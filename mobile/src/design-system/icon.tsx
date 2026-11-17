@@ -5,6 +5,8 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -18,7 +20,7 @@ type Stroke =
   | { circle: readonly [x: number, y: number, r: number] }
   | { rect: readonly [x: number, y: number, width: number, height: number, corner: number] };
 
-// The design system's line icons: a 24-point grid, a 2-point round stroke, never filled.
+// The design system's line icons: a 24-point grid, a 2-point round stroke, filled only where `Icon` is asked to.
 const ICONS = {
   map: [{ path: 'M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z' }, { path: 'M9 4v14' }, { path: 'M15 6v14' }],
   chat: [{ path: 'M4 5h16v11H9l-5 4z' }],
@@ -81,14 +83,16 @@ const ICONS = {
   // Not the design system's: the `Profile` frame draws them on the timetable versions' 이름 바꾸기 and 이 시간표 삭제.
   pencil: [{ path: 'M4 20h4L19 9l-4-4L4 16z' }],
   trash: [{ path: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3' }],
-  // Not the design system's: the `Events` frame draws it on `AI 매칭` and on the button of the requests.
-  sparkle: [
-    { path: 'M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z' },
-    { path: 'M18.5 14.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z' },
-  ],
   // Not the design system's: the `Party` frame draws them on the button that pauses and plays the official banner.
   pause: [{ path: 'M9 5v14' }, { path: 'M15 5v14' }],
   play: [{ path: 'M7 5l12 7-12 7z' }],
+  // Not the design system's: the ☆ of a Global Event, filled for a Favorite Event.
+  star: [{ path: 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z' }],
+  // Not the design system's: the answer frame draws them on 그만 (filled), on "이전 답" in the AI input, and on
+  // "새 대화" beside the pill.
+  stop: [{ rect: [7, 7, 10, 10, 2] }],
+  history: [{ path: 'M3.5 12a8.5 8.5 0 1 0 2.5-6' }, { path: 'M3.5 3.5V8H8' }, { path: 'M12 8v4l3 2' }],
+  chatPlus: [{ path: 'M4 5h16v11H9l-5 4z' }, { path: 'M12 8v5' }, { path: 'M9.5 10.5h5' }],
 } as const satisfies Record<string, readonly Stroke[]>;
 
 export type IconName = keyof typeof ICONS;
@@ -120,6 +124,8 @@ interface IconProps {
   // Set when the icon stands alone and carries meaning: it becomes the accessible name. Without it a screen reader
   // skips the icon.
   label?: string;
+  // Filled with the colour, as a Favorite Event's star is.
+  filled?: boolean;
   testID?: string;
 }
 
@@ -135,12 +141,19 @@ function screenReaderProps(label: string | undefined): object {
   return { accessible: true, accessibilityLabel: label, accessibilityRole: 'image', importantForAccessibility: 'yes' };
 }
 
-export function Icon({ name, size = 20, color: tint = color.ink, label, testID }: IconProps): ReactElement {
+export function Icon({
+  name,
+  size = 20,
+  color: tint = color.ink,
+  label,
+  filled = false,
+  testID,
+}: IconProps): ReactElement {
   const strokes: readonly Stroke[] = ICONS[name];
   return (
     <Svg
       {...screenReaderProps(label)}
-      fill="none"
+      fill={filled ? tint : 'none'}
       height={size}
       stroke={tint}
       strokeLinecap="round"

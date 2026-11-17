@@ -13,7 +13,9 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -23,19 +25,20 @@ import { CAMPUS_BOUNDS, isInside } from '@/map/campus';
 import { keep, readKept } from '@/storage/kept';
 import { answer } from './answer';
 import { mockAssistantReply, mockRecalculation, mockTap } from './assistant';
-import { FOOTPRINTS } from './data/footprints';
 import { FRIEND_STATUSES, MY_FRIEND_ID } from './data/friends';
 import { LATE_WAY } from './data/late-way';
 import { MENUS } from './data/menus';
 import { PLACES } from './data/places';
-import { GLOBAL_EVENT_ANNOUNCERS, GLOBAL_EVENTS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
+import { GLOBAL_EVENT_ANNOUNCERS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
 import { QUEST_INVITATIONS } from './data/waiting';
 import { mockEvents } from './events';
+import { mockGlobalEvents } from './global-events';
 import { mockFriendships as friendships } from './friendships';
 import { mockInvitationCard } from './invitation-card';
 import { mockInterests } from './interests';
 import { mockParty } from './party';
 import { mockBetterPlan, mockChangedPlanQuest, mockMadeQuests, mockPlanQuest } from './plan-quest';
+import { mockSeatStays } from './seat-stays';
 import { insidePrivateZone, mockPrivateZones } from './private-zones';
 import { mockTimetable as timetable } from './timetable';
 import { SHUTTLE, SHUTTLE_VEHICLES } from './data/shuttle';
@@ -175,6 +178,8 @@ export const mockClient: ApiClient = {
   },
   findFriendId: (friendId) => answer('findFriendId', () => friendships.findFriendId(friendId)),
   sendFriendRequest: (friendId) => answer('sendFriendRequest', () => friendships.sendFriendRequest(friendId)),
+  sendFriendRequestToUser: (userId) =>
+    answer('sendFriendRequestToUser', () => friendships.sendFriendRequestToUser(userId)),
   listFriendRequests: () => answer('listFriendRequests', friendships.listFriendRequests, { received: [], sent: [] }),
   acceptFriendRequest: async (requestId) => {
     await answer('acceptFriendRequest', () => {
@@ -220,11 +225,10 @@ export const mockClient: ApiClient = {
   },
   listPlaces: () => answer('listPlaces', () => PLACES, []),
   searchPlaces: (words) => answer('searchPlaces', () => timetable.searchPlaces(words), []),
-  listGlobalEvents: () => answer('listGlobalEvents', () => GLOBAL_EVENTS, []),
+  ...mockGlobalEvents,
   listGlobalEventAnnouncers: () => answer('listGlobalEventAnnouncers', () => GLOBAL_EVENT_ANNOUNCERS, []),
   listParties: () => answer('listParties', () => PARTIES, []),
   getMyParty: () => answer('getMyParty', () => MY_PARTY, null),
-  getFootprints: () => answer('getFootprints', () => FOOTPRINTS, { friendCount: 0, faces: [] }),
   findWalkingRoute: (from, to) =>
     answer('findWalkingRoute', () => mockWalkingRoute(from, to), {
       status: 'ROUTE_RESULT_NOT_FOUND',
@@ -237,7 +241,7 @@ export const mockClient: ApiClient = {
   askAssistant: (messages, context) => answer('askAssistant', () => mockAssistantReply(messages, context)),
   recalculateAnswer: (input) => answer('recalculateAnswer', () => mockRecalculation(input)),
   answerTap: (tapped) => answer('answerTap', () => mockTap(tapped)),
-  makePlanQuest: () => answer('makePlanQuest', mockPlanQuest),
+  makePlanQuest: (making) => answer('makePlanQuest', () => mockPlanQuest(making)),
   getBetterPlan: () => answer('getBetterPlan', mockBetterPlan),
   changePlanQuest: () => answer('changePlanQuest', mockChangedPlanQuest),
   getInvitationCard: (invitationId) => answer('getInvitationCard', () => mockInvitationCard(invitationId)),
@@ -249,4 +253,5 @@ export const mockClient: ApiClient = {
   ...mockTutorial,
   ...mockInterests,
   ...mockPrivateZones,
+  ...mockSeatStays,
 };

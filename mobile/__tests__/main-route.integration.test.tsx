@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -11,7 +12,7 @@ import { router } from 'expo-router';
 import { pass, screen } from './support/app';
 import { EXPLANATION, givePhone, NEAR_LIBRARY, OFF_CAMPUS, ON_CAMPUS, openMain } from './support/main';
 import { DINNER, FRIEND, lookOf, press, ROUTE, wordsUnder } from './support/markers';
-import { startFresh } from './support/mocks';
+import { startFresh, withoutInterestMarks } from './support/mocks';
 import { apiClient } from '@/api/client';
 import { QUESTS } from '@/api/mock/data/quests';
 
@@ -38,6 +39,7 @@ beforeEach(async () => {
   jest.useFakeTimers();
   findWalkingRoute = jest.spyOn(apiClient, 'findWalkingRoute');
   await startFresh();
+  withoutInterestMarks();
 });
 
 afterEach(() => {
@@ -189,7 +191,7 @@ describe('"길찾기" without a position to start from', () => {
     expect(screen.getByText('캠퍼스 밖에 있어요')).toBeVisible();
     expect(findWalkingRoute).not.toHaveBeenCalled();
     // Closer than the whole campus, and the card is still there to try again.
-    expect(lookOf(FRIEND)).toBe('person:full:free:f1');
+    expect(lookOf(FRIEND)).toBe('person:full:free:f1:exact');
     expect(screen.getByRole('header', { name: '저녁 약속' })).toBeVisible();
   });
 
@@ -203,7 +205,7 @@ describe('"길찾기" without a position to start from', () => {
 
     expect(screen.getByRole('header', { name: EXPLANATION })).toBeVisible();
     expect(findWalkingRoute).not.toHaveBeenCalled();
-    expect(lookOf(FRIEND)).toBe('person:small:free:f1');
+    expect(lookOf(FRIEND)).toBe('person:small:free:f1:exact');
   });
 
   it('says that the position is being looked for when the phone has told none yet', async () => {

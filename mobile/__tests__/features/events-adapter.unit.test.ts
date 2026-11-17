@@ -3,12 +3,13 @@
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-// Partitions: each filter of the 행사 tab at the edges of today and of the week, the search's fields, the sheet's own and
-// others' rows, and the AI 매칭 list's ages. Expected values: P13-03's criteria, worked by hand in Korea's time.
+// Partitions: each filter of the 행사 tab at the edges of today and of the week, the search's fields, and the sheet's own
+// and others' rows. Expected values: P13-03's criteria, worked by hand in Korea's time.
 
-import type { MatchingRequest } from '@/api/matching-types';
 import type { RecruitingQuest } from '@/api/party-types';
 import type { GlobalEvent, Person, Quest } from '@/api/types';
 import {
@@ -18,7 +19,6 @@ import {
   isOverPeriod,
   sharedQuestFor,
   toEventViews,
-  toMatchingRows,
   toRecruitRows,
 } from '@/features/events/adapter';
 
@@ -89,12 +89,8 @@ function recruiting(eventId: string | null, id = `r-${eventId ?? 'none'}`): Recr
   };
 }
 
-function request(globalEventId: string, state: MatchingRequest['state'], arrivedAt: string): MatchingRequest {
-  return { globalEventId, size: 3, state, arrivedAt, questId: null };
-}
-
 function sources(events: GlobalEvent[], more: Partial<EventSources> = {}): EventSources {
-  return { events, announcers: [], recruiting: [], quests: [], matching: [], now: NOW, ...more };
+  return { events, announcers: [], recruiting: [], quests: [], now: NOW, ...more };
 }
 
 function idsOf(filter: EventFilter, events: GlobalEvent[], more: Partial<EventSources> = {}, search = ''): string[] {
@@ -200,25 +196,23 @@ describe('toEventViews search', () => {
 describe('toEventViews card', () => {
   const night = event('night', '2026-10-06T18:00:00+09:00', { endsAt: '2026-10-06T20:00:00+09:00', place: '대강당' });
 
-  it('an announcer, two recruiting Quests, a Quest held and a request waiting → all on the card', () => {
+  it('an announcer, two recruiting Quests, and a Quest held → all on the card', () => {
     const [view] = toEventViews(
       sources([night], {
         announcers: [{ eventId: 'night', announcer: '컴퓨터공학부' }],
         recruiting: [recruiting('night', 'r1'), recruiting('night', 'r2')],
         quests: [questFor('night', [ME])],
-        matching: [request('night', 'waiting', '2026-10-06T12:58:00+09:00')],
       }),
       'all',
       '',
     );
     expect(view).toMatchObject({ source: '컴퓨터공학부', time: '오늘 18:00–20:00', place: '대강당', recruiting: 2 });
-    expect(view).toMatchObject({ mine: true, matching: true });
+    expect(view).toMatchObject({ mine: true });
   });
 
-  it('no announcer, no Quest and a request matched already → none of them', () => {
-    const more = { matching: [request('night', 'matched', '2026-10-06T12:00:00+09:00')] };
-    const [view] = toEventViews(sources([night], more), 'all', '');
-    expect(view).toMatchObject({ source: null, recruiting: 0, mine: false, matching: false });
+  it('no announcer and no Quest → none of them', () => {
+    const [view] = toEventViews(sources([night]), 'all', '');
+    expect(view).toMatchObject({ source: null, recruiting: 0, mine: false });
   });
 });
 
@@ -262,26 +256,18 @@ describe('sharedQuestFor', () => {
   });
 });
 
-describe('toMatchingRows', () => {
-  const night = event('night', '2026-10-06T18:00:00+09:00', { endsAt: '2026-10-06T20:00:00+09:00', place: '대강당' });
+// Partitions: the User's Quest for the event taken alone ("여기로", P03 ticket 17). Expected values: it is no 파티, so
+// the event is not the User's and lists no row of theirs.
+describe('a Quest taken alone for the event', () => {
+  const taken = { ...questFor('night', [ME]), takenAlone: true, capacity: 1 };
 
-  it.each([
-    ['under a minute ago', '2026-10-06T12:59:01+09:00', '방금 신청'],
-    ['a minute ago', '2026-10-06T12:59:00+09:00', '1분 전'],
-    ['59 minutes ago', '2026-10-06T12:01:00+09:00', '59분 전'],
-  ])('a request waiting since %s → "%s"', (_, arrivedAt, ago) => {
-    const [row] = toMatchingRows([request('night', 'waiting', arrivedAt)], [night], NOW);
-    expect(row).toEqual({ eventId: 'night', title: 'night 설명회', when: '오늘 18:00–20:00 · 대강당', size: 3, ago });
+  it("does not make the event the User's", () => {
+    const [view] = toEventViews(sources([event('night', '2026-10-06T19:00:00+09:00')], { quests: [taken] }), 'all', '');
+
+    expect(view).toMatchObject({ mine: false });
   });
 
-  it('requests matched, withdrawn or expired → no row', () => {
-    const states = ['matched', 'withdrawn', 'expired'] as const;
-    const requests = states.map((state) => request('night', state, '2026-10-06T12:00:00+09:00'));
-    expect(toMatchingRows(requests, [night], NOW)).toEqual([]);
-  });
-
-  it('a request for an Event no longer listed → no title and no time', () => {
-    const [row] = toMatchingRows([request('gone', 'waiting', '2026-10-06T12:00:00+09:00')], [night], NOW);
-    expect(row).toMatchObject({ title: '', when: '' });
+  it('is no row of 파티 찾기/모집', () => {
+    expect(toRecruitRows('night', [taken], [], ME.id, NOW)).toEqual([]);
   });
 });

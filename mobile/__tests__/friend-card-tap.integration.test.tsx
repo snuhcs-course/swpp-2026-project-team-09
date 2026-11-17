@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -18,9 +19,9 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, MIN_JUN, PHONE_NOW } from './support/server';
 
 // A Friend's card fills from the main server's card of the face (P02 ticket 22's Friend half, row 6's decision D11),
-// over the fake main server: with the switch on, the card asks POST /assistant/taps for the Friend and draws its fact
-// lines in place of the lines the app holds, which stay while it is asked and after a failure. The fake main server
-// gives no Friend a status, so the lines replaced are the mock's (`friend-card-tap-mock.integration.test.tsx`).
+// over the fake main server: the card asks POST /assistant/taps for the Friend and draws its fact lines in place of the
+// lines the app holds, which stay while it is asked and after a failure. The fake main server gives no Friend a status,
+// so the lines replaced are the mock's (`friend-card-tap-mock.integration.test.tsx`).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -67,11 +68,11 @@ function cardTexts(): unknown[] {
     .map(({ props }): unknown => props.children);
 }
 
-// Partitions: the switch on and off; the card that came, the one on its way, and a failure.
+// Partitions: the card that came, the one on its way, and a failure.
 describe("a Friend's card on the everyday map", () => {
   it("asks for the Friend's card and draws its facts in place of the app's lines", async () => {
     server.on('POST /assistant/taps', { status: 200, body: MIN_JUN_TAP, afterMs: 1000 });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, MIN_JUN.name);
     await pass(100);
     const held = cardTexts();
@@ -89,7 +90,7 @@ describe("a Friend's card on the everyday map", () => {
 
   it("keeps the app's lines while the card is asked, and after a failure", async () => {
     server.on('POST /assistant/taps', { status: 500, body: { statusCode: 500, message: 'Internal' }, afterMs: 1000 });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, MIN_JUN.name);
     await pass(100);
     const held = cardTexts();
@@ -99,16 +100,5 @@ describe("a Friend's card on the everyday map", () => {
     expect(server.received('POST /assistant/taps').length).toBeGreaterThan(0);
     expect(screen.queryAllByTestId('card-fact')).toEqual([]);
     expect(cardTexts()).toEqual(held);
-  });
-
-  it('asks nothing with the switch off', async () => {
-    server.on('POST /assistant/taps', { status: 200, body: MIN_JUN_TAP });
-    const user = await openMain();
-
-    await press(user, MIN_JUN.name);
-    await pass(500);
-
-    expect(server.received('POST /assistant/taps')).toEqual([]);
-    expect(screen.queryAllByTestId('card-fact')).toEqual([]);
   });
 });

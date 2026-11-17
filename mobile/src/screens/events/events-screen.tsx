@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -14,8 +15,8 @@ import { type EventFilter, type EventSources, toEventViews } from '@/features/ev
 import { useEventSources } from '@/features/events/use-events';
 import { TabScreen } from '../shell/tab-screen';
 import { EventItem } from './event-item';
-import { Filters, MatchingButton, SearchBar } from './events-bar';
-import { EventSheets, openMatchingRequests, type PickedEvent, useEventSheets } from './event-sheets';
+import { Filters, SearchBar } from './events-bar';
+import { EventSheets, type PickedEvent, useEventSheets } from './event-sheets';
 import { showFind } from '../party/use-party-actions';
 import { type Focus, useFocus } from './use-focus';
 
@@ -25,10 +26,9 @@ interface ListProps extends Omit<Focus, 'focused'> {
   search: string;
   focused: string | null;
   onRecruit: (event: PickedEvent) => void;
-  onMatch: (event: PickedEvent) => void;
 }
 
-function List({ sources, filter, search, focused, scroll, onCardAt, onRecruit, onMatch }: ListProps): ReactElement {
+function List({ sources, filter, search, focused, scroll, onCardAt, onRecruit }: ListProps): ReactElement {
   const views = toEventViews(sources, filter, search);
   // Without any event, the tab says what it is for, and leads to the 파티 one can join meanwhile (HE H7).
   if (sources.events.length === 0) {
@@ -49,10 +49,6 @@ function List({ sources, filter, search, focused, scroll, onCardAt, onRecruit, o
           onLayout={(y) => {
             onCardAt(event.id, y);
           }}
-          onMatch={() => {
-            onMatch(event);
-          }}
-          onMatching={openMatchingRequests}
           onRecruit={() => {
             onRecruit(event);
           }}
@@ -68,7 +64,7 @@ interface EventsScreenProps {
   onFocused: () => void;
 }
 
-// The 행사 tab, the `Events` frame: the published Global Events, their 파티 and AI 매칭.
+// The 행사 tab, the `Events` frame: the published Global Events and their 파티.
 export function EventsScreen({ focus, onFocused }: EventsScreenProps): ReactElement {
   const { data, isPending, refetch } = useEventSources();
   const [filter, setFilter] = useState<EventFilter>('all');
@@ -85,16 +81,13 @@ export function EventsScreen({ focus, onFocused }: EventsScreenProps): ReactElem
   return (
     <TabScreen
       actions={
-        <>
-          <MatchingButton count={data?.matching.length ?? 0} />
-          <IconButton
-            icon="search"
-            label="행사 검색"
-            onPress={() => {
-              setSearching(true);
-            }}
-          />
-        </>
+        <IconButton
+          icon="search"
+          label="행사 검색"
+          onPress={() => {
+            setSearching(true);
+          }}
+        />
       }
       bar={searching ? <SearchBar onClose={showAll} onSearch={setSearch} search={search} /> : undefined}
       title="행사"
@@ -103,14 +96,7 @@ export function EventsScreen({ focus, onFocused }: EventsScreenProps): ReactElem
       {data === undefined && isPending ? <LoadingState /> : null}
       {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
       {data === undefined ? null : (
-        <List
-          {...focusing}
-          filter={filter}
-          onMatch={sheets.setMatchEvent}
-          onRecruit={sheets.setRecruitEvent}
-          search={search}
-          sources={data}
-        />
+        <List {...focusing} filter={filter} onRecruit={sheets.setRecruitEvent} search={search} sources={data} />
       )}
       <EventSheets quests={quests} sheets={sheets} />
     </TabScreen>

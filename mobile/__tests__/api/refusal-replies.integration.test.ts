@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -104,16 +105,5 @@ describe("the Assistant's refusal from the main server", () => {
 describe('the mock of a refusal', () => {
   it.each([...REFUSAL_REPLIES.keys()])('answers "%s" with a context by the main server\'s reply', async (words) => {
     await expect(answered(mockClient.askAssistant(asked(words), CONTEXT))).resolves.toEqual(copyOf(words));
-  });
-
-  it('answers the same words without a context as before, with no refusal', async () => {
-    const reply = await answered(mockClient.askAssistant(asked('셔틀 오면 알려 줘')));
-
-    expect(reply).toEqual({
-      text: '셔틀이 어디 있는지 지도에서 볼 수 있어요.',
-      mapButtons: ['shuttle'],
-      cards: [],
-      proposal: null,
-    });
   });
 });

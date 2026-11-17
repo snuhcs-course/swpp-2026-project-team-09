@@ -17,6 +17,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
@@ -29,12 +30,13 @@ import type { CardView } from '@/features/map/adapter';
 import type { ShuttleLayer } from '@/features/shuttle/use-shuttle';
 import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
 import { showsStartButton } from '@/features/tutorial/rules';
-import { CAMPUS_CAMERA, Map, type MapLine } from '@/map';
+import type { MapLine } from '@/map';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { FriendList } from './friend-list';
 import { OffMapFriendCard, useOffMapFriends } from './friend-profile';
-import { listsTop, mapInset, ROUTE_PADDING, type Room } from './layout';
+import { listsTop, ROUTE_PADDING, type Room } from './layout';
 import { LocationExplanation } from './location-explanation';
+import { MainMapView } from './main-map-view';
 import { MapBottom, openMenus, type Taken } from './map-bottom';
 import { withMeet } from './meet-button';
 import { MyCard } from './my-card';
@@ -43,7 +45,6 @@ import { QuestList } from './quest-list';
 import { RoomRequestInbox } from './room-consent';
 import { CardOrSeen } from './seen-card';
 import type { ChatSheetControl } from './chat-sheet';
-import type { MapContents } from './use-answer-map';
 import { askAssistant, useMainLayers } from './use-main-layers';
 import { type MainMap, useMainMap } from './use-main-map';
 import { type Me, useMe } from './use-me';
@@ -51,7 +52,7 @@ import { useActivePartyRoom } from './use-active-party-room';
 import { useAskedByAddress } from './use-asked-card';
 import type { MainRoute } from './use-route';
 import { useMapView } from './use-map-view';
-import type { MapTouches } from './use-pressed-place';
+import { useReturnedCamera } from './use-camera-back';
 import { useFramedRoom } from './use-room';
 import { type Selection, useSelection } from './use-selection';
 import { type TutorialFlow, useTutorialFlow } from './tutorial/use-tutorial-flow';
@@ -179,9 +180,9 @@ function SelectedCard(props: SelectedCardProps): ReactElement | null {
   return <ThingCard {...props} />;
 }
 
-// The zoom control gives way to a card at the bottom, the shuttle's notice, the open 편의기능 stack and the answer frame.
-function zoomShown({ bottomCard, notice }: Taken, stackOpen: boolean, framed: boolean): boolean {
-  return !bottomCard && notice === null && !stackOpen && !framed;
+// The zoom control gives way to a card at the bottom, the open 편의기능 stack and the answer frame.
+function zoomShown({ bottomCard }: Taken, stackOpen: boolean, framed: boolean): boolean {
+  return !bottomCard && !stackOpen && !framed;
 }
 
 // The lists give way to a 식당's card at the top, and to the answer frame or a received invitation's card.
@@ -200,42 +201,6 @@ function MainZoomControl({ map, me }: { map: MainMap; me: Me }): ReactElement {
         map.zoomBy(-1);
       }}
     />
-  );
-}
-
-interface MainMapViewProps {
-  map: MainMap;
-  contents: MapContents;
-  room: Room;
-  // What watches the map's touches and its size: the tutorial place pin's tap and a press on a building.
-  around: MapTouches;
-  // What a press on a marker does: the tutorial pin's press for its own marker, else the things'.
-  onPress: (id: string) => void;
-  nativeMinLevel: number;
-  outerZoom?: number;
-}
-
-// The map with what it draws. Its credit opens the sources of its data. The View around it watches its touches for a
-// tap, which removes the pin or presses a building.
-function MainMapView({ map, contents, room, around, onPress, ...limits }: MainMapViewProps): ReactElement {
-  return (
-    <View style={styles.map} testID="main-map-touches" {...around}>
-      <Map
-        avatars={contents.avatars}
-        {...CAMPUS_CAMERA}
-        inset={mapInset(room.cardHeight, room.tutorialStart, room.answerHeight, room.interestsHint, room.madeLine)}
-        markers={contents.markers}
-        {...limits}
-        onCameraIdle={map.onCameraIdle}
-        onCreditPress={() => {
-          router.push('/map-sources');
-        }}
-        onFitZoom={map.onFitZoom}
-        onPress={onPress}
-        lines={contents.lines}
-        ref={map.ref}
-      />
-    </View>
   );
 }
 
@@ -310,13 +275,13 @@ export function MainScreen(): ReactElement {
   const me = useMe(map);
   const layers = useMainLayers(inFront, map, me);
   const { stack, shuttle, cards, ready, chat, route } = layers;
-  const selection = useSelection(cards, inFront, chat.onMap && me.position !== null, useOffMapFriends(chat.onMap));
-  const lines = useLines(shuttle, route);
+  const selection = useSelection(cards, inFront, me.position !== null, useOffMapFriends());
   const party = useActivePartyRoom();
   useAskedByAddress(ready ? cards : null, map, selection, chat);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
   const { unasked, framed, taken, firstRun, room, ...bottom } = useFramedRoom(selection, layers, me, start);
-  const view = useMapView(chat, map, room, { me, pin, lines, cards, selection }, unasked);
+  const view = useMapView(chat, map, room, { me, pin, lines: useLines(shuttle, route), cards, selection }, unasked);
+  useReturnedCamera(layers.back, chat.framed, map);
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
@@ -357,9 +322,8 @@ export function MainScreen(): ReactElement {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface },
-  // The map and what floats over it. It ends at the navigation's top, so that the map's credit stays uncovered.
+  // What floats over the map. It ends at the navigation's top.
   stage: { flex: 1 },
-  map: { flex: 1 },
   overMap: { position: 'absolute', right: 0, bottom: 0, left: 0, pointerEvents: 'box-none' },
   lists: { ...StyleSheet.absoluteFill, pointerEvents: 'box-none' },
   hidden: { display: 'none' },

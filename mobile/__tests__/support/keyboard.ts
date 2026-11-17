@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { act, screen } from '@testing-library/react-native';
+import { act } from '@testing-library/react-native';
 import { DeviceEventEmitter, Keyboard } from 'react-native';
 
 // The phone's keyboard in the tests. Their phone is an iOS one, which tells of the keyboard before it moves and
@@ -40,11 +41,4 @@ export function quietDismiss(): jest.SpyInstance {
   return jest.spyOn(Keyboard, 'dismiss').mockImplementation(() => {
     // Nothing is up.
   });
-}
-
-// That the chat's content ends `under` from the sheet's bottom: the room it keeps clear of the AI input.
-export function expectContentUnder(testID: 'chat-empty' | 'chat-bubbles', under: number): void {
-  expect(screen.getByTestId(testID).props.contentContainerStyle).toEqual(
-    expect.arrayContaining([{ paddingBottom: under }]),
-  );
 }

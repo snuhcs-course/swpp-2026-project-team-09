@@ -12,7 +12,9 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -31,7 +33,6 @@ import {
   isParties,
   isPlaces,
   isPositionKept,
-  isPositions,
   isProfile,
   isSentFriendRequest,
   isTimetableClass,
@@ -40,6 +41,7 @@ import {
   isWalkingRoute,
 } from './answers';
 import { isMenus } from './menu-answers';
+import { isPositions } from './position-answers';
 import { isQuests } from './quest-answers';
 import { isShuttleRoute, isShuttleVehicles } from './shuttle-answers';
 import { isStudyBuildings } from './study-answers';
@@ -54,10 +56,14 @@ import { partyClient } from './party-client';
 import { planQuestClient } from './plan-quest-client';
 import { privateZoneClient } from './private-zone-client';
 import { roomClient } from './room-client';
+import { seatStayClient } from './seat-stay-client';
 import { TUTORIAL_SERVED, tutorialClient } from './tutorial-client';
 
 // The operations the main server serves on its main line, each from its route. What it does not serve stays the
-// mock's: the Friends' statuses, who announced the Global Events, and 오늘의 발자국 (todo.md, section 3).
+// mock's, such as who announced the Global Events (todo.md, section 3).
+//
+// The Friends' statuses are not served and are not the mock's either: the mock's sample status made every Friend the
+// User sees "공강". Without one, a Friend's line says only what the main server knows (`toFriendViews`).
 export const serverClient: ApiClient = {
   ...mockClient,
   ...roomClient,
@@ -69,6 +75,8 @@ export const serverClient: ApiClient = {
   ...interestClient,
   ...privateZoneClient,
   ...lateClient,
+  ...seatStayClient,
+  listFriendStatuses: () => Promise.resolve([]),
   // The tutorial stays the mock's until the main server serves it (`./tutorial-client.ts`).
   ...(TUTORIAL_SERVED ? tutorialClient : {}),
   // The main server stores four of the answers. The course level and the gender have no place there, so the phone
@@ -111,6 +119,7 @@ export const serverClient: ApiClient = {
   },
   findFriendId: (friendId) => call('GET', `/friend-ids/${encodeURIComponent(friendId)}`, isUserSummary),
   sendFriendRequest: (friendId) => call('POST', '/friend-requests', isSentFriendRequest, { body: { friendId } }),
+  sendFriendRequestToUser: (userId) => call('POST', '/friend-requests', isSentFriendRequest, { body: { userId } }),
   listFriendRequests: () => call('GET', '/friend-requests', isFriendRequests),
   acceptFriendRequest: async (requestId) => {
     await call('POST', `/friend-requests/${encodeURIComponent(requestId)}/accept`, isNothing);

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -70,7 +71,7 @@ type User = Awaited<ReturnType<typeof openMain>>;
 
 async function askRefused(words: string): Promise<User> {
   server.on('POST /assistant/messages', { status: 200, body: { ...copyOf(words), text: SENTENCE }, afterMs: 1000 });
-  const user = await openMain({ answerOnMap: true }, MORE);
+  const user = await openMain({}, MORE);
   await user.type(screen.getByLabelText(AI_INPUT), words);
   await user.press(screen.getByRole('button', { name: '보내기' }));
   await pass(1000);
@@ -141,7 +142,7 @@ const LEE = { kind: 'friend', userId: LEE_MINSU.userId };
 
 async function askWhich(): Promise<User> {
   server.on('POST /assistant/messages', { status: 200, body: WHICH_MINSU_REPLY, afterMs: 1000 });
-  const user = await openMain({ answerOnMap: true }, MORE);
+  const user = await openMain({}, MORE);
   await user.type(screen.getByLabelText(AI_INPUT), ASKED);
   await user.press(screen.getByRole('button', { name: '보내기' }));
   await pass(1000);

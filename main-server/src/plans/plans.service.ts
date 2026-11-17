@@ -8,6 +8,7 @@
 
 import { BadRequestException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import {
+  type EventsInput,
   type MealInput,
   type MeetInput,
   type NewQuestInput,
@@ -24,9 +25,10 @@ import { JoinPolicy, type Prisma, QuestBoard } from '../generated/prisma/client.
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { type CreatedInvitation, InvitationsService } from '../quests/invitations.service.js';
-import { QuestsService, type SubQuestColumns } from '../quests/quests.service.js';
+import { ALONE_CAPACITY, QuestsService, type SubQuestColumns } from '../quests/quests.service.js';
 import { conflict, sharedQuestHeld } from '../quests/refusals.js';
 import { UsersService } from '../users/users.service.js';
+import { aloneLeaveBy, goingLine, nextWordOf } from './alone-plan.js';
 import { type PlanQuestBody, type PlanQuestDto } from './dto/plan-quest.dto.js';
 
 // The Sub Quests of a Plan, each ending where the next starts and the last at the Plan's end.
@@ -68,6 +70,18 @@ export function mealOrMeetInputOf(input: PlanInput): MealInput | MeetInput {
   return input;
 }
 
+// A Plan taken alone: an events Plan, or a meal's or a meet's whose people are the asker only. Null for a Plan with a
+// Friend and for any other kind.
+function aloneInputOf(input: PlanInput): MealInput | MeetInput | EventsInput | null {
+  if (input.kind === 'events') {
+    return input;
+  }
+  if (input.kind === 'meal' || input.kind === 'meet') {
+    return input.people.length < 2 ? input : null;
+  }
+  return null;
+}
+
 @Injectable()
 export class PlansService {
   private readonly logger = new Logger(PlansService.name);
@@ -85,18 +99,14 @@ export class PlansService {
   ) {}
 
   // Plans again as the recalculation does, and makes the Plan named into a Quest the asker leads, inviting everyone
-  // else of it.
+  // else of it. A Plan taken alone is a Quest the asker holds alone.
   async make(userId: string, making: PlanQuestBody): Promise<PlanQuestDto> {
     if (making.input.kind === 'new-quest') {
       return this.makeNewQuest(userId, making, making.input);
     }
-    if (mealOrMeetInputOf(making.input).people.length < 2) {
-      throw new BadRequestException({
-        statusCode: HttpStatus.BAD_REQUEST,
-        error: 'Bad Request',
-        code: 'PLAN_ALONE',
-        message: 'A plan with no Friend makes no Quest.',
-      });
+    const alone = aloneInputOf(making.input);
+    if (alone !== null) {
+      return this.makeAlone(userId, making, alone);
     }
     const plan = await this.replanned(userId, making, []);
     const { questId, created } = await this.prisma.$transaction(async (tx) => {
@@ -150,14 +160,53 @@ export class PlansService {
     return this.made(userId, questId, created);
   }
 
-  // The asker's Quest for the Global Event, which they may hold only when they hold no Shared Quest for it.
+  // Plans again, and makes the Plan named a Quest taken alone, which the asker holds alone: a meal's with its steps, an
+  // event's in place of the one they held alone for it. Keeps its leave-by, and answers the card's two lines.
+  private async makeAlone(
+    userId: string,
+    making: PlanQuestBody,
+    input: MealInput | MeetInput | EventsInput,
+  ): Promise<PlanQuestDto> {
+    const now = this.clock.now();
+    if (outOfReach(input.date, now)) {
+      throw new BadRequestException('A plan is for a day from today to a week ahead');
+    }
+    const { location, locationMissing } = making;
+    const answer = await this.answers.plan(userId, input, { now, location, locationMissing });
+    const plan = planNamed(answer.plans, making.planId, making.startAt);
+    const settings = { capacity: ALONE_CAPACITY, takenAlone: true };
+    const questId = await this.prisma.$transaction((tx) =>
+      input.kind === 'events'
+        ? this.forGlobalEvent(userId, { id: plan.id, title: plan.title }, tx, settings, true)
+        : this.quests.createWithSubQuests(plan.title, subQuestsOf(plan), [userId], tx, settings),
+    );
+    const leaveBy = aloneLeaveBy(plan, nextWordOf(answer), now);
+    if (leaveBy.facts !== null && leaveBy.at !== null) {
+      // As the Leader's, it never fails the making.
+      await this.notifications.schedule(userId, { ...leaveBy.facts, questId }, leaveBy.at).catch((error: unknown) => {
+        this.logger.warn(`The time to leave of a Plan taken alone was not kept: ${String(error)}`);
+      });
+    }
+    const made = await this.made(userId, questId, []);
+    const lines = [goingLine(plan, input.kind), [{ text: leaveBy.line, strong: false }]];
+    return { ...made, alone: { lines, remindAt: leaveBy.at?.toISOString() ?? null } };
+  }
+
+  // The asker's Quest for the Global Event, which they may hold only when they hold no Shared Quest for it. Taken
+  // `alone`, it replaces only a Quest they took alone for the event: a 파티 of theirs, even one nobody joined yet,
+  // refuses it.
   private async forGlobalEvent(
     userId: string,
     event: { id: string; title: string },
     tx: Prisma.TransactionClient,
     settings: Parameters<QuestsService['createForGlobalEvent']>[3],
+    alone = false,
   ): Promise<string> {
     await this.users.lock(userId, tx);
+    const held = alone ? await this.quests.heldFor(userId, event.id, tx) : null;
+    if (held !== null && (await tx.quest.findUnique({ where: { id: held } }))?.takenAlone === false) {
+      throw sharedQuestHeld();
+    }
     if (!(await this.quests.freeForSharedQuest(userId, event.id, tx))) {
       throw sharedQuestHeld();
     }

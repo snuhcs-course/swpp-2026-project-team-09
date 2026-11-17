@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { MemberFace, QuestPhoto, ShownQuest, ShownRecruitingQuest } from '@/api/quest-parts-types';
@@ -16,9 +17,13 @@ import { shownSubQuest } from '@/features/quests/adapter';
 // User's own Quests.
 
 // How the post reads to the User: its Leader, another Holder, or one who may join an Open Quest or ask to join an
-// Approval one, with the request that waits.
+// Approval one, with the request that waits. `removed`: the Leader removed the User, so that even an Open Quest takes
+// them back only by asking.
 export type PostRole =
-  { kind: 'leader' } | { kind: 'holder' } | { kind: 'open' } | { kind: 'approval'; requestId: string | null };
+  | { kind: 'leader' }
+  | { kind: 'holder' }
+  | { kind: 'open' }
+  | { kind: 'approval'; requestId: string | null; removed: boolean };
 
 // A Friend of the User, as the posts know them.
 export type KnownFriend = Pick<Person, 'id' | 'name'>;
@@ -30,6 +35,7 @@ export interface PostView {
   leader: Person;
   event: string | null;
   board: Board | null;
+  // How the User enters: Approval also for an Open Quest the Leader removed them from.
   joinPolicy: JoinPolicy;
   // "3/8명"
   fill: string;
@@ -109,12 +115,16 @@ function friendsOfSummary({ leader, faces }: ShownRecruitingQuest, friends: read
   return [...(ids.has(leader.id) ? [leader.name] : []), ...others.map(({ name }) => name)];
 }
 
+// `removedIds`: the Quests the Leader removed the User from (GET /quest-removals).
 export function entryPost(
   entry: ShownRecruitingQuest,
   requests: readonly MyJoinRequest[],
   friends: readonly KnownFriend[] = [],
+  removedIds: readonly string[] = [],
 ): PostView {
   const waiting = requests.find(({ quest }) => quest.id === entry.id);
+  const removed = removedIds.includes(entry.id);
+  const asks = entry.joinPolicy === 'approval' || removed;
   return postOf({
     questId: entry.id,
     title: entry.title,
@@ -122,12 +132,12 @@ export function entryPost(
     leader: entry.leader,
     event: entry.globalEvent?.title ?? null,
     board: entry.board,
-    joinPolicy: entry.joinPolicy,
+    joinPolicy: asks ? 'approval' : entry.joinPolicy,
     holders: entry.holderCount,
     capacity: entry.capacity,
     createdAt: entry.createdAt,
     next: entry.nextSubQuest,
-    role: entry.joinPolicy === 'approval' ? { kind: 'approval', requestId: waiting?.id ?? null } : { kind: 'open' },
+    role: asks ? { kind: 'approval', requestId: waiting?.id ?? null, removed } : { kind: 'open' },
     photo: entry.photo,
     tags: entry.tags,
     faces: entry.faces,
@@ -175,11 +185,14 @@ export function boardPosts(
   quests: readonly ShownQuest[],
   requests: readonly MyJoinRequest[],
   meId: string,
+  removedIds: readonly string[] = [],
 ): PostView[] {
   const own = quests
     .filter((quest) => quest.board === board && quest.joinPolicy !== 'closed' && shownSubQuest(quest) !== null)
     .flatMap((quest) => questPost(quest, meId) ?? []);
-  const others = entries.filter((entry) => entry.board === board).map((entry) => entryPost(entry, requests));
+  const others = entries
+    .filter((entry) => entry.board === board)
+    .map((entry) => entryPost(entry, requests, [], removedIds));
   return [...own, ...others].toSorted(newestFirst);
 }
 

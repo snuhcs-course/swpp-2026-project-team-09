@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -13,6 +14,7 @@ import { FRIEND_PILL } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { FRIEND } from './support/markers';
 import { startFresh } from './support/mocks';
+import { apiClient } from '@/api/client';
 
 // 친구 관리 against the mocks: the frame's twelve Friends, ten of whom the User sees.
 
@@ -88,6 +90,13 @@ describe('친구 관리 when empty or failing', () => {
 });
 
 describe("친구 관리's levels", () => {
+  // The levels take a press only while the Master Switch is on, which the mocks start with off.
+  beforeEach(async () => {
+    const turned = apiClient.setMasterSwitch(true);
+    await pass(300);
+    await turned;
+  });
+
   it("offers three levels for each Friend, and the Friend's Avatar goes at 시간표만 and comes back above it", async () => {
     const user = await openFriendScreen('/me/friends');
     expect(choice('시간표만')).not.toBeChecked();

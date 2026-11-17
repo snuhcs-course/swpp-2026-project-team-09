@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Placement's assign: Quests by age and a tie on age, a Holder's own request, free places as the cap, pools by Global
@@ -33,10 +34,14 @@ type EligibleQuest = Parameters<typeof assign>[1][number];
 function quest(
   id: string,
   minute: number,
-  { freePlaces = 1, holderIds = ['holder'] }: { freePlaces?: number; holderIds?: string[] } = {},
+  {
+    freePlaces = 1,
+    holderIds = ['holder'],
+    removedIds = [],
+  }: { freePlaces?: number; holderIds?: string[]; removedIds?: string[] } = {},
 ): EligibleQuest {
   const createdAt = new Date(Date.UTC(2026, 9, 22, 8, minute)).toISOString();
-  return { id, globalEventId: CONCERT, capacity: 3, freePlaces, holderIds, createdAt };
+  return { id, globalEventId: CONCERT, capacity: 3, freePlaces, holderIds, removedIds, createdAt };
 }
 
 // Each placement as the request's id and the Quest's id.
@@ -72,6 +77,16 @@ describe('The standing requests an eligible Quest takes', () => {
 
     expect(placed([holding, request('r2')], [own, quest('q-next', 2)])).toEqual([
       ['r2', 'q-own'],
+      ['r1', 'q-next'],
+    ]);
+  });
+
+  it('a request whose User the Leader removed from the Quest → skipped for it, and placed into the next Quest', () => {
+    const removed = request('r1');
+    const left = quest('q-left', 1, { freePlaces: 2, removedIds: [removed.userId] });
+
+    expect(placed([removed, request('r2')], [left, quest('q-next', 2)])).toEqual([
+      ['r2', 'q-left'],
       ['r1', 'q-next'],
     ]);
   });

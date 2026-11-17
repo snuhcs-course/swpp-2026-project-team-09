@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -12,7 +13,7 @@ import { startFresh } from './support/mocks';
 import { KWANJEONG_ROW, SHEET, START, started, type User } from './support/tutorial';
 
 // The answer frame and the 새내기 튜토리얼 (P02 ticket 01, "What gives way" and "Every way of asking"), against the
-// mocks, with the switch on: the tutorial's start button gives way to the frame, and the tutorial's ask shows it.
+// mocks: the tutorial's start button gives way to the frame, and the tutorial's ask shows it.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -32,10 +33,9 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-// A 26학번 User, whom the tutorial is for, with the switch on.
+// A 26학번 User, whom the tutorial is for.
 function openFreshmanFramed(): Promise<User> {
   return openMain({
-    answerOnMap: true,
     answers: {
       name: '홍길동',
       department: '컴퓨터공학부',
@@ -68,8 +68,8 @@ describe("the tutorial's start button and the frame", () => {
   });
 });
 
-// Partitions: the 관정 quest's ask with the switch on.
-describe("the tutorial's ask with the switch on", () => {
+// Partitions: the 관정 quest's ask.
+describe("the tutorial's ask", () => {
   it('closes the sheet and shows the frame with the words in the pill, and no chat sheet', async () => {
     await started('kwanjeong');
     const user = await openFreshmanFramed();

@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import * as Location from 'expo-location';
@@ -62,7 +63,7 @@ describe('the development walk on campus', () => {
     await openMain();
 
     expect(screen.queryByText(EXPLANATION)).toBeNull();
-    expect(screen.getByRole('image', { name: ME })).toBeVisible();
+    expect(screen.getByRole('button', { name: ME })).toBeVisible();
     expect(Location.getForegroundPermissionsAsync).not.toHaveBeenCalled();
     expect(Location.watchPositionAsync).not.toHaveBeenCalled();
   });

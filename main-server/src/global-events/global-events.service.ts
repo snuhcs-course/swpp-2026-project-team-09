@@ -12,7 +12,9 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
@@ -30,6 +32,7 @@ import {
   type GlobalEventWithJudgement,
   type GlobalEventWithOwnPost,
   ListedGlobalEventDto,
+  ListedPublishedGlobalEventDto,
   type ListedState,
   missingFor,
   PublishedGlobalEventDto,
@@ -73,7 +76,10 @@ function searched({ period, title }: PublishedSearch): Prisma.GlobalEventWhereIn
 
 // What an edit or a change of state writes besides the version.
 type Change = Partial<
-  Pick<GlobalEvent, 'title' | 'description' | 'startsAt' | 'endsAt' | 'place' | 'latitude' | 'longitude' | 'state'>
+  Pick<
+    GlobalEvent,
+    'title' | 'description' | 'startsAt' | 'endsAt' | 'place' | 'latitude' | 'longitude' | 'state' | 'publishedAt'
+  >
 >;
 
 const globalEventNotFound = (): NotFoundException => notFound('GLOBAL_EVENT_NOT_FOUND', 'No Global Event has this id.');
@@ -121,6 +127,34 @@ export class GlobalEventsService {
 
   async listPublished(): Promise<PublishedGlobalEventDto[]> {
     return (await this.findListed(GlobalEventState.published)).map((event) => toPublishedGlobalEventDto(event));
+  }
+
+  // The User's list of Global Events: listPublished's, with what is the User's own of each event.
+  async listPublishedFor(userId: string): Promise<ListedPublishedGlobalEventDto[]> {
+    const [events, favorites] = await Promise.all([
+      this.findListed(GlobalEventState.published),
+      this.prisma.globalEventFavorite.findMany({ where: { userId }, select: { globalEventId: true } }),
+    ]);
+    const starred = new Set(favorites.map(({ globalEventId }) => globalEventId));
+    return events.map((event) =>
+      Object.assign(toPublishedGlobalEventDto(event), {
+        publishedAt: event.publishedAt?.toISOString() ?? null,
+        favorite: starred.has(event.id),
+      }),
+    );
+  }
+
+  // Stars a published event for the User, or clears the star. A repeat changes nothing. An event that is not published
+  // is refused as not found, as the User's list never shows it.
+  async setFavorite(userId: string, globalEventId: string, favorite: boolean): Promise<void> {
+    const event = await this.prisma.globalEvent.findUnique({ where: { id: globalEventId }, select: { state: true } });
+    if (event?.state !== GlobalEventState.published) {
+      throw globalEventNotFound();
+    }
+    const data = { userId, globalEventId };
+    await (favorite
+      ? this.prisma.globalEventFavorite.createMany({ data: [data], skipDuplicates: true })
+      : this.prisma.globalEventFavorite.deleteMany({ where: data }));
   }
 
   // The published events of the search that have not ended at `now`, as the User's list serves them and in its order.
@@ -199,8 +233,12 @@ export class GlobalEventsService {
     return this.change(id, version, [GlobalEventState.draft, GlobalEventState.published], fields);
   }
 
+  // Records when it was published (`publishedAt`), which the lists give. An edit later keeps it.
   publish(id: string, version: number): Promise<GlobalEventDetailDto> {
-    return this.change(id, version, [GlobalEventState.draft], { state: GlobalEventState.published });
+    return this.change(id, version, [GlobalEventState.draft], {
+      state: GlobalEventState.published,
+      publishedAt: new Date(),
+    });
   }
 
   discard(id: string, version: number): Promise<GlobalEventDetailDto> {

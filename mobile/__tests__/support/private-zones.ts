@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, within } from '@testing-library/react-native';
@@ -49,6 +50,16 @@ export async function openZones(): Promise<Awaited<ReturnType<typeof openMain>>>
   await fireEvent(map, 'layout', layout);
   await fireEvent(within(map).getByText('지도는 Android·iOS 빌드에서 보입니다'), 'layout', layout);
   return user;
+}
+
+// The outlines the map draws: the saved zones', and the one not yet saved. Each zone's hatch strokes are lines of their
+// own, named after it.
+export function savedZones(): ReturnType<typeof screen.queryAllByTestId> {
+  return screen.queryAllByTestId(/^line:zone:[^:]+$/u);
+}
+
+export function unsavedZones(): ReturnType<typeof screen.queryAllByTestId> {
+  return screen.queryAllByTestId('line:unsaved-zone');
 }
 
 export function pencil(): ReturnType<typeof screen.getByRole> {

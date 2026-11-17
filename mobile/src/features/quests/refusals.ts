@@ -3,9 +3,14 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
+
+// Under `참여 신청` and on the 보낸 신청 row for a Quest the Leader removed the User from, and when joining it refuses.
+export const REMOVED_CAPTION = '내보내진 파티라 파티장 승인이 필요해요';
 
 // The words for the main server's refusals in 파티, by their code: one table, which the screens of 파티 and 행사 add
 // to.
@@ -28,15 +33,13 @@ const WORDS: Readonly<Record<string, string>> = {
   QUEST_NOT_FOUND: '파티를 찾을 수 없어요',
   QUEST_NOT_OPEN: '참여 방식이 바뀌었어요. 다시 확인해 주세요',
   QUEST_NOT_APPROVAL: '참여 방식이 바뀌었어요. 다시 확인해 주세요',
+  QUEST_REMOVED_ASK: REMOVED_CAPTION,
   QUEST_JOIN_REQUEST_ALREADY_SENT: '이미 참여를 신청했어요',
   QUEST_JOIN_REQUEST_NOT_FOUND: '이미 끝난 신청이에요',
   CAPACITY_BELOW_HOLDERS: '지금 멤버 수보다 적게 정할 수 없어요',
   BOARD_REQUIRED: '게시판을 골라 주세요',
   GLOBAL_EVENT_STARTED: '이미 시작한 행사예요',
   GLOBAL_EVENT_NOT_FOUND: '행사를 찾을 수 없어요',
-  MATCHING_REQUEST_WAITING: '이미 매칭 중이에요',
-  MATCHING_REQUEST_NOT_WAITING: '이미 매칭이 끝났어요',
-  MATCHING_REQUEST_NOT_FOUND: '이미 매칭이 끝났어요',
 };
 
 // Where the User enters a Quest, by joining, asking or accepting, an ended Quest is the Quest's, not its Party's.

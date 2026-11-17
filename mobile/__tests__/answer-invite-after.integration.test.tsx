@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -22,7 +23,7 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, DINNER, PHONE_NOW } from './support/server';
 
 // What follows a press of "이대로 초대" on the card of the answer to "배고파, 민수랑 같이" (P02 ticket 05), against the
-// fake main server with the switch on: a signal of 민수's answer, each refusal, and "닫기". The Quest is the stored
+// fake main server: a signal of 민수's answer, each refusal, and "닫기". The Quest is the stored
 // reply to POST /plans for the first Plan, with 민수 invited.
 
 jest.mock('expo-location');

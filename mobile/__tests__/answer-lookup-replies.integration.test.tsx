@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { pass, screen } from './support/app';
@@ -39,7 +40,7 @@ afterEach(() => {
 type User = Awaited<ReturnType<typeof openMain>>;
 
 async function open(): Promise<User> {
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await pass(500);
   return user;
 }

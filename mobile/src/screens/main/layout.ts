@@ -8,6 +8,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { space } from '@/design-system';
@@ -58,7 +59,7 @@ export interface Room {
   cardHeight: number | null;
   // The answer frame's card, its whole laid-out height: null while the frame is not shown or not laid out yet.
   answerHeight: number | null;
-  // The 새내기 튜토리얼's start button is shown, above "오늘의 발자국".
+  // The 새내기 튜토리얼's start button is shown, above the row of buttons.
   tutorialStart: boolean;
   // The first run's line that asks for interests is shown, above the row or the start button.
   interestsHint: boolean;
@@ -78,7 +79,7 @@ export function friendsWidth({ stage }: Room): number {
 // What is under each list's window, counted from the stage's bottom, with clear room of 8. The rule: a window never
 // reaches what takes a press under it, nor the strip in which the map draws its credit (`mapInset`).
 // - While a card is open, both end above the credit, which sits on the card.
-// - Otherwise the friend list ends above the credit, which sits on "오늘의 발자국", and the Quest list above the
+// - Otherwise the friend list ends above the credit, which sits on the row of buttons, and the Quest list above the
 //   zoom control.
 function underLists({ cardHeight, tutorialStart, interestsHint, madeLine }: Room): { friends: number; quests: number } {
   if (cardHeight !== null) {
@@ -117,8 +118,9 @@ export function listWindow(rows: number): number {
 // high, so its top is 62 above the navigation, 10 under a card's bottom.
 export const AI_INPUT = { side: space[4], bottom: 12, height: 50 } as const;
 
-// The row of "오늘의 발자국" and "활성 파티": 48 high, from 16 at the left to 70 from the right, its bottom 158 from
-// the frame's bottom, which is 78 above the navigation.
+// The row of buttons, where "활성 파티" stands: 48 high, from 16 at the left to 70 from the right, its bottom 158 from
+// the frame's bottom, which is 78 above the navigation. It keeps the frame's place, so that the
+// credit, the lists and the buttons above it stay where they are.
 export const BUTTON_ROW = { left: space[4], right: 70, bottom: 78, height: 48, gap: 6 } as const;
 
 // The 새내기 튜토리얼's start button: 34 high, 16 from the left, its bottom 214 from the frame's bottom, which is 8
@@ -153,21 +155,6 @@ function leftControlsTop(tutorialStart: boolean, interestsHint = false, madeLine
   return tutorialStart ? TUTORIAL_START.bottom + TUTORIAL_START.height : BUTTON_ROW.bottom + BUTTON_ROW.height;
 }
 
-// The frame's width, at which both buttons of the row are whole, and the narrowest stage that still has a face.
-const FRAME_WIDTH = 390;
-const FACE_WIDTH = 360;
-
-// What "오늘의 발자국" shows beside its name. On a stage narrower than the frame it gives way to "활성 파티", whose
-// two lines stay whole: first it drops its second line and keeps one face, under 360 it has no face, and what is
-// still missing is cut from its name with an ellipsis, since it is the one button of the row that shrinks. Alone in
-// the row, or until the stage is laid out, it is whole.
-export function footprintsForm({ stage }: Room, withParty: boolean): { faces: number; line: boolean } {
-  if (!withParty || stage === null || stage.width >= FRAME_WIDTH) {
-    return { faces: 3, line: true };
-  }
-  return { faces: stage.width >= FACE_WIDTH ? 1 : 0, line: false };
-}
-
 // The 편의기능 button: a round of 48 at the right of that row, 16 from the side.
 export const LAYERS_BUTTON = { right: space[4], bottom: BUTTON_ROW.bottom, size: 48 } as const;
 
@@ -180,7 +167,7 @@ export const LAYER_STACK = {
 
 // What the controls cover of the map's edges, for `<Map inset>`: the credit for the map data and the provider's logo
 // are drawn inside what is left. The row of buttons ends 126 above the navigation, so the credit sits just above
-// "오늘의 발자국", in a strip that the friend list always leaves free (`listRows`); the 8 at the left brings it in
+// it, in a strip that the friend list always leaves free (`listRows`); the 8 at the left brings it in
 // line with the controls, 16 from the side. The zoom control takes 62 at the right, so the logo
 // sits left of it, above "활성 파티". While a card is open the row and the zoom control are not shown and the card
 // covers the bottom instead, up to its top edge: the credit sits on the card, and both lists end above it.

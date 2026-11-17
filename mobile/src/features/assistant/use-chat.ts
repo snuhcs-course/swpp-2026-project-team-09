@@ -7,6 +7,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -31,6 +32,7 @@ import { ApiError } from '@/api/errors';
 import type { ShownChatCard } from '@/api/quest-parts-types';
 import type { LibraryDone } from '@/library/cards/done';
 import { useAskApp } from './app-turn';
+import { useLetGo, useWaiting } from './let-go';
 
 type Tapped = NonNullable<RequestContext['tapped']>;
 
@@ -71,9 +73,9 @@ export interface ChatBubble {
 }
 
 // How a library card ended: what it says in place of its buttons. It is kept with the chat, so that a card that
-// booked, cancelled, returned or was dismissed never offers its button again when the sheet opens anew.
+// booked, cancelled, returned or was dismissed never offers its button again when it is drawn anew.
 export interface CardOutcome {
-  // `pending` from the confirm press until the library answers, so that a sheet opened anew meanwhile offers no
+  // `pending` from the confirm press until the library answers, so that a card drawn anew meanwhile offers no
   // button; the card clears it when the write fails.
   kind: 'pending' | 'booked' | 'declined' | 'cancelled' | 'returned' | 'stopped';
   words: string;
@@ -110,8 +112,11 @@ export interface Chat {
   send: (text: string, tapped?: Tapped) => void;
   // Sends the User's last message again, after a failure the Assistant may get over.
   retry: () => void;
-  // 새 대화: forgets the conversation, and a reply still on its way.
-  reset: () => void;
+  // 새 대화: forgets the conversation, and a reply still on its way. The call it gives brings the conversation back
+  // while nothing new was said.
+  reset: () => () => void;
+  // 그만: takes back the question on its way, and drops its reply when it comes.
+  stop: () => void;
   // Adds the app's own bubble, which no request sends.
   addOwn: (bubble: OwnBubble) => void;
   // Adds a turn a card's button asked of the recalculation: its words as what was asked, and its answer as the reply.
@@ -177,20 +182,17 @@ export function messagesToSend(
 
 type NewBubble = Omit<ChatBubble, 'id'>;
 
-function withTapped(context: RequestContext | undefined, bubbles: readonly ChatBubble[]): RequestContext | undefined {
+function withTapped(context: RequestContext, bubbles: readonly ChatBubble[]): RequestContext {
   const tapped = bubbles.findLast(({ role }) => role === 'user')?.tapped;
-  return context === undefined || tapped === undefined ? context : { ...context, tapped };
+  return tapped === undefined ? context : { ...context, tapped };
 }
 
-// The Assistant's bubble for the conversation: its reply, or the failure. A request without a context is sent as
-// before the answer on the map.
-async function answerTo(messages: ChatMessage[], context: RequestContext | undefined): Promise<NewBubble> {
+// The Assistant's bubble for the conversation: its reply, or the failure.
+async function answerTo(messages: ChatMessage[], context: RequestContext): Promise<NewBubble> {
   try {
-    const reply = await (context === undefined
-      ? apiClient.askAssistant(messages)
-      : apiClient.askAssistant(messages, context));
+    const reply = await apiClient.askAssistant(messages, context);
     const { text, cards, mapButtons, proposal, answer = null, lookup = null, refusal = null, offers } = reply;
-    const drawn = { answer, lookup, refusal, area: context?.viewport ?? null };
+    const drawn = { answer, lookup, refusal, area: context.viewport };
     const offered = offers === undefined || offers.length === 0 ? {} : { offers };
     return { role: 'assistant', text, cards, mapButtons, proposal, failure: null, ...drawn, ...offered };
   } catch (error) {
@@ -226,7 +228,7 @@ function useBubbles(): Bubbles {
 }
 
 // The app's own bubbles, added after what was said, and the turns of a card's button.
-function useAddOwn(add: Bubbles['add']): Pick<Chat, 'addOwn' | 'addRecalculated'> {
+function useAddOwn(add: Bubbles['add'], takeBack: () => void): Pick<Chat, 'addOwn' | 'addRecalculated'> {
   const addOwn = useCallback(
     ({ text, cards = [], done }: OwnBubble): void => {
       add({ role: 'assistant', text, cards, mapButtons: [], proposal: null, failure: null, own: true, done });
@@ -235,17 +237,18 @@ function useAddOwn(add: Bubbles['add']): Pick<Chat, 'addOwn' | 'addRecalculated'
   );
   const addRecalculated = useCallback(
     (asked: string, answer: AnswerReply): void => {
+      takeBack();
       const parts = { cards: [], mapButtons: [], proposal: null, failure: null, recalculated: true };
       add({ role: 'user', text: asked, ...parts });
       add({ role: 'assistant', text: '', ...parts, answer });
     },
-    [add],
+    [add, takeBack],
   );
   return { addOwn, addRecalculated };
 }
 
-// How the library cards ended, kept with the conversation.
-function useOutcomes(): Pick<Chat, 'outcomes' | 'finish' | 'unfinish'> & { forget: () => void } {
+// How the library cards ended, kept with the conversation by each card's place.
+function useOutcomes(): Pick<Chat, 'outcomes' | 'finish' | 'unfinish'> {
   const [outcomes, setOutcomes] = useState<ReadonlyMap<string, CardOutcome>>(new Map());
   const finish = useCallback((card: string, outcome: CardOutcome): void => {
     setOutcomes((last) => new Map(last).set(card, outcome));
@@ -257,17 +260,13 @@ function useOutcomes(): Pick<Chat, 'outcomes' | 'finish' | 'unfinish'> & { forge
       return next;
     });
   }, []);
-  const forget = useCallback((): void => {
-    setOutcomes(new Map());
-  }, []);
-  return { outcomes, finish, unfinish, forget };
+  return { outcomes, finish, unfinish };
 }
 
 // The rooms the seat cards show, kept with the conversation; `sent` holds them for a request without waiting for a
 // render.
 function useRooms(): Pick<Chat, 'rooms' | 'showRoom'> & {
   sent: { readonly current: ReadonlyMap<string, CardRoom> };
-  forget: () => void;
 } {
   const [rooms, setRooms] = useState<ReadonlyMap<string, CardRoom>>(new Map());
   const sent = useRef<ReadonlyMap<string, CardRoom>>(new Map());
@@ -287,42 +286,32 @@ function useRooms(): Pick<Chat, 'rooms' | 'showRoom'> & {
     },
     [keep],
   );
-  const forget = useCallback((): void => {
-    keep(new Map());
-  }, [keep]);
-  return { rooms, showRoom, sent, forget };
+  return { rooms, showRoom, sent };
 }
 
-// How the library cards ended and the rooms they show, forgotten together.
+// How the library cards ended and the rooms they show.
 function useCardsKept(): ReturnType<typeof useOutcomes> & ReturnType<typeof useRooms> {
-  const outcomes = useOutcomes();
-  const rooms = useRooms();
-  const { forget: forgetOutcomes } = outcomes;
-  const { forget: forgetRooms } = rooms;
-  const forget = useCallback((): void => {
-    forgetOutcomes();
-    forgetRooms();
-  }, [forgetOutcomes, forgetRooms]);
-  return { ...outcomes, ...rooms, forget };
+  return { ...useOutcomes(), ...useRooms() };
 }
 
 // The conversation with the Assistant, kept in memory by whoever holds the hook; the server keeps none of it. Each
 // message sends the conversation, and the reply is shown whole. `readContext` gives what the app knows when a request
-// is sent, 다시 시도's included; without one, or while it gives none, the request carries no context.
-export function useChat(readContext?: () => RequestContext | undefined): Chat {
+// is sent, 다시 시도's included.
+export function useChat(readContext: () => RequestContext): Chat {
   const { bubbles, said, show, add } = useBubbles();
   const context = useRef(readContext);
   context.current = readContext;
-  const [waiting, setWaiting] = useState(false);
-  // Which conversation a reply belongs to: 새 대화 starts another, and a reply to the one before is dropped.
+  const { waiting, setWaiting, waitingNow } = useWaiting();
+  // Which conversation a reply belongs to: 새 대화 and 그만 start another, and a reply to the one before is dropped.
   const conversation = useRef(0);
-  const { outcomes, finish, unfinish, rooms, showRoom, sent: roomsShown, forget } = useCardsKept();
+  const { outcomes, finish, unfinish, rooms, showRoom, sent: roomsShown } = useCardsKept();
+  const { reset, stop, takeBack } = useLetGo({ said, show }, conversation, { setWaiting, waitingNow });
 
   // Asks the Assistant to answer the conversation as it stands, the User's message last.
   const ask = useCallback((): void => {
     const asked = conversation.current;
     setWaiting(true);
-    void answerTo(messagesToSend(said.current, roomsShown.current), withTapped(context.current?.(), said.current)).then(
+    void answerTo(messagesToSend(said.current, roomsShown.current), withTapped(context.current(), said.current)).then(
       (answer) => {
         if (asked === conversation.current) {
           add(answer);
@@ -330,14 +319,16 @@ export function useChat(readContext?: () => RequestContext | undefined): Chat {
         }
       },
     );
-  }, [add, said, roomsShown]);
+  }, [add, said, roomsShown, setWaiting]);
 
+  // A message while a reply is on its way takes that question back first.
   const send = useCallback(
     (text: string, tapped?: Tapped): void => {
+      takeBack();
       add({ role: 'user', text, cards: [], mapButtons: [], proposal: null, failure: null, tapped });
       ask();
     },
-    [add, ask],
+    [add, ask, takeBack],
   );
 
   const retry = useCallback((): void => {
@@ -348,14 +339,8 @@ export function useChat(readContext?: () => RequestContext | undefined): Chat {
     ask();
   }, [ask, said, show]);
 
-  const reset = useCallback((): void => {
-    conversation.current += 1;
-    show([]);
-    forget();
-    setWaiting(false);
-  }, [forget, show]);
-  const own = useAddOwn(add);
-  const askApp = useAskApp({ said, show, add }, conversation, setWaiting);
+  const own = useAddOwn(add, takeBack);
+  const askApp = useAskApp({ said, show, add }, conversation, setWaiting, takeBack);
 
-  return { bubbles, waiting, send, retry, reset, ...own, askApp, outcomes, finish, unfinish, rooms, showRoom };
+  return { bubbles, waiting, send, retry, reset, stop, ...own, askApp, outcomes, finish, unfinish, rooms, showRoom };
 }

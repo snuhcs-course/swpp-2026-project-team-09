@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Plan } from '@/api/assistant-types';
@@ -46,6 +47,7 @@ export const MEAL_PLAN_3: Plan = {
       },
       leaveAt: '2026-11-17T12:18:00+09:00',
       walkMinutes: 15,
+      arriveAt: '2026-11-17T12:33:00+09:00',
       leaveBy: '2026-11-17T12:59:00+09:00',
       next: {
         startAt: '2026-11-17T13:00:00+09:00',
@@ -72,6 +74,7 @@ export const MEAL_PLAN_3: Plan = {
       },
       leaveAt: '2026-11-17T12:15:00+09:00',
       walkMinutes: 18,
+      arriveAt: '2026-11-17T12:33:00+09:00',
       leaveBy: null,
       next: null,
     },
@@ -88,10 +91,23 @@ export const MEAL_PLAN_3: Plan = {
       title: '학생회관식당에서 식사',
     },
   ],
-  lines: [[{ text: '12:33 학생회관식당', strong: true }], [{ text: '같이 먹으면 식사가 29분 줄어요', strong: false }]],
+  lines: [
+    [
+      { text: '점심 ', strong: false },
+      { text: '12:33 학생회관식당', strong: true },
+    ],
+    [
+      { text: '오늘 ', strong: false },
+      { text: '눈꽃치즈닭갈비', strong: true },
+      { text: ' 외 2 · 14:30까지', strong: false },
+    ],
+    [{ text: '같이 먹으면 식사가 29분 줄어요', strong: false }],
+  ],
   basis: [
     '민수 12:15 302동 수업 끝 · 301동까지 걸어서 3분, 같이 15분',
     '학생회관식당 → 24동 걸어서 1분, 그래서 12:59에 나서요',
+    '눈꽃치즈닭갈비 6,000원 · 단호박영양밥&양념장(#) 3,000원 · 수제탕수육 6,000원',
+    '메뉴와 닫는 시각: 오늘의 식단',
   ],
   scene: {
     people: [
@@ -220,14 +236,14 @@ export const MEAL_PLAN_3: Plan = {
         userId: '11ca538e-e4ef-48d9-9a1f-b7160c553bee',
         name: '나',
         busy: [
-          { startAt: '2026-11-17T11:30:00+09:00', endAt: '2026-11-17T11:50:00+09:00' },
-          { startAt: '2026-11-17T13:00:00+09:00', endAt: '2026-11-17T13:30:00+09:00' },
+          { startAt: '2026-11-17T11:30:00+09:00', endAt: '2026-11-17T11:50:00+09:00', label: '301동 수업' },
+          { startAt: '2026-11-17T13:00:00+09:00', endAt: '2026-11-17T13:30:00+09:00', label: '24동 수업' },
         ],
       },
       {
         userId: '35976b5c-4daf-454f-b10e-c8b09a33ca37',
         name: '민수',
-        busy: [{ startAt: '2026-11-17T11:30:00+09:00', endAt: '2026-11-17T12:15:00+09:00' }],
+        busy: [{ startAt: '2026-11-17T11:30:00+09:00', endAt: '2026-11-17T12:15:00+09:00', label: '302동 수업' }],
       },
     ],
     startAt: '2026-11-17T12:33:00+09:00',

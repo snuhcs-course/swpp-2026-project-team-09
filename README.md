@@ -93,10 +93,11 @@ P11's walking and shuttle times and P12's changes to the searches and the recrui
   the User's parties, the Places' outlines, the to-do list (퀘스트) of today's classes and parties, a card for whatever
   is pressed, one marker for everything at one place (events, parties, restaurants and shuttle stops) whose card lists
   each kind, and a walking route on request.
-- **Location Sharing**: the Master Switch (친구와 위치 공유) on 내 정보, off until the User turns it on; a switch for
-  each Friend and each active party; the position sent every 5 seconds while the app is open and, on Android, every 30
-  seconds in the background under a notification; Avatars dimmed after 2 minutes without a position and removed after
-  10; nobody shown outside the Campus Boundary, and no history kept.
+- **Location Sharing**: the Master Switch (위치 공유) on 내 정보, off until the User turns it on; a level for
+  each Friend and a switch for each active party, shown off and disabled while the Master Switch is off; the position
+  sent every 5 seconds while the app is open and, on Android, every 30 seconds in the background under a
+  notification; Avatars dimmed after 2 minutes without a position and removed after 10; nobody shown outside the
+  Campus Boundary, and no history kept.
 - **Friends**: Friend Requests by Friend ID, one-time Invite Links sent through any messenger, a sharing switch per
   Friend, and ending a friendship.
 - **Parties (파티)**: a party for a Global Event or a plan of the User's own, with a capacity of 1 to 8 and a Join
@@ -109,9 +110,11 @@ P11's walking and shuttle times and P12's changes to the searches and the recrui
   each other on the map, Friends or not, until they pause, leave or the Leader ends it. A User is in at most one.
 - **Navigation**: on Android, a swipe from the screen's left edge goes back, as the back button does, and closes an
   open panel or sheet; inputs rise above the keyboard everywhere.
-- **SNU Now AI**: a chat sheet from the map's input bar that answers about today's menus and the shuttle, finds Global
-  Events and recruiting parties, and turns one sentence into a Proposal that the User makes or edits. 50 messages per
-  User a day; the conversation stays on the phone. Its replies render bold, lists and links. Added in Iteration 3:
+- **SNU Now AI**: one screen, the answer frame over the map: what the User asks from the map's input bar stands as a
+  pill at the top, and the answer as a card at the bottom and on the map. It answers about today's menus and the
+  shuttle, finds Global Events and recruiting parties, and turns one sentence into a Proposal that the User makes or
+  edits. 50 messages per User a day; the conversation stays on the phone. Its replies render bold, lists and links.
+  Added in Iteration 3:
   - searches take a time window and leave out full parties, parties already started and those the User cannot enter;
     on `3.0/Main`, not released yet, each result says which words it matched, and a search with too many results
     says how to narrow it;
@@ -182,7 +185,7 @@ Each flow is what Users do with the app on campus. Each says what it needs; the 
 To run the flows on your own servers: [Setup](#setup), [Running the servers](#running-the-servers) (collect the
 Global Events by hand with `docker compose exec worker-server node dist/collect snu_events`, which publishes those the
 rules read), [Running the admin site](#running-the-admin-site) only to see each event's Publication Route, and
-[Running the app](#running-the-app) on a phone on campus. The Assistant's flows need an OpenRouter key.
+[Running the app](#running-the-app) on a phone on campus. The Assistant's flows need an OpenRouter or Anthropic key.
 
 ### Iteration 2, as history
 
@@ -208,7 +211,8 @@ Every AI feature of Iteration 3 has an evaluation set frozen before its first ru
 it was measured, improved from its failures and measured again; 관정도서관 and the tutorial were measured only before
 their tools existed and once they were built. A **development** reading scores the set the changes
 were chosen from; a **held-out** reading scores cases no change was made from. All model runs used Claude Haiku 5.5
-through OpenRouter with the provider's default decoding. Each row's record holds the commits, commands, costs and every
+through OpenRouter with the provider's default decoding; Iteration 4's baseline on the Anthropic path, a different
+condition, is in [main-server/eval/a02-baseline.md](main-server/eval/a02-baseline.md). Each row's record holds the commits, commands, costs and every
 failure. The P11 and P12 figures measure code merged after Release `snunow/all/26.11.04-1`: it is on `3.0/Main`, not
 yet in Production.
 
@@ -281,8 +285,9 @@ What the demo cannot show, and what is known not to work yet:
 - **The walking route has a quota** of 1,000 routes a day for the team's Kakao app. A route is asked when the User
   asks for one and, while a party room is open, for each sharing member who has moved, at most once a minute each,
   looked at every 15 seconds.
-- **Sample data in a build.** Friends' statuses (such as 공강), who announced a Global Event and "오늘의 발자국" are the
-  app's own sample data even against the servers: no server serves them yet.
+- **Sample data in a build.** Who announced a Global Event is the app's own sample data even against the servers: no
+  server serves it yet. Against the servers a Friend has no status ("공강", "수업 중", "이동 중"): their line shows the
+  Place nearest them ("위치 켜짐" while it is not known), or "위치 꺼짐".
 - **Kept on the phone only.** The party form's 사진 and 태그 and the room's 파티 채팅 are kept on the phone that made
   them: the main server stores none of them yet, so other members do not see them. Timetable versions other than the
   current one belong to one phone, and while a switch runs the server's timetable is empty or partial for a few
@@ -290,8 +295,8 @@ What the demo cannot show, and what is known not to work yet:
 - **SNU Now AI.** Its answers depend on the model and vary between runs of the same question; several suites still
   miss thresholds ([Evaluation](#evaluation)). They are measured only when a developer runs them, by hand. Replies
   are not streamed, a conversation is lost when the app restarts, and the Assistant cannot manage an existing party or
-  activate one. Messages go to the model provider through OpenRouter, which the empty chat says; the move to the
-  Anthropic API (A01) is in review. A meeting place and time proposed for an existing party is not built; for a meal,
+  activate one. Messages go to the model provider, which the empty chat says: through OpenRouter or the Anthropic
+  API, as the key an Administrator chose on the admin site says. A meeting place and time proposed for an existing party is not built; for a meal,
   공강에 밥 proposes a Restaurant and a time.
 - **Walking and shuttle times are estimates** ([Evaluation](#evaluation)). The figures there are for `3.0/Main` and
   not released yet: Production still uses the earlier walking table, within min(25%, 2 min) on 3 of 30 test walks
@@ -349,7 +354,8 @@ What the project was built and run with:
 - The team's Kakao keys (REST API, JavaScript and native app keys), which the Owner of the team's Kakao app shares
   privately: ask the team. To only try the app, use the [Quick start](#quick-start) instead.
 - An SNU Google account to sign in to the app.
-- For SNU Now AI only: an OpenRouter API key with a credit limit. Without it every other feature runs.
+- For SNU Now AI only: an OpenRouter API key with a credit limit, or an Anthropic API key from the Claude Console on an
+  account with a monthly spend limit. Without one every other feature runs.
 - For 관정도서관 booking only: an SNU account that can log in to the library's booking site, on the phone.
 - For the device runs only: Maestro 2.11.0 ([mobile/README.md](mobile/README.md), "Device runs").
 - About 30 GB of free disk space. On one Mac the Android build's Gradle cache took about 10 GB, Docker's images and
@@ -447,6 +453,8 @@ file's.
 | `MATCH_SERVER_TOKEN`               | The secret the main and match servers send each other; generated in [Setup](#setup).                                                     |
 | `DEMO_ACCOUNT_EMAILS`              | Read by the demo profile only: real SNU addresses that get demo Friends, requests, an invitation.                                        |
 | `OPENROUTER_API_KEY`               | The OpenRouter key SNU Now AI calls its model with, the key `llm.key` names `default`. Empty, the Assistant answers it is unavailable.   |
+| `LLM_KEYS`                         | Optional: the AI's other keys by name, a JSON object such as `{"anthropic":"sk-ant-…"}`; `{}` unless set. `llm.key` chooses among them.  |
+| `MODEL_CACHE`                      | Optional: what an Anthropic key's requests cache, `breakpoints`, `auto` or `off`; `breakpoints` unless set.                              |
 | `ASSISTANT_DAILY_MESSAGES`         | Optional: the messages a User may send in a day in Korea; 50 unless set.                                                                 |
 | `ASSISTANT_MAX_STEPS`              | Optional: the model calls per message; 8 unless set.                                                                                     |
 | `ASSISTANT_TIMEOUT_MS`             | Optional: the milliseconds over all of a message's model calls; 30000 unless set.                                                        |
@@ -722,7 +730,8 @@ Not run by `pnpm test` or CI:
 - **Device runs**: `pnpm build:mock-apk`, then `pnpm test:device` in `mobile/`, run the M1 and M2 flows with Maestro on
   an Android emulator against the app's own mock data ([mobile/README.md](mobile/README.md), "Device runs"). M2 on a
   cold start still fails (see [Known limitations and todos](#known-limitations-and-todos)).
-- **The evaluations** ([Evaluation](#evaluation)) call the real model and spend OpenRouter credit, so they run by hand
+- **The evaluations** ([Evaluation](#evaluation)) call the real model and spend OpenRouter credit, or Anthropic's with
+  `--provider anthropic`, so they run by hand
   only, in `main-server/`. `pnpm eval` runs the Assistant's 62 P19 cases, and
   `pnpm eval --world <p4|p5|large-world-v1|p6>` one Iteration 3 suite; `pnpm eval:holdout` runs the P4 holdout;
   `pnpm eval:collection --run <name> --part held-out` runs evaluations A and B on saved posts, and B's runs (`r0b`,
@@ -803,7 +812,8 @@ The team decided what to build, reviewed the specs and the table schemas, and ch
 also made the product decisions, such as the words party, active party and Quest, where API keys go and how much the
 Assistant's benchmark may spend. Where something was wrong, the agent rewrote it; no code was edited by hand.
 
-AI also runs inside the product: SNU Now AI calls a model through OpenRouter (Claude Haiku 5.5 in `.env.example`),
+AI also runs inside the product: SNU Now AI calls Claude Haiku 5.5 through OpenRouter or the Anthropic API, with the
+key an Administrator chooses on the admin site's Settings page ([ADR 0013](docs/adr/0013-the-ai-calls-claude-through-the-anthropic-api-or-openrouter.md)),
 and so would Judgements and the same-event choice, which are off in Production. The timetable is read on the phone
 with Google ML Kit's text recognizer.
 
@@ -836,6 +846,7 @@ tell how the work went, with the prompts in each iteration's Prompt Log.
 | The shuttle operator's route page and vehicle positions, `web.busin.co.kr` (route 41946)                              | The shuttle's stops, service hours and vehicles                            | Collected from public pages                     |
 | Pretendard                                                                                                            | The app's font                                                             | SIL Open Font License 1.1                       |
 | OpenRouter and the model it routes to                                                                                 | SNU Now AI's answers; conversations are not stored, locations never sent   | OpenRouter's terms                              |
+| Anthropic, the Claude API, when an Anthropic key is chosen                                                            | SNU Now AI's answers; conversations are not stored, locations never sent   | Anthropic's Commercial Terms                    |
 | 관정도서관's booking site, `k-rsv.snu.ac.kr`, called from the phone with the User's own session                       | Free seats, seat maps and the User's bookings; nothing reaches our servers | The library's terms                             |
 | SNU's public pages for students, read by hand                                                                         | The tutorial's quests, the study spaces and the facility booking links     | Facts checked by hand, with their sources       |
 | The shuttle's vehicle positions, logged on the Dev Server on 2026-11-02 and 11-03                                     | The shuttle's ride times                                                   | Collected from public pages                     |

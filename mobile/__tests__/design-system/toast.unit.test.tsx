@@ -4,10 +4,10 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
- * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { hideKeyboard, KEYBOARD, showKeyboard } from '../support/keyboard';
@@ -152,81 +152,6 @@ describe('Toast, one at a time', () => {
   });
 });
 
-function LinkButton({ onLink }: { onLink: () => void }): ReactElement {
-  const showToast = useToast();
-  return (
-    <Button
-      onPress={() => {
-        showToast('참여를 신청했어요', undefined, undefined, { label: '보낸 신청 보기', onPress: onLink });
-      }}
-    >
-      신청
-    </Button>
-  );
-}
-
-describe('a toast with a link', () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('shows the link beside its words, and a press follows it and closes the toast', async () => {
-    const onLink = jest.fn<undefined, []>();
-    await render(
-      <ToastProvider>
-        <LinkButton onLink={onLink} />
-      </ToastProvider>,
-    );
-
-    await fireEvent.press(screen.getByRole('button', { name: '신청' }));
-    expect(screen.getByText('참여를 신청했어요')).toBeVisible();
-    await fireEvent.press(screen.getByRole('button', { name: '보낸 신청 보기' }));
-
-    expect(onLink).toHaveBeenCalledTimes(1);
-    expect(screen.queryByText('참여를 신청했어요')).toBeNull();
-  });
-});
-
-describe("a toast with a link's time", () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('stays 4 seconds, long enough to reach the link', async () => {
-    await render(
-      <ToastProvider>
-        <LinkButton onLink={jest.fn<undefined, []>()} />
-      </ToastProvider>,
-    );
-
-    await fireEvent.press(screen.getByRole('button', { name: '신청' }));
-    await act(() => {
-      jest.advanceTimersByTime(3999);
-    });
-    expect(screen.getByRole('button', { name: '보낸 신청 보기' })).toBeVisible();
-    await act(() => {
-      jest.advanceTimersByTime(1);
-    });
-    expect(screen.queryByRole('button', { name: '보낸 신청 보기' })).toBeNull();
-  });
-
-  it('has no link unless the caller gives one', async () => {
-    await renderButtons();
-
-    await fireEvent.press(screen.getByRole('button', { name: '추가' }));
-
-    expect(within(screen.getByTestId('toast-layer')).queryByRole('button')).toBeNull();
-  });
-});
-
 function ScreenWithNavigation(): ReactElement {
   useToastAbove(65);
   return <Buttons />;
@@ -300,5 +225,43 @@ describe("Toast's place among screens that stay mounted", () => {
 
     await screen.rerender(tabs('map'));
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 134 + 24 });
+  });
+});
+
+function Forgetting({ onUndo }: { onUndo: () => void }): ReactElement {
+  const showToast = useToast();
+  return (
+    <Button
+      onPress={() => {
+        showToast('대화를 지웠어요', 5000, 'check', { label: '되돌리기', onPress: onUndo });
+      }}
+    >
+      새 대화
+    </Button>
+  );
+}
+
+describe("Toast's action", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('acts once when its word is pressed, and the toast goes', async () => {
+    const onUndo = jest.fn<void, []>();
+    await render(
+      <ToastProvider>
+        <Forgetting onUndo={onUndo} />
+      </ToastProvider>,
+    );
+
+    await fireEvent.press(screen.getByRole('button', { name: '새 대화' }));
+    await fireEvent.press(screen.getByRole('button', { name: '되돌리기' }));
+
+    expect(onUndo).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('대화를 지웠어요')).toBeNull();
   });
 });

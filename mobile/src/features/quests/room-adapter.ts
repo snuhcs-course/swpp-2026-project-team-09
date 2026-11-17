@@ -4,11 +4,13 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ShownQuest } from '@/api/quest-parts-types';
 import type { LatLng, MyParty, Party, SubQuest } from '@/api/types';
 import { koreaClock } from '@/korea-time';
+import { heldAlone } from './adapter';
 import { editsSubQuests } from './rules';
 
 // What a Quest's room shows: the frame's `PartyDetail`. The room is the Quest's; its 활성화 is the domain Party opened
@@ -113,14 +115,19 @@ function activationOf({ quest, myParty, parties, declined, meId }: RoomSources):
     : { state: 'waiting', partyId: id, title, leader: running.leader?.name ?? null };
 }
 
+// A Quest taken alone is a 퀘스트: no 파티 badges and no 비공개, since nobody joins it.
 function badgesOf(quest: ShownQuest, leads: boolean): BadgeView[] {
+  const event = quest.globalEvent === null ? [] : [{ label: quest.globalEvent.title, tone: 'official' } as const];
+  if (heldAlone(quest)) {
+    return [{ label: '퀘스트', tone: 'party' }, ...event];
+  }
   const closed = quest.joinPolicy === 'closed';
   const holders = quest.holders.length;
   return [
     { label: closed ? `파티 · ${holders}명` : `파티 · ${holders}/${quest.capacity}명`, tone: 'party' },
     ...(leads ? [{ label: '내가 만든 파티', tone: 'warning' } as const] : []),
     ...(closed ? [{ label: '비공개', tone: 'neutral', icon: 'lock' } as const] : []),
-    ...(quest.globalEvent === null ? [] : [{ label: quest.globalEvent.title, tone: 'official' } as const]),
+    ...event,
   ];
 }
 

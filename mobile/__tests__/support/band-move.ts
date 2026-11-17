@@ -10,8 +10,7 @@ import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { pass, screen } from './app';
 
-// The time band moved whole by a drag on its lanes, its body among them (P02 ticket 25), against the fake main server
-// with the switch on.
+// The time band moved whole by a drag on its lanes, its body among them (P02 ticket 25), against the fake main server.
 
 const LANES = 'time-band-lanes';
 

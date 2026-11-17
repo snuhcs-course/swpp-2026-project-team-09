@@ -6,6 +6,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -120,6 +121,9 @@ describe("a move of the main screen's camera that changes nothing", () => {
   });
 });
 
+// The navigation, shown here, covers this much of the map's bottom: its 64 and 16 for a phone without a bar of its own.
+const NAV = 80;
+
 describe("a fit of the main screen's camera", () => {
   const PADDING = { top: 10, right: 20, bottom: 30, left: 40 };
 
@@ -131,7 +135,10 @@ describe("a fit of the main screen's camera", () => {
 
     await ready();
     expect(fits).toEqual([
-      { points: [CENTRE, LIBRARY], options: { padding: PADDING, maxZoom: FIT + ZOOM_OFFSET.pins, animated: true } },
+      {
+        points: [CENTRE, LIBRARY],
+        options: { padding: { ...PADDING, bottom: 30 + NAV }, maxZoom: FIT + ZOOM_OFFSET.pins, animated: true },
+      },
     ]);
   });
 
@@ -162,7 +169,7 @@ describe("a fit of the main screen's camera for an answer", () => {
       {
         points: [CENTRE, LIBRARY],
         options: {
-          padding: { top: 156, right: 64, bottom: 56, left: 64 },
+          padding: { top: 156, right: 64, bottom: 56 + NAV, left: 64 },
           maxZoom: FIT + ZOOM_OFFSET.close,
           animated: true,
         },

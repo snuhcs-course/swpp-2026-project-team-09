@@ -24,8 +24,10 @@
 // 2026-11-14  Opus 5.5   prompted by TaeHyun79
 // 2026-11-14  Opus 5.5   prompted by fyoon46
 // 2026-11-15  Opus 5.5   prompted by fyoon46
+// 2026-11-15  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 // 2026-11-16  Opus 5.5   prompted by fyoon46
+// 2026-11-16  Opus 5.5   prompted by Jaehyun0320
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -77,6 +79,7 @@ model User {
   questJoinRequests QuestJoinRequest[]
   questInvitations  QuestInvitation[]
   questDeclines     QuestDecline[]
+  questRemovals     QuestRemoval[]
   meetupsProposed   Meetup[]           @relation("MeetupProposer")
   meetupsReceived   Meetup[]           @relation("MeetupReceiver")
   partyMember       PartyMember?
@@ -90,6 +93,7 @@ model User {
   roomConsents      RoomConsent[]
   roomNotices       RoomNotice[]
   notifications     Notification[]
+  favoriteEvents    GlobalEventFavorite[]
   watchedInterests  WatchedInterest[]
   privateZones      PrivateZone[]
 
@@ -356,10 +360,13 @@ model GlobalEvent {
   // update keep working; a later migration drops them.
   retiredPostNumber  Int?                @unique @map("post_number")
   retiredSourceUrl   String?             @map("source_url")
+  // When it was published, which tells a New Event. Empty for an event published before it was recorded.
+  publishedAt        DateTime?           @map("published_at")
   // None for an event an Administrator created.
   sessions           SourcePostSession[]
   quests             Quest[]
   questHolders       QuestHolder[]
+  favorites          GlobalEventFavorite[]
   // The topic words the model read in its title and description, normalised (README.md: Interests).
   topics             String[]            @default([])
   // When the topics were last asked for, and how many times.
@@ -367,6 +374,19 @@ model GlobalEvent {
   topicsTries        Int                 @default(0) @map("topics_tries")
 
   @@map("global_events")
+}
+
+// A Global Event a User starred, which stays on their map until it ends. Deleted with the User or the event.
+model GlobalEventFavorite {
+  userId        String      @map("user_id") @db.Uuid
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  globalEventId String      @map("global_event_id") @db.Uuid
+  globalEvent   GlobalEvent @relation(fields: [globalEventId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  @@id([userId, globalEventId])
+  @@index([globalEventId])
+  @@map("global_event_favorites")
 }
 
 enum GlobalEventState {
@@ -562,6 +582,12 @@ model Quest {
   board         QuestBoard?
   // The recruiting post, up to 200 characters, which the migration checks.
   description   String             @default("")
+  // A Quest taken alone, made from a Plan for one person or from a booked seat: it gathers nobody, so it is never a
+  // 파티 and is in no list or count of parties (README.md: Quests).
+  takenAlone    Boolean            @default(false) @map("taken_alone")
+  // A seat's stay at 관정관, taken alone: the User still eats, meets and goes out from a seat, so its Sub Quest is no
+  // busy time for any planner (README.md: A seat's stay).
+  seatStay      Boolean            @default(false) @map("seat_stay")
   // The match server's match this Quest was created for, so that a repeated request finds it (README.md: Matching).
   matchId       String?            @unique @map("match_id") @db.Uuid
   createdAt     DateTime           @default(now()) @map("created_at")
@@ -570,6 +596,7 @@ model Quest {
   joinRequests  QuestJoinRequest[]
   invitations   QuestInvitation[]
   declines      QuestDecline[]
+  removals      QuestRemoval[]
   party         Party?
   // As a Global Event's (README.md: Interests).
   topics        String[]           @default([])
@@ -707,6 +734,22 @@ model QuestDecline {
   @@unique([questId, userId])
   @@index([userId])
   @@map("quest_declines")
+}
+
+// A User the Leader removed from a Quest, who comes back only by the Leader's approval: joining refuses, and asking to
+// join is taken even by an Open Quest. It goes when the User enters the Quest again, and with the Quest or the User.
+// Leaving writes none.
+model QuestRemoval {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questId   String   @map("quest_id") @db.Uuid
+  quest     Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([questId, userId])
+  @@index([userId])
+  @@map("quest_removals")
 }
 
 // A group of Users who are together now (README.md: Party). It ends, and its row is deleted, when its last member

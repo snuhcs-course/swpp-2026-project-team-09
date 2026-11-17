@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -11,7 +12,7 @@ import { color, font, space } from './tokens';
 interface SwitchProps {
   value: boolean;
   onValueChange: (value: boolean) => void;
-  // What a screen reader says, such as "친구와 위치 공유".
+  // What a screen reader says, such as "위치 공유".
   label: string;
   disabled?: boolean;
 }
@@ -21,6 +22,8 @@ export function Switch({ value, onValueChange, label, disabled = false }: Switch
   return (
     <NativeSwitch
       accessibilityLabel={label}
+      // React Native's switch does not tell a screen reader that it is disabled.
+      accessibilityState={{ disabled }}
       disabled={disabled}
       ios_backgroundColor={color.borderStrong}
       onValueChange={onValueChange}

@@ -9,14 +9,14 @@ PR assignee: Jaehyun0320
 
 ## What to build
 
-An event published in the last 24 hours shows on the map with an exclamation mark until the User checks it. Checking is closing that event's card on the map (a single pin's card, or its row opened from a grouped pin's list) or starring it anywhere. Seeing it in the 행사 tab or in chat does not check it. A checked event leaves the map when its card closes, never while it is open, unless it is a Favorite Event or held today. Opening a grouped pin's card checks nothing; a checked event drops out of its group, the count goes down, and a group left with one event becomes that event's own pin. Pins that overlap at the current zoom merge, as study pins do, for every event pin. A grouped or merged pin shows one look, exclamation mark first, then star, then plain. Events an Administrator published, from a Draft or from the Same-event queue, count the same as collected ones.
+An event published in the last 24 hours shows on the map with an exclamation mark until the User checks it. Checking is closing that event's card on the map (a single pin's card, or its row opened from a grouped pin's list) or starring it anywhere. Seeing it in the 행사 tab or in chat does not check it. A checked event leaves the map when its card closes, never while it is open, unless it is a Favorite Event. Opening a grouped pin's card checks nothing; a checked event drops out of its group, the count goes down, and a group left with one event becomes that event's own pin. Pins that overlap at the current zoom merge, as study pins do, for every event pin. A grouped or merged pin shows one look, exclamation mark first, then star, then plain. Events an Administrator published, from a Draft or from the Same-event queue, count the same as collected ones.
 
 ## Acceptance criteria
 
 - [ ] Every write that sets `state = published` records `publishedAt`. There are four: the rules that read a post and a Judgement (both when a session settles), an Administrator's publish of a Draft, and an Administrator's publish from the Same-event queue (same `administrator` route, easy to miss); events published before stay null and are never New Events; editing an event's time keeps it.
-- [ ] The pin function from 01 adds the `new` look: `publishedAt` within 24 hours and not checked. The order is `new`, `favorite`, `plain`.
+- [ ] The pin function from 01 adds the `new` look: `publishedAt` within 24 hours and not checked. The order is `new`, then `favorite`.
 - [ ] Checked ids are kept on the phone per User; starring adds the id; an id is dropped once its event is more than 24 hours past `publishedAt`.
-- [ ] A checked event leaves the map on card close, not before; a Favorite Event or today's event stays (as a star or plain pin).
+- [ ] A checked event leaves the map on card close, not before; a Favorite Event stays (as a star pin).
 - [ ] Grouping and the zoom merge show the strongest look and the total count.
 - [ ] The exclamation look is a JS marker look; no native file changes.
 - [ ] Tests (ADR 0007): main-server integration that each of the four writes sets `publishedAt` (the Same-event queue's publish included) and an edit keeps it; unit tests of the pin function at the 24-hour edge, checked and unchecked, and the look order, and of the merge; an app integration test that closing a New Event's card removes its pin and a starred one stays.
@@ -25,3 +25,18 @@ An event published in the last 24 hours shows on the map with an exclamation mar
 - [ ] The "Events on the map" row of `he-revision-log.md` gets this pull request and its state.
 
 ## Comments
+
+### Changed in review (2026-11-16)
+
+The New Event rule is dropped: "!" on every event published in the last 24 hours until checked, the checked ids on the phone, and checking on a card's close or on starring. The agentic map's design gives "!" only to a newly posted match of a watched interest (#296, #306), and one mark cannot mean both. What stays: recording `publishedAt` on the four publishing writes, and the merge of events' pins that overlap at the campus zoom, which now shows the star of a Favorite Event among them and an interest mark's "!" first. `GLOSSARY.md` gains **Favorite Event** only.
+
+### Agent usage (2026-11-15)
+
+- Agent time: about 45 minutes in one session (15:58 to 16:40 KST), an estimate from the session's transcript; the one wait for a person, a short question, is included. About 11 minutes of it went to one jest run that, by a wrong flag order (`--selectProjects` takes every name after it), ran every app unit test instead of four files; later runs named the files first.
+- Tokens, summed from the session's transcript (`~/.claude/projects/…/<session>.jsonl`) and its two review subagents (Standards and Spec):
+
+  | | Input | Cache reads | Cache writes | Output |
+  |---|---|---|---|---|
+  | Main session | 360 | 35,397,932 | 299,146 | 111,418 |
+  | Subagents | 52 | 1,435,062 | 171,218 | 13,454 |
+  | Total | 412 | 36,832,994 | 470,364 | 124,872 |

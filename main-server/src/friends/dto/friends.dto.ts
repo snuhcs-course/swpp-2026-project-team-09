@@ -5,6 +5,7 @@
  * 2026-10-04  Fable 5.1  prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -14,7 +15,11 @@ import { type Friendship, FriendLevel, User } from '../../generated/prisma/clien
 // Read in capitals, so that a Friend ID typed in small letters is found too. Any other text is a Friend ID nobody holds.
 export const friendIdSchema = z.string().trim().toUpperCase().min(1);
 
-export const sendFriendRequestSchema = z.object({ friendId: friendIdSchema });
+// The receiver by Friend ID, or by user id between two Holders of the same Quest.
+export const sendFriendRequestSchema = z.union([
+  z.strictObject({ friendId: friendIdSchema }),
+  z.strictObject({ userId: z.uuid() }),
+]);
 
 export type SendFriendRequestDto = z.infer<typeof sendFriendRequestSchema>;
 
@@ -32,9 +37,14 @@ export interface SentFriendRequestDto {
   status: 'waiting' | 'friends';
 }
 
+// The other User of each request with their user id, so that a 파티's member rows can tell who was asked.
 export interface FriendRequestsDto {
-  received: { id: string; sender: UserSummaryDto; sentAt: string }[];
-  sent: { id: string; receiver: UserSummaryDto; sentAt: string }[];
+  received: { id: string; sender: RequestUserDto; sentAt: string }[];
+  sent: { id: string; receiver: RequestUserDto; sentAt: string }[];
+}
+
+export interface RequestUserDto extends UserSummaryDto {
+  id: string;
 }
 
 // The User's own end of a friendship: what the User lets the Friend see, and when the app asked the User about them.

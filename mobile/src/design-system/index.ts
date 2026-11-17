@@ -10,6 +10,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
@@ -55,7 +56,8 @@ export { Switch, SwitchRow } from './switch';
 export { EmptyState, ErrorState, LoadingState } from './states';
 export { TextField } from './text-field';
 export { useSlide } from './use-slide';
-export { type ToastLink, ToastProvider, useNotReadyToast, useToast, useToastAbove } from './toast';
+export { WaitingDots } from './waiting-dots';
+export { type ToastAction, ToastProvider, useNotReadyToast, useToast, useToastAbove } from './toast';
 export {
   classColors,
   color,

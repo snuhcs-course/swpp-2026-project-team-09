@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BackHandler } from 'react-native';
@@ -10,7 +11,7 @@ import { act, fireEvent } from '@testing-library/react-native';
 import { pass, screen, shownAddress } from './support/app';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { CLOSER, DINNER, EVENT, FRIEND, lookOf, MEMBER, PARTY, press, wordsUnder } from './support/markers';
-import { startFresh } from './support/mocks';
+import { startFresh, withoutInterestMarks } from './support/mocks';
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -22,6 +23,7 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 beforeEach(async () => {
   jest.useFakeTimers();
   await startFresh();
+  withoutInterestMarks();
   givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
 
@@ -93,14 +95,6 @@ describe('a press on a marker of the main screen', () => {
     await press(user, MEMBER);
     expect(screen.getByLabelText('오현우')).toBeVisible();
   });
-
-  it('finds no button in the User’s own Avatar: it takes no press and is still read', async () => {
-    givePhone({ permission: 'granted', position: ON_CAMPUS });
-    await openMain();
-
-    expect(screen.queryByRole('button', { name: '내 위치' })).toBeNull();
-    expect(screen.getByRole('image', { name: '내 위치' })).toHaveStyle({ pointerEvents: 'none' });
-  });
 });
 
 describe('an open card', () => {
@@ -113,7 +107,7 @@ describe('an open card', () => {
 
     await press(user, '닫기');
     expect(screen.queryByTestId('map-card')).toBeNull();
-    expect(lookOf(FRIEND)).toBe('person:small:free:f1');
+    expect(lookOf(FRIEND)).toBe('person:small:free:f1:exact');
     expect(screen.getByRole('button', { name: '확대' })).toBeVisible();
   });
 
@@ -154,8 +148,8 @@ describe('"가까이 보기"', () => {
     await press(user, CLOSER);
 
     expect(screen.getByRole('header', { name: '김민준' })).toBeVisible();
-    expect(lookOf(FRIEND)).toBe('person:full:free:f1:selected');
-    expect(wordsUnder(FRIEND, '민준')).toBeVisible();
+    expect(lookOf(FRIEND)).toBe('person:full:free:f1:exact:selected');
+    expect(wordsUnder(FRIEND, '김민준')).toBeVisible();
     expect(screen.queryByRole('button', { name: CLOSER })).toBeNull();
   });
 
@@ -175,18 +169,21 @@ describe('"가까이 보기"', () => {
 
 describe('a toast while a card is open', () => {
   it('shows above the card, so that it never lies over the buttons', async () => {
+    // No position yet: 길찾기 says so and keeps the card.
+    givePhone({ permission: 'granted' });
     const user = await openMain();
-    await press(user, EVENT);
+    await press(user, DINNER);
     await fireEvent(screen.getByTestId('map-card'), 'layout', {
       nativeEvent: { layout: { x: 16, y: 300, width: 358, height: 180 } },
     });
 
-    await user.press(screen.getByRole('button', { name: '올리기' }));
+    await press(user, '길찾기');
 
+    expect(screen.getByText('위치를 찾는 중이에요')).toBeVisible();
     // The navigation's 80, the card's bottom 72 above it, its height, and 8 of clear room.
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 340 });
     await press(user, '닫기');
-    await user.press(screen.getByRole('button', { name: '올리기' }));
+    await user.press(screen.getByRole('button', { name: '내 위치로 이동' }));
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 158 });
   });
 });

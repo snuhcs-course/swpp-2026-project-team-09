@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen } from '@testing-library/react-native';
@@ -12,15 +14,19 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
 import { card } from './support/answer-map';
-import { buildingCard, pressBuilding, STUDENT_HALL } from './support/building';
+import { recalculations } from './support/answer-correct';
+import { buildingCard, CULTURE_HALL, pressBuilding, STUDENT_HALL } from './support/building';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT, SEND } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
+import { answerRecalculations, JOB_FAIR } from './support/row-four';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// What the card of a pressed building leads to (P02 ticket 22), over the fake main server with the switch on: "여기서
+const TALK = 'c750f9a0-887e-4dc1-99d1-34b065ff6257';
+
+// What the card of a pressed building leads to (P02 ticket 22), over the fake main server: "여기서
 // 먹기" asks the recalculation and opens its answer in the answer frame, "가는 길" starts the route guidance, and words
 // typed under the card go to the Assistant with the Place in the request context.
 
@@ -67,7 +73,7 @@ afterEach(() => {
 // Partitions: the answer that comes, and a request that fails.
 describe('"여기서 먹기" on the card of a pressed building', () => {
   it('asks the recalculation for its lunch and opens the answer in the frame, the pill saying where and what', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await pressBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
 
     await user.press(buildingCard().getByRole('button', { name: '여기서 먹기' }));
@@ -83,7 +89,7 @@ describe('"여기서 먹기" on the card of a pressed building', () => {
   });
 
   it("comes back to the building's card when the frame is closed", async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await pressBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
     await user.press(buildingCard().getByRole('button', { name: '여기서 먹기' }));
     await pass(500);
@@ -95,7 +101,7 @@ describe('"여기서 먹기" on the card of a pressed building', () => {
 
   it('says that it failed and keeps the card when the recalculation fails', async () => {
     server.on('POST /assistant/answers', { status: 500, body: { statusCode: 500, message: 'Internal' } });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await pressBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
 
     await user.press(buildingCard().getByRole('button', { name: '여기서 먹기' }));
@@ -107,6 +113,21 @@ describe('"여기서 먹기" on the card of a pressed building', () => {
   });
 });
 
+describe('"여기서 먹기" while its answer is on its way', () => {
+  it('shows the dots in the pressed button while its answer is on its way', async () => {
+    server.on('POST /assistant/answers', { status: 200, body: EATEN_HERE, afterMs: 1000 });
+    const user = await openMain();
+    await pressBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
+
+    await user.press(buildingCard().getByRole('button', { name: '여기서 먹기' }));
+
+    expect(buildingCard().getByLabelText('여기서 먹기 · 보는 중')).toBeVisible();
+    expect(buildingCard().queryByText('여기서 먹기')).toBeNull();
+    await pass(1000);
+    expect(card().getByText('12:45엔 나서야 해요')).toBeVisible();
+  });
+});
+
 describe('"가는 길" on the card of a pressed building', () => {
   it('starts the route guidance from the User to the Place and closes the card', async () => {
     // A way found, so that no "길을 찾지 못했어요" takes the guidance's words' place.
@@ -114,7 +135,7 @@ describe('"가는 길" on the card of a pressed building', () => {
       status: 200,
       body: { status: 'OK', route: { line: [ON_CAMPUS, STUDENT_POINT], distance: 900, duration: 900 } },
     });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await pressBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
     const before = server.received('GET /walking-route').length;
 
@@ -139,6 +160,42 @@ describe('"가는 길" on the card of a pressed building', () => {
   });
 });
 
+// Partitions: a2's two `plan` buttons, events and parties (P02 ticket 30). Expected values: the stored card's inputs.
+describe("a2's buttons on the card of 문화관", () => {
+  beforeEach(() => {
+    answerRecalculations(server);
+  });
+
+  it('"행사 보기" asks the recalculation for the events of the card and opens their answer', async () => {
+    const user = await openMain();
+    await pressBuilding(server, CULTURE_HALL, TAP_LOOKUPS.a2);
+
+    await user.press(buildingCard().getByRole('button', { name: '행사 보기' }));
+    await pass(500);
+
+    expect(recalculations(server)).toEqual([
+      { input: { kind: 'events', date: '2026-11-20', eventIds: [JOB_FAIR, TALK] }, location: ON_CAMPUS },
+    ]);
+    expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 행사 보기');
+    expect(card().getByText('13:54 도착 · 78분 볼 수 있어요')).toBeVisible();
+    expect(card().getByRole('button', { name: '같이 갈 파티' })).toBeEnabled();
+  });
+
+  it('"같이 갈 파티" asks the recalculation for the job fair\'s parties and opens their answer', async () => {
+    const user = await openMain();
+    await pressBuilding(server, CULTURE_HALL, TAP_LOOKUPS.a2);
+
+    await user.press(buildingCard().getByRole('button', { name: '같이 갈 파티' }));
+    await pass(500);
+
+    expect(recalculations(server)).toEqual([
+      { input: { kind: 'quests', globalEventId: JOB_FAIR, questIds: null }, location: ON_CAMPUS },
+    ]);
+    expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 같이 갈 파티');
+    expect(card().getByText('18:00 체육관 · 17:43에 나서요')).toBeVisible();
+  });
+});
+
 function lastContext(): unknown {
   const body = server.received('POST /assistant/messages').at(-1)?.body;
   return typeof body === 'object' && body !== null && 'context' in body ? body.context : undefined;
@@ -148,7 +205,7 @@ function lastContext(): unknown {
 describe('words typed under the card of a pressed building', () => {
   it('carry the Place as what was tapped, and the reply opens in the frame', async () => {
     server.on('POST /assistant/messages', { status: 200, body: MEAL_ANSWER_REPLY });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await pressBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
 
     await user.type(screen.getByLabelText(AI_INPUT), '민수도 같이');
@@ -163,7 +220,7 @@ describe('words typed under the card of a pressed building', () => {
 
   it('carry nothing tapped once the card is closed', async () => {
     server.on('POST /assistant/messages', { status: 200, body: MEAL_ANSWER_REPLY });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await pressBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
     await user.press(buildingCard().getByRole('button', { name: '닫기' }));
 

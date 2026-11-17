@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -11,7 +12,6 @@ import type { Quest } from '@/api/types';
 import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
 import { onInvitationAnswer } from '@/live/invitation-answers';
-import { useAnswerSwitch } from './answer-switch';
 import { friendStandings, type HeardAnswer, type Standing } from './invited-friends';
 import { madeQuestIdsQuery, useDropMadeQuests } from './made-quest-ids';
 import { endedIds, type FlagWords, flagWords, type MadeQuest, madeQuests } from './made-quests';
@@ -30,17 +30,15 @@ interface MadeRead {
 const NONE: readonly MadeQuestView[] = [];
 const NO_IDS: readonly string[] = [];
 
-// The signals of an answer to an invitation heard while the switch is on, each with when it was heard.
-function useHeard(on: boolean): readonly HeardAnswer[] {
+// The signals of an answer to an invitation heard, each with when it was heard.
+function useHeard(): readonly HeardAnswer[] {
   const [heard, setHeard] = useState<readonly HeardAnswer[]>([]);
   useEffect(
     () =>
-      on
-        ? onInvitationAnswer((answer) => {
-            setHeard((last) => [...last, { ...answer, heardAt: Date.now() }]);
-          })
-        : undefined,
-    [on],
+      onInvitationAnswer((answer) => {
+        setHeard((last) => [...last, { ...answer, heardAt: Date.now() }]);
+      }),
+    [],
   );
   return heard;
 }
@@ -60,11 +58,9 @@ function useDropEnded(ended: readonly string[], readAt: number, keptAt: number):
 }
 
 // The Quests made from a Plan on this phone that the User waits on, the earliest first, each with how its Friends
-// stand by the latest word: a signal heard after the Quests were read, else the members they hold. With the switch off
-// there are none, and neither the kept ids, the Quests, nor the signals are read or listened to.
+// stand by the latest word: a signal heard after the Quests were read, else the members they hold.
 export function useMadeQuests(): readonly MadeQuestView[] {
-  const on = useAnswerSwitch();
-  const kept = useQuery({ ...madeQuestIdsQuery, enabled: on });
+  const kept = useQuery(madeQuestIdsQuery);
   const ids = kept.data ?? NO_IDS;
   // The clock is read when the Quests are read, or the kept ids change: nothing ticks between.
   const select = useCallback(
@@ -74,11 +70,11 @@ export function useMadeQuests(): readonly MadeQuestView[] {
     },
     [ids],
   );
-  const { data, dataUpdatedAt } = useQuery({ ...questsQuery, subscribed: on, select });
-  useDropEnded(on ? (data?.ended ?? NO_IDS) : NO_IDS, dataUpdatedAt, kept.dataUpdatedAt);
-  const heard = useHeard(on);
+  const { data, dataUpdatedAt } = useQuery({ ...questsQuery, select });
+  useDropEnded(data?.ended ?? NO_IDS, dataUpdatedAt, kept.dataUpdatedAt);
+  const heard = useHeard();
   return useMemo(() => {
-    if (!on || data === undefined) {
+    if (data === undefined) {
       return NONE;
     }
     return data.made.map((made): MadeQuestView => {
@@ -87,5 +83,5 @@ export function useMadeQuests(): readonly MadeQuestView[] {
       const standings = friendStandings(invited, read, heard);
       return { ...made, standings, ...flagWords(made, standings) };
     });
-  }, [on, data, dataUpdatedAt, heard]);
+  }, [data, dataUpdatedAt, heard]);
 }

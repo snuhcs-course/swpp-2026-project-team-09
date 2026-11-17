@@ -4,6 +4,7 @@
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: each kind of 알림 row, with and without what it names, a list that failed, the rows' order, the kept
@@ -301,7 +302,7 @@ describe('toNotices of the time to leave', () => {
 describe('takesJoinRequests', () => {
   it.each([
     ['an Approval Quest the User leads', quest('q1'), true],
-    ['an Open Quest the User leads', quest('q1', { joinPolicy: 'open' }), false],
+    ['an Open Quest the User leads, for Users the Leader removed', quest('q1', { joinPolicy: 'open' }), true],
     ['a Closed Quest the User leads', quest('q1', { joinPolicy: 'closed' }), false],
     ['an Approval Quest another leads', quest('q1', { leader: MIN_JUN }), false],
     ['a Class Quest', quest('q1', { classQuest: true, leader: null }), false],

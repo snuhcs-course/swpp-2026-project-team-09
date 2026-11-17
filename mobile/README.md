@@ -434,8 +434,9 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
 
 - **The tabs** (`(signed-in)/(tabs)/`): Expo Router's `Tabs`, with `TabBar` (`src/screens/shell/tab-bar.tsx`)
   drawing the design system's `BottomNav`. 지도 is the main screen at `/main`; 파티 is `/party`, 행사 `/events`, 내
-  정보 `/me`. 올리기 is no tab and says "준비 중이에요". A tab stays mounted while another is shown, so the map keeps
-  its native view, its camera, the open card, the route and the collapsed lists. The bar has no line on top but the
+  정보 `/me`. 올리기 is no tab: it opens 파티 만들기 (`/party-form`) empty above the tabs, and 뒤로 shows the tab it
+  was pressed on. A tab stays mounted while another is shown, so the map keeps its native view, its camera, the open
+  card, the route and the collapsed lists. The bar has no line on top but the
   frames' shadow (`shadow.nav`), and under its items 16 or the phone's own inset, whichever is larger
   (`navPaddingBottom` in `src/screens/shell/layout.ts`). The number on 파티 is `usePartyBadge()`: the rows of 알림
   that wait for the User and concern 파티, every row but the kept Notifications and the Friend Requests. While the
@@ -448,7 +449,7 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   (`/notifications`), 프로필 편집 (`/profile-edit`), 시간표 (`/me/timetable`) and its class form
   (`/me/timetable/class`), a Quest's room (`/room/<questId>`), the map view of the place picker (`/place-map`), 전체
   파티 (`/boards`), a board (`/boards/meal`), 파티 모집글 (`/post/<questId>`), 파티 만들기 (`/party-form`, and
-  `/party-form?questId=<id>` for its edit mode) and the AI 매칭 신청 list (`/matching`). Each is a `FullScreenPanel`
+  `/party-form?questId=<id>` for its edit mode). Each is a `FullScreenPanel`
   and slides in over 0.28 s, from the bottom for `/quests` and from the right for a pushed screen,
   or appears without sliding where the phone asks for less motion (`slideFrom` in the layout). The tabs lie under
   them also when the app opens at their address (`unstable_settings`).
@@ -501,13 +502,19 @@ above the navigation.
 selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under its card's id. A Friend who can be
   seen and a member of the User's Party who is no Friend are the wireframe's teardrop at every zoom, in the status's
   colour or the Party's: small while the whole campus is in view, at full size from the `pins` level, and with the
-  given name under it from the `names` level. While the switch of the answer on the map is on, a Friend whose
-  position is at the exact level (`Position.level`) carries a green dot at the face, none at the building level or
-  while dimmed; with the switch off no face has one. A live position's level replaces the one before; one without a
+  full name under it from the `names` level. A Friend whose position is at the exact level (`Position.level`) carries
+  a green dot at the face, none at the building level or while dimmed. A live position's level replaces the one before; one without a
   level keeps it. A Friend whose position is not known has no marker. The Global Event,
   the User's Party and a Shared Quest are dots while the whole campus is in view, pins from the `pins` level and pins
   with a short name from the `names` level. A Party's pin counts its members; a Global Event's counts the Quests
-  that gather for it (`GET /quests/recruiting`) when they are more than one. A short name is the title cut at a word's end within 8 characters,
+  that gather for it (`GET /quests/recruiting`) when they are more than one. Of the Global Events, only Favorite Events
+  stand on the map (`src/features/map/event-pins.ts`), unless the interest marks keep them: once the main server
+  answers the matches, every event goes to the marks, which keep one mark per place for what matches a watched
+  interest, with "!" on what is new (`src/features/map/interest-marks.ts`); the others are in the 행사 tab only. A
+  Favorite Event is the official pin with a filled star at every zoom, and so is a place one of whose events is one.
+  With the whole campus in view, events' pins that would overlap merge, as study pins do
+  (`src/features/map/event-merges.ts`), into one official pin with their count, the star when one is a Favorite Event,
+  and an interest mark's "!" first; a press zooms in to them. A short name is the title cut at a word's end within 8 characters,
   counted in whole characters, so that an emoji is never cut. A given name is the name without its first syllable for
   a Korean name of three syllables, and the whole name otherwise (`src/features/map/short-name.ts`). A marker is read as the wireframe reads it: "김민준 · 공강 · 중앙도서관 근처 · 15:00까지 비어 있어요", "공식 행사 · AI 커리어
   설명회". The selected marker has the selected look and is drawn above the others, the User's own Avatar included.
@@ -579,12 +586,16 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   - **The room** (`Room` in `layout.ts`: the stage's size, which `OverMap` tells, and the open card's height). A
     window shows the whole rows that fit above what is under it, with 8 clear (`listRows`): three, or two, one or
     none on a low screen. Under the Quest list is the zoom control; under the friend list is the strip of the
-    map's credit, on "오늘의 발자국"; while a card is open, under both is the credit's strip on the card. The Quest
+    map's credit, on the row of buttons; while a card is open, under both is the credit's strip on the card. The Quest
     column is 182 wide; the friend column is 160 or, on a screen narrower than 374, what the Quest column leaves
     (`friendsWidth`), 146 at 360, so the two never share a point.
-  - A Friend's row has the dot in the status's colour (`presence`), the name and the line, "공강 · 중앙도서관" or
-    "위치 꺼짐". A press brings the map to the Friend at the `close` level and opens their card; for a Friend whose
-    position is not known it says "<이름>님은 위치가 꺼져 있어요" for 2 seconds.
+  - A Friend's row has the dot in the status's colour (`presence`), the name and the line. Against the main server,
+    which serves no statuses, the line is the Place nearest the Friend from `GET /positions`'s `nearPlace`
+    ("중앙도서관 본관", or "위치 켜짐" while it is not known) or "위치 꺼짐", with "· N분 전 위치" after an old
+    position; the mock's statuses give "공강 · 중앙도서관". The Friend's card has the walk from
+    `walkMinutes`: "도보 N분", "근처" for the same Place, and nothing while the User's own position is unknown.
+    "수업 중" and "이동 중" wait for the FriendView of the Friend levels. A press brings the map to the Friend at the `close` level and opens their card; for a Friend whose
+    position is not known it opens the same card without moving the map.
   - A Quest's row has the round with its icon, the kicker, the title and the time with the place, and the rail joins
     the rounds. The adapter says the row's `tone` and `icon`: a class is `clock` in grey; `open`, a Party that
     others may join, is `users` in blue; `closed`, a Party that takes nobody else and a Shared Quest, is `lock` in
@@ -593,61 +604,82 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     room.
     Without a Quest the list says "오늘 일정 없음".
   - While a list's data is loading, and after a failure, its pill has no number and the list has no rows.
-- **The controls above the navigation** (`bottom-controls.tsx`): "오늘의 발자국", with up to three faces and "친구
-  5명의 오늘" from `useFootprints()`; "활성 파티", shown only while the User is in a Party, with "<n>명 공유 중" for
+- **The controls above the navigation** (`bottom-controls.tsx`): "활성 파티", shown only while the User is in a Party, with "<n>명 공유 중" for
   the members who share their position, the User left out, or "응답 대기" when nobody else does
   (`useActiveParty()`); the 편의기능 button (`layers.tsx`, below); and the AI input. "활성 파티" opens the room of the
   Party's Quest, or, for a Party tied to no Quest, which has no room, asks "활성화에서 나갈까요?" and leaves it
-  (`use-active-party-room.tsx`). The AI input opens the chat (below). "오늘의 발자국" says "준비 중이에요".
-  - The AI input (`ai-input.tsx`) is a field with the placeholder "무엇이든 부탁해 보세요". Pressing or focusing it
-    opens the chat, and it stays at the bottom as the chat's input, with the focus ring as its border. It grows with
+  (`use-active-party-room.tsx`). A message sent from the AI input opens the answer frame (below).
+  - The AI input (`ai-input.tsx`) is a field with the placeholder "무엇이든 부탁해 보세요". It grows with
     its text from 40 to 120 and then scrolls, its corners going from 28 to 22 once it holds more than a line; Enter
     starts a new line, and only the send button sends. It takes at most 1,000 characters, as much as the main server
     takes in a message. The send button is `snuBlue` while there is something to send,
     and grey and disabled while the input is empty or the Assistant works. Speech input and autocomplete would attach
     to it.
-  - On a screen narrower than the wireframe's 390, "오늘의 발자국" gives way to "활성 파티", whose two lines stay
-    whole (`footprintsForm` in `layout.ts`): it drops its second line and keeps one face, has no face under 360,
-    and is the one button of the row that shrinks, its name cut with an ellipsis. Alone in the row it is whole.
-- **The chat with the Assistant** (`chat-sheet.tsx`, `chat-bubbles.tsx`, the `MainChat` frame). It is a translucent
-  sheet (`color.surfaceGlass`, white at 80%) from the top of the screen to the navigation, which stays in view. It
-  lies over the map and the lists, and hides the shuttle's notice, the row of buttons and the 편의기능 button; the
-  AI input lies over its bottom. Its header has the round chat icon, "SNU Now AI", "새 대화", which discards the
-  conversation and shows the empty chat again, and "대화 닫기"; Android's back button closes it too.
-  - Empty, it says "무엇을 도와드릴까요?", the line "대화 내용은 AI 제공자에게 전송돼요", and three examples as rows
-    with an icon on their layer's colour: 식사 메뉴 추천 (식당), 현재 통학/순환 셔틀 위치 (셔틀버스) and 파티 찾기 (the
-    Party's), in place of the frame's library seats. A press sends its words as the User's message.
-  - The User's bubbles are at the right in `snuBlue`, the Assistant's at the left in `blue50`, and "···" shows while
-    the Assistant works. The reply is shown whole. Each message sends the latest 20 messages of the conversation
-    (`askAssistant`, `messagesToSend`), the Assistant's with the cards they showed, and fewer while they hold more
-    than 24,000 characters.
-  - A failure is the Assistant's bubble, and is left out of what the next message sends. When the server cannot
-    answer, it says "지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요" with "다시 시도", while it is the last bubble,
-    which sends the User's message again in its place. Once the User's messages of the day are used up (429), it says
-    "오늘은 여기까지 답할 수 있어요. 내일 다시 물어봐 주세요", without "다시 시도".
+  - "활성 파티" never shrinks: its two lines stay whole on a screen narrower than the wireframe's 390.
+- **The answer frame** (`answer/answer-frame.tsx`), the one screen of the conversation with the Assistant. While the
+  bar has the keyboard and nothing is asked, the three examples of the empty chat stand above it as chips with an icon
+  in their layer's colour, 배고파 (식당), 오늘 볼 만한 거 있어? (the Party's) and 공부할 자리 (공부공간), with
+  the line "대화 내용은 AI 제공자에게 전송돼요" (`answer/asked-examples.tsx`); a press sends the example as the
+  User's message. Once something is asked, what the User asked last stands as a pill at the top left with "답 닫기"
+  (✕) and the round "새 대화" at its right, and one white card at the bottom of the screen holds the rest of the turn
+  (`turn.ts`) without bubbles, the question as a grey line first, with the bar under it ("이어서 말하기"). While the
+  Assistant works, the card keeps the height it had and shows the question with the waiting dots (`WaitingDots`, read
+  aloud as "보는 중") and the round stop button "그만" in place of the reply; the bar stays, and a message sent then
+  takes the waiting question back, as anywhere else. A card's button whose answer is on its way ("여기서 먹기",
+  "만나고 싶다") shows the dots in place of its label (`Button`'s `busy`). A reply whose answer has a Plan shows the
+  Plan's two lines (`answer-lines.tsx`) in place of the model's sentence; any other reply is drawn with the chat's own
+  parts (`chat-bubbles.tsx`'s `BubbleParts`): the text as Markdown, the cards with their buttons, a Proposal, the map
+  buttons, and "다시 시도" under a failure. Under the reply on screen, up to two follow-ups in cells of one width
+  (`follow-up-chips.tsx`, `features/assistant/follow-ups.ts`) send whole sentences filled from the reply: the next
+  meals of a meal's Plan ("오늘 저녁 배고파", or "김민수랑 내일 저녁 먹자" with its Friends), "{친구}랑 같이 밥 먹자"
+  and tomorrow's meet under a meet, "같이 갈 파티 있어?" and tomorrow's under a day's events, "{친구}랑 같이 밥
+  먹자" under a Friend's Lookup, tomorrow's menu under a menu's, "운동 파티만 보여줘" under parties and "다른 열람실"
+  under a seat card; none under a refusal, a reply with its own offers, a failure or an answer without a Plan. The
+  lists, the row of buttons, 편의기능, the zoom control, the selected thing's card, and the tabs give way, and a
+  marker takes no press. Another card leads where it
+  does and leaves the frame as it is. A send puts the keyboard down, and the map's credit sits above the card once it
+  is laid out.
+  - Leaving the frame hides it and keeps the conversation (`use-kept-conversation.ts`): ✕, Android's back button, a
+    card's "닫기", a map button, which also turns its layer on, and the start of route guidance. A reply on its way
+    still comes and is kept. While the frame is hidden, the map is the everyday map, without the answer's marks, and
+    its presses and cards work as without a conversation; the AI input has the round "이전 답" at its left, which shows
+    the frame again at the turn on screen as it was, with the answer's marks and camera. A reply that arrived while
+    the frame was hidden puts a red dot on it until the frame is shown. The frame's own way out (✕, back, a card's
+    "닫기") brings the camera back to where the everyday map was when the frame was shown (`use-camera-back.ts`); a
+    map button and route guidance leave it to their own moves. A message sent from the
+    everyday map goes on with the conversation and shows the frame, and so does any turn a card's button or a mark
+    asks. "새 대화" forgets the conversation and closes the frame, and the toast "대화를 지웠어요" offers 되돌리기 for 5
+    seconds, which brings every turn back while nothing new was said (`forget-with-undo.ts`); it is the only way the
+    conversation is forgotten while the app runs. "그만" takes the question on its way back and drops its reply when it comes: the frame shows
+    the turn before, or closes when there is none.
+  - When the conversation has turns before the one on screen, "지난 답 N개" under its reply opens them below it, the
+    latest first, read-only (`earlier-turns.tsx`): for each, the words asked, the reply's lines (a Plan's first
+    Plan's, a Lookup's, or any other reply's words), and its cards' names. "접기" closes them.
+  - While the keyboard is up, the card shows one line in place of its content, cut to fit (`keyboard-headline.tsx`):
+    the headline of the turn on screen, which is the Plan's first line as its card draws it, the Lookup's title, or
+    the reply's first line, or the dots while the reply is on its way. The map is left as it is.
+  - The conversation (`chat-sheet.tsx`, whose chat sheet is gone, and `useChat()` in
+    `src/features/assistant/use-chat.ts`) lives in memory, held by the main screen, so it stays while the app runs and
+    restarting the app loses it. The server stores none of it. Each message sends the latest 20 messages of the
+    conversation (`askAssistant`, `messagesToSend`), the Assistant's with the cards they showed, and fewer while they
+    hold more than 24,000 characters. A failure is left out of what the next message sends. When the server cannot
+    answer, the card says so with "다시 시도", which sends the User's message again in its place; once the User's
+    messages of the day are used up (429), it says "오늘은 여기까지 답할 수 있어요. 내일 다시 물어봐 주세요", without
+    "다시 시도".
+  - Every request carries a context with the User's position on campus, the capabilities `library`, `answer`, `area`,
+    `meet`, and `events`, and the map's visible area at rest as `viewport` (`useViewport`: the stage under the status
+    bar at the camera, null until both are known). A `study` Lookup ("이 근처") outlines the area its request sent,
+    leaves the camera where it is, and adds the free seats the phone reads from its own library session to the flag
+    towards 관정 (`study-area.ts`, `use-away-seats.ts`); its card's main button reads "가는 길", and its `ask` action
+    "관정 보기" sends its words as the User's.
+  - While a meal's Plan is on screen, a press on a building recalculates the conditions with that Place fixed and
+    shows "여기면 어때?" over the Plan, which stays underneath: each person's arrival, the time together against the
+    Plan, "여기로 바꾸기" and "그대로" (`use-how-about.ts`, `how-about-card.tsx`); "그대로", the pill's ✕, and Android's
+    back return to the Plan.
   - A Restaurant card of a 공강에 밥 answer (`chat-restaurant-cards.tsx`) shows the name, "63동 · 오늘 점심", "식사 가능 시간
     N분", the first two menu lines with "외 N개", a chip per person, "{name} {도보|셔틀} N분" or "{name} —", with the
     longest highlighted, and 파티 만들기, which opens the party form filled from the card's Proposal as 수정 does, with
     no model call.
-  - The conversation lives in memory in `useChat()` (`src/features/assistant/use-chat.ts`), held by the main screen,
-    so closing the sheet keeps it while the app runs and restarting the app loses it. "새 대화" also drops a reply
-    still on its way. The server stores none of it.
-- **The answer frame** (`answer/answer-frame.tsx`), behind a switch that is off on every phone. A long press on the
-  build line at the bottom of 내 정보 turns it on or off and says which in a toast (`answerOnMap`, read by
-  `useAnswerSwitch` in `src/features/assistant/answer-switch.ts`); the main screen follows at once. With it on, the
-  chat sheet never opens: what the User asked last stands as a pill at the top left with "답 닫기" (✕), and one white
-  card at the bottom of the screen holds the rest of the turn (`turn.ts`) without bubbles, "보는 중이에요" while the
-  Assistant works, with the bar under it ("이어서 말하기"). A reply whose answer has a Plan shows the Plan's two lines
-  (`answer-lines.tsx`) in place of the model's sentence. The lists, the row of buttons, 편의기능, the zoom control, the
-  shuttle's notice, the selected thing's card, and the tabs give way, and a marker takes no press. ✕ and Android's back
-  button forget the conversation; a map button forgets it and turns its layer on; another card leads where it does and
-  leaves the frame as it is. A send puts the keyboard down, and the map's credit sits above the card once it is laid
-  out. Turning the switch either way closes the chat sheet and forgets the conversation. Every request then carries a
-  context with the User's position on campus, the capabilities `answer` and `area`, and the map's visible area at rest
-  as `viewport` (`useViewport`: the stage under the status bar at the camera, null until both are known). A `study`
-  Lookup ("이 근처") outlines the area its request sent, leaves the camera where it is, and adds the free seats the
-  phone reads from its own library session to the flag towards 관정 (`study-area.ts`, `use-away-seats.ts`); its card's
-  main button reads "가는 길", and its `ask` action "관정 보기" sends its words as the User's.
 - **The answer on the map** (`use-answer-map.ts`, `use-map-view.ts`). The answer on screen is that of the
   conversation's last reply (a failure and the app's own bubble are none), so it stays while a follow-up waits or has
   failed, or a recalculation that replaced it, held with the index of the Plan on screen and whether its basis is open
@@ -713,16 +745,16 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   "초대하지 못했어요. 잠시 후 다시 시도해 주세요". The made Quest's card shows the chips without a press, each Friend's
   with the state ("민수 · 아직 안 봄", "수락", "거절", "5분 늦음", "빠짐"), "파티를 만들고 초대를 보냈어요" and "답이 없어도
   12:15에 가면 돼요", the Quest's steps in three columns (`quest-steps.tsx`: a white number on navy, the start, and
-  the title), and "닫기" across the card, which closes the answer as ✕ does. The latest word counts
+  the title), and "닫기" across the card, which hides the answer as ✕ does. The latest word counts
   (`invited-friends.ts`): a signal of an answer heard after the Quest's members were last read, else those members
   ("빠짐" for a Friend no longer among them), else the reply's invitations; a Friend's face on the map carries "?"
   while invited and "✓" once in (accepted or late), its name read aloud the state after the name, and its tag the
-  state alone beside a face that shows the whole name ("아직 안 봄"). A new answer, another Plan, or ✕ drops
-  the made Quest from the screen.
+  state alone beside a face that shows the whole name ("아직 안 봄"). A new answer, another Plan, or "새 대화" drops
+  the made Quest from the screen; ✕ hides it with the frame, and "이전 답" brings it back.
 - **A made Quest after closing** (`src/features/assistant/made-quests.ts`, `made-quest-ids.ts`, `use-made-quests.ts`,
   `use-made-quest-card.ts`, `answer/made-quest-frame.tsx`, `made-quest-line.tsx`). Nothing the server sends tells a
   Quest made from a Plan from a matched Shared Quest or a library booking's, so the phone keeps the id of each Quest
-  `POST /plans` made (`Kept.madeQuests`); with the switch on, a Quest whose id is kept, which the User leads, and whose
+  `POST /plans` made (`Kept.madeQuests`); a Quest whose id is kept, which the User leads, and whose
   destination (the last step not cancelled with a start and a point) has not ended by the clock when the Quests were
   read counts as made from a Plan. Ids of Quests gone or ended are dropped when the Quests are read. It is drawn as a
   flag at its destination, the pick's dot with two lines above it, "12:15 점심" over "수락 0/1" (the start and the meal
@@ -737,12 +769,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   received invitation's, with the destination, a dark flag at each other step, and the User's own dot where the phone
   was at the press or first was after it, and no Avatar. Its drawing is kept by what it draws, so a signal moves no
   camera. The signals of an answer count at once, after which the Quests' members do; the flag and its card go when
-  the Quests come again without it or with its meal ended. With the switch off nothing of this is read, drawn, or
-  listened to. The mock lists the Quest its `POST /plans` made, with the mock's User as its asker.
-- **A received invitation** (`use-received-invitation.ts`, `answer/received-invitation-card.tsx`). With the switch
-  on, each invitation of `GET /quest-invitations` is a card of the main screen, `invitation:<invitationId>`, with no
-  marker, so `/main?card=invitation:<id>` opens it once the switch's stored value is read; with the switch off that
-  address opens 파티's 초대 as before. The address moves no camera. While its card is open (and no answer frame is),
+  the Quests come again without it or with its meal ended. The mock lists the Quest its `POST /plans` made, with the mock's User as its asker.
+- **A received invitation** (`use-received-invitation.ts`, `answer/received-invitation-card.tsx`). Each invitation of
+  `GET /quest-invitations` is a card of the main screen, `invitation:<invitationId>`, with no marker, so
+  `/main?card=invitation:<id>` opens it once the list is read. The address moves no camera. While its card is open (and no answer frame is),
   the app reads `GET /quest-invitations/:id` with the User's position on campus (`invitationCardQuery`, under the
   invitations' key, so `quests-changed` reads it again), draws the invitee's own way by the marks and the camera of
   an answer (`drawingOfScene`) and no one else's Avatar, and the lists, the bottom controls, the zoom control, the AI
@@ -754,7 +784,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   while it is still shown. "이미 끝난 초대예요" closes it after a 404 read (which reads the list again) or when the
   list comes back without it, and an address of an invitation the known list does not hold says it on the map;
   another failure offers "다시 시도". Android's back button closes it as ✕ does.
-- While a card at the bottom is open, the row of "오늘의 발자국" and "활성 파티", the 편의기능 button and its stack
+- While a card at the bottom is open, the row of buttons with "활성 파티", the 편의기능 button and its stack
   are not shown, as the zoom control is not; both lists, the AI input and the navigation stay. A 식당's card sits at
   the top instead (52 from the top, 16 from the sides): the two lists give way to it, and the zoom control, the row
   and the 편의기능 button stay.
@@ -771,7 +801,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   them. A card shows only while the User has no Class, no watched interest, or no Friend, and counts as answered once
   the User has it, by the card or elsewhere (`rules.ts`); one that waits for a list not yet fetched shows nothing.
   The interests card is passed over for a main server that keeps no interests. A card gives way to a selected
-  thing's card, the chat, and the answer frame, and hides what a card at the bottom hides. A User of the first run
+  thing's card and the answer frame, and hides what a card at the bottom hides. A User of the first run
   who watches no interest sees "관심을 맡기면 맞는 행사를 알려 드려요" at the left, 8 above the row of buttons or the
   tutorial's start button (`InterestsHint`), which opens the interests card again; the friend list and the map's
   credit stand above it.
@@ -801,10 +831,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   in loop order, and has no button but "가까이 보기"; a vehicle's says "셔틀버스 · 운행 중", "교내 순환 셔틀" and
   "{stop}에 있어요 · 다음 정류장 {next}", follows the vehicle's sets and closes when it goes, and "노선 보기" fits the
   camera to the whole line and closes the card. Outside weekdays from 08:00 to 21:00 in Korea's time
-  (`SERVICE_HOURS`), a notice at the bottom card's place says "지금은 셔틀버스가 운행하지 않아요" over the route's
-  service hours as the server words them; it is checked every 5 seconds, gives way to an open card, hides the row of
-  buttons and the zoom control as a card does, and the 편의기능 button stands 8 above it. Turning the layer off takes
-  everything away and closes a stop's or a vehicle's card.
+  (`SERVICE_HOURS`), a toast with the bus icon says "지금은 셔틀버스가 운행하지 않아요 · 평일 08:00–21:00" for 3.5
+  seconds: each time the layer is turned on, and once when the hours end while it is on (checked every 5 seconds).
+  Nothing else at the bottom moves for it. Turning the layer off takes everything away and closes a stop's or a
+  vehicle's card.
 - **How a vehicle travels.** The operator reports a vehicle only at a stop. A vehicle seen for the first time is
   placed at its stop. One reported at a new stop travels there along the line in the line's direction, the order of
   the stops, past any stops skipped between two sets, in 10 seconds (`TRIP_MS`): every second it glides for a second
@@ -817,9 +847,12 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
 - Every control has a Korean name for a screen reader, the wireframe's where it has one. A touch area is at least 48
   high: a row is 56, and the pills and the round buttons of 32 and 40 reach past their shapes (`hitSlop`), never
   into a neighbour's shape.
-- **The map's credit.** The map ends at the navigation's top and is told what the controls cover of its edges
-  (`mapInset` in `layout.ts`, the `inset` of `<Map>`): 126 at the bottom, the row of buttons' top, and 62 at the
-  right, the zoom control. So the credit is just above "오늘의 발자국", 16 from the left, and a provider's logo
+- **The map's credit.** The map is as high as the screen and lies under the navigation (`main-map-view.tsx`), so its
+  view keeps one size when the navigation gives way to the answer frame and nothing on it moves then; while the
+  navigation is shown, its height is added to the inset's bottom and to the bottom padding of the everyday map's
+  fits (`useNavCoverOnMain`). It is told what the controls cover of its edges (`mapInset` in `layout.ts`, the
+  `inset` of `<Map>`), counted from the navigation's top: 126 at the bottom, the row of buttons' top, and 62 at the
+  right, the zoom control. So the credit is just above the row of buttons, 16 from the left, and a provider's logo
   belongs left of the zoom control, above "활성 파티". While a card is open the inset's bottom is the card's top,
   and the credit sits above the card. Nothing is drawn over the credit: the lists end 8 above its strip
   (`CREDIT_ROOM` of `@/map`, the credit's margin and its line), on a low screen with fewer rows.
@@ -907,30 +940,32 @@ cards from the top:
   (`GET /timetable/classes`, with `GET /places` for the numbers) in the colour of the class's place in the timetable
   (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". The tile "직접 입력" opens 시간표; "이미지로
   불러오기" and "빈 시간 말하기" say "준비 중이에요";
-- 위치 공유 (`sharing-card.tsx`): the switch "친구와 위치 공유", which is the Master Switch, with the number of
-  Friends, and "캠퍼스 밖이라 위치가 공유되지 않아요" while the last upload was off campus. Turning it on without the
-  location permission shows the map's explanation and the system's prompt first; a refusal leaves it off with
-  "위치 권한을 허용해야 공유할 수 있어요". The new state shows at once, and turns back with "위치 공유를 바꾸지
-  못했어요" when the main server did not take it. While the Lobby's `masterOffAsked` is false, turning it off asks
-  first with the Friends' question in the words "모든 친구에게는 지금 있는 건물만 보여 줄 수도 있어요." and "어느 쪽을
-  골라도 친구에게는 아무 표시도 가지 않아요.": "위치 끄기" turns it off ("껐어요 · 친구에게 알림은 가지 않아요"),
-  "건물까지만" leaves it on and sends `lowerFriendLevels('building')` ("모든 친구에게 지금 있는 건물까지만 보여요"),
-  and "취소" leaves it on; each sends `recordMasterOffAsked`. Its last row, "위치 공유 보기", opens the 위치 공유 screen.
-  At `/me?show=sharing` the screen scrolls to the card and outlines it for 1.2 s;
+- 위치 공유 (`sharing-card.tsx`): the switch "위치 공유", which is the Master Switch. While the Master Switch is off,
+  the Friends' levels on 친구 and 위치 공유 and the room's "내 위치 공유" show off and disabled under "전체 위치 공유가
+  꺼져 있어요 · 켜기", keeping their stored values; and "캠퍼스 밖이라 위치가 공유되지 않아요" while the last upload was
+  off campus. Turning it on without the location permission shows the map's explanation and the system's prompt first; a
+  refusal leaves it off with "위치 권한을 허용해야 공유할 수 있어요". The new state shows at once, and turns back with
+  "위치 공유를 바꾸지 못했어요" when the main server did not take it. While the Lobby's `masterOffAsked` is false,
+  turning it off asks first with the Friends' question in the words "모든 친구에게는 지금 있는 건물만 보여 줄 수도
+  있어요." and "어느 쪽을 골라도 친구에게는 아무 표시도 가지 않아요.": "위치 끄기" turns it off ("껐어요 · 친구에게
+  알림은 가지 않아요"), "건물까지만" leaves it on and sends `lowerFriendLevels('building')` ("모든 친구에게 지금 있는
+  건물까지만 보여요"), and "취소" leaves it on; each sends `recordMasterOffAsked`. Its last row, "위치 공유 보기", opens
+  the 위치 공유 screen. At `/me?show=sharing` the screen scrolls to the card and outlines it for 1.2 s;
 - "친구 관리 {n}" (친구 관리), "참여 중인 파티 {n}" (파티 at 내 파티), "내 퀘스트" (the Quest list on the
   whole screen), and "관심사 {n}" (관심사, with the number of watched interests).
 
 위치 공유 (`/me/location-sharing`, `src/screens/me/location-sharing-screen.tsx`, P02 ticket 11, board n7b), from the
-card's "위치 공유 보기", has three cards. The first is the switch "위치 공유" over
-"끄면 친구 모두에게 시간표만 보여요", the same Master Switch as 내 정보's, with the same explanation and question
-(`use-sharing-switch.ts`). "친구마다" lists the Friends of `GET /friends`, each with what the two see of each other
-from `seen`, "서로 시간표만 보여요", "서로 지금 있는 건물까지 보여요" or "서로 정확한 위치까지 보여요", and the
-User's own end as the three cells of 친구 관리, which ask and set the level as there (`use-levels.ts`). The line is
-lowered at once by a choice or a switch on its way, and raised only once `GET /friends` says so, since the app does not
-know the Friend's end. Its foot: "시간표의 건물과 끝나는 시각은 친구 모두에게 보여요. 위치를 꺼도 시간표는 보여요."
-and "새 친구는 '지금 있는 건물'에서 시작해요.". "남기지 않는 것" has the rows "누가 나를 찾았는지 · 기록 안 함" and
-"지난 위치 · 저장 안 함", the name at the start and the fact at the end, over "과목과 강의실은 보이지 않고, 후보로 검토된
-것은 누구에게도 알리지 않아요.". The board's "비공개 구역" row is not drawn: no ticket builds the Private Zone yet.
+card's "위치 공유 보기", has no switch of its own and starts with "친구마다". While the Master Switch is off, "친구마다"
+shows "전체 위치 공유가 꺼져 있어요 · 켜기", whose 켜기 turns it on as 내 정보's switch does (`master-off-line.tsx`).
+"친구마다" lists the Friends of `GET /friends`, each with what the two see of each other from `seen`, "서로 시간표만
+보여요", "서로 지금 있는 건물까지 보여요" or "서로 정확한 위치까지 보여요", and the User's own end as the three cells of
+친구 관리, which ask and set the level as there (`use-levels.ts`). The line is lowered at once by a choice or a switch
+on its way, and raised only once `GET /friends` says so, since the app does not know the Friend's end. Its foot:
+"시간표의 건물과 끝나는 시각은 친구 모두에게 보여요. 위치를 꺼도 시간표는 보여요." and "새 친구는 '지금 있는 건물'에서
+시작해요.". "남기지 않는 것" has the rows "누가 나를 찾았는지 · 기록 안 함" and "지난 위치 · 저장 안 함", the name at
+the start and the fact at the end, over "과목과 강의실은 보이지 않고, 후보로 검토된 것은 누구에게도 알리지 않아요.".
+Above it, the "비공개 구역" row ("칠한 곳 안에서는 시간표만 보여요", the number of zones) opens the zone screen
+(`me/private-zones/`).
 
 관심사 (`/me/interests`, `src/screens/me/interests-screen.tsx`, P05 ticket 08) has two cards. "프로필 관심사" shows the
 profile's hashtags from the Lobby as chips ("#러닝"), or "프로필에 넣은 관심사가 없어요", over "프로필 편집에서 바꿀 수
@@ -978,7 +1013,7 @@ the requests to join, which also wait for the User. A new match of a watched int
 떴어요") is on the navy round too, a calendar for an event and people for a recruiting party, by its address. A kind
 the app does not know shows as an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
 holds ("{name}님이 파티를 활성화했어요"), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and
-the requests to join each Quest the User leads with Approval ("참여 신청 {n}명"). A row with a card's address, `/main?card=<kind>:<id>`, opens it as a tapped push does
+the requests to join each Open or Approval Quest the User leads ("참여 신청 {n}명"); an Open one has them only from Users the Leader removed. A row with a card's address, `/main?card=<kind>:<id>`, opens it as a tapped push does
 (`src/features/notifications/address.ts`): a kept Notification's address is the main server's, and an invitation's is
 `/main?card=invitation:<id>`, which ends at 파티's 초대 while the map holds no invitation card. A Friend Request's row
 opens 친구 요청, and a running Party's and the requests' the Quest's room. The count in the panel's title is of the rows
@@ -1006,8 +1041,12 @@ files' renewal on the VWorld page.
 **A Quest's room** (`src/screens/room/`, the frame's `PartyDetail`, `/room/<questId>`) is the room of every Quest the
 User holds but a Class Quest: its `파티장` is the Quest's Leader, its `멤버` the Holders and its `일정` the Sub Quests.
 It reads the Quest (`GET /quests/:questId`), the User's Party and the listed Parties (`useRoom()` of the quests
-feature, `room-adapter.ts`), and closes with "파티에서 빠졌어요" once the main server no longer answers the Quest,
-after a removal, a drop on another phone or the Leader's end. From the top:
+feature, `room-adapter.ts`), and closes once the main server no longer answers the Quest, after a removal, a drop on
+another phone or the Leader's end. `GoneQuestsWatch` (`src/features/quests/gone-watch.tsx`), in the signed-in layout,
+tells it on whatever screen is shown: a Quest that was in `GET /quests` and is not when the list comes again, and that
+`GET /quests/:questId` no longer answers (`QUEST_NOT_FOUND`, or no answer at all), says "{title} 파티에서 빠졌어요" once. A Quest that only left the
+list because all its Sub Quests ended, a Class Quest, and the User's own 나가기 or 파티 없애기 on this phone, which
+mark the Quest while they run, are not told; nor is what happened before the app started. From the top:
 
 - in the app bar, "모집글 보기" for an Open or Approval Quest, which opens its post, and "수정" for the Leader, which
   opens 파티 만들기 in its edit mode;
@@ -1091,17 +1130,22 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
 **행사** (`src/screens/events/`, the `Events` frame, `/events`) lists the published Global Events (`GET
 /global-events`) by their start, with the data of `useEventSources()` and the words of `src/features/events/adapter.ts`:
 
-- The app bar (`events-bar.tsx`) has "행사", the sparkle "AI 매칭 신청 내역" with a navy count of the waiting
-  requests, which opens the AI 매칭 신청 list, and the search, which puts the field "행사 검색" and ✕ "검색 닫기" in
+- The app bar (`events-bar.tsx`) has "행사" and the search, which puts the field "행사 검색" and ✕ "검색 닫기" in
   place of the title and keeps the events whose title, place or description holds the words.
 - The chips "전체", "오늘", "이번 주" (to Sunday in Korea's time) and "파티 모집 중" (an event with a recruiting Quest)
   filter the list. Empty: "예정된 행사가 없어요" without any event, "검색 결과가 없어요" after a filter or a search.
 - A card (`event-item.tsx`) has "같이 갈 파티 {n}개" for the recruiting Quests of `GET /quests/recruiting`, "내 파티"
   when the User holds a Quest for the event, the source from the app's own list of announcers, the title, the time
   ("M월 D일까지" for an event whose end is more than 24 hours after its start, on every card and sheet that shows an
-  event's time) and the place, and "자세히", which opens `sourceUrl` in the browser and is left out without one, "파티 찾기/모집" and
-  "AI 매칭", or "매칭 중" while the User's request waits, which opens the list. At `/events?focus=<id>` the list shows
+  event's time) and the place, and "자세히", which opens `sourceUrl` in the browser and is left out without one, and "파티 찾기/모집".
+  AI matching left the main UI on 2026-11-10 (P06-03): the card has no "AI 매칭" and the app no matching screen, though
+  the main server's matching routes and `apiClient`'s calls for them stay. At `/events?focus=<id>` the list shows
   every event, scrolls to the card and marks it with a navy border and a glow for 2.6 s (`use-focus.ts`).
+- The ☆ "즐겨찾기" (`favorite-toggle.tsx`) at a card's top right, right of the source, stars the event or clears its
+  star (`PUT` and `DELETE /global-events/:id/favorite`). It changes at once and back with "즐겨찾기를 바꾸지 못했어요"
+  when the main server refuses. The chat's event cards have it too, and so does the map's card of one event, left of
+  the X; a grouped pin's card marks a Favorite Event's row with ★ instead. Whether the User starred an event is read
+  from `GET /global-events` alone, so every screen shows the same.
 - **파티 찾기/모집** (`recruiting-sheet.tsx`) lists the User's own Quest for the event ("내 파티" when the User leads it,
   "참여 중" with its Leader otherwise), then the Quests gathering for it (`GET /quests/recruiting?globalEventId=`),
   each with its fill and its next Sub Quest. The User's own opens its room; another's asks "‘{title}’에
@@ -1109,14 +1153,6 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
   (`POST /quest-join-requests`). "+ 파티 모집", like the map card's "같이 갈 사람 찾기", opens the room of a Quest the
   User already holds with others for the event, with "이 행사에 함께 가는 파티가 이미 있어요", and 파티 만들기 with the
   event chosen otherwise (`/party-form?eventId=<id>`, `use-party-create.ts`).
-- **AI 매칭** (`matching-sheet.tsx`) asks only the group size, "2명", "3명" or "4명", explains what Matching does and
-  sends `POST /matching-requests`. **The AI 매칭 신청 list** (`matching-screen.tsx`, `/matching`) shows each waiting
-  request with "매칭 중", when it was asked, the event and the size, and withdraws one after "매칭 신청을 취소할까요?"
-  (`POST /matching-requests/:globalEventId/withdraw`). The requests and their refusals are in `use-event-actions.ts`,
-  and the words of every refusal in `src/features/quests/refusals.ts`.
-- `MatchingWatch` (`src/features/events/matching-watch.tsx`), in the signed-in layout, watches the waiting requests
-  wherever the User is: a request that stops waiting is read again (`GET /matching-requests/:globalEventId`), and a
-  match says "{event} 파티가 만들어졌어요" and fetches the Quests again.
 
 **The date·time sheet** (`src/screens/date-time-sheet.tsx`) is shared: "언제" with the choice in words ("오늘 19:00"),
 21 days from today in Korea's time, the hours and the minutes by tens, and "확인". **The map view**
@@ -1162,7 +1198,7 @@ the entries it needs. So an operation that two screens need is asked once, and o
 
 When an operation fails:
 
-- `listFriendStatuses`, `listGlobalEventAnnouncers` and `getFootprints`, the app's own, never fail a screen: it shows what it has without them.
+- `listFriendStatuses` and `listGlobalEventAnnouncers`, the app's own, never fail a screen: it shows what it has without them.
 - The friend list and the Quest list have `isError` and no `data`.
 - The map has `isError` and keeps in `data` the cards that are still right: without the Global Events, the Friends'
   cards still show; without the recruiting Quests, an event's card only lacks its line of them.
@@ -1188,7 +1224,7 @@ Behind a hook are three layers:
   A shape marked "provisional" comes from an open pull request of the main server, and one marked "the app's own" is
   defined nowhere else yet.
 - **An adapter** per feature (`src/features/<feature>/adapter.ts`): turns answers into what the screens use, such as
-  `FriendView`, `QuestRowView`, `CardView`, `FootprintsView` and `ActivePartyView`.
+  `FriendView`, `QuestRowView`, `CardView` and `ActivePartyView`.
 - **The main server's client** (`src/api/server/`): the operations the main server serves, in a build that asks it
   (`asksMainServer()`). `http.ts` is the one way to the main server: it attaches the access token, renews the Session
   once on a 401 and asks again, and ends the Session when that cannot mend it. `answers.ts` (with `waiting-answers.ts`,
@@ -1220,7 +1256,7 @@ Behind a hook are three layers:
 | `createInviteLink`                                                   | A new Invite Link's address                                  | `POST /invite-links`                                                    |
 | `getInviteLink`, `acceptInviteLink`                                  | Who sent the link and its status; nothing                    | `GET /invite-links/:token`, `POST /invite-links/:token/accept`          |
 | `listPositions`                                                      | The positions the User may see                               | `GET /positions`, and the socket's `position`                           |
-| `listFriendStatuses`                                                 | Each Friend's status, place and photo                        | The mock: the app's own                                                 |
+| `listFriendStatuses`                                                 | Each Friend's status, place and photo                        | The mock's in a mock build; none against the main server                |
 | `listQuests`                                                         | The User's Quests and today's Class Quests                   | `GET /quests`                                                           |
 | `listQuestInvitations`                                               | The invitations into a Quest                                 | `GET /quest-invitations`                                                |
 | `listJoinRequests`                                                   | The requests to join a Quest the User leads                  | `GET /quests/:questId/join-requests`                                    |
@@ -1228,7 +1264,6 @@ Behind a hook are three layers:
 | `listGlobalEvents`                                                   | The published Global Events                                  | The mock: no route lists them for a User yet                            |
 | `listGlobalEventAnnouncers`                                          | Who announced each Global Event                              | The mock: the app's own                                                 |
 | `listParties`, `getMyParty`                                          | The Parties, and the one the User is in                      | `GET /parties`, `/parties/mine`                                         |
-| `getFootprints`                                                      | What "오늘의 발자국" shows: a number and faces               | The mock: the app's own                                                 |
 | `findWalkingRoute`                                                   | The way on foot between two points                           | `GET /walking-route`                                                    |
 | `listMenus`                                                          | One day's menus by restaurant                                | `GET /menus?date=`                                                      |
 | `getShuttle`                                                         | The shuttle's route: hours, stops and line                   | `GET /shuttle`                                                          |
@@ -1274,11 +1309,11 @@ that the screens read as the wireframe on any day.
 The phone keeps that the User signed in, that the User agreed to the legal documents, what the sign-in suggested for
 Onboarding, whether Onboarding is finished and its answers, that the User answered the explanation before the
 location prompt (`locationExplained`), the token of an Invite Link until its accept screen shows it (`inviteToken`),
-the running Parties whose 활성화 the User declined (`declinedParties`), and the switch of the answer frame
-(`answerOnMap`) (`src/storage/kept.ts`). A value stored by
+and the running Parties whose 활성화 the User declined (`declinedParties`) (`src/storage/kept.ts`). A value stored by
 an older version, without a newer
-field, reads as "not yet" for that field. `openKept()` is the read for the start of the app: it is the one that
-honours `EXPO_PUBLIC_FIRST_STATE`, which clears all of it.
+field, reads as "not yet" for that field, and one an older version stored that this one no longer keeps, such as the
+switch of the answer frame (`answerOnMap`), leaves the rest as it was. `openKept()` is the read for the start of the
+app: it is the one that honours `EXPO_PUBLIC_FIRST_STATE`, which clears all of it.
 
 ### The User's position
 
@@ -1442,6 +1477,8 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
   - `Switch`, React Native's switch in navy, and `SwitchRow` with a label and a description.
   - `EmptyState` (the caller's words in `inkFaint`), `LoadingState` ("불러오는 중") and `ErrorState` ("불러오지
     못했어요" and "다시 시도").
+  - `WaitingDots`: three dots of 8 that pulse in turn while something is on its way, still where the phone asks for
+    less motion, read aloud as the words they stand for ("보는 중", "보는 중이에요").
 - **Toast**: the design system has none and the wireframes use one. It is the `Main` wireframe's: a dark bar from 16
   to 16 from the sides with a check mark before its words, and no shadow. `useToast()` gives the call that shows a sentence for 2.4
   seconds, or for the time given as its second argument (`showToast(words, 2000)`), and `useNotReadyToast()` the call
@@ -1792,7 +1829,7 @@ that phone.
   `router.navigate`. `/main` reads `card` once: the map moves to the card with that id and opens it, and without
   one the app opens the screen of the matching row of "알림". For an invitation that is the "파티" tab's
   invitations, `/party?tab=invites`. A party's card whose room request this phone made from a card that waited for
-  the booking window also opens that room card again in the chat (Group study rooms).
+  the booking window also opens that room card again in the answer frame (Group study rooms).
 - **A push in front.** While the app is open, a push drops no banner and plays no sound; it goes to the phone's
   notification list. On Android a banner cannot show without sound. The app instead fetches again the lists "알림"
   and the "파티" badge are made from (`src/push/push-arrivals.tsx`).
@@ -1970,7 +2007,7 @@ A card of a study plan for a date after the booking window has a key that ends i
 no rooms, shows the day, the time, the room's size and each person's note, gathers the consents, and says
 "11월 6일 09:00 예약 창이 열리면 예약할 수 있어요" (for 9 November) with 예약하기 unavailable (`waiting-room-card.tsx`). The phone
 keeps the request with its card by its Quest in `room-bookings.ts`, until the room is booked; the room-window
-Notification's address, `/main?card=party:<questId>`, then opens the chat with "예약 창이 열렸어요" and that card
+Notification's address, `/main?card=party:<questId>`, then opens the answer frame with "예약 창이 열렸어요" and that card
 again, bound to the request, which reads the rooms and books once everyone agreed (`waiting-room.ts`). The server
 keeps no way to find a requester's request by its Quest, so a request made on another phone, or before the app was
 reinstalled, opens only the party's card.

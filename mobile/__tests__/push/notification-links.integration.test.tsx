@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -11,9 +12,11 @@ import type * as FakeSocketModule from '../support/fake-socket';
 import type * as PushDevice from '@/push/device';
 import { act, userEvent } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { INVITATION_CARD } from '@/api/mock/data/invitation-card';
 import { type FakeServer, refusal } from '../support/fake-server';
 import { sockets } from '../support/fake-socket';
 import { pass, screen, shownAddress, startApp } from '../support/app';
+import { answerInvitation, invitationCard } from '../support/invitation';
 import { givePhone, ON_CAMPUS, openMain, placeOf } from '../support/main';
 import { startFresh } from '../support/mocks';
 import { ONBOARDING, saveOnboarding } from '../support/onboarding';
@@ -83,6 +86,11 @@ jest.mock('expo-notifications', () => ({
   },
 }));
 
+// The stored invitation's card, which its address opens on the main screen (P02 ticket 06).
+const INVITATION_ADDRESS = `/main?card=invitation:${INVITATION_CARD.id}`;
+// The test router still prints a cleared parameter's name, as `card=undefined`.
+const ON_MAIN = /^\/main(?:\?card=undefined)?$/u;
+
 function tapOn(url: unknown, identifier = 'push-1'): Response {
   return {
     actionIdentifier: 'expo.modules.notifications.actions.DEFAULT',
@@ -127,8 +135,9 @@ afterEach(() => {
 });
 
 describe('a push tapped while the app was closed', () => {
-  it("opens the 파티 tab's invitations after the loading screen, and is cleared", async () => {
-    mockLastResponse = tapOn(`/main?card=invitation:${INVITATION.id}`);
+  it("opens the invitation's card on the main screen after the loading screen, and is cleared", async () => {
+    answerInvitation(server);
+    mockLastResponse = tapOn(INVITATION_ADDRESS);
     await keep({ signedIn: true, consented: true, onboardingCompleted: true });
     await startApp();
 
@@ -137,14 +146,17 @@ describe('a push tapped while the app was closed', () => {
 
     await pass(1000);
     await pass(1000);
+    // The card's own read comes after the list's; since #280 merged it ends half a second later on the test's clock.
+    await pass(500);
 
-    expect(shownAddress()).toBe('/party?tab=invites');
-    expect(screen.getByText('물리 실험 보고서')).toBeVisible();
+    expect(shownAddress()).toMatch(ON_MAIN);
+    expect(invitationCard().getByText('유상의 파티 초대')).toBeVisible();
     expect(mockCleared).toBe(1);
   });
 
   it('opens after Onboarding when Onboarding was unfinished', async () => {
-    mockLastResponse = tapOn(`/main?card=invitation:${INVITATION.id}`);
+    answerInvitation(server);
+    mockLastResponse = tapOn(INVITATION_ADDRESS);
     server.on(
       'POST /lobby',
       refusal(403, 'ONBOARDING_REQUIRED', {
@@ -163,7 +175,8 @@ describe('a push tapped while the app was closed', () => {
     await saveOnboarding(userEvent.setup({ advanceTimers: jest.advanceTimersByTime }));
     await pass(1000);
 
-    expect(shownAddress()).toBe('/party?tab=invites');
+    expect(shownAddress()).toMatch(ON_MAIN);
+    expect(invitationCard().getByText('유상의 파티 초대')).toBeVisible();
     expect(mockCleared).toBe(1);
   });
 });
@@ -197,6 +210,41 @@ describe('a push tapped while the app runs', () => {
   });
 });
 
+describe('a push for an invitation that came after the map read its invitations', () => {
+  // The boundary of the rule that an invitation the map holds no card of has ended (P02-06): the list the map holds
+  // may be older than the push, so the app reads it again before it says so.
+  it("reads the invitations again and opens the new invitation's card, not 이미 끝난 초대예요", async () => {
+    await openMain();
+    answerInvitation(server);
+
+    await tap(tapOn(INVITATION_ADDRESS));
+
+    expect(screen.queryByText('이미 끝난 초대예요')).toBeNull();
+    expect(invitationCard().getByText('유상의 파티 초대')).toBeVisible();
+  });
+
+  it('says the invitation has ended when the list read again does not hold it either', async () => {
+    await openMain();
+
+    await tap(tapOn(INVITATION_ADDRESS));
+
+    expect(screen.getByText('이미 끝난 초대예요')).toBeVisible();
+    expect(shownAddress()).toMatch(ON_MAIN);
+  });
+
+  it('opens 파티 at 초대 when the invitations cannot be read, since it cannot be told that it has ended', async () => {
+    await openMain();
+    server.on('GET /quest-invitations', { status: 500, body: { statusCode: 500, message: 'Internal Server Error' } });
+
+    await tap(tapOn(INVITATION_ADDRESS));
+    // A failure of the main server's own is asked once more, a second later (`api/query-client.ts`).
+    await pass(2000);
+
+    expect(screen.queryByText('이미 끝난 초대예요')).toBeNull();
+    expect(shownAddress()).toMatch(/^\/party\?(?:card=undefined&)?tab=invites$/u);
+  });
+});
+
 describe('a push about an event the map shows no card of', () => {
   it('opens the 행사 tab at that event, as one on a later day', async () => {
     await openMain();
@@ -210,13 +258,15 @@ describe('a push about an event the map shows no card of', () => {
 
 describe('a tap that comes twice', () => {
   it('opens once when the tap that started the app also comes through the listener', async () => {
-    const response = tapOn(`/main?card=invitation:${INVITATION.id}`);
+    answerInvitation(server);
+    const response = tapOn(INVITATION_ADDRESS);
     mockLastResponse = response;
     await keep({ signedIn: true, consented: true, onboardingCompleted: true });
     await startApp();
     await pass(1000);
     await pass(1000);
-    expect(shownAddress()).toBe('/party?tab=invites');
+    await pass(500);
+    expect(invitationCard().getByText('유상의 파티 초대')).toBeVisible();
     await openTab('/me');
 
     await tap(response);

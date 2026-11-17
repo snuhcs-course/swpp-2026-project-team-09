@@ -8,6 +8,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
@@ -18,13 +19,14 @@ import { levelSeen } from '../location-sharing/friend-level.js';
 import { VisibilityService } from '../location-sharing/visibility.service.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { UsersService } from '../users/users.service.js';
+import { checkFellowHolders } from './fellow-holders.js';
 import {
   endOf,
   FriendDto,
   FriendRequestsDto,
+  type SendFriendRequestDto,
   SentFriendRequestDto,
   toFriendDto,
-  toUserSummaryDto,
 } from './dto/friends.dto.js';
 
 interface Pair {
@@ -107,18 +109,20 @@ export class FriendsService {
     return owner;
   }
 
-  async sendRequest(senderId: string, friendId: string): Promise<SentFriendRequestDto> {
-    const receiver = await this.ownerOf(friendId);
-    if (receiver.id === senderId) {
-      throw new BadRequestException({
-        statusCode: HttpStatus.BAD_REQUEST,
-        error: 'Bad Request',
-        code: 'OWN_FRIEND_ID',
-        message: 'This is your own Friend ID.',
-      });
+  // To the owner of a Friend ID, or by user id to a User who holds a Quest with the sender (fellow-holders.ts).
+  async sendRequest(senderId: string, to: SendFriendRequestDto): Promise<SentFriendRequestDto> {
+    const [receiverId, own] =
+      'friendId' in to
+        ? [(await this.ownerOf(to.friendId)).id, { code: 'OWN_FRIEND_ID', message: 'This is your own Friend ID.' }]
+        : [to.userId, { code: 'OWN_USER_ID', message: 'This is your own user id.' }];
+    if (receiverId === senderId) {
+      throw new BadRequestException({ statusCode: HttpStatus.BAD_REQUEST, error: 'Bad Request', ...own });
     }
-    const pair = pairOf(senderId, receiver.id);
+    const pair = pairOf(senderId, receiverId);
     return this.changeBetween(pair, async (tx) => {
+      if ('userId' in to) {
+        await checkFellowHolders(tx, senderId, receiverId);
+      }
       const existing = await tx.friendship.findUnique({ where: { userAId_userBId: pair } });
       if (existing === null) {
         await tx.friendship.create({ data: { ...pair, senderId } });
@@ -173,7 +177,7 @@ export class FriendsService {
     });
     const lists: FriendRequestsDto = { received: [], sent: [] };
     for (const row of waiting) {
-      const other = toUserSummaryDto(otherOf(row, userId));
+      const other = otherOf(row, userId);
       const sentAt = row.sentAt.toISOString();
       if (row.senderId === userId) {
         lists.sent.push({ id: row.id, receiver: other, sentAt });

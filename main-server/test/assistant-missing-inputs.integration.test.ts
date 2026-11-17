@@ -58,7 +58,11 @@ describe('Board n13: 배고파 without the location permission', () => {
       { kind: 'origin', text: '301동에서', userId: null, mark: 'assumed' },
       { kind: 'until', text: '13:00 수업까지', userId: null },
     ]);
-    expect(linesOf(answer.plans[0]?.lines)).toEqual(['위치를 몰라 직전 수업의', '301동에서 출발로 잡았어요']);
+    expect(linesOf(answer.plans[0]?.lines)).toEqual([
+      '위치를 몰라 직전 수업의',
+      '301동에서 출발로 잡았어요',
+      '오늘 제육볶음',
+    ]);
     expect(answer.offers).toEqual([{ kind: 'open', label: '위치 켜기', screen: 'location' }]);
   });
 
@@ -144,7 +148,7 @@ describe('Board n15: 배고파 with no Class in the Timetable', () => {
     const walks = answer.plans.map(({ parts }) => parts[0]?.walkMinutes ?? 0);
     expect(walks).toEqual(walks.toSorted((a, b) => a - b));
     expect(answer.chips).toEqual([{ kind: 'origin', text: '301동에서', userId: null }]);
-    expect(linesOf(answer.plans[0]?.lines)).toEqual(['301동식당이 가장 가까워요']);
+    expect(linesOf(answer.plans[0]?.lines)).toEqual(['301동식당이 가장 가까워요', '오늘 제육볶음']);
     expect(answer.plans[0]?.basis[0]).toBe('시간표가 없어 가까운 순서로 넘겨 봐요');
     expect(answer.note).toBe('시간표를 넣으면 나설 시각까지 알려 드려요');
     expect(answer.offers).toEqual([{ kind: 'open', label: '시간표 넣기', screen: 'timetable' }]);

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ShuttleRoute, ShuttleStop, ShuttleVehicle } from '@/api/shuttle-types';
@@ -11,6 +12,8 @@ import { type MeasuredLine, measureLine, nearestAlong, pointAlong } from './line
 
 // The shuttle runs on weekdays from 08:00 to 21:00 in Korea's time, in minutes after midnight.
 export const SERVICE_HOURS = { from: 8 * 60, until: 21 * 60 } as const;
+
+export const NOT_IN_SERVICE = '지금은 셔틀버스가 운행하지 않아요 · 평일 08:00–21:00';
 
 // A vehicle reported at a new stop travels there along the line in `TRIP_MS`, in steps of `STEP_MS`, each a glide to
 // the next point along the line.

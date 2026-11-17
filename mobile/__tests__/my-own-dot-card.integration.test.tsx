@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, screen, within } from '@testing-library/react-native';
@@ -70,7 +71,7 @@ function myCard(): ReturnType<typeof within> {
 // Partitions: the card's ✕ and Android's back button; what stays on the map.
 describe('the open card of the User', () => {
   it('closes by its ✕, and the dot stays', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, ME);
 
     await user.press(myCard().getByRole('button', { name: '닫기' }));
@@ -81,7 +82,7 @@ describe('the open card of the User', () => {
 
   it("closes by Android's back button", async () => {
     const back = holdBackButton();
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, ME);
 
     expect(await back()).toBe(true);
@@ -90,7 +91,7 @@ describe('the open card of the User', () => {
   });
 
   it("moves no camera and keeps every Friend's face", async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     const before = { at: placeOf(ME), things: mapThings() };
 
     await press(user, ME);
@@ -105,7 +106,7 @@ describe('the open card of the User', () => {
 // Partitions: "바꾸기" and a level changed behind it; words typed under the card.
 describe('what the card leads to', () => {
   it('opens 위치 공유 from 바꾸기', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, ME);
 
     await user.press(myCard().getByRole('button', { name: '바꾸기' }));
@@ -120,7 +121,7 @@ describe('what the card leads to', () => {
       server.on('GET /friends', { status: 200, body: [MIN_JUN, { ...SEO_JUN, level: 'building', seen: 'building' }] });
       return { status: 204 };
     });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await press(user, ME);
     await user.press(myCard().getByRole('button', { name: '바꾸기' }));
     await pass(500);

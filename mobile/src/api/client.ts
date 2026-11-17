@@ -15,7 +15,9 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
@@ -35,11 +37,10 @@ import type {
   AskedMoment,
   Board,
   ClassSave,
-  Footprints,
   Friend,
   FriendLevel,
   FriendStatus,
-  GlobalEvent,
+  ListedGlobalEvent,
   InviteLink,
   LatLng,
   Lobby,
@@ -63,9 +64,17 @@ import type { RestaurantMenus } from './menu-types';
 import type { ShuttleRoute, ShuttleVehicle } from './shuttle-types';
 import type { StudyBuilding } from './study-types';
 import type { PartyOpening, PlaceAt, SubQuestContent } from './room-types';
-import type { FriendRequests, JoinRequest, KeptNotification, MyJoinRequest, QuestInvitation } from './waiting-types';
+import type {
+  FriendRequests,
+  JoinRequest,
+  KeptNotification,
+  MyJoinRequest,
+  QuestInvitation,
+  QuestRemoval,
+} from './waiting-types';
 import type { QuestChange, QuestMaking, RecruitingQuest } from './party-types';
 import type { BetterPlan, MakePlanQuest, PlanQuest } from './plan-quest-types';
+import type { SeatStay, SeatStayMade } from './seat-stay-types';
 import type { Tutorial, TutorialCompletedBy } from './tutorial-types';
 import type { WalkingRoute } from './walking-route-types';
 
@@ -96,6 +105,8 @@ export interface ApiClient {
   findFriendId: (friendId: string) => Promise<UserSummary>;
   // Also refused with 400 OWN_FRIEND_ID, 409 ALREADY_FRIENDS and 409 FRIEND_REQUEST_ALREADY_SENT.
   sendFriendRequest: (friendId: string) => Promise<SentFriendRequest>;
+  // By user id, from a 파티's member row: also refused with 403 NOT_FELLOW_HOLDER unless the two hold one Quest.
+  sendFriendRequestToUser: (userId: string) => Promise<SentFriendRequest>;
   listFriendRequests: () => Promise<FriendRequests>;
   // Each refused with 404 FRIEND_REQUEST_NOT_FOUND for a request that waits no more.
   acceptFriendRequest: (requestId: string) => Promise<void>;
@@ -127,7 +138,10 @@ export interface ApiClient {
   listPlaces: () => Promise<Place[]>;
   // The Places whose name holds the words, or whose number they are, with or without 동.
   searchPlaces: (words: string) => Promise<Place[]>;
-  listGlobalEvents: () => Promise<GlobalEvent[]>;
+  listGlobalEvents: () => Promise<ListedGlobalEvent[]>;
+  // Stars a published Global Event, or clears its star; a repeat changes nothing. Refused with 404
+  // GLOBAL_EVENT_NOT_FOUND for an event that is not published.
+  setFavoriteEvent: (globalEventId: string, favorite: boolean) => Promise<void>;
   // Who announced each Global Event. The app's own: the stored event does not hold it.
   listGlobalEventAnnouncers: () => Promise<{ eventId: string; announcer: string }[]>;
   listParties: () => Promise<Party[]>;
@@ -141,9 +155,6 @@ export interface ApiClient {
   // Null for a User who is in no Party. The main server says so with a refusal, 404 NOT_IN_PARTY: the operation turns
   // exactly that one into null, with `isRefusal`, and throws any other.
   getMyParty: () => Promise<MyParty | null>;
-  // What "오늘의 발자국" shows: how many Friends left a story today, and three faces. The app's own: no answer of the
-  // main server holds it.
-  getFootprints: () => Promise<Footprints>;
   findWalkingRoute: (from: LatLng, to: LatLng) => Promise<WalkingRoute>;
   // One day's menus, a calendar day in Korea as "2026-10-06", by restaurant.
   listMenus: (date: string) => Promise<RestaurantMenus[]>;
@@ -183,9 +194,10 @@ export interface ApiClient {
   listRecruitingQuests: (filter?: { board?: Board; globalEventId?: string }) => Promise<RecruitingQuest[]>;
   // An Open Quest, at once.
   joinQuest: (questId: string) => Promise<Quest>;
-  // An Approval Quest: a request that the Leader answers.
+  // An Approval Quest, or an Open one the Leader removed the User from: a request that the Leader answers.
   askToJoinQuest: (questId: string) => Promise<void>;
   listMyJoinRequests: () => Promise<MyJoinRequest[]>;
+  listQuestRemovals: () => Promise<QuestRemoval[]>;
   withdrawJoinRequest: (requestId: string) => Promise<void>;
   makeQuest: (making: QuestMaking, idempotencyKey: string) => Promise<Quest>;
   // The User's Quest for the Global Event, Closed, made the first time with the title given or else the event's. A
@@ -200,8 +212,8 @@ export interface ApiClient {
   // A Holder reports being late by a whole number of minutes from 1 to 120, and gets their own way as it now is.
   reportLate: (questId: string, minutes: number, location: LatLng | null) => Promise<OwnWay>;
   // The chat Assistant's reply to the conversation, the User's new message last, with what the app knew as the User
-  // asked when it gives that.
-  askAssistant: (messages: ChatMessage[], context?: RequestContext) => Promise<AssistantReply>;
+  // asked.
+  askAssistant: (messages: ChatMessage[], context: RequestContext) => Promise<AssistantReply>;
   // An answer drawn on the map, recalculated from its changed input and where the User is now or why that is not
   // known, without the model.
   recalculateAnswer: (input: PlanInput, location: LatLng | null, missing?: LocationMissing) => Promise<AnswerReply>;
@@ -209,9 +221,13 @@ export interface ApiClient {
   // User's messages. Refused with 400 for an id that is no Place and with 404 FRIEND_NOT_FOUND for someone who is not
   // the User's Friend.
   answerTap: (tapped: Tapped, location: LatLng | null) => Promise<Lookup>;
-  // A Plan of the answer on screen made into a Quest the User leads, with an invitation of each Friend of it. Refused
-  // with 409 PLAN_CHANGED when the Plan is no longer the one shown, and 400 PLAN_ALONE for a Plan with no Friend.
+  // A Plan of the answer on screen made into a Quest the User leads, with an invitation of each Friend of it; a Plan
+  // taken alone, a Quest the User holds alone with the card's lines. Refused with 409 PLAN_CHANGED when the Plan is no
+  // longer the one shown.
   makePlanQuest: (making: MakePlanQuest, idempotencyKey: string) => Promise<PlanQuest>;
+  // A seat booked on the library's site, held as a Quest the User holds alone, with its leave-by for the next item.
+  // Refused with 400 NOT_A_SEAT for a space that is not a seat.
+  makeSeatStay: (stay: SeatStay, idempotencyKey: string) => Promise<SeatStayMade>;
   // For the Leader after a decline: whether the people left have a better Plan than the Quest as it stands, worked
   // out from where the Leader is now when the app knows, or else from why that is not known, as the Quest was made.
   getBetterPlan: (questId: string, location: LatLng | null, missing?: LocationMissing) => Promise<BetterPlan>;
@@ -268,6 +284,7 @@ export const apiClient: ShownClient = {
   lowerFriendLevels: (level) => chosen().lowerFriendLevels(level),
   findFriendId: (friendId) => chosen().findFriendId(friendId),
   sendFriendRequest: (friendId) => chosen().sendFriendRequest(friendId),
+  sendFriendRequestToUser: (userId) => chosen().sendFriendRequestToUser(userId),
   listFriendRequests: () => chosen().listFriendRequests(),
   acceptFriendRequest: (requestId) => chosen().acceptFriendRequest(requestId),
   declineFriendRequest: (requestId) => chosen().declineFriendRequest(requestId),
@@ -289,6 +306,7 @@ export const apiClient: ShownClient = {
   listPlaces: () => chosen().listPlaces(),
   searchPlaces: (words) => chosen().searchPlaces(words),
   listGlobalEvents: () => chosen().listGlobalEvents(),
+  setFavoriteEvent: (globalEventId, favorite) => chosen().setFavoriteEvent(globalEventId, favorite),
   listGlobalEventAnnouncers: () => chosen().listGlobalEventAnnouncers(),
   listParties: () => chosen().listParties(),
   requestMatching: (globalEventId, size) => chosen().requestMatching(globalEventId, size),
@@ -296,7 +314,6 @@ export const apiClient: ShownClient = {
   getMatchingRequest: (globalEventId) => chosen().getMatchingRequest(globalEventId),
   withdrawMatchingRequest: (globalEventId) => chosen().withdrawMatchingRequest(globalEventId),
   getMyParty: () => chosen().getMyParty(),
-  getFootprints: () => chosen().getFootprints(),
   findWalkingRoute: (from, to) => chosen().findWalkingRoute(from, to),
   listMenus: (date) => chosen().listMenus(date),
   getShuttle: () => chosen().getShuttle(),
@@ -327,6 +344,7 @@ export const apiClient: ShownClient = {
   joinQuest: (questId) => chosen().joinQuest(questId),
   askToJoinQuest: (questId) => chosen().askToJoinQuest(questId),
   listMyJoinRequests: () => chosen().listMyJoinRequests(),
+  listQuestRemovals: () => chosen().listQuestRemovals(),
   withdrawJoinRequest: (requestId) => chosen().withdrawJoinRequest(requestId),
   makeQuest: (making, key) => chosen().makeQuest(making, key),
   attendGlobalEvent: (globalEventId, title, entries) => chosen().attendGlobalEvent(globalEventId, title, entries),
@@ -353,6 +371,7 @@ export const apiClient: ShownClient = {
     tellAskLevels(made.askLevels);
     return made;
   },
+  makeSeatStay: (stay, key) => chosen().makeSeatStay(stay, key),
   getBetterPlan: (questId, location, missing) => chosen().getBetterPlan(questId, location, missing),
   changePlanQuest: (questId, making) => chosen().changePlanQuest(questId, making),
   getInvitationCard: (invitationId, location) => chosen().getInvitationCard(invitationId, location),

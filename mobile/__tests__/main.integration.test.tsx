@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { pass, screen } from './support/app';
@@ -38,7 +39,7 @@ describe('the main screen', () => {
     expect(screen.getByText('지도는 Android·iOS 빌드에서 보입니다')).toBeVisible();
     expect(screen.getByText('© OpenStreetMap · 국토지리정보원')).toBeVisible();
     // The User's Avatar is at three quarters of its size while the whole campus is in view.
-    expect(screen.getByRole('image', { name: ME })).toHaveProp('testID', 'me:small');
+    expect(screen.getByRole('button', { name: ME })).toHaveProp('testID', 'me:small');
   });
 
   it('has the zoom control over the map', async () => {
@@ -83,21 +84,21 @@ describe("the main screen's bottom navigation", () => {
     givePhone({ permission: 'granted' });
     const user = await openMain();
 
-    await user.press(screen.getByRole('button', { name: '올리기' }));
+    await user.press(screen.getByRole('button', { name: '내 위치로 이동' }));
 
+    expect(screen.getByText('위치를 찾는 중이에요')).toBeVisible();
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 158 });
   });
 });
 
 describe("a slot of the main screen's bottom navigation", () => {
-  it('says that 올리기 is not ready', async () => {
+  it('opens 파티 만들기 with 올리기, and says nothing', async () => {
     givePhone({ permission: 'granted' });
     const user = await openMain();
 
     await user.press(screen.getByRole('button', { name: '올리기' }));
 
-    expect(screen.getByText(NOT_READY)).toBeVisible();
-    await pass(2400);
+    expect(screen.getByRole('header', { name: '파티 만들기' })).toBeVisible();
     expect(screen.queryByText(NOT_READY)).toBeNull();
   });
 
@@ -122,13 +123,13 @@ describe('the zoom buttons', () => {
     const closer = placeOf(ME);
     expect(closer.left - middle).toBeCloseTo((far.left - middle) * 1.5, 3);
     // One press is short of the level from which the Avatar has its full size, and two are past it.
-    expect(screen.getByRole('image', { name: ME })).toHaveProp('testID', 'me:small');
+    expect(screen.getByRole('button', { name: ME })).toHaveProp('testID', 'me:small');
     await user.press(screen.getByRole('button', { name: '확대' }));
-    expect(screen.getByRole('image', { name: ME })).toHaveProp('testID', 'me');
+    expect(screen.getByRole('button', { name: ME })).toHaveProp('testID', 'me');
 
     await user.press(screen.getByRole('button', { name: '축소' }));
     expect(placeOf(ME).left).toBeCloseTo(closer.left, 3);
-    expect(screen.getByRole('image', { name: ME })).toHaveProp('testID', 'me:small');
+    expect(screen.getByRole('button', { name: ME })).toHaveProp('testID', 'me:small');
   });
 
   it('do not zoom out further than the whole campus', async () => {

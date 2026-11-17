@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INVITATION_CARD } from '@/api/mock/data/invitation-card';
@@ -27,9 +28,9 @@ import { DINNER } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, DINNER as DINNER_QUEST, PHONE_NOW } from './support/server';
 
-// 수락, 거절, and the reads of a received invitation's card (P02 ticket 06), against the fake main server with the
-// switch on: the list of received invitations holds the stored card's invitation, and its card is the stored card of
-// 민수. 수락 and 거절 use the endpoints of the 파티 tab, whose words for an acceptance and a failure the card keeps.
+// 수락, 거절, and the reads of a received invitation's card (P02 ticket 06), against the fake main server: the list of
+// received invitations holds the stored card's invitation, and its card is the stored card of 민수. 수락 and 거절 use the
+// endpoints of the 파티 tab, whose words for an acceptance and a failure the card keeps.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -74,7 +75,7 @@ function answered(): void {
 describe('수락 and 거절', () => {
   it('수락 accepts, says so, and closes the card to the everyday map, the Quests read again', async () => {
     server.on(ACCEPT_ROUTE, { status: 201, body: DINNER_QUEST });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await openInvitation();
     const questsBefore = server.received('GET /quests').length;
     answered();
@@ -92,7 +93,7 @@ describe('수락 and 거절', () => {
 
   it('거절 declines, says so, and closes the card', async () => {
     server.on(DECLINE_ROUTE, { status: 204 });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await openInvitation();
     answered();
 
@@ -110,7 +111,7 @@ describe('수락 and 거절', () => {
 describe('수락 and 거절 that do not go through', () => {
   it('a failure says so and leaves the card', async () => {
     server.on(ACCEPT_ROUTE, { status: 500, body: { statusCode: 500 } });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await openInvitation();
 
     await user.press(invitationCard().getByRole('button', { name: '수락' }));
@@ -123,7 +124,7 @@ describe('수락 and 거절 that do not go through', () => {
 
   it('takes one press while its request is on its way', async () => {
     server.on(DECLINE_ROUTE, { status: 204, afterMs: HELD_MS });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await openInvitation();
 
     await user.press(invitationCard().getByRole('button', { name: '거절' }));
@@ -142,7 +143,7 @@ describe('수락 of one invitation while another is shown', () => {
   it("closes only its own card, says it accepted, and leaves the other's buttons free", async () => {
     answerTwoInvitations(server);
     server.on(ACCEPT_ROUTE, { status: 201, body: DINNER_QUEST, afterMs: HELD_MS });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await openInvitation();
     await user.press(invitationCard().getByRole('button', { name: '수락' }));
     server.on('GET /quest-invitations', { status: 200, body: [SECOND_RECEIVED] });
@@ -163,7 +164,7 @@ describe('수락 of one invitation while another is shown', () => {
 describe('the read of the card', () => {
   it('says the invitation is being read while the reply is held back', async () => {
     answerInvitation(server, { status: 200, body: INVITATION_CARD, afterMs: HELD_MS });
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     await openInvitation();
 
@@ -174,7 +175,7 @@ describe('the read of the card', () => {
 
   it('says an invitation that waits no more is over, closes the card, and reads the list again', async () => {
     answerInvitation(server, refusal(404, 'QUEST_INVITATION_NOT_FOUND'));
-    await openMain({ answerOnMap: true });
+    await openMain();
     const listsBefore = server.received('GET /quest-invitations').length;
 
     await openInvitation();
@@ -187,7 +188,7 @@ describe('the read of the card', () => {
 
   it('says another failure, and 다시 시도 reads the card again', async () => {
     answerInvitation(server, { status: 500, body: { statusCode: 500 } });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await openInvitation();
     // A failure of the main server's own is asked once more before the screen is told.
     await pass(2000);

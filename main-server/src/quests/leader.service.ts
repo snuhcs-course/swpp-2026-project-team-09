@@ -7,6 +7,8 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -20,7 +22,7 @@ import { ClassQuestsService } from './class-quests.service.js';
 import { type UpdateQuestDto } from './dto/quest-requests.dto.js';
 import { QuestDto } from './dto/quest.dto.js';
 import { QuestsService } from './quests.service.js';
-import { conflict, notFound, notLeader, questNotFound } from './refusals.js';
+import { conflict, notFound, notLeader, questNotFound, takenAloneRefused } from './refusals.js';
 
 const notHolder = (): NotFoundException => notFound('NOT_QUEST_HOLDER', 'This User does not hold this Quest.');
 
@@ -64,6 +66,9 @@ export class LeaderService {
   // Approval, and on none when Closed: a change to Closed clears the board.
   async update(userId: string, questId: string, changes: UpdateQuestDto): Promise<QuestDto> {
     await this.changeAsLeader(userId, questId, async (tx, quest, holderIds) => {
+      if (quest.takenAlone) {
+        throw takenAloneRefused();
+      }
       if (changes.capacity !== undefined && changes.capacity < holderIds.length) {
         throw conflict('CAPACITY_BELOW_HOLDERS', 'The Quest has more Holders than this capacity.');
       }
@@ -109,8 +114,8 @@ export class LeaderService {
     });
   }
 
-  // The Holder goes as one who dropped the Quest, with their progress. Nothing records the removal, so the User may
-  // enter again.
+  // The Holder goes as one who dropped the Quest, with their progress. The removal is kept, so that the User comes back
+  // only by the Leader's approval (QuestRemoval).
   async remove(userId: string, questId: string, holderId: string): Promise<void> {
     await this.changeAsLeader(
       userId,
@@ -120,6 +125,12 @@ export class LeaderService {
           throw notHolder();
         }
         await this.quests.removeHolder(questId, holderId, tx);
+        // A row a seed left behind keeps its time.
+        await tx.questRemoval.upsert({
+          where: { questId_userId: { questId, userId: holderId } },
+          create: { questId, userId: holderId },
+          update: {},
+        });
       },
       holderId,
     );

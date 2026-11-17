@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -156,14 +157,14 @@ describe('What the model is told of the plans', () => {
     const date = '2087-01-28';
     await workedExample(date);
     const friend = await minsu();
-
     await stage.send([resolve('민수'), planMeal(date, [friend.id]), { text: '…' }]);
-
     expect(stage.model.toolResults()[1]).toMatchObject({
       result: 'planned',
       plans: expect.arrayContaining([
         {
           restaurant: '학생회관식당',
+          menu: ['제육볶음 6,000원'],
+          closesAt: null,
           start: '12:33',
           end: '12:59',
           togetherMinutes: 26,

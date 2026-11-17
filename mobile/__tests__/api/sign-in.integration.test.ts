@@ -8,6 +8,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -42,7 +43,6 @@ const NO_BACKGROUND = { masterSwitch: false, backgroundChosen: false, background
 const NOTHING_LATER = {
   ...NO_BACKGROUND,
   declinedParties: [],
-  answerOnMap: false,
   madeQuests: [],
   pushAsked: false,
   pushUnregisterOwed: false,
@@ -58,7 +58,6 @@ const FIRST_STATE = {
   inviteToken: null,
   ...NO_BACKGROUND,
   declinedParties: [],
-  answerOnMap: false,
   madeQuests: [],
   pushAsked: false,
   pushUnregisterOwed: false,
@@ -82,7 +81,6 @@ describe('sign-in', () => {
       inviteToken: null,
       ...NO_BACKGROUND,
       declinedParties: [],
-      answerOnMap: false,
       madeQuests: [],
       pushAsked: false,
       pushUnregisterOwed: false,
@@ -122,7 +120,6 @@ describe('what the phone keeps', () => {
       inviteToken: null,
       ...NO_BACKGROUND,
       declinedParties: [],
-      answerOnMap: false,
       madeQuests: [],
       pushAsked: false,
       pushUnregisterOwed: false,

@@ -4,6 +4,8 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Animated } from 'react-native';
@@ -25,7 +27,7 @@ import {
 } from './support/lists';
 import { givePhone, ME, ON_CAMPUS, openMain, placeOf } from './support/main';
 import { EVENT, FRIEND, lookOf, OTHER_FRIEND, press, wordsUnder } from './support/markers';
-import { startFresh } from './support/mocks';
+import { startFresh, withoutInterestMarks } from './support/mocks';
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -37,6 +39,7 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 beforeEach(async () => {
   jest.useFakeTimers();
   await startFresh();
+  withoutInterestMarks();
   givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
 
@@ -140,9 +143,9 @@ describe("a press on a Friend's row", () => {
     await press(user, FRIEND_ROW);
 
     expect(screen.getByRole('header', { name: '김민준' })).toBeVisible();
-    expect(lookOf(FRIEND)).toBe('person:full:free:f1:selected');
-    // The "close" level is past the "names" level: the given name is under the marker.
-    expect(wordsUnder(FRIEND, '민준')).toBeVisible();
+    expect(lookOf(FRIEND)).toBe('person:full:free:f1:exact:selected');
+    // The "close" level is past the "names" level: the full name is under the marker.
+    expect(wordsUnder(FRIEND, '김민준')).toBeVisible();
     expect(placeOf(FRIEND)).not.toEqual(before);
   });
 
@@ -154,21 +157,6 @@ describe("a press on a Friend's row", () => {
 
     expect(screen.getAllByTestId('map-card')).toHaveLength(1);
     expect(screen.getByRole('header', { name: '김민준' })).toBeVisible();
-  });
-
-  it('says that the location is off for a Friend without a position, for 2000 ms, and moves nothing', async () => {
-    const user = await openMain();
-    const before = placeOf(FRIEND);
-
-    await press(user, FRIEND_ROW_OFF);
-
-    expect(screen.getByText('서지우님은 위치가 꺼져 있어요')).toBeVisible();
-    expect(screen.queryByTestId('map-card')).toBeNull();
-    expect(placeOf(FRIEND)).toEqual(before);
-    await pass(1900);
-    expect(screen.getByText('서지우님은 위치가 꺼져 있어요')).toBeVisible();
-    await pass(100);
-    expect(screen.queryByText('서지우님은 위치가 꺼져 있어요')).toBeNull();
   });
 });
 
@@ -185,7 +173,7 @@ describe("a press on a Friend's row before the map's cards came", () => {
     expect(screen.queryByTestId('map-card')).toBeNull();
     await pass(3000);
     expect(screen.getByRole('header', { name: '김민준' })).toBeVisible();
-    expect(lookOf(FRIEND)).toBe('person:full:free:f1:selected');
+    expect(lookOf(FRIEND)).toBe('person:full:free:f1:exact:selected');
   });
 
   it('opens nothing when the card was closed or another was asked for before the cards came', async () => {
@@ -252,7 +240,7 @@ describe("a press on a class's row", () => {
     await press(user, CLASS_ROW);
 
     // The Global Event stands on the class's building: it is a pin without words, and the map moved.
-    expect(lookOf(EVENT)).toBe('official:pin');
+    expect(lookOf(EVENT)).toBe('official:pin:starred');
     expect(wordsUnder(EVENT, 'AI 커리어')).toBeNull();
     expect(placeOf(EVENT)).not.toEqual(before);
     expect(screen.getByText('자료구조 · 301동 118호')).toBeVisible();

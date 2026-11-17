@@ -12,17 +12,26 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
 import type { RecruitingQuest } from '@/api/party-types';
-import type { GlobalEvent, LatLng, MyParty, Party, Position, Presence, Quest } from '@/api/types';
-import { eventTime, recruitingCounts } from '@/features/events/adapter';
+import type { LatLng, ListedGlobalEvent, MyParty, Party, Position, Presence, Quest } from '@/api/types';
 import { type FriendView, keptPositions, minutesOld } from '@/features/friends/adapter';
-import { otherHolders, partyOf, positionOf, type QuestParty, shownSubQuest } from '@/features/quests/adapter';
+import {
+  heldAlone,
+  otherHolders,
+  partyOf,
+  positionOf,
+  type QuestParty,
+  shownSubQuest,
+} from '@/features/quests/adapter';
 import { koreaClock, koreaDay } from '@/korea-time';
+import { eventCards } from './event-cards';
 import { placeGroupId } from './place-groups';
 import { givenName, shortTitle, withParticle } from './short-name';
 
@@ -40,10 +49,11 @@ type PersonSeen = { stale: boolean; exact?: boolean };
 // - a place: the icon and the colour of its kind in the design system. The frames draw a Shared Quest as a Party, and a
 //   shuttle's vehicle as its stops;
 // - a group: the kinds of the things at one place, in the order `place-groups.ts` draws them.
+// `starred` is a Favorite Event's star on a place's or a group's pin: the event, or one of the events at the place.
 export type CardMark =
   | ({ type: 'person'; id: string; name: string; photo: string | null; presence: Presence | null } & PersonSeen)
-  | { type: 'place'; place: PlaceKind }
-  | { type: 'group'; kinds: readonly PlaceKind[] };
+  | { type: 'place'; place: PlaceKind; starred?: boolean }
+  | { type: 'group'; kinds: readonly PlaceKind[]; starred?: boolean };
 
 // The kinds of a place in the design system.
 export type PlaceKind = 'official' | 'party' | 'quest' | 'dining' | 'shuttle' | 'library';
@@ -66,13 +76,12 @@ export interface CardMarker {
 // What a card shows for anything pressed on the map. Its id is also the id of the marker or the Avatar.
 export interface CardView {
   id: string;
-  // `shared-quest` is a Quest of the User's that no Party names, such as a dinner with a Friend. `dining` is the
-  // Place of restaurants with menus today, `shuttle-stop` and `shuttle-vehicle` the shuttle's, while their layer is
-  // on. `place-group` is a place on the map where two or more things stand, which its card lists. `study` is a
-  // building of the 공부공간 layer, and `study-cluster` its buildings merged while the whole campus is in view.
-  // `invitation` is an invitation the User received, while the switch of the answer on the map is on: it has no
-  // marker, and its card is the invitee's own way. `made-quest` is the flag of a Quest made from a Plan while the
-  // switch is on, whose marker's name is the flag's words and whose card is the one after inviting.
+  // `shared-quest` is a Quest of the User's that no Party names, such as a dinner with a Friend. `dining` is the Place
+  // of restaurants with menus today, `shuttle-stop` and `shuttle-vehicle` the shuttle's, while their layer is on.
+  // `place-group` is a place on the map where two or more things stand, which its card lists. `study` is a building of
+  // the 공부공간 layer, and `study-cluster` its buildings merged while the whole campus is in view. `invitation` is an
+  // invitation the User received: it has no marker, and its card is the invitee's own way. `made-quest` is the flag of
+  // a Quest made from a Plan, whose marker's name is the flag's words and whose card is the one after inviting.
   kind:
     | 'global-event'
     | 'place-group'
@@ -85,6 +94,7 @@ export interface CardView {
     | 'shuttle-vehicle'
     | 'study'
     | 'study-cluster'
+    | 'event-cluster'
     | 'invitation'
     | 'made-quest';
   mark: CardMark;
@@ -117,13 +127,16 @@ export interface CardView {
   flag?: { title: string; line: string };
   // For a place with several things: the things, each with its card's id, its kind, its title and a line of its card,
   // such as its time.
-  choices?: { id: string; kind: PlaceKind; title: string; detail: string }[];
+  // `favorite` marks a Favorite Event's row with ★.
+  choices?: { id: string; kind: PlaceKind; title: string; detail: string; favorite?: boolean }[];
   // For a building of the 공부공간 layer: its Study Spaces, and 관정관's seat sectors.
   study?: StudyDetail;
-  // For merged study pins: where each building stands, which a press brings into view.
+  // For merged study or event pins: where each building or event stands, which a press brings into view.
   cluster?: readonly LatLng[];
   // Drawn in a translucent grey: a building none of whose Study Spaces the User may use.
   muted?: boolean;
+  // For a Global Event's card: the event, and whether the User starred it, which its ☆ shows and changes.
+  event?: { id: string; favorite: boolean };
 }
 
 // One Study Space as its building's card lists it. `refusal` is what a press on a space the User may not use says,
@@ -178,7 +191,7 @@ export function line(icon: CardIcon, text: string): Line {
 }
 
 export interface MapSources {
-  globalEvents: readonly GlobalEvent[];
+  globalEvents: readonly ListedGlobalEvent[];
   globalEventAnnouncers: readonly { eventId: string; announcer: string }[];
   recruiting: readonly RecruitingQuest[];
   quests: readonly Quest[];
@@ -188,36 +201,8 @@ export interface MapSources {
   positions: readonly Position[];
   meId: string;
   now: Date;
-}
-
-// The Global Events' cards. Things at one place are grouped on the main screen (`place-groups.ts`).
-function eventCards({ globalEvents, globalEventAnnouncers, recruiting: gathering, now }: MapSources): CardView[] {
-  const counts = recruitingCounts(gathering);
-  return globalEvents.map((event): CardView => {
-    const announcer = globalEventAnnouncers.find(({ eventId }) => eventId === event.id)?.announcer;
-    const recruiting = counts.get(event.id) ?? 0;
-    return {
-      id: cardId.globalEvent(event.id),
-      kind: 'global-event',
-      mark: { type: 'place', place: 'official' },
-      marker: {
-        name: `공식 행사 · ${event.title}`,
-        short: shortTitle(event.title),
-        count: recruiting > 1 ? recruiting : 0,
-        minutesOld: null,
-      },
-      subLabel: announcer === undefined ? '공식 행사' : `공식 행사 · ${announcer}`,
-      title: event.title,
-      lines: [
-        line('clock', eventTime(event, now)),
-        ...(event.place === null ? [] : [line('pin', event.place)]),
-        ...(recruiting === 0 ? [] : [line('users', `같이 갈 파티 ${recruiting}개 모집 중`)]),
-      ],
-      primary: { label: '같이 갈 사람 찾기', action: 'recruit', eventId: event.id },
-      secondary: null,
-      position: { latitude: event.latitude, longitude: event.longitude },
-    };
-  });
+  // The interest marks choose the events (`event-pins.ts`): every event's card is made, for the marks to keep some.
+  forInterestMarks?: boolean;
 }
 
 // A Party that others may join: its members and how to join, in the Quest's room.
@@ -246,7 +231,7 @@ function openPartyCard(
 
 // A Party that others may join shows its members and how to join. A closed Party and a Shared Quest that is no
 // Party's show when and where, and the way there; the frames word both as a "비공개 파티" and draw both as a Party. A
-// Quest the User holds alone is worded and drawn as a Quest.
+// Quest the User holds alone is worded and drawn as a Quest, and one taken alone with "여기로" is never called a 파티.
 function partyCard(
   quest: Quest,
   party: QuestParty | null,
@@ -271,7 +256,7 @@ function partyCard(
     kind: party === null ? 'shared-quest' : 'party',
     mark: { type: 'place', place: alone ? 'quest' : 'party' },
     marker: { name: `${alone ? '퀘스트' : '파티'} · ${title}`, short: shortTitle(title), count: 0, minutesOld: null },
-    subLabel: kindWords,
+    subLabel: heldAlone(quest) ? '퀘스트' : kindWords,
     title,
     lines: [
       ...(start === null ? [] : [line('clock', `${koreaDay(start, now)} ${koreaClock(start)}`)]),

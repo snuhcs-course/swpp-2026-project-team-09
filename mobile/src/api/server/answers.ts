@@ -9,6 +9,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -25,7 +26,6 @@ import type {
   PartyQuest,
   Person,
   Place,
-  Position,
   PositionKept,
   Profile,
   SentFriendRequest,
@@ -159,21 +159,6 @@ export function isOpenedInviteLink(value: unknown): value is OpenedInviteLink {
   const status = field(value, 'status');
   return isUserSummary(field(value, 'sender')) && isText(status) && INVITE_LINK_STATUSES.has(status);
 }
-
-const POSITION_LEVELS = new Set<unknown>([undefined, 'building', 'exact']);
-
-function isPosition(value: unknown): value is Position {
-  const placeId = field(value, 'placeId');
-  return (
-    hasTexts(value, ['userId', 'measuredAt']) &&
-    isNumber(field(value, 'latitude')) &&
-    isNumber(field(value, 'longitude')) &&
-    POSITION_LEVELS.has(field(value, 'level')) &&
-    (placeId === undefined || isText(placeId))
-  );
-}
-
-export const isPositions = listOf(isPosition);
 
 export function isEventName(value: unknown): value is { id: string; title: string } | null {
   return value === null || hasTexts(value, ['id', 'title']);

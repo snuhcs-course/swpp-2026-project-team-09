@@ -5,8 +5,13 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-17  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
+import * as Location from 'expo-location';
+import { Platform } from 'react-native';
 import { pass, screen, shownAddress } from './support/app';
 import { holdBackButton } from './support/back';
 import { FRIEND_PILL } from './support/lists';
@@ -166,14 +171,42 @@ describe('the week', () => {
   });
 });
 
+// The mocks start with the Master Switch off.
+async function turnMasterOn(): Promise<void> {
+  const turned = apiClient.setMasterSwitch(true);
+  await pass(300);
+  await turned;
+}
+
 describe('the 위치 공유 card', () => {
-  it('has the Master Switch with the number of Friends, and no 비공개 구역', async () => {
+  // P15 ticket 1: the mocks' Friends allow sharing and their 파티 has its sharing on, which once put two count lines
+  // under the switch.
+  it.each([
+    ['off', false],
+    ['on', true],
+  ])('has the Master Switch %s with no count line under it, and no 비공개 구역', async (_, on) => {
+    expect((await answered(apiClient.listFriends())).some(({ sharing }) => sharing)).toBe(true);
+    expect((await answered(apiClient.getMyParty()))?.sharing).toBe(true);
+    if (on) {
+      await turnMasterOn();
+    }
     await openMe();
 
     expect(screen.getByRole('header', { name: '위치 공유' })).toBeVisible();
-    expect(screen.getByRole('switch', { name: '친구와 위치 공유' })).not.toBeChecked();
-    expect(screen.getByText('12명')).toBeVisible();
+    expect(screen.getByRole('switch', { name: '위치 공유', checked: on })).toBeVisible();
+    expect(screen.queryByText(/위치 공유를 허용한/u)).toBeNull();
     expect(screen.queryByText('비공개 구역 관리')).toBeNull();
+  });
+
+  // The row is Android's, in a development build. Android's switch is found by its label only.
+  it('keeps the row 백그라운드에서도 공유', async () => {
+    jest.replaceProperty(Platform, 'OS', 'android');
+    jest.mocked(Location.isBackgroundLocationAvailableAsync).mockResolvedValue(true);
+    await turnMasterOn();
+    await openMe();
+
+    expect(screen.getByLabelText('백그라운드에서도 공유')).toBeEnabled();
+    expect(screen.getByText('화면이 꺼져도 30초마다 위치를 보내요')).toBeVisible();
   });
 
   it('is outlined when the friend panel\'s "공유 설정" shows it, and the outline goes after 1.2 s', async () => {

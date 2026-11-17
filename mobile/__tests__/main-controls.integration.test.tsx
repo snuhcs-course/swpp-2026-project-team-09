@@ -6,11 +6,13 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { act, within } from '@testing-library/react-native';
-import { BackHandler } from 'react-native';
 import { pass, screen, shownAddress } from './support/app';
+import { holdBackButton } from './support/back';
 import {
   ACTIVE_PARTY,
   AI_INPUT,
@@ -18,7 +20,6 @@ import {
   DINNER_ROW,
   findButton,
   FOLD_FRIENDS,
-  FOOTPRINTS,
   FRIEND_PILL,
   FRIEND_ROW,
   FULL_SCREEN,
@@ -27,9 +28,9 @@ import {
   PARTY_ROW,
   SEND,
 } from './support/lists';
-import { expectContentUnder, hideKeyboard, KEYBOARD, LIFT, quietDismiss, showKeyboard } from './support/keyboard';
+import { hideKeyboard, KEYBOARD, LIFT, quietDismiss, showKeyboard } from './support/keyboard';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
-import { FRIEND, NOT_READY, press } from './support/markers';
+import { FRIEND, press } from './support/markers';
 import { startFresh } from './support/mocks';
 
 jest.mock('expo-location');
@@ -40,6 +41,15 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 }));
 
 const CREDIT = '지도 데이터 출처 보기';
+
+type User = Awaited<ReturnType<typeof openMain>>;
+
+// Sends the words from the map's bar, which the mocks answer.
+async function ask(user: User, words: string): Promise<void> {
+  await user.type(screen.getByLabelText(AI_INPUT), words);
+  await press(user, SEND);
+  await pass(300);
+}
 
 beforeEach(async () => {
   jest.useFakeTimers();
@@ -53,23 +63,13 @@ afterEach(() => {
 });
 
 describe('the controls above the navigation of the main screen', () => {
-  it('shows "오늘의 발자국" with its words, and "활성 파티" with the members who share', async () => {
+  it('shows "활성 파티" with the members who share, and no "오늘의 발자국"', async () => {
     await openMain();
 
-    expect(button(FOOTPRINTS)).toHaveTextContent('민준서연지호오늘의 발자국친구 5명의 오늘');
+    expect(findButton(/^오늘의 발자국/u)).toBeNull();
     expect(button(ACTIVE_PARTY)).toHaveTextContent('활성 파티3명 공유 중');
     expect(button(LAYERS)).toBeVisible();
     expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', '무엇이든 부탁해 보세요');
-  });
-
-  it('draws the three faces of "오늘의 발자국" as decoration, hidden from a screen reader', async () => {
-    await openMain();
-
-    const faces = within(button(FOOTPRINTS));
-    expect(faces.queryByLabelText('이서연')).toBeNull();
-    for (const name of ['김민준', '이서연', '박지호']) {
-      expect(faces.getByLabelText(name, { includeHiddenElements: true })).toBeOnTheScreen();
-    }
   });
 
   it('has no "활성 파티" for a User in no Party', async () => {
@@ -77,14 +77,7 @@ describe('the controls above the navigation of the main screen', () => {
     await openMain();
 
     expect(findButton(/^활성 파티/u)).toBeNull();
-    expect(button(FOOTPRINTS)).toBeVisible();
-  });
-
-  it('shows "오늘의 발자국" by its name alone when what it shows did not come', async () => {
-    process.env.EXPO_PUBLIC_MOCK_FAIL = 'getFootprints';
-    await openMain();
-
-    expect(button(FOOTPRINTS)).toHaveTextContent('오늘의 발자국');
+    expect(button(LAYERS)).toBeVisible();
   });
 });
 
@@ -102,17 +95,6 @@ describe('a control of the main screen whose feature belongs to another task', (
     expect(shownAddress()).toBe(address);
     expect(screen.getByRole('header', { name: '파티' })).toBeVisible();
   });
-
-  it.each([['오늘의 발자국', FOOTPRINTS]] as const)('says that it is not ready: %s', async (_control, name) => {
-    const user = await openMain();
-
-    await press(user, name);
-
-    expect(screen.getByText(NOT_READY)).toBeVisible();
-    expect(screen.queryByTestId('map-card')).toBeNull();
-    await pass(2400);
-    expect(screen.queryByText(NOT_READY)).toBeNull();
-  });
 });
 
 describe("the main screen's AI input", () => {
@@ -123,87 +105,49 @@ describe("the main screen's AI input", () => {
     expect(button(SEND)).toBeDisabled();
   });
 
-  it('opens the chat, which the mocks answer where the app asks no main server', async () => {
+  it('shows the answer frame, which the mocks answer where the app asks no main server', async () => {
     const user = await openMain();
 
-    await user.press(screen.getByLabelText(AI_INPUT));
-    await press(user, '식사 메뉴 추천');
-    await pass(300);
+    await ask(user, '식사 메뉴 추천');
 
-    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent(/^오늘 메뉴예요\./u);
+    expect(screen.getByTestId('answer-card')).toHaveTextContent(/^식사 메뉴 추천오늘 메뉴예요\./u);
   });
 });
 
 describe("the main screen's AI input over the keyboard", () => {
-  it("rises by the keyboard less the navigation under it, with the chat's room, and comes back when it hides", async () => {
-    const user = await openMain();
-    await user.press(screen.getByLabelText(AI_INPUT));
-    // The bar is 12 above the navigation and 50 high; the chat keeps 32 above it.
+  it('rises by the keyboard less the navigation under it, and comes back when it hides', async () => {
+    await openMain();
+    // The bar is 12 above the navigation.
     expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 });
-    expectContentUnder('chat-empty', 94);
 
     await showKeyboard(KEYBOARD);
     expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 + LIFT });
-    expectContentUnder('chat-empty', 94 + LIFT);
 
     await hideKeyboard();
     expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 });
-    expectContentUnder('chat-empty', 94);
-  });
-
-  it('keeps the last bubble clear of it, and sends an example with its first press', async () => {
-    const dismiss = quietDismiss();
-    const user = await openMain();
-    await user.press(screen.getByLabelText(AI_INPUT));
-    await showKeyboard(KEYBOARD);
-
-    await press(user, '식사 메뉴 추천');
-    await pass(300);
-
-    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent(/^오늘 메뉴예요\./u);
-    expectContentUnder('chat-bubbles', 94 + LIFT);
-    expect(dismiss).not.toHaveBeenCalled();
   });
 });
 
 describe('what puts the keyboard down on the main screen', () => {
-  it("puts the keyboard down when Android's back button closes the chat", async () => {
-    const dismiss = quietDismiss();
-    const listen = jest.spyOn(BackHandler, 'addEventListener');
+  it("puts the keyboard down when Android's back button closes the answer frame", async () => {
+    const back = holdBackButton();
     const user = await openMain();
-    await user.press(screen.getByLabelText(AI_INPUT));
-
-    await act(() => {
-      listen.mock.lastCall?.[1]({ type: 'hardwareBackPress', timeStamp: 0 });
-    });
-
-    expect(screen.queryByTestId('chat-sheet')).toBeNull();
-    expect(dismiss).toHaveBeenCalledTimes(1);
-  });
-
-  it("lets a drag of the conversation put the keyboard down, and an answer's map button too", async () => {
+    await ask(user, '식사 메뉴 추천');
     const dismiss = quietDismiss();
-    const user = await openMain();
-    await user.press(screen.getByLabelText(AI_INPUT));
-    expect(screen.getByTestId('chat-empty')).toHaveProp('keyboardDismissMode', 'on-drag');
 
-    await press(user, '식사 메뉴 추천');
-    await pass(300);
-    expect(screen.getByTestId('chat-bubbles')).toHaveProp('keyboardDismissMode', 'on-drag');
+    await back();
 
-    await press(user, '지도에서 식당 보기');
-    expect(screen.queryByTestId('chat-sheet')).toBeNull();
+    expect(screen.queryByTestId('answer-pill')).toBeNull();
     expect(dismiss).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('the main screen while a card is open', () => {
-  it('hides "오늘의 발자국", "활성 파티" and the 편의기능 button, and keeps the lists, the AI input and the navigation', async () => {
+  it('hides "활성 파티" and the 편의기능 button, and keeps the lists, the AI input and the navigation', async () => {
     const user = await openMain();
 
     await press(user, FRIEND);
 
-    expect(findButton(FOOTPRINTS)).toBeNull();
     expect(findButton(ACTIVE_PARTY)).toBeNull();
     expect(findButton(LAYERS)).toBeNull();
     expect(button(FRIEND_PILL)).toBeVisible();
@@ -214,7 +158,7 @@ describe('the main screen while a card is open', () => {
     expect(screen.getByRole('tab', { name: '행사' })).toBeVisible();
 
     await press(user, '닫기');
-    expect(button(FOOTPRINTS)).toBeVisible();
+    expect(button(ACTIVE_PARTY)).toBeVisible();
     expect(button(LAYERS)).toBeVisible();
   });
 });
@@ -223,8 +167,9 @@ describe("the map's credit on the main screen", () => {
   it('sits above the row of buttons, in line with the controls at the left', async () => {
     await openMain();
 
-    // The row ends 126 above the navigation; the map's own margin of 8 is over that.
-    expect(button(CREDIT)).toHaveStyle({ left: 16, bottom: 134 });
+    // The row ends 126 above the navigation; the map's own margin of 8 is over that. The map lies under the
+    // navigation, 80 high, and counts from the screen's bottom.
+    expect(button(CREDIT)).toHaveStyle({ left: 16, bottom: 80 + 134 });
   });
 
   it('sits above a card while one is open', async () => {
@@ -233,7 +178,7 @@ describe("the map's credit on the main screen", () => {
     await layCard(180);
 
     // The card's bottom is 72 above the navigation and it is 180 high.
-    expect(button(CREDIT)).toHaveStyle({ left: 16, bottom: 260 });
+    expect(button(CREDIT)).toHaveStyle({ left: 16, bottom: 80 + 260 });
   });
 
   it('leaves the card and the AI input clear of each other', async () => {

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -80,10 +81,10 @@ function shownCard(): ReturnType<typeof within> {
   return within(screen.getByTestId('map-card'));
 }
 
-// Opens the Friend's card from their row of the friend list, with the switch on, `waitMs` after the main screen is
+// Opens the Friend's card from their row of the friend list, `waitMs` after the main screen is
 // shown, and then "어디까지 보이나".
 async function openSeen(friend: Friend, waitMs = 0): Promise<void> {
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await pass(waitMs);
   await press(user, `${friend.name} 지도에서 보기`);
   await user.press(shownCard().getByRole('button', { name: SEEN }));

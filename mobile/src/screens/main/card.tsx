@@ -7,6 +7,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
@@ -19,6 +20,7 @@ import { useFriendFacts } from '@/features/assistant/use-tap-answer';
 import { useFriendProfile } from '@/features/friends/use-friend-profile';
 import { type CardMark, type CardView, friendIdOf } from '@/features/map/adapter';
 import { CardFacts } from './card-facts';
+import { FavoriteToggle } from '../events/favorite-toggle';
 import { Choices, GroupMark } from './card-choices';
 import { CARD } from './layout';
 import { StudyRows } from './study-rows';
@@ -26,7 +28,10 @@ import { StudyRows } from './study-rows';
 export const LOOK_CLOSER = '가까이 보기';
 
 // What the card draws of a thing, which a Friend's card has also for a Friend whom the map does not show.
-type CardContent = Pick<CardView, 'id' | 'mark' | 'subLabel' | 'title' | 'lines' | 'primary' | 'study' | 'choices'>;
+type CardContent = Pick<
+  CardView,
+  'id' | 'mark' | 'subLabel' | 'title' | 'lines' | 'primary' | 'study' | 'choices' | 'event'
+>;
 
 export interface CardProps {
   card: CardContent;
@@ -104,14 +109,15 @@ export function CloseButton({ onClose }: Pick<CardProps, 'onClose'>): ReactEleme
   );
 }
 
+// A Global Event's card has its ☆ left of the X; a place's card that lists events has none, its rows show ★.
 export function Head({
   card,
   onClose,
 }: {
-  card: Pick<CardContent, 'mark' | 'subLabel' | 'title'>;
+  card: Pick<CardContent, 'mark' | 'subLabel' | 'title'> & Partial<Pick<CardContent, 'event'>>;
   onClose: () => void;
 }): ReactElement {
-  const { mark, subLabel, title } = card;
+  const { mark, subLabel, title, event } = card;
   return (
     <View style={styles.head}>
       <Leading mark={mark} />
@@ -130,6 +136,7 @@ export function Head({
           {title}
         </Text>
       </View>
+      {event === undefined ? null : <FavoriteToggle eventId={event.id} style={styles.favorite} />}
       <CloseButton onClose={onClose} />
     </View>
   );
@@ -167,8 +174,8 @@ function SeenRow({ seen, onPress = openSharing }: { seen: string; onPress?: () =
 }
 
 // The card's lines. A Friend's card is their profile: what the User sees of them before the lines, and their Friend
-// ID and since when the two have been Friends after them, each where the main server sends it. With the switch on, the
-// fact lines of the main server's card of the Friend stand in place of the lines once they came.
+// ID and since when the two have been Friends after them, each where the main server sends it. The fact lines of the
+// main server's card of the Friend stand in place of the lines once they came.
 function Lines({ card, onSeen }: Pick<CardProps, 'card' | 'onSeen'>): ReactElement | null {
   const userId = friendIdOf(card.id);
   const facts = useFriendProfile(userId)?.facts ?? null;
@@ -288,6 +295,8 @@ const styles = StyleSheet.create({
     marginTop: -space[2],
     marginRight: -space[2],
   },
+  // Beside the X, at its height, with no room between their touch areas taken from the title.
+  favorite: { alignSelf: 'flex-start', marginTop: -space[2], marginRight: -space[3] },
   lines: { gap: space[1] },
   line: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   seen: { minHeight: SEEN_HEIGHT },

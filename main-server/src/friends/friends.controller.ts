@@ -4,6 +4,7 @@
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
@@ -40,7 +41,7 @@ export class FriendsController {
     @CurrentUser() user: SignedInUser,
     @Body({ schema: sendFriendRequestSchema }) body: SendFriendRequestDto,
   ): Promise<SentFriendRequestDto> {
-    return this.friends.sendRequest(user.id, body.friendId);
+    return this.friends.sendRequest(user.id, body);
   }
 
   @Get('friend-requests')

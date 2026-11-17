@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -24,6 +25,8 @@ function masterOffAskedOf(lobby: Lobby): boolean {
 
 export interface MasterSwitch {
   on: boolean;
+  // Known to be off: false while the Lobby is still loading, so nothing is held off before the app knows.
+  off: boolean;
   // Shows the new state at once, and the old one again with a toast when the main server did not take it. `done` is
   // the toast once it did.
   turn: (on: boolean, done?: string) => void;
@@ -37,7 +40,9 @@ export interface MasterSwitch {
 export function useMasterSwitch(): MasterSwitch {
   const queryClient = useQueryClient();
   const showToast = useToast();
-  const on = useQuery({ ...lobbyQuery, select: masterSwitchOf }).data === true;
+  const shown = useQuery({ ...lobbyQuery, select: masterSwitchOf }).data;
+  const on = shown === true;
+  const off = shown === false;
   const offAsked = useQuery({ ...lobbyQuery, select: masterOffAskedOf }).data === true;
   const turn = useCallback(
     (next: boolean, done?: string) => {
@@ -66,5 +71,5 @@ export function useMasterSwitch(): MasterSwitch {
     queryClient.setQueryData<Lobby>(LOBBY_KEY, (lobby) => lobby && { ...lobby, masterOffAsked: true });
     void apiClient.recordMasterOffAsked().catch(() => null);
   }, [queryClient]);
-  return { on, turn, offAsked, markOffAsked };
+  return { on, off, turn, offAsked, markOffAsked };
 }

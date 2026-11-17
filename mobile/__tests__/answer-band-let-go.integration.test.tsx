@@ -65,7 +65,7 @@ type User = Awaited<ReturnType<typeof openMain>>;
 
 // Asks "만나고 싶다" from 민수's card and lays the band's track out.
 async function meetMinSu(): Promise<User> {
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await press(user, row(MIN_SU));
   await meetFromCard(user);
   await layTrack(390);

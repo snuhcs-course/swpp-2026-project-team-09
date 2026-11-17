@@ -2,9 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { within } from '@testing-library/react-native';
+import { fireEvent, within } from '@testing-library/react-native';
+import { ScrollView } from 'react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -16,7 +19,8 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // P02 ticket 12 against the fake main server: a request that failed says so in two lines and keeps the words in the
-// input (n16), and while the reply is on its way the card says 보는 중 with 그만, and the input is hidden (n18).
+// input (n16), and while the reply is on its way the card shows the dots (보는 중) with 그만, and the input is hidden
+// (n18).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -38,7 +42,6 @@ const ANSWERED = { status: 200, body: { text: REPLY, mapButtons: [], cards: [], 
 const FAILED_FIRST = '답을 가져오지 못했어요.';
 const FAILED_SECOND = '연결이 끊겼거나 서버가 답하지 않았어요. 쓴 말은 입력칸에 그대로 두었어요.';
 const USED_UP = '오늘은 여기까지 답할 수 있어요. 내일 다시 물어봐 주세요';
-const SLOW_FAILURE = { status: 503, body: { statusCode: 503, message: 'Refused' }, afterMs: 1000 };
 
 let server: FakeServer;
 
@@ -88,13 +91,13 @@ function sentWith(messages: object[]): unknown {
 // The frame, after the words were sent and the request failed.
 async function failedInFrame(): Promise<User> {
   server.on('POST /assistant/messages', refusal(503));
-  const user = await openMain({ answerOnMap: true });
+  const user = await openMain();
   await ask(user);
   return user;
 }
 
-// Partitions: the switch on and off; a failure the Assistant may get over, and the daily limit; the words kept,
-// edited, sent again, and dropped with the frame.
+// Partitions: a failure the Assistant may get over, and the daily limit; the words kept, edited, sent again, and dropped
+// with the frame.
 describe('a request that failed, in the frame (n16)', () => {
   it('says what failed in two lines with 다시 시도, and the input holds the words that were sent', async () => {
     await failedInFrame();
@@ -118,7 +121,7 @@ describe('a request that failed, in the frame (n16)', () => {
 
   it('keeps its own words for the daily limit, with no 다시 시도 and nothing put back', async () => {
     server.on('POST /assistant/messages', refusal(429));
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
 
     await ask(user);
 
@@ -160,82 +163,94 @@ describe('the words kept after a failure, in the frame (n16)', () => {
     expect(input()).toHaveDisplayValue('');
   });
 
-  it('empties the input when the frame is closed with the words untouched', async () => {
+  it('keeps the words when the frame is hidden with ✕, and empties the input untouched with 새 대화', async () => {
     const user = await failedInFrame();
 
     await user.press(screen.getByRole('button', { name: '답 닫기' }));
-
-    expect(input()).toHaveDisplayValue('');
-  });
-});
-
-describe('a request that failed, in the chat sheet (n16)', () => {
-  it('says the two lines with 다시 시도, and the input holds the words that were sent', async () => {
-    server.on('POST /assistant/messages', refusal(503));
-    const user = await openMain();
-    await user.press(input());
-
-    await ask(user);
-
-    const bubble = screen.getByTestId('assistant-bubble');
-    expect(bubble).toHaveTextContent(FAILED_FIRST, { exact: false });
-    expect(bubble).toHaveTextContent(FAILED_SECOND, { exact: false });
     expect(input()).toHaveDisplayValue(ASKED);
-  });
+    await user.press(screen.getByRole('button', { name: '이전 답' }));
+    await user.press(screen.getByRole('button', { name: '새 대화' }));
 
-  it('keeps what the User wrote while waiting, in place of the words sent', async () => {
-    server.on('POST /assistant/messages', SLOW_FAILURE);
-    const user = await openMain();
-    await user.press(input());
-    await send(user, ASKED);
-
-    await user.type(input(), '한식');
-    await pass(1000);
-
-    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent(FAILED_FIRST, { exact: false });
-    expect(input()).toHaveDisplayValue('한식');
-  });
-
-  it('empties the input once 다시 시도 sends the words again', async () => {
-    server.on('POST /assistant/messages', refusal(503));
-    const user = await openMain();
-    await user.press(input());
-    await ask(user);
-    server.on('POST /assistant/messages', { ...ANSWERED, afterMs: 1000 });
-
-    await user.press(screen.getByRole('button', { name: '다시 시도' }));
-    await pass(1000);
-
-    expect(screen.getByTestId('assistant-bubble')).toHaveTextContent(REPLY);
     expect(input()).toHaveDisplayValue('');
   });
 });
 
-// Partitions: waiting, then the reply; waiting, then 그만.
+// Partitions: waiting, then the reply.
 describe('waiting for the reply (n18)', () => {
-  it('says 보는 중 with 그만, and hides the input', async () => {
-    const user = await openMain({ answerOnMap: true });
+  it('shows the question and the dots, labelled 보는 중, with a 그만 icon button, and keeps the input', async () => {
+    const user = await openMain();
 
     await send(user, ASKED);
 
-    expect(card().getByText('보는 중')).toBeVisible();
+    expect(card().getByTestId('turn-question')).toHaveTextContent(ASKED);
+    expect(card().getByLabelText('보는 중')).toBeVisible();
+    expect(card().queryByText('보는 중')).toBeNull();
     expect(card().getByRole('button', { name: '그만' })).toBeVisible();
-    expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
+    expect(card().queryByText('그만')).toBeNull();
+    expect(input()).toHaveProp('placeholder', '이어서 말하기');
+  });
+
+  it('keeps the card as high as the reply before while the next one is on its way', async () => {
+    const user = await openMain();
+    await ask(user);
+    const content = screen.getByTestId('answer-card-content');
+    await fireEvent(content, 'contentSizeChange', 390, 420);
+
+    await send(user, '한식');
+    await fireEvent(content, 'contentSizeChange', 390, 120);
+
+    expect(content.props.contentContainerStyle).toContainEqual({ minHeight: 420 });
+  });
+
+  it('starts at the top of the card, where the next question stands, however far the reply was scrolled', async () => {
+    const scrolled = jest.spyOn(ScrollView.prototype, 'scrollTo');
+    const user = await openMain();
+    await ask(user);
+    scrolled.mockClear();
+
+    await send(user, '한식');
+
+    expect(scrolled).toHaveBeenCalledWith({ y: 0, animated: false });
   });
 
   it('brings the input back with the reply', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
 
     await ask(user);
 
     expect(card().getByText(REPLY)).toBeVisible();
-    expect(card().queryByText('보는 중')).toBeNull();
+    expect(card().queryByLabelText('보는 중')).toBeNull();
     expect(card().queryByRole('button', { name: '그만' })).toBeNull();
     expect(input()).toHaveProp('placeholder', '이어서 말하기');
   });
+});
 
-  it('closes the answer with 그만, forgets the reply on its way, and brings the input back', async () => {
-    const user = await openMain({ answerOnMap: true });
+// Partitions: 그만 on a follow-up, and on the first question.
+describe('그만 while the reply is on its way (n18)', () => {
+  it('takes a follow-up back: the turn before is shown, and the reply is dropped', async () => {
+    const user = await openMain();
+    await ask(user);
+    server.on('POST /assistant/messages', { status: 200, body: { ...ANSWERED.body, text: '한식이요' }, afterMs: 1000 });
+    await send(user, '한식');
+
+    await user.press(card().getByRole('button', { name: '그만' }));
+    await pass(1000);
+
+    expect(within(screen.getByTestId('answer-pill')).getByText(ASKED)).toBeVisible();
+    expect(card().getByText(REPLY)).toBeVisible();
+    expect(screen.queryByText('한식이요')).toBeNull();
+    await ask(user, '양식');
+    expect(sentBodies().at(-1)).toEqual(
+      sentWith([
+        { role: 'user', text: ASKED },
+        { role: 'assistant', text: REPLY, cards: [] },
+        { role: 'user', text: '양식' },
+      ]),
+    );
+  });
+
+  it('closes the answer on the first question, forgets the reply on its way, and brings the input back', async () => {
+    const user = await openMain();
     await send(user, ASKED);
 
     await user.press(card().getByRole('button', { name: '그만' }));

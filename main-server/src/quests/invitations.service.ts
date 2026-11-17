@@ -9,6 +9,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -34,7 +35,7 @@ import {
 import { LeaderService } from './leader.service.js';
 import { QuestsService } from './quests.service.js';
 import { RecruitingService } from './recruiting.service.js';
-import { alreadyHolder, conflict, notFound } from './refusals.js';
+import { alreadyHolder, conflict, notFound, takenAloneRefused } from './refusals.js';
 
 export type CreatedInvitation = Prisma.QuestInvitationGetPayload<{ include: typeof WAITING_INCLUDE }>;
 
@@ -64,7 +65,9 @@ export class InvitationsService {
 
   async invite(leaderId: string, questId: string, userId: string): Promise<void> {
     const created = await this.prisma.$transaction(async (tx) => {
-      await this.leader.lockLed(questId, leaderId, tx);
+      if ((await this.leader.lockLed(questId, leaderId, tx)).takenAlone) {
+        throw takenAloneRefused();
+      }
       if ((await this.quests.holderIds(questId, tx)).includes(userId)) {
         throw alreadyHolder();
       }

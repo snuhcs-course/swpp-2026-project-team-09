@@ -3,12 +3,13 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
 import { EVENTS_ANSWER } from '@/api/mock/data/events-answer';
 import { field } from '@/api/server/answers';
-import type { GlobalEvent } from '@/api/types';
+import type { ListedGlobalEvent } from '@/api/types';
 import type { KeptNotification } from '@/api/waiting-types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -45,8 +46,9 @@ function eventAt(
   title: string,
   [startsAt, endsAt]: [string, string],
   [latitude, longitude]: [number, number],
-): GlobalEvent {
-  return { id, title, description: '', startsAt, endsAt, place: '문화관', latitude, longitude, sourceUrl: null };
+): ListedGlobalEvent {
+  const event = { id, title, description: '', startsAt, endsAt, place: '문화관', latitude, longitude, sourceUrl: null };
+  return { ...event, publishedAt: null, favorite: false };
 }
 
 const HALL: [number, number] = [37.46159, 126.95104];
@@ -87,8 +89,14 @@ const TOLD: KeptNotification = {
 
 const MARK = '채용박람회 외 1';
 const FRESH_MARK = `${MARK} · 새로 올라왔어요`;
-// The names the map gives the events today, with the switch off.
+// The names the map would give the events today. Without marks the map keeps only the Favorite Events.
 const TODAY = ['공식 행사 2개 · 문화관', '공식 행사 · 동아리 정기공연', '공식 행사 · AI 특강'];
+const STARRED = '공식 행사 · 동아리 정기공연';
+
+// The concert is a Favorite Event.
+function starConcert(): void {
+  server.on('GET /global-events', { status: 200, body: [JOB_FAIR, TALK, { ...CONCERT, favorite: true }, LECTURE] });
+}
 
 let server: FakeServer;
 
@@ -134,11 +142,11 @@ function looks(name: string, part: string): boolean {
   return String(lookOf(name)).split(':').includes(part);
 }
 
-// Partitions: the switch on with matches, a watched match told and a hashtag match; an event that matches nothing.
-// Expected values: the design's "Watching interests" and the ticket's "newly posted".
-describe('the switch on', () => {
+// Partitions: matches, a watched match told and a hashtag match; an event that matches nothing. Expected values: the
+// design's "Watching interests" and the ticket's "newly posted".
+describe('the marks', () => {
   it('draws only the matching events, at one place under one mark named after the first, with "!"', async () => {
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     expect(drawn(FRESH_MARK)).toBe(true);
     expect(looks(FRESH_MARK, 'fresh')).toBe(true);
@@ -148,7 +156,7 @@ describe('the switch on', () => {
   });
 
   it('opens the answer for the mark\'s events on a tap, as asking does, and the mark loses its "!"', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
 
     await user.press(screen.getByRole('button', { name: FRESH_MARK }));
     await pass(500);
@@ -171,7 +179,7 @@ describe('the switch on', () => {
 
   it('keeps "!" when the answer cannot be had', async () => {
     server.on('POST /assistant/answers', { status: 500, body: { statusCode: 500, message: 'Internal' } });
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
 
     await user.press(screen.getByRole('button', { name: FRESH_MARK }));
     await pass(1500);
@@ -186,7 +194,7 @@ describe('the switch on', () => {
 // is drawn without a restart.
 describe('the matches read again', () => {
   it('on a notice, drawing a new match', async () => {
-    await openMain({ answerOnMap: true });
+    await openMain();
     server.on('GET /interests/matches', {
       status: 200,
       body: { globalEvents: [{ id: CONCERT.id, watched: true }], quests: [] },
@@ -213,7 +221,7 @@ describe('a User who watches nothing', () => {
     server.on('GET /interests', { status: 200, body: [] });
     server.on('GET /interests/matches', { status: 200, body: { globalEvents: [], quests: [] } });
 
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     expect(looks(MARK, 'faded')).toBe(true);
     expect(looks('동아리 정기공연', 'faded')).toBe(true);
@@ -221,26 +229,35 @@ describe('a User who watches nothing', () => {
   });
 });
 
-// Partitions: the switch off; the switch on with a main server without the matches. Expected values: the ticket, the
-// map as today.
-describe('the map as today', () => {
-  it('with the switch off draws every event as before, and asks for no matches', async () => {
+// Partitions: a Favorite Event that matches no interest, beside the marks the matches give (P06 ticket 01 with the
+// marks always on since P02-04). Expected values: the ticket and the app's README, a Favorite Event's pin at every level.
+describe('a Favorite Event beside the marks', () => {
+  it('keeps its starred pin though it matches nothing, and the marks stay', async () => {
+    starConcert();
+
     await openMain();
 
-    for (const name of TODAY) {
-      expect(drawn(name)).toBe(true);
-      expect(looks(name, 'fresh') || looks(name, 'faded')).toBe(false);
-    }
-    expect(server.received('GET /interests/matches')).toEqual([]);
+    expect(drawn(STARRED)).toBe(true);
+    expect(looks(STARRED, 'starred')).toBe(true);
+    expect(drawn(FRESH_MARK)).toBe(true);
+    expect(drawn('AI 특강')).toBe(false);
   });
+});
 
-  it('with the switch on and a main server that answers 404 for the matches draws every event as before', async () => {
+// Partitions: a main server without the matches. Expected values: the ticket, the map without marks, which keeps only
+// the Favorite Events (P06 ticket 01).
+describe('the map without marks', () => {
+  it('with a main server that answers 404 for the matches draws only the Favorite Event, with its star and no "!"', async () => {
+    starConcert();
     server.on('GET /interests/matches', { status: 404, body: { statusCode: 404, message: 'Not Found' } });
 
-    await openMain({ answerOnMap: true });
+    await openMain();
 
-    for (const name of TODAY) {
-      expect(drawn(name)).toBe(true);
+    expect(drawn(STARRED)).toBe(true);
+    expect(looks(STARRED, 'starred')).toBe(true);
+    expect(looks(STARRED, 'fresh') || looks(STARRED, 'faded')).toBe(false);
+    for (const name of TODAY.filter((one) => one !== STARRED)) {
+      expect(drawn(name)).toBe(false);
     }
     expect(drawn(MARK)).toBe(false);
   });

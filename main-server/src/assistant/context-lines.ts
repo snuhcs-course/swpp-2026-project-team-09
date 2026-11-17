@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type RequestContext } from './dto/answer.dto.js';
@@ -35,6 +36,7 @@ export function contextLines({ conditions, planId, tapped }: RequestContext): st
       friendIds: people.slice(1).map(({ userId }) => userId),
       from: window.from,
       until: window.until,
+      ...(window.now === true ? { now: true } : {}),
       placeId,
     };
     lines.push(`[Plan on screen: ${JSON.stringify(plan)}]`);

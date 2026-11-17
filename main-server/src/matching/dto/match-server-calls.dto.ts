@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -34,6 +35,8 @@ export interface EligibleAnswerDto {
     capacity: number;
     freePlaces: number;
     holderIds: string[];
+    // The Users the Leader removed, whom the match server never places into it.
+    removedIds: string[];
     createdAt: string;
   }[];
 }

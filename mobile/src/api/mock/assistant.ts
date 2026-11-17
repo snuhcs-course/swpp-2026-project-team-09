@@ -32,6 +32,7 @@ import { NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from './data/missing-inputs';
 import { refusalReplyTo } from './data/refusals';
 import { STUDY_LOOKUP_REPLY } from './data/study-lookup';
 import { FRIEND_TAPS, STAND_IN_FRIEND_TAP, TAP_LOOKUPS } from './data/tap-lookups';
+import { EASED_ANSWER, NOT_NOW_ANSWER, NOT_NOW_ASKED, NOT_NOW_REPLY } from './data/unmet-plans';
 import { WAY_LOOKUP_REPLY } from './data/way-lookup';
 import {
   LATE_LOOKUP_REPLY,
@@ -50,6 +51,7 @@ import {
 import { MEET_ANSWER, MEET_ANSWER_FROM_14 } from './data/meet-answer';
 import { GLOBAL_EVENTS } from './data/quests';
 import { isLibraryAsk, libraryReply } from './library-replies';
+import { rowFourCopyOf, rowFourReplyOf } from './row-four-copies';
 import { mockTimetable } from './timetable';
 
 // The Assistant without a model: a question about the menus is answered from the mocks' menus of the day, one about
@@ -58,13 +60,14 @@ import { mockTimetable } from './timetable';
 // one about 파티 with the mocks' recruiting Quests that meet soonest as cards, one about events with the mocks' Global
 // Events as cards, and anything else with a short reply, so that the chat can be seen and tried where the app asks no
 // main server. Asked 배고파 with what the app knew (a context), it answers with the main server's real answer drawn on
-// the map, and with a context it answers with the main server's real Lookups: where something is (어디) with 문화관,
+// the map, and it answers with the main server's real Lookups: where something is (어디) with 문화관,
 // 301동식당's menu, where 민수 is, a place to study near here (이 근처) with board a9's study spaces over 공대, whatever
 // area the app sent, in the words of boards q2 to q4 the way to 24동 on time (까지 몇 분), late (늦나), and by the
 // shuttle (셔틀 탈까), and of board n21 the way to 919동 when the shuttle is not running (기숙사 가는 셔틀). The words of a
-// board of row 8 with a context get the main server's real refusal, before anything else. 배고파 without the location
-// permission, or with no Class in the mock's Timetable, gets the main server's real answer of board n13 or n15. A press
-// on a building or a face is answered with the main server's real cards of row 6.
+// board of row 8 get the main server's real refusal, before anything else. 배고파 without the location
+// permission, or with no Class in the mock's Timetable, gets the main server's real answer of board n13 or n15, and
+// board n11's words its answer of no time now. A press on a building or a face is answered with the main server's real
+// cards of row 6.
 
 const MENU_WORDS = ['메뉴', '학식', '점심', '저녁', '아침', '밥'];
 const SHUTTLE_WORDS = ['셔틀', '버스'];
@@ -157,22 +160,36 @@ function menusReply(): string {
   return ['오늘 메뉴예요.', ...lines].join('\n');
 }
 
+// The mock's own Places (`data/places.ts`) of the copies' fixed Places, 자하연식당's building and 301동, so that a
+// building pressed on the mock gets them too.
+const PRESSED_ON_MOCK: Readonly<Record<string, AnswerReply>> = {
+  'place-109': MEAL_ANSWER_FIXED_PLACE,
+  'place-301': MEAL_ANSWER_UNFIT_PLACE,
+};
+
 // The mock holds copies of meal answers and of one meet, asked as it first is and again from 14:00, so other conditions
 // are read as a meal of the User alone. Three people at a pressed Place get the copy of that Place when there is one
-// ("여기면 어때?").
+// ("여기면 어때?"). A meal 지금 of three is board n11's, and one eased from 지금 board n11b's.
 function copyFor(input: PlanInput): AnswerReply {
+  const rowFour = rowFourCopyOf(input);
+  if (rowFour !== null) {
+    return rowFour;
+  }
   if (input.kind === 'meet') {
     return input.window.from === MEET_ANSWER_FROM_14.input.window.from ? MEET_ANSWER_FROM_14 : MEET_ANSWER;
   }
   const people = input.kind === 'meal' || input.kind === 'new-quest' ? input.people : [];
   const from = input.kind === 'meal' ? input.window.from : null;
+  if (input.kind === 'meal' && input.window.now === true && (from !== null || people.length >= 3)) {
+    return from === null ? NOT_NOW_ANSWER : EASED_ANSWER;
+  }
   if (people.length <= 1) {
     return MEAL_ANSWER_ALONE;
   }
   if (people.length >= 3) {
     const placeId = input.kind === 'meal' ? input.placeId : null;
     const pressed = [MEAL_ANSWER_FIXED_PLACE, MEAL_ANSWER_UNFIT_PLACE].find((copy) => copy.input.placeId === placeId);
-    return pressed ?? MEAL_ANSWER_THREE;
+    return pressed ?? (placeId === null ? undefined : PRESSED_ON_MOCK[placeId]) ?? MEAL_ANSWER_THREE;
   }
   if (from !== null) {
     return MEAL_ANSWER_FIXED_START;
@@ -209,11 +226,14 @@ function hungryReplyOf({ locationMissing }: RequestContext): AssistantReply {
 }
 
 // The stored refusal of a board of row 8, answers of 배고파, and Lookups of 301동식당's menu, of a place to study near
-// here, of where 민수 is, and of a way with a deadline, for a message sent with a context.
+// here, of where 민수 is, and of a way with a deadline.
 function drawnReplyOf(last: string, context: RequestContext): AssistantReply | null {
   const refused = refusalReplyTo(last);
   if (refused !== null) {
     return refused;
+  }
+  if (last.includes(NOT_NOW_ASKED)) {
+    return NOT_NOW_REPLY;
   }
   if (last.includes('배고파')) {
     return hungryReplyOf(context);
@@ -227,7 +247,7 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
   if (last.includes('민수') && last.includes('어디')) {
     return FRIEND_LOOKUP_REPLY;
   }
-  return wayReplyOf(last);
+  return rowFourReplyOf(last) ?? wayReplyOf(last);
 }
 
 // The stored Lookups of a way, by the words of boards q4, q3, q2, and n21: by the shuttle, late, on time, and the
@@ -245,9 +265,9 @@ function wayReplyOf(last: string): AssistantReply | null {
   return last.includes('까지 몇 분') ? LEAVE_LOOKUP_REPLY : null;
 }
 
-export function mockAssistantReply(messages: readonly ChatMessage[], context?: RequestContext): AssistantReply {
+export function mockAssistantReply(messages: readonly ChatMessage[], context: RequestContext): AssistantReply {
   const last = messages.at(-1)?.text ?? '';
-  const drawn = context === undefined ? null : drawnReplyOf(last, context);
+  const drawn = drawnReplyOf(last, context);
   if (drawn !== null) {
     return drawn;
   }
@@ -283,7 +303,7 @@ export function mockAssistantReply(messages: readonly ChatMessage[], context?: R
   if (MENU_WORDS.some((word) => last.includes(word))) {
     return { text: menusReply(), mapButtons: ['dining'], cards: [], proposal: null };
   }
-  if (context !== undefined && last.includes('어디')) {
+  if (last.includes('어디')) {
     return WAY_LOOKUP_REPLY;
   }
   return {

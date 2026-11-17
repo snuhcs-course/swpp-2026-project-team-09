@@ -4,12 +4,15 @@
  * 2026-10-04  Fable 5.1  prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
+import { type ClientProxy } from '@nestjs/microservices';
 import { Redis } from 'ioredis';
 import { randomUUID } from 'node:crypto';
 import { Server } from 'node:http';
+import { type Observable } from 'rxjs';
 import { inject } from 'vitest';
 import { z } from 'zod';
 
@@ -67,10 +70,39 @@ export class SignalWatcher {
   }
 }
 
+// JSON with each object's keys in order, so that a signal and its copy read back from Redis compare equal.
+const canonical = (value: unknown): string =>
+  JSON.stringify(value, (_key, inner: unknown) =>
+    inner !== null && typeof inner === 'object' && !Array.isArray(inner)
+      ? Object.fromEntries(Object.entries(inner).toSorted(([a], [b]) => a.localeCompare(b)))
+      : inner,
+  );
+
+const published = new WeakMap<ClientProxy, string[]>();
+
+// The signals this server has put on Redis since its first signalsWhile, in order.
+function publishedBy(app: INestApplication<Server>): string[] {
+  const client = app.get<ClientProxy>('MESSAGING_CLIENT');
+  const known = published.get(client);
+  if (known !== undefined) {
+    return known;
+  }
+  const signals: string[] = [];
+  const emit = client.emit.bind(client);
+  client.emit = <TResult>(pattern: unknown, data: unknown): Observable<TResult> => {
+    if (pattern === 'signal') {
+      signals.push(canonical(data));
+    }
+    return emit<TResult>(pattern, data);
+  };
+  published.set(client, signals);
+  return signals;
+}
+
 // The signals of that name, those names, or every name with null, that the server sends while `act` runs. A server's
 // signals reach Redis in order, so two signals of the test's own around `act` leave out those an earlier test sent
-// late. Signals that other test files' servers send to the same Redis can fall between the two, so a test that checks
-// that none is sent gives its server and the watcher a Redis of their own, or reads only its own Users' signals.
+// late. Other servers on the same Redis, such as those of the test files running alongside, send signals that fall
+// between the two as well, so of those only the ones this server put on Redis are kept.
 export async function signalsWhile(
   app: INestApplication<Server>,
   watcher: SignalWatcher,
@@ -80,20 +112,32 @@ export async function signalsWhile(
   // Imported after startApp, so that it is the same class AppModule registers.
   const { SignalsService } = await import('../src/common/signals.service.js');
   const signals = app.get(SignalsService);
-  const sendMarker = (): Promise<number> => {
+  const own = publishedBy(app);
+  const sendMarker = async (): Promise<{ at: number; sent: number }> => {
     const marker = `test-${randomUUID()}`;
     signals.send('everyone', marker);
-    return vi.waitFor(() => {
-      const at = watcher.all().findIndex((signal) => signal.name === marker);
-      expect(at).not.toBe(-1);
-      return at;
+    const sent = own.lastIndexOf(canonical({ name: marker }));
+    const at = await vi.waitFor(() => {
+      const index = watcher.all().findIndex((signal) => signal.name === marker);
+      expect(index).not.toBe(-1);
+      return index;
     });
+    return { at, sent };
   };
   const start = await sendMarker();
   await act();
   const end = await sendMarker();
+  const ours = own.slice(start.sent + 1, end.sent);
   return watcher
     .all()
-    .slice(start + 1, end)
+    .slice(start.at + 1, end.at)
+    .filter((signal) => {
+      const at = ours.indexOf(canonical(signal));
+      if (at === -1) {
+        return false;
+      }
+      ours.splice(at, 1);
+      return true;
+    })
     .filter((signal) => names === null || [names].flat().includes(signal.name));
 }

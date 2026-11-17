@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, type userEvent, within } from '@testing-library/react-native';
@@ -14,6 +15,7 @@ import { PLACES } from './dining';
 import type { FakeServer } from './fake-server';
 import { sockets } from './fake-socket';
 import { FAKE_ROOM_FORM, FakeLibrary } from './kwanjeong/fake-library';
+import { hideKeyboard, KEYBOARD, showKeyboard } from './keyboard';
 import { answerFromFakeLibrary } from './library-session';
 import { AI_INPUT } from './lists';
 import { givePhone, ON_CAMPUS, openMain } from './main';
@@ -38,6 +40,17 @@ export const SEAT_CARD: LibraryCard = {
   }),
 };
 
+// The request context every ask of these tests carries: the User's position on campus, and nothing of an answer on
+// screen.
+export const ASK_CONTEXT = {
+  location: ON_CAMPUS,
+  locationMissing: null,
+  viewport: null,
+  tapped: null,
+  conditions: null,
+  planId: null,
+};
+
 export function card(data: LibraryCardData): LibraryCard {
   return { kind: 'library', library: data };
 }
@@ -59,8 +72,8 @@ export async function startLibraryChat(now: Date = LIBRARY_NOW): Promise<{ serve
   return { server, library: answerFromFakeLibrary(new FakeLibrary()) };
 }
 
-// Opens the chat, sends the words and lets the Assistant answer with these cards. The library's "logged in" flag is
-// set unless `loggedIn` is false.
+// Sends the words from the map's bar and lets the Assistant answer with these cards, which the answer frame's card
+// draws. The library's "logged in" flag is set unless `loggedIn` is false.
 export async function askForCards(
   given: { server: FakeServer; library: FakeLibrary },
   // As the main server sends them, which may be a raw object.
@@ -73,15 +86,24 @@ export async function askForCards(
   const body = { text: '카드에서 확인해 주세요.', mapButtons: [], cards, proposal: null };
   given.server.on('POST /assistant/messages', { status: 200, body });
   const user = await openMain();
-  await user.press(screen.getByLabelText(AI_INPUT));
-  await user.type(screen.getByLabelText(AI_INPUT), words);
-  await user.press(screen.getByRole('button', { name: '보내기' }));
-  await pass(500);
+  await sendFromBar(user, words);
   return { ...given, user };
 }
 
+// The words sent from the map's bar, and the reply let in.
+export async function sendFromBar(user: LibraryChat['user'], words: string): Promise<void> {
+  await user.type(screen.getByLabelText(AI_INPUT), words);
+  await user.press(screen.getByRole('button', { name: '보내기' }));
+  await pass(500);
+}
+
+// The answer frame's card, which holds the turn: the reply's cards and the app's own bubbles after it.
+export function inFrame(): ReturnType<typeof within> {
+  return within(screen.getByTestId('answer-card'));
+}
+
 export function inCard(testID: string): ReturnType<typeof within> {
-  return within(screen.getByTestId(testID));
+  return within(inFrame().getByTestId(testID));
 }
 
 // One of the User's bookings, as getMyBookingList lists it: a 7층 seat today at 17:00 unless told otherwise.
@@ -142,11 +164,11 @@ export async function pressIn(
   await pass(0);
 }
 
-// The chat closed with its close button and opened again from the AI input: the sheet mounts anew.
-export async function reopenChat(user: LibraryChat['user']): Promise<void> {
-  await user.press(screen.getByRole('button', { name: '대화 닫기' }));
-  await pass(0);
-  expect(screen.queryByTestId('chat-sheet')).toBeNull();
-  await user.press(screen.getByLabelText(AI_INPUT));
+// The frame's card drawn anew, the conversation kept: the keyboard, up for the next words, empties the card, and its
+// going down draws the turn again.
+export async function redrawFrame(): Promise<void> {
+  await showKeyboard(KEYBOARD);
+  expect(inFrame().queryAllByTestId(/^library-/u)).toEqual([]);
+  await hideKeyboard();
   await pass(0);
 }

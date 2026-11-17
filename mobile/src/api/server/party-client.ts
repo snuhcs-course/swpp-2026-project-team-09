@@ -6,13 +6,14 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
 import type { RecruitingQuest } from '@/api/party-types';
 import { field, isNothing, isPlace, hasTexts, isTextOrNull, listOf } from './answers';
 import { isQuest } from './quest-answers';
-import { isQuestInvitations, isQuestSummary, isQuestWaiting } from './waiting-answers';
+import { isQuestInvitations, isQuestRemovals, isQuestSummary, isQuestWaiting } from './waiting-answers';
 import { call } from './http';
 
 // The operations of the 파티 tab, each from its route of the main server.
@@ -40,6 +41,7 @@ type PartyClient = Pick<
   | 'joinQuest'
   | 'askToJoinQuest'
   | 'listMyJoinRequests'
+  | 'listQuestRemovals'
   | 'withdrawJoinRequest'
   | 'makeQuest'
   | 'attendGlobalEvent'
@@ -59,6 +61,7 @@ export const partyClient: PartyClient = {
     await call('POST', '/quest-join-requests', isQuestWaiting, { body: { questId } });
   },
   listMyJoinRequests: () => call('GET', '/quest-join-requests', isQuestInvitations),
+  listQuestRemovals: () => call('GET', '/quest-removals', isQuestRemovals),
   withdrawJoinRequest: async (requestId) => {
     await call('POST', path('quest-join-requests', requestId, 'withdraw'), isNothing);
   },

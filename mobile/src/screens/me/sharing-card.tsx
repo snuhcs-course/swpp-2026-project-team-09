@@ -3,15 +3,15 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { type ReactElement, useEffect, useState } from 'react';
 import { Animated, type LayoutChangeEvent, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { friendsQuery } from '@/api/queries';
-import type { Friend } from '@/api/types';
 import { cardStyles, color, font, Icon, radius, space, SwitchRow, text } from '@/design-system';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { useSending } from '@/position';
@@ -19,10 +19,6 @@ import { BackgroundRow } from './background-row';
 import type { SharingSwitch } from './use-sharing-switch';
 
 const FADE_MS = 600;
-
-function countOf(friends: Friend[]): number {
-  return friends.length;
-}
 
 // The outline the friend panel's "공유 설정" puts around the card. It fades once `on` is over, at once where the phone
 // asks for less motion.
@@ -82,22 +78,15 @@ function Whole(): ReactElement {
   );
 }
 
-// The 위치 공유 card: the Master Switch, with the number of Friends under it, the row for background sharing, the
-// line that says the User is not shared off campus or inside a Private Zone, and the way to the 위치 공유 screen.
+// The 위치 공유 card on 내 정보, the only place with the Master Switch (P15 ticket 1).
 export function SharingCard({ sharing, outlined, onLayout }: SharingCardProps): ReactElement {
-  const friends = useQuery({ ...friendsQuery, select: countOf }).data;
   const { offCampus, privateZone } = useSending();
   return (
     <View onLayout={onLayout} style={[cardStyles.card, styles.card]}>
       <Text accessibilityRole="header" style={styles.title}>
         위치 공유
       </Text>
-      <SwitchRow
-        description={friends === undefined ? undefined : `${friends}명`}
-        label="친구와 위치 공유"
-        onValueChange={sharing.change}
-        value={sharing.on}
-      />
+      <SwitchRow label="위치 공유" onValueChange={sharing.change} value={sharing.on} />
       <BackgroundRow masterOn={sharing.on} />
       {sharing.on && offCampus ? <Text style={styles.offCampus}>캠퍼스 밖이라 위치가 공유되지 않아요</Text> : null}
       {sharing.on && privateZone ? (

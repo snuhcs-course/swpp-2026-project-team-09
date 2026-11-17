@@ -17,9 +17,8 @@ import { type CardView, cardId, line } from './adapter';
 import { placeGroupId } from './place-groups';
 import { shortTitle } from './short-name';
 
-// The marks of the everyday map while the switch of the answer on the map is on (P05 ticket 13): only what matches
-// the User's interests stands on it, what stands at one place shares one mark, and a mark carries "!" while one of its
-// items is newly posted for the User.
+// The marks of the everyday map (P05 ticket 13): only what matches the User's interests stands on it, what stands at
+// one place shares one mark, and a mark carries "!" while one of its items is newly posted for the User.
 
 // Why items stand on the map, each named by its card's id ("event:<id>", "party:<id>"). `interest`: the matches of the
 // profile's hashtags and the watched interests, with whether a watched interest matched. `today`: a few of today's
@@ -277,8 +276,9 @@ function partyCards(quest: RecruitingQuest, now: Date): CardView[] {
   return [card];
 }
 
-// The map's cards with the marks: the events no mark holds are left out, and each recruiting party a mark holds gets a
-// card after the others, unless the map holds one already. Every other card stays.
+// The map's cards with the marks: the events no mark holds are left out, but a Favorite Event stays (P06 ticket 01),
+// and each recruiting party a mark holds gets a card after the others, unless the map holds one already. Every other
+// card stays.
 export function cardsWithMarks(
   cards: readonly CardView[],
   marks: readonly InterestMark[],
@@ -291,7 +291,10 @@ export function cardsWithMarks(
     const id = cardId.quest(quest.id);
     return shown.has(id) && !known.has(id) ? partyCards(quest, now) : [];
   });
-  return [...cards.filter(({ id, kind }) => kind !== 'global-event' || shown.has(id)), ...parties];
+  const kept = cards.filter(
+    ({ id, kind, event }) => kind !== 'global-event' || shown.has(id) || event?.favorite === true,
+  );
+  return [...kept, ...parties];
 }
 
 // A place's or a group's look with its mark's "!" or fade; any other look, and a plain mark's, as it is.

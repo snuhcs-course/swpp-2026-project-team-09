@@ -11,7 +11,8 @@ import { type Position } from '../../common/geometry.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
 import { type MealInput, type MeetInput } from '../dto/answer.dto.js';
-import { type DayItem } from '../free-time/free-time.js';
+import { type FriendLevel } from '../../friends/dto/friend-view.dto.js';
+import { clockOf, type DayItem } from '../free-time/free-time.js';
 import {
   type Gathering,
   type GatheringDrop,
@@ -19,8 +20,10 @@ import {
   type GatheringSide,
   type PersonPart,
 } from './gathering.js';
+import { type ServedMenu } from './meal-menu.js';
 import { type MissingInputs } from './missing-inputs.js';
 import { PlaceNaming } from './place-naming.js';
+import { type Unmet } from './unmet-plans.js';
 
 // What the words of a meal's answer share: who is who, how a Place is called, and the pieces of a way.
 
@@ -32,6 +35,8 @@ export interface AnswerPerson {
   items: readonly DayItem[];
   // The position the asker may see of them now (the asker's own for the asker), or null.
   position: Position | null;
+  // How much of a Friend the asker sees.
+  level?: FriendLevel;
 }
 
 // What the words of a gathering's answer read, a meal's or a meet's.
@@ -53,6 +58,10 @@ export interface MealAnswerArgs extends GatheringArgs<MealInput> {
   menus: 'none' | 'closed' | 'closed-at-place' | 'open';
   // What the app could not give, left out when nothing was missing.
   missing?: MissingInputs;
+  // What of the conditions could not be met, left out when all were.
+  unmet?: Unmet;
+  // Each open Restaurant's menu for the meal, by its key, which its Plan says.
+  served?: ReadonlyMap<string, ServedMenu>;
 }
 
 const SHORTEST_MEAL_MINUTES = SHORTEST_MEAL_SECONDS / 60;
@@ -136,7 +145,10 @@ export class GatheringNaming<Args extends GatheringArgs = GatheringArgs> extends
     return person;
   }
 
-  dropReason({ togetherMinutes, shortest }: GatheringDrop): string {
+  dropReason({ togetherMinutes, shortest, closing }: GatheringDrop): string {
+    if (closing !== undefined) {
+      return `${clockOf(closing.at)} 닫아요`;
+    }
     if (shortest.minutes >= SHORTEST_MEAL_MINUTES) {
       return `같이 있는 시간이 ${togetherMinutes}분뿐이에요`;
     }

@@ -3,7 +3,10 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
@@ -21,7 +24,7 @@ import {
 } from '@/api/queries';
 import { type ScreenData, askAgain, someFailed, somePending } from '@/api/screen-data';
 import type { RecruitingQuest } from '@/api/party-types';
-import type { Friend, FriendStatus, GlobalEvent, MyParty, Party, Position, Quest } from '@/api/types';
+import type { Friend, FriendStatus, ListedGlobalEvent, MyParty, Party, Position, Quest } from '@/api/types';
 import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
 import { toFriendViews } from '@/features/friends/adapter';
@@ -31,7 +34,7 @@ import { type CardView, toCards } from './adapter';
 import { useInterestMarks, withInterestMarks } from './use-interest-marks';
 
 type Results = [
-  UseQueryResult<GlobalEvent[]>,
+  UseQueryResult<ListedGlobalEvent[]>,
   UseQueryResult<{ eventId: string; announcer: string }[]>,
   UseQueryResult<Quest[]>,
   UseQueryResult<Party[]>,
@@ -47,7 +50,7 @@ type Results = [
 // - a Friend's card needs the Friends and the positions;
 // - a card of a member of the User's Party also needs the Friends, to know that the member is not one.
 // A Global Event's card without the recruiting Quests only lacks its line of them.
-function cardsOf(results: Results, at: Date): CardView[] {
+function cardsOf(results: Results, at: Date, forInterestMarks: boolean): CardView[] {
   const [globalEvents, announcers, quests, parties, myParty, friends, positions, statuses, recruiting] = results;
   const cards = toCards({
     globalEvents: globalEvents.data ?? [],
@@ -60,6 +63,7 @@ function cardsOf(results: Results, at: Date): CardView[] {
     positions: positions.data ?? [],
     meId: myUserId(),
     now: at,
+    forInterestMarks,
   });
   return friends.isError ? cards.filter(({ kind }) => kind !== 'party-member') : cards;
 }
@@ -71,11 +75,11 @@ function agedAt(at: number): Date {
 
 // The announcers and the statuses are the app's own, and the recruiting Quests only count, so none fails the map. It
 // runs again when an answer changes and when `at` does, which ages the positions.
-function combine(results: Results, at: number): ScreenData<CardView[]> {
+function combine(results: Results, at: number, forInterestMarks: boolean): ScreenData<CardView[]> {
   const [globalEvents, , quests, parties, myParty, friends, positions] = results;
   const isPending = somePending(results);
   return {
-    data: isPending ? undefined : cardsOf(results, agedAt(at)),
+    data: isPending ? undefined : cardsOf(results, agedAt(at), forInterestMarks),
     isPending,
     isError: someFailed([globalEvents, quests, parties, myParty, friends, positions]),
     refetch: askAgain(results),
@@ -85,12 +89,13 @@ function combine(results: Results, at: number): ScreenData<CardView[]> {
 // Everything on the map that a press opens, each with its card: Global Events, the User's Parties, Friends and the
 // members of the User's Party. After a failure `data` holds the cards that are still right and `isError` is true. The
 // age of the people's positions is looked at again every 15 seconds: an Avatar dims at two minutes and goes at ten.
-// While the switch of the answer on the map is on, the events and recruiting parties are those of the interest marks.
+// The events and recruiting parties are those of the interest marks, which choose among every event; without the
+// marks (a main server without the matches, or a failed read) the events are the Favorite Events (`event-pins.ts`).
 export function useMapCards(): ScreenData<CardView[]> {
   const at = useNow(POSITION_AGE_EVERY_MS);
   const marks = useInterestMarks();
   const combineAt = useCallback(
-    (results: Results) => withInterestMarks(combine(results, at), marks, agedAt(at)),
+    (results: Results) => withInterestMarks(combine(results, at, marks.marks !== null), marks, agedAt(at)),
     [at, marks],
   );
   return useQueries({

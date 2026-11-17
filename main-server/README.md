@@ -187,9 +187,11 @@ Request to it. The routes, all a User's:
 - `POST /friend-requests` with `{ "friendId": "7KX2M9QD" }` sends a Friend Request to the owner and answers
   `201 { "status": "waiting" }`. When the owner's own request to the sender is waiting, the two become Friends at once,
   no request is left, and the answer is `201 { "status": "friends" }`. A repeat is refused as a request already sent,
-  so it takes no `Idempotency-Key`.
-- `GET /friend-requests` answers the waiting requests sent to the User and those the User sent, the newest first:
-  `{ "received": [{ "id", "sender": { "name", "department" }, "sentAt" }], "sent": [{ "id", "receiver": { ... }, "sentAt" }] }`.
+  so it takes no `Idempotency-Key`. `{ "userId": "..." }` in place of the Friend ID, as a 파티's member rows send it,
+  goes only to a User who holds a Quest with the sender; a user id nobody holds is refused the same way.
+- `GET /friend-requests` answers the waiting requests sent to the User and those the User sent, the newest first, each
+  with the other User's id:
+  `{ "received": [{ "id", "sender": { "id", "name", "department" }, "sentAt" }], "sent": [{ "id", "receiver": { ... }, "sentAt" }] }`.
 - `POST /friend-requests/:id/accept` makes the two Friends, and `POST /friend-requests/:id/decline` removes the request.
   Only its receiver answers it. `POST /friend-requests/:id/cancel` removes it, and only its sender cancels it. Each
   answers 204.
@@ -215,6 +217,8 @@ A Friend ID is read in capitals, so one typed in small letters is found too. The
 | -------------------------------------------------------------------------- | ------ | ----------------------------- |
 | A Friend ID nobody holds, looked up or sent to                             | 404    | `FRIEND_ID_NOT_FOUND`         |
 | A Friend Request to the sender's own Friend ID                             | 400    | `OWN_FRIEND_ID`               |
+| A Friend Request to the sender's own user id                               | 400    | `OWN_USER_ID`                 |
+| A Friend Request by user id to a User who holds no Quest with the sender   | 403    | `NOT_FELLOW_HOLDER`           |
 | A Friend Request to a Friend                                               | 409    | `ALREADY_FRIENDS`             |
 | A Friend Request to a User the sender's request already waits for          | 409    | `FRIEND_REQUEST_ALREADY_SENT` |
 | An answer to a request that is not waiting for it from this User           | 404    | `FRIEND_REQUEST_NOT_FOUND`    |
@@ -372,8 +376,12 @@ numbers below are provisional until P17 has checked them on a phone.
   before, so it takes no `Idempotency-Key`.
 - `GET /positions` answers what the User may see now of each subject: `{ "userId", "latitude", "longitude",
 "measuredAt", "level": "exact" }` with the position, or `{ "userId", "placeId", "latitude", "longitude",
-"measuredAt", "level": "building" }` with the Place's id and point. The app fetches it when it connects, reconnects
-  and returns to the front.
+"measuredAt", "level": "building" }` with the Place's id and point. Each also has `nearPlace`, the name of the Place
+  nearest the subject, and `walkMinutes`, the walk to that Place from the Place nearest the User's own last position,
+  from the walking table ([ADR 0010](../docs/adr/0010-travel-time-from-a-walking-table-and-logged-shuttle-times.md)):
+  0 when both are the same Place. Either is null when its Place is unknown, and `walkMinutes` also while the User has
+  no position kept. The app fetches it when it connects, reconnects and returns to the front, and every minute while
+  a screen shows the positions.
 
 An upload is refused, and nothing is stored, with these codes. The three numbers are `MAX_POSITION_AGE_MS`,
 `MAX_POSITION_LEAD_MS` and `MAX_ACCURACY_METRES` in `src/location-sharing/location-sharing.service.ts`.
@@ -395,7 +403,8 @@ another phone, a sign-out or a used refresh token, so that the phone's last posi
 
 What is pushed, through the [socket server](../socket-server/README.md#signals):
 
-- Each position kept goes as `position`, in the form `GET /positions` gives, to the Users who may see the subject at
+- Each position kept goes as `position`, in the form `GET /positions` gives without `nearPlace` and `walkMinutes`
+  (the minutes are each viewer's own), to the Users who may see the subject at
   that moment: to a viewer at `exact` each time, and to one at `building` only when the Place differs from the one of
   the position before. Delivery is lossy on purpose: only the newest position matters.
 - `position-removed`, with `{ "userId" }`, the subject, goes at once to each viewer who could see something of the
@@ -608,15 +617,26 @@ start, then by title. The app fetches it again on `global-events-changed`.
     "place": "뉴미디어통신공동연구소 이충웅홀(132동 103호)",
     "latitude": 37.45487,
     "longitude": 126.95407,
-    "sourceUrl": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525"
+    "sourceUrl": "https://www.snu.ac.kr/snunow/events?md=v&bbsidx=176525",
+    "publishedAt": null,
+    "favorite": false
   }
 ]
 ```
 
 - A Draft, a cancelled, a discarded and an ended event are never in it.
 - `sourceUrl` is `null` for an event an Administrator created.
+- `publishedAt` is when the event was published, `null` for an event published before it was recorded. It is recorded
+  by each of the four writes that publish: the rules and a Judgement, when the step after a Collection settles a post,
+  an Administrator's publish of a Draft, and an Administrator's publish from the Same-event queue. An edit keeps it.
+- `favorite` is whether the caller starred the event, which makes it a Favorite Event.
 - An Administrator's access token gets 401, and a User before onboarding 403 `ONBOARDING_REQUIRED`, as on every User's
   route.
+
+`PUT /global-events/:id/favorite` stars a published event for the caller and `DELETE /global-events/:id/favorite`
+clears the star, both with 204. A repeat changes nothing, so neither takes an Idempotency-Key. An event that is not
+published, or an id no event has, is refused with 404 `GLOBAL_EVENT_NOT_FOUND`, as the User's list never shows it. A star
+is kept in `global_event_favorites` and deleted with the User or the event.
 
 An Administrator reads them through `src/global-events/admin-global-events.controller.ts`, and the lists the admin site
 needs beside them through a controller of their own feature. Each route needs an Administrator's access token (see
@@ -856,7 +876,7 @@ its start ([Assistant](#assistant)); the AI's choice reads it for each call.
 - **What the model answers:** whether the post announces an event, and per session the start, end, place, whether it runs
   over a period, and the lines each came from (`judgement-answer.ts`). The call is limited by `JUDGEMENT_TIMEOUT_MS` (60,000)
   and `JUDGEMENT_MAX_OUTPUT_TOKENS` (4,000), is not sent again, and runs outside any transaction, after the Collection's
-  answer. It uses the Assistant's model and OpenRouter key, so it spends the same credit. `judgement-model.ts` calls the
+  answer. It uses the key `llm.key` names, as the Assistant does, so it spends the same credit. `judgement-model.ts` calls the
   model library itself, because the Assistant's adapter runs a User's tools and stays as the chat's evaluations measured it.
 - **What the server checks** (`judgement-checks.ts`), each on its own: the post is called an event, each quoted line is
   in the post, the date, weekday and time agree with the lines, the whole line and a short label above it are not an
@@ -1029,7 +1049,7 @@ Friend is a Closed Quest the User makes and invites the Friend into. The routes,
 - `GET /quests/recruiting` answers the list of recruiting Quests, `GET /quests/recruiting?globalEventId=...` the same
   for one Global Event and `GET /quests/recruiting?board=meal` for one board; the two combine (see below).
 - `POST /quests/:questId/join` joins an Open Quest and answers 201 with it. A second join is refused, so it takes no
-  `Idempotency-Key`.
+  `Idempotency-Key`. A User the Leader removed from the Quest is refused, and asks to join instead (below).
 - `GET /quests` answers the User's Quests in the order they were created, then today's Class Quests (below), leaving
   out each Quest whose Sub Quests have all ended, that is each is cancelled or past its end time; the User's marks of
   done do not count. `GET /quests/:questId` answers one, ended or not.
@@ -1081,6 +1101,7 @@ A Quest reads:
     }
   ],
   "classQuest": false,
+  "takenAlone": false,
   "waitingJoinRequests": 0
 }
 ```
@@ -1094,6 +1115,8 @@ A Quest reads:
   made.
 - `classQuest` is `true` for a Class Quest and `false` for every stored Quest. `leader` and `createdAt` are `null` for
   a Class Quest only.
+- `takenAlone` is `true` for a Quest taken alone, made from a Plan for one person or from a booked seat. It gathers
+  nobody, so it is never a 파티: it is in no list or count of parties, and its capacity is 1.
 - `waitingJoinRequests` is the number of requests to join waiting for the Leader's answer when the reading User leads
   the Quest, and `0` otherwise.
 
@@ -1109,6 +1132,7 @@ The refusals each have a `code`:
 | Cancelling the only Sub Quest of a Quest                  | 409    | `LAST_SUB_QUEST`         |
 | Joining a Closed Quest, or one that does not exist        | 404    | `QUEST_NOT_FOUND`        |
 | Joining an Approval Quest                                 | 409    | `QUEST_NOT_OPEN`         |
+| Joining an Open Quest the Leader removed the User from    | 409    | `QUEST_REMOVED_ASK`      |
 | Joining a Quest the User holds                            | 409    | `ALREADY_HOLDER`         |
 | Joining a Quest without a Sub Quest ahead                 | 409    | `QUEST_ENDED`            |
 | Joining a Quest whose Holders fill its capacity           | 409    | `QUEST_FULL`             |
@@ -1236,9 +1260,12 @@ as an invitation is. The routes:
 
 - `POST /quest-join-requests` with `{ "questId": "..." }` asks to join and answers 201 with the request. A second
   request is refused, so it takes no `Idempotency-Key`. `GET /quest-join-requests` answers the User's waiting requests,
-  and `POST /quest-join-requests/:id/withdraw` withdraws one and answers 204.
-- `GET /quests/:questId/join-requests` answers the Leader the Quest's requests with who asked,
-  `{ "id", "user": { "id", "name", "department" }, "sentAt" }`. `POST /quests/:questId/join-requests/:id/accept` makes
+  and `POST /quest-join-requests/:id/withdraw` withdraws one and answers 204. An Open Quest takes a request only from a
+  User the Leader removed from it. `GET /quest-removals` answers the Quests the Leader removed the User from since the
+  User last entered each, the latest first: `[{ "questId", "removedAt" }]`.
+- `GET /quests/:questId/join-requests` answers the Leader the Quest's requests, whatever its Join Policy, with who
+  asked and whether the Leader removed them from it before,
+  `{ "id", "user": { "id", "name", "department" }, "sentAt", "removedBefore" }`. `POST /quests/:questId/join-requests/:id/accept` makes
   the User a Holder and `.../decline` ends the request; both answer 204.
 - `POST /quests/:questId/invitations` with `{ "userId": "..." }` invites a Friend of the Leader and answers 204.
   `GET /quest-invitations` answers the User's invitations, `POST /quest-invitations/:id/accept` makes the User a Holder
@@ -1264,7 +1291,9 @@ the lists are the newest first.
   Quest from attending `open` or `approval`, on a board, is how it starts gathering people.
 - `PUT /quests/:questId/leader` with `{ "userId": "..." }` hands the role to another Holder and answers 204.
 - `DELETE /quests/:questId/holders/:userId` removes a Holder and answers 204. The Holder goes as one who dropped the
-  Quest, with their progress, and may enter it again.
+  Quest, with their progress. The removal is kept in `quest_removals` in the same transaction, so that the User comes
+  back only by asking to join and the Leader accepting, even to an Open Quest; entering the Quest in any way deletes
+  it. A Holder who drops the Quest leaves no removal.
 - `POST /quests/:questId/end` ends the Quest for every Holder and answers 204: it is deleted with its Sub Quests, the
   Holders' progress, its requests to join and its invitations, as when its last Holder drops it, and a running Party
   for it goes on with `quest: null`. A repeat is refused as a Quest the User does not hold, so it takes no
@@ -1278,7 +1307,7 @@ other.
 | Refusal                                                               | Status | `code`                            |
 | --------------------------------------------------------------------- | ------ | --------------------------------- |
 | Asking to join a Closed Quest, or one that does not exist             | 404    | `QUEST_NOT_FOUND`                 |
-| Asking to join an Open Quest                                          | 409    | `QUEST_NOT_APPROVAL`              |
+| Asking to join an Open Quest the Leader did not remove the User from  | 409    | `QUEST_NOT_APPROVAL`              |
 | Asking to join a Quest the User holds, or inviting one of its Holders | 409    | `ALREADY_HOLDER`                  |
 | Asking to join while holding a Shared Quest for its Global Event      | 409    | `SHARED_QUEST_HELD`               |
 | A second request to the same Quest                                    | 409    | `QUEST_JOIN_REQUEST_ALREADY_SENT` |
@@ -1425,10 +1454,11 @@ User's, an Administrator's and the worker's included. The bodies are checked as 
   not started, and their User holds no Shared Quest for it. It is `MatchingQuestsService.matchingRefusals()`, which
   also decides whether a User may ask, and it stores nothing.
 - `POST /matching-requests/eligible-quests` with `{ "pools": [{ "globalEventId": "…", "size": 3 }] }`, sizes 2 to 4,
-  answers 200 with `{ "quests": [{ "id", "globalEventId", "capacity", "freePlaces", "holderIds", "createdAt" }] }`,
+  answers 200 with `{ "quests": [{ "id", "globalEventId", "capacity", "freePlaces", "holderIds", "removedIds", "createdAt" }] }`,
   the earliest made first: the Open Quests of each pool's Global Event whose capacity is the size, that have a free
   place and a Sub Quest ahead. `holderIds` are in the order the Holders entered, so that the match server never places
-  a User into a Quest the User holds. An Approval or a Closed Quest is never answered. It is
+  a User into a Quest the User holds, and `removedIds` are the Users the Leader removed, whom it never places there
+  either. An Approval or a Closed Quest is never answered. It is
   `MatchingQuestsService.eligibleQuests()`, and it stores nothing.
 - `POST /matching-requests/placements` with `{ "questId": "…", "userId": "…", "size": 3 }` places the User into the
   Quest and answers 201 with `{ "questId": "…", "holderIds": [...] }`, the Holders the User included (see below).
@@ -1471,6 +1501,7 @@ request. Each refusal leaves the request waiting in the match server, which deci
 | The Quest is unknown                                       | 404    | `QUEST_NOT_FOUND`        |
 | The Quest is no longer Open                                | 409    | `QUEST_NOT_OPEN`         |
 | The Quest's capacity is no longer the size                 | 409    | `QUEST_CAPACITY_DIFFERS` |
+| The Leader removed the User from the Quest                 | 409    | `QUEST_REMOVED_ASK`      |
 | The Quest has no Sub Quest ahead                           | 409    | `QUEST_ENDED`            |
 | The Quest is full                                          | 409    | `QUEST_FULL`             |
 | The User holds a Shared Quest for the Global Event by then | 409    | `SHARED_QUEST_HELD`      |
@@ -2295,11 +2326,28 @@ kept once the change is stored, with the time of the Quests' `CLOCK` unless said
 failure is logged as a warning. The room in their words is `관정 {floor}층 {name}`, the catalogue's name without
 "그룹스터디룸 " before it and the rooms in brackets after it: "관정 4층 6인실".
 
+## A seat's stay
+
+A seat the phone booked on the library's site becomes a Quest held by the User alone (`src/library/seat-stays.*`),
+which is no 파티. `POST /library/seat-stays` with `{ spaceId, date, start, minutes }` takes an `Idempotency-Key` and
+answers `{ quest, leaveAt }` (201): the Closed Quest "관정 {floor}층 {space}", taken alone (`takenAlone`) with capacity
+1, and one Sub Quest at Place 62-1 for the booking's time, as the User reads it, and when the User is told to leave. The seat and the booking
+number stay on the phone. A space that is
+not a seat is a 400 `NOT_A_SEAT`. The leave-by is the Quest's `leave-by` Notification for the first item of the
+User's day that starts during the stay at a Place other than 관정관, at its start minus the walk from 관정관, whatever
+the walk (`seatLeaveBy`); none when that time has passed or comes before the stay. `leaveAt` is null when none is
+kept, and a leave-by that fails to be kept never fails the stay. The Quest is marked `seatStay`: the User's day as the
+planners read it (`heldSubQuests`, for `UserDayService.itemsOn`) leaves it out, so a seat is no busy time for the User
+or a Friend planning with them. The phone ends it with `DELETE /quests/:id` when it cancels or returns the seat, and a
+seat it never reports ends at its booked end.
+
 ## Assistant
 
 The Assistant ("SNU Now AI") is the chat that the main screen's input bar opens (P07). It runs in this server and calls
-its model through OpenRouter with the Vercel AI SDK
-([ADR 0005](../docs/adr/0005-assistant-in-the-main-server-without-an-agent-framework.md)).
+its model with the Vercel AI SDK
+([ADR 0005](../docs/adr/0005-assistant-in-the-main-server-without-an-agent-framework.md)), through OpenRouter or the
+Anthropic API as the AI's key says
+([ADR 0013](../docs/adr/0013-the-ai-calls-claude-through-the-anthropic-api-or-openrouter.md)).
 
 - `POST /assistant/messages` with a User's access token and the conversation so far, the User's new message last:
 
@@ -2391,7 +2439,7 @@ Proposal)`.
     `A party that needs approval takes you in once you ask to join and its leader accepts.` It applies to every
     feature that shows Quest cards.
   - **503 `{ "message": "The Assistant cannot answer now" }`**, the one error reply, whatever failed: no key configured,
-    a model error, exhausted credit (OpenRouter's 402), the time running out, the step cap reached without an answer,
+    a model error, exhausted credit (OpenRouter's 402) or a reached spend limit (Anthropic's 429), the time running out, the step cap reached without an answer,
     or a run with no text and nothing to show. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
     message's text, the model's answer or an error's message or body, which can hold the request sent to the model.
 
@@ -2627,8 +2675,8 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       those that fit, the longer stay first, then those that clash with an item, and drops those the asker cannot
       reach in time or stay at for 30 minutes. `eventIds` are accepted only when `searchGlobalEvents` returned them in
       the message. It answers the model `planned` with each plan's title, place, arrival, stay, leave-by, and clash in
-      words and minutes, or `none`. `POST /assistant/answers` recalculates either kind; `POST /plans` refuses any but a
-      meal's, a meet's, or a new recruiting Quest's with 400 `PLAN_KIND`.
+      words and minutes, or `none`. `POST /assistant/answers` recalculates either kind; `POST /plans` takes an events Plan
+      alone and refuses a recruiting Quests' Plan with 400 `PLAN_KIND`.
     - `findStudyNearby(what)` and `STUDY_RULES` join for an app that sends both `answer` and `area` (`lookup/study-*`).
       `StudyAreaService` reads the 공부공간 layer for the asker and keeps the spaces of the kind asked (`quiet`,
       `group`, `pc`, `any`) whose building's Place lies in the request context's `viewport`. Of those the User may use
@@ -2710,7 +2758,7 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
   feature with an entry point of its own gets a definition of its own that reuses tools, so that it cannot reach
   another's data.
 - **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
-  call, tool call and answer within the limits per message, asking OpenRouter for providers that do not collect data
+  call, tool call and answer within the limits per message, on an OpenRouter key asking for providers that do not collect data
   (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). It makes the reply's
   text from the steps' text, or the fixed sentence. `causeOf` names why a run failed for the log.
 
@@ -2722,7 +2770,7 @@ kept. A step is a tool to call with its arguments, `{ tool, input }`, with `text
 call, the text to answer, `{ text }`, a call cut at the output limit, `{ cut }`, an error to throw as the provider
 would, `{ error }`, or no answer until the time per message runs out, `{ stall: true }`. A call past
 the end of the script fails, and so does the model `startApp` binds by default, so a test that forgot a script cannot
-reach OpenRouter. `test/assistant.integration.test.ts` does it this way:
+reach a real model. `test/assistant.integration.test.ts` does it this way:
 
 ```ts
 const model = new ScriptedModel();
@@ -2767,14 +2815,16 @@ pnpm eval --model anthropic/claude-haiku-5.5 --temperature 0 --max-steps 30 --ti
 | `--repeat <n>`                                         | the cases marked `repeat` run their own count (3)                                 |
 | `--category`, `--case`                                 | every case; both take several values, comma-separated or again                    |
 | `--budget <USD>`                                       | 5                                                                                 |
-| `--world <small \| p4 \| p5 \| large-world-v1>`        | `small`, P19's world and the cases that name it                                   |
+| `--world <small \| p4 \| p5 \| large-world-v1 \| p6>`  | `small`, P19's world and the cases that name it                                   |
 | `--yes`                                                | asks before it starts                                                             |
 
 `eval/cli.ts` reads the flags, prints the estimated cost from the number of turns, the tokens a turn took in the last
 saved run and the provider's listed prices (Anthropic's table in `eval/cost.ts`, or OpenRouter's list), and asks before it starts. It then starts the Vitest project with the
 options as JSON in `EVAL_RUN`. The sampling settings are applied by the recorder's model wrapper, and the limits are
 the settings given to `startApp`. During the run the tokens the model reported are summed, and the run stops past the
-budget. The budget is an estimate; a credit limit on the OpenRouter key is the hard stop.
+budget. The budget is an estimate; a credit limit on the OpenRouter key, or the Anthropic account's spend limit, is
+the hard stop. The baseline on both providers (A02, 2026-11-15) is recorded beside each suite's last OpenRouter run:
+`eval/a02-baseline.md`.
 
 The recorder (`eval/recorder.ts`) wraps the model and records each step: its tool calls and inputs, its finish
 reason and its usage with cache reads and writes. A step cut at the output limit also keeps `cut`: its content parts,
@@ -3463,6 +3513,13 @@ warning and the answer stays as it is.
 part of the Plan sets out, with the Plan's Place and the Leader's own walking minutes, after the transaction and its
 signals, without the answer waiting for it; a failure is logged as a warning. None is kept when the Leader's starting
 Place is unknown or the walk is 0 minutes.
+
+A Plan taken alone ("여기로": an events Plan, or a meal's whose people are the asker only) is a Quest taken alone
+(`takenAlone`), which the asker holds alone with capacity 1 (`ALONE_CAPACITY` of `quests.service.ts`). Its `leave-by` is kept, awaited, for the first walk
+of 5 minutes or more whose time is still ahead: to the Plan's Place, else on from it to the next item
+(`plans/alone-plan.ts`). Such a `leave-by` carries the next item, " 13:00 수업에 맞아요.", and says a way by shuttle
+as one. The reply's `alone` holds the card's two lines and `remindAt`. Entering a Shared Quest for a Global Event that
+deletes the Quest held alone for it (`freeForSharedQuest`) cancels that Quest's `leave-by`.
 
 An invited User's `leave-by` is kept when they accept an invitation into a Quest whose steps give a gathering, as a
 party's do. `InvitationsService` tells the listeners given to its `onAccepted()` once the acceptance is stored and

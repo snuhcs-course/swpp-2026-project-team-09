@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent } from '@testing-library/react-native';
@@ -9,7 +10,7 @@ import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-han
 import { pass, screen } from './app';
 import type { FakeServer } from './fake-server';
 
-// Correcting the answer on the map (P02 ticket 03), against the fake main server with the switch on.
+// Correcting the answer on the map (P02 ticket 03), against the fake main server.
 
 // The bodies of the recalculations the app asked for, in order.
 export function recalculations(server: FakeServer): unknown[] {

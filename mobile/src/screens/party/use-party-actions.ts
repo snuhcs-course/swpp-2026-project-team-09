@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -25,7 +26,7 @@ import {
 } from '@/api/queries';
 import type { CompanionSeeker, OfficialRecruiting } from '@/api/quest-parts-types';
 import type { MyJoinRequest, QuestInvitation } from '@/api/waiting-types';
-import { type ToastLink, useToast } from '@/design-system';
+import { type ToastAction, useToast } from '@/design-system';
 import type { PostView } from '@/features/party/posts';
 import { ENTERING, refusalWords } from '@/features/quests/refusals';
 import type { PartyTab } from './party-screen';
@@ -67,8 +68,9 @@ export function showSentRequests(): void {
   showPartyTab('invites');
 }
 
-// The toast after asking to join links to where the request now shows (HE H11).
-const TO_SENT_REQUESTS: ToastLink = { label: '보낸 신청 보기', onPress: showSentRequests };
+// The toast after asking to join links to where the request now shows (HE H11), and stays long enough to reach it.
+const TO_SENT_REQUESTS: ToastAction = { label: '보낸 신청 보기', onPress: showSentRequests };
+const LINKED_MS = 4000;
 
 // Accepting and declining both delete a request, so a withdrawal after either is refused with the same not-found, and
 // only the User's Quests tell them apart: holding the Quest now means the Leader accepted. Null when the Quests do not
@@ -106,7 +108,7 @@ type Run = (
   requests: () => Promise<unknown>,
   done: string | null,
   refused?: (error: unknown) => Promise<string | null>,
-  link?: ToastLink,
+  link?: ToastAction,
 ) => Promise<boolean>;
 
 async function withdrawOnce(run: Run, queryClient: QueryClient, requestId: string, questId: string): Promise<void> {
@@ -138,7 +140,7 @@ export function usePartyActions(): PartyActions {
       try {
         await requests();
         if (done !== null) {
-          showToast(done, undefined, undefined, link);
+          showToast(done, link === undefined ? undefined : LINKED_MS, undefined, link);
         }
         return true;
       } catch (error) {

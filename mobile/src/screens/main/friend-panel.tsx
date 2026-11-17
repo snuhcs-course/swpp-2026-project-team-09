@@ -3,7 +3,9 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -37,13 +39,13 @@ import { useFriends } from '@/features/friends/use-friends';
 
 type Filter = Presence | 'all';
 
-const PRESENCES: readonly Presence[] = ['free', 'class', 'moving', 'off'];
+const PRESENCES: readonly Presence[] = ['free', 'class', 'moving', 'on', 'off'];
 
 interface FriendPanelProps {
   open: boolean;
   onClose: () => void;
-  // A press on a Friend's row; without it, a row takes no press.
-  onShow?: (friend: FriendView) => void;
+  // A press on a Friend's row.
+  onShow: (friend: FriendView) => void;
 }
 
 // A search by name and department, where spaces do not count, as in the frame.
@@ -56,7 +58,7 @@ function FriendRow({ friend, onMeet, onShow }: { friend: FriendView } & Omit<Gro
   return (
     <ListRow
       aside={friend.department}
-      label={onShow === undefined ? undefined : profileLabel(friend.name)}
+      label={profileLabel(friend.name)}
       leading={
         <Avatar
           name={friend.name}
@@ -65,13 +67,9 @@ function FriendRow({ friend, onMeet, onShow }: { friend: FriendView } & Omit<Gro
         />
       }
       lines={[withAge(friend.detail === '' ? friend.line : friend.detail, friend.minutesOld)]}
-      onPress={
-        onShow === undefined
-          ? undefined
-          : () => {
-              onShow(friend);
-            }
-      }
+      onPress={() => {
+        onShow(friend);
+      }}
       title={friend.name}
       trailing={
         <Pressable

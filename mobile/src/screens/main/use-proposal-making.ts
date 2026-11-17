@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -30,21 +31,19 @@ function blockOf(proposal: QuestProposal, form: PartyForm): string | null {
   return form.startsAt !== null && new Date(form.startsAt) <= now() ? STARTED : null;
 }
 
-// Closes the sheet and opens the party form filled with the Proposal, which tells `made` once it made the Quest.
-export function openProposalForm(proposal: QuestProposal, made: () => void, close: () => void): void {
+// Opens the party form filled with the Proposal, which tells `made` once it made the Quest.
+export function openProposalForm(proposal: QuestProposal, made: () => void): void {
   holdProposal({ proposal, made });
-  close();
   router.push({ pathname: '/party-form', params: { fromProposal: '1' } });
 }
 
 // 만들기 on a Proposal card: makes the Quest the way the party form does, attending its event and inviting its Friends,
-// and shows the form's toast. Made, it closes the sheet and goes where the form goes after making, 내 파티, or to the
-// room when a step after attending the event failed; refused, the sheet stays and the card can be pressed again. A
-// Proposal is made once: its card then says so, and a second press while it is on its way does nothing. The state
-// lives with the conversation, so that closing the sheet keeps it.
+// and shows the form's toast. Made, it goes where the form goes after making, 내 파티, or to the room when a step after
+// attending the event failed; refused, the card can be pressed again. A Proposal is made once: its card then says so,
+// and a second press while it is on its way does nothing.
 // A Quest made in the form 수정 opens counts as made here too, so that the card does not make it again; coming back
 // without making leaves the card as it was.
-export function useProposalMaking(close: () => void): ProposalActions {
+export function useProposalMaking(): ProposalActions {
   const sendParty = useSendParty(null);
   const showToast = useToast();
   const announcers = useQuery(globalEventAnnouncersQuery).data;
@@ -75,7 +74,6 @@ export function useProposalMaking(close: () => void): ProposalActions {
         return;
       }
       mark(bubbleId, 'made');
-      close();
       if (sent.sent === 'room') {
         router.navigate(`/room/${sent.questId}`);
       } else {
@@ -84,13 +82,9 @@ export function useProposalMaking(close: () => void): ProposalActions {
     });
   };
   const edit = (bubbleId: number, proposal: QuestProposal): void => {
-    openProposalForm(
-      proposal,
-      () => {
-        mark(bubbleId, 'made');
-      },
-      close,
-    );
+    openProposalForm(proposal, () => {
+      mark(bubbleId, 'made');
+    });
   };
   return { makingOf: (bubbleId) => making.get(bubbleId) ?? 'ready', make, edit };
 }

@@ -128,21 +128,15 @@ describe("the User's own card once open", () => {
 
 const STUDENT_HALL: Place = { id: 'p63', number: '63', name: '학생회관', latitude: 37.45932, longitude: 126.95058 };
 
-// The selection over the two Friends' cards; `buildings`: whether a building takes a press, the switch being on, which
-// gives the Friends a card may be open for without their mark (P02 ticket 22).
-function renderBuildings(initialProps: {
-  buildings: boolean;
-}): Promise<RenderHookResult<Selection, { buildings: boolean }>> {
-  return renderHook(
-    ({ buildings }: { buildings: boolean }) => useSelection([MIN_JUN, JI_HO], true, false, buildings ? [] : null),
-    { initialProps },
-  );
+// The selection over the two Friends' cards, where a building takes a press (P02 ticket 22).
+function renderBuildings(): Promise<RenderHookResult<Selection, unknown>> {
+  return renderHook(() => useSelection([MIN_JUN, JI_HO], true));
 }
 
-// Partitions: buildings taking a press and not.
+// Partitions: a building pressed with nothing open.
 describe("a pressed building's card in the selection", () => {
-  it('opens while buildings take a press, as no thing of the map', async () => {
-    const { result } = await renderBuildings({ buildings: true });
+  it('opens as no thing of the map', async () => {
+    const { result } = await renderBuildings();
 
     await act(() => {
       result.current.selectPlace(STUDENT_HALL);
@@ -152,23 +146,12 @@ describe("a pressed building's card in the selection", () => {
     expect(result.current.open).toBe(true);
     expect(result.current.selected).toBeNull();
   });
-
-  it('does not open while buildings take no press', async () => {
-    const { result } = await renderBuildings({ buildings: false });
-
-    await act(() => {
-      result.current.selectPlace(STUDENT_HALL);
-    });
-
-    expect(result.current.place).toBeNull();
-    expect(result.current.open).toBe(false);
-  });
 });
 
-// Partitions: a thing selected after it; buildings no longer taking a press while it is open.
+// Partitions: a thing selected after it.
 describe("a pressed building's card once open", () => {
   it("is replaced by a thing's card that is selected after it", async () => {
-    const { result } = await renderBuildings({ buildings: true });
+    const { result } = await renderBuildings();
     await act(() => {
       result.current.selectPlace(STUDENT_HALL);
     });
@@ -179,18 +162,5 @@ describe("a pressed building's card once open", () => {
 
     expect(result.current.place).toBeNull();
     expect(result.current.selected?.title).toBe('김민준');
-  });
-
-  it('is closed for good once buildings no longer take a press', async () => {
-    const { result, rerender } = await renderBuildings({ buildings: true });
-    await act(() => {
-      result.current.selectPlace(STUDENT_HALL);
-    });
-
-    await rerender({ buildings: false });
-    await rerender({ buildings: true });
-
-    expect(result.current.place).toBeNull();
-    expect(result.current.open).toBe(false);
   });
 });

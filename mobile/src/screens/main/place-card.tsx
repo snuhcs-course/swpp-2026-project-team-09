@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -10,7 +11,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { ConditionChip } from '@/api/assistant-types';
 import type { LookupAction, LookupCard } from '@/api/lookup-types';
 import type { Place } from '@/api/types';
-import { Button, color, RoundIcon, space, text } from '@/design-system';
+import { Button, color, RoundIcon, space, text, WaitingDots } from '@/design-system';
 import { useTapAnswer } from '@/features/assistant/use-tap-answer';
 import { cardId } from '@/features/map/adapter';
 import { Chips } from './answer/lookup-card';
@@ -32,10 +33,9 @@ interface PlaceCardProps {
   onHeight: (height: number) => void;
 }
 
-// A `plan` button is drawn only for an answer the frame draws: a meal. Row 4's events and Quests have no screen in the
-// frame yet (note (11)).
+// Every `plan` button: the frame draws a meal's answer, and those of events and parties ("행사 보기", "같이 갈 파티").
 function shownPlans(actions: readonly LookupAction[]): PlanAction[] {
-  return actions.filter((action): action is PlanAction => action.kind === 'plan' && action.input.kind === 'meal');
+  return actions.filter((action): action is PlanAction => action.kind === 'plan');
 }
 
 function Head({
@@ -67,33 +67,39 @@ interface ButtonsProps {
   onGuide: (action: GuideAction) => void;
 }
 
-// Each `plan` by its label, then the way as "가는 길"; the first is the main one.
+// Each `plan` by its label, then the way as "가는 길", in cells of one width; the first is the main one.
 function Buttons({ actions, plan, onGuide }: ButtonsProps): ReactElement {
   const guide = actions.find((action): action is GuideAction => action.kind === 'guide');
   const plans = shownPlans(actions);
   return (
     <View style={styles.buttons}>
       {plans.map((action, index) => (
-        <Button
-          disabled={plan.asking}
-          key={action.label}
-          onPress={() => {
-            plan.ask(action);
-          }}
-          variant={index === 0 ? 'primary' : 'secondary'}
-        >
-          {action.label}
-        </Button>
+        <View key={action.label} style={styles.cell}>
+          <Button
+            busy={plan.asked === action.label}
+            disabled={plan.asking && plan.asked !== action.label}
+            full
+            onPress={() => {
+              plan.ask(action);
+            }}
+            variant={index === 0 ? 'primary' : 'secondary'}
+          >
+            {action.label}
+          </Button>
+        </View>
       ))}
       {guide === undefined ? null : (
-        <Button
-          onPress={() => {
-            onGuide(guide);
-          }}
-          variant={plans.length === 0 ? 'primary' : 'secondary'}
-        >
-          가는 길
-        </Button>
+        <View style={styles.cell}>
+          <Button
+            full
+            onPress={() => {
+              onGuide(guide);
+            }}
+            variant={plans.length === 0 ? 'primary' : 'secondary'}
+          >
+            가는 길
+          </Button>
+        </View>
       )}
     </View>
   );
@@ -141,7 +147,7 @@ function Answered({ card, chips, basis, onFriend, ...buttons }: AnsweredProps): 
 function NotYet({ failed, onRetry }: { failed: boolean; onRetry: () => void }): ReactElement {
   return (
     <View style={styles.notYet}>
-      <Text style={styles.status}>{failed ? '답을 가져오지 못했어요' : '보는 중이에요'}</Text>
+      {failed ? <Text style={styles.status}>답을 가져오지 못했어요</Text> : <WaitingDots label="보는 중이에요" />}
       {failed ? (
         <Button onPress={onRetry} variant="secondary">
           다시 시도
@@ -152,7 +158,7 @@ function NotYet({ failed, onRetry }: { failed: boolean; onRetry: () => void }): 
 }
 
 // The card of a building pressed on the everyday map (P02 ticket 22): the Place's name while the main server is
-// asked, with "보는 중이에요", then its card. A failure says so, with "다시 시도". A Friend's line opens that
+// asked, with the waiting dots ("보는 중이에요"), then its card. A failure says so, with "다시 시도". A Friend's line opens that
 // Friend's card, "가는 길" starts the route guidance and closes the card, and a `plan` button opens its answer in
 // the frame.
 export function PlaceCard({ place, selection, chat, route, onHeight }: PlaceCardProps): ReactElement {
@@ -199,5 +205,6 @@ const styles = StyleSheet.create({
   status: { ...text.body, color: color.inkMuted },
   note: { ...text.body, color: color.quest },
   basis: { ...text.body, color: color.inkMuted },
-  buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  buttons: { flexDirection: 'row', gap: space[2] },
+  cell: { flex: 1 },
 });

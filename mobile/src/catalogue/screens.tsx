@@ -4,6 +4,8 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -99,8 +101,8 @@ export function Panels(): ReactElement {
       <SidePanel label="친구" onClose={close} open={open === 'side'}>
         <AppBar actions={<IconButton icon="x" label="닫기" onPress={close} />} count={12} line={false} title="친구" />
       </SidePanel>
-      <BottomSheet label="AI 매칭" onClose={close} open={open === 'sheet'}>
-        <Text style={styles.body}>인원</Text>
+      <BottomSheet label="파티 찾기" onClose={close} open={open === 'sheet'}>
+        <Text style={styles.body}>같이 갈 파티</Text>
       </BottomSheet>
     </Section>
   );
@@ -184,7 +186,12 @@ export function ListRows(): ReactElement {
           title="자료구조"
           trailing={<Text style={styles.time}>14:00</Text>}
         />
-        <SwitchRow description="12명" label="친구와 위치 공유" onValueChange={setSharing} value={sharing} />
+        <SwitchRow
+          description="화면이 꺼져도 30초마다 위치를 보내요"
+          label="백그라운드에서도 공유"
+          onValueChange={setSharing}
+          value={sharing}
+        />
       </View>
     </Section>
   );

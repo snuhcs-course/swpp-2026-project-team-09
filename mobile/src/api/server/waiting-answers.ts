@@ -6,9 +6,18 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import type { FriendRequests, JoinRequest, KeptNotification, QuestInvitation, QuestSummary } from '@/api/waiting-types';
+import type {
+  FriendRequests,
+  JoinRequest,
+  KeptNotification,
+  QuestInvitation,
+  QuestRemoval,
+  QuestSummary,
+  RequestUser,
+} from '@/api/waiting-types';
 import {
   field,
   hasTexts,
@@ -24,12 +33,17 @@ import {
 
 // The checks of the main server's lists of what waits for the User.
 
+function isRequestUser(value: unknown): value is RequestUser {
+  const id = field(value, 'id');
+  return isUserSummary(value) && (id === undefined || typeof id === 'string');
+}
+
 function isReceivedRequest(value: unknown): value is FriendRequests['received'][number] {
-  return hasTexts(value, ['id', 'sentAt']) && isUserSummary(field(value, 'sender'));
+  return hasTexts(value, ['id', 'sentAt']) && isRequestUser(field(value, 'sender'));
 }
 
 function isSentRequest(value: unknown): value is FriendRequests['sent'][number] {
-  return hasTexts(value, ['id', 'sentAt']) && isUserSummary(field(value, 'receiver'));
+  return hasTexts(value, ['id', 'sentAt']) && isRequestUser(field(value, 'receiver'));
 }
 
 export function isFriendRequests(value: unknown): value is FriendRequests {
@@ -56,10 +70,21 @@ export function isQuestWaiting(value: unknown): value is QuestInvitation {
 export const isQuestInvitations = listOf(isQuestWaiting);
 
 function isJoinRequest(value: unknown): value is JoinRequest {
-  return hasTexts(value, ['id', 'sentAt']) && isHolder(field(value, 'user'));
+  const removedBefore = field(value, 'removedBefore');
+  return (
+    hasTexts(value, ['id', 'sentAt']) &&
+    isHolder(field(value, 'user')) &&
+    (removedBefore === undefined || typeof removedBefore === 'boolean')
+  );
 }
 
 export const isJoinRequests = listOf(isJoinRequest);
+
+function isQuestRemoval(value: unknown): value is QuestRemoval {
+  return hasTexts(value, ['questId', 'removedAt']);
+}
+
+export const isQuestRemovals = listOf(isQuestRemoval);
 
 function isKeptNotification(value: unknown): value is KeptNotification {
   const ahead = field(value, 'ahead');

@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -23,12 +24,26 @@ export const publishedEventSchema = z.strictObject({
   latitude: z.number().nullable(),
   longitude: z.number().nullable(),
   sourceUrl: z.string().nullable(),
+  publishedAt: z.iso.datetime().nullable(),
+  favorite: z.boolean(),
 });
 
 export type PublishedEvent = z.infer<typeof publishedEventSchema>;
 
 export function getGlobalEvents(app: INestApplication<Server>, accessToken: string | undefined): request.Test {
   return withAccessToken(request(app.getHttpServer()).get('/global-events'), accessToken);
+}
+
+// PUT stars the event for the User; with `favorite` false, DELETE clears the star.
+export function setFavorite(
+  app: INestApplication<Server>,
+  accessToken: string,
+  id: string,
+  favorite = true,
+): request.Test {
+  const server = request(app.getHttpServer());
+  const path = `/global-events/${id}/favorite`;
+  return withAccessToken(favorite ? server.put(path) : server.delete(path), accessToken);
 }
 
 // The User's list, of which only the events in `ids` are kept, in the list's order: the test files share the database.

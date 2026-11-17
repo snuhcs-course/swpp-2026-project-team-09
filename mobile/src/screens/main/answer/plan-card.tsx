@@ -14,6 +14,8 @@ import type { AnswerOffer } from '@/api/refusal-types';
 import { Button, color, Icon, size, space, text } from '@/design-system';
 import { chipsWhileMoved, movingWords } from '@/features/assistant/band-move';
 import { peopleOf, windowOf } from '@/features/assistant/plan-input';
+import { easedFromNow } from '@/features/assistant/relaxed-plan';
+import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useOpenFriendProfile } from '../friend-profile';
@@ -22,8 +24,11 @@ import { CardNote } from './card-note';
 import { ConditionChips, type CornerAction } from './condition-chips';
 import { FriendChoices } from './friend-choices';
 import { MainButtons } from './main-buttons';
+import { RelaxButtons } from './relax-buttons';
+import { RowFourButtons } from './row-four-buttons';
 import { TimeBand } from './time-band';
 import { type Corrections, useCorrections } from './use-corrections';
+import { addNameOf, whoOf } from './who-words';
 
 // The arrows are as high as the buttons beside them, and their touch area reaches the design system's minimum.
 const ARROW = 40;
@@ -35,10 +40,8 @@ const COUNT_WIDTH = 44;
 // A swipe begins only on a sideways move, so that the card still scrolls up and down, and counts from this far.
 const SWIPE_STARTS = 10;
 const SWIPE_COUNTS = 48;
-// The card's lines while the list of Friends is open, in place of the Plan's: who comes to eat, or to meet. The map
-// takes a press on a face only while a Plan is drawn, so without one the second line says how the list is sorted.
-const WHO: AnswerLine = [{ text: '누구와 같이 먹을까요?', strong: false }];
-const WHO_MEETS: AnswerLine = [{ text: '누구와 같이 만날까요?', strong: false }];
+// The card's lines while the list of Friends is open, in place of the Plan's: who comes (`whoOf`). The map takes a
+// press on a face only while a Plan is drawn, so without one the second line says how the list is sorted.
 const HOW: AnswerLine = [{ text: '지도의 얼굴을 누르거나 아래에서 골라요', strong: false }];
 const HOW_WITHOUT_PLAN: AnswerLine = [{ text: '가까운 친구부터 보여요', strong: false }];
 
@@ -105,15 +108,19 @@ interface StepsProps {
   invitation: PlanInvitation | null;
   // The screens the answer offers for an input that was missing.
   offers: readonly AnswerOffer[];
+  // "처음으로" back to 지금, null for none.
+  back: (() => void) | null;
+  // "여기로" for a meal's Plan of the User alone, null for none.
+  here: (() => void) | null;
 }
 
 // The arrows at the row's two ends when the answer has more than one Plan, the count right before "›", and the
-// middle from the start: "되돌리기" at a fixed width while a drag is kept, then "이대로 초대" for a Plan with a Friend,
-// then the answer's offers.
-function Steps({ shown, count, busy, invitation, offers }: StepsProps): ReactElement | null {
+// middle from the start: "되돌리기" at a fixed width while a drag is kept, then "이대로 초대" for a Plan with a Friend or
+// "여기로" for a meal's Plan alone, then the answer's offers.
+function Steps({ shown, count, busy, invitation, offers, back, here }: StepsProps): ReactElement | null {
   const { index, browse, ghost, undo } = shown;
   const arrows = count > 1;
-  if (ghost === null && !arrows && invitation === null && offers.length === 0) {
+  if (ghost === null && !arrows && invitation === null && offers.length === 0 && back === null && here === null) {
     return null;
   }
   return (
@@ -135,7 +142,7 @@ function Steps({ shown, count, busy, invitation, offers }: StepsProps): ReactEle
             </Button>
           </View>
         )}
-        <MainButtons busy={busy} invitation={invitation} offers={offers} />
+        <MainButtons back={back} busy={busy} here={here} invitation={invitation} offers={offers} />
       </View>
       {arrows ? (
         <Text numberOfLines={1} style={styles.count} testID="plan-count">
@@ -187,7 +194,11 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
       />
     );
   }
-  const invitable = plan !== null && peopleOf(answer.input).length > 1;
+  // A new party is posted with "이대로 모집", its friends invited or not.
+  const invitable = plan !== null && answer.input.kind !== 'new-quest' && peopleOf(answer.input).length > 1;
+  // A meal's Plan of the User alone is taken with "여기로", the same press (P05-14).
+  const alone = plan !== null && answer.input.kind === 'meal' && peopleOf(answer.input).length === 1;
+  const fixed = bandIsFixed(answer.input.kind);
   return (
     <>
       {plan === null ? null : (
@@ -198,18 +209,23 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
           ghost={ghost}
           onDrop={fix.drop}
           fixed={windowOf(answer.input)}
+          handles={!fixed}
           moving={shown.moving}
-          onMove={fix.move}
+          onMove={fixed ? undefined : fix.move}
         />
       )}
       <CardNote note={answer.note} />
+      {plan === null ? <RelaxButtons busy={busy} onRelax={fix.relax} relax={answer.noPlan?.relax ?? []} /> : null}
       <Steps
+        back={plan !== null && easedFromNow(answer.input) ? fix.back : null}
         busy={busy}
         count={answer.plans.length}
+        here={alone ? invitation.invite : null}
         invitation={invitable ? invitation : null}
         offers={answer.offers ?? []}
         shown={shown}
       />
+      <RowFourButtons busy={busy} invitation={invitation} shown={shown} />
     </>
   );
 }
@@ -233,9 +249,9 @@ interface PlanCardProps extends CardProps {
 }
 
 // While the band is moved over someone's busy stretch, the lines say who cannot come and why.
-function linesOf({ plan, moving }: ShownAnswer, answer: AnswerReply, adding: boolean): readonly AnswerLine[] {
+export function linesOf({ plan, moving }: ShownAnswer, answer: AnswerReply, adding: boolean): readonly AnswerLine[] {
   if (adding) {
-    return [answer.input.kind === 'meet' ? WHO_MEETS : WHO, plan === null ? HOW_WITHOUT_PLAN : HOW];
+    return [whoOf(answer.input.kind), plan === null ? HOW_WITHOUT_PLAN : HOW];
   }
   const words = plan === null || moving === null ? null : movingWords(plan.band.lanes, moving);
   return words?.lines ?? plan?.lines ?? answer.noPlan?.lines ?? [];
@@ -263,7 +279,8 @@ export function PlanCard({ shown, answer, invitation, room, over = [], onClose }
         corner={cornerOf(shown, fix)}
         disabled={busy}
         friendIds={fix.friendIds}
-        meet={answer.input.kind === 'meet'}
+        addName={addNameOf(answer.input.kind)}
+        fixed={bandIsFixed(answer.input.kind)}
         onAdd={fix.toggleAdding}
         onOrigin={fix.chooseOrigin}
         onProfile={openProfile}

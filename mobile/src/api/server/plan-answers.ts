@@ -14,6 +14,7 @@ import { isChip } from './chip-answers';
 import { hasMissingParts } from './missing-input-answers';
 import { isRecruitingQuest } from './party-client';
 import { isInput, isOneOf } from './plan-inputs';
+import { hasRelax } from './relax-answers';
 
 // The `answer` and the `lookup` of the Assistant's reply, as main-server `assistant/dto/answer.dto.ts` fixes them:
 // every field, since the answer screen draws each. An answer or a Lookup the app cannot read fails the reply. The
@@ -88,7 +89,9 @@ function isDropped(value: unknown): value is DroppedPlace {
 function isNoPlan(value: unknown): value is AnswerReply['noPlan'] {
   return (
     value === null ||
-    (isOneOf(['no-menu', 'no-shared-time', 'no-fit'])(field(value, 'reason')) && listOf(isLine)(field(value, 'lines')))
+    (isOneOf(['no-menu', 'no-shared-time', 'no-fit'])(field(value, 'reason')) &&
+      listOf(isLine)(field(value, 'lines')) &&
+      hasRelax(value))
   );
 }
 

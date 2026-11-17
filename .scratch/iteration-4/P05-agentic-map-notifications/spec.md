@@ -171,3 +171,10 @@ What the map draws for these rows waits for two things outside this package: an 
 - The phone remembers which cards were answered or skipped. Nothing asks again; each can be done later from 내 정보.
 - A User with no interest sees one line over the input that leads to choosing interests. The faded events of the design wait for the map's pin rule (ticket 08).
 
+
+### Everything done alone is a Quest (ticket 14, rows 1 and 2)
+
+- **A meal alone.** A meal's Plan for the User alone has "여기로", which makes it a Quest held by the User alone through `POST /plans` (P03 ticket 15). Its card says where the User goes and whether they will be told when to leave, with "다시 고르기" and "닫기".
+- **A seat.** Once a seat is booked on the library's site, the phone sends `POST /library/seat-stays` with the space and the time. The main server holds the stay as a Quest the User holds alone, at 관정관 for the booking's time, with the time to leave for the next item that starts during it, whatever the walk ("15:56 나설 시각").
+- **Never a 파티.** A Quest held alone is marked `takenAlone` with capacity 1, and no list or count of parties holds it.
+- **A seat is no busy time.** The planners leave a seat's stay out of the User's day, for the User and for Friends who plan with them; returning or cancelling the seat on the phone ends its Quest with its leave-by.

@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-07  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-17  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -26,7 +27,6 @@ import {
   lineDashes,
   openLiveMain,
   SCIENCE,
-  SERVICE_HOURS,
   shown,
   stopMarker,
   toggleShuttle,
@@ -34,7 +34,7 @@ import {
   vehicleMarker,
 } from './support/shuttle';
 
-// The shuttle layer of the `Main` frame, its cards and its notice outside the service hours, against the fake main
+// The shuttle layer of the `Main` frame, its cards and its toast outside the service hours, against the fake main
 // server and the fake socket server, on a phone that asks for less motion.
 
 jest.mock('expo-location');
@@ -52,7 +52,7 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const FAILED = '셔틀버스 정보를 불러오지 못했어요';
-const NOT_IN_SERVICE = '지금은 셔틀버스가 운행하지 않아요';
+const NOT_IN_SERVICE = '지금은 셔틀버스가 운행하지 않아요 · 평일 08:00–21:00';
 const STOPS = [GATE, LAW, SCIENCE, AGRICULTURE];
 
 let server: FakeServer;
@@ -239,27 +239,34 @@ function korea(instant: string): Date {
   return new Date(`${instant}+09:00`);
 }
 
-describe('the notice outside the service hours', () => {
+describe('the toast outside the service hours', () => {
   it.each([
     ['on a Saturday at noon', korea('2026-10-10T12:00:00')],
     ['on a weekday at 07:59', korea('2026-10-06T07:59:00')],
     ['on a weekday at 21:00', korea('2026-10-06T21:00:00')],
-  ])(
-    "says that the shuttle is not in service %s, with the route's service hours, over the line and the stops",
-    async (_when, now) => {
-      await start(now);
-      const user = await openMain();
+  ])('says that the shuttle is not in service %s, over the line and the stops', async (_when, now) => {
+    await start(now);
+    const user = await openMain();
 
-      await toggleShuttle(user);
+    await toggleShuttle(user);
 
-      const notice = screen.getByTestId('shuttle-notice');
-      expect(notice).toHaveTextContent(`${NOT_IN_SERVICE}${SERVICE_HOURS}`);
-      expect(screen.getByText(SERVICE_HOURS)).toBeVisible();
-      expect(screen.getByText(NOT_IN_SERVICE)).toHaveStyle({ fontSize: 16 });
-      expect(lineDashes().length).toBeGreaterThan(0);
-      expect(shown(stopMarker(GATE))).toBe(true);
-    },
-  );
+    expect(screen.getByText(NOT_IN_SERVICE)).toBeVisible();
+    expect(lineDashes().length).toBeGreaterThan(0);
+    expect(shown(stopMarker(GATE))).toBe(true);
+  });
+
+  it('goes by itself after a few seconds, and the line and the stops stay', async () => {
+    await start(korea('2026-10-10T12:00:00'));
+    const user = await openMain();
+    await toggleShuttle(user);
+    expect(screen.getByText(NOT_IN_SERVICE)).toBeVisible();
+
+    await pass(4000);
+
+    expect(screen.queryByText(NOT_IN_SERVICE)).toBeNull();
+    expect(lineDashes().length).toBeGreaterThan(0);
+    expect(shown(stopMarker(GATE))).toBe(true);
+  });
 
   it.each([
     ['at 08:00', korea('2026-10-06T08:00:00')],
@@ -271,33 +278,34 @@ describe('the notice outside the service hours', () => {
     await toggleShuttle(user);
 
     expect(lineDashes().length).toBeGreaterThan(0);
-    expect(screen.queryByTestId('shuttle-notice')).toBeNull();
+    expect(screen.queryByText(NOT_IN_SERVICE)).toBeNull();
   });
 });
 
-describe('the notice as the clock passes and cards open', () => {
-  it('goes at 08:00 while the layer stays on', async () => {
-    await start(korea('2026-10-06T07:59:40'));
-    const user = await openMain();
-    await toggleShuttle(user);
-    expect(screen.getByTestId('shuttle-notice')).toBeVisible();
-
-    await pass(25_000);
-
-    expect(screen.queryByTestId('shuttle-notice')).toBeNull();
-  });
-
-  it('gives way to an open card, and goes when the layer is turned off', async () => {
+describe('the toast as the layer is turned on again and the clock passes', () => {
+  it('is said again each time the layer is turned on', async () => {
     await start(korea('2026-10-10T12:00:00'));
     const user = await openMain();
     await toggleShuttle(user);
-
-    await press(user, stopMarker(LAW));
-    expect(screen.queryByTestId('shuttle-notice')).toBeNull();
-    await press(user, '닫기');
-    expect(screen.getByTestId('shuttle-notice')).toBeVisible();
+    await pass(4000);
+    expect(screen.queryByText(NOT_IN_SERVICE)).toBeNull();
 
     await toggleShuttle(user);
-    expect(screen.queryByTestId('shuttle-notice')).toBeNull();
+    await toggleShuttle(user);
+
+    expect(screen.getByText(NOT_IN_SERVICE)).toBeVisible();
+  });
+
+  it('is said once when the service hours end while the layer is on', async () => {
+    await start(korea('2026-10-06T20:59:40'));
+    const user = await openMain();
+    await toggleShuttle(user);
+    expect(screen.queryByText(NOT_IN_SERVICE)).toBeNull();
+
+    await pass(25_000);
+    expect(screen.getByText(NOT_IN_SERVICE)).toBeVisible();
+
+    await pass(10_000);
+    expect(screen.queryByText(NOT_IN_SERVICE)).toBeNull();
   });
 });

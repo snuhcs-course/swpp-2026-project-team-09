@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -56,8 +57,9 @@ interface CategoryPinProps {
   // People who joined, or events clustered here.
   count?: number;
   selected?: boolean;
-  // Another icon than the kind's own.
+  // Another icon than the kind's own, filled where `filled` is set: a Favorite Event's star.
   icon?: IconName;
+  filled?: boolean;
   // Translucent grey: a place the User may not use, such as a study building none of whose spaces is open to them.
   muted?: boolean;
 }
@@ -78,6 +80,7 @@ function CategoryPin({
   count = 0,
   selected = false,
   icon,
+  filled = false,
   muted = false,
 }: CategoryPinProps): ReactElement {
   const { fill: kindFill, icon: kindIcon, service, name } = CATEGORIES[kind];
@@ -94,7 +97,7 @@ function CategoryPin({
       <View
         style={[styles.head, service && styles.serviceHead, { backgroundColor: fill }, selected && styles.selectedHead]}
       >
-        <Icon color={color.onPrimary} name={icon ?? kindIcon} size={18} />
+        <Icon color={color.onPrimary} filled={filled} name={icon ?? kindIcon} size={18} />
         {count > 0 ? (
           <View style={styles.count}>
             <Text style={styles.countText}>{count}</Text>

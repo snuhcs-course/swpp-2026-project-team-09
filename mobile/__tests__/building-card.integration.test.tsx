@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -29,8 +30,8 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, JI_WOO, LIBRARY_POSITION, MIN_JUN, PHONE_NOW } from './support/server';
 
-// The card of a pressed building (P02 ticket 22, boards a1, a3, a14, and a2), over the fake main server with the
-// switch on: the main server's card of the Place, read while it is asked, after a failure, and once it came.
+// The card of a pressed building (P02 ticket 22, boards a1, a3, a14, and a2), over the fake main server: the main
+// server's card of the Place, read while it is asked, after a failure, and once it came.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -91,7 +92,7 @@ function buttonNames(): unknown[] {
 // Partitions: a card with a meal and the note (a1); the basis closed and opened.
 describe("the card of a pressed building, as the main server's card reads", () => {
   it('reads a1: the walk in bold, the stay, the meal, the note, the chips, the basis, and two buttons', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
 
     await pressBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
 
@@ -124,7 +125,7 @@ describe("the card of a pressed building, as the main server's card reads", () =
 // Partitions: a card with the walk and the stay alone (a3), and one with events whose buttons have no screen yet (a2).
 describe("the card of a pressed building with fewer lines, as the main server's card reads", () => {
   it('reads a3: the walk and the stay, and "가는 길" alone', async () => {
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     await pressBuilding(server, GRADUATE_HALL, TAP_LOOKUPS.a3);
 
@@ -136,8 +137,8 @@ describe("the card of a pressed building with fewer lines, as the main server's 
     expect(buildingCard().getByRole('button', { name: '가는 길' })).toBeVisible();
   });
 
-  it('reads a2: the events, with "가는 길" alone while row 4\'s answers have no screen', async () => {
-    await openMain({ answerOnMap: true });
+  it('reads a2: the events, with "행사 보기" and "같이 갈 파티" before "가는 길"', async () => {
+    await openMain();
 
     await pressBuilding(server, CULTURE_HALL, TAP_LOOKUPS.a2);
 
@@ -147,9 +148,7 @@ describe("the card of a pressed building with fewer lines, as the main server's 
       '채용박람회 · 17:00까지 열려요',
       '기업 설명회 · 16:00–17:00',
     ]);
-    expect(buildingCard().queryByRole('button', { name: '행사 보기' })).toBeNull();
-    expect(buildingCard().queryByRole('button', { name: '같이 갈 파티' })).toBeNull();
-    expect(buildingCard().getByRole('button', { name: '가는 길' })).toBeVisible();
+    expect(buttonNames().slice(-3)).toEqual(['행사 보기', '같이 갈 파티', '가는 길']);
   });
 });
 
@@ -161,7 +160,7 @@ describe("a14's Friend line", () => {
   });
 
   it('ends with "›" and opens the Friend\'s card', async () => {
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     answerBuilding(server, ENGINEERING_2, TAP_LOOKUPS.a14);
     server.on('POST /assistant/taps', ({ body }) =>
       JSON.stringify(body).includes('"friend"') ? refusal(404) : { status: 200, body: TAP_LOOKUPS.a14 },
@@ -184,24 +183,25 @@ describe("a14's Friend line", () => {
 
 // Partitions: the card while it is asked, after a failure, and "다시 시도".
 describe("a building's card before its answer", () => {
-  it('says "보는 중이에요" under the Place\'s name while it is asked', async () => {
+  it('waits with the dots, labelled "보는 중이에요", under the Place\'s name while it is asked', async () => {
     answerBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
     server.on('POST /assistant/taps', { status: 200, body: TAP_LOOKUPS.a1, afterMs: 2000 });
-    await openMain({ answerOnMap: true });
+    await openMain();
 
     await tapGround();
 
     expect(buildingCard().getByRole('header', { name: '63동' })).toBeVisible();
-    expect(buildingCard().getByText('보는 중이에요')).toBeVisible();
-    await pass(2000);
+    expect(buildingCard().getByLabelText('보는 중이에요')).toBeVisible();
     expect(buildingCard().queryByText('보는 중이에요')).toBeNull();
+    await pass(2000);
+    expect(buildingCard().queryByLabelText('보는 중이에요')).toBeNull();
     expect(factLines()).toHaveLength(3);
   });
 
   it('says that it failed, and "다시 시도" asks again', async () => {
     answerBuilding(server, STUDENT_HALL, TAP_LOOKUPS.a1);
     server.on('POST /assistant/taps', 'no-answer');
-    const user = await openMain({ answerOnMap: true });
+    const user = await openMain();
     await tapGround();
     await pass(3000);
 
