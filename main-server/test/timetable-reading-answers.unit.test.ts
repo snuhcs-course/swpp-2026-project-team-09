@@ -27,8 +27,9 @@ import {
 // are now and compared with the hand-written ground truth. No model is called. The chosen design's run is held to the
 // bar; `READING_TABLE=1 RUNS=a1,d2-blocks-fades` prints the tables accuracy.md gives.
 
-// The chosen design: the label-free grid sent, the model reading the layout and then the text (accuracy.md).
-const CHOSEN = 'g3-grid-two-calls';
+// The chosen design: the label-free grid sent, the model reading the layout and, at the same time, the text
+// (accuracy.md).
+const CHOSEN = 'h4-parallel-thinking';
 
 function sum(scores: readonly ReadingScore[], key: keyof ReadingScore): number {
   return scores.reduce((total, one) => total + Number(one[key]), 0);
@@ -79,9 +80,8 @@ function agreedLines(run: string): string[] {
   ];
 }
 
-// What the chosen design leaves out (accuracy.md): only snutt-2's block that fades behind the tab bar, on one reading
-// of three, when the end the model read did not agree with where its colour is last seen.
-const LEFT_OUT: Record<string, number> = { 'snutt-2': 1 };
+// What the chosen design leaves out (accuracy.md): nothing, on its three readings of the nine.
+const LEFT_OUT: Record<string, number> = {};
 
 it.each(SCREENSHOTS)(
   'reads %s with nothing wrong and nothing invented on each saved reading of the chosen design',
@@ -109,18 +109,24 @@ function near(end: string, truth: string | null): boolean {
   return truth !== null && Math.abs(clockMinutes(end) - clockMinutes(truth)) <= 5;
 }
 
-const FADE_RULES: FadeRule[] = ['window', 'usual-end', 'model-agrees-with-pixels', 'two-readings-agree'];
+const FADE_RULES: FadeRule[] = [
+  'window',
+  'usual-end',
+  'model-agrees-with-pixels',
+  'two-readings-agree',
+  'agrees-or-reask-agrees',
+];
 
 // Each fading-end rule over the fading blocks of a grid run: right, wrong and left out, real and synthetic apart.
 function fadeLines(run: string): string[] {
   return [SCREENSHOTS, FADE_NAMES].flatMap((names) => {
     const cases = fadeCases(run, names);
     return FADE_RULES.map((rule) => {
-      const ends = cases.map((one, index) => {
-        const other = cases.find(
-          (two) => two !== one && two.name === one.name && two.n === (one.n % 3) + 1 && two.seen === one.seen,
-        );
-        return { end: fadeRuleEnd(rule, one, other ?? cases[index]), truth: one.truthEnd };
+      const ends = cases.map((one) => {
+        const same = cases.filter((two) => two !== one && two.name === one.name && two.seen === one.seen);
+        // The next reading of the same block, or the first after the last: each reading paired once.
+        const other = same.find((two) => two.n === one.n + 1) ?? same.find((two) => two.n < one.n);
+        return { end: fadeRuleEnd(rule, one, other), truth: one.truthEnd };
       });
       const right = ends.filter(({ end, truth }) => end !== null && near(end, truth)).length;
       const wrong = ends.filter(({ end, truth }) => end !== null && !near(end, truth)).length;
@@ -140,7 +146,7 @@ it('prints the tables', () => {
         ...(fades ? lines(run, FADE_NAMES, `${run}, synthetic fades`) : []),
       ];
       process.stdout.write(
-        `${[...out, ...agreedLines(run), ...(run.startsWith('g') ? fadeLines(run) : [])].join('\n')}\n`,
+        `${[...out, ...agreedLines(run), ...(/^[gh]/u.test(run) ? fadeLines(run) : [])].join('\n')}\n`,
       );
     }
   }

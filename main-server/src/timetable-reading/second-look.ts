@@ -75,8 +75,10 @@ const SAME_COLOUR = 24;
 
 // Whether two names read on two blocks are probably one name misread: as long as each other, apart by one character
 // in four, at most two (생물학 and 통계학 are not; 컴퓨터프로그래밍 and 컴퓨터프로그레밍 are), with the same digits and
-// Latin letters in the same order (수학 1 and 수학 2, or 물리학 1 and 물리학실험 1, are different classes), and, when
-// both blocks' colours are known, of one colour. Only a second look decides: nothing is merged on this alone.
+// Latin letters in the same order (수학 1 and 수학 2, or 물리학 1 and 물리학실험 1, are different classes), and of one
+// colour when both blocks' colours are known. Without colour evidence (the whole picture's reading), names alone
+// decide that the blocks are looked at again. Only that second look decides: nothing is merged on this alone, and
+// nothing near-equal is left as two classes without it.
 // The digits and Latin letters of a name, in order: what tells 수학 1 from 수학 2.
 function marks(text: string): string {
   return text.replaceAll(/[^0-9A-Za-z]/gu, '');

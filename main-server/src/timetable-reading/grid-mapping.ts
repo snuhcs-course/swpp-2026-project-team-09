@@ -31,8 +31,10 @@ export interface GridFound {
   blocks: GridBlockFound[];
 }
 
-// How far, in minutes, a model's time may be from the fitted line and still count for it.
+// How far, in minutes, a model's time may be from the fitted line and still count for it; and how far the middle of
+// all its times may be.
 const INLIER_MINUTES = 12;
+const MEDIAN_MINUTES = 4;
 
 interface Point {
   y: number;
@@ -41,7 +43,7 @@ interface Point {
 
 // minutes = slope × y + offset through the most points within INLIER_MINUTES, refitted by least squares over them.
 // Every pair of points proposes a line, so the result does not depend on chance. Null with fewer than 4 points
-// agreeing, or fewer than 60 % of them, or a line running backwards.
+// agreeing, or fewer than 60 % of them, a line running backwards, or times whose median is more than 4 minutes off it.
 export function fitMinutes(points: readonly Point[]): { slope: number; offset: number } | null {
   let best: Point[] = [];
   for (const [index, one] of points.entries()) {
@@ -64,7 +66,13 @@ export function fitMinutes(points: readonly Point[]): { slope: number; offset: n
   const meanM = best.reduce((sum, point) => sum + point.minutes, 0) / best.length;
   const spread = best.reduce((sum, point) => sum + (point.y - meanY) ** 2, 0);
   const slope = best.reduce((sum, point) => sum + (point.y - meanY) * (point.minutes - meanM), 0) / spread;
-  return slope > 0 ? { slope, offset: meanM - slope * meanY } : null;
+  const offset = meanM - slope * meanY;
+  // The model's times sit on the line when it read them with care: on the nine screenshots their median distance from
+  // it was at most 2 minutes, and above 9 when the model read them without thinking first, which placed every block
+  // 10 to 25 minutes off (accuracy.md). A line the times do not sit on is no line.
+  const residuals = points.map((point) => Math.abs(slope * point.y + offset - point.minutes)).toSorted((x, y) => x - y);
+  const median = residuals[Math.floor(residuals.length / 2)] ?? Infinity;
+  return slope > 0 && median <= MEDIAN_MINUTES ? { slope, offset } : null;
 }
 
 // The day of each column: day₀ + column, where day₀ is what most blocks' day labels say once their column is taken

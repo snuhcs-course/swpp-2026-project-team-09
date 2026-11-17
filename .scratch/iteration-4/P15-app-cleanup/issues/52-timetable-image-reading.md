@@ -136,6 +136,24 @@ On 2026-11-18 안진영 narrowed stage 1 to recording the pipeline's numbers on 
 - **Review (TaeHyun79):** the name check is linear and the answer is bounded; blocks the phone finds and does not
   send are counted in the toast; the lint failures are fixed.
 
+### Notes from the implementation, last round (2026-11-18)
+
+- **Faster, and 100 % on the nine.** The text is now read at the same time as the layout, the blocks named by column
+  and place, each with the start it read; a block whose start is more than 20 minutes from its placed start is read
+  again on its placed day and time. On the nine screenshots, three readings each: 345 of 345 all right, 0 wrong, 0
+  invented, 189 of 189 grouped right; median 7.7 s (was 13.3 s), 90th percentile 12.3 s, about USD 0.0028 a reading.
+- **The fading end:** when the layout's end does not agree with where the colour ends, one more call asks where that
+  block alone ends, and the end is kept only if that answer agrees within 5 minutes. Real fading blocks: 28 of 28 right
+  (25 without it); synthetic hidden ends: 0 wrong of 46. When it fires, a reading takes about 3.5 s and USD 0.001 more.
+- **A new check:** the fit is refused when the model's times have a median distance of more than 4 minutes from the
+  line (the layout read without thinking placed every block 10 to 25 minutes off while passing the old checks); the
+  reading then falls back to the whole picture.
+- **Numbers decided on:** 20 minutes for the text call's start check; 4 minutes for the fit's median.
+- **Review (TaeHyun79), round 2:** the phone's colours reach the near-miss check only when the answer is on the grid's
+  blocks (no colour on the whole picture's fallback, where names alone ask for a second look); the route says
+  `usedGrid`, and the phone counts the blocks it kept back only when it is true.
+- **Spend:** about USD 0.87 for all experiments.
+
 ### Agent usage (2026-11-18)
 
 - Agent time: about 2 hours 10 minutes, one session (an estimate), including waiting for the shared test lock.
@@ -143,3 +161,5 @@ On 2026-11-18 안진영 narrowed stage 1 to recording the pipeline's numbers on 
   million cache writes; output about 140 thousand.
 - Later the same day: about 2 hours 30 minutes more (an estimate), the same agent; tokens about 35 million more input
   (about 33.5 million cache reads, 1.4 million cache writes) and 160 thousand more output, no subagents.
+- Last round the same day: about 1 hour 30 minutes more (an estimate), the same agent; tokens about 22 million more
+  input (about 21 million cache reads, 0.9 million cache writes) and 90 thousand more output, no subagents.

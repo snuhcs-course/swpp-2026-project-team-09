@@ -2214,18 +2214,20 @@ left), top and bottom in the picture's pixels, fill colour, and whether its bott
 }
 ```
 
-With the grid, the model is asked twice (`src/timetable-reading/`): first for the layout, the hour labels as printed and
-each listed block's day label and rough start and end (`reading-model.ts`, `GRID_INSTRUCTIONS`); the code then fits one
-line from pixels to minutes through all those times, which a few misread times cannot move, gives each column the day
-most of its blocks were read with (the columns' days running on by one, so a hidden label is filled in), and takes
-every block's start and end from the pixels on that line (`grid-mapping.ts`). Then the model reads each block's text,
-listed by its day and times. When the fit or the days do not hold, or no grid was sent, the model reads the whole
+With the grid, the model is asked twice at the same time (`src/timetable-reading/grid-reading.ts`): for the layout,
+the hour labels as printed and each listed block's day label and rough start and end (`GRID_INSTRUCTIONS`), and for the
+text of each block, named by its column and place, with the start it read (`ID_TEXT_INSTRUCTIONS`). The code fits one
+line from pixels to minutes through the layout's times, which a few misread times cannot move and which is refused when
+the times' median distance from it is over 4 minutes; gives each column the day most of its blocks were read with (the
+columns' days running on by one, so a hidden label is filled in); and takes every block's start and end from the pixels
+on that line (`grid-mapping.ts`). A block whose text was read at a start more than 20 minutes from its placed start is
+read again on its placed day and time. When the fit or the days do not hold, or no grid was sent, the model reads the whole
 picture instead, hour axis included. Code checks the answer (`reading-checks.ts`): a name must be its printed lines
 joined, a room must match the room pattern, a 12-hour axis becomes 24-hour, times snap to five minutes, and blocks
 whose names are equal after NFC and space normalisation are one class, each time with its own room. Blocks whose names
 are one or two characters apart (and of one colour) are read once more on their own before they are grouped
 (`second-look.ts`). A fading block keeps the end where its colour is last seen only when the end the model read agrees
-with it within 5 minutes; otherwise it is left out. What fails a check is left out and counted:
+with it within 5 minutes, with the layout or when asked once more about that block alone; otherwise it is left out. What fails a check is left out and counted:
 
 ```json
 {
@@ -2240,9 +2242,14 @@ with it within 5 minutes; otherwise it is left out. What fails a check is left o
       ]
     }
   ],
-  "leftOut": [{ "weekday": "monday", "name": "논리설계", "start": "19:00", "end": null, "reason": "cut" }]
+  "leftOut": [{ "weekday": "monday", "name": "논리설계", "start": "19:00", "end": null, "reason": "cut" }],
+  "usedGrid": true
 }
 ```
+
+`usedGrid` says whether the blocks were placed on the grid the phone sent. Only then does the phone add the blocks it
+kept back (side by side, or cut at the top) to what was left out; on the whole picture's reading the model saw those
+blocks itself.
 
 or `{ "kind": "none" }` for a picture with no timetable. Refused with 400 for a body of another shape, 413 above the
 limit, 422 `UNREADABLE_IMAGE` for bytes that are no picture the model takes, 429 once a User has asked

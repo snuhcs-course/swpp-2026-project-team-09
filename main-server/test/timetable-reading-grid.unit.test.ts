@@ -137,3 +137,13 @@ describe('a grid read', () => {
     expect(placedBlocks(GRID, { ...TEXT, axis: [] })).toBeNull();
   });
 });
+
+describe('a line the model’s times do not sit on', () => {
+  it('is refused, as when the layout was read without thinking and every time is 10 to 25 minutes off', () => {
+    const points = [540, 660, 735, 840, 960, 1020, 1140, 1200].map((minutes, index) => ({
+      y: 300 + (minutes - 540) * (5 / 3),
+      minutes: minutes + ([0, 12, -10, 11, -9, 10, -11, 9][index] ?? 0),
+    }));
+    expect(fitMinutes(points)).toBeNull();
+  });
+});

@@ -17,10 +17,10 @@ import { LETTERS, type Weekday } from './labels.js';
 import { checkedReading, type TimetableReading } from './reading-checks.js';
 import { blocksAnswer, listedBlocks, nearMissGroups, withSecondLook } from './second-look.js';
 import { UnreadableImageException } from './unreadable-image.exception.js';
-import { type GridFound, gridListed, placedAnswer, placedBlocks } from './grid-mapping.js';
+import { type GridFound } from './grid-mapping.js';
+import { DEFAULT_GRID_OPTIONS, type GridOptions, readGrid } from './grid-reading.js';
 import {
   askForBlockText,
-  askForGridText,
   askForTimetable,
   type ListedBlock,
   type ModelAnswer,
@@ -64,6 +64,11 @@ export function imageTypeOf(bytes: Uint8Array): string | null {
   return starts(0x52, 0x49, 0x46, 0x46) && webp === 'WEBP' ? 'image/webp' : null;
 }
 
+// The reading as the route answers it: whether the blocks were placed on the grid the phone sent (`usedGrid`), so that
+// the phone counts the blocks it kept back only then; on the whole picture's reading the model saw those itself.
+export type ServedReading =
+  (Extract<TimetableReading, { kind: 'read' }> & { usedGrid: boolean }) | Extract<TimetableReading, { kind: 'none' }>;
+
 @Injectable()
 export class TimetableReadingService {
   private readonly logger = new Logger(TimetableReadingService.name);
@@ -85,7 +90,7 @@ export class TimetableReadingService {
 
   // The classes on the picture, or why not: 422 for a picture the model cannot take, 429 once the User's readings of
   // the day are used up, 503 when the model cannot read now. On each, the app reads the picture on the phone.
-  async read(userId: string, base64: string, grid: GridFound | null): Promise<TimetableReading> {
+  async read(userId: string, base64: string, grid: GridFound | null): Promise<ServedReading> {
     const bytes = Buffer.from(base64, 'base64');
     const mediaType = imageTypeOf(bytes);
     if (mediaType === null || bytes.length > MOST_IMAGE_BYTES) {
@@ -112,7 +117,7 @@ export class TimetableReadingService {
           : 'no timetable';
       const how = grid === null ? 'the whole picture' : mapped === true ? 'the grid' : 'the grid, its mapping refused';
       this.logger.log(`A timetable was read from ${how}: ${counts}`);
-      return reading;
+      return reading.kind === 'read' ? { ...reading, usedGrid: mapped === true } : reading;
     } catch (error) {
       this.logger.warn(`A timetable was not read: ${causeOf(error)}`);
       throw unavailable();
@@ -137,17 +142,15 @@ async function firstReading(
   image: TimetableImage,
   { grid, blocks }: Found,
   limits: ReadingLimits,
+  options: GridOptions,
 ): Promise<{ answer: ModelAnswer; listed: (ListedBlock | null)[]; mapped: boolean | null; raw: unknown }> {
   if (grid !== undefined && grid !== null && grid.blocks.length > 0) {
-    const layout = (await askForGridText(model, image, grid.blocks, limits)).answer;
-    const placed = placedBlocks(grid, layout);
-    if (placed !== null) {
-      const listed = gridListed(grid, placed);
-      const text = (await askForBlockText(model, image, listed, limits)).answer;
-      return { answer: placedAnswer(grid, placed, text), listed, mapped: true, raw: { layout, text } };
+    const reading = await readGrid(model, image, grid, limits, options);
+    if (reading !== null) {
+      return { ...reading, mapped: true };
     }
     const whole = (await askForTimetable(model, image, limits)).answer;
-    return { answer: whole, listed: listedBlocks(whole), mapped: false, raw: { layout, whole } };
+    return { answer: whole, listed: listedBlocks(whole), mapped: false, raw: { whole } };
   }
   if (blocks !== undefined && blocks !== null && blocks.length > 0) {
     const sent = blocks.map(({ weekday, start, end, fades }) => ({ day: LETTERS[weekday], start, end, fades }));
@@ -168,9 +171,13 @@ export async function readAnswer(
   image: TimetableImage,
   found: Found,
   limits: ReadingLimits,
+  options: GridOptions = DEFAULT_GRID_OPTIONS,
 ): Promise<{ answer: ModelAnswer; mapped: boolean | null; raw: unknown }> {
-  const { answer, listed, mapped, raw } = await firstReading(model, image, found, limits);
-  const colours = found.grid?.blocks ?? found.blocks ?? [];
+  const { answer, listed, mapped, raw } = await firstReading(model, image, found, limits, options);
+  // The phone's colours belong to the answer's blocks only where the answer is on those blocks, in their order: the
+  // placed grid, or the blocks sent. On the whole picture's fallback the model's blocks are its own, so no colour is
+  // given, and near-equal names are looked at again on their names alone (P15-52 review).
+  const colours = mapped === true ? (found.grid?.blocks ?? []) : mapped === null ? (found.blocks ?? []) : [];
   const groups = nearMissGroups(
     answer.blocks.map((block, index) => ({ name: block.name, colour: colours[index]?.colour ?? null })),
   );

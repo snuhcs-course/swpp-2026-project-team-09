@@ -62,6 +62,11 @@ function isLeftOut(value: unknown): value is ServerLeftOut {
   );
 }
 
+// `usedGrid` is a boolean, or absent from a server before it was added.
+function isUsedGrid(value: unknown): value is boolean | undefined {
+  return value === undefined || typeof value === 'boolean';
+}
+
 export function isTimetableReading(value: unknown): value is ServerTimetableReading {
   const kind = field(value, 'kind');
   if (kind === 'none') {
@@ -72,6 +77,7 @@ export function isTimetableReading(value: unknown): value is ServerTimetableRead
   return (
     kind === 'read' &&
     isTextOrNull(field(value, 'title')) &&
+    isUsedGrid(field(value, 'usedGrid')) &&
     Array.isArray(classes) &&
     classes.every((lesson) => isReadClass(lesson)) &&
     Array.isArray(leftOut) &&

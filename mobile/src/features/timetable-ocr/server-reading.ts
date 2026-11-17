@@ -39,8 +39,16 @@ export function readingFromServer(
       end,
       reason: reason === 'cut' ? 'end-uncertain' : 'unchecked',
     })),
-    // What the phone's pixels found and did not send, counted as the phone's own reader counts it.
-    ...skipped.map(({ reason }): LeftOut => ({ weekday: null, name: '', start: null, end: null, reason })),
+    // What the phone's pixels found and did not send, counted as the phone's own reader counts it: only when the
+    // server placed the blocks on the grid. On the whole picture's reading the model saw those blocks itself, and they
+    // are in its own answer already; an answer that does not say counts nothing, so nothing is counted twice.
+    ...(server.usedGrid === true ? skipped : []).map(({ reason }): LeftOut => ({
+      weekday: null,
+      name: '',
+      start: null,
+      end: null,
+      reason,
+    })),
   ];
   return { kind: 'read', title: server.title, classes, leftOut };
 }

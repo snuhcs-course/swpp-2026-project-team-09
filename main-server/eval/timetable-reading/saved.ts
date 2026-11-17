@@ -42,7 +42,11 @@ const savedSchema = z.object({
 const gridRawSchema = z.object({
   mode: z.literal('grid'),
   mapped: z.literal(true),
-  raw: z.object({ layout: gridTextSchema, text: textSchema }),
+  raw: z.object({
+    layout: gridTextSchema,
+    text: textSchema,
+    reasked: z.record(z.string(), z.string().nullable()).optional(),
+  }),
 });
 
 // A grid run's answer placed again from its raw layout and text with the code as it is now, so that a change of the
@@ -52,8 +56,13 @@ function answerOf(name: string, raw: z.infer<typeof savedSchema>, record: unknow
   if (grid.success) {
     const found = gridOf(name);
     const placed = placedBlocks(found, grid.data.raw.layout);
+    const reasked = grid.data.raw.reasked ?? {};
     if (placed !== null) {
-      return placedAnswer(found, placed, grid.data.raw.text);
+      const withEnds = placed.map((place, index) => {
+        const { day, start, seen } = place;
+        return String(index) in reasked ? { day, start, seen, modelEnd: reasked[String(index)] ?? null } : place;
+      });
+      return placedAnswer(found, withEnds, grid.data.raw.text);
     }
   }
   if (raw.boxes === undefined) {
@@ -116,7 +125,8 @@ export function agreed(one: TimetableReading, other: TimetableReading): Timetabl
 
 // P15-52, the fading block: each rule for a block whose end is not seen, judged on every fading block of a grid run's
 // readings (from the raw answers it saved) against the ground truth: right, wrong, or left out.
-export type FadeRule = 'window' | 'usual-end' | 'model-agrees-with-pixels' | 'two-readings-agree';
+export type FadeRule =
+  'window' | 'usual-end' | 'model-agrees-with-pixels' | 'two-readings-agree' | 'agrees-or-reask-agrees';
 
 export interface FadeCase {
   name: string;
@@ -124,15 +134,21 @@ export interface FadeCase {
   truthEnd: string | null;
   seen: string;
   modelEnd: string | null;
+  // The end a second call on that block alone read, when it was asked.
+  reaskedEnd?: string | null;
 }
 
-const rawRecordSchema = z.object({ raw: z.object({ layout: gridTextSchema }), mode: z.literal('grid') });
+const rawRecordSchema = z.object({
+  raw: z.object({ layout: gridTextSchema, reasked: z.record(z.string(), z.string().nullable()).optional() }),
+  mode: z.literal('grid'),
+});
 
 export function fadeCases(run: string, names: readonly string[]): FadeCase[] {
   return names.flatMap((name) => {
     const grid = gridOf(name);
+    const reads = Array.from({ length: 12 }, (_, index) => index + 1);
     const truth = truthOf(name);
-    return [1, 2, 3].flatMap((n) => {
+    return reads.flatMap((n) => {
       const file = new URL(`answers/${run}/${name}.${n}.json`, import.meta.url);
       if (!existsSync(file)) {
         return [];
@@ -147,7 +163,10 @@ export function fadeCases(run: string, names: readonly string[]): FadeCase[] {
         const weekday = WEEKDAYS.find((day) => LETTERS[day] === place.day);
         const truthEnd =
           truth.times.find((time) => time.weekday === weekday && time.start === place.start)?.end ?? null;
-        return [{ name, n, truthEnd, seen: place.seen, modelEnd: place.modelEnd }];
+        const reasked = parsed.success ? parsed.data.raw.reasked : undefined;
+        const reaskedEnd =
+          reasked === undefined || !(String(index) in reasked) ? undefined : (reasked[String(index)] ?? null);
+        return [{ name, n, truthEnd, seen: place.seen, modelEnd: place.modelEnd, reaskedEnd }];
       });
     });
   });
@@ -165,6 +184,11 @@ export function fadeRuleEnd(rule: FadeRule, one: FadeCase, other: FadeCase | und
   }
   if (rule === 'usual-end') {
     return [0, 15, 45, 50].includes(minutesOfClock(one.seen) % 60) ? one.seen : null;
+  }
+  if (rule === 'agrees-or-reask-agrees') {
+    const agrees = (end: string | null | undefined): boolean =>
+      end !== null && end !== undefined && Math.abs(minutesOfClock(end) - minutesOfClock(one.seen)) <= 5;
+    return agrees(one.modelEnd) || agrees(one.reaskedEnd) ? one.seen : null;
   }
   if (rule === 'model-agrees-with-pixels') {
     const agrees = one.modelEnd !== null && Math.abs(minutesOfClock(one.modelEnd) - minutesOfClock(one.seen)) <= 5;

@@ -78,16 +78,35 @@ describe('the main server’s reading', () => {
 });
 
 describe('the main server’s reading with what the phone kept back', () => {
-  it('counts the blocks the phone found and did not send among what was left out', () => {
-    const reading = readingFromServer(READ, PLACES, [
+  it('counts the blocks the phone kept back once when the server placed blocks on its grid', () => {
+    const reading = readingFromServer({ ...READ, usedGrid: true }, PLACES, [
       { column: 3, reason: 'too-narrow' },
       { column: 3, reason: 'too-narrow' },
+      { column: 0, reason: 'start-uncertain' },
     ]);
     expect(reading.kind === 'read' ? reading.leftOut.map(({ reason }) => reason) : []).toEqual([
       'end-uncertain',
       'too-narrow',
       'too-narrow',
+      'start-uncertain',
     ]);
+  });
+
+  it('does not add them when the server read the whole picture, or does not say, so that none is counted twice', () => {
+    // The whole picture's reading reported the block cut at its top itself, as `cut`.
+    const whole = {
+      ...READ,
+      leftOut: [{ weekday: 'monday', name: '논리설계', start: '09:00', end: null, reason: 'cut' }],
+    } satisfies ServerTimetableReading;
+    for (const server of [{ ...whole, usedGrid: false }, whole]) {
+      const reading = readingFromServer(server, PLACES, [{ column: 0, reason: 'start-uncertain' }]);
+      expect(reading.kind === 'read' ? reading.leftOut.map(({ reason }) => reason) : []).toEqual(['end-uncertain']);
+    }
+  });
+
+  it('takes `usedGrid` as a boolean or absent', () => {
+    expect(isTimetableReading({ ...READ, usedGrid: true })).toBe(true);
+    expect(isTimetableReading({ ...READ, usedGrid: 'yes' })).toBe(false);
   });
 
   it('is no timetable when the server found none', () => {

@@ -8,6 +8,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { wrapLanguageModel } from 'ai';
 import { modelThrough } from '../../src/assistant/model-port.js';
 import { checkedReading } from '../../src/timetable-reading/reading-checks.js';
+import { type GridOptions } from '../../src/timetable-reading/grid-reading.js';
 import { readAnswer } from '../../src/timetable-reading/timetable-reading.service.js';
 import { blocksOf, gridOf } from './boxes.ts';
 import { imageOf, namesOf, scoreReading, truthOf } from './score.ts';
@@ -32,6 +33,13 @@ const PRICES: Record<string, { input: number; output: number }> = {
 };
 
 const RUN = process.env.RUN ?? 'run';
+const LIMITS = { timeoutMs: 120_000, maxOutputTokens: 6000 };
+// LAYOUT_THINKING=0 PARALLEL=1 FADE_REASK=0: the ways of reading a grid measured against the default.
+const OPTIONS: GridOptions = {
+  layoutThinking: (process.env.LAYOUT_THINKING ?? '1') === '1',
+  parallel: process.env.PARALLEL === '1',
+  fadeReask: (process.env.FADE_REASK ?? '1') === '1',
+};
 const ANSWERS = new URL(`answers/${RUN}/`, import.meta.url);
 
 function apiKey(): string {
@@ -93,11 +101,12 @@ async function readOnce(
   const found = mode === 'grid' ? { grid: gridOf(name) } : mode === 'blocks' ? { blocks: blocksOf(name) } : {};
   const before = { ...usage };
   const started = performance.now();
-  const { answer, mapped, raw } = await readAnswer(model, image, found, { timeoutMs: 120_000, maxOutputTokens: 8000 });
+  const { answer, mapped, raw } = await readAnswer(model, image, found, LIMITS, OPTIONS);
   const ms = Math.round(performance.now() - started);
   const [input, output, calls] = [usage.input - before.input, usage.output - before.output, usage.calls - before.calls];
   const spent = input * prices.input + output * prices.output;
   const saved = {
+    options: OPTIONS,
     screenshot: name,
     model: modelId,
     mode,

@@ -80,7 +80,16 @@ const TEXT = {
 };
 
 // The fake model answers the layout call, the text call and the whole picture's call each in its shape.
+// The text read at the same time as the layout, the blocks named by column and place, each with its start.
+const ID_TEXT = {
+  title: TEXT.title,
+  blocks: TEXT.blocks.map((block, index) => ({ ...block, start: ['11:00', '11:00', '5:00'][index] ?? '' })),
+};
+
 function answerFor(prompt: string): object {
+  if (prompt.includes('and where it starts')) {
+    return ID_TEXT;
+  }
   if (prompt.includes('column 1') || prompt.includes('column 2')) {
     return LAYOUT;
   }
@@ -149,6 +158,7 @@ describe('reading a timetable screenshot', () => {
         { name: '물리학 1', times: [{ weekday: 'thursday', start: '17:00', end: '18:15', room: '56-105' }] },
       ],
       leftOut: [],
+      usedGrid: false,
     });
     // The picture went to the model as an image, once.
     expect(calls).toHaveLength(1);
@@ -174,6 +184,7 @@ describe('reading a timetable screenshot with the grid the phone found', () => {
         { name: '물리학 1', times: [{ weekday: 'thursday', start: '17:00', end: '18:15', room: '56-105' }] },
       ],
       leftOut: [],
+      usedGrid: true,
     });
   });
 

@@ -105,6 +105,8 @@ export type GridTextAnswer = z.infer<typeof gridTextSchema>;
 export interface ReadingLimits {
   timeoutMs: number;
   maxOutputTokens: number;
+  // Whether the model may think first (adaptive thinking, the default). Off makes a short call quicker.
+  thinking?: boolean;
 }
 
 export interface TimetableImage {
@@ -135,7 +137,7 @@ async function ask<Answer>(
   image: TimetableImage,
   text: string,
   schema: z.ZodType<Answer>,
-  { timeoutMs, maxOutputTokens }: ReadingLimits,
+  { timeoutMs, maxOutputTokens, thinking = true }: ReadingLimits,
 ): Promise<ModelCall<Answer>> {
   const { output, usage } = await generateText({
     model,
@@ -153,7 +155,10 @@ async function ask<Answer>(
     maxRetries: 0,
     maxOutputTokens,
     timeout: { totalMs: timeoutMs },
-    providerOptions: { openrouter: { provider: { require_parameters: true, data_collection: 'deny' } } },
+    providerOptions: {
+      openrouter: { provider: { require_parameters: true, data_collection: 'deny' } },
+      ...(thinking ? {} : { anthropic: { thinking: { type: 'disabled' } } }),
+    },
   });
   return { answer: output, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens };
 }
@@ -207,4 +212,56 @@ export function askForGridText(
   all: readonly { column: number; top: number }[] = blocks,
 ): Promise<ModelCall<GridTextAnswer>> {
   return ask(model, GRID_INSTRUCTIONS, image, `The blocks:\n${gridList(blocks, all)}`, gridTextSchema, limits);
+}
+
+export const END_INSTRUCTIONS = `You read one class block on a screenshot of a weekly university timetable. Its bottom fades out or runs under a bar. Say where the class ends: the time, on a 24-hour clock as "HH:MM" to five minutes, at which its bottom edge falls against the hour lines (the picture's hour labels may use a 12-hour clock: 13:00 is the line labelled 1). If its end cannot be seen or told, give null. Do not guess from a usual class length.
+
+${GRID}`;
+
+export const endSchema = z.object({ end: z.string().nullable() });
+
+// Where one fading block ends, asked on its own: the block given by its day and start. Throws as askForTimetable does.
+export function askForEnd(
+  model: Model,
+  image: TimetableImage,
+  block: { day: string; start: string },
+  limits: ReadingLimits,
+): Promise<ModelCall<z.infer<typeof endSchema>>> {
+  return ask(model, END_INSTRUCTIONS, image, `The block: ${block.day} from ${block.start}`, endSchema, limits);
+}
+
+export const ID_TEXT_INSTRUCTIONS = `You read the text inside class blocks on a screenshot of a weekly university timetable. The blocks have been found already, by their colour: each is listed with its number as "column C, block K", the K-th block from the top in the C-th day column counted from the left (the hour labels' strip is not a column). For each listed block, read what is printed inside it, and where it starts.
+
+${GRID}
+
+What to report, for every listed number, each one once:
+- start: where its top edge falls against the hour lines, as "H:MM" on the axis's own clock, to five minutes.
+${TEXT_RULES}
+- If no class block is at a listed place, give empty nameLines and an empty name.
+And title: the timetable's own name as printed above the grid, without a credit count or the app's own words; null when none can be read.`;
+
+export const idTextSchema = z.object({
+  title: z.string().nullable(),
+  blocks: z.array(
+    z.object({
+      number: z.number(),
+      start: z.string(),
+      nameLines: z.array(z.string()),
+      name: z.string(),
+      room: z.string().nullable(),
+    }),
+  ),
+});
+
+export type IdTextAnswer = z.infer<typeof idTextSchema>;
+
+// The text of the found blocks named by column and place, with each one's start for a check, read at the same time as
+// the layout. Throws as askForTimetable does.
+export function askForIdText(
+  model: Model,
+  image: TimetableImage,
+  blocks: readonly { column: number; top: number }[],
+  limits: ReadingLimits,
+): Promise<ModelCall<IdTextAnswer>> {
+  return ask(model, ID_TEXT_INSTRUCTIONS, image, `The blocks:\n${gridList(blocks)}`, idTextSchema, limits);
 }

@@ -1,0 +1,459 @@
+{
+  "options": {
+    "layoutThinking": true,
+    "parallel": true,
+    "fadeReask": true
+  },
+  "screenshot": "everytime-1",
+  "model": "claude-haiku-5-5",
+  "mode": "grid",
+  "mapped": true,
+  "ms": 10254,
+  "inputTokens": 10484,
+  "outputTokens": 4579,
+  "calls": 2,
+  "answer": {
+    "title": "2025년 여름학기 시간표",
+    "axis": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24"
+    ],
+    "blocks": [
+      {
+        "day": "월",
+        "start": "12:30",
+        "end": "13:45",
+        "nameLines": ["영상예술의 이해"],
+        "name": "영상예술의 이해",
+        "room": "43-1",
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "14:00",
+        "end": "15:15",
+        "nameLines": ["자료구조"],
+        "name": "자료구조",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "17:00",
+        "end": "18:15",
+        "nameLines": ["자연언어처리 개", "론"],
+        "name": "자연언어처리 개론",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "19:00",
+        "end": "21:00",
+        "nameLines": ["컴퓨터프로그래", "밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "09:30",
+        "end": "10:45",
+        "nameLines": ["공학수학 2"],
+        "name": "공학수학 2",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "19:00",
+        "end": "21:00",
+        "nameLines": ["시스템프로그래", "밍"],
+        "name": "시스템프로그래밍",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "12:30",
+        "end": "13:45",
+        "nameLines": ["영상예술의 이해"],
+        "name": "영상예술의 이해",
+        "room": "43-1",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "14:00",
+        "end": "15:15",
+        "nameLines": ["자료구조"],
+        "name": "자료구조",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "17:00",
+        "end": "18:15",
+        "nameLines": ["자연언어처리 개", "론"],
+        "name": "자연언어처리 개론",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "19:00",
+        "end": "21:00",
+        "nameLines": ["컴퓨터프로그래", "밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "09:30",
+        "end": "10:45",
+        "nameLines": ["공학수학 2"],
+        "name": "공학수학 2",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "13:00",
+        "end": "13:50",
+        "nameLines": ["인공지능 이론", "및 응용 세미나"],
+        "name": "인공지능 이론 및 응용 세미나",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "14:00",
+        "end": "15:50",
+        "nameLines": ["컴퓨터프로그래", "밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "16:00",
+        "end": "18:00",
+        "nameLines": ["시스템프로그래", "밍"],
+        "name": "시스템프로그래밍",
+        "room": null,
+        "cut": false
+      }
+    ]
+  },
+  "raw": {
+    "layout": {
+      "title": "2025년 여름학기",
+      "axis": ["9", "10", "11", "12", "1", "2", "3", "4", "5", "6", "7", "8"],
+      "blocks": [
+        {
+          "number": 1,
+          "day": "월",
+          "start": "12:30",
+          "end": "1:45"
+        },
+        {
+          "number": 2,
+          "day": "월",
+          "start": "2:00",
+          "end": "3:15"
+        },
+        {
+          "number": 3,
+          "day": "월",
+          "start": "5:00",
+          "end": "6:15"
+        },
+        {
+          "number": 4,
+          "day": "월",
+          "start": "7:00",
+          "end": "9:00"
+        },
+        {
+          "number": 5,
+          "day": "화",
+          "start": "9:30",
+          "end": "10:45"
+        },
+        {
+          "number": 6,
+          "day": "화",
+          "start": "7:00",
+          "end": "9:00"
+        },
+        {
+          "number": 7,
+          "day": "수",
+          "start": "12:30",
+          "end": "1:45"
+        },
+        {
+          "number": 8,
+          "day": "수",
+          "start": "2:00",
+          "end": "3:15"
+        },
+        {
+          "number": 9,
+          "day": "수",
+          "start": "5:00",
+          "end": "6:15"
+        },
+        {
+          "number": 10,
+          "day": "수",
+          "start": "7:00",
+          "end": "9:00"
+        },
+        {
+          "number": 11,
+          "day": "목",
+          "start": "9:30",
+          "end": "10:45"
+        },
+        {
+          "number": 12,
+          "day": "목",
+          "start": "1:00",
+          "end": "1:50"
+        },
+        {
+          "number": 13,
+          "day": "목",
+          "start": "2:00",
+          "end": "3:50"
+        },
+        {
+          "number": 14,
+          "day": "목",
+          "start": "4:00",
+          "end": "6:00"
+        }
+      ]
+    },
+    "text": {
+      "title": "2025년 여름학기 시간표",
+      "blocks": [
+        {
+          "number": 1,
+          "nameLines": ["영상예술의 이해"],
+          "name": "영상예술의 이해",
+          "room": "43-1"
+        },
+        {
+          "number": 2,
+          "nameLines": ["자료구조"],
+          "name": "자료구조",
+          "room": null
+        },
+        {
+          "number": 3,
+          "nameLines": ["자연언어처리 개", "론"],
+          "name": "자연언어처리 개론",
+          "room": null
+        },
+        {
+          "number": 4,
+          "nameLines": ["컴퓨터프로그래", "밍"],
+          "name": "컴퓨터프로그래밍",
+          "room": null
+        },
+        {
+          "number": 5,
+          "nameLines": ["공학수학 2"],
+          "name": "공학수학 2",
+          "room": null
+        },
+        {
+          "number": 6,
+          "nameLines": ["시스템프로그래", "밍"],
+          "name": "시스템프로그래밍",
+          "room": null
+        },
+        {
+          "number": 7,
+          "nameLines": ["영상예술의 이해"],
+          "name": "영상예술의 이해",
+          "room": "43-1"
+        },
+        {
+          "number": 8,
+          "nameLines": ["자료구조"],
+          "name": "자료구조",
+          "room": null
+        },
+        {
+          "number": 9,
+          "nameLines": ["자연언어처리 개", "론"],
+          "name": "자연언어처리 개론",
+          "room": null
+        },
+        {
+          "number": 10,
+          "nameLines": ["컴퓨터프로그래", "밍"],
+          "name": "컴퓨터프로그래밍",
+          "room": null
+        },
+        {
+          "number": 11,
+          "nameLines": ["공학수학 2"],
+          "name": "공학수학 2",
+          "room": null
+        },
+        {
+          "number": 12,
+          "nameLines": ["인공지능 이론", "및 응용 세미나"],
+          "name": "인공지능 이론 및 응용 세미나",
+          "room": null
+        },
+        {
+          "number": 13,
+          "nameLines": ["컴퓨터프로그래", "밍"],
+          "name": "컴퓨터프로그래밍",
+          "room": null
+        },
+        {
+          "number": 14,
+          "nameLines": ["시스템프로그래", "밍"],
+          "name": "시스템프로그래밍",
+          "room": null
+        }
+      ]
+    },
+    "idText": {
+      "title": "2025년 여름학기 시간표",
+      "blocks": [
+        {
+          "number": 1,
+          "start": "12:30",
+          "nameLines": ["영상예술의 이해"],
+          "name": "영상예술의 이해",
+          "room": "43-1"
+        },
+        {
+          "number": 2,
+          "start": "2:00",
+          "nameLines": ["자료구조"],
+          "name": "자료구조",
+          "room": null
+        },
+        {
+          "number": 3,
+          "start": "5:00",
+          "nameLines": ["자연언어처리 개", "론"],
+          "name": "자연언어처리 개론",
+          "room": null
+        },
+        {
+          "number": 4,
+          "start": "7:00",
+          "nameLines": ["컴퓨터프로그래", "밍"],
+          "name": "컴퓨터프로그래밍",
+          "room": null
+        },
+        {
+          "number": 5,
+          "start": "9:30",
+          "nameLines": ["공학수학 2"],
+          "name": "공학수학 2",
+          "room": null
+        },
+        {
+          "number": 6,
+          "start": "7:00",
+          "nameLines": ["시스템프로그래", "밍"],
+          "name": "시스템프로그래밍",
+          "room": null
+        },
+        {
+          "number": 7,
+          "start": "12:30",
+          "nameLines": ["영상예술의 이해"],
+          "name": "영상예술의 이해",
+          "room": "43-1"
+        },
+        {
+          "number": 8,
+          "start": "2:00",
+          "nameLines": ["자료구조"],
+          "name": "자료구조",
+          "room": null
+        },
+        {
+          "number": 9,
+          "start": "5:00",
+          "nameLines": ["자연언어처리 개", "론"],
+          "name": "자연언어처리 개론",
+          "room": null
+        },
+        {
+          "number": 10,
+          "start": "7:00",
+          "nameLines": ["컴퓨터프로그래", "밍"],
+          "name": "컴퓨터프로그래밍",
+          "room": null
+        },
+        {
+          "number": 11,
+          "start": "9:30",
+          "nameLines": ["공학수학 2"],
+          "name": "공학수학 2",
+          "room": null
+        },
+        {
+          "number": 12,
+          "start": "1:00",
+          "nameLines": ["인공지능 이론", "및 응용 세미나"],
+          "name": "인공지능 이론 및 응용 세미나",
+          "room": null
+        },
+        {
+          "number": 13,
+          "start": "2:00",
+          "nameLines": ["컴퓨터프로그래", "밍"],
+          "name": "컴퓨터프로그래밍",
+          "room": null
+        },
+        {
+          "number": 14,
+          "start": "4:00",
+          "nameLines": ["시스템프로그래", "밍"],
+          "name": "시스템프로그래밍",
+          "room": null
+        }
+      ]
+    },
+    "reasked": {},
+    "again": 0
+  }
+}

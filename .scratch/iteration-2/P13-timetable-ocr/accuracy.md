@@ -6,6 +6,54 @@ Android emulator in ticket 01) against the hand-written ground truth beside them
 the main server's seed of campus buildings (`main-server/seed/campus-map-places.json`, 250 rows from map.snu.ac.kr),
 as `GET /places` lists them.
 
+## Update of 2026-11-18, last round (P15-52): the text read alongside the layout, and a second look at fading ends
+
+**Time.** g3 read the layout, then the text on the placed days and times: two calls one after the other, median
+13.3 s. Measured on the nine, three readings each:
+
+| Run             | Variant                                                                                                                                                                                                                 | All right   | Wrong                                                    | Left out | Median    | 90th pct.  | USD a reading |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | -------------------------------------------------------- | -------- | --------- | ---------- | ------------- |
+| g3              | layout, then text on placed days and times                                                                                                                                                                              | 344/345     | 0                                                        | 1        | 13.3 s    | 18.3 s     | 0.0025        |
+| h2              | g3 with the layout call not thinking (stopped after 4 readings)                                                                                                                                                         | —           | every reading of everytime-1 placed blocks 10–25 min off | —        | 9.6 s     | —          | 0.0021        |
+| h3              | h2 with the text read at the same time (stopped after 3)                                                                                                                                                                | —           | the same                                                 | —        | 13.3 s    | —          | 0.0036        |
+| **h4 (chosen)** | **the text read at the same time as the layout, blocks named by column and place, each with the start it read; a block whose start is more than 20 min from its placed start is read again on its placed day and time** | **345/345** | **0**                                                    | **0**    | **7.7 s** | **12.3 s** | **0.0028**    |
+
+- Thinking off for the layout call made its rough times careless: the fitted line still found enough times within 12
+  minutes, and every block came out 10 to 25 minutes off. So the fit now also refuses a line whose times have a median
+  distance above 4 minutes from it (on g3's readings it was at most 1.8 minutes, on h2's 9 to 10); the reading then
+  falls back to the whole picture. One reading of h1 (snutt-grey-1) had such a layout too, with thinking on, and is
+  refused by this check.
+- The text call named blocks by column and place (as g1 and g2 did) but did nothing else, and in h4's 27 readings it
+  read every block at its start: the check re-read none. Its safeguard against g2's fault, text taken from the next
+  block, is the start check, which a unit test covers.
+- Shortening the layout's output was tried only by turning its thinking off, which is where its time goes, and that
+  broke the fit. Streaming changes nothing here: the server needs the whole answer before it can place a block.
+  Prompt caching: the fixed instructions are about 600 to 800 tokens, above Claude Haiku 5.5's 512-token minimum, and
+  the server's Anthropic path already marks them with a cache breakpoint (`MODEL_CACHE=breakpoints`); a cache read
+  would save under USD 0.0001 a call, and was not measured on time.
+
+**The fading end.** A fading block whose end the layout call read differently from where its colour ends is now
+asked about once more, alone ("where does this block end?", with no hint of the colour's end), and kept only if that
+answer agrees within 5 minutes. Run h1: the three real fading screenshots 10 readings each and the two synthetic sets
+10 each (two readings of the 30 real were refused by the median check above and are not counted):
+
+| Rule                                                | Real fading blocks, 28            | Synthetic hidden ends, 46         |
+| --------------------------------------------------- | --------------------------------- | --------------------------------- |
+| model's end agrees with the colour's (g3)           | 25 right, 0 wrong, 3 left out     | 0 right, 0 wrong, 46 left out     |
+| **the same, or a second look that agrees (chosen)** | **28 right, 0 wrong, 0 left out** | **0 right, 0 wrong, 46 left out** |
+| model's end in a window (d4)                        | 25 right, 0 wrong, 3 left out     | 9 right, **27 wrong**             |
+| colour's end at a usual minute                      | 28 right, 0 wrong                 | 8 right, **8 wrong**              |
+| two readings agree                                  | 22 right, 0 wrong, 6 left out     | 7 right, **15 wrong**             |
+
+The second look fired on 3 of snutt-2's 10 readings, each time reading 17:50 (right): about 3.5 s and USD 0.001 more
+on those readings. On the synthetic hidden ends it answered "cannot be told" or the true end (21:50), never the
+colour's end, so none was turned into a wrong time.
+
+**The chosen design (h4, with the second look and the median check):** 345 of 345 all right, 0 wrong, 0 invented, 189
+of 189 classes grouped right, on three readings of each of the nine screenshots; median 7.7 s, 90th percentile 12.3 s,
+about USD 0.0028 a reading. h4 ran with the second look on; it never fired there (snutt-2's fading end agreed every
+time). The experiments cost about USD 0.87 in all, of the USD 10 allowed.
+
 ## Update of 2026-11-18, later (P15-52): blocks found without any label, and the fading end
 
 The design measured below (d4) placed the blocks with the hour and day labels ML Kit read on the phone, and on the five

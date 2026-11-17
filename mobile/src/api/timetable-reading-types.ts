@@ -46,4 +46,12 @@ export interface ServerLeftOut {
 }
 
 export type ServerTimetableReading =
-  { kind: 'read'; title: string | null; classes: ServerReadClass[]; leftOut: ServerLeftOut[] } | { kind: 'none' };
+  | {
+      kind: 'read';
+      title: string | null;
+      classes: ServerReadClass[];
+      leftOut: ServerLeftOut[];
+      // Whether the blocks were placed on the grid the phone sent; absent from an older server, read as false.
+      usedGrid?: boolean;
+    }
+  | { kind: 'none' };

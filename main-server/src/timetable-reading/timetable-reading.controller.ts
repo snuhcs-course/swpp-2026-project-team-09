@@ -7,8 +7,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { z } from 'zod';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
-import { type TimetableReading } from './reading-checks.js';
-import { TimetableReadingService } from './timetable-reading.service.js';
+import { type ServedReading, TimetableReadingService } from './timetable-reading.service.js';
 
 // More blocks than a week of classes has.
 const MOST_BLOCKS = 80;
@@ -54,7 +53,7 @@ export class TimetableReadingController {
   read(
     @CurrentUser() user: SignedInUser,
     @Body({ schema: readingSchema }) body: z.infer<typeof readingSchema>,
-  ): Promise<TimetableReading> {
+  ): Promise<ServedReading> {
     return this.readings.read(user.id, body.image, body.grid);
   }
 }
