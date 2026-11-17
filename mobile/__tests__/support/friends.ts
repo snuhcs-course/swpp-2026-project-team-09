@@ -3,9 +3,10 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { act } from '@testing-library/react-native';
+import { act, within } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { pass, screen } from './app';
 import { openMain } from './main';
@@ -24,9 +25,9 @@ export async function openFriendScreen(
   return user;
 }
 
-// The Friends in 친구 관리, by the names on their choices of level, in the list's order.
+// The Friends in 친구 관리, by the names on their rows, in the list's order: the buttons after the entry to 친구 요청.
 export function friendRows(): string[] {
-  return screen
-    .getAllByLabelText(/님에게 보일 위치$/u)
-    .map((row) => String(row.props.accessibilityLabel).replace('님에게 보일 위치', ''));
+  const buttons = within(screen.getByTestId('full-screen-panel')).getAllByRole('button');
+  const requests = buttons.indexOf(screen.getByRole('button', { name: /^친구 요청/u }));
+  return buttons.slice(requests + 1).map((row) => String(row.props.accessibilityLabel));
 }

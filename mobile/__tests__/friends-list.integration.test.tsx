@@ -4,9 +4,10 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { act, within } from '@testing-library/react-native';
+import { act } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { pass, screen } from './support/app';
 import { friendRows, openFriendScreen } from './support/friends';
@@ -14,7 +15,6 @@ import { FRIEND_PILL } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { FRIEND } from './support/markers';
 import { startFresh } from './support/mocks';
-import { apiClient } from '@/api/client';
 
 // 친구 관리 against the mocks: the frame's twelve Friends, ten of whom the User sees.
 
@@ -24,8 +24,6 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useMotionAllowed: (): boolean => false,
   useReduceMotionSetting: (): boolean => true,
 }));
-
-const MIN_JUN_LEVELS = '김민준님에게 보일 위치';
 
 beforeEach(async () => {
   jest.useFakeTimers();
@@ -38,11 +36,6 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-// 김민준's choice of the level named.
-function choice(words: string): ReturnType<typeof screen.getByRole> {
-  return within(screen.getByLabelText(MIN_JUN_LEVELS)).getByRole('radio', { name: words });
-}
-
 describe('친구 관리', () => {
   it('lists the Friends by name with 친구 추가 and the entry to 친구 요청', async () => {
     await openFriendScreen('/me/friends');
@@ -53,7 +46,20 @@ describe('친구 관리', () => {
     expect(friendRows()).toHaveLength(12);
     expect(friendRows()[0]).toBe('강도윤');
     expect(screen.getByText('심리학과 · 위치 꺼짐')).toBeVisible();
-    expect(screen.getByText('둘 중 낮은 쪽까지만 서로 보여요. 시간표는 계속 보여요')).toBeVisible();
+  });
+
+  // P15 ticket 2: each Friend's level is chosen on 위치 공유 only. The mocks start with the Master Switch off.
+  it('shows no level, no note about the levels and no 켜기 line while the Master Switch is off', async () => {
+    await openFriendScreen('/me/friends');
+
+    expect(screen.queryAllByLabelText(/님에게 보일 위치$/u)).toHaveLength(0);
+    for (const words of ['시간표만', '지금 있는 건물', '정확한 위치']) {
+      expect(screen.queryByRole('radio', { name: words })).toBeNull();
+    }
+    expect(screen.queryByText('둘 중 낮은 쪽까지만 서로 보여요. 시간표는 계속 보여요')).toBeNull();
+    expect(screen.queryByText('전체 위치 공유가 꺼져 있어요 ·')).toBeNull();
+    expect(screen.queryByRole('button', { name: '전체 위치 공유 켜기' })).toBeNull();
+    expect(friendRows()).toHaveLength(12);
   });
 
   it('searches by name and department, and says so when nobody is found', async () => {
@@ -86,48 +92,6 @@ describe('친구 관리 when empty or failing', () => {
 
     await pass(2000);
     expect(screen.getAllByText('불러오지 못했어요').length).toBeGreaterThan(0);
-  });
-});
-
-describe("친구 관리's levels", () => {
-  // The levels take a press only while the Master Switch is on, which the mocks start with off.
-  beforeEach(async () => {
-    const turned = apiClient.setMasterSwitch(true);
-    await pass(300);
-    await turned;
-  });
-
-  it("offers three levels for each Friend, and the Friend's Avatar goes at 시간표만 and comes back above it", async () => {
-    const user = await openFriendScreen('/me/friends');
-    expect(choice('시간표만')).not.toBeChecked();
-    expect(choice('지금 있는 건물')).not.toBeChecked();
-    expect(choice('정확한 위치')).toBeChecked();
-
-    await user.press(choice('시간표만'));
-    await user.press(screen.getByRole('button', { name: '위치 끄기' }));
-    expect(choice('시간표만')).toBeChecked();
-    await pass(1000);
-    expect(screen.getByText('컴퓨터공학부 · 위치 꺼짐')).toBeVisible();
-    // The map lies under this screen.
-    expect(screen.queryByRole('button', { name: FRIEND, hidden: true })).toBeNull();
-
-    await user.press(choice('지금 있는 건물'));
-    await pass(1000);
-    expect(choice('지금 있는 건물')).toBeChecked();
-    expect(choice('정확한 위치')).not.toBeChecked();
-    expect(screen.getByRole('button', { name: FRIEND, hidden: true })).toBeTruthy();
-  });
-
-  it('turns the choice back and says so when the change fails', async () => {
-    process.env.EXPO_PUBLIC_MOCK_FAIL = 'setFriendLevel';
-    const user = await openFriendScreen('/me/friends');
-
-    await user.press(choice('시간표만'));
-    await user.press(screen.getByRole('button', { name: '위치 끄기' }));
-    await pass(1000);
-
-    expect(choice('정확한 위치')).toBeChecked();
-    expect(screen.getByText('위치 공유를 바꾸지 못했어요')).toBeVisible();
   });
 });
 
