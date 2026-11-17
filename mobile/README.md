@@ -873,8 +873,8 @@ slide in from the right, each a `FullScreenPanel` whose "뒤로" goes back to wh
 
 - **친구 관리** (`/me/friends`, from 내 정보's "친구 관리"): "친구 {n}"; the search "친구 검색", by name and department, with "결과 없음"; the row
   "친구 추가"; the row "친구 요청 {n}", n the requests received; and under "친구 {n}" every Friend in the main server's
-  order, with the department (and " · 위치 꺼짐" for a Friend the User cannot see), and nothing about Location
-  Sharing: each Friend's level is chosen on 위치 공유. A press on a Friend opens a bottom sheet with
+  order, with the department (and " · 위치 꺼짐" for a Friend the User cannot see) and no level or 위치 공유 line:
+  each Friend's level is chosen on 위치 공유. A press on a Friend opens a bottom sheet with
   "친구 끊기", which a danger dialog confirms; the Friend then leaves the list, the friend panel and the map. A
   friendship that ended already is fetched again without a word. With no Friend it says "아직 친구가 없어요".
 - **친구 요청** (`/me/friends/requests`, also from a Friend Request in 알림): "받은 요청 · {n}" with "거절" and "수락", and "보낸 요청 · {n}" with "요청 취소",
@@ -961,15 +961,15 @@ and "새 친구는 '지금 있는 건물'에서 시작해요.". "남기지 않�
 것은 누구에게도 알리지 않아요.". Above it, the "비공개 구역" row ("칠한 곳 안에서는 시간표만 보여요", the number of zones)
 opens the zone screen (`me/private-zones/`).
 
-A Friend's level on "친구마다" (`level-track.tsx`, `use-levels.ts`) is three cells of one width in a row, "시간표만",
-"지금 있는 건물", and "정확한 위치" ("{이름}님에게 보일 위치"). A choice shows at once, sends
-`setFriendLevel`, and turns back with "위치 공유를 바꾸지 못했어요" when that fails; the Friends and the positions are
-fetched again after it. The first "시간표만" for a Friend above it asks first, in a bottom sheet (`off-question.tsx`):
-"{이름}에게는 지금 있는 건물만 보여 줄 수도 있어요." over "어느 쪽을 골라도 {이름}에게는 아무 표시도 가지 않아요.",
-the cells "위치 끄기", "건물까지만", and "취소" of one width, and "시간표는 계속 보여요" under them. "위치 끄기" sets
-`timetable` ("껐어요 · {이름}에게 알림은 가지 않아요"), "건물까지만" `building` ("{이름}에게 지금 있는 건물까지만
-보여요"), and "취소" or closing the sheet nothing; each records the question with `recordFriendsAsked([id], 'off')`,
-and a Friend whose `askedOff` is true is not asked again.
+A Friend's level on "친구마다" (`level-track.tsx` and `use-levels.ts` in `src/screens/friends/`) is three cells of
+one width in a row, "시간표만", "지금 있는 건물", and "정확한 위치" ("{이름}님에게 보일 위치"). A choice shows at once,
+sends `setFriendLevel`, and turns back with "위치 공유를 바꾸지 못했어요" when that fails; the Friends and the positions
+are fetched again after it. The first "시간표만" for a Friend above it asks first, in a bottom sheet
+(`src/screens/friends/off-question.tsx`): "{이름}에게는 지금 있는 건물만 보여 줄 수도 있어요." over "어느 쪽을 골라도
+{이름}에게는 아무 표시도 가지 않아요.", the cells "위치 끄기", "건물까지만", and "취소" of one width, and "시간표는
+계속 보여요" under them. "위치 끄기" sets `timetable` ("껐어요 · {이름}에게 알림은 가지 않아요"), "건물까지만"
+`building` ("{이름}에게 지금 있는 건물까지만 보여요"), and "취소" or closing the sheet nothing; each records the
+question with `recordFriendsAsked([id], 'off')`, and a Friend whose `askedOff` is true is not asked again.
 
 관심사 (`/me/interests`, `src/screens/me/interests-screen.tsx`, P05 ticket 08) has two cards. "프로필 관심사" shows the
 profile's hashtags from the Lobby as chips ("#러닝"), or "프로필에 넣은 관심사가 없어요", over "프로필 편집에서 바꿀 수

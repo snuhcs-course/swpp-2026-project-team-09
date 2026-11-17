@@ -15,6 +15,7 @@ import { FRIEND_PILL } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { FRIEND } from './support/markers';
 import { startFresh } from './support/mocks';
+import { apiClient } from '@/api/client';
 
 // 친구 관리 against the mocks: the frame's twelve Friends, ten of whom the User sees.
 
@@ -48,8 +49,11 @@ describe('친구 관리', () => {
     expect(screen.getByText('심리학과 · 위치 꺼짐')).toBeVisible();
   });
 
-  // P15 ticket 2: each Friend's level is chosen on 위치 공유 only. The mocks start with the Master Switch off.
-  it('shows no level, no note about the levels and no 켜기 line while the Master Switch is off', async () => {
+  // The mocks start with the Master Switch off, which master-off-line.integration.test.tsx covers.
+  it('shows no level and no note about the levels while the Master Switch is on', async () => {
+    const turned = apiClient.setMasterSwitch(true);
+    await pass(300);
+    await turned;
     await openFriendScreen('/me/friends');
 
     expect(screen.queryAllByLabelText(/님에게 보일 위치$/u)).toHaveLength(0);
@@ -57,8 +61,6 @@ describe('친구 관리', () => {
       expect(screen.queryByRole('radio', { name: words })).toBeNull();
     }
     expect(screen.queryByText('둘 중 낮은 쪽까지만 서로 보여요. 시간표는 계속 보여요')).toBeNull();
-    expect(screen.queryByText('전체 위치 공유가 꺼져 있어요 ·')).toBeNull();
-    expect(screen.queryByRole('button', { name: '전체 위치 공유 켜기' })).toBeNull();
     expect(friendRows()).toHaveLength(12);
   });
 

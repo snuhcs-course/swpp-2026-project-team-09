@@ -27,7 +27,9 @@ export async function openFriendScreen(
 
 // The Friends in 친구 관리, by the names on their rows, in the list's order: the buttons after the entry to 친구 요청.
 export function friendRows(): string[] {
-  const buttons = within(screen.getByTestId('full-screen-panel')).getAllByRole('button');
-  const requests = buttons.indexOf(screen.getByRole('button', { name: /^친구 요청/u }));
+  const panel = within(screen.getByTestId('full-screen-panel'));
+  const buttons = panel.getAllByRole('button');
+  const requests = buttons.indexOf(panel.getByRole('button', { name: /^친구 요청/u }));
+  expect(requests).toBeGreaterThanOrEqual(0);
   return buttons.slice(requests + 1).map((row) => String(row.props.accessibilityLabel));
 }

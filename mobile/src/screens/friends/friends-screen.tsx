@@ -70,14 +70,13 @@ function Entries({ received }: { received: number | undefined }): ReactElement {
   );
 }
 
-// No level under the name: each Friend's level is chosen on 위치 공유 only (P15 ticket 2).
 function FriendRow({ friend, onPress }: { friend: FriendView; onPress: () => void }): ReactElement {
   return (
     <Pressable
       accessibilityLabel={friend.name}
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => [styles.friend, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.entry, styles.friend, pressed && styles.pressed]}
     >
       <Avatar name={friend.name} source={friend.photo === null ? undefined : { uri: friend.photo }} />
       <View style={styles.words}>
@@ -189,14 +188,7 @@ const styles = StyleSheet.create({
   addLabel: { flex: 1, fontFamily: font.semiBold, fontSize: 16, lineHeight: 22, color: color.snuBlue },
   entryLabel: { flex: 1, fontFamily: font.medium, fontSize: 15, lineHeight: 22, color: color.ink },
   entryCount: { ...text.label, color: color.inkMuted },
-  friend: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    minHeight: 64,
-    borderBottomWidth: 1,
-    borderBottomColor: color.border,
-  },
+  friend: { minHeight: 64 },
   words: { flex: 1, gap: 1 },
   name: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 22, color: color.ink },
   line: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: color.inkMuted },
