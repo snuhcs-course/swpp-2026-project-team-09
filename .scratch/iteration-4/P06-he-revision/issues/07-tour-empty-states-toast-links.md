@@ -17,12 +17,19 @@ A toast can carry a link (a label and what it does). Three actions use it: askin
 
 ## Acceptance criteria
 
-- [ ] The tour shows once after Onboarding, can be skipped or turned off for good, and replays from 내 정보.
-- [ ] The tour highlights only the four tabs.
-- [ ] The three empty states show their sentence and one action.
-- [ ] The toast takes an optional action; the three calls above use it and the link opens the right screen.
-- [ ] Tests (ADR 0007): the toast's action as a design-system unit test (prior art: `design-system/toast`); app integration for the tour's show, skip and replay, the empty states, and one link.
-- [ ] B was told before the change; the pull request says so.
-- [ ] The H7, H8 and H11 rows of `he-revision-log.md` get this pull request.
+- [x] The tour shows once after Onboarding, can be skipped or turned off for good, and replays from 내 정보.
+- [x] The tour highlights only the four tabs.
+- [x] The three empty states show their sentence and one action.
+- [x] The toast takes an optional action; the three calls above use it and the link opens the right screen. (Two calls: 내 파티 보기 was left out, since joining or making a 파티 already moves to 내 파티.)
+- [x] Tests (ADR 0007): the toast's action as a design-system unit test (prior art: `design-system/toast`); app integration for the tour's show, skip and replay, the empty states, and one link.
+- [x] B was told before the change; the pull request says so.
+- [x] The H7, H8 and H11 rows of `he-revision-log.md` get this pull request.
 
 ## Comments
+
+### Agent usage (2026-11-18)
+
+- Agent time: about 2 hours (estimate), over two sessions in the `swpp-p06-07` worktree on 2026-11-16 and 2026-11-18. That counts the implementation, a merge of `4.0/Main` that brought in P02-35's toast action, and the review fixes. Waiting for answers is not counted.
+- Tokens: the two review subagents used 61,559 and 70,766 tokens (132,325 in all; the split into input, output and cache was not reported to the session). The main session's input, output, cache-read and cache-write counts are not visible from inside the session and are not recorded here.
+
+PR: #348.
