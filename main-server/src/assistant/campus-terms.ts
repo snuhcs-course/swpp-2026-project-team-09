@@ -50,7 +50,7 @@ export const CAMPUS_TERMS: readonly CampusTerm[] = [
   { shortNames: ['종운'], means: '종합운동장' },
   { shortNames: ['긱운'], means: '기숙사 운동장, which is 관악사운동장' },
   { shortNames: ['긱삼'], means: '기숙사삼거리', note: 'A stop of the shuttle; no Place has this name.' },
-  { shortNames: ['중도'], means: '중앙도서관: 중앙도서관 본관 (62동) and 중앙도서관 관정관 (62-1동, 관정도서관)' },
+  { shortNames: ['중도'], means: '중앙도서관' },
 ];
 
 function lineOf({ shortNames, means, note }: CampusTerm): string {
