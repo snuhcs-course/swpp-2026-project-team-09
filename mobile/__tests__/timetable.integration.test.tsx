@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -40,7 +41,7 @@ async function openTimetable(): Promise<User> {
   const user = await openMain();
   await user.press(screen.getByRole('tab', { name: '내 정보' }));
   await pass(500);
-  await user.press(screen.getByRole('button', { name: '직접 입력' }));
+  await user.press(screen.getByRole('button', { name: '직접 입력/수정' }));
   await pass(500);
   return user;
 }

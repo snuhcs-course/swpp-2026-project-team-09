@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -132,7 +133,7 @@ describe('a change on the screens', () => {
     const user = await openMain();
     await user.press(screen.getByRole('tab', { name: '내 정보' }));
     await pass(500);
-    await user.press(screen.getByRole('button', { name: '직접 입력' }));
+    await user.press(screen.getByRole('button', { name: '직접 입력/수정' }));
     await pass(500);
     expect(screen.getByText('등록된 수업이 없어요')).toBeVisible();
     const classesBefore = server.received('GET /timetable/classes').length;

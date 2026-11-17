@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ClassTime, Place, TimetableClass, Weekday } from '@/api/types';
@@ -19,6 +20,8 @@ const WORKDAYS = 5;
 // One time of a class in the week on 내 정보.
 export interface ClassBlockView {
   key: string;
+  // A class that meets on two days has two blocks with one `classId`.
+  classId: string;
   // 0 for Monday to 6 for Sunday.
   day: number;
   // In hours of the day: 10.5 for 10:30.
@@ -63,6 +66,7 @@ export function toWeekBlocks(classes: readonly TimetableClass[], places: readonl
       return [
         {
           key: time.id,
+          classId: lesson.id,
           day,
           start,
           end,
