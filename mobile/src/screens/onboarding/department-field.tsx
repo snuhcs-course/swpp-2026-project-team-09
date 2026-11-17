@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -94,7 +95,7 @@ export function DepartmentField({ level, value, suggested, onChange }: Departmen
           onFocus={search.begin}
           placeholder="학과 검색"
           ref={search.input}
-          style={styles.input}
+          room={ROOM}
           value={shown}
         />
         <View style={styles.icon}>
@@ -125,10 +126,10 @@ export function DepartmentField({ level, value, suggested, onChange }: Departmen
 }
 
 const SIDE = space[10];
+const ROOM = { left: SIDE, right: size.touchMin };
 
 const styles = StyleSheet.create({
   field: { gap: space[2] },
-  input: { paddingLeft: SIDE, paddingRight: size.touchMin },
   icon: {
     pointerEvents: 'none',
     position: 'absolute',

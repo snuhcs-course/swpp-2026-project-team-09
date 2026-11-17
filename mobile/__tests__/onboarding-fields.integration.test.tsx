@@ -2,13 +2,16 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
+import { StyleSheet, type TextStyle } from 'react-native';
 import { pass, screen } from './support/app';
 import { startFresh } from './support/mocks';
 import { arriveAtOnboarding, BADGE, button, chooseDepartment, SAVE, type User } from './support/onboarding';
 import type { OnboardingAnswers } from '@/api/types';
+import { color, space } from '@/design-system';
 import { readKept } from '@/storage/kept';
 
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -18,6 +21,12 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 }));
 
 const SUGGESTION = { name: '홍길동', department: '컴퓨터공학부' };
+
+// The field's own style, without the box around it.
+function departmentStyle(): TextStyle {
+  const style: unknown = screen.getByLabelText('학과').props.style;
+  return StyleSheet.flatten<TextStyle>(typeof style === 'object' && style !== null ? style : {});
+}
 
 async function saved(user: User): Promise<OnboardingAnswers | null> {
   await user.press(button(SAVE));
@@ -109,6 +118,25 @@ describe('the department, left without a choice', () => {
     await pass(300);
     expect(screen.getByLabelText('학과')).toHaveDisplayValue('간호학과');
     expect(screen.getAllByText(BADGE)).toHaveLength(1);
+  });
+});
+
+describe("the department's field", () => {
+  // Android draws a field's words from its default side padding once a change of the field's border or ring
+  // replaces its background, and so over the search icon.
+  it('marks the focus on a box around it and keeps its own style, which leaves room for the search icon', async () => {
+    await arriveAtOnboarding(SUGGESTION);
+    const first = departmentStyle();
+    expect(first).toMatchObject({ paddingLeft: space[10] });
+
+    await fireEvent(screen.getByLabelText('학과'), 'focus');
+    expect(screen.getByLabelText('학과').parent).toHaveStyle({ borderColor: color.snuBlue });
+    expect(departmentStyle()).toEqual(first);
+
+    await fireEvent(screen.getByLabelText('학과'), 'blur');
+    await pass(300);
+    expect(screen.getByLabelText('학과').parent).toHaveStyle({ borderColor: color.border });
+    expect(departmentStyle()).toEqual(first);
   });
 });
 
