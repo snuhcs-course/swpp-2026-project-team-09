@@ -62,7 +62,7 @@ Everything here is still what Expo's template gave the app.
 - [x] The app icon's file is 1024 × 1024 with no alpha channel.
 - [x] `mobile/app.json` names no `ios.icon` and no adaptive background image, the Icon Composer bundle is gone, and none of the images it names is Expo's default, the favicon included.
 - [x] `docs/design/app-icon/` holds the master, its script and the brief.
-- [x] `version` is 1.0.3, and CI's `app-fingerprint` job passes with its notice that `version` was raised.
+- [ ] `version` is 1.0.3, and CI's `app-fingerprint` job passes with its notice that `version` was raised.
 - [x] Tests, by ADR 0007: no app code changes, so no test is added, and the test of the design catalogue still passes. The icon, the splash and the notification icon are native, so they are checked by hand on an Android emulator with an APK built from the branch, which is an integration check by the ADR; the check and its screenshots are recorded under this ticket's Comments.
 - [ ] The pull request's body shows the launcher and the splash before and after, as screenshots of the emulator, in place of the canvas boards.
 - [ ] After the merge and 김태현's approval, the `app` Release is made: its APK installs over 1.0.2 and shows the new icon, and `app-version.json` gives 1.0.3 as `latest`.
@@ -77,7 +77,7 @@ Everything here is still what Expo's template gave the app.
 - **The master** (`snu-now-icon.svg`): written by the script byte for byte as the approved file.
 - **`icon.png`**, 1024 × 1024, RGB: the master rendered, the alpha channel dropped. Its mean difference from the approved PNG, laid on white, is under 0.02 of 255 per channel.
 - **`favicon.png`**, 48 × 48, RGB: the master rendered at 48.
-- **`android-icon-foreground.png`**, 1024 × 1024, RGBA: the wordmark without the white square, at 18 + 0.72 u dp on the 108 dp layer, with the pin's white hole. Its ink spans x 32–76 and y 37–71 dp, at most 26 dp from the centre.
+- **`android-icon-foreground.png`**, 1024 × 1024, RGBA: the wordmark without the white square, at 18 + 0.72 u dp on the 108 dp layer, with the pin's white hole. Its ink spans x 32–76 and y 37–71 dp, all within 27 dp of the centre.
 - **`android-icon-monochrome.png`**, 1024 × 1024, RGBA: the same geometry with "SNU", `n`, `w` and the pin all `#001A72`. The pin and its hole are one even-odd path, so the hole is transparent. Every pixel is `#001A72`; only the alpha varies.
 - **`splash-icon.png`**, 1024 × 810, RGBA: the wordmark's ink box (x 19.6–80.4, y 26.1–73.4) with 2 units of margin. With `imageWidth` 140 the farthest ink is 79 dp from the centre of the 192 dp circle (radius 96 dp), so the largest width that cuts nothing is about 170.
 - **`notification-icon.png`**, 96 × 96, RGBA: the pin alone, its height 80 px with 8 px clear above and below, white, with its hole cut out by an even-odd path.
@@ -113,14 +113,23 @@ Everything here is still what Expo's template gave the app.
 - The status bar shows the pin with its hole.
 - The shade shows the pin, white, on a circle of `#001A72` (sampled as 0, 26, 114). Its record has `color=0xff001a72`.
 
+**Tests:** `__tests__/catalogue.integration.test.tsx`, the design catalogue's test, which shows `icon.png` as its sample photo, was run alone and passed (3 of 3). No other test reads `app.json` or these images.
+
 The screenshots are in the pull request's body. The raw ones were kept outside the repository.
 
 ### Notes (2026-11-18)
 
 - **The layers' SVGs:** the master's folder also holds the four layers' SVGs that the script writes (`android-icon-foreground.svg`, `android-icon-monochrome.svg`, `splash-icon.svg`, `notification-icon.svg`), so that each PNG can be written again from them. The handoff's master PNG is not kept: `icon.png` is that render without alpha.
 - **iOS:** the handoff's brief left it open whether to rebuild the Icon Composer bundle or drop `ios.icon`. The ticket's choice was followed: `ios.icon` is dropped and the bundle deleted.
-- **`app-fingerprint`:** CI's check was run locally with `release.sh fingerprint-and-decide`, the repository's production app variables and the published `app-version.json`. It gave `publish-needs-build`: version 1.0.3 is above the latest native build's 1.0.2, so CI passes with its notice that `version` was raised.
+- **`app-fingerprint`:** CI's check was run locally with `release.sh fingerprint-and-decide`, the repository's production app variables and the published `app-version.json`. It gave `publish-needs-build`: version 1.0.3 is above the latest native build's 1.0.2, so CI should pass with its notice that `version` was raised. The criterion is ticked once the pull request's CI has run.
 - **Still to do:**
   - The pull request, with the three screenshots in its body.
   - The `app` Release after the merge and 김태현's approval.
   - 김태현's check on a phone: the launcher under its mask, the themed icon, a notification, the icon on a dark and on a light wallpaper, and the splash on a cold start.
+
+### Agent usage (2026-11-18)
+
+Estimates from the session transcripts, with gaps of 5 minutes or more left out, up to the pull request:
+
+- Agent time: about 45 minutes, in one session with three Opus 5.5 subagents. One made the images, `app.json` and the emulator check, two reviewed it. The drawing itself was made in an earlier session, in about 13 minutes.
+- Tokens: output about 43,000. Input about 31.7 million: 31.2 million cache reads, 0.49 million cache writes and about 500 uncached. The drawing's session added output about 57,000 and input about 3.05 million: 2.93 million cache reads, 0.12 million cache writes and about 50 uncached.

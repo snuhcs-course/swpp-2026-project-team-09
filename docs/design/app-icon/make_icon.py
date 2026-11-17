@@ -120,7 +120,7 @@ def splash(margin=2, width=1024):
 
 
 def notification(size=96, margin=8):
-    """The pin alone, white, its hole cut out, 8 px clear of each edge as Android's 24 dp grid keeps 2 dp."""
+    """The pin alone, white, its hole cut out, with the margin that Android's 24 dp grid keeps (2 dp)."""
     height = PIN_TIP - PIN_TOP
     side = height * size / (size - 2 * margin)
     top = PIN_TOP - (side - height) / 2
