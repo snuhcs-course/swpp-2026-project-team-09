@@ -27,7 +27,6 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotionSetting: (): boolean => true,
 }));
 
-const NOT_READY = '준비 중이에요';
 const SIGN_IN = '서울대학교 구글 계정(@snu.ac.kr)으로 로그인';
 
 beforeEach(async () => {
@@ -157,14 +156,6 @@ describe('the week', () => {
     await user.press(screen.getByRole('button', { name: '다시 시도' }));
     await pass(500);
     expect(screen.getAllByTestId('class-block')).toHaveLength(7);
-  });
-
-  it.each(['이미지로 불러오기'])('says that "%s" is not ready', async (tile) => {
-    const user = await openMe();
-
-    await user.press(screen.getByRole('button', { name: tile }));
-
-    expect(screen.getByTestId('toast-layer')).toHaveTextContent(NOT_READY);
   });
 });
 

@@ -17,7 +17,6 @@ import {
   ErrorState,
   font,
   Icon,
-  type IconName,
   LoadingState,
   radius,
   space,
@@ -30,14 +29,13 @@ import { UnfinishedSwitch } from './unfinished-switch';
 import { VersionMenu } from './version-menu';
 import { WeekGrid } from './week-grid';
 
-type TileAction = 'open' | 'import';
-const TILES: readonly { icon: IconName; label: string; action: TileAction }[] = [
-  { icon: 'calendar', label: '직접 입력/수정', action: 'open' },
-  { icon: 'plus', label: '이미지로 불러오기', action: 'import' },
-];
-
 function openTimetable(): void {
   router.push('/me/timetable');
+}
+
+// The same 수업 수정 as the class's row in 시간표.
+function openClass(classId: string): void {
+  router.push({ pathname: '/me/timetable/class', params: { classId } });
 }
 
 // The 시간표 card: the User's week from the main server, the version it is, and the ways to fill it in.
@@ -45,10 +43,10 @@ export function WeekCard(): ReactElement {
   const { data, isPending, refetch } = useWeek();
   const versions = useTimetableVersions();
   const importing = useImportFromImage(versions);
-  const actions: Record<TileAction, () => void> = {
-    open: openTimetable,
-    import: importing.start,
-  };
+  const tiles = [
+    { icon: 'calendar', label: '직접 입력/수정', onPress: openTimetable, busy: false },
+    { icon: 'plus', label: '이미지로 불러오기', onPress: importing.start, busy: importing.reading },
+  ] as const;
   return (
     <View style={[cardStyles.card, styles.card]}>
       <View style={styles.head}>
@@ -58,16 +56,16 @@ export function WeekCard(): ReactElement {
         <VersionMenu versions={versions} />
       </View>
       <UnfinishedSwitch versions={versions} />
-      {data === undefined ? null : <WeekGrid blocks={data} />}
+      {data === undefined ? null : <WeekGrid blocks={data} onOpenClass={openClass} />}
       {data === undefined && isPending ? <LoadingState /> : null}
       {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
       <View style={styles.tiles}>
-        {TILES.map(({ icon, label, action }) => (
+        {tiles.map(({ icon, label, onPress, busy }) => (
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ busy: action === 'import' && importing.reading }}
+            accessibilityState={{ busy }}
             key={label}
-            onPress={actions[action]}
+            onPress={onPress}
             style={({ pressed }): StyleProp<ViewStyle> => [styles.tile, pressed && styles.pressed]}
           >
             <Icon color={color.snuBlue} name={icon} size={20} />

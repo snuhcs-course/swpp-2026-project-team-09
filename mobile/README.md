@@ -942,7 +942,8 @@ cards from the top:
   수정, as the class's row in 시간표 does. Under the week, two tiles of one width: "직접 입력/수정" opens 시간표, and
   "이미지로 불러오기" reads a timetable screenshot from the album on the phone (`use-import-from-image.ts`), makes a
   new version of the timetable from it, switches to it and stays on 내 정보 with "시간표를 만들었어요" or "N개 중
-  15개만 넣었어요"; it says "준비 중이에요" where the build has no text recognition;
+  15개만 넣었어요", ending in "· M개는 넣지 못했어요" when some could not be put in; it says "준비 중이에요" where the
+  build has no text recognition;
 - 위치 공유 (`sharing-card.tsx`): the switch "위치 공유", which is the Master Switch, with "위치 공유를 허용한 친구 N명"
   (Friends whose level the User set above 시간표만) and, while a 파티 is on with the User's own switch on, "○○ 파티에서
   위치 공유를 허용한 멤버 M명" (its other members), both only while it is on. Both count the User's own end only. While

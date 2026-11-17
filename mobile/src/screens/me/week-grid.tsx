@@ -5,7 +5,6 @@
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { router } from 'expo-router';
 import { memo, type ReactElement, type RefObject, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   type NativeScrollEvent,
@@ -39,7 +38,13 @@ const LABEL_DROP = 2;
 // The fade over an edge of the hours that has more hours past it.
 const FADE_HEIGHT = space[6];
 
-function Block({ block, first }: { block: ClassBlockView; first: number }): ReactElement {
+interface BlockProps {
+  block: ClassBlockView;
+  first: number;
+  onOpenClass: (classId: string) => void;
+}
+
+function Block({ block, first, onOpenClass }: BlockProps): ReactElement {
   const height = (block.end - block.start) * HOUR_HEIGHT - 2 * BLOCK_INSET;
   const padding = block.end - block.start < PADDED_HOURS ? 0 : BLOCK_PADDING;
   return (
@@ -47,9 +52,10 @@ function Block({ block, first }: { block: ClassBlockView; first: number }): Reac
       accessibilityLabel={[`${DAY_LETTERS[block.day] ?? ''}요일 ${block.time} ${block.name}`, block.where]
         .filter((part) => part !== '')
         .join(', ')}
+      accessibilityHint="수업 수정"
       accessibilityRole="button"
       onPress={() => {
-        router.push({ pathname: '/me/timetable/class', params: { classId: block.classId } });
+        onOpenClass(block.classId);
       }}
       style={({ pressed }): StyleProp<ViewStyle> => [
         styles.block,
@@ -203,11 +209,13 @@ const Hours = memo(function Hours({
   days,
   first,
   hours,
+  onOpenClass,
 }: {
   blocks: readonly ClassBlockView[];
   days: readonly string[];
   first: number;
   hours: number;
+  onOpenClass: (classId: string) => void;
 }): ReactElement {
   return (
     <View style={[styles.row, { height: hours * HOUR_HEIGHT }]}>
@@ -228,7 +236,7 @@ const Hours = memo(function Hours({
           {blocks
             .filter((block) => block.day === day)
             .map((block) => (
-              <Block block={block} first={first} key={block.key} />
+              <Block block={block} first={first} key={block.key} onOpenClass={onOpenClass} />
             ))}
         </View>
       ))}
@@ -240,7 +248,13 @@ const Hours = memo(function Hours({
 // the ends, so that a swipe there does not stretch the hours. Handing the swipe to the page at an end is the
 // platform's (Android's nested scrolling; iOS does not chain them).
 // The week on 내 정보's 시간표 card.
-export function WeekGrid({ blocks }: { blocks: readonly ClassBlockView[] }): ReactElement {
+export function WeekGrid({
+  blocks,
+  onOpenClass,
+}: {
+  blocks: readonly ClassBlockView[];
+  onOpenClass: (classId: string) => void;
+}): ReactElement {
   const { first, last } = weekHours(blocks);
   const hours = last - first;
   const dayCount = weekDays(blocks);
@@ -261,7 +275,7 @@ export function WeekGrid({ blocks }: { blocks: readonly ClassBlockView[] }): Rea
           style={{ height: Math.min(hours, VISIBLE_HOURS) * HOUR_HEIGHT }}
           testID="week-scroll"
         >
-          <Hours blocks={blocks} days={days} first={first} hours={hours} />
+          <Hours blocks={blocks} days={days} first={first} hours={hours} onOpenClass={onOpenClass} />
         </ScrollView>
         {hiddenAbove ? <Fade edge="top" /> : null}
         {hiddenBelow ? <Fade edge="bottom" /> : null}
@@ -302,6 +316,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[1],
     borderRadius: radius.sm,
   },
-  pressed: { opacity: 0.8 },
+  pressed: { opacity: 0.6 },
   blockWords: { ...text.micro, color: color.onPrimary },
 });
