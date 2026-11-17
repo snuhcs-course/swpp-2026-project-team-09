@@ -6,6 +6,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useState } from 'react';
@@ -13,11 +14,11 @@ import { ScrollView, StyleSheet } from 'react-native';
 import { EmptyState, ErrorState, IconButton, LoadingState, space } from '@/design-system';
 import { type EventFilter, type EventSources, toEventViews } from '@/features/events/adapter';
 import { useEventSources } from '@/features/events/use-events';
+import { showFind } from '../party/use-party-actions';
 import { TabScreen } from '../shell/tab-screen';
 import { EventItem } from './event-item';
 import { Filters, SearchBar } from './events-bar';
 import { EventSheets, type PickedEvent, useEventSheets } from './event-sheets';
-import { showFind } from '../party/use-party-actions';
 import { type Focus, useFocus } from './use-focus';
 
 interface ListProps extends Omit<Focus, 'focused'> {

@@ -68,9 +68,8 @@ export function showSentRequests(): void {
   showPartyTab('invites');
 }
 
-// The toast after asking to join links to where the request now shows (HE H11), and stays long enough to reach it.
+// The toast after asking to join links to where the request now shows (HE H11).
 const TO_SENT_REQUESTS: ToastAction = { label: '보낸 신청 보기', onPress: showSentRequests };
-const LINKED_MS = 4000;
 
 // Accepting and declining both delete a request, so a withdrawal after either is refused with the same not-found, and
 // only the User's Quests tell them apart: holding the Quest now means the Leader accepted. Null when the Quests do not
@@ -140,7 +139,7 @@ export function usePartyActions(): PartyActions {
       try {
         await requests();
         if (done !== null) {
-          showToast(done, link === undefined ? undefined : LINKED_MS, undefined, link);
+          showToast(done, undefined, undefined, link);
         }
         return true;
       } catch (error) {

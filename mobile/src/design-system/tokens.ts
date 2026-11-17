@@ -9,6 +9,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -28,6 +29,8 @@ export const color = {
   // A sheet over the map that lets the map show through, such as the AI chat.
   surfaceGlass: 'rgba(255, 255, 255, 0.8)',
   scrim: 'rgba(14, 19, 48, 0.40)',
+  // Darker, for a tour that dims all but one control so that it stands out.
+  scrimStrong: 'rgba(14, 19, 48, 0.64)',
   border: '#E2E5EC',
   borderStrong: '#858CA0',
   ink: '#0E1330',

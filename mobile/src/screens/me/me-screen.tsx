@@ -9,6 +9,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -177,7 +178,8 @@ interface MeScreenProps {
 }
 
 // The 내 정보 tab, the `Profile` frame: the User's profile, the 새내기 튜토리얼 row, the week, the Master Switch, the ways to
-// the User's Friends, Parties, Quests, and interests, the tour of the tabs again, the library's login, the sign-out, and below it the build and update the phone runs.
+// the User's Friends, Parties, Quests, and interests, the tour of the tabs again, the library's login, the sign-out,
+// and below it the build and update the phone runs.
 export function MeScreen({ showSharing, onSharingShown }: MeScreenProps): ReactElement {
   const profile = useQuery(lobbyQuery).data?.profile;
   const sharing = useSharingSwitch();

@@ -2,15 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, type ReactElement, type ReactNode, use, useState } from 'react';
-import type { WatchedInterest } from '@/api/interest-types';
-import { classesQuery, friendsQuery, interestsQuery } from '@/api/queries';
 import { myUserId } from '@/auth/sign-in';
-import { FIRST_RUN_KEY } from '@/features/first-run/use-first-run';
-import { readFirstRun } from '@/storage/first-run';
+import { firstRunWaitingQuery, useFirstRunFacts } from '@/features/first-run/use-first-run';
 import { endTabTour, readTabTour, type TabTourKept } from '@/storage/tab-tour';
 import { firstRunDone, TOUR_STEPS } from './rules';
 
@@ -31,29 +29,11 @@ const TabTourContext = createContext<TabTour | null>(null);
 
 const TAB_TOUR_KEY = 'tab-tour';
 
-function lengthOf(list: readonly unknown[]): number {
-  return list.length;
-}
-
-function interestCountOf(interests: WatchedInterest[] | null): number | null {
-  return interests === null ? null : interests.length;
-}
-
-// Whether the first run is done with the User. The same queries as the first run's own (`useFirstRun`), so that a card
-// answered on the main screen reaches the tour at once; asked only while the tour waits for it.
+// Whether the first run is done with the User. The first run's own queries, so that a card answered on the main screen
+// reaches the tour at once; asked only while the tour waits for it.
 function useFirstRunDone(asked: boolean): boolean {
-  const waiting = useQuery({
-    queryKey: [FIRST_RUN_KEY, myUserId()],
-    queryFn: readFirstRun,
-    staleTime: Infinity,
-    enabled: asked,
-  });
-  const enabled = asked && (waiting.data?.length ?? 0) > 0;
-  const facts = {
-    classes: useQuery({ ...classesQuery, enabled, select: lengthOf }).data,
-    interests: useQuery({ ...interestsQuery, enabled, select: interestCountOf }).data,
-    friends: useQuery({ ...friendsQuery, enabled, select: lengthOf }).data,
-  };
+  const waiting = useQuery(firstRunWaitingQuery(asked));
+  const facts = useFirstRunFacts(asked && (waiting.data?.length ?? 0) > 0);
   return waiting.isSuccess && firstRunDone(waiting.data, facts);
 }
 

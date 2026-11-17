@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useSegments } from 'expo-router';
@@ -26,8 +27,6 @@ const STEPS: readonly { slot: number; title: string; words: string }[] = [
 
 const SLOTS = 5;
 
-// Darker than a sheet's scrim, so that the one bright tab stands out.
-const DIM = 'rgba(14, 19, 48, 0.64)';
 const ARROW = 12;
 
 interface Size {
@@ -142,11 +141,11 @@ function Bubble({ step, shown, size, hole, tour }: BubbleProps): ReactElement {
   );
 }
 
-// The words of 다시 보지 않기 are 18 high; the slop makes its press 44 high.
-const SLOP = { top: 13, bottom: 13 };
+// 다시 보지 않기 is 24 high with its padding; the slop makes its press 44 high.
+const SLOP = { top: 10, bottom: 10 };
 
 const styles = StyleSheet.create({
-  dim: { position: 'absolute', backgroundColor: DIM },
+  dim: { position: 'absolute', backgroundColor: color.scrimStrong },
   ring: { position: 'absolute', borderWidth: 2, borderRadius: radius.md, borderColor: color.surface },
   bubble: {
     position: 'absolute',
@@ -167,10 +166,10 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '45deg' }],
   },
   count: { ...text.caption, fontFamily: font.semiBold, color: color.snuBlue },
-  title: { fontFamily: font.bold, fontSize: 18, lineHeight: 26, color: color.ink },
-  words: { fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: color.inkMuted },
+  title: { ...text.title, color: color.ink },
+  words: { ...text.label, fontFamily: font.regular, color: color.inkMuted },
   buttons: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space[2] },
   never: { paddingVertical: space[1] },
-  neverWords: { ...text.caption, fontSize: 13, lineHeight: 18, color: color.inkSubtle },
+  neverWords: { ...text.caption, color: color.inkSubtle },
   right: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
 });

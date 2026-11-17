@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { cardToShow, type FirstRunCard, type FirstRunFacts } from '@/features/first-run/rules';
+import { cardToShow, countOf, type FirstRunCard, type FirstRunFacts } from '@/features/first-run/rules';
 
 // The tour of the bottom tabs (P06 ticket 07): one step for each of 지도, 파티, 행사 and 내 정보.
 export const TOUR_STEPS = 4;
@@ -16,11 +17,5 @@ export function firstRunDone(waiting: readonly FirstRunCard[] | null, facts: Fir
   if (waiting === null || waiting.length === 0) {
     return true;
   }
-  const known = waiting.every((card) => {
-    if (card === 'timetable') {
-      return facts.classes !== undefined;
-    }
-    return (card === 'interests' ? facts.interests : facts.friends) !== undefined;
-  });
-  return known && cardToShow(waiting, facts) === null;
+  return waiting.every((card) => countOf(card, facts) !== undefined) && cardToShow(waiting, facts) === null;
 }

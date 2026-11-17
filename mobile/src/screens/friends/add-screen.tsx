@@ -32,15 +32,14 @@ import { useMyFriendId } from '@/features/friends/use-my-friend-id';
 import { useSendInviteLink } from '@/features/friends/use-send-invite-link';
 import { alreadyFriends, becameFriends, NO_ANSWER } from './words';
 
-// The toast after a Friend Request links to the list where the Friend shows once they accept (HE H11): 친구 관리,
-// the screen under this one when it was opened from there, which is closed back to. It stays long enough to reach.
+// The toast after a Friend Request links to the list where the Friend shows once they accept (HE H11): 친구 관리.
+// When this screen was opened from there, it closes back to it; opened from the map, 친구 관리 takes its place.
 const TO_FRIENDS: ToastAction = {
   label: '친구 목록 보기',
   onPress: () => {
     router.dismissTo('/me/friends');
   },
 };
-const LINKED_MS = 4000;
 
 const FRIEND_ID_LENGTH = 8;
 const OWN_ID = '내 친구 ID예요';
@@ -142,7 +141,7 @@ function useLookup(): [Lookup, (typed: string) => void, () => void, () => void] 
           return;
         }
         setLookup((now) => (now.typed === typed ? { ...now, sent: true } : now));
-        showToast(`${owner.name}님에게 친구 요청을 보냈어요`, LINKED_MS, undefined, TO_FRIENDS);
+        showToast(`${owner.name}님에게 친구 요청을 보냈어요`, undefined, undefined, TO_FRIENDS);
       },
       (error: unknown) => {
         setLookup((now) => (now.typed === typed ? { ...now, error: refusalWords(error, owner) } : now));
