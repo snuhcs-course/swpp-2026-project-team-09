@@ -1808,8 +1808,8 @@ and none throws.
   before the permission is asked, since Android 13 shows no prompt before a channel exists.
 - **Permission.** Android 13 and later report a permission that was never asked as denied but still askable. On
   Android the wrapper reads that as `undetermined`, so `undetermined` means the phone's own prompt can still show.
-- **Icon.** `assets/images/notification-icon.png`, 96 by 96, white on transparent, drawn from the app icon's shape.
-  Android tints it with the plugin's `color`, `#208AEF`.
+- **Icon.** `assets/images/notification-icon.png`, 96 by 96, white on transparent: the app icon's pin, with its hole
+  cut out (`docs/design/app-icon/`). Android tints it with the plugin's `color`, `#001A72`.
 - **Firebase.** `google-services.json` is Firebase's Android settings file for `com.bonnieandclaude.snunow` in the
   project `snunow-b5827`. It holds no secret, and its bytes are part of the app's fingerprint. The FCM V1 service
   account key lives in the EAS project's credentials only, never in the repository.

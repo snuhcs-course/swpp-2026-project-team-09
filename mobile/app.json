@@ -3,7 +3,7 @@
     "name": "SNU Now",
     "slug": "snu-now",
     "owner": "snu-now",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "runtimeVersion": {
       "policy": "fingerprint"
     },
@@ -12,15 +12,13 @@
     "scheme": "snunow",
     "userInterfaceStyle": "light",
     "ios": {
-      "bundleIdentifier": "com.bonnieandclaude.snunow",
-      "icon": "./assets/expo.icon"
+      "bundleIdentifier": "com.bonnieandclaude.snunow"
     },
     "android": {
       "package": "com.bonnieandclaude.snunow",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
@@ -48,9 +46,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#FFFFFF",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 140
         }
       ],
       [
@@ -78,7 +76,7 @@
         "expo-notifications",
         {
           "icon": "./assets/images/notification-icon.png",
-          "color": "#208AEF",
+          "color": "#001A72",
           "defaultChannel": "default"
         }
       ]
