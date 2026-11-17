@@ -2,10 +2,22 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
+import { router } from 'expo-router';
 import { memo, type ReactElement, type RefObject, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { type NativeScrollEvent, type NativeSyntheticEvent, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  type StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { now } from '@/clock';
 import { classColors, color, font, radius, space, text } from '@/design-system';
@@ -31,12 +43,15 @@ function Block({ block, first }: { block: ClassBlockView; first: number }): Reac
   const height = (block.end - block.start) * HOUR_HEIGHT - 2 * BLOCK_INSET;
   const padding = block.end - block.start < PADDED_HOURS ? 0 : BLOCK_PADDING;
   return (
-    <View
+    <Pressable
       accessibilityLabel={[`${DAY_LETTERS[block.day] ?? ''}요일 ${block.time} ${block.name}`, block.where]
         .filter((part) => part !== '')
         .join(', ')}
-      accessible
-      style={[
+      accessibilityRole="button"
+      onPress={() => {
+        router.push({ pathname: '/me/timetable/class', params: { classId: block.classId } });
+      }}
+      style={({ pressed }): StyleProp<ViewStyle> => [
         styles.block,
         {
           top: (block.start - first) * HOUR_HEIGHT + BLOCK_INSET,
@@ -44,6 +59,7 @@ function Block({ block, first }: { block: ClassBlockView; first: number }): Reac
           paddingVertical: padding,
           backgroundColor: classColors[block.order % classColors.length],
         },
+        pressed && styles.pressed,
       ]}
       testID="class-block"
     >
@@ -53,7 +69,7 @@ function Block({ block, first }: { block: ClassBlockView; first: number }): Reac
       >
         {block.where === '' ? block.name : `${block.name}\n${block.where}`}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -286,5 +302,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[1],
     borderRadius: radius.sm,
   },
+  pressed: { opacity: 0.8 },
   blockWords: { ...text.micro, color: color.onPrimary },
 });

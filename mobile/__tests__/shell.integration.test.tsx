@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -136,7 +137,8 @@ describe("a toast on a tab's screen", () => {
     await user.press(screen.getByRole('tab', { name: '내 정보' }));
     await pass(500);
 
-    await user.press(screen.getByRole('button', { name: '빈 시간 말하기' }));
+    // Without text recognition, as in the tests, it says "준비 중이에요".
+    await user.press(screen.getByRole('button', { name: '이미지로 불러오기' }));
 
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 96 });
   });

@@ -6,6 +6,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { pass, screen, shownAddress } from './support/app';
@@ -158,7 +159,7 @@ describe('the week', () => {
     expect(screen.getAllByTestId('class-block')).toHaveLength(7);
   });
 
-  it.each(['이미지로 불러오기', '빈 시간 말하기'])('says that "%s" is not ready', async (tile) => {
+  it.each(['이미지로 불러오기'])('says that "%s" is not ready', async (tile) => {
     const user = await openMe();
 
     await user.press(screen.getByRole('button', { name: tile }));

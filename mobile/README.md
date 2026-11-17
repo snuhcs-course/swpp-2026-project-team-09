@@ -938,8 +938,11 @@ cards from the top:
   start, else, while today has a class to come, at the current hour or later so that the class shows whole, else at
   the week's earliest class. Today's day in navy, a block for each time of a class
   (`GET /timetable/classes`, with `GET /places` for the numbers) in the colour of the class's place in the timetable
-  (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". The tile "직접 입력" opens 시간표; "이미지로
-  불러오기" and "빈 시간 말하기" say "준비 중이에요";
+  (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". A press on a block opens its class's 수업
+  수정, as the class's row in 시간표 does. Under the week, two tiles of one width: "직접 입력/수정" opens 시간표, and
+  "이미지로 불러오기" reads a timetable screenshot from the album on the phone (`use-import-from-image.ts`), makes a
+  new version of the timetable from it, switches to it and stays on 내 정보 with "시간표를 만들었어요" or "N개 중
+  15개만 넣었어요"; it says "준비 중이에요" where the build has no text recognition;
 - 위치 공유 (`sharing-card.tsx`): the switch "위치 공유", which is the Master Switch, with "위치 공유를 허용한 친구 N명"
   (Friends whose level the User set above 시간표만) and, while a 파티 is on with the User's own switch on, "○○ 파티에서
   위치 공유를 허용한 멤버 M명" (its other members), both only while it is on. Both count the User's own end only. While

@@ -2,11 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { within } from '@testing-library/react-native';
 import { launchImageLibraryAsync } from 'expo-image-picker';
-import { pass, screen } from './support/app';
+import { pass, screen, shownAddress } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { answered, startFresh } from './support/mocks';
 import { lesson, OCR, openMe, read, sixteen, tile, toast, twoClasses, untilToast } from './support/timetable-import';
@@ -104,7 +104,7 @@ describe('reading', () => {
 });
 
 describe('importing a screenshot', () => {
-  it('makes the version named by the title, switches to it and opens the timetable', async () => {
+  it('makes the version named by the title, switches to it and stays on 내 정보 with its week', async () => {
     mockRead = twoClasses;
     const user = await openMe();
 
@@ -113,11 +113,11 @@ describe('importing a screenshot', () => {
 
     expect(toast()).toHaveTextContent('시간표를 만들었어요');
     await pass(1000);
-    expect(screen.getByRole('button', { name: '수업 추가' })).toBeVisible();
-    expect(
-      within(screen.getByRole('button', { name: '컴파일러 수정' })).getByText('제2공학관 302동 311-1'),
-    ).toBeVisible();
-    expect(within(screen.getByRole('button', { name: '데이터베이스 수정' })).getByText('장소 미정')).toBeVisible();
+    expect(shownAddress()).toBe('/me');
+    expect(screen.queryByRole('button', { name: '수업 추가' })).toBeNull();
+    expect(screen.getAllByTestId('class-block')).toHaveLength(2);
+    expect(screen.getByLabelText('월요일 09:00–10:15 컴파일러, 302-311-1')).toBeVisible();
+    expect(screen.getByLabelText('화요일 13:00–14:15 데이터베이스')).toBeVisible();
     expect(mockDeleted).toEqual([]);
     const versions = await answered(readVersions());
     expect(versions.versions.map(({ name }) => name)).toEqual(['2026-2학기', '2026년 2학기 최종']);
@@ -147,9 +147,9 @@ describe('more than 15 classes', () => {
 
     expect(toast()).toHaveTextContent(/^16개 중 15개만 넣었어요$/u);
     await pass(1000);
-    expect(screen.getAllByRole('button', { name: / 수정$/u })).toHaveLength(15);
-    expect(screen.queryByRole('button', { name: 'friday 16 수정' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'monday 09 수정' })).toBeVisible();
+    expect(screen.getAllByTestId('class-block')).toHaveLength(15);
+    expect(screen.queryByLabelText('금요일 16:00–16:50 friday 16')).toBeNull();
+    expect(screen.getByLabelText('월요일 09:00–09:50 monday 09')).toBeVisible();
   });
 
   it('adds what the pipeline left out to the toast', async () => {

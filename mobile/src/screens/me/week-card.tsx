@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -21,7 +22,6 @@ import {
   radius,
   space,
   text,
-  useNotReadyToast,
 } from '@/design-system';
 import { useTimetableVersions } from '@/features/timetable/use-versions';
 import { READING, useImportFromImage } from '@/features/timetable-ocr/use-import-from-image';
@@ -30,29 +30,24 @@ import { UnfinishedSwitch } from './unfinished-switch';
 import { VersionMenu } from './version-menu';
 import { WeekGrid } from './week-grid';
 
-// `직접 입력` opens the timetable, `이미지로 불러오기` reads a screenshot (or says that it is not ready where the build
-// cannot read one), and `빈 시간 말하기` says that it is not ready.
-type TileAction = 'open' | 'import' | 'not-ready';
+type TileAction = 'open' | 'import';
 const TILES: readonly { icon: IconName; label: string; action: TileAction }[] = [
-  { icon: 'calendar', label: '직접 입력', action: 'open' },
+  { icon: 'calendar', label: '직접 입력/수정', action: 'open' },
   { icon: 'plus', label: '이미지로 불러오기', action: 'import' },
-  { icon: 'chat', label: '빈 시간 말하기', action: 'not-ready' },
 ];
 
 function openTimetable(): void {
   router.push('/me/timetable');
 }
 
-// The 시간표 card: the User's week from the main server, the version it is, and the three ways to fill it in.
+// The 시간표 card: the User's week from the main server, the version it is, and the ways to fill it in.
 export function WeekCard(): ReactElement {
   const { data, isPending, refetch } = useWeek();
-  const showNotReady = useNotReadyToast();
   const versions = useTimetableVersions();
   const importing = useImportFromImage(versions);
   const actions: Record<TileAction, () => void> = {
     open: openTimetable,
     import: importing.start,
-    'not-ready': showNotReady,
   };
   return (
     <View style={[cardStyles.card, styles.card]}>
