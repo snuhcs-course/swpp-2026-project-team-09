@@ -1,7 +1,7 @@
 # 54: The 행사 tab as drawn
 
 Parent: [P15 spec](../spec.md), item 54; asked by 안진영 on 2026-11-18 ("행사 탭을 읽기 쉽게, 지금 와이어프레임대로"), after a phone photo of the tab: long titles and places run over several lines, and a card without the "같이 갈 파티" badge leaves an empty band above its title. The team canvas's boards in the row at y = 2892: `Events` (the target: "행사 · 새 디자인 (날짜 열 · 출처 · 제목 · 시간·장소 · 모집 중인 파티/함께 갈 파티 찾기 · 북마크) · 행을 누르면 자세히"), `EventsDetail` (the sheet a pressed row opens) and `EventsCode` (the tab as built in 4.0, the before).
-Status: ready-for-agent
+Status: ready-for-human
 Owner: AhnJinYoung
 Blocked by: none. It builds on #348 (P06-07), merged, which gave the tab its empty state.
 
@@ -75,18 +75,18 @@ The two missing parts are left out (see "Differences from the boards"). Giving t
 
 ## Acceptance criteria
 
-- [ ] Each event is a row whose date column shows the day of the month and "{M}월 · 오늘", "{M}월 · 내일" or "{M}월 · {요일}", then the source when known, the title, and "{hours} · {place}" on one line of words.
-- [ ] The title and the time·place line are each limited to 2 lines, cut with "…", tested with "제147회 규장각 콜로키엄 | 147th Kyujanggak Colloquium" and "서울대학교 규장각한국학연구원(103동) 1-44호 & Zoom 온라인 회의실(전날 이메일로 접속 안내 예정)".
-- [ ] No row has the badges "같이 갈 파티 {n}개" or "내 파티", nor the buttons "자세히" or "파티 찾기/모집".
-- [ ] The party line says "모집 중인 파티 {n}" for an event with 파티, counting the User's own, and "함께 갈 파티 찾기" otherwise; its press opens 파티 찾기/모집 for that event.
-- [ ] The bookmark, named "관심 행사에 추가" or "관심 행사에서 빼기", keeps or drops the event at once against the main server, and turns back with the toast when it refuses.
-- [ ] A press on a row opens the detail sheet: source, title, bookmark, "언제" and "어디", the description, "원문 보기" (opening `sourceUrl`, left out without one) and the party button, which opens 파티 찾기/모집.
-- [ ] The filters keep the same events as before, and a filter that leaves nothing says "해당하는 행사가 없어요"; a search that finds nothing says "검색 결과가 없어요"; no event at all shows #348's empty state.
-- [ ] "다가오는 행사" heads the list.
-- [ ] `/events?focus=<id>` marks the row for 2.6 s.
-- [ ] The chat's event cards and the map's card are unchanged, their tests passing.
-- [ ] No native file and no main-server file changes.
-- [ ] Tests, by ADR 0007: the date words are unit-tested with the adapter; the tab, the row, the bookmark, the sheet and the filters are tested by the integration tests that render the app over the fake main server (`events-tab`, `event-favorites`, `events-recruiting`).
+- [x] Each event is a row whose date column shows the day of the month and "{M}월 · 오늘", "{M}월 · 내일" or "{M}월 · {요일}", then the source when known, the title, and "{hours} · {place}" on one line of words.
+- [x] The title and the time·place line are each limited to 2 lines, cut with "…", tested with "제147회 규장각 콜로키엄 | 147th Kyujanggak Colloquium" and "서울대학교 규장각한국학연구원(103동) 1-44호 & Zoom 온라인 회의실(전날 이메일로 접속 안내 예정)".
+- [x] No row has the badges "같이 갈 파티 {n}개" or "내 파티", nor the buttons "자세히" or "파티 찾기/모집".
+- [x] The party line says "모집 중인 파티 {n}" for an event with 파티, counting the User's own, and "함께 갈 파티 찾기" otherwise; its press opens 파티 찾기/모집 for that event.
+- [x] The bookmark, named "관심 행사에 추가" or "관심 행사에서 빼기", keeps or drops the event at once against the main server, and turns back with the toast when it refuses.
+- [x] A press on a row opens the detail sheet: source, title, bookmark, "언제" and "어디", the description, "원문 보기" (opening `sourceUrl`, left out without one) and the party button, which opens 파티 찾기/모집.
+- [x] The filters keep the same events as before, and a filter that leaves nothing says "해당하는 행사가 없어요"; a search that finds nothing says "검색 결과가 없어요"; no event at all shows #348's empty state.
+- [x] "다가오는 행사" heads the list.
+- [x] `/events?focus=<id>` marks the row for 2.6 s.
+- [x] The chat's event cards and the map's card are unchanged, their tests passing.
+- [x] No native file and no main-server file changes.
+- [x] Tests, by ADR 0007: the date words are unit-tested with the adapter; the tab, the row, the bookmark, the sheet and the filters are tested by the integration tests that render the app over the fake main server (`events-tab`, `event-favorites`, `events-recruiting`).
 
 ## Open questions for the owner
 
@@ -97,3 +97,19 @@ The two missing parts are left out (see "Differences from the boards"). Giving t
 5. The board's "관심 행사" screen (kept events, from 내 정보) is not in the app. Is it wanted?
 
 ## Comments
+
+### Notes from the implementation (2026-11-18)
+
+- Built: `event-row.tsx` (the row), `event-detail-sheet.tsx` (the `EventsDetail` sheet), the filters as the board's text tabs and "다가오는 행사" in `events-bar.tsx` and `events-screen.tsx`, a `bookmark` look for `favorite-toggle.tsx`, and in the design system the icons `bookmark` and `globe` and the tokens `eventTone` (the board's #3A4060, #E3EAFB and #F1F4FB, which no token named) and `eventText` (its text sizes).
+- `event-item.tsx` stays as the chat's event card: its board is not this one. Its test in `answer-frame-event-cards` now checks the tab's row marked with the light blue ground, as the tab draws it.
+- The party count is the recruiting Quests plus the User's own Quests for the event, as the sheet's rows are, so "파티 모집 중" now also keeps an event where only the User's own 파티 is. The board's filter does the same.
+- The sheet's buttons are the app's `Button` (size lg), whose radius and outline are the design system's, a little off the board's 14 and #C9CEDA.
+- Status is `ready-for-human`: the phone check and the before/after pictures are left to a person, since no emulator or browser could run here. Screens to look at are listed in the PR.
+- The local Jest runs were slow under the machine's load. A test that passes alone took up to 3 minutes and timed out at the default 60 s when two files shared the workers. Each touched file was run alone with a longer timeout, and all passed.
+
+### Agent usage (2026-11-18)
+
+Estimates. No transcript tooling was at hand, so these come from the session's own view of its work:
+
+- Agent time: about 1 hour 25 minutes in one Opus 5.5 session (14:15–15:40 KST), most of it waiting on Jest under load. No subagents.
+- Tokens: output about 45,000. Input about 9 million: about 8.5 million cache reads, 0.45 million cache writes, and a few thousand uncached.
