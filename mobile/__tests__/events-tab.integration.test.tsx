@@ -11,7 +11,7 @@
 import { act, within } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { Linking } from 'react-native';
-import { eventTone } from '@/design-system';
+import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
@@ -23,7 +23,7 @@ import { startFresh } from './support/mocks';
 import { answerRoom, openRoom } from './support/room';
 import { askMainServer, DINNER, PHONE_NOW } from './support/server';
 
-const MARKED = eventTone.marked;
+const MARKED = color.blue50;
 
 // The 행사 tab's list of Global Events from the main server: the filters, the search, the rows and the detail sheet.
 
@@ -56,6 +56,14 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// The User's own 파티 for the career talk, 비공개, with a Friend: nobody else may join it.
+const WITH_FRIEND = {
+  ...MY_CAREER,
+  joinPolicy: 'closed' as const,
+  capacity: 2,
+  holders: [...MY_CAREER.holders, { id: 'friend', name: '김민준', department: '경영학과' }],
+};
+
 const LONG_TITLE = '제147회 규장각 콜로키엄 | 147th Kyujanggak Colloquium';
 const LONG_PLACE = '서울대학교 규장각한국학연구원(103동) 1-44호 & Zoom 온라인 회의실(전날 이메일로 접속 안내 예정)';
 
@@ -72,10 +80,11 @@ describe('the list', () => {
     expect(card(CAREER).getByText('컴퓨터공학부 공지')).toBeVisible();
     expect(card(CAREER).getByRole('button', { name: CAREER.title })).toBeVisible();
     expect(card(CAREER).getByText('18:00–20:00 · 301동 대강당')).toBeVisible();
-    // The two recruiting Quests and the User's own, as 파티 찾기/모집 lists them.
-    expect(card(CAREER).getByRole('button', { name: '모집 중인 파티 3' })).toBeVisible();
+    // The two recruiting Quests the User can join, as the map card counts them; the User's own beside them.
+    expect(card(CAREER).getByRole('button', { name: '모집 중인 파티 2' })).toBeVisible();
+    expect(card(CAREER).getByText('내 파티')).toBeVisible();
     // No badge over the title and no button under it: the row opens the details.
-    expect(card(CAREER).queryByText(/같이 갈 파티|내 파티/u)).toBeNull();
+    expect(card(CAREER).queryByText(/같이 갈 파티/u)).toBeNull();
     expect(card(CAREER).queryByRole('button', { name: '자세히' })).toBeNull();
     expect(card(CAREER).queryByRole('button', { name: '파티 찾기/모집' })).toBeNull();
     // AI matching left the app's main UI on 2026-11-10: no entry on the row or in the app bar.
@@ -85,6 +94,7 @@ describe('the list', () => {
     expect(card(MAJOR).getByText('10월 · 목')).toBeVisible();
     expect(card(MAJOR).getByText('17:00 · 뉴미디어통신공동연구소 (132동)')).toBeVisible();
     expect(card(MAJOR).getByRole('button', { name: '함께 갈 파티 찾기' })).toBeVisible();
+    expect(card(MAJOR).queryByText('내 파티')).toBeNull();
     expect(card(MAJOR).queryByText('컴퓨터공학부 공지')).toBeNull();
   });
 
@@ -105,6 +115,20 @@ describe('the list', () => {
 
     expect(screen.getByRole('header', { name: '모집 중인 파티 0' })).toBeVisible();
     expect(screen.getByText('아직 모집 중인 파티가 없어요')).toBeVisible();
+  });
+});
+
+describe("the User's own 파티", () => {
+  it("marks the User's own 비공개 파티 as 내 파티, without counting it or keeping it under 파티 모집 중", async () => {
+    answerEvents(server, { recruiting: [], quests: [DINNER, WITH_FRIEND] });
+    const user = await openEvents();
+
+    expect(card(CAREER).getByText('내 파티')).toBeVisible();
+    // As the old card, which offered 파티 찾기/모집 on every event.
+    expect(card(CAREER).getByRole('button', { name: '함께 갈 파티 찾기' })).toBeVisible();
+    expect(card(CAREER).queryByRole('button', { name: /모집 중인 파티/u })).toBeNull();
+    await user.press(screen.getByRole('button', { name: '파티 모집 중' }));
+    expect(screen.getByText('해당하는 행사가 없어요')).toBeVisible();
   });
 });
 
@@ -141,14 +165,15 @@ describe('the detail sheet', () => {
     expect(screen.getByRole('header', { name: '모집 중인 파티 0' })).toBeVisible();
   });
 
-  it('counts the 파티 on its party button', async () => {
-    answerEvents(server);
+  it("counts the recruiting Quests on its party button, and marks the User's own 파티", async () => {
+    answerEvents(server, { quests: [DINNER, WITH_FRIEND] });
     const user = await openEvents();
 
     await user.press(card(CAREER).getByRole('button', { name: CAREER.title }));
     await pass(500);
 
     expect(screen.getByRole('button', { name: '모집 중인 파티 2 · 찾기/모집' })).toBeVisible();
+    expect(within(screen.getByTestId('event-detail')).getByText('내 파티')).toBeVisible();
   });
 });
 

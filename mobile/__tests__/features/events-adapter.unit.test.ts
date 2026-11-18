@@ -8,15 +8,15 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-// Partitions: each filter of the 행사 tab at the edges of today and of the week, the search's fields, the row's date
-// column and hours, and the sheet's own and others' rows. Expected values: P13-03's criteria, worked by hand in Korea's time.
+// Partitions: each filter of the 행사 tab at the edges of today and of the week, the search's fields, the row's hours,
+// its count and its 내 파티, and the sheet's own and others' rows. Expected values: P13-03's criteria and P15 ticket
+// 54's, worked by hand in Korea's time. The date column is `event-date.unit.test.ts`.
 
 import type { RecruitingQuest } from '@/api/party-types';
 import type { GlobalEvent, Person, Quest } from '@/api/types';
 import {
   type EventFilter,
   type EventSources,
-  eventDate,
   eventHours,
   eventTime,
   isOverPeriod,
@@ -147,19 +147,6 @@ describe('eventTime of an event over a period', () => {
   });
 });
 
-describe('eventDate, the date column', () => {
-  it.each([
-    ['today', '2026-10-06T18:00:00+09:00', { day: '6', line: '10월 · 오늘' }],
-    ['tomorrow, just after midnight', '2026-10-07T00:00:00+09:00', { day: '7', line: '10월 · 내일' }],
-    ['a later day, by its weekday', '2026-10-08T17:00:00+09:00', { day: '8', line: '10월 · 목' }],
-    // 08:00 on the 1st in Korea is the 31st in UTC.
-    ['the day in Korea', '2026-11-01T08:00:00+09:00', { day: '1', line: '11월 · 일' }],
-    ['a start already past, of an event over a period', '2026-10-05T00:00:00+09:00', { day: '5', line: '10월 · 월' }],
-  ])('%s', (_, startsAt, expected) => {
-    expect(eventDate(startsAt, NOW)).toEqual(expected);
-  });
-});
-
 describe('eventHours, beside the place', () => {
   it.each([
     [
@@ -204,9 +191,13 @@ describe('toEventViews filters', () => {
     expect(idsOf('recruiting', all, more)).toEqual(['sunday']);
   });
 
-  it("파티 모집 중 → an Event with the User's own 파티 too, as its row counts it, but not one taken alone", () => {
-    const alone = { ...questFor('monday', [ME]), takenAlone: true };
-    const more = { quests: [questFor('tomorrow', [ME, MIN_JUN]), alone] };
+  it("파티 모집 중 → not an Event with the User's own 파티 alone, a 비공개 one with a Friend: nobody recruits", () => {
+    const more = { quests: [questFor('tomorrow', [ME, MIN_JUN])] };
+    expect(idsOf('recruiting', all, more)).toEqual([]);
+  });
+
+  it("파티 모집 중 → an Event with a recruiting Quest and the User's own 파티 too", () => {
+    const more = { recruiting: [recruiting('tomorrow')], quests: [questFor('tomorrow', [ME, MIN_JUN])] };
     expect(idsOf('recruiting', all, more)).toEqual(['tomorrow']);
   });
 });
@@ -243,17 +234,25 @@ describe('toEventViews card', () => {
       '',
     );
     expect(view).toMatchObject({ source: '컴퓨터공학부', time: '오늘 18:00–20:00', place: '대강당', recruiting: 2 });
-    expect(view).toMatchObject({
-      mine: true,
-      parties: 3,
-      hours: '18:00–20:00',
-      date: { day: '6', line: '10월 · 오늘' },
-    });
+    expect(view).toMatchObject({ mine: true, hours: '18:00–20:00', date: { day: '6', line: '10월 · 오늘' } });
   });
 
   it('no announcer and no Quest → none of them', () => {
     const [view] = toEventViews(sources([night]), 'all', '');
-    expect(view).toMatchObject({ source: null, recruiting: 0, mine: false, parties: 0 });
+    expect(view).toMatchObject({ source: null, recruiting: 0, mine: false });
+  });
+
+  // "모집 중인 파티 {n}" counts what the map card and the chat card count; "내 파티" marks the User's own.
+  const own = [questFor('night', [ME, MIN_JUN])];
+  const two = [recruiting('night', 'r1'), recruiting('night', 'r2')];
+  it.each([
+    ["the User's own 비공개 파티 only → not counted, 내 파티", [], own, 0, true],
+    ['recruiting Quests of others only → counted', two, [], 2, false],
+    ["both → the others' counted, 내 파티 beside", two, own, 2, true],
+    ['a Quest taken alone → neither', [], [{ ...own[0], holders: [ME], takenAlone: true }], 0, false],
+  ])('%s', (_, gathering: RecruitingQuest[], quests: Quest[], count, mine) => {
+    const [view] = toEventViews(sources([night], { recruiting: gathering, quests }), 'all', '');
+    expect(view).toMatchObject({ recruiting: count, mine });
   });
 });
 

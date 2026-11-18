@@ -9,7 +9,7 @@
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
-import { eventTone } from '@/design-system';
+import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
@@ -137,8 +137,8 @@ describe('an event card pressed', () => {
 
     expect(screen.getByRole('tab', { name: '행사' })).toBeSelected();
     // The tab's row of the event, on its light blue ground (P15 ticket 54).
-    expect(screen.getByTestId(`event-${MAJOR.id}`)).toHaveStyle({ backgroundColor: eventTone.marked });
-    expect(screen.getByTestId(`event-${CAREER.id}`)).not.toHaveStyle({ backgroundColor: eventTone.marked });
+    expect(screen.getByTestId(`event-${MAJOR.id}`)).toHaveStyle({ backgroundColor: color.blue50 });
+    expect(screen.getByTestId(`event-${CAREER.id}`)).not.toHaveStyle({ backgroundColor: color.blue50 });
   });
 });
 

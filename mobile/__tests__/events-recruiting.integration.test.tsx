@@ -57,7 +57,7 @@ afterEach(() => {
 type User = Awaited<ReturnType<typeof openEvents>>;
 
 async function openSheet(user: User): Promise<void> {
-  // The row's party line: "모집 중인 파티 {n}" with the Quests gathering and the User's own, "함께 갈 파티 찾기" without.
+  // The row's party line: "모집 중인 파티 {n}" with Quests gathering that the User can join, "함께 갈 파티 찾기" without.
   await user.press(card(CAREER).getByRole('button', { name: /^(?:모집 중인 파티 \d|함께 갈 파티 찾기)$/u }));
   await pass(500);
 }

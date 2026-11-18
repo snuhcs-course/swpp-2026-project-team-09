@@ -193,13 +193,12 @@ export const signInButton = {
   shadow: '0 12px 32px rgba(0, 26, 114, 0.18), 0 2px 6px rgba(14, 19, 48, 0.08)',
 } as const;
 
-// The 행사 tab's colours, as the `Events` frame draws them, which no token of the design system names: the words of a
-// row's time and place and of an event's description, the light blue of the chosen filter and of "모집 중인 파티", and
-// the ground of a row opened from elsewhere.
+// The 행사 tab's colour, as the `Events` frame draws it, which no token of the design system names: the words of a row's
+// time and place and of an event's description, between `ink` and `inkMuted`. The frame's light blues of the chosen
+// filter and of "모집 중인 파티" (#E3EAFB) and of a row opened from elsewhere (#F1F4FB) are drawn in `blue100` and
+// `blue50`, a step of the design system's from each.
 export const eventTone = {
   words: '#3A4060',
-  chosen: '#E3EAFB',
-  marked: '#F1F4FB',
 } as const;
 
 // One font file per weight, loaded under these names by the root layout. React Native picks a weight by the family's
@@ -260,8 +259,7 @@ export const eventText = {
   // "모집 중인 파티 {n}", and "함께 갈 파티 찾기".
   party: { fontFamily: font.bold, fontSize: 15, lineHeight: 20 },
   partyFind: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 20 },
-  // The detail sheet: its title, a row's key and value, and the description.
-  sheetTitle: { fontFamily: font.bold, fontSize: 22, lineHeight: 30, letterSpacing: -0.33 },
+  // The detail sheet, whose title is `text.titleLg`: a row's key and value, and the description.
   key: { fontFamily: font.medium, fontSize: 14, lineHeight: 22 },
   value: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 22 },
   description: { fontFamily: font.regular, fontSize: 15, lineHeight: 23 },

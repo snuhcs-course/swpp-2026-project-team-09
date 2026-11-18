@@ -6,13 +6,26 @@
 
 import type { ReactElement } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { BottomSheet, Button, color, eventText, eventTone, Icon, type IconName, radius, space } from '@/design-system';
+import {
+  BottomSheet,
+  Button,
+  color,
+  eventText,
+  eventTone,
+  Icon,
+  type IconName,
+  radius,
+  space,
+  text,
+} from '@/design-system';
 import type { EventView } from '@/features/events/adapter';
-import { FavoriteToggle } from './favorite-toggle';
+import { MineMark } from './event-row';
+import { EVENTS_TAB_LOOK, FavoriteToggle } from './favorite-toggle';
 
-// "파티 찾기/모집", or "모집 중인 파티 {n} · 찾기/모집" when any 파티 is there for the event.
-export function detailPartyWords(parties: number): string {
-  return parties === 0 ? '파티 찾기/모집' : `모집 중인 파티 ${parties} · 찾기/모집`;
+// "파티 찾기/모집", or "모집 중인 파티 {n} · 찾기/모집" when a recruiting Quest the User can join is there for the event,
+// as the row counts them.
+export function detailPartyWords(recruiting: number): string {
+  return recruiting === 0 ? '파티 찾기/모집' : `모집 중인 파티 ${recruiting} · 찾기/모집`;
 }
 
 function Fact({ icon, name, words }: { icon: IconName; name: string; words: string }): ReactElement {
@@ -35,11 +48,12 @@ function Details({ event }: { event: EventView }): ReactElement {
       <View style={styles.head}>
         <View style={styles.names}>
           {event.source === null ? null : <Text style={styles.source}>{event.source}</Text>}
+          {event.mine ? <MineMark /> : null}
           <Text accessibilityRole="header" lineBreakStrategyIOS="hangul-word" style={styles.title}>
             {event.title}
           </Text>
         </View>
-        <FavoriteToggle bookmark eventId={event.id} style={styles.bookmark} />
+        <FavoriteToggle eventId={event.id} look={EVENTS_TAB_LOOK} style={styles.bookmark} />
       </View>
       <View style={styles.facts}>
         <Fact icon="clock" name="언제" words={event.time} />
@@ -92,7 +106,7 @@ export function EventDetailSheet({ event, onClose, onParty }: EventDetailSheetPr
                 }}
                 size="lg"
               >
-                {detailPartyWords(event.parties)}
+                {detailPartyWords(event.recruiting)}
               </Button>
             </View>
           </View>
@@ -102,6 +116,14 @@ export function EventDetailSheet({ event, onClose, onParty }: EventDetailSheetPr
   );
 }
 
+// The `EventsDetail` frame's measures that the design system's 4-point steps do not hold: the gaps and padding of the
+// time and place box, its key column, and how far the bookmark's touch area reaches past the title's corner.
+const BOX_GAP = 10;
+const BOX_PADDING = 14;
+const KEY_WIDTH = 36;
+const ICON_DROP = 2;
+const BOOKMARK_REACH = { marginTop: -6, marginRight: -10 };
+
 const styles = StyleSheet.create({
   body: { flexShrink: 1, gap: space[4], paddingHorizontal: space[5], paddingBottom: space[1] },
   scroll: { flexGrow: 0, flexShrink: 1 },
@@ -109,18 +131,18 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2] },
   names: { flex: 1, minWidth: 0, gap: space[1] },
   source: { ...eventText.source, color: color.inkMuted },
-  title: { ...eventText.sheetTitle, color: color.ink },
-  bookmark: { marginTop: -6, marginRight: -10 },
+  title: { ...text.titleLg, color: color.ink },
+  bookmark: BOOKMARK_REACH,
   facts: {
-    gap: 10,
-    paddingVertical: 14,
+    gap: BOX_GAP,
+    paddingVertical: BOX_PADDING,
     paddingHorizontal: space[4],
     borderRadius: radius.lg,
     backgroundColor: color.surfaceSubtle,
   },
-  fact: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  factIcon: { paddingTop: 2 },
-  key: { ...eventText.key, width: 36, color: color.inkFaint },
+  fact: { flexDirection: 'row', alignItems: 'flex-start', gap: BOX_GAP },
+  factIcon: { paddingTop: ICON_DROP },
+  key: { ...eventText.key, width: KEY_WIDTH, color: color.inkFaint },
   value: { ...eventText.value, flex: 1, color: color.ink },
   description: { ...eventText.description, color: eventTone.words },
   actions: { flexDirection: 'row', alignItems: 'center', gap: space[2] },

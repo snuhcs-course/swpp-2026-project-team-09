@@ -6,28 +6,48 @@
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { color, eventText, eventTone, Icon, radius, space } from '@/design-system';
+import { Badge, color, eventText, eventTone, Icon, radius, size, space } from '@/design-system';
 import type { EventView } from '@/features/events/adapter';
-import { FavoriteToggle } from './favorite-toggle';
+import { EVENTS_TAB_LOOK, FavoriteToggle } from './favorite-toggle';
 
 // The title and the time·place line take at most this many lines each: a long real title or place stays one short
 // row, and the detail sheet shows them whole.
 export const ROW_LINES = 2;
 
-// "모집 중인 파티 {n}" in navy on light blue when any 파티 is there for the event, "함께 갈 파티 찾기" otherwise.
-export function partyWords(parties: number): string {
-  return parties === 0 ? '함께 갈 파티 찾기' : `모집 중인 파티 ${parties}`;
+// "모집 중인 파티 {n}" in navy on light blue when a recruiting Quest the User can join is there for the event, "함께 갈
+// 파티 찾기" otherwise, the User's own 파티 or not: the old card offered 파티 찾기/모집 on every event.
+export function partyWords(recruiting: number): string {
+  return recruiting === 0 ? '함께 갈 파티 찾기' : `모집 중인 파티 ${recruiting}`;
 }
 
-function PartyLine({ parties, onPress }: { parties: number; onPress: () => void }): ReactElement {
-  const some = parties > 0;
+// The line is drawn 40 high, as the frame draws it; its touch area reaches the design system's 48.
+const LINE_HEIGHT = space[10];
+const SLOP = (size.touchMin - LINE_HEIGHT) / 2;
+const HIT_SLOP = { top: SLOP, bottom: SLOP };
+
+function PartyLine({ recruiting, onPress }: { recruiting: number; onPress: () => void }): ReactElement {
+  const some = recruiting > 0;
   const tint = some ? color.snuBlue : color.ink;
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={[styles.party, some && styles.partySome]}>
+    <Pressable
+      accessibilityRole="button"
+      hitSlop={HIT_SLOP}
+      onPress={onPress}
+      style={[styles.party, some && styles.partySome]}
+    >
       <Icon color={tint} name="users" size={18} />
-      <Text style={[some ? eventText.party : eventText.partyFind, { color: tint }]}>{partyWords(parties)}</Text>
+      <Text style={[some ? eventText.party : eventText.partyFind, { color: tint }]}>{partyWords(recruiting)}</Text>
       <Icon color={tint} name="chevronRight" size={16} />
     </Pressable>
+  );
+}
+
+// The User's own 파티 for the event, as the old card's badge said it. The frame draws none (ticket 54).
+export function MineMark(): ReactElement {
+  return (
+    <Badge icon={false} tone="friend">
+      내 파티
+    </Badge>
   );
 }
 
@@ -56,7 +76,7 @@ export function EventRow({ event, focused, onLayout, onOpen, onParty }: EventRow
       style={[styles.row, focused && styles.marked]}
       testID={`event-${event.id}`}
     >
-      <View style={styles.date}>
+      <View style={[styles.date, { marginTop: event.source === null ? DAY_DROP - SOURCE_STEP : DAY_DROP }]}>
         <Text style={styles.day}>{event.date.day}</Text>
         <Text numberOfLines={1} style={styles.dayLine}>
           {event.date.line}
@@ -77,24 +97,36 @@ export function EventRow({ event, focused, onLayout, onOpen, onParty }: EventRow
         <Text lineBreakStrategyIOS="hangul-word" numberOfLines={ROW_LINES} style={styles.line}>
           {line}
         </Text>
-        <PartyLine onPress={onParty} parties={event.parties} />
+        <View style={styles.partyRow}>
+          <PartyLine onPress={onParty} recruiting={event.recruiting} />
+          {event.mine ? <MineMark /> : null}
+        </View>
       </View>
-      <FavoriteToggle bookmark eventId={event.id} style={styles.bookmark} />
+      <FavoriteToggle eventId={event.id} look={EVENTS_TAB_LOOK} style={styles.bookmark} />
     </Pressable>
   );
 }
+
+// The frame's measures that the design system's 4-point steps do not hold: the row's padding, the date column's width
+// and the light blue's padding.
+const ROW_PADDING = 22;
+const DATE_WIDTH = 72;
+const PARTY_PADDING = 14;
+// The day sits level with the title: lowered by 18 under a source's line, raised by the source's line and the gap
+// under it without one.
+const DAY_DROP = 18;
+const SOURCE_STEP = eventText.source.lineHeight + space[1];
 
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingVertical: 22,
+    paddingVertical: ROW_PADDING,
     borderBottomWidth: 1,
     borderBottomColor: color.border,
   },
-  marked: { backgroundColor: eventTone.marked },
-  // The day sits level with the title, under the source's line.
-  date: { width: 72, paddingTop: 18 },
+  marked: { backgroundColor: color.blue50 },
+  date: { width: DATE_WIDTH },
   day: { ...eventText.day, color: color.ink },
   dayLine: { ...eventText.dayLine, color: color.inkMuted },
   rule: {
@@ -114,10 +146,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     gap: space[2],
-    height: 40,
-    marginTop: space[2],
+    height: LINE_HEIGHT,
     borderRadius: radius.md,
   },
-  partySome: { paddingHorizontal: 14, backgroundColor: eventTone.chosen },
+  partyRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: space[2] },
+  partySome: { paddingHorizontal: PARTY_PADDING, backgroundColor: color.blue100 },
   bookmark: { position: 'absolute', top: space[3], right: -space[2] },
 });

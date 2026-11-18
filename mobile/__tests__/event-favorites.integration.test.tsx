@@ -17,6 +17,7 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { EVENT, lookOf, press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { askMainServer, PHONE_NOW } from './support/server';
+import { EVENTS_TAB_LOOK } from '@/screens/events/favorite-toggle';
 
 // Favorite Events against the fake main server, on Tuesday 6 October 2026 at 13:00 in Korea: the bookmark on the 행사
 // tab's rows and in its detail sheet, the ☆ on the map's card of one event, and the everyday map keeping only the
@@ -63,12 +64,15 @@ function answerFavorite(eventId: string, reply: { status: number; afterMs?: numb
   server.on(`DELETE /global-events/${eventId}/favorite`, reply);
 }
 
-const KEEP = '관심 행사에 추가';
-const DROP = '관심 행사에서 빼기';
+// The tab's toggle as `EVENTS_TAB_LOOK` names it, while the owner decides between the bookmark and the ☆.
+const { keep: KEEP, drop: DROP } = EVENTS_TAB_LOOK;
 
-// The bookmark, named for what a press does.
+const escaped = (words: string): string => words.replaceAll(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+const NAMED = new RegExp(`^(?:${escaped(KEEP)}|${escaped(DROP)})$`, 'u');
+
+// The tab's toggle, named for what a press does.
 function star(of: ReturnType<typeof card>): ReturnType<ReturnType<typeof card>['getByRole']> {
-  return of.getByRole('button', { name: /^관심 행사(?:에 추가|에서 빼기)$/u });
+  return of.getByRole('button', { name: NAMED });
 }
 
 describe('the bookmark on the 행사 tab', () => {
