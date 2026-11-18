@@ -46,3 +46,10 @@ Native files: none. Releases: the main server (a data migration), then an app OT
 - The migration's SQL was run on sample rows in a throwaway PostgreSQL 17: a nickname replaced, a name without `/` kept with its typed department, an empty Google name and parts over the limits left alone, spaces around the parts dropped.
 
 ## Comments
+
+### Agent usage (2026-11-19)
+
+Estimates from the session transcript, with gaps of 5 minutes or more left out, among them the wait for another session to free the emulator. One Opus 5.5 session did the ticket, with no subagents.
+
+- Agent time: about 35 minutes.
+- Tokens: output about 95,000. Input about 39.0 million: 38.6 million cache reads, 0.31 million cache writes and about 340 uncached.
