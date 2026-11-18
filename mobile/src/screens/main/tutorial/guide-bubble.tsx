@@ -131,8 +131,9 @@ function StepBody(props: BubbleProps & { step: TutorialStep; index: number }): R
   );
 }
 
-// The bubble under the guide's bar, whose words scroll when they do not fit: the guide's or the step's paragraphs, then the kinds to choose from, or the step
-// shown with its place, its link, its spots, its rows, its chips and its buttons.
+// The bubble under the guide's bar, whose words scroll when they do not fit: the guide's or the step's paragraphs,
+// then the kinds to choose from, or the step shown with its place, its link, its spots, its rows, its chips and its
+// buttons.
 export function GuideBubble(props: BubbleProps): ReactElement | null {
   const { guide, position, tone, onKind } = props;
   const choosing = isChoosing(guide, position.kind);

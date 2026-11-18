@@ -144,8 +144,8 @@ interface GuideMapDeps {
   me: LatLng | null;
   // The walking route of a 길찾기, drawn over the way.
   route: MapLine | null;
-  // The answer frame, or a card nobody asked for, is shown.
-  framed: boolean;
+  // Something else is over the map: a selected card, the answer frame, or a card nobody asked for.
+  overMap: boolean;
 }
 
 function pinsOf(
@@ -199,15 +199,17 @@ function useGuideCamera(
 }
 
 // Closing a guide brings the map back to where the everyday map was when the guide opened, as the answer frame's way
-// out does (`use-camera-back.ts`), unless the guide gave way to the answer frame, whose own way back then follows.
-function useGuideCameraBack(open: boolean, { map, framed }: Pick<GuideMapDeps, 'map' | 'framed'>): void {
+// out does (`use-camera-back.ts`), unless the guide gave way to something over the map (`overMap`): a card selected by
+// a push or by `?person=`, which brought the camera to its own place, the answer frame or a card nobody asked for,
+// whose own camera then holds.
+export function useGuideCameraBack(open: boolean, { map, overMap }: Pick<GuideMapDeps, 'map' | 'overMap'>): void {
   const everyday = useRef<MapCamera | null>(null);
   const wasOpen = useRef(false);
   const remember = useEffectEvent(() => {
     everyday.current = map.camera;
   });
   const goBack = useEffectEvent(() => {
-    if (everyday.current !== null && !framed) {
+    if (everyday.current !== null && !overMap) {
       map.moveTo(everyday.current);
     }
     everyday.current = null;

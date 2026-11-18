@@ -284,11 +284,11 @@ function useMainParts(): MainParts {
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
   const guided = tutorial.guide !== null;
   const framedRoom = useFramedRoom(selection, layers, me, { tutorialStart: start, guided });
-  useGuideGivesWay(guided, selection.open || framedRoom.framed, tutorial.closeGuide);
+  const overMap = selection.open || framedRoom.framed;
+  useGuideGivesWay(guided, overMap, tutorial.closeGuide);
   const { room, unasked } = framedRoom;
   const lines = useLines(shuttle, route);
-  const { framed } = framedRoom;
-  const guide = useGuideMap({ flow: tutorial, map, room, me: me.position, route: route.line, framed });
+  const guide = useGuideMap({ flow: tutorial, map, room, me: me.position, route: route.line, overMap });
   const view = useMapView(chat, map, room, { me, pin, lines, cards, selection, guide }, unasked);
   useReturnedCamera(layers.back, chat.framed, map);
   return { map, me, layers, selection, party, tutorial, pin, guided, view, ...framedRoom };

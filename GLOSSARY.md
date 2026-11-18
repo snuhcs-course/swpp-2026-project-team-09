@@ -202,7 +202,7 @@ The 새내기 튜토리얼: a guide for new students to the basics of campus lif
 _Avoid_: Quest, Onboarding (Onboarding is the name and department after the first sign-in)
 
 **Tutorial Quest**:
-One page of the Tutorial, a step of campus life such as getting the student card, which a User starts and completes. It is not a Quest: it has no Holder, Board, Sub Quest or capacity.
+One part of the Tutorial, a step of campus life such as getting the student card, which a User starts and completes, shown as a Tutorial Guide on the map. It is not a Quest: it has no Holder, Board, Sub Quest or capacity.
 _Avoid_: Quest
 
 **Tutorial Category**:

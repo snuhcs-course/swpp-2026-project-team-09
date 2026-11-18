@@ -662,7 +662,7 @@ quests:
           pinText: 🌙
           name: 302동 앞
           sub: 주말·공휴일 제외
-          # The dates of the facts below (cse.snu.ac.kr notice 25702), so that the step does not read as standing after
+          # The dates of the quest's facts above (cse.snu.ac.kr notice 25702), so that the step does not read as standing after
           # 12월 14일.
           chips:
             - { icon: calendar, words: '2026 · 10/12–10/30 · 11/30–12/14' }

@@ -90,13 +90,15 @@ Every board of the row is drawn by the canvas's `Main` board with a `tutorial` o
 
 ## Open questions for the owner
 
-1. 천원의 식사 at 윗공대 (301동) "아침만": the board says so, but the quest's sources (학생처, 생협) as written in `tutorial.yaml` do not say which restaurant serves which meal. Built as drawn and marked *unsourced* in the file. The file cannot keep words on screen away from the Assistant: `getTutorial` hands it the body and the places as the quest's text (not as a fact). Two choices: (a) keep the board's line in the body and the place's label, as now, with a source to add as a fact if there is one; or (b) put the body and the label back to the sourced words, so that "아침만" stays only in the guide, which the Assistant does not read.
-2. `MainTutSU`'s link button shows the host "mysnu.ac.kr", but MySNU is my.snu.ac.kr. Built with my.snu.ac.kr. Right?
-3. `MainTutorialFail`'s title says "그냥 완료하기"; its button says "그냥 완료". Built as the button.
-4. `MainTutorialDone` draws "15 / 15" as fixed words; built as the count of quests (n / n), which is 15 now.
-5. 관심 (생활 · 진로) says "기숙사 919A동 1층"; the seed has no 919A, and the board's pin stands on Place 919 (관악사 학부 생활관). Built on 919.
-6. The guides' places as the boards' map draws them are the seed's Places exactly (checked by fitting the board's map to the seed); 공존 and 자우리 (501동) have none, so they have no pin, as drawn.
-7. The start button keeps "새내기 튜토리얼 시작하기" for a tutorial already started, as `MainTutorialList` and `MainTutorialStart` both draw it. Should it say something else, such as "이어서 하기", once a quest is started?
+The owner gave no answer on 2026-11-18, so questions 2–7 stand as built, unless the owner says otherwise. Question 1 stays open, and its line stays marked _unsourced_ in `tutorial.yaml`.
+
+1. (Open.) 천원의 식사 at 윗공대 (301동) "아침만": the board says so, but the quest's sources (학생처, 생협) as written in `tutorial.yaml` do not say which restaurant serves which meal. Built as drawn and marked _unsourced_ in the file. The file cannot keep words on screen away from the Assistant: `getTutorial` hands it the body and the places as the quest's text (not as a fact). Two choices: (a) keep the board's line in the body and the place's label, as now, with a source to add as a fact if there is one; or (b) put the body and the label back to the sourced words, so that "아침만" stays only in the guide, which the Assistant does not read.
+2. (As built, unless the owner says otherwise.) `MainTutSU`'s link button shows the host "mysnu.ac.kr", but MySNU is my.snu.ac.kr. Built with my.snu.ac.kr. Right?
+3. (As built, unless the owner says otherwise.) `MainTutorialFail`'s title says "그냥 완료하기"; its button says "그냥 완료". Built as the button.
+4. (As built, unless the owner says otherwise.) `MainTutorialDone` draws "15 / 15" as fixed words; built as the count of quests (n / n), which is 15 now.
+5. (As built, unless the owner says otherwise.) 관심 (생활 · 진로) says "기숙사 919A동 1층"; the seed has no 919A, and the board's pin stands on Place 919 (관악사 학부 생활관). Built on 919.
+6. (As built, unless the owner says otherwise.) The guides' places as the boards' map draws them are the seed's Places exactly (checked by fitting the board's map to the seed); 공존 and 자우리 (501동) have none, so they have no pin, as drawn.
+7. (As built, unless the owner says otherwise.) The start button keeps "새내기 튜토리얼 시작하기" for a tutorial already started, as `MainTutorialList` and `MainTutorialStart` both draw it. Should it say something else, such as "이어서 하기", once a quest is started?
 
 ## Comments
 
@@ -114,7 +116,7 @@ Every board of the row is drawn by the canvas's `Main` board with a `tutorial` o
 
 ### Agent usage (2026-11-18)
 
-Estimates from this session (one Opus 5.5 session, no subagents), with waits for test runs counted as agent time since the agent waited on them:
+Estimates from this ticket's sessions (Opus 5.5, no subagents; the work moved from `/workspace/a02-05` to `/workspace/a02-04` after the VM restarted), with the waits for test runs counted, since the agent waited on them:
 
-- Agent time: about 3 hours 30 minutes.
-- Tokens: output about 150,000. Input about 30 million: about 28.5 million cache reads, about 1.4 million cache writes, and a few thousand uncached.
+- Agent time: about 7 hours, through three rounds of review and the merge of `4.0/Main`.
+- Tokens: output about 250,000. Input about 62 million: about 59.5 million cache reads, about 2.4 million cache writes, and a few thousand uncached.
