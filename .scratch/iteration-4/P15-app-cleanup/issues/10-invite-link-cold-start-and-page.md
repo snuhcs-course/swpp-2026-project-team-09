@@ -230,3 +230,10 @@ project (`./gradlew assembleRelease` alone, 33 s), the emulator booted cold, `te
   start (1m 45s) and M1 (1m 36s) passed, 3/3.
 
 The screenshots for the pull request and both JUnit reports are in `~/Downloads/p15-10/`.
+
+### Agent usage (2026-11-18)
+
+Estimates from the session transcripts, with gaps of 5 minutes or more left out, up to the pull request:
+
+- Agent time: about 105 minutes, summed. An Opus 5.5 implementation subagent worked about 72 minutes in two runs (the work, then the reviews' fixes; each with the device run), two review subagents about 12 minutes side by side, and the parent session (Opus 5.5) about 21 minutes around them. The ticket itself was written in an earlier session, not counted here.
+- Tokens: output about 145,000. Input about 85.3 million: 84.3 million cache reads, 1.0 million cache writes and about 750 uncached.
