@@ -18,7 +18,8 @@ import { MOCK_TUTORIAL_SWITCHES } from '@/api/mock/tutorial';
 // MainTut* boards, P15 ticket 53): the bar, the bubble's words, the steps, the kinds of the 학생증, the spots of 상담,
 // ✓ 완료, and what gives way while a guide is open.
 
-const STEP_PIN = 'tutorialStep';
+// A guide's pin: its look's name starts so.
+const STEP_PIN = /^tutorialStep/u;
 
 jest.mock('expo-location');
 jest.mock('expo-web-browser', () => ({ openBrowserAsync: jest.fn(() => Promise.resolve({ type: 'opened' })) }));
@@ -27,6 +28,9 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useMotionAllowed: (): boolean => false,
   useReduceMotionSetting: (): boolean => true,
 }));
+
+// Each quest is reached through the start button, the list and its tab: longer than a press on a row.
+jest.setTimeout(150000);
 
 beforeEach(async () => {
   jest.useFakeTimers();

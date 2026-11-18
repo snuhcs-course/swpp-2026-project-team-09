@@ -38,6 +38,7 @@ function Tabs({ flow, guide, view, tone }: GuideShown): ReactElement {
         const past = !together && at < now;
         return (
           <Pressable
+            accessibilityLabel={step.tab}
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
             key={`${step.tab}-${String(at)}`}

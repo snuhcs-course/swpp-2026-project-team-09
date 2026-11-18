@@ -43,6 +43,9 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotionSetting: (): boolean => true,
 }));
 
+// Each quest is reached through the start button, the list and its tab: longer than a press on a row.
+jest.setTimeout(150000);
+
 beforeEach(async () => {
   jest.useFakeTimers();
   await startFresh();

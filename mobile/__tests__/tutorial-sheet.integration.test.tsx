@@ -41,6 +41,9 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotionSetting: (): boolean => true,
 }));
 
+// Each quest is reached through the start button, the list and its tab: longer than a press on a row.
+jest.setTimeout(150000);
+
 beforeEach(async () => {
   jest.useFakeTimers();
   await startFresh();
@@ -177,7 +180,7 @@ describe('튜토리얼 그만하기', () => {
     MOCK_TUTORIAL_SWITCHES.guides = false;
     await started('s-card');
     const user = await openSheet('thousand-won-meals');
-    await user.press(button('나중에'));
+    await pressAndWait(user, '나중에');
     await pressAndWait(user, START);
 
     await pressAndWait(user, '튜토리얼 그만하기');

@@ -76,6 +76,9 @@ async function status(): Promise<string | undefined> {
   return quests.find(({ key }) => key === 'kwanjeong')?.status;
 }
 
+// Each quest is reached through the start button, the list and its tab: longer than a press on a row.
+jest.setTimeout(150000);
+
 describe('✓ 완료 with a booking that counts', () => {
   it('asks for the bookings of the 30 days before to the 3 after, and shows the most recent with 확인됨', async () => {
     await setUp(TODAY);

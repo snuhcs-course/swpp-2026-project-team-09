@@ -103,6 +103,13 @@ function withBuildingPress(answer: AnswerMap, pressed: PressedPlace, asked: bool
   };
 }
 
+// Whether the map draws something of its own in place of the everyday map: an answer or a Lookup, an invitation's or a
+// made Quest's way, or a 새내기 튜토리얼 quest's guide. While it does, the answer's limits hold and the everyday map's
+// glide back in to the lowest zoom waits, so that a fit further out than the whole campus stays where it rests.
+export function drawsItsOwnMap(drawn: { answer: object | null; way: object | null; guide: GuideMap | null }): boolean {
+  return drawn.answer !== null || drawn.way !== null || drawn.guide !== null;
+}
+
 // A 새내기 튜토리얼 quest's guide: its pins and its lines in place of everything else, and the User's own Avatar.
 function guidedView(guide: GuideMap, me: Me, around: MapTouches): MapView {
   return {
@@ -141,7 +148,7 @@ export function useMapView(
   const answer = plan ?? lookup;
   const unasked = invitation.shown || made.shown !== null;
   const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);
-  const limits = useEverydayLimits(map, answer !== null || way !== null);
+  const limits = useEverydayLimits(map, drawsItsOwnMap({ answer, way, guide }));
   const everyday = answer === null && way === null && !chat.framed && !unasked && guide === null;
   const asking = howAbout.pressable && plan !== null && !unasked;
   const target = asking ? howAbout.target : selection;

@@ -1,7 +1,7 @@
 # 53: The 새내기 튜토리얼 as drawn: fewer words, guides on the map
 
 Parent: [P15 spec](../spec.md), item 53; the owner's request of 2026-11-18 ("Cut the text, starting with the 새내기 튜토리얼 … Build it exactly as drawn"); the team canvas's row "새내기 튜토리얼" (y = 9640), left to right: `MainTutorialStart`, `ProfileTutorial`, `MainTutorialPager`, `MainTutorialList`, `MainTutorialSheet`, `MainTutorialPin`, `MainTutorialOk`, `MainTutorialNext`, `MainTutorialDone`, `MainTutorialKwOk`, `MainTutorialFail`, `MainTutorialCard1`–`6`, `MainTutorialMeal`, `MainTutLost`, `MainTutLaptop1`–`2`, `MainTutKw1`–`3`, `MainTutSU`, `MainTutGPT`, `MainTutSW1`–`2`, `MainTutAdmin`, `MainTutNight1`–`3`, `MainTutClinic`, `MainTutCounsel1`–`4`, `MainTutArt1`–`2`, `MainTutDure1`–`2`, `MainTutTrail1`–`2`
-Status: ready-for-agent
+Status: ready-for-human
 Owner: AhnJinYoung
 Blocked by: none
 
@@ -76,15 +76,15 @@ Every board of the row is drawn by the canvas's `Main` board with a `tutorial` o
 
 ## Acceptance criteria
 
-- [ ] The start button shows while the tutorial is `available` or `active` with a quest not completed, not while a card, the chat or a guide is open, and opens the list (unit test of the rule; integration test of the press).
-- [ ] The 내 정보 row's `active` line is "진행 중 · 완료 n/N · 지도 화면 아래 버튼으로 이어서 해요" (unit test).
-- [ ] No started tutorial quest is on the map's Quest list or the whole-screen 퀘스트 list (integration test).
-- [ ] The list shows the head, the category's count and "✓ n / N", one bar segment per quest, the five category tabs, the shown category's rows with icon, title, ✓ and "진행 중", and 튜토리얼 그만하기; a tab shows its category; a row's press starts the quest and opens its guide, or its sheet without a guide (integration test).
-- [ ] Completing a quest opens the list on the next quest's category with "✓ {title}" and that quest's row marked "다음"; after the last, "n / n" with 닫기 (integration test).
+- [x] The start button shows while the tutorial is `available` or `active` with a quest not completed, not while a card, the chat or a guide is open, and opens the list (unit test of the rule; integration test of the press).
+- [x] The 내 정보 row's `active` line is "진행 중 · 완료 n/N · 지도 화면 아래 버튼으로 이어서 해요" (unit test).
+- [x] No started tutorial quest is on the map's Quest list or the whole-screen 퀘스트 list (integration test).
+- [x] The list shows the head, the category's count and "✓ n / N", one bar segment per quest, the five category tabs, the shown category's rows with icon, title, ✓ and "진행 중", and 튜토리얼 그만하기; a tab shows its category; a row's press starts the quest and opens its guide, or its sheet without a guide (integration test).
+- [x] Completing a quest opens the list on the next quest's category with "✓ {title}" and that quest's row marked "다음"; after the last, "n / n" with 닫기 (integration test).
 - [ ] The sheet has no 완료 조건 box, has the 🌐 button with the quest's links, and [나중에][✓ 완료] (integration test).
 - [ ] A guide shows its bar, its step's words, its chips, its online steps and its buttons, moves between steps with 다음, ←, and the tabs, and ✓ 완료 completes the quest; 학생증 starts with the choice of two kinds and its chip chooses again; a side-by-side guide has ✓ 완료 on every tab (integration test over the mock's content).
 - [ ] While a guide is open the map draws only its pins and lines and the User; the lists, the input and the tab bar give way (integration test).
-- [ ] `content/tutorial.yaml` holds an `icon` and a `guide` for each of the 15 quests, and every guide place is a Place of the seed or a point (unit test of the content).
+- [x] `content/tutorial.yaml` holds an `icon` and a `guide` for each of the 15 quests, and every guide place is a Place of the seed or a point (unit test of the content).
 - [ ] GET /tutorial serves `icon` and `guide`; the guide's ask buttons are left out while 관정 booking is off; `getTutorial` does not serve them (unit tests of `servedContent` and the tool).
 - [ ] oxlint, Prettier, tsc and the touched tests pass for `mobile` and `main-server`; no native file changes (`git diff --stat`).
 
@@ -98,3 +98,19 @@ Every board of the row is drawn by the canvas's `Main` board with a `tutorial` o
 6. The guides' places as the boards' map draws them are the seed's Places exactly (checked by fitting the board's map to the seed); 공존 and 자우리 (501동) have none, so they have no pin, as drawn.
 
 ## Comments
+
+### Notes from the implementation (2026-11-18)
+
+- Built in PR #359. The 45 boards share one frame in the canvas's `Main` board, so one renderer draws every guide, and each quest's guide is data in `content/tutorial.yaml` (`icon`, `guide`; schema in `main-server/src/tutorial/tutorial-guide.ts`). The app's mock copies it whole in `mobile/src/api/mock/data/tutorial-guides.json`.
+- Every place the boards' map draws was matched to the seed by fitting the board's map to the seed's Places: they are the seed's Places exactly, so each guide names Places by number. 관심's pin is Place 919.
+- The sheet is now reached only for a quest without a guide (an older main server), and for the 관정 check when `TUTORIAL_KWANJEONG_CHECK` is on.
+- Differences from the boards, each because it needs a pin's screen position, an animated marker or line opacity that the map does not give: the bubble always sits under the bar and has no tail, and it is full width; the current pin's tag is the map's own text and its ring does not pulse; the way between steps is straight and not faded. Also: the 🌐 link of `MainTutSU` shows the real host `my.snu.ac.kr`; "15 / 15" is counted.
+- The sheet tests turn the mock's guides off (`MOCK_TUTORIAL_SWITCHES.guides`), as an older server serves the tutorial.
+- The tutorial's integration tests reach each quest through the start button, the list and its tab, which takes longer than a press on a Quest list row did. Their timeout is 150 s.
+
+### Agent usage (2026-11-18)
+
+Estimates from this session (one Opus 5.5 session, no subagents), with waits for test runs counted as agent time since the agent waited on them:
+
+- Agent time: about 3 hours 30 minutes.
+- Tokens: output about 150,000. Input about 30 million: about 28.5 million cache reads, about 1.4 million cache writes, and a few thousand uncached.
