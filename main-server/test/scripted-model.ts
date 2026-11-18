@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-29  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { MockLanguageModelV4 } from 'ai/test';
@@ -100,13 +101,15 @@ export class ScriptedModel {
     return this.model.doGenerateCalls;
   }
 
-  // The system prompt of the first call.
+  // The system prompt of the first call: its system messages, the stable part and the request's lines, joined.
   system(): string {
-    const message = this.received()[0]?.prompt.find(({ role }) => role === 'system');
-    if (message?.role !== 'system') {
+    const messages = (this.received()[0]?.prompt ?? []).flatMap((message) =>
+      message.role === 'system' ? [message.content] : [],
+    );
+    if (messages.length === 0) {
       throw new Error('The model received no system prompt');
     }
-    return message.content;
+    return messages.join('\n\n');
   }
 
   // What each tool returned, in order, as the last call received it.

@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -51,7 +52,9 @@ export function AskedExamples({ bottom, onSend }: AskedExamplesProps): ReactElem
           </Pressable>
         ))}
       </View>
-      <Text style={styles.notice}>대화 내용은 AI 제공자에게 전송돼요</Text>
+      <View style={styles.noticeBox}>
+        <Text style={styles.notice}>대화 내용은 AI 제공자에게 전송돼요</Text>
+      </View>
     </View>
   );
 }
@@ -73,10 +76,11 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.6 },
   label: { ...text.label, color: color.ink },
+  // A press on it reaches the scrim under the examples, which puts the keyboard down.
+  noticeBox: { alignSelf: 'flex-start', pointerEvents: 'none' },
   // On a white ground, so that the map's labels and faces under it do not run into it.
   notice: {
     ...text.caption,
-    alignSelf: 'flex-start',
     paddingHorizontal: space[2],
     borderRadius: radius.full,
     backgroundColor: color.surface,

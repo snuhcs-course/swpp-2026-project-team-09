@@ -8,6 +8,7 @@
 # 2026-10-28  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-15  Opus 5.5   prompted by fyoon46
 # 2026-11-16  Opus 5.5   prompted by fyoon46
+# 2026-11-18  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 name: CI
@@ -22,13 +23,13 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # A Main's run in progress is not cancelled, since a job that skips on a branch leans on its Main's last full run.
+  # A Main's run in progress is not cancelled, since a job that skips on a branch or in the merge queue leans on its
+  # Main's last full run. A newer push's run replaces one still waiting, so a Main has one full run at a time, on its
+  # newest commit, which covers every commit merged before it.
   cancel-in-progress: ${{ !endsWith(github.ref, '/Main') }}
 
 permissions:
   contents: read
-  # A push to a Main asks whether the merge queue's run of the same commit passed (.github/ci/changes.sh).
-  actions: read
 
 jobs:
   check:
@@ -61,7 +62,7 @@ jobs:
         continue-on-error: true
         working-directory: ${{ github.workspace }}
         env:
-          GH_TOKEN: ${{ github.token }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
         run: .github/ci/changes.sh ${{ matrix.project }}
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
         if: steps.changes.outputs.run != 'false'
@@ -78,7 +79,8 @@ jobs:
         if: steps.changes.outputs.run != 'false'
       - run: pnpm test
         if: matrix.project != 'mobile' && steps.changes.outputs.run != 'false' && steps.changes.outputs.tests != 'unit'
-      # A pull request's own push runs only the unit tests, the app's among them; the merge queue runs every test.
+      # A working branch's push and the merge queue run only the unit tests, the app's among them; a push to a Main,
+      # main or development and a tag's push run every test.
       - run: pnpm test:unit
         if: >-
           matrix.project != 'flow-tests' && steps.changes.outputs.run != 'false' &&
@@ -86,7 +88,7 @@ jobs:
 
   # mobile's tests take over ten minutes on one runner, so they are split across four, packed by each file's measured
   # seconds (.github/ci/app-test-sequencer.cjs). Each keeps Jest's transform cache for the next runs on its branch. On a
-  # pull request's own push they run nothing: the mobile job runs the app's unit tests there.
+  # pull request's own push and in the merge queue they run nothing: the mobile job runs the app's unit tests there.
   mobile-tests:
     name: mobile-tests (${{ matrix.shard }}/${{ strategy.job-total }})
     runs-on: ubuntu-latest
@@ -107,7 +109,7 @@ jobs:
         continue-on-error: true
         working-directory: ${{ github.workspace }}
         env:
-          GH_TOKEN: ${{ github.token }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
         run: .github/ci/changes.sh mobile-tests
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
         if: steps.changes.outputs.run != 'false' && steps.changes.outputs.tests != 'unit'
@@ -154,7 +156,7 @@ jobs:
         continue-on-error: true
         working-directory: ${{ github.workspace }}
         env:
-          GH_TOKEN: ${{ github.token }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
         run: .github/ci/changes.sh app-fingerprint
       - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
         if: steps.changes.outputs.run != 'false'
@@ -193,7 +195,7 @@ jobs:
         continue-on-error: true
         working-directory: ${{ github.workspace }}
         env:
-          GH_TOKEN: ${{ github.token }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
         run: .github/ci/changes.sh deploy-scripts
       - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends bats shellcheck jq
         if: steps.changes.outputs.run != 'false'
@@ -216,7 +218,7 @@ jobs:
         continue-on-error: true
         working-directory: ${{ github.workspace }}
         env:
-          GH_TOKEN: ${{ github.token }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
         run: .github/ci/changes.sh release-script
       - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends bats shellcheck jq
         if: steps.changes.outputs.run != 'false'
@@ -242,7 +244,7 @@ jobs:
         continue-on-error: true
         working-directory: ${{ github.workspace }}
         env:
-          GH_TOKEN: ${{ github.token }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
         run: .github/ci/changes.sh terraform
       - uses: hashicorp/setup-terraform@v4
         if: steps.changes.outputs.run != 'false'
@@ -270,7 +272,7 @@ jobs:
         continue-on-error: true
         working-directory: ${{ github.workspace }}
         env:
-          GH_TOKEN: ${{ github.token }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
         run: .github/ci/changes.sh manifests
       - run: infra/production/k8s/test/targets.sh
         if: steps.changes.outputs.run != 'false'

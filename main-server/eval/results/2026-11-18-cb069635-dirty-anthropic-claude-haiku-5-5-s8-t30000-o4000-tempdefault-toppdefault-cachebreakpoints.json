@@ -1,0 +1,245 @@
+{
+  "name": "2026-11-18-cb069635-dirty-anthropic-claude-haiku-5-5-s8-t30000-o4000-tempdefault-toppdefault-cachebreakpoints",
+  "startedAt": "2026-11-18T08:45:57.750Z",
+  "endedAt": "2026-11-18T08:46:09.459Z",
+  "now": "2026-10-21T14:05:00+09:00",
+  "options": {
+    "provider": "anthropic",
+    "cache": "breakpoints",
+    "model": "claude-haiku-5-5",
+    "temperature": null,
+    "topP": null,
+    "maxSteps": 8,
+    "timeoutMs": 30000,
+    "maxOutputTokens": 4000,
+    "repeat": null,
+    "categories": [
+      "adhoc-campus-terms"
+    ],
+    "caseIds": [],
+    "budgetUsd": 0.2,
+    "world": "small",
+    "prices": {
+      "input": 1e-7,
+      "output": 5e-7,
+      "cacheRead": 1e-8,
+      "cacheWrite": 1.25e-7,
+      "source": "anthropic"
+    },
+    "commit": "cb069635-dirty"
+  },
+  "stoppedBy": null,
+  "seeds": {
+    "이민수": {
+      "kind": "friend",
+      "id": "243ccfbe-7d8f-4364-b87e-5c80b3e1f92e",
+      "name": "이민수"
+    },
+    "김민수": {
+      "kind": "friend",
+      "id": "c155ba49-0aba-493c-babb-6c88b63619ad",
+      "name": "김민수"
+    },
+    "김지은": {
+      "kind": "friend",
+      "id": "773fdddb-1d7c-4c6c-909d-51248ab53631",
+      "name": "김지은"
+    },
+    "박서준 (경영학과)": {
+      "kind": "friend",
+      "id": "8a1a287a-cc2e-4e21-a6dc-f95219770bba",
+      "name": "박서준"
+    },
+    "박서준 (물리천문학부)": {
+      "kind": "friend",
+      "id": "5fc8890d-aee0-4739-a5c0-0425b691247b",
+      "name": "박서준"
+    },
+    "학생회관": {
+      "kind": "place",
+      "id": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+      "name": "학생회관"
+    },
+    "제1공학관": {
+      "kind": "place",
+      "id": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+      "name": "제1공학관"
+    },
+    "취업 박람회": {
+      "kind": "globalEvent",
+      "id": "622a1c44-876c-4b39-a1b1-fbfb77e1f59c",
+      "name": "취업 박람회"
+    },
+    "미술대학 졸업 전시": {
+      "kind": "globalEvent",
+      "id": "165ceb00-b261-4906-85c2-130e6a91e040",
+      "name": "미술대학 졸업 전시"
+    },
+    "AI 시대의 진로 특강": {
+      "kind": "globalEvent",
+      "id": "c28fb7f5-0fb4-45fb-b5be-da1aff40233f",
+      "name": "AI 시대의 진로 특강"
+    },
+    "가을 재즈 콘서트": {
+      "kind": "globalEvent",
+      "id": "ad1d9345-573d-41a8-b852-6acda6ad9cb2",
+      "name": "가을 재즈 콘서트"
+    },
+    "관악 가을 축제": {
+      "kind": "globalEvent",
+      "id": "50aeaa67-d0d9-41ca-b20e-917fb483b0c5",
+      "name": "관악 가을 축제"
+    },
+    "축제 개막 공연": {
+      "kind": "globalEvent",
+      "id": "212785d1-99fc-44b9-9b28-fa4de2681472",
+      "name": "축제 개막 공연"
+    },
+    "총장배 농구 대회": {
+      "kind": "globalEvent",
+      "id": "b1491723-6b87-4e0b-9da1-ab944c0557de",
+      "name": "총장배 농구 대회"
+    },
+    "저녁 농구 한 판": {
+      "kind": "quest",
+      "id": "e1635b5b-83cf-453d-b9a1-325124d483a8",
+      "name": "저녁 농구 한 판"
+    },
+    "주말 배드민턴": {
+      "kind": "quest",
+      "id": "7c6aeff7-699e-481c-acbf-9b0f777440cc",
+      "name": "주말 배드민턴"
+    },
+    "아침 러닝 크루": {
+      "kind": "quest",
+      "id": "4e9ffe07-8c44-47f4-82e5-6ed7aa67d4d0",
+      "name": "아침 러닝 크루"
+    },
+    "보드게임 모임": {
+      "kind": "quest",
+      "id": "b459e737-3f1b-4909-bbc0-46138c54f2d9",
+      "name": "보드게임 모임"
+    },
+    "내일 점심 학식 같이": {
+      "kind": "quest",
+      "id": "f28a8325-8264-48c0-b802-8515f6e2d4a9",
+      "name": "내일 점심 학식 같이"
+    },
+    "오늘 저녁 고기 먹을 사람": {
+      "kind": "quest",
+      "id": "a1b7cdcc-b777-4981-bd8c-f97fe483d21e",
+      "name": "오늘 저녁 고기 먹을 사람"
+    },
+    "어제 점심 번개": {
+      "kind": "quest",
+      "id": "09fca1ee-a521-4fdf-8e54-4903db13d5c9",
+      "name": "어제 점심 번개"
+    },
+    "알고리즘 스터디": {
+      "kind": "quest",
+      "id": "ff9238dd-25d3-4107-89e5-0e7db4d679c5",
+      "name": "알고리즘 스터디"
+    },
+    "토익 스터디": {
+      "kind": "quest",
+      "id": "eeecf78a-fa59-4a6d-bb82-e946d69f74d0",
+      "name": "토익 스터디"
+    },
+    "재즈 콘서트 같이 가요": {
+      "kind": "quest",
+      "id": "bf3f39cc-8f3f-45a3-8533-28248ca8abe0",
+      "name": "재즈 콘서트 같이 가요"
+    },
+    "축제 같이 즐겨요": {
+      "kind": "quest",
+      "id": "5a08976a-d607-43ad-a226-9c30a51599e8",
+      "name": "축제 같이 즐겨요"
+    }
+  },
+  "totals": {
+    "cases": 1,
+    "turns": 1,
+    "tokens": {
+      "inputTokens": 54433,
+      "outputTokens": 482,
+      "cacheReadTokens": 27032,
+      "cacheWriteTokens": 27395
+    },
+    "costUsd": 0.003936295
+  },
+  "cases": [
+    {
+      "id": "adhoc-terms-thousand-won-meal",
+      "category": "adhoc-campus-terms",
+      "kind": "single",
+      "repetition": 1,
+      "knownFailure": null,
+      "expect": null,
+      "turnExpects": [
+        null
+      ],
+      "turns": [
+        {
+          "user": "천식 오늘 뭐 나와?",
+          "status": 200,
+          "latencyMs": 3381,
+          "steps": [
+            {
+              "toolCalls": [
+                {
+                  "id": "toolu_01Wu1g8JcAtz1BtgovjezP9Z",
+                  "name": "getMenus",
+                  "input": {
+                    "date": "2026-10-21",
+                    "restaurant": "천원의 식사"
+                  },
+                  "result": {
+                    "result": "none",
+                    "reason": "No restaurant named 천원의 식사 has a menu collected for 2026-10-21."
+                  }
+                }
+              ],
+              "text": "",
+              "finishReason": "tool-calls",
+              "usage": {
+                "inputTokens": 27036,
+                "outputTokens": 315,
+                "cacheReadTokens": 0,
+                "cacheWriteTokens": 27032
+              },
+              "latencyMs": 1993,
+              "ended": true
+            },
+            {
+              "toolCalls": [],
+              "text": "오늘(10월 21일) 천원의 식사(천식)의 메뉴는 수집되지 않아서 확인할 수 없어요. 다른 날짜나 다른 식당의 메뉴는 찾아볼 수 있으니 말씀해 주세요.",
+              "finishReason": "stop",
+              "usage": {
+                "inputTokens": 27397,
+                "outputTokens": 167,
+                "cacheReadTokens": 27032,
+                "cacheWriteTokens": 363
+              },
+              "latencyMs": 1293,
+              "ended": true
+            }
+          ],
+          "reply": {
+            "text": "오늘(10월 21일) 천원의 식사(천식)의 메뉴는 수집되지 않아서 확인할 수 없어요. 다른 날짜나 다른 식당의 메뉴는 찾아볼 수 있으니 말씀해 주세요.",
+            "mapButtons": [],
+            "cards": [],
+            "proposal": null,
+            "answer": null,
+            "lookup": null,
+            "refusal": null,
+            "textLength": 84,
+            "modelText": "오늘(10월 21일) 천원의 식사(천식)의 메뉴는 수집되지 않아서 확인할 수 없어요. 다른 날짜나 다른 식당의 메뉴는 찾아볼 수 있으니 말씀해 주세요.",
+            "approvalLine": false
+          },
+          "failure": null,
+          "errorBody": null
+        }
+      ]
+    }
+  ]
+}
