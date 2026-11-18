@@ -693,7 +693,13 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   (`useShownAnswer` in `src/features/assistant/use-shown-answer.ts`, read through the chat control's `answer`). While
   it has a Plan, the map draws what `drawingOf` (`src/features/assistant/answer-marks.ts`) gives for it, and nothing
   else of the everyday map: each mark is an `answer` look, one symbol at a point and its label at the first free side,
-  and a candidate's mark takes a press, which shows its Plan; each route is a straight, solid line. The markers of
+  and a candidate's mark takes a press, which shows its Plan; each route is a solid line. A walked route (one whose
+  `mode` is absent or `walk`, never a shuttle's ride) follows the path `GET /walking-route` gives for its two ends,
+  joined onto them, in its own colour and width, and stays straight while that is on its way, when it fails and when
+  no path is found (`useAnswerWalks`, `use-answer-walks.ts`; P15 ticket 56, pending the owner's decision on Kakao's
+  rule). Only the scene on screen is asked, at most `WALKS_PER_SCENE` (3) walks, each pair of ends once, the people's
+  ways before the way on to the next Class; a scene that leaves the screen gives its requests up and keeps nothing, so
+  one shown again asks again. The minutes shown stay the main server's. The markers of
   events, Quests, Restaurants, Study Spaces, and the shuttle, the shuttle's line, a walking route, the tutorial's pin,
   the shuttle's vehicles, and the User's own Avatar give way; the Avatars of Friends and of the other people of the
   User's Party stay, but for those of the Plan's people, whom the marks draw, and those near one of the Plan's own
@@ -1234,7 +1240,10 @@ When an operation fails:
   cards still show; without the recruiting Quests, an event's card only lacks its line of them.
 - The 행사 tab waits for the Global Events and fails with them; a card lacks what another failed operation adds.
 
-The walking route is asked when the User asks, not as the User's position moves:
+The walking route is asked when the User asks, not as the User's position moves. Pending the owner's decision (P15
+ticket 56), an answer's walks are asked by themselves too (`useAnswerWalks`): at most three for the scene on screen,
+none kept once it leaves, and a request whose scene leaves is given up. The everyday route keeps its asking only
+while it is drawn (`gcTime: 0`):
 
 ```tsx
 const { route, isPending, isError, ask, clear } = useWalkingRoute();

@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { apiClient } from '@/api/client';
@@ -179,12 +180,14 @@ describe('"길 안내" without a position', () => {
   it('says that the position is being found, and the answer stays', async () => {
     givePhone({ permission: 'granted' });
     const user = await ask('문화관이 어디야?');
+    // The Lookup's own walk to 문화관 is asked for its line (P15 ticket 56); 길 안내 asks nothing more.
+    const before = findWalkingRoute.mock.calls.length;
 
     await user.press(card().getByRole('button', { name: '길 안내' }));
     await pass(500);
 
     expect(screen.getByText('위치를 찾는 중이에요')).toBeVisible();
-    expect(findWalkingRoute).not.toHaveBeenCalledWith(expect.anything(), CULTURE_HALL);
+    expect(findWalkingRoute.mock.calls.slice(before).map(([, to]) => to)).not.toContainEqual(CULTURE_HALL);
     expect(screen.getByTestId('answer-pill')).toBeVisible();
     expect(card().getByTestId('lookup-card')).toBeVisible();
   });

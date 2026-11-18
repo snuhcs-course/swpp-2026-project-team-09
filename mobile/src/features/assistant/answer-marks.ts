@@ -5,6 +5,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
@@ -28,6 +29,7 @@ import {
   SYMBOL_ORDER,
 } from './answer-groups';
 import { type LabelView, placeLabels, type Unplaced, UPRIGHT_REACH } from './answer-labels';
+import { routeLineId } from './answer-walks';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
@@ -257,7 +259,7 @@ export function drawingOfScene(
   );
   const things = placed.map((one, index) => thingOf(one, placed.length - index));
   const lines = scene.routes.map(({ role, from, to }, index) => ({
-    id: `answer:route:${index}`,
+    id: routeLineId(index),
     points: [from, to],
     style: ROUTE_STYLES[role],
   }));

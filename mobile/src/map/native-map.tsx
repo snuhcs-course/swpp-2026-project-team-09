@@ -8,6 +8,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { requireNativeView } from 'expo';
@@ -300,6 +301,8 @@ export default function NativeMap(props: MapProps): ReactElement {
   const report = useReports(rules, props);
   const { shift, reported } = useScaleShift(size);
   const handedBounds = useMemo(() => sentBounds(allowed, shift, bounds), [allowed, shift, bounds]);
+  // A walk along its path carries hundreds of points: they cross to the module only when the lines change.
+  const handedLines = useMemo(() => lines.map((line) => nativeLine(line)), [lines]);
   useHandle(ref, view, allowed, shift);
   const inset = useInset(props.inset);
   const passive = new Set([...markers, ...avatars].filter((one) => one.passive === true).map(({ id }) => id));
@@ -318,7 +321,7 @@ export default function NativeMap(props: MapProps): ReactElement {
         avatars={avatars.map((avatar) => thing(avatar, gliding ? avatar.glideMs : 0))}
         bounds={handedBounds}
         inset={inset}
-        lines={lines.map((line) => nativeLine(line))}
+        lines={handedLines}
         looks={LOOKS}
         markers={markers.map((marker) => thing(marker, 0))}
         maxZoom={maxZoom}

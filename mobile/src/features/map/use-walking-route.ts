@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { skipToken, useQuery } from '@tanstack/react-query';
@@ -33,14 +34,18 @@ interface Asking {
 
 let askings = 0;
 
-// The way on foot to a place, asked when the User asks. The start is not in the key: a position that moves must not
-// ask again, so the route stays the one from where the User asked until `ask` is called once more.
+// The way on foot to a place, asked when the User asks, and kept only while it is drawn. The start is not in the key:
+// a position that moves must not ask again, so the route stays the one from where the User asked until `ask` is called
+// once more.
 export function useWalkingRoute(): WalkingRouteState {
   const [asking, setAsking] = useState<Asking | null>(null);
   const { data, isPending, isError } = useQuery({
     queryKey: [...WALKING_ROUTE_KEY, asking?.to ?? null, asking?.count ?? 0] as const,
     queryFn:
       asking === null ? skipToken : (): Promise<WalkingRoute> => apiClient.findWalkingRoute(asking.from, asking.to),
+    // Kakao's policy keeps a route from being stored (`main-server/README.md`): an asking that is replaced or cleared
+    // is dropped from the cache at once.
+    gcTime: 0,
   });
   const ask = useCallback((from: LatLng, to: LatLng): void => {
     askings += 1;
