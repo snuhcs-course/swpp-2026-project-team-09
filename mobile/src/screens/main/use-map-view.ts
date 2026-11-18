@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { awayPlaceOf } from '@/features/assistant/study-area';
@@ -155,13 +156,8 @@ export function useMapView(
   const everyday = answer === null && way === null && !chat.framed && !unasked && guide === null;
   const asking = howAbout.pressable && plan !== null && !unasked;
   const target = asking ? howAbout.target : selection;
-  const pressed = usePressedPlace(
-    map.camera,
-    target,
-    chat.setTapped,
-    everyday || asking,
-    everyday ? clearRoute : undefined,
-  );
+  const tapClears = everyday ? clearRoute : undefined;
+  const pressed = usePressedPlace(map.camera, target, chat.setTapped, everyday || asking, tapClears);
   const around = bothTouches(pin.touches, pressed);
   if (guide !== null && !chat.framed) {
     return guidedView(guide, me, around);
