@@ -1,0 +1,165 @@
+{
+  "screenshot": "synthetic-english",
+  "model": "claude-haiku-5-5",
+  "mode": "grid",
+  "mapped": true,
+  "ms": 9687,
+  "inputTokens": 6092,
+  "outputTokens": 1789,
+  "calls": 2,
+  "answer": {
+    "title": "Fall 2026",
+    "axis": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24"
+    ],
+    "blocks": [
+      {
+        "day": "월",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["물리학 1"],
+        "name": "물리학 1",
+        "room": "56-105",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["물리학 1"],
+        "name": "물리학 1",
+        "room": "56-105",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "14:00",
+        "end": "15:50",
+        "nameLines": ["물리학실험 1"],
+        "name": "물리학실험 1",
+        "room": "26-304",
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "09:30",
+        "end": "10:45",
+        "nameLines": ["수학 1"],
+        "name": "수학 1",
+        "room": "25-101",
+        "cut": false
+      },
+      {
+        "day": "금",
+        "start": "09:30",
+        "end": "10:45",
+        "nameLines": ["수학연습 1"],
+        "name": "수학연습 1",
+        "room": "25-102",
+        "cut": false
+      }
+    ]
+  },
+  "raw": {
+    "layout": {
+      "title": "Fall 2026",
+      "axis": ["9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM"],
+      "blocks": [
+        {
+          "number": 1,
+          "day": "Mon",
+          "start": "11:00",
+          "end": "12:15"
+        },
+        {
+          "number": 2,
+          "day": "Wed",
+          "start": "11:00",
+          "end": "12:15"
+        },
+        {
+          "number": 3,
+          "day": "Tue",
+          "start": "2:00",
+          "end": "3:50"
+        },
+        {
+          "number": 4,
+          "day": "Thu",
+          "start": "9:30",
+          "end": "10:45"
+        },
+        {
+          "number": 5,
+          "day": "Fri",
+          "start": "9:30",
+          "end": "10:45"
+        }
+      ]
+    },
+    "text": {
+      "title": "Fall 2026",
+      "blocks": [
+        {
+          "number": 1,
+          "nameLines": ["물리학 1"],
+          "name": "물리학 1",
+          "room": "56-105",
+          "end": null
+        },
+        {
+          "number": 2,
+          "nameLines": ["물리학 1"],
+          "name": "물리학 1",
+          "room": "56-105",
+          "end": null
+        },
+        {
+          "number": 3,
+          "nameLines": ["물리학실험 1"],
+          "name": "물리학실험 1",
+          "room": "26-304",
+          "end": null
+        },
+        {
+          "number": 4,
+          "nameLines": ["수학 1"],
+          "name": "수학 1",
+          "room": "25-101",
+          "end": null
+        },
+        {
+          "number": 5,
+          "nameLines": ["수학연습 1"],
+          "name": "수학연습 1",
+          "room": "25-102",
+          "end": null
+        }
+      ]
+    }
+  }
+}

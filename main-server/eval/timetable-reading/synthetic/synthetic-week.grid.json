@@ -1,0 +1,40 @@
+{
+  "columns": 7,
+  "blocks": [
+    {
+      "column": 0,
+      "top": 240,
+      "bottom": 358.75,
+      "colour": [0, 150, 136],
+      "fades": false
+    },
+    {
+      "column": 0,
+      "top": 382.5,
+      "bottom": 501.25,
+      "colour": [219, 68, 55],
+      "fades": false
+    },
+    {
+      "column": 6,
+      "top": 1285,
+      "bottom": 1459.1349999999998,
+      "colour": [240, 140, 40],
+      "fades": false
+    },
+    {
+      "column": 2,
+      "top": 1285,
+      "bottom": 1459.1349999999998,
+      "colour": [240, 140, 40],
+      "fades": false
+    },
+    {
+      "column": 4,
+      "top": 620,
+      "bottom": 738.75,
+      "colour": [142, 84, 200],
+      "fades": false
+    }
+  ]
+}

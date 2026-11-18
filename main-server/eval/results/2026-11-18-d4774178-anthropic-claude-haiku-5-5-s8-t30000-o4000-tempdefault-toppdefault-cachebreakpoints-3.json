@@ -1,0 +1,909 @@
+{
+  "name": "2026-11-18-d4774178-anthropic-claude-haiku-5-5-s8-t30000-o4000-tempdefault-toppdefault-cachebreakpoints",
+  "startedAt": "2026-11-17T17:26:20.042Z",
+  "endedAt": "2026-11-17T17:26:58.137Z",
+  "now": "2026-10-21T14:05:00+09:00",
+  "options": {
+    "provider": "anthropic",
+    "cache": "breakpoints",
+    "model": "claude-haiku-5-5",
+    "temperature": null,
+    "topP": null,
+    "maxSteps": 8,
+    "timeoutMs": 30000,
+    "maxOutputTokens": 4000,
+    "repeat": null,
+    "categories": [
+      "adhoc-campus-terms"
+    ],
+    "caseIds": [],
+    "budgetUsd": 0.2,
+    "world": "small",
+    "prices": {
+      "input": 1e-7,
+      "output": 5e-7,
+      "cacheRead": 1e-8,
+      "cacheWrite": 1.25e-7,
+      "source": "anthropic"
+    },
+    "commit": "d4774178"
+  },
+  "stoppedBy": null,
+  "seeds": {
+    "이민수": {
+      "kind": "friend",
+      "id": "30648cda-fbc7-47db-8d19-98dffd44a9cf",
+      "name": "이민수"
+    },
+    "김민수": {
+      "kind": "friend",
+      "id": "bb1729cf-fc3b-466b-9994-e7c12c760b58",
+      "name": "김민수"
+    },
+    "김지은": {
+      "kind": "friend",
+      "id": "3fef2deb-6365-4083-8be9-61292c9f6387",
+      "name": "김지은"
+    },
+    "박서준 (경영학과)": {
+      "kind": "friend",
+      "id": "2f118788-9059-4daf-9189-f8b81d2e31fd",
+      "name": "박서준"
+    },
+    "박서준 (물리천문학부)": {
+      "kind": "friend",
+      "id": "db98f69a-dcdb-4280-bc6a-23bab040640f",
+      "name": "박서준"
+    },
+    "학생회관": {
+      "kind": "place",
+      "id": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+      "name": "학생회관"
+    },
+    "제1공학관": {
+      "kind": "place",
+      "id": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+      "name": "제1공학관"
+    },
+    "취업 박람회": {
+      "kind": "globalEvent",
+      "id": "34bcb514-2ad1-4f39-9846-4ef03df7fa47",
+      "name": "취업 박람회"
+    },
+    "미술대학 졸업 전시": {
+      "kind": "globalEvent",
+      "id": "8c303d93-f79f-4204-a52e-2b696b091aad",
+      "name": "미술대학 졸업 전시"
+    },
+    "AI 시대의 진로 특강": {
+      "kind": "globalEvent",
+      "id": "8687a1c4-82ac-429f-be00-d8d4258d2a16",
+      "name": "AI 시대의 진로 특강"
+    },
+    "가을 재즈 콘서트": {
+      "kind": "globalEvent",
+      "id": "ad1936a4-6b80-4bd5-bbba-f55678d596e3",
+      "name": "가을 재즈 콘서트"
+    },
+    "관악 가을 축제": {
+      "kind": "globalEvent",
+      "id": "bee3789f-4aa9-4bf6-abd7-372b8251d3a4",
+      "name": "관악 가을 축제"
+    },
+    "축제 개막 공연": {
+      "kind": "globalEvent",
+      "id": "8d551a72-c4d7-449a-939a-866c415791d1",
+      "name": "축제 개막 공연"
+    },
+    "총장배 농구 대회": {
+      "kind": "globalEvent",
+      "id": "c4bb937e-a59c-407d-a52d-b690edbfdbde",
+      "name": "총장배 농구 대회"
+    },
+    "저녁 농구 한 판": {
+      "kind": "quest",
+      "id": "268f4e21-e8a7-43f0-b0b9-d285e16323d7",
+      "name": "저녁 농구 한 판"
+    },
+    "주말 배드민턴": {
+      "kind": "quest",
+      "id": "051c9f98-e5be-4555-926d-681a01e4c78d",
+      "name": "주말 배드민턴"
+    },
+    "아침 러닝 크루": {
+      "kind": "quest",
+      "id": "a93c29d4-611c-45cd-b726-cc7fcc54161a",
+      "name": "아침 러닝 크루"
+    },
+    "보드게임 모임": {
+      "kind": "quest",
+      "id": "42716803-1b8b-4137-bcd7-a2c17ed2764b",
+      "name": "보드게임 모임"
+    },
+    "내일 점심 학식 같이": {
+      "kind": "quest",
+      "id": "f32dee2d-339f-4e38-bf36-07feb8d4a44e",
+      "name": "내일 점심 학식 같이"
+    },
+    "오늘 저녁 고기 먹을 사람": {
+      "kind": "quest",
+      "id": "93b571d9-095a-4c07-989f-090d20fec9e0",
+      "name": "오늘 저녁 고기 먹을 사람"
+    },
+    "어제 점심 번개": {
+      "kind": "quest",
+      "id": "695698a1-0e72-4bf1-ab0a-fce2a4d08f73",
+      "name": "어제 점심 번개"
+    },
+    "알고리즘 스터디": {
+      "kind": "quest",
+      "id": "a1914ce2-5210-443d-8815-a82e4db66444",
+      "name": "알고리즘 스터디"
+    },
+    "토익 스터디": {
+      "kind": "quest",
+      "id": "d9e5279b-c38b-410d-9393-a61522a46f41",
+      "name": "토익 스터디"
+    },
+    "재즈 콘서트 같이 가요": {
+      "kind": "quest",
+      "id": "2f7cc839-5835-43b5-ae04-a51049f1bed1",
+      "name": "재즈 콘서트 같이 가요"
+    },
+    "축제 같이 즐겨요": {
+      "kind": "quest",
+      "id": "3f0c7613-4088-4add-aaff-c6dfe99b59ce",
+      "name": "축제 같이 즐겨요"
+    }
+  },
+  "totals": {
+    "cases": 7,
+    "turns": 7,
+    "tokens": {
+      "inputTokens": 466845,
+      "outputTokens": 4452,
+      "cacheReadTokens": 461227,
+      "cacheWriteTokens": 5570
+    },
+    "costUsd": 0.00753932
+  },
+  "cases": [
+    {
+      "id": "adhoc-terms-lower-engineering",
+      "category": "adhoc-campus-terms",
+      "kind": "single",
+      "repetition": 1,
+      "knownFailure": null,
+      "expect": null,
+      "turnExpects": [
+        null
+      ],
+      "turns": [
+        {
+          "user": "아랫공대 근처 식당 알려줘",
+          "status": 200,
+          "latencyMs": 5865,
+          "steps": [
+            {
+              "toolCalls": [
+                {
+                  "id": "toolu_01QBYjYtWVYGUyhWwenjbsz9",
+                  "name": "getMenus",
+                  "input": {
+                    "date": "2026-10-21"
+                  },
+                  "result": {
+                    "result": "found",
+                    "date": "2026-10-21",
+                    "restaurants": [
+                      {
+                        "name": "자하연식당",
+                        "collectedAt": "2026-10-21T07:00:00+09:00",
+                        "meals": [
+                          {
+                            "meal": "lunch",
+                            "lines": [
+                              "비빔밥 : 6,500원"
+                            ]
+                          },
+                          {
+                            "meal": "dinner",
+                            "lines": [
+                              "순두부찌개 : 6,000원"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "학생회관식당",
+                        "collectedAt": "2026-10-21T07:00:00+09:00",
+                        "meals": [
+                          {
+                            "meal": "breakfast",
+                            "lines": [
+                              "김치볶음밥 : 2,000원"
+                            ]
+                          },
+                          {
+                            "meal": "lunch",
+                            "lines": [
+                              "제육볶음 : 6,000원"
+                            ]
+                          },
+                          {
+                            "meal": "dinner",
+                            "lines": [
+                              "돈까스 : 5,500원"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "toolu_01YXFGdZUHumGAof2dPuugcJ",
+                  "name": "resolvePlace",
+                  "input": {
+                    "words": "43동"
+                  },
+                  "result": {
+                    "result": "one",
+                    "candidate": {
+                      "id": "b2a96243-517f-59d7-8824-c0c132b5f262",
+                      "name": "데이터사이언스대학원 및 공과대학 강의동 1",
+                      "number": "43"
+                    }
+                  }
+                }
+              ],
+              "text": "",
+              "finishReason": "tool-calls",
+              "usage": {
+                "inputTokens": 27040,
+                "outputTokens": 492,
+                "cacheReadTokens": 26875,
+                "cacheWriteTokens": 161
+              },
+              "latencyMs": 2910,
+              "ended": true
+            },
+            {
+              "toolCalls": [
+                {
+                  "id": "toolu_013B29b1HAnKPhD3Me6Rg4rz",
+                  "name": "showOnMap",
+                  "input": {
+                    "layer": "dining"
+                  },
+                  "result": {
+                    "result": "shown",
+                    "layer": "dining"
+                  }
+                }
+              ],
+              "text": "오늘 메뉴가 있는 식당은 **자하연식당**과 **학생회관식당** 두 곳이에요. 메뉴는 오늘 07:00에 수집됐어요.\n\n- **자하연식당**: 점심 비빔밥 6,500원, 저녁 순두부찌개 6,000원\n- **학생회관식당**: 아침 김치볶음밥 2,000원, 점심 제육볶음 6,000원, 저녁 돈까스 5,500원\n\n다만 제가 가진 자료에는 식당의 위치 정보가 없어서, 어느 식당이 아랫공대 근처인지는 알려 드릴 수 없어요. 지도에서 위치를 확인해 주세요.",
+              "finishReason": "tool-calls",
+              "usage": {
+                "inputTokens": 27923,
+                "outputTokens": 436,
+                "cacheReadTokens": 27036,
+                "cacheWriteTokens": 885
+              },
+              "latencyMs": 2238,
+              "ended": true
+            },
+            {
+              "toolCalls": [],
+              "text": "",
+              "finishReason": "stop",
+              "usage": {
+                "inputTokens": 28380,
+                "outputTokens": 1,
+                "cacheReadTokens": 27921,
+                "cacheWriteTokens": 457
+              },
+              "latencyMs": 640,
+              "ended": true
+            }
+          ],
+          "reply": {
+            "text": "오늘 메뉴가 있는 식당은 **자하연식당**과 **학생회관식당** 두 곳이에요. 메뉴는 오늘 07:00에 수집됐어요.\n\n- **자하연식당**: 점심 비빔밥 6,500원, 저녁 순두부찌개 6,000원\n- **학생회관식당**: 아침 김치볶음밥 2,000원, 점심 제육볶음 6,000원, 저녁 돈까스 5,500원\n\n다만 제가 가진 자료에는 식당의 위치 정보가 없어서, 어느 식당이 아랫공대 근처인지는 알려 드릴 수 없어요. 지도에서 위치를 확인해 주세요.",
+            "mapButtons": [
+              "dining"
+            ],
+            "cards": [],
+            "proposal": null,
+            "answer": null,
+            "lookup": null,
+            "refusal": null,
+            "textLength": 250,
+            "modelText": "오늘 메뉴가 있는 식당은 **자하연식당**과 **학생회관식당** 두 곳이에요. 메뉴는 오늘 07:00에 수집됐어요.\n\n- **자하연식당**: 점심 비빔밥 6,500원, 저녁 순두부찌개 6,000원\n- **학생회관식당**: 아침 김치볶음밥 2,000원, 점심 제육볶음 6,000원, 저녁 돈까스 5,500원\n\n다만 제가 가진 자료에는 식당의 위치 정보가 없어서, 어느 식당이 아랫공대 근처인지는 알려 드릴 수 없어요. 지도에서 위치를 확인해 주세요.",
+            "approvalLine": false
+          },
+          "failure": null,
+          "errorBody": null
+        }
+      ]
+    },
+    {
+      "id": "adhoc-terms-student-center-menu",
+      "category": "adhoc-campus-terms",
+      "kind": "single",
+      "repetition": 1,
+      "knownFailure": null,
+      "expect": null,
+      "turnExpects": [
+        null
+      ],
+      "turns": [
+        {
+          "user": "학관 오늘 메뉴 뭐야",
+          "status": 200,
+          "latencyMs": 2809,
+          "steps": [
+            {
+              "toolCalls": [
+                {
+                  "id": "toolu_01TVfyG8Gh71KVXVUzGj3KD9",
+                  "name": "getMenus",
+                  "input": {
+                    "date": "2026-10-21",
+                    "restaurant": "학생회관"
+                  },
+                  "result": {
+                    "result": "found",
+                    "date": "2026-10-21",
+                    "restaurants": [
+                      {
+                        "name": "학생회관식당",
+                        "collectedAt": "2026-10-21T07:00:00+09:00",
+                        "meals": [
+                          {
+                            "meal": "breakfast",
+                            "lines": [
+                              "김치볶음밥 : 2,000원"
+                            ]
+                          },
+                          {
+                            "meal": "lunch",
+                            "lines": [
+                              "제육볶음 : 6,000원"
+                            ]
+                          },
+                          {
+                            "meal": "dinner",
+                            "lines": [
+                              "돈까스 : 5,500원"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "text": "",
+              "finishReason": "tool-calls",
+              "usage": {
+                "inputTokens": 27040,
+                "outputTokens": 144,
+                "cacheReadTokens": 26875,
+                "cacheWriteTokens": 161
+              },
+              "latencyMs": 1105,
+              "ended": true
+            },
+            {
+              "toolCalls": [
+                {
+                  "id": "toolu_012phuumUWxSCkZYpbTdWYRu",
+                  "name": "showOnMap",
+                  "input": {
+                    "layer": "dining"
+                  },
+                  "result": {
+                    "result": "shown",
+                    "layer": "dining"
+                  }
+                }
+              ],
+              "text": "",
+              "finishReason": "tool-calls",
+              "usage": {
+                "inputTokens": 27345,
+                "outputTokens": 51,
+                "cacheReadTokens": 27036,
+                "cacheWriteTokens": 307
+              },
+              "latencyMs": 754,
+              "ended": true
+            },
+            {
+              "toolCalls": [],
+              "text": "학생회관식당(학관) 오늘 메뉴예요. 2026-10-21 07:00에 수집된 정보예요.\n\n- **아침:** 김치볶음밥 2,000원\n- **점심:** 제육볶음 6,000원\n- **저녁:** 돈까스 5,500원",
+              "finishReason": "stop",
+              "usage": {
+                "inputTokens": 27417,
+                "outputTokens": 102,
+                "cacheReadTokens": 27343,
+                "cacheWriteTokens": 72
+              },
+              "latencyMs": 910,
+              "ended": true
+            }
+          ],
+          "reply": {
+            "text": "학생회관식당(학관) 오늘 메뉴예요. 2026-10-21 07:00에 수집된 정보예요.\n\n- **아침:** 김치볶음밥 2,000원\n- **점심:** 제육볶음 6,000원\n- **저녁:** 돈까스 5,500원",
+            "mapButtons": [
+              "dining"
+            ],
+            "cards": [],
+            "proposal": null,
+            "answer": null,
+            "lookup": null,
+            "refusal": null,
+            "textLength": 114,
+            "modelText": "학생회관식당(학관) 오늘 메뉴예요. 2026-10-21 07:00에 수집된 정보예요.\n\n- **아침:** 김치볶음밥 2,000원\n- **점심:** 제육볶음 6,000원\n- **저녁:** 돈까스 5,500원",
+            "approvalLine": false
+          },
+          "failure": null,
+          "errorBody": null
+        }
+      ]
+    },
+    {
+      "id": "adhoc-terms-central-library-seat",
+      "category": "adhoc-campus-terms",
+      "kind": "single",
+      "repetition": 1,
+      "knownFailure": null,
+      "expect": null,
+      "turnExpects": [
+        null
+      ],
+      "turns": [
+        {
+          "user": "중도 자리 있어?",
+          "status": 200,
+          "latencyMs": 2658,
+          "steps": [
+            {
+              "toolCalls": [],
+              "text": "중앙도서관(중도)은 아직 미구현이라 앱에서 자리를 확인하거나 예약할 수 없어요.\n\n대신 관정도서관에서는 자리를 예약할 수 있어요. 7층 열람실, 노트북존, 8층 열람실 등이 있는데, 어떤 자리를 원하세요? 원하는 시간도 함께 알려 주시면 찾아볼게요.",
+              "finishReason": "stop",
+              "usage": {
+                "inputTokens": 27033,
+                "outputTokens": 424,
+                "cacheReadTokens": 26875,
+                "cacheWriteTokens": 154
+              },
+              "latencyMs": 2644,
+              "ended": true
+            }
+          ],
+          "reply": {
+            "text": "중앙도서관(중도)은 아직 미구현이라 앱에서 자리를 확인하거나 예약할 수 없어요.\n\n대신 관정도서관에서는 자리를 예약할 수 있어요. 7층 열람실, 노트북존, 8층 열람실 등이 있는데, 어떤 자리를 원하세요? 원하는 시간도 함께 알려 주시면 찾아볼게요.",
+            "mapButtons": [],
+            "cards": [],
+            "proposal": null,
+            "answer": null,
+            "lookup": null,
+            "refusal": null,
+            "textLength": 139,
+            "modelText": "중앙도서관(중도)은 아직 미구현이라 앱에서 자리를 확인하거나 예약할 수 없어요.\n\n대신 관정도서관에서는 자리를 예약할 수 있어요. 7층 열람실, 노트북존, 8층 열람실 등이 있는데, 어떤 자리를 원하세요? 원하는 시간도 함께 알려 주시면 찾아볼게요.",
+            "approvalLine": false
+          },
+          "failure": null,
+          "errorBody": null
+        }
+      ]
+    },
+    {
+      "id": "adhoc-terms-thousand-won-meal",
+      "category": "adhoc-campus-terms",
+      "kind": "single",
+      "repetition": 1,
+      "knownFailure": null,
+      "expect": null,
+      "turnExpects": [
+        null
+      ],
+      "turns": [
+        {
+          "user": "천식 오늘 뭐 나와?",
+          "status": 200,
+          "latencyMs": 6074,
+          "steps": [
+            {
+              "toolCalls": [
+                {
+                  "id": "toolu_01F1jytEgU4ZSShPXdv38cwd",
+                  "name": "getMenus",
+                  "input": {
+                    "date": "2026-10-21"
+                  },
+                  "result": {
+                    "result": "found",
+                    "date": "2026-10-21",
+                    "restaurants": [
+                      {
+                        "name": "자하연식당",
+                        "collectedAt": "2026-10-21T07:00:00+09:00",
+                        "meals": [
+                          {
+                            "meal": "lunch",
+                            "lines": [
+                              "비빔밥 : 6,500원"
+                            ]
+                          },
+                          {
+                            "meal": "dinner",
+                            "lines": [
+                              "순두부찌개 : 6,000원"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "학생회관식당",
+                        "collectedAt": "2026-10-21T07:00:00+09:00",
+                        "meals": [
+                          {
+                            "meal": "breakfast",
+                            "lines": [
+                              "김치볶음밥 : 2,000원"
+                            ]
+                          },
+                          {
+                            "meal": "lunch",
+                            "lines": [
+                              "제육볶음 : 6,000원"
+                            ]
+                          },
+                          {
+                            "meal": "dinner",
+                            "lines": [
+                              "돈까스 : 5,500원"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "text": "",
+              "finishReason": "tool-calls",
+              "usage": {
+                "inputTokens": 27038,
+                "outputTokens": 292,
+                "cacheReadTokens": 26875,
+                "cacheWriteTokens": 159
+              },
+              "latencyMs": 2351,
+              "ended": true
+            },
+            {
+              "toolCalls": [
+                {
+                  "id": "toolu_01KUq8pZ3sFLHDAkdQwLkaua",
+                  "name": "showOnMap",
+                  "input": {
+                    "layer": "dining"
+                  },
+                  "result": {
+                    "result": "shown",
+                    "layer": "dining"
+                  }
+                }
+              ],
+              "text": "오늘 천식 대상인 식당 메뉴는 이렇게 나와요. 메뉴는 오늘 오전 7시에 수집됐어요.\n\n- **학생회관식당** (천식 대상): 아침 김치볶음밥 2,000원, 점심 제육볶음 6,000원, 저녁 돈까스 5,500원\n- **301동식당**: 오늘 메뉴가 없어요.\n\n메뉴에 1,000원 가격은 나오지 않아서, 천식 적용 여부는 식당에서 확인해 주세요. 아침은 지났고 점심도 거의 끝났어요.",
+              "finishReason": "tool-calls",
+              "usage": {
+                "inputTokens": 27591,
+                "outputTokens": 518,
+                "cacheReadTokens": 27034,
+                "cacheWriteTokens": 555
+              },
+              "latencyMs": 2780,
+              "ended": true
+            },
+            {
+              "toolCalls": [],
+              "text": "",
+              "finishReason": "stop",
+              "usage": {
+                "inputTokens": 28130,
+                "outputTokens": 1,
+                "cacheReadTokens": 27589,
+                "cacheWriteTokens": 539
+              },
+              "latencyMs": 902,
+              "ended": true
+            }
+          ],
+          "reply": {
+            "text": "오늘 천식 대상인 식당 메뉴는 이렇게 나와요. 메뉴는 오늘 오전 7시에 수집됐어요.\n\n- **학생회관식당** (천식 대상): 아침 김치볶음밥 2,000원, 점심 제육볶음 6,000원, 저녁 돈까스 5,500원\n- **301동식당**: 오늘 메뉴가 없어요.\n\n메뉴에 1,000원 가격은 나오지 않아서, 천식 적용 여부는 식당에서 확인해 주세요. 아침은 지났고 점심도 거의 끝났어요.",
+            "mapButtons": [
+              "dining"
+            ],
+            "cards": [],
+            "proposal": null,
+            "answer": null,
+            "lookup": null,
+            "refusal": null,
+            "textLength": 212,
+            "modelText": "오늘 천식 대상인 식당 메뉴는 이렇게 나와요. 메뉴는 오늘 오전 7시에 수집됐어요.\n\n- **학생회관식당** (천식 대상): 아침 김치볶음밥 2,000원, 점심 제육볶음 6,000원, 저녁 돈까스 5,500원\n- **301동식당**: 오늘 메뉴가 없어요.\n\n메뉴에 1,000원 가격은 나오지 않아서, 천식 적용 여부는 식당에서 확인해 주세요. 아침은 지났고 점심도 거의 끝났어요.",
+            "approvalLine": false
+          },
+          "failure": null,
+          "errorBody": null
+        }
+      ]
+    },
+    {
+      "id": "adhoc-terms-department-room",
+      "category": "adhoc-campus-terms",
+      "kind": "single",
+      "repetition": 1,
+      "knownFailure": null,
+      "expect": null,
+      "turnExpects": [
+        null
+      ],
+      "turns": [
+        {
+          "user": "우리 과 과방 어디야?",
+          "status": 200,
+          "latencyMs": 2045,
+          "steps": [
+            {
+              "toolCalls": [],
+              "text": "우리 과 과방의 위치는 앱에서 확인할 수 없어요. 과방 정보가 등록되어 있지 않아서 어느 건물, 어느 방인지 알려 드릴 수가 없어요. 학과 사무실이나 같은 과 선배에게 물어보시는 게 가장 빨라요.",
+              "finishReason": "stop",
+              "usage": {
+                "inputTokens": 27036,
+                "outputTokens": 251,
+                "cacheReadTokens": 26875,
+                "cacheWriteTokens": 157
+              },
+              "latencyMs": 2032,
+              "ended": true
+            }
+          ],
+          "reply": {
+            "text": "우리 과 과방의 위치는 앱에서 확인할 수 없어요. 과방 정보가 등록되어 있지 않아서 어느 건물, 어느 방인지 알려 드릴 수가 없어요. 학과 사무실이나 같은 과 선배에게 물어보시는 게 가장 빨라요.",
+            "mapButtons": [],
+            "cards": [],
+            "proposal": null,
+            "answer": null,
+            "lookup": null,
+            "refusal": null,
+            "textLength": 109,
+            "modelText": "우리 과 과방의 위치는 앱에서 확인할 수 없어요. 과방 정보가 등록되어 있지 않아서 어느 건물, 어느 방인지 알려 드릴 수가 없어요. 학과 사무실이나 같은 과 선배에게 물어보시는 게 가장 빨라요.",
+            "approvalLine": false
+          },
+          "failure": null,
+          "errorBody": null
+        }
+      ]
+    },
+    {
+      "id": "adhoc-terms-upper-engineering-to-dorm",
+      "category": "adhoc-campus-terms",
+      "kind": "single",
+      "repetition": 1,
+      "knownFailure": null,
+      "expect": null,
+      "turnExpects": [
+        null
+      ],
+      "turns": [
+        {
+          "user": "윗공대에서 긱사까지 어떻게 가?",
+          "status": 200,
+          "latencyMs": 5755,
+          "steps": [
+            {
+              "toolCalls": [
+                {
+                  "id": "toolu_019s3XUEZo6sFuanonMuUHdX",
+                  "name": "getShuttle",
+                  "input": {},
+                  "result": {
+                    "result": "found",
+                    "collectedAt": "2026-10-21T14:04:45+09:00",
+                    "vehicles": [
+                      {
+                        "vehicle": "4522",
+                        "stop": "정문"
+                      },
+                      {
+                        "vehicle": "4531",
+                        "stop": "301동"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "text": "",
+              "finishReason": "tool-calls",
+              "usage": {
+                "inputTokens": 27044,
+                "outputTokens": 373,
+                "cacheReadTokens": 26875,
+                "cacheWriteTokens": 165
+              },
+              "latencyMs": 2814,
+              "ended": true
+            },
+            {
+              "toolCalls": [
+                {
+                  "id": "toolu_01188UzbHmhHbnKDcV2GRp8U",
+                  "name": "showOnMap",
+                  "input": {
+                    "layer": "shuttle"
+                  },
+                  "result": {
+                    "result": "shown",
+                    "layer": "shuttle"
+                  }
+                }
+              ],
+              "text": "윗공대에서 기숙사(관악사)까지 가는 길을 안내해 드릴 수 있는 정보는 제가 가지고 있지 않아요. 대신 순환 셔틀의 현재 위치는 확인했어요(2026-10-21 14:04 기준).\n\n- 4531호: 301동 정류장에 있어요. 윗공대 근처라 바로 탈 수 있을 것 같아요.\n- 4522호: 정문에 있어요.\n\n셔틀 노선이 관악사를 지나는지는 제가 확인하지 못했어요. 지도에서 셔틀 노선과 정류장을 함께 확인해 보세요.",
+              "finishReason": "tool-calls",
+              "usage": {
+                "inputTokens": 27499,
+                "outputTokens": 342,
+                "cacheReadTokens": 27040,
+                "cacheWriteTokens": 457
+              },
+              "latencyMs": 1990,
+              "ended": true
+            },
+            {
+              "toolCalls": [],
+              "text": "지도에 셔틀 위치를 표시해 두었어요. 아래 버튼을 누르면 확인할 수 있어요.",
+              "finishReason": "stop",
+              "usage": {
+                "inputTokens": 27864,
+                "outputTokens": 47,
+                "cacheReadTokens": 27497,
+                "cacheWriteTokens": 365
+              },
+              "latencyMs": 905,
+              "ended": true
+            }
+          ],
+          "reply": {
+            "text": "윗공대에서 기숙사(관악사)까지 가는 길을 안내해 드릴 수 있는 정보는 제가 가지고 있지 않아요. 대신 순환 셔틀의 현재 위치는 확인했어요(2026-10-21 14:04 기준).\n\n- 4531호: 301동 정류장에 있어요. 윗공대 근처라 바로 탈 수 있을 것 같아요.\n- 4522호: 정문에 있어요.\n\n셔틀 노선이 관악사를 지나는지는 제가 확인하지 못했어요. 지도에서 셔틀 노선과 정류장을 함께 확인해 보세요.\n\n지도에 셔틀 위치를 표시해 두었어요. 아래 버튼을 누르면 확인할 수 있어요.",
+            "mapButtons": [
+              "shuttle"
+            ],
+            "cards": [],
+            "proposal": null,
+            "answer": null,
+            "lookup": null,
+            "refusal": null,
+            "textLength": 272,
+            "modelText": "윗공대에서 기숙사(관악사)까지 가는 길을 안내해 드릴 수 있는 정보는 제가 가지고 있지 않아요. 대신 순환 셔틀의 현재 위치는 확인했어요(2026-10-21 14:04 기준).\n\n- 4531호: 301동 정류장에 있어요. 윗공대 근처라 바로 탈 수 있을 것 같아요.\n- 4522호: 정문에 있어요.\n\n셔틀 노선이 관악사를 지나는지는 제가 확인하지 못했어요. 지도에서 셔틀 노선과 정류장을 함께 확인해 보세요.\n\n지도에 셔틀 위치를 표시해 두었어요. 아래 버튼을 누르면 확인할 수 있어요.",
+            "approvalLine": false
+          },
+          "failure": null,
+          "errorBody": null
+        }
+      ]
+    },
+    {
+      "id": "adhoc-terms-stadium-party",
+      "category": "adhoc-campus-terms",
+      "kind": "single",
+      "repetition": 1,
+      "knownFailure": null,
+      "expect": null,
+      "turnExpects": [
+        null
+      ],
+      "turns": [
+        {
+          "user": "종운에서 내일 축구할 파티 있어?",
+          "status": 200,
+          "latencyMs": 6390,
+          "steps": [
+            {
+              "toolCalls": [
+                {
+                  "id": "toolu_01B6viUQhf6xif1ZfyCAxnqd",
+                  "name": "resolvePlace",
+                  "input": {
+                    "words": "종합운동장"
+                  },
+                  "result": {
+                    "result": "one",
+                    "candidate": {
+                      "id": "85171921-3d6e-53c7-b25a-134d12852246",
+                      "name": "종합운동장",
+                      "number": null
+                    }
+                  }
+                }
+              ],
+              "text": "",
+              "finishReason": "tool-calls",
+              "usage": {
+                "inputTokens": 27042,
+                "outputTokens": 470,
+                "cacheReadTokens": 26875,
+                "cacheWriteTokens": 163
+              },
+              "latencyMs": 2658,
+              "ended": true
+            },
+            {
+              "toolCalls": [
+                {
+                  "id": "toolu_01Rb3YqudzPnMQi15CSbm1Me",
+                  "name": "searchRecruitingQuests",
+                  "input": {
+                    "from": "2026-10-22",
+                    "to": "2026-10-22",
+                    "words": [
+                      "축구",
+                      "풋살",
+                      "운동"
+                    ],
+                    "placeId": "85171921-3d6e-53c7-b25a-134d12852246",
+                    "board": "hobby"
+                  },
+                  "result": {
+                    "result": "none",
+                    "reason": "No 파티 that the User can join on the Board hobby within 300 m of that Place is found from 2026-10-22T00:00 to 2026-10-22T23:59."
+                  }
+                }
+              ],
+              "text": "",
+              "finishReason": "tool-calls",
+              "usage": {
+                "inputTokens": 27570,
+                "outputTokens": 186,
+                "cacheReadTokens": 27038,
+                "cacheWriteTokens": 530
+              },
+              "latencyMs": 1211,
+              "ended": true
+            },
+            {
+              "toolCalls": [],
+              "text": "내일(10월 22일) 종합운동장 근처에 참여할 수 있는 축구 파티는 없어요.\n\n직접 파티를 열어 드릴까요? 그렇다면 몇 시에 시작할지 알려 주세요.",
+              "finishReason": "stop",
+              "usage": {
+                "inputTokens": 27853,
+                "outputTokens": 322,
+                "cacheReadTokens": 27568,
+                "cacheWriteTokens": 283
+              },
+              "latencyMs": 2410,
+              "ended": true
+            }
+          ],
+          "reply": {
+            "text": "내일(10월 22일) 종합운동장 근처에 참여할 수 있는 축구 파티는 없어요.\n\n직접 파티를 열어 드릴까요? 그렇다면 몇 시에 시작할지 알려 주세요.",
+            "mapButtons": [],
+            "cards": [],
+            "proposal": null,
+            "answer": null,
+            "lookup": null,
+            "refusal": null,
+            "textLength": 82,
+            "modelText": "내일(10월 22일) 종합운동장 근처에 참여할 수 있는 축구 파티는 없어요.\n\n직접 파티를 열어 드릴까요? 그렇다면 몇 시에 시작할지 알려 주세요.",
+            "approvalLine": false
+          },
+          "failure": null,
+          "errorBody": null
+        }
+      ]
+    }
+  ]
+}

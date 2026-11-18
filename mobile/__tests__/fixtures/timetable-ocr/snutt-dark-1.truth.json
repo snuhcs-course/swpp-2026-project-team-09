@@ -1,0 +1,134 @@
+{
+  "screenshot": "snutt-dark-1.png",
+  "app": "SNUTT",
+  "title": "1",
+  "times": [
+    {
+      "weekday": "friday",
+      "start": "10:00",
+      "end": "11:50",
+      "name": "수학연습 2",
+      "roomLine": "24-211",
+      "building": "24",
+      "room": "211"
+    },
+    {
+      "weekday": "monday",
+      "start": "11:00",
+      "end": "11:50",
+      "name": "수학 2",
+      "roomLine": "24-211",
+      "building": "24",
+      "room": "211"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "11:00",
+      "end": "11:50",
+      "name": "수학 2",
+      "roomLine": "24-211",
+      "building": "24",
+      "room": "211"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "회계원리",
+      "roomLine": "58-324",
+      "building": "58",
+      "room": "324"
+    },
+    {
+      "weekday": "thursday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "회계원리",
+      "roomLine": "58-324",
+      "building": "58",
+      "room": "324"
+    },
+    {
+      "weekday": "monday",
+      "start": "12:30",
+      "end": "13:45",
+      "name": "물리학 2",
+      "roomLine": "26-B101",
+      "building": "26",
+      "room": "B101"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "12:30",
+      "end": "13:45",
+      "name": "물리학 2",
+      "roomLine": "26-B101",
+      "building": "26",
+      "room": "B101"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "이산수학",
+      "roomLine": "301-118",
+      "building": "301",
+      "room": "118"
+    },
+    {
+      "weekday": "thursday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "이산수학",
+      "roomLine": "301-118",
+      "building": "301",
+      "room": "118"
+    },
+    {
+      "weekday": "friday",
+      "start": "14:00",
+      "end": "16:50",
+      "name": "대학 글쓰기 1",
+      "roomLine": "83-202",
+      "building": "83",
+      "room": "202"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "15:00",
+      "end": "16:50",
+      "name": "축구",
+      "roomLine": null,
+      "building": null,
+      "room": null,
+      "note": "no room printed"
+    },
+    {
+      "weekday": "monday",
+      "start": "16:00",
+      "end": "17:50",
+      "name": "프로그래밍연습",
+      "roomLine": "301-118",
+      "building": "301",
+      "room": "118"
+    },
+    {
+      "weekday": "thursday",
+      "start": "16:00",
+      "end": "17:50",
+      "name": "물리학실험 2",
+      "roomLine": "26-302",
+      "building": "26",
+      "room": "302"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "18:30",
+      "end": "20:20",
+      "name": "프로그래밍연습",
+      "roomLine": "302-105",
+      "building": "302",
+      "room": "105"
+    }
+  ]
+}

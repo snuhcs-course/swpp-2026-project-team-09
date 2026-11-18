@@ -2195,6 +2195,73 @@ answers the User's classes, each with its times in the order of the week and eac
 `isClassOf(userId, classId, db?)` whether an identifier is one of the User's classes. The Quest list shows each class
 held today as a Class Quest, computed from these and never stored (see [Quests](#quests), Class Quests).
 
+### Reading a timetable screenshot
+
+`POST /timetable/readings` reads a screenshot of a weekly timetable with the AI's model (the key `llm.key` names, Claude
+Haiku 5.5), for `이미지로 불러오기` (P15-52,
+[ADR 0015](../docs/adr/0015-a-timetable-screenshot-is-read-by-the-ai-with-the-phones-blocks.md)). The body is the
+picture in base64 (PNG, JPEG, WebP or GIF, at most 5 MB; the route's JSON limit is 7 MB, every other route's 1 MB) and,
+when the phone found it from the pixels, the grid: how many day columns, and each class block's column (from 0 at the
+left), top and bottom in the picture's pixels, fill colour, and whether its bottom fades out. No label is in it.
+
+```json
+{
+  "image": "iVBORw0KGgo…",
+  "grid": {
+    "columns": 5,
+    "blocks": [{ "column": 1, "top": 636, "bottom": 848, "colour": [80, 70, 190], "fades": false }]
+  }
+}
+```
+
+With the grid, the model is asked twice at the same time (`src/timetable-reading/grid-reading.ts`): for the layout,
+the hour labels as printed and each listed block's day label and rough start and end (`GRID_INSTRUCTIONS`), and for the
+text of each block, named by its column and place, with the start it read (`ID_TEXT_INSTRUCTIONS`). The code fits one
+line from pixels to minutes through the layout's times, which a few misread times cannot move and which is refused when
+the times' median distance from it is over 4 minutes; gives each column the day most of its blocks were read with (the
+columns' days running on by one, so a hidden label is filled in); and takes every block's start and end from the pixels
+on that line (`grid-mapping.ts`). A block whose text was read at a start more than 20 minutes from its placed start is
+read again on its placed day and time. When the fit or the days do not hold, or no grid was sent, the model reads the whole
+picture instead, hour axis included. Code checks the answer (`reading-checks.ts`): a name must be its printed lines
+joined, a room must match the room pattern, a 12-hour axis becomes 24-hour, times snap to five minutes, and blocks
+whose names are equal after NFC and space normalisation are one class, each time with its own room. Blocks whose names
+are one or two characters apart (and of one colour) are read once more on their own before they are grouped
+(`second-look.ts`). A fading block keeps the end where its colour is last seen only when the end the model read agrees
+with it within 5 minutes, with the layout or when asked once more about that block alone; otherwise it is left out. What fails a check is left out and counted:
+
+```json
+{
+  "kind": "read",
+  "title": "연습3",
+  "classes": [
+    {
+      "name": "대학영어 2: 말하기",
+      "times": [
+        { "weekday": "tuesday", "start": "11:00", "end": "12:15", "room": "8-408" },
+        { "weekday": "thursday", "start": "11:00", "end": "12:15", "room": "8-408" }
+      ]
+    }
+  ],
+  "leftOut": [{ "weekday": "monday", "name": "논리설계", "start": "19:00", "end": null, "reason": "cut" }],
+  "usedGrid": true
+}
+```
+
+`usedGrid` says whether the blocks were placed on the grid the phone sent. Only then does the phone add the blocks it
+kept back (side by side, or cut at the top) to what was left out; on the whole picture's reading the model saw those
+blocks itself.
+
+or `{ "kind": "none" }` for a picture with no timetable. Refused with 400 for a body of another shape, 413 above the
+limit, 422 `UNREADABLE_IMAGE` for bytes that are no picture the model takes, 429 once a User has asked
+`TIMETABLE_READING_DAILY` times that day in Korea (a setting, 10 unless set), and 503 when the model fails or the server has no key by the
+name `llm.key` gives; the app then reads the picture on the phone. The picture is neither stored nor logged, nor is
+what was read; the log says only how many classes and blocks left out. A reading makes at most 7 model calls
+(`MOST_MODEL_CALLS`: the layout and the text, at most 3 fading ends asked again, one re-read, one second look at
+near-miss names) and the grid at most 48 blocks; `TIMETABLE_READING_TIMEOUT_MS` (24 000) is one deadline over all of
+a reading's calls, under the phone's 25 s, and `TIMETABLE_READING_MAX_OUTPUT_TOKENS` (6000) bounds each call. A
+further look that fails keeps the first reading, the blocks it was for left out and counted. The experiment that chose this design is
+`pnpm eval:timetable` (`eval/timetable-reading/`, results in `.scratch/iteration-2/P13-timetable-ocr/accuracy.md`).
+
 ## Tutorial
 
 The 새내기 튜토리얼 walks a new student through campus life, one Tutorial Quest at a time. A Tutorial Quest is not a
@@ -2540,7 +2607,7 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
 
 - **The model port** (`ModelPort` in `model-port.ts`, over `adapter.ts`): the one place that talks to the model, with a
   model for each key built by `MODEL_FACTORY`. The server's factory makes the Anthropic model (`anthropicModel`: a cache
-  breakpoint at the end of the system prompt, the chat's conversation cached automatically, effort `medium`, no sampling
+  breakpoint at the end of the system prompt's stable part, the chat's conversation cached automatically, effort `medium`, no sampling
   parameters, as `MODEL_CACHE` says) or the OpenRouter one (`openRouterModel`); the tests give `startApp` the scripted
   fake below for every key, or a `modelFactory` of their own.
 - **Tools** (`tools/`, `free-time/` for the 공강 tools, `gathering/` for `planMeal`, and `lookup/` for `findWay`): each is a zod schema of its
@@ -2753,10 +2820,21 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     `<data label="globalEvent.title">…</data>`, which the system prompt marks as data, never instructions.
     `othersText` breaks a tag of the delimiters inside the text, so that it cannot close them.
 - **Feature definitions**: an entry point with its own system prompt and its own tools (`Feature` in `feature.ts`). The
-  chat Assistant is `chat/chat-assistant.ts`. Its system prompt carries the date, the weekday and the time in Korea of
-  each request. A capability of the chat joins it as tools and a prompt fragment (ADR 0009, `FREE_TIME_RULES`). An AI
+  chat Assistant is `chat/chat-assistant.ts`. A feature's system prompt has two parts, sent as two system messages in
+  this order on both providers: `instructions`, the same for every request whoever asks and whenever, and
+  `requestInstructions(now)`, the lines of one request. On the Anthropic path the cache breakpoint ends the first, so
+  every request with the same tools reads the tools and the rules back from the cache, across Users and minutes; the
+  second, the chat's `Now in Korea` line with the date, the weekday and the time in Korea, comes after it and is not
+  cached on its own. Anything that changes per request goes in the second part. A capability of the chat joins it as tools and a prompt fragment (ADR 0009, `FREE_TIME_RULES`). An AI
   feature with an entry point of its own gets a definition of its own that reuses tools, so that it cannot reach
   another's data.
+- **Campus short names** (`campus-terms.ts`): what people on campus call places and things (학관, 윗공대, 중도, 천식,
+  …), a fragment of the chat's stable prompt. The list is data: to add a name, add one entry to `CAMPUS_TERMS` with
+  its `shortNames`, what it `means`, written with the names `resolvePlace` and `getMenus` find (check them against
+  `seed/campus-map-places.json`, `seed/national-map-places.json` and `seed/restaurant-places.json`), and a `note` when
+  the model needs one. `campusTermsRules` renders it, and `test/assistant-campus-terms.unit.test.ts` checks every
+  entry is in the fragment and that every Place an entry names, by its name and number, is in the seed, so that a
+  renamed Place fails the test. The list only tells the model what a name stands for; facts still come from the tools.
 - **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
   call, tool call and answer within the limits per message, on an OpenRouter key asking for providers that do not collect data
   (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). It makes the reply's
@@ -2843,6 +2921,13 @@ seed name; all of them are sent in one request, and only the last turn is scored
 it). A run is saved as `eval/results/<date>-<commit>-<model>-<settings>.json`, every turn's trace with it. `results/`
 is ignored by git; commit a run worth keeping with `git add -f`. `test/eval-runner.integration.test.ts` and
 `test/eval-options.integration.test.ts` test the runner with the scripted model in `pnpm test`.
+
+The benchmark fixes `now`, so every case reads the same cached prefix. `pnpm eval:cross-minute` measures what it
+cannot: whether the prefix is shared across minutes and Users. It sends one small-talk message N times on the Anthropic
+path, each one minute later and as another User, through the chat of an app with every capability built over services
+that hold no data (`test/chat-services.ts`), and saves each call's cache reads and writes in
+`eval/results/cross-minute-cache-<commit>.{json,md}`. It needs `CROSS_MINUTE_YES=1` to call the model;
+`CROSS_MINUTE_N` sets N (10). Ten requests cost about USD 0.06 with nothing cached.
 
 The collection evaluations (A and B of P05) have their own fixed sets, saved posts, labels and thresholds in
 `eval/collection/`, with their record in `eval/collection/README.md`. `pnpm eval:collection:status` shows the blanks left

@@ -1,0 +1,139 @@
+{
+  "screenshot": "snutt-grey-1.png",
+  "app": "SNUTT",
+  "title": null,
+  "times": [
+    {
+      "weekday": "monday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "인공지능",
+      "roomLine": "302-208",
+      "building": "302",
+      "room": "208"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "인공지능",
+      "roomLine": "302-208",
+      "building": "302",
+      "room": "208"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "컴퓨터프로그래밍",
+      "roomLine": "302-105",
+      "building": "302",
+      "room": "105",
+      "note": "printed over two lines, wrapped inside the word: '컴퓨터프로그래' / '밍'"
+    },
+    {
+      "weekday": "thursday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "컴퓨터프로그래밍",
+      "roomLine": "302-105",
+      "building": "302",
+      "room": "105",
+      "note": "printed over two lines, wrapped inside the word: '컴퓨터프로그래' / '밍'"
+    },
+    {
+      "weekday": "monday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "논리설계",
+      "roomLine": "301-118",
+      "building": "301",
+      "room": "118"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "논리설계",
+      "roomLine": "301-118",
+      "building": "301",
+      "room": "118"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "공학수학 1",
+      "roomLine": "302-208",
+      "building": "302",
+      "room": "208"
+    },
+    {
+      "weekday": "thursday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "공학수학 1",
+      "roomLine": "302-208",
+      "building": "302",
+      "room": "208"
+    },
+    {
+      "weekday": "monday",
+      "start": "15:30",
+      "end": "16:45",
+      "name": "자료구조",
+      "roomLine": "302-105",
+      "building": "302",
+      "room": "105"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "15:30",
+      "end": "16:45",
+      "name": "자료구조",
+      "roomLine": "302-105",
+      "building": "302",
+      "room": "105"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "15:30",
+      "end": "16:45",
+      "name": "대학 글쓰기 2: 과학기술글쓰기",
+      "roomLine": "43-1-403",
+      "building": "43-1",
+      "room": "403",
+      "note": "printed over two lines: '대학 글쓰기 2:' / '과학기술글쓰기'"
+    },
+    {
+      "weekday": "thursday",
+      "start": "15:30",
+      "end": "16:45",
+      "name": "대학 글쓰기 2: 과학기술글쓰기",
+      "roomLine": "43-1-403",
+      "building": "43-1",
+      "room": "403",
+      "note": "printed over two lines: '대학 글쓰기 2:' / '과학기술글쓰기'"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "18:30",
+      "end": "20:20",
+      "name": "컴퓨터프로그래밍",
+      "roomLine": "302-105",
+      "building": "302",
+      "room": "105",
+      "note": "printed over two lines, wrapped inside the word: '컴퓨터프로그래' / '밍'"
+    },
+    {
+      "weekday": "monday",
+      "start": "19:00",
+      "end": "20:50",
+      "name": "논리설계",
+      "roomLine": "302-310-2",
+      "building": "302",
+      "room": "310-2",
+      "note": "fades out towards the floating tab bar; the end is read by eye at the last row of its colour"
+    }
+  ]
+}

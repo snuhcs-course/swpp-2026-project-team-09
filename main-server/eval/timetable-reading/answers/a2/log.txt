@@ -1,0 +1,42 @@
+everytime-1.1 14191 ms, 5604/3405 tokens, USD 0.00226: {"truthTimes":14,"readTimes":11,"found":11,"timesRight":11,"namesExact":11,"roomsExact":11,"allRight":11,"invented":0,"classesGroupedRight":7,"truthClasses":7,"leftOut":3,"titleRight":true}
+  missed: 컴퓨터프로그래밍 monday 19:00–21:00
+  missed: 시스템프로그래밍 tuesday 19:00–21:00
+  missed: 컴퓨터프로그래밍 wednesday 19:00–21:00
+everytime-1.2 11920 ms, 5604/3001 tokens, USD 0.00206: {"truthTimes":14,"readTimes":11,"found":11,"timesRight":11,"namesExact":11,"roomsExact":11,"allRight":11,"invented":0,"classesGroupedRight":7,"truthClasses":7,"leftOut":3,"titleRight":true}
+  missed: 컴퓨터프로그래밍 monday 19:00–21:00
+  missed: 시스템프로그래밍 tuesday 19:00–21:00
+  missed: 컴퓨터프로그래밍 wednesday 19:00–21:00
+everytime-1.3 12546 ms, 5604/3071 tokens, USD 0.00210: {"truthTimes":14,"readTimes":11,"found":11,"timesRight":11,"namesExact":11,"roomsExact":11,"allRight":11,"invented":0,"classesGroupedRight":7,"truthClasses":7,"leftOut":3,"titleRight":true}
+  missed: 컴퓨터프로그래밍 monday 19:00–21:00
+  missed: 시스템프로그래밍 tuesday 19:00–21:00
+  missed: 컴퓨터프로그래밍 wednesday 19:00–21:00
+snutt-1.1 12456 ms, 5604/3073 tokens, USD 0.00210: {"truthTimes":16,"readTimes":16,"found":16,"timesRight":16,"namesExact":15,"roomsExact":16,"allRight":15,"invented":0,"classesGroupedRight":10,"truthClasses":10,"leftOut":0,"titleRight":true}
+  name: 컴퓨팅 살펴 tuesday 13:00–13:50 302-105 read "컴퓨팅 살펴…"
+snutt-1.2 12741 ms, 5604/3149 tokens, USD 0.00213: {"truthTimes":16,"readTimes":16,"found":16,"timesRight":14,"namesExact":15,"roomsExact":16,"allRight":13,"invented":0,"classesGroupedRight":10,"truthClasses":10,"leftOut":0,"titleRight":true}
+  time: 근장 wednesday 16:00–18:00 - read 16:00–17:00
+  time: 근장 thursday 16:00–18:00 - read 16:00–17:00
+  name: 컴퓨팅 살펴 tuesday 13:00–13:50 302-105 read "컴퓨팅 살펴…"
+snutt-1.3 11885 ms, 5604/2900 tokens, USD 0.00201: {"truthTimes":16,"readTimes":16,"found":16,"timesRight":16,"namesExact":15,"roomsExact":16,"allRight":15,"invented":0,"classesGroupedRight":10,"truthClasses":10,"leftOut":0,"titleRight":true}
+  name: 컴퓨팅 살펴 tuesday 13:00–13:50 302-105 read "컴퓨팅 살펴…"
+snutt-2.1 8577 ms, 5604/2243 tokens, USD 0.00168: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+snutt-2.2 8369 ms, 5604/2132 tokens, USD 0.00163: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+snutt-2.3 9186 ms, 5604/2259 tokens, USD 0.00169: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+snutt-3.1 7283 ms, 5604/1596 tokens, USD 0.00136: {"truthTimes":7,"readTimes":7,"found":7,"timesRight":7,"namesExact":7,"roomsExact":7,"allRight":7,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+snutt-3.2 7271 ms, 5604/1672 tokens, USD 0.00140: {"truthTimes":7,"readTimes":7,"found":7,"timesRight":7,"namesExact":7,"roomsExact":7,"allRight":7,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+snutt-3.3 7285 ms, 5604/1613 tokens, USD 0.00137: {"truthTimes":7,"readTimes":7,"found":7,"timesRight":7,"namesExact":7,"roomsExact":7,"allRight":7,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+everytime-2.1 8904 ms, 4024/2099 tokens, USD 0.00145: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+everytime-2.2 9247 ms, 4024/2258 tokens, USD 0.00153: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+everytime-2.3 9309 ms, 4024/2252 tokens, USD 0.00153: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+everytime-dark-1.1 6995 ms, 4024/1752 tokens, USD 0.00128: {"truthTimes":12,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+everytime-dark-1.2 7560 ms, 4024/1805 tokens, USD 0.00130: {"truthTimes":12,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+everytime-dark-1.3 7573 ms, 4024/1856 tokens, USD 0.00133: {"truthTimes":12,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-4.1 8202 ms, 4024/1935 tokens, USD 0.00137: {"truthTimes":12,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-4.2 8900 ms, 4024/2105 tokens, USD 0.00145: {"truthTimes":12,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-4.3 8920 ms, 4024/2144 tokens, USD 0.00147: {"truthTimes":12,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-dark-1.1 8462 ms, 4024/2058 tokens, USD 0.00143: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":9,"truthClasses":9,"leftOut":0,"titleRight":true}
+snutt-dark-1.2 10482 ms, 4024/2578 tokens, USD 0.00169: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":9,"truthClasses":9,"leftOut":0,"titleRight":true}
+snutt-dark-1.3 9681 ms, 4024/2499 tokens, USD 0.00165: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":9,"truthClasses":9,"leftOut":0,"titleRight":true}
+snutt-grey-1.1 14565 ms, 4024/3507 tokens, USD 0.00216: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-grey-1.2 11415 ms, 4024/2845 tokens, USD 0.00182: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-grey-1.3 10319 ms, 4024/2593 tokens, USD 0.00170: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+Total USD 0.0450

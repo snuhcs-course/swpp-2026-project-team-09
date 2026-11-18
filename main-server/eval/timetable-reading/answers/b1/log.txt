@@ -1,0 +1,34 @@
+everytime-1.1 8745 ms, 5060/1739 tokens, USD 0.00138: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":7,"truthClasses":7,"leftOut":0,"titleRight":true}
+everytime-1.2 6137 ms, 5060/1464 tokens, USD 0.00124: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":7,"truthClasses":7,"leftOut":0,"titleRight":true}
+everytime-1.3 6336 ms, 5060/1470 tokens, USD 0.00124: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":7,"truthClasses":7,"leftOut":0,"titleRight":true}
+snutt-1.1 6304 ms, 5086/1501 tokens, USD 0.00126: {"truthTimes":16,"readTimes":16,"found":16,"timesRight":16,"namesExact":16,"roomsExact":16,"allRight":16,"invented":0,"classesGroupedRight":10,"truthClasses":10,"leftOut":0,"titleRight":true}
+snutt-1.2 6366 ms, 5086/1529 tokens, USD 0.00127: {"truthTimes":16,"readTimes":16,"found":16,"timesRight":16,"namesExact":16,"roomsExact":16,"allRight":16,"invented":0,"classesGroupedRight":10,"truthClasses":10,"leftOut":0,"titleRight":true}
+snutt-1.3 7569 ms, 5086/1809 tokens, USD 0.00141: {"truthTimes":16,"readTimes":16,"found":16,"timesRight":16,"namesExact":16,"roomsExact":16,"allRight":16,"invented":0,"classesGroupedRight":10,"truthClasses":10,"leftOut":0,"titleRight":true}
+snutt-2.1 3092 ms, 5034/548 tokens, USD 0.00078: {"truthTimes":13,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":7,"truthClasses":8,"leftOut":0,"titleRight":true}
+  missed: 물리학실험 1 tuesday 16:00–17:50
+snutt-2.2 2946 ms, 5034/548 tokens, USD 0.00078: {"truthTimes":13,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":7,"truthClasses":8,"leftOut":0,"titleRight":true}
+  missed: 물리학실험 1 tuesday 16:00–17:50
+snutt-2.3 2484 ms, 5034/548 tokens, USD 0.00078: {"truthTimes":13,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":7,"truthClasses":8,"leftOut":0,"titleRight":true}
+  missed: 물리학실험 1 tuesday 16:00–17:50
+snutt-3.1 2534 ms, 4956/332 tokens, USD 0.00066: {"truthTimes":7,"readTimes":6,"found":6,"timesRight":6,"namesExact":6,"roomsExact":6,"allRight":6,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+  missed: 소프트웨어 개발의 원리와 실습 wednesday 19:00–20:50
+snutt-3.2 2919 ms, 4956/599 tokens, USD 0.00080: {"truthTimes":7,"readTimes":6,"found":6,"timesRight":6,"namesExact":6,"roomsExact":6,"allRight":6,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+  missed: 소프트웨어 개발의 원리와 실습 wednesday 19:00–20:50
+snutt-3.3 2149 ms, 4956/332 tokens, USD 0.00066: {"truthTimes":7,"readTimes":6,"found":6,"timesRight":6,"namesExact":6,"roomsExact":6,"allRight":6,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+  missed: 소프트웨어 개발의 원리와 실습 wednesday 19:00–20:50
+everytime-2.1 3068 ms, 3467/585 tokens, USD 0.00064: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+everytime-2.2 2564 ms, 3467/585 tokens, USD 0.00064: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+everytime-2.3 2488 ms, 3467/585 tokens, USD 0.00064: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+everytime-dark-1.1 4502 ms, 3454/974 tokens, USD 0.00083: {"truthTimes":12,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+everytime-dark-1.2 5015 ms, 3454/1128 tokens, USD 0.00091: {"truthTimes":12,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+everytime-dark-1.3 4881 ms, 3454/1084 tokens, USD 0.00089: {"truthTimes":12,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-4.1 2899 ms, 3454/524 tokens, USD 0.00061: {"truthTimes":12,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-4.2 2290 ms, 3454/524 tokens, USD 0.00061: {"truthTimes":12,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-4.3 2471 ms, 3454/524 tokens, USD 0.00061: {"truthTimes":12,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-dark-1.1 3088 ms, 3480/556 tokens, USD 0.00063: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":9,"truthClasses":9,"leftOut":0,"titleRight":true}
+snutt-dark-1.2 2381 ms, 3480/556 tokens, USD 0.00063: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":9,"truthClasses":9,"leftOut":0,"titleRight":true}
+snutt-dark-1.3 2827 ms, 3480/556 tokens, USD 0.00063: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":9,"truthClasses":9,"leftOut":0,"titleRight":true}
+snutt-grey-1.1 3538 ms, 3480/716 tokens, USD 0.00071: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":false}
+snutt-grey-1.2 3204 ms, 3480/653 tokens, USD 0.00067: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-grey-1.3 4297 ms, 3480/1156 tokens, USD 0.00093: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+Total USD 0.0228

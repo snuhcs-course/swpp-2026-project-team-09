@@ -3,6 +3,7 @@
  *
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -60,7 +61,7 @@ function echoFeature(): { feature: Feature; runs: () => number } {
   let runs = 0;
   return {
     feature: {
-      instructions: () => SYSTEM_PROMPT,
+      instructions: SYSTEM_PROMPT,
       tools: {
         echo: {
           description: 'Says the text back.',
