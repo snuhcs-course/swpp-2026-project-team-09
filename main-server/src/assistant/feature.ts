@@ -9,6 +9,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -145,8 +146,12 @@ export function defineTool<Schema extends z.ZodType>(definition: {
 }
 
 export interface Feature {
-  // The system prompt of a request made at `now`.
-  instructions(now: Date): string;
+  // The system prompt's part that is the same for every request of the feature, whoever asks and whenever. It is sent
+  // first, and on the Anthropic path the cache breakpoint ends it, so that every request with the same tools reads it
+  // back (adapter.ts, anthropicOptions).
+  readonly instructions: string;
+  // The system prompt's lines of a request made at `now`, such as the time, sent after `instructions`.
+  requestInstructions?(now: Date): string;
   // By the name the model calls each one.
   readonly tools: Readonly<Record<string, Tool>>;
   // The cards of a run that answered, from what its tools kept. Left out, they stay as the presenters put them.
