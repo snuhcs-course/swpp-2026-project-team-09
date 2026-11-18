@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useCallback, useEffect, useState } from 'react';
@@ -32,7 +33,31 @@ export function needsLogin(failure: LibraryFailure): boolean {
   return failure === 'noSession' || failure === 'sessionEnded';
 }
 
-// What the card loads when it shows and whenever `key` changes, and `reload`, which reads again.
+// Whether what a card loaded is out of date after a login (`loggedIn`) or after the session was ended on purpose: after
+// a login, a read that failed for want of a session; after a logout, a read that did not.
+export function staleAfter<T>(loaded: Loaded<T>, loggedIn: boolean): boolean {
+  const wantedLogin = loaded.state === 'failed' && needsLogin(loaded.failure);
+  return loggedIn ? wantedLogin : !wantedLogin;
+}
+
+// Reads again after a login and after a logout when what the card shows is out of date, so that every mounted card
+// follows them at once, whichever card or row they came from. A session that ended under a call is the failed card's
+// to show, with its 로그인 that sends the pressed write once more, and the others find it on their next call.
+function useFollowFlag<T>(loaded: Loaded<T>, reload: () => void): void {
+  const { loggedIn, logouts } = useLibrarySession();
+  const [seen, setSeen] = useState({ loggedIn, logouts });
+  if (seen.loggedIn !== loggedIn || seen.logouts !== logouts) {
+    setSeen({ loggedIn, logouts });
+    const loggedInNow = loggedIn && !seen.loggedIn;
+    const loggedOut = seen.logouts !== logouts;
+    if ((loggedInNow && staleAfter(loaded, true)) || (loggedOut && staleAfter(loaded, false))) {
+      reload();
+    }
+  }
+}
+
+// What the card loads when it shows and whenever `key` changes, and `reload`, which reads again. It reads again too
+// when a login or the session's end leaves it out of date.
 export function useLibraryLoad<T>(load: () => Promise<T>, key: string): { loaded: Loaded<T>; reload: () => void } {
   const [loaded, setLoaded] = useState<Loaded<T>>({ state: 'loading' });
   const [round, setRound] = useState(0);
@@ -59,6 +84,7 @@ export function useLibraryLoad<T>(load: () => Promise<T>, key: string): { loaded
   const reload = useCallback((): void => {
     setRound((last) => last + 1);
   }, []);
+  useFollowFlag(loaded, reload);
   return { loaded, reload };
 }
 
@@ -104,6 +130,18 @@ export interface Write<Args> {
   logIn: () => void;
 }
 
+// A login from anywhere takes away a write's line that asked for it; the write is not sent again by itself.
+function useClearOnLogin(failure: CardFailure | null, setFailure: (failure: CardFailure | null) => void): void {
+  const { loggedIn } = useLibrarySession();
+  const [seen, setSeen] = useState(loggedIn);
+  if (seen !== loggedIn) {
+    setSeen(loggedIn);
+    if (loggedIn && failure !== null && failure.failure !== null && needsLogin(failure.failure)) {
+      setFailure(null);
+    }
+  }
+}
+
 // A card's write, sent only from its confirm button. `send` answers null when it was made, or what the card says.
 // A failure is never sent again by itself; `onFailed` lets the card read again to show where things stand.
 export function useWrite<Args>(
@@ -115,6 +153,7 @@ export function useWrite<Args>(
   const [failure, setFailure] = useState<CardFailure | null>(null);
   const [pending, setPending] = useState<{ args: Args; press: ConfirmedPress } | null>(null);
   const logInThen = useLogInThen();
+  useClearOnLogin(failure, setFailure);
   const attempt = async (args: Args, press: ConfirmedPress): Promise<void> => {
     setFailure(null);
     setBusy(true);

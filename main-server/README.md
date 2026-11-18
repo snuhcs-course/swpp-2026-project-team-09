@@ -325,6 +325,18 @@ change between two Users does and runs `alongside`, here the link's use, in the 
 only while `used_at` is still empty, so of two Users who accept one link at the same moment one becomes the Friend and
 the other gets `INVITE_LINK_USED`.
 
+In a browser the link's address answers a page, `GET /invite/<token>`, without a sign-in
+(`src/invite-links/invite-page.ts`): the app's wordmark, "SNU Now 친구 초대", one button "SNU Now에서 열기" that opens
+`snunow://invite/<token>`, and under it "앱이 설치돼 있어야 열려요.". A messenger that opens links in its own browser, an
+iPhone, whose build declares no link that opens the app, and a phone without the app show it; a phone that verified
+the App Link opens the app without it. The page looks nothing up, so a token nobody made, a used one and an expired one
+get the same page, which names no sender: the app's accept screen says who sent the link and whether it can be
+accepted. It does not open the app by itself, which a browser blocks without a press, and it has no link to an APK. A
+token not of an Invite Link token's form, 43 characters of base64url, answers 404 with "찾을 수 없는 초대 링크예요", no
+button and nothing of the address. The page loads nothing and runs no script, which its `Content-Security-Policy`
+enforces, and asks search engines not to index it (`X-Robots-Tag: noindex` and the robots meta tag). Its wordmark is
+`docs/design/app-icon/sign-in-wordmark.svg`, copied into the page; a new design is copied again.
+
 Android opens the app from the link through App Links. It asks for `GET /.well-known/assetlinks.json` on the link's
 host, without a token and following no redirect, and the server answers the Digital Asset Links file: the app's package
 name, `com.bonnieandclaude.snunow`, and the SHA-256 fingerprints of the certificates the app is signed with. Two
@@ -3286,7 +3298,8 @@ src/
 ├── auth/                            a feature: app and admin site sign-in, refresh, sign-out, the access token checks
 ├── users/                           a feature: the signed-in User, their profile, Friend ID and onboarding
 ├── friends/                         a feature: Friend IDs looked up, Friend Requests and Friends
-├── invite-links/                    a feature: Invite Links, and the Digital Asset Links file that opens them in the app
+├── invite-links/                    a feature: Invite Links, the Digital Asset Links file that opens them in the app,
+│                                    and the page their address answers in a browser
 ├── location-sharing/                a feature: the Master Switch, the positions uploaded, kept and pushed, and who
 │                                    sees whom
 ├── lobby/                           a feature: what the app needs when it starts

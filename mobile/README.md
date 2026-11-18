@@ -183,7 +183,8 @@ project is generated. The build then declares an App Link with `autoVerify` for 
 (`app.config.ts`), and Android checks it against `https://<host>/.well-known/assetlinks.json`, which the main server
 answers. The check passes only when the build's signing certificate is among the main server's
 `ANDROID_CERTIFICATE_FINGERPRINTS`; the debug key's fingerprint is in the main server's `.env.example`. Without the
-host the build declares no App Link, and a link opens the app only through `snunow://invite/<token>`.
+host the build declares no App Link, and a link opens the app only through `snunow://invite/<token>`: the https
+address opens the main server's page in the browser, whose button opens that.
 
 `pnpm android` generates the Android project in `android/` (not committed), builds the app, installs it on the
 running emulator, opens it and starts the development server. The first build takes 15 to 30 minutes; later ones a
@@ -371,8 +372,7 @@ and the relaunch in M1 keeps it. The flows grant the app no permission: granted 
 Google Play services may ask over the map to turn on Location Accuracy, a system screen that depends on the emulator's
 settings. So the app explains the location once on the map, and the flows answer "나중에".
 
-M2 on a cold start fails until the ticket in `.scratch/iteration-2/fix-invite-link-cold-start/` is fixed: the app
-lands on the map, not on the accept screen. M1 and M2 on a warm start pass.
+M1 and M2, on a cold and on a warm start, pass.
 
 Each run writes into its own folder under `device-results/`, which git ignores, named by the date, the time and the
 commit, such as `device-results/2026-10-23T001807-74381a9b/`. It holds `report.xml`, the JUnit report, and Maestro's
@@ -908,13 +908,18 @@ cells of one width with the current one chosen when all are at it, "넘기기", 
 보여요"); a removed Friend stays as they are. An answer, a skip, and closing the sheet record the question for every
 Friend named with `recordFriendsAsked(ids, 'plan')`.
 
-**An Invite Link** is `<PUBLIC_URL>/invite/<token>`, and the main server's page opens `snunow://invite/<token>` where a
-messenger shows the address in its own browser. Both reach the route `/invite/[token]`. A link opened before the User
-belongs to the signed-in place (at the start of the app, or signed out) meets the signed-in place's guard, which keeps
-its token on the phone (`inviteToken` of `Kept`) before it leads away; once the User is there, after the loading
-screen or after the sign-in, the consent and Onboarding, the layout opens the accept screen of the kept token. Opened
-while signed in, the link shows its screen at once. The accept screen drops the kept token, and a later link replaces
-it. Android opens the https address in the app only through App Links (see "Invite Links on Android" below).
+**An Invite Link** is `<PUBLIC_URL>/invite/<token>`. Opened in a browser, such as a messenger's own, an iPhone's or one
+on a phone without the app, the address answers the main server's page, whose button "SNU Now에서 열기" opens
+`snunow://invite/<token>`. Both reach the route `/invite/[token]`. A link that starts the app has its token kept on the
+phone (`inviteToken` of `Kept`) by the router's hook for the address the system opens the app with
+(`src/app/+native-intent.ts`), before the first screen renders. On Android the router gets that address as a promise,
+after its first render, and starts at `/` without it when React Native answers after 150 ms, so the hook reads it from
+expo-linking, which holds it and each later link, and clears it at every address so that none opens twice. A link
+opened while the app runs and the User is signed out meets the signed-in place's guard, which keeps its token before it
+leads away. Once the User is in the signed-in place, after the loading screen or after the sign-in, the consent and
+Onboarding, the layout opens the accept screen of the kept token. Opened while signed in, the link shows its screen at
+once. The accept screen drops the kept token, and a later link replaces it. Android opens the https address in the app
+only through App Links (see "Invite Links on Android" above).
 
 **The Quest list on the whole screen** (`src/screens/quests/`, the `MainQuests` frame, `/quests`) is a
 `FullScreenPanel` that comes up from the bottom: ✕ "닫기" and "퀘스트 {n}", n the Quests that have not ended; the
@@ -1969,6 +1974,35 @@ The login opens `…/pc/main` in a visible web view and injects nothing into it.
 answers with JSON (`loginWorks`); only then is the flag set. ✕ is "no session", and after 5 minutes the view closes
 with "로그인하지 못했어요".
 
+The site serves `/pc/main` before it sends the User to the school's login too, so the first landing starts a check
+with no session, which can take up to 35 seconds. The checks belong to the provider, not to the view
+(`login-checks.ts`): one runs at a time, on the hidden view's page loaded afresh (`reloadPage()`). A landing that comes
+while one runs is kept, and so is ✕ pressed while one runs; when the running check finds no session, one more check is
+made, but not while the visible view is off the site's screens (the User in the school's login): it waits for the
+next landing or the close. After ✕ or the five minutes, the login's outcome (and "로그인하지 못했어요") waits for a check
+still to come. A check that finds the session sets the flag even after the view was closed, so a User who logged in and then
+closed the view is still logged in, and the cards follow. Every check ends with the hidden view unmounted unless the
+flag is set, and a logout or the provider's end cancels the checks (P15 ticket 57).
+
+Every mounted card follows the flag (`useLibraryLoad`): after a login, a card whose read failed for want of a session
+reads again; after the session was ended on purpose (`endLibrarySession`, which clears the flag as `loggedOut`), a card
+that had read reads again and shows "관정도서관 로그인이 필요해요". A session that ended under a call is the failed card's
+to show, with its 로그인 that sends the pressed write once more.
+
+### The seat book card's time and seat (P15 ticket 57)
+
+The seat book card shows its time as a band (`slot-band.tsx`, rules in `cards/slot-band.ts`): a track from the
+space's opening to its closing time, the band with a handle at each end, and "14:00–20:00 · 6시간" under it. A drag
+moves an end or the band whole, by the space's step (30 minutes), never before the next 30 minutes today, after
+closing, or outside the space's shortest and longest length; the seats and the room chip's counts are read again when
+the finger is let go. `now` is read at each render, at the let-go and at 예약하기: a start that went by moves on with the
+end along, a day with no room left says "오늘은 예약 시간이 끝났어요", and the booking (`seat-booking.ts`) refuses a slot
+that is no longer valid. The time and the seat on screen are kept with the chat where the room is (`CardRoom`), so
+later requests send the key of the card as it is on screen.
+자리 선택하기 opens the room's seat picture (`seat-picker.tsx`): the site's `area_<sectorNo>.png` with each seat at its
+`POSX`/`POSY` from `getSeatBookingList` and its number, zoomed by two fingers or 확대 and 축소 (1 to 4 times). A press
+picks a free seat and colours it alone; "<n>번 선택" puts it in the card. A space without `mapImage` has no picture.
+
 ### Logout
 
 `endLibrarySession()` (`end-session.ts`) is the one step that ends the library session. Three paths take it:
@@ -1979,8 +2013,10 @@ with "로그인하지 못했어요".
   tokens. It is a refused token or the Session replaced on another phone, and does not go through `signOut()`.
 
 The two sign-outs take it whether or not the flag is set and do not wait on it (`endLibrarySessionInBackground()`).
-In order: with the flag set, the hidden view loads the site's logout URL (15 seconds at most, and a failure does not
-stop the rest; without the flag there is no view, no call and no wait); every web-view cookie is cleared by
+In order: with the flag set, or once a login view was opened since the session last ended (the cookie jar may then hold
+a session the flag never knew of, as after a login closed before its check), the hidden view is mounted if it is not
+and loads the site's logout URL (15 seconds at most, and a failure does not stop the rest; otherwise there is no view,
+no call and no wait); every web-view cookie is cleared by
 `clearWebViewCookies()`; and the flag is cleared. The cookies and the flag are cleared even when an earlier part fails.
 
 ### The cookie module and its lint rule
