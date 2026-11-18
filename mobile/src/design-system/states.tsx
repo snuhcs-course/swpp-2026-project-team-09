@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -16,14 +17,21 @@ interface EmptyStateProps {
   // The caller's words: "결과 없음", "퀘스트가 없어요", "준비 중이에요".
   words: string;
   icon?: IconName;
+  // One first thing to do, under the words, for an empty screen that says what it is for (HE H7).
+  action?: { label: string; onPress: () => void };
 }
 
-// Nothing to show: faint words in the middle.
-export function EmptyState({ words, icon }: EmptyStateProps): ReactElement {
+// Nothing to show: faint words in the middle, and the first thing to do under them when the caller gives one.
+export function EmptyState({ words, icon, action }: EmptyStateProps): ReactElement {
   return (
     <View style={styles.state}>
       {icon === undefined ? null : <Icon color={color.inkFaint} name={icon} size={28} />}
       <Text style={styles.words}>{words}</Text>
+      {action === undefined ? null : (
+        <Button onPress={action.onPress} variant="secondary">
+          {action.label}
+        </Button>
+      )}
     </View>
   );
 }

@@ -5,6 +5,8 @@
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useState } from 'react';
@@ -12,6 +14,7 @@ import { ScrollView, StyleSheet } from 'react-native';
 import { EmptyState, ErrorState, IconButton, LoadingState, space } from '@/design-system';
 import { type EventFilter, type EventSources, toEventViews } from '@/features/events/adapter';
 import { useEventSources } from '@/features/events/use-events';
+import { showFind } from '../party/use-party-actions';
 import { TabScreen } from '../shell/tab-screen';
 import { EventItem } from './event-item';
 import { Filters, SearchBar } from './events-bar';
@@ -28,8 +31,11 @@ interface ListProps extends Omit<Focus, 'focused'> {
 
 function List({ sources, filter, search, focused, scroll, onCardAt, onRecruit }: ListProps): ReactElement {
   const views = toEventViews(sources, filter, search);
+  // Without any event, the tab says what it is for, and leads to the 파티 one can join meanwhile (HE H7).
   if (sources.events.length === 0) {
-    return <EmptyState words="예정된 행사가 없어요" />;
+    return (
+      <EmptyState action={{ label: '파티 찾기', onPress: showFind }} words="여기서는 학교 행사를 모아 볼 수 있어요" />
+    );
   }
   if (views.length === 0) {
     return <EmptyState words="검색 결과가 없어요" />;

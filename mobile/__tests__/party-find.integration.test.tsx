@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -148,7 +149,7 @@ describe('joining through the confirm sheet', () => {
     await answer(user, '참여 신청');
 
     expect(server.received('POST /quest-join-requests')[0]?.body).toEqual({ questId: CODING.id });
-    expect(toast()).toHaveTextContent('참여를 신청했어요');
+    expect(toast()).toHaveTextContent('참여를 신청했어요보낸 신청 보기');
   });
 });
 

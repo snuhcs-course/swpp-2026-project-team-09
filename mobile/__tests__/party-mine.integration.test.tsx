@@ -6,6 +6,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -139,7 +140,7 @@ describe('내 파티', () => {
 
 describe('내 파티 without a Quest', () => {
   it.each([
-    ['전체', '참여 중인 파티가 없어요'],
+    ['전체', '여기서는 참여 중인 파티를 볼 수 있어요'],
     ['비공개', '비공개 파티가 없어요'],
     ['공개', '참여 중인 공개 파티가 없어요'],
   ])('says when %s has no Quest', async (chip, words) => {
@@ -192,7 +193,7 @@ describe('참여 중인 파티 above the tabs', () => {
     setAnswers({ quests: [] });
     await openAt('/me/parties');
 
-    expect(screen.getByText('참여 중인 파티가 없어요')).toBeVisible();
+    expect(screen.getByText('여기서는 참여 중인 파티를 볼 수 있어요')).toBeVisible();
   });
 
   it('opens a card’s room, whose back returns to it', async () => {

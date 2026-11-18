@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -241,6 +242,22 @@ function Forgetting({ onUndo }: { onUndo: () => void }): ReactElement {
   );
 }
 
+function AskedToJoin(): ReactElement {
+  const showToast = useToast();
+  return (
+    <Button
+      onPress={() => {
+        showToast('참여를 신청했어요', undefined, undefined, {
+          label: '보낸 신청 보기',
+          onPress: jest.fn<undefined, []>(),
+        });
+      }}
+    >
+      신청
+    </Button>
+  );
+}
+
 describe("Toast's action", () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -263,5 +280,22 @@ describe("Toast's action", () => {
 
     expect(onUndo).toHaveBeenCalledTimes(1);
     expect(screen.queryByText('대화를 지웠어요')).toBeNull();
+  });
+  it('stays 4 seconds when the caller gives no time, long enough to reach the action', async () => {
+    await render(
+      <ToastProvider>
+        <AskedToJoin />
+      </ToastProvider>,
+    );
+
+    await fireEvent.press(screen.getByRole('button', { name: '신청' }));
+    await act(() => {
+      jest.advanceTimersByTime(3999);
+    });
+    expect(screen.getByRole('button', { name: '보낸 신청 보기' })).toBeVisible();
+    await act(() => {
+      jest.advanceTimersByTime(1);
+    });
+    expect(screen.queryByRole('button', { name: '보낸 신청 보기' })).toBeNull();
   });
 });
