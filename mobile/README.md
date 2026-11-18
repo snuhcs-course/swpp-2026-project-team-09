@@ -1140,23 +1140,26 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
 
 - The app bar (`events-bar.tsx`) has "행사" and the search, which puts the field "행사 검색" and ✕ "검색 닫기" in
   place of the title and keeps the events whose title, place or description holds the words.
-- The filters "전체", "오늘", "이번 주" (to Sunday in Korea's time) and "파티 모집 중" (an event with any 파티, the
-  User's own counted) filter the list; the chosen one is bold navy on light blue. Under them, on the white ground,
+- The filters "전체", "오늘", "이번 주" (to Sunday in Korea's time) and "파티 모집 중" (an event with a recruiting Quest
+  the User can join; the User's own 파티 is not one) filter the list; the chosen one is bold navy on light blue. Under them, on the white ground,
   "다가오는 행사" heads the list. Empty: "여기서는 학교 행사를 모아 볼 수 있어요" with "파티 찾기" without any event,
-  "해당하는 행사가 없어요" after a filter and "검색 결과가 없어요" after a search.
+  "해당하는 행사가 없어요" after a filter, and "검색 결과가 없어요" after a search.
 - A row (`event-row.tsx`, P15 ticket 54) has the date column (the day of the month, and "{M}월 · 오늘", "내일" or the
-  weekday), then the source from the app's own list of announcers, the title, and the hours and the place on one line
+  weekday; today for an event that has begun and not ended, such as an exhibition until 11월 30일), then the source from the app's own list of announcers, the title, and the hours and the place on one line
   ("18:00–20:00 · 301동 대강당"; "M월 D일까지" for an event whose end is more than 24 hours after its start), each of
-  the two cut at 2 lines. Its party line says "모집 중인 파티 {n}" (the recruiting Quests of `GET /quests/recruiting`
-  and the User's own Quests for the event) or "함께 갈 파티 찾기", and opens 파티 찾기/모집. A press elsewhere on the row
-  opens the detail sheet (`event-detail-sheet.tsx`, the `EventsDetail` frame): the source, the whole title, "언제",
+  the two cut at 2 lines. Its party line says "모집 중인 파티 {n}" (the recruiting Quests of `GET /quests/recruiting`,
+  which the User does not hold, as the map card and the chat card count them) or "함께 갈 파티 찾기", and opens 파티
+  찾기/모집; beside it, "내 파티" when the User holds a Quest for the event with others or open to them, closed ones
+  too. The 48-point touch area of the line and of the filters reaches past their 40-point height. A press elsewhere on the row
+  opens the detail sheet (`event-detail-sheet.tsx`, the `EventsDetail` frame): the source, "내 파티" as on the row, the whole title, "언제",
   "어디", the description, "원문 보기", which opens `sourceUrl` in the browser and is left out without one, and
   "파티 찾기/모집" ("모집 중인 파티 {n} · 찾기/모집"), which leads on to 파티 찾기/모집. At `/events?focus=<id>` the
   list shows every event, scrolls to the row and marks it with a light blue ground for 2.6 s (`use-focus.ts`). The
   frame's 분류 tabs and "대상" are not drawn: a Global Event has no category or audience. AI matching left the main
   UI on 2026-11-10 (P06-03): the app has no matching screen, though the main server's matching routes and
   `apiClient`'s calls for them stay. The chat's event cards are `event-item.tsx`, with "자세히" and "파티 찾기/모집".
-- The bookmark at a row's top right and in the detail sheet (`favorite-toggle.tsx`), named "관심 행사에 추가" or
+- The bookmark at a row's top right and in the detail sheet (`favorite-toggle.tsx`, `EVENTS_TAB_LOOK`; whether it stays
+  a bookmark or turns back into the ☆ is the owner's open question in ticket 54), named "관심 행사에 추가" or
   "관심 행사에서 빼기", keeps the event or drops it (`PUT` and `DELETE /global-events/:id/favorite`): a Favorite
   Event. It changes at once and back with "즐겨찾기를 바꾸지 못했어요" when the main server refuses. The chat's event
   cards have it as the ☆ "즐겨찾기", and so does the map's card of one event, left of the X; a grouped pin's card
