@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -10,7 +11,7 @@ import { pass, screen, startApp } from './support/app';
 import { startFresh } from './support/mocks';
 import {
   arriveAtOnboarding,
-  BADGE,
+  FROM_ACCOUNT,
   button,
   chooseDepartment,
   ONBOARDING,
@@ -37,43 +38,46 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-describe('what the sign-in suggested', () => {
-  it('fills in the name and the department, each with its badge', async () => {
+describe('the name and the department that the account gives', () => {
+  it('are shown fixed, with the line that says where they come from, and need nothing more', async () => {
     await arriveAtOnboarding(SUGGESTION);
 
     expect(screen.getByRole('header', { name: ONBOARDING })).toBeVisible();
     expect(screen.getByLabelText('이름')).toHaveDisplayValue('홍길동');
+    expect(screen.getByLabelText('이름')).toBeDisabled();
     expect(screen.getByLabelText('학과')).toHaveDisplayValue('컴퓨터공학부');
-    expect(screen.getAllByText(BADGE)).toHaveLength(2);
-    expect(screen.getByRole('radio', { name: '학부생' })).toBeChecked();
+    expect(screen.getByLabelText('학과')).toBeDisabled();
+    expect(screen.getByText(FROM_ACCOUNT)).toBeVisible();
+    expect(screen.queryByRole('radio', { name: '학부생' })).toBeNull();
     expect(button(SAVE)).toBeEnabled();
   });
 
-  it('keeps a badge until the User changes that field', async () => {
-    const user = await arriveAtOnboarding(SUGGESTION);
-
-    await user.type(screen.getByLabelText('이름'), '님');
-    expect(screen.getByLabelText('이름')).toHaveDisplayValue('홍길동님');
-    expect(screen.getAllByText(BADGE)).toHaveLength(1);
-
-    await user.press(button('학과 지우기'));
-    expect(screen.queryByText(BADGE)).toBeNull();
-  });
-
-  it('leaves the department empty when the suggestion has none', async () => {
+  it('leave a department the account does not give to the User, from the list', async () => {
     await arriveAtOnboarding({ name: '홍길동', department: null });
 
+    expect(screen.getByLabelText('이름')).toBeDisabled();
     expect(screen.getByLabelText('학과')).toHaveDisplayValue('');
-    expect(screen.getAllByText(BADGE)).toHaveLength(1);
+    expect(screen.getByLabelText('학과')).toBeEnabled();
+    expect(screen.getByText('이름은 SNU 계정에서 가져와요')).toBeVisible();
+    expect(screen.getByRole('radio', { name: '학부생' })).toBeChecked();
     expect(button(SAVE)).toBeDisabled();
   });
 
-  it('leaves a department that is not in the list empty, and a name it lacks too', async () => {
+  it("keep the account's department even when the list does not hold it, and ask for a name it lacks", async () => {
     await arriveAtOnboarding({ name: null, department: '마법학과' });
 
     expect(screen.getByLabelText('이름')).toHaveDisplayValue('');
-    expect(screen.getByLabelText('학과')).toHaveDisplayValue('');
-    expect(screen.queryByText(BADGE)).toBeNull();
+    expect(screen.getByLabelText('이름')).toBeEnabled();
+    expect(screen.getByLabelText('학과')).toHaveDisplayValue('마법학과');
+    expect(screen.getByText('학과는 SNU 계정에서 가져와요')).toBeVisible();
+  });
+
+  it('leave both to the User when the account gives neither, with no line', async () => {
+    await arriveAtOnboarding({ name: null, department: null });
+
+    expect(screen.getByLabelText('이름')).toBeEnabled();
+    expect(screen.getByLabelText('학과')).toBeEnabled();
+    expect(screen.queryByText(/SNU 계정에서 가져와요/u)).toBeNull();
   });
 });
 
@@ -140,7 +144,7 @@ describe('a save, asked for', () => {
   });
 
   it('counts the name by characters and takes thirty, an emoji being one', async () => {
-    await arriveAtOnboarding(SUGGESTION);
+    await arriveAtOnboarding({ name: null, department: null });
     await fireEvent.changeText(screen.getByLabelText('이름'), '😀'.repeat(31));
 
     expect(screen.getByLabelText('이름')).toHaveDisplayValue('😀'.repeat(30));

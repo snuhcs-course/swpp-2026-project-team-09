@@ -2,14 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useState } from 'react';
 import type { Gender, OnboardingAnswers, Suggestion } from '@/api/types';
 import { now } from '@/clock';
 import { koreaYear } from '@/korea-time';
-import { isDepartment } from './department-search';
 import type { CourseLevel } from './departments';
+import type { FromAccount } from './fixed-field';
 import { cut } from './length';
 
 export type GenderChoice = 'none' | 'female' | 'male' | 'custom';
@@ -20,12 +21,11 @@ export type YearChoice = number | 'other' | null;
 // What the User has put into Onboarding's fields so far.
 export interface Form {
   name: string;
-  // The name is still the one the sign-in suggested.
-  nameSuggested: boolean;
   level: CourseLevel;
-  // A name from the course level's list, or empty.
+  // A name from the course level's list, or empty, unless the account gives it.
   department: string;
-  departmentSuggested: boolean;
+  // The SNU account gives these, and they cannot be changed.
+  fromAccount: FromAccount;
   year: YearChoice;
   gender: GenderChoice;
   // The User's own words for "직접 입력".
@@ -37,18 +37,16 @@ export interface Form {
 export const LONGEST_NAME = 30;
 const YEARS = 12;
 
-// The form a User starts with: undergraduate, and the suggestion's name and department. A part the suggestion lacks
-// stays empty, and so does a department that is not in the list.
+// The form a User starts with: undergraduate, and the name and the department that the account gives. A part it does
+// not give stays empty, for the User to fill in.
 export function firstForm(suggestion: Suggestion | null): Form {
   const name = cut(suggestion?.name ?? '', LONGEST_NAME);
-  const suggested = suggestion?.department ?? '';
-  const department = isDepartment('undergraduate', suggested) ? suggested : '';
+  const department = suggestion?.department ?? '';
   return {
     name,
-    nameSuggested: name !== '',
     level: 'undergraduate',
     department,
-    departmentSuggested: department !== '',
+    fromAccount: { name: name !== '', department: department !== '' },
     year: null,
     gender: 'none',
     genderText: '',

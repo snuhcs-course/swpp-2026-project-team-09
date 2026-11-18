@@ -6,6 +6,7 @@
  * 2026-10-04  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -14,7 +15,7 @@ import request from 'supertest';
 import { inject } from 'vitest';
 import { A_FRIEND_ID } from './friends.js';
 import { googleSubject } from './google.js';
-import { NO_LIBRARY_DETAILS, patchProfile } from './profile.js';
+import { NO_LIBRARY_DETAILS, NOT_FROM_ACCOUNT, patchProfile } from './profile.js';
 import { signIn, signInBeforeOnboarding, withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
 
@@ -52,11 +53,18 @@ describe('The lobby', () => {
         hashtags: ['AI'],
         friendId: A_FRIEND_ID,
         ...NO_LIBRARY_DETAILS,
+        ...NOT_FROM_ACCOUNT,
       },
       ...NEW_SWITCH,
     });
   });
 
+  it('refuses a request without an access token with 401', async () => {
+    expect((await postLobby()).status).toBe(401);
+  });
+});
+
+describe('The lobby before onboarding', () => {
   it('sends a User who has not finished onboarding back to it, with the suggestion', async () => {
     const { accessToken } = await signInBeforeOnboarding(app, { name: '홍길동 / 학생 / 컴퓨터공학부' });
 
@@ -80,9 +88,5 @@ describe('The lobby', () => {
     const response = await postLobby(accessToken);
 
     expect(response.body).toMatchObject({ onboarding: { suggestion: { name: '홍길동', department: '경제학부' } } });
-  });
-
-  it('refuses a request without an access token with 401', async () => {
-    expect((await postLobby()).status).toBe(401);
   });
 });

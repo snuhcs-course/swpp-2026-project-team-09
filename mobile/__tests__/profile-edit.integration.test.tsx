@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -92,6 +93,31 @@ describe('프로필 편집', () => {
   });
 });
 
+describe('프로필 편집 of an account that gives the name and the department', () => {
+  it('shows both fixed with the line that says so, and saves the other fields without them', async () => {
+    const server = await askMainServer({ signedIn: true });
+    answerMainScreen(server);
+    const profile = { ...LOBBY.profile, fromAccount: { name: true, department: true } };
+    server.on('POST /lobby', { status: 200, body: { ...LOBBY, profile } });
+    server.on('PATCH /users/me/profile', { status: 200, body: { ...profile, admissionYear: null } });
+    const user = await openEdit();
+
+    expect(screen.getByLabelText('이름')).toHaveDisplayValue('홍길동');
+    expect(screen.getByLabelText('이름')).toBeDisabled();
+    expect(screen.getByLabelText('학과')).toHaveDisplayValue('컴퓨터공학부');
+    expect(screen.getByLabelText('학과')).toBeDisabled();
+    expect(screen.getByText('이름과 학과는 SNU 계정에서 가져와요')).toBeVisible();
+    expect(screen.getByLabelText('학적상 이름')).toBeEnabled();
+
+    await user.press(screen.getByRole('combobox', { name: '학번' }));
+    await user.press(screen.getByRole('button', { name: '그 외' }));
+    await user.press(screen.getByRole('button', { name: '저장' }));
+    await pass(500);
+
+    expect(server.received('PATCH /users/me/profile').map(({ body }) => body)).toEqual([{ admissionYear: null }]);
+  });
+});
+
 describe('프로필 편집 and the tutorial', () => {
   it('reads the tutorial again after a save, since its rule reads the profile', async () => {
     const server = await askMainServer({ signedIn: true });
@@ -114,12 +140,12 @@ describe('프로필 편집 that could not be saved', () => {
     process.env.EXPO_PUBLIC_MOCK_FAIL = 'updateProfile';
     const user = await openEdit();
 
-    await user.type(screen.getByLabelText('이름'), '순');
+    await user.type(screen.getByLabelText('학적상 이름'), '홍길순');
     await user.press(screen.getByRole('button', { name: '저장' }));
     await pass(500);
 
     expect(screen.getByTestId('toast-layer')).toHaveTextContent('저장하지 못했어요. 다시 시도해 주세요');
     expect(screen.getByRole('header', { name: '프로필 편집' })).toBeVisible();
-    expect(screen.getByLabelText('이름')).toHaveDisplayValue('홍길동순');
+    expect(screen.getByLabelText('학적상 이름')).toHaveDisplayValue('홍길순');
   });
 });

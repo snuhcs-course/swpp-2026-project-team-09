@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -22,7 +23,6 @@ interface DepartmentFieldProps {
   level: CourseLevel;
   // The chosen department's name, or empty.
   value: string;
-  suggested: boolean;
   onChange: (department: string) => void;
 }
 
@@ -77,15 +77,13 @@ function Choices({ groups, value, onChoose, onHold, onRelease }: ChoicesProps): 
 }
 
 // The department, chosen from the course level's list by searching it. Nothing but a name from the list is taken.
-export function DepartmentField({ level, value, suggested, onChange }: DepartmentFieldProps): ReactElement {
+export function DepartmentField({ level, value, onChange }: DepartmentFieldProps): ReactElement {
   const search = useDepartmentSearch(onChange);
   const { block, onLayout } = useRevealed(search.open);
   const shown = search.open ? search.words : value;
   return (
     <View onLayout={onLayout} ref={block} style={styles.field}>
-      <FieldLabel required suggested={suggested}>
-        학과
-      </FieldLabel>
+      <FieldLabel required>학과</FieldLabel>
       <View>
         <Input
           label="학과"

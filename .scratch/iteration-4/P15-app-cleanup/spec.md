@@ -82,6 +82,7 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 56. An answer's walking routes are drawn as straight lines: each walk follows the path the walking route service finds. Ticket [56](issues/56-answer-routes-along-the-paths.md).
 57. 관정 booking: a login takes effect only on a second 로그인, the time moves only by ±30분 buttons, and a pressed seat is taken at once without showing which: the login takes effect at once, the time is a bar, and a seat is picked on the room's picture. Ticket [57](issues/57-kwanjeong-login-and-seat-picker.md).
 58. 관정 booking, after #360: a card left open across its start can show the old time while it books, and a login closed while its check runs can close the login opened again after it. Ticket [58](issues/58-kwanjeong-follow-ups.md).
+60. The name and the department can be changed in onboarding and 프로필 편집, though the service runs on real names: each one the SNU account gives is fixed, with a line saying so, and one it does not give stays the User's. Ticket [60](issues/60-name-and-department-from-account.md).
 
 ## Testing Decisions
 

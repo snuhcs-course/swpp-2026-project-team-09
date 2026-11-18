@@ -7,16 +7,18 @@
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Fable 5.1  prompted by fyoon46
  * 2026-10-05  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { PrismaService } from '../common/prisma.service.js';
 import { Prisma, User } from '../generated/prisma/client.js';
+import { accountFieldsOf, accountProfileOf, googleNameParts } from './account-profile.js';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto.js';
 import { OnboardingDto, OnboardingSource } from './dto/onboarding.dto.js';
 import { ProfileDto, toProfileDto } from './dto/profile.dto.js';
-import { departmentSchema, nameSchema, UpdateProfileDto } from './dto/update-profile.dto.js';
+import { UpdateProfileDto } from './dto/update-profile.dto.js';
 import { newFriendId } from './friend-id.js';
 
 const FRIEND_ID_ATTEMPTS = 3;
@@ -36,11 +38,6 @@ function isFriendIdHeld(error: unknown): boolean {
   );
 }
 
-// An SNU account's Google name reads "홍길동 / 학생 / 컴퓨터공학부".
-function googleNameParts(googleName: string): string[] {
-  return googleName === '' ? [] : googleName.split('/');
-}
-
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
@@ -57,7 +54,20 @@ export class UsersService {
     if (parts !== 3) {
       this.logger.warn(`The Google name of User ${user.id} has ${parts} parts separated by "/", not 3.`);
     }
-    return user;
+    return this.followAccount(user);
+  }
+
+  // An onboarded User's name and department follow the ones the account gives at every sign-in. Before onboarding they
+  // stay empty, and onboarding stores them.
+  private followAccount(user: User): Promise<User> {
+    if (user.onboardedAt === null) {
+      return Promise.resolve(user);
+    }
+    const given = accountFieldsOf(user.googleName);
+    const differs =
+      (given.name !== undefined && given.name !== user.name) ||
+      (given.department !== undefined && given.department !== user.department);
+    return differs ? this.prisma.user.update({ where: { id: user.id }, data: given }) : Promise.resolve(user);
   }
 
   private async upsert(
@@ -78,19 +88,13 @@ export class UsersService {
     }
   }
 
-  // A part of the Google name that the profile would refuse is left out of the suggestion.
+  // The suggestion is what the account gives, which onboarding shows fixed. A part it lacks is null, for the User to
+  // fill in.
   onboardingOf({ onboardedAt, googleName }: OnboardingSource): OnboardingDto {
     if (onboardedAt !== null) {
       return { completed: true };
     }
-    const [name, , department] = googleNameParts(googleName);
-    return {
-      completed: false,
-      suggestion: {
-        name: nameSchema.safeParse(name).data ?? null,
-        department: departmentSchema.safeParse(department).data ?? null,
-      },
-    };
+    return { completed: false, suggestion: accountProfileOf(googleName) };
   }
 
   profileOf(user: User): ProfileDto {
@@ -101,12 +105,22 @@ export class UsersService {
     return this.prisma.user.findUniqueOrThrow({ where: { id } });
   }
 
-  updateProfile(id: string, profile: UpdateProfileDto): Promise<User> {
-    return this.prisma.user.update({ where: { id }, data: profile });
+  // A name or a department that the account gives is stored over the one sent, so that an older app's edit of it
+  // saves the other fields.
+  async updateProfile(id: string, profile: UpdateProfileDto): Promise<User> {
+    const { googleName } = await this.findById(id);
+    return this.prisma.user.update({ where: { id }, data: { ...profile, ...accountFieldsOf(googleName) } });
   }
 
-  // A repeat keeps the time of the first completion.
-  async completeOnboarding(id: string, profile: CompleteOnboardingDto): Promise<void> {
+  // The name and the department come from the account, and the User sends only one it does not give. A repeat keeps
+  // the time of the first completion.
+  async completeOnboarding(id: string, sent: CompleteOnboardingDto): Promise<void> {
+    const { googleName } = await this.findById(id);
+    const profile = { ...sent, ...accountFieldsOf(googleName) };
+    const missing = (['name', 'department'] as const).filter((field) => profile[field] === undefined);
+    if (missing.length > 0) {
+      throw new BadRequestException(missing.map((field) => `${field}: Required: the SNU account does not give it`));
+    }
     await this.prisma.$transaction([
       this.prisma.user.update({ where: { id }, data: profile }),
       this.prisma.user.updateMany({ where: { id, onboardedAt: null }, data: { onboardedAt: new Date() } }),

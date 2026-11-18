@@ -4,6 +4,7 @@
  * 2026-09-30  Opus 5.5   prompted by fyoon46
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,6 +14,10 @@ import { withAccessToken } from './sign-in.js';
 
 // What a profile holds for the library before the User enters it.
 export const NO_LIBRARY_DETAILS = { studentNumber: null, registeredName: null, affiliation: null };
+
+// What a profile says of an account whose Google name gives neither the name nor the department, as the tests'
+// accounts have unless a test gives one.
+export const NOT_FROM_ACCOUNT = { fromAccount: { name: false, department: false } };
 
 export function getProfile(app: INestApplication<Server>, accessToken?: string): request.Test {
   return withAccessToken(request(app.getHttpServer()).get('/users/me/profile'), accessToken);

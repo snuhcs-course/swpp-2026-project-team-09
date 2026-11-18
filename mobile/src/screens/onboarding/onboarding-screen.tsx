@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -12,6 +13,7 @@ import { cardStyles, color, space, text } from '@/design-system';
 import { useSession } from '@/session/session';
 import { CourseLevelField, GenderField } from './choice-fields';
 import { DepartmentField } from './department-field';
+import { AccountLine, FixedField } from './fixed-field';
 import { Foot } from './foot';
 import { canSave, type ChangeForm, type Form, useForm } from './form';
 import { InterestsSection } from './interests-section';
@@ -22,25 +24,50 @@ import { YearField } from './year-field';
 
 const WIDEST = 390;
 
-// The fields about the User. A badge leaves its field with the User's first change there, and another course level
-// has other departments, so it clears the one chosen.
-function BasicSection({ form, change }: { form: Form; change: ChangeForm }): ReactElement {
+function headSentence({ fromAccount }: Form): string {
+  if (fromAccount.name && fromAccount.department) {
+    return '확인하고 바로 시작해요';
+  }
+  if (fromAccount.name) {
+    return '학과만 채우면 바로 시작해요';
+  }
+  return fromAccount.department ? '이름만 채우면 바로 시작해요' : '이름과 학과만 채우면 바로 시작해요';
+}
+
+// The name, or the account's fixed.
+function NameRow({ form, change }: { form: Form; change: ChangeForm }): ReactElement {
+  if (form.fromAccount.name) {
+    return <FixedField label="이름" value={form.name} />;
+  }
   return (
-    <View style={[cardStyles.card, styles.section]}>
-      <Text accessibilityRole="header" style={styles.title}>
-        기본 정보
-      </Text>
-      <NameField
-        onChange={(name) => {
-          change({ name, nameSuggested: false });
-        }}
-        suggested={form.nameSuggested}
-        value={form.name}
-      />
+    <NameField
+      onChange={(name) => {
+        change({ name });
+      }}
+      value={form.name}
+    />
+  );
+}
+
+// The account's department fixed, or the course level and a department from its list. The course level only picks
+// the list, so it is not asked beside a fixed department, and another one clears the department chosen.
+function DepartmentRows({ form, change }: { form: Form; change: ChangeForm }): ReactElement {
+  const { fromAccount } = form;
+  if (fromAccount.department) {
+    return (
+      <>
+        <FixedField label="학과" value={form.department} />
+        <AccountLine fromAccount={fromAccount} />
+      </>
+    );
+  }
+  return (
+    <>
+      {fromAccount.name ? <AccountLine fromAccount={fromAccount} /> : null}
       <CourseLevelField
         onChange={(level) => {
           if (level !== form.level) {
-            change({ level, department: '', departmentSuggested: false });
+            change({ level, department: '' });
           }
         }}
         value={form.level}
@@ -50,11 +77,23 @@ function BasicSection({ form, change }: { form: Form; change: ChangeForm }): Rea
         key={form.level}
         level={form.level}
         onChange={(department) => {
-          change({ department, departmentSuggested: false });
+          change({ department });
         }}
-        suggested={form.departmentSuggested}
         value={form.department}
       />
+    </>
+  );
+}
+
+// The fields about the User.
+function BasicSection({ form, change }: { form: Form; change: ChangeForm }): ReactElement {
+  return (
+    <View style={[cardStyles.card, styles.section]}>
+      <Text accessibilityRole="header" style={styles.title}>
+        기본 정보
+      </Text>
+      <NameRow change={change} form={form} />
+      <DepartmentRows change={change} form={form} />
       <YearField
         onChange={(year) => {
           change({ year });
@@ -76,7 +115,7 @@ function BasicSection({ form, change }: { form: Form; change: ChangeForm }): Rea
 }
 
 // Where a new User confirms a name and a department after the first sign-in and adds what else they like. Nothing
-// on it leads back: a User who signed in with the wrong account signs out.
+// on it leads back: a User who signed in with the wrong account signs out. The head says what is left to fill in.
 export function OnboardingScreen(): ReactElement {
   const insets = useSafeAreaInsets();
   const { suggestion } = useSession();
@@ -90,7 +129,7 @@ export function OnboardingScreen(): ReactElement {
           <Text accessibilityRole="header" style={styles.heading}>
             프로필 만들기
           </Text>
-          <Text style={styles.sentence}>이름과 학과만 채우면 바로 시작해요</Text>
+          <Text style={styles.sentence}>{headSentence(form)}</Text>
         </View>
         <View onLayout={revealer.settle} ref={revealer.frame} style={styles.frame}>
           <ScrollView

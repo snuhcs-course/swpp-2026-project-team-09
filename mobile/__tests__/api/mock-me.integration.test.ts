@@ -5,6 +5,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
@@ -74,13 +75,13 @@ describe('the mock of Location Sharing', () => {
 });
 
 describe('the mock of the profile', () => {
-  it('changes the fields sent, which the next Lobby holds', async () => {
+  it("changes the fields sent but the account's name, which the next Lobby holds", async () => {
     await keep({ onboardingCompleted: true, answers: ANSWERS });
 
     const profile = await answered(mockClient.updateProfile({ name: '안진영', admissionYear: null }));
 
     expect(profile).toEqual({
-      name: '안진영',
+      name: ANSWERS.name,
       department: '컴퓨터공학부',
       admissionYear: null,
       hashtags: ['러닝'],
@@ -88,6 +89,7 @@ describe('the mock of the profile', () => {
       studentNumber: null,
       registeredName: null,
       affiliation: null,
+      fromAccount: { name: true, department: false },
     });
     expect((await answered(mockClient.enterLobby())).profile).toEqual(profile);
   });

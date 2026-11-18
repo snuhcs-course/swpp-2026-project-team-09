@@ -13,6 +13,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The answers of the main server, as the app reads them; `src/api/server/answers.ts` checks them. A shape marked "the
@@ -26,7 +27,8 @@ export interface LatLng {
 
 // --- Sign-in (POST /auth/google) ---
 
-// What the sign-in suggests for Onboarding. A part that could not be read is null.
+// The name and the department that the SNU account gives, which Onboarding shows fixed. A part it does not give is
+// null, for the User to fill in.
 export interface Suggestion {
   name: string | null;
   department: string | null;
@@ -77,6 +79,8 @@ export interface Profile {
   studentNumber: string | null;
   registeredName: string | null;
   affiliation: Affiliation | null;
+  // Which of the name and the department the SNU account gives. The main server keeps those as the account has them.
+  fromAccount: { name: boolean; department: boolean };
 }
 
 // 소속: 학부, 대학원 or 교환학생.

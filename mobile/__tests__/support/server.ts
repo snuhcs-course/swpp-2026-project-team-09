@@ -10,6 +10,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Friend, Lobby, Party, Position, Quest } from '@/api/types';
@@ -91,6 +92,8 @@ export const LOBBY: Lobby = {
     studentNumber: null,
     registeredName: null,
     affiliation: null,
+    // Editable, as for an account whose Google name gives neither; a test of the fixed fields says otherwise.
+    fromAccount: { name: false, department: false },
   },
   masterSwitch: false,
   masterOffAsked: false,

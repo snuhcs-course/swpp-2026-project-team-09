@@ -4,6 +4,7 @@
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,7 +14,7 @@ import { inject } from 'vitest';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { A_FRIEND_ID } from './friends.js';
 import { googleSubject } from './google.js';
-import { getProfile, NO_LIBRARY_DETAILS } from './profile.js';
+import { getProfile, NO_LIBRARY_DETAILS, NOT_FROM_ACCOUNT, patchProfile } from './profile.js';
 import { postOnboarding, postSignIn, signInBeforeOnboarding, signInResultSchema } from './sign-in.js';
 import { startApp } from './start-app.js';
 
@@ -74,7 +75,7 @@ describe("A new User's sign-in", () => {
 describe('Completing onboarding', () => {
   it('saves the profile sent, and a later sign-in says that onboarding is complete', async () => {
     const sub = googleSubject();
-    const { accessToken } = await signInBeforeOnboarding(app, { sub, name: '홍길동 / 학생 / 컴퓨터공학부' });
+    const { accessToken } = await signInBeforeOnboarding(app, { sub });
     const profile = { name: '김철수', department: '경영학과', admissionYear: 2024, hashtags: ['AI'] };
 
     const response = await postOnboarding(app, accessToken, profile);
@@ -84,6 +85,7 @@ describe('Completing onboarding', () => {
       ...profile,
       friendId: A_FRIEND_ID,
       ...NO_LIBRARY_DETAILS,
+      ...NOT_FROM_ACCOUNT,
     });
     expect(signInResultSchema.parse((await postSignIn(app, { sub })).body).onboarding).toEqual({ completed: true });
   });
@@ -101,6 +103,7 @@ describe('Completing onboarding', () => {
       hashtags: [],
       friendId: A_FRIEND_ID,
       ...NO_LIBRARY_DETAILS,
+      ...NOT_FROM_ACCOUNT,
     });
   });
 
@@ -116,6 +119,53 @@ describe('Completing onboarding', () => {
     expect((await getProfile(app, accessToken)).body).toMatchObject({ department: '경제학부' });
     expect(completedAt).not.toBeNull();
     expect(await onboardedAt(sub)).toEqual(completedAt);
+  });
+});
+
+describe('Completing onboarding with an SNU account that gives the name or the department', () => {
+  it('keeps the name and the department that the account gives, whatever an older app sends', async () => {
+    const { accessToken } = await signInBeforeOnboarding(app, { name: '홍길동 / 학생 / 컴퓨터공학부' });
+
+    const response = await postOnboarding(app, accessToken, {
+      name: '김철수',
+      department: '경영학과',
+      hashtags: ['AI'],
+    });
+
+    expect(response.status).toBe(204);
+    expect((await getProfile(app, accessToken)).body).toMatchObject({
+      name: '홍길동',
+      department: '컴퓨터공학부',
+      hashtags: ['AI'],
+      fromAccount: { name: true, department: true },
+    });
+  });
+
+  it('needs nothing but what the account does not give', async () => {
+    const { accessToken } = await signInBeforeOnboarding(app, { name: '홍길동 / 학생 / 컴퓨터공학부' });
+
+    const response = await postOnboarding(app, accessToken, {});
+
+    expect(response.status).toBe(204);
+    expect((await getProfile(app, accessToken)).body).toMatchObject({ name: '홍길동', department: '컴퓨터공학부' });
+  });
+
+  it('takes the department from an account that gives the name alone, and keeps it editable', async () => {
+    const { accessToken } = await signInBeforeOnboarding(app, { name: 'Gildong Hong' });
+
+    const without = await postOnboarding(app, accessToken, {});
+    const response = await postOnboarding(app, accessToken, { name: '김철수', department: '경영학과' });
+    await patchProfile(app, accessToken, { name: '김영희', department: '경제학부' });
+
+    expect(without.status).toBe(400);
+    expect(JSON.stringify(without.body)).toContain('"department:');
+    expect(JSON.stringify(without.body)).not.toContain('"name:');
+    expect(response.status).toBe(204);
+    expect((await getProfile(app, accessToken)).body).toMatchObject({
+      name: 'Gildong Hong',
+      department: '경제학부',
+      fromAccount: { name: true, department: false },
+    });
   });
 });
 

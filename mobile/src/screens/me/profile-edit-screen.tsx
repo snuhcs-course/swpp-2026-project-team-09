@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -18,6 +19,7 @@ import { Button, cardStyles, color, FullScreenPanel, LoadingState, space, text, 
 import { DepartmentField } from '../onboarding/department-field';
 import { isDepartment } from '../onboarding/department-search';
 import type { CourseLevel } from '../onboarding/departments';
+import { AccountLine, FixedField, type FromAccount } from '../onboarding/fixed-field';
 import { admissionYears, type YearChoice } from '../onboarding/form';
 import { InterestsSection } from '../onboarding/interests-section';
 import { NameField } from '../onboarding/name-field';
@@ -65,14 +67,15 @@ function yearChoiceOf(admissionYear: number | null): YearChoice {
   return admissionYears().includes(admissionYear) ? admissionYear : 'other';
 }
 
-// The fields the User changed, as the main server takes them.
+// The fields the User changed, as the main server takes them. The name and the department that the account gives are
+// not the User's to change.
 function changesOf(profile: Profile, edit: Edit): ProfileChange {
   const change: ProfileChange = {};
   const name = edit.name.trim();
-  if (name !== profile.name) {
+  if (!profile.fromAccount.name && name !== profile.name) {
     change.name = name;
   }
-  if (edit.department !== profile.department) {
+  if (!profile.fromAccount.department && edit.department !== profile.department) {
     change.department = edit.department;
   }
   if (edit.year !== yearChoiceOf(profile.admissionYear)) {
@@ -146,29 +149,41 @@ function useSave(profile: Profile): {
 interface BasicSectionProps {
   edit: Edit;
   level: CourseLevel;
+  fromAccount: FromAccount;
   change: (changed: Partial<Edit>) => void;
 }
 
-function BasicSection({ edit, level, change }: BasicSectionProps): ReactElement {
+// The name and the department that the SNU account gives are shown fixed, with the line that says where they come
+// from.
+function BasicSection({ edit, level, fromAccount, change }: BasicSectionProps): ReactElement {
   return (
     <View style={[cardStyles.card, styles.section]}>
       <Text accessibilityRole="header" style={styles.title}>
         기본 정보
       </Text>
-      <NameField
-        onChange={(name) => {
-          change({ name });
-        }}
-        value={edit.name}
-      />
-      <DepartmentField
-        level={level}
-        onChange={(department) => {
-          change({ department });
-        }}
-        suggested={false}
-        value={edit.department}
-      />
+      {fromAccount.name ? (
+        <FixedField label="이름" value={edit.name} />
+      ) : (
+        <NameField
+          onChange={(name) => {
+            change({ name });
+          }}
+          value={edit.name}
+        />
+      )}
+      {fromAccount.name && !fromAccount.department ? <AccountLine fromAccount={fromAccount} /> : null}
+      {fromAccount.department ? (
+        <FixedField label="학과" value={edit.department} />
+      ) : (
+        <DepartmentField
+          level={level}
+          onChange={(department) => {
+            change({ department });
+          }}
+          value={edit.department}
+        />
+      )}
+      {fromAccount.department ? <AccountLine fromAccount={fromAccount} /> : null}
       <YearField
         onChange={(year) => {
           change({ year });
@@ -216,7 +231,7 @@ function EditForm({ profile }: { profile: Profile }): ReactElement {
       title="프로필 편집"
     >
       <View style={styles.body}>
-        <BasicSection change={change} edit={edit} level={level} />
+        <BasicSection change={change} edit={edit} fromAccount={profile.fromAccount} level={level} />
         <InterestsSection
           interests={edit.interests}
           onChange={(interests) => {

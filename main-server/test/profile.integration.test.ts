@@ -5,6 +5,7 @@
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -14,7 +15,7 @@ import { inject } from 'vitest';
 import { z } from 'zod';
 import { A_FRIEND_ID } from './friends.js';
 import { googleSubject } from './google.js';
-import { getProfile, NO_LIBRARY_DETAILS, patchProfile } from './profile.js';
+import { getProfile, NO_LIBRARY_DETAILS, NOT_FROM_ACCOUNT, patchProfile } from './profile.js';
 import {
   getMe,
   ONBOARDED_PROFILE,
@@ -49,6 +50,7 @@ describe('Reading the profile', () => {
       hashtags: [],
       friendId: A_FRIEND_ID,
       ...NO_LIBRARY_DETAILS,
+      ...NOT_FROM_ACCOUNT,
     });
   });
 });
@@ -61,7 +63,7 @@ describe('Editing the profile', () => {
     const response = await patchProfile(app, accessToken, edited);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ ...edited, friendId: A_FRIEND_ID, ...NO_LIBRARY_DETAILS });
+    expect(response.body).toEqual({ ...edited, friendId: A_FRIEND_ID, ...NO_LIBRARY_DETAILS, ...NOT_FROM_ACCOUNT });
     expect((await getProfile(app, accessToken)).body).toEqual(response.body);
   });
 
@@ -78,6 +80,7 @@ describe('Editing the profile', () => {
       hashtags: ['러닝'],
       friendId: A_FRIEND_ID,
       ...NO_LIBRARY_DETAILS,
+      ...NOT_FROM_ACCOUNT,
     });
   });
 });
@@ -95,6 +98,7 @@ describe('Emptying fields of the profile', () => {
       hashtags: [],
       friendId: A_FRIEND_ID,
       ...NO_LIBRARY_DETAILS,
+      ...NOT_FROM_ACCOUNT,
     });
   });
 });
@@ -178,7 +182,7 @@ describe("The library's details left empty", () => {
 });
 
 describe('A later sign-in', () => {
-  it('keeps the name the User chose', async () => {
+  it('keeps the name the User chose where the account gives none', async () => {
     const sub = googleSubject();
     const { accessToken } = await signIn(app, { sub });
     await patchProfile(app, accessToken, { name: '길동' });
@@ -186,6 +190,46 @@ describe('A later sign-in', () => {
     const again = await signIn(app, { sub });
 
     expect((await getProfile(app, again.accessToken)).body).toMatchObject({ name: '길동' });
+  });
+});
+
+describe('The name and the department that the account gives', () => {
+  const GOOGLE_NAME = '홍길동 / 학생 / 컴퓨터공학부';
+
+  it('are kept when an older app sends others, and the rest of its edit is saved', async () => {
+    const { accessToken } = await signIn(app, { name: GOOGLE_NAME });
+
+    const response = await patchProfile(app, accessToken, { name: '길동', department: '경영학과', hashtags: ['러닝'] });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      name: '홍길동',
+      department: '컴퓨터공학부',
+      hashtags: ['러닝'],
+      fromAccount: { name: true, department: true },
+    });
+  });
+
+  it("follow the account's Google name at a later sign-in", async () => {
+    const sub = googleSubject();
+    await signIn(app, { sub, name: GOOGLE_NAME });
+
+    const again = await signIn(app, { sub, name: '홍길동 / 학생 / 경제학부' });
+
+    expect((await getProfile(app, again.accessToken)).body).toMatchObject({ name: '홍길동', department: '경제학부' });
+  });
+
+  it('replace the ones the User chose at the next sign-in', async () => {
+    const sub = googleSubject();
+    const { accessToken } = await signIn(app, { sub });
+    await patchProfile(app, accessToken, { name: '길동', department: '경영학과' });
+
+    const again = await signIn(app, { sub, name: GOOGLE_NAME });
+
+    expect((await getProfile(app, again.accessToken)).body).toMatchObject({
+      name: '홍길동',
+      department: '컴퓨터공학부',
+    });
   });
 });
 
@@ -203,6 +247,7 @@ describe("Another User's profile", () => {
       hashtags: [],
       friendId: A_FRIEND_ID,
       ...NO_LIBRARY_DETAILS,
+      ...NOT_FROM_ACCOUNT,
     });
   });
 

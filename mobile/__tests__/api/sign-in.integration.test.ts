@@ -9,6 +9,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -221,6 +222,7 @@ describe('the Lobby', () => {
         studentNumber: null,
         registeredName: null,
         affiliation: null,
+        fromAccount: { name: true, department: false },
       },
       masterSwitch: false,
       masterOffAsked: false,

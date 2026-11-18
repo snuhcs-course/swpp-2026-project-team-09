@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { userEvent } from '@testing-library/react-native';
@@ -12,7 +13,8 @@ import { keep } from '@/storage/kept';
 // The Onboarding screen's title.
 export const ONBOARDING = '프로필 만들기';
 export const SAVE = '저장하고 시작하기';
-export const BADGE = 'Google 계정에서 가져옴';
+// The grey line under the name and the department that the SNU account gives.
+export const FROM_ACCOUNT = '이름과 학과는 SNU 계정에서 가져와요';
 
 export type User = ReturnType<typeof userEvent.setup>;
 
@@ -35,9 +37,11 @@ export async function chooseDepartment(user: User, words: string, department: st
   await user.press(button(department));
 }
 
-// Fills in what Onboarding needs beyond the suggested name, a department, and saves.
+// Fills in what Onboarding needs beyond the account's name, a department unless the account gives one, and saves.
 export async function saveOnboarding(user: User): Promise<void> {
-  await chooseDepartment(user, '컴퓨터', '컴퓨터공학부');
+  if (screen.getByLabelText('학과').props.editable !== false) {
+    await chooseDepartment(user, '컴퓨터', '컴퓨터공학부');
+  }
   await user.press(button(SAVE));
   await pass(400);
 }
