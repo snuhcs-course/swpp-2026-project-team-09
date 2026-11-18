@@ -15,6 +15,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -61,6 +62,9 @@ const FIXED_SETTINGS = {
   ASSISTANT_MAX_STEPS: '8',
   ASSISTANT_TIMEOUT_MS: '30000',
   ASSISTANT_MAX_OUTPUT_TOKENS: '1000',
+  TIMETABLE_READING_DAILY: '10',
+  TIMETABLE_READING_TIMEOUT_MS: '30000',
+  TIMETABLE_READING_MAX_OUTPUT_TOKENS: '6000',
   AUTOMATIC_PUBLICATION: 'on',
   AUTOMATIC_JUDGEMENT: 'off',
   SAME_EVENT_TITLE_RULE: 'off',

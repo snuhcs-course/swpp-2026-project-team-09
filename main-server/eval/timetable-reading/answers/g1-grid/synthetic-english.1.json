@@ -1,0 +1,60 @@
+{
+  "screenshot": "synthetic-english",
+  "model": "claude-haiku-5-5",
+  "mode": "grid",
+  "ms": 6442,
+  "inputTokens": 3225,
+  "outputTokens": 1391,
+  "calls": 1,
+  "answer": {
+    "title": "Fall 2026",
+    "axis": ["9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM"],
+    "blocks": [
+      {
+        "day": "Mon",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["물리학 1"],
+        "name": "물리학 1",
+        "room": "56-105",
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      }
+    ]
+  }
+}
