@@ -44,3 +44,12 @@ The answer card takes at most about half the stage. A long answer, its cards, an
 - A toast over the map stands above the lowered card's height, so it is under a raised card.
 
 ## Comments
+
+### Checked on an emulator (2026-11-18)
+
+The debug build with the mock API. Lowered card with its handle; a drag up held halfway; raised with "지난 답 2개" open; raised with the keyboard up; back puts the keyboard down, back again lowers the card, and the map's camera is where it was before raising.
+
+### Agent usage (2026-11-18)
+
+- Agent time: about 20 minutes in one session, an estimate from the session's first and last messages; no subagents.
+- Tokens: input 15,651,412 (cache reads 15,466,218, cache writes 185,012, uncached 182), output 52,048.
