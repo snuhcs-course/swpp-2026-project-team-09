@@ -1,0 +1,139 @@
+{
+  "screenshot": "snutt-dark-1",
+  "model": "claude-haiku-5-5",
+  "ms": 10601,
+  "inputTokens": 3920,
+  "outputTokens": 2512,
+  "answer": {
+    "title": "1",
+    "axis": ["9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21"],
+    "blocks": [
+      {
+        "day": "금",
+        "start": "10:00",
+        "end": "11:50",
+        "nameLines": ["수학연습 2"],
+        "name": "수학연습 2",
+        "room": "24-211",
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "11:00",
+        "end": "11:50",
+        "nameLines": ["수학 2"],
+        "name": "수학 2",
+        "room": "24-211",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["회계원리"],
+        "name": "회계원리",
+        "room": "58-324",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "11:00",
+        "end": "11:50",
+        "nameLines": ["수학 2"],
+        "name": "수학 2",
+        "room": "24-211",
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["회계원리"],
+        "name": "회계원리",
+        "room": "58-324",
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "12:30",
+        "end": "13:45",
+        "nameLines": ["물리학 2"],
+        "name": "물리학 2",
+        "room": "26-B101",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "12:30",
+        "end": "13:45",
+        "nameLines": ["물리학 2"],
+        "name": "물리학 2",
+        "room": "26-B101",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "14:00",
+        "end": "15:15",
+        "nameLines": ["이산수학"],
+        "name": "이산수학",
+        "room": "301-118",
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "14:00",
+        "end": "15:15",
+        "nameLines": ["이산수학"],
+        "name": "이산수학",
+        "room": "301-118",
+        "cut": false
+      },
+      {
+        "day": "금",
+        "start": "14:00",
+        "end": "16:50",
+        "nameLines": ["대학 글쓰기 1"],
+        "name": "대학 글쓰기 1",
+        "room": "83-202",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "15:00",
+        "end": "16:50",
+        "nameLines": ["축구"],
+        "name": "축구",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "16:00",
+        "end": "17:45",
+        "nameLines": ["프로그래밍연습"],
+        "name": "프로그래밍연습",
+        "room": "301-118",
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "16:00",
+        "end": "17:45",
+        "nameLines": ["물리학실험 2"],
+        "name": "물리학실험 2",
+        "room": "26-302",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "18:30",
+        "end": "20:15",
+        "nameLines": ["프로그래밍연습"],
+        "name": "프로그래밍연습",
+        "room": "302-105",
+        "cut": false
+      }
+    ]
+  }
+}

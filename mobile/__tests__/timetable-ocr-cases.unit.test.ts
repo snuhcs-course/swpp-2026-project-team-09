@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Place } from '@/api/types';
@@ -44,7 +45,7 @@ const FEW_PLACES: Place[] = ['43-1', '61', '302'].map((number) => ({
 const BOX = { x0: 22, x1: 82, y0: 20, y1: 120 };
 
 function word(text: string, y: number, index: number): Word {
-  return { text, x0: 25, x1: 25 + text.length * 4, y0: y - 5, y1: y + 5, confidence: 0.9, line: index };
+  return { text, x0: 25, x1: 25 + text.length * 4, y0: y - 5, y1: y + 5, line: index };
 }
 
 function time(weekday: ReadTime['weekday'], start: string, end: string): ReadTime {

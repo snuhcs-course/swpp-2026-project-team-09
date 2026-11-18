@@ -21,6 +21,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Module, StandardSchemaValidationPipe } from '@nestjs/common';
@@ -64,6 +65,7 @@ import { QuestsModule } from './quests/quests.module.js';
 import { ShuttleModule } from './shuttle/shuttle.module.js';
 import { StudySpacesModule } from './study-spaces/study-spaces.module.js';
 import { TimetableModule } from './timetable/timetable.module.js';
+import { TimetableReadingModule } from './timetable-reading/timetable-reading.module.js';
 import { TravelModule } from './travel/travel.module.js';
 import { TutorialModule } from './tutorial/tutorial.module.js';
 import { UsersModule } from './users/users.module.js';
@@ -113,6 +115,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     MatchingModule,
     PartiesModule,
     TimetableModule,
+    TimetableReadingModule,
     TravelModule,
     TutorialModule,
     AssistantModule,

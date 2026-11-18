@@ -1,0 +1,54 @@
+{
+  "columns": 5,
+  "blocks": [
+    {
+      "column": 1,
+      "top": 240,
+      "bottom": 365.0,
+      "colour": [66, 133, 244],
+      "fades": false
+    },
+    {
+      "column": 3,
+      "top": 440,
+      "bottom": 623.3,
+      "colour": [52, 168, 83],
+      "fades": false
+    },
+    {
+      "column": 1,
+      "top": 740,
+      "bottom": 865.0,
+      "colour": [142, 84, 200],
+      "fades": false
+    },
+    {
+      "column": 3,
+      "top": 740,
+      "bottom": 865.0,
+      "colour": [142, 84, 200],
+      "fades": false
+    },
+    {
+      "column": 0,
+      "top": 1240,
+      "bottom": 1356.6999999999998,
+      "colour": [219, 68, 55],
+      "fades": true
+    },
+    {
+      "column": 2,
+      "top": 1190.0,
+      "bottom": 1306.6000000000001,
+      "colour": [0, 150, 136],
+      "fades": true
+    },
+    {
+      "column": 4,
+      "top": 1240,
+      "bottom": 1356.6999999999998,
+      "colour": [240, 140, 40],
+      "fades": true
+    }
+  ]
+}

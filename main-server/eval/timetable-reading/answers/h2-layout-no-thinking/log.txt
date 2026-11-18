@@ -1,0 +1,32 @@
+everytime-1.1 12941 ms, 2 calls, mapped true, 10646/2531 tokens, USD 0.00233: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":3,"namesExact":14,"roomsExact":14,"allRight":3,"invented":0,"classesGroupedRight":7,"truthClasses":7,"leftOut":0,"titleRight":false}
+  time: 영상예술의 이해 monday 12:30–13:45 43-1 read 12:05–13:25
+  time: 영상예술의 이해 wednesday 12:30–13:45 43-1 read 12:05–13:25
+  time: 자료구조 monday 14:00–15:15 - read 13:45–15:05
+  time: 자료구조 wednesday 14:00–15:15 - read 13:45–15:05
+  time: 컴퓨터프로그래밍 monday 19:00–21:00 - read 19:10–21:20
+  time: 컴퓨터프로그래밍 wednesday 19:00–21:00 - read 19:10–21:20
+  time: 컴퓨터프로그래밍 thursday 14:00–15:50 - read 13:45–15:40
+  time: 공학수학 2 tuesday 09:30–10:45 - read 08:50–10:10
+  time: 공학수학 2 thursday 09:30–10:45 - read 08:50–10:10
+  time: 시스템프로그래밍 tuesday 19:00–21:00 - read 19:10–21:20
+  time: 인공지능 이론 및 응용 세미나 thursday 13:00–13:50 - read 12:40–13:30
+everytime-1.2 9595 ms, 2 calls, mapped true, 10646/2042 tokens, USD 0.00209: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":8,"namesExact":14,"roomsExact":14,"allRight":8,"invented":0,"classesGroupedRight":7,"truthClasses":7,"leftOut":0,"titleRight":false}
+  time: 자연언어처리 개론 monday 17:00–18:15 - read 17:10–18:25
+  time: 자연언어처리 개론 wednesday 17:00–18:15 - read 17:10–18:25
+  time: 컴퓨터프로그래밍 monday 19:00–21:00 - read 19:15–21:15
+  time: 컴퓨터프로그래밍 wednesday 19:00–21:00 - read 19:15–21:15
+  time: 시스템프로그래밍 tuesday 19:00–21:00 - read 19:15–21:15
+  time: 시스템프로그래밍 thursday 16:00–18:00 - read 16:05–18:10
+everytime-1.3 8243 ms, 2 calls, mapped true, 10646/1972 tokens, USD 0.00205: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":3,"namesExact":14,"roomsExact":14,"allRight":3,"invented":0,"classesGroupedRight":7,"truthClasses":7,"leftOut":0,"titleRight":false}
+  time: 영상예술의 이해 monday 12:30–13:45 43-1 read 12:05–13:25
+  time: 영상예술의 이해 wednesday 12:30–13:45 43-1 read 12:05–13:25
+  time: 자료구조 monday 14:00–15:15 - read 13:45–15:05
+  time: 자료구조 wednesday 14:00–15:15 - read 13:45–15:05
+  time: 컴퓨터프로그래밍 monday 19:00–21:00 - read 19:10–21:20
+  time: 컴퓨터프로그래밍 wednesday 19:00–21:00 - read 19:10–21:20
+  time: 컴퓨터프로그래밍 thursday 14:00–15:50 - read 13:45–15:40
+  time: 공학수학 2 tuesday 09:30–10:45 - read 08:50–10:10
+  time: 공학수학 2 thursday 09:30–10:45 - read 08:50–10:10
+  time: 시스템프로그래밍 tuesday 19:00–21:00 - read 19:10–21:20
+  time: 인공지능 이론 및 응용 세미나 thursday 13:00–13:50 - read 12:40–13:30
+snutt-1.1 20136 ms, 3 calls, mapped false, 15948/4201 tokens, USD 0.00370: {"truthTimes":16,"readTimes":16,"found":16,"timesRight":16,"namesExact":16,"roomsExact":16,"allRight":16,"invented":0,"classesGroupedRight":10,"truthClasses":10,"leftOut":0,"titleRight":false}

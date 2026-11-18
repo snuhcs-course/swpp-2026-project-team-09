@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Place } from '@/api/types';
@@ -21,18 +22,15 @@ import { headerLines, labelLines, line, screenshot } from './support/timetable-o
 const BLUE: [number, number, number] = [73, 150, 225];
 
 function word(text: string, x0: number, x1: number, y = 50, lineIndex = 0): Word {
-  return { text, x0, x1, y0: y - 5, y1: y + 5, confidence: 0.9, line: lineIndex };
+  return { text, x0, x1, y0: y - 5, y1: y + 5, line: lineIndex };
 }
 
 function place(number: string): Place {
   return { id: `place-${number}`, number, name: number, latitude: 37.45, longitude: 126.95 };
 }
 
-function roomLine(
-  text: string,
-  { unclipped = true, confidence = 0.9, oneElement = true }: Partial<RoomText> = {},
-): RoomText {
-  return { text, unclipped, confidence, oneElement };
+function roomLine(text: string, { unclipped = true, oneElement = true }: Partial<RoomText> = {}): RoomText {
+  return { text, unclipped, oneElement };
 }
 
 // A one-letter name, a name with a room, an empty block and a block of a mark only, each read with `confidence`.
@@ -121,18 +119,16 @@ describe('the building of a room', () => {
     expect(buildingOf('999-101', places)).toBeNull();
   });
 
-  it('is linked from a whole room that no block side cut, read with at least 0.5 confidence (Android)', () => {
+  it('is linked from a whole room that no block side cut', () => {
     expect(linkRoom(roomLine('302-311-1'), places)?.building).toBe('302');
-    expect(linkRoom(roomLine('302-311-1', { confidence: 0.55 }), places)?.building).toBe('302');
-    expect(linkRoom(roomLine('302-311-1', { confidence: 0.45 }), places)).toBeNull();
     expect(linkRoom(roomLine('302 - …'), places)).toBeNull();
     expect(linkRoom(roomLine('302-311-1', { unclipped: false }), places)).toBeNull();
     expect(linkRoom(null, places)).toBeNull();
   });
 
-  it('is linked without confidence (iOS) only when read inside one whole OCR element', () => {
-    expect(linkRoom(roomLine('302-311-1', { confidence: null }), places)?.room).toBe('311-1');
-    expect(linkRoom(roomLine('302 -311-1', { confidence: null, oneElement: false }), places)).toBeNull();
+  it('is linked only when read inside one whole OCR element, on Android and iOS alike', () => {
+    expect(linkRoom(roomLine('302-311-1'), places)?.room).toBe('311-1');
+    expect(linkRoom(roomLine('302 -311-1', { oneElement: false }), places)).toBeNull();
   });
 });
 
@@ -242,15 +238,11 @@ describe('the whole pipeline on a drawn timetable', () => {
     });
   });
 
-  it('keeps a block with a name whatever its confidence, on Android and iOS alike, and leaves out a block without one', () => {
-    // Only the room's link asks for confidence: a room read at 0.05 is not linked; its class is kept all the same.
-    for (const [confidence, linked] of [
-      [0.05, false],
-      [0.9, true],
-      [null, true],
-    ] as const) {
+  it('reads the same whatever ML Kit’s confidence, on Android and iOS alike, and leaves out a block without a name', () => {
+    // Nothing reads the confidence (P15-52): a room read at 0.05 is linked as one read at 0.9 or on iOS.
+    for (const confidence of [0.05, 0.9, null]) {
       expect(readTimetable(screenshot(confidenceBlocks(confidence)), [place('302')])).toMatchObject(
-        expectedReading(linked),
+        expectedReading(true),
       );
     }
   });

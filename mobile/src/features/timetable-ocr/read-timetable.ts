@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Place, Weekday } from '@/api/types';
@@ -33,10 +34,13 @@ export type LeftOutReason =
   // The block's top or bottom is outside the day.
   | 'outside-day'
   // No name was read in the block: no text, only a room, or only marks without a letter or digit.
-  | 'no-name';
+  | 'no-name'
+  // The main server's reader (P15-52) left it out: its day, time or name failed a check there.
+  | 'unchecked';
 
 export interface LeftOut {
-  weekday: Weekday;
+  // Null only from the main server's reader, for a block whose day it could not read.
+  weekday: Weekday | null;
   name: string;
   // The times as far as they were read, "13:00", or null.
   start: string | null;

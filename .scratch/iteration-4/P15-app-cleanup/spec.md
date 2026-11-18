@@ -5,6 +5,7 @@ Status: ready-for-human
 Schedule row: Iteration 4, P15 "Clean up features outside the main UI", due 2026-11-19. Workers: 김태현 (`TaeHyun79`) and 안진영 (`AhnJinYoung`).
 
 References:
+
 - The team canvas (SNU Now 와이어프레임, https://claude.ai/code/artifact/004b1b85-ec1c-47c1-a8f9-d429b971846f): the after wireframe of each item is drawn there before its ticket is written.
 - `CLAUDE.md`, "The app's native files"; ADR 0007 (test levels).
 
@@ -71,6 +72,7 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 
 ### 안진영 (`51`–`99`)
 
+52. 이미지로 불러오기 reads real screenshots badly: read them with the AI on the blocks the phone finds, for any timetable layout. Ticket [52](issues/52-timetable-image-reading.md).
 54. The 행사 tab is hard to read: long titles and places run over many lines, and a card without its badge has an empty band. Draw it as the `Events` board does: a date column, one row per event, and a sheet for the details. Ticket [54](issues/54-events-tab-as-drawn.md).
 
 ## Testing Decisions

@@ -1,0 +1,114 @@
+snutt-2.1 13788 ms, 2 calls, mapped true, 10625/2749 tokens, USD 0.00244: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+snutt-2.2 16591 ms, 3 calls, mapped true, 15278/3377 tokens, USD 0.00322: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+snutt-2.3 12443 ms, 2 calls, mapped true, 10625/2849 tokens, USD 0.00249: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+snutt-2.4 16528 ms, 2 calls, mapped true, 10625/3760 tokens, USD 0.00294: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+snutt-2.5 13143 ms, 2 calls, mapped true, 10625/2939 tokens, USD 0.00253: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+snutt-2.6 13586 ms, 2 calls, mapped true, 10625/3016 tokens, USD 0.00257: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+snutt-2.7 16111 ms, 3 calls, mapped true, 15278/3244 tokens, USD 0.00315: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+snutt-2.8 16818 ms, 3 calls, mapped true, 15278/3411 tokens, USD 0.00323: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+snutt-2.9 12358 ms, 2 calls, mapped true, 10625/2792 tokens, USD 0.00246: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+snutt-2.10 11864 ms, 2 calls, mapped true, 10625/2702 tokens, USD 0.00241: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+snutt-3.1 12030 ms, 2 calls, mapped true, 10487/2323 tokens, USD 0.00221: {"truthTimes":7,"readTimes":7,"found":7,"timesRight":7,"namesExact":7,"roomsExact":7,"allRight":7,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+snutt-3.2 11173 ms, 2 calls, mapped true, 10487/2333 tokens, USD 0.00222: {"truthTimes":7,"readTimes":7,"found":7,"timesRight":7,"namesExact":7,"roomsExact":7,"allRight":7,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+snutt-3.3 10729 ms, 2 calls, mapped true, 10487/2111 tokens, USD 0.00210: {"truthTimes":7,"readTimes":7,"found":7,"timesRight":7,"namesExact":7,"roomsExact":7,"allRight":7,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+snutt-3.4 11231 ms, 2 calls, mapped true, 10487/2414 tokens, USD 0.00226: {"truthTimes":7,"readTimes":7,"found":7,"timesRight":7,"namesExact":7,"roomsExact":7,"allRight":7,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+snutt-3.5 10547 ms, 2 calls, mapped true, 10487/2166 tokens, USD 0.00213: {"truthTimes":7,"readTimes":7,"found":7,"timesRight":7,"namesExact":7,"roomsExact":7,"allRight":7,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+snutt-3.6 11581 ms, 2 calls, mapped true, 10487/2441 tokens, USD 0.00227: {"truthTimes":7,"readTimes":7,"found":7,"timesRight":7,"namesExact":7,"roomsExact":7,"allRight":7,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+snutt-3.7 12131 ms, 2 calls, mapped true, 10487/2275 tokens, USD 0.00219: {"truthTimes":7,"readTimes":7,"found":7,"timesRight":7,"namesExact":7,"roomsExact":7,"allRight":7,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+snutt-3.8 11403 ms, 2 calls, mapped true, 10487/2167 tokens, USD 0.00213: {"truthTimes":7,"readTimes":7,"found":7,"timesRight":7,"namesExact":7,"roomsExact":7,"allRight":7,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+snutt-3.9 11562 ms, 2 calls, mapped true, 10487/2376 tokens, USD 0.00224: {"truthTimes":7,"readTimes":7,"found":7,"timesRight":7,"namesExact":7,"roomsExact":7,"allRight":7,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+snutt-3.10 10843 ms, 2 calls, mapped true, 10487/2283 tokens, USD 0.00219: {"truthTimes":7,"readTimes":7,"found":7,"timesRight":7,"namesExact":7,"roomsExact":7,"allRight":7,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+snutt-grey-1.1 18454 ms, 2 calls, mapped true, 7488/4227 tokens, USD 0.00286: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-grey-1.2 17268 ms, 2 calls, mapped true, 7488/3773 tokens, USD 0.00264: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":2,"namesExact":14,"roomsExact":14,"allRight":2,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+  time: 인공지능 monday 11:00–12:15 302-208 read 10:45–12:05
+  time: 인공지능 wednesday 11:00–12:15 302-208 read 10:45–12:05
+  time: 논리설계 monday 14:00–15:15 301-118 read 13:50–15:05
+  time: 논리설계 wednesday 14:00–15:15 301-118 read 13:50–15:05
+  time: 자료구조 monday 15:30–16:45 302-105 read 15:20–16:40
+  time: 자료구조 wednesday 15:30–16:45 302-105 read 15:20–16:40
+  time: 컴퓨터프로그래밍 tuesday 11:00–12:15 302-105 read 10:45–12:05
+  time: 컴퓨터프로그래밍 thursday 11:00–12:15 302-105 read 10:45–12:05
+  time: 공학수학 1 tuesday 14:00–15:15 302-208 read 13:50–15:05
+  time: 공학수학 1 thursday 14:00–15:15 302-208 read 13:50–15:05
+  time: 대학 글쓰기 2: 과학기술글쓰기 tuesday 15:30–16:45 43-1-403 read 15:20–16:40
+  time: 대학 글쓰기 2: 과학기술글쓰기 thursday 15:30–16:45 43-1-403 read 15:20–16:40
+snutt-grey-1.3 18926 ms, 2 calls, mapped true, 7488/4129 tokens, USD 0.00281: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-grey-1.4 17041 ms, 2 calls, mapped true, 7488/3680 tokens, USD 0.00259: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-grey-1.5 17973 ms, 2 calls, mapped true, 7488/4128 tokens, USD 0.00281: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-grey-1.6 14417 ms, 2 calls, mapped true, 7488/3232 tokens, USD 0.00236: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-grey-1.7 18219 ms, 2 calls, mapped true, 7488/4055 tokens, USD 0.00278: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-grey-1.8 24579 ms, 3 calls, mapped true, 10561/5106 tokens, USD 0.00361: {"truthTimes":14,"readTimes":13,"found":13,"timesRight":12,"namesExact":13,"roomsExact":13,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":1,"titleRight":true}
+  time: 컴퓨터프로그래밍 wednesday 18:30–20:20 302-105 read 18:35–20:30
+  missed: 논리설계 monday 19:00–20:50
+snutt-grey-1.9 16163 ms, 2 calls, mapped true, 7488/3541 tokens, USD 0.00252: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-grey-1.10 15542 ms, 2 calls, mapped true, 7488/3568 tokens, USD 0.00253: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+synthetic-fades.1 27188 ms, 5 calls, mapped true, 15393/5676 tokens, USD 0.00438: {"truthTimes":7,"readTimes":4,"found":4,"timesRight":4,"namesExact":4,"roomsExact":4,"allRight":4,"invented":0,"classesGroupedRight":3,"truthClasses":6,"leftOut":3,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 컴퓨터프로그래밍 wednesday 18:30–20:20
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades.2 22860 ms, 5 calls, mapped true, 15393/4923 tokens, USD 0.00400: {"truthTimes":7,"readTimes":4,"found":4,"timesRight":4,"namesExact":4,"roomsExact":4,"allRight":4,"invented":0,"classesGroupedRight":3,"truthClasses":6,"leftOut":3,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 컴퓨터프로그래밍 wednesday 18:30–20:20
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades.3 25213 ms, 5 calls, mapped true, 15393/5424 tokens, USD 0.00425: {"truthTimes":7,"readTimes":4,"found":4,"timesRight":4,"namesExact":4,"roomsExact":4,"allRight":4,"invented":0,"classesGroupedRight":3,"truthClasses":6,"leftOut":3,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 컴퓨터프로그래밍 wednesday 18:30–20:20
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades.4 22646 ms, 5 calls, mapped true, 15393/5203 tokens, USD 0.00414: {"truthTimes":7,"readTimes":4,"found":4,"timesRight":4,"namesExact":4,"roomsExact":4,"allRight":4,"invented":0,"classesGroupedRight":3,"truthClasses":6,"leftOut":3,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 컴퓨터프로그래밍 wednesday 18:30–20:20
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades.5 26331 ms, 5 calls, mapped true, 15393/5648 tokens, USD 0.00436: {"truthTimes":7,"readTimes":4,"found":4,"timesRight":4,"namesExact":4,"roomsExact":4,"allRight":4,"invented":0,"classesGroupedRight":3,"truthClasses":6,"leftOut":3,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 컴퓨터프로그래밍 wednesday 18:30–20:20
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades.6 25658 ms, 5 calls, mapped true, 15393/5778 tokens, USD 0.00443: {"truthTimes":7,"readTimes":4,"found":4,"timesRight":4,"namesExact":4,"roomsExact":4,"allRight":4,"invented":0,"classesGroupedRight":3,"truthClasses":6,"leftOut":3,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 컴퓨터프로그래밍 wednesday 18:30–20:20
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades.7 23367 ms, 5 calls, mapped true, 15393/4840 tokens, USD 0.00396: {"truthTimes":7,"readTimes":4,"found":4,"timesRight":4,"namesExact":4,"roomsExact":4,"allRight":4,"invented":0,"classesGroupedRight":3,"truthClasses":6,"leftOut":3,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 컴퓨터프로그래밍 wednesday 18:30–20:20
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades.8 27140 ms, 5 calls, mapped true, 15393/5578 tokens, USD 0.00433: {"truthTimes":7,"readTimes":4,"found":4,"timesRight":4,"namesExact":4,"roomsExact":4,"allRight":4,"invented":0,"classesGroupedRight":3,"truthClasses":6,"leftOut":3,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 컴퓨터프로그래밍 wednesday 18:30–20:20
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades.9 24834 ms, 5 calls, mapped true, 15393/5182 tokens, USD 0.00413: {"truthTimes":7,"readTimes":4,"found":4,"timesRight":4,"namesExact":4,"roomsExact":4,"allRight":4,"invented":0,"classesGroupedRight":3,"truthClasses":6,"leftOut":3,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 컴퓨터프로그래밍 wednesday 18:30–20:20
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades.10 24525 ms, 5 calls, mapped true, 15393/5025 tokens, USD 0.00405: {"truthTimes":7,"readTimes":4,"found":4,"timesRight":4,"namesExact":4,"roomsExact":4,"allRight":4,"invented":0,"classesGroupedRight":3,"truthClasses":6,"leftOut":3,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 컴퓨터프로그래밍 wednesday 18:30–20:20
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades-2.1 16076 ms, 4 calls, mapped true, 12504/3015 tokens, USD 0.00276: {"truthTimes":5,"readTimes":3,"found":3,"timesRight":3,"namesExact":3,"roomsExact":3,"allRight":3,"invented":0,"classesGroupedRight":2,"truthClasses":4,"leftOut":2,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades-2.2 16336 ms, 4 calls, mapped true, 12504/3055 tokens, USD 0.00278: {"truthTimes":5,"readTimes":3,"found":3,"timesRight":3,"namesExact":3,"roomsExact":3,"allRight":3,"invented":0,"classesGroupedRight":2,"truthClasses":4,"leftOut":2,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades-2.3 15522 ms, 4 calls, mapped true, 12504/3025 tokens, USD 0.00276: {"truthTimes":5,"readTimes":3,"found":3,"timesRight":3,"namesExact":3,"roomsExact":3,"allRight":3,"invented":0,"classesGroupedRight":2,"truthClasses":4,"leftOut":2,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades-2.4 17102 ms, 4 calls, mapped true, 12504/3218 tokens, USD 0.00286: {"truthTimes":5,"readTimes":3,"found":3,"timesRight":3,"namesExact":3,"roomsExact":3,"allRight":3,"invented":0,"classesGroupedRight":2,"truthClasses":4,"leftOut":2,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades-2.5 16274 ms, 4 calls, mapped true, 12504/3120 tokens, USD 0.00281: {"truthTimes":5,"readTimes":3,"found":3,"timesRight":3,"namesExact":3,"roomsExact":3,"allRight":3,"invented":0,"classesGroupedRight":2,"truthClasses":4,"leftOut":2,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades-2.6 19807 ms, 4 calls, mapped true, 12504/3818 tokens, USD 0.00316: {"truthTimes":5,"readTimes":3,"found":3,"timesRight":3,"namesExact":3,"roomsExact":3,"allRight":3,"invented":0,"classesGroupedRight":2,"truthClasses":4,"leftOut":2,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades-2.7 18628 ms, 4 calls, mapped true, 12504/3481 tokens, USD 0.00299: {"truthTimes":5,"readTimes":3,"found":3,"timesRight":3,"namesExact":3,"roomsExact":3,"allRight":3,"invented":0,"classesGroupedRight":2,"truthClasses":4,"leftOut":2,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades-2.8 15734 ms, 4 calls, mapped true, 12504/2965 tokens, USD 0.00273: {"truthTimes":5,"readTimes":3,"found":3,"timesRight":3,"namesExact":3,"roomsExact":3,"allRight":3,"invented":0,"classesGroupedRight":2,"truthClasses":4,"leftOut":2,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+  missed: 창의공학설계 friday 19:00–21:50
+synthetic-fades-2.9 15728 ms, 2 calls, mapped false, 6872/3002 tokens, USD 0.00219: {"truthTimes":5,"readTimes":4,"found":4,"timesRight":3,"namesExact":4,"roomsExact":4,"allRight":3,"invented":0,"classesGroupedRight":3,"truthClasses":4,"leftOut":1,"titleRight":true}
+  time: 창의공학설계 friday 19:00–21:50 301-204 read 19:00–20:50
+  missed: 논리설계 monday 19:00–20:50
+synthetic-fades-2.10 12323 ms, 2 calls, mapped false, 6872/2433 tokens, USD 0.00190: {"truthTimes":5,"readTimes":4,"found":4,"timesRight":4,"namesExact":4,"roomsExact":4,"allRight":4,"invented":0,"classesGroupedRight":3,"truthClasses":4,"leftOut":1,"titleRight":true}
+  missed: 논리설계 monday 19:00–20:50
+Total USD 0.1459
