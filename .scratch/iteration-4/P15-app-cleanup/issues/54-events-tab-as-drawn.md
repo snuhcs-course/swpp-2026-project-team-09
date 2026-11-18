@@ -115,16 +115,16 @@ The two missing parts are left out (see "Differences from the boards"). Giving t
 
 - Built: `event-row.tsx` (the row), `event-detail-sheet.tsx` (the `EventsDetail` sheet), the filters as the board's text tabs and "다가오는 행사" in `events-bar.tsx` and `events-screen.tsx`, a `bookmark` look for `favorite-toggle.tsx`, and in the design system the icons `bookmark` and `globe` and the tokens `eventTone` (the board's #3A4060, #E3EAFB and #F1F4FB, which no token named) and `eventText` (its text sizes).
 - `event-item.tsx` stays as the chat's event card: its board is not this one. Its test in `answer-frame-event-cards` now checks the tab's row marked with the light blue ground, as the tab draws it.
-- The party count is the recruiting Quests plus the User's own Quests for the event, as the sheet's rows are, so "파티 모집 중" now also keeps an event where only the User's own 파티 is. The board's filter does the same.
+- The party count is the recruiting Quests the User can join, as the map card and the chat card count them, and "파티 모집 중" follows it, as before this ticket. The User's own 파티 for the event is not counted: it shows as "내 파티" beside the party line and in the sheet, the old card's badge.
 - The sheet's buttons are the app's `Button` (size lg), whose radius and outline are the design system's, a little off the board's 14 and #C9CEDA.
 - Status is `ready-for-human`: the phone check and the before/after pictures are left to a person, since no emulator or browser could run here. Screens to look at are listed in the PR.
 - The local Jest runs were slow under the machine's load. A test that passes alone took up to 3 minutes and timed out at the default 60 s when two files shared the workers. Each touched file was run alone with a longer timeout, and all passed.
 
 ### Notes from the review (2026-11-18)
 
-fyoon46's review at `295175ac`, answered on the branch:
+The review at `295175ac`, answered on the branch:
 
-- The count is back to the recruiting Quests the User can join, as the map card and the chat card count them, and 파티 모집 중 follows it, as before this ticket. The earlier note above, that the count adds the User's own Quests and the filter keeps an event with only them, is replaced by this. The User's own 파티 is "내 파티" beside the party line and in the sheet, the old card's badge.
+- The count is back to the recruiting Quests the User can join, as the map card and the chat card count them, and 파티 모집 중 follows it, as before this ticket. The User's own 파티 is "내 파티" beside the party line and in the sheet, the old card's badge.
 - The bookmark stays as drawn until the owner answers open question 4. `EVENTS_TAB_LOOK` holds the tab's icon and names in one place.
 - The date column shows today for a running event (open question 3, answered in review).
 - The day is level with the title with and without a source: lowered by 18 under a source's line, raised by that line and its gap without one.

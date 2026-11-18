@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -43,11 +44,14 @@ function PartyLine({ recruiting, onPress }: { recruiting: number; onPress: () =>
 }
 
 // The User's own 파티 for the event, as the old card's badge said it. The frame draws none (ticket 54).
+// The badge keeps itself at its parent's start, so a box of its own centres it on the line it stands beside.
 export function MineMark(): ReactElement {
   return (
-    <Badge icon={false} tone="friend">
-      내 파티
-    </Badge>
+    <View style={styles.mine}>
+      <Badge icon={false} tone="friend">
+        내 파티
+      </Badge>
+    </View>
   );
 }
 
@@ -150,6 +154,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   partyRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: space[2] },
+  mine: { alignSelf: 'center', justifyContent: 'center' },
   partySome: { paddingHorizontal: PARTY_PADDING, backgroundColor: color.blue100 },
   bookmark: { position: 'absolute', top: space[3], right: -space[2] },
 });
