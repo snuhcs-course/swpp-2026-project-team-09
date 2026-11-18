@@ -78,6 +78,7 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 52. 이미지로 불러오기 reads real screenshots badly: read them with the AI on the blocks the phone finds, for any timetable layout. Ticket [52](issues/52-timetable-image-reading.md).
 
 57. 관정 booking: a login takes effect only on a second 로그인, the time moves only by ±30분 buttons, and a pressed seat is taken at once without showing which: the login takes effect at once, the time is a bar, and a seat is picked on the room's picture. Ticket [57](issues/57-kwanjeong-login-and-seat-picker.md).
+58. 관정 booking, after #360: a card left open across its start can show the old time while it books, and a login closed while its check runs can close the login opened again after it. Ticket [58](issues/58-kwanjeong-follow-ups.md).
 
 ## Testing Decisions
 
