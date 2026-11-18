@@ -29,7 +29,7 @@ export const CAMPUS_TERMS: readonly CampusTerm[] = [
   {
     shortNames: ['아랫공대'],
     means:
-      'the College of Engineering buildings from about 43동 to 39동, such as 데이터사이언스대학원 및 공과대학 강의동 1 (43동) and 대학원연구동(1단계) (39동), and 신소재공동연구소 (131동)',
+      'the College of Engineering buildings in the lower part of campus, around 30동–44동, and 신소재공동연구소 (131동); among them 공학관1 (30동), 대학원연구동(1단계) (39동), and 데이터사이언스대학원 및 공과대학 강의동 1 (43동)',
     note: 'Said to tell it from 윗공대. An area, not one building.',
   },
   {
@@ -40,12 +40,12 @@ export const CAMPUS_TERMS: readonly CampusTerm[] = [
   { shortNames: ['버들골', '풍산마당'], means: '버들골 풍산마당 (100동)' },
   {
     shortNames: ['긱사', '긱'],
-    means: '기숙사, which is 관악사: (관악사)학부 생활관 (919동) and (관악사)대학원 생활관 (900동)',
+    means: '기숙사, which is 관악사 (the dormitories)',
+    note: 'An area of many buildings, not one.',
   },
   {
     shortNames: ['천식'],
-    means: '천원의 식사: the 1,000-won breakfast and lunch at 학생회관식당, and the 1,000-won breakfast at 301동식당',
-    note: 'At 학생회관식당 the menu may show 3,000 won, the price for people outside the university.',
+    means: '천원의 식사, the 1,000-won meal',
   },
   { shortNames: ['종운'], means: '종합운동장' },
   { shortNames: ['긱운'], means: '기숙사 운동장, which is 관악사운동장' },
@@ -59,11 +59,11 @@ function lineOf({ shortNames, means, note }: CampusTerm): string {
 
 // The fragment: what the list is for, the list, and what to do with a short name that is not in it.
 export function campusTermsRules(terms: readonly CampusTerm[]): string {
-  return `Short names people on campus use, so that you know what the User means by them. Read such a name in the User's message as what it stands for, then look that up with your tools as you would any other name: the list gives no facts to answer from. Answer in the User's own words, such as 중도 to a User who wrote 중도.
+  return `Short names people on campus use, so that you know what the User means by them. Read such a name in the User's message as what it stands for, then look that up with your tools as you would any other name: the list gives no facts to answer from. For a name in the list, what it stands for counts as the User's words as written, and the tools' rules for several or none apply to it as to any other name. Answer in the User's own words, such as 중도 to a User who wrote 중도.
 
 ${terms.map((term) => lineOf(term)).join('\n')}
 
-Most other short names cut a long building name short or join first syllables. When one is not in the list and the tools find nothing for it, ask the User which place they mean instead of guessing.`;
+Most other short names cut a long building name short or join first syllables. When one is not in the list and the tools find several or none for it, ask the User which place they mean instead of guessing; for such a name, this comes before saying that nothing matches.`;
 }
 
 export const CAMPUS_TERMS_RULES = campusTermsRules(CAMPUS_TERMS);

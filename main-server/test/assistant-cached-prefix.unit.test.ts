@@ -86,17 +86,31 @@ function cachedPrefix(body: AnthropicBody): string {
 }
 
 describe('The chat on the Anthropic path, caching by breakpoints', () => {
-  it('sends equal bytes up to the breakpoint at different minutes and for different Users', async () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('sends equal bytes up to the breakpoint from two features built on different days, at different minutes and for different Users', async () => {
     const api = fakeApi(anthropicReply);
     const model = anthropicModel('test-key', 'claude-haiku-5-5', 'breakpoints', api.fetch);
-
-    await send(model, chatAssistant(SERVICES, ALL), 'user-1', '2026-11-18T00:05:00Z');
-    await send(model, chatAssistant(SERVICES, ALL), 'user-2', '2026-11-18T03:41:00Z');
+    // Each feature and its services are built with the clock at its own day, so that a value fixed when the feature
+    // is built, not when it is asked, would differ between the two prefixes.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-18T00:05:00Z'));
+    const first = chatAssistant(await chatServicesWithoutData(), ALL);
+    await send(model, first, 'user-1', '2026-11-18T00:05:00Z');
+    vi.setSystemTime(new Date('2026-11-21T03:41:00Z'));
+    const second = chatAssistant(await chatServicesWithoutData(), ALL);
+    await send(model, second, 'user-2', '2026-11-21T03:41:00Z');
 
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the Anthropic provider's request
-    const [first, second] = api.bodies as AnthropicBody[];
-    expect(cachedPrefix(first)).toBe(cachedPrefix(second));
-    expect(first.tools.length).toBeGreaterThan(0);
+    const [one, other] = api.bodies as AnthropicBody[];
+    expect(first).not.toBe(second);
+    expect(cachedPrefix(one)).toBe(cachedPrefix(other));
+    expect(one.tools.length).toBeGreaterThan(0);
+    // After the breakpoint, each request's own time.
+    expect(one.system.at(-1)?.text).toBe(NOW_LINE('2026-11-18 Wednesday 09:05'));
+    expect(other.system.at(-1)?.text).toBe(NOW_LINE('2026-11-21 Saturday 12:41'));
   });
 
   it('marks the stable block and sends the time after it, in the same words', async () => {
@@ -120,7 +134,7 @@ describe('The chat on the Anthropic path, caching by breakpoints', () => {
 });
 
 describe('The chat on the OpenRouter path', () => {
-  it('sends the same instructions in the same order, with no cache mark', async () => {
+  it('sends both system messages, in order, the time line included, as on the Anthropic path, with no cache mark', async () => {
     const anthropic = fakeApi(anthropicReply);
     const openRouter = fakeApi(openRouterReply);
     const feature = chatAssistant(SERVICES, ALL);
@@ -134,6 +148,12 @@ describe('The chat on the OpenRouter path', () => {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- each provider's request
     const [openRouterBody] = openRouter.bodies as OpenRouterBody[];
     const systemMessages = openRouterBody.messages.filter(({ role }) => role === 'system');
+    // Both system messages, in order, before the conversation: the stable part, then the time of the request.
+    expect(openRouterBody.messages.slice(0, 2)).toEqual([
+      { role: 'system', content: [{ type: 'text', text: feature.instructions }] },
+      { role: 'system', content: [{ type: 'text', text: NOW_LINE('2026-11-18 Wednesday 09:05') }] },
+    ]);
+    expect(systemMessages).toHaveLength(2);
     expect(systemMessages).toEqual(
       anthropicBody.system.map(({ text }) => ({ role: 'system', content: [{ type: 'text', text }] })),
     );
