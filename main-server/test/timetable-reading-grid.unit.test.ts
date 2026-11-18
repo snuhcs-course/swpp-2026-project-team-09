@@ -61,6 +61,17 @@ describe('the time from the pixels', () => {
     expect((line?.slope ?? 0) * y(16) + (line?.offset ?? 0)).toBeCloseTo(960);
   });
 
+  it('is not pulled by times 5 to 12 minutes off: refitted over the times within 5 minutes of the first fit', () => {
+    // Eight times on the hour lines, and two read 10 minutes late: the first fit would be about 2 minutes late.
+    const line = fitMinutes([
+      ...[9, 10, 11, 12, 13, 14, 15, 16].map((hours) => ({ y: y(hours), minutes: hours * 60 })),
+      { y: y(11), minutes: 670 },
+      { y: y(12), minutes: 730 },
+    ]);
+    expect((line?.slope ?? 0) * y(11) + (line?.offset ?? 0)).toBeCloseTo(660);
+    expect((line?.slope ?? 0) * y(16) + (line?.offset ?? 0)).toBeCloseTo(960);
+  });
+
   it('is refused when too few times agree', () => {
     expect(
       fitMinutes([

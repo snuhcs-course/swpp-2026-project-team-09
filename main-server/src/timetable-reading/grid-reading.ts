@@ -76,7 +76,12 @@ async function checkedIdText(
       const one = listed[index];
       return one === undefined ? [] : [one];
     });
-    const second = (await askForBlockText(read.model, read.image, again, read.limits)).answer;
+    // A failed re-read leaves those blocks without text, so they are left out and counted; the rest stands (P15-52
+    // review).
+    const second = await askForBlockText(read.model, read.image, again, read.limits).then(
+      (call) => call.answer,
+      () => ({ title: null, blocks: [] }),
+    );
     for (const one of second.blocks) {
       const index = missing[one.number - 1];
       if (index !== undefined) {
@@ -87,17 +92,24 @@ async function checkedIdText(
   return { text: { title: idText.title, blocks: kept }, again: missing.length };
 }
 
-// The fading blocks whose end the layout did not agree on, asked once more each; the end kept only where the second
-// answer agrees with where the colour ends (`placedEnd`).
+// The fading blocks of one reading whose end is asked again, at most: real screenshots need 0 or 1, the synthetic ones
+// with hidden ends up to 3 (accuracy.md). The blocks past it keep the layout's end, which did not agree, so they are
+// left out and counted (P15-52 review: each re-ask carries the whole picture).
+export const MOST_END_REASKS = 3;
+
+// The fading blocks whose end the layout did not agree on, asked once more each, the first MOST_END_REASKS of them;
+// the end kept only where the second answer agrees with where the colour ends (`placedEnd`).
 async function reaskedEnds(
   read: { model: Model; image: TimetableImage; limits: ReadingLimits },
   grid: GridFound,
   placed: readonly Placed[],
 ): Promise<{ placed: Placed[]; reasked: Record<number, string | null> }> {
-  const asked = placed.flatMap((place, index) => {
-    const block = grid.blocks[index];
-    return block?.fades === true && placedEnd(block, place) === null ? [index] : [];
-  });
+  const asked = placed
+    .flatMap((place, index) => {
+      const block = grid.blocks[index];
+      return block?.fades === true && placedEnd(block, place) === null ? [index] : [];
+    })
+    .slice(0, MOST_END_REASKS);
   // Each asked at once and each observed; a failed one reads as no end, so the block is left out.
   const settled = await Promise.allSettled(
     asked.map(async (index) => {

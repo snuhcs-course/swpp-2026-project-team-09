@@ -9,8 +9,10 @@ import { z } from 'zod';
 import { CurrentUser, type SignedInUser } from '../common/current-user.decorator.js';
 import { type ServedReading, TimetableReadingService } from './timetable-reading.service.js';
 
-// More blocks than a week of classes has.
-const MOST_BLOCKS = 80;
+// More blocks than a real week of classes has (P15-52 review): at most 6 days with classes × 8 classes a day = 48, which
+// also covers the app's own limit of 15 classes (`TIMETABLE_FULL`) meeting 3 times a week each, 45. The nine
+// screenshots hold at most 16.
+export const MOST_BLOCKS = 48;
 
 // The picture in base64, as the app's image picker gives it: at most 5 MB once decoded (the body limit is
 // READING_BODY_LIMIT, json-body-limit.ts).

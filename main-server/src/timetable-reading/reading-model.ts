@@ -107,8 +107,39 @@ export interface ReadingLimits {
   maxOutputTokens: number;
   // Whether the model may think first (adaptive thinking, the default). Off makes a short call quicker.
   thinking?: boolean;
-  // Ends the call early, as when the other call of a reading failed.
+  // Ends the call early, as when the other call of a reading failed, or the reading's deadline has passed.
   signal?: AbortSignal;
+  // The model calls the reading may still make; every call takes one.
+  budget?: CallBudget;
+}
+
+// The model calls one reading may make, over all its steps (P15-52 review): the layout and the text, at most
+// MOST_END_REASKS fading ends, one re-read of blocks whose start did not agree, and one second look at near-miss
+// names. A call past the last throws before anything is sent, so that no answer, however made, starts more.
+export const MOST_MODEL_CALLS = 7;
+
+export class CallsSpentError extends Error {
+  constructor() {
+    super(`A reading may make at most ${MOST_MODEL_CALLS} model calls`);
+    this.name = 'CallsSpentError';
+  }
+}
+
+export interface CallBudget {
+  // One call taken, or CallsSpentError when none is left.
+  take: () => void;
+}
+
+export function callBudget(most: number = MOST_MODEL_CALLS): CallBudget {
+  let made = 0;
+  return {
+    take: () => {
+      if (made >= most) {
+        throw new CallsSpentError();
+      }
+      made += 1;
+    },
+  };
 }
 
 export interface TimetableImage {
@@ -139,8 +170,11 @@ async function ask<Answer>(
   image: TimetableImage,
   text: string,
   schema: z.ZodType<Answer>,
-  { timeoutMs, maxOutputTokens, thinking = true, signal }: ReadingLimits,
+  { timeoutMs, maxOutputTokens, thinking = true, signal, budget }: ReadingLimits,
 ): Promise<ModelCall<Answer>> {
+  // Past the reading's deadline, or over its calls, nothing is sent.
+  signal?.throwIfAborted();
+  budget?.take();
   const { output, usage } = await generateText({
     model,
     instructions,

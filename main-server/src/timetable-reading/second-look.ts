@@ -169,3 +169,14 @@ export function withSecondLook(answer: ModelAnswer, indexes: readonly number[], 
     }),
   };
 }
+
+// The answer with the blocks at `indexes` given no name, so that the checks leave them out and count them: what a
+// second look that failed leaves of a near miss.
+export function withoutNames(answer: ModelAnswer, indexes: readonly number[]): ModelAnswer {
+  return {
+    ...answer,
+    blocks: answer.blocks.map((block, index) =>
+      indexes.includes(index) ? { ...block, nameLines: [], name: '' } : block,
+    ),
+  };
+}

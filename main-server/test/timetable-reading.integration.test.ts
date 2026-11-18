@@ -192,6 +192,16 @@ describe('reading a timetable screenshot with the grid the phone found', () => {
     const { accessToken } = await signInUser(app);
     await post(accessToken, { image: PNG, grid: { columns: 9, blocks: [] } }).expect(400);
   });
+
+  it('refuses more blocks than a real week holds (48), without calling the model', async () => {
+    const { accessToken } = await signInUser(app);
+    const block = { column: 0, top: 300, bottom: 400, colour: null, fades: true };
+    await post(accessToken, {
+      image: PNG,
+      grid: { columns: 5, blocks: Array.from({ length: 49 }, () => block) },
+    }).expect(400);
+    expect(calls).toHaveLength(0);
+  });
 });
 
 describe('a refused timetable screenshot', () => {

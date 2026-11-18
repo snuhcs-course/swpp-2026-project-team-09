@@ -75,6 +75,8 @@ export interface ReadingScore {
   found: number;
   // Of those, start and end within 5 minutes.
   timesRight: number;
+  // Of those, start and end exactly the true ones (the reading's times are snapped to 5 minutes, as the truth is).
+  timesExact: number;
   namesExact: number;
   roomsExact: number;
   // Found with the time, the name and the room all right.
@@ -172,6 +174,8 @@ export function scoreReading(reading: TimetableReading, truth: Truth): ReadingSc
     readTimes: read.length,
     found: pairs.length,
     timesRight: count('time:'),
+    timesExact: pairs.filter(({ read: one, truth: time }) => one.time.start === time.start && one.time.end === time.end)
+      .length,
     namesExact: count('name:'),
     roomsExact: count('room:'),
     allRight: faults.filter((list) => list.length === 0).length,

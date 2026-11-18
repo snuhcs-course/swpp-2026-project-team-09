@@ -31,9 +31,11 @@ export interface GridFound {
   blocks: GridBlockFound[];
 }
 
-// How far, in minutes, a model's time may be from the fitted line and still count for it; and how far the middle of
-// all its times may be.
+// How far, in minutes, a model's time may be from the fitted line and still count for it; how far from that first fit
+// it may be and count for the second (P15-52 review: a time 5 to 12 minutes off pulled the first fit by 5 minutes on
+// one saved reading); and how far the middle of all its times may be.
 const INLIER_MINUTES = 12;
+const REFIT_MINUTES = 5;
 const MEDIAN_MINUTES = 4;
 
 interface Point {
@@ -41,10 +43,24 @@ interface Point {
   minutes: number;
 }
 
-// minutes = slope × y + offset through the most points within INLIER_MINUTES, refitted by least squares over them.
-// Every pair of points proposes a line, so the result does not depend on chance. Null with fewer than 4 points
-// agreeing, or fewer than 60 % of them, a line running backwards, or times whose median is more than 4 minutes off it.
-export function fitMinutes(points: readonly Point[]): { slope: number; offset: number } | null {
+type Line = { slope: number; offset: number };
+
+// The least-squares line through the points.
+function leastSquares(points: readonly Point[]): Line {
+  const meanY = points.reduce((sum, point) => sum + point.y, 0) / points.length;
+  const meanM = points.reduce((sum, point) => sum + point.minutes, 0) / points.length;
+  const spread = points.reduce((sum, point) => sum + (point.y - meanY) ** 2, 0);
+  const slope = points.reduce((sum, point) => sum + (point.y - meanY) * (point.minutes - meanM), 0) / spread;
+  return { slope, offset: meanM - slope * meanY };
+}
+
+const offBy = (line: Line, point: Point): number => Math.abs(line.slope * point.y + line.offset - point.minutes);
+
+// minutes = slope × y + offset through the most points within INLIER_MINUTES, refitted by least squares over them, and
+// once more over those within REFIT_MINUTES of that fit when at least 4 are. Every pair of points proposes a line, so
+// the result does not depend on chance. Null with fewer than 4 points agreeing, or fewer than 60 % of them, a line
+// running backwards, or times whose median is more than 4 minutes off it.
+export function fitMinutes(points: readonly Point[]): Line | null {
   let best: Point[] = [];
   for (const [index, one] of points.entries()) {
     for (const other of points.slice(index + 1)) {
@@ -62,15 +78,14 @@ export function fitMinutes(points: readonly Point[]): { slope: number; offset: n
   if (best.length < 4 || best.length < points.length * 0.6) {
     return null;
   }
-  const meanY = best.reduce((sum, point) => sum + point.y, 0) / best.length;
-  const meanM = best.reduce((sum, point) => sum + point.minutes, 0) / best.length;
-  const spread = best.reduce((sum, point) => sum + (point.y - meanY) ** 2, 0);
-  const slope = best.reduce((sum, point) => sum + (point.y - meanY) * (point.minutes - meanM), 0) / spread;
-  const offset = meanM - slope * meanY;
+  const first = leastSquares(best);
+  const close = best.filter((point) => offBy(first, point) <= REFIT_MINUTES);
+  const { slope, offset } =
+    close.length >= 4 && new Set(close.map(({ y }) => y)).size > 1 ? leastSquares(close) : first;
   // The model's times sit on the line when it read them with care: on the nine screenshots their median distance from
   // it was at most 2 minutes, and above 9 when the model read them without thinking first, which placed every block
   // 10 to 25 minutes off (accuracy.md). A line the times do not sit on is no line.
-  const residuals = points.map((point) => Math.abs(slope * point.y + offset - point.minutes)).toSorted((x, y) => x - y);
+  const residuals = points.map((point) => offBy({ slope, offset }, point)).toSorted((x, y) => x - y);
   const median = residuals[Math.floor(residuals.length / 2)] ?? Infinity;
   return slope > 0 && median <= MEDIAN_MINUTES ? { slope, offset } : null;
 }

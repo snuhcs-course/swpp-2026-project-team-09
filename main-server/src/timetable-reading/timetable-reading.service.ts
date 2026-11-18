@@ -15,13 +15,14 @@ import { type Settings } from '../common/settings.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { LETTERS, type Weekday } from './labels.js';
 import { checkedReading, type TimetableReading } from './reading-checks.js';
-import { blocksAnswer, listedBlocks, nearMissGroups, withSecondLook } from './second-look.js';
+import { blocksAnswer, listedBlocks, nearMissGroups, withoutNames, withSecondLook } from './second-look.js';
 import { UnreadableImageException } from './unreadable-image.exception.js';
 import { type GridFound } from './grid-mapping.js';
 import { DEFAULT_GRID_OPTIONS, type GridOptions, readGrid } from './grid-reading.js';
 import {
   askForBlockText,
   askForTimetable,
+  callBudget,
   type ListedBlock,
   type ModelAnswer,
   type ReadingLimits,
@@ -82,6 +83,8 @@ export class TimetableReadingService {
     settings: ConfigService<Settings, true>,
   ) {
     this.daily = settings.get('TIMETABLE_READING_DAILY', { infer: true });
+    // One deadline over the whole reading, under the phone's own (25 s, `timetable-reading-client.ts`), so that no model
+    // call starts after the phone has given up and read the picture itself.
     this.limits = {
       timeoutMs: settings.get('TIMETABLE_READING_TIMEOUT_MS', { infer: true }),
       maxOutputTokens: settings.get('TIMETABLE_READING_MAX_OUTPUT_TOKENS', { infer: true }),
@@ -109,7 +112,8 @@ export class TimetableReadingService {
       throw new HttpException("Today's timetable readings are used up", HttpStatus.TOO_MANY_REQUESTS);
     }
     try {
-      const { answer, mapped } = await readAnswer(chosen.model, { data: bytes, mediaType }, { grid }, this.limits);
+      const limits = { ...this.limits, signal: AbortSignal.timeout(this.limits.timeoutMs) };
+      const { answer, mapped } = await readAnswer(chosen.model, { data: bytes, mediaType }, { grid }, limits);
       const reading = checkedReading(answer);
       const counts =
         reading.kind === 'read'
@@ -170,9 +174,11 @@ export async function readAnswer(
   model: Model,
   image: TimetableImage,
   found: Found,
-  limits: ReadingLimits,
+  given: ReadingLimits,
   options: GridOptions = DEFAULT_GRID_OPTIONS,
 ): Promise<{ answer: ModelAnswer; mapped: boolean | null; raw: unknown }> {
+  // Every call of this reading counts towards one bound (MOST_MODEL_CALLS), whatever the phone sent.
+  const limits = { ...given, budget: given.budget ?? callBudget() };
   const { answer, listed, mapped, raw } = await firstReading(model, image, found, limits, options);
   // The phone's colours belong to the answer's blocks only where the answer is on those blocks, in their order: the
   // placed grid, or the blocks sent. On the whole picture's fallback the model's blocks are its own, so no colour is
@@ -189,6 +195,15 @@ export async function readAnswer(
     const one = listed[index] ?? null;
     return one === null ? [] : [one];
   });
-  const second = await askForBlockText(model, image, again, limits);
-  return { answer: withSecondLook(answer, indexes, second.answer), mapped, raw };
+  // A failed second look keeps the first reading, with the near-miss blocks left out and counted: neither merged nor
+  // split by a guess (P15-52 review).
+  const second = await askForBlockText(model, image, again, limits).then(
+    (call) => call.answer,
+    () => null,
+  );
+  return {
+    answer: second === null ? withoutNames(answer, indexes) : withSecondLook(answer, indexes, second),
+    mapped,
+    raw,
+  };
 }

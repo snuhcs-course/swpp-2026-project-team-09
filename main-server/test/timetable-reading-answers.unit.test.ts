@@ -47,6 +47,7 @@ function summary(run: string, saved: readonly Saved[]): string {
   return [
     `${run}: ${saved.length} readings`,
     `all right ${sum(scores, 'allRight')}/${sum(scores, 'truthTimes')}`,
+    `times exact ${sum(scores, 'timesExact')}/${sum(scores, 'found')}`,
     `wrong ${scores.reduce((total, one) => total + wrongOf(one), 0)}`,
     `invented ${sum(scores, 'invented')}`,
     `left out ${sum(scores, 'truthTimes') - sum(scores, 'found')}`,
@@ -93,6 +94,8 @@ it.each(SCREENSHOTS)(
       const score = scored(one);
       expect(score.wrong.filter((line) => !line.startsWith('missed:'))).toEqual([]);
       expect(score.allRight).toBe(score.found);
+      // Not only within 5 minutes: every time exactly the true one (P15-52 review).
+      expect(score.timesExact).toBe(score.found);
       missed += score.truthTimes - score.found;
     }
     expect(missed).toBe(LEFT_OUT[name] ?? 0);
