@@ -5,6 +5,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -176,7 +177,7 @@ describe("a Quest card's join button", () => {
     await answer(user, '참여 신청');
 
     expect(server.received('POST /quest-join-requests')[0]?.body).toEqual({ questId: BADMINTON.id });
-    expect(toast()).toHaveTextContent('참여를 신청했어요');
+    expect(toast()).toHaveTextContent('참여를 신청했어요보낸 신청 보기');
   });
 
   it('asks to join an Open Quest the Leader removed the User from', async () => {

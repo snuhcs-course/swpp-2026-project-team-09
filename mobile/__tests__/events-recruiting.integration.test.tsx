@@ -5,6 +5,7 @@
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -163,7 +164,7 @@ describe('joining from the sheet', () => {
     await answer(user, '참여 신청');
 
     expect(server.received('POST /quest-join-requests').map(({ body }) => body)).toEqual([{ questId: TAE_O_GOING.id }]);
-    expect(toast()).toHaveTextContent('참여를 신청했어요');
+    expect(toast()).toHaveTextContent('참여를 신청했어요보낸 신청 보기');
   });
 });
 

@@ -34,7 +34,7 @@ import { agoWords } from '@/features/quests/room-adapter';
 import { REMOVED_CAPTION } from '@/features/quests/refusals';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
 import { openPost } from './post-card';
-import { type PartyActions, usePartyActions } from './use-party-actions';
+import { type PartyActions, showFind, usePartyActions } from './use-party-actions';
 
 // `{when} · {where} · {names} 함께`, of what the invitation carries: the server build has none of the three yet, and
 // then the card counts the Holders.
@@ -145,7 +145,13 @@ function SentRequests({ actions }: { actions: PartyActions }): ReactElement {
       </Text>
       {requests === undefined && isPending ? <LoadingState /> : null}
       {requests === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
-      {requests?.length === 0 ? <EmptyState icon="users" words="보낸 신청이 없어요" /> : null}
+      {requests?.length === 0 ? (
+        <EmptyState
+          action={{ label: '파티 찾기', onPress: showFind }}
+          icon="users"
+          words="여기서는 보낸 참여 신청을 볼 수 있어요"
+        />
+      ) : null}
       {(requests ?? []).map((request) => (
         <SentRequestRow
           key={request.id}

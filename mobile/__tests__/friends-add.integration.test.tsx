@@ -2,11 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import * as Clipboard from 'expo-clipboard';
 import { Share } from 'react-native';
-import { pass, screen } from './support/app';
+import { within } from '@testing-library/react-native';
+import { pass, screen, shownAddress } from './support/app';
 import { openFriendScreen } from './support/friends';
 import { FRIEND_PILL } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
@@ -78,6 +80,18 @@ describe('친구 ID로 추가', () => {
 
     expect(screen.getByRole('button', { name: '요청됨' })).toBeDisabled();
     expect(screen.getByText('유지안님에게 친구 요청을 보냈어요')).toBeVisible();
+  });
+
+  it('links its toast to 친구 관리, where the Friend shows once they accept', async () => {
+    const user = await openFriendScreen('/me/friends/add');
+
+    await find(user, 'YJ7A4Y6Z');
+    await user.press(screen.getByRole('button', { name: '추가' }));
+    await pass(1000);
+    await user.press(within(screen.getByTestId('toast-layer')).getByRole('button', { name: '친구 목록 보기' }));
+    await pass(500);
+
+    expect(shownAddress()).toBe('/me/friends');
   });
 
   it('makes two Friends at once when the owner asked first', async () => {

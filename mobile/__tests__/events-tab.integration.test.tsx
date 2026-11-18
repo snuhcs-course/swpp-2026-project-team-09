@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -131,11 +132,11 @@ describe('the filters and the search', () => {
 });
 
 describe('an empty list', () => {
-  it('says that no event is ahead when the main server lists none', async () => {
+  it('says what the tab holds when the main server lists no event', async () => {
     answerEvents(server, { events: [] });
     await openEvents();
 
-    expect(screen.getByText('예정된 행사가 없어요')).toBeVisible();
+    expect(screen.getByText('여기서는 학교 행사를 모아 볼 수 있어요')).toBeVisible();
   });
 });
 

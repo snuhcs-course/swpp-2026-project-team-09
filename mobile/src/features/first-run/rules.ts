@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // The first run's cards (P05 ticket 09), in the order they are shown.
@@ -17,7 +18,7 @@ export interface FirstRunFacts {
   friends: number | undefined;
 }
 
-function countOf(card: FirstRunCard, { classes, interests, friends }: FirstRunFacts): number | null | undefined {
+export function countOf(card: FirstRunCard, { classes, interests, friends }: FirstRunFacts): number | null | undefined {
   if (card === 'timetable') {
     return classes;
   }

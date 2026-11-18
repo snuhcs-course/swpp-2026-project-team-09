@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -71,7 +72,7 @@ describe('파티 모집글 of an Open Quest the Leader removed the User from', (
 
     expect(server.received('POST /quest-join-requests')[0]?.body).toEqual({ questId: RUN.id });
     expect(server.received(`POST /quests/${RUN.id}/join`)).toEqual([]);
-    expect(toast()).toHaveTextContent('참여를 신청했어요');
+    expect(toast()).toHaveTextContent('참여를 신청했어요보낸 신청 보기');
   });
 });
 

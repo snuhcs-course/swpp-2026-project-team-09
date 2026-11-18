@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -10,16 +11,16 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 import { font, Icon, radius, shadow, size, tutorialTone } from '@/design-system';
 import { TUTORIAL_START } from '../layout';
 
-// "새내기 튜토리얼 시작하기" at the bottom left, above the row of buttons (MainTutorialStart). It opens the pager. Whether
-// it shows is the main screen's (`showsStartButton`, and no card or chat open).
-export function TutorialStartButton({ onPress }: { onPress: () => void }): ReactElement {
+// "새내기 튜토리얼 시작하기" at the bottom left, above the row of buttons or in its place (MainTutorialStart). It opens
+// the pager. Whether it shows is the main screen's (`showsStartButton`, and no card or chat open).
+export function TutorialStartButton({ bottom, onPress }: { bottom: number; onPress: () => void }): ReactElement {
   return (
     <Pressable
       accessibilityLabel="새내기 튜토리얼 시작하기"
       accessibilityRole="button"
       hitSlop={(size.touchMin - TUTORIAL_START.height) / 2}
       onPress={onPress}
-      style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.button, { bottom }, pressed && styles.pressed]}
     >
       <Icon color={tutorialTone.ink} name="flag" size={14} />
       <Text style={styles.words}>새내기 튜토리얼 시작하기</Text>
@@ -31,7 +32,6 @@ const styles = StyleSheet.create({
   button: {
     position: 'absolute',
     left: TUTORIAL_START.left,
-    bottom: TUTORIAL_START.bottom,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,

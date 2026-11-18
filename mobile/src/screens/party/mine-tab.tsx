@@ -5,6 +5,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -18,12 +19,24 @@ import { joinAsk } from '../room/activation-box';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
 import { useRoomActions } from '../room/use-room-actions';
 import { MineCard } from './mine-card';
+import { showFind } from './use-party-actions';
 
+// Without any 파티, the list says what it is for and leads to 찾기 (HE H7). A filter that hides every one says so.
 const EMPTY: Record<MineFilter, string> = {
-  all: '참여 중인 파티가 없어요',
+  all: '여기서는 참여 중인 파티를 볼 수 있어요',
   private: '비공개 파티가 없어요',
   public: '참여 중인 공개 파티가 없어요',
 };
+
+function MineEmpty({ filter }: { filter: MineFilter }): ReactElement {
+  return (
+    <EmptyState
+      action={filter === 'all' ? { label: '파티 찾기', onPress: showFind } : undefined}
+      icon="users"
+      words={EMPTY[filter]}
+    />
+  );
+}
 
 // The strip's `참여` enters as the room's does: at once, or after asking when the User must leave another Party.
 function useEnter(onAsk: (ask: Ask) => void): (card: MineCardView) => void {
@@ -75,7 +88,7 @@ export function useMineList(): MineList {
       <View style={styles.body}>
         {cards === undefined && isPending ? <LoadingState /> : null}
         {cards === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
-        {cards !== undefined && held(filter) === 0 ? <EmptyState icon="users" words={EMPTY[filter]} /> : null}
+        {cards !== undefined && held(filter) === 0 ? <MineEmpty filter={filter} /> : null}
         {groupMine(shown).map((group) => (
           <View key={group.title} style={styles.group}>
             <SectionHeader>{group.title}</SectionHeader>

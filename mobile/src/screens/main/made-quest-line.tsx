@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -10,7 +11,7 @@ import { color, font, Icon, radius, shadow, size } from '@/design-system';
 import { MADE_LINE } from './layout';
 
 // The line over the input of a Quest made from a Plan, which says what its flag says and opens its card after
-// inviting. It stands at the left above what else stands there over the row of buttons.
+// inviting. It stands at the left above what else stands there over the AI input.
 export function MadeQuestLine({
   bottom,
   words,
