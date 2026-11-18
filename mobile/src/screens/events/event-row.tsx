@@ -9,7 +9,7 @@ import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge, color, eventText, eventTone, Icon, radius, size, space } from '@/design-system';
 import type { EventView } from '@/features/events/adapter';
-import { EVENTS_TAB_LOOK, FavoriteToggle } from './favorite-toggle';
+import { FavoriteToggle } from './favorite-toggle';
 
 // The title and the time·place line take at most this many lines each: a long real title or place stays one short
 // row, and the detail sheet shows them whole.
@@ -65,8 +65,8 @@ interface EventRowProps {
 }
 
 // An event's row on the 행사 tab, as the `Events` frame draws it: the date column, then the source, the title, the time
-// and the place, and the party line, with the bookmark at the top right. A press opens the detail sheet. The row is
-// not one control for a screen reader: its title is the button that opens it, and its party line and bookmark stay
+// and the place, and the party line, with the ☆ at the top right. A press opens the detail sheet. The row is
+// not one control for a screen reader: its title is the button that opens it, and its party line and ☆ stay
 // buttons of their own.
 export function EventRow({ event, focused, onLayout, onOpen, onParty }: EventRowProps): ReactElement {
   const line = event.place === null ? event.hours : `${event.hours} · ${event.place}`;
@@ -106,7 +106,7 @@ export function EventRow({ event, focused, onLayout, onOpen, onParty }: EventRow
           {event.mine ? <MineMark /> : null}
         </View>
       </View>
-      <FavoriteToggle eventId={event.id} look={EVENTS_TAB_LOOK} style={styles.bookmark} />
+      <FavoriteToggle eventId={event.id} style={styles.favorite} />
     </Pressable>
   );
 }
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     marginRight: space[4],
     backgroundColor: color.border,
   },
-  // Clear of the bookmark.
+  // Clear of the ☆.
   body: { flex: 1, minWidth: 0, gap: space[1], paddingRight: space[8] },
   source: { ...eventText.source, color: color.inkMuted },
   title: { ...eventText.title, color: color.ink },
@@ -156,5 +156,5 @@ const styles = StyleSheet.create({
   partyRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: space[2] },
   mine: { alignSelf: 'center', justifyContent: 'center' },
   partySome: { paddingHorizontal: PARTY_PADDING, backgroundColor: color.blue100 },
-  bookmark: { position: 'absolute', top: space[3], right: -space[2] },
+  favorite: { position: 'absolute', top: space[3], right: -space[2] },
 });

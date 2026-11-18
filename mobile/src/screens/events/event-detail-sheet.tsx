@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -20,7 +21,7 @@ import {
 } from '@/design-system';
 import type { EventView } from '@/features/events/adapter';
 import { MineMark } from './event-row';
-import { EVENTS_TAB_LOOK, FavoriteToggle } from './favorite-toggle';
+import { FavoriteToggle } from './favorite-toggle';
 
 // "파티 찾기/모집", or "모집 중인 파티 {n} · 찾기/모집" when a recruiting Quest the User can join is there for the event,
 // as the row counts them.
@@ -53,7 +54,7 @@ function Details({ event }: { event: EventView }): ReactElement {
             {event.title}
           </Text>
         </View>
-        <FavoriteToggle eventId={event.id} look={EVENTS_TAB_LOOK} style={styles.bookmark} />
+        <FavoriteToggle eventId={event.id} style={styles.favorite} />
       </View>
       <View style={styles.facts}>
         <Fact icon="clock" name="언제" words={event.time} />
@@ -117,12 +118,12 @@ export function EventDetailSheet({ event, onClose, onParty }: EventDetailSheetPr
 }
 
 // The `EventsDetail` frame's measures that the design system's 4-point steps do not hold: the gaps and padding of the
-// time and place box, its key column, and how far the bookmark's touch area reaches past the title's corner.
+// time and place box, its key column, and how far the ☆'s touch area reaches past the title's corner.
 const BOX_GAP = 10;
 const BOX_PADDING = 14;
 const KEY_WIDTH = 36;
 const ICON_DROP = 2;
-const BOOKMARK_REACH = { marginTop: -6, marginRight: -10 };
+const FAVORITE_REACH = { marginTop: -6, marginRight: -10 };
 
 const styles = StyleSheet.create({
   body: { flexShrink: 1, gap: space[4], paddingHorizontal: space[5], paddingBottom: space[1] },
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
   names: { flex: 1, minWidth: 0, gap: space[1] },
   source: { ...eventText.source, color: color.inkMuted },
   title: { ...text.titleLg, color: color.ink },
-  bookmark: BOOKMARK_REACH,
+  favorite: FAVORITE_REACH,
   facts: {
     gap: BOX_GAP,
     paddingVertical: BOX_PADDING,

@@ -1158,9 +1158,8 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
   frame's 분류 tabs and "대상" are not drawn: a Global Event has no category or audience. AI matching left the main
   UI on 2026-11-10 (P06-03): the app has no matching screen, though the main server's matching routes and
   `apiClient`'s calls for them stay. The chat's event cards are `event-item.tsx`, with "자세히" and "파티 찾기/모집".
-- The bookmark at a row's top right and in the detail sheet (`favorite-toggle.tsx`, `EVENTS_TAB_LOOK`; whether it stays
-  a bookmark or turns back into the ☆ is the owner's open question in ticket 54), named "관심 행사에 추가" or
-  "관심 행사에서 빼기", keeps the event or drops it (`PUT` and `DELETE /global-events/:id/favorite`): a Favorite
+- The ☆ at a row's top right and in the detail sheet (`favorite-toggle.tsx`), named "즐겨찾기" as everywhere in the
+  app, keeps the event or drops it (`PUT` and `DELETE /global-events/:id/favorite`): a Favorite
   Event. It changes at once and back with "즐겨찾기를 바꾸지 못했어요" when the main server refuses. The chat's event
   cards have it as the ☆ "즐겨찾기", and so does the map's card of one event, left of the X; a grouped pin's card
   marks a Favorite Event's row with ★ instead. Whether the User starred an event is read from `GET /global-events`

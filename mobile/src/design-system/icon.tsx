@@ -8,6 +8,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -89,8 +90,7 @@ const ICONS = {
   play: [{ path: 'M7 5l12 7-12 7z' }],
   // Not the design system's: the ☆ of a Global Event, filled for a Favorite Event.
   star: [{ path: 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z' }],
-  // Not the design system's: the `Events` frame draws them on a kept event (관심 행사) and on "원문 보기".
-  bookmark: [{ path: 'M6 3h12v18l-6-4.5L6 21z' }],
+  // Not the design system's: the `Events` frame draws it on "원문 보기".
   globe: [
     { path: 'M11 3a9 9 0 1 0 9 9' },
     { path: 'M2 12h12' },

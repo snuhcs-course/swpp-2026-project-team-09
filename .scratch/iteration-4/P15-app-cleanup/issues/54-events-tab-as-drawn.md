@@ -33,12 +33,12 @@ Against the `Events` board (the list) and the `EventsDetail` board (the sheet):
   - **Time and place on one line of words**, "18:00–20:00 · 301동 대강당", in 15 points: the hours alone, since the date column says the day ("11월 30일까지" for an event over a period). At most 2 lines, cut with "…". The place is left out when the event has none.
   - **The party line**, 8 under it: "모집 중인 파티 {n}" in bold navy on light blue when a recruiting Quest the User can join is gathering for the event, else "함께 갈 파티 찾기" in ink with no fill; each with the people icon before and › after. A press opens 파티 찾기/모집, as the card's button did. It is drawn 40 high, as the board draws it, and its touch area reaches `size.touchMin` (48) by `hitSlop`; so do the filters'.
   - **"내 파티"** beside the party line, the design system's `Badge` in the friend tone without an icon, as the old card's badge was, when the User holds a Quest for the event with others or open to them, closed ones too (not one taken alone).
-  - **The bookmark** at the top right of the row (44 square, 24-point mark): filled navy when the User keeps the event, an outline in muted ink when not. Its name is "관심 행사에 추가" or "관심 행사에서 빼기". A press does what ☆ did: `PUT` or `DELETE /global-events/:id/favorite`.
+  - **The ☆** at the top right of the row (44 square to touch, the app's 20-point star): filled in the official colour when the User keeps the event, an outline in muted ink when not. Its name is "즐겨찾기", as on the map's card and the chat's. The board draws a bookmark named "관심 행사"; the owner chose the star on 2026-11-18, so that one thing has one mark and one name in the whole app (see Differences from the boards).
   - The badge "같이 갈 파티 {n}개" and the buttons "자세히" and "파티 찾기/모집" are gone from the row, and "내 파티" moves to the party line's row. The badges' place over the title, and its empty band, go with them. 자세히 is now two presses: the row, then 원문 보기.
   - **A press anywhere else on the row opens the detail sheet.**
 - **Opened at one event**, the row is marked with a light blue ground for 2.6 s, in place of the navy border.
 - **The detail sheet** (`EventsDetail`), a bottom sheet over the tab:
-  - The source, "내 파티" as on the row, the title in bold 22 points (`text.titleLg`, whole, not cut), and the bookmark at the right.
+  - The source, "내 파티" as on the row, the title in bold 22 points (`text.titleLg`, whole, not cut), and the ☆ at the right.
   - A grey box with rows of an icon, a key and its value: "언제" with the full time ("오늘 18:00–20:00"), "어디" with the whole place.
   - The event's description.
   - "🌐 원문 보기" (outlined), which opens the event's page in the browser, and the navy "파티 찾기/모집", or "모집 중인 파티 {n} · 찾기/모집" when a recruiting Quest the User can join is gathering, counted as on the row. The latter closes the sheet and opens 파티 찾기/모집.
@@ -73,6 +73,7 @@ The two missing parts are left out (see "Differences from the boards"). Giving t
 
 ## Differences from the boards
 
+- The board draws a bookmark named "관심 행사" where the app keeps its ☆ "즐겨찾기": GLOSSARY.md names a Favorite Event by its star, 관심 elsewhere in the app means a watched interest that notifies, and the map and the chat already use the star. The owner chose the star for every screen.
 - No 분류 tabs (진로 / 이벤트 / 축제) under the app bar, and no "대상" row in the sheet: the server has neither (above).
 - The board's weight 800 is drawn in Pretendard Bold: the app loads Regular, Medium, SemiBold and Bold only.
 - The board does not limit the title's or the time·place line's lines. They are cut at 2 lines each so that a long real title or place stays one short row, the owner's complaint; every example on the board fits in 2, and the sheet shows them whole.
@@ -90,23 +91,21 @@ The two missing parts are left out (see "Differences from the boards"). Giving t
 - [x] The date column shows today for an event that has begun and not ended, and its start's day otherwise, unit-tested at the edges: starting today, starting this minute, ended yesterday, ending this minute, a night across midnight before and after midnight, and a time when Korea's day differs from UTC's.
 - [x] The day is level with the title with a source over it and without one.
 - [x] The filters and the party line keep their drawn 40-point height and reach a 48-point touch area by `hitSlop`.
-- [x] The bookmark, named "관심 행사에 추가" or "관심 행사에서 빼기", keeps or drops the event at once against the main server, and turns back with the toast when it refuses.
-- [x] A press on a row opens the detail sheet: source, title, bookmark, "언제" and "어디", the description, "원문 보기" (opening `sourceUrl`, left out without one) and the party button, which opens 파티 찾기/모집.
+- [x] The ☆, named "즐겨찾기", keeps or drops the event at once against the main server, and turns back with the toast when it refuses.
+- [x] A press on a row opens the detail sheet: source, title, ☆, "언제" and "어디", the description, "원문 보기" (opening `sourceUrl`, left out without one) and the party button, which opens 파티 찾기/모집.
 - [x] The filters keep the same events as before this ticket (the first version of this branch let "파티 모집 중" also keep an event with only the User's own 파티; that is undone), and a filter that leaves nothing says "해당하는 행사가 없어요"; a search that finds nothing says "검색 결과가 없어요"; no event at all shows #348's empty state.
 - [x] "다가오는 행사" heads the list.
 - [x] `/events?focus=<id>` marks the row for 2.6 s.
 - [x] The chat's event cards and the map's card are unchanged, their tests passing.
 - [x] No native file and no main-server file changes.
-- [x] Tests, by ADR 0007: the date words and the counts are unit-tested with the adapter (`events-adapter`, `event-date`); the tab, the row, the bookmark, the sheet and the filters are tested by the integration tests that render the app over the fake main server (`events-tab`, `event-favorites`, `events-recruiting`).
+- [x] Tests, by ADR 0007: the date words and the counts are unit-tested with the adapter (`events-adapter`, `event-date`); the tab, the row, the ☆, the sheet and the filters are tested by the integration tests that render the app over the fake main server (`events-tab`, `event-favorites`, `events-recruiting`).
 
 ## Open questions for the owner
 
 1. The 분류 tabs (진로 / 이벤트 / 축제) and "대상": should the server read a category and an audience for each event? That is a server change and a Release, its own ticket.
 2. Line limits: 2 lines for the title and 2 for time·place. Fewer or more?
 3. ~~An event over a period that began before today: the date column shows its first day.~~ Answered in review: it shows today while the event runs (the rule above). Say if the last day is wanted instead.
-4. **The bookmark "관심 행사" or the star "즐겨찾기"?** The tab draws the board's bookmark named "관심 행사", while GLOSSARY.md defines a Favorite Event as starred (☆) and lists "Bookmark" under Avoid, 관심 elsewhere in the app is a watched interest that notifies, and the map card, the chat card and the failure toast say ☆ 즐겨찾기. The tab's toggle takes its icon and its names from one constant, `EVENTS_TAB_LOOK` in `favorite-toggle.tsx` (now `BOOKMARK`), so either answer is one small commit:
-   - (가) **The star and "즐겨찾기" on this tab too**: set `EVENTS_TAB_LOOK = STAR` in `favorite-toggle.tsx`, and update this ticket's and `mobile/README.md`'s lines on the bookmark. Nothing else changes; the tests read the names from the constant.
-   - (나) **The bookmark and "관심 행사" everywhere**: the map card's and the chat card's toggle (`FavoriteToggle`'s default look, `STAR`, so `BOOKMARK` becomes the default) and a grouped pin's ★ row, the toast "즐겨찾기를 바꾸지 못했어요" (`use-favorite.ts`), GLOSSARY.md's Favorite Event entry and its Avoid list ("Bookmark"), the README, and the tests that name 즐겨찾기 (`event-favorites`, `answer-frame-event-cards`).
+4. **The bookmark "관심 행사" or the star "즐겨찾기"?** Answered by the owner on 2026-11-18: the star, everywhere. The tab's row and sheet use the same ☆ "즐겨찾기" as the map's card and the chat's, and the bookmark look and its icon are removed.
 5. The board's "관심 행사" screen (kept events, from 내 정보) is not in the app. Is it wanted?
 
 ## Comments
@@ -125,7 +124,7 @@ The two missing parts are left out (see "Differences from the boards"). Giving t
 The review at `295175ac`, answered on the branch:
 
 - The count is back to the recruiting Quests the User can join, as the map card and the chat card count them, and 파티 모집 중 follows it, as before this ticket. The User's own 파티 is "내 파티" beside the party line and in the sheet, the old card's badge.
-- The bookmark stays as drawn until the owner answers open question 4. `EVENTS_TAB_LOOK` holds the tab's icon and names in one place.
+- The bookmark was kept as drawn until the owner answered open question 4; the answer was the star, and the tab now draws the app's ☆ "즐겨찾기" (`favorite-toggle.tsx`, with no look of its own).
 - The date column shows today for a running event (open question 3, answered in review).
 - The day is level with the title with and without a source: lowered by 18 under a source's line, raised by that line and its gap without one.
 - The filters and the party line keep their 40 drawn and reach 48 by `hitSlop`.
