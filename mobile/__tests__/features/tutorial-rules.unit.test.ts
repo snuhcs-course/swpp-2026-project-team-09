@@ -4,16 +4,15 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Tutorial, TutorialQuest, TutorialQuestStatus, TutorialState } from '@/api/tutorial-types';
 import {
   categoryOf,
-  firstNotStarted,
-  firstOfCategory,
+  firstCategory,
   kickerOf,
   nextAfter,
-  questsInList,
   rowOf,
   showsStartButton,
   stepOf,
@@ -53,7 +52,9 @@ describe('the start button', () => {
     ['off', tutorialOf('off', 'notStarted'), false],
     ['available', tutorialOf('available', 'notStarted', 'notStarted'), true],
     ['active with a quest not started', tutorialOf('active', 'started', 'notStarted'), true],
-    ['active with every quest started', tutorialOf('active', 'started', 'completed'), false],
+    // The list is the one way back to a started quest (MainTutorialList).
+    ['active with a quest started and not completed', tutorialOf('active', 'started', 'completed'), true],
+    ['active with every quest completed', tutorialOf('active', 'completed', 'completed'), false],
     ['stopped', tutorialOf('stopped', 'started', 'notStarted'), false],
     ['finished', tutorialOf('finished', 'completed', 'notStarted'), false],
   ])('%s: %p', (_, tutorial, shown) => {
@@ -61,17 +62,7 @@ describe('the start button', () => {
   });
 });
 
-describe('the quest list group', () => {
-  it('holds the started quests that are not completed, while active', () => {
-    const shown = questsInList(tutorialOf('active', 'completed', 'started', 'notStarted', 'started'));
-
-    expect(shown.map(({ key }) => key)).toEqual(['q2', 'q4']);
-  });
-
-  it.each<TutorialState>(['off', 'available', 'stopped', 'finished'])('is empty while %s', (state) => {
-    expect(questsInList(tutorialOf(state, 'started', 'started'))).toEqual([]);
-  });
-
+describe("a quest's place", () => {
   it('numbers a quest by its place', () => {
     expect(stepOf(tutorialOf('active', 'started', 'started', 'notStarted'), 'q2')).toBe('2/3');
   });
@@ -106,24 +97,14 @@ describe('the Tutorial Categories', () => {
     expect(first === undefined ? null : kickerOf(tutorial, first)).toBe('새내기 튜토리얼 · 1/1');
   });
 
-  it("move to the category's first quest not started, or its first quest", () => {
-    expect(firstOfCategory(withCategories('notStarted', 'notStarted', 'started', 'notStarted').quests, 'study')).toBe(
-      3,
-    );
-    expect(firstOfCategory(withCategories('notStarted', 'notStarted', 'completed', 'started').quests, 'study')).toBe(2);
-    expect(firstOfCategory(withCategories('notStarted').quests, 'culture')).toBe(-1);
+  it('open the list on the category of the first quest not completed, else on the first category', () => {
+    expect(firstCategory(withCategories('completed', 'completed', 'started', 'notStarted'))).toBe('study');
+    expect(firstCategory(withCategories('started', 'completed', 'notStarted', 'notStarted'))).toBe('life');
+    expect(firstCategory(withCategories('completed', 'completed', 'completed', 'completed'))).toBe('life');
   });
 });
 
-describe('the pager', () => {
-  it('opens on the first quest not started', () => {
-    expect(firstNotStarted(tutorialOf('active', 'started', 'completed', 'notStarted').quests)).toBe(2);
-  });
-
-  it('opens on the first quest when every quest is started', () => {
-    expect(firstNotStarted(tutorialOf('active', 'started', 'started').quests)).toBe(0);
-  });
-
+describe("the list's next quest", () => {
   it('goes on to the next quest not started after the one completed', () => {
     const { quests } = tutorialOf('active', 'notStarted', 'completed', 'started', 'notStarted');
 
@@ -184,7 +165,7 @@ describe('the 내 정보 row while on', () => {
     expect(
       rowOf({ ...tutorialOf('active', 'completed', 'started', 'notStarted'), eligibleByDefault: true }),
     ).toMatchObject({
-      line: '진행 중 · 완료 1/3 · 지도의 퀘스트 목록에서 이어서 해요',
+      line: '진행 중 · 완료 1/3 · 지도 화면 아래 버튼으로 이어서 해요',
       stopLabel: '그만하기',
     });
   });

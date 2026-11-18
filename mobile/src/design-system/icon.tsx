@@ -7,6 +7,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -93,6 +94,54 @@ const ICONS = {
   stop: [{ rect: [7, 7, 10, 10, 2] }],
   history: [{ path: 'M3.5 12a8.5 8.5 0 1 0 2.5-6' }, { path: 'M3.5 3.5V8H8' }, { path: 'M12 8v4l3 2' }],
   chatPlus: [{ path: 'M4 5h16v11H9l-5 4z' }, { path: 'M12 8v5' }, { path: 'M9.5 10.5h5' }],
+  // The 새내기 튜토리얼's quests and the facts of their guides, as the canvas's boards draw them.
+  idcard: [
+    { rect: [2, 5, 20, 14, 1] },
+    { circle: [8, 11, 2] },
+    { path: 'M5 16.5c.6-1.4 1.7-2 3-2s2.4.6 3 2' },
+    { path: 'M14 10h5' },
+    { path: 'M14 14h4' },
+  ],
+  bowl: [{ path: 'M3 11h18a9 9 0 0 1-18 0z' }, { path: 'M8 21h8' }, { path: 'M14 3l-3 8' }, { path: 'M19 4l-6 7' }],
+  box: [{ path: 'M21 8l-9-5-9 5 9 5 9-5z' }, { path: 'M3 8v8l9 5 9-5V8' }, { path: 'M12 13v8' }],
+  laptop: [{ path: 'M5 5h14v10H5z' }, { path: 'M2 19h20' }],
+  grade: [{ path: 'M9 11l3 3 8-8' }, { path: 'M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9' }],
+  spark: [
+    { path: 'M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z' },
+    { path: 'M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z' },
+  ],
+  download: [{ path: 'M12 3v12' }, { path: 'M7 10l5 5 5-5' }, { path: 'M5 21h14' }],
+  moon: [{ path: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z' }],
+  cross: [{ path: 'M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z' }],
+  heart: [
+    {
+      path: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z',
+    },
+  ],
+  art: [{ path: 'M3 3h18v18H3z' }, { path: 'M3 16l5-5 4 4 3-3 6 6' }, { path: 'M15.5 8.5h.01' }],
+  music: [{ path: 'M9 18V5l12-2v13' }, { circle: [6, 18, 3] }, { circle: [18, 16, 3] }],
+  mountain: [{ path: 'M8 3l4 8 5-5 5 15H2z' }],
+  bank: [
+    { path: 'M3 10h18' },
+    { path: 'M12 3l9 5H3z' },
+    { path: 'M5 10v8' },
+    { path: 'M9.5 10v8' },
+    { path: 'M14.5 10v8' },
+    { path: 'M19 10v8' },
+    { path: 'M3 21h18' },
+  ],
+  phone: [{ rect: [5, 2, 14, 20, 2] }, { path: 'M11 18h2' }],
+  monitor: [{ path: 'M3 4h18v12H3z' }, { path: 'M8 20h8' }, { path: 'M12 16v4' }],
+  // A site outside the app: the globe with an arrow out of it.
+  web: [
+    { path: 'M11 3a9 9 0 1 0 9 9' },
+    { path: 'M2 12h12' },
+    { path: 'M11 3a14 14 0 0 0-3.6 9 14 14 0 0 0 3.6 9' },
+    { path: 'M11 3a14 14 0 0 1 3 5' },
+    { path: 'M16 3h5v5' },
+    { path: 'M21 3l-7 7' },
+  ],
+  arrowRight: [{ path: 'M5 12h14' }, { path: 'M13 6l6 6-6 6' }],
 } as const satisfies Record<string, readonly Stroke[]>;
 
 export type IconName = keyof typeof ICONS;
@@ -102,6 +151,11 @@ function isIconName(name: string): name is IconName {
 }
 
 export const ICON_NAMES: readonly IconName[] = Object.keys(ICONS).filter((name): name is IconName => isIconName(name));
+
+// An icon a server's answer names, such as a Tutorial Quest's: the flag for a name the app does not draw.
+export function iconOrFlag(name: string | undefined): IconName {
+  return name !== undefined && isIconName(name) ? name : 'flag';
+}
 
 function strokeElement(stroke: Stroke, key: number): ReactElement {
   if ('path' in stroke) {

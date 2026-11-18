@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -13,6 +14,7 @@ import { BottomSheet, Button, color, font, Icon, radius, space, text, tutorialTo
 import { kickerOf } from '@/features/tutorial/rules';
 import { Places } from './tutorial-places';
 import { Said } from './tutorial-said';
+import { WebLinks } from './web-links';
 import type { SheetView, TutorialFlow } from './use-tutorial-flow';
 import type { TutorialPinTarget } from './use-tutorial-pin';
 
@@ -82,9 +84,9 @@ function Pair({ left, right }: { left: ReactElement; right: ReactElement }): Rea
   );
 }
 
-// The 관정 quest's buttons: 나중에 and 완료했어요, 어시스턴트에게 예약 부탁하기 (while its switch is on) and the skip;
-// none while the check runs; after a check that found nothing or failed, 다시 확인 and 그냥 완료하기 with
-// 어시스턴트에게 예약 부탁하기.
+// The 관정 quest's buttons: 나중에 and ✓ 완료, 어시스턴트에게 예약 부탁하기 (while its switch is on) and the skip;
+// none while the check runs; after a check that found nothing or failed, 다시 확인 and ✓ 그냥 완료 with
+// 어시스턴트에게 예약 부탁하기 (MainTutorialFail).
 function KwanjeongButtons(props: ButtonsProps & { skipLabel: string }): ReactElement | null {
   const { quest, skipLabel, shown, flow, onAskAssistant } = props;
   const { working } = flow.actions;
@@ -96,13 +98,13 @@ function KwanjeongButtons(props: ButtonsProps & { skipLabel: string }): ReactEle
       <View style={styles.buttons}>
         <Pair
           left={
-            <Button full onPress={flow.check} variant="secondary">
+            <Button full onPress={flow.check} size="lg" variant="secondary">
               다시 확인
             </Button>
           }
           right={
-            <Button disabled={working} full onPress={flow.forceDone} variant="secondary">
-              그냥 완료하기
+            <Button disabled={working} full icon="check" onPress={flow.forceDone} size="lg" variant="done">
+              그냥 완료
             </Button>
           }
         />
@@ -114,13 +116,13 @@ function KwanjeongButtons(props: ButtonsProps & { skipLabel: string }): ReactEle
     <View style={styles.buttons}>
       <Pair
         left={
-          <Button full onPress={flow.closeSheet} variant="secondary">
+          <Button full onPress={flow.closeSheet} size="lg" variant="secondary">
             나중에
           </Button>
         }
         right={
-          <Button full onPress={flow.check}>
-            완료했어요
+          <Button full icon="check" onPress={flow.check} size="lg" variant="done">
+            완료
           </Button>
         }
       />
@@ -132,14 +134,14 @@ function KwanjeongButtons(props: ButtonsProps & { skipLabel: string }): ReactEle
   );
 }
 
-// The sheet's buttons: 나중에 and 완료했어요 for a button quest, with 어시스턴트에게 예약 부탁하기 for one with `ask` (the
+// The sheet's buttons: 나중에 and ✓ 완료 for a button quest, with 어시스턴트에게 예약 부탁하기 for one with `ask` (the
 // 관정 quest as the main server serves it while its check is off), the checked 관정 quest's own, and 퀘스트 완료 under
 // the message.
 function Buttons({ quest, shown, flow, onAskAssistant }: ButtonsProps): ReactElement | null {
   const { working } = flow.actions;
   if (shown.mode === 'message') {
     return (
-      <Button disabled={working} full onPress={flow.finish} size="lg">
+      <Button disabled={working} full icon="check" onPress={flow.finish} size="lg">
         퀘스트 완료
       </Button>
     );
@@ -159,13 +161,13 @@ function Buttons({ quest, shown, flow, onAskAssistant }: ButtonsProps): ReactEle
     <View style={styles.buttons}>
       <Pair
         left={
-          <Button full onPress={flow.closeSheet} variant="secondary">
+          <Button full onPress={flow.closeSheet} size="lg" variant="secondary">
             나중에
           </Button>
         }
         right={
-          <Button disabled={working} full onPress={flow.saidDone}>
-            완료했어요
+          <Button disabled={working} full icon="check" onPress={flow.saidDone} size="lg" variant="done">
+            완료
           </Button>
         }
       />
@@ -174,10 +176,11 @@ function Buttons({ quest, shown, flow, onAskAssistant }: ButtonsProps): ReactEle
   );
 }
 
-// A quest's sheet (MainTutorialSheet): "새내기 튜토리얼 · {category} · n/N" with the dots, the title, the body's paragraphs, the
-// 완료 조건 box, the places and the links, and its buttons; after 완료했어요 or the skip, the completionMessage in the
-// Assistant's bubble with 퀘스트 완료 (MainTutorialOk, with the booking row after the 관정 check found one). While the
-// 관정 check runs, the sheet stays open.
+// A quest's sheet, for a quest without a guide (MainTutorialSheet, "완료 조건 없음 · 링크는 🌐 · [나중에][✓ 완료]"):
+// "새내기 튜토리얼 · {category} · n/N" with the dots and 🌐, the title, the body's paragraphs, the places and the links,
+// and its buttons; after ✓ 완료 or the skip, the completionMessage in the Assistant's bubble with ✓ 퀘스트 완료
+// (MainTutorialOk, with the booking row after the 관정 check found one). While the 관정 check runs, the sheet stays
+// open.
 export function TutorialSheet({ flow, onShowOnMap, onAskAssistant }: TutorialSheetProps): ReactElement {
   const { sheet: shown, tutorial } = flow;
   const quest = shown === null ? undefined : tutorial?.quests.find(({ key }) => key === shown.key);
@@ -191,7 +194,10 @@ export function TutorialSheet({ flow, onShowOnMap, onAskAssistant }: TutorialShe
               <Icon color={tutorialTone.ink} name="flag" size={14} />
               <Text style={styles.kickerWords}>{kickerOf(tutorial, quest)}</Text>
             </View>
-            <Dots shownKey={quest.key} tutorial={tutorial} />
+            <View style={styles.headEnd}>
+              <Dots shownKey={quest.key} tutorial={tutorial} />
+              <WebLinks links={quest.links} />
+            </View>
           </View>
           <Text accessibilityRole="header" style={styles.title}>
             {quest.title}
@@ -201,13 +207,6 @@ export function TutorialSheet({ flow, onShowOnMap, onAskAssistant }: TutorialShe
               {paragraph}
             </Text>
           ))}
-          <View style={styles.condition}>
-            <Icon color={tutorialTone.ink} name="check" size={16} />
-            <View style={styles.conditionWords}>
-              <Text style={styles.conditionLabel}>완료 조건</Text>
-              <Text style={styles.conditionText}>{quest.condition}</Text>
-            </View>
-          </View>
           <Places onShowOnMap={onShowOnMap} quest={quest} />
           <Said quest={quest} shown={shown} />
           <Buttons flow={flow} onAskAssistant={onAskAssistant} quest={quest} shown={shown} />
@@ -234,17 +233,7 @@ const styles = StyleSheet.create({
   dotNow: { width: DOT_NOW, backgroundColor: tutorialTone.dotNow },
   title: { ...text.titleLg, marginTop: -space[1], color: color.ink },
   paragraph: { ...text.body, lineHeight: 24, color: color.inkMuted },
-  condition: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingVertical: space[3],
-    paddingHorizontal: 14,
-    borderRadius: radius.md,
-    backgroundColor: tutorialTone.box,
-  },
-  conditionWords: { flex: 1, gap: 2 },
-  conditionLabel: { fontFamily: font.bold, fontSize: 12, lineHeight: 16, color: tutorialTone.ink },
-  conditionText: { ...text.label, color: color.ink },
+  headEnd: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   buttons: { gap: space[2] },
   pair: { flexDirection: 'row', gap: space[2] },
   half: { flex: 1 },

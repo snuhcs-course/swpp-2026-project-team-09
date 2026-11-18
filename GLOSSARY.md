@@ -209,6 +209,10 @@ _Avoid_: Quest
 A group of Tutorial Quests about one part of campus life, such as 생활 or 이동, shown together. Every Tutorial Quest belongs to exactly one, and a category's quests come one after another.
 _Avoid_: Tutorial Layer, Quest category
 
+**Tutorial Guide**:
+What a Tutorial Quest shows on the map in place of a page of text: its places as pins, a step at a time, each with a few words, the facts that matter as chips, and buttons such as 길찾기. Some guides first ask which kind applies, such as 일반 or 금융 for the student card; in others the steps are places side by side, any of which completes the quest.
+_Avoid_: Tour (the tour of the four tabs after the first run)
+
 ### 관정도서관
 
 **Library Space**:

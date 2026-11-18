@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { TutorialContent } from './tutorial';
@@ -42,14 +43,11 @@ export const FIRST_QUESTS: readonly TutorialContent[] = [
     category: 'life',
     title: '천원의 식사 이용하기',
     brief: '아침만이 아니라 점심과 저녁도 1,000원에 먹을 수 있어요.',
-    body: [
-      '천원의 식사는 아침·점심·저녁 하루 세 끼를 1,000원에 먹을 수 있게 하는 서울대의 식사 지원이에요. 2015년에 국내 대학에서 처음 시작했어요.',
-      '끼니마다 어느 식당에서 언제 하는지는 학생처 안내에 없으니, 생협 식단에서 확인해 보세요.',
-    ],
+    body: ['아침·점심·저녁, 1,000원에 먹을 수 있어요.', '윗공대(301동)는 아침만 운영해요.'],
     condition: '천원의 식사로 한 끼 먹어 보기',
     completion: { kind: 'button' },
     completionMessage: '든든하게 드셨나요? 바쁜 날에도 끼니는 꼭 챙겨요!',
-    places: [{ place: '63' }],
+    places: [{ place: '63' }, { place: '301', label: '윗공대 301동 · 아침만' }],
     links: [
       {
         label: '학생처 천원의 식샤 안내',

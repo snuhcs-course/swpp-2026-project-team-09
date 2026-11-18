@@ -5,6 +5,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { openBrowserAsync } from 'expo-web-browser';
@@ -14,23 +15,23 @@ import { givePhone, ME, ON_CAMPUS, placeOf } from './support/main';
 import { answered, startFresh } from './support/mocks';
 import {
   completed,
-  KWANJEONG_ROW,
-  openAsFreshman,
+  LIST,
   openSheet,
   pressAndWait,
   QUEST_KEYS,
-  S_CARD_ROW,
+  rowName,
   SHEET,
-  SHUTTLE_ROW,
   START,
   started,
 } from './support/tutorial';
 import { within } from '@testing-library/react-native';
 import { apiClient } from '@/api/client';
+import { MOCK_TUTORIAL_SWITCHES } from '@/api/mock/tutorial';
 
-// A 새내기 튜토리얼 quest's sheet on the main screen, against the mocks (MainTutorialSheet, MainTutorialOk and
-// MainTutorialNext): its content, completing a button quest, the 관정 quest served as a button quest (its check off,
-// P13) with 예약 부탁 and no skip, and 그만하기. The 관정 check itself is `tutorial-kwanjeong-check.integration.test.tsx`'s.
+// A 새내기 튜토리얼 quest's sheet on the main screen, for a quest without a guide (an older main server's), against the
+// mocks (MainTutorialSheet, MainTutorialOk and MainTutorialNext): its content, completing a button quest, the 관정
+// quest served as a button quest (its check off, P13) with 예약 부탁 and no skip, and 그만하기. The 관정 check itself is
+// `tutorial-kwanjeong-check.integration.test.tsx`'s.
 
 jest.mock('expo-location');
 jest.mock('expo-web-browser', () => ({ openBrowserAsync: jest.fn(() => Promise.resolve({ type: 'opened' })) }));
@@ -53,34 +54,39 @@ afterEach(() => {
 });
 
 describe("a quest's sheet", () => {
-  it('shows the dots, the title, the paragraphs, the 완료 조건, the places and the links', async () => {
-    await openSheet('s-card', S_CARD_ROW);
+  it('shows the dots, 🌐, the title, the paragraphs, the places and the links, and no 완료 조건', async () => {
+    await openSheet('s-card');
 
     expect(within(screen.getByLabelText(SHEET)).getByText('새내기 튜토리얼 · 생활 · 1/15')).toBeVisible();
+    expect(button('외부 사이트 링크')).toBeVisible();
     expect(screen.getByRole('header', { name: '학생증(S-CARD) 발급받기' })).toBeVisible();
     expect(screen.getByText('학생증(S-CARD)은 도서관 출입처럼 학교생활 곳곳에서 써요.')).toBeVisible();
     expect(screen.getByText('· 신청: MySNU에서 온라인으로 신청해요.')).toBeVisible();
-    expect(screen.getByText('완료 조건')).toBeVisible();
-    expect(screen.getByText('학생증 받기')).toBeVisible();
+    expect(screen.queryByText('완료 조건')).toBeNull();
     expect(button('NH농협두레문예관 2층 지도에서 보기')).toBeVisible();
     expect(button('우리은행 (4동) 지도에서 보기')).toBeVisible();
     expect(button('MySNU 열기')).toBeVisible();
     expect(button('학생처 S-CARD 발급 절차 열기')).toBeVisible();
     expect(button('나중에')).toBeVisible();
-    expect(button('완료했어요')).toBeVisible();
+    expect(button('완료')).toBeVisible();
     expect(findButton('어시스턴트에게 예약 부탁하기')).toBeNull();
   });
 
-  it('opens a link in the browser', async () => {
-    const user = await openSheet('s-card', S_CARD_ROW);
+  it('opens a link in the browser, from the list and from 🌐', async () => {
+    const user = await openSheet('s-card');
 
     await user.press(button('MySNU 열기'));
-
     expect(openBrowserAsync).toHaveBeenCalledWith('https://my.snu.ac.kr');
-  });
 
+    await user.press(button('외부 사이트 링크'));
+    await user.press(screen.getByRole('link', { name: '학생처 S-CARD 발급 절차 열기 (외부 사이트)' }));
+    expect(openBrowserAsync).toHaveBeenLastCalledWith(expect.stringContaining('student.snu.ac.kr'));
+  });
+});
+
+describe("a quest's sheet, pressed", () => {
   it('brings the main map to a place and closes', async () => {
-    const user = await openSheet('admin-shuttle', SHUTTLE_ROW);
+    const user = await openSheet('admin-shuttle');
     const before = placeOf(ME);
 
     await user.press(button('행정관 셔틀 정류장 (행정관 잔디광장 아래) 지도에서 보기'));
@@ -91,110 +97,93 @@ describe("a quest's sheet", () => {
   });
 
   it('closes with 나중에 and keeps the quest started', async () => {
-    const user = await openSheet('s-card', S_CARD_ROW);
+    const user = await openSheet('s-card');
 
     await user.press(button('나중에'));
     await pass(500);
 
     expect(screen.queryByLabelText(SHEET)).toBeNull();
-    expect(button(S_CARD_ROW)).toBeVisible();
+    expect((await answered(apiClient.getTutorial())).quests[0]?.status).toBe('started');
   });
-});
 
-describe("a new quest's sheet", () => {
-  it("shows a new quest's category in its kicker, its places and its links", async () => {
-    await openSheet(
-      'night-shuttle',
-      '새내기 튜토리얼 · 이동 · 10/15 · 야간 셔틀 타기 · 완료 조건 · 야간 도서관 셔틀이나 심야셔틀 타 보기',
-    );
+  it("shows the 천원의 식사 board's two lines and its two places", async () => {
+    await openSheet('thousand-won-meals');
 
-    expect(within(screen.getByLabelText(SHEET)).getByText('새내기 튜토리얼 · 이동 · 10/15')).toBeVisible();
-    expect(screen.getByRole('header', { name: '야간 셔틀 타기' })).toBeVisible();
-    expect(button('행정관 앞 (야간 도서관 셔틀) 지도에서 보기')).toBeVisible();
-    expect(button('완료했어요')).toBeVisible();
+    expect(screen.getByText('아침·점심·저녁, 1,000원에 먹을 수 있어요.')).toBeVisible();
+    expect(screen.getByText('윗공대(301동)는 아침만 운영해요.')).toBeVisible();
+    expect(button('윗공대 301동 · 아침만 지도에서 보기')).toBeVisible();
   });
 });
 
 describe('completing a button quest', () => {
-  it('shows its message, then 퀘스트 완료 completes it and opens the pager on the next quest not started', async () => {
-    await started('s-card');
-    const user = await openAsFreshman();
-    await user.press(button(S_CARD_ROW));
-    await pass(500);
+  it('shows its message, then 퀘스트 완료 completes it and opens the list on the next quest', async () => {
+    const user = await openSheet('s-card');
 
-    await user.press(button('완료했어요'));
+    await user.press(button('완료'));
 
     expect(screen.getByText('학생증을 받았군요! 이제 도서관과 학교 시설을 마음껏 이용해 보세요.')).toBeVisible();
     expect((await answered(apiClient.getTutorial())).quests[0]?.status).toBe('started');
 
     await pressAndWait(user, '퀘스트 완료');
 
-    expect(screen.getByText('퀘스트 완료! 다음 퀘스트 · 2/15')).toBeVisible();
-    expect(screen.getByRole('header', { name: '천원의 식사 이용하기' })).toBeVisible();
-    expect(button('퀘스트 시작')).toBeVisible();
+    expect(screen.getByLabelText(LIST)).toBeVisible();
+    // The banner over the list, and the row.
+    expect(screen.getAllByText('학생증(S-CARD) 발급받기')).toHaveLength(2);
+    expect(screen.getByText('다음')).toBeVisible();
+    expect(button(rowName('s-card', ' · 완료'))).toBeVisible();
     expect((await answered(apiClient.getTutorial())).quests[0]?.status).toBe('completed');
-    await user.press(button('닫기'));
-    expect(findButton(S_CARD_ROW)).toBeNull();
   });
 
-  it('says all is done after the last quest, and the tutorial leaves the main screen', async () => {
+  it('shows n / n after the last quest, and the tutorial leaves the main screen', async () => {
     await completed(...QUEST_KEYS.filter((key) => key !== 'art-museum'));
-    await started('art-museum');
-    const user = await openAsFreshman();
-    await user.press(
-      button(
-        '새내기 튜토리얼 · 문화·여가 · 13/15 · 서울대 미술관/파워플랜트 관람 · 완료 조건 · 미술관이나 파워플랜트 전시 관람하기',
-      ),
-    );
-    await pass(500);
+    const user = await openSheet('art-museum');
 
-    await user.press(button('완료했어요'));
+    await user.press(button('완료'));
     await pressAndWait(user, '퀘스트 완료');
 
-    expect(screen.getByText('새내기 튜토리얼 완료')).toBeVisible();
-    expect(screen.getByRole('header', { name: '튜토리얼을 모두 마쳤어요' })).toBeVisible();
-    expect(screen.getByText('이제 SNU Now를 자유롭게 써 보세요.')).toBeVisible();
+    expect(screen.getByRole('header', { name: '15 / 15' })).toBeVisible();
     await user.press(button('닫기'));
     expect(findButton(START)).toBeNull();
-    expect(screen.queryAllByRole('button', { name: /새내기 튜토리얼 · /u })).toEqual([]);
     expect((await answered(apiClient.getTutorial())).state).toBe('finished');
   });
 });
 
 describe('the 관정 quest, served as a button quest', () => {
-  it('offers 나중에, 완료했어요 and 어시스턴트에게 예약 부탁하기, and no skip', async () => {
-    await openSheet('kwanjeong', KWANJEONG_ROW);
+  it('offers 나중에, ✓ 완료 and 어시스턴트에게 예약 부탁하기, and no skip', async () => {
+    await openSheet('kwanjeong');
 
     expect(button('나중에')).toBeVisible();
-    expect(button('완료했어요')).toBeVisible();
+    expect(button('완료')).toBeVisible();
     expect(button('어시스턴트에게 예약 부탁하기')).toBeVisible();
     expect(findButton('이미 예약 및 이용해본 적이 있어요')).toBeNull();
     expect(button('중앙도서관 관정관 지도에서 보기')).toBeVisible();
   });
 
-  it('completes by 완료했어요 with its message, without a check, then goes to the next quest', async () => {
-    const user = await openSheet('kwanjeong', KWANJEONG_ROW);
+  it('completes by ✓ 완료 with its message, without a check, then goes to the next quest', async () => {
+    const user = await openSheet('kwanjeong');
 
-    await user.press(button('완료했어요'));
+    await user.press(button('완료'));
 
     expect(screen.getByText('관정도서관 이용은 어떠셨나요? 도서관을 자주 이용해 보아요!')).toBeVisible();
     await pressAndWait(user, '퀘스트 완료');
     expect((await answered(apiClient.getTutorial())).quests[4]?.status).toBe('completed');
-    expect(screen.getByText('퀘스트 완료! 다음 퀘스트 · 6/15')).toBeVisible();
+    expect(screen.getAllByText('관정도서관 예약하기')).toHaveLength(2);
+    expect(button(rowName('su-grading-option'))).toBeVisible();
   });
 });
 
 describe('튜토리얼 그만하기', () => {
   it('ends the tutorial on the main screen and keeps the progress', async () => {
+    MOCK_TUTORIAL_SWITCHES.guides = false;
     await started('s-card');
-    const user = await openAsFreshman();
+    const user = await openSheet('thousand-won-meals');
+    await user.press(button('나중에'));
     await pressAndWait(user, START);
 
     await pressAndWait(user, '튜토리얼 그만하기');
 
-    expect(screen.queryByText('새내기 튜토리얼 2/15')).toBeNull();
+    expect(screen.queryByLabelText(LIST)).toBeNull();
     expect(findButton(START)).toBeNull();
-    expect(findButton(S_CARD_ROW)).toBeNull();
     const tutorial = await answered(apiClient.getTutorial());
     expect(tutorial.state).toBe('stopped');
     expect(tutorial.quests[0]?.status).toBe('started');

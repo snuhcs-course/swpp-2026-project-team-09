@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { pass, screen } from './support/app';
@@ -25,7 +26,6 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 const OFF_LINE = '학교생활이 처음이라면\n퀘스트로 하나씩 익혀 보세요';
 const HIDE = '새내기 튜토리얼 안 보기';
 const START = '새내기 튜토리얼 시작하기';
-const S_CARD_ROW = '새내기 튜토리얼 · 생활 · 1/15 · 학생증(S-CARD) 발급받기 · 완료 조건 · 학생증 받기';
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
@@ -122,7 +122,7 @@ describe('while the tutorial is active', () => {
     await answered(apiClient.completeTutorialQuest('admin-shuttle', 'button'));
     await openMe();
 
-    expect(screen.getByText('진행 중 · 완료 1/15 · 지도의 퀘스트 목록에서 이어서 해요')).toBeVisible();
+    expect(screen.getByText('진행 중 · 완료 1/15 · 지도 화면 아래 버튼으로 이어서 해요')).toBeVisible();
     expect(button('그만하기')).toBeVisible();
   });
 
@@ -136,15 +136,13 @@ describe('while the tutorial is active', () => {
     await user.press(screen.getByRole('tab', { name: '지도' }));
     await pass(500);
     expect(findButton(START)).toBeNull();
-    expect(findButton(S_CARD_ROW)).toBeNull();
 
     await user.press(screen.getByRole('tab', { name: '내 정보' }));
     await pressAndWait(user, '진행하기');
-    expect(screen.getByText('진행 중 · 완료 0/15 · 지도의 퀘스트 목록에서 이어서 해요')).toBeVisible();
+    expect(screen.getByText('진행 중 · 완료 0/15 · 지도 화면 아래 버튼으로 이어서 해요')).toBeVisible();
     await user.press(screen.getByRole('tab', { name: '지도' }));
     await pass(500);
     expect(button(START)).toBeVisible();
-    expect(button(S_CARD_ROW)).toBeVisible();
   });
 });
 

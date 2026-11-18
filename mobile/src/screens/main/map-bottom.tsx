@@ -13,6 +13,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -40,7 +41,8 @@ import { FirstRunAsk } from './first-run/first-run-ask';
 import { InterestsHint } from './first-run/interests-hint';
 import { aiInputTop, interestsHintBottom, madeLineBottom, type Room, tutorialStartBottom } from './layout';
 import { MadeQuestLine } from './made-quest-line';
-import { TutorialPager } from './tutorial/tutorial-pager';
+import { type GuideActions, TutorialGuideOverlay } from './tutorial/tutorial-guide';
+import { TutorialList } from './tutorial/tutorial-list';
 import { TutorialSheet } from './tutorial/tutorial-sheet';
 import { TutorialStartButton } from './tutorial/tutorial-start-button';
 import type { UnaskedCards } from './use-map-view';
@@ -95,10 +97,12 @@ interface MapBottomProps {
   onParty: () => void;
   room: Room;
   stack: LayerStack;
-  // The 새내기 튜토리얼: its start button while `room.tutorialStart`, its pager and its quests' sheets.
+  // The 새내기 튜토리얼: its start button while `room.tutorialStart`, its list, its quests' guides and sheets.
   tutorial: TutorialFlow;
   // A quest's 지도에서 보기.
   onShowOnMap: (target: TutorialPinTarget) => void;
+  // A guide's 길찾기: the walking route to its place.
+  onRoute: GuideActions['onRoute'];
   // The conversation, which the main screen holds, so that a card's button can ask the Assistant.
   chat: ChatSheetControl;
   // A received invitation, whose card stands at the bottom in place of everything else there while it is shown, and
@@ -147,7 +151,7 @@ function EverydayBottom(props: EverydayProps): ReactElement {
       <BottomControls cardOpen={bottomCard} onActiveParty={onParty} />
       {bottomCard ? null : <LayerControls stack={stack} />}
       {room.tutorialStart && !keyboardUp ? (
-        <TutorialStartButton bottom={tutorialStartBottom(room)} onPress={tutorial.openPager} />
+        <TutorialStartButton bottom={tutorialStartBottom(room)} onPress={tutorial.openList} />
       ) : null}
       {firstRun.card === null || keyboardUp ? null : (
         <FirstRunAsk card={firstRun.card} onAnswer={firstRun.answer} onHeight={onNoticeHeight} />
@@ -167,10 +171,39 @@ function EverydayBottom(props: EverydayProps): ReactElement {
 // stands right above it. The conversation is kept while the app runs: while the frame is hidden, "이전 답" in the input
 // shows it again. A card nobody asked for, a received invitation's or a made Quest's, takes the bottom without the
 // input.
+// The 새내기 튜토리얼's list, its quests' sheets, and the guide of a quest, which takes the whole map while it is open.
+function TutorialParts({
+  tutorial,
+  chat,
+  onShowOnMap,
+  onRoute,
+}: Pick<MapBottomProps, 'tutorial' | 'chat' | 'onShowOnMap' | 'onRoute'>): ReactElement {
+  return (
+    <>
+      <TutorialGuideOverlay flow={tutorial} onAsk={chat.chat.send} onRoute={onRoute} />
+      <TutorialList flow={tutorial} />
+      <TutorialSheet
+        flow={tutorial}
+        onAskAssistant={(words) => {
+          tutorial.closeSheet();
+          chat.chat.send(words);
+        }}
+        onShowOnMap={(target) => {
+          tutorial.closeSheet();
+          onShowOnMap(target);
+        }}
+      />
+    </>
+  );
+}
+
 export function MapBottom(props: MapBottomProps): ReactElement {
-  const { onAnswerHeight, onInputHeight, room, tutorial, onShowOnMap, chat, unasked } = props;
+  const { onAnswerHeight, onInputHeight, room, tutorial, chat, unasked } = props;
   const { invitation, made } = unasked;
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
+  if (tutorial.guide !== null) {
+    return <TutorialParts {...props} />;
+  }
   const cardShown = invitation.shown || made.shown !== null;
   // The open list of Friends to add takes the input's place in the answer's card. The time band moved whole hides the
   // input but keeps its room, so that the card and its lanes stay under the finger.
@@ -200,18 +233,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
           unseen={chat.unseen}
         />
       ) : null}
-      <TutorialPager flow={tutorial} />
-      <TutorialSheet
-        flow={tutorial}
-        onAskAssistant={(words) => {
-          tutorial.closeSheet();
-          chat.chat.send(words);
-        }}
-        onShowOnMap={(target) => {
-          tutorial.closeSheet();
-          onShowOnMap(target);
-        }}
-      />
+      <TutorialParts {...props} />
     </>
   );
 }

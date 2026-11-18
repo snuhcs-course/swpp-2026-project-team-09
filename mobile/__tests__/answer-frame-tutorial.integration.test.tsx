@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -10,7 +11,8 @@ import { pass, screen } from './support/app';
 import { AI_INPUT, button } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
-import { KWANJEONG_ROW, SHEET, START, started, type User } from './support/tutorial';
+import { openListAt, pressAndWait, rowName, SHEET, START, started, type User } from './support/tutorial';
+import { MOCK_TUTORIAL_SWITCHES } from '@/api/mock/tutorial';
 
 // The answer frame and the 새내기 튜토리얼 (P02 ticket 01, "What gives way" and "Every way of asking"), against the
 // mocks: the tutorial's start button gives way to the frame, and the tutorial's ask shows it.
@@ -71,10 +73,11 @@ describe("the tutorial's start button and the frame", () => {
 // Partitions: the 관정 quest's ask.
 describe("the tutorial's ask", () => {
   it('closes the sheet and shows the frame with the words in the pill, and no chat sheet', async () => {
+    MOCK_TUTORIAL_SWITCHES.guides = false;
     await started('kwanjeong');
     const user = await openFreshmanFramed();
-    await user.press(button(KWANJEONG_ROW));
-    await pass(500);
+    await openListAt(user, 'kwanjeong');
+    await pressAndWait(user, rowName('kwanjeong', ' · 진행 중'));
 
     await user.press(button('어시스턴트에게 예약 부탁하기'));
     await pass(1000);

@@ -5,22 +5,23 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, type StyleProp, StyleSheet, Text, type ViewStyle } from 'react-native';
 import { Icon, type IconName } from './icon';
 import { WaitingDots } from './waiting-dots';
-import { color, font, radius, size as sizes, space, text } from './tokens';
+import { color, font, radius, size as sizes, space, text, tutorialTone } from './tokens';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'destructive';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'destructive' | 'done';
 
 interface ButtonProps {
   // The label: a short Korean verb, such as "참여하기".
   children: string;
   // One `primary` per screen or sheet; everything else is `secondary` or `ghost`. `danger` is for an action that
   // revokes sharing or leaves a Party, and is always confirmed; `destructive`, red and filled, is the answer of a
-  // dialog that confirms it.
+  // dialog that confirms it. `done`, green and filled, says a 새내기 튜토리얼 quest is done (✓ 완료).
   variant?: Variant;
   // `md` is 40 points high inside a 48-point touch area; `lg` is the full-width button at the foot of a sheet or form.
   size?: 'md' | 'lg';
@@ -44,6 +45,7 @@ const LABEL_COLOR: Record<Variant, string> = {
   ghost: color.blue600,
   danger: color.danger,
   destructive: color.onPrimary,
+  done: color.onPrimary,
 };
 
 // The touch area of an `md` button reaches the design system's minimum without growing the button.
@@ -115,6 +117,7 @@ const styles = StyleSheet.create({
   ghost: { backgroundColor: 'transparent' },
   danger: { backgroundColor: color.surface, borderColor: color.danger },
   destructive: { backgroundColor: color.danger },
+  done: { backgroundColor: tutorialTone.done },
   disabled: { backgroundColor: color.surfaceSunken, borderColor: 'transparent' },
   label: { ...text.label },
   labelLg: { ...text.bodyLg, fontFamily: font.semiBold },
@@ -127,4 +130,5 @@ const pressedStyles = StyleSheet.create({
   ghost: { backgroundColor: color.blue50 },
   danger: { backgroundColor: color.dangerSoft },
   destructive: { opacity: 0.85 },
+  done: { opacity: 0.85 },
 });

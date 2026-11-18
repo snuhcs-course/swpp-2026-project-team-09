@@ -1,0 +1,1078 @@
+{
+  "s-card": {
+    "icon": "idcard",
+    "guide": {
+      "kinds": [
+        {
+          "key": "plain",
+          "label": "일반",
+          "icon": "idcard",
+          "title": "일반 학생증",
+          "route": ["MySNU", "학생지원센터"],
+          "steps": [
+            {
+              "tab": "신청",
+              "title": "온라인 신청",
+              "rows": [
+                {
+                  "words": "MySNU 로그인"
+                },
+                {
+                  "words": "캠퍼스·복지"
+                },
+                {
+                  "words": "S-CARD(학생증)"
+                },
+                {
+                  "words": "S-CARD 분실신고",
+                  "note": "여기서 신청"
+                }
+              ],
+              "actions": [
+                {
+                  "kind": "link",
+                  "words": "MySNU",
+                  "url": "https://my.snu.ac.kr"
+                }
+              ]
+            },
+            {
+              "tab": "수령",
+              "title": "방문 수령",
+              "place": {
+                "place": "67"
+              },
+              "name": "학생지원센터",
+              "sub": "67동 · 두레문예관 2층",
+              "chips": [
+                {
+                  "icon": "calendar",
+                  "words": "신청 다음 날부터"
+                },
+                {
+                  "icon": "clock",
+                  "words": "평일 09:00–17:50"
+                },
+                {
+                  "icon": "idcard",
+                  "words": "신분증"
+                }
+              ],
+              "actions": [
+                {
+                  "kind": "route",
+                  "words": "길찾기"
+                }
+              ]
+            },
+            {
+              "tab": "모바일",
+              "title": "모바일 학생증",
+              "optional": true,
+              "rows": [
+                {
+                  "words": "서울대학교 앱"
+                },
+                {
+                  "words": "하단 가운데 '샤'"
+                },
+                {
+                  "words": "모바일 S-CARD 발급"
+                }
+              ],
+              "chips": [
+                {
+                  "icon": "info",
+                  "words": "카드형 없으면 1개월만"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "financial",
+          "label": "금융",
+          "icon": "bank",
+          "title": "금융 학생증 (체크카드)",
+          "route": ["우리은행", "학생지원센터"],
+          "steps": [
+            {
+              "tab": "발급",
+              "title": "은행에서 발급",
+              "place": {
+                "place": "4"
+              },
+              "name": "우리은행",
+              "sub": "4동 · 신양학술정보관",
+              "chips": [
+                {
+                  "icon": "idcard",
+                  "words": "신분증"
+                },
+                {
+                  "icon": "info",
+                  "words": "교환학생은 불가"
+                }
+              ],
+              "actions": [
+                {
+                  "kind": "route",
+                  "words": "길찾기"
+                }
+              ]
+            },
+            {
+              "tab": "정보 등록",
+              "title": "학생 정보 넣기",
+              "place": {
+                "place": "67"
+              },
+              "name": "학생지원센터",
+              "sub": "67동 · 두레문예관 2층",
+              "chips": [
+                {
+                  "icon": "clock",
+                  "words": "평일 09:00–17:50"
+                },
+                {
+                  "icon": "grade",
+                  "words": "신청서 작성"
+                }
+              ],
+              "actions": [
+                {
+                  "kind": "route",
+                  "words": "길찾기"
+                }
+              ]
+            },
+            {
+              "tab": "모바일",
+              "title": "모바일 학생증",
+              "optional": true,
+              "rows": [
+                {
+                  "words": "서울대학교 앱"
+                },
+                {
+                  "words": "하단 가운데 '샤'"
+                },
+                {
+                  "words": "모바일 S-CARD 발급"
+                }
+              ],
+              "chips": [
+                {
+                  "icon": "info",
+                  "words": "카드형 없으면 1개월만"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "thousand-won-meals": {
+    "icon": "bowl",
+    "guide": {
+      "together": true,
+      "about": [
+        "천원의 식사는 재학생이 부담 없이\n식사할 수 있도록 하는 서울대의 복지사업이에요.",
+        "식당에서 재학생 키오스크를 이용하거나,\n카드를 등록해 이용할 수 있어요."
+      ],
+      "steps": [
+        {
+          "tab": "학생회관",
+          "title": "학생회관",
+          "place": {
+            "place": "63"
+          },
+          "pinText": "🍚",
+          "name": "학생회관",
+          "sub": "63동",
+          "chips": [
+            {
+              "icon": "bowl",
+              "words": "아침 · 점심 · 저녁"
+            }
+          ],
+          "actions": [
+            {
+              "kind": "route",
+              "words": "길찾기"
+            },
+            {
+              "kind": "link",
+              "words": "생협 식단",
+              "url": "https://snuco.snu.ac.kr/foodmenu/"
+            }
+          ]
+        },
+        {
+          "tab": "윗공대",
+          "title": "윗공대",
+          "place": {
+            "place": "301"
+          },
+          "pinText": "🍚",
+          "name": "제1공학관",
+          "sub": "301동",
+          "chips": [
+            {
+              "icon": "bowl",
+              "words": "아침만"
+            }
+          ],
+          "actions": [
+            {
+              "kind": "route",
+              "words": "길찾기"
+            },
+            {
+              "kind": "link",
+              "words": "생협 식단",
+              "url": "https://snuco.snu.ac.kr/foodmenu/"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "lost-and-found": {
+    "icon": "box",
+    "guide": {
+      "steps": [
+        {
+          "tab": "분실물센터",
+          "title": "분실물센터",
+          "place": {
+            "place": "101"
+          },
+          "name": "분실물센터",
+          "sub": "101동 1층 · 국민은행 옆",
+          "chips": [
+            {
+              "icon": "clock",
+              "words": "09:00–18:00"
+            },
+            {
+              "icon": "phone",
+              "words": "02-880-8114"
+            },
+            {
+              "icon": "idcard",
+              "words": "신분증 · 서약서"
+            },
+            {
+              "icon": "info",
+              "words": "1개월 보관 뒤 경찰로"
+            }
+          ],
+          "actions": [
+            {
+              "kind": "route",
+              "words": "길찾기"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "laptop-rental": {
+    "icon": "laptop",
+    "guide": {
+      "steps": [
+        {
+          "tab": "신청",
+          "title": "온라인 신청",
+          "about": [
+            "노트북이 갑자기 고장 났거나 깜빡하고 안 챙겨 왔을 때 빌려 쓰면 돼요.\n하루 1,000원이고, 평일 낮에만 빌리고 돌려줄 수 있어요."
+          ],
+          "rows": [
+            {
+              "words": "마이스누",
+              "url": "https://my.snu.ac.kr"
+            },
+            {
+              "words": "캠퍼스·복지"
+            },
+            {
+              "words": "IT서비스"
+            },
+            {
+              "words": "장비/SW대여"
+            },
+            {
+              "words": "장비신청",
+              "note": "여기서 신청"
+            }
+          ]
+        },
+        {
+          "tab": "대여",
+          "title": "방문 대여",
+          "place": {
+            "place": "102"
+          },
+          "name": "IT Service Center",
+          "sub": "102동 정보화본부 101호",
+          "chips": [
+            {
+              "icon": "clock",
+              "words": "평일 09:00–18:00"
+            },
+            {
+              "icon": "laptop",
+              "words": "하루 1,000원"
+            },
+            {
+              "icon": "info",
+              "words": "연체 시 하루 2배"
+            }
+          ],
+          "actions": [
+            {
+              "kind": "route",
+              "words": "길찾기"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "kwanjeong": {
+    "icon": "book",
+    "guide": {
+      "steps": [
+        {
+          "tab": "예약",
+          "title": "좌석 예약",
+          "place": {
+            "place": "62-1"
+          },
+          "name": "관정도서관",
+          "sub": "62-1동",
+          "chips": [
+            {
+              "icon": "monitor",
+              "words": "키오스크"
+            },
+            {
+              "icon": "phone",
+              "words": "관정 앱"
+            },
+            {
+              "icon": "spark",
+              "words": "SNU Now 어시스턴트"
+            }
+          ],
+          "actions": [
+            {
+              "kind": "ask",
+              "words": "어시스턴트에게 부탁",
+              "ask": "관정도서관 7층 열람실에 한 자리 예약해줘"
+            },
+            {
+              "kind": "route",
+              "words": "길찾기"
+            }
+          ]
+        },
+        {
+          "tab": "확인",
+          "title": "30분 안에 확인",
+          "place": {
+            "place": "62-1"
+          },
+          "name": "좌석배정기",
+          "sub": "관정도서관 키오스크",
+          "chips": [
+            {
+              "icon": "clock",
+              "words": "예약 후 30분 안"
+            },
+            {
+              "icon": "info",
+              "words": "안 하면 자동 반납"
+            }
+          ]
+        },
+        {
+          "tab": "반납",
+          "title": "다 쓰면 반납",
+          "place": {
+            "place": "62-1"
+          },
+          "name": "키오스크 · 어시스턴트",
+          "sub": "둘 중 편한 곳에서",
+          "chips": [
+            {
+              "icon": "info",
+              "words": "한 달 5번 놓치면 10일 정지"
+            }
+          ],
+          "actions": [
+            {
+              "kind": "ask",
+              "words": "어시스턴트에게 반납",
+              "ask": "관정도서관 좌석 반납해줘"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "su-grading-option": {
+    "icon": "grade",
+    "guide": {
+      "steps": [
+        {
+          "tab": "신청",
+          "title": "MySNU에서 직접 신청",
+          "about": [
+            "다른 과 전공 수업, 학점 걱정돼서 망설였다면 써 보세요.\n성적을 A~F 대신 S(통과) / U로 받을 수 있어요."
+          ],
+          "link": {
+            "words": "MySNU에서 신청하기",
+            "url": "https://my.snu.ac.kr"
+          },
+          "chips": [
+            {
+              "icon": "calendar",
+              "words": "수업일수 1/4까지"
+            },
+            {
+              "icon": "grade",
+              "words": "지정된 다른 학과 전공 과목만"
+            },
+            {
+              "icon": "info",
+              "words": "학기마다 공지 확인"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "chatgpt-edu": {
+    "icon": "spark",
+    "guide": {
+      "steps": [
+        {
+          "tab": "로그인",
+          "title": "바로 로그인",
+          "rows": [
+            {
+              "words": "chatgpt.com",
+              "url": "https://chatgpt.com"
+            },
+            {
+              "words": "마이스누 ID · 비밀번호",
+              "note": "로그인"
+            }
+          ],
+          "chips": [
+            {
+              "icon": "check",
+              "words": "신청 없이"
+            },
+            {
+              "icon": "info",
+              "words": "휴학생 불가"
+            },
+            {
+              "icon": "clock",
+              "words": "3개월 미접속 시 회수"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "ms365-campus-software": {
+    "icon": "download",
+    "guide": {
+      "together": true,
+      "steps": [
+        {
+          "tab": "캠퍼스 SW",
+          "title": "캠퍼스 라이선스 SW",
+          "rows": [
+            {
+              "words": "학내에서 마이스누",
+              "url": "https://my.snu.ac.kr"
+            },
+            {
+              "words": "캠퍼스·복지"
+            },
+            {
+              "words": "IT서비스"
+            },
+            {
+              "words": "장비/SW대여"
+            },
+            {
+              "words": "캠퍼스라이선스SW다운로드"
+            }
+          ],
+          "chips": [
+            {
+              "icon": "download",
+              "words": "한글 · Office · SPSS · MATLAB"
+            },
+            {
+              "icon": "info",
+              "words": "교육·연구용만"
+            }
+          ]
+        },
+        {
+          "tab": "Microsoft 365",
+          "title": "Microsoft 365",
+          "rows": [
+            {
+              "words": "mso365.snu.ac.kr",
+              "url": "https://mso365.snu.ac.kr/"
+            },
+            {
+              "words": "SNU 아이디",
+              "note": "로그인"
+            }
+          ],
+          "chips": [
+            {
+              "icon": "info",
+              "words": "졸업하면 종료"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "admin-shuttle": {
+    "icon": "bus",
+    "guide": {
+      "steps": [
+        {
+          "tab": "정류장",
+          "title": "행정관 셔틀",
+          "place": {
+            "point": {
+              "latitude": 37.460938,
+              "longitude": 126.950312
+            }
+          },
+          "name": "행정관 셔틀 정류장",
+          "sub": "행정관 잔디광장 아래",
+          "actions": [
+            {
+              "kind": "route",
+              "words": "길찾기"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "night-shuttle": {
+    "icon": "moon",
+    "guide": {
+      "together": true,
+      "steps": [
+        {
+          "tab": "탈출셔틀",
+          "title": "야간 도서관 셔틀",
+          "place": {
+            "point": {
+              "latitude": 37.460938,
+              "longitude": 126.950312
+            }
+          },
+          "pinText": "🌙",
+          "name": "행정관 앞",
+          "sub": "서울대입구역 · 대학동",
+          "chips": [
+            {
+              "icon": "calendar",
+              "words": "연중"
+            },
+            {
+              "icon": "clock",
+              "words": "21:10 · 21:40 · 22:10 · 22:40 · 23:10"
+            }
+          ],
+          "actions": [
+            {
+              "kind": "route",
+              "words": "길찾기"
+            }
+          ]
+        },
+        {
+          "tab": "심야셔틀",
+          "title": "심야셔틀",
+          "showName": true,
+          "name": "에너지자원신기술연구소 출발",
+          "sub": "교내 → 낙성대 → 서울대입구역 3번 출구",
+          "chips": [
+            {
+              "icon": "calendar",
+              "words": "학기 중"
+            },
+            {
+              "icon": "clock",
+              "words": "24:00–02:00 · 30분 간격"
+            }
+          ]
+        },
+        {
+          "tab": "시험기간",
+          "title": "시험기간 심야셔틀",
+          "place": {
+            "place": "302"
+          },
+          "pinText": "🌙",
+          "name": "302동 앞",
+          "sub": "주말·공휴일 제외",
+          "chips": [
+            {
+              "icon": "clock",
+              "words": "23:40 · 00:15 · 00:50 · 01:25 · 02:00"
+            },
+            {
+              "icon": "bus",
+              "words": "도서관 셔틀 3대로 증차"
+            }
+          ],
+          "actions": [
+            {
+              "kind": "route",
+              "words": "길찾기"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "health-clinic": {
+    "icon": "cross",
+    "guide": {
+      "steps": [
+        {
+          "tab": "보건진료소",
+          "title": "보건진료소",
+          "place": {
+            "place": "63"
+          },
+          "name": "보건진료소",
+          "sub": "63동 학생회관 3층",
+          "chips": [
+            {
+              "icon": "grade",
+              "words": "접수·수납 329호"
+            },
+            {
+              "icon": "clock",
+              "words": "09:00–12:00 · 13:30–17:30"
+            },
+            {
+              "icon": "info",
+              "words": "금요일은 16:30까지"
+            }
+          ],
+          "actions": [
+            {
+              "kind": "route",
+              "words": "길찾기"
+            },
+            {
+              "kind": "link",
+              "words": "진료 예약",
+              "url": "https://health4u.snu.ac.kr/medicalTreatment/newAppointment/_/init.do"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "counseling-center": {
+    "icon": "heart",
+    "guide": {
+      "together": true,
+      "steps": [
+        {
+          "tab": "마음",
+          "title": "대학생활문화원",
+          "about": [
+            "마음이 힘들거나 고민이 있을 때 편하게 이야기 나눌 수 있는 곳이에요.\n학생이면 누구나 신청할 수 있으니 혼자 버티지 말고 찾아가 봐요."
+          ],
+          "place": {
+            "place": "63"
+          },
+          "pinText": "💬",
+          "name": "대학생활문화원",
+          "sub": "63동 학생회관 5층",
+          "chips": [
+            {
+              "icon": "heart",
+              "words": "개인상담 · 주 1회 50분"
+            },
+            {
+              "icon": "phone",
+              "words": "02-880-5501"
+            },
+            {
+              "icon": "phone",
+              "words": "SNU Call 02-880-8080 · 24시간"
+            },
+            {
+              "icon": "cross",
+              "words": "정신건강의학과 · 보건진료소 3층"
+            }
+          ],
+          "actions": [
+            {
+              "kind": "route",
+              "words": "길찾기"
+            }
+          ]
+        },
+        {
+          "tab": "인권",
+          "title": "인권센터",
+          "place": {
+            "place": "153"
+          },
+          "pinText": "💬",
+          "name": "인권센터",
+          "sub": "153동 우정원 3층",
+          "chips": [
+            {
+              "icon": "clock",
+              "words": "평일 10–17 · 전화 예약"
+            },
+            {
+              "icon": "phone",
+              "words": "성희롱·성폭력 02-880-2424"
+            },
+            {
+              "icon": "phone",
+              "words": "인권침해 02-880-2422"
+            }
+          ],
+          "actions": [
+            {
+              "kind": "route",
+              "words": "길찾기"
+            }
+          ]
+        },
+        {
+          "tab": "단과대",
+          "title": "단과대 상담실",
+          "spots": [
+            {
+              "name": "공감",
+              "place": {
+                "place": "39"
+              },
+              "sub": "공대 · 39동 227호",
+              "chips": [
+                {
+                  "icon": "clock",
+                  "words": "평일 09–18"
+                },
+                {
+                  "icon": "phone",
+                  "words": "02-880-1716"
+                }
+              ]
+            },
+            {
+              "name": "공존",
+              "sub": "공대 학생복지공간",
+              "chips": [
+                {
+                  "icon": "phone",
+                  "words": "02-880-7010"
+                }
+              ]
+            },
+            {
+              "name": "생생원",
+              "place": {
+                "place": "4"
+              },
+              "sub": "4동 307 · 313호"
+            },
+            {
+              "name": "사회랑",
+              "place": {
+                "place": "16-1"
+              },
+              "sub": "16-1동 301호"
+            },
+            {
+              "name": "경청",
+              "place": {
+                "place": "58"
+              },
+              "sub": "58동 210호",
+              "chips": [
+                {
+                  "icon": "check",
+                  "words": "무료"
+                }
+              ]
+            },
+            {
+              "name": "농;담",
+              "place": {
+                "place": "75-1"
+              },
+              "sub": "75-1동 209호"
+            },
+            {
+              "name": "미소",
+              "place": {
+                "place": "74"
+              },
+              "sub": "74동 213호"
+            },
+            {
+              "name": "사담",
+              "place": {
+                "place": "10"
+              },
+              "sub": "10동 5층"
+            },
+            {
+              "name": "힐링벳",
+              "place": {
+                "place": "85"
+              },
+              "sub": "85동 716호"
+            },
+            {
+              "name": "법전원",
+              "place": {
+                "place": "17"
+              },
+              "sub": "17동 613호"
+            },
+            {
+              "name": "자우리",
+              "sub": "501동 3층"
+            }
+          ]
+        },
+        {
+          "tab": "생활 지원",
+          "title": "생활 · 진로",
+          "spots": [
+            {
+              "name": "관심",
+              "place": {
+                "place": "919"
+              },
+              "sub": "기숙사 919A동 1층",
+              "chips": [
+                {
+                  "icon": "clock",
+                  "words": "평일 09–21"
+                },
+                {
+                  "icon": "phone",
+                  "words": "02-880-7979"
+                }
+              ]
+            },
+            {
+              "name": "경력개발센터",
+              "place": {
+                "place": "152-1"
+              },
+              "sub": "진로 · 152-1동 2층"
+            },
+            {
+              "name": "장애학생지원센터",
+              "place": {
+                "place": "102"
+              },
+              "sub": "102동 1층",
+              "chips": [
+                {
+                  "icon": "phone",
+                  "words": "02-880-8787"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "art-museum": {
+    "icon": "art",
+    "guide": {
+      "together": true,
+      "steps": [
+        {
+          "tab": "미술관",
+          "title": "서울대학교 미술관",
+          "place": {
+            "place": "151"
+          },
+          "pinText": "🖼",
+          "name": "미술관",
+          "sub": "151동",
+          "actions": [
+            {
+              "kind": "route",
+              "words": "길찾기"
+            },
+            {
+              "kind": "link",
+              "words": "지금 전시",
+              "url": "http://www.snumoa.org/"
+            }
+          ]
+        },
+        {
+          "tab": "파워플랜트",
+          "title": "파워플랜트",
+          "place": {
+            "place": "68"
+          },
+          "pinText": "🖼",
+          "name": "파워플랜트",
+          "sub": "68동",
+          "actions": [
+            {
+              "kind": "route",
+              "words": "길찾기"
+            },
+            {
+              "kind": "link",
+              "words": "지금 전시",
+              "url": "https://culture.snu.ac.kr/event/powerplant365/"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "dure-practice-room": {
+    "icon": "music",
+    "guide": {
+      "steps": [
+        {
+          "tab": "예약",
+          "title": "예약하샤에서 신청",
+          "rows": [
+            {
+              "words": "예약하샤"
+            },
+            {
+              "words": "빈 호실 찾기"
+            },
+            {
+              "words": "신청"
+            }
+          ],
+          "chips": [
+            {
+              "icon": "calendar",
+              "words": "15일 안 · 한 번 3시간"
+            },
+            {
+              "icon": "info",
+              "words": "당일 예약 불가"
+            },
+            {
+              "icon": "clock",
+              "words": "승인 1–3일 · 이메일"
+            }
+          ],
+          "actions": [
+            {
+              "kind": "link",
+              "words": "예약하샤",
+              "url": "https://ssims.snu.ac.kr/index.do"
+            }
+          ]
+        },
+        {
+          "tab": "연습",
+          "title": "연습실 가기",
+          "place": {
+            "place": "67"
+          },
+          "name": "두레문예관",
+          "sub": "67동 · 연습실 7개",
+          "actions": [
+            {
+              "kind": "route",
+              "words": "길찾기"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "gwanaksan-engineering-trail": {
+    "icon": "mountain",
+    "guide": {
+      "withoutUser": true,
+      "steps": [
+        {
+          "tab": "입구",
+          "title": "등산로 입구",
+          "place": {
+            "point": {
+              "latitude": 37.4472146,
+              "longitude": 126.9498331
+            }
+          },
+          "name": "등산로 입구",
+          "sub": "5513 건설환경종합연구소 정류장",
+          "chips": [
+            {
+              "icon": "bus",
+              "words": "5513"
+            },
+            {
+              "icon": "info",
+              "words": "편한 신발"
+            }
+          ],
+          "actions": [
+            {
+              "kind": "route",
+              "words": "길찾기"
+            }
+          ]
+        },
+        {
+          "tab": "연주대",
+          "title": "연주대까지",
+          "place": {
+            "point": {
+              "latitude": 37.4447713,
+              "longitude": 126.9645611
+            }
+          },
+          "name": "연주대 →",
+          "sub": "관악산 정상 · 도림천계곡 따라",
+          "chips": [
+            {
+              "icon": "clock",
+              "words": "해 지기 전에 하산"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

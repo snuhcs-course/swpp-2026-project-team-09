@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -14,6 +15,7 @@ import request from 'supertest';
 import { parse, stringify } from 'yaml';
 import { z } from 'zod';
 import { TUTORIAL_FILE } from '../src/tutorial/tutorial-content.js';
+import { guideSchema, iconSchema } from '../src/tutorial/tutorial-guide.js';
 import { TestUser } from './friends.js';
 import { patchProfile } from './profile.js';
 import { withAccessToken } from './sign-in.js';
@@ -34,6 +36,7 @@ export const tutorialSchema = z.strictObject({
       key: z.string(),
       order: z.number(),
       category: z.string().optional(),
+      icon: iconSchema.optional(),
       title: z.string(),
       brief: z.string(),
       body: z.array(z.string()),
@@ -46,6 +49,7 @@ export const tutorialSchema = z.strictObject({
       places: z.array(placeSchema),
       links: z.array(z.strictObject({ label: z.string(), url: z.string() })),
       ask: z.string().optional(),
+      guide: guideSchema.optional(),
       status: z.enum(['notStarted', 'started', 'completed']),
     }),
   ),

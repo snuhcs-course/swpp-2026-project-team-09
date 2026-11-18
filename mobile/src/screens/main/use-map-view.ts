@@ -5,6 +5,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { awayPlaceOf } from '@/features/assistant/study-area';
@@ -17,7 +18,14 @@ import type { MapAvatar, MapLine } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
 import { useAwaySeats } from './library/use-away-seats';
-import { type AnswerMap, ignorePress, useAnswerMap, useEverydayLimits, useInvitationMap } from './use-answer-map';
+import {
+  ANSWER_LIMITS,
+  type AnswerMap,
+  ignorePress,
+  useAnswerMap,
+  useEverydayLimits,
+  useInvitationMap,
+} from './use-answer-map';
 import { useLookupMap } from './use-lookup-map';
 import { pressOnMap } from './use-main-layers';
 import type { MainMap } from './use-main-map';
@@ -28,6 +36,7 @@ import { bothTouches, type MapTouches, type PressedPlace, usePressedPlace } from
 import type { Selection } from './use-selection';
 import { useThings } from './use-things';
 import { useViewport } from './use-viewport';
+import type { GuideMap } from './tutorial/use-guide-map';
 import { TUTORIAL_PIN_ID, type TutorialPin } from './tutorial/use-tutorial-pin';
 
 // A press on the map, which keeps a tap on the ground from being a press on a building: the tutorial place pin takes
@@ -56,6 +65,8 @@ export interface Everyday {
   lines: readonly MapLine[];
   cards: readonly CardView[];
   selection: Selection;
+  // A 새내기 튜토리얼 quest's guide, drawn in place of the everyday map while it is open.
+  guide: GuideMap | null;
 }
 
 // The cards nobody asked for: a received invitation's, and a made Quest's card after inviting.
@@ -92,6 +103,16 @@ function withBuildingPress(answer: AnswerMap, pressed: PressedPlace, asked: bool
   };
 }
 
+// A 새내기 튜토리얼 quest's guide: its pins and its lines in place of everything else, and the User's own Avatar.
+function guidedView(guide: GuideMap, me: Me, around: MapTouches): MapView {
+  return {
+    contents: { markers: guide.markers, lines: guide.lines, avatars: me.avatars },
+    onPress: guide.onPress,
+    around,
+    ...ANSWER_LIMITS,
+  };
+}
+
 // What the map draws and what a press on it does. The everyday map: the things of the cards, the selected one drawn
 // selected, the tutorial place pin over them, the User's own Avatar, which takes a press, and the lines. A tap on a
 // building opens its card and the Place is marked, and a press on an interest mark opens its answer instead of a card.
@@ -105,7 +126,7 @@ export function useMapView(
   chat: ChatSheetControl,
   map: MainMap,
   room: Room,
-  { me, pin, lines, cards, selection }: Everyday,
+  { me, pin, lines, cards, selection, guide }: Everyday,
   { invitation, made }: UnaskedCards,
 ): MapView {
   const marks = useMarkPresses(chat.chat, me, cards);
@@ -121,11 +142,14 @@ export function useMapView(
   const unasked = invitation.shown || made.shown !== null;
   const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);
   const limits = useEverydayLimits(map, answer !== null || way !== null);
-  const everyday = answer === null && way === null && !chat.framed && !unasked;
+  const everyday = answer === null && way === null && !chat.framed && !unasked && guide === null;
   const asking = howAbout.pressable && plan !== null && !unasked;
   const target = asking ? howAbout.target : selection;
   const pressed = usePressedPlace(map.camera, target, chat.setTapped, everyday || asking);
   const around = bothTouches(pin.touches, pressed);
+  if (guide !== null && !chat.framed) {
+    return guidedView(guide, me, around);
+  }
   if (answer !== null) {
     return asking ? withBuildingPress(answer, pressed, howAbout.place !== null, around) : { ...answer, around };
   }

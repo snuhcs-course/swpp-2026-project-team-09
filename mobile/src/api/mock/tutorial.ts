@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -29,11 +30,14 @@ async function mockEligibleByDefault(): Promise<boolean> {
 }
 
 // The mock's TUTORIAL_KWANJEONG_CHECK, off as on the main server by default: the 관정 quest is then served, and
-// completed, as a button quest. An object, so that a test of the phone's check can turn it on.
-export const MOCK_TUTORIAL_SWITCHES = { kwanjeongCheck: false };
+// completed, as a button quest. `guides`: off, the quests are served without their icons and guides, as an older main
+// server serves them, so that each opens its sheet. An object, so that a test can turn either.
+export const MOCK_TUTORIAL_SWITCHES = { kwanjeongCheck: false, guides: true };
 
 // A quest as the main server serves it (`servedContent`), with 관정 booking on.
-function served(quest: TutorialContent): TutorialContent {
+function served(content: TutorialContent): TutorialContent {
+  const { icon: _icon, guide: _guide, ...withoutGuide } = content;
+  const quest = MOCK_TUTORIAL_SWITCHES.guides ? content : withoutGuide;
   return quest.completion.kind === 'kwanjeongCheck' && !MOCK_TUTORIAL_SWITCHES.kwanjeongCheck
     ? { ...quest, completion: { kind: 'button' } }
     : quest;
@@ -54,9 +58,10 @@ function freshProgress(): Progress {
 
 let progress = freshProgress();
 
-// For the tests: a User without progress, as at the first start.
+// For the tests: a User without progress, as at the first start, and the guides served.
 export function resetMockTutorial(): void {
   progress = freshProgress();
+  MOCK_TUTORIAL_SWITCHES.guides = true;
 }
 
 // The main server's order, the first that holds.
