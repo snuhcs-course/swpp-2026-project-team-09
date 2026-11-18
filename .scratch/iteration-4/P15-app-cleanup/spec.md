@@ -71,7 +71,7 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 
 ### 안진영 (`51`–`99`)
 
-None yet.
+54. The 행사 tab is hard to read: long titles and places run over many lines, and a card without its badge has an empty band. Draw it as the `Events` board does: a date column, one row per event, and a sheet for the details. Ticket [54](issues/54-events-tab-as-drawn.md).
 
 ## Testing Decisions
 
