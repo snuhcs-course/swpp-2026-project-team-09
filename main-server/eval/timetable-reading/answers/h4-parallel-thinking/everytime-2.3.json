@@ -8,9 +8,11 @@
   "model": "claude-haiku-5-5",
   "mode": "grid",
   "mapped": true,
-  "ms": 7650,
+  "ms": 7909,
   "inputTokens": 7304,
-  "outputTokens": 3641,
+  "outputTokens": 3455,
+  "reasoningTokens": 2372,
+  "callsThatThought": 2,
   "calls": 2,
   "answer": {
     "title": "2022년 1학기 시간표",

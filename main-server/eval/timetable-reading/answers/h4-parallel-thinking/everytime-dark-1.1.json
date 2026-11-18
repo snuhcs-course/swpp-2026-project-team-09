@@ -8,9 +8,11 @@
   "model": "claude-haiku-5-5",
   "mode": "grid",
   "mapped": true,
-  "ms": 8967,
+  "ms": 7311,
   "inputTokens": 7284,
-  "outputTokens": 3777,
+  "outputTokens": 2900,
+  "reasoningTokens": 1924,
+  "callsThatThought": 2,
   "calls": 2,
   "answer": {
     "title": "2023년 2학기 시간표",
@@ -154,7 +156,7 @@
   },
   "raw": {
     "layout": {
-      "title": "시간표",
+      "title": "2023년 2학기",
       "axis": ["9", "10", "11", "12", "1", "2", "3", "4"],
       "blocks": [
         {
@@ -172,14 +174,14 @@
         {
           "number": 3,
           "day": "월",
-          "start": "14:00",
-          "end": "15:15"
+          "start": "2:00",
+          "end": "3:15"
         },
         {
           "number": 4,
           "day": "월",
-          "start": "15:30",
-          "end": "16:45"
+          "start": "3:30",
+          "end": "4:45"
         },
         {
           "number": 5,
@@ -190,8 +192,8 @@
         {
           "number": 6,
           "day": "화",
-          "start": "14:00",
-          "end": "15:15"
+          "start": "2:00",
+          "end": "3:15"
         },
         {
           "number": 7,
@@ -208,14 +210,14 @@
         {
           "number": 9,
           "day": "수",
-          "start": "14:00",
-          "end": "15:15"
+          "start": "2:00",
+          "end": "3:15"
         },
         {
           "number": 10,
           "day": "수",
-          "start": "15:30",
-          "end": "16:45"
+          "start": "3:30",
+          "end": "4:45"
         },
         {
           "number": 11,
@@ -226,8 +228,8 @@
         {
           "number": 12,
           "day": "목",
-          "start": "14:00",
-          "end": "15:15"
+          "start": "2:00",
+          "end": "3:15"
         }
       ]
     },
@@ -327,14 +329,14 @@
         },
         {
           "number": 3,
-          "start": "2:00",
+          "start": "14:00",
           "nameLines": ["현대대수학"],
           "name": "현대대수학",
           "room": "28-103"
         },
         {
           "number": 4,
-          "start": "3:30",
+          "start": "15:30",
           "nameLines": ["컴퓨터구조"],
           "name": "컴퓨터구조",
           "room": "302-105"
@@ -348,7 +350,7 @@
         },
         {
           "number": 6,
-          "start": "2:00",
+          "start": "14:00",
           "nameLines": ["프로그래밍의 원", "리"],
           "name": "프로그래밍의 원리",
           "room": "302-107"
@@ -369,14 +371,14 @@
         },
         {
           "number": 9,
-          "start": "2:00",
+          "start": "14:00",
           "nameLines": ["현대대수학"],
           "name": "현대대수학",
           "room": "28-103"
         },
         {
           "number": 10,
-          "start": "3:30",
+          "start": "15:30",
           "nameLines": ["컴퓨터구조"],
           "name": "컴퓨터구조",
           "room": "302-105"
@@ -390,7 +392,7 @@
         },
         {
           "number": 12,
-          "start": "2:00",
+          "start": "14:00",
           "nameLines": ["프로그래밍의 원", "리"],
           "name": "프로그래밍의 원리",
           "room": "302-107"

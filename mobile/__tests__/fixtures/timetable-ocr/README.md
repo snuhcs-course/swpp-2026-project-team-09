@@ -6,7 +6,7 @@ they be committed to this public repository.
 
 | Screenshot        | App        | Original file                         | Lines | Words |
 | ----------------- | ---------- | ------------------------------------- | ----- | ----- |
-| `everytime-1.png` | 에브리타임 | `KakaoTalk_20261018_010503540.png`    | 45    | 66    |
+| `everytime-1.png` | 에브리타임 | `KakaoTalk_20261018_010503540.png`    | 42    | 59    |
 | `snutt-1.png`     | SNUTT      | `KakaoTalk_20261018_010503540_01.png` | 54    | 61    |
 | `snutt-2.png`     | SNUTT      | `KakaoTalk_20261018_010503540_02.png` | 48    | 63    |
 | `snutt-3.png`     | SNUTT      | `KakaoTalk_20261018_010503540_03.png` | 42    | 49    |
@@ -14,7 +14,18 @@ they be committed to this public repository.
 Each screenshot is 1320 × 2868 pixels from an iPhone. `<name>.json` is the module's answer unchanged
 (`NativeOcrResult` in `src/features/timetable-ocr/native-ocr.ts`): the lines and words with their boxes in the
 screenshot's pixels and their confidences, and `pixels`, a 330 × 717 copy with `scale` 4. Prettier formatted the JSON; the values are as the module returned
-them.
+them, except as the next section says.
+
+## The grade card covered
+
+`everytime-1.png`, `everytime-2.png` and `everytime-dark-1.png` showed 에브리타임's 학점계산기 card below the grid (an
+average grade and earned credits). On 2026-11-18 (P15-52 review) the card was covered in each with a flat rectangle of
+the page's own background colour, the picture's size unchanged: rows 2100–2371 of `everytime-1.png`, 1270–1520 of
+`everytime-2.png` and 1084–1340 of `everytime-dark-1.png`, across the whole width. The same rows of `everytime-1.json`'s
+pixel copy were made white, and the card's three lines (`학점계산기`, `평균 학점 3.46/4.3`, `5 a 62/130`) were taken out
+of its lines; the two `.pixels.json` copies were made again from the covered pictures. The grid the phone finds on each
+is the one saved before (`timetable-ocr-grid-geometry.unit.test.ts`), and the pipeline's tests hold their numbers. The
+pictures as they were remain in the repository's history.
 
 ## Ground truth
 
@@ -64,14 +75,14 @@ a placeholder), or Kakao's SDK stops the app at its start.
 
 ## The five screenshots of P15-52
 
-Copies of iPhone screenshots, 921 × 2000 pixels, given by 안진영 on 2026-11-18 as ones the app had read badly in use.
-Their owner agreed on 2026-11-18 that they be committed to this public repository. No device run was made for
+Copies of iPhone screenshots, 921 × 2000 pixels, given on 2026-11-18 as ones the app had read badly in use. Their
+owner agreed on 2026-11-18 that they be committed to this public repository. No device run was made for
 P15-52, so they have no saved ML Kit output (`<name>.json`); `__tests__/support/timetable-ocr-new.ts` stands in only
 the day letters and hour labels, at boxes measured on the pictures, so that the pipeline's pixel half runs on them.
 
 | Screenshot             | App        | Theme                    | What makes it hard                                                             |
 | ---------------------- | ---------- | ------------------------ | ------------------------------------------------------------------------------ |
-| `everytime-2.png`      | 에브리타임 | light                    | a 12-hour axis 9 … 6; blocks ending at 12:15 and 13:45; cards below the grid   |
+| `everytime-2.png`      | 에브리타임 | light                    | a 12-hour axis 9 … 6; blocks ending at 12:15 and 13:45; a card below the grid  |
 | `everytime-dark-1.png` | 에브리타임 | dark                     | a 12-hour axis 9 … 4; starts at 9:30 and 15:30; `프로그래밍의 원 / 리`         |
 | `snutt-4.png`          | SNUTT      | light                    | names wrapped over two lines; the floating tab bar over 18:00                  |
 | `snutt-dark-1.png`     | SNUTT      | dark                     | 9 … 21; a block without a room; one name in two rooms; a block of 14:00–16:50  |

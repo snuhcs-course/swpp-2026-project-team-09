@@ -8,12 +8,14 @@
   "model": "claude-haiku-5-5",
   "mode": "grid",
   "mapped": true,
-  "ms": 6954,
+  "ms": 7872,
   "inputTokens": 7284,
-  "outputTokens": 3026,
+  "outputTokens": 3290,
+  "reasoningTokens": 2310,
+  "callsThatThought": 2,
   "calls": 2,
   "answer": {
-    "title": "시간표",
+    "title": "2023년 2학기 시간표",
     "axis": [
       "0",
       "1",
@@ -232,7 +234,7 @@
       ]
     },
     "text": {
-      "title": "시간표",
+      "title": "2023년 2학기 시간표",
       "blocks": [
         {
           "number": 1,
@@ -309,7 +311,7 @@
       ]
     },
     "idText": {
-      "title": "시간표",
+      "title": "2023년 2학기 시간표",
       "blocks": [
         {
           "number": 1,

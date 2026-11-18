@@ -8,9 +8,11 @@
   "model": "claude-haiku-5-5",
   "mode": "grid",
   "mapped": true,
-  "ms": 12344,
+  "ms": 9603,
   "inputTokens": 10484,
-  "outputTokens": 5208,
+  "outputTokens": 4461,
+  "reasoningTokens": 3302,
+  "callsThatThought": 2,
   "calls": 2,
   "answer": {
     "title": "2025년 여름학기 시간표",
@@ -197,7 +199,7 @@
           "number": 4,
           "day": "월",
           "start": "7:00",
-          "end": "9:00"
+          "end": "8:00"
         },
         {
           "number": 5,
@@ -209,7 +211,7 @@
           "number": 6,
           "day": "화",
           "start": "7:00",
-          "end": "9:00"
+          "end": "8:00"
         },
         {
           "number": 7,
@@ -233,7 +235,7 @@
           "number": 10,
           "day": "수",
           "start": "7:00",
-          "end": "9:00"
+          "end": "8:00"
         },
         {
           "number": 11,

@@ -8,9 +8,11 @@
   "model": "claude-haiku-5-5",
   "mode": "grid",
   "mapped": true,
-  "ms": 7221,
+  "ms": 8679,
   "inputTokens": 7304,
-  "outputTokens": 3243,
+  "outputTokens": 3582,
+  "reasoningTokens": 2498,
+  "callsThatThought": 2,
   "calls": 2,
   "answer": {
     "title": "2022년 1학기 시간표",
@@ -341,7 +343,7 @@
         },
         {
           "number": 2,
-          "start": "2:00",
+          "start": "14:00",
           "nameLines": ["컴퓨터의 개념", "및 실습"],
           "name": "컴퓨터의 개념 및 실습",
           "room": "302-311-1"
@@ -362,14 +364,14 @@
         },
         {
           "number": 5,
-          "start": "3:00",
+          "start": "15:00",
           "nameLines": ["통계학실험"],
           "name": "통계학실험",
           "room": "26-102"
         },
         {
           "number": 6,
-          "start": "5:00",
+          "start": "17:00",
           "nameLines": ["물리학 1"],
           "name": "물리학 1",
           "room": "56-105"
@@ -383,7 +385,7 @@
         },
         {
           "number": 8,
-          "start": "2:00",
+          "start": "14:00",
           "nameLines": ["컴퓨터의 개념", "및 실습"],
           "name": "컴퓨터의 개념 및 실습",
           "room": "302-311-1"
@@ -404,14 +406,14 @@
         },
         {
           "number": 11,
-          "start": "2:00",
+          "start": "14:00",
           "nameLines": ["물리학실험 1"],
           "name": "물리학실험 1",
           "room": "26-304"
         },
         {
           "number": 12,
-          "start": "5:00",
+          "start": "17:00",
           "nameLines": ["물리학 1"],
           "name": "물리학 1",
           "room": "56-105"

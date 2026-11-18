@@ -8,9 +8,11 @@
   "model": "claude-haiku-5-5",
   "mode": "grid",
   "mapped": true,
-  "ms": 10254,
+  "ms": 16439,
   "inputTokens": 10484,
-  "outputTokens": 4579,
+  "outputTokens": 4078,
+  "reasoningTokens": 2919,
+  "callsThatThought": 2,
   "calls": 2,
   "answer": {
     "title": "2025년 여름학기 시간표",
@@ -172,7 +174,7 @@
   },
   "raw": {
     "layout": {
-      "title": "2025년 여름학기",
+      "title": "2025년 여름학기 시간표",
       "axis": ["9", "10", "11", "12", "1", "2", "3", "4", "5", "6", "7", "8"],
       "blocks": [
         {
