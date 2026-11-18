@@ -2,13 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
 import { shownMinutes } from '../../travel/travel.js';
-import { type AnswerLine, type Lookup, type MapScene, type PlacePoint } from '../dto/answer.dto.js';
+import { type AnswerLine, type Lookup, type LookupAction, type MapScene, type PlacePoint } from '../dto/answer.dto.js';
 import { clockOf } from '../free-time/free-time.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
+import { boardingGuide, takenShuttle } from './shuttle-lookup.js';
 import { nextIn } from './tutorial-lookup.js';
 import { type Span, stayStart } from './tutorial-order.js';
 import { type Next } from './tutorial-words.js';
@@ -72,7 +74,7 @@ const plus = (at: Date, minutes: number): Date => new Date(at.getTime() + minute
 const minutesBetween = (from: Date, to: Date): number => (to.getTime() - from.getTime()) / MINUTE_MS;
 
 function visitOf(way: Way, stop: QuestStop, args: WayArgs, naming: WayNaming): Visit {
-  const shuttle = way.shuttle !== null && way.shuttle !== 'not running' && way.shuttle.taken ? way.shuttle : null;
+  const shuttle = takenShuttle(way);
   const arrival = shuttle?.trip.arrival ?? way.arrival;
   const start = stayStart(stop, arrival);
   const end = start === null ? null : plus(start, stop.stayMinutes);
@@ -235,6 +237,8 @@ export function questWay(args: WayArgs, stop: QuestStop): QuestWayAnswer {
   const visit = visitOf(way, stop, args, naming);
   const pick: PlacePoint = { placeId: stop.placeId, label: stop.words, ...stop.at };
   const { next } = visit;
+  const shuttle = takenShuttle(way);
+  const guide: LookupAction = shuttle === null ? { kind: 'guide', to: pick } : boardingGuide(shuttle, naming);
   const lookup: Lookup = {
     kind: 'way',
     chips:
@@ -248,7 +252,7 @@ export function questWay(args: WayArgs, stop: QuestStop): QuestWayAnswer {
     basis: [...wayBasis(visit, base), ...stayBasis(visit), ...(stop.note === null ? [] : [stop.note])],
     scene: sceneOf(visit, base, args, pick),
     band: null,
-    actions: atPlace(way) ? [] : [{ kind: 'guide', to: pick }],
+    actions: atPlace(way) ? [] : [guide],
   };
   return { result: 'found', way, lookup, words: wordsOf(visit) };
 }

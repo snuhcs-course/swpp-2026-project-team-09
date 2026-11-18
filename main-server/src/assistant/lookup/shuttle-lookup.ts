@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { shownMinutes } from '../../travel/travel.js';
@@ -18,6 +19,9 @@ import { dueWords, gated, part, REMIND_WALK_MINUTES, type WayNaming } from './wa
 // The words and the map of a way that takes the shuttle, and the line of a walk's basis that weighs it.
 
 export type ShuttleTaken = Extract<Way['shuttle'], { trip: ShuttleTrip }>;
+
+export const takenShuttle = ({ shuttle }: Pick<Way, 'shuttle'>): ShuttleTaken | null =>
+  shuttle !== null && shuttle !== 'not running' && shuttle.taken ? shuttle : null;
 
 // A walk this long or longer names the shuttle in its basis.
 const COMPARED_WALK_MINUTES = 15;
@@ -50,6 +54,22 @@ export function shuttleLine({ walkMinutes, shuttle, now }: Way): string | null {
   return minutes >= walkMinutes
     ? `셔틀은 ${minutes}분 걸려 걸어요`
     : `셔틀은 ${minutes}분으로 걷기보다 ${ADVANTAGE_MINUTES}분 이상 빠르지 않아 걸어요`;
+}
+
+// A pressed Place's card: the ride and the arrival, then the stop and when to set out for it.
+export function shuttleFacts({ trip }: ShuttleTaken, naming: WayNaming): [string, string] {
+  const { label } = naming.stopPoint(trip.stops[0]?.name ?? '');
+  return [
+    `셔틀로 ${tripMinutes(trip)}분 · ${clockOf(trip.arrival)} 도착`,
+    trip.passed === null
+      ? `${label}에서 타요 · 기다림 약 ${trip.waitMinutes}분`
+      : `${clockOf(trip.leave)}에 나서 ${label}에서 ${clockOf(trip.comes)} 셔틀`,
+  ];
+}
+
+// Route guidance on foot to the stop the shuttle is taken at, since the app's guidance is a walk.
+export function boardingGuide({ trip }: ShuttleTaken, naming: WayNaming): LookupAction {
+  return { kind: 'guide', to: naming.stopPoint(trip.stops[0]?.name ?? '') };
 }
 
 export function shuttleLines(way: Way, { trip, lateMinutes }: ShuttleTaken): AnswerLine[] {
@@ -164,13 +184,11 @@ export function shuttleBand(
   };
 }
 
-// A notification in time for the shuttle, while that is still ahead and it makes the deadline, then route guidance.
-export function shuttleActions(
-  way: Way,
-  { trip, lateMinutes }: ShuttleTaken,
-  naming: WayNaming,
-  guide: LookupAction,
-): LookupAction[] {
+// A notification in time for the shuttle, while that is still ahead and it makes the deadline, then route guidance to
+// the stop.
+export function shuttleActions(way: Way, shuttle: ShuttleTaken, naming: WayNaming): LookupAction[] {
+  const { trip, lateMinutes } = shuttle;
+  const guide = boardingGuide(shuttle, naming);
   const { deadline, now } = way;
   if (deadline === null || lateMinutes > 0 || trip.leave <= now || tripMinutes(trip) < REMIND_WALK_MINUTES) {
     return [guide];
