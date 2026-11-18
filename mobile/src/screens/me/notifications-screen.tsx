@@ -5,6 +5,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -43,6 +44,9 @@ const TONE: Record<NoticeKind, keyof typeof noticeTone> = {
   'room-ending': 'navy',
   'room-window': 'request',
   'interest-new': 'navy',
+  'step-changed': 'invitation',
+  arrived: 'navy',
+  late: 'request',
   notice: 'invitation',
 };
 

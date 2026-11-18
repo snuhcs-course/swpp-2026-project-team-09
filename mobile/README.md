@@ -1036,7 +1036,10 @@ navy round), and its own title once the time has come. A room request's kinds ha
 (`room-declined`, a person) and everyone agreed (`room-agreed`, a group) as an acceptance's, the room's end
 (`room-ending`) as the time to leave's, and the booking window opening (`room-window`, a calendar) in the colour of
 the requests to join, which also wait for the User. A new match of a watched interest (`interest-new`, "채용박람회가
-떴어요") is on the navy round too, a calendar for an event and people for a recruiting party, by its address. A kind
+떴어요") is on the navy round too, a calendar for an event and people for a recruiting party, by its address. What a party's members would have said, for the room has no chat, is kept too: a step changed
+(`step-changed`, a calendar) as an acceptance's, a member arrived at the step's point (`arrived`, a pin) on the navy
+round, and a member late (`late`, a clock) in the colour of the requests to join; the room's row of a late member
+starts with "N분 늦어요". A kind
 the app does not know shows as an invitation's. The rows of what waits for the User follow, in this order: a Party running for a Quest the User
 holds ("{name}님이 파티를 활성화했어요"), a Friend Request received, a Quest invitation ("{name}님의 파티 초대"), and
 the requests to join each Open or Approval Quest the User leads ("참여 신청 {n}명"); an Open one has them only from Users the Leader removed. A row with a card's address, `/main?card=<kind>:<id>`, opens it as a tapped push does

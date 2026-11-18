@@ -6,6 +6,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Party, Quest } from '@/api/types';
@@ -24,6 +25,9 @@ const KEPT_KINDS = [
   'room-ending',
   'room-window',
   'interest-new',
+  'step-changed',
+  'arrived',
+  'late',
 ] as const;
 type KeptKind = (typeof KEPT_KINDS)[number] | 'notice';
 
@@ -65,9 +69,12 @@ function keptKind(kind: string): KeptKind {
   return KEPT_KINDS.find((known) => known === kind) ?? 'notice';
 }
 
-// A time comes with the clock; a room request's companion out with a person, and all agreed with the group.
+// A time comes with the clock; a room request's companion out with a person, and all agreed with the group. A party's
+// changed step has the calendar, a member's arrival the pin and a member's lateness the clock.
 const KEPT_ICONS: Partial<Record<KeptKind, NoticeView['icon']>> = {
   'leave-by': 'clock',
+  arrived: 'pin',
+  late: 'clock',
   'room-ending': 'clock',
   'room-declined': 'user',
   'room-agreed': 'users',

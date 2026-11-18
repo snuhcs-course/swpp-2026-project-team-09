@@ -5,6 +5,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Card } from './card-address.js';
@@ -41,6 +42,27 @@ export type Told =
     }
   | { kind: 'room-ending'; questId: string; roomLabel: string; end: string }
   | { kind: 'room-window'; questId: string; date: string; start: string; minutes: number }
+  // What words between a party's members would have said, told to the other Holders. `startsAt` is the step's time,
+  // null for a step without one; `arriveAt` is Korea time with the offset, null when the way has no arrival.
+  | {
+      kind: 'step-changed';
+      questId: string;
+      byId: string;
+      byName: string;
+      stepTitle: string;
+      startsAt: Date | null;
+      cancelled: boolean;
+    }
+  | { kind: 'arrived'; questId: string; userId: string; name: string; placeLabel: string }
+  | {
+      kind: 'late';
+      questId: string;
+      questTitle: string;
+      userId: string;
+      name: string;
+      minutes: number;
+      arriveAt: string | null;
+    }
   | {
       kind: 'interest-new';
       subject: 'event' | 'quest';
