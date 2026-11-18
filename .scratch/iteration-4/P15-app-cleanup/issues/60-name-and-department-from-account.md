@@ -48,5 +48,5 @@ Native files: none. Releases: the main server (a data migration), then an app OT
 
 Estimates from the session transcript, with gaps of 5 minutes or more left out, among them the wait for another session to free the emulator. One Opus 5.5 session did the ticket, with no subagents.
 
-- Agent time: about 35 minutes.
-- Tokens: output about 95,000. Input about 39.0 million: 38.6 million cache reads, 0.31 million cache writes and about 340 uncached.
+- Agent time: about 55 minutes, the second pass (both fields always fixed) included.
+- Tokens: output about 142,000. Input about 63.1 million: 62.7 million cache reads, 0.40 million cache writes and about 470 uncached.
