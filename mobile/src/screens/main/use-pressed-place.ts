@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -43,25 +44,32 @@ const MARK_LOOK: readonly MarkerLook[] = [
   { kind: 'answer', symbol: { type: 'dot', role: 'pick', number: null }, label: null },
 ];
 
-function ignore(): void {
-  // A point the main server could not answer for is no press.
+// A tap's answer: the Place found, or, where none is found or the main server cannot answer, a tap on empty map.
+function settle(live: { onPlace: (place: Place) => void; onEmpty: () => void }, place: Place | null): void {
+  if (place === null) {
+    live.onEmpty();
+  } else {
+    live.onPlace(place);
+  }
 }
 
 // The touch's page point is its point in the map: the main screen has no header, and the map starts at the screen's
 // top left, under the status bar. Until the View is laid out it counts as large as the window, as the plain ground
-// does. The answer to a tap is dropped once another tap or a mark's press came, or presses are no longer taken.
+// does. The answer to a tap is dropped once another tap or a mark's press came, or presses are no longer taken. A tap
+// where the main server finds no Place, or cannot answer, is a tap on empty map: `onEmpty` is called for it.
 function usePlaceTap(
   camera: MapCamera | null,
   active: boolean,
   onPlace: (place: Place) => void,
+  onEmpty: () => void,
 ): Pick<PressedPlace, 'touches' | 'keep'> {
   const screenSize = useWindowDimensions();
   const [laidOut, setLaidOut] = useState<Size | null>(null);
   const size = laidOut ?? { width: screenSize.width, height: screenSize.height };
   const presses = useRef(0);
-  const live = useRef({ camera, size, active, onPlace });
+  const live = useRef({ camera, size, active, onPlace, onEmpty });
   useEffect(() => {
-    live.current = { camera, size, active, onPlace };
+    live.current = { camera, size, active, onPlace, onEmpty };
   });
   const onTap = useCallback((point: Point) => {
     const now = live.current;
@@ -70,11 +78,19 @@ function usePlaceTap(
     }
     presses.current += 1;
     const asked = presses.current;
-    apiClient.findPlaceAt(atPoint(point, now.camera, now.size)).then(({ place }) => {
-      if (place !== null && asked === presses.current && live.current.active) {
-        live.current.onPlace(place);
+    const answered = (place: Place | null): void => {
+      if (asked === presses.current && live.current.active) {
+        settle(live.current, place);
       }
-    }, ignore);
+    };
+    apiClient.findPlaceAt(atPoint(point, now.camera, now.size)).then(
+      ({ place }) => {
+        answered(place);
+      },
+      () => {
+        answered(null);
+      },
+    );
   }, []);
   const tap = useMapTap(onTap, active);
   const { keep: keepTap } = tap;
@@ -108,15 +124,20 @@ function usePlaceMark(place: Place | null): readonly MapMarker[] {
   );
 }
 
-// The building press while `active`, which selects the Place it finds; the selected Place's mark; and the Place as
-// what was tapped in every request while its card is open.
+function nothingToClear(): void {
+  // A tap on empty map clears nothing here.
+}
+
+// The building press while `active`, which selects the Place it finds and calls `onEmptyTap` where it finds none; the
+// selected Place's mark; and the Place as what was tapped in every request while its card is open.
 export function usePressedPlace(
   camera: MapCamera | null,
   { place, selectPlace }: Pick<Selection, 'place' | 'selectPlace'>,
   setTapped: ChatSheetControl['setTapped'],
   active: boolean,
+  onEmptyTap: () => void = nothingToClear,
 ): PressedPlace {
-  const press = usePlaceTap(camera, active, selectPlace);
+  const press = usePlaceTap(camera, active, selectPlace, onEmptyTap);
   const placeId = place?.id ?? null;
   useEffect(() => {
     setTapped(placeId === null ? null : { kind: 'place', placeId });
