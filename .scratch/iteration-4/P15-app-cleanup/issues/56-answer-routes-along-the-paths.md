@@ -47,6 +47,7 @@ Native files: none. Releases: an app OTA update only (no main-server Release, no
 - The swap sits in `useDrawnMap`, which all three scene drawings share, so a Lookup's route and a received invitation's way follow their paths too, not only a Plan's.
 - The scene gives no path, only the two ends, and the walking route service's line may start and end a few metres from them, at the nearest walkway. The line is drawn as the service gives it, as the everyday route's is.
 - Answers are kept in the app's memory only (react-query's cache, `staleTime: Infinity`, dropped five minutes after no scene shows them), which Kakao's rule that no cache along the way keeps a route (`walking-route.controller.ts`) is about HTTP caches; the everyday route keeps its line in memory the same way.
+- `answer-lookup`'s test of 길 안내 without a position asserted that `findWalkingRoute` was never called toward 문화관; the Lookup's own walk now is, so it asserts that 길 안내 asks nothing more after the answer is drawn.
 - The fake main server answers `GET /walking-route` with `ROUTE_RESULT_NOT_FOUND` by default, so the older answer tests over it still see straight lines; the mock client's curved line needed no change.
 - The phone check is left to a person: ask the Assistant "배고파, 민수랑 같이" (or any question whose answer draws a way) and see the navy line bend along the walkways a moment after the straight one; turn the network off and ask again: the straight line stays.
 
