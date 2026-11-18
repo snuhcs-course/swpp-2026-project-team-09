@@ -38,6 +38,7 @@ import type { ChatSheetControl } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
 import { FirstRunAsk } from './first-run/first-run-ask';
 import { InterestsHint } from './first-run/interests-hint';
+import { KeyboardScrim } from './keyboard-scrim';
 import { aiInputTop, interestsHintBottom, madeLineBottom, type Room, tutorialStartBottom } from './layout';
 import { MadeQuestLine } from './made-quest-line';
 import { TutorialPager } from './tutorial/tutorial-pager';
@@ -164,9 +165,10 @@ function EverydayBottom(props: EverydayProps): ReactElement {
 // card at the bottom hides the row and the button. While the keyboard is up and nothing is asked, the examples stand
 // above the input. A message sent from the AI input shows the answer frame, which hides the rest, and the input is its
 // card's: it stays in the same place in the tree, so that it keeps the focus. While the keyboard is up, the input
-// stands right above it. The conversation is kept while the app runs: while the frame is hidden, "이전 답" in the input
-// shows it again. A card nobody asked for, a received invitation's or a made Quest's, takes the bottom without the
-// input.
+// stands right above it, and a scrim under the frame, the examples and the input takes a press anywhere else on the
+// stage, the map, the lists, the zoom control and an open card included, to put the keyboard down. The conversation
+// is kept while the app runs: while the frame is hidden, "이전 답" in the input shows it again. A card nobody asked
+// for, a received invitation's or a made Quest's, takes the bottom without the input.
 export function MapBottom(props: MapBottomProps): ReactElement {
   const { onAnswerHeight, onInputHeight, room, tutorial, onShowOnMap, chat, unasked } = props;
   const { invitation, made } = unasked;
@@ -181,6 +183,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   return (
     <>
       {!chat.framed && !cardShown ? <EverydayBottom {...props} keyboardUp={keyboardUp} /> : null}
+      {keyboardUp ? <KeyboardScrim /> : null}
       <RowFourProvider control={chat}>
         <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
       </RowFourProvider>
