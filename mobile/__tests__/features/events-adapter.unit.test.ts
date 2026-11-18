@@ -5,16 +5,19 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-// Partitions: each filter of the 행사 tab at the edges of today and of the week, the search's fields, and the sheet's own
-// and others' rows. Expected values: P13-03's criteria, worked by hand in Korea's time.
+// Partitions: each filter of the 행사 tab at the edges of today and of the week, the search's fields, the row's hours,
+// its count and its 내 파티, and the sheet's own and others' rows. Expected values: P13-03's criteria and P15 ticket
+// 54's, worked by hand in Korea's time. The date column is `event-date.unit.test.ts`.
 
 import type { RecruitingQuest } from '@/api/party-types';
 import type { GlobalEvent, Person, Quest } from '@/api/types';
 import {
   type EventFilter,
   type EventSources,
+  eventHours,
   eventTime,
   isOverPeriod,
   sharedQuestFor,
@@ -144,6 +147,20 @@ describe('eventTime of an event over a period', () => {
   });
 });
 
+describe('eventHours, beside the place', () => {
+  it.each([
+    [
+      'a start and an end',
+      { startsAt: '2026-10-08T18:00:00+09:00', endsAt: '2026-10-08T20:00:00+09:00' },
+      '18:00–20:00',
+    ],
+    ['a start alone', { startsAt: '2026-10-08T17:00:00+09:00', endsAt: null }, '17:00'],
+    ['a period', { startsAt: '2026-10-05T00:00:00+09:00', endsAt: '2026-11-30T23:59:00+09:00' }, '11월 30일까지'],
+  ])('%s', (_, times, expected) => {
+    expect(eventHours(times)).toBe(expected);
+  });
+});
+
 describe('toEventViews filters', () => {
   const started = event('started', '2026-10-06T09:00:00+09:00');
   const lastOfToday = event('last-of-today', '2026-10-06T23:59:00+09:00');
@@ -172,6 +189,16 @@ describe('toEventViews filters', () => {
   it('파티 모집 중 → the Events with a recruiting Quest', () => {
     const more = { recruiting: [recruiting('sunday'), recruiting(null)] };
     expect(idsOf('recruiting', all, more)).toEqual(['sunday']);
+  });
+
+  it("파티 모집 중 → not an Event with the User's own 파티 alone, a 비공개 one with a Friend: nobody recruits", () => {
+    const more = { quests: [questFor('tomorrow', [ME, MIN_JUN])] };
+    expect(idsOf('recruiting', all, more)).toEqual([]);
+  });
+
+  it("파티 모집 중 → an Event with a recruiting Quest and the User's own 파티 too", () => {
+    const more = { recruiting: [recruiting('tomorrow')], quests: [questFor('tomorrow', [ME, MIN_JUN])] };
+    expect(idsOf('recruiting', all, more)).toEqual(['tomorrow']);
   });
 });
 
@@ -207,12 +234,25 @@ describe('toEventViews card', () => {
       '',
     );
     expect(view).toMatchObject({ source: '컴퓨터공학부', time: '오늘 18:00–20:00', place: '대강당', recruiting: 2 });
-    expect(view).toMatchObject({ mine: true });
+    expect(view).toMatchObject({ mine: true, hours: '18:00–20:00', date: { day: '6', line: '10월 · 오늘' } });
   });
 
   it('no announcer and no Quest → none of them', () => {
     const [view] = toEventViews(sources([night]), 'all', '');
     expect(view).toMatchObject({ source: null, recruiting: 0, mine: false });
+  });
+
+  // "모집 중인 파티 {n}" counts what the map card and the chat card count; "내 파티" marks the User's own.
+  const own = [questFor('night', [ME, MIN_JUN])];
+  const two = [recruiting('night', 'r1'), recruiting('night', 'r2')];
+  it.each([
+    ["the User's own 비공개 파티 only → not counted, 내 파티", [], own, 0, true],
+    ['recruiting Quests of others only → counted', two, [], 2, false],
+    ["both → the others' counted, 내 파티 beside", two, own, 2, true],
+    ['a Quest taken alone → neither', [], [{ ...own[0], holders: [ME], takenAlone: true }], 0, false],
+  ])('%s', (_, gathering: RecruitingQuest[], quests: Quest[], count, mine) => {
+    const [view] = toEventViews(sources([night], { recruiting: gathering, quests }), 'all', '');
+    expect(view).toMatchObject({ recruiting: count, mine });
   });
 });
 

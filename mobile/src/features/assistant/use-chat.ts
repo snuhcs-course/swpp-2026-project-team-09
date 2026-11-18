@@ -8,6 +8,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -31,6 +32,7 @@ import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import type { ShownChatCard } from '@/api/quest-parts-types';
 import type { LibraryDone } from '@/library/cards/done';
+import type { Slot } from '@/library/cards/payloads';
 import { useAskApp } from './app-turn';
 import { useLetGo, useWaiting } from './let-go';
 
@@ -95,6 +97,9 @@ export interface CardRoom {
   first: LibrarySpace;
   // The card's own room, when it was full for the card's time.
   full: LibrarySpace | null;
+  // The time and the seat on screen, when the User changed them on the card (P15 ticket 57).
+  slot?: Slot;
+  seat?: string | null;
   key: string;
 }
 

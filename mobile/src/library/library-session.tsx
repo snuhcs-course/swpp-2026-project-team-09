@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import {
@@ -15,14 +16,16 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
 import { useToast } from '@/design-system';
 import { koreaDateKey } from '@/korea-time';
 import { type LoginOutcome, loginWorks } from './client';
 import { endLibrarySession } from './end-session';
-import { isLibraryLoggedIn, listenToLibraryFlag, markLibraryLoggedIn } from './flag';
+import { isLibraryLoggedIn, listenToLibraryFlag, markLibraryLoggedIn, noteLoginOpened } from './flag';
 import { HiddenLibraryView } from './hidden-view';
 import { hiddenTransport } from './library';
+import { type LoginCheckHooks, LoginChecks } from './login-checks';
 import { LibraryLogin } from './login-view';
 
 const LOGIN_FAILED = '로그인하지 못했어요';
@@ -30,6 +33,8 @@ const LOGIN_FAILED = '로그인하지 못했어요';
 interface LibrarySession {
   // The "logged in" flag, as the phone keeps it.
   loggedIn: boolean;
+  // How many times the session was ended on purpose (`endLibrarySession`), so that the cards that had read follow.
+  logouts: number;
   // Opens the login and gives how it ended.
   logIn: () => Promise<LoginOutcome>;
   // Ends the library session (`endLibrarySession`).
@@ -46,13 +51,17 @@ export function useLibrarySession(): LibrarySession {
   return session;
 }
 
-function useLoggedIn(): boolean {
+function useLoggedIn(): { loggedIn: boolean; logouts: number } {
   const [loggedIn, setLoggedIn] = useState(false);
+  const [logouts, setLogouts] = useState(0);
   useEffect(() => {
     let current = true;
-    const stop = listenToLibraryFlag((next) => {
+    const stop = listenToLibraryFlag((next, cleared) => {
       current = false;
       setLoggedIn(next);
+      if (cleared === 'loggedOut') {
+        setLogouts((last) => last + 1);
+      }
     });
     void isLibraryLoggedIn().then((kept) => {
       if (current) {
@@ -61,76 +70,172 @@ function useLoggedIn(): boolean {
     });
     return stop;
   }, []);
-  return loggedIn;
+  return { loggedIn, logouts };
 }
 
-// The login's check. While it runs, the hidden view is mounted for its one read, before the flag is set; a session
-// that works keeps it mounted until the flag is set.
-function useLoginCheck(): { checking: boolean; check: () => Promise<boolean>; stopChecking: () => void } {
+// The login's checks, which outlive the view (`login-checks.ts`). While one runs, the hidden view is mounted for its
+// one read, on a page loaded afresh, before the flag is set; a session that works keeps it mounted through the flag. A
+// logout cancels them; the provider's end stops them.
+type Ended = Pick<LoginCheckHooks, 'onSession' | 'onNoSession'>;
+
+function useLoginChecks(logouts: number, ended: Ended): { checking: boolean; checks: LoginChecks } {
   const [checking, setChecking] = useState(false);
-  const check = useCallback(async (): Promise<boolean> => {
-    setChecking(true);
-    const works = await loginWorks(hiddenTransport, koreaDateKey(new Date()).replaceAll('-', ''));
-    if (!works) {
-      setChecking(false);
+  const [checks] = useState(
+    () =>
+      new LoginChecks({
+        setChecking,
+        check: (): Promise<boolean> => {
+          hiddenTransport.reloadPage();
+          return loginWorks(hiddenTransport, koreaDateKey(new Date()).replaceAll('-', ''));
+        },
+        markLoggedIn: async (): Promise<boolean> => {
+          await markLibraryLoggedIn();
+          return true;
+        },
+        ...ended,
+      }),
+  );
+  useEffect(() => {
+    checks.hooks = { ...checks.hooks, ...ended };
+  }, [checks, ended]);
+  useEffect(() => {
+    if (logouts > 0) {
+      checks.cancel();
     }
-    return works;
-  }, []);
-  const stopChecking = useCallback((): void => {
-    setChecking(false);
-  }, []);
-  return { checking, check, stopChecking };
+  }, [checks, logouts]);
+  useEffect(() => {
+    checks.start();
+    return (): void => {
+      checks.stop();
+    };
+  }, [checks]);
+  return { checking, checks };
 }
 
-// The library session over the whole app: the hidden web view at the root while the flag is set, and the login,
-// opened by whichever card or row asks for it.
-export function LibrarySessionProvider({ children }: { children: ReactNode }): ReactElement {
-  const loggedIn = useLoggedIn();
-  const showToast = useToast();
+// Whether the transport wants the hidden view for a logout that neither the flag nor a check mounts it for.
+function useWantedForLogout(): boolean {
+  return useSyncExternalStore(
+    (listener) => hiddenTransport.onWantsView(listener),
+    () => hiddenTransport.wantsView(),
+  );
+}
+
+// The login view: open while a card or row waits on it, and `settle`, which closes it and tells them how it ended.
+function useLoginView(): {
+  loggingIn: boolean;
+  logIn: () => Promise<LoginOutcome>;
+  settle: (outcome: LoginOutcome) => void;
+  hide: () => void;
+} {
   const [loggingIn, setLoggingIn] = useState(false);
-  const { checking, check, stopChecking } = useLoginCheck();
   const waiting = useRef<((outcome: LoginOutcome) => void)[]>([]);
+  const settle = useCallback((outcome: LoginOutcome): void => {
+    setLoggingIn(false);
+    for (const resolve of waiting.current.splice(0)) {
+      resolve(outcome);
+    }
+  }, []);
   const logIn = useCallback(
     () =>
       new Promise<LoginOutcome>((resolve) => {
+        noteLoginOpened();
         waiting.current.push(resolve);
         setLoggingIn(true);
       }),
     [],
   );
-  const done = useCallback(
-    (outcome: LoginOutcome): void => {
-      setLoggingIn(false);
+  const hide = useCallback((): void => {
+    setLoggingIn(false);
+  }, []);
+  return { loggingIn, logIn, settle, hide };
+}
+
+type Closed = Exclude<LoginOutcome, 'loggedIn'>;
+
+// How the view's close ends the login: at once, or, while a check is still to come, once it ends: "logged in" when it
+// finds the session, else what the close said, with "로그인하지 못했어요" only then.
+function useClose(view: ReturnType<typeof useLoginView>): {
+  ended: Ended;
+  close: (outcome: Closed, waits: boolean) => void;
+  // A view opened again: what the one before it said on its close is dropped, and its callers wait for this one.
+  reopened: () => void;
+} {
+  const showToast = useToast();
+  const { settle, hide } = view;
+  const waiting = useRef<Closed | null>(null);
+  const end = useCallback(
+    (outcome: Closed): void => {
       if (outcome === 'failed') {
         showToast(LOGIN_FAILED);
       }
-      const settle = (): void => {
-        for (const resolve of waiting.current.splice(0)) {
-          resolve(outcome);
-        }
-      };
-      if (outcome === 'loggedIn') {
-        const after = (): void => {
-          stopChecking();
-          settle();
-        };
-        void markLibraryLoggedIn().then(after, after);
-      } else {
-        stopChecking();
-        settle();
-      }
+      settle(outcome);
     },
-    [showToast, stopChecking],
+    [settle, showToast],
   );
+  const ended = useMemo(
+    (): Ended => ({
+      onSession: (): void => {
+        waiting.current = null;
+        settle('loggedIn');
+      },
+      onNoSession: (): void => {
+        const outcome = waiting.current;
+        waiting.current = null;
+        if (outcome !== null) {
+          end(outcome);
+        }
+      },
+    }),
+    [end, settle],
+  );
+  const close = (outcome: Closed, waits: boolean): void => {
+    if (waits) {
+      waiting.current = outcome;
+      hide();
+    } else {
+      end(outcome);
+    }
+  };
+  const reopened = useCallback((): void => {
+    waiting.current = null;
+  }, []);
+  return { ended, close, reopened };
+}
+
+// The library session over the whole app: the hidden web view at the root while the flag is set, and the login,
+// opened by whichever card or row asks for it.
+export function LibrarySessionProvider({ children }: { children: ReactNode }): ReactElement {
+  const { loggedIn, logouts } = useLoggedIn();
+  const view = useLoginView();
+  const { ended, close, reopened } = useClose(view);
+  const { checking, checks } = useLoginChecks(logouts, ended);
+  const { logIn: openView } = view;
+  const logIn = useCallback((): Promise<LoginOutcome> => {
+    checks.opened();
+    reopened();
+    return openView();
+  }, [checks, reopened, openView]);
+  const wanted = useWantedForLogout();
   const session = useMemo(
-    () => ({ loggedIn, logIn, logOut: (): Promise<void> => endLibrarySession() }),
-    [loggedIn, logIn],
+    () => ({ loggedIn, logouts, logIn, logOut: (): Promise<void> => endLibrarySession() }),
+    [loggedIn, logouts, logIn],
   );
   return (
     <LibrarySessionContext value={session}>
       {children}
-      {loggedIn || checking ? <HiddenLibraryView transport={hiddenTransport} /> : null}
-      <LibraryLogin check={check} onDone={done} visible={loggingIn} />
+      {loggedIn || checking || wanted ? <HiddenLibraryView transport={hiddenTransport} /> : null}
+      <LibraryLogin
+        onDone={(outcome) => {
+          close(outcome, checks.closed());
+        }}
+        onLanded={() => {
+          checks.landed();
+        }}
+        onLeft={() => {
+          checks.left();
+        }}
+        visible={view.loggingIn}
+      />
     </LibrarySessionContext>
   );
 }

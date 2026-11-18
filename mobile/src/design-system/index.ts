@@ -62,6 +62,8 @@ export { type ToastAction, ToastProvider, useNotReadyToast, useToast, useToastAb
 export {
   classColors,
   color,
+  eventText,
+  eventTone,
   font,
   halo,
   mapText,

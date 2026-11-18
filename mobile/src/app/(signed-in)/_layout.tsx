@@ -12,6 +12,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type NativeStackNavigationOptions, router, Stack, useGlobalSearchParams, useSegments } from 'expo-router';
@@ -110,7 +111,8 @@ function AboveTabs({ reduceMotion }: { reduceMotion: boolean }): ReactElement {
 
 // An Invite Link opened before the User belongs here, at the start of the app or signed out, is kept on the phone, and
 // its accept screen is shown once the User is here: after the loading screen, or after the sign-in, the consent and
-// Onboarding. Opened while the User is here, the link shows its screen at once.
+// Onboarding. At a start of the app `+native-intent.ts` keeps it, since this place may first render without the
+// address. Opened while the User is here, the link shows its screen at once.
 function useInviteLinks(here: boolean): void {
   const segments: readonly string[] = useSegments();
   const { token } = useGlobalSearchParams<{ token?: string }>();

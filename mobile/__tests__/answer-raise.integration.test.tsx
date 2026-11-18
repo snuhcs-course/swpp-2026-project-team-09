@@ -1,0 +1,186 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-18  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
+import { act, fireEvent } from '@testing-library/react-native';
+import { StyleSheet, type ViewStyle } from 'react-native';
+import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
+import { space } from '@/design-system';
+import { ANSWER_PILL, listsTop } from '@/screens/main/layout';
+import { pass, screen } from './support/app';
+import { holdBackButton } from './support/back';
+import { KEYBOARD, showKeyboard } from './support/keyboard';
+import { AI_INPUT, button, layStage, SEND } from './support/lists';
+import { givePhone, ON_CAMPUS, openMain } from './support/main';
+import { press } from './support/markers';
+import { startFresh } from './support/mocks';
+
+// P02 ticket 38: the answer card's handle raises the card up to the pill and lowers it again, by a press or a drag,
+// and Android's back button lowers a raised card first. The mocks answer.
+
+jest.mock('expo-location');
+jest.mock('@/hooks/use-reduce-motion', () => ({
+  useReduceMotion: (): boolean => true,
+  useMotionAllowed: (): boolean => false,
+  useReduceMotionSetting: (): boolean => true,
+}));
+
+const HANDLE = '답 크게 보기';
+const ASKED = '식사 메뉴 추천';
+const STAGE = 760;
+// What the pill keeps from the stage's top: the tests' status bar takes nothing.
+const PILL_ROOM = listsTop(0) + ANSWER_PILL.height + space[2];
+
+type User = Awaited<ReturnType<typeof openMain>>;
+
+async function ask(user: User, words: string): Promise<void> {
+  await user.type(screen.getByLabelText(AI_INPUT), words);
+  await press(user, SEND);
+  await pass(300);
+}
+
+async function framed(): Promise<User> {
+  const user = await openMain();
+  await layStage(390, STAGE);
+  await ask(user, ASKED);
+  return user;
+}
+
+function contentStyle(): ViewStyle {
+  const style: unknown = screen.getByTestId('answer-card-content').props.style;
+  return StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
+}
+
+function handle(): ReturnType<typeof button> {
+  return button(HANDLE);
+}
+
+async function layContent(height: number): Promise<void> {
+  await fireEvent(screen.getByTestId('answer-card-content'), 'layout', {
+    nativeEvent: { layout: { x: 0, y: 0, width: 390, height } },
+  });
+}
+
+async function dragHandle(dy: number): Promise<void> {
+  await act(() => {
+    fireGestureHandler(getByGestureTestId('answer-card-handle'), [
+      { translationX: 0, translationY: 0, velocityY: 0 },
+      { translationX: 0, translationY: dy / 2, velocityY: 0 },
+      { translationX: 0, translationY: dy, velocityY: 0 },
+    ]);
+  });
+}
+
+beforeEach(async () => {
+  jest.useFakeTimers();
+  await startFresh();
+  givePhone({ permission: 'granted', position: ON_CAMPUS });
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+  jest.useRealTimers();
+});
+
+// Partitions: lowered and raised by a press.
+describe("the answer card's handle", () => {
+  it('stands on the lowered card, which takes at most about half the stage as before', async () => {
+    await framed();
+
+    expect(handle()).toBeCollapsed();
+    expect(contentStyle().maxHeight).toBeLessThanOrEqual(STAGE / 2);
+    expect(contentStyle().height).toBeUndefined();
+  });
+
+  it('raises the card up to the pill by a press, and lowers it by another', async () => {
+    const user = await framed();
+    const lowered = Number(contentStyle().maxHeight);
+
+    await press(user, HANDLE);
+
+    expect(handle()).toBeExpanded();
+    expect(contentStyle().height).toBe(lowered + STAGE / 2 - PILL_ROOM);
+    expect(button('답 닫기')).toBeVisible();
+    expect(button('새 대화')).toBeVisible();
+
+    await press(user, HANDLE);
+
+    expect(handle()).toBeCollapsed();
+    expect(contentStyle()).toMatchObject({ maxHeight: lowered });
+  });
+});
+
+// Partitions: up and down, past half the way and short of it; what the card keeps.
+describe("a drag on the answer card's handle", () => {
+  it('raises the card by a drag up past half the way, and lowers it by a drag down', async () => {
+    await framed();
+    await layContent(200);
+
+    await dragHandle(-300);
+    expect(handle()).toBeExpanded();
+
+    await dragHandle(300);
+    expect(handle()).toBeCollapsed();
+  });
+
+  it('keeps the card where it was after a short drag', async () => {
+    await framed();
+    await layContent(200);
+
+    await dragHandle(-40);
+
+    expect(handle()).toBeCollapsed();
+  });
+
+  it('keeps the conversation and the words being written', async () => {
+    const user = await framed();
+    await user.type(screen.getByLabelText(AI_INPUT), '저녁은?');
+
+    await press(user, HANDLE);
+    await press(user, HANDLE);
+
+    expect(screen.getByTestId('answer-card')).toHaveTextContent(/^식사 메뉴 추천오늘 메뉴예요\./u);
+    expect(screen.getByLabelText(AI_INPUT)).toHaveDisplayValue('저녁은?');
+  });
+});
+
+// Partitions: the keyboard up while raised and lowered.
+describe('the raised card while the keyboard is up', () => {
+  it('shows the conversation, not the headline alone, over the input standing on the keyboard', async () => {
+    const user = await framed();
+    await press(user, HANDLE);
+
+    await showKeyboard(KEYBOARD);
+
+    expect(screen.queryByTestId('answer-headline')).toBeNull();
+    expect(screen.getByTestId('turn-question')).toHaveTextContent(ASKED);
+  });
+
+  it('shows the headline again once lowered', async () => {
+    const user = await framed();
+    await press(user, HANDLE);
+    await showKeyboard(KEYBOARD);
+
+    await press(user, HANDLE);
+
+    expect(screen.getByTestId('answer-headline')).toBeVisible();
+  });
+});
+
+// Partitions: raised and lowered.
+describe("Android's back button", () => {
+  it('lowers a raised card first, and then hides the frame', async () => {
+    const back = holdBackButton();
+    const user = await framed();
+    await press(user, HANDLE);
+
+    expect(await back()).toBe(true);
+    expect(handle()).toBeCollapsed();
+    expect(screen.getByTestId('answer-pill')).toBeVisible();
+
+    expect(await back()).toBe(true);
+    expect(screen.queryByTestId('answer-pill')).toBeNull();
+  });
+});
