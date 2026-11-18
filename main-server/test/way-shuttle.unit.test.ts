@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Lookup } from '../src/assistant/dto/answer.dto.js';
@@ -124,14 +125,14 @@ describe('Board q4: the band and the actions', () => {
     });
   });
 
-  it('offers a notification at 16:43 first, then route guidance', () => {
+  it('offers a notification at 16:43 first, then route guidance to the stop', () => {
     expect(shuttleOrWalk().actions).toEqual([
       {
         kind: 'remind',
         at: time(TUESDAY, '16:43'),
         text: '지금 나서면 16:45 셔틀로 17:00 수업에 맞아요 · 301동 정류장까지 걸어서 2분',
       },
-      { kind: 'guide', to: point('SK경영관', '58동') },
+      { kind: 'guide', to: stopPoint('301동') },
     ]);
   });
 });

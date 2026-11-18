@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Lookup } from '../src/assistant/dto/answer.dto.js';
@@ -10,7 +11,7 @@ import { questWay, type QuestWayAnswer } from '../src/assistant/lookup/quest-way
 import { spansOn } from '../src/assistant/lookup/tutorial-lookup.js';
 import { readTutorialContent, TUTORIAL_FILE, type TutorialVisit } from '../src/tutorial/tutorial-content.js';
 import { CARD, CARD_NOTE, plain, pointOf, positionOf, strong } from './tutorial-example.js';
-import { classAt, id, ME, numbered, readCampus, reporting, TUESDAY, wayArgs } from './way-example.js';
+import { classAt, id, ME, numbered, readCampus, reporting, stopPoint, TUESDAY, wayArgs } from './way-example.js';
 
 // The way to the 학생증 and back (board q12): on Tuesday 2026-11-17 at 11:50 at 301동, after its 11:00 Class, before a
 // 13:00 Class in 24동, on the seed's walking table and shuttle timing, with the S-CARD's hours of content/tutorial.yaml.
@@ -115,8 +116,8 @@ describe('Board q12 on the map', () => {
     expect(boardQ12().band).toBeNull();
   });
 
-  it('offers route guidance to the place, and nothing that completes the quest', () => {
-    expect(boardQ12().actions).toEqual([{ kind: 'guide', to: pointOf('67', 'NH농협두레문예관 2층') }]);
+  it('offers route guidance to the stop the shuttle is taken at, and nothing that completes the quest', () => {
+    expect(boardQ12().actions).toEqual([{ kind: 'guide', to: stopPoint('301동') }]);
   });
 
   it('gives the model the arrival, the stay, and the way back, in words', () => {
@@ -175,6 +176,7 @@ describe('The way to a quest from nearby', () => {
     const near = lookupOf(cardWay('11:50', { at: '63' }));
     expect(near.lines[0]).toEqual([plain('걸어서 가면 '), strong('11:58'), plain(' 도착')]);
     expect(near.scene.routes.map(({ role }) => role)).toEqual(['me', 'next']);
+    expect(near.actions).toEqual([{ kind: 'guide', to: pointOf('67', 'NH농협두레문예관 2층') }]);
   });
 
   it("draws only the quest's own arrival when the next item is at the quest's Place", () => {
