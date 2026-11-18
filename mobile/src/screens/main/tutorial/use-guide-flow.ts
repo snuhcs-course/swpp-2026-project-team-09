@@ -4,7 +4,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useState } from 'react';
 import type { Tutorial } from '@/api/tutorial-types';
 import type { GuidePosition } from '@/features/tutorial/guide';
 import type { TutorialActions } from '@/features/tutorial/use-tutorial';
@@ -85,4 +85,16 @@ export function useGuideFlow({ tutorial, complete, onList, onCompleted, onCheck 
       });
     },
   };
+}
+
+// A guide gives way to what opens over the map while it is open: a selected card (a tapped 파티 or invitation push),
+// an invitation's or a made Quest's card, or the answer frame. The guide closes, so that its bar and panel never stay
+// over a map that draws something else.
+export function useGuideGivesWay(open: boolean, otherOpen: boolean, closeGuide: () => void): void {
+  const close = useEffectEvent(closeGuide);
+  useEffect(() => {
+    if (open && otherOpen) {
+      close();
+    }
+  }, [open, otherOpen]);
 }

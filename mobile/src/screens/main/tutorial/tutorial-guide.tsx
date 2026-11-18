@@ -87,7 +87,7 @@ export function TutorialGuideOverlay({
   const { guide: view, tutorial } = flow;
   const quest = view === null ? undefined : tutorial?.quests.find(({ key }) => key === view.key);
   const guide = quest?.guide;
-  const positions = useGuidePositions();
+  const positions = useGuidePositions(view !== null);
   useBackToClose(guide !== undefined, flow.closeGuide);
   if (view === null || quest === undefined || guide === undefined || tutorial === undefined) {
     return null;

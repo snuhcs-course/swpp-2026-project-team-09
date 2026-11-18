@@ -13,9 +13,11 @@ import { color, font, Icon, radius, shadow, size, space, tutorialTone } from '@/
 const BUTTON = 40;
 const CARD_WIDTH = 250;
 
-// Opens a site in the phone's browser; a failure to open leaves the screen as it is.
+// Opens a site in the phone's browser; a failure to open leaves the screen as it is. Only a web address opens.
 export function openSite(url: string): void {
-  void openBrowserAsync(url).catch(() => null);
+  if (/^https?:\/\//iu.test(url)) {
+    void openBrowserAsync(url).catch(() => null);
+  }
 }
 
 // 🌐 of a Tutorial Quest's sheet and of its guide's bar ("링크는 🌐"): a press opens a small card of the quest's links

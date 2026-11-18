@@ -21,8 +21,8 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
-import { type ReactElement, type ReactNode, useEffect, useMemo } from 'react';
+import { router, useIsFocused } from 'expo-router';
+import { type ReactElement, type ReactNode, useMemo } from 'react';
 import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LatLng } from '@/api/types';
@@ -57,6 +57,7 @@ import { useReturnedCamera } from './use-camera-back';
 import { useFramedRoom } from './use-room';
 import { type Selection, useSelection } from './use-selection';
 import { type TutorialFlow, useTutorialFlow } from './tutorial/use-tutorial-flow';
+import { useGuideGivesWay } from './tutorial/use-guide-flow';
 import { useGuideMap } from './tutorial/use-guide-map';
 import { type TutorialPin, useTutorialPin } from './tutorial/use-tutorial-pin';
 import { ZoomControl } from './zoom-control';
@@ -224,17 +225,6 @@ function Lists({ hidden, map, room, selection }: { hidden: boolean } & Omit<List
   );
 }
 
-// A tutorial quest asked for by the main screen's address, `/main?tutorial=…`, opens here: its guide, or its sheet.
-function useAskedTutorialQuest(openQuest: (key: string) => void, ready: boolean): void {
-  const { tutorial } = useLocalSearchParams<{ tutorial?: string }>();
-  useEffect(() => {
-    if (tutorial !== undefined && ready) {
-      router.setParams({ tutorial: undefined });
-      openQuest(tutorial);
-    }
-  }, [tutorial, openQuest, ready]);
-}
-
 // The 새내기 튜토리얼 over the main screen, whether its start button shows (not while a card is open), and the pin
 // of its 지도에서 보기.
 function useMainTutorial(
@@ -243,7 +233,6 @@ function useMainTutorial(
   map: MainMap,
 ): { tutorial: TutorialFlow; start: boolean; pin: TutorialPin } {
   const tutorial = useTutorialFlow();
-  useAskedTutorialQuest(tutorial.openQuest, tutorial.tutorial !== undefined);
   const pin = useTutorialPin({ cards, selection, goTo: map.goTo, tutorialState: tutorial.tutorial?.state });
   const start = showsStartButton(tutorial.tutorial) && !selection.open && tutorial.guide === null;
   return { tutorial, start, pin };
@@ -295,9 +284,11 @@ function useMainParts(): MainParts {
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
   const guided = tutorial.guide !== null;
   const framedRoom = useFramedRoom(selection, layers, me, { tutorialStart: start, guided });
+  useGuideGivesWay(guided, selection.open || framedRoom.framed, tutorial.closeGuide);
   const { room, unasked } = framedRoom;
   const lines = useLines(shuttle, route);
-  const guide = useGuideMap({ flow: tutorial, map, room, me: me.position, route: route.line });
+  const { framed } = framedRoom;
+  const guide = useGuideMap({ flow: tutorial, map, room, me: me.position, route: route.line, framed });
   const view = useMapView(chat, map, room, { me, pin, lines, cards, selection, guide }, unasked);
   useReturnedCamera(layers.back, chat.framed, map);
   return { map, me, layers, selection, party, tutorial, pin, guided, view, ...framedRoom };

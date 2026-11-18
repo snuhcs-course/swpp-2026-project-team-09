@@ -161,8 +161,10 @@ quests:
     icon: bowl
     title: 천원의 식사 이용하기
     brief: 아침만이 아니라 점심과 저녁도 1,000원에 먹을 수 있어요.
-    # The board MainTutorialSheet's two lines (P15 ticket 53), which the owner drew; 윗공대's breakfast only is the
-    # board's, not the 학생처 page's.
+    # The board MainTutorialSheet's two lines (P15 ticket 53), which the owner drew. *unsourced*: 윗공대's breakfast
+    # only is the board's, not the 학생처 page's (the facts below leave out which restaurant serves which meal). The
+    # body and the places reach the Assistant as the quest's text, not as a fact; P15 ticket 53 asks the owner for a
+    # source or for the line to move into the guide only.
     body:
       - 아침·점심·저녁, 1,000원에 먹을 수 있어요.
       - 윗공대(301동)는 아침만 운영해요.
@@ -660,7 +662,10 @@ quests:
           pinText: 🌙
           name: 302동 앞
           sub: 주말·공휴일 제외
+          # The dates of the facts below (cse.snu.ac.kr notice 25702), so that the step does not read as standing after
+          # 12월 14일.
           chips:
+            - { icon: calendar, words: '2026 · 10/12–10/30 · 11/30–12/14' }
             - { icon: clock, words: '23:40 · 00:15 · 00:50 · 01:25 · 02:00' }
             - { icon: bus, words: 도서관 셔틀 3대로 증차 }
           actions:

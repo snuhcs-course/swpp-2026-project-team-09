@@ -18,7 +18,7 @@
 
 import { router } from 'expo-router';
 import type { ReactElement } from 'react';
-import { Keyboard } from 'react-native';
+import { Keyboard, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { now } from '@/clock';
 import { space } from '@/design-system';
@@ -198,12 +198,11 @@ function TutorialParts({
 }
 
 export function MapBottom(props: MapBottomProps): ReactElement {
-  const { onAnswerHeight, onInputHeight, room, tutorial, chat, unasked } = props;
+  const { onInputHeight, room, tutorial, chat, unasked } = props;
   const { invitation, made } = unasked;
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
-  if (tutorial.guide !== null) {
-    return <TutorialParts {...props} />;
-  }
+  // While a quest's guide is open it takes the whole map. The AI input stays mounted, hidden, so that a draft is kept.
+  const guided = tutorial.guide !== null;
   const cardShown = invitation.shown || made.shown !== null;
   // The open list of Friends to add takes the input's place in the answer's card. The time band moved whole hides the
   // input but keeps its room, so that the card and its lanes stay under the finger.
@@ -211,6 +210,41 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const inputShown = !inputGone && !(chat.framed && chat.answer.moving !== null);
   const inputTop = inputGone ? lift : aiInputTop(room) + lift;
   const send = sendWithKeyboardDown(chat.chat.send);
+  return (
+    <>
+      {guided ? null : (
+        <FramedParts {...props} cardShown={cardShown} inputTop={inputTop} keyboardUp={keyboardUp} send={send} />
+      )}
+      <View style={[styles.inputLayer, guided && styles.gone]}>
+        {inputShown && !cardShown ? (
+          <AiInput
+            lift={lift}
+            onEarlier={chat.showAgain}
+            onHeight={onInputHeight}
+            placeholder={chat.framed ? '이어서 말하기' : undefined}
+            restore={restoreOf(chat.chat.bubbles)}
+            onSend={send}
+            unseen={chat.unseen}
+          />
+        ) : null}
+      </View>
+      <TutorialParts {...props} />
+    </>
+  );
+}
+
+type FramedProps = MapBottomProps & {
+  cardShown: boolean;
+  inputTop: number;
+  keyboardUp: boolean;
+  send: (text: string) => void;
+};
+
+// The everyday map's bottom, the answer frame, the examples over the keyboard, and the cards nobody asked for: none of
+// them while a quest's guide is open.
+function FramedParts(props: FramedProps): ReactElement {
+  const { chat, room, unasked, onAnswerHeight, cardShown, inputTop, keyboardUp, send } = props;
+  const { invitation, made } = unasked;
   return (
     <>
       {!chat.framed && !cardShown ? <EverydayBottom {...props} keyboardUp={keyboardUp} /> : null}
@@ -222,18 +256,11 @@ export function MapBottom(props: MapBottomProps): ReactElement {
       {made.shown === null ? null : (
         <MadeQuestFrame made={made.shown} onClose={made.closeCard} onHeight={onAnswerHeight} room={room} />
       )}
-      {inputShown && !cardShown ? (
-        <AiInput
-          lift={lift}
-          onEarlier={chat.showAgain}
-          onHeight={onInputHeight}
-          placeholder={chat.framed ? '이어서 말하기' : undefined}
-          restore={restoreOf(chat.chat.bubbles)}
-          onSend={send}
-          unseen={chat.unseen}
-        />
-      ) : null}
-      <TutorialParts {...props} />
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  inputLayer: { ...StyleSheet.absoluteFill, pointerEvents: 'box-none' },
+  gone: { display: 'none' },
+});

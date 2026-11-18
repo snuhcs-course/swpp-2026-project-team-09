@@ -11,9 +11,10 @@ import type { LatLng } from '@/api/types';
 import type { TutorialGuidePlace } from '@/api/tutorial-types';
 
 // Where a guide's place is: a point as it is, a Place of the list by its number. A Place the list does not hold has
-// no position, and no pin.
-export function useGuidePositions(): (place: TutorialGuidePlace) => LatLng | null {
-  const places = useQuery(placesQuery).data;
+// no position, and no pin. The list of Places is read only while a guide is open (`open`), or as another screen has
+// read it.
+export function useGuidePositions(open: boolean): (place: TutorialGuidePlace) => LatLng | null {
+  const places = useQuery({ ...placesQuery, enabled: open }).data;
   return useCallback(
     (place: TutorialGuidePlace): LatLng | null => {
       if ('point' in place) {

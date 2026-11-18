@@ -134,7 +134,7 @@ export const questTone = {
 } as const;
 
 // The 새내기 튜토리얼's warm look, as the `Main` and `Profile` frames draw it: the Quest colour's ink on a cream ground.
-// `round` is the 내 정보 row's round, `pagerRound` the pager's, `dotNow` the sheet's dot of the quest shown.
+// `round` is the 내 정보 row's round, `dotNow` the sheet's dot of the quest shown.
 export const tutorialTone = {
   ink: color.quest,
   words: '#6B4500',
@@ -142,7 +142,6 @@ export const tutorialTone = {
   border: '#F1DFAF',
   box: '#FFF8E6',
   round: '#FFF1C9',
-  pagerRound: '#FFF4D6',
   dotNow: '#E8A400',
   // As the canvas's 새내기 튜토리얼 boards draw the list and the guides (P15 ticket 53): the green of a completed quest,
   // its ✓ and ✓ 완료, with its banner's ground and words; the grey of what is not there yet.

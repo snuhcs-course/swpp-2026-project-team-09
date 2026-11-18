@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Tutorial } from '@/api/tutorial-types';
 import {
   Button,
@@ -108,7 +108,7 @@ function Page({ tutorial, shown, flow }: { tutorial: Tutorial; shown: Shown; flo
       {banner === undefined ? null : <Banner title={banner.title} />}
       <Progress shown={shown} tone={tone} tutorial={tutorial} />
       <CategoryTabs flow={flow} shown={shown} tutorial={tutorial} />
-      <View style={styles.rows}>
+      <ScrollView contentContainerStyle={styles.rows} style={styles.scroll} testID="tutorial-list-scroll">
         {tutorial.quests
           .filter(({ category }) => category === shown.category)
           .map((quest) => (
@@ -122,7 +122,7 @@ function Page({ tutorial, shown, flow }: { tutorial: Tutorial; shown: Shown; flo
               tone={tone}
             />
           ))}
-      </View>
+      </ScrollView>
       <Pressable accessibilityRole="button" disabled={flow.actions.working} onPress={flow.stop} style={styles.stop}>
         <Text style={styles.stopWords}>튜토리얼 그만하기</Text>
       </Pressable>
@@ -181,8 +181,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[5],
     backgroundColor: color.scrim,
   },
+  // Within the screen on a low phone or with a large font: the rows scroll, and the head and 그만하기 stay.
   card: {
     alignSelf: 'stretch',
+    flexShrink: 1,
+    maxHeight: '100%',
     gap: 14,
     maxWidth: MAX_WIDTH,
     paddingTop: space[5],
@@ -228,6 +231,7 @@ const styles = StyleSheet.create({
   bar: { flexDirection: 'row', gap: 3, height: space[2] },
   segment: { flex: 1, borderRadius: radius.full },
   rows: { gap: 6 },
+  scroll: { flexShrink: 1 },
   stop: { alignSelf: 'center', justifyContent: 'center', height: CLOSE, paddingHorizontal: space[3] },
   stopWords: { fontFamily: font.semiBold, fontSize: 14, lineHeight: 20, color: color.inkFaint },
   done: { alignItems: 'center', gap: space[2], paddingTop: space[3], paddingBottom: space[1] },

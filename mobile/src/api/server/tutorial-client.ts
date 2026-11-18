@@ -59,7 +59,6 @@ function isQuest(value: unknown): value is TutorialQuest {
     isOptional(field(value, 'category'), isText) &&
     isOptional(field(value, 'icon'), isText) &&
     isOptional(field(value, 'ask'), isText) &&
-    isOptional(field(value, 'guide'), isTutorialGuide) &&
     listOf(isText)(field(value, 'body')) &&
     isCompletion(field(value, 'completion')) &&
     listOf(isPlace)(field(value, 'places')) &&
@@ -82,6 +81,25 @@ export function isTutorial(value: unknown): value is Tutorial {
   );
 }
 
+// The tutorial with only the guides this app can read: a quest whose guide it cannot read (a newer server's, with a
+// button of a kind it does not know) opens its sheet, and the rest of the tutorial stays.
+export function withReadableGuides(tutorial: Tutorial): Tutorial {
+  return {
+    ...tutorial,
+    quests: tutorial.quests.map((quest) => {
+      if (quest.guide === undefined || isTutorialGuide(quest.guide)) {
+        return quest;
+      }
+      const { guide: _unreadable, ...withoutGuide } = quest;
+      return withoutGuide;
+    }),
+  };
+}
+
+function readTutorial(answer: Promise<Tutorial>): Promise<Tutorial> {
+  return answer.then(withReadableGuides);
+}
+
 function questPath(key: string, action: 'start' | 'complete'): string {
   return `/tutorial/quests/${encodeURIComponent(key)}/${action}`;
 }
@@ -92,10 +110,11 @@ type TutorialClient = Pick<
 >;
 
 export const tutorialClient: TutorialClient = {
-  getTutorial: () => call('GET', '/tutorial', isTutorial),
-  enableTutorial: () => call('POST', '/tutorial/enable', isTutorial),
-  stopTutorial: () => call('POST', '/tutorial/stop', isTutorial),
-  hideTutorialRow: () => call('POST', '/tutorial/hide-row', isTutorial),
-  startTutorialQuest: (key) => call('POST', questPath(key, 'start'), isTutorial),
-  completeTutorialQuest: (key, by) => call('POST', questPath(key, 'complete'), isTutorial, { body: { by } }),
+  getTutorial: () => readTutorial(call('GET', '/tutorial', isTutorial)),
+  enableTutorial: () => readTutorial(call('POST', '/tutorial/enable', isTutorial)),
+  stopTutorial: () => readTutorial(call('POST', '/tutorial/stop', isTutorial)),
+  hideTutorialRow: () => readTutorial(call('POST', '/tutorial/hide-row', isTutorial)),
+  startTutorialQuest: (key) => readTutorial(call('POST', questPath(key, 'start'), isTutorial)),
+  completeTutorialQuest: (key, by) =>
+    readTutorial(call('POST', questPath(key, 'complete'), isTutorial, { body: { by } })),
 };

@@ -75,6 +75,8 @@ describe('the start button', () => {
     expect(LIFE.map((title) => list().getByRole('button', { name: title }))).toHaveLength(4);
     expect(list().getByRole('button', { name: '튜토리얼 그만하기' })).toBeVisible();
     expect(list().queryByText('퀘스트 시작')).toBeNull();
+    // The rows scroll inside the card on a low screen or with a large font.
+    expect(list().getByTestId('tutorial-list-scroll')).toBeVisible();
   });
 });
 

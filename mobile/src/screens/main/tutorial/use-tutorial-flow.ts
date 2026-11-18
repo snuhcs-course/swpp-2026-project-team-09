@@ -56,7 +56,6 @@ export interface TutorialFlow extends TutorialGuideFlow {
   openQuest: (key: string) => void;
   // 튜토리얼 그만하기.
   stop: () => void;
-  openSheet: (key: string) => void;
   closeSheet: () => void;
   // ✓ 완료 of a button quest's sheet: its completionMessage, before 퀘스트 완료 completes it.
   saidDone: () => void;
@@ -186,14 +185,14 @@ interface QuestDeps {
   guide: TutorialGuideFlow;
 }
 
-// What opens a quest, its sheet, and what stops the tutorial.
+// What opens a quest, closes its sheet, and stops the tutorial.
 function questActions({
   tutorial,
   actions,
   setList,
   setSheet,
   guide,
-}: QuestDeps): Pick<TutorialFlow, 'openQuest' | 'stop' | 'openSheet' | 'closeSheet'> {
+}: QuestDeps): Pick<TutorialFlow, 'openQuest' | 'stop' | 'closeSheet'> {
   return {
     openQuest: (key) => {
       const quest = tutorial?.quests.find((one) => one.key === key);
@@ -218,10 +217,6 @@ function questActions({
           guide.closeGuide();
         }
       });
-    },
-    openSheet: (key) => {
-      setList(null);
-      setSheet(() => freshSheet(key));
     },
     closeSheet: () => {
       setSheet(() => null);

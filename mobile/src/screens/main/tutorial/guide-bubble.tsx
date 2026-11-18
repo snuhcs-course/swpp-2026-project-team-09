@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { TutorialAction, TutorialGuide, TutorialKind, TutorialStep } from '@/api/tutorial-types';
 import {
   color,
@@ -131,7 +131,7 @@ function StepBody(props: BubbleProps & { step: TutorialStep; index: number }): R
   );
 }
 
-// The bubble under the guide's bar: the guide's or the step's paragraphs, then the kinds to choose from, or the step
+// The bubble under the guide's bar, whose words scroll when they do not fit: the guide's or the step's paragraphs, then the kinds to choose from, or the step
 // shown with its place, its link, its spots, its rows, its chips and its buttons.
 export function GuideBubble(props: BubbleProps): ReactElement | null {
   const { guide, position, tone, onKind } = props;
@@ -140,28 +140,32 @@ export function GuideBubble(props: BubbleProps): ReactElement | null {
   const about = shown?.step.about ?? guide.about;
   return (
     <View style={[styles.bubble, { borderTopColor: tone.ink }]}>
-      {about === undefined || choosing ? null : <About paragraphs={about} />}
-      {choosing
-        ? (guide.kinds ?? []).map((kind) => (
-            <KindOption
-              key={kind.key}
-              kind={kind}
-              onPress={() => {
-                onKind(kind.key);
-              }}
-              tone={tone}
-            />
-          ))
-        : null}
-      {!choosing && shown !== null ? <StepBody {...props} index={shown.index} step={shown.step} /> : null}
+      <ScrollView contentContainerStyle={styles.content} testID="guide-bubble-scroll">
+        {about === undefined || choosing ? null : <About paragraphs={about} />}
+        {choosing
+          ? (guide.kinds ?? []).map((kind) => (
+              <KindOption
+                key={kind.key}
+                kind={kind}
+                onPress={() => {
+                  onKind(kind.key);
+                }}
+                tone={tone}
+              />
+            ))
+          : null}
+        {!choosing && shown !== null ? <StepBody {...props} index={shown.index} step={shown.step} /> : null}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  content: { gap: 10, padding: 14 },
+  // It shrinks, and its words scroll, on a low screen or with a large font: the panel under it stays in sight.
   bubble: {
-    gap: 10,
-    padding: 14,
+    flexShrink: 1,
+    overflow: 'hidden',
     borderTopWidth: 4,
     borderRadius: 20,
     backgroundColor: color.surface,

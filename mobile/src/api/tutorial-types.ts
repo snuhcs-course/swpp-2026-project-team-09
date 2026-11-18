@@ -116,7 +116,7 @@ export interface TutorialQuest {
   // The icon of its row in the list and of its guide's bar, by name; left out by an older main server.
   icon?: string;
   title: string;
-  // The pager's line.
+  // The quest's line, which the Assistant reads.
   brief: string;
   // The sheet's text, one paragraph each.
   body: string[];

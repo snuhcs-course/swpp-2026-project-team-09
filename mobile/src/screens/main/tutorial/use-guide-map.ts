@@ -4,11 +4,11 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { useEffect, useEffectEvent, useMemo } from 'react';
+import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
 import type { LatLng } from '@/api/types';
 import type { Tutorial, TutorialGuide, TutorialGuidePlace, TutorialStep } from '@/api/tutorial-types';
 import { type GuidePosition, isChoosing, placesOf, stepAt, stepsAtOnePlace, stepsOf } from '@/features/tutorial/guide';
-import { type MapLine, type MapMarker, type MarkerLook, useMarkerImages } from '@/map';
+import { type MapCamera, type MapLine, type MapMarker, type MarkerLook, useMarkerImages } from '@/map';
 import type { Room } from '../layout';
 import type { MainMap } from '../use-main-map';
 import { useGuidePositions } from './guide-places';
@@ -144,6 +144,8 @@ interface GuideMapDeps {
   me: LatLng | null;
   // The walking route of a 길찾기, drawn over the way.
   route: MapLine | null;
+  // The answer frame, or a card nobody asked for, is shown.
+  framed: boolean;
 }
 
 function pinsOf(
@@ -196,15 +198,40 @@ function useGuideCamera(
   }, [key, guide === null]);
 }
 
+// Closing a guide brings the map back to where the everyday map was when the guide opened, as the answer frame's way
+// out does (`use-camera-back.ts`), unless the guide gave way to the answer frame, whose own way back then follows.
+function useGuideCameraBack(open: boolean, { map, framed }: Pick<GuideMapDeps, 'map' | 'framed'>): void {
+  const everyday = useRef<MapCamera | null>(null);
+  const wasOpen = useRef(false);
+  const remember = useEffectEvent(() => {
+    everyday.current = map.camera;
+  });
+  const goBack = useEffectEvent(() => {
+    if (everyday.current !== null && !framed) {
+      map.moveTo(everyday.current);
+    }
+    everyday.current = null;
+  });
+  useEffect(() => {
+    if (open && !wasOpen.current) {
+      remember();
+    } else if (!open && wasOpen.current) {
+      goBack();
+    }
+    wasOpen.current = open;
+  }, [open]);
+}
+
 export function useGuideMap(deps: GuideMapDeps): GuideMap | null {
   const { flow, me } = deps;
   const { tutorial, guide: view } = flow;
-  const positionOf = useGuidePositions();
+  const positionOf = useGuidePositions(view !== null);
   const drawn = useMemo(
     () => (tutorial === undefined || view === null ? null : pinsOf(tutorial, view, positionOf)),
     [tutorial, view, positionOf],
   );
   const images = useMarkerImages(drawn?.pins.map(({ look }) => look) ?? []);
+  useGuideCameraBack(view !== null, deps);
   useGuideCamera(drawn?.guide ?? null, view, deps, positionOf);
   if (drawn === null || view === null || tutorial === undefined) {
     return null;

@@ -58,6 +58,8 @@ describe('the 학생증 guide', () => {
     expect(screen.getAllByText('학생지원센터').length).toBeGreaterThan(0);
     expect(button('종류를 골라 주세요')).toBeDisabled();
     expect(screen.queryAllByTestId(STEP_PIN)).toHaveLength(2);
+    // On a low screen or with a large font the bubble's words scroll and the panel stays in sight.
+    expect(screen.getByTestId('guide-bubble-scroll')).toBeVisible();
   });
 
   it("walks 일반's steps with 다음 and the tabs, and ends on ✓ 완료", async () => {

@@ -70,7 +70,7 @@ const questSchema = z.strictObject({
   // The icon of its row in the list and of its guide's bar.
   icon: iconSchema.optional(),
   title: text,
-  // The pager's line.
+  // The quest's line, which the Assistant reads.
   brief: text,
   // The sheet's text, a paragraph each.
   body: z.array(text).min(1),
