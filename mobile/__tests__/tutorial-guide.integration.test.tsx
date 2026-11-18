@@ -85,7 +85,9 @@ describe('the 학생증 guide', () => {
     expect(screen.getByText('선택')).toBeVisible();
     expect(button('완료')).toBeEnabled();
   });
+});
 
+describe("the 학생증 guide's choice", () => {
   it('chooses again from the kind chip, and ← on the first step goes back to the choice', async () => {
     const user = await openGuide('s-card');
     await user.press(button('금융 학생증 (체크카드)'));

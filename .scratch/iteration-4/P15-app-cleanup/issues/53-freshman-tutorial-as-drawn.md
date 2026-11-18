@@ -90,12 +90,13 @@ Every board of the row is drawn by the canvas's `Main` board with a `tutorial` o
 
 ## Open questions for the owner
 
-1. 천원의 식사 at 윗공대 (301동) "아침만": the board says so, but the quest's sources (학생처, 생협) as written in `tutorial.yaml` say which restaurant serves which meal is not on the 학생처 page. Built as drawn; is there a source to add as a fact?
+1. 천원의 식사 at 윗공대 (301동) "아침만": the board says so, but the quest's sources (학생처, 생협) as written in `tutorial.yaml` do not say which restaurant serves which meal. Built as drawn and marked *unsourced* in the file. The file cannot keep words on screen away from the Assistant: `getTutorial` hands it the body and the places as the quest's text (not as a fact). Two choices: (a) keep the board's line in the body and the place's label, as now, with a source to add as a fact if there is one; or (b) put the body and the label back to the sourced words, so that "아침만" stays only in the guide, which the Assistant does not read.
 2. `MainTutSU`'s link button shows the host "mysnu.ac.kr", but MySNU is my.snu.ac.kr. Built with my.snu.ac.kr. Right?
 3. `MainTutorialFail`'s title says "그냥 완료하기"; its button says "그냥 완료". Built as the button.
 4. `MainTutorialDone` draws "15 / 15" as fixed words; built as the count of quests (n / n), which is 15 now.
 5. 관심 (생활 · 진로) says "기숙사 919A동 1층"; the seed has no 919A, and the board's pin stands on Place 919 (관악사 학부 생활관). Built on 919.
 6. The guides' places as the boards' map draws them are the seed's Places exactly (checked by fitting the board's map to the seed); 공존 and 자우리 (501동) have none, so they have no pin, as drawn.
+7. The start button keeps "새내기 튜토리얼 시작하기" for a tutorial already started, as `MainTutorialList` and `MainTutorialStart` both draw it. Should it say something else, such as "이어서 하기", once a quest is started?
 
 ## Comments
 
@@ -106,6 +107,8 @@ Every board of the row is drawn by the canvas's `Main` board with a `tutorial` o
 - The sheet is now reached only for a quest without a guide (an older main server), and for the 관정 check when `TUTORIAL_KWANJEONG_CHECK` is on.
 - Differences from the boards, each because it needs a pin's screen position, an animated marker or line opacity that the map does not give: the bubble always sits under the bar and has no tail, and it is full width; the current pin's tag is the map's own text and its ring does not pulse; the way between steps is straight and not faded. Also: the 🌐 link of `MainTutSU` shows the real host `my.snu.ac.kr`; "15 / 15" is counted.
 - The sheet tests turn the mock's guides off (`MOCK_TUTORIAL_SWITCHES.guides`), as an older server serves the tutorial.
+- From the review of #359: the Assistant's tutorial rules (`tutorial-rules.ts`) now name the start button, the list, the guide and ✓ 완료 in place of the pager and the Quest list; the P6 tutorial cases were not run again (no model calls in this ticket). A guide the app cannot read leaves only that quest without its guide (`withReadableGuides`). A guide closes when a card, an invitation's card or the answer frame opens (`useGuideGivesWay`). The bubble and the list scroll within the screen. Closing a guide brings the camera back to where it was when the guide opened. The Places list is read only while a guide is open. The AI input stays mounted, hidden, while a guide is open, so its draft is kept. Only `http(s)` links open. `/main?tutorial=` and `openSheet` are removed. The exam-period shuttle step shows its 2026 dates.
+- Left from the review: a 어시스턴트에게 부탁 from a guide makes the answer frame keep the guide's camera as its way back (the frame saves the camera when it opens, as the guide closes; changing that needs the frame's camera store to take the guide's). The mock copy of the guides is in the app's bundle as every mock is. The 🌐 icon is named `web`; #358 adds the same paths as `globe`, so whichever merges second takes the other's name. 미술관's link stays `http://www.snumoa.org/`: its `https` does not answer.
 - The tutorial's integration tests reach each quest through the start button, the list and its tab, which takes longer than a press on a Quest list row did. Their timeout is 150 s.
 
 ### Agent usage (2026-11-18)
