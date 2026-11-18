@@ -5,16 +5,19 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-// Partitions: each filter of the 행사 tab at the edges of today and of the week, the search's fields, and the sheet's own
-// and others' rows. Expected values: P13-03's criteria, worked by hand in Korea's time.
+// Partitions: each filter of the 행사 tab at the edges of today and of the week, the search's fields, the row's date
+// column and hours, and the sheet's own and others' rows. Expected values: P13-03's criteria, worked by hand in Korea's time.
 
 import type { RecruitingQuest } from '@/api/party-types';
 import type { GlobalEvent, Person, Quest } from '@/api/types';
 import {
   type EventFilter,
   type EventSources,
+  eventDate,
+  eventHours,
   eventTime,
   isOverPeriod,
   sharedQuestFor,
@@ -144,6 +147,33 @@ describe('eventTime of an event over a period', () => {
   });
 });
 
+describe('eventDate, the date column', () => {
+  it.each([
+    ['today', '2026-10-06T18:00:00+09:00', { day: '6', line: '10월 · 오늘' }],
+    ['tomorrow, just after midnight', '2026-10-07T00:00:00+09:00', { day: '7', line: '10월 · 내일' }],
+    ['a later day, by its weekday', '2026-10-08T17:00:00+09:00', { day: '8', line: '10월 · 목' }],
+    // 08:00 on the 1st in Korea is the 31st in UTC.
+    ['the day in Korea', '2026-11-01T08:00:00+09:00', { day: '1', line: '11월 · 일' }],
+    ['a start already past, of an event over a period', '2026-10-05T00:00:00+09:00', { day: '5', line: '10월 · 월' }],
+  ])('%s', (_, startsAt, expected) => {
+    expect(eventDate(startsAt, NOW)).toEqual(expected);
+  });
+});
+
+describe('eventHours, beside the place', () => {
+  it.each([
+    [
+      'a start and an end',
+      { startsAt: '2026-10-08T18:00:00+09:00', endsAt: '2026-10-08T20:00:00+09:00' },
+      '18:00–20:00',
+    ],
+    ['a start alone', { startsAt: '2026-10-08T17:00:00+09:00', endsAt: null }, '17:00'],
+    ['a period', { startsAt: '2026-10-05T00:00:00+09:00', endsAt: '2026-11-30T23:59:00+09:00' }, '11월 30일까지'],
+  ])('%s', (_, times, expected) => {
+    expect(eventHours(times)).toBe(expected);
+  });
+});
+
 describe('toEventViews filters', () => {
   const started = event('started', '2026-10-06T09:00:00+09:00');
   const lastOfToday = event('last-of-today', '2026-10-06T23:59:00+09:00');
@@ -172,6 +202,12 @@ describe('toEventViews filters', () => {
   it('파티 모집 중 → the Events with a recruiting Quest', () => {
     const more = { recruiting: [recruiting('sunday'), recruiting(null)] };
     expect(idsOf('recruiting', all, more)).toEqual(['sunday']);
+  });
+
+  it("파티 모집 중 → an Event with the User's own 파티 too, as its row counts it, but not one taken alone", () => {
+    const alone = { ...questFor('monday', [ME]), takenAlone: true };
+    const more = { quests: [questFor('tomorrow', [ME, MIN_JUN]), alone] };
+    expect(idsOf('recruiting', all, more)).toEqual(['tomorrow']);
   });
 });
 
@@ -207,12 +243,17 @@ describe('toEventViews card', () => {
       '',
     );
     expect(view).toMatchObject({ source: '컴퓨터공학부', time: '오늘 18:00–20:00', place: '대강당', recruiting: 2 });
-    expect(view).toMatchObject({ mine: true });
+    expect(view).toMatchObject({
+      mine: true,
+      parties: 3,
+      hours: '18:00–20:00',
+      date: { day: '6', line: '10월 · 오늘' },
+    });
   });
 
   it('no announcer and no Quest → none of them', () => {
     const [view] = toEventViews(sources([night]), 'all', '');
-    expect(view).toMatchObject({ source: null, recruiting: 0, mine: false });
+    expect(view).toMatchObject({ source: null, recruiting: 0, mine: false, parties: 0 });
   });
 });
 

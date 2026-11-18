@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -16,8 +17,9 @@ import { EVENT, lookOf, press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// Favorite Events against the fake main server, on Tuesday 6 October 2026 at 13:00 in Korea: the ☆ on the 행사 tab's
-// cards and on the map's card of one event, and the everyday map keeping only the Favorite Events.
+// Favorite Events against the fake main server, on Tuesday 6 October 2026 at 13:00 in Korea: the bookmark on the 행사
+// tab's rows and in its detail sheet, the ☆ on the map's card of one event, and the everyday map keeping only the
+// Favorite Events.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -60,20 +62,26 @@ function answerFavorite(eventId: string, reply: { status: number; afterMs?: numb
   server.on(`DELETE /global-events/${eventId}/favorite`, reply);
 }
 
+const KEEP = '관심 행사에 추가';
+const DROP = '관심 행사에서 빼기';
+
+// The bookmark, named for what a press does.
 function star(of: ReturnType<typeof card>): ReturnType<ReturnType<typeof card>['getByRole']> {
-  return of.getByRole('button', { name: FAVORITE });
+  return of.getByRole('button', { name: /^관심 행사(?:에 추가|에서 빼기)$/u });
 }
 
-describe('the ☆ on the 행사 tab', () => {
+describe('the bookmark on the 행사 tab', () => {
   it('stars the event at once, before the main server answers, and stays starred after', async () => {
     answerEvents(server);
     answerFavorite(MAJOR.id, { status: 204, afterMs: 1000 });
     const user = await openEvents();
     expect(star(card(MAJOR))).not.toBeSelected();
 
+    expect(star(card(MAJOR))).toHaveAccessibleName(KEEP);
     await user.press(star(card(MAJOR)));
 
     expect(star(card(MAJOR))).toBeSelected();
+    expect(star(card(MAJOR))).toHaveAccessibleName(DROP);
     expect(server.received(`PUT /global-events/${MAJOR.id}/favorite`)).toHaveLength(1);
     await pass(1500);
     expect(star(card(MAJOR))).toBeSelected();
@@ -104,6 +112,23 @@ describe('the ☆ on the 행사 tab', () => {
 
     expect(star(card(MAJOR))).not.toBeSelected();
     expect(screen.getByTestId('toast-layer')).toHaveTextContent(NOT_CHANGED);
+  });
+});
+
+describe('the bookmark in the detail sheet', () => {
+  it("is there too, and both show the event's one state, and both show the event's one state", async () => {
+    answerEvents(server);
+    answerFavorite(MAJOR.id, { status: 204 });
+    const user = await openEvents();
+    await user.press(card(MAJOR).getByRole('button', { name: MAJOR.title }));
+    await pass(500);
+
+    await user.press(screen.getByRole('button', { name: KEEP }));
+    await pass(500);
+
+    expect(server.received(`PUT /global-events/${MAJOR.id}/favorite`)).toHaveLength(1);
+    expect(star(card(MAJOR))).toBeSelected();
+    expect(screen.getAllByRole('button', { name: DROP })).toHaveLength(2);
   });
 });
 

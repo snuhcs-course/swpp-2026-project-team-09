@@ -6,12 +6,13 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { GlobalEvent, Quest } from '@/api/types';
 import type { RecruitingQuest } from '@/api/party-types';
 import { heldAlone, shownSubQuest } from '@/features/quests/adapter';
-import { koreaCalendar, koreaClock, koreaDay, koreaDaysAfter, koreaWeekday } from '@/korea-time';
+import { koreaCalendar, koreaClock, koreaDay, koreaDaysAfter, koreaWeekday, WEEKDAYS } from '@/korea-time';
 
 // What the 행사 tab and its sheet show of the Global Events.
 
@@ -29,13 +30,26 @@ export function isOverPeriod({ startsAt, endsAt }: EventTimes): boolean {
 
 // "오늘 18:00–20:00", or "11월 30일까지" for an event over a period.
 export function eventTime(event: EventTimes, now: Date): string {
+  return isOverPeriod(event) ? eventHours(event) : `${koreaDay(event.startsAt, now)} ${eventHours(event)}`;
+}
+
+// The hours alone, "18:00–20:00", where the date column says the day; "11월 30일까지" for an event over a period.
+export function eventHours(event: EventTimes): string {
   if (event.endsAt !== null && isOverPeriod(event)) {
     const { month, date } = koreaCalendar(new Date(event.endsAt));
     return `${month}월 ${date}일까지`;
   }
-  const hours =
-    event.endsAt === null ? koreaClock(event.startsAt) : `${koreaClock(event.startsAt)}–${koreaClock(event.endsAt)}`;
-  return `${koreaDay(event.startsAt, now)} ${hours}`;
+  return event.endsAt === null
+    ? koreaClock(event.startsAt)
+    : `${koreaClock(event.startsAt)}–${koreaClock(event.endsAt)}`;
+}
+
+// The date column of the `Events` frame: the day of the month, and "11월 · 오늘", "11월 · 내일" or "11월 · 토" under it.
+export function eventDate(startsAt: string, now: Date): { day: string; line: string } {
+  const { month, date, weekday } = koreaCalendar(new Date(startsAt));
+  const days = koreaDaysAfter(now, new Date(startsAt));
+  const name = days === 0 ? '오늘' : days === 1 ? '내일' : WEEKDAYS[weekday];
+  return { day: String(date), line: `${month}월 · ${name}` };
 }
 
 // How many recruiting Quests gather for each Global Event.
@@ -61,6 +75,12 @@ export interface EventView {
   recruiting: number;
   // The User holds a Quest for it.
   mine: boolean;
+  // The 행사 tab's row and sheet: the date column, the hours beside the place, and the description.
+  date: { day: string; line: string };
+  hours: string;
+  description: string;
+  // The 파티 for it, as 파티 찾기/모집 lists them: the User's own with others, then the recruiting ones.
+  parties: number;
 }
 
 export interface EventSources {
@@ -76,7 +96,8 @@ function daysToSunday(now: Date): number {
   return (7 - koreaWeekday(now)) % 7;
 }
 
-function passes(event: GlobalEvent, recruiting: number, filter: EventFilter, now: Date): boolean {
+// "파티 모집 중" keeps an event with any 파티: the row's "모집 중인 파티 {n}".
+function passes(event: GlobalEvent, parties: number, filter: EventFilter, now: Date): boolean {
   const days = koreaDaysAfter(now, new Date(event.startsAt));
   if (filter === 'today') {
     return days <= 0;
@@ -84,7 +105,7 @@ function passes(event: GlobalEvent, recruiting: number, filter: EventFilter, now
   if (filter === 'week') {
     return days <= daysToSunday(now);
   }
-  return filter !== 'recruiting' || recruiting > 0;
+  return filter !== 'recruiting' || parties > 0;
 }
 
 function matches(event: GlobalEvent, search: string): boolean {
@@ -95,11 +116,16 @@ function matches(event: GlobalEvent, search: string): boolean {
   );
 }
 
+function ownCount(quests: readonly Quest[], eventId: string): number {
+  return quests.filter((quest) => quest.globalEvent?.id === eventId && !heldAlone(quest)).length;
+}
+
 export function toEventViews(sources: EventSources, filter: EventFilter, search: string): EventView[] {
   const { events, announcers, recruiting, quests, now } = sources;
   const counts = recruitingCounts(recruiting);
+  const partiesOf = (id: string): number => (counts.get(id) ?? 0) + ownCount(quests, id);
   return events
-    .filter((event) => matches(event, search) && passes(event, counts.get(event.id) ?? 0, filter, now))
+    .filter((event) => matches(event, search) && passes(event, partiesOf(event.id), filter, now))
     .map((event) => ({
       id: event.id,
       title: event.title,
@@ -108,7 +134,11 @@ export function toEventViews(sources: EventSources, filter: EventFilter, search:
       place: event.place,
       sourceUrl: event.sourceUrl,
       recruiting: counts.get(event.id) ?? 0,
-      mine: quests.some((quest) => quest.globalEvent?.id === event.id && !heldAlone(quest)),
+      mine: ownCount(quests, event.id) > 0,
+      date: eventDate(event.startsAt, now),
+      hours: eventHours(event),
+      description: event.description,
+      parties: partiesOf(event.id),
     }));
 }
 

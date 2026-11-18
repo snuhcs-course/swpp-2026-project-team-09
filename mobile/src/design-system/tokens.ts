@@ -10,6 +10,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -192,6 +193,15 @@ export const signInButton = {
   shadow: '0 12px 32px rgba(0, 26, 114, 0.18), 0 2px 6px rgba(14, 19, 48, 0.08)',
 } as const;
 
+// The 행사 tab's colours, as the `Events` frame draws them, which no token of the design system names: the words of a
+// row's time and place and of an event's description, the light blue of the chosen filter and of "모집 중인 파티", and
+// the ground of a row opened from elsewhere.
+export const eventTone = {
+  words: '#3A4060',
+  chosen: '#E3EAFB',
+  marked: '#F1F4FB',
+} as const;
+
 // One font file per weight, loaded under these names by the root layout. React Native picks a weight by the family's
 // name, so a style sets fontFamily and never fontWeight.
 export const font = {
@@ -229,4 +239,30 @@ export const mapText = {
   // The two lines of "활성 파티".
   smallTitle: { fontFamily: font.bold, fontSize: 12, lineHeight: 16 },
   smallLine: { fontFamily: font.medium, fontSize: 10, lineHeight: 13 },
+} as const satisfies Record<string, TextStyle>;
+
+// The text of the 행사 tab and its sheet, as the `Events` frame draws it: sizes the eight styles lack. The frame's weight
+// 800 is drawn in Bold, the heaviest the app loads.
+export const eventText = {
+  // The day of the month in the date column, and the month and day name under it.
+  day: { fontFamily: font.bold, fontSize: 34, lineHeight: 40, letterSpacing: -0.68 },
+  dayLine: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
+  // The source over the title.
+  source: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
+  title: { fontFamily: font.bold, fontSize: 20, lineHeight: 28, letterSpacing: -0.3 },
+  // The time and the place.
+  line: { fontFamily: font.medium, fontSize: 15, lineHeight: 22 },
+  // The filters, chosen and not.
+  filter: { fontFamily: font.medium, fontSize: 16, lineHeight: 22 },
+  filterChosen: { fontFamily: font.bold, fontSize: 16, lineHeight: 22 },
+  // "다가오는 행사".
+  heading: { fontFamily: font.bold, fontSize: 16, lineHeight: 24 },
+  // "모집 중인 파티 {n}", and "함께 갈 파티 찾기".
+  party: { fontFamily: font.bold, fontSize: 15, lineHeight: 20 },
+  partyFind: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 20 },
+  // The detail sheet: its title, a row's key and value, and the description.
+  sheetTitle: { fontFamily: font.bold, fontSize: 22, lineHeight: 30, letterSpacing: -0.33 },
+  key: { fontFamily: font.medium, fontSize: 14, lineHeight: 22 },
+  value: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 22 },
+  description: { fontFamily: font.regular, fontSize: 15, lineHeight: 23 },
 } as const satisfies Record<string, TextStyle>;

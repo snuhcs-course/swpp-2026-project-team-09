@@ -4,12 +4,13 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Chip, color, IconButton, SearchField, size, space } from '@/design-system';
+import { color, eventText, eventTone, IconButton, radius, SearchField, size, space } from '@/design-system';
 import type { EventFilter } from '@/features/events/adapter';
 
 // The 행사 tab's app bar and filters, as the `Events` frame draws them.
@@ -42,6 +43,7 @@ export function SearchBar({ search, onSearch, onClose }: SearchBarProps): ReactE
   );
 }
 
+// The `Events` frame's filters: words on the white ground, the chosen one bold in navy on light blue.
 export function Filters({
   filter,
   onFilter,
@@ -56,17 +58,22 @@ export function Filters({
       showsHorizontalScrollIndicator={false}
       style={styles.filtersScroll}
     >
-      {FILTERS.map(({ key, label }) => (
-        <Chip
-          key={key}
-          onPress={() => {
-            onFilter(key);
-          }}
-          selected={key === filter}
-        >
-          {label}
-        </Chip>
-      ))}
+      {FILTERS.map(({ key, label }) => {
+        const chosen = key === filter;
+        return (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ selected: chosen }}
+            key={key}
+            onPress={() => {
+              onFilter(key);
+            }}
+            style={[styles.filter, chosen && styles.chosen]}
+          >
+            <Text style={chosen ? styles.chosenWords : styles.words}>{label}</Text>
+          </Pressable>
+        );
+      })}
     </ScrollView>
   );
 }
@@ -82,7 +89,12 @@ const styles = StyleSheet.create({
     paddingLeft: space[4],
   },
   field: { flex: 1 },
-  // The room above and below the chips is padding on the scroller, as in `ChipRow`, so that Android keeps it.
-  filtersScroll: { flexGrow: 0, paddingVertical: space[3] },
-  filters: { alignItems: 'center', gap: space[2], paddingHorizontal: space[4] },
+  // The row is 60 high: the room above and below the filters is padding on the scroller, as in `ChipRow`, so that
+  // Android keeps it.
+  filtersScroll: { flexGrow: 0, paddingVertical: 10 },
+  filters: { alignItems: 'center', gap: space[1], paddingHorizontal: space[4] },
+  filter: { justifyContent: 'center', height: 40, paddingHorizontal: space[4], borderRadius: radius.md },
+  chosen: { backgroundColor: eventTone.chosen },
+  words: { ...eventText.filter, color: color.inkMuted },
+  chosenWords: { ...eventText.filterChosen, color: color.snuBlue },
 });
