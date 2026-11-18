@@ -15,7 +15,7 @@ import { inject } from 'vitest';
 import { z } from 'zod';
 import { A_FRIEND_ID } from './friends.js';
 import { googleSubject } from './google.js';
-import { getProfile, NO_LIBRARY_DETAILS, NOT_FROM_ACCOUNT, patchProfile } from './profile.js';
+import { getProfile, NO_LIBRARY_DETAILS, patchProfile } from './profile.js';
 import {
   getMe,
   ONBOARDED_PROFILE,
@@ -50,7 +50,6 @@ describe('Reading the profile', () => {
       hashtags: [],
       friendId: A_FRIEND_ID,
       ...NO_LIBRARY_DETAILS,
-      ...NOT_FROM_ACCOUNT,
     });
   });
 });
@@ -58,29 +57,27 @@ describe('Reading the profile', () => {
 describe('Editing the profile', () => {
   it('answers with the saved profile, and a later read shows it', async () => {
     const { accessToken } = await signIn(app);
-    const edited = { name: '김철수', department: '컴퓨터공학부', admissionYear: 2024, hashtags: ['AI', '보드게임'] };
+    const edited = { admissionYear: 2024, hashtags: ['AI', '보드게임'] };
 
     const response = await patchProfile(app, accessToken, edited);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ ...edited, friendId: A_FRIEND_ID, ...NO_LIBRARY_DETAILS, ...NOT_FROM_ACCOUNT });
+    expect(response.body).toEqual({ ...ONBOARDED_PROFILE, ...edited, friendId: A_FRIEND_ID, ...NO_LIBRARY_DETAILS });
     expect((await getProfile(app, accessToken)).body).toEqual(response.body);
   });
 
   it('changes only the fields sent', async () => {
     const { accessToken } = await signIn(app);
-    await patchProfile(app, accessToken, { department: '경영학과', admissionYear: 2023, hashtags: ['러닝'] });
+    await patchProfile(app, accessToken, { admissionYear: 2023, hashtags: ['러닝'] });
 
     const response = await patchProfile(app, accessToken, { admissionYear: 2022 });
 
     expect(response.body).toEqual({
       ...ONBOARDED_PROFILE,
-      department: '경영학과',
       admissionYear: 2022,
       hashtags: ['러닝'],
       friendId: A_FRIEND_ID,
       ...NO_LIBRARY_DETAILS,
-      ...NOT_FROM_ACCOUNT,
     });
   });
 });
@@ -98,7 +95,6 @@ describe('Emptying fields of the profile', () => {
       hashtags: [],
       friendId: A_FRIEND_ID,
       ...NO_LIBRARY_DETAILS,
-      ...NOT_FROM_ACCOUNT,
     });
   });
 });
@@ -107,13 +103,9 @@ describe('Editing the profile with spaces', () => {
   it('saves text without the spaces around it', async () => {
     const { accessToken } = await signIn(app);
 
-    const response = await patchProfile(app, accessToken, {
-      name: ' 김철수 ',
-      department: ' 경영학과\n',
-      hashtags: [' AI '],
-    });
+    const response = await patchProfile(app, accessToken, { registeredName: ' 홍길순 ', hashtags: [' AI '] });
 
-    expect(response.body).toMatchObject({ name: '김철수', department: '경영학과', hashtags: ['AI'] });
+    expect(response.body).toMatchObject({ registeredName: '홍길순', hashtags: ['AI'] });
   });
 });
 
@@ -153,9 +145,13 @@ describe("The library's details", () => {
     const { accessToken } = await signIn(app);
     await patchProfile(app, accessToken, { studentNumber: '202612345', affiliation: 'undergraduate' });
 
-    const response = await patchProfile(app, accessToken, { name: '길동' });
+    const response = await patchProfile(app, accessToken, { hashtags: ['러닝'] });
 
-    expect(response.body).toMatchObject({ name: '길동', studentNumber: '202612345', affiliation: 'undergraduate' });
+    expect(response.body).toMatchObject({
+      hashtags: ['러닝'],
+      studentNumber: '202612345',
+      affiliation: 'undergraduate',
+    });
   });
 });
 
@@ -181,55 +177,23 @@ describe("The library's details left empty", () => {
   });
 });
 
-describe('A later sign-in', () => {
-  it('keeps the name the User chose where the account gives none', async () => {
-    const sub = googleSubject();
-    const { accessToken } = await signIn(app, { sub });
-    await patchProfile(app, accessToken, { name: '길동' });
-
-    const again = await signIn(app, { sub });
-
-    expect((await getProfile(app, again.accessToken)).body).toMatchObject({ name: '길동' });
-  });
-});
-
-describe('The name and the department that the account gives', () => {
-  const GOOGLE_NAME = '홍길동 / 학생 / 컴퓨터공학부';
-
-  it('are kept when an older app sends others, and the rest of its edit is saved', async () => {
-    const { accessToken } = await signIn(app, { name: GOOGLE_NAME });
+describe('The name and the department', () => {
+  it("are the account's: an older app's edit of them is dropped, and the rest of it saved", async () => {
+    const { accessToken } = await signIn(app);
 
     const response = await patchProfile(app, accessToken, { name: '길동', department: '경영학과', hashtags: ['러닝'] });
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({
-      name: '홍길동',
-      department: '컴퓨터공학부',
-      hashtags: ['러닝'],
-      fromAccount: { name: true, department: true },
-    });
+    expect(response.body).toMatchObject({ ...ONBOARDED_PROFILE, hashtags: ['러닝'] });
   });
 
   it("follow the account's Google name at a later sign-in", async () => {
     const sub = googleSubject();
-    await signIn(app, { sub, name: GOOGLE_NAME });
+    await signIn(app, { sub });
 
     const again = await signIn(app, { sub, name: '홍길동 / 학생 / 경제학부' });
 
     expect((await getProfile(app, again.accessToken)).body).toMatchObject({ name: '홍길동', department: '경제학부' });
-  });
-
-  it('replace the ones the User chose at the next sign-in', async () => {
-    const sub = googleSubject();
-    const { accessToken } = await signIn(app, { sub });
-    await patchProfile(app, accessToken, { name: '길동', department: '경영학과' });
-
-    const again = await signIn(app, { sub, name: GOOGLE_NAME });
-
-    expect((await getProfile(app, again.accessToken)).body).toMatchObject({
-      name: '홍길동',
-      department: '컴퓨터공학부',
-    });
   });
 });
 
@@ -247,7 +211,6 @@ describe("Another User's profile", () => {
       hashtags: [],
       friendId: A_FRIEND_ID,
       ...NO_LIBRARY_DETAILS,
-      ...NOT_FROM_ACCOUNT,
     });
   });
 

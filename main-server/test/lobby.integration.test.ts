@@ -15,7 +15,7 @@ import request from 'supertest';
 import { inject } from 'vitest';
 import { A_FRIEND_ID } from './friends.js';
 import { googleSubject } from './google.js';
-import { NO_LIBRARY_DETAILS, NOT_FROM_ACCOUNT, patchProfile } from './profile.js';
+import { NO_LIBRARY_DETAILS, patchProfile } from './profile.js';
 import { signIn, signInBeforeOnboarding, withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
 
@@ -53,7 +53,6 @@ describe('The lobby', () => {
         hashtags: ['AI'],
         friendId: A_FRIEND_ID,
         ...NO_LIBRARY_DETAILS,
-        ...NOT_FROM_ACCOUNT,
       },
       ...NEW_SWITCH,
     });

@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Fable 5.1  prompted by fyoon46
  * 2026-10-05  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -60,10 +61,10 @@ describe('A Friend ID', () => {
     const { accessToken } = await signIn(app, { sub });
     const { friendId } = friendIdOf((await getProfile(app, accessToken)).body);
 
-    await patchProfile(app, accessToken, { name: '길동', friendId: 'ABCDEFGH' });
+    await patchProfile(app, accessToken, { hashtags: ['러닝'], friendId: 'ABCDEFGH' });
     const again = await signIn(app, { sub });
 
-    expect((await getProfile(app, again.accessToken)).body).toMatchObject({ name: '길동', friendId });
+    expect((await getProfile(app, again.accessToken)).body).toMatchObject({ hashtags: ['러닝'], friendId });
   });
 
   it('is kept unique by the database', async () => {

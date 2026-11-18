@@ -28,7 +28,7 @@ export interface LatLng {
 // --- Sign-in (POST /auth/google) ---
 
 // The name and the department that the SNU account gives, which Onboarding shows fixed. A part it does not give is
-// null, for the User to fill in.
+// null.
 export interface Suggestion {
   name: string | null;
   department: string | null;
@@ -50,17 +50,14 @@ export type SignInResult =
 export type Gender = { kind: 'female' | 'male' } | { kind: 'custom'; text: string };
 
 export interface OnboardingAnswers {
-  // 1 to 30 characters.
+  // The SNU account's, which the main server stores whatever is sent; empty where the account gives none.
   name: string;
-  // 1 to 50 characters.
   department: string;
   // Null for "그 외" and for no choice.
   admissionYear: number | null;
   // Without '#', at most 20, 1 to 30 characters each, no whitespace, none twice whatever the case.
   hashtags: string[];
   // The app's own: the main server does not take it, and the phone keeps it.
-  courseLevel: 'undergraduate' | 'graduate';
-  // The app's own, as the course level.
   gender: Gender | null;
 }
 
@@ -79,8 +76,6 @@ export interface Profile {
   studentNumber: string | null;
   registeredName: string | null;
   affiliation: Affiliation | null;
-  // Which of the name and the department the SNU account gives. The main server keeps those as the account has them.
-  fromAccount: { name: boolean; department: boolean };
 }
 
 // 소속: 학부, 대학원 or 교환학생.
@@ -96,11 +91,9 @@ export interface Lobby {
 
 // The fields of the profile that change; a field left out stays. `null` empties the admission year and the 소속, and an
 // empty text the 학번 and the 학적상 이름. The 학번 may hold the hyphen, as the User typed it.
+// The name and the department are the SNU account's, so an edit does not hold them.
 export type ProfileChange = Partial<
-  Pick<
-    Profile,
-    'name' | 'department' | 'admissionYear' | 'hashtags' | 'studentNumber' | 'registeredName' | 'affiliation'
-  >
+  Pick<Profile, 'admissionYear' | 'hashtags' | 'studentNumber' | 'registeredName' | 'affiliation'>
 >;
 
 // --- Friends and their positions ---

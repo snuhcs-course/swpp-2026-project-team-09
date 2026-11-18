@@ -92,8 +92,6 @@ export const LOBBY: Lobby = {
     studentNumber: null,
     registeredName: null,
     affiliation: null,
-    // Editable, as for an account whose Google name gives neither; a test of the fixed fields says otherwise.
-    fromAccount: { name: false, department: false },
   },
   masterSwitch: false,
   masterOffAsked: false,

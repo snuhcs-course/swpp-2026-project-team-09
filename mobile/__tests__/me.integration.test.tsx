@@ -8,6 +8,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-17  Opus 5.5   prompted by TaeHyun79
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import * as Location from 'expo-location';
@@ -59,7 +60,6 @@ async function openMe(admissionYear: number | null = 2022): Promise<Awaited<Retu
       department: '컴퓨터공학부',
       admissionYear,
       hashtags: [],
-      courseLevel: 'undergraduate',
       gender: null,
     },
   });

@@ -17,7 +17,6 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
- * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -106,19 +105,8 @@ async function onboardingAnswers(): Promise<OnboardingAnswers> {
   return answers;
 }
 
-// The mock account gives the name alone, as the mock sign-in's suggestion says.
-const FROM_ACCOUNT: Profile['fromAccount'] = { name: true, department: false };
-
 function profileOf({ name, department, admissionYear, hashtags }: OnboardingAnswers): Profile {
-  return {
-    name,
-    department,
-    admissionYear,
-    hashtags,
-    friendId: MY_FRIEND_ID,
-    ...libraryDetails,
-    fromAccount: FROM_ACCOUNT,
-  };
+  return { name, department, admissionYear, hashtags, friendId: MY_FRIEND_ID, ...libraryDetails };
 }
 
 // Answers every operation from inside the app, in the main server's shapes, with what the `Main` frame shows. The
@@ -136,13 +124,12 @@ export const mockClient: ApiClient = {
       masterOffAsked,
     })),
   // The profile is the Onboarding's answers on the phone, so the next Lobby holds the change, and the library's
-  // details in memory. As the main server, a name the account gives is kept.
+  // details in memory.
   updateProfile: (change) =>
     answer('updateProfile', async () => {
       const { studentNumber, registeredName, affiliation, ...onboarding } = change;
       const details = changedDetails({ studentNumber, registeredName, affiliation });
-      const kept = await onboardingAnswers();
-      const answers = { ...kept, ...onboarding, ...(FROM_ACCOUNT.name ? { name: kept.name } : {}) };
+      const answers = { ...(await onboardingAnswers()), ...onboarding };
       await keep({ answers });
       libraryDetails = details;
       return profileOf(answers);

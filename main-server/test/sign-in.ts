@@ -6,6 +6,7 @@
  * 2026-09-30  Opus 5.5   prompted by fyoon46
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -65,14 +66,22 @@ export function postOnboarding(
 
 export const ONBOARDED_PROFILE = { name: '홍길동', department: '컴퓨터공학부' };
 
-// Signs in, and completes onboarding with the profile given if the User has not yet, so that every User route lets
-// the User in.
+// The Google name of an SNU account that gives this name and department.
+export function googleNameOf({ name, department }: typeof ONBOARDED_PROFILE): string {
+  return `${name} / 학생 / ${department}`;
+}
+
+// Signs in, and completes onboarding if the User has not yet, so that every User route lets the User in. The name and
+// the department come from the account, so the profile given is the account's Google name unless claims name one.
 export async function signIn(
   app: INestApplication<Server>,
   claims: Partial<TokenPayload> = {},
   profile: typeof ONBOARDED_PROFILE = ONBOARDED_PROFILE,
 ): Promise<Tokens> {
-  const { accessToken, refreshToken, onboarding } = await signInBeforeOnboarding(app, claims);
+  const { accessToken, refreshToken, onboarding } = await signInBeforeOnboarding(app, {
+    name: googleNameOf(profile),
+    ...claims,
+  });
   if (!onboarding.completed) {
     const response = await postOnboarding(app, accessToken, profile);
     if (response.status !== 204) {

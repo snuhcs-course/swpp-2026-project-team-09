@@ -5,7 +5,6 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
- * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Partitions, for each check of an answer about Users: the documented shape, each checked field left out, null and of
@@ -51,7 +50,6 @@ const PROFILE = {
   studentNumber: '202612345',
   registeredName: '홍길동',
   affiliation: 'exchange',
-  fromAccount: { name: true, department: true },
 };
 const LOBBY = { profile: PROFILE, masterSwitch: false, masterOffAsked: false };
 const FRIEND = {
@@ -133,7 +131,6 @@ describe('isProfile', () => {
       ['no library details yet', { ...PROFILE, studentNumber: null, registeredName: null, affiliation: null }],
       ['the 소속 undergraduate', { ...PROFILE, affiliation: 'undergraduate' }],
       ['the 소속 graduate', { ...PROFILE, affiliation: 'graduate' }],
-      ['a name and a department of the User', { ...PROFILE, fromAccount: { name: false, department: false } }],
     ],
     wrongFields(
       PROFILE,
@@ -146,7 +143,6 @@ describe('isProfile', () => {
         studentNumber: [202612345],
         registeredName: [1],
         affiliation: ['staff', 1],
-        fromAccount: [true, { name: true }, { name: 'true', department: false }],
       },
       ['admissionYear', 'studentNumber', 'registeredName', 'affiliation'],
     ),

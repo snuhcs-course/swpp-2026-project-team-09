@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { userEvent } from '@testing-library/react-native';
@@ -91,7 +92,6 @@ function signedIn(): Promise<unknown> {
       department: '컴퓨터공학부',
       admissionYear: 2022,
       hashtags: [],
-      courseLevel: 'undergraduate',
       gender: null,
     },
   });

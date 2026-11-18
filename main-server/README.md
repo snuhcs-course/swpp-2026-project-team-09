@@ -121,13 +121,12 @@ of a session that ends, and closes each connection when its access token expires
 ## Onboarding and the lobby
 
 A new User's name and department start empty. Onboarding stores the ones the SNU account gives, which the app shows
-fixed, and asks the User only for one the account does not give. The app enters the lobby, which gives it what it needs to run, after a sign-in or a start with stored tokens, and right after onboarding.
+fixed: they are never the User's to change. The app enters the lobby, which gives it what it needs to run, after a sign-in or a start with stored tokens, and right after onboarding.
 
 1. The sign-in's `onboarding` is `{ "completed": true }` once the User has finished onboarding. Until then it is
    `{ "completed": false, "suggestion": { "name": ..., "department": ... } }`, read from the Google account's name, which
    for an SNU account reads `홍길동 / 학생 / 컴퓨터공학부`. A part that cannot be read, or that the
-   [profile's limits](#profile) refuse, is `null`. A part given is the account's, fixed; a `null` one is the User's to
-   fill in.
+   [profile's limits](#profile) refuse, is `null`. Every SNU account is taken to give both.
 2. Until then, every User route but two answers
    `403 { "code": "ONBOARDING_REQUIRED", "message": "Complete onboarding first.", "onboarding": { ... } }`, with the
    sign-in's `onboarding` read from the Google name of the last sign-in. So an app that restarts halfway gets onboarding
@@ -135,9 +134,9 @@ fixed, and asks the User only for one the account does not give. The app enters 
    session. The two routes open before onboarding are marked `@AllowBeforeOnboarding()`: `POST /users/me/onboarding`
    and `POST /auth/sign-out`.
 3. `POST /users/me/onboarding` with `{ "name": "...", "department": "...", "admissionYear": ..., "hashtags": [...] }`
-   saves the profile and completes onboarding, and answers 204. A name or a department the account gives is stored
-   whatever is sent, so that an older app's request still goes through; one it does not give is required, or the answer
-   is 400 naming the field. The profile's limits apply. The app sends it again when the answer was lost: a repeat saves the profile again.
+   saves the profile and completes onboarding, and answers 204. The name and the department are the account's: sent,
+   they are dropped, so that an older app's request still goes through. An account that does not give one of them is
+   logged as a warning and completes onboarding with that part empty. The profile's limits apply. The app sends it again when the answer was lost: a repeat saves the profile again.
 4. `POST /lobby`, with no body, answers `200 { "profile": { ... }, "masterSwitch": false, "masterOffAsked": false }`,
    the profile as `GET /users/me/profile` gives it, whether the User's [Master Switch](#location-sharing) is on, and
    whether the app has asked the User before they turned it off (see [Asking once](#asking-once)). Later features add
@@ -154,15 +153,14 @@ on an undergraduate's account only.
 A User reads and edits their own profile. The routes name no User, so they never reach another User's profile.
 
 - `GET /users/me/profile` answers
-  `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...], "friendId": "7KX2M9QD", "studentNumber": ..., "registeredName": ..., "affiliation": ..., "fromAccount": { ... } }`.
+  `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...], "friendId": "7KX2M9QD", "studentNumber": ..., "registeredName": ..., "affiliation": ... }`.
   Like every User route but two, it needs the User to have finished onboarding. `friendId` is the User's
   [Friend ID](#friends).
 - `PATCH /users/me/profile` with some of these fields changes only those and answers with the whole profile. `null`
   empties `admissionYear`, `studentNumber`, `registeredName` and `affiliation`, and `[]` empties `hashtags`. The name
-  and the department cannot be emptied. The Friend ID cannot be changed: a `friendId` sent is ignored.
-- `fromAccount`, `{ "name": true, "department": true }`, says which of the two the SNU account gives. Those are the
-  account's: a value sent for one is ignored, so that an older app's edit saves its other fields, and every sign-in of
-  an onboarded User stores them again from the Google name. Only one the account does not give is the User's to edit.
+  and the department are the SNU account's and cannot be changed: sent, they are dropped, so that an older app's edit
+  saves its other fields. Every sign-in of an onboarded User stores them again from the Google name. The Friend ID
+  cannot be changed either: a `friendId` sent is ignored.
 - `studentNumber` (학번), `registeredName` (학적상 이름, the name the library knows) and `affiliation` (소속) are for
   a group study room's booking at 관정도서관. They start empty, and onboarding does not take them. The 학번 and the
   registered name are in this reply and the Lobby's only: no Friend list, Friend search, Quest, Party or invitation
@@ -171,8 +169,8 @@ A User reads and edits their own profile. The routes name no User, so they never
 - A value outside these limits gets 400 with a message that starts with the field, and nothing changes. Spaces around
   text are dropped first. The limits are set in `src/users/dto/update-profile.dto.ts`, and onboarding follows the same
   ones.
-  - `name`: 1 to 30 characters.
-  - `department`: 1 to 50 characters. A double major is written out, such as `컴퓨터공학부, 경제학부`.
+  - `name` and `department`, as read from the account's Google name: 1 to 30 and 1 to 50 characters. A part over its
+    limit is not read.
   - `admissionYear`: a whole number from 1946, when SNU was founded, to this year in Korea.
   - `hashtags`: at most 20. Each is kept without the `#` in front, in the case sent, and then has 1 to 30 characters
     without whitespace. None may appear twice, whatever the case.

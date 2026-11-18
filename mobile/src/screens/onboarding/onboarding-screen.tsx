@@ -11,89 +11,25 @@ import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from 'react-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cardStyles, color, space, text } from '@/design-system';
 import { useSession } from '@/session/session';
-import { CourseLevelField, GenderField } from './choice-fields';
-import { DepartmentField } from './department-field';
-import { AccountLine, FixedField } from './fixed-field';
+import { GenderField } from './choice-fields';
+import { AccountFields } from './fixed-field';
 import { Foot } from './foot';
-import { canSave, type ChangeForm, type Form, useForm } from './form';
+import { type ChangeForm, type Form, useForm } from './form';
 import { InterestsSection } from './interests-section';
-import { NameField } from './name-field';
 import { RevealContext, useRevealer } from './reveal';
 import { useOnboarding } from './use-onboarding';
 import { YearField } from './year-field';
 
 const WIDEST = 390;
 
-function headSentence({ fromAccount }: Form): string {
-  if (fromAccount.name && fromAccount.department) {
-    return '확인하고 바로 시작해요';
-  }
-  if (fromAccount.name) {
-    return '학과만 채우면 바로 시작해요';
-  }
-  return fromAccount.department ? '이름만 채우면 바로 시작해요' : '이름과 학과만 채우면 바로 시작해요';
-}
-
-// The name, or the account's fixed.
-function NameRow({ form, change }: { form: Form; change: ChangeForm }): ReactElement {
-  if (form.fromAccount.name) {
-    return <FixedField label="이름" value={form.name} />;
-  }
-  return (
-    <NameField
-      onChange={(name) => {
-        change({ name });
-      }}
-      value={form.name}
-    />
-  );
-}
-
-// The account's department fixed, or the course level and a department from its list. The course level only picks
-// the list, so it is not asked beside a fixed department, and another one clears the department chosen.
-function DepartmentRows({ form, change }: { form: Form; change: ChangeForm }): ReactElement {
-  const { fromAccount } = form;
-  if (fromAccount.department) {
-    return (
-      <>
-        <FixedField label="학과" value={form.department} />
-        <AccountLine fromAccount={fromAccount} />
-      </>
-    );
-  }
-  return (
-    <>
-      {fromAccount.name ? <AccountLine fromAccount={fromAccount} /> : null}
-      <CourseLevelField
-        onChange={(level) => {
-          if (level !== form.level) {
-            change({ level, department: '' });
-          }
-        }}
-        value={form.level}
-      />
-      <DepartmentField
-        // The search starts again with the other course level's list.
-        key={form.level}
-        level={form.level}
-        onChange={(department) => {
-          change({ department });
-        }}
-        value={form.department}
-      />
-    </>
-  );
-}
-
-// The fields about the User.
+// The fields about the User: the account's name and department, fixed, and what the User adds.
 function BasicSection({ form, change }: { form: Form; change: ChangeForm }): ReactElement {
   return (
     <View style={[cardStyles.card, styles.section]}>
       <Text accessibilityRole="header" style={styles.title}>
         기본 정보
       </Text>
-      <NameRow change={change} form={form} />
-      <DepartmentRows change={change} form={form} />
+      <AccountFields department={form.department} name={form.name} />
       <YearField
         onChange={(year) => {
           change({ year });
@@ -114,8 +50,8 @@ function BasicSection({ form, change }: { form: Form; change: ChangeForm }): Rea
   );
 }
 
-// Where a new User confirms a name and a department after the first sign-in and adds what else they like. Nothing
-// on it leads back: a User who signed in with the wrong account signs out. The head says what is left to fill in.
+// Where a new User sees the name and the department from the SNU account after the first sign-in and adds what else
+// they like. Nothing on it leads back: a User who signed in with the wrong account signs out.
 export function OnboardingScreen(): ReactElement {
   const insets = useSafeAreaInsets();
   const { suggestion } = useSession();
@@ -129,7 +65,7 @@ export function OnboardingScreen(): ReactElement {
           <Text accessibilityRole="header" style={styles.heading}>
             프로필 만들기
           </Text>
-          <Text style={styles.sentence}>{headSentence(form)}</Text>
+          <Text style={styles.sentence}>확인하고 바로 시작해요</Text>
         </View>
         <View onLayout={revealer.settle} ref={revealer.frame} style={styles.frame}>
           <ScrollView
@@ -155,7 +91,6 @@ export function OnboardingScreen(): ReactElement {
           onSave={() => {
             save(form);
           }}
-          ready={canSave(form)}
           working={working}
         />
       </View>

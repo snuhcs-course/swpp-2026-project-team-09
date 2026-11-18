@@ -3,12 +3,12 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, font, radius, shadow, size, space, text } from '@/design-system';
-import type { CourseLevel } from './departments';
 import { FieldLabel } from './field-label';
 import type { Affiliation } from '@/api/types';
 import type { GenderChoice } from './form';
@@ -62,22 +62,6 @@ function SegmentField<Key extends string>({
       </View>
     </View>
   );
-}
-
-const LEVELS: readonly { key: CourseLevel; label: string }[] = [
-  { key: 'undergraduate', label: '학부생' },
-  { key: 'graduate', label: '대학원생' },
-];
-
-// The course level: one of two, side by side.
-export function CourseLevelField({
-  value,
-  onChange,
-}: {
-  value: CourseLevel;
-  onChange: (level: CourseLevel) => void;
-}): ReactElement {
-  return <SegmentField choices={LEVELS} label="소속 과정" onChange={onChange} title="과정" value={value} />;
 }
 
 const AFFILIATIONS: readonly { key: Affiliation; label: string }[] = [

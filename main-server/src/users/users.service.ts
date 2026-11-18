@@ -10,7 +10,7 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { PrismaService } from '../common/prisma.service.js';
 import { Prisma, User } from '../generated/prisma/client.js';
@@ -88,8 +88,7 @@ export class UsersService {
     }
   }
 
-  // The suggestion is what the account gives, which onboarding shows fixed. A part it lacks is null, for the User to
-  // fill in.
+  // The suggestion is what the account gives, which onboarding shows fixed. A part it lacks is null.
   onboardingOf({ onboardedAt, googleName }: OnboardingSource): OnboardingDto {
     if (onboardedAt !== null) {
       return { completed: true };
@@ -105,22 +104,20 @@ export class UsersService {
     return this.prisma.user.findUniqueOrThrow({ where: { id } });
   }
 
-  // A name or a department that the account gives is stored over the one sent, so that an older app's edit of it
-  // saves the other fields.
-  async updateProfile(id: string, profile: UpdateProfileDto): Promise<User> {
-    const { googleName } = await this.findById(id);
-    return this.prisma.user.update({ where: { id }, data: { ...profile, ...accountFieldsOf(googleName) } });
+  updateProfile(id: string, profile: UpdateProfileDto): Promise<User> {
+    return this.prisma.user.update({ where: { id }, data: profile });
   }
 
-  // The name and the department come from the account, and the User sends only one it does not give. A repeat keeps
-  // the time of the first completion.
+  // The name and the department are stored from the account. Every SNU account is taken to give both; one that does
+  // not is logged and completes onboarding with that part empty. A repeat keeps the time of the first completion.
   async completeOnboarding(id: string, sent: CompleteOnboardingDto): Promise<void> {
     const { googleName } = await this.findById(id);
-    const profile = { ...sent, ...accountFieldsOf(googleName) };
-    const missing = (['name', 'department'] as const).filter((field) => profile[field] === undefined);
+    const account = accountFieldsOf(googleName);
+    const missing = (['name', 'department'] as const).filter((field) => account[field] === undefined);
     if (missing.length > 0) {
-      throw new BadRequestException(missing.map((field) => `${field}: Required: the SNU account does not give it`));
+      this.logger.warn(`User ${id} completes onboarding without a ${missing.join(' or ')} from the SNU account.`);
     }
+    const profile = { ...sent, ...account };
     await this.prisma.$transaction([
       this.prisma.user.update({ where: { id }, data: profile }),
       this.prisma.user.updateMany({ where: { id, onboardedAt: null }, data: { onboardedAt: new Date() } }),

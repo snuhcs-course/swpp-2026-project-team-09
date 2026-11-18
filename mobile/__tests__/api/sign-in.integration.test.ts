@@ -24,7 +24,6 @@ const ANSWERS: OnboardingAnswers = {
   department: '컴퓨터공학부',
   admissionYear: 2022,
   hashtags: ['AI커리어', '러닝'],
-  courseLevel: 'graduate',
   gender: { kind: 'custom', text: '논바이너리' },
 };
 
@@ -222,7 +221,6 @@ describe('the Lobby', () => {
         studentNumber: null,
         registeredName: null,
         affiliation: null,
-        fromAccount: { name: true, department: false },
       },
       masterSwitch: false,
       masterOffAsked: false,

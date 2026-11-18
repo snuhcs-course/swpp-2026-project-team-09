@@ -21,7 +21,6 @@ const ANSWERS: OnboardingAnswers = {
   department: '컴퓨터공학부',
   admissionYear: 2022,
   hashtags: ['러닝'],
-  courseLevel: 'undergraduate',
   gender: null,
 };
 
@@ -75,21 +74,20 @@ describe('the mock of Location Sharing', () => {
 });
 
 describe('the mock of the profile', () => {
-  it("changes the fields sent but the account's name, which the next Lobby holds", async () => {
+  it('changes the fields sent, which the next Lobby holds', async () => {
     await keep({ onboardingCompleted: true, answers: ANSWERS });
 
-    const profile = await answered(mockClient.updateProfile({ name: '안진영', admissionYear: null }));
+    const profile = await answered(mockClient.updateProfile({ hashtags: ['AI'], admissionYear: null }));
 
     expect(profile).toEqual({
       name: ANSWERS.name,
       department: '컴퓨터공학부',
       admissionYear: null,
-      hashtags: ['러닝'],
+      hashtags: ['AI'],
       friendId: '7KX2M9QD',
       studentNumber: null,
       registeredName: null,
       affiliation: null,
-      fromAccount: { name: true, department: false },
     });
     expect((await answered(mockClient.enterLobby())).profile).toEqual(profile);
   });

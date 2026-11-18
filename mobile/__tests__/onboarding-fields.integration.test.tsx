@@ -6,13 +6,10 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { fireEvent } from '@testing-library/react-native';
-import { StyleSheet, type TextStyle } from 'react-native';
 import { pass, screen } from './support/app';
 import { startFresh } from './support/mocks';
-import { arriveAtOnboarding, button, chooseDepartment, SAVE, type User } from './support/onboarding';
+import { arriveAtOnboarding, button, SAVE, type User } from './support/onboarding';
 import type { OnboardingAnswers } from '@/api/types';
-import { color, space } from '@/design-system';
 import { readKept } from '@/storage/kept';
 
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -21,16 +18,7 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotionSetting: (): boolean => true,
 }));
 
-// An account that gives the name alone, so that the department is the User's to choose.
-const SUGGESTION = { name: '홍길동', department: null };
-// An account that gives both, so that a save needs nothing more.
-const BOTH_GIVEN = { name: '홍길동', department: '컴퓨터공학부' };
-
-// The field's own style, without the box around it.
-function departmentStyle(): TextStyle {
-  const style: unknown = screen.getByLabelText('학과').props.style;
-  return StyleSheet.flatten<TextStyle>(typeof style === 'object' && style !== null ? style : {});
-}
+const SUGGESTION = { name: '홍길동', department: '컴퓨터공학부' };
 
 async function saved(user: User): Promise<OnboardingAnswers | null> {
   await user.press(button(SAVE));
@@ -48,104 +36,9 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-describe('the department', () => {
-  it('is searched by its name or its college, spaces aside, and chosen with a press', async () => {
-    const user = await arriveAtOnboarding({ name: '홍길동', department: null });
-
-    await user.type(screen.getByLabelText('학과'), '정치 학');
-    expect(button('정치외교학부 정치학전공')).toBeVisible();
-    expect(screen.queryByRole('button', { name: '경제학부' })).toBeNull();
-
-    await user.clear(screen.getByLabelText('학과'));
-    await user.type(screen.getByLabelText('학과'), '간호대');
-    expect(screen.getByRole('header', { name: '간호대학' })).toBeVisible();
-    await user.press(button('간호학과'));
-
-    expect(screen.getByLabelText('학과')).toHaveDisplayValue('간호학과');
-    expect(screen.queryByRole('header', { name: '간호대학' })).toBeNull();
-    expect(await saved(user)).toMatchObject({ department: '간호학과' });
-  });
-
-  it('says "결과 없음" for words that find nothing, and takes no words of the User as a department', async () => {
-    const user = await arriveAtOnboarding({ name: '홍길동', department: null });
-    await user.type(screen.getByLabelText('학과'), '마법학과');
-
-    expect(screen.getByText('결과 없음')).toBeVisible();
-    expect(button(SAVE)).toBeDisabled();
-  });
-
-  it('is cleared by another course level, which has its own list', async () => {
-    const user = await arriveAtOnboarding(SUGGESTION);
-    await user.press(screen.getByRole('radio', { name: '대학원생' }));
-
-    expect(screen.getByRole('radio', { name: '대학원생' })).toBeChecked();
-    expect(screen.getByLabelText('학과')).toHaveDisplayValue('');
-    expect(button(SAVE)).toBeDisabled();
-
-    await chooseDepartment(user, '인공', '인공지능');
-    expect(await saved(user)).toMatchObject({ department: '인공지능', courseLevel: 'graduate' });
-  });
-});
-
-describe('the department, left without a choice', () => {
-  it('closes the list and shows the department it held', async () => {
-    const user = await arriveAtOnboarding(SUGGESTION);
-    await chooseDepartment(user, '컴퓨터', '컴퓨터공학부');
-    await user.type(screen.getByLabelText('학과'), '마법학과');
-    expect(screen.getByText('결과 없음')).toBeVisible();
-
-    await pass(300);
-    expect(screen.queryByText('결과 없음')).toBeNull();
-    expect(screen.getByLabelText('학과')).toHaveDisplayValue('컴퓨터공학부');
-    expect(await saved(user)).toMatchObject({ department: '컴퓨터공학부' });
-  });
-
-  it('shows the held department again after a focus alone', async () => {
-    const user = await arriveAtOnboarding(SUGGESTION);
-    await chooseDepartment(user, '컴퓨터', '컴퓨터공학부');
-    await pass(300);
-    await fireEvent(screen.getByLabelText('학과'), 'focus');
-    expect(screen.getByLabelText('학과')).toHaveDisplayValue('');
-    expect(button('간호학과')).toBeVisible();
-
-    await fireEvent(screen.getByLabelText('학과'), 'blur');
-    await pass(300);
-    expect(screen.queryByRole('button', { name: '간호학과' })).toBeNull();
-    expect(screen.getByLabelText('학과')).toHaveDisplayValue('컴퓨터공학부');
-  });
-
-  it('still takes a press on a row that began as the field lost the focus', async () => {
-    const user = await arriveAtOnboarding(SUGGESTION);
-    await fireEvent(screen.getByLabelText('학과'), 'focus');
-    await fireEvent(screen.getByLabelText('학과'), 'blur');
-    await pass(200);
-
-    await user.longPress(button('간호학과'), { duration: 400 });
-    await pass(300);
-    expect(screen.getByLabelText('학과')).toHaveDisplayValue('간호학과');
-  });
-});
-
-describe("the department's field", () => {
-  it('marks the focus on a box around it and keeps its own style, which keeps its words clear of the search icon', async () => {
-    await arriveAtOnboarding(SUGGESTION);
-    const first = departmentStyle();
-    expect(first).toMatchObject({ paddingLeft: space[10] });
-
-    await fireEvent(screen.getByLabelText('학과'), 'focus');
-    expect(screen.getByLabelText('학과').parent).toHaveStyle({ borderColor: color.snuBlue });
-    expect(departmentStyle()).toEqual(first);
-
-    await fireEvent(screen.getByLabelText('학과'), 'blur');
-    await pass(300);
-    expect(screen.getByLabelText('학과').parent).toHaveStyle({ borderColor: color.border });
-    expect(departmentStyle()).toEqual(first);
-  });
-});
-
 describe('the admission year', () => {
   it('offers this year and the eleven before it, and stores the one chosen', async () => {
-    const user = await arriveAtOnboarding(BOTH_GIVEN);
+    const user = await arriveAtOnboarding(SUGGESTION);
     await user.press(screen.getByRole('combobox', { name: '학번' }));
 
     for (let year = 15; year <= 26; year += 1) {
@@ -160,7 +53,7 @@ describe('the admission year', () => {
   });
 
   it('stores no year for "그 외"', async () => {
-    const user = await arriveAtOnboarding(BOTH_GIVEN);
+    const user = await arriveAtOnboarding(SUGGESTION);
     await user.press(screen.getByRole('combobox', { name: '학번' }));
     await user.press(button('그 외'));
 
@@ -171,7 +64,7 @@ describe('the admission year', () => {
 
 describe('the gender', () => {
   it('starts with no choice and stores the one pressed', async () => {
-    const user = await arriveAtOnboarding(BOTH_GIVEN);
+    const user = await arriveAtOnboarding(SUGGESTION);
     expect(screen.getByRole('radio', { name: '선택 안 함' })).toBeChecked();
 
     await user.press(screen.getByRole('radio', { name: '여성' }));
@@ -179,7 +72,7 @@ describe('the gender', () => {
   });
 
   it('takes words of the User\'s own for "직접 입력"', async () => {
-    const user = await arriveAtOnboarding(BOTH_GIVEN);
+    const user = await arriveAtOnboarding(SUGGESTION);
     expect(screen.queryByLabelText('성별 직접 입력')).toBeNull();
 
     await user.press(screen.getByRole('radio', { name: '직접 입력' }));

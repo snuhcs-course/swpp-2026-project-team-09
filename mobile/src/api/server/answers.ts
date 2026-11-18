@@ -11,7 +11,6 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
- * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -104,13 +103,8 @@ export function isProfile(value: unknown): value is Profile {
     listOf(isText)(field(value, 'hashtags')) &&
     isTextOrNull(field(value, 'studentNumber')) &&
     isTextOrNull(field(value, 'registeredName')) &&
-    AFFILIATIONS.has(field(value, 'affiliation')) &&
-    isFromAccount(field(value, 'fromAccount'))
+    AFFILIATIONS.has(field(value, 'affiliation'))
   );
-}
-
-function isFromAccount(value: unknown): boolean {
-  return typeof field(value, 'name') === 'boolean' && typeof field(value, 'department') === 'boolean';
 }
 
 export function isLobby(value: unknown): value is Lobby {

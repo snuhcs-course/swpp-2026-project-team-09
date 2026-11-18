@@ -15,10 +15,6 @@ import { withAccessToken } from './sign-in.js';
 // What a profile holds for the library before the User enters it.
 export const NO_LIBRARY_DETAILS = { studentNumber: null, registeredName: null, affiliation: null };
 
-// What a profile says of an account whose Google name gives neither the name nor the department, as the tests'
-// accounts have unless a test gives one.
-export const NOT_FROM_ACCOUNT = { fromAccount: { name: false, department: false } };
-
 export function getProfile(app: INestApplication<Server>, accessToken?: string): request.Test {
   return withAccessToken(request(app.getHttpServer()).get('/users/me/profile'), accessToken);
 }

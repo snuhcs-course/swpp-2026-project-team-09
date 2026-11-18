@@ -13,6 +13,7 @@ function yearInKorea(): number {
   return Number(new Intl.DateTimeFormat('en', { timeZone: 'Asia/Seoul', year: 'numeric' }).format(new Date()));
 }
 
+// The limits under which the account's name and department are read.
 export const nameSchema = z.string().trim().min(1).max(30);
 
 // A double major is written out in the one text, such as "컴퓨터공학부, 경제학부".
@@ -35,10 +36,9 @@ export const registeredNameSchema = z
   .transform((registeredName) => (registeredName === '' ? null : registeredName))
   .nullable();
 
+// The name and the department are the SNU account's, so they are not here: an older app that sends them has them
+// dropped, as any field the schema does not name, and the rest of its edit saved.
 export const updateProfileSchema = z.object({
-  // The name and the department count only where the SNU account gives none: the service stores the account's.
-  name: nameSchema.optional(),
-  department: departmentSchema.optional(),
   // From 1946, when SNU was founded.
   admissionYear: z
     .number()

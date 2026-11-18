@@ -3,6 +3,7 @@
  *
  * 2026-09-30  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,7 +14,7 @@ import { getProfile, patchProfile } from './profile.js';
 import { signIn } from './sign-in.js';
 import { startApp } from './start-app.js';
 
-// The validation pipe starts each message with the path of the field, such as `name: ` or `hashtags.0: `.
+// The validation pipe starts each message with the path of the field, such as `admissionYear: ` or `hashtags.0: `.
 const refusalSchema = z.object({ message: z.array(z.string()) });
 
 const settings = inject('settings');
@@ -29,15 +30,6 @@ afterAll(async () => {
 
 describe('Editing the profile with an invalid value', () => {
   it.each([
-    ['an empty name', { name: '' }],
-    ['a blank name', { name: '   ' }],
-    ['a name longer than 30 characters', { name: 'a'.repeat(31) }],
-    ['no name', { name: null }],
-    ['an empty department', { department: '' }],
-    ['a blank department', { department: '   ' }],
-    ['a department longer than 50 characters', { department: 'a'.repeat(51) }],
-    ['a department that is not text', { department: 5 }],
-    ['no department', { department: null }],
     ['an admission year before 1946, when SNU was founded', { admissionYear: 1945 }],
     ['an admission year that is not a whole number', { admissionYear: 2020.5 }],
     ['an admission year sent as text', { admissionYear: '2020' }],
@@ -75,8 +67,6 @@ describe('Editing the profile with a value at a limit', () => {
   it('accepts it', async () => {
     const { accessToken } = await signIn(app);
     const edited = {
-      name: 'a'.repeat(30),
-      department: 'a'.repeat(50),
       admissionYear: 1946,
       hashtags: Array.from({ length: 20 }, (_, index) => `${index}`.padStart(30, 'a')),
     };

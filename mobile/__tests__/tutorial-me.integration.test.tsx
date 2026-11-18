@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { pass, screen } from './support/app';
@@ -47,7 +48,6 @@ async function openMe(admissionYear = 2022): Promise<User> {
       department: '컴퓨터공학부',
       admissionYear,
       hashtags: [],
-      courseLevel: 'undergraduate',
       gender: null,
     },
   });

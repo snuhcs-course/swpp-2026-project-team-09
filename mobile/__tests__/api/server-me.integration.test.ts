@@ -5,6 +5,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -68,10 +69,10 @@ describe('the Lobby and the profile', () => {
 
   it('sends only the changed fields of the profile, and gives the whole profile back', async () => {
     const server = await askMainServer({ signedIn: true });
-    const changed = { ...LOBBY.profile, name: '홍길순', admissionYear: null };
+    const changed = { ...LOBBY.profile, hashtags: ['AI'], admissionYear: null };
     server.on('PATCH /users/me/profile', { status: 200, body: changed });
 
-    const profile = await apiClient.updateProfile({ name: '홍길순', admissionYear: null });
+    const profile = await apiClient.updateProfile({ hashtags: ['AI'], admissionYear: null });
 
     expect(profile).toEqual(changed);
     expect(server.received('PATCH /users/me/profile')).toEqual([
@@ -80,7 +81,7 @@ describe('the Lobby and the profile', () => {
         path: '/users/me/profile',
         query: {},
         authorization: BEARER,
-        body: { name: '홍길순', admissionYear: null },
+        body: { hashtags: ['AI'], admissionYear: null },
       },
     ]);
   });
