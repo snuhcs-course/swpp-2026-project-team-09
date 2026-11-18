@@ -9,9 +9,10 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, useRef, useState } from 'react';
 import { type LayoutChangeEvent, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { USER_MESSAGE_MAX } from '@/api/assistant-types';
 import { color, Icon, radius, shadow, space, text } from '@/design-system';
@@ -50,14 +51,17 @@ const BAR_RADIUS = 28;
 const BAR_RADIUS_TALL = 22;
 
 // The bar's height from its own layout, whole: a change under 1 is no change. What it sets, the corners and the room
-// the answer frame's card keeps, does not change it.
+// the answer frame's card keeps, does not change it. The first layout is always told, so that a bar that comes back
+// at one line after a card hid it does not leave the screen counting the taller bar before.
 function useBarHeight(onHeight: (height: number) => void): [number, (event: LayoutChangeEvent) => void] {
   const [height, setHeight] = useState<number>(AI_INPUT.height);
+  const told = useRef<number | null>(null);
   const laidOut = ({ nativeEvent }: LayoutChangeEvent): void => {
     const next = Math.round(nativeEvent.layout.height);
-    if (Math.abs(next - height) < 1) {
+    if (told.current !== null && Math.abs(next - told.current) < 1) {
       return;
     }
+    told.current = next;
     setHeight(next);
     onHeight(next);
   };

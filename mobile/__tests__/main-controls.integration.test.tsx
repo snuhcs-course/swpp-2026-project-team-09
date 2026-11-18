@@ -9,8 +9,10 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
+import { fireEvent } from '@testing-library/react-native';
 import { pass, screen, shownAddress } from './support/app';
 import { holdBackButton } from './support/back';
 import {
@@ -164,7 +166,7 @@ describe('the main screen while a card is open', () => {
 });
 
 describe("the map's credit on the main screen", () => {
-  it('sits above the row of buttons, in line with the controls at the left', async () => {
+  it('sits above the row of buttons for a User in a Party, in line with the controls at the left', async () => {
     await openMain();
 
     // The row ends 126 above the navigation; the map's own margin of 8 is over that. The map lies under the
@@ -189,5 +191,39 @@ describe("the map's credit on the main screen", () => {
     expect(screen.getByTestId('map-card')).toHaveStyle({ bottom: 72 });
     expect(screen.getByLabelText(AI_INPUT)).toHaveStyle({ minHeight: 40 });
     expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 });
+  });
+});
+
+// Partitions: an AI input of one line and of more; the keyboard up.
+describe("the map's credit on the main screen for a User in no Party", () => {
+  it('sits 8 above the AI input for a User in no Party, whose row is not drawn', async () => {
+    process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getMyParty';
+    await openMain();
+
+    // The input's top is 62 above the navigation.
+    expect(findButton(/^활성 파티/u)).toBeNull();
+    expect(button(CREDIT)).toHaveStyle({ left: 16, bottom: 80 + 70 });
+  });
+
+  it('stays 8 above a taller AI input, and comes back down at one line', async () => {
+    process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getMyParty';
+    await openMain();
+
+    await fireEvent(screen.getByTestId('ai-input'), 'layout', { nativeEvent: { layout: { height: 90 } } });
+    // The input's top is 12 and 90 above the navigation.
+    expect(button(CREDIT)).toHaveStyle({ left: 16, bottom: 80 + 110 });
+
+    await fireEvent(screen.getByTestId('ai-input'), 'layout', { nativeEvent: { layout: { height: 50 } } });
+    expect(button(CREDIT)).toHaveStyle({ left: 16, bottom: 80 + 70 });
+  });
+
+  it('stays where it is while the keyboard lifts the AI input', async () => {
+    process.env.EXPO_PUBLIC_MOCK_EMPTY = 'getMyParty';
+    await openMain();
+
+    await showKeyboard(KEYBOARD);
+
+    expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 + LIFT });
+    expect(button(CREDIT)).toHaveStyle({ left: 16, bottom: 80 + 70 });
   });
 });

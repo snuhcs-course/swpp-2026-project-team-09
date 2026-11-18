@@ -586,9 +586,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   - **The room** (`Room` in `layout.ts`: the stage's size, which `OverMap` tells, and the open card's height). A
     window shows the whole rows that fit above what is under it, with 8 clear (`listRows`): three, or two, one or
     none on a low screen. Under the Quest list is the zoom control; under the friend list is the strip of the
-    map's credit, on the row of buttons; while a card is open, under both is the credit's strip on the card. The Quest
-    column is 182 wide; the friend column is 160 or, on a screen narrower than 374, what the Quest column leaves
-    (`friendsWidth`), 146 at 360, so the two never share a point.
+    map's credit, on what stands at the left above the AI input or on the input; while a card is open, under both is
+    the credit's strip on the card. The Quest column is 182 wide; the friend column is 160 or, on a screen narrower
+    than 374, what the Quest column leaves (`friendsWidth`), 146 at 360, so the two never share a point.
   - A Friend's row has the dot in the status's colour (`presence`), the name and the line. Against the main server,
     which serves no statuses, the line is the Place nearest the Friend from `GET /positions`'s `nearPlace`
     ("중앙도서관 본관", or "위치 켜짐" while it is not known) or "위치 꺼짐", with "· N분 전 위치" after an old
@@ -762,8 +762,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   the Friends accepted or late out of all in its members; its name says them in one line): a card of kind
   `made-quest`, `made-quest:<id>`, outside the place groups, with the Quest's own card `party:<id>` within it, which
   an address or a row of the Quest list opens with its "길찾기" as before. The first made Quest's line says the same
-  in one line at the left above the row of buttons (and above the start button
-  and the line that asks for interests), and gives way to the keyboard, a card at the bottom, and the answer frame. A
+  in one line at the left above the row of buttons or in its place (and above the start button and the line that
+  asks for interests), and gives way to the keyboard, a card at the bottom, and the answer frame. A
   press on either opens the card after inviting again, built from the Quest: a chip for each Friend with the state,
   the lines with the destination's start, the steps, and "닫기"; without a pill, the input, or the tab bar, as a
   received invitation's, with the destination, a dark flag at each other step, and the User's own dot where the phone
@@ -803,8 +803,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   The interests card is passed over for a main server that keeps no interests. A card gives way to a selected
   thing's card and the answer frame, and hides what a card at the bottom hides. A User of the first run
   who watches no interest sees "관심을 맡기면 맞는 행사를 알려 드려요" at the left, 8 above the row of buttons or the
-  tutorial's start button (`InterestsHint`), which opens the interests card again; the friend list and the map's
-  credit stand above it.
+  tutorial's start button, or in the row's place for a User in no Party (`InterestsHint`), which opens the interests
+  card again; the friend list and the map's credit stand above it.
 - **The 편의기능 stack** (`layers.tsx`, the `MainLayers` frame). The button, "편의기능 (식당 · 셔틀버스)", opens and
   closes it and says whether it is open; it is navy with a white icon while the stack is open, and under its icon a
   dot of 5 in each colour of a layer that is on. The stack rises 8 above it, or appears at once where the phone asks
@@ -851,20 +851,24 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   view keeps one size when the navigation gives way to the answer frame and nothing on it moves then; while the
   navigation is shown, its height is added to the inset's bottom and to the bottom padding of the everyday map's
   fits (`useNavCoverOnMain`). It is told what the controls cover of its edges (`mapInset` in `layout.ts`, the
-  `inset` of `<Map>`), counted from the navigation's top: 126 at the bottom, the row of buttons' top, and 62 at the
-  right, the zoom control. So the credit is just above the row of buttons, 16 from the left, and a provider's logo
-  belongs left of the zoom control, above "활성 파티". While a card is open the inset's bottom is the card's top,
-  and the credit sits above the card. Nothing is drawn over the credit: the lists end 8 above its strip
-  (`CREDIT_ROOM` of `@/map`, the credit's margin and its line), on a low screen with fewer rows.
+  `inset` of `<Map>`), counted from the navigation's top: at the bottom, the top of what stands at the left above
+  the AI input, or the input's top where nothing does or the input is higher; 62 at the right, the zoom control. The
+  row of buttons keeps its place only while it is drawn, for a User in a Party: its top is 126. With no row, the
+  tutorial's start button and the lines above the input come down into its place, 16 above the input's top, and
+  with nothing there the credit is 8 above the input. The keyboard's lift does not count. So the credit is never
+  over an empty place, 16 from the left, and Kakao's logo is at its height left of the zoom control and the 편의기능
+  button. While a card is open the inset's bottom is the card's top, and the credit sits above the card. Nothing is
+  drawn over the credit: the lists end 8 above its strip (`CREDIT_ROOM` of `@/map`, the credit's margin and its
+  line), on a low screen with fewer rows.
 
 **The friend panel** (`friend-panel.tsx`, the `MainFriends` frame) is a `SidePanel` from the left over the whole
 screen: "친구 {N}" and ✕ "닫기"; the search "이름, 학과 검색" ("친구 검색"), by name and department, spaces aside, with
 "결과 없음" when nobody is found; the chips 전체, 공강, 수업 중, 이동 중 and 위치 꺼짐 with their counts, those of 0
 hidden but 전체; and the Friends grouped by presence ("공강 · 4"), each row with the Avatar and its status, the name
 and the department, the detail (or the line where the app has no detail), and the round calendar button "{이름}님과
-파티 만들기", which says "준비 중이에요". Its footer has the live Badge "친구 {n}명과 위치 공유 중", n the Friends the
-User sees now (`visible`); "공유 설정", which closes the panel and shows 내 정보 at `/me?show=sharing`; and "+ 친구
-추가", which closes the panel and opens 친구 추가. The scrim ("친구 패널 닫기"), ✕ and Android's back button close it.
+파티 만들기", which says "준비 중이에요". Its footer has "공유 설정" on the right, which closes the panel and shows 내
+정보 at `/me?show=sharing`, and "+ 친구 추가", which closes the panel and opens 친구 추가. The scrim ("친구 패널
+닫기"), ✕ and Android's back button close it.
 A Friend is under "위치 꺼짐" whenever the main server says the User cannot see them (`visible`), whatever the app's
 own status says.
 
@@ -873,17 +877,8 @@ slide in from the right, each a `FullScreenPanel` whose "뒤로" goes back to wh
 
 - **친구 관리** (`/me/friends`, from 내 정보's "친구 관리"): "친구 {n}"; the search "친구 검색", by name and department, with "결과 없음"; the row
   "친구 추가"; the row "친구 요청 {n}", n the requests received; and under "친구 {n}" every Friend in the main server's
-  order, with the department (and " · 위치 꺼짐" for a Friend the User cannot see) and, under it, the User's level for
-  that Friend as three cells of one width in a row, "시간표만", "지금 있는 건물", and "정확한 위치"
-  ("{이름}님에게 보일 위치"), with the note "둘 중 낮은 쪽까지만 서로 보여요. 시간표는 계속 보여요". A choice shows at
-  once, sends `setFriendLevel`, and turns back with "위치 공유를 바꾸지 못했어요" when that fails; the Friends and the
-  positions are fetched again after it. The first "시간표만" for a Friend above it asks first, in a bottom sheet
-  (`off-question.tsx`): "{이름}에게는 지금 있는 건물만 보여 줄 수도 있어요." over "어느 쪽을 골라도 {이름}에게는 아무
-  표시도 가지 않아요.", the cells "위치 끄기", "건물까지만", and "취소" of one width, and "시간표는 계속 보여요" under
-  them. "위치 끄기" sets `timetable` ("껐어요 · {이름}에게 알림은 가지 않아요"), "건물까지만" `building` ("{이름}에게
-  지금 있는 건물까지만 보여요"), and "취소" or closing the sheet nothing; each records the question with
-  `recordFriendsAsked([id], 'off')`, and a Friend whose `askedOff` is true is not asked again. A press on a Friend opens
-  a bottom sheet with
+  order, with the department (and " · 위치 꺼짐" for a Friend the User cannot see) and no level or 위치 공유 line:
+  each Friend's level is chosen on 위치 공유. A press on a Friend opens a bottom sheet with
   "친구 끊기", which a danger dialog confirms; the Friend then leaves the list, the friend panel and the map. A
   friendship that ended already is fetched again without a word. With no Friend it says "아직 친구가 없어요".
 - **친구 요청** (`/me/friends/requests`, also from a Friend Request in 알림): "받은 요청 · {n}" with "거절" and "수락", and "보낸 요청 · {n}" with "요청 취소",
@@ -938,12 +933,16 @@ cards from the top:
   start, else, while today has a class to come, at the current hour or later so that the class shows whole, else at
   the week's earliest class. Today's day in navy, a block for each time of a class
   (`GET /timetable/classes`, with `GET /places` for the numbers) in the colour of the class's place in the timetable
-  (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". The tile "직접 입력" opens 시간표; "이미지로
-  불러오기" and "빈 시간 말하기" say "준비 중이에요";
+  (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". A press on a block opens its class's 수업
+  수정, as the class's row in 시간표 does. Under the week, two tiles of one width: "직접 입력/수정" opens 시간표, and
+  "이미지로 불러오기" reads a timetable screenshot from the album on the phone (`use-import-from-image.ts`), makes a
+  new version of the timetable from it, switches to it and stays on 내 정보 with "시간표를 만들었어요" or "N개 중
+  15개만 넣었어요", ending in "· M개는 넣지 못했어요" when some could not be put in; it says "준비 중이에요" where the
+  build has no text recognition;
 - 위치 공유 (`sharing-card.tsx`): the switch "위치 공유", which is the Master Switch. While the Master Switch is off,
-  the Friends' levels on 친구 and 위치 공유 and the room's "내 위치 공유" show off and disabled under "전체 위치 공유가
-  꺼져 있어요 · 켜기", keeping their stored values; and "캠퍼스 밖이라 위치가 공유되지 않아요" while the last upload was
-  off campus. Turning it on without the location permission shows the map's explanation and the system's prompt first; a
+  the Friends' levels on 위치 공유 and the room's "내 위치 공유" show off and disabled under "전체 위치 공유가 꺼져
+  있어요 · 켜기", keeping their stored values; and "캠퍼스 밖이라 위치가 공유되지 않아요" while the last upload was off
+  campus. Turning it on without the location permission shows the map's explanation and the system's prompt first; a
   refusal leaves it off with "위치 권한을 허용해야 공유할 수 있어요". The new state shows at once, and turns back with
   "위치 공유를 바꾸지 못했어요" when the main server did not take it. While the Lobby's `masterOffAsked` is false,
   turning it off asks first with the Friends' question in the words "모든 친구에게는 지금 있는 건물만 보여 줄 수도
@@ -958,14 +957,23 @@ cards from the top:
 card's "위치 공유 보기", has no switch of its own and starts with "친구마다". While the Master Switch is off, "친구마다"
 shows "전체 위치 공유가 꺼져 있어요 · 켜기", whose 켜기 turns it on as 내 정보's switch does (`master-off-line.tsx`).
 "친구마다" lists the Friends of `GET /friends`, each with what the two see of each other from `seen`, "서로 시간표만
-보여요", "서로 지금 있는 건물까지 보여요" or "서로 정확한 위치까지 보여요", and the User's own end as the three cells of
-친구 관리, which ask and set the level as there (`use-levels.ts`). The line is lowered at once by a choice or a switch
-on its way, and raised only once `GET /friends` says so, since the app does not know the Friend's end. Its foot:
-"시간표의 건물과 끝나는 시각은 친구 모두에게 보여요. 위치를 꺼도 시간표는 보여요." and "새 친구는 '지금 있는 건물'에서
-시작해요.". "남기지 않는 것" has the rows "누가 나를 찾았는지 · 기록 안 함" and "지난 위치 · 저장 안 함", the name at
-the start and the fact at the end, over "과목과 강의실은 보이지 않고, 후보로 검토된 것은 누구에게도 알리지 않아요.".
-Above it, the "비공개 구역" row ("칠한 곳 안에서는 시간표만 보여요", the number of zones) opens the zone screen
-(`me/private-zones/`).
+보여요", "서로 지금 있는 건물까지 보여요" or "서로 정확한 위치까지 보여요", and the User's own end as three cells, which
+the next paragraph describes. The line is lowered at once by a choice or a switch on its way, and raised only once
+`GET /friends` says so, since the app does not know the Friend's end. Its foot: "시간표의 건물과 끝나는 시각은 친구
+모두에게 보여요. 위치를 꺼도 시간표는 보여요." and "새 친구는 '지금 있는 건물'에서 시작해요.". "남기지 않는 것" has the
+rows "누가 나를 찾았는지 · 기록 안 함" and "지난 위치 · 저장 안 함", the name at the start and the fact at the end, over
+"과목과 강의실은 보이지 않고, 후보로 검토된 것은 누구에게도 알리지 않아요.". Above it, the "비공개 구역" row ("칠한 곳
+안에서는 시간표만 보여요", the number of zones) opens the zone screen (`me/private-zones/`).
+
+A Friend's level on "친구마다" (`level-track.tsx` and `use-levels.ts` in `src/screens/friends/`) is three cells of
+one width in a row, "시간표만", "지금 있는 건물", and "정확한 위치" ("{이름}님에게 보일 위치"). A choice shows at once,
+sends `setFriendLevel`, and turns back with "위치 공유를 바꾸지 못했어요" when that fails; the Friends and the positions
+are fetched again after it. The first "시간표만" for a Friend above it asks first, in a bottom sheet
+(`src/screens/friends/off-question.tsx`): "{이름}에게는 지금 있는 건물만 보여 줄 수도 있어요." over "어느 쪽을 골라도
+{이름}에게는 아무 표시도 가지 않아요.", the cells "위치 끄기", "건물까지만", and "취소" of one width, and "시간표는
+계속 보여요" under them. "위치 끄기" sets `timetable` ("껐어요 · {이름}에게 알림은 가지 않아요"), "건물까지만"
+`building` ("{이름}에게 지금 있는 건물까지만 보여요"), and "취소" or closing the sheet nothing; each records the
+question with `recordFriendsAsked([id], 'off')`, and a Friend whose `askedOff` is true is not asked again.
 
 관심사 (`/me/interests`, `src/screens/me/interests-screen.tsx`, P05 ticket 08) has two cards. "프로필 관심사" shows the
 profile's hashtags from the Lobby as chips ("#러닝"), or "프로필에 넣은 관심사가 없어요", over "프로필 편집에서 바꿀 수
@@ -1804,8 +1812,8 @@ and none throws.
   before the permission is asked, since Android 13 shows no prompt before a channel exists.
 - **Permission.** Android 13 and later report a permission that was never asked as denied but still askable. On
   Android the wrapper reads that as `undetermined`, so `undetermined` means the phone's own prompt can still show.
-- **Icon.** `assets/images/notification-icon.png`, 96 by 96, white on transparent, drawn from the app icon's shape.
-  Android tints it with the plugin's `color`, `#208AEF`.
+- **Icon.** `assets/images/notification-icon.png`, 96 by 96, white on transparent: the app icon's pin, with its hole
+  cut out (`docs/design/app-icon/`). Android tints it with the plugin's `color`, `#001A72`.
 - **Firebase.** `google-services.json` is Firebase's Android settings file for `com.bonnieandclaude.snunow` in the
   project `snunow-b5827`. It holds no secret, and its bytes are part of the app's fingerprint. The FCM V1 service
   account key lives in the EAS project's credentials only, never in the repository.

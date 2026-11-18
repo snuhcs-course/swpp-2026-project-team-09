@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { userEvent } from '@testing-library/react-native';
@@ -36,6 +37,26 @@ async function pressSignIn(user: User): Promise<void> {
   await user.press(screen.getByRole('button', { name: SIGN_IN }));
 }
 
+type Host = ReturnType<typeof screen.getByRole>;
+
+function inside(node: Host, ancestor: Host): boolean {
+  for (let at: Host | null = node; at !== null; at = at.parent) {
+    if (at === ancestor) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// The labels of the pictures outside the button, whose emblem is the only picture in it. A drawing is hidden from a
+// screen reader, so it is found as a picture, not by a role.
+function picturesBesideTheButton(): unknown[] {
+  const button = screen.getByRole('button', { name: SIGN_IN });
+  return screen.container
+    .queryAll((node) => node.type === 'Image' && !inside(node, button))
+    .map((node): unknown => node.props.accessibilityLabel);
+}
+
 beforeEach(async () => {
   jest.useFakeTimers();
   await startFresh();
@@ -50,7 +71,10 @@ describe('the sign-in screen', () => {
   it('shows the one button and what it is for', async () => {
     await openSignIn();
 
-    expect(screen.getByText('SNU Now')).toBeVisible();
+    expect(screen.getByRole('image', { name: 'SNU Now' })).toBeVisible();
+    expect(screen.queryByText('SNU Now')).toBeNull();
+    expect(screen.queryByText('관악캠퍼스의 지금')).toBeNull();
+    expect(picturesBesideTheButton()).toEqual(['SNU Now']);
     expect(screen.getByRole('header', { name: '서울대 계정으로 로그인' })).toBeVisible();
     expect(screen.getByText('@snu.ac.kr')).toBeVisible();
     expect(screen.getByRole('button', { name: SIGN_IN })).not.toBeBusy();
@@ -66,6 +90,7 @@ describe('the sign-in screen', () => {
     expect(screen.getByRole('header', { name: '학교 계정 확인 중…' })).toBeVisible();
     expect(screen.getByRole('button', { name: SIGN_IN })).toBeBusy();
     expect(screen.getByTestId('sign-in-spinner')).toBeVisible();
+    expect(picturesBesideTheButton()).toEqual(['SNU Now']);
 
     await pressSignIn(user);
     expect(signIn).toHaveBeenCalledTimes(1);
@@ -109,6 +134,7 @@ describe('how a sign-in ends', () => {
     expect(screen.getByRole('header', { name: '로그인하지 못했어요' })).toBeVisible();
     expect(screen.getByRole('alert')).toHaveTextContent('@snu.ac.kr 계정만 가능해요');
     expect(screen.getByRole('button', { name: SIGN_IN })).not.toBeBusy();
+    expect(picturesBesideTheButton()).toEqual(['SNU Now']);
   });
 
   it('returns to the default state when the User closed the sheet', async () => {
@@ -130,6 +156,7 @@ describe('a sign-in that fails for another reason', () => {
 
     expect(screen.getByRole('header', { name: '로그인하지 못했어요' })).toBeVisible();
     expect(screen.getByRole('alert')).toHaveTextContent('잠시 후 다시 시도해 주세요');
+    expect(picturesBesideTheButton()).toEqual(['SNU Now']);
   });
 
   it('says the same when the sign-in itself breaks', async () => {

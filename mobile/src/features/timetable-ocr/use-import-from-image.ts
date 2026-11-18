@@ -2,12 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
 import { File, Paths } from 'expo-file-system';
 import { launchImageLibraryAsync } from 'expo-image-picker';
-import { router } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { placesQuery } from '@/api/queries';
 import type { Place } from '@/api/types';
@@ -19,8 +19,8 @@ import { hasNativeOcr, type NativeOcrResult, readImageText } from './native-ocr'
 import { type Reading, readTimetable } from './read-timetable';
 
 // `이미지로 불러오기` (P13 spec, "Importing"): a screenshot of a timetable picked from the album is read on the phone
-// and becomes a new version, which is switched to; the timetable screen then opens. The image never leaves the phone,
-// and the copy the picker may leave in the app's cache is deleted once read.
+// and becomes a new version, which is switched to without leaving the screen (P15 ticket 03). The image never leaves
+// the phone, and the copy the picker may leave in the app's cache is deleted once read.
 
 export const READING = '시간표를 읽고 있어요';
 export const NOTHING_READ = '시간표를 찾지 못했어요';
@@ -99,7 +99,6 @@ async function importImage({ versions, read, places, show, showNotReady, picked 
   const made = await versions.make(plan.name, plan.classes);
   // Null: the versions' own toast said why.
   if (made !== null) {
-    router.push('/me/timetable');
     show(madeWords(plan, plan.leftOut + made.dropped.classes + made.dropped.times + made.refused));
   }
 }

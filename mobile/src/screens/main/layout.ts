@@ -9,6 +9,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { space } from '@/design-system';
@@ -59,12 +60,16 @@ export interface Room {
   cardHeight: number | null;
   // The answer frame's card, its whole laid-out height: null while the frame is not shown or not laid out yet.
   answerHeight: number | null;
-  // The 새내기 튜토리얼's start button is shown, above the row of buttons.
+  // The 새내기 튜토리얼's start button is shown, the lowest of the three at the left.
   tutorialStart: boolean;
-  // The first run's line that asks for interests is shown, above the row or the start button.
+  // The first run's line that asks for interests is shown, above the start button.
   interestsHint: boolean;
   // The line of a Quest made from a Plan is shown, above all of them. Left out, it is not.
   madeLine?: boolean;
+  // The row of buttons is drawn: the User is in a Party. Left out, it is not.
+  buttonRow?: boolean;
+  // The AI input's own height, without the keyboard's lift. Left out, one line's (`AI_INPUT`).
+  inputHeight?: number;
 }
 
 // The two columns never share a point. The Quest column keeps the frame's 182, which a title of 146 beside its round
@@ -79,15 +84,14 @@ export function friendsWidth({ stage }: Room): number {
 // What is under each list's window, counted from the stage's bottom, with clear room of 8. The rule: a window never
 // reaches what takes a press under it, nor the strip in which the map draws its credit (`mapInset`).
 // - While a card is open, both end above the credit, which sits on the card.
-// - Otherwise the friend list ends above the credit, which sits on the row of buttons, and the Quest list above the
-//   zoom control.
-function underLists({ cardHeight, tutorialStart, interestsHint, madeLine }: Room): { friends: number; quests: number } {
-  if (cardHeight !== null) {
-    const card = CARD.bottom + cardHeight + CREDIT_ROOM + LISTS.clear;
+// - Otherwise the friend list ends above the credit (`underCredit`), and the Quest list above the zoom control.
+function underLists(room: Room): { friends: number; quests: number } {
+  if (room.cardHeight !== null) {
+    const card = CARD.bottom + room.cardHeight + CREDIT_ROOM + LISTS.clear;
     return { friends: card, quests: card };
   }
   return {
-    friends: leftControlsTop(tutorialStart, interestsHint, madeLine) + CREDIT_ROOM + LISTS.clear,
+    friends: underCredit(room) + CREDIT_ROOM + LISTS.clear,
     quests: ZOOM_CONTROL.bottom + ZOOM_CONTROL.height + LISTS.clear,
   };
 }
@@ -118,41 +122,63 @@ export function listWindow(rows: number): number {
 // high, so its top is 62 above the navigation, 10 under a card's bottom.
 export const AI_INPUT = { side: space[4], bottom: 12, height: 50 } as const;
 
+// The AI input's top while the keyboard is down. It grows upward while it holds more than a line.
+export function aiInputTop({ inputHeight = AI_INPUT.height }: Room): number {
+  return AI_INPUT.bottom + inputHeight;
+}
+
 // The row of buttons, where "활성 파티" stands: 48 high, from 16 at the left to 70 from the right, its bottom 158 from
-// the frame's bottom, which is 78 above the navigation. It keeps the frame's place, so that the
-// credit, the lists and the buttons above it stay where they are.
+// the frame's bottom, which is 78 above the navigation. Its place is kept only while it is drawn: with no row, what
+// stood above it comes down into it, so that nothing stands over an empty place.
 export const BUTTON_ROW = { left: space[4], right: 70, bottom: 78, height: 48, gap: 6 } as const;
 
-// The 새내기 튜토리얼's start button: 34 high, 16 from the left, its bottom 214 from the frame's bottom, which is 8
-// above the row of buttons.
-export const TUTORIAL_START = { left: space[4], bottom: BUTTON_ROW.bottom + BUTTON_ROW.height + space[2], height: 34 };
-
-// The first run's line that asks for interests: 34 high, 16 from the left, 8 above the row of buttons, or 8 above
-// the start button while that is shown.
+// The 새내기 튜토리얼's start button, the first run's line that asks for interests, and the line of a Quest made from a
+// Plan stand at the left in that order, each 34 high, 16 from the left and 8 above the one under it. The lowest
+// stands 8 above the row of buttons while that is drawn, else in the row's place: 16 above the AI input's top, in
+// line with the 편의기능 button.
+export const TUTORIAL_START = { left: space[4], height: 34 } as const;
 export const INTERESTS_HINT = { left: space[4], height: 34 } as const;
-
-export function interestsHintBottom(tutorialStart: boolean): number {
-  return tutorialStart ? TUTORIAL_START.bottom + TUTORIAL_START.height + space[2] : TUTORIAL_START.bottom;
-}
-
-// The line of a Quest made from a Plan: 34 high, 16 from the left, 8 above the row of buttons, the start button, or
-// the line that asks for interests, whichever stands highest.
 export const MADE_LINE = { left: space[4], height: 34 } as const;
 
-export function madeLineBottom(tutorialStart: boolean, interestsHint: boolean): number {
-  return leftControlsTop(tutorialStart, interestsHint) + space[2];
+// The bottom of the next one at the left: 8 over `top`, the top of what stands under it, or the row's place while
+// nothing does.
+function bottomOver(top: number | null): number {
+  return top === null ? BUTTON_ROW.bottom : top + space[2];
 }
 
-// The top of what stands at the left above the AI input while no card is open: the row of buttons, the start button
-// above it, the line that asks for interests above them, or the line of a made Quest above all.
-function leftControlsTop(tutorialStart: boolean, interestsHint = false, madeLine = false): number {
-  if (madeLine) {
-    return madeLineBottom(tutorialStart, interestsHint) + MADE_LINE.height;
-  }
-  if (interestsHint) {
-    return interestsHintBottom(tutorialStart) + INTERESTS_HINT.height;
-  }
-  return tutorialStart ? TUTORIAL_START.bottom + TUTORIAL_START.height : BUTTON_ROW.bottom + BUTTON_ROW.height;
+function rowTop({ buttonRow = false }: Room): number | null {
+  return buttonRow ? BUTTON_ROW.bottom + BUTTON_ROW.height : null;
+}
+
+export function tutorialStartBottom(room: Room): number {
+  return bottomOver(rowTop(room));
+}
+
+function tutorialStartTop(room: Room): number | null {
+  return room.tutorialStart ? tutorialStartBottom(room) + TUTORIAL_START.height : rowTop(room);
+}
+
+export function interestsHintBottom(room: Room): number {
+  return bottomOver(tutorialStartTop(room));
+}
+
+function interestsHintTop(room: Room): number | null {
+  return room.interestsHint ? interestsHintBottom(room) + INTERESTS_HINT.height : tutorialStartTop(room);
+}
+
+export function madeLineBottom(room: Room): number {
+  return bottomOver(interestsHintTop(room));
+}
+
+// The top of what stands at the left above the AI input while no card is open, null while nothing does.
+function leftControlsTop(room: Room): number | null {
+  return room.madeLine === true ? madeLineBottom(room) + MADE_LINE.height : interestsHintTop(room);
+}
+
+// What the credit and the logo stand over while no card is open: what stands at the left above the AI input, or the
+// input's top where nothing does or the input is higher. Never an empty place.
+function underCredit(room: Room): number {
+  return Math.max(leftControlsTop(room) ?? 0, aiInputTop(room));
 }
 
 // The 편의기능 button: a round of 48 at the right of that row, 16 from the side.
@@ -166,32 +192,24 @@ export const LAYER_STACK = {
 } as const;
 
 // What the controls cover of the map's edges, for `<Map inset>`: the credit for the map data and the provider's logo
-// are drawn inside what is left. The row of buttons ends 126 above the navigation, so the credit sits just above
-// it, in a strip that the friend list always leaves free (`listRows`); the 8 at the left brings it in
-// line with the controls, 16 from the side. The zoom control takes 62 at the right, so the logo
-// sits left of it, above "활성 파티". While a card is open the row and the zoom control are not shown and the card
-// covers the bottom instead, up to its top edge: the credit sits on the card, and both lists end above it.
+// are drawn inside what is left, 8 above its bottom (`underCredit`), in a strip that the friend list always leaves
+// free (`listRows`). The 8 at the left brings the credit in line with the controls, 16 from the side. The zoom
+// control takes 62 at the right, so the logo sits left of it and of the 편의기능 button. While a card is open the row
+// and the zoom control are not shown and the card covers the bottom instead, up to its top edge: the credit sits on
+// the card, and both lists end above it.
 const CREDIT_LEFT = space[2];
 const ZOOM_CONTROL_RIGHT = 62;
 
-// The 새내기 튜토리얼's start button, the line that asks for interests, and the line of a made Quest raise the credit
-// above them. The answer frame's card, `answerHeight` high from the stage's bottom, which is the screen's while the
-// navigation gives way to it, covers the bottom as a card does.
-export function mapInset(
-  cardHeight: number | null,
-  tutorialStart = false,
-  answerHeight: number | null = null,
-  interestsHint = false,
-  madeLine = false,
-): { bottom: number; left: number; right: number } {
-  if (answerHeight !== null) {
-    return { bottom: answerHeight, left: CREDIT_LEFT, right: CREDIT_LEFT };
+// The answer frame's card, `answerHeight` high from the stage's bottom, which is the screen's while the navigation
+// gives way to it, covers the bottom as a card does.
+export function mapInset(room: Room): { bottom: number; left: number; right: number } {
+  if (room.answerHeight !== null) {
+    return { bottom: room.answerHeight, left: CREDIT_LEFT, right: CREDIT_LEFT };
   }
-  if (cardHeight !== null) {
-    return { bottom: CARD.bottom + cardHeight, left: CREDIT_LEFT, right: CREDIT_LEFT };
+  if (room.cardHeight !== null) {
+    return { bottom: CARD.bottom + room.cardHeight, left: CREDIT_LEFT, right: CREDIT_LEFT };
   }
-  const bottom = leftControlsTop(tutorialStart, interestsHint, madeLine);
-  return { bottom, left: CREDIT_LEFT, right: ZOOM_CONTROL_RIGHT };
+  return { bottom: underCredit(room), left: CREDIT_LEFT, right: ZOOM_CONTROL_RIGHT };
 }
 
 // What the screen's controls take at each edge of the map, with clear room of 16: the two lists end 272 from the

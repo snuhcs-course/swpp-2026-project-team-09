@@ -3,21 +3,23 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { fireEvent, within } from '@testing-library/react-native';
+import { act, fireEvent, within } from '@testing-library/react-native';
+import { router } from 'expo-router';
 import { type FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { pass, screen } from './support/app';
-import { openFriendScreen } from './support/friends';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, JI_WOO, LOBBY, MIN_JUN, PHONE_NOW } from './support/server';
 
-// The question before location is turned off, asked once for each Friend and once for the Master Switch, against the
-// fake main server: its words, what each answer sends, and that the question is recorded whatever the answer.
+// The question before location is turned off, asked once for each Friend on the 위치 공유 screen and once for the
+// Master Switch, against the fake main server: its words, what each answer sends, and that the question is recorded
+// whatever the answer.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -71,13 +73,22 @@ function choice(words: string): ReturnType<typeof screen.getByRole> {
   return within(screen.getByLabelText('김민준님에게 보일 위치')).getByRole('radio', { name: words });
 }
 
+async function openSharing(): Promise<Awaited<ReturnType<typeof openMain>>> {
+  const user = await openMain();
+  await act(() => {
+    router.push('/me/location-sharing');
+  });
+  await pass(500);
+  return user;
+}
+
 describe("Turning one Friend's location off", () => {
   it.each([
     ['위치 끄기', [{ level: 'timetable' }]],
     ['건물까지만', [{ level: 'building' }]],
     ['취소', []],
   ])('asks the first time with the design words, and %s sends %j and records the question', async (answer, levels) => {
-    const user = await openFriendScreen('/me/friends');
+    const user = await openSharing();
 
     await user.press(choice('시간표만'));
 
@@ -98,7 +109,7 @@ describe("Turning one Friend's location off", () => {
       server.on('GET /friends', { status: 200, body: [{ ...MIN_JUN, askedOff: true }, JI_WOO] });
       return { status: 204 };
     });
-    const user = await openFriendScreen('/me/friends');
+    const user = await openSharing();
     await user.press(choice('시간표만'));
     await user.press(screen.getByRole('button', { name: '취소' }));
     await pass(500);
@@ -112,7 +123,7 @@ describe("Turning one Friend's location off", () => {
   });
 
   it('does not ask when the level stays above the Timetable', async () => {
-    const user = await openFriendScreen('/me/friends');
+    const user = await openSharing();
 
     await user.press(choice('지금 있는 건물'));
     await pass(500);

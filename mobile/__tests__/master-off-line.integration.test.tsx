@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -18,8 +19,9 @@ import { startFresh } from './support/mocks';
 import { activationBox, answerMyParty, answerRoom, myPicnicParty, openRoom } from './support/room';
 import { answerMainScreen, askMainServer, JI_WOO, LOBBY, MIN_JUN, PHONE_NOW } from './support/server';
 
-// P06 ticket 6 against the fake main server: while the Master Switch is off, each Friend's level on 위치 공유 and 친구
-// and the room's "내 위치 공유" show off and disabled under one line, and its 켜기 brings back what was stored.
+// P06 ticket 6 against the fake main server: while the Master Switch is off, each Friend's level on 위치 공유 and the
+// room's "내 위치 공유" show off and disabled under one line, and its 켜기 brings back what was stored. 친구 관리 shows
+// neither since P15 ticket 2.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -83,12 +85,9 @@ function levels(name: string): ReturnType<typeof within> {
   return within(screen.getByLabelText(`${name}님에게 보일 위치`));
 }
 
-describe.each([
-  ['위치 공유', '/me/location-sharing'],
-  ['친구', '/me/friends'],
-] as const)("The Friends' levels on %s while the Master Switch is off", (_, address) => {
+describe("The Friends' levels on 위치 공유 while the Master Switch is off", () => {
   it('keep each stored level checked and dimmed, take no press, and come back once 켜기 turns it on', async () => {
-    const user = await open(address);
+    const user = await open('/me/location-sharing');
 
     expect(screen.getByText(OFF_LINE)).toBeVisible();
     expect(levels(MIN_SU.name).getByRole('radio', { name: '정확한 위치' })).toBeChecked();
@@ -111,6 +110,20 @@ describe.each([
     expect(levels(JI_EUN.name).getByRole('radio', { name: '지금 있는 건물' })).toBeChecked();
     expect(levels(MIN_SU.name).getByRole('radio', { name: '시간표만' })).toBeEnabled();
     expect(server.received(LEVEL_ROUTE)).toHaveLength(0);
+  });
+});
+
+describe('친구 관리 while the Master Switch is off', () => {
+  it('shows the Friends without the line or any level', async () => {
+    await open('/me/friends');
+
+    for (const name of [MIN_SU.name, JI_EUN.name]) {
+      expect(screen.getByRole('button', { name })).toBeVisible();
+    }
+    expect(screen.queryByText(OFF_LINE)).toBeNull();
+    expect(screen.queryByRole('button', { name: '전체 위치 공유 켜기' })).toBeNull();
+    expect(screen.queryAllByLabelText(/님에게 보일 위치$/u)).toHaveLength(0);
+    expect(screen.queryByText('둘 중 낮은 쪽까지만 서로 보여요. 시간표는 계속 보여요')).toBeNull();
   });
 });
 
