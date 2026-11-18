@@ -3,8 +3,10 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import { pass, screen } from './support/app';
 import { mapLines } from './support/answer-map';
 import { AI_INPUT } from './support/lists';
@@ -61,6 +63,16 @@ describe('what gives way to the Plan over the mocks', () => {
     await user.press(screen.getByRole('button', { name: '답 닫기' }));
 
     expect(mapLines()).toContain('walking-route');
+  });
+
+  // The mock's walking route is a curve of 12 strokes, where the straight line is one (P15 ticket 56).
+  it("draws each of the Plan's walks along the mock's walking route", async () => {
+    await ask();
+    await pass(1000);
+
+    for (const id of ['answer:route:0', 'answer:route:1']) {
+      expect(within(screen.getByTestId(`line:${id}`)).getAllByTestId('route-stroke')).toHaveLength(12);
+    }
   });
 
   it("keeps the Avatar of a person of the User's Party who is no Friend", async () => {

@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useMemo } from 'react';
@@ -69,7 +70,7 @@ export function useLookupMap(
   const base = useBase(draw);
   const others = base === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, base);
   const faces = useUnselected(others);
-  const drawn = useDrawnMap(draw, base, reply, NO_LOOKS, map, framing);
+  const drawn = useDrawnMap(draw, base, reply, NO_LOOKS, map, framing, lookup?.scene.routes);
   if (drawn === null || lookup === null) {
     return null;
   }

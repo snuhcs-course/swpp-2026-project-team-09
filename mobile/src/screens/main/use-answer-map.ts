@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
@@ -30,6 +31,7 @@ import {
 } from '@/map';
 import { ANSWER_PILL, listsTop, type Room } from './layout';
 import { useFaces } from './use-answer-faces';
+import { useAnswerWalks } from './use-answer-walks';
 import type { MainMap } from './use-main-map';
 
 // What the map draws: its markers, its Avatars, and its lines.
@@ -53,6 +55,8 @@ const ANSWER_MIN_LEVEL = NATIVE_MIN_LEVEL - 1;
 const ANSWER_OUTER_ZOOM = nativeLevelZoom(ANSWER_MIN_LEVEL) + 0.25;
 
 const NO_LOOKS: readonly MarkerLook[] = [];
+const NO_LINES: readonly MapLine[] = [];
+const NO_ROUTES: MapScene['routes'] = [];
 
 type Invited = Pick<PlanInvitation, 'sending' | 'made' | 'standings'>;
 
@@ -251,7 +255,8 @@ export function useBase(draw: Draw | null): AnswerDrawing | null {
 // with the camera of an answer. The camera is worked out from the drawing with its sides chosen in metres (`base`),
 // and the marks are drawn with their sides chosen at that camera. Null while there is nothing to draw. `looks` are
 // asked for with the drawing's own, so that a change of drawing never waits for a picture. `answer` is the answer
-// drawn, or the reply of a Lookup, for the camera to tell one that replaced another.
+// drawn, or the reply of a Lookup, for the camera to tell one that replaced another. `routes` are those of the scene
+// drawn: its walks follow their paths once found (`useAnswerWalks`).
 export function useDrawnMap(
   draw: Draw | null,
   base: AnswerDrawing | null,
@@ -259,12 +264,14 @@ export function useDrawnMap(
   looks: readonly MarkerLook[],
   map: MainMap,
   framing: Framing,
+  routes: MapScene['routes'] = NO_ROUTES,
 ): Drawn | null {
   const shown = useMemo(() => (base === null ? null : labelViewOf(base, framing)), [base, framing]);
   const drawing = useMemo(() => (draw === null || shown === null ? base : draw(shown)), [draw, base, shown]);
   const things = drawing?.things ?? [];
   const images = useMarkerImages([...things.map(({ look }) => look), ...looks]);
   useAnswerCamera(base, shown, answer, map, framing);
+  const lines = useAnswerWalks(drawing?.lines ?? NO_LINES, routes);
   if (base === null || drawing === null || things.length === 0) {
     return null;
   }
@@ -273,7 +280,7 @@ export function useDrawnMap(
     const { id, position, planId, order } = thing;
     return image === undefined ? [] : [{ id, name: thing.name, position, image, order, passive: planId === null }];
   });
-  return { markers, lines: drawing.lines, drawing: base };
+  return { markers, lines, drawing: base };
 }
 
 export function ignorePress(): void {
@@ -291,7 +298,7 @@ export function useInvitationMap(scene: MapScene | null, map: MainMap, room: Roo
     [scene],
   );
   const framing = useFraming(map, room, false);
-  const drawn = useDrawnMap(draw, useBase(draw), null, NO_LOOKS, map, framing);
+  const drawn = useDrawnMap(draw, useBase(draw), null, NO_LOOKS, map, framing, scene?.routes);
   if (drawn === null) {
     return null;
   }
@@ -333,7 +340,7 @@ export function useAnswerMap(
   const base = useBase(draw);
   const others = base === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, base);
   const faces = useFaces(others, shown, made !== null);
-  const drawn = useDrawnMap(draw, base, answer, looks, map, framing);
+  const drawn = useDrawnMap(draw, base, answer, looks, map, framing, answer?.plans[index]?.scene.routes);
   if (drawn === null) {
     return null;
   }

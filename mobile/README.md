@@ -686,7 +686,11 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   (`useShownAnswer` in `src/features/assistant/use-shown-answer.ts`, read through the chat control's `answer`). While
   it has a Plan, the map draws what `drawingOf` (`src/features/assistant/answer-marks.ts`) gives for it, and nothing
   else of the everyday map: each mark is an `answer` look, one symbol at a point and its label at the first free side,
-  and a candidate's mark takes a press, which shows its Plan; each route is a straight, solid line. The markers of
+  and a candidate's mark takes a press, which shows its Plan; each route is a solid line. A walked route (one whose
+  `mode` is absent or `walk`, never a shuttle's ride) follows the path `GET /walking-route` gives for its two ends, in
+  its own colour and width, and stays straight while that is on its way, when it fails and when no path is found
+  (`useAnswerWalks`, `use-answer-walks.ts`; P15 ticket 56). Only the scene on screen is asked, at most `WALKS_AT_ONCE`
+  (3) at a time in the scene's order, and the minutes shown stay the main server's. The markers of
   events, Quests, Restaurants, Study Spaces, and the shuttle, the shuttle's line, a walking route, the tutorial's pin,
   the shuttle's vehicles, and the User's own Avatar give way; the Avatars of Friends and of the other people of the
   User's Party stay, but for those of the Plan's people, whom the marks draw, and those near one of the Plan's own

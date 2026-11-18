@@ -73,6 +73,8 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 
 None yet.
 
+56. An answer's walking routes are drawn as straight lines: each walk follows the path the walking route service finds. Ticket [56](issues/56-answer-routes-along-the-paths.md).
+
 ## Testing Decisions
 
 Each ticket names its own tests by ADR 0007. A ticket that only removes something checks that it is gone and that what stays still works. A ticket that changes what a press does tests the press.
