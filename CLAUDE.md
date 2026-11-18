@@ -22,6 +22,14 @@ Before writing, renaming or moving a test, read `docs/adr/0007-test-levels-by-wh
 
 Keep `AGENTS.md` and `CLAUDE.md` synchronized. Whenever repository instructions change, update both files together with the same content.
 
+## Merging
+
+A pull request goes into the merge queue only when every person who commented on it has approved it. One approval is not enough while another person's comment stands without their approval.
+
+- A comment is a review of any kind, a reply in a review thread, or a comment in the conversation, from anyone but the author. Bots do not count.
+- A comment left after that person's approval needs their approval again.
+- Before an agent adds a pull request to the queue or reports it as ready to merge, it reads every review and comment and checks this. When someone has not approved, it names them and waits.
+
 ## AI-generated code markers
 
 Every source file starts with a box comment that records when an agent changed it, with which Claude model and for whom, below a shebang if it has one. Markdown, JSON, lockfiles, Prisma migrations, test fixtures and third-party files get none.
