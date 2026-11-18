@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -9,7 +10,7 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { pass, screen } from './support/app';
+import { screen } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import {
@@ -273,26 +274,11 @@ describe('switching from another Party that ended, into one that refuses', () =>
 });
 
 describe('파티 채팅', () => {
-  it('starts empty on a Quest of the main server, and sends with 파티에 메시지 보내기', async () => {
-    const user = await openRoom();
-
-    const chat = within(screen.getByLabelText('파티 채팅'));
-    expect(chat.getByRole('header', { name: '파티 채팅' })).toBeVisible();
-    expect(chat.queryByTestId('party-chat-theirs')).toBeNull();
-    await user.type(chat.getByPlaceholderText('파티에 메시지 보내기'), '10분 뒤에 도착해요');
-    await user.press(chat.getByRole('button', { name: '보내기' }));
-    await pass(500);
-
-    expect(within(chat.getByTestId('party-chat-mine')).getByText('10분 뒤에 도착해요')).toBeVisible();
-    expect(chat.getByText('오후 1:00')).toBeVisible();
-  });
-
-  it('keeps what the User sent on the phone, for the next time the room opens', async () => {
-    await apiClient.sendPartyChat(PICNIC.id, '먼저 가 있을게요');
-
+  it('is not in the room: the members meet at a step’s place, with no words between them', async () => {
     await openRoom();
 
-    expect(within(screen.getByLabelText('파티 채팅')).getByText('먼저 가 있을게요')).toBeVisible();
+    expect(screen.queryByLabelText('파티 채팅')).toBeNull();
+    expect(screen.queryByPlaceholderText('파티에 메시지 보내기')).toBeNull();
   });
 });
 

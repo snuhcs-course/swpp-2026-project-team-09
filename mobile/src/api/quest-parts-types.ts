@@ -6,6 +6,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AssistantReply, GlobalEventCard, LibraryCard, QuestCard, RestaurantCard } from './assistant-types';
@@ -100,14 +101,6 @@ export type ShownQuestInvitation = Omit<QuestInvitation, 'quest'> & {
 // A request to join with the note its User wrote, which the Leader reads in the room; null where none is known.
 export type ShownJoinRequest = JoinRequest & { note: string | null };
 
-// One message of a room's 파티 채팅. `from` is null for the User's own.
-export interface PartyMessage {
-  id: string;
-  from: { id: string; name: string } | null;
-  words: string;
-  sentAt: string;
-}
-
 // The operations whose answers carry the parts, or that take what the User enters.
 export type PartsOperation =
   | 'listQuests'
@@ -140,9 +133,6 @@ export type ShownClient = Omit<ApiClient, PartsOperation> & {
   listMyTags: () => Promise<string[]>;
   listJoinRequests: (questId: string) => Promise<ShownJoinRequest[]>;
   askAssistant: (...args: Parameters<ApiClient['askAssistant']>) => Promise<ShownAssistantReply>;
-  // The room's 파티 채팅, the oldest first, and sending to it. The phone keeps what the User sends.
-  listPartyChat: (questId: string) => Promise<PartyMessage[]>;
-  sendPartyChat: (questId: string, words: string) => Promise<PartyMessage>;
   // The User's past Quests, which 내 파티 shows under `지난 일정`: the main server keeps no ended Quest yet. `me` is the
   // User, who holds each of them.
   listPastQuests: (me: Person) => Promise<ShownQuest[]>;

@@ -8,6 +8,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -32,7 +33,6 @@ import { useRoom } from '@/features/quests/use-room';
 import { useWalkingTimes } from '@/features/quests/use-walking-times';
 import { ActivationBox } from './activation-box';
 import { type Ask, ConfirmSheet } from './confirm-sheet';
-import { PartyChat } from './party-chat';
 import { InvitationsSection, MembersSection, RequestsSection } from './people-sections';
 import { PlanSection } from './plan-section';
 import { RoomEvent } from './room-event';
@@ -200,7 +200,6 @@ function Body({ room, actions, onAsk, open }: BodyProps): ReactElement {
       <RequestsSection actions={actions} room={room} />
       {party ? <MembersSection actions={actions} room={room} walks={walks} /> : null}
       <InvitationsSection actions={actions} room={room} />
-      {party ? <PartyChat questId={room.quest.id} /> : null}
     </View>
   );
 }
@@ -211,8 +210,7 @@ function titleOf(room: RoomView): string {
 }
 
 // A Quest's room, the frame's `PartyDetail`: what the Holders plan, who comes and whether the Quest's Party runs.
-// While the User types in 파티 채팅, the footer's 나가기 gives way, so that the input stands right above the keyboard
-// with the latest message over it.
+// While the User types, the footer's 나가기 gives way, so that the field stands right above the keyboard.
 export function RoomScreen({ questId }: { questId: string }): ReactElement {
   const { data: room, isPending, refetch, gone } = useRoom(questId);
   const actions = useRoomActions();

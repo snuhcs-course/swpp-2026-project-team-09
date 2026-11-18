@@ -14,6 +14,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
@@ -21,7 +22,7 @@ import { clockMoves } from '@/clock';
 import { apiClient } from './client';
 import type { InvitationCard } from './invitation-card-types';
 import type { RestaurantMenus } from './menu-types';
-import type { PartyMessage, ShownJoinRequest, ShownQuest, ShownRecruitingQuest } from './quest-parts-types';
+import type { ShownJoinRequest, ShownQuest, ShownRecruitingQuest } from './quest-parts-types';
 import type { Board, LatLng, Person, Place } from './types';
 import type { JoinRequest } from './waiting-types';
 
@@ -51,7 +52,6 @@ type MenusKey = readonly ['menus', string];
 export const RECRUITING_KEY = ['recruiting'] as const;
 export const MY_JOIN_REQUESTS_KEY = ['my-join-requests'] as const;
 export const MATCHING_REQUESTS_KEY = ['matching-requests'] as const;
-export const PARTY_CHAT_KEY = ['party-chat'] as const;
 export const PAST_QUESTS_KEY = ['past-quests'] as const;
 export const MY_TAGS_KEY = ['my-tags'] as const;
 export const OFFICIAL_RECRUITING_KEY = ['official-recruiting'] as const;
@@ -119,10 +119,6 @@ export function joinRequestsQuery(
 // One Quest, for its room. Under the key of the Quests, so that whatever fetches them again fetches it too.
 export function questQuery(questId: string): UseQueryOptions<ShownQuest, Error, ShownQuest, string[]> {
   return { queryKey: [...QUESTS_KEY, questId], queryFn: () => apiClient.getQuest(questId) };
-}
-// A room's 파티 채팅.
-export function partyChatQuery(questId: string): UseQueryOptions<PartyMessage[], Error, PartyMessage[], string[]> {
-  return { queryKey: [...PARTY_CHAT_KEY, questId], queryFn: () => apiClient.listPartyChat(questId) };
 }
 // The Leader's invitations into one Quest.
 export function sentInvitationsQuery(questId: string): UseQueryOptions<JoinRequest[], Error, JoinRequest[], string[]> {
