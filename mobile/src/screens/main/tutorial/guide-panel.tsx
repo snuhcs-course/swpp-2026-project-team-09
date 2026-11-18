@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -28,11 +29,11 @@ export interface GuideShown {
 }
 
 // The steps' tabs: the shown one filled, a passed one with ✓; no numbers in a guide of places side by side.
-function Tabs({ flow, guide, view, tone }: GuideShown): ReactElement {
+function Tabs({ flow, guide, view, tone, beside }: GuideShown & { beside: boolean }): ReactElement {
   const together = guide.together === true;
   const now = stepAt(guide, view)?.index ?? 0;
   return (
-    <View accessibilityLabel="단계" accessibilityRole="tablist" style={styles.tabs}>
+    <View accessibilityLabel="단계" accessibilityRole="tablist" style={[styles.tabs, beside && styles.tabsBeside]}>
       {stepsOf(guide, view.kind).map((step, at) => {
         const on = at === now;
         const past = !together && at < now;
@@ -91,7 +92,7 @@ export function GuidePanel(shown: GuideShown): ReactElement {
   const now = stepAt(guide, view)?.index ?? 0;
   return (
     <View style={[styles.panel, inRow && styles.panelRow]}>
-      {tabs ? <Tabs {...shown} /> : null}
+      {tabs ? <Tabs {...shown} beside={inRow} /> : null}
       <View style={[styles.mainRow, inRow && (tabs ? styles.mainBeside : styles.mainAlone)]}>
         {hasPrevious(guide, view) ? (
           <Pressable
@@ -141,7 +142,9 @@ const styles = StyleSheet.create({
     boxShadow: shadow.mapCard,
   },
   panelRow: { flexDirection: 'row' },
-  tabs: { flex: 1, flexDirection: 'row', gap: 6 },
+  tabs: { flexDirection: 'row', gap: 6 },
+  // Only beside the main button: in the stacked panel, `flex: 1` left the row no height and the tabs fell under it.
+  tabsBeside: { flex: 1 },
   tab: {
     flex: 1,
     flexDirection: 'row',
