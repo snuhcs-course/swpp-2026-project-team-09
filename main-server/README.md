@@ -2766,7 +2766,8 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
   its `shortNames`, what it `means`, written with the names `resolvePlace` and `getMenus` find (check them against
   `seed/campus-map-places.json`, `seed/national-map-places.json` and `seed/restaurant-places.json`), and a `note` when
   the model needs one. `campusTermsRules` renders it, and `test/assistant-campus-terms.unit.test.ts` checks every
-  entry is in the fragment. The list only tells the model what a name stands for; facts still come from the tools.
+  entry is in the fragment and that every Place an entry names, by its name and number, is in the seed, so that a
+  renamed Place fails the test. The list only tells the model what a name stands for; facts still come from the tools.
 - **The adapter** (`runFeature` in `adapter.ts`): registers a feature's tools with the SDK and runs the loop of model
   call, tool call and answer within the limits per message, on an OpenRouter key asking for providers that do not collect data
   (`data_collection: deny`, with no ZDR restriction, which could shrink the providers available). It makes the reply's

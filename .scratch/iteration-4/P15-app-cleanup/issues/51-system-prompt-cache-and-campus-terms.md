@@ -30,21 +30,21 @@ A new prompt fragment of its own, in the stable part, as the 공강 and 관정�
 
 - **Kept as data**, so that a name is added by adding one entry: each entry has the short names, what they mean, and an optional note. One function renders the list into the fragment. The fragment says in one line what the list is for.
 - **How the model uses it**: it reads a short name in the User's message as the place or thing it stands for, and then looks it up with its tools as for any other name. The list gives no facts to answer from: menus, hours and locations still come only from tool results. It keeps answering in the User's words (a User who writes 중도 is answered with 중도).
-- **The first entries**, from 안진영 on 2026-11-18. The implementation checks each against the Places and Restaurants the server has (`main-server/seed/campus-map-places.json` and the restaurant data) and writes the name as the tools find it; an entry that matches nothing is reported to the owner instead of guessed.
+- **The first entries**, from the owner on 2026-11-18. The implementation checks each against the Places and Restaurants the server has (`main-server/seed/campus-map-places.json` and the restaurant data) and writes the name as the tools find it; an entry that matches nothing is reported to the owner instead of guessed.
 
-  | Short names | Means | Note |
-  | --- | --- | --- |
-  | 학관 | 학생회관 | |
-  | 윗공대 | The College of Engineering buildings around 300동–303동 | The highest part of campus and the farthest from the main gate. An area, not one building. |
-  | 아랫공대 | The College of Engineering buildings from about 43동 to 39동 and 신소재공동연구소 | Said to tell it from 윗공대. An area, not one building. |
-  | 과방 | A department's own room for resting and studying | Usually in the department's building, but some departments have none or have it elsewhere. The app has no data on 과방: say so, and do not name a room. |
-  | 버들골, 풍산마당 | 버들골 풍산마당 | |
-  | 긱사, 긱 | 기숙사 | |
-  | 천식 | 천원의 식사: the 1,000-won breakfast and lunch at 학생회관 식당, and the 1,000-won breakfast at 301동 식당 | At 학생회관 the menu may show 3,000 won, the price for people outside the university. |
-  | 종운 | 종합운동장 | |
-  | 긱운 | 기숙사 운동장 | |
-  | 긱삼 | 기숙사 삼거리 | |
-  | 중도 | 중앙도서관 | |
+  | Short names      | Means                                                                                                      | Note                                                                                                                                                    |
+  | ---------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | 학관             | 학생회관                                                                                                   |                                                                                                                                                         |
+  | 윗공대           | The College of Engineering buildings around 300동–303동                                                    | The highest part of campus and the farthest from the main gate. An area, not one building.                                                              |
+  | 아랫공대         | The College of Engineering buildings from about 43동 to 39동 and 신소재공동연구소                          | Said to tell it from 윗공대. An area, not one building.                                                                                                 |
+  | 과방             | A department's own room for resting and studying                                                           | Usually in the department's building, but some departments have none or have it elsewhere. The app has no data on 과방: say so, and do not name a room. |
+  | 버들골, 풍산마당 | 버들골 풍산마당                                                                                            |                                                                                                                                                         |
+  | 긱사, 긱         | 기숙사                                                                                                     |                                                                                                                                                         |
+  | 천식             | 천원의 식사: the 1,000-won breakfast and lunch at 학생회관 식당, and the 1,000-won breakfast at 301동 식당 | At 학생회관 the menu may show 3,000 won, the price for people outside the university.                                                                   |
+  | 종운             | 종합운동장                                                                                                 |                                                                                                                                                         |
+  | 긱운             | 기숙사 운동장                                                                                              |                                                                                                                                                         |
+  | 긱삼             | 기숙사 삼거리                                                                                              |                                                                                                                                                         |
+  | 중도             | 중앙도서관                                                                                                 |                                                                                                                                                         |
 
 - **A general line** after the list: most other short names cut a long building name short or join first syllables; when one is not in the list and the tools find nothing for it, ask the User which place they mean instead of guessing.
 - The fragment is short: the list above should add well under 1,000 tokens. Its size is reported in the pull request.
@@ -57,7 +57,7 @@ A new prompt fragment of its own, in the stable part, as the 공강 and 관정�
 
 ## Measuring it
 
-All runs call the Anthropic API directly (`--provider anthropic --cache breakpoints`), on 안진영's Claude Console key in `main-server/.env`. None goes through OpenRouter. Estimated cost: about USD 1.5 in all; stop and ask before passing USD 3.
+All runs call the Anthropic API directly (`--provider anthropic --cache breakpoints`), on the owner's Claude Console key in `main-server/.env`. (After the review, one run of the date-dependent cases went through OpenRouter on the team's key; see the Comments.) Estimated cost: about USD 1.5 in all; stop and ask before passing USD 3.
 
 1. **The scores stay.** P19 and the P5 small world, once on the commit this branch starts from and once on the finished branch. The same suites and options for both. They agree within the suites' noise: P19 was 56–59/64 over earlier runs, and the P5 small world's floors keep their verdicts. A drop beyond that is looked into case by case before the pull request is opened.
 2. **The cache is shared across minutes.** The evals cannot show this, since they fix `now`. So a small measurement of its own: the same short conversation sent N times (N about 10), each with `now` one minute later and as a different User, once on the base commit and once on the branch, reading each request's `cache_read_input_tokens` and `cache_creation_input_tokens`. Expected: on the base every first request writes about 26,300 tokens; on the branch only the first of the N does, and the others read them. The pull request reports the tokens read and written and the cost of both, per request and in total. It is a script or an eval option kept in `main-server/eval/`, so that it can be run again.
@@ -96,7 +96,47 @@ All runs call the Anthropic API directly (`--provider anthropic --cache breakpoi
 - **Tests.** The bytes-equal check is a unit test that sends the real chat feature, built over services with no data (`test/chat-services.ts`), through the real provider library to a fake fetch. `test/scripted-model.ts`'s `system()` now joins the system messages.
 - Spent on the API: USD 1.24 (P19 ×3, P5 ×2, cross-minute ×2, the short-name questions).
 
+### Notes from the review (2026-11-18)
+
+- **OpenRouter, without a model.** `assistant-cached-prefix.unit.test.ts` already sent the chat through the real
+  OpenRouter provider library to a fake fetch; it now asserts outright that the request's first two messages are the two
+  system messages, stable part first and the `Now in Korea` line second, and that there are no others.
+- **OpenRouter, with the model.** The 29 P19 cases whose expected answer depends on 오늘, 내일, 모레, 이번 주, a weekday or
+  a meal time were run once with `--provider openrouter` (results `…cb069635-dirty-openrouter-…`, USD 0.30): 25 of 29
+  passed, every date and window read against 2026-10-21 (수) 14:05 right. On the same 29 cases the Anthropic after run
+  (`d4774178`) passed 24. The four failures are failures on Anthropic too (`ambiguous-intent-lunch-at-student-center`,
+  a known failure; `follow-up-seven-oclock`, 7시 read as 19:00; `follow-up-yes-after-menus`;
+  `global-events-tonight-talk`, a window given as after/before instead of from/to), none a wrong date.
+- **천식** now means only 천원의 식사, the 1,000-won meal; the restaurants and the price are gone, so `getMenus` gives the
+  rest. Asked once on Anthropic, "천식 오늘 뭐 나와?" called `getMenus` (date 2026-10-21, restaurant 천원의 식사), got
+  none, and said the menu of 천원의 식사 was not collected: the answer came from the tool, with no restaurant from the
+  prompt. The menus carry no mark of which meal is the 1,000-won one, so the tools cannot answer this question well yet;
+  that is for the owner.
+- **Other entries.** 아랫공대: the College of Engineering buildings in the lower part of campus, around 30동–44동, and
+  신소재공동연구소 (131동), naming 공학관1 (30), 대학원연구동(1단계) (39) and the 43동 강의동; the seed has 공학관1–8 at
+  30–37, 글로벌공학교육센터 at 38 and the 43–44동 buildings there. 긱사: 관악사 (the dormitories), an area of many
+  buildings, without naming two. 중도: 중앙도서관, unchanged.
+- **Which rule wins.** The fragment now says that a listed name's meaning counts as the User's words as written, the
+  tools' several-or-none rules applying as to any name, and that asking which place is meant is only for a short name
+  not in the list, where it comes before saying that nothing matches. The chat's own rules' words are unchanged.
+- **The seed test.** `assistant-campus-terms.unit.test.ts` checks every "name (N동)" an entry gives against the seed's
+  Places by name and number, and the entries without a number (종운, 긱운, 긱삼, 중도, 긱사) by what the tools find; 과방
+  and 천식 name no Place. Renaming 공학관1 in an entry fails it.
+- **Built twice.** The cached-prefix test now builds two features and their services with the clock on two different
+  days, sends one as each of two Users at two different minutes, and compares the prefixes. The cross-minute run moved
+  `now` by a minute per request within about ten real seconds: it shows that the time no longer changes the prefix,
+  not that a cache entry lives through real minutes (the API keeps one five minutes from its last read).
+- **After the changes.** P19 on Anthropic (`--cache breakpoints`, results `…cb069635-dirty-…-2`): 57/64, pass^3 5/5,
+  known failures passed 4/8, USD 0.085; inside 56–59. The fragment is 701 tokens by the free token count (703 before;
+  the 744 above was counted in its place in the prompt).
+- **Spec line.** The P15 spec's lines for 51 and 52 meet; neither pull request has merged, so it is left for the
+  second to merge.
+- Spent on the API in the review: USD 0.39 (OpenRouter 0.30, Anthropic 0.09).
+
 ### Agent usage (2026-11-18)
 
 - Agent time: about 1 h 40 min in one session (an estimate), most of it waiting on the four eval runs.
 - Tokens (an estimate; one agent, no subagents): output about 45k; input about 6.5M, of which about 6.2M cache reads and 0.3M cache writes.
+- Review round, the same day: about 1 h 15 min more (an estimate, in a session shared with P15-52's review and
+  interrupted by a VM restart; its waits on the evals included); tokens about 9 million more input (about 8.6 million
+  cache reads, 0.3 million cache writes) and 45 thousand more output, no subagents.
