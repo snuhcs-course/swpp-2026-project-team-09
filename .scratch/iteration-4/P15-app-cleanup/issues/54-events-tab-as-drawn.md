@@ -139,3 +139,10 @@ Estimates. No transcript tooling was at hand, so these come from the session's o
 
 - Agent time: about 1 hour 25 minutes in one Opus 5.5 session (14:15–15:40 KST), most of it waiting on Jest under load. No subagents.
 - Tokens: output about 45,000. Input about 9 million: about 8.5 million cache reads, 0.45 million cache writes, and a few thousand uncached.
+
+### Agent usage (2026-11-18, review round)
+
+Estimates, from the session's own view of its work (no transcript tooling at hand):
+
+- Agent time: about 55 minutes in one Opus 5.5 session answering the review, a third of it waiting on Jest under the memory cap. No subagents.
+- Tokens: output about 30,000. Input about 4 million: about 3.8 million cache reads, 0.2 million cache writes, and a few thousand uncached.
