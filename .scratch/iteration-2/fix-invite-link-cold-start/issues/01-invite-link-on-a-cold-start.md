@@ -49,3 +49,25 @@ for the timer to win. On iOS it takes `ExpoLinking.getLinkingURL()` and has no r
 - A test that fails before the fix pins the cause, at a seam triage agrees.
 - P11-03's M2 criterion is ticked, and the line in `mobile/README.md`'s "Device runs" that says M2 on a cold start
   fails is removed.
+
+## Comments
+
+### Fixed by P15 ticket 10 (2026-11-18)
+
+[P15 ticket 10](../../../iteration-4/P15-app-cleanup/issues/10-invite-link-cold-start-and-page.md) fixed this. The
+cause, as confirmed against the installed expo-router 57.0.23 (`mobile/node_modules/expo-router/build/`), is not the
+150 ms race this ticket guessed at:
+
+- On Android, `link/linking.js`'s `getInitialURL()` answers a promise (React Native's `Linking.getInitialURL()` raced
+  against 150 ms); on iOS it answers `expo-linking`'s `getLinkingURL()` at once.
+- `global-state/useStore.js` prefetches the first route's info only when that answer is a string. Otherwise the store's
+  route info stays empty until a leaf screen sets it (`useScreens.js`) or a later state change does: React
+  Navigation's `onStateChange` is not called for the first state.
+- So the signed-in place's layout renders first with `useSegments()` empty, its guard sees no Invite Link and keeps no
+  token, and `useOwnPlace`'s Redirect leads to `/` and then to the map. The race only decides whether the router starts
+  at the link or at `/`; neither keeps the token.
+
+The fix is `mobile/src/app/+native-intent.ts`: the router's `redirectSystemPath` keeps the token on the phone at a start
+of the app, read on Android from expo-linking and then cleared, and gives the address back unchanged.
+`mobile/__tests__/invite-link-cold-start.integration.test.tsx` takes Android's way of getting the first address and
+failed before the fix. M2 on a cold start passed on the emulator; the run is recorded under ticket 10.

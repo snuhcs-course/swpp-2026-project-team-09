@@ -183,7 +183,8 @@ project is generated. The build then declares an App Link with `autoVerify` for 
 (`app.config.ts`), and Android checks it against `https://<host>/.well-known/assetlinks.json`, which the main server
 answers. The check passes only when the build's signing certificate is among the main server's
 `ANDROID_CERTIFICATE_FINGERPRINTS`; the debug key's fingerprint is in the main server's `.env.example`. Without the
-host the build declares no App Link, and a link opens the app only through `snunow://invite/<token>`.
+host the build declares no App Link, and a link opens the app only through `snunow://invite/<token>`: the https
+address opens the main server's page in the browser, whose button opens that.
 
 `pnpm android` generates the Android project in `android/` (not committed), builds the app, installs it on the
 running emulator, opens it and starts the development server. The first build takes 15 to 30 minutes; later ones a
@@ -371,8 +372,7 @@ and the relaunch in M1 keeps it. The flows grant the app no permission: granted 
 Google Play services may ask over the map to turn on Location Accuracy, a system screen that depends on the emulator's
 settings. So the app explains the location once on the map, and the flows answer "나중에".
 
-M2 on a cold start fails until the ticket in `.scratch/iteration-2/fix-invite-link-cold-start/` is fixed: the app
-lands on the map, not on the accept screen. M1 and M2 on a warm start pass.
+M1 and M2, on a cold and on a warm start, pass.
 
 Each run writes into its own folder under `device-results/`, which git ignores, named by the date, the time and the
 commit, such as `device-results/2026-10-23T001807-74381a9b/`. It holds `report.xml`, the JUnit report, and Maestro's
@@ -905,13 +905,18 @@ cells of one width with the current one chosen when all are at it, "넘기기", 
 보여요"); a removed Friend stays as they are. An answer, a skip, and closing the sheet record the question for every
 Friend named with `recordFriendsAsked(ids, 'plan')`.
 
-**An Invite Link** is `<PUBLIC_URL>/invite/<token>`, and the main server's page opens `snunow://invite/<token>` where a
-messenger shows the address in its own browser. Both reach the route `/invite/[token]`. A link opened before the User
-belongs to the signed-in place (at the start of the app, or signed out) meets the signed-in place's guard, which keeps
-its token on the phone (`inviteToken` of `Kept`) before it leads away; once the User is there, after the loading
-screen or after the sign-in, the consent and Onboarding, the layout opens the accept screen of the kept token. Opened
-while signed in, the link shows its screen at once. The accept screen drops the kept token, and a later link replaces
-it. Android opens the https address in the app only through App Links (see "Invite Links on Android" below).
+**An Invite Link** is `<PUBLIC_URL>/invite/<token>`. Opened in a browser, such as a messenger's own, an iPhone's or one
+on a phone without the app, the address answers the main server's page, whose button "SNU Now에서 열기" opens
+`snunow://invite/<token>`. Both reach the route `/invite/[token]`. A link that starts the app has its token kept on the
+phone (`inviteToken` of `Kept`) by the router's hook for the address the system opens the app with
+(`src/app/+native-intent.ts`), before the first screen renders. On Android the router gets that address as a promise,
+after its first render, and starts at `/` without it when React Native answers after 150 ms, so the hook reads it from
+expo-linking, which holds it and each later link, and clears it at every address so that none opens twice. A link
+opened while the app runs and the User is signed out meets the signed-in place's guard, which keeps its token before it
+leads away. Once the User is in the signed-in place, after the loading screen or after the sign-in, the consent and
+Onboarding, the layout opens the accept screen of the kept token. Opened while signed in, the link shows its screen at
+once. The accept screen drops the kept token, and a later link replaces it. Android opens the https address in the app
+only through App Links (see "Invite Links on Android" above).
 
 **The Quest list on the whole screen** (`src/screens/quests/`, the `MainQuests` frame, `/quests`) is a
 `FullScreenPanel` that comes up from the bottom: ✕ "닫기" and "퀘스트 {n}", n the Quests that have not ended; the

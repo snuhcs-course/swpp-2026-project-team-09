@@ -70,6 +70,7 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 7. The map's credit and Kakao's logo float far above the AI input, over the place of a row of buttons that is no longer drawn: nothing stands over an empty place above the input. Ticket [07](issues/07-credit-above-the-input.md).
 8. The sign-in screen: remove the drawn character, put the sign-in button in the middle, and show the app icon's wordmark in place of the name and its tagline. Ticket [08](issues/08-sign-in-wordmark.md).
 9. The AI input's keyboard goes down only on a send: a press anywhere outside the input puts it down, and does nothing else. Ticket [09](issues/09-keyboard-down-on-press-outside.md).
+10. An Invite Link that starts the stopped app lands on the map, on Android, and in a browser its address answers 404: the stopped app shows the accept screen, and the address is a page that opens the app. Ticket [10](issues/10-invite-link-cold-start-and-page.md).
 
 ### 안진영 (`51`–`99`)
 
