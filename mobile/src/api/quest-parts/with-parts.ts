@@ -7,6 +7,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ChatCard } from '@/api/assistant-types';
@@ -18,7 +19,6 @@ import type { QuestSummary } from '@/api/waiting-types';
 import { now } from '@/clock';
 import { keepQuestEntries, readQuestEntries } from '@/storage/quest-entries';
 import type { Build } from './build';
-import { chatOf, sendChat } from './chat';
 import { facesOfQuest, facesOfSummary } from './faces';
 import { invitationPlaceOf } from './invitation-places';
 import { invitationStartOf } from './invitation-times';
@@ -32,8 +32,7 @@ import { myTagsOf, tagsOf } from './tags';
 
 // Adds the mocked parts of a Quest to a client's answers: its photo, its tags and its members' faces, each from its
 // own adapter, in every answer that carries a Quest, the Assistant's cards among them; the mocked parts of 찾기,
-// official recruiting, hiding a post and the people looking for company; and the room's, a request's note and the 파티
-// 채팅. When the main server gives one of them, its adapter is dropped here and the server client reads it.
+// official recruiting, hiding a post and the people looking for company; and the room's, a request's note. When the main server gives one of them, its adapter is dropped here and the server client reads it.
 
 type Entered = Partial<Record<string, QuestEntries>>;
 
@@ -164,8 +163,6 @@ function mockedOnly(build: Build): Pick<ShownClient, MockedOnly> {
     hidePost,
     listCompanionSeekers: () => listCompanionSeekers(build),
     askCompanionSeeker,
-    listPartyChat: (questId) => chatOf(questId, build),
-    sendPartyChat: (questId, words) => sendChat(questId, words),
   };
 }
 
@@ -176,6 +173,4 @@ type MockedOnly =
   | 'listHiddenPosts'
   | 'hidePost'
   | 'listCompanionSeekers'
-  | 'askCompanionSeeker'
-  | 'listPartyChat'
-  | 'sendPartyChat';
+  | 'askCompanionSeeker';

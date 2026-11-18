@@ -84,6 +84,8 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 58. 관정 booking, after #360: a card left open across its start can show the old time while it books, and a login closed while its check runs can close the login opened again after it. Ticket [58](issues/58-kwanjeong-follow-ups.md).
 59. The 행사 search field says only "행사 검색": it names what the search reads, the title, the place and the description. Ticket [59](issues/59-events-search-hint.md).
 60. The name and the department can be changed in onboarding and 프로필 편집, though the service runs on real names: both come from the SNU account and are fixed, with a line saying so. Ticket [60](issues/60-name-and-department-from-account.md).
+61. The room's 파티 채팅 is a mock that only the sender sees: it leaves the room, and members meet at a step's place. Ticket [61](issues/61-room-without-chat.md).
+62. With no chat, nobody hears that the meeting moved, that a latecomer has come, or that someone is late: each is a Notification to the other Holders. Ticket [62](issues/62-party-notices-without-words.md).
 
 ## Testing Decisions
 

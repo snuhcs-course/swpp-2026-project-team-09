@@ -19,6 +19,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
@@ -361,8 +362,6 @@ export const apiClient: ShownClient = {
   acceptInvitation: (invitationId) => chosen().acceptInvitation(invitationId),
   declineInvitation: (invitationId) => chosen().declineInvitation(invitationId),
   listMyTags: () => chosen().listMyTags(),
-  listPartyChat: (questId) => chosen().listPartyChat(questId),
-  sendPartyChat: (questId, words) => chosen().sendPartyChat(questId, words),
   listPastQuests: (me) => chosen().listPastQuests(me),
   listOfficialRecruiting: () => chosen().listOfficialRecruiting(),
   joinOfficialRecruiting: (recruitingId) => chosen().joinOfficialRecruiting(recruitingId),
