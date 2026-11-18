@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type CardFact, type Lookup } from '../src/assistant/dto/answer.dto.js';
@@ -10,7 +11,7 @@ import { mealAt, placeAnswer, type PlaceArgs } from '../src/assistant/lookup/pla
 import { type FriendView } from '../src/friends/dto/friend-view.dto.js';
 import { MenuLineKind } from '../src/generated/prisma/client.js';
 import { type MenuLineDto } from '../src/menus/dto/restaurant-menus.dto.js';
-import { classAt, id, ME, position, TUESDAY, wayArgs } from './way-example.js';
+import { classAt, id, ME, position, reporting, TUESDAY, wayArgs } from './way-example.js';
 
 // The pressed buildings of wireframe row 6 on the seed's Places and walking table: on Tuesday 2026-11-17 at 12:10 the
 // User is in 301동 after a Class there until 11:50, with the next at 13:00 in 24동. Call `readCampus` in a beforeAll
@@ -66,6 +67,8 @@ export interface Pressed {
   restaurants?: { name: string; lines: MenuLineDto[] }[];
   events?: PlaceArgs['events'];
   friends?: PlaceArgs['friends'];
+  // The shuttles reported, each at the stop it passed last: none unless given.
+  reported?: { stop: string; at: Date }[];
 }
 
 function insideOf({ location, inside }: Pressed): string | null {
@@ -83,7 +86,11 @@ export function pressed(name: string, given: Pressed = {}): Lookup {
   return placeAnswer({
     placeId: id(name),
     inside: insideOf(given),
-    way: wayArgs(now, { me: { userId: ME, name: '유상', items: given.items ?? tuesday() }, location }),
+    way: wayArgs(now, {
+      me: { userId: ME, name: '유상', items: given.items ?? tuesday() },
+      location,
+      shuttle: reporting(given.reported ?? []),
+    }),
     meal: meal === null ? null : { meal, restaurants: given.restaurants ?? [] },
     events: given.events ?? [],
     friends: given.friends ?? [],

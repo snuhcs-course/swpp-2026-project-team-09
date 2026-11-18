@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type FriendView } from '../../friends/dto/friend-view.dto.js';
@@ -24,12 +25,19 @@ import { koreaDate } from '../korea-time.js';
 import { cardOf, fact } from './card.js';
 import { friendHere } from './friend-lookup.js';
 import { dishesOf } from './menu-lookup.js';
-import { shuttleLine } from './shuttle-lookup.js';
+import {
+  boardingGuide,
+  shuttleBasis,
+  shuttleFacts,
+  shuttleLine,
+  type ShuttleTaken,
+  takenShuttle,
+} from './shuttle-lookup.js';
 import { atPlace, type Way, type WayArgs, wayOf } from './way.js';
 import { GATE_BASIS, hereBasis } from './way-lookup.js';
 import { dueWords, gated, WayNaming } from './way-naming.js';
 
-// A pressed building's card: the walk there and how long the User can stay before their next item, today's menu, its
+// A pressed building's card: the walk there, or the shuttle when it is taken, and how long the User can stay before their next item, today's menu, its
 // events, and the Friends the asker's map shows in it, with the buttons for what it holds. Nothing goes to the model.
 
 export interface PlaceEvent {
@@ -74,8 +82,9 @@ export function mealAt(now: Date): HandledMeal | null {
 interface Held {
   title: string;
   point: PlacePoint;
-  // The way there, null when where the User sets out from is not known.
+  // The way there, null when where the User sets out from is not known, and the shuttle when it is taken.
   way: Way | null;
+  shuttle: ShuttleTaken | null;
   here: boolean;
   next: DayItem | undefined;
   // From the arrival, or now when the User is there, to the next item's start less the walk on to its Place.
@@ -94,11 +103,12 @@ function stayOf(
   if (found === null || next === undefined) {
     return null;
   }
+  const arrival = takenShuttle(found)?.trip.arrival ?? found.arrival;
   const onward =
     next.placeId === null || next.placeId === placeId
       ? 0
       : shownMinutes(way.travel.walkingSeconds(placeId, next.placeId));
-  const from = here ? found.now : found.arrival;
+  const from = here ? found.now : arrival;
   return (next.start.getTime() - from.getTime()) / MINUTE_MS - onward;
 }
 
@@ -121,6 +131,7 @@ function heldOf(args: PlaceArgs): Held {
     title,
     point: new WayNaming(way).labelledPoint(placeId, title),
     way: found,
+    shuttle: found === null || here ? null : takenShuttle(found),
     here,
     next,
     stayMinutes: stayOf(args, found, here, next),
@@ -162,7 +173,7 @@ function eventWords({ title, start, end }: PlaceEvent, now: Date): string {
 
 // A way that starts at the Place itself without the User in it has no walk to state: beside it when the location is
 // near, and nothing when the start is only the last item's Place or the gate.
-function routeWords({ way, here }: Held): string[] {
+function routeWords({ way, shuttle, here }: Held, naming: WayNaming): string[] {
   if (here) {
     return ['지금 여기 있어요'];
   }
@@ -172,13 +183,15 @@ function routeWords({ way, here }: Held): string[] {
   if (atPlace(way)) {
     return way.start.basis === 'location' ? ['바로 옆이에요'] : [];
   }
-  return [`걸어서 ${way.walkMinutes}분 · ${clockOf(way.arrival)} 도착`];
+  return shuttle === null
+    ? [`걸어서 ${way.walkMinutes}분 · ${clockOf(way.arrival)} 도착`]
+    : shuttleFacts(shuttle, naming);
 }
 
-function factsOf(held: Held, now: Date): CardFact[] {
+function factsOf(held: Held, now: Date, naming: WayNaming): CardFact[] {
   const { next, stayMinutes } = held;
   return [
-    ...routeWords(held).map((text) => fact('route', text)),
+    ...routeWords(held, naming).map((text) => fact('route', text)),
     ...(next === undefined || stayMinutes === null ? [] : [fact('clock', stayWords(next, stayMinutes))]),
     ...held.menus.map((text) => fact('meal', text)),
     ...held.events.map((event) => fact('flag', eventWords(event, now))),
@@ -195,7 +208,7 @@ function noteOf({ menus, friends, next, stayMinutes }: Held, meal: PlaceArgs['me
     : null;
 }
 
-function actionsOf({ placeId, way, meal }: PlaceArgs, held: Held): LookupAction[] {
+function actionsOf({ placeId, way, meal }: PlaceArgs, held: Held, naming: WayNaming): LookupAction[] {
   const date = koreaDate(way.now);
   const actions: LookupAction[] = [];
   if (meal !== null && held.menus.length > 0) {
@@ -218,7 +231,10 @@ function actionsOf({ placeId, way, meal }: PlaceArgs, held: Held): LookupAction[
       { kind: 'plan', label: '같이 갈 파티', input: { kind: 'quests', globalEventId: first.id, questIds: null } },
     );
   }
-  return held.here ? actions : [...actions, { kind: 'guide', to: held.point }];
+  if (held.here) {
+    return actions;
+  }
+  return [...actions, held.shuttle === null ? { kind: 'guide', to: held.point } : boardingGuide(held.shuttle, naming)];
 }
 
 // The way's chips: where the User sets out from, and their next item.
@@ -231,9 +247,10 @@ function chipsOf({ way, next }: Held, naming: WayNaming): ConditionChip[] {
   return [...from, ...until];
 }
 
-// A walk's, with the shuttle's minutes when it is 15 minutes or more; where the way starts when that is the Place, the
+// The shuttle's legs and the walk it beats when it is taken; else a walk's, with the shuttle's minutes when it is 15
+// minutes or more; where the way starts when that is the Place, the
 // User being in it or not.
-function basisOf({ way, here, title }: Held, naming: WayNaming): string[] {
+function basisOf({ way, shuttle: taken, here, title }: Held, naming: WayNaming): string[] {
   if (way === null) {
     return [];
   }
@@ -242,6 +259,9 @@ function basisOf({ way, here, title }: Held, naming: WayNaming): string[] {
   }
   if (here || atPlace(way)) {
     return [hereBasis(way, naming)];
+  }
+  if (taken !== null) {
+    return [...shuttleBasis(way, taken), ...(gated(way) ? [GATE_BASIS] : [])];
   }
   const shuttle = shuttleLine(way);
   return [
@@ -267,7 +287,12 @@ export function placeAnswer(args: PlaceArgs): Lookup {
       flags: [],
     },
     band: null,
-    actions: actionsOf(args, held),
-    card: cardOf(held.title, number === null ? null : name, factsOf(held, args.way.now), noteOf(held, args.meal)),
+    actions: actionsOf(args, held, naming),
+    card: cardOf(
+      held.title,
+      number === null ? null : name,
+      factsOf(held, args.way.now, naming),
+      noteOf(held, args.meal),
+    ),
   };
 }

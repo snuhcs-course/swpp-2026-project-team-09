@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -25,7 +26,7 @@ import {
   shuttleLine,
   shuttleLines,
   shuttleScene,
-  type ShuttleTaken,
+  takenShuttle,
 } from './shuttle-lookup.js';
 import { atPlace, type Way, type WayArgs, wayOf } from './way.js';
 import { dueWords, gated, part, REMIND_WALK_MINUTES, WayNaming } from './way-naming.js';
@@ -44,9 +45,6 @@ export const GATE_BASIS = '지금 위치는 캠퍼스 밖이라 쓰지 않고 �
 // Board n14's, where the lines say it was counted from the gate.
 const GATE_UNUSED = '지금 위치는 캠퍼스 밖이라 쓰지 않았어요';
 const OFF_CAMPUS_NOTE = '캠퍼스 밖이라 친구에게 내 위치가 보이지 않아요';
-
-const takenShuttle = ({ shuttle }: Way): ShuttleTaken | null =>
-  shuttle !== null && shuttle !== 'not running' && shuttle.taken ? shuttle : null;
 
 // Board n14: a walk from the gate that is in time for the deadline.
 const gateInTime = (way: Way): boolean =>
@@ -189,16 +187,16 @@ function bandOf(way: Way, args: WayArgs, naming: WayNaming): TimeBand | null {
   };
 }
 
-// Route guidance, after a leave-by notification while the leave-by time is ahead and the walk is long enough. From
+// Route guidance, to the boarding stop for the shuttle, after a leave-by notification while the leave-by time is ahead and the walk is long enough. From
 // off campus in time, nothing but closing: the way starts at the gate, not where the User is.
 function actionsOf(way: Way, naming: WayNaming): LookupAction[] {
   const { toPlaceId, walkMinutes, deadline, now } = way;
-  const { label } = naming.to(way);
-  const guide: LookupAction = { kind: 'guide', to: naming.labelledPoint(toPlaceId, label) };
   const shuttle = takenShuttle(way);
   if (shuttle !== null) {
-    return shuttleActions(way, shuttle, naming, guide);
+    return shuttleActions(way, shuttle, naming);
   }
+  const { label } = naming.to(way);
+  const guide: LookupAction = { kind: 'guide', to: naming.labelledPoint(toPlaceId, label) };
   if (gateInTime(way)) {
     return [];
   }

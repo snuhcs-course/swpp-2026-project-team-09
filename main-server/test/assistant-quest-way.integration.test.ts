@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -98,7 +99,7 @@ describe('가는 길 보기 pressed (board q12)', () => {
         { kind: 'origin', text: '301동에서', userId: null },
         { kind: 'until', text: '13:00 수업까지', userId: null },
       ],
-      actions: [{ kind: 'guide', to: { label: 'NH농협두레문예관 2층' } }],
+      actions: [{ kind: 'guide', to: { label: '301동 정류장' } }],
     });
     expect(reply.lookup?.lines[1]).toEqual([
       { text: '13:00 수업 전', strong: true },
