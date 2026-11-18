@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -23,7 +24,8 @@ import { roomPhotoUrl } from '@/library/site';
 import { CardBox, FailureNote, Notes, Pill, Pills, Said } from './library-parts';
 import { seatBookBubble } from './own-bubbles';
 import { roomTimesFor } from './room-times';
-import { LargeSeatMap, SmallSeatMap } from './seat-map';
+import { SmallSeatMap } from './seat-map';
+import { SeatPicker } from './seat-picker';
 import { type LibraryCardActions, useLibraryLoad, useLogInReload } from './use-library-call';
 
 // The seats card (the MainChatLibSeats frame). A reading room's sector draws the site's seat map with the free seats
@@ -101,7 +103,7 @@ function SeatMaps({ card, space, actions, seats, slot }: SeatMapsProps): ReactEl
       >{`${spaceWords(space)} · ${when} · 빈 자리 ${String(freeSeats(seats).length)}석`}</Text>
       {bookable ? <Text style={styles.caption}>{SEAT_TAP_HINT}</Text> : null}
       {bookable ? <BookAnySeat {...{ card, space, actions, slot }} /> : <Said>{BOOKING_CLOSED}</Said>}
-      <LargeSeatMap
+      <SeatPicker
         onClose={() => {
           setLarge(false);
         }}

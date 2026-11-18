@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -14,7 +15,7 @@ import { withParticle } from '@/features/map/short-name';
 import { koreaClock } from '@/korea-time';
 import type { Room } from '../layout';
 import type { ReceivedInvitation } from '../use-received-invitation';
-import { FrameCard } from './answer-frame';
+import { FrameCard } from './frame-card';
 import { AnswerLines } from './answer-lines';
 import { CloseButton } from './close-button';
 import { QuestSteps } from './quest-steps';

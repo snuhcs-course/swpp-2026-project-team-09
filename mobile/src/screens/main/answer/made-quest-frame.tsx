@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -10,7 +11,7 @@ import { space } from '@/design-system';
 import { friendChips } from '@/features/assistant/made-quests';
 import type { MadeQuestView } from '@/features/assistant/use-made-quests';
 import type { Room } from '../layout';
-import { FrameCard } from './answer-frame';
+import { FrameCard } from './frame-card';
 import { InvitedCard } from './invited-card';
 
 interface MadeQuestFrameProps {

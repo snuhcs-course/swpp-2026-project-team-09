@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { libraryCard, READING_ROOM, SEAT_NOTES } from '@/api/mock/data/library';
@@ -89,7 +90,7 @@ describe('the seat book card', () => {
     ]);
     expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
     expect(seatCard().getByText('오늘 17:00–18:00')).toBeVisible();
-    for (const name of ['예약하기', '닫기', '다른 자리 고르기']) {
+    for (const name of ['예약하기', '닫기', '자리 선택하기']) {
       expect(seatCard().getByRole('button', { name })).toBeVisible();
     }
     expect(seatCard().getByText(`· ${SEAT_NOTES[1] ?? ''}`)).toBeVisible();
@@ -183,7 +184,7 @@ describe('the seat book card when the User asked the Assistant to book it ("그�
   });
 });
 
-describe('닫기 and 다른 자리 고르기 on the seat book card', () => {
+describe('닫기 on the seat book card', () => {
   it('says "알겠어요. 예약하지 않았어요." on 닫기 and books nothing', async () => {
     await askForCards({ server, library }, [SEAT_CARD]);
 
@@ -193,17 +194,6 @@ describe('닫기 and 다른 자리 고르기 on the seat book card', () => {
     expect(seatCard().queryByRole('button', { name: '예약하기' })).toBeNull();
     expectNoWrite(library);
     expect(server.received('POST /assistant/messages')).toHaveLength(1);
-  });
-
-  it('lets 다른 자리 고르기 pick another free seat on the large map', async () => {
-    await askForCards({ server, library }, [SEAT_CARD]);
-
-    await press('다른 자리 고르기');
-    expect(screen.getByText('관정관 7층 7A 열람실 2 구역 좌석 현황')).toBeVisible();
-    await pressIn(screen, '7300번 빈 자리');
-
-    expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7300번')).toBeVisible();
-    expectNoWrite(library);
   });
 });
 
