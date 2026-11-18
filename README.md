@@ -434,39 +434,42 @@ file's.
 
 ### main-server
 
-| Setting                            | What it is                                                                                                                               |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`                             | The port the HTTP server listens on.                                                                                                     |
-| `DATABASE_URL`                     | The main database, reached with the main server's own role.                                                                              |
-| `REDIS_HOST`                       | Redis's host, which carries messaging between the servers.                                                                               |
-| `REDIS_PORT`                       | Redis's port.                                                                                                                            |
-| `ACCESS_TOKEN_PRIVATE_KEY`         | The private key that signs access tokens; written by `pnpm keys:generate`, never shared.                                                 |
-| `ACCESS_TOKEN_PUBLIC_KEY`          | The public key of the same pair, which the socket server is given; written by the same command.                                          |
-| `GOOGLE_APP_CLIENT_ID`             | The app's Google OAuth client; already in `.env.example`.                                                                                |
-| `GOOGLE_ADMIN_CLIENT_ID`           | The admin site's Google OAuth client, which must differ from the app's; already in `.env.example`.                                       |
-| `INITIAL_ADMINISTRATOR_EMAILS`     | The Administrators registered when the database holds none; your own address.                                                            |
-| `KAKAO_REST_API_KEY`               | The REST API key of the team's Kakao app, for walking routes; a secret the Owner shares.                                                 |
-| `WORKER_TOKEN`                     | The secret the worker server sends with what it collects; generated in [Setup](#setup).                                                  |
-| `PUBLIC_URL`                       | The address the apps reach this server at from outside, from which Invite Links are built.                                               |
-| `ANDROID_CERTIFICATE_FINGERPRINTS` | The SHA-256 fingerprints of the app's signing certificates, for Invite Links' App Links.                                                 |
-| `MATCH_SERVER_URL`                 | Where the match server is reached.                                                                                                       |
-| `MATCH_SERVER_TOKEN`               | The secret the main and match servers send each other; generated in [Setup](#setup).                                                     |
-| `DEMO_ACCOUNT_EMAILS`              | Read by the demo profile only: real SNU addresses that get demo Friends, requests, an invitation.                                        |
-| `OPENROUTER_API_KEY`               | The OpenRouter key SNU Now AI calls its model with, the key `llm.key` names `default`. Empty, the Assistant answers it is unavailable.   |
-| `LLM_KEYS`                         | Optional: the AI's other keys by name, a JSON object such as `{"anthropic":"sk-ant-…"}`; `{}` unless set. `llm.key` chooses among them.  |
-| `MODEL_CACHE`                      | Optional: what an Anthropic key's requests cache, `breakpoints`, `auto` or `off`; `breakpoints` unless set.                              |
-| `ASSISTANT_DAILY_MESSAGES`         | Optional: the messages a User may send in a day in Korea; 50 unless set.                                                                 |
-| `ASSISTANT_MAX_STEPS`              | Optional: the model calls per message; 8 unless set.                                                                                     |
-| `ASSISTANT_TIMEOUT_MS`             | Optional: the milliseconds over all of a message's model calls; 30000 unless set.                                                        |
-| `ASSISTANT_MAX_OUTPUT_TOKENS`      | Optional: the tokens the model may write in each call; 4000 unless set.                                                                  |
-| `AUTOMATIC_PUBLICATION`            | Optional: `off` keeps every collected session a Draft, to stop publication; `on` unless set.                                             |
-| `AUTOMATIC_JUDGEMENT`              | Optional: `on` lets the step after a Collection ask the model about Drafts; `off` unless set.                                            |
-| `SAME_EVENT_TITLE_RULE`            | Optional: `on` lets that step attach a session by an equal title and start; `off` unless set.                                            |
-| `SAME_EVENT_AI_CHOICE`             | Optional: `on` lets that step ask the model about the candidates the rules leave; `off` unless set.                                      |
-| `JUDGEMENT_TIMEOUT_MS`             | Optional: the milliseconds of a Judgement's model call; 60000 unless set.                                                                |
-| `JUDGEMENT_MAX_OUTPUT_TOKENS`      | Optional: the tokens the model may write in a Judgement; 4000 unless set.                                                                |
-| `LIBRARY_BOOKING_ENABLED`          | Optional: `false` answers library requests with the official site and no card; `true` unless set.                                        |
-| `TUTORIAL_KWANJEONG_CHECK`         | Optional: `true`, with `LIBRARY_BOOKING_ENABLED` on, completes the 관정 tutorial quest by the phone's booking check; `false` unless set. |
+| Setting                               | What it is                                                                                                                               |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                                | The port the HTTP server listens on.                                                                                                     |
+| `DATABASE_URL`                        | The main database, reached with the main server's own role.                                                                              |
+| `REDIS_HOST`                          | Redis's host, which carries messaging between the servers.                                                                               |
+| `REDIS_PORT`                          | Redis's port.                                                                                                                            |
+| `ACCESS_TOKEN_PRIVATE_KEY`            | The private key that signs access tokens; written by `pnpm keys:generate`, never shared.                                                 |
+| `ACCESS_TOKEN_PUBLIC_KEY`             | The public key of the same pair, which the socket server is given; written by the same command.                                          |
+| `GOOGLE_APP_CLIENT_ID`                | The app's Google OAuth client; already in `.env.example`.                                                                                |
+| `GOOGLE_ADMIN_CLIENT_ID`              | The admin site's Google OAuth client, which must differ from the app's; already in `.env.example`.                                       |
+| `INITIAL_ADMINISTRATOR_EMAILS`        | The Administrators registered when the database holds none; your own address.                                                            |
+| `KAKAO_REST_API_KEY`                  | The REST API key of the team's Kakao app, for walking routes; a secret the Owner shares.                                                 |
+| `WORKER_TOKEN`                        | The secret the worker server sends with what it collects; generated in [Setup](#setup).                                                  |
+| `PUBLIC_URL`                          | The address the apps reach this server at from outside, from which Invite Links are built.                                               |
+| `ANDROID_CERTIFICATE_FINGERPRINTS`    | The SHA-256 fingerprints of the app's signing certificates, for Invite Links' App Links.                                                 |
+| `MATCH_SERVER_URL`                    | Where the match server is reached.                                                                                                       |
+| `MATCH_SERVER_TOKEN`                  | The secret the main and match servers send each other; generated in [Setup](#setup).                                                     |
+| `DEMO_ACCOUNT_EMAILS`                 | Read by the demo profile only: real SNU addresses that get demo Friends, requests, an invitation.                                        |
+| `OPENROUTER_API_KEY`                  | The OpenRouter key SNU Now AI calls its model with, the key `llm.key` names `default`. Empty, the Assistant answers it is unavailable.   |
+| `LLM_KEYS`                            | Optional: the AI's other keys by name, a JSON object such as `{"anthropic":"sk-ant-…"}`; `{}` unless set. `llm.key` chooses among them.  |
+| `MODEL_CACHE`                         | Optional: what an Anthropic key's requests cache, `breakpoints`, `auto` or `off`; `breakpoints` unless set.                              |
+| `ASSISTANT_DAILY_MESSAGES`            | Optional: the messages a User may send in a day in Korea; 50 unless set.                                                                 |
+| `ASSISTANT_MAX_STEPS`                 | Optional: the model calls per message; 8 unless set.                                                                                     |
+| `ASSISTANT_TIMEOUT_MS`                | Optional: the milliseconds over all of a message's model calls; 30000 unless set.                                                        |
+| `ASSISTANT_MAX_OUTPUT_TOKENS`         | Optional: the tokens the model may write in each call; 4000 unless set.                                                                  |
+| `TIMETABLE_READING_DAILY`             | Optional: the timetable screenshots a User may have read in a day in Korea; 10 unless set.                                               |
+| `TIMETABLE_READING_TIMEOUT_MS`        | Optional: the milliseconds over all of a timetable reading's model calls; 24000 unless set, under the phone's 25 s.                      |
+| `TIMETABLE_READING_MAX_OUTPUT_TOKENS` | Optional: the tokens the model may write in each call of a timetable reading; 6000 unless set.                                           |
+| `AUTOMATIC_PUBLICATION`               | Optional: `off` keeps every collected session a Draft, to stop publication; `on` unless set.                                             |
+| `AUTOMATIC_JUDGEMENT`                 | Optional: `on` lets the step after a Collection ask the model about Drafts; `off` unless set.                                            |
+| `SAME_EVENT_TITLE_RULE`               | Optional: `on` lets that step attach a session by an equal title and start; `off` unless set.                                            |
+| `SAME_EVENT_AI_CHOICE`                | Optional: `on` lets that step ask the model about the candidates the rules leave; `off` unless set.                                      |
+| `JUDGEMENT_TIMEOUT_MS`                | Optional: the milliseconds of a Judgement's model call; 60000 unless set.                                                                |
+| `JUDGEMENT_MAX_OUTPUT_TOKENS`         | Optional: the tokens the model may write in a Judgement; 4000 unless set.                                                                |
+| `LIBRARY_BOOKING_ENABLED`             | Optional: `false` answers library requests with the official site and no card; `true` unless set.                                        |
+| `TUTORIAL_KWANJEONG_CHECK`            | Optional: `true`, with `LIBRARY_BOOKING_ENABLED` on, completes the 관정 tutorial quest by the phone's booking check; `false` unless set. |
 
 ### socket-server
 

@@ -14,15 +14,18 @@ import { blocksOf, gridOf } from './boxes.ts';
 import { imageOf, namesOf, scoreReading, truthOf } from './score.ts';
 
 // P15-52's experiment: reads each screenshot READS times (default 3) as the server does (`readAnswer`), with Claude
-// Haiku 5.5 on the Anthropic API unless MODEL names another, and saves each final answer in
-// answers/<RUN>/<name>.<n>.json with its tokens, calls and time; prints each reading's score and the cost.
+// Haiku 5.5 on the Anthropic API unless MODEL names another (or PROVIDER=openrouter, OpenRouter's
+// anthropic/claude-haiku-5.5 as the server calls it), and saves each final answer in answers/<RUN>/<name>.<n>.json with
+// its tokens, calls and time; prints each reading's score and the cost, and the reasoning tokens the provider reports,
+// which show whether the model thought first.
 //
 //   READ_MODE=grid    the phone's label-free grid is sent (grids/), the model reads labels, text and rough times
 //   READ_MODE=blocks  the earlier design: blocks placed with ML Kit's labels (blocks/), the model reads their text
 //   READ_MODE=whole   the picture alone
 //   ONLY=snutt-1,snutt-4   some screenshots; SYNTHETIC=1 the synthetic ones too
 //
-// The key is ANTHROPIC_API_KEY, from the environment or from the .env file ENV_FILE names; it is never printed.
+// The key is ANTHROPIC_API_KEY (OPENROUTER_API_KEY with PROVIDER=openrouter), from the environment or from the .env
+// file ENV_FILE names; it is never printed.
 //
 //   ENV_FILE=../path/.env RUN=g1 READ_MODE=grid pnpm eval:timetable
 
@@ -30,7 +33,12 @@ import { imageOf, namesOf, scoreReading, truthOf } from './score.ts';
 const PRICES: Record<string, { input: number; output: number }> = {
   'claude-haiku-5-5': { input: 0.1e-6, output: 0.5e-6 },
   'claude-sonnet-5-5': { input: 2e-6, output: 10e-6 },
+  // OpenRouter passes on the provider's price.
+  'anthropic/claude-haiku-5.5': { input: 0.1e-6, output: 0.5e-6 },
 };
+
+const PROVIDER = process.env.PROVIDER === 'openrouter' ? 'openrouter' : 'anthropic';
+const KEY_NAME = PROVIDER === 'openrouter' ? 'OPENROUTER_API_KEY' : 'ANTHROPIC_API_KEY';
 
 const RUN = process.env.RUN ?? 'run';
 const LIMITS = { timeoutMs: 120_000, maxOutputTokens: 6000 };
@@ -49,10 +57,8 @@ function apiKey(): string {
       ? undefined
       : readFileSync(file, 'utf8')
           .split('\n')
-          .find((one) => one.startsWith('ANTHROPIC_API_KEY='));
-  return (
-    process.env.ANTHROPIC_API_KEY ?? line?.slice('ANTHROPIC_API_KEY='.length).trim().replaceAll(/^"|"$/gu, '') ?? ''
-  );
+          .find((one) => one.startsWith(`${KEY_NAME}=`));
+  return process.env[KEY_NAME] ?? line?.slice(`${KEY_NAME}=`.length).trim().replaceAll(/^"|"$/gu, '') ?? '';
 }
 
 function say(line: string): void {
@@ -63,18 +69,23 @@ function say(line: string): void {
 interface Usage {
   input: number;
   output: number;
+  // The output tokens the provider reports as reasoning, and the calls whose answer carried a reasoning part.
+  reasoning: number;
+  thought: number;
   calls: number;
 }
 
-// The model on the Anthropic API, adding each call's tokens to `usage`.
+// The model on the provider, adding each call's tokens to `usage`.
 function countedModel(modelId: string, usage: Usage): ReturnType<typeof wrapLanguageModel> {
   return wrapLanguageModel({
-    model: modelThrough('anthropic', apiKey(), modelId, 'off'),
+    model: modelThrough(PROVIDER, apiKey(), modelId, 'off'),
     middleware: {
       wrapGenerate: async ({ doGenerate }) => {
         const result = await doGenerate();
         usage.input += result.usage.inputTokens.total ?? 0;
         usage.output += result.usage.outputTokens.total ?? 0;
+        usage.reasoning += result.usage.outputTokens.reasoning ?? 0;
+        usage.thought += result.content.some(({ type }) => type === 'reasoning') ? 1 : 0;
         usage.calls += 1;
         return result;
       },
@@ -104,6 +115,7 @@ async function readOnce(
   const { answer, mapped, raw } = await readAnswer(model, image, found, LIMITS, OPTIONS);
   const ms = Math.round(performance.now() - started);
   const [input, output, calls] = [usage.input - before.input, usage.output - before.output, usage.calls - before.calls];
+  const [reasoning, thought] = [usage.reasoning - before.reasoning, usage.thought - before.thought];
   const spent = input * prices.input + output * prices.output;
   const saved = {
     options: OPTIONS,
@@ -114,6 +126,8 @@ async function readOnce(
     ms,
     inputTokens: input,
     outputTokens: output,
+    reasoningTokens: reasoning,
+    callsThatThought: thought,
     calls,
     answer,
     raw,
@@ -122,16 +136,16 @@ async function readOnce(
   const { wrong, ...counts } = scoreReading(checkedReading(answer), truthOf(name));
   const faults = wrong.length === 0 ? '' : `\n  ${wrong.join('\n  ')}`;
   say(
-    `${name}.${n} ${ms} ms, ${calls} calls, mapped ${String(mapped)}, ${input}/${output} tokens, USD ${spent.toFixed(5)}: ${JSON.stringify(counts)}${faults}`,
+    `${name}.${n} ${ms} ms, ${calls} calls (${thought} thought, ${reasoning} reasoning tokens), mapped ${String(mapped)}, ${input}/${output} tokens, USD ${spent.toFixed(5)}: ${JSON.stringify(counts)}${faults}`,
   );
   return spent;
 }
 
 it('reads the screenshots', async () => {
-  const modelId = process.env.MODEL ?? 'claude-haiku-5-5';
+  const modelId = process.env.MODEL ?? (PROVIDER === 'openrouter' ? 'anthropic/claude-haiku-5.5' : 'claude-haiku-5-5');
   const prices = PRICES[modelId];
   expect(prices).toBeDefined();
-  const usage = { input: 0, output: 0, calls: 0 };
+  const usage = { input: 0, output: 0, reasoning: 0, thought: 0, calls: 0 };
   const run: Run = {
     model: countedModel(modelId, usage),
     modelId,

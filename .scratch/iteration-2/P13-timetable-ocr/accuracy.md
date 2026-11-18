@@ -6,6 +6,63 @@ Android emulator in ticket 01) against the hand-written ground truth beside them
 the main server's seed of campus buildings (`main-server/seed/campus-map-places.json`, 250 rows from map.snu.ac.kr),
 as `GET /places` lists them.
 
+## Update of 2026-11-18, review round (P15-52): covered grade cards, exact times, OpenRouter
+
+The rules below (the 12- and 5-minute fits, the 4-minute median, the 20-minute start check, the fading-end rule) were
+chosen on the same nine screenshots they are measured on; only the synthetic timetables are outside that set.
+
+**The grade card covered.** `everytime-1`, `everytime-2` and `everytime-dark-1` showed 에브리타임's 학점계산기 card
+(an average grade and earned credits). Each now has the card covered by a flat rectangle of the page's own background
+(white, or 17,17,17 on the dark one), the picture's size unchanged; the pixel copies were made again from the covered
+pictures, and the card's three text lines were taken out of `everytime-1.json`. The phone's grid on each is exactly the
+saved one (every block at the same place, nothing found in the covered area), and the phone pipeline's tests hold
+their numbers. h4's readings of the three were made again on the covered pictures, three each (USD 0.024): 14/14,
+13/13 and 12/12 all right on every reading, every time exact. With them, h4 is still 345 of 345 all right, 0 wrong,
+0 invented, 189 of 189 grouped right; median 8.0 s, 90th percentile 14.2 s (the readings replaced were 7.7 s and
+12.3 s), about USD 0.0028 a reading.
+
+**Exact times.** The score counts a time right within 5 minutes. A second score counts it only when its start and end
+are exactly the true ones (the reading's times are snapped to 5 minutes, as the truth is). The fit now also refits once
+more over the times within 5 minutes of its first line, so that times 5 to 12 minutes off no longer pull it. The saved
+grid runs, re-scored (exact times of the times found):
+
+| Run                    | First fit only | With the second refit |
+| ---------------------- | -------------- | --------------------- |
+| g1                     | 312/315        | 312/315               |
+| g3                     | 338/344        | 344/344               |
+| h1, synthetic fades    | 17/21          | 21/21                 |
+| h1, the nine           | 88/102         | 88/102                |
+| **h4 (chosen)**        | **345/345**    | **345/345**           |
+| o1 (OpenRouter, below) | —              | 115/115               |
+
+g3's six include the five of snutt-grey-1 read 10:55–12:10 for 11:00–12:15, which the 5-minute score counted right.
+g1's three stay off by 5 minutes after the refit; h1's 14 are the times of its nine-screenshot readings that were
+already wrong by more than 5 minutes. The unit test now holds h4 to exact times.
+
+**OpenRouter.** Production's AI uses the key `llm.key` names, `default` (OpenRouter) unless set. The nine screenshots
+were read once each with the same module through OpenRouter (`anthropic/claude-haiku-5.5`, run o1, `PROVIDER=openrouter`):
+
+| Run               | Readings | All right | Wrong | Left out | Invented | Grouped | Median | USD a reading |
+| ----------------- | -------- | --------- | ----- | -------- | -------- | ------- | ------ | ------------- |
+| h4, Anthropic API | 27       | 345/345   | 0     | 0        | 0        | 189/189 | 8.0 s  | 0.0028        |
+| o1, OpenRouter    | 9        | 115/115   | 0     | 0        | 0        | 63/63   | 9.3 s  | 0.0027        |
+
+Thinking on that path: the request sends no thinking option (`reasoning-model.ts` turns thinking off only on the
+Anthropic path, and only for the experiment's no-thinking variants), and OpenRouter's answers carried no reasoning text,
+but every call reported reasoning tokens (1,750 to 3,400 a reading, as the Anthropic readings' 1,900 to 3,300): the
+model thought first on both paths, by its own default. So the feature needs no particular `llm.key`; if OpenRouter
+ever stops thinking by default, the layout's times would turn careless as in h2, and the median check would refuse the
+grid for the whole picture.
+
+**Bounds on one reading** (review): the phone may send at most 48 blocks (6 days with classes × 8 classes a day; the
+app's own 15 classes × 3 meetings is 45; the nine hold at most 16); at most 3 fading ends are asked again (real
+screenshots needed 0 or 1, the synthetic ones up to 3), the rest left out and counted; and one reading makes at most 7
+model calls in all (layout and text, 3 fading ends, one re-read, one near-miss look), with one deadline over all of them
+(24 s, under the phone's 25 s). A failed re-read or second look keeps the first reading, the unsure blocks left out and
+counted. Measured on 27 h4 readings, the slowest took 22.8 s (one whose grid was refused for the whole picture).
+
+This round cost about USD 0.048 (USD 0.024 on Anthropic, USD 0.024 on OpenRouter).
+
 ## Update of 2026-11-18, last round (P15-52): the text read alongside the layout, and a second look at fading ends
 
 **Time.** g3 read the layout, then the text on the placed days and times: two calls one after the other, median
@@ -163,9 +220,9 @@ those wrong plus anything invented; **left out** counts true times not returned,
 The text half (names and rooms from ML Kit) could not be measured on the five new screenshots: no emulator or device
 was run, and the native module is the only source of ML Kit's output. The pixel half (`__tests__/timetable-ocr-new-
 screenshots.unit.test.ts`) found every block of the five at its true time once the day letters and hour labels were
-placed where the pictures show them, so the faults 안진영 saw in use lie in the text half or in ML Kit's reading of
+placed where the pictures show them, so the faults seen in use lie in the text half or in ML Kit's reading of
 the labels, which could not be checked here. Removing ML Kit's confidence (requirement 4) changed nothing on P13's four:
-their readings are equal with and without it. On 2026-11-18 안진영 moved the work to stage 2.
+their readings are equal with and without it. On 2026-11-18 the owner moved the work to stage 2.
 
 ### Stage 2: the variants measured
 

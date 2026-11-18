@@ -2255,8 +2255,11 @@ or `{ "kind": "none" }` for a picture with no timetable. Refused with 400 for a 
 limit, 422 `UNREADABLE_IMAGE` for bytes that are no picture the model takes, 429 once a User has asked
 `TIMETABLE_READING_DAILY` times that day in Korea (a setting, 10 unless set), and 503 when the model fails or the server has no key by the
 name `llm.key` gives; the app then reads the picture on the phone. The picture is neither stored nor logged, nor is
-what was read; the log says only how many classes and blocks left out. `TIMETABLE_READING_TIMEOUT_MS` (60 000) and
-`TIMETABLE_READING_MAX_OUTPUT_TOKENS` (6000) bound each model call. The experiment that chose this design is
+what was read; the log says only how many classes and blocks left out. A reading makes at most 7 model calls
+(`MOST_MODEL_CALLS`: the layout and the text, at most 3 fading ends asked again, one re-read, one second look at
+near-miss names) and the grid at most 48 blocks; `TIMETABLE_READING_TIMEOUT_MS` (24 000) is one deadline over all of
+a reading's calls, under the phone's 25 s, and `TIMETABLE_READING_MAX_OUTPUT_TOKENS` (6000) bounds each call. A
+further look that fails keeps the first reading, the blocks it was for left out and counted. The experiment that chose this design is
 `pnpm eval:timetable` (`eval/timetable-reading/`, results in `.scratch/iteration-2/P13-timetable-ocr/accuracy.md`).
 
 ## Tutorial

@@ -1,6 +1,6 @@
 # 52: Reading a timetable image works on any SNUTT or 에브리타임 screenshot
 
-Parent: [P15 spec](../spec.md), item 52; from 안진영 on 2026-11-18, with four screenshots that the app read badly in use. The pipeline is P13's (`.scratch/iteration-2/P13-timetable-ocr/`).
+Parent: [P15 spec](../spec.md), item 52; from the owner on 2026-11-18, with four screenshots that the app read badly in use. The pipeline is P13's (`.scratch/iteration-2/P13-timetable-ocr/`).
 Status: ready-for-agent
 Owner: AhnJinYoung
 Blocked by: none. Ticket [03](03-timetable-card.md) changes where the import comes back to, in `use-import-from-image.ts`; whichever merges second takes the other in.
@@ -8,22 +8,22 @@ Blocked by: none. Ticket [03](03-timetable-card.md) changes where the import com
 ## What happens now
 
 - `이미지로 불러오기` reads a screenshot on the phone: the native module (`modules/snu-now-ocr`, ML Kit Text Recognition v2, Korean) returns the lines and a small copy of the picture, and the pipeline (`mobile/src/features/timetable-ocr/read-timetable.ts`) finds the grid, the coloured blocks and each block's name and room. Whatever is uncertain is left out. The image never leaves the phone.
-- On P13's four reference screenshots it reads 48 of 50 class times (`accuracy.md`). In use it did much worse: 안진영 reports that real screenshots came out with classes missing or wrong.
+- On P13's four reference screenshots it reads 48 of 50 class times (`accuracy.md`). In use it did much worse: real screenshots came out with classes missing or wrong.
 - Room links still use ML Kit's confidence on Android (`ROOM_CONFIDENCE` in `building.ts`), which iOS does not give.
 
 ## The five new screenshots
 
-From 안진영, 921 × 2000 copies of iPhone screenshots, now fixtures in `mobile/__tests__/fixtures/timetable-ocr/`:
+921 × 2000 copies of iPhone screenshots, now fixtures in `mobile/__tests__/fixtures/timetable-ocr/`:
 
-| File                   | App                              | What makes it hard                                                                                                                                                                                                                 |
-| ---------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `everytime-2.png`      | 에브리타임, light                | The hour axis is a 12-hour clock: 9, 10, 11, 12, 1 … 6. Names top-left in the block, the room under them. A 학점계산기 card and a friend search below the grid. Blocks that end between hour lines (12:15, 13:45).                 |
-| `snutt-4.png`          | SNUTT, light, "연습3"            | The axis is 9–18 with half-hour lines. Names wrap over two lines ("대학영어 / 2: 말하기", "컴퓨터의 개념 / 및 실습"). The floating tab bar covers the bottom.                                                                      |
-| `snutt-dark-1.png`     | SNUTT, dark, "1"                 | Dark background, 9–21. A block with a name and no room ("축구"). The same name with two rooms ("프로그래밍연습" in 301-118 and 302-105). A tall block spanning 14:00–16:50.                                                        |
-| `everytime-dark-1.png` | 에브리타임, dark, "2023년 2학기" | A 12-hour axis 9 … 4. Blocks that start and end between hour lines (공학수학 2 9:30–10:45, 컴퓨터구조 15:30–16:45). A name wrapped inside a word ("프로그래밍의 원 / 리"). The 학점계산기 card and a friend search below the grid. |
-| `snutt-grey-1.png`     | SNUTT, grey, "수면"              | The phone's focus-mode overlay covers the title and the day header (flashlight and camera buttons, a "수면" badge). The last block fades behind the tab bar. Names wrap in the middle of a word ("컴퓨터프로그래 / 밍").           |
+| File                   | App                              | What makes it hard                                                                                                                                                                                                                                          |
+| ---------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `everytime-2.png`      | 에브리타임, light                | The hour axis is a 12-hour clock: 9, 10, 11, 12, 1 … 6. Names top-left in the block, the room under them. A 학점계산기 card (covered in the fixture) and a friend search below the grid. Blocks that end between hour lines (12:15, 13:45).                 |
+| `snutt-4.png`          | SNUTT, light, "연습3"            | The axis is 9–18 with half-hour lines. Names wrap over two lines ("대학영어 / 2: 말하기", "컴퓨터의 개념 / 및 실습"). The floating tab bar covers the bottom.                                                                                               |
+| `snutt-dark-1.png`     | SNUTT, dark, "1"                 | Dark background, 9–21. A block with a name and no room ("축구"). The same name with two rooms ("프로그래밍연습" in 301-118 and 302-105). A tall block spanning 14:00–16:50.                                                                                 |
+| `everytime-dark-1.png` | 에브리타임, dark, "2023년 2학기" | A 12-hour axis 9 … 4. Blocks that start and end between hour lines (공학수학 2 9:30–10:45, 컴퓨터구조 15:30–16:45). A name wrapped inside a word ("프로그래밍의 원 / 리"). The 학점계산기 card (covered in the fixture) and a friend search below the grid. |
+| `snutt-grey-1.png`     | SNUTT, grey, "수면"              | The phone's focus-mode overlay covers the title and the day header (flashlight and camera buttons, a "수면" badge). The last block fades behind the tab bar. Names wrap in the middle of a word ("컴퓨터프로그래 / 밍").                                    |
 
-안진영 agreed on 2026-11-18 that the five may be committed to this public repository, as P13's four were.
+Their owner agreed on 2026-11-18 that the five may be committed to this public repository, as P13's four were. The 학점계산기 card (an average grade and earned credits) is covered in the three 에브리타임 screenshots, `everytime-1` among them (the fixtures' README).
 
 ## What the reading must do
 
@@ -37,15 +37,15 @@ From 안진영, 921 × 2000 copies of iPhone screenshots, now fixtures in `mobil
 
 ### Stage 1: the pipeline's numbers, as the before column
 
-On 2026-11-18 안진영 narrowed stage 1 to recording the pipeline's numbers on the nine screenshots where they can be measured, as the "before" column, and moved the work to stage 2 without trying further to rescue the phone pipeline's text half.
+On 2026-11-18 the owner narrowed stage 1 to recording the pipeline's numbers on the nine screenshots where they can be measured, as the "before" column, and moved the work to stage 2 without trying further to rescue the phone pipeline's text half.
 
 - A hand-written truth file for each new screenshot, as P13's (`mobile/__tests__/fixtures/timetable-ocr/README.md`): every block's day, start, end, name and room.
 - What can be measured on this machine: the pipeline's pixel half (background, grid, axis lines, blocks) runs in Node on the PNG alone. Its text half needs ML Kit's output, which only a phone or an emulator gives; no emulator is run for this ticket. So stage 1 measures how many blocks and times the pixel half gets on the five new screenshots, and reports plainly that the text half is not measured on them.
-- The decision: if the pixel half cannot find every block and its times on all nine screenshots after a reasonable try, or the text half's known faults (wrapped names, rooms, confidence) are not fixable without new ML Kit runs, stage 2 is taken. 안진영 agreed on 2026-11-18 that the agent takes it without asking again.
+- The decision: if the pixel half cannot find every block and its times on all nine screenshots after a reasonable try, or the text half's known faults (wrapped names, rooms, confidence) are not fixable without new ML Kit runs, stage 2 is taken. The owner agreed on 2026-11-18 that the agent takes it without asking again.
 
 ### Stage 2: a small reader on Claude Haiku
 
-안진영 decided on 2026-11-18 that the reading may move to the model if the pipeline does not get there. This reverses P13's rule that the image never leaves the phone, so:
+The owner decided on 2026-11-18 that the reading may move to the model if the pipeline does not get there. This reverses P13's rule that the image never leaves the phone, so:
 
 - **The route.** The phone sends the picture to the main server; the server calls Claude Haiku 5.5 through the AI's chosen key (`llm.key`, so the provider follows the admin's choice) and answers with the classes in the shape the pipeline returns today. Signed-in Users only, with a size limit and a per-User rate limit. The picture is not stored and not logged, and the User is told before the first use that the picture is sent to be read.
 - **A simple module, with what we know built in.** The model is not left to guess the format:
@@ -53,7 +53,7 @@ On 2026-11-18 안진영 narrowed stage 1 to recording the pipeline's numbers on 
   - The answer is structured (a tool call or a JSON schema): the axis's hours as read, and per block its day, start, end, name lines and room.
   - Code, not the model, does the rest: a 12-hour axis becomes 24-hour (hours that fall after 12 go on), times snap to five minutes and are checked against the axis, a room is checked against the room pattern, wrapped name lines are joined, equal names are grouped into one class, and a room is linked to a building as now. A block that fails a check is left out and counted, not repaired by guessing.
   - Where the picture's pixels give the geometry more exactly than the model does, the code may find the blocks' rectangles and the axis lines itself and ask the model only for the text; which split reads best is decided by the measurement.
-- **Experiments, broadly.** Different prompts, different splits between model and code (whole picture; numbered blocks found by code; crops), image scaling, structured output or a tool call, with or without thinking, Claude Haiku 5.5 first and one stronger model only as a ceiling. Every variant is recorded with its numbers and cost (`accuracy.md`), and none is rerun for a nicer number. Budget: up to USD 10 (안진영, 2026-11-18); stop and report before passing it.
+- **Experiments, broadly.** Different prompts, different splits between model and code (whole picture; numbered blocks found by code; crops), image scaling, structured output or a tool call, with or without thinking, Claude Haiku 5.5 first and one stronger model only as a ceiling. Every variant is recorded with its numbers and cost (`accuracy.md`), and none is rerun for a nicer number. Budget: up to USD 10 (the owner, 2026-11-18); stop and report before passing it.
 - **Generality.** A few synthetic timetables in other layouts (a Saturday column, a 12-hour axis with 오전/오후, a professor's line in the blocks, English day labels) are read too; they are a check, outside the bar, and a failure on them is a finding.
 - **Measured** on all nine screenshots, each read at least three times with the chosen variant, on the Anthropic API: class times found, times right to five minutes, names and rooms character-exact, classes grouped right, anything invented, what was left out (apart from what was wrong), and the cost and the time of one reading.
 - **Accepted** at 100 %: on every one of the nine and on each reading, every class time is found with its day, start and end right to five minutes, its name and room character-exact and its class grouped right, and nothing is invented. A block the reader cannot be sure of is still left out and counted, not guessed; if the chosen variant falls short, exactly which blocks fail, how often and why is listed, and the bar is not lowered.
@@ -87,7 +87,7 @@ On 2026-11-18 안진영 narrowed stage 1 to recording the pipeline's numbers on 
   blocks at their true times, so the faults seen in use are in the text half or in ML Kit's reading of the labels,
   which could not be measured here.
 - **The decision.** Stage 2 was taken first on the agreed rule (the text half could not be measured or fixed without
-  ML Kit runs), and then on 안진영's direction of 2026-11-18 to go to the model-based reader. Numbers it was settled
+  ML Kit runs), and then on the owner's direction of 2026-11-18 to go to the model-based reader. Numbers it was settled
   on: the whole picture read by the model gets names and rooms right but times wrong now and then (a1 1, a2 2 of 345
   class times; the generic prompt a3 6 of 317; Claude Sonnet 5.5 1 of 115), while the phone's blocks with the model
   reading only their text got no time, name or room wrong in 117 readings. So the design is: the phone sends the
@@ -107,9 +107,10 @@ On 2026-11-18 안진영 narrowed stage 1 to recording the pipeline's numbers on 
   the synthetic timetables, one reading joined `글쓰기의 / 기초` as `글쓰기의기초`: the only wrong name in any block
   reading.
 - **Cost.** One reading: about USD 0.0012, median 5.6 s. All experiments: about USD 0.45 of the USD 10 allowed.
-- **The notice**, before the first send, as a dialog: title "시간표 사진을 서버에서 읽어요", body "더 정확하게 읽도록
-  사진을 서버의 AI에 보내요. 사진은 읽기만 하고 저장하지 않아요.", buttons "휴대폰에서 읽기" and "보내기". A yes is
-  remembered on the phone; a no reads on the phone and asks again next time.
+- **The notice**, before the first send, as a dialog (its words changed in the second review, below): title
+  "시간표 사진을 서버에서 읽어요", body "더 정확하게 읽도록 사진을 서버의 AI에 보내요. 사진은 읽기만 하고 저장하지
+  않아요.", buttons "휴대폰에서 읽기" and "보내기". A yes is remembered on the phone; a no reads on the phone and asks
+  again next time.
 - **Releases.** The app's change is JavaScript only (over the air). The route needs a Release of the main server; until
   then the app gets 404 and reads on the phone as before.
 - **Owed:** a phone check of the notice, the send and the fallback, and an ML Kit run on the five new screenshots to see
@@ -133,7 +134,7 @@ On 2026-11-18 안진영 narrowed stage 1 to recording the pipeline's numbers on 
   "column C, block K" (blocks skipped, and when asked again, the next block's text read); the model's own fading end
   (9 wrong of 13 synthetic hidden ends).
 - **Cost:** a reading is two calls, median 13.3 s, about USD 0.0025. All experiments: about USD 0.63 of the USD 10.
-- **Review (TaeHyun79):** the name check is linear and the answer is bounded; blocks the phone finds and does not
+- **Review, round 1:** the name check is linear and the answer is bounded; blocks the phone finds and does not
   send are counted in the toast; the lint failures are fixed.
 
 ### Notes from the implementation, last round (2026-11-18)
@@ -149,15 +150,43 @@ On 2026-11-18 안진영 narrowed stage 1 to recording the pipeline's numbers on 
   line (the layout read without thinking placed every block 10 to 25 minutes off while passing the old checks); the
   reading then falls back to the whole picture.
 - **Numbers decided on:** 20 minutes for the text call's start check; 4 minutes for the fit's median.
-- **Review (TaeHyun79), round 2:** the phone's colours reach the near-miss check only when the answer is on the grid's
+- **Review, round 2:** the phone's colours reach the near-miss check only when the answer is on the grid's
   blocks (no colour on the whole picture's fallback, where names alone ask for a second look); the route says
   `usedGrid`, and the phone counts the blocks it kept back only when it is true.
-- **Review (TaeHyun79), round 3:** the layout and text calls are now observed from the start
+- **Review, round 3:** the layout and text calls are now observed from the start
   (`Promise.allSettled`); a failed layout aborts the text call and the reading fails with 503 (the phone then reads
   the picture); a failed text call leaves the text to be read after the layout; a layout that places nothing refuses
   the grid for the whole picture; a failed fading re-ask reads as no end. Unit tests check that no rejection is left
   unhandled in each case.
 - **Spend:** about USD 0.87 for all experiments.
+
+### Notes from the second review (2026-11-18)
+
+- **The grade card.** The 학점계산기 card is covered in `everytime-1`, `everytime-2` and `everytime-dark-1` with a flat
+  rectangle of the page's background, the pictures' size kept; the pixel copies are made again, and the card's three
+  lines (`학점계산기`, `평균 학점 3.46/4.3`, `5 a 62/130`) are out of `everytime-1.json`. The phone's grid on each is the
+  saved one, and the phone pipeline's tests hold their numbers. The three were read again three times each on the
+  covered pictures (all right every time). The pictures as they were remain in this branch's earlier commits until the
+  branch is deleted, and `everytime-1`'s in `4.0/Main`'s history; no history was rewritten.
+- **Bounds.** At most 3 fading ends asked again per reading (`MOST_END_REASKS`), the rest left out and counted; at most
+  7 model calls per reading in all (`MOST_MODEL_CALLS`, a hard stop before a call is sent); at most 48 blocks from the
+  phone (6 days × 8 classes; the app's 15 classes × 3 meetings is 45; the nine hold at most 16); one deadline of 24 s
+  over a reading's calls (`TIMETABLE_READING_TIMEOUT_MS`, was 60 s per call), and the phone gives up after 25 s and
+  reads the picture itself. A failed re-read or second look keeps the first reading, those blocks left out.
+- **The fallback.** When the server's reading is `none` or has no class, the phone's own reading is taken if it has
+  one; with neither, 시간표를 찾지 못했어요 as before.
+- **Exact times.** The fit refits once more over the times within 5 minutes of its first line; a second score counts a
+  time right only when exact. g3 went from 338 to 344 exact of 344, h4 stays 345 of 345 (`accuracy.md`).
+- **OpenRouter.** The nine read once each through OpenRouter: 115 of 115 all right, 0 wrong, 0 left out, median 9.3 s,
+  USD 0.0027 a reading; the model reported reasoning tokens there as on the Anthropic API, so it thinks first on both
+  paths and the feature needs no particular `llm.key`.
+- **The notice** now reads: title "시간표 사진을 AI로 읽어요", body "더 정확하게 읽도록 사진을 서버를 거쳐 외부 AI 서비스에
+  보내요. 우리 서버에는 저장하지 않아요.", buttons "휴대폰에서 읽기" and "보내기". The yes is forgotten at a sign-out
+  and at the end of a Session.
+- **Spend:** this round about USD 0.048 (Anthropic USD 0.024, OpenRouter USD 0.024); about USD 0.92 for all
+  experiments.
+- **Owed:** a phone or emulator run of the notice, the send, the fallback (including the 25 s give-up), and the import
+  of a server reading, with screens.
 
 ### Agent usage (2026-11-18)
 

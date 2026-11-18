@@ -1783,13 +1783,26 @@ model is bundled in the app, so no download is needed at first use; iOS uses the
 
 ML Kit gives a confidence on Android only; on iOS every `confidence` is null. Nothing reads it (P15-52).
 
+`/ocr-check` (`snunow://ocr-check` in a development build) picks an image from the album (`expo-image-picker`, images
+only, no editing), reads it, lists the lines and saves the module's whole answer as JSON in the app's documents folder.
+It is for developers: a released app does not show it. The address can name the image and the file, which is how the
+fixtures in `__tests__/fixtures/timetable-ocr/` were made on the emulator (see their README):
+
+```bash
+adb push snutt-1.png /data/local/tmp/
+adb shell run-as com.bonnieandclaude.snunow cp /data/local/tmp/snutt-1.png files/
+adb shell am start -a android.intent.action.VIEW \
+  -d "'snunow://ocr-check?uri=file:///data/data/com.bonnieandclaude.snunow/files/snutt-1.png&name=snutt-1'"
+adb exec-out run-as com.bonnieandclaude.snunow cat files/snutt-1.json > snutt-1.json
+```
+
 ### Reading a timetable screenshot (`이미지로 불러오기`)
 
 From P15-52 the main server's AI reads the picked screenshot
 ([ADR 0015](../docs/adr/0015-a-timetable-screenshot-is-read-by-the-ai-with-the-phones-blocks.md)). Before the first
-send the app asks once, in a dialog: "시간표 사진을 서버에서 읽어요" / "더 정확하게 읽도록 사진을 서버의 AI에 보내요. 사진은
-읽기만 하고 저장하지 않아요." with "보내기" and "휴대폰에서 읽기"; a yes is remembered on the phone
-(`src/storage/reading-notice.ts`). Then `use-import-from-image.ts`:
+send the app asks once, in a dialog: "시간표 사진을 AI로 읽어요" / "더 정확하게 읽도록 사진을 서버를 거쳐 외부 AI 서비스에
+보내요. 우리 서버에는 저장하지 않아요." with "보내기" and "휴대폰에서 읽기"; a yes is remembered on the phone until a
+sign-out or the end of the Session (`src/storage/reading-notice.ts`). Then `use-import-from-image.ts`:
 
 1. runs the native module on the picture, as before, for its small copy of the pixels (`readImageText`; the copy comes
    with ML Kit's answer, which is otherwise not used on this path);
@@ -1799,8 +1812,9 @@ send the app asks once, in a dialog: "시간표 사진을 서버에서 읽어요
 3. sends the picture in base64 with that grid to `POST /timetable/readings` (`apiClient.readTimetableImage`); the
    server's AI reads the labels and the text, and the server places the blocks. The answer's rooms are linked to
    buildings on the phone (`server-reading.ts`);
-4. reads it with the phone's own pipeline, as P13 did, when the User said no, the main server does not answer or
-   refuses (a server without the route answers 404), or the build does not ask the main server (the mock build).
+4. reads it with the phone's own pipeline, as P13 did, when the User said no, the main server does not answer within
+   25 s or refuses (a server without the route answers 404), the server's reading has no class, or the build does not
+   ask the main server (the mock build); when neither reading has a class, the User is told 시간표를 찾지 못했어요.
    Without the native module, or when no grid is found, the server's AI reads the whole picture.
 
 ## Push notifications
