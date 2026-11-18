@@ -157,6 +157,8 @@ type Closed = Exclude<LoginOutcome, 'loggedIn'>;
 function useClose(view: ReturnType<typeof useLoginView>): {
   ended: Ended;
   close: (outcome: Closed, waits: boolean) => void;
+  // A view opened again: what the one before it said on its close is dropped, and its callers wait for this one.
+  reopened: () => void;
 } {
   const showToast = useToast();
   const { settle, hide } = view;
@@ -194,7 +196,10 @@ function useClose(view: ReturnType<typeof useLoginView>): {
       end(outcome);
     }
   };
-  return { ended, close };
+  const reopened = useCallback((): void => {
+    waiting.current = null;
+  }, []);
+  return { ended, close, reopened };
 }
 
 // The library session over the whole app: the hidden web view at the root while the flag is set, and the login,
@@ -202,12 +207,18 @@ function useClose(view: ReturnType<typeof useLoginView>): {
 export function LibrarySessionProvider({ children }: { children: ReactNode }): ReactElement {
   const { loggedIn, logouts } = useLoggedIn();
   const view = useLoginView();
-  const { ended, close } = useClose(view);
+  const { ended, close, reopened } = useClose(view);
   const { checking, checks } = useLoginChecks(logouts, ended);
+  const { logIn: openView } = view;
+  const logIn = useCallback((): Promise<LoginOutcome> => {
+    checks.opened();
+    reopened();
+    return openView();
+  }, [checks, reopened, openView]);
   const wanted = useWantedForLogout();
   const session = useMemo(
-    () => ({ loggedIn, logouts, logIn: view.logIn, logOut: (): Promise<void> => endLibrarySession() }),
-    [loggedIn, logouts, view.logIn],
+    () => ({ loggedIn, logouts, logIn, logOut: (): Promise<void> => endLibrarySession() }),
+    [loggedIn, logouts, logIn],
   );
   return (
     <LibrarySessionContext value={session}>

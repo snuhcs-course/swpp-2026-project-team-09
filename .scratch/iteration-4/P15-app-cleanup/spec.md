@@ -79,6 +79,7 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 54. The 행사 tab is hard to read: long titles and places run over many lines, and a card without its badge has an empty band. Draw it as the `Events` board does: a date column, one row per event, and a sheet for the details. Ticket [54](issues/54-events-tab-as-drawn.md).
 
 57. 관정 booking: a login takes effect only on a second 로그인, the time moves only by ±30분 buttons, and a pressed seat is taken at once without showing which: the login takes effect at once, the time is a bar, and a seat is picked on the room's picture. Ticket [57](issues/57-kwanjeong-login-and-seat-picker.md).
+58. 관정 booking, after #360: a card left open across its start can show the old time while it books, and a login closed while its check runs can close the login opened again after it. Ticket [58](issues/58-kwanjeong-follow-ups.md).
 
 ## Testing Decisions
 

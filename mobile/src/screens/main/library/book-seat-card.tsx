@@ -8,7 +8,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, useEffect, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
 import { now } from '@/clock';
@@ -257,13 +257,27 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
   );
 }
 
+// The one time the card holds: the kept time as it may be booked now. A start that went by while the card was open
+// moves the kept time on (P15 ticket 58), so that what the card shows, the seats it reads, what it books and the done
+// message name the same time at every moment; while a booking is on its way the kept time stays as it was booked.
+function useOneSlot(room: SeatRoom, busy: boolean): Slot | null {
+  const live = busy ? room.slot : liveSlot(room.shown, room.slot, now());
+  const moved = live !== null && !sameSlot(live, room.slot);
+  useEffect(() => {
+    if (moved && live !== null) {
+      room.setSlot(live);
+    }
+  });
+  return live;
+}
+
 // The card's time as it may be booked now; the card says so when no time is left that day.
 export function BookSeatCard(props: BookSeatCardProps): ReactElement {
   const { card } = props;
   const room = useSeatRoom(props);
-  const live = liveSlot(room.shown, room.slot, now());
   // While a booking is on its way its time stays.
   const busy = props.actions.outcomeOf(props.place)?.kind === 'pending';
+  const live = useOneSlot(room, busy);
   const changed = card.start !== null && !sameSlot(room.slot, cardSlot(card, now()));
   return (
     <CardBox testID={`library-book-${card.key}`}>
@@ -281,7 +295,7 @@ export function BookSeatCard(props: BookSeatCardProps): ReactElement {
           room={room}
           setNamed={room.setNamed}
           setSlot={room.setSlot}
-          slot={busy ? room.slot : live}
+          slot={live}
         />
       )}
     </CardBox>
