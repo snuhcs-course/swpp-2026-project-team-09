@@ -81,12 +81,12 @@ Every board of the row is drawn by the canvas's `Main` board with a `tutorial` o
 - [x] No started tutorial quest is on the map's Quest list or the whole-screen 퀘스트 list (integration test).
 - [x] The list shows the head, the category's count and "✓ n / N", one bar segment per quest, the five category tabs, the shown category's rows with icon, title, ✓ and "진행 중", and 튜토리얼 그만하기; a tab shows its category; a row's press starts the quest and opens its guide, or its sheet without a guide (integration test).
 - [x] Completing a quest opens the list on the next quest's category with "✓ {title}" and that quest's row marked "다음"; after the last, "n / n" with 닫기 (integration test).
-- [ ] The sheet has no 완료 조건 box, has the 🌐 button with the quest's links, and [나중에][✓ 완료] (integration test).
-- [ ] A guide shows its bar, its step's words, its chips, its online steps and its buttons, moves between steps with 다음, ←, and the tabs, and ✓ 완료 completes the quest; 학생증 starts with the choice of two kinds and its chip chooses again; a side-by-side guide has ✓ 완료 on every tab (integration test over the mock's content).
-- [ ] While a guide is open the map draws only its pins and lines and the User; the lists, the input and the tab bar give way (integration test).
+- [x] The sheet has no 완료 조건 box, has the 🌐 button with the quest's links, and [나중에][✓ 완료] (integration test).
+- [x] A guide shows its bar, its step's words, its chips, its online steps and its buttons, moves between steps with 다음, ←, and the tabs, and ✓ 완료 completes the quest; 학생증 starts with the choice of two kinds and its chip chooses again; a side-by-side guide has ✓ 완료 on every tab (integration test over the mock's content).
+- [x] While a guide is open the map draws only its pins and lines and the User; the lists, the input and the tab bar give way (integration test).
 - [x] `content/tutorial.yaml` holds an `icon` and a `guide` for each of the 15 quests, and every guide place is a Place of the seed or a point (unit test of the content).
-- [ ] GET /tutorial serves `icon` and `guide`; the guide's ask buttons are left out while 관정 booking is off; `getTutorial` does not serve them (unit tests of `servedContent` and the tool).
-- [ ] oxlint, Prettier, tsc and the touched tests pass for `mobile` and `main-server`; no native file changes (`git diff --stat`).
+- [x] GET /tutorial serves `icon` and `guide`; the guide's ask buttons are left out while 관정 booking is off; `getTutorial` does not serve them (unit tests of `servedContent` and the tool).
+- [x] oxlint, Prettier, tsc and the touched tests pass for `mobile` and `main-server`; no native file changes (`git diff --stat`).
 
 ## Open questions for the owner
 
@@ -109,6 +109,7 @@ Every board of the row is drawn by the canvas's `Main` board with a `tutorial` o
 - The sheet tests turn the mock's guides off (`MOCK_TUTORIAL_SWITCHES.guides`), as an older server serves the tutorial.
 - From the review of #359: the Assistant's tutorial rules (`tutorial-rules.ts`) now name the start button, the list, the guide and ✓ 완료 in place of the pager and the Quest list; the P6 tutorial cases were not run again (no model calls in this ticket). A guide the app cannot read leaves only that quest without its guide (`withReadableGuides`). A guide closes when a card, an invitation's card or the answer frame opens (`useGuideGivesWay`). The bubble and the list scroll within the screen. Closing a guide brings the camera back to where it was when the guide opened. The Places list is read only while a guide is open. The AI input stays mounted, hidden, while a guide is open, so its draft is kept. Only `http(s)` links open. `/main?tutorial=` and `openSheet` are removed. The exam-period shuttle step shows its 2026 dates.
 - Left from the review: a 어시스턴트에게 부탁 from a guide makes the answer frame keep the guide's camera as its way back (the frame saves the camera when it opens, as the guide closes; changing that needs the frame's camera store to take the guide's). The mock copy of the guides is in the app's bundle as every mock is. The 🌐 icon is named `web`; #358 adds the same paths as `globe`, so whichever merges second takes the other's name. 미술관's link stays `http://www.snumoa.org/`: its `https` does not answer.
+- Each tutorial integration file, run alone under the 3 GB cap with `--logHeapUsage` (2026-11-18): `tutorial-list` 220 s, 437 MB; `tutorial-sheet` 184 s, 372 MB; `tutorial-kwanjeong-check` 282 s, 488 MB; `tutorial-place-pin` 219 s, 532 MB; `answer-frame-tutorial` 58 s, 297 MB; `api/server-tutorial` 5 s, 92 MB; `tutorial-guide` 274 s, 471 MB. All pass. No file climbs or loops. The VM's crash at 17:04 came from running seven of them in one Jest process, which kept each file's whole app (about 0.4–0.5 GB) in one heap.
 - The tutorial's integration tests reach each quest through the start button, the list and its tab, which takes longer than a press on a Quest list row did. Their timeout is 150 s.
 
 ### Agent usage (2026-11-18)

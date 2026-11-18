@@ -145,7 +145,8 @@ describe('completing a button quest', () => {
     await pressAndWait(user, '퀘스트 완료');
 
     expect(screen.getByRole('header', { name: '15 / 15' })).toBeVisible();
-    await user.press(button('닫기'));
+    // The head's ✕ and the 닫기 under "15 / 15" close the list alike.
+    await user.press(screen.getAllByRole('button', { name: '닫기' }).at(-1) ?? button('닫기'));
     expect(findButton(START)).toBeNull();
     expect((await answered(apiClient.getTutorial())).state).toBe('finished');
   });

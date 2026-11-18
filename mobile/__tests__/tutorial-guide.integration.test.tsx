@@ -4,6 +4,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import { openBrowserAsync } from 'expo-web-browser';
 import { pass, screen } from './support/app';
 import { AI_INPUT, button, findButton } from './support/lists';
@@ -158,7 +159,9 @@ describe('a guide on the map', () => {
     await pass(1000);
 
     expect(findButton(TO_LIST)).toBeNull();
-    expect(screen.getByText('관정도서관 7층 열람실에 한 자리 예약해줘')).toBeVisible();
+    expect(
+      within(screen.getByTestId('answer-pill')).getByText('관정도서관 7층 열람실에 한 자리 예약해줘'),
+    ).toBeVisible();
   });
 
   it("gives way to the sheet's check for the 관정 quest served as checked", async () => {
