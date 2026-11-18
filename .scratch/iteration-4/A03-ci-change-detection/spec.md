@@ -44,15 +44,15 @@ A path reaches the jobs that read it. The map lives in the script, one `case` ar
 
 Every job does its work when:
 
-- the run was started neither by a push nor by the merge queue, or a push's ref is not a branch (a Release tag);
-- the branch name has no slash (`main`, `development`);
-- the branch is itself `<line>/Main` (below);
+- the run was started neither by a push nor by the merge queue, or a push's ref is a tag;
+- the push is to `<line>/Main`, `main` or `development`;
+- a working branch is not named `<line>/<name>`;
 - in the merge queue, the merge group's base is missing, not a full commit hash or unreadable;
 - `origin/<line>/Main` is missing or unreadable, or the two share no history;
 - the commit is already on a Main of any line, on `main` or on `development`;
 - any git command fails, a changed path matches no rule, the job key is unknown, or the script fails in any way.
 
-In doubt, the job runs. The workflow skips a step only when the script's output is exactly `false`.
+In doubt, the job runs, at the level that the run's event sets (below). The workflow skips a step only when the script's output is exactly `false`.
 
 A run on a branch whose name ends in `/Main` is no longer cancelled by the next push to it, because a job that skips on a branch or in the merge queue leans on Main's last full run. A run still waiting to start is replaced by a newer push's run (GitHub keeps one pending run per concurrency group), and the newer Main commit contains the replaced one's changes. So a Main has one full run at a time, on its newest commit, and that run covers every commit merged before it.
 
@@ -60,9 +60,16 @@ The script's bats tests and its shellcheck run in the `release-script` job, whos
 
 The workflow also answers a merge queue: `merge_group` is a trigger, and pushes to the queue's own branches (`gh-readonly-queue/**`) start no push run. Tags are named in the push trigger, because a branch filter alone would leave them out and the Release gate waits for the tag's run. A `merge_group` run is compared with its merge group's base (`github.event.merge_group.base_sha`, given to the script as `MERGE_GROUP_BASE_SHA`): the paths changed from that commit to the group's commit reach jobs through the same map. The base is Main's tip or the head of the group ahead in the queue; either way the paths include the group's own changes.
 
-A push to a `<line>/Main` runs every job with every test. The queue moves Main to the very commit it tested, but it checks only what a pull request's push checks, so Main's run is the commit's full check.
+Which jobs a run does, and at which level, follows from its event alone:
 
-A pull request's own push and the merge queue check the same. Each job their changes reach runs its lint, format and type checks and only the unit tests (`pnpm test:unit`; `changes.sh` answers `tests=unit`). The app's unit tests run in the `mobile` job, so the app's four test shards do nothing there, and flow-tests runs no tests. A change to CI's own files runs every test on the branch and in the queue too, and so does any doubt in the queue about the comparison. In the queue the checks see the pull request on top of those merged before it, so a clash in lint or types is caught before the merge. Every test runs on a Main's push, so an integration or flow failure is first seen there, after the merge, and a new pull request fixes it.
+| Run | Jobs | Level |
+| --- | --- | --- |
+| Push to a working branch (anything but `<line>/Main`, `main` and `development`) | The jobs its changed paths reach, against `origin/<line>/Main` | Basic |
+| Merge queue | The jobs its changed paths reach, against the merge group's base | Basic |
+| Push to `<line>/Main`, `main` or `development` | Every job | Full |
+| Tag push | Every job | Full |
+
+At the basic level each job runs its lint, format and type checks and only the unit tests (`pnpm test:unit`; `changes.sh` answers `tests=unit`). The app's unit tests run in the `mobile` job, so the app's four test shards do nothing, and flow-tests runs no tests. At the full level every test runs (`tests=all`). `changes.sh` sets the level from `GITHUB_EVENT_NAME` and `GITHUB_REF` before anything else, and nothing after that changes it. A run of an event that `ci.yml` does not trigger on does every job at the full level.
 
 ## Decisions
 

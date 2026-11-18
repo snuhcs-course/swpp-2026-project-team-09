@@ -79,8 +79,8 @@ jobs:
         if: steps.changes.outputs.run != 'false'
       - run: pnpm test
         if: matrix.project != 'mobile' && steps.changes.outputs.run != 'false' && steps.changes.outputs.tests != 'unit'
-      # A pull request's own push and the merge queue run only the unit tests, the app's among them; a Main's push and a
-      # tag's run every test.
+      # A working branch's push and the merge queue run only the unit tests, the app's among them; a push to a Main,
+      # main or development and a tag's push run every test.
       - run: pnpm test:unit
         if: >-
           matrix.project != 'flow-tests' && steps.changes.outputs.run != 'false' &&

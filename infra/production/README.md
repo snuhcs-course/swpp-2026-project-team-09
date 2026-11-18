@@ -544,10 +544,10 @@ git push origin snunow/main-server/26.11.13-1
 ```
 
 A Release is tagged on the newest commit of the iteration branch, here `4.0/Main`, whose full CI run passed, which the
-second line finds. The merge queue runs only the lint, format and type checks and the unit tests. The iteration branch's
-own push runs every job with every test, one run at a time on its newest commit, and that run covers every commit merged
-before it; a run still waiting when a newer commit lands is replaced by the newer one's. The third line lists the day's
-earlier Releases of the target, from which N follows.
+second line finds. The merge queue runs only the basic checks, and the iteration branch's own push every job with every
+test ([Running the tests](../../README.md#running-the-tests) has the four kinds of run). That push's run goes one at a
+time on the newest commit and covers every commit merged before it; a run still waiting when a newer commit lands is
+replaced by the newer one's. The third line lists the day's earlier Releases of the target, from which N follows.
 
 Every Release also applies the shared part at its commit: the settings, the Secret, the Ingresses, and Redis. A server
 takes up a changed setting or secret value when it is next deployed.
