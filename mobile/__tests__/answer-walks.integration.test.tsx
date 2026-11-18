@@ -95,7 +95,7 @@ describe("an answer's walks", () => {
 
     expect(mapLines()).toEqual(['answer:route:0', 'answer:route:1']);
     expect(strokesOf('answer:route:0')).toEqual(
-      Array.from({ length: 3 }, () => expect.objectContaining({ height: 5, backgroundColor: color.snuBlue })),
+      Array.from({ length: 3 }, (): unknown => expect.objectContaining({ height: 5, backgroundColor: color.snuBlue })),
     );
     expect(strokesOf('answer:route:1')).toHaveLength(1);
   });
