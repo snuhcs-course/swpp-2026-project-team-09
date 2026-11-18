@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -19,6 +20,11 @@ import type { MainMap } from '@/screens/main/use-main-map';
 import { useLookupMap } from '@/screens/main/use-lookup-map';
 import { SELECTED_ORDER } from '@/screens/main/use-things';
 
+// The walking route service is no part of these hooks' units: an answer's walks keep their straight lines (P15
+// ticket 56 tests the walks).
+jest.mock('@/screens/main/use-answer-walks', () => ({
+  useAnswerWalks: (lines: readonly unknown[]): readonly unknown[] => lines,
+}));
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: (): object => ({ top: 0, right: 0, bottom: 0, left: 0 }),
 }));

@@ -5,6 +5,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -26,6 +27,11 @@ jest.mock('@/map/marker-images', () => {
   const actual = jest.requireActual<typeof MarkerImages>('@/map/marker-images');
   return { ...actual, useMarkerImages: jest.fn(actual.useMarkerImages) };
 });
+// The walking route service is no part of these hooks' units: an answer's walks keep their straight lines (P15
+// ticket 56 tests the walks).
+jest.mock('@/screens/main/use-answer-walks', () => ({
+  useAnswerWalks: (lines: readonly unknown[]): readonly unknown[] => lines,
+}));
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: (): object => ({ top: 0, right: 0, bottom: 0, left: 0 }),
 }));
