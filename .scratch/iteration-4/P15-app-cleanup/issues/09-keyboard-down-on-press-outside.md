@@ -43,7 +43,7 @@ Blocked by: none. #359 (P15-53, 안진영, a draft) changes the same files of th
 - [x] In the answer frame with the keyboard up, a press on the map above the card puts the keyboard down and does nothing else. The card's own buttons, "답 닫기" and "새 대화" do what they do today.
 - [x] Words written before the keyboard went down are still in the field, and are sent by the send button.
 - [x] Tests, by ADR 0007: the main screen's integration tests check, on the everyday map and in the answer frame, that a press outside the bar while the keyboard is up asks for the keyboard to go down and selects nothing, and that the bar's own buttons and the examples still work. That the keyboard really goes down, and that a drag does not pan the native map, is checked by hand on an Android emulator with a build that holds the native map, which is an integration check by the ADR; the check is recorded under this ticket's Comments. iOS is not checked here: no iOS build is made for it.
-- [ ] The other screens with a field are walked by hand on the emulator, and any place where the keyboard cannot be put down is listed under this ticket's Comments. None is fixed in this ticket.
+- [x] The other screens with a field are walked by hand on the emulator, and any place where the keyboard cannot be put down is listed under this ticket's Comments. None is fixed in this ticket.
 
 ## Comments
 
@@ -51,6 +51,7 @@ Blocked by: none. #359 (P15-53, 안진영, a draft) changes the same files of th
 
 - **The scrim.** While the keyboard is up, `MapBottom` draws a transparent scrim over the whole stage (`keyboard-scrim.tsx`, "키보드 내리기"). It comes after the everyday map's own bottom and before the answer frame, the examples and the AI input, so the map, its markers, the two lists, the zoom control, an open card, "활성 파티" and the 편의기능 button lie under it, and the bar, the examples and the frame's card and pill stand over it. It goes once the keyboard is down, so the next press reaches what is under it.
   - It puts the keyboard down as the touch starts (`onPressIn`), so a drag does so too and never becomes a pan. It also does so on `onPress`, since a screen reader's double tap sends only that.
+  - For a screen reader it is one button over the whole stage while the keyboard is up, so nothing under it can be reached until "키보드 내리기" is pressed. That is the same rule a sighted User gets (from 안진영's review).
   - It follows the keyboard, not the AI input's focus, as the examples already do. The other fields of the main screen open over it (the friend panel's search is a side panel over the whole screen), so this changes nothing for them.
   - It covers the stage, which starts under the status bar. On Android the system's status bar takes the touches in its strip, so no press reaches the map there. On iOS a press in that strip would; iOS is not checked here.
 - **Two places that took the press over the scrim.** Both were found by the reviews and confirmed on the emulator, then fixed.
@@ -91,13 +92,23 @@ Each field was focused, then a part of the screen with nothing on it was pressed
 | 파티 방 | 파티에 메시지 보내기 | of the page or of the chat: down |
 | 수업 추가 | 과목명, 강의실 | of the form: down |
 | 장소 선택 (from 수업 추가) | 건물 이름, 동 번호 | of the header: stays up. A drag on the list scrolls it with the keyboard up, and a press on a row picks the place. The keyboard's search key puts it down |
+| 친구 관리 | 친구 검색 | of the list: down. Of the header: stays up |
+| 시간표 › 버전 › 이름 바꾸기 | 시간표 이름 | outside the menu: down, and the menu stays |
+| 파티 만들기 › 관련 행사 | 행사 검색 | of the list: down. Of the header: stays up |
+| 파티 만들기 › 친구 초대 | 친구 검색 | of the form: down |
+| 파티 만들기 › 게시판 (sheet) | 게시판 검색 | of the sheet's header: stays up, and its rows pick a board. The keyboard's search key puts it down. The scrim closes the sheet |
+| 파티 만들기 › 태그 › 직접 입력 | 태그 | of the form: down |
+| 파티 방 (Leader) › 일정 추가 | 내용, 어디서 | of the room: down |
 
-- **Where the keyboard cannot be put down by a press on the screen:** 장소 선택 only. Its own search key and the back button do. Not fixed here.
-- **Not walked:** 친구 관리's search, the room's plan form (`room/plan-form.tsx`), the field of a room request (`room-consent.tsx`), the party form's sheets (the event field, the friend picker, the board sheet, the tag field), and the version's name on 내 정보 (`version-rename.tsx`). The last criterion stays open for them.
+- **Where the keyboard cannot be put down by a press on the screen:**
+  - 장소 선택: nothing on the screen puts it down. Its own search key and the back button do.
+  - The 게시판 sheet of 파티 만들기: nothing inside the sheet puts it down. Its own search key does, and a press on the scrim closes the sheet. When the sheet closes, Android gives the focus back to the form's field that had it before, so the keyboard can come back for that field; a press on the form then puts it down.
+  - Neither is fixed here.
+- **Not run: the room request's dialog** (`room-consent.tsx`, 학적상 이름 and 학번). The mock's inbox is always empty, so it cannot be opened without a server. Read in the code: it is a `Modal` whose scrim is a plain `View` with no scrolling area, so a press beside its fields would likely leave the keyboard up. Back hides the keyboard first, before it closes the dialog.
 
 ### Agent usage (2026-11-18)
 
-Estimates from the session transcripts, with gaps of 5 minutes or more left out, up to the pull request:
+Estimates from the session transcripts, with gaps of 5 minutes or more left out, up to the fixes for the first reviews:
 
-- Agent time: about 80 minutes, in one session (Opus 5.5), with two review subagents that ran about 8 minutes inside it. Most of it was the emulator check and the walk. The ticket itself was written in an earlier session, not counted here.
-- Tokens: output about 185,000. Input about 68 million: 67.5 million cache reads, 0.6 million cache writes and about 650 uncached.
+- Agent time: about 110 minutes, in one session (Opus 5.5). Three subagents ran inside it: two reviewers (about 8 minutes) and one that found the way to the last fields (about 2 minutes). Most of the time was the emulator check and the walk of the other fields. The ticket itself was written in an earlier session, not counted here.
+- Tokens: output about 230,000. Input about 101.5 million: 100.8 million cache reads, 0.74 million cache writes and about 850 uncached.
