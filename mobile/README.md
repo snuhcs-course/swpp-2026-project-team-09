@@ -549,7 +549,11 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   the place and says "캠퍼스 밖에 있어요"; before the first position it says "위치를 찾는 중이에요". Nothing is drawn
   for it later either, when the position comes: neither that way nor the opening route. A way that is not found says
   "길을 찾지 못했어요". Leaving the screen drops the line and the opening route that was still to come, and coming
-  back draws nothing by itself.
+  back draws nothing by itself. A tap on empty map clears the line too (`route.clear`, P15 ticket 55): a tap that no
+  mark keeps, on the everyday map, where `GET /places/at` finds no Place or cannot answer (`onEmptyTap` of
+  `usePressedPlace`). A tap that opens a card leaves it, "새 대화" and closing the answer frame leave it, and once
+  cleared the opening route is not drawn again until the screen starts anew; a tap before it was asked, as before the
+  first position, changes nothing, and it still comes.
   The line is the wireframe's: dots in the Quest's colour, 3 wide, 2 long and 6 apart (`ROUTE_STYLE`).
 - The zoom in and zoom out buttons change the zoom by a factor 1.5 around the middle of the view. "내 위치로 이동"
   brings the map to the User at the larger of the current zoom and the `close` level; off campus it says "캠퍼스 밖에

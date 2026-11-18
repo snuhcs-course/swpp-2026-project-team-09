@@ -18,6 +18,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
@@ -30,7 +31,6 @@ import type { CardView } from '@/features/map/adapter';
 import type { ShuttleLayer } from '@/features/shuttle/use-shuttle';
 import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
 import { showsStartButton } from '@/features/tutorial/rules';
-import type { MapLine } from '@/map';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { FriendList } from './friend-list';
 import { OffMapFriendCard, useOffMapFriends } from './friend-profile';
@@ -51,7 +51,7 @@ import { type Me, useMe } from './use-me';
 import { useActivePartyRoom } from './use-active-party-room';
 import { useAskedByAddress } from './use-asked-card';
 import type { MainRoute } from './use-route';
-import { useMapView } from './use-map-view';
+import { type Everyday, useMapView } from './use-map-view';
 import { useReturnedCamera } from './use-camera-back';
 import { useFramedRoom } from './use-room';
 import { type Selection, useSelection } from './use-selection';
@@ -204,9 +204,14 @@ function MainZoomControl({ map, me }: { map: MainMap; me: Me }): ReactElement {
   );
 }
 
-// The walking route, and the shuttle's line under it.
-function useLines(shuttle: ShuttleLayer, route: MainRoute): readonly MapLine[] {
-  return useMemo(() => [...shuttle.lines, ...(route.line === null ? [] : [route.line])], [shuttle.lines, route.line]);
+// The walking route, and the shuttle's line under it; and the route's clearing, for a tap on empty map (P15 ticket
+// 55).
+function useRouteLines(shuttle: ShuttleLayer, route: MainRoute): Pick<Everyday, 'lines' | 'clearRoute'> {
+  const lines = useMemo(
+    () => [...shuttle.lines, ...(route.line === null ? [] : [route.line])],
+    [shuttle.lines, route.line],
+  );
+  return { lines, clearRoute: route.clear };
 }
 
 // The friend list and the Quest list, which give way to a card at the top.
@@ -280,7 +285,7 @@ export function MainScreen(): ReactElement {
   useAskedByAddress(ready ? cards : null, map, selection, chat);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
   const { unasked, framed, taken, firstRun, room, ...bottom } = useFramedRoom(selection, layers, me, start);
-  const view = useMapView(chat, map, room, { me, pin, lines: useLines(shuttle, route), cards, selection }, unasked);
+  const view = useMapView(chat, map, room, { me, pin, ...useRouteLines(shuttle, route), cards, selection }, unasked);
   useReturnedCamera(layers.back, chat.framed, map);
   return (
     <View style={styles.screen}>
