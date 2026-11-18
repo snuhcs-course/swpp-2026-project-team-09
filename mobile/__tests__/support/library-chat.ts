@@ -3,12 +3,13 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fireEvent, type userEvent, within } from '@testing-library/react-native';
 import type { LibraryCard, LibraryCardData } from '@/api/assistant-types';
 import { libraryCard, READING_ROOM, SEAT_NOTES } from '@/api/mock/data/library';
-import { markLibraryLoggedIn } from '@/library/flag';
+import { forgetLoginOpened, markLibraryLoggedIn } from '@/library/flag';
 import type { LibraryBooking } from '@/library/replies';
 import { pass, screen } from './app';
 import { PLACES } from './dining';
@@ -64,6 +65,7 @@ export interface LibraryChat {
 export async function startLibraryChat(now: Date = LIBRARY_NOW): Promise<{ server: FakeServer; library: FakeLibrary }> {
   jest.useFakeTimers({ now });
   await startFresh();
+  forgetLoginOpened();
   sockets.length = 0;
   const server = await askMainServer({ signedIn: true });
   answerParty(server);

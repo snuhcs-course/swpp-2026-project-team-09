@@ -1943,9 +1943,12 @@ answers with JSON (`loginWorks`); only then is the flag set. ✕ is "no session"
 with "로그인하지 못했어요".
 
 The site serves `/pc/main` before it sends the User to the school's login too, so the first landing starts a check
-with no session, which can take up to 35 seconds. A landing that comes while a check runs is kept, and checked once
-that check ends without a session; each check loads the hidden view's page afresh (`reloadPage()`). The login thus
-takes effect on the first 로그인 (P15 ticket 57).
+with no session, which can take up to 35 seconds. The checks belong to the provider, not to the view
+(`login-checks.ts`): one runs at a time, on the hidden view's page loaded afresh (`reloadPage()`). A landing that comes
+while one runs is kept, and so is ✕ pressed while one runs; when the running check finds no session, one more check is
+made. A check that finds the session sets the flag even after the view was closed, so a User who logged in and then
+closed the view is still logged in, and the cards follow. Every check ends with the hidden view unmounted unless the
+flag is set, and a logout or the provider's end cancels the checks (P15 ticket 57).
 
 Every mounted card follows the flag (`useLibraryLoad`): after a login, a card whose read failed for want of a session
 reads again; after the session was ended on purpose (`endLibrarySession`, which clears the flag as `loggedOut`), a card
@@ -1972,8 +1975,10 @@ picks a free seat and colours it alone; "<n>번 선택" puts it in the card. A s
   tokens. It is a refused token or the Session replaced on another phone, and does not go through `signOut()`.
 
 The two sign-outs take it whether or not the flag is set and do not wait on it (`endLibrarySessionInBackground()`).
-In order: with the flag set, the hidden view loads the site's logout URL (15 seconds at most, and a failure does not
-stop the rest; without the flag there is no view, no call and no wait); every web-view cookie is cleared by
+In order: with the flag set, or once a login view was opened since the session last ended (the cookie jar may then hold
+a session the flag never knew of, as after a login closed before its check), the hidden view is mounted if it is not
+and loads the site's logout URL (15 seconds at most, and a failure does not stop the rest; otherwise there is no view,
+no call and no wait); every web-view cookie is cleared by
 `clearWebViewCookies()`; and the flag is cleared. The cookies and the flag are cleared even when an earlier part fails.
 
 ### The cookie module and its lint rule

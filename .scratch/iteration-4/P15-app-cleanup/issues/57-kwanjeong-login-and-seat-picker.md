@@ -92,9 +92,11 @@ The seat book card shows its time as the kit's time band, as `AmStudy-a1` draws 
 - The seat book card's tests for the picture and the band are in their own files (`answer-frame-library-seat-picker`, `answer-frame-library-slot-band`), since the book card's file reached the 300-line limit.
 - On this machine, Jest in the worktree resolved `@babel/runtime` only through a link at `/workspace/a02-04/node_modules/@babel/runtime` to the shared `.pnpm` copy, outside git; CI is not affected.
 
+- The review of #360 (TaeHyun79) found that a check made after the view had closed could leave `checking` true, the hidden view mounted with the flag unset, and the login thrown away; a logout then skipped the site's logout. The checks now belong to the provider (`login-checks.ts`), not to the view: ✕ while a check runs keeps one last check, a session it finds sets the flag though the view is closed, every check ends with `checking` false, and a logout or the provider's end cancels them. "End the library session" logs out on the site once a login view was opened since the last end, whatever the flag says, and mounts the hidden view for it (`HiddenViewTransport.wantsView()`). Tested in `answer-frame-library-login-closed` (3 tests, each failing on `df4f58c0`).
+
 ### Agent usage (2026-11-18)
 
 Estimates from the session transcript, with the waits for the shared machine (a full disk, other agents' test runs) left out:
 
-- Agent time: about 2 hours 40 minutes, in one Opus 5.5 session (a subagent of the orchestrating session), stopped once when the disk filled and resumed.
-- Tokens: output about 110,000. Input about 9 million: about 8.6 million cache reads, 0.4 million cache writes and a few thousand uncached.
+- Agent time: about 3 hours 25 minutes, in one Opus 5.5 session (a subagent of the orchestrating session), stopped once when the disk filled and resumed, then back for the review's fix (about 45 minutes).
+- Tokens: output about 140,000. Input about 12 million: about 11.5 million cache reads, 0.5 million cache writes and a few thousand uncached.

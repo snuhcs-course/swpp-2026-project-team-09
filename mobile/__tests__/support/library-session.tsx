@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { FakeLibrary, fakeTransport } from './kwanjeong/fake-library';
 import { forgetWebViews } from './web-view';
 import { ToastProvider } from '@/design-system';
+import { forgetLoginOpened } from '@/library/flag';
 import { hiddenTransport } from '@/library/library';
 import { LibrarySessionProvider, useLibrarySession } from '@/library/library-session';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -83,6 +85,7 @@ export function useLibrarySessionTests(): void {
   beforeEach(async () => {
     jest.useFakeTimers();
     await AsyncStorage.clear();
+    forgetLoginOpened();
     forgetWebViews();
     clearWebViewCookies.mockClear();
     giveCookieModule();

@@ -18,15 +18,19 @@ export const LOGIN_LIMIT_MS = 5 * 60 * 1000;
 
 interface LibraryLoginProps {
   visible: boolean;
-  onDone: (outcome: LoginOutcome) => void;
-  // Whether the session works, asked once the view is back on the site's screens (`loginWorks`).
-  check: () => Promise<boolean>;
+  // The view closed without a session: ✕, or the five minutes.
+  onDone: (outcome: Exclude<LoginOutcome, 'loggedIn'>) => void;
+  // The view is back on the site's main, booking or my-booking screen, where the provider checks the session
+  // (`login-checks.ts`) and closes the view once it works.
+  onLanded: () => void;
 }
 
-// Ends the login once, with the first of the User's ✕, the done page and the five minutes.
-function useFinish(visible: boolean, onDone: (outcome: LoginOutcome) => void): (outcome: LoginOutcome) => void {
+// Closes the login once, with the first of the User's ✕ and the five minutes.
+type Closed = Exclude<LoginOutcome, 'loggedIn'>;
+
+function useFinish(visible: boolean, onDone: (outcome: Closed) => void): (outcome: Closed) => void {
   const finished = useRef(false);
-  const finish = useEffectEvent((outcome: LoginOutcome) => {
+  const finish = useEffectEvent((outcome: Closed) => {
     if (!finished.current) {
       finished.current = true;
       onDone(outcome);
@@ -47,43 +51,14 @@ function useFinish(visible: boolean, onDone: (outcome: LoginOutcome) => void): (
   return finish;
 }
 
-// Asks `check` once at a time, and ends the login as logged in only when it says the session works. A landing that
-// comes while a check runs is kept, and asked once that check ends without a session: the site serves its main page
-// before the school's login too, and the check made there may still be running when the User is back logged in.
-function useCheckThenFinish(check: () => Promise<boolean>, finish: (outcome: LoginOutcome) => void): () => void {
-  const checking = useRef(false);
-  const again = useRef(false);
-  const run = (): void => {
-    if (checking.current) {
-      again.current = true;
-      return;
-    }
-    checking.current = true;
-    again.current = false;
-    const ended = (works: boolean): void => {
-      checking.current = false;
-      if (works) {
-        finish('loggedIn');
-      } else if (again.current) {
-        run();
-      }
-    };
-    void check().then(ended, () => {
-      ended(false);
-    });
-  };
-  return run;
-}
-
 // The full-screen login: the school's own login page in a visible web view. The User types the password there, into
 // the library's page; no script is injected into any of its pages, so the app never sees it. Once the view is back
 // on the site's main, booking or my-booking screen, the login is done and the session stays in the web view's own
-// cookie jar. Reaching those screens is not enough by itself: the login is done only when `check` finds the session
+// cookie jar. Reaching those screens is not enough by itself: the login is done only when a check finds the session
 // works; otherwise the view stays open and asks again on the next of those screens. ✕ is "no session"; after five
 // minutes the view closes as failed.
-export function LibraryLogin({ visible, onDone, check }: LibraryLoginProps): ReactElement {
+export function LibraryLogin({ visible, onDone, onLanded }: LibraryLoginProps): ReactElement {
   const finish = useFinish(visible, onDone);
-  const checkThenFinish = useCheckThenFinish(check, finish);
   return (
     <Modal
       animationType="slide"
@@ -108,7 +83,7 @@ export function LibraryLogin({ visible, onDone, check }: LibraryLoginProps): Rea
             incognito={false}
             onNavigationStateChange={(navigation) => {
               if (!navigation.loading && isLoginDone(navigation.url)) {
-                checkThenFinish();
+                onLanded();
               }
             }}
             source={{ uri: LIBRARY_MAIN_URL }}

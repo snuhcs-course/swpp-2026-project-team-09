@@ -43,6 +43,20 @@ export class HiddenViewTransport implements LibraryTransport {
   // The logout in progress: whether its URL was asked of the view yet, and how it ends.
   private logoutDone: ((loaded: boolean) => void) | null = null;
   private logoutAsked = false;
+  // The view is wanted for a logout though neither the flag nor a check mounts it.
+  private wanted = false;
+  private readonly wantListeners = new Set<() => void>();
+
+  wantsView(): boolean {
+    return this.wanted;
+  }
+
+  onWantsView(listener: () => void): () => void {
+    this.wantListeners.add(listener);
+    return () => {
+      this.wantListeners.delete(listener);
+    };
+  }
 
   attach(handle: HiddenViewHandle): void {
     this.handle = handle;
@@ -141,6 +155,7 @@ export class HiddenViewTransport implements LibraryTransport {
 
   logout(): Promise<boolean> {
     this.endLogout(false);
+    this.want(true);
     return new Promise<boolean>((resolve) => {
       const timer = setTimeout(() => {
         this.endLogout(false);
@@ -161,7 +176,18 @@ export class HiddenViewTransport implements LibraryTransport {
     const done = this.logoutDone;
     this.logoutDone = null;
     this.logoutAsked = false;
+    this.want(false);
     done?.(loaded);
+  }
+
+  private want(wanted: boolean): void {
+    if (this.wanted === wanted) {
+      return;
+    }
+    this.wanted = wanted;
+    for (const listener of this.wantListeners) {
+      listener();
+    }
   }
 
   // The page the calls run on, loaded once. A page that failed to load is loaded again for the next call.

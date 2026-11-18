@@ -34,6 +34,23 @@ export function listenToLibraryFlag(listener: Listener): () => void {
   };
 }
 
+// Whether a login view was opened since the session was last ended: the web views' cookie jar may then hold a session
+// though the flag is not set (a login closed before its check found it). "End the library session" then logs out on
+// the site too.
+let loginOpened = false;
+
+export function noteLoginOpened(): void {
+  loginOpened = true;
+}
+
+export function wasLoginOpened(): boolean {
+  return loginOpened;
+}
+
+export function forgetLoginOpened(): void {
+  loginOpened = false;
+}
+
 export async function isLibraryLoggedIn(): Promise<boolean> {
   return (await AsyncStorage.getItem(KEY)) !== null;
 }
