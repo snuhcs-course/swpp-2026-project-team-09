@@ -5,6 +5,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -25,9 +26,9 @@ import type { LibrarySeat } from '@/library/replies';
 import { useAskForPush } from '@/push/push-ask-host';
 import { CardBox, FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
 import { seatsBubble } from './own-bubbles';
-import { LargeSeatMap } from './seat-map';
+import { SeatPicker } from './seat-picker';
 import { RoomTop, RoomWords, type SeatRoom, useFullRoomSwap, useSeatRoom } from './seat-room';
-import { SlotSteps } from './slot-steps';
+import { SlotBand } from './slot-band';
 import {
   bseqnoOf,
   type CardFailure,
@@ -148,7 +149,8 @@ function OfferButtons({
   undo,
   onPick,
 }: Pick<OfferProps, 'seat' | 'write' | 'close' | 'actions' | 'undo'> & {
-  onPick: () => void;
+  // 자리 선택하기, which opens the seat picture; null for a space without one.
+  onPick: (() => void) | null;
 }): ReactElement {
   return (
     <Pills>
@@ -167,7 +169,7 @@ function OfferButtons({
           actions.addOwn({ text: NOT_BOOKED });
         }}
       />
-      <Pill label="다른 자리 고르기" onPress={onPick} />
+      {onPick === null ? null : <Pill label="자리 선택하기" onPress={onPick} />}
     </Pills>
   );
 }
@@ -181,7 +183,7 @@ function KioskFoot(): ReactElement {
 
 // The seat offered, its time, the card's buttons and the site's notes.
 function SeatOffer(props: OfferProps): ReactElement {
-  const { card, space, adjustable, seat, seats, slot, setSlot, choose, write } = props;
+  const { card, space, seat, seats, slot, choose, write } = props;
   const [picking, setPicking] = useState(false);
   const open = !write.busy;
   return (
@@ -190,20 +192,23 @@ function SeatOffer(props: OfferProps): ReactElement {
         meta={whenWords(slot.date, slot.start, slot.minutes, now())}
         title={`${spaceWords(space)} · ${seatWords(seat.VNAME)}`}
       />
-      {adjustable && open ? <SlotSteps onChange={setSlot} slot={slot} space={space} /> : null}
       <FailureNote failure={write.failure?.failure ?? null} message={write.failure?.message} onLogIn={write.logIn} />
       {open ? (
         <OfferButtons
           {...props}
-          onPick={() => {
-            setPicking(true);
-          }}
+          onPick={
+            space.mapImage === null
+              ? null
+              : () => {
+                  setPicking(true);
+                }
+          }
         />
       ) : null}
       {open ? <KioskFoot /> : null}
       {write.busy ? <Said>예약하는 중이에요</Said> : null}
       <Notes notes={card.notes.filter((note) => !note.includes(KIOSK))} />
-      <LargeSeatMap
+      <SeatPicker
         onClose={() => {
           setPicking(false);
         }}
@@ -308,8 +313,11 @@ export function BookSeatCard(props: BookSeatCardProps): ReactElement {
   const [slot, setSlot] = useState<Slot>(() => slotOf(card));
   const [named, setNamed] = useState<string | null>(card.seat);
   const room = useSeatRoom(props, slot, setNamed);
+  // While a booking is on its way its time stays.
+  const busy = props.actions.outcomeOf(props.place)?.kind === 'pending';
   return (
     <CardBox testID={`library-book-${card.key}`}>
+      {room.listing || busy ? null : <SlotBand onChange={setSlot} slot={slot} space={room.shown} />}
       <RoomTop room={room} slot={slot} />
       <SeatPart {...props} named={named} room={room} setNamed={setNamed} setSlot={setSlot} slot={slot} />
     </CardBox>

@@ -4,8 +4,10 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
+import { fireEvent, within } from '@testing-library/react-native';
 import { libraryCard, READING_ROOM, SEAT_NOTES } from '@/api/mock/data/library';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -89,7 +91,7 @@ describe('the seat book card', () => {
     ]);
     expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
     expect(seatCard().getByText('오늘 17:00–18:00')).toBeVisible();
-    for (const name of ['예약하기', '닫기', '다른 자리 고르기']) {
+    for (const name of ['예약하기', '닫기', '자리 선택하기']) {
       expect(seatCard().getByRole('button', { name })).toBeVisible();
     }
     expect(seatCard().getByText(`· ${SEAT_NOTES[1] ?? ''}`)).toBeVisible();
@@ -183,7 +185,7 @@ describe('the seat book card when the User asked the Assistant to book it ("그�
   });
 });
 
-describe('닫기 and 다른 자리 고르기 on the seat book card', () => {
+describe('닫기 and 자리 선택하기 on the seat book card', () => {
   it('says "알겠어요. 예약하지 않았어요." on 닫기 and books nothing', async () => {
     await askForCards({ server, library }, [SEAT_CARD]);
 
@@ -195,15 +197,95 @@ describe('닫기 and 다른 자리 고르기 on the seat book card', () => {
     expect(server.received('POST /assistant/messages')).toHaveLength(1);
   });
 
-  it('lets 다른 자리 고르기 pick another free seat on the large map', async () => {
+  it('lets 자리 선택하기 pick a free seat on the seat picture, which only that seat shows, and choose it', async () => {
+    library.takeSeat(17202002);
     await askForCards({ server, library }, [SEAT_CARD]);
 
-    await press('다른 자리 고르기');
-    expect(screen.getByText('관정관 7층 7A 열람실 2 구역 좌석 현황')).toBeVisible();
-    await pressIn(screen, '7300번 빈 자리');
+    await press('자리 선택하기');
+    const picture = within(screen.getByTestId('seat-map-large'));
+    expect(picture.getByText('관정관 7층 7A 열람실 2 구역 좌석 현황')).toBeVisible();
+    expect(screen.getByText('7300', { includeHiddenElements: true })).toBeTruthy();
+    expect(picture.queryByRole('button', { name: /번 선택$/u })).toBeNull();
+    // A taken seat is no button.
+    expect(picture.queryByRole('button', { name: '7194번 빈 자리' })).toBeNull();
 
-    expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7300번')).toBeVisible();
+    await pressIn(picture, '7300번 빈 자리');
+    expect(picture.getByRole('button', { name: '7300번 고른 자리' })).toHaveStyle({ backgroundColor: '#001A72' });
+    expect(picture.getByRole('button', { name: '7200번 빈 자리' })).toHaveStyle({ backgroundColor: '#F89200' });
+    expect(picture.getByRole('button', { name: '7300번 선택' })).toBeVisible();
+
+    // A press on another seat moves the pick there.
+    await pressIn(picture, '7200번 빈 자리');
+    expect(picture.getByRole('button', { name: '7300번 빈 자리' })).toHaveStyle({ backgroundColor: '#F89200' });
+    await pressIn(picture, '7200번 선택');
+
+    expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7200번')).toBeVisible();
     expectNoWrite(library);
+  });
+
+  it('zooms the seat picture with 확대 and 축소, between 1 and 4 times', async () => {
+    await askForCards({ server, library }, [SEAT_CARD]);
+    await press('자리 선택하기');
+    const picture = within(screen.getByTestId('seat-map-large'));
+    const image = (): ReturnType<typeof screen.getByTestId> => screen.getByTestId('seat-map-large-map-image');
+    expect(image()).toHaveStyle({ height: 300 });
+    expect(picture.getByRole('button', { name: '축소' })).toBeDisabled();
+
+    await pressIn(picture, '확대');
+    expect(image()).toHaveStyle({ height: 450 });
+    for (let step = 0; step < 4; step += 1) {
+      await pressIn(picture, '확대');
+    }
+    expect(image()).toHaveStyle({ height: 1200 });
+    expect(picture.getByRole('button', { name: '확대' })).toBeDisabled();
+    await pressIn(picture, '축소');
+    expect(image()).toHaveStyle({ height: 800 });
+  });
+
+  it('closes the seat picture on ✕ with the seat as it was', async () => {
+    await askForCards({ server, library }, [SEAT_CARD]);
+    await press('자리 선택하기');
+    const picture = within(screen.getByTestId('seat-map-large'));
+    await pressIn(picture, '7300번 빈 자리');
+    await pressIn(picture, '닫기');
+
+    expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
+  });
+});
+
+describe('the time band of the seat book card', () => {
+  it("shows the card's time on the space's hours, and a step of its end reads the seats for the new time", async () => {
+    await askForCards({ server, library }, [SEAT_CARD]);
+    const band = within(seatCard().getByTestId('slot-band'));
+    expect(band.getByText('17:00–18:00 · 1시간')).toBeVisible();
+    expect(band.getByText(READING_ROOM.hours.open)).toBeVisible();
+    expect(band.getByText(READING_ROOM.hours.close)).toBeVisible();
+    const before = library.requestsTo('getSeatBookingList').length;
+
+    await fireEvent(band.getByRole('adjustable', { name: '끝 시각' }), 'accessibilityAction', {
+      nativeEvent: { actionName: 'increment' },
+    });
+    await pass(0);
+
+    expect(seatCard().getByText('17:00–18:30 · 1시간 30분')).toBeVisible();
+    expect(seatCard().getByText('오늘 17:00–18:30')).toBeVisible();
+    expect(library.requestsTo('getSeatBookingList').slice(before).at(-1)?.body).toMatchObject({
+      useTime: '90',
+      bookTime: '1700-1830',
+    });
+    expectNoWrite(library);
+  });
+
+  it('moves whole by a step of the band and keeps its length', async () => {
+    await askForCards({ server, library }, [SEAT_CARD]);
+    const band = within(seatCard().getByTestId('slot-band'));
+
+    await fireEvent(band.getByRole('adjustable', { name: '시간 띠' }), 'accessibilityAction', {
+      nativeEvent: { actionName: 'decrement' },
+    });
+    await pass(0);
+
+    expect(seatCard().getByText('16:30–17:30 · 1시간')).toBeVisible();
   });
 });
 

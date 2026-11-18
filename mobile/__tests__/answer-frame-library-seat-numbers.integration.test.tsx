@@ -3,6 +3,7 @@
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -79,13 +80,14 @@ describe('the seat numbers', () => {
     expect(large).toBeVisible();
   });
 
-  it('leave a tap on a free numbered seat giving its book card', async () => {
+  it('leave a free numbered seat, picked and chosen, giving its book card', async () => {
     await askForCards({ server, library }, [SEATS_CARD], { words: '좌석현황' });
     await laidOut();
     await pressIn(inCard(`library-seats-${SEATS_CARD.library.key}`), '좌석 현황 크게 보기');
 
     expect(screen.getByText('7200', HIDDEN)).toBeTruthy();
     await pressIn(screen, '7200번 빈 자리');
+    await pressIn(screen, '7200번 선택');
 
     const given = inCard('library-book-book:7F-7A-zone2:2026-11-02:1600:120:s=7200');
     expect(given.getByText('관정관 7층 7A 열람실 2 구역 · 7200번')).toBeVisible();
