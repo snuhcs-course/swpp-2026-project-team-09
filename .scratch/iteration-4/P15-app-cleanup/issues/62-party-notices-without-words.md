@@ -47,3 +47,14 @@ All three are Notifications of the main server's kept list, which ring the phone
 - [x] Tests, by ADR 0007: `party-member-notices.integration.test.ts` (a step changed, a member arrived) and `quest-late.integration.test.ts` (late) in main-server; `notifications-members.unit.test.ts` and `room-walking.integration.test.tsx` (the late row) in the app.
 
 ## Comments
+
+### Notes from the implementation (2026-11-19)
+
+- Nothing in the app sends a late report yet, so `late` comes only from `POST /quests/:id/late` until the AI Assistant batch adds the sender ("5분 늦어" to the Assistant, "늦어요" on the leave-by notification).
+- A press opens the party's card on the map, as the other party Notifications do, not the room.
+- No emulator screens: after the mock data was patched to show the three kinds and a late member, the dev build stayed on a black screen for over ten minutes on a freshly cleared Metro, so the rows are covered by `notifications-members.unit.test.ts` and `room-walking.integration.test.tsx` only.
+
+### Agent usage (2026-11-19)
+
+- Agent time: about 30 minutes in one side session (an estimate).
+- Tokens: input 47.63 M, of which 47.45 M cache reads and 0.18 M cache writes (280 uncached); output 79 k. No subagents.
