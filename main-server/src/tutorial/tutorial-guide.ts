@@ -141,8 +141,16 @@ export function guideWithoutAsk(guide: TutorialGuide): TutorialGuide {
 // Every place a guide names, for the content's check against the seed.
 export function guidePlaces(guide: TutorialGuide): z.infer<typeof guidePlaceSchema>[] {
   const steps = [...(guide.steps ?? []), ...(guide.kinds ?? []).flatMap(({ steps: kindSteps }) => kindSteps)];
-  return steps.flatMap(({ place, spots }) => [
-    ...(place === undefined ? [] : [place]),
-    ...(spots ?? []).flatMap((spot) => (spot.place === undefined ? [] : [spot.place])),
-  ]);
+  const places: z.infer<typeof guidePlaceSchema>[] = [];
+  for (const { place, spots } of steps) {
+    if (place !== undefined) {
+      places.push(place);
+    }
+    for (const spot of spots ?? []) {
+      if (spot.place !== undefined) {
+        places.push(spot.place);
+      }
+    }
+  }
+  return places;
 }

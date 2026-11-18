@@ -151,6 +151,36 @@ function stepsOf(guide: TutorialGuide | undefined): NonNullable<TutorialGuide['s
   return [...(guide?.steps ?? []), ...(guide?.kinds ?? []).flatMap(({ steps }) => steps)];
 }
 
+type GuideStep = NonNullable<TutorialGuide['steps']>[number];
+
+// The sites a step opens: its buttons', its rows' and its link's.
+function urlsOf({ actions, rows, link }: GuideStep): string[] {
+  const urls: string[] = [];
+  for (const action of actions ?? []) {
+    if (action.kind === 'link') {
+      urls.push(action.url);
+    }
+  }
+  for (const { url } of rows ?? []) {
+    if (url !== undefined) {
+      urls.push(url);
+    }
+  }
+  if (link !== undefined) {
+    urls.push(link.url);
+  }
+  return urls;
+}
+
+// The words of every guide button that asks the Assistant, as served.
+function asks(libraryBooking: boolean): string[] {
+  return servedContent(content, { libraryBooking, kwanjeongCheck: false }).quests.flatMap(({ guide }) =>
+    stepsOf(guide).flatMap(({ actions }) =>
+      (actions ?? []).flatMap((action) => (action.kind === 'ask' ? [action.ask] : [])),
+    ),
+  );
+}
+
 describe("The quests' icons and guides (P15 ticket 53)", () => {
   it('gives every quest its icon, as the boards draw the list', () => {
     expect(content.quests.map(({ icon }) => icon)).toEqual([
@@ -190,28 +220,17 @@ describe("The quests' icons and guides (P15 ticket 53)", () => {
     expect(named.length).toBeGreaterThan(20);
     expect(named.filter((place) => !numbers.has(place))).toEqual([]);
   });
+});
 
+describe("The guides' links and asks", () => {
   it("links the guides' buttons and rows only to web addresses", () => {
-    const urls = content.quests.flatMap(({ guide }) =>
-      stepsOf(guide).flatMap(({ actions, rows, link }) => [
-        ...(actions ?? []).flatMap((action) => (action.kind === 'link' ? [action.url] : [])),
-        ...(rows ?? []).flatMap(({ url }) => (url === undefined ? [] : [url])),
-        ...(link === undefined ? [] : [link.url]),
-      ]),
-    );
+    const urls = content.quests.flatMap(({ guide }) => stepsOf(guide).flatMap((step) => urlsOf(step)));
 
     expect(urls).toContain('https://ssims.snu.ac.kr/index.do');
     expect(urls.map((url) => new URL(url).protocol).filter((protocol) => !protocol.startsWith('http'))).toEqual([]);
   });
 
   it("serves the guides' buttons that ask the Assistant only while 관정 booking is on", () => {
-    const asks = (libraryBooking: boolean): string[] =>
-      servedContent(content, { libraryBooking, kwanjeongCheck: false }).quests.flatMap(({ guide }) =>
-        stepsOf(guide).flatMap(({ actions }) =>
-          (actions ?? []).flatMap((action) => (action.kind === 'ask' ? [action.ask] : [])),
-        ),
-      );
-
     expect(asks(true)).toEqual([ASK, '관정도서관 좌석 반납해줘']);
     expect(asks(false)).toEqual([]);
   });
