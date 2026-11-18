@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -208,6 +209,7 @@ describe('the filters and the search', () => {
 
     await user.press(screen.getByRole('button', { name: '행사 검색' }));
     const field = screen.getByLabelText('행사 검색어');
+    expect(field).toHaveProp('placeholder', '제목·장소·내용 검색');
     await user.type(field, '62-1동');
     expect(shownEvents()).toEqual([BOOK_TALK.title]);
     await user.clear(field);

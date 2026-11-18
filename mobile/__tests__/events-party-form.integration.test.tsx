@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -57,6 +58,15 @@ beforeEach(async () => {
 afterEach(() => {
   jest.useRealTimers();
   jest.restoreAllMocks();
+});
+
+describe('the event picker', () => {
+  it('says in its search field what the search reads', async () => {
+    const user = await openAt('/party-form');
+
+    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    expect(screen.getByLabelText('행사 검색')).toHaveProp('placeholder', '제목·장소·내용 검색');
+  });
 });
 
 describe('관련 행사', () => {

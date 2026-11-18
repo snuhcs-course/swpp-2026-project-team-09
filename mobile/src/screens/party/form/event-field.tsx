@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -24,7 +25,7 @@ import {
   SegmentedTabs,
   space,
 } from '@/design-system';
-import { eventTime, toEventViews } from '@/features/events/adapter';
+import { EVENT_SEARCH_HINT, eventTime, toEventViews } from '@/features/events/adapter';
 import { useEventSources } from '@/features/events/use-events';
 import { EVENT_KINDS, type EventKind, eventKindOf, eventTagsOf } from '@/features/party/event-kinds';
 import type { FormEvent } from '@/features/party/making';
@@ -116,7 +117,7 @@ export function EventPicker({ chosen, onPick, onBack }: PickerProps): ReactEleme
     <FullScreenPanel leave={{ kind: 'back', onPress: onBack }} title="행사">
       <SegmentedTabs onSelect={setKind} segments={EVENT_KINDS} selected={kind} />
       <View style={styles.picker}>
-        <SearchField label="행사 검색" onChangeText={setSearch} placeholder="행사 검색" value={search} />
+        <SearchField label="행사 검색" onChangeText={setSearch} placeholder={EVENT_SEARCH_HINT} value={search} />
         <Events chosen={chosen} kind={kind} onPick={onPick} search={search} />
       </View>
     </FullScreenPanel>
