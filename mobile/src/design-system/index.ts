@@ -12,6 +12,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 // The team's design system "SNU Now", ported to React Native. A screen takes its colours, text styles and shared
@@ -61,6 +62,8 @@ export { type ToastAction, ToastProvider, useNotReadyToast, useToast, useToastAb
 export {
   classColors,
   color,
+  eventText,
+  eventTone,
   font,
   halo,
   mapText,

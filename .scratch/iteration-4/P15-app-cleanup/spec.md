@@ -76,6 +76,7 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 
 51. The chat's system prompt: cache it across Users and minutes, with the time after the breakpoint, and teach it the campus's short names (학관, 중도, …). Ticket [51](issues/51-system-prompt-cache-and-campus-terms.md).
 52. 이미지로 불러오기 reads real screenshots badly: read them with the AI on the blocks the phone finds, for any timetable layout. Ticket [52](issues/52-timetable-image-reading.md).
+54. The 행사 tab is hard to read: long titles and places run over many lines, and a card without its badge has an empty band. Draw it as the `Events` board does: a date column, one row per event, and a sheet for the details. Ticket [54](issues/54-events-tab-as-drawn.md).
 
 57. 관정 booking: a login takes effect only on a second 로그인, the time moves only by ±30분 buttons, and a pressed seat is taken at once without showing which: the login takes effect at once, the time is a bar, and a seat is picked on the room's picture. Ticket [57](issues/57-kwanjeong-login-and-seat-picker.md).
 
