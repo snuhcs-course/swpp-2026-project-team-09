@@ -7,6 +7,8 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -88,6 +90,15 @@ const ICONS = {
   play: [{ path: 'M7 5l12 7-12 7z' }],
   // Not the design system's: the ☆ of a Global Event, filled for a Favorite Event.
   star: [{ path: 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z' }],
+  // Not the design system's: the `Events` frame draws it on "원문 보기".
+  globe: [
+    { path: 'M11 3a9 9 0 1 0 9 9' },
+    { path: 'M2 12h12' },
+    { path: 'M11 3a14 14 0 0 0-3.6 9 14 14 0 0 0 3.6 9' },
+    { path: 'M11 3a14 14 0 0 1 3 5' },
+    { path: 'M16 3h5v5' },
+    { path: 'M21 3l-7 7' },
+  ],
   // Not the design system's: the answer frame draws them on 그만 (filled), on "이전 답" in the AI input, and on
   // "새 대화" beside the pill.
   stop: [{ rect: [7, 7, 10, 10, 2] }],

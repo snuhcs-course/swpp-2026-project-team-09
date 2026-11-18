@@ -3,8 +3,11 @@
  *
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
@@ -15,9 +18,11 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { EVENT, lookOf, press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { askMainServer, PHONE_NOW } from './support/server';
+import { FAVORITE_LABEL } from '@/screens/events/favorite-toggle';
 
-// Favorite Events against the fake main server, on Tuesday 6 October 2026 at 13:00 in Korea: the ☆ on the 행사 tab's
-// cards and on the map's card of one event, and the everyday map keeping only the Favorite Events.
+// Favorite Events against the fake main server, on Tuesday 6 October 2026 at 13:00 in Korea: the ☆ on the 행사
+// tab's rows and in its detail sheet, the ☆ on the map's card of one event, and the everyday map keeping only the
+// Favorite Events.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -60,8 +65,9 @@ function answerFavorite(eventId: string, reply: { status: number; afterMs?: numb
   server.on(`DELETE /global-events/${eventId}/favorite`, reply);
 }
 
+// The tab's ☆, named 즐겨찾기 as on the map's card and the chat's.
 function star(of: ReturnType<typeof card>): ReturnType<ReturnType<typeof card>['getByRole']> {
-  return of.getByRole('button', { name: FAVORITE });
+  return of.getByRole('button', { name: FAVORITE_LABEL });
 }
 
 describe('the ☆ on the 행사 tab', () => {
@@ -104,6 +110,23 @@ describe('the ☆ on the 행사 tab', () => {
 
     expect(star(card(MAJOR))).not.toBeSelected();
     expect(screen.getByTestId('toast-layer')).toHaveTextContent(NOT_CHANGED);
+  });
+});
+
+describe('the ☆ in the detail sheet', () => {
+  it("is there too, and both show the event's one state", async () => {
+    answerEvents(server);
+    answerFavorite(MAJOR.id, { status: 204 });
+    const user = await openEvents();
+    await user.press(card(MAJOR).getByRole('button', { name: MAJOR.title }));
+    await pass(500);
+
+    await user.press(within(screen.getByTestId('event-detail')).getByRole('button', { name: FAVORITE_LABEL }));
+    await pass(500);
+
+    expect(server.received(`PUT /global-events/${MAJOR.id}/favorite`)).toHaveLength(1);
+    expect(star(card(MAJOR))).toBeSelected();
+    expect(screen.getAllByRole('button', { name: FAVORITE_LABEL, selected: true })).toHaveLength(2);
   });
 });
 

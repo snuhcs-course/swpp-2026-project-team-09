@@ -680,10 +680,18 @@ the location to a point on campus in the extended controls.
 
 ## Running the tests
 
-Each project has the same four checks. On a pull request's own push, CI runs them for the projects its changes reach,
-with the unit tests only (`pnpm test:unit`); the merge queue runs every check with every test before the merge, and a
-failure there sends the pull request back. So run the integration and end-to-end test files you touched before a pull
-request is ready. A test's level, unit, integration or end-to-end, is in its file name ([ADR
+Each project has the same four checks. CI runs them at a level set by the run's event alone:
+
+| Run | Jobs | Level |
+| --- | --- | --- |
+| Push to a working branch (anything but `<line>/Main`, `main` and `development`) | The jobs its changed paths reach, against `origin/<line>/Main` | Basic |
+| Merge queue | The jobs its changed paths reach, against the merge group's base | Basic |
+| Push to `<line>/Main`, `main` or `development` | Every job | Full |
+| Tag push | Every job | Full |
+
+The basic level runs the four checks with the unit tests only (`pnpm test:unit`); the full level runs every test. The
+iteration branch's full run goes one at a time, on its newest commit, so an integration or end-to-end failure shows only
+after the merge: run the integration and end-to-end test files you touched before a pull request is ready. A test's level, unit, integration or end-to-end, is in its file name ([ADR
 0007](docs/adr/0007-test-levels-by-what-a-test-starts.md)), and follows what the test starts: a unit test
 (`.unit.test.ts(x)`) calls one module with stand-ins and does no I/O; an integration test (`.integration.test.ts(x)`)
 joins two of our layers or crosses a real boundary, such as a database container or a started server; an end-to-end test

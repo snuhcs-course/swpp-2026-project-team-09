@@ -9,12 +9,14 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
 import { Stack } from 'expo-router';
 import { renderRouter, screen } from 'expo-router/testing-library';
 import type { ComponentType, ReactElement } from 'react';
+import * as NativeIntent from '@/app/+native-intent';
 import * as SignedInLayout from '@/app/(signed-in)/_layout';
 import TabsLayout from '@/app/(signed-in)/(tabs)/_layout';
 import EventsScreen from '@/app/(signed-in)/(tabs)/events';
@@ -61,12 +63,16 @@ function Layout(): ReactElement {
 // The started app. The address readers are on what `renderRouter` gives at once, not on what it settles to.
 let started: ReturnType<typeof renderRouter> | null = null;
 
-// Starts the app's screens at an address, as a start of the app or a link would. `more` adds screens that another
-// task builds, by their files' names.
-export async function startApp(initialUrl = '/', more: Record<string, ComponentType> = {}): Promise<void> {
+// Starts the app's screens at an address, as a start of the app or a link would. Without one (null) the router asks
+// the phone for it, as a released app does. `more` adds screens that another task builds, by their files' names.
+export async function startApp(
+  initialUrl: string | null = '/',
+  more: Record<string, ComponentType> = {},
+): Promise<void> {
   started = renderRouter(
     {
       _layout: Layout,
+      '+native-intent': NativeIntent,
       index: StartScreen,
       'sign-in': SignInScreen,
       consent: ConsentScreen,

@@ -5,34 +5,31 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, useEffect, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
 import { now } from '@/clock';
 import { color, font } from '@/design-system';
-import { koreaDateKey } from '@/korea-time';
 import type { CardOutcome } from '@/features/assistant/use-chat';
-import type { ConfirmedPress } from '@/library/client';
 import { seatWords, spaceWords } from '@/library/cards/bookings';
-import { doneOf } from '@/library/cards/done';
-import { type Slot, seatBookingOf } from '@/library/cards/payloads';
-import { chooseSeat, freeSeats, nextFreeSeat, seatState } from '@/library/cards/seats';
-import { kioskDeadline, nextStart, whenWords } from '@/library/cards/times';
-import { library } from '@/library/library';
+import type { Slot } from '@/library/cards/payloads';
+import { chooseSeat, freeSeats } from '@/library/cards/seats';
+import { liveSlot, sameSlot } from '@/library/cards/slot-band';
+import { kioskDeadline, whenWords } from '@/library/cards/times';
 import type { LibrarySeat } from '@/library/replies';
 import { useAskForPush } from '@/push/push-ask-host';
 import { CardBox, FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
 import { seatsBubble } from './own-bubbles';
-import { LargeSeatMap } from './seat-map';
-import { RoomTop, RoomWords, type SeatRoom, useFullRoomSwap, useSeatRoom } from './seat-room';
-import { SlotSteps } from './slot-steps';
+import { type Booking, NO_FREE_SEAT, NOT_BOOKED, SEATS_UNREAD, sendBooking, TIME_CHANGED } from './seat-booking';
+import { SeatPicker } from './seat-picker';
+import { cardSlot, RoomTop, RoomWords, type SeatRoom, useFullRoomSwap, useSeatRoom } from './seat-room';
+import { BOOKING_CLOSED } from './seats-card';
+import { SlotBand } from './slot-band';
 import {
-  bseqnoOf,
-  type CardFailure,
   type LibraryCardActions,
-  libraryMessage,
   useLibraryLoad,
   useLogInReload,
   pendingMark,
@@ -40,7 +37,7 @@ import {
   type Write,
 } from './use-library-call';
 import { seatsFor } from './use-room-counts';
-import { type HoldStay, useSeatStay } from './use-seat-stay';
+import { useSeatStay } from './use-seat-stay';
 
 // The book card of a reading room's seat (the MainChatLibReserve frame). It reads the sector's seats for the time,
 // offers the named or tapped seat, else the first free one, and books it only on 예약하기; 닫기 beside it ends the card
@@ -49,13 +46,15 @@ import { type HoldStay, useSeatStay } from './use-seat-stay';
 // lists the rooms by floor and kind and switches the card to another for the same time, and a room full for that time
 // is swapped for one with free seats.
 
-export const SEAT_TAKEN = '그 자리는 방금 다른 사람이 예약했어요';
-export const NO_FREE_SEAT = '그 시간에 빈 자리가 없어요';
-export const NOT_BOOKED = '알겠어요. 예약하지 않았어요.';
-export const BOOK_FAILED = '예약하지 못했어요';
-export const SEATS_UNREAD = '관정의 자리 정보를 받지 못했어요';
-// 대학원 열람실, which the library may refuse to an undergraduate: the card then says only that it failed.
-const GRADUATE_ROOM = '8F-grad-reading-room';
+export {
+  BOOK_FAILED,
+  NO_FREE_SEAT,
+  NOT_BOOKED,
+  SEAT_TAKEN,
+  SEATS_UNREAD,
+  SLOT_PASSED,
+  TIME_CHANGED,
+} from './seat-booking';
 
 // After 예약하기 or 취소 (the seat card's 닫기), the card offers nothing more: the chat keeps how it ended
 // (`LibraryCardActions.finish`).
@@ -78,56 +77,6 @@ interface BookSeatCardProps {
   actions: LibraryCardActions;
 }
 
-function slotOf(card: LibraryCardData): Slot {
-  return {
-    date: card.date ?? koreaDateKey(now()),
-    start: card.start ?? nextStart(now()),
-    minutes: card.minutes ?? 120,
-  };
-}
-
-interface Booking {
-  card: LibraryCardData;
-  space: LibrarySpace;
-  slot: Slot;
-  actions: LibraryCardActions;
-  close: (closed: Closed) => void;
-  choose: (label: string) => void;
-  reload: () => void;
-  // The stay held as the User's own Quest once booked (P05-14).
-  hold: HoldStay;
-}
-
-// 예약하기: the booking, then the done message; a seat just taken offers the next free one.
-async function sendBooking(booking: Booking, seat: LibrarySeat, press: ConfirmedPress): Promise<CardFailure | null> {
-  const { card, space, slot } = booking;
-  const result = await library.book(seatBookingOf(space, slot, seat), press);
-  const info = result.bookingResultInfo;
-  if (info !== undefined) {
-    booking.close('booked');
-    const made = { slot, label: seat.VNAME, bseqno: bseqnoOf(info), notes: card.notes };
-    booking.hold(space, slot, made.bseqno);
-    const done = doneOf(space, made, now());
-    booking.actions.addOwn({ text: done.title, done });
-    return null;
-  }
-  const fresh = await seatsFor(space, slot);
-  const after = fresh.find(({ SEATNO }) => SEATNO === seat.SEATNO);
-  if (after !== undefined && seatState(after) !== 'free') {
-    const next = nextFreeSeat(fresh, seat.VNAME);
-    if (next !== null) {
-      booking.choose(next.VNAME);
-    }
-    booking.reload();
-    return { failure: null, message: SEAT_TAKEN };
-  }
-  const message = libraryMessage(result);
-  return {
-    failure: null,
-    message: space.id === GRADUATE_ROOM || message === '' ? BOOK_FAILED : `${BOOK_FAILED}: ${message}`,
-  };
-}
-
 interface OfferProps extends BookSeatCardProps {
   seat: LibrarySeat;
   seats: readonly LibrarySeat[];
@@ -148,7 +97,8 @@ function OfferButtons({
   undo,
   onPick,
 }: Pick<OfferProps, 'seat' | 'write' | 'close' | 'actions' | 'undo'> & {
-  onPick: () => void;
+  // 자리 선택하기, which opens the seat picture; null for a space without one.
+  onPick: (() => void) | null;
 }): ReactElement {
   return (
     <Pills>
@@ -167,7 +117,7 @@ function OfferButtons({
           actions.addOwn({ text: NOT_BOOKED });
         }}
       />
-      <Pill label="다른 자리 고르기" onPress={onPick} />
+      {onPick === null ? null : <Pill label="자리 선택하기" onPress={onPick} />}
     </Pills>
   );
 }
@@ -181,7 +131,7 @@ function KioskFoot(): ReactElement {
 
 // The seat offered, its time, the card's buttons and the site's notes.
 function SeatOffer(props: OfferProps): ReactElement {
-  const { card, space, adjustable, seat, seats, slot, setSlot, choose, write } = props;
+  const { card, space, seat, seats, slot, choose, write } = props;
   const [picking, setPicking] = useState(false);
   const open = !write.busy;
   return (
@@ -190,20 +140,23 @@ function SeatOffer(props: OfferProps): ReactElement {
         meta={whenWords(slot.date, slot.start, slot.minutes, now())}
         title={`${spaceWords(space)} · ${seatWords(seat.VNAME)}`}
       />
-      {adjustable && open ? <SlotSteps onChange={setSlot} slot={slot} space={space} /> : null}
       <FailureNote failure={write.failure?.failure ?? null} message={write.failure?.message} onLogIn={write.logIn} />
       {open ? (
         <OfferButtons
           {...props}
-          onPick={() => {
-            setPicking(true);
-          }}
+          onPick={
+            space.mapImage === null
+              ? null
+              : () => {
+                  setPicking(true);
+                }
+          }
         />
       ) : null}
       {open ? <KioskFoot /> : null}
       {write.busy ? <Said>예약하는 중이에요</Said> : null}
       <Notes notes={card.notes.filter((note) => !note.includes(KIOSK))} />
-      <LargeSeatMap
+      <SeatPicker
         onClose={() => {
           setPicking(false);
         }}
@@ -211,6 +164,7 @@ function SeatOffer(props: OfferProps): ReactElement {
           choose(chosen.VNAME);
           setPicking(false);
         }}
+        current={seat.VNAME}
         seats={seats}
         space={space}
         visible={picking}
@@ -303,15 +257,47 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
   );
 }
 
+// The one time the card holds: the kept time as it may be booked now. A start that went by while the card was open
+// moves the kept time on (P15 ticket 58), so that what the card shows, the seats it reads, what it books and the done
+// message name the same time at every moment; while a booking is on its way the kept time stays as it was booked.
+function useOneSlot(room: SeatRoom, busy: boolean): Slot | null {
+  const live = busy ? room.slot : liveSlot(room.shown, room.slot, now());
+  const moved = live !== null && !sameSlot(live, room.slot);
+  useEffect(() => {
+    if (moved && live !== null) {
+      room.setSlot(live);
+    }
+  });
+  return live;
+}
+
+// The card's time as it may be booked now; the card says so when no time is left that day.
 export function BookSeatCard(props: BookSeatCardProps): ReactElement {
   const { card } = props;
-  const [slot, setSlot] = useState<Slot>(() => slotOf(card));
-  const [named, setNamed] = useState<string | null>(card.seat);
-  const room = useSeatRoom(props, slot, setNamed);
+  const room = useSeatRoom(props);
+  // While a booking is on its way its time stays.
+  const busy = props.actions.outcomeOf(props.place)?.kind === 'pending';
+  const live = useOneSlot(room, busy);
+  const changed = card.start !== null && !sameSlot(room.slot, cardSlot(card, now()));
   return (
     <CardBox testID={`library-book-${card.key}`}>
-      <RoomTop room={room} slot={slot} />
-      <SeatPart {...props} named={named} room={room} setNamed={setNamed} setSlot={setSlot} slot={slot} />
+      {room.listing || busy || live === null ? null : (
+        <SlotBand onChange={room.setSlot} slot={live} space={room.shown} />
+      )}
+      {changed && !room.listing ? <Text style={styles.foot}>{TIME_CHANGED}</Text> : null}
+      <RoomTop room={room} slot={live ?? room.slot} />
+      {live === null ? (
+        <Said>{BOOKING_CLOSED}</Said>
+      ) : (
+        <SeatPart
+          {...props}
+          named={room.named}
+          room={room}
+          setNamed={room.setNamed}
+          setSlot={room.setSlot}
+          slot={live}
+        />
+      )}
     </CardBox>
   );
 }

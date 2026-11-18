@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -212,15 +213,18 @@ describe('the seats card, large and tapped', () => {
 
     await pressIn(inCard(`library-seats-${SEATS_CARD.library.key}`), '좌석 현황 크게 보기');
     expect(screen.getByText('관정관 7층 7A 열람실 2 구역 좌석 현황')).toBeVisible();
-    expect(screen.getByText('옆으로 밀어서 보기')).toBeVisible();
+    expect(screen.getByText('밀어서 옮기고, 두 손가락으로 확대해요')).toBeVisible();
     expect(screen.getByTestId('seat-map-large-map-image')).toHaveStyle({ height: 300, width: (300 * 2529) / 1198 });
 
     await pressIn(screen, '7200번 빈 자리');
+    await pressIn(screen, '7200번 선택');
 
     const given = inCard('library-book-book:7F-7A-zone2:2026-11-02:1600:120:s=7200');
     expect(given.getByText('관정관 7층 7A 열람실 2 구역 · 7200번')).toBeVisible();
     expect(given.getByText('오늘 16:00–18:00')).toBeVisible();
-    await pressIn(given, '이용 시간 30분 늘리기');
+    await fireEvent(given.getByRole('adjustable', { name: '끝 시각' }), 'accessibilityAction', {
+      nativeEvent: { actionName: 'increment' },
+    });
     expect(given.getByText('오늘 16:00–18:30')).toBeVisible();
     expectNoWrite(library);
     expect(server.received('POST /assistant/messages')).toHaveLength(1);

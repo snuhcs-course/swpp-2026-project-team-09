@@ -5,6 +5,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { awayPlaceOf } from '@/features/assistant/study-area';
@@ -54,6 +55,8 @@ export interface Everyday {
   me: Me;
   pin: TutorialPin;
   lines: readonly MapLine[];
+  // Clears the walking route: a tap on empty map of the everyday map calls it.
+  clearRoute: () => void;
   cards: readonly CardView[];
   selection: Selection;
 }
@@ -99,13 +102,14 @@ function withBuildingPress(answer: AnswerMap, pressed: PressedPlace, asked: bool
 // while a received invitation's card is, its own way is; while a made Quest's card is, its Places and the User are. A
 // Lookup on screen is drawn as a Plan is, and takes no press (`useLookupMap`). Once any of them closes, a camera left
 // further out than the everyday map allows glides back in. While a meal's Plan is on screen, a press on a building asks
-// about it and the map draws that ("여기면 어때?"). Every request carries the map's visible area at rest
-// (`useViewport`).
+// about it and the map draws that ("여기면 어때?"). On the everyday map, a tap on empty map, one that no mark keeps
+// and where no Place is found, clears the walking route with `clearRoute` (P15 ticket 55). Every request carries the
+// map's visible area at rest (`useViewport`).
 export function useMapView(
   chat: ChatSheetControl,
   map: MainMap,
   room: Room,
-  { me, pin, lines, cards, selection }: Everyday,
+  { me, pin, lines, cards, selection, clearRoute }: Everyday,
   { invitation, made }: UnaskedCards,
 ): MapView {
   const marks = useMarkPresses(chat.chat, me, cards);
@@ -124,7 +128,13 @@ export function useMapView(
   const everyday = answer === null && way === null && !chat.framed && !unasked;
   const asking = howAbout.pressable && plan !== null && !unasked;
   const target = asking ? howAbout.target : selection;
-  const pressed = usePressedPlace(map.camera, target, chat.setTapped, everyday || asking);
+  const pressed = usePressedPlace(
+    map.camera,
+    target,
+    chat.setTapped,
+    everyday || asking,
+    everyday ? clearRoute : undefined,
+  );
   const around = bothTouches(pin.touches, pressed);
   if (answer !== null) {
     return asking ? withBuildingPress(answer, pressed, howAbout.place !== null, around) : { ...answer, around };

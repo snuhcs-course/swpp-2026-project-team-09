@@ -5,12 +5,14 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-18  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
-import { type ReactElement, type ReactNode, useCallback } from 'react';
-import { type LayoutChangeEvent, Keyboard, ScrollView, StyleSheet, View } from 'react-native';
-import { color, radius, shadow, space, text } from '@/design-system';
+import { type ReactElement, useCallback, useState } from 'react';
+import { Keyboard, StyleSheet, View } from 'react-native';
+import { color, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
@@ -31,7 +33,7 @@ import { EarlierTurns, TurnQuestion } from './earlier-turns';
 import { FailedLines, WaitingReply } from './failed-and-waiting';
 import { FollowUpChips } from './follow-up-chips';
 import { useForgetWithUndo } from './forget-with-undo';
-import { useHeldHeight } from './held-height';
+import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { HowAboutCard } from './how-about-card';
 import { KeyboardHeadline } from './keyboard-headline';
 import { LookupCard } from './lookup-card';
@@ -39,10 +41,8 @@ import { MadeCard } from './made-card';
 import { OfferedWords } from './offered-words';
 import { pillIconOf } from './pill-icon';
 import { PlanCard } from './plan-card';
+import type { Raising } from './raise-handle';
 import { type RefusalAsk, RefusalReply } from './refusal-reply';
-
-// Above the first of the card's parts.
-const CONTENT_TOP = space[5];
 
 interface WordsProps {
   bubble: ChatBubble;
@@ -123,71 +123,23 @@ interface AnswerCardProps {
   keyboardUp: boolean;
   onHeight: (height: number) => void;
   onClose: () => void;
-}
-
-interface FrameCardProps {
-  // From the stage's bottom: the room the card keeps under its content.
-  barRoom: number;
-  // The stage's height, null until it is laid out: the card takes at most about half of it.
-  stageHeight: number | null;
-  onHeight: (height: number) => void;
-  testID: string;
-  // Keeps the content's height, while a reply is on its way.
-  hold?: boolean;
-  // Null leaves the card empty.
-  children: ReactNode;
-}
-
-// The most the card's content takes, about half the stage, null until the stage is laid out. It never takes less
-// than the headline's line, which is all it shows while the keyboard is up and leaves little of the stage.
-const LEAST_CONTENT = CONTENT_TOP + text.title.lineHeight;
-
-function contentMaxOf(stageHeight: number | null, barRoom: number): number | null {
-  return stageHeight === null ? null : Math.max(LEAST_CONTENT, stageHeight / 2 - barRoom);
-}
-
-// The frame's card, attached to the bottom of the screen. Its content scrolls inside it.
-export function FrameCard(props: FrameCardProps): ReactElement {
-  const { barRoom, stageHeight, onHeight, testID, hold = false, children } = props;
-  const contentMax = contentMaxOf(stageHeight, barRoom);
-  const { minHeight, onContentSizeChange, scroll } = useHeldHeight(hold);
-  return (
-    <View
-      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-        onHeight(nativeEvent.layout.height);
-      }}
-      style={[styles.card, { paddingBottom: barRoom }]}
-      testID={testID}
-    >
-      {children === null ? null : (
-        <ScrollView
-          contentContainerStyle={[styles.content, { minHeight }]}
-          keyboardShouldPersistTaps="handled"
-          onContentSizeChange={onContentSizeChange}
-          ref={scroll}
-          testID={`${testID}-content`}
-          style={contentMax === null ? undefined : { maxHeight: contentMax }}
-        >
-          {children}
-        </ScrollView>
-      )}
-    </View>
-  );
+  raising: Raising;
 }
 
 // The card at the bottom: what was asked, the turn's bubbles without a bubble around them or the dots with 그만 in
 // their place, and "지난 답 N개" under them, then the room of the bar. While the keyboard is up, the turn's headline
-// stands in place of its content.
+// stands in place of its content, unless the card is raised.
 function AnswerCard(props: AnswerCardProps): ReactElement {
-  const { control, cardActions, barRoom, stageHeight, keyboardUp, onHeight, onClose } = props;
+  const { control, cardActions, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising } = props;
+  const card = { barRoom, onHeight, raising, stageHeight };
   const { bubbles, waiting, retry } = control.chat;
   const turn = turnOf(bubbles);
   const after = turn?.after ?? [];
   const last = bubbles.at(-1);
   const contentMax = contentMaxOf(stageHeight, barRoom);
   return (
-    <FrameCard barRoom={barRoom} hold={waiting} onHeight={onHeight} stageHeight={stageHeight} testID="answer-card">
-      {keyboardUp ? (
+    <FrameCard {...card} hold={waiting} testID="answer-card">
+      {keyboardUp && !raising.raised ? (
         <KeyboardHeadline control={control} />
       ) : (
         <>
@@ -248,7 +200,8 @@ interface FramedProps {
 // "새 대화" forgets it, with 되돌리기 for a few seconds. While a building is asked about over the answer ("여기면 어때?"), ✕ and back return to the
 // answer instead, and the pill names the building. A Friend's profile opened from the card stands over it until a new
 // reply; while it is shown, the back button hides it alone. This handler is the only one, and listens only while the
-// main screen is in front, so a screen pushed from the profile goes back to it.
+// main screen is in front, so a screen pushed from the profile goes back to it. While the card is raised, back lowers it
+// first.
 function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedProps): ReactElement {
   const { chat, leaving, hide } = control;
   const { reset } = chat;
@@ -261,13 +214,18 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
   const profileShown = profile.friend !== null && !keyboardUp;
   const { title, keep } = control.howAbout;
   const leave = title === null ? close : keep;
-  useBackToClose(useIsFocused(), profileShown ? profile.hide : leave, { edge: false });
+  const [raised, setRaised] = useState(false);
+  const lower = useCallback((): void => {
+    setRaised(false);
+  }, []);
+  useBackToClose(useIsFocused(), profileShown ? profile.hide : raised ? lower : leave, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   return (
     <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
       <AnswerPill
         asked={title ?? turnOf(chat.bubbles)?.asked ?? ''}
         icon={title === null ? pillIconOf(chat.bubbles) : 'pin'}
+        keyboardUp={keyboardUp}
         onClose={leave}
         onNew={forget}
       />
@@ -278,6 +236,7 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
         keyboardUp={keyboardUp}
         onClose={close}
         onHeight={onHeight}
+        raising={{ raised, setRaised }}
         stageHeight={stageHeight}
       />
       {sheets}
@@ -308,17 +267,6 @@ export function AnswerFrame({ control, inputTop, keyboardUp, onHeight, room }: A
 }
 
 const styles = StyleSheet.create({
-  card: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    left: 0,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    backgroundColor: color.surface,
-    boxShadow: shadow.sheet,
-  },
-  content: { gap: space[3], paddingTop: CONTENT_TOP, paddingHorizontal: space[4] },
   part: { gap: space[2] },
   words: { ...text.bodyLg, color: color.ink },
 });

@@ -69,12 +69,18 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 6. The app's icon, splash and notification icon are still Expo's defaults: give the app its own, the "SNU / now" wordmark. A native change. Ticket [06](issues/06-app-icon.md).
 7. The map's credit and Kakao's logo float far above the AI input, over the place of a row of buttons that is no longer drawn: nothing stands over an empty place above the input. Ticket [07](issues/07-credit-above-the-input.md).
 8. The sign-in screen: remove the drawn character, put the sign-in button in the middle, and show the app icon's wordmark in place of the name and its tagline. Ticket [08](issues/08-sign-in-wordmark.md).
+9. The AI input's keyboard goes down only on a send: a press anywhere outside the input puts it down, and does nothing else. Ticket [09](issues/09-keyboard-down-on-press-outside.md).
+10. An Invite Link that starts the stopped app lands on the map, on Android, and in a browser its address answers 404: the stopped app shows the accept screen, and the address is a page that opens the app. Ticket [10](issues/10-invite-link-cold-start-and-page.md).
 
 ### 안진영 (`51`–`99`)
 
 51. The chat's system prompt: cache it across Users and minutes, with the time after the breakpoint, and teach it the campus's short names (학관, 중도, …). Ticket [51](issues/51-system-prompt-cache-and-campus-terms.md).
 52. 이미지로 불러오기 reads real screenshots badly: read them with the AI on the blocks the phone finds, for any timetable layout. Ticket [52](issues/52-timetable-image-reading.md).
+54. The 행사 tab is hard to read: long titles and places run over many lines, and a card without its badge has an empty band. Draw it as the `Events` board does: a date column, one row per event, and a sheet for the details. Ticket [54](issues/54-events-tab-as-drawn.md).
+55. A walking route on the map cannot be cancelled, and its line stays: a tap on empty map clears it. Ticket [55](issues/55-cancel-the-walking-route.md).
 56. An answer's walking routes are drawn as straight lines: each walk follows the path the walking route service finds. Ticket [56](issues/56-answer-routes-along-the-paths.md).
+57. 관정 booking: a login takes effect only on a second 로그인, the time moves only by ±30분 buttons, and a pressed seat is taken at once without showing which: the login takes effect at once, the time is a bar, and a seat is picked on the room's picture. Ticket [57](issues/57-kwanjeong-login-and-seat-picker.md).
+58. 관정 booking, after #360: a card left open across its start can show the old time while it books, and a login closed while its check runs can close the login opened again after it. Ticket [58](issues/58-kwanjeong-follow-ups.md).
 
 ## Testing Decisions
 

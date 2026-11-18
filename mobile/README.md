@@ -183,7 +183,8 @@ project is generated. The build then declares an App Link with `autoVerify` for 
 (`app.config.ts`), and Android checks it against `https://<host>/.well-known/assetlinks.json`, which the main server
 answers. The check passes only when the build's signing certificate is among the main server's
 `ANDROID_CERTIFICATE_FINGERPRINTS`; the debug key's fingerprint is in the main server's `.env.example`. Without the
-host the build declares no App Link, and a link opens the app only through `snunow://invite/<token>`.
+host the build declares no App Link, and a link opens the app only through `snunow://invite/<token>`: the https
+address opens the main server's page in the browser, whose button opens that.
 
 `pnpm android` generates the Android project in `android/` (not committed), builds the app, installs it on the
 running emulator, opens it and starts the development server. The first build takes 15 to 30 minutes; later ones a
@@ -371,8 +372,7 @@ and the relaunch in M1 keeps it. The flows grant the app no permission: granted 
 Google Play services may ask over the map to turn on Location Accuracy, a system screen that depends on the emulator's
 settings. So the app explains the location once on the map, and the flows answer "나중에".
 
-M2 on a cold start fails until the ticket in `.scratch/iteration-2/fix-invite-link-cold-start/` is fixed: the app
-lands on the map, not on the accept screen. M1 and M2 on a warm start pass.
+M1 and M2, on a cold and on a warm start, pass.
 
 Each run writes into its own folder under `device-results/`, which git ignores, named by the date, the time and the
 commit, such as `device-results/2026-10-23T001807-74381a9b/`. It holds `report.xml`, the JUnit report, and Maestro's
@@ -549,7 +549,11 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   the place and says "캠퍼스 밖에 있어요"; before the first position it says "위치를 찾는 중이에요". Nothing is drawn
   for it later either, when the position comes: neither that way nor the opening route. A way that is not found says
   "길을 찾지 못했어요". Leaving the screen drops the line and the opening route that was still to come, and coming
-  back draws nothing by itself.
+  back draws nothing by itself. A tap on empty map clears the line too (`route.clear`, P15 ticket 55): a tap that no
+  mark keeps, on the everyday map, where `GET /places/at` finds no Place or cannot answer (`onEmptyTap` of
+  `usePressedPlace`). A tap that opens a card leaves it, "새 대화" and closing the answer frame leave it, and once
+  cleared the opening route is not drawn again until the screen starts anew; a tap before it was asked, as before the
+  first position, changes nothing, and it still comes.
   The line is the wireframe's: dots in the Quest's colour, 3 wide, 2 long and 6 apart (`ROUTE_STYLE`).
 - The zoom in and zoom out buttons change the zoom by a factor 1.5 around the middle of the view. "내 위치로 이동"
   brings the map to the User at the larger of the current zoom and the `close` level; off campus it says "캠퍼스 밖에
@@ -614,7 +618,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     starts a new line, and only the send button sends. It takes at most 1,000 characters, as much as the main server
     takes in a message. The send button is `snuBlue` while there is something to send,
     and grey and disabled while the input is empty or the Assistant works. Speech input and autocomplete would attach
-    to it.
+    to it. While its keyboard is up, a transparent scrim ("키보드 내리기", `keyboard-scrim.tsx`) lies over the map,
+    the lists, the zoom control and an open card: a press or a drag there only puts the keyboard down. The bar, the
+    examples and the answer frame's card and pill stand over it, and a press on the pill beside its buttons does the
+    same.
   - "활성 파티" never shrinks: its two lines stay whole on a screen narrower than the wireframe's 390.
 - **The answer frame** (`answer/answer-frame.tsx`), the one screen of the conversation with the Assistant. While the
   bar has the keyboard and nothing is asked, the three examples of the empty chat stand above it as chips with an icon
@@ -908,13 +915,18 @@ cells of one width with the current one chosen when all are at it, "넘기기", 
 보여요"); a removed Friend stays as they are. An answer, a skip, and closing the sheet record the question for every
 Friend named with `recordFriendsAsked(ids, 'plan')`.
 
-**An Invite Link** is `<PUBLIC_URL>/invite/<token>`, and the main server's page opens `snunow://invite/<token>` where a
-messenger shows the address in its own browser. Both reach the route `/invite/[token]`. A link opened before the User
-belongs to the signed-in place (at the start of the app, or signed out) meets the signed-in place's guard, which keeps
-its token on the phone (`inviteToken` of `Kept`) before it leads away; once the User is there, after the loading
-screen or after the sign-in, the consent and Onboarding, the layout opens the accept screen of the kept token. Opened
-while signed in, the link shows its screen at once. The accept screen drops the kept token, and a later link replaces
-it. Android opens the https address in the app only through App Links (see "Invite Links on Android" below).
+**An Invite Link** is `<PUBLIC_URL>/invite/<token>`. Opened in a browser, such as a messenger's own, an iPhone's or one
+on a phone without the app, the address answers the main server's page, whose button "SNU Now에서 열기" opens
+`snunow://invite/<token>`. Both reach the route `/invite/[token]`. A link that starts the app has its token kept on the
+phone (`inviteToken` of `Kept`) by the router's hook for the address the system opens the app with
+(`src/app/+native-intent.ts`), before the first screen renders. On Android the router gets that address as a promise,
+after its first render, and starts at `/` without it when React Native answers after 150 ms, so the hook reads it from
+expo-linking, which holds it and each later link, and clears it at every address so that none opens twice. A link
+opened while the app runs and the User is signed out meets the signed-in place's guard, which keeps its token before it
+leads away. Once the User is in the signed-in place, after the loading screen or after the sign-in, the consent and
+Onboarding, the layout opens the accept screen of the kept token. Opened while signed in, the link shows its screen at
+once. The accept screen drops the kept token, and a later link replaces it. Android opens the https address in the app
+only through App Links (see "Invite Links on Android" above).
 
 **The Quest list on the whole screen** (`src/screens/quests/`, the `MainQuests` frame, `/quests`) is a
 `FullScreenPanel` that comes up from the bottom: ✕ "닫기" and "퀘스트 {n}", n the Quests that have not ended; the
@@ -1146,20 +1158,30 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
 
 - The app bar (`events-bar.tsx`) has "행사" and the search, which puts the field "행사 검색" and ✕ "검색 닫기" in
   place of the title and keeps the events whose title, place or description holds the words.
-- The chips "전체", "오늘", "이번 주" (to Sunday in Korea's time) and "파티 모집 중" (an event with a recruiting Quest)
-  filter the list. Empty: "예정된 행사가 없어요" without any event, "검색 결과가 없어요" after a filter or a search.
-- A card (`event-item.tsx`) has "같이 갈 파티 {n}개" for the recruiting Quests of `GET /quests/recruiting`, "내 파티"
-  when the User holds a Quest for the event, the source from the app's own list of announcers, the title, the time
-  ("M월 D일까지" for an event whose end is more than 24 hours after its start, on every card and sheet that shows an
-  event's time) and the place, and "자세히", which opens `sourceUrl` in the browser and is left out without one, and "파티 찾기/모집".
-  AI matching left the main UI on 2026-11-10 (P06-03): the card has no "AI 매칭" and the app no matching screen, though
-  the main server's matching routes and `apiClient`'s calls for them stay. At `/events?focus=<id>` the list shows
-  every event, scrolls to the card and marks it with a navy border and a glow for 2.6 s (`use-focus.ts`).
-- The ☆ "즐겨찾기" (`favorite-toggle.tsx`) at a card's top right, right of the source, stars the event or clears its
-  star (`PUT` and `DELETE /global-events/:id/favorite`). It changes at once and back with "즐겨찾기를 바꾸지 못했어요"
-  when the main server refuses. The chat's event cards have it too, and so does the map's card of one event, left of
-  the X; a grouped pin's card marks a Favorite Event's row with ★ instead. Whether the User starred an event is read
-  from `GET /global-events` alone, so every screen shows the same.
+- The filters "전체", "오늘", "이번 주" (to Sunday in Korea's time) and "파티 모집 중" (an event with a recruiting Quest
+  the User can join; the User's own 파티 is not one) filter the list; the chosen one is bold navy on light blue. Under them, on the white ground,
+  "다가오는 행사" heads the list. Empty: "여기서는 학교 행사를 모아 볼 수 있어요" with "파티 찾기" without any event,
+  "해당하는 행사가 없어요" after a filter, and "검색 결과가 없어요" after a search.
+- A row (`event-row.tsx`, P15 ticket 54) has the date column (the day of the month, and "{M}월 · 오늘", "내일" or the
+  weekday; today for an event that has begun and not ended, such as an exhibition until 11월 30일), then the source from the app's own list of announcers, the title, and the hours and the place on one line
+  ("18:00–20:00 · 301동 대강당"; "M월 D일까지" for an event whose end is more than 24 hours after its start), each of
+  the two cut at 2 lines. Its party line says "모집 중인 파티 {n}" (the recruiting Quests of `GET /quests/recruiting`,
+  which the User does not hold, as the map card and the chat card count them) or "함께 갈 파티 찾기", and opens 파티
+  찾기/모집; beside it, "내 파티" when the User holds a Quest for the event with others or open to them, closed ones
+  too. The 48-point touch area of the line and of the filters reaches past their 40-point height. A press elsewhere on the row
+  opens the detail sheet (`event-detail-sheet.tsx`, the `EventsDetail` frame): the source, "내 파티" as on the row, the whole title, "언제",
+  "어디", the description, "원문 보기", which opens `sourceUrl` in the browser and is left out without one, and
+  "파티 찾기/모집" ("모집 중인 파티 {n} · 찾기/모집"), which leads on to 파티 찾기/모집. At `/events?focus=<id>` the
+  list shows every event, scrolls to the row and marks it with a light blue ground for 2.6 s (`use-focus.ts`). The
+  frame's 분류 tabs and "대상" are not drawn: a Global Event has no category or audience. AI matching left the main
+  UI on 2026-11-10 (P06-03): the app has no matching screen, though the main server's matching routes and
+  `apiClient`'s calls for them stay. The chat's event cards are `event-item.tsx`, with "자세히" and "파티 찾기/모집".
+- The ☆ at a row's top right and in the detail sheet (`favorite-toggle.tsx`), named "즐겨찾기" as everywhere in the
+  app, keeps the event or drops it (`PUT` and `DELETE /global-events/:id/favorite`): a Favorite
+  Event. It changes at once and back with "즐겨찾기를 바꾸지 못했어요" when the main server refuses. The chat's event
+  cards have it as the ☆ "즐겨찾기", and so does the map's card of one event, left of the X; a grouped pin's card
+  marks a Favorite Event's row with ★ instead. Whether the User starred an event is read from `GET /global-events`
+  alone, so every screen shows the same.
 - **파티 찾기/모집** (`recruiting-sheet.tsx`) lists the User's own Quest for the event ("내 파티" when the User leads it,
   "참여 중" with its Leader otherwise), then the Quests gathering for it (`GET /quests/recruiting?globalEventId=`),
   each with its fill and its next Sub Quest. The User's own opens its room; another's asks "‘{title}’에
@@ -1972,6 +1994,35 @@ The login opens `…/pc/main` in a visible web view and injects nothing into it.
 answers with JSON (`loginWorks`); only then is the flag set. ✕ is "no session", and after 5 minutes the view closes
 with "로그인하지 못했어요".
 
+The site serves `/pc/main` before it sends the User to the school's login too, so the first landing starts a check
+with no session, which can take up to 35 seconds. The checks belong to the provider, not to the view
+(`login-checks.ts`): one runs at a time, on the hidden view's page loaded afresh (`reloadPage()`). A landing that comes
+while one runs is kept, and so is ✕ pressed while one runs; when the running check finds no session, one more check is
+made, but not while the visible view is off the site's screens (the User in the school's login): it waits for the
+next landing or the close. After ✕ or the five minutes, the login's outcome (and "로그인하지 못했어요") waits for a check
+still to come. A check that finds the session sets the flag even after the view was closed, so a User who logged in and then
+closed the view is still logged in, and the cards follow. Every check ends with the hidden view unmounted unless the
+flag is set, and a logout or the provider's end cancels the checks (P15 ticket 57).
+
+Every mounted card follows the flag (`useLibraryLoad`): after a login, a card whose read failed for want of a session
+reads again; after the session was ended on purpose (`endLibrarySession`, which clears the flag as `loggedOut`), a card
+that had read reads again and shows "관정도서관 로그인이 필요해요". A session that ended under a call is the failed card's
+to show, with its 로그인 that sends the pressed write once more.
+
+### The seat book card's time and seat (P15 ticket 57)
+
+The seat book card shows its time as a band (`slot-band.tsx`, rules in `cards/slot-band.ts`): a track from the
+space's opening to its closing time, the band with a handle at each end, and "14:00–20:00 · 6시간" under it. A drag
+moves an end or the band whole, by the space's step (30 minutes), never before the next 30 minutes today, after
+closing, or outside the space's shortest and longest length; the seats and the room chip's counts are read again when
+the finger is let go. `now` is read at each render, at the let-go and at 예약하기: a start that went by moves on with the
+end along, a day with no room left says "오늘은 예약 시간이 끝났어요", and the booking (`seat-booking.ts`) refuses a slot
+that is no longer valid. The time and the seat on screen are kept with the chat where the room is (`CardRoom`), so
+later requests send the key of the card as it is on screen.
+자리 선택하기 opens the room's seat picture (`seat-picker.tsx`): the site's `area_<sectorNo>.png` with each seat at its
+`POSX`/`POSY` from `getSeatBookingList` and its number, zoomed by two fingers or 확대 and 축소 (1 to 4 times). A press
+picks a free seat and colours it alone; "<n>번 선택" puts it in the card. A space without `mapImage` has no picture.
+
 ### Logout
 
 `endLibrarySession()` (`end-session.ts`) is the one step that ends the library session. Three paths take it:
@@ -1982,8 +2033,10 @@ with "로그인하지 못했어요".
   tokens. It is a refused token or the Session replaced on another phone, and does not go through `signOut()`.
 
 The two sign-outs take it whether or not the flag is set and do not wait on it (`endLibrarySessionInBackground()`).
-In order: with the flag set, the hidden view loads the site's logout URL (15 seconds at most, and a failure does not
-stop the rest; without the flag there is no view, no call and no wait); every web-view cookie is cleared by
+In order: with the flag set, or once a login view was opened since the session last ended (the cookie jar may then hold
+a session the flag never knew of, as after a login closed before its check), the hidden view is mounted if it is not
+and loads the site's logout URL (15 seconds at most, and a failure does not stop the rest; otherwise there is no view,
+no call and no wait); every web-view cookie is cleared by
 `clearWebViewCookies()`; and the flag is cleared. The cookies and the flag are cleared even when an earlier part fails.
 
 ### The cookie module and its lint rule

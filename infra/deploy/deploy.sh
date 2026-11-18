@@ -5,6 +5,7 @@
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
 # 2026-11-15  Opus 5.5   prompted by fyoon46
+# 2026-11-18  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # One run of the Dev Server's deployment, started by snu-now-deploy.timer: brings the stack up to the tip of
@@ -50,12 +51,11 @@ plan_run() {
   fi
 }
 
-# Prints the ids of the check suites of GitHub's check-suites answer on stdin whose CI runs always do every job: the
-# merge queue's and those of pushes to development or main. A working branch's run may skip work its changes cannot
-# reach, and a Main's the work the merge queue already passed on the commit (.github/ci/changes.sh), so their checks are
-# not counted.
+# Prints the ids of the check suites of GitHub's check-suites answer on stdin whose CI runs always do every job: those
+# of pushes to a Main, to development or to main. A working branch's run and the merge queue's may skip work their
+# changes cannot reach and run only the unit tests (.github/ci/changes.sh), so their checks are not counted.
 full_run_suites_from_json() {
-  jq -r '.check_suites[]? | select((.head_branch // "") | test("^(gh-readonly-queue/.+|main|development)$")) | .id'
+  jq -r '.check_suites[]? | select((.head_branch // "") | test("^([^/]+/Main|main|development)$")) | .id'
 }
 
 # Prints `name<TAB>status<TAB>conclusion` for each check run of GitHub's check-runs answer on stdin that belongs to one
