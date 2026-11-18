@@ -10,6 +10,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { FriendViewService } from '../../friends/friend-view.service.js';
@@ -19,6 +20,7 @@ import { MenusService } from '../../menus/menus.service.js';
 import { PlacesService } from '../../places/places.service.js';
 import { RecruitingService } from '../../quests/recruiting.service.js';
 import { ShuttleService } from '../../shuttle/shuttle.service.js';
+import { CAMPUS_TERMS_RULES } from '../campus-terms.js';
 import { EVENT_RULES, planEvents } from '../events/event-tools.js';
 import { type Feature, type Tool } from '../feature.js';
 import { FREE_TIME_EVENT_RULES, FREE_TIME_RULES } from '../free-time/free-time-rules.js';
@@ -90,22 +92,24 @@ export interface ChatAssistantOptions {
   drawsArea?: boolean;
 }
 
-function instructionsOf(
-  freeTimeRules: readonly string[],
-  libraryRules: string,
-  drawsAnswers: boolean,
-): (now: Date) => string {
-  return (now) => [chatRules(now, drawsAnswers), ...freeTimeRules, libraryRules, TUTORIAL_RULES].join('\n\n');
+// The system prompt's part that is the same for every request, whoever asks and whenever, which the Anthropic path
+// caches (adapter.ts): the rules and the campus short names.
+function instructionsOf(freeTimeRules: readonly string[], libraryRules: string, drawsAnswers: boolean): string {
+  return [chatRules(drawsAnswers), ...freeTimeRules, libraryRules, TUTORIAL_RULES, CAMPUS_TERMS_RULES].join('\n\n');
+}
+
+// The system prompt's lines of a request made at `now`, sent after the rest: the time in Korea, which the rules' "now"
+// means.
+function requestInstructionsOf(now: Date): string {
+  return `Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such as 오늘, 내일, 이번 주 and 점심 against it.`;
 }
 
 // In the chat of an app that draws answers, findFriend answers where a Friend is.
 const NO_POSITIONS = `
 - You cannot see where anyone is. When asked where a Friend is, tell the User to look at the map in the app.`;
 
-function chatRules(now: Date, drawsAnswers: boolean): string {
+function chatRules(drawsAnswers: boolean): string {
   return `You are SNU Now AI, the assistant in SNU Now, an app for campus life at Seoul National University.
-
-Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such as 오늘, 내일, 이번 주 and 점심 against it.
 
 - Answer in the language of the User's last message. In Korean, use 해요체.
 - Answer facts about campus, such as menus, the shuttle and events, only from the results your tools returned in this message. Never answer them from memory, and never guess or invent one. When a tool returns result "none", say plainly that there is none and why.
@@ -230,6 +234,7 @@ export function chatAssistant(services: ChatAssistantServices, options?: ChatAss
   );
   return {
     instructions: instructionsOf(planned.rules, drawsAnswers ? LIBRARY_ANSWER_RULES : LIBRARY_RULES, drawsAnswers),
+    requestInstructions: requestInstructionsOf,
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
     tools: {
       getMenus: getMenus(menus),

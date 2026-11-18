@@ -5,6 +5,7 @@ Status: ready-for-human
 Schedule row: Iteration 4, P15 "Clean up features outside the main UI", due 2026-11-19. Workers: 김태현 (`TaeHyun79`) and 안진영 (`AhnJinYoung`).
 
 References:
+
 - The team canvas (SNU Now 와이어프레임, https://claude.ai/code/artifact/004b1b85-ec1c-47c1-a8f9-d429b971846f): the after wireframe of each item is drawn there before its ticket is written.
 - `CLAUDE.md`, "The app's native files"; ADR 0007 (test levels).
 
@@ -68,11 +69,13 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 6. The app's icon, splash and notification icon are still Expo's defaults: give the app its own, the "SNU / now" wordmark. A native change. Ticket [06](issues/06-app-icon.md).
 7. The map's credit and Kakao's logo float far above the AI input, over the place of a row of buttons that is no longer drawn: nothing stands over an empty place above the input. Ticket [07](issues/07-credit-above-the-input.md).
 8. The sign-in screen: remove the drawn character, put the sign-in button in the middle, and show the app icon's wordmark in place of the name and its tagline. Ticket [08](issues/08-sign-in-wordmark.md).
+9. The AI input's keyboard goes down only on a send: a press anywhere outside the input puts it down, and does nothing else. Ticket [09](issues/09-keyboard-down-on-press-outside.md).
 10. An Invite Link that starts the stopped app lands on the map, on Android, and in a browser its address answers 404: the stopped app shows the accept screen, and the address is a page that opens the app. Ticket [10](issues/10-invite-link-cold-start-and-page.md).
 
 ### 안진영 (`51`–`99`)
 
-None yet.
+51. The chat's system prompt: cache it across Users and minutes, with the time after the breakpoint, and teach it the campus's short names (학관, 중도, …). Ticket [51](issues/51-system-prompt-cache-and-campus-terms.md).
+52. 이미지로 불러오기 reads real screenshots badly: read them with the AI on the blocks the phone finds, for any timetable layout. Ticket [52](issues/52-timetable-image-reading.md).
 
 ## Testing Decisions
 

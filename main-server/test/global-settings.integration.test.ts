@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SchedulerRegistry } from '@nestjs/schedule';
@@ -54,6 +55,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  vi.useRealTimers();
   await Promise.all(pods.splice(0).map((pod) => pod.close()));
 });
 
@@ -179,6 +181,9 @@ describe("the global settings' minute check", () => {
   it('is read by no pod, the saving one included, before the minute check, and by both after it', async () => {
     const a = await startPod();
     const b = await startPod();
+    // Mid-minute, so that the minute does not turn between the save's reading of the clock and the check's.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2027-03-02T02:00:30Z'));
 
     const { appliesAt } = await a.settings.save('test.key', 'beta', administratorId);
 

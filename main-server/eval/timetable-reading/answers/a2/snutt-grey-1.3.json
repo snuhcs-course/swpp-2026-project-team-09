@@ -1,0 +1,139 @@
+{
+  "screenshot": "snutt-grey-1",
+  "model": "claude-haiku-5-5",
+  "ms": 10319,
+  "inputTokens": 4024,
+  "outputTokens": 2593,
+  "answer": {
+    "title": null,
+    "axis": ["9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21"],
+    "blocks": [
+      {
+        "day": "월",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["인공지능"],
+        "name": "인공지능",
+        "room": "302-208",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["컴퓨터프로그래", "밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": "302-105",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["인공지능"],
+        "name": "인공지능",
+        "room": "302-208",
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["컴퓨터프로그래", "밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": "302-105",
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "14:00",
+        "end": "15:15",
+        "nameLines": ["논리설계"],
+        "name": "논리설계",
+        "room": "301-118",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "14:00",
+        "end": "15:15",
+        "nameLines": ["공학수학 1"],
+        "name": "공학수학 1",
+        "room": "302-208",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "14:00",
+        "end": "15:15",
+        "nameLines": ["논리설계"],
+        "name": "논리설계",
+        "room": "301-118",
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "14:00",
+        "end": "15:15",
+        "nameLines": ["공학수학 1"],
+        "name": "공학수학 1",
+        "room": "302-208",
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "15:30",
+        "end": "16:45",
+        "nameLines": ["자료구조"],
+        "name": "자료구조",
+        "room": "302-105",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "15:30",
+        "end": "16:45",
+        "nameLines": ["대학 글쓰기 2:", "과학기술글쓰기"],
+        "name": "대학 글쓰기 2: 과학기술글쓰기",
+        "room": "43-1-403",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "15:30",
+        "end": "16:45",
+        "nameLines": ["자료구조"],
+        "name": "자료구조",
+        "room": "302-105",
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "15:30",
+        "end": "16:45",
+        "nameLines": ["대학 글쓰기 2:", "과학기술글쓰기"],
+        "name": "대학 글쓰기 2: 과학기술글쓰기",
+        "room": "43-1-403",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "18:30",
+        "end": "20:20",
+        "nameLines": ["컴퓨터프로그래", "밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": "302-105",
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "19:00",
+        "end": "20:50",
+        "nameLines": ["논리설계"],
+        "name": "논리설계",
+        "room": "302-310-2",
+        "cut": false
+      }
+    ]
+  }
+}

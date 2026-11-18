@@ -3,9 +3,10 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { centreY, clipWord, meanConfidence, type Word } from './words';
+import { centreY, clipWord, type Word } from './words';
 
 // ④ A block's name and room, from the OCR lines inside it.
 
@@ -18,8 +19,6 @@ export const NAME_LENGTH = 30;
 export interface BlockLine {
   text: string;
   y: number;
-  // ML Kit's confidence, character-weighted over its words; null on iOS. Only a room's link reads it.
-  confidence: number | null;
   // Whether the line is a single OCR element read whole.
   oneElement: boolean;
   // Whether no element was cut at the block's sides: a room cut at a column edge (`43-1-304` → `3-1-304`) can still
@@ -38,7 +37,6 @@ export interface RoomText {
   text: string;
   // Whether none of the room part's words was cut at the block's sides.
   unclipped: boolean;
-  confidence: number | null;
   // Whether the room was read inside one OCR element read whole.
   oneElement: boolean;
 }
@@ -61,7 +59,6 @@ export function roomOf(text: string): string | null {
 
 interface Piece {
   text: string;
-  confidence: number | null;
   x0: number;
   x1: number;
   y: number;
@@ -75,7 +72,6 @@ function lineOf(pieces: readonly Piece[]): BlockLine {
   return {
     text: ordered.map((piece) => piece.text).join(' '),
     y: pieces.reduce((sum, piece) => sum + piece.y, 0) / pieces.length,
-    confidence: meanConfidence(pieces),
     oneElement: pieces.length === 1 && (pieces[0]?.whole ?? false),
     unclipped: pieces.every((piece) => piece.whole),
     x0: Math.min(...pieces.map((piece) => piece.x0)),
@@ -96,7 +92,6 @@ export function linesIn(words: readonly Word[], box: { x0: number; x1: number; y
       const pieces = byLine.get(word.line) ?? [];
       pieces.push({
         text,
-        confidence: word.confidence,
         x0: Math.max(word.x0, box.x0),
         x1: Math.min(word.x1, box.x1),
         y,
@@ -159,7 +154,6 @@ function roomTextOf(lines: readonly BlockLine[]): RoomText {
   return {
     text: rest.length > 0 || roomOf(first) !== null ? first : joined,
     unclipped: lines.every((line) => line.unclipped),
-    confidence: meanConfidence(lines),
     oneElement: endsInFirstLine && (firstLine?.oneElement ?? false),
   };
 }

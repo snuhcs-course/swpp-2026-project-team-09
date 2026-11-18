@@ -10,6 +10,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
@@ -26,6 +27,7 @@ import { namedSignInEnding, signInEnding } from '@/dev-settings';
 import { endLibrarySessionInBackground } from '@/library/end-session';
 import { unregisterPush } from '@/push/device';
 import { keep, readKept } from '@/storage/kept';
+import { forgetReadingAgreement } from '@/storage/reading-notice';
 
 // Sign-in lives behind these two operations. A build that holds Google's sign-in module asks Google which account.
 // Where the app asks the main server (`asksMainServer()`), Google's ID token goes to the main server, whose answer says
@@ -145,6 +147,8 @@ export async function signOut(): Promise<void> {
   }
   endLibrarySessionInBackground();
   await keep({ signedIn: false, suggestion: null });
+  // The next User on this phone is asked again before a timetable picture is sent (P15-52).
+  await forgetReadingAgreement();
   if (googleAvailable()) {
     await forgetGoogleQuietly();
   }

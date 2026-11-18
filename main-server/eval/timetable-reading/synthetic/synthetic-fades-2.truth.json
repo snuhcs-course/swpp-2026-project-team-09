@@ -1,0 +1,52 @@
+{
+  "screenshot": "synthetic-fades-2.png",
+  "app": "synthetic",
+  "title": "fade 2",
+  "times": [
+    {
+      "weekday": "tuesday",
+      "start": "10:00",
+      "end": "11:15",
+      "name": "경제학원론",
+      "roomLine": "16-201",
+      "building": "16",
+      "room": "201"
+    },
+    {
+      "weekday": "thursday",
+      "start": "10:00",
+      "end": "11:15",
+      "name": "경제학원론",
+      "roomLine": "16-201",
+      "building": "16",
+      "room": "201"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "13:00",
+      "end": "14:50",
+      "name": "물리학실험 2",
+      "roomLine": "26-302",
+      "building": "26",
+      "room": "302"
+    },
+    {
+      "weekday": "monday",
+      "start": "19:00",
+      "end": "20:50",
+      "name": "논리설계",
+      "roomLine": "302-310-2",
+      "building": "302",
+      "room": "310-2"
+    },
+    {
+      "weekday": "friday",
+      "start": "19:00",
+      "end": "21:50",
+      "name": "창의공학설계",
+      "roomLine": "301-204",
+      "building": "301",
+      "room": "204"
+    }
+  ]
+}

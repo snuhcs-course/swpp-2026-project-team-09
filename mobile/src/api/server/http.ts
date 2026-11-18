@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
@@ -26,6 +27,9 @@ interface Request {
   headers?: Record<string, string>;
   // Whether the request carries the access token. Only the sign-in and the renewal go without one.
   signedIn?: boolean;
+  // After how many milliseconds the request is given up, as no answer (status 0); unset, it waits as long as the
+  // phone's own networking does.
+  timeoutMs?: number;
 }
 
 function field(value: unknown, name: string): unknown {
@@ -71,17 +75,30 @@ async function send(method: Method, path: string, request: Request, accessToken:
   if (accessToken !== null) {
     headers.Authorization = `Bearer ${accessToken}`;
   }
+  const abort = new AbortController();
+  const timer =
+    request.timeoutMs === undefined
+      ? null
+      : setTimeout(() => {
+          abort.abort();
+        }, request.timeoutMs);
   let response: Response;
+  let body: unknown;
   try {
     response = await fetch(urlOf(path, request.query), {
       method,
       headers,
       body: request.body === undefined ? undefined : JSON.stringify(request.body),
+      signal: abort.signal,
     });
+    body = await readBody(response);
   } catch {
     throw new ApiError(0);
+  } finally {
+    if (timer !== null) {
+      clearTimeout(timer);
+    }
   }
-  const body = await readBody(response);
   if (!response.ok) {
     throw new ApiError(response.status, textOrNull(field(body, 'code')), body);
   }

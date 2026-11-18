@@ -1,0 +1,168 @@
+{
+  "screenshot": "snutt-grey-1",
+  "model": "claude-haiku-5-5",
+  "ms": 3204,
+  "inputTokens": 3480,
+  "outputTokens": 653,
+  "boxes": [
+    {
+      "weekday": "monday",
+      "start": "11:00",
+      "end": "12:15"
+    },
+    {
+      "weekday": "monday",
+      "start": "14:00",
+      "end": "15:15"
+    },
+    {
+      "weekday": "monday",
+      "start": "15:30",
+      "end": "16:45"
+    },
+    {
+      "weekday": "monday",
+      "start": "19:00",
+      "end": "20:50"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "11:00",
+      "end": "12:15"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "14:00",
+      "end": "15:15"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "15:30",
+      "end": "16:45"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "11:00",
+      "end": "12:15"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "14:00",
+      "end": "15:15"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "15:30",
+      "end": "16:45"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "18:30",
+      "end": "20:20"
+    },
+    {
+      "weekday": "thursday",
+      "start": "11:00",
+      "end": "12:15"
+    },
+    {
+      "weekday": "thursday",
+      "start": "14:00",
+      "end": "15:15"
+    },
+    {
+      "weekday": "thursday",
+      "start": "15:30",
+      "end": "16:45"
+    }
+  ],
+  "answer": {
+    "title": null,
+    "blocks": [
+      {
+        "number": 1,
+        "nameLines": ["인공지능"],
+        "name": "인공지능",
+        "room": "302-208"
+      },
+      {
+        "number": 2,
+        "nameLines": ["논리설계"],
+        "name": "논리설계",
+        "room": "301-118"
+      },
+      {
+        "number": 3,
+        "nameLines": ["자료구조"],
+        "name": "자료구조",
+        "room": "302-105"
+      },
+      {
+        "number": 4,
+        "nameLines": ["논리설계"],
+        "name": "논리설계",
+        "room": "302-310-2"
+      },
+      {
+        "number": 5,
+        "nameLines": ["컴퓨터프로그래", "밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": "302-105"
+      },
+      {
+        "number": 6,
+        "nameLines": ["공학수학 1"],
+        "name": "공학수학 1",
+        "room": "302-208"
+      },
+      {
+        "number": 7,
+        "nameLines": ["대학 글쓰기 2:", "과학기술글쓰기"],
+        "name": "대학 글쓰기 2: 과학기술글쓰기",
+        "room": "43-1-403"
+      },
+      {
+        "number": 8,
+        "nameLines": ["인공지능"],
+        "name": "인공지능",
+        "room": "302-208"
+      },
+      {
+        "number": 9,
+        "nameLines": ["논리설계"],
+        "name": "논리설계",
+        "room": "301-118"
+      },
+      {
+        "number": 10,
+        "nameLines": ["자료구조"],
+        "name": "자료구조",
+        "room": "302-105"
+      },
+      {
+        "number": 11,
+        "nameLines": ["컴퓨터프로그래", "밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": "302-105"
+      },
+      {
+        "number": 12,
+        "nameLines": ["컴퓨터프로그래", "밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": "302-105"
+      },
+      {
+        "number": 13,
+        "nameLines": ["공학수학 1"],
+        "name": "공학수학 1",
+        "room": "302-208"
+      },
+      {
+        "number": 14,
+        "nameLines": ["대학 글쓰기 2:", "과학기술글쓰기"],
+        "name": "대학 글쓰기 2: 과학기술글쓰기",
+        "room": "43-1-403"
+      }
+    ]
+  }
+}

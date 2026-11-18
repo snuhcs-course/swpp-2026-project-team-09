@@ -614,7 +614,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     starts a new line, and only the send button sends. It takes at most 1,000 characters, as much as the main server
     takes in a message. The send button is `snuBlue` while there is something to send,
     and grey and disabled while the input is empty or the Assistant works. Speech input and autocomplete would attach
-    to it.
+    to it. While its keyboard is up, a transparent scrim ("키보드 내리기", `keyboard-scrim.tsx`) lies over the map,
+    the lists, the zoom control and an open card: a press or a drag there only puts the keyboard down. The bar, the
+    examples and the answer frame's card and pill stand over it, and a press on the pill beside its buttons does the
+    same.
   - "활성 파티" never shrinks: its two lines stay whole on a screen narrower than the wireframe's 390.
 - **The answer frame** (`answer/answer-frame.tsx`), the one screen of the conversation with the Assistant. While the
   bar has the keyboard and nothing is asked, the three examples of the empty chat stand above it as chips with an icon
@@ -1790,7 +1793,7 @@ model is bundled in the app, so no download is needed at first use; iOS uses the
 - `unavailable` where the build has no module: Expo Go, the web and the tests;
 - `failed`, with a message, when the image could not be opened or ML Kit failed.
 
-ML Kit gives a confidence on Android only; on iOS every `confidence` is null.
+ML Kit gives a confidence on Android only; on iOS every `confidence` is null. Nothing reads it (P15-52).
 
 `/ocr-check` (`snunow://ocr-check` in a development build) picks an image from the album (`expo-image-picker`, images
 only, no editing), reads it, lists the lines and saves the module's whole answer as JSON in the app's documents folder.
@@ -1804,6 +1807,27 @@ adb shell am start -a android.intent.action.VIEW \
   -d "'snunow://ocr-check?uri=file:///data/data/com.bonnieandclaude.snunow/files/snutt-1.png&name=snutt-1'"
 adb exec-out run-as com.bonnieandclaude.snunow cat files/snutt-1.json > snutt-1.json
 ```
+
+### Reading a timetable screenshot (`이미지로 불러오기`)
+
+From P15-52 the main server's AI reads the picked screenshot
+([ADR 0015](../docs/adr/0015-a-timetable-screenshot-is-read-by-the-ai-with-the-phones-blocks.md)). Before the first
+send the app asks once, in a dialog: "시간표 사진을 AI로 읽어요" / "더 정확하게 읽도록 사진을 서버를 거쳐 외부 AI 서비스에
+보내요. 우리 서버에는 저장하지 않아요." with "보내기" and "휴대폰에서 읽기"; a yes is remembered on the phone until a
+sign-out or the end of the Session (`src/storage/reading-notice.ts`). Then `use-import-from-image.ts`:
+
+1. runs the native module on the picture, as before, for its small copy of the pixels (`readImageText`; the copy comes
+   with ML Kit's answer, which is otherwise not used on this path);
+2. finds the grid from those pixels alone (`grid-geometry.ts`): how many day columns, and each class block's column,
+   top and bottom, colour, and whether its bottom fades out. No OCR'd label is used, so a label ML Kit misreads cannot
+   misplace a block;
+3. sends the picture in base64 with that grid to `POST /timetable/readings` (`apiClient.readTimetableImage`); the
+   server's AI reads the labels and the text, and the server places the blocks. The answer's rooms are linked to
+   buildings on the phone (`server-reading.ts`);
+4. reads it with the phone's own pipeline, as P13 did, when the User said no, the main server does not answer within
+   25 s or refuses (a server without the route answers 404), the server's reading has no class, or the build does not
+   ask the main server (the mock build); when neither reading has a class, the User is told 시간표를 찾지 못했어요.
+   Without the native module, or when no grid is found, the server's AI reads the whole picture.
 
 ## Push notifications
 

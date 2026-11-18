@@ -1,0 +1,121 @@
+{
+  "screenshot": "snutt-4",
+  "model": "claude-haiku-5-5",
+  "ms": 8900,
+  "inputTokens": 4024,
+  "outputTokens": 2105,
+  "answer": {
+    "title": "연습3",
+    "axis": ["9", "10", "11", "12", "13", "14", "15", "16", "17", "18"],
+    "blocks": [
+      {
+        "day": "월",
+        "start": "9:00",
+        "end": "9:50",
+        "nameLines": ["수학 1"],
+        "name": "수학 1",
+        "room": "25-101",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "9:00",
+        "end": "9:50",
+        "nameLines": ["수학 1"],
+        "name": "수학 1",
+        "room": "25-101",
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["생물학"],
+        "name": "생물학",
+        "room": "500-L309",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["대학영어", "2: 말하기"],
+        "name": "대학영어 2: 말하기",
+        "room": "8-408",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["생물학"],
+        "name": "생물학",
+        "room": "500-L309",
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["대학영어", "2: 말하기"],
+        "name": "대학영어 2: 말하기",
+        "room": "8-408",
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "14:00",
+        "end": "15:50",
+        "nameLines": ["컴퓨터의 개념", "및 실습"],
+        "name": "컴퓨터의 개념 및 실습",
+        "room": "302-311-1",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "14:00",
+        "end": "15:15",
+        "nameLines": ["통계학"],
+        "name": "통계학",
+        "room": "56-106",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "14:00",
+        "end": "15:50",
+        "nameLines": ["컴퓨터의 개념", "및 실습"],
+        "name": "컴퓨터의 개념 및 실습",
+        "room": "302-311-1",
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "14:00",
+        "end": "15:15",
+        "nameLines": ["통계학"],
+        "name": "통계학",
+        "room": "56-106",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "15:30",
+        "end": "16:45",
+        "nameLines": ["물리학 1"],
+        "name": "물리학 1",
+        "room": "56-106",
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "15:30",
+        "end": "16:45",
+        "nameLines": ["물리학 1"],
+        "name": "물리학 1",
+        "room": "56-106",
+        "cut": false
+      }
+    ]
+  }
+}

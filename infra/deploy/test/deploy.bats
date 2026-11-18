@@ -4,6 +4,7 @@
 #
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-11-15  Opus 5.5   prompted by fyoon46
+# 2026-11-18  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Each test runs in a subshell of its own, so that its exports reach no other test, as meant.
@@ -196,21 +197,21 @@ serve_check_runs() {
   [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests completed failure' 'flow-tests in_progress null')" = waiting-for-ci ]
 }
 
-@test "only the check runs of the merge queue and of pushes to development or main count; a Main's or a working branch's may have skipped work" {
+@test "only the check runs of pushes to a Main, to development or to main count; the merge queue's or a working branch's may have skipped work or run only the unit tests" {
   serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed failure' 'flow-tests completed success 2.0/feature' \
-    'flow-tests completed success 2.0/Main'
+    'flow-tests completed success gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d'
   run "$DEPLOY"
   [ "$status" -eq 0 ]
   [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success match-server=success flow-tests=failure" ]
   [ "$(field .result)" = ci-failed ]
 
   unset INVOCATION_ID
-  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed success 2.0/Main'
+  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed success gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d'
   run "$DEPLOY"
   [ "$(field .result)" = waiting-for-ci ]
 
-  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed success 2.0/Main' \
-    'flow-tests completed success gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d'
+  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed success gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d' \
+    'flow-tests completed success 2.0/Main'
   run "$DEPLOY"
   [ "$(field .result)" = deployed ]
 }

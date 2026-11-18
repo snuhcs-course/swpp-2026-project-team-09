@@ -1,0 +1,199 @@
+{
+  "commit": "dc27a523",
+  "model": "claude-haiku-5-5",
+  "message": "안녕하세요!",
+  "startedAt": "2026-11-17T16:15:18.054Z",
+  "endedAt": "2026-11-17T16:15:31.590Z",
+  "records": [
+    {
+      "index": 0,
+      "userId": "cross-minute-user-1",
+      "now": "2026-11-18T00:05:00.000Z",
+      "steps": [
+        {
+          "finishReason": "stop",
+          "toolErrors": [],
+          "inputTokens": 43280,
+          "outputTokens": 77,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 43276
+        }
+      ],
+      "toolCalls": [],
+      "reply": "안녕하세요! SNU Now AI예요. 캠퍼스 식사 메뉴, 셔틀, 행사, 파티, 공강 시간 활용 등 무엇이든 편하게 물어보세요.",
+      "error": null,
+      "cost": 0.0054484
+    },
+    {
+      "index": 1,
+      "userId": "cross-minute-user-2",
+      "now": "2026-11-18T00:06:00.000Z",
+      "steps": [
+        {
+          "finishReason": "stop",
+          "toolErrors": [],
+          "inputTokens": 43280,
+          "outputTokens": 80,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 43276
+        }
+      ],
+      "toolCalls": [],
+      "reply": "안녕하세요! SNU Now AI예요. 캠퍼스 식당 메뉴, 셔틀, 행사, 파티, 공강 시간 활용 등 무엇이든 편하게 물어봐 주세요.",
+      "error": null,
+      "cost": 0.0054499
+    },
+    {
+      "index": 2,
+      "userId": "cross-minute-user-3",
+      "now": "2026-11-18T00:07:00.000Z",
+      "steps": [
+        {
+          "finishReason": "stop",
+          "toolErrors": [],
+          "inputTokens": 43280,
+          "outputTokens": 88,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 43276
+        }
+      ],
+      "toolCalls": [],
+      "reply": "안녕하세요! SNU Now AI예요. 캠퍼스 식사 메뉴, 셔틀 위치, 행사, 파티, 공강 활용, 관정도서관 좌석 등 무엇이든 편하게 물어보세요.",
+      "error": null,
+      "cost": 0.005453899999999999
+    },
+    {
+      "index": 3,
+      "userId": "cross-minute-user-4",
+      "now": "2026-11-18T00:08:00.000Z",
+      "steps": [
+        {
+          "finishReason": "stop",
+          "toolErrors": [],
+          "inputTokens": 43280,
+          "outputTokens": 76,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 43276
+        }
+      ],
+      "toolCalls": [],
+      "reply": "안녕하세요! SNU Now AI예요. 식사, 셔틀, 행사, 파티, 관정도서관 좌석 등 캠퍼스 생활에 관해 무엇이든 물어보세요.",
+      "error": null,
+      "cost": 0.0054478999999999994
+    },
+    {
+      "index": 4,
+      "userId": "cross-minute-user-5",
+      "now": "2026-11-18T00:09:00.000Z",
+      "steps": [
+        {
+          "finishReason": "stop",
+          "toolErrors": [],
+          "inputTokens": 43280,
+          "outputTokens": 75,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 43276
+        }
+      ],
+      "toolCalls": [],
+      "reply": "안녕하세요! SNU Now AI예요. 식사, 셔틀, 행사, 파티, 관정도서관 자리 등 캠퍼스 생활에 관해 무엇이든 물어보세요.",
+      "error": null,
+      "cost": 0.0054474
+    },
+    {
+      "index": 5,
+      "userId": "cross-minute-user-6",
+      "now": "2026-11-18T00:10:00.000Z",
+      "steps": [
+        {
+          "finishReason": "stop",
+          "toolErrors": [],
+          "inputTokens": 43280,
+          "outputTokens": 102,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 43276
+        }
+      ],
+      "toolCalls": [],
+      "reply": "안녕하세요! SNU Now AI예요. 캠퍼스 식사 메뉴, 셔틀 위치, 행사와 파티, 수업 일정, 관정도서관 좌석 등에 대해 도와드릴 수 있어요. 무엇을 도와드릴까요?",
+      "error": null,
+      "cost": 0.0054608999999999994
+    },
+    {
+      "index": 6,
+      "userId": "cross-minute-user-7",
+      "now": "2026-11-18T00:11:00.000Z",
+      "steps": [
+        {
+          "finishReason": "stop",
+          "toolErrors": [],
+          "inputTokens": 43280,
+          "outputTokens": 88,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 43276
+        }
+      ],
+      "toolCalls": [],
+      "reply": "안녕하세요! SNU Now AI예요. 식사, 셔틀, 행사, 파티, 관정도서관 자리 등 캠퍼스 생활에 대해 도와드릴 수 있어요. 무엇을 알아볼까요?",
+      "error": null,
+      "cost": 0.005453899999999999
+    },
+    {
+      "index": 7,
+      "userId": "cross-minute-user-8",
+      "now": "2026-11-18T00:12:00.000Z",
+      "steps": [
+        {
+          "finishReason": "stop",
+          "toolErrors": [],
+          "inputTokens": 43280,
+          "outputTokens": 88,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 43276
+        }
+      ],
+      "toolCalls": [],
+      "reply": "안녕하세요! SNU Now AI예요. 캠퍼스 식당 메뉴, 셔틀 위치, 행사, 파티, 공강 시간 활용 등 궁금한 게 있으면 편하게 물어봐 주세요.",
+      "error": null,
+      "cost": 0.005453899999999999
+    },
+    {
+      "index": 8,
+      "userId": "cross-minute-user-9",
+      "now": "2026-11-18T00:13:00.000Z",
+      "steps": [
+        {
+          "finishReason": "stop",
+          "toolErrors": [],
+          "inputTokens": 43280,
+          "outputTokens": 77,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 43276
+        }
+      ],
+      "toolCalls": [],
+      "reply": "안녕하세요! SNU Now AI예요. 캠퍼스 식당 메뉴, 셔틀, 행사, 파티, 수업 일정 등 무엇이든 편하게 물어봐 주세요.",
+      "error": null,
+      "cost": 0.0054484
+    },
+    {
+      "index": 9,
+      "userId": "cross-minute-user-10",
+      "now": "2026-11-18T00:14:00.000Z",
+      "steps": [
+        {
+          "finishReason": "stop",
+          "toolErrors": [],
+          "inputTokens": 43280,
+          "outputTokens": 76,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 43276
+        }
+      ],
+      "toolCalls": [],
+      "reply": "안녕하세요! SNU Now AI예요. 식사, 셔틀, 행사, 파티, 관정도서관 좌석 등 캠퍼스 생활에 관해 무엇이든 물어보세요.",
+      "error": null,
+      "cost": 0.0054478999999999994
+    }
+  ]
+}

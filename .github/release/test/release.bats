@@ -7,6 +7,7 @@
 # 2026-11-03  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-15  Opus 5.5   prompted by fyoon46
+# 2026-11-18  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # The Release workflow's script, through its commands: the name check, the gate with gh faked on PATH, the app's
@@ -375,7 +376,7 @@ print_certs() {
 }
 
 @test "a job that failed in every run of the commit stops the gate" {
-  serve_runs '41 completed failure queue' '57 completed failure tag'
+  serve_runs '41 completed failure 2.0/Main' '57 completed failure tag'
   mapfile -t jobs < <(ci_jobs completed success mobile; echo 'mobile completed failure')
   serve_jobs 41 "${jobs[@]}"
   serve_jobs 57 "${jobs[@]}"
@@ -388,10 +389,10 @@ print_certs() {
   [ "$(polls)" -eq 1 ]
 }
 
-@test "the runs of a push to a Main or to a working branch are not read, since their jobs may skip work" {
+@test "the runs of the merge queue and of a working branch's push are not read, since their jobs may skip work" {
   mapfile -t failed < <(ci_jobs completed success mobile; echo 'mobile completed failure')
   mapfile -t passed < <(ci_jobs completed success)
-  serve_runs '41 completed failure queue' '57 completed success 2.0/feature' '63 completed success 2.0/Main' \
+  serve_runs '41 completed failure 2.0/Main' '57 completed success 2.0/feature' '63 completed success queue' \
     '77 completed failure tag'
   serve_jobs 41 "${failed[@]}"
   serve_jobs 57 "${passed[@]}"
@@ -406,7 +407,7 @@ print_certs() {
   [ "$(polls)" -eq 1 ]
 }
 
-@test "the runs of pushes to main and development are read, since they do every job" {
+@test "the runs of pushes to a Main, to main and to development are read, since they do every job" {
   mapfile -t failed < <(ci_jobs completed success mobile; echo 'mobile completed failure')
   mapfile -t passed < <(ci_jobs completed success)
   serve_runs '41 completed success main' '57 completed success development' '77 completed failure tag'
@@ -418,11 +419,19 @@ print_certs() {
 
   [ "$status" -eq 0 ]
   grep -q 'runs/57/jobs' "$FAKE_CALLS"
+
+  serve_runs '63 completed success 2.0/Main' '77 completed failure tag'
+  serve_jobs 63 "${passed[@]}"
+
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
+
+  [ "$status" -eq 0 ]
+  grep -q 'runs/63/jobs' "$FAKE_CALLS"
 }
 
-@test "a job that failed in the merge queue's run but still runs on the tag's is waited for, and one success of each job is enough" {
+@test "a job that failed in a Main's run but still runs on the tag's is waited for, and one success of each job is enough" {
   mapfile -t branch_jobs < <(ci_jobs completed success mobile; echo 'mobile completed failure')
-  serve_runs '41 completed failure queue' '57 in_progress null tag'
+  serve_runs '41 completed failure 2.0/Main' '57 in_progress null tag'
   serve_jobs 41 "${branch_jobs[@]}"
   serve_jobs 57 'mobile in_progress null' 'main-server queued null'
   serve_jobs --poll 2 57 'mobile completed success' 'main-server in_progress null'
@@ -438,7 +447,7 @@ print_certs() {
 @test "a run that has not listed its jobs yet keeps a job that failed elsewhere waiting" {
   mapfile -t branch_jobs < <(ci_jobs completed success mobile; echo 'mobile completed failure')
   mapfile -t tag_jobs < <(ci_jobs completed success)
-  serve_runs '41 completed failure queue' '57 queued null tag'
+  serve_runs '41 completed failure 2.0/Main' '57 queued null tag'
   serve_jobs 41 "${branch_jobs[@]}"
   serve_jobs 57
   serve_jobs --poll 2 57 "${tag_jobs[@]}"
@@ -450,11 +459,11 @@ print_certs() {
   [[ "${lines[0]}" == *"mobile=queued"* ]] || false
 }
 
-@test "a job that failed in the merge queue's run is waited for until GitHub lists the tag's run" {
+@test "a job that failed in a Main's run is waited for until GitHub lists the tag's run" {
   mapfile -t branch_jobs < <(ci_jobs completed success mobile; echo 'mobile completed failure')
   mapfile -t tag_jobs < <(ci_jobs completed success)
-  serve_runs '41 completed failure queue'
-  serve_runs --poll 2 '41 completed failure queue' '57 completed success tag'
+  serve_runs '41 completed failure 2.0/Main'
+  serve_runs --poll 2 '41 completed failure 2.0/Main' '57 completed success tag'
   serve_jobs 41 "${branch_jobs[@]}"
   serve_jobs 57 "${tag_jobs[@]}"
 
@@ -477,7 +486,7 @@ print_certs() {
 
 @test "a run cancelled by a newer push to its branch is waited for, not failed" {
   mapfile -t jobs < <(ci_jobs completed success flow-tests; echo 'flow-tests completed cancelled')
-  serve_runs '41 completed cancelled queue'
+  serve_runs '41 completed cancelled development'
   serve_jobs 41 "${jobs[@]}"
 
   GATE_LIMIT_SECONDS=0 run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { act, screen } from '@testing-library/react-native';
@@ -16,6 +17,7 @@ import { keepRoomBooking } from '@/library/room-bookings';
 import { endSession } from '@/session/session-events';
 import * as kept from '@/storage/kept';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { agreeToReading, readingAgreed } from '@/storage/reading-notice';
 
 // "End the library session" from `signOut()` and `endSession()`, with the flag set and without it: it never holds
 // up the sign-out, and the cookies and the flag are cleared whatever fails on the way.
@@ -108,6 +110,24 @@ describe('the end of the library session on the forced end', () => {
     expect(clearWebViewCookies).toHaveBeenCalledTimes(1);
     await expect(isLibraryLoggedIn()).resolves.toBe(false);
   });
+});
+
+describe('the end of a Session and the timetable reading notice', () => {
+  it.each([
+    ['signOut()', signOut],
+    ['endSession()', (): Promise<void> => endSession(false)],
+  ])(
+    'forgets in %s that the User agreed to send timetable pictures, so the next User is asked (P15-52)',
+    async (_, end) => {
+      await agreeToReading();
+      jest.spyOn(hiddenTransport, 'logout').mockResolvedValue(true);
+
+      await end();
+      await pass(0);
+
+      await expect(readingAgreed()).resolves.toBe(false);
+    },
+  );
 });
 
 describe('the end of the library session and what the phone kept', () => {

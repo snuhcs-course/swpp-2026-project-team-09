@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
+import { SchedulerRegistry } from '@nestjs/schedule';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
@@ -29,6 +31,9 @@ beforeAll(async () => {
   ({ url, drop } = await seededDatabase(inject('settings')));
   prisma = connect(url);
   app = await startApp({ ...inject('settings'), DATABASE_URL: url, LLM_KEYS });
+  // The server's own minute check runs at the real clock's second 0, which can fall between a save and the listing
+  // that expects the value still in effect. No test here runs a check.
+  await app.get(SchedulerRegistry).getCronJob('global-settings-check').stop();
   ({ accessToken: token } = await signInAsAdministrator(app));
   // Starting the whole server can take longer than a hook's default.
 }, 60_000);
