@@ -9,9 +9,8 @@ import { type Response } from 'express';
 import { Public } from '../common/public.decorator.js';
 import { INVITE_PAGE_POLICY, invitePage } from './invite-page.js';
 
-// An Invite Link's address, `PUBLIC_URL/invite/<token>`, opened in a browser: in a messenger's own browser, on an
-// iPhone, whose build declares no link that opens the app, or without the app. A phone that verified the App Link
-// opens the app without asking here. Open without a sign-in, and it looks nothing up.
+// An Invite Link's address, `PUBLIC_URL/invite/<token>`, opened in a browser (README.md, "Invite Links"). Open without
+// a sign-in, and it looks nothing up.
 @Public()
 @Controller('invite')
 export class InvitePageController {
@@ -19,8 +18,9 @@ export class InvitePageController {
   @Header('Content-Type', 'text/html; charset=utf-8')
   @Header('Content-Security-Policy', INVITE_PAGE_POLICY)
   @Header('X-Robots-Tag', 'noindex')
-  page(@Param('token') token: string, @Res() response: Response): void {
+  page(@Param('token') token: string, @Res({ passthrough: true }) response: Response): string {
     const { status, html } = invitePage(token);
-    response.status(status).send(html);
+    response.status(status);
+    return html;
   }
 }

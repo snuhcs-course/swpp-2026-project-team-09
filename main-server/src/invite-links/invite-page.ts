@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { HttpStatus } from '@nestjs/common';
-import { INVITE_LINK_TOKEN } from './invite-links.service.js';
+import { INVITE_LINK_TOKEN_FORM } from './invite-links.service.js';
 
 // The page loads nothing, from this host or another, and runs no script: it is one inline style and one link.
 export const INVITE_PAGE_POLICY =
@@ -30,7 +30,7 @@ const WORDMARK = `<svg xmlns="http://www.w3.org/2000/svg" width="132" height="10
   </g>
 </svg>`;
 
-// The app's colours: the ink, the muted ink, SNU blue and its pressed shade, with the primary button's size and corner.
+// The values of the app's design tokens (`mobile/src/design-system/tokens.ts`), so the page looks like the app.
 const STYLE = `
   * { box-sizing: border-box; }
   html { color-scheme: light; -webkit-text-size-adjust: 100%; }
@@ -89,12 +89,10 @@ ${content}
 `;
 }
 
-// The page at an Invite Link's address, for whoever opens it in a browser. A token of an Invite Link token's form gets
-// a button that opens the app at the link, whether or not anyone made it or it can still be accepted: the app's accept
-// screen says who sent it and whether it can. No script opens the app by itself, since a browser blocks that without a
-// press. Any other token is not found, and nothing of it goes into the page.
+// The page at an Invite Link's address (README.md, "Invite Links"). Only a token of an Invite Link token's form goes
+// into it.
 export function invitePage(token: string): { status: HttpStatus; html: string } {
-  if (!INVITE_LINK_TOKEN.test(token)) {
+  if (!INVITE_LINK_TOKEN_FORM.test(token)) {
     return { status: HttpStatus.NOT_FOUND, html: page('<p class="gone">찾을 수 없는 초대 링크예요</p>') };
   }
   return {

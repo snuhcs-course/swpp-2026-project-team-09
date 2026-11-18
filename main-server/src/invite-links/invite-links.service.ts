@@ -26,7 +26,7 @@ import { CreatedInviteLinkDto, InviteLinkDto, InviteLinkStatus } from './dto/inv
 const LIFETIME_MS = 24 * 60 * 60 * 1000;
 
 // The form of every token `create` makes: 32 random bytes in base64url.
-export const INVITE_LINK_TOKEN = /^[\w-]{43}$/u;
+export const INVITE_LINK_TOKEN_FORM = /^[\w-]{43}$/u;
 
 // 32 random bytes cannot be guessed, so a fast hash is enough to keep the stored copy useless to a reader.
 function hashToken(token: string): string {

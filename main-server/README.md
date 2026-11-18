@@ -3298,7 +3298,8 @@ src/
 ├── auth/                            a feature: app and admin site sign-in, refresh, sign-out, the access token checks
 ├── users/                           a feature: the signed-in User, their profile, Friend ID and onboarding
 ├── friends/                         a feature: Friend IDs looked up, Friend Requests and Friends
-├── invite-links/                    a feature: Invite Links, and the Digital Asset Links file that opens them in the app
+├── invite-links/                    a feature: Invite Links, the Digital Asset Links file that opens them in the app,
+│                                    and the page their address answers in a browser
 ├── location-sharing/                a feature: the Master Switch, the positions uploaded, kept and pushed, and who
 │                                    sees whom
 ├── lobby/                           a feature: what the app needs when it starts

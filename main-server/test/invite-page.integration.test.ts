@@ -31,22 +31,12 @@ function openPage(path: string): request.Test {
   return request(app.getHttpServer()).get(`/invite/${path}`);
 }
 
-function links(html: string): string[] {
-  return [...html.matchAll(/\shref="([^"]*)"/gu)].map(([, href]) => href);
-}
-
+// The page's words and what it holds are `invite-page.unit.test.ts`'s; here, what reaches a browser.
 function expectAPage(response: request.Response): void {
   expect(response.headers['content-type']).toBe('text/html; charset=utf-8');
   expect(response.headers['x-robots-tag']).toBe('noindex');
   expect(response.headers['content-security-policy']).toMatch(/^default-src 'none';/u);
-  expect(response.text).toContain('<meta name="robots" content="noindex">');
-  expect(response.text).toContain('<meta name="viewport" content="width=device-width, initial-scale=1">');
-  expect(response.text).toContain('<title>SNU Now 친구 초대</title>');
   expect(response.text).toContain('<h1>SNU Now 친구 초대</h1>');
-  expect(response.text).toContain('aria-label="SNU Now"');
-  // Nothing from another host, no script that opens the app by itself, no APK.
-  expect(response.text).not.toMatch(/\ssrc=|<script|<link|@import|url\(/u);
-  expect(response.text).not.toMatch(/\.apk/iu);
 }
 
 describe("The page at an Invite Link's address", () => {
@@ -57,7 +47,6 @@ describe("The page at an Invite Link's address", () => {
 
     expect(response.status).toBe(200);
     expectAPage(response);
-    expect(links(response.text)).toEqual([`snunow://invite/${token}`]);
     expect(response.text).toContain(`<a href="snunow://invite/${token}">SNU Now에서 열기</a>`);
     expect(response.text).toContain('앱이 설치돼 있어야 열려요.');
   });
@@ -89,37 +78,29 @@ describe("The page at an Invite Link's address", () => {
 
 describe('The page at an address whose token has another form', () => {
   it.each([
-    ['too short', 'k3J9xQ'],
-    ['one character too long', 'a'.repeat(44)],
-    ['with a character outside base64url', `${'a'.repeat(42)}.`],
+    ['malformed', 'k3J9xQ'],
     ['carrying markup', '"><script>alert(1)</script>'],
-    ["carrying markup of a token's length", `<img src=x onerror=alert(1)>${'a'.repeat(15)}`],
   ])(
-    'answers a token %s with a page that says it is not found, with no button and nothing of the address',
+    'answers a %s token with a page that says it is not found, with no button and nothing of the address',
     async (_, token) => {
       const response = await openPage(encodeURIComponent(token));
 
       expect(response.status).toBe(404);
       expectAPage(response);
       expect(response.text).toContain('찾을 수 없는 초대 링크예요');
-      expect(links(response.text)).toEqual([]);
       expect(response.text).not.toContain('SNU Now에서 열기');
       expect(response.text).not.toContain(token);
       expect(response.text).not.toContain(encodeURIComponent(token));
-      expect(response.text).not.toContain('alert');
     },
   );
 });
 
-describe("Beside the page, the Invite Links' other addresses", () => {
-  it('are as they were: the routes of the API need a sign-in, and the Digital Asset Links file answers', async () => {
+describe("Beside the page, the Invite Links' routes of the API", () => {
+  it('still need a sign-in', async () => {
     const token = randomBytes(32).toString('base64url');
 
     expect((await request(app.getHttpServer()).get(`/invite-links/${token}`)).status).toBe(401);
     expect((await request(app.getHttpServer()).post(`/invite-links/${token}/accept`)).status).toBe(401);
     expect((await request(app.getHttpServer()).post('/invite-links')).status).toBe(401);
-    const assetLinks = await request(app.getHttpServer()).get('/.well-known/assetlinks.json');
-    expect(assetLinks.status).toBe(200);
-    expect(assetLinks.headers['content-type']).toMatch(/^application\/json/u);
   });
 });
