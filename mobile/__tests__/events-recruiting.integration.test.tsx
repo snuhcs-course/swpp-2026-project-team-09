@@ -6,6 +6,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -21,7 +22,7 @@ import { startFresh } from './support/mocks';
 import { answer, MIN_JUN_HOLDER, toast } from './support/room';
 import { askMainServer, DINNER, PHONE_NOW } from './support/server';
 
-// 파티 찾기/모집 on an event's card and 같이 갈 사람 찾기 on the map: the Quests gathering for a Global Event, joining
+// 파티 찾기/모집 from an event's row on the 행사 tab and 같이 갈 사람 찾기 on the map: the Quests gathering for a Global Event, joining
 // one, and recruiting one's own, against the fake main server.
 
 jest.mock('expo-location');
@@ -56,7 +57,8 @@ afterEach(() => {
 type User = Awaited<ReturnType<typeof openEvents>>;
 
 async function openSheet(user: User): Promise<void> {
-  await user.press(card(CAREER).getByRole('button', { name: '파티 찾기/모집' }));
+  // The row's party line: "모집 중인 파티 {n}" with Quests gathering that the User can join, "함께 갈 파티 찾기" without.
+  await user.press(card(CAREER).getByRole('button', { name: /^(?:모집 중인 파티 \d|함께 갈 파티 찾기)$/u }));
   await pass(500);
 }
 

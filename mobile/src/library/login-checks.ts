@@ -34,11 +34,22 @@ export class LoginChecks {
   private alive = true;
   // The view is away from the site's screens.
   private away = false;
-  // The view closed while a check ran or one was kept: its outcome waits for them.
-  private closing = false;
+  // The view that is open, or was last: each login view opened is a new one.
+  private view = 0;
+  // The view that closed while a check ran or one was kept, whose outcome waits for them; null for none.
+  private closingView: number | null = null;
 
   constructor(hooks: LoginCheckHooks) {
     this.hooks = hooks;
+  }
+
+  // A login view opened. A close that still waits belongs to the view before it, and is no longer the one to end: a
+  // check made for that view that finds no session says nothing, so it never closes this one (P15 ticket 58); one that
+  // finds the session logs the User in, which ends this view too.
+  opened(): void {
+    this.view += 1;
+    this.closingView = null;
+    this.away = false;
   }
 
   // The login view landed on the site's main, booking or my-booking screen.
@@ -71,8 +82,8 @@ export class LoginChecks {
     } else if (this.again) {
       void this.run();
     }
-    this.closing = this.running;
-    return this.closing;
+    this.closingView = this.running ? this.view : null;
+    return this.running;
   }
 
   // The provider is (again) in use, as after a Fast Refresh that stopped it.
@@ -87,11 +98,11 @@ export class LoginChecks {
   }
 
   private settle(session: boolean): void {
-    const closing = this.closing;
-    this.closing = false;
+    const waits = this.closingView !== null && this.closingView === this.view;
+    this.closingView = null;
     if (session) {
       this.hooks.onSession();
-    } else if (closing) {
+    } else if (waits) {
       this.hooks.onNoSession();
     }
   }

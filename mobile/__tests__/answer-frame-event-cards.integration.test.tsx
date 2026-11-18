@@ -5,9 +5,11 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
+import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
@@ -134,8 +136,9 @@ describe('an event card pressed', () => {
     await pass(500);
 
     expect(screen.getByRole('tab', { name: '행사' })).toBeSelected();
-    expect(screen.getByTestId(`event-${MAJOR.id}`)).toHaveStyle({ borderWidth: 2 });
-    expect(screen.getByTestId(`event-${CAREER.id}`)).toHaveStyle({ borderWidth: 1 });
+    // The tab's row of the event, on its light blue ground (P15 ticket 54).
+    expect(screen.getByTestId(`event-${MAJOR.id}`)).toHaveStyle({ backgroundColor: color.blue50 });
+    expect(screen.getByTestId(`event-${CAREER.id}`)).not.toHaveStyle({ backgroundColor: color.blue50 });
   });
 });
 

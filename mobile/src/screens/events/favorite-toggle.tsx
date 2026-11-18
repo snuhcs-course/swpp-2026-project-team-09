@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -38,13 +40,14 @@ export function FavoriteToggle({
       style={[styles.toggle, style]}
       testID={`favorite-${eventId}`}
     >
-      <Icon color={on ? color.snuBlue : color.inkMuted} filled={on} name="star" size={20} />
+      <Icon color={on ? color.snuBlue : color.inkMuted} filled={on} name="star" size={STAR_SIZE} />
     </Pressable>
   );
 }
 
 // As the map card's X: the frame's 44, and the room around it.
 const SIZE = 44;
+const STAR_SIZE = 20;
 const HIT_SLOP = 2;
 
 const styles = StyleSheet.create({

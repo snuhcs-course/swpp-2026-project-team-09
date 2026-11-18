@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -61,7 +62,8 @@ function Card({ id, focused, onLayout, onPress, children }: CardProps): ReactEle
   );
 }
 
-// An event's card on the 행사 tab, the `Events` frame's.
+// An event's card in the chat's answers, as the 행사 tab drew it before P15 ticket 54 gave the tab its rows
+// (`event-row.tsx`).
 export function EventItem(props: EventItemProps): ReactElement {
   const { event, focused, onLayout, onRecruit, onPress, children } = props;
   const { sourceUrl } = event;
