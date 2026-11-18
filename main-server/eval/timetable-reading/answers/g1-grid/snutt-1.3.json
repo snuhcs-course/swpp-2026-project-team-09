@@ -1,0 +1,159 @@
+{
+  "screenshot": "snutt-1",
+  "model": "claude-haiku-5-5",
+  "mode": "grid",
+  "ms": 11016,
+  "inputTokens": 5509,
+  "outputTokens": 2879,
+  "calls": 1,
+  "answer": {
+    "title": "hi",
+    "axis": ["9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"],
+    "blocks": [
+      {
+        "day": "월",
+        "start": "9:30",
+        "end": "10:45",
+        "nameLines": ["딥러닝의 기초"],
+        "name": "딥러닝의 기초",
+        "room": "301-118",
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "13:30",
+        "end": "15:20",
+        "nameLines": ["하드웨어시스", "템설계"],
+        "name": "하드웨어시스템설계",
+        "room": "302-311-1",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "14:00",
+        "end": "15:15",
+        "nameLines": ["운영체제"],
+        "name": "운영체제",
+        "room": "301-203",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "19:00",
+        "end": "21:00",
+        "nameLines": ["주간회의"],
+        "name": "주간회의",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      }
+    ]
+  }
+}

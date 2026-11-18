@@ -39,6 +39,7 @@ import type { ChatSheetControl } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
 import { FirstRunAsk } from './first-run/first-run-ask';
 import { InterestsHint } from './first-run/interests-hint';
+import { KeyboardScrim } from './keyboard-scrim';
 import { aiInputTop, interestsHintBottom, madeLineBottom, type Room, tutorialStartBottom } from './layout';
 import { MadeQuestLine } from './made-quest-line';
 import { type GuideActions, TutorialGuideOverlay } from './tutorial/tutorial-guide';
@@ -164,13 +165,6 @@ function EverydayBottom(props: EverydayProps): ReactElement {
   );
 }
 
-// What is at the bottom of the map: the everyday map's own (`EverydayBottom`), the answer frame, and the AI input. A
-// card at the bottom hides the row and the button. While the keyboard is up and nothing is asked, the examples stand
-// above the input. A message sent from the AI input shows the answer frame, which hides the rest, and the input is its
-// card's: it stays in the same place in the tree, so that it keeps the focus. While the keyboard is up, the input
-// stands right above it. The conversation is kept while the app runs: while the frame is hidden, "이전 답" in the input
-// shows it again. A card nobody asked for, a received invitation's or a made Quest's, takes the bottom without the
-// input.
 // The 새내기 튜토리얼's list, its quests' sheets, and the guide of a quest, which takes the whole map while it is open.
 function TutorialParts({
   tutorial,
@@ -197,6 +191,15 @@ function TutorialParts({
   );
 }
 
+// What is at the bottom of the map: the everyday map's own (`EverydayBottom`), the answer frame, and the AI input. A
+// card at the bottom hides the row and the button. While the keyboard is up and nothing is asked, the examples stand
+// above the input. A message sent from the AI input shows the answer frame, which hides the rest, and the input is its
+// card's: it stays in the same place in the tree, so that it keeps the focus. While the keyboard is up, the input
+// stands right above it, and a scrim under the frame, the examples and the input puts the keyboard down for a press
+// anywhere else (`KeyboardScrim`). The conversation is kept while the app runs: while the frame is hidden, "이전 답" in
+// the input shows it again. A card nobody asked for, a received invitation's or a made Quest's, takes the bottom
+// without the input. A 새내기 튜토리얼 quest's guide takes the whole map while it is open, with no scrim: it has no field,
+// and the input is hidden under it.
 export function MapBottom(props: MapBottomProps): ReactElement {
   const { onInputHeight, room, tutorial, chat, unasked } = props;
   const { invitation, made } = unasked;
@@ -248,6 +251,7 @@ function FramedParts(props: FramedProps): ReactElement {
   return (
     <>
       {!chat.framed && !cardShown ? <EverydayBottom {...props} keyboardUp={keyboardUp} /> : null}
+      {keyboardUp ? <KeyboardScrim /> : null}
       <RowFourProvider control={chat}>
         <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
       </RowFourProvider>

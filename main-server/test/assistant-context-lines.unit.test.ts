@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -99,7 +100,7 @@ const LIMITS = { maxSteps: 4, timeoutMs: 5000, maxOutputTokens: 1000 };
 const model = new ScriptedModel();
 
 const feature: Feature = {
-  instructions: () => 'test',
+  instructions: 'test',
   tools: { plan: defineTool({ description: 'Plans a meal.', input: z.object({}), run: () => Promise.resolve({}) }) },
 };
 

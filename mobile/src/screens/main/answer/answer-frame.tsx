@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -268,6 +269,7 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
       <AnswerPill
         asked={title ?? turnOf(chat.bubbles)?.asked ?? ''}
         icon={title === null ? pillIconOf(chat.bubbles) : 'pin'}
+        keyboardUp={keyboardUp}
         onClose={leave}
         onNew={forget}
       />

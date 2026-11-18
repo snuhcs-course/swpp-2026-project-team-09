@@ -15,6 +15,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -58,6 +59,7 @@ import { privateZoneClient } from './private-zone-client';
 import { roomClient } from './room-client';
 import { seatStayClient } from './seat-stay-client';
 import { TUTORIAL_SERVED, tutorialClient } from './tutorial-client';
+import { timetableReadingClient } from './timetable-reading-client';
 
 // The operations the main server serves on its main line, each from its route. What it does not serve stays the
 // mock's, such as who announced the Global Events (todo.md, section 3).
@@ -76,6 +78,7 @@ export const serverClient: ApiClient = {
   ...privateZoneClient,
   ...lateClient,
   ...seatStayClient,
+  ...timetableReadingClient,
   listFriendStatuses: () => Promise.resolve([]),
   // The tutorial stays the mock's until the main server serves it (`./tutorial-client.ts`).
   ...(TUTORIAL_SERVED ? tutorialClient : {}),

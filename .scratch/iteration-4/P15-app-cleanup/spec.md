@@ -69,11 +69,12 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 6. The app's icon, splash and notification icon are still Expo's defaults: give the app its own, the "SNU / now" wordmark. A native change. Ticket [06](issues/06-app-icon.md).
 7. The map's credit and Kakao's logo float far above the AI input, over the place of a row of buttons that is no longer drawn: nothing stands over an empty place above the input. Ticket [07](issues/07-credit-above-the-input.md).
 8. The sign-in screen: remove the drawn character, put the sign-in button in the middle, and show the app icon's wordmark in place of the name and its tagline. Ticket [08](issues/08-sign-in-wordmark.md).
+9. The AI input's keyboard goes down only on a send: a press anywhere outside the input puts it down, and does nothing else. Ticket [09](issues/09-keyboard-down-on-press-outside.md).
 
 ### 안진영 (`51`–`99`)
 
-None yet.
-
+51. The chat's system prompt: cache it across Users and minutes, with the time after the breakpoint, and teach it the campus's short names (학관, 중도, …). Ticket [51](issues/51-system-prompt-cache-and-campus-terms.md).
+52. 이미지로 불러오기 reads real screenshots badly: read them with the AI on the blocks the phone finds, for any timetable layout. Ticket [52](issues/52-timetable-image-reading.md).
 53. The 새내기 튜토리얼 as the canvas draws it: fewer words, a list with category tabs and icons in place of the pager, and each quest as a guide on the map. Ticket [53](issues/53-freshman-tutorial-as-drawn.md).
 
 ## Testing Decisions

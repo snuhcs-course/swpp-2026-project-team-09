@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
+import { SchedulerRegistry } from '@nestjs/schedule';
 import { type LanguageModelMiddleware, wrapLanguageModel } from 'ai';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
@@ -68,6 +70,9 @@ async function pod(settings: Record<string, string> = KEYS): Promise<{
     { modelFactory },
   );
   apps.push(app);
+  // The tests run the minute check themselves. The server's own, at the real clock's second 0, would make one of
+  // theirs that starts while it runs return before the copy is loaded.
+  await app.get(SchedulerRegistry).getCronJob('global-settings-check').stop();
   const { GlobalSettings } = await import('../src/global-settings/global-settings.service.js');
   const { accessToken } = await signIn(app);
   return { app, settings: app.get(GlobalSettings), token: accessToken };

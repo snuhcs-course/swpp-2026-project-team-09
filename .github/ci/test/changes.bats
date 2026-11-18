@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-11-15  Opus 5.5   prompted by fyoon46
+# 2026-11-18  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Each test runs in a subshell of its own, so that its exports reach no other test, as meant.
@@ -26,16 +27,14 @@ setup() {
   export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
   export GIT_AUTHOR_NAME=Tester GIT_AUTHOR_EMAIL=tester@example.com
   export GIT_COMMITTER_NAME=Tester GIT_COMMITTER_EMAIL=tester@example.com
-  export GITHUB_EVENT_NAME=push GITHUB_REPOSITORY=snuhcs-course/swpp-2026-project-team-09
-  unset GITHUB_OUTPUT GITHUB_REF GITHUB_REF_NAME GITHUB_SHA
-  serve_queue_runs
+  export GITHUB_EVENT_NAME=push
+  unset GITHUB_OUTPUT GITHUB_REF GITHUB_REF_NAME GITHUB_SHA MERGE_GROUP_BASE_SHA
+  # A gh that only records its calls: the script asks GitHub nothing.
   mkdir -p "$BATS_TEST_TMPDIR/bin"
   cat >"$BATS_TEST_TMPDIR/bin/gh" <<'FAKE'
 #!/usr/bin/env bash
 echo "gh $*" >>"$FAKE_GH_CALLS"
-[[ $1 == api && $2 == "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?"* ]] || exit 2
-[[ -z ${FAKE_GH_STATUS:-} ]] || exit "$FAKE_GH_STATUS"
-cat "$FAKE_QUEUE_RUNS"
+exit 2
 FAKE
   chmod +x "$BATS_TEST_TMPDIR/bin/gh"
   export PATH="$BATS_TEST_TMPDIR/bin:$PATH" FAKE_GH_CALLS="$BATS_TEST_TMPDIR/gh-calls"
@@ -48,19 +47,6 @@ FAKE
   git -C "$WORK" remote add origin "$ORIGIN"
   commit README.md mobile/App.tsx main-server/src/main.ts
   publish 4.0/Main
-}
-
-# Makes the faked gh list these merge_group runs, each "status conclusion [sha]", of the checked-out commit when the sha
-# is left out.
-serve_queue_runs() {
-  local run state conclusion sha
-  for run in "$@"; do
-    read -r state conclusion sha <<<"$run"
-    jq -n --arg state "$state" --arg conclusion "$conclusion" --arg sha "${sha:-$GITHUB_SHA}" \
-      '{event: "merge_group", head_sha: $sha, status: $state,
-        conclusion: (if $conclusion == "null" then null else $conclusion end)}'
-  done | jq -s '{total_count: length, workflow_runs: .}' >"$BATS_TEST_TMPDIR/queue-runs.json"
-  export FAKE_QUEUE_RUNS="$BATS_TEST_TMPDIR/queue-runs.json"
 }
 
 # Commits a change to each path in the working repository: a line added, the file made if missing.
@@ -122,6 +108,25 @@ push_documents_branch() {
   ci_checkout "$1"
 }
 
+# Pushes a merge group as the queue makes one for pull request N: a branch gh-readonly-queue/4.0/Main/pr-N from the
+# given commit, with one commit that changes the further paths.
+group_off() {
+  local group=gh-readonly-queue/4.0/Main/pr-$1 from=$2
+  shift 2
+  branch_off "$group" "$from"
+  commit "$@"
+  publish "$group"
+}
+
+# Checks out the merge group of pull request N as CI does in the merge queue, with this commit as its base. Clone
+# options after the base go to ci_checkout.
+queue_checkout() {
+  local group=gh-readonly-queue/4.0/Main/pr-$1 base=$2
+  shift 2
+  ci_checkout "$group" "$@"
+  export GITHUB_EVENT_NAME=merge_group MERGE_GROUP_BASE_SHA=$base
+}
+
 # The jobs whose work runs on the checkout, in KEYS's order, as the script decides for each key with these extra
 # variables. Fails unless each decision is exactly a run= line and a tests= line.
 jobs_that_run() {
@@ -153,16 +158,18 @@ expect_jobs() {
   [ "$actual" = "$expected" ] || { echo "expected: '$expected'"$'\n'"actual:   '$actual'" >&2; false; }
 }
 
-# Fails unless every job does its work, with these extra variables, and the mobile job's line gives this reason first.
-expect_full_run() {
-  local reason=$1
-  shift
+# Fails unless every job does its work at this level, unit or all, with these extra variables, and the mobile job's line
+# gives this reason first.
+expect_every_job() {
+  local level=$1 reason=$2 given prefix='The job mobile does its work: '
+  shift 2
   expect_jobs "$EVERY" "$@"
-  run --separate-stderr env "$@" GITHUB_OUTPUT="$BATS_TEST_TMPDIR/full-run" "$CHANGES" mobile
+  given=$(tests_given "$@")
+  [ "$given" = "$level" ] || { echo "tests=$given, not $level" >&2; false; }
+  [ "$level" = all ] || prefix="The job mobile does its work, with unit tests only, as on every pull request's push: "
+  run --separate-stderr env "$@" GITHUB_OUTPUT="$BATS_TEST_TMPDIR/every-job" "$CHANGES" mobile
   [ "$status" -eq 0 ]
-  [[ "$output" == "The job mobile does its work: $reason"* ||
-    "$output" == "The job mobile does its work, with unit tests only, as on every pull request's push: $reason"* ]] ||
-    { echo "$output" >&2; false; }
+  [[ "$output" == "$prefix$reason"* ]] || { echo "$output" >&2; false; }
 }
 
 # The jobs that a change to this path alone reaches through the script's map, in KEYS's order.
@@ -292,7 +299,7 @@ EOF
 
 # --- The output ---------------------------------------------------------------------------------------------------
 
-@test "a working branch's push gives unit tests only, unless CI's own files changed" {
+@test "a working branch's push gives unit tests only, also when CI's own files change" {
   push_documents_branch 4.0/documents
   [ "$(tests_given)" = unit ]
 
@@ -300,33 +307,32 @@ EOF
   commit .github/ci/changes.sh
   publish 4.0/ci
   ci_checkout 4.0/ci
-  [ "$(tests_given)" = all ]
+  [ "$(tests_given)" = unit ]
   branch_off 4.0/workflow
   commit .github/workflows/ci.yml
   publish 4.0/workflow
   ci_checkout 4.0/workflow
-  [ "$(tests_given)" = all ]
+  [ "$(tests_given)" = unit ]
 }
 
-@test "a Main, a branch without a slash, a tag, the merge queue and any other event give every test" {
+@test "a push to a Main, main or development, a tag and any other event give every test" {
   ci_checkout 4.0/Main
   [ "$(tests_given)" = all ]
-  [ "$(tests_given FAKE_GH_STATUS=1)" = all ]
   push_documents_branch development
+  [ "$(tests_given)" = all ]
+  push_documents_branch main
   [ "$(tests_given)" = all ]
   push_documents_branch 4.0/documents
   [ "$(tests_given GITHUB_REF=refs/tags/snunow/all/26.11.15-1 GITHUB_REF_NAME=snunow/all/26.11.15-1)" = all ]
-  [ "$(tests_given GITHUB_EVENT_NAME=merge_group)" = all ]
   [ "$(tests_given GITHUB_EVENT_NAME=workflow_dispatch)" = all ]
 }
 
-@test "a working branch whose decision fails safe still gives unit tests, and a failure inside the script every test" {
+@test "the level comes from the event and the ref alone, so GITHUB_REF_NAME and GITHUB_SHA cannot raise it" {
   push_documents_branch 4.0/documents
   [ "$(tests_given GITHUB_SHA=0123456789abcdef0123456789abcdef01234567)" = unit ]
-  mkdir "$BATS_TEST_TMPDIR/broken-mktemp"
-  printf '#!/bin/sh\nexit 1\n' >"$BATS_TEST_TMPDIR/broken-mktemp/mktemp"
-  chmod +x "$BATS_TEST_TMPDIR/broken-mktemp/mktemp"
-  [ "$(tests_given PATH="$BATS_TEST_TMPDIR/broken-mktemp:$PATH")" = all ]
+  [ "$(tests_given GITHUB_REF_NAME=4.0/Main)" = unit ]
+  ci_checkout 4.0/Main
+  [ "$(tests_given GITHUB_REF_NAME=4.0/documents)" = all ]
 }
 
 @test "a skip appends exactly one run=false and tests= after what GITHUB_OUTPUT held, prints one notice and exits 0" {
@@ -389,8 +395,8 @@ mobile/App.tsx reaches it; 4.0/app changes 2 paths since it left origin/4.0/Main
 
   [ "$status" -eq 0 ]
   [ "${#lines[@]}" -eq 1 ]
-  [[ "$output" == 'The job mobile does its work: '*'; GITHUB_OUTPUT cannot be written, so the step sets no output' ]] ||
-    false
+  [[ "$output" == 'The job mobile does its work: '*'; GITHUB_OUTPUT cannot be written, so the step sets no output, and '\
+'ci.yml then runs every step' ]] || false
 }
 
 @test "a failure after the decision was recorded adds no second run= or tests= line, and the script still exits 0" {
@@ -538,80 +544,144 @@ mobile/App.tsx reaches it; 4.0/app changes 2 paths since it left origin/4.0/Main
   expect_jobs ''
 }
 
+# --- The merge queue ----------------------------------------------------------------------------------------------
+
+@test "the merge queue runs the jobs its merge group's paths reach, with unit tests only, as on a pull request's push" {
+  local base
+  base=$(git -C "$WORK" rev-parse 4.0/Main)
+  group_off 9 4.0/Main mobile/App.tsx docs/guide.md
+  queue_checkout 9 "$base"
+  expect_jobs "$APP"
+  [ "$(tests_given)" = unit ]
+
+  rm -f "$BATS_TEST_TMPDIR/output"
+  run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" mobile-tests
+
+  [ "$status" -eq 0 ]
+  [ "$(cat "$BATS_TEST_TMPDIR/output")" = $'run=true\ntests=unit' ]
+  [ "$output" = "The job mobile-tests does its work, with unit tests only, as on every pull request's push: \
+mobile/App.tsx reaches it; the merge group changes 2 paths since its base ${base:0:7}" ]
+}
+
+@test "a merge group that changes only documents skips every job, with a notice that names its base" {
+  local base
+  base=$(git -C "$WORK" rev-parse 4.0/Main)
+  group_off 9 4.0/Main docs/guide.md
+  queue_checkout 9 "$base"
+  expect_jobs ''
+
+  rm -f "$BATS_TEST_TMPDIR/output"
+  run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" mobile
+
+  [ "$status" -eq 0 ]
+  [ "$(cat "$BATS_TEST_TMPDIR/output")" = $'run=false\ntests=unit' ]
+  [ "$output" = "::notice::The job mobile skips its work: the merge group changes 1 path since its base ${base:0:7}, \
+and none reaches it" ]
+}
+
+@test "a merge group counts the paths changed since its base, its own only when the base is the group ahead of it" {
+  local main ahead
+  main=$(git -C "$WORK" rev-parse 4.0/Main)
+  group_off 9 4.0/Main infra/production/terraform/main.tf
+  ahead=$(git -C "$WORK" rev-parse HEAD)
+  group_off 10 HEAD admin/src/page.tsx
+  queue_checkout 10 "$ahead"
+  expect_jobs admin
+  export MERGE_GROUP_BASE_SHA=$main
+  expect_jobs 'admin terraform'
+}
+
+@test "a merge group that changes CI's own files runs every job with unit tests only" {
+  group_off 9 4.0/Main .github/ci/changes.sh docs/guide.md
+  queue_checkout 9 "$(git -C "$WORK" rev-parse 4.0/Main)"
+  expect_every_job unit '.github/ci/changes.sh is part of CI itself; the merge group changes 2 paths since its base '
+}
+
+@test "a merge group whose base is missing, malformed or unreadable runs every job with unit tests only" {
+  local unknown=0123456789abcdef0123456789abcdef01234567
+  group_off 9 4.0/Main docs/guide.md
+  queue_checkout 9 "$(git -C "$WORK" rev-parse 4.0/Main)"
+
+  expect_every_job unit "the merge group's base is '' in MERGE_GROUP_BASE_SHA, not a full commit hash" \
+    MERGE_GROUP_BASE_SHA=
+  expect_every_job unit "the merge group's base is 'HEAD~1' in MERGE_GROUP_BASE_SHA, not a full commit hash" \
+    MERGE_GROUP_BASE_SHA='HEAD~1'
+  expect_every_job unit "the merge group's base $unknown cannot be read" MERGE_GROUP_BASE_SHA=$unknown
+}
+
+@test "in the merge queue, a shallow checkout or a failing git runs every job with unit tests only" {
+  local base
+  base=$(git -C "$WORK" rev-parse 4.0/Main)
+  group_off 9 4.0/Main docs/guide.md
+  queue_checkout 9 "$base" --depth=1 --no-single-branch
+  expect_every_job unit 'the checkout is shallow, or git cannot read it'
+
+  queue_checkout 9 "$base"
+  fake_git_failing_on diff 128
+  expect_every_job unit 'git could not list the paths changed from '
+}
+
 # --- Full runs ----------------------------------------------------------------------------------------------------
 
-@test "a run that a push did not start runs every job" {
+@test "a run that neither a push nor the merge queue started runs every job" {
   push_documents_branch 4.0/documents
-  expect_full_run 'the run was started by workflow_dispatch, not by a push' GITHUB_EVENT_NAME=workflow_dispatch
+  expect_every_job all 'the run was started by workflow_dispatch, not by a push or the merge queue' \
+    GITHUB_EVENT_NAME=workflow_dispatch
 }
 
 @test "a ref that is not a branch, such as a Release tag, runs every job" {
   push_documents_branch 4.0/documents
-  expect_full_run 'refs/tags/snunow/all/26.11.15-1 is not a branch' GITHUB_REF=refs/tags/snunow/all/26.11.15-1 \
+  expect_every_job all 'refs/tags/snunow/all/26.11.15-1 is not a branch' GITHUB_REF=refs/tags/snunow/all/26.11.15-1 \
     GITHUB_REF_NAME=snunow/all/26.11.15-1
 }
 
 @test "a GITHUB_REF_NAME that does not name GITHUB_REF runs every job" {
   push_documents_branch 4.0/documents
-  expect_full_run 'GITHUB_REF_NAME (4.0/other) does not name refs/heads/4.0/documents' GITHUB_REF_NAME=4.0/other
+  expect_every_job unit 'GITHUB_REF_NAME (4.0/other) does not name refs/heads/4.0/documents' GITHUB_REF_NAME=4.0/other
 }
 
-@test "a branch name without a slash runs every job" {
+@test "a push to main or development runs every job with every test, and another branch without a slash with unit tests" {
   push_documents_branch development
-  expect_full_run 'development is not named <line>/<name>'
+  expect_every_job all 'a push to development runs every job with every test'
+  push_documents_branch main
+  expect_every_job all 'a push to main runs every job with every test'
+  push_documents_branch feature
+  expect_every_job unit 'feature is not named <line>/<name>'
 }
 
-@test "a push to a Main runs every job unless the merge queue's run of the same commit passed, whatever its line" {
-  local runs="repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs"
+@test "a push to a Main runs every job with every test, whatever its line, and a deeper .../Main gives unit tests" {
   ci_checkout 4.0/Main
-  expect_full_run "4.0/Main is a Main, and no merge queue run passed ${GITHUB_SHA:0:7}"
-  grep -qxF "gh api $runs?head_sha=$GITHUB_SHA&event=merge_group&per_page=100" "$FAKE_GH_CALLS"
+  expect_every_job all 'a push to 4.0/Main runs every job with every test'
 
   git -C "$WORK" branch ci-trial/Main 4.0/Main
   publish ci-trial/Main
   ci_checkout ci-trial/Main
-  serve_queue_runs 'completed success'
-  expect_jobs ''
-  run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" mobile
-  [ "$output" = "::notice::The job mobile skips its work: the merge queue's run of ${GITHUB_SHA:0:7} already passed \
-every job" ]
+  expect_every_job all 'a push to ci-trial/Main runs every job with every test'
+
+  push_documents_branch 4.0/old/Main
+  [ "$(tests_given)" = unit ]
 }
 
-@test "a push to a Main after a failed, unfinished or other commit's merge queue run runs every job" {
-  local other
-  ci_checkout 4.0/Main
-  other=$(tr 0-9a-f 1-9a-f0 <<<"$GITHUB_SHA")
-  serve_queue_runs 'completed failure' 'completed cancelled' 'in_progress null' "completed success $other"
-  expect_full_run "4.0/Main is a Main, and no merge queue run passed ${GITHUB_SHA:0:7}"
-}
-
-@test "a push to a Main runs every job when GitHub fails, gh cannot run, or the answer is not a list of runs" {
-  local unknown
-  ci_checkout 4.0/Main
-  unknown="4.0/Main is a Main, and GitHub did not say whether the merge queue passed $GITHUB_SHA"
-  expect_full_run "$unknown" FAKE_GH_STATUS=1
-  expect_full_run "$unknown" FAKE_GH_STATUS=127
-  echo 'Bad Gateway' >"$FAKE_QUEUE_RUNS"
-  expect_full_run "$unknown"
-  echo '{"message": "Not Found"}' >"$FAKE_QUEUE_RUNS"
-  expect_full_run "$unknown"
-}
-
-@test "a working branch's push asks GitHub nothing" {
+@test "no run asks GitHub anything: a working branch's push, a Main's push or the merge queue" {
   push_documents_branch 4.0/documents
+  expect_jobs ''
+  ci_checkout 4.0/Main
+  expect_jobs "$EVERY"
+  group_off 9 4.0/Main docs/guide.md
+  queue_checkout 9 "$(git -C "$WORK" rev-parse 4.0/Main)"
   expect_jobs ''
   [ ! -e "$FAKE_GH_CALLS" ]
 }
 
 @test "a branch whose Main is missing runs every job" {
   push_documents_branch 9.0/documents
-  expect_full_run 'origin/9.0/Main is missing or is not a commit'
+  expect_every_job unit 'origin/9.0/Main is missing or is not a commit'
 }
 
 @test "a branch whose Main is not a commit runs every job" {
   push_documents_branch 4.0/documents
   git update-ref refs/remotes/origin/4.0/Main "$(git rev-parse 'HEAD^{tree}')"
-  expect_full_run 'origin/4.0/Main is missing or is not a commit'
+  expect_every_job unit 'origin/4.0/Main is missing or is not a commit'
 }
 
 @test "a commit already on Main runs every job, even pushed on a working branch" {
@@ -622,9 +692,9 @@ every job" ]
   publish 4.0/at-tip 4.0/behind
 
   ci_checkout 4.0/at-tip
-  expect_full_run 'the commit is already on origin/4.0/Main'
+  expect_every_job unit 'the commit is already on origin/4.0/Main'
   ci_checkout 4.0/behind
-  expect_full_run 'the commit is already on origin/4.0/Main'
+  expect_every_job unit 'the commit is already on origin/4.0/Main'
 }
 
 @test "a commit already on another line's Main, on development or on main runs every job" {
@@ -634,13 +704,13 @@ every job" ]
   git -C "$WORK" branch 4.0/late 5.0/Main
   publish 4.0/late
   ci_checkout 4.0/late
-  expect_full_run 'the commit is already on origin/5.0/Main'
+  expect_every_job unit 'the commit is already on origin/5.0/Main'
 
   push_documents_branch 4.0/deployed
   git -C "$WORK" branch development 4.0/deployed
   publish development
   ci_checkout 4.0/deployed
-  expect_full_run 'the commit is already on origin/development'
+  expect_every_job unit 'the commit is already on origin/development'
 
   # Another path than 4.0/deployed's, or both commits could be one when made within the same second.
   branch_off 4.0/old
@@ -649,7 +719,7 @@ every job" ]
   git -C "$WORK" branch main 4.0/old
   publish main
   ci_checkout 4.0/old
-  expect_full_run 'the commit is already on origin/main'
+  expect_every_job unit 'the commit is already on origin/main'
 }
 
 @test "a branch that shares no history with Main runs every job" {
@@ -657,7 +727,7 @@ every job" ]
   commit docs/guide.md
   publish 4.0/orphan
   ci_checkout 4.0/orphan
-  expect_full_run 'the commit shares no history with origin/4.0/Main'
+  expect_every_job unit 'the commit shares no history with origin/4.0/Main'
 }
 
 @test "a change to ci.yml runs every job" {
@@ -665,7 +735,7 @@ every job" ]
   commit .github/workflows/ci.yml docs/guide.md
   publish 4.0/ci
   ci_checkout 4.0/ci
-  expect_full_run '.github/workflows/ci.yml is part of CI itself; '
+  expect_every_job unit '.github/workflows/ci.yml is part of CI itself; '
 }
 
 @test "a change under .github/ci/ runs every job" {
@@ -673,7 +743,7 @@ every job" ]
   commit .github/ci/test/changes.bats docs/guide.md
   publish 4.0/ci
   ci_checkout 4.0/ci
-  expect_full_run '.github/ci/test/changes.bats is part of CI itself; '
+  expect_every_job unit '.github/ci/test/changes.bats is part of CI itself; '
 }
 
 @test "a changed path that no rule names runs every job" {
@@ -681,7 +751,7 @@ every job" ]
   commit .gitignore docs/guide.md
   publish 4.0/ignore
   ci_checkout 4.0/ignore
-  expect_full_run 'no rule names .gitignore; '
+  expect_every_job unit 'no rule names .gitignore; '
 }
 
 @test "an unknown job key, or none, runs the job" {
@@ -691,28 +761,30 @@ every job" ]
     rm -f "$BATS_TEST_TMPDIR/output"
     run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" "$key"
     [ "$status" -eq 0 ]
-    [ "$(cat "$BATS_TEST_TMPDIR/output")" = $'run=true\ntests=all' ]
-    [ "$output" = "The job $key does its work: $key is not a job key that this script knows" ]
+    [ "$(cat "$BATS_TEST_TMPDIR/output")" = $'run=true\ntests=unit' ]
+    [ "$output" = "The job $key does its work, with unit tests only, as on every pull request's push: $key is not a job \
+key that this script knows" ]
   done
 
   rm "$BATS_TEST_TMPDIR/output"
   run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES"
   [ "$status" -eq 0 ]
-  [ "$(cat "$BATS_TEST_TMPDIR/output")" = $'run=true\ntests=all' ]
-  [ "$output" = 'The job without a key does its work: no job key was given' ]
+  [ "$(cat "$BATS_TEST_TMPDIR/output")" = $'run=true\ntests=unit' ]
+  [ "$output" = "The job without a key does its work, with unit tests only, as on every pull request's push: no job key \
+was given" ]
 }
 
 @test "git failing for for-each-ref --contains, for merge-base --all or for diff runs every job" {
   push_documents_branch 4.0/documents
 
   fake_git_failing_on --contains 129
-  expect_full_run 'git could not tell which branches hold the commit'
+  expect_every_job unit 'git could not tell which branches hold the commit'
   fake_git_failing_on --all 128
-  expect_full_run 'git could not find where 4.0/documents left origin/4.0/Main'
+  expect_every_job unit 'git could not find where 4.0/documents left origin/4.0/Main'
   fake_git_failing_on diff 128
-  expect_full_run 'git could not list the paths changed from '
+  expect_every_job unit 'git could not list the paths changed from '
   fake_git_failing_on rev-parse 128
-  expect_full_run 'the checkout is shallow, or git cannot read it'
+  expect_every_job unit 'the checkout is shallow, or git cannot read it'
 }
 
 @test "git missing from PATH, or a pushed commit that git cannot read, runs every job" {
@@ -720,8 +792,8 @@ every job" ]
   mkdir "$BATS_TEST_TMPDIR/no-git"
   ln -s "$(command -v bash)" "$BATS_TEST_TMPDIR/no-git/bash"
 
-  expect_full_run 'the checkout is shallow, or git cannot read it' PATH="$BATS_TEST_TMPDIR/no-git"
-  expect_full_run 'the pushed commit 0123456789abcdef0123456789abcdef01234567 cannot be read' \
+  expect_every_job unit 'the checkout is shallow, or git cannot read it' PATH="$BATS_TEST_TMPDIR/no-git"
+  expect_every_job unit 'the pushed commit 0123456789abcdef0123456789abcdef01234567 cannot be read' \
     GITHUB_SHA=0123456789abcdef0123456789abcdef01234567
 }
 
@@ -730,7 +802,7 @@ every job" ]
   commit docs/guide.md
   publish 4.0/documents
   ci_checkout 4.0/documents --depth=1 --no-single-branch
-  expect_full_run 'the checkout is shallow, or git cannot read it'
+  expect_every_job unit 'the checkout is shallow, or git cannot read it'
 }
 
 @test "a failure inside the script runs the job, and the script still exits 0" {
@@ -740,5 +812,5 @@ every job" ]
   printf '#!/bin/sh\nexit 1\n' >"$BATS_TEST_TMPDIR/broken/mktemp"
   chmod +x "$BATS_TEST_TMPDIR/broken/mktemp"
 
-  expect_full_run 'the script stopped before it decided' PATH="$BATS_TEST_TMPDIR/broken:$PATH"
+  expect_every_job unit 'the script stopped before it decided' PATH="$BATS_TEST_TMPDIR/broken:$PATH"
 }

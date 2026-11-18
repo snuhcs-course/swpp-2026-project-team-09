@@ -14,6 +14,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -25,6 +26,7 @@ import {
   type LanguageModelMiddleware,
   RetryError,
   stepCountIs,
+  type SystemModelMessage,
   tool,
   type ToolSet,
   wrapLanguageModel,
@@ -98,23 +100,25 @@ const EPHEMERAL = { type: 'ephemeral' } as const;
 // Haiku 5.5's default, sent so that the request does not rely on it.
 const EFFORT = 'medium';
 
-// The Anthropic request's options. Under `breakpoints`, one breakpoint ends the last system message: the tools and the
-// system prompt come before it, and are read back by every request that has the same ones, which in an eval world is
-// every case. A call that gives the model tools is a step of the chat's loop, whose next step sends it all again, so
+// The Anthropic request's options. Under `breakpoints`, one breakpoint ends the first system message: the tools and the
+// system prompt's stable part (Feature.instructions) come before it, and are read back by every request that has the
+// same ones, whoever asks and whenever, within the cache's five minutes. What changes per request, the time in Korea
+// (Feature.requestInstructions), is a second system message after the breakpoint, and is not cached on its own. A
+// call that gives the model tools is a step of the chat's loop, whose next step sends it all again, so
 // its conversation is cached automatically too. The Judgement and the same-event choice give no tools: each is one call
 // whose last block is unique, so automatic caching would only write it at 1.25 times the price and never read it.
 // Under `auto`, every request is cached automatically and nothing else; under `off`, nothing is.
 function anthropicOptions(cache: CacheMode): LanguageModelMiddleware {
   return {
     transformParams: ({ params }) => {
-      const lastSystem = params.prompt.findLastIndex(({ role }) => role === 'system');
+      const stableSystem = params.prompt.findIndex(({ role }) => role === 'system');
       const isLoopStep = (params.tools ?? []).length > 0;
       const automatic = cache === 'auto' || (cache === 'breakpoints' && isLoopStep);
       const prompt =
-        cache !== 'breakpoints' || lastSystem === -1
+        cache !== 'breakpoints' || stableSystem === -1
           ? params.prompt
           : params.prompt.map((message, index) =>
-              index === lastSystem
+              index === stableSystem
                 ? {
                     ...message,
                     providerOptions: {
@@ -262,6 +266,14 @@ function toolSetOf({ tools }: Feature, context: ToolContext, observer: RunObserv
   );
 }
 
+// The feature's system prompt as the SDK sends it: its stable part, then the lines of this request, each a system
+// message of its own, in that order on every provider.
+function systemOf(feature: Feature, now: Date): SystemModelMessage[] {
+  const stable: SystemModelMessage = { role: 'system', content: feature.instructions };
+  const perRequest = feature.requestInstructions?.(now);
+  return perRequest === undefined ? [stable] : [stable, { role: 'system', content: perRequest }];
+}
+
 // Runs the feature on the conversation, the User's new message last, and answers with the text of the model's steps and
 // what the presenters put beside it. It throws NoAnswerError when the steps ran out on tools or the run has nothing to
 // say or show, and the SDK's errors when the model fails or the time runs out. An observer, if given, is told of each
@@ -285,7 +297,7 @@ export async function runFeature(
   };
   const { steps, finishReason } = await generateText({
     model,
-    instructions: feature.instructions(asker.now),
+    instructions: systemOf(feature, asker.now),
     messages: messagesFor(messages, asker),
     tools: toolSetOf(feature, context, observer),
     stopWhen: stepCountIs(maxSteps),

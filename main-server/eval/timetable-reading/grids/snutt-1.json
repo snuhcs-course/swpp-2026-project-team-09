@@ -1,0 +1,117 @@
+{
+  "columns": 6,
+  "blocks": [
+    {
+      "column": 0,
+      "top": 500,
+      "bottom": 700,
+      "colour": [95, 191, 112],
+      "fades": false
+    },
+    {
+      "column": 0,
+      "top": 1128,
+      "bottom": 1416,
+      "colour": [163, 91, 174],
+      "fades": false
+    },
+    {
+      "column": 1,
+      "top": 424,
+      "bottom": 896,
+      "colour": [97, 204, 199],
+      "fades": false
+    },
+    {
+      "column": 1,
+      "top": 1052,
+      "bottom": 1184,
+      "colour": [230, 146, 78],
+      "fades": false
+    },
+    {
+      "column": 1,
+      "top": 1208,
+      "bottom": 1404,
+      "colour": [241, 198, 80],
+      "fades": false
+    },
+    {
+      "column": 1,
+      "top": 1992,
+      "bottom": 2304,
+      "colour": [211, 81, 92],
+      "fades": false
+    },
+    {
+      "column": 2,
+      "top": 500,
+      "bottom": 700,
+      "colour": [95, 191, 113],
+      "fades": false
+    },
+    {
+      "column": 2,
+      "top": 1128,
+      "bottom": 1416,
+      "colour": [164, 92, 174],
+      "fades": false
+    },
+    {
+      "column": 2,
+      "top": 1520,
+      "bottom": 1836,
+      "colour": [97, 204, 199],
+      "fades": false
+    },
+    {
+      "column": 3,
+      "top": 424,
+      "bottom": 896,
+      "colour": [97, 204, 199],
+      "fades": false
+    },
+    {
+      "column": 3,
+      "top": 1208,
+      "bottom": 1404,
+      "colour": [241, 198, 80],
+      "fades": false
+    },
+    {
+      "column": 3,
+      "top": 1520,
+      "bottom": 1836,
+      "colour": [97, 204, 199],
+      "fades": false
+    },
+    {
+      "column": 4,
+      "top": 580,
+      "bottom": 1024,
+      "colour": [74, 151, 225],
+      "fades": false
+    },
+    {
+      "column": 4,
+      "top": 1052,
+      "bottom": 1968,
+      "colour": [176, 215, 82],
+      "fades": false
+    },
+    {
+      "column": 4,
+      "top": 1992,
+      "bottom": 2464,
+      "colour": [211, 82, 93],
+      "fades": false
+    },
+    {
+      "column": 5,
+      "top": 424,
+      "bottom": 712,
+      "colour": [78, 72, 189],
+      "fades": false
+    }
+  ]
+}

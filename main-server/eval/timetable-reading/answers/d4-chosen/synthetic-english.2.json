@@ -1,0 +1,86 @@
+{
+  "screenshot": "synthetic-english",
+  "model": "claude-haiku-5-5",
+  "mode": "blocks",
+  "ms": 1941,
+  "inputTokens": 3210,
+  "outputTokens": 230,
+  "calls": 1,
+  "answer": {
+    "title": "Fall 2026",
+    "axis": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24"
+    ],
+    "blocks": [
+      {
+        "day": "월",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["물리학 1"],
+        "name": "물리학 1",
+        "room": "56-105",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["물리학 1"],
+        "name": "물리학 1",
+        "room": "56-105",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "14:00",
+        "end": "15:50",
+        "nameLines": ["물리학실험 1"],
+        "name": "물리학실험 1",
+        "room": "26-304",
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "09:30",
+        "end": "10:45",
+        "nameLines": ["수학 1"],
+        "name": "수학 1",
+        "room": "25-101",
+        "cut": false
+      },
+      {
+        "day": "금",
+        "start": "09:30",
+        "end": "10:45",
+        "nameLines": ["수학연습 1"],
+        "name": "수학연습 1",
+        "room": "25-102",
+        "cut": false
+      }
+    ]
+  }
+}

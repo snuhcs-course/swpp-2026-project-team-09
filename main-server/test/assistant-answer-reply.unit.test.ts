@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -46,7 +47,7 @@ const model = new ScriptedModel();
 // One tool, `plan`, that tells what location it was run with and puts `answer` in the reply.
 function featureAnswering(answer: AnswerReply | null): Feature {
   return {
-    instructions: () => 'test',
+    instructions: 'test',
     tools: {
       plan: defineTool({
         description: 'Plans a meal.',
@@ -63,7 +64,7 @@ function featureAnswering(answer: AnswerReply | null): Feature {
 // One tool, `find`, that puts `lookup` in the reply.
 function featureLookingUp(lookup: Lookup): Feature {
   return {
-    instructions: () => 'test',
+    instructions: 'test',
     tools: {
       find: defineTool({
         description: 'Finds a way.',

@@ -1,0 +1,12 @@
+everytime-1.1 6580 ms, 1 calls, 5438/923 tokens, USD 0.02011: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":7,"truthClasses":7,"leftOut":0,"titleRight":false}
+snutt-1.1 10213 ms, 2 calls, 10742/1088 tokens, USD 0.03236: {"truthTimes":16,"readTimes":16,"found":16,"timesRight":16,"namesExact":16,"roomsExact":16,"allRight":16,"invented":0,"classesGroupedRight":10,"truthClasses":10,"leftOut":0,"titleRight":true}
+snutt-2.1 5625 ms, 1 calls, 5438/850 tokens, USD 0.01938: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":true}
+snutt-3.1 4168 ms, 1 calls, 5438/554 tokens, USD 0.01642: {"truthTimes":7,"readTimes":7,"found":7,"timesRight":7,"namesExact":7,"roomsExact":7,"allRight":7,"invented":0,"classesGroupedRight":3,"truthClasses":3,"leftOut":0,"titleRight":true}
+everytime-2.1 5888 ms, 1 calls, 3858/841 tokens, USD 0.01613: {"truthTimes":13,"readTimes":13,"found":13,"timesRight":13,"namesExact":13,"roomsExact":13,"allRight":13,"invented":0,"classesGroupedRight":8,"truthClasses":8,"leftOut":0,"titleRight":false}
+everytime-dark-1.1 5568 ms, 1 calls, 3858/754 tokens, USD 0.01526: {"truthTimes":12,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":false}
+snutt-4.1 4884 ms, 1 calls, 3858/766 tokens, USD 0.01538: {"truthTimes":12,"readTimes":12,"found":12,"timesRight":12,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":0,"titleRight":true}
+snutt-dark-1.1 5868 ms, 1 calls, 3858/842 tokens, USD 0.01614: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":9,"truthClasses":9,"leftOut":0,"titleRight":true}
+snutt-grey-1.1 5963 ms, 1 calls, 3858/937 tokens, USD 0.01709: {"truthTimes":14,"readTimes":13,"found":13,"timesRight":12,"namesExact":13,"roomsExact":13,"allRight":12,"invented":0,"classesGroupedRight":6,"truthClasses":6,"leftOut":1,"titleRight":true}
+  time: 컴퓨터프로그래밍 wednesday 18:30–20:20 302-105 read 18:30–20:00
+  missed: 논리설계 monday 19:00–20:50
+Total USD 0.1682

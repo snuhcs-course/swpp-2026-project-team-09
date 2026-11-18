@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, View, type ViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { color, Icon, radius, shadow, space, text } from '@/design-system';
@@ -17,15 +18,29 @@ interface AnswerPillProps {
   icon: 'chat' | 'user' | 'pin';
   onClose: () => void;
   onNew: () => void;
+  keyboardUp: boolean;
+}
+
+// While the keyboard is up, a press on the pill beside ✕ only puts the keyboard down, as one on the scrim under the
+// frame does. ✕ stands deeper, so it keeps its press.
+function keyboardDownOn(keyboardUp: boolean): Partial<ViewProps> {
+  return keyboardUp
+    ? {
+        onStartShouldSetResponder: () => true,
+        onResponderGrant: () => {
+          Keyboard.dismiss();
+        },
+      }
+    : {};
 }
 
 // What the User asked, on one line, with its icon and ✕, which hides the frame; or a building asked about over the
 // answer ("여기면 어때?"), with the pin. "새 대화" at its right forgets the conversation.
-export function AnswerPill({ asked, icon, onClose, onNew }: AnswerPillProps): ReactElement {
+export function AnswerPill({ asked, icon, onClose, onNew, keyboardUp }: AnswerPillProps): ReactElement {
   const { top } = useSafeAreaInsets();
   return (
     <View style={[styles.pillRow, { top: listsTop(top) }]}>
-      <View style={styles.pill} testID="answer-pill">
+      <View {...keyboardDownOn(keyboardUp)} style={styles.pill} testID="answer-pill">
         <Icon color={color.ink} name={icon} size={20} testID={`answer-pill-${icon}`} />
         <Text ellipsizeMode="tail" numberOfLines={1} style={styles.asked}>
           {asked}

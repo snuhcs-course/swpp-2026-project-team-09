@@ -1,0 +1,146 @@
+{
+  "screenshot": "everytime-dark-1",
+  "model": "claude-haiku-5-5",
+  "ms": 4502,
+  "inputTokens": 3454,
+  "outputTokens": 974,
+  "boxes": [
+    {
+      "weekday": "monday",
+      "start": "09:30",
+      "end": "10:45"
+    },
+    {
+      "weekday": "monday",
+      "start": "11:00",
+      "end": "12:15"
+    },
+    {
+      "weekday": "monday",
+      "start": "14:00",
+      "end": "15:15"
+    },
+    {
+      "weekday": "monday",
+      "start": "15:30",
+      "end": "16:45"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "11:00",
+      "end": "12:15"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "14:00",
+      "end": "15:15"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "09:30",
+      "end": "10:45"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "11:00",
+      "end": "12:15"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "14:00",
+      "end": "15:15"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "15:30",
+      "end": "16:45"
+    },
+    {
+      "weekday": "thursday",
+      "start": "11:00",
+      "end": "12:15"
+    },
+    {
+      "weekday": "thursday",
+      "start": "14:00",
+      "end": "15:15"
+    }
+  ],
+  "answer": {
+    "title": "2023년 2학기",
+    "blocks": [
+      {
+        "number": 1,
+        "nameLines": ["공학수학 2"],
+        "name": "공학수학 2",
+        "room": "301-118"
+      },
+      {
+        "number": 2,
+        "nameLines": ["알고리즘"],
+        "name": "알고리즘",
+        "room": "302-208"
+      },
+      {
+        "number": 3,
+        "nameLines": ["현대대수학"],
+        "name": "현대대수학",
+        "room": "28-103"
+      },
+      {
+        "number": 4,
+        "nameLines": ["컴퓨터구조"],
+        "name": "컴퓨터구조",
+        "room": "302-105"
+      },
+      {
+        "number": 5,
+        "nameLines": ["전기전자회로"],
+        "name": "전기전자회로",
+        "room": "301-118"
+      },
+      {
+        "number": 6,
+        "nameLines": ["프로그래밍의 원", "리"],
+        "name": "프로그래밍의 원리",
+        "room": "302-107"
+      },
+      {
+        "number": 7,
+        "nameLines": ["공학수학 2"],
+        "name": "공학수학 2",
+        "room": "301-118"
+      },
+      {
+        "number": 8,
+        "nameLines": ["알고리즘"],
+        "name": "알고리즘",
+        "room": "302-208"
+      },
+      {
+        "number": 9,
+        "nameLines": ["현대대수학"],
+        "name": "현대대수학",
+        "room": "28-103"
+      },
+      {
+        "number": 10,
+        "nameLines": ["컴퓨터구조"],
+        "name": "컴퓨터구조",
+        "room": "302-105"
+      },
+      {
+        "number": 11,
+        "nameLines": ["전기전자회로"],
+        "name": "전기전자회로",
+        "room": "301-118"
+      },
+      {
+        "number": 12,
+        "nameLines": ["프로그래밍의 원", "리"],
+        "name": "프로그래밍의 원리",
+        "room": "302-107"
+      }
+    ]
+  }
+}
