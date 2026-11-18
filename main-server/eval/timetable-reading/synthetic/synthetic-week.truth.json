@@ -1,0 +1,52 @@
+{
+  "screenshot": "synthetic-week.png",
+  "app": "synthetic",
+  "title": "연습",
+  "times": [
+    {
+      "weekday": "monday",
+      "start": "08:00",
+      "end": "09:15",
+      "name": "아침영어",
+      "roomLine": "3-101",
+      "building": "3",
+      "room": "101"
+    },
+    {
+      "weekday": "monday",
+      "start": "09:30",
+      "end": "10:45",
+      "name": "미적분학",
+      "roomLine": "28-102",
+      "building": "28",
+      "room": "102"
+    },
+    {
+      "weekday": "sunday",
+      "start": "19:00",
+      "end": "20:50",
+      "name": "프로그래밍연습",
+      "roomLine": "302-105",
+      "building": "302",
+      "room": "105"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "19:00",
+      "end": "20:50",
+      "name": "프로그래밍연습",
+      "roomLine": "301-118",
+      "building": "301",
+      "room": "118"
+    },
+    {
+      "weekday": "friday",
+      "start": "12:00",
+      "end": "13:15",
+      "name": "프로그래밍의 원리",
+      "roomLine": "302-107",
+      "building": "302",
+      "room": "107"
+    }
+  ]
+}

@@ -14,6 +14,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { DynamicModule, INestApplication, Type } from '@nestjs/common';
@@ -23,7 +24,7 @@ import { Server } from 'node:http';
 import { type Model } from '../src/assistant/adapter.js';
 import { MODEL_FACTORY, type ModelFactory } from '../src/assistant/model-port.js';
 import { httpAdapter } from '../src/common/http-adapter.js';
-import { JSON_BODY_LIMIT } from '../src/common/json-body-limit.js';
+import { useJsonBodyParsers } from '../src/common/json-body-limit.js';
 import { Settings } from '../src/common/settings.js';
 import { FETCH_MATCH_SERVER } from '../src/matching/match-server.js';
 import { FETCH_EXPO } from '../src/push/expo-push.js';
@@ -83,7 +84,7 @@ export async function startApp(
     .compile();
   // As src/main.ts does.
   const app = moduleRef.createNestApplication<NestExpressApplication>(httpAdapter());
-  app.useBodyParser('json', { limit: JSON_BODY_LIMIT });
+  useJsonBodyParsers(app);
   try {
     // On a free port, once. A server that does not listen is started and closed by supertest around each group of
     // requests, on a new port each time, and now and then a request reached something else or hung up.

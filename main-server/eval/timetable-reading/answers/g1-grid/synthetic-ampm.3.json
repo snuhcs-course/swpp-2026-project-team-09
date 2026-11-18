@@ -1,0 +1,61 @@
+{
+  "screenshot": "synthetic-ampm",
+  "model": "claude-haiku-5-5",
+  "mode": "grid",
+  "ms": 5964,
+  "inputTokens": 3215,
+  "outputTokens": 1228,
+  "calls": 1,
+  "answer": {
+    "title": null,
+    "axis": [
+      "오전 9시",
+      "오전 10시",
+      "오전 11시",
+      "오후 12시",
+      "오후 1시",
+      "오후 2시",
+      "오후 3시",
+      "오후 4시",
+      "오후 5시"
+    ],
+    "blocks": [
+      {
+        "day": "월",
+        "start": "10:00",
+        "end": "11:15",
+        "nameLines": ["컴퓨터프로", "그래밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": "302-105",
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "",
+        "start": "",
+        "end": "",
+        "nameLines": [],
+        "name": "",
+        "room": null,
+        "cut": false
+      }
+    ]
+  }
+}

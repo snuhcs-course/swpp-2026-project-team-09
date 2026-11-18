@@ -1,0 +1,190 @@
+{
+  "screenshot": "snutt-1",
+  "model": "claude-haiku-5-5",
+  "ms": 6366,
+  "inputTokens": 5086,
+  "outputTokens": 1529,
+  "boxes": [
+    {
+      "weekday": "monday",
+      "start": "09:30",
+      "end": "10:45"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "09:30",
+      "end": "10:45"
+    },
+    {
+      "weekday": "monday",
+      "start": "13:30",
+      "end": "15:20"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "13:30",
+      "end": "15:20"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "09:00",
+      "end": "12:00"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "16:00",
+      "end": "18:00"
+    },
+    {
+      "weekday": "thursday",
+      "start": "09:00",
+      "end": "12:00"
+    },
+    {
+      "weekday": "thursday",
+      "start": "16:00",
+      "end": "18:00"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "13:00",
+      "end": "13:50"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "14:00",
+      "end": "15:15"
+    },
+    {
+      "weekday": "thursday",
+      "start": "14:00",
+      "end": "15:15"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "19:00",
+      "end": "21:00"
+    },
+    {
+      "weekday": "friday",
+      "start": "10:00",
+      "end": "12:50"
+    },
+    {
+      "weekday": "friday",
+      "start": "13:00",
+      "end": "18:50"
+    },
+    {
+      "weekday": "friday",
+      "start": "19:00",
+      "end": "22:00"
+    },
+    {
+      "weekday": "saturday",
+      "start": "09:00",
+      "end": "10:50"
+    }
+  ],
+  "answer": {
+    "title": "hi",
+    "blocks": [
+      {
+        "number": 1,
+        "nameLines": ["딥러닝의 기초"],
+        "name": "딥러닝의 기초",
+        "room": "301-118"
+      },
+      {
+        "number": 2,
+        "nameLines": ["딥러닝의 기초"],
+        "name": "딥러닝의 기초",
+        "room": "301-118"
+      },
+      {
+        "number": 3,
+        "nameLines": ["하드웨어시스", "템설계"],
+        "name": "하드웨어시스템설계",
+        "room": "302-311-1"
+      },
+      {
+        "number": 4,
+        "nameLines": ["하드웨어시스", "템설계"],
+        "name": "하드웨어시스템설계",
+        "room": "302-311-1"
+      },
+      {
+        "number": 5,
+        "nameLines": ["근장"],
+        "name": "근장",
+        "room": null
+      },
+      {
+        "number": 6,
+        "nameLines": ["근장"],
+        "name": "근장",
+        "room": null
+      },
+      {
+        "number": 7,
+        "nameLines": ["근장"],
+        "name": "근장",
+        "room": null
+      },
+      {
+        "number": 8,
+        "nameLines": ["근장"],
+        "name": "근장",
+        "room": null
+      },
+      {
+        "number": 9,
+        "nameLines": ["컴퓨팅 살펴…"],
+        "name": "컴퓨팅 살펴…",
+        "room": "302-105"
+      },
+      {
+        "number": 10,
+        "nameLines": ["운영체제"],
+        "name": "운영체제",
+        "room": "301-203"
+      },
+      {
+        "number": 11,
+        "nameLines": ["운영체제"],
+        "name": "운영체제",
+        "room": "301-203"
+      },
+      {
+        "number": 12,
+        "nameLines": ["주간회의"],
+        "name": "주간회의",
+        "room": null
+      },
+      {
+        "number": 13,
+        "nameLines": ["정보 보호 및", "블록체인 개론"],
+        "name": "정보 보호 및 블록체인 개론",
+        "room": "43-2-B101"
+      },
+      {
+        "number": 14,
+        "nameLines": ["창의적통합설", "계2"],
+        "name": "창의적통합설계2",
+        "room": "302-106"
+      },
+      {
+        "number": 15,
+        "nameLines": ["월간회의"],
+        "name": "월간회의",
+        "room": null
+      },
+      {
+        "number": 16,
+        "nameLines": ["(공유)학부생", "연구 인턴"],
+        "name": "(공유)학부생 연구 인턴",
+        "room": null
+      }
+    ]
+  }
+}

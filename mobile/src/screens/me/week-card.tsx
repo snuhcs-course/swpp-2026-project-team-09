@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
@@ -14,6 +15,7 @@ import {
   BottomSheet,
   cardStyles,
   color,
+  Dialog,
   ErrorState,
   font,
   Icon,
@@ -23,7 +25,14 @@ import {
   text,
 } from '@/design-system';
 import { useTimetableVersions } from '@/features/timetable/use-versions';
-import { READING, useImportFromImage } from '@/features/timetable-ocr/use-import-from-image';
+import {
+  PHONE_ONLY,
+  READING,
+  SEND,
+  SEND_BODY,
+  SEND_TITLE,
+  useImportFromImage,
+} from '@/features/timetable-ocr/use-import-from-image';
 import { useWeek } from '@/features/timetable/use-week';
 import { UnfinishedSwitch } from './unfinished-switch';
 import { VersionMenu } from './version-menu';
@@ -73,6 +82,7 @@ export function WeekCard(): ReactElement {
           </Pressable>
         ))}
       </View>
+      <SendNotice answer={importing.answer} visible={importing.asking} />
       <BottomSheet label="시간표 읽기" onClose={ignore} open={importing.reading}>
         <View style={styles.reading} testID="timetable-reading">
           <ActivityIndicator color={color.snuBlue} />
@@ -80,6 +90,25 @@ export function WeekCard(): ReactElement {
         </View>
       </BottomSheet>
     </View>
+  );
+}
+
+// The notice before the first send of a picture to the main server's AI (P15-52).
+function SendNotice({ visible, answer }: { visible: boolean; answer: (send: boolean) => void }): ReactElement {
+  return (
+    <Dialog
+      body={SEND_BODY}
+      cancelLabel={PHONE_ONLY}
+      confirmLabel={SEND}
+      onCancel={() => {
+        answer(false);
+      }}
+      onConfirm={() => {
+        answer(true);
+      }}
+      title={SEND_TITLE}
+      visible={visible}
+    />
   );
 }
 

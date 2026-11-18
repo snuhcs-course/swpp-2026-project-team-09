@@ -1,0 +1,117 @@
+{
+  "screenshot": "everytime-dark-1.png",
+  "app": "에브리타임",
+  "title": "2023년 2학기",
+  "times": [
+    {
+      "weekday": "monday",
+      "start": "09:30",
+      "end": "10:45",
+      "name": "공학수학 2",
+      "roomLine": "301-118",
+      "building": "301",
+      "room": "118"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "09:30",
+      "end": "10:45",
+      "name": "공학수학 2",
+      "roomLine": "301-118",
+      "building": "301",
+      "room": "118"
+    },
+    {
+      "weekday": "monday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "알고리즘",
+      "roomLine": "302-208",
+      "building": "302",
+      "room": "208"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "알고리즘",
+      "roomLine": "302-208",
+      "building": "302",
+      "room": "208"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "전기전자회로",
+      "roomLine": "301-118",
+      "building": "301",
+      "room": "118"
+    },
+    {
+      "weekday": "thursday",
+      "start": "11:00",
+      "end": "12:15",
+      "name": "전기전자회로",
+      "roomLine": "301-118",
+      "building": "301",
+      "room": "118"
+    },
+    {
+      "weekday": "monday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "현대대수학",
+      "roomLine": "28-103",
+      "building": "28",
+      "room": "103"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "현대대수학",
+      "roomLine": "28-103",
+      "building": "28",
+      "room": "103"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "프로그래밍의 원리",
+      "roomLine": "302-107",
+      "building": "302",
+      "room": "107",
+      "note": "printed over two lines, wrapped inside 원리: '프로그래밍의 원' / '리'"
+    },
+    {
+      "weekday": "thursday",
+      "start": "14:00",
+      "end": "15:15",
+      "name": "프로그래밍의 원리",
+      "roomLine": "302-107",
+      "building": "302",
+      "room": "107",
+      "note": "printed over two lines, wrapped inside 원리: '프로그래밍의 원' / '리'"
+    },
+    {
+      "weekday": "monday",
+      "start": "15:30",
+      "end": "16:45",
+      "name": "컴퓨터구조",
+      "roomLine": "302-105",
+      "building": "302",
+      "room": "105"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "15:30",
+      "end": "16:45",
+      "name": "컴퓨터구조",
+      "roomLine": "302-105",
+      "building": "302",
+      "room": "105"
+    }
+  ]
+}

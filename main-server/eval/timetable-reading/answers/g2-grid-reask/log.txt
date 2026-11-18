@@ -1,0 +1,23 @@
+everytime-1.1 13735 ms, 1 calls, mapped true, 5489/3263 tokens, USD 0.00218: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":7,"truthClasses":7,"leftOut":0,"titleRight":true}
+everytime-1.2 19436 ms, 1 calls, mapped true, 5489/4931 tokens, USD 0.00301: {"truthTimes":14,"readTimes":14,"found":14,"timesRight":14,"namesExact":14,"roomsExact":14,"allRight":14,"invented":0,"classesGroupedRight":7,"truthClasses":7,"leftOut":0,"titleRight":false}
+everytime-1.3 23869 ms, 2 calls, mapped true, 10938/5871 tokens, USD 0.00403: {"truthTimes":14,"readTimes":8,"found":8,"timesRight":8,"namesExact":6,"roomsExact":7,"allRight":6,"invented":0,"classesGroupedRight":2,"truthClasses":7,"leftOut":6,"titleRight":false}
+  name: 영상예술의 이해 wednesday 12:30–13:45 43-1 read "자연언어처리 개론"
+  room: 영상예술의 이해 wednesday 12:30–13:45 43-1 read -
+  name: 자료구조 wednesday 14:00–15:15 - read "컴퓨터프로그래밍"
+  missed: 공학수학 2 thursday 09:30–10:45
+  missed: 인공지능 이론 및 응용 세미나 thursday 13:00–13:50
+  missed: 컴퓨터프로그래밍 thursday 14:00–15:50
+  missed: 시스템프로그래밍 thursday 16:00–18:00
+  missed: 자연언어처리 개론 wednesday 17:00–18:15
+  missed: 컴퓨터프로그래밍 wednesday 19:00–21:00
+snutt-1.1 12388 ms, 2 calls, mapped true, 10854/2872 tokens, USD 0.00252: {"truthTimes":16,"readTimes":16,"found":16,"timesRight":16,"namesExact":16,"roomsExact":16,"allRight":16,"invented":0,"classesGroupedRight":10,"truthClasses":10,"leftOut":0,"titleRight":true}
+snutt-1.2 14123 ms, 2 calls, mapped true, 10854/3248 tokens, USD 0.00271: {"truthTimes":16,"readTimes":16,"found":16,"timesRight":16,"namesExact":16,"roomsExact":16,"allRight":16,"invented":0,"classesGroupedRight":10,"truthClasses":10,"leftOut":0,"titleRight":true}
+snutt-1.3 22937 ms, 2 calls, mapped true, 10978/5563 tokens, USD 0.00388: {"truthTimes":16,"readTimes":16,"found":16,"timesRight":16,"namesExact":12,"roomsExact":12,"allRight":12,"invented":0,"classesGroupedRight":7,"truthClasses":10,"leftOut":0,"titleRight":true}
+  name: 근장 tuesday 09:00–12:00 - read "운영체제"
+  room: 근장 tuesday 09:00–12:00 - read 301-203
+  name: 주간회의 tuesday 19:00–21:00 - read "운영체제"
+  room: 주간회의 tuesday 19:00–21:00 - read 301-203
+  name: 컴퓨팅 살펴 tuesday 13:00–13:50 302-105 read "주간회의"
+  room: 컴퓨팅 살펴 tuesday 13:00–13:50 302-105 read -
+  name: 운영체제 tuesday 14:00–15:15 301-203 read "컴퓨팅 살펴"
+  room: 운영체제 tuesday 14:00–15:15 301-203 read 302-105
