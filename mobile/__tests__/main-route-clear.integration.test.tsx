@@ -102,6 +102,22 @@ describe('a tap on empty map', () => {
   });
 });
 
+// Partitions: no route drawn or asked yet, as before the first position.
+describe('a tap on empty map with no route', () => {
+  it('changes nothing before the first position: the route drawn by itself still comes', async () => {
+    const phone = givePhone({ permission: 'granted' });
+    await openMain();
+    await pass(500);
+
+    await tapGround();
+    await phone.moveTo(ON_CAMPUS);
+    await pass(500);
+
+    expect(mapLines()).toContain(LINE);
+    expect(findWalkingRoute).toHaveBeenCalledTimes(1);
+  });
+});
+
 // Partitions: a mark's press that comes with the touch; a tap on a building.
 describe('a tap that is not on empty map', () => {
   it("is a mark's press, which opens its card and leaves the route", async () => {

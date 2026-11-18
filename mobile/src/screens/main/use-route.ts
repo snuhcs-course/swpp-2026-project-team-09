@@ -31,9 +31,10 @@ export interface MainRoute {
   // map to the place and says why, "캠퍼스 밖에 있어요" off campus. Nothing is drawn later for it either, when the
   // position comes: neither this way nor the opening one.
   routeTo: (place: { title: string; position: LatLng }) => boolean;
-  // A tap on empty map (P15 ticket 55): drops the line that is drawn, whoever drew it, and the opening route if it was
-  // still to come. The opening route is not drawn by itself again until the screen starts anew: it is drawn once a
-  // start of the screen, and the screen stays mounted while the app runs. A "길찾기" draws again as before.
+  // A tap on empty map (P15 ticket 55): drops the line that is drawn or on its way, whoever asked for it. A drawn
+  // opening route is not drawn by itself again until the screen starts anew: it is asked once a start of the screen,
+  // and the screen stays mounted while the app runs. With nothing drawn or asked it changes nothing: an opening route
+  // still to come, such as before the first position, still comes. A "길찾기" draws again as before.
   clear: () => void;
 }
 
@@ -50,20 +51,30 @@ function useLeaving(onLeave: () => void): void {
   );
 }
 
-// Drops the route that is drawn and the opening route still to come (`asked`), and any toast still to come for a route
-// the User asked for (`wanted`): for leaving the screen, and for a tap on empty map.
-function useDrop(clear: () => void, asked: RefObject<boolean>, wanted: RefObject<boolean>): () => void {
-  return useCallback((): void => {
-    asked.current = true;
+// `dismiss` drops the route that is drawn or on its way and any toast still to come for a route the User asked for
+// (`wanted`): for a tap on empty map. It leaves the opening route alone when that was not asked yet, so a tap before the
+// position comes keeps it coming. `leave` also drops the opening route still to come (`asked`): for leaving the screen.
+function useDrops(
+  clear: () => void,
+  asked: RefObject<boolean>,
+  wanted: RefObject<boolean>,
+): { dismiss: () => void; leave: () => void } {
+  const dismiss = useCallback((): void => {
     wanted.current = false;
     clear();
-  }, [clear, asked, wanted]);
+  }, [clear, wanted]);
+  const leave = useCallback((): void => {
+    asked.current = true;
+    dismiss();
+  }, [asked, dismiss]);
+  return { dismiss, leave };
 }
 
 // The main screen's one route. When the screen opens, the way to the User's next Quest by time is drawn, once, as
 // soon as the User has a position on campus; without one, none is. A "길찾기" replaces it, also one that could draw
-// nothing. Leaving the screen, or `clear`, drops whatever is drawn and the opening route that was still to come, and
-// nothing is drawn by itself after that.
+// nothing. Leaving the screen drops whatever is drawn and the opening route that was still to come, and nothing is
+// drawn by itself after that. `clear` drops what is drawn or on its way; the opening route, once asked, is not asked
+// again, but one still to come still comes.
 export function useRoute(map: MainMap, me: Me): MainRoute {
   const { route, isError, ask, clear } = useWalkingRoute();
   const showToast = useToast();
@@ -79,8 +90,8 @@ export function useRoute(map: MainMap, me: Me): MainRoute {
       ask(from, next.position);
     }
   }, [from, next, ask]);
-  const drop = useDrop(clear, asked, wanted);
-  useLeaving(drop);
+  const { dismiss, leave } = useDrops(clear, asked, wanted);
+  useLeaving(leave);
   const failed = isError || (route !== undefined && route.status !== 'OK');
   useEffect(() => {
     if (failed && wanted.current) {
@@ -109,5 +120,5 @@ export function useRoute(map: MainMap, me: Me): MainRoute {
     () => (route?.status === 'OK' ? { id: 'walking-route', points: route.route.line, style: ROUTE_STYLE } : null),
     [route],
   );
-  return { line, routeTo, clear: drop };
+  return { line, routeTo, clear: dismiss };
 }

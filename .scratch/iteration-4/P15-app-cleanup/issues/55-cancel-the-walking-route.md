@@ -18,8 +18,9 @@ Native files: none. Releases: an app OTA update only (no main-server Release, no
 
 - **A tap on empty map clears the walking route.** Empty means: a tap the building press counts (no marker, face or the User's dot kept it; a card, a control, the lists and the AI input are not on the map's View, so their presses never reach it), on the everyday map, where `GET /places/at` finds no Place or cannot answer. The route has no label of its own to tap.
 - The clear is one named callback in the existing tap path: `usePressedPlace` takes `onEmptyTap`, which `usePlaceTap` calls where it would have done nothing; `useMapView` passes `clearRoute` there only while the everyday map is shown; `MainScreen` passes `route.clear`. No second touch watcher.
-- `useRoute` gives `clear`. It drops the line, whoever drew it, a failure toast still to come for it, and the opening route if it was still to come.
-- **The route drawn by itself** toward the next Quest is cleared by such a tap too, and is not drawn again: it is drawn once each time the screen starts, and the screen stays mounted while the app runs, so after a tap it comes back only when the app starts again. A new position, the next Quest changing, or leaving and coming back to the tab draws nothing (leaving already dropped it for good). 길찾기 and 길 안내 draw again as before.
+- `useRoute` gives `clear`. It drops the line that is drawn or on its way, whoever asked for it, and a failure toast still to come for it. With nothing drawn and nothing asked it changes nothing.
+- **The route drawn by itself** toward the next Quest is cleared by such a tap too, once it is drawn or asked, and is not drawn again: it is asked once each time the screen starts, and the screen stays mounted while the app runs, so after a tap it comes back only when the app starts again. A new position, the next Quest changing, or leaving and coming back to the tab draws nothing (leaving already dropped it for good). 길찾기 and 길 안내 draw again as before.
+- **A tap before it is asked**, such as while the first position is still on its way, changes nothing: the opening route still comes when the position does. Only leaving the screen cancels an opening route still to come.
 
 ## What stays as it is
 
@@ -34,12 +35,13 @@ Native files: none. Releases: an app OTA update only (no main-server Release, no
 
 - [x] After 길찾기 on a card draws the route, a tap on empty map removes the `walking-route` line, and no card opens.
 - [x] The route drawn by itself when the screen opens is removed by a tap on empty map, and does not come back with a new position.
+- [x] A tap on empty map before the first position changes nothing: the route drawn by itself still comes when the position does.
 - [x] A tap where `GET /places/at` fails also removes it.
 - [x] A marker's press (with its touch) opens its card and leaves the route; `GET /places/at` is not asked.
 - [x] A tap on a building opens the Place's card and leaves the route.
 - [x] After a tap cleared it, 길찾기 draws a route again.
 - [x] No `Keyboard.dismiss` and no second touch watcher.
-- [x] Tests, by ADR 0007: an integration test over the mocks (`main-route-clear.integration.test.tsx`) for each criterion above; the building press, route and tutorial pin integration tests still pass.
+- [x] Tests, by ADR 0007: an integration test over the mocks (`main-route-clear.integration.test.tsx`) for each criterion above (7 tests); the building press, route and tutorial pin integration tests still pass.
 - [ ] On a phone: 길찾기, then a tap on an empty part of the map clears the line (left to a person, see the pull request).
 
 ## Comments
@@ -50,6 +52,7 @@ Native files: none. Releases: an app OTA update only (no main-server Release, no
 - `MainScreen` hands the clear to `useMapView` as `clearRoute` in `Everyday`, next to `lines`, both from `useRouteLines` (formerly `useLines`), so that `MainScreen` stays within the 50-line function limit.
 - A tap with a card open clears the route too when it lands on empty map; the card stays open, as before.
 - With #359 (the 새내기 튜토리얼 on the map) a trial merge (`git merge-tree`) gives three one-line conflicts. In `main-screen.tsx`, the import from `./use-map-view` takes both names (`type Everyday, type MapView`), and where #359 moves `MainScreen`'s hooks into `useMainParts` and calls `useLines`: there `const lines = useLines(shuttle, route)` becomes `const { lines, clearRoute } = useRouteLines(shuttle, route)` and `clearRoute` joins the `Everyday` object it passes to `useMapView` (`{ me, pin, lines, clearRoute, cards, selection, guide }`). In `use-map-view.ts` both add a field to `Everyday`'s destructuring in `useMapView`'s parameters; that line takes both (`{ me, pin, lines, cards, selection, clearRoute, guide }`). #361 (the keyboard scrim) is merged into `4.0/Main` and was taken into this branch with no conflict; with #362 (ticket 56) the trial merge conflicts only on the P15 spec's item line (both stay, 55 before 56).
+- fyoon46's review of #367 found that a tap before the opening route was asked cancelled it for the whole start (`clear` set `asked`). `clear` now only drops what is drawn or on its way; only leaving the screen marks the opening route as done. A test taps before the first position and sees the route come.
 - What ticket 56's review taught, applied here: the clear subscribes to nothing it reads back (it calls `useWalkingRoute`'s `clear`, which drops the asking from state), and nothing of the cleared route is kept once #362 gives the everyday route `gcTime: 0`; this branch does not change `useWalkingRoute`, so the two do not collide.
 - The phone check is left to a person: press 길찾기 on a Quest's card, then tap a spot of the map with no building or marker: the dotted line goes. Tap a marker or a building: its card opens and the line stays. Open the app on campus with a Quest today: the line to it shows; tap empty map: it goes and does not come back while walking.
 
@@ -57,5 +60,5 @@ Native files: none. Releases: an app OTA update only (no main-server Release, no
 
 Estimates, for this ticket alone:
 
-- Agent time: about 1 hour, in one session of one Opus 5.5 agent, most of it waiting on single-file Jest runs.
-- Tokens: output about 30,000. Input about 6 million: about 5.8 million cache reads, 0.2 million cache writes and a few thousand uncached.
+- Agent time: about 1 hour 20 minutes, in one session of one Opus 5.5 agent, the review's fix included, most of it waiting on single-file Jest runs.
+- Tokens: output about 38,000. Input about 8 million: about 7.7 million cache reads, 0.3 million cache writes and a few thousand uncached.
