@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { readReply, scriptFor } from './call-script';
@@ -105,6 +106,16 @@ export class HiddenViewTransport implements LibraryTransport {
       return;
     }
     settle(reply.ok ? { ok: true, result: reply.result } : { ok: false, error: reply.error });
+  }
+
+  // The page loaded afresh before the next call, as for each check of a login: a page the site sent off its screens,
+  // or one still on its way there, is not reused. Without the view, its mount loads the page.
+  reloadPage(): void {
+    if (this.handle === null || this.logoutDone !== null) {
+      return;
+    }
+    this.page = 'loading';
+    this.handle.load(LIBRARY_MAIN_URL);
   }
 
   async call(endpoint: LibraryEndpoint, body: Readonly<Record<string, string>>): Promise<TransportReply> {

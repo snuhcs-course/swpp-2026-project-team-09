@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import {
@@ -30,6 +31,8 @@ const LOGIN_FAILED = '로그인하지 못했어요';
 interface LibrarySession {
   // The "logged in" flag, as the phone keeps it.
   loggedIn: boolean;
+  // How many times the session was ended on purpose (`endLibrarySession`), so that the cards that had read follow.
+  logouts: number;
   // Opens the login and gives how it ended.
   logIn: () => Promise<LoginOutcome>;
   // Ends the library session (`endLibrarySession`).
@@ -46,13 +49,17 @@ export function useLibrarySession(): LibrarySession {
   return session;
 }
 
-function useLoggedIn(): boolean {
+function useLoggedIn(): { loggedIn: boolean; logouts: number } {
   const [loggedIn, setLoggedIn] = useState(false);
+  const [logouts, setLogouts] = useState(0);
   useEffect(() => {
     let current = true;
-    const stop = listenToLibraryFlag((next) => {
+    const stop = listenToLibraryFlag((next, cleared) => {
       current = false;
       setLoggedIn(next);
+      if (cleared === 'loggedOut') {
+        setLogouts((last) => last + 1);
+      }
     });
     void isLibraryLoggedIn().then((kept) => {
       if (current) {
@@ -61,15 +68,16 @@ function useLoggedIn(): boolean {
     });
     return stop;
   }, []);
-  return loggedIn;
+  return { loggedIn, logouts };
 }
 
 // The login's check. While it runs, the hidden view is mounted for its one read, before the flag is set; a session
-// that works keeps it mounted until the flag is set.
+// that works keeps it mounted until the flag is set. Each check reads on a page loaded afresh.
 function useLoginCheck(): { checking: boolean; check: () => Promise<boolean>; stopChecking: () => void } {
   const [checking, setChecking] = useState(false);
   const check = useCallback(async (): Promise<boolean> => {
     setChecking(true);
+    hiddenTransport.reloadPage();
     const works = await loginWorks(hiddenTransport, koreaDateKey(new Date()).replaceAll('-', ''));
     if (!works) {
       setChecking(false);
@@ -85,7 +93,7 @@ function useLoginCheck(): { checking: boolean; check: () => Promise<boolean>; st
 // The library session over the whole app: the hidden web view at the root while the flag is set, and the login,
 // opened by whichever card or row asks for it.
 export function LibrarySessionProvider({ children }: { children: ReactNode }): ReactElement {
-  const loggedIn = useLoggedIn();
+  const { loggedIn, logouts } = useLoggedIn();
   const showToast = useToast();
   const [loggingIn, setLoggingIn] = useState(false);
   const { checking, check, stopChecking } = useLoginCheck();
@@ -123,8 +131,8 @@ export function LibrarySessionProvider({ children }: { children: ReactNode }): R
     [showToast, stopChecking],
   );
   const session = useMemo(
-    () => ({ loggedIn, logIn, logOut: (): Promise<void> => endLibrarySession() }),
-    [loggedIn, logIn],
+    () => ({ loggedIn, logouts, logIn, logOut: (): Promise<void> => endLibrarySession() }),
+    [loggedIn, logouts, logIn],
   );
   return (
     <LibrarySessionContext value={session}>

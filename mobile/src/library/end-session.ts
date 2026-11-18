@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { clearLibraryLoggedIn, isLibraryLoggedIn } from './flag';
@@ -32,7 +33,7 @@ export async function endLibrarySession(transport: LibraryTransport = hiddenTran
       // A jar that could not be cleared leaves the site's logout as the end of the session; the flag goes either way.
     } finally {
       try {
-        await clearLibraryLoggedIn();
+        await clearLibraryLoggedIn('loggedOut');
       } finally {
         await forgetRoomBookings();
       }

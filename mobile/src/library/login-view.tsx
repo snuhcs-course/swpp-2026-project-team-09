@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type ReactElement, useEffect, useEffectEvent, useRef } from 'react';
@@ -46,26 +47,32 @@ function useFinish(visible: boolean, onDone: (outcome: LoginOutcome) => void): (
   return finish;
 }
 
-// Asks `check` once at a time, and ends the login as logged in only when it says the session works.
+// Asks `check` once at a time, and ends the login as logged in only when it says the session works. A landing that
+// comes while a check runs is kept, and asked once that check ends without a session: the site serves its main page
+// before the school's login too, and the check made there may still be running when the User is back logged in.
 function useCheckThenFinish(check: () => Promise<boolean>, finish: (outcome: LoginOutcome) => void): () => void {
   const checking = useRef(false);
-  return (): void => {
+  const again = useRef(false);
+  const run = (): void => {
     if (checking.current) {
+      again.current = true;
       return;
     }
     checking.current = true;
-    void check().then(
-      (works) => {
-        checking.current = false;
-        if (works) {
-          finish('loggedIn');
-        }
-      },
-      () => {
-        checking.current = false;
-      },
-    );
+    again.current = false;
+    const ended = (works: boolean): void => {
+      checking.current = false;
+      if (works) {
+        finish('loggedIn');
+      } else if (again.current) {
+        run();
+      }
+    };
+    void check().then(ended, () => {
+      ended(false);
+    });
   };
+  return run;
 }
 
 // The full-screen login: the school's own login page in a visible web view. The User types the password there, into

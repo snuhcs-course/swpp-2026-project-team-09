@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,13 +13,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const KEY = 'kwanjeong.loggedIn';
 
-type Listener = (loggedIn: boolean) => void;
+// Why the flag was cleared: the session ended under a call (`ended`), or the User or a sign-out ended it
+// (`loggedOut`, "end the library session").
+export type FlagCleared = 'ended' | 'loggedOut';
+
+type Listener = (loggedIn: boolean, cleared: FlagCleared | null) => void;
 
 const listeners = new Set<Listener>();
 
-function tell(loggedIn: boolean): void {
+function tell(loggedIn: boolean, cleared: FlagCleared | null): void {
   for (const listener of listeners) {
-    listener(loggedIn);
+    listener(loggedIn, cleared);
   }
 }
 
@@ -35,14 +40,14 @@ export async function isLibraryLoggedIn(): Promise<boolean> {
 
 export async function markLibraryLoggedIn(): Promise<void> {
   await AsyncStorage.setItem(KEY, '1');
-  tell(true);
+  tell(true, null);
 }
 
 // The views hear that the flag is cleared even when the phone's storage fails, so the hidden view unmounts.
-export async function clearLibraryLoggedIn(): Promise<void> {
+export async function clearLibraryLoggedIn(cleared: FlagCleared = 'ended'): Promise<void> {
   try {
     await AsyncStorage.removeItem(KEY);
   } finally {
-    tell(false);
+    tell(false, cleared);
   }
 }
