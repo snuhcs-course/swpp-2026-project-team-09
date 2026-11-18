@@ -7,7 +7,9 @@
 import { isTimetableReading } from '@/api/server/timetable-reading-client';
 import type { ServerTimetableReading } from '@/api/timetable-reading-types';
 import type { Place } from '@/api/types';
-import { readingFromServer } from '@/features/timetable-ocr/server-reading';
+import type { Reading } from '@/features/timetable-ocr/read-timetable';
+import { chosenReading, readingFromServer } from '@/features/timetable-ocr/server-reading';
+import { agreeToReading, forgetReadingAgreement, readingAgreed } from '@/storage/reading-notice';
 
 // P15-52: the main server's reading of a screenshot, checked as it comes and turned into the phone reader's shape.
 
@@ -111,5 +113,48 @@ describe('the main server’s reading with what the phone kept back', () => {
 
   it('is no timetable when the server found none', () => {
     expect(readingFromServer({ kind: 'none' }, PLACES).kind).toBe('none');
+  });
+});
+
+describe('the reading the import takes', () => {
+  const server = readingFromServer(READ, PLACES);
+  const own: Reading = {
+    kind: 'read',
+    title: null,
+    classes: [
+      { name: '수학 1', times: [{ weekday: 'monday', start: '09:00', end: '10:15', room: null, placeId: null }] },
+    ],
+    leftOut: [],
+  };
+  const empty: Reading = { kind: 'read', title: null, classes: [], leftOut: [] };
+  const none: Reading = { kind: 'none', reason: 'no-hours' };
+
+  it("is the server's when it holds a class, without the phone's own being read", async () => {
+    const phone = jest.fn(() => Promise.resolve(own));
+    await expect(chosenReading(server, phone)).resolves.toBe(server);
+    expect(phone).not.toHaveBeenCalled();
+  });
+
+  it("is the phone's own when the server found no timetable, or no class", async () => {
+    for (const fromServer of [readingFromServer({ kind: 'none' }, PLACES), empty]) {
+      // oxlint-disable-next-line no-await-in-loop -- one case after the other
+      await expect(chosenReading(fromServer, () => Promise.resolve(own))).resolves.toBe(own);
+    }
+  });
+
+  it("is the server's none when the phone found none either, so the User is told no timetable was found", async () => {
+    const fromServer = readingFromServer({ kind: 'none' }, PLACES);
+    await expect(chosenReading(fromServer, () => Promise.resolve(none))).resolves.toBe(fromServer);
+    await expect(chosenReading(fromServer, () => Promise.resolve(null))).resolves.toBe(fromServer);
+    await expect(chosenReading(null, () => Promise.resolve(null))).resolves.toBeNull();
+  });
+});
+
+describe('the notice before the first send', () => {
+  it('is remembered on a yes and forgotten again', async () => {
+    await agreeToReading();
+    await expect(readingAgreed()).resolves.toBe(true);
+    await forgetReadingAgreement();
+    await expect(readingAgreed()).resolves.toBe(false);
   });
 });

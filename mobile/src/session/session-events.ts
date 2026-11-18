@@ -6,6 +6,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Suggestion } from '@/api/types';
@@ -13,6 +14,7 @@ import { forgetTokens } from '@/auth/tokens';
 import { endLibrarySessionInBackground } from '@/library/end-session';
 import { unregisterPush } from '@/push/device';
 import { keep } from '@/storage/kept';
+import { forgetReadingAgreement } from '@/storage/reading-notice';
 
 // What the main server or the socket server says about the Session in the middle of anything, which the session's
 // provider follows: the Session ended, or the User has to finish Onboarding first. An end is `replaced` when a sign-in
@@ -37,7 +39,8 @@ export function announce(event: SessionEvent): void {
   }
 }
 
-// The Session is over: the phone is unregistered from push, the tokens are forgotten, the phone no longer keeps that the User signed in, and the screens
+// The Session is over: the phone is unregistered from push, the tokens are forgotten, the phone no longer keeps that the
+// User signed in nor that they agreed to send timetable pictures (P15-52), and the screens
 // show the sign-in screen. The library session ends right after the tokens go, whether or not the User logged in to
 // it, without the end waiting on the library's site.
 export async function endSession(replaced: boolean): Promise<void> {
@@ -47,6 +50,7 @@ export async function endSession(replaced: boolean): Promise<void> {
   await forgetTokens();
   endLibrarySessionInBackground();
   await keep({ signedIn: false, suggestion: null });
+  await forgetReadingAgreement();
   announce({ kind: 'ended', replaced });
 }
 

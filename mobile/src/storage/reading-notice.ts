@@ -7,7 +7,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Whether the User agreed, on this phone, that a timetable screenshot is sent to the main server to be read (P15-52).
-// Asked before the first send; a sign-out leaves it as it is.
+// Asked before the first send; forgotten at a sign-out or the end of a Session, so that the next User is asked
+// (P15-52 review).
 
 const KEY = 'snunow.timetable-reading-agreed';
 
@@ -24,5 +25,13 @@ export async function agreeToReading(): Promise<void> {
     await AsyncStorage.setItem(KEY, 'yes');
   } catch {
     // Asked again next time.
+  }
+}
+
+export async function forgetReadingAgreement(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(KEY);
+  } catch {
+    // Left as it was: the next send is not asked about.
   }
 }

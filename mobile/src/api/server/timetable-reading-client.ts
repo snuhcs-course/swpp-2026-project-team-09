@@ -85,7 +85,12 @@ export function isTimetableReading(value: unknown): value is ServerTimetableRead
   );
 }
 
+// How long the phone waits for the server's reading before it reads the picture itself (P15-52 review): above the
+// server's own deadline over all its model calls (24 s, `TIMETABLE_READING_TIMEOUT_MS`), so that a slow provider never
+// keeps the User on the sheet longer.
+export const READING_TIMEOUT_MS = 25_000;
+
 export const timetableReadingClient: Pick<ApiClient, 'readTimetableImage'> = {
   readTimetableImage: (image, grid) =>
-    call('POST', '/timetable/readings', isTimetableReading, { body: { image, grid } }),
+    call('POST', '/timetable/readings', isTimetableReading, { body: { image, grid }, timeoutMs: READING_TIMEOUT_MS }),
 };

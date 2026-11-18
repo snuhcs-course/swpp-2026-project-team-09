@@ -52,3 +52,24 @@ export function readingFromServer(
   ];
   return { kind: 'read', title: server.title, classes, leftOut };
 }
+
+function holdsClass(reading: Reading): boolean {
+  return reading.kind === 'read' && reading.classes.length > 0;
+}
+
+// The reading to import (P15-52 review): the server's when it holds a class; else the phone's own, read only then,
+// when it holds one, so that a picture the phone read before the server was asked does not now fail; else whichever
+// there is, the server's first, and the User is told that no timetable was found. Null when neither gave a reading.
+export async function chosenReading(
+  server: Reading | null,
+  phone: () => Promise<Reading | null>,
+): Promise<Reading | null> {
+  if (server !== null && holdsClass(server)) {
+    return server;
+  }
+  const own = await phone();
+  if (own !== null && holdsClass(own)) {
+    return own;
+  }
+  return server ?? own;
+}

@@ -23,7 +23,7 @@ import { type ImportPlan, importPlan, MOST_IMPORTED } from './import-plan';
 import { hasNativeOcr, type NativeOcrResult, type OcrReading, readImageText } from './native-ocr';
 import { gridGeometry, type SkippedBlock } from './grid-geometry';
 import { type Reading, readTimetable } from './read-timetable';
-import { readingFromServer } from './server-reading';
+import { chosenReading, readingFromServer } from './server-reading';
 
 // `이미지로 불러오기` (P13 spec, "Importing"; P15-52): a screenshot of a timetable picked from the album is read and
 // becomes a new version, which is switched to without leaving the screen (P15 ticket 03). The main server's AI reads it
@@ -39,8 +39,10 @@ const TOO_MANY = '시간표는 10개까지 저장할 수 있어요';
 // versions is on its way.
 export const NOT_SAVED = '저장하지 못했어요. 다시 시도해 주세요';
 // The notice before the first send (P15-52).
-export const SEND_TITLE = '시간표 사진을 서버에서 읽어요';
-export const SEND_BODY = '더 정확하게 읽도록 사진을 서버의 AI에 보내요. 사진은 읽기만 하고 저장하지 않아요.';
+// The picture goes through the main server to an outside model service (ADR 0015), so the words say so.
+export const SEND_TITLE = '시간표 사진을 AI로 읽어요';
+export const SEND_BODY =
+  '더 정확하게 읽도록 사진을 서버를 거쳐 외부 AI 서비스에 보내요. 우리 서버에는 저장하지 않아요.';
 export const SEND = '보내기';
 export const PHONE_ONLY = '휴대폰에서 읽기';
 
@@ -128,8 +130,9 @@ function phoneGrid(ocr: OcrReading): { grid: SentGrid; skipped: SkippedBlock[] }
   return found === null ? null : { grid: { columns: found.columns, blocks: found.blocks }, skipped: found.skipped };
 }
 
-// The picked picture read: by the main server when it is sent and answers, else by the phone. The phone reads it first
-// either way: its grid goes with the picture, and its own reading is there if the server gives none.
+// The picked picture read: by the main server when it is sent and answers with a class, else by the phone. The phone
+// reads it first either way: its grid goes with the picture, and its own reading is there if the server gives none or
+// finds no class (`chosenReading`).
 async function readPicked(
   asset: { uri: string; base64?: string | null },
   send: boolean,
@@ -140,10 +143,13 @@ async function readPicked(
   forgetImage(asset.uri);
   const image = send ? (asset.base64 ?? null) : null;
   const fromServer = image === null ? null : await serverReading(image, phoneGrid(ocr), places);
-  if (fromServer !== null) {
-    return { kind: 'read', reading: fromServer };
+  const reading = await chosenReading(fromServer, async () =>
+    ocr.kind === 'read' ? read(ocr.result, await places()) : null,
+  );
+  if (reading !== null) {
+    return { kind: 'read', reading };
   }
-  return ocr.kind === 'read' ? { kind: 'read', reading: read(ocr.result, await places()) } : { kind: ocr.kind };
+  return ocr.kind === 'read' ? { kind: 'failed' } : { kind: ocr.kind };
 }
 
 async function importImage({ versions, read, places, show, showNotReady, picked, agreesToSend }: Steps): Promise<void> {
