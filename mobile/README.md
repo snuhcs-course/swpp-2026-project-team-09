@@ -911,12 +911,12 @@ on a phone without the app, the address answers the main server's page, whose bu
 phone (`inviteToken` of `Kept`) by the router's hook for the address the system opens the app with
 (`src/app/+native-intent.ts`), before the first screen renders. On Android the router gets that address as a promise,
 after its first render, and starts at `/` without it when React Native answers after 150 ms, so the hook reads it from
-expo-linking, which holds it, and clears it there so that it opens once. A link opened while the app runs and the User
-is signed out meets the signed-in place's guard, which keeps its token before it leads away. Once the User is in the
-signed-in place, after the loading screen or after the sign-in, the consent and Onboarding, the layout opens the accept
-screen of the kept token. Opened while signed in, the link shows its screen at once. The accept screen drops the kept
-token, and a later link replaces it. Android opens the https address in the app only through App Links (see "Invite
-Links on Android" above).
+expo-linking, which holds it and each later link, and clears it at every address so that none opens twice. A link
+opened while the app runs and the User is signed out meets the signed-in place's guard, which keeps its token before it
+leads away. Once the User is in the signed-in place, after the loading screen or after the sign-in, the consent and
+Onboarding, the layout opens the accept screen of the kept token. Opened while signed in, the link shows its screen at
+once. The accept screen drops the kept token, and a later link replaces it. Android opens the https address in the app
+only through App Links (see "Invite Links on Android" above).
 
 **The Quest list on the whole screen** (`src/screens/quests/`, the `MainQuests` frame, `/quests`) is a
 `FullScreenPanel` that comes up from the bottom: ✕ "닫기" and "퀘스트 {n}", n the Quests that have not ended; the
