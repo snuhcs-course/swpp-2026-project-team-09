@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { Friend, FriendLevel, FriendStatus, LatLng, Position, Presence } from '@/api/types';
@@ -35,8 +36,6 @@ export interface FriendView {
   // What the two see of each other, as the main server says.
   seen: FriendLevel;
   sharing: boolean;
-  // Whether the app has asked the User before turning location off for this Friend.
-  askedOff: boolean;
   friendId?: string;
   friendsSince?: string;
 }
@@ -113,7 +112,7 @@ export function toFriendViews(
   now: Date,
 ): FriendView[] {
   const kept = keptPositions(positions, now);
-  return friends.map(({ id, name, department, visible, level, seen, sharing, askedOff, friendId, friendsSince }) => {
+  return friends.map(({ id, name, department, visible, level, seen, sharing, friendId, friendsSince }) => {
     // The main server's word on whether the Friend is seen wins over the app's own status.
     const status = statuses.find(({ userId, presence }) => userId === id && (presence !== 'off') === visible);
     const position = visible ? kept.find(({ userId }) => userId === id) : undefined;
@@ -135,7 +134,6 @@ export function toFriendViews(
       level,
       seen,
       sharing,
-      askedOff,
       friendId,
       friendsSince,
     };

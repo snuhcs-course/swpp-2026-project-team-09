@@ -4,13 +4,13 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router } from 'expo-router';
 import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { isRefusal } from '@/api/errors';
-import type { FriendLevel } from '@/api/types';
 import {
   Avatar,
   color,
@@ -31,12 +31,7 @@ import type { FriendView } from '@/features/friends/adapter';
 import { useFriendChanges } from '@/features/friends/use-friend-changes';
 import { useFriendRequests } from '@/features/friends/use-friend-requests';
 import { useFriends } from '@/features/friends/use-friends';
-import { useMasterSwitch } from '@/features/sharing/use-master-switch';
-import { MasterOffLine } from '../master-off-line';
 import { EndFriendship } from './end-friendship';
-import { LevelTrack } from './level-track';
-import { OffQuestion } from './off-question';
-import { useLevels } from './use-levels';
 import { NO_ANSWER } from './words';
 
 // A search by name and department, where spaces do not count, as in the frame.
@@ -75,37 +70,25 @@ function Entries({ received }: { received: number | undefined }): ReactElement {
   );
 }
 
-interface FriendRowProps {
-  friend: FriendView;
-  level: FriendLevel;
-  masterOff: boolean;
-  onChoose: (level: FriendLevel) => void;
-  onPress: () => void;
-}
-
-// A Friend, with the three levels the User may let them see under the name, off and disabled while the Master Switch
-// is off.
-function FriendRow({ friend, level, masterOff, onChoose, onPress }: FriendRowProps): ReactElement {
+function FriendRow({ friend, onPress }: { friend: FriendView; onPress: () => void }): ReactElement {
   return (
-    <View style={styles.friend}>
-      <Pressable
-        accessibilityLabel={friend.name}
-        accessibilityRole="button"
-        onPress={onPress}
-        style={({ pressed }) => [styles.who, pressed && styles.pressed]}
-      >
-        <Avatar name={friend.name} source={friend.photo === null ? undefined : { uri: friend.photo }} />
-        <View style={styles.words}>
-          <Text numberOfLines={1} style={styles.name}>
-            {friend.name}
-          </Text>
-          <Text numberOfLines={1} style={styles.line}>
-            {friend.visible ? friend.department : `${friend.department} · 위치 꺼짐`}
-          </Text>
-        </View>
-      </Pressable>
-      <LevelTrack label={`${friend.name}님에게 보일 위치`} level={level} masterOff={masterOff} onChoose={onChoose} />
-    </View>
+    <Pressable
+      accessibilityLabel={friend.name}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.entry, styles.friend, pressed && styles.pressed]}
+      testID="friend-row"
+    >
+      <Avatar name={friend.name} source={friend.photo === null ? undefined : { uri: friend.photo }} />
+      <View style={styles.words}>
+        <Text numberOfLines={1} style={styles.name}>
+          {friend.name}
+        </Text>
+        <Text numberOfLines={1} style={styles.line}>
+          {friend.visible ? friend.department : `${friend.department} · 위치 꺼짐`}
+        </Text>
+      </View>
+    </Pressable>
   );
 }
 
@@ -115,16 +98,11 @@ interface ListProps {
   onPress: (friend: FriendView) => void;
 }
 
-// The list, and the question before a Friend's location is turned off the first time.
 function Friends({ friends, query, onPress }: ListProps): ReactElement {
-  const { levelOf, choose, asked, answer } = useLevels();
-  const masterOff = useMasterSwitch().off;
   const shown = friends.filter((friend) => found(friend, query));
   return (
     <>
       <SectionHeader>{`친구 ${friends.length}`}</SectionHeader>
-      <Text style={styles.note}>둘 중 낮은 쪽까지만 서로 보여요. 시간표는 계속 보여요</Text>
-      {friends.length === 0 ? null : <MasterOffLine />}
       {friends.length === 0 ? <EmptyState words="아직 친구가 없어요" /> : null}
       {friends.length > 0 && shown.length === 0 ? <EmptyState words="결과 없음" /> : null}
       {shown.map((friend) => (
@@ -134,14 +112,8 @@ function Friends({ friends, query, onPress }: ListProps): ReactElement {
           onPress={() => {
             onPress(friend);
           }}
-          level={levelOf(friend)}
-          masterOff={masterOff}
-          onChoose={(level) => {
-            choose(friend, level);
-          }}
         />
       ))}
-      <OffQuestion name={asked?.friend.name ?? null} onAnswer={answer} open={asked?.open === true} />
     </>
   );
 }
@@ -165,8 +137,8 @@ function useEnd(): (friend: FriendView) => void {
   };
 }
 
-// 친구 관리, the `Friends` frame's list: 친구 추가, the entry to 친구 요청, and every Friend with the level the User
-// lets them see. A press on a Friend offers to end the friendship.
+// 친구 관리, the `Friends` frame's list: 친구 추가, the entry to 친구 요청, and every Friend. A press on a Friend offers to
+// end the friendship.
 export function FriendsScreen(): ReactElement {
   const friends = useFriends();
   const received = useFriendRequests().data?.received.length;
@@ -217,9 +189,7 @@ const styles = StyleSheet.create({
   addLabel: { flex: 1, fontFamily: font.semiBold, fontSize: 16, lineHeight: 22, color: color.snuBlue },
   entryLabel: { flex: 1, fontFamily: font.medium, fontSize: 15, lineHeight: 22, color: color.ink },
   entryCount: { ...text.label, color: color.inkMuted },
-  note: { ...text.caption, paddingBottom: space[1], color: color.inkMuted },
-  friend: { paddingBottom: space[3], borderBottomWidth: 1, borderBottomColor: color.border },
-  who: { flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 64 },
+  friend: { minHeight: 64 },
   words: { flex: 1, gap: 1 },
   name: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 22, color: color.ink },
   line: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: color.inkMuted },

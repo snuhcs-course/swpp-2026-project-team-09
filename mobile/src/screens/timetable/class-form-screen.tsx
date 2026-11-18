@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -56,7 +57,8 @@ function refusalWords(error: unknown): string {
   return '저장하지 못했어요. 다시 시도해 주세요';
 }
 
-// Saves or deletes, then goes back to the timetable with a toast. A refusal leaves the form open with its toast.
+// Saves or deletes, then goes back where the form was opened from, with a toast. A refusal leaves the form open with
+// its toast.
 function useFormActions(classId: string | null): {
   working: boolean;
   save: (draft: ClassDraft) => void;

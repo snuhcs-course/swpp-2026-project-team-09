@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -20,8 +21,8 @@ import { zone, ZONES_ROUTE } from './support/private-zones';
 import { answerMainScreen, askMainServer, JI_WOO, LOBBY, MIN_JUN, PHONE_NOW } from './support/server';
 
 // The 위치 공유 screen (P02 ticket 11, board n7b) against the fake main server: its parts in the board's words, with
-// no switch of its own since P15 ticket 1, and a Friend's level chosen there, which asks once as the Friends screen
-// does. 켜기 under "친구마다" is in master-off-line.integration.test.tsx.
+// no switch of its own since P15 ticket 1, and a Friend's level chosen there, the only place since P15 ticket 2, which
+// asks once before it goes down to 시간표만. 켜기 under "친구마다" is in master-off-line.integration.test.tsx.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({

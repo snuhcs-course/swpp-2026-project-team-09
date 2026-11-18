@@ -18,12 +18,14 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, ChatMessage, PlanInput, RequestContext } from './assistant-types';
 import type { InvitationCard, OwnWay } from './invitation-card-types';
 import type { Lookup, Tapped } from './lookup-types';
 import type { LocationMissing } from './refusal-types';
+import type { SentGrid, ServerTimetableReading } from './timetable-reading-types';
 import { mockClient } from './mock/client';
 import { tellAskLevels } from './plan-asks';
 import { serverClient } from './server/client';
@@ -135,6 +137,10 @@ export interface ApiClient {
   deleteClass: (classId: string) => Promise<void>;
   // Deletes every class of the User, also when there are none.
   resetTimetable: () => Promise<void>;
+  // A screenshot of a timetable, in base64, read by the main server's AI (P15-52), with the grid the phone found on it
+  // from its pixels, or null. Refused with 422 UNREADABLE_IMAGE, 429 for the day's readings used up, 503 when it cannot read now,
+  // and 404 by a main server without the route.
+  readTimetableImage: (image: string, grid: SentGrid | null) => Promise<ServerTimetableReading>;
   listPlaces: () => Promise<Place[]>;
   // The Places whose name holds the words, or whose number they are, with or without 동.
   searchPlaces: (words: string) => Promise<Place[]>;
@@ -303,6 +309,7 @@ export const apiClient: ShownClient = {
   replaceClass: (classId, save) => chosen().replaceClass(classId, save),
   deleteClass: (classId) => chosen().deleteClass(classId),
   resetTimetable: () => chosen().resetTimetable(),
+  readTimetableImage: (image, grid) => chosen().readTimetableImage(image, grid),
   listPlaces: () => chosen().listPlaces(),
   searchPlaces: (words) => chosen().searchPlaces(words),
   listGlobalEvents: () => chosen().listGlobalEvents(),

@@ -2,19 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useState } from 'react';
-import type { FriendLevel } from '@/api/types';
+import type { Friend, FriendLevel } from '@/api/types';
 import { useToast } from '@/design-system';
-import type { FriendView } from '@/features/friends/adapter';
 import { useFriendChanges } from '@/features/friends/use-friend-changes';
 import type { OffAnswer } from './off-question';
 
 export const NOT_CHANGED = '위치 공유를 바꾸지 못했어요';
 
-// A Friend of the list or of `GET /friends` itself.
-type Leveled = Pick<FriendView, 'id' | 'name' | 'level' | 'askedOff'>;
+type Leveled = Pick<Friend, 'id' | 'name' | 'level' | 'askedOff'>;
 
 export interface Levels {
   // The level shown for a Friend: the choice being sent, or the Friend's own.

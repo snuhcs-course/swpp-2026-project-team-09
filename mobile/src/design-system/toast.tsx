@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import {
@@ -27,6 +28,9 @@ import { color, font, radius, space, text } from './tokens';
 // Long enough to read one short sentence: the time the `Main` frame gives its toasts.
 const SHOWN_MS = 2400;
 
+// A toast with an action stays longer, for the User to read the words and then reach the action.
+const SHOWN_WITH_ACTION_MS = 4000;
+
 const NOT_READY = '준비 중이에요';
 
 // A word at the toast's end that acts, such as 되돌리기. Pressing it acts and hides the toast.
@@ -35,7 +39,7 @@ export interface ToastAction {
   onPress: () => void;
 }
 
-// `shownMs` is how long the words stay. Left out, 2400 ms. `icon` is the check mark unless given, such as `alert`.
+// `shownMs` is how long the words stay. Left out, 2400 ms, or 4000 ms with an action. `icon` is the check mark unless given, such as `alert`.
 type ShowToast = (message: string, shownMs?: number, icon?: IconName, action?: ToastAction) => void;
 
 interface Toast {
@@ -72,8 +76,8 @@ export function ToastProvider({ children }: { children: ReactNode }): ReactEleme
   const [claims, setClaims] = useState<readonly { height: number }[]>([]);
   const taken = claims.at(-1)?.height ?? 0;
   const floor = useToastFloor();
-  const show = useCallback<ShowToast>((message, shownMs = SHOWN_MS, icon = 'check', action) => {
-    setToast({ message, shownMs, icon, action });
+  const show = useCallback<ShowToast>((message, shownMs, icon = 'check', action) => {
+    setToast({ message, shownMs: shownMs ?? (action === undefined ? SHOWN_MS : SHOWN_WITH_ACTION_MS), icon, action });
     // iOS has no live regions: the words are announced by hand. Android reads the live region below.
     if (Platform.OS === 'ios') {
       AccessibilityInfo.announceForAccessibility(message);

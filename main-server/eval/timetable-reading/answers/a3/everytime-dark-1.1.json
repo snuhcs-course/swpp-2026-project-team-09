@@ -1,0 +1,123 @@
+{
+  "screenshot": "everytime-dark-1",
+  "model": "claude-haiku-5-5",
+  "mode": "test",
+  "ms": 7813,
+  "inputTokens": 3858,
+  "outputTokens": 1852,
+  "calls": 1,
+  "answer": {
+    "title": "2023년 2학기 시간표",
+    "axis": ["9", "10", "11", "12", "1", "2", "3", "4"],
+    "blocks": [
+      {
+        "day": "월",
+        "start": "9:30",
+        "end": "10:45",
+        "nameLines": ["공학수학 2"],
+        "name": "공학수학 2",
+        "room": "301-118",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "9:30",
+        "end": "10:45",
+        "nameLines": ["공학수학 2"],
+        "name": "공학수학 2",
+        "room": "301-118",
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["알고리즘"],
+        "name": "알고리즘",
+        "room": "302-208",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["전기전자회로"],
+        "name": "전기전자회로",
+        "room": "301-118",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["알고리즘"],
+        "name": "알고리즘",
+        "room": "302-208",
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["전기전자회로"],
+        "name": "전기전자회로",
+        "room": "301-118",
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "2:00",
+        "end": "3:15",
+        "nameLines": ["현대대수학"],
+        "name": "현대대수학",
+        "room": "28-103",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "2:00",
+        "end": "3:15",
+        "nameLines": ["프로그래밍의 원", "리"],
+        "name": "프로그래밍의 원리",
+        "room": "302-107",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "2:00",
+        "end": "3:15",
+        "nameLines": ["현대대수학"],
+        "name": "현대대수학",
+        "room": "28-103",
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "2:00",
+        "end": "3:15",
+        "nameLines": ["프로그래밍의 원", "리"],
+        "name": "프로그래밍의 원리",
+        "room": "302-107",
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "3:30",
+        "end": "4:45",
+        "nameLines": ["컴퓨터구조"],
+        "name": "컴퓨터구조",
+        "room": "302-105",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "3:30",
+        "end": "4:45",
+        "nameLines": ["컴퓨터구조"],
+        "name": "컴퓨터구조",
+        "room": "302-105",
+        "cut": false
+      }
+    ]
+  }
+}

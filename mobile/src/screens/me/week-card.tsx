@@ -4,6 +4,8 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -13,47 +15,47 @@ import {
   BottomSheet,
   cardStyles,
   color,
+  Dialog,
   ErrorState,
   font,
   Icon,
-  type IconName,
   LoadingState,
   radius,
   space,
   text,
-  useNotReadyToast,
 } from '@/design-system';
 import { useTimetableVersions } from '@/features/timetable/use-versions';
-import { READING, useImportFromImage } from '@/features/timetable-ocr/use-import-from-image';
+import {
+  PHONE_ONLY,
+  READING,
+  SEND,
+  SEND_BODY,
+  SEND_TITLE,
+  useImportFromImage,
+} from '@/features/timetable-ocr/use-import-from-image';
 import { useWeek } from '@/features/timetable/use-week';
 import { UnfinishedSwitch } from './unfinished-switch';
 import { VersionMenu } from './version-menu';
 import { WeekGrid } from './week-grid';
 
-// `직접 입력` opens the timetable, `이미지로 불러오기` reads a screenshot (or says that it is not ready where the build
-// cannot read one), and `빈 시간 말하기` says that it is not ready.
-type TileAction = 'open' | 'import' | 'not-ready';
-const TILES: readonly { icon: IconName; label: string; action: TileAction }[] = [
-  { icon: 'calendar', label: '직접 입력', action: 'open' },
-  { icon: 'plus', label: '이미지로 불러오기', action: 'import' },
-  { icon: 'chat', label: '빈 시간 말하기', action: 'not-ready' },
-];
-
 function openTimetable(): void {
   router.push('/me/timetable');
 }
 
-// The 시간표 card: the User's week from the main server, the version it is, and the three ways to fill it in.
+// The same 수업 수정 as the class's row in 시간표.
+function openClass(classId: string): void {
+  router.push({ pathname: '/me/timetable/class', params: { classId } });
+}
+
+// The 시간표 card: the User's week from the main server, the version it is, and the ways to fill it in.
 export function WeekCard(): ReactElement {
   const { data, isPending, refetch } = useWeek();
-  const showNotReady = useNotReadyToast();
   const versions = useTimetableVersions();
   const importing = useImportFromImage(versions);
-  const actions: Record<TileAction, () => void> = {
-    open: openTimetable,
-    import: importing.start,
-    'not-ready': showNotReady,
-  };
+  const tiles = [
+    { icon: 'calendar', label: '직접 입력/수정', onPress: openTimetable, busy: false },
+    { icon: 'plus', label: '이미지로 불러오기', onPress: importing.start, busy: importing.reading },
+  ] as const;
   return (
     <View style={[cardStyles.card, styles.card]}>
       <View style={styles.head}>
@@ -63,16 +65,16 @@ export function WeekCard(): ReactElement {
         <VersionMenu versions={versions} />
       </View>
       <UnfinishedSwitch versions={versions} />
-      {data === undefined ? null : <WeekGrid blocks={data} />}
+      {data === undefined ? null : <WeekGrid blocks={data} onOpenClass={openClass} />}
       {data === undefined && isPending ? <LoadingState /> : null}
       {data === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
       <View style={styles.tiles}>
-        {TILES.map(({ icon, label, action }) => (
+        {tiles.map(({ icon, label, onPress, busy }) => (
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ busy: action === 'import' && importing.reading }}
+            accessibilityState={{ busy }}
             key={label}
-            onPress={actions[action]}
+            onPress={onPress}
             style={({ pressed }): StyleProp<ViewStyle> => [styles.tile, pressed && styles.pressed]}
           >
             <Icon color={color.snuBlue} name={icon} size={20} />
@@ -80,6 +82,7 @@ export function WeekCard(): ReactElement {
           </Pressable>
         ))}
       </View>
+      <SendNotice answer={importing.answer} visible={importing.asking} />
       <BottomSheet label="시간표 읽기" onClose={ignore} open={importing.reading}>
         <View style={styles.reading} testID="timetable-reading">
           <ActivityIndicator color={color.snuBlue} />
@@ -87,6 +90,25 @@ export function WeekCard(): ReactElement {
         </View>
       </BottomSheet>
     </View>
+  );
+}
+
+// The notice before the first send of a picture to the main server's AI (P15-52).
+function SendNotice({ visible, answer }: { visible: boolean; answer: (send: boolean) => void }): ReactElement {
+  return (
+    <Dialog
+      body={SEND_BODY}
+      cancelLabel={PHONE_ONLY}
+      confirmLabel={SEND}
+      onCancel={() => {
+        answer(false);
+      }}
+      onConfirm={() => {
+        answer(true);
+      }}
+      title={SEND_TITLE}
+      visible={visible}
+    />
   );
 }
 

@@ -5,6 +5,8 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -24,9 +26,10 @@ import {
 } from '@/api/queries';
 import type { CompanionSeeker, OfficialRecruiting } from '@/api/quest-parts-types';
 import type { MyJoinRequest, QuestInvitation } from '@/api/waiting-types';
-import { useToast } from '@/design-system';
+import { type ToastAction, useToast } from '@/design-system';
 import type { PostView } from '@/features/party/posts';
 import { ENTERING, refusalWords } from '@/features/quests/refusals';
+import type { PartyTab } from './party-screen';
 
 // What the 파티 tab asks of the main server to enter a Quest, each with its toast. A refusal says why in Korean, and
 // the recruiting Quests, the User's Quests, requests and invitations are fetched again either way.
@@ -43,14 +46,30 @@ export interface PartyActions {
   decline: (invitation: QuestInvitation) => Promise<boolean>;
 }
 
-// The 파티 tab at 내 파티, closing the screens above it.
-export function showMine(): void {
+// The 파티 tab at one of its tabs, closing the screens above it.
+function showPartyTab(tab: PartyTab): void {
   if (router.canDismiss()) {
-    router.dismissTo({ pathname: '/party', params: { tab: 'mine' } });
+    router.dismissTo({ pathname: '/party', params: { tab } });
   } else {
-    router.navigate({ pathname: '/party', params: { tab: 'mine' } });
+    router.navigate({ pathname: '/party', params: { tab } });
   }
 }
+
+export function showMine(): void {
+  showPartyTab('mine');
+}
+
+export function showFind(): void {
+  showPartyTab('find');
+}
+
+// 초대, where 보낸 신청 lists the requests to join.
+export function showSentRequests(): void {
+  showPartyTab('invites');
+}
+
+// The toast after asking to join links to where the request now shows (HE H11).
+const TO_SENT_REQUESTS: ToastAction = { label: '보낸 신청 보기', onPress: showSentRequests };
 
 // Accepting and declining both delete a request, so a withdrawal after either is refused with the same not-found, and
 // only the User's Quests tell them apart: holding the Quest now means the Leader accepted. Null when the Quests do not
@@ -82,11 +101,13 @@ function dropRequest(queryClient: QueryClient, requestId: string): void {
 // The requests being withdrawn, from 보낸 신청 or the post: a second press while one is on its way sends nothing.
 const withdrawing = new Set<string>();
 
-// Sends a request and toasts `done`, or the words `refused` gives for a refusal; true when the main server did it.
+// Sends a request and toasts `done`, with `link` when given, or the words `refused` gives for a refusal; true when the
+// main server did it.
 type Run = (
   requests: () => Promise<unknown>,
   done: string | null,
   refused?: (error: unknown) => Promise<string | null>,
+  link?: ToastAction,
 ) => Promise<boolean>;
 
 async function withdrawOnce(run: Run, queryClient: QueryClient, requestId: string, questId: string): Promise<void> {
@@ -114,11 +135,11 @@ export function usePartyActions(): PartyActions {
   const showToast = useToast();
   return useMemo(() => {
     // `refused` may give words of its own for a refusal; otherwise the table's are shown.
-    const run: Run = async (requests, done, refused) => {
+    const run: Run = async (requests, done, refused, link) => {
       try {
         await requests();
         if (done !== null) {
-          showToast(done);
+          showToast(done, undefined, undefined, link);
         }
         return true;
       } catch (error) {
@@ -133,7 +154,7 @@ export function usePartyActions(): PartyActions {
     return {
       join: async ({ questId, title, joinPolicy }) => {
         if (joinPolicy === 'approval') {
-          await run(() => apiClient.askToJoinQuest(questId), '참여를 신청했어요');
+          await run(() => apiClient.askToJoinQuest(questId), '참여를 신청했어요', undefined, TO_SENT_REQUESTS);
         } else if (await run(() => apiClient.joinQuest(questId), `${title} 참여 완료`)) {
           showMine();
         }

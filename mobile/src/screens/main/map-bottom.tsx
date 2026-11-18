@@ -12,10 +12,11 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import { type ReactElement, useState } from 'react';
+import type { ReactElement } from 'react';
 import { Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { now } from '@/clock';
@@ -37,7 +38,7 @@ import type { ChatSheetControl } from './chat-sheet';
 import { LayerControls, type LayerStack } from './layers';
 import { FirstRunAsk } from './first-run/first-run-ask';
 import { InterestsHint } from './first-run/interests-hint';
-import { AI_INPUT, interestsHintBottom, madeLineBottom, type Room } from './layout';
+import { aiInputTop, interestsHintBottom, madeLineBottom, type Room, tutorialStartBottom } from './layout';
 import { MadeQuestLine } from './made-quest-line';
 import { TutorialPager } from './tutorial/tutorial-pager';
 import { TutorialSheet } from './tutorial/tutorial-sheet';
@@ -88,6 +89,8 @@ interface MapBottomProps {
   onNoticeHeight: (height: number) => void;
   // The answer frame's card was laid out with this height.
   onAnswerHeight: (height: number) => void;
+  // The AI input was laid out with this height.
+  onInputHeight: (height: number) => void;
   // "활성 파티": the room of the User's Party's Quest.
   onParty: () => void;
   room: Room;
@@ -123,7 +126,7 @@ function MadeLine({
   }
   return (
     <MadeQuestLine
-      bottom={madeLineBottom(room.tutorialStart, room.interestsHint)}
+      bottom={madeLineBottom(room)}
       onPress={() => {
         openCard(first.quest.id);
       }}
@@ -143,12 +146,14 @@ function EverydayBottom(props: EverydayProps): ReactElement {
     <>
       <BottomControls cardOpen={bottomCard} onActiveParty={onParty} />
       {bottomCard ? null : <LayerControls stack={stack} />}
-      {room.tutorialStart && !keyboardUp ? <TutorialStartButton onPress={tutorial.openPager} /> : null}
+      {room.tutorialStart && !keyboardUp ? (
+        <TutorialStartButton bottom={tutorialStartBottom(room)} onPress={tutorial.openPager} />
+      ) : null}
       {firstRun.card === null || keyboardUp ? null : (
         <FirstRunAsk card={firstRun.card} onAnswer={firstRun.answer} onHeight={onNoticeHeight} />
       )}
       {room.interestsHint && !keyboardUp ? (
-        <InterestsHint bottom={interestsHintBottom(room.tutorialStart)} onPress={firstRun.openInterests} />
+        <InterestsHint bottom={interestsHintBottom(room)} onPress={firstRun.openInterests} />
       ) : null}
       <MadeLine {...props} />
     </>
@@ -163,16 +168,15 @@ function EverydayBottom(props: EverydayProps): ReactElement {
 // shows it again. A card nobody asked for, a received invitation's or a made Quest's, takes the bottom without the
 // input.
 export function MapBottom(props: MapBottomProps): ReactElement {
-  const { onAnswerHeight, room, tutorial, onShowOnMap, chat, unasked } = props;
+  const { onAnswerHeight, onInputHeight, room, tutorial, onShowOnMap, chat, unasked } = props;
   const { invitation, made } = unasked;
-  const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const { lift, keyboardUp } = useKeyboardLift(chat.framed);
   const cardShown = invitation.shown || made.shown !== null;
   // The open list of Friends to add takes the input's place in the answer's card. The time band moved whole hides the
   // input but keeps its room, so that the card and its lanes stay under the finger.
   const inputGone = chat.framed && chat.answer.adding;
   const inputShown = !inputGone && !(chat.framed && chat.answer.moving !== null);
-  const inputTop = inputGone ? lift : AI_INPUT.bottom + lift + inputHeight;
+  const inputTop = inputGone ? lift : aiInputTop(room) + lift;
   const send = sendWithKeyboardDown(chat.chat.send);
   return (
     <>
@@ -189,7 +193,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
         <AiInput
           lift={lift}
           onEarlier={chat.showAgain}
-          onHeight={setInputHeight}
+          onHeight={onInputHeight}
           placeholder={chat.framed ? '이어서 말하기' : undefined}
           restore={restoreOf(chat.chat.bubbles)}
           onSend={send}

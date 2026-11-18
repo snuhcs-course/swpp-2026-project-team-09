@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useRef, useState } from 'react';
@@ -11,6 +12,7 @@ import { signOut } from '@/auth/sign-in';
 import { useToast } from '@/design-system';
 import { useSession } from '@/session/session';
 import { startFirstRun } from '@/storage/first-run';
+import { startTabTour } from '@/storage/tab-tour';
 import { answersOf, type Form } from './form';
 
 const NOT_SAVED = '저장하지 못했어요. 다시 시도해 주세요';
@@ -36,8 +38,10 @@ export function useOnboarding(): { working: boolean; save: (form: Form) => void;
     }
     apiClient.completeOnboarding(answersOf(form)).then(
       async () => {
-        // The first run's cards are shown only to a User who finished Onboarding on this phone.
+        // The first run's cards, and after them the tour of the tabs, are shown only to a User who finished Onboarding
+        // on this phone.
         await startFirstRun().catch(() => null);
+        await startTabTour().catch(() => null);
         finishOnboarding();
       },
       () => {

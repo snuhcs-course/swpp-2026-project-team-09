@@ -1,0 +1,168 @@
+{
+  "screenshot": "everytime-1",
+  "model": "claude-haiku-5-5",
+  "ms": 8745,
+  "inputTokens": 5060,
+  "outputTokens": 1739,
+  "boxes": [
+    {
+      "weekday": "monday",
+      "start": "12:30",
+      "end": "13:45"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "12:30",
+      "end": "13:45"
+    },
+    {
+      "weekday": "monday",
+      "start": "14:00",
+      "end": "15:15"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "14:00",
+      "end": "15:15"
+    },
+    {
+      "weekday": "monday",
+      "start": "17:00",
+      "end": "18:15"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "17:00",
+      "end": "18:15"
+    },
+    {
+      "weekday": "monday",
+      "start": "19:00",
+      "end": "21:00"
+    },
+    {
+      "weekday": "wednesday",
+      "start": "19:00",
+      "end": "21:00"
+    },
+    {
+      "weekday": "thursday",
+      "start": "14:00",
+      "end": "15:50"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "09:30",
+      "end": "10:45"
+    },
+    {
+      "weekday": "thursday",
+      "start": "09:30",
+      "end": "10:45"
+    },
+    {
+      "weekday": "tuesday",
+      "start": "19:00",
+      "end": "21:00"
+    },
+    {
+      "weekday": "thursday",
+      "start": "16:00",
+      "end": "18:00"
+    },
+    {
+      "weekday": "thursday",
+      "start": "13:00",
+      "end": "13:50"
+    }
+  ],
+  "answer": {
+    "title": "2025년 여름학기",
+    "blocks": [
+      {
+        "number": 1,
+        "nameLines": ["영상예술의 이해"],
+        "name": "영상예술의 이해",
+        "room": "43-1"
+      },
+      {
+        "number": 2,
+        "nameLines": ["영상예술의 이해"],
+        "name": "영상예술의 이해",
+        "room": "43-1"
+      },
+      {
+        "number": 3,
+        "nameLines": ["자료구조"],
+        "name": "자료구조",
+        "room": null
+      },
+      {
+        "number": 4,
+        "nameLines": ["자료구조"],
+        "name": "자료구조",
+        "room": null
+      },
+      {
+        "number": 5,
+        "nameLines": ["자연언어처리 개", "론"],
+        "name": "자연언어처리 개론",
+        "room": null
+      },
+      {
+        "number": 6,
+        "nameLines": ["자연언어처리 개", "론"],
+        "name": "자연언어처리 개론",
+        "room": null
+      },
+      {
+        "number": 7,
+        "nameLines": ["컴퓨터프로그래", "밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": null
+      },
+      {
+        "number": 8,
+        "nameLines": ["컴퓨터프로그래", "밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": null
+      },
+      {
+        "number": 9,
+        "nameLines": ["컴퓨터프로그래", "밍"],
+        "name": "컴퓨터프로그래밍",
+        "room": null
+      },
+      {
+        "number": 10,
+        "nameLines": ["공학수학 2"],
+        "name": "공학수학 2",
+        "room": null
+      },
+      {
+        "number": 11,
+        "nameLines": ["공학수학 2"],
+        "name": "공학수학 2",
+        "room": null
+      },
+      {
+        "number": 12,
+        "nameLines": ["시스템프로그래", "밍"],
+        "name": "시스템프로그래밍",
+        "room": null
+      },
+      {
+        "number": 13,
+        "nameLines": ["시스템프로그래", "밍"],
+        "name": "시스템프로그래밍",
+        "room": null
+      },
+      {
+        "number": 14,
+        "nameLines": ["인공지능 이론", "및 응용 세미나"],
+        "name": "인공지능 이론 및 응용 세미나",
+        "room": null
+      }
+    ]
+  }
+}

@@ -26,7 +26,29 @@ Blocked by: none
 
 ## Acceptance criteria
 
-- [ ] A Friend's row on 친구 관리 shows no level bar and no words about levels, and no "전체 위치 공유가 꺼져 있어요 · 켜기" line shows while the Master Switch is off; the list shows the search, 친구 추가, 친구 요청 and each Friend's name, department and "위치 꺼짐" as before.
-- [ ] A press on a Friend on 친구 관리 still offers 친구 끊기, and ending the friendship still removes the Friend from the list.
-- [ ] The "친구마다" card of the 위치 공유 screen still shows and saves each Friend's level, asking once before the first turn-off.
-- [ ] Tests, by ADR 0007: the integration tests that render 친구 관리 over the fake main server check that the bars and both lines are gone and that the search, the entries and 친구 끊기 still work; the integration test of the 위치 공유 screen still covers the levels.
+- [x] A Friend's row on 친구 관리 shows no level bar and no words about levels, and no "전체 위치 공유가 꺼져 있어요 · 켜기" line shows while the Master Switch is off; the list shows the search, 친구 추가, 친구 요청 and each Friend's name, department and "위치 꺼짐" as before.
+- [x] A press on a Friend on 친구 관리 still offers 친구 끊기, and ending the friendship still removes the Friend from the list.
+- [x] The "친구마다" card of the 위치 공유 screen still shows and saves each Friend's level, asking once before the first turn-off.
+- [x] Tests, by ADR 0007: the integration tests that render 친구 관리 over the fake main server check that the bars and both lines are gone and that the search, the entries and 친구 끊기 still work; the integration test of the 위치 공유 screen still covers the levels.
+
+## Comments
+
+### Notes from the implementation (2026-11-18)
+
+- Where criterion 4 is checked:
+  - Over the fake main server, `master-off-line.integration` checks that 친구 관리 shows no 켜기 line while the Master Switch is off.
+  - Over the app's mocks, `friends-list.integration` checks that 친구 관리 shows no level bar and no note with the switch on, and that the search, the entries and 친구 끊기 work.
+  - The levels are covered on the 위치 공유 screen by three files:
+    - `location-sharing-screen.integration`;
+    - `location-off-question.integration`, whose per-Friend question cases now open `/me/location-sharing`;
+    - the new `location-sharing-levels.integration`, which holds the two cases that were only on 친구 관리.
+- `FriendView.askedOff` was read only by the bars, so it is removed. `use-levels.ts` reads `askedOff` from `Friend`.
+- `PlanLevelsQuestion`, the question after a Plan, still sets levels. It is not part of 친구 관리, so this ticket leaves it.
+- The H3 row of the P06 HE revision log now says the levels and the 켜기 line are on 위치 공유 only. It names this ticket and #351.
+
+### Agent usage (2026-11-18)
+
+Estimates from the session transcripts, with gaps of 5 minutes or more left out. Tickets 02–05 ran in one session, in parallel, so that session's own share is split evenly among them.
+
+- Agent time: about 36 minutes. Three Opus 5.5 subagents worked on it: one implemented the ticket and two reviewed it.
+- Tokens: output about 62,000. Input about 20.4 million: 19.4 million cache reads, 0.95 million cache writes and about 300 uncached.

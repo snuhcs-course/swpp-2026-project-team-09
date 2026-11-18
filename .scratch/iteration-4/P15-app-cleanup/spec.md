@@ -25,6 +25,8 @@ This spec does not decide how an item is fixed. It lists what each item is about
 
 An item is found by using the released app, on a phone or an emulator, and checked against the code. Items are collected first. Each one then gets its after wireframe on the team canvas, and the drawing is approved before its ticket is written.
 
+An item that changes no screen, such as the app's icon, has no board. Its ticket names the drawing that was approved instead, and its pull request shows screenshots of the emulator where the others show the boards.
+
 ### Tickets
 
 - One ticket per item, at `issues/<NN>-<slug>.md`. Items so small that they change the same file together may share one ticket.
@@ -64,10 +66,14 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 3. The 시간표 card on 내 정보: remove "빈 시간 말하기", a pressed class block opens that class, and reading an image comes back to 내 정보. Ticket [03](issues/03-timetable-card.md).
 4. The map's friend panel: remove the green "친구 N명과 위치 공유 중" banner. Ticket [04](issues/04-friend-panel-banner.md).
 5. The 학과 field (프로필 편집, Onboarding): the words cover the search icon once the field is pressed. Ticket [05](issues/05-department-field-icon.md).
+6. The app's icon, splash and notification icon are still Expo's defaults: give the app its own, the "SNU / now" wordmark. A native change. Ticket [06](issues/06-app-icon.md).
+7. The map's credit and Kakao's logo float far above the AI input, over the place of a row of buttons that is no longer drawn: nothing stands over an empty place above the input. Ticket [07](issues/07-credit-above-the-input.md).
+8. The sign-in screen: remove the drawn character, put the sign-in button in the middle, and show the app icon's wordmark in place of the name and its tagline. Ticket [08](issues/08-sign-in-wordmark.md).
 
 ### 안진영 (`51`–`99`)
 
 51. The chat's system prompt: cache it across Users and minutes, with the time after the breakpoint, and teach it the campus's short names (학관, 중도, …). Ticket [51](issues/51-system-prompt-cache-and-campus-terms.md).
+52. 이미지로 불러오기 reads real screenshots badly: read them with the AI on the blocks the phone finds, for any timetable layout. Ticket [52](issues/52-timetable-image-reading.md).
 
 ## Testing Decisions
 
