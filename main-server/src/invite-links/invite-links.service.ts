@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import {
@@ -23,6 +24,9 @@ import { InviteLink } from '../generated/prisma/client.js';
 import { CreatedInviteLinkDto, InviteLinkDto, InviteLinkStatus } from './dto/invite-links.dto.js';
 
 const LIFETIME_MS = 24 * 60 * 60 * 1000;
+
+// The form of every token `create` makes: 32 random bytes in base64url.
+export const INVITE_LINK_TOKEN = /^[\w-]{43}$/u;
 
 // 32 random bytes cannot be guessed, so a fast hash is enough to keep the stored copy useless to a reader.
 function hashToken(token: string): string {
