@@ -614,7 +614,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     starts a new line, and only the send button sends. It takes at most 1,000 characters, as much as the main server
     takes in a message. The send button is `snuBlue` while there is something to send,
     and grey and disabled while the input is empty or the Assistant works. Speech input and autocomplete would attach
-    to it.
+    to it. While its keyboard is up, a transparent scrim ("키보드 내리기", `keyboard-scrim.tsx`) lies over the map,
+    the lists, the zoom control and an open card: a press or a drag there only puts the keyboard down. The bar, the
+    examples and the answer frame's card and pill stand over it, and a press on the pill beside its buttons does the
+    same.
   - "활성 파티" never shrinks: its two lines stay whole on a screen narrower than the wireframe's 390.
 - **The answer frame** (`answer/answer-frame.tsx`), the one screen of the conversation with the Assistant. While the
   bar has the keyboard and nothing is asked, the three examples of the empty chat stand above it as chips with an icon

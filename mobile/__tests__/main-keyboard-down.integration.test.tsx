@@ -4,6 +4,7 @@
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import { pass, screen, shownAddress } from './support/app';
 import { hideKeyboard, KEYBOARD, quietDismiss, showKeyboard } from './support/keyboard';
 import { AI_INPUT, button, DINNER_ROW, findButton, FRIEND_ROW, SEND } from './support/lists';
@@ -23,6 +24,7 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 }));
 
 const SCRIM = '키보드 내리기';
+const NOTICE = '대화 내용은 AI 제공자에게 전송돼요';
 const EARLIER = '이전 답';
 
 type User = Awaited<ReturnType<typeof openMain>>;
@@ -45,7 +47,7 @@ function drawnOver(upper: Found, lower: Found): boolean {
   return false;
 }
 
-function map(): Found {
+function mapTouches(): Found {
   return screen.getByTestId('main-map-touches');
 }
 
@@ -75,7 +77,7 @@ describe('a press beside the AI input on the everyday map', () => {
 
     const scrim = button(SCRIM);
     expect(scrim).toHaveStyle({ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 });
-    for (const under of [map(), marker(FRIEND), button(FRIEND_ROW), button(DINNER_ROW), button('확대')]) {
+    for (const under of [mapTouches(), marker(FRIEND), button(FRIEND_ROW), button(DINNER_ROW), button('확대')]) {
       expect(drawnOver(scrim, under)).toBe(true);
     }
   });
@@ -96,7 +98,7 @@ describe('a press on the scrim on the everyday map', () => {
 
     await press(user, SCRIM);
 
-    expect(dismiss).toHaveBeenCalledTimes(1);
+    expect(dismiss).toHaveBeenCalled();
     expect(screen.queryByTestId('map-card')).toBeNull();
     expect(shownAddress()).toBe('/main');
   });
@@ -130,7 +132,7 @@ describe('a press on the scrim on the everyday map', () => {
   });
 });
 
-// Partitions: the bar's field and buttons, an example, "이전 답".
+// Partitions: the bar's field and buttons, an example and the line under the examples, "이전 답".
 describe("the AI input's own parts while the keyboard is up", () => {
   it('stand over the scrim: the bar and the examples', async () => {
     await openMain();
@@ -140,6 +142,15 @@ describe("the AI input's own parts while the keyboard is up", () => {
     const scrim = button(SCRIM);
     expect(drawnOver(screen.getByTestId('ai-input'), scrim)).toBe(true);
     expect(drawnOver(button('배고파'), scrim)).toBe(true);
+  });
+
+  it('let a press on the line under the examples through to the scrim', async () => {
+    await openMain();
+
+    await showKeyboard(KEYBOARD);
+
+    expect(drawnOver(screen.getByText(NOTICE), button(SCRIM))).toBe(true);
+    expect(screen.getByText(NOTICE).parent).toHaveStyle({ pointerEvents: 'none' });
   });
 
   it('send an example as before', async () => {
@@ -173,7 +184,7 @@ describe('a press beside the AI input in the answer frame', () => {
     await showKeyboard(KEYBOARD);
 
     const scrim = button(SCRIM);
-    expect(drawnOver(scrim, map())).toBe(true);
+    expect(drawnOver(scrim, mapTouches())).toBe(true);
     for (const over of [screen.getByTestId('answer-card'), button('답 닫기'), button('새 대화')]) {
       expect(drawnOver(over, scrim)).toBe(true);
     }
@@ -188,9 +199,35 @@ describe('a press beside the AI input in the answer frame', () => {
 
     await press(user, SCRIM);
 
-    expect(dismiss).toHaveBeenCalledTimes(1);
+    expect(dismiss).toHaveBeenCalled();
     expect(screen.getByTestId('answer-pill')).toHaveTextContent('식사 메뉴 추천');
     expect(screen.getByTestId('answer-card')).toBeVisible();
+  });
+});
+
+// Partitions: the keyboard up and down.
+describe("a press on the answer pill's words", () => {
+  it('puts the keyboard down while it is up, and keeps the frame', async () => {
+    const user = await openMain();
+    await ask(user, '식사 메뉴 추천');
+    await showKeyboard(KEYBOARD);
+    const dismiss = quietDismiss();
+
+    await user.press(within(screen.getByTestId('answer-pill')).getByText('식사 메뉴 추천'));
+
+    expect(dismiss).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('answer-pill')).toHaveTextContent('식사 메뉴 추천');
+  });
+
+  it('does nothing while the keyboard is down', async () => {
+    const user = await openMain();
+    await ask(user, '식사 메뉴 추천');
+    const dismiss = quietDismiss();
+
+    await user.press(within(screen.getByTestId('answer-pill')).getByText('식사 메뉴 추천'));
+
+    expect(dismiss).not.toHaveBeenCalled();
+    expect(screen.getByTestId('answer-pill')).toHaveTextContent('식사 메뉴 추천');
   });
 });
 

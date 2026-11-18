@@ -7,17 +7,20 @@
 import type { ReactElement } from 'react';
 import { Keyboard, Pressable, StyleSheet } from 'react-native';
 
-// A transparent scrim over the stage while the keyboard is up, under the AI input's own parts: a press beside them
-// only puts the keyboard down. It takes the touch as it starts, so that a drag puts the keyboard down too and the map
-// under it does not pan.
+function putDown(): void {
+  Keyboard.dismiss();
+}
+
+// A transparent scrim over the stage while the keyboard is up: a press on it only puts the keyboard down. It takes the
+// touch as it starts, so that a drag puts the keyboard down too and the map under it does not pan. A screen reader's
+// double tap sends only the press.
 export function KeyboardScrim(): ReactElement {
   return (
     <Pressable
       accessibilityLabel="키보드 내리기"
       accessibilityRole="button"
-      onPressIn={() => {
-        Keyboard.dismiss();
-      }}
+      onPress={putDown}
+      onPressIn={putDown}
       style={styles.scrim}
     />
   );

@@ -165,10 +165,10 @@ function EverydayBottom(props: EverydayProps): ReactElement {
 // card at the bottom hides the row and the button. While the keyboard is up and nothing is asked, the examples stand
 // above the input. A message sent from the AI input shows the answer frame, which hides the rest, and the input is its
 // card's: it stays in the same place in the tree, so that it keeps the focus. While the keyboard is up, the input
-// stands right above it, and a scrim under the frame, the examples and the input takes a press anywhere else on the
-// stage, the map, the lists, the zoom control and an open card included, to put the keyboard down. The conversation
-// is kept while the app runs: while the frame is hidden, "이전 답" in the input shows it again. A card nobody asked
-// for, a received invitation's or a made Quest's, takes the bottom without the input.
+// stands right above it, and a scrim under the frame, the examples and the input puts the keyboard down for a press
+// anywhere else (`KeyboardScrim`). The conversation is kept while the app runs: while the frame is hidden, "이전 답" in
+// the input shows it again. A card nobody asked for, a received invitation's or a made Quest's, takes the bottom
+// without the input.
 export function MapBottom(props: MapBottomProps): ReactElement {
   const { onAnswerHeight, onInputHeight, room, tutorial, onShowOnMap, chat, unasked } = props;
   const { invitation, made } = unasked;
