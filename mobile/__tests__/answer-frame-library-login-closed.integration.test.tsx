@@ -8,6 +8,7 @@ import { act } from '@testing-library/react-native';
 import { endLibrarySession } from '@/library/end-session';
 import { isLibraryLoggedIn } from '@/library/flag';
 import { hiddenTransport } from '@/library/library';
+import { LOGIN_LIMIT_MS } from '@/library/login-view';
 import { LIBRARY_LOGOUT_URL } from '@/library/site';
 import type { TransportReply } from '@/library/transport';
 import type * as SecureStoreFake from './support/secure-store';
@@ -133,6 +134,47 @@ describe('a login closed while its check runs', () => {
     await expect(isLibraryLoggedIn()).resolves.toBe(false);
     expect(hiddenViewMounted()).toBe(false);
     expect(seatCard().getByText(NEEDS_LOGIN)).toBeVisible();
+  });
+});
+
+describe('the check kept while the view is in the school login', () => {
+  it('waits while the view is off the site, and is made on close', async () => {
+    const held = holdFirstCheck(true);
+    await askForCards({ server, library }, [SEAT_CARD], { loggedIn: false });
+    await pressIn(seatCard(), '로그인');
+    await navigate(MAIN);
+    await navigate(MAIN);
+    await navigate('https://nsso.snu.ac.kr/sso/login');
+    await held.release();
+
+    // The first check found no session; the one kept does not reload the hidden page while the User is at the school.
+    expect(held.checks()).toBe(1);
+    expect(hiddenViewMounted()).toBe(false);
+
+    await pressIn(screen, '닫기');
+    await pass(0);
+    await pass(0);
+
+    expect(held.checks()).toBe(2);
+    await expect(isLibraryLoggedIn()).resolves.toBe(true);
+    expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
+  });
+});
+
+describe("the login's toast when the time runs out during a check", () => {
+  it('says "로그인하지 못했어요" only once the last check found no session', async () => {
+    const held = holdFirstCheck(false);
+    await askForCards({ server, library }, [SEAT_CARD], { loggedIn: false });
+    await pressIn(seatCard(), '로그인');
+    await navigate(MAIN);
+
+    await pass(LOGIN_LIMIT_MS);
+    expect(screen.queryByTestId('library-login-view')).toBeNull();
+    expect(screen.queryByText('로그인하지 못했어요')).toBeNull();
+
+    await held.release();
+    expect(held.checks()).toBe(2);
+    expect(screen.getByText('로그인하지 못했어요')).toBeVisible();
   });
 });
 

@@ -1946,7 +1946,9 @@ The site serves `/pc/main` before it sends the User to the school's login too, s
 with no session, which can take up to 35 seconds. The checks belong to the provider, not to the view
 (`login-checks.ts`): one runs at a time, on the hidden view's page loaded afresh (`reloadPage()`). A landing that comes
 while one runs is kept, and so is ✕ pressed while one runs; when the running check finds no session, one more check is
-made. A check that finds the session sets the flag even after the view was closed, so a User who logged in and then
+made, but not while the visible view is off the site's screens (the User in the school's login): it waits for the
+next landing or the close. After ✕ or the five minutes, the login's outcome (and "로그인하지 못했어요") waits for a check
+still to come. A check that finds the session sets the flag even after the view was closed, so a User who logged in and then
 closed the view is still logged in, and the cards follow. Every check ends with the hidden view unmounted unless the
 flag is set, and a logout or the provider's end cancels the checks (P15 ticket 57).
 
@@ -1960,7 +1962,11 @@ to show, with its 로그인 that sends the pressed write once more.
 The seat book card shows its time as a band (`slot-band.tsx`, rules in `cards/slot-band.ts`): a track from the
 space's opening to its closing time, the band with a handle at each end, and "14:00–20:00 · 6시간" under it. A drag
 moves an end or the band whole, by the space's step (30 minutes), never before the next 30 minutes today, after
-closing, or outside the space's shortest and longest length; the seats are read again when the finger is let go.
+closing, or outside the space's shortest and longest length; the seats and the room chip's counts are read again when
+the finger is let go. `now` is read at each render, at the let-go and at 예약하기: a start that went by moves on with the
+end along, a day with no room left says "오늘은 예약 시간이 끝났어요", and the booking (`seat-booking.ts`) refuses a slot
+that is no longer valid. The time and the seat on screen are kept with the chat where the room is (`CardRoom`), so
+later requests send the key of the card as it is on screen.
 자리 선택하기 opens the room's seat picture (`seat-picker.tsx`): the site's `area_<sectorNo>.png` with each seat at its
 `POSX`/`POSY` from `getSeatBookingList` and its number, zoomed by two fingers or 확대 and 축소 (1 to 4 times). A press
 picks a free seat and colours it alone; "<n>번 선택" puts it in the card. A space without `mapImage` has no picture.

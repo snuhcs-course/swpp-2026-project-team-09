@@ -7,6 +7,9 @@
 import { READING_ROOM } from '@/api/mock/data/library';
 import {
   endMoved,
+  fitted,
+  isValidSpan,
+  liveSlot,
   lengthWords,
   limitsOf,
   nowOn,
@@ -88,5 +91,42 @@ describe('the words and the track', () => {
 
   it('gives the slot back', () => {
     expect(slotOf(TODAY, { start: 1020, end: 1110 })).toEqual({ date: TODAY, start: '17:00', minutes: 90 });
+  });
+});
+
+describe('a band that must stay bookable', () => {
+  // Monday 2026-11-02, 15:10 in Korea: the earliest start is 15:30.
+  const LATER = new Date('2026-11-02T06:10:00.000Z');
+
+  it('moves a start in the past to the earliest, the end along with it', () => {
+    const slot = { date: TODAY, start: '14:00', minutes: 60 };
+    expect(liveSlot(space, slot, LATER)).toEqual({ date: TODAY, start: '15:30', minutes: 60 });
+  });
+
+  it('takes the end along when the earliest has passed the end less the least, never past the end', () => {
+    const limits = limitsOf(space, TODAY, LATER);
+    const span = spanOf({ date: TODAY, start: '14:00', minutes: 60 });
+    const moved = endMoved(span, 'start', 840, limits);
+    expect(moved).toEqual({ start: 930, end: 990 });
+    expect(moved === null ? false : isValidSpan(moved, limits)).toBe(true);
+  });
+
+  it('follows a card left open across the half hour', () => {
+    const slot = { date: TODAY, start: '16:30', minutes: 120 };
+    expect(liveSlot(space, slot, NOW)).toEqual(slot);
+    // 16:40: the next start is 17:00.
+    expect(liveSlot(space, slot, new Date('2026-11-02T07:40:00.000Z'))).toEqual({
+      date: TODAY,
+      start: '17:00',
+      minutes: 120,
+    });
+  });
+
+  it('leaves no slot near closing when the least length no longer fits, and cuts a long one at closing', () => {
+    // 22:10: the next start is 22:30, closing 23:00, the least an hour.
+    const late = new Date('2026-11-02T13:10:00.000Z');
+    expect(liveSlot(space, { date: TODAY, start: '21:00', minutes: 60 }, late)).toBeNull();
+    const limits = limitsOf(space, TODAY, NOW);
+    expect(fitted({ start: 1200, end: 1500 }, limits)).toEqual({ start: 1200, end: 1380 });
   });
 });

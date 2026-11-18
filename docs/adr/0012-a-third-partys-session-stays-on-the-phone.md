@@ -35,3 +35,11 @@ The cookies and the flag are cleared even when the logout or the phone's storage
 - The app depends on the site's pages and JSON as they were read on 2026-11-01. A changed page or field breaks the client, which reads the reply it cannot understand as `network`. The tests run against a fake library made from the recorded, redacted replies, so they do not show such a change; only a check on a phone against the real site does.
 - The site's logout URL (`SSOService.do?pname=spLogout`) also ends the school's single sign-on in the web views.
 - The iOS side of the module has not been built yet; the first build is on a Mac.
+
+## Amendment (2026-11-18, P15 ticket 57)
+
+The decision stands: the session stays in the web views' cookie jar and no app code reads it. Three parts of the text above no longer match the code, and are read as follows:
+
+- **The login's checks belong to the app's session provider, not to the login view** (`mobile/src/library/login-checks.ts`). One check runs at a time, on the hidden view's page loaded afresh. A landing that comes while one runs is kept, and so is ✕ pressed while one runs; a check kept waits while the visible view is off the site's screens (the User in the middle of the school's login). So ✕ is not always "no session": a check still to come that finds the session sets the flag though the view is closed, and the login's outcome waits for it.
+- **The hidden view is mounted while the flag is set, while a check runs, and while a logout needs it.** Every check ends with the view unmounted unless the flag is set.
+- **Step 1 of the end of the library session** loads the site's logout URL when the flag is set *or* a login view was opened since the session last ended, since the jar may then hold a session the flag never knew of. The hidden view is mounted for it if neither the flag nor a check mounts it.

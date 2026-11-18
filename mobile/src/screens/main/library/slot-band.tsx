@@ -26,6 +26,7 @@ import {
   wholeMoved,
 } from '@/library/cards/slot-band';
 import { clockOf } from '@/library/cards/times';
+import { percent } from '../answer/band-body';
 
 // The seat book card's time as a band (P15 ticket 57, the kit's time band as `AmStudy-a1` and `AmFrame-f14` draw it):
 // a track from the space's opening to its closing time, the card's time on it with a handle at each end, and its words
@@ -38,7 +39,10 @@ interface SlotBandProps {
   onChange: (slot: Slot) => void;
 }
 
-type Move = (span: Span, letGo: boolean) => void;
+// A move of the band, worked out against the limits at the moment it is used: during a drag, and again with `now` at
+// the moment the finger lets go.
+type Moved = (limits: SpanLimits) => Span | null;
+type Move = (moved: Moved, letGo: boolean) => void;
 type Kind = SpanEnd | 'whole';
 
 const TRACK_HEIGHT = 28;
@@ -48,17 +52,13 @@ const HANDLE_TOUCH = 44;
 const HANDLE_SLOP = (HANDLE_TOUCH - HANDLE_WIDTH) / 2;
 const PAN_STARTS = 10;
 
-function percent(share: number): DimensionValue {
-  return `${share * 100}%`;
-}
-
 function placeOf(span: Span, limits: SpanLimits): { left: DimensionValue; width: DimensionValue } {
   const start = shareOn(span.start, limits);
   return { left: percent(start), width: percent(shareOn(span.end, limits) - start) };
 }
 
 // Where a drag of `dx` points, or a screen reader's step, leaves the band.
-function movedBy(kind: Kind, span: Span, by: number, limits: SpanLimits): Span {
+function movedBy(kind: Kind, span: Span, by: number, limits: SpanLimits): Span | null {
   return kind === 'whole' ? wholeMoved(span, by, limits) : endMoved(span, kind, span[kind] + by, limits);
 }
 
@@ -72,7 +72,10 @@ function useSpanPan(
   over?: PanGesture,
 ): PanGesture {
   return useMemo(() => {
-    const at = (dx: number): Span => movedBy(kind, span, minutesAcross(dx / width, limits), limits);
+    const at =
+      (dx: number): Moved =>
+      (fresh: SpanLimits) =>
+        movedBy(kind, span, minutesAcross(dx / width, fresh), fresh);
     const pan = Gesture.Pan();
     if (over !== undefined) {
       pan.blocksExternalGesture(over).hitSlop({ left: HANDLE_SLOP, right: HANDLE_SLOP });
@@ -112,7 +115,8 @@ function stepsOf({ kind, span, shown, limits, move }: PartProps): object {
     accessibilityValue: { text: kind === 'whole' ? spanWords(shown) : clockOf(shown[kind]) },
     onAccessibilityAction: ({ nativeEvent: { actionName } }: { nativeEvent: { actionName: string } }): void => {
       if (actionName === 'increment' || actionName === 'decrement') {
-        move(movedBy(kind, span, actionName === 'increment' ? limits.step : -limits.step, limits), true);
+        const by = actionName === 'increment' ? limits.step : -limits.step;
+        move((fresh) => movedBy(kind, span, by, fresh), true);
       }
     },
   };
@@ -134,27 +138,32 @@ function Handle(props: Omit<PartProps, 'kind'> & { which: SpanEnd; width: number
 }
 
 // The band while it is dragged, and where it was before, dashed.
-function useMoving(slot: Slot, onChange: SlotBandProps['onChange']): { moving: Span | null; move: Move } {
+function useMoving({ slot, space, onChange }: SlotBandProps): { moving: Span | null; move: Move } {
   const [moving, setMoving] = useState<Span | null>(null);
   const span = spanOf(slot);
-  const move = (next: Span, letGo: boolean): void => {
+  const move = (moved: Moved, letGo: boolean): void => {
+    const next = moved(limitsOf(space, slot.date, now()));
     if (!letGo) {
-      setMoving(next);
+      if (next !== null) {
+        setMoving(next);
+      }
       return;
     }
     setMoving(null);
-    if (next.start !== span.start || next.end !== span.end) {
+    if (next !== null && (next.start !== span.start || next.end !== span.end)) {
       onChange(slotOf(slot.date, next));
     }
   };
   return { moving, move };
 }
 
-export function SlotBand({ slot, space, onChange }: SlotBandProps): ReactElement {
+export function SlotBand(props: SlotBandProps): ReactElement {
+  const { slot, space } = props;
   const [width, setWidth] = useState(0);
-  const limits = useMemo(() => limitsOf(space, slot.date, now()), [space, slot.date]);
+  // Read at each render, so that a card left open moves its earliest start on.
+  const limits = limitsOf(space, slot.date, now());
   const span = useMemo(() => spanOf(slot), [slot]);
-  const { moving, move } = useMoving(slot, onChange);
+  const { moving, move } = useMoving(props);
   const shown = moving ?? span;
   const whole = useSpanPan('whole', span, limits, width, move);
   const part = { span, shown, limits, move };

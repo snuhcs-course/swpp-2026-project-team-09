@@ -42,6 +42,8 @@ interface SeatPickerProps {
   onClose: () => void;
   // "<n>번 선택"; null when no seat can be booked now, and then no seat is a button.
   onSeat: ((seat: LibrarySeat) => void) | null;
+  // The seat the card offers now, marked until another is picked.
+  current?: string | null;
 }
 
 function ZoomButton({ icon, name, onPress, disabled }: ZoomButtonProps): ReactElement {
@@ -145,7 +147,7 @@ function Picture(
           <ScrollView nestedScrollEnabled testID="seat-picker-scroll-down">
             <ScrollView horizontal nestedScrollEnabled testID="seat-map-scroll">
               <SeatMap
-                chosen={chosen?.VNAME ?? null}
+                chosen={chosen?.VNAME ?? props.current ?? null}
                 numbered
                 onSeat={onSeat === null ? null : pick}
                 seats={seats}

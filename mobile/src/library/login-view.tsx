@@ -23,6 +23,8 @@ interface LibraryLoginProps {
   // The view is back on the site's main, booking or my-booking screen, where the provider checks the session
   // (`login-checks.ts`) and closes the view once it works.
   onLanded: () => void;
+  // The view went off the site's screens, as to the school's login.
+  onLeft: () => void;
 }
 
 // Closes the login once, with the first of the User's ✕ and the five minutes.
@@ -57,7 +59,7 @@ function useFinish(visible: boolean, onDone: (outcome: Closed) => void): (outcom
 // cookie jar. Reaching those screens is not enough by itself: the login is done only when a check finds the session
 // works; otherwise the view stays open and asks again on the next of those screens. ✕ is "no session"; after five
 // minutes the view closes as failed.
-export function LibraryLogin({ visible, onDone, onLanded }: LibraryLoginProps): ReactElement {
+export function LibraryLogin({ visible, onDone, onLanded, onLeft }: LibraryLoginProps): ReactElement {
   const finish = useFinish(visible, onDone);
   return (
     <Modal
@@ -82,7 +84,9 @@ export function LibraryLogin({ visible, onDone, onLanded }: LibraryLoginProps): 
           <WebView
             incognito={false}
             onNavigationStateChange={(navigation) => {
-              if (!navigation.loading && isLoginDone(navigation.url)) {
+              if (!isLoginDone(navigation.url)) {
+                onLeft();
+              } else if (!navigation.loading) {
                 onLanded();
               }
             }}

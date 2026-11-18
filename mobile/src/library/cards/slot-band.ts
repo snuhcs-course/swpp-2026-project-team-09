@@ -59,23 +59,58 @@ function clamped(value: number, low: number, high: number): number {
   return Math.min(Math.max(value, low), high);
 }
 
-// One end moved to `minutes`, by the step, so that the start is not before the earliest, the end not after closing,
-// and the length stays within the least and the most. The other end stays.
-export function endMoved(span: Span, which: SpanEnd, minutes: number, limits: SpanLimits): Span {
+// Whether the band may hold `span`: a start on a step, not before the earliest; an end not after closing; a length
+// within the least and the most.
+export function isValidSpan(span: Span, limits: SpanLimits): boolean {
+  const length = span.end - span.start;
+  return (
+    span.start % limits.step === 0 &&
+    span.start >= limits.earliest &&
+    span.end <= limits.close &&
+    length >= limits.least &&
+    length <= limits.most
+  );
+}
+
+// `span` made one the band may hold: a start before the earliest (a card left open, a time past) moves the band whole
+// to the earliest step, its length kept within the least and the most, and an end past closing is cut there. Null when
+// no span of the least length is left before closing.
+export function fitted(span: Span, limits: SpanLimits): Span | null {
+  const length = clamped(span.end - span.start, limits.least, limits.most);
+  const start = Math.ceil(Math.max(span.start, limits.earliest) / limits.step) * limits.step;
+  const end = Math.min(start + length, limits.close);
+  return end - start < limits.least ? null : { start, end };
+}
+
+// One end moved to `minutes`, by the step, within the limits. A start that cannot stay before the end by the least
+// length (the earliest has passed it) takes the end along; null when no span is left.
+export function endMoved(span: Span, which: SpanEnd, minutes: number, limits: SpanLimits): Span | null {
   const at = snapped(minutes, limits.step);
   if (which === 'start') {
     const low = Math.max(limits.earliest, span.end - limits.most);
-    return { start: clamped(at, low, Math.max(low, span.end - limits.least)), end: span.end };
+    const high = span.end - limits.least;
+    return low <= high ? { start: clamped(at, low, high), end: span.end } : fitted({ start: low, end: low }, limits);
   }
+  const low = span.start + limits.least;
   const high = Math.min(limits.close, span.start + limits.most);
-  return { start: span.start, end: clamped(at, Math.min(high, span.start + limits.least), high) };
+  return low <= high ? fitted({ start: span.start, end: clamped(at, low, high) }, limits) : fitted(span, limits);
 }
 
 // The band moved whole by `by` minutes, by the step, with its length kept, between the earliest and closing.
-export function wholeMoved(span: Span, by: number, limits: SpanLimits): Span {
+export function wholeMoved(span: Span, by: number, limits: SpanLimits): Span | null {
   const length = span.end - span.start;
   const start = clamped(snapped(span.start + by, limits.step), limits.earliest, limits.close - length);
-  return start < limits.earliest ? span : { start, end: start + length };
+  return fitted({ start, end: start + length }, limits);
+}
+
+// The card's slot as it may be booked now: moved past a start that has gone by, or null when nothing is left that day.
+export function liveSlot(space: LibrarySpace, slot: Slot, now: Date): Slot | null {
+  const span = fitted(spanOf(slot), limitsOf(space, slot.date, now));
+  return span === null ? null : slotOf(slot.date, span);
+}
+
+export function sameSlot(one: Slot, other: Slot): boolean {
+  return one.date === other.date && one.start === other.start && one.minutes === other.minutes;
 }
 
 // Where a minute of the day lies on the track, from 0 at opening to 1 at closing.

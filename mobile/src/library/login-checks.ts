@@ -10,7 +10,9 @@
 // one more; when the running check finds no session, the one kept is made, once. A check that finds the session sets
 // the flag whether or not the view is still open, so that closing the view never throws a login away. Every check ends
 // with `checking` false, and once cancelled (a logout, a sign-out) or stopped (the provider gone) none starts and the
-// result of the one under way is not used.
+// result of the one under way is not used. A check reloads the hidden page, which goes to the school's login in the
+// cookie jar the visible view shares; so the one kept waits while the view is away from the site's screens (the User
+// in the middle of the school's login), and is made on the next landing or on close.
 
 export interface LoginCheckHooks {
   setChecking: (checking: boolean) => void;
@@ -20,6 +22,8 @@ export interface LoginCheckHooks {
   markLoggedIn: () => Promise<boolean>;
   // A check found the session and the flag is set.
   onSession: () => void;
+  // The checks ended without a session and none is kept: what the view's close said can be said now.
+  onNoSession: () => void;
 }
 
 export class LoginChecks {
@@ -28,6 +32,10 @@ export class LoginChecks {
   private again = false;
   private round = 0;
   private alive = true;
+  // The view is away from the site's screens.
+  private away = false;
+  // The view closed while a check ran or one was kept: its outcome waits for them.
+  private closing = false;
 
   constructor(hooks: LoginCheckHooks) {
     this.hooks = hooks;
@@ -35,6 +43,7 @@ export class LoginChecks {
 
   // The login view landed on the site's main, booking or my-booking screen.
   landed(): void {
+    this.away = false;
     if (!this.alive) {
       return;
     }
@@ -45,17 +54,46 @@ export class LoginChecks {
     void this.run();
   }
 
-  // The view closed without a session: a check under way is followed by one last check.
-  closed(): void {
+  // The view went to a page off the site's screens.
+  left(): void {
+    this.away = true;
+  }
+
+  // The view closed without a session. A check under way is followed by one last check, and one kept is made now.
+  // True when a check is still to come, and the view's outcome is to wait for `onSession` or `onNoSession`.
+  closed(): boolean {
+    this.away = false;
+    if (!this.alive) {
+      return false;
+    }
     if (this.running) {
       this.again = true;
+    } else if (this.again) {
+      void this.run();
     }
+    this.closing = this.running;
+    return this.closing;
+  }
+
+  // The provider is (again) in use, as after a Fast Refresh that stopped it.
+  start(): void {
+    this.alive = true;
   }
 
   // The session was ended on purpose: the check under way is not used, and the one kept is dropped.
   cancel(): void {
     this.round += 1;
     this.again = false;
+  }
+
+  private settle(session: boolean): void {
+    const closing = this.closing;
+    this.closing = false;
+    if (session) {
+      this.hooks.onSession();
+    } else if (closing) {
+      this.hooks.onNoSession();
+    }
   }
 
   stop(): void {
@@ -75,13 +113,14 @@ export class LoginChecks {
     if (!this.alive) {
       return;
     }
-    if (used() && !session && this.again) {
+    if (used() && !session && this.again && !this.away) {
       void this.run();
       return;
     }
     this.hooks.setChecking(false);
-    if (used() && session) {
-      this.hooks.onSession();
+    if (session || !this.again || !used()) {
+      this.again = false;
+      this.settle(session);
     }
   }
 }

@@ -31,7 +31,7 @@ Two smaller gaps sit next to it:
 
 - A landing on the site's screens that comes while a check runs is no longer dropped: it is remembered, and when the running check ends without a session, the check runs once more. The login closes as soon as one check finds the session, with no second press.
 - Each check starts the hidden view's page afresh (`HiddenViewTransport.reloadPage()`), so a check never reuses a page that was sent off the site.
-- Every mounted library card that reads (`useLibraryLoad`) follows the flag: when it is set, a card whose read failed for want of a session (`noSession`, `sessionEnded`) reads again at once; when it is cleared (로그아웃 on 내 정보, a session that ended, a sign-out), a card that had read reads again and shows "관정도서관 로그인이 필요해요" with 로그인. A write that failed for want of a session clears its red line once the flag is set, and is not sent again by itself: the User presses 예약하기 again.
+- Every mounted library card that reads (`useLibraryLoad`) follows the flag: when it is set, a card whose read failed for want of a session (`noSession`, `sessionEnded`) reads again at once; when the session is ended on purpose (로그아웃 on 내 정보, a sign-out), a card that had read reads again and shows "관정도서관 로그인이 필요해요" with 로그인. A write that failed for want of a session clears its red line once the flag is set, and is not sent again by itself: the User presses 예약하기 again.
 - The 내 정보 row already follows the flag (`useLibrarySession().loggedIn`), and stays as it is.
 - Nothing about the session reaches the main server or the model: no flag, no student number, no cookie.
 
@@ -48,7 +48,7 @@ The seat book card shows its time as the kit's time band, as `AmStudy-a1` draws 
 ### (c) 자리 선택하기 opens the seat picture
 
 - The seat book card's "다른 자리 고르기" is renamed "자리 선택하기", the owner's word.
-- It opens the room's seat picture full screen, as the large view does today: its title "<room> 좌석 현황" and ✕, the picture, a key of the colours, and the hint.
+- It opens the room's seat picture as a white sheet over the map (`GestureAskSeats`'s look): its title "<room> 좌석 현황" and ✕, the picture, a key of the colours, 축소 and 확대, and the hint. The seat the card offers is marked until another is picked.
 - Zoom: two fingers pinch it (`react-native-gesture-handler`'s `Gesture.Pinch`, already installed, as the edge-back swipe uses it), and the buttons "확대" (+) and "축소" (−) step it, from the picture fitted 300 high up to 4 times that. The picture scrolls both ways once it is larger than the screen. No new package and no native change.
 - Every seat is drawn with its number (VNAME), at every zoom, with the number's size following the box.
 - Colours: a free seat is the site's orange, a taken seat pale (no button), an accessible seat grey (no button), and the seat pressed is the key colour (`color.snuBlue`) with a white number. A press on a free seat selects it and changes that seat's colour only; a press on another free seat moves the selection there.
@@ -59,7 +59,7 @@ The seat book card shows its time as the kit's time band, as `AmStudy-a1` draws 
 ## What stays as it is
 
 - The reply's words: the server's library tools still answer `result: 'shown'`, and the model still says it showed the card (the owner's choice for this ticket).
-- The session stays on the phone (ADR 0012): the login web view, the hidden view, the flag, the logout, the cookie module.
+- The session stays on the phone (ADR 0012): the login web view, the flag and the cookie module. The hidden view and the logout change as ADR 0012's amendment of 2026-11-18 says (the checks outlive the view; the logout reaches the site once a login view was opened).
 - The seat book card's 예약하기, 닫기, 되돌리기, the kiosk foot, the notes, the room chip and its list, and the seats card's small map.
 - The room book card's time (its own slot rows in `book-room-card.tsx`).
 
@@ -70,6 +70,10 @@ The seat book card shows its time as the kit's time band, as `AmStudy-a1` draws 
 - [x] The seat book card shows the time band with "17:00–18:00 · 1시간" under it and the space's hours at its ends; a screen reader's step of the end handle makes it "17:00–18:30 · 1시간 30분", reads the seats for the new time and shows "오늘 17:00–18:30". (Integration test.)
 - [x] The band's rules, by unit test: snapping to 30 minutes, the start not before the next 30 minutes today nor before opening, the end not after closing, the length within the space's least and most, a whole move keeping its length.
 - [x] 자리 선택하기 opens "<room> 좌석 현황"; every seat shows its number; a press on a free seat changes only that seat's colour and shows "<n>번 선택"; a press on another moves it; a taken seat is no button; "<n>번 선택" puts the seat in the card. (Integration test.)
+- [x] The band never holds a start at or after its end, nor one in the past: a start that went by moves on with the end along, near closing with no room for the shortest length the card says "오늘은 예약 시간이 끝났어요", and 예약하기 pressed after the start went by sends nothing. (Unit tests, and an integration test of the press.)
+- [x] A time moved on the band and a seat picked are sent back as the card on screen in the next request. (Integration test.)
+- [x] The room chip's counts and "…은 그 시간에 다 찼어요" follow a new time. (Integration test.)
+- [x] A login closed while a check runs takes effect if the last check finds the session; with none, the flag stays unset and the hidden view unmounted; a check kept waits while the view is in the school's login; "로그인하지 못했어요" comes only after the last check; ending the session after a login view was opened logs out on the site. (Integration tests.)
 - [ ] 확대 and 축소 change the picture's size between 1 and 4 times, and a pinch changes it within the same limits. (Integration test for the buttons; the pinch by reading, and by a person on a phone.) The buttons are tested (1, 1.5, 2, 3, 4 times); the pinch waits for a person on a phone.
 - [x] No test calls the real library; the fake library and its fixtures only.
 - [x] No native file changes; oxlint, Prettier and tsc pass on the app.
@@ -92,7 +96,18 @@ The seat book card shows its time as the kit's time band, as `AmStudy-a1` draws 
 - The seat book card's tests for the picture and the band are in their own files (`answer-frame-library-seat-picker`, `answer-frame-library-slot-band`), since the book card's file reached the 300-line limit.
 - On this machine, Jest in the worktree resolved `@babel/runtime` only through a link at `/workspace/a02-04/node_modules/@babel/runtime` to the shared `.pnpm` copy, outside git; CI is not affected.
 
-- The review of #360 (TaeHyun79) found that a check made after the view had closed could leave `checking` true, the hidden view mounted with the flag unset, and the login thrown away; a logout then skipped the site's logout. The checks now belong to the provider (`login-checks.ts`), not to the view: ✕ while a check runs keeps one last check, a session it finds sets the flag though the view is closed, every check ends with `checking` false, and a logout or the provider's end cancels them. "End the library session" logs out on the site once a login view was opened since the last end, whatever the flag says, and mounts the hidden view for it (`HiddenViewTransport.wantsView()`). Tested in `answer-frame-library-login-closed` (3 tests, each failing on `df4f58c0`).
+- The first review of #360 found that a check made after the view had closed could leave `checking` true, the hidden view mounted with the flag unset, and the login thrown away; a logout then skipped the site's logout. The checks now belong to the provider (`login-checks.ts`), not to the view: ✕ while a check runs keeps one last check, a session it finds sets the flag though the view is closed, every check ends with `checking` false, and a logout or the provider's end cancels them. "End the library session" logs out on the site once a login view was opened since the last end, whatever the flag says, and mounts the hidden view for it (`HiddenViewTransport.wantsView()`). Tested in `answer-frame-library-login-closed` (3 tests, each failing on `df4f58c0`).
+- The second review of #360 (at `d5e365f6`):
+  - The band could hold a start at or after its end (a card left open past `end − least`), and `earliest` went stale while the card stayed open. The rules now never give an invalid span (`isValidSpan`, `fitted`, `liveSlot`): a start in the past moves the band to the next step with the end along, within closing time; with no room left that day the card says "오늘은 예약 시간이 끝났어요" and offers no 예약. `now` is read at each render, at the let-go of a drag, and at the press of 예약하기, and `sendBooking` refuses a slot that is no longer valid ("시작 시각이 지났어요. 시간을 다시 골라 주세요.").
+  - The time moved on the band and the seat picked are kept with the chat, where the room is kept (`CardRoom.slot`, `CardRoom.seat`), and later requests send the key of the card as it is on screen (`book:<space>:<date>:<HHMM>:<minutes>:s=<seat>`). The main server already reads that key (`bookKeyOf`), so no server change.
+  - The room chip's counts are read again for a new time once they were read, and "…은 그 시간에 다 찼어요" goes when the counts for the new time show free seats in that room.
+  - A check kept while the visible view is off the site's screens (in the school's login) waits for the next landing or the close, so no check reloads the hidden page while the User is typing there. The check a landing on `/pc/main` starts is still made at once.
+  - After ✕ or the five minutes, the outcome waits for a check still to come: "로그인하지 못했어요" and the tutorial's check hear of it only when that check found no session. A login that ends this way then sends the pressed write once more, as a login that closed by itself does.
+  - The checks restart after the provider is mounted again (a Fast Refresh in a dev build).
+  - Under a time the User changed, the card says "바꾼 시간이에요. 위 답의 시각은 처음 시간 기준이에요.": the arrival time is in the Assistant's words above the card, which the app does not rewrite.
+  - The band shares `percent` with the plan band (`band-body.tsx`); its rules (30-minute steps, the space's limits) and the plan band's (5-minute steps, a recalculation) are not the same, so nothing else is shared.
+  - The button keeps the owner's word "자리 선택하기" (the merged one was "다른 자리 고르기"): the owner's request names it.
+  - The booking moved to `seat-booking.ts`, since `book-seat-card.tsx` passed the 300-line limit.
 
 ### Agent usage (2026-11-18)
 
@@ -100,3 +115,8 @@ Estimates from the session transcript, with the waits for the shared machine (a 
 
 - Agent time: about 3 hours 25 minutes, in one Opus 5.5 session (a subagent of the orchestrating session), stopped once when the disk filled and resumed, then back for the review's fix (about 45 minutes).
 - Tokens: output about 140,000. Input about 12 million: about 11.5 million cache reads, 0.5 million cache writes and a few thousand uncached.
+
+### Agent usage (2026-11-18, the second review)
+
+- Agent time: about 1 hour 30 minutes, in the same Opus 5.5 session, for the second review's points. An estimate.
+- Tokens: output about 60,000. Input about 7 million: about 6.7 million cache reads, 0.3 million cache writes and a few thousand uncached.
