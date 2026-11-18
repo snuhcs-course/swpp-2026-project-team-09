@@ -75,7 +75,6 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 
 51. The chat's system prompt: cache it across Users and minutes, with the time after the breakpoint, and teach it the campus's short names (학관, 중도, …). Ticket [51](issues/51-system-prompt-cache-and-campus-terms.md).
 52. 이미지로 불러오기 reads real screenshots badly: read them with the AI on the blocks the phone finds, for any timetable layout. Ticket [52](issues/52-timetable-image-reading.md).
-
 55. A walking route on the map cannot be cancelled, and its line stays: a tap on empty map clears it. Ticket [55](issues/55-cancel-the-walking-route.md).
 
 ## Testing Decisions
