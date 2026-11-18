@@ -56,18 +56,146 @@ Read on 2026-10-24 with a Jest model of the start, not on a device. It is to be 
 
 ## Acceptance criteria
 
-- [ ] A signed-in User's stopped app, started by an Invite Link, shows that link's accept screen after the loading screen, and 수락 makes the two Friends.
-- [ ] A signed-out User's stopped app, started by an Invite Link, shows the accept screen after the sign-in, and after the consent and Onboarding where they are still owed.
-- [ ] The kept token is dropped once its accept screen has shown: a later plain start of the app shows the map.
-- [ ] A link opened while the app runs, and a tapped push at a cold start, do what they do today.
-- [ ] `GET /invite/<token>` with a well-formed token, without a sign-in, answers 200 with a page that has the words above and a button to `snunow://invite/<token>`.
-- [ ] With a token of any other form it answers a page with "찾을 수 없는 초대 링크예요" and no button, and nothing of the address appears in the page unescaped.
-- [ ] The page is the same for a token nobody made, a used one and an expired one, and names no sender.
-- [ ] `/.well-known/assetlinks.json` and the `/invite-links` routes answer as before.
-- [ ] Tests, by ADR 0007:
+- [x] A signed-in User's stopped app, started by an Invite Link, shows that link's accept screen after the loading screen, and 수락 makes the two Friends.
+- [x] A signed-out User's stopped app, started by an Invite Link, shows the accept screen after the sign-in, and after the consent and Onboarding where they are still owed.
+- [x] The kept token is dropped once its accept screen has shown: a later plain start of the app shows the map.
+- [x] A link opened while the app runs, and a tapped push at a cold start, do what they do today.
+- [x] `GET /invite/<token>` with a well-formed token, without a sign-in, answers 200 with a page that has the words above and a button to `snunow://invite/<token>`.
+- [x] With a token of any other form it answers a page with "찾을 수 없는 초대 링크예요" and no button, and nothing of the address appears in the page unescaped.
+- [x] The page is the same for a token nobody made, a used one and an expired one, and names no sender.
+- [x] `/.well-known/assetlinks.json` and the `/invite-links` routes answer as before.
+- [x] Tests, by ADR 0007:
   - a test of the app that takes Android's way of getting the first address fails before the fix and passes after it, for a signed-in and for a signed-out start;
   - the main server's integration test asks for the page with a well-formed token, a malformed one, and one that tries to carry markup;
   - the existing tests of Invite Links and of a tapped push still pass.
-- [ ] After the fix, the device run's M2 on a cold start passes on the emulator, and M1 and M2 on a warm start still pass. This is the check on a device; the bug is not reproduced on one before the fix. The run is recorded under this ticket's Comments.
-- [ ] `mobile/README.md` no longer says that M2 on a cold start fails, and what it and the main server's README say of the page is true of the code.
-- [ ] The earlier ticket gets a comment that says this ticket fixed it, with the cause as it was confirmed.
+- [x] After the fix, the device run's M2 on a cold start passes on the emulator, and M1 and M2 on a warm start still pass. This is the check on a device; the bug is not reproduced on one before the fix. The run is recorded under this ticket's Comments.
+- [x] `mobile/README.md` no longer says that M2 on a cold start fails, and what it and the main server's README say of the page is true of the code.
+- [x] The earlier ticket gets a comment that says this ticket fixed it, with the cause as it was confirmed.
+
+## Comments
+
+### Notes from the implementation (2026-11-18)
+
+- **The cause, confirmed in the installed expo-router 57.0.23** (`mobile/node_modules/expo-router/build/`), as the Jest
+  model of 2026-10-24 had it:
+  - `link/linking.js`'s `getInitialURL()` answers a promise on Android: React Native's `Linking.getInitialURL()` raced
+    against 150 ms (`fork/useLinking.native.js`). On iOS it answers expo-linking's `getLinkingURL()` at once.
+  - `global-state/useStore.js` prefetches the first route's info only when that answer is a string. Otherwise the
+    store's route info stays empty until a leaf screen sets it (`useScreens.js`) or a state change does, and React
+    Navigation does not call `onStateChange` for the first state (`react-navigation/core/BaseNavigationContainer.js`).
+  - So the signed-in place's layout renders first with `useSegments()` empty, its guard keeps no token, and
+    `useOwnPlace`'s Redirect leads to `/`, then to the map. Losing the race only makes the router start at `/`; the
+    token is lost either way.
+- **The fix is the one the model passed**, `mobile/src/app/+native-intent.ts`. `getLinkingConfig.js` calls its
+  `redirectSystemPath({ path, initial })` with the first address on both platforms, before the router renders. At a
+  start of the app it keeps an Invite Link's token (`keep({ inviteToken })`) and gives `path` back unchanged.
+  - On Android it reads the address from expo-linking's `getLinkingURL()`, falling back to `path`, and then calls
+    `clearInitialURL()`. The native module (`ExpoLinkingModule.initialURL`) holds the address for as long as the
+    process lives, so a second start of the JavaScript in the same process would otherwise open it again. On iOS it
+    reads `path`, which is already that address.
+  - It parses both forms, `https://<host>/invite/<token>` and `snunow://invite/<token>`, and a bare path.
+  - The signed-in place's other half, which opens a kept token's accept screen once the User is there, is unchanged,
+    and so is the guard's keeping half, which still serves a link opened while the app runs and the User is signed
+    out. The layout's comment now points at `+native-intent.ts`. A link opened while the app runs calls the hook with
+    `initial: false`, which does nothing.
+  - A tapped push is not an address: expo-notifications starts the main activity with no data, so the hook keeps
+    nothing for it.
+- **The page** is `main-server/src/invite-links/invite-page.ts` and `invite-page.controller.ts`, `@Public()`, in
+  `InviteLinksModule`.
+  - The Invite Link token's form is `INVITE_LINK_TOKEN = /^[\w-]{43}$/u` in `invite-links.service.ts`, beside the
+    `randomBytes(32).toString('base64url')` that makes every token.
+  - `invitePage(token)` checks the form itself, so no caller can put another token into the page. Only a matching
+    token goes into the button's `href`, and it is made of `[A-Za-z0-9_-]` alone.
+  - The wordmark is `docs/design/app-icon/sign-in-wordmark.svg`, inlined at 132 × 103 with `role="img"` and
+    `aria-label="SNU Now"`. The colours and the button (52 high, corner 12, `#001A72`) are the app's tokens. The font
+    is the phone's own.
+  - Headers: `Content-Type: text/html; charset=utf-8`, `X-Robots-Tag: noindex`, and a `Content-Security-Policy` of
+    `default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`, so
+    the browser itself refuses any load and any script. The page also has `<meta name="robots" content="noindex">`
+    and the phone-width viewport.
+- **Decided here, where the ticket says nothing:**
+  - A token of another form answers **404** with the page; a well-formed one answers 200. The ticket asks only for "a
+    page". The controller sends the page with `@Res()`, because Nest overwrites a status set through a passthrough
+    response.
+  - The not-found page keeps the title "SNU Now 친구 초대" as its heading and says "찾을 수 없는 초대 링크예요" under it.
+- **Where each criterion is checked:**
+  - `mobile/__tests__/invite-link-cold-start.integration.test.tsx` (new) takes Android's way: `Platform.OS` replaced by
+    `android`, `startApp(null)` so the router asks the phone, React Native's `Linking.getInitialURL` answering after
+    10 ms or after 300 ms (past the 150 ms race), and expo-linking's `getLinkingURL`/`clearInitialURL` standing in for
+    the native module. Its cases:
+    - the accept screen after the loading screen for a signed-in User, for both forms and both answers;
+    - 수락 making the two Friends;
+    - a signed-out User's accept screen after the sign-in, the consent and Onboarding;
+    - "opens once": after the accept screen, `inviteToken` is null, and a later start in the same process from the
+      home screen shows the map;
+    - and a start from the home screen keeping nothing.
+    - The first seven failed on the code before the fix, each at the accept screen; the last passes either way.
+  - `mobile/__tests__/support/app.tsx`: `startApp` now carries `+native-intent` among the app's files, as the real
+    app does, and takes `null` for no address.
+  - A link while the app runs and a tapped push: `friends-server.integration.test.tsx`,
+    `push/notification-links.integration.test.tsx` and `friends-add.integration.test.tsx` pass unchanged, and so do
+    `shell`, `loading` and `consent`, which start the app.
+  - The page: `main-server/test/invite-page.integration.test.ts` (new):
+    - a well-formed token: 200, the words, one link, to `snunow://invite/<token>`, the headers, and no script, no load
+      and no APK;
+    - one usable, one used, one expired and one nobody made give the same page with no sender;
+    - five tokens of another form give 404, the not-found words, no link and nothing of the address: too short, one
+      too long, a `.`, `"><script>alert(1)</script>`, and an `<img onerror>` padded to 43 characters;
+    - the `/invite-links` routes answer 401 without a sign-in, and `assetlinks.json` answers.
+    - All but the last failed with the controller left out of the module. `invite-links`, `invite-link-refusals` and
+      `asset-links` pass unchanged.
+  - The device: the run below.
+- **Checks:** `tsc --noEmit` clean in `mobile/` (the four stale typed-route errors did not appear in this worktree)
+  and in `main-server/`; `oxlint --type-aware` and `prettier --check` clean on every changed file;
+  `check-test-levels.ts` passes in both.
+- **No native file changed.** `+native-intent.ts` is JavaScript under `src/app/`, so the app's part ships over the
+  air. The main server needs a Release for the page.
+- **Left open:** a new User who meets the accept screen right after Onboarding may get the map's explanation before
+  the location prompt, "내 위치를 지도에 표시할까요?", drawn over the accept screen until they answer it. It is the
+  map's dialog for a first run, shown before the accept screen has slid over the map. It appeared in two of the four
+  hand runs of that flow below. By the code, a link opened while signed out meets the same order without this change;
+  that was not run. Not changed here.
+
+### Device run (2026-11-18)
+
+**Setup:**
+
+- The mock release APK, built in this worktree with `mobile/scripts/build-mock-apk.sh`'s steps run by hand: JDK 17,
+  empty server addresses, Google web client ID and `INVITE_LINK_HOST`,
+  `expo prebuild --platform android --clean --no-install`, then `./gradlew assembleRelease`. It was built from the
+  commit of the fix, `ead99e98`. `package.json` came out unchanged.
+- The pinned emulator: the `Medium_Phone` AVD, `system-images;android-36;google_apis_playstore;arm64-v8a` revision 7,
+  emulator 37.1.11, booted cold (`-no-snapshot-load -no-snapshot-save`).
+- Maestro 2.11.0, through `mobile/scripts/test-device.sh` itself, which needs no pnpm.
+
+**`test-device.sh`, folder `device-results/2026-11-18T190407-ead99e98`:**
+
+```
+[Passed] M2 an Invite Link opened on a warm start (1m 1s)
+[Passed] M2 an Invite Link opened on a cold start (59s)
+[Passed] M1 first run, then a relaunch to the map (1m 10s)
+3/3 Flows Passed in 3m 11s
+```
+
+M2 on a cold start showed "유지안님의 친구 초대" after the loading screen, and after 수락 the map said
+"유지안님과 친구가 됐어요" and 친구 관리 listed 유지안.
+
+**Hand checks with two flows not committed** (in the same session, same build):
+
+- **A signed-out cold start.** Cleared state, `stopApp`, `openLink snunow://invite/from-yujian`: the sign-in screen
+  shows. The sign-in, 동의하고 시작 and Onboarding, with no accept screen on the way. After 저장하고 시작하기,
+  "유지안님의 친구 초대". The flow ran four times while it was taught to answer the map's explanation before the
+  location prompt, which came over the accept screen in two of them (see "Left open"); the accept screen showed in all
+  four, and the last run passed.
+- **A plain start after it**, with the state kept: `stopApp`, then `launchApp`. The map, and no accept screen within
+  8 s. Passed.
+- **The page in the emulator's Chrome.** The page was served by a small local server that serves the built
+  `invitePage()` with the controller's headers, reached through `adb reverse`, not by a running main server:
+  - With a well-formed token, the wordmark, the title, the button and the line fit the phone's 411 dp width.
+  - With the app stopped, its button started the app at the accept screen: the mock knows no such token, so it said
+    "찾을 수 없는 초대 링크예요".
+  - `/invite/%3Cscript%3Ealert(1)%3C%2Fscript%3E` showed the not-found page, with no button and nothing of the address.
+- **Not run on the device:** the https form, since the mock APK declares no App Link; Jest covers it. iOS, as the
+  ticket says.
+
+The screenshots for the pull request and both JUnit reports are in `~/Downloads/p15-10/`.
