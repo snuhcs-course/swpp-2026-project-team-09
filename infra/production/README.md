@@ -536,13 +536,18 @@ run at its first step.
 
 ```bash
 git fetch origin
+commit=$(gh run list --workflow ci.yml --branch 4.0/Main --event push --status success --limit 1 \
+  --json headSha --jq '.[0].headSha')
 git ls-remote --tags origin 'refs/tags/snunow/main-server/26.11.13-*'
-git tag snunow/main-server/26.11.13-1 <commit>
+git tag snunow/main-server/26.11.13-1 "$commit"
 git push origin snunow/main-server/26.11.13-1
 ```
 
-The second line lists the day's earlier Releases of the target, from which N follows. `<commit>` is a reviewed commit
-of the iteration branch, usually its newest, such as `origin/2.0/Main`.
+A Release is tagged on the newest commit of the iteration branch, here `4.0/Main`, whose full CI run passed, which the
+second line finds. The merge queue runs only the lint, format and type checks and the unit tests. The iteration branch's
+own push runs every job with every test, one run at a time on its newest commit, and that run covers every commit merged
+before it; a run still waiting when a newer commit lands is replaced by the newer one's. The third line lists the day's
+earlier Releases of the target, from which N follows.
 
 Every Release also applies the shared part at its commit: the settings, the Secret, the Ingresses, and Redis. A server
 takes up a changed setting or secret value when it is next deployed.
@@ -655,10 +660,11 @@ The run appears in the repository's **Actions** tab under the Release workflow, 
 
 1. It checks the tag's name.
 2. It waits for CI's results on the tagged commit. Every CI job must have passed, in the runs that always do every
-   job: the tag's own, the merge queue's, and those of pushes to `main` or `development`. A working branch's run may skip
-   work its changes cannot reach, and a Main's the work the merge queue already passed, so neither is read. CI runs on
-   the tag's push too, so a tagged commit always gets results. While a job is queued or running, the Release waits. A failed job fails the
-   Release before any AWS step: fix the commit through a pull request and release the new one.
+   job: the tag's own and those of pushes to an iteration branch (`<line>/Main`), `main` or `development`. A working
+   branch's run and the merge queue's may skip work their changes cannot reach and run only the unit tests, so neither
+   is read. CI runs on the tag's push too, so a tagged commit always gets results. While a job is queued or running,
+   the Release waits. A failed job fails the Release before any AWS step: fix the commit through a pull request and
+   release the new one.
 3. It builds the target's arm64 images and pushes them to ECR, tagged with the commit and with the tag's name with `/`
    as `-`, for example `main-server-26.11.13-1`. An image already built for the commit is tagged, not built again.
 4. A job for each server it deploys applies the server's target and waits until its Deployment has rolled out. A

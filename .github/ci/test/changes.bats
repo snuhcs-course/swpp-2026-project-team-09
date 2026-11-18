@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-11-15  Opus 5.5   prompted by fyoon46
+# 2026-11-18  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Each test runs in a subshell of its own, so that its exports reach no other test, as meant.
@@ -26,16 +27,14 @@ setup() {
   export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
   export GIT_AUTHOR_NAME=Tester GIT_AUTHOR_EMAIL=tester@example.com
   export GIT_COMMITTER_NAME=Tester GIT_COMMITTER_EMAIL=tester@example.com
-  export GITHUB_EVENT_NAME=push GITHUB_REPOSITORY=snuhcs-course/swpp-2026-project-team-09
-  unset GITHUB_OUTPUT GITHUB_REF GITHUB_REF_NAME GITHUB_SHA
-  serve_queue_runs
+  export GITHUB_EVENT_NAME=push
+  unset GITHUB_OUTPUT GITHUB_REF GITHUB_REF_NAME GITHUB_SHA MERGE_GROUP_BASE_SHA
+  # A gh that only records its calls: the script asks GitHub nothing.
   mkdir -p "$BATS_TEST_TMPDIR/bin"
   cat >"$BATS_TEST_TMPDIR/bin/gh" <<'FAKE'
 #!/usr/bin/env bash
 echo "gh $*" >>"$FAKE_GH_CALLS"
-[[ $1 == api && $2 == "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?"* ]] || exit 2
-[[ -z ${FAKE_GH_STATUS:-} ]] || exit "$FAKE_GH_STATUS"
-cat "$FAKE_QUEUE_RUNS"
+exit 2
 FAKE
   chmod +x "$BATS_TEST_TMPDIR/bin/gh"
   export PATH="$BATS_TEST_TMPDIR/bin:$PATH" FAKE_GH_CALLS="$BATS_TEST_TMPDIR/gh-calls"
@@ -48,19 +47,6 @@ FAKE
   git -C "$WORK" remote add origin "$ORIGIN"
   commit README.md mobile/App.tsx main-server/src/main.ts
   publish 4.0/Main
-}
-
-# Makes the faked gh list these merge_group runs, each "status conclusion [sha]", of the checked-out commit when the sha
-# is left out.
-serve_queue_runs() {
-  local run state conclusion sha
-  for run in "$@"; do
-    read -r state conclusion sha <<<"$run"
-    jq -n --arg state "$state" --arg conclusion "$conclusion" --arg sha "${sha:-$GITHUB_SHA}" \
-      '{event: "merge_group", head_sha: $sha, status: $state,
-        conclusion: (if $conclusion == "null" then null else $conclusion end)}'
-  done | jq -s '{total_count: length, workflow_runs: .}' >"$BATS_TEST_TMPDIR/queue-runs.json"
-  export FAKE_QUEUE_RUNS="$BATS_TEST_TMPDIR/queue-runs.json"
 }
 
 # Commits a change to each path in the working repository: a line added, the file made if missing.
@@ -120,6 +106,25 @@ push_documents_branch() {
   commit docs/guide.md
   publish "$1"
   ci_checkout "$1"
+}
+
+# Pushes a merge group as the queue makes one for pull request N: a branch gh-readonly-queue/4.0/Main/pr-N from the
+# given commit, with one commit that changes the further paths.
+group_off() {
+  local group=gh-readonly-queue/4.0/Main/pr-$1 from=$2
+  shift 2
+  branch_off "$group" "$from"
+  commit "$@"
+  publish "$group"
+}
+
+# Checks out the merge group of pull request N as CI does in the merge queue, with this commit as its base. Clone
+# options after the base go to ci_checkout.
+queue_checkout() {
+  local group=gh-readonly-queue/4.0/Main/pr-$1 base=$2
+  shift 2
+  ci_checkout "$group" "$@"
+  export GITHUB_EVENT_NAME=merge_group MERGE_GROUP_BASE_SHA=$base
 }
 
 # The jobs whose work runs on the checkout, in KEYS's order, as the script decides for each key with these extra
@@ -308,15 +313,13 @@ EOF
   [ "$(tests_given)" = all ]
 }
 
-@test "a Main, a branch without a slash, a tag, the merge queue and any other event give every test" {
+@test "a Main, a branch without a slash, a tag and any other event give every test" {
   ci_checkout 4.0/Main
   [ "$(tests_given)" = all ]
-  [ "$(tests_given FAKE_GH_STATUS=1)" = all ]
   push_documents_branch development
   [ "$(tests_given)" = all ]
   push_documents_branch 4.0/documents
   [ "$(tests_given GITHUB_REF=refs/tags/snunow/all/26.11.15-1 GITHUB_REF_NAME=snunow/all/26.11.15-1)" = all ]
-  [ "$(tests_given GITHUB_EVENT_NAME=merge_group)" = all ]
   [ "$(tests_given GITHUB_EVENT_NAME=workflow_dispatch)" = all ]
 }
 
@@ -538,11 +541,93 @@ mobile/App.tsx reaches it; 4.0/app changes 2 paths since it left origin/4.0/Main
   expect_jobs ''
 }
 
+# --- The merge queue ----------------------------------------------------------------------------------------------
+
+@test "the merge queue runs the jobs its merge group's paths reach, with unit tests only, as on a pull request's push" {
+  local base
+  base=$(git -C "$WORK" rev-parse 4.0/Main)
+  group_off 9 4.0/Main mobile/App.tsx docs/guide.md
+  queue_checkout 9 "$base"
+  expect_jobs "$APP"
+  [ "$(tests_given)" = unit ]
+
+  rm -f "$BATS_TEST_TMPDIR/output"
+  run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" mobile-tests
+
+  [ "$status" -eq 0 ]
+  [ "$(cat "$BATS_TEST_TMPDIR/output")" = $'run=true\ntests=unit' ]
+  [ "$output" = "The job mobile-tests does its work, with unit tests only, as on every pull request's push: \
+mobile/App.tsx reaches it; the merge group changes 2 paths since its base ${base:0:7}" ]
+}
+
+@test "a merge group that changes only documents skips every job, with a notice that names its base" {
+  local base
+  base=$(git -C "$WORK" rev-parse 4.0/Main)
+  group_off 9 4.0/Main docs/guide.md
+  queue_checkout 9 "$base"
+  expect_jobs ''
+
+  rm -f "$BATS_TEST_TMPDIR/output"
+  run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" mobile
+
+  [ "$status" -eq 0 ]
+  [ "$(cat "$BATS_TEST_TMPDIR/output")" = $'run=false\ntests=unit' ]
+  [ "$output" = "::notice::The job mobile skips its work: the merge group changes 1 path since its base ${base:0:7}, \
+and none reaches it" ]
+}
+
+@test "a merge group counts the paths changed since its base, its own only when the base is the group ahead of it" {
+  local main ahead
+  main=$(git -C "$WORK" rev-parse 4.0/Main)
+  group_off 9 4.0/Main infra/production/terraform/main.tf
+  ahead=$(git -C "$WORK" rev-parse HEAD)
+  group_off 10 HEAD admin/src/page.tsx
+  queue_checkout 10 "$ahead"
+  expect_jobs admin
+  export MERGE_GROUP_BASE_SHA=$main
+  expect_jobs 'admin terraform'
+}
+
+@test "a merge group that changes CI's own files runs every job with every test" {
+  group_off 9 4.0/Main .github/ci/changes.sh docs/guide.md
+  queue_checkout 9 "$(git -C "$WORK" rev-parse 4.0/Main)"
+  expect_full_run '.github/ci/changes.sh is part of CI itself; the merge group changes 2 paths since its base '
+  [ "$(tests_given)" = all ]
+}
+
+@test "a merge group whose base is missing, malformed or unreadable runs every job with every test" {
+  local unknown=0123456789abcdef0123456789abcdef01234567
+  group_off 9 4.0/Main docs/guide.md
+  queue_checkout 9 "$(git -C "$WORK" rev-parse 4.0/Main)"
+
+  expect_full_run "the merge group's base is '' in MERGE_GROUP_BASE_SHA, not a full commit hash" MERGE_GROUP_BASE_SHA=
+  [ "$(tests_given MERGE_GROUP_BASE_SHA=)" = all ]
+  expect_full_run "the merge group's base is 'HEAD~1' in MERGE_GROUP_BASE_SHA, not a full commit hash" \
+    MERGE_GROUP_BASE_SHA='HEAD~1'
+  expect_full_run "the merge group's base $unknown cannot be read" MERGE_GROUP_BASE_SHA=$unknown
+  [ "$(tests_given MERGE_GROUP_BASE_SHA=$unknown)" = all ]
+}
+
+@test "in the merge queue, a shallow checkout or a failing git runs every job with every test" {
+  local base
+  base=$(git -C "$WORK" rev-parse 4.0/Main)
+  group_off 9 4.0/Main docs/guide.md
+  queue_checkout 9 "$base" --depth=1 --no-single-branch
+  expect_full_run 'the checkout is shallow, or git cannot read it'
+  [ "$(tests_given)" = all ]
+
+  queue_checkout 9 "$base"
+  fake_git_failing_on diff 128
+  expect_full_run 'git could not list the paths changed from '
+  [ "$(tests_given)" = all ]
+}
+
 # --- Full runs ----------------------------------------------------------------------------------------------------
 
-@test "a run that a push did not start runs every job" {
+@test "a run that neither a push nor the merge queue started runs every job" {
   push_documents_branch 4.0/documents
-  expect_full_run 'the run was started by workflow_dispatch, not by a push' GITHUB_EVENT_NAME=workflow_dispatch
+  expect_full_run 'the run was started by workflow_dispatch, not by a push or the merge queue' \
+    GITHUB_EVENT_NAME=workflow_dispatch
 }
 
 @test "a ref that is not a branch, such as a Release tag, runs every job" {
@@ -561,44 +646,25 @@ mobile/App.tsx reaches it; 4.0/app changes 2 paths since it left origin/4.0/Main
   expect_full_run 'development is not named <line>/<name>'
 }
 
-@test "a push to a Main runs every job unless the merge queue's run of the same commit passed, whatever its line" {
-  local runs="repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs"
+@test "a push to a Main runs every job with every test, whatever its line" {
   ci_checkout 4.0/Main
-  expect_full_run "4.0/Main is a Main, and no merge queue run passed ${GITHUB_SHA:0:7}"
-  grep -qxF "gh api $runs?head_sha=$GITHUB_SHA&event=merge_group&per_page=100" "$FAKE_GH_CALLS"
+  expect_full_run '4.0/Main is a Main, whose push runs every job with every test'
+  [ "$(tests_given)" = all ]
 
   git -C "$WORK" branch ci-trial/Main 4.0/Main
   publish ci-trial/Main
   ci_checkout ci-trial/Main
-  serve_queue_runs 'completed success'
-  expect_jobs ''
-  run --separate-stderr env GITHUB_OUTPUT="$BATS_TEST_TMPDIR/output" "$CHANGES" mobile
-  [ "$output" = "::notice::The job mobile skips its work: the merge queue's run of ${GITHUB_SHA:0:7} already passed \
-every job" ]
+  expect_full_run 'ci-trial/Main is a Main, whose push runs every job with every test'
+  [ "$(tests_given)" = all ]
 }
 
-@test "a push to a Main after a failed, unfinished or other commit's merge queue run runs every job" {
-  local other
-  ci_checkout 4.0/Main
-  other=$(tr 0-9a-f 1-9a-f0 <<<"$GITHUB_SHA")
-  serve_queue_runs 'completed failure' 'completed cancelled' 'in_progress null' "completed success $other"
-  expect_full_run "4.0/Main is a Main, and no merge queue run passed ${GITHUB_SHA:0:7}"
-}
-
-@test "a push to a Main runs every job when GitHub fails, gh cannot run, or the answer is not a list of runs" {
-  local unknown
-  ci_checkout 4.0/Main
-  unknown="4.0/Main is a Main, and GitHub did not say whether the merge queue passed $GITHUB_SHA"
-  expect_full_run "$unknown" FAKE_GH_STATUS=1
-  expect_full_run "$unknown" FAKE_GH_STATUS=127
-  echo 'Bad Gateway' >"$FAKE_QUEUE_RUNS"
-  expect_full_run "$unknown"
-  echo '{"message": "Not Found"}' >"$FAKE_QUEUE_RUNS"
-  expect_full_run "$unknown"
-}
-
-@test "a working branch's push asks GitHub nothing" {
+@test "no run asks GitHub anything: a working branch's push, a Main's push or the merge queue" {
   push_documents_branch 4.0/documents
+  expect_jobs ''
+  ci_checkout 4.0/Main
+  expect_jobs "$EVERY"
+  group_off 9 4.0/Main docs/guide.md
+  queue_checkout 9 "$(git -C "$WORK" rev-parse 4.0/Main)"
   expect_jobs ''
   [ ! -e "$FAKE_GH_CALLS" ]
 }
