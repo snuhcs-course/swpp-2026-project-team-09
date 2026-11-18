@@ -65,14 +65,14 @@ The seat book card shows its time as the kit's time band, as `AmStudy-a1` draws 
 
 ## Acceptance criteria
 
-- [ ] With no session, a seat book card shows "관정도서관 로그인이 필요해요" with 로그인. After 로그인, the login view lands on `/pc/main` before the school's login (its check still waiting), then on `/pc/main` after it; once the first check answers "no session", the check runs again, the login closes, and the card loads its seats, with no second press. (Integration test, fails on the old code.)
-- [ ] Two cards that failed for want of a session both load after one login from one of them, and a card that loaded shows the login line at once after 로그아웃. (Integration test.)
-- [ ] The seat book card shows the time band with "17:00–18:00 · 1시간" under it and the space's hours at its ends; a screen reader's step of the end handle makes it "17:00–18:30 · 1시간 30분", reads the seats for the new time and shows "오늘 17:00–18:30". (Integration test.)
-- [ ] The band's rules, by unit test: snapping to 30 minutes, the start not before the next 30 minutes today nor before opening, the end not after closing, the length within the space's least and most, a whole move keeping its length.
-- [ ] 자리 선택하기 opens "<room> 좌석 현황"; every seat shows its number; a press on a free seat changes only that seat's colour and shows "<n>번 선택"; a press on another moves it; a taken seat is no button; "<n>번 선택" puts the seat in the card. (Integration test.)
-- [ ] 확대 and 축소 change the picture's size between 1 and 4 times, and a pinch changes it within the same limits. (Integration test for the buttons; the pinch by reading, and by a person on a phone.)
-- [ ] No test calls the real library; the fake library and its fixtures only.
-- [ ] No native file changes; oxlint, Prettier and tsc pass on the app.
+- [x] With no session, a seat book card shows "관정도서관 로그인이 필요해요" with 로그인. After 로그인, the login view lands on `/pc/main` before the school's login (its check still waiting), then on `/pc/main` after it; once the first check answers "no session", the check runs again, the login closes, and the card loads its seats, with no second press. (Integration test, fails on the old code.)
+- [x] Two cards that failed for want of a session both load after one login from one of them, and a card that loaded shows the login line at once after 로그아웃. (Integration test.)
+- [x] The seat book card shows the time band with "17:00–18:00 · 1시간" under it and the space's hours at its ends; a screen reader's step of the end handle makes it "17:00–18:30 · 1시간 30분", reads the seats for the new time and shows "오늘 17:00–18:30". (Integration test.)
+- [x] The band's rules, by unit test: snapping to 30 minutes, the start not before the next 30 minutes today nor before opening, the end not after closing, the length within the space's least and most, a whole move keeping its length.
+- [x] 자리 선택하기 opens "<room> 좌석 현황"; every seat shows its number; a press on a free seat changes only that seat's colour and shows "<n>번 선택"; a press on another moves it; a taken seat is no button; "<n>번 선택" puts the seat in the card. (Integration test.)
+- [ ] 확대 and 축소 change the picture's size between 1 and 4 times, and a pinch changes it within the same limits. (Integration test for the buttons; the pinch by reading, and by a person on a phone.) The buttons are tested (1, 1.5, 2, 3, 4 times); the pinch waits for a person on a phone.
+- [x] No test calls the real library; the fake library and its fixtures only.
+- [x] No native file changes; oxlint, Prettier and tsc pass on the app.
 
 ## Open questions for the owner
 
@@ -81,3 +81,20 @@ The seat book card shows its time as the kit's time band, as `AmStudy-a1` draws 
 - The login's first landing on `/pc/main`, before the school's login, still starts a check whose hidden page goes to the school's login too. If the school's login refuses a second login page in the same cookie jar, the first try may still fail on a phone; the fix here cannot show that without a real login.
 
 ## Comments
+
+### Notes from the implementation (2026-11-18)
+
+- The owner's answers to the open questions: no "나" lane on the band; a tap on the small seat map in the chat keeps giving the book card at once, and only the large picture confirms with "<n>번 선택"; the cookie-jar risk of the first check is left to a person on a phone (the pull request lists what to try).
+- The flag now says why it was cleared (`clearLibraryLoggedIn('ended' | 'loggedOut')`), and the session gives a `logouts` count. Only a logout on purpose (`endLibrarySession`) makes the cards that had read read again. A session that ended under a call stays the failed card's own to show, so that its 로그인 still sends the pressed write once more (P06 ticket 08's rule).
+- The band's words, ends and steps follow the space's own `stepMinutes`, `minMinutes` and `maxMinutes` from the server's catalogue; for the seats these are 30, 30 and 360 minutes.
+- The seat picture is a centred white sheet over the map in `GestureAskSeats`'s look, rather than the earlier dark full-screen view. Its hint is new: "밀어서 옮기고, 두 손가락으로 확대해요".
+- The pinch could not be tested here: `react-native-gesture-handler`'s jest utilities drive pans, and the zoom's buttons share its limits (`zoomWithin`). A person checks the pinch on a phone.
+- The seat book card's tests for the picture and the band are in their own files (`answer-frame-library-seat-picker`, `answer-frame-library-slot-band`), since the book card's file reached the 300-line limit.
+- On this machine, Jest in the worktree resolved `@babel/runtime` only through a link at `/workspace/a02-04/node_modules/@babel/runtime` to the shared `.pnpm` copy, outside git; CI is not affected.
+
+### Agent usage (2026-11-18)
+
+Estimates from the session transcript, with the waits for the shared machine (a full disk, other agents' test runs) left out:
+
+- Agent time: about 2 hours 40 minutes, in one Opus 5.5 session (a subagent of the orchestrating session), stopped once when the disk filled and resumed.
+- Tokens: output about 110,000. Input about 9 million: about 8.6 million cache reads, 0.4 million cache writes and a few thousand uncached.

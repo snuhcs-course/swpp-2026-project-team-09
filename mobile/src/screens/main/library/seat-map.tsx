@@ -133,13 +133,7 @@ export function SeatMap(props: SeatMapProps): ReactElement | null {
       />
       {under}
       {seatBoxes(seats, image.width, width).map((box) => (
-        <Seat
-          box={box}
-          chosen={box.seat.VNAME === chosen}
-          key={box.seat.SEATNO}
-          numbered={numbered}
-          onSeat={onSeat}
-        />
+        <Seat box={box} chosen={box.seat.VNAME === chosen} key={box.seat.SEATNO} numbered={numbered} onSeat={onSeat} />
       ))}
     </View>
   );

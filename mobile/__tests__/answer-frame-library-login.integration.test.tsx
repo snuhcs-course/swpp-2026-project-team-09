@@ -78,11 +78,14 @@ function holdFirstCheck(): () => Promise<void> {
   };
 }
 
+function seatCard(): ReturnType<typeof inCard> {
+  return inCard(SEAT_TEST_ID);
+}
+
 describe('the login from a card', () => {
   it('takes effect once a check finds the session, though the landing came while the first check still ran', async () => {
     const releaseFirstCheck = holdFirstCheck();
     await askForCards({ server, library }, [SEAT_CARD], { loggedIn: false });
-    const seatCard = (): ReturnType<typeof inCard> => inCard(SEAT_TEST_ID);
     expect(seatCard().getByText(NEEDS_LOGIN)).toBeVisible();
 
     await pressIn(seatCard(), '로그인');

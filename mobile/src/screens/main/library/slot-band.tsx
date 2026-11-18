@@ -63,7 +63,14 @@ function movedBy(kind: Kind, span: Span, by: number, limits: SpanLimits): Span {
 }
 
 // A drag of the band (`whole`) or of one of its handles, which takes the touch from the band's drag.
-function useSpanPan(kind: Kind, span: Span, limits: SpanLimits, width: number, move: Move, over?: PanGesture): PanGesture {
+function useSpanPan(
+  kind: Kind,
+  span: Span,
+  limits: SpanLimits,
+  width: number,
+  move: Move,
+  over?: PanGesture,
+): PanGesture {
   return useMemo(() => {
     const at = (dx: number): Span => movedBy(kind, span, minutesAcross(dx / width, limits), limits);
     const pan = Gesture.Pan();

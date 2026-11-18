@@ -23,7 +23,13 @@ import { CHOSEN_LOOK, SEAT_LOOK, SeatMap } from './seat-map';
 // The picture's height at zoom 1, as the frame draws it, and how far it zooms.
 export const PICTURE_HEIGHT = 300;
 export const ZOOM_MOST = 4;
-const ZOOM_STEP = 1.5;
+// The zooms 확대 and 축소 step through.
+const ZOOMS = [1, 1.5, 2, 3, ZOOM_MOST] as const;
+
+export function zoomStepped(zoom: number, by: 1 | -1): number {
+  const next = by === 1 ? ZOOMS.find((each) => each > zoom) : ZOOMS.findLast((each) => each < zoom);
+  return next ?? zoom;
+}
 
 export function zoomWithin(zoom: number): number {
   return Math.min(Math.max(zoom, 1), ZOOM_MOST);
@@ -96,7 +102,37 @@ function useZoom(): { zoom: number; setZoom: (zoom: number) => void; pinch: Retu
   };
 }
 
-function Picture(props: SeatPickerProps & { chosen: LibrarySeat | null; pick: (seat: LibrarySeat) => void }): ReactElement {
+// The colours' key, and 축소 and 확대.
+function Tools({ zoom, setZoom }: { zoom: number; setZoom: (zoom: number) => void }): ReactElement {
+  return (
+    <View style={styles.tools}>
+      <Key fill={SEAT_LOOK.free.fill} label={SEAT_LOOK.free.label} />
+      <Key fill={SEAT_LOOK.taken.fill} label={SEAT_LOOK.taken.label} />
+      <Key fill={CHOSEN_LOOK.fill} label={CHOSEN_LOOK.label} />
+      <View style={styles.spring} />
+      <ZoomButton
+        disabled={zoom <= 1}
+        icon="minus"
+        name="축소"
+        onPress={() => {
+          setZoom(zoomStepped(zoom, -1));
+        }}
+      />
+      <ZoomButton
+        disabled={zoom >= ZOOM_MOST}
+        icon="plus"
+        name="확대"
+        onPress={() => {
+          setZoom(zoomStepped(zoom, 1));
+        }}
+      />
+    </View>
+  );
+}
+
+function Picture(
+  props: SeatPickerProps & { chosen: LibrarySeat | null; pick: (seat: LibrarySeat) => void },
+): ReactElement {
   const { space: shown, seats, onSeat, chosen, pick } = props;
   const { zoom, setZoom, pinch } = useZoom();
   const image = shown.mapImage;
@@ -121,28 +157,7 @@ function Picture(props: SeatPickerProps & { chosen: LibrarySeat | null; pick: (s
           </ScrollView>
         </View>
       </GestureDetector>
-      <View style={styles.tools}>
-        <Key fill={SEAT_LOOK.free.fill} label={SEAT_LOOK.free.label} />
-        <Key fill={SEAT_LOOK.taken.fill} label={SEAT_LOOK.taken.label} />
-        <Key fill={CHOSEN_LOOK.fill} label={CHOSEN_LOOK.label} />
-        <View style={styles.spring} />
-        <ZoomButton
-          disabled={zoom <= 1}
-          icon="minus"
-          name="축소"
-          onPress={() => {
-            setZoom(zoom / ZOOM_STEP);
-          }}
-        />
-        <ZoomButton
-          disabled={zoom >= ZOOM_MOST}
-          icon="plus"
-          name="확대"
-          onPress={() => {
-            setZoom(zoom * ZOOM_STEP);
-          }}
-        />
-      </View>
+      <Tools setZoom={setZoom} zoom={zoom} />
     </>
   );
 }

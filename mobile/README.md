@@ -1942,6 +1942,26 @@ The login opens `…/pc/main` in a visible web view and injects nothing into it.
 answers with JSON (`loginWorks`); only then is the flag set. ✕ is "no session", and after 5 minutes the view closes
 with "로그인하지 못했어요".
 
+The site serves `/pc/main` before it sends the User to the school's login too, so the first landing starts a check
+with no session, which can take up to 35 seconds. A landing that comes while a check runs is kept, and checked once
+that check ends without a session; each check loads the hidden view's page afresh (`reloadPage()`). The login thus
+takes effect on the first 로그인 (P15 ticket 57).
+
+Every mounted card follows the flag (`useLibraryLoad`): after a login, a card whose read failed for want of a session
+reads again; after the session was ended on purpose (`endLibrarySession`, which clears the flag as `loggedOut`), a card
+that had read reads again and shows "관정도서관 로그인이 필요해요". A session that ended under a call is the failed card's
+to show, with its 로그인 that sends the pressed write once more.
+
+### The seat book card's time and seat (P15 ticket 57)
+
+The seat book card shows its time as a band (`slot-band.tsx`, rules in `cards/slot-band.ts`): a track from the
+space's opening to its closing time, the band with a handle at each end, and "14:00–20:00 · 6시간" under it. A drag
+moves an end or the band whole, by the space's step (30 minutes), never before the next 30 minutes today, after
+closing, or outside the space's shortest and longest length; the seats are read again when the finger is let go.
+자리 선택하기 opens the room's seat picture (`seat-picker.tsx`): the site's `area_<sectorNo>.png` with each seat at its
+`POSX`/`POSY` from `getSeatBookingList` and its number, zoomed by two fingers or 확대 and 축소 (1 to 4 times). A press
+picks a free seat and colours it alone; "<n>번 선택" puts it in the card. A space without `mapImage` has no picture.
+
 ### Logout
 
 `endLibrarySession()` (`end-session.ts`) is the one step that ends the library session. Three paths take it:
