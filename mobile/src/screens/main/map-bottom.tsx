@@ -13,11 +13,12 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
 import type { ReactElement } from 'react';
-import { Keyboard } from 'react-native';
+import { Keyboard, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { now } from '@/clock';
 import { space } from '@/design-system';
@@ -41,7 +42,8 @@ import { InterestsHint } from './first-run/interests-hint';
 import { KeyboardScrim } from './keyboard-scrim';
 import { aiInputTop, interestsHintBottom, madeLineBottom, type Room, tutorialStartBottom } from './layout';
 import { MadeQuestLine } from './made-quest-line';
-import { TutorialPager } from './tutorial/tutorial-pager';
+import { type GuideActions, TutorialGuideOverlay } from './tutorial/tutorial-guide';
+import { TutorialList } from './tutorial/tutorial-list';
 import { TutorialSheet } from './tutorial/tutorial-sheet';
 import { TutorialStartButton } from './tutorial/tutorial-start-button';
 import type { UnaskedCards } from './use-map-view';
@@ -96,10 +98,12 @@ interface MapBottomProps {
   onParty: () => void;
   room: Room;
   stack: LayerStack;
-  // The 새내기 튜토리얼: its start button while `room.tutorialStart`, its pager and its quests' sheets.
+  // The 새내기 튜토리얼: its start button while `room.tutorialStart`, its list, its quests' guides and sheets.
   tutorial: TutorialFlow;
   // A quest's 지도에서 보기.
   onShowOnMap: (target: TutorialPinTarget) => void;
+  // A guide's 길찾기: the walking route to its place.
+  onRoute: GuideActions['onRoute'];
   // The conversation, which the main screen holds, so that a card's button can ask the Assistant.
   chat: ChatSheetControl;
   // A received invitation, whose card stands at the bottom in place of everything else there while it is shown, and
@@ -148,7 +152,7 @@ function EverydayBottom(props: EverydayProps): ReactElement {
       <BottomControls cardOpen={bottomCard} onActiveParty={onParty} />
       {bottomCard ? null : <LayerControls stack={stack} />}
       {room.tutorialStart && !keyboardUp ? (
-        <TutorialStartButton bottom={tutorialStartBottom(room)} onPress={tutorial.openPager} />
+        <TutorialStartButton bottom={tutorialStartBottom(room)} onPress={tutorial.openList} />
       ) : null}
       {firstRun.card === null || keyboardUp ? null : (
         <FirstRunAsk card={firstRun.card} onAnswer={firstRun.answer} onHeight={onNoticeHeight} />
@@ -161,49 +165,17 @@ function EverydayBottom(props: EverydayProps): ReactElement {
   );
 }
 
-// What is at the bottom of the map: the everyday map's own (`EverydayBottom`), the answer frame, and the AI input. A
-// card at the bottom hides the row and the button. While the keyboard is up and nothing is asked, the examples stand
-// above the input. A message sent from the AI input shows the answer frame, which hides the rest, and the input is its
-// card's: it stays in the same place in the tree, so that it keeps the focus. While the keyboard is up, the input
-// stands right above it, and a scrim under the frame, the examples and the input puts the keyboard down for a press
-// anywhere else (`KeyboardScrim`). The conversation is kept while the app runs: while the frame is hidden, "이전 답" in
-// the input shows it again. A card nobody asked for, a received invitation's or a made Quest's, takes the bottom
-// without the input.
-export function MapBottom(props: MapBottomProps): ReactElement {
-  const { onAnswerHeight, onInputHeight, room, tutorial, onShowOnMap, chat, unasked } = props;
-  const { invitation, made } = unasked;
-  const { lift, keyboardUp } = useKeyboardLift(chat.framed);
-  const cardShown = invitation.shown || made.shown !== null;
-  // The open list of Friends to add takes the input's place in the answer's card. The time band moved whole hides the
-  // input but keeps its room, so that the card and its lanes stay under the finger.
-  const inputGone = chat.framed && chat.answer.adding;
-  const inputShown = !inputGone && !(chat.framed && chat.answer.moving !== null);
-  const inputTop = inputGone ? lift : aiInputTop(room) + lift;
-  const send = sendWithKeyboardDown(chat.chat.send);
+// The 새내기 튜토리얼's list, its quests' sheets, and the guide of a quest, which takes the whole map while it is open.
+function TutorialParts({
+  tutorial,
+  chat,
+  onShowOnMap,
+  onRoute,
+}: Pick<MapBottomProps, 'tutorial' | 'chat' | 'onShowOnMap' | 'onRoute'>): ReactElement {
   return (
     <>
-      {!chat.framed && !cardShown ? <EverydayBottom {...props} keyboardUp={keyboardUp} /> : null}
-      {keyboardUp ? <KeyboardScrim /> : null}
-      <RowFourProvider control={chat}>
-        <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
-      </RowFourProvider>
-      {!chat.framed && keyboardUp ? <AskedExamples bottom={inputTop + space[2]} onSend={send} /> : null}
-      {invitation.shown ? <InvitationFrame invitation={invitation} onHeight={onAnswerHeight} room={room} /> : null}
-      {made.shown === null ? null : (
-        <MadeQuestFrame made={made.shown} onClose={made.closeCard} onHeight={onAnswerHeight} room={room} />
-      )}
-      {inputShown && !cardShown ? (
-        <AiInput
-          lift={lift}
-          onEarlier={chat.showAgain}
-          onHeight={onInputHeight}
-          placeholder={chat.framed ? '이어서 말하기' : undefined}
-          restore={restoreOf(chat.chat.bubbles)}
-          onSend={send}
-          unseen={chat.unseen}
-        />
-      ) : null}
-      <TutorialPager flow={tutorial} />
+      <TutorialGuideOverlay flow={tutorial} onAsk={chat.chat.send} onRoute={onRoute} />
+      <TutorialList flow={tutorial} />
       <TutorialSheet
         flow={tutorial}
         onAskAssistant={(words) => {
@@ -218,3 +190,81 @@ export function MapBottom(props: MapBottomProps): ReactElement {
     </>
   );
 }
+
+// What is at the bottom of the map: the everyday map's own (`EverydayBottom`), the answer frame, and the AI input. A
+// card at the bottom hides the row and the button. While the keyboard is up and nothing is asked, the examples stand
+// above the input. A message sent from the AI input shows the answer frame, which hides the rest, and the input is its
+// card's: it stays in the same place in the tree, so that it keeps the focus. While the keyboard is up, the input
+// stands right above it, and a scrim under the frame, the examples and the input puts the keyboard down for a press
+// anywhere else (`KeyboardScrim`). The conversation is kept while the app runs: while the frame is hidden, "이전 답" in
+// the input shows it again. A card nobody asked for, a received invitation's or a made Quest's, takes the bottom
+// without the input. A 새내기 튜토리얼 quest's guide takes the whole map while it is open, with no scrim: it has no field,
+// and the input is hidden under it.
+export function MapBottom(props: MapBottomProps): ReactElement {
+  const { onInputHeight, room, tutorial, chat, unasked } = props;
+  const { invitation, made } = unasked;
+  const { lift, keyboardUp } = useKeyboardLift(chat.framed);
+  // While a quest's guide is open it takes the whole map. The AI input stays mounted, hidden, so that a draft is kept.
+  const guided = tutorial.guide !== null;
+  const cardShown = invitation.shown || made.shown !== null;
+  // The open list of Friends to add takes the input's place in the answer's card. The time band moved whole hides the
+  // input but keeps its room, so that the card and its lanes stay under the finger.
+  const inputGone = chat.framed && chat.answer.adding;
+  const inputShown = !inputGone && !(chat.framed && chat.answer.moving !== null);
+  const inputTop = inputGone ? lift : aiInputTop(room) + lift;
+  const send = sendWithKeyboardDown(chat.chat.send);
+  return (
+    <>
+      {guided ? null : (
+        <FramedParts {...props} cardShown={cardShown} inputTop={inputTop} keyboardUp={keyboardUp} send={send} />
+      )}
+      <View style={[styles.inputLayer, guided && styles.gone]}>
+        {inputShown && !cardShown ? (
+          <AiInput
+            lift={lift}
+            onEarlier={chat.showAgain}
+            onHeight={onInputHeight}
+            placeholder={chat.framed ? '이어서 말하기' : undefined}
+            restore={restoreOf(chat.chat.bubbles)}
+            onSend={send}
+            unseen={chat.unseen}
+          />
+        ) : null}
+      </View>
+      <TutorialParts {...props} />
+    </>
+  );
+}
+
+type FramedProps = MapBottomProps & {
+  cardShown: boolean;
+  inputTop: number;
+  keyboardUp: boolean;
+  send: (text: string) => void;
+};
+
+// The everyday map's bottom, the answer frame, the examples over the keyboard, and the cards nobody asked for: none of
+// them while a quest's guide is open.
+function FramedParts(props: FramedProps): ReactElement {
+  const { chat, room, unasked, onAnswerHeight, cardShown, inputTop, keyboardUp, send } = props;
+  const { invitation, made } = unasked;
+  return (
+    <>
+      {!chat.framed && !cardShown ? <EverydayBottom {...props} keyboardUp={keyboardUp} /> : null}
+      {keyboardUp ? <KeyboardScrim /> : null}
+      <RowFourProvider control={chat}>
+        <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
+      </RowFourProvider>
+      {!chat.framed && keyboardUp ? <AskedExamples bottom={inputTop + space[2]} onSend={send} /> : null}
+      {invitation.shown ? <InvitationFrame invitation={invitation} onHeight={onAnswerHeight} room={room} /> : null}
+      {made.shown === null ? null : (
+        <MadeQuestFrame made={made.shown} onClose={made.closeCard} onHeight={onAnswerHeight} room={room} />
+      )}
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  inputLayer: { ...StyleSheet.absoluteFill, pointerEvents: 'box-none' },
+  gone: { display: 'none' },
+});

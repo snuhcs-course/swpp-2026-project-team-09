@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -11,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { inject } from 'vitest';
 import { type UserDayService } from '../src/assistant/free-time/user-day.service.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
+import { guidePlaces } from '../src/tutorial/tutorial-guide.js';
 import { signInUser, TestUser } from './friends.js';
 import { googleSubject } from './google.js';
 import { connectToDatabase } from './quests.js';
@@ -117,6 +119,17 @@ describe("The tutorial's Places", () => {
 
     expect(tutorial.quests).toHaveLength(15);
     expect(numbers.length).toBeGreaterThan(0);
+    const found = await prisma.place.findMany({ where: { number: { in: numbers } }, select: { number: true } });
+    expect(numbers.filter((number) => !found.some((place) => place.number === number))).toEqual([]);
+  });
+
+  it("are served with each quest's icon and guide, whose pins are each a Place of the database", async () => {
+    const tutorial = await tutorialAfter(getTutorial(app, await signInUser(app)));
+    const numbers = tutorial.quests.flatMap(({ guide }) =>
+      guide === undefined ? [] : guidePlaces(guide).flatMap((entry) => ('place' in entry ? [entry.place] : [])),
+    );
+
+    expect(tutorial.quests.filter(({ icon, guide }) => icon === undefined || guide === undefined)).toEqual([]);
     const found = await prisma.place.findMany({ where: { number: { in: numbers } }, select: { number: true } });
     expect(numbers.filter((number) => !found.some((place) => place.number === number))).toEqual([]);
   });

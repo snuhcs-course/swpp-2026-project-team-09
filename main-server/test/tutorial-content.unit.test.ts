@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fileURLToPath } from 'node:url';
@@ -18,6 +19,7 @@ import {
   type TutorialContent,
   type TutorialQuest,
 } from '../src/tutorial/tutorial-content.js';
+import { guidePlaces, type TutorialGuide } from '../src/tutorial/tutorial-guide.js';
 
 function fixture(name: string): string {
   return fileURLToPath(new URL(`fixtures/tutorial/${name}`, import.meta.url));
@@ -112,6 +114,7 @@ describe("The tutorial's places and links", () => {
       '67',
       '4',
       '63',
+      '301',
       '101',
       '102',
       '62-1',
@@ -140,6 +143,96 @@ describe("The tutorial's places and links", () => {
       [],
     );
     expect(urls.filter(({ protocol }) => protocol !== 'https:').map(String)).toEqual(['http://www.snumoa.org/']);
+  });
+});
+
+// Every step of a guide, of its kinds' too, with the buttons each holds.
+function stepsOf(guide: TutorialGuide | undefined): NonNullable<TutorialGuide['steps']> {
+  return [...(guide?.steps ?? []), ...(guide?.kinds ?? []).flatMap(({ steps }) => steps)];
+}
+
+type GuideStep = NonNullable<TutorialGuide['steps']>[number];
+
+// The sites a step opens: its buttons', its rows' and its link's.
+function urlsOf({ actions, rows, link }: GuideStep): string[] {
+  const urls: string[] = [];
+  for (const action of actions ?? []) {
+    if (action.kind === 'link') {
+      urls.push(action.url);
+    }
+  }
+  for (const { url } of rows ?? []) {
+    if (url !== undefined) {
+      urls.push(url);
+    }
+  }
+  if (link !== undefined) {
+    urls.push(link.url);
+  }
+  return urls;
+}
+
+// The words of every guide button that asks the Assistant, as served.
+function asks(libraryBooking: boolean): string[] {
+  return servedContent(content, { libraryBooking, kwanjeongCheck: false }).quests.flatMap(({ guide }) =>
+    stepsOf(guide).flatMap(({ actions }) =>
+      (actions ?? []).flatMap((action) => (action.kind === 'ask' ? [action.ask] : [])),
+    ),
+  );
+}
+
+describe("The quests' icons and guides (P15 ticket 53)", () => {
+  it('gives every quest its icon, as the boards draw the list', () => {
+    expect(content.quests.map(({ icon }) => icon)).toEqual([
+      'idcard',
+      'bowl',
+      'box',
+      'laptop',
+      'book',
+      'grade',
+      'spark',
+      'download',
+      'bus',
+      'moon',
+      'cross',
+      'heart',
+      'art',
+      'music',
+      'mountain',
+    ]);
+  });
+
+  it('gives every quest a guide, the 학생증 one with its two kinds to choose from', () => {
+    expect(content.quests.filter(({ guide }) => guide === undefined)).toEqual([]);
+    expect(content.quests[0]?.guide?.kinds?.map(({ key, label, route }) => [key, label, route])).toEqual([
+      ['plain', '일반', ['MySNU', '학생지원센터']],
+      ['financial', '금융', ['우리은행', '학생지원센터']],
+    ]);
+  });
+
+  it("names only Places whose number the shared seed holds in the guides' pins", async () => {
+    const seed = await readSeedPlaces(SEED_DIRECTORY, await readCampusBoundary(SEED_DIRECTORY));
+    const numbers = new Set(seed.map(({ number }) => number));
+    const named = content.quests.flatMap(({ guide }) =>
+      guide === undefined ? [] : guidePlaces(guide).flatMap((entry) => ('place' in entry ? [entry.place] : [])),
+    );
+
+    expect(named.length).toBeGreaterThan(20);
+    expect(named.filter((place) => !numbers.has(place))).toEqual([]);
+  });
+});
+
+describe("The guides' links and asks", () => {
+  it("links the guides' buttons and rows only to web addresses", () => {
+    const urls = content.quests.flatMap(({ guide }) => stepsOf(guide).flatMap((step) => urlsOf(step)));
+
+    expect(urls).toContain('https://ssims.snu.ac.kr/index.do');
+    expect(urls.map((url) => new URL(url).protocol).filter((protocol) => !protocol.startsWith('http'))).toEqual([]);
+  });
+
+  it("serves the guides' buttons that ask the Assistant only while 관정 booking is on", () => {
+    expect(asks(true)).toEqual([ASK, '관정도서관 좌석 반납해줘']);
+    expect(asks(false)).toEqual([]);
   });
 });
 
@@ -189,6 +282,16 @@ describe('A tutorial file', () => {
   it('is refused with a category whose quests are split in `order`', async () => {
     await expect(readTutorialContent(fixture('split-category.yaml'))).rejects.toThrow(
       'The quests of the category life are not one after another in `order`',
+    );
+  });
+
+  it('is refused with an icon the app does not draw', async () => {
+    await expect(readTutorialContent(fixture('unknown-icon.yaml'))).rejects.toThrow('quests[0].icon');
+  });
+
+  it('is refused with a guide that has neither steps nor kinds', async () => {
+    await expect(readTutorialContent(fixture('guide-without-steps.yaml'))).rejects.toThrow(
+      'Expected `steps` or `kinds`',
     );
   });
 

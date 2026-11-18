@@ -5,6 +5,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { readFile } from 'node:fs/promises';
@@ -12,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 import { z } from 'zod';
 import { Weekday } from '../generated/prisma/client.js';
+import { guideSchema, guideWithoutAsk, iconSchema } from './tutorial-guide.js';
 
 // The tutorial's content (README.md: Tutorial). src/ and dist/ lie at the same depth below it.
 export const TUTORIAL_FILE = fileURLToPath(new URL('../../content/tutorial.yaml', import.meta.url));
@@ -65,8 +67,10 @@ const questSchema = z.strictObject({
   order: z.int().min(1),
   // The key of its Tutorial Category.
   category: keySchema.optional(),
+  // The icon of its row in the list and of its guide's bar.
+  icon: iconSchema.optional(),
   title: text,
-  // The pager's line.
+  // The quest's line, which the Assistant reads.
   brief: text,
   // The sheet's text, a paragraph each.
   body: z.array(text).min(1),
@@ -82,6 +86,8 @@ const questSchema = z.strictObject({
   // not serve them.
   facts: z.array(z.strictObject({ text, source: z.url({ protocol: /^https?$/u }), checked: z.iso.date() })).default([]),
   visit: visitSchema.optional(),
+  // Its guide on the map, which the app opens in place of the sheet (tutorial-guide.ts).
+  guide: guideSchema.optional(),
 });
 
 type Quest = z.infer<typeof questSchema>;
@@ -179,7 +185,7 @@ export interface TutorialSwitches {
 // The content as GET /tutorial serves it. A quest checked through the library is served as the file holds it only
 // while both 관정 booking and the check are on; otherwise it is completed by its button, so that the phone never calls
 // the library for it. With 관정 booking turned off, it also links to the official site, and no quest offers to ask
-// the Assistant, which then cannot book.
+// the Assistant, which then cannot book: neither its `ask` nor a button of its guide.
 export function servedContent(
   content: TutorialContent,
   { libraryBooking, kwanjeongCheck }: TutorialSwitches,
@@ -188,7 +194,9 @@ export function servedContent(
     ...content,
     quests: content.quests.map((quest) => {
       const { ask: _ask, ...rest } = quest;
-      const served = libraryBooking ? quest : rest;
+      const served = libraryBooking
+        ? quest
+        : { ...rest, ...(quest.guide === undefined ? {} : { guide: guideWithoutAsk(quest.guide) }) };
       if (quest.completion.kind !== 'kwanjeongCheck' || (libraryBooking && kwanjeongCheck)) {
         return served;
       }

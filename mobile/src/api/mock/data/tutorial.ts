@@ -3,9 +3,12 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import type { TutorialCategory, TutorialQuest } from '@/api/tutorial-types';
+import { isTutorialGuide } from '@/api/server/tutorial-guide-answers';
+import type { TutorialCategory, TutorialGuide, TutorialQuest } from '@/api/tutorial-types';
+import guides from './tutorial-guides.json';
 import { FIRST_QUESTS } from './tutorial-quests-first';
 import { LAST_QUESTS } from './tutorial-quests-last';
 
@@ -23,4 +26,18 @@ export const TUTORIAL_CATEGORIES: readonly TutorialCategory[] = [
   { key: 'culture', label: '문화·여가' },
 ];
 
-export const TUTORIAL_CONTENT: readonly TutorialContent[] = [...FIRST_QUESTS, ...LAST_QUESTS];
+// Each quest's icon and guide, copied whole from the file into `tutorial-guides.json` and checked as the client checks
+// the server's answer. `main-server/test/tutorial-mock-copy.unit.test.ts` fails once the copy drifts from the file.
+function guideOf(key: string): { icon?: string; guide?: TutorialGuide } {
+  const copy: unknown = Reflect.get(guides, key);
+  const icon: unknown = Reflect.get(copy ?? {}, 'icon');
+  const guide: unknown = Reflect.get(copy ?? {}, 'guide');
+  if (typeof icon !== 'string' || !isTutorialGuide(guide)) {
+    throw new Error(`The stored guide of ${key} fails the check of an answer`);
+  }
+  return { icon, guide };
+}
+
+export const TUTORIAL_CONTENT: readonly TutorialContent[] = [...FIRST_QUESTS, ...LAST_QUESTS].map((quest) =>
+  Object.assign({}, quest, guideOf(quest.key)),
+);

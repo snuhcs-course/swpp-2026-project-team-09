@@ -3,6 +3,7 @@
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -12,7 +13,7 @@ import { button, findButton, LAYERS } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { lookOf, press, wordsUnder, zoomIn } from './support/markers';
 import { startFresh } from './support/mocks';
-import { openSheet, pressAndWait, started, type User } from './support/tutorial';
+import { openListAt, openSheet, pressAndWait, rowName, started, type User } from './support/tutorial';
 
 // 지도에서 보기 of a 새내기 튜토리얼 quest drops the tutorial place pin on the main map (P13 "지도에서 보기 drops a
 // pin"), against the mocks: one pin with the place's words, replaced by the next 지도에서 보기, and a tap on it opens
@@ -25,9 +26,6 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotionSetting: (): boolean => true,
 }));
 
-const NIGHT_SHUTTLE_ROW =
-  '새내기 튜토리얼 · 이동 · 10/15 · 야간 셔틀 타기 · 완료 조건 · 야간 도서관 셔틀이나 심야셔틀 타 보기';
-const S_CARD_ROW = '새내기 튜토리얼 · 생활 · 1/15 · 학생증(S-CARD) 발급받기 · 완료 조건 · 학생증 받기';
 const ENGINEERING = '제2공학관(302동) (시험기간 심야셔틀)';
 const SHUTTLE_STOP = '행정관 앞 (야간 도서관 셔틀)';
 const LOOK = 'tutorialPlace';
@@ -77,7 +75,7 @@ async function turnDiningOn(user: User): Promise<void> {
 
 describe('the tutorial place pin', () => {
   it("stands at the place with the place's words under it", async () => {
-    const user = await openSheet('night-shuttle', NIGHT_SHUTTLE_ROW);
+    const user = await openSheet('night-shuttle');
 
     await showOnMap(user, SHUTTLE_STOP);
 
@@ -88,10 +86,11 @@ describe('the tutorial place pin', () => {
 
   it('is replaced by the next 지도에서 보기', async () => {
     await started('s-card');
-    const user = await openSheet('night-shuttle', NIGHT_SHUTTLE_ROW);
+    const user = await openSheet('night-shuttle');
     await showOnMap(user, SHUTTLE_STOP);
 
-    await pressAndWait(user, S_CARD_ROW);
+    await openListAt(user, 's-card');
+    await pressAndWait(user, rowName('s-card', ' · 진행 중'));
     await showOnMap(user, '우리은행 (4동)');
 
     expect(pins()).toHaveLength(1);
@@ -100,7 +99,7 @@ describe('the tutorial place pin', () => {
   });
 
   it('goes when the tutorial is stopped', async () => {
-    const user = await openSheet('night-shuttle', NIGHT_SHUTTLE_ROW);
+    const user = await openSheet('night-shuttle');
     await showOnMap(user, SHUTTLE_STOP);
 
     await pressAndWait(user, '새내기 튜토리얼 시작하기');
@@ -112,7 +111,7 @@ describe('the tutorial place pin', () => {
 
 describe('a touch on the map', () => {
   it('that is a tap elsewhere than on the pin removes it', async () => {
-    const user = await openSheet('night-shuttle', NIGHT_SHUTTLE_ROW);
+    const user = await openSheet('night-shuttle');
     await showOnMap(user, SHUTTLE_STOP);
 
     await touchMap();
@@ -121,7 +120,7 @@ describe('a touch on the map', () => {
   });
 
   it('that drags, or a zoom, keeps it', async () => {
-    const user = await openSheet('night-shuttle', NIGHT_SHUTTLE_ROW);
+    const user = await openSheet('night-shuttle');
     await showOnMap(user, SHUTTLE_STOP);
 
     await touchMap({ moved: 80 });
@@ -132,7 +131,7 @@ describe('a touch on the map', () => {
   });
 
   it("that ends on the pin, whose press comes after the touch's end, keeps it", async () => {
-    const user = await openSheet('night-shuttle', NIGHT_SHUTTLE_ROW);
+    const user = await openSheet('night-shuttle');
     await showOnMap(user, SHUTTLE_STOP);
 
     await touchAndLift();
@@ -145,7 +144,7 @@ describe('a touch on the map', () => {
 
 describe('a tap on the pin', () => {
   it('opens the card of the 식당 at its Place, as a tap on its marker does, and the pin stays', async () => {
-    const user = await openSheet('night-shuttle', NIGHT_SHUTTLE_ROW);
+    const user = await openSheet('night-shuttle');
     await turnDiningOn(user);
     await showOnMap(user, ENGINEERING);
 
@@ -157,7 +156,7 @@ describe('a tap on the pin', () => {
   });
 
   it('opens nothing at the 행정관 셔틀 정류장, and the pin and its words stay', async () => {
-    const user = await openSheet('night-shuttle', NIGHT_SHUTTLE_ROW);
+    const user = await openSheet('night-shuttle');
     await showOnMap(user, SHUTTLE_STOP);
 
     await press(user, SHUTTLE_STOP);
@@ -169,7 +168,7 @@ describe('a tap on the pin', () => {
   });
 
   it('goes once another thing on the map is selected', async () => {
-    const user = await openSheet('night-shuttle', NIGHT_SHUTTLE_ROW);
+    const user = await openSheet('night-shuttle');
     await turnDiningOn(user);
     await showOnMap(user, SHUTTLE_STOP);
 

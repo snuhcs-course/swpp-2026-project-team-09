@@ -202,12 +202,16 @@ The 새내기 튜토리얼: a guide for new students to the basics of campus lif
 _Avoid_: Quest, Onboarding (Onboarding is the name and department after the first sign-in)
 
 **Tutorial Quest**:
-One page of the Tutorial, a step of campus life such as getting the student card, which a User starts and completes. It is not a Quest: it has no Holder, Board, Sub Quest or capacity.
+One part of the Tutorial, a step of campus life such as getting the student card, which a User starts and completes, shown as a Tutorial Guide on the map. It is not a Quest: it has no Holder, Board, Sub Quest or capacity.
 _Avoid_: Quest
 
 **Tutorial Category**:
 A group of Tutorial Quests about one part of campus life, such as 생활 or 이동, shown together. Every Tutorial Quest belongs to exactly one, and a category's quests come one after another.
 _Avoid_: Tutorial Layer, Quest category
+
+**Tutorial Guide**:
+What a Tutorial Quest shows on the map in place of a page of text: its places as pins, a step at a time, each with a few words, the facts that matter as chips, and buttons such as 길찾기. Some guides first ask which kind applies, such as 일반 or 금융 for the student card; in others the steps are places side by side, any of which completes the quest.
+_Avoid_: Tour (the tour of the four tabs after the first run)
 
 ### 관정도서관
 

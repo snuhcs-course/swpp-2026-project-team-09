@@ -134,7 +134,7 @@ export const questTone = {
 } as const;
 
 // The 새내기 튜토리얼's warm look, as the `Main` and `Profile` frames draw it: the Quest colour's ink on a cream ground.
-// `round` is the 내 정보 row's round, `pagerRound` the pager's, `dotNow` the sheet's dot of the quest shown.
+// `round` is the 내 정보 row's round, `dotNow` the sheet's dot of the quest shown.
 export const tutorialTone = {
   ink: color.quest,
   words: '#6B4500',
@@ -142,9 +142,32 @@ export const tutorialTone = {
   border: '#F1DFAF',
   box: '#FFF8E6',
   round: '#FFF1C9',
-  pagerRound: '#FFF4D6',
   dotNow: '#E8A400',
+  // As the canvas's 새내기 튜토리얼 boards draw the list and the guides (P15 ticket 53): the green of a completed quest,
+  // its ✓ and ✓ 완료, with its banner's ground and words; the grey of what is not there yet.
+  done: '#0B8A5B',
+  doneSoft: '#E6F6EF',
+  doneWords: color.live,
+  idle: '#EEF0F5',
+  // The faint chevron and arrows.
+  faint: '#A9B0C4',
+  // The rows of an online step.
+  rowsGround: '#F5F7FB',
+  rowsLine: '#C9D0E0',
+  link: color.blue600,
 } as const;
+
+// The Tutorial Categories' colours as the canvas's boards draw them: an ink and a soft ground for each, by the
+// category's place in the list (생활, 공부·학사, 이동, 건강, 문화·여가); a sixth starts again from the first.
+export const tutorialCategoryTones = [
+  { ink: '#E8590C', soft: '#FFF0E6' },
+  { ink: '#3D63D6', soft: '#EAF0FF' },
+  { ink: '#7048E8', soft: '#F1ECFF' },
+  { ink: '#0B8A5B', soft: '#E6F6EF' },
+  { ink: '#D6336C', soft: '#FFEAF1' },
+] as const;
+
+export type TutorialCategoryTone = (typeof tutorialCategoryTones)[number];
 
 // The colours of a class in the timetable, by its place in it, as the `Profile` frame draws the week: the first class
 // navy, the eighth navy again.

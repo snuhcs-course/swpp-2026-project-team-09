@@ -76,6 +76,7 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 
 51. The chat's system prompt: cache it across Users and minutes, with the time after the breakpoint, and teach it the campus's short names (학관, 중도, …). Ticket [51](issues/51-system-prompt-cache-and-campus-terms.md).
 52. 이미지로 불러오기 reads real screenshots badly: read them with the AI on the blocks the phone finds, for any timetable layout. Ticket [52](issues/52-timetable-image-reading.md).
+53. The 새내기 튜토리얼 as the canvas draws it: fewer words, a list with category tabs and icons in place of the pager, and each quest as a guide on the map. Ticket [53](issues/53-freshman-tutorial-as-drawn.md).
 54. The 행사 tab is hard to read: long titles and places run over many lines, and a card without its badge has an empty band. Draw it as the `Events` board does: a date column, one row per event, and a sheet for the details. Ticket [54](issues/54-events-tab-as-drawn.md).
 55. A walking route on the map cannot be cancelled, and its line stays: a tap on empty map clears it. Ticket [55](issues/55-cancel-the-walking-route.md).
 56. An answer's walking routes are drawn as straight lines: each walk follows the path the walking route service finds. Ticket [56](issues/56-answer-routes-along-the-paths.md).

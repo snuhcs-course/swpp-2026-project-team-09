@@ -3,27 +3,24 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { pass } from './app';
+import { pass, screen } from './app';
 import { button } from './lists';
 import { openMain } from './main';
 import { answered } from './mocks';
 import { apiClient } from '@/api/client';
-import { TUTORIAL_CONTENT } from '@/api/mock/data/tutorial';
+import { TUTORIAL_CATEGORIES, TUTORIAL_CONTENT } from '@/api/mock/data/tutorial';
 import { MOCK_TUTORIAL_SWITCHES } from '@/api/mock/tutorial';
 
 // The 새내기 튜토리얼 on the main screen: its buttons and rows by their names, a 26학번 User, who is eligible by
 // default, and the progress the main server's mock already holds.
 
 export const START = '새내기 튜토리얼 시작하기';
-export const PREVIOUS = '이전 퀘스트';
-export const NEXT = '다음 퀘스트';
 export const SHEET = '새내기 튜토리얼 퀘스트';
-export const S_CARD_ROW = '새내기 튜토리얼 · 생활 · 1/15 · 학생증(S-CARD) 발급받기 · 완료 조건 · 학생증 받기';
-export const SHUTTLE_ROW = '새내기 튜토리얼 · 이동 · 9/15 · 행정관 셔틀 이용하기 · 완료 조건 · 행정관 셔틀 타 보기';
-export const KWANJEONG_ROW =
-  '새내기 튜토리얼 · 공부·학사 · 5/15 · 관정도서관 예약하기 · 완료 조건 · 관정도서관 열람실이나 스터디룸 예약 및 이용';
+export const LIST = '새내기 튜토리얼';
+export const TO_LIST = '튜토리얼 목록으로';
 
 // Every quest's key, in `order`.
 export const QUEST_KEYS = TUTORIAL_CONTENT.map(({ key }) => key);
@@ -72,11 +69,34 @@ export async function completed(...keys: string[]): Promise<void> {
   }
 }
 
-// A started quest's sheet, opened from its row on the main screen.
-export async function openSheet(key: string, row: string): Promise<User> {
+// A quest's row in the list, by its title and its status, as a screen reader reads it.
+export function rowName(key: string, status: '' | ' · 진행 중' | ' · 완료' = ''): string {
+  const quest = TUTORIAL_CONTENT.find((one) => one.key === key);
+  return `${quest?.title ?? key}${status}`;
+}
+
+// The start button, then the quest's category's tab: the list on the quest's row.
+export async function openListAt(user: User, key: string): Promise<void> {
+  await pressAndWait(user, START);
+  const category = TUTORIAL_CONTENT.find((one) => one.key === key)?.category;
+  const label = TUTORIAL_CATEGORIES.find((one) => one.key === category)?.label ?? '';
+  await user.press(screen.getByRole('tab', { name: label }));
+}
+
+// A started quest's sheet, as the main server without guides serves the tutorial: opened from its row in the list.
+export async function openSheet(key: string): Promise<User> {
+  MOCK_TUTORIAL_SWITCHES.guides = false;
   await started(key);
   const user = await openAsFreshman();
-  await user.press(button(row));
-  await pass(500);
+  await openListAt(user, key);
+  await pressAndWait(user, rowName(key, ' · 진행 중'));
+  return user;
+}
+
+// A quest's guide, opened from its row in the list.
+export async function openGuide(key: string): Promise<User> {
+  const user = await openAsFreshman();
+  await openListAt(user, key);
+  await pressAndWait(user, rowName(key));
   return user;
 }

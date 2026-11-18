@@ -32,7 +32,7 @@ export { type CountedChip, ChipRow } from './chip-row';
 export { Dialog } from './dialog';
 export { EventCard, type EventKind } from './event-card';
 export { FullScreenPanel } from './full-screen-panel';
-export { Icon, ICON_NAMES, type IconName } from './icon';
+export { Icon, ICON_NAMES, iconOrFlag, type IconName } from './icon';
 export { ListRow, RoundIcon, SectionHeader } from './list-row';
 export {
   ANSWER_SYMBOL_BOX,
@@ -46,7 +46,7 @@ export {
 export { MapPerson, type PersonTone } from './map-person';
 export { KindRounds, MapGroupDot, MapGroupPin } from './map-group-pin';
 export { MapMarkBadge } from './map-mark-badge';
-export { MapTutorialPin } from './map-tutorial-pin';
+export { MapTutorialPin, MapTutorialStep, type TutorialStepShape } from './map-tutorial-pin';
 export { MapDot, MapPin, type MapPinKind, type MapPlaceKind, MapRestaurant, placeKindLook } from './map-pin';
 export { MapStudyCluster } from './map-study-cluster';
 export { Overlay, OverlayHost } from './overlay';
@@ -79,5 +79,7 @@ export {
   space,
   text,
   textHalo,
+  tutorialCategoryTones,
+  type TutorialCategoryTone,
   tutorialTone,
 } from './tokens';

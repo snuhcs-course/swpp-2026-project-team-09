@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Tutorial, TutorialQuest } from '@/api/tutorial-types';
@@ -11,25 +12,17 @@ import type { Tutorial, TutorialQuest } from '@/api/tutorial-types';
 // What the 새내기 튜토리얼 shows where, from the main server's state (P06 spec "The state, derived" and "App"). Who is
 // eligible by default is the server's rule alone: the app reads its answer's `eligibleByDefault`.
 
-// The start button at the bottom of the main screen: while the tutorial is `available`, and while it is `active`
-// with a quest not started. What hides it over the map (a card, the chat) is the screen's.
+// The start button at the bottom of the main screen (MainTutorialStart): while the tutorial is `available`, and while
+// it is `active` with a quest not completed, since it is the one way back to the list (MainTutorialList: "퀘스트
+// 목록에는 안 뜸"). What hides it over the map (a card, the chat, a guide) is the screen's.
 export function showsStartButton(tutorial: Tutorial | undefined): boolean {
   if (tutorial === undefined) {
     return false;
   }
   return (
     tutorial.state === 'available' ||
-    (tutorial.state === 'active' && tutorial.quests.some(({ status }) => status === 'notStarted'))
+    (tutorial.state === 'active' && tutorial.quests.some(({ status }) => status !== 'completed'))
   );
-}
-
-// The quests on top of the quest list, in the group "새내기 튜토리얼": those started and not completed, while the
-// tutorial is `active`.
-export function questsInList(tutorial: Tutorial | undefined): TutorialQuest[] {
-  if (tutorial?.state !== 'active') {
-    return [];
-  }
-  return tutorial.quests.filter(({ status }) => status === 'started');
 }
 
 // "n/N": a quest's place in the tutorial.
@@ -48,22 +41,14 @@ export function kickerOf(tutorial: Tutorial, quest: TutorialQuest): string {
   return ['새내기 튜토리얼', ...(category === null ? [] : [category]), stepOf(tutorial, quest.key)].join(' · ');
 }
 
-// Where a category's chip moves the pager: to its first quest not started, or to its first quest.
-export function firstOfCategory(quests: readonly TutorialQuest[], category: string): number {
-  const notStarted = quests.findIndex((quest) => quest.category === category && quest.status === 'notStarted');
-  return notStarted === -1 ? quests.findIndex((quest) => quest.category === category) : notStarted;
+// The category the list opens on (MainTutorialPager): that of the first quest not completed, else the first one.
+export function firstCategory(tutorial: Tutorial): string | null {
+  const open = tutorial.quests.find(({ status }) => status !== 'completed');
+  return open?.category ?? tutorial.categories[0]?.key ?? null;
 }
 
-// Where the pager opens: on the first quest not started, or on the first one without one.
-export function firstNotStarted(quests: readonly TutorialQuest[]): number {
-  return Math.max(
-    0,
-    quests.findIndex(({ status }) => status === 'notStarted'),
-  );
-}
-
-// Where the pager goes once a quest is completed: the next quest not started after it, else the first not started
-// before it, else a started one still to complete; null when every quest is completed.
+// The quest the list marks 다음 once a quest is completed (MainTutorialNext): the next quest not started after it,
+// else the first not started before it, else a started one still to complete; null when every quest is completed.
 export function nextAfter(quests: readonly TutorialQuest[], completedKey: string): number | null {
   const from = quests.findIndex(({ key }) => key === completedKey);
   const order = [...quests.keys()].map((index) => (from + 1 + index) % quests.length);
@@ -88,7 +73,7 @@ function activeRow(tutorial: Tutorial): TutorialRowView {
   const done = tutorial.quests.filter(({ status }) => status === 'completed').length;
   return {
     ...NO_BUTTONS,
-    line: `진행 중 · 완료 ${done}/${tutorial.quests.length} · 지도의 퀘스트 목록에서 이어서 해요`,
+    line: `진행 중 · 완료 ${done}/${tutorial.quests.length} · 지도 화면 아래 버튼으로 이어서 해요`,
     stopLabel: '그만하기',
   };
 }

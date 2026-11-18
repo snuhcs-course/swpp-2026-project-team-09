@@ -19,10 +19,11 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { router, useIsFocused, useLocalSearchParams } from 'expo-router';
-import { type ReactElement, type ReactNode, useEffect, useMemo } from 'react';
+import { router, useIsFocused } from 'expo-router';
+import { type ReactElement, type ReactNode, useMemo } from 'react';
 import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LatLng } from '@/api/types';
@@ -45,17 +46,19 @@ import { QuestList } from './quest-list';
 import { RoomRequestInbox } from './room-consent';
 import { CardOrSeen } from './seen-card';
 import type { ChatSheetControl } from './chat-sheet';
-import { askAssistant, useMainLayers } from './use-main-layers';
+import { askAssistant, type MainLayers, useMainLayers } from './use-main-layers';
 import { type MainMap, useMainMap } from './use-main-map';
 import { type Me, useMe } from './use-me';
 import { useActivePartyRoom } from './use-active-party-room';
 import { useAskedByAddress } from './use-asked-card';
 import type { MainRoute } from './use-route';
-import { type Everyday, useMapView } from './use-map-view';
+import { type Everyday, type MapView, useMapView } from './use-map-view';
 import { useReturnedCamera } from './use-camera-back';
 import { useFramedRoom } from './use-room';
 import { type Selection, useSelection } from './use-selection';
 import { type TutorialFlow, useTutorialFlow } from './tutorial/use-tutorial-flow';
+import { useGuideGivesWay } from './tutorial/use-guide-flow';
+import { useGuideMap } from './tutorial/use-guide-map';
 import { type TutorialPin, useTutorialPin } from './tutorial/use-tutorial-pin';
 import { ZoomControl } from './zoom-control';
 
@@ -163,9 +166,12 @@ function ThingCard(props: SelectedCardProps): ReactElement | null {
 }
 
 // The open card: the User's own, a pressed building's, or that of a Friend whom the map does not show, each giving way
-// to the answer frame as a thing's does, or the selected thing's.
-function SelectedCard(props: SelectedCardProps): ReactElement | null {
-  const { selection, chat, onHeight } = props;
+// to the answer frame as a thing's does, or the selected thing's. None while a 새내기 튜토리얼 quest's guide is open.
+function SelectedCard(props: SelectedCardProps & { hidden: boolean }): ReactElement | null {
+  const { selection, chat, onHeight, hidden } = props;
+  if (hidden) {
+    return null;
+  }
   if (selection.mine) {
     return chat.framed ? null : <MyCard onClose={selection.close} onHeight={onHeight} />;
   }
@@ -215,31 +221,13 @@ function useRouteLines(shuttle: ShuttleLayer, route: MainRoute): Pick<Everyday, 
 }
 
 // The friend list and the Quest list, which give way to a card at the top.
-function Lists({ hidden, map, room, selection, tutorial }: { hidden: boolean } & ListProps): ReactElement {
+function Lists({ hidden, map, room, selection }: { hidden: boolean } & Omit<ListProps, 'tutorial'>): ReactElement {
   return (
     <View style={[styles.lists, hidden && styles.hidden]}>
       <FriendList map={map} room={room} selection={selection} />
-      <QuestList
-        map={map}
-        onTutorial={tutorial.openSheet}
-        room={room}
-        selection={selection}
-        tutorial={tutorial.tutorial}
-      />
+      <QuestList map={map} room={room} selection={selection} />
     </View>
   );
-}
-
-// A tutorial quest pressed on the Quest list on the whole screen comes back by the main screen's address,
-// `/main?tutorial=…`, and opens its sheet here.
-function useAskedTutorialQuest(openSheet: (key: string) => void): void {
-  const { tutorial } = useLocalSearchParams<{ tutorial?: string }>();
-  useEffect(() => {
-    if (tutorial !== undefined) {
-      router.setParams({ tutorial: undefined });
-      openSheet(tutorial);
-    }
-  }, [tutorial, openSheet]);
 }
 
 // The 새내기 튜토리얼 over the main screen, whether its start button shows (not while a card is open), and the pin
@@ -250,9 +238,9 @@ function useMainTutorial(
   map: MainMap,
 ): { tutorial: TutorialFlow; start: boolean; pin: TutorialPin } {
   const tutorial = useTutorialFlow();
-  useAskedTutorialQuest(tutorial.openSheet);
   const pin = useTutorialPin({ cards, selection, goTo: map.goTo, tutorialState: tutorial.tutorial?.state });
-  return { tutorial, start: showsStartButton(tutorial.tutorial) && !selection.open, pin };
+  const start = showsStartButton(tutorial.tutorial) && !selection.open && tutorial.guide === null;
+  return { tutorial, start, pin };
 }
 
 // The main screen, the `Main` frame: the map with the User's own Avatar, the people and places of the map's cards
@@ -274,28 +262,57 @@ function useMainTutorial(
 // a Quest made from a Plan, opened by its flag or its line, with its Places; the tab bar gives way to each. After
 // Onboarding on this phone the first run asks its three things, one card at a time, while nothing else takes the
 // bottom (`useFirstRun`).
-export function MainScreen(): ReactElement {
+type MainParts = {
+  map: MainMap;
+  me: Me;
+  layers: MainLayers;
+  selection: Selection;
+  party: ReturnType<typeof useActivePartyRoom>;
+  tutorial: TutorialFlow;
+  pin: TutorialPin;
+  // A 새내기 튜토리얼 quest's guide is open: it takes the whole map.
+  guided: boolean;
+  view: MapView;
+} & ReturnType<typeof useFramedRoom>;
+
+// Everything the main screen holds, and what its map draws: the everyday map, an answer, or a 새내기 튜토리얼 quest's
+// guide.
+function useMainParts(): MainParts {
   const inFront = useIsFocused();
   const map = useMainMap();
   const me = useMe(map);
   const layers = useMainLayers(inFront, map, me);
-  const { stack, shuttle, cards, ready, chat, route } = layers;
+  const { shuttle, cards, ready, chat, route } = layers;
   const selection = useSelection(cards, inFront, me.position !== null, useOffMapFriends());
   const party = useActivePartyRoom();
   useAskedByAddress(ready ? cards : null, map, selection, chat);
   const { tutorial, start, pin } = useMainTutorial(selection, cards, map);
-  const { unasked, framed, taken, firstRun, room, ...bottom } = useFramedRoom(selection, layers, me, start);
-  const view = useMapView(chat, map, room, { me, pin, ...useRouteLines(shuttle, route), cards, selection }, unasked);
+  const guided = tutorial.guide !== null;
+  const framedRoom = useFramedRoom(selection, layers, me, { tutorialStart: start, guided });
+  const overMap = selection.open || framedRoom.framed;
+  useGuideGivesWay(guided, overMap, tutorial.closeGuide);
+  const { room, unasked } = framedRoom;
+  const routeLines = useRouteLines(shuttle, route);
+  const guide = useGuideMap({ flow: tutorial, map, room, me: me.position, route: route.line, overMap });
+  const view = useMapView(chat, map, room, { me, pin, ...routeLines, cards, selection, guide }, unasked);
   useReturnedCamera(layers.back, chat.framed, map);
+  return { map, me, layers, selection, party, tutorial, pin, guided, view, ...framedRoom };
+}
+
+export function MainScreen(): ReactElement {
+  const { map, me, layers, selection, party, tutorial, pin, guided, view, ...framedRoom } = useMainParts();
+  const { stack, shuttle, chat, route } = layers;
+  const { unasked, framed, taken, firstRun, room, ...bottom } = framedRoom;
   return (
     <View style={styles.screen}>
       <View style={styles.stage}>
         <MainMapView {...view} map={map} room={room} />
         <OverMap onStage={bottom.setStage}>
-          <Lists hidden={listsHidden(taken, framed)} map={map} room={room} selection={selection} tutorial={tutorial} />
-          {zoomShown(taken, stack.open, framed) ? <MainZoomControl map={map} me={me} /> : null}
+          <Lists hidden={listsHidden(taken, framed || guided)} map={map} room={room} selection={selection} />
+          {zoomShown(taken, stack.open, framed || guided) ? <MainZoomControl map={map} me={me} /> : null}
           <SelectedCard
             chat={chat}
+            hidden={guided}
             map={map}
             onActiveParty={party.open}
             onHeight={bottom.setCardHeight}
@@ -309,6 +326,9 @@ export function MainScreen(): ReactElement {
             chat={chat}
             firstRun={firstRun}
             onParty={party.open}
+            onRoute={(place) => {
+              route.routeTo(place);
+            }}
             onShowOnMap={pin.showOnMap}
             room={room}
             stack={stack}

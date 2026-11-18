@@ -4,18 +4,17 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router, useLocalSearchParams } from 'expo-router';
 import { type ReactElement, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { Tutorial } from '@/api/tutorial-types';
 import { color, font, Icon, mapText, radius, shadow, space, text, textHalo, useToast } from '@/design-system';
 import type { QuestRowView } from '@/features/quests/adapter';
 import { useQuestRows } from '@/features/quests/use-quest-rows';
-import { questsInList } from '@/features/tutorial/rules';
-import { questRows, type RowLook, tutorialRows } from './quest-list-rows';
+import { questRows, type RowLook } from './quest-list-rows';
 import { listRows, LISTS, listsTop, type Room } from './layout';
 import { CollapseButton, RowWindow } from './list-parts';
 import type { MainMap } from './use-main-map';
@@ -26,9 +25,6 @@ interface QuestListProps {
   selection: Selection;
   // The room the list has: its window is lower on a low screen.
   room: Room;
-  // The 새내기 튜토리얼, whose started quests sit on top, and what a press on one of them opens: its sheet.
-  tutorial: Tutorial | undefined;
-  onTutorial: (key: string) => void;
 }
 
 interface RowsProps {
@@ -71,7 +67,7 @@ function QuestPill({ count, onFullScreen }: { count: number | null; onFullScreen
   );
 }
 
-// One Quest of today or a started tutorial quest: its words at the left of the round that holds its icon, both in the
+// One Quest of today: its words at the left of the round that holds its icon, both in the
 // colour of its tone. The rail runs behind the round.
 function QuestRow({ row, first, last }: QuestRowProps): ReactElement {
   const { tint } = row;
@@ -141,9 +137,9 @@ function useAskedQuest(rows: readonly QuestRowView[] | undefined, press: (row: Q
 }
 
 // The Quest list of the `Main` frame, at the right over the map: the round button that collapses the list, the pill,
-// and the started tutorial quests over today's Quests, joined by the rail, in a window of up to three rows. Without
-// a Quest it says so.
-export function QuestList({ map, selection, room, tutorial, onTutorial }: QuestListProps): ReactElement {
+// and today's Quests, joined by the rail, in a window of up to three rows. Without a Quest it says so. The 새내기
+// 튜토리얼's quests are not on it: the start button under the map continues the tutorial (MainTutorialList).
+export function QuestList({ map, selection, room }: QuestListProps): ReactElement {
   const rows = useQuestRows().data;
   const [open, setOpen] = useState(true);
   const press = usePress({ map, selection });
@@ -162,15 +158,13 @@ export function QuestList({ map, selection, room, tutorial, onTutorial }: QuestL
           pill="right"
         />
         <QuestPill
-          count={rows === undefined ? null : rows.length + questsInList(tutorial).length}
+          count={rows === undefined ? null : rows.length}
           onFullScreen={() => {
             router.push('/quests');
           }}
         />
       </View>
-      {open && rows !== undefined ? (
-        <Rows rows={[...tutorialRows(tutorial, onTutorial), ...questRows(rows, press)]} shown={shown} />
-      ) : null}
+      {open && rows !== undefined ? <Rows rows={questRows(rows, press)} shown={shown} /> : null}
     </View>
   );
 }

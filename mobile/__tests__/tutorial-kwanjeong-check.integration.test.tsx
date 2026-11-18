@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -13,7 +14,7 @@ import { answerFromFakeLibrary } from './support/library-session';
 import { button, findButton } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { answered, startFresh } from './support/mocks';
-import { KWANJEONG_ROW, openSheet, pressAndWait, SHEET } from './support/tutorial';
+import { LIST, openSheet, pressAndWait, rowName, SHEET } from './support/tutorial';
 import { forgetWebViews } from './support/web-view';
 import { apiClient } from '@/api/client';
 import { MOCK_TUTORIAL_SWITCHES } from '@/api/mock/tutorial';
@@ -22,7 +23,7 @@ import { hiddenTransport } from '@/library/library';
 import { isLibraryWrite } from '@/library/site';
 import { TUTORIAL_SHEET_FLAGS } from '@/screens/main/tutorial/tutorial-sheet';
 
-// The 관정 quest's 완료했어요 on the main screen (MainTutorialOk and MainTutorialFail): the phone asks the fake
+// The 관정 quest's ✓ 완료 on the main screen (MainTutorialOk and MainTutorialFail): the phone asks the fake
 // 관정도서관 for the User's bookings through the library client and completes the quest by what it finds, against the
 // main server's mock. The check only reads, and nothing of the library reaches the main server. The quest is served as
 // `kwanjeongCheck`, as the main server serves it with TUTORIAL_KWANJEONG_CHECK on (off by default since P13).
@@ -75,12 +76,15 @@ async function status(): Promise<string | undefined> {
   return quests.find(({ key }) => key === 'kwanjeong')?.status;
 }
 
-describe('완료했어요 with a booking that counts', () => {
+// Each quest is reached through the start button, the list and its tab: longer than a press on a row.
+jest.setTimeout(150000);
+
+describe('✓ 완료 with a booking that counts', () => {
   it('asks for the bookings of the 30 days before to the 3 after, and shows the most recent with 확인됨', async () => {
     await setUp(TODAY);
-    const user = await openSheet('kwanjeong', KWANJEONG_ROW);
+    const user = await openSheet('kwanjeong');
 
-    await pressAndWait(user, '완료했어요');
+    await pressAndWait(user, '완료');
 
     expect(library.requestsTo('getMyBookingList').map(({ body }) => body)).toEqual([
       { start: '20260904', end: '20261007' },
@@ -95,15 +99,16 @@ describe('완료했어요 with a booking that counts', () => {
   it('completes the quest as checked with 퀘스트 완료 and opens the next quest', async () => {
     await setUp(TODAY);
     const complete = jest.spyOn(apiClient, 'completeTutorialQuest');
-    const user = await openSheet('kwanjeong', KWANJEONG_ROW);
+    const user = await openSheet('kwanjeong');
 
-    await pressAndWait(user, '완료했어요');
+    await pressAndWait(user, '완료');
     await pressAndWait(user, '퀘스트 완료');
 
     expect(complete.mock.calls).toEqual([['kwanjeong', 'checked']]);
     expect(await status()).toBe('completed');
     expect(screen.queryByLabelText(SHEET)).toBeNull();
-    expect(screen.getByText('퀘스트 완료! 다음 퀘스트 · 6/15')).toBeVisible();
+    expect(screen.getByLabelText(LIST)).toBeVisible();
+    expect(button(rowName('su-grading-option'))).toBeVisible();
   });
 });
 
@@ -119,13 +124,13 @@ describe('while the check runs', () => {
           }, 3000);
         }),
     );
-    const user = await openSheet('kwanjeong', KWANJEONG_ROW);
+    const user = await openSheet('kwanjeong');
 
-    await user.press(button('완료했어요'));
+    await user.press(button('완료'));
     await pass(100);
 
     expect(screen.getByText(CHECKING)).toBeVisible();
-    expect(findButton('완료했어요')).toBeNull();
+    expect(findButton('완료')).toBeNull();
     expect(findButton('나중에')).toBeNull();
     await pass(3000);
     expect(screen.queryByText(CHECKING)).toBeNull();
@@ -147,9 +152,9 @@ describe('the library data and the main server', () => {
   it('sends the main server only how the quest was completed', async () => {
     await setUp(TODAY);
     const asked = recordApiClient();
-    const user = await openSheet('kwanjeong', KWANJEONG_ROW);
+    const user = await openSheet('kwanjeong');
 
-    await pressAndWait(user, '완료했어요');
+    await pressAndWait(user, '완료');
     await pressAndWait(user, '퀘스트 완료');
 
     expect(library.requestsTo('getMyBookingList')).toHaveLength(1);
@@ -163,12 +168,12 @@ describe('the library data and the main server', () => {
   });
 });
 
-describe('완료했어요 without a booking that counts', () => {
-  it('says there is none and offers 다시 확인 and 그냥 완료하기', async () => {
+describe('✓ 완료 without a booking that counts', () => {
+  it('says there is none and offers 다시 확인 and 그냥 완료', async () => {
     await setUp(A_MONTH_LATER);
-    const user = await openSheet('kwanjeong', KWANJEONG_ROW);
+    const user = await openSheet('kwanjeong');
 
-    await pressAndWait(user, '완료했어요');
+    await pressAndWait(user, '완료');
 
     expect(library.requestsTo('getMyBookingList').map(({ body }) => body)).toEqual([
       { start: '20261003', end: '20261105' },
@@ -176,36 +181,37 @@ describe('완료했어요 without a booking that counts', () => {
     expect(screen.getByText(NOT_FOUND)).toBeVisible();
     expect(screen.queryByText('확인됨')).toBeNull();
     expect(button('다시 확인')).toBeVisible();
-    expect(button('그냥 완료하기')).toBeVisible();
+    expect(button('그냥 완료')).toBeVisible();
     expect(findButton('퀘스트 완료')).toBeNull();
     expect(button('어시스턴트에게 예약 부탁하기')).toBeVisible();
     expect(await status()).toBe('started');
   });
 
-  it('completes the quest as forced with 그냥 완료하기 and opens the next quest', async () => {
+  it('completes the quest as forced with 그냥 완료 and opens the list on the next quest', async () => {
     await setUp(A_MONTH_LATER);
     const complete = jest.spyOn(apiClient, 'completeTutorialQuest');
-    const user = await openSheet('kwanjeong', KWANJEONG_ROW);
+    const user = await openSheet('kwanjeong');
 
-    await pressAndWait(user, '완료했어요');
-    await pressAndWait(user, '그냥 완료하기');
+    await pressAndWait(user, '완료');
+    await pressAndWait(user, '그냥 완료');
 
     expect(complete.mock.calls).toEqual([['kwanjeong', 'forced']]);
     expect(await status()).toBe('completed');
-    expect(screen.getByText('퀘스트 완료! 다음 퀘스트 · 6/15')).toBeVisible();
+    expect(screen.getByLabelText(LIST)).toBeVisible();
+    expect(button(rowName('su-grading-option'))).toBeVisible();
   });
 });
 
-describe('완료했어요 when the library cannot be reached', () => {
+describe('✓ 완료 when the library cannot be reached', () => {
   it.each(['network', 'sessionEnded'] as const)('says so after a %s read, and 다시 확인 asks again', async (error) => {
     await setUp(TODAY);
     library.answerNext(error);
-    const user = await openSheet('kwanjeong', KWANJEONG_ROW);
+    const user = await openSheet('kwanjeong');
 
-    await pressAndWait(user, '완료했어요');
+    await pressAndWait(user, '완료');
 
     expect(screen.getByText(FAILED)).toBeVisible();
-    expect(button('그냥 완료하기')).toBeVisible();
+    expect(button('그냥 완료')).toBeVisible();
     expect(await status()).toBe('started');
     expect(screen.queryByTestId('library-login-view')).toBeNull();
 
@@ -220,12 +226,12 @@ describe('완료했어요 when the library cannot be reached', () => {
   });
 });
 
-describe('완료했어요 without a library session', () => {
+describe('✓ 완료 without a library session', () => {
   it('opens the login first, and a login that works goes on to the check', async () => {
     await setUp(TODAY, false);
-    const user = await openSheet('kwanjeong', KWANJEONG_ROW);
+    const user = await openSheet('kwanjeong');
 
-    await pressAndWait(user, '완료했어요');
+    await pressAndWait(user, '완료');
 
     expect(screen.getByTestId('library-login-view')).toBeVisible();
     expect(library.requestsTo('getMyBookingList')).toEqual([]);
@@ -243,9 +249,9 @@ describe('완료했어요 without a library session', () => {
 
   it('counts a cancelled login as not found', async () => {
     await setUp(TODAY, false);
-    const user = await openSheet('kwanjeong', KWANJEONG_ROW);
+    const user = await openSheet('kwanjeong');
 
-    await pressAndWait(user, '완료했어요');
+    await pressAndWait(user, '완료');
     await user.press(button('닫기'));
     await pass(500);
 
@@ -260,7 +266,7 @@ describe('the skip', () => {
   it('completes the quest as skipped without asking the library', async () => {
     await setUp(TODAY);
     const complete = jest.spyOn(apiClient, 'completeTutorialQuest');
-    const user = await openSheet('kwanjeong', KWANJEONG_ROW);
+    const user = await openSheet('kwanjeong');
 
     await pressAndWait(user, '이미 예약 및 이용해본 적이 있어요');
 
@@ -274,9 +280,9 @@ describe('the skip', () => {
 describe('어시스턴트에게 예약 부탁하기', () => {
   it('is offered after a check that found nothing, and shows the frame with the request and its seat card', async () => {
     await setUp(A_MONTH_LATER);
-    const user = await openSheet('kwanjeong', KWANJEONG_ROW);
+    const user = await openSheet('kwanjeong');
 
-    await pressAndWait(user, '완료했어요');
+    await pressAndWait(user, '완료');
     await user.press(button('어시스턴트에게 예약 부탁하기'));
     await pass(1000);
 
@@ -295,10 +301,10 @@ describe('어시스턴트에게 예약 부탁하기', () => {
   it('stays hidden while the switch is off', async () => {
     await setUp(A_MONTH_LATER);
     jest.replaceProperty(TUTORIAL_SHEET_FLAGS, 'askAssistantToBook', false);
-    const user = await openSheet('kwanjeong', KWANJEONG_ROW);
+    const user = await openSheet('kwanjeong');
 
     expect(findButton('어시스턴트에게 예약 부탁하기')).toBeNull();
-    await pressAndWait(user, '완료했어요');
+    await pressAndWait(user, '완료');
     expect(findButton('어시스턴트에게 예약 부탁하기')).toBeNull();
   });
 });

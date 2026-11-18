@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { LatLng } from './types';
@@ -39,13 +40,83 @@ export interface TutorialCategory {
   label: string;
 }
 
+// A guide's place: a Place of the shared seed by its number, or a point.
+export type TutorialGuidePlace = { place: string } | { point: LatLng };
+
+// A fact of a step in a few words after its icon, by the icon's name (`TUTORIAL_ICONS` of the main server).
+export interface TutorialChip {
+  icon: string;
+  words: string;
+}
+
+// A row of an online step; a row with `url` opens it.
+export interface TutorialRow {
+  words: string;
+  note?: string;
+  url?: string;
+}
+
+// A step's button: 길찾기 to its place, a site, or words sent to the Assistant.
+export type TutorialAction =
+  | { kind: 'route'; words: string }
+  | { kind: 'link'; words: string; url: string }
+  | { kind: 'ask'; words: string; ask: string };
+
+// One of several places of a step, a chip each, with its pin if it has a Place.
+export interface TutorialSpot {
+  name: string;
+  sub?: string;
+  place?: TutorialGuidePlace;
+  chips?: TutorialChip[];
+}
+
+// One step of a guide on the map (`main-server/src/tutorial/tutorial-guide.ts`).
+export interface TutorialStep {
+  tab: string;
+  title: string;
+  optional?: boolean;
+  about?: string[];
+  place?: TutorialGuidePlace;
+  name?: string;
+  sub?: string;
+  showName?: boolean;
+  pinText?: string;
+  link?: { words: string; url: string };
+  rows?: TutorialRow[];
+  chips?: TutorialChip[];
+  actions?: TutorialAction[];
+  spots?: TutorialSpot[];
+}
+
+// A kind to choose before the steps, such as 일반 학생증.
+export interface TutorialKind {
+  key: string;
+  label: string;
+  icon: string;
+  title: string;
+  route: string[];
+  steps: TutorialStep[];
+}
+
+// A quest's guide on the map, which the app opens in place of its sheet: `steps`, or `kinds` to choose first.
+// `together`: its steps are places side by side, any of which completes the quest.
+export interface TutorialGuide {
+  together?: boolean;
+  about?: string[];
+  withoutUser?: boolean;
+  steps?: TutorialStep[];
+  kinds?: TutorialKind[];
+}
+
 export interface TutorialQuest {
   key: string;
   order: number;
   // The key of its Tutorial Category.
   category?: string;
+  // The icon of its row in the list and of its guide's bar, by name; left out by an older main server.
+  icon?: string;
   title: string;
-  // The pager's line.
+  // The quest's line, which the Assistant reads.
   brief: string;
   // The sheet's text, one paragraph each.
   body: string[];
@@ -58,6 +129,8 @@ export interface TutorialQuest {
   links: TutorialLink[];
   // What 어시스턴트에게 예약 부탁하기 sends; the sheet shows the button only for a quest with it.
   ask?: string;
+  // Left out by an older main server: the quest then opens its sheet.
+  guide?: TutorialGuide;
   status: TutorialQuestStatus;
 }
 

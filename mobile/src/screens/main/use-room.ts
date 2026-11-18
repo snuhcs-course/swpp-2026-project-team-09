@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -100,17 +101,18 @@ export function useBottomRoom(
 }
 
 // The cards nobody asked for, a received invitation's and a made Quest's card after inviting; whether the answer
-// frame or one of them is shown, which the tab bar gives way to; and what takes the bottom of the map then.
+// frame or one of them is shown, which the tab bar gives way to, as it does to a 새내기 튜토리얼 quest's guide
+// (`guided`); and what takes the bottom of the map then.
 export function useFramedRoom(
   selection: Selection,
   { cards, made, chat }: Pick<MainLayers, 'cards' | 'made' | 'chat'>,
   me: Me,
-  tutorialStart: boolean,
+  { tutorialStart, guided }: { tutorialStart: boolean; guided: boolean },
 ): ReturnType<typeof useBottomRoom> & { unasked: UnaskedCards; framed: boolean } {
   const invitation = useReceivedInvitation(selection, cards, me, chat.framed);
   const madeCard = useMadeQuestCard(selection, made, me, chat.framed);
   const framed = chat.framed || invitation.shown || madeCard.shown !== null;
-  useHideTabBarOnMain(framed);
+  useHideTabBarOnMain(framed || guided);
   const madeLine = madeCard.first !== null;
   const bottom = useBottomRoom(selection, { tutorialStart, framed, madeLine });
   return { unasked: { invitation, made: madeCard }, framed, ...bottom };

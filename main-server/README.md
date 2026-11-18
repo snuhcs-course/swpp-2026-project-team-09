@@ -2282,7 +2282,7 @@ further look that fails keeps the first reading, the blocks it was for left out 
 The 새내기 튜토리얼 walks a new student through campus life, one Tutorial Quest at a time. A Tutorial Quest is not a
 [Quest](#quests): it has no Holder, Board or Sub Quest, so it never shows on the Boards or in Free Time.
 
-**Content.** `content/tutorial.yaml` holds the quests: each one's `key`, `order`, `title`, `brief` (the pager's line),
+**Content.** `content/tutorial.yaml` holds the quests: each one's `key`, `order`, `title`, `brief` (the quest's line),
 `body` (the sheet's paragraphs), `condition` (완료 조건), `completion` (`{ kind: button }`, or
 `{ kind: kwanjeongCheck, skipLabel }` for the quest the phone checks against the User's library bookings),
 `completionMessage`, `places` (a Place of the seed by its number, with `floor` and `label` when they help, or a
@@ -2293,6 +2293,16 @@ order the app shows them; every quest names one of them, every category holds a 
 one after another in `order`. The server reads and checks it once when it starts, in
 `src/tutorial/tutorial-content.ts`, and a file that does not match stops the start with the reason. Adding a quest is
 an entry in the file. `test/tutorial-content.unit.test.ts` checks that each Place number is in the seed.
+
+**Icons and guides.** A quest may name its `icon` (one of `TUTORIAL_ICONS` in `src/tutorial/tutorial-guide.ts`, which
+the app draws) and its `guide`, the Tutorial Guide the app shows on the map in place of the sheet (P15 ticket 53):
+`steps`, or `kinds` to choose first (학생증's 일반 and 금융), each step with its `tab`, `title`, `place` (a Place of the
+seed by its number, or a `point`), `name` and `sub`, and its optional `about`, `rows` (an online step's presses, a
+`url` on a row that opens a site), `chips` (`icon` and `words`), `link`, `actions` (`route` for 길찾기, `link` with its
+`url`, `ask` with the words sent to the Assistant) and `spots` (several places of one step). `together: true` makes
+the steps places side by side, any of which completes the quest; `withoutUser: true` fits the map without the User.
+GET /tutorial serves both as the file holds them, without the `ask` buttons while `LIBRARY_BOOKING_ENABLED` is off;
+the Assistant's `getTutorial` reads neither.
 
 **The P6 suite's copy.** The P6 eval suite reads its own copy of the content, `eval/p6/tutorial.yaml`, frozen with C0
 (`WORLD_TUTORIAL_FILES` in `eval/cases.ts`); every other world reads `content/tutorial.yaml`. So adding a quest here does

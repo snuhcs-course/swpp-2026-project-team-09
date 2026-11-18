@@ -12,6 +12,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -31,7 +32,9 @@ import {
   MapRestaurant,
   MapStudyCluster,
   MapTutorialPin,
+  MapTutorialStep,
   type PersonTone,
+  type TutorialStepShape,
 } from '@/design-system';
 import type { Size } from './projection';
 
@@ -47,7 +50,7 @@ import type { Size } from './projection';
 // - for each set of kinds that stand together at one place, the dot and the pin, and each of them selected; the pin
 //   also with the star;
 // - the same places and sets with the "!" of a mark newly posted or faded (`fresh`, `faded`);
-// - one for the tutorial's place pin.
+// - one for the tutorial's place pin, and one for each shape, colour and number of a guide's places.
 // No look holds a name or a label: that is the map's own text under the marker (`text` of `MapMarker`).
 //
 // A name holds nothing that changes from one answer of the server to the next: a person is named by their id and by
@@ -116,6 +119,8 @@ export type MarkerLook =
     } & InterestLook)
   // The place 지도에서 보기 of a tutorial quest shows: a red teardrop with a white circle, at every level of detail.
   | { kind: 'tutorialPlace' }
+  // A place of a tutorial quest's guide, in its category's colour `ink`, with its step's number or sign.
+  | { kind: 'tutorialStep'; shape: TutorialStepShape; ink: string; words?: string; later?: boolean }
   // A mark of an answer: its symbol and its label, words included, in one picture.
   | { kind: 'answer'; symbol: AnswerSymbol | null; label: AnswerLabel | null };
 
@@ -157,6 +162,9 @@ export function lookName(look: MarkerLook): string {
   }
   if (look.kind === 'tutorialPlace') {
     return 'tutorialPlace';
+  }
+  if (look.kind === 'tutorialStep') {
+    return `tutorialStep:${JSON.stringify([look.shape, look.ink, look.words ?? '', look.later === true])}`;
   }
   if (look.kind === 'answer') {
     return answerName(look.symbol, look.label);
@@ -222,7 +230,7 @@ export function hasPhoto(look: MarkerLook): boolean {
 // A pin and a person's marker stand on their tip, the bottom of their view. Everything else, a round thing, sits on
 // its middle.
 export function standsOnTip(look: MarkerLook): boolean {
-  if (look.kind === 'me' || look.kind === 'study-cluster' || look.kind === 'answer') {
+  if (look.kind === 'me' || look.kind === 'study-cluster' || look.kind === 'answer' || look.kind === 'tutorialStep') {
     return false;
   }
   return look.kind === 'person' || look.kind === 'restaurant' || look.kind === 'tutorialPlace' || look.form === 'pin';
@@ -280,6 +288,9 @@ function PlainLookView({ look, onPhotoSettled, testID }: LookViewProps): ReactEl
   }
   if (look.kind === 'tutorialPlace') {
     return <MapTutorialPin />;
+  }
+  if (look.kind === 'tutorialStep') {
+    return <MapTutorialStep ink={look.ink} later={look.later} shape={look.shape} words={look.words} />;
   }
   if (look.kind === 'answer') {
     return <MapAnswerMark label={look.label} symbol={look.symbol} testID={testID} />;
