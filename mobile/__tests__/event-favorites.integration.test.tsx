@@ -6,6 +6,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
@@ -116,14 +117,14 @@ describe('the bookmark on the 행사 tab', () => {
 });
 
 describe('the bookmark in the detail sheet', () => {
-  it("is there too, and both show the event's one state, and both show the event's one state", async () => {
+  it("is there too, and both show the event's one state", async () => {
     answerEvents(server);
     answerFavorite(MAJOR.id, { status: 204 });
     const user = await openEvents();
     await user.press(card(MAJOR).getByRole('button', { name: MAJOR.title }));
     await pass(500);
 
-    await user.press(screen.getByRole('button', { name: KEEP }));
+    await user.press(within(screen.getByTestId('event-detail')).getByRole('button', { name: KEEP }));
     await pass(500);
 
     expect(server.received(`PUT /global-events/${MAJOR.id}/favorite`)).toHaveLength(1);

@@ -31,7 +31,7 @@ function Fact({ icon, name, words }: { icon: IconName; name: string; words: stri
 
 function Details({ event }: { event: EventView }): ReactElement {
   return (
-    <ScrollView contentContainerStyle={styles.details} style={styles.scroll}>
+    <ScrollView contentContainerStyle={styles.details} style={styles.scroll} testID="event-detail">
       <View style={styles.head}>
         <View style={styles.names}>
           {event.source === null ? null : <Text style={styles.source}>{event.source}</Text>}
