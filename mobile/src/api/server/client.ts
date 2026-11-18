@@ -171,8 +171,9 @@ export const serverClient: ApiClient = {
       throw error;
     }
   },
-  findWalkingRoute: (from, to) =>
+  findWalkingRoute: (from, to, signal) =>
     call('GET', '/walking-route', isWalkingRoute, {
+      signal,
       query: {
         startLatitude: from.latitude,
         startLongitude: from.longitude,

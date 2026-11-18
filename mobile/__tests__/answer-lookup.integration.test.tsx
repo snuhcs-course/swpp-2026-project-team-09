@@ -187,7 +187,7 @@ describe('"길 안내" without a position', () => {
     await pass(500);
 
     expect(screen.getByText('위치를 찾는 중이에요')).toBeVisible();
-    expect(findWalkingRoute.mock.calls.slice(before)).not.toContainEqual([expect.anything(), CULTURE_HALL]);
+    expect(findWalkingRoute.mock.calls.slice(before).map(([, to]) => to)).not.toContainEqual(CULTURE_HALL);
     expect(screen.getByTestId('answer-pill')).toBeVisible();
     expect(card().getByTestId('lookup-card')).toBeVisible();
   });

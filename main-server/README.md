@@ -1863,7 +1863,10 @@ The app asks for a walking route between two points and draws its line. The main
 A route is never stored or cached, because Kakao's operating policy does not allow it. Every request asks Kakao once,
 and the answer carries `Cache-Control: no-store`, so that no HTTP cache, the app's included, keeps it. Nothing else
 calls Kakao. The team's Kakao app has a free quota of 1,000 routes a day, and a call beyond it fails (§7.5), so the app
-asks for a route when the User does, never on every position.
+asks for a route when the User does, never on every position. Pending the owner's decision (P15 ticket 56, "Open
+questions for the owner"): the app also asks, by itself, for the walks of the Plan or Lookup on screen in the answer
+frame, at most three a scene, each pair of ends once, keeping nothing once the scene leaves the screen; a typical
+answer costs 2 to 3 routes a Plan shown.
 
 The REST API key is `KAKAO_REST_API_KEY`, a secret that stays on the main server: it goes to Kakao in the
 `Authorization` header and nowhere else. The server stops at startup and names the setting when it is missing or empty.

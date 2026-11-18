@@ -139,7 +139,7 @@ The worker server collects events, menus and shuttle positions from their origin
 ### Walking route
 
 - The main server calls Kakao's walking route API with a server key and returns the line, the distance and the duration.
-- A route is never stored or cached. Kakao's policy does not allow it.
+- A route is never stored or cached. Kakao's policy does not allow it. (Pending the owner's decision, P15 ticket 56: the app asks by itself for the walks of an answer's Plan on screen, at most three, and keeps none once the Plan leaves the screen.)
 - The API's failure statuses are returned to the app as "no route".
 
 ## Testing Decisions

@@ -284,7 +284,8 @@ What the demo cannot show, and what is known not to work yet:
   `mobile/app.json`.
 - **The walking route has a quota** of 1,000 routes a day for the team's Kakao app. A route is asked when the User
   asks for one and, while a party room is open, for each sharing member who has moved, at most once a minute each,
-  looked at every 15 seconds.
+  looked at every 15 seconds. Pending the owner's decision (P15 ticket 56): an answer on the map also asks for the
+  walks of the Plan on screen, at most three a Plan shown.
 - **Sample data in a build.** Who announced a Global Event is the app's own sample data even against the servers: no
   server serves it yet. Against the servers a Friend has no status ("공강", "수업 중", "이동 중"): their line shows the
   Place nearest them ("위치 켜짐" while it is not known), or "위치 꺼짐".

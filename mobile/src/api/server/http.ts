@@ -30,6 +30,8 @@ interface Request {
   // After how many milliseconds the request is given up, as no answer (status 0); unset, it waits as long as the
   // phone's own networking does.
   timeoutMs?: number;
+  // Gives the request up, as no answer (status 0), when it aborts: a query that no screen shows any more.
+  signal?: AbortSignal;
 }
 
 function field(value: unknown, name: string): unknown {
@@ -82,6 +84,13 @@ async function send(method: Method, path: string, request: Request, accessToken:
       : setTimeout(() => {
           abort.abort();
         }, request.timeoutMs);
+  const stop = (): void => {
+    abort.abort();
+  };
+  request.signal?.addEventListener('abort', stop);
+  if (request.signal?.aborted === true) {
+    abort.abort();
+  }
   let response: Response;
   let body: unknown;
   try {
@@ -98,6 +107,7 @@ async function send(method: Method, path: string, request: Request, accessToken:
     if (timer !== null) {
       clearTimeout(timer);
     }
+    request.signal?.removeEventListener('abort', stop);
   }
   if (!response.ok) {
     throw new ApiError(response.status, textOrNull(field(body, 'code')), body);
