@@ -7,7 +7,6 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { readCampusBoundary } from '../src/common/campus-boundary.js';
 import { SEED_DIRECTORY } from '../src/common/seed-directory.js';
@@ -234,16 +233,6 @@ describe("The guides' links and asks", () => {
   it("serves the guides' buttons that ask the Assistant only while 관정 booking is on", () => {
     expect(asks(true)).toEqual([ASK, '관정도서관 좌석 반납해줘']);
     expect(asks(false)).toEqual([]);
-  });
-});
-
-describe("The app's mock copy of the guides", () => {
-  it("holds every quest's icon and guide as the file does", async () => {
-    const copy: unknown = JSON.parse(
-      await readFile(new URL('../../mobile/src/api/mock/data/tutorial-guides.json', import.meta.url), 'utf8'),
-    );
-
-    expect(copy).toEqual(Object.fromEntries(content.quests.map(({ key, icon, guide }) => [key, { icon, guide }])));
   });
 });
 

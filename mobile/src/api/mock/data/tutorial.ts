@@ -27,7 +27,7 @@ export const TUTORIAL_CATEGORIES: readonly TutorialCategory[] = [
 ];
 
 // Each quest's icon and guide, copied whole from the file into `tutorial-guides.json` and checked as the client checks
-// the server's answer.
+// the server's answer. `main-server/test/tutorial-mock-copy.unit.test.ts` fails once the copy drifts from the file.
 function guideOf(key: string): { icon?: string; guide?: TutorialGuide } {
   const copy: unknown = Reflect.get(guides, key);
   const icon: unknown = Reflect.get(copy ?? {}, 'icon');
