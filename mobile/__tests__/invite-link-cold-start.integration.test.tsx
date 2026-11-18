@@ -14,9 +14,8 @@ import { ONBOARDING, saveOnboarding } from './support/onboarding';
 import { mockFriendships } from '@/api/mock/friendships';
 import { keep, readKept } from '@/storage/kept';
 
-// An Invite Link that starts the stopped app on Android, against the mocks. There the router is given the address the
-// app was started with as React Native answers it, after its first render, and starts at `/` when the answer takes
-// longer than 150 ms. expo-linking holds the address from the start, until it is cleared.
+// An Invite Link that starts the stopped app on Android, against the mocks: the router's way of getting the first
+// address there is in `src/app/+native-intent.ts`.
 
 jest.mock('expo-location');
 // The app's scheme, which the router's address at a start from the home screen is made of.
