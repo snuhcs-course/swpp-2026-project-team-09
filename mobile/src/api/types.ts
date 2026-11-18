@@ -13,6 +13,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The answers of the main server, as the app reads them; `src/api/server/answers.ts` checks them. A shape marked "the
@@ -26,7 +27,8 @@ export interface LatLng {
 
 // --- Sign-in (POST /auth/google) ---
 
-// What the sign-in suggests for Onboarding. A part that could not be read is null.
+// The name and the department that the SNU account gives, which Onboarding shows fixed. A part it does not give is
+// null.
 export interface Suggestion {
   name: string | null;
   department: string | null;
@@ -48,17 +50,14 @@ export type SignInResult =
 export type Gender = { kind: 'female' | 'male' } | { kind: 'custom'; text: string };
 
 export interface OnboardingAnswers {
-  // 1 to 30 characters.
+  // The SNU account's, which the main server stores whatever is sent; empty where the account gives none.
   name: string;
-  // 1 to 50 characters.
   department: string;
   // Null for "그 외" and for no choice.
   admissionYear: number | null;
   // Without '#', at most 20, 1 to 30 characters each, no whitespace, none twice whatever the case.
   hashtags: string[];
   // The app's own: the main server does not take it, and the phone keeps it.
-  courseLevel: 'undergraduate' | 'graduate';
-  // The app's own, as the course level.
   gender: Gender | null;
 }
 
@@ -92,11 +91,9 @@ export interface Lobby {
 
 // The fields of the profile that change; a field left out stays. `null` empties the admission year and the 소속, and an
 // empty text the 학번 and the 학적상 이름. The 학번 may hold the hyphen, as the User typed it.
+// The name and the department are the SNU account's, so an edit does not hold them.
 export type ProfileChange = Partial<
-  Pick<
-    Profile,
-    'name' | 'department' | 'admissionYear' | 'hashtags' | 'studentNumber' | 'registeredName' | 'affiliation'
-  >
+  Pick<Profile, 'admissionYear' | 'hashtags' | 'studentNumber' | 'registeredName' | 'affiliation'>
 >;
 
 // --- Friends and their positions ---

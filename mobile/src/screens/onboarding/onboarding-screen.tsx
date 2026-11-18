@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -10,51 +11,25 @@ import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from 'react-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cardStyles, color, space, text } from '@/design-system';
 import { useSession } from '@/session/session';
-import { CourseLevelField, GenderField } from './choice-fields';
-import { DepartmentField } from './department-field';
+import { GenderField } from './choice-fields';
+import { AccountFields } from './fixed-field';
 import { Foot } from './foot';
-import { canSave, type ChangeForm, type Form, useForm } from './form';
+import { type ChangeForm, type Form, useForm } from './form';
 import { InterestsSection } from './interests-section';
-import { NameField } from './name-field';
 import { RevealContext, useRevealer } from './reveal';
 import { useOnboarding } from './use-onboarding';
 import { YearField } from './year-field';
 
 const WIDEST = 390;
 
-// The fields about the User. A badge leaves its field with the User's first change there, and another course level
-// has other departments, so it clears the one chosen.
+// The fields about the User: the account's name and department, fixed, and what the User adds.
 function BasicSection({ form, change }: { form: Form; change: ChangeForm }): ReactElement {
   return (
     <View style={[cardStyles.card, styles.section]}>
       <Text accessibilityRole="header" style={styles.title}>
         기본 정보
       </Text>
-      <NameField
-        onChange={(name) => {
-          change({ name, nameSuggested: false });
-        }}
-        suggested={form.nameSuggested}
-        value={form.name}
-      />
-      <CourseLevelField
-        onChange={(level) => {
-          if (level !== form.level) {
-            change({ level, department: '', departmentSuggested: false });
-          }
-        }}
-        value={form.level}
-      />
-      <DepartmentField
-        // The search starts again with the other course level's list.
-        key={form.level}
-        level={form.level}
-        onChange={(department) => {
-          change({ department, departmentSuggested: false });
-        }}
-        suggested={form.departmentSuggested}
-        value={form.department}
-      />
+      <AccountFields department={form.department} name={form.name} />
       <YearField
         onChange={(year) => {
           change({ year });
@@ -75,8 +50,8 @@ function BasicSection({ form, change }: { form: Form; change: ChangeForm }): Rea
   );
 }
 
-// Where a new User confirms a name and a department after the first sign-in and adds what else they like. Nothing
-// on it leads back: a User who signed in with the wrong account signs out.
+// Where a new User sees the name and the department from the SNU account after the first sign-in and adds what else
+// they like. Nothing on it leads back: a User who signed in with the wrong account signs out.
 export function OnboardingScreen(): ReactElement {
   const insets = useSafeAreaInsets();
   const { suggestion } = useSession();
@@ -90,7 +65,7 @@ export function OnboardingScreen(): ReactElement {
           <Text accessibilityRole="header" style={styles.heading}>
             프로필 만들기
           </Text>
-          <Text style={styles.sentence}>이름과 학과만 채우면 바로 시작해요</Text>
+          <Text style={styles.sentence}>확인하고 바로 시작해요</Text>
         </View>
         <View onLayout={revealer.settle} ref={revealer.frame} style={styles.frame}>
           <ScrollView
@@ -116,7 +91,6 @@ export function OnboardingScreen(): ReactElement {
           onSave={() => {
             save(form);
           }}
-          ready={canSave(form)}
           working={working}
         />
       </View>

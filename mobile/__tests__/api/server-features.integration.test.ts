@@ -8,6 +8,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -258,7 +259,6 @@ describe('Onboarding with the main server', () => {
       department: '컴퓨터공학부',
       admissionYear: 2022,
       hashtags: ['AI커리어'],
-      courseLevel: 'graduate',
       gender: { kind: 'female' },
     };
 
@@ -286,7 +286,6 @@ describe('Onboarding with the main server', () => {
         department: '컴퓨터공학부',
         admissionYear: null,
         hashtags: [],
-        courseLevel: 'undergraduate',
         gender: null,
       }),
     ).rejects.toMatchObject({ status: 400 });

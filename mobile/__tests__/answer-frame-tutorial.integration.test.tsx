@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -43,7 +44,6 @@ function openFreshmanFramed(): Promise<User> {
       department: '컴퓨터공학부',
       admissionYear: 2026,
       hashtags: [],
-      courseLevel: 'undergraduate',
       gender: null,
     },
   });

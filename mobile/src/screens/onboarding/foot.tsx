@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-19  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -12,8 +13,6 @@ import { Button, color, radius, shadow, size, space, text, useToastAbove } from 
 import { useKeyboardShown } from '@/hooks/use-keyboard-height';
 
 interface FootProps {
-  // A name and a department are there.
-  ready: boolean;
   // A save or a sign-out is at work: neither button takes a press.
   working: boolean;
   onSave: () => void;
@@ -22,7 +21,7 @@ interface FootProps {
 
 // The two buttons fixed under the form. A toast sits above them. While the phone's keyboard is up they give their
 // place to the form, which has little of the screen left then; they are back when the keyboard closes.
-export function Foot({ ready, working, onSave, onOut }: FootProps): ReactElement | null {
+export function Foot({ working, onSave, onOut }: FootProps): ReactElement | null {
   const insets = useSafeAreaInsets();
   const [height, setHeight] = useState(0);
   const hidden = useKeyboardShown();
@@ -39,7 +38,7 @@ export function Foot({ ready, working, onSave, onOut }: FootProps): ReactElement
       style={[styles.foot, { paddingBottom: insets.bottom + space[3] }]}
       testID="onboarding-foot"
     >
-      <Button disabled={working || !ready} full onPress={onSave} size="lg">
+      <Button disabled={working} full onPress={onSave} size="lg">
         저장하고 시작하기
       </Button>
       <Pressable

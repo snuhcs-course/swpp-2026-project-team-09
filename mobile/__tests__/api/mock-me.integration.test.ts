@@ -5,6 +5,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
@@ -20,7 +21,6 @@ const ANSWERS: OnboardingAnswers = {
   department: '컴퓨터공학부',
   admissionYear: 2022,
   hashtags: ['러닝'],
-  courseLevel: 'undergraduate',
   gender: null,
 };
 
@@ -77,13 +77,13 @@ describe('the mock of the profile', () => {
   it('changes the fields sent, which the next Lobby holds', async () => {
     await keep({ onboardingCompleted: true, answers: ANSWERS });
 
-    const profile = await answered(mockClient.updateProfile({ name: '안진영', admissionYear: null }));
+    const profile = await answered(mockClient.updateProfile({ hashtags: ['AI'], admissionYear: null }));
 
     expect(profile).toEqual({
-      name: '안진영',
+      name: ANSWERS.name,
       department: '컴퓨터공학부',
       admissionYear: null,
-      hashtags: ['러닝'],
+      hashtags: ['AI'],
       friendId: '7KX2M9QD',
       studentNumber: null,
       registeredName: null,

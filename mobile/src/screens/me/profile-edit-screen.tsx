@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -15,20 +16,15 @@ import { ApiError } from '@/api/errors';
 import { LOBBY_KEY, lobbyQuery, TUTORIAL_KEY } from '@/api/queries';
 import type { Lobby, Profile, ProfileChange } from '@/api/types';
 import { Button, cardStyles, color, FullScreenPanel, LoadingState, space, text, useToast } from '@/design-system';
-import { DepartmentField } from '../onboarding/department-field';
-import { isDepartment } from '../onboarding/department-search';
-import type { CourseLevel } from '../onboarding/departments';
+import { AccountFields } from '../onboarding/fixed-field';
 import { admissionYears, type YearChoice } from '../onboarding/form';
 import { InterestsSection } from '../onboarding/interests-section';
-import { NameField } from '../onboarding/name-field';
 import { YearField } from '../onboarding/year-field';
 import { type LibraryEdit, LibrarySection } from './library-section';
 
 const NOT_SAVED = '저장하지 못했어요. 다시 시도해 주세요';
 
 interface Edit extends LibraryEdit {
-  name: string;
-  department: string;
   year: YearChoice;
   // Without the '#'.
   interests: readonly string[];
@@ -65,16 +61,9 @@ function yearChoiceOf(admissionYear: number | null): YearChoice {
   return admissionYears().includes(admissionYear) ? admissionYear : 'other';
 }
 
-// The fields the User changed, as the main server takes them.
+// The fields the User changed, as the main server takes them. The name and the department are the SNU account's.
 function changesOf(profile: Profile, edit: Edit): ProfileChange {
   const change: ProfileChange = {};
-  const name = edit.name.trim();
-  if (name !== profile.name) {
-    change.name = name;
-  }
-  if (edit.department !== profile.department) {
-    change.department = edit.department;
-  }
   if (edit.year !== yearChoiceOf(profile.admissionYear)) {
     change.admissionYear = typeof edit.year === 'number' ? edit.year : null;
   }
@@ -92,13 +81,6 @@ function refusesStudentNumber(error: unknown): boolean {
   const { body } = error;
   const message: unknown = typeof body === 'object' && body !== null ? Reflect.get(body, 'message') : undefined;
   return Array.isArray(message) && message.some((line) => typeof line === 'string' && line.startsWith('studentNumber'));
-}
-
-// The department list a department is found in: a graduate one only in the graduate list.
-function levelOf(department: string): CourseLevel {
-  return isDepartment('graduate', department) && !isDepartment('undergraduate', department)
-    ? 'graduate'
-    : 'undergraduate';
 }
 
 // Sends the changed fields; the answer's profile replaces the Lobby's, the tutorial is read again (the server's
@@ -144,31 +126,18 @@ function useSave(profile: Profile): {
 }
 
 interface BasicSectionProps {
+  profile: Profile;
   edit: Edit;
-  level: CourseLevel;
   change: (changed: Partial<Edit>) => void;
 }
 
-function BasicSection({ edit, level, change }: BasicSectionProps): ReactElement {
+function BasicSection({ profile, edit, change }: BasicSectionProps): ReactElement {
   return (
     <View style={[cardStyles.card, styles.section]}>
       <Text accessibilityRole="header" style={styles.title}>
         기본 정보
       </Text>
-      <NameField
-        onChange={(name) => {
-          change({ name });
-        }}
-        value={edit.name}
-      />
-      <DepartmentField
-        level={level}
-        onChange={(department) => {
-          change({ department });
-        }}
-        suggested={false}
-        value={edit.department}
-      />
+      <AccountFields department={profile.department} name={profile.name} />
       <YearField
         onChange={(year) => {
           change({ year });
@@ -181,15 +150,12 @@ function BasicSection({ edit, level, change }: BasicSectionProps): ReactElement 
 
 function EditForm({ profile }: { profile: Profile }): ReactElement {
   const [edit, setEdit] = useState<Edit>(() => ({
-    name: profile.name,
-    department: profile.department,
     year: yearChoiceOf(profile.admissionYear),
     interests: profile.hashtags,
     studentNumber: studentNumberShown(profile.studentNumber),
     registeredName: profile.registeredName ?? '',
     affiliation: profile.affiliation,
   }));
-  const [level] = useState(() => levelOf(profile.department));
   const { working, studentNumberRefused, forgetRefusal, save } = useSave(profile);
   const change = (changed: Partial<Edit>): void => {
     if (changed.studentNumber !== undefined) {
@@ -201,7 +167,7 @@ function EditForm({ profile }: { profile: Profile }): ReactElement {
     <FullScreenPanel
       footer={
         <Button
-          disabled={working || edit.name.trim() === '' || edit.department === ''}
+          disabled={working}
           full
           onPress={() => {
             save(edit);
@@ -216,7 +182,7 @@ function EditForm({ profile }: { profile: Profile }): ReactElement {
       title="프로필 편집"
     >
       <View style={styles.body}>
-        <BasicSection change={change} edit={edit} level={level} />
+        <BasicSection change={change} edit={edit} profile={profile} />
         <InterestsSection
           interests={edit.interests}
           onChange={(interests) => {

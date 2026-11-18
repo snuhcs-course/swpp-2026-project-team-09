@@ -168,7 +168,7 @@ _Avoid_: Hidden area
 ### The app
 
 **Onboarding**:
-What a new User completes after the first sign-in: confirming a name and a department.
+What a new User completes after the first sign-in: seeing the name and the department, which come from the SNU account and cannot be changed, and adding what else they like.
 _Avoid_: Sign-up, registration
 
 **Lobby**:

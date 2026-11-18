@@ -9,6 +9,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,7 +24,6 @@ const ANSWERS: OnboardingAnswers = {
   department: '컴퓨터공학부',
   admissionYear: 2022,
   hashtags: ['AI커리어', '러닝'],
-  courseLevel: 'graduate',
   gender: { kind: 'custom', text: '논바이너리' },
 };
 

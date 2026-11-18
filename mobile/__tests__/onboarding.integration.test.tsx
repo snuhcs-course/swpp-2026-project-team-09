@@ -2,21 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
 import { fireEvent, userEvent } from '@testing-library/react-native';
 import { pass, screen, startApp } from './support/app';
 import { startFresh } from './support/mocks';
-import {
-  arriveAtOnboarding,
-  BADGE,
-  button,
-  chooseDepartment,
-  ONBOARDING,
-  SAVE,
-  saveOnboarding,
-} from './support/onboarding';
+import { arriveAtOnboarding, FROM_ACCOUNT, button, ONBOARDING, SAVE, saveOnboarding } from './support/onboarding';
 import { readKept } from '@/storage/kept';
 
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -37,66 +30,32 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-describe('what the sign-in suggested', () => {
-  it('fills in the name and the department, each with its badge', async () => {
+describe('the name and the department', () => {
+  it("are the account's, fixed, with the line that says so, and the save needs nothing more", async () => {
     await arriveAtOnboarding(SUGGESTION);
 
     expect(screen.getByRole('header', { name: ONBOARDING })).toBeVisible();
     expect(screen.getByLabelText('이름')).toHaveDisplayValue('홍길동');
+    expect(screen.getByLabelText('이름')).toBeDisabled();
     expect(screen.getByLabelText('학과')).toHaveDisplayValue('컴퓨터공학부');
-    expect(screen.getAllByText(BADGE)).toHaveLength(2);
-    expect(screen.getByRole('radio', { name: '학부생' })).toBeChecked();
+    expect(screen.getByLabelText('학과')).toBeDisabled();
+    expect(screen.getByText(FROM_ACCOUNT)).toBeVisible();
+    expect(screen.queryByRole('radio', { name: '학부생' })).toBeNull();
     expect(button(SAVE)).toBeEnabled();
   });
 
-  it('keeps a badge until the User changes that field', async () => {
-    const user = await arriveAtOnboarding(SUGGESTION);
-
-    await user.type(screen.getByLabelText('이름'), '님');
-    expect(screen.getByLabelText('이름')).toHaveDisplayValue('홍길동님');
-    expect(screen.getAllByText(BADGE)).toHaveLength(1);
-
-    await user.press(button('학과 지우기'));
-    expect(screen.queryByText(BADGE)).toBeNull();
-  });
-
-  it('leaves the department empty when the suggestion has none', async () => {
+  it('stay fixed and empty where the account gives none, and the save still goes', async () => {
     await arriveAtOnboarding({ name: '홍길동', department: null });
 
     expect(screen.getByLabelText('학과')).toHaveDisplayValue('');
-    expect(screen.getAllByText(BADGE)).toHaveLength(1);
-    expect(button(SAVE)).toBeDisabled();
-  });
-
-  it('leaves a department that is not in the list empty, and a name it lacks too', async () => {
-    await arriveAtOnboarding({ name: null, department: '마법학과' });
-
-    expect(screen.getByLabelText('이름')).toHaveDisplayValue('');
-    expect(screen.getByLabelText('학과')).toHaveDisplayValue('');
-    expect(screen.queryByText(BADGE)).toBeNull();
+    expect(screen.getByLabelText('학과')).toBeDisabled();
+    expect(button(SAVE)).toBeEnabled();
   });
 });
 
-describe('the save button', () => {
-  it('is enabled once a name and a department are there', async () => {
-    const user = await arriveAtOnboarding({ name: null, department: null });
-    expect(button(SAVE)).toBeDisabled();
-
-    await chooseDepartment(user, '컴퓨터', '컴퓨터공학부');
-    expect(button(SAVE)).toBeDisabled();
-
-    await user.type(screen.getByLabelText('이름'), '   ');
-    expect(button(SAVE)).toBeDisabled();
-
-    await user.type(screen.getByLabelText('이름'), '김샤');
-    expect(button(SAVE)).toBeEnabled();
-
-    await user.press(button('학과 지우기'));
-    expect(button(SAVE)).toBeDisabled();
-  });
-
-  it('saves the answers on the phone and shows the main screen', async () => {
-    const user = await arriveAtOnboarding({ name: ' 홍길동 ', department: null });
+describe('the save', () => {
+  it('keeps the answers on the phone and shows the main screen', async () => {
+    const user = await arriveAtOnboarding(SUGGESTION);
     await saveOnboarding(user);
     await pass(600);
 
@@ -110,19 +69,17 @@ describe('the save button', () => {
         department: '컴퓨터공학부',
         admissionYear: null,
         hashtags: [],
-        courseLevel: 'undergraduate',
         gender: null,
       },
     });
   });
 
-  it('says so when the save failed, and leaves the form as it is', async () => {
+  it('says so when it failed, and leaves the form as it is', async () => {
     process.env.EXPO_PUBLIC_MOCK_FAIL = 'completeOnboarding';
-    const user = await arriveAtOnboarding({ name: '홍길동', department: null });
+    const user = await arriveAtOnboarding(SUGGESTION);
     await saveOnboarding(user);
 
     expect(screen.getByText('저장하지 못했어요. 다시 시도해 주세요')).toBeVisible();
-    expect(screen.getByLabelText('학과')).toHaveDisplayValue('컴퓨터공학부');
     expect(button(SAVE)).toBeEnabled();
     expect((await readKept()).onboardingCompleted).toBe(false);
   });
@@ -137,14 +94,6 @@ describe('a save, asked for', () => {
     await pass(400);
 
     expect(screen.getByTestId('toast-layer')).toHaveStyle({ bottom: 132 + 24 });
-  });
-
-  it('counts the name by characters and takes thirty, an emoji being one', async () => {
-    await arriveAtOnboarding(SUGGESTION);
-    await fireEvent.changeText(screen.getByLabelText('이름'), '😀'.repeat(31));
-
-    expect(screen.getByLabelText('이름')).toHaveDisplayValue('😀'.repeat(30));
-    expect(screen.getByText('30/30')).toBeVisible();
   });
 });
 

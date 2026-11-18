@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, userEvent } from '@testing-library/react-native';
@@ -182,7 +183,6 @@ export async function openMain(
       department: '컴퓨터공학부',
       admissionYear: 2022,
       hashtags: [],
-      courseLevel: 'undergraduate',
       gender: null,
     },
     ...kept,
