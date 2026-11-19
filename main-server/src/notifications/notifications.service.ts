@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -25,6 +26,9 @@ const KINDS: ReadonlySet<string> = new Set<NotificationKind>([
   'room-ending',
   'room-window',
   'interest-new',
+  'step-changed',
+  'arrived',
+  'late',
 ]);
 
 function kept(told: Told, at: Date): Kept {

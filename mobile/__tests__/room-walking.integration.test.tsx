@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -136,6 +137,24 @@ describe("a member's walking time", () => {
 
     expect(hisLine()).toBe('김민준 · 위치 공유 중 · 301동 앞에 있어요');
     expect(hisRoutes()).toHaveLength(before);
+  });
+
+  it('says first that a member reported being late, on that member’s line only', async () => {
+    answerRoom(server, {
+      ...PICNIC,
+      members: PICNIC.holders.map((user) => ({
+        user,
+        state: user.name === '김민준' ? ('late' as const) : ('accepted' as const),
+        lateMinutes: user.name === '김민준' ? 5 : null,
+      })),
+    });
+    answerMyParty(server, myPicnicParty(ME_ID));
+    server.on('GET /walking-route', routeFor);
+
+    await openSharedRoom();
+
+    expect(hisLine()).toBe('김민준 · 5분 늦어요 · 위치 공유 중 · 301동 앞까지 도보 15분');
+    expect(within(screen.getByLabelText('멤버')).getAllByText(/늦어요/u)).toHaveLength(1);
   });
 });
 

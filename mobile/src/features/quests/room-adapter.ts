@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ShownQuest } from '@/api/quest-parts-types';
@@ -51,6 +52,8 @@ export interface MemberView {
   me: boolean;
   // While the User is in the Party: "위치 공유 중", "위치 꺼짐", "공유 일시정지" or "응답 대기". Null otherwise.
   state: { words: string; tone: 'live' | 'muted' | 'waiting' } | null;
+  // "5분 늦어요" for a member who reported being late, whether or not the User is in the Party. Null otherwise.
+  late: string | null;
   // The User sees the member on the map now.
   seen: boolean;
 }
@@ -168,6 +171,11 @@ function stateOf(id: string, myParty: MyParty | null, meId: string): MemberView[
   return member.visible ? { words: '위치 공유 중', tone: 'live' } : { words: '위치 꺼짐', tone: 'muted' };
 }
 
+function lateOf(quest: RoomSources['quest'], id: string): string | null {
+  const minutes = quest.members?.find(({ user }) => user.id === id)?.lateMinutes ?? null;
+  return minutes === null ? null : `${String(minutes)}분 늦어요`;
+}
+
 function membersOf(sources: RoomSources, inParty: boolean): MemberView[] {
   const { quest, myParty, seenFriends, meId } = sources;
   return quest.holders.map(({ id, name, department }) => ({
@@ -177,6 +185,7 @@ function membersOf(sources: RoomSources, inParty: boolean): MemberView[] {
     leader: quest.leader?.id === id,
     me: id === meId,
     state: inParty ? stateOf(id, myParty, meId) : null,
+    late: lateOf(quest, id),
     seen:
       id !== meId &&
       (seenFriends.includes(id) ||

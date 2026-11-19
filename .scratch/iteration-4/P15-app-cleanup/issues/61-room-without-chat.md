@@ -33,3 +33,8 @@ The room gets no chat. Members meet at a step's place (a Sub Quest with a point 
 - [x] On the emulator, a room of a 파티 ends with its members (and the invitations) above 나가기.
 
 ## Comments
+
+### Agent usage (2026-11-19)
+
+- Agent time: about 25 minutes in one side session, counting the design discussion that decided it and the removal (an estimate). The first part of the discussion, held in the orchestrating session, is not counted.
+- Tokens: input 16.34 M, of which 16.16 M cache reads and 0.18 M cache writes (196 uncached); output 48 k. No subagents.

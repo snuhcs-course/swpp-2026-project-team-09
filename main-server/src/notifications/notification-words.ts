@@ -5,6 +5,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { clockOf } from '../assistant/free-time/free-time.js';
@@ -102,10 +103,60 @@ function interestWords({
   };
 }
 
+// "14:10 정문 앞에서 만나기", or "'정문 앞에서 만나기' 취소".
+function stepLine({ stepTitle, startsAt, cancelled }: Of<'step-changed'>): string {
+  if (cancelled) {
+    return `'${stepTitle}' 취소`;
+  }
+  return startsAt === null ? stepTitle : `${clockOf(startsAt)} ${stepTitle}`;
+}
+
+// What a party's members would have said in words. Each rings, is about the member, and opens the party's room.
+function memberWords(told: Of<'step-changed'> | Of<'arrived'> | Of<'late'>): NotificationWords {
+  const card = { kind: 'party', id: told.questId };
+  if (told.kind === 'step-changed') {
+    const line = stepLine(told);
+    return {
+      title: `${withSubject(told.byName)} 일정을 바꿨어요`,
+      ahead: null,
+      line,
+      card,
+      about: told.byId,
+      rings: true,
+      body: `${line}.`,
+    };
+  }
+  if (told.kind === 'arrived') {
+    return {
+      title: `${withSubject(told.name)} 도착했어요`,
+      ahead: null,
+      line: told.placeLabel,
+      card,
+      about: told.userId,
+      rings: true,
+      body: `${told.placeLabel}에 있어요.`,
+    };
+  }
+  const arrival = told.arriveAt === null ? null : `${clockOf(new Date(told.arriveAt))} 도착`;
+  const line = arrival === null ? told.questTitle : `${arrival} · ${told.questTitle}`;
+  return {
+    title: `${withSubject(told.name)} ${String(told.minutes)}분 늦어요`,
+    ahead: null,
+    line,
+    card,
+    about: told.userId,
+    rings: true,
+    body: `${line}.`,
+  };
+}
+
 // `at` is the Notification's time.
 export function wordsOf(told: Told, at: Date): NotificationWords {
   if (told.kind === 'interest-new') {
     return interestWords(told);
+  }
+  if (told.kind === 'step-changed' || told.kind === 'arrived' || told.kind === 'late') {
+    return memberWords(told);
   }
   if (told.kind === 'leave-by') {
     return {

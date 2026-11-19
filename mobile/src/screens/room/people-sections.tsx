@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -121,12 +122,13 @@ function MemberRow({ room, actions, member, walk, onHandOver }: MemberRowProps):
   const show = useShowMember();
   // The Leader of the Party also takes the Holder out of it.
   const fromParty = activation.state === 'in' && activation.leadsParty && member.state?.tone !== 'waiting';
+  const words = [member.late, member.state?.words, walk].filter((part) => part !== null && part !== undefined);
   return (
     <PersonRow
       department={member.department}
       leader={member.leader}
-      line={member.state === null ? null : [member.state.words, ...(walk === undefined ? [] : [walk])].join(' · ')}
-      lineInk={member.state === null ? undefined : STATE_INK[member.state.tone]}
+      line={words.length === 0 ? null : words.join(' · ')}
+      lineInk={member.late === null ? (member.state === null ? undefined : STATE_INK[member.state.tone]) : color.quest}
       name={member.name}
       onPress={
         member.me

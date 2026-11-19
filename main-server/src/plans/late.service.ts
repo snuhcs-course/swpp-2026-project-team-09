@@ -2,10 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { SignalsService } from '../common/signals.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
+import { CLOCK, type Clock } from '../quests/clock.js';
 import { QUEST_INCLUDE } from '../quests/dto/quest.dto.js';
 import { QuestsService } from '../quests/quests.service.js';
 import { conflict } from '../quests/refusals.js';
@@ -14,13 +17,17 @@ import { type LateBody, type LateSignal } from './dto/late.dto.js';
 import { OwnWayReader } from './own-way-reader.service.js';
 
 // A Holder's report of being late: the Quest keeps the minutes, the Holder gets their own way as it now is, and the
-// other Holders get only the minutes and the arrival.
+// other Holders get only the minutes and the arrival, by a signal and a Notification.
 @Injectable()
 export class LateService {
+  private readonly logger = new Logger(LateService.name);
+
   constructor(
     private readonly quests: QuestsService,
     private readonly ways: OwnWayReader,
     private readonly signals: SignalsService,
+    private readonly notifications: NotificationsService,
+    @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
   async report(userId: string, questId: string, { minutes, location }: LateBody): Promise<OwnWay> {
@@ -32,9 +39,16 @@ export class LateService {
         throw conflict('QUEST_NOT_GATHERING', 'No step of this Quest ahead has a time and a Place.');
       }
       await tx.questHolder.update({ where: { id: holder.id }, data: { lateMinutes: minutes } });
-      return { gathered, leaderName: quest.leader.name, subQuestIds: quest.subQuests.map(({ id }) => id) };
+      const { name } = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } });
+      return {
+        gathered,
+        leaderName: quest.leader.name,
+        subQuestIds: quest.subQuests.map(({ id }) => id),
+        questTitle: quest.title,
+        name,
+      };
     });
-    const { gathered, leaderName, subQuestIds } = result;
+    const { gathered, leaderName, subQuestIds, questTitle, name } = result;
     // A Holder is busy with the Quest's own Sub Quests, which would leave no Free Time to set out in.
     const way = await this.ways.way(gathered, userId, leaderName, {
       now,
@@ -43,12 +57,16 @@ export class LateService {
       leaveOut: subQuestIds,
     });
     const signal: LateSignal = { questId, userId, minutes, arriveAt: way.arriveAt };
-    this.signals.send(
-      holderIds.filter((id) => id !== userId),
-      'late',
-      signal,
-    );
+    const others = holderIds.filter((id) => id !== userId);
+    this.signals.send(others, 'late', signal);
     this.signals.send(holderIds, 'quests-changed');
+    const told = { kind: 'late' as const, questId, questTitle, userId, name, minutes, arriveAt: way.arriveAt };
+    for (const holderId of others) {
+      // Not awaited: a Notification never fails the report.
+      this.notifications.schedule(holderId, told, this.clock.now()).catch((error: unknown) => {
+        this.logger.warn(`A Holder was not told of a late report: ${String(error)}`);
+      });
+    }
     return way;
   }
 }

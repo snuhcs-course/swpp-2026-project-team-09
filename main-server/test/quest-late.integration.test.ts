@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -20,7 +21,7 @@ import { refused, type SignalEvent, SignalWatcher, signalsWhile } from './signal
 // A late Holder's report at POST /quests/:questId/late over the started server: the Leader makes the worked example's
 // lunch with 민수 and 지은 from its Plan (the meeting at 301동 from 12:18, the meal at the Student Center from 12:33),
 // and 민수, whose Class in 302동 ends at 12:15, reports. Each test stands on a Tuesday of October 2088, which no other
-// file uses, at 11:50.
+// file uses, at 11:50, and the Notifications' on one of October 2089.
 
 const stage = new MealPlanStage();
 let watcher: SignalWatcher;
@@ -194,6 +195,32 @@ describe('민수, 5 minutes late', () => {
       { id: lunch.minsu.id, state: 'late', lateMinutes: 5 },
       { id: lunch.jieun.id, state: 'accepted', lateMinutes: null },
     ]);
+  });
+});
+
+const lateNoticesOf = async (user: TestUser): Promise<object[]> =>
+  z
+    .array(z.object({ kind: z.string() }).loose())
+    .parse((await withAccessToken(request(stage.app.getHttpServer()).get('/notifications'), user.accessToken)).body)
+    .filter(({ kind }) => kind === 'late');
+
+describe('민수, 5 minutes late, in Notifications', () => {
+  it('gives the Leader and 지은 one of the minutes and the arrival, and 민수 none', async () => {
+    const { lunch } = await fiveLate('2089-10-04');
+    const { title } = z
+      .object({ title: z.string() })
+      .parse((await getQuest(stage.app, stage.asker, lunch.questId)).body);
+    const told = {
+      id: `late:party:${lunch.questId}:${lunch.minsu.id}`,
+      title: '민수가 5분 늦어요',
+      line: `12:37 도착 · ${title}`,
+    };
+
+    await vi.waitFor(async () => {
+      const [asker, jieun] = await Promise.all([lateNoticesOf(stage.asker), lateNoticesOf(lunch.jieun)]);
+      expect([asker, jieun]).toMatchObject([[told], [told]]);
+    });
+    expect(await lateNoticesOf(lunch.minsu)).toEqual([]);
   });
 });
 

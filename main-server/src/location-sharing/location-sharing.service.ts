@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-19  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, ConflictException, HttpStatus, Inject, Injectable } from '@nestjs/common';
@@ -33,8 +34,13 @@ const ageMs = (since: string, at: string): number => new Date(at).getTime() - ne
 const positionRefused = (code: string, message: string): BadRequestException =>
   new BadRequestException({ statusCode: HttpStatus.BAD_REQUEST, error: 'Bad Request', code, message });
 
+// Told of each position kept, after it is stored. It must not throw.
+export type KeptListener = (userId: string, position: Position) => void;
+
 @Injectable()
 export class LocationSharingService {
+  private readonly kept: KeptListener[] = [];
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly campusBoundary: CampusBoundary,
@@ -45,6 +51,10 @@ export class LocationSharingService {
     @Inject(TRAVEL_PROVIDER) private readonly travel: TravelProvider,
     private readonly privateZones: PrivateZonesService,
   ) {}
+
+  onKept(listener: KeptListener): void {
+    this.kept.push(listener);
+  }
 
   // Turning it off clears the User's position.
   async setMasterSwitch(userId: string, on: boolean): Promise<void> {
@@ -155,6 +165,9 @@ export class LocationSharingService {
     const tells = placeChanged || renewal;
     const position = { ...uploaded, placeToldAt: tells ? uploaded.measuredAt : (before?.placeToldAt ?? null) };
     await this.positions.store(userId, position);
+    this.kept.forEach((listener) => {
+      listener(userId, { latitude: uploaded.latitude, longitude: uploaded.longitude });
+    });
     const viewers = [...(await this.visibility.viewersOf(userId))];
     const at = (level: SeenLevel): string[] => viewers.filter(([, seen]) => seen === level).map(([id]) => id);
     this.signals.send(at('exact'), 'position', this.visibility.shown(userId, 'exact', position));
