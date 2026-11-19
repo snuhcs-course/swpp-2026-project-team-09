@@ -3613,7 +3613,7 @@ calls throw when the database fails too, so a caller that must not fail catches 
 | `room-window`   | A room request's requester                    | 09:00 on the day the booking window opens for a request that waits for it | `예약 창이 열렸어요`                                       | `<M월 D일> 09:00 예약 창 열림` | `<요일> <start>–<end> 스터디`, such as `월 09:00–12:00 스터디`                      | `party:<questId>`                            | Yes   |
 | `interest-new`  | A User watching a match                       | The topics step reads a match                                             | `<title>이 떴어요`, or `<title> 모집이 떴어요` for a Quest | None                           | `<HH:MM> <Place>`                                                                   | `event:<globalEventId>` or `party:<questId>` | Yes   |
 | `step-changed`  | Every other Holder of the Quest               | A Holder adds, edits or cancels a step that has not ended                 | `<name>가 일정을 바꿨어요`                                 | None                           | `<HH:MM> <step's title>`, or `'<step's title>' 취소` for a cancelled step           | `party:<questId>`                            | Yes   |
-| `arrived`       | Every other Holder of the Quest               | A member sharing with the Quest's Party reaches the shown step's point    | `<name>가 도착했어요`                                      | None                           | The step's place                                                                    | `party:<questId>`                            | Yes   |
+| `arrived`       | Each other Holder who sees the member exactly | A member sharing with the Quest's Party reaches the shown step's point    | `<name>가 도착했어요`                                      | None                           | The step's place                                                                    | `party:<questId>`                            | Yes   |
 | `late`          | Every other Holder of the Quest               | A Holder reports being late                                               | `<name>가 <N>분 늦어요`                                    | None                           | `<HH:MM> 도착 · <Quest's title>`, or the Quest's title when no arrival is known     | `party:<questId>`                            | Yes   |
 
 A kind that rings is pushed to the User's phone when its time comes, with its title and a body under it: for a
@@ -3627,8 +3627,10 @@ no chat. Each is kept once per member who caused it (`about`), so a later one re
 `SubQuestsService` and `LateService` tell after the change is stored, without the answer waiting. `ArrivalsService`
 (`src/parties/`) hears each position `LocationSharingService` keeps: a User who is a member of a Quest's Party with
 its sharing on, and holds the Quest, has arrived within 50 m of the point of the step the map shows (the next step not
-ended, the attending one first), from 30 minutes before the step's time until it ends. Redis keeps
-`arrived:<userId>:<subQuestId>` for a day, so each member is told arrived once per step.
+ended, the attending one first), from 30 minutes before the step's time until it ends, or for a day after its time
+when it has no end. Only the Holders who see the member's position at `exact` (`VisibilityService.viewersOf`) are
+told, for the notice says where the member is. Redis keeps `arrived:<userId>:<subQuestId>:<startsAt>:<point>` until
+the step ends, so each member is told arrived once per step, and anew when the step moves to another time or point.
 
 The name is the User's name as stored, with the subject particle that fits its last syllable (이 or 가). An invitation
 the Leader cancels tells nobody. `InvitationsService` tells the Leader after the invitation's change is stored and

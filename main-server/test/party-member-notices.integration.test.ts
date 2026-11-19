@@ -12,9 +12,9 @@ import { z } from 'zod';
 import { clockOf } from '../src/assistant/free-time/free-time.js';
 import { befriend, signInUser, TestUser } from './friends.js';
 import { expectStatus, ON_CAMPUS, setMasterSwitch, uploadPosition } from './location-sharing.js';
-import { openParty } from './parties.js';
+import { joinParty, openParty } from './parties.js';
 import { answerInvitation, invitationOf } from './quest-recruiting.js';
-import { addSubQuest, cancelSubQuest, ownQuest } from './quests.js';
+import { addSubQuest, cancelSubQuest, editSubQuest, getQuest, ownQuest } from './quests.js';
 import { withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
 
@@ -85,10 +85,33 @@ const settle = (): Promise<void> =>
     setTimeout(resolve, 500);
   });
 
-// 민수 opens the Quest's Party, which shares his position, and turns his Master Switch on.
-async function minsuInParty(holders: Holders): Promise<void> {
-  await expectStatus(openParty(app, holders.minsu, { questId: holders.questId }), 201);
-  await expectStatus(setMasterSwitch(app, holders.minsu, true), 204);
+// 민수 opens the Quest's Party and 김리더 enters it, both sharing with it with their Master Switches on, so that each
+// sees where the other is.
+async function bothInParty(holders: Holders): Promise<void> {
+  const opened = await expectStatus(openParty(app, holders.minsu, { questId: holders.questId }), 201);
+  await expectStatus(joinParty(app, holders.leader, z.object({ id: z.string() }).parse(opened.body).id), 201);
+  await Promise.all([
+    expectStatus(setMasterSwitch(app, holders.minsu, true), 204),
+    expectStatus(setMasterSwitch(app, holders.leader, true), 204),
+  ]);
+}
+
+// 지은, 김리더's Friend, holds the Quest with her Master Switch on but stays out of its Party: she sees nothing of 민수.
+async function outsider({ leader, questId }: Holders): Promise<TestUser> {
+  const jieun = await signInUser(app, { name: '지은', department: '수학과' });
+  await befriend(app, leader, jieun);
+  await expectStatus(answerInvitation(app, jieun, await invitationOf(app, leader, questId, jieun), 'accept'), 201);
+  await expectStatus(setMasterSwitch(app, jieun, true), 204);
+  return jieun;
+}
+
+async function stepIdOf({ leader, questId }: Holders): Promise<string> {
+  const response = await expectStatus(getQuest(app, leader, questId), 200);
+  const [step] = z.object({ subQuests: z.array(z.object({ id: z.string() })) }).parse(response.body).subQuests;
+  if (step === undefined) {
+    throw new Error('The Quest has no step');
+  }
+  return step.id;
 }
 
 describe('A Holder changing a step', () => {
@@ -139,10 +162,11 @@ describe('A Holder changing a step', () => {
 });
 
 describe('A member of the Quest’s Party reaching the step’s point', () => {
-  it('tells the other Holder once, with the step’s place, and not the member', async () => {
+  it('tells the other Holder who sees the member once, with the step’s place, and not the member', async () => {
     const holders = await twoHolders(meeting(10));
     const { leader, minsu, questId } = holders;
-    await minsuInParty(holders);
+    const jieun = await outsider(holders);
+    await bothInParty(holders);
 
     await expectStatus(uploadPosition(app, minsu), 200);
     let first: object[] = [];
@@ -163,6 +187,31 @@ describe('A member of the Quest’s Party reaching the step’s point', () => {
 
     expect(await noticesOf(leader, 'arrived')).toEqual(first);
     expect(await noticesOf(minsu, 'arrived')).toEqual([]);
+    expect(await noticesOf(jieun, 'arrived')).toEqual([]);
+  });
+});
+
+describe('A member of the Quest’s Party reaching a moved step’s point', () => {
+  it('tells the other Holder anew', async () => {
+    const holders = await twoHolders(meeting(10));
+    const { leader, minsu, questId } = holders;
+    await bothInParty(holders);
+    await expectStatus(uploadPosition(app, minsu), 200);
+    await vi.waitFor(async () => {
+      expect(await noticesOf(leader, 'arrived')).toEqual([expect.objectContaining({ line: '301동 정문 앞' })]);
+    });
+
+    const moved = { latitude: ON_CAMPUS.latitude + 0.0009, longitude: ON_CAMPUS.longitude };
+    const subQuestId = await stepIdOf(holders);
+    await expectStatus(
+      editSubQuest(app, leader, { questId, subQuestId }, { ...meeting(10), place: { ...moved, label: '301동 후문' } }),
+      200,
+    );
+    await expectStatus(uploadPosition(app, minsu, moved), 200);
+
+    await vi.waitFor(async () => {
+      expect(await noticesOf(leader, 'arrived')).toEqual([expect.objectContaining({ line: '301동 후문' })]);
+    });
   });
 });
 
@@ -171,7 +220,7 @@ describe('A member of the Quest’s Party near the step', () => {
     const away = await twoHolders(meeting(10));
     const early = await twoHolders(meeting(45));
     const hidden = await twoHolders(meeting(10));
-    await Promise.all([minsuInParty(away), minsuInParty(early), minsuInParty(hidden)]);
+    await Promise.all([bothInParty(away), bothInParty(early), bothInParty(hidden)]);
     await expectStatus(
       withAccessToken(request(app.getHttpServer()).put('/parties/mine/sharing'), hidden.minsu.accessToken).send({
         on: false,
