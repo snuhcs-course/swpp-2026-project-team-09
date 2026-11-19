@@ -142,15 +142,6 @@ const ICONS = {
   ],
   phone: [{ rect: [5, 2, 14, 20, 2] }, { path: 'M11 18h2' }],
   monitor: [{ path: 'M3 4h18v12H3z' }, { path: 'M8 20h8' }, { path: 'M12 16v4' }],
-  // A site outside the app: the globe with an arrow out of it.
-  web: [
-    { path: 'M11 3a9 9 0 1 0 9 9' },
-    { path: 'M2 12h12' },
-    { path: 'M11 3a14 14 0 0 0-3.6 9 14 14 0 0 0 3.6 9' },
-    { path: 'M11 3a14 14 0 0 1 3 5' },
-    { path: 'M16 3h5v5' },
-    { path: 'M21 3l-7 7' },
-  ],
   arrowRight: [{ path: 'M5 12h14' }, { path: 'M13 6l6 6-6 6' }],
 } as const satisfies Record<string, readonly Stroke[]>;
 

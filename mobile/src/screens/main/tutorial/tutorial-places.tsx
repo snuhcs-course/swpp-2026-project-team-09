@@ -67,7 +67,7 @@ export function Places({
       })}
       {quest.links.map(({ label, url }) => (
         <Button
-          icon="web"
+          icon="globe"
           key={url}
           label={`${label} 열기`}
           onPress={() => {
