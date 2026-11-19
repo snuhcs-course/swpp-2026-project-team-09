@@ -86,6 +86,7 @@ One line per item: what it is about. The ticket holds the rest. A line gets its 
 60. The name and the department can be changed in onboarding and 프로필 편집, though the service runs on real names: both come from the SNU account and are fixed, with a line saying so. Ticket [60](issues/60-name-and-department-from-account.md).
 61. The room's 파티 채팅 is a mock that only the sender sees: it leaves the room, and members meet at a step's place. Ticket [61](issues/61-room-without-chat.md).
 62. With no chat, nobody hears that the meeting moved, that a latecomer has come, or that someone is late: each is a Notification to the other Holders. Ticket [62](issues/62-party-notices-without-words.md).
+63. The design system has the same globe icon twice, and no test holds what a tap on the map does while the tutorial draws on it: one `globe`, and a test of the tap. Ticket [63](issues/63-one-globe-icon-and-the-map-tap-test.md).
 
 ## Testing Decisions
 

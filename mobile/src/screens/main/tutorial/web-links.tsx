@@ -39,7 +39,7 @@ export function WebLinks({ links }: { links: readonly TutorialLink[] }): ReactEl
         }}
         style={[styles.button, open && styles.buttonOpen]}
       >
-        <Icon color={color.snuBlue} name="web" size={22} />
+        <Icon color={color.snuBlue} name="globe" size={22} />
       </Pressable>
       {open ? (
         <View accessibilityLabel="외부 사이트" style={styles.card}>
@@ -54,7 +54,7 @@ export function WebLinks({ links }: { links: readonly TutorialLink[] }): ReactEl
               }}
               style={styles.link}
             >
-              <Icon color={color.snuBlue} name="web" size={18} />
+              <Icon color={color.snuBlue} name="globe" size={18} />
               <Text style={styles.linkWords}>{label}</Text>
             </Pressable>
           ))}

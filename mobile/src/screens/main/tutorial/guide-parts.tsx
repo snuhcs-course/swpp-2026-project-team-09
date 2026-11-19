@@ -55,7 +55,7 @@ function RowLine({
       <Text style={[styles.number, last ? { backgroundColor: tone.ink, color: color.onPrimary } : styles.numberIdle]}>
         {String(at + 1)}
       </Text>
-      {url === undefined ? null : <Icon color={tutorialTone.link} name="web" size={16} />}
+      {url === undefined ? null : <Icon color={tutorialTone.link} name="globe" size={16} />}
       <Text style={[styles.rowWords, url !== undefined && styles.rowLink]}>{row.words}</Text>
       {row.note === undefined ? null : (
         <Text style={[styles.note, { backgroundColor: tone.soft, color: tone.ink }]}>{row.note}</Text>
@@ -163,14 +163,14 @@ export function LinkButton({ words, url }: { words: string; url: string }): Reac
       }}
       style={styles.link}
     >
-      <Icon color={color.snuBlue} name="web" size={20} />
+      <Icon color={color.snuBlue} name="globe" size={20} />
       <Text style={styles.linkWords}>{words}</Text>
       <Text style={styles.linkHost}>{hostOf(url)}</Text>
     </Pressable>
   );
 }
 
-const ACTION_ICON: Record<TutorialAction['kind'], IconName> = { route: 'route', link: 'web', ask: 'spark' };
+const ACTION_ICON: Record<TutorialAction['kind'], IconName> = { route: 'route', link: 'globe', ask: 'spark' };
 
 interface ActionsProps {
   actions: readonly TutorialAction[];
