@@ -1,7 +1,7 @@
 # deploy
 
 The Dev Server's deployment and its runbook. The Dev Server is server B of the two the course lends the team. It runs
-the four servers, PostgreSQL, Redis and the Demo Data under Docker Compose, behind a Caddy proxy, and keeps itself on
+the three servers, PostgreSQL, Redis and the Demo Data under Docker Compose, behind a Caddy proxy, and keeps itself on
 the tip of `development`: nothing pushes to it
 ([ADR 0003](../../docs/adr/0003-the-dev-server-pulls-its-deployments.md),
 [ADR 0004](../../docs/adr/0004-compose-not-kubernetes-on-the-course-servers.md)).
@@ -140,7 +140,7 @@ left, that a `CHANGE_ME` waits. Once the checkout exists, run it from there:
 
 The timers start at once, so the first deploy run stops at `secrets-missing`. Fill in the settings
 ([Filling the settings](#filling-the-settings)); the next run, within a minute, deploys by itself. The first build of
-the four servers' images takes several minutes. Follow it with `sudo journalctl -u snu-now-deploy --follow`, then open
+the three servers' images takes several minutes. Follow it with `sudo journalctl -u snu-now-deploy --follow`, then open
 `/health/ready` and `/deploy-status` at the Dev Server's address from a phone. Until the first deployment nothing
 listens on port 80 and the ingress answers 503; the status is then read on the server, in
 `/srv/team/snu-now-status/status.json`.
@@ -308,7 +308,7 @@ dc up --detach
 sudo systemctl start snu-now-deploy.timer
 ```
 
-with the name of the dump to restore in the fourth line. `psql` reports that the roles and the two databases already
+with the name of the dump to restore in the fourth line. `psql` reports that the `main` role and database already
 exist, because PostgreSQL creates them on an empty volume; those errors are expected. A `manual-` dump is not among the
 seven the deploy run keeps, so it stays until a person deletes it.
 

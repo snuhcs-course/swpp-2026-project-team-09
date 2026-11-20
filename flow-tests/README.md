@@ -1,6 +1,6 @@
 # flow-tests
 
-The SNU Now flow tests. They start the four servers as built, with PostgreSQL and Redis, and run the demo's flows and
+The SNU Now flow tests. They start the three servers as built, with PostgreSQL and Redis, and run the demo's flows and
 the A1 and A2 journeys from end to end through the servers' public interfaces, as the app would: HTTP to the main server
 and a Socket.IO connection to the socket server. `pnpm test` also checks the stacks themselves: the Dev Server's,
 through its proxy, and the harness that starts them. Each server's own rules are tested in that server's project; these

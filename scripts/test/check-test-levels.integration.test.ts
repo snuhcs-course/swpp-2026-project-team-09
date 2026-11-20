@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: test files in test/ and __tests__/ with no, one or two level suffixes, level suffixes outside them,
@@ -19,7 +20,7 @@ import { test } from 'node:test';
 const script = join(import.meta.dirname, '..', 'check-test-levels.ts');
 const aTest = "describe('rounds', () => {\n  it('places a request', () => {});\n});\n";
 
-// What the four servers' Vitest runs.
+// What the servers' Vitest runs.
 const SERVER = ['test/**/*.unit.test.ts', 'test/**/*.integration.test.ts'];
 const EVERY_LEVEL = ['{test,__tests__}/**/*.{unit,integration}.test.{ts,tsx}', '{test,__tests__}/**/*.e2e.test.ts'];
 
