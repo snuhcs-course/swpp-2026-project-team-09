@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,7 +14,6 @@ import { z } from 'zod';
 import { type PrismaClient } from '../src/generated/prisma/client.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { befriend, signInUser, type TestUser } from './friends.js';
-import { refuseMatchServer } from './match-server.js';
 import { patchProfile } from './profile.js';
 import { connectToDatabase } from './quests.js';
 import { withAccessToken } from './sign-in.js';
@@ -100,7 +100,7 @@ export class RoomStage {
   readonly replies: string[] = [];
 
   async start(settings: Record<string, string | undefined>): Promise<void> {
-    this.app = await startApp(settings, [], refuseKakao, refuseMatchServer);
+    this.app = await startApp(settings, [], refuseKakao);
     this.clock = this.app.get<Clock>(CLOCK);
     vi.spyOn(this.clock, 'now').mockReturnValue(NOW);
     this.prisma = connectToDatabase();

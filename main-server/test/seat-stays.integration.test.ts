@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,7 +14,6 @@ import { z } from 'zod';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { type TravelProvider } from '../src/travel/travel.js';
 import { signInUser, type TestUser } from './friends.js';
-import { refuseMatchServer } from './match-server.js';
 import { withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
 import { addClass } from './timetable.js';
@@ -42,7 +42,7 @@ const notificationSchema = z.object({
 });
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, undefined, [], travel);
+  app = await startApp(inject('settings'), [], refuseKakao, undefined, [], travel);
   vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(NOW);
   const { accessToken } = await signInUser(app);
   const listed = await withAccessToken(request(app.getHttpServer()).get('/places'), accessToken).expect(200);

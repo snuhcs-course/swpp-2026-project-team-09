@@ -7,9 +7,10 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-// Partitions: each setting missing; all but DATABASE_URL, REDIS_HOST and MATCH_SERVER_URL malformed or by a bound;
+// Partitions: each setting missing; all but DATABASE_URL and REDIS_HOST malformed or by a bound;
 // keys of each wrong kind; lists with the wrong separator. Valid values and bounds: .env.example and README.md.
 
 import { generateKeyPairSync } from 'node:crypto';
@@ -23,7 +24,7 @@ type Values = Record<string, string | undefined>;
 
 const example = parseEnv(readFileSync(fileURLToPath(new URL('../.env.example', import.meta.url)), 'utf8'));
 
-// What .env.example leaves to be made: the key pair of `pnpm keys:generate`, the two secrets of
+// What .env.example leaves to be made: the key pair of `pnpm keys:generate`, the secret of
 // `openssl rand -hex 32` (64 hex digits) and the Owner's Kakao key.
 const keys = es256KeyPair();
 const valid: Values = {
@@ -32,7 +33,6 @@ const valid: Values = {
   ACCESS_TOKEN_PUBLIC_KEY: keys.publicKey,
   KAKAO_REST_API_KEY: 'the-owners-kakao-rest-api-key',
   WORKER_TOKEN: '0123456789abcdef'.repeat(4),
-  MATCH_SERVER_TOKEN: 'fedcba9876543210'.repeat(4),
 };
 
 const p384 = generateKeyPairSync('ec', {
@@ -63,7 +63,6 @@ describe('settingsSchema', () => {
       INITIAL_ADMINISTRATOR_EMAILS: ['admin@example.com'],
       PUBLIC_URL: 'http://localhost:3000',
       ANDROID_CERTIFICATE_FINGERPRINTS: [sha256],
-      MATCH_SERVER_URL: 'http://localhost:3003',
     });
   });
 });
@@ -86,7 +85,7 @@ describe.each(['PORT', 'REDIS_PORT'])('settingsSchema: %s', (setting) => {
   });
 });
 
-describe.each(['DATABASE_URL', 'REDIS_HOST', 'MATCH_SERVER_URL'])('settingsSchema: %s', (setting) => {
+describe.each(['DATABASE_URL', 'REDIS_HOST'])('settingsSchema: %s', (setting) => {
   it(`missing → refused, naming ${setting}`, () => {
     expect(refused({ ...valid, [setting]: undefined })).toEqual([setting]);
   });
@@ -101,7 +100,7 @@ describe('settingsSchema: KAKAO_REST_API_KEY', () => {
   });
 });
 
-describe.each(['WORKER_TOKEN', 'MATCH_SERVER_TOKEN'])('settingsSchema: %s', (setting) => {
+describe.each(['WORKER_TOKEN'])('settingsSchema: %s', (setting) => {
   it.each([
     ['missing', undefined],
     ['of 31 characters', 'a'.repeat(31)],

@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -111,7 +112,6 @@ export class JudgementWorld {
     this.judging = await startApp(
       { ...this.posts.settings, AUTOMATIC_JUDGEMENT: 'on', JUDGEMENT_TIMEOUT_MS: '200', ...settings },
       [],
-      undefined,
       undefined,
       this.scripted.model,
     );

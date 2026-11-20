@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -42,7 +43,7 @@ export class InterestsStage {
     this.topics.answer('배드민턴', ['배드민턴']);
     this.topics.answer(TENNIS_LESSON, ['테니스']);
     this.topics.answer(TENNIS_CLUB, (inUse) => (inUse.includes('테니스') ? ['테니스'] : ['테니스동아리']));
-    this.app = await startApp(inject('settings'), [], undefined, undefined, this.topics.model);
+    this.app = await startApp(inject('settings'), [], undefined, this.topics.model);
     this.prisma = connectToDatabase();
     this.step = this.app.get((await import('../src/interests/topics-step.service.js')).TopicsStep);
     this.reader = this.app.get((await import('../src/interests/topics-reader.js')).TopicsReader);

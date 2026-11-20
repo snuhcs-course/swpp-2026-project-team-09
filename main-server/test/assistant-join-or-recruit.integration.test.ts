@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -12,7 +13,6 @@ import { z } from 'zod';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { signInUser, TestUser } from './friends.js';
-import { refuseMatchServer } from './match-server.js';
 import { connectToDatabase, joinQuest, ownQuest } from './quests.js';
 import { ScriptedModel, type Step } from './scripted-model.js';
 import { startApp } from './start-app.js';
@@ -30,7 +30,7 @@ let place301: string;
 const model = new ScriptedModel();
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model.model);
+  app = await startApp(inject('settings'), [], refuseKakao, model.model);
   prisma = connectToDatabase();
   leader = await signInUser(app);
   reader = await signInUser(app);

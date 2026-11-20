@@ -7,6 +7,7 @@
  * 2026-10-29  Fable 5.1  prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -18,7 +19,6 @@ import { ScriptedModel } from './scripted-model.js';
 import { signIn } from './sign-in.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
-import { refuseMatchServer } from './match-server.js';
 import { sendAsWorker } from './worker.js';
 
 // The chat Assistant's endpoint, its getMenus tool and its showOnMap presenter, with the scripted model in the model's
@@ -29,7 +29,7 @@ let accessToken: string;
 const model = new ScriptedModel();
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model.model);
+  app = await startApp(inject('settings'), [], refuseKakao, model.model);
   ({ accessToken } = await signIn(app));
 });
 

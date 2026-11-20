@@ -15,6 +15,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { DynamicModule, INestApplication, Type } from '@nestjs/common';
@@ -26,21 +27,18 @@ import { MODEL_FACTORY, type ModelFactory } from '../src/assistant/model-port.js
 import { httpAdapter } from '../src/common/http-adapter.js';
 import { useJsonBodyParsers } from '../src/common/json-body-limit.js';
 import { Settings } from '../src/common/settings.js';
-import { FETCH_MATCH_SERVER } from '../src/matching/match-server.js';
 import { FETCH_EXPO } from '../src/push/expo-push.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../src/travel/travel.js';
 import { TUTORIAL_FILE_PATH } from '../src/tutorial/tutorial-content.js';
 import { FETCH_KAKAO } from '../src/walking-route/walking-route.service.js';
 import { refuseExpoPush } from './expo-push.js';
 import { TestGoogleIdTokenVerifier } from './google.js';
-import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel } from './scripted-model.js';
 import { refuseKakao } from './walking-route.js';
 
 // AppModule validates the settings when it is imported, so it is imported afresh after the environment is set.
-// The test verifier accepts ID tokens from test/google.ts, `fetchKakao` answers in Kakao's place, `fetchMatchServer`
-// in the match server's and `model` in the Assistant's model's: by default a ScriptedModel without a script, which
-// fails every call.
+// The test verifier accepts ID tokens from test/google.ts, `fetchKakao` answers in Kakao's place and `model` in the
+// Assistant's model's: by default a ScriptedModel without a script, which fails every call.
 // `controllers` adds controllers that exist only in the tests, such as handlers that no feature has yet, and `modules`
 // modules that only the tests or the benchmark import, such as the one binding the benchmark's run observer. `travel`,
 // when given, answers in the place of the real Travel Times. `tutorialFile`, when given, is read as the tutorial's content
@@ -50,7 +48,6 @@ export async function startApp(
   settings: Partial<Record<keyof Settings, string | undefined>>,
   controllers: Type[] = [],
   fetchKakao: typeof fetch = refuseKakao,
-  fetchMatchServer: typeof fetch = refuseMatchServer,
   model: Model = new ScriptedModel().model,
   modules: (Type | DynamicModule)[] = [],
   travel?: TravelProvider,
@@ -77,8 +74,6 @@ export async function startApp(
     .useClass(TestGoogleIdTokenVerifier)
     .overrideProvider(FETCH_KAKAO)
     .useValue(fetchKakao)
-    .overrideProvider(FETCH_MATCH_SERVER)
-    .useValue(fetchMatchServer)
     .overrideProvider(MODEL_FACTORY)
     .useValue(modelFactory ?? ((): Model => model))
     .compile();

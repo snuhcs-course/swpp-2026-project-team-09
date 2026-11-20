@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication, Logger } from '@nestjs/common';
@@ -33,7 +34,7 @@ beforeAll(async () => {
       logged.push(String(message));
     });
   }
-  app = await startApp(inject('settings'), [], undefined, undefined, undefined, [], undefined, undefined, {
+  app = await startApp(inject('settings'), [], undefined, undefined, [], undefined, undefined, {
     fetchExpo: expo.fetch,
   });
   push = await pushServiceOf(app);

@@ -17,6 +17,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -103,10 +104,6 @@ export const settingsSchema = z
       .string()
       .transform((fingerprints) => fingerprints.split(',').map((fingerprint) => fingerprint.trim().toUpperCase()))
       .pipe(z.array(z.string().regex(/^(?:[0-9A-F]{2}:){31}[0-9A-F]{2}$/u, 'Expected a SHA-256 fingerprint'))),
-    // Where the match server is reached, such as http://localhost:3003.
-    MATCH_SERVER_URL: z.url(),
-    // The secret that this server and the match server send with each call to the other.
-    MATCH_SERVER_TOKEN: z.string().min(32),
     // The AI's keys (README.md: Assistant): the OpenRouter key, the one `llm.key` names `default`, empty when there is
     // none, and the others by name. The global setting `llm.key` chooses among them, and each provider's model is a
     // constant (src/common/llm-keys.ts).

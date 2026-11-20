@@ -7,6 +7,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -21,7 +22,6 @@ import { ScriptedModel } from './scripted-model.js';
 import { signIn } from './sign-in.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
-import { refuseMatchServer } from './match-server.js';
 
 // The chat Assistant's searchGlobalEvents and showGlobalEvents, with the scripted model in the model's place. The
 // files share the database, so each test seeds its events in a month of 2086 of its own, a year no other file uses:
@@ -33,7 +33,7 @@ let accessToken: string;
 const model = new ScriptedModel();
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model.model);
+  app = await startApp(inject('settings'), [], refuseKakao, model.model);
   prisma = connectToDatabase();
   ({ accessToken } = await signIn(app));
 });

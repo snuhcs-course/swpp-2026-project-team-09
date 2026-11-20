@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -123,7 +124,7 @@ const model = new MockLanguageModelV4({
 let app: INestApplication<Server>;
 
 beforeAll(async () => {
-  app = await startApp({ ...inject('settings'), TIMETABLE_READING_DAILY: '2' }, [], undefined, undefined, model);
+  app = await startApp({ ...inject('settings'), TIMETABLE_READING_DAILY: '2' }, [], undefined, model);
 });
 
 afterAll(async () => {

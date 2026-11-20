@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -16,7 +17,6 @@ import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { type TravelProvider } from '../src/travel/travel.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { befriend, signInUser, type TestUser } from './friends.js';
-import { refuseMatchServer } from './match-server.js';
 import { menusMessage, restaurant } from './menus.js';
 import { ScriptedModel, type Step } from './scripted-model.js';
 import { withAccessToken } from './sign-in.js';
@@ -60,7 +60,7 @@ export class MealPlanStage {
 
   async start(): Promise<void> {
     const { model } = this.model;
-    this.app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model, [], this.travel);
+    this.app = await startApp(inject('settings'), [], refuseKakao, model, [], this.travel);
     vi.spyOn(this.app.get<Clock>(CLOCK), 'now').mockImplementation(() => this.now);
     // Imported after startApp, so that it is the class AppModule registers.
     const { RestaurantHours } = await import('../src/menus/restaurant-hours.js');

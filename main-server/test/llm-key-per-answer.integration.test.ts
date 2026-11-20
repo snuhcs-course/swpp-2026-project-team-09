@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -15,7 +16,6 @@ import { type ModelFactory } from '../src/assistant/model-port.js';
 import { type GlobalSettings } from '../src/global-settings/global-settings.service.js';
 import { ask, captureLogs, postAssistantMessages } from './assistant.js';
 import { connect, seededDatabase } from './containers.js';
-import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel } from './scripted-model.js';
 import { signIn } from './sign-in.js';
 import { startApp } from './start-app.js';
@@ -62,7 +62,6 @@ async function pod(settings: Record<string, string> = KEYS): Promise<{
     { ...database.settings, ...settings },
     [],
     refuseKakao,
-    refuseMatchServer,
     undefined,
     [],
     undefined,

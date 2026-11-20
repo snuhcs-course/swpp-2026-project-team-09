@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -32,7 +33,7 @@ const silent = new ScriptedModel();
 
 beforeAll(async () => {
   await world.start();
-  off = await startApp({ ...world.posts.settings, AUTOMATIC_JUDGEMENT: 'off' }, [], undefined, undefined, silent.model);
+  off = await startApp({ ...world.posts.settings, AUTOMATIC_JUDGEMENT: 'off' }, [], undefined, silent.model);
   judgements = off.get((await import('../src/global-events/judgements.service.js')).JudgementsService);
   step = off.get((await import('../src/global-events/publication-step.service.js')).PublicationStepService);
 });
@@ -52,7 +53,6 @@ describe('With automatic publication off', () => {
     const notPublishing = await startApp(
       { ...world.posts.settings, AUTOMATIC_JUDGEMENT: 'on', AUTOMATIC_PUBLICATION: 'off' },
       [],
-      undefined,
       undefined,
       world.scripted.model,
     );
@@ -136,7 +136,6 @@ describe("A Judgement's key", () => {
     const keyed = await startApp(
       { ...world.posts.settings, AUTOMATIC_JUDGEMENT: 'off', LLM_KEYS: '{"claude":"sk-ant-test-claude-key"}' },
       [],
-      undefined,
       undefined,
       undefined,
       [],

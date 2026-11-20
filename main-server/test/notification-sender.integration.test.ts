@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -48,7 +49,7 @@ let clock: Clock;
 
 beforeAll(async () => {
   [app, watcher] = await Promise.all([
-    startApp(inject('settings'), [], undefined, undefined, undefined, [], undefined, undefined, {
+    startApp(inject('settings'), [], undefined, undefined, [], undefined, undefined, {
       fetchExpo: expo.fetch,
     }),
     SignalWatcher.start(),

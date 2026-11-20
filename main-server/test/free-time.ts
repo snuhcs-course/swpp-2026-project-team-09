@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -14,7 +15,6 @@ import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { SeedTravel, type TravelProvider } from '../src/travel/travel.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { signInUser, TestUser } from './friends.js';
-import { refuseMatchServer } from './match-server.js';
 import { connectToDatabase, ownQuest } from './quests.js';
 import { ScriptedModel, type Step } from './scripted-model.js';
 import { withAccessToken } from './sign-in.js';
@@ -121,7 +121,7 @@ export class FreeTimeStage {
       walkingSeconds: (from, to) => this.seedTravel.walkingSeconds(from, to),
     };
     const { model } = this.model;
-    this.app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model, [], travel);
+    this.app = await startApp(inject('settings'), [], refuseKakao, model, [], travel);
     vi.spyOn(this.app.get<Clock>(CLOCK), 'now').mockImplementation(() => this.now);
     this.prisma = connectToDatabase();
     this.leader = await signInUser(this.app);

@@ -4,6 +4,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -22,7 +23,6 @@ import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { connect, type SeededDatabase, seededDatabase } from './containers.js';
 import { unseeded } from './eval-refs.ts';
-import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
@@ -169,7 +169,7 @@ describe('The world the cases refer to', () => {
 
   beforeAll(async () => {
     database = await seededDatabase(inject('settings'));
-    app = await startApp(database.settings, [], refuseKakao, refuseMatchServer, model.model);
+    app = await startApp(database.settings, [], refuseKakao, model.model);
     vi.spyOn(app.get<Clock>(CLOCK), 'now').mockImplementation(() => new Date(WORLD_CLOCKS.p4));
     world = await seedP4World(app, database.url);
   });
