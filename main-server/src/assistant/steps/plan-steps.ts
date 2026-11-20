@@ -5,7 +5,13 @@
  ******************************************************************************/
 
 import { type PlaceDto } from '../../places/dto/place.dto.js';
-import { type AnswerReply, type MealInput, type PlacePoint, type ReplyStep } from '../dto/answer.dto.js';
+import {
+  type AnswerReply,
+  type MealInput,
+  type PlacePoint,
+  type PlanInput,
+  type ReplyStep,
+} from '../dto/answer.dto.js';
 import { type Card, type ToolContext } from '../feature.js';
 import { onDay } from '../free-time/free-time.js';
 import { windowOf } from '../gathering/plan-conditions.js';
@@ -89,8 +95,14 @@ export function noteNotDone(context: Pick<ToolContext, 'presented' | 'capabiliti
   context.presented.notDone = [...(context.presented.notDone ?? []), step];
 }
 
-// What a meal's plan is called when none was found.
+// What a plan is called when none was found: a meal by its meal, the rest by their kind.
 const MEAL_WORDS: Record<MealInput['meal'], string> = { lunch: '점심', dinner: '저녁' };
+const KIND_WORDS: Record<Exclude<PlanInput['kind'], 'meal'>, string> = {
+  meet: '만남',
+  events: '행사',
+  quests: '파티',
+  'new-quest': '새 파티',
+};
 
 // The answer's step: its first Plan, or why it has none.
 export function answerStep(answer: AnswerReply): ReplyStep {
@@ -112,7 +124,7 @@ export function answerStep(answer: AnswerReply): ReplyStep {
   const start = input.kind === 'meal' ? windowOf(input).start : null;
   return {
     kind: input.kind,
-    title: input.kind === 'meal' ? MEAL_WORDS[input.meal] : '',
+    title: input.kind === 'meal' ? MEAL_WORDS[input.meal] : KIND_WORDS[input.kind],
     place: null,
     from: null,
     startAt: start === null ? null : koreaTime(start),

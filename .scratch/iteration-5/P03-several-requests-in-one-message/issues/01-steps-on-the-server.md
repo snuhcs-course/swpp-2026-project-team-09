@@ -20,7 +20,7 @@ Native files: none. Releases: the main server only. An app that does not know `s
 `ReplyStep` in `dto/answer.dto.ts`, and an optional `steps: ReplyStep[]` on the reply, sent only when there are two or more:
 
 - `kind`: `seat` or `room` for a booking, or the plan input's kind (`meal`, `meet`, `events`, `quests`, `new-quest`).
-- `title`: "7층 7A 열람실 2 구역", "학생회관식당에서 저녁"; for a meal with no plan, "점심" or "저녁".
+- `title`: "7층 7A 열람실 2 구역", "학생회관식당에서 저녁"; for a plan that found nothing, "점심" or "저녁" for a meal, else "만남", "행사", "파티" or "새 파티".
 - `place` and `from`, as `PlacePoint`s; `startAt` and `endAt`, Korea time with the offset; each null when unknown.
 - `status`: `shown` or `not-done`, with `reason` for a step not done.
 - `shows`: the library card's key, the answer, or nothing.
@@ -71,7 +71,7 @@ The line names the meal's start: "3식당 · 14:00 도착" for a lunch from 14:0
 - [x] A start the User names for the meal is kept. (Integration test.)
 - [x] A seat asked for the next day: its step is `not-done` with "당일만 예약할 수 있어요", and lunch is still planned from 62-1동. (Integration test.)
 - [x] Lunch alone, and a seat alone, have no `steps`; lunch alone sets out from the Class before it. (Integration test.)
-- [x] Time order, the step a meal follows, a User's own start kept, and a refused booking's times. (Unit tests.)
+- [x] Time order, the step a meal follows, a User's own start kept, a refused booking's times, and the title and reason of a plan that found nothing. (Unit tests.)
 - [x] The arrival line says the meal's start. (Unit test, which fails on the old line.)
 - [x] The evaluation's `steps` check. (Unit tests.)
 - [x] Through the real model (`pnpm eval --world p4-answer --category several-steps`, Claude Haiku 5.5 on OpenRouter, once each): both two-step cases give the seat and then dinner from 62-1동 at 19:04, the refused seat with its reason, and dinner alone no steps. The model's sentence names the same dinner as the answer.

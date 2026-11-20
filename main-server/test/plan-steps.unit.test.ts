@@ -4,8 +4,14 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type MealInput, type ReplyStep } from '../src/assistant/dto/answer.dto.js';
-import { chainedInput, inTimeOrder, refusedBookingStep, stepBefore } from '../src/assistant/steps/plan-steps.js';
+import { type AnswerReply, type MealInput, type ReplyStep } from '../src/assistant/dto/answer.dto.js';
+import {
+  answerStep,
+  chainedInput,
+  inTimeOrder,
+  refusedBookingStep,
+  stepBefore,
+} from '../src/assistant/steps/plan-steps.js';
 
 // The order of a message's steps and the step a meal sets out from (P03), on a made-up Tuesday.
 
@@ -82,5 +88,26 @@ describe('The steps of one message', () => {
       reason: '좌석은 당일만 예약할 수 있어요',
       shows: null,
     });
+  });
+});
+
+// An answer of these conditions that found no plan.
+const none = (input: AnswerReply['input']): AnswerReply => ({
+  input,
+  chips: [],
+  plans: [],
+  dropped: [],
+  noPlan: { reason: 'no-fit', lines: [[{ text: '그 시간에는 비는 시간이 없어요', strong: false }]] },
+});
+
+describe('A plan that found nothing', () => {
+  it('is named by its meal or its kind, with its lines as the reason', () => {
+    expect(answerStep(none(dinner()))).toMatchObject({
+      title: '저녁',
+      startAt: `${DATE}T19:00:00+09:00`,
+      status: 'not-done',
+      reason: '그 시간에는 비는 시간이 없어요',
+    });
+    expect(answerStep(none({ kind: 'events', date: DATE, eventIds: null })).title).toBe('행사');
   });
 });
