@@ -5,6 +5,7 @@
 # 2026-10-28  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-03  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-21  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Deploys a Release to Production: a pushed tag snunow/<target>/YY.MM.DD-N deploys its target at the tag's commit once
@@ -106,7 +107,7 @@ jobs:
         run: |
           aws eks update-kubeconfig --name "$CLUSTER_NAME"
           .github/release/release.sh deploy "$REGISTRY" "$SERVER" "$COMMIT"
-      - name: Delete the retired servers' objects, and the settings and secrets no pod uses
+      - name: Delete the settings and secrets no pod uses
         run: .github/release/release.sh clean
 
   # Publishes the commit's JavaScript bundle to EAS Update for Android and iOS. For `all` it starts only once every
