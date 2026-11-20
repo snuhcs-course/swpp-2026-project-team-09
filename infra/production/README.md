@@ -98,7 +98,7 @@ kubeconfig in the same way. Its automatic EKS integration is on paid plans only,
 ### Looking into a problem
 
 **Logs.** The commands below are for the main server; the other servers are `socket-server`, `worker-server`,
-`match-server`, and `admin`.
+and `admin`.
 
 ```bash
 kubectl --namespace snunow logs --selector app=main-server --prefix --tail=200
@@ -119,8 +119,8 @@ kubectl --namespace snunow rollout status deployment/main-server
 
 In Freelens, a Deployment under **Workloads** › **Deployments** has **Restart** in its menu. A restart replaces the
 pods with the same image and settings; a changed parameter reaches a server only with a Release. The main and socket
-servers and the admin site start a new pod before stopping an old one. The worker and match servers use `Recreate`, so
-each stops for the time its new pod takes to become ready.
+servers and the admin site start a new pod before stopping an old one. The worker server uses `Recreate`, so it
+stops for the time its new pod takes to become ready.
 
 **Forwarding a port.** This reaches a server from the laptop without the load balancer:
 
@@ -129,7 +129,7 @@ kubectl --namespace snunow port-forward service/main-server 3000:3000
 curl http://localhost:3000/health/ready
 ```
 
-The ports are the servers' own: 3000 to 3003 for the main, socket, worker, and match servers, 3100 for the admin site,
+The ports are the servers' own: 3000 to 3002 for the main, socket, and worker servers, 3100 for the admin site,
 and 6379 for Redis. In Freelens, a Service's page has **Forward** beside each port.
 
 ### Logs last as long as their pod
@@ -262,24 +262,23 @@ RDS keeps automated backups for 7 days and can restore the database to any momen
 keeps a final snapshot, named `snunow-final-` and the instance's creation time in UTC.
 
 Terraform generates the master user's password and keeps it in the state. The master user prepares each new database
-once, with the database Job below. The servers then connect as their own roles, `main` and `match`, each of which owns
-the database of the same name. The Release workflow assembles each server's `DATABASE_URL` in this form, with the
+once, with the database Job below. The main server then connects as its own role, `main`, which owns the
+database of the same name. The Release workflow assembles its `DATABASE_URL` in this form, with the
 `database_endpoint` output as the host:
 
 ```text
 postgresql://main:<password>@<database_endpoint>:5432/main?sslmode=verify-full
-postgresql://match:<password>@<database_endpoint>:5432/match?sslmode=verify-full
 ```
 
-RDS accepts only TLS connections. The main-server and match-server images carry RDS's CA bundle and point
-`NODE_EXTRA_CA_CERTS` at it, so with `sslmode=verify-full` the servers verify the database's certificate and host name.
+RDS accepts only TLS connections. The main-server image carries RDS's CA bundle and points
+`NODE_EXTRA_CA_CERTS` at it, so with `sslmode=verify-full` the server verifies the database's certificate and host name.
 Prisma's migrations, which know no `verify-full`, fall back to `prefer` and still connect over TLS.
 
 ### Preparing a new database
 
 `k8s/database-setup.yaml` is a Job that a team member runs once for each new database, after the apply that creates it
-and before the first Release. As the master user, it creates the `main` and `match` roles with their passwords, a
-database owned by each, and the PostGIS extension in `main`. The Release never applies it.
+and before the first Release. As the master user, it creates the `main` role with its password, a
+database it owns, and the PostGIS extension in it. The Release never applies it.
 
 Its pod carries the labels `app=database-setup` and `database-client=true`, which let it download RDS's CA bundle and
 reach the database ([below](#network-policies)). It reads the Secret `database-setup`, which is created by hand just
@@ -291,12 +290,10 @@ before it and deleted after it:
 | `PGUSER`            | `terraform output -raw database_master_username` |
 | `PGPASSWORD`        | `terraform output -raw database_master_password` |
 | `MAIN_DB_PASSWORD`  | The `main` role's new password                   |
-| `MATCH_DB_PASSWORD` | The `match` role's new password                  |
 
-The two new passwords also go into the account's Parameter Store, as the `SecureString` parameters
-`/snunow/production/main-db-password` and `/snunow/production/match-db-password`, from which the Release workflow
-assembles the servers' `DATABASE_URL`. Generate them in the same shell that creates the Secret, so that the Job and the
-parameters get the same values. `--overwrite` also replaces a value the account already holds, for example one copied
+The new password also goes into the account's Parameter Store, as the `SecureString` parameter
+`/snunow/production/main-db-password`, from which the Release workflow assembles the main server's `DATABASE_URL`.
+Generate it in the same shell that creates the Secret, so that the Job and the parameter get the same value. `--overwrite` also replaces a value the account already holds, for example one copied
 from account A in a move, or one kept from an earlier database.
 
 In `infra/production/terraform`, signed in to the account, with kubectl pointed at the cluster:
@@ -305,25 +302,21 @@ In `infra/production/terraform`, signed in to the account, with kubectl pointed 
 aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-production
 
 MAIN_DB_PASSWORD=$(openssl rand -hex 32)
-MATCH_DB_PASSWORD=$(openssl rand -hex 32)
 aws ssm put-parameter --region ap-northeast-2 --name /snunow/production/main-db-password \
   --type SecureString --value "$MAIN_DB_PASSWORD" --overwrite
-aws ssm put-parameter --region ap-northeast-2 --name /snunow/production/match-db-password \
-  --type SecureString --value "$MATCH_DB_PASSWORD" --overwrite
 
 kubectl --namespace snunow create secret generic database-setup \
   --from-literal=PGHOST="$(terraform output -raw database_endpoint)" \
   --from-literal=PGUSER="$(terraform output -raw database_master_username)" \
   --from-literal=PGPASSWORD="$(terraform output -raw database_master_password)" \
-  --from-literal=MAIN_DB_PASSWORD="$MAIN_DB_PASSWORD" \
-  --from-literal=MATCH_DB_PASSWORD="$MATCH_DB_PASSWORD"
+  --from-literal=MAIN_DB_PASSWORD="$MAIN_DB_PASSWORD"
 kubectl apply -f ../k8s/database-setup.yaml
 kubectl --namespace snunow wait --for=condition=complete job/database-setup --timeout=3m
 kubectl --namespace snunow logs job/database-setup --all-containers
 kubectl --namespace snunow delete job/database-setup secret/database-setup
 ```
 
-The log shows `CREATE ROLE`, `GRANT ROLE`, `CREATE DATABASE`, and `REVOKE` for each role, then `CREATE EXTENSION`.
+The log shows `CREATE ROLE`, `GRANT ROLE`, `CREATE DATABASE`, and `REVOKE`, then `CREATE EXTENSION`.
 Deleting the Secret takes the master password out of the cluster.
 
 The Job stops at its first error and is not retried, because its statements cannot run twice. If `wait` times out, the
@@ -348,10 +341,9 @@ database, and `SET ROLE main;` makes what you create there belong to the server'
 
 ### A migration left halfway (P3009)
 
-The main and match servers apply their pending migrations each time they start. A migration that stopped partway, for
+The main server applies its pending migrations each time it starts. A migration that stopped partway, for
 example because its pod was killed, makes every later start fail with Prisma's error P3009, and the server's pods keep
-restarting. A team member resolves it once by hand. The commands are for the main server; for the match server, write
-`match-server` for `main-server`, and `match` for `main`.
+restarting. A team member resolves it once by hand.
 
 1. Make a copy of one of the server's pods, and open a shell in it. The copy has the pod's image and `DATABASE_URL`,
    but sleeps instead of running the server. It has none of the pod's labels, so no Service sends to it, and the label
@@ -393,13 +385,12 @@ allowed connections is `k8s/test/allowed-connections.txt`:
 
 - every pod asks CoreDNS in `kube-system`, on port 53;
 - the load balancer reaches `main-server`, `socket-server`, and `admin` on their ports;
-- `main-server` reaches Redis, `match-server`, the database, and the internet on 443;
+- `main-server` reaches Redis, the database, and the internet on 443;
 - `socket-server` reaches Redis;
 - `worker-server` reaches `main-server` and the internet on 443;
-- `match-server` reaches `main-server` and the database;
 - `admin` reaches `main-server`.
 
-Besides `main-server` and `match-server`, only pods labelled `database-client=true` reach the database. A pod started
+Besides `main-server`, only pods labelled `database-client=true` reach the database. A pod started
 by hand that needs it carries that label: psql and the copy above do, and so does the database Job, whose label
 `app=database-setup` also lets it download RDS's CA bundle. A `kubectl exec` into a server's pod, such as a Collection
 run by hand in the worker, has that server's allowances.
@@ -451,7 +442,7 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
    done
    ```
 
-5. **The other parameters.** Put the seven parameters under `/snunow/production/` that the database's steps did not,
+5. **The other parameters.** Put the six parameters under `/snunow/production/` that the database's steps did not,
    with Production's own values, never the Dev Server's. The key pair is stored as PEM with real line breaks. A PEM
    starts with `-`, so it goes in as `--value=...`, which the CLI cannot take for an option. `read -rs` takes a value
    typed or pasted without showing it, and keeps it out of the shell's history:
@@ -465,8 +456,6 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
      --type SecureString --value="$PUBLIC_KEY" --overwrite
 
    aws ssm put-parameter --region ap-northeast-2 --name /snunow/production/worker-token \
-     --type SecureString --value "$(openssl rand -hex 32)" --overwrite
-   aws ssm put-parameter --region ap-northeast-2 --name /snunow/production/match-server-token \
      --type SecureString --value "$(openssl rand -hex 32)" --overwrite
 
    read -rs KAKAO_REST_API_KEY
@@ -484,7 +473,7 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
 
    The Kakao key is the REST API key of the team's Kakao app, and the OpenRouter key is the Assistant's
    (`main-server/.env.example` says how to make one). The administrators' addresses are those the team members sign in
-   to the admin site with, separated by commas. The last command lists the nine parameters. The AI's other keys, the
+   to the admin site with, separated by commas. The last command lists the seven parameters. The AI's other keys, the
    `llm-key-<name>` parameters, are added later and only when wanted ([The AI's keys](#the-ais-keys)).
 
 6. **The consoles, by hand.**
@@ -523,10 +512,9 @@ the Release workflow, which deploys the target at that commit.
 | `main-server`   | The main server                                               |
 | `socket-server` | The socket server                                             |
 | `worker-server` | The worker server                                             |
-| `match-server`  | The match server                                              |
 | `admin`         | The admin site                                                |
 | `app`           | The app's bundle, published to EAS Update                     |
-| `all`           | The five servers, then the app's bundle, at the tagged commit |
+| `all`           | The four servers, then the app's bundle, at the tagged commit |
 
 `all` is for the first deploy, for a change that spans servers, and for rolling a changed setting or secret value to
 every server. `app` is for a change to the app alone ([The app's bundle](#the-apps-bundle)). `YY.MM.DD` is the day in
@@ -556,7 +544,7 @@ takes up a changed setting or secret value when it is next deployed.
 
 The servers are separate services, so different servers may run different commits. A change that spans servers is
 released in an order that keeps the old and new versions working together, for example the main server's new route
-before the match server that calls it. Or it goes out as one `all` Release.
+before the worker server that calls it. Or it goes out as one `all` Release.
 
 ### Stopping automatic publication
 
@@ -669,7 +657,7 @@ The run appears in the repository's **Actions** tab under the Release workflow, 
    as `-`, for example `main-server-26.11.13-1`. An image already built for the commit is tagged, not built again.
 4. A job for each server it deploys applies the server's target and waits until its Deployment has rolled out. A
    Deployment that does not become ready fails the run. The main and socket servers and the admin site keep their old
-   pods serving then; the worker and match servers, which use `Recreate`, stay down until a working Release.
+   pods serving then; the worker server, which uses `Recreate`, stays down until a working Release.
 5. For `app` and `all`, the `release app` job publishes the bundle ([The app's bundle](#the-apps-bundle)). For `all`
    it starts only once every server job has succeeded, so a new bundle never calls a server that is not there yet; a
    failed or cancelled server job skips it.
@@ -696,7 +684,7 @@ Never deploy again across a migration. Migrations only move forward, so a server
 fail. To see whether Releases since the earlier one brought a migration:
 
 ```bash
-git diff --stat <earlier tag> <current tag> -- main-server/prisma/migrations match-server/prisma/migrations
+git diff --stat <earlier tag> <current tag> -- main-server/prisma/migrations
 ```
 
 If any did, fix with a new Release instead.
@@ -1120,27 +1108,27 @@ aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-p
    aws ssm get-parameters-by-path --region ap-northeast-2 --path /snunow/production --query 'Parameters[].Name'
    ```
 
-   The last command lists the nine parameters in B, and any `llm-key-<name>` parameters. A's stay as they are.
+   The last command lists the seven parameters in B, and any `llm-key-<name>` parameters. A's stay as they are.
 
 5. **B's first Release.** With `kubectx snunow-production-b`, [prepare B's database](#preparing-a-new-database),
    leaving out its first command, which would point `snunow-production` at B. Its `--overwrite` puts B's new database
    passwords over the copied ones. Set the repository variables to B's outputs
    ([First setup](#first-setup), step 4). From then on every Release deploys to B. Push an `all` Release, which
-   deploys all five servers to B at one commit and makes B's ALB. Once it has rolled out, stop B's servers:
+   deploys all four servers to B at one commit and makes B's ALB. Once it has rolled out, stop B's servers:
 
    ```bash
    kubectl --context snunow-production-b --namespace snunow scale deployment \
-     main-server socket-server worker-server match-server admin --replicas=0
+     main-server socket-server worker-server admin --replicas=0
    ```
 
 6. **The data.** The app is down for 10 to 30 minutes from here, and no write is lost. Stop A's servers, and dump A's
-   two databases from a `postgres:18` pod in A's cluster:
+   database from a `postgres:18` pod in A's cluster:
 
    ```bash
    unset AWS_PROFILE
    terraform init -reconfigure -backend-config=account-a.s3.tfbackend
    kubectl --context snunow-production --namespace snunow scale deployment \
-     main-server socket-server worker-server match-server admin --replicas=0
+     main-server socket-server worker-server admin --replicas=0
    kubectl --context snunow-production --namespace snunow run dump --restart=Never --image=postgres:18 \
      --labels=database-client=true \
      --env=PGHOST="$(terraform output -raw database_endpoint)" \
@@ -1149,14 +1137,12 @@ aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-p
      --env=PGSSLMODE=require --command -- sleep infinity
    kubectl --context snunow-production --namespace snunow wait --for=condition=Ready pod/dump
    kubectl --context snunow-production --namespace snunow exec dump -- pg_dump -Fc --dbname=main --file=/tmp/main.dump
-   kubectl --context snunow-production --namespace snunow exec dump -- pg_dump -Fc --dbname=match --file=/tmp/match.dump
    kubectl --context snunow-production --namespace snunow cp dump:/tmp/main.dump main.dump
-   kubectl --context snunow-production --namespace snunow cp dump:/tmp/match.dump match.dump
    kubectl --context snunow-production --namespace snunow delete pod dump
    ```
 
-   Copy the dumps into a pod in B's cluster. There, drop the two databases that B's first Release migrated and seeded,
-   and restore A's in their place. `--create` makes each database again with its owner and settings from the dump:
+   Copy the dumps into a pod in B's cluster. There, drop the database that B's first Release migrated and seeded,
+   and restore A's in its place. `--create` makes the database again with its owner and settings from the dump:
 
    ```bash
    export AWS_PROFILE=account-b
@@ -1169,24 +1155,21 @@ aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-p
      --env=PGSSLMODE=require --command -- sleep infinity
    kubectl --context snunow-production-b --namespace snunow wait --for=condition=Ready pod/restore
    kubectl --context snunow-production-b --namespace snunow cp main.dump restore:/tmp/main.dump
-   kubectl --context snunow-production-b --namespace snunow cp match.dump restore:/tmp/match.dump
    kubectl --context snunow-production-b --namespace snunow exec restore -- \
-     psql --dbname=postgres --command='DROP DATABASE main' --command='DROP DATABASE match'
+     psql --dbname=postgres --command='DROP DATABASE main'
    kubectl --context snunow-production-b --namespace snunow exec restore -- \
      pg_restore --create --exit-on-error --dbname=postgres /tmp/main.dump
-   kubectl --context snunow-production-b --namespace snunow exec restore -- \
-     pg_restore --create --exit-on-error --dbname=postgres /tmp/match.dump
    kubectl --context snunow-production-b --namespace snunow delete pod restore
-   rm main.dump match.dump
+   rm main.dump
    ```
 
-   A restore that stops at an error leaves A's data untouched: drop that database again and repeat its restore. Then
+   A restore that stops at an error leaves A's data untouched: drop the database again and repeat the restore. Then
    start B's servers:
 
    ```bash
    kubectl --context snunow-production-b --namespace snunow scale deployment main-server socket-server --replicas=2
    kubectl --context snunow-production-b --namespace snunow scale deployment \
-     worker-server match-server admin --replicas=1
+     worker-server admin --replicas=1
    ```
 
 7. **The records.** In A's zone, point `api` and `admin` at B's ALB. With the two validation records, the move edits
