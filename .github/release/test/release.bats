@@ -9,12 +9,12 @@
 # 2026-11-15  Opus 5.5   prompted by fyoon46
 # 2026-11-18  Opus 5.5   prompted by fyoon46
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-21  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # The Release workflow's script, through its commands: the name check, the gate with gh faked on PATH, the app's
 # publish decision, its ordering and its check of the published updates, its checks of a built APK and its new
-# app-version.json, the secrets files, the retired servers' objects it deletes, and the choice of generated objects to
-# delete.
+# app-version.json, the secrets files, and the choice of generated objects to delete.
 
 # The app's decision tests read $stderr, which bats's `run --separate-stderr` sets.
 # shellcheck disable=SC2154
@@ -548,14 +548,14 @@ EOF
   [[ "$output" != *3f9a1c77d2e0* && "$output" != *"BEGIN"* && "$output" != *5c1d0e9f8a7b* ]] || false
 }
 
-@test "the match server's parameters, left in Parameter Store until they are deleted by hand, reach no secrets file" {
-  serve_parameters "${PARAMETERS[@]}" match-db-password 0b5e3c9a7d1f42e8 match-server-token 8e21b4a09c5d
+@test "a parameter the Release does not read, such as a retired server's, reaches no secrets file" {
+  serve_parameters "${PARAMETERS[@]}" retired-db-password 0b5e3c9a7d1f42e8 retired-token 8e21b4a09c5d
   local secrets=$BATS_TEST_TMPDIR/secrets
 
   run "$RELEASE" write-secrets "$secrets" "$ENDPOINT" <"$BATS_TEST_TMPDIR/parameters.json"
 
   [ "$status" -eq 0 ]
-  run ! grep -q -e MATCH -e 0b5e3c9a7d1f42e8 -e 8e21b4a09c5d "$secrets/secrets.env"
+  run ! grep -q -e RETIRED -e 0b5e3c9a7d1f42e8 -e 8e21b4a09c5d "$secrets/secrets.env"
 }
 
 @test "a missing parameter, a key without line breaks, a value over two lines, or no database endpoint fails, naming the parameter and printing no value" {
@@ -615,20 +615,6 @@ EOF
     [[ "$output" == *"/snunow/production/llm-key-anthropic holds"* && "$output" != *7f3c* ]] || false
   done
   [ ! -e "$secrets/secrets.env" ]
-}
-
-@test "the match server's Deployment, Service and NetworkPolicy are deleted by name, ignoring those already gone" {
-  cat >"$BATS_TEST_TMPDIR/bin/kubectl" <<'EOF'
-#!/usr/bin/env bash
-printf '%s\n' "$*" >>"$FAKE_CALLS"
-EOF
-  chmod +x "$BATS_TEST_TMPDIR/bin/kubectl"
-
-  run "$RELEASE" delete-retired
-
-  [ "$status" -eq 0 ]
-  [ "$(cat "$FAKE_CALLS")" = \
-    'delete --namespace snunow --ignore-not-found deployment/match-server service/match-server networkpolicy/match-server' ]
 }
 
 # A ConfigMap or Secret as `kubectl get -o json` lists it: kind, name, and creation time.
