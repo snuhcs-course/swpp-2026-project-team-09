@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-21  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Making a Quest: a Proposal with the right fields. P07's open questions: 아침, 점심 and 저녁 start at 08:00, 12:00 and
@@ -126,3 +127,27 @@
       capacity: 2
       startsAt: '2026-10-23 19:00'
       invitees: [김지은]
+
+# A 파티 to meet a named Friend, as a tester asked it (Iteration 5): a 비공개 파티 is never offered from a search, so
+# the Assistant proposes it at once, and the reply speaks only of the Proposal, never of a search or its empty result.
+- id: making-parties-meet-friend-at-two
+  category: making-parties
+  turns:
+    - user: 내일 이민수랑 학생회관에서 두시에 만나는 파티
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [resolveFriend, resolvePlace, proposeQuest]
+      forbidden: [searchRecruitingQuests, showQuests]
+    args:
+      resolveFriend: { name: 이민수 }
+      resolvePlace: { words: 학생회관 }
+    proposal:
+      joinPolicy: closed
+      board: null
+      capacity: 2
+      startsAt: '2026-10-22 14:00'
+      place: 학생회관
+      invitees: [이민수]
+    text:
+      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
