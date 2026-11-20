@@ -1,0 +1,227 @@
+{
+  "options": {
+    "layoutThinking": true,
+    "parallel": true,
+    "fadeReask": true
+  },
+  "screenshot": "synthetic-ampm",
+  "model": "anthropic/claude-haiku-5.5",
+  "mode": "grid",
+  "mapped": true,
+  "ms": 8170,
+  "inputTokens": 5932,
+  "outputTokens": 2374,
+  "reasoningTokens": 1943,
+  "callsThatThought": 0,
+  "calls": 2,
+  "answer": {
+    "title": null,
+    "axis": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24"
+    ],
+    "blocks": [
+      {
+        "day": "월",
+        "start": "10:00",
+        "end": "11:15",
+        "nameLines": [
+          "컴퓨터프로",
+          "그래밍"
+        ],
+        "name": "컴퓨터프로그래밍",
+        "room": "302-105",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "10:00",
+        "end": "11:15",
+        "nameLines": [
+          "컴퓨터프로",
+          "그래밍"
+        ],
+        "name": "컴퓨터프로그래밍",
+        "room": "302-105",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "15:00",
+        "end": "16:45",
+        "nameLines": [
+          "데이터구조",
+          "와알고리즘"
+        ],
+        "name": "데이터구조와알고리즘",
+        "room": "301-118",
+        "cut": false
+      },
+      {
+        "day": "토",
+        "start": "13:00",
+        "end": "15:00",
+        "nameLines": [
+          "글쓰기의",
+          "기초"
+        ],
+        "name": "글쓰기의 기초",
+        "room": "1-201",
+        "cut": false
+      }
+    ]
+  },
+  "raw": {
+    "layout": {
+      "title": null,
+      "axis": [
+        "오전 9시",
+        "오전 10시",
+        "오전 11시",
+        "오후 12시",
+        "오후 1시",
+        "오후 2시",
+        "오후 3시",
+        "오후 4시",
+        "오후 5시"
+      ],
+      "blocks": [
+        {
+          "number": 1,
+          "day": "월",
+          "start": "10:00",
+          "end": "11:15"
+        },
+        {
+          "number": 2,
+          "day": "수",
+          "start": "10:00",
+          "end": "11:15"
+        },
+        {
+          "number": 3,
+          "day": "화",
+          "start": "3:00",
+          "end": "4:45"
+        },
+        {
+          "number": 4,
+          "day": "토",
+          "start": "13:00",
+          "end": "15:00"
+        }
+      ]
+    },
+    "text": {
+      "title": null,
+      "blocks": [
+        {
+          "number": 1,
+          "nameLines": [
+            "컴퓨터프로",
+            "그래밍"
+          ],
+          "name": "컴퓨터프로그래밍",
+          "room": "302-105"
+        },
+        {
+          "number": 2,
+          "nameLines": [
+            "컴퓨터프로",
+            "그래밍"
+          ],
+          "name": "컴퓨터프로그래밍",
+          "room": "302-105"
+        },
+        {
+          "number": 3,
+          "nameLines": [
+            "데이터구조",
+            "와알고리즘"
+          ],
+          "name": "데이터구조와알고리즘",
+          "room": "301-118"
+        },
+        {
+          "number": 4,
+          "nameLines": [
+            "글쓰기의",
+            "기초"
+          ],
+          "name": "글쓰기의 기초",
+          "room": "1-201"
+        }
+      ]
+    },
+    "idText": {
+      "title": null,
+      "blocks": [
+        {
+          "number": 1,
+          "start": "10:00",
+          "nameLines": [
+            "컴퓨터프로",
+            "그래밍"
+          ],
+          "name": "컴퓨터프로그래밍",
+          "room": "302-105"
+        },
+        {
+          "number": 2,
+          "start": "10:00",
+          "nameLines": [
+            "컴퓨터프로",
+            "그래밍"
+          ],
+          "name": "컴퓨터프로그래밍",
+          "room": "302-105"
+        },
+        {
+          "number": 3,
+          "start": "15:00",
+          "nameLines": [
+            "데이터구조",
+            "와알고리즘"
+          ],
+          "name": "데이터구조와알고리즘",
+          "room": "301-118"
+        },
+        {
+          "number": 4,
+          "start": "13:00",
+          "nameLines": [
+            "글쓰기의",
+            "기초"
+          ],
+          "name": "글쓰기의 기초",
+          "room": "1-201"
+        }
+      ]
+    },
+    "reasked": {},
+    "again": 0
+  }
+}
