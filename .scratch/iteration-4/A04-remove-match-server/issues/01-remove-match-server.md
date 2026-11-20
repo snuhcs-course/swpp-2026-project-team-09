@@ -158,13 +158,19 @@ The pull request cannot merge while the rulesets still require a check that no l
 1. **Before the merge queue** (repo admin): remove `match-server` from the required status checks of both rulesets, **Iteration Main** (`25631643`) and **main** (`25632199`). This is harmless to other open pull requests, which still run the job.
 2. Merge the pull request through the merge queue.
 3. **After the merge:**
-   1. Tag and run an `all` Release. This deletes the cluster's match-server objects, and the new secrets no longer hold `MATCH_*`.
+   1. Tag and run an `all` Release. Its `clean` step deletes the cluster's match-server objects, and the new secrets no longer hold `MATCH_*`. Every server's job runs `clean`, so the first Release of **any** server from a commit with this change deletes them; only an `app` Release leaves them.
    2. Check with `kubectl get deploy,svc,networkpolicy -n snunow` that the match-server objects are gone.
    3. Then, in any order:
-      - Run `terraform plan`, then `terraform apply`, in `infra/production/terraform`. The plan should show only the match-server ECR repository and its lifecycle policy being destroyed.
+      - Run `terraform plan`, then `terraform apply`, in `infra/production/terraform`. The plan should show the match-server ECR repository and its lifecycle policy being destroyed, and `aws_iam_role_policy.deploy` updated in place, because its `EcrImages` statement lists every repository's ARN: 2 to destroy, 1 to change.
       - Delete the two SSM parameters: `aws ssm delete-parameters --region ap-northeast-2 --names /snunow/production/match-db-password /snunow/production/match-server-token`.
       - Drop the `match` database and role in RDS, from a psql pod as the master user (`infra/production/README.md` § psql as the master user): `DROP DATABASE match;` then `DROP ROLE match;`. **This cannot be undone.**
-   4. The Dev Server's `match` database and its `.env` values can stay. They are harmless.
+   4. **The Dev Server**, once `development` carries this change. The deploy run checks CI with the `deploy.sh` already in its checkout, which still requires a `match-server` check that the new commit never gets, so it waits for CI forever, a run by hand too. On the Dev Server, reset the checkout to the new tip and ask for a run:
+      ```bash
+      sudo git -C /srv/team/snu-now fetch origin development
+      sudo git -C /srv/team/snu-now reset --hard FETCH_HEAD
+      sudo systemctl start snu-now-redeploy
+      ```
+      That run's `compose up --remove-orphans` removes the `match-server` container. The Dev Server's `match` database and the `MATCH_*` values in its settings file can stay. They are harmless.
 
 Doing step 3.3 before 3.1 breaks the Release: today's `release.sh` reads both SSM values and pushes a match-server image.
 
