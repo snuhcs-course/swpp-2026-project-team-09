@@ -634,8 +634,10 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   aloud as "보는 중") and the round stop button "그만" in place of the reply; the bar stays, and a message sent then
   takes the waiting question back, as anywhere else. A card's button whose answer is on its way ("여기서 먹기",
   "만나고 싶다") shows the dots in place of its label (`Button`'s `busy`). A reply whose answer has a Plan shows the
-  Plan's two lines (`answer-lines.tsx`) in place of the model's sentence; any other reply is drawn with the chat's own
-  parts (`chat-bubbles.tsx`'s `BubbleParts`): the text as Markdown, the cards with their buttons, a Proposal, the map
+  Plan's two lines (`answer-lines.tsx`) in place of the model's sentence. A reply to a message that asked for two or
+  more things ("관정 갔다가 저녁") lists its `steps` above, numbered in time order (`reply-steps.tsx`): each one's time,
+  title and where it sets out from, "예약 카드는 아래에 있어요" for a booking, and the reason of a step that was not
+  done. Any other reply is drawn with the chat's own parts (`chat-bubbles.tsx`'s `BubbleParts`): the text as Markdown, the cards with their buttons, a Proposal, the map
   buttons, and "다시 시도" under a failure. Under the reply on screen, up to two follow-ups in cells of one width
   (`follow-up-chips.tsx`, `features/assistant/follow-ups.ts`) send whole sentences filled from the reply: the next
   meals of a meal's Plan ("오늘 저녁 배고파", or "김민수랑 내일 저녁 먹자" with its Friends), "{친구}랑 같이 밥 먹자"

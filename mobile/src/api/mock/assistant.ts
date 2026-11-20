@@ -8,6 +8,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -30,6 +31,7 @@ import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from './data/menu-lookup';
 import { NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from './data/missing-inputs';
 import { refusalReplyTo } from './data/refusals';
+import { isStepsAsk, stepsReplyOn } from './data/steps-answer';
 import { STUDY_LOOKUP_REPLY } from './data/study-lookup';
 import { FRIEND_TAPS, STAND_IN_FRIEND_TAP, TAP_LOOKUPS } from './data/tap-lookups';
 import { EASED_ANSWER, NOT_NOW_ANSWER, NOT_NOW_ASKED, NOT_NOW_REPLY } from './data/unmet-plans';
@@ -234,6 +236,9 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
   }
   if (last.includes(NOT_NOW_ASKED)) {
     return NOT_NOW_REPLY;
+  }
+  if (isStepsAsk(last)) {
+    return stepsReplyOn(koreaDateKey(now()));
   }
   if (last.includes('배고파')) {
     return hungryReplyOf(context);

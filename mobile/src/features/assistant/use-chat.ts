@@ -9,6 +9,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -23,6 +24,7 @@ import {
   type QuestProposal,
   referenceOf,
   type ReplyOffer,
+  type ReplyStep,
   type RequestContext,
   sentProposalOf,
 } from '@/api/assistant-types';
@@ -64,6 +66,8 @@ export interface ChatBubble {
   lookup?: Lookup | null;
   refusal?: Refusal | null;
   offers?: ReplyOffer[];
+  // Each request of the message, in time order, when it asked for two or more (P03). They are not sent back.
+  steps?: ReplyStep[];
   // The map's visible area the reply's request sent, which a `study` Lookup outlines.
   area?: RequestContext['viewport'];
   // A turn a card's button asked of the recalculation, not of the Assistant: its words and its answer are a turn and a
@@ -196,10 +200,11 @@ function withTapped(context: RequestContext, bubbles: readonly ChatBubble[]): Re
 async function answerTo(messages: ChatMessage[], context: RequestContext): Promise<NewBubble> {
   try {
     const reply = await apiClient.askAssistant(messages, context);
-    const { text, cards, mapButtons, proposal, answer = null, lookup = null, refusal = null, offers } = reply;
+    const { text, cards, mapButtons, proposal, answer = null, lookup = null, refusal = null, offers, steps } = reply;
     const drawn = { answer, lookup, refusal, area: context.viewport };
     const offered = offers === undefined || offers.length === 0 ? {} : { offers };
-    return { role: 'assistant', text, cards, mapButtons, proposal, failure: null, ...drawn, ...offered };
+    const stepped = steps === undefined || steps.length < 2 ? {} : { steps };
+    return { role: 'assistant', text, cards, mapButtons, proposal, failure: null, ...drawn, ...offered, ...stepped };
   } catch (error) {
     const failure = error instanceof ApiError && error.status === 429 ? 'usedUp' : 'unavailable';
     return { role: 'assistant', text: FAILURE_TEXT[failure], cards: [], mapButtons: [], proposal: null, failure };
