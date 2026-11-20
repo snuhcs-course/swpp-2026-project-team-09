@@ -111,8 +111,9 @@ Production runs everything below.
   marker for everything at one place whose card lists each kind, and a walking route on request, cleared by a tap on
   the map. Any building that is pressed gets a card: the walk there (the shuttle when it is 3 minutes faster), how
   long the User can stay before their next class or party, and what is there now.
-- **Location Sharing**: the Master Switch (위치 공유) on 내 정보, off until the User turns it on; turning it off asks
-  first. Each Friend gets a level, 시간표만, 지금 있는 건물 or 정확한 위치, and two Friends see each other at the lower
+- **Location Sharing**: the Master Switch (위치 공유) on 내 정보, off until the User turns it on; the first time it is
+  turned off, the app asks first. Each Friend gets a level, 시간표만, 지금 있는 건물 or 정확한 위치, and two Friends see
+  each other at the lower
   of their two levels; a new Friend starts at 지금 있는 건물. An active party has its own switch, and its members see
   exact positions. A User draws up to five Private Zones (비공개 구역), inside which no position is kept. A press on
   the User's own dot shows what each Friend sees. The position is sent every 5 seconds while the app is open and, on
@@ -132,9 +133,10 @@ Production runs everything below.
 - **Active party (활성 파티)**: any member activates the party when they are about to meet; the members who accept see
   each other on the map, Friends or not, until they pause, leave or the Leader ends it. A User is in at most one.
 - **Notifications (알림)**: an accepted or declined invitation, the time to leave for a step (지금 나서요, with the
-  walk or shuttle time and 파티 켜기), a changed step, a member who arrived or said "N분 늦어요", a group study room's
-  news, and a new event or party that matches a watched interest. 알림 keeps them for 30 days, and on Android they
-  are also sent as push notifications through Expo's push service; a tapped push opens its card.
+  walk or shuttle time and 파티 켜기), a changed step, a member who arrived, a group study room's news, and a new event
+  or party that matches a watched interest. 알림 keeps them for 30 days. On Android an invitation and every
+  Notification but the answers to an invitation are also sent as push notifications through Expo's push service; a
+  tapped push opens its card.
 - **Navigation**: on Android, a swipe from the screen's left edge goes back, as the back button does, and closes an
   open panel or sheet; inputs rise above the keyboard everywhere, and a press outside an input closes the keyboard.
 - **SNU Now AI**: one screen, the answer frame over the map: what the User asks from the map's input bar stands as a
@@ -150,9 +152,8 @@ Production runs everything below.
     way. Arrows move between Plans, and chips, ＋ 같이, the time band and 여기면 어때? change one. The model only
     chooses what to ask for;
   - **이대로 초대** makes the 비공개 파티 and its invitations in one step; each invited Friend opens the invitation
-    on the map with their own way there and answers 수락 or 거절, and after a decline the Leader is offered a better
-    Plan. **여기로** takes a Plan alone, as a Quest of the User's own. **만나고 싶다** on a Friend's card asks for a
-    Plan to meet;
+    on the map with their own way there and answers 수락 or 거절; the Leader sees the answer in 알림. **여기로** takes a Plan
+    alone, as a Quest of the User's own. **만나고 싶다** on a Friend's card asks for a Plan to meet;
   - **Lookups on the map**: the way to a Place, a named restaurant's menu and closing time, where a Friend is (only
     what the User's own map shows of them), today's classes, the order to do the tutorial's quests in, and the study
     spaces near what the map shows; an answer's walking routes follow the campus's paths;
@@ -203,8 +204,7 @@ Each flow is what Users do with the app on campus. Each says what it needs; the 
    SNU Now AI draws a Plan: a restaurant open then, the time both are free, and each one's way. The User moves
    between Plans, changes the time on the band, and presses 이대로 초대. The Friend gets a push notification, opens
    the invitation on the map with their own way, and presses 수락. When it is time to leave, both get 지금 나서요; 파티
-   켜기 activates the party and they see each other on the map. One who is late says "10분 늦어요", and the other is
-   told.
+   켜기 activates the party and they see each other on the map.
    - Needs: two SNU Google accounts that are Friends, each with today's classes in its timetable (the demo data makes
      no classes), on Android phones that allow notifications, on campus.
 2. **Events that find the User**: a User opens the 행사 tab, presses a row and stars the event with ☆; it stays on
@@ -219,7 +219,7 @@ Each flow is what Users do with the app on campus. Each says what it needs; the 
    tutorial quest in the list and follows its guide on the map to ✓ 완료. Then "공부할 자리" gives a 관정도서관 seat
    card timed from the User's arrival; the User logs in on the library's own page, drags the time bar, picks a seat
    by its number on the room's picture and presses 예약하기. The seat becomes a Quest with the time to leave, and
-   "취소해줘" cancels the booking.
+   "취소해줘" brings a cancel card, whose 취소하기 cancels the booking.
    - Needs: one SNU Google account whose admission year is this year or later, or whose 소속 is 교환학생 (or with the
      tutorial turned on from 내 정보), a timetable screenshot from SNUTT or 에브리타임, and an SNU account that can
      log in to the library.
@@ -314,7 +314,7 @@ What the demo cannot show, and what is known not to work yet:
   to turn on the Judgements, the same-event rules and extra.snu's Collections, how to stop automatic publication at
   once, and how to add an AI key.
 - **Merged late, and checked on a phone only in part.** The 새내기 튜토리얼's guides, the 행사 tab's rows, the
-  관정도서관 seat picture, the timetable's AI reading and the notices of a changed step, an arrival and a delay were
+  관정도서관 seat picture, the timetable's AI reading and the notices of a changed step and an arrival were
   merged in the last three days of the iteration. Their tests pass; the timetable reading was measured on nine
   screenshots and not on a phone.
 - **ARM only.** Kakao's map SDK ships ARM libraries only, so the app is built for `arm64-v8a` alone. It runs on an
@@ -334,6 +334,10 @@ What the demo cannot show, and what is known not to work yet:
   built but off in Production ([Evaluation](#evaluation)). A post is read once, so a later edit at the source is
   not seen, and a post of the events list that describes several sessions is one event. With the same-event rules off,
   extra.snu is not collected, so its programmes are not shown.
+- **Built on the server, not yet in the app.** A member cannot say they are late: the main server takes the report
+  (`POST /quests/{id}/late`) and would tell the other members, and the room shows "N분 늦어요" for a member who
+  reported it, but no screen sends it. After an invitation is declined the main server can work out a better Plan for
+  the people left (`GET /plans/{id}/better`), but no screen shows it to the Leader.
 - **The map shows only some events.** An event is on the map when the User starred it or it matches a watched
   interest; a User who watches nothing sees a few of today's events, faded. Every published event is in the 행사 tab.
 - **Users outside the Campus Boundary are hidden** from everyone, by design: a demo must be run on campus. The app's
@@ -496,40 +500,42 @@ file's.
 
 ### main-server
 
-| Setting                               | What it is                                                                                                                               |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`                                | The port the HTTP server listens on.                                                                                                     |
-| `DATABASE_URL`                        | The main database, reached with the main server's own role.                                                                              |
-| `REDIS_HOST`                          | Redis's host, which carries messaging between the servers.                                                                               |
-| `REDIS_PORT`                          | Redis's port.                                                                                                                            |
-| `ACCESS_TOKEN_PRIVATE_KEY`            | The private key that signs access tokens; written by `pnpm keys:generate`, never shared.                                                 |
-| `ACCESS_TOKEN_PUBLIC_KEY`             | The public key of the same pair, which the socket server is given; written by the same command.                                          |
-| `GOOGLE_APP_CLIENT_ID`                | The app's Google OAuth client; already in `.env.example`.                                                                                |
-| `GOOGLE_ADMIN_CLIENT_ID`              | The admin site's Google OAuth client, which must differ from the app's; already in `.env.example`.                                       |
-| `INITIAL_ADMINISTRATOR_EMAILS`        | The Administrators registered when the database holds none; your own address.                                                            |
-| `KAKAO_REST_API_KEY`                  | The REST API key of the team's Kakao app, for walking routes; a secret the Owner shares.                                                 |
-| `WORKER_TOKEN`                        | The secret the worker server sends with what it collects; generated in [Setup](#setup).                                                  |
-| `PUBLIC_URL`                          | The address the apps reach this server at from outside, from which Invite Links are built.                                               |
-| `ANDROID_CERTIFICATE_FINGERPRINTS`    | The SHA-256 fingerprints of the app's signing certificates, for Invite Links' App Links.                                                 |
-| `DEMO_ACCOUNT_EMAILS`                 | Read by the demo profile only: real SNU addresses that get demo Friends, requests, an invitation.                                        |
-| `OPENROUTER_API_KEY`                  | The OpenRouter key SNU Now AI calls its model with, the key `llm.key` names `default`. Empty, the Assistant answers it is unavailable.   |
-| `LLM_KEYS`                            | Optional: the AI's other keys by name, a JSON object such as `{"anthropic":"sk-ant-…"}`; `{}` unless set. `llm.key` chooses among them.  |
-| `MODEL_CACHE`                         | Optional: what an Anthropic key's requests cache, `breakpoints`, `auto` or `off`; `breakpoints` unless set.                              |
-| `ASSISTANT_DAILY_MESSAGES`            | Optional: the messages a User may send in a day in Korea; 50 unless set.                                                                 |
-| `ASSISTANT_MAX_STEPS`                 | Optional: the model calls per message; 8 unless set.                                                                                     |
-| `ASSISTANT_TIMEOUT_MS`                | Optional: the milliseconds over all of a message's model calls; 30000 unless set.                                                        |
-| `ASSISTANT_MAX_OUTPUT_TOKENS`         | Optional: the tokens the model may write in each call; 4000 unless set.                                                                  |
-| `TIMETABLE_READING_DAILY`             | Optional: the timetable screenshots a User may have read in a day in Korea; 10 unless set.                                               |
-| `TIMETABLE_READING_TIMEOUT_MS`        | Optional: the milliseconds over all of a timetable reading's model calls; 24000 unless set, under the phone's 25 s.                      |
-| `TIMETABLE_READING_MAX_OUTPUT_TOKENS` | Optional: the tokens the model may write in each call of a timetable reading; 6000 unless set.                                           |
-| `AUTOMATIC_PUBLICATION`               | Optional: `off` keeps every collected session a Draft, to stop publication; `on` unless set.                                             |
-| `AUTOMATIC_JUDGEMENT`                 | Optional: `on` lets the step after a Collection ask the model about Drafts; `off` unless set.                                            |
-| `SAME_EVENT_TITLE_RULE`               | Optional: `on` lets that step attach a session by an equal title and start; `off` unless set.                                            |
-| `SAME_EVENT_AI_CHOICE`                | Optional: `on` lets that step ask the model about the candidates the rules leave; `off` unless set.                                      |
-| `JUDGEMENT_TIMEOUT_MS`                | Optional: the milliseconds of a Judgement's model call; 60000 unless set.                                                                |
-| `JUDGEMENT_MAX_OUTPUT_TOKENS`         | Optional: the tokens the model may write in a Judgement; 4000 unless set.                                                                |
-| `LIBRARY_BOOKING_ENABLED`             | Optional: `false` answers library requests with the official site and no card; `true` unless set.                                        |
-| `TUTORIAL_KWANJEONG_CHECK`            | Optional: `true`, with `LIBRARY_BOOKING_ENABLED` on, completes the 관정 tutorial quest by the phone's booking check; `false` unless set. |
+| Setting                               | What it is                                                                                                                                 |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PORT`                                | The port the HTTP server listens on.                                                                                                       |
+| `DATABASE_URL`                        | The main database, reached with the main server's own role.                                                                                |
+| `REDIS_HOST`                          | Redis's host, which carries messaging between the servers.                                                                                 |
+| `REDIS_PORT`                          | Redis's port.                                                                                                                              |
+| `ACCESS_TOKEN_PRIVATE_KEY`            | The private key that signs access tokens; written by `pnpm keys:generate`, never shared.                                                   |
+| `ACCESS_TOKEN_PUBLIC_KEY`             | The public key of the same pair, which the socket server is given; written by the same command.                                            |
+| `GOOGLE_APP_CLIENT_ID`                | The app's Google OAuth client; already in `.env.example`.                                                                                  |
+| `GOOGLE_ADMIN_CLIENT_ID`              | The admin site's Google OAuth client, which must differ from the app's; already in `.env.example`.                                         |
+| `INITIAL_ADMINISTRATOR_EMAILS`        | The Administrators registered when the database holds none; your own address.                                                              |
+| `KAKAO_REST_API_KEY`                  | The REST API key of the team's Kakao app, for walking routes; a secret the Owner shares.                                                   |
+| `WORKER_TOKEN`                        | The secret the worker server sends with what it collects; generated in [Setup](#setup).                                                    |
+| `PUBLIC_URL`                          | The address the apps reach this server at from outside, from which Invite Links are built.                                                 |
+| `ANDROID_CERTIFICATE_FINGERPRINTS`    | The SHA-256 fingerprints of the app's signing certificates, for Invite Links' App Links.                                                   |
+| `DEMO_ACCOUNT_EMAILS`                 | Read by the demo profile only: real SNU addresses that get demo Friends, requests, an invitation.                                          |
+| `OPENROUTER_API_KEY`                  | The OpenRouter key SNU Now AI calls its model with, the key `llm.key` names `default`. Empty, the Assistant answers it is unavailable.     |
+| `LLM_KEYS`                            | Optional: the AI's other keys by name, a JSON object such as `{"anthropic":"sk-ant-…"}`; `{}` unless set. `llm.key` chooses among them.    |
+| `MODEL_CACHE`                         | Optional: what an Anthropic key's requests cache, `breakpoints`, `auto` or `off`; `breakpoints` unless set.                                |
+| `ASSISTANT_DAILY_MESSAGES`            | Optional: the messages a User may send in a day in Korea; 50 unless set.                                                                   |
+| `ASSISTANT_MAX_STEPS`                 | Optional: the model calls per message; 8 unless set.                                                                                       |
+| `ASSISTANT_TIMEOUT_MS`                | Optional: the milliseconds over all of a message's model calls; 30000 unless set.                                                          |
+| `ASSISTANT_MAX_OUTPUT_TOKENS`         | Optional: the tokens the model may write in each call; 4000 unless set.                                                                    |
+| `TIMETABLE_READING_DAILY`             | Optional: the timetable screenshots a User may have read in a day in Korea; 10 unless set.                                                 |
+| `TIMETABLE_READING_TIMEOUT_MS`        | Optional: the milliseconds over all of a timetable reading's model calls; 24000 unless set, under the phone's 25 s.                        |
+| `TIMETABLE_READING_MAX_OUTPUT_TOKENS` | Optional: the tokens the model may write in each call of a timetable reading; 6000 unless set.                                             |
+| `NOTIFICATIONS_TICK_SECONDS`          | Optional: the seconds between two rounds of sending the Notifications that are due; 15 unless set.                                         |
+| `TOPICS_TICK_SECONDS`                 | Optional: the seconds between two rounds of reading the topics of new events and recruiting parties, for watched interests; 60 unless set. |
+| `AUTOMATIC_PUBLICATION`               | Optional: `off` keeps every collected session a Draft, to stop publication; `on` unless set.                                               |
+| `AUTOMATIC_JUDGEMENT`                 | Optional: `on` lets the step after a Collection ask the model about Drafts; `off` unless set.                                              |
+| `SAME_EVENT_TITLE_RULE`               | Optional: `on` lets that step attach a session by an equal title and start; `off` unless set.                                              |
+| `SAME_EVENT_AI_CHOICE`                | Optional: `on` lets that step ask the model about the candidates the rules leave; `off` unless set.                                        |
+| `JUDGEMENT_TIMEOUT_MS`                | Optional: the milliseconds of a Judgement's model call; 60000 unless set.                                                                  |
+| `JUDGEMENT_MAX_OUTPUT_TOKENS`         | Optional: the tokens the model may write in a Judgement; 4000 unless set.                                                                  |
+| `LIBRARY_BOOKING_ENABLED`             | Optional: `false` answers library requests with the official site and no card; `true` unless set.                                          |
+| `TUTORIAL_KWANJEONG_CHECK`            | Optional: `true`, with `LIBRARY_BOOKING_ENABLED` on, completes the 관정 tutorial quest by the phone's booking check; `false` unless set.   |
 
 ### socket-server
 
