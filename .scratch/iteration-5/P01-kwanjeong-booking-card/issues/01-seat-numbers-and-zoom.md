@@ -29,7 +29,7 @@ The seat picture (`mobile/src/screens/main/library/seat-picker.tsx`) draws the r
 - 확대 and 축소 keep the middle of the view in the middle. While a seat is pressed, they bring that seat to the middle instead.
 - A pinch keeps the point between the two fingers where it is.
 - The offsets never pass the picture's edges, so the view never shows space outside the picture. A picture smaller than the view sits at 0.
-- The pinch's gesture is made once and reads the zoom from a ref, so a pinch is not cut off while it lasts.
+- react-native-gesture-handler gives a pinch's `scale` as the total since the fingers came down, not the change since the last update. So the zoom is the zoom when the pinch began times that scale, and that starting zoom is kept in a ref, because the gesture's callbacks may come from a later render than its start.
 - The arithmetic is a pure module (`mobile/src/library/cards/seat-zoom.ts`) with the zoom steps it already had (1, 1.5, 2, 3, 4).
 
 ## What stays as it is
@@ -44,7 +44,7 @@ The seat picture (`mobile/src/screens/main/library/seat-picker.tsx`) draws the r
 - [x] At zoom 4 every seat's number is drawn whole, at 8 points or more, and fits its box by the 0.7 rule; no number is cut. (Integration test; unit tests of the size rule: none below the floor, none wider than its box, three- and four-digit numbers.)
 - [x] At zoom 4 a press on 7300 shows 7300 on the seat itself with no tag, and "7300번 선택"; zoomed out to 2, the tag says 7300; "7300번 선택" puts 7300 in the card. (Integration test.)
 - [x] 확대 with no seat pressed keeps the view's middle in the middle; 확대 after a press brings the pressed seat to the middle; the offsets stay within the picture. (Integration test of the scroll calls; unit tests of the arithmetic.)
-- [ ] A pinch's arithmetic keeps the focal point fixed and the offsets within the picture. (Unit test.) The pinch itself is not checked on a device here: adb has no two-finger gesture, so a person tries it on a phone. The unit test passes; the device check waits for a person.
+- [ ] A pinch follows the fingers' total scale without compounding it: updates of 1.05 to 1.5 leave 1.5 times, a second pinch to 1.2 from there leaves 1.8, and one to 0.2 stops at 1. (Integration test through the gesture handler's test events.) Its arithmetic keeps the focal point fixed and the offsets within the picture. (Unit test.) The pinch itself is not checked on a device here: adb has no two-finger gesture, so a person tries it on a phone. The tests pass; the device check waits for a person.
 - [x] No native file changes; oxlint, Prettier and tsc pass on the app.
 
 ## Comments
@@ -57,3 +57,7 @@ The debug app on an Android emulator, with the mock Assistant and the fake libra
 
 - Agent time: about 50 minutes in one session, measured from the transcript up to the pull request (an estimate). It covers the first look at the code and the releases, the emulator check of `5.0/Main`, the fix, and the second emulator check.
 - Tokens: output 128k; input 37.0M, of which 36.7M cache reads, 301k cache writes and 318 uncached. No subagents.
+
+### Review fix (2026-11-21)
+
+A review found that the pinch multiplied the zoom it had already raised by the gesture's total scale, so the zoom compounded and reached 4 times within a few frames. The pinch now multiplies the zoom at its start. A test that fires the pinch's events (1.05, 1.1, … 1.5) failed on the first version, giving 1135 points high instead of 450, and passes now.

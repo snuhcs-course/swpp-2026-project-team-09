@@ -5,7 +5,8 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { fireEvent, within } from '@testing-library/react-native';
+import { act, fireEvent, within } from '@testing-library/react-native';
+import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { ScrollView } from 'react-native';
 import { seatNumberSize } from '@/library/cards/seats';
 import { pictureSize } from '@/library/cards/seat-zoom';
@@ -162,6 +163,31 @@ describe('where the seat picture zooms', () => {
     await pressIn(picture, '확대');
     expect(lastScroll(scrollTo, 'x')).toBeCloseTo((1468 + 16.5) * (600 / 1198) - 160);
     expect(lastScroll(scrollTo, 'y')).toBe(0);
+  });
+});
+
+// A pinch as react-native-gesture-handler reports it: each update's scale is the total since the fingers came down.
+async function pinch(scales: readonly number[]): Promise<void> {
+  await act(() => {
+    fireGestureHandler(
+      getByGestureTestId('seat-picker-pinch'),
+      [1, ...scales].map((scale) => ({ scale, focalX: 160, focalY: 149 })),
+    );
+  });
+}
+
+describe('a pinch on the seat picture', () => {
+  it('zooms by the total scale since the fingers came down, without compounding it, within 1 and 4 times', async () => {
+    await askForCards({ server, library }, [SEAT_CARD]);
+    await press('자리 선택하기');
+
+    await pinch([1.05, 1.1, 1.2, 1.3, 1.4, 1.5]);
+    expect(image()).toHaveStyle({ height: 450 });
+    // Back toward the start in one gesture, and a second gesture from where the first left it.
+    await pinch([1.4, 1.2]);
+    expect(image()).toHaveStyle({ height: 540 });
+    await pinch([0.9, 0.5, 0.2]);
+    expect(image()).toHaveStyle({ height: 300 });
   });
 });
 

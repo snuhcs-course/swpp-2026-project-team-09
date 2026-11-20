@@ -35,6 +35,8 @@ export interface SeatZoom {
 
 interface Place {
   now: RefObject<number>;
+  // The zoom when the running pinch began.
+  pinchedFrom: RefObject<number>;
   offset: RefObject<Point>;
   view: RefObject<Size>;
   // The offsets the last zoom landed on, until the User drags.
@@ -82,17 +84,22 @@ function useZoomTo(image: Size | null, place: Place): { zoom: number; zoomTo: Zo
   return { zoom, zoomTo };
 }
 
-// Made once, so that a pinch is not cut off while it lasts. Each update scales from the last, around the fingers.
+// react-native-gesture-handler gives a pinch's `scale` as the total since the fingers came down, so the zoom is the
+// zoom at that moment times it. The zoom at that moment is kept with the place, since the gesture's callbacks may come
+// from a later render than its start. Each update keeps the picture's point under the fingers where it is.
 function usePinch(place: Place, zoomTo: ZoomTo): ReturnType<typeof Gesture.Pinch> {
   return useMemo(
     () =>
       Gesture.Pinch()
         .withTestId('seat-picker-pinch')
         .runOnJS(true)
+        .onStart(() => {
+          place.pinchedFrom.current = place.now.current;
+        })
         .onUpdate(({ scale, focalX, focalY }) => {
           const at = { x: focalX, y: focalY };
           const { x, y } = place.offset.current;
-          zoomTo(place.now.current * scale, { x: x + at.x, y: y + at.y }, at);
+          zoomTo(place.pinchedFrom.current * scale, { x: x + at.x, y: y + at.y }, at);
         }),
     [place, zoomTo],
   );
@@ -100,12 +107,13 @@ function usePinch(place: Place, zoomTo: ZoomTo): ReturnType<typeof Gesture.Pinch
 
 function usePlace(): Place {
   const now = useRef(1);
+  const pinchedFrom = useRef(1);
   const offset = useRef<Point>({ x: 0, y: 0 });
   const view = useRef<Size>({ width: 0, height: 0 });
   const pending = useRef<Point | null>(null);
   const down = useRef<ScrollView>(null);
   const across = useRef<ScrollView>(null);
-  return useMemo(() => ({ now, offset, view, pending, down, across }), []);
+  return useMemo(() => ({ now, pinchedFrom, offset, view, pending, down, across }), []);
 }
 
 // `picked` gives the picked seat's middle in the picture at a zoom, or null when no seat is picked.
