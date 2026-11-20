@@ -176,8 +176,8 @@ Doing step 3.3 before 3.1 breaks the Release: today's `release.sh` reads both SS
 
 ## Acceptance criteria
 
-- [ ] `git grep -i -E "match[-_ ]?server|MATCH_DB|matching-requests|matching-changed|MatchServer"` outside `.scratch/` and the ADRs finds nothing.
-  - Not met yet: on `5.0/Main` it still finds `.github/release/release.sh` and `release.bats` (`delete_retired`), and `README.md` (the Iteration 4 history's line on AI 매칭 and the match server). The ticket stays open until `delete_retired` goes.
+- [x] `git grep -i -E "match[-_ ]?server|MATCH_DB|matching-requests|matching-changed|MatchServer"` outside `.scratch/` and the ADRs finds nothing.
+  - Accepted exception: `README.md`'s Iteration 4 history line, "Removed in Iteration 4: AI 매칭 and the match server (A04)". It records the removal, so it stays.
 - [x] `git grep -i matchId` finds only the kept `schema.prisma` field and existing migrations.
 - [x] The main server starts without `MATCH_SERVER_URL` and `MATCH_SERVER_TOKEN`, and the Matching routes answer 404.
 - [x] Every CI job is green, including flow-tests with the new recruit-and-join path, and `app-fingerprint` reports no change.
@@ -247,9 +247,15 @@ Doing step 3.3 before 3.1 breaks the Release: today's `release.sh` reads both SS
 - `kubectl kustomize` of `targets/all`, with empty secret files, gives 23 objects and no match-server.
 - #377's Rollback Scenario calls the change a one-way door after step 3.3 and lists the order of operations.
 
+**`delete_retired` removed (2026-11-21).** Every Release since `26.11.20-1` found no match-server object to delete, so the step went:
+- `release.sh` loses `delete_retired` and its `delete-retired` command, and `clean` deletes only unused generated ConfigMaps and Secrets.
+- `release.bats` loses its case. The case on parameters the Release does not read now uses neutral names instead of the match server's.
+- `release.yml`'s step is renamed to what it still does.
+- The first criterion's `git grep` then finds only the README's history line.
+- Nothing else called it: the Dev Server runs Compose, whose `--remove-orphans` removes the old container (step 3.4).
+
 **Still open:**
 - **Step 3.4.** The Dev Server waits until `development` carries this change.
-- **`delete_retired`.** It stays in `release.sh` and `release.bats` until a later change removes it. Then the first acceptance criterion can be ticked, with the README's Iteration 4 history line as the one hit left on purpose.
 - **Old tags.** Since the parameters are gone, a tag from before this change cannot be deployed again: its Release reads them for the shared Secret. A rollback is a new commit.
 
 ### Agent usage (2026-11-21)

@@ -9,6 +9,7 @@
 # 2026-11-15  Opus 5.5   prompted by fyoon46
 # 2026-11-18  Opus 5.5   prompted by fyoon46
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-21  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # The Release workflow's steps (.github/workflows/release.yml), one command each. The functions under Deciding take
@@ -467,18 +468,10 @@ deploy() {
   kubectl rollout status "deployment/$server" --namespace "$NAMESPACE" --timeout=10m
 }
 
-# Deletes the match server's objects, which no target names since AI 매칭 was removed (A04). They carry no app label,
-# so they are named one by one. Once a Release has deleted them this does nothing, and a later change removes it.
-delete_retired() {
-  kubectl delete --namespace "$NAMESPACE" --ignore-not-found \
-    deployment/match-server service/match-server networkpolicy/match-server
-}
-
-# Deletes the retired servers' objects, then the generated ConfigMaps and Secrets that no pod uses any more. Only names
-# and creation times are kept from the listing, so no secret value is written to disk.
+# Deletes the generated ConfigMaps and Secrets that no pod uses any more. Only names and creation times are kept from
+# the listing, so no secret value is written to disk.
 clean() {
   local objects
-  delete_retired
   kubectl get configmaps,secrets --namespace "$NAMESPACE" --output json |
     jq '{items: [.items[] | {kind, metadata: (.metadata | {name, creationTimestamp})}]}' >"$work/objects.json"
   kubectl get deployments,pods --namespace "$NAMESPACE" --output json >"$work/users.json"
@@ -509,7 +502,6 @@ main() {
     push-image) push_image "$@" ;;
     deploy) deploy "$@" ;;
     unused-generated) unused_generated "$@" ;;
-    delete-retired) delete_retired ;;
     clean) clean ;;
     *)
       echo "usage: release.sh <command> ..." >&2
