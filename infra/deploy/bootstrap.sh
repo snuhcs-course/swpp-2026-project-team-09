@@ -6,6 +6,7 @@
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
 # 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 ################################################################################
 
 # Readies a course server for the deploy timer. Run as root, once and again whenever: it never overwrites the settings
@@ -103,13 +104,10 @@ one_line() {
 }
 
 write_settings() {
-  local postgres_password main_db_password match_db_password worker_token match_server_token private_pem private_key
-  local public_key
+  local postgres_password main_db_password worker_token private_pem private_key public_key
   postgres_password=$(openssl rand -hex 32)
   main_db_password=$(openssl rand -hex 32)
-  match_db_password=$(openssl rand -hex 32)
   worker_token=$(openssl rand -hex 32)
-  match_server_token=$(openssl rand -hex 32)
   private_pem=$(openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -pkeyopt ec_param_enc:named_curve)
   private_key=$(printf '%s\n' "$private_pem" | one_line)
   public_key=$(printf '%s\n' "$private_pem" | openssl pkey -pubout | one_line)
@@ -122,16 +120,13 @@ DEPLOY_STATUS_DIR=$STATUS_DIR
 DEPLOY_APK_DIR=$APK_DIR
 POSTGRES_PASSWORD=$postgres_password
 MAIN_DB_PASSWORD=$main_db_password
-MATCH_DB_PASSWORD=$match_db_password
 ACCESS_TOKEN_PRIVATE_KEY="$private_key"
 ACCESS_TOKEN_PUBLIC_KEY="$public_key"
 WORKER_TOKEN=$worker_token
-MATCH_SERVER_TOKEN=$match_server_token
 PUBLIC_URL=http://swpp26t09.147-46-242-174.sslip.io
 GOOGLE_APP_CLIENT_ID=1021723676612-aria1ohmdms787sqbvldtt8484fnf04c.apps.googleusercontent.com
 GOOGLE_ADMIN_CLIENT_ID=1021723676612-23lpoe5ue36rr2a07uora5ai4qckoe87.apps.googleusercontent.com
 ANDROID_CERTIFICATE_FINGERPRINTS=FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C
-ROUND_INTERVAL_SECONDS=60
 EXTRA_SNU_COLLECTION=off
 KAKAO_REST_API_KEY=CHANGE_ME
 INITIAL_ADMINISTRATOR_EMAILS=CHANGE_ME

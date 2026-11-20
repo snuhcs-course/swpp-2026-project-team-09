@@ -6,6 +6,7 @@
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
 # 2026-11-15  Opus 5.5   prompted by fyoon46
 # 2026-11-18  Opus 5.5   prompted by fyoon46
+# 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 ################################################################################
 
 # One run of the Dev Server's deployment, started by snu-now-deploy.timer: brings the stack up to the tip of
@@ -15,7 +16,7 @@
 
 readonly TRACKED_REF=development
 readonly REPOSITORY=snuhcs-course/swpp-2026-project-team-09
-readonly REQUIRED_CHECKS='main-server socket-server worker-server match-server flow-tests'
+readonly REQUIRED_CHECKS='main-server socket-server worker-server flow-tests'
 readonly MAX_ATTEMPTS=3
 readonly KEPT_DUMPS=7
 readonly COMPOSE_PROJECT=snu-now
@@ -246,7 +247,8 @@ deploy_tip() {
   # Built before anything is stopped, so that a failed build leaves the running containers alone.
   if ! compose build; then
     log "build: failed; the containers that ran before keep running"
-  elif ! compose up --detach 2>&1 | tee "$output"; then
+  # --remove-orphans removes the container of a service gone from the Compose files.
+  elif ! compose up --detach --remove-orphans 2>&1 | tee "$output"; then
     log "start: compose up failed; the new containers are what runs"
     result=unhealthy
   elif smoke_check; then
