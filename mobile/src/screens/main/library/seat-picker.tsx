@@ -2,38 +2,28 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, useMemo, useRef, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LibrarySpace } from '@/api/assistant-types';
 import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
 import { spaceWords } from '@/library/cards/bookings';
-import { freeSeats } from '@/library/cards/seats';
+import { SEAT_BOX, freeSeats } from '@/library/cards/seats';
+import { PICTURE_HEIGHT, type Point, pictureSize, type Size, ZOOM_MOST } from '@/library/cards/seat-zoom';
 import type { LibrarySeat } from '@/library/replies';
 import { CHOSEN_LOOK, SEAT_LOOK, SeatMap } from './seat-map';
+import { type SeatZoom, useSeatZoom } from './use-seat-zoom';
 
 // The room's seat picture, large (P15 ticket 57; the look of `GestureAskSeats` and `MainChatLibSeats`): the site's
-// `area_<sector>.png` with every seat drawn with its number, which two fingers or 확대 and 축소 zoom and which scrolls
-// both ways. A press on a free seat picks it and turns that seat alone the key colour; a press on another moves the
-// pick. "<n>번 선택" at the foot, shown once a seat is picked, hands the seat on; ✕ hands nothing on.
-
-// The picture's height at zoom 1, as the frame draws it, and how far it zooms.
-export const PICTURE_HEIGHT = 300;
-export const ZOOM_MOST = 4;
-// The zooms 확대 and 축소 step through.
-const ZOOMS = [1, 1.5, 2, 3, ZOOM_MOST] as const;
-
-export function zoomStepped(zoom: number, by: 1 | -1): number {
-  const next = by === 1 ? ZOOMS.find((each) => each > zoom) : ZOOMS.findLast((each) => each < zoom);
-  return next ?? zoom;
-}
-
-export function zoomWithin(zoom: number): number {
-  return Math.min(Math.max(zoom, 1), ZOOM_MOST);
-}
+// `area_<sector>.png` with every seat drawn with its number once it fits whole, which two fingers or 확대 and 축소 zoom
+// and which scrolls both ways. A press on a free seat picks it and turns that seat alone the key colour, with a tag
+// naming it; a press on another moves the pick. "<n>번 선택" at the foot, shown once a seat is picked, hands the seat
+// on; ✕ hands nothing on. 확대 and 축소 keep the middle of the view in the middle, or bring the picked seat there, and a
+// pinch keeps the point between the fingers where it is (P01 ticket 01 of Iteration 5).
 
 interface SeatPickerProps {
   space: LibrarySpace;
@@ -78,34 +68,8 @@ function Key({ fill, label }: { fill: string; label: string }): ReactElement {
   );
 }
 
-// The zoom, which a pinch changes from where it began and the buttons step.
-function useZoom(): { zoom: number; setZoom: (zoom: number) => void; pinch: ReturnType<typeof Gesture.Pinch> } {
-  const [zoom, setZoom] = useState(1);
-  const began = useRef(1);
-  const pinch = useMemo(
-    () =>
-      Gesture.Pinch()
-        .withTestId('seat-picker-pinch')
-        .runOnJS(true)
-        .onStart(() => {
-          began.current = zoom;
-        })
-        .onUpdate(({ scale }) => {
-          setZoom(zoomWithin(began.current * scale));
-        }),
-    [zoom],
-  );
-  return {
-    zoom,
-    setZoom: (next) => {
-      setZoom(zoomWithin(next));
-    },
-    pinch,
-  };
-}
-
 // The colours' key, and 축소 and 확대.
-function Tools({ zoom, setZoom }: { zoom: number; setZoom: (zoom: number) => void }): ReactElement {
+function Tools({ zoom, step }: Pick<SeatZoom, 'zoom' | 'step'>): ReactElement {
   return (
     <View style={styles.tools}>
       <Key fill={SEAT_LOOK.free.fill} label={SEAT_LOOK.free.label} />
@@ -117,7 +81,7 @@ function Tools({ zoom, setZoom }: { zoom: number; setZoom: (zoom: number) => voi
         icon="minus"
         name="축소"
         onPress={() => {
-          setZoom(zoomStepped(zoom, -1));
+          step(-1);
         }}
       />
       <ZoomButton
@@ -125,41 +89,84 @@ function Tools({ zoom, setZoom }: { zoom: number; setZoom: (zoom: number) => voi
         icon="plus"
         name="확대"
         onPress={() => {
-          setZoom(zoomStepped(zoom, 1));
+          step(1);
         }}
       />
     </View>
   );
 }
 
-function Picture(
-  props: SeatPickerProps & { chosen: LibrarySeat | null; pick: (seat: LibrarySeat) => void },
-): ReactElement {
+// The picked seat's middle, in the picture's points at `zoom`.
+function seatMiddle(seat: LibrarySeat, image: Size, zoom: number): Point {
+  const scale = pictureSize(image, zoom).width / image.width;
+  return { x: (seat.POSX + SEAT_BOX.width / 2) * scale, y: (seat.POSY + SEAT_BOX.height / 2) * scale };
+}
+
+type PictureProps = SeatPickerProps & { chosen: LibrarySeat | null; pick: (seat: LibrarySeat) => void };
+
+// The two scroll views, down and across, that hold the picture and tell the zoom where the view is.
+function Scrolled({ zoomed, children }: { zoomed: SeatZoom; children: ReactElement }): ReactElement {
+  return (
+    <ScrollView
+      nestedScrollEnabled
+      onContentSizeChange={() => {
+        zoomed.grown('y');
+      }}
+      onLayout={({ nativeEvent: { layout } }) => {
+        zoomed.laidOut({ width: layout.width, height: layout.height });
+      }}
+      onScroll={({ nativeEvent: { contentOffset } }) => {
+        zoomed.scrolled('y', contentOffset.y);
+      }}
+      onScrollBeginDrag={zoomed.dragged}
+      ref={zoomed.down}
+      scrollEventThrottle={16}
+      testID="seat-picker-scroll-down"
+    >
+      <ScrollView
+        horizontal
+        nestedScrollEnabled
+        onContentSizeChange={() => {
+          zoomed.grown('x');
+        }}
+        onScroll={({ nativeEvent: { contentOffset } }) => {
+          zoomed.scrolled('x', contentOffset.x);
+        }}
+        onScrollBeginDrag={zoomed.dragged}
+        ref={zoomed.across}
+        scrollEventThrottle={16}
+        testID="seat-map-scroll"
+      >
+        {children}
+      </ScrollView>
+    </ScrollView>
+  );
+}
+
+function Picture(props: PictureProps): ReactElement {
   const { space: shown, seats, onSeat, chosen, pick } = props;
-  const { zoom, setZoom, pinch } = useZoom();
   const image = shown.mapImage;
-  const height = PICTURE_HEIGHT * zoom;
-  const width = image === null ? 0 : (height * image.width) / image.height;
+  const zoomed = useSeatZoom(image, (zoom) =>
+    chosen === null || image === null ? null : seatMiddle(chosen, image, zoom),
+  );
   return (
     <>
-      <GestureDetector gesture={pinch}>
+      <GestureDetector gesture={zoomed.pinch}>
         <View collapsable={false} style={styles.box} testID="seat-picker-box">
-          <ScrollView nestedScrollEnabled testID="seat-picker-scroll-down">
-            <ScrollView horizontal nestedScrollEnabled testID="seat-map-scroll">
-              <SeatMap
-                chosen={chosen?.VNAME ?? props.current ?? null}
-                numbered
-                onSeat={onSeat === null ? null : pick}
-                seats={seats}
-                space={shown}
-                testID="seat-map-large-map"
-                width={width}
-              />
-            </ScrollView>
-          </ScrollView>
+          <Scrolled zoomed={zoomed}>
+            <SeatMap
+              chosen={chosen?.VNAME ?? props.current ?? null}
+              numbered
+              onSeat={onSeat === null ? null : pick}
+              seats={seats}
+              space={shown}
+              testID="seat-map-large-map"
+              width={image === null ? 0 : pictureSize(image, zoomed.zoom).width}
+            />
+          </Scrolled>
         </View>
       </GestureDetector>
-      <Tools setZoom={setZoom} zoom={zoom} />
+      <Tools step={zoomed.step} zoom={zoomed.zoom} />
     </>
   );
 }

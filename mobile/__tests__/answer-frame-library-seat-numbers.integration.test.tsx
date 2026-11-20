@@ -4,10 +4,13 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
 import { libraryCard, READING_ROOM, SEAT_NOTES } from '@/api/mock/data/library';
+import { seatNumberSize } from '@/library/cards/seats';
+import { pictureSize } from '@/library/cards/seat-zoom';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -16,7 +19,8 @@ import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { askForCards, card, expectNoWrite, inCard, inFrame, pressIn, startLibraryChat } from './support/library-chat';
 
 // The seats card's seat numbers and its hint, against the fake main server and the fake library: the large view
-// draws each seat's number and the small map none, and the hint tells the User a free seat books on a tap.
+// draws each seat's number once it fits whole and the small map none, and the hint tells the User a free seat books on
+// a tap.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -60,7 +64,7 @@ describe('the seat numbers', () => {
     ({ server, library } = await startLibraryChat());
   });
 
-  it('are drawn in the large view, not in the small map, centred and no smaller than 8', async () => {
+  it('are drawn in the large view once zoomed in, whole, centred and no smaller than 8, and not in the small map', async () => {
     library.takeSeat(17202002);
     await askForCards({ server, library }, [SEATS_CARD], { words: '좌석현황' });
     await laidOut();
@@ -68,14 +72,22 @@ describe('the seat numbers', () => {
     expect(screen.queryByText('7193', HIDDEN)).toBeNull();
     await pressIn(inCard(`library-seats-${SEATS_CARD.library.key}`), '좌석 현황 크게 보기');
 
+    // At 1 a four-digit number does not fit its box whole, so none is drawn.
     const large = screen.getByTestId('seat-map-large-map');
-    expect(screen.getByText('7193', HIDDEN)).toHaveStyle({ textAlign: 'center' });
-    expect(screen.getByTestId('seat-number-7193', HIDDEN).props.style).toEqual(
-      expect.arrayContaining([expect.objectContaining({ fontSize: 8 })]),
-    );
+    expect(screen.queryByText('7193', HIDDEN)).toBeNull();
+    const picture = within(screen.getByTestId('seat-map-large'));
+    await pressIn(picture, '확대');
+    await pressIn(picture, '확대');
+    await pressIn(picture, '확대');
+    await pressIn(picture, '확대');
+
+    const scale = pictureSize({ width: 2529, height: 1198 }, 4).width / 2529;
+    const size = seatNumberSize({ width: 33 * scale, height: 28 * scale }, '7193') ?? 0;
+    expect(size).toBeGreaterThanOrEqual(8);
+    expect(screen.getByText('7193', HIDDEN)).toHaveStyle({ textAlign: 'center', fontSize: size });
     // A taken seat shows its number too, and the seat keeps its label without a second element for the number.
     expect(screen.getByText('7194', HIDDEN)).toBeTruthy();
-    expect(within(large).getByLabelText('7194번 사용 중')).toBeTruthy();
+    expect(within(screen.getByTestId('seat-map-large-map')).getByLabelText('7194번 사용 중')).toBeTruthy();
     expect(screen.queryByText('7193')).toBeNull();
     expect(large).toBeVisible();
   });
@@ -85,8 +97,8 @@ describe('the seat numbers', () => {
     await laidOut();
     await pressIn(inCard(`library-seats-${SEATS_CARD.library.key}`), '좌석 현황 크게 보기');
 
-    expect(screen.getByText('7200', HIDDEN)).toBeTruthy();
     await pressIn(screen, '7200번 빈 자리');
+    expect(screen.getByTestId('seat-tag', HIDDEN)).toHaveTextContent('7200');
     await pressIn(screen, '7200번 선택');
 
     const given = inCard('library-book-book:7F-7A-zone2:2026-11-02:1600:120:s=7200');
