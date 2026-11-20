@@ -255,15 +255,20 @@ Doing step 3.3 before 3.1 breaks the Release: today's `release.sh` reads both SS
 - Nothing else called it: the Dev Server runs Compose, whose `--remove-orphans` removes the old container (step 3.4).
 
 **Still open:**
-- **Step 3.4.** The Dev Server waits until `development` carries this change.
+- **Step 3.4.** `development` was fast-forwarded to `5.0/Main` (`c920d9de`) on 2026-11-21 at 00:43 KST, so it carries this change. The Dev Server's reset by hand, the three commands in the Order of operations, is still to do. It needs `ssh swpp-b` from the university's network. Until then, the Dev Server's old `deploy.sh` waits for a `match-server` check that never comes, and the server keeps running its 2026-11-01 commit.
 - **Old tags.** Since the parameters are gone, a tag from before this change cannot be deployed again: its Release reads them for the shared Secret. A rollback is a new commit.
 
 ### Agent usage (2026-11-21)
 
-- Agent time: about 1 hour, an estimate. One Claude Code session spent it on planning the steps after the merge, checking each one, the queue and Release, and the cleanup. Waiting for CI and the Release is not counted.
+- Agent time: about 1 hour 10 minutes, an estimate. One Claude Code session spent it on:
+  - planning the steps after the merge and checking each one;
+  - the queue and the Release;
+  - the cleanup, removing `delete_retired`, and moving `development`.
+
+  Waiting for CI and the Release is not counted.
 - Tokens:
-  - input: 20,822,759 in all, of which:
-    - 20,572,526 cache reads;
-    - 249,933 cache writes;
-    - 300 uncached.
-  - output: 75,843.
+  - input: 29,254,080 in all, of which:
+    - 28,942,439 cache reads;
+    - 311,227 cache writes;
+    - 414 uncached.
+  - output: 110,162.
