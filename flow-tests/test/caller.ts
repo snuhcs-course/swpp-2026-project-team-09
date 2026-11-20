@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { createSign, randomUUID } from 'node:crypto';
@@ -59,6 +60,10 @@ export class Caller {
   // A route that requires an Idempotency-Key.
   create<T>(path: string, body: object, schema: z.ZodType<T>): Promise<T> {
     return this.succeeds('POST', path, schema, body, { 'Idempotency-Key': randomUUID() });
+  }
+
+  patch<T>(path: string, body: object, schema: z.ZodType<T>): Promise<T> {
+    return this.succeeds('PATCH', path, schema, body);
   }
 
   put(path: string, body: object): Promise<unknown> {
