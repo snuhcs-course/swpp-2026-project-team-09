@@ -2,7 +2,7 @@
 
 Parent: none. A04 is an additional task with no spec; this ticket is its whole record.
 Follows: P06-03 (#260, merged 2026-11-16), which took AI 매칭 out of the app's UI and kept the match server.
-Status: in-progress
+Status: done
 Blocked by: None
 
 Branch: `4.0/A04-01-remove-match-server`, cut fresh from `origin/4.0/Main`. The pull request targets `4.0/Main`, follows `.github/pull_request_template.md` in English, and has assignee `Jaehyun0320`.
@@ -183,7 +183,7 @@ Doing step 3.3 before 3.1 breaks the Release: today's `release.sh` reads both SS
 - [ ] `kustomize build` of `targets/all` has no match-server object, and `manifests` is green.
 - [ ] `release.bats`, `changes.bats`, `deploy.bats` and `bootstrap.bats` are green.
 - [ ] Before merging, the pull request's Rollback Scenario says this is a one-way door after step 3.3, and lists the order of operations.
-- [ ] After the merge, steps 3.1 to 3.3 are recorded under `## Comments` with the date and the result.
+- [x] After the merge, steps 3.1 to 3.3 are recorded under `## Comments` with the date and the result.
 
 ## Comments
 
@@ -215,3 +215,41 @@ Doing step 3.3 before 3.1 breaks the Release: today's `release.sh` reads both SS
     - 485,024 cache writes;
     - 508 uncached.
   - output: 128,329.
+
+### After the merge (2026-11-20 to 2026-11-21)
+
+1. **Rulesets.** Before the queue, `match-server` was removed from the required checks of **Iteration Main** and **main**; both now list 14 checks.
+2. **Merge.** The pull request merged through the queue on 2026-11-20 at 20:29 KST as `b86c73d0`.
+3. **Step 3.1.** The `all` Release `snunow/all/26.11.20-1` on `b86c73d0` (run 44728763668) ran from 20:34 to 21:18 KST:
+   - its server jobs waited for the tag's own full CI run, 44728763667, which passed all 15 jobs;
+   - the servers run `b86c73d0` and `/health/ready` answers 200;
+   - the app got a bundle only, with no new APK.
+   
+   `4.0/Main`'s own full run on the same commit, 44728062939, also passed all 15 jobs.
+4. **Step 3.2.** `kubectl get deploy,svc,networkpolicy -n snunow` showed no match-server object at 21:16.
+5. **Step 3.3, Terraform.** A plan limited with `-target` to `aws_ecr_repository.image["match-server"]`, `aws_ecr_lifecycle_policy.image["match-server"]` and `aws_iam_role_policy.deploy` showed 2 to destroy and 1 to change, with the IAM policy losing only the match-server ARN.
+   - The untargeted plan also shows four EKS addon updates and cluster drift that have nothing to do with this ticket. Use `-target` until that drift is dealt with separately.
+   - By 2026-11-21 00:05 the repository had already been deleted (CloudTrail `DeleteRepository` at 2026-11-20 22:04 KST), and the same targeted plan showed no changes.
+   - ECR now holds `main-server`, `socket-server`, `worker-server` and `admin`, and the deploy role's `release` policy names no match-server.
+6. **Step 3.3, SSM.** On 2026-11-21 at 00:06 KST `aws ssm delete-parameters` deleted `/snunow/production/match-db-password` and `/snunow/production/match-server-token`, with no invalid names.
+   - No parameter under `/snunow/production/match` is left.
+   - Every parameter `release.sh` reads is still there.
+7. **Step 3.3, database.** On 2026-11-21 a psql pod ran as the master user, with `ON_ERROR_STOP`:
+   - `pg_stat_activity` had 0 sessions on `match`;
+   - `DROP DATABASE match` and `DROP ROLE match` succeeded;
+   - `pg_database` and `pg_roles` then had no `match` row.
+
+**Still open:**
+- **Step 3.4.** The Dev Server waits until `development` carries this change.
+- **`delete_retired`.** It stays in `release.sh` and `release.bats` until a later change removes it.
+- **Old tags.** Since the parameters are gone, a tag from before this change cannot be deployed again: its Release reads them for the shared Secret. A rollback is a new commit.
+
+### Agent usage (2026-11-21)
+
+- Agent time: about 1 hour, an estimate. One Claude Code session spent it on planning the steps after the merge, checking each one, the queue and Release, and the cleanup. Waiting for CI and the Release is not counted.
+- Tokens:
+  - input: 20,822,759 in all, of which:
+    - 20,572,526 cache reads;
+    - 249,933 cache writes;
+    - 300 uncached.
+  - output: 75,843.
