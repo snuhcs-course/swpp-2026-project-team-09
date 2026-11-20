@@ -1,7 +1,7 @@
 {
   "record": {
     "run": "ai-choice",
-    "command": "pnpm eval:collection --run ai-choice --part held-out --from /Users/taehyun/PyCharmProjects/swpp-2026-project-team-09/.claude/worktrees/testing-iter4/main-server/eval/results/collection-held-out-judgement-openrouter-cacheoff-dc4336b4.json --provider openrouter --budget 0.2",
+    "command": "pnpm eval:collection --run ai-choice --part held-out --from eval/results/collection-held-out-judgement-openrouter-cacheoff-dc4336b4.json --provider openrouter --budget 0.2",
     "commit": "dc4336b491979781ae5f19b86240fd43c1f67a1a",
     "c0Tag": "eval-freeze-iter3-collection",
     "isDescendantOfC0": true,
@@ -44,7 +44,7 @@
       "newSession",
       "timesConsistent"
     ],
-    "from": "/Users/taehyun/PyCharmProjects/swpp-2026-project-team-09/.claude/worktrees/testing-iter4/main-server/eval/results/collection-held-out-judgement-openrouter-cacheoff-dc4336b4.json",
+    "from": "eval/results/collection-held-out-judgement-openrouter-cacheoff-dc4336b4.json",
     "usage": {
       "calls": 14,
       "tokens": {

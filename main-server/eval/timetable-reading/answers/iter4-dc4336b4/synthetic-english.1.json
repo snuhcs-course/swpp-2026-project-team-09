@@ -48,9 +48,7 @@
         "day": "월",
         "start": "11:00",
         "end": "12:15",
-        "nameLines": [
-          "물리학 1"
-        ],
+        "nameLines": ["물리학 1"],
         "name": "물리학 1",
         "room": "56-105",
         "cut": false
@@ -59,9 +57,7 @@
         "day": "수",
         "start": "11:00",
         "end": "12:15",
-        "nameLines": [
-          "물리학 1"
-        ],
+        "nameLines": ["물리학 1"],
         "name": "물리학 1",
         "room": "56-105",
         "cut": false
@@ -70,9 +66,7 @@
         "day": "화",
         "start": "14:00",
         "end": "15:50",
-        "nameLines": [
-          "물리학실험 1"
-        ],
+        "nameLines": ["물리학실험 1"],
         "name": "물리학실험 1",
         "room": "26-304",
         "cut": false
@@ -81,9 +75,7 @@
         "day": "목",
         "start": "09:30",
         "end": "10:45",
-        "nameLines": [
-          "수학 1"
-        ],
+        "nameLines": ["수학 1"],
         "name": "수학 1",
         "room": "25-101",
         "cut": false
@@ -92,9 +84,7 @@
         "day": "금",
         "start": "09:30",
         "end": "10:45",
-        "nameLines": [
-          "수학연습 1"
-        ],
+        "nameLines": ["수학연습 1"],
         "name": "수학연습 1",
         "room": "25-102",
         "cut": false
@@ -104,17 +94,7 @@
   "raw": {
     "layout": {
       "title": "Fall 2026",
-      "axis": [
-        "9 AM",
-        "10 AM",
-        "11 AM",
-        "12 PM",
-        "1 PM",
-        "2 PM",
-        "3 PM",
-        "4 PM",
-        "5 PM"
-      ],
+      "axis": ["9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM"],
       "blocks": [
         {
           "number": 1,
@@ -153,41 +133,31 @@
       "blocks": [
         {
           "number": 1,
-          "nameLines": [
-            "물리학 1"
-          ],
+          "nameLines": ["물리학 1"],
           "name": "물리학 1",
           "room": "56-105"
         },
         {
           "number": 2,
-          "nameLines": [
-            "물리학 1"
-          ],
+          "nameLines": ["물리학 1"],
           "name": "물리학 1",
           "room": "56-105"
         },
         {
           "number": 3,
-          "nameLines": [
-            "물리학실험 1"
-          ],
+          "nameLines": ["물리학실험 1"],
           "name": "물리학실험 1",
           "room": "26-304"
         },
         {
           "number": 4,
-          "nameLines": [
-            "수학 1"
-          ],
+          "nameLines": ["수학 1"],
           "name": "수학 1",
           "room": "25-101"
         },
         {
           "number": 5,
-          "nameLines": [
-            "수학연습 1"
-          ],
+          "nameLines": ["수학연습 1"],
           "name": "수학연습 1",
           "room": "25-102"
         }
@@ -199,45 +169,35 @@
         {
           "number": 1,
           "start": "11:00",
-          "nameLines": [
-            "물리학 1"
-          ],
+          "nameLines": ["물리학 1"],
           "name": "물리학 1",
           "room": "56-105"
         },
         {
           "number": 2,
           "start": "11:00",
-          "nameLines": [
-            "물리학 1"
-          ],
+          "nameLines": ["물리학 1"],
           "name": "물리학 1",
           "room": "56-105"
         },
         {
           "number": 3,
           "start": "14:00",
-          "nameLines": [
-            "물리학실험 1"
-          ],
+          "nameLines": ["물리학실험 1"],
           "name": "물리학실험 1",
           "room": "26-304"
         },
         {
           "number": 4,
           "start": "9:30",
-          "nameLines": [
-            "수학 1"
-          ],
+          "nameLines": ["수학 1"],
           "name": "수학 1",
           "room": "25-101"
         },
         {
           "number": 5,
           "start": "9:30",
-          "nameLines": [
-            "수학연습 1"
-          ],
+          "nameLines": ["수학연습 1"],
           "name": "수학연습 1",
           "room": "25-102"
         }

@@ -48,9 +48,7 @@
         "day": "월",
         "start": "11:00",
         "end": "11:50",
-        "nameLines": [
-          "수학 2"
-        ],
+        "nameLines": ["수학 2"],
         "name": "수학 2",
         "room": "24-211",
         "cut": false
@@ -59,9 +57,7 @@
         "day": "월",
         "start": "12:30",
         "end": "13:45",
-        "nameLines": [
-          "물리학 2"
-        ],
+        "nameLines": ["물리학 2"],
         "name": "물리학 2",
         "room": "26-B101",
         "cut": false
@@ -70,9 +66,7 @@
         "day": "월",
         "start": "16:00",
         "end": "17:50",
-        "nameLines": [
-          "프로그래밍연습"
-        ],
+        "nameLines": ["프로그래밍연습"],
         "name": "프로그래밍연습",
         "room": "301-118",
         "cut": false
@@ -81,9 +75,7 @@
         "day": "화",
         "start": "11:00",
         "end": "12:15",
-        "nameLines": [
-          "회계원리"
-        ],
+        "nameLines": ["회계원리"],
         "name": "회계원리",
         "room": "58-324",
         "cut": false
@@ -92,9 +84,7 @@
         "day": "화",
         "start": "14:00",
         "end": "15:15",
-        "nameLines": [
-          "이산수학"
-        ],
+        "nameLines": ["이산수학"],
         "name": "이산수학",
         "room": "301-118",
         "cut": false
@@ -103,9 +93,7 @@
         "day": "수",
         "start": "11:00",
         "end": "11:50",
-        "nameLines": [
-          "수학 2"
-        ],
+        "nameLines": ["수학 2"],
         "name": "수학 2",
         "room": "24-211",
         "cut": false
@@ -114,9 +102,7 @@
         "day": "수",
         "start": "12:30",
         "end": "13:45",
-        "nameLines": [
-          "물리학 2"
-        ],
+        "nameLines": ["물리학 2"],
         "name": "물리학 2",
         "room": "26-B101",
         "cut": false
@@ -125,9 +111,7 @@
         "day": "수",
         "start": "15:00",
         "end": "16:50",
-        "nameLines": [
-          "축구"
-        ],
+        "nameLines": ["축구"],
         "name": "축구",
         "room": null,
         "cut": false
@@ -136,9 +120,7 @@
         "day": "수",
         "start": "18:30",
         "end": "20:20",
-        "nameLines": [
-          "프로그래밍연습"
-        ],
+        "nameLines": ["프로그래밍연습"],
         "name": "프로그래밍연습",
         "room": "302-105",
         "cut": false
@@ -147,9 +129,7 @@
         "day": "목",
         "start": "11:00",
         "end": "12:15",
-        "nameLines": [
-          "회계원리"
-        ],
+        "nameLines": ["회계원리"],
         "name": "회계원리",
         "room": "58-324",
         "cut": false
@@ -158,9 +138,7 @@
         "day": "목",
         "start": "14:00",
         "end": "15:15",
-        "nameLines": [
-          "이산수학"
-        ],
+        "nameLines": ["이산수학"],
         "name": "이산수학",
         "room": "301-118",
         "cut": false
@@ -169,9 +147,7 @@
         "day": "목",
         "start": "16:00",
         "end": "17:50",
-        "nameLines": [
-          "물리학실험 2"
-        ],
+        "nameLines": ["물리학실험 2"],
         "name": "물리학실험 2",
         "room": "26-302",
         "cut": false
@@ -180,9 +156,7 @@
         "day": "금",
         "start": "10:00",
         "end": "11:50",
-        "nameLines": [
-          "수학연습 2"
-        ],
+        "nameLines": ["수학연습 2"],
         "name": "수학연습 2",
         "room": "24-211",
         "cut": false
@@ -191,9 +165,7 @@
         "day": "금",
         "start": "14:00",
         "end": "16:50",
-        "nameLines": [
-          "대학 글쓰기 1"
-        ],
+        "nameLines": ["대학 글쓰기 1"],
         "name": "대학 글쓰기 1",
         "room": "83-202",
         "cut": false
@@ -203,21 +175,7 @@
   "raw": {
     "layout": {
       "title": null,
-      "axis": [
-        "9",
-        "10",
-        "11",
-        "12",
-        "13",
-        "14",
-        "15",
-        "16",
-        "17",
-        "18",
-        "19",
-        "20",
-        "21"
-      ],
+      "axis": ["9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21"],
       "blocks": [
         {
           "number": 1,
@@ -310,113 +268,85 @@
       "blocks": [
         {
           "number": 1,
-          "nameLines": [
-            "수학 2"
-          ],
+          "nameLines": ["수학 2"],
           "name": "수학 2",
           "room": "24-211"
         },
         {
           "number": 2,
-          "nameLines": [
-            "물리학 2"
-          ],
+          "nameLines": ["물리학 2"],
           "name": "물리학 2",
           "room": "26-B101"
         },
         {
           "number": 3,
-          "nameLines": [
-            "프로그래밍연습"
-          ],
+          "nameLines": ["프로그래밍연습"],
           "name": "프로그래밍연습",
           "room": "301-118"
         },
         {
           "number": 4,
-          "nameLines": [
-            "회계원리"
-          ],
+          "nameLines": ["회계원리"],
           "name": "회계원리",
           "room": "58-324"
         },
         {
           "number": 5,
-          "nameLines": [
-            "이산수학"
-          ],
+          "nameLines": ["이산수학"],
           "name": "이산수학",
           "room": "301-118"
         },
         {
           "number": 6,
-          "nameLines": [
-            "수학 2"
-          ],
+          "nameLines": ["수학 2"],
           "name": "수학 2",
           "room": "24-211"
         },
         {
           "number": 7,
-          "nameLines": [
-            "물리학 2"
-          ],
+          "nameLines": ["물리학 2"],
           "name": "물리학 2",
           "room": "26-B101"
         },
         {
           "number": 8,
-          "nameLines": [
-            "축구"
-          ],
+          "nameLines": ["축구"],
           "name": "축구",
           "room": null
         },
         {
           "number": 9,
-          "nameLines": [
-            "프로그래밍연습"
-          ],
+          "nameLines": ["프로그래밍연습"],
           "name": "프로그래밍연습",
           "room": "302-105"
         },
         {
           "number": 10,
-          "nameLines": [
-            "회계원리"
-          ],
+          "nameLines": ["회계원리"],
           "name": "회계원리",
           "room": "58-324"
         },
         {
           "number": 11,
-          "nameLines": [
-            "이산수학"
-          ],
+          "nameLines": ["이산수학"],
           "name": "이산수학",
           "room": "301-118"
         },
         {
           "number": 12,
-          "nameLines": [
-            "물리학실험 2"
-          ],
+          "nameLines": ["물리학실험 2"],
           "name": "물리학실험 2",
           "room": "26-302"
         },
         {
           "number": 13,
-          "nameLines": [
-            "수학연습 2"
-          ],
+          "nameLines": ["수학연습 2"],
           "name": "수학연습 2",
           "room": "24-211"
         },
         {
           "number": 14,
-          "nameLines": [
-            "대학 글쓰기 1"
-          ],
+          "nameLines": ["대학 글쓰기 1"],
           "name": "대학 글쓰기 1",
           "room": "83-202"
         }
@@ -428,126 +358,98 @@
         {
           "number": 1,
           "start": "11:00",
-          "nameLines": [
-            "수학 2"
-          ],
+          "nameLines": ["수학 2"],
           "name": "수학 2",
           "room": "24-211"
         },
         {
           "number": 2,
           "start": "12:30",
-          "nameLines": [
-            "물리학 2"
-          ],
+          "nameLines": ["물리학 2"],
           "name": "물리학 2",
           "room": "26-B101"
         },
         {
           "number": 3,
           "start": "16:00",
-          "nameLines": [
-            "프로그래밍연습"
-          ],
+          "nameLines": ["프로그래밍연습"],
           "name": "프로그래밍연습",
           "room": "301-118"
         },
         {
           "number": 4,
           "start": "11:00",
-          "nameLines": [
-            "회계원리"
-          ],
+          "nameLines": ["회계원리"],
           "name": "회계원리",
           "room": "58-324"
         },
         {
           "number": 5,
           "start": "14:00",
-          "nameLines": [
-            "이산수학"
-          ],
+          "nameLines": ["이산수학"],
           "name": "이산수학",
           "room": "301-118"
         },
         {
           "number": 6,
           "start": "11:00",
-          "nameLines": [
-            "수학 2"
-          ],
+          "nameLines": ["수학 2"],
           "name": "수학 2",
           "room": "24-211"
         },
         {
           "number": 7,
           "start": "12:30",
-          "nameLines": [
-            "물리학 2"
-          ],
+          "nameLines": ["물리학 2"],
           "name": "물리학 2",
           "room": "26-B101"
         },
         {
           "number": 8,
           "start": "15:00",
-          "nameLines": [
-            "축구"
-          ],
+          "nameLines": ["축구"],
           "name": "축구",
           "room": null
         },
         {
           "number": 9,
           "start": "18:30",
-          "nameLines": [
-            "프로그래밍연습"
-          ],
+          "nameLines": ["프로그래밍연습"],
           "name": "프로그래밍연습",
           "room": "302-105"
         },
         {
           "number": 10,
           "start": "11:00",
-          "nameLines": [
-            "회계원리"
-          ],
+          "nameLines": ["회계원리"],
           "name": "회계원리",
           "room": "58-324"
         },
         {
           "number": 11,
           "start": "14:00",
-          "nameLines": [
-            "이산수학"
-          ],
+          "nameLines": ["이산수학"],
           "name": "이산수학",
           "room": "301-118"
         },
         {
           "number": 12,
           "start": "16:00",
-          "nameLines": [
-            "물리학실험 2"
-          ],
+          "nameLines": ["물리학실험 2"],
           "name": "물리학실험 2",
           "room": "26-302"
         },
         {
           "number": 13,
           "start": "10:00",
-          "nameLines": [
-            "수학연습 2"
-          ],
+          "nameLines": ["수학연습 2"],
           "name": "수학연습 2",
           "room": "24-211"
         },
         {
           "number": 14,
           "start": "14:00",
-          "nameLines": [
-            "대학 글쓰기 1"
-          ],
+          "nameLines": ["대학 글쓰기 1"],
           "name": "대학 글쓰기 1",
           "room": "83-202"
         }

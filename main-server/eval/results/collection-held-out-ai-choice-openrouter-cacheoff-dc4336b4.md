@@ -4,7 +4,7 @@
 
 | 항목 | 값 |
 |---|---|
-| 명령 | `pnpm eval:collection --run ai-choice --part held-out --from /Users/taehyun/PyCharmProjects/swpp-2026-project-team-09/.claude/worktrees/testing-iter4/main-server/eval/results/collection-held-out-judgement-openrouter-cacheoff-dc4336b4.json --provider openrouter --budget 0.2` |
+| 명령 | `pnpm eval:collection --run ai-choice --part held-out --from eval/results/collection-held-out-judgement-openrouter-cacheoff-dc4336b4.json --provider openrouter --budget 0.2` |
 | 시각 | 2026-11-20T09:54:50.839Z – 2026-11-20T09:55:32.700Z |
 | 커밋 | `dc4336b491979781ae5f19b86240fd43c1f67a1a` |
 | 고정 세트 | 태그 `eval-freeze-iter3-collection`의 후손: 예. 정렬한 id의 SHA-256 `af9f5ed56cb5854d09b9e8e0a59247dcac97c64d6303d6c2385a617e8ec95bf3`, held-out |
@@ -15,7 +15,7 @@
 | 켠 설정 | {"SAME_EVENT_TITLE_RULE":true,"SAME_EVENT_AI_CHOICE":true} |
 | 캠퍼스 설정 | campusDefault {"snu_events":"gwanak","extra_snu":"gwanak"} |
 | 켠 검사 | announcesEvent, linesInPost, dateAgrees, weekdayAgrees, timeAgrees, notApplicationPeriod, startBeforeEnd, hasTimeOfDay, length, placeInLines, placeMatches, newSession, timesConsistent |
-| 다시 쓴 답 | /Users/taehyun/PyCharmProjects/swpp-2026-project-team-09/.claude/worktrees/testing-iter4/main-server/eval/results/collection-held-out-judgement-openrouter-cacheoff-dc4336b4.json |
+| 다시 쓴 답 | eval/results/collection-held-out-judgement-openrouter-cacheoff-dc4336b4.json |
 | 사용량과 비용 | 호출 14, 입력 42960 (캐시 읽기 0, 쓰기 0), 출력 4787, USD 0.0067 (openrouter), 예산 USD 0.2 |
 
 ## 점수

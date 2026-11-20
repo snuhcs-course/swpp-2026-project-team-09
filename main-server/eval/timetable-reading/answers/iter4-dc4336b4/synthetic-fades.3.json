@@ -48,9 +48,7 @@
         "day": "화",
         "start": "09:00",
         "end": "10:15",
-        "nameLines": [
-          "회계원리"
-        ],
+        "nameLines": ["회계원리"],
         "name": "회계원리",
         "room": "58-324",
         "cut": false
@@ -59,9 +57,7 @@
         "day": "목",
         "start": "11:00",
         "end": "12:50",
-        "nameLines": [
-          "수학연습 1"
-        ],
+        "nameLines": ["수학연습 1"],
         "name": "수학연습 1",
         "room": "24-211",
         "cut": false
@@ -70,9 +66,7 @@
         "day": "화",
         "start": "14:00",
         "end": "15:15",
-        "nameLines": [
-          "이산수학"
-        ],
+        "nameLines": ["이산수학"],
         "name": "이산수학",
         "room": "301-118",
         "cut": false
@@ -81,9 +75,7 @@
         "day": "목",
         "start": "14:00",
         "end": "15:15",
-        "nameLines": [
-          "이산수학"
-        ],
+        "nameLines": ["이산수학"],
         "name": "이산수학",
         "room": "301-118",
         "cut": false
@@ -92,9 +84,7 @@
         "day": "월",
         "start": "19:00",
         "end": "20:10",
-        "nameLines": [
-          "논리설계"
-        ],
+        "nameLines": ["논리설계"],
         "name": "논리설계",
         "room": "302-310-2",
         "cut": true
@@ -103,10 +93,7 @@
         "day": "수",
         "start": "18:30",
         "end": "19:40",
-        "nameLines": [
-          "컴퓨터프로그",
-          "래밍"
-        ],
+        "nameLines": ["컴퓨터프로그", "래밍"],
         "name": "컴퓨터프로그래밍",
         "room": "302-105",
         "cut": true
@@ -115,9 +102,7 @@
         "day": "금",
         "start": "19:00",
         "end": "20:10",
-        "nameLines": [
-          "창의공학설계"
-        ],
+        "nameLines": ["창의공학설계"],
         "name": "창의공학설계",
         "room": "301-204",
         "cut": true
@@ -127,21 +112,7 @@
   "raw": {
     "layout": {
       "title": "fade",
-      "axis": [
-        "9",
-        "10",
-        "11",
-        "12",
-        "13",
-        "14",
-        "15",
-        "16",
-        "17",
-        "18",
-        "19",
-        "20",
-        "21"
-      ],
+      "axis": ["9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21"],
       "blocks": [
         {
           "number": 1,
@@ -192,58 +163,43 @@
       "blocks": [
         {
           "number": 1,
-          "nameLines": [
-            "회계원리"
-          ],
+          "nameLines": ["회계원리"],
           "name": "회계원리",
           "room": "58-324"
         },
         {
           "number": 2,
-          "nameLines": [
-            "수학연습 1"
-          ],
+          "nameLines": ["수학연습 1"],
           "name": "수학연습 1",
           "room": "24-211"
         },
         {
           "number": 3,
-          "nameLines": [
-            "이산수학"
-          ],
+          "nameLines": ["이산수학"],
           "name": "이산수학",
           "room": "301-118"
         },
         {
           "number": 4,
-          "nameLines": [
-            "이산수학"
-          ],
+          "nameLines": ["이산수학"],
           "name": "이산수학",
           "room": "301-118"
         },
         {
           "number": 5,
-          "nameLines": [
-            "논리설계"
-          ],
+          "nameLines": ["논리설계"],
           "name": "논리설계",
           "room": "302-310-2"
         },
         {
           "number": 6,
-          "nameLines": [
-            "컴퓨터프로그",
-            "래밍"
-          ],
+          "nameLines": ["컴퓨터프로그", "래밍"],
           "name": "컴퓨터프로그래밍",
           "room": "302-105"
         },
         {
           "number": 7,
-          "nameLines": [
-            "창의공학설계"
-          ],
+          "nameLines": ["창의공학설계"],
           "name": "창의공학설계",
           "room": "301-204"
         }
@@ -255,64 +211,49 @@
         {
           "number": 1,
           "start": "9:00",
-          "nameLines": [
-            "회계원리"
-          ],
+          "nameLines": ["회계원리"],
           "name": "회계원리",
           "room": "58-324"
         },
         {
           "number": 2,
           "start": "11:00",
-          "nameLines": [
-            "수학연습 1"
-          ],
+          "nameLines": ["수학연습 1"],
           "name": "수학연습 1",
           "room": "24-211"
         },
         {
           "number": 3,
           "start": "14:00",
-          "nameLines": [
-            "이산수학"
-          ],
+          "nameLines": ["이산수학"],
           "name": "이산수학",
           "room": "301-118"
         },
         {
           "number": 4,
           "start": "14:00",
-          "nameLines": [
-            "이산수학"
-          ],
+          "nameLines": ["이산수학"],
           "name": "이산수학",
           "room": "301-118"
         },
         {
           "number": 5,
           "start": "19:00",
-          "nameLines": [
-            "논리설계"
-          ],
+          "nameLines": ["논리설계"],
           "name": "논리설계",
           "room": "302-310-2"
         },
         {
           "number": 6,
           "start": "18:30",
-          "nameLines": [
-            "컴퓨터프로그",
-            "래밍"
-          ],
+          "nameLines": ["컴퓨터프로그", "래밍"],
           "name": "컴퓨터프로그래밍",
           "room": "302-105"
         },
         {
           "number": 7,
           "start": "19:00",
-          "nameLines": [
-            "창의공학설계"
-          ],
+          "nameLines": ["창의공학설계"],
           "name": "창의공학설계",
           "room": "301-204"
         }

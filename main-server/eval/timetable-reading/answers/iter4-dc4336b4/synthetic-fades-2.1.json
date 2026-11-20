@@ -48,9 +48,7 @@
         "day": "화",
         "start": "10:00",
         "end": "11:15",
-        "nameLines": [
-          "경제학원론"
-        ],
+        "nameLines": ["경제학원론"],
         "name": "경제학원론",
         "room": "16-201",
         "cut": false
@@ -59,9 +57,7 @@
         "day": "목",
         "start": "10:00",
         "end": "11:15",
-        "nameLines": [
-          "경제학원론"
-        ],
+        "nameLines": ["경제학원론"],
         "name": "경제학원론",
         "room": "16-201",
         "cut": false
@@ -70,9 +66,7 @@
         "day": "수",
         "start": "13:00",
         "end": "14:50",
-        "nameLines": [
-          "물리학실험 2"
-        ],
+        "nameLines": ["물리학실험 2"],
         "name": "물리학실험 2",
         "room": "26-302",
         "cut": false
@@ -81,9 +75,7 @@
         "day": "월",
         "start": "19:00",
         "end": "20:50",
-        "nameLines": [
-          "논리설계"
-        ],
+        "nameLines": ["논리설계"],
         "name": "논리설계",
         "room": "302-310-2",
         "cut": true
@@ -92,9 +84,7 @@
         "day": "금",
         "start": "19:00",
         "end": "20:50",
-        "nameLines": [
-          "창의공학설계"
-        ],
+        "nameLines": ["창의공학설계"],
         "name": "창의공학설계",
         "room": "301-204",
         "cut": true
@@ -104,20 +94,7 @@
   "raw": {
     "layout": {
       "title": "fade 2",
-      "axis": [
-        "9",
-        "10",
-        "11",
-        "12",
-        "13",
-        "14",
-        "15",
-        "16",
-        "17",
-        "18",
-        "19",
-        "20"
-      ],
+      "axis": ["9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"],
       "blocks": [
         {
           "number": 1,
@@ -156,44 +133,34 @@
       "blocks": [
         {
           "number": 1,
-          "nameLines": [
-            "경제학원론"
-          ],
+          "nameLines": ["경제학원론"],
           "name": "경제학원론",
           "room": "16-201"
         },
         {
           "number": 2,
-          "nameLines": [
-            "경제학원론"
-          ],
+          "nameLines": ["경제학원론"],
           "name": "경제학원론",
           "room": "16-201",
           "end": null
         },
         {
           "number": 3,
-          "nameLines": [
-            "물리학실험 2"
-          ],
+          "nameLines": ["물리학실험 2"],
           "name": "물리학실험 2",
           "room": "26-302",
           "end": null
         },
         {
           "number": 4,
-          "nameLines": [
-            "논리설계"
-          ],
+          "nameLines": ["논리설계"],
           "name": "논리설계",
           "room": "302-310-2",
           "end": "20:50"
         },
         {
           "number": 5,
-          "nameLines": [
-            "창의공학설계"
-          ],
+          "nameLines": ["창의공학설계"],
           "name": "창의공학설계",
           "room": "301-204",
           "end": "21:50"
@@ -206,45 +173,35 @@
         {
           "number": 1,
           "start": "10:00",
-          "nameLines": [
-            "경제학원론"
-          ],
+          "nameLines": ["경제학원론"],
           "name": "경제학원론",
           "room": "16-201"
         },
         {
           "number": 1,
           "start": "10:00",
-          "nameLines": [
-            "경제학원론"
-          ],
+          "nameLines": ["경제학원론"],
           "name": "경제학원론",
           "room": "16-201"
         },
         {
           "number": 1,
           "start": "13:00",
-          "nameLines": [
-            "물리학실험 2"
-          ],
+          "nameLines": ["물리학실험 2"],
           "name": "물리학실험 2",
           "room": "26-302"
         },
         {
           "number": 1,
           "start": "19:00",
-          "nameLines": [
-            "논리설계"
-          ],
+          "nameLines": ["논리설계"],
           "name": "논리설계",
           "room": "302-310-2"
         },
         {
           "number": 1,
           "start": "19:00",
-          "nameLines": [
-            "창의공학설계"
-          ],
+          "nameLines": ["창의공학설계"],
           "name": "창의공학설계",
           "room": "301-204"
         }
