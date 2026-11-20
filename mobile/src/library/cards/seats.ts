@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibrarySeat } from '../replies';
@@ -63,4 +64,20 @@ export function seatBoxes(seats: readonly LibrarySeat[], imageWidth: number, sho
     width: SEAT_BOX.width * scale,
     height: SEAT_BOX.height * scale,
   }));
+}
+
+// The smallest and largest size the seat picture draws a seat's number at, in points.
+export const SEAT_NUMBER_MIN = 8;
+const SEAT_NUMBER_MOST = 14;
+// A digit's width as a share of the font size, with room to spare, and the room left at each side of the number.
+const DIGIT_WIDTH = 0.7;
+const NUMBER_SIDE = 1;
+
+// A seat number's font size in its box: the largest at which the whole number fits the box's width and 0.8 of its
+// height, at most SEAT_NUMBER_MOST. Null when that is below SEAT_NUMBER_MIN: the seat then shows no number rather than a
+// cut one (P01 ticket 01 of Iteration 5).
+export function seatNumberSize(box: Pick<SeatBox, 'width' | 'height'>, label: string): number | null {
+  const wide = (box.width - 2 * NUMBER_SIDE) / (DIGIT_WIDTH * Math.max(label.length, 1));
+  const size = Math.min(SEAT_NUMBER_MOST, 0.8 * box.height, wide);
+  return size >= SEAT_NUMBER_MIN ? size : null;
 }
