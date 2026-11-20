@@ -1,0 +1,517 @@
+{
+  "options": {
+    "layoutThinking": true,
+    "parallel": true,
+    "fadeReask": true
+  },
+  "screenshot": "snutt-1",
+  "model": "anthropic/claude-haiku-5.5",
+  "mode": "grid",
+  "mapped": true,
+  "ms": 12317,
+  "inputTokens": 15863,
+  "outputTokens": 4114,
+  "reasoningTokens": 2757,
+  "callsThatThought": 0,
+  "calls": 3,
+  "answer": {
+    "title": "hi",
+    "axis": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24"
+    ],
+    "blocks": [
+      {
+        "day": "월",
+        "start": "09:30",
+        "end": "10:45",
+        "nameLines": ["딥러닝의 기초"],
+        "name": "딥러닝의 기초",
+        "room": "301-118",
+        "cut": false
+      },
+      {
+        "day": "월",
+        "start": "13:30",
+        "end": "15:20",
+        "nameLines": ["하드웨어시스", "템설계"],
+        "name": "하드웨어시스템설계",
+        "room": "302-311-1",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "09:00",
+        "end": "12:00",
+        "nameLines": ["근장"],
+        "name": "근장",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "13:00",
+        "end": "13:50",
+        "nameLines": ["컴퓨팅 살펴…"],
+        "name": "컴퓨팅 살펴…",
+        "room": "302-105",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "14:00",
+        "end": "15:15",
+        "nameLines": ["운영체제"],
+        "name": "운영체제",
+        "room": "301-203",
+        "cut": false
+      },
+      {
+        "day": "화",
+        "start": "19:00",
+        "end": "21:00",
+        "nameLines": ["주간회의"],
+        "name": "주간회의",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "09:30",
+        "end": "10:45",
+        "nameLines": ["딥러닝의 기초"],
+        "name": "딥러닝의 기초",
+        "room": "301-118",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "13:30",
+        "end": "15:20",
+        "nameLines": ["하드웨어시스", "템설계"],
+        "name": "하드웨어시스템설계",
+        "room": "302-311-1",
+        "cut": false
+      },
+      {
+        "day": "수",
+        "start": "16:00",
+        "end": "18:00",
+        "nameLines": ["근장"],
+        "name": "근장",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "09:00",
+        "end": "12:00",
+        "nameLines": ["근장"],
+        "name": "근장",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "14:00",
+        "end": "15:15",
+        "nameLines": ["운영체제"],
+        "name": "운영체제",
+        "room": "301-203",
+        "cut": false
+      },
+      {
+        "day": "목",
+        "start": "16:00",
+        "end": "18:00",
+        "nameLines": ["근장"],
+        "name": "근장",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "금",
+        "start": "10:00",
+        "end": "12:50",
+        "nameLines": ["정보 보호 및", "블록체인 개론"],
+        "name": "정보 보호 및 블록체인 개론",
+        "room": "43-2-B101",
+        "cut": false
+      },
+      {
+        "day": "금",
+        "start": "13:00",
+        "end": "18:50",
+        "nameLines": ["창의적통합설", "계2"],
+        "name": "창의적통합설계2",
+        "room": "302-106",
+        "cut": false
+      },
+      {
+        "day": "금",
+        "start": "19:00",
+        "end": "22:00",
+        "nameLines": ["월간회의"],
+        "name": "월간회의",
+        "room": null,
+        "cut": false
+      },
+      {
+        "day": "토",
+        "start": "09:00",
+        "end": "10:50",
+        "nameLines": ["(공유)학부생", "연구 인턴"],
+        "name": "(공유)학부생 연구 인턴",
+        "room": null,
+        "cut": false
+      }
+    ]
+  },
+  "raw": {
+    "layout": {
+      "title": "hi",
+      "axis": ["9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"],
+      "blocks": [
+        {
+          "number": 1,
+          "day": "월",
+          "start": "9:30",
+          "end": "10:45"
+        },
+        {
+          "number": 2,
+          "day": "월",
+          "start": "13:30",
+          "end": "15:20"
+        },
+        {
+          "number": 3,
+          "day": "화",
+          "start": "9:00",
+          "end": "12:00"
+        },
+        {
+          "number": 4,
+          "day": "화",
+          "start": "13:00",
+          "end": "13:50"
+        },
+        {
+          "number": 5,
+          "day": "화",
+          "start": "14:00",
+          "end": "15:15"
+        },
+        {
+          "number": 6,
+          "day": "화",
+          "start": "19:00",
+          "end": "21:00"
+        },
+        {
+          "number": 7,
+          "day": "수",
+          "start": "9:30",
+          "end": "10:45"
+        },
+        {
+          "number": 8,
+          "day": "수",
+          "start": "13:30",
+          "end": "15:20"
+        },
+        {
+          "number": 9,
+          "day": "수",
+          "start": "16:00",
+          "end": "18:00"
+        },
+        {
+          "number": 10,
+          "day": "목",
+          "start": "9:00",
+          "end": "12:00"
+        },
+        {
+          "number": 11,
+          "day": "목",
+          "start": "14:00",
+          "end": "15:15"
+        },
+        {
+          "number": 12,
+          "day": "목",
+          "start": "16:00",
+          "end": "18:00"
+        },
+        {
+          "number": 13,
+          "day": "금",
+          "start": "10:00",
+          "end": "12:50"
+        },
+        {
+          "number": 14,
+          "day": "금",
+          "start": "13:00",
+          "end": "18:50"
+        },
+        {
+          "number": 15,
+          "day": "금",
+          "start": "19:00",
+          "end": "22:00"
+        },
+        {
+          "number": 16,
+          "day": "토",
+          "start": "9:00",
+          "end": "10:50"
+        }
+      ]
+    },
+    "text": {
+      "title": "hi",
+      "blocks": [
+        {
+          "number": 1,
+          "nameLines": ["딥러닝의 기초"],
+          "name": "딥러닝의 기초",
+          "room": "301-118"
+        },
+        {
+          "number": 2,
+          "nameLines": ["하드웨어시스", "템설계"],
+          "name": "하드웨어시스템설계",
+          "room": "302-311-1"
+        },
+        {
+          "number": 3,
+          "nameLines": ["근장"],
+          "name": "근장",
+          "room": null
+        },
+        {
+          "number": 4,
+          "nameLines": ["컴퓨팅 살펴…"],
+          "name": "컴퓨팅 살펴…",
+          "room": "302-105"
+        },
+        {
+          "number": 5,
+          "nameLines": ["운영체제"],
+          "name": "운영체제",
+          "room": "301-203"
+        },
+        {
+          "number": 6,
+          "nameLines": ["주간회의"],
+          "name": "주간회의",
+          "room": null
+        },
+        {
+          "number": 7,
+          "nameLines": ["딥러닝의 기초"],
+          "name": "딥러닝의 기초",
+          "room": "301-118"
+        },
+        {
+          "number": 8,
+          "nameLines": ["하드웨어시스", "템설계"],
+          "name": "하드웨어시스템설계",
+          "room": "302-311-1"
+        },
+        {
+          "number": 9,
+          "nameLines": ["근장"],
+          "name": "근장",
+          "room": null
+        },
+        {
+          "number": 10,
+          "nameLines": ["근장"],
+          "name": "근장",
+          "room": null
+        },
+        {
+          "number": 11,
+          "nameLines": ["운영체제"],
+          "name": "운영체제",
+          "room": "301-203"
+        },
+        {
+          "number": 12,
+          "nameLines": ["근장"],
+          "name": "근장",
+          "room": null
+        },
+        {
+          "number": 13,
+          "nameLines": ["정보 보호 및", "블록체인 개론"],
+          "name": "정보 보호 및 블록체인 개론",
+          "room": "43-2-B101"
+        },
+        {
+          "number": 14,
+          "nameLines": ["창의적통합설", "계2"],
+          "name": "창의적통합설계2",
+          "room": "302-106"
+        },
+        {
+          "number": 15,
+          "nameLines": ["월간회의"],
+          "name": "월간회의",
+          "room": null
+        },
+        {
+          "number": 16,
+          "nameLines": ["(공유)학부생", "연구 인턴"],
+          "name": "(공유)학부생 연구 인턴",
+          "room": null
+        }
+      ]
+    },
+    "idText": {
+      "title": "hi",
+      "blocks": [
+        {
+          "number": 1,
+          "start": "9:30",
+          "nameLines": ["딥러닝의 기초"],
+          "name": "딥러닝의 기초",
+          "room": "301-118"
+        },
+        {
+          "number": 2,
+          "start": "13:30",
+          "nameLines": ["하드웨어시스", "템설계"],
+          "name": "하드웨어시스템설계",
+          "room": "302-311-1"
+        },
+        {
+          "number": 3,
+          "start": "9:00",
+          "nameLines": ["근장"],
+          "name": "근장",
+          "room": null
+        },
+        {
+          "number": 4,
+          "start": "13:00",
+          "nameLines": ["컴퓨팅 살펴…"],
+          "name": "컴퓨팅 살펴…",
+          "room": "302-105"
+        },
+        {
+          "number": 5,
+          "start": "14:00",
+          "nameLines": ["운영체제"],
+          "name": "운영체제",
+          "room": "301-203"
+        },
+        {
+          "number": 6,
+          "start": "19:00",
+          "nameLines": ["주간회의"],
+          "name": "주간회의",
+          "room": null
+        },
+        {
+          "number": 7,
+          "start": "9:30",
+          "nameLines": ["딥러닝의 기초"],
+          "name": "딥러닝의 기초",
+          "room": "301-118"
+        },
+        {
+          "number": 8,
+          "start": "13:30",
+          "nameLines": ["하드웨어시스", "템설계"],
+          "name": "하드웨어시스템설계",
+          "room": "302-311-1"
+        },
+        {
+          "number": 9,
+          "start": "16:00",
+          "nameLines": ["근장"],
+          "name": "근장",
+          "room": null
+        },
+        {
+          "number": 10,
+          "start": "9:00",
+          "nameLines": ["근장"],
+          "name": "근장",
+          "room": null
+        },
+        {
+          "number": 11,
+          "start": "14:00",
+          "nameLines": ["운영체제"],
+          "name": "운영체제",
+          "room": "301-203"
+        },
+        {
+          "number": 12,
+          "start": "16:00",
+          "nameLines": ["근장"],
+          "name": "근장",
+          "room": null
+        },
+        {
+          "number": 13,
+          "start": "10:00",
+          "nameLines": ["정보 보호 및", "블록체인 개론"],
+          "name": "정보 보호 및 블록체인 개론",
+          "room": "43-2-B101"
+        },
+        {
+          "number": 14,
+          "start": "13:00",
+          "nameLines": ["창의적통합설", "계2"],
+          "name": "창의적통합설계2",
+          "room": "302-106"
+        },
+        {
+          "number": 15,
+          "start": "19:00",
+          "nameLines": ["월간회의"],
+          "name": "월간회의",
+          "room": null
+        },
+        {
+          "number": 16,
+          "start": "9:00",
+          "nameLines": ["(공유)학부생", "연구 인턴"],
+          "name": "(공유)학부생 연구 인턴",
+          "room": null
+        }
+      ]
+    },
+    "reasked": {},
+    "again": 0
+  }
+}

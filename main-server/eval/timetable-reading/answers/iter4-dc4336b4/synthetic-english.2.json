@@ -1,0 +1,121 @@
+{
+  "options": {
+    "layoutThinking": true,
+    "parallel": true,
+    "fadeReask": true
+  },
+  "screenshot": "synthetic-english",
+  "model": "anthropic/claude-haiku-5.5",
+  "mode": "grid",
+  "mapped": false,
+  "ms": 17136,
+  "inputTokens": 9214,
+  "outputTokens": 3927,
+  "reasoningTokens": 3064,
+  "callsThatThought": 0,
+  "calls": 3,
+  "answer": {
+    "title": "Fall 2026",
+    "axis": ["9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM"],
+    "blocks": [
+      {
+        "day": "Mon",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["물리학 1"],
+        "name": "물리학 1",
+        "room": "56-105",
+        "cut": false
+      },
+      {
+        "day": "Tue",
+        "start": "14:00",
+        "end": "15:50",
+        "nameLines": ["물리학실험 1"],
+        "name": "물리학실험 1",
+        "room": "26-304",
+        "cut": false
+      },
+      {
+        "day": "Wed",
+        "start": "11:00",
+        "end": "12:15",
+        "nameLines": ["물리학 1"],
+        "name": "물리학 1",
+        "room": "56-105",
+        "cut": false
+      },
+      {
+        "day": "Thu",
+        "start": "9:30",
+        "end": "10:45",
+        "nameLines": ["수학 1"],
+        "name": "수학 1",
+        "room": "25-101",
+        "cut": false
+      },
+      {
+        "day": "Fri",
+        "start": "9:30",
+        "end": "10:45",
+        "nameLines": ["수학연습 1"],
+        "name": "수학연습 1",
+        "room": "25-102",
+        "cut": false
+      }
+    ]
+  },
+  "raw": {
+    "whole": {
+      "title": "Fall 2026",
+      "axis": ["9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM"],
+      "blocks": [
+        {
+          "day": "Mon",
+          "start": "11:00",
+          "end": "12:15",
+          "nameLines": ["물리학 1"],
+          "name": "물리학 1",
+          "room": "56-105",
+          "cut": false
+        },
+        {
+          "day": "Tue",
+          "start": "14:00",
+          "end": "15:50",
+          "nameLines": ["물리학실험 1"],
+          "name": "물리학실험 1",
+          "room": "26-304",
+          "cut": false
+        },
+        {
+          "day": "Wed",
+          "start": "11:00",
+          "end": "12:15",
+          "nameLines": ["물리학 1"],
+          "name": "물리학 1",
+          "room": "56-105",
+          "cut": false
+        },
+        {
+          "day": "Thu",
+          "start": "9:30",
+          "end": "10:45",
+          "nameLines": ["수학 1"],
+          "name": "수학 1",
+          "room": "25-101",
+          "cut": false
+        },
+        {
+          "day": "Fri",
+          "start": "9:30",
+          "end": "10:45",
+          "nameLines": ["수학연습 1"],
+          "name": "수학연습 1",
+          "room": "25-102",
+          "cut": false
+        }
+      ]
+    }
+  }
+}
