@@ -35,7 +35,18 @@ The answer screen is being redesigned (a time bar under the question, details on
 - [x] A reply to one request shows no steps. (Integration test.)
 - [x] The guard keeps two steps in order, keeps a reply without steps as it was, and refuses a step of an unknown kind or without a status. (Integration test.)
 - [x] The mock build's stored reply passes the checks and moves to the day asked. (Unit test.)
-- [ ] The card on a phone, with the mock build. (Emulator; see the comments.)
+- [x] The card on a phone, with the mock build. (Emulator; see the comments.)
 - [x] No native file changes; oxlint, Prettier and tsc pass on the app.
 
 ## Comments
+
+### Emulator check (2026-11-21)
+
+The debug app on an Android emulator, with Metro from this branch in mock mode (no main server, no library). "관정 갔다가 저녁" got the stored reply: the card listed "① 17:30–19:00 7층 7A 열람실 2 구역 · 예약 카드는 아래에 있어요" and "② 19:04–19:30 학생회관식당에서 저녁 · 62-1동에서" above the chip "62-1동에서" and the plan's lines; the map drew 학생회관식당 at 19:04. Scrolling the card showed the seat's book card (17:30–19:00, 7층 열람실) below the plan, logged out of the library; nothing on it was pressed. A step not done was checked only in the integration test: the mock build has no reply with a refused step.
+
+The emulator's system process had to be rebooted first, after a loop of "isn't responding" dialogs that "Wait" did not end.
+
+### Agent usage (2026-11-21)
+
+- Agent time: about 33 minutes in the same session as ticket 01, after its pull request (an estimate from the transcript, without the minutes spent waiting for an answer about the emulator). It covers the app change, its tests, the mock reply, and the emulator check, which the frozen emulator made longer.
+- Tokens: output 69k; input 54.9M, of which 54.7M cache reads, 153k cache writes and 246 uncached. No subagents in this part.
