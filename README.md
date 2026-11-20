@@ -15,8 +15,8 @@ screens are in Korean.
 A **party** is any gathering of Users; the code still uses the Iteration 1 names (a party is a `Quest`), see
 [GLOSSARY.md](GLOSSARY.md).
 
-The system is an Android and iOS app, four servers (main, socket, worker and match) with PostgreSQL and Redis, and an
-admin site for Administrators.
+The system is an Android and iOS app, three servers (main, socket and worker) with PostgreSQL and Redis, and an admin
+site for Administrators.
 
 ## Quick start
 
@@ -197,7 +197,8 @@ Production on Amazon EKS. Its demo flows still run; its README is on `2.0/Main`.
 
 Iteration 1 built an Android prototype in which a student joins a group for a campus event and finds its members on
 the map, with the campus's data collected without anyone's help. Its Meetup between Friends was retired in Iteration
-2, and its Matching became AI 매칭, which groups strangers interested in the same event and was frozen in Iteration 2.
+2, and its Matching became AI 매칭, which grouped strangers interested in the same event, was frozen in Iteration 2 and
+was removed in Iteration 4 (A04).
 
 ## Demo video
 
@@ -310,8 +311,8 @@ What the demo cannot show, and what is known not to work yet:
 - **Timetable reading.** Photos of a screen, a professor's name printed inside a block and two overlapping classes
   drawn side by side are not read; the last are reported as left out. A real dark-mode screenshot is not yet among the
   test screenshots.
-- **Left in the code.** AI 매칭 and the match server are frozen: they run in every deployment and are still tested.
-  The active party's own join request and invitation routes and the `meetups` table remain, unused. Redis runs
+- **Left in the code.** The `quests.match_id` column of AI 매칭, which was removed in Iteration 4 (A04), stays,
+  written by nothing. The active party's own join request and invitation routes and the `meetups` table remain, unused. Redis runs
   without a password.
 - **Planned for later iterations**: switching on Judgements, the same-event rules and extra.snu once they reach their
   thresholds; a meeting place and time proposed for a party's members; the app's results shown on the map to explore;
@@ -376,7 +377,7 @@ nvm install
 nvm use
 ```
 
-The main server's settings, with an access token key pair and the two shared secrets of your own:
+The main server's settings, with an access token key pair and the shared secret of your own:
 
 ```bash
 cd main-server
@@ -384,7 +385,6 @@ pnpm install
 cp .env.example .env
 pnpm keys:generate >> .env
 echo "WORKER_TOKEN=$(openssl rand -hex 32)" >> .env
-echo "MATCH_SERVER_TOKEN=$(openssl rand -hex 32)" >> .env
 cd ..
 ```
 
@@ -393,7 +393,7 @@ example address in `INITIAL_ADMINISTRATOR_EMAILS` with your Google account's add
 admin site. The main server reads it only when it starts on a database that holds no Administrator: once the servers
 have run with the example address, a new address is not taken until the data is deleted with `docker compose down -v`.
 
-The other servers take the same public key and secrets from it:
+The other servers take the same public key and secret from it:
 
 ```bash
 cd socket-server
@@ -404,10 +404,6 @@ cd ../worker-server
 pnpm install
 cp .env.example .env
 grep '^WORKER_TOKEN=' ../main-server/.env >> .env
-cd ../match-server
-pnpm install
-cp .env.example .env
-grep '^MATCH_SERVER_TOKEN=' ../main-server/.env >> .env
 cd ..
 ```
 
@@ -450,8 +446,6 @@ file's.
 | `WORKER_TOKEN`                        | The secret the worker server sends with what it collects; generated in [Setup](#setup).                                                  |
 | `PUBLIC_URL`                          | The address the apps reach this server at from outside, from which Invite Links are built.                                               |
 | `ANDROID_CERTIFICATE_FINGERPRINTS`    | The SHA-256 fingerprints of the app's signing certificates, for Invite Links' App Links.                                                 |
-| `MATCH_SERVER_URL`                    | Where the match server is reached.                                                                                                       |
-| `MATCH_SERVER_TOKEN`                  | The secret the main and match servers send each other; generated in [Setup](#setup).                                                     |
 | `DEMO_ACCOUNT_EMAILS`                 | Read by the demo profile only: real SNU addresses that get demo Friends, requests, an invitation.                                        |
 | `OPENROUTER_API_KEY`                  | The OpenRouter key SNU Now AI calls its model with, the key `llm.key` names `default`. Empty, the Assistant answers it is unavailable.   |
 | `LLM_KEYS`                            | Optional: the AI's other keys by name, a JSON object such as `{"anthropic":"sk-ant-…"}`; `{}` unless set. `llm.key` chooses among them.  |
@@ -490,16 +484,6 @@ file's.
 | `WORKER_TOKEN`         | The same line as in `main-server/.env`.                                 |
 | `EXTRA_SNU_COLLECTION` | `on` lets the schedule start extra.snu's Collections; `off` unless set. |
 
-### match-server
-
-| Setting                  | What it is                                                    |
-| ------------------------ | ------------------------------------------------------------- |
-| `PORT`                   | The port the HTTP server listens on.                          |
-| `DATABASE_URL`           | The match database, reached with the match server's own role. |
-| `MATCH_SERVER_TOKEN`     | The same line as in `main-server/.env`.                       |
-| `MAIN_SERVER_URL`        | Where the main server is reached.                             |
-| `ROUND_INTERVAL_SECONDS` | The seconds from one round of AI 매칭 to the next.            |
-
 ### admin
 
 | Setting                            | What it is                                                                     |
@@ -535,10 +519,10 @@ In the repository root, with Docker running:
 docker compose up --build
 ```
 
-This starts PostgreSQL, Redis and the four servers. The main server brings its database up to date and loads the seed
+This starts PostgreSQL, Redis and the three servers. The main server brings its database up to date and loads the seed
 (the Places, the Campus Boundary and the shuttle's stops and line) before it starts. The main server answers on port
-3000 and the socket server on 3001, on the network too, so that a phone can reach them; the worker (3002), the match
-server (3003), PostgreSQL and Redis only on the loopback address. Anyone on the same network can reach the two ports
+3000 and the socket server on 3001, on the network too, so that a phone can reach them; the worker (3002),
+PostgreSQL and Redis only on the loopback address. Anyone on the same network can reach the two ports
 over plain http, so on a public Wi-Fi run the servers only while you use them. `http://localhost:3000/health/ready`
 answers 200 once the main server can reach its stores.
 
@@ -705,15 +689,14 @@ pnpm typecheck
 pnpm test
 ```
 
-| Project         | What `pnpm test` runs and needs                                                                                                                         |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `main-server`   | Vitest against PostgreSQL and Redis containers it starts; Docker running; `pnpm test:unit` needs no Docker                                              |
-| `socket-server` | Vitest against a Redis container it starts itself; Docker running; `pnpm test:unit` needs no Docker                                                     |
-| `worker-server` | Vitest on saved pages of each Source; neither it nor `pnpm test:unit` needs Docker                                                                      |
-| `match-server`  | Vitest against a PostgreSQL container it starts itself; Docker running; `pnpm test:unit` needs no Docker                                                |
-| `admin`         | Vitest: `unit`, `integration-pages`, `integration-site`; neither it nor `pnpm test:unit` needs Docker                                                   |
-| `mobile`        | Jest, against the mocks and a fake main server and socket; neither it nor `pnpm test:unit` needs Docker                                                 |
-| `flow-tests`    | Iteration 1's demo flows (Event through AI 매칭, Friend, Campus services), A1, A2 and the stack checks, on the four built servers; Docker and `openssl` |
+| Project         | What `pnpm test` runs and needs                                                                                                                                   |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main-server`   | Vitest against PostgreSQL and Redis containers it starts; Docker running; `pnpm test:unit` needs no Docker                                                        |
+| `socket-server` | Vitest against a Redis container it starts itself; Docker running; `pnpm test:unit` needs no Docker                                                               |
+| `worker-server` | Vitest on saved pages of each Source; neither it nor `pnpm test:unit` needs Docker                                                                                |
+| `admin`         | Vitest: `unit`, `integration-pages`, `integration-site`; neither it nor `pnpm test:unit` needs Docker                                                             |
+| `mobile`        | Jest, against the mocks and a fake main server and socket; neither it nor `pnpm test:unit` needs Docker                                                           |
+| `flow-tests`    | Iteration 1's demo flows (Event through a recruited 파티, Friend, Campus services), A1, A2 and the stack checks, on the three built servers; Docker and `openssl` |
 
 `flow-tests` builds the servers' images the first time, which takes some minutes, and leaves a running stack and its
 data alone: [flow-tests/README.md](flow-tests/README.md). Its `pnpm test:admin-ui` runs the W1 and W2 journeys through
@@ -757,7 +740,7 @@ Not run by `pnpm test` or CI:
 
 ## Deployment
 
-The **Dev Server** is the team's shared server, server B of the two the course lends the team. It runs the four
+The **Dev Server** is the team's shared server, server B of the two the course lends the team. It runs the three
 servers, PostgreSQL, Redis and the [Demo Data](#demo-data) under Docker Compose, behind a Caddy proxy, at
 `http://swpp26t09.147-46-242-174.sslip.io`. The stack is `compose.yaml` with `compose.deploy.yaml` over it.
 
@@ -781,13 +764,13 @@ journal, redeploy by hand, move `development`, restore a dump and add an APK.
 It runs on Amazon EKS in AWS's Seoul Region, built with Terraform, and answers at `https://api.snunow.com` for the app
 and at `https://admin.snunow.com` for the admin site. It starts with only the seed data and never carries Demo Data.
 It changes only with a Release: a tag `snunow/<target>/YY.MM.DD-N` on a reviewed commit of the iteration branch, which
-deploys one server, or all five (the four servers and the admin site) with `all`, once every CI job has passed on
+deploys one server, or all four (the three servers and the admin site) with `all`, once every CI job has passed on
 that commit
 ([ADR 0006](docs/adr/0006-production-runs-on-eks-and-releases-are-pushed.md)); `all` also publishes the app's bundle,
 and `app` publishes only the bundle. A Release of `app` or `all` that changes the native part also builds the
 Production APK and attaches it to that tag's release page. What Production runs now, and its switches, are under
 [Known limitations and todos](#known-limitations-and-todos). Two `t4g.small` nodes run the servers, the admin site and
-Redis, the main and match databases are on RDS for PostgreSQL 18, and network policies allow only the listed
+Redis, the main database is on RDS for PostgreSQL 18, and network policies allow only the listed
 connections between pods. The runbook and the tool guide, [infra/production/README.md](infra/production/README.md),
 say how to set up a laptop, release, deploy an earlier Release again, rotate a secret, publish the app's bundle by
 hand, and move Production to another AWS account.
@@ -799,10 +782,9 @@ hand, and move Production to another AWS account.
 | `main-server/`   | The main server: sign-in, Users, Friends, parties, sharing, events, SNU Now AI, tutorial, `eval/`                  |
 | `socket-server/` | The socket server: pushes positions and signals to the apps over Socket.IO, keeps no data                          |
 | `worker-server/` | The worker server: collects the events list, the menus and the shuttle on a schedule                               |
-| `match-server/`  | The match server of the frozen AI 매칭: keeps its requests and groups them in rounds                               |
 | `admin/`         | The admin site for Administrators                                                                                  |
 | `mobile/`        | The app; its native map, OCR and cookie modules in `modules/`, its Maestro flows in `maestro/`                     |
-| `flow-tests/`    | End-to-end tests across the four servers, and of the admin site in a browser                                       |
+| `flow-tests/`    | End-to-end tests across the three servers, and of the admin site in a browser                                      |
 | `scripts/`       | The level check every project's `pnpm lint` runs (ADR 0007), the coverage sums, their tests                        |
 | `infra/`         | The PostgreSQL image, the Dev Server (`deploy/`, `proxy/`), and Production (`production/`)                         |
 | `docs/`          | Decision records (`adr/`), the agents' conventions (`agents/`), and Iteration 1's demo clips (`demo/iteration-1/`) |
@@ -878,5 +860,5 @@ record where they came from and when they were exported. No coordinate comes fro
 - [GLOSSARY.md](GLOSSARY.md): the project's words, as the code names them. [docs/adr/](docs/adr/): its architecture
   decisions.
 - Each project's README: [main-server](main-server/README.md), [socket-server](socket-server/README.md),
-  [worker-server](worker-server/README.md), [match-server](match-server/README.md), [admin](admin/README.md),
+  [worker-server](worker-server/README.md), [admin](admin/README.md),
   [mobile](mobile/README.md) and [flow-tests](flow-tests/README.md).

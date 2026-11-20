@@ -1,7 +1,7 @@
 # deploy
 
 The Dev Server's deployment and its runbook. The Dev Server is server B of the two the course lends the team. It runs
-the four servers, PostgreSQL, Redis and the Demo Data under Docker Compose, behind a Caddy proxy, and keeps itself on
+the three servers, PostgreSQL, Redis and the Demo Data under Docker Compose, behind a Caddy proxy, and keeps itself on
 the tip of `development`: nothing pushes to it
 ([ADR 0003](../../docs/adr/0003-the-dev-server-pulls-its-deployments.md),
 [ADR 0004](../../docs/adr/0004-compose-not-kubernetes-on-the-course-servers.md)).
@@ -36,7 +36,7 @@ systemd never starts it while a run is going. The service runs `infra/deploy/dep
 2. Reads the tip's check suites and check runs from GitHub's public API, without a token, and keeps the runs that
    always do every job: those of pushes to an iteration branch (`<line>/Main`), `development` or `main`. A working
    branch's run and the merge queue's may skip work their changes cannot reach and run only the unit tests ([Running
-   the tests](../../README.md#running-the-tests) has the four kinds of run), so neither is read. The CI checks `main-server`, `socket-server`, `worker-server`, `match-server` and `flow-tests` must have
+   the tests](../../README.md#running-the-tests) has the four kinds of run), so neither is read. The CI checks `main-server`, `socket-server`, `worker-server` and `flow-tests` must have
    succeeded; `admin`, `mobile` and `deploy-scripts` are not consulted. One success of each among those runs is
    enough. Otherwise a check missing, still running, cancelled (as a newer push cancels it), stale or waiting for an
    action gives `waiting-for-ci`, asked again next run; one failed, timed out, neutral or skipped gives `ci-failed`,
@@ -45,7 +45,8 @@ systemd never starts it while a run is going. The service runs `infra/deploy/dep
    runs.
 4. Resets the checkout to the tip with `git reset --hard` and `git clean -fdx`.
 5. Builds the images with `docker compose build`, with `compose.yaml` and `compose.deploy.yaml`, then starts them with
-   `docker compose up --detach`, which recreates only the services whose image or settings changed. A failed build
+   `docker compose up --detach --remove-orphans`, which recreates only the services whose image or settings changed
+   and removes the container of a service gone from the Compose files. A failed build
    stops nothing: the containers that ran before keep running. A failed `up`, such as a migration that keeps the main
    server from turning healthy, leaves the new containers running as they are.
 6. Checks, through the proxy on the server's loopback, that `/health/ready` answers 200 and
@@ -139,7 +140,7 @@ left, that a `CHANGE_ME` waits. Once the checkout exists, run it from there:
 
 The timers start at once, so the first deploy run stops at `secrets-missing`. Fill in the settings
 ([Filling the settings](#filling-the-settings)); the next run, within a minute, deploys by itself. The first build of
-the four servers' images takes several minutes. Follow it with `sudo journalctl -u snu-now-deploy --follow`, then open
+the three servers' images takes several minutes. Follow it with `sudo journalctl -u snu-now-deploy --follow`, then open
 `/health/ready` and `/deploy-status` at the Dev Server's address from a phone. Until the first deployment nothing
 listens on port 80 and the ingress answers 503; the status is then read on the server, in
 `/srv/team/snu-now-status/status.json`.
@@ -152,11 +153,11 @@ The settings file, `/srv/team/snu-now-secrets/snu-now.env`, holds two kinds of v
 [`snu-now.env.example`](snu-now.env.example) says what each one is and which service takes it, by the names of the
 servers' own `.env.example` files.
 
-**Written by the bootstrap, left as they are.** The generated secrets: `POSTGRES_PASSWORD`, `MAIN_DB_PASSWORD`,
-`MATCH_DB_PASSWORD`, the access-token key pair `ACCESS_TOKEN_PRIVATE_KEY` and `ACCESS_TOKEN_PUBLIC_KEY`, `WORKER_TOKEN`
-and `MATCH_SERVER_TOKEN`. The fixed values: `COMPOSE_PROFILES=demo`, `DEPLOY_STATUS_DIR`, `DEPLOY_APK_DIR`,
-`PUBLIC_URL` (the Dev Server's address), the two Google client IDs, `ANDROID_CERTIFICATE_FINGERPRINTS` (the debug
-key's, which signs the dev APK), `ROUND_INTERVAL_SECONDS` and `EXTRA_SNU_COLLECTION=off`.
+**Written by the bootstrap, left as they are.** The generated secrets: `POSTGRES_PASSWORD`, `MAIN_DB_PASSWORD`, the
+access-token key pair `ACCESS_TOKEN_PRIVATE_KEY` and `ACCESS_TOKEN_PUBLIC_KEY`, and `WORKER_TOKEN`. The fixed values:
+`COMPOSE_PROFILES=demo`, `DEPLOY_STATUS_DIR`, `DEPLOY_APK_DIR`, `PUBLIC_URL` (the Dev Server's address), the two
+Google client IDs, `ANDROID_CERTIFICATE_FINGERPRINTS` (the debug key's, which signs the dev APK) and
+`EXTRA_SNU_COLLECTION=off`.
 
 **Filled in by a person**, `CHANGE_ME` until then:
 
@@ -307,7 +308,7 @@ dc up --detach
 sudo systemctl start snu-now-deploy.timer
 ```
 
-with the name of the dump to restore in the fourth line. `psql` reports that the roles and the two databases already
+with the name of the dump to restore in the fourth line. `psql` reports that the `main` role and database already
 exist, because PostgreSQL creates them on an empty volume; those errors are expected. A `manual-` dump is not among the
 seven the deploy run keeps, so it stays until a person deletes it.
 

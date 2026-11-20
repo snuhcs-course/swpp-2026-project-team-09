@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Sums a coverage report over each file set of the P09 spec's "Coverage goals", for the package in the current folder.
@@ -15,24 +16,18 @@ const METRICS = ['statements', 'branches', 'functions', 'lines'] as const;
 type Metric = (typeof METRICS)[number];
 type Counts = Record<Metric, { covered: number; total: number }>;
 
-// A file is in a set when it matches `include` and not `exclude`, or matches `add`.
+// A file is in a set when it matches `include` and not `exclude`.
 interface FileSet {
   name: string;
   include: string[];
   exclude?: string[];
-  add?: string[];
 }
 
 const KINDS = '{service,controller,gateway,collector,guard}';
 const ENTRY: Record<string, string> = {
   'main-server': 'src/{main,seed,demo-seed,demo-walk,load-seed}.ts',
-  'match-server': 'src/main.ts',
   'socket-server': 'src/main.ts',
   'worker-server': 'src/{main,collect,collect-sources,demo-menus}.ts',
-};
-// match-server's round split and `assign` are pure functions in service files.
-const LOGIC_IN_SERVICES: Record<string, string[]> = {
-  'match-server': ['src/matching/{round,placement}.service.ts'],
 };
 
 function serverSets(pkg: string): FileSet[] {
@@ -52,7 +47,6 @@ function serverSets(pkg: string): FileSet[] {
         'src/demo/**',
         'src/generated/**',
       ],
-      add: LOGIC_IN_SERVICES[pkg] ?? [],
     },
   ];
 }
@@ -94,8 +88,7 @@ const { total, ...byPath } = report;
 const files = Object.entries(byPath).map(([path, counts]) => ({ path: relative(process.cwd(), path), counts }));
 
 const matchesAny = (path: string, globs: string[] = []) => globs.some((glob) => matchesGlob(path, glob));
-const inSet = (path: string, set: FileSet) =>
-  (matchesAny(path, set.include) && !matchesAny(path, set.exclude)) || matchesAny(path, set.add);
+const inSet = (path: string, set: FileSet) => matchesAny(path, set.include) && !matchesAny(path, set.exclude);
 
 function sum(paths: Set<string>): Record<Metric, [covered: number, total: number]> {
   const chosen = files.filter(({ path }) => paths.has(path));

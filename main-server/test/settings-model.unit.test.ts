@@ -3,6 +3,7 @@
  *
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // The model's settings (specs A01 and A02): the caching mode, and the key that the Judgement and the same-event choice
@@ -25,7 +26,6 @@ const valid: Values = {
   ACCESS_TOKEN_PUBLIC_KEY: keys.publicKey,
   KAKAO_REST_API_KEY: 'the-owners-kakao-rest-api-key',
   WORKER_TOKEN: '0123456789abcdef'.repeat(4),
-  MATCH_SERVER_TOKEN: 'fedcba9876543210'.repeat(4),
 };
 
 function refused(values: Values): string[] {

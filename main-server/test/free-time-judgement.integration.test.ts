@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -17,7 +18,6 @@ import { type World } from '../eval/world.ts';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { type SeededDatabase, seededDatabase } from './containers.js';
-import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel, type Step } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
@@ -60,7 +60,7 @@ beforeAll(async () => {
   database = await seededDatabase(inject('settings'));
   // Each User's messages of a day are counted, and the suite sends more than the daily limit.
   const settings = { ...database.settings, ASSISTANT_DAILY_MESSAGES: '1000' };
-  app = await startApp(settings, [], refuseKakao, refuseMatchServer, model.model, [], travel);
+  app = await startApp(settings, [], refuseKakao, model.model, [], travel);
   now = WORLD_CLOCKS.p4;
   vi.spyOn(app.get<Clock>(CLOCK), 'now').mockImplementation(() => new Date(now));
   world = await seedP4World(app, database.url);

@@ -5,6 +5,7 @@
 # 2026-10-17  Opus 5.5   prompted by TaeHyun79
 # 2026-11-15  Opus 5.5   prompted by fyoon46
 # 2026-11-18  Opus 5.5   prompted by fyoon46
+# 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 ################################################################################
 
 # Each test runs in a subshell of its own, so that its exports reach no other test, as meant.
@@ -49,7 +50,7 @@ setup() {
  Container snu-now-main-server-1  Recreated
  Container snu-now-socket-server-1  Recreated
  Container snu-now-proxy-1  Created
- Container snu-now-match-server-1  Running
+ Container snu-now-worker-server-1  Running
  Container snu-now-main-server-1  Starting
  Container snu-now-socket-server-1  Starting
  Container snu-now-proxy-1  Starting
@@ -84,7 +85,7 @@ steps() {
 }
 
 PASSED=('main-server completed success' 'socket-server completed success' 'worker-server completed success'
-  'match-server completed success' 'flow-tests completed success')
+  'flow-tests completed success')
 
 # The verdict on a commit's check runs, each given as "name status conclusion".
 verdict() {
@@ -132,12 +133,14 @@ serve_check_runs() {
 
   [ "$status" -eq 0 ]
   [ "$(steps | tr '\n' ' ')" = "fetch check-suites check-runs dump reset clean compose-build compose-up ready handshake image-prune builder-prune " ]
+  # A service gone from the Compose files, such as the retired AI 매칭's, is removed with its container.
+  grep -q -E '^docker compose .* up --detach --remove-orphans$' "$FAKE_CALLS"
   [ "$(field 'keys_unsorted | join(" ")')" = "trackedRef checkedAt result candidateCommit attempt deployedCommit deployedAt checks recreatedServices" ]
   [ "$(field '[.trackedRef, .result, .candidateCommit, .attempt, .deployedCommit] | join(" ")')" = "development deployed $TIP 1 $TIP" ]
   [[ "$(field .checkedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]] || false
   [[ "$(field .deployedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]] || false
   [[ ! "$(field .deployedAt)" < "$(field .checkedAt)" ]] || false
-  [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success match-server=success flow-tests=success" ]
+  [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success flow-tests=success" ]
   [ "$(field '.recreatedServices | join(" ")')" = "main-server socket-server proxy" ]
 }
 
@@ -170,23 +173,23 @@ serve_check_runs() {
   # shellcheck source=../deploy.sh
   source "$DEPLOY"
   [ "$(verdict "${PASSED[@]}")" = deploy ]
-  [ "$(verdict "${PASSED[@]:0:4}")" = waiting-for-ci ]
-  [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests in_progress null')" = waiting-for-ci ]
-  [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests completed failure')" = ci-failed ]
+  [ "$(verdict "${PASSED[@]:0:3}")" = waiting-for-ci ]
+  [ "$(verdict "${PASSED[@]:0:3}" 'flow-tests in_progress null')" = waiting-for-ci ]
+  [ "$(verdict "${PASSED[@]:0:3}" 'flow-tests completed failure')" = ci-failed ]
   [ "$(verdict "${PASSED[@]}" 'admin completed failure' 'mobile completed failure')" = deploy ]
 
-  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed failure' 'mobile completed success'
+  serve_check_runs "${PASSED[@]:0:3}" 'flow-tests completed failure' 'mobile completed success'
   run "$DEPLOY"
   [ "$status" -eq 0 ]
   [ "$(field '[.result, .candidateCommit, .attempt, .deployedCommit] | map(tostring) | join(" ")')" = "ci-failed $TIP null null" ]
-  [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success match-server=success flow-tests=failure" ]
+  [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success flow-tests=failure" ]
   : >"$FAKE_CALLS"
 
   run "$DEPLOY"
 
   [ "$status" -eq 0 ]
   [ "$(field .result)" = ci-failed ]
-  [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success match-server=success flow-tests=failure" ]
+  [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success flow-tests=failure" ]
   [ "$(grep -c '^curl ' "$FAKE_CALLS")" -eq 0 ]
 }
 
@@ -194,23 +197,23 @@ serve_check_runs() {
   # shellcheck source=../deploy.sh
   source "$DEPLOY"
   [ "$(verdict "${PASSED[@]}" 'flow-tests completed failure')" = deploy ]
-  [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests completed failure' 'flow-tests in_progress null')" = waiting-for-ci ]
+  [ "$(verdict "${PASSED[@]:0:3}" 'flow-tests completed failure' 'flow-tests in_progress null')" = waiting-for-ci ]
 }
 
 @test "only the check runs of pushes to a Main, to development or to main count; the merge queue's or a working branch's may have skipped work or run only the unit tests" {
-  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed failure' 'flow-tests completed success 2.0/feature' \
+  serve_check_runs "${PASSED[@]:0:3}" 'flow-tests completed failure' 'flow-tests completed success 2.0/feature' \
     'flow-tests completed success gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d'
   run "$DEPLOY"
   [ "$status" -eq 0 ]
-  [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success match-server=success flow-tests=failure" ]
+  [ "$(field '.checks | map("\(.name)=\(.conclusion)") | join(" ")')" = "main-server=success socket-server=success worker-server=success flow-tests=failure" ]
   [ "$(field .result)" = ci-failed ]
 
   unset INVOCATION_ID
-  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed success gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d'
+  serve_check_runs "${PASSED[@]:0:3}" 'flow-tests completed success gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d'
   run "$DEPLOY"
   [ "$(field .result)" = waiting-for-ci ]
 
-  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed success gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d' \
+  serve_check_runs "${PASSED[@]:0:3}" 'flow-tests completed success gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d' \
     'flow-tests completed success 2.0/Main'
   run "$DEPLOY"
   [ "$(field .result)" = deployed ]
@@ -221,11 +224,11 @@ serve_check_runs() {
   source "$DEPLOY"
   local conclusion
   for conclusion in cancelled stale action_required; do
-    [ "$(verdict "${PASSED[@]:0:4}" "flow-tests completed $conclusion")" = waiting-for-ci ]
-    [ "$(verdict "${PASSED[@]:0:4}" 'flow-tests completed failure' "flow-tests completed $conclusion")" = waiting-for-ci ]
+    [ "$(verdict "${PASSED[@]:0:3}" "flow-tests completed $conclusion")" = waiting-for-ci ]
+    [ "$(verdict "${PASSED[@]:0:3}" 'flow-tests completed failure' "flow-tests completed $conclusion")" = waiting-for-ci ]
   done
   for conclusion in failure timed_out startup_failure neutral skipped; do
-    [ "$(verdict "${PASSED[@]:0:4}" "flow-tests completed $conclusion")" = ci-failed ]
+    [ "$(verdict "${PASSED[@]:0:3}" "flow-tests completed $conclusion")" = ci-failed ]
   done
 }
 
@@ -341,9 +344,9 @@ outcome() {
   [ "$(outcome)" = "up-to-date zero" ]
 
   export FAKE_TIP=$NEXT_TIP
-  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests in_progress null'
+  serve_check_runs "${PASSED[@]:0:3}" 'flow-tests in_progress null'
   [ "$(outcome)" = "waiting-for-ci zero" ]
-  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed failure'
+  serve_check_runs "${PASSED[@]:0:3}" 'flow-tests completed failure'
   [ "$(outcome)" = "ci-failed zero" ]
 
   export FAKE_TIP=$THIRD_TIP FAKE_BUILD_STATUS=1
@@ -409,7 +412,7 @@ outcome() {
 }
 
 @test "a run outside systemd, as sudo bash deploy.sh starts one, asks GitHub again about a ci-failed commit" {
-  serve_check_runs "${PASSED[@]:0:4}" 'flow-tests completed failure'
+  serve_check_runs "${PASSED[@]:0:3}" 'flow-tests completed failure'
   run "$DEPLOY"
   [ "$(field .result)" = ci-failed ]
 

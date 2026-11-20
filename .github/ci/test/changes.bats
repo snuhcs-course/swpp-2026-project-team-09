@@ -4,6 +4,7 @@
 #
 # 2026-11-15  Opus 5.5   prompted by fyoon46
 # 2026-11-18  Opus 5.5   prompted by fyoon46
+# 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 ################################################################################
 
 # Each test runs in a subshell of its own, so that its exports reach no other test, as meant.
@@ -16,10 +17,10 @@
 
 bats_require_minimum_version 1.5.0
 
-KEYS=(main-server socket-server worker-server match-server admin mobile flow-tests mobile-tests app-fingerprint
+KEYS=(main-server socket-server worker-server admin mobile flow-tests mobile-tests app-fingerprint
   deploy-scripts release-script terraform manifests)
 EVERY="${KEYS[*]}"
-PACKAGES='main-server socket-server worker-server match-server admin mobile flow-tests'
+PACKAGES='main-server socket-server worker-server admin mobile flow-tests'
 APP='mobile mobile-tests app-fingerprint'
 
 setup() {
@@ -252,7 +253,6 @@ EOF
   expect_reached 'main-server flow-tests' main-server/src/main.ts main-server/test/answers/a.json main-server/README.md
   expect_reached 'socket-server flow-tests' socket-server/src/main.ts
   expect_reached 'worker-server flow-tests' worker-server/test/pages/notice.html
-  expect_reached 'match-server flow-tests' match-server/prisma/schema.prisma
 }
 
 @test "admin/ reaches admin, and mobile/ the app's check, tests and fingerprint, Markdown in them too" {
@@ -269,10 +269,10 @@ EOF
     infra/proxy/Caddyfile
 }
 
-@test "infra/postgres/ reaches the servers' tests that build the database's image, and flow-tests" {
+@test "infra/postgres/ reaches main-server, whose tests build the database's image, and flow-tests" {
   # shellcheck source=../changes.sh
   source "$CHANGES"
-  expect_reached 'main-server match-server flow-tests' infra/postgres/Dockerfile
+  expect_reached 'main-server flow-tests' infra/postgres/Dockerfile
 }
 
 @test "the Dev Server's scripts, Production's Terraform and Production's manifests each reach their own job" {

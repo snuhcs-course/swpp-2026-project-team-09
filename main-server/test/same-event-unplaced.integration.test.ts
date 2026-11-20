@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -68,7 +69,6 @@ beforeAll(async () => {
   notPublishing = await startApp(
     { ...world.posts.settings, AUTOMATIC_JUDGEMENT: 'on', SAME_EVENT_TITLE_RULE: 'on', AUTOMATIC_PUBLICATION: 'off' },
     [],
-    undefined,
     undefined,
     world.scripted.model,
   );

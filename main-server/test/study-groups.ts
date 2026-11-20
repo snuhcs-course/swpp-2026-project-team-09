@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -14,7 +15,6 @@ import { type TravelProvider } from '../src/travel/travel.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { befriend, signInUser, type TestUser } from './friends.js';
 import { type LibraryCardBody, libraryCards, resolving } from './library.js';
-import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel } from './scripted-model.js';
 import { withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
@@ -86,7 +86,7 @@ export class StudyStage {
   private places!: Record<'b301' | 'b24' | 'b8' | 'b302', string>;
 
   async start(settings: Record<string, string | undefined>): Promise<void> {
-    this.app = await startApp(settings, [], refuseKakao, refuseMatchServer, this.model.model, [], walksOf(this.walks));
+    this.app = await startApp(settings, [], refuseKakao, this.model.model, [], walksOf(this.walks));
     vi.spyOn(this.app.get<Clock>(CLOCK), 'now').mockReturnValue(NOW);
     const { accessToken } = await signInUser(this.app);
     const listed = await withAccessToken(request(this.app.getHttpServer()).get('/places'), accessToken).expect(200);

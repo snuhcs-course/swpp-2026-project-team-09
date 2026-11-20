@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -16,7 +17,6 @@ import { guidePlaces } from '../src/tutorial/tutorial-guide.js';
 import { signInUser, TestUser } from './friends.js';
 import { googleSubject } from './google.js';
 import { connectToDatabase } from './quests.js';
-import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel } from './scripted-model.js';
 import { signIn } from './sign-in.js';
 import { startApp } from './start-app.js';
@@ -35,7 +35,7 @@ import { refuseKakao } from './walking-route.js';
 const settings = inject('settings');
 
 function startWithTutorial(file: string): Promise<INestApplication<Server>> {
-  return startApp(settings, [], refuseKakao, refuseMatchServer, new ScriptedModel().model, [], undefined, file);
+  return startApp(settings, [], refuseKakao, new ScriptedModel().model, [], undefined, file);
 }
 
 // The routes read only the access token.

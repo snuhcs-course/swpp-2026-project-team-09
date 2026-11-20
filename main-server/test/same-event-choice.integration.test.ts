@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -33,10 +34,9 @@ beforeAll(async () => {
     { ...settings, SAME_EVENT_AI_CHOICE: 'on', AUTOMATIC_PUBLICATION: 'off' },
     [],
     undefined,
-    undefined,
     world.scripted.model,
   );
-  turnedOff = await startApp(settings, [], undefined, undefined, world.scripted.model);
+  turnedOff = await startApp(settings, [], undefined, world.scripted.model);
 });
 
 // Each test starts with no event near its own.

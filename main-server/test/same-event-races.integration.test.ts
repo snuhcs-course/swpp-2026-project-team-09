@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -45,7 +46,6 @@ beforeAll(async () => {
   otherPod = await startApp(
     { ...world.posts.settings, AUTOMATIC_JUDGEMENT: 'on', SAME_EVENT_TITLE_RULE: 'on', SAME_EVENT_AI_CHOICE: 'on' },
     [],
-    undefined,
     undefined,
     otherModel.model,
   );

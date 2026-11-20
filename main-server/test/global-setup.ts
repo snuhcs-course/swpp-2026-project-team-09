@@ -16,6 +16,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -50,9 +51,6 @@ const FIXED_SETTINGS = {
   WORKER_TOKEN: 'test-worker-token-of-thirty-two-characters',
   PUBLIC_URL: 'https://snunow.example',
   ANDROID_CERTIFICATE_FINGERPRINTS,
-  // Not reached: the tests give startApp a MatchServerStub from test/match-server.ts in the match server's place.
-  MATCH_SERVER_URL: 'http://match-server:3003',
-  MATCH_SERVER_TOKEN: 'test-match-server-token-of-32-characters',
   // Not a key, with OpenRouter's prefix: the tests give startApp a ScriptedModel (test/scripted-model.ts) for it.
   OPENROUTER_API_KEY: 'sk-or-test-openrouter-api-key',
   LLM_KEYS: '{}',

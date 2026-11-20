@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -14,7 +15,6 @@ import { type World } from '../eval/world.ts';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { postAssistantMessages } from './assistant.js';
 import { type SeededDatabase, seededDatabase } from './containers.js';
-import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
@@ -33,7 +33,7 @@ let world: World;
 
 beforeAll(async () => {
   database = await seededDatabase(inject('settings'));
-  app = await startApp(database.settings, [], refuseKakao, refuseMatchServer, model.model);
+  app = await startApp(database.settings, [], refuseKakao, model.model);
   vi.spyOn(app.get<Clock>(CLOCK), 'now').mockImplementation(() => new Date(WORLD_CLOCKS.p4));
   world = await seedP4World(app, database.url);
 });

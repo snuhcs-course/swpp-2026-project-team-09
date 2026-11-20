@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions: a file of each kind the P09 spec's file sets name, in a server, admin and mobile; sums over several files;
@@ -67,16 +68,16 @@ function row(output: string, name: string): string[] {
     .map((cell) => cell.trim());
 }
 
-test("a server's files → each in the spec's sets of its kind, the round split's service among the logic", () => {
-  const { status, output } = run('match-server', {
+test("a server's files → each in the spec's sets of its kind", () => {
+  const { status, output } = run('socket-server', {
     'src/main.ts': same(0, 4),
-    'src/matching/round.service.ts': same(6, 8),
-    'src/matching/matching.module.ts': same(1, 1),
-    'src/matching/rounds.controller.ts': same(1, 2),
+    'src/users/presence.service.ts': same(6, 8),
+    'src/app.module.ts': same(1, 1),
+    'src/health/health.controller.ts': same(1, 2),
     'src/common/settings.ts': same(3, 3),
   });
   assert.equal(status, 0, output);
-  assert.deepEqual(row(output, 'match-server').slice(1), [
+  assert.deepEqual(row(output, 'socket-server').slice(1), [
     '5',
     '61.11 % (11/18)',
     '61.11 % (11/18)',
@@ -87,7 +88,7 @@ test("a server's files → each in the spec's sets of its kind, the round split'
   assert.equal(row(output, 'services, controllers, gateways, collectors and guards')[3], '70.00 % (7/10)');
   assert.equal(row(output, 'services, gateways, collectors and guards')[3], '75.00 % (6/8)');
   assert.equal(row(output, 'entry points, seeds and command-line scripts')[5], '0.00 % (0/4)');
-  assert.deepEqual(row(output, 'logic').slice(1, 3), ['2', '81.81 % (9/11)']);
+  assert.deepEqual(row(output, 'logic').slice(1, 3), ['1', '100.00 % (3/3)']);
 });
 
 test("main-server's entry files and seeds → out of its logic", () => {
@@ -157,7 +158,7 @@ test('a set with nothing to count → no figure, and a set with no file → 0 fi
 });
 
 test("a report whose files do not add up to its total, such as another checkout's → fails, saying so", () => {
-  const { status, output } = run('match-server', { 'src/main.ts': same(1, 2) }, same(5, 10));
+  const { status, output } = run('socket-server', { 'src/main.ts': same(1, 2) }, same(5, 10));
   assert.equal(status, 1);
   assert.match(output, /do not add up to the report's total/);
 });

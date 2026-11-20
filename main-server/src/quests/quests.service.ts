@@ -13,6 +13,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -191,20 +192,19 @@ export class QuestsService {
   // A Quest for the Global Event, with the Holders and the Sub Quest for attending it, then these steps in the order
   // given, titled as the event unless a title is given. The title is the Quest's own and does not follow later changes
   // to the event's. Each Holder must hold no Quest for it yet, or the unique index on the Holders refuses it. The
-  // Holders enter in the order given. A match's Quest names the match, once.
+  // Holders enter in the order given.
   createForGlobalEvent(
     globalEvent: Pick<GlobalEvent, 'id' | 'title'>,
     holderIds: readonly string[],
     tx: Prisma.TransactionClient,
     {
-      matchId,
       title = globalEvent.title,
       steps = [],
       ...settings
-    }: QuestSettings & { matchId?: string; title?: string; steps?: readonly SubQuestColumns[] } = {},
+    }: QuestSettings & { title?: string; steps?: readonly SubQuestColumns[] } = {},
   ): Promise<string> {
     const subQuest = [{ attending: true }, ...inOrder(steps)];
-    return this.create({ title, globalEventId: globalEvent.id, matchId, subQuest }, holderIds, settings, tx);
+    return this.create({ title, globalEventId: globalEvent.id, subQuest }, holderIds, settings, tx);
   }
 
   // A Quest without a Global Event, titled as its one Sub Quest unless a title is given, with these Holders in the order
@@ -300,19 +300,17 @@ export class QuestsService {
     quest: {
       title: string;
       globalEventId: string | null;
-      matchId?: string;
       subQuest: Prisma.SubQuestCreateWithoutQuestInput | Prisma.SubQuestCreateWithoutQuestInput[];
     },
     holderIds: readonly string[],
     { leaderId = holderIds[0], ...settings }: QuestSettings,
     tx: Prisma.TransactionClient,
   ): Promise<string> {
-    const { title, globalEventId, matchId, subQuest } = quest;
+    const { title, globalEventId, subQuest } = quest;
     const { id } = await tx.quest.create({
       data: {
         title,
         globalEventId,
-        matchId,
         leaderId,
         ...settings,
         holders: { create: holderIds.map((userId) => ({ userId, globalEventId })) },

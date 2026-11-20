@@ -4,6 +4,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication, Logger } from '@nestjs/common';
@@ -13,7 +14,6 @@ import { FIXED_SENTENCE } from '../src/assistant/adapter.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { ask, postAssistantMessages } from './assistant.js';
-import { refuseMatchServer } from './match-server.js';
 import { connectToDatabase, storeEvent } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
 import { signIn } from './sign-in.js';
@@ -45,7 +45,7 @@ let prisma: PrismaClient;
 let accessToken: string;
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model.model);
+  app = await startApp(inject('settings'), [], refuseKakao, model.model);
   vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(NOW);
   prisma = connectToDatabase();
   ({ accessToken } = await signIn(app));

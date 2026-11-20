@@ -5,6 +5,7 @@
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -20,7 +21,6 @@ import { connectToDatabase, getQuests } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
-import { refuseMatchServer } from './match-server.js';
 
 // The chat Assistant's proposeQuest, with the scripted model in the model's place. The app's clock stands at a
 // morning of 2096, which no other file uses, so that a start before it is in the past, and every title is this file's.
@@ -34,7 +34,7 @@ const model = new ScriptedModel();
 const NOW = new Date('2096-05-07T00:00:00Z');
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model.model);
+  app = await startApp(inject('settings'), [], refuseKakao, model.model);
   vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(NOW);
   prisma = connectToDatabase();
   user = await signInUser(app);

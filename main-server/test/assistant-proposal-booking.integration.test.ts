@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -16,7 +17,6 @@ import { connectToDatabase } from './quests.js';
 import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import { refuseKakao } from './walking-route.js';
-import { refuseMatchServer } from './match-server.js';
 
 // The booking page of a Proposal's Place (seed/facility-booking.json), which proposeQuest fills and the model is not
 // told of, with the scripted model in the model's place. assistant-proposals.integration.test.ts holds the rest of
@@ -32,7 +32,7 @@ const model = new ScriptedModel();
 const NOW = new Date('2097-05-07T00:00:00Z');
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model.model);
+  app = await startApp(inject('settings'), [], refuseKakao, model.model);
   vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(NOW);
   prisma = connectToDatabase();
   user = await signInUser(app);

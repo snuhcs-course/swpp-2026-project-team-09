@@ -28,6 +28,7 @@
 // 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 // 2026-11-16  Opus 5.5   prompted by fyoon46
 // 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+// 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -588,7 +589,8 @@ model Quest {
   // A seat's stay at 관정관, taken alone: the User still eats, meets and goes out from a seat, so its Sub Quest is no
   // busy time for any planner (README.md: A seat's stay).
   seatStay      Boolean            @default(false) @map("seat_stay")
-  // The match server's match this Quest was created for, so that a repeated request finds it (README.md: Matching).
+  // Left from AI 매칭, removed in Iteration 4 (GLOSSARY.md: Matching): it named the match a Quest was created for. No
+  // code writes or reads it; dropping the column is a separate change.
   matchId       String?            @unique @map("match_id") @db.Uuid
   createdAt     DateTime           @default(now()) @map("created_at")
   holders       QuestHolder[]

@@ -8,6 +8,7 @@
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -20,7 +21,6 @@ import { idOf } from '../src/assistant/tools/fresh-ids.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { type Settings } from '../src/common/settings.js';
 import { postAssistantMessages, type SentMessage } from '../test/assistant.js';
-import { refuseMatchServer } from '../test/match-server.js';
 import { startApp } from '../test/start-app.js';
 import { refuseKakao } from '../test/walking-route.js';
 import {
@@ -85,7 +85,6 @@ export async function startEvalApp(
     },
     [],
     refuseKakao,
-    refuseMatchServer,
     recorder.wrap(model),
     [runObserverModule(recorder)],
     travel,

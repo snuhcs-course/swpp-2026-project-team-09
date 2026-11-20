@@ -146,21 +146,20 @@ change here.
 
 The signals and what the app does on each:
 
-| Signal                  | Carries                                       | The app                                                                                                    |
-| ----------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `friends-changed`       | nothing                                       | fetches `GET /friends` and `GET /friend-requests` of the main server again                                 |
-| `global-events-changed` | nothing                                       | fetches `GET /global-events` of the main server again; sent to every connection                            |
-| `position`              | `{ userId, latitude, longitude, measuredAt }` | moves that User's Avatar to the position, or shows it there                                                |
-| `position-removed`      | `{ userId }`                                  | removes that User's Avatar from the map at once                                                            |
-| `quests-changed`        | nothing                                       | fetches `GET /quests`, the requests to join and the invitations of the main server again                   |
-| `invitation-accepted`   | `{ questId, userId }`                         | fetches `GET /quests` and the sent invitations again, and tells the screen that listens; to the Leader     |
-| `invitation-declined`   | `{ questId, userId }`                         | fetches `GET /quests` and the sent invitations again, and tells the screen that listens; to the Leader     |
-| `late`                  | `{ questId, userId, minutes, arriveAt }`      | fetches `GET /quests` again, and tells the screen that listens; to the other Holders, with no position     |
-| `plan-changed`          | `{ questId }`                                 | fetches `GET /quests` and the invitations again; to every Holder and invited User of the Quest             |
-| `party-changed`         | nothing                                       | fetches `GET /parties/mine`, `GET /parties`, the Party requests and invitations of the main server again   |
-| `matching-changed`      | nothing                                       | fetches `GET /matching-requests` and each request it shows, `GET /matching-requests/:globalEventId`, again |
-| `room-requests-changed` | nothing                                       | fetches `GET /library/room-requests` and the room request a book card polls again                          |
-| `notice`                | nothing                                       | fetches `GET /notifications` of the main server again                                                      |
+| Signal                  | Carries                                       | The app                                                                                                  |
+| ----------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `friends-changed`       | nothing                                       | fetches `GET /friends` and `GET /friend-requests` of the main server again                               |
+| `global-events-changed` | nothing                                       | fetches `GET /global-events` of the main server again; sent to every connection                          |
+| `position`              | `{ userId, latitude, longitude, measuredAt }` | moves that User's Avatar to the position, or shows it there                                              |
+| `position-removed`      | `{ userId }`                                  | removes that User's Avatar from the map at once                                                          |
+| `quests-changed`        | nothing                                       | fetches `GET /quests`, the requests to join and the invitations of the main server again                 |
+| `invitation-accepted`   | `{ questId, userId }`                         | fetches `GET /quests` and the sent invitations again, and tells the screen that listens; to the Leader   |
+| `invitation-declined`   | `{ questId, userId }`                         | fetches `GET /quests` and the sent invitations again, and tells the screen that listens; to the Leader   |
+| `late`                  | `{ questId, userId, minutes, arriveAt }`      | fetches `GET /quests` again, and tells the screen that listens; to the other Holders, with no position   |
+| `plan-changed`          | `{ questId }`                                 | fetches `GET /quests` and the invitations again; to every Holder and invited User of the Quest           |
+| `party-changed`         | nothing                                       | fetches `GET /parties/mine`, `GET /parties`, the Party requests and invitations of the main server again |
+| `room-requests-changed` | nothing                                       | fetches `GET /library/room-requests` and the room request a book card polls again                        |
+| `notice`                | nothing                                       | fetches `GET /notifications` of the main server again                                                    |
 
 ```ts
 socket.on('friends-changed', () => {

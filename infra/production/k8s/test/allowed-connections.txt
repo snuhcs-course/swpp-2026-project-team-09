@@ -5,7 +5,6 @@
 main-server -> CoreDNS 53/UDP
 main-server -> CoreDNS 53/TCP
 main-server -> redis 6379/TCP
-main-server -> match-server 3003/TCP
 main-server -> the database in zone a 5432/TCP
 main-server -> the database in zone c 5432/TCP
 main-server -> the internet 443/TCP
@@ -18,12 +17,6 @@ worker-server -> CoreDNS 53/UDP
 worker-server -> CoreDNS 53/TCP
 worker-server -> main-server 3000/TCP
 worker-server -> the internet 443/TCP
-
-match-server -> CoreDNS 53/UDP
-match-server -> CoreDNS 53/TCP
-match-server -> main-server 3000/TCP
-match-server -> the database in zone a 5432/TCP
-match-server -> the database in zone c 5432/TCP
 
 admin -> CoreDNS 53/UDP
 admin -> CoreDNS 53/TCP

@@ -1,6 +1,6 @@
 # flow-tests
 
-The SNU Now flow tests. They start the four servers as built, with PostgreSQL and Redis, and run the demo's flows and
+The SNU Now flow tests. They start the three servers as built, with PostgreSQL and Redis, and run the demo's flows and
 the A1 and A2 journeys from end to end through the servers' public interfaces, as the app would: HTTP to the main server
 and a Socket.IO connection to the socket server. `pnpm test` also checks the stacks themselves: the Dev Server's,
 through its proxy, and the harness that starts them. Each server's own rules are tested in that server's project; these
@@ -27,7 +27,7 @@ The first run builds the images, which takes some minutes; later runs reuse Dock
 free port of the loopback address, and removes the stack with its volumes when it is done.
 
 The stack reads no `.env` file of the projects. Its keys and secrets are made afresh for each run in `.stack/`, which
-git ignores, and the rest of its settings are in `compose.test.yaml`. The match server runs a round every second.
+git ignores, and the rest of its settings are in `compose.test.yaml`.
 
 A run that was interrupted leaves the stack running; the next run removes it first. To remove it by hand, in the
 repository root:
@@ -42,20 +42,16 @@ Each flow is one test that reads like the demo script: named Users act one after
 step. A failed call names the User, the call and the server's answer, and a wait for a message on the socket names
 what it waited for.
 
-| File                               | Flow                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `test/event.e2e.test.ts`           | An account outside SNU is refused. An Administrator publishes a Global Event. Two Users ask for Matching in a group of two and, after the match server's round, hold the same Shared Quest. One opens its Party; a second Party for the Quest is refused; the other enters. Each receives the other's position, and a walking route to the event is returned. A Master Switch turned off removes the User at once and stops delivery. |
-| `test/friend.e2e.test.ts`          | A User accepts another's Invite Link, and each receives the other's position. A position off campus is not delivered and removes the Avatar. A friendship's switch turned off stops delivery until it is on again. The friendship ends, and positions stop. (Its Meetup step went with the Meetup, retired in Iteration 2.)                                                                                                           |
-| `test/campus-services.e2e.test.ts` | The worker collects the Co-op's and the dormitory's menus and the shuttle's stops and vehicles, by hand as `pnpm collect` does. Today's menus are served, and a shuttle vehicle is at its stop, pushed to the app and through the route.                                                                                                                                                                                              |
-| `test/session.e2e.test.ts`         | A1 (US-AUTH-02 scenario 1, NFR-07). Two Friends see each other, and one signs in on a second phone. The first phone is told its Session ended and is disconnected; its next upload is refused, and no position of it reaches the Friend. The second phone's upload does.                                                                                                                                                              |
-| `test/quest-group.e2e.test.ts`     | A2 (US-QUEST-03 scenarios 1 and 2). A User who only reads a Board finds an Approval Quest on it. Its Leader accepts two Users' requests to join, and each time every Holder is told and reads the new Holder. The Holders enter the Quest's Party; the Leader ends the Party and then the Quest, and the others are told. The Quest is refused as not found, nobody is in a Party, and the Board lists nothing.                       |
-| `test/plan-invitation.e2e.test.ts` | Steps 4 to 7 of the agentic map's first path. Two Friends each have a Class before tomorrow's lunch, and the worker collects menus. One makes a recalculated Plan a Quest with the Plan's steps and the other's invitation. The invited Friend lists it, opens it and reads their own way from the building of their Class; the Leader is refused it. The Friend accepts, and the Leader's app is told who and reads both accepted.   |
+| File                               | Flow                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `test/event.e2e.test.ts`           | An account outside SNU is refused. An Administrator publishes a Global Event. One User recruits a 파티 for it as the app's 파티 모집 does, attending it and opening the Quest on a board; the other finds it among the event's recruiting Quests and joins, and both hold the same Shared Quest. One opens its Party; a second Party for the Quest is refused; the other enters. Each receives the other's position, and a walking route to the event is returned. A Master Switch turned off removes the User at once and stops delivery. |
+| `test/friend.e2e.test.ts`          | A User accepts another's Invite Link, and each receives the other's position. A position off campus is not delivered and removes the Avatar. A friendship's switch turned off stops delivery until it is on again. The friendship ends, and positions stop. (Its Meetup step went with the Meetup, retired in Iteration 2.)                                                                                                                                                                                                                |
+| `test/campus-services.e2e.test.ts` | The worker collects the Co-op's and the dormitory's menus and the shuttle's stops and vehicles, by hand as `pnpm collect` does. Today's menus are served, and a shuttle vehicle is at its stop, pushed to the app and through the route.                                                                                                                                                                                                                                                                                                   |
+| `test/session.e2e.test.ts`         | A1 (US-AUTH-02 scenario 1, NFR-07). Two Friends see each other, and one signs in on a second phone. The first phone is told its Session ended and is disconnected; its next upload is refused, and no position of it reaches the Friend. The second phone's upload does.                                                                                                                                                                                                                                                                   |
+| `test/quest-group.e2e.test.ts`     | A2 (US-QUEST-03 scenarios 1 and 2). A User who only reads a Board finds an Approval Quest on it. Its Leader accepts two Users' requests to join, and each time every Holder is told and reads the new Holder. The Holders enter the Quest's Party; the Leader ends the Party and then the Quest, and the others are told. The Quest is refused as not found, nobody is in a Party, and the Board lists nothing.                                                                                                                            |
+| `test/plan-invitation.e2e.test.ts` | Steps 4 to 7 of the agentic map's first path. Two Friends each have a Class before tomorrow's lunch, and the worker collects menus. One makes a recalculated Plan a Quest with the Plan's steps and the other's invitation. The invited Friend lists it, opens it and reads their own way from the building of their Class; the Leader is refused it. The Friend accepts, and the Leader's app is told who and reads both accepted.                                                                                                        |
 
 A message that must not arrive is waited for 1.5 seconds; one that is delivered takes milliseconds.
-
-Not covered: the match server asking again for a Quest after the main server was stopped and started. A round asks the
-main server which requests still stand before it forms a match, so the main server would have to stop between that
-question and the request for the Quest, which a test cannot time. The match server's own tests cover the repeat.
 
 ## The admin site in a browser
 
@@ -117,7 +113,7 @@ network. In `pnpm test:admin-ui` the browser's route handler answers it with the
 
 ## Empty state
 
-Before each test, the main and match databases are emptied of everything but the seed (Places, the shuttle's route and
+Before each test, the main database is emptied of everything but the seed (Places, the shuttle's route and
 stops), the Administrators and the migrations, and Redis is emptied. This is the only time the tests reach a database
 or Redis, through `docker compose exec`.
 

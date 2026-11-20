@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -11,7 +12,6 @@ import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { ask, postAssistantMessages } from './assistant.js';
 import { signInUser } from './friends.js';
-import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel } from './scripted-model.js';
 import { signIn } from './sign-in.js';
 import { startApp } from './start-app.js';
@@ -24,7 +24,7 @@ let app: INestApplication<Server>;
 const model = new ScriptedModel();
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model.model);
+  app = await startApp(inject('settings'), [], refuseKakao, model.model);
 });
 
 afterAll(async () => {

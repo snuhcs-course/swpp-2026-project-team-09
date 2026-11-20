@@ -8,6 +8,7 @@
 # 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-15  Opus 5.5   prompted by fyoon46
 # 2026-11-18  Opus 5.5   prompted by fyoon46
+# 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 ################################################################################
 
 # The Release workflow's steps (.github/workflows/release.yml), one command each. The functions under Deciding take
@@ -16,20 +17,20 @@
 # app's job builds and attaches its APK from the workflow itself; its decision, its checks of the APK and of the
 # published updates, and its new app-version.json are here.
 
-readonly SERVERS=(main-server socket-server worker-server match-server admin)
+readonly SERVERS=(main-server socket-server worker-server admin)
 readonly PARAMETER_PATH=/snunow/production
 readonly NAMESPACE=snunow
 # The SHA-256 digest of the Expo template's debug key, which signs every APK, so that a new one installs over the old.
 readonly APK_SIGNER=fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c
 REPOSITORY_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 readonly REPOSITORY_ROOT
-readonly TARGETS='main-server|socket-server|worker-server|match-server|admin|app|all'
+readonly TARGETS='main-server|socket-server|worker-server|admin|app|all'
 readonly RELEASE_REF="^refs/tags/snunow/($TARGETS)/[0-9]{2}\\.(0[1-9]|1[0-2])\\.(0[1-9]|[12][0-9]|3[01])-[1-9][0-9]*\$"
 
 # --- Deciding -----------------------------------------------------------------------------------------------------
 
 # Prints the job outputs for a Release's ref: the servers it deploys, as a JSON array, whether it publishes the app's
-# bundle, and the images' Release tag. `all` is the five servers and the app; `app` deploys no server.
+# bundle, and the images' Release tag. `all` is the four servers and the app; `app` deploys no server.
 check_name() {
   local ref=$1 servers=() app=false
   if [[ ! "$ref" =~ $RELEASE_REF ]]; then
@@ -403,9 +404,7 @@ write_secrets() {
   fi
   parameters=$(cat)
   env="MAIN_DATABASE_URL=$(database_url main)" &&
-    env+=$'\n'"MATCH_DATABASE_URL=$(database_url match)" &&
     env+=$'\n'"WORKER_TOKEN=$(line_parameter worker-token)" &&
-    env+=$'\n'"MATCH_SERVER_TOKEN=$(line_parameter match-server-token)" &&
     env+=$'\n'"KAKAO_REST_API_KEY=$(line_parameter kakao-rest-api-key)" &&
     env+=$'\n'"OPENROUTER_API_KEY=$(line_parameter openrouter-api-key)" &&
     env+=$'\n'"LLM_KEYS=$(llm_keys)" &&
@@ -468,10 +467,18 @@ deploy() {
   kubectl rollout status "deployment/$server" --namespace "$NAMESPACE" --timeout=10m
 }
 
-# Deletes the generated ConfigMaps and Secrets that no pod uses any more. Only names and creation times are kept from
-# the listing, so no secret value is written to disk.
+# Deletes the match server's objects, which no target names since AI 매칭 was removed (A04). They carry no app label,
+# so they are named one by one. Once a Release has deleted them this does nothing, and a later change removes it.
+delete_retired() {
+  kubectl delete --namespace "$NAMESPACE" --ignore-not-found \
+    deployment/match-server service/match-server networkpolicy/match-server
+}
+
+# Deletes the retired servers' objects, then the generated ConfigMaps and Secrets that no pod uses any more. Only names
+# and creation times are kept from the listing, so no secret value is written to disk.
 clean() {
   local objects
+  delete_retired
   kubectl get configmaps,secrets --namespace "$NAMESPACE" --output json |
     jq '{items: [.items[] | {kind, metadata: (.metadata | {name, creationTimestamp})}]}' >"$work/objects.json"
   kubectl get deployments,pods --namespace "$NAMESPACE" --output json >"$work/users.json"
@@ -502,6 +509,7 @@ main() {
     push-image) push_image "$@" ;;
     deploy) deploy "$@" ;;
     unused-generated) unused_generated "$@" ;;
+    delete-retired) delete_retired ;;
     clean) clean ;;
     *)
       echo "usage: release.sh <command> ..." >&2

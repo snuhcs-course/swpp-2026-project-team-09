@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -26,7 +27,7 @@ let prisma: PrismaClient;
 let push: PushService;
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [], undefined, undefined, undefined, [], undefined, undefined, {
+  app = await startApp(inject('settings'), [], undefined, undefined, [], undefined, undefined, {
     fetchExpo: expo.fetch,
   });
   push = await pushServiceOf(app);

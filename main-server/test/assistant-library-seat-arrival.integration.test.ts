@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -16,7 +17,6 @@ import { type TravelProvider } from '../src/travel/travel.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { signInUser, type TestUser } from './friends.js';
 import { find, LIBRARY, type LibraryCardBody, libraryCards } from './library.js';
-import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel, type Step } from './scripted-model.js';
 import { withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
@@ -47,7 +47,7 @@ let app: INestApplication<Server>;
 let places: Record<'b24' | 'kwanjeong' | 'doosan', { id: string; name: string }>;
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [], refuseKakao, refuseMatchServer, model.model, [], travel);
+  app = await startApp(inject('settings'), [], refuseKakao, model.model, [], travel);
   vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(NOW);
   const { accessToken } = await signInUser(app);
   const listed = await withAccessToken(request(app.getHttpServer()).get('/places'), accessToken).expect(200);

@@ -3,13 +3,13 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { signInUser, TestUser } from './friends.js';
-import { refuseMatchServer } from './match-server.js';
 import { ScriptedModel } from './scripted-model.js';
 import { startApp } from './start-app.js';
 import {
@@ -272,16 +272,7 @@ describe('With TUTORIAL_KWANJEONG_CHECK on', () => {
 describe('A User who finished the five quests of P06', () => {
   it('stays finished, and gets the ten new quests on 진행하기 with the five still completed', async () => {
     const file = await changedTutorialFile({ only: P06_KEYS });
-    const five = await startApp(
-      inject('settings'),
-      [],
-      refuseKakao,
-      refuseMatchServer,
-      new ScriptedModel().model,
-      [],
-      undefined,
-      file,
-    );
+    const five = await startApp(inject('settings'), [], refuseKakao, new ScriptedModel().model, [], undefined, file);
     const user = await signInUser(five);
     try {
       await tutorialAfter(postTutorial(five, user, 'enable'));

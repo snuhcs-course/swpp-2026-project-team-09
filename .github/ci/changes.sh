@@ -4,6 +4,7 @@
 #
 # 2026-11-15  Opus 5.5   prompted by fyoon46
 # 2026-11-18  Opus 5.5   prompted by fyoon46
+# 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 ################################################################################
 
 # Says whether a CI job (.github/workflows/ci.yml) does its work on this run (run=true or run=false) and at which level
@@ -27,9 +28,9 @@
 # and tests=unit or tests=all to GITHUB_OUTPUT, or prints them when that is unset, prints one line that says why, and
 # always exits 0.
 
-JOBS=(main-server socket-server worker-server match-server admin mobile flow-tests mobile-tests app-fingerprint
+JOBS=(main-server socket-server worker-server admin mobile flow-tests mobile-tests app-fingerprint
   deploy-scripts release-script terraform manifests)
-PACKAGE_JOBS='main-server socket-server worker-server match-server admin mobile flow-tests'
+PACKAGE_JOBS='main-server socket-server worker-server admin mobile flow-tests'
 NODE_JOBS="$PACKAGE_JOBS mobile-tests app-fingerprint"
 
 # Sets `reached` to the jobs whose work a change to the path can affect, separated by spaces, or to `every` for CI's
@@ -45,16 +46,15 @@ reach() {
     main-server/seed/*) reached='main-server flow-tests mobile mobile-tests' ;;
     # The Dev Server bootstrap's tests read it.
     main-server/.env.example) reached='main-server flow-tests deploy-scripts' ;;
-    # The flow tests build the four servers' images.
+    # The flow tests build the three servers' images.
     main-server/*) reached='main-server flow-tests' ;;
     socket-server/*) reached='socket-server flow-tests' ;;
     worker-server/*) reached='worker-server flow-tests' ;;
-    match-server/*) reached='match-server flow-tests' ;;
     admin/*) reached='admin' ;;
     mobile/*) reached='mobile mobile-tests app-fingerprint' ;;
     flow-tests/* | compose.yaml | compose.deploy.yaml | infra/proxy/*) reached=flow-tests ;;
-    # Their tests build the database's image.
-    infra/postgres/*) reached='main-server match-server flow-tests' ;;
+    # main-server's tests build the database's image.
+    infra/postgres/*) reached='main-server flow-tests' ;;
     infra/deploy/*) reached=deploy-scripts ;;
     infra/production/terraform/*) reached=terraform ;;
     infra/production/k8s/*) reached=manifests ;;

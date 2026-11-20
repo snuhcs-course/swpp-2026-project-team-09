@@ -6,6 +6,7 @@
 # 2026-10-18  Opus 5.5   prompted by TaeHyun79
 # 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 ################################################################################
 
 # Runs bootstrap.sh on a pretend machine under $BATS_TEST_TMPDIR: the team folder, systemd's unit folder and, through
@@ -14,10 +15,9 @@
 
 CONTRACT=(
   COMPOSE_PROFILES DEPLOY_STATUS_DIR DEPLOY_APK_DIR
-  POSTGRES_PASSWORD MAIN_DB_PASSWORD MATCH_DB_PASSWORD ACCESS_TOKEN_PRIVATE_KEY ACCESS_TOKEN_PUBLIC_KEY WORKER_TOKEN
-  MATCH_SERVER_TOKEN
+  POSTGRES_PASSWORD MAIN_DB_PASSWORD ACCESS_TOKEN_PRIVATE_KEY ACCESS_TOKEN_PUBLIC_KEY WORKER_TOKEN
   PUBLIC_URL GOOGLE_APP_CLIENT_ID GOOGLE_ADMIN_CLIENT_ID ANDROID_CERTIFICATE_FINGERPRINTS
-  ROUND_INTERVAL_SECONDS EXTRA_SNU_COLLECTION
+  EXTRA_SNU_COLLECTION
   KAKAO_REST_API_KEY INITIAL_ADMINISTRATOR_EMAILS DEMO_ACCOUNT_EMAILS OPENROUTER_API_KEY LLM_KEYS
 )
 
@@ -86,14 +86,15 @@ example_value_of() {
 
   [ "$(grep -v -e '^#' -e '^$' "$SETTINGS" | sed 's/=.*//' | sort)" = "$(printf '%s\n' "${CONTRACT[@]}" | sort)" ]
 
-  for name in POSTGRES_PASSWORD MAIN_DB_PASSWORD MATCH_DB_PASSWORD WORKER_TOKEN MATCH_SERVER_TOKEN; do
+  for name in POSTGRES_PASSWORD MAIN_DB_PASSWORD WORKER_TOKEN; do
     # Hex, so that a password goes into DATABASE_URL as it is.
     [[ $(value_of "$name") =~ ^[0-9a-f]{64}$ ]] || false
   done
   [ -n "$(value_of ACCESS_TOKEN_PRIVATE_KEY)" ]
   [ -n "$(value_of ACCESS_TOKEN_PUBLIC_KEY)" ]
-  [ "$(for name in POSTGRES_PASSWORD MAIN_DB_PASSWORD MATCH_DB_PASSWORD WORKER_TOKEN MATCH_SERVER_TOKEN \
-    ACCESS_TOKEN_PRIVATE_KEY ACCESS_TOKEN_PUBLIC_KEY; do value_of "$name"; done | sort -u | grep -c .)" -eq 7 ]
+  [ "$(for name in POSTGRES_PASSWORD MAIN_DB_PASSWORD WORKER_TOKEN ACCESS_TOKEN_PRIVATE_KEY ACCESS_TOKEN_PUBLIC_KEY; do
+    value_of "$name"
+  done | sort -u | grep -c .)" -eq 5 ]
 
   [ "$(grep CHANGE_ME "$SETTINGS" | sort)" = "$(printf '%s\n' DEMO_ACCOUNT_EMAILS=CHANGE_ME \
     INITIAL_ADMINISTRATOR_EMAILS=CHANGE_ME KAKAO_REST_API_KEY=CHANGE_ME)" ]
@@ -106,7 +107,6 @@ example_value_of() {
   done
   [ "$(value_of DEPLOY_STATUS_DIR)" = "$BOOTSTRAP_TEAM_DIR/snu-now-status" ]
   [ "$(value_of DEPLOY_APK_DIR)" = "$BOOTSTRAP_TEAM_DIR/snu-now-apk" ]
-  [ "$(value_of ROUND_INTERVAL_SECONDS)" = 60 ]
   [ "$(value_of EXTRA_SNU_COLLECTION)" = off ]
   [ -z "$(value_of OPENROUTER_API_KEY)" ]
   [ "$(value_of LLM_KEYS)" = '{}' ]

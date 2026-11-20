@@ -18,7 +18,7 @@ pnpm install
 pnpm dev
 ```
 
-Open http://localhost:3100. The servers use ports 3000 to 3003, so the site uses 3100, in `pnpm dev` and `pnpm start`
+Open http://localhost:3100. The servers use ports 3000 to 3002, so the site uses 3100, in `pnpm dev` and `pnpm start`
 alike. Sign in with Google and the Kakao map accept only registered addresses, so keep the port.
 
 The main server must be running, with `GOOGLE_ADMIN_CLIENT_ID` set to the same client ID as the site's, and with your

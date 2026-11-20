@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -22,7 +23,7 @@ const model = new ScriptedModel();
 let app: INestApplication<Server>;
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [], undefined, undefined, model.model);
+  app = await startApp(inject('settings'), [], undefined, model.model);
 });
 
 afterAll(() => app.close());
