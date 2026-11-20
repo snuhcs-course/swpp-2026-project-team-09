@@ -186,3 +186,32 @@ Doing step 3.3 before 3.1 breaks the Release: today's `release.sh` reads both SS
 - [ ] After the merge, steps 3.1 to 3.3 are recorded under `## Comments` with the date and the result.
 
 ## Comments
+
+### Decisions (2026-11-20)
+
+- **The event flow's path.** `flow-tests/test/event.e2e.test.ts` takes the calls the app's 파티 모집 makes for an event (`mobile/src/screens/party/form/use-send.ts`):
+  1. Minji attends the event with `POST /quests`.
+  2. She opens her Quest with `PATCH /quests/:id` (`capacity: 2`, `joinPolicy: open`, `board: career`).
+  3. Jun finds the Quest in `GET /quests/recruiting?globalEventId=` and joins it with `POST /quests/:questId/join`.
+  
+  The flow tests' caller gained `patch()` for step 2.
+- **The cluster cleanup is `delete_retired`, called from `clean`.** It is exposed as `release.sh delete-retired` so that `release.bats` can test it with a fake kubectl. Because it lives there, the acceptance grep still finds `match-server` in `release.sh` and `release.bats`. Every other hit outside `.scratch/` and the ADRs is gone. A later change removes the step.
+- **`release.bats`** also checks that the `match-*` parameters left in Parameter Store until step 3.3 reach no secrets file.
+- **The Dev Server's container** goes through `compose up --detach --remove-orphans` in `deploy.sh`. The Dev Server still needs the step by hand (step 3.4 above, added after review), because its first gate runs the old `deploy.sh`.
+- **`ROUND_INTERVAL_SECONDS`** was read only by the match server, so it was removed everywhere: Kubernetes, Compose, the Dev Server's settings, and the bootstrap.
+- **`scripts/coverage-by-file-set.ts`** lost its `add` rule along with match-server's entries, because only match-server used it. Its tests moved to socket-server.
+- **`main-server/test/database.integration.test.ts`** lost "keeps the main role out of the match database", because there is no `match` database.
+- **The full test suite ran before the merge.** A working branch's run and the merge queue run only the unit tests, so the person agreed to push a temporary tag, `ci/a04-01-full`, for a full CI run. The tag starts CI but not the Release, and it was deleted afterwards. Run 44715568078 is green except for two tests that fail the same way on `4.0/Main`:
+  - `quest-drop.integration.test.ts`;
+  - `room-keyboard.integration.test.tsx`.
+- **No tests ran locally.** bats and `terraform validate` ran only in CI: bats is not installed locally, and the disk was full.
+
+### Agent usage (2026-11-20)
+
+- Agent time: about 2 hours, an estimate. About 1 hour of it was waiting for CI runs, in one Claude Code session with no other worktree.
+- Tokens, the main session and two review subagents together:
+  - input: 54,071,961 in all, of which:
+    - 53,586,429 cache reads;
+    - 485,024 cache writes;
+    - 508 uncached.
+  - output: 128,329.
