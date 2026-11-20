@@ -10,10 +10,11 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
-import { type AnswerReply, type Lookup, type RequestContext } from './dto/answer.dto.js';
+import { type AnswerReply, type Lookup, type ReplyStep, type RequestContext } from './dto/answer.dto.js';
 import { type ReplyOffer } from './dto/assistant-messages.dto.js';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
 import { type RecruitingQuestDto } from '../quests/dto/quest.dto.js';
@@ -93,6 +94,10 @@ export interface Presented {
   refusal: Refusal | null;
   // Buttons under the text, which the reply keeps only without an answer, a Lookup, or a refusal.
   offers?: ReplyOffer[];
+  // The bookings a library tool refused, each a step that was not done (P03).
+  notDone?: ReplyStep[];
+  // The requests of the message in time order, when it asked for two or more (P03).
+  steps?: ReplyStep[];
 }
 
 // Who asks, when, and what their app knew as they asked, such as where they are.
@@ -156,6 +161,9 @@ export interface Feature {
   readonly tools: Readonly<Record<string, Tool>>;
   // The cards of a run that answered, from what its tools kept. Left out, they stay as the presenters put them.
   cardsAfterRun?(context: ToolContext): Card[];
+  // What a run that answered changes in what was presented once every tool has run, such as the steps of a message
+  // that asked for several things (P03).
+  afterRun?(context: ToolContext): Promise<void>;
 }
 
 // What a tool answers when nothing matches, so that the model says so instead of answering from elsewhere.

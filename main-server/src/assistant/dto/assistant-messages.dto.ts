@@ -8,12 +8,13 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type Card, type CardKind, CARDS_MAX, CLIENT_CAPABILITIES, type MapLayer } from '../feature.js';
 import { isLibraryKey, LIBRARY_KEY_MAX } from '../library/library-card.js';
-import { type AnswerReply, type Lookup, NO_CONTEXT, requestContextSchema } from './answer.dto.js';
+import { type AnswerReply, type Lookup, NO_CONTEXT, type ReplyStep, requestContextSchema } from './answer.dto.js';
 import { proposalLength, type QuestProposal, questProposalSchema } from '../proposal.js';
 import { type Refusal, type RefusalOffer } from '../refusals/refusal.dto.js';
 
@@ -94,6 +95,8 @@ export interface AssistantReplyDto {
   refusal: Refusal | null;
   // Buttons under the text of a reply that draws nothing; left out when there are none.
   offers?: ReplyOffer[];
+  // Each request of a message that asked for two or more, in time order; left out otherwise (P03).
+  steps?: ReplyStep[];
 }
 
 // A button under a reply's text, sent as the User's words: a Tutorial quest's 가는 길 보기 (P01-14).
