@@ -2,7 +2,7 @@
 
 Parent: none. A04 is an additional task with no spec; this ticket is its whole record.
 Follows: P06-03 (#260, merged 2026-11-16), which took AI 매칭 out of the app's UI and kept the match server.
-Status: done
+Status: in-progress
 Blocked by: None
 
 Branch: `4.0/A04-01-remove-match-server`, cut fresh from `origin/4.0/Main`. The pull request targets `4.0/Main`, follows `.github/pull_request_template.md` in English, and has assignee `Jaehyun0320`.
@@ -177,12 +177,13 @@ Doing step 3.3 before 3.1 breaks the Release: today's `release.sh` reads both SS
 ## Acceptance criteria
 
 - [ ] `git grep -i -E "match[-_ ]?server|MATCH_DB|matching-requests|matching-changed|MatchServer"` outside `.scratch/` and the ADRs finds nothing.
-- [ ] `git grep -i matchId` finds only the kept `schema.prisma` field and existing migrations.
-- [ ] The main server starts without `MATCH_SERVER_URL` and `MATCH_SERVER_TOKEN`, and the Matching routes answer 404.
-- [ ] Every CI job is green, including flow-tests with the new recruit-and-join path, and `app-fingerprint` reports no change.
-- [ ] `kustomize build` of `targets/all` has no match-server object, and `manifests` is green.
-- [ ] `release.bats`, `changes.bats`, `deploy.bats` and `bootstrap.bats` are green.
-- [ ] Before merging, the pull request's Rollback Scenario says this is a one-way door after step 3.3, and lists the order of operations.
+  - Not met yet: on `5.0/Main` it still finds `.github/release/release.sh` and `release.bats` (`delete_retired`), and `README.md` (the Iteration 4 history's line on AI 매칭 and the match server). The ticket stays open until `delete_retired` goes.
+- [x] `git grep -i matchId` finds only the kept `schema.prisma` field and existing migrations.
+- [x] The main server starts without `MATCH_SERVER_URL` and `MATCH_SERVER_TOKEN`, and the Matching routes answer 404.
+- [x] Every CI job is green, including flow-tests with the new recruit-and-join path, and `app-fingerprint` reports no change.
+- [x] `kustomize build` of `targets/all` has no match-server object, and `manifests` is green.
+- [x] `release.bats`, `changes.bats`, `deploy.bats` and `bootstrap.bats` are green.
+- [x] Before merging, the pull request's Rollback Scenario says this is a one-way door after step 3.3, and lists the order of operations.
 - [x] After the merge, steps 3.1 to 3.3 are recorded under `## Comments` with the date and the result.
 
 ## Comments
@@ -239,9 +240,16 @@ Doing step 3.3 before 3.1 breaks the Release: today's `release.sh` reads both SS
    - `DROP DATABASE match` and `DROP ROLE match` succeeded;
    - `pg_database` and `pg_roles` then had no `match` row.
 
+**Checked on `5.0/Main` (`981722cb`) on 2026-11-21:**
+- `git grep -i matchId` finds `schema.prisma` and, inside `.scratch/`, earlier tickets only.
+- No main-server source or test reads `MATCH_SERVER_URL` or `MATCH_SERVER_TOKEN`. Production runs without them: `/health/ready` answers 200. `GET` and `POST /matching-requests` and `POST /matches/:matchId/quest` answer 404, while `GET /quests/recruiting` answers 401 without a token.
+- The full runs 44728763667 and 44728062939 on `b86c73d0` passed all 15 jobs, `flow-tests`, `app-fingerprint`, `manifests`, `release-script` (`release.bats`, `changes.bats`) and `deploy-scripts` (`deploy.bats`, `bootstrap.bats`) among them.
+- `kubectl kustomize` of `targets/all`, with empty secret files, gives 23 objects and no match-server.
+- #377's Rollback Scenario calls the change a one-way door after step 3.3 and lists the order of operations.
+
 **Still open:**
 - **Step 3.4.** The Dev Server waits until `development` carries this change.
-- **`delete_retired`.** It stays in `release.sh` and `release.bats` until a later change removes it.
+- **`delete_retired`.** It stays in `release.sh` and `release.bats` until a later change removes it. Then the first acceptance criterion can be ticked, with the README's Iteration 4 history line as the one hit left on purpose.
 - **Old tags.** Since the parameters are gone, a tag from before this change cannot be deployed again: its Release reads them for the shared Secret. A rollback is a new commit.
 
 ### Agent usage (2026-11-21)
