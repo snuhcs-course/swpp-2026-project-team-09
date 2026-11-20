@@ -555,7 +555,7 @@ EOF
   run "$RELEASE" write-secrets "$secrets" "$ENDPOINT" <"$BATS_TEST_TMPDIR/parameters.json"
 
   [ "$status" -eq 0 ]
-  ! grep -q -e MATCH -e 0b5e3c9a7d1f42e8 -e 8e21b4a09c5d "$secrets/secrets.env"
+  run ! grep -q -e MATCH -e 0b5e3c9a7d1f42e8 -e 8e21b4a09c5d "$secrets/secrets.env"
 }
 
 @test "a missing parameter, a key without line breaks, a value over two lines, or no database endpoint fails, naming the parameter and printing no value" {
@@ -618,7 +618,10 @@ EOF
 }
 
 @test "the match server's Deployment, Service and NetworkPolicy are deleted by name, ignoring those already gone" {
-  printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$*" >>"$FAKE_CALLS"\n' >"$BATS_TEST_TMPDIR/bin/kubectl"
+  cat >"$BATS_TEST_TMPDIR/bin/kubectl" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >>"$FAKE_CALLS"
+EOF
   chmod +x "$BATS_TEST_TMPDIR/bin/kubectl"
 
   run "$RELEASE" delete-retired
