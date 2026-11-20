@@ -253,7 +253,8 @@ was removed in Iteration 4 (A04).
 
 ## Demo video
 
-The Iteration 4 demo video is to be added here before the demo; it shows
+The Iteration 4 demo is in
+[this Google Drive folder](https://drive.google.com/drive/folders/1wo-oUcbG4fUZ31gISO1c6KoxfBKiGgty). It shows
 [the three demo flows](#the-three-demo-flows). The Iteration 3 demo is
 [Team09 iteration3 demo](https://www.youtube.com/watch?v=PB54HriEl-8) on YouTube, and the Iteration 1 and 2 videos are
 in [this Google Drive folder](https://drive.google.com/drive/folders/1LnGPIOsQbjt4Or9v-cogjmvhMoUhx7y6).
@@ -788,8 +789,8 @@ Not run by `pnpm test` or CI:
   the Iteration 4 figures in
   [Testing Documentation – Iteration 4 Coverage Details](https://github.com/snuhcs-course/swpp-2026-project-team-09/wiki/Testing-Documentation-%E2%80%93-Iteration-4-Coverage-Details).
 - **Device runs**: `pnpm build:mock-apk`, then `pnpm test:device` in `mobile/`, run the M1 and M2 flows with Maestro on
-  an Android emulator against the app's own mock data ([mobile/README.md](mobile/README.md), "Device runs"). M2 on a
-  cold start still fails (see [Known limitations and todos](#known-limitations-and-todos)).
+  an Android emulator against the app's own mock data ([mobile/README.md](mobile/README.md), "Device runs"). M1 and M2
+  pass on a cold and on a warm start.
 - **The evaluations** ([Evaluation](#evaluation)) call the real model and spend OpenRouter credit, or Anthropic's with
   `--provider anthropic`, so they run by hand
   only, in `main-server/`. `pnpm eval` runs the Assistant's 62 P19 cases, and
