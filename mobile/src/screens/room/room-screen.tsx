@@ -9,6 +9,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -185,9 +186,8 @@ interface BodyProps {
   open: boolean;
 }
 
-// The frame's order: the head, the activation, the event card, 일정, 신청, 멤버, 초대 중 and 파티 채팅. A Quest taken
-// alone has no Party to switch on and no 파티 채팅, either of which would show it to Friends, and no 멤버, as the User is
-// its one Holder.
+// The frame's order: the head, the activation, the event card, 일정, 신청, 멤버 and 초대 중. A Quest taken alone has no
+// Party to switch on, which would show it to Friends, and no 멤버, as the User is its one Holder.
 function Body({ room, actions, onAsk, open }: BodyProps): ReactElement {
   const walks = useWalkingTimes(room, open);
   const party = !heldAlone(room.quest);

@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-10-05  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -132,6 +133,14 @@ function signalsTo(user: TestUser): string[] {
   return watcher.for(user).map(({ name }) => name);
 }
 
+function countsOf(names: readonly string[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const name of names) {
+    counts[name] = (counts[name] ?? 0) + 1;
+  }
+  return counts;
+}
+
 describe('quests-changed', () => {
   it('goes to the User who attends, once', async () => {
     const user = await signInUser(app);
@@ -153,11 +162,11 @@ describe('quests-changed', () => {
     await cancelSubQuest(app, other, { questId, subQuestId });
     await dropQuest(app, other, questId);
 
-    // Attending, adding, editing, cancelling and dropping for the User; the last four for the other Holder.
+    // Attending, adding, editing, cancelling and dropping for the User; the last four for the other Holder. Beside
+    // them, a `notice` for each step the other Holder changed: two for the User, and one for the other Holder.
     await vi.waitFor(() => {
-      expect(signalsTo(user)).toHaveLength(5);
-      expect(signalsTo(other)).toHaveLength(4);
+      expect(countsOf(signalsTo(user))).toEqual({ 'quests-changed': 5, notice: 2 });
+      expect(countsOf(signalsTo(other))).toEqual({ 'quests-changed': 4, notice: 1 });
     });
-    expect(new Set([...signalsTo(user), ...signalsTo(other)])).toEqual(new Set(['quests-changed']));
   });
 });

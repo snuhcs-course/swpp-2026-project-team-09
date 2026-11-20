@@ -2,9 +2,9 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-20  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { sockets } from './support/fake-socket';
@@ -15,7 +15,7 @@ import { startFresh } from './support/mocks';
 import { answerRoom, openRoom } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// The room while the User types in 파티 채팅: the input stands right above the phone's keyboard, the footer giving way.
+// The room while the User types a step: the form stands right above the phone's keyboard, the footer giving way.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -47,15 +47,16 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe('파티 채팅 with the keyboard up', () => {
+describe('A step being typed with the keyboard up', () => {
   it('stands right above the keyboard, the footer giving way, and comes back down with it', async () => {
-    await openRoom();
+    const user = await openRoom();
     expect(screen.getByRole('button', { name: FOOTER })).toBeVisible();
+    await user.press(screen.getByRole('button', { name: '일정 추가' }));
 
     await showKeyboard(KEYBOARD);
     expect(screen.getByTestId('full-screen-panel')).toHaveStyle({ paddingBottom: KEYBOARD });
     expect(screen.queryByRole('button', { name: FOOTER })).toBeNull();
-    expect(within(screen.getByLabelText('파티 채팅')).getByPlaceholderText('파티에 메시지 보내기')).toBeVisible();
+    expect(screen.getByLabelText('내용')).toBeVisible();
 
     await hideKeyboard();
     expect(screen.getByTestId('full-screen-panel')).toHaveStyle({ paddingBottom: 0 });
