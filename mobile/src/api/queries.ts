@@ -15,6 +15,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { queryOptions, type UseQueryOptions } from '@tanstack/react-query';
@@ -51,7 +52,6 @@ export const SHUTTLE_VEHICLES_KEY = ['shuttle-vehicles'] as const;
 type MenusKey = readonly ['menus', string];
 export const RECRUITING_KEY = ['recruiting'] as const;
 export const MY_JOIN_REQUESTS_KEY = ['my-join-requests'] as const;
-export const MATCHING_REQUESTS_KEY = ['matching-requests'] as const;
 export const PAST_QUESTS_KEY = ['past-quests'] as const;
 export const MY_TAGS_KEY = ['my-tags'] as const;
 export const OFFICIAL_RECRUITING_KEY = ['official-recruiting'] as const;

@@ -17,6 +17,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -32,7 +33,6 @@ import { MENUS } from './data/menus';
 import { PLACES } from './data/places';
 import { GLOBAL_EVENT_ANNOUNCERS, MY_PARTY, PARTIES, QUESTS } from './data/quests';
 import { QUEST_INVITATIONS } from './data/waiting';
-import { mockEvents } from './events';
 import { mockGlobalEvents } from './global-events';
 import { mockFriendships as friendships } from './friendships';
 import { mockInvitationCard } from './invitation-card';
@@ -252,7 +252,6 @@ export const mockClient: ApiClient = {
   reportLate: () => answer('reportLate', () => LATE_WAY),
   ...mockRoom,
   ...mockParty,
-  ...mockEvents,
   ...mockTutorial,
   ...mockInterests,
   ...mockPrivateZones,

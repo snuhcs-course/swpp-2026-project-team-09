@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -122,11 +123,11 @@ describe('the flag of a made Quest', () => {
 });
 
 // Partitions: Closed Quests the User leads with someone invited that POST /plans did not make on this phone: a Shared
-// Quest of a Global Event, which matching makes, and a library booking's Quest. Neither has a stored reply: each is the
+// Quest of a Global Event, which AI matching used to make, and a library booking's Quest. Neither has a stored reply: each is the
 // stored Quest of POST /plans with the one field changed that says what it is.
 describe('a Quest the User leads that was not made from a Plan on this phone', () => {
   it('keeps its own marker when it is a Shared Quest of a Global Event', async () => {
-    // Changed for the boundary: matching makes a Shared Quest of the Global Event, Closed and led by a matched User.
+    // Changed for the boundary: a Shared Quest of the Global Event, Closed and led by the User, as AI matching made.
     answerMadeQuest(server, { ...MADE, globalEvent: CAREER_GATHERING.globalEvent });
 
     await openMain();

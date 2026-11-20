@@ -12,6 +12,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -23,7 +24,6 @@ import {
   GLOBAL_EVENTS_KEY,
   interestMatchesQuery,
   JOIN_REQUESTS_KEY,
-  MATCHING_REQUESTS_KEY,
   MY_JOIN_REQUESTS_KEY,
   MY_PARTY_KEY,
   NOTIFICATIONS_KEY,
@@ -63,7 +63,6 @@ const REFETCH: Record<string, readonly QueryKey[]> = {
   'party-changed': [MY_PARTY_KEY, PARTIES_KEY, POSITIONS_KEY],
   // A new event or party that matches the User's interests comes with a `notice`, and its mark with the matches.
   'global-events-changed': [GLOBAL_EVENTS_KEY, QUESTS_KEY, interestMatchesQuery.queryKey],
-  'matching-changed': [MATCHING_REQUESTS_KEY, QUESTS_KEY, RECRUITING_KEY],
   'room-requests-changed': [ROOM_INBOX_KEY, ROOM_REQUEST_KEY],
   notice: [NOTIFICATIONS_KEY, interestMatchesQuery.queryKey],
   'invitation-accepted': [QUESTS_KEY, SENT_INVITATIONS_KEY],
@@ -93,7 +92,6 @@ const SHOWN: readonly QueryKey[] = [
   SHUTTLE_VEHICLES_KEY,
   RECRUITING_KEY,
   MY_JOIN_REQUESTS_KEY,
-  MATCHING_REQUESTS_KEY,
   SENT_INVITATIONS_KEY,
   ROOM_INBOX_KEY,
   ...WAITING,

@@ -4,15 +4,16 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
-import type { MatchingRequest } from '@/api/matching-types';
 import type { GlobalEvent, ListedGlobalEvent } from '@/api/types';
 import { field, hasTexts, isNothing, isNumber, isTextOrNull, listOf } from './answers';
 import { call } from './http';
 
-// The operations of the 행사 tab: the Global Events and Matching. The recruiting Quests and joining are the 파티 tab's.
+// The operations of the 행사 tab: the Global Events and the User's Favorite Events. The recruiting Quests and joining
+// are the 파티 tab's.
 
 // A published Global Event, as the 행사 tab's list and the Assistant's cards carry it.
 export function isGlobalEvent(value: unknown): value is GlobalEvent {
@@ -33,43 +34,11 @@ function isListedGlobalEvent(value: unknown): value is ListedGlobalEvent {
   );
 }
 
-const MATCHING_STATES = new Set(['waiting', 'matched', 'withdrawn', 'expired']);
-
-function isMatchingRequest(value: unknown): value is MatchingRequest {
-  const state = field(value, 'state');
-  return (
-    hasTexts(value, ['globalEventId', 'arrivedAt']) &&
-    isNumber(field(value, 'size')) &&
-    typeof state === 'string' &&
-    MATCHING_STATES.has(state) &&
-    isTextOrNull(field(value, 'questId'))
-  );
-}
-
-function matchingPath(globalEventId: string, rest = ''): string {
-  return `/matching-requests/${encodeURIComponent(globalEventId)}${rest}`;
-}
-
-type EventClient = Pick<
-  ApiClient,
-  | 'listGlobalEvents'
-  | 'setFavoriteEvent'
-  | 'requestMatching'
-  | 'listMatchingRequests'
-  | 'getMatchingRequest'
-  | 'withdrawMatchingRequest'
->;
+type EventClient = Pick<ApiClient, 'listGlobalEvents' | 'setFavoriteEvent'>;
 
 export const eventClient: EventClient = {
   listGlobalEvents: () => call('GET', '/global-events', listOf(isListedGlobalEvent)),
   setFavoriteEvent: async (globalEventId, favorite) => {
     await call(favorite ? 'PUT' : 'DELETE', `/global-events/${encodeURIComponent(globalEventId)}/favorite`, isNothing);
-  },
-  requestMatching: (globalEventId, size) =>
-    call('POST', '/matching-requests', isMatchingRequest, { body: { globalEventId, size } }),
-  listMatchingRequests: () => call('GET', '/matching-requests', listOf(isMatchingRequest)),
-  getMatchingRequest: (globalEventId) => call('GET', matchingPath(globalEventId), isMatchingRequest),
-  withdrawMatchingRequest: async (globalEventId) => {
-    await call('POST', matchingPath(globalEventId, '/withdraw'), isNothing);
   },
 };

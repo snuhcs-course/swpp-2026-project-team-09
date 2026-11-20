@@ -1177,8 +1177,8 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
   "파티 찾기/모집" ("모집 중인 파티 {n} · 찾기/모집"), which leads on to 파티 찾기/모집. At `/events?focus=<id>` the
   list shows every event, scrolls to the row and marks it with a light blue ground for 2.6 s (`use-focus.ts`). The
   frame's 분류 tabs and "대상" are not drawn: a Global Event has no category or audience. AI matching left the main
-  UI on 2026-11-10 (P06-03): the app has no matching screen, though the main server's matching routes and
-  `apiClient`'s calls for them stay. The chat's event cards are `event-item.tsx`, with "자세히" and "파티 찾기/모집".
+  UI on 2026-11-10 (P06-03), and its calls and the routes and server behind them left the code in
+  Iteration 4 (A04). The chat's event cards are `event-item.tsx`, with "자세히" and "파티 찾기/모집".
 - The ☆ at a row's top right and in the detail sheet (`favorite-toggle.tsx`), named "즐겨찾기" as everywhere in the
   app, keeps the event or drops it (`PUT` and `DELETE /global-events/:id/favorite`): a Favorite
   Event. It changes at once and back with "즐겨찾기를 바꾸지 못했어요" when the main server refuses. The chat's event
@@ -1328,9 +1328,6 @@ Behind a hook are three layers:
 | `attendGlobalEvent`                                                  | The User's Quest for the Global Event                        | `POST /quests` with `{ globalEventId }`                                 |
 | `inviteToQuest`                                                      | Nothing                                                      | `POST /quests/:questId/invitations`                                     |
 | `acceptInvitation`, `declineInvitation`                              | The Quest; nothing                                           | `POST /quest-invitations/:id/accept`, `/decline`                        |
-| `requestMatching`, `listMatchingRequests`                            | The request; the waiting requests                            | `POST`, `GET /matching-requests`                                        |
-| `getMatchingRequest`                                                 | The latest request for a Global Event                        | `GET /matching-requests/:globalEventId`                                 |
-| `withdrawMatchingRequest`                                            | Nothing                                                      | `POST /matching-requests/:globalEventId/withdraw`                       |
 | `askAssistant`                                                       | The Assistant's reply to the conversation                    | `POST /assistant/messages`                                              |
 | `getTutorial`, `enableTutorial`, `stopTutorial`, `hideTutorialRow`   | The 새내기 튜토리얼 with the User's progress, after each     | The mock until P06-02: `GET /tutorial`, `POST /tutorial/enable`, …      |
 | `startTutorialQuest`, `completeTutorialQuest`                        | The 새내기 튜토리얼 with the User's progress                 | The mock until P06-02: `POST /tutorial/quests/:key/start`, `/complete`  |
@@ -1456,8 +1453,7 @@ socket server's README describes:
 - The signals fetch what they name again: `friends-changed` the Friends, the positions and the Friend Requests,
   `quests-changed` the Quests (the open room's Quest among them), the invitations, the requests to join and the
   Leader's invitations, the recruiting Quests and the User's requests to join,
-  `party-changed` the Parties and the positions, `global-events-changed` the Global Events and the Quests,
-  `matching-changed` the requests for Matching, the Quests and the recruiting Quests, `notice` the kept
+  `party-changed` the Parties and the positions, `global-events-changed` the Global Events and the Quests, `notice` the kept
   Notifications of 알림, which are also fetched again when the connection opens again. When the app returns to the
   front, the lists of 알림, the Friend Requests among them, are fetched again too.
 - `shuttle-vehicles-updated` replaces the shuttle's vehicles in the cache of `GET /shuttle/vehicles` while the
