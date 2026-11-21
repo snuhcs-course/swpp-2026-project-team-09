@@ -37,11 +37,19 @@ interface OnScreen {
   howAbout: HowAbout;
 }
 
-function lookupOf(bubble: ChatBubble, { lookup }: OnScreen): ShownLookup['lookup'] {
+// What deciding a reply's card reads of what is on screen.
+interface Seen {
+  shown: Pick<ShownAnswer, 'source' | 'answer' | 'plan'>;
+  lookup: Pick<ShownLookup, 'lookup'>;
+  invitation: Pick<PlanInvitation, 'made'>;
+  howAbout: Pick<HowAbout, 'place'>;
+}
+
+function lookupOf(bubble: ChatBubble, { lookup }: Seen): ShownLookup['lookup'] {
   return keepsShown(bubble) ? lookup.lookup : (bubble.lookup ?? null);
 }
 
-function wordsKindOf(bubble: ChatBubble, onScreen: OnScreen): WordsKind {
+function wordsKindOf(bubble: ChatBubble, onScreen: Seen): WordsKind {
   const { shown, invitation, howAbout } = onScreen;
   const { answer } = bubble;
   const fromReply = answer !== undefined && answer !== null && answer === shown.source;
@@ -62,7 +70,7 @@ export function onScreenOf({ answer, lookup, invitation, howAbout }: ChatSheetCo
   return { shown: answer, lookup, invitation, howAbout };
 }
 
-export function barOf(bubbles: readonly ChatBubble[], onScreen: OnScreen): BarOf {
+export function barOf(bubbles: readonly ChatBubble[], onScreen: Seen): BarOf {
   // While a follow-up's reply is on its way its turn holds nothing yet, and the answer before it stays on the map:
   // its bar stays too, as the card keeps its height, so that the camera does not move twice.
   const turn = turnsOf(bubbles).findLast(({ after }) => after.length > 0);

@@ -6,10 +6,6 @@
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import type { ChatBubble } from '@/features/assistant/use-chat';
-import type { HowAbout } from '@/features/assistant/use-how-about';
-import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
-import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
-import type { ShownLookup } from '@/features/assistant/use-shown-lookup';
 import { barOf } from '@/screens/main/answer/reply-words';
 
 // Which turn's band the time bar draws (P04 ticket 01), over the stored answer to "배고파, 민수랑 같이" on screen.
@@ -19,10 +15,10 @@ function bubble(id: number, role: ChatBubble['role'], text: string, more: Partia
 }
 
 const ON_SCREEN = {
-  shown: { source: MEAL_ANSWER, answer: MEAL_ANSWER, plan: MEAL_ANSWER.plans[0] ?? null } as ShownAnswer,
-  lookup: { lookup: null } as ShownLookup,
-  invitation: { made: null } as PlanInvitation,
-  howAbout: { place: null } as HowAbout,
+  shown: { source: MEAL_ANSWER, answer: MEAL_ANSWER, plan: MEAL_ANSWER.plans[0] ?? null },
+  lookup: { lookup: null },
+  invitation: { made: null },
+  howAbout: { place: null },
 };
 
 const ASKED = bubble(1, 'user', '배고파, 민수랑 같이');

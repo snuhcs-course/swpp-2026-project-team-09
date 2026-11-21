@@ -108,8 +108,10 @@ describe('the time bar', () => {
 
     expect(bar().queryByText('민수')).toBeNull();
   });
+});
 
-  it("folded, lets the first lane's busy stretches show under the second lane's", async () => {
+describe('the folded bar', () => {
+  it("lets the first lane's busy stretches show under the second lane's", async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
     const [, minsu] = MEAL_ANSWER_REPLY.answer.plans[0]?.band.lanes ?? [];
 
@@ -117,8 +119,10 @@ describe('the time bar', () => {
 
     expect(lane.children[0]).toHaveStyle({ backgroundColor: 'transparent' });
   });
+});
 
-  it('is not there for an answer without a time', async () => {
+describe('an answer without a time', () => {
+  it('has no bar', async () => {
     await askOnMap(server, WORDS_ONLY);
 
     expect(screen.getByText('학생증은 학생지원센터에서 다시 받아요.')).toBeVisible();
