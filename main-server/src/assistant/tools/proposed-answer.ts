@@ -16,9 +16,9 @@ import { proposalForModel, type QuestProposal, sentProposalOf } from '../proposa
 
 const CLASHES_MAX = 3;
 
-// Where the model reads it as it writes: the rules alone did not keep a search before the Proposal out of the reply.
-const NOTE =
-  'In your words of this 파티, speak only of it. Never mention a search, nor 파티 found, not found or not fitting.';
+// Where the model reads it as it writes: the rules alone did not keep a search before the Proposal out of the reply. It
+// names the search alone, so that the clashes are still said.
+const NOTE = 'Never mention a search, nor 파티 found, not found or not fitting.';
 
 export interface Clash {
   kind: 'class' | 'quest';

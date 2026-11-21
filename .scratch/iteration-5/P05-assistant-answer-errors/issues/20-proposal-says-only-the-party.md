@@ -18,11 +18,11 @@ It follows a search that answered none, and one that found 파티 the model judg
 
 ## What to build
 
-- proposeQuest's answer of a Proposal carries a `note`, where the model reads it as it writes: speak only of this 파티, and never of a search or of 파티 found, not found or not fitting.
+- proposeQuest's answer of a Proposal carries a `note`, where the model reads it as it writes: never mention a search, nor 파티 found, not found or not fitting. It names the search alone: an answer with `clashes` (ticket 19) still has the model say the first and ask, which "speak only of this 파티" would have invited it to drop.
 - P02's rule also names what was found and did not fit, besides "that you looked" and "that none was found".
 
 ## Acceptance criteria
 
 - [ ] proposeQuest's answer of a Proposal carries the note. (`assistant-proposals.integration.test.ts`, which fails before the change.)
-- [ ] The eval cases `recruit-coding-study-says-only-the-party` and `recruit-badminton-says-only-the-party` pass more often than before the change, and P02's revised cases (`eval/p5/cases/join-or-recruit-revised.yaml`) do not get worse.
+- [ ] The eval cases `recruit-coding-study-says-only-the-party` and `recruit-badminton-says-only-the-party` pass more often than before the change, P02's revised cases (`eval/p5/cases/join-or-recruit-revised.yaml`) do not get worse, and ticket 19's `proposal-clashes` cases still name the Class.
 - [ ] Lint, format and types of the main server pass.
