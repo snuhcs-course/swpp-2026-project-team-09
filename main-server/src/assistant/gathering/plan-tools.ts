@@ -9,6 +9,7 @@
  ******************************************************************************/
 
 import { z } from 'zod';
+import { CUISINE_WORD_LIST, type CuisineWord } from '../../menus/cuisine-words.js';
 import { type AnswerReply, type MealInput, type Plan, type ReplyStep, type RequestContext } from '../dto/answer.dto.js';
 import { defineTool, type Presented, type Tool, type ToolContext } from '../feature.js';
 import { afterEarlierSteps } from '../steps/plan-steps.js';
@@ -72,6 +73,10 @@ function planWords(plan: Plan, served: ReadonlyMap<string, ServedMenu>): object 
   const words = menu === undefined ? {} : { menu: menuWords(menu.lines), closesAt: menu.closesAt };
   return { restaurant: plan.id, ...words, ...timesAndWays(plan) };
 }
+
+// The Restaurants of the plans whose main corner serves the kind of food, which come first.
+const servingKind = (plans: readonly Plan[], kind: CuisineWord): string[] =>
+  plans.filter(({ menu }) => menu?.dishes.some(({ cuisine }) => cuisine === kind) === true).map(({ id }) => id);
 
 // When everyone is there and until when, where they meet on the way, and each person's way, in words and minutes.
 export function timesAndWays(plan: Plan): object {
@@ -141,6 +146,12 @@ const input = z
       .describe(
         'The Place to eat at, as resolvePlace returned it in this message, or as [Plan on screen: …] or [Tapped: place …] gives it. Left out for any.',
       ),
+    cuisine: z
+      .enum([...CUISINE_WORD_LIST, 'any'])
+      .optional()
+      .describe(
+        "The kind of food the User named (한식, 중식, 일식, 양식, 분식): the plans of the Restaurants that serve it come first, and the app shows that kind. 'any' when they let it go (아무거나). Left out otherwise: the kind on screen is kept.",
+      ),
     startPlaceId: z
       .uuid()
       .optional()
@@ -184,6 +195,21 @@ function constraintsOf(
   return new Map(conditions.people.map(({ userId, constraints }) => [userId, constraints]));
 }
 
+// The kind of food the User named, none for 'any', else the one on screen for the same day and meal.
+function kindOf(
+  asked: CuisineWord | 'any' | undefined,
+  { conditions }: RequestContext,
+  date: string,
+  meal: MealInput['meal'],
+): CuisineWord | null {
+  if (asked !== undefined) {
+    return asked === 'any' ? null : asked;
+  }
+  return conditions?.kind === 'meal' && conditions.date === date && conditions.meal === meal
+    ? (conditions.cuisine ?? null)
+    : null;
+}
+
 // The asker's constraints with the start they named, in place of any start kept from the screen.
 function withStart(
   kept: Map<string, MealInput['people'][number]['constraints']>,
@@ -214,6 +240,21 @@ function placeIdOf(
   return placed;
 }
 
+// The plans in words for the model, and with a kind of food, the Restaurants that serve it.
+function plannedWords(
+  answer: AnswerReply,
+  served: ReadonlyMap<string, ServedMenu>,
+  { meal, kind }: { meal: MealInput['meal']; kind: CuisineWord | null },
+): object {
+  return {
+    result: 'planned',
+    meal,
+    plans: answer.plans.map((plan) => planWords(plan, served)),
+    dropped: answer.dropped.map(({ place }) => place.label),
+    ...(kind === null ? {} : { cuisine: kind, servedBy: servingKind(answer.plans, kind) }),
+  };
+}
+
 // `earlier`: the steps shown before the meal in this message, which it sets out from (P03).
 export function planMeal(
   plans: Pick<MealPlanService, 'planned' | 'restaurantPlaceId'>,
@@ -224,7 +265,7 @@ export function planMeal(
       "Plans a meal for the User alone or with Friends on a day from today to a week ahead. The server decides the Restaurant, when everyone is there, how long they can eat, and where they meet on the way, the longest time together first, and the app draws the plans on the map. Answers result 'planned' with the meal and the plans in order, each with its restaurant, its menu for the meal and closesAt, start, end, togetherMinutes, meeting, and each person's way, and the Restaurants dropped, or result 'none' with the meal and the reason.",
     input,
     run: async (
-      { date, meal: named, friendIds, from, until, now: soon, restaurant, placeId, startPlaceId },
+      { date, meal: named, friendIds, from, until, now: soon, restaurant, placeId, cuisine, startPlaceId },
       toolContext,
     ) => {
       const { userId, now, context, found, presented } = toolContext;
@@ -238,6 +279,7 @@ export function planMeal(
       refuseUnseen(found, 'place', placeId === undefined ? [] : [placeId], seen.places);
       refuseUnseen(found, 'place', startPlaceId === undefined ? [] : [startPlaceId], []);
       const kept = withStart(constraintsOf(context, date, meal), userId, startPlaceId);
+      const kind = kindOf(cuisine, context, date, meal);
       const planInput: MealInput = {
         kind: 'meal',
         date,
@@ -245,6 +287,7 @@ export function planMeal(
         people: [userId, ...new Set(friendIds)].map((id) => ({ userId: id, constraints: kept.get(id) ?? [] })),
         window: { from: from ?? null, until: until ?? null, ...(soon === true ? { now: true } : {}) },
         placeId: placeIdOf(plans, restaurant, placeId),
+        ...(kind === null ? {} : { cuisine: kind }),
       };
       const { location, locationMissing } = context;
       const chained = afterEarlierSteps(planInput, earlier(toolContext));
@@ -255,12 +298,7 @@ export function planMeal(
       if (answer.noPlan !== null) {
         return noneOf(answer, planInput, { now, presented });
       }
-      return {
-        result: 'planned',
-        meal,
-        plans: answer.plans.map((plan) => planWords(plan, served)),
-        dropped: answer.dropped.map(({ place }) => place.label),
-      };
+      return plannedWords(answer, served, { meal, kind });
     },
   });
 }
@@ -272,7 +310,8 @@ export const PLAN_RULES = `A meal is planned on the map: the server decides the 
 - When the User is hungry, wants a meal, or is choosing what or where to eat (배고파, 밥 먹자, 점심 같이 먹자, 뭐 먹을까, 뭐 먹지, 밥 추천해 줘, 어디서 먹지, 먹을 만한 데), on any day, alone or with Friends they name, call planMeal with the day (today when they name none), the meal only when their words name one (lunch for 점심, dinner for 저녁; left out otherwise: the server takes the one being served or the next one today, and lunch on a later day), and the Friends, each found with resolveFriend first. With no Friend it plans for the User alone. A time they name for the meal (오후 3시쯤 저녁) is from, as HH:MM, even when it is before the meal's hours: the server fits it to them. Plan first: do not ask back about the kind of food, about lunch or dinner, or about the time.
 - On a later day with no meal named, the plans are lunch's: your sentence may end by saying that 저녁 plans dinner, such as "월요일 점심은 12:10에 학생회관식당에서 먹어요, 저녁이면 '저녁'이라고 해 주세요."
 - The app draws the plans on the map and writes their times, ways, and minutes itself, the first one first, and the User browses the others with arrows. Your reply is one sentence about the first plan only, its Restaurant and when everyone is there, such as "12:33에 학생회관식당에서 먹어요." Write nothing more: no second sentence, no other plan, nobody's walking minutes or time to set out, nothing about the map, and nothing that was dropped. Do not call showOnMap for a plan: the app already draws it.
-- Each plan has its Restaurant's menu for the meal and when it closes, and the app shows the menus. When the User picks by food, in the same message as the meal or in the next (한식, 돈까스 먹고 싶어, 더 가벼운 걸로, 국물 있는 거), call planMeal with the conditions on screen, if any, as they are, and read the plans' menus. When one serves what they asked for, call planMeal again with the same conditions and that plan's restaurant. When none does, say so in one sentence with what the first plan serves. Never name a dish that no plan's menu has, and never answer with a list of menus or dishes in words.
+- When the User names a kind of food (한식, 중식, 일식, 양식, 분식), in the same message as the meal or in the next, call planMeal with the conditions on screen, if any, as they are, and cuisine set to that kind: the plans of the Restaurants that serve it come first, and the app shows that kind. When servedBy is empty, say in one sentence that none serves it then, with what the first plan serves. 'any' lets it go (아무거나).
+- Each plan has its Restaurant's menu for the meal and when it closes, and the app shows the menus. When the User picks by a dish or a taste, in the same message as the meal or in the next (돈까스 먹고 싶어, 더 가벼운 걸로, 국물 있는 거), call planMeal with the conditions on screen, if any, as they are, and read the plans' menus. When one serves what they asked for, call planMeal again with the same conditions and that plan's restaurant. When none does, say so in one sentence with what the first plan serves. Never name a dish that no plan's menu has, and never answer with a list of menus or dishes in words.
 - A question about what a Restaurant the User names serves (학생회관 오늘 메뉴 뭐야, 302동 저녁 뭐 나와) is a menu question, by the menu rules. Any other question about what or where to eat, menus included (오늘 점심 뭐야?), is a meal wish, planned with planMeal.
 - When planMeal answers none, say plainly why. Name someone busy only if they are a Friend in the plan, and say only when their Class ends or starts, never the course or the room; never name anyone who is not the User's Friend.
 - When the User asks who is free for a meal ("오늘 점심에 누구 돼?"), call findFreeFriends. Your reply says the User's Free Time in that window and the names of the Friends it returned.

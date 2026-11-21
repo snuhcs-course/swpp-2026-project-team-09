@@ -7,7 +7,7 @@
 
 import { MenuLineKind } from '../../generated/prisma/client.js';
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
-import { type Cuisines } from '../../menus/cuisine-reading.js';
+import { type CuisineWord, type Cuisines } from '../../menus/cuisine-words.js';
 import { dishName } from '../../menus/dish-name.js';
 import { servedLines } from '../../menus/open-rule.js';
 import { type AnswerLine, type PlanMenu } from '../dto/answer.dto.js';
@@ -66,6 +66,21 @@ export function mainMenu(lines: readonly MenuLineDto[], cuisines: Cuisines = new
       return { name, price: line.price, cuisine: cuisines.get(name) ?? null };
     }),
   };
+}
+
+// The Restaurants whose main corner serves the kind of food first, each group in its order; all as they are with no kind.
+export function kindFirst<Fit extends { key: string }>(
+  fits: readonly Fit[],
+  kind: CuisineWord | null | undefined,
+  served: ReadonlyMap<string, ServedMenu> | undefined,
+): Fit[] {
+  const serves = ({ key }: Fit): boolean => {
+    const menu = served?.get(key);
+    return menu !== undefined && mainMenu(menu.lines, menu.cuisines).dishes.some(({ cuisine }) => cuisine === kind);
+  };
+  return kind === null || kind === undefined
+    ? [...fits]
+    : [...fits.filter((fit) => serves(fit)), ...fits.filter((fit) => !serves(fit))];
 }
 
 const won = (price: number): string => `${price.toLocaleString('ko-KR')}원`;

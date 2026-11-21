@@ -11,7 +11,7 @@ import { type Lookup } from '../src/assistant/dto/answer.dto.js';
 import { type DayItem } from '../src/assistant/free-time/free-time.js';
 import { dishesOf, menuAnswer } from '../src/assistant/lookup/menu-lookup.js';
 import { MenuLineKind } from '../src/generated/prisma/client.js';
-import { type Cuisines } from '../src/menus/cuisine-reading.js';
+import { type Cuisines } from '../src/menus/cuisine-words.js';
 import { type MenuLineDto } from '../src/menus/dto/restaurant-menus.dto.js';
 import { answerOf, ME, person, plain, point, position, strong, time } from './meal-answers.js';
 import { at, classAt, DATE, id, readWorld } from './worked-example.js';

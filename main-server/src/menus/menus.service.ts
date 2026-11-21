@@ -14,7 +14,7 @@ import { CollectionService } from '../collection/collection.service.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { type Meal, MenuLineKind } from '../generated/prisma/client.js';
 import { type MenusCollectedMessage } from './dto/menus-collected.dto.js';
-import { type Cuisines } from './cuisine-reading.js';
+import { type Cuisines } from './cuisine-words.js';
 import { type MenuLineDto, RestaurantMenusDto, toRestaurantMenusDto } from './dto/restaurant-menus.dto.js';
 import { DishCuisines } from './dish-cuisines.js';
 import { dishName } from './dish-name.js';

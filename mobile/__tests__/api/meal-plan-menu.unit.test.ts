@@ -53,7 +53,7 @@ describe("A meal Plan's dish", () => {
   });
 
   it.each([
-    ['with a kind not of the six', { cuisine: '퓨전' }],
+    ['with a kind not of the five', { cuisine: '기타' }],
     ["with the server's word for it", { cuisine: 'chinese' }],
   ])('is refused %s', (_, dish) => {
     expect(isAnswerReply(withDish(dish))).toBe(false);

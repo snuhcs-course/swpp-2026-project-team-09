@@ -6,7 +6,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type Cuisines } from '../../menus/cuisine-reading.js';
+import { type Cuisines } from '../../menus/cuisine-words.js';
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { dishName } from '../../menus/dish-name.js';
 import { type AnswerLine, type AnswerReply, type Lookup, type MapScene, type Plan } from '../dto/answer.dto.js';

@@ -42,31 +42,37 @@ const bothMeals = (name: string): object =>
     ],
   });
 
+// A lunch with 민수 at 11:50 on `date`, as the bar keeps it: 민수 ready at 12:20, and from 12:40.
+async function lunchWithMinsu(date: string): Promise<MealInput> {
+  await stage.asking(date, '11:50');
+  await sendAsWorker(
+    stage.app,
+    '/menus/collected',
+    menusMessage([{ date, restaurants: RESTAURANTS.map((name) => bothMeals(name)) }]),
+  );
+  await stage.classAt(stage.asker, '11:00', '11:50', '301');
+  const friend = await stage.friend('민수');
+  await stage.classAt(friend, '11:00', '12:15', '302');
+  return {
+    kind: 'meal',
+    date,
+    meal: 'lunch',
+    people: [
+      { userId: stage.asker.id, constraints: [] },
+      { userId: friend.id, constraints: [{ kind: 'notBefore', time: '12:20', source: 'asker' }] },
+    ],
+    window: { from: '12:40', until: null },
+    placeId: null,
+  };
+}
+
 describe('The other meal of the same day', () => {
   it("is planned from the kept input with its meal switched and what was fixed for the first meal's times cleared", async () => {
     const date = '2089-07-12';
-    await stage.asking(date, '11:50');
-    await sendAsWorker(
-      stage.app,
-      '/menus/collected',
-      menusMessage([{ date, restaurants: RESTAURANTS.map((name) => bothMeals(name)) }]),
-    );
-    await stage.classAt(stage.asker, '11:00', '11:50', '301');
-    const friend = await stage.friend('민수');
-    await stage.classAt(friend, '11:00', '12:15', '302');
-    const lunch: MealInput = {
-      kind: 'meal',
-      date,
-      meal: 'lunch',
-      people: [
-        { userId: stage.asker.id, constraints: [] },
-        { userId: friend.id, constraints: [{ kind: 'notBefore', time: '12:20', source: 'asker' }] },
-      ],
-      window: { from: '12:40', until: null },
-      placeId: null,
-    };
+    const lunch = await lunchWithMinsu(date);
     const kept = answerIn((await recalculate(lunch)).body);
     expect(kept.plans.length).toBeGreaterThan(0);
+    expect(kept.otherMeal).toEqual({ meal: 'dinner', start: '17:00' });
 
     const response = await recalculate({
       ...lunch,
@@ -81,5 +87,27 @@ describe('The other meal of the same day', () => {
     expect(dinner.input).toMatchObject({ kind: 'meal', date, meal: 'dinner' });
     expect(dinner.plans.length).toBeGreaterThan(0);
     expect(dinner.plans.every(({ startAt }) => startAt >= `${date}T17:00:00+09:00`)).toBe(true);
+    expect(dinner.otherMeal).toEqual({ meal: 'lunch', start: '11:50' });
+  });
+
+  it('is offered by none when no Restaurant serves it that day', async () => {
+    const date = '2089-07-19';
+    await stage.asking(date, '11:50');
+    await sendAsWorker(
+      stage.app,
+      '/menus/collected',
+      menusMessage([{ date, restaurants: RESTAURANTS.map((name) => restaurant({ name })) }]),
+    );
+
+    const response = await recalculate({
+      kind: 'meal',
+      date,
+      meal: 'lunch',
+      people: [{ userId: stage.asker.id, constraints: [] }],
+      window: { from: null, until: null },
+      placeId: null,
+    });
+
+    expect(answerIn(response.body).otherMeal).toBeNull();
   });
 });

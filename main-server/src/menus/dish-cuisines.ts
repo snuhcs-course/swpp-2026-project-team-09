@@ -10,7 +10,8 @@ import { causeOf, type Model } from '../assistant/adapter.js';
 import { ModelPort } from '../assistant/model-port.js';
 import { type Settings } from '../common/settings.js';
 import { PrismaService } from '../common/prisma.service.js';
-import { CUISINE_WORDS, type CuisineLimits, type CuisineWord, readCuisines } from './cuisine-reading.js';
+import { type CuisineLimits, readCuisines } from './cuisine-reading.js';
+import { CUISINE_WORDS, type CuisineWord } from './cuisine-words.js';
 
 // The most names one call reads: a week's new dishes take a few calls at first, and none once their names are kept.
 const NAMES_PER_CALL = 100;

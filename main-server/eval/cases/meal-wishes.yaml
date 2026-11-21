@@ -116,6 +116,8 @@
     tools:
       required: [planMeal]
       forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    args:
+      planMeal: { cuisine: 한식 }
 
 - id: meal-wish-named-restaurant-stays-menu
   category: meal-wishes

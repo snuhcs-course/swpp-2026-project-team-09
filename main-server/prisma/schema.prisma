@@ -873,7 +873,8 @@ enum MenuLineKind {
 model DishCuisine {
   id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name    String   @unique
-  // Null for what nobody chooses a place by: a side dish, rice, a drink, fruit, a dessert, or a line that is no dish.
+  // Null for another cuisine, and for what nobody chooses a place by: a side dish, rice, a drink, fruit, a dessert, or a
+  // line that is no dish.
   cuisine Cuisine?
 
   @@map("dish_cuisines")
@@ -886,7 +887,6 @@ enum Cuisine {
   western
   // 분식: 떡볶이, 김밥, 라면.
   snack
-  other
 
   @@map("cuisine")
 }

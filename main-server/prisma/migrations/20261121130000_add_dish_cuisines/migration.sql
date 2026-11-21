@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "cuisine" AS ENUM ('korean', 'chinese', 'japanese', 'western', 'snack', 'other');
+CREATE TYPE "cuisine" AS ENUM ('korean', 'chinese', 'japanese', 'western', 'snack');
 
 -- CreateTable
 CREATE TABLE "dish_cuisines" (
