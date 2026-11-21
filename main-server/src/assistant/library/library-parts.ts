@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -193,3 +194,6 @@ export function dayWords(date: string, now: Date): string {
   const words: Record<string, string> = { [today]: '오늘', [addDays(today, 1)]: '내일', [addDays(today, 2)]: '모레' };
   return words[date] ?? date;
 }
+
+// A User signed out of 관정도서관 sees 로그인 on the card in the place of 예약하기, and the main server cannot tell.
+export const SIGN_IN_FIRST = '카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.';

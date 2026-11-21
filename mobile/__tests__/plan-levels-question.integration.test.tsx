@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -91,6 +92,8 @@ describe('After a Plan became a Quest', () => {
 
     expect(screen.getByRole('header', { name: BOTH })).toBeVisible();
     expect(screen.getByText('지금은 둘에게 시간표만 보여요. 뺀 친구는 그대로 둬요.')).toBeVisible();
+    // The Friends were only invited: "내 파티에 처음 들어왔어요" said they had joined.
+    expect(screen.getByText('처음 초대한 친구예요')).toBeVisible();
     expect(level('시간표만')).toBeChecked();
     expect(level('지금 있는 건물')).not.toBeChecked();
     expect(level('정확한 위치')).not.toBeChecked();

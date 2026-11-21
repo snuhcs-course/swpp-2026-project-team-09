@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type StudyBuildingDto, type StudySpaceDto } from '../../study-spaces/dto/study-spaces.dto.js';
@@ -13,14 +14,17 @@ import {
   type PlacePoint,
 } from '../dto/answer.dto.js';
 import { clockOf, type DayItem } from '../free-time/free-time.js';
-import { edgeTowards, inArea, longestStay, type StudyArea, studyDayOf, type StudyStay, stayAt } from './study-near.js';
+import { byStay, edgeTowards, inArea, type StudyArea, studyDayOf, type StudyStay, stayAt } from './study-near.js';
 import { type WayArgs, type WayStart } from './way.js';
 import { GATE_BASIS } from './way-lookup.js';
 import { dueWords, part, WayNaming } from './way-naming.js';
 
 // The study spaces of the visible area drawn on the map ("이 근처 조용히 공부할 곳"): the one the User may use where
-// they can stay longest before their next item, the rooms open only to others faded, and 관정 pointed to when it is
-// outside the area. The model is given names and minutes, never the area.
+// they can stay longest before their next item, up to two more in other buildings, the rooms open only to others faded,
+// and 관정 pointed to when it is outside the area. The model is given names and minutes, never the area.
+
+// The other buildings named after the pick, so that a space on the screen is not left out of the answer.
+const OTHERS_MAX = 2;
 
 export type StudyWhat = 'quiet' | 'group' | 'pc' | 'any';
 
@@ -47,10 +51,19 @@ export interface RestrictedWords {
   openTo: string | null;
 }
 
+export interface OtherWords {
+  building: string;
+  space: string;
+  hours: string | null;
+  walkMinutes: number;
+}
+
 export interface StudyWords {
   building: string;
   space: string;
   hours: string | null;
+  // The other places the User may use in the area, drawn as candidates after the pick.
+  others: OtherWords[];
   from: string;
   walkMinutes: number;
   next: string | null;
@@ -129,9 +142,26 @@ function awayFlag(area: StudyArea, buildings: readonly StudyBuildingDto[]): MapS
   return [{ at, text: `${arrow} 관정`, role: 'away', placeId: kwanjeong.id }];
 }
 
+// The best of each other building, in the order of the pick, up to OTHERS_MAX.
+function othersOf(ranked: readonly Picked[], picked: Picked): Picked[] {
+  const seen = new Set([picked.building.place.id]);
+  return ranked
+    .filter(({ building }) => {
+      const fresh = !seen.has(building.place.id);
+      seen.add(building.place.id);
+      return fresh;
+    })
+    .slice(0, OTHERS_MAX);
+}
+
 function sceneOf(
   way: WayArgs,
-  { start, picked, restricted }: { start: WayStart; picked: Picked; restricted: readonly Found[] },
+  {
+    start,
+    picked,
+    others,
+    restricted,
+  }: { start: WayStart; picked: Picked; others: readonly Picked[]; restricted: readonly Found[] },
   away: MapScene['flags'],
 ): MapScene {
   const naming = new WayNaming(way);
@@ -143,6 +173,11 @@ function sceneOf(
     people: [naming.me({ start })],
     places: [
       { place: point, role: 'pick', tag: pickTag(picked.space) },
+      ...others.map(({ building, space }) => ({
+        place: pointOf(building),
+        role: 'candidate' as const,
+        tag: pickTag(space),
+      })),
       ...restricted.map(({ building, space }) => ({
         place: pointOf(building),
         role: 'dropped' as const,
@@ -171,16 +206,23 @@ interface Drawn {
   from: string;
   next: DayItem | null;
   picked: Picked;
+  others: readonly Picked[];
   restricted: readonly Found[];
   away: MapScene['flags'];
 }
 
-function wordsOf({ from, next, picked, restricted, away }: Drawn): StudyWords {
+function wordsOf({ from, next, picked, others, restricted, away }: Drawn): StudyWords {
   const { leaveBy, minutes, walkMinutes } = picked.stay;
   return {
     building: picked.building.name,
     space: picked.space.name,
     hours: picked.space.hours,
+    others: others.map(({ building, space, stay }) => ({
+      building: building.name,
+      space: space.name,
+      hours: space.hours,
+      walkMinutes: stay.walkMinutes,
+    })),
     from,
     walkMinutes,
     next: nextWords(next),
@@ -188,6 +230,31 @@ function wordsOf({ from, next, picked, restricted, away }: Drawn): StudyWords {
     stayMinutes: minutes,
     restricted: restricted.map((each) => restrictedWords(each)),
     kwanjeong: away.length > 0 ? 'outside the visible area' : 'in the visible area',
+  };
+}
+
+function studyLookup(way: WayArgs, drawn: Drawn & { start: WayStart; what: StudyWhat }): Lookup {
+  const { start, next, picked, others, restricted, what } = drawn;
+  const more = others.length > 0 ? [part(` 외 ${others.length}곳`)] : [];
+  return {
+    kind: 'study',
+    chips: chipsOf(drawn.from, next, what),
+    lines: [
+      [part('보는 범위에선 '), part(picked.building.name, true), ...more],
+      [part('빈 자리 수는 관정만 알 수 있어요')],
+    ],
+    basis: [
+      '지도에 보이는 범위 안의 공부공간만 찾았어요',
+      ...others.map(({ building, space, stay }) =>
+        [`${building.name} ${space.name}`, stayWords(stay)].filter(Boolean).join(' · '),
+      ),
+      ...(restricted.length > 0 ? ['학과 전용 열람실은 흐리게 두었어요'] : []),
+      ...(start.basis === 'gate' ? [GATE_BASIS] : []),
+    ],
+    scene: sceneOf(way, { start, picked, others, restricted }, drawn.away),
+    band: null,
+    actions:
+      picked.stay.walkMinutes > 0 ? [{ kind: 'guide', to: pointOf(picked.building) }, ASK_KWANJEONG] : [ASK_KWANJEONG],
   };
 }
 
@@ -208,30 +275,26 @@ export function studyAnswer({ way, buildings, area, what }: StudyArgs): StudyAns
   if (start === null) {
     return { result: 'none', reason: 'no-start' };
   }
-  const picked = longestStay(
+  const ranked = byStay(
     usable.map(({ building, space }) => ({
       building,
       space,
       stay: stayAt({ ready, start, next }, building.place.id, way.travel),
     })),
   );
-  if (picked === null) {
+  const [picked] = ranked;
+  if (picked === undefined) {
     return { result: 'none', reason: 'nothing-in-area' };
   }
-  const drawn = { from: new WayNaming(way).from({ start }), next, picked, restricted, away: awayFlag(area, buildings) };
-  const lookup: Lookup = {
-    kind: 'study',
-    chips: chipsOf(drawn.from, next, what),
-    lines: [[part('보는 범위에선 '), part(picked.building.name, true)], [part('빈 자리 수는 관정만 알 수 있어요')]],
-    basis: [
-      '지도에 보이는 범위 안의 공부공간만 찾았어요',
-      ...(restricted.length > 0 ? ['학과 전용 열람실은 흐리게 두었어요'] : []),
-      ...(start.basis === 'gate' ? [GATE_BASIS] : []),
-    ],
-    scene: sceneOf(way, { start, picked, restricted }, drawn.away),
-    band: null,
-    actions:
-      picked.stay.walkMinutes > 0 ? [{ kind: 'guide', to: pointOf(picked.building) }, ASK_KWANJEONG] : [ASK_KWANJEONG],
+  const others = othersOf(ranked, picked);
+  const drawn = {
+    from: new WayNaming(way).from({ start }),
+    next,
+    picked,
+    others,
+    restricted,
+    away: awayFlag(area, buildings),
   };
+  const lookup = studyLookup(way, { ...drawn, start, what });
   return { result: 'found', lookup, words: wordsOf(drawn) };
 }
