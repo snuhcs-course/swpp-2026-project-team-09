@@ -19,6 +19,13 @@ The app is to mark the place of a Quest already set on the map, such as "잡힌 
 
 ## Acceptance criteria
 
-- [ ] A meal's `planSet` and a meeting in `related` each carry the point of the Place of the Plan they were made from (`assistant-related-quests.integration.test.ts`, which failed before the change).
-- [ ] A day Lookup's `kept` carries its point, and null for a place given only in words (`day-kept-quests.unit.test.ts`, which failed before the change).
-- [ ] Lint, format and types of the main server pass.
+- [x] A meal's `planSet` and a meeting in `related` each carry the point of the Place of the Plan they were made from (`assistant-related-quests.integration.test.ts`, which failed before the change).
+- [x] A day Lookup's `kept` carries its point, and null for a place given only in words (`day-kept-quests.unit.test.ts`, which failed before the change).
+- [x] Lint, format and types of the main server pass.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 8 minutes (estimate: gaps under 5 minutes between transcript entries, summed).
+- Tokens: input 10,485,237 (cache reads 10,426,711, cache writes 58,438, uncached 88); output 28,610. Without cache reads, 58,526.
