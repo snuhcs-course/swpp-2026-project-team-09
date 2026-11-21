@@ -23,6 +23,8 @@ import { onInvitationAnswer } from '@/live/invitation-answers';
 import { useAskForPush } from '@/push/push-ask-host';
 import { friendStandings, type HeardAnswer, NO_STANDINGS, type ReadMembers, type Standing } from './invited-friends';
 import { useKeepMadeQuest } from './made-quest-ids';
+import { samePlanConditions } from './plan-conditions';
+import { setRefusalWords } from './set-refusals';
 import { usePlanChange } from './use-plan-change';
 import type { ShownAnswer } from './use-shown-answer';
 
@@ -70,11 +72,6 @@ const FAILED = '초대하지 못했어요. 잠시 후 다시 시도해 주세요
 const SENT = '파티를 만들고 초대를 보냈어요';
 const TAKEN = '여기로 정했어요';
 const NOT_DROPPED = '다시 고르지 못했어요. 잠시 후 다시 시도해 주세요';
-// 바꾸기 refused: the Quest it would replace became shared with others since the answer came (P04 ticket 17); a
-// meeting already set, the User's or a Friend's, refused a second one.
-const SET_SHARED = '같이 정한 약속이라 그 파티에서 바꿔 주세요';
-const PLAN_SET = '이미 정한 약속이 있어요. 그 파티에서 확인해 주세요';
-const SET_BY_FRIEND = '친구가 이미 정한 약속이 있어요. 그 파티에서 확인해 주세요';
 // "여기로" invites nobody.
 const NOT_TAKEN = '답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요';
 
@@ -107,10 +104,13 @@ function fresh(answer: AnswerReply | null, planId: string | null): InvitationSta
   return { answer, sent: new Map(), planId, made: null, heard: [] };
 }
 
-// What is held for the answer and the Plan on screen: another answer drops everything, another Plan what was made.
+// What is held for the answer and the Plan on screen: another answer drops everything, unless nothing was made and the
+// Plan on screen stands the same in it (its id, day, start, place, and people), as after a kind chip pressed after a
+// failure, so that the retry keeps its key; another Plan drops what was made.
 function heldFor(stored: InvitationState, answer: AnswerReply | null, planId: string | null): InvitationState {
   if (stored.answer !== answer) {
-    return fresh(answer, planId);
+    const same = stored.made === null && samePlanConditions(stored.answer, answer, planId);
+    return same ? { ...stored, answer } : fresh(answer, planId);
   }
   return stored.planId === planId ? stored : { ...stored, planId, made: null, heard: [] };
 }
@@ -149,12 +149,8 @@ function tellRefusal(error: unknown, say: Inviting['say'], change: ShownAnswer['
   if (isRefusal(error, 409, 'PLAN_CHANGED')) {
     say(CHANGED);
     change((input) => ({ ...input }));
-  } else if (isRefusal(error, 409, 'MEAL_ALREADY_SET')) {
-    say(SET_SHARED);
-  } else if (isRefusal(error, 409, 'PLAN_ALREADY_SET')) {
-    say(PLAN_SET);
-  } else if (isRefusal(error, 409, 'PLAN_SET_BY_FRIEND')) {
-    say(SET_BY_FRIEND);
+  } else if (setRefusalWords(error) !== null) {
+    say(setRefusalWords(error) ?? FAILED);
   } else if (alone) {
     // A 파티 of the User's own for the event refuses "여기로" with SHARED_QUEST_HELD, worded as 파티 says it.
     say(isRefusal(error, 409, 'SHARED_QUEST_HELD') ? refusalWords(error) : NOT_TAKEN);

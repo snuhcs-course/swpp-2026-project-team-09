@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { apiClient } from '@/api/client';
@@ -108,15 +109,33 @@ describe('the idempotency key', () => {
     const [first, back] = keys(make);
     expect(back).toBe(first);
   });
+});
 
-  it('is new for the same Plan after a recalculation', async () => {
+// Partitions: the same Plan in a new answer object, the same conditions and a changed start.
+describe('the idempotency key across a new answer object', () => {
+  // P04 ticket 17, from PR 441's review: a kind chip pressed after a failure puts a new answer object on screen with
+  // the same Plan; a new key then could make the Quest a second time if the first request did make it.
+  it('is the same for the same Plan in a new answer object whose conditions are the same, as after a kind chip', async () => {
     make.mockRejectedValue(new ApiError(500));
-    // A recalculation puts a new answer object on screen, here with the same content.
-    const recalculated = { ...MEAL_ANSWER };
+    const withKind = { ...MEAL_ANSWER, input: { ...MEAL_ANSWER.input, cuisine: '한식' as const } };
     const held = await hold(onScreen(MEAL_ANSWER, MEAL_PLAN_1));
 
     await pressed(held);
-    await held.rerender(onScreen(recalculated, MEAL_PLAN_1));
+    await held.rerender(onScreen(withKind, MEAL_PLAN_1));
+    await pressed(held);
+
+    const [first, after] = keys(make);
+    expect(after).toBe(first);
+  });
+
+  it('is new for the same Plan once its start changed', async () => {
+    make.mockRejectedValue(new ApiError(500));
+    const later = { ...MEAL_PLAN_1, startAt: '2026-11-17T12:25:00+09:00' };
+    const moved = { ...MEAL_ANSWER, plans: [later, ...MEAL_ANSWER.plans.slice(1)] };
+    const held = await hold(onScreen(MEAL_ANSWER, MEAL_PLAN_1));
+
+    await pressed(held);
+    await held.rerender(onScreen(moved, later));
     await pressed(held);
 
     const [first, after] = keys(make);
