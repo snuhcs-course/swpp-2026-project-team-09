@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -9,7 +10,7 @@ import { MEET_ANSWER, MEET_ANSWER_FROM_14 } from '@/api/mock/data/meet-answer';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { screen } from './support/app';
-import { card, mapThings } from './support/answer-map';
+import { card, mapThings, timeBar } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import { dragBody, layTrack } from './support/band-move';
 import type { FakeServer } from './support/fake-server';
@@ -83,7 +84,7 @@ describe('the band of a5 let go at 14:00 (board a6)', () => {
     expect(card().getByRole('button', { name: '24동에서' })).toBeVisible();
     expect(card().getByRole('button', { name: '14:00부터' })).toBeVisible();
     expect(card().getByRole('button', { name: '민수 빼기' })).toBeVisible();
-    expect(card().getByText('14:07–15:30 · 함께 83분')).toBeVisible();
+    expect(timeBar().getByText('14:07–15:30 · 함께 83분')).toBeVisible();
     expect(screen.getByTestId('time-band-ghost')).toHaveStyle({ left: `${(15 / 390) * 100}%` });
     expect(card().getByRole('button', { name: '되돌리기' })).toBeVisible();
   });

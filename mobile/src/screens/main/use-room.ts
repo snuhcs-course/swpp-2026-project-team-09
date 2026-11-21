@@ -7,6 +7,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -36,30 +37,34 @@ function useToastOverMap({ cardHeight, answerHeight }: Room, framed: boolean): v
   useToastAbove(taken, useIsFocused());
 }
 
-// The room the parts over the map have, and the toast's place. A card at the bottom counts; one that appears counts
-// from the last one's height until it is laid out. The answer frame's card counts on its own while `framed`, from its
-// first layout on. The row of buttons counts while the User is in a Party, as `BottomControls` draws it. `heights`
-// are the bottom's parts' callbacks: the first run's card's, the answer frame's card's and the AI input's.
-export function useRoom(
-  { bottomCard }: Taken,
-  tutorialStart: boolean,
-  framed: boolean,
-  interestsHint = false,
-  madeLine = false,
-): {
+interface RoomParts {
   room: Room;
   setStage: (stage: Room['stage']) => void;
   setCardHeight: (height: number) => void;
   heights: {
     onNoticeHeight: (height: number) => void;
     onAnswerHeight: (height: number) => void;
+    onTimeBarHeight: (height: number) => void;
     onInputHeight: (height: number) => void;
   };
-} {
+}
+
+// The room the parts over the map have, and the toast's place. A card at the bottom counts; one that appears counts
+// from the last one's height until it is laid out. The answer frame's card counts on its own while `framed`, from its
+// first layout on. The row of buttons counts while the User is in a Party, as `BottomControls` draws it. `heights`
+// are the bottom's parts' callbacks: the first run's card's, the answer frame's card's, its time bar's, and the AI input's.
+export function useRoom(
+  { bottomCard }: Taken,
+  tutorialStart: boolean,
+  framed: boolean,
+  interestsHint = false,
+  madeLine = false,
+): RoomParts {
   const atBottom = bottomCard;
   const party = useActiveParty();
   const [cardHeight, setCardHeight] = useState(0);
   const [answerHeight, setAnswerHeight] = useState<number | null>(null);
+  const [timeBarHeight, setTimeBarHeight] = useState(0);
   const [inputHeight, setInputHeight] = useState<number>(AI_INPUT.height);
   const [stage, setStage] = useState<Room['stage']>(null);
   if (!framed && answerHeight !== null) {
@@ -69,6 +74,7 @@ export function useRoom(
     stage,
     cardHeight: atBottom ? cardHeight : null,
     answerHeight: framed ? answerHeight : null,
+    timeBarHeight: framed ? timeBarHeight : 0,
     tutorialStart: tutorialStart && !atBottom,
     interestsHint: interestsHint && !atBottom,
     madeLine: madeLine && !atBottom,
@@ -80,7 +86,12 @@ export function useRoom(
     room,
     setStage,
     setCardHeight,
-    heights: { onNoticeHeight: setCardHeight, onAnswerHeight: setAnswerHeight, onInputHeight: setInputHeight },
+    heights: {
+      onNoticeHeight: setCardHeight,
+      onAnswerHeight: setAnswerHeight,
+      onTimeBarHeight: setTimeBarHeight,
+      onInputHeight: setInputHeight,
+    },
   };
 }
 

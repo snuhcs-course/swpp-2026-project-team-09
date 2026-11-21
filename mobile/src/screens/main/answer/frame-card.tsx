@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -26,6 +27,8 @@ interface FrameCardProps {
   hold?: boolean;
   // The handle that raises the card up to the pill and lowers it again. Left out, the card has one height.
   raising?: Raising;
+  // The time bar's height under the pill, which the raised card stops under. Left out, none.
+  timeBarHeight?: number;
   // Null leaves the card empty.
   children: ReactNode;
 }
@@ -45,10 +48,16 @@ const LOWERED: Raising = {
   },
 };
 
-// The content's height while raised: from under the pill to the bar's room. Null until the stage is laid out.
-function useRaisedHeight(stageHeight: number | null, barRoom: number, raising: Raising | undefined): number | null {
+// The content's height while raised: from under the pill, and the time bar when there is one, to the bar's room. Null
+// until the stage is laid out.
+function useRaisedHeight(
+  stageHeight: number | null,
+  barRoom: number,
+  raising: Raising | undefined,
+  timeBarHeight: number,
+): number | null {
   const { top } = useSafeAreaInsets();
-  const pillRoom = listsTop(top) + ANSWER_PILL.height + space[2];
+  const pillRoom = listsTop(top) + ANSWER_PILL.height + space[2] + (timeBarHeight > 0 ? timeBarHeight + space[2] : 0);
   return stageHeight === null || raising === undefined
     ? null
     : Math.max(LEAST_CONTENT, stageHeight - pillRoom - barRoom);
@@ -57,10 +66,10 @@ function useRaisedHeight(stageHeight: number | null, barRoom: number, raising: R
 // The frame's card, attached to the bottom of the screen. Its content scrolls inside it. Raised, it reaches up to the
 // pill. Only the lowered card tells its height, so that the camera fits the answer to the lowered card alone.
 export function FrameCard(props: FrameCardProps): ReactElement {
-  const { barRoom, stageHeight, onHeight, testID, hold = false, raising, children } = props;
+  const { barRoom, stageHeight, onHeight, testID, hold = false, raising, timeBarHeight = 0, children } = props;
   const contentMax = contentMaxOf(stageHeight, barRoom);
   const { raised } = raising ?? LOWERED;
-  const raisedHeight = useRaisedHeight(stageHeight, barRoom, raising);
+  const raisedHeight = useRaisedHeight(stageHeight, barRoom, raising, timeBarHeight);
   const drag = useRaiseDrag(raising ?? LOWERED, raisedHeight);
   const { minHeight, onContentSizeChange, scroll } = useHeldHeight(hold);
   const shown = raised && raisedHeight !== null ? { height: raisedHeight } : { maxHeight: contentMax };

@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useMemo, useState } from 'react';
@@ -21,7 +22,7 @@ import {
   type Stretch,
   stepped,
 } from '@/features/assistant/time-band';
-import { BandOnTrack, percent, placeOf, redOf, Track, useWholeMove, wordsOf } from './band-body';
+import { BandOnTrack, Ends, percent, placeOf, redOf, Track, useWholeMove, wordsOf } from './band-body';
 
 interface TimeBandProps {
   band: TimeBandData;
@@ -41,6 +42,10 @@ interface TimeBandProps {
   moving?: Stretch | null;
   // Where a drag on the lanes moves the band whole, and where it is let go or stepped. Without it nothing does.
   onMove?: (at: Stretch, letGo: boolean) => void;
+  // Every lane on one row, without names, and the busy stretches that bound the span at its ends.
+  folded?: boolean;
+  // The span's day beside its words: "내일(수)", or nothing for today.
+  day?: string;
 }
 
 // A handle moved by a drag, or let go and held while the recalculation it asked for is on its way.
@@ -56,6 +61,8 @@ const HANDLE_WIDTH = 16;
 // the band.
 const HANDLE_TOUCH = 44;
 const HANDLE_SLOP = (HANDLE_TOUCH - HANDLE_WIDTH) / 2;
+// Up and down too, so that a folded bar's handle, one lane high, still takes a touch the design system's height.
+const HANDLE_SLOP_Y = (HANDLE_TOUCH - LANE_HEIGHT) / 2;
 const PAN_STARTS = 10;
 const NAME_WIDTH = 40;
 
@@ -85,7 +92,7 @@ function Handle(props: HandleProps): ReactElement {
       .runOnJS(true)
       .enabled(!disabled && trackWidth > 0)
       .blocksExternalGesture(whole)
-      .hitSlop({ left: HANDLE_SLOP, right: HANDLE_SLOP })
+      .hitSlop({ left: HANDLE_SLOP, right: HANDLE_SLOP, top: HANDLE_SLOP_Y, bottom: HANDLE_SLOP_Y })
       .activeOffsetX([-PAN_STARTS, PAN_STARTS])
       .failOffsetY([-PAN_STARTS, PAN_STARTS])
       .onUpdate(({ translationX }) => {
@@ -121,6 +128,7 @@ interface LanesProps {
   band: TimeBandData;
   fixed: MealInput['window'];
   moving: Stretch | null;
+  folded: boolean;
 }
 
 function Red({ stretches, range }: { stretches: readonly Stretch[]; range: Stretch }): ReactElement {
@@ -137,12 +145,16 @@ function Red({ stretches, range }: { stretches: readonly Stretch[]; range: Stret
   );
 }
 
-function Lanes({ band, fixed, moving }: LanesProps): ReactElement {
+function Lanes({ band, fixed, moving, folded }: LanesProps): ReactElement {
   return (
     <>
-      {band.lanes.map((lane) => (
-        <View key={lane.userId} style={styles.lane} testID={`time-band-lane-${lane.userId}`}>
-          <View style={styles.bar}>
+      {band.lanes.map((lane, at) => (
+        <View
+          key={lane.userId}
+          style={[styles.lane, folded && at > 0 && styles.stacked]}
+          testID={`time-band-lane-${lane.userId}`}
+        >
+          <View style={[styles.bar, folded && at > 0 && styles.clear]}>
             {lane.busy.map((stretch) => (
               <View key={`busy-${stretch.startAt}`} style={[styles.busy, placeOf(stretch, band.range)]} />
             ))}
@@ -157,14 +169,18 @@ function Lanes({ band, fixed, moving }: LanesProps): ReactElement {
 
 // While the band is moved whole, the parts of the busy stretches it covers, red on their lanes over the band and its
 // handles, which would hide them: the handles cover most of a narrow band.
-function RedOver({ band, moving }: Pick<LanesProps, 'band' | 'moving'>): ReactElement | null {
+function RedOver({ band, moving, folded }: Pick<LanesProps, 'band' | 'moving' | 'folded'>): ReactElement | null {
   if (moving === null) {
     return null;
   }
   return (
     <View style={styles.over} testID="time-band-red">
-      {band.lanes.map((lane) => (
-        <View key={lane.userId} style={styles.lane} testID={`time-band-red-${lane.userId}`}>
+      {band.lanes.map((lane, at) => (
+        <View
+          key={lane.userId}
+          style={[styles.lane, folded && at > 0 && styles.stacked]}
+          testID={`time-band-red-${lane.userId}`}
+        >
           <View style={styles.redBar}>
             <Red range={band.range} stretches={clashesAt([lane], moving)} />
           </View>
@@ -218,10 +234,34 @@ function useMovedBand(band: TimeBandData, disabled: boolean, onDrop: TimeBandPro
   return { shown, ...handlers };
 }
 
-// The time band of the answer's card: each person's busy stretches, the line of now, and the Plan's band with a
-// handle at each end, which a drag or a screen reader's step moves by five minutes, and lanes that move it whole.
+function Names({ lanes }: { lanes: TimeBandData['lanes'] }): ReactElement {
+  return (
+    <View style={styles.names}>
+      {lanes.map(({ userId, name }) => (
+        <Text key={userId} numberOfLines={1} style={styles.name}>
+          {name}
+        </Text>
+      ))}
+    </View>
+  );
+}
+
+// The time bar's band: its words with the day on top, then each person's busy stretches, the line of now, and the
+// band with a handle at each end, which a drag or a screen reader's step moves by five minutes, and lanes that move it
+// whole. Folded, the lanes lie on one row without names.
 export function TimeBand(props: TimeBandProps): ReactElement {
-  const { band, fixed, focus, disabled, onDrop, handles = true, moving = null, onMove } = props;
+  const {
+    band,
+    fixed,
+    focus,
+    disabled,
+    onDrop,
+    handles = true,
+    moving = null,
+    onMove,
+    folded = false,
+    day = '',
+  } = props;
   const [trackWidth, setTrackWidth] = useState(0);
   const moved = useMovedBand(band, disabled, onDrop);
   const whole = useWholeMove(band, trackWidth, disabled, onMove);
@@ -238,29 +278,23 @@ export function TimeBand(props: TimeBandProps): ReactElement {
       shown={shown}
     />
   );
+  const words = wordsOf(band, moving);
   return (
     <View style={styles.timeBand}>
+      <Text numberOfLines={1} style={styles.words} testID="time-band-words">
+        {day === '' ? words : `${day} ${words}`}
+      </Text>
       <View style={styles.lanes}>
-        <View style={styles.names}>
-          {band.lanes.map(({ userId, name }) => (
-            <Text key={userId} numberOfLines={1} style={styles.name}>
-              {name}
-            </Text>
-          ))}
-        </View>
+        {folded ? null : <Names lanes={band.lanes} />}
         <Track onWidth={setTrackWidth} whole={whole}>
-          <Lanes band={band} fixed={fixed} moving={moving} />
+          <Lanes band={band} fixed={fixed} folded={folded} moving={moving} />
           <BandOnTrack {...props} moving={moving} shown={shown} />
           {handles ? handle('from') : null}
           {handles ? handle('until') : null}
-          <RedOver band={band} moving={moving} />
+          <RedOver band={band} folded={folded} moving={moving} />
         </Track>
       </View>
-      <View style={styles.ends}>
-        <Text style={styles.end}>{clockOf(band.range.startAt)}</Text>
-        <Text style={styles.end}>{clockOf(band.range.endAt)}</Text>
-      </View>
-      <Text style={styles.words}>{wordsOf(band, moving)}</Text>
+      <Ends band={band} folded={folded} margin={NAME_WIDTH} />
     </View>
   );
 }
@@ -271,7 +305,10 @@ const styles = StyleSheet.create({
   names: { width: NAME_WIDTH },
   name: { ...text.caption, height: LANE_HEIGHT, lineHeight: LANE_HEIGHT, color: color.inkMuted },
   lane: { height: LANE_HEIGHT, justifyContent: 'center' },
+  stacked: { position: 'absolute', top: 0, right: 0, left: 0 },
   bar: { height: BAR_HEIGHT, borderRadius: radius.full, backgroundColor: color.surfaceSunken },
+  // A folded lane over the first draws only its stretches, so that the lanes under it still show theirs.
+  clear: { backgroundColor: 'transparent' },
   busy: { position: 'absolute', top: 0, bottom: 0, borderRadius: radius.full, backgroundColor: color.borderStrong },
   clash: { position: 'absolute', top: 0, bottom: 0, borderRadius: radius.full, backgroundColor: color.warning },
   over: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, pointerEvents: 'none' },
@@ -289,7 +326,5 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
   },
   focused: { borderWidth: 3, borderColor: color.focusRing },
-  ends: { flexDirection: 'row', justifyContent: 'space-between', marginLeft: NAME_WIDTH },
-  end: { ...text.caption, color: color.inkSubtle },
   words: { ...text.label, color: color.quest, textAlign: 'center' },
 });

@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -56,7 +57,14 @@ function useChoices(input: PlanInput): Pick<Corrections, 'choices' | 'friendIds'
 }
 
 // The band's end handle in focus for a while after the time chip is pressed, a press anew starting the while again.
-function useFocus(): { focus: BandBound | null; focusUntil: () => void } {
+// The handle the time bar draws emphasised for a while after a time chip was pressed. The chips and the bar each hold
+// their own corrections, so the frame holds this one for both.
+export interface BandFocus {
+  focus: BandBound | null;
+  focusUntil: () => void;
+}
+
+export function useBandFocus(): BandFocus {
   const [pressed, setPressed] = useState<{ at: BandBound } | null>(null);
   useEffect(() => {
     const timer =
@@ -104,11 +112,15 @@ function moveOf({ plan, setMoving, change }: ShownAnswer): Corrections['move'] {
 
 // What the card's controls do to the conditions of the answer on screen when they are pressed or dragged: each change
 // asks for a recalculation, but a person's ✕ as `removerOf` says. The list of Friends leaves out those `input` holds.
-export function useCorrections(shown: ShownAnswer, input: PlanInput, close: () => void): Corrections {
+export function useCorrections(
+  shown: ShownAnswer,
+  input: PlanInput,
+  close: () => void,
+  { focus, focusUntil }: BandFocus,
+): Corrections {
   const { change, add, adding, setAdding } = shown;
   const showToast = useToast();
   const { choices, friendIds } = useChoices(input);
-  const { focus, focusUntil } = useFocus();
   return {
     adding,
     toggleAdding: () => {

@@ -4,9 +4,10 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { MealInput } from '@/api/assistant-types';
+import type { MealInput, TimeBand } from '@/api/assistant-types';
 import { koreaClock } from '@/korea-time';
 
 // The time band's arithmetic. Its times are Korea time with the offset, and the window's are "HH:MM".
@@ -106,4 +107,33 @@ export function clashes(
 
 export function clockOf(time: string): string {
   return koreaClock(time);
+}
+
+// What bounds the span on each side of the folded bar: the busy stretch that ends last before it ("13:45 수업 끝") and
+// the one that starts first after it ("민수 15:30 수업"), named after its person unless it is the first lane's, the
+// User's own. Without one, now when it is in the range before the span, else the range's end.
+export function bandEdgesOf(band: TimeBand): { before: string; after: string } {
+  const [own] = band.lanes;
+  const all = band.lanes.flatMap(({ userId, name, busy }) =>
+    busy.map((stretch) => ({ ...stretch, who: userId === own?.userId ? '' : `${name} ` })),
+  );
+  const start = msOf(band.startAt);
+  const end = msOf(band.endAt);
+  const ended = all.filter(({ endAt }) => msOf(endAt) <= start).toSorted((a, b) => msOf(b.endAt) - msOf(a.endAt));
+  const coming = all
+    .filter(({ startAt }) => msOf(startAt) >= end)
+    .toSorted((a, b) => msOf(a.startAt) - msOf(b.startAt));
+  const [last] = ended;
+  const [next] = coming;
+  const now = msOf(band.now);
+  const nowBefore = now >= msOf(band.range.startAt) && now <= start;
+  const before =
+    last === undefined || (nowBefore && now > msOf(last.endAt))
+      ? nowBefore
+        ? `${clockOf(band.now)} 지금`
+        : clockOf(band.range.startAt)
+      : `${last.who}${clockOf(last.endAt)} ${last.label ?? '일정'} 끝`;
+  const after =
+    next === undefined ? clockOf(band.range.endAt) : `${next.who}${clockOf(next.startAt)} ${next.label ?? '일정'}`;
+  return { before, after };
 }

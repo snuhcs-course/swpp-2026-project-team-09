@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useMemo } from 'react';
@@ -13,7 +14,7 @@ import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
 import type { AnswerOffer } from '@/api/refusal-types';
 import { Button, color, Icon, size, space, text } from '@/design-system';
 import { chipsWhileMoved, movingWords } from '@/features/assistant/band-move';
-import { peopleOf, windowOf } from '@/features/assistant/plan-input';
+import { peopleOf } from '@/features/assistant/plan-input';
 import { easedFromNow } from '@/features/assistant/relaxed-plan';
 import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
@@ -26,8 +27,7 @@ import { FriendChoices } from './friend-choices';
 import { MainButtons } from './main-buttons';
 import { RelaxButtons } from './relax-buttons';
 import { RowFourButtons } from './row-four-buttons';
-import { TimeBand } from './time-band';
-import { type Corrections, useCorrections } from './use-corrections';
+import { type BandFocus, type Corrections, useCorrections } from './use-corrections';
 import { addNameOf, whoOf } from './who-words';
 
 // The arrows are as high as the buttons beside them, and their touch area reaches the design system's minimum.
@@ -178,9 +178,10 @@ interface BelowProps extends CardProps {
   onProfile: ((userId: string) => void) | null;
 }
 
-// Under the lines: the list of Friends while it is open, else the Plan's time band, the answer's note, and the steps.
+// Under the lines: the list of Friends while it is open, else the answer's note and the steps. The Plan's band is the
+// time bar's, under the pill.
 function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowProps): ReactElement {
-  const { plan, ghost } = shown;
+  const { plan } = shown;
   if (fix.adding) {
     return (
       <FriendChoices
@@ -198,22 +199,8 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
   const invitable = plan !== null && answer.input.kind !== 'new-quest' && peopleOf(answer.input).length > 1;
   // A meal's Plan of the User alone is taken with "여기로", the same press (P05-14).
   const alone = plan !== null && answer.input.kind === 'meal' && peopleOf(answer.input).length === 1;
-  const fixed = bandIsFixed(answer.input.kind);
   return (
     <>
-      {plan === null ? null : (
-        <TimeBand
-          band={plan.band}
-          disabled={busy}
-          focus={fix.focus}
-          ghost={ghost}
-          onDrop={fix.drop}
-          fixed={windowOf(answer.input)}
-          handles={!fixed}
-          moving={shown.moving}
-          onMove={fixed ? undefined : fix.move}
-        />
-      )}
       <CardNote note={answer.note} />
       {plan === null ? <RelaxButtons busy={busy} onRelax={fix.relax} relax={answer.noPlan?.relax ?? []} /> : null}
       <Steps
@@ -246,6 +233,7 @@ function cornerOf({ plan, basisOpen, toggleBasis }: ShownAnswer, fix: Correction
 
 interface PlanCardProps extends CardProps {
   onClose: () => void;
+  focus: BandFocus;
 }
 
 // While the band is moved over someone's busy stretch, the lines say who cannot come and why.
@@ -258,16 +246,16 @@ export function linesOf({ plan, moving }: ShownAnswer, answer: AnswerReply, addi
 }
 
 // The answer on screen in the answer frame's card: its condition chips with "근거" at the right of their first line,
-// the Plan's two lines or those that say why there is none, the basis while open, and the time band with the steps.
+// the Plan's two lines or those that say why there is none, the basis while open, and the steps.
 // While the list of Friends to add is open, the lines ask who comes, "그대로" closes the list, and the list stands in
-// place of the band and the steps. Each chip, a Friend chosen, and a drop of the band ask for a recalculation, and
+// place of the steps. Each chip, a Friend chosen, and a drop of the band ask for a recalculation, and
 // none takes a press while a recalculation or "이대로 초대" is on its way; the ✕ of a meet's only Friend closes the
 // answer (`onClose`, as the frame's ✕) and goes back to that Friend's card. A Friend's chip and the mark of a Friend's
 // cell open the Friend's profile over the card.
-export function PlanCard({ shown, answer, invitation, room, over = [], onClose }: PlanCardProps): ReactElement {
+export function PlanCard({ shown, answer, invitation, room, over = [], onClose, focus }: PlanCardProps): ReactElement {
   const { plan, basisOpen, recalculating } = shown;
   const busy = recalculating || invitation.sending;
-  const fix = useCorrections(shown, answer.input, onClose);
+  const fix = useCorrections(shown, answer.input, onClose, focus);
   const openProfile = useOpenFriendProfile();
   const own = linesOf(shown, answer, fix.adding);
   const lines = fix.adding ? own : [...over, ...own.slice(over.length)];

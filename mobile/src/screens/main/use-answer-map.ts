@@ -5,20 +5,19 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapScene } from '@/api/assistant-types';
-import { space } from '@/design-system';
-import { answerCamera, roomsOf, type ViewArea } from '@/features/assistant/answer-camera';
+import { answerCamera } from '@/features/assistant/answer-camera';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import { type AnswerDrawing, drawingOf, drawingOfScene, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { type CardView, friendIdOf } from '@/features/map/adapter';
 import {
-  type FitPadding,
   type MapAvatar,
   type MapLine,
   type MapMarker,
@@ -29,10 +28,13 @@ import {
   useMarkerImages,
   ZOOM_OFFSET,
 } from '@/map';
-import { ANSWER_PILL, listsTop, type Room } from './layout';
+import { labelArea, paddingOf } from './answer-padding';
+import type { Room } from './layout';
 import { useFaces } from './use-answer-faces';
 import { useAnswerWalks } from './use-answer-walks';
 import type { MainMap } from './use-main-map';
+
+export { labelArea, paddingOf } from './answer-padding';
 
 // What the map draws: its markers, its Avatars, and its lines.
 export interface MapContents {
@@ -40,11 +42,6 @@ export interface MapContents {
   avatars: readonly MapAvatar[];
   lines: readonly MapLine[];
 }
-
-const SIDE = 64;
-// Between the area an answer's labels stay in and what covers the map at the top and at the bottom, and the edges.
-const CLEAR = space[2];
-const EDGE = space[4];
 
 // A Plan may span the campus, and on a phone Kakao's level 15, where a campus map's pinch out stops, is closer than
 // the lowest zoom of the camera's rules: while a Plan is drawn, a native map may go one level further out.
@@ -60,66 +57,44 @@ const NO_ROUTES: MapScene['routes'] = [];
 
 type Invited = Pick<PlanInvitation, 'sending' | 'made' | 'standings'>;
 
-// What covers the map at the top under a status bar `top` high: the answer's pill or, for a received invitation, which
-// has none, the status bar alone.
-function coveredTop(top: number, pill: boolean): number {
-  return pill ? top + listsTop(top) + ANSWER_PILL.height : top;
-}
-
-// What covers the map at the top and the card at the bottom, each with the clear room of the labels' area
-// (`labelArea`) and the room the drawing's marks there need.
-export function paddingOf(top: number, cardHeight: number | null, drawing: AnswerDrawing, pill: boolean): FitPadding {
-  const { above, below } = roomsOf(drawing);
-  return {
-    top: coveredTop(top, pill) + CLEAR + above,
-    right: SIDE,
-    bottom: (cardHeight ?? 0) + CLEAR + below,
-    left: SIDE,
-  };
-}
-
-// The area of a view `size` high and wide that an answer's labels stay in: 8 under the pill or the status bar, 8 over
-// the card, and 16 from each side.
-export function labelArea(top: number, cardHeight: number | null, size: Size, pill: boolean): ViewArea {
-  return {
-    top: coveredTop(top, pill) + CLEAR,
-    right: size.width - EDGE,
-    bottom: size.height - (cardHeight ?? 0) - CLEAR,
-    left: EDGE,
-  };
-}
-
 // What frames an answer on the map: the status bar, the card, the pill or none, and, once the stage is laid out and
 // the map has told its fit zoom, the map's view, under the status bar too, with the closest zoom of its camera.
 interface Framing {
   top: number;
   card: number | null;
   pill: boolean;
+  // The time bar under the pill, 0 for none.
+  timeBar: number;
   view: { size: Size; closest: number } | null;
 }
 
-export function useFraming({ fitZoom }: MainMap, { answerHeight, stage }: Room, pill: boolean): Framing {
+export function useFraming({ fitZoom }: MainMap, room: Room, pill: boolean): Framing {
+  const { answerHeight, stage, timeBarHeight = 0 } = room;
+  const timeBar = pill ? timeBarHeight : 0;
   const { top } = useSafeAreaInsets();
   const width = stage?.width;
   const height = stage?.height;
   return useMemo(() => {
     const known = width !== undefined && height !== undefined && fitZoom !== null;
     const view = known ? { size: { width, height: height + top }, closest: fitZoom + ZOOM_OFFSET.close } : null;
-    return { top, card: answerHeight, pill, view };
-  }, [top, answerHeight, pill, width, height, fitZoom]);
+    return { top, card: answerHeight, pill, timeBar, view };
+  }, [top, answerHeight, pill, timeBar, width, height, fitZoom]);
 }
 
 // The camera `answerCamera` works out for a drawing whose labels' sides are chosen in metres, and the area its labels
 // stay in. Null until the view is known. The room for labels is measured from the points the camera fits: every point,
 // or the Plan's own alone.
-function labelViewOf(drawing: AnswerDrawing, { top, card, pill, view }: Framing): LabelView | null {
+function labelViewOf(drawing: AnswerDrawing, { top, card, pill, timeBar, view }: Framing): LabelView | null {
   if (view === null) {
     return null;
   }
-  const padding = paddingOf(top, card, drawing, pill);
-  const own = { padding: paddingOf(top, card, { ...drawing, points: drawing.own }, pill), outer: ANSWER_OUTER_ZOOM };
-  const camera = answerCamera(drawing, view.size, padding, view.closest, own);
-  return camera === null ? null : { camera, size: view.size, area: labelArea(top, card, view.size, pill) };
+  const padding = paddingOf(top, card, drawing, pill, timeBar);
+  const ownPadding = paddingOf(top, card, { ...drawing, points: drawing.own }, pill, timeBar);
+  const camera = answerCamera(drawing, view.size, padding, view.closest, {
+    padding: ownPadding,
+    outer: ANSWER_OUTER_ZOOM,
+  });
+  return camera === null ? null : { camera, size: view.size, area: labelArea(top, card, view.size, pill, timeBar) };
 }
 
 // How long the drawing and the card's height stay the same before the camera follows an answer that replaced another,
@@ -133,7 +108,7 @@ function showDrawing(drawing: AnswerDrawing | null, shown: LabelView | null, map
     return;
   }
   if (framing.view === null) {
-    map.fitAnswer(drawing.points, paddingOf(framing.top, framing.card, drawing, framing.pill));
+    map.fitAnswer(drawing.points, paddingOf(framing.top, framing.card, drawing, framing.pill, framing.timeBar));
     return;
   }
   if (shown !== null) {

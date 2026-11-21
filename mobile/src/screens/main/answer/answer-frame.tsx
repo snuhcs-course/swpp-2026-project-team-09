@@ -11,109 +11,31 @@
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
-import { type ReactElement, useCallback, useState } from 'react';
+import { type ReactElement, useCallback, useEffect, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
-import { color, space, text } from '@/design-system';
+import { space } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
-import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
-import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
-import type { HowAbout } from '@/features/assistant/use-how-about';
-import { keepsShown, lastReply, type ShownAnswer } from '@/features/assistant/use-shown-answer';
-import type { ShownLookup } from '@/features/assistant/use-shown-lookup';
+
+import { lastReply } from '@/features/assistant/use-shown-answer';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { BubbleParts } from '../chat-bubbles';
 import type { CardActions } from '../chat-cards';
-import { ChatMarkdown } from '../chat-markdown';
 import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
 import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import type { Room } from '../layout';
-import { AnswerLines } from './answer-lines';
 import { AnswerPill } from './answer-pill';
 import { EarlierTurns, TurnQuestion } from './earlier-turns';
-import { FailedLines, WaitingReply } from './failed-and-waiting';
+import { WaitingReply } from './failed-and-waiting';
 import { FollowUpChips } from './follow-up-chips';
 import { useForgetWithUndo } from './forget-with-undo';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
-import { HowAboutCard } from './how-about-card';
 import { KeyboardHeadline } from './keyboard-headline';
-import { LookupCard } from './lookup-card';
-import { MadeCard } from './made-card';
-import { OfferedWords } from './offered-words';
 import { pillIconOf } from './pill-icon';
-import { PlanCard } from './plan-card';
 import type { Raising } from './raise-handle';
-import { type RefusalAsk, RefusalReply } from './refusal-reply';
 import { ReplySteps } from './reply-steps';
-
-interface WordsProps {
-  bubble: ChatBubble;
-  shown: ShownAnswer;
-  lookup: ShownLookup;
-  invitation: PlanInvitation;
-  howAbout: HowAbout;
-  // How high the Plan's card may stand before the card scrolls, null until it is known.
-  room: number | null;
-  onClose: () => void;
-  onAsk: RefusalAsk;
-  // A turn a Lookup's button asked of the recalculation.
-  addRecalculated: Chat['addRecalculated'];
-}
-
-// A reply's words: the card of the answer on screen for the reply it came from, the made Quest's once its Plan was
-// made into one, the card of the Lookup on screen for its reply, with a refusal's lines over either when the refusal
-// stands beside the Lookup or keeps what is on screen, else a refusal's lines and offers, a failure's lines, or the
-// lines of its answer's first Plan, those that say why it has none, or its Lookup's, in place of the model's sentence;
-// otherwise the sentence as Markdown.
-function Words(props: WordsProps): ReactElement {
-  const { bubble, shown, lookup: onScreen, invitation, howAbout, room, onClose, onAsk, addRecalculated } = props;
-  const { answer, refusal = null } = bubble;
-  const keeps = keepsShown(bubble);
-  const fromReply = answer !== undefined && answer !== null && answer === shown.source;
-  if (fromReply && howAbout.place !== null && shown.plan !== null) {
-    return <HowAboutCard current={shown.plan} howAbout={howAbout} />;
-  }
-  if ((fromReply || keeps) && shown.answer !== null) {
-    const { made } = invitation;
-    const over = keeps ? refusal?.lines : undefined;
-    return made === null || shown.plan === null ? (
-      <PlanCard answer={shown.answer} invitation={invitation} onClose={onClose} over={over} room={room} shown={shown} />
-    ) : (
-      <MadeCard
-        answer={shown.answer}
-        invitation={invitation}
-        made={made}
-        onClose={onClose}
-        over={over}
-        plan={shown.plan}
-      />
-    );
-  }
-  const lookup = keeps ? onScreen.lookup : (bubble.lookup ?? null);
-  if (lookup !== null && lookup === onScreen.lookup) {
-    return (
-      <LookupCard
-        addRecalculated={addRecalculated}
-        lookup={lookup}
-        onAsk={onAsk}
-        onClose={onClose}
-        refusal={refusal}
-        shown={onScreen}
-      />
-    );
-  }
-  if (refusal !== null) {
-    return <RefusalReply onAsk={onAsk} refusal={refusal} />;
-  }
-  if (bubble.failure === 'unavailable') {
-    return <FailedLines text={bubble.text} />;
-  }
-  if (bubble.offers !== undefined && bubble.offers.length > 0) {
-    return <OfferedWords offers={bubble.offers} onAsk={onAsk} text={bubble.text} />;
-  }
-  const lines = answer?.plans[0]?.lines ?? answer?.noPlan?.lines ?? lookup?.lines;
-  return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;
-}
+import { barOf, onScreenOf, TopBar, Words } from './reply-words';
+import { type BandFocus, useBandFocus } from './use-corrections';
 
 interface AnswerCardProps {
   control: ChatSheetControl;
@@ -126,14 +48,18 @@ interface AnswerCardProps {
   onHeight: (height: number) => void;
   onClose: () => void;
   raising: Raising;
+  focus: BandFocus;
+  // The time bar's height under the pill, 0 for none: the raised card stops under it.
+  timeBarHeight: number;
 }
 
 // The card at the bottom: what was asked, the turn's bubbles without a bubble around them, each under its steps when it
 // answered several requests, or the dots with 그만 in their place, and "지난 답 N개" under them, then the room of the
 // bar. While the keyboard is up, the turn's headline stands in place of its content, unless the card is raised.
 function AnswerCard(props: AnswerCardProps): ReactElement {
-  const { control, cardActions, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising } = props;
-  const card = { barRoom, onHeight, raising, stageHeight };
+  const { control, cardActions, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, focus, timeBarHeight } =
+    props;
+  const card = { barRoom, onHeight, raising, stageHeight, timeBarHeight };
   const { bubbles, waiting, retry } = control.chat;
   const turn = turnOf(bubbles);
   const after = turn?.after ?? [];
@@ -158,6 +84,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
                   <Words
                     addRecalculated={control.chat.addRecalculated}
                     bubble={bubble}
+                    focus={focus}
                     howAbout={control.howAbout}
                     invitation={control.invitation}
                     lookup={control.lookup}
@@ -196,16 +123,33 @@ interface FramedProps {
   stageHeight: number | null;
   keyboardUp: boolean;
   onHeight: (height: number) => void;
+  // The time bar's height under the pill, 0 while there is none.
+  onBarHeight: (height: number) => void;
 }
 
-// The frame itself: what the User asked as a pill at the top, and one card at the bottom with the reply over the bar.
+// The bar's height while it is shown, told to the screen for the camera's fit; 0 while there is none.
+function useBarHeight(
+  shown: boolean,
+  onBarHeight: (height: number) => void,
+): { height: number; onHeight: (height: number) => void } {
+  const [height, setHeight] = useState(0);
+  const told = shown ? height : 0;
+  useEffect(() => {
+    onBarHeight(told);
+  }, [told, onBarHeight]);
+  return { height: told, onHeight: setHeight };
+}
+
+// The frame itself: what the User asked as a pill at the top with the time bar under it when the answer has a time, and
+// one card at the bottom with the reply over the input.
 // ✕, Android's back button, and a card's "닫기" hide the frame and keep the conversation, a reply on its way included;
 // "새 대화" forgets it, with 되돌리기 for a few seconds. While a building is asked about over the answer ("여기면 어때?"), ✕ and back return to the
 // answer instead, and the pill names the building. A Friend's profile opened from the card stands over it until a new
 // reply; while it is shown, the back button hides it alone. This handler is the only one, and listens only while the
 // main screen is in front, so a screen pushed from the profile goes back to it. While the card is raised, back lowers it
 // first.
-function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedProps): ReactElement {
+function Framed(props: FramedProps): ReactElement {
+  const { control, barRoom, stageHeight, keyboardUp, onHeight, onBarHeight } = props;
   const { chat, leaving, hide } = control;
   const { reset } = chat;
   const close = useCallback((): void => {
@@ -223,6 +167,9 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
   }, []);
   useBackToClose(useIsFocused(), profileShown ? profile.hide : raised ? lower : leave, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
+  const focus = useBandFocus();
+  const barShown = !keyboardUp && barOf(chat.bubbles, onScreenOf(control)) !== null;
+  const bar = useBarHeight(barShown, onBarHeight);
   return (
     <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
       <AnswerPill
@@ -232,10 +179,13 @@ function Framed({ control, barRoom, stageHeight, keyboardUp, onHeight }: FramedP
         onClose={leave}
         onNew={forget}
       />
+      {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
       <AnswerCard
+        timeBarHeight={bar.height}
         barRoom={barRoom}
         cardActions={actions}
         control={control}
+        focus={focus}
         keyboardUp={keyboardUp}
         onClose={close}
         onHeight={onHeight}
@@ -253,16 +203,19 @@ interface AnswerFrameProps {
   inputTop: number;
   keyboardUp: boolean;
   onHeight: (height: number) => void;
+  onBarHeight: (height: number) => void;
   room: Room;
 }
 
 // The answer frame over the map while the conversation holds something and the frame was not left.
-export function AnswerFrame({ control, inputTop, keyboardUp, onHeight, room }: AnswerFrameProps): ReactElement | null {
+export function AnswerFrame(props: AnswerFrameProps): ReactElement | null {
+  const { control, inputTop, keyboardUp, onHeight, onBarHeight, room } = props;
   return control.framed ? (
     <Framed
       barRoom={inputTop + space[3]}
       control={control}
       keyboardUp={keyboardUp}
+      onBarHeight={onBarHeight}
       onHeight={onHeight}
       stageHeight={room.stage?.height ?? null}
     />
@@ -271,5 +224,4 @@ export function AnswerFrame({ control, inputTop, keyboardUp, onHeight, room }: A
 
 const styles = StyleSheet.create({
   part: { gap: space[2] },
-  words: { ...text.bodyLg, color: color.ink },
 });
