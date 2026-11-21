@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLine, AnswerReply, MapScene, PlacePoint, Plan, PlanInput } from '@/api/assistant-types';
@@ -69,12 +70,15 @@ export function rowsOf(parts: readonly PlanPart[]): HowAboutRow[] {
   return parts.map((part) => ({ userId: part.userId, name: part.me ? '나' : part.name, words: arrivalWords(part) }));
 }
 
-// "12:35–12:55 함께 20분 · 지금 계획보다 2분 짧아요": the new Plan's time together against the Plan on screen's.
+// "12:35–12:55 함께 20분 · 지금 계획보다 2분 짧아요": the new Plan's time together against the Plan on screen's. Equal
+// minutes at another place are "시간은 지금 계획과 같아요": "지금 계획과 같아요" read as the same plan.
 export function noteOf(next: Plan, current: Plan): string {
   const span = `${koreaClock(next.startAt)}–${koreaClock(next.endAt)} 함께 ${String(next.togetherMinutes)}분`;
   const more = next.togetherMinutes - current.togetherMinutes;
   if (more === 0) {
-    return `${span} · 지금 계획과 같아요`;
+    return next.place.placeId === current.place.placeId
+      ? `${span} · 지금 계획과 같아요`
+      : `${span} · 시간은 지금 계획과 같아요`;
   }
   return `${span} · 지금 계획보다 ${String(Math.abs(more))}분 ${more < 0 ? '짧아요' : '길어요'}`;
 }

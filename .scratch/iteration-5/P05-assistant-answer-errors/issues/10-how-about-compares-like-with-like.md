@@ -2,9 +2,9 @@
 
 Parent: [P05 spec](../spec.md)
 Status: ready-for-agent
-Blocked by: [06](06-free-stretch-not-a-meal.md), which changes the same meal lines.
+Blocked by: None.
 
-Native files: none. Releases: an app OTA update and the main server.
+Native files: none. Releases: an app OTA update.
 
 ## What happens now
 
@@ -13,13 +13,19 @@ Native files: none. Releases: an app OTA update and the main server.
 
 ## What to build
 
-- The time lost by eating together is measured against eating alone at the same restaurant.
-- The note says "지금 계획과 같아요" only for the plan's own place; another place with equal minutes says that the time is the same ("시간은 지금 계획과 같아요").
+- The note says "지금 계획과 같아요" only for the plan's own place; another place with equal minutes says "시간은 지금 계획과 같아요".
+
+Left as it is: "같이 먹으면 식사가 28분 줄어요". The design defines it as what changes from eating alone, the User's best plan alone against the plan together ("eating time drops from 55 minutes to 22", the design's worked example). In the usage test the minutes were right: the Friend left in the plan was the one who limited it, so removing the other changed nothing. Measuring at the same restaurant would change the design.
 
 ## Acceptance criteria
 
-- [ ] A restaurant where the User alone could stay 10 minutes longer than together says 10 minutes, whatever another restaurant gives. (Unit test, fails before the fix.)
-- [ ] Another place with the same minutes does not say "지금 계획과 같아요". (Unit test, fails before the fix.)
-- [ ] Lint, format and types of the app and the main server pass.
+- [x] Another place with the same minutes does not say "지금 계획과 같아요". (Unit test, fails before the fix.)
+- [x] The plan's own place with the same minutes does. (Unit test.)
+- [x] Lint, format and types of the app pass.
 
 ## Comments
+
+### Agent usage (2026-11-21)
+
+- Agent time: about 2 minutes (an estimate from the transcript, gaps over five minutes left out).
+- Tokens: output 8k; input 4.9M, of which 4.9M cache reads, 12k cache writes and 18 uncached. No subagents.
