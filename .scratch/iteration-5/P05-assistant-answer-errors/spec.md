@@ -114,6 +114,7 @@ Every error of the usage test's list of answer errors, and where it went:
 | Found later: the Assistant knows nothing of the User's own Quests ("오늘 뭐 있지?", "민수랑 약속 몇 시였지?"), and a planner treats them as a wall | Ticket 17 |
 | Found later (feedback 2026-11-22): a 파티 already made "changed" by proposing a second one | Ticket 18 |
 | Found later (feedback 2026-11-22): a 파티 proposed over the asker's own Class without a word, or with a Class of another day | Ticket 19 |
+| Found later (feedback 2026-11-22): "맞는 파티는 없었어요" still opens a reply after P02's rule, on the open-파티 path | Ticket 20 |
 | A first sentence that sounds like a failure ("…파티는 찾지 못했어요", "…열려 있는 게 없어서") | P02 ticket 01 (pull request 384) |
 | A part of the request dropped without a word (관정, 16시 and the booking) | P03 tickets 01 and 02 (pull requests 385 and 386) |
 

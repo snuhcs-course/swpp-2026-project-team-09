@@ -1,0 +1,50 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# A 파티 proposed after a search that found none to join speaks only of itself (P05 ticket 20, after P02 ticket 01):
+# never that the Assistant looked, nor that none was found or fit. The P4 world asked from an app that draws answers
+# (`pnpm eval --world p4-answer`), on Monday 2026-11-02 at 11:30, with nothing of the asker's on Tuesday at 14:00 or
+# 19:00 and no 파티 there to join. The first names its Board, which a coding study would otherwise be asked for.
+
+- id: recruit-coding-study-says-only-the-party
+  category: recruit-wording
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 내일 14시 관정 코딩스터디 4명 승인제로 진로 게시판에 만들어봐
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+      allowed: [searchRecruitingQuests, resolvePlace, searchGlobalEvents, resolveGlobalEvent, findDay]
+      forbidden: [showQuests]
+    proposal:
+      joinPolicy: approval
+      board: career
+      capacity: 4
+      startsAt: '2026-11-03 14:00'
+    text:
+      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네, 맞는 파티는, 참여할 만한]
+
+- id: recruit-badminton-says-only-the-party
+  category: recruit-wording
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 내일 저녁 7시에 배드민턴 칠 사람 나 포함 4명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+      allowed: [searchRecruitingQuests, resolvePlace, searchGlobalEvents, resolveGlobalEvent, findDay]
+      forbidden: [showQuests]
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 4
+      startsAt: '2026-11-03 19:00'
+    text:
+      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네, 맞는 파티는, 참여할 만한]
