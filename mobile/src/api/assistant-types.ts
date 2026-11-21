@@ -206,6 +206,8 @@ export interface MealInput {
   window: MealWindow;
   // The Place the User fixed.
   placeId: string | null;
+  // The kind of food on screen, which the main server keeps and puts first. Absent or null for none.
+  cuisine?: Cuisine | null;
 }
 
 // The Global Events of a day the asker can attend.
@@ -237,6 +239,9 @@ export interface AnswerReply extends WithMissing {
   // Considered, but they do not fit.
   dropped: DroppedPlace[];
   noPlan: ({ reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } & WithRelax) | null;
+  // A meal's: the other meal of the day and when it starts ("HH:MM"), null when it is over or nothing serves it. Absent
+  // from other answers and from a main server before P05 ticket 15.
+  otherMeal?: { meal: 'lunch' | 'dinner'; start: string } | null;
 }
 
 // `from` is the start the User fixed for a meet. `area` is the visible map area and `what` the kind of place asked for,
@@ -295,7 +300,12 @@ export interface Plan {
 export interface MenuDish {
   name: string;
   price: number | null;
+  // Its kind of food, for the chips of kinds: null for another cuisine, a side dish, rice, a drink and the like, and for a
+  // name the main server has not read yet; absent from a main server before P05 ticket 15.
+  cuisine?: Cuisine | null;
 }
+
+export type Cuisine = '한식' | '중식' | '일식' | '양식' | '분식';
 
 // What the map draws, by meaning. The app decides colours, camera, and label sides.
 export interface MapScene {

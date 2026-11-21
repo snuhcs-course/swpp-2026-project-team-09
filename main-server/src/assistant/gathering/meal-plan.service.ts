@@ -4,12 +4,15 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { type Position } from '../../common/geometry.js';
 import { type FriendView } from '../../friends/dto/friend-view.dto.js';
 import { FriendViewService } from '../../friends/friend-view.service.js';
+import { type Cuisines } from '../../menus/cuisine-words.js';
+import { type RestaurantMenusDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { MenusService } from '../../menus/menus.service.js';
 import { type Hours, RestaurantHours } from '../../menus/restaurant-hours.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
@@ -19,7 +22,8 @@ import { TimetableService } from '../../timetable/timetable.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
 import { UsersService } from '../../users/users.service.js';
 import { type AnswerReply, type LocationMissing, type MealInput } from '../dto/answer.dto.js';
-import { freeTimeOf } from '../free-time/free-time.js';
+import { clockOf, freeTimeOf } from '../free-time/free-time.js';
+import { mealWindow } from '../free-time/meal-fit.js';
 import { openRestaurants } from '../free-time/meal-tools.js';
 import { type OpenRestaurant } from '../free-time/restaurant-card.js';
 import { UserDayService } from '../free-time/user-day.service.js';
@@ -46,12 +50,16 @@ const menusOf = (collected: number, open: number, there: number): MealAnswerArgs
 function servedOf(
   restaurants: readonly OpenRestaurant[],
   candidates: readonly { key: string }[],
-  hours: readonly (Hours | null)[],
+  { hours, cuisines }: { hours: readonly (Hours | null)[]; cuisines: Cuisines },
 ): Map<string, ServedMenu> {
   return new Map(
     candidates.map(({ key }, index): [string, ServedMenu] => [
       key,
-      { lines: restaurants.find((each) => each.key === key)?.lines ?? [], closesAt: hours[index]?.closesAt ?? null },
+      {
+        lines: restaurants.find((each) => each.key === key)?.lines ?? [],
+        closesAt: hours[index]?.closesAt ?? null,
+        cuisines,
+      },
     ]),
   );
 }
@@ -119,8 +127,11 @@ export class MealPlanService {
     const restaurants = openRestaurants(collected, meal, this.restaurantPlaces);
     const open = restaurants.map(({ key, place }) => ({ key, placeId: place.id }));
     const candidates = input.placeId === null ? open : open.filter(({ placeId }) => placeId === input.placeId);
-    const hours = await Promise.all(candidates.map(({ key }) => this.hours.hoursOf(key, meal, date)));
-    const menus = servedOf(restaurants, candidates, hours);
+    const [hours, cuisines] = await Promise.all([
+      Promise.all(candidates.map(({ key }) => this.hours.hoursOf(key, meal, date))),
+      this.menus.cuisinesOf(restaurants.flatMap(({ lines }) => lines)),
+    ]);
+    const menus = servedOf(restaurants, candidates, { hours, cuisines });
     const { places, ...served } = withHours(input, candidates, hours);
     const gathered = gatherMeal([askerPerson, ...friendPeople], places, { input, now, ...served }, this.travel);
     const answer = mealAnswer({
@@ -133,7 +144,22 @@ export class MealPlanService {
       missing,
       served: menus,
     });
-    return { answer, served: menus };
+    return { answer: { ...answer, otherMeal: this.otherMealOf(collected, input, now) }, served: menus };
+  }
+
+  // The other meal of the day, which the app's bar offers, and when it starts: its window's start, or now when it is under
+  // way. None when it is over, or when no Restaurant with a Place serves it that day.
+  private otherMealOf(
+    collected: readonly RestaurantMenusDto[],
+    { date, meal }: MealInput,
+    now: Date,
+  ): AnswerReply['otherMeal'] {
+    const other = meal === 'lunch' ? 'dinner' : 'lunch';
+    const { start, end } = mealWindow(date, other);
+    if (end <= now || openRestaurants(collected, other, this.restaurantPlaces).length === 0) {
+      return null;
+    }
+    return { meal: other, start: clockOf(start < now ? now : start) };
   }
 
   // The Place of a Restaurant named as the plans name it, null for one the seed does not place.

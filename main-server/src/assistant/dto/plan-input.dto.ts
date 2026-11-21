@@ -2,10 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { QuestBoard } from '../../generated/prisma/client.js';
+import { CUISINE_WORD_LIST, type CuisineWord } from '../../menus/cuisine-words.js';
 import { clockTime } from '../free-time/tool-parts.js';
 import { mealWindowSchema } from '../refusals/relax.dto.js';
 
@@ -25,6 +27,8 @@ export interface MealInput {
   window: { from: string | null; until: string | null; now?: boolean };
   // The Place the User fixed.
   placeId: string | null;
+  // The kind of food on screen: the plans of the Restaurants that serve it come first. Absent or null for none.
+  cuisine?: CuisineWord | null;
 }
 
 // When the asker and their Friends are free together that day, and where they meet.
@@ -114,6 +118,7 @@ const mealInputSchema = z.strictObject({
   people: planPeopleSchema.min(1),
   window: mealWindowSchema,
   placeId: z.uuid().nullable(),
+  cuisine: z.enum(CUISINE_WORD_LIST).nullable().optional(),
 });
 
 // A meet has a Friend: without one there is nobody to meet.
