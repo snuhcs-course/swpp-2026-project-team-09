@@ -65,6 +65,16 @@ function roundBut(round: number): ViewStyle {
   };
 }
 
+// The dot's box, its centre at 45° below the drop's centre, as far out as puts its inner edge `DOT_ON_RIM` inside.
+function dotOf(side: number, room: number): number {
+  return room + side / 2 + (side / 2 + DOT / 2 - DOT_ON_RIM) / Math.SQRT2 - DOT / 2;
+}
+
+// The whole picture's box: the drop and its tip, with room for a badge.
+function frameOf(side: number, room: number): ViewStyle {
+  return { width: side + room * 2, height: side * (1 + TIP) + room };
+}
+
 // A person on the map, as the `Main` frame draws one: a teardrop filled with the tone's colour, with the person's
 // small Avatar in it. Its box ends at its tip, which stands on the person's position. A selected one is 1.18 times
 // as large, inside a white ring and a ring of the key colour.
@@ -84,17 +94,9 @@ export function MapPerson({
   const grown = selected ? SELECTED : 1;
   const side = (small ? SMALL_SIDE : SIDE) * grown;
   const room = addable || exact ? BADGE_ROOM : 0;
-  // The dot's box, its centre at 45° below the drop's centre, as far out as puts its inner edge `DOT_ON_RIM` inside.
-  const dotAt = room + side / 2 + (side / 2 + DOT / 2 - DOT_ON_RIM) / Math.SQRT2 - DOT / 2;
+  const dotAt = dotOf(side, room);
   return (
-    <View
-      style={[
-        { width: side + room * 2, height: side * (1 + TIP) + room },
-        stale && styles.stale,
-        faded && styles.faded,
-      ]}
-      testID={testID}
-    >
+    <View style={[frameOf(side, room), stale && styles.stale, faded && styles.faded]} testID={testID}>
       <View
         style={[
           styles.drop,

@@ -91,6 +91,19 @@ describe('two candidates at one point when room is short', () => {
   });
 });
 
+// Partitions: the emulator's view, where some candidates' tags do not fit; every Plan of the answer on screen.
+describe('candidates whose tags do not fit', () => {
+  it.each([0, 1, 2, 3, 4])('leaves them out from the lowest rank upward, Plan %i on screen', (index) => {
+    const drawing = drawingOf(MEAL_ANSWER_MENUS, index, undefined, viewAt(FIRST_CAMERA));
+    const tagged = MEAL_ANSWER_MENUS.plans
+      .map((plan) => drawing.things.find(({ id }) => id === `answer:candidate:${plan.place.label}`))
+      .flatMap((thing) => (thing?.look.kind === 'answer' ? [thing.look.label !== null] : []));
+
+    expect(tagged).toHaveLength(4);
+    expect(tagged).toEqual(tagged.toSorted((one, other) => Number(other) - Number(one)));
+  });
+});
+
 function avatarOf(userId: string): MapAvatar {
   const view = { kind: 'person' as const, id: userId, tone: 'on' as const, name: '김민준', photo: null };
   return {

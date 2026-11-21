@@ -13,7 +13,7 @@
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { type AnswerLabel, type AnswerSymbol, type FaceBadge, initials } from '@/design-system';
-import { koreaClock, koreaDayWord } from '@/korea-time';
+import { koreaDayWord } from '@/korea-time';
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
 import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
@@ -26,7 +26,6 @@ import {
   OWN,
   restOf,
   ROUTE_STYLES,
-  SIDE_ORDER,
   SIDES,
   stopDraft,
   SYMBOL_ORDER,
@@ -34,7 +33,7 @@ import {
 import { type LabelView, placeLabels, type Unplaced, UPRIGHT_REACH } from './answer-labels';
 import { routeLineId } from './answer-walks';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
-import { dishWords, menuLine } from './meal-menus';
+import { candidateDraft, leftOutByRank, pickLine, sideRank } from './answer-candidates';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
 
@@ -114,25 +113,6 @@ export interface SceneSetting {
 
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
 
-// The pick's time with the Plan's day before it. A flag the main server already wrote with its day ("내일(토) 18:00
-// 배드민턴") keeps it once.
-function dayAndTime(time: string | null, day: string | undefined): string | null {
-  if (day === undefined || day === '' || (time?.includes(day) ?? false)) {
-    return time;
-  }
-  return time === null ? day : `${day} ${time}`;
-}
-
-// The pick's line: its time with the Plan's day, and a meal Plan's first dish with the count of the rest.
-function pickLine(time: string | null, day: string | undefined, plan: Plan | undefined): string | null {
-  const when = dayAndTime(time, day);
-  const dishes = plan?.menu === undefined ? null : dishWords(plan.menu);
-  if (dishes === null) {
-    return when;
-  }
-  return when === null ? dishes : `${when} · ${dishes}`;
-}
-
 function placeDraft(
   { number: pickNumber, plans, day }: SceneSetting,
   scene: MapScene,
@@ -160,26 +140,7 @@ function placeDraft(
     };
   }
   if (role === 'candidate') {
-    const index = plans.findIndex((plan) => plan.place.placeId === place.placeId && plan.place.label === place.label);
-    const plan: Plan | undefined = plans[index];
-    const number = plan === undefined ? null : index + 1;
-    const time = plan === undefined ? null : koreaClock(plan.startAt);
-    const sub = menuLine(plan?.menu);
-    const said = [time, sub].flatMap((words) => words ?? []);
-    const name = number === null ? title : [`후보 ${number}`, title, ...said].join(' · ');
-    const symbol: AnswerSymbol = { type: 'dot', role, number };
-    return {
-      ...base,
-      id: `answer:candidate:${place.label}`,
-      name,
-      planId: plan?.id ?? null,
-      group: role,
-      symbol,
-      tone: role,
-      line: time,
-      sub,
-      number,
-    };
+    return candidateDraft(plans, item);
   }
   if (role === 'stop' || role === 'meeting') {
     return role === 'stop' ? stopDraft(item) : null;
@@ -256,11 +217,6 @@ function candidatesAt(here: readonly Draft[]): number {
   return here.filter(({ group }) => group === 'candidate').length;
 }
 
-// The order labels take sides in: by their kinds (`SIDE_ORDER`), candidates sharing a point before those alone.
-function sideRank({ draft, shared }: { draft: Draft; shared: boolean }): number {
-  return SIDE_ORDER.indexOf(draft.group) - (shared ? 0.5 : 0);
-}
-
 // One symbol at each point, and the labels placed (`placeLabels`) in the order their kinds take sides, so that the
 // Plan's own marks take theirs first.
 function placeAll(drafts: Draft[], view: LabelView | null): Placed[] {
@@ -282,7 +238,10 @@ function placeAll(drafts: Draft[], view: LabelView | null): Placed[] {
   const marks = placed.map(({ draft, point, symbol, shared }) => unplaced(draft, point, symbol, shared));
   const symbols = points.map(({ position, drawn }) => ({ position, symbol: drawn?.position ?? null }));
   const labels = placeLabels(symbols, marks, view);
-  return placed.map(({ draft, symbol }, at) => ({ draft, symbol, label: labels[at] ?? null }));
+  return leftOutByRank(
+    placed.map(({ draft, symbol, shared }, at) => ({ draft, symbol, shared, label: labels[at] ?? null })),
+    view,
+  );
 }
 
 function thingOf({ draft, symbol, label }: Placed, order: number): AnswerThing {

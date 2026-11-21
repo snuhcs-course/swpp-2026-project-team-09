@@ -12,7 +12,10 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { initials } from './avatar';
 import { MapPin } from './map-pin';
+import { ANSWER_SYMBOL_BOX, BADGE, GAP, LABEL_MAX, RING, SUB_MAX } from './map-answer-box';
 import { color, mapText, radius, shadow, space, text } from './tokens';
+
+export { ANSWER_SYMBOL_BOX, answerLabelBox } from './map-answer-box';
 
 export type AnswerSymbol =
   | { type: 'me' }
@@ -41,8 +44,6 @@ export interface AnswerLabel {
   // shares an edge with the labels of neighbouring marks. Left out, none.
   shift?: number;
 }
-
-export const ANSWER_SYMBOL_BOX = 36;
 
 const DIRECTION: Record<LabelSide, ViewStyle['flexDirection']> = {
   right: 'row',
@@ -89,8 +90,8 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
   return <Dot {...symbol} testID={partOf(testID, 'dot')} />;
 }
 
-function Label({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
-  const { side, tone, title, line, number, shift, sub = null } = label;
+// A label's title and its line: a candidate's side by side, with its dishes under them (`sub`).
+function LabelWords({ tone, title, line, sub = null }: AnswerLabel): ReactElement {
   const candidate = tone === 'candidate';
   const head = (
     <>
@@ -118,13 +119,30 @@ function Label({ label, testID }: { label: AnswerLabel; testID?: string }): Reac
       )}
     </>
   );
+  if (!candidate) {
+    return <View style={styles.words}>{head}</View>;
+  }
+  return (
+    <View style={styles.words}>
+      <View style={styles.inline}>{head}</View>
+      {sub === null ? null : (
+        <Text numberOfLines={1} style={styles.sub}>
+          {sub}
+        </Text>
+      )}
+    </View>
+  );
+}
+
+function Label({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
+  const { side, tone, line, number, shift, sub = null } = label;
   return (
     <View
       style={[
         styles.label,
-        ((line !== null && !candidate) || sub !== null) && styles.twoLines,
+        ((line !== null && tone !== 'candidate') || sub !== null) && styles.twoLines,
         tone === 'pick' && styles.pickLabel,
-        candidate && styles.candidateLabel,
+        tone === 'candidate' && styles.candidateLabel,
         sub !== null && styles.subLabel,
         tone === 'meeting' && styles.meetingLabel,
         tone === 'late' && styles.lateLabel,
@@ -138,18 +156,7 @@ function Label({ label, testID }: { label: AnswerLabel; testID?: string }): Reac
           <Text style={styles.number}>{number}</Text>
         </View>
       )}
-      {candidate ? (
-        <View style={styles.words}>
-          <View style={styles.inline}>{head}</View>
-          {sub === null ? null : (
-            <Text numberOfLines={1} style={styles.sub}>
-              {sub}
-            </Text>
-          )}
-        </View>
-      ) : (
-        <View style={styles.words}>{head}</View>
-      )}
+      <LabelWords {...label} />
     </View>
   );
 }
@@ -175,81 +182,13 @@ export function MapAnswerMark({
   );
 }
 
-const GAP = 2;
-const LABEL_MAX = 180;
-// A candidate's tag with its dishes and price under its name: boards 22 and 24 show "뚝배기불고기 외 2 · 5,000원부터"
-// whole.
-const SUB_MAX = 220;
-const RING = 2;
 const PICK_DOT = 24;
 const CANDIDATE_DOT = 20;
 const SMALL_DOT = 14;
 const NEXT_SQUARE = 18;
-const BADGE = 16;
 const FACE_BADGE = 14;
 const EXACT_DOT = 11;
 const WAY_FLAGS = new Set<AnswerLabel['tone']>(['leave', 'late', 'shuttle']);
-
-// A label's height, the tallest of its kind: one line of the pick's title with the padding and the pick's border at
-// the top and at the bottom, or that title and a line under it.
-const ONE_LINE = mapText.buttonTitle.lineHeight + 2 * GAP + 2 * RING;
-const TWO_LINES = mapText.buttonTitle.lineHeight + mapText.rowLine.lineHeight + 2 * space[1] + 2 * RING;
-// The advance widths of `assets/fonts/Pretendard-SemiBold.otf` and `Pretendard-Bold.otf` as shares of the font's
-// size, each class at its widest letter in either font, rounded up: a Hangul syllable 0.864; a space, "·", ":", ".",
-// and "," 0.287; "W", "M", "m", "w", "%", "@", and the capitals "A", "C", "D", "G", "H", "N", "O", "Q", "U", "V", "X",
-// and "Y" 0.999, and any letter outside ASCII, such as "→" (0.922), "—", or "…", no wider but for rare symbols such as
-// "㎯"; any other letter 0.663.
-const HANGUL = /\p{Script=Hangul}/u;
-const NARROW = /[\s·:.,]/u;
-const WIDE = /[WMmw%@ACDGHNOQUVXY]|\P{ASCII}/u;
-const LETTER = { hangul: 0.87, narrow: 0.29, wide: 1, other: 0.67 };
-
-function shareOf(letter: string): number {
-  if (HANGUL.test(letter)) {
-    return LETTER.hangul;
-  }
-  if (NARROW.test(letter)) {
-    return LETTER.narrow;
-  }
-  return WIDE.test(letter) ? LETTER.wide : LETTER.other;
-}
-
-function wordsWidth(words: string, size: number): number {
-  let width = 0;
-  for (const letter of words) {
-    width += shareOf(letter) * size;
-  }
-  return width;
-}
-
-// A label's box around its mark's point, in points, x to the right and y down, as `MapAnswerMark` lays it out: at its
-// side of the symbol box, the gap and its `shift` away, and centred on the point the other way. Its width is its
-// words' with the padding, the pick's border, and the number's badge, at most `LABEL_MAX`. The camera's room for
-// labels and the choice of a label's side both read it.
-export function answerLabelBox({ side, tone, title, line, number, shift = 0, sub = null }: AnswerLabel): {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-} {
-  const titleSize = tone === 'pick' ? mapText.buttonTitle.fontSize : mapText.rowLine.fontSize;
-  const lineWidth = line === null ? 0 : wordsWidth(line, mapText.rowLine.fontSize);
-  const head =
-    tone === 'candidate' && line !== null
-      ? wordsWidth(title, titleSize) + space[1] + lineWidth
-      : Math.max(wordsWidth(title, titleSize), lineWidth);
-  const words = Math.max(head, sub === null ? 0 : wordsWidth(sub, mapText.rowLine.fontSize));
-  const frame = 2 * space[2] + (tone === 'pick' ? 2 * RING : 0) + (number === null ? 0 : BADGE + space[1]);
-  const width = Math.ceil(Math.min(sub === null ? LABEL_MAX : SUB_MAX, frame + words));
-  const height = (line === null || tone === 'candidate') && sub === null ? ONE_LINE : TWO_LINES;
-  const reach = ANSWER_SYMBOL_BOX / 2 + GAP + shift;
-  if (side === 'left' || side === 'right') {
-    const left = side === 'right' ? reach : -reach - width;
-    return { left, top: -height / 2, right: left + width, bottom: height / 2 };
-  }
-  const top = side === 'below' ? reach : -reach - height;
-  return { left: -width / 2, top, right: width / 2, bottom: top + height };
-}
 
 const styles = StyleSheet.create({
   mark: { alignSelf: 'flex-start', alignItems: 'center', gap: GAP },

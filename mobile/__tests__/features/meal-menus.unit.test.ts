@@ -4,6 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { menuLine, type PlanMenu } from '@/features/assistant/meal-menus';
 
 // A candidate's second line (P04 ticket 13, board 22): its first dish, the count of the rest, and its price.
@@ -15,7 +16,7 @@ function menu(price: number | null, ...dishes: [string, number | null][]): PlanM
 // Partitions: no menu, no dishes, one dish, several dishes; prices all missing, one, equal, different, the corner's.
 describe("a candidate's second line", () => {
   it('is none without a menu or without dishes', () => {
-    expect(menuLine(undefined)).toBeNull();
+    expect(menuLine(MEAL_ANSWER.plans[0]?.menu)).toBeNull();
     expect(menuLine(menu(null))).toBeNull();
   });
 
