@@ -223,6 +223,15 @@ describe('A PROPOSE turn', () => {
       scoreTurn(turn({ steps: [[refused], [proposed]], text: '만들까요?', proposal }), propose, names).action,
     ).toBe('PROPOSE');
   });
+
+  it('is a TOOL when proposeQuest answered that the 파티 is made already and the text says so', () => {
+    const made = call('proposeQuest', {}, { result: 'made', questId: 'q' });
+    const told = expectOf({ actions: ['CHAT', 'TOOL'], text: { mentions: ['수정'] } });
+    const traced = turn({ steps: [[made]], text: '이미 올린 파티예요. 내 파티에서 수정할 수 있어요.' });
+
+    expect(scoreTurn(traced, told, names)).toMatchObject({ action: 'TOOL', passed: true });
+    expect(observedActionOf(traced)).toBe('TOOL');
+  });
 });
 
 describe('A REFUSE or CHAT turn', () => {

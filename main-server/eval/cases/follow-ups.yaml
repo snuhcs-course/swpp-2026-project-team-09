@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-22  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Follow-ups with a fixed history: the earlier turns are written as the app sends them back, and only the last is
@@ -79,6 +80,32 @@
       invitees: [이민수]
     text:
       mentions: [[오전 7시, 아침 7시, 오전, 아침, '07:00', '7:00']]
+
+# A 파티 the User made with 만들기 is changed in its room: a second Proposal would make a second 파티, never change the
+# first. proposeQuest may be called, and then answers that it is made, with no card.
+- id: follow-up-change-made-party
+  category: follow-ups
+  turns:
+    - user: 내일 저녁 6시에 학생회관에서 코딩 스터디 4명 승인제로 모집해줘
+    - assistant:
+        text: 내일 18:00 코딩 스터디 파티를 제안했어요. 만들기를 누르기 전에는 아무것도 만들어지지 않아요.
+        proposal:
+          title: 코딩 스터디
+          description: 학생회관에서 같이 코딩 공부해요
+          joinPolicy: approval
+          board: hobby
+          capacity: 4
+          startsAt: '2026-10-22T18:00:00+09:00'
+          place: 학생회관
+          made: true
+    - user: 방금 만든 파티 19시로 수정해줄 수 있어? 새로 만들지 말고
+  expect:
+    actions: [CHAT, TOOL]
+    tools:
+      allowed: [proposeQuest, resolvePlace]
+    text:
+      mentions: [수정]
+      absent: [바꿨, 수정했, 변경했, 바꾼]
 
 # Cards are shown only from a search in this message, so narrowing searches again.
 - id: follow-up-narrow-to-weekend

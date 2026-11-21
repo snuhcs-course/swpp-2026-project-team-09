@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -76,6 +77,9 @@ export const questProposalSchema = z.strictObject({
     .array(z.strictObject({ id: z.uuid(), name: nameSchema }))
     .max(20)
     .default([]),
+  // The Quest 만들기 made of it, once made: the model reads it as a 파티 already posted, which proposeQuest does not
+  // propose again.
+  madeQuestId: z.uuid().optional(),
 });
 
 export type SentProposal = z.infer<typeof questProposalSchema>;
