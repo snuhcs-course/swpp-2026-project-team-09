@@ -6,6 +6,7 @@
 # 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-22  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # What every target in targets/ applies besides its servers' parts. A target holds only namespaced objects, since the
@@ -35,8 +36,9 @@ configMapGenerator:
       - EXTRA_SNU_COLLECTION=off
       - GOOGLE_APP_CLIENT_ID=1021723676612-aria1ohmdms787sqbvldtt8484fnf04c.apps.googleusercontent.com
       - GOOGLE_ADMIN_CLIENT_ID=1021723676612-23lpoe5ue36rr2a07uora5ai4qckoe87.apps.googleusercontent.com
-      # The Expo template's debug key, which signs the APK.
-      - ANDROID_CERTIFICATE_FINGERPRINTS=FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C
+      # The Expo template's debug key, which signs the APK on GitHub, then the team's release key, which signs the
+      # APK on ONE Store.
+      - ANDROID_CERTIFICATE_FINGERPRINTS=FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C,94:11:18:82:52:10:EB:BC:16:12:44:5B:6C:43:67:79:DA:10:46:60:B2:81:98:2B:54:2C:5F:6A:2F:41:1A:7F
 
 # The Release workflow writes the secrets/ folder from Parameter Store, and git ignores it. An env file holds one line
 # per value, so the key pair comes as two PEM files, which keep their line breaks.
