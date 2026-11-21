@@ -114,7 +114,9 @@ export function actionOf(trace: TurnTrace, expect: Expect, names: Names): Action
   const shown = showsSomething(reply);
   const answered = (outcome: string): boolean =>
     calls.some((call) => roleOf(call.name) === 'lookup' && outcomeOf(call) === outcome);
-  const inWords = answered('found') && reply.text.trim() !== '';
+  // proposeQuest answering that the 파티 is made already told the model what is true, as a lookup's data does.
+  const made = calls.some((call) => roleOf(call.name) === 'proposer' && outcomeOf(call) === 'made');
+  const inWords = (answered('found') || made) && reply.text.trim() !== '';
   // A lookup such as getMyDay can be what it took to ask: with nothing shown, a case that accepts an ASK reads one.
   if (!shown && asks && expect.actions.includes('ASK')) {
     return 'ASK';

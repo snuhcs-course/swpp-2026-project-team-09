@@ -53,7 +53,11 @@ export function observedActionOf(trace: TurnTrace): Observed {
   if (typeof reply.proposal === 'object' && reply.proposal !== null) {
     return asks ? 'PROPOSE+ASK' : 'PROPOSE';
   }
-  const answered = calls.some((call) => roleOf(call.name) === 'lookup' && ['found', 'none'].includes(outcomeOf(call)));
+  const answered = calls.some(
+    (call) =>
+      (roleOf(call.name) === 'lookup' && ['found', 'none'].includes(outcomeOf(call))) ||
+      (roleOf(call.name) === 'proposer' && outcomeOf(call) === 'made'),
+  );
   if (showsSomething(reply) || (answered && reply.text.trim() !== '')) {
     return asks || calledFor ? 'TOOL+ASK' : 'TOOL';
   }

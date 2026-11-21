@@ -7,6 +7,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readdirSync, readFileSync } from 'node:fs';
@@ -91,6 +92,8 @@ const proposalSchema = z.strictObject({
   place: seedName.nullable().default(null),
   globalEvent: seedName.nullable().default(null),
   invitees: z.array(seedName).default([]),
+  // The User made it with 만들기: the app sends it back with the Quest's id.
+  made: z.literal(true).optional(),
 });
 
 const userTurnSchema = z.strictObject({
