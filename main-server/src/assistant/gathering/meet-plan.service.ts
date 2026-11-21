@@ -16,6 +16,8 @@ import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
 import { type AnswerReply, type MeetInput } from '../dto/answer.dto.js';
 import { freeTimeOf } from '../free-time/free-time.js';
 import { openRestaurants } from '../free-time/meal-tools.js';
+import { type AnswerPerson } from './answer-words.js';
+import { type BusyAt, busyAt } from './busy-at.js';
 import { type GatheringPerson, type GatheringPlace, MINUTE_MS } from './gathering.js';
 import { locationPlaceOf, MealPlanService } from './meal-plan.service.js';
 import { meetAnswer } from './meet-answer.js';
@@ -24,6 +26,12 @@ import { conditionsOf } from './plan-conditions.js';
 
 // 학생회관's Place number.
 const STUDENT_CENTER = '63';
+
+interface PlanAt {
+  now: Date;
+  location: Position | null;
+  leftOut?: readonly string[];
+}
 
 // The one place that gathers what a meet's plan needs, for the tool and the recalculation alike. Its people are read as
 // a meal's are, through the Friend view.
@@ -39,11 +47,26 @@ export class MeetPlanService {
   ) {}
 
   // `leftOut` names Sub Quests that stand in nobody's way, as a meal's plan takes them.
-  async plan(
+  async plan(askerId: string, input: MeetInput, at: PlanAt): Promise<AnswerReply> {
+    return (await this.planned(askerId, input, at)).answer;
+  }
+
+  // A plan for a start the User fixed (`input.window.from`): the answer, and who of it is busy then.
+  async planAsked(
     askerId: string,
     input: MeetInput,
-    at: { now: Date; location: Position | null; leftOut?: readonly string[] },
-  ): Promise<AnswerReply> {
+    at: PlanAt,
+    asked: Date,
+  ): Promise<{ answer: AnswerReply; busy: BusyAt[] }> {
+    const { answer, people } = await this.planned(askerId, input, at);
+    return { answer, busy: busyAt(people, asked) };
+  }
+
+  private async planned(
+    askerId: string,
+    input: MeetInput,
+    at: PlanAt,
+  ): Promise<{ answer: AnswerReply; people: AnswerPerson[] }> {
     const friends = await this.meals.friendsOf(askerId, input);
     this.meals.refuseUnknownPlaces(input);
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
@@ -81,6 +104,7 @@ export class MeetPlanService {
     const when = { window: meetWindow(input), now };
     const gathering = gatherToMeet([asker, ...others], places, input.placeId, when, this.travel);
     const answer = meetAnswer({ input, now, people, gathering, placeOf: (placeId) => this.meals.placeOf(placeId) });
-    return { ...answer, ...(await this.meals.touched(askerId, input, { now, kinds: ['meet'], setAside: null })) };
+    const touched = await this.meals.touched(askerId, input, { now, kinds: ['meet'], setAside: null });
+    return { answer: { ...answer, ...touched }, people };
   }
 }

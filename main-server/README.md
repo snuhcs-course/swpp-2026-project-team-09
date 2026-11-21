@@ -2354,7 +2354,11 @@ Anthropic API as the AI's key says
   chips, at most two lines, basis, map scene, time band or `null`, and the card's actions (`guide`, `remind`, `meet`).
   A tool that draws a Plan clears the Lookup, and one that draws a Lookup clears the answer. The full shape of each is
   in `src/assistant/dto/answer.dto.ts`. An app that also sends `meet` is offered `planMeet` ("민수랑 만나고 싶어"),
-  whose answer is a meet's (`kind` `meet`, below); one that does not keeps the prompt and the tools it had. A busy
+  whose answer is a meet's (`kind` `meet`, below); one that does not keeps the prompt and the tools it had. For such an
+  app a 파티 or 약속 only with Friends the User names is a meeting planned by `planMeet`, its place as `placeId` and a
+  start they fixed as `at`. With `at`, the model is told `asked`: whether the first plan starts then, and when it does
+  not, who of the plan is busy then and until when (a Friend by name only, the asker by their own Class or Quest too);
+  the first plan is the nearest time everyone can be there. A busy
   stretch of a Plan's time band carries a `label`: `302동 수업` for a Class with a Place, `수업` without one, and `일정`
   for a Sub Quest. A message that asks for two or more things ("16시에 관정 갔다가 19시쯤 저녁, 7층 예약하고 스케줄 짜줘")
   gets `steps` too, left out otherwise: each request in time order, a book card, a booking a library tool refused, or
