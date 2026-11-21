@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply } from '@/api/assistant-types';
@@ -144,7 +145,8 @@ describe('"새로 모집" on a party\'s Plan', () => {
     expect(chats(server).at(-1)).toMatchObject({
       messages: [
         { role: 'user', text: ASKED },
-        { role: 'assistant', text: QUESTS_REPLY.text },
+        // The reply as the User saw it (P05-03): its first Plan's lines.
+        { role: 'assistant', text: '18:00 체육관 · 17:43에 나서요' },
         { role: 'user', text: '새로 모집' },
       ],
       context: { conditions: QUESTS_ANSWER.input, planId: party.id },

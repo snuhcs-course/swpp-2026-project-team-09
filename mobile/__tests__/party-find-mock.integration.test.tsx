@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -238,10 +239,10 @@ describe('파티 모집글', () => {
   });
 
   it('names the day when it is neither today nor tomorrow', async () => {
-    // 관악산 아침 등산 is on Sunday at 07:30, a day without classes.
+    // 관악산 아침 등산 is on Sunday at 07:30, a day without classes: free all day, not "until" 07:30.
     await openAt('/post/post-24');
 
-    expect(screen.getByText('일요일은 07:30까지 수업이 없어서 비어 있어요.')).toBeVisible();
+    expect(screen.getByText('일요일은 수업이 없는 날이에요.')).toBeVisible();
   });
 
   it('hides another’s post with 관심 없음 beside 참여하기, and goes back', async () => {
