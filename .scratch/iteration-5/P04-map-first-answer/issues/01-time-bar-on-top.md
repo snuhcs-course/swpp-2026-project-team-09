@@ -19,7 +19,7 @@ The time band leaves the bottom card and becomes one white row under the questio
 ## What changes
 
 - A bar under the pill draws the same band, the same handles, and the same moves, folded by default. Folded, every lane's busy stretches are merged on one track; unfolded, the lanes are drawn as today.
-- The day words: today none, tomorrow "내일(수)", the day after "모레(목)", further "월(11/23)". One helper makes them from the band's `now` and the span's start; flags and step rows use it in later tickets.
+- The day words: today none, tomorrow "내일(수)", the day after "모레(목)", the day before "어제(월)", further "11/23(월)". One helper makes them from the band's `now` and the span's start; flags and step rows use it in later tickets.
 - The camera's fit counts the bar's height under the pill.
 - While the keyboard is up, the bar hides, as the card's content does today.
 - While the card is raised, the bar stays where it is and the raised card stops under it.

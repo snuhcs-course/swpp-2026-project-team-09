@@ -80,7 +80,7 @@ The map carries the answer, and the text says only what the map cannot.
 ### The time bar
 
 - The bar draws the Plan's (or Lookup's, or booking's) existing `TimeBand`: its range, the line of now, its span, and its lanes. Folded, it is one row: the span over the time everyone shares, the busy stretches of all lanes merged, with the nearest busy edge on each side named ("13:45 수업 끝", "15:30 수업"). Unfolded, it shows one row per lane as the band does today.
-- Its title is the span's start and end with the day word: "14:00–15:00" today, "내일(수) 14:00–15:00" tomorrow, "월(11/23) 12:00–12:50" further ahead. The same day words are used on flags and in step rows. The words are made in the app from the band's `now` and the span's start; the main server sends nothing new for them.
+- Its title is the span's start and end with the day word: "14:00–15:00" today, "내일(수) 14:00–15:00" tomorrow, "11/23(월) 12:00–12:50" further ahead, "어제(금)" for a day before. The same day words are used on flags and in step rows. The words are made in the app from the band's `now` and the span's start; the main server sends nothing new for them.
 - Handles, moving the span whole, the ghost with 되돌리기, focus from the "until" chip, and the screen reader's steps keep today's rules. Changing the time by dragging stays as it is; nothing new is added to it.
 
 ### Flags and attached cards
