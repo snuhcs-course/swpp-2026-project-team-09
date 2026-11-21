@@ -24,6 +24,7 @@ import type { MealWindow, WithRelax } from './relax-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
 import type { Board, GlobalEvent, JoinPolicy, LatLng } from './types';
+import type { SentProposal } from './sent-proposal';
 
 // --- The Assistant (POST /assistant/messages) ---
 
@@ -77,13 +78,7 @@ export interface QuestProposal {
   invitees: ProposalFriend[];
 }
 
-// A Proposal as it is sent back: its Global Event by id and title, as a card goes back by reference.
-export type SentProposal = Omit<QuestProposal, 'globalEvent'> & { globalEvent: { id: string; title: string } | null };
-
-export function sentProposalOf(proposal: QuestProposal): SentProposal {
-  const { globalEvent } = proposal;
-  return { ...proposal, globalEvent: globalEvent === null ? null : { id: globalEvent.id, title: globalEvent.title } };
-}
+export { type SentProposal, sentProposalOf } from './sent-proposal';
 
 // One message of the conversation, as the app sends it: the User's text, or the Assistant's with the cards it showed
 // and, on the last that made one, its Proposal by its values.
