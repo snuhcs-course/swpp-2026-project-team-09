@@ -15,7 +15,7 @@ import {
   type TimeBand,
 } from '../dto/answer.dto.js';
 import { clockOf } from '../free-time/free-time.js';
-import { koreaTime } from '../korea-time.js';
+import { clockWithDay, koreaTime } from '../korea-time.js';
 import { type GatheringArgs, GatheringNaming } from './answer-words.js';
 import { endedByItem, type GatheringFit, MINUTE_MS, minutesSaid } from './gathering.js';
 import { basisOf, meetingOf, originChip, personChips, subQuestsOf, untilChip } from './meal-answer.js';
@@ -70,10 +70,10 @@ function togetherWords(fit: GatheringFit): string {
   return endedByItem(fit) ? `${clockOf(fit.end)}까지 함께할 수 있어요` : '그 뒤로는 일정이 없어요';
 }
 
-function linesOf(fit: GatheringFit): AnswerLine[] {
+function linesOf(fit: GatheringFit, now: Date): AnswerLine[] {
   return [
     [
-      { text: `${clockOf(fit.start)} ${fit.key}`, strong: true },
+      { text: `${clockWithDay(fit.start, now)} ${fit.key}`, strong: true },
       { text: '에서 만나요', strong: false },
     ],
     plain(togetherWords(fit)),
@@ -118,7 +118,7 @@ function planOf(fit: GatheringFit, naming: MeetNaming): Plan {
     meeting: meetingOf(fit, naming),
     parts: fit.parts.map((part) => partOf(part, naming)),
     subQuests: subQuestsOf(fit, naming, title),
-    lines: linesOf(fit),
+    lines: linesOf(fit, naming.args.now),
     basis: basisOf(fit, naming),
     scene: sceneOf(fit, naming, MEETING_WORD),
     band: bandOf(fit, naming),

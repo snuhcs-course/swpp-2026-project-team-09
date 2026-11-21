@@ -257,3 +257,13 @@ describe('A meet with nothing after it', () => {
     expect(first?.band.text).not.toContain('분');
   });
 });
+
+describe('A meet on another day', () => {
+  it('carries its day in the first line', () => {
+    const theDayBefore = new Date(Date.parse(time('12:00')) - 24 * 60 * 60 * 1000);
+
+    const [first] = meetOf([me(), minsu()], {}, theDayBefore).plans;
+
+    expect(first?.lines[0]?.[0]?.text).toMatch(/^내일\(화\) \d{2}:\d{2} /u);
+  });
+});

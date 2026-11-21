@@ -21,7 +21,7 @@ import { chipsOf, leaveByWords, partOf, plain } from '../events/event-answer.js'
 import { bandOf, EventNaming, itemWord, modeOf, type NamingArgs, sceneOf } from '../events/event-scene.js';
 import { clockOf, type FreeInterval } from '../free-time/free-time.js';
 import { type AnswerPerson, withSubject, withToward } from '../gathering/answer-words.js';
-import { koreaTime } from '../korea-time.js';
+import { clockWithDay, koreaTime } from '../korea-time.js';
 import { type NewQuestPlanning, type PersonWay } from './new-quest-fit.js';
 import { setOutWords } from './quest-answer.js';
 
@@ -117,7 +117,7 @@ function linesOf(plan: EventPlan, naming: Naming): AnswerLine[] {
   const { planning, people, placeWords } = naming.args;
   const capacity = Math.max(CAPACITY_MIN, people.length);
   const first: AnswerLine = [
-    { text: `${clockOf(plan.start)} ${placeWords}`, strong: true },
+    { text: `${clockWithDay(plan.start, naming.args.now)} ${placeWords}`, strong: true },
     { text: ` · ${capacity}명 공개 모집`, strong: false },
   ];
   const { decidedBy } = planning;
