@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
@@ -128,13 +129,24 @@ function sceneRoutes({ event, origin, there, next }: EventPlan, naming: EventNam
   return routes.filter(({ minutes }) => minutes > 0);
 }
 
+// An event's own times: "06:00–08:00", or "06:00 시작" with no end.
+export function eventTimes({ start, end }: { start: Date; end: Date | null }): string {
+  return end === null ? `${clockOf(start)} 시작` : `${clockOf(start)}–${clockOf(end)}`;
+}
+
+// The flag of an event under way gives its own times, not the asker's arrival, which would read as its start.
+function flagText({ event, start }: EventPlan): string {
+  const times = event.start < start ? eventTimes(event) : clockOf(start);
+  return `${times} ${event.title}`;
+}
+
 export function sceneOf(plan: EventPlan, naming: EventNaming<NamingArgs>): MapScene {
-  const { event, start } = plan;
+  const { event } = plan;
   return {
     people: scenePeople(plan, naming),
     places: scenePlaces(plan, naming),
     routes: sceneRoutes(plan, naming),
-    flags: [{ at: naming.position(event.placeId), text: `${clockOf(start)} ${event.title}`, role: 'place' }],
+    flags: [{ at: naming.position(event.placeId), text: flagText(plan), role: 'place' }],
   };
 }
 
