@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { MockLanguageModelV4 } from 'ai/test';
-import { readCuisines } from '../src/menus/cuisine-reading.js';
+import { cuisineParts, NAMES_PER_CALL, readCuisines } from '../src/menus/cuisine-reading.js';
 
 // The kinds of food of dish names, read over a stand-in model: each answer is taken by its number, and what is not one
 // of the kinds is left unread.
@@ -68,5 +68,24 @@ describe('readCuisines', () => {
     ]);
 
     expect(await readCuisines(model, NAMES, LIMITS)).toEqual(new Map([['돈코츠라멘&일본풍감자고로케', 'japanese']]));
+  });
+});
+
+describe('cuisineParts', () => {
+  it('cuts 250 names into ten parts of 25, in their order', () => {
+    const names = Array.from({ length: 250 }, (_, index) => `요리${index}`);
+
+    const parts = cuisineParts(names);
+
+    expect(NAMES_PER_CALL).toBe(25);
+    expect(parts.map((part) => part.length)).toEqual(Array.from({ length: 10 }, () => 25));
+    expect(parts.flat()).toEqual(names);
+  });
+
+  it('leaves the rest in a last, shorter part, and makes none of no names', () => {
+    expect(cuisineParts(Array.from({ length: 26 }, (_, index) => `요리${index}`)).map((part) => part.length)).toEqual([
+      25, 1,
+    ]);
+    expect(cuisineParts([])).toEqual([]);
   });
 });

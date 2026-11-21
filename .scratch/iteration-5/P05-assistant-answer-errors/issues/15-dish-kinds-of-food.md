@@ -17,7 +17,7 @@ The app should offer one chip per kind of food that the candidates' dishes hold 
   - It is named `cuisine` because `kind` already means heading, dish or note on a menu line.
 - **Reading the kinds.**
   - The kind is kept per dish name, as a meal Plan names it (`dishName`), in a new table `dish_cuisines`.
-  - When the worker posts a Collection, the main server answers it first, then asks the model for the names no row holds yet, at most 100 names per call, with the key `llm.key` names. A name is read once, never per request.
+  - When the worker posts a Collection, the main server answers it first, then asks the model for the names no row holds yet, at most 25 names per call and one call at a time, with the key `llm.key` names. A name is read once, never per request.
   - A failed call keeps nothing for those names; the next Collection asks for them again. The Collection itself never fails for it.
   - A setting `DISH_CUISINES` (on by default) turns the reading off without a release. The tests turn it off, so that no other test's scripted model is called.
   - The menus route and the tools' menu lines are unchanged: only the dishes of a meal Plan and a menu Lookup carry the kind, looked up by name when they are made.
@@ -29,9 +29,11 @@ The app should offer one chip per kind of food that the candidates' dishes hold 
 - **The other meal.** A meal answer carries `otherMeal`: the other meal of the day and when it starts (its window's start, or now when it is under way), null when it is over or no Restaurant with a Place serves it that day.
 - **The switch to the other meal** needs no server change. The app recalculates the kept input with `meal` switched, and with the people's constraints, the window, the Place and the kind cleared.
 
-Cost at the project's Haiku 5.5 prices (`eval/cost.ts`):
-- A day has about 80 distinct names (the fixture of 2026-10-01). A first week fills in about three calls of about 2k input and 1.5k output tokens, about USD 0.003.
-- After that, each of the two daily Collections asks only new names, under USD 0.001.
+Cost and size, measured through OpenRouter on 2026-11-21:
+- 25 names took 8.7 s and wrote 1,767 tokens, 1,341 of them the model's reasoning, which counts in the output limit. That is USD 0.001.
+- 80 names took 12.9 s and wrote 3,462 tokens, near the 4,000 the Assistant's limit allows.
+- The first release read 100 names per call, all at once. In Production every part of 100 was cut off (`AI_NoObjectGeneratedError`, `AI_NoOutputGeneratedError`), and only the shorter parts were kept.
+- 25 names per call leaves room in both the tokens and the time. A week's first fill of about 300 names takes about 12 calls, one after another, about USD 0.012; after that, only new names are read.
 
 ## Acceptance criteria
 
@@ -43,3 +45,4 @@ Cost at the project's Haiku 5.5 prices (`eval/cost.ts`):
 - [x] The app believes a dish's kind, a meal input's kind and the other meal in their shapes, absent or null, and refuses other shapes. (`meal-plan-menu.unit.test.ts`, `meal-kind-and-other-meal.unit.test.ts`.)
 - [x] An eval case: "한식" after a meal plan calls planMeal with `cuisine: 한식` (`meal-wishes.yaml`; loads, not run here).
 - [x] Lint, format and types of the main server and the app pass.
+- [x] Names are read 25 at a time: 250 names are cut into ten parts of 25, in their order. (`cuisine-reading.unit.test.ts`.)

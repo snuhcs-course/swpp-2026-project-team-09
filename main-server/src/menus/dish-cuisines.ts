@@ -10,11 +10,8 @@ import { causeOf, type Model } from '../assistant/adapter.js';
 import { ModelPort } from '../assistant/model-port.js';
 import { type Settings } from '../common/settings.js';
 import { PrismaService } from '../common/prisma.service.js';
-import { type CuisineLimits, readCuisines } from './cuisine-reading.js';
+import { cuisineParts, type CuisineLimits, readCuisines } from './cuisine-reading.js';
 import { CUISINE_WORDS, type CuisineWord } from './cuisine-words.js';
-
-// The most names one call reads: a week's new dishes take a few calls at first, and none once their names are kept.
-const NAMES_PER_CALL = 100;
 
 // Keeps the kind of food of each dish name, read once by the model with the key llm.key names when a collected menu
 // first holds the name, so that no request asks the model for it. A name the model failed to answer stays unread and is
@@ -49,10 +46,12 @@ export class DishCuisines {
     if (unread.length === 0 || chosen === null) {
       return;
     }
-    const parts = Array.from({ length: Math.ceil(unread.length / NAMES_PER_CALL) }, (_, index) =>
-      unread.slice(index * NAMES_PER_CALL, (index + 1) * NAMES_PER_CALL),
-    );
-    await Promise.all(parts.map((part) => this.keep(chosen.model, part)));
+    // One call at a time, so that a week's first names do not meet the provider's rate limit; a part that fails keeps
+    // nothing and leaves the others.
+    for (const part of cuisineParts(unread)) {
+      // oxlint-disable-next-line no-await-in-loop -- one model call at a time
+      await this.keep(chosen.model, part);
+    }
   }
 
   // The names no row holds yet; none when they cannot be read.
