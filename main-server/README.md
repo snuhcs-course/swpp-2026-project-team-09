@@ -2572,7 +2572,10 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     the activity plainly fits, without asking, and propose once nothing else is missing, asking only when it fits none
     or more than one. Or it answers
     `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when it is called
-    twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
+    twice. When the 파티's first 30 minutes (as a Sub Quest with no end fills a day) overlap the asker's own Classes or
+    the Quests they hold, the answer adds `clashes`, at most 3, each its kind (`class` or `quest`), name, start and end;
+    the rules have the model say the first and ask whether to keep the time, the card still shown. Nobody else's day is
+    read. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
     the change. A Proposal sent back made is a 파티 already posted: `proposeQuest` answers
     `{ "result": "made", "questId", "reason" }` and puts nothing in the reply, so that 만들기 never makes a second 파티
     for a change, and the model says it is posted and is changed with 수정 in its room. Only `another: true`, when the
