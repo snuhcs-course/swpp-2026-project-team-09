@@ -112,6 +112,15 @@ export interface SceneSetting {
 
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
 
+// The pick's time with the Plan's day before it. A flag the main server already wrote with its day ("내일(토) 18:00
+// 배드민턴") keeps it once.
+function pickLine(time: string | null, day: string | undefined): string | null {
+  if (day === undefined || day === '' || (time?.includes(day) ?? false)) {
+    return time;
+  }
+  return time === null ? day : `${day} ${time}`;
+}
+
 function placeDraft(
   { number: pickNumber, plans, day }: SceneSetting,
   scene: MapScene,
@@ -123,8 +132,7 @@ function placeDraft(
   const base = { position, planId: null, title, line: null, number: null };
   if (role === 'pick') {
     const flag = scene.flags.find(({ at, role: flagRole }) => flagRole === 'place' && samePoint(at, position));
-    const time = flag === undefined ? null : restOf(title, flag.text);
-    const line = day === undefined || day === '' ? time : [day, time].filter((part) => part !== null).join(' ');
+    const line = pickLine(flag === undefined ? null : restOf(title, flag.text), day);
     const name = line === null ? title : `${title} · ${line}`;
     const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber };
     return {

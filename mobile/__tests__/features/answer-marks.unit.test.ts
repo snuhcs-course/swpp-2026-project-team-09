@@ -294,6 +294,16 @@ describe("the pick's day", () => {
     });
   });
 
+  it('says the day once when the flag already carries it', () => {
+    const dated = structuredClone(tomorrow);
+    for (const flag of dated.plans[0]?.scene.flags ?? []) {
+      if (flag.role === 'place') {
+        flag.text = `내일(화) ${flag.text}`;
+      }
+    }
+    expect(seen(drawingOf(dated, 0), 'answer:pick')).toMatchObject({ name: '302동식당 · 내일(화) 12:15 점심' });
+  });
+
   it("says no day for today's Plan", () => {
     expect(seen(drawingOf(MEAL_ANSWER, 0), 'answer:pick')).toMatchObject({ name: '302동식당 · 12:15 점심' });
   });
