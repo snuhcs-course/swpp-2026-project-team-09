@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { koreaDate } from '../korea-time.js';
@@ -25,6 +26,14 @@ export interface Refusal {
   reason: string;
   bound?: unknown;
 }
+
+// The refusals that say the space is closed then, on a Sunday or outside its hours: the User will not be there.
+const closedRefusals = new WeakSet<Refusal>();
+function closed(refusal: Refusal): Refusal {
+  closedRefusals.add(refusal);
+  return refusal;
+}
+export const saysClosed = (refusal: Refusal): boolean => closedRefusals.has(refusal);
 
 export interface BookingRequest {
   date: string;
@@ -117,7 +126,7 @@ export function windowRefusal(space: LibrarySpace, date: string, now: Date, wait
     return { field: 'date', reason, bound: last };
   }
   if (space.closedOnSunday && new Date(`${date}T00:00:00Z`).getUTCDay() === 0) {
-    return { field: 'date', reason: `${space.name}은 일요일에 열지 않아요` };
+    return closed({ field: 'date', reason: `${space.name}은 일요일에 열지 않아요` });
   }
   return null;
 }
@@ -126,11 +135,11 @@ function hoursRefusal(space: LibrarySpace, hours: ClockRange, start: number, end
   if (start >= minutesOfClock(hours.open) && end <= minutesOfClock(hours.close)) {
     return null;
   }
-  return {
+  return closed({
     field: 'start',
     reason: `${kindWord(space)}은 ${hours.open}–${hours.close}에 이용할 수 있어요`,
     bound: hours,
-  };
+  });
 }
 
 export function durationRefusal(space: LibrarySpace, minutes: number): Refusal | null {

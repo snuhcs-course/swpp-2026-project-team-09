@@ -13,7 +13,15 @@ import { defineTool, type Tool, type ToolContext } from '../feature.js';
 import { koreaDate } from '../korea-time.js';
 import { shownMinutes } from '../../travel/travel.js';
 import { clockTime, dateInput } from '../free-time/tool-parts.js';
-import { checkBooking, type CheckedBooking, clockOfMinutes, minutesOfClock, type Refusal } from './booking-rules.js';
+import { noteNotDone, refusedBookingStep } from '../steps/plan-steps.js';
+import {
+  checkBooking,
+  type CheckedBooking,
+  clockOfMinutes,
+  minutesOfClock,
+  type Refusal,
+  saysClosed,
+} from './booking-rules.js';
 import { KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
 import { firstOfSeveralNote } from './find-library-space.js';
 import { bookCard, type LibraryCompanion } from './library-card.js';
@@ -236,10 +244,18 @@ export function proposeLibraryBooking(services: LibraryServices, options?: Booki
         : { ...asked, start: filling.fill.start, minutes: filling.fill.minutes, end: filling.fill.end };
     const result = checkBooking(services.catalogue, space, { ...request, people }, context.now);
     if ('refusal' in party || 'refusals' in result) {
-      return refused([
+      const refusals = [
         ...('refusal' in party ? [party.refusal] : []),
         ...('refusals' in result ? result.refusals : []),
-      ]);
+      ];
+      const reasons = refusals.map(({ reason }) => reason);
+      const step = refusedBookingStep(space, { ...request, date: asked.date }, reasons);
+      noteNotDone(
+        context,
+        step,
+        refusals.some((refusal) => saysClosed(refusal)),
+      );
+      return refused(refusals);
     }
     const { booking } = result;
     return shownBooking(services, context, { space, booking, party, filling, askedToBook: asked.askedToBook });

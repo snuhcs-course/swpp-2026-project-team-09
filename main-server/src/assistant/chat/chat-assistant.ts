@@ -23,7 +23,7 @@ import { RecruitingService } from '../../quests/recruiting.service.js';
 import { ShuttleService } from '../../shuttle/shuttle.service.js';
 import { CAMPUS_TERMS_RULES } from '../campus-terms.js';
 import { EVENT_RULES, planEvents } from '../events/event-tools.js';
-import { type Feature, type Tool } from '../feature.js';
+import { type Feature, type Tool, type ToolContext } from '../feature.js';
 import { FREE_TIME_EVENT_RULES, FREE_TIME_RULES } from '../free-time/free-time-rules.js';
 import { type FreeTimeServices } from '../free-time/free-time-services.js';
 import { freeTimeTools } from '../free-time/free-time-tools.js';
@@ -47,6 +47,9 @@ import { findTutorialOrder, TUTORIAL_ORDER_RULES } from '../lookup/tutorial-orde
 import { findWay, WAY_RULES } from '../lookup/way-tools.js';
 import { DELIMITER } from '../others-text.js';
 import { withRefusals } from '../refusals/refusal-tools.js';
+import { bookingSteps, pointOf, presentSteps, STEPS_RULES } from '../steps/plan-steps.js';
+import { type PlacePoint, type ReplyStep } from '../dto/answer.dto.js';
+import { KWANJEONG_PLACE_NUMBER } from '../library/catalogue.js';
 import { getMenus } from '../tools/get-menus.js';
 import { getShuttle } from '../tools/get-shuttle.js';
 import { proposeQuest } from '../tools/propose-quest.js';
@@ -96,7 +99,10 @@ export interface ChatAssistantOptions {
 // The system prompt's part that is the same for every request, whoever asks and whenever, which the Anthropic path
 // caches (adapter.ts): the rules and the campus short names.
 function instructionsOf(freeTimeRules: readonly string[], libraryRules: string, drawsAnswers: boolean): string {
-  return [chatRules(drawsAnswers), ...freeTimeRules, libraryRules, TUTORIAL_RULES, CAMPUS_TERMS_RULES].join('\n\n');
+  const steps = drawsAnswers ? [STEPS_RULES] : [];
+  return [chatRules(drawsAnswers), ...freeTimeRules, libraryRules, ...steps, TUTORIAL_RULES, CAMPUS_TERMS_RULES].join(
+    '\n\n',
+  );
 }
 
 // The system prompt's lines of a request made at `now`, sent after the rest: the time in Korea, which the rules' "now"
@@ -155,14 +161,19 @@ function chatRules(drawsAnswers: boolean): string {
 // What an app that draws answers plans on the map in place of the Restaurant cards and their rules: a meal, the events
 // of a day and recruiting Quests when it draws those too, and a meet when it draws one.
 function plannedOnMap(
-  plans: PlanAnswersService,
+  { plans, freeTime }: ChatAssistantServices,
   cards: Record<string, Tool>,
   options: ChatAssistantOptions | undefined,
 ): { rules: string[]; tools: Record<string, Tool> } {
   if (options?.drawsAnswers !== true) {
     return { rules: [FREE_TIME_RULES], tools: cards };
   }
-  const planned = mealsAndEvents(plans, options.drawsEvents === true);
+  const kwanjeong = (): PlacePoint | null => {
+    const place = freeTime.places.numbered(KWANJEONG_PLACE_NUMBER);
+    return place === null ? null : pointOf(place);
+  };
+  const earlier = ({ presented }: ToolContext): ReplyStep[] => bookingSteps(presented, kwanjeong());
+  const planned = mealsAndEvents(plans, options.drawsEvents === true, earlier);
   if (options.drawsMeets !== true) {
     return planned;
   }
@@ -172,15 +183,16 @@ function plannedOnMap(
 function mealsAndEvents(
   plans: PlanAnswersService,
   drawsEvents: boolean,
+  earlier: (context: ToolContext) => ReplyStep[],
 ): { rules: string[]; tools: Record<string, Tool> } {
   const { meals, events, quests } = plans;
   if (!drawsEvents) {
-    return { rules: [FREE_TIME_EVENT_RULES, PLAN_RULES], tools: { planMeal: planMeal(meals) } };
+    return { rules: [FREE_TIME_EVENT_RULES, PLAN_RULES], tools: { planMeal: planMeal(meals, earlier) } };
   }
   return {
     rules: [FREE_TIME_EVENT_RULES, PLAN_RULES, EVENT_RULES, RECRUITING_RULES],
     tools: {
-      planMeal: planMeal(meals),
+      planMeal: planMeal(meals, earlier),
       planEvents: planEvents(events),
       planQuests: planQuests(quests),
       planNewQuest: planNewQuest(plans),
@@ -223,14 +235,24 @@ function withInterests(
   return { rules: [...planned.rules, INTEREST_RULES], tools: { ...planned.tools, ...interestTools(interests) } };
 }
 
+// The steps of a message that asked for several things, a meal planned again from the step before it (P03).
+function stepsAfterRun({ freeTime, plans }: ChatAssistantServices): (context: ToolContext) => Promise<void> {
+  return (context) =>
+    presentSteps(context, {
+      kwanjeong: () => freeTime.places.numbered(KWANJEONG_PLACE_NUMBER),
+      replanMeal: (input, { userId, now, context: { location, locationMissing } }) =>
+        plans.meals.plan(userId, input, { now, location, locationMissing }),
+    });
+}
+
 // The chat Assistant of the main screen's input bar (P07): its system prompt and its tools.
 export function chatAssistant(services: ChatAssistantServices, options?: ChatAssistantOptions): Feature {
-  const { menus, shuttle, globalEvents, recruiting, friends, places, freeTime, library, tutorial, plans } = services;
+  const { menus, shuttle, globalEvents, recruiting, friends, places, freeTime, library, tutorial } = services;
   const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
     freeTimeTools(freeTime);
   const drawsAnswers = options?.drawsAnswers ?? false;
   const onMap = withRefusals(
-    withLookups(plannedOnMap(plans, { findMealRestaurants, showRestaurants }, options), services, drawsAnswers),
+    withLookups(plannedOnMap(services, { findMealRestaurants, showRestaurants }, options), services, drawsAnswers),
     freeTime,
     drawsAnswers,
   );
@@ -243,6 +265,7 @@ export function chatAssistant(services: ChatAssistantServices, options?: ChatAss
     instructions: instructionsOf(planned.rules, drawsAnswers ? LIBRARY_ANSWER_RULES : LIBRARY_RULES, drawsAnswers),
     requestInstructions: requestInstructionsOf,
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
+    ...(drawsAnswers ? { afterRun: stepsAfterRun(services) } : {}),
     tools: {
       getMenus: getMenus(menus),
       getShuttle: getShuttle(shuttle),

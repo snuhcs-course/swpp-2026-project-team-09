@@ -5,6 +5,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Action, type Expect, expectSchema, type Mention } from './expect.ts';
@@ -23,6 +24,7 @@ import {
 } from './normalise.ts';
 import type { CaseRun } from './runner.ts';
 import { type Observed, observedActionOf } from './observed.ts';
+import { type CheckName, stepsChecks } from './checks.ts';
 import { type FailureKind, type TurnTrace } from './trace.ts';
 
 // The scorer (spec P19, "Scoring (rules only)"): fixed rules that read a turn's trace and reply against its case's
@@ -31,16 +33,7 @@ import { type FailureKind, type TurnTrace } from './trace.ts';
 
 // One check of a turn and why it failed.
 export interface Check {
-  name:
-    | 'action'
-    | 'tools.required'
-    | 'tools.forbidden'
-    | 'args'
-    | 'proposal'
-    | 'cards'
-    | 'mapButtons'
-    | 'text.mentions'
-    | 'text.absent';
+  name: CheckName;
   passed: boolean;
   detail: string;
 }
@@ -260,6 +253,7 @@ function outcomeChecks(trace: TurnTrace, expect: Expect, names: Names): Check[] 
       check('mapButtons', JSON.stringify(wanted) === JSON.stringify(shown) ? [] : [`shown [${shown.join(', ')}]`]),
     );
   }
+  checks.push(...stepsChecks(expect, trace.reply));
   if (expect.text?.mentions !== undefined) {
     const missing = missingMentions(reply.text, expect);
     checks.push(

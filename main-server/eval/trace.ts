@@ -4,6 +4,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The trace of a turn (spec P19, "The recorder"): what the model did in it, step by step, and how the turn ended. A
@@ -63,6 +64,8 @@ export interface ReplyTrace {
   mapButtons: string[];
   cards: { kind: string }[];
   proposal: unknown;
+  // The requests of a message that asked for several, in time order (P03); left out otherwise.
+  steps?: { kind: string; status: string; from: { label: string } | null }[];
   modelText?: string;
   approvalLine?: boolean;
 }

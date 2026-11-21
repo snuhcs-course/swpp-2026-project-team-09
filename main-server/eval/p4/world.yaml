@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-31  Opus 5.5   prompted by TaeHyun79
+# 2026-11-21  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # The P4 world (spec P04, "Evaluation plan" 1): what the 공강 cases run in, by seed name. eval/p4/world.ts seeds it.
@@ -27,6 +28,7 @@ places:
   제3학생식당: '75-1'
   학생회관: '63'
   중앙도서관 본관: '62'
+  중앙도서관 관정관: '62-1'
   자하연식당: '109'
   문화관: '73'
   예술복합연구동: '74'

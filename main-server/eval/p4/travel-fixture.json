@@ -1,5 +1,5 @@
 {
-  "note": "Frozen for the P4 eval set: the seconds and the mode of every ordered pair of the Places of eval/p4/world.yaml, whatever the time of day. Made by hand from straight lines and a guessed climb, not from the walking table or the shuttle file, whose changes do not reach the labels.",
+  "note": "Frozen for the P4 eval set: the seconds and the mode of every ordered pair of the Places of eval/p4/world.yaml, whatever the time of day. Made by hand from straight lines and a guessed climb, not from the walking table or the shuttle file, whose changes do not reach the labels. 중앙도서관 관정관 (added for P03) is taken as 중앙도서관 본관 plus 60 s, the two being about 60 m apart.",
   "rows": [
     {
       "from": "제1공학관",
@@ -1534,6 +1534,204 @@
     {
       "from": "서울대 정문",
       "to": "서울대 정문",
+      "seconds": 0,
+      "mode": "walk"
+    },
+    {
+      "from": "제1공학관",
+      "to": "중앙도서관 관정관",
+      "seconds": 855,
+      "mode": "shuttle"
+    },
+    {
+      "from": "제2공학관",
+      "to": "중앙도서관 관정관",
+      "seconds": 969,
+      "mode": "shuttle"
+    },
+    {
+      "from": "글로벌공학교육센터",
+      "to": "중앙도서관 관정관",
+      "seconds": 675,
+      "mode": "walk"
+    },
+    {
+      "from": "이공계멀티미디어강의동",
+      "to": "중앙도서관 관정관",
+      "seconds": 437,
+      "mode": "walk"
+    },
+    {
+      "from": "제3학생식당",
+      "to": "중앙도서관 관정관",
+      "seconds": 589,
+      "mode": "walk"
+    },
+    {
+      "from": "학생회관",
+      "to": "중앙도서관 관정관",
+      "seconds": 223,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "제1공학관",
+      "seconds": 990,
+      "mode": "shuttle"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "제2공학관",
+      "seconds": 1132,
+      "mode": "shuttle"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "글로벌공학교육센터",
+      "seconds": 794,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "이공계멀티미디어강의동",
+      "seconds": 516,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "제3학생식당",
+      "seconds": 672,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "학생회관",
+      "seconds": 232,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "자하연식당",
+      "seconds": 283,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "문화관",
+      "seconds": 378,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "예술복합연구동",
+      "seconds": 418,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "사회과학관",
+      "seconds": 615,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "인문사회계멀티미디어강의동",
+      "seconds": 597,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "동원생활관",
+      "seconds": 814,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "체육관",
+      "seconds": 1146,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "미술관",
+      "seconds": 1039,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "서울대 정문",
+      "seconds": 1049,
+      "mode": "walk"
+    },
+    {
+      "from": "자하연식당",
+      "to": "중앙도서관 관정관",
+      "seconds": 308,
+      "mode": "walk"
+    },
+    {
+      "from": "문화관",
+      "to": "중앙도서관 관정관",
+      "seconds": 404,
+      "mode": "walk"
+    },
+    {
+      "from": "예술복합연구동",
+      "to": "중앙도서관 관정관",
+      "seconds": 446,
+      "mode": "walk"
+    },
+    {
+      "from": "사회과학관",
+      "to": "중앙도서관 관정관",
+      "seconds": 672,
+      "mode": "walk"
+    },
+    {
+      "from": "인문사회계멀티미디어강의동",
+      "to": "중앙도서관 관정관",
+      "seconds": 647,
+      "mode": "walk"
+    },
+    {
+      "from": "동원생활관",
+      "to": "중앙도서관 관정관",
+      "seconds": 873,
+      "mode": "walk"
+    },
+    {
+      "from": "체육관",
+      "to": "중앙도서관 관정관",
+      "seconds": 1223,
+      "mode": "walk"
+    },
+    {
+      "from": "미술관",
+      "to": "중앙도서관 관정관",
+      "seconds": 1136,
+      "mode": "walk"
+    },
+    {
+      "from": "서울대 정문",
+      "to": "중앙도서관 관정관",
+      "seconds": 1167,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "중앙도서관 본관",
+      "seconds": 60,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 본관",
+      "to": "중앙도서관 관정관",
+      "seconds": 60,
+      "mode": "walk"
+    },
+    {
+      "from": "중앙도서관 관정관",
+      "to": "중앙도서관 관정관",
       "seconds": 0,
       "mode": "walk"
     }

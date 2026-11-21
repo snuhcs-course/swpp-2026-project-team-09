@@ -161,7 +161,8 @@ function unknownLines({ key, parts }: GatheringFit, naming: Naming): AnswerLine[
   ];
 }
 
-// Board n12: the pick of the asker alone, when a nearer Restaurant closes before a meal fits there.
+// Board n12: the pick of the asker alone, when a nearer Restaurant closes before a meal fits there. The arrival is the
+// meal's start: the asker may be free to get there hours before a dinner the User set (P03).
 function closingLines({ key, start, parts }: GatheringFit, { args }: Naming): AnswerLine[] | null {
   const [mine] = parts;
   if (args.people.length > 1 || mine?.walkMinutes === null || mine?.walkMinutes === undefined) {
@@ -178,7 +179,7 @@ function closingLines({ key, start, parts }: GatheringFit, { args }: Naming): An
     return null;
   }
   return [
-    [strong(key), plain(` · ${clockOf(mine.canArriveAt ?? start)} 도착`)],
+    [strong(key), plain(` · ${clockOf(start)} 도착`)],
     [plain(`${withTopic(nearer.closed)} ${clockOf(nearer.at)}에 닫아요`)],
   ];
 }
