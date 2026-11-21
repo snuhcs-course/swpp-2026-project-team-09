@@ -45,6 +45,8 @@ describe('A 파티 proposed over the asker’s own time', () => {
     expect(stage.model.toolResults()[0]).toMatchObject({
       result: 'proposed',
       clashes: [{ kind: 'class', name: expect.stringContaining(COURSE) as unknown, start: '15:00', end: '16:15' }],
+      // Of the search alone, so that the clash is still said.
+      note: expect.not.stringContaining('only of') as unknown,
     });
     expect(replySchema.parse(response.body).proposal).not.toBeNull();
   });
