@@ -9,6 +9,7 @@ import type {
   AnswerLine,
   ConditionChip,
   MapScene,
+  MenuDish,
   PlacePoint,
   PlanInput,
   RequestContext,
@@ -44,7 +45,7 @@ export interface Lookup {
 
 export interface LookupMenu {
   hours: { opensAt: string; closesAt: string } | null;
-  dishes: { name: string; price: number | null }[];
+  dishes: MenuDish[];
 }
 
 // A row of a Lookup's list: the time at the left ("13:51", or "11:00–11:50" for a Class), and the text at the right.

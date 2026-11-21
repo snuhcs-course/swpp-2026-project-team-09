@@ -5,7 +5,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerLine, ConditionChip, MapScene, PlacePoint, PlanInput, TimeBand } from './answer.dto.js';
+import type { AnswerLine, ConditionChip, MapScene, MenuDish, PlacePoint, PlanInput, TimeBand } from './answer.dto.js';
 
 // An answer drawn on the map that has no Plan: where a Place is, the way and the time to it, a Friend, a menu, a
 // pressed Place, a day's Classes, the Tutorial Quests in order, or the study spaces of the visible area.
@@ -34,7 +34,7 @@ export interface Lookup {
 
 export interface LookupMenu {
   hours: { opensAt: string; closesAt: string } | null;
-  dishes: { name: string; price: number | null }[];
+  dishes: MenuDish[];
 }
 
 // A row of a Lookup's list: the time at the left ("13:51", or "11:00–11:50" for a Class), and the text at the right.
