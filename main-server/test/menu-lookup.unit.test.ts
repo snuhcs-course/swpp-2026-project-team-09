@@ -89,9 +89,9 @@ describe('301동식당 at 11:40, in a Class there until 11:50 (board q8)', () =>
     });
   });
 
-  it('names the Restaurant and the first dish of its main line, then how long the User can eat', () => {
+  it('names the Restaurant, the first dish of its main line with its price and how many more, then how long the User can eat', () => {
     expect(boardQ8().lines).toEqual([
-      [strong('301동식당'), plain(' 오늘 점심은 부대짬뽕&군만두')],
+      [strong('301동식당'), plain(' 오늘 점심은 부대짬뽕&군만두 6,500원 외 1')],
       [plain('12:45까지 55분 먹을 수 있어요')],
     ]);
   });
@@ -130,9 +130,9 @@ describe('301동식당 at 11:40 on the map (board q8)', () => {
     });
   });
 
-  it('rests on the walk on to the next Class, and guides the User to the Restaurant', () => {
+  it('rests on the dishes with their prices and the walk on to the next Class, and guides the User there', () => {
     expect(boardQ8()).toMatchObject({
-      basis: ['24동까지 걸어서 15분이라 12:45에 나서요'],
+      basis: ['부대짬뽕&군만두 6,500원 · (뚝)순댓국&계란장조림 6,500원', '24동까지 걸어서 15분이라 12:45에 나서요'],
       actions: [{ kind: 'guide', to: point('제1공학관', '301동식당') }],
     });
   });
@@ -144,7 +144,11 @@ describe('The time to eat', () => {
 
     expect(lookup.band).toMatchObject({ startAt: time('12:05'), endAt: time('12:59') });
     expect(lookup.lines[1]).toEqual([plain('12:59까지 54분 먹을 수 있어요')]);
-    expect(lookup.basis).toEqual(['301동 → 학생회관식당 걸어서 15분', '24동까지 걸어서 1분이라 12:59에 나서요']);
+    expect(lookup.basis).toEqual([
+      '눈꽃치즈닭갈비 6,000원 · 단호박영양밥&양념장(#) 3,000원 · 수제탕수육 6,000원',
+      '301동 → 학생회관식당 걸어서 15분',
+      '24동까지 걸어서 1분이라 12:59에 나서요',
+    ]);
   });
 
   it("ends at the end of the meal's hours when nothing follows", () => {
@@ -153,7 +157,7 @@ describe('The time to eat', () => {
     expect(lookup.band).toMatchObject({ startAt: time('11:50'), endAt: time('14:30') });
     // 160 minutes would read as a meal that long: a stretch over two hours is said by its times.
     expect(lookup.lines[1]).toEqual([plain('11:50–14:30')]);
-    expect(lookup.basis).toEqual(['점심은 14:30까지예요']);
+    expect(lookup.basis).toEqual(['부대짬뽕&군만두 6,500원 · (뚝)순댓국&계란장조림 6,500원', '점심은 14:30까지예요']);
     expect(lookup.chips).toEqual([{ kind: 'origin', text: '301동에서', userId: null }]);
   });
 
@@ -164,7 +168,7 @@ describe('The time to eat', () => {
     ]);
 
     expect(lookup.band).toMatchObject({ startAt: time('11:50'), endAt: time('13:00') });
-    expect(lookup.basis).toEqual(['13:00에 나서요']);
+    expect(lookup.basis).toEqual(['부대짬뽕&군만두 6,500원 · (뚝)순댓국&계란장조림 6,500원', '13:00에 나서요']);
   });
 
   it('is none when no break during the meal leaves the User time to be there and eat', () => {

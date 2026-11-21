@@ -1,0 +1,23 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-21  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# A menu drawn on the map says when it was collected only when asked (P05 ticket 12): in the usage test of 2026-11-21
+# the reply began "메뉴는 11/21 02:59에 수집된 정보예요" to a question about today's menu. The P4 world asked from an app
+# that draws answers (`pnpm eval --world p4-answer`), on Monday 2026-11-02 at 11:30.
+
+- id: menu-collected-not-said-unasked
+  category: menu-collected
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 오늘 학생회관식당 점심 뭐야?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findMenu]
+      forbidden: [getMenus, showOnMap]
+    text:
+      absent: [수집]
