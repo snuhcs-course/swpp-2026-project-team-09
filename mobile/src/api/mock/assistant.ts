@@ -221,14 +221,15 @@ export function mockTap(tapped: Tapped): Lookup {
 }
 
 // The stored answer of 배고파, the one of board n13 without the location permission, and else that of board n15 when
-// the mock's Timetable holds no Class.
+// the mock's Timetable holds no Class; each beside a lunch the User made from a Plan names it (P04 ticket 17).
 function hungryReplyOf({ locationMissing }: RequestContext): AssistantReply {
+  let reply = MEAL_ANSWER_REPLY;
   if (locationMissing === 'permission') {
-    return NO_LOCATION_REPLY;
+    reply = NO_LOCATION_REPLY;
+  } else if (mockTimetable.listClasses().length === 0) {
+    reply = NO_TIMETABLE_REPLY;
   }
-  return mockTimetable.listClasses().length === 0
-    ? NO_TIMETABLE_REPLY
-    : withMealSet(MEAL_ANSWER_REPLY, mockMadeQuests());
+  return withMealSet(reply, mockMadeQuests());
 }
 
 // The stored refusal of a board of row 8, answers of 배고파, and Lookups of 301동식당's menu, of a place to study near

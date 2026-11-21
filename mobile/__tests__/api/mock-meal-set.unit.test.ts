@@ -4,6 +4,8 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { RequestContext } from '@/api/assistant-types';
+import { mockAssistantReply } from '@/api/mock/assistant';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
@@ -49,5 +51,28 @@ describe("the mock's answer to 배고파 beside a lunch the User holds", () => {
       friendNames: ['민수'],
       shared: true,
     });
+  });
+});
+
+// The phone without the location permission, as the emulator is: the mock answers 배고파 from 301동 without it.
+const NO_LOCATION: RequestContext = {
+  location: null,
+  locationMissing: 'permission',
+  viewport: null,
+  tapped: null,
+  conditions: null,
+  planId: null,
+};
+
+// Partitions: the answer without the location permission.
+describe("the mock's 배고파 on a phone without the location permission", () => {
+  it('names the lunch held alone too', () => {
+    const input = { ...MEAL_ANSWER_ALONE.input };
+    mockPlanQuest({ input, planId: ALONE_PLAN?.id ?? '', startAt: ALONE_PLAN?.startAt ?? '', location: null });
+
+    const reply = mockAssistantReply([{ role: 'user', text: '배고파' }], NO_LOCATION);
+
+    expect(reply.text).toBe('이미 11:53 302동식당 점심이 있어요. 바꿀까요?');
+    expect(reply.answer?.mealSet?.shared).toBe(false);
   });
 });
