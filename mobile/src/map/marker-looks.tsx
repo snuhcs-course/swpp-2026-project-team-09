@@ -152,6 +152,7 @@ function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | null): str
           label.line,
           label.number,
           ...(label.shift === undefined ? [] : [label.shift]),
+          ...(label.sub === undefined || label.sub === null ? [] : [{ sub: label.sub }]),
         ],
   ];
   return `answer:${JSON.stringify(drawn)}`;
