@@ -143,7 +143,7 @@ function Label({ label, testID }: { label: AnswerLabel; testID?: string }): Reac
         ((line !== null && tone !== 'candidate') || sub !== null) && styles.twoLines,
         tone === 'pick' && styles.pickLabel,
         tone === 'candidate' && styles.candidateLabel,
-        sub !== null && styles.subLabel,
+        (sub !== null || tone === 'pick') && styles.subLabel,
         tone === 'meeting' && styles.meetingLabel,
         tone === 'late' && styles.lateLabel,
         tone === 'shuttle' && styles.shuttleLabel,
