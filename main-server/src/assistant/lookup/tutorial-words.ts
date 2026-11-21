@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
@@ -91,10 +92,15 @@ export interface Drawn {
 
 const COUNTS = ['한', '두', '세', '네', '다섯'];
 
+// A first stop that starts later than this after the question waits for a place to open.
+const WAIT_SAID_MS = 30 * 60 * 1000;
+
 const countWord = (count: number): string => COUNTS[count - 1] ?? String(count);
 
 const MODEL_REASONS: Record<LeftReason, (next: Next | null) => string> = {
   closed: () => 'closed when the User could be there',
+  'closed-today': () => 'closed all day today',
+  'closed-already': () => 'already closed today',
   'no-time': (next) =>
     next === null ? `no time before ${NO_NEXT_CLOSING}, when the order ends` : 'no time before the next item',
   more: () => 'at most five are ordered at once',
@@ -105,6 +111,8 @@ const dueOf = (next: Next | null): string => next?.due ?? NO_NEXT_CLOSING;
 
 const LEFT_BASIS: Record<LeftReason, (next: Next | null) => string> = {
   closed: (next) => `${dueOf(next)} 전에는 열지 않아 뺐어요`,
+  'closed-today': () => '오늘은 열지 않아 뺐어요',
+  'closed-already': () => '오늘은 이미 닫아서 뺐어요',
   'no-time': (next) => `${dueOf(next)} 전에 시간이 모자라 뺐어요`,
   more: () => `한 번에 ${countWord(STOPS_MAX)} 곳까지라 뺐어요`,
   unmapped: () => '걸어서 몇 분인지 몰라 뺐어요',
@@ -120,12 +128,20 @@ export const noteOf = ({ visit }: OpenQuest): string | null => visit?.note ?? nu
 
 const pointOf = ({ placeId, words, at }: Located): PlacePoint => ({ placeId, label: words, ...at });
 
-function linesOf({ visits, doneAt, next }: Drawn): AnswerLine[] {
+// The first line says when the order starts when it waits for a place to open, as at night.
+function linesOf({ visits, doneAt, next, args }: Drawn): AnswerLine[] {
+  const first = visits[0]?.visit;
+  const waits = first !== undefined && first.start.getTime() - args.now.getTime() > WAIT_SAID_MS;
+  const count = `${countWord(visits.length)} 곳을 돌면 `;
   return [
-    [part(`${countWord(visits.length)} 곳을 돌면 `), part(clockOf(doneAt), true), part('에 끝나요')],
-    next === null
-      ? [part('오늘 남은 일정이 없어요')]
-      : [part('다음은 '), part(next.due, true), ...(next.label === null ? [] : [part(` · ${next.label}`)])],
+    [
+      ...(waits ? [part(clockOf(first.start), true), part(`부터 ${count}`)] : [part(count)]),
+      part(clockOf(doneAt), true),
+      part('에 끝나요'),
+    ],
+    ...(next === null
+      ? []
+      : [[part('다음은 '), part(next.due, true), ...(next.label === null ? [] : [part(` · ${next.label}`)])]]),
   ];
 }
 
@@ -136,7 +152,11 @@ function basisOf({ visits, order, left, online, next }: Drawn): string[] {
   return [
     `가장 일찍 끝나는 순서예요 · ${onward}모두 걸어서 ${order.walkMinutes}분`,
     `한 곳에 ${STOP_MINUTES}분씩 잡았어요`,
-    ...visits.flatMap(({ located }) => noteOf(located.quest) ?? []),
+    ...visits.flatMap(({ visit, located }) => {
+      const line = `${located.quest.title} · ${clockOf(visit.start)}–${clockOf(visit.end)} ${located.words}`;
+      const note = noteOf(located.quest);
+      return note === null ? [line] : [line, note];
+    }),
     ...left.flatMap(({ quest, reason }) => {
       const line = `${quest.title} · ${LEFT_BASIS[reason](next)}`;
       const note = noteOf(quest);

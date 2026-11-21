@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { clockOf, onDay } from '../src/assistant/free-time/free-time.js';
@@ -127,23 +128,29 @@ describe('A quest that does not fit before the next item', () => {
 describe('An office with hours', () => {
   const walks = table({ SA: 1, SC: 2, SN: 2, AC: 1, AN: 1, CN: 1 });
 
-  it('is left out as closed when it does not open before the next item', () => {
+  it('is left out as already closed when its hours ended before the User could be there', () => {
     const closed = stop('C', { open: [{ from: at('09:00'), until: at('12:00') }] });
 
     const found = order([stop('A'), closed], walks);
 
     expect(visited(found)).toEqual([['A', '13:51']]);
-    expect(leftOut(found)).toEqual([['C', 'closed']]);
+    expect(leftOut(found)).toEqual([['C', 'closed-already']]);
   });
 
-  it('is left out as closed when it closes before the walk gets there', () => {
+  it('is left out as closed today when it has no hours that day', () => {
+    const found = order([stop('A'), stop('C', { open: [] })], walks);
+
+    expect(leftOut(found)).toEqual([['C', 'closed-today']]);
+  });
+
+  it('is left out as already closed when it closes before the walk gets there', () => {
     const found = order(
       [stop('A'), stop('C', { open: [{ from: at('09:00'), until: at('14:00') }] })],
       table({ SA: 1, SC: 15, SN: 1, AC: 15, AN: 1, CN: 1 }),
     );
 
     expect(visited(found)).toEqual([['A', '13:51']]);
-    expect(leftOut(found)).toEqual([['C', 'closed']]);
+    expect(leftOut(found)).toEqual([['C', 'closed-already']]);
   });
 
   it('is waited for when the User is there before it opens', () => {
