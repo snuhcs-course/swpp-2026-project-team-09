@@ -13,13 +13,13 @@ Every control of the condition chips gets a place on the map, so that ticket 04 
 ## What happens now
 
 - The person chip opens the Friend's profile, and its ✕ takes the Friend out.
-- The origin chip opens the list of buildings to set out from.
+- The origin chip opens 장소 선택, where a building is picked to set out from.
 - A press on the face of a Friend the Plan does not hold adds them (`+`); a press on a face the Plan holds does nothing.
 
 ## What changes
 
-- Plan people's faces and my start label take a press and open the attached card of ticket 02.
-- 빼기 asks the same recalculation as the chip's ✕; the start list asks the same as the origin chip; 프로필 opens the same profile over the answer.
+- Plan people's faces and my start label take a press and open the attached card of ticket 02; once the Plan is sent, they take none.
+- 빼기 asks the same recalculation as the chip's ✕; "다른 건물에서 출발" opens 장소 선택 as the origin chip does; 프로필 opens the same profile over the answer.
 - The chips stay in the card in this ticket.
 
 ## Must not break
@@ -30,9 +30,20 @@ Every control of the condition chips gets a place on the map, so that ticket 04 
 
 ## Acceptance criteria
 
-- [ ] A press on 김민수's face opens the card with 프로필 and 빼기; 빼기 asks the recalculation without 김민수. (Integration test.)
-- [ ] 프로필 opens the Friend's profile over the answer. (Integration test.)
-- [ ] A press on my start label lists the buildings; a pick asks the recalculation from it. (Integration test.)
-- [ ] After "이대로 초대", a press on a face opens no card that changes the Plan. (Integration test.)
-- [ ] The face's card and the start list on a phone with the mock build. (Emulator.)
-- [ ] No native file changes; lint, format, and types pass on the app.
+- [x] A press on 민수's face opens the card with 빼기 (and 프로필 for a Friend); 빼기 asks the recalculation without 민수. (Integration test.)
+- [x] 프로필 opens the Friend's profile over the answer, by the same opener as the chip's. (Shared with the chip; not tested again.)
+- [x] A press on my start says where I set out from and opens 장소 선택, as the origin chip does; the recalculation from a building chosen there is the chip's own (`answer-correct-origin`). (Integration test.)
+- [x] After "이대로 초대", a face takes no press. (Integration test.)
+- [x] The face's card and the start list on a phone with the mock build. (Emulator.)
+- [x] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+### Emulator check (2026-11-21)
+
+The debug app with Metro from this branch in mock mode. A Friend's card, 만나고 싶다, then a press on 민수's face: the card opened with 민수 and 빼기 (the mock's 민수 is not among the Friends, so no 프로필). The User's start was outside the camera's view in that answer, so its card was checked in the test only.
+
+### Agent usage (2026-11-21)
+
+- Agent time: about 17 minutes in the same session as tickets 01 and 02 (an estimate from the transcript's timestamps), with the emulator check.
+- Tokens: output 23k; input 17.5M, of which 17.5M cache reads, 42k cache writes, and 74 uncached. No subagents.

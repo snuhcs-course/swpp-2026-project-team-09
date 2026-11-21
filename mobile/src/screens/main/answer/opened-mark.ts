@@ -55,17 +55,17 @@ export function stagePointOf(
   return { x, y: y - top };
 }
 
-// The press on a Plan's pick: its card opens at the pick's point in the stage.
-export function usePickOpening(
+// The press on a mark of a Plan that has a card: its card opens at the mark's point in the stage.
+export function useMarkOpening(
   openMark: (mark: OpenedMark) => void,
   camera: MapCamera | null,
   stage: { width: number; height: number } | null,
-): (position: LatLng) => void {
+): (id: string, position: LatLng) => void {
   const { top } = useSafeAreaInsets();
-  return (position) => {
+  return (id, position) => {
     const at = stagePointOf(position, camera, stage, top);
     if (at !== null) {
-      openMark({ id: 'answer:pick', at });
+      openMark({ id, at });
     }
   };
 }

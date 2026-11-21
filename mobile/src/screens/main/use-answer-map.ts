@@ -11,13 +11,12 @@
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MapScene } from '@/api/assistant-types';
-import type { LatLng } from '@/api/types';
 import { answerCamera } from '@/features/assistant/answer-camera';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import { type AnswerDrawing, drawingOf, drawingOfScene, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
-import { type CardView, friendIdOf } from '@/features/map/adapter';
+import type { CardView } from '@/features/map/adapter';
 import {
   type MapAvatar,
   type MapLine,
@@ -29,6 +28,7 @@ import {
   useMarkerImages,
   ZOOM_OFFSET,
 } from '@/map';
+import { ignoreMark, type OnMark, planPress, pressableWhile, takesNoPress } from './answer-presses';
 import { labelArea, paddingOf } from './answer-padding';
 import type { Room } from './layout';
 import { useFaces } from './use-answer-faces';
@@ -241,8 +241,8 @@ export function useDrawnMap(
   map: MainMap,
   framing: Framing,
   routes: MapScene['routes'] = NO_ROUTES,
-  // A mark that takes a press although it is no Plan's: the Plan's pick, which opens its card.
-  pressable: string | null = null,
+  // The marks that take a press although they are no Plan's: those that open a card.
+  pressable: (id: string) => boolean = takesNoPress,
 ): Drawn | null {
   const shown = useMemo(() => (base === null ? null : labelViewOf(base, framing)), [base, framing]);
   const drawing = useMemo(() => (draw === null || shown === null ? base : draw(shown)), [draw, base, shown]);
@@ -258,7 +258,7 @@ export function useDrawnMap(
     const { id, position, planId, order } = thing;
     return image === undefined
       ? []
-      : [{ id, name: thing.name, position, image, order, passive: planId === null && id !== pressable }];
+      : [{ id, name: thing.name, position, image, order, passive: planId === null && !pressable(id) }];
   });
   return { markers, lines, drawing: base };
 }
@@ -286,35 +286,21 @@ export function useInvitationMap(scene: MapScene | null, map: MainMap, room: Roo
   return { contents: { markers, lines, avatars: NO_AVATARS }, onPress: ignorePress, ...ANSWER_LIMITS };
 }
 
-const PICK_ID = 'answer:pick';
-
-function ignorePick(): void {
-  // Without a card to open, the pick takes no press.
-}
-
-// A press on the Avatar of a Friend whom the conditions do not hold adds the Friend.
-function addOnPress({ add }: ShownAnswer, id: string): void {
-  const userId = friendIdOf(id);
-  if (userId !== null) {
-    add(userId);
-  }
-}
-
 // The Plan on screen drawn on the map in place of the everyday map's markers, lines, the User's own Avatar, and the
 // Avatars of the people it draws. Null while no Plan is shown. The looks of every Plan, each at its own camera, are
 // asked for when the answer comes, so that the arrows never wait for a picture. A Friend's face that a press would add
 // carries a "+", and lights while that add is on its way. Once "이대로 초대" is pressed the faces say how each invited
 // Friend stands, no face carries a "+", and a press changes nothing: the Plan is sent. A press on the pick, before or
-// after, opens its card (`onPick`).
+// after, opens its card, and one on the User's start or a face of the Plan's people opens theirs before (`onMark`).
 export function useAnswerMap(
   shown: ShownAnswer,
   map: MainMap,
   room: Room,
   everyday: EverydayAvatars,
   { sending, made, standings }: Invited,
-  onPick: (position: LatLng) => void = ignorePick,
+  onMark: OnMark = ignoreMark,
 ): AnswerMap | null {
-  const { answer, index, show } = shown;
+  const { answer, index } = shown;
   const draw = useMemo(
     () =>
       answer === null ? null : (view: LabelView | null): AnswerDrawing => drawingOf(answer, index, standings, view),
@@ -329,29 +315,15 @@ export function useAnswerMap(
   const others = base === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, base);
   const faces = useFaces(others, shown, made !== null);
   const routes = answer?.plans[index]?.scene.routes;
-  const drawn = useDrawnMap(draw, base, answer, looks, map, framing, routes, PICK_ID);
+  const sent = sending || made !== null;
+  const drawn = useDrawnMap(draw, base, answer, looks, map, framing, routes, pressableWhile(sent));
   if (drawn === null) {
     return null;
   }
   const { markers, lines, drawing } = drawn;
   return {
     contents: { markers, lines, avatars: faces },
-    onPress: (id) => {
-      const thing = drawing.things.find((one) => one.id === id);
-      if (id === PICK_ID && thing !== undefined) {
-        onPick(thing.position);
-        return;
-      }
-      if (sending || made !== null) {
-        return;
-      }
-      const planId = thing?.planId ?? null;
-      if (planId === null) {
-        addOnPress(shown, id);
-      } else {
-        show(planId);
-      }
-    },
+    onPress: planPress(drawing, shown, sent, onMark),
     ...ANSWER_LIMITS,
   };
 }
