@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEALS, type MealHours, type MenuLine } from './dto/menus-collected.dto.js';
@@ -28,14 +29,30 @@ export function readHoursLine(text: string): Pick<MealHours, 'opensAt' | 'closes
   return opensAt !== null && closesAt !== null && opensAt < closesAt ? { opensAt, closesAt } : null;
 }
 
-// Each meal's hours, from the one hours line of its cell. A cell with several, such as one for each corner, gives none:
-// which of them is the Restaurant's is not sure.
+// A take-out counter's section, "<TAKE-OUT>" or "<TAKE-OUT 카페 301동>": its hours are not the Restaurant's.
+const TAKE_OUT = /take\s*-?\s*out|테이크\s*아웃/iu;
+
+// The hours lines of one meal's cell, outside its take-out sections.
+function hoursOf(lines: readonly MenuLine[], meal: MenuLine['meal']): MealHours[] {
+  let takeOut = false;
+  return lines.flatMap(({ meal: lineMeal, text, kind }) => {
+    if (lineMeal !== meal) {
+      return [];
+    }
+    if (kind === 'heading') {
+      takeOut = TAKE_OUT.test(text);
+      return [];
+    }
+    const hours = takeOut ? null : readHoursLine(text);
+    return hours === null ? [] : [{ meal, ...hours, line: text }];
+  });
+}
+
+// Each meal's hours, from the one hours line of its cell outside take-out sections. A cell with several, such as one
+// for each corner, gives none: which of them is the Restaurant's is not sure.
 export function readMealHours(lines: readonly MenuLine[]): MealHours[] {
   return MEALS.flatMap((meal) => {
-    const read = lines.flatMap(({ meal: lineMeal, text }) => {
-      const hours = lineMeal === meal ? readHoursLine(text) : null;
-      return hours === null ? [] : [{ meal, ...hours, line: text }];
-    });
+    const read = hoursOf(lines, meal);
     return read.length === 1 ? read : [];
   });
 }

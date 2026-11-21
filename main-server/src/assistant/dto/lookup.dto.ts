@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLine, ConditionChip, MapScene, PlacePoint, PlanInput, TimeBand } from './answer.dto.js';
@@ -26,6 +27,14 @@ export interface Lookup {
   steps?: LookupStep[];
   // One short line of the card above its buttons.
   note?: string;
+  // A menu's facts, which the map writes on the Restaurant's flag and its card: the meal's hours that day, null when
+  // none were kept, and the dishes of its main corner with their prices. Only a menu Lookup has it.
+  menu?: LookupMenu;
+}
+
+export interface LookupMenu {
+  hours: { opensAt: string; closesAt: string } | null;
+  dishes: { name: string; price: number | null }[];
 }
 
 // A row of a Lookup's list: the time at the left ("13:51", or "11:00–11:50" for a Class), and the text at the right.

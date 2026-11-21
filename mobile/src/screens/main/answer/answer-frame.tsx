@@ -7,6 +7,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-18  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -43,6 +44,7 @@ import { pillIconOf } from './pill-icon';
 import { PlanCard } from './plan-card';
 import type { Raising } from './raise-handle';
 import { type RefusalAsk, RefusalReply } from './refusal-reply';
+import { ReplySteps } from './reply-steps';
 
 interface WordsProps {
   bubble: ChatBubble;
@@ -126,9 +128,9 @@ interface AnswerCardProps {
   raising: Raising;
 }
 
-// The card at the bottom: what was asked, the turn's bubbles without a bubble around them or the dots with 그만 in
-// their place, and "지난 답 N개" under them, then the room of the bar. While the keyboard is up, the turn's headline
-// stands in place of its content, unless the card is raised.
+// The card at the bottom: what was asked, the turn's bubbles without a bubble around them, each under its steps when it
+// answered several requests, or the dots with 그만 in their place, and "지난 답 N개" under them, then the room of the
+// bar. While the keyboard is up, the turn's headline stands in place of its content, unless the card is raised.
 function AnswerCard(props: AnswerCardProps): ReactElement {
   const { control, cardActions, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising } = props;
   const card = { barRoom, onHeight, raising, stageHeight };
@@ -146,6 +148,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
           {turn === null ? null : <TurnQuestion turn={turn} />}
           {after.map((bubble) => (
             <View key={bubble.id} style={styles.part}>
+              {bubble.steps === undefined ? null : <ReplySteps steps={bubble.steps} />}
               <BubbleParts
                 bubble={bubble}
                 cardActions={cardActions}

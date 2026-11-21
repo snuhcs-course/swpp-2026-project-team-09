@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -74,7 +75,8 @@ export class MenuLookupService {
       },
       at,
     );
-    const found = menuAnswer({ key, date, meal, now: at.now, lines, answer });
+    const hours = await this.menus.hoursOf(key, meal, date);
+    const found = menuAnswer({ key, date, meal, now: at.now, lines, answer, hours });
     if (found.result === 'none') {
       return { result: 'none', reason: found.reason, lines };
     }

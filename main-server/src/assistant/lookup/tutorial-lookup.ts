@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { shownMinutes } from '../../travel/travel.js';
@@ -12,7 +13,7 @@ import { byStart, clockOf, type DayItem, onDay, weekdayOf } from '../free-time/f
 import { MINUTE_MS } from '../gathering/gathering.js';
 import { PlaceNaming } from '../gathering/place-naming.js';
 import { koreaDate } from '../korea-time.js';
-import { NO_NEXT_CLOSING, type Order, orderOf, type Span, STOP_MINUTES } from './tutorial-order.js';
+import { NO_HOURS_OPENING, NO_NEXT_CLOSING, type Order, orderOf, type Span, STOP_MINUTES } from './tutorial-order.js';
 import {
   type Drawn,
   type LeftReason,
@@ -97,7 +98,8 @@ interface Setting {
   located: ReadonlyMap<string, Located>;
 }
 
-// Every stop at the Place of its quest, open that day as the content says, each given the same minutes.
+// Every stop at the Place of its quest, open that day as the content says, or in campus offices' hours when it says
+// nothing, each given the same minutes.
 function orderFor({ now, travel }: TutorialArgs, { start, setOut, next, located }: Setting): Order {
   const date = koreaDate(now);
   return orderOf({
@@ -108,7 +110,9 @@ function orderFor({ now, travel }: TutorialArgs, { start, setOut, next, located 
       key: quest.key,
       placeId,
       stayMinutes: STOP_MINUTES,
-      open: spansOn(quest.visit, date),
+      open: spansOn(quest.visit, date) ?? [
+        { from: onDay(date, NO_HOURS_OPENING), until: onDay(date, NO_NEXT_CLOSING) },
+      ],
     })),
     walkMinutes: (from, to) => (from === to ? 0 : shownMinutes(travel.walkingSeconds(from, to))),
   });

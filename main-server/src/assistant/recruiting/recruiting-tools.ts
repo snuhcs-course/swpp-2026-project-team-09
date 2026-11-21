@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -23,6 +24,7 @@ function planWords({ title, place, startAt, togetherMinutes, parts, quest, frien
   return {
     title: othersText('quest.title', title),
     place: othersText('quest.place', place.label),
+    date: startAt.slice(0, 10),
     start: clock(startAt),
     setOut: clock(part?.leaveAt),
     stayMinutes: togetherMinutes,
@@ -84,5 +86,5 @@ export const RECRUITING_RULES = `Recruiting 파티 to join, and a new one to rec
 - When the User asks for 파티 to join for an event (그 행사 같이 갈 파티, 민수가 있는 파티), call planQuests with the Global Event's id: as resolveGlobalEvent or searchGlobalEvents returned it in this message, from [Cards shown: …], or the plan of [Plan on screen: …] of kind events.
 - When they ask for 파티 or people for an activity (배드민턴 칠 사람, 같이 운동할 파티), first call searchRecruitingQuests with words of the activity, pick the candidates that are that activity, and call planQuests with their ids.
 - When they ask to recruit a new one (새로 모집, 새로 만들어 줘), or planQuests answers none, call planNewQuest with what they said: the Global Event, or the activity in their words as title with the ids searchRecruitingQuests returned for it; a Place they named, found with resolvePlace; a time they named, as HH:MM; Friends they named, found with resolveFriend; and the Board the activity plainly fits. When it answers needs-place or needs-time, ask the User where or when, in one question.
-- The app draws the plans and writes their times, ways, and minutes itself, the first one first. Your reply is one sentence about the first plan only, such as "18:00 체육관 파티에 17:43에 나서면 돼요." Do not show them with showQuests and do not propose a 파티 with proposeQuest: the app draws them. Joining and making are the User's presses on the app: never say that they joined or that anything was made.
+- The app draws the plans and writes their times, ways, and minutes itself, the first one first. Your reply is one sentence about the first plan only, such as "18:00 체육관 파티에 17:43에 나서면 돼요." When its date is not today, name the day first, such as "내일 18:00 체육관 파티". Do not show them with showQuests and do not propose a 파티 with proposeQuest: the app draws them. Joining and making are the User's presses on the app: never say that they joined or that anything was made.
 - When planQuests answers none, say plainly that no 파티 can be reached in time.`;

@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type DayItem, freeTimeOf, type FreeInterval, startOfDay } from '../free-time/free-time.js';
@@ -36,6 +37,8 @@ export interface NamedLength {
 
 export interface Arrival {
   at: string;
+  // The space's opening, which an arrival before it waits for.
+  opensAt: string;
   fromPlaceId: string | null;
   walkMinutes: number | null;
 }
@@ -59,24 +62,40 @@ function minutesOfDay(date: string, at: Date): number {
   return Math.ceil((at.getTime() - startOfDay(date).getTime()) / MINUTE_MS);
 }
 
-function arrivalOf({ date, now, items, locationPlaceId, kwanjeongPlaceId, walkingMinutes }: SeatFacts): Arrival {
+function arrivalOf(
+  { date, now, items, locationPlaceId, kwanjeongPlaceId, walkingMinutes }: SeatFacts,
+  opensAt: string,
+): Arrival {
   const first: FreeInterval = freeTimeOf(items, date, now)[0] ?? { start: now, end: now, previous: null, next: null };
   const ready = minutesOfDay(date, first.start);
   const origin = originOf({ locationPlaceId }, first, now);
   if (origin === null || kwanjeongPlaceId === null) {
-    return { at: clockOfMinutes(ready), fromPlaceId: null, walkMinutes: null };
+    return { at: clockOfMinutes(ready), opensAt, fromPlaceId: null, walkMinutes: null };
   }
   const walk = origin.placeId === kwanjeongPlaceId ? 0 : walkingMinutes(origin.placeId, kwanjeongPlaceId);
-  return { at: clockOfMinutes(ready + walk), fromPlaceId: origin.placeId, walkMinutes: walk };
+  return { at: clockOfMinutes(ready + walk), opensAt, fromPlaceId: origin.placeId, walkMinutes: walk };
 }
 
-function noteOf({ fromPlaceId, at }: Arrival, named: boolean): string {
-  const from = fromPlaceId === null ? '지금부터' : `${at} 도착에 맞춰`;
+function beforeOpening({ at, opensAt }: Arrival): boolean {
+  return minutesOfClock(at) < minutesOfClock(opensAt);
+}
+
+// When the User sits down: the arrival, or the opening for an arrival before it.
+export function seatedAt({ arrival }: Pick<SeatFill, 'arrival'>): string {
+  return beforeOpening(arrival) ? arrival.opensAt : arrival.at;
+}
+
+function noteOf(arrival: Arrival, named: boolean): string {
+  const from = beforeOpening(arrival)
+    ? `${arrival.opensAt} 열 때부터`
+    : arrival.fromPlaceId === null
+      ? '지금부터'
+      : `${arrival.at} 도착에 맞춰`;
   return `${from} ${named ? '' : '최대 시간으로 '}채웠어요`;
 }
 
 export function fillSeat(facts: SeatFacts, space: SeatSpace, { minutes, end }: NamedLength): SeatFill {
-  const arrival = arrivalOf(facts);
+  const arrival = arrivalOf(facts, space.hours.open);
   const { stepMinutes } = space;
   const open = minutesOfClock(space.hours.open);
   const start = Math.max(open, Math.ceil(minutesOfClock(arrival.at) / stepMinutes) * stepMinutes);
@@ -115,4 +134,19 @@ export function leaveByOf(facts: SeatFacts, arrival: string, bookingEnd: string)
     for: next.isClass ? '수업' : '일정',
     start: clockOfMinutes(next.minutes),
   };
+}
+
+// The words of a filled seat: when the User arrives and the booking starts, and when to leave for what follows. The
+// booking runs past that time, so the words say how to end it then, and the two times do not read as a contradiction.
+export function filledWords(fill: SeatFill, leaveBy: LeaveBy | null, end: string): string {
+  const { arrival, start } = fill;
+  const arriving = beforeOpening(arrival)
+    ? `${arrival.opensAt} 열 때부터예요. `
+    : arrival.at === start
+      ? `${arrival.at}에 도착해요. `
+      : `${arrival.at}에 도착해 ${start}부터예요. `;
+  if (leaveBy === null) {
+    return arriving;
+  }
+  return `${arriving}${leaveBy.start} ${leaveBy.for}이라 ${leaveBy.at}엔 나서요. ${end}까지 쓰지 않으면 카드에서 끝 시간을 당겨요. `;
 }

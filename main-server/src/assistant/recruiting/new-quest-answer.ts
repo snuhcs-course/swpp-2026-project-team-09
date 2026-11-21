@@ -3,8 +3,10 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { OPEN_SUB_QUEST_SECONDS } from '../../travel/judgement-constants.js';
 import {
   type AnswerLine,
   type AnswerReply,
@@ -12,13 +14,14 @@ import {
   type NewQuestInput,
   type Plan,
   type PlanPart,
+  type TimeBand,
 } from '../dto/answer.dto.js';
 import { type EventPlan } from '../events/event-fit.js';
 import { chipsOf, leaveByWords, partOf, plain } from '../events/event-answer.js';
 import { bandOf, EventNaming, itemWord, modeOf, type NamingArgs, sceneOf } from '../events/event-scene.js';
 import { clockOf, type FreeInterval } from '../free-time/free-time.js';
 import { type AnswerPerson, withSubject, withToward } from '../gathering/answer-words.js';
-import { koreaTime } from '../korea-time.js';
+import { clockWithDay, koreaTime } from '../korea-time.js';
 import { type NewQuestPlanning, type PersonWay } from './new-quest-fit.js';
 import { setOutWords } from './quest-answer.js';
 
@@ -114,7 +117,7 @@ function linesOf(plan: EventPlan, naming: Naming): AnswerLine[] {
   const { planning, people, placeWords } = naming.args;
   const capacity = Math.max(CAPACITY_MIN, people.length);
   const first: AnswerLine = [
-    { text: `${clockOf(plan.start)} ${placeWords}`, strong: true },
+    { text: `${clockWithDay(plan.start, naming.args.now)} ${placeWords}`, strong: true },
     { text: ` · ${capacity}명 공개 모집`, strong: false },
   ];
   const { decidedBy } = planning;
@@ -185,6 +188,13 @@ function sceneWithFriends(plan: EventPlan, naming: Naming): Plan['scene'] {
   return scene;
 }
 
+// An activity has no end of its own: the plan gives it the shortest stay, which the band would show as "19:00–19:30 ·
+// 30분". Unless someone's next item ends it, the band says its start alone.
+function openBand(band: TimeBand, plan: EventPlan, { args }: Naming): TimeBand {
+  const open = args.event === null && plan.end.getTime() - plan.start.getTime() === OPEN_SUB_QUEST_SECONDS * 1000;
+  return open ? { ...band, text: `${clockOf(plan.start)}부터` } : band;
+}
+
 function planOf(naming: Naming): Plan {
   const plan = askerPlan(naming);
   const { args } = naming;
@@ -201,7 +211,7 @@ function planOf(naming: Naming): Plan {
     lines: linesOf(plan, naming),
     basis: basisOf(plan, naming),
     scene: sceneWithFriends(plan, naming),
-    band: bandOf(plan, naming, args.people.slice(1)),
+    band: openBand(bandOf(plan, naming, args.people.slice(1)), plan, naming),
     candidates: candidatesOf(naming),
   };
 }

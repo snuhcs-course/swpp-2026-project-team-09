@@ -1,0 +1,61 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-21  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# One message with two requests (P03): a 관정 seat, then dinner from 관정. The P4 world asked from an app that draws
+# answers (`pnpm eval --world p4-answer`). On Monday 김하늘's last Class is from 16:00 to 17:15 in 제1공학관 (301동), so
+# a dinner planned without the step before it sets out from 301동; after the seat it sets out from 관정 (62-1동). A
+# seat is booked for the same day only, so the case asked the day before gets the seat refused, with the reason in
+# its step, and dinner still planned from 관정. The single request stays as it was: no steps. planMeal is not one of
+# the scorer's tools, so a turn that calls only it and the library tools reads as ASK or no action; the steps check is
+# what these cases measure.
+
+- id: steps-seat-then-dinner-today
+  category: several-steps
+  world: p4-answer
+  now: '2026-11-02T13:00:00+09:00'
+  turns:
+    - user: 17시 반에 관정 갔다가 19시쯤 저녁 먹으려고 하는데 7층 자리 예약하고 스케줄 짜줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking, planMeal]
+      forbidden: [findMealRestaurants, showRestaurants, proposeQuest]
+    cards:
+      - kind: library
+        action: book
+    steps:
+      - { kind: seat, status: shown }
+      - { kind: meal, status: shown, from: 62-1동 }
+
+- id: steps-seat-then-dinner-tomorrow
+  category: several-steps
+  knownFailure: planMeal is not one of the scorer's tools, so the action check fails; the steps check is what counts
+  world: p4-answer
+  now: '2026-11-01T21:17:00+09:00'
+  turns:
+    - user: 내일 17시 반에 관정 갔다가 19시 저녁쯤 먹고 싶은데 7층 예약하고 스케줄 짜줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [proposeLibraryBooking, planMeal]
+      forbidden: [findMealRestaurants, showRestaurants, proposeQuest]
+    steps:
+      - { kind: seat, status: not-done }
+      - { kind: meal, status: shown, from: 62-1동 }
+
+- id: steps-dinner-alone
+  category: several-steps
+  knownFailure: planMeal is not one of the scorer's tools, so the action check fails; the steps check is what counts
+  world: p4-answer
+  now: '2026-11-02T13:00:00+09:00'
+  turns:
+    - user: 19시쯤 저녁 먹자
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [findMealRestaurants, showRestaurants, proposeQuest, proposeLibraryBooking]
+    steps: []
