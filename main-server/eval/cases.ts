@@ -68,9 +68,17 @@ export const WORLD_REQUEST_FIELDS: Record<WorldName, { clientCapabilities?: Clie
   'p4-answer': { clientCapabilities: ['library', 'answer'] },
 };
 
-// What a run of a case sends beside the messages: its world's fields, and where the asker is when the case says.
-export function requestFieldsOf({ world, context }: EvalCase): object {
-  return { ...WORLD_REQUEST_FIELDS[world], ...(context === undefined ? {} : { context }) };
+// What the current app says it draws with every chat request (ANSWER_CAPABILITIES in mobile/src/api/assistant-types.ts).
+const APP_CAPABILITIES = ['library', 'answer', 'area', 'meet', 'events'] as const satisfies readonly ClientCapability[];
+
+// What a run of a case sends beside the messages: its world's fields, or the current app's capabilities when the case
+// says so, and where the asker is when the case says.
+export function requestFieldsOf({ world, capabilities, context }: EvalCase): object {
+  return {
+    ...WORLD_REQUEST_FIELDS[world],
+    ...(capabilities === 'app' ? { clientCapabilities: APP_CAPABILITIES } : {}),
+    ...(context === undefined ? {} : { context }),
+  };
 }
 
 // The tutorial content a run of each world reads in the place of content/tutorial.yaml. The P6 suite reads its own copy,
@@ -124,6 +132,9 @@ export const caseSchema = z
     now: z.iso.datetime({ offset: true }).optional(),
     // Who asks, by a name in the world's `askers`, if not the world's User.
     asker: seedName.optional(),
+    // `app`: the request says what the current app draws, every capability, in place of the world's (a meet needs
+    // `meet`).
+    capabilities: z.enum(['world', 'app']).default('world'),
     // Where the asker is, sent as the request's context as the app sends it; none is sent without it.
     context: z.strictObject({ location: z.strictObject({ latitude: z.number(), longitude: z.number() }) }).optional(),
     live: z.boolean().default(false),

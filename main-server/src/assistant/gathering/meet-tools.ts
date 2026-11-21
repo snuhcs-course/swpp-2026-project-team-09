@@ -8,6 +8,7 @@
 import { z } from 'zod';
 import { type AnswerReply, type MeetInput, type Plan, type RequestContext } from '../dto/answer.dto.js';
 import { defineTool, type Tool } from '../feature.js';
+import { onDay } from '../free-time/free-time.js';
 import { clockTime, dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
 import { askedBy } from '../refusals/friend-question.js';
 import { relatedWords } from './meal-tool-words.js';
@@ -36,7 +37,14 @@ const input = z
       ),
     from: clockTime
       .optional()
-      .describe('The start the User fixed, as HH:MM: nobody is there before it. Left out when they fixed none.'),
+      .describe(
+        'The earliest start the User allowed, as HH:MM (14시 이후): nobody is there before it. Left out when they gave none.',
+      ),
+    at: clockTime
+      .optional()
+      .describe(
+        'The start the User fixed (두시에 만나는, 3시에 보자), as HH:MM: the plan starts then when everyone can be there, and the answer says who is busy when nobody can. Left out when they fixed none.',
+      ),
     until: clockTime
       .optional()
       .describe('The end the User fixed, as HH:MM: everyone has left by it. Left out when they fixed none.'),
@@ -80,7 +88,7 @@ export function planMeet(plans: MeetPlanService): Tool {
     description:
       "Plans when the User and Friends can meet on a day from today to a week ahead, and where. The server decides the earliest time they are all free, the place where they are together longest among the places people gather and the buildings they are in, and when everyone is there, and the app draws the plans on the map. Answers result 'planned' with the plans in order, each with its place, start, end, togetherMinutes, and each person's way, or result 'none' with the reason.",
     input,
-    run: async ({ date, friendIds, from, until, placeId }, { userId, now, context, found, presented }) => {
+    run: async ({ date, friendIds, from, until, at, placeId }, { userId, now, context, found, presented }) => {
       if (outOfReach(date, now)) {
         return noDay(date);
       }
@@ -93,17 +101,28 @@ export function planMeet(plans: MeetPlanService): Tool {
         kind: 'meet',
         date,
         people: [userId, ...new Set(friendIds)].map((id) => ({ userId: id, constraints: kept.get(id) ?? [] })),
-        window: { from: from ?? null, until: until ?? null },
+        window: { from: at ?? from ?? null, until: until ?? null },
         placeId: placeId ?? null,
       };
-      const answer = await plans.plan(userId, meetInput, { now, location: context.location });
+      const asked = at === undefined ? null : onDay(date, at);
+      const { answer, busy } =
+        asked === null
+          ? { answer: await plans.plan(userId, meetInput, { now, location: context.location }), busy: [] }
+          : await plans.planAsked(userId, meetInput, { now, location: context.location }, asked);
       presented.answer = answer;
       presented.lookup = null;
       presented.mapButtons.length = 0;
       if (answer.noPlan !== null) {
         return { result: 'none', reason: NONE_REASONS[answer.noPlan.reason] };
       }
-      return { result: 'planned', plans: answer.plans.map((plan) => planWords(plan)), ...relatedWords(answer.related) };
+      const [first] = answer.plans;
+      const fits = asked === null || (first !== undefined && new Date(first.startAt).getTime() === asked.getTime());
+      return {
+        result: 'planned',
+        ...(at === undefined ? {} : { asked: { at, fits, ...(fits ? {} : { busy }) } }),
+        plans: answer.plans.map((plan) => planWords(plan)),
+        ...relatedWords(answer.related),
+      };
     },
   });
 }
@@ -115,6 +134,8 @@ export const MEET_RULES = `A meet with Friends is planned on the map too: the se
 - When the User wants to meet or see Friends they name, not for a meal (민수랑 만나고 싶어, 지은이 언제 볼 수 있어?), call planMeet with the day (today when they name none) and the Friends, each found with resolveFriend first.
 - The app draws the plans and writes their times, ways, and minutes itself, the first one first. Your reply is one sentence about the first plan only, its place and when everyone is there, such as "12:15에 302동 앞에서 만나요." Write nothing more, and do not call showOnMap for a plan.
 - When planMeet answers related, the User already has those Quests that day, meetings or with a Friend asked for. Your sentence mentions the one that matters, such as "민수와는 내일 14:00 SK경영관 앞에서 약속이 이미 있어요", whether or not it limits the plans.
+- A 파티 or 약속 only with Friends the User names, with or without a place and a time ("내일 이민수랑 학생회관에서 두시에 만나는 파티", "민수랑 3시에 보자"), is a meeting: call planMeet with those Friends, the place as placeId and the time as at, not proposeQuest. This comes before the rule for a closed 파티. proposeQuest still makes an open or approval 파티, or one with a capacity, a Board or a title the User gave.
+- When planMeet answers asked with fits false, the first plan is the nearest time everyone can be there, and your one sentence says why the asked time does not fit and offers it: a Friend of the plan only by when their Class or Quest ends ("민수는 15:15까지 수업이에요. 15:20은 어때요?"), never what it is or where, and never anyone not in the plan; your own Class or Quest by its name ("내일 14:00엔 운영체제 수업이 있어요. 16:20은 어때요?"); with nobody busy, that it is the earliest everyone is there.
 - When planMeet answers none, say plainly why, without naming who is busy.
 - A line [Plan on screen: …] whose kind is meet gives the meet the app shows. To change it (14시부터, 학생회관에서 보자, 지은이도 불러 줘), call planMeet again with its date, friendIds, from, until, and placeId, changing only what the User changed: a Friend found with resolveFriend, a Place with resolvePlace, a start as from and an end as until.
 - After a change, your reply is one sentence that says what changed.`;
