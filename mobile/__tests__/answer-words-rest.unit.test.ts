@@ -16,8 +16,8 @@ import type { ChatBubble } from '@/features/assistant/use-chat';
 import { lookupRestOf, wordsRestOf } from '@/screens/main/answer/words-rest';
 
 // P04 ticket 05: which reply rests in the dock with which one line and chips. Partitions: each Lookup kind the map
-// draws or not, a day's, one beside a refusal; a refusal with buttons and with Friends to pick, each failure, offered
-// words, and plain words.
+// draws or not, a day's, one beside a refusal; a refusal with buttons and with Friends to pick, each failure, a question
+// back, an answer with an offer, and plain words.
 
 const WORDS = '모델의 말이에요.';
 
@@ -39,7 +39,13 @@ function bubble(parts: Partial<ChatBubble>): ChatBubble {
 
 describe('a Lookup in the dock', () => {
   it('has no line for a way or a place the map draws, and its asks as chips', () => {
-    expect(lookupRestOf(WAY_LOOKUP, null, WORDS)).toEqual({ line: null, offers: [], retry: false, note: null });
+    expect(lookupRestOf(WAY_LOOKUP, null, WORDS)).toEqual({
+      line: null,
+      offers: [],
+      retry: false,
+      note: null,
+      basis: true,
+    });
     expect(lookupRestOf(LEAVE_LOOKUP_REPLY.lookup, null, WORDS)?.line).toBeNull();
   });
 
@@ -96,15 +102,18 @@ describe('words that are no answer, in the dock', () => {
     expect(wordsRestOf(bubble({ failure: 'usedUp' }))?.retry).toBe(false);
   });
 
-  it('has the first line of offered words, and none for plain words', () => {
-    const offers = [{ kind: 'ask' as const, label: '가는 길 보기', text: '가는 길' }];
+  it("has a question back's line with its offers, and keeps an answer with an offer and plain words open", () => {
+    const next = [{ kind: 'ask' as const, label: '내일 점심 보기', text: '내일 점심 먹을 곳' }];
+    const way = [{ kind: 'ask' as const, label: '가는 길 보기', text: '가는 길' }];
 
-    expect(wordsRestOf(bubble({ offers, text: '**두레문예관**에서 받아요.\n평일에 받아요.' }))).toEqual({
-      line: [{ text: '두레문예관에서 받아요.', strong: false }],
-      offers,
+    expect(wordsRestOf(bubble({ offers: next, text: '오늘 점심은 끝났어요. **내일 점심**을 볼까요?' }))).toEqual({
+      line: [{ text: '오늘 점심은 끝났어요. 내일 점심을 볼까요?', strong: false }],
+      offers: next,
       retry: false,
       note: null,
+      basis: false,
     });
+    expect(wordsRestOf(bubble({ offers: way, text: '**두레문예관**에서 받아요.\n평일에 받아요.' }))).toBeNull();
     expect(wordsRestOf(bubble({}))).toBeNull();
   });
 });

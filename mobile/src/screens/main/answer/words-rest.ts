@@ -13,19 +13,21 @@ import { wordsLine } from './keyboard-headline';
 import { type ButtonOffer, isButton } from './refusal-reply';
 
 // How a reply that is no Plan rests in the dock (P04 ticket 05): the one line, null when the map says it all, which a
-// press opens to the whole reply; the chips that do what its card's buttons did; 다시 시도; and the note. `keep`: a
-// Plan beside a Quest the User holds (ticket 17), whose 그대로 두기 leaves the answer and the Quest as it is.
+// press opens to the whole reply; the chips that do what its card's buttons did; 다시 시도; the note; `basis`, a
+// Lookup with no line whose basis the map does not show, which 근거 › opens in the raised card; and `keep`, a Plan
+// beside a Quest the User holds (ticket 17), whose 그대로 두기 leaves the answer and the Quest as it is.
 export interface WordsRest {
   line: AnswerLine | null;
   offers: readonly ButtonOffer[];
   retry: boolean;
   note: string | null;
+  basis: boolean;
   keep?: boolean;
 }
 
 // A Plan beside a Quest the User holds: the model's line, which says so, with 그대로 두기.
 export function setQuestRestOf(words: string): WordsRest {
-  return { line: wordsLine(words), offers: [], retry: false, note: null, keep: true };
+  return { line: wordsLine(words), offers: [], retry: false, note: null, basis: false, keep: true };
 }
 
 type AskAction = Extract<LookupAction, { kind: 'ask' }>;
@@ -50,19 +52,28 @@ export function lookupRestOf(lookup: Lookup, refusal: Refusal | null, words: str
     offers: asks,
     retry: false,
     note: lookup.note ?? null,
+    basis: drawn && lookup.basis.length > 0,
   };
 }
 
-// A refusal, a failure, or words with offers (a question back): the first line, with the buttons as chips. A refusal
-// that asks which Friend keeps its grid in the open card, and any other words their card. Null for the open card.
+// Words that ask the User back, such as the next meal offered once today's is over: the text ends with a question.
+// Words that answer and carry an offer (a Tutorial quest's facts with 가는 길 보기) are a procedure, read whole.
+function asksBack(words: string): boolean {
+  return /[?？]\s*$/u.test(words);
+}
+
+// A refusal, a failure, or a question back (words that ask, with offers): the first line, with the buttons as chips. A
+// refusal that asks which Friend keeps its grid in the open card, and any other words their card, with their offers
+// under them (decision 3). Null for the open card.
 export function wordsRestOf({ refusal = null, failure, offers = [], text }: ChatBubble): WordsRest | null {
+  const rest = { retry: false, note: null, basis: false };
   if (refusal !== null) {
     return refusal.offers.every(isButton)
-      ? { line: refusal.lines[0] ?? wordsLine(text), offers: refusal.offers.filter(isButton), retry: false, note: null }
+      ? { ...rest, line: refusal.lines[0] ?? wordsLine(text), offers: refusal.offers.filter(isButton) }
       : null;
   }
   if (failure !== null) {
-    return { line: wordsLine(text), offers: [], retry: failure === 'unavailable', note: null };
+    return { ...rest, line: wordsLine(text), offers: [], retry: failure === 'unavailable' };
   }
-  return offers.length === 0 ? null : { line: wordsLine(text), offers, retry: false, note: null };
+  return offers.length > 0 && asksBack(text) ? { ...rest, line: wordsLine(text), offers } : null;
 }

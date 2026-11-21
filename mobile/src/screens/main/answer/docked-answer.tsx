@@ -120,20 +120,57 @@ function FoldedChips({
   );
 }
 
-// A reply's dock: its one line, which raises the card with the whole reply, then its buttons as chips, and the folded
-// chips. Nothing when the map says it all and nothing is folded.
-function DockedWords({
-  control,
-  rest,
-  onRaise,
-}: {
+interface DockedWordsProps {
   control: ChatSheetControl;
   rest: WordsRest;
   onRaise: Raise;
-}): ReactElement | null {
-  const { line, offers, retry, note, keep = false } = rest;
-  const { send } = control.chat;
-  if (line === null && offers.length === 0 && !retry && note === null && turnsOf(control.chat.bubbles).length < 2) {
+}
+
+// The reply's buttons as chips, which scroll sideways: its offers and 다시 시도, disabled while the next reply is on its
+// way, for they act on the turn before; 근거 ›, which raises the card; 그대로 두기 beside a Quest the User holds; and
+// the folded chips.
+function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement {
+  const { offers, retry, note, basis, keep = false } = rest;
+  const { send, waiting } = control.chat;
+  return (
+    <ScrollView
+      contentContainerStyle={styles.chips}
+      horizontal
+      keyboardShouldPersistTaps="handled"
+      showsHorizontalScrollIndicator={false}
+      style={styles.chipsBox}
+    >
+      {offers.map((offer) => (
+        <DockChip
+          disabled={waiting}
+          key={offer.label}
+          onPress={() => {
+            pressOffer(offer, send);
+          }}
+          words={offer.label}
+        />
+      ))}
+      {basis ? (
+        <DockChip
+          onPress={() => {
+            onRaise(false);
+          }}
+          words="근거 ›"
+        />
+      ) : null}
+      {retry ? <DockChip disabled={waiting} onPress={control.chat.retry} words="다시 시도" /> : null}
+      {keep ? <DockChip onPress={control.hide} words="그대로 두기" /> : null}
+      <FoldedChips control={control} note={note} onRaise={onRaise} />
+    </ScrollView>
+  );
+}
+
+// A reply's dock: its one line, which raises the card with the whole reply, then its buttons as chips, and the folded
+// chips. Nothing when the map says it all and nothing is folded.
+function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement | null {
+  const { line, offers, retry, note, basis } = rest;
+  const empty = line === null && offers.length === 0 && !retry && note === null && !basis;
+  if (empty && turnsOf(control.chat.bubbles).length < 2) {
     return null;
   }
   return (
@@ -146,26 +183,7 @@ function DockedWords({
           }}
         />
       )}
-      <ScrollView
-        contentContainerStyle={styles.chips}
-        horizontal
-        keyboardShouldPersistTaps="handled"
-        showsHorizontalScrollIndicator={false}
-        style={styles.chipsBox}
-      >
-        {offers.map((offer) => (
-          <DockChip
-            key={offer.label}
-            onPress={() => {
-              pressOffer(offer, send);
-            }}
-            words={offer.label}
-          />
-        ))}
-        {retry ? <DockChip onPress={control.chat.retry} words="다시 시도" /> : null}
-        {keep ? <DockChip onPress={control.hide} words="그대로 두기" /> : null}
-        <FoldedChips control={control} note={note} onRaise={onRaise} />
-      </ScrollView>
+      <ReplyChips control={control} onRaise={onRaise} rest={rest} />
     </View>
   );
 }

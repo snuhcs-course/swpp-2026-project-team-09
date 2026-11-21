@@ -13,15 +13,26 @@ const CHIP_HEIGHT = 34;
 const HIT_SLOP = (size.touchMin - CHIP_HEIGHT) / 2;
 
 // A small chip of the dock's row for what the docked card keeps folded: "지난 답 N개", or the answer's note. A press
-// raises the card with it open. A reply's buttons take the same chip (an offer, 다시 시도, a Lookup's ask).
-export function DockChip({ words, onPress }: { words: string; onPress: () => void }): ReactElement {
+// raises the card with it open. A reply's buttons take the same chip (an offer, 다시 시도, a Lookup's ask), disabled
+// while the next reply is on its way, for they act on the turn before.
+export function DockChip({
+  words,
+  onPress,
+  disabled = false,
+}: {
+  words: string;
+  onPress: () => void;
+  disabled?: boolean;
+}): ReactElement {
   return (
     <Pressable
       accessibilityLabel={words}
       accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       hitSlop={HIT_SLOP}
       onPress={onPress}
-      style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.chip, pressed && styles.pressed, disabled && styles.disabled]}
     >
       <Text numberOfLines={1} style={styles.words}>
         {words}
@@ -66,6 +77,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.surfaceSunken,
   },
   pressed: { opacity: 0.6 },
+  disabled: { opacity: 0.4 },
   words: { ...text.label, color: color.inkMuted },
   line: {
     flexDirection: 'row',

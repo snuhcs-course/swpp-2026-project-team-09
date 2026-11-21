@@ -112,7 +112,12 @@ function LookupActionButton({ control, lookup, refusal }: LookupActionProps): Re
     onAsk: chat.send,
     addRecalculated: chat.addRecalculated,
   });
-  return main === null ? null : <Button onPress={main.onPress}>{main.label}</Button>;
+  // Disabled while the next reply is on its way: it would act on the turn before.
+  return main === null ? null : (
+    <Button disabled={chat.waiting} onPress={main.onPress}>
+      {main.label}
+    </Button>
+  );
 }
 
 export function AnswerActionButton({
