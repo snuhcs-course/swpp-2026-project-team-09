@@ -4,9 +4,10 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { screen } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
 import { TAP_LOOKUPS } from '@/api/mock/data/tap-lookups';
@@ -84,7 +85,9 @@ describe('"여기서 먹기" on the card of a pressed building', () => {
     ]);
     expect(server.received('POST /assistant/messages')).toEqual([]);
     expect(screen.getByTestId('answer-pill')).toHaveTextContent('63동 · 여기서 먹기');
-    expect(card().getByText('12:45엔 나서야 해요')).toBeVisible();
+    // The answer is on the map and the bar, its button beside the input (P04 ticket 04).
+    expect(screen.getByTestId('time-bar')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: '일정에 넣기' })).toBeVisible();
     expect(screen.queryByTestId('map-card')).toBeNull();
   });
 
@@ -124,7 +127,9 @@ describe('"여기서 먹기" while its answer is on its way', () => {
     expect(buildingCard().getByLabelText('여기서 먹기 · 보는 중')).toBeVisible();
     expect(buildingCard().queryByText('여기서 먹기')).toBeNull();
     await pass(1000);
-    expect(card().getByText('12:45엔 나서야 해요')).toBeVisible();
+    // The answer is on the map and the bar, its button beside the input (P04 ticket 04).
+    expect(screen.getByTestId('time-bar')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: '일정에 넣기' })).toBeVisible();
   });
 });
 
@@ -177,7 +182,7 @@ describe("a2's buttons on the card of 문화관", () => {
       { input: { kind: 'events', date: '2026-11-20', eventIds: [JOB_FAIR, TALK] }, location: ON_CAMPUS },
     ]);
     expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 행사 보기');
-    expect(card().getByText('13:54 도착 · 78분 볼 수 있어요')).toBeVisible();
+    expect(screen.getByTestId('time-bar')).toBeOnTheScreen();
     expect(card().getByRole('button', { name: '같이 갈 파티' })).toBeEnabled();
   });
 
@@ -192,7 +197,7 @@ describe("a2's buttons on the card of 문화관", () => {
       { input: { kind: 'quests', globalEventId: JOB_FAIR, questIds: null }, location: ON_CAMPUS },
     ]);
     expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 같이 갈 파티');
-    expect(card().getByText('18:00 체육관 · 17:43에 나서요')).toBeVisible();
+    expect(screen.getByTestId('time-bar')).toBeOnTheScreen();
   });
 });
 
@@ -214,8 +219,11 @@ describe('words typed under the card of a pressed building', () => {
 
     expect(lastContext()).toMatchObject({ tapped: { kind: 'place', placeId: STUDENT_HALL.id } });
     expect(screen.queryByTestId('map-card')).toBeNull();
-    // The first Plan's lines of the stored answer.
-    expect(card().getByText('12:15 302동식당')).toBeVisible();
+    // The first Plan of the stored answer: its pick on the map, its button beside the input (P04 ticket 04).
+    expect(
+      within(screen.getByTestId('main-map-touches')).getByRole('button', { name: '302동식당 · 12:15 점심' }),
+    ).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: '만들고 초대 보내기' })).toBeVisible();
   });
 
   it('carry nothing tapped once the card is closed', async () => {
