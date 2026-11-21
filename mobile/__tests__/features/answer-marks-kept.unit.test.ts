@@ -44,9 +44,9 @@ const MEETING: KeptQuest = {
   point: { placeId: 'kwanjeong', label: '관정도서관', latitude: 37.45965, longitude: 126.95168 },
 };
 
-// A point that many degrees of longitude east of the meeting's.
-function eastOfMeeting(east: number): { latitude: number; longitude: number } {
-  return { latitude: 37.45965, longitude: 126.95168 + east };
+// A point that many degrees of longitude east and of latitude north of the meeting's.
+function eastOfMeeting(east: number, north = 0): { latitude: number; longitude: number } {
+  return { latitude: 37.45965 + north, longitude: 126.95168 + east };
 }
 
 function beside(answer: AnswerReply, planSet: KeptQuest): AnswerReply {
@@ -128,8 +128,8 @@ describe('the drawing of a Quest left as it is', () => {
   });
 });
 
-// Partitions: a Friend's face beside the tag's point; along its label, 250 m to the label's side; as far to the other
-// side. The faces of the everyday map give way near the Plan's own marks, so that none lies over a mark's words; the
+// Partitions: a Friend's face beside the tag's point; along its label, 250 m to the label's side, level with it and
+// 90 m below it, where a face drawn as a pin above its point reaches the words; as far to the other side. The faces of the everyday map give way near the Plan's own marks, so that none lies over a mark's words; the
 // tag is one of them, and its label reaches to one side.
 describe('the tag among the marks a Friend gives way to', () => {
   // 250 m east or west at the meeting's latitude.
@@ -148,6 +148,8 @@ describe('the tag among the marks a Friend gives way to', () => {
 
     expect(side === 'left' || side === 'right').toBe(true);
     expect(nearKeptWords(drawing, eastOfMeeting(toward))).toBe(true);
+    // 90 m south.
+    expect(nearKeptWords(drawing, eastOfMeeting(toward, -0.00081))).toBe(true);
     expect(nearKeptWords(drawing, eastOfMeeting(-toward))).toBe(false);
   });
 });

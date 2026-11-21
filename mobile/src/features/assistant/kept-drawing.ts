@@ -6,9 +6,9 @@
 
 import type { AnswerReply, MapScene } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import type { AnswerDrawing } from './answer-drawing';
+import { type AnswerDrawing, offset } from './answer-drawing';
 import { drawingOfScene } from './answer-marks';
-import { type LabelView, reachesOver } from './answer-labels';
+import type { LabelView } from './answer-labels';
 import { NO_STANDINGS } from './invited-friends';
 
 // What the map shows once 그대로 두기 left the Quest already set as it is (P04 ticket 20): its tag and the User's own
@@ -36,11 +36,20 @@ export function keptDrawingOf(
   return me.length === 0 ? { ...drawing, points: [] } : drawing;
 }
 
-// Whether a position lies under the words of the tag of a Quest already set, which reach to one side of its point: a
-// Friend's face there gives way, as one near any of the Plan's own marks does, for the map draws every face above
-// every mark.
+// How far the tag's words reach to their side, in metres, and how far up or down a Friend's face may stand and still
+// cover them: a face is a pin drawn above its point.
+const KEPT_WORDS = { along: 400, across: 120 };
+
+// Whether a Friend's face at a position would cover the words of the tag of a Quest already set, which reach to one
+// side of its point: it then gives way, as one near any of the Plan's own marks does, for the map draws every face
+// above every mark.
 export function nearKeptWords({ things }: Pick<AnswerDrawing, 'things'>, position: LatLng): boolean {
   const kept = things.find(({ id }) => id === 'answer:kept');
   const side = kept?.look.kind === 'answer' ? kept.look.label?.side : undefined;
-  return kept !== undefined && side !== undefined && reachesOver(kept.position, side, position);
+  if (kept === undefined || (side !== 'left' && side !== 'right')) {
+    return false;
+  }
+  const { east, north } = offset(kept.position, position);
+  const along = side === 'right' ? east : -east;
+  return along > 0 && along <= KEPT_WORDS.along && Math.abs(north) <= KEPT_WORDS.across;
 }
