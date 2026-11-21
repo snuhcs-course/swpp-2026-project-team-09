@@ -15,7 +15,7 @@ import type { AnswerReply, MapScene } from '@/api/assistant-types';
 import { answerCamera } from '@/features/assistant/answer-camera';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import { type AnswerDrawing, drawingOf, drawingOfScene, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
-import { keptDrawingOf } from '@/features/assistant/kept-drawing';
+import { keptDrawingOf, nearKeptWords } from '@/features/assistant/kept-drawing';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { CardView } from '@/features/map/adapter';
@@ -177,8 +177,8 @@ function useAnswerCamera(
 }
 
 // The Avatars of people the Plan does not draw: Friends and the other people of the User's Party, not the User's own
-// nor the shuttle's vehicles. One near one of the Plan's own marks gives way too: the map draws every Avatar above
-// every marker, so it would lie over the mark or its words.
+// nor the shuttle's vehicles. One near one of the Plan's own marks, or under the words of a Quest already set (P04
+// ticket 20), gives way too: the map draws every Avatar above every marker, so it would lie over the mark or its words.
 export function othersOf(
   avatars: readonly MapAvatar[],
   cards: readonly CardView[],
@@ -187,7 +187,9 @@ export function othersOf(
   const others = new Set(
     cards.flatMap(({ id, mark }) => (mark.type === 'person' && !drawing.userIds.includes(mark.id) ? [id] : [])),
   );
-  return avatars.filter(({ id, position }) => others.has(id) && !nearOwnMark(drawing, position));
+  return avatars.filter(
+    ({ id, position }) => others.has(id) && !nearOwnMark(drawing, position) && !nearKeptWords(drawing, position),
+  );
 }
 
 export interface AnswerMap {

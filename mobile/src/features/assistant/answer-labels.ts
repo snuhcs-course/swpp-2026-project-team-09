@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -58,6 +59,11 @@ function blocked(at: LatLng, side: LabelSide, others: readonly LatLng[]): boolea
         : [side === 'above' ? north : -north, east, UPRIGHT_REACH];
     return along > 0 && along <= reach.along && Math.abs(across) <= reach.across;
   });
+}
+
+// Whether a label at that side of its point reaches over another point.
+export function reachesOver(at: LatLng, side: LabelSide, other: LatLng): boolean {
+  return blocked(at, side, [other]);
 }
 
 function boxIn(view: LabelView, position: LatLng, label: AnswerLabel): ViewArea {

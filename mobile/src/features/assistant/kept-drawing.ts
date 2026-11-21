@@ -5,9 +5,10 @@
  ******************************************************************************/
 
 import type { AnswerReply, MapScene } from '@/api/assistant-types';
+import type { LatLng } from '@/api/types';
 import type { AnswerDrawing } from './answer-drawing';
 import { drawingOfScene } from './answer-marks';
-import type { LabelView } from './answer-labels';
+import { type LabelView, reachesOver } from './answer-labels';
 import { NO_STANDINGS } from './invited-friends';
 
 // What the map shows once 그대로 두기 left the Quest already set as it is (P04 ticket 20): its tag and the User's own
@@ -33,4 +34,13 @@ export function keptDrawingOf(
     return null;
   }
   return me.length === 0 ? { ...drawing, points: [] } : drawing;
+}
+
+// Whether a position lies under the words of the tag of a Quest already set, which reach to one side of its point: a
+// Friend's face there gives way, as one near any of the Plan's own marks does, for the map draws every face above
+// every mark.
+export function nearKeptWords({ things }: Pick<AnswerDrawing, 'things'>, position: LatLng): boolean {
+  const kept = things.find(({ id }) => id === 'answer:kept');
+  const side = kept?.look.kind === 'answer' ? kept.look.label?.side : undefined;
+  return kept !== undefined && side !== undefined && reachesOver(kept.position, side, position);
 }

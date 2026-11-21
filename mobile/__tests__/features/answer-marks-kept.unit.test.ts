@@ -8,7 +8,7 @@ import type { AnswerReply, KeptQuest } from '@/api/assistant-types';
 import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
 import { MEET_ANSWER } from '@/api/mock/data/meet-answer';
 import { drawingOf, nearOwnMark } from '@/features/assistant/answer-marks';
-import { keptDrawingOf } from '@/features/assistant/kept-drawing';
+import { keptDrawingOf, nearKeptWords } from '@/features/assistant/kept-drawing';
 import { seen } from '../support/answer-marks';
 
 // P04 ticket 20: the place of a Quest already set marked on the map apart from the candidates. Expected values: the
@@ -43,6 +43,11 @@ const MEETING: KeptQuest = {
   place: '관정도서관',
   point: { placeId: 'kwanjeong', label: '관정도서관', latitude: 37.45965, longitude: 126.95168 },
 };
+
+// A point that many degrees of longitude east of the meeting's.
+function eastOfMeeting(east: number): { latitude: number; longitude: number } {
+  return { latitude: 37.45965, longitude: 126.95168 + east };
+}
 
 function beside(answer: AnswerReply, planSet: KeptQuest): AnswerReply {
   return { ...answer, planSet };
@@ -123,12 +128,26 @@ describe('the drawing of a Quest left as it is', () => {
   });
 });
 
-// Partitions: a Friend's face beside the tag. The faces of the everyday map give way near the Plan's own marks, so
-// that none lies over a mark's words; the tag is one of them.
+// Partitions: a Friend's face beside the tag's point; along its label, 250 m to the label's side; as far to the other
+// side. The faces of the everyday map give way near the Plan's own marks, so that none lies over a mark's words; the
+// tag is one of them, and its label reaches to one side.
 describe('the tag among the marks a Friend gives way to', () => {
+  // 250 m east or west at the meeting's latitude.
+  const EAST_250 = 0.00283;
+
   it("counts as one of the Plan's own marks", () => {
     const drawing = drawingOf(beside(MEET_ANSWER, MEETING), 0);
 
     expect(nearOwnMark(drawing, { latitude: 37.45967, longitude: 126.95162 })).toBe(true);
+  });
+
+  it("keeps a Friend's face off its label's words, and not off the other side", () => {
+    const drawing = drawingOf(beside(MEET_ANSWER, MEETING), 0);
+    const side = seen(drawing, 'answer:kept').label?.side;
+    const toward = side === 'left' ? -EAST_250 : EAST_250;
+
+    expect(side === 'left' || side === 'right').toBe(true);
+    expect(nearKeptWords(drawing, eastOfMeeting(toward))).toBe(true);
+    expect(nearKeptWords(drawing, eastOfMeeting(-toward))).toBe(false);
   });
 });
