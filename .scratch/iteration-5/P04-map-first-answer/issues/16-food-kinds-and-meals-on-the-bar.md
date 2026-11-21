@@ -44,7 +44,8 @@ A meal question is answered on the map at once, and what it leaves open is chose
 - A kind pressed while the pick has no dish of it: the pick moves on the phone to the first candidate that serves it (the lowest number among them), as a pressed tag does; clearing the chip leaves the pick where it is. Reason: saying "한식" makes the server put such a place first, and a press must end on the same screen as the words.
 - The bar's title keeps the app's one day helper (`koreaDayWord`): "내일(월) 점심 …", "11/23(월) 점심 …", or the meal alone today before its window opens ("저녁 …"), not board 26's "월(23일)". The tick stands in place of the bar's end label on its side.
 - The meal switch sends the kept input with `meal` switched, `window: { from: null, until: null }`, every person's constraints empty, `placeId: null`, and `cuisine` left out (P05: absent is what a server before the kinds also accepts).
-- Chips of the same count stand in the order 한식, 중식, 일식, 양식, 분식; the row is 종류, the kinds, "지난 답 N개" and the note, then 메뉴 모두 보기.
+- Chips of the same count stand in the order 한식, 중식, 일식, 양식, 분식. From the screen review: no grey label 종류 (a chip "한식 4" says what it is), and the row is one line: the kinds, "지난 답 N개", and the note scroll sideways, and "메뉴 보기 ▲" stays at the right. On a phone 360 wide two kinds stand whole beside "＋ 같이" with the next one peeking.
+- The bar's grip takes a press only around its middle (72 wide, 44 high), so the other meal's tick keeps its own press (agreed with P04).
 
 ## Acceptance criteria
 

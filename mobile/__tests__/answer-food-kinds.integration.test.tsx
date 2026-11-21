@@ -66,14 +66,14 @@ function lastContext(): unknown {
 
 // Partitions: the chips at first; a kind the pick serves pressed, then pressed again; a kind it does not serve.
 describe('the kind chips of a meal answer', () => {
-  it('stand with "종류" in the order of their counts, none filled', async () => {
+  it('stand in the order of their counts, none filled, without a label', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
-    expect(screen.getByText('종류')).toBeVisible();
+    expect(screen.queryByText('종류')).toBeNull();
     for (const name of [KOREAN, JAPANESE, '양식 2곳', '중식 1곳']) {
       expect(selected(name)).toBe(false);
     }
-    expect(screen.getByRole('button', { name: '메뉴 모두 보기' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: '메뉴 보기' })).toBeOnTheScreen();
   });
 
   it('fill on a press, recede a candidate without the kind, put the kind first in each line, and clear again', async () => {

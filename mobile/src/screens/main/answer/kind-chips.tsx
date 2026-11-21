@@ -19,9 +19,9 @@ interface KindChipsProps {
   onChoose: (kind: Cuisine | null) => void;
 }
 
-// The kinds of food of a meal answer as the dock's first chips (P04 ticket 16, boards 24 and 25): a small grey "종류",
-// then a chip per kind with its count of places. The kind on screen is filled; a press chooses another, and a second
-// press clears it. Nothing with fewer than two kinds.
+// The kinds of food of a meal answer as the dock's first chips (P04 ticket 16, boards 24 and 25): a chip per kind with
+// its count of places, which says what it is without a label. The kind on screen is filled; a press chooses another,
+// and a second press clears it. Nothing with fewer than two kinds.
 export function KindChips({ answer, onChoose }: KindChipsProps): ReactElement | null {
   const chips = answer === null ? [] : kindChipsOf(answer.plans);
   if (chips.length === 0) {
@@ -30,7 +30,6 @@ export function KindChips({ answer, onChoose }: KindChipsProps): ReactElement | 
   const chosen = kindOn(answer);
   return (
     <>
-      <Text style={styles.label}>종류</Text>
       {chips.map(({ kind, places }) => {
         const on = kind === chosen;
         return (
@@ -54,12 +53,12 @@ export function KindChips({ answer, onChoose }: KindChipsProps): ReactElement | 
 }
 
 const styles = StyleSheet.create({
-  label: { ...text.caption, color: color.inkMuted },
   chip: {
     flexShrink: 0,
     justifyContent: 'center',
     height: CHIP_HEIGHT,
-    paddingHorizontal: space[3],
+    // Narrower than the dock's other chips: two kinds stand whole beside ＋ 같이 and 메뉴 보기 on a phone 360 wide.
+    paddingHorizontal: space[2],
     borderRadius: radius.full,
     borderWidth: 1.5,
     borderColor: color.border,
