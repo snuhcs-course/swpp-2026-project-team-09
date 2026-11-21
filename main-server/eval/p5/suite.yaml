@@ -69,8 +69,10 @@ superseded:
 # P05 cases whose expected words a later change revised, not edited, so that earlier runs can be scored again. Each is
 # listed with the case that holds the revised words. Revised on 2026-11-21 by Iteration 5's P02
 # (.scratch/iteration-5/P02-party-reply-wording/spec.md): a Proposal made after a search that found none no longer says
-# so, because testers found the line awkward. The cards, the Proposal and the tools are unchanged, and no metric reads
-# these words, so the tags stay on the frozen cases.
+# so, because testers found the line awkward. The cards, the Proposal and the tools are unchanged. A run runs the
+# revision and leaves the frozen case out, and the report scores the revision in the frozen case's place, its tags
+# included, since J3a and J3b read whether the whole case passed (eval/p5/report.ts). A run saved before holds only the
+# frozen cases and scores as it did.
 revised:
   - { case: join-04, heldBy: join-04-r5 }
   - { case: join-06, heldBy: join-06-r5 }

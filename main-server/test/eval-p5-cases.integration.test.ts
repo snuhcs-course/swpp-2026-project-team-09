@@ -16,6 +16,7 @@ import { parse } from 'yaml';
 import { z } from 'zod';
 import { casesIn, loadCases, WORLD_CLOCKS } from '../eval/cases.ts';
 import { FIXED_SET } from '../eval/fixed-set.ts';
+import { casesToRun } from '../eval/p4/holdout.ts';
 import { caseOfTag, tagSchema } from '../eval/p5/report.ts';
 import { seedP5World } from '../eval/p5/world.ts';
 import { p5WorldData } from '../eval/p5/world-data.ts';
@@ -226,6 +227,12 @@ describe('The P05 suite', () => {
 describe('The revised P05 cases', () => {
   it('keep each frozen case as it was, beside a copy that differs only in its words', () => {
     expect(revisionsOffTheirCases()).toEqual([]);
+  });
+
+  it('run in place of their frozen cases, never beside them', () => {
+    const run = new Set(casesToRun({ world: 'p5' }).map(({ id }) => id));
+
+    expect(suite.revised.filter(({ case: id, heldBy }) => run.has(id) || !run.has(heldBy))).toEqual([]);
   });
 });
 
