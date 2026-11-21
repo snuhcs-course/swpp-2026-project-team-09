@@ -37,6 +37,7 @@ import type { LibraryDone } from '@/library/cards/done';
 import type { Slot } from '@/library/cards/payloads';
 import { useAskApp } from './app-turn';
 import { useLetGo, useWaiting } from './let-go';
+import { shownText } from './shown-text';
 
 type Tapped = NonNullable<RequestContext['tapped']>;
 
@@ -158,7 +159,7 @@ function textLength(messages: readonly ChatMessage[]): number {
 // What a request sends of the conversation: the latest 20 messages without the failures and the app's own bubbles,
 // fewer while they hold more characters than the main server takes. The last Proposal goes with its message, by its
 // values, so that the Assistant can change one of its fields and keep the others. A seat card that shows another
-// room is sent as the card of that room.
+// room is sent as the card of that room. A reply is sent as the User saw it (`shownText`).
 export function messagesToSend(
   bubbles: readonly ChatBubble[],
   rooms: ReadonlyMap<string, CardRoom> = new Map(),
@@ -169,10 +170,11 @@ export function messagesToSend(
   const proposing = said.findLast(({ proposal }) => proposal !== null);
   let messages = said
     .map((bubble): ChatMessage => {
-      const { role, text, cards, proposal } = bubble;
+      const { role, cards, proposal } = bubble;
       if (role === 'user') {
-        return { role, text };
+        return { role, text: bubble.text };
       }
+      const text = shownText(bubble);
       const references = cards.map((card) =>
         card.kind === 'library'
           ? { kind: card.kind, id: rooms.get(cardPlace(bubble.id, card.library.key))?.key ?? card.library.key }
