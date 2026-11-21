@@ -57,11 +57,11 @@ export function menuListTitle(answer: AnswerReply): string {
 const CHIP_HEIGHT = 34;
 const HIT_SLOP = (size.touchMin - CHIP_HEIGHT) / 2;
 
-// The row's chip that opens and folds the list.
+// The row's chip that opens and folds the list, short so that the kinds of ticket 16 have room beside it.
 export function MenuListChip({ open, onPress }: { open: boolean; onPress: () => void }): ReactElement {
   return (
     <Pressable
-      accessibilityLabel="메뉴 모두 보기"
+      accessibilityLabel="메뉴 보기"
       accessibilityRole="button"
       accessibilityState={{ expanded: open }}
       hitSlop={HIT_SLOP}
@@ -70,7 +70,7 @@ export function MenuListChip({ open, onPress }: { open: boolean; onPress: () => 
       testID="menu-list-chip"
     >
       <Text numberOfLines={1} style={styles.chipWords}>
-        {open ? '메뉴 모두 보기 ▼' : '메뉴 모두 보기 ▲'}
+        {open ? '메뉴 보기 ▼' : '메뉴 보기 ▲'}
       </Text>
     </Pressable>
   );

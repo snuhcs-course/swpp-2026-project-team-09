@@ -8,7 +8,7 @@ Native files: none. Releases: an app OTA update only.
 
 ## What to build
 
-In a meal answer, a chip "메뉴 모두 보기 ▲" in the bottom row opens a list above it (board 23): its title names the meal ("메뉴 모두 보기 · 화 점심"), then one group per candidate in the map's order, each with its number as on the map, its name, its arrival time ("11:53 도착"), and every dish with its price; the pick's group is marked "고른 곳". A press on another group makes that place the pick: the list folds, and the flag, the route, the minutes, and the bar's span move to it, as a press on its tag does. "접기" and the chip again fold it. The chip makes a meal answer's bottom two rows; that is accepted.
+In a meal answer, a chip "메뉴 보기 ▲" in the bottom row opens a list above it (board 23): its title names the meal ("메뉴 모두 보기 · 화 점심"), then one group per candidate in the map's order, each with its number as on the map, its name, its arrival time ("11:53 도착"), and every dish with its price; the pick's group is marked "고른 곳". A press on another group makes that place the pick: the list folds, and the flag, the route, the minutes, and the bar's span move to it, as a press on its tag does. "접기" and the chip again fold it. The chip makes a meal answer's bottom two rows; that is accepted.
 
 ## What happens now
 
@@ -28,6 +28,7 @@ In a meal answer, a chip "메뉴 모두 보기 ▲" in the bottom row opens a li
 
 - A buffet's own price (`Plan.menu.price`) stands once in its group's header ("12:35 도착 · 1인 6,500원"), and its dishes show no price.
 - A candidate without a menu keeps its header and shows no dish rows.
+- The chip reads "메뉴 보기 ▲" / "메뉴 보기 ▼" (screen review, 2026-11-22: short, so that two kinds of ticket 16 stand whole beside it); the list's title keeps "메뉴 모두 보기 · 화 점심".
 - The chip shows only while the Plan's card is docked; it is the row's last chip, after "지난 답 N개" and the note. The list stands in the docked card above the row, so the card grows and the camera fits again; it folds when another answer comes.
 
 ## Acceptance criteria
