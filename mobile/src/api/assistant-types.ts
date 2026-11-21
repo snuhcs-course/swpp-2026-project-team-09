@@ -249,6 +249,21 @@ export interface AnswerReply extends WithMissing {
   mealSet?: MealSet | null;
 }
 
+// One of the User's Quests as the main server names it (P05 ticket 17): set aside by a plan, related to one, or asked
+// about in a day's Lookup. `people` are the others of it, never the User; `changeable` when the User may change it from
+// the Assistant (theirs, shared with nobody, for no event or seat, not under way).
+export interface KeptQuest {
+  kind: 'meal-lunch' | 'meal-dinner' | 'meet' | 'event' | 'seat' | 'other';
+  questId: string;
+  title: string;
+  startAt: string;
+  endAt: string | null;
+  place: string | null;
+  people: { name: string; answer: 'leads' | 'accepted' | 'waiting' | 'declined' }[];
+  mine: boolean;
+  changeable: boolean;
+}
+
 export interface MealSet {
   questId: string;
   title: string;

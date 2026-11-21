@@ -35,7 +35,12 @@ import { aloneLeaveBy, goingLine, nextWordOf } from './alone-plan.js';
 import { type PlanQuestBody, type PlanQuestDto } from './dto/plan-quest.dto.js';
 
 // A Quest made from a meal's Plan keeps its meal, so that a new Plan for the same meal and day sets it aside.
-const mealOf = (input: PlanInput): { meal?: MealInput['meal'] } => (input.kind === 'meal' ? { meal: input.meal } : {});
+const mealOf = (input: PlanInput): { meal?: MealInput['meal']; meet?: true } => {
+  if (input.kind === 'meal') {
+    return { meal: input.meal };
+  }
+  return input.kind === 'meet' ? { meet: true } : {};
+};
 
 // The Sub Quests of a Plan, each ending where the next starts and the last at the Plan's end.
 export const subQuestsOf = ({ subQuests, endAt }: Plan): SubQuestColumns[] =>

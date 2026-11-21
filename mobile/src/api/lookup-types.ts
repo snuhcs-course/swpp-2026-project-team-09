@@ -8,6 +8,7 @@
 import type {
   AnswerLine,
   ConditionChip,
+  KeptQuest,
   MapScene,
   MenuDish,
   PlacePoint,
@@ -41,6 +42,9 @@ export interface Lookup {
   // A menu Lookup's facts: the meal's hours that day ("HH:MM"), null when none were kept, and the dishes of its main
   // corner with their prices. Absent from any other Lookup, and from a main server before P05 ticket 12.
   menu?: LookupMenu;
+  // A day's: the User's Quests the question asked about, nearest first (P05 ticket 17). Absent from any other Lookup, and
+  // from a main server before it.
+  kept?: KeptQuest[];
 }
 
 export interface LookupMenu {

@@ -6,6 +6,7 @@
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Action, type Expect, expectSchema, type Mention } from './expect.ts';
@@ -25,7 +26,7 @@ import {
 import type { CaseRun } from './runner.ts';
 import { type Observed, observedActionOf } from './observed.ts';
 import { type CheckName, stepsChecks } from './checks.ts';
-import { type FailureKind, type TurnTrace } from './trace.ts';
+import { type FailureKind, showsSomething, type TurnTrace } from './trace.ts';
 
 // The scorer (spec P19, "Scoring (rules only)"): fixed rules that read a turn's trace and reply against its case's
 // `expect`. No model grades anything, so a saved run is scored again for free. eval/run-score.ts sums a run's cases
@@ -110,7 +111,7 @@ export function actionOf(trace: TurnTrace, expect: Expect, names: Names): Action
   if (proposalOf(reply.proposal, names) !== null) {
     return asks ? 'PROPOSE+ASK' : 'PROPOSE';
   }
-  const shown = reply.cards.length > 0 || reply.mapButtons.length > 0;
+  const shown = showsSomething(reply);
   const answered = (outcome: string): boolean =>
     calls.some((call) => roleOf(call.name) === 'lookup' && outcomeOf(call) === outcome);
   const inWords = answered('found') && reply.text.trim() !== '';
