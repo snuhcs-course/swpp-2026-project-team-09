@@ -10,10 +10,11 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { JoinPolicy, LatLng, MyParty, Party, Quest, SubQuest } from '@/api/types';
-import { koreaClock, koreaDate, koreaDaysAfter, koreaNextDay, sameKoreaDay } from '@/korea-time';
+import { koreaClock, koreaDate, koreaDay, koreaDaysAfter, koreaNextDay, sameKoreaDay } from '@/korea-time';
 
 // What a row of the Quest list is drawn as, which gives its colour, by the Quest's own Join Policy: a class; `open`, a
 // 공개 파티, an Open or an Approval Quest; `closed`, a 비공개 파티, a Closed Quest. Whether its Party is switched on
@@ -205,10 +206,13 @@ function sharedKicker(quest: Quest, switchedOn: boolean, meId: string): string {
   return more.length === 0 ? `${kind} · ${first.name}` : `${kind} · ${first.name} 외 ${more.length}명`;
 }
 
-function meta(subQuest: SubQuest | null): string {
+// "14:00 · 학생회관", with its day when it is not today ("내일 14:00 · 학생회관"): the main screen's list has no day
+// headers, and a Party tomorrow read as today's was gone to a day early.
+function meta(subQuest: SubQuest | null, now: Date): string {
   const label = subQuest?.place?.label ?? '';
   const start = subQuest?.startsAt ?? null;
-  return [start === null ? '' : koreaClock(start), label].filter((part) => part !== '').join(' · ');
+  const day = start === null || koreaDaysAfter(now, new Date(start)) === 0 ? '' : `${koreaDay(start, now)} `;
+  return [start === null ? '' : `${day}${koreaClock(start)}`, label].filter((part) => part !== '').join(' · ');
 }
 
 // The frames' words for a kind on the whole screen: a class, a Party that others may join, and anything else, with
@@ -270,7 +274,7 @@ export function toQuestRows(sources: QuestSources): QuestRowView[] {
         : sharedKicker(quest, partyOf(quest, myParty, parties) !== null, meId),
       label: kindLabel(tone, quest, meId),
       title: quest.title,
-      meta: meta(subQuest),
+      meta: meta(subQuest, now),
       place: subQuest?.place?.label ?? '',
       time: start === null ? '' : koreaClock(start),
       daysAway: start === null ? null : koreaDaysAfter(now, new Date(start)),

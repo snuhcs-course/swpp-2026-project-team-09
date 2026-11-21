@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { TimetableClass } from '@/api/types';
@@ -61,11 +62,16 @@ describe('시간대', () => {
     );
   });
 
-  it('says there is no class before it, tomorrow or on a named day', () => {
-    expect(timeReason('2026-10-02T10:00:00.000Z', CLASSES, TODAY)).toBe('내일은 19:00까지 수업이 없어서 비어 있어요.');
+  it('says there is no class before it on a day with classes', () => {
     expect(timeReason('2026-10-08T00:00:00.000Z', CLASSES, TODAY)).toBe(
       '목요일은 09:00까지 수업이 없어서 비어 있어요.',
     );
+  });
+
+  // In the usage test of 2026-11-21 a Sunday was "free until 18:00".
+  it('says a day with no class at all, tomorrow or a Sunday, has none, not that it is free until the post', () => {
+    expect(timeReason('2026-10-02T10:00:00.000Z', CLASSES, TODAY)).toBe('내일은 수업이 없는 날이에요.');
+    expect(timeReason('2026-10-04T09:00:00.000Z', CLASSES, TODAY)).toBe('일요일은 수업이 없는 날이에요.');
   });
 
   it('says when the post has no time', () => {

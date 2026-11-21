@@ -5,6 +5,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MyParty, Party, Quest } from '@/api/types';
@@ -162,6 +163,15 @@ function groupOf(live: boolean, strip: MineStripView | null, start: string | nul
   return dayGroup(start, now);
 }
 
+// The step and its place. A step that takes the 파티's own title, which the card already shows, is its place alone:
+// "민수랑 학생회관에서 만나기 · 학생회관" said the place twice.
+function whatOf(step: string, title: string, place: string): string {
+  if (place === '') {
+    return step;
+  }
+  return step === title ? place : `${step} · ${place}`;
+}
+
 function cardOf(quest: Quest, sources: MineSources, past: boolean): MineCardView {
   const { myParty, parties, declined, meId, now } = sources;
   // A past Quest's Sub Quests have all ended: its first tells when it was.
@@ -188,7 +198,7 @@ function cardOf(quest: Quest, sources: MineSources, past: boolean): MineCardView
         ? null
         : {
             when: start === null ? '시간 미정' : whenWords(start, now),
-            what: place === '' ? next.title : `${next.title} · ${place}`,
+            what: whatOf(next.title, quest.title, place),
           },
     faces: [...quest.holders.filter(({ id }) => id === meId), ...quest.holders.filter(({ id }) => id !== meId)].map(
       ({ name }) => name,

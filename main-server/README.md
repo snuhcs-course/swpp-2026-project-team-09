@@ -2356,7 +2356,12 @@ Anthropic API as the AI's key says
   in `src/assistant/dto/answer.dto.ts`. An app that also sends `meet` is offered `planMeet` ("민수랑 만나고 싶어"),
   whose answer is a meet's (`kind` `meet`, below); one that does not keeps the prompt and the tools it had. A busy
   stretch of a Plan's time band carries a `label`: `302동 수업` for a Class with a Place, `수업` without one, and `일정`
-  for a Sub Quest.
+  for a Sub Quest. A message that asks for two or more things ("16시에 관정 갔다가 19시쯤 저녁, 7층 예약하고 스케줄 짜줘")
+  gets `steps` too, left out otherwise: each request in time order, a book card, a booking a library tool refused, or
+  the answer, with its `kind`, `title`, `place`, `from`, `startAt`, `endAt`, `status` (`shown` or `not-done`),
+  `reason`, and what `shows` it (the card's key or the answer). A meal planned after a booking sets out from 관정 when
+  the booking ends, unless the User named its start (`planMeal`'s `startPlaceId`); `planMeal` plans from the steps shown
+  before it, and the run plans the meal again when the model planned it first (`src/assistant/steps/plan-steps.ts`).
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
@@ -2881,7 +2886,9 @@ pnpm eval:compare eval/results/<a>.json eval/results/<b>.json   # two runs side 
 A case's `expect` (`eval/expect.ts`) holds the accepted `actions` (TOOL, ASK, PROPOSE, REFUSE, CHAT, TOOL+ASK,
 PROPOSE+ASK), `tools` (`required`, `allowed`, `forbidden`, `"*"` for none), `args` of required tools (a list for one
 call each), and the outcome: `proposal` fields, `cards` (`kind`, `seeds`, `min`, `max`), `mapButtons`, `text.mentions`
-(each a word, or a list of which any one counts, spaces ignored) and `text.absent` (words the reply must not hold). A
+(each a word, or a list of which any one counts, spaces ignored), `text.absent` (words the reply must not hold) and
+`steps` (each step's `kind`, `status` and `from`, the label of the Place it sets out from, all in order; `[]` for a
+reply with none). A
 case of the 공강 tools can also give `results`, what each tool must answer, which only the judgement suite reads. `knownFailure` goes on the case or
 in its `expect`. Values that name the world are seed names; the run file keeps the world's seeds to read ids by.
 

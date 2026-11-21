@@ -4,7 +4,7 @@ Parent: [P05 spec](../spec.md)
 Status: ready-for-agent
 Blocked by: [06](06-free-stretch-not-a-meal.md), which changes the same lines.
 
-Native files: none. Releases: the main server.
+Native files: none. Releases: the main server and an app OTA update.
 
 ## What happens now
 
@@ -13,13 +13,25 @@ Native files: none. Releases: the main server.
 
 ## What to build
 
-- The lines give up to three dishes with their prices, and the hours.
-- The rules say the time of collection only when the User asks or when the menu is not of the day asked.
+- The first line gives the first dish with its price and how many more are served ("**301동식당** 오늘 점심은 부대짬뽕&군만두 6,500원 외 1"); the basis opens with up to three dishes and their prices.
+- The hours stay the plan's, in the second line, read from the hours collected (ticket 01). The menu's own hours note is not added: where no hours were stored, it would contradict the plan's window in the same answer.
+- The menu rules say when the menu was collected only when the User asks, or when it is not the menu of the day asked.
+- The menu Lookup carries `menu`: the meal's hours that day (null when none were kept) and the dishes of its main corner with their prices, so that the map's card of the Restaurant (P04 ticket 08) reads them as facts, not from the words.
+- The Restaurant card (findMealRestaurants and showRestaurants) carries `hours`, the meal's hours kept for its day (`RestaurantHours`), or null when none were kept. The app reads it as optional. P04 ticket 08 writes them on the Restaurant's flag; that server part was moved here.
 
 ## Acceptance criteria
 
-- [ ] A menu with three dishes and prices gives the three with their prices and the hours. (Unit test, fails before the fix.)
-- [ ] An evaluation case: a menu question about today does not mention the time of collection.
-- [ ] Lint, format and types of the main server pass.
+- [x] The first line holds the first dish's price and the count of the others; the basis lists the dishes with their prices. (Unit test, fails before the fix.)
+- [x] An evaluation case, `menu-collected-not-said-unasked`: a menu question about today does not mention the time of collection. (Loads; not run here, it calls the model.)
+- [x] The menu Lookup's `menu` holds the hours and the main corner's dishes with prices. (Unit test.)
+- [x] The app believes a menu Lookup with `menu`, with null hours, and without it, and refuses one of another shape. (Unit test.)
+- [x] The Restaurant card carries the hours kept for its meal, and null without them. (Main server integration tests.)
+- [x] The app believes a card with hours, with null, and without the field, and refuses hours of another shape. (Integration test.)
+- [x] Lint, format and types of the main server and the app pass.
 
 ## Comments
+
+### Agent usage (2026-11-21)
+
+- Agent time: about 4 minutes (an estimate from the transcript, gaps over five minutes left out).
+- Tokens: output 11k; input 6.8M, of which 6.8M cache reads, 19k cache writes and 24 uncached. No subagents.

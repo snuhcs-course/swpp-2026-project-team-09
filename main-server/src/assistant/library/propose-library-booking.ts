@@ -13,11 +13,27 @@ import { defineTool, type Tool, type ToolContext } from '../feature.js';
 import { koreaDate } from '../korea-time.js';
 import { shownMinutes } from '../../travel/travel.js';
 import { clockTime, dateInput } from '../free-time/tool-parts.js';
-import { checkBooking, type CheckedBooking, clockOfMinutes, minutesOfClock, type Refusal } from './booking-rules.js';
+import { noteNotDone, refusedBookingStep } from '../steps/plan-steps.js';
+import {
+  checkBooking,
+  type CheckedBooking,
+  clockOfMinutes,
+  minutesOfClock,
+  type Refusal,
+  saysClosed,
+} from './booking-rules.js';
 import { KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
 import { firstOfSeveralNote } from './find-library-space.js';
 import { bookCard, type LibraryCompanion } from './library-card.js';
-import { bookableSpace, dayWords, type LibraryServices, refused, showCard, spaceIdInput } from './library-parts.js';
+import {
+  bookableSpace,
+  dayWords,
+  type LibraryServices,
+  refused,
+  showCard,
+  SIGN_IN_FIRST,
+  spaceIdInput,
+} from './library-parts.js';
 import { fillSeat, filledWords, leaveByOf, type SeatFacts, type SeatFill, seatedAt } from './seat-arrival.js';
 
 const words = (max: number): z.ZodString => z.string().trim().min(1).max(max);
@@ -107,8 +123,8 @@ function summaryOf(
   const asks = space.unit === 'room' && booking.useDesc === null ? ' 사용 용도는 카드에서 골라요.' : '';
   const when = `${dayWords(booking.date, now)} ${booking.start}–${end}`;
   const press = askedToBook
-    ? '대신 예약할 수는 없어요. 예약하기를 직접 눌러야 예약돼요.'
-    : '예약하기를 눌러야 예약돼요.';
+    ? `대신 예약할 수는 없어요. 예약하기를 직접 눌러야 예약돼요. ${SIGN_IN_FIRST}`
+    : `예약하기를 눌러야 예약돼요. ${SIGN_IN_FIRST}`;
   return `${where}, ${when}${who} 예약 카드를 보여 줬어요. ${filled}${press}${asks}`;
 }
 
@@ -228,10 +244,18 @@ export function proposeLibraryBooking(services: LibraryServices, options?: Booki
         : { ...asked, start: filling.fill.start, minutes: filling.fill.minutes, end: filling.fill.end };
     const result = checkBooking(services.catalogue, space, { ...request, people }, context.now);
     if ('refusal' in party || 'refusals' in result) {
-      return refused([
+      const refusals = [
         ...('refusal' in party ? [party.refusal] : []),
         ...('refusals' in result ? result.refusals : []),
-      ]);
+      ];
+      const reasons = refusals.map(({ reason }) => reason);
+      const step = refusedBookingStep(space, { ...request, date: asked.date }, reasons);
+      noteNotDone(
+        context,
+        step,
+        refusals.some((refusal) => saysClosed(refusal)),
+      );
+      return refused(refusals);
     }
     const { booking } = result;
     return shownBooking(services, context, { space, booking, party, filling, askedToBook: asked.askedToBook });

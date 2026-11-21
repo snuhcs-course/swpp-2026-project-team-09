@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLine, AnswerReply, MapScene, PlacePoint, Plan, TimeBand } from '@/api/assistant-types';
@@ -222,6 +223,11 @@ function isOfQuest(value: unknown): boolean {
   );
 }
 
+// A Global Event's own times: absent from other Plans and from a main server before P05 ticket 05's follow-up.
+function isEventTimesOrAbsent(value: unknown): boolean {
+  return value === undefined || (isText(field(value, 'startAt')) && isTextOrNull(field(value, 'endAt')));
+}
+
 export function isPlan(value: unknown): value is Plan {
   return (
     hasTexts(value, ['id', 'title', 'startAt', 'endAt']) &&
@@ -234,7 +240,8 @@ export function isPlan(value: unknown): value is Plan {
     listOf(isText)(field(value, 'basis')) &&
     isScene(field(value, 'scene')) &&
     isBand(field(value, 'band')) &&
-    isOfQuest(value)
+    isOfQuest(value) &&
+    isEventTimesOrAbsent(field(value, 'event'))
   );
 }
 

@@ -4,16 +4,19 @@
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { readFileSync } from 'node:fs';
 import { Server } from 'node:http';
+import { isDeepStrictEqual } from 'node:util';
 import { inject, type ProvidedContext } from 'vitest';
 import { parse } from 'yaml';
 import { z } from 'zod';
 import { casesIn, loadCases, WORLD_CLOCKS } from '../eval/cases.ts';
 import { FIXED_SET } from '../eval/fixed-set.ts';
+import { casesToRun } from '../eval/p4/holdout.ts';
 import { caseOfTag, tagSchema } from '../eval/p5/report.ts';
 import { seedP5World } from '../eval/p5/world.ts';
 import { p5WorldData } from '../eval/p5/world-data.ts';
@@ -50,6 +53,7 @@ const suiteSchema = z.looseObject({
   world: z.literal('p5'),
   tags: z.record(z.string(), z.array(tagSchema)),
   superseded: z.array(z.strictObject({ case: z.string(), heldBy: z.string() })),
+  revised: z.array(z.strictObject({ case: z.string(), heldBy: z.string() })),
   thresholds: z.array(thresholdSchema),
 });
 
@@ -161,6 +165,21 @@ function pointDistances(stored: readonly StoredPlace[]): object[] {
   });
 }
 
+// A case without its id and its words, to compare a revised case with the frozen one.
+function apart({ id: _id, expect: written, ...rest }: (typeof cases)[number]): object {
+  return { ...rest, expect: { ...written, text: undefined } };
+}
+
+// The revised cases whose frozen case or revision is missing, or that differ from it in more than their words.
+function revisionsOffTheirCases(): object[] {
+  const byId = new Map(cases.map((one) => [one.id, one]));
+  return suite.revised.filter(({ case: id, heldBy }) => {
+    const frozen = byId.get(id);
+    const revision = byId.get(heldBy);
+    return frozen === undefined || revision === undefined || !isDeepStrictEqual(apart(frozen), apart(revision));
+  });
+}
+
 describe('The P05 suite', () => {
   it('runs every case 3 times, in fixed histories, none of them live', () => {
     expect(cases.filter(({ repeat, live }) => repeat !== 3 || live)).toEqual([]);
@@ -202,6 +221,18 @@ describe('The P05 suite', () => {
     const fixed = new Set(Object.values(FIXED_SET).flat());
 
     expect(suite.superseded.filter(({ case: id, heldBy }) => !fixed.has(id) || !ids.includes(heldBy))).toEqual([]);
+  });
+});
+
+describe('The revised P05 cases', () => {
+  it('keep each frozen case as it was, beside a copy that differs only in its words', () => {
+    expect(revisionsOffTheirCases()).toEqual([]);
+  });
+
+  it('run in place of their frozen cases, never beside them', () => {
+    const run = new Set(casesToRun({ world: 'p5' }).map(({ id }) => id));
+
+    expect(suite.revised.filter(({ case: id, heldBy }) => run.has(id) || !run.has(heldBy))).toEqual([]);
   });
 });
 

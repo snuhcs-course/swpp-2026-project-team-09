@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -213,5 +214,15 @@ describe("The time band's range", () => {
 
     expect(band.range).toEqual({ startAt: time('11:30'), endAt: time('13:30') });
     expect(band.now).toBe('2026-11-16T20:00:00+09:00');
+  });
+});
+
+describe('A meal stretch over two hours', () => {
+  it('is said by when it ends, not as "식사 N분", which reads as the length of the meal', () => {
+    const plan = firstPlan(answerOf([{ ...me(), items: [] }], { now: at('10:30') }));
+
+    expect(plan.togetherMinutes).toBeGreaterThan(120);
+    expect(plan.lines.flat().map(({ text }) => text)).not.toContainEqual(expect.stringMatching(/식사 \d+분/u));
+    expect(plan.band.text).not.toContain('분');
   });
 });

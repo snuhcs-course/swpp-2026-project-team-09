@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Lookup } from '../src/assistant/dto/answer.dto.js';
@@ -244,6 +245,15 @@ describe('A way asked about the shuttle (board n21)', () => {
     expect(lookup.lines[1]).toContainEqual({ text: '11분', strong: true });
     expect(lookup.scene.flags).toEqual([{ at: position('SK경영관'), text: '22:21 도착 · 58동', role: 'place' }]);
     expect(lookup.actions).toEqual([]);
+  });
+
+  // In the usage test of 2026-11-21, asked about the shuttle for a Class, the answer gave the walk's lines again.
+  it('says first that the shuttle is not running when a Class is due too, then when to set out', () => {
+    const me = { userId: ME, name: '유상', items: [classAt(TUESDAY, '22:40', '23:30', 'SK경영관')] };
+
+    const lookup = lookupOf({ travel: timed(11, null), about: 'shuttle', me }, at('22:10'));
+
+    expect(linesOf(lookup)).toEqual(['셔틀은 지금 다니지 않아요 (평일 8–21시)', '22:29에 나서면 22:40에 맞아요']);
   });
 
   it('is the way of a walk while the shuttle runs', () => {

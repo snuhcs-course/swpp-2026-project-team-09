@@ -95,6 +95,11 @@ function isRestaurantTravel(value: unknown): value is RestaurantTravel {
   );
 }
 
+// Absent or null, or both times as "HH:MM".
+function isHoursOrAbsent(value: unknown): boolean {
+  return value === undefined || value === null || hasTexts(value, ['opensAt', 'closesAt']);
+}
+
 function isRestaurant(value: unknown): value is RestaurantCard['restaurant'] {
   const meal = field(value, 'meal');
   return (
@@ -103,6 +108,7 @@ function isRestaurant(value: unknown): value is RestaurantCard['restaurant'] {
     (meal === 'lunch' || meal === 'dinner') &&
     isNumber(field(value, 'eatingMinutes')) &&
     listOf(isMenuLine)(field(value, 'lines')) &&
+    isHoursOrAbsent(field(value, 'hours')) &&
     listOf(isRestaurantTravel)(field(value, 'people')) &&
     isQuestProposal(field(value, 'proposal'))
   );

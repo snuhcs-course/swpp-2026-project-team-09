@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Plan } from '@/api/assistant-types';
@@ -89,7 +90,7 @@ describe('the card of a pressed Place', () => {
     const next = plan(MEAL_ANSWER_FIXED_PLACE);
 
     expect(noteOf({ ...next, togetherMinutes: 25 }, CURRENT)).toBe('12:35–12:55 함께 25분 · 지금 계획보다 3분 길어요');
-    expect(noteOf({ ...next, togetherMinutes: 22 }, CURRENT)).toBe('12:35–12:55 함께 22분 · 지금 계획과 같아요');
+    expect(noteOf({ ...next, togetherMinutes: 22 }, CURRENT)).toBe('12:35–12:55 함께 22분 · 시간은 지금 계획과 같아요');
   });
 
   it('names the building while it is asked', () => {
@@ -113,5 +114,17 @@ describe('the map while a Place is asked about', () => {
     ]);
     expect(scene.people).toBe(CURRENT.scene.people);
     expect(scene.flags).toEqual([]);
+  });
+});
+
+describe('the note on equal minutes', () => {
+  // In the usage test of 2026-11-21 another restaurant with the same minutes read "지금 계획과 같아요".
+  it('says the plan is the same only at its own place', () => {
+    const next = plan(MEAL_ANSWER_FIXED_PLACE);
+
+    expect(noteOf({ ...next, place: CURRENT.place, togetherMinutes: 22 }, CURRENT)).toBe(
+      '12:35–12:55 함께 22분 · 지금 계획과 같아요',
+    );
+    expect(next.place.placeId).not.toBe(CURRENT.place.placeId);
   });
 });
