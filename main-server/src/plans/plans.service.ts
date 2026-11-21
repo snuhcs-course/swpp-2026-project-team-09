@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
@@ -28,6 +29,7 @@ import { CLOCK, type Clock } from '../quests/clock.js';
 import { type CreatedInvitation, InvitationsService } from '../quests/invitations.service.js';
 import { ALONE_CAPACITY, QuestsService, type SubQuestColumns } from '../quests/quests.service.js';
 import { heldMealOf } from '../quests/held-meal.js';
+import { refuseHeldMeeting } from '../quests/held-meeting.js';
 import { conflict, sharedQuestHeld } from '../quests/refusals.js';
 import { forgetLeaveBy } from '../quests/taken-alone.js';
 import { UsersService } from '../users/users.service.js';
@@ -121,6 +123,9 @@ export class PlansService {
     }
     const plan = await this.replanned(userId, making, []);
     const { questId, created, replaced } = await this.prisma.$transaction(async (tx) => {
+      if (making.input.kind === 'meet') {
+        await refuseHeldMeeting(tx, userId, making.input, this.clock.now());
+      }
       const dropped = await this.replaceHeldMeal(userId, making.input, tx);
       const made = await this.quests.createWithSubQuests(plan.title, subQuestsOf(plan), [userId], tx, {
         capacity: Math.max(CAPACITY_MIN, plan.parts.length),

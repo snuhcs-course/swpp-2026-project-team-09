@@ -3524,6 +3524,14 @@ into a Quest (`POST /plans`) replaces it in the same transaction: the asker drop
 and its `leave-by` is cancelled. A meal held with another Holder or a waiting invitation is never dropped from a new
 Plan: the making answers 409 `MEAL_ALREADY_SET` with its `questId`, and it is changed in that Quest.
 
+A meeting is set aside the same way (`quests/held-meeting.ts`): a new meet's Plan takes the asker's meeting made from a
+meet's Plan that day, not started, that the model names by its ref (`planMeet`'s `questId`), else the one whose
+people are the Friends asked for (the others not declined, or the declined ones when every other declined). One the
+asker leads is left out of everyone's day and named as `planSet`, `changeable`, and the model is told `setAside`; one a
+Friend made answers the model `set-by-friend` and plans nothing; two answer `several`. Making a second one at `POST
+/plans` answers 409 `PLAN_ALREADY_SET`, or `PLAN_SET_BY_FRIEND` for a Friend's, with its `questId`: it is changed in
+place at `PUT /plans/{id}`.
+
 An invited User's `leave-by` is kept when they accept an invitation into a Quest whose steps give a gathering, as a
 party's do. `InvitationsService` tells the listeners given to its `onAccepted()` once the acceptance is stored and
 signalled, so that the Quests' module need not import the Plans' module. `InviteeTimeToLeave` from
