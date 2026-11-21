@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -34,7 +35,10 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const ASKED = '학생증 어디서 받아?';
-const FACTS = '두레문예관(67동) 2층 학생지원센터에서 받아요. MySNU에서 신청한 다음 날부터, 평일 9:00–17:50에 받아요.';
+const WHERE = '두레문예관(67동) 2층 학생지원센터에서 받아요.';
+const WHEN = 'MySNU에서 신청한 다음 날부터, 평일 9:00–17:50에 받아요.';
+// Two lines, as a procedure is: a dock's one line would show the first alone.
+const FACTS = `${WHERE}\n${WHEN}`;
 const WAY_WORDS = '학생증(S-CARD) 발급받기 가는 길';
 
 const REPLY = {
@@ -83,7 +87,9 @@ describe('a reply in words with a button under it', () => {
   it("shows the model's words and 가는 길 보기 under them, with no condition chips", async () => {
     await ask(REPLY);
 
-    expect(card().getByText(FACTS)).toBeVisible();
+    expect(card().getByText(WHERE)).toBeVisible();
+    expect(card().getByText(WHEN)).toBeVisible();
+    expect(screen.queryByTestId('dock-line')).toBeNull();
     expect(card().getByRole('button', { name: '가는 길 보기' })).toBeVisible();
     expect(screen.queryByTestId('condition-chips')).toBeNull();
   });
@@ -107,7 +113,8 @@ describe('a reply in words with a button under it', () => {
     const { offers: _offers, ...before } = REPLY;
     await ask(before);
 
-    expect(card().getByText(FACTS)).toBeVisible();
+    expect(card().getByText(WHERE)).toBeVisible();
+    expect(card().getByText(WHEN)).toBeVisible();
     expect(card().queryByRole('button', { name: '가는 길 보기' })).toBeNull();
   });
 });

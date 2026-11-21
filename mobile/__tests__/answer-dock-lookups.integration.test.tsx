@@ -95,6 +95,27 @@ describe('a Lookup in the dock', () => {
     expect(card().queryByRole('button', { name: '닫기' })).toBeNull();
   });
 
+  it("reaches a first way's card, its chips, basis, and 닫기, from 근거 in the dock", async () => {
+    const user = await askOnMap(server, WAY_LOOKUP_REPLY);
+
+    await user.press(card().getByRole('button', { name: '근거 ›' }));
+
+    expect(card().getByTestId('lookup-card')).toBeVisible();
+    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
+    expect(card().getByRole('button', { name: /근거/u })).toBeVisible();
+  });
+
+  it('keeps "길 안내" from acting on the turn before while the next reply is on its way', async () => {
+    const user = await askOnMap(server, WAY_LOOKUP_REPLY);
+    server.on('POST /assistant/messages', { status: 200, body: NOT_RUNNING_LOOKUP_REPLY, afterMs: 5000 });
+
+    await user.type(screen.getByLabelText(AI_INPUT), '민수 어디야?');
+    await user.press(screen.getByRole('button', { name: '보내기' }));
+    await pass(300);
+
+    expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '길 안내' })).toBeDisabled();
+  });
+
   it('says that the shuttle is not running in one line, whose press raises the rest', async () => {
     const user = await askOnMap(server, NOT_RUNNING_LOOKUP_REPLY);
 
