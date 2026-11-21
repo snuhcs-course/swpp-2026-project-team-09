@@ -1,0 +1,46 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-21  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# Starts CI at the nightly level (.github/ci/changes.sh), with the app's integration tests, on the newest commit of the
+# newest iteration Main, every night at 03:00 KST. GitHub fires a schedule only from the default branch's copy of this
+# file, so `main` carries it. A Main whose ci.yml cannot be started this way yet (no `workflow_dispatch`) is skipped
+# with a notice. A run started with the workflow's token sends GitHub's failure mail to nobody: a red one is found by
+# its name, "Nightly level on <line>/Main", in CI's list of runs (README.md § The nightly level).
+name: Nightly
+
+on:
+  schedule:
+    - cron: '0 18 * * *'
+
+# Starting another workflow needs actions: write; reading the branches and ci.yml needs contents: read.
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  start:
+    name: start
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Start CI at the nightly level on the newest iteration Main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          main=$(gh api --paginate "repos/$GITHUB_REPOSITORY/branches?per_page=100" --jq '.[].name' |
+            { grep -E '^[0-9]+\.[0-9]+/Main$' || true; } | sort -V | tail -n 1)
+          if [[ -z $main ]]; then
+            echo "::error::No <line>/Main branch was found"
+            exit 1
+          fi
+          ci=$(gh api "repos/$GITHUB_REPOSITORY/contents/.github/workflows/ci.yml?ref=$main" --jq .content |
+            base64 --decode)
+          if ! grep -q '^  workflow_dispatch:' <<<"$ci"; then
+            echo "::notice::$main's ci.yml has no workflow_dispatch trigger yet, so no nightly run was started"
+            exit 0
+          fi
+          gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$main"
+          echo "Started CI at the nightly level on $main." >>"$GITHUB_STEP_SUMMARY"

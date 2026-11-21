@@ -5,23 +5,28 @@
 # 2026-11-15  Opus 5.5   prompted by fyoon46
 # 2026-11-18  Opus 5.5   prompted by fyoon46
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-21  Opus 5.5   prompted by fyoon46
 ################################################################################
 
-# Says whether a CI job (.github/workflows/ci.yml) does its work on this run (run=true or run=false) and at which level
-# (tests=unit, the basic checks, or tests=all, every test):
+# Says whether a CI job (.github/workflows/ci.yml) does its work on this run (run=true or run=false) and with which
+# tests (tests=unit, the unit tests only, or tests=all, every test), at one of three levels:
 #
 #   Run                                            Jobs                                             Level
 #   Push to a working branch (anything but         the jobs its changed paths reach, against        basic
 #   <line>/Main, main and development)             origin/<line>/Main
 #   Merge queue                                    the jobs its changed paths reach, against        basic
 #                                                  the merge group's base
-#   Push to <line>/Main, main or development       every job                                        full
-#   Tag push                                       every job                                        full
+#   Push to <line>/Main, main or development       every job but mobile-tests                       full
+#   Tag push                                       every job but mobile-tests                       full
+#   Run started by hand or by the nightly          every job                                        nightly
+#   (workflow_dispatch), or any other event
 #
-# The level comes from the event and the ref alone. Any doubt or failure after that gives run=true at that level. A run
-# of an event that ci.yml does not trigger on does every job at the full level. A working branch is compared from all
-# its common ancestors with its Main, never with the previous push, whose run may have been cancelled before it checked
-# anything.
+# The basic level gives tests=unit, the full and nightly levels tests=all. mobile-tests, the app's integration tests,
+# take over twenty minutes, so they run at the nightly level only: at the full level that job skips its work.
+#
+# The level comes from the event and the ref alone. Any doubt or failure after that gives run=true at that level. A
+# working branch is compared from all its common ancestors with its Main, never with the previous push, whose run may
+# have been cancelled before it checked anything.
 #
 # Usage: changes.sh <job key>, from the repository root, with GitHub's GITHUB_EVENT_NAME, GITHUB_REF, GITHUB_REF_NAME
 # and GITHUB_SHA, and in the merge queue MERGE_GROUP_BASE_SHA, the merge group's base. It appends run=true or run=false
@@ -61,6 +66,8 @@ reach() {
     # app-fingerprint runs the Release script's decision.
     .github/release/*) reached='release-script app-fingerprint' ;;
     .github/workflows/release.yml) reached=release-script ;;
+    # It only starts ci.yml, and only from main's copy.
+    .github/workflows/nightly.yml) reached='' ;;
     # Read by no job. Markdown inside a package matched its package above, whose format check reads it.
     .scratch/* | docs/* | .claude/* | .agents/* | .github/CODEOWNERS | .github/pull_request_template.md | *.md)
       reached=''
@@ -80,28 +87,31 @@ reaches() {
   esac
 }
 
-# Sets `tests` from GITHUB_EVENT_NAME and GITHUB_REF alone, by string checks that cannot fail.
+# Sets `level` (basic, full or nightly) and `tests` from GITHUB_EVENT_NAME and GITHUB_REF alone, by string checks that
+# cannot fail.
 level() {
   local branch
-  tests=all
+  level=nightly tests=all
   case ${GITHUB_EVENT_NAME:-} in
-    merge_group) tests=unit ;;
+    merge_group) level=basic ;;
     push)
+      level=full
       [[ ${GITHUB_REF:-} == refs/heads/* ]] || return 0
       branch=${GITHUB_REF#refs/heads/}
       case $branch in
         main | development) ;;
-        */*) [[ ${branch#*/} == Main ]] || tests=unit ;;
-        *) tests=unit ;;
+        */*) [[ ${branch#*/} == Main ]] || level=basic ;;
+        *) level=basic ;;
       esac
       ;;
   esac
+  [[ $level != basic ]] || tests=unit
 }
 
 # Sets `run` and `why` for the job, at the level that `level` set.
 decide() {
   local job=$1 known='' one branch line main main_commit sha shallow holders holder status bases base at='' path count=0
-  local paths hit='' queue='' since group_base
+  local paths hit='' queue='' since group_base pushed
   run=true
   if [[ -z $job ]]; then
     why='no job key was given'
@@ -112,6 +122,20 @@ decide() {
   done
   if [[ -z $known ]]; then
     why="$job is not a job key that this script knows"
+    return
+  fi
+  if [[ $level == full ]]; then
+    case ${GITHUB_REF:-} in
+      refs/heads/*) pushed="a push to ${GITHUB_REF#refs/heads/}" ;;
+      refs/tags/*) pushed="the push of tag ${GITHUB_REF#refs/tags/}" ;;
+      *) pushed="a push of ${GITHUB_REF:-an unnamed ref}" ;;
+    esac
+    if [[ $job == mobile-tests ]]; then
+      run=false
+      why="$pushed runs the full level, and the app's integration tests run only at the nightly level, nightly and by hand"
+    else
+      why="$pushed runs the full level: every test but the app's integration tests"
+    fi
     return
   fi
   case ${GITHUB_EVENT_NAME:-} in
@@ -131,14 +155,6 @@ decide() {
     fi
     main="its base ${group_base:0:7}"
   else
-    if [[ ${GITHUB_REF:-} != refs/heads/* ]]; then
-      why="${GITHUB_REF:-the unnamed ref} is not a branch"
-      return
-    fi
-    if [[ $tests == all ]]; then
-      why="a push to ${GITHUB_REF#refs/heads/} runs every job with every test"
-      return
-    fi
     branch=${GITHUB_REF_NAME:-}
     if [[ $GITHUB_REF != "refs/heads/$branch" ]]; then
       why="GITHUB_REF_NAME ($branch) does not name $GITHUB_REF"
@@ -258,7 +274,7 @@ record() {
 }
 
 main() {
-  job=${1:-} recorded='' changed='' tests=all
+  job=${1:-} recorded='' changed='' level=nightly tests=all
   trap 'record true "the script stopped before it decided" || true; [[ -z $changed ]] || rm -f "$changed" || true
     exit 0' EXIT
   level

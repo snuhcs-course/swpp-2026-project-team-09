@@ -395,22 +395,22 @@ What the demo cannot show, and what is known not to work yet:
 
 What the project was built and run with:
 
-| Part                   | Used                                                                                                                                                                                          |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Development machine    | macOS on Apple Silicon                                                                                                                                                                        |
-| Node.js and pnpm       | Node.js 24.14.0, the version in `.nvmrc`; pnpm 12.6.0                                                                                                                                         |
-| Containers             | Docker Desktop (Docker 29, Compose 5), `compose.yaml` at the repository root                                                                                                                  |
-| Servers                | NestJS 12 on Node.js 24 in containers; Prisma 7; Socket.IO 4                                                                                                                                  |
-| Data stores            | PostgreSQL 18 with PostGIS 3, Redis 8                                                                                                                                                         |
-| Assistant              | Vercel AI SDK 7 with the OpenRouter and Anthropic providers; the key, and with it the provider, chosen by the global setting `llm.key`                                                        |
-| Admin site             | Next.js 16 with React 19, in a desktop browser                                                                                                                                                |
-| App                    | Expo SDK 57, React Native 0.86, Expo Router, expo-updates, expo-notifications; local modules: Kakao Maps SDK, ML Kit, cookies                                                                 |
-| Android build          | JDK 17 (Temurin) locally, JDK 21 (Temurin) for the Production APK in CI; Android SDK Platform and Build-Tools 36, Gradle 9.3.1                                                                |
-| Android devices        | Emulator: Android 16 (API 36), Google Play, `arm64-v8a`; ARM Android phones                                                                                                                   |
-| Device runs            | Maestro 2.11.0 on the Android emulator (API 36, `arm64-v8a`)                                                                                                                                  |
-| iOS build (not demo)   | Xcode 27 with the iOS 27 simulator, CocoaPods 1.17                                                                                                                                            |
-| Continuous integration | GitHub Actions on `ubuntu-latest`: a pull request and the merge queue run the jobs their changes reach, with unit tests; a push to a main line and a Release tag run every job and every test |
-| Deployment             | Dev Server: Docker Compose, Caddy; Production: Terraform, Amazon EKS in Seoul; the app: EAS Update                                                                                            |
+| Part                   | Used                                                                                                                                                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Development machine    | macOS on Apple Silicon                                                                                                                                                                                                          |
+| Node.js and pnpm       | Node.js 24.14.0, the version in `.nvmrc`; pnpm 12.6.0                                                                                                                                                                           |
+| Containers             | Docker Desktop (Docker 29, Compose 5), `compose.yaml` at the repository root                                                                                                                                                    |
+| Servers                | NestJS 12 on Node.js 24 in containers; Prisma 7; Socket.IO 4                                                                                                                                                                    |
+| Data stores            | PostgreSQL 18 with PostGIS 3, Redis 8                                                                                                                                                                                           |
+| Assistant              | Vercel AI SDK 7 with the OpenRouter and Anthropic providers; the key, and with it the provider, chosen by the global setting `llm.key`                                                                                          |
+| Admin site             | Next.js 16 with React 19, in a desktop browser                                                                                                                                                                                  |
+| App                    | Expo SDK 57, React Native 0.86, Expo Router, expo-updates, expo-notifications; local modules: Kakao Maps SDK, ML Kit, cookies                                                                                                   |
+| Android build          | JDK 17 (Temurin) locally, JDK 21 (Temurin) for the Production APK in CI; Android SDK Platform and Build-Tools 36, Gradle 9.3.1                                                                                                  |
+| Android devices        | Emulator: Android 16 (API 36), Google Play, `arm64-v8a`; ARM Android phones                                                                                                                                                     |
+| Device runs            | Maestro 2.11.0 on the Android emulator (API 36, `arm64-v8a`)                                                                                                                                                                    |
+| iOS build (not demo)   | Xcode 27 with the iOS 27 simulator, CocoaPods 1.17                                                                                                                                                                              |
+| Continuous integration | GitHub Actions on `ubuntu-latest`: a pull request and the merge queue run the jobs their changes reach, with unit tests; a main line's push and a Release tag run every test but the app's integration tests, which run nightly |
+| Deployment             | Dev Server: Docker Compose, Caddy; Production: Terraform, Amazon EKS in Seoul; the app: EAS Update                                                                                                                              |
 
 ## Requirements
 
@@ -736,18 +736,28 @@ the location to a point on campus in the extended controls.
 
 ## Running the tests
 
-Each project has the same four checks. CI runs them at a level set by the run's event alone:
+Each project has the same four checks. CI runs them at one of three levels, set by the run's event alone
+([.github/ci/changes.sh](.github/ci/changes.sh)):
 
-| Run                                                                             | Jobs                                                             | Level |
-| ------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ----- |
-| Push to a working branch (anything but `<line>/Main`, `main` and `development`) | The jobs its changed paths reach, against `origin/<line>/Main`   | Basic |
-| Merge queue                                                                     | The jobs its changed paths reach, against the merge group's base | Basic |
-| Push to `<line>/Main`, `main` or `development`                                  | Every job                                                        | Full  |
-| Tag push                                                                        | Every job                                                        | Full  |
+| Run                                                                             | Jobs                                                             | Level   |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------- |
+| Push to a working branch (anything but `<line>/Main`, `main` and `development`) | The jobs its changed paths reach, against `origin/<line>/Main`   | Basic   |
+| Merge queue                                                                     | The jobs its changed paths reach, against the merge group's base | Basic   |
+| Push to `<line>/Main`, `main` or `development`                                  | Every job but `mobile-tests`                                     | Full    |
+| Tag push                                                                        | Every job but `mobile-tests`                                     | Full    |
+| Run started by hand or by the nightly                                           | Every job                                                        | Nightly |
 
-The basic level runs the four checks with the unit tests only (`pnpm test:unit`); the full level runs every test. The
-iteration branch's full run goes one at a time, on its newest commit, so an integration or end-to-end failure shows only
-after the merge: run the integration and end-to-end test files you touched before a pull request is ready. A test's level, unit, integration or end-to-end, is in its file name ([ADR
+The basic level runs the four checks with the unit tests only (`pnpm test:unit`). The full level runs every test but
+the app's integration tests, in about ten minutes; the nightly level adds them, in the four `mobile-tests` jobs, which
+take 20 to 35 minutes more. A job left out still starts and reports success under its own name, which the iteration
+branch's ruleset requires. A Release waits for the full level only
+([infra/production/README.md](infra/production/README.md), "Following a Release"). The iteration branch's full run goes
+one at a time, on its newest commit, so an integration or end-to-end failure shows only after the merge, and a failure
+of the app's integration tests only in the next nightly run ([The nightly level](#the-nightly-level)): run the
+integration and end-to-end test files you touched before a pull request is ready (in `mobile`,
+`pnpm test:integration <file>`).
+
+A test's level, unit, integration or end-to-end, is in its file name ([ADR
 0007](docs/adr/0007-test-levels-by-what-a-test-starts.md)), and follows what the test starts: a unit test
 (`.unit.test.ts(x)`) calls one module with stand-ins and does no I/O; an integration test (`.integration.test.ts(x)`)
 joins two of our layers or crosses a real boundary, such as a database container or a started server; an end-to-end test
@@ -810,6 +820,37 @@ Not run by `pnpm test` or CI:
   model. The chat and collection suites' rules and records are in
   `main-server/eval/`; `eval/walking` and `eval/shuttle-days` hold only data, and their record is
   [P11's before-after](.scratch/iteration-3/P11-free-time-meals-parties-improve/before-after.md).
+
+### The nightly level
+
+[`.github/workflows/nightly.yml`](.github/workflows/nightly.yml) starts CI at the nightly level every night at 03:00 KST
+on the newest commit of the newest `<line>/Main`. GitHub fires a schedule only from the default branch's copy of a
+workflow, so `main` carries that file too; it skips, with a notice, a Main whose `ci.yml` cannot be started by hand.
+Anyone with write access starts the same run on a branch or a tag, for example on the iteration branch's newest commit
+before tagging a Release:
+
+```bash
+gh workflow run ci.yml --ref 5.0/Main
+```
+
+`--ref` takes a branch or a tag, not a commit. To check an older commit, push a branch at it, start the run there, and
+delete the branch once the run has finished:
+
+```bash
+git push origin <commit>:refs/heads/5.0/check-<commit>
+```
+
+```bash
+gh workflow run ci.yml --ref 5.0/check-<commit>
+```
+
+Such a run is named "Nightly level on" and its ref, and no merge or Release waits for it. GitHub mails a failure to
+whoever started a run by hand, but nobody for the nightly's, so look for a red one the next morning in the CI workflow's
+runs started by `workflow_dispatch`:
+
+```bash
+gh run list --workflow ci.yml --event workflow_dispatch --limit 5
+```
 
 ## Deployment
 

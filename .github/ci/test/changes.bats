@@ -5,6 +5,7 @@
 # 2026-11-15  Opus 5.5   prompted by fyoon46
 # 2026-11-18  Opus 5.5   prompted by fyoon46
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-21  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Each test runs in a subshell of its own, so that its exports reach no other test, as meant.
@@ -20,6 +21,8 @@ bats_require_minimum_version 1.5.0
 KEYS=(main-server socket-server worker-server admin mobile flow-tests mobile-tests app-fingerprint
   deploy-scripts release-script terraform manifests)
 EVERY="${KEYS[*]}"
+# The full level's jobs: every one but the app's integration tests.
+FULL=${EVERY/ mobile-tests/}
 PACKAGES='main-server socket-server worker-server admin mobile flow-tests'
 APP='mobile mobile-tests app-fingerprint'
 
@@ -173,6 +176,23 @@ expect_every_job() {
   [[ "$output" == "$prefix$reason"* ]] || { echo "$output" >&2; false; }
 }
 
+# Fails unless every job but mobile-tests does its work with every test, with these extra variables, the mobile job's
+# line saying the reason and mobile-tests's notice saying that it skips its work at the full level.
+expect_full_level() {
+  local reason=$1
+  shift
+  expect_jobs "$FULL" "$@"
+  [ "$(tests_given "$@")" = all ]
+  run --separate-stderr env "$@" GITHUB_OUTPUT="$BATS_TEST_TMPDIR/full-level" "$CHANGES" mobile
+  [ "$status" -eq 0 ]
+  [ "$output" = "The job mobile does its work: $reason runs the full level: every test but the app's integration \
+tests" ] || { echo "$output" >&2; false; }
+  run --separate-stderr env "$@" GITHUB_OUTPUT="$BATS_TEST_TMPDIR/full-level" "$CHANGES" mobile-tests
+  [ "$status" -eq 0 ]
+  [ "$output" = "::notice::The job mobile-tests skips its work: $reason runs the full level, and the app's integration \
+tests run only at the nightly level, nightly and by hand" ] || { echo "$output" >&2; false; }
+}
+
 # The jobs that a change to this path alone reaches through the script's map, in KEYS's order.
 reached_by() {
   local key ran=''
@@ -283,11 +303,12 @@ EOF
   expect_reached manifests infra/production/k8s/base/kustomization.yaml
 }
 
-@test "the Release script reaches release-script and app-fingerprint, and the Release workflow release-script" {
+@test "the Release script reaches release-script and app-fingerprint, the Release workflow release-script, and the nightly's none" {
   # shellcheck source=../changes.sh
   source "$CHANGES"
   expect_reached 'app-fingerprint release-script' .github/release/release.sh .github/release/test/release.bats
   expect_reached release-script .github/workflows/release.yml
+  expect_reached '' .github/workflows/nightly.yml
 }
 
 @test "notes, documents, agent settings and Markdown outside the packages reach no job" {
@@ -623,16 +644,24 @@ and none reaches it" ]
 
 # --- Full runs ----------------------------------------------------------------------------------------------------
 
-@test "a run that neither a push nor the merge queue started runs every job" {
+@test "a run started by hand or by the nightly, or by any event but a push and the merge queue, runs every job with the app's integration tests" {
   push_documents_branch 4.0/documents
   expect_every_job all 'the run was started by workflow_dispatch, not by a push or the merge queue' \
     GITHUB_EVENT_NAME=workflow_dispatch
+  ci_checkout 4.0/Main
+  expect_every_job all 'the run was started by workflow_dispatch, not by a push or the merge queue' \
+    GITHUB_EVENT_NAME=workflow_dispatch
+  expect_every_job all 'the run was started by workflow_dispatch, not by a push or the merge queue' \
+    GITHUB_EVENT_NAME=workflow_dispatch GITHUB_REF=refs/tags/snunow/all/26.11.15-1 \
+    GITHUB_REF_NAME=snunow/all/26.11.15-1
+  expect_every_job all 'the run was started by schedule, not by a push or the merge queue' GITHUB_EVENT_NAME=schedule
 }
 
-@test "a ref that is not a branch, such as a Release tag, runs every job" {
+@test "a tag's push, such as a Release's, runs the full level: every job but the app's integration tests" {
   push_documents_branch 4.0/documents
-  expect_every_job all 'refs/tags/snunow/all/26.11.15-1 is not a branch' GITHUB_REF=refs/tags/snunow/all/26.11.15-1 \
+  expect_full_level 'the push of tag snunow/all/26.11.15-1' GITHUB_REF=refs/tags/snunow/all/26.11.15-1 \
     GITHUB_REF_NAME=snunow/all/26.11.15-1
+  expect_full_level 'a push of refs/pull/9/head' GITHUB_REF=refs/pull/9/head GITHUB_REF_NAME=9/head
 }
 
 @test "a GITHUB_REF_NAME that does not name GITHUB_REF runs every job" {
@@ -640,23 +669,23 @@ and none reaches it" ]
   expect_every_job unit 'GITHUB_REF_NAME (4.0/other) does not name refs/heads/4.0/documents' GITHUB_REF_NAME=4.0/other
 }
 
-@test "a push to main or development runs every job with every test, and another branch without a slash with unit tests" {
+@test "a push to main or development runs the full level, and another branch without a slash the basic level" {
   push_documents_branch development
-  expect_every_job all 'a push to development runs every job with every test'
+  expect_full_level 'a push to development'
   push_documents_branch main
-  expect_every_job all 'a push to main runs every job with every test'
+  expect_full_level 'a push to main'
   push_documents_branch feature
   expect_every_job unit 'feature is not named <line>/<name>'
 }
 
-@test "a push to a Main runs every job with every test, whatever its line, and a deeper .../Main gives unit tests" {
+@test "a push to a Main runs the full level, whatever its line, and a deeper .../Main the basic level" {
   ci_checkout 4.0/Main
-  expect_every_job all 'a push to 4.0/Main runs every job with every test'
+  expect_full_level 'a push to 4.0/Main'
 
   git -C "$WORK" branch ci-trial/Main 4.0/Main
   publish ci-trial/Main
   ci_checkout ci-trial/Main
-  expect_every_job all 'a push to ci-trial/Main runs every job with every test'
+  expect_full_level 'a push to ci-trial/Main'
 
   push_documents_branch 4.0/old/Main
   [ "$(tests_given)" = unit ]
@@ -666,7 +695,7 @@ and none reaches it" ]
   push_documents_branch 4.0/documents
   expect_jobs ''
   ci_checkout 4.0/Main
-  expect_jobs "$EVERY"
+  expect_jobs "$FULL"
   group_off 9 4.0/Main docs/guide.md
   queue_checkout 9 "$(git -C "$WORK" rev-parse 4.0/Main)"
   expect_jobs ''

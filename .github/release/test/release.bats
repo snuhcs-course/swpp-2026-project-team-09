@@ -40,7 +40,8 @@ setup() {
 
 # Makes the faked GitHub list these CI runs of the commit, each "id status conclusion push", in every poll or, after
 # --poll N, in poll N. The last field is `queue`, the merge queue's run, `tag`, the run of the Release's tag, or a
-# branch's name, the run of a push to it.
+# branch's name, the run of a push to it; `hand:` before `tag` or a branch's name makes it a run started by hand or by
+# the nightly there.
 serve_runs() {
   local file=$FAKE_GITHUB/runs.json
   if [[ "$1" == --poll ]]; then
@@ -48,16 +49,18 @@ serve_runs() {
     shift 2
   fi
   printf '%s\n' "$@" | jq --raw-input --slurp --arg commit "$COMMIT" --arg tag "$TAG" '
-    [split("\n")[] | select(length > 0) | split(" ") |
+    [split("\n")[] | select(length > 0) | split(" ") | (.[3] | ltrimstr("hand:")) as $ref |
       {id: (.[0] | tonumber), name: "CI", path: ".github/workflows/ci.yml", head_sha: $commit,
-        head_branch: (if .[3] == "tag" then $tag elif .[3] == "queue" then "gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d"
-          else .[3] end),
-        event: (if .[3] == "queue" then "merge_group" else "push" end), status: .[1],
-        conclusion: (if .[2] == "null" then null else .[2] end)}] |
+        head_branch: (if $ref == "tag" then $tag elif $ref == "queue" then "gh-readonly-queue/2.0/Main/pr-9-0a1b2c3d"
+          else $ref end),
+        event: (if .[3] | startswith("hand:") then "workflow_dispatch" elif $ref == "queue" then "merge_group"
+          else "push" end),
+        status: .[1], conclusion: (if .[2] == "null" then null else .[2] end)}] |
     {total_count: length, workflow_runs: .}' >"$file"
 }
 
 # Makes the faked GitHub list a run's jobs, each "name status conclusion", in every poll or, after --poll N, in poll N.
+# A name may hold spaces, as "mobile-tests (1/4)" does.
 serve_jobs() {
   local file
   if [[ "$1" == --poll ]]; then
@@ -70,7 +73,7 @@ serve_jobs() {
   shift
   printf '%s\n' "$@" | jq --raw-input --slurp --argjson run "$run" '
     [split("\n")[] | select(length > 0) | split(" ") |
-      {run_id: $run, name: .[0], status: .[1], conclusion: (if .[2] == "null" then null else .[2] end)}] |
+      {run_id: $run, name: (.[:-2] | join(" ")), status: .[-2], conclusion: (if .[-1] == "null" then null else .[-1] end)}] |
     {total_count: length, jobs: .}' >"$file"
 }
 
@@ -409,7 +412,7 @@ print_certs() {
   [ "$(polls)" -eq 1 ]
 }
 
-@test "the runs of pushes to a Main, to main and to development are read, since they do every job" {
+@test "the runs of pushes to a Main, to main and to development are read, since they run the full level" {
   mapfile -t failed < <(ci_jobs completed success mobile; echo 'mobile completed failure')
   mapfile -t passed < <(ci_jobs completed success)
   serve_runs '41 completed success main' '57 completed success development' '77 completed failure tag'
@@ -429,6 +432,73 @@ print_certs() {
 
   [ "$status" -eq 0 ]
   grep -q 'runs/63/jobs' "$FAKE_CALLS"
+}
+
+@test "the tag's run at the full level, whose app integration test jobs skip their work and report success, lets the Release go on" {
+  mapfile -t jobs < <(ci_jobs completed success; for shard in 1 2 3 4; do echo "mobile-tests ($shard/4) completed success"; done)
+  serve_runs '41 completed success tag'
+  serve_jobs 41 "${jobs[@]}"
+
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"mobile-tests (1/4)=success"* ]] || false
+  [[ "$output" == *"gate: every CI job passed"* ]] || false
+}
+
+@test "a run started by hand or by the nightly is not read, on the tag or on a Main, whichever way it ended" {
+  mapfile -t failed < <(ci_jobs completed success; echo 'mobile-tests (2/4) completed failure')
+  mapfile -t passed < <(ci_jobs completed success; echo 'mobile-tests (2/4) completed success')
+  serve_runs '41 completed failure hand:tag' '57 completed failure hand:2.0/Main' '63 completed success tag'
+  serve_jobs 41 "${failed[@]}"
+  serve_jobs 57 "${failed[@]}"
+  serve_jobs 63 "${passed[@]}"
+
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
+
+  [ "$status" -eq 0 ]
+  grep -E 'runs/(41|57)/jobs' "$FAKE_CALLS" && false
+
+  mapfile -t failed < <(ci_jobs completed success main-server; echo 'main-server completed failure')
+  : >"$FAKE_CALLS"
+  serve_runs '41 completed success hand:tag' '63 completed failure tag'
+  serve_jobs 41 "${passed[@]}"
+  serve_jobs 63 "${failed[@]}"
+
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
+
+  grep -E 'runs/41/jobs' "$FAKE_CALLS" && false
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"main-server=failure"* ]] || false
+  [[ "$output" == *"gate: CI failed on $COMMIT"* ]] || false
+}
+
+@test "a nightly run still going on the commit, or none at all, holds up no Release" {
+  mapfile -t passed < <(ci_jobs completed success; echo 'mobile-tests (1/4) completed success')
+  serve_runs '41 in_progress null hand:2.0/Main' '57 queued null hand:tag' '63 completed success tag'
+  serve_jobs 41 'mobile-tests (1/4) in_progress null'
+  serve_jobs 57
+  serve_jobs 63 "${passed[@]}"
+
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
+
+  grep -E 'runs/(41|57)/jobs' "$FAKE_CALLS" && false
+  [ "$status" -eq 0 ]
+  [ "$(polls)" -eq 1 ]
+}
+
+@test "a run started by hand on the tag does not stand for the tag's own run, which is waited for" {
+  mapfile -t jobs < <(ci_jobs completed success)
+  serve_runs '41 completed success hand:tag'
+  serve_runs --poll 2 '41 completed success hand:tag' '57 completed success tag'
+  serve_jobs 41 "${jobs[@]}"
+  serve_jobs 57 "${jobs[@]}"
+
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
+
+  [ "$status" -eq 0 ]
+  [ "$(polls)" -eq 2 ]
+  [[ "${lines[0]}" == *"ci=missing"* ]] || false
 }
 
 @test "a job that failed in a Main's run but still runs on the tag's is waited for, and one success of each job is enough" {

@@ -3,13 +3,14 @@
 # AI-generated with Claude
 #
 # 2026-11-15  Opus 5.5   prompted by fyoon46
+# 2026-11-21  Opus 5.5   prompted by fyoon46
 ################################################################################
 
-# Rebuilds app-test-times.json, the app's test files' seconds by which app-test-sequencer.cjs packs the CI shards, from
-# a finished CI run whose mobile-tests jobs did their work: each job prints an `app-test-time <seconds> <file>` line
-# per test file.
+# Rebuilds app-test-times.json, the app's integration test files' seconds by which app-test-sequencer.cjs packs the CI
+# shards, from a finished CI run whose mobile-tests jobs did their work, one at the nightly level: each job prints an
+# `app-test-time <seconds> <file>` line per test file.
 #
-# Usage: .github/ci/app-test-times.sh <run id>, with gh signed in. A run on a Main in a quiet hour measures best.
+# Usage: .github/ci/app-test-times.sh <run id>, with gh signed in. A nightly run on a Main measures best.
 
 set -euo pipefail
 
