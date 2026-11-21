@@ -134,7 +134,6 @@ function isReplyOffer(value: unknown): value is ReplyOffer {
 
 function isAssistantReply(value: unknown): value is AssistantReply {
   const offers = field(value, 'offers');
-  const steps = field(value, 'steps');
   const proposal = field(value, 'proposal');
   const answer = field(value, 'answer');
   const lookup = field(value, 'lookup');
@@ -147,16 +146,21 @@ function isAssistantReply(value: unknown): value is AssistantReply {
     (answer === undefined || isNothing(answer) || isAnswerReply(answer)) &&
     (lookup === undefined || isNothing(lookup) || isLookup(lookup)) &&
     (refusal === undefined || isNothing(refusal) || isRefusal(refusal)) &&
-    (offers === undefined || listOf(isReplyOffer)(offers)) &&
-    (steps === undefined || listOf(isReplyStep)(steps))
+    (offers === undefined || listOf(isReplyOffer)(offers))
   );
+}
+
+// Steps this app does not know, from a later main server, are left out whole and the rest of the reply kept, so that
+// a partial list never reads as the whole plan.
+function knownSteps(steps: unknown): Pick<AssistantReply, 'steps'> {
+  return listOf(isReplyStep)(steps) ? { steps } : {};
 }
 
 export const assistantClient: Pick<ApiClient, 'askAssistant' | 'recalculateAnswer' | 'answerTap'> = {
   askAssistant: async (messages, context) => {
     const body = { messages, context, clientCapabilities: ANSWER_CAPABILITIES };
-    const reply = await call('POST', '/assistant/messages', isAssistantReply, { body });
-    return { ...reply, cards: reply.cards.map(filled) };
+    const { steps, ...reply } = await call('POST', '/assistant/messages', isAssistantReply, { body });
+    return { ...reply, cards: reply.cards.map(filled), ...knownSteps(steps) };
   },
   // A main server before P02-13 refuses a key it does not know, so the reason is sent only when there is one.
   recalculateAnswer: (input, location, missing) =>

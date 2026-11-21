@@ -17,7 +17,7 @@ The answer screen is being redesigned (a time bar under the question, details on
 ## What changes
 
 - `ReplyStep` and an optional `steps` on `AssistantReply` (`mobile/src/api/assistant-types.ts`), the same shape as the server's.
-- The reply's guard checks each step (`api/server/step-answers.ts`): a known kind, a title, places or null, times or null, `shown` or `not-done`, a reason or null, and what shows it. A reply with a step that fails is refused like any other malformed reply.
+- The reply's guard checks each step (`api/server/step-answers.ts`): a known kind, a title, places or null, times or null, `shown` or `not-done`, a reason or null, and what shows it. When one step fails, every step is left out and the rest of the reply is kept, so a later main server's new kind of step never costs the answer.
 - The bubble keeps `steps` when there are two or more.
 - `ReplySteps` (`answer/reply-steps.tsx`), above the reply in the answer card: one row for each step, numbered in time order. A row says the time ("17:30–19:00", or "19:04" without an end), the title, and where the step sets out from ("· 62-1동에서"). A booking's row adds "예약 카드는 아래에 있어요"; a step not done has a gray number and its reason in the warning colour ("열람실은 당일만 예약할 수 있어요").
 - The plan's card and the book card stay where they are. Nothing is booked until the User presses 예약하기 on the card.

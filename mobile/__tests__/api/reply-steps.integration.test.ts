@@ -12,8 +12,8 @@ import { apiClient } from '@/api/client';
 import { googleAvailable } from '@/auth/google';
 
 // The steps of a reply that answered several requests (P03): believed when each has its kind, title, status, and
-// times; a reply without them is the reply of before. Partitions: two steps, none, a step of an unknown kind, a step
-// without its status.
+// times; a reply without them is the reply of before, and so is one whose steps this app does not know. Partitions: two
+// steps, none, a step of an unknown kind, a step without its status.
 
 jest.mock('@/auth/google', () => ({
   googleAvailable: jest.fn<boolean, []>(),
@@ -96,13 +96,13 @@ describe("a reply's steps", () => {
   it.each([
     ['a step of an unknown kind', { ...SEAT, kind: 'shuttle' }],
     ['a step without its status', { ...MEAL, status: undefined }],
-  ])('refuse the reply with %s', async (_, step) => {
+  ])('are all left out with %s, and the rest of the reply kept', async (_, step) => {
     const server = await askMainServer({ signedIn: true });
     server.on('POST /assistant/messages', { status: 200, body: { ...REPLY, steps: [SEAT, step] } });
 
-    await expect(apiClient.askAssistant(MESSAGES, CONTEXT)).rejects.toMatchObject({
-      status: 0,
-      code: 'UNEXPECTED_ANSWER',
-    });
+    const reply = await apiClient.askAssistant(MESSAGES, CONTEXT);
+
+    expect(reply).not.toHaveProperty('steps');
+    expect(reply.text).toBe(REPLY.text);
   });
 });
