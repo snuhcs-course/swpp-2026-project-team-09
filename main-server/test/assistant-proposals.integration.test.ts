@@ -6,6 +6,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -99,7 +100,9 @@ describe('proposeQuest, with a complete Open Proposal', () => {
       lookup: null,
       refusal: null,
     });
-    expect(model.toolResults()).toEqual([{ result: 'proposed', proposal: LUNCH }]);
+    expect(model.toolResults()).toEqual([
+      { result: 'proposed', proposal: LUNCH, note: expect.stringContaining('Never mention a search') as unknown },
+    ]);
   });
 
   it('takes an Approval Quest', async () => {

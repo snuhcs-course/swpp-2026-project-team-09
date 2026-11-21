@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { QuestProposal } from '@/api/assistant-types';
@@ -20,8 +21,8 @@ export interface ProposalStart extends WhereStart {
   form: PartyForm;
   // The Friends to invite.
   chosen: string[];
-  // The form made the Quest.
-  made: () => void;
+  // The form made the Quest, by its id.
+  made: (questId: string) => void;
 }
 
 // `어디서` as choosing an event fills it: the event's place as a point with its words, or nothing.

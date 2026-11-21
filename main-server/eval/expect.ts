@@ -6,6 +6,7 @@
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -203,14 +204,15 @@ const resultsSchema = z.strictObject({
 });
 
 // What the reply's text must hold, each a word or a list of which any one counts, and the words it must not hold, such
-// as the names of Friends who are not free.
+// as the names of Friends who are not free; or `none`, no words at all, such as beside a way the map draws.
 const textSchema = z
   .strictObject({
     mentions: z.array(mentionSchema).min(1).optional(),
     absent: z.array(z.string().min(1)).min(1).optional(),
+    none: z.literal(true).optional(),
   })
-  .refine(({ mentions, absent }) => mentions !== undefined || absent !== undefined, {
-    message: 'Give mentions, absent or both',
+  .refine(({ mentions, absent, none }) => mentions !== undefined || absent !== undefined || none !== undefined, {
+    message: 'Give mentions, absent, none or several',
   });
 
 export const expectSchema = z

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { QuestProposal } from '@/api/assistant-types';
@@ -11,8 +12,8 @@ import type { QuestProposal } from '@/api/assistant-types';
 // gives its place back through `waitForPlace`.
 export interface HeldProposal {
   proposal: QuestProposal;
-  // The form made the Quest: the chat's card then says so.
-  made: () => void;
+  // The form made the Quest, by its id: the chat's card then says so, and the Proposal goes back with the id.
+  made: (questId: string) => void;
 }
 
 let held: HeldProposal | null = null;

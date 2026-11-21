@@ -42,7 +42,7 @@ const NOT_NOW = 'There is no time now when everyone can eat together; the app of
 const overToday = (words: string): string =>
   `That meal is over for today. The app shows your sentence with one button, which plans ${words}. Say in one sentence that the meal is over and that the button plans ${words}; name no other button.`;
 
-// A Friend's name as the chips write it, without " · 자리 모름".
+// A Friend's name as the chips write it, without " · 출발지 모름" or " · 위치 모름".
 const friendNames = ({ chips }: AnswerReply): string[] =>
   chips.flatMap(({ kind, text }) => (kind === 'person' ? [text.split(' · ')[0] ?? text] : []));
 

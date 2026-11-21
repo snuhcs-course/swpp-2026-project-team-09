@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Expect } from './expect.ts';
@@ -18,6 +19,7 @@ export type CheckName =
   | 'mapButtons'
   | 'text.mentions'
   | 'text.absent'
+  | 'text.none'
   | 'steps';
 
 // The reply's steps that differ from those expected, in order.

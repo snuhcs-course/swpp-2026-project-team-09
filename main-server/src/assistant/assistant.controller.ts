@@ -5,6 +5,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Inject, Post } from '@nestjs/common';
@@ -63,14 +64,15 @@ export class AssistantController {
   @HttpCode(HttpStatus.OK)
   recalculate(
     @CurrentUser() user: SignedInUser,
-    @Body({ schema: recalculationSchema }) { input, location, locationMissing }: Recalculation,
+    @Body({ schema: recalculationSchema }) { input, location, locationMissing, clientCapabilities }: Recalculation,
   ): Promise<AnswerReply> {
     const now = this.clock.now();
     // Recruiting Quests are each on the day of their own step.
     if (input.kind !== 'quests' && outOfReach(input.date, now)) {
       throw new BadRequestException('A plan is for a day from today to a week ahead');
     }
-    return this.answers.plan(user.id, input, { now, location, locationMissing });
+    const setsAside = clientCapabilities.includes('plan-set');
+    return this.answers.plan(user.id, input, { now, location, locationMissing, setsAside });
   }
 
   // The card of a pressed building or Friend's face, without the model and without counting the User's messages.
