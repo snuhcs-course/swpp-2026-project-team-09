@@ -13,6 +13,7 @@ From the user's feedback: asked for a 파티 at a time he has a Class, he saw on
 - When a reply has words and a Lookup, for every Lookup (a way or a place the map draws included), the words are the dock's one line: they say why the Lookup is shown. A press raises the card, which shows the words above the Lookup's card. The app never judges whether the words repeat the map; keeping a way's bottom to one row is the server's job (its model writes nothing for a way or place the map draws unless it has something the map cannot say).
 - A day Lookup with words docks with them; without words it keeps its card open, as before.
 - In the list of earlier answers, such a turn shows the words, then the Lookup's lines.
+- From the screen review: the dock's line may run to two lines before it is cut, for every kind of line (words, a refusal, a question back): one sentence of the model fits, its question included, and a third line is cut with "›" as before. This widens ticket 04's "one line" to "at most two".
 - When the model said nothing: a Lookup's own headline is the line, but a way or a place the map draws has no line, and 근거 › when it has a basis, until its flag raises the card (the next pull request). Beside a refusal, the refusal's first line, as before.
 
 ## What happens now
@@ -32,7 +33,7 @@ From the user's feedback: asked for a 파티 at a time he has a Class, he saw on
 
 ## Acceptance criteria
 
-- [ ] A day Lookup with words: the words in the dock, not the day's line; pressed, the words over the Lookup's card; in the earlier answers, the words. (Integration test.)
+- [ ] A day Lookup with words: the words in the dock, not the day's line, in at most two lines; pressed, the words over the Lookup's card; in the earlier answers, the words. (Integration test.)
 - [ ] The line's rule for words, no words, a way the map draws, and a refusal. (Unit test.)
 - [ ] A way Lookup with words has them as its line and no 근거 ›; one without words has no line and 근거 ›. (Integration test.)
 - [ ] A Lookup with words on a phone with the mock build. (Emulator.)

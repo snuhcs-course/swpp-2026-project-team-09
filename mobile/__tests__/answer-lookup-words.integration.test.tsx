@@ -71,6 +71,13 @@ describe("the model's words beside the day's Lookup", () => {
     expect(dock().queryByText(DAY_LINE)).toBeNull();
   });
 
+  it("take up to two lines in the dock before they are cut, so that the model's question can be read", async () => {
+    await askOnMap(server, WITH_WORDS);
+
+    expect(dock().getByTestId('dock-line-words')).toHaveProp('numberOfLines', 2);
+    expect(dock().getByTestId('dock-line-words')).toHaveTextContent(WORDS);
+  });
+
   it('stand over the Lookup in the raised card', async () => {
     const user = await askOnMap(server, WITH_WORDS);
 
