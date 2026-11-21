@@ -201,15 +201,16 @@ interface Placed {
   label: AnswerLabel | null;
 }
 
-// A draft at the point of that index, its label without its side: a pick or a candidate whose dot is not drawn
-// carries its number in it. The pick's label is kept, the answer's main mark, and so is a candidate's that shares its
+// A draft at the point of that index, its label without its side: a candidate carries its number in it, as the pick
+// does when its dot is not drawn, so that a tag read alone says which candidate it is (the list of ticket 15 uses the
+// same numbers). The pick's label is kept, the answer's main mark, and so is a candidate's that shares its
 // point with another candidate, two restaurants of one building, so that each can be pressed.
 function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null, shared: boolean): Unplaced {
   const { position, group, tone, title, line, sub = null, number } = draft;
   const words =
     title === null
       ? null
-      : { tone, title, line, ...(sub === null ? {} : { sub }), number: symbol === null ? number : null };
+      : { tone, title, line, ...(sub === null ? {} : { sub }), number: group === 'candidate' || symbol === null ? number : null };
   return { point, position, words, sides: SIDES[group], kept: group === 'pick' || shared };
 }
 
