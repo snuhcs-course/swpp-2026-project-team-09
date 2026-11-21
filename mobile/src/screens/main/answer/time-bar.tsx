@@ -41,8 +41,10 @@ interface BarProps {
 // unfolds to a row for each person when there is more than one, and folds again.
 function Bar({ band, onHeight }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
-  const [folded, setFolded] = useState(true);
+  const [unfolded, setUnfolded] = useState(false);
   const { lanes, startAt, now } = band.band;
+  // One lane has nothing to unfold, also once a Friend was taken out while the bar was unfolded.
+  const folded = !unfolded || lanes.length < 2;
   const label = folded ? '사람별 시간 펼치기' : '사람별 시간 접기';
   return (
     <View
@@ -60,7 +62,7 @@ function Bar({ band, onHeight }: BarProps): ReactElement {
           accessibilityState={{ expanded: !folded }}
           hitSlop={space[2]}
           onPress={() => {
-            setFolded(!folded);
+            setUnfolded(folded);
           }}
           style={styles.toggle}
         >

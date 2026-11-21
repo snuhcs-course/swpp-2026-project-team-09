@@ -7,7 +7,7 @@
 import type { ReactElement } from 'react';
 import { StyleSheet } from 'react-native';
 import { color, text } from '@/design-system';
-import { turnOf } from '@/features/assistant/turn';
+import { turnsOf } from '@/features/assistant/turn';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
 import type { HowAbout } from '@/features/assistant/use-how-about';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
@@ -55,7 +55,7 @@ function wordsKindOf(bubble: ChatBubble, onScreen: OnScreen): WordsKind {
   return lookup !== null && lookup === onScreen.lookup.lookup ? 'lookup' : 'own';
 }
 
-// The time bar the turn on screen has: the band of its Plan's card, or of its Lookup's, which have one.
+// The time bar the latest turn with a reply has: the band of its Plan's card, or of its Lookup's, which have one.
 type BarOf = { kind: 'plan' } | { kind: 'lookup'; lookup: NonNullable<ShownLookup['lookup']> } | null;
 
 export function onScreenOf({ answer, lookup, invitation, howAbout }: ChatSheetControl): OnScreen {
@@ -63,7 +63,10 @@ export function onScreenOf({ answer, lookup, invitation, howAbout }: ChatSheetCo
 }
 
 export function barOf(bubbles: readonly ChatBubble[], onScreen: OnScreen): BarOf {
-  for (const bubble of turnOf(bubbles)?.after ?? []) {
+  // While a follow-up's reply is on its way its turn holds nothing yet, and the answer before it stays on the map:
+  // its bar stays too, as the card keeps its height, so that the camera does not move twice.
+  const turn = turnsOf(bubbles).findLast(({ after }) => after.length > 0);
+  for (const bubble of turn?.after ?? []) {
     const kind = wordsKindOf(bubble, onScreen);
     if (kind === 'plan' && onScreen.shown.plan !== null) {
       return { kind };
