@@ -10,6 +10,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The conversation's control: the conversation with the Assistant, which the main screen holds, and what the answer
@@ -27,12 +28,13 @@ import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use
 import { type ShownAnswer, useShownAnswer } from '@/features/assistant/use-shown-answer';
 import { type ShownLookup, type StartGuidance, useShownLookup } from '@/features/assistant/use-shown-lookup';
 import { openPost } from '../party/post-card';
+import { type MarkOpening, useOpenedMark } from './answer/opened-mark';
 import type { CardLeaving } from './chat-card-actions';
 import { useContextChat, type Where } from './use-context-chat';
 import { type KeptConversation, useKeptConversation } from './use-kept-conversation';
 import { openProposalForm, useProposalMaking } from './use-proposal-making';
 
-export interface ChatSheetControl extends Omit<KeptConversation, 'chat'> {
+export interface ChatSheetControl extends Omit<KeptConversation, 'chat'>, MarkOpening {
   chat: Chat;
   // Where the answer frame's cards lead, and its map buttons.
   leaving: CardLeaving & { showLayer: (layer: MapLayer) => void };
@@ -118,6 +120,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
     },
     ...useAnswerOnScreen(chat.bubbles, where, shownNow),
     lookup: useShownLookup(chat.bubbles, start, kept.hide),
+    ...useOpenedMark(chat.bubbles, kept.framed),
     ...pressing,
   };
 }

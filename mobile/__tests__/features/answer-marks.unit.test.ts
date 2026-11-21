@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -274,5 +275,36 @@ describe('the marks of an answer with Restaurants that do not fit', () => {
       label: label('left', 'dropped', '3식당 · 14분밖에 못 있어요'),
       planId: null,
     });
+  });
+});
+
+// P04 ticket 02: the pick's flag says the Plan's day when it is not the day the answer was asked, before its time.
+describe("the pick's day", () => {
+  const tomorrow = {
+    ...MEAL_ANSWER,
+    plans: MEAL_ANSWER.plans.map((plan) => ({ ...plan, band: { ...plan.band, now: '2026-11-16T11:50:00+09:00' } })),
+  };
+
+  it('puts 내일 with the weekday before the time of a Plan for tomorrow', () => {
+    expect(seen(drawingOf(tomorrow, 0), 'answer:pick')).toEqual({
+      name: '302동식당 · 내일(화) 12:15 점심',
+      symbol: null,
+      label: label('below', 'pick', '302동식당', { line: '내일(화) 12:15 점심', number: 1 }),
+      planId: null,
+    });
+  });
+
+  it('says the day once when the flag already carries it', () => {
+    const dated = structuredClone(tomorrow);
+    for (const flag of dated.plans[0]?.scene.flags ?? []) {
+      if (flag.role === 'place') {
+        flag.text = `내일(화) ${flag.text}`;
+      }
+    }
+    expect(seen(drawingOf(dated, 0), 'answer:pick')).toMatchObject({ name: '302동식당 · 내일(화) 12:15 점심' });
+  });
+
+  it("says no day for today's Plan", () => {
+    expect(seen(drawingOf(MEAL_ANSWER, 0), 'answer:pick')).toMatchObject({ name: '302동식당 · 12:15 점심' });
   });
 });
