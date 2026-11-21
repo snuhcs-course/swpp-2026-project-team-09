@@ -5,12 +5,13 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication, Logger } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
-import { FIXED_SENTENCE } from '../src/assistant/adapter.js';
+import { FIXED_SENTENCE } from '../src/assistant/wordless-reply.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { ask, postAssistantMessages } from './assistant.js';

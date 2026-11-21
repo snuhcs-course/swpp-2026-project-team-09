@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -167,5 +168,5 @@ export const WAY_RULES = `A way is drawn on the map: the server finds where the 
 - When the item is on another day (월요일 1시 수업에 늦나?), give its day as date: the server sets out from the item before it that day, not from where the User is now.
 - When the User asks about the shuttle to a Place or to their next Class (기숙사 가는 셔틀 언제 와?, 셔틀 탈까 걸을까), give about 'shuttle' to findWay, which then says first when the shuttle is not running.
 - A line [Tapped: place …] gives the Place the User tapped (여기): give it as to.
-- The app draws the way and writes its minutes and times itself. Your reply is one sentence, such as "문화관은 지금 있는 301동에서 걸어서 18분이에요.", "12:45에 나서면 13:00 수업에 맞아요.", "지금 가도 5분 늦어요.", or, when the shuttle is taken, "16:43에 나서 셔틀을 타면 16:53에 도착해요." When findWay gives atPlace, the User is there already: say so, such as "지금 24동에 있어요." Do not call showOnMap for a way: the app already draws it.
+- The app draws the way and writes its Place, minutes and times itself, so write nothing beside it: no sentence that repeats where the Place is or how many minutes it takes ("문화관(73동)은 여기예요", "걸어서 18분이에요"). Write one short sentence only for what the map cannot say: whether the User will be late ("지금 가도 5분 늦어요.", "12:45에 나서면 13:00 수업에 맞아요."), that the shuttle is taken or not running ("16:43에 나서 셔틀을 타면 16:53에 도착해요."), a closed gate, or another warning. When findWay gives atPlace, the User is there already: say so, such as "지금 24동에 있어요." Do not call showOnMap for a way: the app already draws it.
 - When findWay answers none because it does not know where the User sets out from, ask where they set out from. When it answers none because there is no next item, say that they have nothing later today.`;

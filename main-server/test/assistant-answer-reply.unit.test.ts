@@ -4,10 +4,12 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
-import { FIXED_SENTENCE, runFeature } from '../src/assistant/adapter.js';
+import { runFeature } from '../src/assistant/adapter.js';
+import { FIXED_SENTENCE } from '../src/assistant/wordless-reply.js';
 import { type AnswerReply, type Lookup, NO_CONTEXT, type RequestContext } from '../src/assistant/dto/answer.dto.js';
 import { defineTool, type Feature, type Request } from '../src/assistant/feature.js';
 import { ScriptedModel } from './scripted-model.js';
@@ -136,11 +138,20 @@ describe("A run's Lookup", () => {
     expect(reply.lookup).toBeNull();
   });
 
-  it('says the fixed sentence over a Lookup when no step wrote text', async () => {
+  it('says nothing beside a way the map draws when no step wrote text', async () => {
     model.script({ tool: 'find', input: {} }, { text: '' });
 
     const reply = await runFeature(model.model, featureLookingUp(LOOKUP), asker(NO_CONTEXT), ask, LIMITS);
 
-    expect(reply).toMatchObject({ text: FIXED_SENTENCE, lookup: LOOKUP, noTextFinishReason: 'stop' });
+    expect(reply).toMatchObject({ text: '', lookup: LOOKUP, noTextFinishReason: null });
+  });
+
+  it('says the fixed sentence over any other Lookup when no step wrote text', async () => {
+    const menu: Lookup = { ...LOOKUP, kind: 'menu' };
+    model.script({ tool: 'find', input: {} }, { text: '' });
+
+    const reply = await runFeature(model.model, featureLookingUp(menu), asker(NO_CONTEXT), ask, LIMITS);
+
+    expect(reply).toMatchObject({ text: FIXED_SENTENCE, lookup: menu, noTextFinishReason: 'stop' });
   });
 });

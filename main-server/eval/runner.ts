@@ -31,8 +31,8 @@ import {
   type EvalCase,
   kindOf,
   nowOf,
+  requestFieldsOf,
   WORLD_CLOCKS,
-  WORLD_REQUEST_FIELDS,
   WORLD_TUTORIAL_FILES,
 } from './cases.ts';
 import { addTokens, costOf, NO_TOKENS, type Tokens } from './cost.ts';
@@ -137,11 +137,13 @@ export function requestMessages(turns: readonly CaseTurn[], world: World): SentM
   });
 }
 
-// The reply sent back with the next message, as the app does: the cards by reference, the Proposal by its values.
-function sentBack({ text, cards, proposal }: AssistantReplyDto): SentAssistant {
+// The reply sent back with the next message, as the app does: the cards by reference, the Proposal by its values, and
+// a reply with no words beside a Lookup by the Lookup's lines, which the User saw.
+function sentBack({ text, cards, proposal, lookup }: AssistantReplyDto): SentAssistant {
+  const seen = lookup?.lines.map((line) => line.map((part) => part.text).join('')).join('\n') ?? '';
   return {
     role: 'assistant',
-    text,
+    text: text.trim() === '' && seen !== '' ? seen : text,
     cards: cards.map((card) => ({ kind: card.kind, id: idOf(card) })),
     proposal: proposal === null ? null : sentBackProposal(proposal),
   };
@@ -237,7 +239,7 @@ export async function runCase(
 ): Promise<CaseRun> {
   const kind = kindOf(evalCase);
   const accessToken = accessTokenOf(world, evalCase);
-  const fields = WORLD_REQUEST_FIELDS[evalCase.world];
+  const fields = requestFieldsOf(evalCase);
   evalApp.setNow(nowOf(evalCase));
   const userTurns = evalCase.turns.flatMap((turn) => ('user' in turn ? [turn] : []));
   const run: CaseRun = {

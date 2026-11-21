@@ -16,6 +16,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -37,6 +38,7 @@ import { type ChatMessage, type Feature, type FeatureReply, type Request, type T
 import { FoundIds } from './found-ids.js';
 import { isOverload, limitOf, providerOf, waited } from './provider-failures.js';
 import { keptRefusal, lookupBeside, textBeside } from './refusals/refusals.js';
+import { FIXED_SENTENCE, wordlessText } from './wordless-reply.js';
 import { lastShown, messagesFor, textOf } from './run-messages.js';
 
 // The one file that knows the model library, the Vercel AI SDK (ADR 0005): the model port and the loop that runs a
@@ -192,9 +194,6 @@ const MAX_RETRIES = 0;
 // none of it: its options are chosen with the model (anthropicOptions).
 const PROVIDER_OPTIONS = { openrouter: { provider: { data_collection: 'deny' } } };
 
-// What the reply says when no step wrote any text and the reply shows something beneath it.
-export const FIXED_SENTENCE = '아래에서 확인해 보세요.';
-
 // A run that used every step on tools, or that ended with no text and nothing shown.
 export class NoAnswerError extends Error {
   override readonly name = 'NoAnswerError';
@@ -339,7 +338,7 @@ function withLine(reply: FeatureReply, messages: readonly ChatMessage[], observe
 }
 
 // The reply of a run that ended, once the feature has changed what it presented: the model's text, a refusal's lines
-// without any, the fixed sentence over what it showed without either, or none.
+// without any, or what a reply with no words says (wordlessText).
 async function replyOf(
   text: string,
   finishReason: string,
@@ -357,11 +356,11 @@ async function replyOf(
   if (said !== '') {
     return { ...presented, text: said, noTextFinishReason: null };
   }
-  const { cards, mapButtons, proposal, answer, lookup } = presented;
-  if (cards.length === 0 && mapButtons.length === 0 && proposal === null && answer === null && lookup === null) {
+  const wordless = wordlessText(presented);
+  if (wordless === null) {
     return null;
   }
-  return { ...presented, text: FIXED_SENTENCE, noTextFinishReason: finishReason };
+  return { ...presented, text: wordless, noTextFinishReason: wordless === FIXED_SENTENCE ? finishReason : null };
 }
 
 // Why a run failed, for the server's log: the error's name and, from the model's provider, the HTTP status. Never an
