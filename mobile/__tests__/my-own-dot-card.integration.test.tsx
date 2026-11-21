@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, screen, within } from '@testing-library/react-native';
@@ -144,7 +145,10 @@ describe('what the card leads to', () => {
     });
 
     expect(screen.queryByTestId('map-card')).toBeNull();
-    // The first Plan's lines of the stored answer.
-    expect(within(screen.getByTestId('answer-card')).getByText('12:15 302동식당')).toBeVisible();
+    // The answer stands in its place: the first Plan's pick on the map and its button beside the input (P04 ticket 04).
+    expect(
+      within(screen.getByTestId('main-map-touches')).getByRole('button', { name: '302동식당 · 12:15 점심' }),
+    ).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: '만들고 초대 보내기' })).toBeVisible();
   });
 });
