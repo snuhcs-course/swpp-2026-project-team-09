@@ -31,7 +31,8 @@ import { FollowUpChips } from './follow-up-chips';
 import { useForgetWithUndo } from './forget-with-undo';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { KeyboardHeadline } from './keyboard-headline';
-import { MarkCard, PlanFlagRows } from './mark-card';
+import { MarkCard } from './mark-card';
+import { MarkRows } from './mark-rows';
 import { pillIconOf } from './pill-icon';
 import type { Raising } from './raise-handle';
 import { ReplySteps } from './reply-steps';
@@ -129,15 +130,30 @@ interface FramedProps {
   stage: Room['stage'];
 }
 
-// The card of the mark pressed on the map, while one is open and the keyboard is down: the pick's of a Plan.
-function OpenMark({ control, stage }: { control: ChatSheetControl; stage: Room['stage'] }): ReactElement | null {
+interface OpenMarkProps {
+  control: ChatSheetControl;
+  stage: Room['stage'];
+  focus: BandFocus;
+  onClose: () => void;
+}
+
+// The card of the mark pressed on the map, while one is open and the keyboard is down: a mark of the Plan on screen.
+function OpenMark({ control, stage, focus, onClose }: OpenMarkProps): ReactElement | null {
   const { mark, closeMark, answer: shown } = control;
   if (mark === null || stage === null || shown.answer === null || shown.plan === null) {
     return null;
   }
   return (
     <MarkCard mark={mark} onClose={closeMark} stage={stage}>
-      <PlanFlagRows answer={shown.answer} plan={shown.plan} />
+      <MarkRows
+        answer={shown.answer}
+        focus={focus}
+        id={mark.id}
+        onClose={onClose}
+        onDone={closeMark}
+        plan={shown.plan}
+        shown={shown}
+      />
     </MarkCard>
   );
 }
@@ -208,7 +224,7 @@ function Framed(props: FramedProps): ReactElement {
         raising={{ raised, setRaised }}
         stageHeight={stageHeight}
       />
-      {keyboardUp ? null : <OpenMark control={control} stage={stage} />}
+      {keyboardUp ? null : <OpenMark control={control} focus={focus} onClose={close} stage={stage} />}
       {sheets}
     </FriendProfileOver>
   );
