@@ -1,0 +1,102 @@
+# P05: Errors in what the Assistant's answers say
+
+Status: ready-for-agent
+
+## Problem Statement
+
+A usage test on 2026-11-21 gave the app to five synthetic users (persona agents) with 30 tasks, against a local stack with demo data, on a Saturday between 03:00 and 08:00. The heaviest problems it found were errors in what the Assistant's answers say. No screen layout fixes them:
+
+- Facts that contradict each other: 301동식당 is open "11:00–14:30" in one answer and "11:30~13:30" in the next; a seat is booked "07:00~13:00" while the same answer says to leave at 10:54; a tutorial place is left out because it "does not open before 18:00" when it is closed all Saturday.
+- Numbers that mean nothing to a person: "식사 210분", "13:53까지 173분 먹을 수 있어요", "22:00까지 함께 780분이에요", "19:00–19:30 · 30분".
+- An arrival time shown as if it were the event's time: "07:29 가을 정기 음악회" for a concert that began at 06:00.
+- Times without a date: "18:00 체육관 파티에 지호가 있어요" for a 파티 the next day; a list of 파티 at 09:00, 14:00 and 12:21 spread over three days with no day on any of them.
+- No sense of the hour: a tour of five campus places "지금" at 03:19, ending at 04:18.
+- A place said not to be found or not in view when it is: "인문대라는 이름의 건물은 지도에서 찾을 수 없어요", and only 관정 named while a reading room in another building was on the screen.
+- The Assistant taking back what it said before ("근거가 없어요"), including sentences the User never saw, and saying "지금 화면의 일정은 …" about a plan no longer on the screen.
+- "예약하기를 눌러야 예약돼요" when the card shows only a 로그인 button.
+- "지금 계획과 같아요" for a different restaurant, and "같이 먹으면 식사가 28분 줄어요" that does not change when a Friend is removed.
+
+The full results, with the trace of every task, are outside the repository, in the notes of the session that ran the test.
+
+## Solution
+
+Each ticket removes one cause. The tickets are in order of harm:
+
+1. [01 — A restaurant's hours survive a cell with two counters](issues/01-restaurant-hours-with-two-counters.md)
+2. [02 — A seat booking fits the User's day](issues/02-seat-booking-fits-the-day.md)
+3. [03 — The model's history holds what the User saw](issues/03-history-holds-what-the-user-saw.md)
+4. [04 — The tutorial order knows the day and the hour](issues/04-tutorial-order-knows-the-day.md)
+5. [05 — An event's line gives the event's own time and place](issues/05-event-line-gives-its-own-time.md)
+6. [06 — A free stretch is not called a meal or time together](issues/06-free-stretch-not-a-meal.md)
+7. [07 — A time that is not today carries its day](issues/07-times-carry-their-day.md)
+8. [08 — The library's words match the card](issues/08-library-words-match-the-card.md)
+9. [09 — Nearby study places: every open space in view, and study-building names](issues/09-nearby-study-places.md)
+10. [10 — The how-about comparisons compare like with like](issues/10-how-about-compares-like-with-like.md)
+11. [11 — Ways: the shuttle line and a Class on another day](issues/11-ways-shuttle-and-another-day.md)
+12. [12 — The menu answer shows the dishes, their prices and the hours](issues/12-menu-answer-shows-prices-and-hours.md)
+13. [13 — Small wordings of 파티 and invitations](issues/13-party-and-invitation-wordings.md)
+
+## User Stories
+
+1. As a User, I want a restaurant's hours to be the same in every answer, so that I can trust either one.
+2. As a User asking for a seat, I want the booking to end before my next item, so that I am not told to leave in the middle of it.
+3. As a User asking for a seat at night, I want the answer to start at the library's opening, so that I am not told to set out at 04:40.
+4. As a User, I want the seat's start time in the words, not only my arrival, so that "08:13에 도착" and a booking from 08:30 do not read as a contradiction.
+5. As a User, I want the Assistant never to take back a sentence I did not see, so that its corrections mean something.
+6. As a User, I want the Assistant to speak of the plan on my screen only when it is on my screen.
+7. As a new student on a Saturday, I want the tutorial to say a place is closed today, not that it opens after 18:00.
+8. As a new student at night, I want the tutorial order to start when the places open, not now.
+9. As a User, I want the tutorial answer to tell me why the places it chose are in it, not only why others were left out.
+10. As a User asking what to see, I want the event's own time, name and place in the answer, so that I can tell a concert under way from one that starts at my arrival.
+11. As a User, I want the map flag of an event to show the event's time, so that "07:29" is not read as the start.
+12. As a User asking where to eat, I want to read when the restaurant closes or when I must leave, not a number of minutes the size of the opening hours.
+13. As a User meeting a Friend, I want to read until when we are both free, not "780분".
+14. As a User, I want every time that is not today to carry its day ("내일 18:00", "월 12:21"), so that I do not go to a 파티 a day early.
+15. As a User, I want the Assistant not to tell me tomorrow has no Classes "until 18:00" when tomorrow is Sunday.
+16. As a User signed out of the library, I want the answer to tell me what the card asks of me, not a button I cannot see.
+17. As a User, I want one name for one zone of the library in the answer and on the card.
+18. As a User asking for a study place nearby, I want every open space in view, ranked, not only the first one.
+19. As a User, I want "인문대" to find the humanities library, as students call it.
+20. As a User comparing places to eat with Friends, I want "지금 계획과 같아요" only when it is the same place.
+21. As a User, I want the time lost by eating together to be measured at the same restaurant, so that removing a Friend changes it when it should.
+22. As a User asking about the shuttle when it is not running, I want that said first, whatever time I asked about.
+23. As a User asking whether I will be late for a Class on another day, I want the walk to start from the building of the Class before it.
+24. As a User asking for a menu, I want the dishes with their prices and the hours in the answer, so that asking again is not needed.
+25. As a User, I want the Assistant to say when the menu was collected only when I ask or when it is not today's.
+26. As a User, I want a 파티's title and place not to repeat each other.
+27. As a User recruiting for an activity with no end, I want only its start, not a made-up 30 minutes.
+
+## Implementation Decisions
+
+- The fixes stay in the main server's answers (the lines and map flags it builds, the tools' results and the model's rules), the worker's menu reader, and the app's wording outside the answer screen. The answer screen itself is being rebuilt by P04 and is not touched here.
+- Server lines that the app draws in place of the model's text carry the substance: names, places, start and end times, days. The model's sentence is not relied on to carry it, because the app hides it whenever an answer is drawn.
+- A time is written with its day when its date is not today ("내일 18:00", "11월 24일 (월) 12:21"). The server gets one helper for this, built from the day words the library answer already uses; the app uses its existing `koreaDay`.
+- Minutes are shown only where they are a length a person can act on (a walk, a stay that ends at someone's next item). A stretch that ends at the day's limit or a restaurant's closing is said as a clock time.
+- The chat history the app sends back to the server holds, for a reply that drew an answer or a lookup, the words the User saw in place of the model's hidden text.
+- No new database tables and no native changes. The menu fix is in the worker's reader; menus collected before it keep their stored hours until the next collection.
+
+## Testing Decisions
+
+- A wrong calculation gets a unit test that fails before the fix: the worker's hours reader, the seat's fill, the tutorial order, the comparison of eating alone and together, the way lookup.
+- Server lines and map flags are tested at the unit level on the answer builders, as the existing `*-answer.unit.test.ts` files do.
+- Model rules get an evaluation case in `main-server/eval/cases/` where a rule's wording is the fix; a rule has no unit test that would fail.
+- App wording is tested at the unit level beside the existing tests of each feature (`mobile/__tests__/features/`).
+
+## Out of Scope
+
+- Breakfast. The meal planner leaves breakfast out on purpose, so "배고파" at 04:00 plans lunch. Planning breakfast is a decision of its own (see Further Notes).
+- A confirmation before [이대로 초대] sends invitations. Sending at one press is what Iteration 4's P03 spec asked for; changing it is a decision of its own.
+- The answer screen (`screens/main/answer/`): hiding the model's text when an answer is drawn, the tutorial card not listing its steps, the "답이 없어도 … 가면 돼요" line on every invited card. These go to P04.
+- Taps on the map (a restaurant label that presses the building under it, the User's own dot, the origin chip).
+- The 파티 reply that says its search found none (P02) and a message with several requests (P03).
+
+## Further Notes
+
+Left on purpose, with the reason:
+
+- "06:00 63동 일정 끝" and three identical "63동에서 체육관까지 걸어서 14분" lines: the demo Quest's step at 63동 three hours after seeding, and every demo Friend starting there. An artefact of the test setting.
+- "오늘 부대짬뽕" on a Saturday: demo menus are the same every day.
+- Origins that change between answers ("62-1동", "20동", "1동"): the test's moving fake location.
+- Breakfast at night and a confirmation before invitations: decisions for the product owner.
+
+## Comments
