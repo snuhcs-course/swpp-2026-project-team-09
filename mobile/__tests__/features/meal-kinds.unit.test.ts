@@ -51,7 +51,7 @@ describe('the kind chips of a meal answer', () => {
 });
 
 function answerOf(...plans: Plan[]): AnswerReply {
-  return { ...MEAL_ANSWER, plans: plans.map((plan, at) => ({ ...plan, id: `plan-${String(at)}` })) };
+  return { ...MEAL_ANSWER, plans };
 }
 
 // Partitions: a kind the pick serves, one it does not, clearing, and a press on a candidate without the kind.

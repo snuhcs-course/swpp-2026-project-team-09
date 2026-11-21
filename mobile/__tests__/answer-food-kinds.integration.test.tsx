@@ -126,7 +126,7 @@ describe('the kind on screen and the conversation', () => {
     await pass(500);
 
     expect(lastContext()).toEqual(
-      expect.objectContaining({ conditions: expect.objectContaining({ kind: 'meal', cuisine: '한식' }) }),
+      expect.objectContaining({ conditions: { ...MEAL_ANSWER_MENUS.input, cuisine: '한식' } }),
     );
   });
 

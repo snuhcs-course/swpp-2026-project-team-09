@@ -155,7 +155,6 @@ function ghostOf(kept: Shown | null): Stretch | null {
 function useBrowsing(setStored: SetStored): {
   browse: ShownAnswer['browse'];
   show: ShownAnswer['show'];
-  chooseKind: ShownAnswer['chooseKind'];
   toggleBasis: ShownAnswer['toggleBasis'];
   setAdding: ShownAnswer['setAdding'];
   undo: ShownAnswer['undo'];
@@ -175,15 +174,6 @@ function useBrowsing(setStored: SetStored): {
       setStored((last) => {
         const index = last.answer?.plans.findIndex(({ id }) => id === planId) ?? -1;
         return index < 0 ? last : withPlan({ ...last, ...showing(last, index) }, index);
-      });
-    },
-    [setStored],
-  );
-  const chooseKind = useCallback(
-    (kind: Cuisine | null): void => {
-      setStored((last) => {
-        const next = withKind(last, kind);
-        return next.answer === last.answer ? last : withPlan({ ...last, answer: next.answer }, next.index);
       });
     },
     [setStored],
@@ -210,7 +200,20 @@ function useBrowsing(setStored: SetStored): {
     },
     [setStored],
   );
-  return { browse, show, chooseKind, toggleBasis, setAdding, undo, setMoving };
+  return { browse, show, toggleBasis, setAdding, undo, setMoving };
+}
+
+// The kind of food chosen on the phone (`withKind`): the answer on screen with its meal's `cuisine`, and its pick.
+function useKindChoice(setStored: SetStored): ShownAnswer['chooseKind'] {
+  return useCallback(
+    (kind: Cuisine | null): void => {
+      setStored((last) => {
+        const next = withKind(last, kind);
+        return next.answer === last.answer ? last : withPlan({ ...last, answer: next.answer }, next.index);
+      });
+    },
+    [setStored],
+  );
 }
 
 // A change of the conditions, and the Friend it adds, when it adds one.
@@ -274,12 +277,14 @@ export function useShownAnswer(
   }
   const ask = useChange(current, setStored, recalculation);
   const browsing = useBrowsing(setStored);
+  const chooseKind = useKindChoice(setStored);
   return {
     source: current.source,
     answer: current.answer,
     plan: current.answer?.plans[current.index] ?? null,
     index: current.index,
     ...browsing,
+    chooseKind,
     basisOpen: current.basisOpen,
     adding: current.adding,
     recalculating: current.recalculating,

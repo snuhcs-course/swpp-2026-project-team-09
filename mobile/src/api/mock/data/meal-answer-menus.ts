@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, Cuisine, MealInput, Plan } from '@/api/assistant-types';
+import { isAnswerReply } from '@/api/server/plan-answers';
 import { MEAL_ANSWER } from './meal-answer';
 
 // The answer of `meal-answer.ts` with each Plan's menu, as a main server since P05's `Plan.menu` sends it: the main
@@ -75,7 +76,7 @@ export const MEAL_ANSWER_MENUS: AnswerReply & { input: MealInput } = {
 };
 
 // Every time of the answer five hours later, lunch's words as dinner's.
-function fiveHoursLater<T>(value: T): T {
+function fiveHoursLater(value: AnswerReply): AnswerReply {
   const later = JSON.stringify(value)
     .replaceAll(/T(\d{2}):/gu, (_, hour: string) => `T${String(Number(hour) + 5).padStart(2, '0')}:`)
     .replaceAll(
@@ -83,7 +84,11 @@ function fiveHoursLater<T>(value: T): T {
       (_, hour: string, minute: string) => `${String(Number(hour) + 5)}:${minute}`,
     )
     .replaceAll('점심', '저녁');
-  return JSON.parse(later) as T;
+  const copy: unknown = JSON.parse(later);
+  if (!isAnswerReply(copy)) {
+    throw new Error('The dinner copy fails the check of a reply');
+  }
+  return copy;
 }
 
 export const MEAL_DINNER_MENUS: AnswerReply & { input: MealInput } = {
