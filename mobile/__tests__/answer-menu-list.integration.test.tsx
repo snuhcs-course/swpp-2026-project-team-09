@@ -8,12 +8,14 @@ import { screen, within } from '@testing-library/react-native';
 import type { AnswerReply } from '@/api/assistant-types';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
+import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { askOnMap } from './support/answer-map';
+import { askOnMap, card } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
+import { pass } from './support/app';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { sockets } from './support/fake-socket';
 
@@ -128,5 +130,25 @@ describe('a meal answer without menus', () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
 
     expect(screen.queryByRole('button', { name: CHIP })).toBeNull();
+  });
+});
+
+const HELD_MS = 3000;
+
+// Partitions: a group pressed while the Plan on screen is being sent, and once it is made (review of PR 440).
+describe('메뉴 보기 while the Plan is sent', () => {
+  it('picks nothing while "만들고 초대 보내기" is on its way, and the made card shows for the Plan sent', async () => {
+    server.on('POST /plans', { status: 201, body: PLAN_QUEST, afterMs: HELD_MS });
+    const user = await askOnMap(server, fourOf(MEAL_ANSWER_MENUS_REPLY));
+    await user.press(screen.getByRole('button', { name: CHIP }));
+
+    await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' }));
+    const third = list().getByRole('button', { name: /^3 학생회관식당 · /u });
+    expect(third).toBeDisabled();
+    await user.press(third);
+    await pass(HELD_MS);
+
+    expect(screen.getByRole('button', { name: /^302동식당 · 12:15 /u })).toBeOnTheScreen();
+    expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
   });
 });
