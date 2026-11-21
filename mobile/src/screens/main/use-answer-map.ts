@@ -60,10 +60,14 @@ const NO_ROUTES: MapScene['routes'] = [];
 type Invited = Pick<PlanInvitation, 'sending' | 'made' | 'standings' | 'changed'>;
 
 // A Plan made or changed (P04 ticket 17) draws only itself: nothing can be chosen any more, so the other candidates and
-// the places that did not fit go.
+// the places that did not fit go, from the answer and from the Plan's own scene.
 function alone(answer: AnswerReply, index: number): AnswerReply {
   const plan = answer.plans[index];
-  return plan === undefined ? answer : { ...answer, plans: [plan], dropped: [] };
+  if (plan === undefined) {
+    return answer;
+  }
+  const places = plan.scene.places.filter(({ role }) => role !== 'candidate' && role !== 'dropped');
+  return { ...answer, plans: [{ ...plan, scene: { ...plan.scene, places } }], dropped: [] };
 }
 
 // What frames an answer on the map: the status bar, the card, the pill or none, and, once the stage is laid out and

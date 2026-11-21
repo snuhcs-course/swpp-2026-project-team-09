@@ -141,7 +141,8 @@ describe('the map after inviting', () => {
     await user.press(beside().getByRole('button', { name: INVITE }));
     await pass(500);
 
-    expect(mapThings()).not.toContain(SECOND);
+    // No other candidate, numbered or not.
+    expect(mapThings().filter((name) => /301동식당|학생회관식당|3식당|자하연식당/u.test(name))).toEqual([]);
     expect(mapThings()).toContain('302동식당 · 12:15 점심');
   });
 });

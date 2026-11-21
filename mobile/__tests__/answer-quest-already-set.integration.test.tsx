@@ -182,7 +182,7 @@ describe("the main server's planSet", () => {
     expect(screen.queryByRole('button', { name: '바꾸기' })).toBeNull();
     expect(screen.queryByRole('button', { name: '그대로 두기' })).toBeNull();
     // Only the meeting as it now stands: no other candidate, no handle on the bar.
-    expect(mapThings()).not.toContain('후보 2 · 301동 앞');
+    expect(mapThings().filter((name) => /301동 앞|유회진|신양|학생회관/u.test(name))).toEqual([]);
     expect(screen.queryByRole('adjustable', { name: '시작 시각' })).toBeNull();
   });
 

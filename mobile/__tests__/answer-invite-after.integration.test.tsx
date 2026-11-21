@@ -187,7 +187,7 @@ describe('the map after inviting', () => {
     await user.press(inviteButton());
     await pass(500);
 
-    expect(mapThings()).not.toContain('후보 2 · 301동식당');
+    expect(mapThings().filter((name) => /301동식당|학생회관식당|3식당|자하연식당/u.test(name))).toEqual([]);
     expect(mapThings()).toContain(PICK);
     expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
   });
