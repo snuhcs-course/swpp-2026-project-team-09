@@ -19,8 +19,9 @@ export type Group = 'flag' | 'pick' | 'person' | 'next' | 'stop' | 'kept' | 'can
 export const SIDE_ORDER: Group[] = ['flag', 'pick', 'person', 'next', 'stop', 'kept', 'candidate', 'dropped'];
 export const SYMBOL_ORDER: Group[] = ['person', 'pick', 'next', 'stop', 'candidate', 'kept', 'dropped'];
 export const DRAW_ORDER: Group[] = ['pick', 'person', 'flag', 'next', 'stop', 'kept', 'candidate', 'dropped'];
-// A shuttle stop is the way's own: the camera keeps the stop to walk to in view.
-export const OWN = new Set<Group>(['person', 'pick', 'next', 'stop', 'flag']);
+// A shuttle stop is the way's own: the camera keeps the stop to walk to in view. So is a Quest already set (P04 ticket
+// 20): the camera keeps it in view, and a Friend's face near it gives way, so that its words are whole.
+export const OWN = new Set<Group>(['person', 'pick', 'next', 'stop', 'flag', 'kept']);
 
 export const SIDES: Record<Group, LabelSide[]> = {
   flag: ['above', 'below', 'right', 'left'],

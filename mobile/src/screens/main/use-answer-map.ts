@@ -14,14 +14,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AnswerReply, MapScene } from '@/api/assistant-types';
 import { answerCamera } from '@/features/assistant/answer-camera';
 import type { LabelView } from '@/features/assistant/answer-labels';
-import {
-  type AnswerDrawing,
-  drawingOf,
-  drawingOfScene,
-  keptDrawingOf,
-  looksOf,
-  nearOwnMark,
-} from '@/features/assistant/answer-marks';
+import { type AnswerDrawing, drawingOf, drawingOfScene, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
+import { keptDrawingOf } from '@/features/assistant/kept-drawing';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { CardView } from '@/features/map/adapter';
@@ -77,11 +71,11 @@ function alone(answer: AnswerReply, index: number): AnswerReply {
   return { ...answer, plans: [{ ...plan, scene: { ...plan.scene, places } }], dropped: [], planSet: null };
 }
 
-// Once 그대로 두기 left a Quest already set as it is (P04 ticket 20), its tag is the only mark; with no point, nothing
-// is drawn.
-function keptDrawOf(answer: AnswerReply): ((view: LabelView | null) => AnswerDrawing) | null {
-  const base = keptDrawingOf(answer);
-  return base === null ? null : (view: LabelView | null): AnswerDrawing => keptDrawingOf(answer, view) ?? base;
+// Once 그대로 두기 left a Quest already set as it is (P04 ticket 20), its tag is the only mark beside the User's own
+// (`keptDrawingOf`); with no point, nothing is drawn.
+function keptDrawOf(answer: AnswerReply, index: number): ((view: LabelView | null) => AnswerDrawing) | null {
+  const base = keptDrawingOf(answer, index);
+  return base === null ? null : (view: LabelView | null): AnswerDrawing => keptDrawingOf(answer, index, view) ?? base;
 }
 
 // What frames an answer on the map: the status bar, the card, the pill or none, and, once the stage is laid out and
@@ -334,7 +328,7 @@ export function useAnswerMap(
       return null;
     }
     if (leftAlone) {
-      return keptDrawOf(answer);
+      return keptDrawOf(answer, index);
     }
     const [drawn, at] = settled ? [alone(answer, index), 0] : [answer, index];
     return (view: LabelView | null): AnswerDrawing => drawingOf(drawn, at, standings, view);

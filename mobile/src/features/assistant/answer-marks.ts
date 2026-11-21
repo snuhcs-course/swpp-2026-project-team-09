@@ -309,15 +309,6 @@ export function drawingOf(
   return drawingOfScene(plan.scene, view, setting);
 }
 
-const EMPTY_SCENE: MapScene = { places: [], people: [], routes: [], flags: [] };
-
-// What the map shows once 그대로 두기 left the Quest already set as it is (P04 ticket 20): its tag alone. Null when
-// it has no point.
-export function keptDrawingOf(answer: AnswerReply, view: LabelView | null = null): AnswerDrawing | null {
-  const drawing = drawingOfScene(EMPTY_SCENE, view, { ...BARE, kept: answer.planSet });
-  return drawing.things.length === 0 ? null : drawing;
-}
-
 // The looks of every Plan's drawing, each once: at the view `viewOf` gives for the Plan's drawing with its sides
 // chosen in metres, or with those sides.
 export function looksOf(

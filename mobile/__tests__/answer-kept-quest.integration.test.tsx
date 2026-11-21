@@ -104,14 +104,14 @@ describe('a lunch already set, on the map', () => {
     expect(mapThings()).toEqual(expect.arrayContaining(['잡힌 점심 12:16', '후보 4 · 302동식당']));
   });
 
-  it('is the only mark once 그대로 두기 leaves it, with the line that says so, and nothing is sent', async () => {
+  it("is the only mark beside the User's own once 그대로 두기 leaves it, with the line, and nothing is sent", async () => {
     const user = await askOnMap(server, LUNCH_REPLY);
 
     await user.press(dock().getByRole('button', { name: '그대로 두기' }));
     await pass(300);
 
     expect(screen.getByTestId('answer-card')).toBeVisible();
-    expect(mapThings()).toEqual(['잡힌 점심 12:16']);
+    expect(mapThings()).toEqual(['나', '잡힌 점심 12:16']);
     expect(dock().getByText('12:16 302동식당 점심을 그대로 뒀어요')).toBeVisible();
     expect(screen.queryByRole('button', { name: '그대로 두기' })).toBeNull();
     expect(screen.queryByRole('button', { name: '바꾸기' })).toBeNull();
@@ -122,10 +122,10 @@ describe('a lunch already set, on the map', () => {
 
 // Partitions: before and after 바꾸기 of a meeting kept apart from every candidate.
 describe('a meeting already set, on the map', () => {
-  it('is marked at its own place with 잡힌 약속 15:00', async () => {
+  it("is marked at its own place with 잡힌 약속 15:00, and the Plan's Friend stays drawn", async () => {
     await askOnMap(server, MEET_REPLY);
 
-    expect(mapThings()).toContain('잡힌 약속 15:00');
+    expect(mapThings()).toEqual(expect.arrayContaining(['잡힌 약속 15:00', '민수']));
   });
 
   it('is no longer marked once 바꾸기 changed it', async () => {

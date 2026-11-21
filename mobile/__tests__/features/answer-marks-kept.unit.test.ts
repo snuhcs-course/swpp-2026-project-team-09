@@ -7,7 +7,8 @@
 import type { AnswerReply, KeptQuest } from '@/api/assistant-types';
 import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
 import { MEET_ANSWER } from '@/api/mock/data/meet-answer';
-import { drawingOf, keptDrawingOf } from '@/features/assistant/answer-marks';
+import { drawingOf, nearOwnMark } from '@/features/assistant/answer-marks';
+import { keptDrawingOf } from '@/features/assistant/kept-drawing';
 import { seen } from '../support/answer-marks';
 
 // P04 ticket 20: the place of a Quest already set marked on the map apart from the candidates. Expected values: the
@@ -93,16 +94,41 @@ describe('the mark of a Quest already set', () => {
   });
 });
 
-// Partitions: a point, none. After 그대로 두기 the tag is the only mark.
+// Partitions: the User's position known, unknown; a point, none. After 그대로 두기 the tag is the only mark beside the
+// User's own: the orchestrator's review of the screens, where the camera fits both as it fits a Plan.
 describe('the drawing of a Quest left as it is', () => {
-  it('is the tag alone', () => {
-    const drawing = keptDrawingOf(beside(MEAL_ANSWER_ALONE, LUNCH));
+  it("is the tag beside the User's own mark, and the camera fits both", () => {
+    const drawing = keptDrawingOf(beside(MEAL_ANSWER_ALONE, LUNCH), 0);
+    const me = drawing?.things.find(({ id }) => id === 'answer:me');
+
+    expect(drawing?.things.map(({ name }) => name).toSorted()).toEqual(['나', '잡힌 점심 12:16']);
+    expect(drawing?.points).toEqual(
+      expect.arrayContaining([me?.position, { latitude: 37.44887, longitude: 126.95265 }]),
+    );
+    expect(drawing?.points).toHaveLength(2);
+  });
+
+  it('keeps the camera where it was when the User has no mark', () => {
+    const plan = MEAL_ANSWER_ALONE.plans[0];
+    const people = plan?.scene.people.filter(({ me }) => !me) ?? [];
+    const away = plan === undefined ? [] : [{ ...plan, scene: { ...plan.scene, people } }];
+    const drawing = keptDrawingOf({ ...MEAL_ANSWER_ALONE, plans: away, planSet: LUNCH }, 0);
 
     expect(drawing?.things.map(({ name }) => name)).toEqual(['잡힌 점심 12:16']);
-    expect(drawing?.things[0]?.look).toMatchObject({ symbol: { type: 'dot', role: 'kept', number: null } });
+    expect(drawing?.points).toEqual([]);
   });
 
   it('is none without a point', () => {
-    expect(keptDrawingOf(beside(MEAL_ANSWER_ALONE, { ...LUNCH, point: null }))).toBeNull();
+    expect(keptDrawingOf(beside(MEAL_ANSWER_ALONE, { ...LUNCH, point: null }), 0)).toBeNull();
+  });
+});
+
+// Partitions: a Friend's face beside the tag. The faces of the everyday map give way near the Plan's own marks, so
+// that none lies over a mark's words; the tag is one of them.
+describe('the tag among the marks a Friend gives way to', () => {
+  it("counts as one of the Plan's own marks", () => {
+    const drawing = drawingOf(beside(MEET_ANSWER, MEETING), 0);
+
+    expect(nearOwnMark(drawing, { latitude: 37.45967, longitude: 126.95162 })).toBe(true);
   });
 });
