@@ -4,12 +4,14 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { type Position } from '../../common/geometry.js';
 import { type FriendView } from '../../friends/dto/friend-view.dto.js';
 import { FriendViewService } from '../../friends/friend-view.service.js';
+import { type Cuisines } from '../../menus/cuisine-reading.js';
 import { MenusService } from '../../menus/menus.service.js';
 import { type Hours, RestaurantHours } from '../../menus/restaurant-hours.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
@@ -46,12 +48,16 @@ const menusOf = (collected: number, open: number, there: number): MealAnswerArgs
 function servedOf(
   restaurants: readonly OpenRestaurant[],
   candidates: readonly { key: string }[],
-  hours: readonly (Hours | null)[],
+  { hours, cuisines }: { hours: readonly (Hours | null)[]; cuisines: Cuisines },
 ): Map<string, ServedMenu> {
   return new Map(
     candidates.map(({ key }, index): [string, ServedMenu] => [
       key,
-      { lines: restaurants.find((each) => each.key === key)?.lines ?? [], closesAt: hours[index]?.closesAt ?? null },
+      {
+        lines: restaurants.find((each) => each.key === key)?.lines ?? [],
+        closesAt: hours[index]?.closesAt ?? null,
+        cuisines,
+      },
     ]),
   );
 }
@@ -119,8 +125,11 @@ export class MealPlanService {
     const restaurants = openRestaurants(collected, meal, this.restaurantPlaces);
     const open = restaurants.map(({ key, place }) => ({ key, placeId: place.id }));
     const candidates = input.placeId === null ? open : open.filter(({ placeId }) => placeId === input.placeId);
-    const hours = await Promise.all(candidates.map(({ key }) => this.hours.hoursOf(key, meal, date)));
-    const menus = servedOf(restaurants, candidates, hours);
+    const [hours, cuisines] = await Promise.all([
+      Promise.all(candidates.map(({ key }) => this.hours.hoursOf(key, meal, date))),
+      this.menus.cuisinesOf(restaurants.flatMap(({ lines }) => lines)),
+    ]);
+    const menus = servedOf(restaurants, candidates, { hours, cuisines });
     const { places, ...served } = withHours(input, candidates, hours);
     const gathered = gatherMeal([askerPerson, ...friendPeople], places, { input, now, ...served }, this.travel);
     const answer = mealAnswer({

@@ -29,6 +29,7 @@
 // 2026-11-16  Opus 5.5   prompted by fyoon46
 // 2026-11-16  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+// 2026-11-21  Opus 5.5   prompted by fyoon46
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -865,6 +866,29 @@ enum MenuLineKind {
   note
 
   @@map("menu_line_kind")
+}
+
+// The kind of food of a dish, by its name as a meal Plan names it, read once by the model when a collected menu first
+// holds the name.
+model DishCuisine {
+  id      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name    String   @unique
+  // Null for what nobody chooses a place by: a side dish, rice, a drink, fruit, a dessert, or a line that is no dish.
+  cuisine Cuisine?
+
+  @@map("dish_cuisines")
+}
+
+enum Cuisine {
+  korean
+  chinese
+  japanese
+  western
+  // 분식: 떡볶이, 김밥, 라면.
+  snack
+  other
+
+  @@map("cuisine")
 }
 
 // In the order of the day, which is the order the meals are served in.

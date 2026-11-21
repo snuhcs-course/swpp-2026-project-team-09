@@ -299,7 +299,7 @@ function planOf(fit: GatheringFit, naming: Naming, { first, nearest }: { first: 
     ],
     scene: sceneOf(fit, naming, mealWord(naming)),
     band: bandOf(fit, naming),
-    ...(served === undefined ? {} : { menu: mainMenu(served.lines) }),
+    ...(served === undefined ? {} : { menu: mainMenu(served.lines, served.cuisines) }),
   };
 }
 

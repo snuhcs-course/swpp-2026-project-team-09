@@ -75,8 +75,8 @@ export class MenuLookupService {
       },
       at,
     );
-    const hours = await this.menus.hoursOf(key, meal, date);
-    const found = menuAnswer({ key, date, meal, now: at.now, lines, answer, hours });
+    const [hours, cuisines] = await Promise.all([this.menus.hoursOf(key, meal, date), this.menus.cuisinesOf(lines)]);
+    const found = menuAnswer({ key, date, meal, now: at.now, lines, answer, hours, cuisines });
     if (found.result === 'none') {
       return { result: 'none', reason: found.reason, lines };
     }

@@ -182,9 +182,9 @@ describe("A meal Plan's menu", () => {
     expect(plans.find(({ id }) => id === '학생회관식당')?.menu).toEqual({
       price: null,
       dishes: [
-        { name: '눈꽃치즈닭갈비', price: 6000 },
-        { name: '단호박영양밥&양념장(#)', price: 3000 },
-        { name: '수제탕수육', price: 6000 },
+        { name: '눈꽃치즈닭갈비', price: 6000, cuisine: null },
+        { name: '단호박영양밥&양념장(#)', price: 3000, cuisine: null },
+        { name: '수제탕수육', price: 6000, cuisine: null },
       ],
     });
     expect(plans.filter(({ id }) => id !== '학생회관식당').map(({ menu }) => menu)).not.toContainEqual(
@@ -207,7 +207,16 @@ describe("A meal Plan's menu", () => {
     ]);
     expect(mainMenu(lunchOf('302동식당'))).toMatchObject({
       price: 6500,
-      dishes: expect.arrayContaining([{ name: '뼈없는감자탕', price: null }]) as unknown,
+      dishes: expect.arrayContaining([{ name: '뼈없는감자탕', price: null, cuisine: null }]) as unknown,
     });
+  });
+
+  it('gives each dish its kept kind of food, and none to a dish not read', () => {
+    const cuisines = new Map([['부대짬뽕&군만두', '중식' as const]]);
+
+    expect(mainMenu(lunchOf('301동식당'), cuisines).dishes).toEqual([
+      { name: '부대짬뽕&군만두', price: 6500, cuisine: '중식' },
+      { name: '(뚝)순댓국&계란장조림', price: 6500, cuisine: null },
+    ]);
   });
 });

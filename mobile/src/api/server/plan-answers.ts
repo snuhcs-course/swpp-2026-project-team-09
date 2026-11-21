@@ -7,7 +7,16 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerLine, AnswerReply, MapScene, MenuDish, PlacePoint, Plan, TimeBand } from '@/api/assistant-types';
+import type {
+  AnswerLine,
+  AnswerReply,
+  Cuisine,
+  MapScene,
+  MenuDish,
+  PlacePoint,
+  Plan,
+  TimeBand,
+} from '@/api/assistant-types';
 import type { DroppedPlace, PlanPart } from '@/api/plan-part-types';
 import type { LatLng } from '@/api/types';
 import { field, hasTexts, isNumber, isText, isTextOrNull, listOf } from './answers';
@@ -228,8 +237,15 @@ function isEventTimesOrAbsent(value: unknown): boolean {
   return value === undefined || (isText(field(value, 'startAt')) && isTextOrNull(field(value, 'endAt')));
 }
 
+const isCuisine = isKeyOf<Cuisine>({ 한식: true, 중식: true, 일식: true, 양식: true, 분식: true, 기타: true });
+
 export function isDish(value: unknown): value is MenuDish {
-  return isText(field(value, 'name')) && isNumberOrNull(field(value, 'price'));
+  const cuisine = field(value, 'cuisine');
+  return (
+    isText(field(value, 'name')) &&
+    isNumberOrNull(field(value, 'price')) &&
+    (cuisine === undefined || cuisine === null || isCuisine(cuisine))
+  );
 }
 
 // A meal Plan's menu: absent from other Plans and from a main server before P05 ticket 12's follow-up.

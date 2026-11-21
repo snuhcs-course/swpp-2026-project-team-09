@@ -9,6 +9,7 @@
 
 import { z } from 'zod';
 import { type Position } from '../../common/geometry.js';
+import { type CuisineWord } from '../../menus/cuisine-reading.js';
 import { type RecruitingQuestDto } from '../../quests/dto/quest.dto.js';
 import type { LocationMissing, WithMark, WithMissing } from '../refusals/refusal.dto.js';
 import { type RelaxOffer } from '../refusals/relax.dto.js';
@@ -104,6 +105,8 @@ export interface Plan {
 export interface MenuDish {
   name: string;
   price: number | null;
+  // Its kind of food, for the app's chips; null for a side dish, rice, a drink and the like, and for a name not read yet.
+  cuisine: CuisineWord | null;
 }
 
 export interface PlanMenu {

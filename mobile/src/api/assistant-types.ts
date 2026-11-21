@@ -295,7 +295,12 @@ export interface Plan {
 export interface MenuDish {
   name: string;
   price: number | null;
+  // Its kind of food, for the chips of kinds: null for a side dish, rice, a drink and the like, and for a name the main
+  // server has not read yet; absent from a main server before P05 ticket 15.
+  cuisine?: Cuisine | null;
 }
+
+export type Cuisine = '한식' | '중식' | '일식' | '양식' | '분식' | '기타';
 
 // What the map draws, by meaning. The app decides colours, camera, and label sides.
 export interface MapScene {

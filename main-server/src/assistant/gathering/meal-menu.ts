@@ -7,6 +7,8 @@
 
 import { MenuLineKind } from '../../generated/prisma/client.js';
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
+import { type Cuisines } from '../../menus/cuisine-reading.js';
+import { dishName } from '../../menus/dish-name.js';
 import { servedLines } from '../../menus/open-rule.js';
 import { type AnswerLine, type PlanMenu } from '../dto/answer.dto.js';
 import { koreaDate } from '../korea-time.js';
@@ -15,11 +17,12 @@ import { addDays } from '../library/booking-rules.js';
 // What a meal Plan says of its Restaurant's menu (design 6.1, wireframe AmHungry s1): the main dish and the closing
 // time on the card, the whole menu in 근거, and the same in words for the model.
 
-// The meal's lines at a Restaurant as collected, and when it closes for the meal ("HH:MM"), null when its hours were
-// never read.
+// The meal's lines at a Restaurant as collected, when it closes for the meal ("HH:MM"), null when its hours were never
+// read, and the kept kinds of food of its dishes, none when left out.
 export interface ServedMenu {
   lines: readonly MenuLineDto[];
   closesAt: string | null;
+  cuisines?: Cuisines;
 }
 
 // A heading and the lines under it, or the lines before the first heading.
@@ -32,14 +35,8 @@ interface Corner {
 const STAPLES = new Set(['밥', '쌀밥', '잡곡밥', '흑미밥', '백미밥', '현미밥', '기장밥', '귀리밥']);
 // A line of a buffet's notice cut in two by the page, as "<뷔페 특성상 메뉴의 조기품절".
 const CUT_NOTICE = /^<|>$/u;
-const CORNER_TAG = /^<[^>]*>\s*/u;
 
 const SOURCE = '오늘의 식단';
-
-// A dish as the card names it: its name without its price or its corner's tag.
-export function dishName({ name, text }: MenuLineDto): string {
-  return (name ?? text).replace(CORNER_TAG, '').trim();
-}
 
 // The served corners that hold something, each without plain rice when it holds more.
 export function cornersOf(lines: readonly MenuLineDto[]): Corner[] {
@@ -58,13 +55,16 @@ export function cornersOf(lines: readonly MenuLineDto[]): Corner[] {
   });
 }
 
-// The main corner, the first that holds something: its own price from its heading, and its dishes by name and price in
-// the menu's order. What a meal Plan and a menu Lookup give the app of a Restaurant's menu.
-export function mainMenu(lines: readonly MenuLineDto[]): PlanMenu {
+// The main corner, the first that holds something: its own price from its heading, and its dishes by name, price and
+// kept kind of food in the menu's order. What a meal Plan and a menu Lookup give the app of a Restaurant's menu.
+export function mainMenu(lines: readonly MenuLineDto[], cuisines: Cuisines = new Map()): PlanMenu {
   const [main] = cornersOf(lines);
   return {
     price: main?.heading?.price ?? null,
-    dishes: (main?.items ?? []).map((line) => ({ name: dishName(line), price: line.price })),
+    dishes: (main?.items ?? []).map((line) => {
+      const name = dishName(line);
+      return { name, price: line.price, cuisine: cuisines.get(name) ?? null };
+    }),
   };
 }
 
