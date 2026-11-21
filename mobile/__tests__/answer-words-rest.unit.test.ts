@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLine } from '@/api/assistant-types';
@@ -38,34 +39,51 @@ function bubble(parts: Partial<ChatBubble>): ChatBubble {
 }
 
 describe('a Lookup in the dock', () => {
-  it('has no line for a way or a place the map draws, and its asks as chips', () => {
+  it("has the model's words as its line for a way the map draws, and no line and 근거 when it said nothing", () => {
     expect(lookupRestOf(WAY_LOOKUP, null, WORDS)).toEqual({
+      line: [{ text: WORDS, strong: false }],
+      offers: [],
+      retry: false,
+      note: null,
+      basis: false,
+    });
+    expect(lookupRestOf(WAY_LOOKUP, null, '')).toEqual({
       line: null,
       offers: [],
       retry: false,
       note: null,
       basis: true,
     });
-    expect(lookupRestOf(LEAVE_LOOKUP_REPLY.lookup, null, WORDS)?.line).toBeNull();
+    expect(lookupRestOf(LEAVE_LOOKUP_REPLY.lookup, null, '')?.line).toBeNull();
+    // A blank text, as the main server sends when the map says it all, is no words either.
+    expect(lookupRestOf(WAY_LOOKUP, null, '  \n')?.line).toBeNull();
+  });
+});
+
+describe("a Lookup's line in the dock", () => {
+  it("has the model's words as its line, which are never dropped (ticket 18)", () => {
+    expect(said(lookupRestOf(NOT_RUNNING_LOOKUP_REPLY.lookup, null, WORDS)?.line)).toBe(WORDS);
+    expect(said(lookupRestOf(MENU_LOOKUP, null, WORDS)?.line)).toBe(WORDS);
   });
 
-  it('has its headline for words the map does not show', () => {
-    expect(said(lookupRestOf(NOT_RUNNING_LOOKUP_REPLY.lookup, null, WORDS)?.line)).toBe(
+  it('has its headline for words the map does not show when the model said nothing', () => {
+    expect(said(lookupRestOf(NOT_RUNNING_LOOKUP_REPLY.lookup, null, '')?.line)).toBe(
       '셔틀은 지금 다니지 않아요 (평일 8–21시)',
     );
-    expect(said(lookupRestOf(MENU_LOOKUP, null, WORDS)?.line)).toBe('301동식당 오늘 점심은 부대짬뽕&군만두');
-    expect(said(lookupRestOf(FRIEND_LOOKUP, null, WORDS)?.line)).toBe('민수는 지금 302동이에요');
+    expect(said(lookupRestOf(MENU_LOOKUP, null, '')?.line)).toBe('301동식당 오늘 점심은 부대짬뽕&군만두');
+    expect(said(lookupRestOf(FRIEND_LOOKUP, null, '')?.line)).toBe('민수는 지금 302동이에요');
   });
 
   it("takes a study area's ask as a chip", () => {
-    const rest = lookupRestOf(STUDY_LOOKUP, null, WORDS);
+    const rest = lookupRestOf(STUDY_LOOKUP, null, '');
 
     expect(said(rest?.line)).toBe('보는 범위에선 공대 신양학술정보관');
     expect(rest?.offers).toEqual([{ kind: 'ask', label: '관정 보기', text: '관정 지금 자리 있어?' }]);
   });
 
-  it("keeps a day's card open", () => {
-    expect(lookupRestOf(DAY_LOOKUP, null, WORDS)).toBeNull();
+  it("keeps a day's card open when the model said nothing, and docks it under the model's words", () => {
+    expect(lookupRestOf(DAY_LOOKUP, null, '')).toBeNull();
+    expect(said(lookupRestOf(DAY_LOOKUP, null, WORDS)?.line)).toBe(WORDS);
   });
 
   it("has the refusal's line beside a Lookup the map draws, and none of the Lookup's asks", () => {

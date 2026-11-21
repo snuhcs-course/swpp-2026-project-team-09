@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -131,10 +132,10 @@ function onScreenCard(props: WordsProps, kind: WordsKind): ReactElement | null {
   return null;
 }
 
-// A reply's words: the card of the answer on screen, the Lookup on screen with a refusal's lines over the Lookup's
-// when the refusal stands beside it, else a refusal's lines and offers, a failure's lines, or the lines of its answer's
-// first Plan, those that say why it has none, or its Lookup's, in place of the model's sentence; otherwise the sentence
-// as Markdown.
+// A reply's words: the card of the answer on screen, the Lookup on screen under the model's words, or with a refusal's
+// lines over the Lookup's when the refusal stands beside it, else a refusal's lines and offers, a failure's lines, or
+// the lines of its answer's first Plan or those that say why it has none in place of the model's sentence; otherwise
+// the sentence as Markdown, or a Lookup's lines when the model said nothing (P04 ticket 18: words are never dropped).
 export function Words(props: WordsProps): ReactElement {
   const { bubble, onClose, onAsk, addRecalculated } = props;
   const { answer, refusal = null } = bubble;
@@ -145,7 +146,7 @@ export function Words(props: WordsProps): ReactElement {
   }
   const lookup = lookupOf(bubble, props);
   if (kind === 'lookup' && lookup !== null) {
-    return (
+    const card = (
       <LookupCard
         addRecalculated={addRecalculated}
         lookup={lookup}
@@ -154,6 +155,15 @@ export function Words(props: WordsProps): ReactElement {
         refusal={refusal}
         shown={props.lookup}
       />
+    );
+    // The model's words stand over the Lookup: they say why it is shown (P04 ticket 18).
+    return refusal === null && bubble.text.trim() !== '' ? (
+      <>
+        <ChatMarkdown style={styles.words} text={bubble.text} />
+        {card}
+      </>
+    ) : (
+      card
     );
   }
   if (refusal !== null) {
@@ -165,7 +175,8 @@ export function Words(props: WordsProps): ReactElement {
   if (bubble.offers !== undefined && bubble.offers.length > 0) {
     return <OfferedWords offers={bubble.offers} onAsk={onAsk} text={bubble.text} />;
   }
-  const lines = answer?.plans[0]?.lines ?? answer?.noPlan?.lines ?? lookup?.lines;
+  const lines =
+    answer?.plans[0]?.lines ?? answer?.noPlan?.lines ?? (bubble.text.trim() === '' ? lookup?.lines : undefined);
   return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;
 }
 

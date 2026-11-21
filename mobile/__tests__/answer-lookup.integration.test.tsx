@@ -5,10 +5,13 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
 import { apiClient } from '@/api/client';
+import { FRIEND_LOOKUP_REPLY } from '@/api/mock/data/friend-lookup';
+import { MENU_LOOKUP_REPLY } from '@/api/mock/data/menu-lookup';
 import { pass, screen } from './support/app';
 import { card, mapLines, mapThings, timeBar } from './support/answer-map';
 import { AI_INPUT } from './support/lists';
@@ -18,6 +21,10 @@ import { startFresh } from './support/mocks';
 // A Lookup in the answer frame (P01 ticket 11) over the mocks, whose Assistant answers "문화관이 어디야?", "오늘
 // 301동식당 메뉴 뭐야?", and "민수 어디야?" with the main server's real Lookups (boards q1, q8, and q6). Since P04
 // ticket 05 a Lookup docks: its main button beside the input, and the line of words the map does not show.
+
+// The model's words beside the stored menu and Friend Lookups, which are the dock's line (P04 ticket 18).
+const MENU_WORDS = MENU_LOOKUP_REPLY.text;
+const FRIEND_WORDS = FRIEND_LOOKUP_REPLY.text;
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -153,10 +160,10 @@ describe('the map of a way to a Place (q1)', () => {
 // Partitions: a Lookup with a band, its line in the dock, the card it raises, and its marks. Expected values: the copy
 // of board q8.
 describe('a menu (q8)', () => {
-  it('docks with its first line, the band without handles on the time bar, and "길 안내" beside the input', async () => {
+  it('docks with the model\'s words, the band without handles on the time bar, and "길 안내" beside the input', async () => {
     await ask('오늘 301동식당 메뉴 뭐야?');
 
-    expect(card().getByText('301동식당 오늘 점심은 부대짬뽕&군만두')).toBeVisible();
+    expect(card().getByText(MENU_WORDS)).toBeVisible();
     expect(card().queryByText('12:45까지 55분 먹을 수 있어요')).toBeNull();
     expect(timeBar().getByText('11:50–12:45 · 식사 55분')).toBeVisible();
     expect(screen.queryByLabelText('시작 시각')).toBeNull();
@@ -168,8 +175,9 @@ describe('a menu (q8)', () => {
   it('raises the chips, both lines, and "닫기" at a press on the line', async () => {
     const user = await ask('오늘 301동식당 메뉴 뭐야?');
 
-    await user.press(card().getByText('301동식당 오늘 점심은 부대짬뽕&군만두'));
+    await user.press(card().getByText(MENU_WORDS));
 
+    expect(card().getByText('301동식당 오늘 점심은 부대짬뽕&군만두')).toBeVisible();
     expect(card().getByText('13:00 수업까지')).toBeVisible();
     expect(card().getByText('12:45까지 55분 먹을 수 있어요')).toBeVisible();
     expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
@@ -188,10 +196,10 @@ describe('a menu (q8)', () => {
 // Partitions: a Lookup whose only action is `meet` (ticket 24), its line in the dock, a person's chip, and "닫기".
 // Expected values: the copy of board q6.
 describe('where a Friend is (q6)', () => {
-  it('docks with the first line and "만나고 싶다" beside the input, and draws his face', async () => {
+  it('docks with the model\'s words and "만나고 싶다" beside the input, and draws his face', async () => {
     await ask('민수 어디야?');
 
-    expect(card().getByText('민수는 지금 302동이에요')).toBeVisible();
+    expect(card().getByText(FRIEND_WORDS)).toBeVisible();
     expect(card().queryByText('12:15까지 수업이에요')).toBeNull();
     expect(beside().getByRole('button', { name: '만나고 싶다' })).toBeVisible();
     expect(mapThings()).toContain('민수 · 지금 302동');
@@ -200,7 +208,7 @@ describe('where a Friend is (q6)', () => {
   it('shows 민수\'s chip with no ✕, the lines, and "닫기" raised by a press on the line', async () => {
     const user = await ask('민수 어디야?');
 
-    await user.press(card().getByText('민수는 지금 302동이에요'));
+    await user.press(card().getByText(FRIEND_WORDS));
 
     // The chip, and the strong word of the first line.
     expect(card().getAllByText('민수')).toHaveLength(2);
@@ -222,7 +230,7 @@ describe('where a Friend is (q6)', () => {
   it('returns to the everyday map with "닫기" of the raised card', async () => {
     const user = await ask('민수 어디야?');
 
-    await user.press(card().getByText('민수는 지금 302동이에요'));
+    await user.press(card().getByText(FRIEND_WORDS));
     await user.press(card().getByRole('button', { name: '닫기' }));
 
     expect(screen.queryByTestId('answer-pill')).toBeNull();
