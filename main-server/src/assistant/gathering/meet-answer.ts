@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -16,7 +17,7 @@ import {
 import { clockOf } from '../free-time/free-time.js';
 import { koreaTime } from '../korea-time.js';
 import { type GatheringArgs, GatheringNaming } from './answer-words.js';
-import { type GatheringFit, MINUTE_MS } from './gathering.js';
+import { endedByItem, type GatheringFit, MINUTE_MS, minutesSaid } from './gathering.js';
 import { basisOf, meetingOf, originChip, personChips, subQuestsOf, untilChip } from './meal-answer.js';
 import { halfHoursAround, lanesOf, sceneOf } from './meal-scene.js';
 import { meetHours, meetWindow } from './meet-gathering.js';
@@ -60,20 +61,30 @@ function noPlanOf(naming: MeetNaming): AnswerReply['noPlan'] {
   };
 }
 
-function linesOf({ key, start, end, togetherMinutes }: GatheringFit): AnswerLine[] {
+// Until when they are together: its minutes when someone's next item ends it soon, its end when later, and nothing of
+// the day's 22:00 limit, which no one has to leave for.
+function togetherWords(fit: GatheringFit): string {
+  if (minutesSaid(fit)) {
+    return `${clockOf(fit.end)}까지 함께 ${fit.togetherMinutes}분이에요`;
+  }
+  return endedByItem(fit) ? `${clockOf(fit.end)}까지 함께할 수 있어요` : '그 뒤로는 일정이 없어요';
+}
+
+function linesOf(fit: GatheringFit): AnswerLine[] {
   return [
     [
-      { text: `${clockOf(start)} ${key}`, strong: true },
+      { text: `${clockOf(fit.start)} ${fit.key}`, strong: true },
       { text: '에서 만나요', strong: false },
     ],
-    plain(`${clockOf(end)}까지 함께 ${togetherMinutes}분이에요`),
+    plain(togetherWords(fit)),
   ];
 }
 
 // From the half hour at or before the later of now and the day's hours, to the half hour at or after the later of half
 // an hour past the plan's end and the end of the last item in anyone's day within those hours: the stretch of the day
 // the band can be dragged over.
-function bandOf({ start, end, togetherMinutes }: GatheringFit, naming: MeetNaming): TimeBand {
+function bandOf(fit: GatheringFit, naming: MeetNaming): TimeBand {
+  const { start, end, togetherMinutes } = fit;
   const { now, people, input } = naming.args;
   const hours = meetHours(input.date);
   const ends = people
@@ -90,7 +101,7 @@ function bandOf({ start, end, togetherMinutes }: GatheringFit, naming: MeetNamin
     lanes: lanesOf(naming, from, until),
     startAt: koreaTime(start),
     endAt: koreaTime(end),
-    text: `${clockOf(start)}–${clockOf(end)} · 함께 ${togetherMinutes}분`,
+    text: `${clockOf(start)}–${clockOf(end)}${minutesSaid(fit) ? ` · 함께 ${togetherMinutes}분` : ''}`,
   };
 }
 

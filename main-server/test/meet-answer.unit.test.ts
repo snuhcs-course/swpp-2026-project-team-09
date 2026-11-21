@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -242,5 +243,17 @@ describe("The band's busy stretches", () => {
       { startAt: time('16:00'), endAt: time('16:30'), label: '일정' },
       { startAt: time('17:00'), endAt: time('18:15'), label: '58동 수업' },
     ]);
+  });
+});
+
+describe('A meet with nothing after it', () => {
+  it("says no one has an item after it, not the minutes to the day's 22:00", () => {
+    const free = { userId: JIEUN, name: '지은', items: [], in: '제2공학관' };
+
+    const [first] = meetOf([me([]), free]).plans;
+
+    expect(first?.endAt).toBe(time('22:00'));
+    expect(first?.lines[1]).toEqual([plain('그 뒤로는 일정이 없어요')]);
+    expect(first?.band.text).not.toContain('분');
   });
 });

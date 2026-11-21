@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -150,7 +151,8 @@ describe('The time to eat', () => {
     const lookup = lookupOf('301동식당', '제1공학관', [classAt('11:00', '11:50', '제1공학관')]);
 
     expect(lookup.band).toMatchObject({ startAt: time('11:50'), endAt: time('14:30') });
-    expect(lookup.lines[1]).toEqual([plain('14:30까지 160분 먹을 수 있어요')]);
+    // 160 minutes would read as a meal that long: a stretch over two hours is said by its times.
+    expect(lookup.lines[1]).toEqual([plain('11:50–14:30')]);
     expect(lookup.basis).toEqual(['점심은 14:30까지예요']);
     expect(lookup.chips).toEqual([{ kind: 'origin', text: '301동에서', userId: null }]);
   });
