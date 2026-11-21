@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -12,6 +13,7 @@ import type { ChatBubble } from '@/features/assistant/use-chat';
 import { keepsShown } from '@/features/assistant/use-shown-answer';
 import type { ChatSheetControl } from '../chat-sheet';
 import { DockChip, DockLine } from './dock-chips';
+import { WithMenuList } from './meal-list';
 import { planCardRests } from './plan-card';
 import { pressOffer } from './refusal-reply';
 import { onScreenOf, planShown, Words, wordsKindOf } from './reply-words';
@@ -177,7 +179,8 @@ interface DockedAnswerProps {
   onRaise: Raise;
 }
 
-// The docked card's content: a reply's dock, or the Plan's chips' row, which ends with the folded chips.
+// The docked card's content: a reply's dock, or the Plan's chips' row with the folded chips, and in a meal answer
+// 메뉴 모두 보기 and its list (`WithMenuList`).
 export function DockedAnswer({
   control,
   bubble,
@@ -189,20 +192,25 @@ export function DockedAnswer({
   if (rest.kind === 'words') {
     return <DockedWords control={control} onRaise={onRaise} rest={rest.words} />;
   }
+  const folded = <FoldedChips control={control} note={control.answer.answer?.note ?? null} onRaise={onRaise} />;
   return (
-    <Words
-      addRecalculated={control.chat.addRecalculated}
-      bubble={bubble}
-      dock={<FoldedChips control={control} note={control.answer.answer?.note ?? null} onRaise={onRaise} />}
-      focus={focus}
-      howAbout={control.howAbout}
-      invitation={control.invitation}
-      lookup={control.lookup}
-      onAsk={control.chat.send}
-      onClose={onClose}
-      room={null}
-      shown={control.answer}
-    />
+    <WithMenuList folded={folded} shown={control.answer}>
+      {(dock) => (
+        <Words
+          addRecalculated={control.chat.addRecalculated}
+          bubble={bubble}
+          dock={dock}
+          focus={focus}
+          howAbout={control.howAbout}
+          invitation={control.invitation}
+          lookup={control.lookup}
+          onAsk={control.chat.send}
+          onClose={onClose}
+          room={null}
+          shown={control.answer}
+        />
+      )}
+    </WithMenuList>
   );
 }
 
