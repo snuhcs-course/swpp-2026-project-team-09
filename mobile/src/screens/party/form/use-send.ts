@@ -6,6 +6,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -130,7 +131,7 @@ export function useSendParty(
 // The form's sending: its toast, and the room when the Quest stays after a failed step.
 export function useSend(
   quest: ShownQuest | null,
-): (form: PartyForm, friends: string[], plan: PlanChange | null) => Promise<Sent> {
+): (form: PartyForm, friends: string[], plan: PlanChange | null) => Promise<Sending> {
   const sendParty = useSendParty(quest);
   const showToast = useToast();
   return async (form, friends, plan) => {
@@ -139,6 +140,6 @@ export function useSend(
     if (sending.sent === 'room') {
       router.replace(`/room/${sending.questId}`);
     }
-    return sending.sent;
+    return sending;
   };
 }

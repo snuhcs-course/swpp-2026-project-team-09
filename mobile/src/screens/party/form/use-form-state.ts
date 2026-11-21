@@ -7,6 +7,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -157,12 +158,12 @@ function useSubmit(
         const sent = { ...form, place };
         return send(sent, friends, quest === null ? null : planChangeOf(quest, sent, where.changed));
       })
-      .then((sent) => {
+      .then((sending) => {
         setSaving(false);
-        if (sent !== 'refused') {
-          proposal?.made();
+        if (sending.sent !== 'refused') {
+          proposal?.made(sending.questId);
         }
-        if (sent === 'taken') {
+        if (sending.sent === 'taken') {
           (quest === null ? showMine : router.back)();
         }
       });

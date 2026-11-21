@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -32,7 +33,7 @@ function blockOf(proposal: QuestProposal, form: PartyForm): string | null {
 }
 
 // Opens the party form filled with the Proposal, which tells `made` once it made the Quest.
-export function openProposalForm(proposal: QuestProposal, made: () => void): void {
+export function openProposalForm(proposal: QuestProposal, made: (questId: string) => void): void {
   holdProposal({ proposal, made });
   router.push({ pathname: '/party-form', params: { fromProposal: '1' } });
 }
@@ -43,7 +44,8 @@ export function openProposalForm(proposal: QuestProposal, made: () => void): voi
 // and a second press while it is on its way does nothing.
 // A Quest made in the form 수정 opens counts as made here too, so that the card does not make it again; coming back
 // without making leaves the card as it was.
-export function useProposalMaking(): ProposalActions {
+// `onMade` tells the chat the Quest a bubble's Proposal was made into, which goes back with it (P04 ticket 19).
+export function useProposalMaking(onMade: (bubbleId: number, questId: string) => void): ProposalActions {
   const sendParty = useSendParty(null);
   const showToast = useToast();
   const announcers = useQuery(globalEventAnnouncersQuery).data;
@@ -74,6 +76,7 @@ export function useProposalMaking(): ProposalActions {
         return;
       }
       mark(bubbleId, 'made');
+      onMade(bubbleId, sent.questId);
       if (sent.sent === 'room') {
         router.navigate(`/room/${sent.questId}`);
       } else {
@@ -82,8 +85,9 @@ export function useProposalMaking(): ProposalActions {
     });
   };
   const edit = (bubbleId: number, proposal: QuestProposal): void => {
-    openProposalForm(proposal, () => {
+    openProposalForm(proposal, (questId) => {
       mark(bubbleId, 'made');
+      onMade(bubbleId, questId);
     });
   };
   return { makingOf: (bubbleId) => making.get(bubbleId) ?? 'ready', make, edit };

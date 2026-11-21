@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -236,5 +237,25 @@ describe('the frame after 수정', () => {
     expect(card().getByRole('button', { name: '만들었어요' })).toBeDisabled();
     expect(card().getByRole('button', { name: '수정' })).toBeDisabled();
     expect(server.received('POST /quests/own')).toHaveLength(1);
+  });
+
+  // P04 ticket 19: the Proposal made in the form goes back with the made 파티's id.
+  it("sends the Proposal back with the made 파티's id", async () => {
+    const user = await edited(LUNCH);
+    await user.press(screen.getByRole('button', { name: '파티 올리기' }));
+    await pass(500);
+    await user.press(screen.getByRole('tab', { name: '지도' }));
+    server.on('POST /assistant/messages', {
+      status: 200,
+      body: { text: REPLY, mapButtons: [], cards: [], proposal: null },
+    });
+
+    await user.type(screen.getByLabelText(AI_INPUT), '방금 만든 파티 19시로 수정해 줘');
+    await user.press(screen.getByRole('button', { name: '보내기' }));
+    await pass(500);
+
+    expect(server.received('POST /assistant/messages').at(-1)?.body).toMatchObject({
+      messages: [{}, { proposal: { title: LUNCH.title, madeQuestId: MY_HIKE.id } }, {}],
+    });
   });
 });

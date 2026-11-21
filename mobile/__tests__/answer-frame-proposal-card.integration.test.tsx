@@ -5,6 +5,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -165,6 +166,43 @@ describe('the Proposal sent back', () => {
         ],
       }),
     );
+  });
+});
+
+// Partitions: made by 만들기, and not made. Expected values: the stored Quest the fake main server makes, whose id goes
+// back with the Proposal it was made from (P04 ticket 19, the main server's P05 ticket 18), so that the Assistant does
+// not offer it again.
+describe('the Proposal sent back once it was made', () => {
+  it("carries the made 파티's id", async () => {
+    const user = await proposed();
+    await user.press(make());
+    await pass(500);
+    await user.press(screen.getByRole('tab', { name: '지도' }));
+    answerWith(null);
+
+    await say(user, '방금 만든 파티 19시로 수정해 줘');
+
+    expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual(
+      expect.objectContaining({
+        messages: [
+          { role: 'user', text: ASKED },
+          { role: 'assistant', text: REPLY, cards: [], proposal: { ...LUNCH, madeQuestId: MY_HIKE.id } },
+          { role: 'user', text: '방금 만든 파티 19시로 수정해 줘' },
+        ],
+      }),
+    );
+  });
+
+  it('carries no id before it is made', async () => {
+    const user = await proposed();
+    answerWith(null);
+
+    await say(user, '정원만 3명으로');
+
+    expect(server.received('POST /assistant/messages').at(-1)?.body).toMatchObject({
+      messages: [{}, { proposal: LUNCH }, {}],
+    });
+    expect(JSON.stringify(server.received('POST /assistant/messages').at(-1)?.body)).not.toContain('madeQuestId');
   });
 });
 
