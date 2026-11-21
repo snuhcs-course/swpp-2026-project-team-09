@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type NewQuestInput } from '../src/assistant/dto/answer.dto.js';
@@ -268,6 +269,8 @@ describe('Row 5: a new badminton party with 서준', () => {
         ],
         plain('17:02에 도착해서 17:10에 모여요'),
       ],
+      // An activity has no end: "17:10–17:40 · 30분" was a length no one gave.
+      band: { text: '17:10부터' },
     });
   });
 });
