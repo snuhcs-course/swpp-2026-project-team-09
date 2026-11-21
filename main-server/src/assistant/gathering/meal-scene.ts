@@ -3,13 +3,14 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type MapScene, type TimeBand } from '../dto/answer.dto.js';
 import { byStart, clockOf, type DayItem, onDay } from '../free-time/free-time.js';
 import { koreaTime } from '../korea-time.js';
 import { type GatheringNaming, itemAt, mergingLegs, type Naming, wayOn, withAnd } from './answer-words.js';
-import { type GatheringFit, MINUTE_MS, type PersonPart } from './gathering.js';
+import { endedByItem, type GatheringFit, MINUTE_MS, minutesSaid, type PersonPart } from './gathering.js';
 
 // What the map draws of a plan, and its time band.
 
@@ -157,6 +158,19 @@ export function busyIn(
     });
 }
 
+// How long the meal can last: its minutes before someone's next item, else when the User must leave or the
+// Restaurant closes.
+export function mealSpan(fit: GatheringFit): string {
+  if (minutesSaid(fit)) {
+    return `식사 ${fit.togetherMinutes}분`;
+  }
+  const end = clockOf(fit.end);
+  if (endedByItem(fit)) {
+    return `${end}엔 나서요`;
+  }
+  return fit.window === undefined ? `${end}까지` : `${end}에 닫아요`;
+}
+
 // Each person's lane over the range, the asker's named 나.
 export function lanesOf(naming: GatheringNaming, from: Date, until: Date): TimeBand['lanes'] {
   return naming.args.people.map(({ userId, name, me, items }) => ({
@@ -169,7 +183,8 @@ export function lanesOf(naming: GatheringNaming, from: Date, until: Date): TimeB
 // From the half hour at or before the later of now and an hour before the plan's start, to the half hour at or after half
 // an hour past its end, reaching out to the half hours around the window the User fixed. `now` is given as it is, even
 // outside the range.
-export function bandOf({ start, end, togetherMinutes }: GatheringFit, naming: Naming): TimeBand {
+export function bandOf(fit: GatheringFit, naming: Naming): TimeBand {
+  const { start, end, togetherMinutes } = fit;
   const { now, input } = naming.args;
   const opens = [Math.max(now.getTime(), start.getTime() - BAND_BEFORE_MS)];
   const closes = [end.getTime() + BAND_AFTER_MS];
@@ -186,6 +201,6 @@ export function bandOf({ start, end, togetherMinutes }: GatheringFit, naming: Na
     lanes: lanesOf(naming, from, until),
     startAt: koreaTime(start),
     endAt: koreaTime(end),
-    text: `${clockOf(start)}–${clockOf(end)} · 식사 ${togetherMinutes}분`,
+    text: `${clockOf(start)}–${clockOf(end)}${minutesSaid(fit) ? ` · 식사 ${togetherMinutes}분` : ''}`,
   };
 }

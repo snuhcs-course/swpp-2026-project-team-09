@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -9,7 +10,7 @@ import { type AnswerLine, type AnswerReply, type ConditionChip } from '../dto/an
 import { clockOf, type DayItem } from '../free-time/free-time.js';
 import { type RelaxOffer } from '../refusals/relax.dto.js';
 import { type AnswerPerson, mealWord, type Naming, withSubject, withTopic } from './answer-words.js';
-import { type GatheringFit, minutesBetween } from './gathering.js';
+import { type GatheringFit, minutesBetween, minutesSaid } from './gathering.js';
 import { missingLines, NEAREST_BASIS } from './missing-inputs.js';
 import { type Relax, startsByOf, type Unmet } from './unmet-plans.js';
 
@@ -120,13 +121,15 @@ export function timeChip({ args }: Naming): ConditionChip | null {
 }
 
 // Board n11b: the time and the Restaurant, the minutes of those eating, and what was eased.
-function easedLines({ key, start, togetherMinutes }: GatheringFit, { args }: Naming): AnswerLine[] | null {
+function easedLines(fit: GatheringFit, { args }: Naming): AnswerLine[] | null {
+  const { key, start, end, togetherMinutes } = fit;
   const from = eased(args);
   if (from === null) {
     return null;
   }
-  const minutes =
+  const said =
     args.people.length > 1 ? `${together(args.people.length)} ${togetherMinutes}분` : `식사 ${togetherMinutes}분`;
+  const minutes = minutesSaid(fit) ? said : `${clockOf(end)}까지`;
   return [[strong(`${clockOf(start)} ${key}`), plain(` · ${minutes}`)], [plain(`지금 대신 ${toward(from)} 미뤘어요`)]];
 }
 
