@@ -10,6 +10,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibraryCard } from './library-card-types';
@@ -247,6 +248,11 @@ export interface AnswerReply extends WithMissing {
   // MEAL_ALREADY_SET, and it is changed in that Quest. Absent from other answers and from a main server before P05
   // ticket 16.
   mealSet?: MealSet | null;
+  // A meal's or a meeting's: the User's Quest the plans set aside (바꾸기 when `changeable`, else 파티 보기), and their
+  // other Quests that day of the kind asked for or with a Friend asked for, at most three. Absent from a main server
+  // before P05 ticket 17, which sends `mealSet` beside `planSet` for one release.
+  planSet?: KeptQuest | null;
+  related?: KeptQuest[];
 }
 
 // One of the User's Quests as the main server names it (P05 ticket 17): set aside by a plan, related to one, or asked

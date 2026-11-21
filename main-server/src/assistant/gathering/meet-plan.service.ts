@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -79,6 +80,7 @@ export class MeetPlanService {
     );
     const when = { window: meetWindow(input), now };
     const gathering = gatherToMeet([asker, ...others], places, input.placeId, when, this.travel);
-    return meetAnswer({ input, now, people, gathering, placeOf: (placeId) => this.meals.placeOf(placeId) });
+    const answer = meetAnswer({ input, now, people, gathering, placeOf: (placeId) => this.meals.placeOf(placeId) });
+    return { ...answer, ...(await this.meals.touched(askerId, input, { now, kinds: ['meet'], setAside: null })) };
   }
 }

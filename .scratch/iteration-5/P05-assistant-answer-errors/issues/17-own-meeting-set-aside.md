@@ -45,6 +45,11 @@ Slice 1 lands in two PRs, each releasable: (1a) reading, below; (1b) `related` a
    - So it stays, though above the 120 tokens first budgeted: the delimiters around titles and places cost most of it.
 4. **The evaluation's scorer** counted a turn as TOOL only for cards, a map button, or a lookup of its own table answered in words. A reply that draws an answer or a Lookup on the map now counts as shown, as cards do, so map-answer cases (these, and ticket 14's meal wishes) score as they ran.
 5. **Ticket 16 stays** as the meal instance until slice 3, and `mealSet` beside `planSet` (1b) for one release.
+6. **Slice 1b: `planSet` and `related`** on the meal and meeting answers (`MealPlanService.touched`, `gathering/related-quests.ts`).
+   - `planSet` is the asker's Quest the plan sets aside, today only a meal's own, as ticket 16 sets it aside.
+   - `related` holds the asker's other Quests that day of the kind asked for, or with a Friend asked for, at most three, nearest the time asked first.
+   - The model reads `related` from planMeal and planMeet, and its rules mention the one that matters whether or not it limits the plans.
+   - The app reads both as optional, and P04's ticket 17 draws 바꾸기 or 파티 보기 from `planSet.changeable`.
 
 ### Eval cases (three or four per kind; slice 1's are read-only)
 

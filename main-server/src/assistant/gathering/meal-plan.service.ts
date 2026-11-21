@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
@@ -19,21 +20,31 @@ import { type Hours, RestaurantHours } from '../../menus/restaurant-hours.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { PlaceLookup } from '../../places/place-lookup.js';
-import { type HeldMeal, heldMealOf } from '../../quests/held-meal.js';
+import { heldMealOf } from '../../quests/held-meal.js';
+import { type KeptKind, type KeptQuest, keptQuestsOf } from '../../quests/kept-quests.js';
 import { TimetableService } from '../../timetable/timetable.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
 import { UsersService } from '../../users/users.service.js';
-import { type AnswerReply, type LocationMissing, type MealInput } from '../dto/answer.dto.js';
-import { clockOf, type DayItem, freeTimeOf } from '../free-time/free-time.js';
-import { type Interval, mealWindow } from '../free-time/meal-fit.js';
+import {
+  type AnswerReply,
+  type KeptQuestDto,
+  type LocationMissing,
+  type MealInput,
+  type MeetInput,
+} from '../dto/answer.dto.js';
+import { clockOf, type DayItem, freeTimeOf, onDay } from '../free-time/free-time.js';
+import { mealWindow } from '../free-time/meal-fit.js';
 import { openRestaurants } from '../free-time/meal-tools.js';
 import { type OpenRestaurant } from '../free-time/restaurant-card.js';
 import { UserDayService } from '../free-time/user-day.service.js';
-import { koreaTime } from '../korea-time.js';
+import { keptDto } from '../lookup/day-quests.js';
 import { type GatheringPerson, MINUTE_MS } from './gathering.js';
 import { type AnswerPerson, mealAnswer, type MealAnswerArgs } from './meal-answer.js';
 import { type ServedMenu } from './meal-menu.js';
+import { type BusyItem, busyIn, leaveOut, mealSetOf } from './meal-plan-parts.js';
 import { type MissingInputs } from './missing-inputs.js';
+import { placeLabelOf } from './place-naming.js';
+import { relatedOf } from './related-quests.js';
 import { conditionsOf } from './plan-conditions.js';
 import { gatherMeal, withHours } from './unmet-plans.js';
 
@@ -48,44 +59,6 @@ const menusOf = (collected: number, open: number, there: number): MealAnswerArgs
   }
   return there === 0 ? 'closed-at-place' : 'open';
 };
-
-// An item of the asker's that fills the meal's window, as the model is told it when no time is free.
-export interface BusyItem {
-  name: string;
-  isClass: boolean;
-  start: string;
-  end: string;
-}
-
-// Leaves these Sub Quests out of everyone's day.
-function leaveOut(people: readonly { items: readonly DayItem[] }[], subQuestIds: readonly string[]): void {
-  const leftOut = new Set(subQuestIds);
-  for (const person of people) {
-    person.items = person.items.filter(({ id }) => !leftOut.has(id));
-  }
-}
-
-const busyIn = (items: readonly DayItem[], { start, end }: Interval): BusyItem[] =>
-  items
-    .filter((item) => item.start < end && item.end > start)
-    .map(({ name, isClass, start: from, end: to }) => ({ name, isClass, start: clockOf(from), end: clockOf(to) }));
-
-// The meal the asker already holds for the day, as the answer names it: its Restaurant is the title's, "302동식당" of
-// "302동식당에서 점심".
-function mealSetOf(held: HeldMeal | null): AnswerReply['mealSet'] {
-  if (held === null) {
-    return null;
-  }
-  const { id, title, startsAt, others } = held;
-  return {
-    questId: id,
-    title,
-    startAt: koreaTime(startsAt),
-    place: title.replace(/에서 (점심|저녁)$/u, ''),
-    friendNames: others,
-    shared: others.length > 0,
-  };
-}
 
 // Each candidate's menu for the meal, by its key, with when it closes.
 function servedOf(
@@ -184,7 +157,8 @@ export class MealPlanService {
     });
     const busy = this.busyOf(answer, people[0]?.items ?? [], input);
     const otherMeal = this.otherMealOf(collected, input, now);
-    return { answer: { ...answer, otherMeal, mealSet: mealSetOf(held) }, served: menus, busy };
+    const touched = await this.touched(askerId, input, { now, kinds: [`meal-${meal}`], setAside: held?.id ?? null });
+    return { answer: { ...answer, otherMeal, ...touched, mealSet: mealSetOf(held) }, served: menus, busy };
   }
 
   // The asker's items that fill the meal's time, when no time is free for it and no condition can be eased: with a
@@ -298,6 +272,28 @@ export class MealPlanService {
 
   placeIdAt(position: Position | null): string | null {
     return position === null ? null : (this.places.at(position)?.place.id ?? null);
+  }
+
+  // The asker's Quest a plan sets aside, as the answer names it, and their other Quests of the day it touches: of the
+  // kinds asked for, or with a Friend asked for (P05 ticket 17).
+  async touched(
+    askerId: string,
+    { date, people, window }: MealInput | MeetInput,
+    { now, kinds, setAside }: { now: Date; kinds: readonly KeptKind[]; setAside: string | null },
+  ): Promise<Pick<AnswerReply, 'planSet' | 'related'>> {
+    const kept = await keptQuestsOf(this.prisma, askerId, { date, now });
+    const set = kept.find(({ questId }) => questId === setAside);
+    const around = window.from === null ? now : onDay(date, window.from);
+    const friendIds = people.slice(1).map(({ userId }) => userId);
+    return {
+      planSet: set === undefined ? null : this.keptDtoOf(set),
+      related: relatedOf(kept, { kinds, friendIds, around, setAside }).map((quest) => this.keptDtoOf(quest)),
+    };
+  }
+
+  // A Quest of the asker's as the app reads it, its Place by its label.
+  keptDtoOf(quest: KeptQuest): KeptQuestDto {
+    return keptDto(quest, quest.placeId === null ? quest.placeLabel : placeLabelOf(this.placeOf(quest.placeId)));
   }
 
   placeOf(placeId: string): PlaceDto {
