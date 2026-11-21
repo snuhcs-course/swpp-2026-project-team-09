@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerDrawing } from '@/features/assistant/answer-marks';
@@ -30,6 +31,11 @@ describe('the room a drawing is fitted into', () => {
       bottom: 200 + 8 + 24,
       left: 64,
     });
+  });
+
+  it('keeps the time bar under the pill, 8 below it, when the answer has one', () => {
+    // A bar of 96 stands 8 under the pill.
+    expect(paddingOf(24, 200, ONE_POINT, true, 96).top).toBe(24 + 28 + 48 + 8 + 96 + 8 + 24);
   });
 
   it('keeps the status bar and the room for a label at the top for an invitation, which has no pill', () => {

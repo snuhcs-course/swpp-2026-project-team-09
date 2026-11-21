@@ -4,11 +4,12 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { apiClient } from '@/api/client';
 import { pass, screen } from './support/app';
-import { card, mapLines, mapThings } from './support/answer-map';
+import { card, mapLines, mapThings, timeBar } from './support/answer-map';
 import { AI_INPUT } from './support/lists';
 import { givePhone, ME, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
@@ -118,13 +119,13 @@ describe('the map of a way to a Place (q1)', () => {
 
 // Partitions: a Lookup with a band, and its marks. Expected values: the copy of board q8.
 describe('a menu (q8)', () => {
-  it('shows the lines, the band without handles, "길 안내", and "닫기"', async () => {
+  it('shows the lines, the band without handles on the time bar, "길 안내", and "닫기"', async () => {
     await ask('오늘 301동식당 메뉴 뭐야?');
 
     expect(card().getByText('13:00 수업까지')).toBeVisible();
     expect(card().getByText('301동식당 오늘 점심은 부대짬뽕&군만두')).toBeVisible();
     expect(card().getByText('12:45까지 55분 먹을 수 있어요')).toBeVisible();
-    expect(card().getByText('11:50–12:45 · 식사 55분')).toBeVisible();
+    expect(timeBar().getByText('11:50–12:45 · 식사 55분')).toBeVisible();
     expect(screen.queryByLabelText('시작 시각')).toBeNull();
     expect(screen.queryByLabelText('끝 시각')).toBeNull();
     expect(card().getByRole('button', { name: '길 안내' })).toBeVisible();

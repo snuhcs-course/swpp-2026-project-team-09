@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -11,7 +12,7 @@ import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { screen } from './support/app';
-import { card } from './support/answer-map';
+import { card, timeBar } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import { body, holdBody, holdLanes, layTrack } from './support/band-move';
 import type { FakeServer } from './support/fake-server';
@@ -101,7 +102,7 @@ describe("the band dragged over 민수's class to 15:20 (board a12)", () => {
 
     await holdBody(185);
 
-    expect(card().getByText('15:20–15:48 · 민수가 안 돼요')).toBeVisible();
+    expect(timeBar().getByText('15:20–15:48 · 민수가 안 돼요')).toBeVisible();
     const lines = within(card().getByTestId('answer-lines'));
     expect(lines.getByText('민수')).toBeVisible();
     expect(lines.getByText('는 15:30부터 302동 수업이라')).toBeVisible();
@@ -146,7 +147,7 @@ describe('the band dragged elsewhere and held', () => {
 
     expect(body()).toHaveAccessibilityValue({ text: '14:00–14:28' });
     expect(screen.queryByTestId('time-band-clash')).toBeNull();
-    expect(card().getByText('12:15–12:43 · 함께 28분')).toBeVisible();
+    expect(timeBar().getByText('12:15–12:43 · 함께 28분')).toBeVisible();
     expect(card().getByText('12:15 302동 앞')).toBeVisible();
     expect(card().getByRole('button', { name: '14:00' })).toHaveStyle({ borderColor: color.quest });
   });
@@ -157,7 +158,7 @@ describe('the band dragged elsewhere and held', () => {
     await holdBody(400);
 
     expect(body()).toHaveAccessibilityValue({ text: '18:02–18:30' });
-    expect(card().getByText('18:02–18:30 · 내가 안 돼요')).toBeVisible();
+    expect(timeBar().getByText('18:02–18:30 · 내가 안 돼요')).toBeVisible();
     expect(within(card().getByTestId('answer-lines')).getByText('는 17:00부터 58동 수업이라')).toBeVisible();
   });
 
@@ -167,7 +168,7 @@ describe('the band dragged elsewhere and held', () => {
     await holdBody(2);
 
     expect(body()).toHaveAccessibilityValue({ text: '12:15–12:43' });
-    expect(card().getByText('12:15–12:43 · 함께 28분')).toBeVisible();
+    expect(timeBar().getByText('12:15–12:43 · 함께 28분')).toBeVisible();
   });
 });
 
@@ -181,6 +182,6 @@ describe('the band dragged from its lanes beside it', () => {
     await holdLanes(180, 185);
 
     expect(body()).toHaveAccessibilityValue({ text: '15:20–15:48' });
-    expect(card().getByText('15:20–15:48 · 민수가 안 돼요')).toBeVisible();
+    expect(timeBar().getByText('15:20–15:48 · 민수가 안 돼요')).toBeVisible();
   });
 });

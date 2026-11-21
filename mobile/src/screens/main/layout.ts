@@ -10,6 +10,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { space } from '@/design-system';
@@ -60,6 +61,8 @@ export interface Room {
   cardHeight: number | null;
   // The answer frame's card, its whole laid-out height: null while the frame is not shown or not laid out yet.
   answerHeight: number | null;
+  // The answer's time bar under its pill, 0 while there is none. Left out, none.
+  timeBarHeight?: number;
   // The 새내기 튜토리얼's start button is shown, the lowest of the three at the left.
   tutorialStart: boolean;
   // The first run's line that asks for interests is shown, above the start button.

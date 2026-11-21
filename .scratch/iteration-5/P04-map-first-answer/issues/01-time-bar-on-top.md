@@ -32,11 +32,30 @@ The time band leaves the bottom card and becomes one white row under the questio
 
 ## Acceptance criteria
 
-- [ ] A meal Plan for tomorrow shows the bar under the pill with "내일(수)" and the span's times, and the bottom card holds no band. (Integration test.)
-- [ ] Folded, the bar is one row; a tap unfolds one row per person with their names; a tap again folds it. (Integration test.)
-- [ ] A drag of the bar's end handle and its let-go ask for the same recalculation as before. (Integration test, moved from the card's band.)
-- [ ] An answer without a band shows no bar. (Integration test.)
-- [ ] The day words for today, tomorrow, the day after, and a later day. (Unit test.)
-- [ ] The camera's top padding includes the bar. (Unit test of the padding.)
-- [ ] The bar on a phone, folded and unfolded, with the mock build. (Emulator.)
-- [ ] No native file changes; lint, format, and types pass on the app.
+- [x] A meal Plan for tomorrow shows the bar under the pill with "내일(수)" and the span's times, and the bottom card holds no band. (Integration test.)
+- [x] Folded, the bar is one row; a tap unfolds one row per person with their names; a tap again folds it. (Integration test.)
+- [x] A drag of the bar's end handle and its let-go ask for the same recalculation as before. (Integration test, moved from the card's band.)
+- [x] An answer without a band shows no bar. (Integration test.)
+- [x] The day words for today, tomorrow, the day after, and a later day. (Unit test.)
+- [x] The camera's top padding includes the bar. (Unit test of the padding.)
+- [x] The bar on a phone, folded and unfolded, with the mock build. (Emulator.)
+- [x] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+### What was built (2026-11-21)
+
+- The bar is `answer/time-bar.tsx`: the Plan's band with the same corrections as the card had, or a Lookup's without handles. Which band it shows comes from the same decision that picks the reply's card (`answer/reply-words.tsx`), so the bar and the card never disagree.
+- The handle the "until" chip emphasises is held by the frame (`useBandFocus`), since the chips and the bar each hold their corrections.
+- Folded, the lanes lie on one row (each lane keeps its own view, so the red parts while moving whole are still each person's). The ends name the busy stretch that ends last before the span and the one that starts first after it, with the person's name unless it is the User's own lane; without one, now or the range's end.
+- The bar's height is told to the screen's room (`timeBarHeight`), and the camera's padding and the labels' area count it under the pill. The raised card stops under the bar.
+- The day words (`koreaDayWord`) count Korea's calendar days from the band's `now`: nothing today, 내일, 모레, 어제 with the weekday, else "11/23(월)".
+
+### Emulator check (2026-11-21)
+
+The debug app on the shared Android emulator, with Metro from this branch in mock mode and the mock sign-in. A Friend's card, 만나고 싶다: the bar stood under the pill, folded to one row with "민수 12:15 302동 수업 끝" and "13:00 24동 수업" at its ends and the grip under it; a press on the grip unfolded the rows 나 and 민수 with 12:00 and 18:30 at the range's ends, and a press again folded it. The card below kept its chips, lines, and buttons, without a band. Korean cannot be typed through adb, so a meal asked in words was not tried on the phone; the integration tests cover it.
+
+### Agent usage (2026-11-21)
+
+- Agent time: about 50 minutes in one session, after the spec and tickets (an estimate from the transcript's timestamps). It covers the bar, its tests, the lint splits, and the emulator check.
+- Tokens: output 69k; input 38.8M, of which 38.7M cache reads, 145k cache writes, and 244 uncached. No subagents.

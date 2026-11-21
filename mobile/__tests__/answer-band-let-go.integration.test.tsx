@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
@@ -10,7 +11,7 @@ import { MEET_ANSWER } from '@/api/mock/data/meet-answer';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
-import { askOnMap, card } from './support/answer-map';
+import { askOnMap, card, timeBar } from './support/answer-map';
 import { layBand, recalculations } from './support/answer-correct';
 import { body, dragBody, layTrack, stepBody } from './support/band-move';
 import type { FakeServer } from './support/fake-server';
@@ -146,7 +147,7 @@ describe('after a band let go', () => {
     expect(screen.getByText(NOT_RECALCULATED)).toBeVisible();
     expect(body()).toHaveAccessibilityValue({ text: '12:15–12:43' });
     expect(card().getByText('12:15 302동 앞')).toBeVisible();
-    expect(card().getByText('12:15–12:43 · 함께 28분')).toBeVisible();
+    expect(timeBar().getByText('12:15–12:43 · 함께 28분')).toBeVisible();
     expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
   });
 });

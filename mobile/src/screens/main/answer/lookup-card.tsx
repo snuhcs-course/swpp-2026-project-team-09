@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -19,17 +20,10 @@ import { AnswerLines } from './answer-lines';
 import { CardNote } from './card-note';
 import { ReadOnlyChip } from './condition-chips';
 import { isButton, pressOffer } from './refusal-reply';
-import { TimeBand } from './time-band';
 
 // As high as the answer's chips, whose touch area "근거" shares.
 const CHIP_HEIGHT = 34;
 const HIT_SLOP = (size.touchMin - CHIP_HEIGHT) / 2;
-const NO_WINDOW = { from: null, until: null };
-
-function ignoreDrop(): void {
-  // A Lookup's band has no handles.
-}
-
 interface ChipsProps {
   chips: readonly ConditionChip[];
   // Null when the Lookup has no basis.
@@ -193,17 +187,6 @@ export function LookupCard(props: LookupCardProps): ReactElement {
           ))}
         </View>
       ) : null}
-      {lookup.band === null ? null : (
-        <TimeBand
-          band={lookup.band}
-          disabled
-          fixed={NO_WINDOW}
-          focus={null}
-          ghost={null}
-          handles={false}
-          onDrop={ignoreDrop}
-        />
-      )}
       <CardNote note={lookup.note} />
       <Buttons asks={asksOf(props)} main={mainOf(props, meet)} onAsk={props.onAsk} onClose={onClose} />
     </View>

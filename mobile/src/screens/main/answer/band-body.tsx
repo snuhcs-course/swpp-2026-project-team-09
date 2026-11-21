@@ -2,15 +2,16 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useMemo } from 'react';
-import { type DimensionValue, StyleSheet, View } from 'react-native';
+import { type DimensionValue, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector, type PanGesture } from 'react-native-gesture-handler';
 import type { MealInput, TimeBand } from '@/api/assistant-types';
-import { color, radius } from '@/design-system';
+import { color, radius, space, text } from '@/design-system';
 import { bandMoved, bandStepped, movingWords } from '@/features/assistant/band-move';
-import { clashes, clockOf, shareOf, type Stretch } from '@/features/assistant/time-band';
+import { bandEdgesOf, clashes, clockOf, shareOf, type Stretch } from '@/features/assistant/time-band';
 
 // The time band on its track, which a drag on its lanes moves whole (P02 ticket 25).
 
@@ -141,7 +142,27 @@ export function BandOnTrack(props: BandProps): ReactElement {
   );
 }
 
+// The ends under the track: the range's beside the lanes' names, `margin` wide, or folded the busy stretches that
+// bound the span.
+export function Ends({ band, folded, margin }: { band: TimeBand; folded: boolean; margin: number }): ReactElement {
+  const { before, after } = folded
+    ? bandEdgesOf(band)
+    : { before: clockOf(band.range.startAt), after: clockOf(band.range.endAt) };
+  return (
+    <View style={[styles.ends, !folded && { marginLeft: margin }]}>
+      <Text numberOfLines={1} style={styles.end}>
+        {before}
+      </Text>
+      <Text numberOfLines={1} style={styles.end}>
+        {after}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  ends: { flexDirection: 'row', justifyContent: 'space-between', gap: space[2] },
+  end: { ...text.caption, color: color.inkSubtle },
   track: { flex: 1 },
   ghost: {
     position: 'absolute',

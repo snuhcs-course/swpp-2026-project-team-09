@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -68,6 +69,11 @@ export function mapLines(): string[] {
 
 export function card(): ReturnType<typeof within> {
   return within(screen.getByTestId('answer-card'));
+}
+
+// The time bar under the pill, which holds the answer's band (P04 ticket 01).
+export function timeBar(): ReturnType<typeof within> {
+  return within(screen.getByTestId('time-bar'));
 }
 
 export async function layAnswerCard(height: number): Promise<void> {

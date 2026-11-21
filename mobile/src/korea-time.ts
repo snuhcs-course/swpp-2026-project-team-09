@@ -5,6 +5,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // Times are shown in Korea's time wherever the phone is: the campus is there. Korea is nine hours ahead of UTC all
@@ -114,4 +115,17 @@ export function koreaWeekdayName(instant: Date): string {
 export function koreaShortDate(instant: Date): string {
   const korea = inKorea(instant);
   return `${twoDigits(korea.getUTCMonth() + 1)}/${twoDigits(korea.getUTCDate())} (${WEEKDAYS[korea.getUTCDay()]})`;
+}
+
+// The day of an answer's time beside its clock: nothing today, "내일(수)", "모레(목)", "어제(월)", else "11/23(월)".
+export function koreaDayWord(instant: string, now: Date): string {
+  const at = new Date(instant);
+  const days = koreaDaysAfter(now, at);
+  const weekday = koreaWeekdayName(at);
+  const near: Partial<Record<number, string>> = { [-1]: '어제', 1: '내일', 2: '모레' };
+  if (days === 0) {
+    return '';
+  }
+  const korea = inKorea(at);
+  return `${near[days] ?? `${korea.getUTCMonth() + 1}/${korea.getUTCDate()}`}(${weekday})`;
 }

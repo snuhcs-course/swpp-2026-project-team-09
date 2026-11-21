@@ -14,6 +14,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -92,6 +93,8 @@ interface MapBottomProps {
   onNoticeHeight: (height: number) => void;
   // The answer frame's card was laid out with this height.
   onAnswerHeight: (height: number) => void;
+  // The answer's time bar was laid out with this height, 0 when it went.
+  onTimeBarHeight: (height: number) => void;
   // The AI input was laid out with this height.
   onInputHeight: (height: number) => void;
   // "활성 파티": the room of the User's Party's Quest.
@@ -246,14 +249,21 @@ type FramedProps = MapBottomProps & {
 // The everyday map's bottom, the answer frame, the examples over the keyboard, and the cards nobody asked for: none of
 // them while a quest's guide is open.
 function FramedParts(props: FramedProps): ReactElement {
-  const { chat, room, unasked, onAnswerHeight, cardShown, inputTop, keyboardUp, send } = props;
+  const { chat, room, unasked, onAnswerHeight, onTimeBarHeight, cardShown, inputTop, keyboardUp, send } = props;
   const { invitation, made } = unasked;
   return (
     <>
       {!chat.framed && !cardShown ? <EverydayBottom {...props} keyboardUp={keyboardUp} /> : null}
       {keyboardUp ? <KeyboardScrim /> : null}
       <RowFourProvider control={chat}>
-        <AnswerFrame control={chat} inputTop={inputTop} keyboardUp={keyboardUp} onHeight={onAnswerHeight} room={room} />
+        <AnswerFrame
+          control={chat}
+          inputTop={inputTop}
+          keyboardUp={keyboardUp}
+          onBarHeight={onTimeBarHeight}
+          onHeight={onAnswerHeight}
+          room={room}
+        />
       </RowFourProvider>
       {!chat.framed && keyboardUp ? <AskedExamples bottom={inputTop + space[2]} onSend={send} /> : null}
       {invitation.shown ? <InvitationFrame invitation={invitation} onHeight={onAnswerHeight} room={room} /> : null}
