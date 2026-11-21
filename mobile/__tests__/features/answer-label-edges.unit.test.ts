@@ -50,11 +50,14 @@ describe('labels at one side of neighbouring marks', () => {
   });
 });
 
-// The third Plan at the lowest zoom on the emulator: 3식당 stands at (128.5, 235.7) with "3식당 12:31", 85 wide, at its
-// left: its right edge at 108.5. A Place moved to a point of the view this far from it takes its left side too.
+// The third Plan at the lowest zoom on the emulator: 3식당 stands at (128.5, 235.7). A view moved so that 3식당 stands
+// further right gives "3식당 12:31" with its number, 105 wide, room at its left: its right edge 20 left of its point.
+// A Place moved to a point of the view this far from it takes its left side too.
 const AT_3 = inView({ latitude: 37.45647, longitude: 126.94851 }, THIRD_AT_LOWEST, SIZE);
-// The same view 40 further left, 3식당 at (168.5, 235.7): room at its left for "자하연식당 2층 12:35", 130 wide.
-const ROOMIER = cameraPutting({ latitude: 37.45647, longitude: 126.94851 }, { x: AT_3.x + 40, y: AT_3.y });
+// 60 further: 3식당 at (188.5, 235.7), room at its left for "자하연식당 2층 12:35" with its number, 150 wide.
+const ROOMIER = cameraPutting({ latitude: 37.45647, longitude: 126.94851 }, { x: AT_3.x + 60, y: AT_3.y });
+// 20 further: 3식당 at (148.5, 235.7), its label from 23.5 to 128.5.
+const NEAR_EDGE = cameraPutting({ latitude: 37.45647, longitude: 126.94851 }, { x: AT_3.x + 20, y: AT_3.y });
 
 function drawnWith(label: string, across: number, down: number, camera = ROOMIER): ReturnType<typeof drawingOf> {
   // Changed from the stored copy: the Place stands that far right of and below 3식당 in the view.
@@ -67,7 +70,7 @@ function drawnWith(label: string, across: number, down: number, camera = ROOMIER
 // so that its label at the left stays clear of 3식당's dot; a move that the area's left edge cuts short.
 describe('the bounds of neighbouring marks', () => {
   it("moves the label of 자하연식당 2층, 59.5 below and 20 right of 3식당, 20 away to 3식당's right edge", () => {
-    // Its right edge would be at 168.5; moved to 148.5, its 130 run from 18.5, inside 16.
+    // Its right edge would be at 188.5; moved to 168.5, its 150 run from 18.5, inside 16.
     expect(seen(drawnWith('자하연식당 2층', 20, 59.5), 'answer:candidate:자하연식당 2층').label).toMatchObject({
       side: 'left',
       shift: 20,
@@ -85,12 +88,9 @@ describe('the bounds of neighbouring marks', () => {
   });
 
   it('moves a label only as far as the left edge of the area lets it', () => {
-    // The next Class 24동, 40 below and 30 right of 3식당, at (158.5, 275.7): "13:00 수업 · 24동", 113 wide, runs
-    // from 25.5 to 138.5. To end on 108.5 it would start at -4.5, so it moves 25.5 − 16 = 9.5, in whole points 9.
-    expect(seen(drawnWith('24동', 30, 40, THIRD_AT_LOWEST), NEXT_CLASS).label).toMatchObject({
-      side: 'left',
-      shift: 9,
-    });
+    // The next Class 24동, 40 below and 30 right of 3식당, at (178.5, 275.7): "13:00 수업 · 24동", 113 wide, runs
+    // from 45.5 to 158.5. To end on 128.5 it would start at 15.5, so it moves 45.5 − 16 = 29.5, in whole points 29.
+    expect(seen(drawnWith('24동', 30, 40, NEAR_EDGE), NEXT_CLASS).label).toMatchObject({ side: 'left', shift: 29 });
   });
 });
 
