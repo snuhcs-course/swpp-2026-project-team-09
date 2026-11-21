@@ -6,11 +6,13 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { type AnswerLabel, type AnswerSymbol, type FaceBadge, initials } from '@/design-system';
+import { koreaDayWord } from '@/korea-time';
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
 import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
@@ -104,12 +106,14 @@ export interface SceneSetting {
   number: number | null;
   plans: readonly Plan[];
   standings: ReadonlyMap<string, Standing>;
+  // The Plan's day before the pick's time when it is not the day asked ("내일(수)"); left out, none.
+  day?: string;
 }
 
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
 
 function placeDraft(
-  { number: pickNumber, plans }: SceneSetting,
+  { number: pickNumber, plans, day }: SceneSetting,
   scene: MapScene,
   item: MapScene['places'][number],
 ): Draft | null {
@@ -119,7 +123,8 @@ function placeDraft(
   const base = { position, planId: null, title, line: null, number: null };
   if (role === 'pick') {
     const flag = scene.flags.find(({ at, role: flagRole }) => flagRole === 'place' && samePoint(at, position));
-    const line = flag === undefined ? null : restOf(title, flag.text);
+    const time = flag === undefined ? null : restOf(title, flag.text);
+    const line = day === undefined || day === '' ? time : [day, time].filter((part) => part !== null).join(' ');
     const name = line === null ? title : `${title} · ${line}`;
     const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber };
     return {
@@ -286,7 +291,8 @@ export function drawingOf(
   if (plan === undefined) {
     return { things: [], lines: [], points: [], own: [], pick: null, userIds: [] };
   }
-  return drawingOfScene(plan.scene, view, { number: planIndex + 1, plans: answer.plans, standings });
+  const day = koreaDayWord(plan.startAt, new Date(plan.band.now));
+  return drawingOfScene(plan.scene, view, { number: planIndex + 1, plans: answer.plans, standings, day });
 }
 
 // The looks of every Plan's drawing, each once: at the view `viewOf` gives for the Plan's drawing with its sides

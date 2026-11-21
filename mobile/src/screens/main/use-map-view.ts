@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { awayPlaceOf } from '@/features/assistant/study-area';
@@ -16,6 +17,7 @@ import type { ShownLookup } from '@/features/assistant/use-shown-lookup';
 import type { CardView } from '@/features/map/adapter';
 import { useMarkPresses } from '@/features/map/use-interest-marks';
 import type { MapAvatar, MapLine } from '@/map';
+import { usePickOpening } from './answer/opened-mark';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
 import { useAwaySeats } from './library/use-away-seats';
@@ -148,7 +150,8 @@ export function useMapView(
   const lookup = useLookupMap(drawn.lookup, map, room, { avatars: things.avatars, cards }, me.avatars, seats);
   const { howAbout } = chat;
   const shown = useAskingShown(drawn.answer, howAbout.point);
-  const plan = useAnswerMap(shown, map, room, { avatars: things.avatars, cards }, chat.invitation);
+  const openPick = usePickOpening(chat.openMark, map.camera, room.stage);
+  const plan = useAnswerMap(shown, map, room, { avatars: things.avatars, cards }, chat.invitation, openPick);
   const answer = plan ?? lookup;
   const unasked = invitation.shown || made.shown !== null;
   const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);

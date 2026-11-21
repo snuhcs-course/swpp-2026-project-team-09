@@ -31,6 +31,7 @@ import { FollowUpChips } from './follow-up-chips';
 import { useForgetWithUndo } from './forget-with-undo';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { KeyboardHeadline } from './keyboard-headline';
+import { MarkCard, PlanFlagRows } from './mark-card';
 import { pillIconOf } from './pill-icon';
 import type { Raising } from './raise-handle';
 import { ReplySteps } from './reply-steps';
@@ -125,6 +126,20 @@ interface FramedProps {
   onHeight: (height: number) => void;
   // The time bar's height under the pill, 0 while there is none.
   onBarHeight: (height: number) => void;
+  stage: Room['stage'];
+}
+
+// The card of the mark pressed on the map, while one is open and the keyboard is down: the pick's of a Plan.
+function OpenMark({ control, stage }: { control: ChatSheetControl; stage: Room['stage'] }): ReactElement | null {
+  const { mark, closeMark, answer: shown } = control;
+  if (mark === null || stage === null || shown.answer === null || shown.plan === null) {
+    return null;
+  }
+  return (
+    <MarkCard mark={mark} onClose={closeMark} stage={stage}>
+      <PlanFlagRows answer={shown.answer} plan={shown.plan} />
+    </MarkCard>
+  );
 }
 
 // The bar's height while it is shown, told to the screen for the camera's fit; 0 while there is none.
@@ -146,10 +161,10 @@ function useBarHeight(
 // "새 대화" forgets it, with 되돌리기 for a few seconds. While a building is asked about over the answer ("여기면 어때?"), ✕ and back return to the
 // answer instead, and the pill names the building. A Friend's profile opened from the card stands over it until a new
 // reply; while it is shown, the back button hides it alone. This handler is the only one, and listens only while the
-// main screen is in front, so a screen pushed from the profile goes back to it. While the card is raised, back lowers it
-// first.
+// main screen is in front, so a screen pushed from the profile goes back to it. While a mark's card is open, back closes
+// it first; while the card is raised, back lowers it first.
 function Framed(props: FramedProps): ReactElement {
-  const { control, barRoom, stageHeight, keyboardUp, onHeight, onBarHeight } = props;
+  const { control, barRoom, stageHeight, keyboardUp, onHeight, onBarHeight, stage } = props;
   const { chat, leaving, hide } = control;
   const { reset } = chat;
   const close = useCallback((): void => {
@@ -165,7 +180,8 @@ function Framed(props: FramedProps): ReactElement {
   const lower = useCallback((): void => {
     setRaised(false);
   }, []);
-  useBackToClose(useIsFocused(), profileShown ? profile.hide : raised ? lower : leave, { edge: false });
+  const back = control.mark === null ? (raised ? lower : leave) : control.closeMark;
+  useBackToClose(useIsFocused(), profileShown ? profile.hide : back, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   const focus = useBandFocus();
   const barShown = !keyboardUp && barOf(chat.bubbles, onScreenOf(control)) !== null;
@@ -192,6 +208,7 @@ function Framed(props: FramedProps): ReactElement {
         raising={{ raised, setRaised }}
         stageHeight={stageHeight}
       />
+      {keyboardUp ? null : <OpenMark control={control} stage={stage} />}
       {sheets}
     </FriendProfileOver>
   );
@@ -217,6 +234,7 @@ export function AnswerFrame(props: AnswerFrameProps): ReactElement | null {
       keyboardUp={keyboardUp}
       onBarHeight={onBarHeight}
       onHeight={onHeight}
+      stage={room.stage}
       stageHeight={room.stage?.height ?? null}
     />
   ) : null;
