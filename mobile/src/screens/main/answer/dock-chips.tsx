@@ -88,7 +88,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexGrow: 1,
     flexShrink: 1,
-    minWidth: '50%',
     gap: space[1],
     minHeight: CHIP_HEIGHT,
   },

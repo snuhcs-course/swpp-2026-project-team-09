@@ -6,6 +6,7 @@
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { ANSWER_CAPABILITIES, type AssistantReply, type KeptQuest, type MealSet } from '@/api/assistant-types';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
@@ -15,6 +16,7 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
 import { askOnMap, mapThings } from './support/answer-map';
+import { pressMarker } from './support/made-quest';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS } from './support/main';
@@ -90,6 +92,14 @@ describe('an answer beside a lunch the User holds alone', () => {
     expect(dock().getByRole('button', { name: '그대로 두기' })).toBeVisible();
     expect(beside().getByRole('button', { name: '바꾸기' })).toBeEnabled();
     expect(screen.queryByRole('button', { name: '일정에 넣기' })).toBeNull();
+  });
+
+  // The orchestrator's review of the screens: a chip is always whole beside a line of two lines.
+  it('keeps 그대로 두기 whole: the chips keep their own width, and the line takes what is left', async () => {
+    await askOnMap(server, replyWith(OWN));
+
+    expect(StyleSheet.flatten(screen.getByTestId('dock-chips').props.style)).toMatchObject({ flexShrink: 0 });
+    expect(StyleSheet.flatten(screen.getByTestId('dock-line').props.style)).not.toHaveProperty('minWidth');
   });
 
   it('makes the new Plan from 바꾸기, which the main server puts in place of the held one', async () => {
@@ -191,6 +201,53 @@ describe("the main server's planSet", () => {
     await askOnMap(server, { ...replyWith(OWN), answer: { ...MEAL_ANSWER_ALONE, mealSet: OWN, planSet: shared } });
 
     expect(beside().getByRole('button', { name: '파티 보기' })).toBeEnabled();
+  });
+});
+
+// Partitions: a Plan changed since the answer came; the meeting's people changed, and the User no longer leading it;
+// the PUT on its way. From PR 442's review: a refusal that repeats on every press is never worded as one to try again.
+describe("a meeting's 바꾸기 refused or on its way", () => {
+  it('recalculates when the Plan changed since the answer came, and says so', async () => {
+    server.on(`PUT /plans/${MEETING.questId}`, refusal(409, 'PLAN_CHANGED'));
+    server.on('POST /assistant/answers', { status: 200, body: MEET_ANSWER });
+    const user = await askOnMap(server, MEET_REPLY);
+
+    await user.press(beside().getByRole('button', { name: '바꾸기' }));
+    await pass(500);
+
+    expect(screen.getByText('계획이 바뀌었어요. 다시 확인해 주세요')).toBeVisible();
+    expect(server.received('POST /assistant/answers')).toHaveLength(1);
+  });
+
+  it.each([
+    [400, 'PLAN_PEOPLE_CHANGED'],
+    [403, 'NOT_QUEST_LEADER'],
+  ])('sends the User to the 파티 after %i %s, with no 바꾸기 to press again', async (status, code) => {
+    server.on(`PUT /plans/${MEETING.questId}`, refusal(status, code));
+    const user = await askOnMap(server, MEET_REPLY);
+
+    await user.press(beside().getByRole('button', { name: '바꾸기' }));
+    await pass(500);
+
+    expect(dock().getByText('이 약속은 여기서 바꿀 수 없어요. 파티에서 바꿔 주세요')).toBeVisible();
+    expect(screen.queryByText('바꾸지 못했어요. 잠시 후 다시 시도해 주세요')).toBeNull();
+    expect(screen.queryByRole('button', { name: '바꾸기' })).toBeNull();
+    await user.press(beside().getByRole('button', { name: '파티 보기' }));
+    await pass(300);
+    expect(shownAddress()).toBe(`/room/${MEETING.questId}`);
+  });
+
+  it('takes no press on another candidate while it is on its way', async () => {
+    server.on(`PUT /plans/${MEETING.questId}`, { status: 200, body: PLAN_QUEST.quest, afterMs: 5000 });
+    const user = await askOnMap(server, MEET_REPLY);
+
+    await user.press(beside().getByRole('button', { name: '바꾸기' }));
+    await pass(300);
+    await pressMarker(user, '후보 2 · 301동 앞');
+    await pass(300);
+
+    expect(beside().getByRole('button', { name: '바꾸는 중이에요' })).toBeDisabled();
+    expect(mapThings()).toContain('후보 2 · 301동 앞');
   });
 });
 

@@ -94,7 +94,7 @@ export function PlanBar({ shown, answer, plan, invitation, focus, onClose, onHei
     <Bar
       band={{
         band: plan.band,
-        disabled: shown.recalculating || invitation.sending,
+        disabled: shown.recalculating || invitation.sending || invitation.changing,
         fixed: windowOf(answer.input),
         focus: fix.focus,
         ghost: shown.ghost,
