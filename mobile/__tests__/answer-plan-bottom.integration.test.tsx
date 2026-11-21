@@ -126,7 +126,9 @@ describe('an answer without a Plan', () => {
     expect(card().getByText('지금은 셋이 먹을 때가 없어요')).toBeVisible();
     expect(screen.queryByTestId('ai-input-beside')).toBeNull();
 
-    await user.press(card().getByRole('button', { name: '전체 보기' }));
+    await user.press(
+      card().getByRole('button', { name: '지금은 셋이 먹을 때가 없어요 지은이 12:00에 다시 수업이에요, 전체 보기' }),
+    );
 
     expect(card().getByText('지은이 12:00에 수업이라 지금은 어려워요.')).toBeVisible();
   });
