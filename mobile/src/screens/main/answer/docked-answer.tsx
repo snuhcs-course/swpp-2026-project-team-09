@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -70,7 +71,8 @@ export function restOf(control: ChatSheetControl, after: readonly ChatBubble[]):
   const kind = wordsKindOf(reply, onScreenOf(control));
   if (kind === 'plan') {
     if (besideSetQuest(control)) {
-      return { kind: 'words', words: setQuestRestOf(reply.text, control.invitation.changed) };
+      const { changed, left } = control.invitation;
+      return { kind: 'words', words: setQuestRestOf(reply.text, changed ?? left) };
     }
     return planRests(control, reply) ? { kind } : null;
   }
@@ -127,8 +129,8 @@ interface DockedWordsProps {
 }
 
 // The reply's buttons as chips, which scroll sideways: its offers and 다시 시도, disabled while the next reply is on its
-// way, for they act on the turn before; 근거 ›, which raises the card; 그대로 두기 beside a Quest the User holds; and
-// the folded chips.
+// way, for they act on the turn before; 근거 ›, which raises the card; 그대로 두기 beside a Quest the User holds, which
+// leaves it as it is (P04 ticket 20); and the folded chips.
 function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement {
   const { offers, retry, note, basis, keep = false } = rest;
   const { send, waiting } = control.chat;
@@ -159,7 +161,7 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
         />
       ) : null}
       {retry ? <DockChip disabled={waiting} onPress={control.chat.retry} words="다시 시도" /> : null}
-      {keep ? <DockChip onPress={control.hide} words="그대로 두기" /> : null}
+      {keep ? <DockChip onPress={control.invitation.leave} words="그대로 두기" /> : null}
       <FoldedChips control={control} note={note} onRaise={onRaise} />
     </ScrollView>
   );

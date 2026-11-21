@@ -2,20 +2,23 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { MapScene } from '@/api/assistant-types';
+import type { KeptQuest, MapScene } from '@/api/assistant-types';
 import type { FlagRole } from '@/api/scene-roles';
 import type { LatLng } from '@/api/types';
 import { type AnswerLabel, type AnswerSymbol, color, type LabelSide } from '@/design-system';
+import { keptTagOf } from './set-quest';
 
 // The groups in the order their labels take sides, which is also the order of their symbols at one point but for the
-// flags, which have none.
-export type Group = 'flag' | 'pick' | 'person' | 'next' | 'stop' | 'candidate' | 'dropped';
+// flags, which have none. `kept` is a Quest already set (P04 ticket 20): at a candidate's place the candidate's dot
+// is drawn, and the point carries both labels.
+export type Group = 'flag' | 'pick' | 'person' | 'next' | 'stop' | 'kept' | 'candidate' | 'dropped';
 
-export const SIDE_ORDER: Group[] = ['flag', 'pick', 'person', 'next', 'stop', 'candidate', 'dropped'];
-export const SYMBOL_ORDER: Group[] = ['person', 'pick', 'next', 'stop', 'candidate', 'dropped'];
-export const DRAW_ORDER: Group[] = ['pick', 'person', 'flag', 'next', 'stop', 'candidate', 'dropped'];
+export const SIDE_ORDER: Group[] = ['flag', 'pick', 'person', 'next', 'stop', 'kept', 'candidate', 'dropped'];
+export const SYMBOL_ORDER: Group[] = ['person', 'pick', 'next', 'stop', 'candidate', 'kept', 'dropped'];
+export const DRAW_ORDER: Group[] = ['pick', 'person', 'flag', 'next', 'stop', 'kept', 'candidate', 'dropped'];
 // A shuttle stop is the way's own: the camera keeps the stop to walk to in view.
 export const OWN = new Set<Group>(['person', 'pick', 'next', 'stop', 'flag']);
 
@@ -25,6 +28,7 @@ export const SIDES: Record<Group, LabelSide[]> = {
   person: ['right', 'left'],
   next: ['left', 'below', 'right', 'above'],
   stop: ['left', 'right', 'below', 'above'],
+  kept: ['right', 'left', 'above', 'below'],
   candidate: ['left', 'right', 'below', 'above'],
   dropped: ['left', 'right', 'below', 'above'],
 };
@@ -92,4 +96,27 @@ export function stopDraft({ place, tag }: MapScene['places'][number]): Draft {
 export function destinationOf(marks: readonly { group: Group; position: LatLng }[]): LatLng | null {
   const destination = marks.find(({ group }) => group === 'pick') ?? marks.find(({ group }) => group === 'next');
   return destination?.position ?? null;
+}
+
+// A Quest already set, at its place apart from the candidates: grey, with no number, and no press. None without a point.
+export function keptDrafts(kept: KeptQuest | null | undefined): Draft[] {
+  const point = kept?.point ?? null;
+  if (kept === null || kept === undefined || point === null) {
+    return [];
+  }
+  const tag = keptTagOf(kept);
+  return [
+    {
+      id: 'answer:kept',
+      name: tag,
+      position: { latitude: point.latitude, longitude: point.longitude },
+      planId: null,
+      group: 'kept',
+      symbol: { type: 'dot', role: 'kept', number: null },
+      tone: 'kept',
+      title: tag,
+      line: null,
+      number: null,
+    },
+  ];
 }

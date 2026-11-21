@@ -7,7 +7,7 @@
 
 import type { MealSet } from '@/api/assistant-types';
 import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
-import { changedLineOf, setQuestOf } from '@/features/assistant/set-quest';
+import { changedLineOf, keptTagOf, leftLineOf, setQuestOf } from '@/features/assistant/set-quest';
 
 // P04 ticket 17: the Quest an answer stands beside, in one shape for every planner's answer, read for now from a meal
 // answer's `mealSet` (P05 ticket 16). Expected values: the main server's field as P05 wrote it.
@@ -38,7 +38,14 @@ describe('the Quest an answer stands beside', () => {
       shared: false,
       changeable: true,
       inPlace: false,
+      word: '점심',
     });
+  });
+
+  it('calls a meal of a main server that says no kind a dinner from 16:00', () => {
+    const dinner = { ...LUNCH, startAt: '2026-10-01T16:00:00+09:00' };
+
+    expect(setQuestOf({ ...MEAL_ANSWER_ALONE, mealSet: dinner })?.word).toBe('저녁');
   });
 
   it('names a shared one, which is changed in its 파티 and not here', () => {
@@ -64,5 +71,24 @@ describe('the line after a meeting was changed in place', () => {
 
   it('says only the time when nobody else holds it', () => {
     expect(changedLineOf(AT, [])).toBe('약속을 15:00으로 바꿨어요');
+  });
+});
+
+// Partitions: the kinds a tag names, and the line with and without a place. Expected values: P04 ticket 20's words.
+describe('the words of a Quest already set', () => {
+  const AT = '2026-10-01T12:16:00+09:00';
+
+  it.each([
+    ['meal-lunch', '잡힌 점심 12:16'],
+    ['meal-dinner', '잡힌 저녁 12:16'],
+    ['meet', '잡힌 약속 12:16'],
+    ['event', '잡힌 일정 12:16'],
+  ] as const)('tag a %s "%s"', (kind, tag) => {
+    expect(keptTagOf({ kind, startAt: AT })).toBe(tag);
+  });
+
+  it('say it was left as it is, with its place when it has one', () => {
+    expect(leftLineOf({ startAt: AT, place: '302동식당', word: '점심' })).toBe('12:16 302동식당 점심을 그대로 뒀어요');
+    expect(leftLineOf({ startAt: AT, place: '', word: '약속' })).toBe('12:16 약속을 그대로 뒀어요');
   });
 });

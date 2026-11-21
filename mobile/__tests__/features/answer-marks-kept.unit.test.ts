@@ -1,0 +1,108 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
+import type { AnswerReply, KeptQuest } from '@/api/assistant-types';
+import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
+import { MEET_ANSWER } from '@/api/mock/data/meet-answer';
+import { drawingOf, keptDrawingOf } from '@/features/assistant/answer-marks';
+import { seen } from '../support/answer-marks';
+
+// P04 ticket 20: the place of a Quest already set marked on the map apart from the candidates. Expected values: the
+// stored answer to "배고파" for the User alone, whose candidate 4 is 302동식당, and the tag's words as the ticket gives
+// them.
+
+const AT_302: KeptQuest['point'] = {
+  placeId: 'fba342e9-4edb-560d-9ac4-2a4d2454f9d3',
+  label: '302동식당',
+  latitude: 37.44887,
+  longitude: 126.95265,
+};
+const LUNCH: KeptQuest = {
+  kind: 'meal-lunch',
+  questId: 'q-lunch',
+  title: '302동식당에서 점심',
+  startAt: '2026-11-17T12:16:00+09:00',
+  endAt: null,
+  place: '302동식당',
+  point: AT_302,
+  people: [],
+  mine: true,
+  changeable: true,
+};
+// 관정도서관, in no Plan of the stored meet answer.
+const MEETING: KeptQuest = {
+  ...LUNCH,
+  kind: 'meet',
+  questId: 'q-meeting',
+  title: '민수와 만나기',
+  startAt: '2026-11-17T15:00:00+09:00',
+  place: '관정도서관',
+  point: { placeId: 'kwanjeong', label: '관정도서관', latitude: 37.45965, longitude: 126.95168 },
+};
+
+function beside(answer: AnswerReply, planSet: KeptQuest): AnswerReply {
+  return { ...answer, planSet };
+}
+
+function ids(planSet: KeptQuest): string[] {
+  return drawingOf(beside(MEAL_ANSWER_ALONE, planSet), 0).things.map(({ id }) => id);
+}
+
+// Partitions: the point at a candidate's place, at a place of its own, none; a lunch, a dinner, a meeting.
+describe('the mark of a Quest already set', () => {
+  it("stands at candidate 4's place beside the candidate, grey and without a number", () => {
+    const drawing = drawingOf(beside(MEAL_ANSWER_ALONE, LUNCH), 0);
+
+    expect(seen(drawing, 'answer:kept')).toMatchObject({
+      name: '잡힌 점심 12:16',
+      label: { tone: 'kept', title: '잡힌 점심 12:16', line: null, number: null },
+      planId: null,
+    });
+    expect(seen(drawing, 'answer:candidate:302동식당')).toMatchObject({
+      name: '후보 4 · 302동식당',
+      symbol: { type: 'dot', role: 'candidate', number: 4 },
+    });
+    expect(seen(drawing, 'answer:kept').symbol).toBeNull();
+  });
+
+  it('stands at its own point with its own grey dot, which the camera keeps in view', () => {
+    const drawing = drawingOf(beside(MEET_ANSWER, MEETING), 0);
+
+    expect(seen(drawing, 'answer:kept')).toMatchObject({
+      name: '잡힌 약속 15:00',
+      symbol: { type: 'dot', role: 'kept', number: null },
+    });
+    expect(drawing.points).toContainEqual({ latitude: 37.45965, longitude: 126.95168 });
+  });
+
+  it('says 저녁 for a dinner', () => {
+    const dinner = { ...LUNCH, kind: 'meal-dinner', startAt: '2026-11-17T18:30:00+09:00' } as const;
+
+    expect(seen(drawingOf(beside(MEAL_ANSWER_ALONE, dinner), 0), 'answer:kept').name).toBe('잡힌 저녁 18:30');
+  });
+
+  it('is not drawn without a point', () => {
+    const fromOldServer: KeptQuest = { ...LUNCH };
+    delete fromOldServer.point;
+
+    expect(ids({ ...LUNCH, point: null })).not.toContain('answer:kept');
+    expect(ids(fromOldServer)).not.toContain('answer:kept');
+  });
+});
+
+// Partitions: a point, none. After 그대로 두기 the tag is the only mark.
+describe('the drawing of a Quest left as it is', () => {
+  it('is the tag alone', () => {
+    const drawing = keptDrawingOf(beside(MEAL_ANSWER_ALONE, LUNCH));
+
+    expect(drawing?.things.map(({ name }) => name)).toEqual(['잡힌 점심 12:16']);
+    expect(drawing?.things[0]?.look).toMatchObject({ symbol: { type: 'dot', role: 'kept', number: null } });
+  });
+
+  it('is none without a point', () => {
+    expect(keptDrawingOf(beside(MEAL_ANSWER_ALONE, { ...LUNCH, point: null }))).toBeNull();
+  });
+});

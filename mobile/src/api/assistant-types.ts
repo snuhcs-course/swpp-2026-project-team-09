@@ -261,6 +261,9 @@ export interface KeptQuest {
   startAt: string;
   endAt: string | null;
   place: string | null;
+  // Where it is on the map, its first step's Place: null when that step has none or only words for one, absent from a
+  // main server before P05 ticket 28.
+  point?: PlacePoint | null;
   people: { name: string; answer: 'leads' | 'accepted' | 'waiting' | 'declined' }[];
   mine: boolean;
   changeable: boolean;

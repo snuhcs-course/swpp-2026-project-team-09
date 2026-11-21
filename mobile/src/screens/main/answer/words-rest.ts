@@ -17,7 +17,7 @@ import { type ButtonOffer, isButton } from './refusal-reply';
 // How a reply that is no Plan rests in the dock (P04 ticket 05): the one line, null when the map says it all, which a
 // press opens to the whole reply; the chips that do what its card's buttons did; 다시 시도; the note; `basis`, a
 // Lookup with no line whose basis the map does not show, which 근거 › opens in the raised card; and `keep`, a Plan
-// beside a Quest the User holds (ticket 17), whose 그대로 두기 leaves the answer and the Quest as it is.
+// beside a Quest the User holds (ticket 17), whose 그대로 두기 leaves the Quest as it is (ticket 20).
 export interface WordsRest {
   line: AnswerLine | null;
   offers: readonly ButtonOffer[];
@@ -27,11 +27,11 @@ export interface WordsRest {
   keep?: boolean;
 }
 
-// A Plan beside a Quest the User holds: the model's line, which says so, with 그대로 두기; once a meeting was changed in
-// place, the line that says so (`changed`), alone.
-export function setQuestRestOf(words: string, changed: string | null = null): WordsRest {
-  const line = wordsLine(changed ?? words);
-  return { line, offers: [], retry: false, note: null, basis: false, keep: changed === null };
+// A Plan beside a Quest the User holds: the model's line, which says so, with 그대로 두기; once the User chose (a meeting
+// changed in place, or the Quest left as it is), the line that says what was done (`chosen`), alone.
+export function setQuestRestOf(words: string, chosen: string | null = null): WordsRest {
+  const line = wordsLine(chosen ?? words);
+  return { line, offers: [], retry: false, note: null, basis: false, keep: chosen === null };
 }
 
 type AskAction = Extract<LookupAction, { kind: 'ask' }>;

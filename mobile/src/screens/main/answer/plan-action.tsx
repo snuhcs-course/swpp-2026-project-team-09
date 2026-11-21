@@ -42,8 +42,9 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
   const disabled = shown.recalculating || invitation.sending || control.chat.waiting;
   const set = setQuestOf(answer);
   if (set !== null) {
-    // Once 바꾸기 changed the meeting, the answer says so and offers nothing more.
-    return invitation.changed === null ? setQuestAction(set, control, disabled || invitation.changing) : null;
+    // Once 바꾸기 changed the meeting, or 그대로 두기 left the Quest, the answer says so and offers nothing more.
+    const chosen = invitation.changed !== null || invitation.left !== null;
+    return chosen ? null : setQuestAction(set, control, disabled || invitation.changing);
   }
   if (kind !== 'new-quest' && people > 1) {
     return {

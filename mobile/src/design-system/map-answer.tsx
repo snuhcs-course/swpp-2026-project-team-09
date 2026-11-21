@@ -5,6 +5,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -19,16 +20,19 @@ export type AnswerSymbol =
   // measured at the exact level. `badge`: a "?" (`waiting`) or a "✓" (`accepted`) at the face's upper right; the
   // caller says what it means.
   | { type: 'face'; name: string; dashed: boolean; badge?: FaceBadge; exact?: boolean }
-  | { type: 'dot'; role: 'pick' | 'candidate' | 'dropped' | 'next' | 'stop'; number: number | null };
+  | { type: 'dot'; role: 'pick' | 'candidate' | 'dropped' | 'next' | 'stop' | 'kept'; number: number | null };
 
 export type FaceBadge = 'waiting' | 'accepted';
 
 export type LabelSide = 'above' | 'below' | 'left' | 'right';
 
+// A way's flags.
+type WayTone = 'leave' | 'late' | 'shuttle';
+
 export interface AnswerLabel {
   side: LabelSide;
-  // `stop` is a shuttle stop's; `leave`, `late`, and `shuttle` are a way's flags.
-  tone: 'pick' | 'candidate' | 'dropped' | 'next' | 'person' | 'meeting' | 'stop' | 'leave' | 'late' | 'shuttle';
+  // `stop` is a shuttle stop's; `kept` a Quest already set's.
+  tone: 'pick' | 'candidate' | 'dropped' | 'next' | 'person' | 'meeting' | 'stop' | 'kept' | WayTone;
   title: string;
   // A second line, under the title.
   line: string | null;
@@ -95,6 +99,7 @@ function Label({ label, testID }: { label: AnswerLabel; testID?: string }): Reac
         line !== null && tone !== 'candidate' && styles.twoLines,
         tone === 'pick' && styles.pickLabel,
         tone === 'candidate' && styles.candidateLabel,
+        tone === 'kept' && styles.keptLabel,
         tone === 'meeting' && styles.meetingLabel,
         tone === 'late' && styles.lateLabel,
         tone === 'shuttle' && styles.shuttleLabel,
@@ -115,6 +120,7 @@ function Label({ label, testID }: { label: AnswerLabel; testID?: string }): Reac
             tone === 'candidate' && styles.candidateTitle,
             tone === 'meeting' && styles.meetingTitle,
             tone === 'dropped' && styles.droppedTitle,
+            tone === 'kept' && styles.keptTitle,
             WAY_FLAGS.has(tone) && styles.flagTitle,
             tone === 'late' && styles.lateTitle,
             tone === 'shuttle' && styles.shuttleTitle,
@@ -252,6 +258,7 @@ const styles = StyleSheet.create({
   dropped: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: color.border },
   next: { width: NEXT_SQUARE, height: NEXT_SQUARE, borderRadius: radius.sm, backgroundColor: color.snuBlue },
   stop: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: color.svcShuttle },
+  kept: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: color.inkMuted },
   faceBadge: {
     position: 'absolute',
     top: 0,
@@ -302,6 +309,9 @@ const styles = StyleSheet.create({
   candidateLabel: { borderWidth: 1.5, borderColor: color.snuBlue },
   inline: { flexDirection: 'row', alignItems: 'baseline', gap: space[1] },
   candidateTitle: { fontFamily: mapText.smallTitle.fontFamily },
+  // A Quest already set (P04 ticket 20): grey, apart from the candidates, with no number.
+  keptLabel: { borderWidth: 1.5, borderColor: color.inkMuted },
+  keptTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.inkMuted },
   meetingLabel: { backgroundColor: color.ink },
   lateLabel: { backgroundColor: color.dangerSoft },
   shuttleLabel: { backgroundColor: color.svcShuttleSoft },

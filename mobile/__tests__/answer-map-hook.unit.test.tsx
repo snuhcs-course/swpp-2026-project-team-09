@@ -80,7 +80,7 @@ interface Given {
 const FIRST: Given = { shown: shownAt(0), room: ROOM, fitZoom: FIT_ZOOM };
 
 // No Plan made into a Quest.
-const NOT_INVITED = { sending: false, made: null, standings: NO_STANDINGS, changed: null };
+const NOT_INVITED = { sending: false, made: null, standings: NO_STANDINGS, changed: null, left: null };
 
 async function render(asked: Asked, given: Given = FIRST): Promise<(next: Given) => Promise<void>> {
   const { rerender } = await renderHook(

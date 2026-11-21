@@ -155,3 +155,4 @@ Each keeps the answer screen whole. Tickets 13 and 14 came from the phone screen
 17. [17 — A Quest already set is changed, not doubled](issues/17-meal-already-set.md)
 18. [18 — The model's words are never dropped beside a Lookup](issues/18-words-beside-a-lookup.md)
 19. [19 — A made Proposal goes back with its 파티's id](issues/19-made-proposal-sent-back.md)
+20. [20 — A Quest already set is marked on the map](issues/20-kept-quest-on-the-map.md)

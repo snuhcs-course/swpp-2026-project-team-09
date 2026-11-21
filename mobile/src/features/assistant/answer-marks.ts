@@ -7,9 +7,10 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
+import type { AnswerReply, KeptQuest, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { type AnswerLabel, type AnswerSymbol, type FaceBadge, initials } from '@/design-system';
 import { koreaDayWord } from '@/korea-time';
@@ -22,6 +23,7 @@ import {
   DRAW_ORDER,
   FLAG_TONES,
   type Group,
+  keptDrafts,
   OWN,
   restOf,
   ROUTE_STYLES,
@@ -108,6 +110,8 @@ export interface SceneSetting {
   standings: ReadonlyMap<string, Standing>;
   // The Plan's day before the pick's time when it is not the day asked ("내일(수)"); left out, none.
   day?: string;
+  // The Quest already set that the answer stands beside (P04 ticket 20); left out, none.
+  kept?: KeptQuest | null;
 }
 
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
@@ -265,6 +269,7 @@ export function drawingOfScene(
     ...personDrafts(scene, setting.standings),
     ...scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
     ...flagDrafts(scene),
+    ...keptDrafts(setting.kept),
   ];
   const placed = placeAll(drafts, view).toSorted(
     (one, other) =>
@@ -300,7 +305,17 @@ export function drawingOf(
     return { things: [], lines: [], points: [], own: [], pick: null, userIds: [] };
   }
   const day = koreaDayWord(plan.startAt, new Date(plan.band.now));
-  return drawingOfScene(plan.scene, view, { number: planIndex + 1, plans: answer.plans, standings, day });
+  const setting = { number: planIndex + 1, plans: answer.plans, standings, day, kept: answer.planSet };
+  return drawingOfScene(plan.scene, view, setting);
+}
+
+const EMPTY_SCENE: MapScene = { places: [], people: [], routes: [], flags: [] };
+
+// What the map shows once 그대로 두기 left the Quest already set as it is (P04 ticket 20): its tag alone. Null when
+// it has no point.
+export function keptDrawingOf(answer: AnswerReply, view: LabelView | null = null): AnswerDrawing | null {
+  const drawing = drawingOfScene(EMPTY_SCENE, view, { ...BARE, kept: answer.planSet });
+  return drawing.things.length === 0 ? null : drawing;
 }
 
 // The looks of every Plan's drawing, each once: at the view `viewOf` gives for the Plan's drawing with its sides
