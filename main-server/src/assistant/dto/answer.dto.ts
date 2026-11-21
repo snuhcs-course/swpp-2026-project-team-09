@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -92,6 +93,9 @@ export interface Plan {
   friendNames?: string[];
   // A new recruiting Quest's Plan: the Friends free then who are not in it, each with the line of their day.
   candidates?: { userId: string; name: string; line: string }[];
+  // A Global Event's Plan: the event's own start and end, Korea time with the offset (end null when it has none). Its
+  // startAt is the asker's arrival when the event is under way, and is never the event's time.
+  event?: { startAt: string; endAt: string | null };
 }
 
 export interface PlanPart {

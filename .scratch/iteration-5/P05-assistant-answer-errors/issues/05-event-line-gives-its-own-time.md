@@ -22,12 +22,14 @@ A User asked again to learn that the concert ran 06:00–08:00.
 - The arrival comes second ("07:29 도착 · 31분 볼 수 있어요"), then the leave-by line as before.
 - The map flag of an event under way gives its own times; one that has not started keeps its start.
 - Every event's basis starts with its place and times.
+- An event's Plan carries the event's own times as data, `event: { startAt, endAt | null }`, for the map's flag and bar (P04 ticket 08); its `startAt` stays the asker's arrival. Added after the first pull request, at P04's request.
 
 ## Acceptance criteria
 
 - [x] An event under way: the first line holds its name, place and times. (Unit test, fails before the fix.)
 - [x] Its flag reads with the event's times, not the arrival. (Unit test, fails before the fix.)
 - [x] An event that starts after the arrival keeps its start. (Unit test.)
+- [x] An event's Plan carries its own start and end; the app believes it with an end, without one, and absent, and refuses it of another shape. (Unit tests.)
 - [x] Lint, format and types of the main server pass.
 
 ## Comments

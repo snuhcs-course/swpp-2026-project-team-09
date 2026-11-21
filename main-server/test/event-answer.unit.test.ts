@@ -130,6 +130,8 @@ describe('The job fair, first', () => {
       basis: ['채용박람회 · 문화관 10:00–17:00', '24동에서 문화관까지 걸어서 4분', '문화관에서 301동까지 걸어서 18분'],
       scene: jobFairScene(),
       band: jobFairBand(),
+      // The fair's own times, which the map shows as the event's; the Plan's startAt is the arrival.
+      event: { startAt: time('10:00'), endAt: time('17:00') },
     });
   });
 });
@@ -165,6 +167,7 @@ describe('The concert, next', () => {
         flags: [{ text: '18:00 동아리 정기공연' }],
       },
       band: { text: '18:00–18:30 · 30분' },
+      event: { startAt: time('18:00'), endAt: null },
     });
   });
 });
