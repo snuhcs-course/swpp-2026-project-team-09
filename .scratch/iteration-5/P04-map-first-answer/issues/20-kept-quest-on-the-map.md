@@ -28,3 +28,8 @@ An answer beside a Quest the User already holds says so in words ("이미 12:16 
 - [ ] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 65 minutes in this session (an estimate from the transcript's timestamps, over a stretch it shared with PR 442's review fixes, which ticket 17 records): the tag and 그대로 두기 test-first, the merge of PR 442's fixes, and two rounds of phone screens with the screen review's changes. No subagents.
+- Tokens: output 128k; input 53.8M, of which 53.5M cache reads, 293k cache writes, and about 330 uncached.
