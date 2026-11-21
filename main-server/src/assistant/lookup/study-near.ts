@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
@@ -91,8 +92,12 @@ export function stayAt(
   return { walkMinutes, arrival, leaveBy, minutes: (leaveBy.getTime() - arrival.getTime()) / MINUTE_MS };
 }
 
-// The longest stay; of equal stays the shorter walk, then the first. With nothing to follow, the shortest walk.
-export function longestStay<Candidate extends { stay: StudyStay }>(candidates: readonly Candidate[]): Candidate | null {
+// The longest stay first; of equal stays the shorter walk, then the first. With nothing to follow, the shortest walk.
+export function byStay<Candidate extends { stay: StudyStay }>(candidates: readonly Candidate[]): Candidate[] {
   const stayOf = ({ stay }: Candidate): number => stay.minutes ?? Number.POSITIVE_INFINITY;
-  return candidates.toSorted((a, b) => stayOf(b) - stayOf(a) || a.stay.walkMinutes - b.stay.walkMinutes)[0] ?? null;
+  return candidates.toSorted((a, b) => stayOf(b) - stayOf(a) || a.stay.walkMinutes - b.stay.walkMinutes);
+}
+
+export function longestStay<Candidate extends { stay: StudyStay }>(candidates: readonly Candidate[]): Candidate | null {
+  return byStay(candidates)[0] ?? null;
 }

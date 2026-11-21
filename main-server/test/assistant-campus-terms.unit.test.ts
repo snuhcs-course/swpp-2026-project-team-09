@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -38,6 +39,7 @@ describe('The campus short names', () => {
       '긱운',
       '긱삼',
       '중도',
+      '인문대',
     ]);
   });
 
