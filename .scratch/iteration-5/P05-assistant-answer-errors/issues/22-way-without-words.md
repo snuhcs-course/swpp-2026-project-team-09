@@ -22,6 +22,15 @@ When the model writes nothing, the server puts its fixed sentence there instead 
 
 ## Acceptance criteria
 
-- [ ] A way Lookup with no words is replied with `text: ""` and no fixed sentence; a menu Lookup with no words still has the fixed sentence. (`assistant-answer-reply.unit.test.ts`, which failed before the change.)
-- [ ] The eval cases `way-where-is-a-building` ("301동 어디야?") and `way-how-to-go` come back with the way drawn and no words.
-- [ ] Lint, format and types of the main server pass.
+- [x] A way Lookup with no words is replied with `text: ""` and no fixed sentence; a menu Lookup with no words still has the fixed sentence. (`assistant-answer-reply.unit.test.ts`, which failed before the change.)
+- [x] The eval cases `way-where-is-a-building` ("301동 어디야?") and `way-how-to-go` come back with the way drawn and no words.
+- [x] Lint, format and types of the main server pass.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+Tickets 18 to 26 were done together in one session, 01:30–04:00 on 2026-11-22, with PRs 425 to 433; these figures are the whole batch's, not this ticket's alone.
+
+- Agent time: about 2.2 hours (estimate: gaps under 5 minutes between transcript entries, summed).
+- Tokens: input 220,838,000 (cache reads 220,158,000, cache writes 679,000, uncached 1,000); output 331,000. Without cache reads, 1,010,000.

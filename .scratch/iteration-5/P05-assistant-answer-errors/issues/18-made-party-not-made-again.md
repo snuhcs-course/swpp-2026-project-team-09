@@ -24,8 +24,17 @@ Found in use (feedback 2026-11-22, item 6, three runs of three): the User made a
 
 ## Acceptance criteria
 
-- [ ] A conversation whose last Proposal was made: the model reads `[Proposal made: …]` with the Quest's id, proposeQuest answers `made`, and the reply carries no Proposal. (`assistant-made-proposal.integration.test.ts`, which answered 400 before the change.)
-- [ ] With `another: true`, proposeQuest proposes as before.
-- [ ] A Proposal sent back without `madeQuestId` is read and changed as before. (`assistant-proposals.integration.test.ts`.)
-- [ ] The eval case `follow-up-change-made-party` scores a reply that calls nothing or gets `made`, names 수정, and never says the 파티 changed.
-- [ ] Lint, format and types of the main server pass.
+- [x] A conversation whose last Proposal was made: the model reads `[Proposal made: …]` with the Quest's id, proposeQuest answers `made`, and the reply carries no Proposal. (`assistant-made-proposal.integration.test.ts`, which answered 400 before the change.)
+- [x] With `another: true`, proposeQuest proposes as before.
+- [x] A Proposal sent back without `madeQuestId` is read and changed as before. (`assistant-proposals.integration.test.ts`.)
+- [x] The eval case `follow-up-change-made-party` scores a reply that calls nothing or gets `made`, names 수정, and never says the 파티 changed.
+- [x] Lint, format and types of the main server pass.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+Tickets 18 to 26 were done together in one session, 01:30–04:00 on 2026-11-22, with PRs 425 to 433; these figures are the whole batch's, not this ticket's alone.
+
+- Agent time: about 2.2 hours (estimate: gaps under 5 minutes between transcript entries, summed).
+- Tokens: input 220,838,000 (cache reads 220,158,000, cache writes 679,000, uncached 1,000); output 331,000. Without cache reads, 1,010,000.

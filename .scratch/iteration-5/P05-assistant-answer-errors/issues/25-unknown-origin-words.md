@@ -18,5 +18,14 @@ Found in use (feedback 2026-11-22, item 7b): a Friend's chip reads "<name> · �
 
 ## Acceptance criteria
 
-- [ ] A Friend free from now with no position the asker may see reads "위치 모름"; one free only after an item with no Place reads "출발지 모름". (`meal-answer-cases.unit.test.ts`, the second new.)
-- [ ] Lint, format and types of the main server pass.
+- [x] A Friend free from now with no position the asker may see reads "위치 모름"; one free only after an item with no Place reads "출발지 모름". (`meal-answer-cases.unit.test.ts`, the second new.)
+- [x] Lint, format and types of the main server pass.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+Tickets 18 to 26 were done together in one session, 01:30–04:00 on 2026-11-22, with PRs 425 to 433; these figures are the whole batch's, not this ticket's alone.
+
+- Agent time: about 2.2 hours (estimate: gaps under 5 minutes between transcript entries, summed).
+- Tokens: input 220,838,000 (cache reads 220,158,000, cache writes 679,000, uncached 1,000); output 331,000. Without cache reads, 1,010,000.
