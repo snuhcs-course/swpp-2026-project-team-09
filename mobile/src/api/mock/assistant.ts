@@ -53,6 +53,8 @@ import {
 import { MEET_ANSWER, MEET_ANSWER_FROM_14 } from './data/meet-answer';
 import { GLOBAL_EVENTS } from './data/quests';
 import { isLibraryAsk, libraryReply } from './library-replies';
+import { withMealSet } from './meal-set';
+import { mockMadeQuests } from './plan-quest';
 import { rowFourCopyOf, rowFourReplyOf } from './row-four-copies';
 import { mockTimetable } from './timetable';
 
@@ -224,7 +226,9 @@ function hungryReplyOf({ locationMissing }: RequestContext): AssistantReply {
   if (locationMissing === 'permission') {
     return NO_LOCATION_REPLY;
   }
-  return mockTimetable.listClasses().length === 0 ? NO_TIMETABLE_REPLY : MEAL_ANSWER_REPLY;
+  return mockTimetable.listClasses().length === 0
+    ? NO_TIMETABLE_REPLY
+    : withMealSet(MEAL_ANSWER_REPLY, mockMadeQuests());
 }
 
 // The stored refusal of a board of row 8, answers of 배고파, and Lookups of 301동식당's menu, of a place to study near

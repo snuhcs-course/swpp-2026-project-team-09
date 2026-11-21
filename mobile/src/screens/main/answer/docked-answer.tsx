@@ -9,6 +9,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { space } from '@/design-system';
 import { turnsOf } from '@/features/assistant/turn';
 import type { ChatBubble } from '@/features/assistant/use-chat';
+import { setQuestOf } from '@/features/assistant/set-quest';
 import { keepsShown } from '@/features/assistant/use-shown-answer';
 import type { ChatSheetControl } from '../chat-sheet';
 import { DockChip, DockLine } from './dock-chips';
@@ -16,7 +17,7 @@ import { planCardRests } from './plan-card';
 import { pressOffer } from './refusal-reply';
 import { onScreenOf, planShown, Words, wordsKindOf } from './reply-words';
 import type { BandFocus } from './use-corrections';
-import { lookupRestOf, type WordsRest, wordsRestOf } from './words-rest';
+import { lookupRestOf, setQuestRestOf, type WordsRest, wordsRestOf } from './words-rest';
 
 // How the turn on screen rests while nothing is pressed: its Plan's card docked as its chips' row (board 10), the dock
 // with a reply's one line and buttons (`WordsRest`), or null for the open card.
@@ -44,8 +45,23 @@ function planRests(control: ChatSheetControl, reply: ChatBubble): boolean {
   );
 }
 
+// A Plan beside a Quest the User holds, at rest: its line says so (P04 ticket 17).
+function besideSetQuest(control: ChatSheetControl): boolean {
+  const { answer: shown, chat } = control;
+  const { plan, adding, moving, ghost } = shown;
+  return (
+    setQuestOf(shown.answer) !== null &&
+    plan !== null &&
+    !adding &&
+    moving === null &&
+    ghost === null &&
+    planShown(chat.bubbles, onScreenOf(control))
+  );
+}
+
 // The bottom hides only what the map already says: a reply with cards, with several parts, or with nothing to draw
-// keeps the open card, and so does a Plan's card with something to read.
+// keeps the open card, and so does a Plan's card with something to read. A Plan beside a Quest the User holds docks
+// with its line.
 export function restOf(control: ChatSheetControl, after: readonly ChatBubble[]): Rest | null {
   const [reply] = after;
   if (after.length !== 1 || reply === undefined || !bare(reply)) {
@@ -53,6 +69,9 @@ export function restOf(control: ChatSheetControl, after: readonly ChatBubble[]):
   }
   const kind = wordsKindOf(reply, onScreenOf(control));
   if (kind === 'plan') {
+    if (besideSetQuest(control)) {
+      return { kind: 'words', words: setQuestRestOf(reply.text) };
+    }
     return planRests(control, reply) ? { kind } : null;
   }
   const { lookup } = control.lookup;
@@ -112,7 +131,7 @@ function DockedWords({
   rest: WordsRest;
   onRaise: Raise;
 }): ReactElement | null {
-  const { line, offers, retry, note } = rest;
+  const { line, offers, retry, note, keep = false } = rest;
   const { send } = control.chat;
   if (line === null && offers.length === 0 && !retry && note === null && turnsOf(control.chat.bubbles).length < 2) {
     return null;
@@ -144,6 +163,7 @@ function DockedWords({
           />
         ))}
         {retry ? <DockChip onPress={control.chat.retry} words="다시 시도" /> : null}
+        {keep ? <DockChip onPress={control.hide} words="그대로 두기" /> : null}
         <FoldedChips control={control} note={note} onRaise={onRaise} />
       </ScrollView>
     </View>

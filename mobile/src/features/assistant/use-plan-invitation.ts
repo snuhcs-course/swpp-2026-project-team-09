@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -58,6 +59,8 @@ const FAILED = '초대하지 못했어요. 잠시 후 다시 시도해 주세요
 const SENT = '파티를 만들고 초대를 보냈어요';
 const TAKEN = '여기로 정했어요';
 const NOT_DROPPED = '다시 고르지 못했어요. 잠시 후 다시 시도해 주세요';
+// 바꾸기 refused: the Quest it would replace became shared with others since the answer came (P04 ticket 17).
+const SET_SHARED = '같이 정한 약속이라 그 파티에서 바꿔 주세요';
 // "여기로" invites nobody.
 const NOT_TAKEN = '답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요';
 
@@ -132,6 +135,8 @@ function tellRefusal(error: unknown, say: Inviting['say'], change: ShownAnswer['
   if (isRefusal(error, 409, 'PLAN_CHANGED')) {
     say(CHANGED);
     change((input) => ({ ...input }));
+  } else if (isRefusal(error, 409, 'MEAL_ALREADY_SET')) {
+    say(SET_SHARED);
   } else if (alone) {
     // A 파티 of the User's own for the event refuses "여기로" with SHARED_QUEST_HELD, worded as 파티 says it.
     say(isRefusal(error, 409, 'SHARED_QUEST_HELD') ? refusalWords(error) : NOT_TAKEN);
