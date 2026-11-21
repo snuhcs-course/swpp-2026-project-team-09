@@ -12,7 +12,7 @@ import { clockOf, type DayItem } from '../free-time/free-time.js';
 import { type AnswerPerson, placeLabelOf, withAnd } from '../gathering/answer-words.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
 import { busyIn } from '../gathering/meal-scene.js';
-import { koreaTime } from '../korea-time.js';
+import { clockWithDay, koreaTime } from '../korea-time.js';
 import { type EventPlan, type EventPlanning, type PlacedEvent, type Way } from './event-fit.js';
 
 // What the map draws of an event's plan, its time band, and how its Places are called.
@@ -134,9 +134,10 @@ export function eventTimes({ start, end }: { start: Date; end: Date | null }): s
   return end === null ? `${clockOf(start)} 시작` : `${clockOf(start)}–${clockOf(end)}`;
 }
 
-// The flag of an event under way gives its own times, not the asker's arrival, which would read as its start.
-function flagText({ event, start }: EventPlan): string {
-  const times = event.start < start ? eventTimes(event) : clockOf(start);
+// The flag of an event under way gives its own times, not the asker's arrival, which would read as its start; one
+// that starts on another day gives its day.
+function flagText({ event, start }: EventPlan, now: Date): string {
+  const times = event.start < start ? eventTimes(event) : clockWithDay(start, now);
   return `${times} ${event.title}`;
 }
 
@@ -146,7 +147,7 @@ export function sceneOf(plan: EventPlan, naming: EventNaming<NamingArgs>): MapSc
     people: scenePeople(plan, naming),
     places: scenePlaces(plan, naming),
     routes: sceneRoutes(plan, naming),
-    flags: [{ at: naming.position(event.placeId), text: flagText(plan), role: 'place' }],
+    flags: [{ at: naming.position(event.placeId), text: flagText(plan, naming.args.now), role: 'place' }],
   };
 }
 

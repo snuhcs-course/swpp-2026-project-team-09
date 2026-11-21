@@ -1,0 +1,32 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
+import { clockWithDay, dayWordsFrom } from '../src/assistant/korea-time.js';
+
+// A time is written with its day when it is not today (P05 ticket 07). Now is Saturday 2026-11-21 at 03:52 in Korea.
+
+const NOW = new Date('2026-11-21T03:52:00+09:00');
+
+const at = (time: string): Date => new Date(`${time}+09:00`);
+
+describe('A time with its day', () => {
+  it.each([
+    ['2026-11-21T18:00:00', '18:00'],
+    ['2026-11-22T18:00:00', '내일 18:00'],
+    ['2026-11-23T12:21:00', '모레 12:21'],
+    ['2026-11-24T09:00:00', '11월 24일 (화) 09:00'],
+  ])('writes %s as %s', (time, words) => {
+    expect(clockWithDay(at(time), NOW)).toBe(words);
+  });
+
+  it('reads the day in Korea, not in UTC: 00:30 the next day is tomorrow', () => {
+    expect(clockWithDay(at('2026-11-22T00:30:00'), NOW)).toBe('내일 00:30');
+  });
+
+  it('names a day of the week across a month', () => {
+    expect(dayWordsFrom('2026-12-01', NOW)).toBe('12월 1일 (화)');
+  });
+});

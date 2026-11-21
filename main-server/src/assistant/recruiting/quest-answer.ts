@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type RecruitingQuestDto } from '../../quests/dto/quest.dto.js';
@@ -17,7 +18,7 @@ import { type Way } from '../events/event-fit.js';
 import { bandOf, byWord, EventNaming, type NamingArgs, sceneOf } from '../events/event-scene.js';
 import { clockOf } from '../free-time/free-time.js';
 import { withSubject } from '../gathering/answer-words.js';
-import { koreaTime } from '../korea-time.js';
+import { clockWithDay, koreaTime } from '../korea-time.js';
 import { type QuestDrop, type QuestDropReason, type QuestPlan, type QuestPlanning } from './quest-fit.js';
 
 // The words of the recruiting Quests the asker could join: what the app draws and writes for each plan. Nothing here is
@@ -38,7 +39,7 @@ export const setOutWords = (from: string, to: string, way: Way, leaveAt: Date): 
 
 // Where and when, and when to set out; with a Friend among the Holders, who is there.
 function linesOf({ event, start, leaveAt, quest }: QuestPlan, naming: Naming): AnswerLine[] {
-  const where = { text: `${clockOf(start)} ${naming.eventWords(event)}`, strong: true };
+  const where = { text: `${clockWithDay(start, naming.args.now)} ${naming.eventWords(event)}`, strong: true };
   if (quest.friendNames.length > 0) {
     return [[where, { text: ' 파티에', strong: false }], plain(`${withSubject(quest.friendNames.join(', '))} 있어요`)];
   }
