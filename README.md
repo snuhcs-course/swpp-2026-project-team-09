@@ -825,9 +825,9 @@ Not run by `pnpm test` or CI:
 
 [`.github/workflows/nightly.yml`](.github/workflows/nightly.yml) starts CI at the nightly level every night at 03:00 KST
 on the newest commit of the newest `<line>/Main`. GitHub fires a schedule only from the default branch's copy of a
-workflow, so it starts nothing until `main` holds that file, from the next iteration's hand-over; until then the run is
-started by hand. Anyone with write access starts it on a branch or a tag, for example on the iteration branch's newest
-commit before tagging a Release:
+workflow, so `main` carries that file too; it skips, with a notice, a Main whose `ci.yml` cannot be started by hand.
+Anyone with write access starts the same run on a branch or a tag, for example on the iteration branch's newest commit
+before tagging a Release:
 
 ```bash
 gh workflow run ci.yml --ref 5.0/Main

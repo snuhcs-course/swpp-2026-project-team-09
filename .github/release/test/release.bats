@@ -473,6 +473,20 @@ print_certs() {
   [[ "$output" == *"gate: CI failed on $COMMIT"* ]] || false
 }
 
+@test "a nightly run still going on the commit, or none at all, holds up no Release" {
+  mapfile -t passed < <(ci_jobs completed success; echo 'mobile-tests (1/4) completed success')
+  serve_runs '41 in_progress null hand:2.0/Main' '57 queued null hand:tag' '63 completed success tag'
+  serve_jobs 41 'mobile-tests (1/4) in_progress null'
+  serve_jobs 57
+  serve_jobs 63 "${passed[@]}"
+
+  run "$RELEASE" gate "$REPOSITORY" "$COMMIT" "$TAG"
+
+  grep -E 'runs/(41|57)/jobs' "$FAKE_CALLS" && false
+  [ "$status" -eq 0 ]
+  [ "$(polls)" -eq 1 ]
+}
+
 @test "a run started by hand on the tag does not stand for the tag's own run, which is waited for" {
   mapfile -t jobs < <(ci_jobs completed success)
   serve_runs '41 completed success hand:tag'

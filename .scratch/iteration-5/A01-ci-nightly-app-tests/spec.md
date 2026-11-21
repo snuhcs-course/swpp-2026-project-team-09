@@ -24,14 +24,14 @@ CI runs at one of three levels, set by the run's event alone in `.github/ci/chan
 - At the full level the four `mobile-tests` jobs start, skip their work with a notice, and report success, so the Iteration Main ruleset's required checks are unchanged.
 - The `mobile` job runs the app's unit tests at every level. The `mobile-tests` shards run only the integration project (`pnpm test:integration`), so no test runs twice at the nightly level.
 - `ci.yml` takes `workflow_dispatch`. Such a run is named "Nightly level on <ref>" and has a concurrency group of its own, so it neither waits for a Main's push run nor holds one up.
-- `.github/workflows/nightly.yml` runs at 03:00 KST and starts `ci.yml` on the newest `<line>/Main`. GitHub fires a schedule only from the default branch's copy of a workflow, so it starts nothing until `main` holds the file, at the next iteration hand-over. Until then the nightly level is started by hand: `gh workflow run ci.yml --ref 5.0/Main`.
+- `.github/workflows/nightly.yml` runs at 03:00 KST and starts `ci.yml` on the newest `<line>/Main`, with `actions: write` and `contents: read` only. GitHub fires a schedule only from the default branch's copy of a workflow, so the same file also goes to `main`, through a pull request of its own that adds nothing else. A Main whose `ci.yml` has no `workflow_dispatch` yet is skipped with a notice, so the order in which the two pull requests merge does not matter. By hand: `gh workflow run ci.yml --ref 5.0/Main`.
 - The Release gate (`release.sh`'s `read_ci_jobs`) reads only push runs: the tag's own and those of a `<line>/Main`, `main` or `development`. A run started by hand or by the nightly is never read, whichever way it ended, and does not stand for the tag's own run.
 
 ## Decisions
 
 - `main-server` (8 to 9 minutes) and `flow-tests` (about 2) stay at the full level. They were green in every full run measured on 2026-11-21, and `main-server` alone sets the full level's time.
 - No Release waits for the app's integration tests, for now. Whoever wants them green first starts the nightly level on the commit before tagging.
-- Nothing is pushed to `main` and no repository setting or ruleset changes. The interim starter for the nightly (by hand, a scheduled task on a team member's machine, or `nightly.yml` on `main` earlier) is the repository administrator's call.
+- `nightly.yml` reaches `main` now, by a pull request that adds only that file, rather than at the next iteration hand-over. Nothing is pushed to `main` directly, and no repository setting or ruleset changes.
 
 ## Out of Scope
 
