@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -116,6 +117,21 @@ function seedHeldQuest(
   return ownQuest(app, user, { title, subQuest: contentOf(title, subQuest, seeds) });
 }
 
+// A Quest made from a meeting's or a meal's Plan, as the app's 일정에 넣기 marks it, with its Friends invited and waiting.
+async function madeFromPlan(
+  prisma: PrismaClient,
+  questId: string,
+  { kind, invited }: WorldData['ownQuests'][number],
+  seeds: Seeds,
+): Promise<void> {
+  if (kind !== undefined) {
+    await prisma.quest.update({ where: { id: questId }, data: kind === 'meet' ? { meet: true } : { meal: kind } });
+  }
+  await prisma.questInvitation.createMany({
+    data: invited.map((friend) => ({ questId, userId: seedOf(seeds, 'friend', friend).id })),
+  });
+}
+
 const idSchema = z.object({ id: z.string() });
 
 // A Quest for its Global Event, made as the app makes one and then opened on its Board.
@@ -227,6 +243,8 @@ async function seedPeople(
     const id = await seedHeldQuest(app, asker, quest, seeds);
     // oxlint-disable-next-line no-await-in-loop -- as above
     await seedItem(prisma, id, quest.title, quest.subQuest.starts ?? '', seeds);
+    // oxlint-disable-next-line no-await-in-loop -- as above
+    await madeFromPlan(prisma, id, quest, seeds);
   }
 }
 
