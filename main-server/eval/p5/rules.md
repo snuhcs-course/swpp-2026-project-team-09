@@ -54,7 +54,8 @@ On a request to recruit ("모집해 줘", "구해 줘", "같이 갈 사람"), th
 Then:
 
 - **`join`:** when some fit, the reply shows all of them as cards and asks whether the asker wants to join. Several are shown with the most Holders first. The Assistant never joins by itself. Saying the asker has joined or has asked to join is wrong. For an Approval Quest, the reply says that joining is a request (참여 신청).
-- **`propose`:** when none fits, or the asker says to make a new one ("그래도 새로 만들어 줘"), the reply carries a Proposal with no cards and speaks only of it: it never says that the Assistant looked or that none was found. (Revised in Iteration 5 after testers found that line awkward; until then the reply said that none was found.)
+- **`propose`:** when none fits, or the asker says to make a new one ("그래도 새로 만들어 줘"), the reply says none was found (when it looked) and carries a Proposal with no cards.
+  - Revised in Iteration 5 by P02 (`.scratch/iteration-5/P02-party-reply-wording/spec.md`), after testers found the line awkward: the reply speaks only of the Proposal and never says that the Assistant looked or that none was found. The cases of `cases/join-or-recruit-revised.yaml` hold this rule; the frozen cases they revise are kept as they were (`suite.yaml`, `revised`).
 - **`ask`:** with neither an activity nor a day, it asks for them, with no card and no Proposal.
 
 ## 5. Asked to find

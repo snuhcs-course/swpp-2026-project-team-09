@@ -3,13 +3,10 @@
 #
 # 2026-10-31  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-01  Opus 5.5   prompted by Jaehyun0320
-# 2026-11-21  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # 합류와 모집: 있으면 합류, 없으면 만들기 (evaluation C). The fixed histories write the
-# earlier turns as the app sends them back, and only the last turn is scored. Since Iteration 5 a Proposal made after
-# a search that found none says nothing of the search (rules.md, section 4), so those cases list the words it must not
-# hold where they listed the words of "none found".
+# earlier turns as the app sends them back, and only the last turn is scored.
 
 - id: join-01
   category: join-or-recruit
@@ -82,7 +79,7 @@
       place: null
       globalEvent: null
     text:
-      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: join-05
   category: join-or-recruit
@@ -123,7 +120,7 @@
       place: null
       globalEvent: null
     text:
-      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: join-07
   category: join-or-recruit
@@ -148,7 +145,7 @@
       place: null
       globalEvent: null
     text:
-      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: join-08
   category: join-or-recruit
@@ -173,7 +170,7 @@
       place: null
       globalEvent: 가을 음악제
     text:
-      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: join-09
   category: join-or-recruit
@@ -198,7 +195,7 @@
       place: null
       globalEvent: null
     text:
-      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: join-10
   category: join-or-recruit
@@ -223,7 +220,7 @@
       place: null
       globalEvent: null
     text:
-      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: join-11
   category: join-or-recruit
@@ -623,7 +620,7 @@
       place: null
       globalEvent: null
     text:
-      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: join-30
   category: join-or-recruit
@@ -648,7 +645,7 @@
       place: null
       globalEvent: null
     text:
-      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: join-31
   category: join-or-recruit
@@ -705,7 +702,7 @@
       place: null
       globalEvent: null
     text:
-      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: join-34
   category: join-or-recruit
@@ -764,7 +761,7 @@
       place: null
       globalEvent: null
     text:
-      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+      mentions: [[없, 찾지 못, 못 찾]]
 
 - id: join-37
   category: join-or-recruit
