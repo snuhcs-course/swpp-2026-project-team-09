@@ -9,6 +9,7 @@
 
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { type Position } from '../../common/geometry.js';
+import { PrismaService } from '../../common/prisma.service.js';
 import { type FriendView } from '../../friends/dto/friend-view.dto.js';
 import { FriendViewService } from '../../friends/friend-view.service.js';
 import { type Cuisines } from '../../menus/cuisine-words.js';
@@ -18,15 +19,17 @@ import { type Hours, RestaurantHours } from '../../menus/restaurant-hours.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { PlaceLookup } from '../../places/place-lookup.js';
+import { type HeldMeal, heldMealOf } from '../../quests/held-meal.js';
 import { TimetableService } from '../../timetable/timetable.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
 import { UsersService } from '../../users/users.service.js';
 import { type AnswerReply, type LocationMissing, type MealInput } from '../dto/answer.dto.js';
-import { clockOf, freeTimeOf } from '../free-time/free-time.js';
-import { mealWindow } from '../free-time/meal-fit.js';
+import { clockOf, type DayItem, freeTimeOf } from '../free-time/free-time.js';
+import { type Interval, mealWindow } from '../free-time/meal-fit.js';
 import { openRestaurants } from '../free-time/meal-tools.js';
 import { type OpenRestaurant } from '../free-time/restaurant-card.js';
 import { UserDayService } from '../free-time/user-day.service.js';
+import { koreaTime } from '../korea-time.js';
 import { type GatheringPerson, MINUTE_MS } from './gathering.js';
 import { type AnswerPerson, mealAnswer, type MealAnswerArgs } from './meal-answer.js';
 import { type ServedMenu } from './meal-menu.js';
@@ -45,6 +48,44 @@ const menusOf = (collected: number, open: number, there: number): MealAnswerArgs
   }
   return there === 0 ? 'closed-at-place' : 'open';
 };
+
+// An item of the asker's that fills the meal's window, as the model is told it when no time is free.
+export interface BusyItem {
+  name: string;
+  isClass: boolean;
+  start: string;
+  end: string;
+}
+
+// Leaves these Sub Quests out of everyone's day.
+function leaveOut(people: readonly { items: readonly DayItem[] }[], subQuestIds: readonly string[]): void {
+  const leftOut = new Set(subQuestIds);
+  for (const person of people) {
+    person.items = person.items.filter(({ id }) => !leftOut.has(id));
+  }
+}
+
+const busyIn = (items: readonly DayItem[], { start, end }: Interval): BusyItem[] =>
+  items
+    .filter((item) => item.start < end && item.end > start)
+    .map(({ name, isClass, start: from, end: to }) => ({ name, isClass, start: clockOf(from), end: clockOf(to) }));
+
+// The meal the asker already holds for the day, as the answer names it: its Restaurant is the title's, "302동식당" of
+// "302동식당에서 점심".
+function mealSetOf(held: HeldMeal | null): AnswerReply['mealSet'] {
+  if (held === null) {
+    return null;
+  }
+  const { id, title, startsAt, others } = held;
+  return {
+    questId: id,
+    title,
+    startAt: koreaTime(startsAt),
+    place: title.replace(/에서 (점심|저녁)$/u, ''),
+    friendNames: others,
+    shared: others.length > 0,
+  };
+}
 
 // Each candidate's menu for the meal, by its key, with when it closes.
 function servedOf(
@@ -78,6 +119,7 @@ export const locationPlaceOf = (friend: FriendView | undefined): string | null =
 @Injectable()
 export class MealPlanService {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly days: UserDayService,
     private readonly friends: FriendViewService,
     private readonly users: UsersService,
@@ -95,25 +137,25 @@ export class MealPlanService {
     return (await this.planned(askerId, input, at)).answer;
   }
 
-  // The answer, and each candidate Restaurant's menu by its key, which the model reads in words.
+  // The answer, each candidate Restaurant's menu by its key, which the model reads in words, and, when no time is free
+  // for the meal, the asker's items that fill it. The asker's own Quest for the same meal and day is set aside: the new
+  // Plan would replace it.
   async planned(
     askerId: string,
     input: MealInput,
     at: PlanAt,
-  ): Promise<{ answer: AnswerReply; served: ReadonlyMap<string, ServedMenu> }> {
+  ): Promise<{ answer: AnswerReply; served: ReadonlyMap<string, ServedMenu>; busy?: BusyItem[] }> {
     const friends = await this.friendsOf(askerId, input);
     this.refuseUnknownPlaces(input);
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
     const { date, meal } = input;
-    const [people, collected, missing] = await Promise.all([
+    const [people, collected, missing, held] = await Promise.all([
       this.peopleOf(askerId, friends, date, at.location),
       this.menus.findByDate(date),
       this.missingOf(askerId, at),
+      heldMealOf(this.prisma, askerId, input),
     ]);
-    const leftOut = new Set(at.leftOut);
-    for (const person of people) {
-      person.items = person.items.filter(({ id }) => !leftOut.has(id));
-    }
+    leaveOut(people, [...(at.leftOut ?? []), ...(held?.subQuestIds ?? [])]);
     const [askerPerson, ...friendPeople] = people.map(({ userId, items, position }, index): GatheringPerson => ({
       id: userId,
       free: freeTimeOf(items, date, now),
@@ -127,11 +169,7 @@ export class MealPlanService {
     const restaurants = openRestaurants(collected, meal, this.restaurantPlaces);
     const open = restaurants.map(({ key, place }) => ({ key, placeId: place.id }));
     const candidates = input.placeId === null ? open : open.filter(({ placeId }) => placeId === input.placeId);
-    const [hours, cuisines] = await Promise.all([
-      Promise.all(candidates.map(({ key }) => this.hours.hoursOf(key, meal, date))),
-      this.menus.cuisinesOf(restaurants.flatMap(({ lines }) => lines)),
-    ]);
-    const menus = servedOf(restaurants, candidates, { hours, cuisines });
+    const { hours, menus } = await this.servedMenus(restaurants, candidates, input);
     const { places, ...served } = withHours(input, candidates, hours);
     const gathered = gatherMeal([askerPerson, ...friendPeople], places, { input, now, ...served }, this.travel);
     const answer = mealAnswer({
@@ -144,7 +182,29 @@ export class MealPlanService {
       missing,
       served: menus,
     });
-    return { answer: { ...answer, otherMeal: this.otherMealOf(collected, input, now) }, served: menus };
+    const busy = this.busyOf(answer, people[0]?.items ?? [], input);
+    const otherMeal = this.otherMealOf(collected, input, now);
+    return { answer: { ...answer, otherMeal, mealSet: mealSetOf(held) }, served: menus, busy };
+  }
+
+  // The asker's items that fill the meal's time, when no time is free for it and no condition can be eased: with a
+  // button to ease "지금", the model says only that.
+  private busyOf({ noPlan }: AnswerReply, items: readonly DayItem[], { date, meal }: MealInput): BusyItem[] {
+    const eased = (noPlan?.relax ?? []).length > 0;
+    return noPlan?.reason === 'no-shared-time' && !eased ? busyIn(items, mealWindow(date, meal)) : [];
+  }
+
+  // Each candidate's hours for the meal, and its menu with the kept kinds of food of every open Restaurant's dishes.
+  private async servedMenus(
+    restaurants: readonly OpenRestaurant[],
+    candidates: readonly { key: string }[],
+    { date, meal }: MealInput,
+  ): Promise<{ hours: (Hours | null)[]; menus: Map<string, ServedMenu> }> {
+    const [hours, cuisines] = await Promise.all([
+      Promise.all(candidates.map(({ key }) => this.hours.hoursOf(key, meal, date))),
+      this.menus.cuisinesOf(restaurants.flatMap(({ lines }) => lines)),
+    ]);
+    return { hours, menus: servedOf(restaurants, candidates, { hours, cuisines }) };
   }
 
   // The other meal of the day, which the app's bar offers, and when it starts: its window's start, or now when it is under

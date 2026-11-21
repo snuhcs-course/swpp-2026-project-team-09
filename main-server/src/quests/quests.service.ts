@@ -14,6 +14,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -23,6 +24,7 @@ import {
   GlobalEvent,
   GlobalEventState,
   JoinPolicy,
+  type Meal,
   Prisma,
   QuestBoard,
   QuestHolder,
@@ -70,6 +72,8 @@ export interface QuestSettings {
   takenAlone?: boolean;
   // A seat's stay at 관정관, which is no busy time (`heldSubQuests`).
   seatStay?: boolean;
+  // The meal of a Quest made from a meal's Plan (`heldMealOf`).
+  meal?: Meal;
 }
 
 @Injectable()
