@@ -2382,7 +2382,9 @@ Anthropic API as the AI's key says
     since the model may write beside a tool call and close with a line or with nothing. A run that wrote no text but
     shows cards, map buttons or a Proposal says `아래에서 확인해 보세요.` above them, and the server logs that it did, as
     `The Assistant answered with its fixed sentence: no step had text (finish reason stop, 2 cards, 0 map buttons, no
-Proposal)`.
+Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with nothing else shown says nothing instead
+    (`text: ""`, `wordless-reply.ts`): the map says its Place, minutes and times, and the rules have the model write a
+    sentence beside a way only for what the map cannot say, such as a late arrival, the shuttle, or a closed gate.
   - **The Approval line** (P12, `approval-line.ts`): when the cards show a Quest whose Join Policy is Approval and the
     text holds fewer than two of 승인, 수락 and 신청, the server adds a line after it, fixed sentence included:
     `승인제 파티는 참여 신청 후 파티장이 수락하면 참여돼요.`, or, when the User's last message with letters (not

@@ -68,6 +68,11 @@ export const WORLD_REQUEST_FIELDS: Record<WorldName, { clientCapabilities?: Clie
   'p4-answer': { clientCapabilities: ['library', 'answer'] },
 };
 
+// What a run of a case sends beside the messages: its world's fields, and where the asker is when the case says.
+export function requestFieldsOf({ world, context }: EvalCase): object {
+  return { ...WORLD_REQUEST_FIELDS[world], ...(context === undefined ? {} : { context }) };
+}
+
 // The tutorial content a run of each world reads in the place of content/tutorial.yaml. The P6 suite reads its own copy,
 // frozen with C0 (eval/p6/suite.yaml), so that a quest added to the app does not change it; the other worlds read the
 // live file.
@@ -119,6 +124,8 @@ export const caseSchema = z
     now: z.iso.datetime({ offset: true }).optional(),
     // Who asks, by a name in the world's `askers`, if not the world's User.
     asker: seedName.optional(),
+    // Where the asker is, sent as the request's context as the app sends it; none is sent without it.
+    context: z.strictObject({ location: z.strictObject({ latitude: z.number(), longitude: z.number() }) }).optional(),
     live: z.boolean().default(false),
     // Run this many times, for pass^k (the repeated set).
     repeat: z.int().min(2).optional(),

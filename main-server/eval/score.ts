@@ -275,6 +275,9 @@ function outcomeChecks(trace: TurnTrace, expect: Expect, names: Names): Check[] 
       ),
     );
   }
+  if (expect.text?.none === true) {
+    checks.push(check('text.none', reply.text.trim() === '' ? [] : [`says ${JSON.stringify(reply.text)}`]));
+  }
   return checks;
 }
 

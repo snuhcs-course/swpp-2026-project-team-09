@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -119,6 +120,7 @@ describe('What the model is given of a way', () => {
         arrival: '12:08',
         lateMinutes: 0,
       },
+      note: expect.stringContaining('write no text') as unknown,
     });
   });
 });
