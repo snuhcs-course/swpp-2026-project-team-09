@@ -60,6 +60,9 @@ function lunchOf(name: string): MenuLineDto[] {
 
 const NOW = at('11:40');
 
+// The hours RestaurantHours keeps for the meal, as the menu service gives them.
+const HOURS = { opensAt: '11:30', closesAt: '13:30' };
+
 // The User's Lookup of a Restaurant's lunch at its Place, alone, with their day as given.
 function lookupOf(key: string, placeName: string, items: DayItem[]): Lookup {
   const answer = answerOf([person(ME, '유상', items)], {
@@ -67,7 +70,7 @@ function lookupOf(key: string, placeName: string, items: DayItem[]): Lookup {
     now: NOW,
     fixed: { placeId: id(placeName) },
   });
-  const found = menuAnswer({ key, date: DATE, meal: 'lunch', now: NOW, lines: lunchOf(key), answer });
+  const found = menuAnswer({ key, date: DATE, meal: 'lunch', now: NOW, lines: lunchOf(key), answer, hours: HOURS });
   if (found.result !== 'found') {
     throw new Error(`No menu Lookup: ${found.result}`);
   }
@@ -170,7 +173,9 @@ describe('The time to eat', () => {
     expect(lookup.band).toMatchObject({ startAt: time('11:50'), endAt: time('13:00') });
     expect(lookup.basis).toEqual(['부대짬뽕&군만두 6,500원 · (뚝)순댓국&계란장조림 6,500원', '13:00에 나서요']);
   });
+});
 
+describe('No time to eat', () => {
   it('is none when no break during the meal leaves the User time to be there and eat', () => {
     const items = [
       classAt('11:00', '12:15', '제1공학관'),
@@ -184,8 +189,29 @@ describe('The time to eat', () => {
     });
 
     expect(
-      menuAnswer({ key: '301동식당', date: DATE, meal: 'lunch', now: NOW, lines: lunchOf('301동식당'), answer }),
+      menuAnswer({
+        key: '301동식당',
+        date: DATE,
+        meal: 'lunch',
+        now: NOW,
+        lines: lunchOf('301동식당'),
+        answer,
+        hours: null,
+      }),
     ).toEqual({ result: 'none', reason: 'no-time' });
+  });
+});
+
+// The map's card of the Restaurant (P04 ticket 08) reads the menu's facts from the Lookup, not from its words.
+describe("A menu Lookup's facts", () => {
+  it("are the meal's hours and the dishes of its main corner with their prices", () => {
+    expect(boardQ8().menu).toEqual({
+      hours: HOURS,
+      dishes: [
+        { name: '부대짬뽕&군만두', price: 6500 },
+        { name: '(뚝)순댓국&계란장조림', price: 6500 },
+      ],
+    });
   });
 });
 

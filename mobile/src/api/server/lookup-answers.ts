@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { CardFact, Lookup, LookupAction, LookupCard, LookupStep } from '@/api/lookup-types';
+import type { CardFact, Lookup, LookupAction, LookupCard, LookupMenu, LookupStep } from '@/api/lookup-types';
 import { field, hasTexts, isText, isTextOrNull, listOf } from './answers';
 import { isChip } from './chip-answers';
 import { isNote } from './missing-input-answers';
@@ -64,6 +65,23 @@ function isCard(value: unknown): value is LookupCard {
   );
 }
 
+function isDish(value: unknown): value is LookupMenu['dishes'][number] {
+  const price = field(value, 'price');
+  return isText(field(value, 'name')) && (price === null || typeof price === 'number');
+}
+
+// A menu Lookup's facts: absent, or the hours (both "HH:MM", or null) and the dishes.
+function isMenuOrAbsent(value: unknown): boolean {
+  if (value === undefined) {
+    return true;
+  }
+  const hours = field(value, 'hours');
+  return (
+    (hours === null || (isText(field(hours, 'opensAt')) && isText(field(hours, 'closesAt')))) &&
+    listOf(isDish)(field(value, 'dishes'))
+  );
+}
+
 // An asked Lookup has no card, and a main server before P01-17 sends none.
 export function isLookup(value: unknown): value is Lookup {
   const band = field(value, 'band');
@@ -79,6 +97,7 @@ export function isLookup(value: unknown): value is Lookup {
     listOf(isAction)(field(value, 'actions')) &&
     (card === undefined || card === null || isCard(card)) &&
     (steps === undefined || listOf(isStep)(steps)) &&
-    isNote(field(value, 'note'))
+    isNote(field(value, 'note')) &&
+    isMenuOrAbsent(field(value, 'menu'))
   );
 }

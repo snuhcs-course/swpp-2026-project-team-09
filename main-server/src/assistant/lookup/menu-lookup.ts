@@ -8,6 +8,7 @@
 
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { type AnswerLine, type AnswerReply, type Lookup, type MapScene, type Plan } from '../dto/answer.dto.js';
+import { type LookupMenu } from '../dto/lookup.dto.js';
 import { type HandledMeal } from '../free-time/meal-fit.js';
 import { withTopic } from '../gathering/answer-words.js';
 import { MINUTES_SAID_MAX } from '../gathering/gathering.js';
@@ -29,6 +30,8 @@ export interface MenuArgs {
   lines: readonly MenuLineDto[];
   // The meal Plan for the User alone at the Restaurant's Place.
   answer: AnswerReply;
+  // The meal's hours that day, as RestaurantHours keeps them; null when none were kept.
+  hours: LookupMenu['hours'];
 }
 
 export type MenuAnswer = { result: 'found'; plan: Plan; lookup: Lookup } | { result: 'none'; reason: 'no-time' };
@@ -55,6 +58,13 @@ function pricedDishes(lines: readonly MenuLineDto[]): string[] {
   return (main?.items ?? [])
     .slice(0, DISHES_MAX)
     .map((line) => (line.price === null ? dishName(line) : `${dishName(line)} ${won(line.price)}`));
+}
+
+// The meal's hours and the dishes of its main corner (`cornersOf`), each by its name and price, for the map's card of
+// the Restaurant. The hours are the meal counter's, not a take-out counter's, so the dishes are its own.
+function menuOf({ lines, hours }: MenuArgs): LookupMenu {
+  const [main] = cornersOf(lines);
+  return { hours, dishes: (main?.items ?? []).map((line) => ({ name: dishName(line), price: line.price })) };
 }
 
 // The first line: the Restaurant, the day and meal, the first dish with its price, and how many more are served. The
@@ -131,6 +141,7 @@ export function menuAnswer(args: MenuArgs): MenuAnswer {
     scene: sceneOf(plan, dishes),
     band: plan.band,
     actions: [{ kind: 'guide', to: plan.place }],
+    menu: menuOf(args),
   };
   return { result: 'found', plan, lookup };
 }
