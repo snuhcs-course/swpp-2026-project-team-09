@@ -22,6 +22,10 @@ import { TimeBand } from './time-band';
 import { type BandFocus, useCorrections } from './use-corrections';
 
 const NO_WINDOW = { from: null, until: null };
+// The grip takes a press 44 high around its middle only, so that the ends' labels, the day's other meal among them,
+// keep their own presses.
+const GRIP_WIDTH = 72;
+const GRIP_SLOP = { top: 16, bottom: 16, left: space[2], right: space[2] };
 
 function ignoreDrop(): void {
   // A Lookup's band has no handles.
@@ -64,7 +68,7 @@ function Bar({ band, day, onHeight }: BarProps): ReactElement {
           accessibilityLabel={label}
           accessibilityRole="button"
           accessibilityState={{ expanded: !folded }}
-          hitSlop={space[2]}
+          hitSlop={GRIP_SLOP}
           onPress={() => {
             setUnfolded(folded);
           }}
@@ -150,6 +154,6 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.float,
   },
-  toggle: { alignItems: 'center', paddingTop: space[2] },
+  toggle: { alignSelf: 'center', alignItems: 'center', width: GRIP_WIDTH, paddingTop: space[2] },
   grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
 });
