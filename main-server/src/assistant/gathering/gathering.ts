@@ -5,6 +5,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -75,6 +76,18 @@ export interface GatheringFit {
   parts: PersonPart[];
   // The Restaurant's own window it was fitted in, when its hours gave one.
   window?: Interval;
+}
+
+// A plan's minutes are said only up to two hours, a stay a person can act on. A longer one is said by its end, or
+// "식사 210분" reads as a meal three and a half hours long and "함께 780분" as nothing at all.
+export const MINUTES_SAID_MAX = 120;
+
+export function endedByItem({ end, parts }: Pick<GatheringFit, 'end' | 'parts'>): boolean {
+  return parts.some(({ leaveBy }) => leaveBy !== null && leaveBy.getTime() === end.getTime());
+}
+
+export function minutesSaid({ togetherMinutes }: Pick<GatheringFit, 'togetherMinutes'>): boolean {
+  return togetherMinutes <= MINUTES_SAID_MAX;
 }
 
 export interface GatheringDrop {
