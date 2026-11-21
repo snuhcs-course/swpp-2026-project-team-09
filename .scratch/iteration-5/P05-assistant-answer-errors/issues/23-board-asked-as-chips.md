@@ -19,6 +19,15 @@ Found in use (feedback 2026-11-22, item 4): "코딩 스터디를 어느 게시�
 
 ## Acceptance criteria
 
-- [ ] A 파티 refused for its Board alone carries the four Board offers and a note to the model. (`assistant-board-offers.integration.test.ts`, which fails before the change.)
-- [ ] Another field missing beside the Board, or a Proposal after the refusal, leaves no Board offers.
-- [ ] Lint, format and types of the main server pass.
+- [x] A 파티 refused for its Board alone carries the four Board offers and a note to the model. (`assistant-board-offers.integration.test.ts`, which fails before the change.)
+- [x] Another field missing beside the Board, or a Proposal after the refusal, leaves no Board offers.
+- [x] Lint, format and types of the main server pass.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+Tickets 18 to 26 were done together in one session, 01:30–04:00 on 2026-11-22, with PRs 425 to 433; these figures are the whole batch's, not this ticket's alone.
+
+- Agent time: about 2.2 hours (estimate: gaps under 5 minutes between transcript entries, summed).
+- Tokens: input 220,838,000 (cache reads 220,158,000, cache writes 679,000, uncached 1,000); output 331,000. Without cache reads, 1,010,000.

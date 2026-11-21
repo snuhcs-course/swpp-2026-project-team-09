@@ -71,12 +71,15 @@ export const WORLD_REQUEST_FIELDS: Record<WorldName, { clientCapabilities?: Clie
 // What the current app says it draws with every chat request (ANSWER_CAPABILITIES in mobile/src/api/assistant-types.ts).
 const APP_CAPABILITIES = ['library', 'answer', 'area', 'meet', 'events'] as const satisfies readonly ClientCapability[];
 
+// The app with ticket 17's 바꾸기 and 그대로 두기, which says `plan-set` too.
+const NEXT_APP = [...APP_CAPABILITIES, 'plan-set'] as const satisfies readonly ClientCapability[];
+
 // What a run of a case sends beside the messages: its world's fields, or the current app's capabilities when the case
 // says so, and where the asker is when the case says.
 export function requestFieldsOf({ world, capabilities, context }: EvalCase): object {
   return {
     ...WORLD_REQUEST_FIELDS[world],
-    ...(capabilities === 'app' ? { clientCapabilities: APP_CAPABILITIES } : {}),
+    ...(capabilities === 'world' ? {} : { clientCapabilities: capabilities === 'app' ? APP_CAPABILITIES : NEXT_APP }),
     ...(context === undefined ? {} : { context }),
   };
 }
@@ -133,8 +136,8 @@ export const caseSchema = z
     // Who asks, by a name in the world's `askers`, if not the world's User.
     asker: seedName.optional(),
     // `app`: the request says what the current app draws, every capability, in place of the world's (a meet needs
-    // `meet`).
-    capabilities: z.enum(['world', 'app']).default('world'),
+    // `meet`); `next-app`: and `plan-set` too, as the app with 바꾸기 will.
+    capabilities: z.enum(['world', 'app', 'next-app']).default('world'),
     // Where the asker is, sent as the request's context as the app sends it; none is sent without it.
     context: z.strictObject({ location: z.strictObject({ latitude: z.number(), longitude: z.number() }) }).optional(),
     live: z.boolean().default(false),

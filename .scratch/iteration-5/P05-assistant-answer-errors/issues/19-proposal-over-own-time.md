@@ -21,8 +21,17 @@ Found in use (feedback 2026-11-22, item 5): "내일 15시 관정 코딩스터디
 
 ## Acceptance criteria
 
-- [ ] A 파티 at a Class's time names the Class with its time, and the Proposal is shown. (`assistant-proposal-clashes.integration.test.ts`, which fails before the change.)
-- [ ] A held Quest that the 파티's first 30 minutes reach is named; a 파티 at a free time has no `clashes`.
-- [ ] An invited Friend's Class at the 파티's time is never named.
-- [ ] The eval cases `proposal-over-a-class` (the reply names the Class and asks) and `proposal-at-a-free-time` (no Class named) pass.
-- [ ] Lint, format and types of the main server pass.
+- [x] A 파티 at a Class's time names the Class with its time, and the Proposal is shown. (`assistant-proposal-clashes.integration.test.ts`, which fails before the change.)
+- [x] A held Quest that the 파티's first 30 minutes reach is named; a 파티 at a free time has no `clashes`.
+- [x] An invited Friend's Class at the 파티's time is never named.
+- [x] The eval cases `proposal-over-a-class` (the reply names the Class and asks) and `proposal-at-a-free-time` (no Class named) pass.
+- [x] Lint, format and types of the main server pass.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+Tickets 18 to 26 were done together in one session, 01:30–04:00 on 2026-11-22, with PRs 425 to 433; these figures are the whole batch's, not this ticket's alone.
+
+- Agent time: about 2.2 hours (estimate: gaps under 5 minutes between transcript entries, summed).
+- Tokens: input 220,838,000 (cache reads 220,158,000, cache writes 679,000, uncached 1,000); output 331,000. Without cache reads, 1,010,000.

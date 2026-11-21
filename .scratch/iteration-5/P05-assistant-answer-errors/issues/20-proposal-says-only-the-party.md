@@ -23,6 +23,15 @@ It follows a search that answered none, and one that found 파티 the model judg
 
 ## Acceptance criteria
 
-- [ ] proposeQuest's answer of a Proposal carries the note. (`assistant-proposals.integration.test.ts`, which fails before the change.)
-- [ ] The eval cases `recruit-coding-study-says-only-the-party` and `recruit-badminton-says-only-the-party` pass more often than before the change, P02's revised cases (`eval/p5/cases/join-or-recruit-revised.yaml`) do not get worse, and ticket 19's `proposal-clashes` cases still name the Class.
-- [ ] Lint, format and types of the main server pass.
+- [x] proposeQuest's answer of a Proposal carries the note. (`assistant-proposals.integration.test.ts`, which fails before the change.)
+- [x] The eval cases `recruit-coding-study-says-only-the-party` and `recruit-badminton-says-only-the-party` pass more often than before the change, P02's revised cases (`eval/p5/cases/join-or-recruit-revised.yaml`) do not get worse, and ticket 19's `proposal-clashes` cases still name the Class.
+- [x] Lint, format and types of the main server pass.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+Tickets 18 to 26 were done together in one session, 01:30–04:00 on 2026-11-22, with PRs 425 to 433; these figures are the whole batch's, not this ticket's alone.
+
+- Agent time: about 2.2 hours (estimate: gaps under 5 minutes between transcript entries, summed).
+- Tokens: input 220,838,000 (cache reads 220,158,000, cache writes 679,000, uncached 1,000); output 331,000. Without cache reads, 1,010,000.

@@ -19,9 +19,18 @@ Ticket 17's change in place from the Assistant meets the same fault, and a chang
 
 ## Acceptance criteria
 
-- [ ] The Leader edits the step of a party an invited User accepted: the invited User's `leave-by` is gone, `step-changed` is there, and the Leader has no `leave-by`. (`invitee-time-to-leave.integration.test.ts`, which fails before the change.)
-- [ ] Lint, format and types of the main server pass.
+- [x] The Leader edits the step of a party an invited User accepted: the invited User's `leave-by` is gone, `step-changed` is there, and the Leader has no `leave-by`. (`invitee-time-to-leave.integration.test.ts`, which fails before the change.)
+- [x] Lint, format and types of the main server pass.
 
 ## Known gap
 
 Join requesters of an Approval 파티 are not Holders: a step change tells them nothing, in the room and from the Assistant alike (ticket 17's row 32).
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+Tickets 18 to 26 were done together in one session, 01:30–04:00 on 2026-11-22, with PRs 425 to 433; these figures are the whole batch's, not this ticket's alone.
+
+- Agent time: about 2.2 hours (estimate: gaps under 5 minutes between transcript entries, summed).
+- Tokens: input 220,838,000 (cache reads 220,158,000, cache writes 679,000, uncached 1,000); output 331,000. Without cache reads, 1,010,000.

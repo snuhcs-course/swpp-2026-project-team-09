@@ -74,8 +74,10 @@ export type Card = GlobalEventCard | QuestCard | RestaurantCard | LibraryCard;
 // What the app says it can show beside the cards every version shows. Library cards are attached only for an app that
 // says `library`, since older apps refuse a reply with a card they do not know. `answer`: the app draws an answer on
 // the map. `events`: with `answer`, it also draws an answer of a day's events. `meet`: with `answer`, it also draws a
-// meet. `area`: with `answer`, it sends the visible map area and draws its study spaces.
-export const CLIENT_CAPABILITIES = ['library', 'answer', 'events', 'meet', 'area'] as const;
+// meet. `area`: with `answer`, it sends the visible map area and draws its study spaces. `plan-set`: it draws 바꾸기
+// and 그대로 두기 for a meeting or a meal already set (`planSet`) and words their 409s, so the server sets a meeting
+// aside and refuses a second one only for it; an app without it is planned for as before (P05 ticket 17).
+export const CLIENT_CAPABILITIES = ['library', 'answer', 'events', 'meet', 'area', 'plan-set'] as const;
 
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
 
