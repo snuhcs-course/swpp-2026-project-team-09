@@ -9,6 +9,7 @@ import type { AnswerLine } from '@/api/assistant-types';
 import type { Lookup, LookupAction } from '@/api/lookup-types';
 import type { Refusal } from '@/api/refusal-types';
 import type { ChatBubble } from '@/features/assistant/use-chat';
+import { modelWordsOf } from '@/features/assistant/model-words';
 import { mainActionOf } from '@/features/assistant/use-shown-lookup';
 import { wordsLine } from './keyboard-headline';
 import { type ButtonOffer, isButton } from './refusal-reply';
@@ -34,7 +35,7 @@ export function lookupDocks({ kind }: Lookup, refusal: Refusal | null, words = '
 
 // Whether the model said something beside the Lookup.
 function spoken(words: string): boolean {
-  return said(wordsLine(words)).trim() !== '';
+  return said(wordsLine(modelWordsOf(words))).trim() !== '';
 }
 
 function said(line: AnswerLine): string {

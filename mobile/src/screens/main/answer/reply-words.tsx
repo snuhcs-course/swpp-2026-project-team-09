@@ -8,6 +8,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 import { color, text } from '@/design-system';
+import { modelWordsOf } from '@/features/assistant/model-words';
 import { turnsOf } from '@/features/assistant/turn';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
 import type { HowAbout } from '@/features/assistant/use-how-about';
@@ -157,7 +158,7 @@ export function Words(props: WordsProps): ReactElement {
       />
     );
     // The model's words stand over the Lookup: they say why it is shown (P04 ticket 18).
-    return refusal === null && bubble.text.trim() !== '' ? (
+    return refusal === null && modelWordsOf(bubble.text) !== '' ? (
       <>
         <ChatMarkdown style={styles.words} text={bubble.text} />
         {card}
@@ -176,7 +177,7 @@ export function Words(props: WordsProps): ReactElement {
     return <OfferedWords offers={bubble.offers} onAsk={onAsk} text={bubble.text} />;
   }
   const lines =
-    answer?.plans[0]?.lines ?? answer?.noPlan?.lines ?? (bubble.text.trim() === '' ? lookup?.lines : undefined);
+    answer?.plans[0]?.lines ?? answer?.noPlan?.lines ?? (modelWordsOf(bubble.text) === '' ? lookup?.lines : undefined);
   return lines === undefined ? <ChatMarkdown style={styles.words} text={bubble.text} /> : <AnswerLines lines={lines} />;
 }
 

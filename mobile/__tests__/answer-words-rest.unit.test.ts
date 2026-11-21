@@ -21,6 +21,8 @@ import { lookupRestOf, wordsRestOf } from '@/screens/main/answer/words-rest';
 // back, an answer with an offer, and plain words.
 
 const WORDS = '모델의 말이에요.';
+// What the main server writes beside a reply without the model's words (its `wordless-reply.ts`).
+const STAND_IN = '아래에서 확인해 보세요.';
 
 function said(line: AnswerLine | null | undefined): string | null {
   return line === null || line === undefined ? null : line.map(({ text }) => text).join('');
@@ -79,6 +81,14 @@ describe("a Lookup's line in the dock", () => {
 
     expect(said(rest?.line)).toBe('보는 범위에선 공대 신양학술정보관');
     expect(rest?.offers).toEqual([{ kind: 'ask', label: '관정 보기', text: '관정 지금 자리 있어?' }]);
+  });
+
+  it("takes the main server's stand-in sentence for no words: the headline is the line, and a day stays open", () => {
+    expect(said(lookupRestOf(NOT_RUNNING_LOOKUP_REPLY.lookup, null, STAND_IN)?.line)).toBe(
+      '셔틀은 지금 다니지 않아요 (평일 8–21시)',
+    );
+    expect(said(lookupRestOf(STUDY_LOOKUP, null, STAND_IN)?.line)).toBe('보는 범위에선 공대 신양학술정보관');
+    expect(lookupRestOf(DAY_LOOKUP, null, STAND_IN)).toBeNull();
   });
 
   it("keeps a day's card open when the model said nothing, and docks it under the model's words", () => {

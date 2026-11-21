@@ -99,3 +99,24 @@ describe("the model's words beside the day's Lookup", () => {
     expect(within(card().getByTestId('earlier-turn')).getByText(WORDS)).toBeVisible();
   });
 });
+
+// Partitions: a shuttle's and a day's Lookup beside the main server's stand-in sentence, which is no words of the
+// model's (its `wordless-reply.ts`), as replies kept on phones still hold it.
+describe("the main server's stand-in sentence beside a Lookup", () => {
+  const STAND_IN = '아래에서 확인해 보세요.';
+
+  it("leaves a shuttle's Lookup its own headline in the dock", async () => {
+    await askOnMap(server, { ...NOT_RUNNING_LOOKUP_REPLY, text: STAND_IN });
+
+    expect(dock().getByText('셔틀은 지금 다니지 않아요 (평일 8–21시)')).toBeVisible();
+    expect(screen.queryByText(STAND_IN)).toBeNull();
+  });
+
+  it("keeps a day's card open, without the sentence", async () => {
+    await askOnMap(server, { ...DAY_LOOKUP_REPLY, text: STAND_IN });
+
+    expect(screen.queryByTestId('dock-row')).toBeNull();
+    expect(card().getByTestId('lookup-card')).toBeVisible();
+    expect(card().queryByText(STAND_IN)).toBeNull();
+  });
+});

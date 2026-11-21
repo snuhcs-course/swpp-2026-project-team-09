@@ -14,6 +14,7 @@ import type { ShownChatCard } from '@/api/quest-parts-types';
 import { color, font, Icon, size, space, text } from '@/design-system';
 import { type Turn, turnsOf } from '@/features/assistant/turn';
 import type { ChatBubble } from '@/features/assistant/use-chat';
+import { modelWordsOf } from '@/features/assistant/model-words';
 import { markdownLabel } from '../chat-markdown';
 
 const LINE_HEIGHT = 32;
@@ -27,7 +28,7 @@ function linesOf({ answer, lookup, text: words }: ChatBubble): readonly AnswerLi
   if (lines !== undefined) {
     return lines;
   }
-  const said = markdownLabel(words).trim();
+  const said = markdownLabel(lookup === undefined || lookup === null ? words : modelWordsOf(words)).trim();
   const spoken = said === '' ? [] : said.split('\n').map((line): AnswerLine => [{ text: line, strong: false }]);
   const all = [...spoken, ...(lookup?.lines ?? [])];
   return all.length === 0 ? null : all;
