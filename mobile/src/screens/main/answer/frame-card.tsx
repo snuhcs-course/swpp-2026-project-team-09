@@ -101,8 +101,8 @@ function DockedCard({ barRoom, inputBottom = 0, onHeight, testID, children }: Fr
   );
 }
 
-// The frame's card, attached to the bottom of the screen. Its content scrolls inside it. Raised, it reaches up to the
-// pill. Only the lowered card tells its height, so that the camera fits the answer to the lowered card alone.
+// The frame's card, attached to the bottom of the screen. Its content scrolls inside it. Raised, it is as tall as its
+// content, up to the pill. Only the lowered card tells its height, so that the camera fits the answer to the lowered card alone.
 export function FrameCard(props: FrameCardProps): ReactElement {
   return props.docked === true ? <DockedCard {...props} /> : <OpenCard {...props} />;
 }
@@ -112,9 +112,12 @@ function OpenCard(props: FrameCardProps): ReactElement {
   const contentMax = contentMaxOf(stageHeight, barRoom);
   const { raised } = raising ?? LOWERED;
   const raisedHeight = useRaisedHeight(stageHeight, barRoom, raising, timeBarHeight);
-  const drag = useRaiseDrag(raising ?? LOWERED, raisedHeight);
+  // Raised, the card is as tall as its content, up to under the pill, and a drag goes no higher.
+  const [natural, setNatural] = useState<number | null>(null);
+  const raisedTo = raisedHeight === null || natural === null ? raisedHeight : Math.min(raisedHeight, natural);
+  const drag = useRaiseDrag(raising ?? LOWERED, raisedTo);
   const { minHeight, onContentSizeChange, scroll } = useHeldHeight(hold);
-  const shown = raised && raisedHeight !== null ? { height: raisedHeight } : { maxHeight: contentMax };
+  const shown = { maxHeight: raised && raisedHeight !== null ? raisedHeight : contentMax };
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
@@ -130,7 +133,10 @@ function OpenCard(props: FrameCardProps): ReactElement {
         <Animated.ScrollView
           contentContainerStyle={[styles.content, { minHeight }]}
           keyboardShouldPersistTaps="handled"
-          onContentSizeChange={onContentSizeChange}
+          onContentSizeChange={(width, height) => {
+            setNatural(height);
+            onContentSizeChange(width, height);
+          }}
           onLayout={({ nativeEvent }: LayoutChangeEvent) => {
             drag.onContentLayout(nativeEvent.layout.height);
           }}

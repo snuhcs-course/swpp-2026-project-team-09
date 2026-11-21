@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -182,9 +183,20 @@ function sharedEdges(
   });
 }
 
-// The side a kept label takes at a view where none is free: the first whose box stays inside the area, else the first.
-function keptAt(view: LabelView, position: LatLng, words: Words, list: readonly LabelSide[]): LabelSide | null {
-  return atView(view, position, words, list, []) ?? list[0] ?? null;
+// The sides a kept label may also take when none of its own stays inside the area, as a pick near the screen's edge.
+const SIDEWAYS: readonly LabelSide[] = ['left', 'right'];
+
+// The side a kept label takes at a view where none is free: the first whose box stays inside the area, else the left
+// or the right that does and that no other label at its point took, else the first.
+function keptAt(
+  view: LabelView,
+  position: LatLng,
+  words: Words,
+  list: readonly LabelSide[],
+  taken: ReadonlySet<LabelSide>,
+): LabelSide | null {
+  const sideways = SIDEWAYS.filter((side) => !list.includes(side) && !taken.has(side));
+  return atView(view, position, words, list, []) ?? atView(view, position, words, sideways, []) ?? list[0] ?? null;
 }
 
 // The labels of an answer's marks, taken in the order given, each at a side of its list that no earlier label at its
@@ -210,7 +222,7 @@ export function placeLabels(
     const side =
       view === null
         ? inMetres(points, point, list)
-        : (atView(view, position, words, list, covering) ?? (kept ? keptAt(view, position, words, list) : null));
+        : (atView(view, position, words, list, covering) ?? (kept ? keptAt(view, position, words, list, free) : null));
     if (side === null) {
       return null;
     }

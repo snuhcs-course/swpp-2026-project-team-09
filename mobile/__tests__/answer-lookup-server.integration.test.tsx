@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { screen } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 import { FRIEND_LOOKUP } from '@/api/mock/data/friend-lookup';
 import { WAY_LOOKUP_REPLY } from '@/api/mock/data/way-lookup';
 import late from '@/api/mock/data/way-lookups/late.json';
@@ -15,6 +16,7 @@ import { pass } from './support/app';
 import { askOnMap, card, mapThings } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { AI_INPUT } from './support/lists';
 import { givePhone, ME, ON_CAMPUS } from './support/main';
 import { lookOf, press } from './support/markers';
 import { startFresh } from './support/mocks';
@@ -38,6 +40,9 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
+// A docked way's card is raised from a second turn's "지난 답 1개": two replies in one test.
+jest.setTimeout(150000);
+
 let server: FakeServer;
 
 beforeEach(async () => {
@@ -58,24 +63,47 @@ function replyOf(lookup: object): object {
   return { text: '24동까지 걸어서 15분이에요.', mapButtons: [], cards: [], proposal: null, answer: null, lookup };
 }
 
-// Partitions: a late way and one on time. Expected values: the copies of boards q3 and q2, and the decision that only
-// a late way opens with its basis shown.
+function beside(): ReturnType<typeof within> {
+  return within(screen.getByTestId('ai-input-beside'));
+}
+
+type User = Awaited<ReturnType<typeof askOnMap>>;
+
+// A way docks with nothing to read (P04 ticket 05): asked after a first way, so that "지난 답 1개" raises its card.
+async function askAfterWay(lookup: object): Promise<User> {
+  const user = await askOnMap(server, WAY_LOOKUP_REPLY);
+  server.on('POST /assistant/messages', { status: 200, body: replyOf(lookup) });
+  await user.type(screen.getByLabelText(AI_INPUT), '24동 수업 늦나?');
+  await user.press(screen.getByRole('button', { name: '보내기' }));
+  await pass(500);
+  return user;
+}
+
+// Partitions: a late way and one on time, docked and raised. Expected values: the copies of boards q3 and q2, and the
+// decision that only a late way opens with its basis shown.
 describe('the basis of a way', () => {
-  it('opens on its own for a way that is late, with "근거 접기", and the map flags the lateness', async () => {
-    await askOnMap(server, replyOf(late));
+  it('docks a way that is late with the lateness on the map, and opens its basis on its own when raised', async () => {
+    const user = await askAfterWay(late);
+
+    expect(mapThings()).toContain('13:05 도착 · 5분 늦어요');
+    expect(card().queryByText('걸어서 15분 · 지금 12:50')).toBeNull();
+
+    await user.press(card().getByRole('button', { name: '지난 답 1개' }));
 
     expect(card().getByText('걸어서 15분 · 지금 12:50')).toBeVisible();
     expect(card().getByRole('button', { name: '근거 접기' })).toBeVisible();
-    expect(mapThings()).toContain('13:05 도착 · 5분 늦어요');
   });
 
   it('stays closed for a way on time, whose main button is "길 안내" until the leave-by notification is drawn', async () => {
-    await askOnMap(server, replyOf(leave));
+    const user = await askAfterWay(leave);
+
+    expect(beside().getByRole('button', { name: '길 안내' })).toBeVisible();
+    expect(mapThings()).toContain('12:45 나서기');
+
+    await user.press(card().getByRole('button', { name: '지난 답 1개' }));
 
     expect(card().queryByText('301동 → 24동 걸어서 15분')).toBeNull();
     expect(card().getByRole('button', { name: '근거' })).toBeVisible();
-    expect(card().getByRole('button', { name: '길 안내' })).toBeVisible();
-    expect(mapThings()).toContain('12:45 나서기');
   });
 });
 
@@ -95,7 +123,7 @@ describe("a Friend's face under a Lookup", () => {
 
     expect(lookOf(MIN_JUN.name)).not.toMatch(/selected|addable/u);
     expect(server.received('POST /assistant/answers')).toEqual([]);
-    expect(card().getByTestId('lookup-card')).toBeVisible();
+    expect(mapThings()).toContain('문화관(73동) · 걸어서 18분');
   });
 });
 
@@ -114,13 +142,13 @@ const TIMETABLE_ONLY = {
 };
 
 // Partitions: a Lookup whose scene is empty. Expected values: the everyday map's things, the User's own Avatar among
-// them, under the card.
+// them, under the dock that says the line.
 describe('a Lookup that draws nothing', () => {
-  it('leaves the everyday map under its card', async () => {
+  it('leaves the everyday map under its dock', async () => {
     await askOnMap(server, replyOf(TIMETABLE_ONLY));
 
     expect(card().getByText('민수 · 공강 · 14:00까지')).toBeVisible();
-    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
+    expect(beside().getByRole('button', { name: '만나고 싶다' })).toBeVisible();
     expect(screen.getByTestId('answer-pill')).toBeVisible();
     expect(mapThings()).toEqual(expect.arrayContaining([MIN_JUN.name, ME]));
   });

@@ -8,7 +8,7 @@ Native files: none. Releases: an app OTA update only.
 
 ## What to build
 
-With the answer closed and a conversation kept, the map screen shows a chip above the input that names the conversation the next message continues ("이어서 · 민수랑 내일 2시 학생회관 ▾") and a "새 대화" button beside the input (board 17). A tap on the chip opens the list of ticket 10 over the map; a tap on a row reopens that answer. "새 대화" starts a new conversation at one press, with the input focused, and the kept one stays in the list. With nothing kept, neither shows.
+With the answer closed and a conversation kept, the map screen shows a chip above the input that names the conversation the next message continues ("이어서 · 민수랑 내일 2시 학생회관 ▾") and a "새 대화" button beside the input (board 17). A tap on the chip opens the list of ticket 10 over the map; a tap on a row reopens that answer. "새 대화" starts a new conversation at one press, with the input focused, and the kept one stays in the list. With nothing kept, neither shows. After "새 대화" nothing is continued: the map screen shows ticket 10's "지난 대화 N ▾" instead (board 27).
 
 ## What happens now
 

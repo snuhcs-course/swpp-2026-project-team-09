@@ -129,14 +129,20 @@ describe('board n15: no Timetable', () => {
   });
 });
 
+// A way with no button docks with its first line and the note as a chip (P04 ticket 05); raised, 닫기 stands alone.
 describe('board n14: off campus', () => {
   it('notes that Friends do not see the User, with 닫기 alone', async () => {
     givePhone({ permission: 'granted', position: ON_CAMPUS });
     const lookup = { ...LEAVE_LOOKUP_REPLY.lookup, note: N14_NOTE, actions: [] };
-    await askOnMap(server, { ...LEAVE_LOOKUP_REPLY, lookup });
+    const user = await askOnMap(server, { ...LEAVE_LOOKUP_REPLY, lookup });
+
+    expect(card().getByRole('button', { name: N14_NOTE })).toBeVisible();
+    expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
+
+    await user.press(card().getByText('24동까지 걸어서 15분'));
 
     expect(card().getByText(N14_NOTE)).toBeVisible();
     expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
-    expect(card().queryByRole('button', { name: '길 안내' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
   });
 });

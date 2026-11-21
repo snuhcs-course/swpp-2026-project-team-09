@@ -5,10 +5,14 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
+import type { Lookup } from '@/api/lookup-types';
+import type { Refusal } from '@/api/refusal-types';
 import { Button } from '@/design-system';
 import { peopleOf } from '@/features/assistant/plan-input';
 import type { ChatSheetControl } from '../chat-sheet';
-import { onScreenOf, planShown } from './reply-words';
+import { lookupMainOf, useLookupMain } from './lookup-card';
+import { lookupReplyOf, onScreenOf, planShown } from './reply-words';
+import { lookupDocks } from './words-rest';
 
 // The main button of the Plan on screen, beside the input: it says what it does.
 export interface PlanAction {
@@ -48,5 +52,63 @@ export function PlanActionButton({ action }: { action: PlanAction }): ReactEleme
     <Button disabled={action.disabled} onPress={action.onPress}>
       {action.words}
     </Button>
+  );
+}
+
+// The answer's main button beside the input: the Plan's, else that of the Lookup on screen when it docks ("길 안내",
+// "가는 길", "만나고 싶다", or the first offer of a refusal beside it).
+export type AnswerAction =
+  { kind: 'plan'; plan: PlanAction } | { kind: 'lookup'; lookup: Lookup; refusal: Refusal | null };
+
+export function answerActionOf(control: ChatSheetControl): AnswerAction | null {
+  const plan = planActionOf(control);
+  if (plan !== null) {
+    return { kind: 'plan', plan };
+  }
+  const { lookup } = control.lookup;
+  const reply = control.framed ? lookupReplyOf(control.chat.bubbles, onScreenOf(control)) : undefined;
+  if (lookup === null || reply === undefined) {
+    return null;
+  }
+  const refusal = reply.refusal ?? null;
+  return lookupDocks(lookup, refusal) && lookupMainOf(lookup, refusal) !== null
+    ? { kind: 'lookup', lookup, refusal }
+    : null;
+}
+
+interface LookupActionProps {
+  control: ChatSheetControl;
+  lookup: Lookup;
+  refusal: Refusal | null;
+}
+
+function LookupActionButton({ control, lookup, refusal }: LookupActionProps): ReactElement | null {
+  const { chat } = control;
+  const main = useLookupMain({
+    lookup,
+    refusal,
+    shown: control.lookup,
+    onAsk: chat.send,
+    addRecalculated: chat.addRecalculated,
+  });
+  // Disabled while the next reply is on its way: it would act on the turn before.
+  return main === null ? null : (
+    <Button disabled={chat.waiting} onPress={main.onPress}>
+      {main.label}
+    </Button>
+  );
+}
+
+export function AnswerActionButton({
+  action,
+  control,
+}: {
+  action: AnswerAction;
+  control: ChatSheetControl;
+}): ReactElement {
+  return action.kind === 'plan' ? (
+    <PlanActionButton action={action.plan} />
+  ) : (
+    <LookupActionButton control={control} lookup={action.lookup} refusal={action.refusal} />
   );
 }

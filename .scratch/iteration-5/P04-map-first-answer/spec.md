@@ -134,7 +134,7 @@ The map carries the answer, and the text says only what the map cannot.
 
 ## Tickets
 
-In build order; each keeps the answer screen whole. Tickets 13 and 14 came from the phone screens of tickets 01 to 03 and follow 05.
+Each keeps the answer screen whole. Tickets 13 and 14 came from the phone screens of tickets 01 to 04, 15 from board 23, and 16 from boards 24 to 27 after the Release. Build order from 05: 05, 10, 11, 12, 13, 15, 16, then 06 to 09 and 14.
 
 1. [01 — The time bar under the pill](issues/01-time-bar-on-top.md)
 2. [02 — The place's flag says what and when, and opens a card](issues/02-flag-says-what-and-when.md)
@@ -150,3 +150,6 @@ In build order; each keeps the answer screen whole. Tickets 13 and 14 came from 
 12. [12 — Dragging the bottom down closes the answer](issues/12-drag-down-closes.md)
 13. [13 — Our own marks recede while an answer is up](issues/13-our-marks-recede.md)
 14. [14 — The bar, the flag, and the face card as the boards draw them](issues/14-bar-flag-face-as-drawn.md)
+15. [15 — 메뉴 모두 보기, every candidate's dishes in one list](issues/15-all-menus-list.md)
+16. [16 — Kinds of food as chips, lunch and dinner on the bar](issues/16-food-kinds-and-meals-on-the-bar.md)
+17. [17 — A meal already in the schedule is changed, not doubled](issues/17-meal-already-set.md) (its place in the order not yet set)

@@ -33,7 +33,7 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // A Friend Lookup's `meet` action (P02 ticket 24), over the fake main server: the stored real Lookup of "민수 어디야?"
 // (`friend-lookup.json`, board q6), which carries `meet` for 민수, draws "만나고 싶다" as its main button beside
-// "닫기" and asks the same meet as 민수's card does; its answer takes the Lookup's place. Words typed while a meet is
+// the input (P04 ticket 05) and asks the same meet as 민수's card does; its answer takes the Lookup's place. Words typed while a meet is
 // on screen carry its conditions. The meet's "민수 ✕" is 빼기 in the card of 민수's face (P04 ticket 03).
 
 jest.mock('expo-location');
@@ -51,6 +51,10 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 let server: FakeServer;
+
+function beside(): ReturnType<typeof within> {
+  return within(screen.getByTestId('ai-input-beside'));
+}
 
 beforeEach(async () => {
   jest.useFakeTimers({ now: PHONE_NOW });
@@ -70,17 +74,18 @@ afterEach(() => {
 
 // Partitions: the Lookup's buttons, a press on its main one, and the meet's only ✕ after it.
 describe("the meet of a Friend's Lookup (q6)", () => {
-  it('draws "만나고 싶다" as the main button beside "닫기"', async () => {
+  it('draws "만나고 싶다" as the main button beside the input, and no "닫기" in the dock', async () => {
     await askOnMap(server, FRIEND_LOOKUP_REPLY);
 
-    expect(card().getByRole('button', { name: MEET })).toBeVisible();
-    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
+    expect(beside().getByRole('button', { name: MEET })).toBeVisible();
+    expect(card().queryByRole('button', { name: MEET })).toBeNull();
+    expect(card().queryByRole('button', { name: '닫기' })).toBeNull();
   });
 
   it("asks the meet of the User and 민수 today, and the meet's answer takes the Lookup's place", async () => {
     const user = await askOnMap(server, FRIEND_LOOKUP_REPLY);
 
-    await user.press(card().getByRole('button', { name: MEET }));
+    await user.press(beside().getByRole('button', { name: MEET }));
     await pass(500);
 
     expect(recalculations(server)).toEqual([{ input: meetWith(MIN_SU.id), location: ON_CAMPUS }]);
@@ -92,7 +97,7 @@ describe("the meet of a Friend's Lookup (q6)", () => {
 
   it('opens 민수\'s card on the everyday map with "민수 빼기" of that meet', async () => {
     const user = await askOnMap(server, FRIEND_LOOKUP_REPLY, () => layStage(390, 760));
-    await user.press(card().getByRole('button', { name: MEET }));
+    await user.press(beside().getByRole('button', { name: MEET }));
     await pass(500);
 
     await pressMarker(user, '민수');

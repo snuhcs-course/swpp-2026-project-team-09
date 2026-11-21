@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -21,7 +22,8 @@ import { REFUSAL_REPLIES, type RefusalReply } from '@/api/mock/data/refusals';
 
 // What cannot be answered, in the answer frame against the fake main server (P02 ticket 10): the card shows the
 // refusal's lines in place of the model's sentence and its offers as buttons; an ask sends its words as a new turn,
-// and an open goes to its screen. The pill stays, with no condition chip and no 근거.
+// and an open goes to its screen. The pill stays, with no condition chip and no 근거. Since P04 ticket 05 the card
+// docks: its first line, which a press raises to the rest, and its offers as chips.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -88,10 +90,9 @@ function lastSent(): unknown {
 
 describe('the card of a refusal', () => {
   it("shows the lines in place of the model's sentence, then the offers, with the pill and no chips (board n2)", async () => {
-    await askRefused('자료구조 과제 풀어 줘');
+    const user = await askRefused('자료구조 과제 풀어 줘');
 
     expect(card().getByText('과제는 도와 드릴 수 없어요.')).toBeVisible();
-    expect(card().getByText('캠퍼스에서 먹을 곳, 공부할 자리, 행사, 파티, 길을 찾아 드려요.')).toBeVisible();
     expect(card().queryByText(SENTENCE)).toBeNull();
     for (const label of ['배고파', '공부할 자리', '오늘 볼 만한 거 있어?']) {
       expect(card().getByRole('button', { name: label })).toBeVisible();
@@ -99,6 +100,11 @@ describe('the card of a refusal', () => {
     expect(within(screen.getByTestId('answer-pill')).getByText('자료구조 과제 풀어 줘')).toBeVisible();
     expect(screen.queryByTestId('condition-chips')).toBeNull();
     expect(card().queryByText('근거')).toBeNull();
+
+    await user.press(card().getByText('과제는 도와 드릴 수 없어요.'));
+
+    expect(card().getByText('캠퍼스에서 먹을 곳, 공부할 자리, 행사, 파티, 길을 찾아 드려요.')).toBeVisible();
+    expect(card().queryByText(SENTENCE)).toBeNull();
   });
 
   it('sends an ask offer as a new turn of the conversation (board n1)', async () => {
@@ -115,7 +121,9 @@ describe('the card of a refusal', () => {
       ],
     });
   });
+});
 
+describe('an open offer of a refusal', () => {
   it('opens 친구 추가 from not-a-friend (board n5)', async () => {
     const user = await askRefused('우리 과 조교님 어디 계셔?');
 

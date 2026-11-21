@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent } from '@testing-library/react-native';
@@ -94,14 +95,15 @@ describe("the answer card's handle", () => {
     expect(contentStyle().height).toBeUndefined();
   });
 
-  it('raises the card up to the pill by a press, and lowers it by another', async () => {
+  it('raises the card as tall as its content, up to the pill, by a press, and lowers it by another', async () => {
     const user = await framed();
     const lowered = Number(contentStyle().maxHeight);
 
     await press(user, HANDLE);
 
     expect(handle()).toBeExpanded();
-    expect(contentStyle().height).toBe(lowered + STAGE / 2 - PILL_ROOM);
+    expect(contentStyle().maxHeight).toBe(lowered + STAGE / 2 - PILL_ROOM);
+    expect(contentStyle().height).toBeUndefined();
     expect(button('답 닫기')).toBeVisible();
     expect(button('새 대화')).toBeVisible();
 

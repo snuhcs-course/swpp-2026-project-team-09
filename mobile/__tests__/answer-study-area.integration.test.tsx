@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { screen } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 import { apiClient } from '@/api/client';
 import { STUDY_LOOKUP } from '@/api/mock/data/study-lookup';
 import { STUDY_BUILDINGS } from '@/api/mock/data/study-spaces';
@@ -82,6 +83,10 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+function beside(): ReturnType<typeof within> {
+  return within(screen.getByTestId('ai-input-beside'));
+}
+
 function contextOf(index: number): unknown {
   const body = server.received('POST /assistant/messages')[index]?.body;
   return typeof body === 'object' && body !== null && 'context' in body ? body.context : undefined;
@@ -132,22 +137,36 @@ describe('the visible area in a request', () => {
   });
 });
 
-// Partitions: the card, and the map with and without a library session. Expected values: the copy of board a9, and the
-// seats the fake library holds.
+// Partitions: the dock, the card it raises, and the map with and without a library session. Expected values: the copy
+// of board a9, and the seats the fake library holds.
 describe("board a9's answer", () => {
-  it('shows the chips, the two lines, "가는 길", "관정 보기", and "닫기"', async () => {
+  it('docks with its first line, "관정 보기" as a chip, and "가는 길" beside the input (P04 ticket 05)', async () => {
     await askOnMap(server, REPLY);
+
+    expect(card().getByText('보는 범위에선 공대 신양학술정보관')).toBeVisible();
+    expect(card().queryByText('빈 자리 수는 관정만 알 수 있어요')).toBeNull();
+    expect(within(screen.getByTestId('dock-row')).getByRole('button', { name: '관정 보기' })).toBeVisible();
+    expect(beside().getByRole('button', { name: '가는 길' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
+  });
+
+  it('raises the chips, the two lines, "관정 보기", and "닫기" at a press on the line', async () => {
+    const user = await askOnMap(server, REPLY);
+
+    await user.press(card().getByText('보는 범위에선 공대 신양학술정보관'));
 
     for (const chip of ['301동에서', '13:00 수업까지', '보는 범위', '조용한 곳']) {
       expect(card().getByText(chip)).toBeVisible();
     }
     expect(card().getByText('빈 자리 수는 관정만 알 수 있어요')).toBeVisible();
-    expect(card().getByRole('button', { name: '가는 길' })).toBeVisible();
     expect(card().getByRole('button', { name: '관정 보기' })).toBeVisible();
     expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
-    expect(card().queryByRole('button', { name: '길 안내' })).toBeNull();
+    expect(card().queryByRole('button', { name: '가는 길' })).toBeNull();
+    expect(beside().getByRole('button', { name: '가는 길' })).toBeVisible();
   });
+});
 
+describe("board a9's map", () => {
   it('outlines the area its request sent, with the pick, the faded rooms, the walk, and "↑ 관정"', async () => {
     await askOnMap(server, REPLY, async () => {
       await layStage(STAGE.width, STAGE.height);
@@ -183,7 +202,7 @@ describe("board a9's buttons", () => {
   it('"가는 길" starts the route guidance to the pick and returns to the everyday map', async () => {
     const user = await askOnMap(server, REPLY);
 
-    await user.press(card().getByRole('button', { name: '가는 길' }));
+    await user.press(beside().getByRole('button', { name: '가는 길' }));
     await pass(500);
 
     expect(findWalkingRoute).toHaveBeenLastCalledWith(ON_CAMPUS, SHINYANG);

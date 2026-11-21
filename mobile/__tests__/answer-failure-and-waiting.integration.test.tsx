@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -20,7 +21,7 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // P02 ticket 12 against the fake main server: a request that failed says so in two lines and keeps the words in the
 // input (n16), and while the reply is on its way the card shows the dots (보는 중) with 그만, and the input is hidden
-// (n18).
+// (n18). Since P04 ticket 05 a failure docks as its first line with 다시 시도, and a press on the line raises both.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -100,13 +101,17 @@ async function failedInFrame(): Promise<User> {
 // with the frame.
 describe('a request that failed, in the frame (n16)', () => {
   it('says what failed in two lines with 다시 시도, and the input holds the words that were sent', async () => {
-    await failedInFrame();
+    const user = await failedInFrame();
 
     expect(card().getByText(FAILED_FIRST)).toBeVisible();
-    expect(card().getByText(FAILED_SECOND)).toBeVisible();
     expect(card().getByRole('button', { name: '다시 시도' })).toBeVisible();
     expect(input()).toHaveDisplayValue(ASKED);
     expect(screen.getByRole('button', { name: '보내기' })).toBeEnabled();
+
+    await user.press(card().getByText(FAILED_FIRST));
+
+    expect(card().getByText(FAILED_SECOND)).toBeVisible();
+    expect(card().getByRole('button', { name: '다시 시도' })).toBeVisible();
   });
 
   it('puts the words back again after a second failure', async () => {

@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { pass, screen } from './support/app';
@@ -21,6 +22,9 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useMotionAllowed: (): boolean => false,
   useReduceMotionSetting: (): boolean => true,
 }));
+
+// A docked way's card is raised from a second turn's "지난 답 1개": two replies in one test.
+jest.setTimeout(150000);
 
 // A mark of the first Plan, and one of the Lookup of q1.
 const PLAN_PICK = '302동식당 · 12:15 점심';
@@ -55,8 +59,9 @@ function showsPlan(): boolean {
   return screen.queryByTestId('condition-chips') !== null && mapThings().includes(PLAN_PICK);
 }
 
+// A way docks with its "길 안내" beside the input (P04 ticket 05).
 function showsLookup(): boolean {
-  return screen.queryByTestId('lookup-card') !== null && mapThings().includes(LOOKUP_PICK);
+  return screen.queryByRole('button', { name: '길 안내' }) !== null && mapThings().includes(LOOKUP_PICK);
 }
 
 // Partitions: a Plan, then a Lookup, then a Plan again, in one conversation. Expected values: the stored answer and the
@@ -78,13 +83,15 @@ describe('a reply that replaces another', () => {
   });
 });
 
-// Partitions: a late way, whose basis opened on its own, and then a way on time. Expected values: the copies of boards
-// q3 and q2, and decision 6.
+// Partitions: a late way, whose basis opened on its own, and then a way on time, in the card raised from "지난 답 1개"
+// (a way docks with nothing to read). Expected values: the copies of boards q3 and q2, and decision 6.
 describe('the basis of a new reply', () => {
   it('opens as the new reply says, whatever the last one showed', async () => {
     const user = await open();
+    await ask(user, '민수 어디야?');
 
     await ask(user, '24동까지 몇 분? 늦나');
+    await user.press(card().getByRole('button', { name: '지난 답 1개' }));
     expect(card().getByText('걸어서 15분 · 지금 12:50')).toBeVisible();
 
     await ask(user, '24동까지 몇 분?');
