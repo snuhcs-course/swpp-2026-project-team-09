@@ -96,6 +96,21 @@ export interface Plan {
   // A Global Event's Plan: the event's own start and end, Korea time with the offset (end null when it has none). Its
   // startAt is the asker's arrival when the event is under way, and is never the event's time.
   event?: { startAt: string; endAt: string | null };
+  // A meal Plan's menu: its Restaurant's main corner, its own price and its dishes in the menu's order. Absent when no
+  // menu was collected for the meal there.
+  menu?: PlanMenu;
+}
+
+export interface MenuDish {
+  name: string;
+  price: number | null;
+}
+
+export interface PlanMenu {
+  // The corner's one price from its heading, a buffet's or a self corner's ("<뷔페> 6,500원"), null when it has none;
+  // its dishes then have none of their own.
+  price: number | null;
+  dishes: MenuDish[];
 }
 
 export interface PlanPart {

@@ -286,6 +286,15 @@ export interface Plan {
   // A Global Event's Plan: the event's own start and end, Korea time with the offset (end null when it has none). Its
   // startAt is the asker's arrival when the event is under way, and is never the event's time.
   event?: { startAt: string; endAt: string | null };
+  // A meal Plan's menu: its Restaurant's main corner, its own price (a buffet's or a self corner's, from its heading, null
+  // when it has none) and its dishes in the menu's order. Absent when no menu was collected for the meal there, and
+  // from a main server before P05 ticket 12's follow-up.
+  menu?: { price: number | null; dishes: MenuDish[] };
+}
+
+export interface MenuDish {
+  name: string;
+  price: number | null;
 }
 
 // What the map draws, by meaning. The app decides colours, camera, and label sides.

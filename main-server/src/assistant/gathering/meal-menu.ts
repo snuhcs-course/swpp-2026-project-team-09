@@ -2,12 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MenuLineKind } from '../../generated/prisma/client.js';
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { servedLines } from '../../menus/open-rule.js';
-import { type AnswerLine } from '../dto/answer.dto.js';
+import { type AnswerLine, type PlanMenu } from '../dto/answer.dto.js';
 import { koreaDate } from '../korea-time.js';
 import { addDays } from '../library/booking-rules.js';
 
@@ -55,6 +56,16 @@ export function cornersOf(lines: readonly MenuLineDto[]): Corner[] {
     const kept = dishes.length > 0 ? dishes : items;
     return kept.length === 0 ? [] : [{ heading, items: kept }];
   });
+}
+
+// The main corner, the first that holds something: its own price from its heading, and its dishes by name and price in
+// the menu's order. What a meal Plan and a menu Lookup give the app of a Restaurant's menu.
+export function mainMenu(lines: readonly MenuLineDto[]): PlanMenu {
+  const [main] = cornersOf(lines);
+  return {
+    price: main?.heading?.price ?? null,
+    dishes: (main?.items ?? []).map((line) => ({ name: dishName(line), price: line.price })),
+  };
 }
 
 const won = (price: number): string => `${price.toLocaleString('ko-KR')}원`;
