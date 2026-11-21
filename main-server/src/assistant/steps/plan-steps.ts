@@ -12,7 +12,7 @@ import {
   type PlanInput,
   type ReplyStep,
 } from '../dto/answer.dto.js';
-import { type Card, type ToolContext } from '../feature.js';
+import { type Card, type NotDone, type ToolContext } from '../feature.js';
 import { onDay } from '../free-time/free-time.js';
 import { windowOf } from '../gathering/plan-conditions.js';
 import { placeLabelOf } from '../gathering/place-naming.js';
@@ -87,12 +87,16 @@ export function refusedBookingStep(
   };
 }
 
-// Keeps a step that was not done for the reply's steps.
-export function noteNotDone(context: Pick<ToolContext, 'presented' | 'capabilities'>, step: ReplyStep): void {
+// Keeps a step that was not done for the reply's steps; closed when its place was closed then.
+export function noteNotDone(
+  context: Pick<ToolContext, 'presented' | 'capabilities'>,
+  step: ReplyStep,
+  closed = false,
+): void {
   if (!context.capabilities.has('answer')) {
     return;
   }
-  context.presented.notDone = [...(context.presented.notDone ?? []), step];
+  context.presented.notDone = [...(context.presented.notDone ?? []), { step, closed }];
 }
 
 // What a plan is called when none was found: a meal by its meal, the rest by their kind.
@@ -171,9 +175,10 @@ export function chainedInput(input: MealInput, step: ReplyStep): MealInput | nul
 
 const isBookCard = (card: Card): card is LibraryCard => card.kind === 'library' && card.library.action === 'book';
 
-// A refused booking's step at 관정도서관, whose place the library tool did not know.
-const atKwanjeong = (step: ReplyStep, place: PlacePoint | null): ReplyStep =>
-  step.place === null && (step.kind === 'seat' || step.kind === 'room') ? { ...step, place } : step;
+// A refused booking's step at 관정도서관, whose place the library tool did not know. One refused because 관정 was closed
+// keeps no place, so that no later step sets out from it.
+const atKwanjeong = ({ step, closed }: NotDone, place: PlacePoint | null): ReplyStep =>
+  !closed && step.place === null && (step.kind === 'seat' || step.kind === 'room') ? { ...step, place } : step;
 
 // The steps the library tools put in the reply so far: its book cards and the bookings refused. A refusal the model
 // asked again and got a card for is left out.
@@ -183,8 +188,8 @@ export function bookingSteps(presented: ToolContext['presented'], place: PlacePo
     return step === null ? [] : [step];
   });
   const shown = new Set(booked.map(({ kind, title }) => `${kind} ${title}`));
-  const refused = (presented.notDone ?? []).filter(({ kind, title }) => !shown.has(`${kind} ${title}`));
-  return [...booked, ...refused.map((step) => atKwanjeong(step, place))];
+  const refused = (presented.notDone ?? []).filter(({ step }) => !shown.has(`${step.kind} ${step.title}`));
+  return [...booked, ...refused.map((notDone) => atKwanjeong(notDone, place))];
 }
 
 // The meal's conditions set out from the step before it among those shown so far, or as they are. planMeal calls it,

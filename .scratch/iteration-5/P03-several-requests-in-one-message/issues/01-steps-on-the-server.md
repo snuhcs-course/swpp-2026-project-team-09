@@ -30,7 +30,7 @@ Native files: none. Releases: the main server only. An app that does not know `s
 A new module, `steps/plan-steps.ts`:
 
 - A book card is a step at 관정도서관 (62-1동), from its date, start and minutes.
-- A booking `proposeLibraryBooking` refused is a step not done, with the refusals' reasons joined (`noteNotDone`, only for an app that draws answers).
+- A booking `proposeLibraryBooking` refused is a step not done, with the refusals' reasons joined (`noteNotDone`, only for an app that draws answers). A refusal because 관정 is closed then (a Sunday, or outside its hours; `saysClosed`) leaves the step without a place, so no later step sets out from it. A refusal the model asked again and got a card for is left out.
 - The answer is a step: its first Plan, or the meal it could not plan, with `noPlan`'s lines as the reason.
 - The steps come in time order; a step with no time comes last.
 
@@ -70,6 +70,8 @@ The line names the meal's start: "3식당 · 14:00 도착" for a lunch from 14:0
 - [x] The model planning lunch before it shows the seat gives the same steps and origin. (Integration test.)
 - [x] A start the User names for the meal is kept. (Integration test.)
 - [x] A seat asked for the next day: its step is `not-done` with "당일만 예약할 수 있어요", and lunch is still planned from 62-1동. (Integration test.)
+- [x] A seat refused because 관정 is closed then has no place, and lunch does not set out from 관정. (Integration test.)
+- [x] A seat refused and then shown in the same message is one step, shown; a seat at the meal window's opening is the step the meal follows. (Integration tests.)
 - [x] Lunch alone, and a seat alone, have no `steps`; lunch alone sets out from the Class before it. (Integration test.)
 - [x] Time order, the step a meal follows, a User's own start kept, a refused booking's times, and the title and reason of a plan that found nothing. (Unit tests.)
 - [x] The arrival line says the meal's start. (Unit test, which fails on the old line.)

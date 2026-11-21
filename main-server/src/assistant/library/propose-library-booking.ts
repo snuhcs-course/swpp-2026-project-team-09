@@ -14,7 +14,14 @@ import { koreaDate } from '../korea-time.js';
 import { shownMinutes } from '../../travel/travel.js';
 import { clockTime, dateInput } from '../free-time/tool-parts.js';
 import { noteNotDone, refusedBookingStep } from '../steps/plan-steps.js';
-import { checkBooking, type CheckedBooking, clockOfMinutes, minutesOfClock, type Refusal } from './booking-rules.js';
+import {
+  checkBooking,
+  type CheckedBooking,
+  clockOfMinutes,
+  minutesOfClock,
+  type Refusal,
+  saysClosed,
+} from './booking-rules.js';
 import { KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
 import { firstOfSeveralNote } from './find-library-space.js';
 import { bookCard, type LibraryCompanion } from './library-card.js';
@@ -233,7 +240,12 @@ export function proposeLibraryBooking(services: LibraryServices, options?: Booki
         ...('refusals' in result ? result.refusals : []),
       ];
       const reasons = refusals.map(({ reason }) => reason);
-      noteNotDone(context, refusedBookingStep(space, { ...request, date: asked.date }, reasons));
+      const step = refusedBookingStep(space, { ...request, date: asked.date }, reasons);
+      noteNotDone(
+        context,
+        step,
+        refusals.some((refusal) => saysClosed(refusal)),
+      );
       return refused(refusals);
     }
     const { booking } = result;

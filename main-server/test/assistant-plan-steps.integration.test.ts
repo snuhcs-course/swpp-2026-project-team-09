@@ -149,6 +149,21 @@ describe('A seat that cannot be booked, and then lunch', () => {
   });
 });
 
+describe('A seat refused because 관정 is closed then', () => {
+  it('has no place, and lunch does not set out from 관정', async () => {
+    await stage.menusOn(NEXT_DAY, RESTAURANTS);
+    const early: Step = {
+      tool: 'proposeLibraryBooking',
+      input: { spaceId: '7F-7A-zone2', date: NEXT_DAY, start: '06:00', end: '08:00' },
+    };
+    const reply = await asked([find(['7F-7A-zone2']), early, lunch({}, NEXT_DAY), said]);
+
+    expect(reply.steps?.[0]).toMatchObject({ kind: 'seat', status: 'not-done', place: null });
+    expect(reply.steps?.[0]?.reason).toContain('07:00–23:00에 이용할 수 있어요');
+    expect(originOf(reply.answer)?.placeId).not.toBe(kwanjeong.id);
+  });
+});
+
 describe('A seat refused and then asked again in the same message', () => {
   it('lists the seat once, as shown, and lunch after it', async () => {
     const tooLong: Step = {

@@ -79,6 +79,12 @@ export const CLIENT_CAPABILITIES = ['library', 'answer', 'events', 'meet', 'area
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
 
 // What the presenters put in the reply beside its text, gathered over one run.
+// A booking a library tool refused. A place closed then is no step's start: the User will not be there.
+export interface NotDone {
+  step: ReplyStep;
+  closed: boolean;
+}
+
 export interface Presented {
   // Each layer once, in the order first shown.
   readonly mapButtons: MapLayer[];
@@ -94,8 +100,8 @@ export interface Presented {
   refusal: Refusal | null;
   // Buttons under the text, which the reply keeps only without an answer, a Lookup, or a refusal.
   offers?: ReplyOffer[];
-  // The bookings a library tool refused, each a step that was not done (P03).
-  notDone?: ReplyStep[];
+  // The bookings a library tool refused, each a step that was not done (P03), and whether the place was closed then.
+  notDone?: NotDone[];
   // The requests of the message in time order, when it asked for two or more (P03).
   steps?: ReplyStep[];
 }
