@@ -96,7 +96,7 @@ export function MapPerson({
   const room = addable || exact ? BADGE_ROOM : 0;
   const dotAt = dotOf(side, room);
   return (
-    <View style={[frameOf(side, room), stale && styles.stale, faded && styles.faded]} testID={testID}>
+    <View style={[frameOf(side, room), faded && styles.faded, stale && styles.stale]} testID={testID}>
       <View
         style={[
           styles.drop,

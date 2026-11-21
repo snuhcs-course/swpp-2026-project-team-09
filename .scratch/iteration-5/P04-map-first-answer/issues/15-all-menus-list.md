@@ -36,5 +36,12 @@ In a meal answer, a chip "메뉴 보기 ▲" in the bottom row opens a list abov
 - [x] A meal answer with four candidates and their menus: the chip opens the list with four groups in the map's order, the pick's marked, each dish with its price. (Integration test.)
 - [x] A press on group 2 makes candidate 2 the pick and folds the list. (Integration test.)
 - [x] A dish without a price shows its name alone; a meal answer without `Plan.menu` has no chip. (Integration test.)
-- [ ] The list open on a phone with the mock build. (Emulator.)
+- [x] The list open on a phone with the mock build. (Emulator.)
 - [x] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 40 minutes, an estimate: one session built tickets 13, 15, and 16 together from 01:47 to about 05:30 (most of it waiting on tests and an emulator slowed by the Mac's load; waits for the screen review not counted), and this ticket took about 20% of it. No subagents.
+- Tokens: the whole session (13, 15, and 16) output about 262k; input about 221M, nearly all cache reads (see ticket 13). This ticket's share is about 20% of each.

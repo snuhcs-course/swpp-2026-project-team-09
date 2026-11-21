@@ -11,7 +11,8 @@ import { drawingOf } from '@/features/assistant/answer-marks';
 import type { MapAvatar } from '@/map';
 import { answerFaceOf } from '@/screens/main/use-answer-faces';
 import { seen } from '../support/answer-marks';
-import { FIRST_CAMERA, viewAt } from '../support/answer-view';
+import { FIRST_CAMERA, THIRD_CAMERA, viewAt } from '../support/answer-view';
+import { inView } from '@/map';
 
 // The other candidates' tags while an answer is up (P04 ticket 13, boards 20 to 22): each with its number, name, and
 // arrival time, and in a meal answer its dishes and price under them; the pick's flag with its own first dish; two
@@ -101,6 +102,23 @@ describe('candidates whose tags do not fit', () => {
 
     expect(tagged).toHaveLength(4);
     expect(tagged).toEqual(tagged.toSorted((one, other) => Number(other) - Number(one)));
+  });
+});
+
+// The third Plan (the pick 학생회관식당) in a crowded view: an area around 302동 only, where no side of candidate 1's
+// tag fits. 302동식당 (1) stands on 민수's point and 301동식당 (2) on the User's, so neither has a dot of its own.
+describe('a candidate without a dot of its own when room is short (review of PR 437)', () => {
+  const at = inView({ latitude: 37.44887, longitude: 126.95265 }, THIRD_CAMERA, { width: 411, height: 914 });
+  const crowded = viewAt(THIRD_CAMERA, { top: at.y - 1, right: at.x + 1, bottom: at.y + 1, left: at.x - 1 });
+
+  it('keeps its tag and its press, whatever the candidates before it keep', () => {
+    const drawing = drawingOf(MEAL_ANSWER, 2, undefined, crowded);
+    const second = seen(drawing, 'answer:candidate:301동식당');
+
+    expect(seen(drawing, 'answer:candidate:302동식당').symbol).toBeNull();
+    expect(second.symbol).toBeNull();
+    expect(second.label).toMatchObject({ title: '301동식당', number: 2 });
+    expect(second.planId).toBe('301동식당');
   });
 });
 
