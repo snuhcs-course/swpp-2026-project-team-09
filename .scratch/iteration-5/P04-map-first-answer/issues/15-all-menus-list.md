@@ -1,7 +1,7 @@
 # 15: 메뉴 모두 보기, every candidate's dishes in one list
 
 Parent: [P04 spec](../spec.md)
-Status: ready-for-agent
+Status: in-progress
 Blocked by: [13](13-our-marks-recede.md) for the meal Plans' dishes (`Plan.menu`, from P05) and the candidates' tags.
 
 Native files: none. Releases: an app OTA update only.
@@ -24,10 +24,16 @@ In a meal answer, a chip "메뉴 모두 보기 ▲" in the bottom row opens a li
 
 - The dock at rest (one row) for answers that are not meals; the candidate tags' presses; the camera's fit when the list folds.
 
+## Decided while building (2026-11-22)
+
+- A buffet's own price (`Plan.menu.price`) stands once in its group's header ("12:35 도착 · 1인 6,500원"), and its dishes show no price.
+- A candidate without a menu keeps its header and shows no dish rows.
+- The chip shows only while the Plan's card is docked; it is the row's last chip, after "지난 답 N개" and the note. The list stands in the docked card above the row, so the card grows and the camera fits again; it folds when another answer comes.
+
 ## Acceptance criteria
 
-- [ ] A meal answer with four candidates and their menus: the chip opens the list with four groups in the map's order, the pick's marked, each dish with its price. (Integration test.)
-- [ ] A press on group 2 makes candidate 2 the pick and folds the list. (Integration test.)
-- [ ] A dish without a price shows its name alone; a meal answer without `Plan.menu` has no chip. (Integration test.)
+- [x] A meal answer with four candidates and their menus: the chip opens the list with four groups in the map's order, the pick's marked, each dish with its price. (Integration test.)
+- [x] A press on group 2 makes candidate 2 the pick and folds the list. (Integration test.)
+- [x] A dish without a price shows its name alone; a meal answer without `Plan.menu` has no chip. (Integration test.)
 - [ ] The list open on a phone with the mock build. (Emulator.)
-- [ ] No native file changes; lint, format, and types pass on the app.
+- [x] No native file changes; lint, format, and types pass on the app.
