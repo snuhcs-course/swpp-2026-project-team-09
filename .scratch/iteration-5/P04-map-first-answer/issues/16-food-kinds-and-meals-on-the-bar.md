@@ -53,5 +53,12 @@ A meal question is answered on the map at once, and what it leaves open is chose
 - [x] A press on 한식 fills it and makes the candidate without 한식 a grey name tag; the others keep their numbers with their 한식 dish first; a second press clears it. (Integration test.)
 - [x] A message sent with 한식 filled carries `cuisine: '한식'` in its conditions; a reply whose input has `cuisine: '한식'` shows the chip filled. (Integration test.)
 - [x] A lunch answer of a later day shows "내일(화) 점심" with "저녁 17:00 ›"; a press asks the recalculation for dinner without the kind and shows "‹ 점심" with the lunch tick's start. (Integration test.)
-- [ ] Boards 24, 25, and 26 on a phone with the mock build. (Emulator.)
+- [x] Boards 24, 25, and 26 on a phone with the mock build. (Emulator.)
 - [x] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 1.2 hours, an estimate: one session built tickets 13, 15, and 16 together from 01:47 to about 06:00 (most of it waiting on tests and an emulator slowed by the Mac's load; waits for the screen review not counted), and this ticket took about 35% of it. No subagents.
+- Tokens: the whole session (13, 15, and 16) output about 262k by 05:09 and more after; input about 221M, nearly all cache reads (see ticket 13). This ticket's share is about 35% of each.
