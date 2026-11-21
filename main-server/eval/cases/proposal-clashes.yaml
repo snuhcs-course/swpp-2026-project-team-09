@@ -1,0 +1,46 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# A 파티 proposed over the asker's own Class (P05 ticket 19): proposeQuest names it, and the reply says it and asks
+# whether to keep the time, the card still shown. The P4 world asked from an app that draws answers (`pnpm eval --world
+# p4-answer`), on Monday 2026-11-02 at 11:30: the asker has 운영체제 on Tuesday 15:00–16:15, and nothing at 14:00. The
+# request names the Board, which a coding study would otherwise be asked for (진로 or 취미).
+
+- id: proposal-over-a-class
+  category: proposal-clashes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 내일 15시 관정 코딩스터디 4명 승인제로 진로 게시판에 만들어봐
+  expect:
+    actions: [PROPOSE+ASK]
+    tools:
+      required: [proposeQuest]
+      allowed: [searchRecruitingQuests, resolvePlace, searchGlobalEvents, resolveGlobalEvent, findDay]
+    proposal:
+      joinPolicy: approval
+      capacity: 4
+      startsAt: '2026-11-03 15:00'
+    text:
+      mentions: [[운영체제, 수업]]
+
+- id: proposal-at-a-free-time
+  category: proposal-clashes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 내일 14시 관정 코딩스터디 4명 승인제로 진로 게시판에 만들어봐
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [proposeQuest]
+      allowed: [searchRecruitingQuests, resolvePlace, searchGlobalEvents, resolveGlobalEvent, findDay]
+    proposal:
+      joinPolicy: approval
+      capacity: 4
+      startsAt: '2026-11-03 14:00'
+    text:
+      absent: [수업, 운영체제, 겹]

@@ -279,14 +279,22 @@ export class MealPlanService {
   async touched(
     askerId: string,
     { date, people, window }: MealInput | MeetInput,
-    { now, kinds, setAside }: { now: Date; kinds: readonly KeptKind[]; setAside: string | null },
+    {
+      now,
+      kinds,
+      setAside,
+      setAsideChangeable,
+    }: { now: Date; kinds: readonly KeptKind[]; setAside: string | null; setAsideChangeable?: boolean },
   ): Promise<Pick<AnswerReply, 'planSet' | 'related'>> {
     const kept = await keptQuestsOf(this.prisma, askerId, { date, now });
     const set = kept.find(({ questId }) => questId === setAside);
     const around = window.from === null ? now : onDay(date, window.from);
     const friendIds = people.slice(1).map(({ userId }) => userId);
     return {
-      planSet: set === undefined ? null : this.keptDtoOf(set),
+      planSet:
+        set === undefined
+          ? null
+          : { ...this.keptDtoOf(set), ...(setAsideChangeable === undefined ? {} : { changeable: setAsideChangeable }) },
       related: relatedOf(kept, { kinds, friendIds, around, setAside }).map((quest) => this.keptDtoOf(quest)),
     };
   }

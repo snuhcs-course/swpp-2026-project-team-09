@@ -10,6 +10,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -38,6 +39,7 @@ import type { Slot } from '@/library/cards/payloads';
 import { useAskApp } from './app-turn';
 import { useLetGo, useWaiting } from './let-go';
 import { shownText } from './shown-text';
+import { useProposalMade } from './proposal-made';
 
 type Tapped = NonNullable<RequestContext['tapped']>;
 
@@ -77,6 +79,8 @@ export interface ChatBubble {
   // What a User's message was said of by a press, such as a Friend picked from a question: the requests that send it
   // last carry it as `tapped`, 다시 시도's included, and no later one does.
   tapped?: Tapped;
+  // The Quest its Proposal was made into, once 만들기 or the form made it.
+  madeQuestId?: string;
 }
 
 // How a library card ended: what it says in place of its buttons. It is kept with the chat, so that a card that
@@ -143,6 +147,8 @@ export interface Chat {
   // The rooms seat cards show in place of their own, by the card's place; null forgets one.
   rooms: ReadonlyMap<string, CardRoom>;
   showRoom: (card: string, room: CardRoom | null) => void;
+  // The Proposal of that bubble was made into that Quest: it goes back with the Quest's id (P04 ticket 19).
+  proposalMade: (bubbleId: number, questId: string) => void;
 }
 
 // Two lines: what failed, then why and where the words are (the input holds them again).
@@ -181,7 +187,7 @@ export function messagesToSend(
           : referenceOf(card),
       );
       return bubble === proposing && proposal !== null
-        ? { role, text, cards: references, proposal: sentProposalOf(proposal) }
+        ? { role, text, cards: references, proposal: sentProposalOf(proposal, bubble.madeQuestId) }
         : { role, text, cards: references };
     })
     .slice(-CHAT_HISTORY_MAX);
@@ -316,7 +322,7 @@ export function useChat(readContext: () => RequestContext): Chat {
   const { waiting, setWaiting, waitingNow } = useWaiting();
   // Which conversation a reply belongs to: 새 대화 and 그만 start another, and a reply to the one before is dropped.
   const conversation = useRef(0);
-  const { outcomes, finish, unfinish, rooms, showRoom, sent: roomsShown } = useCardsKept();
+  const { sent: roomsShown, ...cardsKept } = useCardsKept();
   const { reset, stop, takeBack } = useLetGo({ said, show }, conversation, { setWaiting, waitingNow });
 
   // Asks the Assistant to answer the conversation as it stands, the User's message last.
@@ -353,6 +359,7 @@ export function useChat(readContext: () => RequestContext): Chat {
 
   const own = useAddOwn(add, takeBack);
   const askApp = useAskApp({ said, show, add }, conversation, setWaiting, takeBack);
+  const proposalMade = useProposalMade(said, show);
 
-  return { bubbles, waiting, send, retry, reset, stop, ...own, askApp, outcomes, finish, unfinish, rooms, showRoom };
+  return { bubbles, waiting, send, retry, reset, stop, ...own, askApp, ...cardsKept, proposalMade };
 }

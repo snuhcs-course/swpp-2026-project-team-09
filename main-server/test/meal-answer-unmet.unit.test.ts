@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply, planInputSchema } from '../src/assistant/dto/answer.dto.js';
@@ -250,7 +251,7 @@ describe('Board n23: 하은이랑 지금 점심, where 하은 is unknown', () =>
   });
 
   it('keeps the chips of a plan that is met now', () => {
-    expect(n23().chips.map(({ text }) => text)).toEqual(['301동에서', '13:00 수업까지', '하은 · 자리 모름']);
+    expect(n23().chips.map(({ text }) => text)).toEqual(['301동에서', '13:00 수업까지', '하은 · 위치 모름']);
   });
 
   it('does not say she shows only her Timetable when she shows more', () => {

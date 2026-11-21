@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { OPEN_SUB_QUEST_SECONDS } from '../../travel/judgement-constants.js';
@@ -41,6 +42,9 @@ export interface PersonWay {
   // No Free Time at the time.
   busy: boolean;
   origin: PersonPart['origin'];
+  // The time is after now and they are not free then, or the stretch they are free in starts after now: they set out
+  // from an item, not from where they are.
+  later: boolean;
   // The way to be there by the time, null when the origin is unknown.
   there: Way | null;
   leaveAt: Date | null;
@@ -106,7 +110,17 @@ function timeOf(day: NewQuestDay, travel: TravelProvider): Pick<NewQuestPlanning
 function wayOf(person: NewQuestPerson, start: Date, day: NewQuestDay, travel: TravelProvider): PersonWay {
   const stretch = holding(stretchesOf(person.items, day), start);
   if (stretch === undefined) {
-    return { userId: person.userId, busy: true, origin: null, there: null, leaveAt: null, next: null, leaveBy: null };
+    const later = start > day.now;
+    return {
+      userId: person.userId,
+      busy: true,
+      origin: null,
+      later,
+      there: null,
+      leaveAt: null,
+      next: null,
+      leaveBy: null,
+    };
   }
   const origin = originOf({ locationPlaceId: person.locationPlaceId }, stretch, day.now);
   const there = origin === null ? null : wayBy(origin.placeId, day.placeId, start, travel);
@@ -119,6 +133,7 @@ function wayOf(person: NewQuestPerson, start: Date, day: NewQuestDay, travel: Tr
     userId: person.userId,
     busy: false,
     origin,
+    later: stretch.start > day.now,
     there,
     // One who cannot be there in time sets out once free.
     leaveAt: there === null ? null : latest([stretch.start, plusMinutes(start, -there.minutes)]),

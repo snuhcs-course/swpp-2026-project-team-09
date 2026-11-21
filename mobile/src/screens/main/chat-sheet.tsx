@@ -11,6 +11,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The conversation's control: the conversation with the Assistant, which the main screen holds, and what the answer
@@ -107,7 +108,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const shownNow = useRef<ShownAnswer | null>(null);
   const { chat: said, ...pressing } = useContextChat(where, shownNow);
   const { chat, ...kept } = useKeptConversation(said);
-  const proposals = useProposalMaking();
+  const proposals = useProposalMaking(said.proposalMade);
   return {
     chat,
     ...kept,

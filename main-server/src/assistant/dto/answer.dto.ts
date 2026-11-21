@@ -11,6 +11,7 @@
 import { z } from 'zod';
 import { type Position } from '../../common/geometry.js';
 import { type CuisineWord } from '../../menus/cuisine-words.js';
+import { CLIENT_CAPABILITIES } from '../feature.js';
 import { type RecruitingQuestDto } from '../../quests/dto/quest.dto.js';
 import type { LocationMissing, WithMark, WithMissing } from '../refusals/refusal.dto.js';
 import { type RelaxOffer } from '../refusals/relax.dto.js';
@@ -276,6 +277,8 @@ export const recalculationSchema = z.strictObject({
   input: planInputSchema,
   location: z.strictObject({ latitude, longitude }).nullable().default(null),
   locationMissing: locationMissingSchema,
+  // What the app draws, as the chat request says it: `plan-set` sets a meeting aside here too.
+  clientCapabilities: z.array(z.enum(CLIENT_CAPABILITIES)).max(CLIENT_CAPABILITIES.length).default([]),
 });
 
 export type Recalculation = z.infer<typeof recalculationSchema>;

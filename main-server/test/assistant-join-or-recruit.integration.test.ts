@@ -5,6 +5,7 @@
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -81,8 +82,8 @@ describe('the instructions on a request to recruit', () => {
     ['a named Global Event', 'with no time, Place or words'],
     ['never joining', 'Never join for the User'],
     [
-      'nothing said of a search that found none',
-      'say nothing of the search: never that you looked, nor that none was found',
+      'nothing said of a search that found none or none that fit',
+      'say nothing of the search: never that you looked, that none was found, or that what was found did not fit',
     ],
     ['the empty search kept from the rule of result "none"', 'except for the search before a 파티 is proposed'],
   ])('hold %s', (_, rule) => {

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -86,6 +87,7 @@ describe('"늦나" at 12:40 at 301동 (board q2)', () => {
         arrival: '13:00',
         lateMinutes: 0,
       },
+      note: expect.stringContaining('write no text') as unknown,
     });
     const replied = JSON.stringify(response.body);
     expect(replied).not.toContain(COURSE);

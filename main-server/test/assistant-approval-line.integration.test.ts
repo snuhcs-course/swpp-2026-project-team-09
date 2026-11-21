@@ -3,13 +3,14 @@
  *
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { z } from 'zod';
-import { FIXED_SENTENCE } from '../src/assistant/adapter.js';
+import { FIXED_SENTENCE } from '../src/assistant/wordless-reply.js';
 import { APPROVAL_LINE } from '../src/assistant/approval-line.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { signInUser, TestUser } from './friends.js';

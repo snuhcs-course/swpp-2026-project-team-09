@@ -1,0 +1,36 @@
+# 22: A way the map draws comes with no words
+
+Parent: [P05 spec](../spec.md)
+Status: ready-for-agent
+Blocked by: None.
+
+Native files: none. Releases: the main server.
+
+## What happens now
+
+The app is changing so that a reply's words are never dropped beside a Lookup: they become the dock's one line. For a way, the model's sentence would then show whenever it writes one, and the rules ask it for one every time ("문화관은 지금 있는 301동에서 걸어서 18분이에요."), which only repeats the flag and the route.
+
+When the model writes nothing, the server puts its fixed sentence there instead ("아래에서 확인해 보세요."), which would show as the line too.
+
+## What to build
+
+- The way rules have the model write no text after findWay answers found, and one short sentence only when the User asked whether they will be late or when to set out, asked about the shuttle, is there already (atPlace), or a gate on the way is closed. It never says the shuttle is not running unless asked about the shuttle.
+- findWay's found answer carries the same as a `note`, where the model reads it as it writes. A first try with the rules alone still had a sentence in 6 of 6 runs, most saying the shuttle was not running.
+- A reply that shows only a `way` or `place` Lookup and has no words has `text: ""`, not the fixed sentence. Anything else shown with no words keeps the fixed sentence.
+- The app sends such a reply back as the Lookup's lines, as it does for every Lookup (`shownText`), so the server's history check, which wants an Assistant's text, holds.
+- The eval takes a case's `context` (where the asker is) and `text.none` (the reply has no words).
+
+## Acceptance criteria
+
+- [x] A way Lookup with no words is replied with `text: ""` and no fixed sentence; a menu Lookup with no words still has the fixed sentence. (`assistant-answer-reply.unit.test.ts`, which failed before the change.)
+- [x] The eval cases `way-where-is-a-building` ("301동 어디야?") and `way-how-to-go` come back with the way drawn and no words.
+- [x] Lint, format and types of the main server pass.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+Tickets 18 to 26 were done together in one session, 01:30–04:00 on 2026-11-22, with PRs 425 to 433; these figures are the whole batch's, not this ticket's alone.
+
+- Agent time: about 2.2 hours (estimate: gaps under 5 minutes between transcript entries, summed).
+- Tokens: input 220,838,000 (cache reads 220,158,000, cache writes 679,000, uncached 1,000); output 331,000. Without cache reads, 1,010,000.
