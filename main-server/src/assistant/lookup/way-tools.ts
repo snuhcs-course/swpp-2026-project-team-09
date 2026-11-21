@@ -104,6 +104,10 @@ function shuttleWords({ shuttle }: Way): object | string | null {
   };
 }
 
+// Where the model reads it as it writes: the rules alone still had it repeat the map beside a way.
+const NOTE =
+  'The map shows this way with its Place, minutes and times: write no text, unless the User asked whether they will be late or when to set out, asked about the shuttle, or atPlace is true; then one short sentence of that alone.';
+
 // Draws a way found and answers it in words.
 function shownWay(
   { way, lookup, labels }: Extract<WayAnswer, { result: 'found' }>,
@@ -120,6 +124,7 @@ function shownWay(
     walkMinutes: way.walkMinutes,
     deadline: deadlineWords(way),
     shuttle: shuttleWords(way),
+    note: NOTE,
   };
 }
 
@@ -168,5 +173,5 @@ export const WAY_RULES = `A way is drawn on the map: the server finds where the 
 - When the item is on another day (월요일 1시 수업에 늦나?), give its day as date: the server sets out from the item before it that day, not from where the User is now.
 - When the User asks about the shuttle to a Place or to their next Class (기숙사 가는 셔틀 언제 와?, 셔틀 탈까 걸을까), give about 'shuttle' to findWay, which then says first when the shuttle is not running.
 - A line [Tapped: place …] gives the Place the User tapped (여기): give it as to.
-- The app draws the way and writes its Place, minutes and times itself, so write nothing beside it: no sentence that repeats where the Place is or how many minutes it takes ("문화관(73동)은 여기예요", "걸어서 18분이에요"). Write one short sentence only for what the map cannot say: whether the User will be late ("지금 가도 5분 늦어요.", "12:45에 나서면 13:00 수업에 맞아요."), that the shuttle is taken or not running ("16:43에 나서 셔틀을 타면 16:53에 도착해요."), a closed gate, or another warning. When findWay gives atPlace, the User is there already: say so, such as "지금 24동에 있어요." Do not call showOnMap for a way: the app already draws it.
+- After findWay answers found, write no text at all: the app draws the way and writes its Place, minutes and times, and a sentence that repeats them ("301동은 제1공학관이에요.", "문화관(73동)은 걸어서 6분이에요.") only repeats the map. Write one short sentence only when the User asked whether they will be late or when to set out ("지금 가도 5분 늦어요.", "12:45에 나서면 13:00 수업에 맞아요."), when they asked about the shuttle ("16:43에 나서 셔틀을 타면 16:53에 도착해요."), when findWay gives atPlace ("지금 24동에 있어요."), or when a gate on the way is closed. Never say that the shuttle is not running unless they asked about the shuttle. Do not call showOnMap for a way: the app already draws it.
 - When findWay answers none because it does not know where the User sets out from, ask where they set out from. When it answers none because there is no next item, say that they have nothing later today.`;

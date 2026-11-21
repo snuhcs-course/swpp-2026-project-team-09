@@ -14,7 +14,8 @@ When the model writes nothing, the server puts its fixed sentence there instead 
 
 ## What to build
 
-- The way rules have the model write nothing beside a way, and one short sentence only for what the map cannot say: whether the User will be late, the shuttle taken or not running, a closed gate, or another warning; and that they are there already.
+- The way rules have the model write no text after findWay answers found, and one short sentence only when the User asked whether they will be late or when to set out, asked about the shuttle, is there already (atPlace), or a gate on the way is closed. It never says the shuttle is not running unless asked about the shuttle.
+- findWay's found answer carries the same as a `note`, where the model reads it as it writes. A first try with the rules alone still had a sentence in 6 of 6 runs, most saying the shuttle was not running.
 - A reply that shows only a `way` or `place` Lookup and has no words has `text: ""`, not the fixed sentence. Anything else shown with no words keeps the fixed sentence.
 - The app sends such a reply back as the Lookup's lines, as it does for every Lookup (`shownText`), so the server's history check, which wants an Assistant's text, holds.
 - The eval takes a case's `context` (where the asker is) and `text.none` (the reply has no words).
