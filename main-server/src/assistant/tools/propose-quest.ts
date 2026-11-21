@@ -21,7 +21,7 @@ import { contestedReason, type FoundKind } from '../found-ids.js';
 import { koreaTime } from '../korea-time.js';
 import { type UserDayService } from '../free-time/user-day.service.js';
 import { type FieldFailures, type Input, input, isField } from './propose-quest-input.js';
-import { proposedAnswer } from './proposed-answer.js';
+import { proposedAnswer, refusedAnswer } from './proposed-answer.js';
 import { type ProposalFriend, type ProposalPlace, type QuestProposal } from '../proposal.js';
 
 // The services proposeQuest checks the resolved ids with, and reads the asker's day from.
@@ -269,7 +269,7 @@ export function proposeQuest(services: ProposeQuestServices): Tool {
         capacity === undefined ||
         startsAt === undefined
       ) {
-        return { result: 'refused', fields: failures };
+        return refusedAnswer(failures, context.presented);
       }
       const proposal: QuestProposal = {
         title: title.trim(),
@@ -283,7 +283,7 @@ export function proposeQuest(services: ProposeQuestServices): Tool {
         invitees: resolved.invitees,
       };
       context.presented.proposal = proposal;
-      return proposedAnswer(proposal, context.userId, services.days);
+      return proposedAnswer(proposal, context.userId, { days: services.days, presented: context.presented });
     },
   });
 }
