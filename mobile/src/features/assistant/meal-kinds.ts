@@ -34,6 +34,17 @@ export function kindOn(answer: AnswerReply | null): Cuisine | null {
   return answer?.input.kind === 'meal' ? (answer.input.cuisine ?? null) : null;
 }
 
+// The kind on screen that the map draws: only one the User sees as a chip and can clear (`kindChipsOf`). A kind the
+// main server kept from words though no candidate serves it ("중식으로"), or one asked of menus whose dishes have no
+// kind, recedes nothing (review of PR 441).
+export function kindShown(answer: AnswerReply | null): Cuisine | null {
+  const kind = kindOn(answer);
+  if (answer === null || kind === null) {
+    return null;
+  }
+  return kindChipsOf(answer.plans).some((chip) => chip.kind === kind) ? kind : null;
+}
+
 // What is on screen: an answer and the index of its Plan.
 export interface OnScreen {
   answer: AnswerReply | null;

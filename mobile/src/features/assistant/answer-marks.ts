@@ -34,7 +34,7 @@ import { type LabelView, placeLabels, type Unplaced, UPRIGHT_REACH } from './ans
 import { routeLineId } from './answer-walks';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 import { candidateDraft, leftOutByRank, pickLine, sideRank } from './answer-candidates';
-import { kindOn } from './meal-kinds';
+import { kindShown } from './meal-kinds';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
 
@@ -312,7 +312,7 @@ export function drawingOf(
     plans: answer.plans,
     standings,
     day,
-    kind: kindOn(answer),
+    kind: kindShown(answer),
   });
 }
 

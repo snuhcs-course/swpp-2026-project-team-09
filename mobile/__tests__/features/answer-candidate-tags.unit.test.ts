@@ -122,6 +122,37 @@ describe('a candidate without a dot of its own when room is short (review of PR 
   });
 });
 
+function withCuisine(answer: AnswerReply, cuisine: '한식' | '분식'): AnswerReply {
+  return answer.input.kind === 'meal' ? { ...answer, input: { ...answer.input, cuisine } } : answer;
+}
+
+function tagOf(answer: AnswerReply, label: string): ReturnType<typeof seen> {
+  return seen(drawingOf(answer, 0), `answer:candidate:${label}`);
+}
+
+// Partitions: a kind on screen that no candidate serves, and a kind asked of menus whose dishes have no kind (review of
+// PR 441): neither has a chip to show or clear it.
+describe('a kind on screen with no chip for it', () => {
+  it('recedes no candidate when none serves it', () => {
+    const answer = withCuisine(MEAL_ANSWER_MENUS, '분식');
+
+    expect(tagOf(answer, '301동식당')).toMatchObject({ label: { tone: 'candidate', number: 2 } });
+    expect(tagOf(answer, '자하연식당 2층')).toMatchObject({ label: { tone: 'candidate', number: 5 } });
+  });
+
+  it('recedes no candidate when the dishes have no kind', () => {
+    const plans = MEAL_ANSWER_MENUS.plans.map((plan) =>
+      plan.menu === undefined
+        ? plan
+        : { ...plan, menu: { ...plan.menu, dishes: plan.menu.dishes.map((dish) => ({ ...dish, cuisine: null })) } },
+    );
+    const answer = withCuisine({ ...MEAL_ANSWER_MENUS, plans }, '한식');
+
+    expect(tagOf(answer, '301동식당')).toMatchObject({ label: { tone: 'candidate', number: 2 } });
+    expect(tagOf(answer, '학생회관식당')).toMatchObject({ label: { tone: 'candidate', number: 3 } });
+  });
+});
+
 function avatarOf(userId: string): MapAvatar {
   const view = { kind: 'person' as const, id: userId, tone: 'on' as const, name: '김민준', photo: null };
   return {
