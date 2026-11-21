@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
@@ -69,8 +70,19 @@ describe('Lunch with 민수', () => {
 });
 
 describe('A Friend whose position the asker may not see', () => {
-  it('reads 자리 모름 on their chip', () => {
-    expect(withHaeun().chips.at(-1)).toEqual({ kind: 'person', text: '하은 · 자리 모름', userId: HAEUN });
+  it('reads 위치 모름 on their chip, free from now', () => {
+    expect(withHaeun().chips.at(-1)).toEqual({ kind: 'person', text: '하은 · 위치 모름', userId: HAEUN });
+  });
+
+  it('reads 출발지 모름 on their chip when they are free only later, after an item with no Place', () => {
+    const tutoring = { ...classAt('11:00', '12:20', '제1공학관'), name: '과외', placeId: null, isClass: false };
+    const later = person(HAEUN, '하은', [tutoring]);
+
+    expect(answerOf([me(), later], { aloneMinutes: 55 }).chips.at(-1)).toEqual({
+      kind: 'person',
+      text: '하은 · 출발지 모름',
+      userId: HAEUN,
+    });
   });
 
   it('says that nobody knows where they are', () => {
@@ -178,11 +190,11 @@ describe('The chips without a plan', () => {
     ]);
   });
 
-  it('read 자리 모름 for a Friend whose origin is unknown when nothing fits', () => {
+  it('read 위치 모름 for a Friend whose origin is unknown when nothing fits', () => {
     expect(answerOf([late(), haeun()], { candidates: [] }).chips).toEqual([
       { kind: 'origin', text: '301동에서', userId: null },
       { kind: 'until', text: '12:30 수업까지', userId: null },
-      { kind: 'person', text: '하은 · 자리 모름', userId: HAEUN },
+      { kind: 'person', text: '하은 · 위치 모름', userId: HAEUN },
     ]);
   });
 
