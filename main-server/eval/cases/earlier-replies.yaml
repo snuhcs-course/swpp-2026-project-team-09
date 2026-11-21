@@ -1,0 +1,27 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-21  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# An earlier reply is sent back as the words the User saw (P05 ticket 03): an answer drawn on the map comes back as its
+# lines, not the model's hidden text. In the usage test of 2026-11-21 the model, asked again, took back what it had
+# said ("근거가 없어요") because no tool of the new message had returned it. The P4 world asked from an app that draws
+# answers (`pnpm eval --world p4-answer`), on Monday 2026-11-02 at 11:30.
+
+- id: earlier-replies-not-taken-back
+  category: earlier-replies
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 배고파
+    - assistant:
+        text: "점심 학생회관식당 · 11:00–14:30\n11:36 도착 · 13:20엔 나서요"
+    - user: 확실해?
+  expect:
+    actions: [TOOL, CHAT]
+    tools:
+      allowed: [planMeal, resolvePlace, findMenu, getMenus, showOnMap]
+      forbidden: [proposeQuest]
+    text:
+      absent: [근거가 없, 근거는 없, 말씀드린 적, 잘못 말씀]

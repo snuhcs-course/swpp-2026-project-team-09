@@ -4,6 +4,7 @@
  * 2026-10-01  Opus 5.5   prompted by TaeHyun79
  * 2026-10-02  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Meal, type MenuLine, type RestaurantMenu } from '../src/menu/dto/menus-collected.dto.js';
@@ -73,7 +74,12 @@ describe('Hours in a cell', () => {
     expect(restaurantOn(coopPage, '예술계식당')?.hours).toEqual([
       { meal: 'dinner', opensAt: '17:00', closesAt: '18:30', line: '※ 운영시간 : 17:00 ~ 18:30' },
     ]);
-    expect(restaurantOn(coopPage, '301동식당')?.hours).toEqual([]);
+  });
+
+  it("are the meal counter's for a meal that also has take-out counters", () => {
+    expect(restaurantOn(coopPage, '301동식당')?.hours).toEqual([
+      { meal: 'lunch', opensAt: '11:30', closesAt: '13:30', line: '※ 운영시간 11:30~13:30' },
+    ]);
   });
 });
 

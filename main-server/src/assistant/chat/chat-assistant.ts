@@ -11,6 +11,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { FriendViewService } from '../../friends/friend-view.service.js';
@@ -104,6 +105,12 @@ function requestInstructionsOf(now: Date): string {
   return `Now in Korea: ${koreaNow(now)} (Asia/Seoul, UTC+09:00). Read days and times such as 오늘, 내일, 이번 주 and 점심 against it.`;
 }
 
+// In the chat of an app that draws answers, an earlier reply that drew an answer comes back as the words the User saw
+// (its lines), and a reply in words alone takes the plan off the screen.
+const EARLIER_REPLIES = `
+- An earlier reply of yours is given as the words the User saw. Never take it back or call it unfounded because no tool returned it in this message: call the tool again when you need the fact, and correct only what that result contradicts.
+- Speak of the plan on the screen only in a reply that calls planMeal: a reply in words alone takes the plan off the screen.`;
+
 // In the chat of an app that draws answers, findFriend answers where a Friend is.
 const NO_POSITIONS = `
 - You cannot see where anyone is. When asked where a Friend is, tell the User to look at the map in the app.`;
@@ -142,7 +149,7 @@ function chatRules(drawsAnswers: boolean): string {
 - Keep answers short, a few sentences or a short list, since they are read on a phone.
 - What you write beside a tool call reaches the User as part of the answer. In the last step, do not repeat it: add only what is new, or nothing.
 - Keep small talk short. To recommend a meal, first ask what the User feels like (한식, 일식, 양식, …), then recommend from that day's menus from getMenus.
-- Politely decline long general work, such as writing a report or an essay, or writing or fixing code, and say what you can help with on campus.${drawsAnswers ? '' : NO_POSITIONS}`;
+- Politely decline long general work, such as writing a report or an essay, or writing or fixing code, and say what you can help with on campus.${drawsAnswers ? EARLIER_REPLIES : NO_POSITIONS}`;
 }
 
 // What an app that draws answers plans on the map in place of the Restaurant cards and their rules: a meal, the events

@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { NotFoundException } from '@nestjs/common';
@@ -17,7 +18,7 @@ import { KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
 import { firstOfSeveralNote } from './find-library-space.js';
 import { bookCard, type LibraryCompanion } from './library-card.js';
 import { bookableSpace, dayWords, type LibraryServices, refused, showCard, spaceIdInput } from './library-parts.js';
-import { type Arrival, fillSeat, type LeaveBy, leaveByOf, type SeatFacts, type SeatFill } from './seat-arrival.js';
+import { fillSeat, filledWords, leaveByOf, type SeatFacts, type SeatFill, seatedAt } from './seat-arrival.js';
 
 const words = (max: number): z.ZodString => z.string().trim().min(1).max(max);
 
@@ -145,13 +146,14 @@ interface Filling {
   fill: SeatFill;
 }
 
-function arrivalAnswer({ fromPlaceId, at, walkMinutes }: Arrival, { arrival: { places } }: LibraryServices): object {
-  return { at, from: fromPlaceId === null ? null : (places.byId(fromPlaceId)?.name ?? null), walkMinutes };
-}
-
-function filledWords({ arrival }: SeatFill, leaveBy: LeaveBy | null): string {
-  const leaving = leaveBy === null ? '' : `${leaveBy.start} ${leaveBy.for}이라 ${leaveBy.at}엔 나서요. `;
-  return `${arrival.at}에 도착해요. ${leaving}`;
+// An arrival before the opening is given as the opening, so that no answer sends the User out at night.
+function arrivalAnswer(fill: SeatFill, { arrival: { places } }: LibraryServices): object {
+  const { fromPlaceId, walkMinutes } = fill.arrival;
+  return {
+    at: seatedAt(fill),
+    from: fromPlaceId === null ? null : (places.byId(fromPlaceId)?.name ?? null),
+    walkMinutes,
+  };
 }
 
 // A seat for today without a start is filled; anything else is checked as asked.
@@ -198,11 +200,11 @@ function shownBooking(services: LibraryServices, context: ToolContext, checked: 
   }
   const end = clockOfMinutes(minutesOfClock(booking.start) + booking.minutes);
   const leaveBy = leaveByOf(filling.facts, filling.fill.arrival.at, end);
-  const filled = filledWords(filling.fill, leaveBy);
+  const filled = filledWords(filling.fill, leaveBy, end);
   return {
     result: 'shown',
     summary: summaryOf(space, booking, party, context.now, { filled, askedToBook }),
-    arrival: arrivalAnswer(filling.fill.arrival, services),
+    arrival: arrivalAnswer(filling.fill, services),
     leaveBy,
   };
 }

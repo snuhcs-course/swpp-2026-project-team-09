@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { checkBooking } from '../src/assistant/library/booking-rules.js';
@@ -12,7 +13,13 @@ import {
   readCatalogue,
 } from '../src/assistant/library/catalogue.js';
 import { type DayItem } from '../src/assistant/free-time/free-time.js';
-import { fillSeat, leaveByOf, type SeatFacts, type SeatSpace } from '../src/assistant/library/seat-arrival.js';
+import {
+  filledWords,
+  fillSeat,
+  leaveByOf,
+  type SeatFacts,
+  type SeatSpace,
+} from '../src/assistant/library/seat-arrival.js';
 
 // A seat asked for today without a start, on Wednesday 2026-11-04 in Korea. The walks, in whole minutes: 24동 to
 // 관정관 4, 관정관 to 두산인문관 (8동) 4. The reading room 7F-7A-zone2 is open 07:00–23:00, in steps of 30 minutes, for
@@ -72,7 +79,7 @@ describe('The design example: Wednesday 13:50, a Class in 24동 has just ended',
     const filled = fillSeat(facts('13:50', { items: AFTERNOON }), seat, {});
 
     expect(filled).toEqual({
-      arrival: { at: '13:54', fromPlaceId: BUILDING_24, walkMinutes: 4 },
+      arrival: { at: '13:54', opensAt: '07:00', fromPlaceId: BUILDING_24, walkMinutes: 4 },
       start: '14:00',
       minutes: 360,
       note: '13:54 도착에 맞춰 최대 시간으로 채웠어요',
@@ -82,7 +89,7 @@ describe('The design example: Wednesday 13:50, a Class in 24동 has just ended',
   it('sets out from the Class just ended when the request has no location', () => {
     const filled = fillSeat(facts('13:50', { items: AFTERNOON, locationPlaceId: null }), seat, {});
 
-    expect(filled.arrival).toEqual({ at: '13:54', fromPlaceId: BUILDING_24, walkMinutes: 4 });
+    expect(filled.arrival).toEqual({ at: '13:54', opensAt: '07:00', fromPlaceId: BUILDING_24, walkMinutes: 4 });
     expect(filled.start).toBe('14:00');
   });
 
@@ -121,14 +128,14 @@ describe('The arrival', () => {
   it('of a User in a Class until 13:50, asked at 13:40, is from the Class: 13:54, wherever the phone is', () => {
     const filled = fillSeat(facts('13:40', { items: AFTERNOON, locationPlaceId: KWANJEONG }), seat, {});
 
-    expect(filled.arrival).toEqual({ at: '13:54', fromPlaceId: BUILDING_24, walkMinutes: 4 });
+    expect(filled.arrival).toEqual({ at: '13:54', opensAt: '07:00', fromPlaceId: BUILDING_24, walkMinutes: 4 });
   });
 
   it('of a User already at 관정관 is now', () => {
     const filled = fillSeat(facts('13:50', { locationPlaceId: KWANJEONG }), seat, {});
 
     expect(filled).toEqual({
-      arrival: { at: '13:50', fromPlaceId: KWANJEONG, walkMinutes: 0 },
+      arrival: { at: '13:50', opensAt: '07:00', fromPlaceId: KWANJEONG, walkMinutes: 0 },
       start: '14:00',
       minutes: 360,
       note: '13:50 도착에 맞춰 최대 시간으로 채웠어요',
@@ -139,7 +146,7 @@ describe('The arrival', () => {
     const filled = fillSeat(facts('13:50', { locationPlaceId: null }), seat, {});
 
     expect(filled).toEqual({
-      arrival: { at: '13:50', fromPlaceId: null, walkMinutes: null },
+      arrival: { at: '13:50', opensAt: '07:00', fromPlaceId: null, walkMinutes: null },
       start: '14:00',
       minutes: 360,
       note: '지금부터 최대 시간으로 채웠어요',
@@ -164,7 +171,7 @@ describe('The length', () => {
 
   it('is the one the User named, and the note says it was filled for the arrival only', () => {
     expect(fillSeat(facts('13:50', { items: AFTERNOON }), seat, { minutes: 120 })).toEqual({
-      arrival: { at: '13:54', fromPlaceId: BUILDING_24, walkMinutes: 4 },
+      arrival: { at: '13:54', opensAt: '07:00', fromPlaceId: BUILDING_24, walkMinutes: 4 },
       start: '14:00',
       minutes: 120,
       note: '13:54 도착에 맞춰 채웠어요',
@@ -228,5 +235,30 @@ describe('The time to leave', () => {
 
   it('is null when nothing with a Place starts before the booking ends', () => {
     expect(leaveByOf(facts('13:50', { items: AFTERNOON }), '13:54', '16:00')).toBeNull();
+  });
+});
+
+describe('The words of a filled seat', () => {
+  it('give the opening, not a time at night, for an arrival before the space opens', () => {
+    // A User asked at 04:34, with a 파티 at 11:00 in 8동: the answer had said "04:40에 도착해요".
+    const night = facts('04:34', { items: [item('11:00', '12:00', DOOSAN, false)] });
+    const filled = fillSeat(night, seat, {});
+    const words = filledWords(filled, leaveByOf(night, filled.arrival.at, '13:00'), '13:00');
+
+    expect(filled.note).toBe('07:00 열 때부터 최대 시간으로 채웠어요');
+    expect(words).toBe(
+      '07:00 열 때부터예요. 11:00 일정이라 10:56엔 나서요. 13:00까지 쓰지 않으면 카드에서 끝 시간을 당겨요. ',
+    );
+    expect(words).not.toContain('04:');
+  });
+
+  it('give the arrival and the start when the booking starts at the next mark', () => {
+    const filled = fillSeat(facts('13:57'), seat, {});
+
+    expect(filledWords(filled, null, '20:30')).toBe('14:01에 도착해 14:30부터예요. ');
+  });
+
+  it('give the arrival alone when the booking starts then', () => {
+    expect(filledWords(fillSeat(facts('13:56'), seat, {}), null, '20:00')).toBe('14:00에 도착해요. ');
   });
 });

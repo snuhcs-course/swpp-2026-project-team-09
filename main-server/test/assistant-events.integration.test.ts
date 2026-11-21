@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
@@ -121,7 +122,7 @@ describe('The worked example', () => {
     ]);
     expect(answer.plans.map(({ id }) => id)).toEqual([ids.jobFair, ids.concert, ids.session]);
     expect(answer.plans.map(({ lines }) => lines.map((line) => line.map(({ text }) => text).join('')))).toEqual([
-      ['13:54 도착 · 78분 볼 수 있어요', '15:30 수업이라 15:12엔 나서요'],
+      ['채용박람회 · 문화관 10:00–17:00', '13:54 도착 · 78분 볼 수 있어요', '15:30 수업이라 15:12엔 나서요'],
       ['동아리 정기공연 · 18:00 시작', '17:42에 셔틀로 가요'],
       ['기업 설명회 · 16:00 문화관', '15:30 수업과 겹쳐요'],
     ]);

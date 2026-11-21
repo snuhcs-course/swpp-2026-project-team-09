@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MINUTE_MS } from '../gathering/gathering.js';
@@ -19,6 +20,9 @@ export const STOP_MINUTES = 10;
 
 // With no next item the order ends when campus offices close, so that a stop without hours is not offered at night.
 export const NO_NEXT_CLOSING = '18:00';
+
+// A stop without hours is visited from when campus offices open: asked at night, the order starts then.
+export const NO_HOURS_OPENING = '09:00';
 
 export interface Span {
   from: Date;
@@ -59,9 +63,10 @@ export interface Order {
   walkMinutes: number;
   // Null when there is no next item, or it has no Place.
   onwardMinutes: number | null;
-  // `closed`: its hours leave no stop between the User's arrival and the deadline. `no-time`: the gap is too short
-  // whatever the hours, or it fits alone but not with the others. `more`: one more than five.
-  left: { stop: Stop; reason: 'closed' | 'no-time' | 'more' }[];
+  // `closed`: it opens too late for a stop between the User's arrival and the deadline. `closed-today`: it does not
+  // open that day. `closed-already`: it has closed by the User's arrival. `no-time`: the gap is too short whatever the
+  // hours, or it fits alone but not with the others. `more`: one more than five.
+  left: { stop: Stop; reason: 'closed' | 'closed-today' | 'closed-already' | 'no-time' | 'more' }[];
 }
 
 interface Candidate {
@@ -158,6 +163,17 @@ function bestOrder(args: OrderArgs, deadline: Date): Candidate | null {
   return found.best;
 }
 
+// Why a stop with no stay left that day is closed: not open that day at all, or closed by the arrival.
+function closedReason({ open }: Stop, arrival: Date): 'closed-today' | 'closed-already' | 'closed' {
+  if (open === null) {
+    return 'closed';
+  }
+  if (open.length === 0) {
+    return 'closed-today';
+  }
+  return open.every(({ until }) => until <= arrival) ? 'closed-already' : 'closed';
+}
+
 // Why a stop is left out, judged as the only stop after the walk to it, so that the reason holds whatever the others.
 function reasonOf(stop: Stop, args: OrderArgs, deadline: Date, chosen: number): Order['left'][number]['reason'] {
   const arrival = plus(args.from.at, args.walkMinutes(args.from.placeId, stop.placeId));
@@ -166,7 +182,10 @@ function reasonOf(stop: Stop, args: OrderArgs, deadline: Date, chosen: number): 
     return 'no-time';
   }
   const start = stayStart(stop, arrival);
-  if (start === null || plus(start, stop.stayMinutes) > latestEnd) {
+  if (start === null) {
+    return closedReason(stop, arrival);
+  }
+  if (plus(start, stop.stayMinutes) > latestEnd) {
     return 'closed';
   }
   return chosen === STOPS_MAX ? 'more' : 'no-time';
