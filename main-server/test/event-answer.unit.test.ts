@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type EventsInput } from '../src/assistant/dto/answer.dto.js';
@@ -71,7 +72,7 @@ const jobFairScene = (): object => ({
     { userId: 'me', role: 'me', from: position('24동'), to: position('문화관'), minutes: 4 },
     { userId: 'me', role: 'next', from: position('문화관'), to: position('301동'), minutes: 18 },
   ],
-  flags: [{ at: position('문화관'), text: '13:54 채용박람회', role: 'place' }],
+  flags: [{ at: position('문화관'), text: '10:00–17:00 채용박람회', role: 'place' }],
 });
 
 const jobFairBand = (): object => ({
@@ -93,7 +94,7 @@ const jobFairBand = (): object => ({
 });
 
 describe('The job fair, first', () => {
-  it('arrives at 13:54, stays 78 minutes, and leaves at 15:12 for the 15:30 Class', () => {
+  it('is under way 10:00–17:00: the asker arrives at 13:54, stays 78 minutes, and leaves at 15:12', () => {
     expect(workedExample().plans[0]).toEqual({
       id: 'job-fair',
       title: '채용박람회',
@@ -117,12 +118,16 @@ describe('The job fair, first', () => {
       subQuests: [],
       lines: [
         [
+          { text: '채용박람회', strong: true },
+          { text: ' · 문화관 10:00–17:00', strong: false },
+        ],
+        [
           { text: '13:54 도착', strong: true },
           { text: ' · 78분 볼 수 있어요', strong: false },
         ],
         plain('15:30 수업이라 15:12엔 나서요'),
       ],
-      basis: ['24동에서 문화관까지 걸어서 4분', '문화관에서 301동까지 걸어서 18분'],
+      basis: ['채용박람회 · 문화관 10:00–17:00', '24동에서 문화관까지 걸어서 4분', '문화관에서 301동까지 걸어서 18분'],
       scene: jobFairScene(),
       band: jobFairBand(),
     });
@@ -145,7 +150,7 @@ describe('The concert, next', () => {
         ],
         plain('17:42에 셔틀로 가요'),
       ],
-      basis: ['301동에서 두레문예관까지 셔틀로 18분'],
+      basis: ['동아리 정기공연 · 두레문예관 18:00 시작', '301동에서 두레문예관까지 셔틀로 18분'],
       scene: {
         routes: [
           {
@@ -180,7 +185,7 @@ describe('The company session, last', () => {
         ],
         plain('15:30 수업과 겹쳐요'),
       ],
-      basis: ['24동에서 문화관까지 걸어서 4분'],
+      basis: ['기업 설명회 · 문화관 16:00–17:00', '24동에서 문화관까지 걸어서 4분'],
       band: { startAt: time('16:00'), endAt: time('17:00'), text: '16:00–17:00 · 수업과 겹쳐요' },
     });
     expect(session?.parts[0]).not.toHaveProperty('mode');
@@ -209,10 +214,14 @@ describe('The lines', () => {
     ]);
   });
 
-  it('of an event under way that ends before the asker must leave, have no second line', () => {
+  it('of an event under way that ends before the asker must leave, give the event and the arrival only', () => {
     const { plans } = answerOf(myDay(), [event('전시', '10:00', '15:00')]);
 
     expect(plans[0]?.lines).toEqual([
+      [
+        { text: '전시', strong: true },
+        { text: ' · 문화관 10:00–15:00', strong: false },
+      ],
       [
         { text: '13:54 도착', strong: true },
         { text: ' · 66분 볼 수 있어요', strong: false },

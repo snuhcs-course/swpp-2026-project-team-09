@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -21,6 +22,7 @@ import {
   byWord,
   type EventAnswerArgs,
   EventNaming,
+  eventTimes,
   itemWord,
   modeOf,
   type NamingArgs,
@@ -77,7 +79,8 @@ export function partOf(
   };
 }
 
-// Under way: when the asker arrives and how long they can stay, and why they leave when the next item cuts the stay.
+// Under way: the event, its place and its own times, then when the asker arrives and how long they can stay, and why
+// they leave when the next item cuts the stay.
 // Not started: its start, and when they set out. A clash: its start and place, and the item it lies over.
 function linesOf(plan: EventPlan, naming: EventNaming): AnswerLine[] {
   const { state, event, start, end, stayMinutes, there, leaveAt, leaveBy, next, clash } = plan;
@@ -100,19 +103,23 @@ function linesOf(plan: EventPlan, naming: EventNaming): AnswerLine[] {
     return [first, plain(there.mode === 'shuttle' ? `${clock}에 셔틀로 가요` : `${clock}에 나서면 돼요`)];
   }
   const first: AnswerLine = [
+    { text: event.title, strong: true },
+    { text: ` · ${naming.eventWords(event)} ${eventTimes(event)}`, strong: false },
+  ];
+  const arriving: AnswerLine = [
     { text: `${clockOf(start)} 도착`, strong: true },
     { text: ` · ${stayMinutes}분 볼 수 있어요`, strong: false },
   ];
   if (next === null || leaveBy === null || leaveBy.getTime() !== end.getTime()) {
-    return [first];
+    return [first, arriving];
   }
-  return [first, plain(leaveByWords(next.item, leaveBy))];
+  return [first, arriving, plain(leaveByWords(next.item, leaveBy))];
 }
 
-// The way there, then the way on to the next item.
+// The event's place and times, the way there, then the way on to the next item.
 function basisOf({ event, origin, there, next }: EventPlan, naming: EventNaming): string[] {
   const words = naming.eventWords(event);
-  const lines: string[] = [];
+  const lines: string[] = [`${event.title} · ${words} ${eventTimes(event)}`];
   if (origin !== null && there !== null && there.minutes > 0) {
     lines.push(`${naming.placeLabel(origin.placeId)}에서 ${words}까지 ${byWord(there)} ${there.minutes}분`);
   }
