@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -36,6 +37,13 @@ const subQuestSchema = z.strictObject({
 });
 
 const heldQuestSchema = z.strictObject({ title: z.string(), subQuest: subQuestSchema });
+
+// One of the asker's own Quests, which may be one made from a meeting's or a meal's Plan (`kind`), with Friends of
+// `friends`, by their seed, invited and waiting (P05 ticket 17).
+const ownQuestSchema = heldQuestSchema.extend({
+  kind: z.enum(['meet', 'lunch', 'dinner']).optional(),
+  invited: z.array(z.string()).default([]),
+});
 
 const friendSchema = profileSchema.extend({
   timetable: z.array(classSchema).default([]),
@@ -74,7 +82,7 @@ const worldSchema = z.strictObject({
   places: z.record(z.string(), z.string().nullable()),
   restaurants: z.record(z.string(), z.string().nullable()),
   timetable: z.array(classSchema),
-  ownQuests: z.array(heldQuestSchema),
+  ownQuests: z.array(ownQuestSchema),
   friends: z.record(z.string(), friendSchema),
   globalEvents: z.array(
     z.strictObject({

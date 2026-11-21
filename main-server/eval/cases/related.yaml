@@ -1,0 +1,77 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# A plan names the User's Quests it touches (P05 ticket 17): those of the kind asked for, and those with a Friend asked
+# for, whether or not they limit it. The P4 world asked from an app that draws answers (`pnpm eval --world p4-answer`),
+# on Monday 2026-11-02 at 11:30: on Saturday 2026-11-07 the asker holds a lunch at 학생회관식당 12:10–12:50 with 김지은
+# invited, and a meeting at 학생회관 14:00–15:00 with 이민수 invited, both made from Plans.
+
+# Nothing new is asked of a meeting already set with the same Friend: the meeting is shown on the map and the User asked
+# whether to change it, with no second one planned (ticket 17's case table, row 14).
+- id: related-meeting-with-the-same-friend
+  category: related
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 토요일에 민수랑 보자
+  expect:
+    actions: [TOOL, TOOL+ASK]
+    tools:
+      required: [findDay]
+      forbidden: [proposeQuest]
+    args:
+      findDay: { date: '2026-11-07' }
+    text:
+      mentions: ['14:00']
+
+- id: related-lunch-with-the-friend-of-a-meeting
+  category: related
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 토요일에 민수랑 점심 먹자
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [proposeQuest]
+    args:
+      planMeal: { date: '2026-11-07' }
+    text:
+      # The meeting with 민수, or the lunch already set with 김지은, which a second lunch would not replace.
+      mentions: [['14:00', '12:10']]
+
+- id: related-lunch-already-set-with-a-friend
+  category: related
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 토요일 점심 뭐 먹지?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [proposeQuest]
+    args:
+      planMeal: { date: '2026-11-07' }
+    text:
+      mentions: [['12:10', 학생회관식당, 지은]]
+
+- id: related-when-is-the-meeting
+  category: related
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 민수랑 약속 몇 시였지?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findDay]
+      forbidden: [planMeet, planMeal, proposeQuest]
+    args:
+      findDay: { date: '2026-11-07' }
+    text:
+      mentions: ['14:00']

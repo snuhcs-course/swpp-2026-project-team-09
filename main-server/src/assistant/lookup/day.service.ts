@@ -19,8 +19,11 @@ import { koreaDate } from '../korea-time.js';
 import { othersText } from '../others-text.js';
 import { dayAnswer, type DayAnswer } from './day-lookup.js';
 
-// The most items the line of what is ahead gives the model each turn, and the days it looks at, today included.
-const AHEAD_MAX = 6;
+// What the line of what is ahead gives the model each turn: the User's Quests of AHEAD_DAYS days, today included, and
+// today's Classes still to come, at most so many of each. The Classes are few, so that a week's Quests are never cut
+// for them: the model has the day's Classes from findDay.
+const AHEAD_QUESTS = 6;
+const AHEAD_CLASSES = 2;
 const AHEAD_DAYS = 7;
 
 // The day of a time not today, "11/04 ", before its clock; nothing for today.
@@ -65,7 +68,7 @@ export class DayLookupService {
     });
   }
 
-  // What is ahead, at most AHEAD_MAX items in order, as one line the model reads after the User's message, so that it
+  // What is ahead, in order, as one line the model reads after the User's message, so that it
   // knows the User's schedule without being asked: today's Classes still to come, and the User's Quests of today and
   // the next AHEAD_DAYS - 1 days. Empty when nothing is.
   async ahead(userId: string, now: Date): Promise<string[]> {
@@ -81,18 +84,20 @@ export class DayLookupService {
     const entries = [
       ...items
         .filter(({ isClass, end }) => isClass && end > now)
+        .slice(0, AHEAD_CLASSES)
         .map(({ start, end, placeId }) => ({
           start,
           words: `${dayOf(start, now)}${clockOf(start)}–${clockOf(end)} class ${label(placeId)}`,
         })),
       ...kept
         .filter(({ start, end }) => (end ?? start) > now)
+        .slice(0, AHEAD_QUESTS)
         .map((quest) => ({
           start: quest.start,
           words: `${dayOf(quest.start, now)}${aheadWords(quest, label(quest.placeId, quest.placeLabel))}`,
         })),
     ].toSorted((one, other) => one.start.getTime() - other.start.getTime());
-    const shown = entries.slice(0, AHEAD_MAX).map(({ words }) => words);
+    const shown = entries.map(({ words }) => words);
     return shown.length === 0 ? [] : [`[Ahead: ${shown.join('; ')}]`];
   }
 
