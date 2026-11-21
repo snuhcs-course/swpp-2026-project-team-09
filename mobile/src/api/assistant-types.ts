@@ -141,6 +141,8 @@ export interface RestaurantCard {
     meal: 'lunch' | 'dinner';
     eatingMinutes: number;
     lines: MenuLine[];
+    // The meal's hours that day, "HH:MM"; null when none were kept. Absent from a main server before P05 ticket 12.
+    hours?: { opensAt: string; closesAt: string } | null;
     people: RestaurantTravel[];
     proposal: QuestProposal;
   };

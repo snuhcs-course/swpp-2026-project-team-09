@@ -4,7 +4,7 @@ Parent: [P05 spec](../spec.md)
 Status: ready-for-agent
 Blocked by: [06](06-free-stretch-not-a-meal.md), which changes the same lines.
 
-Native files: none. Releases: the main server.
+Native files: none. Releases: the main server and an app OTA update.
 
 ## What happens now
 
@@ -16,12 +16,15 @@ Native files: none. Releases: the main server.
 - The first line gives the first dish with its price and how many more are served ("**301동식당** 오늘 점심은 부대짬뽕&군만두 6,500원 외 1"); the basis opens with up to three dishes and their prices.
 - The hours stay the plan's, in the second line, read from the hours collected (ticket 01). The menu's own hours note is not added: where no hours were stored, it would contradict the plan's window in the same answer.
 - The menu rules say when the menu was collected only when the User asks, or when it is not the menu of the day asked.
+- The Restaurant card (findMealRestaurants and showRestaurants) carries `hours`, the meal's hours kept for its day (`RestaurantHours`), or null when none were kept. The app reads it as optional. P04 ticket 08 writes them on the Restaurant's flag; that server part was moved here.
 
 ## Acceptance criteria
 
 - [x] The first line holds the first dish's price and the count of the others; the basis lists the dishes with their prices. (Unit test, fails before the fix.)
 - [x] An evaluation case, `menu-collected-not-said-unasked`: a menu question about today does not mention the time of collection. (Loads; not run here, it calls the model.)
-- [x] Lint, format and types of the main server pass.
+- [x] The Restaurant card carries the hours kept for its meal, and null without them. (Main server integration tests.)
+- [x] The app believes a card with hours, with null, and without the field, and refuses hours of another shape. (Integration test.)
+- [x] Lint, format and types of the main server and the app pass.
 
 ## Comments
 
