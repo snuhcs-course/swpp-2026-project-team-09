@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import { screen } from '@testing-library/react-native';
-import { MEAL_ANSWER_MENUS, MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
+import { MEAL_ANSWER_MENUS, MEAL_ANSWER_MENUS_REPLY, MEAL_DINNER_MENUS } from '@/api/mock/data/meal-answer-menus';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
@@ -17,7 +17,7 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// The kinds of food as chips (P04 ticket 16, boards 24 and 25): a press filters on the phone with no turn to the model,
+// The kinds of food as chips and lunch and dinner on the bar (P04 ticket 16, boards 24 to 26): a press filters on the phone with no turn to the model,
 // a candidate without the kind recedes to a grey name tag, the pick moves to the first candidate that serves it, and
 // the kind on screen goes with the next message; a reply that carries a kind shows its chip filled.
 
@@ -136,5 +136,47 @@ describe('the kind on screen and the conversation', () => {
 
     expect(selected(KOREAN)).toBe(true);
     expect(screen.getByRole('button', { name: '자하연식당 2층' })).toBeOnTheScreen();
+  });
+});
+
+// The stored answer of lunch asked the day before, with the kind 한식 on screen.
+function askedTheDayBefore(): typeof MEAL_ANSWER_MENUS {
+  const plans = MEAL_ANSWER_MENUS.plans.map((plan) => ({
+    ...plan,
+    band: { ...plan.band, now: '2026-11-16T11:50:00+09:00' },
+  }));
+  return { ...MEAL_ANSWER_MENUS, plans, input: { ...MEAL_ANSWER_MENUS.input, cuisine: '한식' } };
+}
+
+function lastRecalculation(): unknown {
+  const body = server.received('POST /assistant/answers').at(-1)?.body;
+  return typeof body === 'object' && body !== null && 'input' in body ? body.input : undefined;
+}
+
+// Partitions: lunch on a later day with dinner after it; the tick pressed; dinner with lunch before it.
+describe('lunch and dinner on the bar', () => {
+  it('names the meal with its day, and the other meal stands at its end', async () => {
+    await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, answer: askedTheDayBefore() });
+
+    expect(screen.getByTestId('time-band-words')).toHaveTextContent(/^내일\(화\) 점심 /u);
+    expect(screen.getByRole('button', { name: '저녁 17:00' })).toHaveTextContent('저녁 17:00 ›');
+  });
+
+  it('asks for dinner without the kind on a press, and shows lunch before it', async () => {
+    server.on('POST /assistant/answers', { status: 200, body: MEAL_DINNER_MENUS });
+    const user = await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, answer: askedTheDayBefore() });
+
+    await user.press(screen.getByRole('button', { name: '저녁 17:00' }));
+    await pass(500);
+
+    expect(lastRecalculation()).toEqual({
+      ...MEAL_ANSWER_MENUS.input,
+      meal: 'dinner',
+      window: { from: null, until: null },
+      placeId: null,
+      people: MEAL_ANSWER_MENUS.input.people.map(({ userId }) => ({ userId, constraints: [] })),
+    });
+    expect(screen.getByRole('button', { name: '점심 12:16' })).toHaveTextContent('‹ 점심 12:16');
+    expect(screen.getByTestId('time-band-words')).toHaveTextContent(/^저녁 /u);
   });
 });

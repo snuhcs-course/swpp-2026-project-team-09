@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -16,6 +17,7 @@ import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { koreaDayWord } from '@/korea-time';
 import { ANSWER_PILL, listsTop } from '../layout';
+import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
 import { TimeBand } from './time-band';
 import { type BandFocus, useCorrections } from './use-corrections';
 
@@ -34,12 +36,14 @@ type BandProps = Parameters<typeof TimeBand>[0];
 
 interface BarProps {
   band: Omit<BandProps, 'folded' | 'day'>;
+  // The words before the span's; left out, its day word.
+  day?: string;
   onHeight: (height: number) => void;
 }
 
 // The time bar: the answer's band in one white row under the pill, folded to one row, which a press on its grip
 // unfolds to a row for each person when there is more than one, and folds again.
-function Bar({ band, onHeight }: BarProps): ReactElement {
+function Bar({ band, day, onHeight }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
   const [unfolded, setUnfolded] = useState(false);
   const { lanes, startAt, now } = band.band;
@@ -54,7 +58,7 @@ function Bar({ band, onHeight }: BarProps): ReactElement {
       style={[styles.bar, { top: barTop(top) }]}
       testID="time-bar"
     >
-      <TimeBand {...band} day={koreaDayWord(startAt, new Date(now))} folded={folded} />
+      <TimeBand {...band} day={day ?? koreaDayWord(startAt, new Date(now))} folded={folded} />
       {lanes.length > 1 ? (
         <Pressable
           accessibilityLabel={label}
@@ -84,13 +88,16 @@ interface PlanBarProps {
 }
 
 // The bar of the Plan on screen: its handles and its lanes move it as the card's band did, unless the answer's kind
-// fixes the time.
+// fixes the time. A meal's names the meal with its day when it is not under way today, and the day's other meal
+// stands at one end (`MealTick`).
 export function PlanBar({ shown, answer, plan, invitation, focus, onClose, onHeight }: PlanBarProps): ReactElement {
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const fixed = bandIsFixed(answer.input.kind);
+  const tick = mealTickOf(answer);
   return (
     <Bar
       band={{
+        tick: tick === null ? undefined : { side: tick.side, node: <MealTick shown={shown} words={tick.words} /> },
         band: plan.band,
         disabled: shown.recalculating || invitation.sending,
         fixed: windowOf(answer.input),
@@ -101,6 +108,7 @@ export function PlanBar({ shown, answer, plan, invitation, focus, onClose, onHei
         onDrop: fix.drop,
         onMove: fixed ? undefined : fix.move,
       }}
+      day={mealDayOf(answer, plan)}
       onHeight={onHeight}
     />
   );

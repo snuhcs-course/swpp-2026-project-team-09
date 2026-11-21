@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useMemo, useState } from 'react';
@@ -22,7 +23,7 @@ import {
   type Stretch,
   stepped,
 } from '@/features/assistant/time-band';
-import { BandOnTrack, Ends, percent, placeOf, redOf, Track, useWholeMove, wordsOf } from './band-body';
+import { type BandTick, BandOnTrack, Ends, percent, placeOf, redOf, Track, useWholeMove, wordsOf } from './band-body';
 
 interface TimeBandProps {
   band: TimeBandData;
@@ -46,6 +47,8 @@ interface TimeBandProps {
   folded?: boolean;
   // The span's day beside its words: "내일(수)", or nothing for today.
   day?: string;
+  // The day's other meal at one end, in place of that end's label.
+  tick?: BandTick;
 }
 
 // A handle moved by a drag, or let go and held while the recalculation it asked for is on its way.
@@ -294,7 +297,7 @@ export function TimeBand(props: TimeBandProps): ReactElement {
           <RedOver band={band} folded={folded} moving={moving} />
         </Track>
       </View>
-      <Ends band={band} folded={folded} margin={NAME_WIDTH} />
+      <Ends band={band} folded={folded} margin={NAME_WIDTH} tick={props.tick} />
     </View>
   );
 }
