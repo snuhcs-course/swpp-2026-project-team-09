@@ -71,8 +71,8 @@ export function restOf(control: ChatSheetControl, after: readonly ChatBubble[]):
   const kind = wordsKindOf(reply, onScreenOf(control));
   if (kind === 'plan') {
     if (besideSetQuest(control)) {
-      const { changed, left } = control.invitation;
-      return { kind: 'words', words: setQuestRestOf(reply.text, changed ?? left) };
+      const { changed, refused, left } = control.invitation;
+      return { kind: 'words', words: setQuestRestOf(reply.text, changed ?? refused ?? left) };
     }
     return planRests(control, reply) ? { kind } : null;
   }
@@ -141,6 +141,7 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
       keyboardShouldPersistTaps="handled"
       showsHorizontalScrollIndicator={false}
       style={styles.chipsBox}
+      testID="dock-chips"
     >
       {offers.map((offer) => (
         <DockChip
@@ -230,8 +231,9 @@ export function DockedAnswer({
 }
 
 const styles = StyleSheet.create({
-  // One row, as board 8 draws it: the line keeps at least half and is cut, and the chips scroll sideways.
+  // One row, as board 8 draws it: the chips keep their own width, so that a chip is always whole, and scroll sideways
+  // past half the row; the line takes what is left and is cut at its two lines.
   row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  chipsBox: { flexGrow: 0, flexShrink: 1 },
+  chipsBox: { flexGrow: 0, flexShrink: 0, maxWidth: '50%' },
   chips: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
 });

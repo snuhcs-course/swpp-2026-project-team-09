@@ -64,7 +64,7 @@ const NO_LOOKS: readonly MarkerLook[] = [];
 const NO_LINES: readonly MapLine[] = [];
 const NO_ROUTES: MapScene['routes'] = [];
 
-type Invited = Pick<PlanInvitation, 'sending' | 'made' | 'standings' | 'changed' | 'left'>;
+type Invited = Pick<PlanInvitation, 'sending' | 'made' | 'standings' | 'changed' | 'changing' | 'left'>;
 
 // A Plan made or changed (P04 ticket 17) draws only itself: nothing can be chosen any more, so the other candidates and
 // the places that did not fit go, from the answer and from the Plan's own scene, and so does the Quest it replaced.
@@ -323,7 +323,7 @@ export function useAnswerMap(
   map: MainMap,
   room: Room,
   everyday: EverydayAvatars,
-  { sending, made, standings, changed, left }: Invited,
+  { sending, made, standings, changed, changing, left }: Invited,
   onMark: OnMark = ignoreMark,
 ): AnswerMap | null {
   const { answer, index } = shown;
@@ -349,7 +349,8 @@ export function useAnswerMap(
   const everydayFaces = useFaces(others, shown, made !== null);
   const faces = leftAlone ? NO_AVATARS : everydayFaces;
   const routes = answer?.plans[index]?.scene.routes;
-  const sent = sending || settled;
+  // While 바꾸기 is on its way nothing can be chosen either.
+  const sent = sending || settled || changing;
   const drawn = useDrawnMap(draw, base, answer, looks, map, framing, routes, pressableWhile(sent));
   if (drawn === null) {
     return null;

@@ -143,6 +143,26 @@ describe('the idempotency key across a new answer object', () => {
   });
 });
 
+// Partitions: another Plan of the kept state whose start changed in the new answer. From PR 442's review: keeping the
+// state for the Plan on screen must not keep another Plan's request made for its old start.
+describe('a request kept for another Plan across a new answer object', () => {
+  it("is dropped once that Plan's start changed, so that its retry sends the new answer's body and a new key", async () => {
+    make.mockRejectedValue(new ApiError(500));
+    const later = { ...MEAL_PLAN_2, startAt: '2026-11-17T12:30:00+09:00' };
+    const narrowed = { ...MEAL_ANSWER, plans: [MEAL_PLAN_1, later, ...MEAL_ANSWER.plans.slice(2)] };
+    const held = await hold(onScreen(MEAL_ANSWER, MEAL_PLAN_2));
+
+    await pressed(held);
+    await held.rerender(onScreen(narrowed, MEAL_PLAN_1));
+    await held.rerender(onScreen(narrowed, later));
+    await pressed(held);
+
+    const [first, retried] = make.mock.calls;
+    expect(retried?.[0]).toMatchObject({ planId: MEAL_PLAN_2.id, startAt: '2026-11-17T12:30:00+09:00' });
+    expect(retried?.[1]).not.toBe(first?.[1]);
+  });
+});
+
 // Partitions: 409 PLAN_CHANGED; another refusal; no answer at all. Expected values: the spec's toasts.
 describe('a refused press', () => {
   it('after PLAN_CHANGED says so and recalculates from conditions equal to the same, as a new object', async () => {

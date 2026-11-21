@@ -39,7 +39,7 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
   const { kind } = answer.input;
   const people = peopleOf(answer.input).length;
   // While a follow-up's reply is on its way the Plan on screen is about to be replaced.
-  const disabled = shown.recalculating || invitation.sending || control.chat.waiting;
+  const disabled = shown.recalculating || invitation.sending || invitation.changing || control.chat.waiting;
   const set = setQuestOf(answer);
   if (set !== null) {
     // Once 바꾸기 changed the meeting, or 그대로 두기 left the Quest, the answer says so and offers nothing more.
@@ -59,7 +59,8 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
 // Beside a Quest the User holds (P04 ticket 17): "바꾸기" makes the Plan in its place, or for a meeting changes that
 // Quest in place; one the User may not change is changed in its 파티, which "파티 보기" opens.
 function setQuestAction(set: SetQuest, { invitation }: ChatSheetControl, disabled: boolean): PlanAction {
-  if (!set.changeable) {
+  // A 바꾸기 refused for good sends the User to the 파티 too.
+  if (!set.changeable || invitation.refused !== null) {
     return {
       words: '파티 보기',
       onPress: () => {

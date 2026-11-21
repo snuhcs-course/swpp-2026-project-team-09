@@ -27,8 +27,9 @@ export interface WordsRest {
   keep?: boolean;
 }
 
-// A Plan beside a Quest the User holds: the model's line, which says so, with 그대로 두기; once the User chose (a meeting
-// changed in place, or the Quest left as it is), the line that says what was done (`chosen`), alone.
+// A Plan beside a Quest the User holds: the model's line, which says so, with 그대로 두기; once the User chose (바꾸기
+// changed the meeting in place or was refused for good, or 그대로 두기 left the Quest as it is), the line that says so
+// (`chosen`), alone.
 export function setQuestRestOf(words: string, chosen: string | null = null): WordsRest {
   const line = wordsLine(chosen ?? words);
   return { line, offers: [], retry: false, note: null, basis: false, keep: chosen === null };
