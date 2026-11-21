@@ -35,3 +35,10 @@ From the user's feedback: after 만들기 made a 파티, "방금 만든 파티 1
 - [ ] After the form that 수정 opened made it, the same. (Integration test.)
 - [ ] Before it is made, the Proposal goes back without the key. (Integration test.)
 - [ ] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 40 minutes in this session (an estimate from the transcript's timestamps: agreeing the field with P05, the code and tests, the sweep, and moving the branch onto `5.0/Main`), with no subagent.
+- Tokens: output 38k; input 40.4M, of which 40.3M cache reads, 65k cache writes, and 126 uncached.
