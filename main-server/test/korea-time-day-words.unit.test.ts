@@ -28,6 +28,11 @@ describe('A time with its day', () => {
     expect(clockWithDay(at('2026-11-22T00:30:00'), NOW)).toBe('내일(일) 00:30');
   });
 
+  // The plans round now up to the next minute: a question at 23:59:30 comes as 00:00, still asked on Saturday.
+  it('reads a now rounded up to midnight as the day before it', () => {
+    expect(clockWithDay(at('2026-11-22T18:00:00'), at('2026-11-22T00:00:00'))).toBe('내일(일) 18:00');
+  });
+
   it('names a day of the week across a month, and nothing for today', () => {
     expect(dayWordsFrom('2026-12-01', NOW)).toBe('12/1(화)');
     expect(dayWordsFrom('2026-11-21', NOW)).toBe('');

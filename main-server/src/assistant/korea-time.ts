@@ -39,10 +39,14 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const NEAR_DAYS: Partial<Record<number, string>> = { [-1]: '어제', 1: '내일', 2: '모레' };
 
+// The day asked on. The plans round now up to the next minute, so a question at 23:59:30 comes as 00:00 the next day:
+// the moment before it is still the day the User asked on.
+const askedOn = (now: Date): string => koreaDate(new Date(now.getTime() - 1));
+
 // The day of a time beside its clock, in the words the app writes (koreaDayWord in mobile/src/korea-time.ts): nothing
 // for today, "내일(수)", "모레(목)", "어제(월)", else "11/23(월)".
 export function dayWordsFrom(date: string, now: Date): string {
-  const days = Math.round((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${koreaDate(now)}T00:00:00Z`)) / DAY_MS);
+  const days = Math.round((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${askedOn(now)}T00:00:00Z`)) / DAY_MS);
   if (days === 0) {
     return '';
   }

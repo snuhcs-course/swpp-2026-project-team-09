@@ -210,7 +210,7 @@ describe('Two Friends among the Holders', () => {
 
 // In the usage test of 2026-11-21, "18:00 체육관 파티에 지호가 있어요" was a 파티 the next day, gone to a day early.
 describe('A 파티 on another day', () => {
-  it('carries its day in the line and on the flag', () => {
+  it('carries its day in the line, and leaves the flag to the app, which writes the day beside it', () => {
     // The day after DATE, 2026-11-20.
     const tomorrow = '2026-11-21';
     const { plans } = answerOf(
@@ -223,6 +223,6 @@ describe('A 파티 on another day', () => {
       { text: '내일(토) 18:00 문화관', strong: true },
       { text: ' 파티에', strong: false },
     ]);
-    expect(plans[0]?.scene.flags[0]?.text).toBe('내일(토) 18:00 배드민턴');
+    expect(plans[0]?.scene.flags[0]?.text).toBe('18:00 배드민턴');
   });
 });
