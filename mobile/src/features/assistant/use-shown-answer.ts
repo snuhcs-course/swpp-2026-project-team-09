@@ -4,13 +4,15 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AnswerReply, Plan, PlanInput } from '@/api/assistant-types';
+import type { AnswerReply, Cuisine, Plan, PlanInput } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
+import { showing, withKind } from './meal-kinds';
 import { withPerson } from './plan-input';
 import { opensBasis } from './relaxed-plan';
 import type { Stretch } from './time-band';
@@ -29,7 +31,11 @@ export interface ShownAnswer {
   index: number;
   // One Plan on or back, going round.
   browse: (step: 1 | -1) => void;
+  // Shows a Plan; a candidate without the kind of food on screen clears the kind (P04 ticket 16).
   show: (planId: string) => void;
+  // Chooses a kind of food on the phone, or clears it with null: the meal's `cuisine`, with no recalculation. A pick
+  // without that kind gives way to the first candidate with it (`withKind`).
+  chooseKind: (kind: Cuisine | null) => void;
   basisOpen: boolean;
   toggleBasis: () => void;
   // The list of Friends to add is open in the card; the input gives way to it.
@@ -149,6 +155,7 @@ function ghostOf(kept: Shown | null): Stretch | null {
 function useBrowsing(setStored: SetStored): {
   browse: ShownAnswer['browse'];
   show: ShownAnswer['show'];
+  chooseKind: ShownAnswer['chooseKind'];
   toggleBasis: ShownAnswer['toggleBasis'];
   setAdding: ShownAnswer['setAdding'];
   undo: ShownAnswer['undo'];
@@ -167,7 +174,16 @@ function useBrowsing(setStored: SetStored): {
     (planId: string): void => {
       setStored((last) => {
         const index = last.answer?.plans.findIndex(({ id }) => id === planId) ?? -1;
-        return index < 0 ? last : withPlan(last, index);
+        return index < 0 ? last : withPlan({ ...last, ...showing(last, index) }, index);
+      });
+    },
+    [setStored],
+  );
+  const chooseKind = useCallback(
+    (kind: Cuisine | null): void => {
+      setStored((last) => {
+        const next = withKind(last, kind);
+        return next.answer === last.answer ? last : withPlan({ ...last, answer: next.answer }, next.index);
       });
     },
     [setStored],
@@ -194,7 +210,7 @@ function useBrowsing(setStored: SetStored): {
     },
     [setStored],
   );
-  return { browse, show, toggleBasis, setAdding, undo, setMoving };
+  return { browse, show, chooseKind, toggleBasis, setAdding, undo, setMoving };
 }
 
 // A change of the conditions, and the Friend it adds, when it adds one.

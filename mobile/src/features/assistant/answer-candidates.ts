@@ -4,13 +4,14 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { MapScene, Plan } from '@/api/assistant-types';
+import type { Cuisine, MapScene, Plan } from '@/api/assistant-types';
 import type { AnswerSymbol } from '@/design-system';
 import { koreaClock } from '@/korea-time';
 import type { AnswerLabel } from '@/design-system';
 import { inView } from '@/map';
 import { type Draft, SIDE_ORDER } from './answer-groups';
 import { inside, type LabelView } from './answer-labels';
+import { serves } from './meal-kinds';
 import { dishWords, menuLine } from './meal-menus';
 
 // The words of an answer's pick and other candidates on the map (P04 ticket 13, boards 20 to 22).
@@ -24,25 +25,57 @@ function dayAndTime(time: string | null, day: string | undefined): string | null
   return time === null ? day : `${day} ${time}`;
 }
 
-// The pick's line: its time with the Plan's day, and a meal Plan's first dish with the count of the rest.
-export function pickLine(time: string | null, day: string | undefined, plan: Plan | undefined): string | null {
+// The pick's line: its time with the Plan's day, and a meal Plan's first dish, of the kind on screen when it has one,
+// with the count of the rest.
+export function pickLine(
+  time: string | null,
+  day: string | undefined,
+  plan: Plan | undefined,
+  kind: Cuisine | null = null,
+): string | null {
   const when = dayAndTime(time, day);
-  const dishes = plan?.menu === undefined ? null : dishWords(plan.menu);
+  const dishes = plan?.menu === undefined ? null : dishWords(plan.menu, kind);
   if (dishes === null) {
     return when;
   }
   return when === null ? dishes : `${when} · ${dishes}`;
 }
 
+// A candidate without the kind of food on screen (board 25): its name alone in grey, with no number and no dot. A
+// press still picks it.
+function recededDraft(plan: Plan, { place, tag }: MapScene['places'][number]): Draft {
+  const title = tag ?? place.label;
+  return {
+    id: `answer:candidate:${place.label}`,
+    name: title,
+    position: { latitude: place.latitude, longitude: place.longitude },
+    planId: plan.id,
+    group: 'candidate',
+    symbol: null,
+    tone: 'dropped',
+    title,
+    line: null,
+    number: null,
+  };
+}
+
 // Another candidate: its number, its name, and its arrival time, and in a meal answer its dishes and price under
-// them. A screen reader reads the same words.
-export function candidateDraft(plans: readonly Plan[], { place, tag }: MapScene['places'][number]): Draft {
+// them, its dish of the kind on screen first. A screen reader reads the same words. One without that kind recedes.
+export function candidateDraft(
+  plans: readonly Plan[],
+  item: MapScene['places'][number],
+  kind: Cuisine | null = null,
+): Draft {
+  const { place, tag } = item;
   const title = tag ?? place.label;
   const index = plans.findIndex((plan) => plan.place.placeId === place.placeId && plan.place.label === place.label);
   const plan: Plan | undefined = plans[index];
+  if (plan !== undefined && kind !== null && !serves(plan, kind)) {
+    return recededDraft(plan, item);
+  }
   const number = plan === undefined ? null : index + 1;
   const time = plan === undefined ? null : koreaClock(plan.startAt);
-  const sub = menuLine(plan?.menu);
+  const sub = menuLine(plan?.menu, kind);
   const said = [time, sub].flatMap((words) => words ?? []);
   const symbol: AnswerSymbol = { type: 'dot', role: 'candidate', number };
   return {

@@ -10,7 +10,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
+import type { AnswerReply, Cuisine, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { type AnswerLabel, type AnswerSymbol, type FaceBadge, initials } from '@/design-system';
 import { koreaDayWord } from '@/korea-time';
@@ -34,6 +34,7 @@ import { type LabelView, placeLabels, type Unplaced, UPRIGHT_REACH } from './ans
 import { routeLineId } from './answer-walks';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 import { candidateDraft, leftOutByRank, pickLine, sideRank } from './answer-candidates';
+import { kindOn } from './meal-kinds';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
 
@@ -109,12 +110,14 @@ export interface SceneSetting {
   standings: ReadonlyMap<string, Standing>;
   // The Plan's day before the pick's time when it is not the day asked ("내일(수)"); left out, none.
   day?: string;
+  // The kind of food on screen, whose candidates stand out; left out, none.
+  kind?: Cuisine | null;
 }
 
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
 
 function placeDraft(
-  { number: pickNumber, plans, day }: SceneSetting,
+  { number: pickNumber, plans, day, kind = null }: SceneSetting,
   scene: MapScene,
   item: MapScene['places'][number],
 ): Draft | null {
@@ -125,7 +128,7 @@ function placeDraft(
   if (role === 'pick') {
     const flag = scene.flags.find(({ at, role: flagRole }) => flagRole === 'place' && samePoint(at, position));
     const plan = pickNumber === null ? undefined : plans[pickNumber - 1];
-    const line = pickLine(flag === undefined ? null : restOf(title, flag.text), day, plan);
+    const line = pickLine(flag === undefined ? null : restOf(title, flag.text), day, plan, kind);
     const name = line === null ? title : `${title} · ${line}`;
     const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber };
     return {
@@ -140,7 +143,7 @@ function placeDraft(
     };
   }
   if (role === 'candidate') {
-    return candidateDraft(plans, item);
+    return candidateDraft(plans, item, kind);
   }
   if (role === 'stop' || role === 'meeting') {
     return role === 'stop' ? stopDraft(item) : null;
@@ -295,7 +298,13 @@ export function drawingOf(
     return { things: [], lines: [], points: [], own: [], pick: null, userIds: [] };
   }
   const day = koreaDayWord(plan.startAt, new Date(plan.band.now));
-  return drawingOfScene(plan.scene, view, { number: planIndex + 1, plans: answer.plans, standings, day });
+  return drawingOfScene(plan.scene, view, {
+    number: planIndex + 1,
+    plans: answer.plans,
+    standings,
+    day,
+    kind: kindOn(answer),
+  });
 }
 
 // The looks of every Plan's drawing, each once: at the view `viewOf` gives for the Plan's drawing with its sides

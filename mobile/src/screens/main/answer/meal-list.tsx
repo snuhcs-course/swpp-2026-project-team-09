@@ -11,6 +11,7 @@ import { color, font, radius, size, space, text } from '@/design-system';
 import { MEAL_NAMES, won } from '@/features/dining/adapter';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { koreaClock, koreaWeekdayName } from '@/korea-time';
+import { KindChips } from './kind-chips';
 
 // 메뉴 모두 보기 (P04 ticket 15, board 23): every candidate of a meal answer with all its dishes and prices, in the
 // map's order, above the dock's chips.
@@ -178,15 +179,15 @@ export function MenuList({ answer, shown, onFold }: MenuListProps): ReactElement
 }
 
 interface WithMenuListProps {
-  shown: Pick<ShownAnswer, 'answer' | 'index' | 'show'>;
+  shown: Pick<ShownAnswer, 'answer' | 'index' | 'show' | 'chooseKind'>;
   // The dock's own chips ("지난 답 N개", the note), which stand before 메뉴 모두 보기.
   folded: ReactNode;
   // The Plan's dock, given its chips.
   children: (dock: ReactNode) => ReactNode;
 }
 
-// A meal answer's dock with 메뉴 모두 보기 as its row's last chip (board 24), and the list, while open, over the row.
-// The list folds when another answer comes.
+// A meal answer's dock: its kinds of food first (`KindChips`), the dock's own chips, and 메뉴 모두 보기 as the row's
+// last chip (board 24), with the list, while open, over the row. The list folds when another answer comes.
 export function WithMenuList({ shown, folded, children }: WithMenuListProps): ReactElement {
   const { answer } = shown;
   const [openFor, setOpenFor] = useState<AnswerReply | null>(null);
@@ -197,6 +198,7 @@ export function WithMenuList({ shown, folded, children }: WithMenuListProps): Re
   };
   const dock = (
     <>
+      <KindChips answer={answer} onChoose={shown.chooseKind} />
       {folded}
       {listed ? (
         <MenuListChip
