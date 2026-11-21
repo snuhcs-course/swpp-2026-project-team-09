@@ -2366,8 +2366,10 @@ Anthropic API as the AI's key says
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
     (`quest` or `globalEvent` by id, `restaurant` and `library` by its key; `cards` may be left out) and the Proposal it made (`proposal`, which may be left
-    out, on one message at most). The model gets only the latest 20 messages, and of an Assistant's message its text,
-    a line naming its cards and a line with its Proposal's values, never an earlier message's tool results.
+    out, on one message at most). Once 만들기 made the Proposal, it is sent back with `madeQuestId`, the Quest's id.
+    The model gets only the latest 20 messages, and of an Assistant's message its text, a line naming its cards and a
+    line with its Proposal's values (`[Proposal shown: …]`, or `[Proposal made: …]` with the Quest's id), never an
+    earlier message's tool results.
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
     the User's, a message of another shape, a User's message over 1,000 characters, an Assistant's over 4,000, more
     than one Proposal, messages over 24,000 characters together, a Proposal's title, description and names included,
@@ -2571,7 +2573,10 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     or more than one. Or it answers
     `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when it is called
     twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
-    the change.
+    the change. A Proposal sent back made is a 파티 already posted: `proposeQuest` answers
+    `{ "result": "made", "questId", "reason" }` and puts nothing in the reply, so that 만들기 never makes a second 파티
+    for a change, and the model says it is posted and is changed with 수정 in its room. Only `another: true`, when the
+    User asks for another 파티 beside it, proposes one.
   - **The 공강 tools** (`free-time/`, ADR 0009) work on a day from today to a week ahead, and on the items of a User's
     day: each Class meeting on that weekday and each timed Sub Quest of a Quest they hold (`UserDayService`, for any
     User). Rooms, Places, coordinates and the reason anyone is busy are never returned.

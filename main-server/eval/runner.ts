@@ -9,6 +9,7 @@
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -104,10 +105,15 @@ export async function startEvalApp(
 
 type SentAssistant = Extract<SentMessage, { role: 'assistant' }>;
 
+// The id a made Proposal is sent back with. The server reads no more of the made Quest than that it was made, so no
+// Quest of the world stands behind it.
+const MADE_QUEST_ID = '0e0e0e0e-0000-4000-8000-00000000000d';
+
 function sentProposalOf(proposal: CaseProposal, world: World): SentAssistant['proposal'] {
-  const { place, globalEvent, invitees, ...values } = proposal;
+  const { place, globalEvent, invitees, made, ...values } = proposal;
   return {
     ...values,
+    ...(made === true ? { madeQuestId: MADE_QUEST_ID } : {}),
     place: place === null ? null : { id: seedOf(world.seeds, 'place', place).id, name: place },
     globalEvent:
       globalEvent === null ? null : { id: seedOf(world.seeds, 'globalEvent', globalEvent).id, title: globalEvent },
