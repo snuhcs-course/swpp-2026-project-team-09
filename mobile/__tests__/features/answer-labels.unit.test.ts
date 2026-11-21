@@ -3,12 +3,14 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
 import { MEET_ANSWER_FROM_14 } from '@/api/mock/data/meet-answer';
-import { drawingOf, looksOf } from '@/features/assistant/answer-marks';
+import { NOT_RUNNING_LOOKUP_REPLY } from '@/api/mock/data/way-lookups';
+import { drawingOf, drawingOfScene, looksOf } from '@/features/assistant/answer-marks';
 import { NO_STANDINGS } from '@/features/assistant/invited-friends';
 import { CAMERA_BOUNDS } from '@/map';
 import { MINSU_ID, NEXT_CLASS, seen, sideOf } from '../support/answer-marks';
@@ -214,5 +216,28 @@ describe('the looks of every Plan of an answer', () => {
       return look.symbol.role === 'candidate' && look.symbol.number === 5 ? [look.label?.side ?? null] : [];
     });
     expect(sides).toEqual(expect.arrayContaining(['left', null]));
+  });
+});
+
+// The shuttle-not-running Lookup's pick, "(관악사)학부 생활관(919동)" with its line "22:21 도착 · 919동", about 190
+// wide and 46 high: centred below or above its point it reaches 95 to each side. Put at (380, 300), 15 from the area's
+// right edge, neither fits, and it takes its left (from about 170 to 360); put at (30, 300), its right (from 50 to
+// about 240). Expected values: the worked numbers above.
+//
+// Partitions: the pick near the area's right edge, and near its left edge.
+describe("a Lookup's pick whose label fits neither below nor above", () => {
+  const scene = NOT_RUNNING_LOOKUP_REPLY.lookup?.scene;
+  const at = scene?.places[0]?.place;
+  if (scene === undefined || at === undefined) {
+    throw new Error('The stored Lookup has no Place');
+  }
+  const drawn = (x: number) => drawingOfScene(scene, viewAt(cameraPutting(at, { x, y: 300 })));
+
+  it('takes its left near the right edge, whole inside the screen', () => {
+    expect(seen(drawn(380), 'answer:pick').label).toMatchObject({ side: 'left', title: '(관악사)학부 생활관(919동)' });
+  });
+
+  it('takes its right near the left edge', () => {
+    expect(sideOf(drawn(30), 'answer:pick')).toBe('right');
   });
 });

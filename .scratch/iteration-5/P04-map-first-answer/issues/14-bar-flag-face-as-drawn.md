@@ -14,7 +14,7 @@ Five corrections from the phone screens of tickets 01 to 04, so that they look a
 2. **A face's card is small and attached to the face** (done before the Release in its own pull request, branch `5.0/P04-14a-small-face-card`; left for this ticket: choosing the side that keeps the pick's flag clear). It holds the name, the face's own line ("12:15 302동 수업 끝"), and 빼기 (and 프로필 for a Friend), in a card the width of its words beside the face, not a wide card over the middle of the map.
 3. **The pick's flag looks pressable.** Its first line ends with "›", as boards 10 and 12 draw it. The flag's card keeps its content, the basis lines included.
 4. **"＋ 같이" moves to the time bar.** It stands at the right end of the bar's words row, beside the per-person rows that people belong with, so that the dock is always one row (the input and the main button).
-5. **A raised card is as tall as what it holds**, up to today's highest, not the whole height for one short list (seen with one earlier turn open).
+5. **A raised card is as tall as what it holds**, up to today's highest, not the whole height for one short list (seen with one earlier turn open). Done in ticket 05's pull request.
 
 ## Must not break
 
@@ -29,7 +29,7 @@ Five corrections from the phone screens of tickets 01 to 04, so that they look a
 - [x] The face's card shows the name, the face's line, and 빼기, beside the face. (Integration test.)
 - [ ] The face's card takes the side that keeps the pick's flag clear. (Unit test of its place.)
 - [ ] The pick's label ends its first line with "›". (Unit test of the mark.)
-- [ ] Raised with one earlier turn open, the card is as tall as its content. (Integration test of its height.)
+- [x] Raised, the card is as tall as its content (ticket 05). (Integration test of its height.)
 - [ ] "＋ 같이" is in the time bar's words row and opens the list of Friends; the dock holds the input row alone. (Integration test.)
 - [ ] The three states on a phone with the mock build. (Emulator.)
 - [ ] No native file changes; lint, format, and types pass on the app.

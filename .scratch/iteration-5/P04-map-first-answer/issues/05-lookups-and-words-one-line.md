@@ -16,6 +16,8 @@ One rule decides every case: the bottom hides only what the map already says; wh
 - **A reply with nothing to draw** (a procedure, a rule) keeps its card open, as tall as its text up to today's highest, with the input under it: the text is the whole answer (decision 3).
 - **A reply with cards** (events, Quests, a restaurant, a library card, a Proposal) keeps its card open until tickets 06 to 08 put its kind on the map.
 - "지난 답 N개" and the note are dock chips, as in ticket 04.
+- The dock is one row: the line keeps at least half of it, is cut, and ends with "›"; the chips after it scroll sideways.
+- Found on the phone screens: a Lookup's flag is always whole inside the screen (near an edge, where neither below nor above fits, it takes the left or the right), and a raised card is as tall as its content, up to under the pill (from ticket 14, item 5).
 
 ## What happens now
 
@@ -37,5 +39,7 @@ One rule decides every case: the bottom hides only what the map already says; wh
 - [ ] A failure shows its line and 다시 시도. (Integration test.)
 - [ ] A shuttle Lookup that says the shuttle is not running shows that line in the dock; a press raises the rest. (Integration test.)
 - [ ] A procedure answer and a reply with cards keep their card open. (Integration test.)
+- [ ] A Lookup's flag near the right edge takes its left, and near the left edge its right. (Unit test of the labels.)
+- [ ] Raised, the card is as tall as its content, up to the pill. (Integration test.)
 - [ ] A Lookup and a procedure answer on a phone with the mock build. (Emulator.)
 - [ ] No native file changes; lint, format, and types pass on the app.
