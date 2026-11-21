@@ -20,6 +20,7 @@ The user's words: "핵심은 이미 만들어진 퀘스트들에 대해서도 �
 - A, related always: rows 3, 8, 9, 21, 22, 23 no longer say "named when it limits the plans". Every planner's answer carries the related Quests (below), and the model's line mentions the one that matters.
 - B, row 23: a hand-made Quest with the same people is related and named by its title, never set aside by a guess. It is changed only when the User names it, and then it keeps its title.
 - C, explicit target: the planners take the Quest to change as an input. The "same meeting" rule is the server's default only when the model gives none and exactly one fits. Row 10b stays a question.
+- D, one rule for every change in place, a meeting, a shared meal and a 파티 alike: it keeps everyone who is in. A Holder stays a Holder, is told with `step-changed` (the push the room's 일정 수정 sends), and may leave if the new time does not suit; a waiting invitee stays waiting and the invitation shows the new time; nobody goes back to waiting. Every Holder's leave-by kept for the old steps is forgotten (ticket 21). A change means the same whether typed or tapped. Rows 4, 5, 7 and 26–28 follow it.
 
 ## Design, slice 1: Know (read-only), as built
 
@@ -62,8 +63,9 @@ Slice 1 lands in two PRs, each releasable: (1a) reading, below; (1b) `related` a
 ## Slices
 
 1. Know (above).
-2. Change a meeting in place: rows 1–19 and 24–33 as amended, with the explicit target.
+2. Change a meeting in place: rows 1–19 and 24–33 as amended, with the explicit target, and a 파티 made from a Proposal (rows 36–44, ticket 18's second step).
 3. Shared meals through the same path (row 20), then cancelling by words: through the leave or delete path, confirmed by a button, and a Quest others hold is left, not deleted.
+4. A 파티's title, capacity, Join Policy, Board and description changed by words (row 39). Until then the line points to 수정 in its room.
 
 ## What happens now
 
@@ -107,10 +109,10 @@ Each row: what exists → what is asked → what the answer says and draws → w
 
 | # | Exists | Answer | 바꾸기 |
 |---|---|---|---|
-| 4 | 민수 waiting | Same meeting (row 1). | 민수 stays waiting and is told the new time. |
-| 5 | 민수 accepted | Same meeting. | 민수 goes back to waiting: their acceptance was for the old time. Their leave-by is forgotten; it is kept again when they accept. |
+| 4 | 민수 waiting | Same meeting (row 1). | 민수 stays waiting; the invitation shows the new time. No push: they are not a Holder. |
+| 5 | 민수 accepted | Same meeting. | 민수 stays a Holder and is told with `step-changed`; they may leave if the new time does not suit. Their leave-by is forgotten (row 26). |
 | 6 | 민수 declined | Not one of its people: a meeting with 민수 is asked, so it is not the same meeting. It is mine alone, set aside only by a plan for me alone. Line names it as declined: "민수가 거절한 내일 14:00 약속이 있어요." | — |
-| 7 | 민수 accepted, 지은 waiting, 현수 declined | Its people are 나, 민수, 지은. "민수랑 지은이랑 내일 보자" is the same meeting; with 현수 too it is not. | 민수 back to waiting, 지은 stays waiting, both told. |
+| 7 | 민수 accepted, 지은 waiting, 현수 declined | Its people are 나, 민수, 지은. "민수랑 지은이랑 내일 보자" is the same meeting; with 현수 too it is not. | 민수 stays and is told with `step-changed`; 지은 stays waiting and sees the new time. |
 
 ### The people asked
 
@@ -155,9 +157,9 @@ Each row: what exists → what is asked → what the answer says and draws → w
 |---|---|---|
 | 24 | The Quest | Same id; its room, links and chat stay. Title and Sub Quests are replaced (as `change` does now). `meet` stays true. |
 | 25 | My leave-by | Kept again for the new plan (`keepTimeToLeave`, which replaces the old one by its identity). |
-| 26 | Invitees' leave-by | Forgotten for every accepted invitee who goes back to waiting. |
-| 27 | Invitees' answers | Accepted → waiting. Waiting stays waiting. Declined Friends are not in it. |
-| 28 | What they are told | A push to each invitee: "유상님이 약속을 바꿨어요: 내일 15:00 학생회관" (a new kind `plan-changed`, opening the invitation). The `plan-changed` and `quests-changed` signals as now. |
+| 26 | The others' leave-by | Every Holder's leave-by kept for the old steps is forgotten where `step-changed` is sent (ticket 21), the asker's included and then kept again (row 25). Recomputing each Holder's from their own day is not done. |
+| 27 | Invitees' answers | Nobody goes back to waiting: a Holder stays a Holder, a waiting invitee stays waiting. Declined Friends are not in it. |
+| 28 | What they are told | Each other Holder: `step-changed`, which released apps already show, as the room's 일정 수정 sends it. A waiting invitee: no push; the invitation shows the new time. `quests-changed` as now. No new kind. |
 | 29 | An invitee busy at the new time | The plan was made with their day: a Class or Quest they hold blocks it. A Quest they were invited to and have not accepted does not. If they became busy after the plan was shown, `change` plans again and the shown plan no longer fits: 409 `PLAN_CHANGED`, and the app asks again. |
 | 30 | 그대로 두기 | The app drops the answer and its plans. Nothing is sent; the kept meeting is as it was. |
 
@@ -166,7 +168,7 @@ Each row: what exists → what is asked → what the answer says and draws → w
 | # | What | Done |
 |---|---|---|
 | 31 | Two 바꾸기 at the same moment | `change` locks the Quest (`lockLed`). The second plans against the first's result: its shown plan no longer fits, so 409 `PLAN_CHANGED`. |
-| 32 | An invitee accepts while it changes | Accepting locks the same Quest. Accept first: the change then puts them back to waiting and tells them. Change first: they accept the new time. |
+| 32 | An invitee accepts while it changes | Accepting locks the same Quest. Accept first: they are a Holder and are told with `step-changed`. Change first: they accept the new time. |
 | 33 | An invitee declines while it changes | Declining first: they are no longer one of its people, so the plan's people differ and `change` refuses (`PLAN_PEOPLE_CHANGED`); the app asks again. Change first: they decline the new time. |
 
 ### Words
@@ -175,6 +177,22 @@ Each row: what exists → what is asked → what the answer says and draws → w
 |---|---|
 | 34 | Only Friends in the plan are named. A busy Friend is named only by when their Class ends or starts, never the course or the room (PLAN_RULES as now). |
 | 35 | The kept meeting is named by its time, its place and its people; a hand-made Quest by its title. Titles and places written by others go inside the delimiters for collected text. |
+
+### A 파티 made from a Proposal
+
+Asked as "방금 만든 파티 19시로" after 만들기 made it. Ticket 18 only says it is posted and points to 수정 in its room; these rows change it in place. What the room's 일정 수정 does today is the measure: it changes the Sub Quest, pushes `step-changed` to every other Holder, and tells join requesters and invitees nothing.
+
+| # | The made 파티 | Done |
+|---|---|---|
+| 36 | Public or closed, nobody else in it | Changed in place: same Quest, its Sub Quest's time and place; the post stays on its Board. Nobody to tell. |
+| 37 | Public, others joined | Changed in place, as 일정 수정 does: each Holder is told with `step-changed`. The line says who will be told before the button is pressed ("바꾸면 참여한 2명에게 알림이 가요") and after ("참여한 2명에게 알렸어요"). |
+| 38 | Approval, join requests waiting | Changed in place; the requests stay and the requesters are not told. A known gap of the room's own edit, not fixed here. |
+| 39 | Asked for more than time or place ("6명으로", "승인제로", "제목 바꿔줘") | Slice 2 changes time and place only. For the rest the line says it is changed in the room and offers the button that opens the room's 수정; never a new card. By words: slice 4. |
+| 40 | Closed, Friends invited from the Proposal | As row 37, by rule D: one who accepted stays a Holder and is told; one waiting stays waiting. |
+| 41 | Started, or over | Not changed, as rows 15–16: "이미 시작한 파티예요." |
+| 42 | Gone (cancelled), or the User left it | Not changed. The line says it is no longer there and offers to propose it again. |
+| 43 | The User handed over the Leader | Not changed, as row 2: "리더에게 말해 주세요." |
+| 44 | For a Global Event | Only a meeting time before the event, as proposeQuest already refuses a start after it. |
 
 ## The app
 

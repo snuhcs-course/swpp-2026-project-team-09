@@ -17,6 +17,7 @@ import { type SubQuestContentDto } from './dto/quest-requests.dto.js';
 import { SUB_QUEST_INCLUDE, SubQuestDto, toSubQuestDto } from './dto/quest.dto.js';
 import { QuestsService } from './quests.service.js';
 import { conflict, notFound } from './refusals.js';
+import { tellStepChanged } from './step-told.js';
 import { columnsOf } from './sub-quest-columns.js';
 
 const subQuestNotFound = (): Error => notFound('SUB_QUEST_NOT_FOUND', 'This Quest has no such Sub Quest.');
@@ -92,19 +93,7 @@ export class SubQuestsService {
     });
   }
 
-  // As QuestsService.changeShared, and tells each other Holder who changed which step, unless the step has ended.
-  // Every Holder's time to leave was worked out for the steps as they were: one for a time that no longer holds is worse
-  // than none, and the change's own push stands in for it. Awaited, as leaving the Quest awaits it, and never failing it.
-  private async forgetTimesToLeave(holderIds: readonly string[], questId: string): Promise<void> {
-    await Promise.all(
-      holderIds.map((holderId) =>
-        this.notifications.cancel(holderId, 'leave-by', { kind: 'party', id: questId }).catch((error: unknown) => {
-          this.logger.warn(`A Holder's time to leave was not cancelled: ${String(error)}`);
-        }),
-      ),
-    );
-  }
-
+  // As QuestsService.changeShared, and tells the Holders of the change (tellStepChanged), unless the step has ended.
   private async changeStep<T>(
     userId: string,
     questId: string,
@@ -118,22 +107,10 @@ export class SubQuestsService {
     this.signals.send(holderIds, 'quests-changed');
     const { step, cancelled, byName } = result;
     if (!step.ended) {
-      const told = {
-        kind: 'step-changed' as const,
-        questId,
-        byId: userId,
-        byName,
-        stepTitle: step.title,
-        startsAt: step.startsAt === null ? null : new Date(step.startsAt),
-        cancelled,
-      };
-      for (const holderId of holderIds.filter((id) => id !== userId)) {
-        // Not awaited: a Notification never fails the change.
-        this.notifications.schedule(holderId, told, this.clock.now()).catch((error: unknown) => {
-          this.logger.warn(`A Holder was not told of a changed step: ${String(error)}`);
-        });
-      }
-      await this.forgetTimesToLeave(holderIds, questId);
+      const startsAt = step.startsAt === null ? null : new Date(step.startsAt);
+      const changed = { questId, byId: userId, byName, stepTitle: step.title, startsAt, cancelled };
+      const { notifications, logger } = this;
+      await tellStepChanged({ notifications, logger }, holderIds, changed, this.clock.now());
     }
     return result.result;
   }
