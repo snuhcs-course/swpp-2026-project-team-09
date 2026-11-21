@@ -27,6 +27,13 @@ Every Lookup a chat reply carries has a line: a day's date and counts, a menu's 
 
 ## Acceptance criteria
 
-- [ ] A menu, a study area, the shuttle, a day, the Tutorial Quests and a Friend with no words are each replied with `text: ""` (`assistant-answer-reply.unit.test.ts`; five of the six failed before the change, the shuttle already passing as a way).
-- [ ] A Lookup with no line still has the fixed sentence.
-- [ ] Lint, format and types of the main server pass.
+- [x] A menu, a study area, the shuttle, a day, the Tutorial Quests and a Friend with no words are each replied with `text: ""` (`assistant-answer-reply.unit.test.ts`; five of the six failed before the change, the shuttle already passing as a way).
+- [x] A Lookup with no line still has the fixed sentence.
+- [x] Lint, format and types of the main server pass.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 10 minutes (estimate: gaps under 5 minutes between transcript entries, summed).
+- Tokens: input 8,860,171 (cache reads 8,712,557, cache writes 147,502, uncached 112); output 34,907. Without cache reads, 182,521.
