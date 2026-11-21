@@ -206,6 +206,8 @@ export interface MealInput {
   window: MealWindow;
   // The Place the User fixed.
   placeId: string | null;
+  // The kind of food on screen, which the main server keeps and puts first. Absent or null for none.
+  cuisine?: Cuisine | null;
 }
 
 // The Global Events of a day the asker can attend.
@@ -237,6 +239,9 @@ export interface AnswerReply extends WithMissing {
   // Considered, but they do not fit.
   dropped: DroppedPlace[];
   noPlan: ({ reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } & WithRelax) | null;
+  // A meal's: the other meal of the day and when it starts ("HH:MM"), null when it is over or nothing serves it. Absent
+  // from other answers and from a main server before P05 ticket 15.
+  otherMeal?: { meal: 'lunch' | 'dinner'; start: string } | null;
 }
 
 // `from` is the start the User fixed for a meet. `area` is the visible map area and `what` the kind of place asked for,
@@ -286,7 +291,21 @@ export interface Plan {
   // A Global Event's Plan: the event's own start and end, Korea time with the offset (end null when it has none). Its
   // startAt is the asker's arrival when the event is under way, and is never the event's time.
   event?: { startAt: string; endAt: string | null };
+  // A meal Plan's menu: its Restaurant's main corner, its own price (a buffet's or a self corner's, from its heading, null
+  // when it has none) and its dishes in the menu's order. Absent when no menu was collected for the meal there, and
+  // from a main server before P05 ticket 12's follow-up.
+  menu?: { price: number | null; dishes: MenuDish[] };
 }
+
+export interface MenuDish {
+  name: string;
+  price: number | null;
+  // Its kind of food, for the chips of kinds: null for another cuisine, a side dish, rice, a drink and the like, and for a
+  // name the main server has not read yet; absent from a main server before P05 ticket 15.
+  cuisine?: Cuisine | null;
+}
+
+export type Cuisine = '한식' | '중식' | '일식' | '양식' | '분식';
 
 // What the map draws, by meaning. The app decides colours, camera, and label sides.
 export interface MapScene {

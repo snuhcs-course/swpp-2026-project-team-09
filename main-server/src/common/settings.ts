@@ -18,6 +18,7 @@
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -167,6 +168,12 @@ export const settingsSchema = z
       .enum(['true', 'false'])
       .default('false')
       .transform((value) => value === 'true'),
+    // Whether a Collection of menus has the model read the kinds of food of the dish names no row holds yet (P05 ticket
+    // 15), once per name. "off" calls no model: the dishes have no kind, and the app offers no chip of kinds.
+    DISH_CUISINES: z
+      .enum(['on', 'off'])
+      .default('on')
+      .transform((value) => value === 'on'),
     JUDGEMENT_TIMEOUT_MS: count(60_000),
     JUDGEMENT_MAX_OUTPUT_TOKENS: count(4000),
     // How often, in seconds, the main server sends the Notifications whose time has come. 0 never sends them by itself,

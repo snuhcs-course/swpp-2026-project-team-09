@@ -25,7 +25,7 @@ import {
   withTopic,
 } from './answer-words.js';
 import { type GatheringFit, type GatheringSide, type PersonPart } from './gathering.js';
-import { menuBasis, withMenu } from './meal-menu.js';
+import { kindFirst, mainMenu, menuBasis, withMenu } from './meal-menu.js';
 import { bandOf, mealSpan, sceneOf } from './meal-scene.js';
 import { missingParts, nearestFirst } from './missing-inputs.js';
 import { conditionsOf, type PersonConditions, windowOf } from './plan-conditions.js';
@@ -299,13 +299,14 @@ function planOf(fit: GatheringFit, naming: Naming, { first, nearest }: { first: 
     ],
     scene: sceneOf(fit, naming, mealWord(naming)),
     band: bandOf(fit, naming),
+    ...(served === undefined ? {} : { menu: mainMenu(served.lines, served.cuisines) }),
   };
 }
 
 export function mealAnswer(args: MealAnswerArgs): AnswerReply {
   const naming = new GatheringNaming(args);
   const nearest = nearestFirst(args);
-  const plans = (nearest ?? args.gathering.fits).map((fit, index) =>
+  const plans = kindFirst(nearest ?? args.gathering.fits, args.input.cuisine, args.served).map((fit, index) =>
     planOf(fit, naming, { first: index === 0, nearest: nearest !== null }),
   );
   return {

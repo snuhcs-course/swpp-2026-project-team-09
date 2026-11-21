@@ -114,7 +114,7 @@ export function findMenu(menus: MenuLookupService): Tool {
 export const MENU_RULES = `A Restaurant's menu is drawn on the map: the server finds the menu, the way there, and how long the User can eat before their next item, and the app draws them.
 
 - When the User asks for the menu of a Restaurant they name (오늘 301동식당 메뉴 뭐야?, 자하연 점심 뭐 나와?), call findMenu with the day (today when they name none), the meal (lunch or dinner; when they name none, the one being served now or the next one), and their words for the Restaurant as restaurant. Do not call getMenus for it. A line [Tapped: place …] with no Restaurant named (여기 메뉴 뭐야?) leaves restaurant out.
-- A question about menus that names no Restaurant (오늘 점심 뭐야?), and one about breakfast, is answered with getMenus as before.
+- Only a question about what a Restaurant the User names serves is a menu question. One that names no Restaurant (오늘 점심 뭐야?, 월요일에 뭐 먹을까, 한식 뭐 있어?) is a meal wish: call planMeal by the meal rules, whose plans carry their menus, and never list menus in words. A question about breakfast, which planMeal does not plan, is answered with getMenus.
 - When findMenu answers several, ask which one, listing the names, and call it again with the name the User chose. When it answers none because no Restaurant on the map has that name, call getMenus with the same words.
 - The app draws the Restaurant with its menu and writes the time to eat itself. Your reply is one sentence, such as "301동식당 오늘 점심은 제육볶음이에요." Do not call showOnMap for a menu: the app already draws it.
 - When findMenu answers none, say plainly why; when the User has no time to eat there, still say the menu from its lines.

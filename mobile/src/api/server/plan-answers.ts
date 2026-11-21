@@ -7,7 +7,16 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerLine, AnswerReply, MapScene, PlacePoint, Plan, TimeBand } from '@/api/assistant-types';
+import type {
+  AnswerLine,
+  AnswerReply,
+  Cuisine,
+  MapScene,
+  MenuDish,
+  PlacePoint,
+  Plan,
+  TimeBand,
+} from '@/api/assistant-types';
 import type { DroppedPlace, PlanPart } from '@/api/plan-part-types';
 import type { LatLng } from '@/api/types';
 import { field, hasTexts, isNumber, isText, isTextOrNull, listOf } from './answers';
@@ -228,6 +237,31 @@ function isEventTimesOrAbsent(value: unknown): boolean {
   return value === undefined || (isText(field(value, 'startAt')) && isTextOrNull(field(value, 'endAt')));
 }
 
+const isCuisine = isKeyOf<Cuisine>({ 한식: true, 중식: true, 일식: true, 양식: true, 분식: true });
+
+// A meal answer's other meal: absent from other answers and from a main server before P05 ticket 15.
+function isOtherMealOrAbsent(value: unknown): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    ((field(value, 'meal') === 'lunch' || field(value, 'meal') === 'dinner') && isText(field(value, 'start')))
+  );
+}
+
+export function isDish(value: unknown): value is MenuDish {
+  const cuisine = field(value, 'cuisine');
+  return (
+    isText(field(value, 'name')) &&
+    isNumberOrNull(field(value, 'price')) &&
+    (cuisine === undefined || cuisine === null || isCuisine(cuisine))
+  );
+}
+
+// A meal Plan's menu: absent from other Plans and from a main server before P05 ticket 12's follow-up.
+function isPlanMenuOrAbsent(value: unknown): boolean {
+  return value === undefined || (isNumberOrNull(field(value, 'price')) && listOf(isDish)(field(value, 'dishes')));
+}
+
 export function isPlan(value: unknown): value is Plan {
   return (
     hasTexts(value, ['id', 'title', 'startAt', 'endAt']) &&
@@ -241,7 +275,8 @@ export function isPlan(value: unknown): value is Plan {
     isScene(field(value, 'scene')) &&
     isBand(field(value, 'band')) &&
     isOfQuest(value) &&
-    isEventTimesOrAbsent(field(value, 'event'))
+    isEventTimesOrAbsent(field(value, 'event')) &&
+    isPlanMenuOrAbsent(field(value, 'menu'))
   );
 }
 
@@ -252,6 +287,7 @@ export function isAnswerReply(value: unknown): value is AnswerReply {
     listOf(isPlan)(field(value, 'plans')) &&
     listOf(isDropped)(field(value, 'dropped')) &&
     isNoPlan(field(value, 'noPlan')) &&
+    isOtherMealOrAbsent(field(value, 'otherMeal')) &&
     hasMissingParts(value)
   );
 }

@@ -2,12 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 import { type AnswerLine } from '../src/assistant/dto/answer.dto.js';
-import { menuBasis, menuLine, withMenu } from '../src/assistant/gathering/meal-menu.js';
+import { mainMenu, menuBasis, menuLine, withMenu } from '../src/assistant/gathering/meal-menu.js';
 import { dishesOf } from '../src/assistant/lookup/menu-lookup.js';
 import { MenuLineKind } from '../src/generated/prisma/client.js';
 import { type MenuLineDto } from '../src/menus/dto/restaurant-menus.dto.js';
@@ -170,5 +171,52 @@ describe("The menu line among a Plan's lines", () => {
     const together = firstPlan(answerOf([me(), minsu(), jieun()], { aloneMinutes: 55, served: menus }));
     expect(together.id).toBe('학생회관식당');
     expect(together.lines[1]).toEqual([plain('오늘 '), strong('눈꽃치즈닭갈비'), plain(' 외 2 · 14:30까지')]);
+  });
+});
+
+describe("A meal Plan's menu", () => {
+  it("is its Restaurant's main corner, its dishes with their prices in the menu's order, and absent without one", () => {
+    const menus = new Map([['학생회관식당', { lines: lunchOf('학생회관식당'), closesAt: '14:30' }]]);
+    const { plans } = answerOf([me()], { served: menus });
+
+    expect(plans.find(({ id }) => id === '학생회관식당')?.menu).toEqual({
+      price: null,
+      dishes: [
+        { name: '눈꽃치즈닭갈비', price: 6000, cuisine: null },
+        { name: '단호박영양밥&양념장(#)', price: 3000, cuisine: null },
+        { name: '수제탕수육', price: 6000, cuisine: null },
+      ],
+    });
+    expect(plans.filter(({ id }) => id !== '학생회관식당').map(({ menu }) => menu)).not.toContainEqual(
+      expect.anything(),
+    );
+  });
+
+  it("leaves the other corners out, and gives a buffet's price once, from its heading", () => {
+    const self = mainMenu(lunchOf('두레미담'));
+    expect(self.price).toBe(7000);
+    expect(self.dishes.map(({ name }) => name)).toEqual([
+      '뼈없는감자탕',
+      '영양부추간장불고기',
+      '치킨까스*소스',
+      '버터치킨크림카레',
+      '마늘쫑무침',
+      '깍두기',
+      '그린샐러드',
+      '오늘의차',
+    ]);
+    expect(mainMenu(lunchOf('302동식당'))).toMatchObject({
+      price: 6500,
+      dishes: expect.arrayContaining([{ name: '뼈없는감자탕', price: null, cuisine: null }]) as unknown,
+    });
+  });
+
+  it('gives each dish its kept kind of food, and none to a dish not read', () => {
+    const cuisines = new Map([['부대짬뽕&군만두', '중식' as const]]);
+
+    expect(mainMenu(lunchOf('301동식당'), cuisines).dishes).toEqual([
+      { name: '부대짬뽕&군만두', price: 6500, cuisine: '중식' },
+      { name: '(뚝)순댓국&계란장조림', price: 6500, cuisine: null },
+    ]);
   });
 });

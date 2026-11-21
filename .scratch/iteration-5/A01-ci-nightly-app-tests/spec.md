@@ -1,6 +1,6 @@
 # A01: The app's integration tests run nightly and by hand, not on a Main's push or a Release
 
-Status: ready-for-agent
+Status: in-progress
 
 ## Problem Statement
 

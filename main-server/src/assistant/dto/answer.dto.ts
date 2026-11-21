@@ -9,6 +9,7 @@
 
 import { z } from 'zod';
 import { type Position } from '../../common/geometry.js';
+import { type CuisineWord } from '../../menus/cuisine-words.js';
 import { type RecruitingQuestDto } from '../../quests/dto/quest.dto.js';
 import type { LocationMissing, WithMark, WithMissing } from '../refusals/refusal.dto.js';
 import { type RelaxOffer } from '../refusals/relax.dto.js';
@@ -40,6 +41,9 @@ export interface AnswerReply extends WithMissing {
   dropped: DroppedPlace[];
   // `relax` when nothing fits 지금: one button for each condition to ease.
   noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[]; relax?: RelaxOffer[] } | null;
+  // A meal's: the other meal of the day and when it starts ("HH:MM", now when it is under way), which the app's bar
+  // offers; null when it is over or no Restaurant serves it that day. Absent from other answers.
+  otherMeal?: { meal: 'lunch' | 'dinner'; start: string } | null;
 }
 
 // `from` is the start the User fixed for a meet. `area` is the visible map area and `what` the kind of place asked for,
@@ -96,6 +100,23 @@ export interface Plan {
   // A Global Event's Plan: the event's own start and end, Korea time with the offset (end null when it has none). Its
   // startAt is the asker's arrival when the event is under way, and is never the event's time.
   event?: { startAt: string; endAt: string | null };
+  // A meal Plan's menu: its Restaurant's main corner, its own price and its dishes in the menu's order. Absent when no
+  // menu was collected for the meal there.
+  menu?: PlanMenu;
+}
+
+export interface MenuDish {
+  name: string;
+  price: number | null;
+  // Its kind of food, for the app's chips; null for a side dish, rice, a drink and the like, and for a name not read yet.
+  cuisine: CuisineWord | null;
+}
+
+export interface PlanMenu {
+  // The corner's one price from its heading, a buffet's or a self corner's ("<뷔페> 6,500원"), null when it has none;
+  // its dishes then have none of their own.
+  price: number | null;
+  dishes: MenuDish[];
 }
 
 export interface PlanPart {

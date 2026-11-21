@@ -5,11 +5,11 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { CardFact, Lookup, LookupAction, LookupCard, LookupMenu, LookupStep } from '@/api/lookup-types';
+import type { CardFact, Lookup, LookupAction, LookupCard, LookupStep } from '@/api/lookup-types';
 import { field, hasTexts, isText, isTextOrNull, listOf } from './answers';
 import { isChip } from './chip-answers';
 import { isNote } from './missing-input-answers';
-import { isBand, isKeyOf, isLine, isPlacePoint, isScene } from './plan-answers';
+import { isBand, isDish, isKeyOf, isLine, isPlacePoint, isScene } from './plan-answers';
 import { isInput, isOneOf } from './plan-inputs';
 
 // The app's check of a reply's Lookup, every field of it, as the answer screen draws each.
@@ -63,11 +63,6 @@ function isCard(value: unknown): value is LookupCard {
     listOf(isFact)(field(value, 'facts')) &&
     isTextOrNull(field(value, 'note'))
   );
-}
-
-function isDish(value: unknown): value is LookupMenu['dishes'][number] {
-  const price = field(value, 'price');
-  return isText(field(value, 'name')) && (price === null || typeof price === 'number');
 }
 
 // A menu Lookup's facts: absent, or the hours (both "HH:MM", or null) and the dishes.

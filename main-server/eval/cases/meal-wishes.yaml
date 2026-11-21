@@ -1,0 +1,132 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-21  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# Choosing what or where to eat is planned on the map (P05 ticket 14). In use of the released app, "월요일에 밥 뭐
+# 먹을까" was asked back in text ("어떤 종류가 당기세요? … 점심인지 저녁인지도 알려 주세요"), and "한식" was then
+# answered with a list of every Restaurant's dishes. Only a question about what a named Restaurant serves stays a menu
+# question. The P4 world asked from an app that draws answers (`pnpm eval --world p4-answer`), on Monday 2026-11-02 at
+# 11:30, with menus from Monday to Thursday.
+
+- id: meal-wish-monday
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 월요일에 밥 뭐 먹을까
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    args:
+      planMeal: { date: '2026-11-02' }
+    text:
+      absent: [어떤 종류, 당기, 점심인지 저녁인지]
+
+- id: meal-wish-later-day
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 수요일에 밥 뭐 먹을까
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    args:
+      planMeal: { date: '2026-11-04' }
+    text:
+      absent: [어떤 종류, 당기, 점심인지 저녁인지]
+
+- id: meal-wish-what-to-eat
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 뭐 먹지
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+
+- id: meal-wish-recommend
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 밥 추천해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+
+- id: meal-wish-where
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 어디서 먹지
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+
+- id: meal-wish-worth-eating
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 먹을 만한 데 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+
+- id: meal-wish-lunch-menu-without-restaurant
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 오늘 점심 뭐야?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+
+- id: meal-wish-kind-of-food-next
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 수요일에 밥 뭐 먹을까
+    - assistant:
+        text: "점심 학생회관식당 · 11:00–14:30\n12:10 도착 · 13:20엔 나서요"
+    - user: 한식
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    args:
+      planMeal: { cuisine: 한식 }
+
+- id: meal-wish-named-restaurant-stays-menu
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 학생회관 오늘 메뉴 뭐야
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findMenu]
+      forbidden: [planMeal, getMenus, showOnMap]

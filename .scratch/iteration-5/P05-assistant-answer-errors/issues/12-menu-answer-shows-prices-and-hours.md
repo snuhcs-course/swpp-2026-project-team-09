@@ -18,6 +18,7 @@ Native files: none. Releases: the main server and an app OTA update.
 - The menu rules say when the menu was collected only when the User asks, or when it is not the menu of the day asked.
 - The menu Lookup carries `menu`: the meal's hours that day (null when none were kept) and the dishes of its main corner with their prices, so that the map's card of the Restaurant (P04 ticket 08) reads them as facts, not from the words.
 - The Restaurant card (findMealRestaurants and showRestaurants) carries `hours`, the meal's hours kept for its day (`RestaurantHours`), or null when none were kept. The app reads it as optional. P04 ticket 08 writes them on the Restaurant's flag; that server part was moved here.
+- Each meal Plan carries `menu`: its Restaurant's main corner, with the corner's own price from its heading (a buffet's or a self corner's, null when it has none) and its dishes with their prices in the menu's order. It is absent when no menu was collected for the meal there. P04 tickets 13 and 15 write the first dish and a price on the Restaurant's tag and list every candidate's menu. The Plan and the menu Lookup take the corner from one helper, `mainMenu` in `meal-menu.ts`. A dish that fits a stated wish ("더 가벼운 걸로") is not put first: the server is given only the Restaurant the model chose, not the wish.
 
 ## Acceptance criteria
 
@@ -27,6 +28,8 @@ Native files: none. Releases: the main server and an app OTA update.
 - [x] The app believes a menu Lookup with `menu`, with null hours, and without it, and refuses one of another shape. (Unit test.)
 - [x] The Restaurant card carries the hours kept for its meal, and null without them. (Main server integration tests.)
 - [x] The app believes a card with hours, with null, and without the field, and refuses hours of another shape. (Integration test.)
+- [x] A meal Plan's `menu` holds its Restaurant's main corner: a buffet's price once, the dishes with their prices in the menu's order. It is absent without a menu. (Unit test, fails before the change.)
+- [x] The app believes a meal Plan with `menu`, with no dishes, and without it, and refuses one of another shape. (Unit test.)
 - [x] Lint, format and types of the main server and the app pass.
 
 ## Comments

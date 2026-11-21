@@ -109,6 +109,7 @@ Every error of the usage test's list of answer errors, and where it went:
 | The shuttle question answered with the walk again; a Monday Class reached from where the phone was; "자연과학관6(24동)는" | Ticket 11 |
 | A menu answer with no prices; "메뉴는 … 수집된 정보예요" unasked | Ticket 12 |
 | "민수랑 학생회관에서 만나기 · 학생회관"; a description repeating the card; "19:00–19:30 · 30분"; "내 파티에 처음 들어왔어요" | Ticket 13 |
+| Found later, in use of the released app 26.11.21-2: "월요일에 밥 뭐 먹을까" asked back in text, then "한식" answered with a list of every Restaurant's dishes | Ticket 14 |
 | A first sentence that sounds like a failure ("…파티는 찾지 못했어요", "…열려 있는 게 없어서") | P02 ticket 01 (pull request 384) |
 | A part of the request dropped without a word (관정, 16시 and the booking) | P03 tickets 01 and 02 (pull requests 385 and 386) |
 

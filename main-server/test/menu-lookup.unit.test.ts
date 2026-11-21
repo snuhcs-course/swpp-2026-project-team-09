@@ -11,6 +11,7 @@ import { type Lookup } from '../src/assistant/dto/answer.dto.js';
 import { type DayItem } from '../src/assistant/free-time/free-time.js';
 import { dishesOf, menuAnswer } from '../src/assistant/lookup/menu-lookup.js';
 import { MenuLineKind } from '../src/generated/prisma/client.js';
+import { type Cuisines } from '../src/menus/cuisine-words.js';
 import { type MenuLineDto } from '../src/menus/dto/restaurant-menus.dto.js';
 import { answerOf, ME, person, plain, point, position, strong, time } from './meal-answers.js';
 import { at, classAt, DATE, id, readWorld } from './worked-example.js';
@@ -64,13 +65,22 @@ const NOW = at('11:40');
 const HOURS = { opensAt: '11:30', closesAt: '13:30' };
 
 // The User's Lookup of a Restaurant's lunch at its Place, alone, with their day as given.
-function lookupOf(key: string, placeName: string, items: DayItem[]): Lookup {
+function lookupOf(key: string, placeName: string, items: DayItem[], cuisines?: Cuisines): Lookup {
   const answer = answerOf([person(ME, '유상', items)], {
     candidates: [{ key, placeId: id(placeName) }],
     now: NOW,
     fixed: { placeId: id(placeName) },
   });
-  const found = menuAnswer({ key, date: DATE, meal: 'lunch', now: NOW, lines: lunchOf(key), answer, hours: HOURS });
+  const found = menuAnswer({
+    key,
+    date: DATE,
+    meal: 'lunch',
+    now: NOW,
+    lines: lunchOf(key),
+    answer,
+    hours: HOURS,
+    ...(cuisines === undefined ? {} : { cuisines }),
+  });
   if (found.result !== 'found') {
     throw new Error(`No menu Lookup: ${found.result}`);
   }
@@ -208,10 +218,18 @@ describe("A menu Lookup's facts", () => {
     expect(boardQ8().menu).toEqual({
       hours: HOURS,
       dishes: [
-        { name: '부대짬뽕&군만두', price: 6500 },
-        { name: '(뚝)순댓국&계란장조림', price: 6500 },
+        { name: '부대짬뽕&군만두', price: 6500, cuisine: null },
+        { name: '(뚝)순댓국&계란장조림', price: 6500, cuisine: null },
       ],
     });
+  });
+
+  it('give each dish its kept kind of food, none to a dish not read', () => {
+    const cuisines = new Map([['부대짬뽕&군만두', '중식' as const]]);
+
+    expect(lookupOf('301동식당', '제1공학관', boardDay(), cuisines).menu?.dishes.map(({ cuisine }) => cuisine)).toEqual(
+      ['중식', null],
+    );
   });
 });
 
