@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -19,5 +20,11 @@ describe('The 관정도서관 rules', () => {
     expect(LIBRARY_ANSWER_RULES).not.toContain('When the words fit several bookable spaces, ask which one');
     expect(LIBRARY_ANSWER_RULES).toContain('When the words fit several bookable seat spaces');
     expect(LIBRARY_ANSWER_RULES).toContain('When the words fit several bookable rooms, ask which one');
+  });
+
+  // In the usage test of 2026-11-21 the words said "예약하기를 눌러야" while a signed-out card showed only 로그인.
+  it('of an app that draws answers say to sign in first when the card shows 로그인, and name the library one way', () => {
+    expect(LIBRARY_ANSWER_RULES).toContain('they sign in first when the card shows 로그인');
+    expect(LIBRARY_ANSWER_RULES).toContain('Call the library 관정도서관 in replies, not 관정관.');
   });
 });

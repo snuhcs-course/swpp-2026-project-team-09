@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -21,7 +22,7 @@ import {
 } from './booking-rules.js';
 import { KWANJEONG_PLACE_NUMBER, type LibrarySpace, roomLabelOf } from './catalogue.js';
 import { bookCard, type LibraryCompanion } from './library-card.js';
-import { gated, type LibraryServices, refused, showCard } from './library-parts.js';
+import { gated, type LibraryServices, refused, showCard, SIGN_IN_FIRST } from './library-parts.js';
 import { arrivalsOf, pickStudyTime, type StudyBooking, type StudyDatePick, type StudyFacts } from './study-pick.js';
 import { monthDayWords, stayNote, studyRoomFor, weekdayWord } from './study-room.js';
 import { windowOpening } from './window-opening.js';
@@ -173,7 +174,7 @@ function shownAnswer({ space, booking, facts, companions, opens }: Shown, others
   const when = `${booking.date}(${weekdayWord(booking.date)}) ${booking.start}–${booking.end}`;
   const closing =
     opens === null
-      ? '예약하기를 눌러야 예약돼요.'
+      ? `예약하기를 눌러야 예약돼요. ${SIGN_IN_FIRST}`
       : `예약 창은 ${openingWords(opens)}에 열려요. 동의를 먼저 받아 두고, 그때 알려 드려요.`;
   return {
     result: 'shown',
