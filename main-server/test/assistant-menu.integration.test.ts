@@ -177,8 +177,10 @@ describe('Words that name several Restaurants', () => {
   });
 });
 
-describe('A question about menus that names no Restaurant', () => {
-  it('is answered with getMenus as today, with no Lookup', async () => {
+// A question that names no Restaurant is a meal wish for planMeal (P05 ticket 14); getMenus stays for breakfast and
+// for a name findMenu does not know.
+describe('getMenus, in an app that draws answers', () => {
+  it('answers with no Lookup, and the dining button', async () => {
     const date = '2086-02-12';
     await boardQ8(date);
     await stage.menusOn(date, ['301동식당', '학생회관식당']);

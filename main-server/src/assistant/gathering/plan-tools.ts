@@ -105,7 +105,7 @@ const input = z
       .enum(['lunch', 'dinner'])
       .optional()
       .describe(
-        "lunch or dinner, only when the User's words name the meal (점심, 저녁). Left out otherwise: the server takes the one being served or the next one.",
+        "lunch or dinner, only when the User's words name the meal (점심, 저녁). Left out otherwise: the server takes the one being served or the next one today, and lunch on a later day.",
       ),
     friendIds: z
       .array(z.uuid())
@@ -269,9 +269,11 @@ export function planMeal(
 // of the 공강 rules for an app that draws answers. They state each rule by what it means.
 export const PLAN_RULES = `A meal is planned on the map: the server decides the Restaurant, the times, and where people meet, and the app draws the plans.
 
-- When the User is hungry or wants a meal (배고파, 밥 먹자, 점심 같이 먹자), alone or with Friends they name, call planMeal with the day (today when they name none), the meal only when their words name one (lunch for 점심, dinner for 저녁; left out otherwise, and the server takes it by the clock), and the Friends, each found with resolveFriend first. With no Friend it plans for the User alone. A time they name for the meal (오후 3시쯤 저녁) is from, as HH:MM, even when it is before the meal's hours: the server fits it to them. Do not ask what the User feels like first, and do not ask back about the time.
+- When the User is hungry, wants a meal, or is choosing what or where to eat (배고파, 밥 먹자, 점심 같이 먹자, 뭐 먹을까, 뭐 먹지, 밥 추천해 줘, 어디서 먹지, 먹을 만한 데), on any day, alone or with Friends they name, call planMeal with the day (today when they name none), the meal only when their words name one (lunch for 점심, dinner for 저녁; left out otherwise: the server takes the one being served or the next one today, and lunch on a later day), and the Friends, each found with resolveFriend first. With no Friend it plans for the User alone. A time they name for the meal (오후 3시쯤 저녁) is from, as HH:MM, even when it is before the meal's hours: the server fits it to them. Plan first: do not ask back about the kind of food, about lunch or dinner, or about the time.
+- On a later day with no meal named, the plans are lunch's: your sentence may end by saying that 저녁 plans dinner, such as "월요일 점심은 12:10에 학생회관식당에서 먹어요, 저녁이면 '저녁'이라고 해 주세요."
 - The app draws the plans on the map and writes their times, ways, and minutes itself, the first one first, and the User browses the others with arrows. Your reply is one sentence about the first plan only, its Restaurant and when everyone is there, such as "12:33에 학생회관식당에서 먹어요." Write nothing more: no second sentence, no other plan, nobody's walking minutes or time to set out, nothing about the map, and nothing that was dropped. Do not call showOnMap for a plan: the app already draws it.
-- Each plan has its Restaurant's menu for the meal and when it closes. When the User picks by food (돈까스 먹고 싶어, 더 가벼운 걸로, 국물 있는 거), call planMeal with the conditions on screen, if any, as they are, and read the plans' menus. When one serves what they asked for, call planMeal again with the same conditions and that plan's restaurant. When none does, say so in one sentence with what the first plan serves. Never name a dish that no plan's menu has.
+- Each plan has its Restaurant's menu for the meal and when it closes, and the app shows the menus. When the User picks by food, in the same message as the meal or in the next (한식, 돈까스 먹고 싶어, 더 가벼운 걸로, 국물 있는 거), call planMeal with the conditions on screen, if any, as they are, and read the plans' menus. When one serves what they asked for, call planMeal again with the same conditions and that plan's restaurant. When none does, say so in one sentence with what the first plan serves. Never name a dish that no plan's menu has, and never answer with a list of menus or dishes in words.
+- A question about what a Restaurant the User names serves (학생회관 오늘 메뉴 뭐야, 302동 저녁 뭐 나와) is a menu question, by the menu rules. Any other question about what or where to eat, menus included (오늘 점심 뭐야?), is a meal wish, planned with planMeal.
 - When planMeal answers none, say plainly why. Name someone busy only if they are a Friend in the plan, and say only when their Class ends or starts, never the course or the room; never name anyone who is not the User's Friend.
 - When the User asks who is free for a meal ("오늘 점심에 누구 돼?"), call findFreeFriends. Your reply says the User's Free Time in that window and the names of the Friends it returned.
 - When resolveFriend answers several, ask which one ${WHICH_FRIEND}, and wait for the answer.
