@@ -28,6 +28,18 @@ const answerSchema = z.object({ dishes: z.array(z.object({ number: z.number(), c
 
 const cuisineSchema = z.enum([...Object.values(Cuisine), NONE, OTHER]);
 
+// The most names one call reads. The model reasons before it answers, and its reasoning counts in the output tokens: on
+// 2026-11-21, 25 names took 8.7 s and wrote 1,767 tokens (1,341 of them reasoning), and 80 names 12.9 s and 3,462, near
+// the 4,000 the Assistant's limit allows, so that 100 names were cut off. 25 leave room in both the tokens and the time.
+export const NAMES_PER_CALL = 25;
+
+// The names in the parts the calls read, in their order.
+export function cuisineParts(names: readonly string[]): string[][] {
+  return Array.from({ length: Math.ceil(names.length / NAMES_PER_CALL) }, (_, index) =>
+    names.slice(index * NAMES_PER_CALL, (index + 1) * NAMES_PER_CALL),
+  );
+}
+
 export interface CuisineLimits {
   timeoutMs: number;
   maxOutputTokens: number;
