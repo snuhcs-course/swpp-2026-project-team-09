@@ -37,7 +37,7 @@ const ANSWER: AnswerReply = {
 const LOOKUP: Lookup = {
   kind: 'way',
   chips: [{ kind: 'origin', text: '301동에서', userId: null }],
-  lines: [],
+  lines: [[{ text: '걸어서 16분', strong: false }]],
   basis: [],
   scene: { people: [], places: [], routes: [], flags: [] },
   band: null,
@@ -146,12 +146,31 @@ describe("A run's Lookup", () => {
     expect(reply).toMatchObject({ text: '', lookup: LOOKUP, noTextFinishReason: null });
   });
 
-  it('says the fixed sentence over any other Lookup when no step wrote text', async () => {
-    const menu: Lookup = { ...LOOKUP, kind: 'menu' };
+  it.each([
+    ['a menu', 'menu', '학생회관식당 점심'],
+    ['a study area', 'study', '보는 범위에선 중앙도서관'],
+    ['the shuttle', 'way', '셔틀은 지금 다니지 않아요'],
+    ['a day', 'day', '내일 수업 2개'],
+    ['the Tutorial Quests', 'tutorial', '세 곳을 돌면 15:40에 끝나요'],
+    ['a Friend', 'friend', '민수는 지금 302동에 있어요'],
+  ] as const)(
+    'says nothing beside %s when no step wrote text, the app sending its lines back',
+    async (_, kind, line) => {
+      const lookup: Lookup = { ...LOOKUP, kind, lines: [[{ text: line, strong: false }]] };
+      model.script({ tool: 'find', input: {} }, { text: '' });
+
+      const reply = await runFeature(model.model, featureLookingUp(lookup), asker(NO_CONTEXT), ask, LIMITS);
+
+      expect(reply).toMatchObject({ text: '', lookup, noTextFinishReason: null });
+    },
+  );
+
+  it('says the fixed sentence beside a Lookup with no lines, so that the reply sent back has words', async () => {
+    const bare: Lookup = { ...LOOKUP, kind: 'menu', lines: [] };
     model.script({ tool: 'find', input: {} }, { text: '' });
 
-    const reply = await runFeature(model.model, featureLookingUp(menu), asker(NO_CONTEXT), ask, LIMITS);
+    const reply = await runFeature(model.model, featureLookingUp(bare), asker(NO_CONTEXT), ask, LIMITS);
 
-    expect(reply).toMatchObject({ text: FIXED_SENTENCE, lookup: menu, noTextFinishReason: 'stop' });
+    expect(reply).toMatchObject({ text: FIXED_SENTENCE, lookup: bare, noTextFinishReason: 'stop' });
   });
 });
