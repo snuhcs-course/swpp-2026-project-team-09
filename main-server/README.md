@@ -2574,7 +2574,10 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     the activity plainly fits, without asking, and propose once nothing else is missing, asking only when it fits none
     or more than one. Or it answers
     `{ "result": "proposed", "proposal": { … } }` and puts the Proposal in the reply, the last one when it is called
-    twice. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
+    twice. When the 파티's first 30 minutes (as a Sub Quest with no end fills a day) overlap the asker's own Classes or
+    the Quests they hold, the answer adds `clashes`, at most 3, each its kind (`class` or `quest`), name, start and end;
+    the rules have the model say the first and ask whether to keep the time, the card still shown. Nobody else's day is
+    read. It makes nothing. To change a Proposal sent back, the model calls it again with its values and
     the change. A Proposal sent back made is a 파티 already posted: `proposeQuest` answers
     `{ "result": "made", "questId", "reason" }` and puts nothing in the reply, so that 만들기 never makes a second 파티
     for a change, and the model says it is posted and is changed with 수정 in its room. Only `another: true`, when the
@@ -3482,7 +3485,9 @@ A kind that rings is pushed to the User's phone when its time comes, with its ti
 
 `step-changed`, `arrived` and `late` stand for the words a party's members cannot say to each other, for the room has
 no chat. Each is kept once per member who caused it (`about`), so a later one replaces the earlier and rings again.
-`SubQuestsService` and `LateService` tell after the change is stored, without the answer waiting. `ArrivalsService`
+`SubQuestsService` and `LateService` tell after the change is stored, without the answer waiting. A step change that
+tells (`step-changed`) also forgets every Holder's `leave-by`, the changer's included, before it answers: it was kept
+for the steps as they were, and a time to leave that no longer holds is worse than none. `ArrivalsService`
 (`src/parties/`) hears each position `LocationSharingService` keeps: a User who is a member of a Quest's Party with
 its sharing on, and holds the Quest, has arrived within 50 m of the point of the step the map shows (the next step not
 ended, the attending one first), from 30 minutes before the step's time until it ends, or for a day after its time

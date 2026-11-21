@@ -19,20 +19,17 @@ import { facilityBookingOf } from '../facility-booking.js';
 import { defineTool, type Tool, type ToolContext } from '../feature.js';
 import { contestedReason, type FoundKind } from '../found-ids.js';
 import { koreaTime } from '../korea-time.js';
+import { type UserDayService } from '../free-time/user-day.service.js';
 import { type FieldFailures, type Input, input, isField } from './propose-quest-input.js';
-import {
-  type ProposalFriend,
-  type ProposalPlace,
-  proposalForModel,
-  type QuestProposal,
-  sentProposalOf,
-} from '../proposal.js';
+import { proposedAnswer } from './proposed-answer.js';
+import { type ProposalFriend, type ProposalPlace, type QuestProposal } from '../proposal.js';
 
-// The services proposeQuest checks the resolved ids with.
+// The services proposeQuest checks the resolved ids with, and reads the asker's day from.
 export interface ProposeQuestServices {
   friends: FriendViewService;
   places: PlacesService;
   globalEvents: GlobalEventsService;
+  days: Pick<UserDayService, 'itemsOn'>;
 }
 
 // What one id of the input names, checked again, or why it was refused.
@@ -241,12 +238,13 @@ const MADE =
 // The proposer: it checks a 파티 the User described against the party form's rules, with the Place, the Global Event
 // and the Friends the resolvers found, and adds it to the reply as the Proposal card. It makes nothing: the User makes
 // the Quest with the card's 만들기. A second Proposal in one reply replaces the first. On a failure it answers what is
-// missing or wrong, field by field, and adds nothing. While the last Proposal sent back was made, it proposes only
+// missing or wrong, field by field, and adds nothing. A Proposal over the asker's own Classes or Quests is still made,
+// and its answer names them. While the last Proposal sent back was made, it proposes only
 // another 파티 beside it.
 export function proposeQuest(services: ProposeQuestServices): Tool {
   return defineTool({
     description:
-      'Proposes a 파티 (a Quest) the User asked to make or recruit for: 공개 (open or approval, on a Board) or 비공개 (closed, with invited Friends), optionally at a Place and for a Global Event. It is shown under your reply as a card with 만들기, which makes it. Nothing is made until the User presses it. Give only ids the resolvers returned in this message or those in [Proposal shown: …]. To change a Proposal shown before, give its values again with only the change. A 파티 in [Proposal made: …] is made already and is not changed here: it answers "made". When it answers "refused", ask the User for the fields it names, except a Board the activity plainly gives.',
+      'Proposes a 파티 (a Quest) the User asked to make or recruit for: 공개 (open or approval, on a Board) or 비공개 (closed, with invited Friends), optionally at a Place and for a Global Event. It is shown under your reply as a card with 만들기, which makes it. Nothing is made until the User presses it. Give only ids the resolvers returned in this message or those in [Proposal shown: …]. To change a Proposal shown before, give its values again with only the change. A 파티 in [Proposal made: …] is made already and is not changed here: it answers "made". When it answers "refused", ask the User for the fields it names, except a Board the activity plainly gives. When its answer has clashes, Classes or Quests of the User at that time, the card is still shown: say the first and ask whether to keep the time.',
     input,
     run: async (given, context) => {
       const madeQuestId = context.shown?.madeQuestId;
@@ -285,7 +283,7 @@ export function proposeQuest(services: ProposeQuestServices): Tool {
         invitees: resolved.invitees,
       };
       context.presented.proposal = proposal;
-      return { result: 'proposed', proposal: proposalForModel(sentProposalOf(proposal)) };
+      return proposedAnswer(proposal, context.userId, services.days);
     },
   });
 }
