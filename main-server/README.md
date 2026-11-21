@@ -3483,7 +3483,9 @@ A kind that rings is pushed to the User's phone when its time comes, with its ti
 
 `step-changed`, `arrived` and `late` stand for the words a party's members cannot say to each other, for the room has
 no chat. Each is kept once per member who caused it (`about`), so a later one replaces the earlier and rings again.
-`SubQuestsService` and `LateService` tell after the change is stored, without the answer waiting. `ArrivalsService`
+`SubQuestsService` and `LateService` tell after the change is stored, without the answer waiting. A step change that
+tells (`step-changed`) also forgets every Holder's `leave-by`, the changer's included, before it answers: it was kept
+for the steps as they were, and a time to leave that no longer holds is worse than none. `ArrivalsService`
 (`src/parties/`) hears each position `LocationSharingService` keeps: a User who is a member of a Quest's Party with
 its sharing on, and holds the Quest, has arrived within 50 m of the point of the step the map shows (the next step not
 ended, the attending one first), from 30 minutes before the step's time until it ends, or for a day after its time
