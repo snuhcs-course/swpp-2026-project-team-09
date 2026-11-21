@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen } from '@testing-library/react-native';
@@ -127,10 +128,10 @@ describe('MapAnswerMark: a dot', () => {
     expect(screen.getByText('3')).toHaveStyle({ color: color.onPrimary });
   });
 
-  it('draws a candidate as a smaller grey round with its number', async () => {
+  it('draws a candidate as a smaller navy round with its number (boards 20 and 21)', async () => {
     await render(<MapAnswerMark label={null} symbol={{ type: 'dot', role: 'candidate', number: 4 }} testID="mark" />);
 
-    expect(screen.getByTestId('mark:dot')).toHaveStyle({ backgroundColor: color.inkSubtle });
+    expect(screen.getByTestId('mark:dot')).toHaveStyle({ backgroundColor: color.snuBlue });
     expect(screen.getByText('4')).toBeVisible();
   });
 
