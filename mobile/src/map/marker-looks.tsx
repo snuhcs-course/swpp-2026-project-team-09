@@ -13,6 +13,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -79,7 +80,7 @@ export type MarkerLook =
   // teardrop with the person's letters or photo in it. `small` is its look while the whole campus is in view.
   // `id` is the person's own, which names the look; `name` and `photo` are what is drawn. `stale` is dimmed: the
   // position is old. `addable` carries a "+": a press adds the Friend to the answer on screen. `exact` carries a green
-  // dot: a Friend seen at the exact level.
+  // dot: a Friend seen at the exact level. `faded` is faint: an answer is up that the person is not in.
   | {
       kind: 'person';
       id: string;
@@ -87,6 +88,7 @@ export type MarkerLook =
       small?: boolean;
       selected?: boolean;
       stale?: boolean;
+      faded?: boolean;
       addable?: boolean;
       exact?: boolean;
       name: string;
@@ -190,9 +192,10 @@ export function lookName(look: MarkerLook): string {
     const photo = look.photo !== null && 'photo';
     const exact = look.exact === true && 'exact';
     const stale = look.stale === true && 'stale';
+    const faded = look.faded === true && 'faded';
     const addable = look.addable === true && 'addable';
     const size = look.small === true ? 'small' : 'full';
-    return parts('person', size, look.tone, look.id, photo, exact, stale, selected, addable);
+    return parts('person', size, look.tone, look.id, photo, exact, stale, faded, selected, addable);
   }
   const count = look.form === 'pin' && (look.count ?? 0) > 0 && String(look.count);
   return parts(
@@ -277,6 +280,7 @@ function PlainLookView({ look, onPhotoSettled, testID }: LookViewProps): ReactEl
         selected={look.selected}
         small={look.small}
         source={look.photo === null ? undefined : { uri: look.photo }}
+        faded={look.faded}
         stale={look.stale}
         testID={testID}
         tone={look.tone}

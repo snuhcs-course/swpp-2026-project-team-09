@@ -5,6 +5,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -30,8 +31,10 @@ export interface AnswerLabel {
   // `stop` is a shuttle stop's; `leave`, `late`, and `shuttle` are a way's flags.
   tone: 'pick' | 'candidate' | 'dropped' | 'next' | 'person' | 'meeting' | 'stop' | 'leave' | 'late' | 'shuttle';
   title: string;
-  // A second line, under the title.
+  // A second line, under the title; a candidate's stands beside its title (its arrival time).
   line: string | null;
+  // A candidate's line under its title and time: its dishes and price. Left out, none.
+  sub?: string | null;
   // A number badge before the title, when the mark's own dot is not drawn.
   number: number | null;
   // How much further than the gap a label at the left or the right stands from the symbol box, in points, so that it
@@ -87,14 +90,42 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
 }
 
 function Label({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
-  const { side, tone, title, line, number, shift } = label;
+  const { side, tone, title, line, number, shift, sub = null } = label;
+  const candidate = tone === 'candidate';
+  const head = (
+    <>
+      <Text
+        numberOfLines={1}
+        style={[
+          tone === 'pick' ? styles.pickTitle : styles.title,
+          candidate && styles.candidateTitle,
+          tone === 'meeting' && styles.meetingTitle,
+          tone === 'dropped' && styles.droppedTitle,
+          WAY_FLAGS.has(tone) && styles.flagTitle,
+          tone === 'late' && styles.lateTitle,
+          tone === 'shuttle' && styles.shuttleTitle,
+        ]}
+      >
+        {title}
+      </Text>
+      {line === null ? null : (
+        <Text
+          numberOfLines={1}
+          style={[styles.line, tone === 'pick' && styles.pickLine, tone === 'stop' && styles.stopLine]}
+        >
+          {line}
+        </Text>
+      )}
+    </>
+  );
   return (
     <View
       style={[
         styles.label,
-        line !== null && tone !== 'candidate' && styles.twoLines,
+        ((line !== null && !candidate) || sub !== null) && styles.twoLines,
         tone === 'pick' && styles.pickLabel,
-        tone === 'candidate' && styles.candidateLabel,
+        candidate && styles.candidateLabel,
+        sub !== null && styles.subLabel,
         tone === 'meeting' && styles.meetingLabel,
         tone === 'late' && styles.lateLabel,
         tone === 'shuttle' && styles.shuttleLabel,
@@ -107,30 +138,18 @@ function Label({ label, testID }: { label: AnswerLabel; testID?: string }): Reac
           <Text style={styles.number}>{number}</Text>
         </View>
       )}
-      <View style={[styles.words, tone === 'candidate' && styles.inline]}>
-        <Text
-          numberOfLines={1}
-          style={[
-            tone === 'pick' ? styles.pickTitle : styles.title,
-            tone === 'candidate' && styles.candidateTitle,
-            tone === 'meeting' && styles.meetingTitle,
-            tone === 'dropped' && styles.droppedTitle,
-            WAY_FLAGS.has(tone) && styles.flagTitle,
-            tone === 'late' && styles.lateTitle,
-            tone === 'shuttle' && styles.shuttleTitle,
-          ]}
-        >
-          {title}
-        </Text>
-        {line === null ? null : (
-          <Text
-            numberOfLines={1}
-            style={[styles.line, tone === 'pick' && styles.pickLine, tone === 'stop' && styles.stopLine]}
-          >
-            {line}
-          </Text>
-        )}
-      </View>
+      {candidate ? (
+        <View style={styles.words}>
+          <View style={styles.inline}>{head}</View>
+          {sub === null ? null : (
+            <Text numberOfLines={1} style={styles.sub}>
+              {sub}
+            </Text>
+          )}
+        </View>
+      ) : (
+        <View style={styles.words}>{head}</View>
+      )}
     </View>
   );
 }
@@ -158,6 +177,9 @@ export function MapAnswerMark({
 
 const GAP = 2;
 const LABEL_MAX = 180;
+// A candidate's tag with its dishes and price under its name: boards 22 and 24 show "뚝배기불고기 외 2 · 5,000원부터"
+// whole.
+const SUB_MAX = 220;
 const RING = 2;
 const PICK_DOT = 24;
 const CANDIDATE_DOT = 20;
@@ -204,17 +226,22 @@ function wordsWidth(words: string, size: number): number {
 // side of the symbol box, the gap and its `shift` away, and centred on the point the other way. Its width is its
 // words' with the padding, the pick's border, and the number's badge, at most `LABEL_MAX`. The camera's room for
 // labels and the choice of a label's side both read it.
-export function answerLabelBox({ side, tone, title, line, number, shift = 0 }: AnswerLabel): {
+export function answerLabelBox({ side, tone, title, line, number, shift = 0, sub = null }: AnswerLabel): {
   left: number;
   top: number;
   right: number;
   bottom: number;
 } {
   const titleSize = tone === 'pick' ? mapText.buttonTitle.fontSize : mapText.rowLine.fontSize;
-  const words = Math.max(wordsWidth(title, titleSize), line === null ? 0 : wordsWidth(line, mapText.rowLine.fontSize));
+  const lineWidth = line === null ? 0 : wordsWidth(line, mapText.rowLine.fontSize);
+  const head =
+    tone === 'candidate' && line !== null
+      ? wordsWidth(title, titleSize) + space[1] + lineWidth
+      : Math.max(wordsWidth(title, titleSize), lineWidth);
+  const words = Math.max(head, sub === null ? 0 : wordsWidth(sub, mapText.rowLine.fontSize));
   const frame = 2 * space[2] + (tone === 'pick' ? 2 * RING : 0) + (number === null ? 0 : BADGE + space[1]);
-  const width = Math.ceil(Math.min(LABEL_MAX, frame + words));
-  const height = line === null ? ONE_LINE : TWO_LINES;
+  const width = Math.ceil(Math.min(sub === null ? LABEL_MAX : SUB_MAX, frame + words));
+  const height = (line === null || tone === 'candidate') && sub === null ? ONE_LINE : TWO_LINES;
   const reach = ANSWER_SYMBOL_BOX / 2 + GAP + shift;
   if (side === 'left' || side === 'right') {
     const left = side === 'right' ? reach : -reach - width;
@@ -302,6 +329,8 @@ const styles = StyleSheet.create({
   candidateLabel: { borderWidth: 1.5, borderColor: color.snuBlue },
   inline: { flexDirection: 'row', alignItems: 'baseline', gap: space[1] },
   candidateTitle: { fontFamily: mapText.smallTitle.fontFamily },
+  sub: { ...mapText.rowLine, color: color.inkMuted },
+  subLabel: { maxWidth: SUB_MAX },
   meetingLabel: { backgroundColor: color.ink },
   lateLabel: { backgroundColor: color.dangerSoft },
   shuttleLabel: { backgroundColor: color.svcShuttleSoft },

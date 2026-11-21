@@ -7,12 +7,13 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { type AnswerLabel, type AnswerSymbol, type FaceBadge, initials } from '@/design-system';
-import { koreaDayWord } from '@/korea-time';
+import { koreaClock, koreaDayWord } from '@/korea-time';
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
 import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
@@ -33,6 +34,7 @@ import {
 import { type LabelView, placeLabels, type Unplaced, UPRIGHT_REACH } from './answer-labels';
 import { routeLineId } from './answer-walks';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
+import { dishWords, menuLine } from './meal-menus';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
 
@@ -114,11 +116,21 @@ const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
 
 // The pick's time with the Plan's day before it. A flag the main server already wrote with its day ("내일(토) 18:00
 // 배드민턴") keeps it once.
-function pickLine(time: string | null, day: string | undefined): string | null {
+function dayAndTime(time: string | null, day: string | undefined): string | null {
   if (day === undefined || day === '' || (time?.includes(day) ?? false)) {
     return time;
   }
   return time === null ? day : `${day} ${time}`;
+}
+
+// The pick's line: its time with the Plan's day, and a meal Plan's first dish with the count of the rest.
+function pickLine(time: string | null, day: string | undefined, plan: Plan | undefined): string | null {
+  const when = dayAndTime(time, day);
+  const dishes = plan?.menu === undefined ? null : dishWords(plan.menu);
+  if (dishes === null) {
+    return when;
+  }
+  return when === null ? dishes : `${when} · ${dishes}`;
 }
 
 function placeDraft(
@@ -132,7 +144,8 @@ function placeDraft(
   const base = { position, planId: null, title, line: null, number: null };
   if (role === 'pick') {
     const flag = scene.flags.find(({ at, role: flagRole }) => flagRole === 'place' && samePoint(at, position));
-    const line = pickLine(flag === undefined ? null : restOf(title, flag.text), day);
+    const plan = pickNumber === null ? undefined : plans[pickNumber - 1];
+    const line = pickLine(flag === undefined ? null : restOf(title, flag.text), day, plan);
     const name = line === null ? title : `${title} · ${line}`;
     const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber };
     return {
@@ -150,7 +163,10 @@ function placeDraft(
     const index = plans.findIndex((plan) => plan.place.placeId === place.placeId && plan.place.label === place.label);
     const plan: Plan | undefined = plans[index];
     const number = plan === undefined ? null : index + 1;
-    const name = number === null ? title : `후보 ${number} · ${title}`;
+    const time = plan === undefined ? null : koreaClock(plan.startAt);
+    const sub = menuLine(plan?.menu);
+    const said = [time, sub].flatMap((words) => words ?? []);
+    const name = number === null ? title : [`후보 ${number}`, title, ...said].join(' · ');
     const symbol: AnswerSymbol = { type: 'dot', role, number };
     return {
       ...base,
@@ -160,6 +176,8 @@ function placeDraft(
       group: role,
       symbol,
       tone: role,
+      line: time,
+      sub,
       number,
     };
   }
@@ -223,11 +241,24 @@ interface Placed {
 }
 
 // A draft at the point of that index, its label without its side: a pick or a candidate whose dot is not drawn
-// carries its number in it. The pick's label is kept, the answer's main mark.
-function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null): Unplaced {
-  const { position, group, tone, title, line, number } = draft;
-  const words = title === null ? null : { tone, title, line, number: symbol === null ? number : null };
-  return { point, position, words, sides: SIDES[group], kept: group === 'pick' };
+// carries its number in it. The pick's label is kept, the answer's main mark, and so is a candidate's that shares its
+// point with another candidate, two restaurants of one building, so that each can be pressed.
+function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null, shared: boolean): Unplaced {
+  const { position, group, tone, title, line, sub = null, number } = draft;
+  const words =
+    title === null
+      ? null
+      : { tone, title, line, ...(sub === null ? {} : { sub }), number: symbol === null ? number : null };
+  return { point, position, words, sides: SIDES[group], kept: group === 'pick' || shared };
+}
+
+function candidatesAt(here: readonly Draft[]): number {
+  return here.filter(({ group }) => group === 'candidate').length;
+}
+
+// The order labels take sides in: by their kinds (`SIDE_ORDER`), candidates sharing a point before those alone.
+function sideRank({ draft, shared }: { draft: Draft; shared: boolean }): number {
+  return SIDE_ORDER.indexOf(draft.group) - (shared ? 0.5 : 0);
 }
 
 // One symbol at each point, and the labels placed (`placeLabels`) in the order their kinds take sides, so that the
@@ -240,10 +271,15 @@ function placeAll(drafts: Draft[], view: LabelView | null): Placed[] {
   }));
   const placed = points
     .flatMap(({ here, drawn }, point) =>
-      here.map((draft) => ({ draft, point, symbol: draft === drawn ? draft.symbol : null })),
+      here.map((draft) => ({
+        draft,
+        point,
+        symbol: draft === drawn ? draft.symbol : null,
+        shared: draft.group === 'candidate' && candidatesAt(here) > 1,
+      })),
     )
-    .toSorted((one, other) => byGroup(SIDE_ORDER)(one.draft, other.draft));
-  const marks = placed.map(({ draft, point, symbol }) => unplaced(draft, point, symbol));
+    .toSorted((one, other) => sideRank(one) - sideRank(other));
+  const marks = placed.map(({ draft, point, symbol, shared }) => unplaced(draft, point, symbol, shared));
   const symbols = points.map(({ position, drawn }) => ({ position, symbol: drawn?.position ?? null }));
   const labels = placeLabels(symbols, marks, view);
   return placed.map(({ draft, symbol }, at) => ({ draft, symbol, label: labels[at] ?? null }));

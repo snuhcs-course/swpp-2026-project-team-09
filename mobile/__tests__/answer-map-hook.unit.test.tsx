@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -188,14 +189,14 @@ describe('the labels the answer draws', () => {
   it("leaves out 자하연식당 2층's label, under the pill at the camera, and keeps the pick's under 302동", async () => {
     const drawn = await drawnIn({ ...ROOM, answerHeight: 406 });
 
-    expect(labelOf(drawn, '후보 5 · 자하연식당 2층')).toBeNull();
+    expect(labelOf(drawn, '후보 5 · 자하연식당 2층 · 12:35')).toBeNull();
     expect(labelOf(drawn, '302동식당 · 12:15 점심')).toMatchObject({ side: 'below' });
   });
 
   it("keeps 자하연식당 2층's label at its left while the stage is not laid out", async () => {
     const drawn = await drawnIn({ ...ROOM, stage: null, answerHeight: 406 });
 
-    expect(labelOf(drawn, '후보 5 · 자하연식당 2층')).toMatchObject({ side: 'left' });
+    expect(labelOf(drawn, '후보 5 · 자하연식당 2층 · 12:35')).toMatchObject({ side: 'left' });
   });
 
   it("lets the map go out to Kakao's level 14, a quarter of a level clear of its 14.515 on the emulator", async () => {

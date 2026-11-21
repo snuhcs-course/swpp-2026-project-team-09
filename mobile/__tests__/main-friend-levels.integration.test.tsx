@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
@@ -176,8 +177,8 @@ describe("a Friend's face while an answer is on screen", () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
 
     const face = String(lookOf(JI_EUN.name));
-    expect(face).toMatch(/:exact:addable$/u);
+    expect(face).toMatch(/:exact:faded:addable$/u);
     const asked = jest.mocked(useMarkerImages).mock.calls.flatMap(([looks]) => looks.map((look) => lookName(look)));
-    expect(asked).toContain(face.replace(/:addable$/u, ':selected'));
+    expect(asked).toContain(face.replace(/:faded:addable$/u, ':selected'));
   });
 });

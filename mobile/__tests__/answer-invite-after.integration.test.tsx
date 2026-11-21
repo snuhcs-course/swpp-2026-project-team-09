@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -151,7 +152,7 @@ describe('a refused "만들고 초대 보내기"', () => {
 
     expect(toasts().getByText('초대하지 못했어요. 잠시 후 다시 시도해 주세요')).toBeVisible();
     expect(recalculations(server)).toEqual([]);
-    expect(mapThings()).toEqual(expect.arrayContaining([PICK, '후보 5 · 자하연식당 2층']));
+    expect(mapThings()).toEqual(expect.arrayContaining([PICK, '후보 5 · 자하연식당 2층 · 12:35']));
     expect(inviteButton()).toBeEnabled();
     expect(card().queryByText('파티를 만들고 초대를 보냈어요')).toBeNull();
   });
@@ -180,7 +181,7 @@ describe('the map after inviting', () => {
     await user.press(inviteButton());
     await pass(500);
 
-    await press(user, '후보 2 · 301동식당');
+    await press(user, '후보 2 · 301동식당 · 12:18');
     await pass(500);
 
     expect(mapThings()).toContain(PICK);

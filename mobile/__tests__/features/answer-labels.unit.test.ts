@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -65,7 +66,7 @@ describe("the first Plan's labels at the emulator's camera", () => {
     expect(sideOf(drawing, 'answer:candidate:301동식당')).toBe('left');
     expect(sideOf(drawing, 'answer:candidate:3식당')).toBe('left');
     expect(seen(drawing, 'answer:candidate:자하연식당 2층')).toMatchObject({
-      name: '후보 5 · 자하연식당 2층',
+      name: '후보 5 · 자하연식당 2층 · 12:35',
       label: null,
     });
   });
@@ -145,7 +146,10 @@ describe('a label near the pill, the card, and other marks', () => {
     // (262.3 to 326.3, 444.5 to 470.5).
     const drawing = drawingOf(MEAL_ANSWER, 2, NO_STANDINGS, viewAt(THIRD_AT_LOWEST));
 
-    expect(seen(drawing, 'answer:candidate:302동식당')).toMatchObject({ name: '후보 1 · 302동식당', label: null });
+    expect(seen(drawing, 'answer:candidate:302동식당')).toMatchObject({
+      name: '후보 1 · 302동식당 · 12:15',
+      label: null,
+    });
   });
 
   it('puts a flag under its point when above it would lie under the pill', () => {
@@ -161,10 +165,10 @@ describe('a label near the pill, the card, and other marks', () => {
   });
 
   it('puts a candidate above its point when its left, right, and lower sides would reach under the card', () => {
-    // Changed from the stored copy: 자하연식당 2층, 91 wide, stands at the first Plan's view's (130, 492). At the left
-    // (19 to 110) and the right (150 to 241) it would reach 505, below further; above, 84.5 to 175.5 and 446 to 472,
-    // it stays clear of the pick's lines from 184.4 and covers nothing.
-    const at = positionAt(FIRST_CAMERA, { x: 130, y: 492 });
+    // Changed from the stored copy: 자하연식당 2층 with its time, 130 wide, stands at the first Plan's view's (110, 492).
+    // At the left it would start out of the area, at the right (130 to 260) it would reach 505, below further; above,
+    // 45 to 175 and 446 to 472, it stays clear of the pick's lines from 184.4 and covers nothing.
+    const at = positionAt(FIRST_CAMERA, { x: 110, y: 492 });
     const answer = withScene(MEAL_ANSWER, 0, placeMoved('자하연식당 2층', at));
 
     expect(sideOf(drawingOf(answer, 0, NO_STANDINGS, viewAt(FIRST_CAMERA)), 'answer:candidate:자하연식당 2층')).toBe(

@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -25,6 +26,8 @@ interface MapPersonProps {
   selected?: boolean;
   // Dimmed: the position it stands on is old.
   stale?: boolean;
+  // Faint: an answer is up that the person is not in.
+  faded?: boolean;
   // A "+" at the drop's upper right, outside the Avatar, as an answer's face carries "?" and "✓": a press adds the
   // person.
   addable?: boolean;
@@ -72,6 +75,7 @@ export function MapPerson({
   small = false,
   selected = false,
   stale = false,
+  faded = false,
   addable = false,
   exact = false,
   onPhotoSettled,
@@ -83,7 +87,14 @@ export function MapPerson({
   // The dot's box, its centre at 45° below the drop's centre, as far out as puts its inner edge `DOT_ON_RIM` inside.
   const dotAt = room + side / 2 + (side / 2 + DOT / 2 - DOT_ON_RIM) / Math.SQRT2 - DOT / 2;
   return (
-    <View style={[{ width: side + room * 2, height: side * (1 + TIP) + room }, stale && styles.stale]} testID={testID}>
+    <View
+      style={[
+        { width: side + room * 2, height: side * (1 + TIP) + room },
+        stale && styles.stale,
+        faded && styles.faded,
+      ]}
+      testID={testID}
+    >
       <View
         style={[
           styles.drop,
@@ -114,6 +125,7 @@ export function MapPerson({
 
 const styles = StyleSheet.create({
   stale: { opacity: 0.45 },
+  faded: { opacity: 0.55 },
   // The shadow is turned with the fill, so it is given against the turn to fall straight down.
   drop: {
     alignItems: 'center',

@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -26,9 +27,9 @@ describe('the marks of the answer for two people, its first Plan', () => {
       planId: null,
     });
     expect(seen(drawing, 'answer:candidate:301동식당')).toEqual({
-      name: '후보 2 · 301동식당',
+      name: '후보 2 · 301동식당 · 12:18',
       symbol: null,
-      label: label('left', 'candidate', '301동식당', { number: 2 }),
+      label: label('left', 'candidate', '301동식당', { line: '12:18', number: 2 }),
       planId: '301동식당',
     });
   });
@@ -57,9 +58,9 @@ describe('the marks of the answer for two people, its first Plan, away from the 
 
   it('puts 학생회관식당 at the right, since 24동 stands 61 metres to its left', () => {
     expect(seen(drawing, 'answer:candidate:학생회관식당')).toEqual({
-      name: '후보 3 · 학생회관식당',
+      name: '후보 3 · 학생회관식당 · 12:33',
       symbol: { type: 'dot', role: 'candidate', number: 3 },
-      label: label('right', 'candidate', '학생회관식당'),
+      label: label('right', 'candidate', '학생회관식당', { line: '12:33' }),
       planId: '학생회관식당',
     });
   });
@@ -142,7 +143,7 @@ describe('the marks of the answer for two people, its third Plan', () => {
   it('at 301동: the User at the right, 301동식당 at the left, and the flag above', () => {
     expect(seen(drawing, 'answer:me')).toMatchObject({ name: '나 · 15분', label: { side: 'right' } });
     expect(seen(drawing, 'answer:candidate:301동식당')).toMatchObject({
-      name: '후보 2 · 301동식당',
+      name: '후보 2 · 301동식당 · 12:18',
       symbol: null,
       label: { side: 'left', number: 2 },
     });
@@ -161,7 +162,7 @@ describe('the marks of the answer for two people, its third Plan', () => {
       label: { side: 'right' },
     });
     expect(seen(drawing, 'answer:candidate:302동식당')).toMatchObject({
-      name: '후보 1 · 302동식당',
+      name: '후보 1 · 302동식당 · 12:15',
       symbol: null,
       label: { side: 'left', number: 1 },
       planId: '302동식당',

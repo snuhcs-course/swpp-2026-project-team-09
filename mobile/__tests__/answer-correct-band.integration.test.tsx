@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
@@ -121,7 +122,7 @@ describe('after a drag', () => {
     await user.press(card().getByRole('button', { name: '되돌리기' }));
     await pass(500);
 
-    expect(mapThings()).toEqual(expect.arrayContaining(['302동식당 · 12:15 점심', '후보 5 · 자하연식당 2층']));
+    expect(mapThings()).toEqual(expect.arrayContaining(['302동식당 · 12:15 점심', '후보 5 · 자하연식당 2층 · 12:35']));
     expect(screen.queryByTestId('time-band-ghost')).toBeNull();
     expect(card().queryByRole('button', { name: '되돌리기' })).toBeNull();
     expect(recalculations(server)).toHaveLength(1);
