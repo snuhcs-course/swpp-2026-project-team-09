@@ -210,7 +210,13 @@ function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null, shar
   const words =
     title === null
       ? null
-      : { tone, title, line, ...(sub === null ? {} : { sub }), number: group === 'candidate' || symbol === null ? number : null };
+      : {
+          tone,
+          title,
+          line,
+          ...(sub === null ? {} : { sub }),
+          number: group === 'candidate' || symbol === null ? number : null,
+        };
   return { point, position, words, sides: SIDES[group], kept: group === 'pick' || shared };
 }
 
