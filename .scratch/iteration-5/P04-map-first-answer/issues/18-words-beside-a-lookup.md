@@ -38,3 +38,10 @@ From the user's feedback: asked for a 파티 at a time he has a Class, he saw on
 - [ ] A way Lookup with words has them as its line and no 근거 ›; one without words has no line and 근거 ›. (Integration test.)
 - [ ] A Lookup with words on a phone with the mock build. (Emulator.)
 - [ ] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 1 hour 40 minutes in this session (an estimate from the transcript's timestamps: the code and tests, the sweep that found ten tests reading the Lookup's headline as the dock's line, moving the branch onto `5.0/Main` after PR 419 merged, three phone screens, and the two-line line from the screen review), with no subagent. Part of that stretch also built ticket 17's meeting case; half of the shared stretch is counted here.
+- Tokens: output 62k; input 54.7M, of which 54.6M cache reads, 100k cache writes, and 176 uncached.
