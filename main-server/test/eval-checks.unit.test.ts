@@ -4,6 +4,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { caseSchema } from '../eval/cases.ts';
@@ -212,6 +213,19 @@ describe('The map buttons and the text', () => {
       'text.mentions',
     ]);
     expect(failedChecks(trace, { actions: ['ASK'], text: { mentions: ['12시', '15분', '18개'] } })).toEqual([]);
+  });
+});
+
+// A way drawn on the map, with `text` beside it.
+const wayDrawn = (text: string): TurnTrace =>
+  turn({ steps: [[call('findWay', {}, { result: 'found' })]], text, lookup: { kind: 'way' } });
+
+describe('No words at all', () => {
+  it('pass on an empty text beside a way drawn, and fail on any other', () => {
+    const none = { actions: ['TOOL'], text: { none: true } };
+
+    expect(failedChecks(wayDrawn(''), none)).toEqual([]);
+    expect(failedChecks(wayDrawn('문화관은 여기예요.'), none)).toEqual(['text.none']);
   });
 });
 

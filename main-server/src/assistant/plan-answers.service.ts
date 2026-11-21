@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -30,7 +31,14 @@ export class PlanAnswersService {
   plan(
     askerId: string,
     input: PlanInput,
-    at: { now: Date; location: Position | null; locationMissing?: LocationMissing; leftOut?: readonly string[] },
+    at: {
+      now: Date;
+      location: Position | null;
+      locationMissing?: LocationMissing;
+      leftOut?: readonly string[];
+      // A meet sets the asker's meeting aside, for an app that draws `planSet`.
+      setsAside?: boolean;
+    },
   ): Promise<AnswerReply> {
     if (input.kind === 'meal') {
       return this.meals.plan(askerId, input, at);

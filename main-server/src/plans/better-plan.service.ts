@@ -5,9 +5,10 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Fable 5.2  prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { BadRequestException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { type LocationMissing, type MealInput, type Plan } from '../assistant/dto/answer.dto.js';
 import { mealWindow } from '../assistant/free-time/meal-fit.js';
 import { outOfReach } from '../assistant/free-time/tool-parts.js';
@@ -18,12 +19,14 @@ import { type Position } from '../common/geometry.js';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { type Prisma } from '../generated/prisma/client.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { QUEST_INCLUDE, type QuestDto, type StoredQuest } from '../quests/dto/quest.dto.js';
 import { LeaderService } from '../quests/leader.service.js';
 import { QuestsService } from '../quests/quests.service.js';
 import { inOrder } from '../quests/sub-quest-order.js';
 import { conflict } from '../quests/refusals.js';
+import { tellStepChanged } from '../quests/step-told.js';
 import { type BetterPlanDto } from './dto/better-plan.dto.js';
 import { type PlanQuestBody } from './dto/plan-quest.dto.js';
 import { placePoint } from './own-way.js';
@@ -60,6 +63,8 @@ function refuseOtherPeople({ people }: Pick<MealInput, 'people'>, quest: StoredQ
 // After a decline: whether the people left have a better Plan than the Quest as it stands, and the change to it.
 @Injectable()
 export class BetterPlanService {
+  private readonly logger = new Logger(BetterPlanService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly plans: PlansService,
@@ -68,6 +73,7 @@ export class BetterPlanService {
     private readonly leaders: LeaderService,
     private readonly signals: SignalsService,
     private readonly ways: OwnWayReader,
+    private readonly notifications: NotificationsService,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -136,10 +142,20 @@ export class BetterPlanService {
         where: { id: questId },
         data: { title: plan.title, subQuests: { deleteMany: {}, create: inOrder(subQuestsOf(plan)) } },
       });
-      return peopleOf(locked);
+      return { people: peopleOf(locked), holderIds: locked.holders.map((holder) => holder.userId), by: locked.leader };
     });
-    this.signals.send(told, 'plan-changed', { questId });
-    this.signals.send(told, 'quests-changed');
+    this.signals.send(told.people, 'plan-changed', { questId });
+    this.signals.send(told.people, 'quests-changed');
+    // As the room's 일정 수정 tells it: the Holders are told and their times to leave forgotten, the Leader's kept again.
+    const [first] = subQuestsOf(plan);
+    const changed = { questId, byId: userId, byName: told.by.name, stepTitle: first?.title ?? plan.title };
+    const { notifications, logger } = this;
+    await tellStepChanged(
+      { notifications, logger },
+      told.holderIds,
+      { ...changed, startsAt: first?.startsAt ?? null, cancelled: false },
+      this.clock.now(),
+    );
     this.plans.keepTimeToLeave(userId, questId, plan);
     return this.quests.read(userId, questId);
   }

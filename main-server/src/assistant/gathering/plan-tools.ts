@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -22,7 +23,7 @@ import { WHICH_FRIEND } from '../tools/which-friend.js';
 import { mealAfter, nextMealOffer } from './meal-after-hours.js';
 import { menuWords, type ServedMenu } from './meal-menu.js';
 import { type MealPlanService } from './meal-plan.service.js';
-import { alreadySetWords, busyWords, servingKind } from './meal-tool-words.js';
+import { alreadySetWords, busyWords, relatedWords, servingKind } from './meal-tool-words.js';
 
 // A meal planned on the map, for an app that draws answers (ADR 0009): the server decides everything, the model passes
 // the User's words as conditions and writes one sentence. Coordinates, ids of Places, course names, and rooms stay here.
@@ -41,7 +42,7 @@ const NOT_NOW = 'There is no time now when everyone can eat together; the app of
 const overToday = (words: string): string =>
   `That meal is over for today. The app shows your sentence with one button, which plans ${words}. Say in one sentence that the meal is over and that the button plans ${words}; name no other button.`;
 
-// A Friend's name as the chips write it, without " · 자리 모름".
+// A Friend's name as the chips write it, without " · 출발지 모름" or " · 위치 모름".
 const friendNames = ({ chips }: AnswerReply): string[] =>
   chips.flatMap(({ kind, text }) => (kind === 'person' ? [text.split(' · ')[0] ?? text] : []));
 
@@ -250,6 +251,7 @@ function plannedWords(
     dropped: answer.dropped.map(({ place }) => place.label),
     ...(kind === null ? {} : { cuisine: kind, servedBy: servingKind(answer.plans, kind) }),
     ...alreadySetWords(answer.mealSet),
+    ...relatedWords(answer.related),
   };
 }
 
@@ -312,6 +314,7 @@ export const PLAN_RULES = `A meal is planned on the map: the server decides the 
 - Each plan has its Restaurant's menu for the meal and when it closes, and the app shows the menus. When the User picks by a dish or a taste, in the same message as the meal or in the next (돈까스 먹고 싶어, 더 가벼운 걸로, 국물 있는 거), call planMeal with the conditions on screen, if any, as they are, and read the plans' menus. When one serves what they asked for, call planMeal again with the same conditions and that plan's restaurant. When none does, say so in one sentence with what the first plan serves. Never name a dish that no plan's menu has, and never answer with a list of menus or dishes in words.
 - A question about what a Restaurant the User names serves (학생회관 오늘 메뉴 뭐야, 302동 저녁 뭐 나와) is a menu question, by the menu rules. Any other question about what or where to eat, menus included (오늘 점심 뭐야?), is a meal wish, planned with planMeal.
 - When planMeal answers alreadySet, the User already put that meal in their schedule, and the plans are new ones that would replace it. Your reply says so and asks whether to change it, such as "이미 12:16 302동식당 점심이 있어요. 바꿀까요?": the app offers 바꾸기 and 그대로 두기. When alreadySet.shared is true, it is with others (alreadySet.with) and is changed only in that 파티, so say so instead, such as "이미 민수와 12:16 302동식당 점심이 있어요. 바꾸려면 그 파티에서 바꿔요."
+- When planMeal answers related, the User already has those Quests that day, of this meal or with a Friend asked for. Your sentence mentions the one that matters, such as "민수와는 13:00에 약속이 이미 있어요", whether or not it limits the plans; never treat it as free.
 - When planMeal answers none with busy, say what fills the time, by the User's own items, such as "점심 시간엔 13:00까지 수업이 있어요."
 - When planMeal answers none, say plainly why. Name someone busy only if they are a Friend in the plan, and say only when their Class ends or starts, never the course or the room; never name anyone who is not the User's Friend.
 - When the User asks who is free for a meal ("오늘 점심에 누구 돼?"), call findFreeFriends. Your reply says the User's Free Time in that window and the names of the Friends it returned.

@@ -1,0 +1,52 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
+import { type HeldMeal } from '../../quests/held-meal.js';
+import { type AnswerReply } from '../dto/answer.dto.js';
+import { clockOf, type DayItem } from '../free-time/free-time.js';
+import { type Interval } from '../free-time/meal-fit.js';
+import { koreaTime } from '../korea-time.js';
+
+// What a meal's plan reads of the asker's own day beside the plan (P05 ticket 16): the Sub Quests it leaves out, the
+// items that fill the meal when no time is free, and the meal already set.
+
+// An item of the asker's that fills the meal's window, as the model is told it when no time is free.
+export interface BusyItem {
+  name: string;
+  isClass: boolean;
+  start: string;
+  end: string;
+}
+
+// Leaves these Sub Quests out of everyone's day.
+export function leaveOut(people: readonly { items: readonly DayItem[] }[], subQuestIds: readonly string[]): void {
+  const leftOut = new Set(subQuestIds);
+  for (const person of people) {
+    person.items = person.items.filter(({ id }) => !leftOut.has(id));
+  }
+}
+
+export const busyIn = (items: readonly DayItem[], { start, end }: Interval): BusyItem[] =>
+  items
+    .filter((item) => item.start < end && item.end > start)
+    .map(({ name, isClass, start: from, end: to }) => ({ name, isClass, start: clockOf(from), end: clockOf(to) }));
+
+// The meal the asker already holds for the day, as the answer names it: its Restaurant is the title's, "302동식당" of
+// "302동식당에서 점심".
+export function mealSetOf(held: HeldMeal | null): AnswerReply['mealSet'] {
+  if (held === null) {
+    return null;
+  }
+  const { id, title, startsAt, others } = held;
+  return {
+    questId: id,
+    title,
+    startAt: koreaTime(startsAt),
+    place: title.replace(/에서 (점심|저녁)$/u, ''),
+    friendNames: others,
+    shared: others.length > 0,
+  };
+}

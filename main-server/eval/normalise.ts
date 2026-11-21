@@ -5,6 +5,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { boardOf, clockOf, dayOf, isRecord, momentOf, windowOf, wordsOf } from './readers.ts';
@@ -30,6 +31,8 @@ const OUTCOMES = [
   'shown',
   'proposed',
   'refused',
+  // proposeQuest, of a Proposal the User made already: nothing proposed.
+  'made',
   'error',
   'unfinished',
   ...LIBRARY_OUTCOMES,

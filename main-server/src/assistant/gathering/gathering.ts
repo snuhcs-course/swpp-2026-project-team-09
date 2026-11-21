@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -59,6 +60,8 @@ export interface GatheringSide {
   personId: string;
   readyAt: Date;
   origin: PersonPart['origin'];
+  // The stretch starts after now: they set out from the item before it, not from where they are.
+  later: boolean;
   next: { start: Date; placeId: string | null } | null;
   // The latest the asker fixed for them to leave.
   leaveBy?: Date;
@@ -245,6 +248,7 @@ function sideOf(person: GatheringPerson, stretch: Interval, now: Date): Gatherin
     personId: person.id,
     readyAt: person.notBefore === undefined ? start : latest([start, person.notBefore]),
     origin: originOf(person, around, now),
+    later: start > now,
     next: next === null ? null : { start: next.start, placeId: next.placeId },
     leaveBy: person.leaveBy,
   };

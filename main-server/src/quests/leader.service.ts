@@ -9,6 +9,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -99,9 +100,7 @@ export class LeaderService {
       };
     });
     this.signals.send([...new Set(told)], 'quests-changed');
-    holderIds.forEach((holderId) => {
-      this.forgetTimeToLeave(holderId, questId);
-    });
+    await Promise.all(holderIds.map((holderId) => this.forgetTimeToLeave(holderId, questId)));
     await this.roomRequests.questChanged(questId);
   }
 
@@ -134,14 +133,14 @@ export class LeaderService {
       },
       holderId,
     );
-    this.forgetTimeToLeave(holderId, questId);
+    await this.forgetTimeToLeave(holderId, questId);
     await this.roomRequests.questChanged(questId);
   }
 
-  // A Holder's time to leave goes with them: when the Quest ends, and when they are removed or drop it. Not awaited, so
-  // that it never fails the change.
-  forgetTimeToLeave(holderId: string, questId: string): void {
-    this.notifications.cancel(holderId, 'leave-by', { kind: 'party', id: questId }).catch((error: unknown) => {
+  // A Holder's time to leave goes with them: when the Quest ends, and when they are removed or drop it. Awaited before
+  // the change answers, so that no leave-by is left for a Quest the answer says is gone; it never fails the change.
+  async forgetTimeToLeave(holderId: string, questId: string): Promise<void> {
+    await this.notifications.cancel(holderId, 'leave-by', { kind: 'party', id: questId }).catch((error: unknown) => {
       this.logger.warn(`A Holder's time to leave was not cancelled: ${String(error)}`);
     });
   }

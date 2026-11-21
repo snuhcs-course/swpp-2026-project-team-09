@@ -6,84 +6,30 @@
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { z } from 'zod';
 import { FriendViewService } from '../../friends/friend-view.service.js';
 import { type PublishedGlobalEventDto } from '../../global-events/dto/global-event.dto.js';
 import { GlobalEventsService } from '../../global-events/global-events.service.js';
-import { JoinPolicy, QuestBoard } from '../../generated/prisma/client.js';
+import { JoinPolicy } from '../../generated/prisma/client.js';
 import { PlacesService } from '../../places/places.service.js';
 import { makeQuestSchema } from '../../quests/dto/quest-requests.dto.js';
 import { facilityBookingOf } from '../facility-booking.js';
 import { defineTool, type Tool, type ToolContext } from '../feature.js';
 import { contestedReason, type FoundKind } from '../found-ids.js';
 import { koreaTime } from '../korea-time.js';
-import {
-  type ProposalFriend,
-  type ProposalPlace,
-  proposalForModel,
-  type QuestProposal,
-  sentProposalOf,
-} from '../proposal.js';
+import { type UserDayService } from '../free-time/user-day.service.js';
+import { type FieldFailures, type Input, input, isField } from './propose-quest-input.js';
+import { proposedAnswer, refusedAnswer } from './proposed-answer.js';
+import { type ProposalFriend, type ProposalPlace, type QuestProposal } from '../proposal.js';
 
-// The services proposeQuest checks the resolved ids with.
+// The services proposeQuest checks the resolved ids with, and reads the asker's day from.
 export interface ProposeQuestServices {
   friends: FriendViewService;
   places: PlacesService;
   globalEvents: GlobalEventsService;
-}
-
-// Every field may be left out, and an id may be any text, so that the tool, not the model library, says which are
-// missing or wrong.
-const input = z.object({
-  title: z.string().optional().describe('The 파티 title, short, as its post shows it.'),
-  description: z
-    .string()
-    .optional()
-    .describe(
-      "The recruiting post's text. When the User gave none for a 공개 파티, write a short one from their request.",
-    ),
-  joinPolicy: z
-    .enum(JoinPolicy)
-    .optional()
-    .describe(
-      'open (공개, 바로 참여): anyone joins at once; approval (공개, 승인 후 참여): the User approves each; closed (비공개): only the invited Friends, on no Board.',
-    ),
-  board: z
-    .enum(QuestBoard)
-    .optional()
-    .describe(
-      'The Board a 공개 파티 is posted on: meal 식사, career 진로, hobby 취미 (운동 too), show 공연. None for 비공개.',
-    ),
-  capacity: z.number().optional().describe('How many people the 파티 holds, the User included.'),
-  startsAt: z
-    .string()
-    .optional()
-    .describe(
-      'When it starts, as an ISO date and time with its offset, such as 2027-01-05T12:00:00+09:00. With a Global Event, leave it out to start at the event, or give a meeting time before it.',
-    ),
-  placeId: z
-    .string()
-    .optional()
-    .describe('Where it meets: the id resolvePlace returned, or the one in [Proposal shown: …].'),
-  globalEventId: z
-    .string()
-    .optional()
-    .describe('The related event: the id resolveGlobalEvent returned, or the one in [Proposal shown: …].'),
-  inviteeIds: z
-    .array(z.string())
-    .optional()
-    .describe('The Friends to invite: ids resolveFriend returned, or those in [Proposal shown: …].'),
-});
-
-type Input = z.output<typeof input>;
-
-// What is missing or wrong, by field, worded for the model to ask the User.
-type FieldFailures = Partial<Record<keyof Input, string>>;
-
-function isField(name: unknown): name is keyof Input {
-  return typeof name === 'string' && Object.hasOwn(input.shape, name);
+  days: Pick<UserDayService, 'itemsOn'>;
 }
 
 // What one id of the input names, checked again, or why it was refused.
@@ -284,16 +230,27 @@ function inThePast(startsAt: string | undefined, now: Date): FieldFailures {
   return { startsAt: `In the past: it is ${koreaTime(now)} now. Ask the User for a time ahead.` };
 }
 
+// What the model is told when the last Proposal was made already: a second card would make a second Quest, never
+// change the first.
+const MADE =
+  'The 파티 of [Proposal made: …] is made already: nothing was changed and no card is shown. Say it is already posted (이미 올린 파티예요), never that it changed, and that the User changes it with 수정 in its room in 내 파티. Give another: true only when the User asks for another 파티 beside it.';
+
 // The proposer: it checks a 파티 the User described against the party form's rules, with the Place, the Global Event
 // and the Friends the resolvers found, and adds it to the reply as the Proposal card. It makes nothing: the User makes
 // the Quest with the card's 만들기. A second Proposal in one reply replaces the first. On a failure it answers what is
-// missing or wrong, field by field, and adds nothing.
+// missing or wrong, field by field, and adds nothing. A Proposal over the asker's own Classes or Quests is still made,
+// and its answer names them. While the last Proposal sent back was made, it proposes only
+// another 파티 beside it.
 export function proposeQuest(services: ProposeQuestServices): Tool {
   return defineTool({
     description:
-      'Proposes a 파티 (a Quest) the User asked to make or recruit for: 공개 (open or approval, on a Board) or 비공개 (closed, with invited Friends), optionally at a Place and for a Global Event. It is shown under your reply as a card with 만들기, which makes it. Nothing is made until the User presses it. Give only ids the resolvers returned in this message or those in [Proposal shown: …]. To change a Proposal shown before, give its values again with only the change. When it answers "refused", ask the User for the fields it names, except a Board the activity plainly gives.',
+      'Proposes a 파티 (a Quest) the User asked to make or recruit for: 공개 (open or approval, on a Board) or 비공개 (closed, with invited Friends), optionally at a Place and for a Global Event. It is shown under your reply as a card with 만들기, which makes it. Nothing is made until the User presses it. Give only ids the resolvers returned in this message or those in [Proposal shown: …]. To change a Proposal shown before, give its values again with only the change. A 파티 in [Proposal made: …] is made already and is not changed here: it answers "made". When it answers "refused", ask the User for the fields it names, except a Board the activity plainly gives. When its answer has clashes, Classes or Quests of the User at that time, the card is still shown: say the first and ask whether to keep the time.',
     input,
     run: async (given, context) => {
+      const madeQuestId = context.shown?.madeQuestId;
+      if (madeQuestId !== undefined && given.another !== true) {
+        return { result: 'made', questId: madeQuestId, reason: MADE };
+      }
       const resolved = await resolvedOf(given, context, services);
       const startsAt = startOf(given.startsAt, resolved.globalEvent);
       const failures: FieldFailures = {
@@ -312,7 +269,7 @@ export function proposeQuest(services: ProposeQuestServices): Tool {
         capacity === undefined ||
         startsAt === undefined
       ) {
-        return { result: 'refused', fields: failures };
+        return refusedAnswer(failures, context.presented);
       }
       const proposal: QuestProposal = {
         title: title.trim(),
@@ -326,7 +283,7 @@ export function proposeQuest(services: ProposeQuestServices): Tool {
         invitees: resolved.invitees,
       };
       context.presented.proposal = proposal;
-      return { result: 'proposed', proposal: proposalForModel(sentProposalOf(proposal)) };
+      return proposedAnswer(proposal, context.userId, { days: services.days, presented: context.presented });
     },
   });
 }

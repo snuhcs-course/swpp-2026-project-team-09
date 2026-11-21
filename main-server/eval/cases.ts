@@ -7,6 +7,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readdirSync, readFileSync } from 'node:fs';
@@ -67,6 +68,22 @@ export const WORLD_REQUEST_FIELDS: Record<WorldName, { clientCapabilities?: Clie
   'p4-answer': { clientCapabilities: ['library', 'answer'] },
 };
 
+// What the current app says it draws with every chat request (ANSWER_CAPABILITIES in mobile/src/api/assistant-types.ts).
+const APP_CAPABILITIES = ['library', 'answer', 'area', 'meet', 'events'] as const satisfies readonly ClientCapability[];
+
+// The app with ticket 17's 바꾸기 and 그대로 두기, which says `plan-set` too.
+const NEXT_APP = [...APP_CAPABILITIES, 'plan-set'] as const satisfies readonly ClientCapability[];
+
+// What a run of a case sends beside the messages: its world's fields, or the current app's capabilities when the case
+// says so, and where the asker is when the case says.
+export function requestFieldsOf({ world, capabilities, context }: EvalCase): object {
+  return {
+    ...WORLD_REQUEST_FIELDS[world],
+    ...(capabilities === 'world' ? {} : { clientCapabilities: capabilities === 'app' ? APP_CAPABILITIES : NEXT_APP }),
+    ...(context === undefined ? {} : { context }),
+  };
+}
+
 // The tutorial content a run of each world reads in the place of content/tutorial.yaml. The P6 suite reads its own copy,
 // frozen with C0 (eval/p6/suite.yaml), so that a quest added to the app does not change it; the other worlds read the
 // live file.
@@ -91,6 +108,8 @@ const proposalSchema = z.strictObject({
   place: seedName.nullable().default(null),
   globalEvent: seedName.nullable().default(null),
   invitees: z.array(seedName).default([]),
+  // The User made it with 만들기: the app sends it back with the Quest's id.
+  made: z.literal(true).optional(),
 });
 
 const userTurnSchema = z.strictObject({
@@ -116,6 +135,11 @@ export const caseSchema = z
     now: z.iso.datetime({ offset: true }).optional(),
     // Who asks, by a name in the world's `askers`, if not the world's User.
     asker: seedName.optional(),
+    // `app`: the request says what the current app draws, every capability, in place of the world's (a meet needs
+    // `meet`); `next-app`: and `plan-set` too, as the app with 바꾸기 will.
+    capabilities: z.enum(['world', 'app', 'next-app']).default('world'),
+    // Where the asker is, sent as the request's context as the app sends it; none is sent without it.
+    context: z.strictObject({ location: z.strictObject({ latitude: z.number(), longitude: z.number() }) }).optional(),
     live: z.boolean().default(false),
     // Run this many times, for pass^k (the repeated set).
     repeat: z.int().min(2).optional(),

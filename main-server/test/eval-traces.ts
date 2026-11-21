@@ -4,6 +4,7 @@
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Expect, expectSchema } from '../eval/expect.ts';
@@ -48,6 +49,9 @@ export interface Turn {
   // The model's own reply, when the server added the Approval line after it: giving it also marks approvalLine true.
   // Left out, the trace is one saved before the line, with neither field.
   modelText?: string;
+  // What an app that draws answers draws on the map; left out, as in a run saved before they were read.
+  answer?: unknown;
+  lookup?: unknown;
 }
 
 // A turn's trace: each step 500 ms and 1000 tokens in, 400 of them read from the cache and 100 written, 50 out.
@@ -59,6 +63,8 @@ export function turn({
   proposal = null,
   failure,
   modelText,
+  answer,
+  lookup,
 }: Turn): TurnTrace {
   const traced = [...steps, []].map((toolCalls, index, all) => ({
     toolCalls,
@@ -82,6 +88,8 @@ export function turn({
             mapButtons,
             proposal,
             ...(modelText === undefined ? {} : { modelText, approvalLine: true }),
+            ...(answer === undefined ? {} : { answer }),
+            ...(lookup === undefined ? {} : { lookup }),
           }
         : null,
     failure: failure ?? null,

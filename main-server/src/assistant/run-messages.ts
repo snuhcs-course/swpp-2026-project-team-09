@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { contextLines } from './context-lines.js';
@@ -12,7 +14,8 @@ import { proposalForModel, type SentProposal } from './proposal.js';
 // library.
 
 // What the model reads of a message: an Assistant's carries a line naming the cards it showed, and one with the values
-// of the Proposal it made, which proposeQuest is given again to change it.
+// of the Proposal it made, which proposeQuest is given again to change it, or, once the User made it, with the Quest's
+// id, which is no Proposal to change any more.
 function contentOf(message: ChatMessage): string {
   if (message.role === 'user') {
     return message.text;
@@ -22,7 +25,12 @@ function contentOf(message: ChatMessage): string {
     lines.push(`[Cards shown: ${message.cards.map(({ kind, id }) => `${kind} ${id}`).join(', ')}]`);
   }
   if (message.proposal !== null) {
-    lines.push(`[Proposal shown: ${JSON.stringify(proposalForModel(message.proposal))}]`);
+    const { madeQuestId, ...proposal } = message.proposal;
+    lines.push(
+      madeQuestId === undefined
+        ? `[Proposal shown: ${JSON.stringify(proposalForModel(proposal))}]`
+        : `[Proposal made: ${JSON.stringify({ questId: madeQuestId, ...proposalForModel(proposal) })}]`,
+    );
   }
   return lines.join('\n\n');
 }
@@ -31,10 +39,10 @@ function contentOf(message: ChatMessage): string {
 // that draws answers.
 export function messagesFor(
   messages: readonly ChatMessage[],
-  { context, capabilities }: Request,
+  { context, capabilities, ahead = [] }: Request,
 ): { role: ChatMessage['role']; content: string }[] {
   const last = messages.length - 1;
-  const lines = capabilities.includes('answer') ? contextLines(context) : [];
+  const lines = capabilities.includes('answer') ? [...contextLines(context), ...ahead] : [];
   return messages.map((message, index) => ({
     role: message.role,
     content: index === last ? [contentOf(message), ...lines].join('\n\n') : contentOf(message),

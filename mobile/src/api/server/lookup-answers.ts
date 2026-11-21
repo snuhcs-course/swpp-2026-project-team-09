@@ -9,6 +9,7 @@ import type { CardFact, Lookup, LookupAction, LookupCard, LookupStep } from '@/a
 import { field, hasTexts, isText, isTextOrNull, listOf } from './answers';
 import { isChip } from './chip-answers';
 import { isNote } from './missing-input-answers';
+import { isKeptOrAbsent } from './kept-answers';
 import { isBand, isDish, isKeyOf, isLine, isPlacePoint, isScene } from './plan-answers';
 import { isInput, isOneOf } from './plan-inputs';
 
@@ -93,6 +94,7 @@ export function isLookup(value: unknown): value is Lookup {
     (card === undefined || card === null || isCard(card)) &&
     (steps === undefined || listOf(isStep)(steps)) &&
     isNote(field(value, 'note')) &&
-    isMenuOrAbsent(field(value, 'menu'))
+    isMenuOrAbsent(field(value, 'menu')) &&
+    isKeptOrAbsent(field(value, 'kept'))
   );
 }

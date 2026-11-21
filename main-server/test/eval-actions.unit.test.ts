@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { observedActionOf } from '../eval/observed.ts';
@@ -58,6 +59,31 @@ describe('A TOOL turn', () => {
     );
 
     expect(score.action).toBe('TOOL');
+  });
+});
+
+describe('A TOOL turn drawn on the map', () => {
+  // A map tool is no lookup of the scorer's: the reply's answer or Lookup is what shows it (P05 ticket 17).
+  const findDay = call('findDay', { date: '2026-11-05' }, { result: 'found' });
+  const dayExpect = expectOf({
+    actions: ['TOOL'],
+    tools: { required: ['findDay'] },
+    args: { findDay: { date: '2026-11-05' } },
+  });
+
+  it('is one whose reply draws a Lookup or an answer, with no card or button', () => {
+    for (const drawn of [{ lookup: { kind: 'day' } }, { answer: { plans: [] } }]) {
+      const traced = turn({ steps: [[findDay]], text: '과외는 17:00이에요.', ...drawn });
+
+      expect(scoreTurn(traced, dayExpect, names)).toMatchObject({ action: 'TOOL', passed: true });
+      expect(observedActionOf(traced)).toBe('TOOL');
+    }
+  });
+
+  it('is not one whose reply draws nothing, as in a run saved before they were read', () => {
+    const traced = turn({ steps: [[findDay]], text: '과외는 17:00이에요.' });
+
+    expect(scoreTurn(traced, dayExpect, names).action).toBeNull();
   });
 });
 
@@ -196,6 +222,15 @@ describe('A PROPOSE turn', () => {
     expect(
       scoreTurn(turn({ steps: [[refused], [proposed]], text: '만들까요?', proposal }), propose, names).action,
     ).toBe('PROPOSE');
+  });
+
+  it('is a TOOL when proposeQuest answered that the 파티 is made already and the text says so', () => {
+    const made = call('proposeQuest', {}, { result: 'made', questId: 'q' });
+    const told = expectOf({ actions: ['CHAT', 'TOOL'], text: { mentions: ['수정'] } });
+    const traced = turn({ steps: [[made]], text: '이미 올린 파티예요. 내 파티에서 수정할 수 있어요.' });
+
+    expect(scoreTurn(traced, told, names)).toMatchObject({ action: 'TOOL', passed: true });
+    expect(observedActionOf(traced)).toBe('TOOL');
   });
 });
 

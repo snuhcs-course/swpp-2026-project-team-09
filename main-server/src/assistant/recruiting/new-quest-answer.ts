@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { OPEN_SUB_QUEST_SECONDS } from '../../travel/judgement-constants.js';
@@ -20,7 +21,7 @@ import { type EventPlan } from '../events/event-fit.js';
 import { chipsOf, leaveByWords, partOf, plain } from '../events/event-answer.js';
 import { bandOf, EventNaming, itemWord, modeOf, type NamingArgs, sceneOf } from '../events/event-scene.js';
 import { clockOf, type FreeInterval } from '../free-time/free-time.js';
-import { type AnswerPerson, withSubject, withToward } from '../gathering/answer-words.js';
+import { type AnswerPerson, unknownOriginChip, withSubject, withToward } from '../gathering/answer-words.js';
 import { clockWithDay, koreaTime } from '../korea-time.js';
 import { type NewQuestPlanning, type PersonWay } from './new-quest-fit.js';
 import { setOutWords } from './quest-answer.js';
@@ -219,9 +220,9 @@ function planOf(naming: Naming): Plan {
 function chipsWithFriends(naming: Naming): ConditionChip[] {
   const [mine, ...theirs] = naming.args.planning.ways;
   const chips = chipsOf(mine === undefined ? null : { origin: mine.origin, next: mine.next?.item ?? null }, naming);
-  for (const { userId, origin } of theirs) {
+  for (const { userId, origin, later } of theirs) {
     const { name } = personOf(naming, userId);
-    chips.push({ kind: 'person', text: origin === null ? `${name} · 자리 모름` : name, userId });
+    chips.push({ kind: 'person', text: origin === null ? unknownOriginChip(name, later) : name, userId });
   }
   return chips;
 }

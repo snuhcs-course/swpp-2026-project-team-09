@@ -12,6 +12,7 @@
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -68,6 +69,8 @@ export class AssistantService {
   private readonly chats: Record<ChatKind, Feature>;
   private readonly dailyMessages: number;
   private readonly limits: RunLimits;
+  // The line of what is ahead, which an app that draws answers has the model read each turn.
+  private readonly ahead: (userId: string, now: Date) => Promise<string[]>;
 
   constructor(
     private readonly models: ModelPort,
@@ -95,6 +98,7 @@ export class AssistantService {
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
+    this.ahead = (userId: string, now: Date): Promise<string[]> => lookups.days.ahead(userId, now);
     const enabled = settings.get('LIBRARY_BOOKING_ENABLED', { infer: true });
     const services = {
       menus,
@@ -136,11 +140,12 @@ export class AssistantService {
       throw new HttpException("Today's messages are used up", HttpStatus.TOO_MANY_REQUESTS);
     }
     const latest = messages.slice(-HISTORY_MAX);
+    const ahead = capabilities.includes('answer') ? await this.ahead(userId, now) : [];
     try {
       const reply = await runFeature(
         chosen.model,
         this.chatFor(capabilities),
-        { userId, now, capabilities, context },
+        { userId, now, capabilities, context, ahead },
         latest,
         this.limits,
         this.observer,

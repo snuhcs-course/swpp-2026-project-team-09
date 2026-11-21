@@ -5,11 +5,13 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type Position } from '../../common/geometry.js';
 import { type CuisineWord } from '../../menus/cuisine-words.js';
+import { CLIENT_CAPABILITIES } from '../feature.js';
 import { type RecruitingQuestDto } from '../../quests/dto/quest.dto.js';
 import type { LocationMissing, WithMark, WithMissing } from '../refusals/refusal.dto.js';
 import { type RelaxOffer } from '../refusals/relax.dto.js';
@@ -44,6 +46,12 @@ export interface AnswerReply extends WithMissing {
   // A meal's: the other meal of the day and when it starts ("HH:MM", now when it is under way), which the app's bar
   // offers; null when it is over or no Restaurant serves it that day. Absent from other answers.
   otherMeal?: { meal: 'lunch' | 'dinner'; start: string } | null;
+  // A meal's or a meeting's: the asker's Quest the plans set aside, which making one replaces; null when none (P05 ticket
+  // 17). For one release `mealSet` names a meal's beside it.
+  planSet?: KeptQuestDto | null;
+  // A meal's or a meeting's: the asker's other Quests of that day of the kind asked for or with a Friend asked for, at
+  // most three, nearest the time asked first, named whether or not they limit the plans.
+  related?: KeptQuestDto[];
   // A meal's: the Quest the asker already holds for that meal and day, which the plans set aside and making one replaces;
   // null when none. `shared` when another holds it or is invited: it is never replaced from a new Plan.
   mealSet?: {
@@ -54,6 +62,21 @@ export interface AnswerReply extends WithMissing {
     friendNames: string[];
     shared: boolean;
   } | null;
+}
+
+// One of the User's Quests as the app reads it: those set aside by a plan (`planSet`), related to one (`related`), and
+// those a day's Lookup was asked about (`kept`). `people` are the others of it, never the User; `changeable` when the
+// User may change it here.
+export interface KeptQuestDto {
+  kind: 'meal-lunch' | 'meal-dinner' | 'meet' | 'event' | 'seat' | 'other';
+  questId: string;
+  title: string;
+  startAt: string;
+  endAt: string | null;
+  place: string | null;
+  people: { name: string; answer: 'leads' | 'accepted' | 'waiting' | 'declined' }[];
+  mine: boolean;
+  changeable: boolean;
 }
 
 // `from` is the start the User fixed for a meet. `area` is the visible map area and `what` the kind of place asked for,
@@ -254,6 +277,8 @@ export const recalculationSchema = z.strictObject({
   input: planInputSchema,
   location: z.strictObject({ latitude, longitude }).nullable().default(null),
   locationMissing: locationMissingSchema,
+  // What the app draws, as the chat request says it: `plan-set` sets a meeting aside here too.
+  clientCapabilities: z.array(z.enum(CLIENT_CAPABILITIES)).max(CLIENT_CAPABILITIES.length).default([]),
 });
 
 export type Recalculation = z.infer<typeof recalculationSchema>;

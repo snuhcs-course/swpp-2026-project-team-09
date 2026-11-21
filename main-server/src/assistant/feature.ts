@@ -11,6 +11,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -73,8 +74,10 @@ export type Card = GlobalEventCard | QuestCard | RestaurantCard | LibraryCard;
 // What the app says it can show beside the cards every version shows. Library cards are attached only for an app that
 // says `library`, since older apps refuse a reply with a card they do not know. `answer`: the app draws an answer on
 // the map. `events`: with `answer`, it also draws an answer of a day's events. `meet`: with `answer`, it also draws a
-// meet. `area`: with `answer`, it sends the visible map area and draws its study spaces.
-export const CLIENT_CAPABILITIES = ['library', 'answer', 'events', 'meet', 'area'] as const;
+// meet. `area`: with `answer`, it sends the visible map area and draws its study spaces. `plan-set`: it draws 바꾸기
+// and 그대로 두기 for a meeting or a meal already set (`planSet`) and words their 409s, so the server sets a meeting
+// aside and refuses a second one only for it; an app without it is planned for as before (P05 ticket 17).
+export const CLIENT_CAPABILITIES = ['library', 'answer', 'events', 'meet', 'area', 'plan-set'] as const;
 
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
 
@@ -116,6 +119,8 @@ export interface Asker {
 // Who asks, when, and what their app can show.
 export interface Request extends Asker {
   readonly capabilities: readonly ClientCapability[];
+  // Lines the server read for this message, added after the request context's: what is ahead (DayLookupService.ahead).
+  readonly ahead?: readonly string[];
 }
 
 // What every tool of a run is given: who asks and when, the ids the run's lookups and resolvers returned, which are

@@ -593,6 +593,8 @@ model Quest {
   // The meal of a Quest made from a meal's Plan: a new Plan for the same meal and day sets it aside, and making that
   // Plan replaces it (README.md: Quests).
   meal          Meal?
+  // A Quest made from a meeting's Plan, whose step is "<Place>에서 만나기": the Assistant names it as a meeting.
+  meet          Boolean            @default(false)
   // Left from AI 매칭, removed in Iteration 4 (GLOSSARY.md: Matching): it named the match a Quest was created for. No
   // code writes or reads it; dropping the column is a separate change.
   matchId       String?            @unique @map("match_id") @db.Uuid

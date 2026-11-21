@@ -1,0 +1,71 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# The Assistant knows the User's Quests (P05 ticket 17, slice 1): a question about the day, or about a Quest already
+# set, is answered from findDay and drawn on the map, never by planning a new one. The P4 world asked from an app that
+# draws answers (`pnpm eval --world p4-answer`), on Monday 2026-11-02 at 11:30: the asker holds 공모전 작업 on
+# Wednesday 2026-11-04 15:50–19:30 at 중앙도서관 본관 (62동), and 과외 on Thursday 2026-11-05 17:00–18:30 at 낙성대역
+# 스터디카페.
+
+- id: schedule-today
+  category: schedule
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 오늘 뭐 있지?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findDay]
+      forbidden: [planMeal, planMeet, planEvents, proposeQuest]
+    args:
+      findDay: { date: '2026-11-02' }
+
+- id: schedule-a-later-day
+  category: schedule
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 수요일에 뭐 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findDay]
+      forbidden: [planMeal, planMeet, planEvents, proposeQuest]
+    args:
+      findDay: { date: '2026-11-04' }
+
+- id: schedule-when-was-it
+  category: schedule
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 과외 몇 시였지?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findDay]
+      forbidden: [planMeal, planMeet, planEvents, proposeQuest]
+    args:
+      findDay: { date: '2026-11-05' }
+    text:
+      mentions: ['17:00']
+
+- id: schedule-where-was-it
+  category: schedule
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 공모전 작업 어디서 하기로 했지?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findDay]
+      forbidden: [planMeal, planMeet, planEvents, proposeQuest]
+    args:
+      findDay: { date: '2026-11-04' }
+    text:
+      mentions: [[62동, 중앙도서관]]

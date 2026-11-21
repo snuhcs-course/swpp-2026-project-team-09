@@ -1,0 +1,102 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# A 파티 or 약속 only with Friends the User names is a meeting planned on the map (P05 ticket 26), with the place and
+# the time they fixed. When the time does not fit, the reply says why and offers the nearest: a Friend only by when
+# their Class ends, the asker's own Class by its name. The P4 world asked from the current app (`capabilities: app`,
+# which draws meets), on Monday 2026-11-02 at 11:30. On Tuesday the asker has 데이터베이스 11:00–12:15 and 운영체제
+# 15:00–16:15; 이민수 has Classes 10:00–11:15 and 16:00–18:30; 김지은 has one 13:00–14:15. A meet with no place cannot be
+# planned in this world (see the last case), so the others name 학생회관.
+
+- id: meet-at-a-fitting-time
+  category: meet-at
+  world: p4-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 내일 이민수랑 학생회관에서 두시에 만나는 파티 만들어줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeet]
+      allowed: [resolveFriend, resolvePlace, findDay]
+      forbidden: [proposeQuest]
+    args:
+      planMeet: { date: '2026-11-03', at: '14:00' }
+    text:
+      absent: [수업, 안 돼, 어려워]
+
+- id: meet-at-a-time-the-friend-is-busy
+  category: meet-at
+  world: p4-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 내일 김지은이랑 학생회관에서 한시에 만나는 파티 만들어줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeet]
+      allowed: [resolveFriend, resolvePlace, findDay]
+      forbidden: [proposeQuest]
+    args:
+      planMeet: { date: '2026-11-03', at: '13:00' }
+    text:
+      mentions: [['14:15', '2시 15분']]
+      absent: [이산수학, 제1공학관, 301동]
+
+- id: meet-at-a-time-of-my-own-class
+  category: meet-at
+  world: p4-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 내일 이민수랑 학생회관에서 세시에 보자
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeet]
+      allowed: [resolveFriend, resolvePlace, findDay]
+      forbidden: [proposeQuest]
+    args:
+      planMeet: { date: '2026-11-03', at: '15:00' }
+    text:
+      mentions: [[운영체제, 수업]]
+
+- id: meet-at-a-place-only
+  category: meet-at
+  world: p4-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 내일 이민수랑 학생회관에서 만나는 파티 만들어줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeet]
+      allowed: [resolveFriend, resolvePlace, findDay]
+      forbidden: [proposeQuest]
+    args:
+      planMeet: { date: '2026-11-03' }
+
+- id: meet-at-a-time-only
+  category: meet-at
+  world: p4-answer
+  capabilities: app
+  repeat: 3
+  knownFailure: >-
+    The P4 world's travel table (eval/p4/travel-fixture.json) holds only its own Places, and a meet with no place
+    weighs the libraries and the Restaurants too, so planMeet fails here before and after the change
+  turns:
+    - user: 내일 이민수랑 두시에 만나는 약속 잡아줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeet]
+      allowed: [resolveFriend, resolvePlace, findDay]
+      forbidden: [proposeQuest]
+    args:
+      planMeet: { date: '2026-11-03', at: '14:00' }

@@ -3,6 +3,7 @@
 #
 # 2026-10-31  Opus 5.5   prompted by TaeHyun79
 # 2026-11-21  Opus 5.5   prompted by fyoon46
+# 2026-11-22  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # The P4 world (spec P04, "Evaluation plan" 1): what the 공강 cases run in, by seed name. eval/p4/world.ts seeds it.
@@ -89,12 +90,22 @@ timetable:
     meetings:
       - { day: friday, start: '18:00', end: '19:15', place: 문화관 }
 
-# Quests of the asker's own, Closed and held by the asker alone.
+# Quests of the asker's own, Closed and held by the asker, with the Friends of `invited` waiting.
 ownQuests:
   - title: 공모전 작업
     subQuest: { starts: '2026-11-04T15:50', ends: '2026-11-04T19:30', place: { seed: 중앙도서관 본관 } }
   - title: 과외
     subQuest: { starts: '2026-11-05T17:00', ends: '2026-11-05T18:30', place: { label: 낙성대역 스터디카페 } }
+  # Made from Plans with Friends (P05 ticket 17), on Saturday, which no labelled case of the suite reads: a lunch with
+  # 김지은 and a meeting with 이민수, each invited and waiting.
+  - title: 학생회관식당에서 점심
+    kind: lunch
+    invited: [김지은]
+    subQuest: { starts: '2026-11-07T12:10', ends: '2026-11-07T12:50', place: { seed: 학생회관 } }
+  - title: 학생회관 앞에서 만나기
+    kind: meet
+    invited: [이민수]
+    subQuest: { starts: '2026-11-07T14:00', ends: '2026-11-07T15:00', place: { seed: 학생회관 } }
 
 # The asker's Friends by seed name, each with their Timetable and the Quests they hold, Closed and held alone.
 friends:
@@ -590,9 +601,20 @@ mappedPoints:
 # When the Co-op collector collected the menus.
 menusCollectedAt: '2026-11-02T07:00:00+09:00'
 
-# The menus of Monday to Thursday; none was collected for Friday or the weekend. Each meal's cell is a list of lines: a
-# dish with its price, or a note.
+# The menus of Monday to Thursday, and Saturday's lunch at two Restaurants for the lunch held with 김지은 (P05 ticket 17);
+# none was collected for Friday or Sunday. Each meal's cell is a list of lines: a dish with its price, or a note.
 menus:
+  - date: '2026-11-07'
+    restaurants:
+      - name: 학생회관식당
+        lunch:
+          - { dish: 제육볶음, price: 6000 }
+          - { dish: 잔치국수, price: 4500 }
+          - { note: '※ 운영시간 : 11:00~14:30' }
+      - name: 301동식당
+        lunch:
+          - { dish: 순두부찌개, price: 5500 }
+          - { dish: 돈까스, price: 6000 }
   - date: '2026-11-02'
     restaurants:
       - name: 학생회관식당
