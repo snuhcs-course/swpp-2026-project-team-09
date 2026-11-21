@@ -61,6 +61,8 @@ const HANDLE_WIDTH = 16;
 // the band.
 const HANDLE_TOUCH = 44;
 const HANDLE_SLOP = (HANDLE_TOUCH - HANDLE_WIDTH) / 2;
+// Up and down too, so that a folded bar's handle, one lane high, still takes a touch the design system's height.
+const HANDLE_SLOP_Y = (HANDLE_TOUCH - LANE_HEIGHT) / 2;
 const PAN_STARTS = 10;
 const NAME_WIDTH = 40;
 
@@ -90,7 +92,7 @@ function Handle(props: HandleProps): ReactElement {
       .runOnJS(true)
       .enabled(!disabled && trackWidth > 0)
       .blocksExternalGesture(whole)
-      .hitSlop({ left: HANDLE_SLOP, right: HANDLE_SLOP })
+      .hitSlop({ left: HANDLE_SLOP, right: HANDLE_SLOP, top: HANDLE_SLOP_Y, bottom: HANDLE_SLOP_Y })
       .activeOffsetX([-PAN_STARTS, PAN_STARTS])
       .failOffsetY([-PAN_STARTS, PAN_STARTS])
       .onUpdate(({ translationX }) => {
@@ -152,7 +154,7 @@ function Lanes({ band, fixed, moving, folded }: LanesProps): ReactElement {
           style={[styles.lane, folded && at > 0 && styles.stacked]}
           testID={`time-band-lane-${lane.userId}`}
         >
-          <View style={styles.bar}>
+          <View style={[styles.bar, folded && at > 0 && styles.clear]}>
             {lane.busy.map((stretch) => (
               <View key={`busy-${stretch.startAt}`} style={[styles.busy, placeOf(stretch, band.range)]} />
             ))}
@@ -305,6 +307,8 @@ const styles = StyleSheet.create({
   lane: { height: LANE_HEIGHT, justifyContent: 'center' },
   stacked: { position: 'absolute', top: 0, right: 0, left: 0 },
   bar: { height: BAR_HEIGHT, borderRadius: radius.full, backgroundColor: color.surfaceSunken },
+  // A folded lane over the first draws only its stretches, so that the lanes under it still show theirs.
+  clear: { backgroundColor: 'transparent' },
   busy: { position: 'absolute', top: 0, bottom: 0, borderRadius: radius.full, backgroundColor: color.borderStrong },
   clash: { position: 'absolute', top: 0, bottom: 0, borderRadius: radius.full, backgroundColor: color.warning },
   over: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, pointerEvents: 'none' },
