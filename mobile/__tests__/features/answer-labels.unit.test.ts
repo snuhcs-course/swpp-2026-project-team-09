@@ -141,15 +141,16 @@ describe("the labels of the answer for a fixed start at the emulator's camera", 
 // Partitions: a label whose only side inside the area covers another mark; first sides under the pill and under the
 // card with a free side left.
 describe('a label near the pill, the card, and other marks', () => {
-  it("leaves 302동식당 out at the lowest zoom rather than above 302동, over the User's dot and tag", () => {
-    // At `THIRD_AT_LOWEST` 302동 stands at (244.0, 502.9): at a side or below its label reaches past 500. Above, 198.0
-    // to 290.0 and 456.9 to 482.9, it covers 301동's symbol box (224.3 to 260.3, 439.5 to 475.5) and "나 · 15분"
-    // (262.3 to 326.3, 444.5 to 470.5).
+  it("keeps 302동식당's tag at the lowest zoom although above 302동 it covers the User's dot and tag: it has no dot of its own", () => {
+    // At `THIRD_AT_LOWEST` 302동 stands at (244.0, 502.9): at a side or below its label reaches past 500, and above it
+    // covers 301동's symbol box and "나 · 15분". 302동식당 stands on 민수's point, so its tag is its only press (the
+    // review of PR 437): it is kept at its first side inside the area.
     const drawing = drawingOf(MEAL_ANSWER, 2, NO_STANDINGS, viewAt(THIRD_AT_LOWEST));
 
     expect(seen(drawing, 'answer:candidate:302동식당')).toMatchObject({
       name: '후보 1 · 302동식당 · 12:15',
-      label: null,
+      symbol: null,
+      label: { side: 'above', number: 1 },
     });
   });
 

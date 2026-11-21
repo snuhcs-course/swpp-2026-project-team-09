@@ -63,16 +63,16 @@ export function candidateDraft(plans: readonly Plan[], { place, tag }: MapScene[
 // Past any number a Plan has.
 const UNNUMBERED = 1000;
 
-// The order labels take sides in: by their kinds (`SIDE_ORDER`), candidates sharing a point before those alone, and
-// candidates by their number.
-export function sideRank({ draft, shared }: { draft: Draft; shared: boolean }): number {
-  const rank = SIDE_ORDER.indexOf(draft.group) - (shared ? 0.5 : 0);
+// The order labels take sides in: by their kinds (`SIDE_ORDER`), held candidates (a tag that is their own way to be
+// pressed) before the others, and candidates by their number.
+export function sideRank({ draft, held }: { draft: Draft; held: boolean }): number {
+  const rank = SIDE_ORDER.indexOf(draft.group) - (held ? 0.5 : 0);
   return draft.group === 'candidate' ? rank + (draft.number ?? UNNUMBERED) / (UNNUMBERED + 1) / 2 : rank;
 }
 
 interface Labelled {
   draft: Draft;
-  shared: boolean;
+  held: boolean;
   label: AnswerLabel | null;
 }
 
@@ -85,11 +85,12 @@ function seenAt(view: LabelView | null, { position }: Draft): boolean {
   return inside({ top: y, right: x, bottom: y, left: x }, view.area);
 }
 
-// Where room is short, the tags of the candidates that stand alone in the view's area are left out from the lowest
-// rank upward: once one has none, none after it has one. Its numbered dot stays and takes the press.
+// Where room is short, the tags of the candidates in the view's area whose own numbered dot is drawn are left out from
+// the lowest rank upward: once one has none, none after it has one. The dot stays and takes the press. A held
+// candidate always keeps its tag.
 export function leftOutByRank<T extends Labelled>(placed: readonly T[], view: LabelView | null): T[] {
   const lone = placed
-    .filter(({ draft, shared }) => draft.group === 'candidate' && !shared && seenAt(view, draft))
+    .filter(({ draft, held }) => draft.group === 'candidate' && !held && seenAt(view, draft))
     .toSorted((one, other) => (one.draft.number ?? UNNUMBERED) - (other.draft.number ?? UNNUMBERED));
   const first = lone.findIndex(({ label }) => label === null);
   const out = new Set(first === -1 ? [] : lone.slice(first));

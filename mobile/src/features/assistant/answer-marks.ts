@@ -203,9 +203,9 @@ interface Placed {
 
 // A draft at the point of that index, its label without its side: a candidate carries its number in it, as the pick
 // does when its dot is not drawn, so that a tag read alone says which candidate it is (the list of ticket 15 uses the
-// same numbers). The pick's label is kept, the answer's main mark, and so is a candidate's that shares its
-// point with another candidate, two restaurants of one building, so that each can be pressed.
-function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null, shared: boolean): Unplaced {
+// same numbers). The pick's label is kept, the answer's main mark, and so is a held candidate's, whose tag is its own
+// way to be pressed (`held`).
+function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null, held: boolean): Unplaced {
   const { position, group, tone, title, line, sub = null, number } = draft;
   const words =
     title === null
@@ -217,7 +217,7 @@ function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null, shar
           ...(sub === null ? {} : { sub }),
           number: group === 'candidate' || symbol === null ? number : null,
         };
-  return { point, position, words, sides: SIDES[group], kept: group === 'pick' || shared };
+  return { point, position, words, sides: SIDES[group], kept: group === 'pick' || held };
 }
 
 function candidatesAt(here: readonly Draft[]): number {
@@ -238,15 +238,17 @@ function placeAll(drafts: Draft[], view: LabelView | null): Placed[] {
         draft,
         point,
         symbol: draft === drawn ? draft.symbol : null,
-        shared: draft.group === 'candidate' && candidatesAt(here) > 1,
+        // Held: it shares its point with another candidate, two restaurants of one building, or its dot is not drawn,
+        // as one on the User's, a Friend's, or the pick's point.
+        held: draft.group === 'candidate' && (candidatesAt(here) > 1 || draft !== drawn),
       })),
     )
     .toSorted((one, other) => sideRank(one) - sideRank(other));
-  const marks = placed.map(({ draft, point, symbol, shared }) => unplaced(draft, point, symbol, shared));
+  const marks = placed.map(({ draft, point, symbol, held }) => unplaced(draft, point, symbol, held));
   const symbols = points.map(({ position, drawn }) => ({ position, symbol: drawn?.position ?? null }));
   const labels = placeLabels(symbols, marks, view);
   return leftOutByRank(
-    placed.map(({ draft, symbol, shared }, at) => ({ draft, symbol, shared, label: labels[at] ?? null })),
+    placed.map(({ draft, symbol, held }, at) => ({ draft, symbol, held, label: labels[at] ?? null })),
     view,
   );
 }
