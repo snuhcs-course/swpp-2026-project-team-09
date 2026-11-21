@@ -96,7 +96,7 @@ describe("A meal's answer", () => {
 });
 
 describe("A meeting's answer", () => {
-  it('sets the meeting with the Friend asked for aside as theirs to change, and relates it no more', async () => {
+  it('names the meeting with the Friend asked for as related, and no Quest set aside', async () => {
     const date = '2089-11-21';
     const { meeting, minsu } = await dayWithQuests(date);
 
@@ -106,10 +106,9 @@ describe("A meeting's answer", () => {
       '민수랑 4시에 보자',
     );
 
-    // P05 ticket 17, slice 2: the same meeting is the one a new plan changes (row 1).
     const answer = answerIn(response.body);
-    expect(answer.planSet).toMatchObject({ questId: meeting, kind: 'meet', changeable: true });
-    expect(answer.related).toEqual([]);
-    expect(stage.model.toolResults()[1]).toMatchObject({ result: 'planned', setAside: { ref: meeting } });
+    expect(answer.planSet).toBeNull();
+    expect(answer.related).toMatchObject([{ questId: meeting, kind: 'meet' }]);
+    expect(stage.model.toolResults()[1]).toMatchObject({ result: 'planned', related: [{ ref: meeting }] });
   });
 });

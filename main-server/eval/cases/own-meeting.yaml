@@ -4,15 +4,15 @@
 # 2026-11-22  Opus 5.5   prompted by fyoon46
 ################################################################################
 
-# The asker's own meeting is the one a new meet changes (P05 ticket 17, slice 2). The P4 world asked from the current
-# app (`capabilities: app`, which draws meets), on Monday 2026-11-02 at 11:30: the asker leads a meeting with 이민수 on
+# The asker's own meeting is the one a new meet changes (P05 ticket 17, slice 2). The P4 world asked from the app with
+# 바꾸기 (`capabilities: next-app`, which draws meets and says `plan-set`), on Monday 2026-11-02 at 11:30: the asker leads a meeting with 이민수 on
 # Saturday 2026-11-07 at 14:00 at 학생회관, made from a meet's Plan, 이민수 invited and waiting.
 
 # Row 1: a new time plans with the meeting set aside, and the line names it and asks whether to change it.
 - id: own-meeting-a-new-time
   category: own-meeting
   world: p4-answer
-  capabilities: app
+  capabilities: next-app
   repeat: 3
   turns:
     - user: 토요일 4시에 이민수랑 학생회관에서 보자
@@ -31,7 +31,7 @@
 - id: own-meeting-nothing-new
   category: own-meeting
   world: p4-answer
-  capabilities: app
+  capabilities: next-app
   repeat: 3
   turns:
     - user: 토요일에 이민수랑 보자

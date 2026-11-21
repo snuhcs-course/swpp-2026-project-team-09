@@ -3530,7 +3530,10 @@ people are the Friends asked for (the others not declined, or the declined ones 
 asker leads is left out of everyone's day and named as `planSet`, `changeable`, and the model is told `setAside`; one a
 Friend made answers the model `set-by-friend` and plans nothing; two answer `several`. Making a second one at `POST
 /plans` answers 409 `PLAN_ALREADY_SET`, or `PLAN_SET_BY_FRIEND` for a Friend's, with its `questId`: it is changed in
-place at `PUT /plans/{id}`.
+place at `PUT /plans/{id}`. All of this is for an app that says `plan-set` in `clientCapabilities` (the chat request,
+`POST /assistant/answers` and `POST /plans`), which draws 바꾸기 and words the 409s; for one that does not, a meet is
+planned as before, its meeting only related, and a second meeting or shared meal is made as before rather than
+refused into a dead end.
 
 An invited User's `leave-by` is kept when they accept an invitation into a Quest whose steps give a gathering, as a
 party's do. `InvitationsService` tells the listeners given to its `onAccepted()` once the acceptance is stored and

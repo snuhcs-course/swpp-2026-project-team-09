@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
@@ -84,18 +85,18 @@ describe('A lunch kept with an invited Friend', () => {
     const kept = await lunchKept(date, [stage.asker.id, friend.id]);
     const plan = await firstPlan(stage, date, [stage.asker.id]);
 
-    const made = await makePlanQuest(stage, {
-      input: inputOf(date, [stage.asker.id]),
-      planId: plan.id,
-      startAt: plan.startAt,
-      location: null,
-    });
+    const making = { input: inputOf(date, [stage.asker.id]), planId: plan.id, startAt: plan.startAt, location: null };
+    // Refused only for an app that words the refusal and offers 바꾸기 (P05 ticket 17, `plan-set`).
+    const made = await makePlanQuest(stage, { ...making, clientCapabilities: ['plan-set'] });
 
     expect(made.status).toBe(409);
     expect(made.body).toMatchObject({ code: 'MEAL_ALREADY_SET', questId: kept });
     expect((await questRead(kept)).status).toBe(200);
     const asked = answerIn((await stage.send([PLAN_MEAL(date), { text: '…' }], {}, '점심 뭐 먹지?')).body);
     expect(asked.mealSet).toMatchObject({ questId: kept, friendNames: ['민수'], shared: true });
+    // An app that does not word the refusal makes a second meal beside it, as before, rather than meet a dead end.
+    expect((await makePlanQuest(stage, making)).status).toBe(201);
+    expect((await questRead(kept)).status).toBe(200);
   });
 });
 

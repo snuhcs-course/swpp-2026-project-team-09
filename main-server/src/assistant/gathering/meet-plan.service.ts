@@ -36,6 +36,8 @@ interface PlanAt {
   leftOut?: readonly string[];
   // The meeting to change, by its ref, as the model names it (P05 ticket 17, slice 2).
   questId?: string;
+  // Only for an app that draws `planSet` (`plan-set`) is the asker's meeting looked for and set aside.
+  setsAside?: boolean;
 }
 
 // A meet's plan as the tool reads it: the answer, its people's days, and the asker's meeting it would change.
@@ -111,7 +113,7 @@ export class MeetPlanService {
       this.meals.peopleOf(askerId, friends, date, at.location),
       this.menus.findByDate(date),
       this.studySpaces.listFor(askerId),
-      this.heldOf(askerId, input, now, at.questId),
+      at.setsAside === true ? this.heldOf(askerId, input, now, at.questId) : null,
     ]);
     const setAside = held?.result === 'one' && held.meeting.kept.mine ? held.meeting : null;
     const leftOut = new Set([...(at.leftOut ?? []), ...(setAside?.subQuestIds ?? [])]);

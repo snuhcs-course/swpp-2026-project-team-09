@@ -121,12 +121,18 @@ export class PlansService {
     if (alone !== null) {
       return this.makeAlone(userId, making, alone);
     }
+    // Only an app that draws `planSet` is refused a second meeting or shared meal: it words the 409 and offers 바꾸기.
+    const refuses = making.clientCapabilities.includes('plan-set');
+    const meeting = refuses && making.input.kind === 'meet' ? making.input : null;
+    if (meeting !== null) {
+      await refuseHeldMeeting(this.prisma, userId, meeting, this.clock.now());
+    }
     const plan = await this.replanned(userId, making, []);
     const { questId, created, replaced } = await this.prisma.$transaction(async (tx) => {
-      if (making.input.kind === 'meet') {
-        await refuseHeldMeeting(tx, userId, making.input, this.clock.now());
+      if (meeting !== null) {
+        await refuseHeldMeeting(tx, userId, meeting, this.clock.now());
       }
-      const dropped = await this.replaceHeldMeal(userId, making.input, tx);
+      const dropped = await this.replaceHeldMeal(userId, making.input, tx, refuses);
       const made = await this.quests.createWithSubQuests(plan.title, subQuestsOf(plan), [userId], tx, {
         capacity: Math.max(CAPACITY_MIN, plan.parts.length),
         ...mealOf(making.input),
@@ -195,7 +201,7 @@ export class PlansService {
     const plan = planNamed(answer.plans, making.planId, making.startAt);
     const settings = { capacity: ALONE_CAPACITY, takenAlone: true, ...mealOf(input) };
     const { questId, replaced } = await this.prisma.$transaction(async (tx) => {
-      const dropped = await this.replaceHeldMeal(userId, input, tx);
+      const dropped = await this.replaceHeldMeal(userId, input, tx, making.clientCapabilities.includes('plan-set'));
       const made =
         input.kind === 'events'
           ? await this.forGlobalEvent(userId, { id: plan.id, title: plan.title }, tx, settings, true)
@@ -217,14 +223,16 @@ export class PlansService {
 
   // The asker's Quest for the same meal and day, which a meal's Plan made into a Quest replaces: the asker drops it, and
   // it is deleted with nobody left. One shared with another Holder or an invitation is never dropped from a new Plan,
-  // so that nobody loses a meal they were asked to: it refuses the making, and is changed in that Quest.
+  // so that nobody loses a meal they were asked to: it refuses the making when the app words the refusal (`refuses`),
+  // and is changed in that Quest; an app that does not is made a second meal beside it, as before.
   private async replaceHeldMeal(
     userId: string,
     input: PlanInput,
     tx: Prisma.TransactionClient,
+    refuses: boolean,
   ): Promise<string | null> {
     const held = input.kind === 'meal' ? await heldMealOf(tx, userId, input) : null;
-    if (held === null) {
+    if (held === null || (held.others.length > 0 && !refuses)) {
       return null;
     }
     if (held.others.length > 0) {

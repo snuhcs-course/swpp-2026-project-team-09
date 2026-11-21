@@ -32,7 +32,9 @@ afterAll(async () => {
   await Promise.all([prisma.$disconnect(), stage.stop()]);
 });
 
-const MEET_APP = { clientCapabilities: ['library', 'answer', 'meet'] };
+// An app that draws 바꾸기 for a plan already set, and the released one, which does not.
+const MEET_APP = { clientCapabilities: ['library', 'answer', 'meet', 'plan-set'] };
+const RELEASED_APP = { clientCapabilities: ['library', 'answer', 'meet'] };
 
 // A meeting made from a meet's Plan on `date` at `clock`, led by `leader` with `invited` waiting.
 async function meeting(date: string, clock: string, leader: Named, invited: Named[]): Promise<string> {
@@ -178,9 +180,58 @@ describe('Making a second meeting at POST /plans', () => {
         ? await meeting(date, '14:00', stage.asker, [minsu])
         : await meeting(date, '14:00', minsu, [stage.asker]);
 
-    const response = await makePlanQuest(stage, await firstMeet(date, minsu));
+    const response = await makePlanQuest(stage, {
+      ...(await firstMeet(date, minsu)),
+      clientCapabilities: ['plan-set'],
+    });
 
     expect(response.status).toBe(409);
     expect(response.body).toMatchObject({ code, questId: kept });
+  });
+});
+
+describe('An app that does not draw 바꾸기', () => {
+  it('is planned for as before: the meeting is related, never set aside, and no change is offered', async () => {
+    await stage.asking('2092-03-31', '10:30');
+    const minsu = await stage.friend('민수');
+    const kept = await meeting('2092-04-01', '14:00', stage.asker, [minsu]);
+
+    const response = await stage.send(
+      [resolve('민수'), planMeet('2092-04-01', [minsu.id]), { text: '…' }],
+      RELEASED_APP,
+      '내일 민수랑 보자',
+    );
+    await stage.send(
+      [{ tool: 'findDay', input: { date: '2092-04-01', questIds: [kept] } }, { text: '…' }],
+      RELEASED_APP,
+      '민수랑 약속 몇 시야?',
+    );
+
+    expect(answerOf(response.body)).toMatchObject({ planSet: null, related: [{ questId: kept }] });
+    expect(stage.model.toolResults()[0]).not.toHaveProperty('note');
+  });
+
+  it('makes a second meeting at POST /plans, as before, where one that draws it is refused', async () => {
+    await stage.asking('2092-04-07', '10:30');
+    const minsu = await stage.friend('민수');
+    await meeting('2092-04-08', '14:00', stage.asker, [minsu]);
+
+    const response = await makePlanQuest(stage, await firstMeet('2092-04-08', minsu));
+
+    expect(response.status).toBe(201);
+  });
+
+  it('is offered no change by findDay, where one that draws it is', async () => {
+    await stage.asking('2092-04-14', '10:30');
+    const minsu = await stage.friend('민수');
+    const kept = await meeting('2092-04-15', '14:00', stage.asker, [minsu]);
+
+    await stage.send(
+      [{ tool: 'findDay', input: { date: '2092-04-15', questIds: [kept] } }, { text: '…' }],
+      MEET_APP,
+      '민수랑 약속 몇 시야?',
+    );
+
+    expect(stage.model.toolResults()[0]).toMatchObject({ note: expect.stringContaining('바꾸기') as unknown });
   });
 });
