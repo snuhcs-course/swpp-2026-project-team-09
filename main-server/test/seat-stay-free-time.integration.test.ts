@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -115,5 +116,30 @@ describe('A seat returned', () => {
       stage.asker.accessToken,
     ).expect(404);
     expect(await leaveBys(stage.asker)).toEqual([]);
+  });
+
+  it('has its leave-by gone by the answer, however long cancelling it takes', async () => {
+    const date = '2087-06-03';
+    await exampleOn(date);
+    const { quest } = await stay(stage.asker, date, '12:00', 120);
+    // The app's own, loaded after its settings.
+    const notifications = stage.app.get(
+      (await import('../src/notifications/notifications.service.js')).NotificationsService,
+    );
+    const cancel = notifications.cancel.bind(notifications);
+    const slow = vi.spyOn(notifications, 'cancel').mockImplementation(async (...args) => {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 300);
+      });
+      return cancel(...args);
+    });
+
+    await withAccessToken(
+      request(stage.app.getHttpServer()).delete(`/quests/${quest.id}`),
+      stage.asker.accessToken,
+    ).expect(204);
+
+    expect(await leaveBys(stage.asker)).toEqual([]);
+    slow.mockRestore();
   });
 });
