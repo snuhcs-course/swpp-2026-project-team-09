@@ -76,12 +76,20 @@ export interface QuestProposal {
   invitees: ProposalFriend[];
 }
 
-// A Proposal as it is sent back: its Global Event by id and title, as a card goes back by reference.
-export type SentProposal = Omit<QuestProposal, 'globalEvent'> & { globalEvent: { id: string; title: string } | null };
+// A Proposal as it is sent back: its Global Event by id and title, as a card goes back by reference, and once 만들기
+// made it, the made Quest's id (P05 ticket 18), so that the Assistant does not offer it again. A main server before
+// P05 ticket 18 refuses the key, so the app that sends it is published after that server.
+export type SentProposal = Omit<QuestProposal, 'globalEvent'> & {
+  globalEvent: { id: string; title: string } | null;
+  madeQuestId?: string;
+};
 
-export function sentProposalOf(proposal: QuestProposal): SentProposal {
+export function sentProposalOf(proposal: QuestProposal, madeQuestId?: string): SentProposal {
   const { globalEvent } = proposal;
-  return { ...proposal, globalEvent: globalEvent === null ? null : { id: globalEvent.id, title: globalEvent.title } };
+  const event = globalEvent === null ? null : { id: globalEvent.id, title: globalEvent.title };
+  return madeQuestId === undefined
+    ? { ...proposal, globalEvent: event }
+    : { ...proposal, globalEvent: event, madeQuestId };
 }
 
 // One message of the conversation, as the app sends it: the User's text, or the Assistant's with the cards it showed
