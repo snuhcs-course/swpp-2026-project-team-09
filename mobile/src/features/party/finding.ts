@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { TimetableClass, Weekday } from '@/api/types';
@@ -90,9 +91,11 @@ export function timeReason(startsAt: string | null, classes: readonly TimetableC
     .map(({ endTime }) => endTime)
     .filter((endTime) => minutesOf(endTime) <= minute)
     .toSorted((one, other) => minutesOf(other) - minutesOf(one))[0];
-  return ended === undefined
-    ? `${day}은 ${clock}까지 수업이 없어서 비어 있어요.`
-    : `${day} 수업이 ${ended}에 끝나서 ${clock}에 비어 있어요.`;
+  if (ended !== undefined) {
+    return `${day} 수업이 ${ended}에 끝나서 ${clock}에 비어 있어요.`;
+  }
+  // A day with no Class at all, such as a Sunday, is free all day, not "until" the 파티's time.
+  return times.length === 0 ? `${day}은 수업이 없는 날이에요.` : `${day}은 ${clock}까지 수업이 없어서 비어 있어요.`;
 }
 
 // "친구 최유나님이 모집했어요.", or the Friends who joined.

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useEffect, useState } from 'react';
@@ -102,7 +103,7 @@ function PlanLevelsSheet({ asking: { named, left, open }, onRemove, onFinish }: 
   return (
     <BottomSheet label="친구에게 보일 위치" onClose={skip} open={open}>
       <View style={styles.body}>
-        <Text style={styles.kicker}>내 파티에 처음 들어왔어요</Text>
+        <Text style={styles.kicker}>처음 초대한 친구예요</Text>
         <Text accessibilityRole="header" style={styles.title}>{`${names(left)}에게 평소에 어디까지 보일까요?`}</Text>
         <Text style={styles.words}>{`${nowLine(left)}${named.length > 1 ? ' 뺀 친구는 그대로 둬요.' : ''}`}</Text>
         <View style={styles.cells}>

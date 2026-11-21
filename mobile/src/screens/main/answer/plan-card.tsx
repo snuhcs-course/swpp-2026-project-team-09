@@ -9,7 +9,7 @@
 
 import { type ReactElement, type ReactNode, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
+import type { AnswerLine, AnswerReply, ConditionChip } from '@/api/assistant-types';
 import type { AnswerOffer } from '@/api/refusal-types';
 import { Button, color, space, text } from '@/design-system';
 import { movingWords } from '@/features/assistant/band-move';
@@ -119,7 +119,7 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
 // over the Plan it keeps, who cannot come while the band is moved over their busy stretch, and why there is no Plan.
 // None otherwise: where, when, who, and the way are on the map and the time bar.
 export function linesOf(
-  { plan, moving }: ShownAnswer,
+  { plan, moving }: Pick<ShownAnswer, 'plan' | 'moving'>,
   answer: AnswerReply,
   adding: boolean,
   over: readonly AnswerLine[] = [],
@@ -146,7 +146,7 @@ function Said({ lines, said }: { lines: readonly AnswerLine[]; said: string }): 
   }
   return (
     <Pressable
-      accessibilityLabel={open ? '접기' : '전체 보기'}
+      accessibilityLabel={`${lines.map((line) => line.map(({ text: words }) => words).join('')).join(' ')}, ${open ? '접기' : '전체 보기'}`}
       accessibilityRole="button"
       accessibilityState={{ expanded: open }}
       onPress={() => {
@@ -163,18 +163,31 @@ function Said({ lines, said }: { lines: readonly AnswerLine[]; said: string }): 
 // Whether the Plan's card has nothing to read: no line, step, relax button, or the buttons of events and parties. Then
 // the frame docks it: one row with the input and the main button, and the chips "＋ 같이", "지난 답 N개", and the note
 // when they show.
-export function planCardRests(shown: ShownAnswer, answer: AnswerReply, over: readonly AnswerLine[]): boolean {
-  const { plan, ghost, adding } = shown;
+export function planCardRests(
+  shown: Pick<ShownAnswer, 'plan' | 'ghost' | 'adding' | 'moving'>,
+  answer: AnswerReply,
+  over: readonly AnswerLine[],
+): boolean {
+  const { plan, ghost, adding, moving } = shown;
   const { kind } = answer.input;
+  // One form for the whole drag of the band: open, since its lines may come and go under the finger.
   return (
     plan !== null &&
     !adding &&
     ghost === null &&
+    moving === null &&
     linesOf(shown, answer, false, over).length === 0 &&
     !easedFromNow(answer.input) &&
     (answer.offers ?? []).length === 0 &&
     (kind === 'meal' || kind === 'meet')
   );
+}
+
+// The chips of the Plan's people whom the scene draws no face for, those whose position is unknown ("민수 · 자리
+// 모름"): their chip keeps their profile and their ✕, since the map has no face to press.
+export function facelessChips(answer: AnswerReply, { plan }: Pick<ShownAnswer, 'plan'>): ConditionChip[] {
+  const drawn = new Set((plan?.scene.people ?? []).map(({ userId }) => userId));
+  return answer.chips.filter(({ kind, userId }) => kind === 'person' && userId !== null && !drawn.has(userId));
 }
 
 interface PlanCardProps extends CardProps {
@@ -198,17 +211,18 @@ export function PlanCard(props: PlanCardProps): ReactElement {
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const openProfile = useOpenFriendProfile();
   const corner = fix.adding ? { words: '그대로', icon: null, onPress: fix.toggleAdding } : null;
-  // A Friend with a position is added by the + on their face, so the chip is for those the map cannot show.
-  const unseen = fix.choices.some(({ position }) => position === null);
-  const addName = fix.adding || unseen ? addNameOf(answer.input.kind) : null;
+  // While the Plan can take more people: the map does not draw every Friend's face (one near the answer's own marks
+  // gives way), so the + on a face is not enough.
+  const addName = fix.adding || fix.choices.length > 0 ? addNameOf(answer.input.kind) : null;
+  const faceless = facelessChips(answer, shown);
   const docked = dock !== undefined;
   return (
     <View style={styles.plan}>
-      {addName === null && corner === null && !docked ? null : (
+      {addName === null && corner === null && faceless.length === 0 && !docked ? null : (
         <ConditionChips
           adding={fix.adding}
           addName={addName}
-          chips={[]}
+          chips={faceless}
           corner={corner}
           disabled={busy}
           extra={dock}

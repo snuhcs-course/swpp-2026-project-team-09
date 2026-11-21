@@ -31,7 +31,8 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
   }
   const { kind } = answer.input;
   const people = peopleOf(answer.input).length;
-  const disabled = shown.recalculating || invitation.sending;
+  // While a follow-up's reply is on its way the Plan on screen is about to be replaced.
+  const disabled = shown.recalculating || invitation.sending || control.chat.waiting;
   if (kind !== 'new-quest' && people > 1) {
     return {
       words: invitation.sending ? '보내는 중이에요' : '만들고 초대 보내기',

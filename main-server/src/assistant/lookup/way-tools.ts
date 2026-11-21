@@ -3,10 +3,11 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
-import { defineTool, noneFound, type Tool } from '../feature.js';
+import { defineTool, noneFound, type Tool, type ToolContext } from '../feature.js';
 import { clockOf } from '../free-time/free-time.js';
 import { clockTime } from '../free-time/tool-parts.js';
 import { QUEST_FIELD, QUEST_NONE_REASONS, questsNamed } from './quest-way-tools.js';
@@ -52,6 +53,12 @@ const input = z.object({
     .describe(
       'The time the User must be there by, as 24-hour HH:MM, when they named one (2시까지 in the afternoon is 14:00). Left out otherwise.',
     ),
+  date: z.iso
+    .date()
+    .optional()
+    .describe(
+      'The day of the item the User asks about, as YYYY-MM-DD read against now, when it is not today (월요일 24동 수업에 늦나?). Left out for today.',
+    ),
   about: z
     .enum(['shuttle'])
     .optional()
@@ -96,13 +103,32 @@ function shuttleWords({ shuttle }: Way): object | string | null {
   };
 }
 
+// Draws a way found and answers it in words.
+function shownWay(
+  { way, lookup, labels }: Extract<WayAnswer, { result: 'found' }>,
+  presented: ToolContext['presented'],
+): object {
+  presented.lookup = lookup;
+  presented.answer = null;
+  presented.mapButtons.length = 0;
+  return {
+    result: 'found',
+    ...labels,
+    fromIs: STARTS[way.start.basis],
+    ...(atPlace(way) ? { atPlace: true } : {}),
+    walkMinutes: way.walkMinutes,
+    deadline: deadlineWords(way),
+    shuttle: shuttleWords(way),
+  };
+}
+
 export function findWay(ways: WayService, tutorial: TutorialOrderService): Tool {
   return defineTool({
     description:
       "Finds the way from where the User is to a Place, or to the Place of their next item today, on foot or by the campus shuttle when it is at least 3 minutes faster, and the app draws it on the map. Answers result 'found' with where the User sets out from, the Place, the minutes on foot, the shuttle weighed against the walk, and, when they must be there by a time, when to set out and how many minutes late they are if they set out now, or result 'none' with the reason." +
       questsNamed(tutorial),
     input,
-    run: async ({ to, from, by, about, quest }, { userId, now, context, found, presented }) => {
+    run: async ({ to, from, by, date, about, quest }, { userId, now, context, found, presented }) => {
       const tapped = context.tapped?.kind === 'place' ? context.tapped.placeId : null;
       found.refuseUnfound(
         'place',
@@ -122,27 +148,13 @@ export function findWay(ways: WayService, tutorial: TutorialOrderService): Tool 
         presented.mapButtons.length = 0;
         return { result: 'found', fromIs: STARTS[reached.way.start.basis], ...reached.words };
       }
-      const answer = await ways.find(
-        userId,
-        { fromPlaceId: from ?? null, toPlaceId: to ?? null, by: by ?? null, about },
-        { now, location: context.location, locationMissing: context.locationMissing },
-      );
-      if (answer.result === 'none') {
-        return noneFound(NONE_REASONS[answer.reason]);
-      }
-      const { way, lookup, labels } = answer;
-      presented.lookup = lookup;
-      presented.answer = null;
-      presented.mapButtons.length = 0;
-      return {
-        result: 'found',
-        ...labels,
-        fromIs: STARTS[way.start.basis],
-        ...(atPlace(way) ? { atPlace: true } : {}),
-        walkMinutes: way.walkMinutes,
-        deadline: deadlineWords(way),
-        shuttle: shuttleWords(way),
-      };
+      const ask = { fromPlaceId: from ?? null, toPlaceId: to ?? null, by: by ?? null, about };
+      const answer = await ways.find(userId, date === undefined ? ask : { ...ask, date }, {
+        now,
+        location: context.location,
+        locationMissing: context.locationMissing,
+      });
+      return answer.result === 'none' ? noneFound(NONE_REASONS[answer.reason]) : shownWay(answer, presented);
     },
   });
 }
@@ -152,6 +164,7 @@ export const WAY_RULES = `A way is drawn on the map: the server finds where the 
 
 - When the User asks where a Place is (문화관이 어디야?, 24동 어떻게 가?), or how many minutes it takes to a Place (24동까지 몇 분?), find the Place with resolvePlace first, then call findWay with it as to. When they name where they set out from (301동에서), find that Place with resolvePlace too and give it as from.
 - When the User asks how many minutes it takes to their next Class, whether they will be late, or whether to take the shuttle (늦나?, 다음 수업까지 몇 분?, 9시 수업인데 늦나, 셔틀 탈까 걸을까), call findWay with to left out: the server takes the Place of their next item today. A time they must be there by (2시까지) is by, as 24-hour HH:MM: 2시 in the afternoon is 14:00.
+- When the item is on another day (월요일 1시 수업에 늦나?), give its day as date: the server sets out from the item before it that day, not from where the User is now.
 - When the User asks about the shuttle to a Place or to their next Class (기숙사 가는 셔틀 언제 와?, 셔틀 탈까 걸을까), give about 'shuttle' to findWay, which then says first when the shuttle is not running.
 - A line [Tapped: place …] gives the Place the User tapped (여기): give it as to.
 - The app draws the way and writes its minutes and times itself. Your reply is one sentence, such as "문화관은 지금 있는 301동에서 걸어서 18분이에요.", "12:45에 나서면 13:00 수업에 맞아요.", "지금 가도 5분 늦어요.", or, when the shuttle is taken, "16:43에 나서 셔틀을 타면 16:53에 도착해요." When findWay gives atPlace, the User is there already: say so, such as "지금 24동에 있어요." Do not call showOnMap for a way: the app already draws it.

@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -242,9 +243,13 @@ function hereLookup(way: Way, naming: WayNaming): Lookup {
   };
 }
 
-// Asked about the shuttle while it is not running and nothing is due (board n21): that it is not, in the words of the
-// basis, the walk, its arrival, and no button.
+// Asked about the shuttle while it is not running: with nothing due (board n21), that it is not, in the words of the
+// basis, the walk, its arrival, and no button; with something due, that it is not, then when to set out, as the walk
+// says it, so that the answer does not read as the walk asked before.
 function notRunning(lookup: Lookup, way: Way, naming: WayNaming): Lookup {
+  if (way.deadline !== null) {
+    return { ...lookup, lines: [[part(NOT_RUNNING)], ...lookup.lines.slice(1, 2)] };
+  }
   const { toPlaceId, walkMinutes, arrival } = way;
   const flag = { at: naming.position(toPlaceId), text: `${clockOf(arrival)} 도착 · ${naming.placeLabel(toPlaceId)}` };
   return {
@@ -275,7 +280,7 @@ export function wayAnswer(args: WayArgs): WayAnswer {
         band: bandOf(way, args, naming),
         actions: actionsOf(way, naming),
       };
-  const asked = args.about === 'shuttle' && way.shuttle === 'not running' && way.deadline === null;
+  const asked = args.about === 'shuttle' && way.shuttle === 'not running';
   const shown = asked ? notRunning(lookup, way, naming) : lookup;
   return {
     result: 'found',

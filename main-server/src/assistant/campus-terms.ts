@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The short names people on campus use for places and things, a fragment of the chat's system prompt of its own
@@ -51,6 +52,11 @@ export const CAMPUS_TERMS: readonly CampusTerm[] = [
   { shortNames: ['긱운'], means: '기숙사 운동장, which is 관악사운동장' },
   { shortNames: ['긱삼'], means: '기숙사삼거리', note: 'A stop of the shuttle; no Place has this name.' },
   { shortNames: ['중도'], means: '중앙도서관' },
+  {
+    shortNames: ['인문대'],
+    means: "the College of Humanities' buildings, 1동–7동, with its library, 신양인문학술정보관 (4동)",
+    note: 'An area, not one building. Asked for a place to study there, it means 신양인문학술정보관 (4동).',
+  },
 ];
 
 function lineOf({ shortNames, means, note }: CampusTerm): string {

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -74,7 +75,7 @@ describe('The menu of 301동식당 at 11:40 (board q8)', () => {
     expect(lookup.lines).toEqual([
       [
         { text: '301동식당', strong: true },
-        { text: ' 오늘 점심은 제육볶음', strong: false },
+        { text: ' 오늘 점심은 제육볶음 6,000원', strong: false },
       ],
       [{ text: '12:45까지 55분 먹을 수 있어요', strong: false }],
     ]);

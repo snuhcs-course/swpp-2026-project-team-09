@@ -3,6 +3,7 @@
  *
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { JoinPolicy, MyParty, Party, Person, Quest } from '@/api/types';
@@ -165,5 +166,18 @@ describe('a Quest without a time', () => {
     ]);
     expect(rows.map(({ id }) => id)).toEqual(['러닝', '저녁']);
     expect(rows[1]).toMatchObject({ time: '19:00', place: '녹두 식당', meta: '19:00 · 녹두 식당' });
+  });
+});
+
+// The main screen's list has no day headers: in the usage test of 2026-11-21 its 09:00, 14:00 and 12:21 were three days.
+describe("a Quest's meta on another day", () => {
+  it('carries its day, and one of today none', () => {
+    const rows = rowsOf([
+      quest('러닝'),
+      quest('배드민턴', { startsAt: '2026-10-07T18:00:00+09:00' }),
+      quest('스터디', { startsAt: '2026-10-09T12:21:00+09:00' }),
+    ]);
+
+    expect(rows.map(({ meta }) => meta.split(' · ')[0])).toEqual(['17:40', '내일 18:00', '10월 9일 (금) 12:21']);
   });
 });

@@ -169,7 +169,14 @@ function FollowUps({ control }: { control: ChatSheetControl }): ReactElement | n
   const reply = lastReply(chat.bubbles);
   const onScreen = reply !== undefined && (turnOf(chat.bubbles)?.after.includes(reply) ?? false);
   return answer.adding || answer.moving !== null || !onScreen ? null : (
-    <FollowUpChips onAsk={chat.send} reply={reply} />
+    <FollowUpChips
+      onAsk={(words) => {
+        // As every send from the input does, so that the card shows the reply.
+        Keyboard.dismiss();
+        chat.send(words);
+      }}
+      reply={reply}
+    />
   );
 }
 

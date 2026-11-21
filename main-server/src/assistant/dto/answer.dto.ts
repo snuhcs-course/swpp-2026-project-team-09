@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -92,6 +93,9 @@ export interface Plan {
   friendNames?: string[];
   // A new recruiting Quest's Plan: the Friends free then who are not in it, each with the line of their day.
   candidates?: { userId: string; name: string; line: string }[];
+  // A Global Event's Plan: the event's own start and end, Korea time with the offset (end null when it has none). Its
+  // startAt is the asker's arrival when the event is under way, and is never the event's time.
+  event?: { startAt: string; endAt: string | null };
 }
 
 export interface PlanPart {
@@ -156,6 +160,25 @@ export interface TimeBand {
   startAt: string;
   endAt: string;
   text: string;
+}
+
+// One request of a message that asked for several (P03): a seat or room booked through a library card, or a plan drawn
+// on the map. A reply carries its steps, in time order, only when there are two or more.
+export interface ReplyStep {
+  kind: 'seat' | 'room' | PlanInput['kind'];
+  // What it is, in words: "7층 7A 열람실 2 구역", "901동에서 저녁".
+  title: string;
+  place: PlacePoint | null;
+  // Where the User sets out from for it: the place of the step before it, unless they named another.
+  from: PlacePoint | null;
+  // Null when the step has no time.
+  startAt: string | null;
+  endAt: string | null;
+  // `shown`: its card or its answer is in the reply. `not-done`: it could not be done, for `reason`.
+  status: 'shown' | 'not-done';
+  reason: string | null;
+  // Where the reply shows it: the library card of that key, or the answer.
+  shows: { kind: 'card'; key: string } | { kind: 'answer' } | null;
 }
 
 export type { CardFact, Lookup, LookupAction, LookupCard } from './lookup.dto.js';

@@ -5,15 +5,17 @@
  * 2026-10-02  Opus 5.5   prompted by fyoon46
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { CollectionService } from '../collection/collection.service.js';
 import { PrismaService } from '../common/prisma.service.js';
+import { type Meal } from '../generated/prisma/client.js';
 import { type MenusCollectedMessage } from './dto/menus-collected.dto.js';
 import { RestaurantMenusDto, toRestaurantMenusDto } from './dto/restaurant-menus.dto.js';
-import { RestaurantHours } from './restaurant-hours.js';
+import { type Hours, RestaurantHours } from './restaurant-hours.js';
 import { RestaurantPlaces } from './restaurant-places.js';
 
 // A `date` column holds the calendar day of the Date in UTC.
@@ -66,6 +68,11 @@ export class MenusService {
       });
       await this.hours.keep(tx, message);
     });
+  }
+
+  // A Restaurant's hours for a meal on `date`, as RestaurantHours keeps them; null when none were kept.
+  hoursOf(restaurant: string, meal: Meal, date: string): Promise<Hours | null> {
+    return this.hours.hoursOf(restaurant, meal, date);
   }
 
   async findByDate(date: string): Promise<RestaurantMenusDto[]> {
