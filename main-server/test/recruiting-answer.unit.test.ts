@@ -220,9 +220,9 @@ describe('A 파티 on another day', () => {
     );
 
     expect(plans[0]?.lines[0]).toEqual([
-      { text: '내일 18:00 문화관', strong: true },
+      { text: '내일(토) 18:00 문화관', strong: true },
       { text: ' 파티에', strong: false },
     ]);
-    expect(plans[0]?.scene.flags[0]?.text).toBe('내일 18:00 배드민턴');
+    expect(plans[0]?.scene.flags[0]?.text).toBe('내일(토) 18:00 배드민턴');
   });
 });

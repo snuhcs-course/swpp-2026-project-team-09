@@ -37,21 +37,24 @@ const WEEKDAY_WORDS = ['일', '월', '화', '수', '목', '금', '토'];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// A day in words, from now: 오늘, 내일, 모레, or "11월 24일 (월)".
+const NEAR_DAYS: Partial<Record<number, string>> = { [-1]: '어제', 1: '내일', 2: '모레' };
+
+// The day of a time beside its clock, in the words the app writes (koreaDayWord in mobile/src/korea-time.ts): nothing
+// for today, "내일(수)", "모레(목)", "어제(월)", else "11/23(월)".
 export function dayWordsFrom(date: string, now: Date): string {
   const days = Math.round((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${koreaDate(now)}T00:00:00Z`)) / DAY_MS);
-  const named = ['오늘', '내일', '모레'][days];
-  if (named !== undefined) {
-    return named;
+  if (days === 0) {
+    return '';
   }
   const [, month, day] = date.split('-').map(Number);
-  return `${month}월 ${day}일 (${WEEKDAY_WORDS[new Date(`${date}T00:00:00Z`).getUTCDay()] ?? ''})`;
+  const weekday = WEEKDAY_WORDS[new Date(`${date}T00:00:00Z`).getUTCDay()] ?? '';
+  return `${NEAR_DAYS[days] ?? `${month}/${day}`}(${weekday})`;
 }
 
-// A time in Korea with its day when that is not today: "18:00", "내일 18:00", "11월 24일 (월) 12:21". A time with no
-// day reads as today's, and a 파티 tomorrow read as today's was gone to a day early.
+// A time in Korea with its day before it when that is not today: "18:00", "내일(수) 18:00", "11/24(화) 09:00". A time
+// with no day reads as today's, and a 파티 tomorrow read as today's was gone to a day early.
 export function clockWithDay(at: Date, now: Date): string {
   const clock = koreaClock(at).toISOString().slice(11, 16);
-  const date = koreaDate(at);
-  return date === koreaDate(now) ? clock : `${dayWordsFrom(date, now)} ${clock}`;
+  const day = dayWordsFrom(koreaDate(at), now);
+  return day === '' ? clock : `${day} ${clock}`;
 }

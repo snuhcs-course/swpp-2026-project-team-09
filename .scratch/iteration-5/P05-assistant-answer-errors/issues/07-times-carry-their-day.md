@@ -14,15 +14,15 @@ Native files: none. Releases: an app OTA update and the main server.
 
 ## What to build
 
-- One server helper, `clockWithDay`, writes a time with its day when its date is not today: "내일 18:00", "모레 12:21", "11월 24일 (화) 09:00". The recruiting line ("내일 18:00 문화관 파티에"), the meet line, the event lines of an event not under way, and the flags of events and 파티 use it. The tool result of a recruiting plan gives the model its date, and the rules say to name the day first when it is not today.
-- The main screen's quest list, which has no day headers, shows the day of a Quest that is not today ("내일 14:00 · 학생회관"), with the app's `koreaDay`.
+- One server helper, `clockWithDay`, writes a time with its day when its date is not today, in the app's day words (`koreaDayWord`, P04 ticket 01): "내일(수) 18:00", "모레(목) 12:21", "11/24(화) 09:00". The recruiting line ("내일(토) 18:00 문화관 파티에"), the meet line, the event lines of an event not under way, and the flags of events and 파티 use it. The tool result of a recruiting plan gives the model its date, and the rules say to name the day first when it is not today.
+- The main screen's quest list, which has no day headers, shows the day of a Quest that is not today ("내일 14:00 · 학생회관"), with the app's `koreaDay`. Once P04 ticket 01 adds `koreaDayWord`, the one helper of the app's day words, the list switches to it.
 - The 파티 finding says a day without any Class has none ("일요일은 수업이 없는 날이에요"), not that it is free "until" the 파티's time.
 
 Left as they are: the library's and the meal menu's own day words, which already name the day, and the how-about notes, which speak of a place on the plan's own day.
 
 ## Acceptance criteria
 
-- [x] A 파티 tomorrow at 18:00 is written "내일 18:00" in the recruiting answer and on its flag. (Unit test, fails before the fix.)
+- [x] A 파티 tomorrow at 18:00 is written "내일(토) 18:00" in the recruiting answer and on its flag. (Unit test, fails before the fix.)
 - [x] A meet asked the day before carries "내일". (Unit test, fails before the fix.)
 - [x] A time today is written as before. (The existing unit and integration tests, unchanged.)
 - [x] The quest list shows the day of a Quest that is not today. (Unit test, fails before the fix.)

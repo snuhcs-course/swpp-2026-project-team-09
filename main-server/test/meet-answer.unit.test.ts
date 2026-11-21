@@ -264,6 +264,6 @@ describe('A meet on another day', () => {
 
     const [first] = meetOf([me(), minsu()], {}, theDayBefore).plans;
 
-    expect(first?.lines[0]?.[0]?.text).toMatch(/^내일 \d{2}:\d{2} /u);
+    expect(first?.lines[0]?.[0]?.text).toMatch(/^내일\(화\) \d{2}:\d{2} /u);
   });
 });
