@@ -3,10 +3,12 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { JoinPolicy } from '../../generated/prisma/client.js';
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
+import { type Hours } from '../../menus/restaurant-hours.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { koreaTime } from '../korea-time.js';
 import { type ProposalFriend, type QuestProposal } from '../proposal.js';
@@ -34,6 +36,9 @@ export interface RestaurantCard {
     meal: HandledMeal;
     eatingMinutes: number;
     lines: MenuLineDto[];
+    // The Restaurant's hours for the meal on that day, as its page last gave them for that kind of day; null when none
+    // were kept. The lines leave the notes out, the hours' line among them.
+    hours: Hours | null;
     people: TravelShown[];
     proposal: QuestProposal;
   };
@@ -64,7 +69,7 @@ function mealProposal(
 
 export function restaurantCard(
   restaurant: OpenRestaurant & MealFit,
-  { date, meal, invitees }: { date: string; meal: HandledMeal; invitees: ProposalFriend[] },
+  { date, meal, invitees, hours }: { date: string; meal: HandledMeal; invitees: ProposalFriend[]; hours: Hours | null },
 ): RestaurantCard {
   const { key, place, lines, start, eatingMinutes, people } = restaurant;
   return {
@@ -77,6 +82,7 @@ export function restaurantCard(
       meal,
       eatingMinutes,
       lines,
+      hours,
       people,
       proposal: mealProposal(restaurant, { meal, start, invitees }),
     },
