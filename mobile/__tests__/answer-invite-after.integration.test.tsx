@@ -20,7 +20,6 @@ import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { socketServer } from './support/live';
 import { givePhone, ON_CAMPUS } from './support/main';
-import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, DINNER, PHONE_NOW } from './support/server';
 
@@ -181,15 +180,14 @@ describe('a refused "만들고 초대 보내기"', () => {
 
 // Partitions: a press on a candidate's mark after inviting.
 describe('the map after inviting', () => {
-  it("shows no other Plan when a candidate's mark is pressed", async () => {
+  // P04 ticket 17: once the Plan is made, the other candidates are not drawn, so none can be pressed.
+  it('leaves no other Plan to press', async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
     await user.press(inviteButton());
     await pass(500);
 
-    await press(user, '후보 2 · 301동식당');
-    await pass(500);
-
+    expect(mapThings()).not.toContain('후보 2 · 301동식당');
     expect(mapThings()).toContain(PICK);
     expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
   });
