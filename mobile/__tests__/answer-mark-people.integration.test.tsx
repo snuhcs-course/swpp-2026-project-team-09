@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -70,7 +71,13 @@ describe("a face of the Plan's people", () => {
     await user.press(markCard().getByRole('button', { name: '민수 빼기' }));
     await pass(500);
 
-    expect(recalculations(server)).toEqual([{ input: { ...MEAL_ANSWER.input, people: [ASKER] }, location: ON_CAMPUS }]);
+    expect(recalculations(server)).toEqual([
+      {
+        input: { ...MEAL_ANSWER.input, people: [ASKER] },
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
+    ]);
     expect(screen.queryByTestId('mark-card')).toBeNull();
     expect(mapThings()).not.toContain('민수');
   });

@@ -157,7 +157,7 @@ describe('the done message', () => {
     const sent = server.received('POST /assistant/messages');
     expect(sent).toHaveLength(2);
     expect(sent[1]?.body).toEqual({
-      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
       context: ASK_CONTEXT,
       messages: [
         { role: 'user', text: '관정 7층 열람실 17시에 한 시간 예약해줘' },

@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -137,7 +138,13 @@ describe('a refused "만들고 초대 보내기"', () => {
     await pass(500);
 
     expect(toasts().getByText('계획이 바뀌었어요. 다시 확인해 주세요')).toBeVisible();
-    expect(recalculations(server)).toEqual([{ input: MEAL_ANSWER.input, location: ON_CAMPUS }]);
+    expect(recalculations(server)).toEqual([
+      {
+        input: MEAL_ANSWER.input,
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
+    ]);
     expect(mapThings()).toContain(PICK);
     expect(inviteButton()).toBeEnabled();
   });

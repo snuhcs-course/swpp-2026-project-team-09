@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
-import type { AssistantReply, MealSet } from '@/api/assistant-types';
+import { ANSWER_CAPABILITIES, type AssistantReply, type KeptQuest, type MealSet } from '@/api/assistant-types';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
+import { MEET_ANSWER } from '@/api/mock/data/meet-answer';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -140,5 +142,84 @@ describe('an answer beside a lunch shared with a Friend', () => {
     await pass(300);
 
     expect(shownAddress()).toBe(`/room/${SHARED.questId}`);
+  });
+});
+
+// The meeting with 민수 the User leads, which a meet answer sets aside (P05 ticket 17's `planSet`).
+const MEETING: KeptQuest = {
+  kind: 'meet',
+  questId: 'q-meeting',
+  title: '민수와 만나기',
+  startAt: '2026-10-01T15:00:00+09:00',
+  endAt: null,
+  place: '302동 앞',
+  people: [{ name: '민수', answer: 'accepted' }],
+  mine: true,
+  changeable: true,
+};
+const MEET_LINE = '이미 15:00 302동 앞에서 민수와 약속이 있어요. 바꿀까요?';
+const MEET_REPLY: AssistantReply = {
+  ...MEAL_ANSWER_REPLY,
+  text: MEET_LINE,
+  answer: { ...MEET_ANSWER, planSet: MEETING },
+};
+
+// Partitions: 바꾸기 of a meeting, answered; a meal's `planSet` read before its `mealSet`.
+describe("the main server's planSet", () => {
+  it('changes the meeting in place from 바꾸기, and the answer stays and says so, with no button left', async () => {
+    server.on(`PUT /plans/${MEETING.questId}`, { status: 200, body: PLAN_QUEST.quest });
+    const user = await askOnMap(server, MEET_REPLY);
+
+    expect(dock().getByText(MEET_LINE)).toBeVisible();
+    await user.press(beside().getByRole('button', { name: '바꾸기' }));
+    await pass(500);
+
+    expect(server.received(`PUT /plans/${MEETING.questId}`)).toHaveLength(1);
+    expect(server.received('POST /plans')).toHaveLength(0);
+    // The stored meet answer's first Plan is at 12:15, with 민수.
+    expect(dock().getByText('약속을 12:15으로 바꿨어요. 민수에게 알렸어요')).toBeVisible();
+    expect(screen.getByTestId('answer-card')).toBeVisible();
+    expect(screen.queryByRole('button', { name: '바꾸기' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '그대로 두기' })).toBeNull();
+  });
+
+  it("is read before a meal's mealSet, so that a shared one shows 파티 보기", async () => {
+    const shared: KeptQuest = { ...MEETING, kind: 'meal-lunch', changeable: false };
+    await askOnMap(server, { ...replyWith(OWN), answer: { ...MEAL_ANSWER_ALONE, mealSet: OWN, planSet: shared } });
+
+    expect(beside().getByRole('button', { name: '파티 보기' })).toBeEnabled();
+  });
+});
+
+// Partitions: the chat request, and the make request.
+describe('what the app says it can draw', () => {
+  it('sends plan-set with the chat request and with POST /plans', async () => {
+    server.on('POST /plans', { status: 201, body: PLAN_QUEST });
+    const user = await askOnMap(server, replyWith(OWN));
+    await user.press(beside().getByRole('button', { name: '바꾸기' }));
+    await pass(500);
+
+    expect(ANSWER_CAPABILITIES).toContain('plan-set');
+    expect(server.received('POST /assistant/messages').at(-1)?.body).toMatchObject({
+      clientCapabilities: ANSWER_CAPABILITIES,
+    });
+    expect(server.received('POST /plans').at(-1)?.body).toMatchObject({ clientCapabilities: ANSWER_CAPABILITIES });
+  });
+});
+
+// Partitions: the two refusals of a second meeting, which arrive even though the answer named none.
+describe('a second meeting refused', () => {
+  it.each([
+    ['PLAN_ALREADY_SET', '이미 정한 약속이 있어요. 그 파티에서 확인해 주세요'],
+    ['PLAN_SET_BY_FRIEND', '친구가 이미 정한 약속이 있어요. 그 파티에서 확인해 주세요'],
+  ])('says what %s is, not to try again', async (code, words) => {
+    server.on('POST /plans', refusal(409, code, { questId: MEETING.questId }));
+    const user = await askOnMap(server, { ...MEAL_ANSWER_REPLY, answer: MEET_ANSWER });
+
+    await user.press(beside().getByRole('button', { name: '만들고 초대 보내기' }));
+    await pass(500);
+
+    expect(screen.getByText(words)).toBeVisible();
+    expect(screen.queryByText('초대하지 못했어요. 잠시 후 다시 시도해 주세요')).toBeNull();
   });
 });

@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -98,7 +99,13 @@ describe('a press of "만들고 초대 보내기"', () => {
 
     const sent = server.received('POST /plans');
     expect(sent.map(({ body }) => body)).toEqual([
-      { input: MEAL_ANSWER.input, planId: '302동식당', startAt: MEAL_PLAN_1.startAt, location: ON_CAMPUS },
+      {
+        input: MEAL_ANSWER.input,
+        planId: '302동식당',
+        startAt: MEAL_PLAN_1.startAt,
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
     ]);
     expect(sent[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);
     expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();

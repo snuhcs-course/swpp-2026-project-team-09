@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -22,6 +23,7 @@ import { onInvitationAnswer } from '@/live/invitation-answers';
 import { useAskForPush } from '@/push/push-ask-host';
 import { friendStandings, type HeardAnswer, NO_STANDINGS, type ReadMembers, type Standing } from './invited-friends';
 import { useKeepMadeQuest } from './made-quest-ids';
+import { usePlanChange } from './use-plan-change';
 import type { ShownAnswer } from './use-shown-answer';
 
 export interface PlanInvitation {
@@ -37,6 +39,11 @@ export interface PlanInvitation {
   again: () => void;
   // "다시 고르기" is on its way.
   dropping: boolean;
+  // 바꾸기 of a meeting already set (P04 ticket 17): the Plan on screen becomes that Quest's; then `changed` is the
+  // answer's line, which says so.
+  change: (questId: string) => void;
+  changing: boolean;
+  changed: string | null;
 }
 
 // Where the User is or why that is not known, which the request sends, and how a refusal or a Quest made out of sight
@@ -49,7 +56,11 @@ export interface Inviting {
 
 // The answer's conditions, the Plan on screen, and where the User is or why that is not known, the reason left out
 // when it is, since a main server before P02-13 refuses the key.
-function makingOf(answer: AnswerReply, plan: Plan, { location, locationMissing = null }: Inviting): MakePlanQuest {
+export function makingOf(
+  answer: AnswerReply,
+  plan: Plan,
+  { location, locationMissing = null }: Inviting,
+): MakePlanQuest {
   const why = locationMissing === null ? {} : { locationMissing };
   return { input: answer.input, planId: plan.id, startAt: plan.startAt, location, ...why };
 }
@@ -59,8 +70,11 @@ const FAILED = '초대하지 못했어요. 잠시 후 다시 시도해 주세요
 const SENT = '파티를 만들고 초대를 보냈어요';
 const TAKEN = '여기로 정했어요';
 const NOT_DROPPED = '다시 고르지 못했어요. 잠시 후 다시 시도해 주세요';
-// 바꾸기 refused: the Quest it would replace became shared with others since the answer came (P04 ticket 17).
+// 바꾸기 refused: the Quest it would replace became shared with others since the answer came (P04 ticket 17); a
+// meeting already set, the User's or a Friend's, refused a second one.
 const SET_SHARED = '같이 정한 약속이라 그 파티에서 바꿔 주세요';
+const PLAN_SET = '이미 정한 약속이 있어요. 그 파티에서 확인해 주세요';
+const SET_BY_FRIEND = '친구가 이미 정한 약속이 있어요. 그 파티에서 확인해 주세요';
 // "여기로" invites nobody.
 const NOT_TAKEN = '답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요';
 
@@ -137,6 +151,10 @@ function tellRefusal(error: unknown, say: Inviting['say'], change: ShownAnswer['
     change((input) => ({ ...input }));
   } else if (isRefusal(error, 409, 'MEAL_ALREADY_SET')) {
     say(SET_SHARED);
+  } else if (isRefusal(error, 409, 'PLAN_ALREADY_SET')) {
+    say(PLAN_SET);
+  } else if (isRefusal(error, 409, 'PLAN_SET_BY_FRIEND')) {
+    say(SET_BY_FRIEND);
   } else if (alone) {
     // A 파티 of the User's own for the event refuses "여기로" with SHARED_QUEST_HELD, worded as 파티 says it.
     say(isRefusal(error, 409, 'SHARED_QUEST_HELD') ? refusalWords(error) : NOT_TAKEN);
@@ -322,10 +340,11 @@ export function usePlanInvitation(shown: OnScreen, inviting: Inviting): PlanInvi
   const members = useMembers(made);
   useHeard(made, setStored);
   const { again, dropping } = useAgain(made, setStored, inviting.say);
+  const { change, changing, changed } = usePlanChange(shown, inviting);
   useGathered(made, setStored);
   const standings = useMemo(
     () => (made === null ? NO_STANDINGS : friendStandings(made, members, heard)),
     [made, members, heard],
   );
-  return { sending, made, standings, invite, again, dropping };
+  return { sending, made, standings, invite, again, dropping, change, changing, changed };
 }

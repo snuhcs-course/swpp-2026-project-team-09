@@ -5,10 +5,12 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { ANSWER_CAPABILITIES } from '@/api/assistant-types';
 import type { ApiClient } from '@/api/client';
-import type { AskLevel, BetterPlan, PlanQuest } from '@/api/plan-quest-types';
+import type { AskLevel, BetterPlan, MakePlanQuest, PlanQuest } from '@/api/plan-quest-types';
 import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
 import { field, hasTexts, isFriendLevel, isNumber, listOf } from './answers';
@@ -58,10 +60,17 @@ function whereOrWhy(location: LatLng | null, missing: LocationMissing): Record<s
   return missing === null ? {} : { locationMissing: missing };
 }
 
+// The request's body: the Plan to make, and what the app can draw beside a Quest already set (P04 ticket 17), which
+// decides whether the main server refuses a second one or replaces it.
+function bodyOf(making: MakePlanQuest): MakePlanQuest & { clientCapabilities: typeof ANSWER_CAPABILITIES } {
+  return { ...making, clientCapabilities: ANSWER_CAPABILITIES };
+}
+
 export const planQuestClient: Pick<ApiClient, 'makePlanQuest' | 'getBetterPlan' | 'changePlanQuest'> = {
   makePlanQuest: (making, idempotencyKey) =>
-    call('POST', '/plans', isPlanQuest, { body: making, headers: { 'Idempotency-Key': idempotencyKey } }),
+    call('POST', '/plans', isPlanQuest, { body: bodyOf(making), headers: { 'Idempotency-Key': idempotencyKey } }),
   getBetterPlan: (questId, location, missing = null) =>
     call('GET', `/plans/${encodeURIComponent(questId)}/better`, isBetterPlan, { query: whereOrWhy(location, missing) }),
-  changePlanQuest: (questId, making) => call('PUT', `/plans/${encodeURIComponent(questId)}`, isQuest, { body: making }),
+  changePlanQuest: (questId, making) =>
+    call('PUT', `/plans/${encodeURIComponent(questId)}`, isQuest, { body: bodyOf(making) }),
 };

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -41,7 +42,8 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
   const disabled = shown.recalculating || invitation.sending || control.chat.waiting;
   const set = setQuestOf(answer);
   if (set !== null) {
-    return setQuestAction(set, invitation, disabled);
+    // Once 바꾸기 changed the meeting, the answer says so and offers nothing more.
+    return invitation.changed === null ? setQuestAction(set, control, disabled || invitation.changing) : null;
   }
   if (kind !== 'new-quest' && people > 1) {
     return {
@@ -53,9 +55,9 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
   return kind === 'meal' && people === 1 ? { words: '일정에 넣기', onPress: invitation.invite, disabled } : null;
 }
 
-// Beside a Quest the User holds (P04 ticket 17): "바꾸기" makes the Plan in its place; one shared with others is changed
-// in its 파티, which "파티 보기" opens.
-function setQuestAction(set: SetQuest, invitation: ChatSheetControl['invitation'], disabled: boolean): PlanAction {
+// Beside a Quest the User holds (P04 ticket 17): "바꾸기" makes the Plan in its place, or for a meeting changes that
+// Quest in place; one the User may not change is changed in its 파티, which "파티 보기" opens.
+function setQuestAction(set: SetQuest, { invitation }: ChatSheetControl, disabled: boolean): PlanAction {
   if (!set.changeable) {
     return {
       words: '파티 보기',
@@ -64,6 +66,12 @@ function setQuestAction(set: SetQuest, invitation: ChatSheetControl['invitation'
       },
       disabled: false,
     };
+  }
+  if (set.inPlace) {
+    const onPress = (): void => {
+      invitation.change(set.questId);
+    };
+    return { words: invitation.changing ? '바꾸는 중이에요' : '바꾸기', onPress, disabled };
   }
   return { words: invitation.sending ? '바꾸는 중이에요' : '바꾸기', onPress: invitation.invite, disabled };
 }

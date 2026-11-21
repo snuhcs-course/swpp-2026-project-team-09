@@ -46,7 +46,7 @@ async function say(user: User, words: string): Promise<void> {
 // Partitions: a lunch held alone, and one shared with 민수.
 describe('배고파 again over the mocks, beside a lunch made from its Plan', () => {
   it('says the lunch held alone is set, with 바꾸기', async () => {
-    givePhone({ permission: 'denied', position: ON_CAMPUS });
+    givePhone({ permission: 'refused', position: ON_CAMPUS });
     const user = await openMain();
     await pass(500);
     await say(user, '배고파');

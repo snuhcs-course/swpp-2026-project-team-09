@@ -25,9 +25,11 @@ export interface WordsRest {
   keep?: boolean;
 }
 
-// A Plan beside a Quest the User holds: the model's line, which says so, with 그대로 두기.
-export function setQuestRestOf(words: string): WordsRest {
-  return { line: wordsLine(words), offers: [], retry: false, note: null, basis: false, keep: true };
+// A Plan beside a Quest the User holds: the model's line, which says so, with 그대로 두기; once a meeting was changed in
+// place, the line that says so (`changed`), alone.
+export function setQuestRestOf(words: string, changed: string | null = null): WordsRest {
+  const line = wordsLine(changed ?? words);
+  return { line, offers: [], retry: false, note: null, basis: false, keep: changed === null };
 }
 
 type AskAction = Extract<LookupAction, { kind: 'ask' }>;

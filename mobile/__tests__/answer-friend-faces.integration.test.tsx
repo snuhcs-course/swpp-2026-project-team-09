@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -160,6 +161,7 @@ describe('a wrong add', () => {
     expect(recalculations(server).at(-1)).toEqual({
       input: { ...three.input, people: peopleOf(three.input).slice(0, 2) },
       location: ON_CAMPUS,
+      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
     });
     expect(mapThings()).toContain('302동식당 · 12:15 점심');
     expect(mapThings().some((name) => name.startsWith('지은'))).toBe(false);

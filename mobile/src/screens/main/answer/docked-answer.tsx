@@ -70,7 +70,7 @@ export function restOf(control: ChatSheetControl, after: readonly ChatBubble[]):
   const kind = wordsKindOf(reply, onScreenOf(control));
   if (kind === 'plan') {
     if (besideSetQuest(control)) {
-      return { kind: 'words', words: setQuestRestOf(reply.text) };
+      return { kind: 'words', words: setQuestRestOf(reply.text, control.invitation.changed) };
     }
     return planRests(control, reply) ? { kind } : null;
   }
