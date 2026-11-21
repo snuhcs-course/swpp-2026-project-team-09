@@ -137,7 +137,9 @@ describe("A run's Lookup", () => {
 
     expect(reply.lookup).toBeNull();
   });
+});
 
+describe('A Lookup when no step wrote text', () => {
   it('says nothing beside a way the map draws when no step wrote text', async () => {
     model.script({ tool: 'find', input: {} }, { text: '' });
 
