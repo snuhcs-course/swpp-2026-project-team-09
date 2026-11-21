@@ -1,7 +1,7 @@
 # 02: `main` carries the nightly schedule
 
 Parent: [A01 spec](../spec.md)
-Status: ready-for-agent
+Status: in-progress
 Blocked by: None
 
 ## What to build
@@ -10,9 +10,11 @@ GitHub fires a `schedule` only from the default branch's copy of a workflow, and
 
 ## Acceptance criteria
 
-- [ ] The pull request against `main` changes only `.github/workflows/nightly.yml`.
-- [ ] The workflow has `actions: write` and `contents: read` and no other permission.
+- [x] The pull request against `main` changes only `.github/workflows/nightly.yml`.
+- [x] The workflow has `actions: write` and `contents: read` and no other permission.
 - [ ] While the newest `<line>/Main`'s `ci.yml` has no `workflow_dispatch`, a nightly run ends green with a notice and starts nothing; once it has one, the nightly run starts `ci.yml` there.
 - [ ] Merged into `main` only on the repository administrator's word.
 
 ## Comments
+
+- 2026-11-21: opened as #413 against `main`. The scheduled run itself is checked only after the merge, by the first nightly at 03:00 KST. Agent usage is recorded in ticket 01.
