@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
@@ -26,10 +27,15 @@ import { NotificationsService } from '../notifications/notifications.service.js'
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { type CreatedInvitation, InvitationsService } from '../quests/invitations.service.js';
 import { ALONE_CAPACITY, QuestsService, type SubQuestColumns } from '../quests/quests.service.js';
+import { heldMealOf } from '../quests/held-meal.js';
 import { conflict, sharedQuestHeld } from '../quests/refusals.js';
+import { forgetLeaveBy } from '../quests/taken-alone.js';
 import { UsersService } from '../users/users.service.js';
 import { aloneLeaveBy, goingLine, nextWordOf } from './alone-plan.js';
 import { type PlanQuestBody, type PlanQuestDto } from './dto/plan-quest.dto.js';
+
+// A Quest made from a meal's Plan keeps its meal, so that a new Plan for the same meal and day sets it aside.
+const mealOf = (input: PlanInput): { meal?: MealInput['meal'] } => (input.kind === 'meal' ? { meal: input.meal } : {});
 
 // The Sub Quests of a Plan, each ending where the next starts and the last at the Plan's end.
 export const subQuestsOf = ({ subQuests, endAt }: Plan): SubQuestColumns[] =>
@@ -109,12 +115,15 @@ export class PlansService {
       return this.makeAlone(userId, making, alone);
     }
     const plan = await this.replanned(userId, making, []);
-    const { questId, created } = await this.prisma.$transaction(async (tx) => {
+    const { questId, created, replaced } = await this.prisma.$transaction(async (tx) => {
+      const dropped = await this.replaceHeldMeal(userId, making.input, tx);
       const made = await this.quests.createWithSubQuests(plan.title, subQuestsOf(plan), [userId], tx, {
         capacity: Math.max(CAPACITY_MIN, plan.parts.length),
+        ...mealOf(making.input),
       });
-      return { questId: made, created: await this.invite(userId, made, plan, tx) };
+      return { questId: made, created: await this.invite(userId, made, plan, tx), replaced: dropped };
     });
+    await this.forgetReplaced(userId, replaced);
     this.keepTimeToLeave(userId, questId, plan);
     return this.made(userId, questId, created);
   }
@@ -174,12 +183,16 @@ export class PlansService {
     const { location, locationMissing } = making;
     const answer = await this.answers.plan(userId, input, { now, location, locationMissing });
     const plan = planNamed(answer.plans, making.planId, making.startAt);
-    const settings = { capacity: ALONE_CAPACITY, takenAlone: true };
-    const questId = await this.prisma.$transaction((tx) =>
-      input.kind === 'events'
-        ? this.forGlobalEvent(userId, { id: plan.id, title: plan.title }, tx, settings, true)
-        : this.quests.createWithSubQuests(plan.title, subQuestsOf(plan), [userId], tx, settings),
-    );
+    const settings = { capacity: ALONE_CAPACITY, takenAlone: true, ...mealOf(input) };
+    const { questId, replaced } = await this.prisma.$transaction(async (tx) => {
+      const dropped = await this.replaceHeldMeal(userId, input, tx);
+      const made =
+        input.kind === 'events'
+          ? await this.forGlobalEvent(userId, { id: plan.id, title: plan.title }, tx, settings, true)
+          : await this.quests.createWithSubQuests(plan.title, subQuestsOf(plan), [userId], tx, settings);
+      return { questId: made, replaced: dropped };
+    });
+    await this.forgetReplaced(userId, replaced);
     const leaveBy = aloneLeaveBy(plan, nextWordOf(answer), now);
     if (leaveBy.facts !== null && leaveBy.at !== null) {
       // As the Leader's, it never fails the making.
@@ -190,6 +203,35 @@ export class PlansService {
     const made = await this.made(userId, questId, []);
     const lines = [goingLine(plan, input.kind), [{ text: leaveBy.line, strong: false }]];
     return { ...made, alone: { lines, remindAt: leaveBy.at?.toISOString() ?? null } };
+  }
+
+  // The asker's Quest for the same meal and day, which a meal's Plan made into a Quest replaces: the asker drops it, and
+  // it is deleted with nobody left. One shared with another Holder or an invitation is never dropped from a new Plan,
+  // so that nobody loses a meal they were asked to: it refuses the making, and is changed in that Quest.
+  private async replaceHeldMeal(
+    userId: string,
+    input: PlanInput,
+    tx: Prisma.TransactionClient,
+  ): Promise<string | null> {
+    const held = input.kind === 'meal' ? await heldMealOf(tx, userId, input) : null;
+    if (held === null) {
+      return null;
+    }
+    if (held.others.length > 0) {
+      throw conflict('MEAL_ALREADY_SET', 'The User holds this meal with others: it is changed in that Quest.', {
+        questId: held.id,
+      });
+    }
+    await this.quests.lock(held.id, tx);
+    await this.quests.removeHolder(held.id, userId, tx);
+    return held.id;
+  }
+
+  // The leave-by of the Quest a new meal replaced goes with it.
+  private async forgetReplaced(userId: string, questId: string | null): Promise<void> {
+    if (questId !== null) {
+      await forgetLeaveBy(this.notifications, this.logger, { userId, questId });
+    }
   }
 
   // The asker's Quest for the Global Event, which they may hold only when they hold no Shared Quest for it. Taken
