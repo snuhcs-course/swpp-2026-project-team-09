@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -65,6 +66,7 @@ describe('the instructions on a request to recruit', () => {
       'no search once the User asked for a new one',
       'has said in this conversation, this message included, to make a new one',
     ],
+    ['no search for a 비공개 파티', 'or when the 파티 would be closed: 비공개, or only for Friends the User names'],
     ['the seven days of an activity with no day', 'the next 7 days from today'],
     ['every activity of a day with no activity', 'every activity, with no words and no Board'],
     ['asking only when both are missing', 'With neither an activity nor a day, ask'],
@@ -73,11 +75,16 @@ describe('the instructions on a request to recruit', () => {
     ['a named Place through the radius', 'leave radius out, so that it means 300 m or less'],
     ['Open and Approval only', 'Offer only Open and Approval 파티'],
     ['the most Holders first', 'the highest holderCount first'],
+    ['joining one or making a new one', 'whether the User wants to join one or make a new one'],
     ['same meaning and look-alikes', 'Words of the same meaning are the same activity'],
     ['a number of people', 'capacity N'],
     ['a named Global Event', 'with no time, Place or words'],
     ['never joining', 'Never join for the User'],
-    ['the line that none was found', 'a line saying that none was found'],
+    [
+      'nothing said of a search that found none',
+      'say nothing of the search: never that you looked, nor that none was found',
+    ],
+    ['the empty search kept from the rule of result "none"', 'except for the search before a 파티 is proposed'],
   ])('hold %s', (_, rule) => {
     expect(system).toContain(rule);
   });
@@ -112,7 +119,7 @@ describe('a reply to a request to recruit, with Quests found', () => {
 });
 
 describe('a reply to a request to recruit, with none found', () => {
-  it('holds the Proposal and the line that none was found', async () => {
+  it('holds the Proposal and the text of the Proposal only', async () => {
     const day = '2083-04-04';
     const proposal = {
       title: '같이 가요',
@@ -125,7 +132,7 @@ describe('a reply to a request to recruit, with none found', () => {
     model.script(
       { tool: 'searchRecruitingQuests', input: { from: day, to: day } },
       { tool: 'proposeQuest', input: proposal },
-      { text: '맞는 파티를 찾지 못했어요. 만들기를 누르면 파티가 만들어져요.' },
+      { text: '내일 6시 파티를 제안해 두었어요. 만들기를 누르기 전에는 만들어지지 않아요.' },
     );
 
     const response = await postAssistantMessages(app, reader.accessToken, ask('같이 갈 사람 구해 줘')).expect(200);
@@ -135,7 +142,7 @@ describe('a reply to a request to recruit, with none found', () => {
       expect.objectContaining({ result: 'proposed' }),
     ]);
     expect(response.body).toMatchObject({
-      text: '맞는 파티를 찾지 못했어요. 만들기를 누르면 파티가 만들어져요.',
+      text: '내일 6시 파티를 제안해 두었어요. 만들기를 누르기 전에는 만들어지지 않아요.',
       cards: [],
       proposal: { title: '같이 가요', capacity: 4 },
     });

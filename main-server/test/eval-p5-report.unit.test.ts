@@ -4,6 +4,7 @@
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { p5Report, type Suite } from '../eval/p5/report.ts';
@@ -195,5 +196,43 @@ describe('J9', () => {
 
     expect(metrics.find(({ metric }) => metric === 'J9')).toMatchObject({ k: 2, n: 3 });
     expect(metrics.find(({ metric }) => metric === 'J9-model')).toMatchObject({ k: 1, n: 3 });
+  });
+});
+
+describe('A revised case', () => {
+  const REVISED: Suite = { ...SUITE, tags: { J3b: ['frozen'] }, revised: [{ case: 'frozen', heldBy: 'revision' }] };
+  // The frozen case still wants the words of "none found", which the reply no longer says; its revision does not.
+  const frozen: RunWritten = {
+    id: 'frozen',
+    category: 'join-or-recruit',
+    seeds: ['가'],
+    shown: showing(['가']),
+    mentions: ['없'],
+  };
+  const revision: RunWritten = { ...frozen, id: 'revision', mentions: undefined };
+
+  function measured(runs: RunWritten[]): Record<string, object | undefined> {
+    const score = scoreRun({
+      name: 'run',
+      seeds: SEEDS,
+      options: { world: 'p5' },
+      cases: runs.map((run) => runOf(run)),
+    });
+    const { metrics, stable } = p5Report(score, REVISED);
+    const of = (wanted: string): object | undefined => metrics.find(({ metric }) => metric === wanted);
+    return { J1: of('J1'), J3b: of('J3b'), J8: of('J8'), stable };
+  }
+
+  it('is scored by its revision in its place, each pair counted once, when the run holds both', () => {
+    expect(measured([frozen, revision])).toMatchObject({
+      J1: { k: 1, n: 1 },
+      J3b: { k: 1, n: 1 },
+      J8: { n: 1 },
+      stable: { k: 1, n: 1 },
+    });
+  });
+
+  it('keeps the numbers of a run saved before the revision', () => {
+    expect(measured([frozen])).toMatchObject({ J1: { n: 1 }, J3b: { k: 0, n: 1 }, stable: { k: 0, n: 1 } });
   });
 });
