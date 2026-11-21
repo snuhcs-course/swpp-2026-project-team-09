@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -9,6 +10,7 @@ import { type AnswerReply, type MeetInput, type Plan, type RequestContext } from
 import { defineTool, type Tool } from '../feature.js';
 import { clockTime, dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
 import { askedBy } from '../refusals/friend-question.js';
+import { relatedWords } from './meal-tool-words.js';
 import { type MeetPlanService } from './meet-plan.service.js';
 import { FRIENDS_MAX, refuseUnseen, timesAndWays } from './plan-tools.js';
 
@@ -101,7 +103,7 @@ export function planMeet(plans: MeetPlanService): Tool {
       if (answer.noPlan !== null) {
         return { result: 'none', reason: NONE_REASONS[answer.noPlan.reason] };
       }
-      return { result: 'planned', plans: answer.plans.map((plan) => planWords(plan)) };
+      return { result: 'planned', plans: answer.plans.map((plan) => planWords(plan)), ...relatedWords(answer.related) };
     },
   });
 }
@@ -112,6 +114,7 @@ export const MEET_RULES = `A meet with Friends is planned on the map too: the se
 
 - When the User wants to meet or see Friends they name, not for a meal (민수랑 만나고 싶어, 지은이 언제 볼 수 있어?), call planMeet with the day (today when they name none) and the Friends, each found with resolveFriend first.
 - The app draws the plans and writes their times, ways, and minutes itself, the first one first. Your reply is one sentence about the first plan only, its place and when everyone is there, such as "12:15에 302동 앞에서 만나요." Write nothing more, and do not call showOnMap for a plan.
+- When planMeet answers related, the User already has those Quests that day, meetings or with a Friend asked for. Your sentence mentions the one that matters, such as "민수와는 내일 14:00 SK경영관 앞에서 약속이 이미 있어요", whether or not it limits the plans.
 - When planMeet answers none, say plainly why, without naming who is busy.
 - A line [Plan on screen: …] whose kind is meet gives the meet the app shows. To change it (14시부터, 학생회관에서 보자, 지은이도 불러 줘), call planMeet again with its date, friendIds, from, until, and placeId, changing only what the User changed: a Friend found with resolveFriend, a Place with resolvePlace, a start as from and an end as until.
 - After a change, your reply is one sentence that says what changed.`;

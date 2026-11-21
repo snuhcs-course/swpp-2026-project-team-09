@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -25,6 +26,7 @@ import { hasMissingParts } from './missing-input-answers';
 import { isRecruitingQuest } from './party-client';
 import { isInput, isOneOf } from './plan-inputs';
 import { hasRelax } from './relax-answers';
+import { isKeptOneOrAbsent, isKeptOrAbsent } from './kept-answers';
 
 // The `answer` and the `lookup` of the Assistant's reply, as main-server `assistant/dto/answer.dto.ts` fixes them:
 // every field, since the answer screen draws each. An answer or a Lookup the app cannot read fails the reply. The
@@ -300,6 +302,8 @@ export function isAnswerReply(value: unknown): value is AnswerReply {
     isNoPlan(field(value, 'noPlan')) &&
     isOtherMealOrAbsent(field(value, 'otherMeal')) &&
     isMealSetOrAbsent(field(value, 'mealSet')) &&
+    isKeptOneOrAbsent(field(value, 'planSet')) &&
+    isKeptOrAbsent(field(value, 'related')) &&
     hasMissingParts(value)
   );
 }

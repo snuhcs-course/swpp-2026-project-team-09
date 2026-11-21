@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { KeptQuest } from '@/api/assistant-types';
@@ -27,6 +28,11 @@ export function isKeptQuest(value: unknown): value is KeptQuest {
     typeof field(value, 'mine') === 'boolean' &&
     typeof field(value, 'changeable') === 'boolean'
   );
+}
+
+// Absent, as from a main server before P05 ticket 17, null, or one of them.
+export function isKeptOneOrAbsent(value: unknown): boolean {
+  return value === undefined || value === null || isKeptQuest(value);
 }
 
 // Absent, as from a main server before P05 ticket 17, or a list of them.
