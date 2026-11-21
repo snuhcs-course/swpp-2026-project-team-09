@@ -141,7 +141,8 @@ const startOf = ({ startAt }: ReplyStep): number => (startAt === null ? Number.P
 export const inTimeOrder = (steps: readonly ReplyStep[]): ReplyStep[] =>
   steps.toSorted((a, b) => startOf(a) - startOf(b));
 
-// The step a meal follows: of the steps at a place on the meal's day that start before the meal may, the latest.
+// The step a meal follows: of the steps at a place on the meal's day that start no later than the meal may, the latest.
+// A step that starts as the meal's window opens comes first, since the meal cannot come before it.
 export function stepBefore(steps: readonly ReplyStep[], input: MealInput): ReplyStep | null {
   const mealStart = windowOf(input).start.getTime();
   const before = steps.filter(
@@ -149,7 +150,7 @@ export function stepBefore(steps: readonly ReplyStep[], input: MealInput): Reply
       place !== null &&
       startAt !== null &&
       koreaDate(new Date(startAt)) === input.date &&
-      Date.parse(startAt) < mealStart,
+      Date.parse(startAt) <= mealStart,
   );
   return inTimeOrder(before).at(-1) ?? null;
 }
@@ -170,19 +171,20 @@ export function chainedInput(input: MealInput, step: ReplyStep): MealInput | nul
 
 const isBookCard = (card: Card): card is LibraryCard => card.kind === 'library' && card.library.action === 'book';
 
-// Puts the steps of the run in what it presented, when there are two or more, after planning a meal again from the
-// step before it.
 // A refused booking's step at 관정도서관, whose place the library tool did not know.
 const atKwanjeong = (step: ReplyStep, place: PlacePoint | null): ReplyStep =>
   step.place === null && (step.kind === 'seat' || step.kind === 'room') ? { ...step, place } : step;
 
-// The steps the library tools put in the reply so far: its book cards and the bookings refused.
+// The steps the library tools put in the reply so far: its book cards and the bookings refused. A refusal the model
+// asked again and got a card for is left out.
 export function bookingSteps(presented: ToolContext['presented'], place: PlacePoint | null): ReplyStep[] {
   const booked = presented.cards.flatMap((card) => {
     const step = isBookCard(card) ? bookingStep(card, place) : null;
     return step === null ? [] : [step];
   });
-  return [...booked, ...(presented.notDone ?? []).map((step) => atKwanjeong(step, place))];
+  const shown = new Set(booked.map(({ kind, title }) => `${kind} ${title}`));
+  const refused = (presented.notDone ?? []).filter(({ kind, title }) => !shown.has(`${kind} ${title}`));
+  return [...booked, ...refused.map((step) => atKwanjeong(step, place))];
 }
 
 // The meal's conditions set out from the step before it among those shown so far, or as they are. planMeal calls it,
@@ -210,7 +212,8 @@ export async function presentSteps(context: ToolContext, services: StepsServices
   if (answer?.input.kind === 'meal') {
     const chained = afterEarlierSteps(answer.input, others);
     if (chained !== answer.input) {
-      presented.answer = await services.replanMeal(chained, context);
+      // A replan that fails keeps the meal as the model planned it, so the rest of the reply still reaches the User.
+      presented.answer = await services.replanMeal(chained, context).catch(() => answer);
     }
   }
   const all = presented.answer === null ? others : [...others, answerStep(presented.answer)];

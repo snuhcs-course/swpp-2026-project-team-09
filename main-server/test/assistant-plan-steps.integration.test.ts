@@ -149,6 +149,46 @@ describe('A seat that cannot be booked, and then lunch', () => {
   });
 });
 
+describe('A seat refused and then asked again in the same message', () => {
+  it('lists the seat once, as shown, and lunch after it', async () => {
+    const tooLong: Step = {
+      tool: 'proposeLibraryBooking',
+      input: { spaceId: '7F-7A-zone2', date: DATE, start: '11:00', end: '19:00' },
+    };
+    const reply = await asked([find(['7F-7A-zone2']), tooLong, seat(), lunch(), said]);
+
+    expect(reply.steps?.map(({ kind, status }) => ({ kind, status }))).toEqual([
+      { kind: 'seat', status: 'shown' },
+      { kind: 'meal', status: 'shown' },
+    ]);
+  });
+
+  it('has no steps when the seat was all it asked for', async () => {
+    const tooLong: Step = {
+      tool: 'proposeLibraryBooking',
+      input: { spaceId: '7F-7A-zone2', date: DATE, start: '11:00', end: '19:00' },
+    };
+    const reply = await asked(
+      [find(['7F-7A-zone2']), tooLong, seat(), { text: '카드를 보여 드렸어요.' }],
+      '7층 11시부터',
+    );
+
+    expect(reply).not.toHaveProperty('steps');
+    expect(reply.cards).toHaveLength(1);
+  });
+});
+
+describe('A seat that starts as the meal window opens', () => {
+  it('is the step lunch follows, when the User named no time for lunch', async () => {
+    const reply = await asked(
+      [find(['7F-7A-zone2']), seat(), { tool: 'planMeal', input: { date: DATE, meal: 'lunch' } }, said],
+      '11시부터 2시간 관정 7층 자리 잡고 점심도 짜줘',
+    );
+
+    expect(originOf(reply.answer)).toEqual({ placeId: kwanjeong.id, basis: 'chosen' });
+  });
+});
+
 describe('A single request', () => {
   it('stays as it was: lunch alone sets out from the Class before it, and the reply has no steps', async () => {
     const reply = await asked([lunch(), { text: '13:00에 먹어요.' }], '13시쯤 점심 먹자');
