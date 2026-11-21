@@ -17,7 +17,7 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { sockets } from './support/fake-socket';
 
-// 메뉴 모두 보기 (P04 ticket 15, board 23): a meal answer's chip opens every candidate's dishes and prices above the
+// 메뉴 모두 보기 (P04 ticket 15, board 23): a meal answer's chip 메뉴 보기 opens every candidate's dishes and prices above the
 // dock, in the map's order, the pick's group marked; a press on another group makes it the pick and folds the list.
 
 jest.mock('expo-location');
@@ -34,7 +34,7 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-const CHIP = '메뉴 모두 보기';
+const CHIP = '메뉴 보기';
 
 let server: FakeServer;
 

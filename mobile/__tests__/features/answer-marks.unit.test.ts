@@ -60,7 +60,7 @@ describe('the marks of the answer for two people, its first Plan, away from the 
     expect(seen(drawing, 'answer:candidate:학생회관식당')).toEqual({
       name: '후보 3 · 학생회관식당 · 12:33',
       symbol: { type: 'dot', role: 'candidate', number: 3 },
-      label: label('right', 'candidate', '학생회관식당', { line: '12:33' }),
+      label: label('right', 'candidate', '학생회관식당', { line: '12:33', number: 3 }),
       planId: '학생회관식당',
     });
   });
