@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -22,6 +23,8 @@ export const planQuestSchema = z.strictObject({
   location: recalculationSchema.shape.location,
   // Why `location` is null; an app before P02-13 sends none.
   locationMissing: recalculationSchema.shape.locationMissing,
+  // `plan-set`: a second meeting or shared meal is refused with 409, as the app words it.
+  clientCapabilities: recalculationSchema.shape.clientCapabilities,
 });
 
 export type PlanQuestBody = z.infer<typeof planQuestSchema>;

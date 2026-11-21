@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -219,7 +220,7 @@ describe("A Friend's position", () => {
 
     const answer = answerIn(response.body);
     expect(answer.plans[0]?.parts[1]?.origin).toBeNull();
-    expect(answer.chips.at(-1)).toEqual({ kind: 'person', text: '하은 · 자리 모름', userId: friend.id });
+    expect(answer.chips.at(-1)).toEqual({ kind: 'person', text: '하은 · 위치 모름', userId: friend.id });
   });
 });
 
