@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -79,7 +80,7 @@ interface Given {
 const FIRST: Given = { shown: shownAt(0), room: ROOM, fitZoom: FIT_ZOOM };
 
 // No Plan made into a Quest.
-const NOT_INVITED = { sending: false, made: null, standings: NO_STANDINGS };
+const NOT_INVITED = { sending: false, made: null, standings: NO_STANDINGS, changed: null };
 
 async function render(asked: Asked, given: Given = FIRST): Promise<(next: Given) => Promise<void>> {
   const { rerender } = await renderHook(

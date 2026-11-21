@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -87,7 +88,8 @@ interface PlanBarProps {
 // fixes the time.
 export function PlanBar({ shown, answer, plan, invitation, focus, onClose, onHeight }: PlanBarProps): ReactElement {
   const fix = useCorrections(shown, answer.input, onClose, focus);
-  const fixed = bandIsFixed(answer.input.kind);
+  // A meeting changed in place (P04 ticket 17) is set: its band is read, not moved.
+  const fixed = bandIsFixed(answer.input.kind) || invitation.changed !== null;
   return (
     <Bar
       band={{

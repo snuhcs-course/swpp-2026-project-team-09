@@ -6,11 +6,12 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { MapScene } from '@/api/assistant-types';
+import type { AnswerReply, MapScene } from '@/api/assistant-types';
 import { answerCamera } from '@/features/assistant/answer-camera';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import { type AnswerDrawing, drawingOf, drawingOfScene, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
@@ -56,7 +57,14 @@ const NO_LOOKS: readonly MarkerLook[] = [];
 const NO_LINES: readonly MapLine[] = [];
 const NO_ROUTES: MapScene['routes'] = [];
 
-type Invited = Pick<PlanInvitation, 'sending' | 'made' | 'standings'>;
+type Invited = Pick<PlanInvitation, 'sending' | 'made' | 'standings' | 'changed'>;
+
+// A Plan made or changed (P04 ticket 17) draws only itself: nothing can be chosen any more, so the other candidates and
+// the places that did not fit go.
+function alone(answer: AnswerReply, index: number): AnswerReply {
+  const plan = answer.plans[index];
+  return plan === undefined ? answer : { ...answer, plans: [plan], dropped: [] };
+}
 
 // What frames an answer on the map: the status bar, the card, the pill or none, and, once the stage is laid out and
 // the map has told its fit zoom, the map's view, under the status bar too, with the closest zoom of its camera.
@@ -297,15 +305,18 @@ export function useAnswerMap(
   map: MainMap,
   room: Room,
   everyday: EverydayAvatars,
-  { sending, made, standings }: Invited,
+  { sending, made, standings, changed }: Invited,
   onMark: OnMark = ignoreMark,
 ): AnswerMap | null {
   const { answer, index } = shown;
-  const draw = useMemo(
-    () =>
-      answer === null ? null : (view: LabelView | null): AnswerDrawing => drawingOf(answer, index, standings, view),
-    [answer, index, standings],
-  );
+  const settled = made !== null || changed !== null;
+  const draw = useMemo(() => {
+    if (answer === null) {
+      return null;
+    }
+    const [drawn, at] = settled ? [alone(answer, index), 0] : [answer, index];
+    return (view: LabelView | null): AnswerDrawing => drawingOf(drawn, at, standings, view);
+  }, [answer, index, standings, settled]);
   const framing = useFraming(map, room, true);
   const looks = useMemo(
     () => (answer === null ? NO_LOOKS : looksOf(answer, (drawing) => labelViewOf(drawing, framing))),
@@ -315,7 +326,7 @@ export function useAnswerMap(
   const others = base === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, base);
   const faces = useFaces(others, shown, made !== null);
   const routes = answer?.plans[index]?.scene.routes;
-  const sent = sending || made !== null;
+  const sent = sending || settled;
   const drawn = useDrawnMap(draw, base, answer, looks, map, framing, routes, pressableWhile(sent));
   if (drawn === null) {
     return null;

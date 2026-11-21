@@ -14,7 +14,7 @@ import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
-import { askOnMap } from './support/answer-map';
+import { askOnMap, mapThings } from './support/answer-map';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS } from './support/main';
@@ -181,6 +181,9 @@ describe("the main server's planSet", () => {
     expect(screen.getByTestId('answer-card')).toBeVisible();
     expect(screen.queryByRole('button', { name: '바꾸기' })).toBeNull();
     expect(screen.queryByRole('button', { name: '그대로 두기' })).toBeNull();
+    // Only the meeting as it now stands: no other candidate, no handle on the bar.
+    expect(mapThings()).not.toContain('후보 2 · 301동 앞');
+    expect(screen.queryByRole('adjustable', { name: '시작 시각' })).toBeNull();
   });
 
   it("is read before a meal's mealSet, so that a shared one shows 파티 보기", async () => {

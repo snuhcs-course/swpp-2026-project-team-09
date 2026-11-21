@@ -129,6 +129,19 @@ describe('a press of "만들고 초대 보내기"', () => {
     expect(card().queryByRole('button', { name: '같이 먹을 친구 추가' })).toBeNull();
     expect(screen.queryByTestId('ai-input-beside')).toBeNull();
   });
+
+  // P04 ticket 17: a Plan made draws only itself; nothing can be chosen any more.
+  it('draws only the Plan made, without the other candidates', async () => {
+    server.on('POST /plans', { status: 201, body: PLAN_QUEST });
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    expect(mapThings()).toContain(SECOND);
+
+    await user.press(beside().getByRole('button', { name: INVITE }));
+    await pass(500);
+
+    expect(mapThings()).not.toContain(SECOND);
+    expect(mapThings()).toContain('302동식당 · 12:15 점심');
+  });
 });
 
 // Partitions: the card's last part. Expected values: fix 5 of the design review of 2026-11-15, "닫기" the secondary
