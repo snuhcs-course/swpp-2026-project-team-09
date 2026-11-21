@@ -5,7 +5,16 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerLine, ConditionChip, MapScene, MenuDish, PlacePoint, PlanInput, TimeBand } from './answer.dto.js';
+import type {
+  AnswerLine,
+  ConditionChip,
+  KeptQuestDto,
+  MapScene,
+  MenuDish,
+  PlacePoint,
+  PlanInput,
+  TimeBand,
+} from './answer.dto.js';
 
 // An answer drawn on the map that has no Plan: where a Place is, the way and the time to it, a Friend, a menu, a
 // pressed Place, a day's Classes, the Tutorial Quests in order, or the study spaces of the visible area.
@@ -30,6 +39,8 @@ export interface Lookup {
   // A menu's facts, which the map writes on the Restaurant's flag and its card: the meal's hours that day, null when
   // none were kept, and the dishes of its main corner with their prices. Only a menu Lookup has it.
   menu?: LookupMenu;
+  // A day's: the Quests the question asked about, nearest first. Absent from any other Lookup.
+  kept?: KeptQuestDto[];
 }
 
 export interface LookupMenu {

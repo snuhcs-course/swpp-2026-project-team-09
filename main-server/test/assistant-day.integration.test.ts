@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -69,6 +70,8 @@ const BOARD_Q14_WORDS = {
   ],
   freeMinutes: [70, 190],
   walkMinutes: [15, 12],
+  // The User's Quests of the day beside the Classes (P05 ticket 17): none on board q14.
+  quests: [],
 };
 
 describe("Today's Classes (board q14)", () => {

@@ -11,6 +11,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -116,6 +117,8 @@ export interface Asker {
 // Who asks, when, and what their app can show.
 export interface Request extends Asker {
   readonly capabilities: readonly ClientCapability[];
+  // Lines the server read for this message, added after the request context's: what is ahead (DayLookupService.ahead).
+  readonly ahead?: readonly string[];
 }
 
 // What every tool of a run is given: who asks and when, the ids the run's lookups and resolvers returned, which are

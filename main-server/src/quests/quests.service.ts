@@ -74,6 +74,8 @@ export interface QuestSettings {
   seatStay?: boolean;
   // The meal of a Quest made from a meal's Plan (`heldMealOf`).
   meal?: Meal;
+  // A Quest made from a meeting's Plan.
+  meet?: boolean;
 }
 
 @Injectable()

@@ -5,6 +5,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The trace of a turn (spec P19, "The recorder"): what the model did in it, step by step, and how the turn ended. A
@@ -68,7 +69,19 @@ export interface ReplyTrace {
   steps?: { kind: string; status: string; from: { label: string } | null }[];
   modelText?: string;
   approvalLine?: boolean;
+  // What an app that draws answers draws on the map: a plan's answer, or a Lookup. Left out by a run saved before they
+  // were read.
+  answer?: unknown;
+  lookup?: unknown;
 }
+
+// Whether the reply shows the User something beside its words: cards, a map button, or an answer or a Lookup drawn on
+// the map.
+export const showsSomething = ({ cards, mapButtons, answer, lookup }: ReplyTrace): boolean =>
+  cards.length > 0 ||
+  mapButtons.length > 0 ||
+  (answer !== undefined && answer !== null) ||
+  (lookup !== undefined && lookup !== null);
 
 export interface TurnTrace {
   // The User's message of the turn.

@@ -3,11 +3,12 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Action } from './expect.ts';
 import { outcomeOf, roleOf } from './normalise.ts';
-import { type FailureKind, type TurnTrace } from './trace.ts';
+import { type FailureKind, showsSomething, type TurnTrace } from './trace.ts';
 
 // The observed action of a turn, read without the case's `expect`, for diagnosis only: the scorecard's confusion table
 // of what each case accepts against what the model did. It decides no pass; the scorer's action (eval/score.ts) does.
@@ -53,7 +54,7 @@ export function observedActionOf(trace: TurnTrace): Observed {
     return asks ? 'PROPOSE+ASK' : 'PROPOSE';
   }
   const answered = calls.some((call) => roleOf(call.name) === 'lookup' && ['found', 'none'].includes(outcomeOf(call)));
-  if (reply.cards.length > 0 || reply.mapButtons.length > 0 || (answered && reply.text.trim() !== '')) {
+  if (showsSomething(reply) || (answered && reply.text.trim() !== '')) {
     return asks || calledFor ? 'TOOL+ASK' : 'TOOL';
   }
   if (asks || calledFor) {

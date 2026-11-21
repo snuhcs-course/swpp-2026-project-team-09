@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { observedActionOf } from '../eval/observed.ts';
@@ -58,6 +59,31 @@ describe('A TOOL turn', () => {
     );
 
     expect(score.action).toBe('TOOL');
+  });
+});
+
+describe('A TOOL turn drawn on the map', () => {
+  // A map tool is no lookup of the scorer's: the reply's answer or Lookup is what shows it (P05 ticket 17).
+  const findDay = call('findDay', { date: '2026-11-05' }, { result: 'found' });
+  const dayExpect = expectOf({
+    actions: ['TOOL'],
+    tools: { required: ['findDay'] },
+    args: { findDay: { date: '2026-11-05' } },
+  });
+
+  it('is one whose reply draws a Lookup or an answer, with no card or button', () => {
+    for (const drawn of [{ lookup: { kind: 'day' } }, { answer: { plans: [] } }]) {
+      const traced = turn({ steps: [[findDay]], text: '과외는 17:00이에요.', ...drawn });
+
+      expect(scoreTurn(traced, dayExpect, names)).toMatchObject({ action: 'TOOL', passed: true });
+      expect(observedActionOf(traced)).toBe('TOOL');
+    }
+  });
+
+  it('is not one whose reply draws nothing, as in a run saved before they were read', () => {
+    const traced = turn({ steps: [[findDay]], text: '과외는 17:00이에요.' });
+
+    expect(scoreTurn(traced, dayExpect, names).action).toBeNull();
   });
 });
 

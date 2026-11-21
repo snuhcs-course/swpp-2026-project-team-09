@@ -56,6 +56,21 @@ export interface AnswerReply extends WithMissing {
   } | null;
 }
 
+// One of the User's Quests as the app reads it: those set aside by a plan (`planSet`), related to one (`related`), and
+// those a day's Lookup was asked about (`kept`). `people` are the others of it, never the User; `changeable` when the
+// User may change it here.
+export interface KeptQuestDto {
+  kind: 'meal-lunch' | 'meal-dinner' | 'meet' | 'event' | 'seat' | 'other';
+  questId: string;
+  title: string;
+  startAt: string;
+  endAt: string | null;
+  place: string | null;
+  people: { name: string; answer: 'leads' | 'accepted' | 'waiting' | 'declined' }[];
+  mine: boolean;
+  changeable: boolean;
+}
+
 // `from` is the start the User fixed for a meet. `area` is the visible map area and `what` the kind of place asked for,
 // of "이 근처".
 export interface ConditionChip extends WithMark {
