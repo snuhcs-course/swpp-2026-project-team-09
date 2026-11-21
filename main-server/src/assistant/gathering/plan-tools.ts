@@ -22,6 +22,7 @@ import { WHICH_FRIEND } from '../tools/which-friend.js';
 import { mealAfter, nextMealOffer } from './meal-after-hours.js';
 import { menuWords, type ServedMenu } from './meal-menu.js';
 import { type MealPlanService } from './meal-plan.service.js';
+import { alreadySetWords, busyWords, servingKind } from './meal-tool-words.js';
 
 // A meal planned on the map, for an app that draws answers (ADR 0009): the server decides everything, the model passes
 // the User's words as conditions and writes one sentence. Coordinates, ids of Places, course names, and rooms stay here.
@@ -73,10 +74,6 @@ function planWords(plan: Plan, served: ReadonlyMap<string, ServedMenu>): object 
   const words = menu === undefined ? {} : { menu: menuWords(menu.lines), closesAt: menu.closesAt };
   return { restaurant: plan.id, ...words, ...timesAndWays(plan) };
 }
-
-// The Restaurants of the plans whose main corner serves the kind of food, which come first.
-const servingKind = (plans: readonly Plan[], kind: CuisineWord): string[] =>
-  plans.filter(({ menu }) => menu?.dishes.some(({ cuisine }) => cuisine === kind) === true).map(({ id }) => id);
 
 // When everyone is there and until when, where they meet on the way, and each person's way, in words and minutes.
 export function timesAndWays(plan: Plan): object {
@@ -252,6 +249,7 @@ function plannedWords(
     plans: answer.plans.map((plan) => planWords(plan, served)),
     dropped: answer.dropped.map(({ place }) => place.label),
     ...(kind === null ? {} : { cuisine: kind, servedBy: servingKind(answer.plans, kind) }),
+    ...alreadySetWords(answer.mealSet),
   };
 }
 
@@ -291,12 +289,12 @@ export function planMeal(
       };
       const { location, locationMissing } = context;
       const chained = afterEarlierSteps(planInput, earlier(toolContext));
-      const { answer, served } = await plans.planned(userId, chained, { now, location, locationMissing });
+      const { answer, served, busy = [] } = await plans.planned(userId, chained, { now, location, locationMissing });
       presented.answer = answer;
       presented.lookup = null;
       presented.mapButtons.length = 0;
       if (answer.noPlan !== null) {
-        return noneOf(answer, planInput, { now, presented });
+        return { ...noneOf(answer, planInput, { now, presented }), ...busyWords(busy) };
       }
       return plannedWords(answer, served, { meal, kind });
     },
@@ -313,6 +311,8 @@ export const PLAN_RULES = `A meal is planned on the map: the server decides the 
 - When the User names a kind of food (한식, 중식, 일식, 양식, 분식), in the same message as the meal or in the next, call planMeal with the conditions on screen, if any, as they are, and cuisine set to that kind: the plans of the Restaurants that serve it come first, and the app shows that kind. When servedBy is empty, say in one sentence that none serves it then, with what the first plan serves. 'any' lets it go (아무거나).
 - Each plan has its Restaurant's menu for the meal and when it closes, and the app shows the menus. When the User picks by a dish or a taste, in the same message as the meal or in the next (돈까스 먹고 싶어, 더 가벼운 걸로, 국물 있는 거), call planMeal with the conditions on screen, if any, as they are, and read the plans' menus. When one serves what they asked for, call planMeal again with the same conditions and that plan's restaurant. When none does, say so in one sentence with what the first plan serves. Never name a dish that no plan's menu has, and never answer with a list of menus or dishes in words.
 - A question about what a Restaurant the User names serves (학생회관 오늘 메뉴 뭐야, 302동 저녁 뭐 나와) is a menu question, by the menu rules. Any other question about what or where to eat, menus included (오늘 점심 뭐야?), is a meal wish, planned with planMeal.
+- When planMeal answers alreadySet, the User already put that meal in their schedule, and the plans are new ones that would replace it. Your reply says so and asks whether to change it, such as "이미 12:16 302동식당 점심이 있어요. 바꿀까요?": the app offers 바꾸기 and 그대로 두기. When alreadySet.shared is true, it is with others (alreadySet.with) and is changed only in that 파티, so say so instead, such as "이미 민수와 12:16 302동식당 점심이 있어요. 바꾸려면 그 파티에서 바꿔요."
+- When planMeal answers none with busy, say what fills the time, by the User's own items, such as "점심 시간엔 13:00까지 수업이 있어요."
 - When planMeal answers none, say plainly why. Name someone busy only if they are a Friend in the plan, and say only when their Class ends or starts, never the course or the room; never name anyone who is not the User's Friend.
 - When the User asks who is free for a meal ("오늘 점심에 누구 돼?"), call findFreeFriends. Your reply says the User's Free Time in that window and the names of the Friends it returned.
 - When resolveFriend answers several, ask which one ${WHICH_FRIEND}, and wait for the answer.

@@ -44,6 +44,16 @@ export interface AnswerReply extends WithMissing {
   // A meal's: the other meal of the day and when it starts ("HH:MM", now when it is under way), which the app's bar
   // offers; null when it is over or no Restaurant serves it that day. Absent from other answers.
   otherMeal?: { meal: 'lunch' | 'dinner'; start: string } | null;
+  // A meal's: the Quest the asker already holds for that meal and day, which the plans set aside and making one replaces;
+  // null when none. `shared` when another holds it or is invited: it is never replaced from a new Plan.
+  mealSet?: {
+    questId: string;
+    title: string;
+    startAt: string;
+    place: string;
+    friendNames: string[];
+    shared: boolean;
+  } | null;
 }
 
 // `from` is the start the User fixed for a meet. `area` is the visible map area and `what` the kind of place asked for,

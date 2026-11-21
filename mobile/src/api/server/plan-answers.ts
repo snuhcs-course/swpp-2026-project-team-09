@@ -239,6 +239,17 @@ function isEventTimesOrAbsent(value: unknown): boolean {
 
 const isCuisine = isKeyOf<Cuisine>({ 한식: true, 중식: true, 일식: true, 양식: true, 분식: true });
 
+// A meal answer's meal already set: absent from other answers and from a main server before P05 ticket 16.
+function isMealSetOrAbsent(value: unknown): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    (hasTexts(value, ['questId', 'title', 'startAt', 'place']) &&
+      listOf(isText)(field(value, 'friendNames')) &&
+      isBoolean(field(value, 'shared')))
+  );
+}
+
 // A meal answer's other meal: absent from other answers and from a main server before P05 ticket 15.
 function isOtherMealOrAbsent(value: unknown): boolean {
   return (
@@ -288,6 +299,7 @@ export function isAnswerReply(value: unknown): value is AnswerReply {
     listOf(isDropped)(field(value, 'dropped')) &&
     isNoPlan(field(value, 'noPlan')) &&
     isOtherMealOrAbsent(field(value, 'otherMeal')) &&
+    isMealSetOrAbsent(field(value, 'mealSet')) &&
     hasMissingParts(value)
   );
 }

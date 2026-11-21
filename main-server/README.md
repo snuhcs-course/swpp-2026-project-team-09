@@ -3500,6 +3500,13 @@ of 5 minutes or more whose time is still ahead: to the Plan's Place, else on fro
 as one. The reply's `alone` holds the card's two lines and `remindAt`. Entering a Shared Quest for a Global Event that
 deletes the Quest held alone for it (`freeForSharedQuest`) cancels that Quest's `leave-by`.
 
+A Quest made from a meal's Plan keeps its `meal`. A new meal Plan sets aside the Quest the asker already holds for the
+same meal and day (`quests/held-meal.ts`): its Sub Quests are left out of everyone's day, so the plans come as if it
+were not there, and the answer's `mealSet` names it. Other Quests and Classes still fill the day. Making such a Plan
+into a Quest (`POST /plans`) replaces it in the same transaction: the asker drops it, it is deleted with nobody left,
+and its `leave-by` is cancelled. A meal held with another Holder or a waiting invitation is never dropped from a new
+Plan: the making answers 409 `MEAL_ALREADY_SET` with its `questId`, and it is changed in that Quest.
+
 An invited User's `leave-by` is kept when they accept an invitation into a Quest whose steps give a gathering, as a
 party's do. `InvitationsService` tells the listeners given to its `onAccepted()` once the acceptance is stored and
 signalled, so that the Quests' module need not import the Plans' module. `InviteeTimeToLeave` from
