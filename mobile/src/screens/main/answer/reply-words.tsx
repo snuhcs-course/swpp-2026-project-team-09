@@ -49,7 +49,7 @@ function lookupOf(bubble: ChatBubble, { lookup }: Seen): ShownLookup['lookup'] {
   return keepsShown(bubble) ? lookup.lookup : (bubble.lookup ?? null);
 }
 
-function wordsKindOf(bubble: ChatBubble, onScreen: Seen): WordsKind {
+export function wordsKindOf(bubble: ChatBubble, onScreen: Seen): WordsKind {
   const { shown, invitation, howAbout } = onScreen;
   const { answer } = bubble;
   const fromReply = answer !== undefined && answer !== null && answer === shown.source;
@@ -91,6 +91,12 @@ export function barOf(bubbles: readonly ChatBubble[], onScreen: Seen): BarOf {
 export function planShown(bubbles: readonly ChatBubble[], onScreen: Seen): boolean {
   const turn = turnsOf(bubbles).findLast(({ after }) => after.length > 0);
   return turn?.after.some((bubble) => wordsKindOf(bubble, onScreen) === 'plan') ?? false;
+}
+
+// The reply of the latest turn with a reply whose words are the Lookup on screen.
+export function lookupReplyOf(bubbles: readonly ChatBubble[], onScreen: Seen): ChatBubble | undefined {
+  const turn = turnsOf(bubbles).findLast(({ after }) => after.length > 0);
+  return turn?.after.find((bubble) => wordsKindOf(bubble, onScreen) === 'lookup');
 }
 
 interface WordsProps extends OnScreen {

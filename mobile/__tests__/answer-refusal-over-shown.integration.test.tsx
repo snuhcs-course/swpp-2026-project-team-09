@@ -86,20 +86,26 @@ function lastAsked(): unknown {
 }
 
 // Partitions: a refusal with a Friend Lookup, whose only offer stands where the Lookup's action would; one with a way
-// Lookup, whose offer stands in place of "길 안내". Expected values: boards n4 and n20.
+// Lookup, whose offer stands in place of "길 안내". Each docks as the refusal's first line with its offer beside the
+// input (P04 ticket 05), and a press on the line raises the rest. Expected values: boards n4 and n20.
 describe('a refusal beside a Lookup', () => {
   it("draws 민수 and puts the refusal's lines in place of the Lookup's, with 만나고 싶다 and 닫기 (board n4)", async () => {
     const user = await askOnMap(server, copyOf('민수 지금 무슨 수업 들어?'));
 
-    expect(card().getByText('민수 · 시간표')).toBeVisible();
     expect(card().getByText('과목과 강의실은 보이지 않아요')).toBeVisible();
+    expect(card().queryByText('12:15에 302동에서 수업이 끝나요')).toBeNull();
+    expect(mapThings()).toContain('민수 · 수업 중 12:15까지');
+    expect(card().queryByRole('button', { name: '닫기' })).toBeNull();
+
+    await user.press(card().getByText('과목과 강의실은 보이지 않아요'));
+
+    expect(card().getByText('민수 · 시간표')).toBeVisible();
     expect(card().getByText('12:15에 302동에서 수업이 끝나요')).toBeVisible();
     expect(card().queryByText('민수는 12:15까지 302동 수업이에요')).toBeNull();
     expect(card().queryByText('지금 위치는 보여 주지 않아요')).toBeNull();
-    expect(mapThings()).toContain('민수 · 수업 중 12:15까지');
     expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
 
-    await user.press(card().getByRole('button', { name: '만나고 싶다' }));
+    await user.press(beside().getByRole('button', { name: '만나고 싶다' }));
     await pass(500);
 
     expect(lastAsked()).toEqual(expect.arrayContaining([{ role: 'user', text: '민수랑 만나고 싶어' }]));
@@ -108,14 +114,19 @@ describe('a refusal beside a Lookup', () => {
   it("draws the way to 신양 with the refusal's lines, and 관정 스터디룸 in place of 길 안내 (board n20)", async () => {
     const user = await askOnMap(server, copyOf('신양 스터디룸 예약해 줘'));
 
-    expect(card().getByText('301동에서')).toBeVisible();
     expect(card().getByText('앱이 예약하는 곳은 관정뿐이에요')).toBeVisible();
+    expect(card().queryByText('신양학술정보관은 그곳의 방식으로 예약해요')).toBeNull();
+    expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
+
+    await user.press(card().getByText('앱이 예약하는 곳은 관정뿐이에요'));
+
+    expect(card().getByText('301동에서')).toBeVisible();
     expect(card().getByText('신양학술정보관은 그곳의 방식으로 예약해요')).toBeVisible();
     expect(card().queryByText('신양학술정보관(44-1동)은 여기예요')).toBeNull();
-    expect(card().queryByRole('button', { name: '길 안내' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
     expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
 
-    await user.press(card().getByRole('button', { name: '관정 스터디룸' }));
+    await user.press(beside().getByRole('button', { name: '관정 스터디룸' }));
     await pass(500);
 
     expect(lastAsked()).toEqual(expect.arrayContaining([{ role: 'user', text: '관정 스터디룸' }]));
@@ -155,12 +166,16 @@ describe('a refusal to accept for a Friend (board n8b)', () => {
 
 // Expected values: board n21, on the copy written at 22:10 at 관정.
 describe('a way asked about the shuttle when it is not running (board n21)', () => {
-  it('says so, then the walk, and offers only 닫기', async () => {
-    await askOnMap(server, NOT_RUNNING_LOOKUP_REPLY);
+  it('says so in the dock, and raised, the walk with only 닫기', async () => {
+    const user = await askOnMap(server, NOT_RUNNING_LOOKUP_REPLY);
 
     expect(card().getByText('셔틀은 지금 다니지 않아요 (평일 8–21시)')).toBeVisible();
+    expect(screen.queryByTestId('ai-input-beside')).toBeNull();
+
+    await user.press(card().getByText('셔틀은 지금 다니지 않아요 (평일 8–21시)'));
+
     expect(card().getByText('(관악사)학부 생활관(919동)까지 걸어서 11분이에요')).toBeVisible();
-    expect(card().queryByRole('button', { name: '길 안내' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
     expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
   });
 });

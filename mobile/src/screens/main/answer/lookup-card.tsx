@@ -13,13 +13,19 @@ import type { Lookup, LookupAction } from '@/api/lookup-types';
 import type { Refusal } from '@/api/refusal-types';
 import { Button, color, Icon, size, space, text } from '@/design-system';
 import type { Chat } from '@/features/assistant/use-chat';
-import { mainActionOf, type ShownLookup } from '@/features/assistant/use-shown-lookup';
+import {
+  type GuideAction,
+  mainActionOf,
+  type MeetAction,
+  type ShownLookup,
+} from '@/features/assistant/use-shown-lookup';
 import { useFriendProfile } from '@/features/friends/use-friend-profile';
 import { MEET, useMeetAsk } from '../meet-button';
 import { AnswerLines } from './answer-lines';
 import { CardNote } from './card-note';
 import { ReadOnlyChip } from './condition-chips';
-import { isButton, pressOffer } from './refusal-reply';
+import { type ButtonOffer, isButton, pressOffer } from './refusal-reply';
+import { lookupDocks } from './words-rest';
 
 // As high as the answer's chips, whose touch area "근거" shares.
 const CHIP_HEIGHT = 34;
@@ -61,7 +67,7 @@ export function Chips({ chips, basis }: ChipsProps): ReactElement {
   );
 }
 
-interface MainButton {
+export interface MainButton {
   label: string;
   onPress: () => void;
 }
@@ -123,33 +129,41 @@ interface LookupCardProps {
 }
 
 // The refusal's first offer, else "길 안내" or "만나고 싶다" when the Lookup has it.
-function mainOf({ lookup, shown, refusal, onAsk }: LookupCardProps, meet: (userId: string) => void): MainButton | null {
-  const offer = refusal?.offers.find(isButton);
-  if (offer !== undefined) {
-    return {
-      label: offer.label,
-      onPress: () => {
-        pressOffer(offer, onAsk);
-      },
-    };
-  }
-  const main = mainActionOf(lookup);
+export function lookupMainOf(lookup: Lookup, refusal: Refusal | null): ButtonOffer | GuideAction | MeetAction | null {
+  return refusal?.offers.find(isButton) ?? mainActionOf(lookup);
+}
+
+type MainArgs = Pick<LookupCardProps, 'lookup' | 'shown' | 'refusal' | 'onAsk' | 'addRecalculated'>;
+
+// The Lookup's main button, in its card or beside the input. A `study` Lookup's ("이 근처") reads "가는 길".
+export function useLookupMain({ lookup, shown, refusal, onAsk, addRecalculated }: MainArgs): MainButton | null {
+  const meet = useLookupMeet(lookup, addRecalculated);
+  const main = lookupMainOf(lookup, refusal);
   if (main === null) {
     return null;
   }
-  return main.kind === 'meet'
-    ? {
-        label: MEET,
-        onPress: () => {
-          meet(main.userId);
-        },
-      }
-    : {
-        label: lookup.kind === 'study' ? '가는 길' : '길 안내',
-        onPress: () => {
-          shown.guide(main.to);
-        },
-      };
+  if (main.kind === 'meet') {
+    return {
+      label: MEET,
+      onPress: () => {
+        meet(main.userId);
+      },
+    };
+  }
+  if (main.kind === 'guide') {
+    return {
+      label: lookup.kind === 'study' ? '가는 길' : '길 안내',
+      onPress: () => {
+        shown.guide(main.to);
+      },
+    };
+  }
+  return {
+    label: main.label,
+    onPress: () => {
+      pressOffer(main, onAsk);
+    },
+  };
 }
 
 // The Lookup's `ask` actions, none beside a refusal, whose offers stand in their place.
@@ -168,12 +182,13 @@ function useLookupMeet(lookup: Lookup, addRecalculated: Chat['addRecalculated'])
 
 // A Lookup in the answer frame's card, as a Plan's card without its arrows and "이대로 초대": its chips, its two lines,
 // the basis while open, the band without handles when a time matters, and the first action the app draws as the main
-// button, then its `ask` actions, beside "닫기". The main button of a `study` Lookup ("이 근처") reads "가는 길". Beside a
-// refusal, the refusal's lines stand in place of the Lookup's, and its offer in place of the buttons.
+// button, then its `ask` actions, beside "닫기". A Lookup that docks has its main button beside the input instead
+// (`answerActionOf`). Beside a refusal, the refusal's lines stand in place of the Lookup's, and its offer in place of
+// the buttons.
 export function LookupCard(props: LookupCardProps): ReactElement {
-  const { lookup, shown, refusal, onClose, addRecalculated } = props;
+  const { lookup, shown, refusal, onClose } = props;
   const { basisOpen, toggleBasis } = shown;
-  const meet = useLookupMeet(lookup, addRecalculated);
+  const main = useLookupMain(props);
   return (
     <View style={styles.card} testID="lookup-card">
       <Chips basis={lookup.basis.length === 0 ? null : { open: basisOpen, toggle: toggleBasis }} chips={lookup.chips} />
@@ -188,7 +203,12 @@ export function LookupCard(props: LookupCardProps): ReactElement {
         </View>
       ) : null}
       <CardNote note={lookup.note} />
-      <Buttons asks={asksOf(props)} main={mainOf(props, meet)} onAsk={props.onAsk} onClose={onClose} />
+      <Buttons
+        asks={asksOf(props)}
+        main={lookupDocks(lookup, refusal) ? null : main}
+        onAsk={props.onAsk}
+        onClose={onClose}
+      />
     </View>
   );
 }

@@ -8,7 +8,14 @@ Native files: none. Releases: an app OTA update only.
 
 ## What to build
 
-Every other reply takes the bottom of ticket 04, so that no answer still shows the old card. A Lookup (a way, a shuttle, a study area, a place, my day) shows its marks and, when it has one, its time on the bar; its line that names no place or time is the one line. A refusal, an offer (a question back), and a failure are the one line, with their buttons in the chip row. A reply with nothing to draw (a procedure, a rule) shows the model's text folded to one line, and a tap raises the card with the whole text (board 8: "김민수가 먼저 일어나야 해요. 저녁으로 바꿀까요? ›").
+One rule decides every case: the bottom hides only what the map already says; where the map does not carry the answer, the answer stands open below without a press.
+
+- **A Lookup whose answer the map draws** (a way, a place: the flag and the route say the name and the minutes) rests in ticket 04's dock: its main action beside the input ("길 안내", "가는 길"), its other asks as chips, no lines; its band on the time bar.
+- **A Lookup whose answer is words the map does not show** (the shuttle is not running, a menu before ticket 08 puts it on the mark, a study area's state): its headline is the one line in the dock, and a press raises the rest. A Lookup of the User's day keeps its card open.
+- **A refusal, a question back (offers), a failure:** the first line is the one line in the dock (board 8), its offers and 다시 시도 are chips in the same row, and a press on the line raises the whole text. The grid of "which Friend?" stays an open card.
+- **A reply with nothing to draw** (a procedure, a rule) keeps its card open, as tall as its text up to today's highest, with the input under it: the text is the whole answer (decision 3).
+- **A reply with cards** (events, Quests, a restaurant, a library card, a Proposal) keeps its card open until tickets 06 to 08 put its kind on the map.
+- "지난 답 N개" and the note are dock chips, as in ticket 04.
 
 ## What happens now
 
@@ -18,7 +25,6 @@ Every other reply takes the bottom of ticket 04, so that no answer still shows t
 
 - The one line's function of ticket 04 covers Lookups, refusals, offers, and failures; words without a scene fall back to the model's text.
 - Their buttons go to the chip row above the input (다시 시도, an offer's choices, a Lookup's button).
-- Reply cards (event, Quest, restaurant, library, Proposal) stay in the raised card until tickets 06 to 08 put them on the map: a reply with cards shows the one line "카드 N개 ›" that raises the card.
 
 ## Must not break
 
@@ -29,7 +35,7 @@ Every other reply takes the bottom of ticket 04, so that no answer still shows t
 - [ ] A way Lookup shows its marks and the one line, no card text. (Integration test.)
 - [ ] A refusal shows its line and its asks above the input. (Integration test.)
 - [ ] A failure shows its line and 다시 시도. (Integration test.)
-- [ ] A procedure answer shows one line; a tap raises the whole text. (Integration test.)
-- [ ] A reply with cards shows "카드 N개 ›", and a tap shows the cards. (Integration test.)
+- [ ] A shuttle Lookup that says the shuttle is not running shows that line in the dock; a press raises the rest. (Integration test.)
+- [ ] A procedure answer and a reply with cards keep their card open. (Integration test.)
 - [ ] A Lookup and a procedure answer on a phone with the mock build. (Emulator.)
 - [ ] No native file changes; lint, format, and types pass on the app.

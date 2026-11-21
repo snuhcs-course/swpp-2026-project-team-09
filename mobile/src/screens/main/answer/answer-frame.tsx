@@ -15,9 +15,7 @@ import { type ReactElement, useCallback, useEffect, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { space } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
-
-import type { ChatBubble } from '@/features/assistant/use-chat';
-import { keepsShown, lastReply } from '@/features/assistant/use-shown-answer';
+import { lastReply } from '@/features/assistant/use-shown-answer';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { BubbleParts } from '../chat-bubbles';
 import type { CardActions } from '../chat-cards';
@@ -33,35 +31,13 @@ import { useForgetWithUndo } from './forget-with-undo';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { KeyboardHeadline } from './keyboard-headline';
 import { MarkCard } from './mark-card';
-import { DockedAnswer } from './docked-answer';
+import { DockedAnswer, restOf } from './docked-answer';
 import { MarkRows } from './mark-rows';
-import { planCardRests } from './plan-card';
 import { pillIconOf } from './pill-icon';
 import type { Raising } from './raise-handle';
 import { ReplySteps } from './reply-steps';
 import { barOf, onScreenOf, planShown, TopBar, Words } from './reply-words';
 import { type BandFocus, useBandFocus } from './use-corrections';
-
-// The turn on screen is its Plan's card alone with nothing to read: the card docks as one row around the input (board
-// 10), whose chips raise it for the earlier turns and the note.
-function restsDocked(control: ChatSheetControl, after: readonly ChatBubble[]): boolean {
-  const { answer: shown, chat } = control;
-  const [reply] = after;
-  const own =
-    after.length === 1 &&
-    reply !== undefined &&
-    reply.cards.length === 0 &&
-    reply.mapButtons.length === 0 &&
-    reply.proposal === null &&
-    reply.steps === undefined;
-  const refusal = reply !== undefined && keepsShown(reply) ? (reply.refusal?.lines ?? []) : [];
-  return (
-    own &&
-    planShown(chat.bubbles, onScreenOf(control)) &&
-    shown.answer !== null &&
-    planCardRests(shown, shown.answer, refusal)
-  );
-}
 
 interface AnswerCardProps {
   control: ChatSheetControl;
@@ -92,18 +68,18 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
   const { bubbles, waiting } = control.chat;
   const after = turnOf(bubbles)?.after ?? [];
   const contentMax = contentMaxOf(stageHeight, barRoom);
-  const docked = !keyboardUp && !raising.raised && !waiting && restsDocked(control, after);
+  const rest = keyboardUp || raising.raised || waiting ? null : restOf(control, after);
   const [reply] = after;
   const raise = (open: boolean): void => {
     props.earlier.setOpen(open);
     raising.setRaised(true);
   };
   return (
-    <FrameCard {...card} docked={docked} hold={waiting} testID="answer-card">
+    <FrameCard {...card} docked={rest !== null} hold={waiting} testID="answer-card">
       {keyboardUp && !raising.raised ? (
         <Typing control={control} />
-      ) : docked && reply !== undefined ? (
-        <DockedAnswer bubble={reply} control={control} focus={focus} onClose={onClose} onRaise={raise} />
+      ) : rest !== null && reply !== undefined ? (
+        <DockedAnswer bubble={reply} control={control} focus={focus} onClose={onClose} onRaise={raise} rest={rest} />
       ) : (
         <OpenAnswer {...props} room={contentMax === null ? null : contentMax - CONTENT_TOP} />
       )}

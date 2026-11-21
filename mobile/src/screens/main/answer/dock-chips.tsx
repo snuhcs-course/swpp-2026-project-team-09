@@ -6,13 +6,14 @@
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { color, radius, size, space, text } from '@/design-system';
+import type { AnswerLine } from '@/api/assistant-types';
+import { color, font, radius, size, space, text } from '@/design-system';
 
 const CHIP_HEIGHT = 34;
 const HIT_SLOP = (size.touchMin - CHIP_HEIGHT) / 2;
 
 // A small chip of the dock's row for what the docked card keeps folded: "지난 답 N개", or the answer's note. A press
-// raises the card with it open.
+// raises the card with it open. A reply's buttons take the same chip (an offer, 다시 시도, a Lookup's ask).
 export function DockChip({ words, onPress }: { words: string; onPress: () => void }): ReactElement {
   return (
     <Pressable
@@ -29,6 +30,29 @@ export function DockChip({ words, onPress }: { words: string; onPress: () => voi
   );
 }
 
+// The dock's one line (board 8), cut to fit, which a press opens to the whole reply in the raised card.
+export function DockLine({ line, onPress }: { line: AnswerLine; onPress: () => void }): ReactElement {
+  return (
+    <Pressable
+      accessibilityHint="전체 보기"
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.line, pressed && styles.pressed]}
+      testID="dock-line"
+    >
+      <Text ellipsizeMode="tail" numberOfLines={1} style={styles.lineWords}>
+        {line.map(({ text: words, strong }, part) => (
+          // The parts have no id, and their order is their meaning.
+          // oxlint-disable-next-line react/no-array-index-key
+          <Text key={part} style={strong ? styles.strong : undefined}>
+            {words}
+          </Text>
+        ))}
+      </Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   chip: {
     flexShrink: 1,
@@ -40,4 +64,7 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.6 },
   words: { ...text.label, color: color.inkMuted },
+  line: { flexGrow: 1, flexShrink: 1, justifyContent: 'center', minHeight: CHIP_HEIGHT },
+  lineWords: { ...text.body, color: color.ink },
+  strong: { fontFamily: font.bold, color: color.snuBlue },
 });

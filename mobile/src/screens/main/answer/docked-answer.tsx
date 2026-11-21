@@ -5,28 +5,81 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { space } from '@/design-system';
 import { turnsOf } from '@/features/assistant/turn';
 import type { ChatBubble } from '@/features/assistant/use-chat';
+import { keepsShown } from '@/features/assistant/use-shown-answer';
 import type { ChatSheetControl } from '../chat-sheet';
-import { DockChip } from './dock-chips';
-import { Words } from './reply-words';
+import { DockChip, DockLine } from './dock-chips';
+import { planCardRests } from './plan-card';
+import { pressOffer } from './refusal-reply';
+import { onScreenOf, planShown, Words, wordsKindOf } from './reply-words';
 import type { BandFocus } from './use-corrections';
+import { lookupRestOf, type WordsRest, wordsRestOf } from './words-rest';
 
-interface DockedAnswerProps {
-  control: ChatSheetControl;
-  bubble: ChatBubble;
-  focus: BandFocus;
-  onClose: () => void;
-  // Raises the card, with the earlier turns open when `earlier` is true.
-  onRaise: (earlier: boolean) => void;
+// How the turn on screen rests while nothing is pressed: its Plan's card docked as its chips' row (board 10), the dock
+// with a reply's one line and buttons (`WordsRest`), or null for the open card.
+export type Rest = { kind: 'plan' } | { kind: 'words'; words: WordsRest };
+
+// A reply that holds nothing but its words: no card, map button, Proposal, steps, or booking, and not the app's own.
+function bare(reply: ChatBubble): boolean {
+  const { cards, mapButtons, proposal, steps, done, own = false } = reply;
+  return (
+    cards.length === 0 &&
+    mapButtons.length === 0 &&
+    proposal === null &&
+    steps === undefined &&
+    done === undefined &&
+    !own
+  );
 }
 
-// The docked card's content: the Plan's chips' row, which ends with "지난 답 N개" while the conversation has turns
-// before this one and with the answer's note when it has one; each raises the card with what it names.
-export function DockedAnswer({ control, bubble, focus, onClose, onRaise }: DockedAnswerProps): ReactElement {
+// The Plan's card alone with nothing to read.
+function planRests(control: ChatSheetControl, reply: ChatBubble): boolean {
+  const { answer: shown, chat } = control;
+  const refusal = keepsShown(reply) ? (reply.refusal?.lines ?? []) : [];
+  return (
+    planShown(chat.bubbles, onScreenOf(control)) && shown.answer !== null && planCardRests(shown, shown.answer, refusal)
+  );
+}
+
+// The bottom hides only what the map already says: a reply with cards, with several parts, or with nothing to draw
+// keeps the open card, and so does a Plan's card with something to read.
+export function restOf(control: ChatSheetControl, after: readonly ChatBubble[]): Rest | null {
+  const [reply] = after;
+  if (after.length !== 1 || reply === undefined || !bare(reply)) {
+    return null;
+  }
+  const kind = wordsKindOf(reply, onScreenOf(control));
+  if (kind === 'plan') {
+    return planRests(control, reply) ? { kind } : null;
+  }
+  const { lookup } = control.lookup;
+  let words: WordsRest | null = null;
+  if (kind === 'lookup' && lookup !== null) {
+    words = lookupRestOf(lookup, reply.refusal ?? null, reply.text);
+  } else if (kind === 'own') {
+    words = wordsRestOf(reply);
+  }
+  return words === null ? null : { kind: 'words', words };
+}
+
+type Raise = (earlier: boolean) => void;
+
+// "지난 답 N개" while the conversation has turns before this one, and the answer's note; each raises the card with
+// what it names.
+function FoldedChips({
+  control,
+  note,
+  onRaise,
+}: {
+  control: ChatSheetControl;
+  note: string | null;
+  onRaise: Raise;
+}): ReactElement {
   const earlier = turnsOf(control.chat.bubbles).length - 1;
-  const note = control.answer.answer?.note ?? null;
-  const chips = (
+  return (
     <>
       {earlier > 0 ? (
         <DockChip
@@ -46,11 +99,76 @@ export function DockedAnswer({ control, bubble, focus, onClose, onRaise }: Docke
       )}
     </>
   );
+}
+
+// A reply's dock: its one line, which raises the card with the whole reply, then its buttons as chips, and the folded
+// chips. Nothing when the map says it all and nothing is folded.
+function DockedWords({
+  control,
+  rest,
+  onRaise,
+}: {
+  control: ChatSheetControl;
+  rest: WordsRest;
+  onRaise: Raise;
+}): ReactElement | null {
+  const { line, offers, retry, note } = rest;
+  const { send } = control.chat;
+  if (line === null && offers.length === 0 && !retry && note === null && turnsOf(control.chat.bubbles).length < 2) {
+    return null;
+  }
+  return (
+    <View style={styles.row} testID="dock-row">
+      {line === null ? null : (
+        <DockLine
+          line={line}
+          onPress={() => {
+            onRaise(false);
+          }}
+        />
+      )}
+      {offers.map((offer) => (
+        <DockChip
+          key={offer.label}
+          onPress={() => {
+            pressOffer(offer, send);
+          }}
+          words={offer.label}
+        />
+      ))}
+      {retry ? <DockChip onPress={control.chat.retry} words="다시 시도" /> : null}
+      <FoldedChips control={control} note={note} onRaise={onRaise} />
+    </View>
+  );
+}
+
+interface DockedAnswerProps {
+  control: ChatSheetControl;
+  bubble: ChatBubble;
+  rest: Rest;
+  focus: BandFocus;
+  onClose: () => void;
+  // Raises the card, with the earlier turns open when `earlier` is true.
+  onRaise: Raise;
+}
+
+// The docked card's content: a reply's dock, or the Plan's chips' row, which ends with the folded chips.
+export function DockedAnswer({
+  control,
+  bubble,
+  rest,
+  focus,
+  onClose,
+  onRaise,
+}: DockedAnswerProps): ReactElement | null {
+  if (rest.kind === 'words') {
+    return <DockedWords control={control} onRaise={onRaise} rest={rest.words} />;
+  }
   return (
     <Words
       addRecalculated={control.chat.addRecalculated}
       bubble={bubble}
-      dock={chips}
+      dock={<FoldedChips control={control} note={control.answer.answer?.note ?? null} onRaise={onRaise} />}
       focus={focus}
       howAbout={control.howAbout}
       invitation={control.invitation}
@@ -62,3 +180,7 @@ export function DockedAnswer({ control, bubble, focus, onClose, onRaise }: Docke
     />
   );
 }
+
+const styles = StyleSheet.create({
+  row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
+});

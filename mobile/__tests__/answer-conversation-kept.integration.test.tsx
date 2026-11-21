@@ -159,7 +159,7 @@ describe('leaving the frame', () => {
   it('hides it once "길 안내" starts the route guidance', async () => {
     const user = await asked(WAY_LOOKUP_REPLY, '문화관이 어디야?');
 
-    await user.press(card().getByRole('button', { name: '길 안내' }));
+    await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '길 안내' }));
     await pass(500);
 
     // To 문화관, where the Lookup's "길 안내" leads.
@@ -168,7 +168,7 @@ describe('leaving the frame', () => {
     );
     expectHidden();
     await user.press(screen.getByRole('button', { name: EARLIER }));
-    expect(card().getByText('문화관(73동)은 여기예요')).toBeVisible();
+    expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '길 안내' })).toBeVisible();
   });
 });
 

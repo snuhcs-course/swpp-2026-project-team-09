@@ -31,7 +31,7 @@ import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { tabBarHeight } from '../shell/layout';
 import { AiInput } from './ai-input';
 import { AnswerFrame } from './answer/answer-frame';
-import { PlanActionButton, planActionOf } from './answer/plan-action';
+import { AnswerActionButton, answerActionOf } from './answer/plan-action';
 import { AskedExamples } from './answer/asked-examples';
 import { MadeQuestFrame } from './answer/made-quest-frame';
 import { InvitationFrame } from './answer/received-invitation-card';
@@ -217,7 +217,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const inputShown = !inputGone && !(chat.framed && chat.answer.moving !== null);
   const inputTop = inputGone ? lift : aiInputTop(room) + lift;
   const send = sendWithKeyboardDown(chat.chat.send);
-  const action = planActionOf(chat);
+  const action = answerActionOf(chat);
   return (
     <>
       {guided ? null : (
@@ -233,7 +233,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
             restore={restoreOf(chat.chat.bubbles)}
             onSend={send}
             unseen={chat.unseen}
-            beside={action === null || keyboardUp ? null : <PlanActionButton action={action} />}
+            beside={action === null || keyboardUp ? null : <AnswerActionButton action={action} control={chat} />}
             inCard={chat.framed}
           />
         ) : null}
