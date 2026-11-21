@@ -532,10 +532,12 @@ git push origin snunow/main-server/26.11.13-1
 ```
 
 A Release is tagged on the newest commit of the iteration branch, here `4.0/Main`, whose full CI run passed, which the
-second line finds. The merge queue runs only the basic checks, and the iteration branch's own push every job with every
-test ([Running the tests](../../README.md#running-the-tests) has the four kinds of run). That push's run goes one at a
-time on the newest commit and covers every commit merged before it; a run still waiting when a newer commit lands is
-replaced by the newer one's. The third line lists the day's earlier Releases of the target, from which N follows.
+second line finds. The merge queue runs only the basic checks, and the iteration branch's own push the full level, every
+test but the app's integration tests ([Running the tests](../../README.md#running-the-tests) has the kinds of run). That
+push's run goes one at a time on the newest commit and covers every commit merged before it; a run still waiting when a
+newer commit lands is replaced by the newer one's. The app's integration tests run nightly and by hand only, and no
+Release waits for them: to see them pass on the commit first, start CI at the nightly level on it
+([The nightly level](../../README.md#the-nightly-level)) and tag once that run is green. The third line lists the day's earlier Releases of the target, from which N follows.
 
 Every Release also applies the shared part at its commit: the settings, the Secret, the Ingresses, and Redis. A server
 takes up a changed setting or secret value when it is next deployed.
@@ -647,10 +649,12 @@ The next Release brings the committed value back, so also set it in that file an
 The run appears in the repository's **Actions** tab under the Release workflow, named after the tag:
 
 1. It checks the tag's name.
-2. It waits for CI's results on the tagged commit. Every CI job must have passed, in the runs that always do every
-   job: the tag's own and those of pushes to an iteration branch (`<line>/Main`), `main` or `development`. A working
-   branch's run and the merge queue's may skip work their changes cannot reach and run only the unit tests, so neither
-   is read. CI runs on the tag's push too, so a tagged commit always gets results. While a job is queued or running,
+2. It waits for CI's results on the tagged commit. Every CI job must have passed, in the runs at the full level: the
+   tag's own push's and those of pushes to an iteration branch (`<line>/Main`), `main` or `development`. There the four
+   `mobile-tests` jobs, the app's integration tests, skip their work and pass, so a Release waits about ten minutes and
+   not for those tests. A working branch's run and the merge queue's may skip work their changes cannot reach and run
+   only the unit tests, and a run started by hand or by the nightly is no part of a Release, so none of these is read.
+   CI runs on the tag's push too, so a tagged commit always gets results. While a job is queued or running,
    the Release waits. A failed job fails the Release before any AWS step: fix the commit through a pull request and
    release the new one.
 3. It builds the target's arm64 images and pushes them to ECR, tagged with the commit and with the tag's name with `/`

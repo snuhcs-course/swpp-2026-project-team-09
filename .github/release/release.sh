@@ -321,21 +321,24 @@ unused_generated() {
 
 # --- Doing --------------------------------------------------------------------------------------------------------
 
-# Prints the jobs of the commit's CI runs that always do every job, as jobs_from_json prints them: the tag's own and
-# those of pushes to a Main, to main or to development. A working branch's run and the merge queue's may skip work
-# their changes cannot reach and run only the unit tests (.github/ci/changes.sh), so neither is read.
+# Prints the jobs of the commit's CI runs at the full level, as jobs_from_json prints them: the run of the tag's own push
+# and those of pushes to a Main, to main or to development (.github/ci/changes.sh). There every job does its work but
+# mobile-tests, the app's integration tests, which skips it and reports success: a Release does not wait for them. A
+# working branch's run and the merge queue's may skip work their changes cannot reach and run only the unit tests, and
+# a run started by hand or by the nightly is no part of a Release, so none of these is read.
 # GitHub may list the run of the tag's own push a little after the Release starts, so until it does, that run counts as
 # one that will run every job.
 read_ci_jobs() {
   local repository=$1 commit=$2 tag=$3 runs id run_status jobs
   runs=$(gh api "repos/$repository/actions/workflows/ci.yml/runs?head_sha=$commit&per_page=100") || return 1
-  jq -e --arg tag "$tag" 'any(.workflow_runs[]; .head_branch == $tag)' <<<"$runs" >/dev/null || printf '*\tmissing\n'
+  jq -e --arg tag "$tag" 'any(.workflow_runs[]; .event == "push" and .head_branch == $tag)' <<<"$runs" >/dev/null ||
+    printf '*\tmissing\n'
   while IFS=$'\t' read -r id run_status; do
     jobs=$(gh api "repos/$repository/actions/runs/$id/jobs?per_page=100") || return 1
     jobs_from_json "$run_status" <<<"$jobs"
   done < <(jq -r --arg tag "$tag" '.workflow_runs[] |
-    select(.head_branch == $tag or
-      (.event == "push" and ((.head_branch // "") | test("^([^/]+/Main|main|development)$")))) |
+    select(.event == "push" and
+      (.head_branch == $tag or ((.head_branch // "") | test("^([^/]+/Main|main|development)$")))) |
     [.id, .status] | @tsv' <<<"$runs")
 }
 
@@ -363,8 +366,9 @@ fingerprint_and_decide() {
   printf 'android=%s\nios=%s\nversion=%s\nverdict=%s\n' "$android" "$ios" "$version" "$verdict"
 }
 
-# Waits for CI's results on the commit and fails unless every CI job has passed. It only reads them: CI runs on the
-# tag's push by itself, since its `on: push` takes tags.
+# Waits for CI's results on the commit and fails unless every CI job has passed at the full level, the app's integration
+# tests left out (read_ci_jobs). It only reads them: CI runs on the tag's push by itself, since its `on: push` takes
+# tags.
 gate() {
   local repository=$1 commit=$2 tag=$3 lines jobs verdict
   local limit=${GATE_LIMIT_SECONDS:-2700} interval=${GATE_INTERVAL_SECONDS:-60}

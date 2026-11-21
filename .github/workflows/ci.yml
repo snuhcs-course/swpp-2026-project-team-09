@@ -10,10 +10,18 @@
 # 2026-11-16  Opus 5.5   prompted by fyoon46
 # 2026-11-18  Opus 5.5   prompted by fyoon46
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-21  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 name: CI
+# A run started by hand or by the nightly (.github/workflows/nightly.yml) is named for its level, so that a red one is
+# easy to find among the pushes' runs; every other run keeps GitHub's own name.
+run-name: >-
+  ${{ github.event_name == 'workflow_dispatch' && format('Nightly level on {0}', github.ref_name) || '' }}
 
+# Three levels (.github/ci/changes.sh): a working branch's push and the merge queue run the basic level, a push to a
+# Main, main or development and a tag's push the full level, which leaves out only the app's integration tests
+# (mobile-tests), and a run started by hand or by the nightly the nightly level, which runs everything.
 on:
   push:
     # A merge queue's branches are checked by their merge_group run.
@@ -21,12 +29,14 @@ on:
     # Named because a branch filter alone would leave tags out, and the Release gate waits for the tag's run.
     tags: ['**']
   merge_group:
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # A run at the nightly level has a group of its own, so that it neither waits for nor holds up a Main's pushes.
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && 'nightly-' || '' }}${{ github.ref }}
   # A Main's run in progress is not cancelled, since a job that skips on a branch or in the merge queue leans on its
   # Main's last full run. A newer push's run replaces one still waiting, so a Main has one full run at a time, on its
-  # newest commit, which covers every commit merged before it.
+  # newest commit, which covers every commit merged before it. The same holds for a Main's nightly-level runs.
   cancel-in-progress: ${{ !endsWith(github.ref, '/Main') }}
 
 permissions:
@@ -79,16 +89,18 @@ jobs:
         if: steps.changes.outputs.run != 'false'
       - run: pnpm test
         if: matrix.project != 'mobile' && steps.changes.outputs.run != 'false' && steps.changes.outputs.tests != 'unit'
-      # A working branch's push and the merge queue run only the unit tests, the app's among them; a push to a Main,
-      # main or development and a tag's push run every test.
+      # A working branch's push and the merge queue run only the unit tests; the full and nightly levels run every
+      # test. The app's unit tests run here at every level, and its integration tests in mobile-tests at the nightly
+      # level only.
       - run: pnpm test:unit
         if: >-
           matrix.project != 'flow-tests' && steps.changes.outputs.run != 'false' &&
-          steps.changes.outputs.tests == 'unit'
+          (steps.changes.outputs.tests == 'unit' || matrix.project == 'mobile')
 
-  # mobile's tests take over ten minutes on one runner, so they are split across four, packed by each file's measured
-  # seconds (.github/ci/app-test-sequencer.cjs). Each keeps Jest's transform cache for the next runs on its branch. On a
-  # pull request's own push and in the merge queue they run nothing: the mobile job runs the app's unit tests there.
+  # The app's integration tests, at the nightly level only: they take over twenty minutes even split across four
+  # runners, packed by each file's measured seconds (.github/ci/app-test-sequencer.cjs). Each keeps Jest's transform
+  # cache for the next runs on its branch. At the basic and full levels the jobs run nothing and still report success,
+  # since the Iteration Main's ruleset requires them by name; the mobile job runs the app's unit tests at every level.
   mobile-tests:
     name: mobile-tests (${{ matrix.shard }}/${{ strategy.job-total }})
     runs-on: ubuntu-latest
@@ -124,7 +136,7 @@ jobs:
           path: ${{ runner.temp }}/jest
           key: mobile-jest-${{ matrix.shard }}-${{ hashFiles('mobile/pnpm-lock.yaml') }}
       - run: >-
-          pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }} --cacheDirectory=${{ runner.temp }}/jest
+          pnpm test:integration --shard=${{ matrix.shard }}/${{ strategy.job-total }} --cacheDirectory=${{ runner.temp }}/jest
           --testSequencer=${{ github.workspace }}/.github/ci/app-test-sequencer.cjs
         if: steps.changes.outputs.run != 'false' && steps.changes.outputs.tests != 'unit'
 

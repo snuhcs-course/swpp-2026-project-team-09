@@ -33,10 +33,10 @@ site is not deployed: run it on a laptop with `MAIN_SERVER_URL=http://swpp26t09.
 systemd never starts it while a run is going. The service runs `infra/deploy/deploy.sh` from the checkout, as root:
 
 1. Fetches `development`. When its tip is the deployed commit, the result is `up-to-date` and the run stops.
-2. Reads the tip's check suites and check runs from GitHub's public API, without a token, and keeps the runs that
-   always do every job: those of pushes to an iteration branch (`<line>/Main`), `development` or `main`. A working
-   branch's run and the merge queue's may skip work their changes cannot reach and run only the unit tests ([Running
-   the tests](../../README.md#running-the-tests) has the four kinds of run), so neither is read. The CI checks `main-server`, `socket-server`, `worker-server` and `flow-tests` must have
+2. Reads the tip's check suites and check runs from GitHub's public API, without a token, and keeps the runs at the
+   full level: those of pushes to an iteration branch (`<line>/Main`), `development` or `main`. A working branch's run
+   and the merge queue's may skip work their changes cannot reach and run only the unit tests ([Running the
+   tests](../../README.md#running-the-tests) has the kinds of run), so neither is read. The CI checks `main-server`, `socket-server`, `worker-server` and `flow-tests` must have
    succeeded; `admin`, `mobile` and `deploy-scripts` are not consulted. One success of each among those runs is
    enough. Otherwise a check missing, still running, cancelled (as a newer push cancels it), stale or waiting for an
    action gives `waiting-for-ci`, asked again next run; one failed, timed out, neutral or skipped gives `ci-failed`,
