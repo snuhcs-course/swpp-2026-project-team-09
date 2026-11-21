@@ -4,6 +4,7 @@
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -14,6 +15,7 @@ import { cardsOf, type Names, namesOf } from '../normalise.ts';
 import { isRecord } from '../readers.ts';
 import { passedAsModelAnswered, type RunScore } from '../run-score.ts';
 import { type CaseScore, type ScoredTurn } from '../score.ts';
+import { inPlaceOfRevised } from './revised.ts';
 
 // The P05 suite's numbers (metrics document, 2 C and D): what a saved run scored, read by the tags and thresholds of
 // suite.yaml, with each threshold's pass or fail. It reads only the scorer's output, so a stored run is scored again
@@ -37,6 +39,8 @@ export const suiteSchema = z.looseObject({
   world: z.literal('p5'),
   tags: z.record(z.string(), z.array(tagSchema)),
   j10StatesDay: z.array(z.string()).default([]),
+  // Cases whose expected words a later change revised, each with the case that holds the revision.
+  revised: z.array(z.strictObject({ case: z.string(), heldBy: z.string() })).optional(),
   thresholds: z.array(thresholdSchema),
   // The large world's own, read by a run of that world (ticket 02b).
   largeWorld: z
@@ -295,19 +299,20 @@ function searchMeasures(
 
 export function p5Report(score: RunScore, suite: Suite = p5Suite()): P5Report {
   const names = namesOf(score.saved.seeds);
+  const { every, idOf } = inPlaceOfRevised(score, suite);
   const reading: Reading = {
     names,
     statedDays: new Set(suite.j10StatesDay),
-    joins: score.cases.filter(({ run }) => run.category === 'join-or-recruit'),
+    joins: every.filter(({ run }) => run.category === 'join-or-recruit'),
     runsTagged: (tag) => {
-      const ids = new Set((suite.tags[tag] ?? []).map((written) => caseOfTag(written)));
-      return score.cases.filter(({ run }) => ids.has(run.id));
+      const ids = new Set((suite.tags[tag] ?? []).map((written) => idOf(caseOfTag(written))));
+      return every.filter(({ run }) => ids.has(run.id));
     },
   };
   const subsets = CARD_SUBSETS.map((subset) => subsetScore(subset, reading.runsTagged(subset), names));
   // A revised threshold stays in the file, and its revision is what a run is judged by.
   const revised = new Set(suite.thresholds.flatMap(({ revises }) => (revises === undefined ? [] : [revises])));
-  const measures = { ...joinMeasures(reading), ...searchMeasures(subsets, reading, score.cases) };
+  const measures = { ...joinMeasures(reading), ...searchMeasures(subsets, reading, every) };
   const metrics = Object.entries(measures).map(([metric, measure]): MetricScore => {
     const measured = measure();
     const verdicts = suite.thresholds

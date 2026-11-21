@@ -5,6 +5,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
@@ -69,10 +70,17 @@ const HANGUL_FIRST = 0xac_00;
 const HANGUL_SYLLABLES = 11_172;
 const FINALS = 28;
 
+// The digits read with a final consonant: 영, 일, 삼, 육, 칠, 팔 (자연과학관6 is read 자연과학관육).
+const DIGITS_WITH_FINAL = new Set(['0', '1', '3', '6', '7', '8']);
+
 // Whether the last syllable of a word has a final consonant, which picks 은 over 는, 과 over 와, 이 over 가, and 이에요
-// over 예요.
-function hasFinal(word: string): boolean {
-  const syllable = (word.at(-1)?.codePointAt(0) ?? 0) - HANGUL_FIRST;
+// over 예요. A word that ends in a digit is read as the digit sounds.
+export function hasFinal(word: string): boolean {
+  const last = word.at(-1) ?? '';
+  if (/\d/u.test(last)) {
+    return DIGITS_WITH_FINAL.has(last);
+  }
+  const syllable = (last.codePointAt(0) ?? 0) - HANGUL_FIRST;
   return syllable >= 0 && syllable < HANGUL_SYLLABLES && syllable % FINALS !== 0;
 }
 

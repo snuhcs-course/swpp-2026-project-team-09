@@ -23,7 +23,7 @@ import { RecruitingService } from '../../quests/recruiting.service.js';
 import { ShuttleService } from '../../shuttle/shuttle.service.js';
 import { CAMPUS_TERMS_RULES } from '../campus-terms.js';
 import { EVENT_RULES, planEvents } from '../events/event-tools.js';
-import { type Feature, type Tool } from '../feature.js';
+import { type Feature, type Tool, type ToolContext } from '../feature.js';
 import { FREE_TIME_EVENT_RULES, FREE_TIME_RULES } from '../free-time/free-time-rules.js';
 import { type FreeTimeServices } from '../free-time/free-time-services.js';
 import { freeTimeTools } from '../free-time/free-time-tools.js';
@@ -47,6 +47,9 @@ import { findTutorialOrder, TUTORIAL_ORDER_RULES } from '../lookup/tutorial-orde
 import { findWay, WAY_RULES } from '../lookup/way-tools.js';
 import { DELIMITER } from '../others-text.js';
 import { withRefusals } from '../refusals/refusal-tools.js';
+import { bookingSteps, pointOf, presentSteps, STEPS_RULES } from '../steps/plan-steps.js';
+import { type PlacePoint, type ReplyStep } from '../dto/answer.dto.js';
+import { KWANJEONG_PLACE_NUMBER } from '../library/catalogue.js';
 import { getMenus } from '../tools/get-menus.js';
 import { getShuttle } from '../tools/get-shuttle.js';
 import { proposeQuest } from '../tools/propose-quest.js';
@@ -96,7 +99,10 @@ export interface ChatAssistantOptions {
 // The system prompt's part that is the same for every request, whoever asks and whenever, which the Anthropic path
 // caches (adapter.ts): the rules and the campus short names.
 function instructionsOf(freeTimeRules: readonly string[], libraryRules: string, drawsAnswers: boolean): string {
-  return [chatRules(drawsAnswers), ...freeTimeRules, libraryRules, TUTORIAL_RULES, CAMPUS_TERMS_RULES].join('\n\n');
+  const steps = drawsAnswers ? [STEPS_RULES] : [];
+  return [chatRules(drawsAnswers), ...freeTimeRules, libraryRules, ...steps, TUTORIAL_RULES, CAMPUS_TERMS_RULES].join(
+    '\n\n',
+  );
 }
 
 // The system prompt's lines of a request made at `now`, sent after the rest: the time in Korea, which the rules' "now"
@@ -119,7 +125,7 @@ function chatRules(drawsAnswers: boolean): string {
   return `You are SNU Now AI, the assistant in SNU Now, an app for campus life at Seoul National University.
 
 - Answer in the language of the User's last message. In Korean, use 해요체.
-- Answer facts about campus, such as menus, the shuttle and events, only from the results your tools returned in this message. Never answer them from memory, and never guess or invent one. When a tool returns result "none", say plainly that there is none and why.
+- Answer facts about campus, such as menus, the shuttle and events, only from the results your tools returned in this message. Never answer them from memory, and never guess or invent one. When a tool returns result "none", say plainly that there is none and why, except for the search before a 파티 is proposed (below).
 - Say when the data was collected, from its collectedAt.
 - After an answer about menus, call showOnMap with dining; after an answer about where the shuttle is, call showOnMap with shuttle. It adds a button that shows that layer on the map, so do not describe the map in words.
 - To find campus events (Global Events), call searchGlobalEvents with the period the User meant, read against now (이번 주 is from today to Sunday; with no period given, the next 7 days), and words of the kind of event they asked for. From its candidates pick those that fit what the User meant, and show them with showGlobalEvents. Keep the text to a sentence: the cards show the details.
@@ -130,7 +136,7 @@ function chatRules(drawsAnswers: boolean): string {
 - A question that names neither 행사 nor 파티, such as "오페라 있어?", searches both with searchGlobalEvents and searchRecruitingQuests, since the User may mean a 파티 with no Global Event.
 - A question about an event's 파티, such as "그 전시 같이 갈 사람 있어?", searches the 파티 going to that event, and also, with the event's span as the window and words of its activity, 파티 with no Global Event for the same activity.
 - When the User asks for 파티 with no condition, such as "파티 찾기", call searchRecruitingQuests with no condition, show the few (at most 3) that meet soonest with showQuests, and add one line inviting the User to narrow down, such as "운동, 식사처럼 원하는 걸 말해 주시면 좁혀 드릴게요".
-- When the User asks to make or recruit a 파티 (모집해 줘, 만들어 줘), first look for one they could join, by these rules, before you propose. Skip the search and go straight to proposeQuest only when the User has said in this conversation, this message included, to make a new one, such as "찾지 말고 바로 열어 줘" or "이거 말고 새 파티로 열어 줘".
+- When the User asks to make or recruit a 파티 (모집해 줘, 만들어 줘), first look for one they could join, by these rules, before you propose. Skip the search and go straight to proposeQuest only when the User has said in this conversation, this message included, to make a new one, such as "찾지 말고 바로 열어 줘" or "이거 말고 새 파티로 열어 줘", or when the 파티 would be closed: 비공개, or only for Friends the User names, such as "민수랑 만나는 파티".
   - Compare only what the User stated. With an activity and no day, search the next 7 days from today with words of the activity. With a day and no activity, search that day for every activity, with no words and no Board. With neither an activity nor a day, ask for them, without searching or proposing.
   - A named time is a window from 30 minutes before it to 30 minutes after it, in after and before. 아침 is 07:00–11:00, 점심 11:00–16:00 and 저녁 17:00–22:00.
   - With a named Place, resolve it with resolvePlace, give its placeId and leave radius out, so that it means 300 m or less.
@@ -138,10 +144,10 @@ function chatRules(drawsAnswers: boolean): string {
   - When the request names a Global Event, resolve it with resolveGlobalEvent, or take its id from [Cards shown: …] when the User points at a card shown, and search with its globalEventId, with no time, Place or words: its 파티 are the candidates, whatever their time and place.
   - Offer only Open and Approval 파티, never a 비공개 파티.
   - Words of the same meaning are the same activity, as 플스 and 플레이스테이션 are; words that only look alike are not, as 플스 and 플랭크 are not. A 파티 for another activity does not fit, even at the same time.
-  - When some fit, show them with showQuests, the highest holderCount first, and ask in a sentence whether the User wants to join one. The User joins from the card. Never join for the User, and never say that they joined or asked to join.
-  - When none fits, call proposeQuest as below, with a line saying that none was found, also when you ask for the fields it refused.
+  - When some fit, show them with showQuests, the highest holderCount first, and ask in a sentence whether the User wants to join one or make a new one. The User joins from the card. Never join for the User, and never say that they joined or asked to join.
+  - When none fits, call proposeQuest as below and say nothing of the search: never that you looked, nor that none was found. Speak only of the proposed 파티, in a sentence or two, also when you ask for the fields it refused.
 - To propose a 파티, call proposeQuest with its title, a short description (write one from the request when they gave none), open unless they want to approve each member, the Board, how many people in total, the User included, and when it starts, read against now. When only 아침, 점심 or 저녁 is given for the time, it starts at 08:00, 12:00 or 18:00. When proposeQuest refuses fields, ask the User for those, all in one question, except a Board the activity plainly gives. When it proposes, the User sees a card with every field and 만들기: say in a sentence that nothing is made until they press 만들기, and do not repeat the fields.
-- A 파티 that is 비공개, or only for Friends the User names, is closed: no Board and at least one Friend to invite. Count the invited Friends and the User in its people.
+- A 파티 that is 비공개, or only for Friends the User names, is closed: no Board and at least one Friend to invite. Count the invited Friends and the User in its people. Give a closed 파티 no description unless the User wrote one: its card already shows who, where and when.
 - Before proposeQuest, resolve each Friend to invite with resolveFriend, the place with resolvePlace and a related event with resolveGlobalEvent, passing the User's words as written. Never pick for the User: when a resolver answers 'several', ask which one, listing the names, and for Friends ${WHICH_FRIEND}; when it answers 'none', say that nothing matches those words. Give proposeQuest only the ids they returned in this message or those in [Proposal shown: …]. With a related event and no time given, leave startsAt out: the 파티 starts with the event.
 - Name a Friend by full name, and never write a Friend's department, except in the question of which one when resolveFriend answers several.
 - To change a Proposal you showed before ("시간만 1시로"), call proposeQuest again with the values of [Proposal shown: …] and only that change, its ids included.
@@ -155,14 +161,19 @@ function chatRules(drawsAnswers: boolean): string {
 // What an app that draws answers plans on the map in place of the Restaurant cards and their rules: a meal, the events
 // of a day and recruiting Quests when it draws those too, and a meet when it draws one.
 function plannedOnMap(
-  plans: PlanAnswersService,
+  { plans, freeTime }: ChatAssistantServices,
   cards: Record<string, Tool>,
   options: ChatAssistantOptions | undefined,
 ): { rules: string[]; tools: Record<string, Tool> } {
   if (options?.drawsAnswers !== true) {
     return { rules: [FREE_TIME_RULES], tools: cards };
   }
-  const planned = mealsAndEvents(plans, options.drawsEvents === true);
+  const kwanjeong = (): PlacePoint | null => {
+    const place = freeTime.places.numbered(KWANJEONG_PLACE_NUMBER);
+    return place === null ? null : pointOf(place);
+  };
+  const earlier = ({ presented }: ToolContext): ReplyStep[] => bookingSteps(presented, kwanjeong());
+  const planned = mealsAndEvents(plans, options.drawsEvents === true, earlier);
   if (options.drawsMeets !== true) {
     return planned;
   }
@@ -172,15 +183,16 @@ function plannedOnMap(
 function mealsAndEvents(
   plans: PlanAnswersService,
   drawsEvents: boolean,
+  earlier: (context: ToolContext) => ReplyStep[],
 ): { rules: string[]; tools: Record<string, Tool> } {
   const { meals, events, quests } = plans;
   if (!drawsEvents) {
-    return { rules: [FREE_TIME_EVENT_RULES, PLAN_RULES], tools: { planMeal: planMeal(meals) } };
+    return { rules: [FREE_TIME_EVENT_RULES, PLAN_RULES], tools: { planMeal: planMeal(meals, earlier) } };
   }
   return {
     rules: [FREE_TIME_EVENT_RULES, PLAN_RULES, EVENT_RULES, RECRUITING_RULES],
     tools: {
-      planMeal: planMeal(meals),
+      planMeal: planMeal(meals, earlier),
       planEvents: planEvents(events),
       planQuests: planQuests(quests),
       planNewQuest: planNewQuest(plans),
@@ -223,14 +235,24 @@ function withInterests(
   return { rules: [...planned.rules, INTEREST_RULES], tools: { ...planned.tools, ...interestTools(interests) } };
 }
 
+// The steps of a message that asked for several things, a meal planned again from the step before it (P03).
+function stepsAfterRun({ freeTime, plans }: ChatAssistantServices): (context: ToolContext) => Promise<void> {
+  return (context) =>
+    presentSteps(context, {
+      kwanjeong: () => freeTime.places.numbered(KWANJEONG_PLACE_NUMBER),
+      replanMeal: (input, { userId, now, context: { location, locationMissing } }) =>
+        plans.meals.plan(userId, input, { now, location, locationMissing }),
+    });
+}
+
 // The chat Assistant of the main screen's input bar (P07): its system prompt and its tools.
 export function chatAssistant(services: ChatAssistantServices, options?: ChatAssistantOptions): Feature {
-  const { menus, shuttle, globalEvents, recruiting, friends, places, freeTime, library, tutorial, plans } = services;
+  const { menus, shuttle, globalEvents, recruiting, friends, places, freeTime, library, tutorial } = services;
   const { getMyDay, findFreeTimeEvents, findFreeFriends, findMealRestaurants, showRestaurants } =
     freeTimeTools(freeTime);
   const drawsAnswers = options?.drawsAnswers ?? false;
   const onMap = withRefusals(
-    withLookups(plannedOnMap(plans, { findMealRestaurants, showRestaurants }, options), services, drawsAnswers),
+    withLookups(plannedOnMap(services, { findMealRestaurants, showRestaurants }, options), services, drawsAnswers),
     freeTime,
     drawsAnswers,
   );
@@ -243,6 +265,7 @@ export function chatAssistant(services: ChatAssistantServices, options?: ChatAss
     instructions: instructionsOf(planned.rules, drawsAnswers ? LIBRARY_ANSWER_RULES : LIBRARY_RULES, drawsAnswers),
     requestInstructions: requestInstructionsOf,
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
+    ...(drawsAnswers ? { afterRun: stepsAfterRun(services) } : {}),
     tools: {
       getMenus: getMenus(menus),
       getShuttle: getShuttle(shuttle),

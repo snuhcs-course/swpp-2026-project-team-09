@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Lookup } from '../src/assistant/dto/answer.dto.js';
@@ -177,7 +178,7 @@ describe('A room the User may use in the building they are in', () => {
   it('is picked over 44-1동, with no way to walk and no route guidance', () => {
     const lookup = lookupOf(asked({ buildings: computing }));
 
-    expect(lookup.lines[0]).toEqual([plain('보는 범위에선 '), strong('제1공학관')]);
+    expect(lookup.lines[0]).toEqual([plain('보는 범위에선 '), strong('제1공학관'), plain(' 외 1곳')]);
     expect(lookup.scene.places[0]).toEqual({
       place: point('제1공학관', '제1공학관(301동)'),
       role: 'pick',
@@ -186,6 +187,17 @@ describe('A room the User may use in the building they are in', () => {
     expect(lookup.scene.routes).toEqual([]);
     expect(lookup.scene.flags[0]).toEqual({ at: position('제1공학관'), text: '12:45까지 35분', role: 'place' });
     expect(lookup.actions).toEqual([{ kind: 'ask', label: '관정 보기', text: '관정 지금 자리 있어?' }]);
+  });
+
+  // The usage test of 2026-11-21 found a reading room on the screen left out of the answer: every other building with a
+  // space the User may use is drawn and named after the pick.
+  it('names and draws 44-1동, the other building in view the User may use, after the pick', () => {
+    const answer = asked({ buildings: computing });
+
+    expect(lookupOf(answer).scene.places[1]).toMatchObject({ place: SINYANG(), role: 'candidate' });
+    expect(answer.result === 'found' ? answer.words.others.map(({ building }) => building) : []).toEqual([
+      '공대 신양학술정보관',
+    ]);
   });
 });
 

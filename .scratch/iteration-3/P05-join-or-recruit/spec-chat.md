@@ -12,7 +12,7 @@ When a User asks for "11/2 17:00 이후" events or Quests, the search tools take
 
 ## Solution
 
-When a User asks the Assistant to recruit for something, it first looks for a recruiting Quest the User could join: the same activity, on the same day, at a close time, at the same or a nearby Place if the User named one, with room left. If it finds some, it shows them as cards and asks whether the User wants to join one; the User joins from the card as on the Boards. If it finds none, or the User says to make a new one anyway, it makes a Proposal as it does today, saying that none was found.
+When a User asks the Assistant to recruit for something, it first looks for a recruiting Quest the User could join: the same activity, on the same day, at a close time, at the same or a nearby Place if the User named one, with room left. If it finds some, it shows them as cards and asks whether the User wants to join one; the User joins from the card as on the Boards. If it finds none, or the User says to make a new one anyway, it makes a Proposal as it does today, saying that none was found. (Revised by [Iteration 5's P02](../../iteration-5/P02-party-reply-wording/spec.md): the reply speaks only of the Proposal and never says that it looked or that none was found, and a request for a closed 파티, 비공개 or only for Friends the User names, is proposed with no search first.)
 
 The search tools take a time window. The server keeps only what overlaps it, drops Full Quests and Quests that already started, and drops what the User cannot enter, before the list is cut. Search words rank the results instead of filtering them, so the model sees close matches too and picks from more candidates.
 
@@ -26,7 +26,7 @@ Words: a **Full** Quest has as many Holders as its capacity. A Quest's start is 
 2. As a User, I want the Quests it found to be shown as the Boards' cards with a question whether I want to join, so that I decide.
 3. As a User, I want to join from the card, as on the Boards, so that nothing happens until I press it.
 4. As a User, I want an Approval Quest's card to send a request to join, so that its Leader still decides.
-5. As a User, I want a Proposal for a new Quest when none fits, with a line saying none was found, so that I know it looked.
+5. As a User, I want a Proposal for a new Quest when none fits, with a line saying none was found, so that I know it looked. (Revised by [Iteration 5's P02](../../iteration-5/P02-party-reply-wording/spec.md): the Proposal comes with no line about the search.)
 6. As a User, I want to say "그래도 새로 만들어 줘" and get a Proposal, so that I am never forced into an existing Quest.
 7. As a User, I want only Quests for the same activity, so that "공연 보러 갈 사람" never shows a dinner Quest at the same time.
 8. As a User, I want words of the same meaning to count as the same activity ("민턴" and "배드민턴") and words that only look alike not to ("배민" and "배드민턴"), so that matching follows meaning.
@@ -96,12 +96,12 @@ Words: a **Full** Quest has as many Holders as its capacity. A Quest's start is 
   - (iv) Only Open and Approval Quests.
   - (v) Quests for an event of which the reader holds a Shared Quest, and Quests the reader already asked to join, are dropped by the server; telling the User they already go is not part of this spec.
   - (vi) When several fit, the Assistant shows them with the most Holders first. This is the order of the cards it shows, not the server's order.
-  - (vii) With neither an activity nor a day, ask. With no match, say so and propose.
+  - (vii) With neither an activity nor a day, ask. With no match, say so and propose. (Revised by [Iteration 5's P02](../../iteration-5/P02-party-reply-wording/spec.md): with no match, propose without saying so.)
   - (viii) Same meaning matches, look-alike words do not.
 - A number of people the User names is the capacity with the User: "4명" asks for capacity four.
 - When the request names a Global Event, the candidates are that event's Quests, with no time or Place comparison.
 - The Assistant never joins a Quest itself. It shows cards with the existing card buttons and asks.
-- Making a new Quest is the existing Proposal, unchanged, with a line that none was found.
+- Making a new Quest is the existing Proposal, unchanged, with a line that none was found. (Revised by [Iteration 5's P02](../../iteration-5/P02-party-reply-wording/spec.md): the line is dropped.)
 
 ### The P05 eval suite
 

@@ -134,7 +134,8 @@ export function eventTimes({ start, end }: { start: Date; end: Date | null }): s
   return end === null ? `${clockOf(start)} 시작` : `${clockOf(start)}–${clockOf(end)}`;
 }
 
-// The flag of an event under way gives its own times, not the asker's arrival, which would read as its start.
+// The flag of an event under way gives its own times, not the asker's arrival, which would read as its start. The
+// flag carries no day: the app writes the day beside the place's flag itself (P04 ticket 02), and the lines carry it.
 function flagText({ event, start }: EventPlan): string {
   const times = event.start < start ? eventTimes(event) : clockOf(start);
   return `${times} ${event.title}`;

@@ -1,0 +1,262 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-21  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# Revised copies of ten cases of join-or-recruit.yaml (evaluation C), added in Iteration 5 by P02
+# (.scratch/iteration-5/P02-party-reply-wording/spec.md). Testers found the line saying that the search found none
+# awkward, so a Proposal made after such a search now speaks only of itself (rules.md, section 4, revision). Each case
+# here is the frozen case of the same id without "-r5", with the words of "none found" moved from `mentions` to
+# `absent`. The frozen cases are kept as they were, so that earlier runs can be scored again; suite.yaml lists the
+# pairs under `revised`.
+
+- id: join-04-r5
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 저녁 7시에 같이 농구할 사람 나 포함 6명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 6
+      startsAt: '2026-11-03 19:00'
+      place: null
+      globalEvent: null
+    text:
+      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+
+- id: join-06-r5
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 내일 저녁 7시에 볼링 칠 사람 나 포함 4명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 4
+      startsAt: '2026-11-03 19:00'
+      place: null
+      globalEvent: null
+    text:
+      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+
+- id: join-07-r5
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 수요일 저녁 8시에 민턴 칠 사람 나 포함 4명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 4
+      startsAt: '2026-11-04 20:00'
+      place: null
+      globalEvent: null
+    text:
+      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+
+- id: join-08-r5
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 가을 음악제 같이 갈 사람 나 포함 4명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: show
+      capacity: 4
+      startsAt: '2026-11-06 18:00'
+      place: null
+      globalEvent: 가을 음악제
+    text:
+      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+
+- id: join-09-r5
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 수요일 저녁 7시에 토익 스터디 할 사람 나 포함 4명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: career
+      capacity: 4
+      startsAt: '2026-11-04 19:00'
+      place: null
+      globalEvent: null
+    text:
+      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+
+- id: join-10-r5
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 오늘 오후 2시 10분에 보드게임 할 사람 나 포함 5명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 5
+      startsAt: '2026-11-02 14:10'
+      place: null
+      globalEvent: null
+    text:
+      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+
+- id: join-29-r5
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 토요일 오후 3시에 체스 둘 사람 나 포함 2명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 2
+      startsAt: '2026-11-07 15:00'
+      place: null
+      globalEvent: null
+    text:
+      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+
+- id: join-30-r5
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 일요일 오전 10시에 요가할 사람 나 포함 5명 모집해 줘. 신청 오면 내가 승인할게
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: approval
+      board: hobby
+      capacity: 5
+      startsAt: '2026-11-08 10:00'
+      place: null
+      globalEvent: null
+    text:
+      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+
+- id: join-33-r5
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 저녁 7시에 민턴 칠 사람 나 포함 4명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: hobby
+      capacity: 4
+      startsAt: '2026-11-05 19:00'
+      place: null
+      globalEvent: null
+    text:
+      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]
+
+- id: join-36-r5
+  category: join-or-recruit
+  world: p5
+  repeat: 3
+  turns:
+    - user: 목요일 오후 4시에 자바 스터디 할 사람 나 포함 4명 모집해 줘
+  expect:
+    actions: [PROPOSE]
+    tools:
+      required: [searchRecruitingQuests, proposeQuest]
+      allowed: [searchGlobalEvents, resolveGlobalEvent, resolvePlace]
+      forbidden: [showQuests, showGlobalEvents]
+    cards:
+      - { kind: quest, seeds: [], max: 0 }
+      - { kind: globalEvent, seeds: [], max: 0 }
+    proposal:
+      joinPolicy: open
+      board: career
+      capacity: 4
+      startsAt: '2026-11-05 16:00'
+      place: null
+      globalEvent: null
+    text:
+      absent: [찾지 못, 못 찾, 찾았지만, 찾아봤, 찾아보니, 없었, 없어서, 없네]

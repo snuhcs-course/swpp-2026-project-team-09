@@ -5,6 +5,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type AnswerReply, type ConditionChip, type Plan } from '../dto/answer.dto.js';
@@ -25,7 +26,7 @@ import {
 } from './answer-words.js';
 import { type GatheringFit, type GatheringSide, type PersonPart } from './gathering.js';
 import { menuBasis, withMenu } from './meal-menu.js';
-import { bandOf, sceneOf } from './meal-scene.js';
+import { bandOf, mealSpan, sceneOf } from './meal-scene.js';
 import { missingParts, nearestFirst } from './missing-inputs.js';
 import { conditionsOf, type PersonConditions, windowOf } from './plan-conditions.js';
 import { droppedOf, partOf, unfitLines } from './plan-parts.js';
@@ -208,14 +209,10 @@ function linesOf(fit: GatheringFit, naming: Naming): AnswerLine[] {
   const meal = { text: `${mealWord(naming)} `, strong: false };
   if (people.length > 1) {
     const fewer = aloneMinutes === null ? 0 : aloneMinutes - togetherMinutes;
-    const second = missed ?? (fewer > 0 ? `같이 먹으면 식사가 ${fewer}분 줄어요` : `식사 ${togetherMinutes}분`);
+    const second = missed ?? (fewer > 0 ? `같이 먹으면 식사가 ${fewer}분 줄어요` : mealSpan(fit));
     return [[meal, { text: `${clockOf(start)} ${key}`, strong: true }], plain(second)];
   }
-  const first: AnswerLine = [
-    meal,
-    { text: key, strong: true },
-    { text: ` · 식사 ${togetherMinutes}분`, strong: false },
-  ];
+  const first: AnswerLine = [meal, { text: key, strong: true }, { text: ` · ${mealSpan(fit)}`, strong: false }];
   const second = missed ?? aloneLine(parts[0]);
   return second === null ? [first] : [first, plain(second)];
 }

@@ -16,15 +16,22 @@ A plan's `togetherMinutes` is the whole stretch from the start to the first end:
 
 ## What to build
 
-- A meal line says the hours and what ends it, as clock times: "11:30–13:30 · 13:53엔 16동으로 나서요" when a next item ends it first, and the hours alone when the closing does.
-- A meet line says until when both are free only when someone's next item ends it ("민수 15:00 수업 전까지"); when the end is the day's limit it says that neither has anything after.
-- Minutes stay where they are a length a person acts on: walks, and the time left together when an item ends it and it is under two hours.
+- Minutes are said only up to two hours, a stay a person can act on. The designed lines for short stays stay as they are ("식사 22분", "12:45까지 55분 먹을 수 있어요", "12:43까지 함께 28분이에요").
+- A longer meal stretch is said by its end: "13:53엔 나서요" when someone's next item ends it, "14:30에 닫아요" when the Restaurant's own hours do, "14:30까지" when only the meal's general window does. The band shows the times alone.
+- A longer menu stretch is said as "11:00부터 · 13:53엔 나서요", or as the times alone when nothing follows.
+- A longer meet says "15:20까지 함께할 수 있어요" when someone's next item ends it, and "그 뒤로는 일정이 없어요" when only the day's 22:00 limit does.
 
 ## Acceptance criteria
 
-- [ ] No meal, menu or meet line holds "식사 N분" or "N분 먹을 수 있어요". (Unit tests, fail before the fix.)
-- [ ] A meet that runs to 22:00 says nothing of 780 minutes. (Unit test, fails before the fix.)
-- [ ] A meal ended by a Class says the leave-by time and the Class's building. (Unit test.)
-- [ ] Lint, format and types of the main server pass.
+- [x] A meal stretch over two hours has no "식사 N분" in its lines or band. (Unit test, fails before the fix.)
+- [x] A menu stretch of 160 minutes is said by its times, not "160분 먹을 수 있어요". (Unit test, fails before the fix.)
+- [x] A meet that runs to 22:00 says that nothing follows, with no minutes. (Unit test, fails before the fix.)
+- [x] Stays of two hours or less keep their minutes. (The existing unit and integration tests, unchanged.)
+- [x] Lint, format and types of the main server pass.
 
 ## Comments
+
+### Agent usage (2026-11-21)
+
+- Agent time: about 6 minutes (an estimate from the transcript, gaps over five minutes left out).
+- Tokens: output 22k; input 11.1M, of which 11.1M cache reads, 41k cache writes and 58 uncached. No subagents.

@@ -4,6 +4,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -256,11 +257,13 @@ export function findMealRestaurants({ days, friends, menus, restaurantPlaces, tr
       const invitees = chosen.map(({ id, name }) => ({ id, name }));
       // A second call of a run answers for the first: showRestaurants takes what this one judged.
       restaurants.clear();
-      for (const restaurant of fitting) {
+      const hours = await Promise.all(fitting.map(({ key }) => menus.hoursOf(key, meal, date)));
+      fitting.forEach((restaurant, index) => {
         found.add('restaurant', [restaurant.key]);
         found.add('place', [restaurant.place.id]);
-        restaurants.set(restaurant.key, restaurantCard(restaurant, { date, meal, invitees }));
-      }
+        const kept = hours[index] ?? null;
+        restaurants.set(restaurant.key, restaurantCard(restaurant, { date, meal, invitees, hours: kept }));
+      });
       return {
         result: 'found',
         collectedAt: oldestCollection(collected),

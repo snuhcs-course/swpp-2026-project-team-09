@@ -92,11 +92,37 @@ Each ticket removes one cause. The tickets are in order of harm:
 
 ## Further Notes
 
+Every error of the usage test's list of answer errors, and where it went:
+
+| Error | Where |
+|---|---|
+| 301동식당 11:00–14:30 in one answer, 11:30~13:30 in the next | Ticket 01 |
+| "07:00~13:00 예약" beside "10:54엔 나서요"; "04:40에 도착해요"; "08:13" for a booking from 08:30 | Ticket 02 (words; the length stays, see below) |
+| "근거가 없어요" about sentences never shown; "지금 화면의 일정은 …" about a plan no longer drawn | Ticket 03 |
+| "18:00 전에는 열지 않아" on a Saturday; five places "지금" at 03:19; a basis of only the places left out; "오늘 남은 일정이 없어요" | Ticket 04 |
+| "07:29 가을 정기 음악회", an arrival read as the start; no name, place or time in the first line | Ticket 05 |
+| "식사 210분", "13:53까지 173분 먹을 수 있어요", "22:00까지 함께 780분이에요" | Ticket 06 |
+| Times without a date; "내일은 18:00까지 수업이 없어서" for a Sunday | Ticket 07 |
+| "예약하기를 눌러야" beside a 로그인 button; "관정관" and "관정도서관" | Ticket 08 |
+| A reading room in view left out; "인문대라는 이름의 건물은 지도에서 찾을 수 없어요" | Ticket 09 |
+| "지금 계획과 같아요" for another restaurant | Ticket 10 |
+| The shuttle question answered with the walk again; a Monday Class reached from where the phone was; "자연과학관6(24동)는" | Ticket 11 |
+| A menu answer with no prices; "메뉴는 … 수집된 정보예요" unasked | Ticket 12 |
+| "민수랑 학생회관에서 만나기 · 학생회관"; a description repeating the card; "19:00–19:30 · 30분"; "내 파티에 처음 들어왔어요" | Ticket 13 |
+| A first sentence that sounds like a failure ("…파티는 찾지 못했어요", "…열려 있는 게 없어서") | P02 ticket 01 (pull request 384) |
+| A part of the request dropped without a word (관정, 16시 and the booking) | P03 tickets 01 and 02 (pull requests 385 and 386) |
+
 Left on purpose, with the reason:
 
-- "06:00 63동 일정 끝" and three identical "63동에서 체육관까지 걸어서 14분" lines: the demo Quest's step at 63동 three hours after seeding, and every demo Friend starting there. An artefact of the test setting.
-- "오늘 부대짬뽕" on a Saturday: demo menus are the same every day.
-- Origins that change between answers ("62-1동", "20동", "1동"): the test's moving fake location.
-- Breakfast at night and a confirmation before invitations: decisions for the product owner.
+- **Decisions for the product owner.**
+  - Breakfast. "배고파" at 04:00 plans lunch because the meal planner leaves breakfast out by design, although the menus hold 천원의아침밥 and 학생회관식당's breakfast.
+  - A confirmation before [이대로 초대]. Sending every invitation at one press is what Iteration 4's P03 spec asked for; one tester was uneasy, another liked the confirmation table of the chat's 파티 card.
+  - The length of a filled seat. The design fills the longest time from the arrival and says the leave-by time; ending the booking at the leave-by time instead would change it (ticket 02).
+- **Not errors.**
+  - "같이 먹으면 식사가 28분 줄어요" that stayed after a Friend was removed: the design compares with the User's best plan alone, and the Friend who stayed was the one who limited the plan (ticket 10).
+  - The zone's three names (room chip, list cell, catalogue name) are the seat card's design (ticket 08).
+- **The answer screen, which P04 rebuilds.** The card hides the model's text whenever an answer is drawn; the tutorial card does not list the order's steps; every invited card repeats "답이 없어도 … 가면 돼요".
+- **Artefacts of the test setting.** "06:00 63동 일정 끝" and three identical "63동에서 체육관까지 걸어서 14분" lines (the demo Quest's step at 63동 three hours after seeding, and every demo Friend starting there); "오늘 부대짬뽕" on a Saturday (demo menus are the same every day); origins that change between answers (the moving fake location); "학과" for "학관" (the input tool's typo).
+- **Taps on the map.** "500동 / 그곳에는 여는 식당이 없어요" after a restaurant label pressed the building under it.
 
 ## Comments

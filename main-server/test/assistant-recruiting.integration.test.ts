@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -137,6 +138,7 @@ describe('What the model is given', () => {
         {
           title: '<data label="quest.title">채용박람회 같이 가요</data>',
           place: '<data label="quest.place">문화관</data>',
+          date: '2089-03-18',
           start: '14:20',
           setOut: '14:16',
           stayMinutes: 52,
