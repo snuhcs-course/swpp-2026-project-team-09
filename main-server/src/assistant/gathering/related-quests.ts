@@ -7,8 +7,8 @@
 import { type KeptKind, type KeptQuest } from '../../quests/kept-quests.js';
 
 // The asker's Quests of the day a plan is for that the plan touches, named in its answer whether or not they limit it
-// (P05 ticket 17): those of the kind asked for, and those with a Friend asked for. The one the plan sets aside is its
-// `planSet`, not related.
+// (P05 ticket 17): those of the kind asked for, and those with a Friend asked for who has not declined them. The one the
+// plan sets aside is its `planSet`, not related.
 
 // The most related Quests an answer names.
 export const RELATED_MAX = 3;
@@ -27,7 +27,8 @@ export function relatedOf(
     .filter(
       (quest) =>
         quest.questId !== setAside &&
-        (kinds.includes(quest.kind) || quest.people.some(({ userId }) => asked.has(userId))),
+        (kinds.includes(quest.kind) ||
+          quest.people.some(({ userId, answer }) => answer !== 'declined' && asked.has(userId))),
     )
     .toSorted(
       (one, other) =>

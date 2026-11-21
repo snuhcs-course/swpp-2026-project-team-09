@@ -24,7 +24,9 @@ export interface KeptQuest {
   // The first step's Place, else the words the User gave for it; both null for a step without one.
   placeId: string | null;
   placeLabel: string | null;
-  // The others of it, in the order of the Leader, the Holders, the invited, the declined; never the User.
+  // The others of it, in the order of the Leader, the Holders, the invited, the declined; never the User. A User who only
+  // holds an invitation sees the Holders alone, as the invitation card shows them; a Holder sees everyone, as a Quest's
+  // members show them.
   people: { userId: string; name: string; answer: KeptAnswer }[];
   // The User leads it.
   mine: boolean;
@@ -69,7 +71,10 @@ function peopleOf({ leaderId, holders, invitations, declines }: Stored, userId: 
     ...invitations.map(({ userId: id, user }) => ({ userId: id, name: user.name, answer: 'waiting' as const })),
     ...declines.map(({ userId: id, user }) => ({ userId: id, name: user.name, answer: 'declined' as const })),
   ];
-  return answered.filter((person) => person.userId !== userId);
+  const holds = holders.some((holder) => holder.userId === userId);
+  return answered.filter(
+    (person) => person.userId !== userId && (holds || person.answer === 'leads' || person.answer === 'accepted'),
+  );
 }
 
 function keptOf(quest: Stored, userId: string, now: Date): KeptQuest | null {
