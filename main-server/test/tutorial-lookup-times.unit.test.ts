@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type DayItem } from '../src/assistant/free-time/free-time.js';
@@ -90,6 +91,7 @@ describe('A next item without a Place', () => {
     expect(lookupOf(tutorialAt('14:35', BOARD_Q10, placeless())).basis).toEqual([
       '가장 일찍 끝나는 순서예요 · 모두 걸어서 1분',
       '한 곳에 10분씩 잡았어요',
+      `${CLINIC} · 14:36–14:46 학생회관 3층`,
       CLINIC_NOTE,
       `${CARD} · 15:00 수업 전에 시간이 모자라 뺐어요`,
       CARD_NOTE,
@@ -113,14 +115,12 @@ describe('A day with no next item', () => {
   it('orders what ends by 18:00, when the offices close, and leaves out the rest with when it can be done', () => {
     const answer = tutorialAt('17:45', ['lost-and-found', 'thousand-won-meals'], morningOnly());
 
-    expect(lookupOf(answer).lines).toEqual([
-      [plain('한 곳을 돌면 '), strong('17:56'), plain('에 끝나요')],
-      [plain('오늘 남은 일정이 없어요')],
-    ]);
+    expect(lookupOf(answer).lines).toEqual([[plain('한 곳을 돌면 '), strong('17:56'), plain('에 끝나요')]]);
     expect(lookupOf(answer).steps).toEqual([{ at: '17:46', text: '학생회관 · 천원의 식사 이용하기' }]);
     expect(lookupOf(answer).basis).toEqual([
       '가장 일찍 끝나는 순서예요 · 모두 걸어서 1분',
       '한 곳에 10분씩 잡았어요',
+      '천원의 식사 이용하기 · 17:46–17:56 학생회관',
       `${LOST} · 18:00 전에 시간이 모자라 뺐어요`,
       LOST_NOTE,
     ]);
@@ -134,5 +134,30 @@ describe('A day with no next item', () => {
       result: 'none',
       reason: 'no-fit',
     });
+  });
+});
+
+// Saturday 2026-11-21 at 03:19, the usage test's hour, with no item that day: the offices of board q10 keep weekday
+// hours, and a quest whose content gives no hours waits for 09:00.
+const saturdayNight = (): { now: Date; fromPlaceId: string } => ({
+  now: new Date('2026-11-21T03:19:00+09:00'),
+  fromPlaceId: numbered('63').id,
+});
+
+describe('A Saturday at night', () => {
+  it('leaves out an office closed all Saturday as closed today, not as opening after 18:00', () => {
+    const answer = tutorialAt('03:19', ['s-card', 'thousand-won-meals'], [], saturdayNight());
+
+    expect(answer).toMatchObject({
+      words: { leftOut: [{ quest: CARD, reason: 'closed all day today', when: CARD_NOTE }] },
+    });
+    expect(lookupOf(answer).basis).toContain(`${CARD} · 오늘은 열지 않아 뺐어요`);
+  });
+
+  it('starts a quest without hours at 09:00, and says so', () => {
+    const lookup = lookupOf(tutorialAt('03:19', ['thousand-won-meals'], [], saturdayNight()));
+
+    expect(lookup.steps).toEqual([{ at: '09:00', text: '학생회관 · 천원의 식사 이용하기' }]);
+    expect(lookup.lines).toEqual([[strong('09:00'), plain('부터 한 곳을 돌면 '), strong('09:10'), plain('에 끝나요')]]);
   });
 });

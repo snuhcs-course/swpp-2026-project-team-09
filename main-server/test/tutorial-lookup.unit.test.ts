@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Lookup } from '../src/assistant/dto/answer.dto.js';
@@ -64,12 +65,15 @@ describe('Three quests left at 13:50, before the 17:00 Class in 58동 (board q10
     ]);
   });
 
-  it('say first what decides the order, then when each quest can be done', () => {
+  it('say first what decides the order, then each quest ordered with its time and place, and when it can be done', () => {
     expect(boardQ10().basis).toEqual([
       '가장 일찍 끝나는 순서예요 · 58동까지 모두 걸어서 14분',
       '한 곳에 10분씩 잡았어요',
+      `${CLINIC} · 13:51–14:01 학생회관 3층`,
       CLINIC_NOTE,
+      `${LOST} · 14:08–14:18 아시아연구소 1층`,
       LOST_NOTE,
+      `${CARD} · 14:19–14:29 NH농협두레문예관 2층`,
       CARD_NOTE,
     ]);
   });
@@ -141,6 +145,7 @@ describe('The 보건진료소 at 12:05, before a 13:00 Class in 58동', () => {
     expect(lookup.basis).toEqual([
       '가장 일찍 끝나는 순서예요 · 58동까지 모두 걸어서 12분',
       '한 곳에 10분씩 잡았어요',
+      `${LOST} · 12:12–12:22 아시아연구소 1층`,
       LOST_NOTE,
       `${CLINIC} · 13:00 수업 전에는 열지 않아 뺐어요`,
       CLINIC_NOTE,
