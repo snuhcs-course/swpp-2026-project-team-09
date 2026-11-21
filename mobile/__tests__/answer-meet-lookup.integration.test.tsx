@@ -2,18 +2,20 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { screen } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 import { FRIEND_LOOKUP_REPLY } from '@/api/mock/data/friend-lookup';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
-import { askOnMap, card } from './support/answer-map';
+import { askOnMap, card, mapThings } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { AI_INPUT, SEND } from './support/lists';
+import { AI_INPUT, layStage, SEND } from './support/lists';
+import { pressMarker } from './support/made-quest';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import {
   answerFriendsWithMinSu,
@@ -32,7 +34,7 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 // A Friend Lookup's `meet` action (P02 ticket 24), over the fake main server: the stored real Lookup of "민수 어디야?"
 // (`friend-lookup.json`, board q6), which carries `meet` for 민수, draws "만나고 싶다" as its main button beside
 // "닫기" and asks the same meet as 민수's card does; its answer takes the Lookup's place. Words typed while a meet is
-// on screen carry its conditions.
+// on screen carry its conditions. The meet's "민수 ✕" is 빼기 in the card of 민수's face (P04 ticket 03).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -84,16 +86,17 @@ describe("the meet of a Friend's Lookup (q6)", () => {
     expect(recalculations(server)).toEqual([{ input: meetWith(MIN_SU.id), location: ON_CAMPUS }]);
     expect(pill().getByText('김민수 · 만나고 싶다')).toBeVisible();
     expect(pill().getByTestId('answer-pill-user', { includeHiddenElements: true })).toBeOnTheScreen();
-    expect(card().getByText('12:15 302동 앞')).toBeVisible();
+    expect(mapThings()).toContain('302동 앞 · 12:15 만남');
     expect(screen.queryByTestId('lookup-card')).toBeNull();
   });
 
-  it('opens 민수\'s card on the everyday map with "민수 ✕" of that meet', async () => {
-    const user = await askOnMap(server, FRIEND_LOOKUP_REPLY);
+  it('opens 민수\'s card on the everyday map with "민수 빼기" of that meet', async () => {
+    const user = await askOnMap(server, FRIEND_LOOKUP_REPLY, () => layStage(390, 760));
     await user.press(card().getByRole('button', { name: MEET }));
     await pass(500);
 
-    await user.press(card().getByRole('button', { name: '민수 빼기' }));
+    await pressMarker(user, '민수');
+    await user.press(within(screen.getByTestId('mark-card')).getByRole('button', { name: '민수 빼기' }));
     await pass(500);
 
     expect(recalculations(server)).toHaveLength(1);

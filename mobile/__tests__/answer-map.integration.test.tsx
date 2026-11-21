@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -117,12 +118,13 @@ describe('the Plan on screen', () => {
     }
   });
 
-  it('lets the candidates take a press, and not the people, the pick, or the next Class', async () => {
+  it('lets the candidates, the pick, and the people take a press, and not the next Class', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
 
     expect(screen.getByRole('button', { name: '후보 3 · 학생회관식당' })).toBeOnTheScreen();
-    expect(screen.getByRole('image', { name: '302동식당 · 12:15 점심' })).toBeOnTheScreen();
-    expect(screen.getByRole('image', { name: '나 · 3분' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: '302동식당 · 12:15 점심' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: '나 · 3분' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: '민수' })).toBeOnTheScreen();
     expect(screen.getByRole('image', { name: '13:00 수업 · 24동' })).toBeOnTheScreen();
   });
 
@@ -221,6 +223,10 @@ const FIRST_PLAN_POINTS = distinct([
 // the marks need above the top-most point, 24 (자하연식당 2층's label is at its left); below, the card, the 8 of ticket
 // 08's area, and the room the marks need under the bottom-most point: for the first Plan 66, half the symbol box and
 // the gap and the two lines of the pick's label under 302동, 18 + 2 + 46; 64 at each side.
+// A Plan's card at rest is docked (P04 ticket 04): it stands 6 over the input's bottom, 12 over the stage's, and covers
+// its own height and those 6 under it.
+const DOCKED = 6;
+
 function padding(cardHeight: number): object {
   return { top: 52 + 48 + 8 + 24, right: 64, bottom: cardHeight + 8 + 66, left: 64 };
 }
@@ -253,38 +259,41 @@ describe('the camera', () => {
 
     await layAnswerCard(240);
 
-    expect(fit.mock.lastCall?.[1]).toEqual(expect.objectContaining({ padding: padding(240) }));
+    expect(fit.mock.lastCall?.[1]).toEqual(expect.objectContaining({ padding: padding(240 + DOCKED) }));
   });
 });
 
-// Partitions: the Plan on screen changes, the basis opens, and the stage is laid out.
+// Partitions: the Plan on screen changes, the card grows, and the stage is laid out.
 describe('the camera after the answer came', () => {
-  it('fits again after "다음 후보" into what the card then leaves, and moves nothing when the answer is closed', async () => {
+  it("fits again after candidate 2's flag into what the card then leaves, and moves nothing when the answer is closed", async () => {
     const fit = jest.spyOn(projection, 'fit');
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
     await layAnswerCard(240);
     const before = fit.mock.calls.length;
 
-    await user.press(screen.getByRole('button', { name: '다음 후보' }));
+    await press(user, '후보 2 · 301동식당');
     // The Plans of the stored answer stand at the same points (their people at 301동 and 302동, and the same
     // Restaurants), so what can differ is that a fit is asked again, and with the card as it then is. The second
     // Plan's pick 301동식당 has its two lines under 301동, 0.00129° = 143.6 metres north of 302동: 66 - 143.6 / 4.5 = 34.1.
     // The 8 is ticket 08's area.
     expect(fit.mock.calls).toHaveLength(before + 1);
-    expect(bottomBeside(fit.mock.lastCall?.[1].padding)).toBeCloseTo(240 + 8 + 66 - (0.00129 * 111_320) / 4.5, 6);
+    expect(bottomBeside(fit.mock.lastCall?.[1].padding)).toBeCloseTo(
+      240 + DOCKED + 8 + 66 - (0.00129 * 111_320) / 4.5,
+      6,
+    );
 
     await user.press(screen.getByRole('button', { name: CLOSE }));
 
     expect(fit.mock.calls).toHaveLength(before + 1);
   });
 
-  it('fits again when the opened basis makes the card taller, by what the card grew', async () => {
+  it('fits again when the opened list of Friends makes the card taller, by what the card grew', async () => {
     const fit = jest.spyOn(projection, 'fit');
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
     await layAnswerCard(240);
 
-    await user.press(screen.getByRole('button', { name: '근거' }));
-    // The plain ground lays nothing out: the card is laid out 96 taller, as the phone lays it out with the basis.
+    await user.press(screen.getByRole('button', { name: '같이 먹을 친구 추가' }));
+    // The plain ground lays nothing out: the card is laid out 96 taller, as the phone lays it out with the list.
     await layAnswerCard(336);
 
     expect(fit.mock.lastCall?.[1]).toEqual(expect.objectContaining({ padding: padding(336) }));

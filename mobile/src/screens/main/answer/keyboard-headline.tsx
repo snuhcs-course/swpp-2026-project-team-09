@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -33,7 +34,9 @@ export function headlineOf(reply: ChatBubble, control: Pick<ChatSheetControl, 'a
   const fromReply = answer !== undefined && answer !== null && answer === shown.source;
   if ((fromReply || keeps) && shown.answer !== null) {
     const over = keeps ? refusal?.lines[0] : undefined;
-    return over ?? linesOf(shown, shown.answer, shown.adding)[0] ?? wordsLine(reply.text);
+    // The card says nothing of a Plan at rest, but the headline over the keyboard names it, the map being covered.
+    const said = linesOf(shown, shown.answer, shown.adding)[0] ?? shown.plan?.lines[0];
+    return over ?? said ?? wordsLine(reply.text);
   }
   const lookup = keeps ? onScreen.lookup : (reply.lookup ?? null);
   if (lookup !== null && lookup === onScreen.lookup) {

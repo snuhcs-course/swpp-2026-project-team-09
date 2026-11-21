@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen } from '@testing-library/react-native';
@@ -11,7 +12,7 @@ import { takenAloneOf } from '@/api/mock/data/taken-alone';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
-import { card } from './support/answer-map';
+import { card, mapThings, timeBar } from './support/answer-map';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { socketServer } from './support/live';
@@ -144,7 +145,8 @@ describe('the card of an event taken alone', () => {
     await pass(500);
 
     expect(server.received(DROP)).toHaveLength(1);
-    expect(card().getByText('13:54 도착 · 78분 볼 수 있어요')).toBeVisible();
+    expect(mapThings()).toContain('채용박람회 · 13:54 채용박람회');
+    expect(timeBar().getByText('13:54–15:12 · 78분')).toBeVisible();
     await user.press(card().getByRole('button', { name: '여기로' }));
     await pass(500);
     const keys = server.received('POST /plans').map(({ idempotencyKey }) => idempotencyKey);

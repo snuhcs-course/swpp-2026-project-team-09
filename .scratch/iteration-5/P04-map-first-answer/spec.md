@@ -134,7 +134,7 @@ The map carries the answer, and the text says only what the map cannot.
 
 ## Tickets
 
-In build order; each keeps the answer screen whole.
+In build order; each keeps the answer screen whole. Tickets 13 and 14 came from the phone screens of tickets 01 to 03 and follow 05.
 
 1. [01 — The time bar under the pill](issues/01-time-bar-on-top.md)
 2. [02 — The place's flag says what and when, and opens a card](issues/02-flag-says-what-and-when.md)
@@ -148,3 +148,5 @@ In build order; each keeps the answer screen whole.
 10. [10 — Earlier questions in the pill, and a new conversation that forgets nothing](issues/10-earlier-questions-in-the-pill.md)
 11. [11 — The map screen says what it continues, and starts anew at one press](issues/11-map-screen-continues.md)
 12. [12 — Dragging the bottom down closes the answer](issues/12-drag-down-closes.md)
+13. [13 — Our own marks recede while an answer is up](issues/13-our-marks-recede.md)
+14. [14 — The bar, the flag, and the face card as the boards draw them](issues/14-bar-flag-face-as-drawn.md)

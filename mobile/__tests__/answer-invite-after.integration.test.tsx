@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -22,7 +23,7 @@ import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, DINNER, PHONE_NOW } from './support/server';
 
-// What follows a press of "이대로 초대" on the card of the answer to "배고파, 민수랑 같이" (P02 ticket 05), against the
+// What follows a press of "만들고 초대 보내기" beside the input, once "이대로 초대" on the card, for the answer to "배고파, 민수랑 같이" (P02 ticket 05), against the
 // fake main server: a signal of 민수's answer, each refusal, and "닫기". The Quest is the stored
 // reply to POST /plans for the first Plan, with 민수 invited.
 
@@ -40,7 +41,8 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-const INVITE = '이대로 초대';
+const INVITE = '만들고 초대 보내기';
+const PICK = '302동식당 · 12:15 점심';
 const MINSU = '35976b5c-4daf-454f-b10e-c8b09a33ca37';
 const ASKER = { id: '11ca538e-e4ef-48d9-9a1f-b7160c553bee', name: '유상', department: '컴퓨터공학부' };
 
@@ -60,6 +62,11 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// The Plan's main button beside the input (P04 ticket 04).
+function inviteButton(): ReturnType<typeof screen.getByRole> {
+  return within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: INVITE });
+}
+
 function toasts(): ReturnType<typeof within> {
   return within(screen.getByTestId('toast-layer'));
 }
@@ -67,7 +74,7 @@ function toasts(): ReturnType<typeof within> {
 async function invited(): Promise<void> {
   server.on('POST /plans', { status: 201, body: PLAN_QUEST });
   const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-  await user.press(card().getByRole('button', { name: INVITE }));
+  await user.press(inviteButton());
   await pass(500);
 }
 
@@ -120,44 +127,43 @@ describe('how 민수 stands after inviting', () => {
 });
 
 // Partitions: 409 PLAN_CHANGED; a refusal of another kind.
-describe('a refused "이대로 초대"', () => {
+describe('a refused "만들고 초대 보내기"', () => {
   it('after PLAN_CHANGED says the Plan changed and recalculates from the same conditions', async () => {
     server.on('POST /plans', refusal(409, 'PLAN_CHANGED'));
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(card().getByRole('button', { name: INVITE }));
+    await user.press(inviteButton());
     await pass(500);
 
     expect(toasts().getByText('계획이 바뀌었어요. 다시 확인해 주세요')).toBeVisible();
     expect(recalculations(server)).toEqual([{ input: MEAL_ANSWER.input, location: ON_CAMPUS }]);
-    expect(card().getByText('12:15 302동식당')).toBeVisible();
-    expect(card().getByRole('button', { name: INVITE })).toBeEnabled();
+    expect(mapThings()).toContain(PICK);
+    expect(inviteButton()).toBeEnabled();
   });
 
   it('after a 500 says it could not invite and keeps the card of the Plan', async () => {
     server.on('POST /plans', refusal(500));
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(card().getByRole('button', { name: INVITE }));
+    await user.press(inviteButton());
     await pass(500);
 
     expect(toasts().getByText('초대하지 못했어요. 잠시 후 다시 시도해 주세요')).toBeVisible();
     expect(recalculations(server)).toEqual([]);
-    expect(card().getByText('12:15 302동식당')).toBeVisible();
-    expect(card().getByText('1/5')).toBeVisible();
-    expect(card().getByRole('button', { name: INVITE })).toBeEnabled();
+    expect(mapThings()).toEqual(expect.arrayContaining([PICK, '후보 5 · 자하연식당 2층']));
+    expect(inviteButton()).toBeEnabled();
     expect(card().queryByText('파티를 만들고 초대를 보냈어요')).toBeNull();
   });
 
   it('after a 500 sends the same Idempotency-Key at the next press', async () => {
     server.on('POST /plans', refusal(500));
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: INVITE }));
+    await user.press(inviteButton());
     await pass(500);
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
 
-    await user.press(card().getByRole('button', { name: INVITE }));
+    await user.press(inviteButton());
     await pass(500);
 
     const [first, again] = server.received('POST /plans').map(({ idempotencyKey }) => idempotencyKey);
@@ -171,13 +177,13 @@ describe('the map after inviting', () => {
   it("shows no other Plan when a candidate's mark is pressed", async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: INVITE }));
+    await user.press(inviteButton());
     await pass(500);
 
     await press(user, '후보 2 · 301동식당');
     await pass(500);
 
-    expect(mapThings()).toContain('302동식당 · 12:15 점심');
+    expect(mapThings()).toContain(PICK);
     expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
   });
 });
@@ -191,7 +197,7 @@ describe('"닫기" after inviting', () => {
       await pass(0);
       everyday.push(...mapThings());
     });
-    await user.press(card().getByRole('button', { name: INVITE }));
+    await user.press(inviteButton());
     await pass(500);
 
     await user.press(card().getByRole('button', { name: '닫기' }));

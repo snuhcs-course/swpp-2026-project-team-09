@@ -12,7 +12,7 @@ import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { screen } from './support/app';
-import { card, timeBar } from './support/answer-map';
+import { card, mapThings, timeBar } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import { body, holdBody, holdLanes, layTrack } from './support/band-move';
 import type { FakeServer } from './support/fake-server';
@@ -74,13 +74,14 @@ async function meetMinSu(): Promise<void> {
 }
 
 // The card's room under its content, kept for the input.
-function cardRoom(): ViewStyle['paddingBottom'] {
-  const style: unknown = screen.getByTestId('answer-card').props.style;
-  return StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]).paddingBottom;
+// Where the time bar stands under the pill, which holds the lanes the finger drags (P04 ticket 01).
+function barTop(): ViewStyle['top'] {
+  const style: unknown = screen.getByTestId('time-bar').props.style;
+  return StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]).top;
 }
 
 // Partitions: the band dragged over 민수's class (board a12), with its lane, its words, the card's lines, the outline,
-// the time chip, and the input. a12's band is 28 points here, and its two handles, 16 wide each, cover most of it.
+// and the input. a12's band is 28 points here, and its two handles, 16 wide each, cover most of it.
 describe("the band dragged over 민수's class to 15:20 (board a12)", () => {
   it("draws 민수's class red on his lane where the band covers it, from 15:30 to 15:48, over the band and its handles", async () => {
     await meetMinSu();
@@ -110,37 +111,37 @@ describe("the band dragged over 민수's class to 15:20 (board a12)", () => {
     expect(card().queryByText('12:15 302동 앞')).toBeNull();
   });
 
-  it('keeps the place before as a dashed outline at 12:15, marks the time chip 15:20, and gives the input way', async () => {
+  it('keeps the place before as a dashed outline at 12:15, shows no chips, and gives the input way', async () => {
     await meetMinSu();
 
     await holdBody(185);
 
     expect(screen.getByTestId('time-band-ghost')).toHaveStyle({ borderStyle: 'dashed', left: left(15) });
-    expect(card().getByRole('button', { name: '15:20' })).toHaveStyle({ borderColor: color.quest });
-    expect(card().queryByRole('button', { name: '13:00 수업까지' })).toBeNull();
-    expect(card().getByRole('button', { name: '301동에서' })).toBeVisible();
+    expect(card().queryByRole('button', { name: '15:20' })).toBeNull();
+    expect(card().queryByRole('button', { name: '301동에서' })).toBeNull();
     expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
     expect(recalculations(server)).toHaveLength(1);
   });
 });
 
-// Partitions: the card's room for the input before the band moves and while it is held at 15:20 (board a12).
-describe('the card while the band moves', () => {
-  it("keeps the input's room under the card while the input gives way, so that the lanes stay under the finger", async () => {
+// Partitions: the time bar before the band moves and while it is held at 15:20 (board a12). The lanes are the bar's,
+// under the pill, so the card below may change while the input gives way.
+describe('the bar while the band moves', () => {
+  it('stays where it is while the input gives way, so that the lanes stay under the finger', async () => {
     await meetMinSu();
-    const room = cardRoom();
+    const top = barTop();
 
     await holdBody(185);
 
     expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
-    expect(room).toEqual(expect.any(Number));
-    expect(cardRoom()).toBe(room);
+    expect(top).toEqual(expect.any(Number));
+    expect(barTop()).toBe(top);
   });
 });
 
 // Partitions: the band over nobody's stretch; over the User's own class, past the range's end; less than half a step.
 describe('the band dragged elsewhere and held', () => {
-  it("shows the band's own words and the Plan's lines over nobody's stretch at 14:00", async () => {
+  it("shows the band's own words and no lines over nobody's stretch at 14:00, the Plan's place on the map", async () => {
     await meetMinSu();
 
     await holdBody(105);
@@ -148,8 +149,8 @@ describe('the band dragged elsewhere and held', () => {
     expect(body()).toHaveAccessibilityValue({ text: '14:00–14:28' });
     expect(screen.queryByTestId('time-band-clash')).toBeNull();
     expect(timeBar().getByText('12:15–12:43 · 함께 28분')).toBeVisible();
-    expect(card().getByText('12:15 302동 앞')).toBeVisible();
-    expect(card().getByRole('button', { name: '14:00' })).toHaveStyle({ borderColor: color.quest });
+    expect(card().queryByTestId('answer-lines')).toBeNull();
+    expect(mapThings()).toContain('302동 앞 · 12:15 만남');
   });
 
   it("stops at the range's end, 18:02 to 18:30, where 나 cannot come for the 17:00 class", async () => {

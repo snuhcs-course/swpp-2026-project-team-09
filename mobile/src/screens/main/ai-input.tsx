@@ -10,9 +10,10 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, useRef, useState } from 'react';
+import { type ReactElement, type ReactNode, useRef, useState } from 'react';
 import { type LayoutChangeEvent, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { USER_MESSAGE_MAX } from '@/api/assistant-types';
 import { color, Icon, radius, shadow, space, text } from '@/design-system';
@@ -34,6 +35,10 @@ interface AiInputProps {
   onEarlier?: (() => void) | null;
   // A reply arrived while the frame was hidden: a dot on "이전 답" until the frame is shown.
   unseen?: boolean;
+  // The answer's main button, at the bar's right on the same line; the bar gives it room.
+  beside?: ReactNode;
+  // Inside the answer's card or dock: a sunken field on its white, without the bar's own border and shadow.
+  inCard?: boolean;
 }
 
 // The field's height for one line, and the most it grows to before it scrolls.
@@ -44,6 +49,8 @@ const UNSEEN = 10;
 const UNSEEN_INSET = 6;
 // Above and below the text.
 const FIELD_PADDING = space[2];
+// A button of 48 in its touch area, in the middle of the bar of 50.
+const BESIDE_LIFT = 1;
 
 // The frame's: a bar of radius 28 around a field and a send button of 40, 22 once the field holds more than a line.
 // The bar is `AI_INPUT.height` high while it holds a line.
@@ -102,6 +109,45 @@ function EarlierButton({ onPress, unseen }: { onPress: () => void; unseen: boole
 // button sends, in the key colour while there is something to send. The field grows by itself, between its least and
 // its most height: nothing sets its height from its content, which would lay it out again and could swing it between
 // two heights. "이전 답", when given, stands at the left as the send button does at the right.
+function Field(props: { message: string; onChange: (message: string) => void; placeholder: string }): ReactElement {
+  return (
+    <TextInput
+      accessibilityLabel="AI에게 메시지"
+      maxLength={USER_MESSAGE_MAX}
+      multiline
+      onChangeText={props.onChange}
+      placeholder={props.placeholder}
+      placeholderTextColor={color.inkMuted}
+      style={styles.field}
+      submitBehavior="newline"
+      value={props.message}
+    />
+  );
+}
+
+// The answer's main button at the bar's right, which tells its width so that the bar gives it room.
+function Beside({
+  lift,
+  onWidth,
+  children,
+}: {
+  lift: number;
+  onWidth: (width: number) => void;
+  children: ReactNode;
+}): ReactElement {
+  return (
+    <View
+      onLayout={({ nativeEvent }) => {
+        onWidth(Math.round(nativeEvent.layout.width));
+      }}
+      style={[styles.beside, { bottom: AI_INPUT.bottom + lift + BESIDE_LIFT }]}
+      testID="ai-input-beside"
+    >
+      {children}
+    </View>
+  );
+}
+
 export function AiInput(props: AiInputProps): ReactElement {
   const {
     onSend,
@@ -111,7 +157,10 @@ export function AiInput(props: AiInputProps): ReactElement {
     restore,
     onEarlier = null,
     unseen = false,
+    beside = null,
+    inCard = false,
   } = props;
+  const [besideWidth, setBesideWidth] = useState(0);
   const [message, setMessage] = useMessage(restore ?? null);
   const [height, laidOut] = useBarHeight(onHeight);
   const canSend = message.trim() !== '';
@@ -119,31 +168,30 @@ export function AiInput(props: AiInputProps): ReactElement {
     onSend(message.trim());
     setMessage('');
   };
+  const room = beside === null ? 0 : besideWidth + space[2];
   return (
-    <View
-      onLayout={laidOut}
-      style={[
-        styles.bar,
-        { bottom: AI_INPUT.bottom + lift },
-        height > AI_INPUT.height && { borderRadius: BAR_RADIUS_TALL },
-        onEarlier !== null && styles.barEarlier,
-      ]}
-      testID="ai-input"
-    >
-      {onEarlier === null ? null : <EarlierButton onPress={onEarlier} unseen={unseen} />}
-      <TextInput
-        accessibilityLabel="AI에게 메시지"
-        maxLength={USER_MESSAGE_MAX}
-        multiline
-        onChangeText={setMessage}
-        placeholder={placeholder}
-        placeholderTextColor={color.inkMuted}
-        style={styles.field}
-        submitBehavior="newline"
-        value={message}
-      />
-      <SendButton canSend={canSend} onPress={send} />
-    </View>
+    <>
+      <View
+        onLayout={laidOut}
+        style={[
+          styles.bar,
+          { bottom: AI_INPUT.bottom + lift, right: AI_INPUT.side + room },
+          height > AI_INPUT.height && { borderRadius: BAR_RADIUS_TALL },
+          onEarlier !== null && styles.barEarlier,
+          inCard && styles.inCard,
+        ]}
+        testID="ai-input"
+      >
+        {onEarlier === null ? null : <EarlierButton onPress={onEarlier} unseen={unseen} />}
+        <Field message={message} onChange={setMessage} placeholder={placeholder} />
+        <SendButton canSend={canSend} onPress={send} />
+      </View>
+      {beside === null ? null : (
+        <Beside lift={lift} onWidth={setBesideWidth}>
+          {beside}
+        </Beside>
+      )}
+    </>
   );
 }
 
@@ -181,6 +229,8 @@ const styles = StyleSheet.create({
     boxShadow: shadow.float,
   },
   barEarlier: { paddingLeft: space[1] },
+  inCard: { borderWidth: 0, backgroundColor: color.surfaceSunken, boxShadow: 'none' },
+  beside: { position: 'absolute', right: AI_INPUT.side },
   field: {
     ...text.bodyLg,
     flex: 1,

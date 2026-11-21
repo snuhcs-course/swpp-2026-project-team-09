@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -102,7 +103,7 @@ function NewParty({ shown, invitation, busy, plan }: RowFourButtonsProps & { pla
         </View>
       )}
       <Button disabled={busy} full onPress={invitation.invite}>
-        {invitation.sending ? '올리는 중이에요' : '이대로 모집'}
+        {invitation.sending ? '올리는 중이에요' : '만들고 모집하기'}
       </Button>
     </>
   );
@@ -110,7 +111,7 @@ function NewParty({ shown, invitation, busy, plan }: RowFourButtonsProps & { pla
 
 // The buttons of an events Plan, a party's Plan, and a new party's Plan, in a row of cells of one width, events and
 // parties after what was dropped with its reason in faint ink, since their scene draws none of it; a new party's Plan
-// has its Friends who could come and "이대로 모집", which posts it as "이대로 초대" makes a meal's Quest. Nothing for a
+// has its Friends who could come and "만들고 모집하기", which posts it as "이대로 초대" makes a meal's Quest. Nothing for a
 // meal's or a meet's Plan.
 export function RowFourButtons(props: RowFourButtonsProps): ReactElement | null {
   const actions = useRowFourActions();

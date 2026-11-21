@@ -3,15 +3,16 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
 import type { QuestProposal } from '@/api/assistant-types';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
-import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
+import { mapThings } from './support/answer-map';
 import { answerEvents, MAJOR } from './support/events';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -102,13 +103,15 @@ describe('a reply that carries an answer', () => {
     answerParty(server);
   });
 
-  it("shows the first Plan's two lines in place of the model's sentence, the strong part in the key colour", async () => {
+  it("draws the first Plan on the map, with neither its lines nor the model's sentence in the card", async () => {
     await askFramed(MEAL_ANSWER_REPLY);
 
-    // MEAL_PLAN_1's lines.
-    expect(card().getByText('12:15 302동식당')).toHaveStyle({ color: color.snuBlue });
-    expect(card().getByText('같이 먹으면 식사가 27분 줄어요')).toBeVisible();
+    expect(mapThings()).toContain('302동식당 · 12:15 점심');
+    expect(card().queryByTestId('answer-lines')).toBeNull();
     expect(card().queryByText(MEAL_ANSWER_REPLY.text)).toBeNull();
+    expect(
+      within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' }),
+    ).toBeVisible();
   });
 
   it('shows the lines that say why when the answer has no Plan', async () => {

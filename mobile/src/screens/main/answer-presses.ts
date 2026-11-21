@@ -48,10 +48,11 @@ function addOnPress(add: ShownAnswer['add'], id: string): void {
 }
 
 // A press on the map while a Plan is drawn: the pick opens its card, before the Plan is sent or after; before, the
-// User's start and a face of the Plan's people open theirs, a candidate shows its Plan, and a Friend's Avatar adds them.
+// User's start and a face of the Plan's people open theirs, a candidate shows its Plan unless a recalculation is on its
+// way, and a Friend's Avatar adds them.
 export function planPress(
   drawing: AnswerDrawing,
-  { add, show }: Pick<ShownAnswer, 'add' | 'show'>,
+  { add, show, recalculating }: Pick<ShownAnswer, 'add' | 'show' | 'recalculating'>,
   sent: boolean,
   onMark: OnMark,
 ): (id: string) => void {
@@ -65,6 +66,9 @@ export function planPress(
       return;
     }
     const planId = thing?.planId ?? null;
+    if (planId !== null && recalculating) {
+      return;
+    }
     if (planId === null) {
       addOnPress(add, id);
     } else {

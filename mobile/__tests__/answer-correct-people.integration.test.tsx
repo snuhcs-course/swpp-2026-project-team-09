@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -15,7 +16,9 @@ import { askOnMap, card, mapThings } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { layStage } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
+import { pressMarker } from './support/made-quest';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, JI_WOO, MIN_JUN, PHONE_NOW } from './support/server';
@@ -24,7 +27,8 @@ import { answerMainScreen, askMainServer, JI_WOO, MIN_JUN, PHONE_NOW } from './s
 // to "배고파, 민수랑 같이" and the fake main server's Friends, 김민준, whom the User sees on the map, and 서지우, whom
 // the User cannot see. The list says each by the full name with the department (ticket 18) and the distance from their
 // position to the picked Restaurant, 302동식당: 김민준's at 37.4598, 126.9521 is 1217.7 metres from it by the spec's
-// flat map, "1.2km"; 서지우 has no position, "자리 모름".
+// flat map, "1.2km"; 서지우 has no position, "자리 모름". A person is taken out from their face on the map (P04 ticket
+// 03), and the Plan's place and people are read on the map.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -44,6 +48,9 @@ const ASKER = MEAL_ANSWER.input.people[0];
 const ADD = '같이 먹을 친구 추가';
 const MIN_JUN_CELL = '김민준, 컴퓨터공학부, 1.2km, 추가';
 const JI_WOO_CELL = '서지우, 경영학과, 자리 모름, 추가';
+// The pick's flag of the first Plan of the stored answers for the User alone and for three.
+const ALONE_PICK = '301동식당 · 11:50 점심';
+const THREE_PICK = '학생회관식당 · 12:33 점심';
 
 let server: FakeServer;
 
@@ -61,23 +68,22 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-// Partitions: the ✕ of a person's chip.
+// Partitions: 빼기 on a person's face.
 describe('taking a Friend out', () => {
   it('sends the conditions without 민수 and draws the answer that comes back', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE });
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
 
-    await user.press(card().getByRole('button', { name: '김민수 빼기' }));
+    await pressMarker(user, '민수');
+    await user.press(within(screen.getByTestId('mark-card')).getByRole('button', { name: '민수 빼기' }));
     await pass(500);
 
     expect(recalculations(server)).toEqual([{ input: { ...MEAL_ANSWER.input, people: [ASKER] }, location: ON_CAMPUS }]);
-    // Who eats changed, so the first Plan of the answer for the User alone is shown.
-    expect(card().getByText('301동식당')).toBeVisible();
-    expect(card().getByText('12:45엔 나서야 해요')).toBeVisible();
-    expect(card().getByText('1/5')).toBeVisible();
-    expect(card().getByRole('button', { name: '301동에서' })).toBeVisible();
-    expect(card().queryByRole('button', { name: '김민수 빼기' })).toBeNull();
+    // Who eats changed, so the first Plan of the answer for the User alone is shown, which the User takes alone.
+    expect(mapThings()).toContain(ALONE_PICK);
     expect(mapThings()).not.toContain('민수');
+    const beside = within(screen.getByTestId('ai-input-beside'));
+    expect(beside.getByRole('button', { name: '일정에 넣기' })).toBeVisible();
   });
 });
 
@@ -126,9 +132,7 @@ describe('adding a Friend chosen', () => {
         location: ON_CAMPUS,
       },
     ]);
-    expect(card().getByText('12:33 학생회관식당')).toBeVisible();
-    expect(card().getByRole('button', { name: '민수 빼기' })).toBeVisible();
-    expect(card().getByRole('button', { name: '지은 빼기' })).toBeVisible();
+    expect(mapThings()).toEqual(expect.arrayContaining([THREE_PICK, '민수 · 18분', '지은 · 5분']));
   });
 
   it("sends the same for a press on the Friend's Avatar on the map", async () => {
@@ -144,7 +148,7 @@ describe('adding a Friend chosen', () => {
         location: ON_CAMPUS,
       },
     ]);
-    expect(card().getByText('12:33 학생회관식당')).toBeVisible();
+    expect(mapThings()).toContain(THREE_PICK);
   });
 
   it('takes no press on the Avatar of a Friend whom the conditions hold', async () => {

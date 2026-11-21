@@ -15,6 +15,8 @@ import { recalculations } from './support/answer-correct';
 import { dragBody, layTrack } from './support/band-move';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { layStage } from './support/lists';
+import { pressMarker } from './support/made-quest';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { answerFriendsWithMinSu, meetFromCard, MIN_SU, row } from './support/meet';
@@ -24,7 +26,8 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 // Board a6 (P02 ticket 25): a5's band let go at 14:00, over the fake main server, which answers the meet with 민수 with
 // the stored real answer of a5 (`meet-answer.json`) and the meet asked again from 14:00 with the stored real answer of
 // a6 (`meet-answer-a6.json`). Expected values: the stored a6 answer, whose first Plan is 302동 앞 for 83 minutes where
-// the board drew 신양학술정보관 앞 for 80.
+// the board drew 신양학술정보관 앞 for 80. The Plan's place and people are on the map, its time on the time bar, and
+// its basis in the card of its flag (P04 tickets 01 to 04).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -39,6 +42,8 @@ jest.mock('@/auth/google', () => ({
 }));
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
+
+const PICK = '302동 앞 · 14:07 만남';
 
 let server: FakeServer;
 
@@ -64,6 +69,7 @@ type User = Awaited<ReturnType<typeof openMain>>;
 // and lets it go; the main server answers the second request with a6.
 async function letGoAt14(): Promise<User> {
   const user = await openMain();
+  await layStage(390, 760);
   await press(user, row(MIN_SU));
   await meetFromCard(user);
   await layTrack(390);
@@ -72,35 +78,36 @@ async function letGoAt14(): Promise<User> {
   return user;
 }
 
-// Partitions: the card of the first Plan; its basis and the next Plan; the map.
+function markCard(): ReturnType<typeof within> {
+  return within(screen.getByTestId('mark-card'));
+}
+
+// Partitions: the first Plan; its basis and the next Plan; the map.
 describe('the band of a5 let go at 14:00 (board a6)', () => {
-  it("asks from 14:00, and draws a6's first Plan, its chips, its band, and the outline of a5's", async () => {
-    await letGoAt14();
+  it("asks from 14:00, and draws a6's first Plan, its people, its band, and the outline of a5's", async () => {
+    const user = await letGoAt14();
 
     expect(recalculations(server).at(-1)).toEqual({ input: MEET_ANSWER_FROM_14.input, location: ON_CAMPUS });
-    expect(card().getByText('14:07 302동 앞')).toBeVisible();
-    expect(card().getByText('15:30까지 함께 83분이에요')).toBeVisible();
-    expect(card().getByTestId('plan-count')).toHaveTextContent('1/5');
-    expect(card().getByRole('button', { name: '24동에서' })).toBeVisible();
-    expect(card().getByRole('button', { name: '14:00부터' })).toBeVisible();
-    expect(card().getByRole('button', { name: '민수 빼기' })).toBeVisible();
+    expect(mapThings()).toEqual(expect.arrayContaining([PICK, '민수']));
     expect(timeBar().getByText('14:07–15:30 · 함께 83분')).toBeVisible();
     expect(screen.getByTestId('time-band-ghost')).toHaveStyle({ left: `${(15 / 390) * 100}%` });
     expect(card().getByRole('button', { name: '되돌리기' })).toBeVisible();
+    await pressMarker(user, '나 · 17분');
+    expect(markCard().getByText('출발 · 24동에서')).toBeVisible();
   });
 
-  it('opens the basis the main server wrote, and shows 유회진 학술정보관 앞 for 82 minutes with "›"', async () => {
+  it("opens the basis the main server wrote on the pick's flag, and shows 유회진 학술정보관 앞 for 82 minutes", async () => {
     const user = await letGoAt14();
 
-    await user.press(card().getByRole('button', { name: '근거' }));
-    expect(card().getByText('민수 12:15 302동 수업 끝 · 15:30에 나서요')).toBeVisible();
-    expect(card().getByText('24동 → 302동 앞 걸어서 17분')).toBeVisible();
-    expect(card().getByText('302동 앞 → 58동 걸어서 27분, 그래서 16:33에 나서요')).toBeVisible();
+    await pressMarker(user, PICK);
+    expect(markCard().getByText('민수 12:15 302동 수업 끝 · 15:30에 나서요')).toBeVisible();
+    expect(markCard().getByText('24동 → 302동 앞 걸어서 17분')).toBeVisible();
+    expect(markCard().getByText('302동 앞 → 58동 걸어서 27분, 그래서 16:33에 나서요')).toBeVisible();
+    await press(user, '카드 닫기');
 
-    await user.press(card().getByRole('button', { name: '다음 후보' }));
-    expect(card().getByText('14:04 유회진 학술정보관 앞')).toBeVisible();
-    expect(card().getByText('15:26까지 함께 82분이에요')).toBeVisible();
-    expect(card().getByTestId('plan-count')).toHaveTextContent('2/5');
+    await pressMarker(user, '후보 2 · 유회진 학술정보관 앞');
+    expect(mapThings()).toContain('유회진 학술정보관 앞 · 14:04 만남');
+    expect(timeBar().getByText('14:04–15:26 · 함께 82분')).toBeVisible();
   });
 
   it('draws 민수 with the dashed ring of a position from the Timetable, at 302동 앞, where they meet at 14:07', async () => {

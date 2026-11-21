@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -14,18 +15,17 @@ import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
-import { askOnMap, card } from './support/answer-map';
+import { askOnMap, card, mapThings } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { AI_INPUT } from './support/lists';
-import { swipe } from './support/swipe';
+import { AI_INPUT, layStage } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// "이대로 초대" on the card of the answer to "배고파, 민수랑 같이" (P02 ticket 05), whose first Plan is "12:15
-// 302동식당", against the fake main server. POST /plans answers with the stored reply for that
-// Plan: the Quest "302동식당에서 점심" with one step, "302동식당에서 식사" at 12:15, and 민수 invited.
+// "만들고 초대 보내기" (once "이대로 초대") beside the input, over the answer to "배고파, 민수랑 같이" (P02 ticket
+// 05), whose first Plan is "12:15 302동식당", against the fake main server. POST /plans answers with the stored reply
+// for that Plan: the Quest "302동식당에서 점심" with one step, "302동식당에서 식사" at 12:15, and 민수 invited.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -41,8 +41,10 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-const INVITE = '이대로 초대';
+const INVITE = '만들고 초대 보내기';
 const HELD_MS = 3000;
+const PICK = '302동식당 · 12:15 점심';
+const SECOND = '후보 2 · 301동식당';
 
 let server: FakeServer;
 
@@ -60,31 +62,38 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+function beside(): ReturnType<typeof within> {
+  return within(screen.getByTestId('ai-input-beside'));
+}
+
+function map(): ReturnType<typeof within> {
+  return within(screen.getByTestId('main-map-touches'));
+}
+
 // Partitions: a Plan with a Friend; a Plan of the User alone.
 describe('the main button', () => {
-  it('is on the card of a Plan with 민수, with the count after it', async () => {
+  it('stands beside the input for a Plan with 민수, the other Plans being flags on the map', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    expect(card().getByRole('button', { name: INVITE })).toBeEnabled();
-    expect(card().getByText('1/5')).toBeVisible();
-    expect(card().getByRole('button', { name: '다음 후보' })).toBeVisible();
+    expect(beside().getByRole('button', { name: INVITE })).toBeEnabled();
+    expect(mapThings()).toEqual(expect.arrayContaining([PICK, SECOND]));
   });
 
-  it('is not on the card of a Plan of the User alone', async () => {
+  it('is not there for a Plan of the User alone', async () => {
     await askOnMap(server, { ...MEAL_ANSWER_REPLY, answer: MEAL_ANSWER_ALONE });
 
-    expect(card().getByText('301동식당')).toBeVisible();
-    expect(card().queryByRole('button', { name: INVITE })).toBeNull();
+    expect(mapThings()).toContain('301동식당 · 11:50 점심');
+    expect(screen.queryByRole('button', { name: INVITE })).toBeNull();
   });
 });
 
 // Partitions: the press and its reply, and the card after it.
-describe('a press of "이대로 초대"', () => {
+describe('a press of "만들고 초대 보내기"', () => {
   it('sends the Plan on screen with a key, and the card then says the Quest was made', async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(card().getByRole('button', { name: INVITE }));
+    await user.press(beside().getByRole('button', { name: INVITE }));
     await pass(500);
 
     const sent = server.received('POST /plans');
@@ -102,19 +111,16 @@ describe('a press of "이대로 초대"', () => {
     expect(card().getByRole('button', { name: '닫기' })).toBeEnabled();
   });
 
-  it('leaves no band, no arrows, no "＋ 같이", and no ✕ on the card after inviting', async () => {
+  it('leaves no band, no "＋ 같이", and no main button after inviting', async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(card().getByRole('button', { name: INVITE }));
+    await user.press(beside().getByRole('button', { name: INVITE }));
     await pass(500);
 
     expect(screen.queryByRole('adjustable', { name: '시작 시각' })).toBeNull();
-    expect(card().queryByRole('button', { name: '다음 후보' })).toBeNull();
     expect(card().queryByRole('button', { name: '같이 먹을 친구 추가' })).toBeNull();
-    expect(card().queryByRole('button', { name: '김민수 빼기' })).toBeNull();
-    expect(card().queryByRole('button', { name: '301동에서' })).toBeNull();
-    expect(card().queryByRole('button', { name: INVITE })).toBeNull();
+    expect(screen.queryByTestId('ai-input-beside')).toBeNull();
   });
 });
 
@@ -125,7 +131,7 @@ describe('the card after inviting', () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(card().getByRole('button', { name: INVITE }));
+    await user.press(beside().getByRole('button', { name: INVITE }));
     await pass(500);
 
     const close = card().getByRole('button', { name: '닫기' });
@@ -137,15 +143,15 @@ describe('the card after inviting', () => {
 
 // Partitions: the list of Friends open and closed again before inviting; the input after inviting. The rule: ticket
 // 03, the open list takes the place of the band, the steps, and the input.
-describe('"이대로 초대" beside the list of Friends', () => {
+describe('"만들고 초대 보내기" beside the list of Friends', () => {
   it('gives way to the open list, and comes back with "그대로"', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
     await user.press(card().getByRole('button', { name: '같이 먹을 친구 추가' }));
-    expect(card().queryByRole('button', { name: INVITE })).toBeNull();
+    expect(screen.queryByRole('button', { name: INVITE })).toBeNull();
     await user.press(card().getByRole('button', { name: '그대로' }));
 
-    expect(card().getByRole('button', { name: INVITE })).toBeEnabled();
+    expect(beside().getByRole('button', { name: INVITE })).toBeEnabled();
     expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
   });
 
@@ -153,7 +159,7 @@ describe('"이대로 초대" beside the list of Friends', () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(card().getByRole('button', { name: INVITE }));
+    await user.press(beside().getByRole('button', { name: INVITE }));
     await pass(500);
 
     expect(card().getByTestId('invited-card')).toBeVisible();
@@ -162,21 +168,20 @@ describe('"이대로 초대" beside the list of Friends', () => {
 });
 
 // Partitions: a press on each kind of control while the reply is held back, and a second press.
-describe('"이대로 초대" on its way', () => {
-  it('waits while the reply is held back, the controls and the swipe take nothing, and a second press sends nothing', async () => {
+describe('"만들고 초대 보내기" on its way', () => {
+  it('waits while the reply is held back, the band and the marks take nothing, and a second press sends nothing', async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST, afterMs: HELD_MS });
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
 
-    await user.press(card().getByRole('button', { name: INVITE }));
+    await user.press(beside().getByRole('button', { name: INVITE }));
 
-    const waiting = card().getByRole('button', { name: '보내는 중이에요' });
+    const waiting = beside().getByRole('button', { name: '보내는 중이에요' });
     expect(waiting).toBeDisabled();
-    expect(card().getByRole('button', { name: '김민수 빼기' })).toBeDisabled();
-    expect(card().getByRole('button', { name: '301동에서' })).toBeDisabled();
-    expect(card().getByRole('button', { name: '다음 후보' })).toBeDisabled();
     expect(screen.getByRole('adjustable', { name: '시작 시각' })).toBeDisabled();
-    await swipe('plan-swipe', { fromX: 200, dx: -60 });
-    expect(card().getByText('1/5')).toBeVisible();
+    await user.press(map().getByLabelText('민수'));
+    expect(screen.queryByTestId('mark-card')).toBeNull();
+    await user.press(map().getByLabelText(SECOND));
+    expect(mapThings()).toContain(PICK);
     await user.press(waiting);
     await pass(HELD_MS);
 

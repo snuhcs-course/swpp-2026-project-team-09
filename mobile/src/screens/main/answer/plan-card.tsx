@@ -7,157 +7,61 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
+import { type ReactElement, type ReactNode, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import type { AnswerLine, AnswerReply, ConditionChip } from '@/api/assistant-types';
 import type { AnswerOffer } from '@/api/refusal-types';
-import { Button, color, Icon, size, space, text } from '@/design-system';
-import { chipsWhileMoved, movingWords } from '@/features/assistant/band-move';
-import { peopleOf } from '@/features/assistant/plan-input';
+import { Button, color, space, text } from '@/design-system';
+import { movingWords } from '@/features/assistant/band-move';
 import { easedFromNow } from '@/features/assistant/relaxed-plan';
 import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
+import { ChatMarkdown } from '../chat-markdown';
 import { useOpenFriendProfile } from '../friend-profile';
 import { AnswerLines } from './answer-lines';
 import { CardNote } from './card-note';
-import { ConditionChips, type CornerAction } from './condition-chips';
+import { ConditionChips } from './condition-chips';
 import { FriendChoices } from './friend-choices';
 import { MainButtons } from './main-buttons';
+import { PlanStepper } from './plan-stepper';
 import { RelaxButtons } from './relax-buttons';
 import { RowFourButtons } from './row-four-buttons';
 import { type BandFocus, type Corrections, useCorrections } from './use-corrections';
 import { addNameOf, whoOf } from './who-words';
 
-// The arrows are as high as the buttons beside them, and their touch area reaches the design system's minimum.
-const ARROW = 40;
-const ARROW_SLOP = (size.touchMin - ARROW) / 2;
 const UNDO_WIDTH = 96;
-// The count stands in a box of its own, so that it never moves. Wide enough for "11/11": the main server answers a
-// meal with up to eleven Plans.
-const COUNT_WIDTH = 44;
-// A swipe begins only on a sideways move, so that the card still scrolls up and down, and counts from this far.
-const SWIPE_STARTS = 10;
-const SWIPE_COUNTS = 48;
-// The card's lines while the list of Friends is open, in place of the Plan's: who comes (`whoOf`). The map takes a
-// press on a face only while a Plan is drawn, so without one the second line says how the list is sorted.
+// The card's lines while the list of Friends is open: who comes (`whoOf`). The map takes a press on a face only while
+// a Plan is drawn, so without one the second line says how the list is sorted.
 const HOW: AnswerLine = [{ text: '지도의 얼굴을 누르거나 아래에서 골라요', strong: false }];
 const HOW_WITHOUT_PLAN: AnswerLine = [{ text: '가까운 친구부터 보여요', strong: false }];
 
-// The answer's lines, which a swipe to the left turns to the next Plan and one to the right to the previous, as the
-// arrows do.
-function SwipedLines({
-  shown,
-  count,
-  lines,
-  busy,
-}: {
-  shown: ShownAnswer;
-  count: number;
-  lines: readonly AnswerLine[];
-  busy: boolean;
-}): ReactElement {
-  const { browse, adding } = shown;
-  const pan = useMemo(
-    () =>
-      Gesture.Pan()
-        .withTestId('plan-swipe')
-        .runOnJS(true)
-        .enabled(!busy && !adding && count > 1)
-        .activeOffsetX([-SWIPE_STARTS, SWIPE_STARTS])
-        .failOffsetY([-SWIPE_STARTS, SWIPE_STARTS])
-        .onEnd(({ translationX }) => {
-          if (Math.abs(translationX) >= SWIPE_COUNTS) {
-            browse(translationX < 0 ? 1 : -1);
-          }
-        }),
-    [browse, busy, adding, count],
-  );
-  return (
-    <GestureDetector gesture={pan}>
-      <View collapsable={false}>
-        <AnswerLines lines={lines} />
-      </View>
-    </GestureDetector>
-  );
-}
-
-// "‹" or "›" at an end of the steps' row: a round button that is easy to press.
-function Arrow({ next, disabled, onPress }: { next: boolean; disabled: boolean; onPress: () => void }): ReactElement {
-  return (
-    <Pressable
-      accessibilityLabel={next ? '다음 후보' : '이전 후보'}
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      hitSlop={ARROW_SLOP}
-      onPress={onPress}
-      style={({ pressed }) => [styles.arrow, pressed && styles.pressed]}
-    >
-      <Icon color={disabled ? color.inkMuted : color.ink} name={next ? 'chevronRight' : 'chevronLeft'} size={20} />
-    </Pressable>
-  );
-}
-
 interface StepsProps {
   shown: ShownAnswer;
-  count: number;
   busy: boolean;
-  // Null for a Plan of the User alone, which has no "이대로 초대".
-  invitation: PlanInvitation | null;
   // The screens the answer offers for an input that was missing.
   offers: readonly AnswerOffer[];
   // "처음으로" back to 지금, null for none.
   back: (() => void) | null;
-  // "여기로" for a meal's Plan of the User alone, null for none.
-  here: (() => void) | null;
 }
 
-// The arrows at the row's two ends when the answer has more than one Plan, the count right before "›", and the
-// middle from the start: "되돌리기" at a fixed width while a drag is kept, then "이대로 초대" for a Plan with a Friend or
-// "여기로" for a meal's Plan alone, then the answer's offers.
-function Steps({ shown, count, busy, invitation, offers, back, here }: StepsProps): ReactElement | null {
-  const { index, browse, ghost, undo } = shown;
-  const arrows = count > 1;
-  if (ghost === null && !arrows && invitation === null && offers.length === 0 && back === null && here === null) {
+// "되돌리기" at a fixed width while a drag is kept, then "처음으로" and the answer's offers. The main button stands beside
+// the input (`planActionOf`), and other candidates are numbered flags on the map.
+function Steps({ shown, busy, offers, back }: StepsProps): ReactElement | null {
+  const { ghost, undo } = shown;
+  if (ghost === null && offers.length === 0 && back === null) {
     return null;
   }
   return (
     <View style={styles.steps} testID="plan-steps">
-      {arrows ? (
-        <Arrow
-          disabled={busy}
-          next={false}
-          onPress={() => {
-            browse(-1);
-          }}
-        />
-      ) : null}
-      <View style={styles.middle}>
-        {ghost === null ? null : (
-          <View style={styles.undo}>
-            <Button disabled={busy} full onPress={undo} variant="secondary">
-              되돌리기
-            </Button>
-          </View>
-        )}
-        <MainButtons back={back} busy={busy} here={here} invitation={invitation} offers={offers} />
-      </View>
-      {arrows ? (
-        <Text numberOfLines={1} style={styles.count} testID="plan-count">
-          {`${index + 1}/${count}`}
-        </Text>
-      ) : null}
-      {arrows ? (
-        <Arrow
-          disabled={busy}
-          next
-          onPress={() => {
-            browse(1);
-          }}
-        />
-      ) : null}
+      {ghost === null ? null : (
+        <View style={styles.undo}>
+          <Button disabled={busy} full onPress={undo} variant="secondary">
+            되돌리기
+          </Button>
+        </View>
+      )}
+      <MainButtons back={back} busy={busy} here={null} invitation={null} offers={offers} />
     </View>
   );
 }
@@ -168,7 +72,7 @@ interface CardProps {
   invitation: PlanInvitation;
   // How high the card may stand before it scrolls, null until it is known.
   room: number | null;
-  // A refusal's lines, which stand in place of the Plan's first (board n8b).
+  // A refusal's lines, which keep the Plan on screen (board n8b).
   over?: readonly AnswerLine[];
 }
 
@@ -178,7 +82,7 @@ interface BelowProps extends CardProps {
   onProfile: ((userId: string) => void) | null;
 }
 
-// Under the lines: the list of Friends while it is open, else the answer's note and the steps. The Plan's band is the
+// Under the line: the list of Friends while it is open, else the answer's note and the steps. The Plan's band is the
 // time bar's, under the pill.
 function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowProps): ReactElement {
   const { plan } = shown;
@@ -195,10 +99,6 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
       />
     );
   }
-  // A new party is posted with "이대로 모집", its friends invited or not.
-  const invitable = plan !== null && answer.input.kind !== 'new-quest' && peopleOf(answer.input).length > 1;
-  // A meal's Plan of the User alone is taken with "여기로", the same press (P05-14).
-  const alone = plan !== null && answer.input.kind === 'meal' && peopleOf(answer.input).length === 1;
   return (
     <>
       <CardNote note={answer.note} />
@@ -206,119 +106,155 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
       <Steps
         back={plan !== null && easedFromNow(answer.input) ? fix.back : null}
         busy={busy}
-        count={answer.plans.length}
-        here={alone ? invitation.invite : null}
-        invitation={invitable ? invitation : null}
         offers={answer.offers ?? []}
         shown={shown}
       />
+      <PlanStepper busy={busy} shown={shown} />
       <RowFourButtons busy={busy} invitation={invitation} shown={shown} />
     </>
   );
 }
 
-// What stands at the right of the chips' first line: "그대로" while the list of Friends is open, else "근거" for a
-// Plan, which has a basis to open.
-function cornerOf({ plan, basisOpen, toggleBasis }: ShownAnswer, fix: Corrections): CornerAction | null {
-  if (fix.adding) {
-    return { words: '그대로', icon: null, onPress: fix.toggleAdding };
+// The lines a Plan's card says, which the map cannot: who comes while the list of Friends is open, a refusal's lines
+// over the Plan it keeps, who cannot come while the band is moved over their busy stretch, and why there is no Plan.
+// None otherwise: where, when, who, and the way are on the map and the time bar.
+export function linesOf(
+  { plan, moving }: Pick<ShownAnswer, 'plan' | 'moving'>,
+  answer: AnswerReply,
+  adding: boolean,
+  over: readonly AnswerLine[] = [],
+): readonly AnswerLine[] {
+  if (adding) {
+    return [whoOf(answer.input.kind), plan === null ? HOW_WITHOUT_PLAN : HOW];
   }
-  if (plan === null) {
+  if (over.length > 0) {
+    return over;
+  }
+  const words = plan === null || moving === null ? null : movingWords(plan.band.lanes, moving);
+  return words?.lines ?? (plan === null ? (answer.noPlan?.lines ?? []) : []);
+}
+
+// The line, which a press opens to the reply's whole words under it and closes again; without words to open, it
+// takes no press.
+function Said({ lines, said }: { lines: readonly AnswerLine[]; said: string }): ReactElement | null {
+  const [open, setOpen] = useState(false);
+  if (lines.length === 0) {
     return null;
   }
-  return basisOpen
-    ? { words: '근거 접기', icon: 'chevronUp', onPress: toggleBasis }
-    : { words: '근거', icon: 'chevronRight', onPress: toggleBasis };
+  if (said === '') {
+    return <AnswerLines lines={lines} />;
+  }
+  return (
+    <Pressable
+      accessibilityLabel={`${lines.map((line) => line.map(({ text: words }) => words).join('')).join(' ')}, ${open ? '접기' : '전체 보기'}`}
+      accessibilityRole="button"
+      accessibilityState={{ expanded: open }}
+      onPress={() => {
+        setOpen(!open);
+      }}
+      style={styles.said}
+    >
+      <AnswerLines lines={lines} />
+      {open ? <ChatMarkdown style={styles.words} text={said} /> : null}
+    </Pressable>
+  );
+}
+
+// Whether the Plan's card has nothing to read: no line, step, relax button, or the buttons of events and parties. Then
+// the frame docks it: one row with the input and the main button, and the chips "＋ 같이", "지난 답 N개", and the note
+// when they show.
+export function planCardRests(
+  shown: Pick<ShownAnswer, 'plan' | 'ghost' | 'adding' | 'moving'>,
+  answer: AnswerReply,
+  over: readonly AnswerLine[],
+): boolean {
+  const { plan, ghost, adding, moving } = shown;
+  const { kind } = answer.input;
+  // One form for the whole drag of the band: open, since its lines may come and go under the finger.
+  return (
+    plan !== null &&
+    !adding &&
+    ghost === null &&
+    moving === null &&
+    linesOf(shown, answer, false, over).length === 0 &&
+    !easedFromNow(answer.input) &&
+    (answer.offers ?? []).length === 0 &&
+    (kind === 'meal' || kind === 'meet')
+  );
+}
+
+// The chips of the Plan's people whom the scene draws no face for, those whose position is unknown ("민수 · 자리
+// 모름"): their chip keeps their profile and their ✕, since the map has no face to press.
+export function facelessChips(answer: AnswerReply, { plan }: Pick<ShownAnswer, 'plan'>): ConditionChip[] {
+  const drawn = new Set((plan?.scene.people ?? []).map(({ userId }) => userId));
+  return answer.chips.filter(({ kind, userId }) => kind === 'person' && userId !== null && !drawn.has(userId));
 }
 
 interface PlanCardProps extends CardProps {
   onClose: () => void;
   focus: BandFocus;
+  // The model's words of the reply, which the line opens.
+  said?: string;
+  // Docked: the card is its chips' row alone, these chips after "＋ 같이"; the note is one of them.
+  dock?: ReactNode;
 }
 
-// While the band is moved over someone's busy stretch, the lines say who cannot come and why.
-export function linesOf({ plan, moving }: ShownAnswer, answer: AnswerReply, adding: boolean): readonly AnswerLine[] {
-  if (adding) {
-    return [whoOf(answer.input.kind), plan === null ? HOW_WITHOUT_PLAN : HOW];
-  }
-  const words = plan === null || moving === null ? null : movingWords(plan.band.lanes, moving);
-  return words?.lines ?? plan?.lines ?? answer.noPlan?.lines ?? [];
-}
-
-// The answer on screen in the answer frame's card: its condition chips with "근거" at the right of their first line,
-// the Plan's two lines or those that say why there is none, the basis while open, and the steps.
-// While the list of Friends to add is open, the lines ask who comes, "그대로" closes the list, and the list stands in
-// place of the steps. Each chip, a Friend chosen, and a drop of the band ask for a recalculation, and
-// none takes a press while a recalculation or "이대로 초대" is on its way; the ✕ of a meet's only Friend closes the
-// answer (`onClose`, as the frame's ✕) and goes back to that Friend's card. A Friend's chip and the mark of a Friend's
-// cell open the Friend's profile over the card.
-export function PlanCard({ shown, answer, invitation, room, over = [], onClose, focus }: PlanCardProps): ReactElement {
-  const { plan, basisOpen, recalculating } = shown;
-  const busy = recalculating || invitation.sending;
+// The answer on screen in the answer frame's card, with no text of its own by default: "＋ 같이" while the Plan can
+// take a Friend whose face is not on the map, the line when the map cannot say it (`linesOf`), the note, and the steps. While the list of
+// Friends to add is open, the line asks who comes, "그대로" closes the list, and the list stands in place of the steps.
+// A Friend chosen and a drop of the band ask for a recalculation, and none takes a press while a recalculation or
+// "이대로 초대" is on its way. The Plan's people, its start, its place, and its time are changed on the map and the
+// time bar.
+export function PlanCard(props: PlanCardProps): ReactElement {
+  const { shown, answer, invitation, room, over = [], onClose, focus, said = '', dock } = props;
+  const busy = shown.recalculating || invitation.sending;
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const openProfile = useOpenFriendProfile();
-  const own = linesOf(shown, answer, fix.adding);
-  const lines = fix.adding ? own : [...over, ...own.slice(over.length)];
+  const corner = fix.adding ? { words: '그대로', icon: null, onPress: fix.toggleAdding } : null;
+  // While the Plan can take more people: the map does not draw every Friend's face (one near the answer's own marks
+  // gives way), so the + on a face is not enough.
+  const addName = fix.adding || fix.choices.length > 0 ? addNameOf(answer.input.kind) : null;
+  const faceless = facelessChips(answer, shown);
+  const docked = dock !== undefined;
   return (
     <View style={styles.plan}>
-      <ConditionChips
-        adding={fix.adding}
-        {...chipsWhileMoved(answer.chips, shown.moving)}
-        corner={cornerOf(shown, fix)}
-        disabled={busy}
-        friendIds={fix.friendIds}
-        addName={addNameOf(answer.input.kind)}
-        fixed={bandIsFixed(answer.input.kind)}
-        onAdd={fix.toggleAdding}
-        onOrigin={fix.chooseOrigin}
-        onProfile={openProfile}
-        onRemove={fix.remove}
-        onUntil={fix.focusUntil}
-      />
-      <SwipedLines busy={busy} count={answer.plans.length} lines={lines} shown={shown} />
-      {plan !== null && basisOpen && !fix.adding ? (
-        <View style={styles.basis}>
-          {plan.basis.map((line) => (
-            <Text key={line} style={styles.basisLine}>
-              {line}
-            </Text>
-          ))}
-        </View>
-      ) : null}
-      <Below
-        answer={answer}
-        busy={busy}
-        fix={fix}
-        invitation={invitation}
-        onProfile={openProfile}
-        room={room}
-        shown={shown}
-      />
+      {addName === null && corner === null && faceless.length === 0 && !docked ? null : (
+        <ConditionChips
+          adding={fix.adding}
+          addName={addName}
+          chips={faceless}
+          corner={corner}
+          disabled={busy}
+          extra={dock}
+          fixed={bandIsFixed(answer.input.kind)}
+          friendIds={fix.friendIds}
+          onAdd={fix.toggleAdding}
+          onOrigin={fix.chooseOrigin}
+          onProfile={openProfile}
+          onRemove={fix.remove}
+          onUntil={fix.focusUntil}
+        />
+      )}
+      {docked ? null : <Said lines={linesOf(shown, answer, fix.adding, over)} said={said} />}
+      {docked ? null : (
+        <Below
+          answer={answer}
+          busy={busy}
+          fix={fix}
+          invitation={invitation}
+          onProfile={openProfile}
+          room={room}
+          shown={shown}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   plan: { gap: space[3] },
-  basis: { gap: space[1] },
-  basisLine: { ...text.body, color: color.inkMuted },
+  said: { gap: space[2] },
+  words: { ...text.body, color: color.ink },
   steps: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  arrow: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: ARROW,
-    height: ARROW,
-    borderRadius: ARROW / 2,
-    backgroundColor: color.surfaceSunken,
-  },
-  pressed: { opacity: 0.85 },
-  middle: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[2] },
   undo: { width: UNDO_WIDTH },
-  count: {
-    ...text.label,
-    width: COUNT_WIDTH,
-    color: color.ink,
-    textAlign: 'center',
-    fontVariant: ['tabular-nums'],
-  },
 });

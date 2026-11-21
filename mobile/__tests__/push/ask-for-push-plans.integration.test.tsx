@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Platform } from 'react-native';
@@ -26,7 +27,7 @@ import { ASKER, EVENTS_REPLY, firstPlan, NEW_QUEST_REPLY, POSTED, sayOnMap } fro
 import { answerMainScreen, askMainServer, PHONE_NOW } from '../support/server';
 
 // The sheet that asks about push (board t17) after a Plan of the answer frame is made into a Quest (P02 ticket 30):
-// "이대로 초대" of a meal, "이대로 모집" of a new party, and "여기로" of an event (P03 ticket 15), as after a booking of the library, against the fake main
+// "만들고 초대 보내기" of a meal, "만들고 모집하기" of a new party, and "여기로" of an event (P03 ticket 15), as after a booking of the library, against the fake main
 // server with the real push wrapper over a mocked `expo-notifications`.
 
 jest.mock('expo-location');
@@ -74,11 +75,11 @@ function sheetShown(): boolean {
 
 // Partitions: a meal's Quest made; a new party posted; an event taken alone.
 describe('the sheet after a Plan made into a Quest', () => {
-  it('shows after "이대로 초대", and 알림 받기 asks and registers', async () => {
+  it('shows after "만들고 초대 보내기", and 알림 받기 asks and registers', async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(card().getByRole('button', { name: '이대로 초대' }));
+    await user.press(screen.getByRole('button', { name: '만들고 초대 보내기' }));
     await pass(500);
 
     expect(screen.getByRole('header', { name: QUESTION })).toBeVisible();
@@ -88,11 +89,11 @@ describe('the sheet after a Plan made into a Quest', () => {
     expect(server.received(REGISTER).map(({ body }) => body)).toEqual([{ token: PHONE_TOKEN }]);
   });
 
-  it('shows after "이대로 모집"', async () => {
+  it('shows after "만들고 모집하기"', async () => {
     server.on('POST /plans', { status: 201, body: POSTED });
     const user = await sayOnMap(server, '새로 모집', NEW_QUEST_REPLY);
 
-    await user.press(card().getByRole('button', { name: '이대로 모집' }));
+    await user.press(card().getByRole('button', { name: '만들고 모집하기' }));
     await pass(500);
 
     expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
@@ -118,7 +119,7 @@ describe('no sheet after a Plan made into a Quest', () => {
     server.on('POST /plans', { status: 500, body: { statusCode: 500, message: 'Internal' } });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(card().getByRole('button', { name: '이대로 초대' }));
+    await user.press(screen.getByRole('button', { name: '만들고 초대 보내기' }));
     await pass(500);
 
     expect(sheetShown()).toBe(false);
@@ -129,7 +130,7 @@ describe('no sheet after a Plan made into a Quest', () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(card().getByRole('button', { name: '이대로 초대' }));
+    await user.press(screen.getByRole('button', { name: '만들고 초대 보내기' }));
     await pass(500);
 
     expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();

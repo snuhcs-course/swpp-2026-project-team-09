@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -22,7 +23,8 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // "여기면 어때?" (P02 ticket 26) against the fake main server: the stored answer to "배고파" with 민수 and 지은 (its first
 // Plan 학생회관식당 12:33–12:55, 22 minutes together) on screen, and a building pressed over it, which the main server
-// answers with its real replies of boards a7 (자하연식당 fits) and a8 (301동식당 does not).
+// answers with its real replies of boards a7 (자하연식당 fits) and a8 (301동식당 does not). The Plan on screen is read
+// from the pick's flag (P04 ticket 04).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -157,7 +159,7 @@ describe('a pressed Place that fits (a7)', () => {
     await pass(500);
 
     expect(screen.queryByText('여기면 어때?')).toBeNull();
-    expect(card().getByText('12:35 자하연식당 2층')).toBeVisible();
+    expect(mapThings()).toContain('자하연식당 2층 · 12:35 점심');
     expect(recalculations(server)).toHaveLength(2);
   });
 });
@@ -180,7 +182,7 @@ describe('a pressed Place that does not fit (a8)', () => {
 async function expectPlanBack(): Promise<void> {
   await pass(500);
   expect(screen.queryByText('여기면 어때?')).toBeNull();
-  expect(card().getByText('12:33 학생회관식당')).toBeVisible();
+  expect(mapThings()).toContain('학생회관식당 · 12:33 점심');
   expect(within(screen.getByTestId('answer-pill')).queryByText('자하연식당 2층')).toBeNull();
   expect(recalculations(server)).toHaveLength(1);
 }

@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -44,8 +45,7 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 const ASKED = '배고파, 민수랑 같이';
 const REPLY = '셔틀 두 대가 정문과 자연대에 있어요.';
 const TEXT_REPLY = { text: REPLY, mapButtons: ['shuttle'], cards: [], proposal: null };
-// The first Plan's headline, and a mark of it on the map.
-const PLAN_LINE = '점심 12:15 302동식당';
+// A mark of the first Plan on the map.
 const PLAN_MARK = '302동식당 · 12:15 점심';
 // Named "이전 답, 새 답 있음" while it holds a reply not yet seen.
 const EARLIER = /^이전 답/u;
@@ -106,6 +106,14 @@ function sentWith(messages: object[]): unknown {
   return expect.objectContaining({ messages });
 }
 
+// The Plan's turn on screen: its mark on the map and its main button beside the input (P04 ticket 04).
+function expectPlanShown(): void {
+  expect(screen.getByLabelText(PLAN_MARK)).toBeOnTheScreen();
+  expect(
+    within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' }),
+  ).toBeVisible();
+}
+
 function expectHidden(): void {
   expect(screen.queryByTestId('answer-pill')).toBeNull();
   expect(screen.queryByTestId('answer-card')).toBeNull();
@@ -122,7 +130,7 @@ describe('leaving the frame', () => {
     expectHidden();
     await user.press(screen.getByRole('button', { name: EARLIER }));
     expect(pill().getByText(ASKED)).toBeVisible();
-    expect(card().getByText(PLAN_LINE)).toBeVisible();
+    expectPlanShown();
     expect(screen.queryByRole('button', { name: EARLIER })).toBeNull();
   });
 
@@ -133,7 +141,7 @@ describe('leaving the frame', () => {
 
     expectHidden();
     await user.press(screen.getByRole('button', { name: EARLIER }));
-    expect(card().getByText(PLAN_LINE)).toBeVisible();
+    expectPlanShown();
   });
 
   it('hides it with a map button, which turns its layer on', async () => {

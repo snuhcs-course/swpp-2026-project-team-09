@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -17,8 +18,9 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // The open list of Friends to add (fix 2 of the design review of 2026-11-15, as its decision sets it), over the stored
-// answer to "배고파, 민수랑 같이": the question becomes the card's two lines, "그대로" takes the place of "근거" at the
-// right of the chips' first line and closes the list, and the band, the steps, "닫기", and the input give way.
+// answer to "배고파, 민수랑 같이": the question becomes the card's two lines, "그대로" stands at the right of the chips'
+// first line and closes the list, and the band, the steps, "닫기", and the input give way. Closed, the card says
+// nothing the map says, and the main button stands beside the input again (P04 ticket 04).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -74,18 +76,18 @@ describe('the open list of Friends', () => {
     expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
   });
 
-  it("closes with 그대로, and brings back the Plan's lines, 근거, the steps, and the input", async () => {
+  it('closes with 그대로, and brings back the input with the main button beside it', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
     await user.press(card().getByRole('button', { name: ADD }));
 
     await user.press(card().getByRole('button', { name: '그대로' }));
 
-    expect(card().getByText(FIRST_PLAN)).toBeVisible();
+    expect(card().queryByTestId('answer-lines')).toBeNull();
     expect(card().queryByText('누구와 같이 먹을까요?')).toBeNull();
-    expect(card().getByRole('button', { name: '근거' })).toBeVisible();
-    expect(card().getByTestId('plan-steps')).toBeVisible();
     expect(card().queryByTestId('choice-grid')).toBeNull();
     expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
+    const beside = within(screen.getByTestId('ai-input-beside'));
+    expect(beside.getByRole('button', { name: '만들고 초대 보내기' })).toBeVisible();
   });
 });
 

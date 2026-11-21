@@ -4,9 +4,10 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import type { ConditionChip } from '@/api/assistant-types';
 import { color, Icon, radius, size, space, text } from '@/design-system';
@@ -42,6 +43,8 @@ interface ConditionChipsProps {
   addName?: string | null;
   // The where-from and time chips take no press: the answer's band is read-only.
   fixed?: boolean;
+  // More chips after "＋ 같이": the docked card's (`DockChip`).
+  extra?: ReactNode;
 }
 
 const CHIP_HEIGHT = 34;
@@ -211,6 +214,7 @@ export function ConditionChips(props: ConditionChipsProps): ReactElement {
           ),
         )}
         {addName === null ? null : <AddChip adding={adding} disabled={disabled} name={addName} onAdd={on.onAdd} />}
+        {props.extra}
       </View>
       {corner === null ? null : (
         <Pressable

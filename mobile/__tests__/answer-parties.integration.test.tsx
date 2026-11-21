@@ -93,7 +93,6 @@ describe("a recruiting parties' answer (board Join 1)", () => {
   it('draws the party the User can reach, its two buttons, the dropped party with its reason, and no "＋ 같이"', async () => {
     await sayOnMap(server, ASKED, QUESTS_REPLY);
 
-    expect(card().getByText('18:00 체육관 · 17:43에 나서요')).toBeVisible();
     expect(card().getByRole('button', { name: '참여하기' })).toBeEnabled();
     expect(card().getByRole('button', { name: '새로 모집' })).toBeEnabled();
     expect(card().queryByRole('button', { name: /친구 추가/u })).toBeNull();
@@ -101,12 +100,13 @@ describe("a recruiting parties' answer (board Join 1)", () => {
     expect(mapThings()).toEqual(expect.arrayContaining(['나 · 17분', '배드민턴 한 게임 · 18:00 배드민턴 한 게임']));
   });
 
-  it("draws a Friend's party first, as the main server orders it", async () => {
-    await sayOnMap(server, ASKED, { ...QUESTS_REPLY, answer: WITH_MIN_SU });
+  it("shows a Friend's party first, as the main server orders it", async () => {
+    const user = await sayOnMap(server, ASKED, { ...QUESTS_REPLY, answer: WITH_MIN_SU });
 
-    expect(card().getByText('14:20 문화관 파티에')).toBeVisible();
-    expect(card().getByText('민수가 있어요')).toBeVisible();
-    expect(card().getByTestId('plan-count')).toHaveTextContent('1/2');
+    await user.press(card().getByRole('button', { name: '참여하기' }));
+    await pass(500);
+
+    expect(shownAddress()).toBe(`/post/${MIN_SU_PARTY.id}`);
   });
 });
 
@@ -173,6 +173,6 @@ describe('"새로 모집" on a party\'s Plan', () => {
         location: ON_CAMPUS,
       },
     ]);
-    expect(card().getByRole('button', { name: '이대로 모집' })).toBeEnabled();
+    expect(card().getByRole('button', { name: '만들고 모집하기' })).toBeEnabled();
   });
 });

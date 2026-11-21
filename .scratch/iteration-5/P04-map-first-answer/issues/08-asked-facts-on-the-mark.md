@@ -2,9 +2,9 @@
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
-Blocked by: [02](02-flag-says-what-and-when.md) for the attached card, [05](05-lookups-and-words-one-line.md) for the bottom.
+Blocked by: [02](02-flag-says-what-and-when.md) for the attached card, [05](05-lookups-and-words-one-line.md) for the bottom. The data comes from P05: the restaurant card's `hours` (P05-12), an event Plan's own times `Plan.event` (P05-05), and a menu Lookup's `Lookup.menu`; each is optional in the app, so this ticket draws what has arrived.
 
-Native files: none. Releases: an app OTA update and the main server.
+Native files: none. Releases: an app OTA update only.
 
 ## What to build
 
@@ -17,7 +17,6 @@ A menu, a price, opening hours, and an event's name with its start and end are r
 
 ## What changes
 
-- Main server: the restaurant card gains `hours` of its meal and day (null when none is kept). The app reads it as optional, so either side can land first.
 - App: scenes made for restaurant and event cards (Place positions from the list of Places; an event's place), flags with their words, and attached cards with the menu or the event's details and its existing buttons (파티 만들기, 같이 갈 파티).
 
 ## Must not break
@@ -29,6 +28,5 @@ A menu, a price, opening hours, and an event's name with its start and end are r
 
 - [ ] A menu reply for 학생회관식당: its flag shows the lunch hours; a tap shows each dish with its price. (Integration test.)
 - [ ] An event reply: the first event's flag shows its name and "19:30–21:00"; the others are numbered flags; the bar shows the event's time. (Integration test.)
-- [ ] The restaurant card carries the hours kept for its meal, and null without them. (Main server integration test.)
 - [ ] A menu and an event on a phone with the mock build. (Emulator.)
-- [ ] No native file changes; lint, format, and types pass on the app and the main server.
+- [ ] No native file changes; lint, format, and types pass on the app.

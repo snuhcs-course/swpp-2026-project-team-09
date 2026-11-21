@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -235,8 +236,7 @@ describe('a Plan that leaves the screen', () => {
 
     await user.press(screen.getByRole('button', { name: '후보 3 · 학생회관식당' }));
     await pass(500);
-    await user.press(screen.getByRole('button', { name: '이전 후보' }));
-    await user.press(screen.getByRole('button', { name: '이전 후보' }));
+    await user.press(screen.getByRole('button', { name: '후보 1 · 302동식당' }));
     await pass(500);
 
     expect(server.received(WALKING_ROUTE).filter((request) => endsAt(request, RESTAURANT))).toHaveLength(2);

@@ -3,16 +3,16 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
-import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
-import { askOnMap, card } from './support/answer-map';
-import { drag, handle, layBand, recalculations, step } from './support/answer-correct';
+import { askOnMap, card, mapThings } from './support/answer-map';
+import { drag, layBand, recalculations, step } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS } from './support/main';
@@ -21,7 +21,8 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // The time band of the card (P02 ticket 03, "A drag" and "After a drag"), over the stored answer to "배고파, 민수랑
 // 같이", whose first Plan runs from 12:15 to 12:43, and the stored answer with the start fixed at 12:40, whose first
-// Plan is "12:40 학생회관식당" from 12:40 to 12:59. The band's track is laid 240 wide, two points a minute.
+// Plan is "12:40 학생회관식당" from 12:40 to 12:59. The band's track is laid 240 wide, two points a minute. The Plan
+// shown is read from the pick's flag (P04 ticket 04).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -106,8 +107,7 @@ describe('after a drag', () => {
 
     await step('from', 'increment');
 
-    expect(card().getByText('12:40 학생회관식당')).toBeVisible();
-    expect(card().getByText('1/2')).toBeVisible();
+    expect(mapThings()).toContain('학생회관식당 · 12:40 점심');
     // 302동식당 is no candidate of the fixed start's answer: it does not fit, with its reason.
     expect(screen.queryByRole('button', { name: /302동식당/u })).toBeNull();
     expect(screen.getByLabelText('302동식당 · 3분밖에 못 있어요')).toBeOnTheScreen();
@@ -121,49 +121,9 @@ describe('after a drag', () => {
     await user.press(card().getByRole('button', { name: '되돌리기' }));
     await pass(500);
 
-    expect(card().getByText('12:15 302동식당')).toBeVisible();
-    expect(card().getByText('1/5')).toBeVisible();
+    expect(mapThings()).toEqual(expect.arrayContaining(['302동식당 · 12:15 점심', '후보 5 · 자하연식당 2층']));
     expect(screen.queryByTestId('time-band-ghost')).toBeNull();
     expect(card().queryByRole('button', { name: '되돌리기' })).toBeNull();
     expect(recalculations(server)).toHaveLength(1);
-  });
-});
-
-// Partitions: the time chip pressed, the while after it, a press anew within it, and a press while the list of
-// Friends is open.
-describe('the time chip', () => {
-  it('puts the focus on the end handle for a while and sends nothing', async () => {
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-
-    await user.press(card().getByRole('button', { name: '13:00 수업까지' }));
-
-    expect(handle('until')).toHaveStyle({ borderColor: color.focusRing });
-    expect(handle('from')).not.toHaveStyle({ borderColor: color.focusRing });
-    expect(recalculations(server)).toEqual([]);
-    await pass(2500);
-    expect(handle('until')).not.toHaveStyle({ borderColor: color.focusRing });
-  });
-
-  it('starts the while again when it is pressed anew', async () => {
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-
-    await user.press(card().getByRole('button', { name: '13:00 수업까지' }));
-    await pass(1500);
-    await user.press(card().getByRole('button', { name: '13:00 수업까지' }));
-    await pass(1500);
-
-    expect(handle('until')).toHaveStyle({ borderColor: color.focusRing });
-    await pass(600);
-    expect(handle('until')).not.toHaveStyle({ borderColor: color.focusRing });
-  });
-
-  it('closes the list of Friends, so that the band with the end handle in focus is shown', async () => {
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: '같이 먹을 친구 추가' }));
-
-    await user.press(card().getByRole('button', { name: '13:00 수업까지' }));
-
-    expect(card().queryByRole('button', { name: '그대로' })).toBeNull();
-    expect(handle('until')).toHaveStyle({ borderColor: color.focusRing });
   });
 });
