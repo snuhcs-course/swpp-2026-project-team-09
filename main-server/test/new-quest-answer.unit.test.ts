@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type NewQuestInput } from '../src/assistant/dto/answer.dto.js';
@@ -268,7 +269,27 @@ describe('Row 5: a new badminton party with 서준', () => {
         ],
         plain('17:02에 도착해서 17:10에 모여요'),
       ],
+      // An activity has no end: "17:10–17:40 · 30분" was a length no one gave.
+      band: { text: '17:10부터' },
     });
+  });
+});
+
+// The new 파티's line carries its day when it is not today, as its flag does once the app writes it.
+describe('A new party on another day', () => {
+  it('names the day in its first line', () => {
+    const { plans } = answerOf({
+      date: THURSDAY,
+      now: onDay('2026-11-18', '20:00'),
+      at: ['체육관', '체육관'],
+      title: '배드민턴',
+      event: null,
+      time: '17:10',
+      people: [person('me', '유상', [classOn(THURSDAY, ['15:30', '16:45'], '301동')])],
+      others: [],
+    });
+
+    expect(plans[0]?.lines[0]?.[0]?.text).toBe('내일(목) 17:10 체육관');
   });
 });
 

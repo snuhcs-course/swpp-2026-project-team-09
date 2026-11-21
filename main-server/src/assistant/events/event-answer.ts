@@ -15,7 +15,7 @@ import {
 } from '../dto/answer.dto.js';
 import { clockOf, type DayItem } from '../free-time/free-time.js';
 import { withAnd } from '../gathering/answer-words.js';
-import { koreaDate, koreaTime } from '../korea-time.js';
+import { clockWithDay, koreaDate, koreaTime } from '../korea-time.js';
 import { type EventDrop, type EventPlan, type EventPlanning } from './event-fit.js';
 import {
   bandOf,
@@ -87,14 +87,14 @@ function linesOf(plan: EventPlan, naming: EventNaming): AnswerLine[] {
   if (state === 'clash' && clash !== null) {
     const first: AnswerLine = [
       { text: event.title, strong: true },
-      { text: ` · ${clockOf(start)} ${naming.eventWords(event)}`, strong: false },
+      { text: ` · ${clockWithDay(start, naming.args.now)} ${naming.eventWords(event)}`, strong: false },
     ];
     return [first, plain(`${clockOf(clash.start)} ${withAnd(itemWord(clash))} 겹쳐요`)];
   }
   if (state === 'not-started') {
     const first: AnswerLine = [
       { text: event.title, strong: true },
-      { text: ` · ${clockOf(event.start)} 시작`, strong: false },
+      { text: ` · ${clockWithDay(event.start, naming.args.now)} 시작`, strong: false },
     ];
     if (leaveAt === null || there === null) {
       return [first];
@@ -146,6 +146,7 @@ function planOf(plan: EventPlan, naming: EventNaming): Plan {
     basis: basisOf(plan, naming),
     scene: sceneOf(plan, naming),
     band: bandOf(plan, naming),
+    event: { startAt: koreaTime(event.start), endAt: timeOf(event.end) },
   };
 }
 

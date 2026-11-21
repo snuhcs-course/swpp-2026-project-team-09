@@ -5,11 +5,13 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
-import { type AnswerReply, type MealInput, type Plan, type RequestContext } from '../dto/answer.dto.js';
-import { defineTool, type Presented, type Tool } from '../feature.js';
+import { type AnswerReply, type MealInput, type Plan, type ReplyStep, type RequestContext } from '../dto/answer.dto.js';
+import { defineTool, type Presented, type Tool, type ToolContext } from '../feature.js';
+import { afterEarlierSteps } from '../steps/plan-steps.js';
 import { type FoundIds, type FoundKind } from '../found-ids.js';
 import { othersText } from '../others-text.js';
 import { mealByClock } from '../free-time/meal-fit.js';
@@ -139,6 +141,12 @@ const input = z
       .describe(
         'The Place to eat at, as resolvePlace returned it in this message, or as [Plan on screen: …] or [Tapped: place …] gives it. Left out for any.',
       ),
+    startPlaceId: z
+      .uuid()
+      .optional()
+      .describe(
+        "The Place the User sets out from for the meal, only when they name it (220동에서 출발해서), as resolvePlace returned it in this message. Left out otherwise: the server takes the place of the step before the meal in this message, else the User's previous Class or location.",
+      ),
   })
   .refine(({ from, until }) => from === undefined || until === undefined || from < until, 'Expected from before until');
 
@@ -176,6 +184,19 @@ function constraintsOf(
   return new Map(conditions.people.map(({ userId, constraints }) => [userId, constraints]));
 }
 
+// The asker's constraints with the start they named, in place of any start kept from the screen.
+function withStart(
+  kept: Map<string, MealInput['people'][number]['constraints']>,
+  askerId: string,
+  startPlaceId: string | undefined,
+): Map<string, MealInput['people'][number]['constraints']> {
+  if (startPlaceId === undefined) {
+    return kept;
+  }
+  const others = (kept.get(askerId) ?? []).filter(({ kind }) => kind !== 'from');
+  return new Map([...kept, [askerId, [...others, { kind: 'from', placeId: startPlaceId, source: 'asker' }]]]);
+}
+
 // The Place of the Restaurant the model named, refused when the seed places no Restaurant of that name; else the Place
 // it gave.
 function placeIdOf(
@@ -193,15 +214,20 @@ function placeIdOf(
   return placed;
 }
 
-export function planMeal(plans: Pick<MealPlanService, 'planned' | 'restaurantPlaceId'>): Tool {
+// `earlier`: the steps shown before the meal in this message, which it sets out from (P03).
+export function planMeal(
+  plans: Pick<MealPlanService, 'planned' | 'restaurantPlaceId'>,
+  earlier: (context: ToolContext) => readonly ReplyStep[] = () => [],
+): Tool {
   return defineTool({
     description:
       "Plans a meal for the User alone or with Friends on a day from today to a week ahead. The server decides the Restaurant, when everyone is there, how long they can eat, and where they meet on the way, the longest time together first, and the app draws the plans on the map. Answers result 'planned' with the meal and the plans in order, each with its restaurant, its menu for the meal and closesAt, start, end, togetherMinutes, meeting, and each person's way, and the Restaurants dropped, or result 'none' with the meal and the reason.",
     input,
     run: async (
-      { date, meal: named, friendIds, from, until, now: soon, restaurant, placeId },
-      { userId, now, context, found, presented },
+      { date, meal: named, friendIds, from, until, now: soon, restaurant, placeId, startPlaceId },
+      toolContext,
     ) => {
+      const { userId, now, context, found, presented } = toolContext;
       if (outOfReach(date, now)) {
         return noDay(date);
       }
@@ -210,7 +236,8 @@ export function planMeal(plans: Pick<MealPlanService, 'planned' | 'restaurantPla
       askedBy('planMeal', friendIds, found, presented);
       refuseUnseen(found, 'friend', friendIds, seen.friends);
       refuseUnseen(found, 'place', placeId === undefined ? [] : [placeId], seen.places);
-      const kept = constraintsOf(context, date, meal);
+      refuseUnseen(found, 'place', startPlaceId === undefined ? [] : [startPlaceId], []);
+      const kept = withStart(constraintsOf(context, date, meal), userId, startPlaceId);
       const planInput: MealInput = {
         kind: 'meal',
         date,
@@ -220,7 +247,8 @@ export function planMeal(plans: Pick<MealPlanService, 'planned' | 'restaurantPla
         placeId: placeIdOf(plans, restaurant, placeId),
       };
       const { location, locationMissing } = context;
-      const { answer, served } = await plans.planned(userId, planInput, { now, location, locationMissing });
+      const chained = afterEarlierSteps(planInput, earlier(toolContext));
+      const { answer, served } = await plans.planned(userId, chained, { now, location, locationMissing });
       presented.answer = answer;
       presented.lookup = null;
       presented.mapButtons.length = 0;

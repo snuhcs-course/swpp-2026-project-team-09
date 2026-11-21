@@ -141,6 +141,8 @@ export interface RestaurantCard {
     meal: 'lunch' | 'dinner';
     eatingMinutes: number;
     lines: MenuLine[];
+    // The meal's hours that day, "HH:MM"; null when none were kept. Absent from a main server before P05 ticket 12.
+    hours?: { opensAt: string; closesAt: string } | null;
     people: RestaurantTravel[];
     proposal: QuestProposal;
   };
@@ -281,6 +283,9 @@ export interface Plan {
   friendNames?: string[];
   // A new recruiting Quest's Plan: the Friends free then who are not in it, each with the line of their day.
   candidates?: { userId: string; name: string; line: string }[];
+  // A Global Event's Plan: the event's own start and end, Korea time with the offset (end null when it has none). Its
+  // startAt is the asker's arrival when the event is under way, and is never the event's time.
+  event?: { startAt: string; endAt: string | null };
 }
 
 // What the map draws, by meaning. The app decides colours, camera, and label sides.

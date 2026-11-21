@@ -5,6 +5,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -232,6 +233,17 @@ export const expectSchema = z
     // The map layers the reply's buttons show, all and only those.
     mapButtons: z.array(z.enum(['dining', 'shuttle'])).optional(),
     text: textSchema.optional(),
+    // The reply's steps, all and in order (P03): each one's kind, whether it was done, and the label of the Place it
+    // sets out from when given. Left out, the steps are not checked; an empty list is a reply with none.
+    steps: z
+      .array(
+        z.strictObject({
+          kind: z.string().min(1),
+          status: z.enum(['shown', 'not-done']),
+          from: z.string().min(1).optional(),
+        }),
+      )
+      .optional(),
     results: resultsSchema.optional(),
     // Why the Assistant does not do this yet: scored as usual, reported apart. It may also be given on the case.
     knownFailure: z.string().min(1).optional(),

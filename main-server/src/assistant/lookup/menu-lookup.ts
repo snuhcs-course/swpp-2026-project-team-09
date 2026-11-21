@@ -3,12 +3,15 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { type AnswerLine, type AnswerReply, type Lookup, type MapScene, type Plan } from '../dto/answer.dto.js';
+import { type LookupMenu } from '../dto/lookup.dto.js';
 import { type HandledMeal } from '../free-time/meal-fit.js';
 import { withTopic } from '../gathering/answer-words.js';
+import { MINUTES_SAID_MAX } from '../gathering/gathering.js';
 import { cornersOf, dishName } from '../gathering/meal-menu.js';
 import { dayWords } from '../library/library-parts.js';
 import { part } from './way-naming.js';
@@ -27,6 +30,8 @@ export interface MenuArgs {
   lines: readonly MenuLineDto[];
   // The meal Plan for the User alone at the Restaurant's Place.
   answer: AnswerReply;
+  // The meal's hours that day, as RestaurantHours keeps them; null when none were kept.
+  hours: LookupMenu['hours'];
 }
 
 export type MenuAnswer = { result: 'found'; plan: Plan; lookup: Lookup } | { result: 'none'; reason: 'no-time' };
@@ -45,19 +50,59 @@ export function dishesOf(lines: readonly MenuLineDto[]): string[] {
   return (main?.items ?? []).slice(0, DISHES_MAX).map((line) => dishName(line));
 }
 
-function linesOf({ key, date, meal, now }: MenuArgs, plan: Plan, dishes: readonly string[]): AnswerLine[] {
-  return [
-    [part(key, true), part(` ${dayWords(date, now)} ${withTopic(mealWord(meal))} ${dishes[0] ?? ''}`)],
-    [part(`${clock(plan.endAt)}까지 ${plan.togetherMinutes}분 먹을 수 있어요`)],
-  ];
+const won = (price: number): string => `${price.toLocaleString('en-US')}원`;
+
+// The dishes of the main line with their prices, "부대짬뽕&군만두 6,500원", up to DISHES_MAX.
+function pricedDishes(lines: readonly MenuLineDto[]): string[] {
+  const [main] = cornersOf(lines);
+  return (main?.items ?? [])
+    .slice(0, DISHES_MAX)
+    .map((line) => (line.price === null ? dishName(line) : `${dishName(line)} ${won(line.price)}`));
 }
 
-// The walk there, then why the meal ends: the walk on to the next item, or the end of the meal's hours.
-function basisOf({ key, meal }: MenuArgs, plan: Plan): string[] {
+// The meal's hours and the dishes of its main corner (`cornersOf`), each by its name and price, for the map's card of
+// the Restaurant. The hours are the meal counter's, not a take-out counter's, so the dishes are its own.
+function menuOf({ lines, hours }: MenuArgs): LookupMenu {
+  const [main] = cornersOf(lines);
+  return { hours, dishes: (main?.items ?? []).map((line) => ({ name: dishName(line), price: line.price })) };
+}
+
+// The first line: the Restaurant, the day and meal, the first dish with its price, and how many more are served. The
+// prices and the hours were in no line, and a User asked again for them and got the same card.
+function firstLine({ key, date, meal, now, lines }: MenuArgs): AnswerLine {
+  const [main] = cornersOf(lines);
+  const [first, ...more] = main?.items ?? [];
+  const dish =
+    first === undefined ? '' : first.price === null ? dishName(first) : `${dishName(first)} ${won(first.price)}`;
+  const rest = more.length > 0 ? ` 외 ${more.length}` : '';
+  return [part(key, true), part(` ${dayWords(date, now)} ${withTopic(mealWord(meal))} ${dish}${rest}`)];
+}
+
+// When the User can eat there: the minutes up to two hours, else from the start until they must leave for their next
+// item, or until the meal ends.
+function whenLine({ startAt, endAt, parts, togetherMinutes }: Plan): AnswerLine {
+  if (togetherMinutes <= MINUTES_SAID_MAX) {
+    return [part(`${clock(endAt)}까지 ${togetherMinutes}분 먹을 수 있어요`)];
+  }
+  const leaves = parts[0]?.leaveBy === endAt;
+  return [part(leaves ? `${clock(startAt)}부터 · ${clock(endAt)}엔 나서요` : `${clock(startAt)}–${clock(endAt)}`)];
+}
+
+function linesOf(args: MenuArgs, plan: Plan): AnswerLine[] {
+  return [firstLine(args), whenLine(plan)];
+}
+
+// The dishes with their prices, the walk there, then why the meal ends: the walk on to the next item, or the end of
+// the meal's hours. The hours are the plan's, from the hours collected, so that no line contradicts another.
+function basisOf({ key, meal, lines: menu }: MenuArgs, plan: Plan): string[] {
   const [mine] = plan.parts;
   const origin = mine?.origin ?? null;
   const walk = mine?.walkMinutes ?? 0;
-  const lines = origin !== null && walk > 0 ? [`${origin.place.label} → ${key} 걸어서 ${walk}분`] : [];
+  const priced = pricedDishes(menu);
+  const lines = [
+    ...(priced.length === 0 ? [] : [priced.join(' · ')]),
+    ...(origin !== null && walk > 0 ? [`${origin.place.label} → ${key} 걸어서 ${walk}분`] : []),
+  ];
   const leaveBy = mine?.leaveBy ?? null;
   if (leaveBy !== plan.endAt || leaveBy === null) {
     return [...lines, `${withTopic(mealWord(meal))} ${clock(plan.endAt)}까지예요`];
@@ -91,11 +136,12 @@ export function menuAnswer(args: MenuArgs): MenuAnswer {
   const lookup: Lookup = {
     kind: 'menu',
     chips: args.answer.chips,
-    lines: linesOf(args, plan, dishes),
+    lines: linesOf(args, plan),
     basis: basisOf(args, plan),
     scene: sceneOf(plan, dishes),
     band: plan.band,
     actions: [{ kind: 'guide', to: plan.place }],
+    menu: menuOf(args),
   };
   return { result: 'found', plan, lookup };
 }

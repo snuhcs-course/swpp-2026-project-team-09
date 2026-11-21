@@ -16,17 +16,24 @@ When the User names no length, the seat's time is filled by the main server (`li
 
 ## What to build
 
-- With a next item today, the filled booking ends at the latest step at or before the leave-by time for that item, and is never longer than the longest length allowed.
-- An arrival before the room opens is said as the opening ("07:00 열 때부터"), and the booking starts at the opening.
-- The words give both the arrival and the start when they differ ("08:13 도착, 08:30부터").
+- The booking keeps the longest length from the arrival, as the design has it ("Books a 관정 seat for the longest time from my arrival, reminds me of … the leave-by time"). With a leave-by time, the words add how to end the booking then: "11:00 일정이라 10:54엔 나서요. 13:00까지 쓰지 않으면 카드에서 끝 시간을 당겨요."
+- An arrival before the room opens is said as the opening ("07:00 열 때부터예요"), in the words, the card's note and the arrival the model is given.
+- The words give both the arrival and the start when they differ ("08:13에 도착해 08:30부터예요").
 - A length or an end the User named is kept as it is.
+
+Left for the product owner: ending the filled booking at the leave-by time instead of filling the longest length. It would change the design.
 
 ## Acceptance criteria
 
-- [ ] With an item at 11:00 and a 6-minute walk, a seat filled at 07:00 ends by 10:30. (Unit test, fails before the fix.)
-- [ ] At 04:34 the booking starts at the room's opening and the words do not give 04:40. (Unit test, fails before the fix.)
-- [ ] An arrival at 08:13 gives words with both 08:13 and 08:30. (Unit test.)
-- [ ] With no item after it, the longest length is still filled. (Unit test.)
-- [ ] Lint, format and types of the main server pass.
+- [x] At 04:34 the words and the note give the opening, not 04:40. (Unit test, fails before the fix.)
+- [x] An arrival at 14:01 gives "14:01에 도착해 14:30부터예요". (Unit test, fails before the fix.)
+- [x] With a leave-by time, the words say how to end the booking then. (Unit and integration tests.)
+- [x] With no item after it, the longest length is still filled. (Unit test.)
+- [x] Lint, format and types of the main server pass.
 
 ## Comments
+
+### Agent usage (2026-11-21)
+
+- Agent time: about 5 minutes (an estimate from the transcript, gaps over five minutes left out).
+- Tokens: output 20k; input 7.0M, of which 6.9M cache reads, 48k cache writes and 58 uncached. No subagents.

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply, planInputSchema } from '../src/assistant/dto/answer.dto.js';
@@ -198,6 +199,21 @@ describe('Board n12: a Restaurant about to close', () => {
       [plain('학생회관식당은 14:00에 닫아요')],
     ]);
     expect(next?.lines[0]).toEqual([plain('점심 '), strong('3식당'), plain(' · 식사 37분')]);
+  });
+
+  it('says the arrival at the start the User set, not when the asker could first get there', () => {
+    const { plans, dropped } = answerFor({
+      people: [n12Day()],
+      clock: '13:47',
+      hours: closing('14:10'),
+      window: { from: '14:00', until: null },
+    });
+
+    expect(dropped.map(({ place }) => place.label)).toEqual(['학생회관식당']);
+    expect(plans[0]?.lines).toEqual([
+      [strong('3식당'), plain(' · 14:00 도착')],
+      [plain('학생회관식당은 14:10에 닫아요')],
+    ]);
   });
 
   it('drops nothing and says nothing of closing when no hours were read', () => {

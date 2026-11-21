@@ -4,6 +4,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -187,7 +188,6 @@ describe("A Restaurant card's Proposal", () => {
     ];
 
     const response = await stage.send(...steps);
-
     expect(response.status).toBe(200);
     const { cards } = cardsSchema.parse(response.body);
     expect(cards).toEqual([
@@ -202,6 +202,7 @@ describe("A Restaurant card's Proposal", () => {
           // 12:36 + 590 s on foot is 12:45:50, which starts at 12:50, and leaves until 14:30.
           eatingMinutes: 100,
           lines: [{ text: LUNCH, kind: 'dish', name: '제육볶음', price: 6000 }],
+          hours: null,
           people: [
             { name: '나', mode: 'walk', minutes: 10, longest: true },
             { name: '최다온', mode: 'walk', minutes: 0, longest: false },

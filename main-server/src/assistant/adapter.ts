@@ -15,6 +15,7 @@
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -322,7 +323,7 @@ export async function runFeature(
             });
           },
   });
-  const reply = finishReason === 'tool-calls' ? null : replyOf(textOf(steps), finishReason, feature, context);
+  const reply = finishReason === 'tool-calls' ? null : await replyOf(textOf(steps), finishReason, feature, context);
   if (reply === null) {
     throw new NoAnswerError(`No answer within ${maxSteps} steps`);
   }
@@ -337,9 +338,15 @@ function withLine(reply: FeatureReply, messages: readonly ChatMessage[], observe
   return { ...reply, text };
 }
 
-// The reply of a run that ended: the model's text, a refusal's lines without any, the fixed sentence over what it
-// showed without either, or none.
-function replyOf(text: string, finishReason: string, feature: Feature, context: ToolContext): FeatureReply | null {
+// The reply of a run that ended, once the feature has changed what it presented: the model's text, a refusal's lines
+// without any, the fixed sentence over what it showed without either, or none.
+async function replyOf(
+  text: string,
+  finishReason: string,
+  feature: Feature,
+  context: ToolContext,
+): Promise<FeatureReply | null> {
+  await feature.afterRun?.(context);
   const presented = { ...context.presented, cards: feature.cardsAfterRun?.(context) ?? context.presented.cards };
   presented.refusal = keptRefusal(presented);
   presented.lookup = lookupBeside(presented);
