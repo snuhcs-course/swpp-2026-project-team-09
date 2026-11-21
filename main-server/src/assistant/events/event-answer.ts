@@ -146,6 +146,7 @@ function planOf(plan: EventPlan, naming: EventNaming): Plan {
     basis: basisOf(plan, naming),
     scene: sceneOf(plan, naming),
     band: bandOf(plan, naming),
+    event: { startAt: koreaTime(event.start), endAt: timeOf(event.end) },
   };
 }
 
