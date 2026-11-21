@@ -17,7 +17,15 @@ import { checkBooking, type CheckedBooking, clockOfMinutes, minutesOfClock, type
 import { KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
 import { firstOfSeveralNote } from './find-library-space.js';
 import { bookCard, type LibraryCompanion } from './library-card.js';
-import { bookableSpace, dayWords, type LibraryServices, refused, showCard, spaceIdInput } from './library-parts.js';
+import {
+  bookableSpace,
+  dayWords,
+  type LibraryServices,
+  refused,
+  showCard,
+  SIGN_IN_FIRST,
+  spaceIdInput,
+} from './library-parts.js';
 import { fillSeat, filledWords, leaveByOf, type SeatFacts, type SeatFill, seatedAt } from './seat-arrival.js';
 
 const words = (max: number): z.ZodString => z.string().trim().min(1).max(max);
@@ -107,8 +115,8 @@ function summaryOf(
   const asks = space.unit === 'room' && booking.useDesc === null ? ' 사용 용도는 카드에서 골라요.' : '';
   const when = `${dayWords(booking.date, now)} ${booking.start}–${end}`;
   const press = askedToBook
-    ? '대신 예약할 수는 없어요. 예약하기를 직접 눌러야 예약돼요.'
-    : '예약하기를 눌러야 예약돼요.';
+    ? `대신 예약할 수는 없어요. 예약하기를 직접 눌러야 예약돼요. ${SIGN_IN_FIRST}`
+    : `예약하기를 눌러야 예약돼요. ${SIGN_IN_FIRST}`;
   return `${where}, ${when}${who} 예약 카드를 보여 줬어요. ${filled}${press}${asks}`;
 }
 

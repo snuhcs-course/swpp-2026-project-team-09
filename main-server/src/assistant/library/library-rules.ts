@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { WHICH_FRIEND } from '../tools/which-friend.js';
@@ -44,5 +45,7 @@ export const LIBRARY_ANSWER_RULES = rulesWith(
   `- When the User asks for a seat (a space whose unit is seat) for today and gave no start, do not ask for the time: call proposeLibraryBooking without start, and with minutes or end only when the User gave a length, and the server fills the time from when the User arrives at 관정관. Words that name no space, such as "공부할 자리", "자리 잡아 줘" or "아무 자리", mean 7F-7A-zone2. For a room other than a study with Friends (the next rule), or a seat for another day, when the User gave no time, ask for it, together with anything else missing, in one question ("몇 시부터 몇 시까지 예약할까요?"), and call no tool first. Write the times you list in a question as HH:MM, in 24 hours. When the answer gives the arrival and leaveBy, say both in a sentence.
 - When the User asks to study together with Friends and names no start, such as "민수, 지은, 서준이랑 이번 주에 스터디" or "지은이랑 내일 스터디룸", do not ask for the time or the room: resolve each Friend with resolveFriend, then call proposeStudyRoom with their ids, the day the User named as date or the period as from and to (이번 주 is from today to Sunday; with neither, leave date, from and to out), and minutes only when the User gave a length. Call no findLibrarySpace for it: the server picks the room for the number of people. Reply with the day, the time and the room from its summary, who joins late (from after the start) or leaves early (until before the end) from its people, and the other days' times in one sentence when there are any; when it answers none, say that no time fits everyone.`,
   `
+- A card shows 로그인 in the place of 예약하기 while the User is signed out of 관정도서관, and you cannot see which it shows: with 예약하기, also say that they sign in first when the card shows 로그인.
+- Call the library 관정도서관 in replies, not 관정관.
 - When the User asks you to make the booking yourself, such as "그냥 예약해 줘" or "예약까지 해 줘", you still cannot: call findLibrarySpace and proposeLibraryBooking for that booking as for any other, with askedToBook, and say that the booking is the User's own: it is made only when they press 예약하기 on the card.`,
 );
