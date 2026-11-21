@@ -5,6 +5,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -92,6 +93,18 @@ export class SubQuestsService {
   }
 
   // As QuestsService.changeShared, and tells each other Holder who changed which step, unless the step has ended.
+  // Every Holder's time to leave was worked out for the steps as they were: one for a time that no longer holds is worse
+  // than none, and the change's own push stands in for it. Awaited, as leaving the Quest awaits it, and never failing it.
+  private async forgetTimesToLeave(holderIds: readonly string[], questId: string): Promise<void> {
+    await Promise.all(
+      holderIds.map((holderId) =>
+        this.notifications.cancel(holderId, 'leave-by', { kind: 'party', id: questId }).catch((error: unknown) => {
+          this.logger.warn(`A Holder's time to leave was not cancelled: ${String(error)}`);
+        }),
+      ),
+    );
+  }
+
   private async changeStep<T>(
     userId: string,
     questId: string,
@@ -120,6 +133,7 @@ export class SubQuestsService {
           this.logger.warn(`A Holder was not told of a changed step: ${String(error)}`);
         });
       }
+      await this.forgetTimesToLeave(holderIds, questId);
     }
     return result.result;
   }

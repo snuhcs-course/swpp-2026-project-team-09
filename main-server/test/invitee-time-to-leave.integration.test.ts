@@ -2,19 +2,22 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Logger } from '@nestjs/common';
 import request from 'supertest';
+import { z } from 'zod';
 import { type TestUser } from './friends.js';
 import { MealPlanStage, type Named } from './meal-plan.js';
 import { firstPlan, jieun, minsu, type Party, partyOf, workedExample } from './plan-quests.js';
 import { answerInvitation, endQuest, removeHolder } from './quest-recruiting.js';
-import { dropQuest } from './quests.js';
+import { dropQuest, editSubQuest, getQuest } from './quests.js';
 import { withAccessToken } from './sign-in.js';
 
 // An invited User's own time to leave, kept in GET /notifications when they accept a party made at POST /plans from
-// the design's worked example (a Tuesday at 11:50), and gone when they leave the Quest or it ends. Each test stands on
+// the design's worked example (a Tuesday at 11:50), and gone when they leave the Quest, it ends, or its step is changed
+// for a time it no longer holds for. Each test stands on
 // a Tuesday of July or August 2088, which no other file posts menus for.
 
 const stage = new MealPlanStage();
@@ -181,5 +184,32 @@ describe('Ending a party an invited User accepted', () => {
     await vi.waitFor(async () => {
       expect((await getNotifications(friend)).body).toEqual([]);
     });
+  });
+});
+
+describe('A step the Leader changes in the room', () => {
+  it('forgets every Holder’s time to leave, kept for the old time, and tells the invited User of the change', async () => {
+    const date = '2088-08-24';
+    const { questId, friend } = await minsuAccepted(date);
+    const quest = z
+      .object({ subQuests: z.array(z.object({ id: z.string() })) })
+      .parse((await getQuest(stage.app, stage.asker, questId)).body);
+    const subQuestId = quest.subQuests[0]?.id ?? '';
+
+    const edited = await editSubQuest(
+      stage.app,
+      stage.asker,
+      { questId, subQuestId },
+      { title: '학생회관식당에서 점심', startsAt: `${date}T13:00:00+09:00` },
+    );
+
+    expect(edited.status).toBe(200);
+    await vi.waitFor(async () => {
+      expect(z.array(z.object({ kind: z.string() })).parse((await getNotifications(friend)).body)).toEqual([
+        { kind: 'step-changed' },
+      ]);
+    });
+    const askers = z.array(z.object({ kind: z.string() })).parse((await getNotifications(stage.asker)).body);
+    expect(askers.map(({ kind }) => kind)).not.toContain('leave-by');
   });
 });

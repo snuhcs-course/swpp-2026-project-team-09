@@ -112,6 +112,7 @@ Every error of the usage test's list of answer errors, and where it went:
 | Found later, in use of the released app 26.11.21-2: "월요일에 밥 뭐 먹을까" asked back in text, then "한식" answered with a list of every Restaurant's dishes | Ticket 14 |
 | Found later, in use of the released app 26.11.21-3 or -4: "점심 뭐 먹지?" with a lunch already in the schedule answered that there was nowhere to go | Ticket 16 |
 | Found later: the Assistant knows nothing of the User's own Quests ("오늘 뭐 있지?", "민수랑 약속 몇 시였지?"), and a planner treats them as a wall | Ticket 17 |
+| Found later, designing ticket 17: a step changed in the room leaves every Holder's time to leave for the old time | Ticket 21 |
 | Found later (feedback 2026-11-22): a 파티 already made "changed" by proposing a second one | Ticket 18 |
 | Found later (feedback 2026-11-22): a 파티 proposed over the asker's own Class without a word, or with a Class of another day | Ticket 19 |
 | A first sentence that sounds like a failure ("…파티는 찾지 못했어요", "…열려 있는 게 없어서") | P02 ticket 01 (pull request 384) |
