@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { gather } from '../src/assistant/gathering/gathering.js';
@@ -18,8 +19,14 @@ describe("Each person's side", () => {
     const friend = person('friend', [free('12:10', '14:30', item('11:00', '12:10', 'B'), null)]);
 
     expect(gather([asker, friend], [place('cafe', 'P')], when, travel).sides).toEqual([
-      { personId: 'me', readyAt: at('12:00'), origin: { placeId: 'A', basis: 'timetable' }, next: null },
-      { personId: 'friend', readyAt: at('12:10'), origin: { placeId: 'B', basis: 'timetable' }, next: null },
+      { personId: 'me', readyAt: at('12:00'), origin: { placeId: 'A', basis: 'timetable' }, later: true, next: null },
+      {
+        personId: 'friend',
+        readyAt: at('12:10'),
+        origin: { placeId: 'B', basis: 'timetable' },
+        later: true,
+        next: null,
+      },
     ]);
   });
 
@@ -34,6 +41,7 @@ describe("Each person's side", () => {
         personId: 'me',
         readyAt: at('12:00'),
         origin: { placeId: 'A', basis: 'timetable' },
+        later: true,
         next: { start: at('12:16'), placeId: 'A' },
       },
     ]);

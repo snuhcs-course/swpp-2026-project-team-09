@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -182,7 +183,7 @@ describe('A Friend whose position is unknown', () => {
     expect(answer.plans[0]).toMatchObject({ id: '301동 앞', startAt: time('12:10'), togetherMinutes: 35 });
     expect(answer.plans[0]?.parts[1]).toMatchObject({ origin: null, walkMinutes: null, leaveAt: null });
     expect(answer.plans[0]?.scene.people.map(({ name }) => name)).toEqual(['유상']);
-    expect(answer.chips.at(-1)).toEqual({ kind: 'person', text: '하은 · 자리 모름', userId: HAEUN });
+    expect(answer.chips.at(-1)).toEqual({ kind: 'person', text: '하은 · 위치 모름', userId: HAEUN });
   });
 });
 

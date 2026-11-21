@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type AnswerReply, type ConditionChip, type Plan } from '../dto/answer.dto.js';
@@ -20,6 +21,7 @@ import {
   mealWord,
   mergingLegs,
   type Naming,
+  unknownOriginChip,
   wayOn,
   withSubject,
   withTopic,
@@ -84,7 +86,7 @@ export function personChips({ args }: GatheringNaming): ConditionChip[] {
   const theirs = args.gathering.sides.slice(1);
   return args.people.slice(1).map((friend, index): ConditionChip => {
     const side = theirs[index];
-    const text = side === undefined || side.origin !== null ? friend.name : `${friend.name} · 자리 모름`;
+    const text = side === undefined || side.origin !== null ? friend.name : unknownOriginChip(friend.name, side.later);
     return { kind: 'person', text, userId: friend.userId };
   });
 }

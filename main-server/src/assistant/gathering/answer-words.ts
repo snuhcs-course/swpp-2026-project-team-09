@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
@@ -170,3 +171,9 @@ export type Naming = GatheringNaming<MealAnswerArgs>;
 
 export const mealWord = ({ args }: { args: Pick<MealAnswerArgs, 'input'> }): string =>
   args.input.meal === 'lunch' ? '점심' : '저녁';
+
+// A Friend's chip when where they set out from is unknown: for a time ahead, the item they leave from; for now, where
+// they are. The app reads the name before " · ".
+export function unknownOriginChip(name: string, later: boolean): string {
+  return `${name} · ${later ? '출발지 모름' : '위치 모름'}`;
+}
