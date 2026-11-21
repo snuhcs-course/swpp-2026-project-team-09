@@ -10,7 +10,7 @@ import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
 import { MEET_ANSWER_FROM_14 } from '@/api/mock/data/meet-answer';
 import { NOT_RUNNING_LOOKUP_REPLY } from '@/api/mock/data/way-lookups';
-import { drawingOf, drawingOfScene, looksOf } from '@/features/assistant/answer-marks';
+import { type AnswerDrawing, drawingOf, drawingOfScene, looksOf } from '@/features/assistant/answer-marks';
 import { NO_STANDINGS } from '@/features/assistant/invited-friends';
 import { CAMERA_BOUNDS } from '@/map';
 import { MINSU_ID, NEXT_CLASS, seen, sideOf } from '../support/answer-marks';
@@ -231,7 +231,7 @@ describe("a Lookup's pick whose label fits neither below nor above", () => {
   if (scene === undefined || at === undefined) {
     throw new Error('The stored Lookup has no Place');
   }
-  const drawn = (x: number) => drawingOfScene(scene, viewAt(cameraPutting(at, { x, y: 300 })));
+  const drawn = (x: number): AnswerDrawing => drawingOfScene(scene, viewAt(cameraPutting(at, { x, y: 300 })));
 
   it('takes its left near the right edge, whole inside the screen', () => {
     expect(seen(drawn(380), 'answer:pick').label).toMatchObject({ side: 'left', title: '(관악사)학부 생활관(919동)' });
