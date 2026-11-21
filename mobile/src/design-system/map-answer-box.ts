@@ -13,9 +13,9 @@ import { mapText, space } from './tokens';
 export const ANSWER_SYMBOL_BOX = 36;
 export const GAP = 2;
 export const LABEL_MAX = 180;
-// A candidate's tag with its dishes and price under its name: boards 22 and 24 show "뚝배기불고기 외 2 · 5,000원부터"
-// whole.
-export const SUB_MAX = 220;
+// A candidate's tag with its dishes and price under its name, and the pick's flag with its first dish after its time:
+// boards 22 and 24 show "부대짬뽕&군만두 외 4 · 5,000원부터" whole.
+export const SUB_MAX = 260;
 export const RING = 2;
 export const BADGE = 16;
 
@@ -69,7 +69,7 @@ export function answerLabelBox({ side, tone, title, line, number, shift = 0, sub
       : Math.max(wordsWidth(title, titleSize), lineWidth);
   const words = Math.max(head, sub === null ? 0 : wordsWidth(sub, mapText.rowLine.fontSize));
   const frame = 2 * space[2] + (tone === 'pick' ? 2 * RING : 0) + (number === null ? 0 : BADGE + space[1]);
-  const width = Math.ceil(Math.min(sub === null ? LABEL_MAX : SUB_MAX, frame + words));
+  const width = Math.ceil(Math.min(sub === null && tone !== 'pick' ? LABEL_MAX : SUB_MAX, frame + words));
   const height = (line === null || tone === 'candidate') && sub === null ? ONE_LINE : TWO_LINES;
   const reach = ANSWER_SYMBOL_BOX / 2 + GAP + shift;
   if (side === 'left' || side === 'right') {
