@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { space } from '@/design-system';
 import { turnsOf } from '@/features/assistant/turn';
 import type { ChatBubble } from '@/features/assistant/use-chat';
@@ -127,17 +127,25 @@ function DockedWords({
           }}
         />
       )}
-      {offers.map((offer) => (
-        <DockChip
-          key={offer.label}
-          onPress={() => {
-            pressOffer(offer, send);
-          }}
-          words={offer.label}
-        />
-      ))}
-      {retry ? <DockChip onPress={control.chat.retry} words="다시 시도" /> : null}
-      <FoldedChips control={control} note={note} onRaise={onRaise} />
+      <ScrollView
+        contentContainerStyle={styles.chips}
+        horizontal
+        keyboardShouldPersistTaps="handled"
+        showsHorizontalScrollIndicator={false}
+        style={styles.chipsBox}
+      >
+        {offers.map((offer) => (
+          <DockChip
+            key={offer.label}
+            onPress={() => {
+              pressOffer(offer, send);
+            }}
+            words={offer.label}
+          />
+        ))}
+        {retry ? <DockChip onPress={control.chat.retry} words="다시 시도" /> : null}
+        <FoldedChips control={control} note={note} onRaise={onRaise} />
+      </ScrollView>
     </View>
   );
 }
@@ -182,5 +190,8 @@ export function DockedAnswer({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
+  // One row, as board 8 draws it: the line keeps at least half and is cut, and the chips scroll sideways.
+  row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  chipsBox: { flexGrow: 0, flexShrink: 1 },
+  chips: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
 });

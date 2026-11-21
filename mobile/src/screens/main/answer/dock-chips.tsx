@@ -30,7 +30,7 @@ export function DockChip({ words, onPress }: { words: string; onPress: () => voi
   );
 }
 
-// The dock's one line (board 8), cut to fit, which a press opens to the whole reply in the raised card.
+// The dock's one line (board 8), cut to fit and ended by "›", which a press opens to the whole reply in the raised card.
 export function DockLine({ line, onPress }: { line: AnswerLine; onPress: () => void }): ReactElement {
   return (
     <Pressable
@@ -49,6 +49,9 @@ export function DockLine({ line, onPress }: { line: AnswerLine; onPress: () => v
           </Text>
         ))}
       </Text>
+      <Text accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.more}>
+        ›
+      </Text>
     </Pressable>
   );
 }
@@ -64,7 +67,16 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.6 },
   words: { ...text.label, color: color.inkMuted },
-  line: { flexGrow: 1, flexShrink: 1, justifyContent: 'center', minHeight: CHIP_HEIGHT },
-  lineWords: { ...text.body, color: color.ink },
+  line: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexGrow: 1,
+    flexShrink: 1,
+    minWidth: '50%',
+    gap: space[1],
+    minHeight: CHIP_HEIGHT,
+  },
+  lineWords: { ...text.body, flexShrink: 1, color: color.ink },
+  more: { ...text.body, color: color.inkMuted },
   strong: { fontFamily: font.bold, color: color.snuBlue },
 });

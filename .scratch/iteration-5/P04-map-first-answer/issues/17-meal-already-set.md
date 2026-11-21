@@ -2,7 +2,7 @@
 
 Parent: [P04 spec](../spec.md)
 Status: needs-triage
-Blocked by: P05 ticket 16 for `AnswerReply.mealSet` and the 409 of `POST /plans`; [04](04-plan-bottom-without-text.md) for the main action beside the input.
+Blocked by: P05's PR 417 for `AnswerReply.mealSet` (`MealSet`) and the 409 of `POST /plans`; [04](04-plan-bottom-without-text.md) for the main action beside the input.
 
 Native files: none. Releases: an app OTA update only.
 
