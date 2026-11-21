@@ -22,17 +22,39 @@ interface MarkCardProps {
   mark: OpenedMark;
   stage: { width: number; height: number };
   onClose: () => void;
+  // As wide as its content, beside the mark's point: a face's card.
+  beside?: boolean;
   children: ReactNode;
+}
+
+// A card beside a face, clear of its symbol, and inside the stage.
+const BESIDE_GAP = 28;
+const BESIDE_MAX = 220;
+
+function besidePlace(
+  at: OpenedMark['at'],
+  size: { width: number; height: number },
+  stage: MarkCardProps['stage'],
+): { left: number; top: number } {
+  const right = at.x + BESIDE_GAP;
+  const left = right + size.width + EDGE <= stage.width ? right : Math.max(EDGE, at.x - BESIDE_GAP - size.width);
+  const top = Math.min(Math.max(EDGE, at.y - size.height / 2), stage.height - size.height - EDGE);
+  return { left, top };
 }
 
 // A card attached to a mark of the answer, under its point, or over it when the stage's lower half would cut it; a
 // press anywhere else closes it, so the map takes no gesture while it is open.
-export function MarkCard({ mark, stage, onClose, children }: MarkCardProps): ReactElement {
-  const [height, setHeight] = useState(0);
-  const left = Math.min(Math.max(mark.at.x - WIDTH / 2, EDGE), stage.width - WIDTH - EDGE);
+export function MarkCard({ mark, stage, onClose, beside = false, children }: MarkCardProps): ReactElement {
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const { height } = size;
   const below = mark.at.y + LABEL_ROOM;
   const fits = below + height <= stage.height / 2 + LABEL_ROOM;
-  const top = fits ? below : Math.max(EDGE, mark.at.y - LABEL_ROOM - height);
+  const place = beside
+    ? besidePlace(mark.at, size, stage)
+    : {
+        left: Math.min(Math.max(mark.at.x - WIDTH / 2, EDGE), stage.width - WIDTH - EDGE),
+        top: fits ? below : Math.max(EDGE, mark.at.y - LABEL_ROOM - height),
+      };
   return (
     <>
       <Pressable
@@ -44,9 +66,9 @@ export function MarkCard({ mark, stage, onClose, children }: MarkCardProps): Rea
       />
       <View
         onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-          setHeight(nativeEvent.layout.height);
+          setSize({ width: nativeEvent.layout.width, height: nativeEvent.layout.height });
         }}
-        style={[styles.card, { left, top }]}
+        style={[styles.card, beside ? styles.beside : styles.wide, place]}
         testID="mark-card"
       >
         {children}
@@ -95,14 +117,14 @@ const styles = StyleSheet.create({
   away: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   card: {
     position: 'absolute',
-    width: WIDTH,
-    padding: space[4],
     borderRadius: radius.lg,
     borderWidth: 1.5,
     borderColor: color.snuBlue,
     backgroundColor: color.surface,
     boxShadow: shadow.float,
   },
+  wide: { width: WIDTH, padding: space[4] },
+  beside: { maxWidth: BESIDE_MAX, paddingVertical: space[2], paddingHorizontal: space[3] },
   rows: { gap: space[2] },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: space[3] },
   name: { ...text.label, color: color.inkMuted },

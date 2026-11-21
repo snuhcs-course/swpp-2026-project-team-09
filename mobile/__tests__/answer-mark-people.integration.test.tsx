@@ -66,6 +66,7 @@ describe("a face of the Plan's people", () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
 
     await pressMarker(user, '민수');
+    expect(markCard().getByText('12:15 302동 수업 끝')).toBeVisible();
     await user.press(markCard().getByRole('button', { name: '민수 빼기' }));
     await pass(500);
 

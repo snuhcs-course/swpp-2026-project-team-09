@@ -216,7 +216,7 @@ function OpenMark({ control, stage, focus, onClose }: OpenMarkProps): ReactEleme
     return null;
   }
   return (
-    <MarkCard mark={mark} onClose={closeMark} stage={stage}>
+    <MarkCard beside={mark.id.startsWith('answer:person:')} mark={mark} onClose={closeMark} stage={stage}>
       <MarkRows
         answer={shown.answer}
         focus={focus}
