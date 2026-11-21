@@ -8,6 +8,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -32,6 +33,7 @@ import { isRecruitingQuest } from './party-client';
 import { isLookup } from './lookup-answers';
 import { isAnswerReply } from './plan-answers';
 import { isRefusal } from './refusal-answers';
+import { isReplyStep } from './step-answers';
 
 // The operation of the AI chat: the conversation goes to the main server, which asks the model. Every request carries
 // the context and says that this app draws library cards and an answer on the map (`clientCapabilities`).
@@ -125,7 +127,7 @@ function filled(card: ChatCard): ChatCard {
   return card.kind === 'library' ? { kind: 'library', library: withLibraryDefaults(card.library) } : card;
 }
 
-// A main server before P01-01 leaves the answer out, and one before P01-06 the Lookup.
+// A main server before P01-01 leaves the answer out, one before P01-06 the Lookup, and one before P03 the steps.
 function isReplyOffer(value: unknown): value is ReplyOffer {
   return field(value, 'kind') === 'ask' && hasTexts(value, ['label', 'text']);
 }
@@ -148,11 +150,17 @@ function isAssistantReply(value: unknown): value is AssistantReply {
   );
 }
 
+// Steps this app does not know, from a later main server, are left out whole and the rest of the reply kept, so that
+// a partial list never reads as the whole plan.
+function knownSteps(steps: unknown): Pick<AssistantReply, 'steps'> {
+  return listOf(isReplyStep)(steps) ? { steps } : {};
+}
+
 export const assistantClient: Pick<ApiClient, 'askAssistant' | 'recalculateAnswer' | 'answerTap'> = {
   askAssistant: async (messages, context) => {
     const body = { messages, context, clientCapabilities: ANSWER_CAPABILITIES };
-    const reply = await call('POST', '/assistant/messages', isAssistantReply, { body });
-    return { ...reply, cards: reply.cards.map(filled) };
+    const { steps, ...reply } = await call('POST', '/assistant/messages', isAssistantReply, { body });
+    return { ...reply, cards: reply.cards.map(filled), ...knownSteps(steps) };
   },
   // A main server before P02-13 refuses a key it does not know, so the reason is sent only when there is one.
   recalculateAnswer: (input, location, missing) =>

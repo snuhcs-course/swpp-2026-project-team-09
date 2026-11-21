@@ -9,6 +9,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibraryCard } from './library-card-types';
@@ -319,6 +320,25 @@ export interface TimeBand {
   text: string;
 }
 
+// One request of a message that asked for several (P03): a seat or room booked through a library card, or the plan
+// drawn on the map. A reply carries its steps, in time order, only when there are two or more.
+export interface ReplyStep {
+  kind: 'seat' | 'room' | PlanInput['kind'];
+  // What it is, in words: "7층 7A 열람실 2 구역", "학생회관식당에서 저녁".
+  title: string;
+  place: PlacePoint | null;
+  // Where the User sets out from for it: the place of the step before it, unless they named another.
+  from: PlacePoint | null;
+  // Korea time with the offset; null when the step has no time.
+  startAt: string | null;
+  endAt: string | null;
+  // `shown`: its card or its answer is in the reply. `not-done`: it could not be done, for `reason`.
+  status: 'shown' | 'not-done';
+  reason: string | null;
+  // Where the reply shows it: the library card of that key, or the answer.
+  shows: { kind: 'card'; key: string } | { kind: 'answer' } | null;
+}
+
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
 // cards in the order shown, the Proposal it made, or null, and the answer or the Lookup it drew on the map, or null. A
 // main server before P01-01 leaves the answer out, and one before P01-06 the Lookup.
@@ -331,6 +351,8 @@ export interface AssistantReply extends WithRefusal {
   lookup?: Lookup | null;
   // Buttons under the text of a reply that draws nothing, such as a Tutorial quest's 가는 길 보기 (P01-14).
   offers?: ReplyOffer[];
+  // Each request of a message that asked for two or more, in time order (P03). A server before P03 leaves it out.
+  steps?: ReplyStep[];
 }
 
 // A button under a reply's text, sent as the User's words.

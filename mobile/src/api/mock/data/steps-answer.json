@@ -1,0 +1,510 @@
+{
+  "text": "7층 7A 열람실 2 구역 17:30–19:00 예약 카드를 띄웠어요. 예약하기를 눌러야 예약이 돼요. 이어서 19:04에 학생회관식당에서 저녁을 먹을 수 있어요(돈까스 5,500원, 우동 4,500원).",
+  "mapButtons": [],
+  "cards": [
+    {
+      "kind": "library",
+      "library": {
+        "space": {
+          "id": "7F-7A-zone2",
+          "name": "7A 열람실 2 구역",
+          "floor": 7,
+          "kind": "reading-room",
+          "placeNumber": "62-1",
+          "unit": "seat",
+          "roomNo": 172,
+          "sectorNo": 17202,
+          "seatNos": [],
+          "mapImage": {
+            "width": 2529,
+            "height": 1198
+          },
+          "hours": {
+            "open": "07:00",
+            "close": "23:00"
+          },
+          "minMinutes": 30,
+          "maxMinutes": 360,
+          "stepMinutes": 30
+        },
+        "date": "2026-11-02",
+        "start": "17:30",
+        "minutes": 90,
+        "seat": null,
+        "useDesc": null,
+        "useDescOptions": null,
+        "pledge": null,
+        "companions": [],
+        "questId": null,
+        "notes": [
+          "맞는 곳이 4곳이라 첫 곳으로 채웠어요",
+          "예약한 뒤 30분 안에 좌석배정기(키오스크)에서 확인해야 해요. 확인하지 않으면 자동으로 반납돼요.",
+          "확인하지 않거나 반납하지 않은 일이 한 달에 5번이면 10일 동안 예약할 수 없어요.",
+          "사용 다했으면 꼭 반납처리를 해주세요! 저한테 말해주셔도 되고 키오스크를 이용해 반납하셔도 돼요!"
+        ],
+        "until": null,
+        "target": null,
+        "key": "book:7F-7A-zone2:2026-11-02:1730:90",
+        "action": "book"
+      }
+    }
+  ],
+  "proposal": null,
+  "answer": {
+    "input": {
+      "kind": "meal",
+      "date": "2026-11-02",
+      "meal": "dinner",
+      "people": [
+        {
+          "userId": "66cdc186-5239-4bf0-ac6c-07d5fea04776",
+          "constraints": [
+            {
+              "kind": "from",
+              "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+              "source": "asker"
+            },
+            {
+              "kind": "notBefore",
+              "time": "19:00",
+              "source": "asker"
+            }
+          ]
+        }
+      ],
+      "window": {
+        "from": "19:00",
+        "until": null
+      },
+      "placeId": null
+    },
+    "chips": [
+      {
+        "kind": "origin",
+        "text": "62-1동에서",
+        "userId": null
+      }
+    ],
+    "plans": [
+      {
+        "id": "학생회관식당",
+        "title": "학생회관식당에서 저녁",
+        "place": {
+          "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+          "label": "학생회관식당",
+          "latitude": 37.45932,
+          "longitude": 126.95058
+        },
+        "startAt": "2026-11-02T19:04:00+09:00",
+        "endAt": "2026-11-02T19:30:00+09:00",
+        "togetherMinutes": 26,
+        "meeting": null,
+        "parts": [
+          {
+            "userId": "66cdc186-5239-4bf0-ac6c-07d5fea04776",
+            "name": "김하늘",
+            "me": true,
+            "origin": {
+              "place": {
+                "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+                "label": "62-1동",
+                "latitude": 37.45903,
+                "longitude": 126.95247
+              },
+              "basis": "chosen"
+            },
+            "leaveAt": "2026-11-02T19:00:00+09:00",
+            "walkMinutes": 4,
+            "arriveAt": "2026-11-02T19:04:00+09:00",
+            "leaveBy": null,
+            "next": null
+          }
+        ],
+        "subQuests": [
+          {
+            "at": "2026-11-02T19:04:00+09:00",
+            "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+            "title": "학생회관식당에서 식사"
+          }
+        ],
+        "lines": [
+          [
+            {
+              "text": "저녁 ",
+              "strong": false
+            },
+            {
+              "text": "학생회관식당",
+              "strong": true
+            },
+            {
+              "text": " · 식사 26분",
+              "strong": false
+            }
+          ],
+          [
+            {
+              "text": "오늘 ",
+              "strong": false
+            },
+            {
+              "text": "돈까스",
+              "strong": true
+            },
+            {
+              "text": " 외 1",
+              "strong": false
+            }
+          ],
+          [
+            {
+              "text": "19:04에야 도착해요",
+              "strong": false
+            }
+          ]
+        ],
+        "basis": ["62-1동 → 학생회관식당 걸어서 4분", "돈까스 5,500원 · 우동 4,500원", "메뉴: 오늘의 식단"],
+        "scene": {
+          "people": [
+            {
+              "userId": "66cdc186-5239-4bf0-ac6c-07d5fea04776",
+              "name": "김하늘",
+              "me": true,
+              "at": {
+                "latitude": 37.45903,
+                "longitude": 126.95247
+              },
+              "source": "timetable",
+              "tag": "나 · 4분"
+            }
+          ],
+          "places": [
+            {
+              "place": {
+                "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                "label": "학생회관식당",
+                "latitude": 37.45932,
+                "longitude": 126.95058
+              },
+              "role": "pick",
+              "tag": "학생회관식당"
+            },
+            {
+              "place": {
+                "placeId": "e757a46a-b81f-509b-8c5a-99fc4801e56f",
+                "label": "동원관식당",
+                "latitude": 37.46504,
+                "longitude": 126.95175
+              },
+              "role": "candidate",
+              "tag": "동원관식당"
+            },
+            {
+              "place": {
+                "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                "label": "301동식당",
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "role": "dropped",
+              "tag": "301동식당 · 13분밖에 못 있어요"
+            },
+            {
+              "place": {
+                "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+                "label": "302동식당",
+                "latitude": 37.44887,
+                "longitude": 126.95265
+              },
+              "role": "dropped",
+              "tag": "302동식당 · 11분밖에 못 있어요"
+            }
+          ],
+          "routes": [
+            {
+              "userId": "66cdc186-5239-4bf0-ac6c-07d5fea04776",
+              "role": "me",
+              "from": {
+                "latitude": 37.45903,
+                "longitude": 126.95247
+              },
+              "to": {
+                "latitude": 37.45932,
+                "longitude": 126.95058
+              },
+              "minutes": 4
+            }
+          ],
+          "flags": [
+            {
+              "at": {
+                "latitude": 37.45932,
+                "longitude": 126.95058
+              },
+              "text": "19:04 저녁",
+              "role": "place"
+            }
+          ]
+        },
+        "band": {
+          "range": {
+            "startAt": "2026-11-02T18:00:00+09:00",
+            "endAt": "2026-11-02T20:00:00+09:00"
+          },
+          "now": "2026-11-02T13:00:00+09:00",
+          "lanes": [
+            {
+              "userId": "66cdc186-5239-4bf0-ac6c-07d5fea04776",
+              "name": "나",
+              "busy": []
+            }
+          ],
+          "startAt": "2026-11-02T19:04:00+09:00",
+          "endAt": "2026-11-02T19:30:00+09:00",
+          "text": "19:04–19:30 · 식사 26분"
+        }
+      },
+      {
+        "id": "동원관식당",
+        "title": "동원관식당에서 저녁",
+        "place": {
+          "placeId": "e757a46a-b81f-509b-8c5a-99fc4801e56f",
+          "label": "동원관식당",
+          "latitude": 37.46504,
+          "longitude": 126.95175
+        },
+        "startAt": "2026-11-02T19:14:00+09:00",
+        "endAt": "2026-11-02T19:30:00+09:00",
+        "togetherMinutes": 16,
+        "meeting": null,
+        "parts": [
+          {
+            "userId": "66cdc186-5239-4bf0-ac6c-07d5fea04776",
+            "name": "김하늘",
+            "me": true,
+            "origin": {
+              "place": {
+                "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+                "label": "62-1동",
+                "latitude": 37.45903,
+                "longitude": 126.95247
+              },
+              "basis": "chosen"
+            },
+            "leaveAt": "2026-11-02T19:00:00+09:00",
+            "walkMinutes": 14,
+            "arriveAt": "2026-11-02T19:14:00+09:00",
+            "leaveBy": null,
+            "next": null
+          }
+        ],
+        "subQuests": [
+          {
+            "at": "2026-11-02T19:14:00+09:00",
+            "placeId": "e757a46a-b81f-509b-8c5a-99fc4801e56f",
+            "title": "동원관식당에서 식사"
+          }
+        ],
+        "lines": [
+          [
+            {
+              "text": "저녁 ",
+              "strong": false
+            },
+            {
+              "text": "동원관식당",
+              "strong": true
+            },
+            {
+              "text": " · 식사 16분",
+              "strong": false
+            }
+          ],
+          [
+            {
+              "text": "오늘 ",
+              "strong": false
+            },
+            {
+              "text": "비빔밥",
+              "strong": true
+            }
+          ],
+          [
+            {
+              "text": "19:14에야 도착해요",
+              "strong": false
+            }
+          ]
+        ],
+        "basis": ["62-1동 → 동원관식당 걸어서 14분", "비빔밥 5,000원", "메뉴: 오늘의 식단"],
+        "scene": {
+          "people": [
+            {
+              "userId": "66cdc186-5239-4bf0-ac6c-07d5fea04776",
+              "name": "김하늘",
+              "me": true,
+              "at": {
+                "latitude": 37.45903,
+                "longitude": 126.95247
+              },
+              "source": "timetable",
+              "tag": "나 · 14분"
+            }
+          ],
+          "places": [
+            {
+              "place": {
+                "placeId": "e757a46a-b81f-509b-8c5a-99fc4801e56f",
+                "label": "동원관식당",
+                "latitude": 37.46504,
+                "longitude": 126.95175
+              },
+              "role": "pick",
+              "tag": "동원관식당"
+            },
+            {
+              "place": {
+                "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+                "label": "학생회관식당",
+                "latitude": 37.45932,
+                "longitude": 126.95058
+              },
+              "role": "candidate",
+              "tag": "학생회관식당"
+            },
+            {
+              "place": {
+                "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+                "label": "301동식당",
+                "latitude": 37.45016,
+                "longitude": 126.95259
+              },
+              "role": "dropped",
+              "tag": "301동식당 · 13분밖에 못 있어요"
+            },
+            {
+              "place": {
+                "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+                "label": "302동식당",
+                "latitude": 37.44887,
+                "longitude": 126.95265
+              },
+              "role": "dropped",
+              "tag": "302동식당 · 11분밖에 못 있어요"
+            }
+          ],
+          "routes": [
+            {
+              "userId": "66cdc186-5239-4bf0-ac6c-07d5fea04776",
+              "role": "me",
+              "from": {
+                "latitude": 37.45903,
+                "longitude": 126.95247
+              },
+              "to": {
+                "latitude": 37.46504,
+                "longitude": 126.95175
+              },
+              "minutes": 14
+            }
+          ],
+          "flags": [
+            {
+              "at": {
+                "latitude": 37.46504,
+                "longitude": 126.95175
+              },
+              "text": "19:14 저녁",
+              "role": "place"
+            }
+          ]
+        },
+        "band": {
+          "range": {
+            "startAt": "2026-11-02T18:00:00+09:00",
+            "endAt": "2026-11-02T20:00:00+09:00"
+          },
+          "now": "2026-11-02T13:00:00+09:00",
+          "lanes": [
+            {
+              "userId": "66cdc186-5239-4bf0-ac6c-07d5fea04776",
+              "name": "나",
+              "busy": []
+            }
+          ],
+          "startAt": "2026-11-02T19:14:00+09:00",
+          "endAt": "2026-11-02T19:30:00+09:00",
+          "text": "19:14–19:30 · 식사 16분"
+        }
+      }
+    ],
+    "dropped": [
+      {
+        "place": {
+          "placeId": "1a242be2-05c6-5185-bcd1-0b78bc358f88",
+          "label": "301동식당",
+          "latitude": 37.45016,
+          "longitude": 126.95259
+        },
+        "reason": "13분밖에 못 있어요"
+      },
+      {
+        "place": {
+          "placeId": "fba342e9-4edb-560d-9ac4-2a4d2454f9d3",
+          "label": "302동식당",
+          "latitude": 37.44887,
+          "longitude": 126.95265
+        },
+        "reason": "11분밖에 못 있어요"
+      }
+    ],
+    "noPlan": null
+  },
+  "lookup": null,
+  "refusal": null,
+  "steps": [
+    {
+      "kind": "seat",
+      "title": "7층 7A 열람실 2 구역",
+      "place": {
+        "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+        "label": "62-1동",
+        "latitude": 37.45903,
+        "longitude": 126.95247
+      },
+      "from": null,
+      "startAt": "2026-11-02T17:30:00+09:00",
+      "endAt": "2026-11-02T19:00:00+09:00",
+      "status": "shown",
+      "reason": null,
+      "shows": {
+        "kind": "card",
+        "key": "book:7F-7A-zone2:2026-11-02:1730:90"
+      }
+    },
+    {
+      "kind": "meal",
+      "title": "학생회관식당에서 저녁",
+      "place": {
+        "placeId": "e3b13da4-ec15-5b6e-ba98-a0fd4346e08b",
+        "label": "학생회관식당",
+        "latitude": 37.45932,
+        "longitude": 126.95058
+      },
+      "from": {
+        "placeId": "1025e082-9f37-5dd5-be61-1895973d0ce9",
+        "label": "62-1동",
+        "latitude": 37.45903,
+        "longitude": 126.95247
+      },
+      "startAt": "2026-11-02T19:04:00+09:00",
+      "endAt": "2026-11-02T19:30:00+09:00",
+      "status": "shown",
+      "reason": null,
+      "shows": {
+        "kind": "answer"
+      }
+    }
+  ]
+}
