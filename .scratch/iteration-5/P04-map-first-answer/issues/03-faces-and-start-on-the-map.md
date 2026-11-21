@@ -1,7 +1,7 @@
 # 03: Faces and my start do what the chips do
 
 Parent: [P04 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: [02](02-flag-says-what-and-when.md) for the attached card.
 
 Native files: none. Releases: an app OTA update only.

@@ -1,7 +1,7 @@
 # 01: Whole seat numbers, and a zoom that stays where the User looks
 
 Parent: [P01 spec](../spec.md); the owner's request of 2026-11-21 and the emulator check of `5.0/Main` (c920d9de) the same night
-Status: ready-for-agent
+Status: done
 Blocked by: none
 
 Native files: none. Releases: an app OTA update only.
