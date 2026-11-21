@@ -5,6 +5,7 @@
  * 2026-11-15  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -14,20 +15,23 @@ import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { askOnMap, card } from './support/answer-map';
+import { askOnMap, card, mapThings } from './support/answer-map';
 import { step } from './support/answer-correct';
 import { pass } from './support/app';
-import { swipe } from './support/swipe';
+import { hasGesture } from './support/swipe';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { layStage } from './support/lists';
+import { pressMarker } from './support/made-quest';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// The card of a Plan (P02 ticket 02, "The Plan in the card"): its lines, "근거", and the arrows with the count, and a
-// press on a candidate's mark, over the stored answer to "배고파, 민수랑 같이", whose five Plans are 302동식당,
-// 301동식당, 학생회관식당, 3식당, and 자하연식당 2층.
+// The ways through the Plans of an answer (P02 ticket 02) since P04 ticket 04: the candidates are numbered flags on
+// the map, with no arrows, count, or swipe in the card; the main button stands beside the input; the basis is in the
+// pick's card. Over the stored answer to "배고파, 민수랑 같이", whose five Plans are 302동식당, 301동식당,
+// 학생회관식당, 3식당, and 자하연식당 2층.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -45,7 +49,8 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 
 const NEXT = '다음 후보';
 const BEFORE = '이전 후보';
-const INVITE = '이대로 초대';
+const INVITE = '만들고 초대 보내기';
+const PICK = '302동식당 · 12:15 점심';
 // The first Plan's basis, from the stored answer.
 const FIRST_BASIS = [
   '민수 12:15 302동 수업 끝',
@@ -69,228 +74,140 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-// Partitions: the first Plan; forward twice; back from the first; the row with "되돌리기" after a drag.
-describe('the arrows and the count', () => {
-  it('show the first Plan as 1/5', async () => {
+function beside(): ReturnType<typeof within> {
+  return within(screen.getByTestId('ai-input-beside'));
+}
+
+// Partitions: the first Plan; the third from its flag; the last from its flag; the row with "되돌리기" after a drag.
+describe('the candidates on the map', () => {
+  it('number the other Plans, with no arrows or count in the card', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    expect(card().getByText('12:15 302동식당')).toBeVisible();
-    expect(card().getByText('1/5')).toBeVisible();
-    expect(card().getByRole('button', { name: BEFORE })).toBeVisible();
-    expect(card().getByRole('button', { name: NEXT })).toBeVisible();
+    expect(mapThings()).toEqual(expect.arrayContaining([PICK, '후보 2 · 301동식당', '후보 5 · 자하연식당 2층']));
+    expect(card().queryByRole('button', { name: BEFORE })).toBeNull();
+    expect(card().queryByRole('button', { name: NEXT })).toBeNull();
+    expect(card().queryByText('1/5')).toBeNull();
   });
 
-  it('go to the third Plan with "›" twice, and the map draws it', async () => {
+  it('go to the third Plan at a press on its flag, and the map draws it', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(card().getByRole('button', { name: NEXT }));
-    await user.press(card().getByRole('button', { name: NEXT }));
+    await press(user, '후보 3 · 학생회관식당');
 
-    expect(card().getByText('12:33 학생회관식당')).toBeVisible();
-    expect(card().getByText('3/5')).toBeVisible();
+    expect(mapThings()).toEqual(expect.arrayContaining(['학생회관식당 · 12:33 점심', '후보 1 · 302동식당']));
     expect(screen.getByLabelText('12:18 민수와 만남')).toBeOnTheScreen();
     expect(screen.getByLabelText('민수 · 18분')).toBeOnTheScreen();
     expect(screen.queryByLabelText('나 · 3분')).toBeNull();
   });
 
-  it('go round to the last Plan with "‹" from the first', async () => {
+  it('go to the last Plan from the first at a press on its flag', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(card().getByRole('button', { name: BEFORE }));
+    await press(user, '후보 5 · 자하연식당 2층');
 
-    expect(card().getByText('5/5')).toBeVisible();
+    expect(mapThings()).toContain('자하연식당 2층 · 12:35 점심');
   });
 
-  it('stand at the two ends of their row, with "되돌리기", the main button, and the count between them', async () => {
+  it('leave "되돌리기" alone in the row after a drag, the main button beside the input', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
     await askOnMap(server, MEAL_ANSWER_REPLY);
     await step('from', 'increment');
 
     const row = within(card().getByTestId('plan-steps'));
-    const names = [BEFORE, '되돌리기', '이대로 초대', NEXT];
-    const inOrder = row
-      .getAllByRole('button')
-      .map((button) => names.find((name) => row.getByRole('button', { name }) === button));
-
-    expect(inOrder).toEqual([BEFORE, '되돌리기', '이대로 초대', NEXT]);
-    expect(row.getByText('1/2')).toBeVisible();
+    const undo = row.getByRole('button', { name: '되돌리기' });
+    expect(row.getAllByRole('button')).toEqual([undo]);
+    expect(undo.parent).toHaveStyle({ width: 96 });
+    expect(row.queryByText('1/2')).toBeNull();
+    expect(beside().getByRole('button', { name: INVITE })).toBeEnabled();
   });
 });
 
-// What stands in the steps' row, in order: an arrow by its name, the count by its test id, and the middle as "".
-function stepParts(): string[] {
-  return card()
-    .getByTestId('plan-steps')
-    .children.map((part) => {
-      if (typeof part === 'string') {
-        return part;
-      }
-      const name: unknown = part.props.accessibilityLabel ?? part.props.testID;
-      return typeof name === 'string' ? name : '';
-    });
-}
-
-// Partitions: more than one Plan without a drag, and with a drag kept. The rule: the design review of 2026-11-15, the
-// count in a box 44 wide (room for "11/11") always right before "›", and the arrows 40 across like the buttons, their
-// touch still 48.
-describe('the last row', () => {
-  it('puts the count right before "›" for an answer of five Plans', async () => {
+// Partitions: the main button at rest, and while its request is held back. The rule: P04 ticket 04, the button beside
+// the input says what it does, "보내는 중이에요" in its place while the request is on its way.
+describe('the main button beside the input', () => {
+  it('is the primary button for a Plan with a Friend', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    expect(stepParts()).toEqual([BEFORE, '', 'plan-count', NEXT]);
-    expect(card().getByTestId('plan-count')).toHaveTextContent('1/5');
+    expect(beside().getByRole('button', { name: INVITE })).toHaveStyle({ backgroundColor: color.snuBlue });
+    expect(card().queryByRole('button', { name: INVITE })).toBeNull();
   });
 
-  it('keeps the count right before "›" while a drag is kept, "되돌리기" in the middle', async () => {
-    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
-    await askOnMap(server, MEAL_ANSWER_REPLY);
-    await step('from', 'increment');
-
-    expect(stepParts()).toEqual([BEFORE, '', 'plan-count', NEXT]);
-    expect(card().getByTestId('plan-count')).toHaveTextContent('1/2');
-    expect(within(card().getByTestId('plan-steps')).getByRole('button', { name: '되돌리기' })).toBeVisible();
-  });
-
-  it('draws the arrows 40 across with a touch of 48, and the count in a box 44 wide', async () => {
-    await askOnMap(server, MEAL_ANSWER_REPLY);
-
-    for (const name of [BEFORE, NEXT]) {
-      expect(card().getByRole('button', { name })).toHaveStyle({ width: 40, height: 40 });
-      expect(card().getByRole('button', { name })).toHaveProp('hitSlop', 4);
-    }
-    expect(card().getByTestId('plan-count')).toHaveStyle({ width: 44, textAlign: 'center' });
-  });
-});
-
-// Partitions: the main button beside a kept drag, and while its request is held back. The rule: fix 4 of the design
-// review of 2026-11-15, "이대로 초대" the primary button 40 high in what the middle leaves after "되돌리기", "보내는
-// 중이에요" in its place and width, and the count never moving.
-describe('the main button in the last row', () => {
-  it('takes the rest of the middle after "되돌리기", the count still right before "›"', async () => {
-    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
-    await askOnMap(server, MEAL_ANSWER_REPLY);
-    await step('from', 'increment');
-
-    const row = within(card().getByTestId('plan-steps'));
-    const main = row.getByRole('button', { name: INVITE });
-    expect(row.getByRole('button', { name: '되돌리기' }).parent).toHaveStyle({ width: 96 });
-    expect(main.parent).toHaveStyle({ flex: 1 });
-    expect(main).toHaveStyle({ alignSelf: 'stretch', height: 40, backgroundColor: color.snuBlue });
-    expect(stepParts()).toEqual([BEFORE, '', 'plan-count', NEXT]);
-  });
-
-  it('reads "보내는 중이에요" in its place while the request is held back, the count unmoved', async () => {
+  it('reads "보내는 중이에요" in its place while the request is held back', async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST, afterMs: 3000 });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(card().getByRole('button', { name: INVITE }));
+    await user.press(beside().getByRole('button', { name: INVITE }));
 
-    const sending = within(card().getByTestId('plan-steps')).getByRole('button', { name: '보내는 중이에요' });
-    expect(sending.parent).toHaveStyle({ flex: 1 });
-    expect(sending).toHaveStyle({ alignSelf: 'stretch', height: 40 });
-    expect(stepParts()).toEqual([BEFORE, '', 'plan-count', NEXT]);
-    expect(card().getByTestId('plan-count')).toHaveTextContent('1/5');
+    expect(beside().getByRole('button', { name: '보내는 중이에요' })).toBeDisabled();
+    expect(beside().queryByRole('button', { name: INVITE })).toBeNull();
     await pass(3000);
   });
 });
 
-// Partitions: 60 to the left and to the right, round from the first; 30, under the 48 that counts; a swipe while a
-// recalculation is held back.
-describe("a swipe over the answer's lines", () => {
-  it('to the left shows the next Plan', async () => {
-    await askOnMap(server, MEAL_ANSWER_REPLY);
-
-    await swipe('plan-swipe', { fromX: 200, dx: -60 });
-
-    expect(card().getByText('12:18 301동식당')).toBeVisible();
-    expect(card().getByText('2/5')).toBeVisible();
-  });
-
-  it('to the right from the first Plan goes round to the last', async () => {
-    await askOnMap(server, MEAL_ANSWER_REPLY);
-
-    await swipe('plan-swipe', { fromX: 200, dx: 60 });
-
-    expect(card().getByText('12:35 자하연식당 2층')).toBeVisible();
-    expect(card().getByText('5/5')).toBeVisible();
-  });
-
-  it('of 30 changes nothing', async () => {
-    await askOnMap(server, MEAL_ANSWER_REPLY);
-
-    await swipe('plan-swipe', { fromX: 200, dx: -30 });
-
-    expect(card().getByText('12:15 302동식당')).toBeVisible();
-    expect(card().getByText('1/5')).toBeVisible();
-  });
-
-  it('changes nothing while a recalculation is on its way', async () => {
-    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE, afterMs: 3000 });
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: '김민수 빼기' }));
-
-    await swipe('plan-swipe', { fromX: 200, dx: -60 });
-
-    expect(card().getByText('12:15 302동식당')).toBeVisible();
-    expect(card().getByText('1/5')).toBeVisible();
-    await pass(3000);
-  });
-});
-
-// Partitions: a press on a candidate's mark; an answer of one Plan.
+// Partitions: no swipe on the card; a candidate's flag while a recalculation is on its way; an answer of one Plan.
 describe('the other ways through the Plans', () => {
-  it("show a candidate's Plan when its mark is pressed", async () => {
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+  it('take no swipe over the card', async () => {
+    await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await press(user, '후보 3 · 학생회관식당');
-
-    expect(card().getByText('12:33 학생회관식당')).toBeVisible();
-    expect(card().getByText('3/5')).toBeVisible();
+    expect(hasGesture('plan-swipe')).toBe(false);
   });
 
-  it('show no arrows for an answer of one Plan', async () => {
+  it("change nothing at a candidate's flag while a recalculation is on its way", async () => {
+    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE, afterMs: 3000 });
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
+    await pressMarker(user, '민수');
+    await user.press(within(screen.getByTestId('mark-card')).getByRole('button', { name: '민수 빼기' }));
+
+    await press(user, '후보 2 · 301동식당');
+
+    expect(mapThings()).toContain(PICK);
+    await pass(3000);
+  });
+
+  it('show no candidates for an answer of one Plan', async () => {
     expect(MEAL_ANSWER_ALONE.plans.length).toBeGreaterThan(0);
     // The stored answer for the User alone, with this one field changed: its first Plan alone.
     const answer = { ...MEAL_ANSWER_ALONE, plans: MEAL_ANSWER_ALONE.plans.slice(0, 1) };
 
     await askOnMap(server, { ...MEAL_ANSWER_REPLY, answer });
 
-    expect(card().queryByRole('button', { name: NEXT })).toBeNull();
+    expect(mapThings().filter((name) => name.startsWith('후보 '))).toEqual([]);
     expect(card().queryByText('1/1')).toBeNull();
   });
 });
 
-// Partitions: closed at first, opened, closed again, and closed by a change of the Plan.
+// Partitions: in the pick's card, not in the answer's; closed with the card; that of the Plan on screen.
 describe('the basis', () => {
-  it('is closed at first, and "근거" opens it', async () => {
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    expect(card().queryByText(FIRST_BASIS[0] ?? '')).toBeNull();
+  it("is in the pick's card, and not in the answer's", async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
+    expect(card().queryByRole('button', { name: '근거' })).toBeNull();
 
-    await user.press(card().getByRole('button', { name: '근거' }));
+    await pressMarker(user, PICK);
 
     for (const line of FIRST_BASIS) {
-      expect(card().getByText(line)).toBeVisible();
+      expect(within(screen.getByTestId('mark-card')).getByText(line)).toBeVisible();
     }
-    expect(card().getByRole('button', { name: '근거 접기' })).toBeVisible();
   });
 
-  it('closes with "근거 접기"', async () => {
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: '근거' }));
+  it('closes with the card', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
+    await pressMarker(user, PICK);
 
-    await user.press(card().getByRole('button', { name: '근거 접기' }));
+    await press(user, '카드 닫기');
+    await pass(100);
 
-    expect(card().queryByText(FIRST_BASIS[0] ?? '')).toBeNull();
-    expect(card().getByRole('button', { name: '근거' })).toBeVisible();
+    expect(screen.queryByTestId('mark-card')).toBeNull();
+    expect(screen.queryByText(FIRST_BASIS[2] ?? '')).toBeNull();
   });
 
-  it('closes when the Plan on screen changes', async () => {
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: '근거' }));
+  it('is that of the Plan on screen', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
+    await pressMarker(user, '후보 3 · 학생회관식당');
 
-    await user.press(card().getByRole('button', { name: NEXT }));
+    await pressMarker(user, '학생회관식당 · 12:33 점심');
 
-    expect(card().getByRole('button', { name: '근거' })).toBeVisible();
-    expect(card().queryByText(/걸어서/u)).toBeNull();
+    const flag = within(screen.getByTestId('mark-card'));
+    expect(flag.getByText('민수 12:15 302동 수업 끝 · 301동까지 걸어서 3분, 같이 15분')).toBeVisible();
+    expect(flag.queryByText(FIRST_BASIS[1] ?? '')).toBeNull();
   });
 });

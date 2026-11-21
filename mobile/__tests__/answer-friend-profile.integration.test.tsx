@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -11,21 +12,23 @@ import type { Friend } from '@/api/types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, shownAddress } from './support/app';
-import { askOnMap, card } from './support/answer-map';
+import { askOnMap, card, mapThings } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import { holdBackButton } from './support/back';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { hideKeyboard, KEYBOARD, showKeyboard } from './support/keyboard';
-import { AI_INPUT } from './support/lists';
+import { AI_INPUT, layStage } from './support/lists';
+import { pressMarker } from './support/made-quest';
 import { givePhone, ON_CAMPUS } from './support/main';
+import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, JI_WOO, MIN_JUN, PHONE_NOW } from './support/server';
 
 // A Friend's profile card inside the answer frame (P02 ticket 18), over the stored answer to "배고파, 민수랑 같이" and
 // the fake main server's Friends: 김민준, seen at the exact position, and 서지우, of whom the User sees the Timetable
-// only. It opens from a person chip and from a cell's mark in the open list of Friends, stands over the answer's card,
-// and closes back to it.
+// only. It opens from the card of a face of the Plan's people (P04 ticket 03) and from a cell's mark in the open list
+// of Friends, stands over the answer's card, and closes back to it.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -44,13 +47,16 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 const ASKER = MEAL_ANSWER.input.people[0];
 const ADD = '같이 먹을 친구 추가';
 const JI_WOO_CELL = '서지우, 경영학과, 자리 모름, 추가';
+const PICK = '302동식당 · 12:15 점심';
+// 김민준's face on the Plan, named apart from his Avatar on the everyday map.
+const FACE = '민준';
 
 // 김민준 with the two fields package C adds to GET /friends: the mock's Friend ID of 김민준 (`FRIEND_IDS.f1`) and the
 // start of the friendship that ticket 18 names, 3 October.
 const MIN_JUN_PROFILED: Friend = { ...MIN_JUN, friendId: 'KM4J8QZA', friendsSince: '2026-10-03T14:05:00+09:00' };
 
-// The stored reply with its second person changed to 김민준, a Friend of the fake server, in the conditions and on the
-// chip, which the main server writes with the Friend's full name.
+// The stored reply with its second person changed to 김민준, a Friend of the fake server, in the conditions, on the
+// chip, which the main server writes with the Friend's full name, and in each Plan's people and faces.
 function replyWithMinJun(): typeof MEAL_ANSWER_REPLY {
   const [asker, minsu] = MEAL_ANSWER.input.people;
   if (asker === undefined || minsu === undefined) {
@@ -60,7 +66,20 @@ function replyWithMinJun(): typeof MEAL_ANSWER_REPLY {
   const chips = MEAL_ANSWER.chips.map((chip) =>
     chip.userId === minsu.userId ? { ...chip, text: MIN_JUN.name, userId: MIN_JUN.id } : chip,
   );
-  return { ...MEAL_ANSWER_REPLY, answer: { ...MEAL_ANSWER, input, chips } };
+  const swapped = <T extends { userId: string; name: string }>(person: T): T =>
+    person.userId === minsu.userId ? { ...person, userId: MIN_JUN.id, name: FACE } : person;
+  const plans = MEAL_ANSWER.plans.map((plan) => ({
+    ...plan,
+    parts: plan.parts.map(swapped),
+    scene: {
+      ...plan.scene,
+      people: plan.scene.people.map((face) => {
+        const changed = swapped(face);
+        return changed === face ? face : { ...changed, tag: FACE };
+      }),
+    },
+  }));
+  return { ...MEAL_ANSWER_REPLY, answer: { ...MEAL_ANSWER, input, chips, plans } };
 }
 
 let server: FakeServer;
@@ -84,12 +103,31 @@ function profileCard(): ReturnType<typeof within> {
   return within(screen.getByTestId('map-card'));
 }
 
-// Partitions: opened and closed by its ✕ and by Android's back button; the chip's ✕ beside it.
-describe('a person chip of an answer', () => {
-  it('opens the profile over the answer card, asks nothing, and its ✕ brings the answer back as it was', async () => {
-    const user = await askOnMap(server, replyWithMinJun());
+function markCard(): ReturnType<typeof within> {
+  return within(screen.getByTestId('mark-card'));
+}
 
-    await user.press(card().getByRole('button', { name: '김민준 프로필' }));
+type User = Awaited<ReturnType<typeof askOnMap>>;
+
+// Asks with 김민준 in the Plan, and opens the card of his face.
+async function askWithMinJun(): Promise<User> {
+  const user = await askOnMap(server, replyWithMinJun(), () => layStage(390, 760));
+  await pressMarker(user, FACE);
+  return user;
+}
+
+// The Plan on the map as it was asked, with 김민준's face.
+function planKept(): void {
+  expect(mapThings()).toEqual(expect.arrayContaining([PICK, FACE]));
+  expect(screen.getByTestId('answer-pill')).toBeVisible();
+}
+
+// Partitions: opened and closed by its ✕ and by Android's back button; 빼기 beside it.
+describe("the profile of a face of an answer's Plan", () => {
+  it('opens the profile over the answer card, asks nothing, and its ✕ brings the answer back as it was', async () => {
+    const user = await askWithMinJun();
+
+    await user.press(markCard().getByRole('button', { name: `${FACE} 프로필` }));
 
     expect(profileCard().getByRole('header', { name: '김민준' })).toBeVisible();
     expect(profileCard().getByText('컴퓨터공학부')).toBeVisible();
@@ -102,36 +140,35 @@ describe('a person chip of an answer', () => {
     await user.press(profileCard().getByRole('button', { name: '닫기' }));
 
     expect(screen.queryByTestId('map-card')).toBeNull();
-    expect(card().getByText('12:15 302동식당')).toBeVisible();
-    expect(card().getByText('1/5')).toBeVisible();
-    expect(card().getByRole('button', { name: '김민준 프로필' })).toBeVisible();
+    expect(screen.getByTestId('answer-card')).toBeVisible();
+    planKept();
+    await pressMarker(user, FACE);
+    expect(markCard().getByRole('button', { name: `${FACE} 프로필` })).toBeVisible();
   });
 
   it("is closed by Android's back button, which leaves the answer on screen", async () => {
     const back = holdBackButton();
-    const user = await askOnMap(server, replyWithMinJun());
-    await user.press(card().getByRole('button', { name: '김민준 프로필' }));
+    const user = await askWithMinJun();
+    await user.press(markCard().getByRole('button', { name: `${FACE} 프로필` }));
     expect(profileCard().getByRole('header', { name: '김민준' })).toBeVisible();
 
     expect(await back()).toBe(true);
 
     expect(screen.queryByTestId('map-card')).toBeNull();
-    expect(card().getByText('12:15 302동식당')).toBeVisible();
-    expect(screen.getByTestId('answer-pill')).toBeVisible();
+    planKept();
   });
 
-  it("keeps the chip's ✕, which still takes the person out", async () => {
+  it('keeps 빼기 beside the profile, which still takes the person out', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE });
-    const reply = replyWithMinJun();
-    const user = await askOnMap(server, reply);
+    const user = await askWithMinJun();
 
-    await user.press(card().getByRole('button', { name: '김민준 빼기' }));
+    await user.press(markCard().getByRole('button', { name: `${FACE} 빼기` }));
     await pass(500);
 
     expect(recalculations(server)).toEqual([
-      { input: { ...reply.answer.input, people: [ASKER] }, location: ON_CAMPUS },
+      { input: { ...replyWithMinJun().answer.input, people: [ASKER] }, location: ON_CAMPUS },
     ]);
-    expect(card().queryByRole('button', { name: '김민준 프로필' })).toBeNull();
+    expect(mapThings()).not.toContain(FACE);
   });
 });
 
@@ -145,8 +182,8 @@ describe('a screen pushed from the profile', () => {
     'returns by %s to the profile over the answer, and the back button then closes the profile alone',
     async (_, way) => {
       const back = holdBackButton();
-      const user = await askOnMap(server, replyWithMinJun());
-      await user.press(card().getByRole('button', { name: '김민준 프로필' }));
+      const user = await askWithMinJun();
+      await user.press(markCard().getByRole('button', { name: `${FACE} 프로필` }));
       await user.press(profileCard().getByRole('button', { name: '어디까지 보이나' }));
       await pass(500);
       expect(shownAddress()).toBe('/me/location-sharing');
@@ -162,8 +199,7 @@ describe('a screen pushed from the profile', () => {
       expect(profileCard().getByRole('header', { name: '김민준' })).toBeVisible();
       expect(await back()).toBe(true);
       expect(screen.queryByTestId('map-card')).toBeNull();
-      expect(card().getByText('12:15 302동식당')).toBeVisible();
-      expect(screen.getByTestId('answer-pill')).toBeVisible();
+      planKept();
     },
   );
 });
@@ -172,8 +208,8 @@ describe('a screen pushed from the profile', () => {
 // decision 14, the profile belongs to the reply it was opened over.
 describe('a new reply', () => {
   it('closes the profile opened over the answer before it', async () => {
-    const user = await askOnMap(server, replyWithMinJun());
-    await user.press(card().getByRole('button', { name: '김민준 프로필' }));
+    const user = await askWithMinJun();
+    await user.press(markCard().getByRole('button', { name: `${FACE} 프로필` }));
     server.on('POST /assistant/messages', { status: 200, body: { ...MEAL_ANSWER_REPLY, answer: MEAL_ANSWER_THREE } });
 
     await showKeyboard(KEYBOARD);
@@ -182,7 +218,7 @@ describe('a new reply', () => {
     await hideKeyboard();
     await pass(500);
 
-    expect(card().getByText('12:33 학생회관식당')).toBeVisible();
+    expect(mapThings()).toContain('학생회관식당 · 12:33 점심');
     expect(screen.queryByTestId('map-card')).toBeNull();
   });
 });
@@ -209,14 +245,16 @@ describe("a cell's mark in the open list of Friends", () => {
   });
 });
 
-// Partitions: the cells, the chip the stored answer writes, and that chip's person, who is none of the User's Friends.
+// Partitions: the cells; the face of the stored answer's person, who is none of the User's Friends.
 describe('full names', () => {
-  it('are in the cells with the department under each, and on the chips, which open only a Friend', async () => {
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+  it('are in the cells with the department under each, and a face opens the profile only of a Friend', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
 
-    expect(card().getByText('김민수')).toBeVisible();
-    expect(card().getByRole('button', { name: '김민수 빼기' })).toBeVisible();
-    expect(card().queryByRole('button', { name: '김민수 프로필' })).toBeNull();
+    await pressMarker(user, '민수');
+    expect(markCard().getByRole('button', { name: '민수 빼기' })).toBeVisible();
+    expect(markCard().queryByRole('button', { name: '민수 프로필' })).toBeNull();
+    await press(user, '카드 닫기');
+    await pass(100);
     await user.press(card().getByRole('button', { name: ADD }));
 
     expect(card().getByRole('button', { name: '김민준, 컴퓨터공학부, 1.2km, 추가' })).toHaveTextContent(

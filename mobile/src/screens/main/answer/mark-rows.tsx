@@ -8,6 +8,7 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { AnswerReply, Plan } from '@/api/assistant-types';
 import { Button, color, space, text } from '@/design-system';
+import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useOpenFriendProfile } from '../friend-profile';
 import { PlanFlagRows } from './mark-card';
@@ -37,20 +38,24 @@ interface ChangeProps {
 // The User's start: where they set out from, and 장소 선택 to set out from another building, as the origin chip.
 function StartRows({ answer, fix, busy, onDone }: ChangeProps & { answer: AnswerReply }): ReactElement {
   const origin = answer.chips.find(({ kind }) => kind === 'origin')?.text ?? '지금 있는 곳에서';
+  // An events or party answer's start is read-only, as its origin chip was.
+  const fixed = bandIsFixed(answer.input.kind);
   return (
     <View style={styles.rows}>
       <Text style={styles.title}>{`출발 · ${origin}`}</Text>
-      <Button
-        disabled={busy}
-        full
-        onPress={() => {
-          onDone();
-          fix.chooseOrigin();
-        }}
-        variant="secondary"
-      >
-        다른 건물에서 출발
-      </Button>
+      {fixed ? null : (
+        <Button
+          disabled={busy}
+          full
+          onPress={() => {
+            onDone();
+            fix.chooseOrigin();
+          }}
+          variant="secondary"
+        >
+          다른 건물에서 출발
+        </Button>
+      )}
     </View>
   );
 }

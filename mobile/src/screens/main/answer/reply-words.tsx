@@ -4,7 +4,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 import { color, text } from '@/design-system';
 import { turnsOf } from '@/features/assistant/turn';
@@ -87,6 +87,12 @@ export function barOf(bubbles: readonly ChatBubble[], onScreen: Seen): BarOf {
   return null;
 }
 
+// Whether the latest turn with a reply shows the Plan's card of the answer on screen.
+export function planShown(bubbles: readonly ChatBubble[], onScreen: Seen): boolean {
+  const turn = turnsOf(bubbles).findLast(({ after }) => after.length > 0);
+  return turn?.after.some((bubble) => wordsKindOf(bubble, onScreen) === 'plan') ?? false;
+}
+
 interface WordsProps extends OnScreen {
   bubble: ChatBubble;
   focus: BandFocus;
@@ -96,6 +102,8 @@ interface WordsProps extends OnScreen {
   onAsk: RefusalAsk;
   // A turn a Lookup's button asked of the recalculation.
   addRecalculated: Chat['addRecalculated'];
+  // The docked card's chips, when the Plan's card is docked (`PlanCard`'s `dock`).
+  dock?: ReactNode;
 }
 
 // The card of the answer on screen a reply's words are, by `wordsKindOf`, with a refusal's lines over the Plan's when
@@ -109,7 +117,7 @@ function onScreenCard(props: WordsProps, kind: WordsKind): ReactElement | null {
   }
   if (kind === 'plan' && answer !== null) {
     const card = { answer, invitation, onClose, over, room, shown };
-    return <PlanCard {...card} focus={focus} />;
+    return <PlanCard {...card} dock={props.dock} focus={focus} said={bubble.text} />;
   }
   if (kind === 'made' && answer !== null && plan !== null && invitation.made !== null) {
     return <MadeCard {...{ answer, invitation, onClose, over, plan }} made={invitation.made} />;

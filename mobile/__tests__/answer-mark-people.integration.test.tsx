@@ -11,7 +11,7 @@ import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
-import { askOnMap, card, mapThings } from './support/answer-map';
+import { askOnMap, mapThings } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -74,10 +74,10 @@ describe("a face of the Plan's people", () => {
     expect(mapThings()).not.toContain('민수');
   });
 
-  it('takes no press once "이대로 초대" sent the Plan', async () => {
+  it('takes no press once "만들고 초대 보내기" sent the Plan', async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
-    await user.press(card().getByRole('button', { name: '이대로 초대' }));
+    await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' }));
     await pass(500);
 
     const map = within(screen.getByTestId('main-map-touches'));

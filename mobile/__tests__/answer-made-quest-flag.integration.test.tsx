@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -71,11 +72,11 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-// "이대로 초대" on the answer, the main server then listing the Quest it made among the User's.
+// "만들고 초대 보내기" beside the input, the main server then listing the Quest it made among the User's.
 async function inviteAndClose(): Promise<void> {
   server.on('POST /plans', { status: 201, body: PLAN_QUEST });
   const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-  await user.press(card().getByRole('button', { name: '이대로 초대' }));
+  await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' }));
   await pass(500);
   await user.press(card().getByRole('button', { name: '닫기' }));
   await pass(500);
@@ -101,7 +102,7 @@ describe('the flag of a made Quest', () => {
     expect(flag.getByText('11월 17일 (화) · 수락 0/1', { includeHiddenElements: true })).toBeOnTheScreen();
   });
 
-  it('stands where the answer was after "이대로 초대" and "닫기", the phone keeping the Quest\'s id', async () => {
+  it('stands where the answer was after "만들고 초대 보내기" and "닫기", the phone keeping the Quest\'s id', async () => {
     await inviteAndClose();
 
     expect(mapThings()).toContain(FLAG);

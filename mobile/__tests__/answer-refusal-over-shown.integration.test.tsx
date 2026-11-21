@@ -2,8 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import { REFUSAL_REPLIES, type RefusalReply } from '@/api/mock/data/refusals';
@@ -22,7 +24,8 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 // A refusal over what is on screen (P02 ticket 15), in the answer frame against the fake main server with the main
 // server's real replies: the refusal's lines in place of a Lookup's beside it, with its offer as the main button
 // (boards n4, n20); a refusal to accept for a Friend that keeps the party or the Plan on screen and puts its line over
-// the card's first (n8b); and the way asked about the shuttle when it is not running (n21).
+// the card's first (n8b), a Plan's own lines being on the map; and the way asked about the shuttle when it is not
+// running (n21).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -63,6 +66,12 @@ afterEach(() => {
 });
 
 type User = Awaited<ReturnType<typeof askOnMap>>;
+
+const INVITE = '만들고 초대 보내기';
+
+function beside(): ReturnType<typeof within> {
+  return within(screen.getByTestId('ai-input-beside'));
+}
 
 async function say(user: User, words: string, reply: object): Promise<void> {
   server.on('POST /assistant/messages', { status: 200, body: reply });
@@ -119,7 +128,7 @@ describe('a refusal to accept for a Friend (board n8b)', () => {
   it("keeps the invited party on screen and puts its line in place of the card's first", async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: '이대로 초대' }));
+    await user.press(beside().getByRole('button', { name: INVITE }));
     await pass(500);
 
     await say(user, '민수 대신 수락해 줘', copyOf('민수 대신 수락해 줘'));
@@ -132,15 +141,15 @@ describe('a refusal to accept for a Friend (board n8b)', () => {
     expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
   });
 
-  it("keeps the Plan on screen and puts its line in place of the Plan's first", async () => {
+  it('keeps the Plan on screen and says only its line in the card', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
     await say(user, '민수 대신 수락해 줘', copyOf('민수 대신 수락해 줘'));
 
     expect(card().getByText('수락은 민수가 직접 해요')).toBeVisible();
     expect(card().queryByText('12:15 302동식당')).toBeNull();
-    expect(card().getByText('같이 먹으면 식사가 27분 줄어요')).toBeVisible();
-    expect(card().getByRole('button', { name: '이대로 초대' })).toBeVisible();
+    expect(mapThings()).toContain('302동식당 · 12:15 점심');
+    expect(beside().getByRole('button', { name: INVITE })).toBeVisible();
   });
 });
 

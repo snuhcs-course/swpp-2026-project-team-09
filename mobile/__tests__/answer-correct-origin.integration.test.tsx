@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -10,16 +11,19 @@ import { MEAL_ANSWER_OTHER_ORIGIN } from '@/api/mock/data/meal-answers';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
-import { askOnMap, card } from './support/answer-map';
+import { askOnMap } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { layStage } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
+import { pressMarker } from './support/made-quest';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// Where the User sets out from (P02 ticket 03), over the stored answer to "배고파, 민수랑 같이", whose origin chip reads
-// "301동에서", and the stored answer from another starting Place, 학생회관 (63동), whose chip reads "63동에서".
+// Where the User sets out from (P02 ticket 03), chosen from the User's start on the map (P04 ticket 03), over the
+// stored answer to "배고파, 민수랑 같이", which sets out "301동에서", and the stored answer from another starting
+// Place, 학생회관 (63동), which sets out "63동에서".
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -63,8 +67,18 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof askOnMap>>;
 
+function startCard(): ReturnType<typeof within> {
+  return within(screen.getByTestId('mark-card'));
+}
+
+// Opens the card of the User's start, whose marker says "나 · " and the walk.
+async function openStart(user: User): Promise<void> {
+  await user.press(within(screen.getByTestId('main-map-touches')).getByRole('button', { name: /^나 · /u }));
+}
+
 async function chooseOnMap(user: User): Promise<void> {
-  await user.press(card().getByRole('button', { name: '301동에서' }));
+  await pressMarker(user, '나 · 3분');
+  await user.press(startCard().getByRole('button', { name: '다른 건물에서 출발' }));
   await pass(500);
   expect(shownAddress()).toBe('/place-map');
   await user.press(screen.getByRole('button', { name: '이 위치로 정하기' }));
@@ -72,10 +86,10 @@ async function chooseOnMap(user: User): Promise<void> {
 }
 
 // Partitions: a Place chosen; a point that is no Place.
-describe('the origin chip', () => {
+describe("the User's start", () => {
   it("sends the Place chosen in 장소 선택's map view as the User's own start, and draws the answer", async () => {
     server.on('GET /places/at', { status: 200, body: { place: STUDENT_HALL, relation: 'inside' } });
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
 
     await chooseOnMap(user);
 
@@ -89,17 +103,19 @@ describe('the origin chip', () => {
         location: ON_CAMPUS,
       },
     ]);
-    expect(card().getByRole('button', { name: '63동에서' })).toBeVisible();
+    await openStart(user);
+    expect(startCard().getByText('출발 · 63동에서')).toBeVisible();
   });
 
   it('sends nothing for a point that is no Place, and says to choose a building', async () => {
     server.on('GET /places/at', { status: 200, body: { place: STUDENT_HALL, relation: 'near' } });
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
 
     await chooseOnMap(user);
 
     expect(recalculations(server)).toEqual([]);
     expect(within(screen.getByTestId('toast-layer')).getByText('건물을 골라 주세요')).toBeVisible();
-    expect(card().getByRole('button', { name: '301동에서' })).toBeVisible();
+    await openStart(user);
+    expect(startCard().getByText('출발 · 301동에서')).toBeVisible();
   });
 });

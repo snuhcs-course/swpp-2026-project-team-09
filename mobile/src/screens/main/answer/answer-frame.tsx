@@ -16,14 +16,15 @@ import { Keyboard, StyleSheet, View } from 'react-native';
 import { space } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 
-import { lastReply } from '@/features/assistant/use-shown-answer';
+import type { ChatBubble } from '@/features/assistant/use-chat';
+import { keepsShown, lastReply } from '@/features/assistant/use-shown-answer';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { BubbleParts } from '../chat-bubbles';
 import type { CardActions } from '../chat-cards';
 import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
 import { FriendProfileOver, useProfileOver } from '../friend-profile';
-import type { Room } from '../layout';
+import { AI_INPUT, type Room } from '../layout';
 import { AnswerPill } from './answer-pill';
 import { EarlierTurns, TurnQuestion } from './earlier-turns';
 import { WaitingReply } from './failed-and-waiting';
@@ -32,12 +33,35 @@ import { useForgetWithUndo } from './forget-with-undo';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { KeyboardHeadline } from './keyboard-headline';
 import { MarkCard } from './mark-card';
+import { DockedAnswer } from './docked-answer';
 import { MarkRows } from './mark-rows';
+import { planCardRests } from './plan-card';
 import { pillIconOf } from './pill-icon';
 import type { Raising } from './raise-handle';
 import { ReplySteps } from './reply-steps';
-import { barOf, onScreenOf, TopBar, Words } from './reply-words';
+import { barOf, onScreenOf, planShown, TopBar, Words } from './reply-words';
 import { type BandFocus, useBandFocus } from './use-corrections';
+
+// The turn on screen is its Plan's card alone with nothing to read: the card docks as one row around the input (board
+// 10), whose chips raise it for the earlier turns and the note.
+function restsDocked(control: ChatSheetControl, after: readonly ChatBubble[]): boolean {
+  const { answer: shown, chat } = control;
+  const [reply] = after;
+  const own =
+    after.length === 1 &&
+    reply !== undefined &&
+    reply.cards.length === 0 &&
+    reply.mapButtons.length === 0 &&
+    reply.proposal === null &&
+    reply.steps === undefined;
+  const refusal = reply !== undefined && keepsShown(reply) ? (reply.refusal?.lines ?? []) : [];
+  return (
+    own &&
+    planShown(chat.bubbles, onScreenOf(control)) &&
+    shown.answer !== null &&
+    planCardRests(shown, shown.answer, refusal)
+  );
+}
 
 interface AnswerCardProps {
   control: ChatSheetControl;
@@ -53,62 +77,93 @@ interface AnswerCardProps {
   focus: BandFocus;
   // The time bar's height under the pill, 0 for none: the raised card stops under it.
   timeBarHeight: number;
+  inputBottom: number;
+  // Whether the earlier turns are open under the turn on screen; the dock's "지난 답 N개" opens them.
+  earlier: { open: boolean; setOpen: (open: boolean) => void };
 }
 
-// The card at the bottom: what was asked, the turn's bubbles without a bubble around them, each under its steps when it
-// answered several requests, or the dots with 그만 in their place, and "지난 답 N개" under them, then the room of the
-// bar. While the keyboard is up, the turn's headline stands in place of its content, unless the card is raised.
+// The card at the bottom: what was asked, unless the Plan's card shows (the pill says it), the turn's bubbles without a
+// bubble around them, each under its steps when it answered several requests, or the dots with 그만 in their place,
+// and "지난 답 N개" under them, then the room of the bar. While the keyboard is up, the turn's headline and its
+// follow-ups stand in place of its content, unless the card is raised.
 function AnswerCard(props: AnswerCardProps): ReactElement {
-  const { control, cardActions, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, focus, timeBarHeight } =
-    props;
-  const card = { barRoom, onHeight, raising, stageHeight, timeBarHeight };
-  const { bubbles, waiting, retry } = control.chat;
-  const turn = turnOf(bubbles);
-  const after = turn?.after ?? [];
-  const last = bubbles.at(-1);
+  const { control, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, focus, timeBarHeight } = props;
+  const card = { barRoom, onHeight, raising, stageHeight, timeBarHeight, inputBottom: props.inputBottom };
+  const { bubbles, waiting } = control.chat;
+  const after = turnOf(bubbles)?.after ?? [];
   const contentMax = contentMaxOf(stageHeight, barRoom);
+  const docked = !keyboardUp && !raising.raised && !waiting && restsDocked(control, after);
+  const [reply] = after;
+  const raise = (open: boolean): void => {
+    props.earlier.setOpen(open);
+    raising.setRaised(true);
+  };
   return (
-    <FrameCard {...card} hold={waiting} testID="answer-card">
+    <FrameCard {...card} docked={docked} hold={waiting} testID="answer-card">
       {keyboardUp && !raising.raised ? (
-        <KeyboardHeadline control={control} />
+        <Typing control={control} />
+      ) : docked && reply !== undefined ? (
+        <DockedAnswer bubble={reply} control={control} focus={focus} onClose={onClose} onRaise={raise} />
       ) : (
-        <>
-          {turn === null ? null : <TurnQuestion turn={turn} />}
-          {after.map((bubble) => (
-            <View key={bubble.id} style={styles.part}>
-              {bubble.steps === undefined ? null : <ReplySteps steps={bubble.steps} />}
-              <BubbleParts
-                bubble={bubble}
-                cardActions={cardActions}
-                onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting ? retry : null}
-                onShowLayer={control.leaving.showLayer}
-                words={
-                  <Words
-                    addRecalculated={control.chat.addRecalculated}
-                    bubble={bubble}
-                    focus={focus}
-                    howAbout={control.howAbout}
-                    invitation={control.invitation}
-                    lookup={control.lookup}
-                    onAsk={control.chat.send}
-                    onClose={onClose}
-                    room={contentMax === null ? null : contentMax - CONTENT_TOP}
-                    shown={control.answer}
-                  />
-                }
-              />
-            </View>
-          ))}
-          {waiting ? <WaitingReply onStop={control.chat.stop} /> : <FollowUps control={control} />}
-          <EarlierTurns bubbles={bubbles} />
-        </>
+        <OpenAnswer {...props} room={contentMax === null ? null : contentMax - CONTENT_TOP} />
       )}
     </FrameCard>
   );
 }
 
-// The follow-ups under the reply on screen, while neither the list of Friends to add nor the time band moved whole
-// takes the card.
+// The open card's content: what was asked, unless the Plan's card shows, the turn's bubbles, each under its steps, the
+// dots with 그만 while a reply is on its way, and the earlier turns.
+function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElement {
+  const { control, cardActions, focus, onClose, room } = props;
+  const { bubbles, waiting, retry } = control.chat;
+  const turn = turnOf(bubbles);
+  const last = bubbles.at(-1);
+  return (
+    <>
+      {turn === null || planShown(bubbles, onScreenOf(control)) ? null : <TurnQuestion turn={turn} />}
+      {(turn?.after ?? []).map((bubble) => (
+        <View key={bubble.id} style={styles.part}>
+          {bubble.steps === undefined ? null : <ReplySteps steps={bubble.steps} />}
+          <BubbleParts
+            bubble={bubble}
+            cardActions={cardActions}
+            onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting ? retry : null}
+            onShowLayer={control.leaving.showLayer}
+            words={
+              <Words
+                addRecalculated={control.chat.addRecalculated}
+                bubble={bubble}
+                focus={focus}
+                howAbout={control.howAbout}
+                invitation={control.invitation}
+                lookup={control.lookup}
+                onAsk={control.chat.send}
+                onClose={onClose}
+                room={room}
+                shown={control.answer}
+              />
+            }
+          />
+        </View>
+      ))}
+      {waiting ? <WaitingReply onStop={control.chat.stop} /> : null}
+      <EarlierTurns bubbles={bubbles} opening={props.earlier} />
+    </>
+  );
+}
+
+// While the keyboard is up: the turn's headline and its follow-ups.
+function Typing({ control }: { control: ChatSheetControl }): ReactElement {
+  return (
+    <>
+      <KeyboardHeadline control={control} />
+      {control.chat.waiting ? null : <FollowUps control={control} />}
+    </>
+  );
+}
+
+// The follow-ups of the reply on screen while the keyboard is up, as one row of small chips over it: they are words to
+// type, so they come with typing. None while the list of Friends to add or the time band moved whole takes the card.
 function FollowUps({ control }: { control: ChatSheetControl }): ReactElement | null {
   const { answer, chat } = control;
   const reply = lastReply(chat.bubbles);
@@ -116,6 +171,21 @@ function FollowUps({ control }: { control: ChatSheetControl }): ReactElement | n
   return answer.adding || answer.moving !== null || !onScreen ? null : (
     <FollowUpChips onAsk={chat.send} reply={reply} />
   );
+}
+
+// Whether the card is raised, and whether its earlier turns are open.
+function useCardState(): {
+  raised: boolean;
+  setRaised: (raised: boolean) => void;
+  lower: () => void;
+  earlier: AnswerCardProps['earlier'];
+} {
+  const [raised, setRaised] = useState(false);
+  const [open, setOpen] = useState(false);
+  const lower = useCallback((): void => {
+    setRaised(false);
+  }, []);
+  return { raised, setRaised, lower, earlier: { open, setOpen } };
 }
 
 interface FramedProps {
@@ -128,6 +198,8 @@ interface FramedProps {
   // The time bar's height under the pill, 0 while there is none.
   onBarHeight: (height: number) => void;
   stage: Room['stage'];
+  // The AI input's bottom, from the stage's bottom: the docked card's edge stands just under it.
+  inputBottom: number;
 }
 
 interface OpenMarkProps {
@@ -180,7 +252,7 @@ function useBarHeight(
 // main screen is in front, so a screen pushed from the profile goes back to it. While a mark's card is open, back closes
 // it first; while the card is raised, back lowers it first.
 function Framed(props: FramedProps): ReactElement {
-  const { control, barRoom, stageHeight, keyboardUp, onHeight, onBarHeight, stage } = props;
+  const { control, barRoom, stageHeight, keyboardUp, onHeight, onBarHeight, stage, inputBottom } = props;
   const { chat, leaving, hide } = control;
   const { reset } = chat;
   const close = useCallback((): void => {
@@ -192,10 +264,7 @@ function Framed(props: FramedProps): ReactElement {
   const profileShown = profile.friend !== null && !keyboardUp;
   const { title, keep } = control.howAbout;
   const leave = title === null ? close : keep;
-  const [raised, setRaised] = useState(false);
-  const lower = useCallback((): void => {
-    setRaised(false);
-  }, []);
+  const { raised, setRaised, lower, earlier } = useCardState();
   const back = control.mark === null ? (raised ? lower : leave) : control.closeMark;
   useBackToClose(useIsFocused(), profileShown ? profile.hide : back, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
@@ -216,6 +285,8 @@ function Framed(props: FramedProps): ReactElement {
         timeBarHeight={bar.height}
         barRoom={barRoom}
         cardActions={actions}
+        earlier={earlier}
+        inputBottom={inputBottom}
         control={control}
         focus={focus}
         keyboardUp={keyboardUp}
@@ -246,6 +317,7 @@ export function AnswerFrame(props: AnswerFrameProps): ReactElement | null {
   return control.framed ? (
     <Framed
       barRoom={inputTop + space[3]}
+      inputBottom={inputTop - (room.inputHeight ?? AI_INPUT.height)}
       control={control}
       keyboardUp={keyboardUp}
       onBarHeight={onBarHeight}

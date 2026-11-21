@@ -2,15 +2,19 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { askOnMap, card } from './support/answer-map';
+import { askOnMap, card, mapThings } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
-import { pass } from './support/app';
+import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { layStage } from './support/lists';
+import { pressMarker } from './support/made-quest';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
@@ -19,7 +23,8 @@ import { EASED_ANSWER, NOT_NOW_ANSWER, NOT_NOW_REPLY } from '@/api/mock/data/unm
 
 // Conditions that cannot be met (P02-14), in the answer frame against the fake main server, over its real answers of
 // board n11 (nothing fits 지금) and n11b (eased to 13:00): the buttons and chips that ease a condition or go back ask
-// for a recalculation without the model, and a Plan with a Friend whose position is unknown opens its basis (n23).
+// for a recalculation without the model, and the pick's card holds the basis (n23). The time chips are gone (P04
+// ticket 04): the relax buttons and "처음으로" stand in for them.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -38,6 +43,7 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 const NOW_INPUT = NOT_NOW_ANSWER.input;
 const EASED_INPUT = { ...NOW_INPUT, window: { from: '13:00', until: null, now: true } };
 const EASED_REPLY = { ...NOT_NOW_REPLY, answer: EASED_ANSWER };
+const EASED_PICK = '학생회관식당 · 13:00 점심';
 
 let server: FakeServer;
 
@@ -91,35 +97,26 @@ describe('board n11: nothing fits 지금', () => {
     await pass(500);
 
     expect(sentInputs()).toEqual([EASED_INPUT]);
-    expect(card().getByText('13:00 학생회관식당 · 셋이 59분')).toBeVisible();
-    expect(card().getByText('지금 대신 13:00으로 미뤘어요')).toBeVisible();
-  });
-
-  it('asks from 13:00 when its 지금 chip is pressed, which eases rather than focusing the band', async () => {
-    server.on('POST /assistant/answers', { status: 200, body: EASED_ANSWER });
-    const user = await askOnMap(server, NOT_NOW_REPLY);
-
-    await user.press(card().getByRole('button', { name: '지금' }));
-    await pass(500);
-
-    expect(sentInputs()).toEqual([EASED_INPUT]);
+    expect(mapThings()).toContain(EASED_PICK);
   });
 });
 
 // Partitions: the relaxed chip; 처음으로.
 describe('board n11b: eased to 13:00', () => {
-  it('offers 처음으로 beside 이대로 초대', async () => {
+  it('offers 처음으로, with "만들고 초대 보내기" beside the input', async () => {
     await askOnMap(server, EASED_REPLY);
 
-    expect(card().getByRole('button', { name: '이대로 초대' })).toBeVisible();
+    expect(
+      within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' }),
+    ).toBeVisible();
     expect(card().getByRole('button', { name: '처음으로' })).toBeVisible();
   });
 
-  it.each([['처음으로'], ['13:00 이후']])('goes back to 지금 with %s', async (name) => {
+  it('goes back to 지금 with 처음으로', async () => {
     server.on('POST /assistant/answers', { status: 200, body: NOT_NOW_ANSWER });
     const user = await askOnMap(server, EASED_REPLY);
 
-    await user.press(card().getByRole('button', { name }));
+    await user.press(card().getByRole('button', { name: '처음으로' }));
     await pass(500);
 
     expect(sentInputs()).toEqual([NOW_INPUT]);
@@ -128,22 +125,17 @@ describe('board n11b: eased to 13:00', () => {
 });
 
 describe('board n23: a Friend whose position is unknown', () => {
-  it('opens the basis at first', async () => {
+  it("shows the basis in the pick's card", async () => {
     const [plan, ...rest] = EASED_ANSWER.plans;
     const unknown =
       plan === undefined
         ? []
         : [{ ...plan, parts: plan.parts.map((part) => (part.me ? part : { ...part, origin: null })) }];
     const answer: AnswerReply = { ...EASED_ANSWER, plans: [...unknown, ...rest] };
-    await askOnMap(server, { ...NOT_NOW_REPLY, answer });
+    const user = await askOnMap(server, { ...NOT_NOW_REPLY, answer }, () => layStage(390, 760));
 
-    expect(card().getByRole('button', { name: '근거 접기' })).toBeVisible();
-    expect(card().getByText(plan?.basis[0] ?? '')).toBeVisible();
-  });
+    await pressMarker(user, EASED_PICK);
 
-  it('keeps the basis closed at first when everyone is placed', async () => {
-    await askOnMap(server, EASED_REPLY);
-
-    expect(card().getByRole('button', { name: '근거' })).toBeVisible();
+    expect(within(screen.getByTestId('mark-card')).getByText(plan?.basis[0] ?? '')).toBeVisible();
   });
 });

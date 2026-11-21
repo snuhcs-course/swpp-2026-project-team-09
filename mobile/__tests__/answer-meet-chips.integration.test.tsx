@@ -2,17 +2,20 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { screen } from '@testing-library/react-native';
-import type { ConditionChip } from '@/api/assistant-types';
+import { screen, within } from '@testing-library/react-native';
+import type { ConditionChip, Plan } from '@/api/assistant-types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
-import { card } from './support/answer-map';
+import { card, mapThings } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { layStage } from './support/lists';
+import { pressMarker } from './support/made-quest';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { answerFriendsWithMinSu, friendCard, meetFromCard, MET_MIN_SU, MIN_SU, row } from './support/meet';
@@ -22,7 +25,8 @@ import { answerMainScreen, askMainServer, JI_WOO, ME_ID, MIN_JUN, PHONE_NOW } fr
 // The person chips of a meet's answer (P02 ticket 24), over the fake main server: in a meet with 민수 alone, "민수 ✕"
 // goes back to 민수's card, since a meet without its Friend has nothing to plan (board a5's chip); a Friend added by
 // "＋ 같이" or a face is planned with (P02 ticket 09), and in a meet with two Friends each ✕ recalculates as a meal's.
-// The meet is asked from 민수's card, opened from the friend list.
+// The meet is asked from 민수's card, opened from the friend list. A person's ✕ is "빼기" in the card of their face on
+// the map (P04 ticket 03).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -48,11 +52,28 @@ const ADD = '같이 만날 친구 추가';
 // The stored answer given to a meet with 민수 and 김민준: it holds those conditions, and a person chip for 김민준 after
 // 민수's, as the main server writes one for each Friend. Changed for the boundary of a meet with two Friends, which no
 // stored answer has.
+// Its Plans draw 김민준's face as "민준", at 민수's place, so that it is not taken for his everyday Avatar.
 const MIN_JUN_CHIP: ConditionChip = { kind: 'person', text: '김민준', userId: MIN_JUN.id };
+function withMinJun(plan: Plan): Plan {
+  const [, minSu] = plan.parts;
+  const [, face] = plan.scene.people;
+  if (minSu === undefined || face === undefined) {
+    return plan;
+  }
+  return {
+    ...plan,
+    parts: [...plan.parts, { ...minSu, userId: MIN_JUN.id, name: '민준' }],
+    scene: {
+      ...plan.scene,
+      people: [...plan.scene.people, { ...face, userId: MIN_JUN.id, name: '민준', tag: '민준' }],
+    },
+  };
+}
 const MET_BOTH = {
   ...MET_MIN_SU,
   input: { ...MET_MIN_SU.input, people: [ASKER, WITH_MIN_SU, WITH_MIN_JUN] },
   chips: [...MET_MIN_SU.chips, MIN_JUN_CHIP],
+  plans: MET_MIN_SU.plans.map(withMinJun),
 };
 
 let server: FakeServer;
@@ -77,9 +98,17 @@ type User = Awaited<ReturnType<typeof openMain>>;
 
 async function meetMinSu(): Promise<User> {
   const user = await openMain();
+  await layStage(390, 760);
   await press(user, row(MIN_SU));
   await meetFromCard(user);
   return user;
+}
+
+// A press on a face of the Plan's people, then 빼기 in its card.
+async function takeOut(user: User, face: string, name: string): Promise<void> {
+  await pressMarker(user, face);
+  await user.press(within(screen.getByTestId('mark-card')).getByRole('button', { name: `${name} 빼기` }));
+  await pass(500);
 }
 
 function peopleAsked(): unknown[] {
@@ -93,8 +122,7 @@ describe("a Friend's ✕ in a meet", () => {
   it("closes the answer and brings back 민수's card when 민수 is the only Friend, asking nothing", async () => {
     const user = await meetMinSu();
 
-    await user.press(card().getByRole('button', { name: '민수 빼기' }));
-    await pass(500);
+    await takeOut(user, '민수', '민수');
 
     expect(recalculations(server)).toHaveLength(1);
     expect(screen.queryByTestId('answer-pill')).toBeNull();
@@ -106,11 +134,10 @@ describe("a Friend's ✕ in a meet", () => {
     const user = await meetMinSu();
     server.on('POST /assistant/answers', { status: 200, body: MET_MIN_SU });
 
-    await user.press(card().getByRole('button', { name: '김민준 빼기' }));
-    await pass(500);
+    await takeOut(user, '민준', '민준');
 
     expect(peopleAsked().at(-1)).toEqual({ ...MET_MIN_SU.input, people: [ASKER, WITH_MIN_SU] });
-    expect(card().queryByRole('button', { name: '김민준 빼기' })).toBeNull();
+    expect(mapThings()).not.toContain('민준');
     expect(screen.getByTestId('answer-pill')).toBeVisible();
   });
 
@@ -118,8 +145,7 @@ describe("a Friend's ✕ in a meet", () => {
     server.on('POST /assistant/answers', { status: 200, body: MET_BOTH });
     const user = await meetMinSu();
 
-    await user.press(card().getByRole('button', { name: '민수 빼기' }));
-    await pass(500);
+    await takeOut(user, '민수', '민수');
 
     expect(peopleAsked().at(-1)).toEqual({ ...MET_MIN_SU.input, people: [ASKER, WITH_MIN_JUN] });
     expect(screen.queryByTestId('map-card')).toBeNull();

@@ -11,12 +11,13 @@ import { MEET_ANSWER } from '@/api/mock/data/meet-answer';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
-import { askOnMap, card, timeBar } from './support/answer-map';
+import { askOnMap, card, mapThings, timeBar } from './support/answer-map';
 import { layBand, recalculations } from './support/answer-correct';
 import { body, dragBody, layTrack, stepBody } from './support/band-move';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { AI_INPUT } from './support/lists';
+import { AI_INPUT, layStage } from './support/lists';
+import { pressMarker } from './support/made-quest';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { answerFriendsWithMinSu, meetFromCard, MIN_SU, row } from './support/meet';
@@ -26,7 +27,8 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 // The band dragged whole and let go (P02 ticket 25, "Letting go"), over the fake main server, which answers the meet
 // with 민수 and its recalculations with the stored real answer of board a5 (`meet-answer.json`): its first Plan, 302동
 // 앞, runs from 12:15 to 12:43, its second, 301동 앞, from 12:18 to 12:45, in a range of 12:00 to 18:30. The track is
-// laid 390 wide, a point a minute. Expected values: the ticket and its amended criteria.
+// laid 390 wide, a point a minute. Expected values: the ticket and its amended criteria. The Plan shown is read from
+// the pick's flag, and another is shown at a press on its candidate flag (P04 ticket 04).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -42,6 +44,8 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
+const FIRST_PICK = '302동 앞 · 12:15 만남';
+const SECOND = '후보 2 · 301동 앞';
 const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요';
 
 let server: FakeServer;
@@ -67,6 +71,7 @@ type User = Awaited<ReturnType<typeof openMain>>;
 // Asks "만나고 싶다" from 민수's card and lays the band's track out.
 async function meetMinSu(): Promise<User> {
   const user = await openMain();
+  await layStage(390, 760);
   await press(user, row(MIN_SU));
   await meetFromCard(user);
   await layTrack(390);
@@ -93,13 +98,12 @@ describe("a meet's band let go", () => {
 
   it("moves the second Plan's band, off the grid, by whole steps, and shows the answer's first Plan", async () => {
     const user = await meetMinSu();
-    await user.press(card().getByRole('button', { name: '다음 후보' }));
+    await pressMarker(user, SECOND);
 
     await dragBody(105);
 
     expect(recalculations(server).at(-1)).toEqual(startingAt('14:03'));
-    expect(card().getByText('12:15 302동 앞')).toBeVisible();
-    expect(card().getByTestId('plan-count')).toHaveTextContent('1/5');
+    expect(mapThings()).toEqual(expect.arrayContaining([FIRST_PICK, SECOND]));
   });
 
   it("asks from 18:02 for a drag past the range's end", async () => {
@@ -126,14 +130,13 @@ describe("a meet's band let go", () => {
 describe('after a band let go', () => {
   it('brings back the Plan shown before with "되돌리기", without a request', async () => {
     const user = await meetMinSu();
-    await user.press(card().getByRole('button', { name: '다음 후보' }));
+    await pressMarker(user, SECOND);
     await dragBody(105);
 
     await user.press(card().getByRole('button', { name: '되돌리기' }));
     await pass(500);
 
-    expect(card().getByText('12:18 301동 앞')).toBeVisible();
-    expect(card().getByTestId('plan-count')).toHaveTextContent('2/5');
+    expect(mapThings()).toContain('301동 앞 · 12:18 만남');
     expect(screen.queryByTestId('time-band-ghost')).toBeNull();
     expect(recalculations(server)).toHaveLength(2);
   });
@@ -146,7 +149,7 @@ describe('after a band let go', () => {
 
     expect(screen.getByText(NOT_RECALCULATED)).toBeVisible();
     expect(body()).toHaveAccessibilityValue({ text: '12:15–12:43' });
-    expect(card().getByText('12:15 302동 앞')).toBeVisible();
+    expect(mapThings()).toContain(FIRST_PICK);
     expect(timeBar().getByText('12:15–12:43 · 함께 28분')).toBeVisible();
     expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
   });
@@ -178,7 +181,7 @@ describe("a meal's band let go", () => {
     expect(recalculations(server)).toEqual([
       { input: { ...MEAL_ANSWER.input, window: { from: '12:25', until: null } }, location: ON_CAMPUS },
     ]);
-    expect(card().getByText('12:40 학생회관식당')).toBeVisible();
+    expect(mapThings()).toContain('학생회관식당 · 12:40 점심');
     expect(screen.getByTestId('time-band-ghost')).toHaveStyle({ borderStyle: 'dashed' });
   });
 });

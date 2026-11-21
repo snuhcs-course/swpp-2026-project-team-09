@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -11,10 +12,11 @@ import type { NewQuestInput } from '@/api/recruiting-plan-types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
-import { card } from './support/answer-map';
+import { card, timeBar } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { layStage } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import {
@@ -32,7 +34,7 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // A new party's answer in the answer frame (P02 ticket 30, boards Together 8 to 11 and Recruit 4 and 5), over the fake
 // main server, which answers "새로 모집" with the stored real answer of row 5: badminton at the gymnasium at 17:10
-// with 서준. Its Friends added and removed, and "이대로 모집" down to POST /plans. Expected values: the ticket's inputs
+// with 서준. Its Friends added and removed, and "만들고 모집하기" down to POST /plans. Expected values: the ticket's inputs
 // and words, and the stored answer's.
 
 jest.mock('expo-location');
@@ -50,7 +52,7 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const ASKED = '새로 모집';
-const POST = '이대로 모집';
+const POST = '만들고 모집하기';
 const plan = firstPlan(NEW_QUEST_ANSWER);
 const ALONE = [{ userId: ASKER, constraints: [] }];
 
@@ -63,7 +65,7 @@ function newPartyOf({ input }: AnswerReply): NewQuestInput {
 
 const STORED = newPartyOf(NEW_QUEST_ANSWER);
 
-// The stored party with the asker alone, as the main server answers it after 서준's ✕: 서준 among the Friends who
+// The stored party with the asker alone, as the main server answers it after 서준's 빼기: 서준 among the Friends who
 // could come, with the line of his day (board Recruit 4).
 const OPEN_TO_ALL: AnswerReply = {
   ...NEW_QUEST_ANSWER,
@@ -89,21 +91,48 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-// Partitions: a party with a Friend in it; one open to all with a Friend who could come.
-describe("a new party's answer (board Recruit 4)", () => {
-  it('draws the time, the Place, the count, 서준 with his ✕, "＋ 같이" to invite, and "이대로 모집"', async () => {
-    await sayOnMap(server, ASKED, NEW_QUEST_REPLY);
+type User = Awaited<ReturnType<typeof sayOnMap>>;
 
-    expect(card().getByText('17:10 체육관 · 4명 공개 모집')).toBeVisible();
-    expect(card().getByText('17:02에 도착해서 17:10에 모여요')).toBeVisible();
-    expect(card().getByRole('button', { name: '서준 빼기' })).toBeEnabled();
+// Asks with the stage laid out, so that the marks of the map take presses.
+async function sayWithMarks(reply: typeof NEW_QUEST_REPLY): Promise<User> {
+  const user = await sayOnMap(server, ASKED, reply);
+  await layStage(390, 760);
+  return user;
+}
+
+async function pressOnMap(user: User, name: string | RegExp): Promise<ReturnType<typeof within>> {
+  await user.press(within(screen.getByTestId('main-map-touches')).getByRole('button', { name }));
+  return within(screen.getByTestId('mark-card'));
+}
+
+// Partitions: what the bottom, the flag, and the faces of a party with a Friend in it offer.
+describe("a new party's answer (board Recruit 4)", () => {
+  it('draws the time, "＋ 같이" to invite, and "만들고 모집하기", and its flag the Place, the count, and 서준', async () => {
+    const user = await sayWithMarks(NEW_QUEST_REPLY);
+
+    expect(timeBar().getByText('17:10–17:40 · 30분')).toBeVisible();
     expect(card().getByRole('button', { name: '초대할 친구 추가' })).toBeEnabled();
     expect(card().getByRole('button', { name: POST })).toBeEnabled();
-    expect(card().queryByRole('button', { name: '이대로 초대' })).toBeNull();
+    expect(screen.queryByTestId('ai-input-beside')).toBeNull();
     expect(screen.queryByLabelText('시작 시각')).toBeNull();
-    expect(card().getByRole('button', { name: '301동에서' })).toBeDisabled();
+    const flag = await pressOnMap(user, '배드민턴 · 17:10 배드민턴');
+    expect(flag.getByText('공개')).toBeVisible();
+    expect(flag.getByText('4명')).toBeVisible();
+    expect(flag.getByText('서준')).toBeVisible();
   });
 
+  it("offers 서준's 빼기 on his face, and no other building on the User's start", async () => {
+    const user = await sayWithMarks(NEW_QUEST_REPLY);
+
+    expect((await pressOnMap(user, /^서준/u)).getByRole('button', { name: '서준 빼기' })).toBeEnabled();
+    await user.press(screen.getByRole('button', { name: '카드 닫기' }));
+    const start = await pressOnMap(user, /^나 · /u);
+    expect(start.queryByRole('button', { name: '다른 건물에서 출발', disabled: false })).toBeNull();
+  });
+});
+
+// Partitions: the list of Friends open; a Friend who could come; a Friend taken out.
+describe("a new party's Friends (board Recruit 4)", () => {
   it('asks who to invite while the list of Friends is open', async () => {
     const user = await sayOnMap(server, ASKED, NEW_QUEST_REPLY);
 
@@ -124,10 +153,10 @@ describe("a new party's answer (board Recruit 4)", () => {
     ]);
   });
 
-  it('removes 서준 with his ✕, which recalculates with the asker alone', async () => {
-    const user = await sayOnMap(server, ASKED, NEW_QUEST_REPLY);
+  it('removes 서준 with 빼기 on his face, which recalculates with the asker alone', async () => {
+    const user = await sayWithMarks(NEW_QUEST_REPLY);
 
-    await user.press(card().getByRole('button', { name: '서준 빼기' }));
+    await user.press((await pressOnMap(user, /^서준/u)).getByRole('button', { name: '서준 빼기' }));
     await pass(500);
 
     expect(recalculations(server)).toEqual([{ input: { ...STORED, people: ALONE }, location: ON_CAMPUS }]);
@@ -135,7 +164,7 @@ describe("a new party's answer (board Recruit 4)", () => {
 });
 
 // Partitions: a party with 서준 invited; one with nobody invited.
-describe('"이대로 모집" (boards Together 11 and Recruit 5)', () => {
+describe('"만들고 모집하기" (boards Together 11 and Recruit 5)', () => {
   it('posts the party through POST /plans with a key, and the card says what was posted', async () => {
     server.on('POST /plans', { status: 201, body: POSTED });
     const user = await sayOnMap(server, ASKED, NEW_QUEST_REPLY);

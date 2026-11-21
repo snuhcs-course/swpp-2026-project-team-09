@@ -2,13 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { screen } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
-import { card } from './support/answer-map';
+import { card, mapThings, timeBar } from './support/answer-map';
+import { layStage } from './support/lists';
 import { recalculations } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -65,18 +67,16 @@ describe('an events answer (board Alone 1)', () => {
     ]);
   });
 
-  it('draws the job fair first with the arrows and the three buttons, and no "＋ 같이"', async () => {
+  it('draws the job fair first with the three buttons, and no "＋ 같이"', async () => {
     await sayOnMap(server, ASKED, EVENTS_REPLY);
 
-    expect(card().getByText('13:54 도착 · 78분 볼 수 있어요')).toBeVisible();
-    expect(card().getByText('15:30 수업이라 15:12엔 나서요')).toBeVisible();
-    expect(card().getByTestId('plan-count')).toHaveTextContent('1/3');
-    expect(card().getByRole('button', { name: '다음 후보' })).toBeVisible();
+    expect(mapThings()).toContain('채용박람회 · 13:54 채용박람회');
+    expect(timeBar().getByText('13:54–15:12 · 78분')).toBeVisible();
     for (const label of ['여기로', '같이 갈 파티', '새로 모집']) {
       expect(card().getByRole('button', { name: label })).toBeEnabled();
     }
     expect(card().queryByRole('button', { name: /친구 추가/u })).toBeNull();
-    expect(card().queryByRole('button', { name: '이대로 초대' })).toBeNull();
+    expect(screen.queryByTestId('ai-input-beside')).toBeNull();
   });
 
   it('marks the company session, last, as clashing with the 15:30 Class', async () => {
@@ -84,23 +84,28 @@ describe('an events answer (board Alone 1)', () => {
 
     await user.press(card().getByRole('button', { name: '이전 후보' }));
 
-    expect(card().getByText('기업 설명회 · 16:00 문화관')).toBeVisible();
-    expect(card().getByText('15:30 수업과 겹쳐요')).toBeVisible();
-    expect(card().getByText('16:00–17:00 · 수업과 겹쳐요')).toBeVisible();
+    // The Plan's place is the map's pick and its clash is the time bar's words; the card says no line of it.
+    expect(card().getByTestId('plan-count')).toHaveTextContent('3/3');
+    expect(mapThings()).toContain('기업 설명회 · 16:00 기업 설명회');
+    expect(timeBar().getByText('16:00–17:00 · 수업과 겹쳐요')).toBeVisible();
+    expect(card().queryByText('기업 설명회 · 16:00 문화관')).toBeNull();
   });
 });
 
 // Ticket decision 4: the main server plans these answers by their own start, so the band is read-only. Partitions: the
-// handles, and the chips of where from and until.
+// handles, and the User's start, which took the where-from chip's press.
 describe('the band of an events answer', () => {
-  it('draws no handles, and its where-from and until chips take no press', async () => {
-    await sayOnMap(server, ASKED, EVENTS_REPLY);
+  it("draws no handles, and its start's card offers no other building", async () => {
+    const user = await sayOnMap(server, ASKED, EVENTS_REPLY);
+    await layStage(390, 760);
 
-    expect(card().getByText('13:54 도착 · 78분 볼 수 있어요')).toBeVisible();
+    expect(timeBar().getByText('13:54–15:12 · 78분')).toBeVisible();
     expect(screen.queryByLabelText('시작 시각')).toBeNull();
     expect(screen.queryByLabelText('끝 시각')).toBeNull();
-    expect(card().getByRole('button', { name: '15:30 수업까지' })).toBeDisabled();
-    expect(card().getByRole('button', { name: '24동에서' })).toBeDisabled();
+    await user.press(within(screen.getByTestId('main-map-touches')).getByRole('button', { name: /^나 · /u }));
+    const start = within(screen.getByTestId('mark-card'));
+    expect(start.getByText('출발 · 24동에서')).toBeVisible();
+    expect(start.queryByRole('button', { name: '다른 건물에서 출발', disabled: false })).toBeNull();
   });
 });
 
@@ -116,7 +121,7 @@ describe('the buttons of an events Plan', () => {
       { input: { kind: 'quests', globalEventId: JOB_FAIR, questIds: null }, location: ON_CAMPUS },
     ]);
     expect(chats(server)).toHaveLength(1);
-    expect(card().getByText('18:00 체육관 · 17:43에 나서요')).toBeVisible();
+    expect(mapThings()).toContain('배드민턴 한 게임 · 18:00 배드민턴 한 게임');
     expect(card().getByRole('button', { name: '참여하기' })).toBeEnabled();
   });
 
@@ -140,8 +145,8 @@ describe('the buttons of an events Plan', () => {
         location: ON_CAMPUS,
       },
     ]);
-    expect(card().getByText('17:10 체육관 · 4명 공개 모집')).toBeVisible();
-    expect(card().getByRole('button', { name: '이대로 모집' })).toBeEnabled();
+    expect(mapThings()).toContain('배드민턴 · 17:10 배드민턴');
+    expect(card().getByRole('button', { name: '만들고 모집하기' })).toBeEnabled();
   });
 });
 

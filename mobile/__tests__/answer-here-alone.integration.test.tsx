@@ -2,8 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import { Platform } from 'react-native';
 import { apiClient } from '@/api/client';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
@@ -19,15 +21,17 @@ import { pass, screen } from './support/app';
 import { askOnMap, card } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { layStage } from './support/lists';
+import { pressMarker } from './support/made-quest';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { givePushPhone } from './support/push';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// "여기로" (P05-14) against the fake main server, over its stored answer to "배고파" for the User alone (boards s1 and
-// s2: 301동식당 where the User is, then 학생회관식당 15 minutes away, the Class at 24동 at 13:00). The Plan becomes a
-// Quest the User holds alone through POST /plans (P03-15), and the card draws the reply's two lines (boards s4b and
-// s4).
+// "일정에 넣기" beside the input (P05-14's "여기로", P04 ticket 04) against the fake main server, over its stored
+// answer to "배고파" for the User alone (boards s1 and s2: 301동식당 where the User is, then 학생회관식당 15 minutes
+// away, the Class at 24동 at 13:00). The Plan becomes a Quest the User holds alone through POST /plans (P03-15), and
+// the card draws the reply's two lines (boards s4b and s4).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -104,8 +108,14 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof askOnMap>>;
 
+const TAKE = '일정에 넣기';
+
+function beside(): ReturnType<typeof within> {
+  return within(screen.getByTestId('ai-input-beside'));
+}
+
 async function take(user: User): Promise<void> {
-  await user.press(card().getByRole('button', { name: '여기로' }));
+  await user.press(beside().getByRole('button', { name: TAKE }));
   await pass(500);
 }
 
@@ -115,7 +125,7 @@ function made(): unknown[] {
 
 // Partitions: the Plan where the User is, its request, its card, the push sheet, and "다시 고르기". Expected values:
 // boards s1 and s4b.
-describe('"여기로" on a Plan where the User is (s1 → s4b)', () => {
+describe('"일정에 넣기" on a Plan where the User is (s1 → s4b)', () => {
   it('makes the Plan on screen into a Quest, and says the User will be told when to leave', async () => {
     const user = await askOnMap(server, REPLY);
 
@@ -133,7 +143,7 @@ describe('"여기로" on a Plan where the User is (s1 → s4b)', () => {
     expect(card().getByText('301동식당에서 먹어요')).toBeVisible();
     expect(card().getByText('12:45에 나설 시각을 알려 드릴게요')).toBeVisible();
     expect(card().getByRole('button', { name: '다시 고르기' })).toBeVisible();
-    expect(card().queryByRole('button', { name: '여기로' })).toBeNull();
+    expect(screen.queryByRole('button', { name: TAKE })).toBeNull();
     expect(card().queryByText(/파티/u)).toBeNull();
   });
 
@@ -164,11 +174,11 @@ describe('"여기로" on a Plan where the User is (s1 → s4b)', () => {
 });
 
 // Partitions: the Plan the User walks to, and "닫기". Expected values: boards s2 and s4.
-describe('"여기로" on a Plan the User walks to (s2 → s4)', () => {
+describe('"일정에 넣기" on a Plan the User walks to (s2 → s4)', () => {
   it('says no leave-by is kept for a short walk on, and "닫기" guides the User to the Restaurant', async () => {
     server.on('POST /plans', { status: 201, body: madeAlone(S4) });
-    const user = await askOnMap(server, REPLY);
-    await user.press(card().getByRole('button', { name: '다음 후보' }));
+    const user = await askOnMap(server, REPLY, () => layStage(390, 760));
+    await pressMarker(user, '후보 2 · 학생회관식당');
     await take(user);
     await user.press(screen.getByRole('button', { name: '나중에' }));
 
@@ -184,14 +194,14 @@ describe('"여기로" on a Plan the User walks to (s2 → s4)', () => {
   });
 });
 
-// Partitions: a Plan with a Friend, and a failure. Expected values: "이대로 초대" as before, and the failure's toast.
-describe('what "여기로" leaves as it was', () => {
-  it('does not stand on a Plan with a Friend, which keeps "이대로 초대"', async () => {
+// Partitions: a Plan with a Friend, and a failure. Expected values: "만들고 초대 보내기", and the failure's toast.
+describe('what "일정에 넣기" leaves as it was', () => {
+  it('does not stand on a Plan with a Friend, which keeps "만들고 초대 보내기"', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
 
     expect(MEAL_ANSWER.input.kind).toBe('meal');
-    expect(card().getByRole('button', { name: '이대로 초대' })).toBeVisible();
-    expect(card().queryByRole('button', { name: '여기로' })).toBeNull();
+    expect(beside().getByRole('button', { name: '만들고 초대 보내기' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: TAKE })).toBeNull();
   });
 
   it('keeps the Plan on a failure and says so', async () => {
@@ -201,6 +211,6 @@ describe('what "여기로" leaves as it was', () => {
     await take(user);
 
     expect(screen.getByText('답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요')).toBeVisible();
-    expect(card().getByRole('button', { name: '여기로' })).toBeVisible();
+    expect(beside().getByRole('button', { name: TAKE })).toBeVisible();
   });
 });

@@ -3,19 +3,22 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_ALONE, MEAL_ANSWER_FIXED_START, MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answers';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
-import { askOnMap, card, FIRST_PLAN_MARKS, mapThings } from './support/answer-map';
+import { askOnMap, FIRST_PLAN_MARKS, mapThings } from './support/answer-map';
 import { step } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { AI_INPUT } from './support/lists';
+import { AI_INPUT, layStage } from './support/lists';
 import { givePhone, ME, ON_CAMPUS } from './support/main';
+import { pressMarker } from './support/made-quest';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
@@ -72,9 +75,8 @@ function lastContext(): unknown {
 // Partitions: the third Plan of the answer the reply drew; the Plan after a recalculation.
 describe('words sent with an answer on screen', () => {
   it('carry its conditions and the id of the Plan on screen', async () => {
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: '다음 후보' }));
-    await user.press(card().getByRole('button', { name: '다음 후보' }));
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
+    await pressMarker(user, '후보 3 · 학생회관식당');
 
     await say(user);
     await pass(500);
@@ -86,8 +88,9 @@ describe('words sent with an answer on screen', () => {
 
   it('carry the recalculated conditions after a recalculation', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE });
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: '김민수 빼기' }));
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
+    await pressMarker(user, '민수');
+    await user.press(within(screen.getByTestId('mark-card')).getByRole('button', { name: '민수 빼기' }));
     await pass(500);
 
     await say(user);
@@ -121,7 +124,7 @@ describe('the answer on screen after words', () => {
     await say(user);
     await pass(500);
 
-    expect(card().getByText('12:33 학생회관식당')).toBeVisible();
+    expect(mapThings()).toContain('학생회관식당 · 12:33 점심');
     expect(screen.queryByTestId('time-band-ghost')).toBeNull();
   });
 

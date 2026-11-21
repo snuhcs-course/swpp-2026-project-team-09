@@ -4,7 +4,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { within } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 import type { ReplyStep } from '@/api/assistant-types';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import type * as SecureStoreFake from './support/secure-store';
@@ -17,7 +17,8 @@ import { markLibraryLoggedIn } from '@/library/flag';
 
 // One message that asked for a 관정 seat and then dinner (P03), against the fake main server and the fake library: the
 // answer card numbers the steps in time order above the plan, says where a later one sets out from, points at the
-// seat's card below, and says why a step was not done. A reply to one request shows no steps.
+// seat's card below, and says why a step was not done. A reply to one request shows no steps. The Plan holds no lines
+// in the card (P04 ticket 04): its main button beside the input says it is on screen.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -90,6 +91,10 @@ async function ask(reply: object): Promise<void> {
   await sendFromBar(user, WORDS);
 }
 
+function planOnScreen(): ReturnType<typeof screen.getByRole> {
+  return within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' });
+}
+
 function row(order: number): ReturnType<typeof within> {
   return within(inFrame().getByTestId(`reply-step-${order}`));
 }
@@ -107,7 +112,7 @@ describe('A reply to a seat and then dinner', () => {
   it('keeps every step reachable: the plan and the seat card stay in the card', async () => {
     await ask({ cards: [SEAT_CARD], answer: MEAL_ANSWER, steps: [seatStep(), mealStep] });
 
-    expect(inFrame().getByTestId('answer-lines')).toBeVisible();
+    expect(planOnScreen()).toBeVisible();
     expect(inFrame().getByTestId(`library-book-${SEAT_CARD.library.key}`)).toBeVisible();
     expect(library.writes()).toEqual([]);
   });
@@ -118,7 +123,7 @@ describe('A reply to a seat and then dinner', () => {
     expect(row(1).getByText('17:00–18:00 7층 7A 열람실 2 구역')).toBeVisible();
     expect(row(1).getByText('열람실은 당일만 예약할 수 있어요')).toBeVisible();
     expect(row(2).getByText('18:04–18:30 학생회관식당에서 저녁 · 62-1동에서')).toBeVisible();
-    expect(inFrame().getByTestId('answer-lines')).toBeVisible();
+    expect(planOnScreen()).toBeVisible();
   });
 });
 
@@ -127,6 +132,6 @@ describe('A reply to one request', () => {
     await ask({ cards: [], answer: MEAL_ANSWER });
 
     expect(inFrame().queryByTestId('reply-steps')).toBeNull();
-    expect(inFrame().getByTestId('answer-lines')).toBeVisible();
+    expect(planOnScreen()).toBeVisible();
   });
 });

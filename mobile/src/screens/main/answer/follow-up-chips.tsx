@@ -2,22 +2,23 @@
  * AI-generated with Claude
  *
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { type ReactElement, useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { friendsQuery } from '@/api/queries';
 import { now } from '@/clock';
 import { color, radius, size, space, text } from '@/design-system';
 import { followUpsOf } from '@/features/assistant/follow-ups';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 
-const CELL_HEIGHT = 40;
+const CELL_HEIGHT = 32;
 const HIT_SLOP = (size.touchMin - CELL_HEIGHT) / 2;
 
-// Under the reply on screen: its follow-ups (`followUpsOf`), with its Friends named as the User's list of Friends
-// names them, in cells of one width, each sending its words as the User's message. Nothing while there are none.
+// The reply's follow-ups (`followUpsOf`), with its Friends named as the User's list of Friends names them, in one row
+// of small chips that scrolls sideways, each sending its words as the User's message. Nothing while there are none.
 export function FollowUpChips({
   reply,
   onAsk,
@@ -32,7 +33,13 @@ export function FollowUpChips({
     return null;
   }
   return (
-    <View style={styles.row} testID="follow-ups">
+    <ScrollView
+      contentContainerStyle={styles.row}
+      horizontal
+      keyboardShouldPersistTaps="handled"
+      showsHorizontalScrollIndicator={false}
+      testID="follow-ups"
+    >
       {words.map((said) => (
         <Pressable
           accessibilityLabel={said}
@@ -49,20 +56,18 @@ export function FollowUpChips({
           </Text>
         </Pressable>
       ))}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: space[2] },
   cell: {
-    flex: 1,
-    minWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
     height: CELL_HEIGHT,
     paddingHorizontal: space[3],
-    borderRadius: radius.md,
+    borderRadius: radius.full,
     borderWidth: 1,
     borderColor: color.borderStrong,
     backgroundColor: color.surface,

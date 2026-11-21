@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -11,10 +12,12 @@ import type { PlanQuest } from '@/api/plan-quest-types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
-import { card, mapLines, mapThings } from './support/answer-map';
+import { card, mapLines, mapThings, timeBar } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { layStage } from './support/lists';
+import { pressMarker } from './support/made-quest';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { answerFriendsWithMinSu, friendCard, MEET, meetFromCard, meetWith, MIN_SU, pill, row } from './support/meet';
@@ -24,7 +27,8 @@ import { answerMainScreen, askMainServer, MIN_JUN, PHONE_NOW } from './support/s
 // "만나고 싶다" on a Friend's card of the everyday map (P02 ticket 24), over the fake main server, which answers the meet
 // with the stored real answer of board a5 (`meet-answer.json`): the button down to the request, the answer drawn as a
 // Plan. Expected values: the ticket's input, and the stored answer, whose words differ from the board's (P01 ticket 18,
-// "Differences from the boards").
+// "Differences from the boards"). The Plan's place, people, start, and basis are read from its marks on the map, its
+// band from the time bar, and its main button beside the input (P04 tickets 01–04).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -59,6 +63,23 @@ afterEach(() => {
   jest.useRealTimers();
   jest.restoreAllMocks();
 });
+
+const PICK = '302동 앞 · 12:15 만남';
+
+type User = Awaited<ReturnType<typeof openMain>>;
+
+// "만나고 싶다" on 김민준's face, with the stage laid out so that a mark's card opens at a press.
+async function meetMinJun(): Promise<User> {
+  const user = await openMain();
+  await layStage(390, 760);
+  await press(user, MIN_JUN.name);
+  await meetFromCard(user);
+  return user;
+}
+
+function markCard(): ReturnType<typeof within> {
+  return within(screen.getByTestId('mark-card'));
+}
 
 // Partitions: the card of a face and the card of a Friend whom the map does not show; the answer that comes, and a
 // request that fails.
@@ -112,21 +133,20 @@ describe('"만나고 싶다" on a Friend\'s card', () => {
 
 // Partitions: the first Plan in the card, and on the map.
 describe('the answer of a meet (board a5)', () => {
-  it("draws the first Plan's lines, the count of five, the chips, and the band of 나 and 민수", async () => {
-    const user = await openMain();
-    await press(user, MIN_JUN.name);
+  it('draws the first Plan of five, its start and 민수, the next Class, and the band of 나 and 민수', async () => {
+    const user = await meetMinJun();
 
-    await meetFromCard(user);
-
-    expect(card().getByText('12:15 302동 앞')).toBeVisible();
-    expect(card().getByText('12:43까지 함께 28분이에요')).toBeVisible();
-    expect(card().getByTestId('plan-count')).toHaveTextContent('1/5');
-    expect(card().getByRole('button', { name: '301동에서' })).toBeVisible();
-    expect(card().getByRole('button', { name: '13:00 수업까지' })).toBeVisible();
-    expect(card().getByRole('button', { name: '민수 빼기' })).toBeVisible();
-    expect(card().getByText('12:15–12:43 · 함께 28분')).toBeVisible();
-    expect(card().getByText('나')).toBeVisible();
-    expect(card().getByText('18:30')).toBeVisible();
+    expect(mapThings()).toEqual(expect.arrayContaining([PICK, '13:00 수업 · 24동']));
+    expect(mapThings().filter((name) => name.startsWith('후보 '))).toHaveLength(4);
+    expect(timeBar().getByText('12:15–12:43 · 함께 28분')).toBeVisible();
+    await press(user, '사람별 시간 펼치기');
+    expect(timeBar().getByText('나')).toBeVisible();
+    expect(timeBar().getByText('18:30')).toBeVisible();
+    await pressMarker(user, '나 · 3분');
+    expect(markCard().getByText('출발 · 301동에서')).toBeVisible();
+    await press(user, '카드 닫기');
+    await pressMarker(user, '민수');
+    expect(markCard().getByRole('button', { name: '민수 빼기' })).toBeVisible();
   });
 
   it('draws the meeting place picked with its time, the next candidate numbered 2, the next Class, and two lines', async () => {
@@ -155,39 +175,32 @@ const MET_QUEST: PlanQuest = {
   },
 };
 
-// Partitions: the basis, the next Plan by the arrow, and "이대로 초대" down to the request and its reply.
+// Partitions: the basis, the next Plan by its flag, and "만들고 초대 보내기" down to the request and its reply.
 describe("the controls of a meet's answer", () => {
-  it('opens the basis the main server wrote', async () => {
-    const user = await openMain();
-    await press(user, MIN_JUN.name);
-    await meetFromCard(user);
+  it("opens the basis the main server wrote in the pick's card", async () => {
+    const user = await meetMinJun();
 
-    await user.press(card().getByRole('button', { name: '근거' }));
+    await pressMarker(user, PICK);
 
-    expect(card().getByText('민수 12:15 302동 수업 끝 · 15:30에 나서요')).toBeVisible();
-    expect(card().getByText('301동 → 302동 앞 걸어서 3분')).toBeVisible();
-    expect(card().getByText('302동 앞 → 24동 걸어서 17분, 그래서 12:43에 나서요')).toBeVisible();
+    expect(markCard().getByText('민수 12:15 302동 수업 끝 · 15:30에 나서요')).toBeVisible();
+    expect(markCard().getByText('301동 → 302동 앞 걸어서 3분')).toBeVisible();
+    expect(markCard().getByText('302동 앞 → 24동 걸어서 17분, 그래서 12:43에 나서요')).toBeVisible();
   });
 
-  it('shows 301동 앞 for 27 minutes with "›"', async () => {
-    const user = await openMain();
-    await press(user, MIN_JUN.name);
-    await meetFromCard(user);
+  it("shows 301동 앞 for 27 minutes at a press on candidate 2's flag", async () => {
+    const user = await meetMinJun();
 
-    await user.press(card().getByRole('button', { name: '다음 후보' }));
+    await pressMarker(user, '후보 2 · 301동 앞');
 
-    expect(card().getByText('12:18 301동 앞')).toBeVisible();
-    expect(card().getByText('12:45까지 함께 27분이에요')).toBeVisible();
-    expect(card().getByTestId('plan-count')).toHaveTextContent('2/5');
+    expect(mapThings()).toContain('301동 앞 · 12:18 만남');
+    expect(timeBar().getByText('12:18–12:45 · 함께 27분')).toBeVisible();
   });
 
-  it('sends the meet and its first Plan with "이대로 초대", and the card then says the Quest was made', async () => {
+  it('sends the meet and its first Plan with "만들고 초대 보내기", and the card then says the Quest was made', async () => {
     server.on('POST /plans', { status: 201, body: MET_QUEST });
-    const user = await openMain();
-    await press(user, MIN_JUN.name);
-    await meetFromCard(user);
+    const user = await meetMinJun();
 
-    await user.press(card().getByRole('button', { name: '이대로 초대' }));
+    await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' }));
     await pass(500);
 
     expect(server.received('POST /plans').map(({ body }) => body)).toEqual([

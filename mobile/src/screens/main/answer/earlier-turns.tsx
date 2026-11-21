@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -87,8 +88,15 @@ function EarlierTurn({ turn }: { turn: Turn }): ReactElement {
 // "지난 답 N개" under the turn on screen while the conversation has turns before it: it opens them below, the latest
 // first, so the turn on screen stays where it was read; "접기" closes them. They are read-only: their Plans and
 // Lookups are no longer on the map, so they have no buttons, and their cards are named only.
-export function EarlierTurns({ bubbles }: { bubbles: readonly ChatBubble[] }): ReactElement | null {
-  const [open, setOpen] = useState(false);
+interface EarlierTurnsProps {
+  bubbles: readonly ChatBubble[];
+  // Held by the frame, so that the dock's "지난 답 N개" raises the card with the turns open. Left out, its own.
+  opening?: { open: boolean; setOpen: (open: boolean) => void };
+}
+
+export function EarlierTurns({ bubbles, opening }: EarlierTurnsProps): ReactElement | null {
+  const own = useState(false);
+  const [open, setOpen] = opening === undefined ? own : [opening.open, opening.setOpen];
   const earlier = turnsOf(bubbles).slice(0, -1).toReversed();
   if (earlier.length === 0) {
     return null;

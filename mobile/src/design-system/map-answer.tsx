@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -91,8 +92,9 @@ function Label({ label, testID }: { label: AnswerLabel; testID?: string }): Reac
     <View
       style={[
         styles.label,
-        line !== null && styles.twoLines,
+        line !== null && tone !== 'candidate' && styles.twoLines,
         tone === 'pick' && styles.pickLabel,
+        tone === 'candidate' && styles.candidateLabel,
         tone === 'meeting' && styles.meetingLabel,
         tone === 'late' && styles.lateLabel,
         tone === 'shuttle' && styles.shuttleLabel,
@@ -105,11 +107,12 @@ function Label({ label, testID }: { label: AnswerLabel; testID?: string }): Reac
           <Text style={styles.number}>{number}</Text>
         </View>
       )}
-      <View style={styles.words}>
+      <View style={[styles.words, tone === 'candidate' && styles.inline]}>
         <Text
           numberOfLines={1}
           style={[
             tone === 'pick' ? styles.pickTitle : styles.title,
+            tone === 'candidate' && styles.candidateTitle,
             tone === 'meeting' && styles.meetingTitle,
             tone === 'dropped' && styles.droppedTitle,
             WAY_FLAGS.has(tone) && styles.flagTitle,
@@ -245,7 +248,7 @@ const styles = StyleSheet.create({
     boxShadow: shadow.dot,
   },
   pick: { width: PICK_DOT, height: PICK_DOT, backgroundColor: color.quest },
-  candidate: { width: CANDIDATE_DOT, height: CANDIDATE_DOT, backgroundColor: color.inkSubtle },
+  candidate: { width: CANDIDATE_DOT, height: CANDIDATE_DOT, backgroundColor: color.snuBlue },
   dropped: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: color.border },
   next: { width: NEXT_SQUARE, height: NEXT_SQUARE, borderRadius: radius.sm, backgroundColor: color.snuBlue },
   stop: { width: SMALL_DOT, height: SMALL_DOT, backgroundColor: color.svcShuttle },
@@ -294,6 +297,11 @@ const styles = StyleSheet.create({
   },
   twoLines: { paddingVertical: space[1], borderRadius: radius.md },
   pickLabel: { borderWidth: RING, borderColor: color.quest },
+  // Another candidate (boards 20 and 21): its number, its name, and its time on one line, in a tag that reads as one
+  // to press.
+  candidateLabel: { borderWidth: 1.5, borderColor: color.snuBlue },
+  inline: { flexDirection: 'row', alignItems: 'baseline', gap: space[1] },
+  candidateTitle: { fontFamily: mapText.smallTitle.fontFamily },
   meetingLabel: { backgroundColor: color.ink },
   lateLabel: { backgroundColor: color.dangerSoft },
   shuttleLabel: { backgroundColor: color.svcShuttleSoft },
