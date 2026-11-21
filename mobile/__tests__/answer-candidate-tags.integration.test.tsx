@@ -14,7 +14,8 @@ import type { FakeServer } from './support/fake-server';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
-import { askMainServer, PHONE_NOW } from './support/server';
+import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { sockets } from './support/fake-socket';
 
 // The other candidates as tags while a meal answer is up (P04 ticket 13, boards 20 to 22): each keeps its number, its
 // name, its arrival time, and its dishes with their price; a press on one makes it the pick, and the old pick becomes
@@ -47,7 +48,9 @@ let server: FakeServer;
 beforeEach(async () => {
   jest.useFakeTimers({ now: PHONE_NOW });
   await startFresh();
+  sockets.length = 0;
   server = await askMainServer({ signedIn: true });
+  answerMainScreen(server);
   givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
 
@@ -111,7 +114,7 @@ describe('two candidates in one building', () => {
     const user = await askOnMap(server, reply);
 
     await press(user, CANDIDATES[2] ?? '');
-    expect(screen.getByRole('button', { name: /^3식당 · 12:31/u })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /^3식당 · .*치즈한장부대찌개 외 2$/u })).toBeOnTheScreen();
 
     await press(user, '후보 5 · 자하연식당 2층 · 12:35 · 나가사키꼬치어묵 외 1 · 6,500원');
     expect(screen.getByRole('button', { name: /^자하연식당 2층 · 12:35/u })).toBeOnTheScreen();
