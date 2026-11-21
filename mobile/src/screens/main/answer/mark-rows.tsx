@@ -5,11 +5,12 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { AnswerReply, Plan } from '@/api/assistant-types';
-import { Button, color, space, text } from '@/design-system';
+import { Button, color, font, space, text } from '@/design-system';
 import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
+import { koreaClock } from '@/korea-time';
 import { useOpenFriendProfile } from '../friend-profile';
 import { PlanFlagRows } from './mark-card';
 import { type BandFocus, type Corrections, useCorrections } from './use-corrections';
@@ -60,36 +61,53 @@ function StartRows({ answer, fix, busy, onDone }: ChangeProps & { answer: Answer
   );
 }
 
-function CardButton({
-  words,
-  label,
-  disabled = false,
-  onPress,
-}: {
-  words: string;
-  label: string;
-  disabled?: boolean;
-  onPress: () => void;
-}): ReactElement {
+// A small pressable word of a face's card.
+function FaceAction(props: { words: string; label: string; disabled?: boolean; onPress: () => void }): ReactElement {
+  const { words, label, disabled = false, onPress } = props;
   return (
-    <View style={styles.button}>
-      <Button disabled={disabled} full label={label} onPress={onPress} variant="secondary">
-        {words}
-      </Button>
-    </View>
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      hitSlop={FACE_SLOP}
+      onPress={onPress}
+      style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+    >
+      <Text style={[styles.actionWords, disabled && styles.disabled]}>{words}</Text>
+    </Pressable>
   );
 }
 
-// A face of the Plan's people: their profile when they are a Friend, as their chip opens it, and 빼기, as its ✕.
-function FaceRows({ userId, name, fix, busy, onDone }: ChangeProps & { userId: string; name: string }): ReactElement {
+// What a face says of the Plan's time: the busy stretch of theirs that ends last before it ("12:15 302동 수업 끝").
+function faceLineOf(plan: Plan, userId: string): string | null {
+  const lane = plan.band.lanes.find((one) => one.userId === userId);
+  const start = Date.parse(plan.band.startAt);
+  const ended = (lane?.busy ?? [])
+    .filter(({ endAt }) => Date.parse(endAt) <= start)
+    .toSorted((one, other) => Date.parse(other.endAt) - Date.parse(one.endAt));
+  const [last] = ended;
+  return last === undefined ? null : `${koreaClock(last.endAt)} ${last.label ?? '일정'} 끝`;
+}
+
+interface FaceProps extends ChangeProps {
+  userId: string;
+  name: string;
+  line: string | null;
+}
+
+// A face of the Plan's people, in a small card beside it: the name, its line, its profile when they are a Friend, as
+// their chip opens it, and 빼기, as its ✕.
+function FaceRows({ userId, name, line, fix, busy, onDone }: FaceProps): ReactElement {
   const openProfile = useOpenFriendProfile();
   const profile = fix.friendIds.has(userId) ? openProfile : null;
   return (
-    <View style={styles.rows}>
-      <Text style={styles.title}>{name}</Text>
-      <View style={styles.buttons}>
+    <View style={styles.face}>
+      <Text style={styles.name}>{name}</Text>
+      {line === null ? null : <Text style={styles.line}>{line}</Text>}
+      <View style={styles.actions}>
         {profile === null ? null : (
-          <CardButton
+          <FaceAction
             label={`${name} 프로필`}
             onPress={() => {
               onDone();
@@ -98,7 +116,7 @@ function FaceRows({ userId, name, fix, busy, onDone }: ChangeProps & { userId: s
             words="프로필"
           />
         )}
-        <CardButton
+        <FaceAction
           disabled={busy}
           label={`${name} 빼기`}
           onPress={() => {
@@ -124,14 +142,23 @@ export function MarkRows({ id, shown, answer, plan, focus, onClose, onDone }: Ma
   if (id.startsWith(PERSON_ID)) {
     const userId = id.slice(PERSON_ID.length);
     const name = plan.parts.find((part) => part.userId === userId)?.name ?? '';
-    return <FaceRows {...change} name={name} userId={userId} />;
+    return <FaceRows {...change} line={faceLineOf(plan, userId)} name={name} userId={userId} />;
   }
   return <PlanFlagRows answer={answer} plan={plan} />;
 }
 
+// The words are about 20 high and 30 wide: this reaches the design system's 44 by 44 press area.
+const FACE_SLOP = 12;
+
 const styles = StyleSheet.create({
+  face: { gap: 2 },
+  name: { ...text.label, fontFamily: font.semiBold, color: color.ink },
+  line: { ...text.caption, color: color.inkMuted },
+  actions: { flexDirection: 'row', gap: space[3], paddingTop: space[1] },
+  action: { paddingVertical: 2 },
+  actionWords: { ...text.label, color: color.snuBlue },
+  disabled: { color: color.inkMuted },
+  pressed: { opacity: 0.6 },
   rows: { gap: space[3] },
   title: { ...text.title, color: color.ink },
-  buttons: { flexDirection: 'row', gap: space[2] },
-  button: { flex: 1 },
 });
