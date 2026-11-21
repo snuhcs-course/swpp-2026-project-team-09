@@ -92,10 +92,12 @@ function DishRow({ name, price }: { name: string; price: number | null }): React
 function Group({
   group,
   picked,
+  disabled,
   onPick,
 }: {
   group: MenuGroup;
   picked: boolean;
+  disabled: boolean;
   onPick: (planId: string) => void;
 }): ReactElement {
   const { number, planId, name, arrival, price, dishes } = group;
@@ -109,7 +111,8 @@ function Group({
     <Pressable
       accessibilityLabel={said}
       accessibilityRole="button"
-      accessibilityState={{ selected: picked }}
+      accessibilityState={{ selected: picked, disabled }}
+      disabled={disabled}
       onPress={() => {
         onPick(planId);
       }}
@@ -140,12 +143,14 @@ function Group({
 interface MenuListProps {
   answer: AnswerReply;
   shown: Pick<ShownAnswer, 'index' | 'show'>;
+  // A Plan is being sent or is made, or a recalculation is on its way: nothing is picked, as on the map.
+  busy: boolean;
   onFold: () => void;
 }
 
 // The list over the dock's chips: its title with "접기", then one group per candidate. A press on another group makes
-// that place the pick, as a press on its tag does, and folds the list.
-export function MenuList({ answer, shown, onFold }: MenuListProps): ReactElement | null {
+// that place the pick, as a press on its tag does, and folds the list; while `busy`, the groups take no press.
+export function MenuList({ answer, shown, busy, onFold }: MenuListProps): ReactElement | null {
   const groups = menuGroupsOf(answer);
   if (groups.length === 0) {
     return null;
@@ -163,6 +168,7 @@ export function MenuList({ answer, shown, onFold }: MenuListProps): ReactElement
       <ScrollView style={styles.groups}>
         {groups.map((group) => (
           <Group
+            disabled={busy}
             group={group}
             key={group.planId}
             onPick={(planId) => {
@@ -180,7 +186,9 @@ export function MenuList({ answer, shown, onFold }: MenuListProps): ReactElement
 }
 
 interface WithMenuListProps {
-  shown: Pick<ShownAnswer, 'answer' | 'index' | 'show' | 'chooseKind'>;
+  shown: Pick<ShownAnswer, 'answer' | 'index' | 'show' | 'chooseKind' | 'recalculating'>;
+  // A Plan is being sent or is made: neither the list nor the kinds change the Plan on screen, as the map does.
+  sent: boolean;
   // The dock's own chips ("지난 답 N개", the note), which stand before 메뉴 모두 보기.
   folded: ReactNode;
   // The Plan's dock, given its chips.
@@ -189,7 +197,7 @@ interface WithMenuListProps {
 
 // A meal answer's dock: its kinds of food first (`KindChips`), the dock's own chips, and 메뉴 모두 보기 as the row's
 // last chip (board 24), with the list, while open, over the row. The list folds when another answer comes.
-export function WithMenuList({ shown, folded, children }: WithMenuListProps): ReactElement {
+export function WithMenuList({ shown, sent, folded, children }: WithMenuListProps): ReactElement {
   const { answer } = shown;
   const [openFor, setOpenFor] = useState<AnswerReply | null>(null);
   const listed = menuGroupsOf(answer).length > 0;
@@ -219,7 +227,7 @@ export function WithMenuList({ shown, folded, children }: WithMenuListProps): Re
           showsHorizontalScrollIndicator={false}
           style={styles.mealScroll}
         >
-          <KindChips answer={answer} onChoose={shown.chooseKind} />
+          <KindChips answer={answer} disabled={sent || shown.recalculating} onChoose={shown.chooseKind} />
           {folded}
         </ScrollView>
         {menuChip}
@@ -227,7 +235,7 @@ export function WithMenuList({ shown, folded, children }: WithMenuListProps): Re
     );
   return (
     <>
-      {open ? <MenuList answer={answer} onFold={fold} shown={shown} /> : null}
+      {open ? <MenuList answer={answer} busy={sent || shown.recalculating} onFold={fold} shown={shown} /> : null}
       {children(dock)}
     </>
   );

@@ -50,18 +50,22 @@ export function mealTickOf(answer: AnswerReply | null): { side: TickSide; words:
 // The tick: a press asks for the other meal's answer with no turn to the model, as a drag on the bar does.
 export function MealTick({
   shown,
+  sent,
   words,
 }: {
   shown: Pick<ShownAnswer, 'answer' | 'change' | 'recalculating'>;
+  // A Plan is being sent or is made: the other meal is not asked for, as the band takes no drag then.
+  sent: boolean;
   words: string;
 }): ReactElement {
   const other = shown.answer?.otherMeal ?? null;
+  const disabled = sent || shown.recalculating;
   return (
     <Pressable
       accessibilityLabel={words.replaceAll(/[‹›]/gu, '').trim()}
       accessibilityRole="button"
-      accessibilityState={{ disabled: shown.recalculating }}
-      disabled={shown.recalculating}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       hitSlop={space[2]}
       onPress={() => {
         if (other !== null) {

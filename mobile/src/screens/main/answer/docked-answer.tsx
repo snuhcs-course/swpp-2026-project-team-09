@@ -194,7 +194,11 @@ export function DockedAnswer({
   }
   const folded = <FoldedChips control={control} note={control.answer.answer?.note ?? null} onRaise={onRaise} />;
   return (
-    <WithMenuList folded={folded} shown={control.answer}>
+    <WithMenuList
+      folded={folded}
+      sent={control.invitation.sending || control.invitation.made !== null}
+      shown={control.answer}
+    >
       {(dock) => (
         <Words
           addRecalculated={control.chat.addRecalculated}

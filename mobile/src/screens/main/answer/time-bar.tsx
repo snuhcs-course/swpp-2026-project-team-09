@@ -98,10 +98,14 @@ export function PlanBar({ shown, answer, plan, invitation, focus, onClose, onHei
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const fixed = bandIsFixed(answer.input.kind);
   const tick = mealTickOf(answer);
+  const sent = invitation.sending || invitation.made !== null;
   return (
     <Bar
       band={{
-        tick: tick === null ? undefined : { side: tick.side, node: <MealTick shown={shown} words={tick.words} /> },
+        tick:
+          tick === null
+            ? undefined
+            : { side: tick.side, node: <MealTick sent={sent} shown={shown} words={tick.words} /> },
         band: plan.band,
         disabled: shown.recalculating || invitation.sending,
         fixed: windowOf(answer.input),

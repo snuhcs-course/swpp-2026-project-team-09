@@ -4,8 +4,9 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { screen } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 import { MEAL_ANSWER_MENUS, MEAL_ANSWER_MENUS_REPLY, MEAL_DINNER_MENUS } from '@/api/mock/data/meal-answer-menus';
+import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
@@ -178,5 +179,24 @@ describe('lunch and dinner on the bar', () => {
     });
     expect(screen.getByRole('button', { name: '점심 12:16' })).toHaveTextContent('‹ 점심 12:16');
     expect(screen.getByTestId('time-band-words')).toHaveTextContent(/^저녁 /u);
+  });
+});
+
+// Partitions: the kind chips and the bar's tick pressed while "만들고 초대 보내기" is on its way (review of PR 440).
+describe('the kinds and the other meal while the Plan is sent', () => {
+  it('change nothing on screen, and ask for nothing', async () => {
+    server.on('POST /plans', { status: 201, body: PLAN_QUEST, afterMs: 3000 });
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+
+    await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' }));
+    // No kind chip takes a press: the docked row gives way to the card while the Plan is sent.
+    expect(screen.queryByRole('button', { name: JAPANESE, disabled: false })).toBeNull();
+    const dinner = screen.getByRole('button', { name: '저녁 17:00' });
+    expect(dinner).toBeDisabled();
+    await user.press(dinner);
+    await pass(3000);
+
+    expect(screen.getByRole('button', { name: /^302동식당 · 12:15 점심/u })).toBeOnTheScreen();
+    expect(server.received('POST /assistant/answers')).toHaveLength(0);
   });
 });
