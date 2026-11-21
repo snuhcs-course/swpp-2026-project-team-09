@@ -43,3 +43,10 @@ One rule decides every case: the bottom hides only what the map already says; wh
 - [ ] Raised, the card is as tall as its content, up to the pill. (Integration test.)
 - [ ] A Lookup and a procedure answer on a phone with the mock build. (Emulator.)
 - [ ] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+### Agent usage (2026-11-21)
+
+- Agent time: about 3 hours in this session (an estimate from the transcript's timestamps: the build's review, the replay onto the Main after the Release, the test sweep, two rounds of phone screens, and the two fixes from the screen review; the waits for the screen review not counted, but about an hour of a full test run and of the emulator under load counted), plus 66 minutes of a subagent that built the code and the tests. The same stretch also wrote tickets 16 and 17 with P05.
+- Tokens: this session output 124k; input 67.1M, of which 66.75M cache reads, 315k cache writes, and 504 uncached. The subagent output 132k; input 45.4M, of which 44.2M cache reads, 1.15M cache writes, and 370 uncached.
