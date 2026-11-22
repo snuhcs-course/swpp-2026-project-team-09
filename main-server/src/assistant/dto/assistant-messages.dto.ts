@@ -9,6 +9,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -99,5 +100,23 @@ export interface AssistantReplyDto {
   steps?: ReplyStep[];
 }
 
-// A button under a reply's text, sent as the User's words: a Tutorial quest's 가는 길 보기 (P01-14).
-export type ReplyOffer = Extract<RefusalOffer, { kind: 'ask' }>;
+// A Place picked on the map (P05 ticket 24): a press turns the map into picking, and a tap on a building sends `text` as
+// the User's words with that Place tapped. Sent only to an app that says `pick`.
+export interface PickPlaceOffer {
+  kind: 'pick-place';
+  label: string;
+  text: string;
+}
+
+// A time picked on a wheel on `date` (P05 ticket 24), the asker's Free Time marked from `from` to `until`: a pick sends
+// "HH:MM에" as the User's words. Sent only to an app that says `pick`.
+export interface PickTimeOffer {
+  kind: 'pick-time';
+  label: string;
+  date: string;
+  free: { from: string; until: string }[];
+}
+
+// A button under a reply's text: one sent as the User's words, such as a Tutorial quest's 가는 길 보기 (P01-14), or a
+// picker of a Place or a time.
+export type ReplyOffer = Extract<RefusalOffer, { kind: 'ask' }> | PickPlaceOffer | PickTimeOffer;

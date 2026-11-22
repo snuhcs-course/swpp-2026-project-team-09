@@ -10,6 +10,7 @@
  ******************************************************************************/
 
 import { FriendViewService } from '../../friends/friend-view.service.js';
+import { type ReplyOffer } from '../dto/assistant-messages.dto.js';
 import { type PublishedGlobalEventDto } from '../../global-events/dto/global-event.dto.js';
 import { GlobalEventsService } from '../../global-events/global-events.service.js';
 import { JoinPolicy } from '../../generated/prisma/client.js';
@@ -21,6 +22,7 @@ import { contestedReason, type FoundKind } from '../found-ids.js';
 import { koreaTime } from '../korea-time.js';
 import { type UserDayService } from '../free-time/user-day.service.js';
 import { type FieldFailures, type Input, input, isField } from './propose-quest-input.js';
+import { offerPicks, PICK_NOTE, proposalPicks } from './pick-offers.js';
 import { proposedAnswer, refusedAnswer } from './proposed-answer.js';
 import { type ProposalFriend, type ProposalPlace, type QuestProposal } from '../proposal.js';
 
@@ -51,8 +53,14 @@ function accepted({ found }: ToolContext, kind: FoundKind, id: string, shownIds:
 const UNRETURNED =
   'No resolver returned this id in this message, and it is not in the last Proposal. Call the resolver with the User’s words.';
 
+// A Place tapped on the map is taken too, as a pick of 지도에서 고르기 sends it (P05 ticket 24).
 async function placeOf(placeId: string, context: ToolContext, places: PlacesService): Promise<Checked<ProposalPlace>> {
-  if (!accepted(context, 'place', placeId, context.shown?.place ? [context.shown.place.id] : [])) {
+  const { tapped } = context.context;
+  const seen = [
+    ...(context.shown?.place ? [context.shown.place.id] : []),
+    ...(tapped?.kind === 'place' ? [tapped.placeId] : []),
+  ];
+  if (!accepted(context, 'place', placeId, seen)) {
     return { failure: UNRETURNED };
   }
   const place = (await places.list()).find(({ id }) => id === placeId);
@@ -269,7 +277,11 @@ export function proposeQuest(services: ProposeQuestServices): Tool {
         capacity === undefined ||
         startsAt === undefined
       ) {
-        return refusedAnswer(failures, context.presented);
+        const refused = refusedAnswer(failures, context.presented);
+        const { userId, now } = context;
+        const picks = (): Promise<ReplyOffer[]> =>
+          proposalPicks(failures, startsAt, { userId, now, days: services.days });
+        return (await offerPicks(context, picks)) ? { ...refused, note: PICK_NOTE } : refused;
       }
       const proposal: QuestProposal = {
         title: title.trim(),
