@@ -81,11 +81,12 @@ interface BelowProps extends CardProps {
   fix: Corrections;
   busy: boolean;
   onProfile: ((userId: string) => void) | null;
+  steps?: boolean;
 }
 
 // Under the line: the list of Friends while it is open, else the answer's note and the steps. The Plan's band is the
 // time bar's, under the pill.
-function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowProps): ReactElement {
+function Below({ shown, answer, invitation, room, fix, busy, onProfile, steps }: BelowProps): ReactElement {
   const { plan } = shown;
   if (fix.adding) {
     return (
@@ -110,7 +111,7 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile }: BelowP
         offers={answer.offers ?? []}
         shown={shown}
       />
-      <PlanStepper busy={busy} shown={shown} />
+      <PlanStepper busy={busy} shown={shown} steps={steps} />
       <RowFourButtons busy={busy} invitation={invitation} shown={shown} />
     </>
   );
@@ -198,6 +199,8 @@ interface PlanCardProps extends CardProps {
   said?: string;
   // Docked: the card is its chips' row alone, these chips after "＋ 같이"; the note is one of them.
   dock?: ReactNode;
+  // One of several requests, whose candidates have no flag on the map (P04 ticket 09): the stepper switches them.
+  steps?: boolean;
 }
 
 // The answer on screen in the answer frame's card, with no text of its own by default: "＋ 같이" while the Plan can
@@ -246,6 +249,7 @@ export function PlanCard(props: PlanCardProps): ReactElement {
           onProfile={openProfile}
           room={room}
           shown={shown}
+          steps={props.steps}
         />
       )}
     </View>

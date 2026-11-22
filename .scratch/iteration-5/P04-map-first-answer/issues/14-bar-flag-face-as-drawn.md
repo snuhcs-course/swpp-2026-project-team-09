@@ -18,7 +18,7 @@ Five corrections from the phone screens of tickets 01 to 04, so that they look a
 
 ## Must not break
 
-- A move further than the free time around the span is made unfolded, over the band's whole range (a meeting's bar unfolds; a bar of one lane has no other range to reach).
+- A move further than the free time around the span is made unfolded, over the band's whole range. Every bar unfolds, a bar of one lane too (the User alone, or after every Friend is taken out), so that a solo lunch between two classes can still be moved past the next one (from PR 465's review).
 
 - The handles' drag, a let-go's recalculation, moving the band whole, and the screen reader's steps (`answer-band-move`, `answer-correct-band`), now on a folded track of another range.
 - 빼기 and 프로필 from the face's card (`answer-mark-people`), and the flag's card (`answer-flag-card`).
@@ -29,7 +29,7 @@ Five corrections from the phone screens of tickets 01 to 04, so that they look a
 - [x] Unfolded, the track runs over the band's whole range as before. (Integration test.)
 - [x] A drag of the end handle on the folded track drops at the time under the finger. (Integration test.)
 - [x] The face's card shows the name, the face's line, and 빼기, beside the face. (Integration test.)
-- [ ] The face's card takes the side that keeps the pick's flag clear. (Unit test of its place.)
+- [x] The face's card takes the side that keeps the pick's flag clear. (Unit test of its place.)
 - [x] The pick's label ends its first line with "›". (Unit test of the mark.)
 - [x] Raised, the card is as tall as its content (ticket 05). (Integration test of its height.)
 - [ ] "＋ 같이" is in the time bar's words row and opens the list of Friends; the dock holds the input row alone. (Integration test.)
@@ -42,6 +42,11 @@ Five corrections from the phone screens of tickets 01 to 04, so that they look a
 
 - Agent time: about 10 minutes in this session (an estimate from the transcript's timestamps, 15:40–15:50): the pick's "›" and the four expectations it changes. No subagents.
 - Tokens: an estimate from this session's use over that stretch: output about 12k; input about 9M, almost all cache reads, about 30k cache writes, and about 50 uncached.
+
+### Agent usage (2026-11-22, item 2)
+
+- Agent time: about 15 minutes in this session (an estimate from the transcript's timestamps, 16:13–16:28): the face card's side test-first and its four integration files. No subagents. Item 1 (the folded bar) was built to a local commit and parked: its drag tests move handles by points over the whole range.
+- Tokens: an estimate from this session's use over that stretch: output about 15k; input about 14M, almost all cache reads, about 40k cache writes, and about 60 uncached.
 
 ### Agent usage (2026-11-22, item 1)
 

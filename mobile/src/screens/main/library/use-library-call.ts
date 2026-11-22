@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useState } from 'react';
@@ -17,6 +18,7 @@ import {
 import { useLibrarySession } from '@/library/library-session';
 import type { LibraryWriteResult } from '@/library/replies';
 import type { CardOutcome, CardRoom, OwnBubble } from '@/features/assistant/use-chat';
+import type { Tell } from './booking-stage';
 
 // How a library card reads from the library and logs in: what it loaded or why it failed, and 로그인, which opens the
 // login and then does the pressed action once more.
@@ -209,6 +211,12 @@ export interface LibraryCardActions {
   showRoom: (card: string, room: CardRoom | null) => void;
   // The User's words the bubble's answer was asked with.
   askedBefore: (bubbleId: number) => string;
+  // How the seat card at a place tells the screen what it offers while the map draws its booking (P04 ticket 07); null
+  // for any other card. Left out, none is drawn.
+  onMap?: (card: string) => Tell | null;
+  // Whether the time bar holds the band of the seat card at a place: a booking on the map alone; a step's card keeps its
+  // own band (P04 ticket 09). Left out, none does.
+  bandOnBar?: (card: string) => boolean;
 }
 
 // How a card's write is marked with the chat while it is on its way.

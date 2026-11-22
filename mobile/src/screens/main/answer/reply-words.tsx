@@ -25,7 +25,8 @@ import { MadeCard } from './made-card';
 import { OfferedWords } from './offered-words';
 import { PlanCard } from './plan-card';
 import { type RefusalAsk, RefusalReply } from './refusal-reply';
-import { LookupBar, PlanBar } from './time-bar';
+import { StepsTop } from './steps-bar';
+import { BookingBar, LookupBar, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
 
 // Which card a reply's words are: the "여기면 어때?" card over the answer on screen for the reply it came from, the
@@ -125,7 +126,8 @@ function onScreenCard(props: WordsProps, kind: WordsKind): ReactElement | null {
   }
   if (kind === 'plan' && answer !== null) {
     const card = { answer, invitation, onClose, over, room, shown };
-    return <PlanCard {...card} dock={props.dock} focus={focus} said={bubble.text} />;
+    const steps = (bubble.steps?.length ?? 0) > 1;
+    return <PlanCard {...card} dock={props.dock} focus={focus} said={bubble.text} steps={steps} />;
   }
   if (kind === 'made' && answer !== null && plan !== null && invitation.made !== null) {
     return <MadeCard {...{ answer, invitation, onClose, over, plan }} made={invitation.made} />;
@@ -188,10 +190,16 @@ interface TopBarProps {
   onHeight: (height: number) => void;
 }
 
-// The time bar of the turn on screen, while it has a time: none once 그대로 두기 left a Quest already set as it is, for
+// The time bar of the turn on screen, while it has a time, a booking's on the map first (P04 ticket 07): none once 그대로 두기 left a Quest already set as it is, for
 // the Plan is gone (P04 ticket 20).
 export function TopBar({ control, focus, onClose, onHeight }: TopBarProps): ReactElement | null {
-  const { answer: shown, invitation } = control;
+  const { answer: shown, invitation, booking, steps } = control;
+  if (steps !== null) {
+    return <StepsTop control={control} focus={focus} onClose={onClose} onHeight={onHeight} />;
+  }
+  if (booking !== null) {
+    return <BookingBar booking={booking} chat={control.chat} onHeight={onHeight} />;
+  }
   const bar = barOf(control.chat.bubbles, onScreenOf(control));
   if (bar === null) {
     return null;

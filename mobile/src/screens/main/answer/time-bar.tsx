@@ -17,6 +17,10 @@ import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { koreaDayWord } from '@/korea-time';
 import { ANSWER_PILL, listsTop } from '../layout';
+import type { ShownBooking } from '@/features/assistant/booking-scene';
+import type { Chat } from '@/features/assistant/use-chat';
+import { bookingKept } from '../library/booking-kept';
+import { SlotBand } from '../library/slot-band';
 import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
 import { TimeBand } from './time-band';
 import { type BandFocus, useCorrections } from './use-corrections';
@@ -43,11 +47,13 @@ interface BarProps {
   // The words before the span's; left out, its day word.
   day?: string;
   onHeight: (height: number) => void;
+  // How far below its place under the pill it stands, under the bar of several requests (P04 ticket 09); left out, 0.
+  offset?: number;
 }
 
 // The time bar: the answer's band in one white row under the pill, folded to one row, which a press on its grip
 // unfolds to a row for each person when there is more than one, and folds again.
-function Bar({ band, day, onHeight }: BarProps): ReactElement {
+function Bar({ band, day, onHeight, offset = 0 }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
   const [unfolded, setUnfolded] = useState(false);
   const { lanes, startAt, now } = band.band;
@@ -59,7 +65,7 @@ function Bar({ band, day, onHeight }: BarProps): ReactElement {
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
         onHeight(nativeEvent.layout.height);
       }}
-      style={[styles.bar, { top: barTop(top) }]}
+      style={[styles.bar, { top: barTop(top) + offset }]}
       testID="time-bar"
     >
       <TimeBand {...band} day={day ?? koreaDayWord(startAt, new Date(now))} folded={folded} />
@@ -89,12 +95,14 @@ interface PlanBarProps {
   focus: BandFocus;
   onClose: () => void;
   onHeight: (height: number) => void;
+  offset?: number;
 }
 
 // The bar of the Plan on screen: its handles and its lanes move it as the card's band did, unless the answer's kind
 // fixes the time. A meal's names the meal with its day when it is not under way today, and the day's other meal
 // stands at one end (`MealTick`).
-export function PlanBar({ shown, answer, plan, invitation, focus, onClose, onHeight }: PlanBarProps): ReactElement {
+export function PlanBar(props: PlanBarProps): ReactElement {
+  const { shown, answer, plan, invitation, focus, onClose, onHeight, offset } = props;
   const fix = useCorrections(shown, answer.input, onClose, focus);
   // A meeting changed in place (P04 ticket 17) is set: its band is read, not moved.
   const fixed = bandIsFixed(answer.input.kind) || invitation.changed !== null;
@@ -119,6 +127,7 @@ export function PlanBar({ shown, answer, plan, invitation, focus, onClose, onHei
       }}
       day={mealDayOf(answer, plan)}
       onHeight={onHeight}
+      offset={offset}
     />
   );
 }
@@ -144,6 +153,40 @@ export function LookupBar({
       }}
       onHeight={onHeight}
     />
+  );
+}
+
+// A booking's bar (P04 ticket 07): the seat card's band, whose handles change the start and the end the chat keeps for
+// the card, within the space's hours, steps, and lengths, as they did in the card. While a booking is on its way the
+// band is hidden, as the card's was, so that the time stays as it was booked.
+export function BookingBar({
+  booking,
+  chat,
+  onHeight,
+}: {
+  booking: ShownBooking;
+  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes'>;
+  onHeight: (height: number) => void;
+}): ReactElement | null {
+  const { top } = useSafeAreaInsets();
+  const { kept, keep, live } = bookingKept(booking, chat);
+  const pending = chat.outcomes.get(booking.place)?.kind === 'pending';
+  return live === null || pending ? null : (
+    <View
+      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+        onHeight(nativeEvent.layout.height);
+      }}
+      style={[styles.bar, { top: barTop(top) }]}
+      testID="time-bar"
+    >
+      <SlotBand
+        onChange={(slot) => {
+          keep({ slot });
+        }}
+        slot={live}
+        space={kept.space}
+      />
+    </View>
   );
 }
 

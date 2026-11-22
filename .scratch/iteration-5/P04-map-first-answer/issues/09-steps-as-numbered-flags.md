@@ -32,3 +32,10 @@ A reply that answered several requests (P03's `steps`) draws each step with a pl
 - [ ] A reply with one request shows no numbers. (Integration test.)
 - [ ] The steps on a phone with the mock build. (Emulator.)
 - [ ] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 15 minutes (an estimate; one Opus 5.5 session that also built tickets 06 and 07, split by time).
+- Tokens: about 30,000 output; input about 20.1 million, of which about 20.0 million cache reads, 50,000 cache writes, and 100 uncached (the session's totals split by the same share).

@@ -34,7 +34,7 @@ import { MarkCard } from './mark-card';
 import { DockedAnswer, restOf } from './docked-answer';
 import { LeaveRow } from './leave-button';
 import { MarkRows } from './mark-rows';
-import { ProposalFlagRows } from './proposal-flag-rows';
+import { MadeMarkCard } from './made-mark-card';
 import type { Raising } from './raise-handle';
 import { ReplySteps } from './reply-steps';
 import { barOf, onScreenOf, planShown, TopBar, Words } from './reply-words';
@@ -97,7 +97,9 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
       {turn === null || planShown(bubbles, onScreenOf(control)) ? null : <TurnQuestion turn={turn} />}
       {(turn?.after ?? []).map((bubble) => (
         <View key={bubble.id} style={styles.part}>
-          {bubble.steps === undefined ? null : <ReplySteps steps={bubble.steps} />}
+          {bubble.steps === undefined ? null : (
+            <ReplySteps onMap={control.steps?.bubbleId === bubble.id} steps={bubble.steps} />
+          )}
           <BubbleParts
             bubble={bubble}
             cardActions={cardActions}
@@ -198,23 +200,11 @@ interface OpenMarkProps {
 }
 
 // The card of the mark pressed on the map, while one is open and the keyboard is down: a mark of the Plan on screen, or
-// the flag of the Proposal on screen, whose rows open the party form.
+// the flag of a Proposal or a booking on screen (`MadeMarkCard`).
 function OpenMark({ control, stage, focus, onClose }: OpenMarkProps): ReactElement | null {
-  const { mark, closeMark, answer: shown, proposal } = control;
-  if (mark !== null && stage !== null && proposal !== null) {
-    const { proposals } = control.leaving;
-    return (
-      <MarkCard mark={mark} onClose={closeMark} stage={stage}>
-        <ProposalFlagRows
-          editable={proposals.makingOf(proposal.bubbleId) === 'ready'}
-          onEdit={() => {
-            closeMark();
-            proposals.edit(proposal.bubbleId, proposal.proposal);
-          }}
-          proposal={proposal.proposal}
-        />
-      </MarkCard>
-    );
+  const { mark, closeMark, answer: shown } = control;
+  if (mark !== null && stage !== null && (control.proposal !== null || control.booking !== null)) {
+    return <MadeMarkCard control={control} mark={mark} stage={stage} />;
   }
   if (mark === null || stage === null || shown.answer === null || shown.plan === null) {
     return null;
@@ -273,7 +263,8 @@ function Framed(props: FramedProps): ReactElement {
   useBackToClose(useIsFocused(), profileShown ? profile.hide : back, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   const focus = useBandFocus();
-  const barShown = !keyboardUp && barOf(chat.bubbles, onScreenOf(control)) !== null;
+  const drawnBar = control.booking !== null || control.steps !== null;
+  const barShown = !keyboardUp && (drawnBar || barOf(chat.bubbles, onScreenOf(control)) !== null);
   const bar = useBarHeight(barShown, onBarHeight);
   const [past, setPast] = useState(false);
   return (
