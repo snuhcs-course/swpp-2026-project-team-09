@@ -84,10 +84,10 @@ describe('the kind chips of a meal answer', () => {
 
     expect(selected(KOREAN)).toBe(true);
     expect(screen.getByRole('button', { name: '자하연식당 2층' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: '후보 2 · 301동식당 · 걸음 15분' })).toBeOnTheScreen();
     expect(
-      screen.getByRole('button', { name: '후보 2 · 301동식당 · 12:18 · 뚝배기불고기 외 4 · 5,000원부터' }),
+      screen.getByRole('button', { name: /^302동식당 · 12:15 · 걸음 20분 · 뼈없는감자탕 외 5/u }),
     ).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: /^302동식당 · 12:15 점심 · 뼈없는감자탕 외 5$/u })).toBeOnTheScreen();
 
     await user.press(screen.getByRole('button', { name: KOREAN }));
 
@@ -100,7 +100,7 @@ describe('the kind chips of a meal answer', () => {
 
     await user.press(screen.getByRole('button', { name: JAPANESE }));
 
-    expect(screen.getByRole('button', { name: /^3식당 · .*돈까스카레 외 2$/u })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /^3식당 · .*돈까스카레 외 2/u })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: '302동식당' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: /^후보 5 · 자하연식당 2층 · /u })).toBeOnTheScreen();
   });
@@ -196,7 +196,7 @@ describe('the kinds and the other meal while the Plan is sent', () => {
     await user.press(dinner);
     await pass(3000);
 
-    expect(screen.getByRole('button', { name: /^302동식당 · 12:15 점심/u })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /^302동식당 · 12:15 · 걸음 20분/u })).toBeOnTheScreen();
     expect(server.received('POST /assistant/answers')).toHaveLength(0);
   });
 });

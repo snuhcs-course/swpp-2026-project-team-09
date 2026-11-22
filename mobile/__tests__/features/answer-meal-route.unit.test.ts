@@ -6,6 +6,7 @@
 
 import { crowdedMealAnswer } from '@/api/mock/data/crowded-meal';
 import { drawingOf } from '@/features/assistant/answer-marks';
+import { withDots } from '@/features/assistant/meal-marks';
 import { seen } from '../support/answer-marks';
 
 // The crowded meal answer's map (the answer screen's redesign, boards E1 and E2): eleven restaurants between a Class
@@ -26,6 +27,15 @@ describe("the crowded meal answer's first pick", () => {
     expect(drawing.lines.map(({ style }) => style.dash)).toEqual([undefined, [1, 8]]);
     expect(seen(drawing, 'answer:leg:0').label).toMatchObject({ tone: 'leg', title: '15분' });
     expect(seen(drawing, 'answer:leg:1').label).toMatchObject({ tone: 'leg', title: '17분' });
+  });
+
+  it('draws the way on as dots, which the native map cannot dash, and the way there whole', () => {
+    const lines = withDots(drawing.lines);
+    expect(lines[0]).toBe(drawing.lines[0]);
+    expect(lines.length).toBeGreaterThan(20);
+    expect(lines.slice(1).every(({ id, points }) => id.startsWith('answer:route:1:dot:') && points.length === 2)).toBe(
+      true,
+    );
   });
 
   it('gives the pick its label with "메뉴 ›" and never fades it, though its walking is over thirty minutes', () => {

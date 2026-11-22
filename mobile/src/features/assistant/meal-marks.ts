@@ -10,6 +10,7 @@ import { color } from '@/design-system';
 import { koreaClock } from '@/korea-time';
 import type { MapLine } from '@/map';
 import { type Draft, ROUTE_STYLES } from './answer-groups';
+import { metresBetween } from './answer-drawing';
 import { fixedAfter, fixedBefore, routeLineId } from './answer-walks';
 
 // A meal answer's route on the map (the answer screen's redesign, board E1): the way to the chosen place solid, the
@@ -83,4 +84,54 @@ export function sceneLines(scene: MapScene, meal: boolean): MapLine[] {
     points: [from, to],
     style: meal && role === 'next' ? WAY_ON : ROUTE_STYLES[role],
   }));
+}
+
+// The native map draws every line solid, so the way on is drawn as dots: short round-ended pieces every 24 metres.
+const DOT = { length: 2, every: 24 };
+const DOT_STYLE = { color: color.snuBlue, width: 6 } as const;
+
+function along(from: LatLng, to: LatLng, share: number): LatLng {
+  return {
+    latitude: from.latitude + (to.latitude - from.latitude) * share,
+    longitude: from.longitude + (to.longitude - from.longitude) * share,
+  };
+}
+
+// The dots of one straight piece from `walked` metres along the way, from the next dot's place `next` on.
+function piece(from: LatLng, to: LatLng, walked: number, next: number, dots: LatLng[][]): number {
+  const length = metresBetween(from, to);
+  if (length === 0) {
+    return next;
+  }
+  let at = next;
+  while (at + DOT.length <= walked + length) {
+    const start = (at - walked) / length;
+    dots.push([along(from, to, start), along(from, to, start + DOT.length / length)]);
+    at += DOT.every;
+  }
+  return at;
+}
+
+function dotsOf(points: readonly LatLng[]): LatLng[][] {
+  const dots: LatLng[][] = [];
+  let next = DOT.every / 2;
+  let walked = 0;
+  for (let at = 1; at < points.length; at += 1) {
+    const from = points[at - 1];
+    const to = points[at];
+    if (from !== undefined && to !== undefined) {
+      next = piece(from, to, walked, next, dots);
+      walked += metresBetween(from, to);
+    }
+  }
+  return dots;
+}
+
+// The lines with a meal Plan's way on (`WAY_ON`) as its dots, once its path is known or straight.
+export function withDots(lines: readonly MapLine[]): MapLine[] {
+  return lines.flatMap((line) =>
+    line.style === WAY_ON
+      ? dotsOf(line.points).map((points, at) => ({ id: `${line.id}:dot:${String(at)}`, points, style: DOT_STYLE }))
+      : [line],
+  );
 }
