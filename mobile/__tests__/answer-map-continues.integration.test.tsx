@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -88,7 +89,7 @@ function list(): ReturnType<typeof within> {
 // What a screen reader says of each row of the list, the latest first.
 function rowNames(): string[] {
   return list()
-    .getAllByRole('button')
+    .getAllByTestId('question-row')
     .map((row) => String(row.props.accessibilityLabel));
 }
 
