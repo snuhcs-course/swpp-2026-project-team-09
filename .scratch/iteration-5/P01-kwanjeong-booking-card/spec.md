@@ -18,6 +18,7 @@ The screenshot with the request came from an app that was older than Iteration 4
 
 - Item 1, the time: nothing more is needed. The time band of P15 ticket 57 changes the start and end on the card.
 - Item 2, the seat picture: [01 — whole seat numbers, and a zoom that stays where the User looks](issues/01-seat-numbers-and-zoom.md).
+- Reported on 2026-11-22, the login: [02 — a login page that fits the phone, and no login ID in the AI input](issues/02-library-login-screen.md).
 
 ## Out of Scope
 

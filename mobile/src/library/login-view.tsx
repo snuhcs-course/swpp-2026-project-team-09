@@ -4,13 +4,15 @@
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useEffect, useEffectEvent, useRef } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
+import { Modal, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { AppBar, color } from '@/design-system';
+import { AppBar, color, space, text } from '@/design-system';
 import type { LoginOutcome } from './client';
+import { LOGIN_FIT_SCRIPT } from './login-fit';
 import { isLoginDone, LIBRARY_MAIN_URL } from './site';
 
 // How long the User has to log in before the view closes by itself.
@@ -54,7 +56,8 @@ function useFinish(visible: boolean, onDone: (outcome: Closed) => void): (outcom
 }
 
 // The full-screen login: the school's own login page in a visible web view. The User types the password there, into
-// the library's page; no script is injected into any of its pages, so the app never sees it. Once the view is back
+// the library's page. The only script the view gives a page is the style sheet that fits the login form to the phone
+// (`login-fit.ts`), and the view takes no messages, so the app never sees the password. Once the view is back
 // on the site's main, booking or my-booking screen, the login is done and the session stays in the web view's own
 // cookie jar. Reaching those screens is not enough by itself: the login is done only when a check finds the session
 // works; otherwise the view stays open and asks again on the next of those screens. ✕ is "no session"; after five
@@ -80,9 +83,12 @@ export function LibraryLogin({ visible, onDone, onLanded, onLeft }: LibraryLogin
           }}
           title="관정도서관 로그인"
         />
+        <Text style={styles.note}>아이디와 비밀번호는 도서관 로그인 페이지로만 전달돼요</Text>
         {visible ? (
           <WebView
             incognito={false}
+            injectedJavaScript={LOGIN_FIT_SCRIPT}
+            injectedJavaScriptBeforeContentLoaded={LOGIN_FIT_SCRIPT}
             onNavigationStateChange={(navigation) => {
               if (!isLoginDone(navigation.url)) {
                 onLeft();
@@ -102,5 +108,6 @@ export function LibraryLogin({ visible, onDone, onLanded, onLeft }: LibraryLogin
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.surface },
+  note: { ...text.caption, color: color.inkMuted, paddingHorizontal: space[5], paddingVertical: space[2] },
   web: { flex: 1 },
 });

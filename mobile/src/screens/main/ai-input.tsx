@@ -17,7 +17,7 @@
 import { type ReactElement, type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
 import { type LayoutChangeEvent, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { USER_MESSAGE_MAX } from '@/api/assistant-types';
-import { color, Icon, radius, shadow, space, text } from '@/design-system';
+import { color, Icon, NOT_AUTOFILLED, radius, shadow, space, text } from '@/design-system';
 import type { Restore } from '@/features/assistant/restore';
 import { AI_INPUT } from './layout';
 
@@ -113,6 +113,7 @@ interface FieldProps {
 function Field(props: FieldProps): ReactElement {
   return (
     <TextInput
+      {...NOT_AUTOFILLED}
       ref={props.field}
       accessibilityLabel="AI에게 메시지"
       maxLength={USER_MESSAGE_MAX}

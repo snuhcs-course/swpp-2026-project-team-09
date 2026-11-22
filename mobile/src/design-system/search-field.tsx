@@ -2,10 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { NOT_AUTOFILLED } from './autofill';
 import { Icon } from './icon';
 import { color, font, radius, space } from './tokens';
 
@@ -31,6 +33,7 @@ export function SearchField({
     <View style={styles.field}>
       <Icon color={color.inkMuted} name="search" size={18} />
       <TextInput
+        {...NOT_AUTOFILLED}
         accessibilityLabel={label}
         autoCorrect={false}
         onChangeText={onChangeText}

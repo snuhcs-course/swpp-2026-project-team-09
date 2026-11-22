@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, render, screen } from '@testing-library/react-native';
@@ -19,6 +20,7 @@ import { shownWebViews, webViewAt } from './support/web-view';
 import { isLibraryLoggedIn, markLibraryLoggedIn } from '@/library/flag';
 import { HiddenViewTransport, LOGOUT_MS, PAGE_LOAD_MS } from '@/library/hidden-transport';
 import { HiddenLibraryView } from '@/library/hidden-view';
+import { LOGIN_FIT_SCRIPT } from '@/library/login-fit';
 import { LOGIN_LIMIT_MS } from '@/library/login-view';
 import { LIBRARY_LOGOUT_URL, LIBRARY_MAIN_URL } from '@/library/site';
 import { LibraryCard } from '@/screens/me/library-card';
@@ -29,7 +31,7 @@ import { LibraryCard } from '@/screens/me/library-card';
 useLibrarySessionTests();
 
 describe('the login', () => {
-  it("opens the library's page, injects nothing, and is done back on the booking screens once a read works", async () => {
+  it("opens the library's page, gives it only the login form's fit, and is done back on the booking screens once a read works", async () => {
     const library = answerFromFakeLibrary();
     await showRow();
     await fireEvent.press(screen.getByRole('button', { name: '로그인' }));
@@ -37,8 +39,10 @@ describe('the login', () => {
 
     const login = webViewAt(LIBRARY_MAIN_URL);
     expect(login?.props.testID).toBe('library-login-view');
-    expect(login?.props.injectedJavaScript).toBeUndefined();
-    expect(login?.props.injectedJavaScriptBeforeContentLoaded).toBeUndefined();
+    expect(login?.props.injectedJavaScript).toBe(LOGIN_FIT_SCRIPT);
+    expect(login?.props.injectedJavaScriptBeforeContentLoaded).toBe(LOGIN_FIT_SCRIPT);
+    expect(login?.props.onMessage).toBeUndefined();
+    expect(login?.injected).toEqual([]);
     expect(login?.props.incognito).toBe(false);
 
     await navigate('https://nsso.snu.ac.kr/sso/login');
