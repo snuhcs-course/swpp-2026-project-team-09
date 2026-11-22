@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -55,9 +56,29 @@ function StepRow({ step, order }: { step: ReplyStep; order: number }): ReactElem
 // The requests of a message that asked for several (P03), numbered in time order above the reply: each with its time,
 // what it is and where it sets out from, and, for one that could not be done, why. The plan itself and the booking card
 // stay where the card draws them.
-export function ReplySteps({ steps }: { steps: readonly ReplyStep[] }): ReactElement | null {
+// On the map (P04 ticket 09) the flags and the bar say the steps, and only why a step was not done stays, as one line
+// each.
+export function ReplySteps({
+  steps,
+  onMap = false,
+}: {
+  steps: readonly ReplyStep[];
+  onMap?: boolean;
+}): ReactElement | null {
   if (steps.length < 2) {
     return null;
+  }
+  if (onMap) {
+    const reasons = steps.flatMap((step) => (step.status === 'not-done' ? [noteOf(step) ?? ''] : []));
+    return reasons.length === 0 ? null : (
+      <View style={styles.list} testID="steps-not-done">
+        {reasons.map((reason) => (
+          <Text key={reason} style={styles.reason}>
+            {reason}
+          </Text>
+        ))}
+      </View>
+    );
   }
   return (
     <View style={styles.list} testID="reply-steps">

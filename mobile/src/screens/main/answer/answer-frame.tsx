@@ -97,7 +97,9 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
       {turn === null || planShown(bubbles, onScreenOf(control)) ? null : <TurnQuestion turn={turn} />}
       {(turn?.after ?? []).map((bubble) => (
         <View key={bubble.id} style={styles.part}>
-          {bubble.steps === undefined ? null : <ReplySteps steps={bubble.steps} />}
+          {bubble.steps === undefined ? null : (
+            <ReplySteps onMap={control.steps?.bubbleId === bubble.id} steps={bubble.steps} />
+          )}
           <BubbleParts
             bubble={bubble}
             cardActions={cardActions}
@@ -261,7 +263,8 @@ function Framed(props: FramedProps): ReactElement {
   useBackToClose(useIsFocused(), profileShown ? profile.hide : back, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   const focus = useBandFocus();
-  const barShown = !keyboardUp && (control.booking !== null || barOf(chat.bubbles, onScreenOf(control)) !== null);
+  const drawnBar = control.booking !== null || control.steps !== null;
+  const barShown = !keyboardUp && (drawnBar || barOf(chat.bubbles, onScreenOf(control)) !== null);
   const bar = useBarHeight(barShown, onBarHeight);
   const [past, setPast] = useState(false);
   return (

@@ -214,6 +214,9 @@ export interface LibraryCardActions {
   // How the seat card at a place tells the screen what it offers while the map draws its booking (P04 ticket 07); null
   // for any other card. Left out, none is drawn.
   onMap?: (card: string) => Tell | null;
+  // Whether the time bar holds the band of the seat card at a place: a booking on the map alone; a step's card keeps its
+  // own band (P04 ticket 09). Left out, none does.
+  bandOnBar?: (card: string) => boolean;
 }
 
 // How a card's write is marked with the chat while it is on its way.

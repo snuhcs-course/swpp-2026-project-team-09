@@ -29,7 +29,7 @@ export interface ShownBooking {
 
 // The seat card the turn on screen replied with alone, while it is open and its space's building is in the list of
 // Places. A reply that also holds a Plan, a Lookup, or several requests keeps its own drawing and the card its own
-// buttons, and a room card (스터디룸, 스튜디오) keeps its card.
+// buttons, unless the card is one of the steps; a room card (스터디룸, 스튜디오) keeps its card.
 export function shownBookingOf(
   bubbles: readonly ChatBubble[],
   places: readonly Place[],
@@ -41,7 +41,11 @@ export function shownBookingOf(
   if (after.length !== 1 || reply === undefined || reply.cards.length !== 1 || card?.kind !== 'library') {
     return null;
   }
-  if ((reply.answer ?? null) !== null || (reply.lookup ?? null) !== null || reply.steps !== undefined) {
+  // A seat card that is one of several requests is that step's: the steps draw it, and its 예약하기 is the step's
+  // button while it is the step shown (P04 ticket 09).
+  const key = card.library.key;
+  const aStep = (reply.steps ?? []).some(({ shows }) => shows?.kind === 'card' && shows.key === key);
+  if (!aStep && ((reply.answer ?? null) !== null || (reply.lookup ?? null) !== null || reply.steps !== undefined)) {
     return null;
   }
   const { library } = card;
