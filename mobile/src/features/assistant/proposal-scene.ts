@@ -37,7 +37,8 @@ export function shownProposalOf(bubbles: readonly ChatBubble[], places: readonly
   if (after.length !== 1 || reply === undefined || reply.role !== 'assistant' || reply.proposal === null) {
     return null;
   }
-  if ((reply.answer ?? null) !== null || (reply.lookup ?? null) !== null || reply.cards.length > 0) {
+  const { answer = null, lookup = null, steps } = reply;
+  if (answer !== null || lookup !== null || steps !== undefined || reply.cards.length > 0) {
     return null;
   }
   const place = proposalPlaceOf(reply.proposal, places);
