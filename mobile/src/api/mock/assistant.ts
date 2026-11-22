@@ -39,12 +39,7 @@ import { STUDY_LOOKUP_REPLY } from './data/study-lookup';
 import { FRIEND_TAPS, STAND_IN_FRIEND_TAP, TAP_LOOKUPS } from './data/tap-lookups';
 import { EASED_ANSWER, NOT_NOW_ANSWER, NOT_NOW_ASKED, NOT_NOW_REPLY } from './data/unmet-plans';
 import { WAY_LOOKUP_REPLY } from './data/way-lookup';
-import {
-  LATE_LOOKUP_REPLY,
-  LEAVE_LOOKUP_REPLY,
-  NOT_RUNNING_LOOKUP_REPLY,
-  SHUTTLE_LOOKUP_REPLY,
-} from './data/way-lookups';
+import { wayReplyOf } from './data/way-lookups';
 import {
   MEAL_ANSWER_ALONE,
   MEAL_ANSWER_FIXED_PLACE,
@@ -288,21 +283,6 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
     return FRIEND_LOOKUP_REPLY;
   }
   return rowFourReplyOf(last) ?? wayReplyOf(last);
-}
-
-// The stored Lookups of a way, by the words of boards q4, q3, q2, and n21: by the shuttle, late, on time, and the
-// shuttle not running. A question about the shuttle's arrival with no Place ("셔틀 몇 분 뒤에 와?") is none of them.
-function wayReplyOf(last: string): AssistantReply | null {
-  if (last.includes('셔틀 탈까')) {
-    return SHUTTLE_LOOKUP_REPLY;
-  }
-  if (last.includes('기숙사 가는 셔틀')) {
-    return NOT_RUNNING_LOOKUP_REPLY;
-  }
-  if (last.includes('늦나')) {
-    return LATE_LOOKUP_REPLY;
-  }
-  return last.includes('까지 몇 분') ? LEAVE_LOOKUP_REPLY : null;
 }
 
 export function mockAssistantReply(messages: readonly ChatMessage[], context: RequestContext): AssistantReply {
