@@ -1,4 +1,4 @@
-# 51: A meal answer's labels are placed at the phone's font size, and give way in order
+# 52: A meal answer's labels are placed at the phone's font size, and give way in order
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent

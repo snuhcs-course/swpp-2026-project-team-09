@@ -16,7 +16,7 @@ import { inView, ZOOM_OFFSET } from '@/map';
 import { heldView, labelViewOf } from '@/screens/main/answer-framing';
 import { LOWEST, SIZE, STATUS_BAR } from '../support/answer-view';
 
-// The labels of a meal answer on a phone with a large system font (P04 ticket 51): a meal from 301동 with one Friend
+// The labels of a meal answer on a phone with a large system font (P04 ticket 52): a meal from 301동 with one Friend
 // who also starts there, at a font scale of 1.3. No label covers another label, the User's own mark, or the Friend's
 // face.
 const FONT_SCALE = 1.3;
