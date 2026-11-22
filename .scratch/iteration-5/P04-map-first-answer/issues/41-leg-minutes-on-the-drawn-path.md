@@ -27,5 +27,6 @@ Native files: none. Releases: an app OTA update only.
 - [x] The crowded mock's 자하연식당 2층 by the shuttle draws a walk to 301동, the ride along the road line to 기숙사삼거리, and a walk to the place. Both stops are marked and named, and "셔틀 13분" stands on the ride. Without the shuttle's route, the leg is dotted in the shuttle's colour. (Unit test.)
 - [x] With no path found, the minutes stand on the straight line; with a path found that bends 250 metres away from it, they stand on the path. (Unit test.)
 - [x] A face where the minutes would stand is kept clear where another place along the leg is free; a face over the minutes is left out. (Unit test.)
-Not pictured: checked on the phone after the Release.
 - [x] No native file changes; lint, format, and types pass on the app.
+
+Not pictured: checked on the phone after the Release.
