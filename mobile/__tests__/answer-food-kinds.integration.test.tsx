@@ -107,10 +107,10 @@ describe('a kind chip pressed', () => {
 
     expect(selected(KOREAN)).toBe(true);
     expect(screen.getByRole('button', { name: '자하연식당 2층' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: '후보 2 · 301동식당 · 걸음 15분' })).toBeOnTheScreen();
     expect(
-      screen.getByRole('button', { name: '후보 2 · 301동식당 · 걸음 15분' }),
+      screen.getByRole('button', { name: /^302동식당 · 12:15 · 걸음 20분 · 뼈없는감자탕 외 5 · /u }),
     ).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: /^302동식당 · 12:15 · 걸음 20분 · 뼈없는감자탕 외 5 · /u })).toBeOnTheScreen();
 
     await user.press(screen.getByRole('button', { name: KOREAN }));
 
