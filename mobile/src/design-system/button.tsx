@@ -6,6 +6,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -23,8 +24,9 @@ interface ButtonProps {
   // revokes sharing or leaves a Party, and is always confirmed; `destructive`, red and filled, is the answer of a
   // dialog that confirms it. `done`, green and filled, says a 새내기 튜토리얼 quest is done (✓ 완료).
   variant?: Variant;
-  // `md` is 40 points high inside a 48-point touch area; `lg` is the full-width button at the foot of a sheet or form.
-  size?: 'md' | 'lg';
+  // `md` is 40 points high inside a 48-point touch area; `lg` is the full-width button at the foot of a sheet or form;
+  // `bar` is the answer's main button beside the AI input: the input's own height and fully rounded corners.
+  size?: 'md' | 'lg' | 'bar';
   // Stretches to the container's width.
   full?: boolean;
   // Stands in the middle of the container's width, where it would otherwise stand at its start.
@@ -50,6 +52,8 @@ const LABEL_COLOR: Record<Variant, string> = {
 
 // The touch area of an `md` button reaches the design system's minimum without growing the button.
 const MD_HEIGHT = 40;
+// The AI input's height for one line (`AI_INPUT.height` of the main screen's layout).
+const BAR_HEIGHT = 50;
 const MD_HIT_SLOP = (sizes.touchMin - MD_HEIGHT) / 2;
 
 export function Button({
@@ -75,7 +79,7 @@ export function Button({
       onPress={onPress}
       style={({ pressed }): StyleProp<ViewStyle> => [
         styles.base,
-        size === 'lg' ? styles.lg : styles.md,
+        styles[size],
         full ? styles.full : styles.hug,
         centred && !full && styles.centred,
         styles[variant],
@@ -87,8 +91,8 @@ export function Button({
         <WaitingDots label={`${label ?? children} · 보는 중`} tint={labelColor} />
       ) : (
         <>
-          {icon === undefined ? null : <Icon color={labelColor} name={icon} size={size === 'lg' ? 20 : 18} />}
-          <Text numberOfLines={1} style={[size === 'lg' ? styles.labelLg : styles.label, { color: labelColor }]}>
+          {icon === undefined ? null : <Icon color={labelColor} name={icon} size={size === 'md' ? 18 : 20} />}
+          <Text numberOfLines={1} style={[size === 'md' ? styles.label : styles.labelLg, { color: labelColor }]}>
             {children}
           </Text>
         </>
@@ -109,6 +113,7 @@ const styles = StyleSheet.create({
   },
   md: { height: MD_HEIGHT, paddingHorizontal: space[4] },
   lg: { height: sizes.button, paddingHorizontal: space[5] },
+  bar: { height: BAR_HEIGHT, paddingHorizontal: space[5], borderRadius: radius.full },
   full: { alignSelf: 'stretch' },
   hug: { alignSelf: 'flex-start' },
   centred: { alignSelf: 'center' },

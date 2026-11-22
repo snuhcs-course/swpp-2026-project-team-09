@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useEffect } from 'react';
@@ -15,6 +16,7 @@ import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { ChatSheetControl } from '../chat-sheet';
 import { markdownLabel } from '../chat-markdown';
 import { DockLine } from './dock-chips';
+import type { Raise } from './docked-answer';
 import { withFriendsOf } from './meal-list';
 
 // The Assistant's words in one paragraph: the pick with its dish and walking, and the nearest good alternative.
@@ -47,9 +49,17 @@ export function mealDockLine(
 }
 
 // A meal answer's dock (board E1): its line (`mealDockLine`) in at most two lines, with no "›": the caption's "올리면 N곳
-// 목록" is the one way to raise the card. The input and the main button, which acts on the chosen place, stand under it; the kinds are in the list. A docked
+// 목록" raises the card, and while the line is cut, so does a press on it ("더 보기"), to the whole words. The input and the main button, which acts on the chosen place, stand under it; the kinds are in the list. A docked
 // card shows no menu: the next raise opens the list.
-export function MealDock({ control, bubble }: { control: ChatSheetControl; bubble: ChatBubble }): ReactElement {
+export function MealDock({
+  control,
+  bubble,
+  onRaise,
+}: {
+  control: ChatSheetControl;
+  bubble: ChatBubble;
+  onRaise: Raise;
+}): ReactElement {
   const { menuFor, closeMenu } = control.answer;
   useEffect(() => {
     if (menuFor !== null) {
@@ -59,7 +69,12 @@ export function MealDock({ control, bubble }: { control: ChatSheetControl; bubbl
   const sentence = mealDockLine(bubble.text, control.answer);
   return (
     <View style={styles.row} testID="dock-row">
-      <DockLine line={[{ text: sentence, strong: false }]} />
+      <DockLine
+        line={[{ text: sentence, strong: false }]}
+        onMore={() => {
+          onRaise(false);
+        }}
+      />
     </View>
   );
 }
