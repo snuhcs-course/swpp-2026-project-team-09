@@ -3,11 +3,13 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import type { LatLng } from '@/api/types';
 import type { LabelSide } from '@/design-system';
+import type { ViewArea } from '@/features/assistant/answer-camera';
 import { placeLabels, type Words } from '@/features/assistant/answer-labels';
 import { drawingOf } from '@/features/assistant/answer-marks';
 import { NO_STANDINGS } from '@/features/assistant/invited-friends';
@@ -142,6 +144,7 @@ describe('a label moving to share an edge', () => {
 // "3식당" labels, 45 by 26, at points of the view, each with the one side or the sides given, in that order.
 function threes(
   marks: readonly { at: readonly [number, number]; sides: readonly LabelSide[] }[],
+  blocked: readonly ViewArea[] = [],
 ): ReturnType<typeof placeLabels> {
   const placed = marks.map(({ at: [x, y], sides }, point) => ({
     point,
@@ -152,7 +155,7 @@ function threes(
   return placeLabels(
     placed.map(({ position }) => ({ position, symbol: position })),
     placed,
-    viewAt(THIRD_AT_LOWEST),
+    { ...viewAt(THIRD_AT_LOWEST), blocked },
   );
 }
 
@@ -200,5 +203,24 @@ describe('labels placed one by one at points of a view', () => {
     expect(right).toMatchObject({ side: 'right', shift: 10 });
     expect(left).toMatchObject({ side: 'left' });
     expect(left).not.toHaveProperty('shift');
+  });
+});
+
+// "←" under the time bar with its clear room (P04 ticket 52), from 8 to 68 across and 280 to 330 down: the label at the
+// left of (100, 300), from 35 to 80 and 287 to 313, would stand under it.
+const BACK = { top: 280, right: 68, bottom: 330, left: 8 };
+
+// Partitions: the first side under "←"; the same side with nothing over the map.
+describe('labels at a view with "←" over the map', () => {
+  it('takes the next side when the first would stand under "←"', () => {
+    const [label] = threes([{ at: [100, 300], sides: ['left', 'right'] }], [BACK]);
+
+    expect(label).toMatchObject({ side: 'right' });
+  });
+
+  it('keeps the first side with nothing over the map there', () => {
+    const [label] = threes([{ at: [100, 300], sides: ['left', 'right'] }]);
+
+    expect(label).toMatchObject({ side: 'left' });
   });
 });

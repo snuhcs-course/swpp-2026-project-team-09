@@ -4,9 +4,11 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerDrawing } from '@/features/assistant/answer-marks';
+import { backCorner } from '@/screens/main/answer-padding';
 import { labelArea, paddingOf } from '@/screens/main/use-answer-map';
 
 // A drawing of one point and no marks, whose marks need the least room at each side: half the symbol box of 36, and 6.
@@ -67,5 +69,19 @@ describe('the area the labels stay in', () => {
 
   it("runs to 8 over the view's bottom while no card is laid out", () => {
     expect(labelArea(24, null, SIZE, true).bottom).toBe(906);
+  });
+});
+
+// Partitions: an answer with a time bar of 96, one without a bar, and a received invitation, under a status bar of 24
+// (the round "←" of P04 ticket 52). Expected values: "←" 8 under the bar, whose top is 24 + 28 = 52 from the screen's
+// top, so from 156 to 200 down and 16 to 60 across, with the 8 of ticket 08's area around it, from the view's left.
+describe('the corner of "←" that labels keep clear of', () => {
+  it('is "←" under the time bar with 8 around it', () => {
+    expect(backCorner(24, true, 96)).toEqual({ top: 148, right: 68, bottom: 208, left: 0 });
+  });
+
+  it('is none without a bar, "←" standing above the labels\' area, nor for an invitation', () => {
+    expect(backCorner(24, true, 0)).toBeNull();
+    expect(backCorner(24, false, 96)).toBeNull();
   });
 });
