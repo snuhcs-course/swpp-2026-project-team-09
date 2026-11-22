@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 import type { KeptQuest } from '@/api/assistant-types';
-import { field, hasTexts, isText, isTextOrNull, listOf } from './answers';
+import { field, hasTexts, isPoint, isText, isTextOrNull, listOf } from './answers';
 
 // The checks of the User's Quests as the main server names them (P05 ticket 17).
 
@@ -18,12 +18,18 @@ function isPerson(value: unknown): value is KeptQuest['people'][number] {
   return isText(field(value, 'name')) && ANSWERS.has(field(value, 'answer'));
 }
 
+// Absent from a main server before P05 ticket 28.
+function isPointOrAbsent(value: unknown): boolean {
+  return value === undefined || value === null || (hasTexts(value, ['placeId', 'label']) && isPoint(value));
+}
+
 export function isKeptQuest(value: unknown): value is KeptQuest {
   return (
     KINDS.has(field(value, 'kind')) &&
     hasTexts(value, ['questId', 'title', 'startAt']) &&
     isTextOrNull(field(value, 'endAt')) &&
     isTextOrNull(field(value, 'place')) &&
+    isPointOrAbsent(field(value, 'point')) &&
     listOf(isPerson)(field(value, 'people')) &&
     typeof field(value, 'mine') === 'boolean' &&
     typeof field(value, 'changeable') === 'boolean'

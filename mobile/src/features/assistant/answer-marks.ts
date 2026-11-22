@@ -10,7 +10,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerReply, Cuisine, MapScene, Plan } from '@/api/assistant-types';
+import type { AnswerReply, Cuisine, KeptQuest, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { type AnswerLabel, type AnswerSymbol, type FaceBadge, initials } from '@/design-system';
 import { koreaDayWord } from '@/korea-time';
@@ -23,6 +23,7 @@ import {
   DRAW_ORDER,
   FLAG_TONES,
   type Group,
+  keptDrafts,
   OWN,
   restOf,
   ROUTE_STYLES,
@@ -110,6 +111,8 @@ export interface SceneSetting {
   standings: ReadonlyMap<string, Standing>;
   // The Plan's day before the pick's time when it is not the day asked ("내일(수)"); left out, none.
   day?: string;
+  // The Quest already set that the answer stands beside (P04 ticket 20); left out, none.
+  kept?: KeptQuest | null;
   // The kind of food on screen, whose candidates stand out; left out, none.
   kind?: Cuisine | null;
 }
@@ -272,6 +275,7 @@ export function drawingOfScene(
     ...personDrafts(scene, setting.standings),
     ...scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
     ...flagDrafts(scene),
+    ...keptDrafts(setting.kept),
   ];
   const placed = placeAll(drafts, view).toSorted(
     (one, other) =>
@@ -313,6 +317,7 @@ export function drawingOf(
     standings,
     day,
     kind: kindShown(answer),
+    kept: answer.planSet,
   });
 }
 

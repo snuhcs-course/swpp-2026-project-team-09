@@ -10,7 +10,7 @@ Native files: none. Releases: an app OTA update only.
 
 With a lunch already put in the schedule (일정에 넣기), "점심 뭐 먹지?" is answered with plans as if that lunch were not there, and the answer says so: "이미 12:16 302동식당 점심이 있어요. 바꿀까요?"
 
-- **The line and 그대로 두기:** the model's line is the dock's one line, and 그대로 두기 is a chip in the same row. 그대로 두기 drops the new Plan and the line: the answer closes and the map goes back to what it showed.
+- **The line and 그대로 두기:** the model's line is the dock's one line, and 그대로 두기 is a chip in the same row. 그대로 두기 leaves the Quest as it is and sends nothing; the answer then shows it alone ([ticket 20](20-kept-quest-on-the-map.md)).
 - **A Quest the User may change** (`mealSet` with `shared: false`): 바꾸기 is the one main button beside the input. A press makes the new Plan; the main server drops the held Quest and its leave-by reminder in the same step, so there are never two lunches.
 - **A shared Quest** (`shared: true`: another holder, or an invitation not yet answered): no 바꾸기; 파티 보기 beside the input opens that 파티. The line says to change it there.
 - A `POST /plans` that answers 409 `MEAL_ALREADY_SET` (the Quest became shared after the answer) says to change it in its 파티 and makes nothing; `PLAN_ALREADY_SET` and `PLAN_SET_BY_FRIEND` (a second meeting refused) say that a meeting is already set, the User's or a Friend's, and never "초대하지 못했어요. 잠시 후 다시 시도해 주세요".
@@ -20,7 +20,7 @@ With a lunch already put in the schedule (일정에 넣기), "점심 뭐 먹지?
 - **From PR 441's and PR 442's reviews:** after a failed send, a new answer object (a kind chip makes one) keeps the request and Idempotency-Key of each Plan that keeps its id, day, start, place, and people; every other Plan starts fresh, so a retry never makes the Quest a second time, nor at a time the screen no longer shows. A Quest made is never carried to a new answer object.
 - **From PR 442's review:** a meeting's 바꾸기 refused because the Plan changed (409 `PLAN_CHANGED`) recalculates and says so; one refused for good (400 `PLAN_PEOPLE_CHANGED`, 403 `NOT_QUEST_LEADER`) makes the line "이 약속은 여기서 바꿀 수 없어요. 파티에서 바꿔 주세요" with 파티 보기 in place of 바꾸기. While the PUT is on its way, nothing of the answer takes a press, and the line after it names the Plan it was pressed on.
 - **From the screen review:** a chip of the dock's row is always whole: the chips keep their own width, up to half the row and scrolling past it, and the line takes what is left.
-- **Next (its own pull request):** the place of what is set marked on the map with "잡힌 점심 12:16" or "잡힌 약속 15:00", a grey outline without a number, apart from the candidates (both when it is one), from `KeptQuest.point` (P05's PR 439).
+- **Next:** the place of what is set marked on the map, and 그대로 두기 leaving it as the only mark: [ticket 20](20-kept-quest-on-the-map.md).
 - **General from the start:** the line, the chip, and the buttons are drawn from one shape that names a Quest (title, time, place, people, shared, whether this answer may change it), `SetQuest`, with `mealSet` as its first source. P05's next ticket makes "already set" a property of every planner's answer (meal, meeting, event, seat) and adds changing and cancelling a Quest by words; the general field is agreed with P05 then, and `setQuestOf` reads it.
 - **Left room for, not built:** a question about what is already set ("민수랑 약속 몇 시였지?") is answered by showing that Quest on the map, its flag and its time on the bar, with no new plan. Its shape is agreed with P05 first.
 
@@ -35,7 +35,7 @@ With a lunch already put in the schedule (일정에 넣기), "점심 뭐 먹지?
 - `usePlanChange` (`features/assistant/use-plan-change.ts`): the meeting's 바꾸기 by `PUT /plans/{questId}`, and the line the answer then holds.
 - `ANSWER_CAPABILITIES` gains `plan-set`; `POST /plans`, `PUT /plans/{questId}`, and `POST /assistant/answers` send `clientCapabilities` too.
 - `planActionOf` reads 바꾸기 for a Quest the User may change, and 파티 보기 for a shared one.
-- The dock: a Plan beside a set Quest rests as the model's line with 그대로 두기 (`setQuestRestOf`), which leaves the answer as ✕ does.
+- The dock: a Plan beside a set Quest rests as the model's line with 그대로 두기 (`setQuestRestOf`).
 - The make request's 409 `MEAL_ALREADY_SET` is told as "같이 정한 약속이라 그 파티에서 바꿔 주세요".
 - The mock answers 배고파 beside a lunch its User made from a Plan with `mealSet` and the main server's line, so the mock build shows both states.
 
@@ -46,7 +46,7 @@ With a lunch already put in the schedule (일정에 넣기), "점심 뭐 먹지?
 
 ## Acceptance criteria
 
-- [ ] A meal answer with an own `mealSet`: the line and 그대로 두기 in the dock, 바꾸기 beside the input; a press sends `POST /plans`; 그대로 두기 closes the answer and sends nothing. (Integration test.)
+- [ ] A meal answer with an own `mealSet`: the line and 그대로 두기 in the dock, 바꾸기 beside the input; a press sends `POST /plans`; 그대로 두기 sends nothing. (Integration test.)
 - [ ] With `shared: true`: no 바꾸기; 파티 보기 opens that 파티. (Integration test.)
 - [ ] A 409 `MEAL_ALREADY_SET` on 바꾸기 says to change it in its 파티 and makes nothing. (Integration test.)
 - [ ] A meeting's 바꾸기 sends `PUT /plans/{questId}`; the answer stays with the changed line and no button. (Integration test.)

@@ -123,13 +123,14 @@ describe('an answer beside a lunch the User holds alone', () => {
     expect(server.received('POST /plans')).toHaveLength(1);
   });
 
-  it('closes the answer from 그대로 두기 and sends nothing', async () => {
+  // P04 ticket 20: the answer stays and says the lunch was left as it is.
+  it('leaves the lunch as it is from 그대로 두기, says so, and sends nothing', async () => {
     const user = await askOnMap(server, replyWith(OWN));
 
     await user.press(dock().getByRole('button', { name: '그대로 두기' }));
     await pass(300);
 
-    expect(screen.queryByTestId('answer-card')).toBeNull();
+    expect(dock().getByText('12:16 302동식당 점심을 그대로 뒀어요')).toBeVisible();
     expect(server.received('POST /plans')).toHaveLength(0);
   });
 });

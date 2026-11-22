@@ -48,6 +48,9 @@ export interface PlanInvitation {
   changed: string | null;
   // 바꾸기 refused for good (PR 442's review): the answer's line, which sends the User to the 파티.
   refused: string | null;
+  // 그대로 두기 (ticket 20): the Quest stays as it is, and `left` is the answer's line, which says so.
+  leave: () => void;
+  left: string | null;
 }
 
 // Where the User is or why that is not known, which the request sends, and how a refusal or a Quest made out of sight
@@ -339,11 +342,11 @@ export function usePlanInvitation(shown: OnScreen, inviting: Inviting): PlanInvi
   const members = useMembers(made);
   useHeard(made, setStored);
   const { again, dropping } = useAgain(made, setStored, inviting.say);
-  const { change, changing, changed, refused } = usePlanChange(shown, inviting);
+  const { change, changing, changed, refused, leave, left } = usePlanChange(shown, inviting);
   useGathered(made, setStored);
   const standings = useMemo(
     () => (made === null ? NO_STANDINGS : friendStandings(made, members, heard)),
     [made, members, heard],
   );
-  return { sending, made, standings, invite, again, dropping, change, changing, changed, refused };
+  return { sending, made, standings, invite, again, dropping, change, changing, changed, refused, leave, left };
 }

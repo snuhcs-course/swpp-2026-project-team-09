@@ -15,6 +15,7 @@ import type { AnswerReply, MapScene } from '@/api/assistant-types';
 import { answerCamera } from '@/features/assistant/answer-camera';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import { type AnswerDrawing, drawingOf, drawingOfScene, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
+import { keptDrawingOf, nearKeptWords } from '@/features/assistant/kept-drawing';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { CardView } from '@/features/map/adapter';
@@ -57,17 +58,24 @@ const NO_LOOKS: readonly MarkerLook[] = [];
 const NO_LINES: readonly MapLine[] = [];
 const NO_ROUTES: MapScene['routes'] = [];
 
-type Invited = Pick<PlanInvitation, 'sending' | 'made' | 'standings' | 'changed' | 'changing'>;
+type Invited = Pick<PlanInvitation, 'sending' | 'made' | 'standings' | 'changed' | 'changing' | 'left'>;
 
 // A Plan made or changed (P04 ticket 17) draws only itself: nothing can be chosen any more, so the other candidates and
-// the places that did not fit go, from the answer and from the Plan's own scene.
+// the places that did not fit go, from the answer and from the Plan's own scene, and so does the Quest it replaced.
 function alone(answer: AnswerReply, index: number): AnswerReply {
   const plan = answer.plans[index];
   if (plan === undefined) {
     return answer;
   }
   const places = plan.scene.places.filter(({ role }) => role !== 'candidate' && role !== 'dropped');
-  return { ...answer, plans: [{ ...plan, scene: { ...plan.scene, places } }], dropped: [] };
+  return { ...answer, plans: [{ ...plan, scene: { ...plan.scene, places } }], dropped: [], planSet: null };
+}
+
+// Once 그대로 두기 left a Quest already set as it is (P04 ticket 20), its tag is the only mark beside the User's own
+// (`keptDrawingOf`); with no point, nothing is drawn.
+function keptDrawOf(answer: AnswerReply, index: number): ((view: LabelView | null) => AnswerDrawing) | null {
+  const base = keptDrawingOf(answer, index);
+  return base === null ? null : (view: LabelView | null): AnswerDrawing => keptDrawingOf(answer, index, view) ?? base;
 }
 
 // What frames an answer on the map: the status bar, the card, the pill or none, and, once the stage is laid out and
@@ -169,8 +177,8 @@ function useAnswerCamera(
 }
 
 // The Avatars of people the Plan does not draw: Friends and the other people of the User's Party, not the User's own
-// nor the shuttle's vehicles. One near one of the Plan's own marks gives way too: the map draws every Avatar above
-// every marker, so it would lie over the mark or its words.
+// nor the shuttle's vehicles. One near one of the Plan's own marks, or under the words of a Quest already set (P04
+// ticket 20), gives way too: the map draws every Avatar above every marker, so it would lie over the mark or its words.
 export function othersOf(
   avatars: readonly MapAvatar[],
   cards: readonly CardView[],
@@ -179,7 +187,9 @@ export function othersOf(
   const others = new Set(
     cards.flatMap(({ id, mark }) => (mark.type === 'person' && !drawing.userIds.includes(mark.id) ? [id] : [])),
   );
-  return avatars.filter(({ id, position }) => others.has(id) && !nearOwnMark(drawing, position));
+  return avatars.filter(
+    ({ id, position }) => others.has(id) && !nearOwnMark(drawing, position) && !nearKeptWords(drawing, position),
+  );
 }
 
 export interface AnswerMap {
@@ -309,18 +319,23 @@ export function useAnswerMap(
   map: MainMap,
   room: Room,
   everyday: EverydayAvatars,
-  { sending, made, standings, changed, changing }: Invited,
+  { sending, made, standings, changed, changing, left }: Invited,
   onMark: OnMark = ignoreMark,
 ): AnswerMap | null {
   const { answer, index } = shown;
   const settled = made !== null || changed !== null;
+  // A Plan made or changed wins the drawing over 그대로 두기 (PR 444's review).
+  const leftAlone = left !== null && !settled;
   const draw = useMemo(() => {
     if (answer === null) {
       return null;
     }
+    if (leftAlone) {
+      return keptDrawOf(answer, index);
+    }
     const [drawn, at] = settled ? [alone(answer, index), 0] : [answer, index];
     return (view: LabelView | null): AnswerDrawing => drawingOf(drawn, at, standings, view);
-  }, [answer, index, standings, settled]);
+  }, [answer, index, standings, settled, leftAlone]);
   const framing = useFraming(map, room, true);
   const looks = useMemo(
     () => (answer === null ? NO_LOOKS : looksOf(answer, (drawing) => labelViewOf(drawing, framing))),
@@ -328,10 +343,11 @@ export function useAnswerMap(
   );
   const base = useBase(draw);
   const others = base === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, base);
-  const faces = useFaces(others, shown, made !== null);
+  const everydayFaces = useFaces(others, shown, made !== null);
+  const faces = leftAlone ? NO_AVATARS : everydayFaces;
   const routes = answer?.plans[index]?.scene.routes;
-  // While 바꾸기 is on its way nothing can be chosen either.
-  const sent = sending || settled || changing;
+  // While 바꾸기 is on its way nothing can be chosen either, nor once 그대로 두기 left the Quest as it is.
+  const sent = sending || settled || changing || leftAlone;
   const drawn = useDrawnMap(draw, base, answer, looks, map, framing, routes, pressableWhile(sent));
   if (drawn === null) {
     return null;
