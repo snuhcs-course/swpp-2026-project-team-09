@@ -146,8 +146,8 @@ describe('a refusal to accept for a Friend (board n8b)', () => {
     await say(user, '민수 대신 수락해 줘', copyOf('민수 대신 수락해 줘'));
 
     expect(card().getByText('수락은 민수가 직접 해요')).toBeVisible();
-    expect(card().getByText('답이 없어도 12:15에 가면 돼요')).toBeVisible();
-    expect(card().queryByText('파티를 만들고 초대를 보냈어요')).toBeNull();
+    expect(card().getByText('12:15 302동식당 · 수락하면 알려 드려요')).toBeVisible();
+    expect(card().queryByText('김민수에게 점심 초대를 보냈어요')).toBeNull();
     expect(card().getByText('김민수 · 아직 안 봄')).toBeVisible();
     expect(mapThings()).toContain('민수 · 아직 안 봄');
     expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
