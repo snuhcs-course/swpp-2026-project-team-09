@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useEffect } from 'react';
@@ -21,7 +22,7 @@ import type { LibrarySeat } from '@/library/replies';
 import { useAskForPush } from '@/push/push-ask-host';
 import { CardBox, FailureNote, Pill, Pills, Said } from './library-parts';
 import { seatsBubble } from './own-bubbles';
-import { type Booking, NO_FREE_SEAT, SEATS_UNREAD, sendBooking } from './seat-booking';
+import { type Booking, NO_FREE_SEAT, SEATS_UNREAD, SEATS_WAIT_MS, sendBooking, withinWait } from './seat-booking';
 import { type BookSeatCardProps, type Closed, SeatOffer } from './seat-offer';
 import { RoomTop, RoomWords, type SeatRoom, useFullRoomSwap, useSeatRoom } from './seat-room';
 import { BOOKING_CLOSED } from './seats-card';
@@ -128,8 +129,9 @@ function useSeatCalls({ card, actions, place, room, slot, setNamed }: SeatPartPr
 } {
   const { shown } = room;
   const close = useClose(actions, place);
+  const mapped = actions.bandOnBar?.(place) === true;
   const { loaded, reload } = useLibraryLoad(
-    () => seatsFor(shown, slot),
+    () => (mapped ? withinWait(seatsFor(shown, slot), SEATS_WAIT_MS) : seatsFor(shown, slot)),
     `${shown.id} ${slot.start} ${String(slot.minutes)}`,
   );
   const hold = useSeatStay();
@@ -177,7 +179,8 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
             failure={loaded.state === 'failed' ? loaded.failure : null}
             onLogIn={mapped ? null : logIn}
             reading={{
-              words: SEATS_UNREAD,
+              words: mapped ? `${bookingTitle(shown)}의 빈 자리를 받지 못했어요.` : SEATS_UNREAD,
+              retryWords: mapped ? '다시 찾기' : undefined,
               onRetry: reload,
               onClose: () => {
                 close('declined');

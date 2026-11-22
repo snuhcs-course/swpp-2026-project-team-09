@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo } from 'react';
@@ -164,11 +165,14 @@ function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: La
   const kept = booking === null ? null : bookingKept(booking, said);
   const done =
     booking?.booked === true ? said.bubbles.findLast((bubble) => bubble.done !== undefined)?.done : undefined;
+  // The walk there, as a meal's label says it ("걸음 8분"), while the User's position is known (P01 ticket 04).
+  const walk = booking === null || position === null ? undefined : meAndWalk(position, booking.point).walk[0];
+  const walking = walk === undefined ? '' : ` · 걸음 ${String(walk.minutes)}분`;
   const line =
     kept === null
       ? null
       : done === undefined
-        ? bookingLine(seat ?? kept.kept.seat, kept.kept.slot, now())
+        ? `${bookingLine(seat ?? kept.kept.seat, kept.kept.slot, now())}${walking}`
         : `${bookingLine(done.seatLabel ?? null, kept.kept.slot, now())} · 예약됨`;
   const space = kept?.kept.space ?? null;
   return useMemo((): Made | null => {

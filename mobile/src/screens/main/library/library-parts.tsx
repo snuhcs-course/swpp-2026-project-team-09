@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -110,6 +111,8 @@ export interface ReadAgain {
   words: string;
   onRetry: () => void;
   onClose: () => void;
+  // The retry's word, "다시 시도" when left out.
+  retryWords?: string;
 }
 
 // A failure in the card, with 로그인 when the library session is missing or ended.
@@ -134,7 +137,7 @@ export function FailureNote({
       <View style={styles.failure}>
         <Said tone="danger">{reading.words}</Said>
         <Pills>
-          <Pill label="다시 시도" onPress={reading.onRetry} primary />
+          <Pill label={reading.retryWords ?? '다시 시도'} onPress={reading.onRetry} primary />
           <Pill label="닫기" onPress={reading.onClose} />
         </Pills>
       </View>
