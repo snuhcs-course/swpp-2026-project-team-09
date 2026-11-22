@@ -10,11 +10,14 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import type { QuestProposal } from '@/api/assistant-types';
+import { apiClient } from '@/api/client';
+import type { ProposalChange } from '@/api/party-change-types';
 import { globalEventAnnouncersQuery } from '@/api/queries';
 import { now } from '@/clock';
 import { useToast } from '@/design-system';
 import { holdProposal } from '@/features/party/held-proposal';
 import { isReady, type PartyForm, proposalForm } from '@/features/party/making';
+import { refusalWords } from '@/features/quests/refusals';
 import { useSendParty } from '../party/form/use-send';
 import { showMine } from '../party/use-party-actions';
 import type { ProposalActions } from './chat-cards';
@@ -30,6 +33,72 @@ function blockOf(proposal: QuestProposal, form: PartyForm): string | null {
     return NOT_READY;
   }
   return form.startsAt !== null && new Date(form.startsAt) <= now() ? STARTED : null;
+}
+
+// The toast once 바꾸기 changed a made 파티 (P04 ticket 25), with how many it told.
+export function changedWords({ told }: ProposalChange): string {
+  return told > 0 ? `파티를 바꿨어요. 참여한 ${String(told)}명에게 알렸어요` : '파티를 바꿨어요';
+}
+
+// 바꾸기 sends the main server's step as it is to the room's 일정 수정: true once it is taken.
+function changeParty({ questId, subQuestId, step }: ProposalChange, say: (words: string) => void): Promise<boolean> {
+  return apiClient.editSubQuest(questId, subQuestId, step).then(
+    () => true,
+    (error: unknown) => {
+      say(refusalWords(error));
+      return false;
+    },
+  );
+}
+
+interface Changing {
+  sending: Set<number>;
+  mark: (bubbleId: number, state: ProposalMaking) => void;
+  say: (words: string) => void;
+  onMade: (bubbleId: number, questId: string) => void;
+}
+
+// 바꾸기 of a bubble's change: on its way, then changed, the 파티 going back as made, or ready again.
+function changeWith({ sending, mark, say, onMade }: Changing): (bubbleId: number, made: ProposalChange) => void {
+  return (bubbleId, made) => {
+    if (sending.has(bubbleId)) {
+      return;
+    }
+    sending.add(bubbleId);
+    mark(bubbleId, 'making');
+    void changeParty(made, say).then((changed) => {
+      sending.delete(bubbleId);
+      mark(bubbleId, changed ? 'made' : 'ready');
+      if (changed) {
+        say(changedWords(made));
+        onMade(bubbleId, made.questId);
+      }
+    });
+  };
+}
+
+// A made 파티's change (P04 ticket 25): 바꾸기 changes it in place, and 파티 보기 opens its room.
+function withChanges(
+  actions: ProposalActions,
+  change: (bubbleId: number, made: ProposalChange) => void,
+): ProposalActions {
+  return {
+    ...actions,
+    make: (bubbleId, proposal) => {
+      if (proposal.change === undefined) {
+        actions.make(bubbleId, proposal);
+      } else {
+        change(bubbleId, proposal.change);
+      }
+    },
+    edit: (bubbleId, proposal) => {
+      if (proposal.change === undefined) {
+        actions.edit(bubbleId, proposal);
+      } else {
+        router.push(`/room/${proposal.change.questId}`);
+      }
+    },
+  };
 }
 
 // Opens the party form filled with the Proposal, which tells `made` once it made the Quest.
@@ -55,6 +124,7 @@ export function useProposalMaking(onMade: (bubbleId: number, questId: string) =>
   const mark = useCallback((bubbleId: number, state: ProposalMaking): void => {
     setMaking((held) => new Map(held).set(bubbleId, state));
   }, []);
+  const change = changeWith({ sending: sending.current, mark, say: showToast, onMade });
   const make = (bubbleId: number, proposal: QuestProposal): void => {
     if (sending.current.has(bubbleId)) {
       return;
@@ -90,5 +160,5 @@ export function useProposalMaking(onMade: (bubbleId: number, questId: string) =>
       onMade(bubbleId, questId);
     });
   };
-  return { makingOf: (bubbleId) => making.get(bubbleId) ?? 'ready', make, edit };
+  return withChanges({ makingOf: (bubbleId) => making.get(bubbleId) ?? 'ready', make, edit }, change);
 }

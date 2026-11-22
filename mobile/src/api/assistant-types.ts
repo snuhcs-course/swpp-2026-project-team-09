@@ -19,8 +19,9 @@ import type { MeetInput } from './meet-plan-types';
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
 import type { DroppedPlace, PlanPart } from './plan-part-types';
-import type { LeaveQuestOffer } from './leave-quest-types';
-import type { RefusalOffer, WithLocationMissing, WithMark, WithMissing, WithRefusal } from './refusal-types';
+import type { ProposalChange } from './party-change-types';
+import type { ReplyOffer } from './reply-offer-types';
+import type { WithLocationMissing, WithMark, WithMissing, WithRefusal } from './refusal-types';
 import type { MealWindow, WithRelax } from './relax-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
 import type { FlagRole, PlaceRole, RouteRole } from './scene-roles';
@@ -36,13 +37,7 @@ export interface CardReference {
   id: string;
 }
 
-// What the app tells the main server it can draw, with every chat request: library cards, an answer on the map, the
-// study spaces of the visible area it sends as `viewport`, a meet ("민수랑 만나고 싶어"), and the answers of events,
-// recruiting parties, and a new party ("오늘 볼 만한 거 있어?", "배드민턴 칠 사람"), and 바꾸기 / 그대로 두기 beside a Quest
-// already set (`plan-set`, P04 ticket 17), which it also sends with POST /plans and POST /assistant/answers, and a
-// Quest cancelled by words (`quest-cancel`, P04 ticket 24). An app without one (the 1.0.0 bundle) is never sent its
-// replies; a main server before P05 ticket 17 refuses `plan-set`, and one before P05 ticket 31 `quest-cancel`.
-export const ANSWER_CAPABILITIES = ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'] as const;
+export { ANSWER_CAPABILITIES } from './capabilities';
 
 // A Place or a Friend of a Proposal, by id and the words the card shows: the Place's name, the Friend's name. Never
 // where a Friend is.
@@ -78,6 +73,7 @@ export interface QuestProposal {
   place: ProposalPlace | null;
   globalEvent: GlobalEvent | null;
   invitees: ProposalFriend[];
+  change?: ProposalChange;
 }
 
 export { type SentProposal, sentProposalOf } from './sent-proposal';
@@ -415,7 +411,4 @@ export interface AssistantReply extends WithRefusal {
   steps?: ReplyStep[];
 }
 
-// A button under a reply's text, sent as the User's words.
-export type AskOffer = Extract<RefusalOffer, { kind: 'ask' }>;
-
-export type ReplyOffer = AskOffer | LeaveQuestOffer;
+export type { AskOffer, ReplyOffer } from './reply-offer-types';

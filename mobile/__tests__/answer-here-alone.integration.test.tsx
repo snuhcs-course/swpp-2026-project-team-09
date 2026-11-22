@@ -138,7 +138,7 @@ describe('"일정에 넣기" on a Plan where the User is (s1 → s4b)', () => {
         planId: '301동식당',
         startAt: MEAL_ANSWER_ALONE.plans[0]?.startAt,
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
       },
     ]);
     expect(server.received('POST /plans')[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);

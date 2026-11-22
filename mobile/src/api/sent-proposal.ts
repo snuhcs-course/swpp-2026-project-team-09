@@ -14,10 +14,13 @@ export type SentProposal = Omit<QuestProposal, 'globalEvent'> & {
   madeQuestId?: string;
 };
 
+// A change of a made 파티 goes back as shown until 바꾸기 changed it; then it goes back as that 파티, without the change
+// (P04 ticket 25).
 export function sentProposalOf(proposal: QuestProposal, madeQuestId?: string): SentProposal {
-  const { globalEvent } = proposal;
+  const { globalEvent, change, ...rest } = proposal;
   const event = globalEvent === null ? null : { id: globalEvent.id, title: globalEvent.title };
-  return madeQuestId === undefined
-    ? { ...proposal, globalEvent: event }
-    : { ...proposal, globalEvent: event, madeQuestId };
+  if (madeQuestId !== undefined) {
+    return { ...rest, globalEvent: event, madeQuestId };
+  }
+  return change === undefined ? { ...rest, globalEvent: event } : { ...rest, globalEvent: event, change };
 }

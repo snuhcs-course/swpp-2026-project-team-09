@@ -65,7 +65,7 @@ describe('an events answer (board Alone 1)', () => {
 
     expect(chats(server)).toEqual([
       expect.objectContaining({
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
       }),
     ]);
   });
@@ -124,7 +124,7 @@ describe('the buttons of an events Plan', () => {
       {
         input: { kind: 'quests', globalEventId: JOB_FAIR, questIds: null },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
       },
     ]);
     expect(chats(server)).toHaveLength(1);
@@ -150,7 +150,7 @@ describe('the buttons of an events Plan', () => {
           people: [{ userId: ASKER, constraints: [] }],
         },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
       },
     ]);
     expect(mapThings()).toContain('배드민턴 · 17:10 배드민턴');
@@ -171,7 +171,7 @@ describe('the buttons of another events Plan', () => {
       {
         input: { kind: 'quests', globalEventId: '06b0d7bf-98aa-4d49-a22c-4c06d135891c', questIds: null },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
       },
     ]);
   });

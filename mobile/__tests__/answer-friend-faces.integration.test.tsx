@@ -163,7 +163,7 @@ describe('a wrong add', () => {
     expect(recalculations(server).at(-1)).toEqual({
       input: { ...three.input, people: peopleOf(three.input).slice(0, 2) },
       location: ON_CAMPUS,
-      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
     });
     expect(mapThings()).toContain('302동식당 · 12:15 점심');
     expect(mapThings().some((name) => name.startsWith('지은'))).toBe(false);

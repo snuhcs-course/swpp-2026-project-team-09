@@ -85,7 +85,7 @@ describe('"여기서 먹기" on the card of a pressed building', () => {
       {
         input: EAT_HERE?.kind === 'plan' ? EAT_HERE.input : null,
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
       },
     ]);
     expect(server.received('POST /assistant/messages')).toEqual([]);
@@ -187,7 +187,7 @@ describe("a2's buttons on the card of 문화관", () => {
       {
         input: { kind: 'events', date: '2026-11-20', eventIds: [JOB_FAIR, TALK] },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
       },
     ]);
     expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 행사 보기', { exact: false });
@@ -206,7 +206,7 @@ describe("a2's buttons on the card of 문화관", () => {
       {
         input: { kind: 'quests', globalEventId: JOB_FAIR, questIds: null },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
       },
     ]);
     expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 같이 갈 파티', { exact: false });

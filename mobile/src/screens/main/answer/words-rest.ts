@@ -82,8 +82,9 @@ function isAsk(offer: ReplyOffer): offer is AskOffer {
 
 // A refusal, a failure, or a question back (words that ask, with offers): the first line, with the buttons as chips. A
 // refusal that asks which Friend keeps its grid in the open card, and any other words their card, with their offers
-// under them (decision 3). A Quest to cancel (P04 ticket 24) always docks: its button stands beside the input, and
-// `left`, once it was pressed, says in the line how that went. Null for the open card.
+// under them (decision 3). A Quest to cancel (P04 ticket 24) or a 파티 to change in its room (ticket 25) always docks:
+// its button stands beside the input, and `left`, once it was pressed, says in the line how that went. Null for the
+// open card.
 export function wordsRestOf(
   { refusal = null, failure, offers = [], text }: ChatBubble,
   left: string | null = null,
@@ -98,7 +99,7 @@ export function wordsRestOf(
     return { ...rest, line: wordsLine(text), offers: [], retry: failure === 'unavailable' };
   }
   const asks = offers.filter((offer) => isAsk(offer));
-  if (offers.some((offer) => offer.kind === 'leave-quest')) {
+  if (offers.some((offer) => offer.kind === 'leave-quest' || offer.kind === 'quest')) {
     return { ...rest, line: wordsLine(left ?? text), offers: asks };
   }
   return asks.length > 0 && asksBack(text) ? { ...rest, line: wordsLine(text), offers: asks } : null;

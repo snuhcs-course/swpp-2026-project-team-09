@@ -127,7 +127,7 @@ function withoutMinJun(): object {
   return {
     input: { ...replyWithMinJun().answer.input, people: [ASKER] },
     location: ON_CAMPUS,
-    clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+    clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
   };
 }
 

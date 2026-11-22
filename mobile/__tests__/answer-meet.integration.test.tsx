@@ -86,7 +86,7 @@ function meetAsked(friendId: string): object {
   return {
     input: meetWith(friendId),
     location: ON_CAMPUS,
-    clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+    clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
   };
 }
 
@@ -218,7 +218,7 @@ describe("the controls of a meet's answer", () => {
         planId: '302동 앞',
         startAt: '2026-11-17T12:15:00+09:00',
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
       },
     ]);
     expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();

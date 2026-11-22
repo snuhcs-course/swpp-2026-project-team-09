@@ -56,7 +56,7 @@ const PICK_FOR_THREE = '학생회관식당 · 12:33 점심';
 const WITH_MIN_JUN = {
   input: { ...MEAL_ANSWER.input, people: [...MEAL_ANSWER.input.people, { userId: MIN_JUN.id, constraints: [] }] },
   location: ON_CAMPUS,
-  clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+  clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
 };
 
 let server: FakeServer;

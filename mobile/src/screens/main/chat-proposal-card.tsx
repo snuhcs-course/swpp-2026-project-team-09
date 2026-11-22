@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { openBrowserAsync } from 'expo-web-browser';
@@ -64,6 +65,8 @@ function rowsOf(proposal: QuestProposal, form: PartyForm): Row[] {
 }
 
 const MAKE_WORDS: Record<ProposalMaking, string> = { ready: '만들기', making: '만드는 중', made: '만들었어요' };
+// A 파티 already made, changed in place (P04 ticket 25).
+const CHANGE_WORDS: Record<ProposalMaking, string> = { ready: '바꾸기', making: '바꾸는 중', made: '바꿨어요' };
 
 // 시설 예약하기 under a made Proposal at a Place booked online: it opens the Place's booking page, since the Assistant
 // cannot book the facility itself. Its label names the page, such as 체육시설 예약 목록.
@@ -89,12 +92,15 @@ function BookingButton({ booking }: { booking: FacilityBooking }): ReactElement 
 // under them, which the Assistant may have written, with 수정 and 만들기. Nothing is made until 만들기 is pressed, or
 // until the form 수정 opens is sent. Once on its way or made, neither does anything more. Made, a Proposal whose
 // Place is booked online shows 시설 예약하기 under them.
+// With a change of a 파티 already made (P04 ticket 25), it is that 파티 with the new time or place, and its buttons
+// are 파티 보기, which opens its room, and 바꾸기.
 export function ChatProposalCard({ proposal, making, onMake, onEdit }: ChatProposalCardProps): ReactElement {
   const form = proposalForm(proposal);
+  const changes = proposal.change !== undefined;
   return (
     <View style={[cardStyles.card, styles.card]} testID="proposal-card">
       <Text accessibilityRole="header" style={styles.kicker}>
-        새 파티
+        {changes ? '파티 바꾸기' : '새 파티'}
       </Text>
       <View>
         {rowsOf(proposal, form).map(({ icon, label, value }) => (
@@ -108,13 +114,13 @@ export function ChatProposalCard({ proposal, making, onMake, onEdit }: ChatPropo
       {form.description === '' ? null : <Text style={styles.description}>{form.description}</Text>}
       <View style={styles.buttons}>
         <View style={styles.button}>
-          <Button disabled={making !== 'ready'} full onPress={onEdit} variant="secondary">
-            수정
+          <Button disabled={making !== 'ready' && !changes} full onPress={onEdit} variant="secondary">
+            {changes ? '파티 보기' : '수정'}
           </Button>
         </View>
         <View style={styles.button}>
           <Button disabled={making !== 'ready'} full onPress={onMake} variant="primary">
-            {MAKE_WORDS[making]}
+            {(changes ? CHANGE_WORDS : MAKE_WORDS)[making]}
           </Button>
         </View>
       </View>

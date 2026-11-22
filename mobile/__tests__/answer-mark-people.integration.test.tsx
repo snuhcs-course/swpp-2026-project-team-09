@@ -75,7 +75,7 @@ describe("a face of the Plan's people", () => {
       {
         input: { ...MEAL_ANSWER.input, people: [ASKER] },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
       },
     ]);
     expect(screen.queryByTestId('mark-card')).toBeNull();

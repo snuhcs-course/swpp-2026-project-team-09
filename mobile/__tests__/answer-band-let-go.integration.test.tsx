@@ -84,7 +84,7 @@ function startingAt(from: string): object {
   return {
     input: { ...MEET_ANSWER.input, window: { from, until: null } },
     location: ON_CAMPUS,
-    clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+    clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
   };
 }
 
@@ -187,7 +187,7 @@ describe("a meal's band let go", () => {
       {
         input: { ...MEAL_ANSWER.input, window: { from: '12:25', until: null } },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
       },
     ]);
     expect(mapThings()).toContain('학생회관식당 · 12:40 점심');
