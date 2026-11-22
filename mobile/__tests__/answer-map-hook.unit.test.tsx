@@ -31,13 +31,14 @@ jest.mock('@/map/marker-images', () => {
 });
 // The walking route service is no part of these hooks' units: an answer's walks keep their straight lines (P15
 // ticket 56 tests the walks).
+// A meal Plan's ways are as a test sets them (`mockWays`), none at first.
+const mockWays: { current: object } = { current: { paths: new Map(), legs: [] } };
 jest.mock('@/screens/main/use-answer-walks', () => {
   const none = new Map();
-  const ways = { paths: none, legs: [] };
   return {
     useAnswerWalks: (lines: readonly unknown[]): readonly unknown[] => lines,
     useWalkPaths: (): ReadonlyMap<string, unknown> => none,
-    useMealWays: (): object => ways,
+    useMealWays: (): object => mockWays.current,
   };
 });
 jest.mock('react-native-safe-area-context', () => ({
@@ -145,6 +146,22 @@ describe("the answer's camera", () => {
     const { top, bottom } = spanIn(drawingOf(MEAL_ANSWER, 2).own, asked.cameras[2]);
     expect((top + bottom) / 2).toBeCloseTo(315, 0);
     expect(bottom - top).toBeCloseTo(370.85, 1);
+  });
+
+  it("moves nothing when a walk's path comes back (PR 497's review)", async () => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const rerender = await render(asked);
+    const [first] = MEAL_ANSWER.plans[0]?.scene.routes ?? [];
+    const bend = { latitude: 37.455, longitude: 126.955 };
+    mockWays.current = {
+      paths: new Map([['answer:route:0', first === undefined ? [] : [first.from, bend, first.to]]]),
+      legs: [],
+    };
+
+    await rerender(FIRST);
+
+    expect(asked.cameras).toHaveLength(1);
+    mockWays.current = { paths: new Map(), legs: [] };
   });
 
   it('moves nothing when the answer is closed', async () => {
