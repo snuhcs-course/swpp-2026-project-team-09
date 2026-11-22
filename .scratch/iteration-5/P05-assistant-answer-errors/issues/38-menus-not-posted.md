@@ -33,11 +33,13 @@ Native files: none. Releases: the main server.
 - `MealPlanService.planned` says whether the day has any menu (`posted`). `planMeal` then tells the model `NOT_POSTED` for a day without menus: say the menu is not posted yet and comes later, never that nothing is open. The `no-menu` reason is now only for menus that hold only notes. The meal rules say the same in one sentence.
 - The card says "11/30(월) 메뉴는 아직 올라오지 않았어요" and "메뉴는 엿새 뒤 날짜까지 볼 수 있어요"; today it says "오늘 메뉴는 아직 올라오지 않았어요" alone. The reason stays `no-menu`, since the app accepts only its three reasons.
 - `findMenu` and `getMenus` say a day without a menu is not posted yet, not that it was not collected.
+- **A day not posted against a meal not served**: a day with no rows at all is not posted yet, and its meals answer with their usual hours. On a day whose menu has lines for another meal, a meal with no line is not served (`serves: false`): "저녁은 안 해요", and the label gives no usual hours for it (for example 301동식당's dinner on a day it serves lunch only).
 - **+7 (choice)**: the tools keep a week ahead, since `DAYS_AHEAD` is shared with the events and free-time tools, which do have +7. +7 gets the not-posted line, and the card's second line says how far ahead menus come.
 
 ## Acceptance criteria
 
 - [x] Unit tests: the not-posted card words today, the day before, +3, +6, and +7; planMeal's reason with no menus and with notes only; the label of an hours answer on a day not posted (another day and today), and "쉬어요" only for notes only.
+- [x] A meal with no line on a day whose menu has lines is not served, and the label after lunch reads "지금 닫음 · 오늘 영업 끝".
 - [x] Integration tests updated (`assistant-meal-plan`, `assistant-menu`, `assistant`).
 - [x] Eval cases written, not run: a meal, a menu, and the hours on a Friday the P4 world has no menus for.
 - [x] README; lint, format, and types of the main server.

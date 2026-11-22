@@ -2676,7 +2676,8 @@ recorded'` with the menu's notes when it serves the meal without kept hours; `se
       meal answers `none`.
       A day whose menus are not posted yet is not a closed day: its meals with kept hours answer `serves: 'not
 known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, today `메뉴 아직 안 올라옴 · 평소 …`),
-      never `쉬어요`, which it says only when the menus hold only notes.
+      never `쉬어요`, which it says only when the menus hold only notes. A meal with no line on a day whose menu has lines for
+      another meal is not served that day (`serves: false`), not a meal still to come.
       Today it adds `now` and `servingNow`, the meal whose hours hold now, or null. With a meal answer on screen (the
       context's `conditions`), it plans that answer again from them and puts it in the reply's `answer`, so that the
       reply keeps the plan on screen; any other reply in words alone takes it off. Without one, the reply's `lookup`

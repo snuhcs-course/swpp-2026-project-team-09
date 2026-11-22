@@ -105,3 +105,25 @@ describe("The map's label of an hours answer on a day not posted", () => {
     expect(stateAt(NEXT_MONDAY, at(MONDAY, '12:00'), closed)).toBe('그날은 쉬어요');
   });
 });
+
+describe('A meal not served on a day whose menu is posted', () => {
+  const dish = { text: '제육볶음 : 6,000원', kind: MenuLineKind.dish, name: '제육볶음', price: 6000 };
+  // 301동식당 today: lunch posted, and no line for dinner, which it does not serve that day.
+  const lunchOnly = (): MealOfDay[] => [
+    { meal: 'lunch', lines: [dish], hours: LUNCH, posted: true },
+    { meal: 'dinner', lines: [], hours: DINNER, posted: true },
+  ];
+
+  it('says the meal is not served, not its usual hours', () => {
+    expect(hoursWords('301동식당', MONDAY, at(MONDAY, '15:00'), lunchOnly())).toMatchObject({
+      meals: [
+        { meal: 'lunch', serves: true },
+        { meal: 'dinner', serves: false, why: 'its menu that day has no line for this meal, so it does not serve it' },
+      ],
+    });
+  });
+
+  it('labels the day done after lunch, with no usual dinner', () => {
+    expect(stateAt(MONDAY, at(MONDAY, '15:00'), lunchOnly())).toBe('지금 닫음 · 오늘 영업 끝');
+  });
+});

@@ -53,9 +53,11 @@ export class MenuLookupService {
   async mealsOf(key: string, date: string): Promise<MealOfDay[]> {
     const day = (await this.menus.findByDate(date)).find(({ name }) => name === key);
     const meals: HoursMeal[] = ['breakfast', 'lunch', 'dinner'];
+    const posted = day?.meals.some(({ lines }) => lines.length > 0) ?? false;
     return Promise.all(
       meals.map(async (meal) => ({
         meal,
+        posted,
         lines: day?.meals.find((served) => served.meal === meal)?.lines ?? [],
         hours: await this.menus.hoursOf(key, meal, date),
       })),
