@@ -6,10 +6,9 @@
  ******************************************************************************/
 
 import { act, fireEvent } from '@testing-library/react-native';
-import { DeviceEventEmitter } from 'react-native';
-import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { pass, screen } from './app';
+import { holdGesture } from './hold-gesture';
 
 // The time band moved whole by a drag on its lanes, its body among them (P02 ticket 25), against the fake main server.
 
@@ -35,26 +34,9 @@ export function body(): ReturnType<typeof screen.getByRole> {
 }
 
 // A drag that starts on the band's lanes at `x` points from the track's left, moved by `dx` points and held there, the
-// finger still down. `fireGestureHandler` always lifts the finger at the end, so the events a pan sends up to its first
-// move are sent as the native side sends them.
+// finger still down.
 export async function holdLanes(x: number, dx: number): Promise<void> {
-  const { handlerTag } = getByGestureTestId(LANES);
-  const event = { handlerTag, numberOfPointers: 1, x, y: 0, absoluteX: x, absoluteY: 0, translationY: 0 };
-  await act(() => {
-    DeviceEventEmitter.emit('onGestureHandlerStateChange', {
-      ...event,
-      state: State.BEGAN,
-      oldState: State.UNDETERMINED,
-      translationX: 0,
-    });
-    DeviceEventEmitter.emit('onGestureHandlerStateChange', {
-      ...event,
-      state: State.ACTIVE,
-      oldState: State.BEGAN,
-      translationX: 0,
-    });
-    DeviceEventEmitter.emit('onGestureHandlerEvent', { ...event, state: State.ACTIVE, translationX: dx });
-  });
+  await holdGesture(LANES, x, dx);
 }
 
 // The body dragged by `dx` points and held there.
