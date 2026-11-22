@@ -213,7 +213,7 @@ function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement
         {line === null ? null : (
           <DockLine
             line={line}
-            // A reply of words alone shows up to five lines before it is cut (P04 ticket 43).
+            // A reply of words alone shows up to five lines before it is cut (P04 ticket 45).
             lines={WORDS_LINES}
             onPress={
               // While a Place is picked, the line says what to do and raises nothing (P04 ticket 26).

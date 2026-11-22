@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   toggle: { alignSelf: 'center', alignItems: 'center', width: GRIP_WIDTH, paddingTop: space[2] },
   grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
   // At the right of the head row, its top at the row's top (the bar's padding), so that the two share their middle and
-  // the track starts below both (P04 ticket 43).
+  // the track starts below both (P04 ticket 45).
   add: { position: 'absolute', top: space[3], right: space[3] },
   // A seat's band starts clear of "←" at its head's left.
   booking: { paddingLeft: space[4] + BACK_ROOM },

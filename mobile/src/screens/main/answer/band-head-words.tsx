@@ -15,7 +15,7 @@ export interface HeadRoom {
   left: number;
   right: number;
   // The head row's least height: that of "＋ 같이", whose middle the words share, so that the track starts below it
-  // (P04 ticket 43). Left out, the words' own.
+  // (P04 ticket 45). Left out, the words' own.
   height?: number;
 }
 

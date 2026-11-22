@@ -228,7 +228,7 @@ function settled({ made, changed, left }: PlanInvitation): boolean {
   return made !== null || changed !== null || left !== null;
 }
 
-// The Assistant's whole words over a meal answer's list, which the dock cuts at two lines (P04 ticket 43); none over a
+// The Assistant's whole words over a meal answer's list, which the dock cuts at two lines (P04 ticket 45); none over a
 // restaurant's menu.
 function MealWords({ said, shown }: { said: string; shown: ShownAnswer }): ReactElement | null {
   const words = modelWordsOf(said);

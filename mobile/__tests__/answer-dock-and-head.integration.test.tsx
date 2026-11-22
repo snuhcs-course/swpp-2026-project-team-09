@@ -19,9 +19,9 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { sockets } from './support/fake-socket';
 
-// The dock and the bar's head from the user's phone (P04 ticket 43): the main button is the input's height on the
-// input's bottom; a cut sentence says "더 보기" and raises the card to the whole words; the caption is a chip that opens
-// "이전 질문", which ends with "＋ 새 질문"; "＋ 같이" is a solid chip of the head row's height, clear of the track.
+// The dock and the bar's head from the user's phone (P04 ticket 45): the main button is the input's height on the
+// input's bottom; a cut sentence says "더 보기" and raises the card to the whole words; "＋ 같이" is a solid chip of the
+// head row's height, clear of the track.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -94,27 +94,6 @@ describe('a cut sentence in the dock', () => {
 
     expect(screen.queryByTestId('dock-line-more', { includeHiddenElements: true })).toBeNull();
     expect(screen.getByTestId('dock-line').props.accessibilityRole).toBeUndefined();
-  });
-});
-
-// Partitions: the caption's chip pressed; "＋ 새 질문" pressed.
-describe('the caption’s chip', () => {
-  it('opens "이전 질문", whose "＋ 새 질문" leaves the answer for the main map’s input', async () => {
-    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
-
-    await user.press(screen.getByTestId('answer-caption'));
-    const questions = within(screen.getByTestId('caption-questions'));
-    expect(questions.getByRole('header', { name: '이전 질문' })).toBeOnTheScreen();
-    await user.press(questions.getByTestId('questions-new'));
-
-    expect(screen.queryByTestId('answer-card')).toBeNull();
-    expect(screen.getByPlaceholderText('무엇이든 물어보세요')).toBeOnTheScreen();
-  });
-
-  it('is at least 32 high on the card’s light fill', async () => {
-    await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
-
-    expect(StyleSheet.flatten(screen.getByTestId('answer-caption').props.style)).toMatchObject({ minHeight: 32 });
   });
 });
 

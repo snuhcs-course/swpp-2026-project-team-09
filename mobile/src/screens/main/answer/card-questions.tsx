@@ -2,13 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
- * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Keyboard, StyleSheet, Text, View } from 'react-native';
 import { now } from '@/clock';
-import { color, font, size, space, text } from '@/design-system';
+import { color, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import { type TypingWords, typingWordsOf } from '@/features/assistant/typing-words';
 import { koreaDateKey } from '@/korea-time';
@@ -38,35 +37,17 @@ const SENTENCE_LINES = 2;
 // While typing, about two rows above the input.
 const TYPING_QUESTIONS_MAX = 150;
 
-// "＋ 새 질문" at the end of the caption's list (P04 ticket 43).
-function NewQuestion({ onPress }: { onPress: () => void }): ReactElement {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [styles.newRow, pressed && styles.pressed]}
-      testID="questions-new"
-    >
-      <Text style={styles.newWords}>＋ 새 질문</Text>
-    </Pressable>
-  );
-}
-
-// The conversations' questions in the card, flat (board 6 of the 2026-11-22 redesign): a press shows that turn. Opened
-// from the caption, the list is titled "이전 질문" and ends with "＋ 새 질문" (`onNew`), which leaves for the main map's
-// input (P04 ticket 43).
+// The conversations' questions in the card, flat (board 6 of the 2026-11-22 redesign): a press shows that turn.
 export function CardQuestions({
   control,
   onDone,
   maxHeight,
-  onNew,
 }: {
   control: ChatSheetControl;
   onDone: () => void;
   maxHeight: number;
-  onNew?: () => void;
 }): ReactElement {
-  const list = (
+  return (
     <QuestionList
       flat
       maxHeight={maxHeight}
@@ -75,33 +56,6 @@ export function CardQuestions({
         control.showTurn(row.turnId, row.conversation);
       }}
       rows={questionRowsOf(control)}
-    />
-  );
-  return onNew === undefined ? (
-    list
-  ) : (
-    <View style={styles.questions} testID="caption-questions">
-      <Text accessibilityRole="header" style={styles.title}>
-        이전 질문
-      </Text>
-      {list}
-      <NewQuestion onPress={onNew} />
-    </View>
-  );
-}
-
-// The caption's list (P04 ticket 43): titled "이전 질문", ending with "＋ 새 질문", which closes the list and leaves for
-// the main map's input with the conversation kept.
-export function CaptionQuestions({ control, onDone }: { control: ChatSheetControl; onDone: () => void }): ReactElement {
-  return (
-    <CardQuestions
-      control={control}
-      maxHeight={QUESTIONS_MAX}
-      onDone={onDone}
-      onNew={() => {
-        onDone();
-        control.askNew();
-      }}
     />
   );
 }
@@ -205,9 +159,4 @@ const styles = StyleSheet.create({
   // The docked line's type (`DockLine`), so that the words keep their look when the keyboard comes up.
   words: { ...text.body, color: color.ink },
   offers: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  questions: { gap: space[2] },
-  title: { ...text.label, fontFamily: font.bold, color: color.ink },
-  newRow: { justifyContent: 'center', minHeight: size.touchMin, paddingHorizontal: space[2] },
-  newWords: { ...text.label, color: color.snuBlue },
-  pressed: { opacity: 0.6 },
 });

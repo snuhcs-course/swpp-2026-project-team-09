@@ -44,7 +44,7 @@ export function DockChip({
 }
 
 // The dock's line (board 8), at most two lines and cut there (P04 ticket 18: one sentence of the model fits, its
-// question included); a reply of words alone takes up to five (P04 ticket 43).
+// question included); a reply of words alone takes up to five (P04 ticket 45).
 const LINES = 2;
 export const WORDS_LINES = 5;
 
@@ -98,7 +98,7 @@ interface DockLineProps {
 }
 
 // The line, which says "더 보기" at its end while its words are cut, so that the rest is always one press away (P04
-// ticket 43), and "›" otherwise while a press opens it. Without a press, nothing at its end.
+// ticket 45), and "›" otherwise while a press opens it. Without a press, nothing at its end.
 export function DockLine({ line, onPress, onMore, lines = LINES }: DockLineProps): ReactElement {
   const [cut, setCut] = useState(false);
   const press = onPress ?? (cut ? onMore : undefined);

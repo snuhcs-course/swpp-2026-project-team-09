@@ -158,7 +158,7 @@ interface AddChipProps {
   // A meal's when left out.
   name?: string;
   onAdd: () => void;
-  // In the time bar's head: a solid outline of the head row's height (P04 ticket 43); else dashed, in the card's chips.
+  // In the time bar's head: a solid outline of the head row's height (P04 ticket 45); else dashed, in the card's chips.
   inBar?: boolean;
 }
 
