@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
   },
   chosenBadge: { backgroundColor: color.quest },
   droppedBadge: { backgroundColor: color.inkSubtle },
-  heading: { ...text.caption, marginTop: space[2], paddingHorizontal: space[2], color: color.inkMuted },
+  heading: { ...text.caption, marginTop: space[2], color: color.inkMuted },
   // On the list's left edge, above the kinds.
   order: { ...text.caption, color: color.inkMuted },
   number: { ...text.micro, color: color.onPrimary },
