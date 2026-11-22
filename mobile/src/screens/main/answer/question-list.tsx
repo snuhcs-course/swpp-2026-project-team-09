@@ -34,7 +34,7 @@ interface QuestionListProps {
   maxHeight: number;
   // In the answer's card: no card of its own around it.
   flat?: boolean;
-  // "＋ 새 질문" at the header's right; none without it.
+  // "＋ 새 대화" at the header's right; none without it.
   onAskNew?: () => void;
   // "모두 지우기", once the User says 지우기 in its dialog.
   onClearEarlier: () => void;
@@ -150,7 +150,7 @@ function Conversation(props: { row: ConversationRow; onPick: () => void; onRemov
   );
 }
 
-// A small word button at a row's right: "＋ 새 질문" and "모두 지우기". Its words end at the row's right edge, as the
+// A small word button at a row's right: "＋ 새 대화" and "모두 지우기". Its words end at the row's right edge, as the
 // rows' chevrons and the trash marks do; the touch area reaches past them.
 function WordButton(props: { words: string; label?: string; onPress: () => void; strong?: boolean }): ReactElement {
   const { words, label = words, onPress, strong = false } = props;
@@ -218,7 +218,7 @@ function Earlier(
   );
 }
 
-// Every question of the conversations kept while the app runs (board 16), under the title "이전 질문" with "＋ 새 질문"
+// Every question of the conversations kept while the app runs (board 16), under the title "이전 질문" with "＋ 새 대화"
 // always in reach at its right, outside the scroll (P04 ticket 49). The current conversation's questions come first
 // ("지금 대화"), each with when it was asked and what it came to, the one on screen tinted (board 9). The kept
 // conversations follow ("이전 대화"), one row each. A press brings that answer back to the map. In the answer's card
@@ -230,7 +230,10 @@ export function QuestionList(props: QuestionListProps): ReactElement {
     <View style={[flat ? styles.flat : styles.card, { maxHeight }]} testID="question-list">
       <View style={[styles.header, flat && styles.flatHeader]}>
         <Text style={styles.title}>{TITLE}</Text>
-        {onAskNew === undefined ? null : <WordButton label="새 질문" onPress={onAskNew} strong words="＋ 새 질문" />}
+        {/* In the card, the card's own header holds "＋ 새 대화" (P04 ticket 52): the flat form shows none. */}
+        {onAskNew === undefined || flat ? null : (
+          <WordButton label="새 대화" onPress={onAskNew} strong words="＋ 새 대화" />
+        )}
       </View>
       <ScrollView contentContainerStyle={!flat && styles.rows} keyboardShouldPersistTaps="handled">
         {earlier.length > 0 && now.length > 0 ? <Text style={[styles.group, styles.groupRow]}>지금 대화</Text> : null}

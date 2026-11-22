@@ -6,7 +6,6 @@
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
-import { TextInput } from 'react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -241,42 +240,15 @@ describe('a question typed on the main map while a conversation is kept', () => 
   });
 });
 
-// P04 ticket 44. Partitions: the list's title; "＋ 새 질문" pressed; a message typed after it.
-describe('"＋ 새 질문" under the caption\'s list', () => {
-  it('titles the list "이전 질문" with "새 질문" in its header', async () => {
+// P04 tickets 44 and 49: the list's header is its title alone; a new question is the card's own "＋", not the list's.
+describe("the caption's list header", () => {
+  it('titles the list "이전 질문", with no "새 대화" of its own', async () => {
     const user = await askedThrice();
 
     await openList(user);
 
     expect(list().getByText('이전 질문')).toBeVisible();
-    expect(list().getByRole('button', { name: '새 질문' })).toBeVisible();
-  });
-
-  it('closes the answer as "←" does, keeps the conversation, and puts the cursor in the main map\'s input', async () => {
-    const user = await askedThrice();
-    await openList(user);
-    const focus = jest.spyOn(TextInput.prototype, 'focus');
-
-    await user.press(list().getByRole('button', { name: '새 질문' }));
-    await pass(100);
-
-    expectClosed();
-    expect(screen.getByRole('button', { name: CONTINUE })).toBeOnTheScreen();
-    expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', '무엇이든 물어보세요');
-    expect(focus).toHaveBeenCalled();
-  });
-
-  it('starts a new conversation with the message typed then, which carries no earlier message', async () => {
-    const user = await askedThrice();
-    await openList(user);
-    await user.press(list().getByRole('button', { name: '새 질문' }));
-
-    await ask(user, NEW, text(NEW_REPLY));
-
-    expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual(
-      expect.objectContaining({ messages: [{ role: 'user', text: NEW }] }),
-    );
-    expect(caption().getByText(NEW)).toBeVisible();
+    expect(list().queryByRole('button', { name: '새 대화' })).toBeNull();
   });
 });
 

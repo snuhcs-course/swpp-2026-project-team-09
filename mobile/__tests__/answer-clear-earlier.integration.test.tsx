@@ -109,7 +109,7 @@ describe('the earlier conversations in the list of questions', () => {
 
     expect(list().getByText('지금 대화')).toBeVisible();
     expect(list().getByText('이전 대화')).toBeVisible();
-    expect(list().getByRole('button', { name: '새 질문' })).toBeVisible();
+    expect(list().queryByRole('button', { name: '새 대화' })).toBeNull();
     expect(list().queryByText('지금')).toBeNull();
     expect(list().getByRole('button', { name: CURRENT })).toBeSelected();
     expect(rowNames()).toEqual([CURRENT, ONE, TWO]);
