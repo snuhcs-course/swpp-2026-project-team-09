@@ -29,17 +29,16 @@ import {
   keptDrafts,
   OWN,
   restOf,
-  ROUTE_STYLES,
   SIDES,
   stopDraft,
   SYMBOL_ORDER,
   withOpenMarks,
 } from './answer-groups';
 import { type LabelView, placeLabels, type Unplaced, UPRIGHT_REACH } from './answer-labels';
-import { routeLineId } from './answer-walks';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 import { candidateDraft, leftOutByRank, pickLine, sideRank } from './answer-candidates';
 import { kindShown } from './meal-kinds';
+import { drawsMeal, mealDrafts, sceneLines } from './meal-marks';
 import { mealPickWords } from './meal-pick';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
@@ -200,7 +199,7 @@ interface Placed {
 // same numbers). The pick's label is kept, the answer's main mark, and so is a held candidate's, whose tag is its own
 // way to be pressed (`held`).
 function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null, held: boolean): Unplaced {
-  const { position, group, tone, title, line, sub = null, note = null, number } = draft;
+  const { position, group, tone, title, line, sub = null, note = null, action = null, faded = false, number } = draft;
   const words =
     title === null
       ? null
@@ -210,6 +209,8 @@ function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null, held
           line,
           ...(sub === null ? {} : { sub }),
           ...(note === null ? {} : { note }),
+          ...(action === null ? {} : { action }),
+          ...(faded ? { faded } : {}),
           number: group === 'candidate' || symbol === null ? number : null,
         };
   return { point, position, words, sides: SIDES[group], kept: group === 'pick' || held };
@@ -262,27 +263,30 @@ export function drawingOfScene(
   view: LabelView | null = null,
   setting: SceneSetting = BARE,
 ): AnswerDrawing {
-  const drafts = withOpenMarks(setting.opens ?? false, [
-    ...personDrafts(scene, setting.standings),
-    ...scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
-    ...flagDrafts(scene),
-    ...keptDrafts(setting.kept),
-    ...(setting.drafts ?? []),
-  ]);
+  const meal = setting.meal === true && setting.number !== null ? setting.plans[setting.number - 1] : undefined;
+  // A meal pick's label says "메뉴 ›" in place of the "›" after its name.
+  const drafts = withOpenMarks(
+    meal === undefined ? (setting.opens ?? false) : false,
+    mealDrafts(meal, scene, [
+      ...personDrafts(scene, setting.standings),
+      ...scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
+      ...flagDrafts(scene),
+      ...keptDrafts(setting.kept),
+      ...(setting.drafts ?? []),
+    ]),
+  );
   const placed = placeAll(drafts, view).toSorted(
     (one, other) =>
       byGroup(DRAW_ORDER)(one.draft, other.draft) || drafts.indexOf(one.draft) - drafts.indexOf(other.draft),
   );
   const things = placed.map((one, index) => thingOf(one, placed.length - index));
-  const lines = scene.routes.map(({ role, from, to }, index) => ({
-    id: routeLineId(index),
-    points: [from, to],
-    style: ROUTE_STYLES[role],
-  }));
+  const points = [...things.map(({ position }) => position), ...scene.routes.flatMap(({ from, to }) => [from, to])];
   return {
     things,
-    lines,
-    points: [...things.map(({ position }) => position), ...scene.routes.flatMap(({ from, to }) => [from, to])],
+    lines: sceneLines(scene, meal !== undefined),
+    points,
+    // A meal answer's camera keeps every candidate in view (the answer screen's redesign).
+    ...(meal === undefined ? {} : { keep: points }),
     own: drafts.filter(({ group }) => OWN.has(group)).map(({ position }) => position),
     pick: destinationOf(drafts),
     userIds: scene.people.map(({ userId }) => userId),
@@ -311,7 +315,7 @@ export function drawingOf(
     day,
     kind: kindShown(answer),
     kept: answer.planSet,
-    meal: answer.input.kind === 'meal' && answer.plans.some(({ menu }) => menu !== undefined),
+    meal: drawsMeal(answer),
   });
 }
 

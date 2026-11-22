@@ -68,8 +68,11 @@ export interface Draft {
   line: string | null;
   // A candidate's dishes and price under its title and time; left out, none.
   sub?: string | null;
-  // A meal pick's time and walking after its title; left out, none.
+  // A meal pick's time and walking after its title, and "메뉴 ›" after its line; left out, none.
   note?: string | null;
+  action?: string | null;
+  // A meal candidate that does not fit or is far, drawn pale; left out, not.
+  faded?: boolean;
   // The number a pick or a candidate carries in its label when its dot is not drawn.
   number: number | null;
 }

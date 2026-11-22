@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -29,6 +30,9 @@ export interface AnswerDrawing {
   // The Plan's own points: its people, its pick, its next Class, and its flags. The camera keeps these in view when
   // not every point fits.
   own: LatLng[];
+  // What the camera keeps in view in place of `own` when not every point fits: a meal answer's every candidate. Left
+  // out, `own`.
+  keep?: LatLng[];
   // The destination: the pick, or without one the next item.
   pick: LatLng | null;
   // The people the scene draws, the User included.

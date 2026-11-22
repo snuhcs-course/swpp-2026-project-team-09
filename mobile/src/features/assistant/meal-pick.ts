@@ -15,9 +15,9 @@ export function mealPickWords(
   plan: Plan,
   title: string,
   kind: Cuisine | null,
-): { name: string; title: string; note: string; line: string | null } {
+): { name: string; title: string; note: string; line: string | null; action: string } {
   const walk = addedWalk(plan);
   const note = [koreaClock(plan.startAt), ...(walk === null ? [] : [`걸음 ${String(walk)}분`])].join(' · ');
   const line = menuLine(plan.menu, kind);
-  return { name: [title, note, ...(line === null ? [] : [line])].join(' · '), title, note, line };
+  return { name: [title, note, ...(line === null ? [] : [line])].join(' · '), title, note, line, action: '메뉴 ›' };
 }

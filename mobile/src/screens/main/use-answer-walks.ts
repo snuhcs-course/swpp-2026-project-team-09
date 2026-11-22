@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQueries } from '@tanstack/react-query';
@@ -10,6 +11,7 @@ import type { MapScene } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import type { WalkingRoute } from '@/api/walking-route-types';
 import { endsOf, linesAlongPaths, type Walk, walksOf, walksToAsk } from '@/features/assistant/answer-walks';
+import { withDots } from '@/features/assistant/meal-marks';
 import type { MapLine } from '@/map';
 
 // At most this many walks of the scene on screen are asked for: a Plan of three people has the User's way and the
@@ -58,5 +60,5 @@ export function useAnswerWalks(lines: readonly MapLine[], routes: MapScene['rout
       ),
     [asked, results],
   );
-  return useMemo(() => linesAlongPaths(lines, walks, found), [lines, walks, found]);
+  return useMemo(() => withDots(linesAlongPaths(lines, walks, found)), [lines, walks, found]);
 }

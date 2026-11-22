@@ -1,0 +1,146 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
+import type { ReactElement } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import type { AnswerLabel } from './map-answer';
+import { BADGE, GAP, LABEL_MAX, RING, SUB_MAX } from './map-answer-box';
+import { color, mapText, radius, shadow, space, text } from './tokens';
+
+const WAY_FLAGS = new Set<AnswerLabel['tone']>(['leave', 'late', 'shuttle']);
+
+// A label's title and its line: a candidate's side by side, with its dishes under them (`sub`).
+function LabelWords({ tone, title, line, sub = null, note = null, action = null }: AnswerLabel): ReactElement {
+  const candidate = tone === 'candidate';
+  const head = (
+    <>
+      <Text
+        numberOfLines={1}
+        style={[
+          tone === 'pick' ? styles.pickTitle : styles.title,
+          candidate && styles.candidateTitle,
+          tone === 'meeting' && styles.meetingTitle,
+          tone === 'dropped' && styles.droppedTitle,
+          tone === 'kept' && styles.keptTitle,
+          WAY_FLAGS.has(tone) && styles.flagTitle,
+          tone === 'late' && styles.lateTitle,
+          tone === 'shuttle' && styles.shuttleTitle,
+          tone === 'leg' && styles.legTitle,
+        ]}
+      >
+        {title}
+        {note === null ? null : <Text style={styles.note}>{` ${note}`}</Text>}
+      </Text>
+      {line === null ? null : (
+        <Text
+          numberOfLines={1}
+          style={[styles.line, tone === 'pick' && note === null && styles.pickLine, tone === 'stop' && styles.stopLine]}
+        >
+          {line}
+          {action === null ? null : <Text style={styles.action}>{` ${action}`}</Text>}
+        </Text>
+      )}
+    </>
+  );
+  if (!candidate) {
+    return <View style={styles.words}>{head}</View>;
+  }
+  return (
+    <View style={styles.words}>
+      <View style={styles.inline}>{head}</View>
+      {sub === null ? null : (
+        <Text numberOfLines={1} style={styles.sub}>
+          {sub}
+        </Text>
+      )}
+    </View>
+  );
+}
+
+// The label of an answer's mark (`MapAnswerMark`): its words in a tag beside the symbol box.
+export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
+  const { side, tone, line, number, shift, sub = null } = label;
+  return (
+    <View
+      style={[
+        styles.label,
+        ((line !== null && tone !== 'candidate') || sub !== null) && styles.twoLines,
+        tone === 'pick' && styles.pickLabel,
+        tone === 'candidate' && styles.candidateLabel,
+        tone === 'kept' && styles.keptLabel,
+        (sub !== null || tone === 'pick') && styles.subLabel,
+        tone === 'meeting' && styles.meetingLabel,
+        tone === 'late' && styles.lateLabel,
+        tone === 'shuttle' && styles.shuttleLabel,
+        tone === 'leg' && styles.legLabel,
+        shift !== undefined && (side === 'left' ? { marginRight: shift } : { marginLeft: shift }),
+      ]}
+      testID={testID}
+    >
+      {number === null ? null : (
+        <View style={[styles.badge, tone === 'pick' ? styles.pickBadge : styles.candidateBadge]}>
+          <Text style={styles.number}>{number}</Text>
+        </View>
+      )}
+      <LabelWords {...label} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  badge: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: BADGE,
+    height: BADGE,
+    borderRadius: radius.full,
+  },
+  label: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[1],
+    maxWidth: LABEL_MAX,
+    paddingVertical: GAP,
+    paddingHorizontal: space[2],
+    borderRadius: radius.full,
+    backgroundColor: color.surface,
+    boxShadow: shadow.mapName,
+  },
+  twoLines: { paddingVertical: space[1], borderRadius: radius.md },
+  pickLabel: { borderWidth: RING, borderColor: color.quest },
+  // Another candidate (boards 20 and 21): its number, its name, and its time on one line, in a tag that reads as one
+  // to press.
+  candidateLabel: { borderWidth: 1.5, borderColor: color.snuBlue },
+  inline: { flexDirection: 'row', alignItems: 'baseline', gap: space[1] },
+  candidateTitle: { fontFamily: mapText.smallTitle.fontFamily },
+  // A Quest already set (P04 ticket 20): grey, apart from the candidates, with no number.
+  keptLabel: { borderWidth: 1.5, borderColor: color.inkMuted },
+  keptTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.inkMuted },
+  sub: { ...mapText.rowLine, color: color.inkMuted },
+  subLabel: { maxWidth: SUB_MAX },
+  meetingLabel: { backgroundColor: color.ink },
+  lateLabel: { backgroundColor: color.dangerSoft },
+  shuttleLabel: { backgroundColor: color.svcShuttleSoft },
+  words: { flexShrink: 1 },
+  title: { ...mapText.rowLine, color: color.ink },
+  pickTitle: { ...mapText.buttonTitle, color: color.ink },
+  meetingTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.onPrimary },
+  droppedTitle: { color: color.inkMuted },
+  flagTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.ink },
+  lateTitle: { color: color.danger },
+  shuttleTitle: { color: color.svcShuttle },
+  note: { color: color.quest },
+  line: { ...mapText.rowLine, color: color.inkMuted },
+  pickLine: { color: color.quest },
+  stopLine: { color: color.svcShuttle },
+  pickBadge: { backgroundColor: color.quest },
+  candidateBadge: { backgroundColor: color.snuBlue },
+  number: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
+  action: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
+  // A route's minutes (board E1): small, on white, in the route's colour.
+  legLabel: { paddingHorizontal: space[1] },
+  legTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
+});

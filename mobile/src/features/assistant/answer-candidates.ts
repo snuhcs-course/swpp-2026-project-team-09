@@ -11,7 +11,7 @@ import type { AnswerLabel } from '@/design-system';
 import { inView } from '@/map';
 import { type Draft, SIDE_ORDER } from './answer-groups';
 import { inside, type LabelView } from './answer-labels';
-import { addedWalk } from './answer-walks';
+import { addedWalk, fadedPlan } from './answer-walks';
 import { serves } from './meal-kinds';
 import { dishWords, menuLine } from './meal-menus';
 
@@ -67,15 +67,17 @@ function mealDraft(plan: Plan, number: number, { place, tag }: MapScene['places'
   const walk = addedWalk(plan);
   const value = walk === null ? koreaClock(plan.startAt) : `${String(walk)}분`;
   const said = walk === null ? `${value} 도착` : `걸음 ${value}`;
+  const faded = fadedPlan(plan);
   return {
     id: `answer:candidate:${place.label}`,
     name: [`후보 ${String(number)}`, title, said].join(' · '),
     position: { latitude: place.latitude, longitude: place.longitude },
     planId: plan.id,
     group: 'candidate',
-    symbol: { type: 'dot', role: 'candidate', number },
+    symbol: { type: 'dot', role: 'candidate', number, ...(faded ? { faded } : {}) },
     tone: 'candidate',
     title: value,
+    ...(faded ? { faded } : {}),
     line: null,
     number,
   };

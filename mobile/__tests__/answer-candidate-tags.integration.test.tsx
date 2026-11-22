@@ -71,10 +71,13 @@ describe('a meal answer with five Plans and their menus', () => {
     expect(screen.queryByText(/\d+\/5/u)).toBeNull();
   });
 
-  it("draws the pick's own routes alone: the User's walk and the way on to the next Class", async () => {
+  it("draws the pick's own routes alone: the User's walk whole and the way on to the next Class as dots", async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
-    expect(mapLines()).toEqual(['answer:route:0', 'answer:route:1']);
+    const [walk, ...dots] = mapLines();
+    expect(walk).toBe('answer:route:0');
+    expect(dots.length).toBeGreaterThan(0);
+    expect(dots.every((id) => id.startsWith('answer:route:1:dot:'))).toBe(true);
   });
 
   it('makes candidate 2 the pick on a press, and the old pick candidate 1', async () => {
@@ -82,9 +85,7 @@ describe('a meal answer with five Plans and their menus', () => {
 
     await press(user, CANDIDATES[0] ?? '');
 
-    expect(
-      screen.getByRole('button', { name: /^301동식당 · 12:18 · 걸음 15분 · 부대짬뽕&군만두 외 4/u }),
-    ).toBeOnTheScreen();
+    expect(mapThings()).toContainEqual(expect.stringMatching(/^301동식당 · 12:18 · 걸음 15분 · 부대짬뽕&군만두 외 4/u));
     expect(screen.getByRole('button', { name: '후보 1 · 302동식당 · 걸음 20분' })).toBeOnTheScreen();
     expect(mapThings().filter((name) => name.startsWith('후보 '))).toHaveLength(4);
   });
@@ -114,10 +115,10 @@ describe('two candidates in one building', () => {
     const user = await askOnMap(server, reply);
 
     await press(user, CANDIDATES[2] ?? '');
-    expect(screen.getByRole('button', { name: /^3식당 · .*치즈한장부대찌개 외 2/u })).toBeOnTheScreen();
+    expect(mapThings()).toContainEqual(expect.stringMatching(/^3식당 · .*치즈한장부대찌개 외 2/u));
 
     await press(user, '후보 5 · 자하연식당 2층 · 걸음 22분');
-    expect(screen.getByRole('button', { name: /^자하연식당 2층 · 12:35/u })).toBeOnTheScreen();
+    expect(mapThings()).toContainEqual(expect.stringMatching(/^자하연식당 2층 · 12:35/u));
     expect(screen.getByRole('button', { name: /^후보 4 · 3식당/u })).toBeOnTheScreen();
   });
 });
