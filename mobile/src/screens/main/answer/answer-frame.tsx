@@ -26,6 +26,7 @@ import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import { AI_INPUT, type Room } from '../layout';
 import { AnswerCaption } from './answer-caption';
 import { CardQuestions, QUESTIONS_MAX, type QuestionsOpen, Typing } from './card-questions';
+import { KeptCards } from './kept-scene';
 import { BackButton } from './back-button';
 import { WaitingReply } from './failed-and-waiting';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
@@ -80,6 +81,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
       {typing || control.answer.menuFor !== null ? null : (
         <AnswerCaption control={control} listOpen={list.open} onList={list.toggle} />
       )}
+      {typing || list.open ? null : <KeptCards cardActions={props.cardActions} control={control} />}
       {typing ? (
         <Typing control={control} />
       ) : list.open ? (

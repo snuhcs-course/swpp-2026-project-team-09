@@ -3,12 +3,14 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 import { color, text } from '@/design-system';
 import { modelWordsOf } from '@/features/assistant/model-words';
+import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
 import { turnsOf } from '@/features/assistant/turn';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
 import type { HowAbout } from '@/features/assistant/use-how-about';
@@ -75,8 +77,9 @@ export function onScreenOf({ answer, lookup, invitation, howAbout }: ChatSheetCo
 
 export function barOf(bubbles: readonly ChatBubble[], onScreen: Seen): BarOf {
   // While a follow-up's reply is on its way its turn holds nothing yet, and the answer before it stays on the map:
-  // its bar stays too, as the card keeps its height, so that the camera does not move twice.
-  const turn = turnsOf(bubbles).findLast(({ after }) => after.length > 0);
+  // its bar stays too, as the card keeps its height, so that the camera does not move twice. So does it under a
+  // follow-up answered with words alone (P04 ticket 43, `sceneBubblesOf`).
+  const turn = turnsOf(sceneBubblesOf(bubbles)).findLast(({ after }) => after.length > 0);
   for (const bubble of turn?.after ?? []) {
     const kind = wordsKindOf(bubble, onScreen);
     if (kind === 'plan' && onScreen.shown.plan !== null) {
@@ -92,13 +95,13 @@ export function barOf(bubbles: readonly ChatBubble[], onScreen: Seen): BarOf {
 
 // Whether the latest turn with a reply shows the Plan's card of the answer on screen.
 export function planShown(bubbles: readonly ChatBubble[], onScreen: Seen): boolean {
-  const turn = turnsOf(bubbles).findLast(({ after }) => after.length > 0);
+  const turn = turnsOf(sceneBubblesOf(bubbles)).findLast(({ after }) => after.length > 0);
   return turn?.after.some((bubble) => wordsKindOf(bubble, onScreen) === 'plan') ?? false;
 }
 
 // The reply of the latest turn with a reply whose words are the Lookup on screen.
 export function lookupReplyOf(bubbles: readonly ChatBubble[], onScreen: Seen): ChatBubble | undefined {
-  const turn = turnsOf(bubbles).findLast(({ after }) => after.length > 0);
+  const turn = turnsOf(sceneBubblesOf(bubbles)).findLast(({ after }) => after.length > 0);
   return turn?.after.find((bubble) => wordsKindOf(bubble, onScreen) === 'lookup');
 }
 

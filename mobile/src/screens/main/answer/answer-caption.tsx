@@ -55,7 +55,7 @@ function listWordsOf({
 }
 
 // What the caption says: the building asked about over the answer, else the turn's question; nothing for a turn the
-// app opened with its own words (a room-window Notification's "예약 창이 열렸어요", P04 ticket 40), which the card
+// app opened with its own words (a room-window Notification's "예약 창이 열렸어요", P04 ticket 42), which the card
 // already shows and which the User did not ask.
 function askedOf({ howAbout, chat }: ChatSheetControl): string | null {
   if (howAbout.title !== null) {

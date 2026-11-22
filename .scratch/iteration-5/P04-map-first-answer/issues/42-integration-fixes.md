@@ -1,4 +1,6 @@
-# 40: The answer's integration tests that 5.0/Main's own code fails
+# 42: The answer's integration tests that 5.0/Main's own code fails
+
+PR 493 carried this ticket as 40, which ticket 40 (the crowded mock's words) also took; it is 42 since.
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
