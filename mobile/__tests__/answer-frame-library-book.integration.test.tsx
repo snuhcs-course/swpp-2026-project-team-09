@@ -143,7 +143,7 @@ describe('예약하기 on the seat book card', () => {
     expect(inFrame().getByLabelText('시간 오늘 17:00–18:00')).toBeVisible();
     expect(inFrame().getByLabelText('예약 번호 2000001')).toBeVisible();
     expect(inFrame().getByText(/30분 안에 좌석배정기\(키오스크\)에서 확인해 주세요/u)).toBeVisible();
-    expect(inFrame().getByText(/사용 다했으면 꼭 반납처리를 해주세요!/u)).toBeVisible();
+    expect(inFrame().getByText(/다 쓰면 꼭 반납해 주세요/u)).toBeVisible();
     expect(done).toBeVisible();
     expect(seatCard().queryByRole('button', { name: '예약하기' })).toBeNull();
   });

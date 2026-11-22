@@ -127,7 +127,7 @@ describe('the room book card', () => {
     expect(inFrame().getByText('G412 예약되었어요!')).toBeVisible();
     expect(inFrame().getByLabelText('방 G412')).toBeVisible();
     expect(screen.queryByText(/좌석배정기/u)).toBeNull();
-    expect(inFrame().getByText(/사용 다했으면 꼭 반납처리를 해주세요!/u)).toBeVisible();
+    expect(inFrame().getByText(/다 쓰면 꼭 반납해 주세요/u)).toBeVisible();
     expectNothingOfTheLibrarySent(server, ['G412']);
   });
 });

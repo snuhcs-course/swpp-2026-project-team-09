@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
@@ -15,8 +16,8 @@ import { whenWords } from './times';
 
 export const KIOSK_SENTENCE =
   '예약한 뒤 30분 안에 좌석배정기(키오스크)에서 확인해 주세요. 확인하지 않으면 자동으로 반납돼요.';
-export const RETURN_SENTENCE =
-  '사용 다했으면 꼭 반납처리를 해주세요! 저한테 말해주셔도 되고 키오스크를 이용해 반납하셔도 돼요!';
+// In the app's own voice (P01 ticket 03); the site's note says the same in the library's.
+export const RETURN_SENTENCE = '다 쓰면 꼭 반납해 주세요. 키오스크에서 하거나, 여기서 "반납해 줘"라고 말하면 돼요.';
 
 export interface LibraryDone {
   title: string;

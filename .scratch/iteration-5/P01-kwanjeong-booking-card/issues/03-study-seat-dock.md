@@ -69,3 +69,14 @@ A 관정도서관 seat card whose building is on the map stands there as a label
 - [x] No native file changes; oxlint, Prettier, and tsc pass on the app.
 
 ## Comments
+
+### Emulator check (2026-11-22)
+
+The debug app on an Android emulator with the mock servers, and the tests' fake library in place of the site (a local change that was not committed). "공부할 자리" from the main map gives the seat card on the map. Lowered, the card says "관정 7층 열람실에 14:00부터 1시간, 빈 자리 470석이에요." with "올리면 자리·열람실". A press there raises it to the reply, the chip, "빈 자리 470석", "관정 7층 열람실 · 7193번 / 오늘 14:00–15:00", 다른 자리 고르기, the kiosk foot, and the note. The chooser lists 7층 and 8층. 8층 정숙 열람실 is chosen, and the label follows: "관정 8층 정숙 열람실 › 8001번". After a drag to 14:00–17:00, the bar and the seat row say 17:00, but the label's picture still said 15:00 three seconds later. The label's text follows a bar step in the integration test, so the drawn picture of the label may lag on the emulator; this is not fixed here. 다른 자리 고르기 opens "관정 8층 정숙 열람실 좌석 현황". 예약하기 books on the fake library; the done card shows, with 확인 beside the input, and 확인 returns to the main map with "이어서 · 공부할 자리 ›".
+
+The done card's "사용 다했으면 꼭 반납처리를 해주세요! 저한테 말해주셔도 되고 키오스크를 이용해 반납하셔도 돼요!" became "다 쓰면 꼭 반납해 주세요. 키오스크에서 하거나, 여기서 "반납해 줘"라고 말하면 돼요." in the app's own voice. Still as they were: the finished card's "예약했어요" above "8001번 예약되었어요!", and the reply's words in the open card after the booking.
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 65 minutes in one session, from the study-flow check at 21:52 to the pull request's last push (an estimate). It covers the code reading, the emulator holds (two of six failed on the hung emulator), the fix, the tests, and the pictures.
+- Tokens: output 137k; input 67.9M, of which 67.6M cache reads, 308k cache writes, and 316 uncached. One read-only subagent (the main server's answers to "공부할 자리"), about 95k tokens in all.
