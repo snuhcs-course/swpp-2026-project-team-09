@@ -30,3 +30,8 @@ Mentions in other inputs (party forms, profile), places or non-Friends, Korean i
 - `main-server/test/friend-mentions.unit.test.ts`: the schema, an id that is not a Friend dropped, the mentioned Friend over a same-named one in `resolveFriend`, the model's line, and the ids the tools accept.
 
 ## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 35 minutes, in one session and no subagents (an estimate, from 21:58 to 22:33 KST).
+- Tokens (an estimate; the session reported its context, not a per-request count): input about 25 M, of which cache reads about 24 M and cache writes about 0.6 M; output about 60 k.

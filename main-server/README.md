@@ -2338,8 +2338,17 @@ Anthropic API as the AI's key says
   Beside `messages` the app may send `context`, what it knew as the User asked, each part null or left out when it does
   not know it: `location` (`{ "latitude", "longitude" }`, where the User is), `viewport` (`{ "south", "west", "north",`
   `"east" }`, the visible map area), `tapped` (`{ "kind": "place", "placeId" }` or `{ "kind": "friend", "userId" }`),
-  `conditions` (the `PlanInput` of the answer on screen), and `planId` (the plan on screen). Every tool is given it, and
-  `planMeal` reads its `location`. For an app that draws answers, the model reads the User's new message followed by a
+  `conditions` (the `PlanInput` of the answer on screen), `planId` (the plan on screen), and `mentions` (below). Every
+  tool is given it, and `planMeal` reads its `location`.
+
+  `mentions` (`[{ "userId", "name" }]`, at most 20) lists the Friends the User picked with "@" in the new message. It is
+  left out when there is none. Before the run, an id that is not among the asker's Friends is dropped, each Friend
+  counts once, and the Friend's own name replaces the one sent (`src/assistant/mentions.ts`). The run's tools take the
+  ids left as found, as if `resolveFriend` had answered each alone. `resolveFriend` answers a mentioned Friend over
+  another of the same name. In every chat, the model reads a line `[Mentioned with @: friend <userId> <name>, …]` after
+  the message. A mention notifies nobody and changes nothing of the Friend. The request schema refuses unknown fields,
+  so a main server before `mentions` answers 400 to a request that carries it: deploy the main server before or with
+  the app that sends it. For an app that draws answers, the model reads the User's new message followed by a
   line `[Plan on screen: {"plan", "date", "meal", "friendIds", "from", "until", "placeId"}]` when `conditions` is sent
   (`friendIds` being the people after the asker), and a line `[Tapped: friend <userId>]` or `[Tapped: place <placeId>]`
   when `tapped` is (`context-lines.ts`). `planMeal` takes the conditions back with a change: beside `date`, `meal`, and
