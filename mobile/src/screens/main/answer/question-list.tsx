@@ -5,17 +5,23 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { color, Icon, radius, shadow, space, text } from '@/design-system';
+import { Button, color, Icon, radius, shadow, space, text } from '@/design-system';
+import { useBackToClose } from '@/hooks/use-back-to-close';
 import { type QuestionRow, questionRows } from '@/features/assistant/turn-outcome';
 import { turnOf } from '@/features/assistant/turn';
 import type { ChatSheetControl } from '../chat-sheet';
 
 const TITLE = '이전 질문';
 const ON_SCREEN = '지금';
-// The time's column, as wide as "00:00", so that the questions stand in line.
+// The time's column, as wide as "00:00", so that the questions stand in line; the time starts at its left.
 const TIME_WIDTH = 48;
+// The one left and right edge of the title, the group names, the rows' times, and the words and marks at the right
+// (P04 ticket 49): in the answer's card, this inside the card's own padding; over the map, inside the rows' padding.
+const INSET = space[2];
+// The word buttons' touch area beyond their words, about 44 high.
+const WORD_SLOP = { top: 6, bottom: 6, left: space[3], right: space[3] };
 
 interface QuestionListProps {
   rows: readonly QuestionRow[];
@@ -49,7 +55,9 @@ function Question({ row, onPress }: { row: QuestionRow; onPress: () => void }): 
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
       testID="question-row"
     >
-      <Text style={[styles.time, styles.timeWords]}>{row.time}</Text>
+      <Text numberOfLines={1} style={[styles.time, styles.timeWords]}>
+        {row.time}
+      </Text>
       <View style={styles.words}>
         <Text numberOfLines={1} style={styles.asked}>
           {row.asked}
@@ -69,14 +77,15 @@ function Question({ row, onPress }: { row: QuestionRow; onPress: () => void }): 
   );
 }
 
-// A small word button at a row's right: "＋ 새 질문", "모두 지우기", 지우기 and 취소.
+// A small word button at a row's right: "＋ 새 질문" and "모두 지우기". Its words end at the row's right edge, as the
+// rows' chevrons do; the touch area reaches past them.
 function WordButton(props: { words: string; label?: string; onPress: () => void; strong?: boolean }): ReactElement {
   const { words, label = words, onPress, strong = false } = props;
   return (
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
-      hitSlop={space[2]}
+      hitSlop={WORD_SLOP}
       onPress={onPress}
       style={({ pressed }) => [styles.wordButton, pressed && styles.pressed]}
     >
@@ -85,10 +94,15 @@ function WordButton(props: { words: string; label?: string; onPress: () => void;
   );
 }
 
-// The earlier conversations' header: its name and "모두 지우기", which turns it into the question whether to erase them,
-// in the row itself: no dialog. The current conversation stays, what "이어서 말하기" goes on from.
+// The earlier conversations' header: its name and "모두 지우기", which puts in its place a block of its own that asks
+// whether to erase them, with 취소 and 지우기 (no dialog), over the rows it would erase. The current conversation stays,
+// what "이어서 말하기" goes on from. Android's back takes the block away first.
 function EarlierHeader({ count, onClear }: { count: number; onClear: () => void }): ReactElement {
   const [asking, setAsking] = useState(false);
+  const cancel = useCallback((): void => {
+    setAsking(false);
+  }, []);
+  useBackToClose(asking, cancel, { edge: false });
   if (!asking) {
     return (
       <View style={styles.groupRow}>
@@ -103,16 +117,20 @@ function EarlierHeader({ count, onClear }: { count: number; onClear: () => void 
     );
   }
   return (
-    <View style={[styles.groupRow, styles.asking]} testID="clear-earlier-question">
+    <View style={styles.confirm} testID="clear-earlier-question">
       <Text style={styles.question}>{`이전 대화의 질문 ${String(count)}개를 지울까요?`}</Text>
-      <View style={styles.answers}>
-        <WordButton
-          onPress={() => {
-            setAsking(false);
-          }}
-          words="취소"
-        />
-        <WordButton onPress={onClear} strong words="지우기" />
+      <Text style={styles.keepNote}>지금 대화는 그대로 남아요.</Text>
+      <View style={styles.confirmButtons}>
+        <View style={styles.half}>
+          <Button full onPress={cancel} variant="secondary">
+            취소
+          </Button>
+        </View>
+        <View style={styles.half}>
+          <Button full onPress={onClear} variant="destructive">
+            지우기
+          </Button>
+        </View>
       </View>
     </View>
   );
@@ -170,7 +188,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[4],
     paddingBottom: space[2],
   },
-  flatHeader: { paddingHorizontal: 0, paddingBottom: space[1] },
+  flatHeader: { paddingHorizontal: INSET, paddingBottom: space[1] },
   title: { ...text.caption, flexShrink: 1, color: color.inkMuted },
   groupRow: {
     flexDirection: 'row',
@@ -179,14 +197,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: space[2],
     minHeight: 36,
-    paddingHorizontal: space[2],
+    paddingHorizontal: INSET,
     paddingTop: space[2],
   },
   group: { ...text.caption, flexShrink: 1, color: color.inkSubtle },
-  asking: { paddingBottom: space[2], borderRadius: radius.md, backgroundColor: color.surfaceSunken },
-  question: { ...text.label, flexShrink: 1, color: color.ink },
-  answers: { flexDirection: 'row', gap: space[2], marginLeft: 'auto' },
-  wordButton: { justifyContent: 'center', minHeight: 32, paddingHorizontal: space[2] },
+  confirm: {
+    gap: space[1],
+    marginTop: space[2],
+    padding: space[3],
+    borderRadius: radius.md,
+    backgroundColor: color.surfaceSunken,
+  },
+  question: { ...text.label, color: color.ink },
+  keepNote: { ...text.caption, color: color.inkMuted },
+  confirmButtons: { flexDirection: 'row', gap: space[2], marginTop: space[2] },
+  half: { flex: 1 },
+  wordButton: { justifyContent: 'center', minHeight: 32 },
   wordButtonWords: { ...text.label, color: color.inkMuted },
   strong: { color: color.snuBlue },
   rows: { paddingHorizontal: space[2] },
@@ -196,12 +222,13 @@ const styles = StyleSheet.create({
     gap: space[3],
     minHeight: 56,
     paddingVertical: space[2],
-    paddingHorizontal: space[2],
+    paddingHorizontal: INSET,
     borderRadius: radius.md,
   },
   pressed: { opacity: 0.6 },
-  time: { width: TIME_WIDTH, alignItems: 'center' },
-  timeWords: { ...text.label, color: color.inkMuted, textAlign: 'center' },
+  // At least as wide as "00:00"; a large font widens it rather than wrapping the time.
+  time: { minWidth: TIME_WIDTH },
+  timeWords: { ...text.label, color: color.inkMuted },
   words: { flex: 1, minWidth: 0, gap: 2 },
   asked: { ...text.label, color: color.ink },
   outcome: { ...text.caption, color: color.inkMuted },

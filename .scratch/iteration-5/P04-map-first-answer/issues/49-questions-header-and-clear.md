@@ -26,9 +26,21 @@ From the phone test on Main 87aa3554:
 - **The current conversation stays**, with every question: it is what "이어서 말하기" goes on from. It leaves only after the User starts a new question and erases again. Quests already made are untouched.
 - **Large font:** at a font scale of 1.3, the header row and the confirm row wrap inside their own rows (`flexWrap`, shrinking words), and nothing overlaps.
 
+## Second round, from the phone
+
+- **One left edge and one right edge.**
+  - Left: the title, the group names, and the rows' times start on one line (`INSET`), and the time is left-aligned in its column, which a large font widens.
+  - Right: "＋ 새 질문", "모두 지우기", 지금, and the chevrons end on one line. The word buttons have no side padding, and their touch area reaches past their words.
+  - Over the main map, the same edges sit inside the card's padding.
+- **The confirm is a block of its own** in place of the "이전 대화" row, full width, sunken and rounded:
+  - "이전 대화의 질문 N개를 지울까요?" in label weight;
+  - "지금 대화는 그대로 남아요." in muted caption;
+  - two equal design-system Buttons, 취소 (secondary) and 지우기 (destructive).
+  The earlier rows stay under it. Android's back takes the block away first.
+
 ## Tests
 
-- `mobile/__tests__/answer-clear-earlier.integration.test.tsx`: the two groups and the header's "새 질문"; "모두 지우기" asks in the row and 취소 keeps everything; 지우기 leaves only the current conversation, and the next message goes on from it.
+- `mobile/__tests__/answer-clear-earlier.integration.test.tsx`: the two groups and the header's "새 질문"; "모두 지우기" asks in its block, with the rows still under it, and 취소 keeps everything; Android's back takes the block away first; 지우기 leaves only the current conversation, and the next message goes on from it.
 - `mobile/__tests__/answer-question-list.integration.test.tsx`: the test of the title and "새 질문" is renamed for the header.
 
 ## Comments

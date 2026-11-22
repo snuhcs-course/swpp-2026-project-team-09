@@ -8,6 +8,7 @@ import { within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
+import { holdBackButton } from './support/back';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT } from './support/lists';
@@ -39,11 +40,13 @@ const NEW = '정문 셔틀은?';
 const NEXT = '고마워';
 
 let server: FakeServer;
+let back: () => Promise<boolean>;
 
 beforeEach(async () => {
   jest.useFakeTimers({ now: PHONE_NOW });
   await startFresh();
   sockets.length = 0;
+  back = holdBackButton();
   server = await askMainServer({ signedIn: true });
   answerMainScreen(server);
   answerShuttle(server);
@@ -87,7 +90,7 @@ const rowsAsked = (): string[] =>
     .getAllByTestId('question-row')
     .map((row) => String(row.props.accessibilityLabel));
 
-// Partitions: two groups; 모두 지우기 then 취소; then 지우기; a message after it; one conversation alone.
+// Partitions: two groups; 모두 지우기 then 취소; then Android's back; then 지우기, and a message after it.
 describe('the earlier conversations in the list of questions', () => {
   it('lists the current conversation first, then the earlier one under "모두 지우기"', async () => {
     await twoConversations();
@@ -98,12 +101,14 @@ describe('the earlier conversations in the list of questions', () => {
     expect(rowsAsked().map((label) => label.includes(NEW))).toEqual([true, false]);
   });
 
-  it('asks in the row before erasing, and 취소 keeps everything', async () => {
+  it('asks in a block of its own before erasing, and 취소 keeps everything', async () => {
     const user = await twoConversations();
 
     await user.press(list().getByRole('button', { name: '모두 지우기' }));
 
     expect(list().getByText('이전 대화의 질문 1개를 지울까요?')).toBeVisible();
+    expect(list().getByText('지금 대화는 그대로 남아요.')).toBeVisible();
+    expect(rowsAsked()).toHaveLength(2);
     await user.press(list().getByRole('button', { name: '취소' }));
     expect(list().getByRole('button', { name: '모두 지우기' })).toBeVisible();
     expect(rowsAsked()).toHaveLength(2);
@@ -126,5 +131,17 @@ describe('the earlier conversations in the list of questions', () => {
       { role: 'user', text: NEXT },
     ]);
     expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual(expect.objectContaining({ messages }));
+  });
+});
+
+describe("the question whether to erase, and Android's back", () => {
+  it("takes the question away with Android's back first, the list still open", async () => {
+    const user = await twoConversations();
+    await user.press(list().getByRole('button', { name: '모두 지우기' }));
+
+    expect(await back()).toBe(true);
+
+    expect(screen.queryByTestId('clear-earlier-question')).toBeNull();
+    expect(list().getByRole('button', { name: '모두 지우기' })).toBeVisible();
   });
 });
