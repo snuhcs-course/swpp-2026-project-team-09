@@ -23,9 +23,10 @@ export async function layTrack(width: number): Promise<void> {
 }
 
 // The bar unfolded, a row for each person, over the band's whole range: folded, its track runs over the free time
-// around the span only (P04 ticket 14), so a move further away is made unfolded.
-export async function unfold(): Promise<void> {
-  await fireEvent.press(screen.getByRole('button', { name: '사람별 시간 펼치기' }));
+// around the span only (P04 ticket 14), so a move further away is made unfolded. A bar of one lane, the User's alone,
+// unfolds to the whole day (`하루 시간 펼치기`).
+export async function unfold(name = '사람별 시간 펼치기'): Promise<void> {
+  await fireEvent.press(screen.getByRole('button', { name }));
   await pass(300);
 }
 

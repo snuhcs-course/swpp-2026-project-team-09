@@ -7,7 +7,7 @@
  ******************************************************************************/
 
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
-import { MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
+import { MEAL_ANSWER_ALONE, MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
 import { MEET_ANSWER } from '@/api/mock/data/meet-answer';
 import type { TimeBand } from '@/api/assistant-types';
 import type * as SecureStoreFake from './support/secure-store';
@@ -180,6 +180,45 @@ describe("a screen reader's step of the band", () => {
 });
 
 // Partitions: a meal's band, whose folded track is laid 240 wide over the free time around its span (P04 ticket 14).
+// What the app asks when the lunch alone's band is let go from `start`.
+function aloneFrom(start: string): object {
+  return {
+    input: { ...MEAL_ANSWER_ALONE.input, window: { from: start, until: null } },
+    location: ON_CAMPUS,
+    clientCapabilities: SENT_CAPABILITIES,
+  };
+}
+
+// From PR 465's review: a bar of one lane unfolds too, so that a lunch alone between two classes still reaches past the
+// next one. Expected values: the stored answer's band, 11:50 to 12:45 in a range of 11:30 to 13:30, with the User's
+// class at 13:00; folded, the track ends at 13:15 (`foldedRangeOf`), so the latest start is 12:20; unfolded, the
+// range's end, so 12:35, over the class.
+describe("a lunch alone's band let go far", () => {
+  const band = MEAL_ANSWER_ALONE.plans[0]?.band;
+  const far = pointsFor(130, band, 240, false);
+
+  it("stops at the folded track's end", async () => {
+    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
+    await askOnMap(server, { ...MEAL_ANSWER_REPLY, answer: MEAL_ANSWER_ALONE });
+    await layBand();
+
+    await dragBody(far);
+
+    expect(recalculations(server).at(-1)).toEqual(aloneFrom('12:20'));
+  });
+
+  it("reaches the range's end over the next class once the bar is unfolded to the whole day", async () => {
+    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
+    await askOnMap(server, { ...MEAL_ANSWER_REPLY, answer: MEAL_ANSWER_ALONE });
+
+    await unfold('하루 시간 펼치기');
+    await layBand();
+    await dragBody(far);
+
+    expect(recalculations(server).at(-1)).toEqual(aloneFrom('12:35'));
+  });
+});
+
 describe("a meal's band let go", () => {
   it('asks the meal again from 12:25 for a drag of ten minutes, and keeps the place before as the outline', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
