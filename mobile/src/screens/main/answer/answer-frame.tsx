@@ -274,10 +274,13 @@ function Framed(props: FramedProps): ReactElement {
   const focus = useBandFocus();
   const barShown = !keyboardUp && barOf(chat.bubbles, onScreenOf(control)) !== null;
   const bar = useBarHeight(barShown, onBarHeight);
+  const [past, setPast] = useState(false);
   return (
     <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
-      <PillAndList control={control} keyboardUp={keyboardUp} list={list} onClose={leave} stageHeight={stageHeight} />
-      {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
+      <View style={[styles.top, past && styles.faded]}>
+        <PillAndList control={control} keyboardUp={keyboardUp} list={list} onClose={leave} stageHeight={stageHeight} />
+        {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
+      </View>
       <AnswerCard
         timeBarHeight={bar.height}
         barRoom={barRoom}
@@ -288,7 +291,7 @@ function Framed(props: FramedProps): ReactElement {
         keyboardUp={keyboardUp}
         onClose={close}
         onHeight={onHeight}
-        raising={{ raised, setRaised }}
+        raising={{ raised, setRaised, close: leave, onPast: setPast }}
         stageHeight={stageHeight}
       />
       {keyboardUp ? null : <OpenMark control={control} focus={focus} onClose={close} stage={stage} />}
@@ -326,4 +329,7 @@ export function AnswerFrame(props: AnswerFrameProps): ReactElement | null {
 
 const styles = StyleSheet.create({
   part: { gap: space[2] },
+  // The pill and the bar, which fade while the card is dragged down to close (P04 ticket 12).
+  top: { ...StyleSheet.absoluteFill, pointerEvents: 'box-none' },
+  faded: { opacity: 0.35 },
 });
