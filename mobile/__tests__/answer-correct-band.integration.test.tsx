@@ -7,13 +7,14 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { TimeBand } from '@/api/assistant-types';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { askOnMap, card, mapThings } from './support/answer-map';
-import { drag, layBand, recalculations, step } from './support/answer-correct';
+import { drag, layBand, pointsFor, recalculations, step } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS } from './support/main';
@@ -39,6 +40,8 @@ jest.mock('@/auth/google', () => ({
 }));
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
+
+const MEAL_BAND: TimeBand | undefined = MEAL_ANSWER.plans[0]?.band;
 
 let server: FakeServer;
 
@@ -79,7 +82,7 @@ describe('a handle let go', () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
     await layBand();
 
-    await drag('from', 20);
+    await drag('from', pointsFor(10, MEAL_BAND));
 
     expect(recalculations(server)).toEqual([windowed('12:25', null)]);
   });

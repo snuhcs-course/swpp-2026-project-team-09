@@ -13,7 +13,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { screen } from './support/app';
 import { card, mapThings, timeBar } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
-import { dragBody, layTrack } from './support/band-move';
+import { dragBody, layTrack, unfold } from './support/band-move';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { layStage } from './support/lists';
@@ -67,13 +67,14 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Asks "만나고 싶다" from 민수's card, then drags the band's body from 12:15 to 14:00 on a track laid a point a minute,
+// Asks "만나고 싶다" from 민수's card, then unfolds the bar, drags the band's body from 12:15 to 14:00 on a track laid a point a minute,
 // and lets it go; the main server answers the second request with a6.
 async function letGoAt14(): Promise<User> {
   const user = await openMain();
   await layStage(390, 760);
   await press(user, row(MIN_SU));
   await meetFromCard(user);
+  await unfold();
   await layTrack(390);
   server.on('POST /assistant/answers', { status: 200, body: MEET_ANSWER_FROM_14 });
   await dragBody(105);

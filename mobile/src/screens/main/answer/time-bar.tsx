@@ -52,14 +52,16 @@ interface BarProps {
 }
 
 // The time bar: the answer's band in one white row under the pill, folded to one row, which a press on its grip
-// unfolds to a row for each person when there is more than one, and folds again.
+// unfolds to the band's whole range, a row for each person, and folds again.
 function Bar({ band, day, onHeight, offset = 0 }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
   const [unfolded, setUnfolded] = useState(false);
   const { lanes, startAt, now } = band.band;
-  // One lane has nothing to unfold, also once a Friend was taken out while the bar was unfolded.
-  const folded = !unfolded || lanes.length < 2;
-  const label = folded ? '사람별 시간 펼치기' : '사람별 시간 접기';
+  // Folded, the track runs over the free time around the span (P04 ticket 14); every bar unfolds to the band's whole
+  // range, a bar of one lane too, so that a move further away is made there (PR 465's review).
+  const folded = !unfolded;
+  const what = lanes.length > 1 ? '사람별 시간' : '하루 시간';
+  const label = folded ? `${what} 펼치기` : `${what} 접기`;
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
@@ -69,20 +71,18 @@ function Bar({ band, day, onHeight, offset = 0 }: BarProps): ReactElement {
       testID="time-bar"
     >
       <TimeBand {...band} day={day ?? koreaDayWord(startAt, new Date(now))} folded={folded} />
-      {lanes.length > 1 ? (
-        <Pressable
-          accessibilityLabel={label}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: !folded }}
-          hitSlop={GRIP_SLOP}
-          onPress={() => {
-            setUnfolded(folded);
-          }}
-          style={styles.toggle}
-        >
-          <View style={styles.grip} />
-        </Pressable>
-      ) : null}
+      <Pressable
+        accessibilityLabel={label}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: !folded }}
+        hitSlop={GRIP_SLOP}
+        onPress={() => {
+          setUnfolded(folded);
+        }}
+        style={styles.toggle}
+      >
+        <View style={styles.grip} />
+      </Pressable>
     </View>
   );
 }

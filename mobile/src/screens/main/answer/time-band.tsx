@@ -24,6 +24,7 @@ import {
   stepped,
 } from '@/features/assistant/time-band';
 import { type BandTick, BandOnTrack, Ends, percent, placeOf, redOf, Track, useWholeMove, wordsOf } from './band-body';
+import { NowMark, Red, useShownBand } from './band-track';
 
 interface TimeBandProps {
   band: TimeBandData;
@@ -134,20 +135,6 @@ interface LanesProps {
   folded: boolean;
 }
 
-function Red({ stretches, range }: { stretches: readonly Stretch[]; range: Stretch }): ReactElement {
-  return (
-    <>
-      {stretches.map((stretch) => (
-        <View
-          key={`clash-${stretch.startAt}`}
-          style={[styles.clash, placeOf(stretch, range)]}
-          testID="time-band-clash"
-        />
-      ))}
-    </>
-  );
-}
-
 function Lanes({ band, fixed, moving, folded }: LanesProps): ReactElement {
   return (
     <>
@@ -165,7 +152,7 @@ function Lanes({ band, fixed, moving, folded }: LanesProps): ReactElement {
           </View>
         </View>
       ))}
-      <View style={[styles.now, { left: percent(shareOf(band.now, band.range)) }]} />
+      <NowMark band={band} />
     </>
   );
 }
@@ -254,7 +241,7 @@ function Names({ lanes }: { lanes: TimeBandData['lanes'] }): ReactElement {
 // whole. Folded, the lanes lie on one row without names.
 export function TimeBand(props: TimeBandProps): ReactElement {
   const {
-    band,
+    band: given,
     fixed,
     focus,
     disabled,
@@ -265,6 +252,7 @@ export function TimeBand(props: TimeBandProps): ReactElement {
     folded = false,
     day = '',
   } = props;
+  const band = useShownBand(given, folded);
   const [trackWidth, setTrackWidth] = useState(0);
   const moved = useMovedBand(band, disabled, onDrop);
   const whole = useWholeMove(band, trackWidth, disabled, onMove);
@@ -291,7 +279,7 @@ export function TimeBand(props: TimeBandProps): ReactElement {
         {folded ? null : <Names lanes={band.lanes} />}
         <Track onWidth={setTrackWidth} whole={whole}>
           <Lanes band={band} fixed={fixed} folded={folded} moving={moving} />
-          <BandOnTrack {...props} moving={moving} shown={shown} />
+          <BandOnTrack {...props} band={band} moving={moving} shown={shown} />
           {handles ? handle('from') : null}
           {handles ? handle('until') : null}
           <RedOver band={band} folded={folded} moving={moving} />
@@ -313,10 +301,8 @@ const styles = StyleSheet.create({
   // A folded lane over the first draws only its stretches, so that the lanes under it still show theirs.
   clear: { backgroundColor: 'transparent' },
   busy: { position: 'absolute', top: 0, bottom: 0, borderRadius: radius.full, backgroundColor: color.borderStrong },
-  clash: { position: 'absolute', top: 0, bottom: 0, borderRadius: radius.full, backgroundColor: color.warning },
   over: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, pointerEvents: 'none' },
   redBar: { height: BAR_HEIGHT },
-  now: { position: 'absolute', top: 0, bottom: 0, width: 2, marginLeft: -1, backgroundColor: color.me },
   handle: {
     position: 'absolute',
     top: 0,
