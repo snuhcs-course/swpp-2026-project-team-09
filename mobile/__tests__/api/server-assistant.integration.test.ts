@@ -16,6 +16,7 @@ import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { TAP_LOOKUPS } from '@/api/mock/data/tap-lookups';
 import { WAY_LOOKUP, WAY_LOOKUP_REPLY } from '@/api/mock/data/way-lookup';
 import { googleAvailable } from '@/auth/google';
+import { SENT_CAPABILITIES } from '../support/capabilities';
 
 // The Assistant through the main server's client: what the app knew as the User asked goes with every request, which
 // says the app can draw an answer on the map. The reply's answer is believed only in the contract's shape.
@@ -59,7 +60,7 @@ describe("the Assistant's request to the main server", () => {
 
     expect(server.received('POST /assistant/messages').map(({ body }) => body)).toEqual([
       {
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: SENT_CAPABILITIES,
         context: CONTEXT,
         messages: MESSAGES,
       },
@@ -129,7 +130,7 @@ describe('a recalculation by the main server', () => {
       {
         input: INPUT,
         location: LOCATION,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
   });

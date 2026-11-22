@@ -27,6 +27,7 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { lookOf, press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, MIN_JUN, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // The "+" on the face of a Friend who can be added (P02 ticket 09), and a wrong add undone by 빼기 on that person's
 // face, over the stored answer to "배고파, 민수랑 같이" and the fake main server's Friend 김민준, whose face is on the
@@ -163,7 +164,7 @@ describe('a wrong add', () => {
     expect(recalculations(server).at(-1)).toEqual({
       input: { ...three.input, people: peopleOf(three.input).slice(0, 2) },
       location: ON_CAMPUS,
-      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      clientCapabilities: SENT_CAPABILITIES,
     });
     expect(mapThings()).toContain('302동식당 · 12:15 점심');
     expect(mapThings().some((name) => name.startsWith('지은'))).toBe(false);

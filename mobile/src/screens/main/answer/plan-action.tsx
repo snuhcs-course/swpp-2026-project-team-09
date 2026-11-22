@@ -7,6 +7,7 @@
 
 import { router } from 'expo-router';
 import type { ReactElement } from 'react';
+import type { QuestOffer } from '@/api/party-change-types';
 import type { Lookup } from '@/api/lookup-types';
 import type { Refusal } from '@/api/refusal-types';
 import { Button } from '@/design-system';
@@ -15,6 +16,7 @@ import { type SetQuest, setQuestOf } from '@/features/assistant/set-quest';
 import type { ChatSheetControl } from '../chat-sheet';
 import type { ProposalMaking } from '../chat-proposal-card';
 import { lookupMainOf, useLookupMain } from './lookup-card';
+import { RoomOfferButton, roomOfferOn } from './room-offer';
 import { lookupReplyOf, onScreenOf, planShown } from './reply-words';
 import { lookupDocks } from './words-rest';
 
@@ -88,9 +90,11 @@ export function PlanActionButton({ action }: { action: PlanAction }): ReactEleme
 }
 
 // The answer's main button beside the input: the Plan's, else that of the Lookup on screen when it docks ("길 안내",
-// "가는 길", "만나고 싶다", or the first offer of a refusal beside it).
+// "가는 길", "만나고 싶다", or the first offer of a refusal beside it), else a reply's 파티 수정하기 (P04 ticket 25).
 export type AnswerAction =
-  { kind: 'plan'; plan: PlanAction } | { kind: 'lookup'; lookup: Lookup; refusal: Refusal | null };
+  | { kind: 'plan'; plan: PlanAction }
+  | { kind: 'lookup'; lookup: Lookup; refusal: Refusal | null }
+  | { kind: 'room'; offer: QuestOffer };
 
 const PROPOSAL_MAKING_WORDS: Record<ProposalMaking, string> = {
   ready: '만들기',
@@ -121,6 +125,10 @@ export function answerActionOf(control: ChatSheetControl): AnswerAction | null {
   const plan = planActionOf(control) ?? proposalActionOf(control);
   if (plan !== null) {
     return { kind: 'plan', plan };
+  }
+  const room = control.framed ? roomOfferOn(control.chat.bubbles) : null;
+  if (room !== null) {
+    return { kind: 'room', offer: room };
   }
   const { lookup } = control.lookup;
   const reply = control.framed ? lookupReplyOf(control.chat.bubbles, onScreenOf(control)) : undefined;
@@ -163,9 +171,11 @@ export function AnswerActionButton({
   action: AnswerAction;
   control: ChatSheetControl;
 }): ReactElement {
-  return action.kind === 'plan' ? (
-    <PlanActionButton action={action.plan} />
-  ) : (
-    <LookupActionButton control={control} lookup={action.lookup} refusal={action.refusal} />
-  );
+  if (action.kind === 'plan') {
+    return <PlanActionButton action={action.plan} />;
+  }
+  if (action.kind === 'room') {
+    return <RoomOfferButton disabled={control.chat.waiting} offer={action.offer} />;
+  }
+  return <LookupActionButton control={control} lookup={action.lookup} refusal={action.refusal} />;
 }

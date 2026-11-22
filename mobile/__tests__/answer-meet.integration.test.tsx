@@ -24,6 +24,7 @@ import { press } from './support/markers';
 import { answerFriendsWithMinSu, friendCard, MEET, meetFromCard, meetWith, MIN_SU, pill, row } from './support/meet';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, MIN_JUN, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // "만나고 싶다" on a Friend's card of the everyday map (P02 ticket 24), over the fake main server, which answers the meet
 // with the stored real answer of board a5 (`meet-answer.json`): the button down to the request, the answer drawn as a
@@ -86,7 +87,7 @@ function meetAsked(friendId: string): object {
   return {
     input: meetWith(friendId),
     location: ON_CAMPUS,
-    clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+    clientCapabilities: SENT_CAPABILITIES,
   };
 }
 
@@ -218,7 +219,7 @@ describe("the controls of a meet's answer", () => {
         planId: '302동 앞',
         startAt: '2026-11-17T12:15:00+09:00',
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(card().getByText('민수에게 약속 초대를 보냈어요')).toBeVisible();

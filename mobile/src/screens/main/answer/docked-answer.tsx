@@ -7,14 +7,21 @@
 
 import type { ReactElement } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import type { PickOffer } from '@/api/pick-types';
+import { now } from '@/clock';
 import { space } from '@/design-system';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { setQuestOf } from '@/features/assistant/set-quest';
+import { leaveOfferOf, leaveWordsOf } from '@/features/assistant/use-quest-leaving';
 import { keepsShown } from '@/features/assistant/use-shown-answer';
+import { koreaDateKey } from '@/korea-time';
 import type { ChatSheetControl } from '../chat-sheet';
 import { DockChip, DockLine } from './dock-chips';
+import { LeaveRow } from './leave-button';
+import { PickTimeSheet } from './pick-time-sheet';
 import { WithMenuList } from './meal-list';
 import { planCardRests } from './plan-card';
+import { wordsLine } from './keyboard-headline';
 import { pressOffer } from './refusal-reply';
 import { onScreenOf, planShown, Words, wordsKindOf } from './reply-words';
 import type { BandFocus } from './use-corrections';
@@ -86,12 +93,25 @@ export function restOf(control: ChatSheetControl, after: readonly ChatBubble[]):
   if (kind === 'lookup' && lookup !== null) {
     words = lookupRestOf(lookup, reply.refusal ?? null, reply.text);
   } else if (kind === 'own') {
-    words = wordsRestOf(reply);
+    const leave = leaveOfferOf(reply);
+    words = wordsRestOf(
+      reply,
+      leave === null ? null : leaveWordsOf(leave, control.leave.stateOf(reply.id, leave.questId)),
+    );
   }
   return words === null ? null : { kind: 'words', words };
 }
 
 type Raise = (earlier: boolean) => void;
+
+const PICKING_PLACE = '지도에서 건물을 눌러 주세요';
+
+// The pickers act only on the conversation's latest turn, whose question they answer, and offer no day that has
+// passed (P04 ticket 26).
+function livePicks({ latest }: ChatSheetControl, { picks = [] }: WordsRest): readonly PickOffer[] {
+  const today = koreaDateKey(now());
+  return latest ? picks.filter((offer) => offer.kind !== 'pick-time' || offer.date >= today) : [];
+}
 
 // The answer's note, which raises the card with what it names. Earlier questions are in the pill's list (P04 ticket
 // 10).
@@ -154,6 +174,20 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
           words={offer.label}
         />
       ))}
+      {livePicks(control, rest).map((offer) => (
+        <DockChip
+          disabled={waiting}
+          key={offer.kind}
+          onPress={() => {
+            if (offer.kind === 'pick-place' && control.pick.place !== null) {
+              control.pick.stop();
+            } else {
+              control.pick.start(offer);
+            }
+          }}
+          words={offer.kind === 'pick-place' && control.pick.place !== null ? '그만 고르기' : offer.label}
+        />
+      ))}
       {retry && control.latest ? <DockChip disabled={waiting} onPress={control.chat.retry} words="다시 시도" /> : null}
       {keep ? <DockChip disabled={choosing(control)} onPress={control.invitation.leave} words="그대로 두기" /> : null}
       <FoldedChips control={control} note={note} onRaise={onRaise} />
@@ -164,26 +198,35 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
 // A reply's dock: its one line, which raises the card with the whole reply, then its buttons as chips, and the folded
 // chips. Nothing when the map says it all and nothing is folded.
 function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement | null {
-  const { line, offers, retry, note } = rest;
+  const { offers, retry, note } = rest;
+  // While the map is picking a Place (P04 ticket 26), the line says what to do.
+  const line = control.pick.place === null ? rest.line : wordsLine(PICKING_PLACE);
+  const { time } = control.pick;
   const empty = line === null && offers.length === 0 && !retry && note === null;
   if (empty) {
     return null;
   }
   return (
-    <View style={styles.row} testID="dock-row">
-      {line === null ? null : (
-        <DockLine
-          line={line}
-          onPress={
-            rest.still === true
-              ? undefined
-              : () => {
-                  onRaise(false);
-                }
-          }
-        />
+    <View style={styles.rest}>
+      <View style={styles.row} testID="dock-row">
+        {line === null ? null : (
+          <DockLine
+            line={line}
+            onPress={
+              rest.still === true
+                ? undefined
+                : () => {
+                    onRaise(false);
+                  }
+            }
+          />
+        )}
+        <ReplyChips control={control} onRaise={onRaise} rest={rest} />
+      </View>
+      <LeaveRow control={control} />
+      {time === null ? null : (
+        <PickTimeSheet offer={time} onClose={control.pick.stop} onPick={control.pick.chooseTime} />
       )}
-      <ReplyChips control={control} onRaise={onRaise} rest={rest} />
     </View>
   );
 }
@@ -278,6 +321,7 @@ export function DockedAnswer({
 const styles = StyleSheet.create({
   // One row, as board 8 draws it: the chips keep their own width, so that a chip is always whole, and scroll sideways
   // past half the row; the line takes what is left and is cut at its two lines.
+  rest: { gap: space[2] },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   chipsBox: { flexGrow: 0, flexShrink: 0, maxWidth: '50%' },
   chips: { flexDirection: 'row', alignItems: 'center', gap: space[2] },

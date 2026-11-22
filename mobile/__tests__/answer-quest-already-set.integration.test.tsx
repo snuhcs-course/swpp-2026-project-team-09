@@ -188,7 +188,7 @@ const MEET_REPLY: AssistantReply = {
   answer: { ...MEET_ANSWER, planSet: MEETING },
 };
 
-// Partitions: 바꾸기 of a meeting, answered; a meal's `planSet` read before its `mealSet`.
+// Partitions: 바꾸기 of a meeting and of a shared lunch, answered; a meal's `planSet` read before its `mealSet`.
 describe("the main server's planSet", () => {
   it('changes the meeting in place from 바꾸기, and the answer stays and says so, with no button left', async () => {
     server.on(`PUT /plans/${MEETING.questId}`, { status: 200, body: PLAN_QUEST.quest });
@@ -211,6 +211,20 @@ describe("the main server's planSet", () => {
     // P04 ticket 10: the list of questions says so too.
     await user.press(screen.getByTestId('answer-pill'));
     expect(within(screen.getByTestId('question-list')).getByRole('button', { name: /12:15 · 바꿈/u })).toBeVisible();
+  });
+
+  // P05 ticket 31: a lunch the User leads with Friends, changeable, is changed in place as a meeting is.
+  it('changes a shared lunch in place from 바꾸기, and says the lunch moved', async () => {
+    const lunch: KeptQuest = { ...MEETING, kind: 'meal-lunch' };
+    server.on(`PUT /plans/${lunch.questId}`, { status: 200, body: PLAN_QUEST.quest });
+    const user = await askOnMap(server, { ...replyWith(OWN), answer: { ...MEAL_ANSWER_ALONE, planSet: lunch } });
+
+    await user.press(beside().getByRole('button', { name: '바꾸기' }));
+    await pass(500);
+
+    expect(server.received(`PUT /plans/${lunch.questId}`)).toHaveLength(1);
+    expect(server.received('POST /plans')).toHaveLength(0);
+    expect(dock().getByText(/^점심을 \d\d:\d\d으로 바꿨어요\. 민수에게 알렸어요$/u)).toBeVisible();
   });
 
   it("is read before a meal's mealSet, so that a shared one shows 파티 보기", async () => {

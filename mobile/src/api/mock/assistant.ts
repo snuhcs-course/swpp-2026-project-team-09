@@ -30,6 +30,9 @@ import { MENUS } from './data/menus';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
 import { MEAL_ANSWER_MENUS_REPLY, MEAL_DINNER_MENUS } from './data/meal-answer-menus';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
+import { cancelReplyTo } from './data/cancel-quest';
+import { partyChangeReplyTo } from './data/party-change';
+import { pickReplyTo } from './data/pick';
 import { MENU_LOOKUP_REPLY } from './data/menu-lookup';
 import { NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from './data/missing-inputs';
 import { refusalReplyTo } from './data/refusals';
@@ -38,12 +41,7 @@ import { STUDY_LOOKUP_REPLY } from './data/study-lookup';
 import { FRIEND_TAPS, STAND_IN_FRIEND_TAP, TAP_LOOKUPS } from './data/tap-lookups';
 import { EASED_ANSWER, NOT_NOW_ANSWER, NOT_NOW_ASKED, NOT_NOW_REPLY } from './data/unmet-plans';
 import { WAY_LOOKUP_REPLY } from './data/way-lookup';
-import {
-  LATE_LOOKUP_REPLY,
-  LEAVE_LOOKUP_REPLY,
-  NOT_RUNNING_LOOKUP_REPLY,
-  SHUTTLE_LOOKUP_REPLY,
-} from './data/way-lookups';
+import { wayReplyOf } from './data/way-lookups';
 import {
   MEAL_ANSWER_ALONE,
   MEAL_ANSWER_FIXED_PLACE,
@@ -264,6 +262,10 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
   if (last.includes(NOT_NOW_ASKED)) {
     return NOT_NOW_REPLY;
   }
+  const cancel = cancelReplyTo(last) ?? partyChangeReplyTo(last) ?? pickReplyTo(last);
+  if (cancel !== null) {
+    return cancel;
+  }
   if (isStepsAsk(last)) {
     return stepsReplyOn(koreaDateKey(now()));
   }
@@ -283,21 +285,6 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
     return FRIEND_LOOKUP_REPLY;
   }
   return rowFourReplyOf(last) ?? wayReplyOf(last);
-}
-
-// The stored Lookups of a way, by the words of boards q4, q3, q2, and n21: by the shuttle, late, on time, and the
-// shuttle not running. A question about the shuttle's arrival with no Place ("셔틀 몇 분 뒤에 와?") is none of them.
-function wayReplyOf(last: string): AssistantReply | null {
-  if (last.includes('셔틀 탈까')) {
-    return SHUTTLE_LOOKUP_REPLY;
-  }
-  if (last.includes('기숙사 가는 셔틀')) {
-    return NOT_RUNNING_LOOKUP_REPLY;
-  }
-  if (last.includes('늦나')) {
-    return LATE_LOOKUP_REPLY;
-  }
-  return last.includes('까지 몇 분') ? LEAVE_LOOKUP_REPLY : null;
 }
 
 export function mockAssistantReply(messages: readonly ChatMessage[], context: RequestContext): AssistantReply {
