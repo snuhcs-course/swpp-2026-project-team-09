@@ -13,15 +13,16 @@ export interface TypingWords {
   example: string | null;
 }
 
-// A sentence ends at ".", "?" or "!" followed by a space, or at the words' end.
-const SENTENCE = /[^.?!]+[.?!]*/gu;
+// A sentence ends at ".", "?" or "!" followed by a space or a line's end, so that "0.8km" stays whole (PR 479's review).
+const BETWEEN_SENTENCES = /(?<=[.?!])\s+|\n+/u;
 const EXAMPLE = /^예를 들어\s*(.+?)처럼/u;
 
 // What stands above the keyboard while the User answers the reply on screen (the rule of 2026-11-22): the sentence that
 // asks, whole, when there is one (the last that ends in "?"), its example ("예를 들어 14:00부터 16:00처럼 알려 주세요")
 // moved into the input's placeholder ("예: 14:00부터 16:00"); else the reply's first sentence.
 export function typingWordsOf(text: string): TypingWords {
-  const sentences = (text.match(SENTENCE) ?? [])
+  const sentences = text
+    .split(BETWEEN_SENTENCES)
     .map((sentence) => sentence.trim())
     .filter((sentence) => sentence !== '');
   const question = sentences.findLast((sentence) => sentence.endsWith('?'));

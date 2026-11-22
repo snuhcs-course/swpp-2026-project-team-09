@@ -88,7 +88,7 @@ function pill(): ReturnType<typeof within> {
 // Asks FIRST and hides the frame with ✕ while its reply is on its way.
 async function askThenHide(user: User): Promise<void> {
   await send(user, FIRST);
-  await user.press(pill().getByRole('button', { name: '뒤로' }));
+  await user.press(screen.getByRole('button', { name: '뒤로' }));
 }
 
 // Presses an example above the AI input, which the everyday map shows while the keyboard is up.

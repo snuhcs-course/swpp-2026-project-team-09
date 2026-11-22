@@ -108,8 +108,9 @@ function spanIn(points: readonly LatLng[], camera: MapCamera | undefined): { top
 
 // Partitions: the answer comes; the Plan on screen changes; the card grows; the answer is closed. Expected values:
 // at the lowest zoom every point is 425.7 high and the Plans' own points 370.8 (see `answer-camera.unit.test.ts`).
-// The first Plan's area of 434 holds every point; the third Plan's under a card of 380, from 132 to 502, only its own
-// within a point.
+// The first Plan's area holds every point; the third Plan's under a card of 380, from 128 to 502, holds its own. The
+// top is the round "←"'s bottom, 0 + 52 + 44 = 96, and the 8 of ticket 08's area with 24 for the marks (the 2026-11-22
+// redesign).
 describe("the answer's camera", () => {
   it('goes in one move to the fit of every point of the first Plan, and asks the map for no fit', async () => {
     const asked: Asked = { fits: 0, cameras: [] };
@@ -118,8 +119,8 @@ describe("the answer's camera", () => {
     expect(asked.fits).toBe(0);
     expect(asked.cameras).toHaveLength(1);
     const { top, bottom } = spanIn(drawingOf(MEAL_ANSWER, 0).points, asked.cameras[0]);
-    // 132 and 566 with the 8 of ticket 08's area at the top and at the bottom.
-    expect(top).toBeCloseTo(132, 0);
+    // 128 and 566 with the 8 of ticket 08's area at the top and at the bottom.
+    expect(top).toBeCloseTo(128, 0);
     expect(bottom).toBeCloseTo(566, 0);
   });
 
@@ -132,11 +133,10 @@ describe("the answer's camera", () => {
 
     await rerender({ ...FIRST, shown: shownAt(2), room: { ...ROOM, answerHeight: 380 } });
     expect(asked.cameras).toHaveLength(3);
-    // With the 8 of ticket 08's area, the area from 132 to 502 is 370 high, less than the third Plan's own 370.85 by
-    // under a point, so they count as fitting there and the camera stays at the lowest zoom: their north end, by the
-    // pick 학생회관, comes to 132, and their middle to 132 + 185.4 = 317.4.
+    // With the 8 of ticket 08's area, the area from 128 to 502 is 374 high, more than the third Plan's own 370.85, so
+    // they fit there at the lowest zoom, their middle at the area's, (128 + 502) / 2 = 315.
     const { top, bottom } = spanIn(drawingOf(MEAL_ANSWER, 2).own, asked.cameras[2]);
-    expect((top + bottom) / 2).toBeCloseTo(317.4, 0);
+    expect((top + bottom) / 2).toBeCloseTo(315, 0);
     expect(bottom - top).toBeCloseTo(370.85, 1);
   });
 
@@ -187,7 +187,7 @@ async function drawnIn(room: Room, shown = shownAt(0), asked?: Asked): Promise<A
 
 // Partitions: the first Plan under the card of 406 measured on the emulator, at whose camera 자하연식당 2층 lies under
 // the pill; the same before the stage is laid out, with the sides chosen in metres. Expected values: the worked
-// numbers of `answer-labels.unit.test.ts` at that camera, where the pill also ends at 100 (0 + 52 + 48 here), and the
+// numbers of `answer-labels.unit.test.ts` at that camera, where the top ends at 96 (0 + 52 + 44 here), and the
 // stored answer's sides in metres (`answer-marks.unit.test.ts`).
 describe('the labels the answer draws', () => {
   it("leaves out 자하연식당 2층's label, under the pill at the camera, and keeps the pick's under 302동", async () => {
@@ -215,10 +215,9 @@ describe('the labels the answer draws', () => {
 // below every point is 24: the pick's two lines need 66 − 200 / 4.5 = 21.6, 3식당's label at its left 18. Below the
 // Plan's own points, 302동 is the bottom-most, and the pick's two lines need 66. At the lowest zoom, 15.2601, those
 // points are 370.85 high, more than the area leaves them either way, so the camera fits them alone further out: into
-// 132 to 914 − 406 − 8 − 66 = 434, at 15.2601 + log2(302 / 370.85) = 14.9638, where the pick's lines run from 184.4
-// to 289.4 and from 454 to 500 (`answer-labels.unit.test.ts`), and 3식당 stands at (142.8, 485.4), its symbol box
-// clear of them. With the room of every point, 24, it would fit them into 132 to 476 instead, where the lines below
-// would end at 542 and above would cover 301동's symbol.
+// 128 to 914 − 406 − 8 − 66 = 434, at 15.2601 + log2(306 / 370.85) = 14.9828, where the pick's lines stay under 302동
+// and 3식당's symbol box clear of them. With the room of every point, 24, it would fit them into 128 to 476 instead,
+// where the lines below would run past the card's top.
 describe("the room the camera leaves when it fits the Plan's own points alone", () => {
   it("keeps the pick's two lines under 302동 with a candidate 200 metres further south", async () => {
     // Changed from the stored copy: 3식당 stands 200 metres (0.0017966°) south of 302동, its longitude kept.
@@ -228,7 +227,7 @@ describe("the room the camera leaves when it fits the Plan's own points alone", 
 
     const drawn = await drawnIn({ ...ROOM, answerHeight: 406 }, { ...shownAt(0), answer, source: answer }, asked);
 
-    expect(asked.cameras[0]?.zoom).toBeCloseTo(15.2601 + Math.log2(302 / 370.85), 3);
+    expect(asked.cameras[0]?.zoom).toBeCloseTo(15.2601 + Math.log2(306 / 370.85), 3);
     expect(labelOf(drawn, '302동식당 · 12:15 점심')).toMatchObject({ side: 'below' });
   });
 });
@@ -277,8 +276,8 @@ describe("the answer's camera after a recalculation", () => {
 
     expect(asked.cameras).toHaveLength(2);
     const { top, bottom } = spanIn(drawingOf(MEAL_ANSWER, 0).points, asked.cameras[1]);
-    // Ticket 08's camera, the one its labels were placed at: 132 and 566 with the 8 of its area.
-    expect(top).toBeCloseTo(132, 0);
+    // Ticket 08's camera, the one its labels were placed at: 128 and 566 with the 8 of its area.
+    expect(top).toBeCloseTo(128, 0);
     expect(bottom).toBeCloseTo(566, 0);
     await wait(1000);
     expect(asked.cameras).toHaveLength(2);

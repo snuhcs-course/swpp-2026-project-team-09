@@ -222,6 +222,22 @@ describe("the reply's words above the keyboard", () => {
   });
 });
 
+// Partitions: a message sent while the caption's list is open (PR 479's review).
+describe("the caption's list across turns", () => {
+  it('closes when a message is sent, so that the card shows the new turn', async () => {
+    const user = await talk([[ASKED, MEAL_ANSWER_REPLY]]);
+    await user.press(screen.getByTestId('answer-caption'));
+    expect(card().getByTestId('question-list')).toBeVisible();
+
+    server.on('POST /assistant/messages', { status: 200, body: TEXT_REPLY, afterMs: 500 });
+    await send(user, '셔틀 어디 있어?');
+    await pass(500);
+
+    expect(screen.queryByTestId('question-list')).toBeNull();
+    expect(card().getByText(/셔틀 두 대가 정문과 자연대에 있어요/u)).toBeVisible();
+  });
+});
+
 // Partitions: the reply on its way; an earlier question pressed.
 describe('the questions while the keyboard is up', () => {
   it('mark the question on its way as waiting, with neither the dots nor 그만', async () => {
