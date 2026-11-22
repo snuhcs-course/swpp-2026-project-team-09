@@ -125,6 +125,10 @@ async function friendNames(prisma: PrismaClient, id: string): Promise<string[]> 
     .toSorted();
 }
 
+function titles(rows: { quest: { title: string } }[]): string {
+  return rows.map((row) => row.quest.title).join(', ');
+}
+
 async function questLines(prisma: PrismaClient, id: string): Promise<string[]> {
   const quest = { select: { title: true, leaderId: true } };
   const [held, asked, invited] = await Promise.all([
@@ -132,7 +136,6 @@ async function questLines(prisma: PrismaClient, id: string): Promise<string[]> {
     prisma.questJoinRequest.findMany({ where: { userId: id }, select: { quest } }),
     prisma.questInvitation.findMany({ where: { userId: id }, select: { quest } }),
   ]);
-  const titles = (rows: { quest: { title: string } }[]): string => rows.map((row) => row.quest.title).join(', ');
   return [
     `   파티: ${held.map((row) => `${row.quest.title}${row.quest.leaderId === id ? '(파티장)' : ''}`).join(', ') || '없음'}`,
     ...(asked.length === 0 ? [] : [`   신청 중: ${titles(asked)}`]),
@@ -167,7 +170,9 @@ export async function uatStatus(prisma: PrismaClient, redis: Redis | null, now: 
   const accounts = await Promise.all(
     UAT_ACCOUNT_LIST.map(({ letter }) => {
       const id = users[letter];
-      return id === undefined ? `${letter}: 계정 없음 (setup 전)` : accountLine(prisma, redis, letter, id, now);
+      return id === undefined
+        ? Promise.resolve(`${letter}: 계정 없음 (setup 전)`)
+        : accountLine(prisma, redis, letter, id, now);
     }),
   );
   const events = await prisma.globalEvent.findMany({
