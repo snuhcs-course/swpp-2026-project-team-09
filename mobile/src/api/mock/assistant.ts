@@ -28,7 +28,7 @@ import { RECRUITING_QUESTS } from './data/boards';
 import { FRIENDS } from './data/friends';
 import { MENUS } from './data/menus';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
-import { MEAL_ANSWER_MENUS_REPLY } from './data/meal-answer-menus';
+import { MEAL_ANSWER_MENUS_REPLY, MEAL_DINNER_MENUS } from './data/meal-answer-menus';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from './data/menu-lookup';
 import { NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from './data/missing-inputs';
@@ -183,6 +183,9 @@ function copyFor(input: PlanInput): AnswerReply {
   }
   if (input.kind === 'meet') {
     return input.window.from === MEET_ANSWER_FROM_14.input.window.from ? MEET_ANSWER_FROM_14 : MEET_ANSWER;
+  }
+  if (input.kind === 'meal' && input.meal === 'dinner') {
+    return MEAL_DINNER_MENUS;
   }
   const people = input.kind === 'meal' || input.kind === 'new-quest' ? input.people : [];
   const from = input.kind === 'meal' ? input.window.from : null;

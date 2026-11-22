@@ -2,11 +2,13 @@
 # AI-generated with Claude
 #
 # 2026-11-21  Opus 5.5   prompted by fyoon46
+# 2026-11-22  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Starts CI at the nightly level (.github/ci/changes.sh), with the app's integration tests, on the newest commit of the
-# newest iteration Main, every night at 03:00 KST. GitHub fires a schedule only from the default branch's copy of this
-# file, so `main` carries it. A Main whose ci.yml cannot be started this way yet (no `workflow_dispatch`) is skipped
+# newest iteration Main, at 03:00 KST. GitHub fires a schedule only from the default branch's copy of this file, so it
+# takes effect only once `main` is fast-forwarded to an iteration Main; until then the same run is started by hand or
+# by a scheduler outside GitHub. A Main whose ci.yml cannot be started this way yet (no `workflow_dispatch`) is skipped
 # with a notice. A run started with the workflow's token sends GitHub's failure mail to nobody: a red one is found by
 # its name, "Nightly level on <line>/Main", in CI's list of runs (README.md § The nightly level).
 name: Nightly
