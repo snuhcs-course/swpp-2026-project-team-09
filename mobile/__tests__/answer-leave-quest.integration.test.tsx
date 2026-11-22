@@ -13,6 +13,7 @@ import { pass, screen } from './support/app';
 import { askOnMap } from './support/answer-map';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { KEYBOARD, showKeyboard } from './support/keyboard';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, ME_ID, PHONE_NOW } from './support/server';
@@ -71,6 +72,18 @@ function dock(): ReturnType<typeof within> {
 
 it('says quest-cancel to the main server', () => {
   expect(ANSWER_CAPABILITIES).toContain('quest-cancel');
+});
+
+// Partitions: the keyboard up on the question (the rule of 2026-11-22: the ways to answer stay above the keyboard).
+describe('a Quest asked to be cancelled, while the User types', () => {
+  it('keeps its row above the keyboard, under the question whole', async () => {
+    await askOnMap(server, replyWith(DINNER));
+
+    await showKeyboard(KEYBOARD);
+
+    expect(screen.getByTestId('typing-words')).toHaveTextContent(QUESTION, { exact: true });
+    expect(screen.getByRole('button', { name: '취소하기, 저녁 약속 · 오늘(화) 18:00' })).toBeEnabled();
+  });
 });
 
 // Partitions: 취소하기 and 나가기; today and tomorrow.
