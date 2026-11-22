@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
 import type { AssistantReply } from '@/api/assistant-types';
 import { DAY_LOOKUP_REPLY } from '@/api/mock/data/day-lookup';
 import { NOT_RUNNING_LOOKUP_REPLY } from '@/api/mock/data/way-lookups';
+import { WORDS_LINES } from '@/screens/main/answer/dock-chips';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -71,10 +73,10 @@ describe("the model's words beside the day's Lookup", () => {
     expect(dock().queryByText(DAY_LINE)).toBeNull();
   });
 
-  it("take up to two lines in the dock before they are cut, so that the model's question can be read", async () => {
+  it('take up to five lines in the dock before they are cut, a reply of words alone (P04 ticket 45)', async () => {
     await askOnMap(server, WITH_WORDS);
 
-    expect(dock().getByTestId('dock-line-words')).toHaveProp('numberOfLines', 2);
+    expect(dock().getByTestId('dock-line-words')).toHaveProp('numberOfLines', WORDS_LINES);
     expect(dock().getByTestId('dock-line-words')).toHaveTextContent(WORDS);
   });
 
