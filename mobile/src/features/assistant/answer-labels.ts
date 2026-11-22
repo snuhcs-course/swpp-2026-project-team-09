@@ -155,7 +155,8 @@ function sharedEdges(
     const moved = { ...label, shift };
     const box = boxIn(view, mark.position, moved);
     const others = boxes.filter((other, otherAt): other is ViewArea => other !== null && otherAt !== index);
-    if ([...othersThan(symbols, mark.point), ...others].some((other) => overlaps(box, other))) {
+    const controls = view.blocked ?? [];
+    if ([...othersThan(symbols, mark.point), ...others, ...controls].some((other) => overlaps(box, other))) {
       return label;
     }
     boxes[index] = box;
