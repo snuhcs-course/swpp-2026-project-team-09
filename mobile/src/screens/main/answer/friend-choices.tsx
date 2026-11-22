@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -71,7 +72,7 @@ function byNearness(one: Measured, other: Measured): number {
 // The one fact at a cell's right: how far, how old the position is when it is old, or that it is not known.
 function valueOf({ friend: { position, minutesOld }, metres }: Measured): string {
   if (position === null) {
-    return '자리 모름';
+    return '위치 모름';
   }
   if (minutesOld !== null) {
     return `${minutesOld}분 전`;

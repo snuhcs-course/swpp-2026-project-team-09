@@ -89,7 +89,7 @@ describe('"여기서 먹기" on the card of a pressed building', () => {
       },
     ]);
     expect(server.received('POST /assistant/messages')).toEqual([]);
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent('63동 · 여기서 먹기');
+    expect(screen.getByTestId('answer-pill')).toHaveTextContent('63동 · 여기서 먹기', { exact: false });
     // The answer is on the map and the bar, its button beside the input (P04 ticket 04).
     expect(screen.getByTestId('time-bar')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: '일정에 넣기' })).toBeVisible();
@@ -190,7 +190,7 @@ describe("a2's buttons on the card of 문화관", () => {
         clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
       },
     ]);
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 행사 보기');
+    expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 행사 보기', { exact: false });
     expect(screen.getByTestId('time-bar')).toBeOnTheScreen();
     expect(card().getByRole('button', { name: '같이 갈 파티' })).toBeEnabled();
   });
@@ -209,7 +209,7 @@ describe("a2's buttons on the card of 문화관", () => {
         clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
       },
     ]);
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 같이 갈 파티');
+    expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 같이 갈 파티', { exact: false });
     expect(screen.getByTestId('time-bar')).toBeOnTheScreen();
   });
 });

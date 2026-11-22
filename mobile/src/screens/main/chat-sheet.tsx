@@ -28,6 +28,7 @@ import { useToast } from '@/design-system';
 import { type ShownBooking, shownBookingOf } from '@/features/assistant/booking-scene';
 import { type ShownProposal, shownProposalOf } from '@/features/assistant/proposal-scene';
 import type { Viewport } from '@/features/assistant/study-area';
+import type { PlanOutcomes } from '@/features/assistant/turn-outcome';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
 import { type HowAbout, useHowAbout } from '@/features/assistant/use-how-about';
 import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use-plan-invitation';
@@ -40,6 +41,7 @@ import type { CardLeaving } from './chat-card-actions';
 import { useContextChat, type Where } from './use-context-chat';
 import { type KeptConversation, useKeptConversation } from './use-kept-conversation';
 import { type BookingStage, useBookingStage } from './library/booking-stage';
+import { usePlanOutcomes } from './use-plan-outcomes';
 import { openProposalForm, useProposalMaking } from './use-proposal-making';
 
 export interface ChatSheetControl extends Omit<KeptConversation, 'chat'>, MarkOpening {
@@ -60,6 +62,8 @@ export interface ChatSheetControl extends Omit<KeptConversation, 'chat'>, MarkOp
   // the time of (P04 ticket 07), and what the card tells of its seat and main action.
   booking: ShownBooking | null;
   bookingStage: BookingStage;
+  // What became of each reply's Plan, for the list of questions.
+  outcomes: PlanOutcomes;
   // Whether the frame's card is raised, which a press on a Lookup's mark on the map does too.
   card: CardRaise;
   // What was pressed on the map and is open in its card, which every request carries from then on; null for nothing.
@@ -143,9 +147,12 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const bookingStage = useBookingStage();
   const place = onMap.booking?.place ?? null;
   const booking = useMemo(() => ({ place, tell: bookingStage.tell }), [place, bookingStage.tell]);
+  const onScreen = useAnswerOnScreen(chat.bubbles, where, shownNow);
+  const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation);
   return {
     chat,
     ...kept,
+    outcomes,
     leaving: {
       showLayer: hidingFor(kept.hide, turnOn),
       openEvent,
@@ -154,7 +161,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
       proposals,
       booking,
     },
-    ...useAnswerOnScreen(chat.bubbles, where, shownNow),
+    ...onScreen,
     lookup: useShownLookup(chat.bubbles, start, kept.hide),
     ...onMap,
     bookingStage,

@@ -4,10 +4,11 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { pass, screen } from './support/app';
-import { card, mapThings } from './support/answer-map';
+import { mapThings } from './support/answer-map';
 import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
@@ -23,7 +24,7 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotionSetting: (): boolean => true,
 }));
 
-// A docked way's card is raised from a second turn's "지난 답 1개": two replies in one test.
+// Several replies in one test.
 jest.setTimeout(150000);
 
 // A mark of the first Plan, and one of the Lookup of q1.
@@ -80,23 +81,5 @@ describe('a reply that replaces another', () => {
     await ask(user, '배고파');
     expect([showsPlan(), showsLookup()]).toEqual([true, false]);
     expect(mapThings()).not.toContain(LOOKUP_PICK);
-  });
-});
-
-// Partitions: a late way, whose basis opened on its own, and then a way on time, in the card raised from "지난 답 1개"
-// (a way docks with nothing to read). Expected values: the copies of boards q3 and q2, and decision 6.
-describe('the basis of a new reply', () => {
-  it('opens as the new reply says, whatever the last one showed', async () => {
-    const user = await open();
-    await ask(user, '민수 어디야?');
-
-    await ask(user, '24동까지 몇 분? 늦나');
-    await user.press(card().getByRole('button', { name: '지난 답 1개' }));
-    expect(card().getByText('걸어서 15분 · 지금 12:50')).toBeVisible();
-
-    await ask(user, '24동까지 몇 분?');
-
-    expect(card().queryByText('301동 → 24동 걸어서 15분')).toBeNull();
-    expect(card().getByRole('button', { name: '근거' })).toBeVisible();
   });
 });

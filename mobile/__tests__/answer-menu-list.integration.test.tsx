@@ -149,6 +149,6 @@ describe('메뉴 보기 while the Plan is sent', () => {
     await pass(HELD_MS);
 
     expect(screen.getByRole('button', { name: /^302동식당 · 12:15 /u })).toBeOnTheScreen();
-    expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
+    expect(card().getByText('김민수에게 점심 초대를 보냈어요')).toBeVisible();
   });
 });

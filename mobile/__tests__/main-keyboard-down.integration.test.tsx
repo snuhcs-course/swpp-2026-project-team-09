@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -160,7 +161,7 @@ describe("the AI input's own parts while the keyboard is up", () => {
     await press(user, '배고파');
     await pass(300);
 
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent('배고파');
+    expect(screen.getByTestId('answer-pill')).toHaveTextContent(/^배고파/u);
   });
 
   it('show the hidden answer frame again by "이전 답"', async () => {
@@ -171,7 +172,7 @@ describe("the AI input's own parts while the keyboard is up", () => {
 
     await press(user, EARLIER);
 
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent('식사 메뉴 추천');
+    expect(screen.getByTestId('answer-pill')).toHaveTextContent(/^식사 메뉴 추천/u);
   });
 });
 
@@ -200,7 +201,7 @@ describe('a press beside the AI input in the answer frame', () => {
     await press(user, SCRIM);
 
     expect(dismiss).toHaveBeenCalled();
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent('식사 메뉴 추천');
+    expect(screen.getByTestId('answer-pill')).toHaveTextContent(/^식사 메뉴 추천/u);
     expect(screen.getByTestId('answer-card')).toBeVisible();
   });
 });
@@ -216,10 +217,10 @@ describe("a press on the answer pill's words", () => {
     await user.press(within(screen.getByTestId('answer-pill')).getByText('식사 메뉴 추천'));
 
     expect(dismiss).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent('식사 메뉴 추천');
+    expect(screen.getByTestId('answer-pill')).toHaveTextContent(/^식사 메뉴 추천/u);
   });
 
-  it('does nothing while the keyboard is down', async () => {
+  it('opens the list of questions while the keyboard is down (P04 ticket 10)', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
     const dismiss = quietDismiss();
@@ -227,7 +228,8 @@ describe("a press on the answer pill's words", () => {
     await user.press(within(screen.getByTestId('answer-pill')).getByText('식사 메뉴 추천'));
 
     expect(dismiss).not.toHaveBeenCalled();
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent('식사 메뉴 추천');
+    expect(screen.getByTestId('answer-pill')).toHaveTextContent(/^식사 메뉴 추천/u);
+    expect(screen.getByTestId('question-list')).toBeVisible();
   });
 });
 
@@ -245,7 +247,7 @@ describe("the answer pill's buttons while the keyboard is up", () => {
     expect(button(EARLIER)).toBeVisible();
   });
 
-  it('forgets the conversation by "새 대화", as before', async () => {
+  it('keeps the conversation aside by "새 대화", whose list "지난 대화 1개" opens (P04 ticket 10)', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
     await showKeyboard(KEYBOARD);
@@ -254,5 +256,6 @@ describe("the answer pill's buttons while the keyboard is up", () => {
 
     expect(screen.queryByTestId('answer-pill')).toBeNull();
     expect(findButton(EARLIER)).toBeNull();
+    expect(button('지난 대화 1개')).toBeVisible();
   });
 });

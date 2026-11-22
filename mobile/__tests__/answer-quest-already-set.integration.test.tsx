@@ -135,6 +135,19 @@ describe('an answer beside a lunch the User holds alone', () => {
   });
 });
 
+// P04 ticket 10: the list of questions says what 그대로 두기 did.
+describe('the list of questions beside a lunch left as it is', () => {
+  it('says the lunch was left as it is', async () => {
+    const user = await askOnMap(server, replyWith(OWN));
+    await user.press(dock().getByRole('button', { name: '그대로 두기' }));
+    await pass(300);
+
+    await user.press(screen.getByTestId('answer-pill'));
+
+    expect(within(screen.getByTestId('question-list')).getByRole('button', { name: /· 그대로 둠/u })).toBeVisible();
+  });
+});
+
 // Partitions: the buttons; 파티 보기 pressed.
 describe('an answer beside a lunch shared with a Friend', () => {
   it('has no 바꾸기, and 파티 보기 beside the input', async () => {
@@ -195,6 +208,9 @@ describe("the main server's planSet", () => {
     // Only the meeting as it now stands: no other candidate, no handle on the bar.
     expect(mapThings().filter((name) => /301동 앞|유회진|신양|학생회관/u.test(name))).toEqual([]);
     expect(screen.queryByRole('adjustable', { name: '시작 시각' })).toBeNull();
+    // P04 ticket 10: the list of questions says so too.
+    await user.press(screen.getByTestId('answer-pill'));
+    expect(within(screen.getByTestId('question-list')).getByRole('button', { name: /12:15 · 바꿈/u })).toBeVisible();
   });
 
   it("is read before a meal's mealSet, so that a shared one shows 파티 보기", async () => {

@@ -221,8 +221,8 @@ describe("the controls of a meet's answer", () => {
         clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
       },
     ]);
-    expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
-    expect(card().getByText('답이 없어도 12:15에 가면 돼요')).toBeVisible();
+    expect(card().getByText('민수에게 약속 초대를 보냈어요')).toBeVisible();
+    expect(card().getByText('12:15 제2공학관 · 수락하면 알려 드려요')).toBeVisible();
     expect(within(card().getByTestId('quest-steps')).getByText('302동 앞에서 만나기')).toBeVisible();
     expect(card().getByText('민수 · 아직 안 봄')).toBeVisible();
     expect(card().getByRole('button', { name: '닫기' })).toBeEnabled();

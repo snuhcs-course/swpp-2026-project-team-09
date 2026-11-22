@@ -41,7 +41,7 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-// A docked way's card is raised from a second turn's "지난 답 1개": two replies in one test.
+// Two replies in one test.
 jest.setTimeout(150000);
 
 let server: FakeServer;
@@ -70,7 +70,7 @@ function beside(): ReturnType<typeof within> {
 
 type User = Awaited<ReturnType<typeof askOnMap>>;
 
-// A way docks with nothing to read (P04 ticket 05): asked after a first way, so that "지난 답 1개" raises its card.
+// A way docks with nothing to read (P04 ticket 05), asked after a first way.
 async function askAfterWay(lookup: object): Promise<User> {
   const user = await askOnMap(server, WAY_LOOKUP_REPLY);
   server.on('POST /assistant/messages', { status: 200, body: replyOf(lookup) });
@@ -80,31 +80,22 @@ async function askAfterWay(lookup: object): Promise<User> {
   return user;
 }
 
-// Partitions: a late way and one on time, docked and raised. Expected values: the copies of boards q3 and q2, and the
-// decision that only a late way opens with its basis shown.
+// Partitions: a late way and one on time, docked. Expected values: the copies of boards q3 and q2. A way with nothing
+// to read stays docked, with no handle to raise it (board 10, P04 ticket 10); its basis is reached by its flag.
 describe('the basis of a way', () => {
-  it('docks a way that is late with the lateness on the map, and opens its basis on its own when raised', async () => {
-    const user = await askAfterWay(late);
+  it('docks a way that is late with the lateness on the map, its basis folded', async () => {
+    await askAfterWay(late);
 
     expect(mapThings()).toContain('13:05 도착 · 5분 늦어요');
     expect(card().queryByText('걸어서 15분 · 지금 12:50')).toBeNull();
-
-    await user.press(card().getByRole('button', { name: '지난 답 1개' }));
-
-    expect(card().getByText('걸어서 15분 · 지금 12:50')).toBeVisible();
-    expect(card().getByRole('button', { name: '근거 접기' })).toBeVisible();
   });
 
-  it('stays closed for a way on time, whose main button is "길 안내" until the leave-by notification is drawn', async () => {
-    const user = await askAfterWay(leave);
+  it('docks a way on time, whose main button is "길 안내" until the leave-by notification is drawn', async () => {
+    await askAfterWay(leave);
 
     expect(beside().getByRole('button', { name: '길 안내' })).toBeVisible();
     expect(mapThings()).toContain('12:45 나서기');
-
-    await user.press(card().getByRole('button', { name: '지난 답 1개' }));
-
     expect(card().queryByText('301동 → 24동 걸어서 15분')).toBeNull();
-    expect(card().getByRole('button', { name: '근거' })).toBeVisible();
   });
 });
 

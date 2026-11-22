@@ -33,10 +33,12 @@ import type { Lookup } from '@/api/lookup-types';
 import type { Refusal } from '@/api/refusal-types';
 import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
+import { now } from '@/clock';
 import type { ShownChatCard } from '@/api/quest-parts-types';
 import type { LibraryDone } from '@/library/cards/done';
 import type { Slot } from '@/library/cards/payloads';
 import { useAskApp } from './app-turn';
+import { type EarlierConversation, useConversations } from './conversations';
 import { useLetGo, useWaiting } from './let-go';
 import { shownText } from './shown-text';
 import { useProposalMade } from './proposal-made';
@@ -81,6 +83,8 @@ export interface ChatBubble {
   tapped?: Tapped;
   // The Quest its Proposal was made into, once 만들기 or the form made it.
   madeQuestId?: string;
+  // When it was added, in milliseconds: a question's is the time the list of questions shows (P04 ticket 10).
+  at?: number;
 }
 
 // How a library card ended: what it says in place of its buttons. It is kept with the chat, so that a card that
@@ -126,13 +130,19 @@ export interface Chat {
   send: (text: string, tapped?: Tapped) => void;
   // Sends the User's last message again, after a failure the Assistant may get over.
   retry: () => void;
-  // 새 대화: forgets the conversation, and a reply still on its way. The call it gives brings the conversation back
-  // while nothing new was said.
-  reset: () => () => void;
+  // 새 대화: keeps the conversation among the earlier ones and starts an empty one; a question still on its way is
+  // dropped (P04 ticket 10).
+  startNew: () => void;
+  // Takes up an earlier conversation again, by its id, keeping the current one among the earlier ones.
+  resume: (id: number) => void;
+  // The conversations kept beside the current one, the one left last first.
+  earlier: readonly EarlierConversation[];
   // 그만: takes back the question on its way, and drops its reply when it comes.
   stop: () => void;
   // Adds the app's own bubble, which no request sends.
-  addOwn: (bubble: OwnBubble) => void;
+  // `after`, the id of a bubble, puts it right after that one: a card of an earlier turn on screen adds to that turn
+  // (P04 ticket 10's review).
+  addOwn: (bubble: OwnBubble, after?: number) => void;
   // Adds a turn a card's button asked of the recalculation: its words as what was asked, and its answer as the reply.
   addRecalculated: (asked: string, answer: AnswerReply) => void;
   // A turn the app asks itself, answered without the model, such as a tap on a mark of the map: `asked` stands as the
@@ -224,7 +234,8 @@ export interface Bubbles {
   // What was said, as the next request sends it, without waiting for a render.
   said: { readonly current: readonly ChatBubble[] };
   show: (next: readonly ChatBubble[]) => void;
-  add: (bubble: NewBubble) => void;
+  // Adds at the end, or right after the bubble whose id is `after`.
+  add: (bubble: NewBubble, after?: number) => void;
 }
 
 function useBubbles(): Bubbles {
@@ -236,9 +247,11 @@ function useBubbles(): Bubbles {
     setBubbles(next);
   }, []);
   const add = useCallback(
-    (bubble: NewBubble): void => {
+    (bubble: NewBubble, after?: number): void => {
       nextId.current += 1;
-      show([...said.current, { ...bubble, id: nextId.current }]);
+      const added = { ...bubble, id: nextId.current, at: now().getTime() };
+      const at = after === undefined ? -1 : said.current.findIndex(({ id }) => id === after);
+      show(at < 0 ? [...said.current, added] : said.current.toSpliced(at + 1, 0, added));
     },
     [show],
   );
@@ -248,8 +261,8 @@ function useBubbles(): Bubbles {
 // The app's own bubbles, added after what was said, and the turns of a card's button.
 function useAddOwn(add: Bubbles['add'], takeBack: () => void): Pick<Chat, 'addOwn' | 'addRecalculated'> {
   const addOwn = useCallback(
-    ({ text, cards = [], done }: OwnBubble): void => {
-      add({ role: 'assistant', text, cards, mapButtons: [], proposal: null, failure: null, own: true, done });
+    ({ text, cards = [], done }: OwnBubble, after?: number): void => {
+      add({ role: 'assistant', text, cards, mapButtons: [], proposal: null, failure: null, own: true, done }, after);
     },
     [add],
   );
@@ -323,7 +336,8 @@ export function useChat(readContext: () => RequestContext): Chat {
   // Which conversation a reply belongs to: 새 대화 and 그만 start another, and a reply to the one before is dropped.
   const conversation = useRef(0);
   const { sent: roomsShown, ...cardsKept } = useCardsKept();
-  const { reset, stop, takeBack } = useLetGo({ said, show }, conversation, { setWaiting, waitingNow });
+  const { leave, stop, takeBack } = useLetGo({ said, show }, conversation, { setWaiting, waitingNow });
+  const conversations = useConversations(show, leave);
 
   // Asks the Assistant to answer the conversation as it stands, the User's message last.
   const ask = useCallback((): void => {
@@ -361,5 +375,5 @@ export function useChat(readContext: () => RequestContext): Chat {
   const askApp = useAskApp({ said, show, add }, conversation, setWaiting, takeBack);
   const proposalMade = useProposalMade(said, show);
 
-  return { bubbles, waiting, send, retry, reset, stop, ...own, askApp, ...cardsKept, proposalMade };
+  return { bubbles, waiting, send, retry, ...conversations, stop, ...own, askApp, ...cardsKept, proposalMade };
 }

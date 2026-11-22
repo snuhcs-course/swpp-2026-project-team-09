@@ -8,7 +8,6 @@
 import type { ReactElement } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { space } from '@/design-system';
-import { turnsOf } from '@/features/assistant/turn';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { setQuestOf } from '@/features/assistant/set-quest';
 import { keepsShown } from '@/features/assistant/use-shown-answer';
@@ -94,10 +93,9 @@ export function restOf(control: ChatSheetControl, after: readonly ChatBubble[]):
 
 type Raise = (earlier: boolean) => void;
 
-// "지난 답 N개" while the conversation has turns before this one, and the answer's note; each raises the card with
-// what it names.
+// The answer's note, which raises the card with what it names. Earlier questions are in the pill's list (P04 ticket
+// 10).
 function FoldedChips({
-  control,
   note,
   onRaise,
 }: {
@@ -105,17 +103,8 @@ function FoldedChips({
   note: string | null;
   onRaise: Raise;
 }): ReactElement {
-  const earlier = turnsOf(control.chat.bubbles).length - 1;
   return (
     <>
-      {earlier > 0 ? (
-        <DockChip
-          onPress={() => {
-            onRaise(true);
-          }}
-          words={`지난 답 ${String(earlier)}개`}
-        />
-      ) : null}
       {note === null ? null : (
         <DockChip
           onPress={() => {
@@ -165,7 +154,7 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
           words={offer.label}
         />
       ))}
-      {retry ? <DockChip disabled={waiting} onPress={control.chat.retry} words="다시 시도" /> : null}
+      {retry && control.latest ? <DockChip disabled={waiting} onPress={control.chat.retry} words="다시 시도" /> : null}
       {keep ? <DockChip disabled={choosing(control)} onPress={control.invitation.leave} words="그대로 두기" /> : null}
       <FoldedChips control={control} note={note} onRaise={onRaise} />
     </ScrollView>
@@ -177,7 +166,7 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
 function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement | null {
   const { line, offers, retry, note } = rest;
   const empty = line === null && offers.length === 0 && !retry && note === null;
-  if (empty && turnsOf(control.chat.bubbles).length < 2) {
+  if (empty) {
     return null;
   }
   return (
