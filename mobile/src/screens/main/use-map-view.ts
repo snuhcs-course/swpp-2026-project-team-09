@@ -20,6 +20,7 @@ import type { CardView } from '@/features/map/adapter';
 import { useMarkPresses } from '@/features/map/use-interest-marks';
 import type { MapAvatar, MapLine } from '@/map';
 import { useMarkOpening } from './answer/opened-mark';
+import { withMealMenu } from './answer-presses';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
 import { useAwaySeats } from './library/use-away-seats';
@@ -169,7 +170,7 @@ export function useMapView(
   const { howAbout } = chat;
   const shown = useAskingShown(drawn.answer, howAbout.point);
   const openMark = useMarkOpening(chat.openMark, map.camera, room.stage);
-  const plan = useAnswerMap(shown, map, room, people, chat.invitation, openMark);
+  const plan = useAnswerMap(shown, map, room, people, chat.invitation, withMealMenu(chat, openMark));
   const answer = useMadeSceneMap(chat, map, room, people, me, openMark) ?? plan ?? lookup;
   const unasked = invitation.shown || made.shown !== null;
   const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);

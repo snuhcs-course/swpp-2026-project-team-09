@@ -1,4 +1,4 @@
-# 32: A meal answer's route, fading, and choosing on the map
+# 34: A meal answer's route, fading, and choosing on the map
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
@@ -11,9 +11,9 @@ The rest of the map part of the answer screen's redesign (boards E1 and E2), aft
 
 - The route runs from where the User starts to the chosen place as a solid line, then on to the next fixed thing as a dotted line. Each leg carries its minutes. The start and the next thing are dark labels with their times ("10:45 301동", "15:30 302동 수업"). With nothing after, only the first leg is drawn.
 - A candidate is faded when it does not fit the band or when its walking is over thirty minutes. The chosen place is never faded. A faded tag can still be pressed.
-- The chosen place's label ends its second line with "메뉴 ›" in place of the "›" after its name. A press on the label opens the place's card, as today's pick does, until the menu card of the list lands.
+- The chosen place's label ends its second line with "메뉴 ›" in place of the "›" after its name. A press on the label raises the card to that restaurant's menu (`openMealMenu`, board E4).
 - Choosing another place pops its dot, and a ring spreads from it twice and stops. Reduced motion shows neither.
-- The camera keeps every candidate in view between the time bar and the card. Tags keep clear of Friends' faces as well as of other marks. A tag that cannot be placed leaves its number on its dot.
+- The camera keeps every candidate in view between the time bar and the card, and keeps the first answer's camera while another place is chosen, panning only to bring the chosen place in. The chosen label stays clear of the map's credit and over Friends' faces. Tags keep clear of Friends' faces as well as of other marks. A tag that cannot be placed leaves its number on its dot.
 
 ## Acceptance criteria
 

@@ -5,9 +5,13 @@
  ******************************************************************************/
 
 import { crowdedMealAnswer } from '@/api/mock/data/crowded-meal';
+import { ANSWER_SYMBOL_BOX } from '@/design-system';
+import { panToShow } from '@/features/assistant/answer-camera';
 import { drawingOf } from '@/features/assistant/answer-marks';
 import { withDots } from '@/features/assistant/meal-marks';
+import { inView } from '@/map';
 import { seen } from '../support/answer-marks';
+import { AREA, FIRST_CAMERA, positionAt, viewAt } from '../support/answer-view';
 
 // The crowded meal answer's map (the answer screen's redesign, boards E1 and E2): eleven restaurants between a Class
 // ending at 301동 at 10:45 and one at 302동 at 15:30.
@@ -61,5 +65,22 @@ describe('302동식당 chosen', () => {
     expect(seen(drawing, 'answer:pick').label).toMatchObject({ title: '302동식당', note: '11:30 · 걸음 2분' });
     expect(drawing.lines).toHaveLength(1);
     expect(seen(drawing, 'answer:leg:0').label).toMatchObject({ title: '2분' });
+  });
+});
+
+// Partitions: a chosen place inside the labels' area, and one below it.
+describe('the view a meal answer keeps while another place is chosen', () => {
+  const view = viewAt(FIRST_CAMERA);
+  const inside = positionAt(FIRST_CAMERA, { x: 200, y: 400 });
+  const below = positionAt(FIRST_CAMERA, { x: 200, y: AREA.bottom + 40 });
+
+  it('stays as it is when the chosen place is in its area', () => {
+    expect(panToShow(view, inside)).toBe(view);
+  });
+
+  it('moves at its zoom just enough to bring a place below its area in', () => {
+    const moved = panToShow(view, below);
+    expect(moved.camera.zoom).toBe(view.camera.zoom);
+    expect(inView(below, moved.camera, moved.size).y).toBeCloseTo(AREA.bottom - ANSWER_SYMBOL_BOX, 3);
   });
 });
