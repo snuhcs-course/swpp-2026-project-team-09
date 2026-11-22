@@ -33,7 +33,8 @@ The design of 2026-11-19 (`references/02-2-member-row-mock-up.png`), with 취소
 
 - The toasts after each action, 내보내기's `fromParty` path, and the hand-over that already asks.
 - The join requests on the same screen (`room-member-requests`).
-- Tests: `room-people` (:201, :213), `room-wireframe` (:294), `room-member-requests`, `me`, `friends-list` (`.integration`), `design-system/dialog.unit`, `icon.unit`, `catalogue.integration`. Tests that find these buttons by their visible words find them by their screen reader names.
+- Tests: `room-people` (:201, :213), `room-wireframe` (:294-295), `room-member-requests`, `me`, `friends-list` (`.integration`), `design-system/dialog.unit`, `icon.unit`, `catalogue.integration`. Tests that find these buttons by their visible words find them by their screen reader names.
+- `room-wireframe:295` gets the member by `getByRole('button', { name: /^김민준/u })` inside 멤버. Once the icons are named "김민준님 …", that matches three buttons; the query narrows to the row's own button.
 
 ## Acceptance criteria
 
@@ -42,7 +43,7 @@ The design of 2026-11-19 (`references/02-2-member-row-mock-up.png`), with 취소
 - [ ] 파티장 넘기기 still asks and hands over. (Integration test.)
 - [ ] 요청됨 shows the dimmed, disabled icon under its name; 수락 stays a text button. (Integration test.)
 - [ ] `usersPlus` and `userMinus` are in the icon set and the catalogue. (Unit test.)
-- [ ] The row, the three dialogs and the 요청됨 state on a phone with the mock build; the screens go to the orchestrator before the PR, and to 김태현. (Emulator.)
+- [ ] The row, the three dialogs and the 요청됨 state on a phone with the mock build; the screens go to the orchestrator before the PR, and to the design review. (Emulator.)
 - [ ] No native file changes; lint, format, and types pass on the app.
 
 ## Comments

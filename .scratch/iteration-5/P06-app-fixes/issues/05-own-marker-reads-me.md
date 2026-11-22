@@ -37,7 +37,7 @@ Decided 2026-11-22: option B of the three shown (`references/05-3-options-shown.
 
 - [ ] `MapPin kind="me"` draws the ring with "나" at both sizes, named "내 위치". (Unit test, which fails before the change.)
 - [ ] The main map, the answer map and the map check draw it, and a press on it still opens the User's card on the main map. (Integration tests.)
-- [ ] The map close up and at the overview, beside a Friend, on a phone with the mock build; the screens go to the orchestrator before the PR, and to 김태현. (Emulator.)
+- [ ] The map close up and at the overview, beside a Friend, on a phone with the mock build; the screens go to the orchestrator before the PR, and to the design review. (Emulator.)
 - [ ] No native file changes; lint, format, and types pass on the app.
 
 ## Comments

@@ -13,7 +13,7 @@ Received: "현재 메인화면 하단의 + 버튼이 파티 만들기로 이어�
 - The tabs are Expo Router `Tabs` (`mobile/src/app/(signed-in)/(tabs)/_layout.tsx:17-41`): `main`, `party`, `events`, `me`, with `backBehavior="firstRoute"` (:20) and our own `tabBar`.
 - The bar's five slots are in `screens/shell/tab-bar.tsx:20-26`: 지도, 파티, `{ route: null, icon: 'plus', label: '올리기' }`, 행사, 내 정보. The middle one pushes `/party-form` (:52-58); it came with iteration 4's P02 ticket 31 (PR 332).
 - The middle slot is `BottomNav`'s action (`design-system/bottom-nav.tsx:17-19`, `Action` at :68-81): a 44 pt navy circle, role button, never selected. A selected tab shows a `blue100` pill, navy, bold (:40-66).
-- The menu screen (`app/(signed-in)/menus.tsx` to `screens/menus/menus-screen.tsx`) slides up above the tabs (`ABOVE_TABS` in `app/(signed-in)/_layout.tsx:43-57`, `['menus', 'bottom']`) inside a `FullScreenPanel` closed by ✕ (:153-156). The only way in is a restaurant card's "메뉴 보기" (`main-screen.tsx:140-141` to `openMenus` in `map-bottom.tsx:66-69`, which pushes `/menus?date&meal&restaurant`).
+- The menu screen (`app/(signed-in)/menus.tsx` to `screens/menus/menus-screen.tsx`) slides up above the tabs (`ABOVE_TABS` in `app/(signed-in)/_layout.tsx:43-57`, `['menus', 'bottom']`). It is a `FullScreenPanel` closed by ✕ (`menus-screen.tsx:153-156`). The only way in is a restaurant card's "메뉴 보기" (`main-screen.tsx:140-141` to `openMenus` in `map-bottom.tsx:66-69`, which pushes `/menus?date&meal&restaurant`).
 - `MenusScreen` reads its params only as `useState`'s first values (:143-151), and `useScrollOnce` (:125) scrolls once.
 - There never was a 식단 tab: the 편의기능 stack had a 메뉴 tile until PR 197 (P13-02) made it the 공부공간 layer.
 - The tab tour points at four tabs by slot, leaving out 올리기 (`screens/shell/tab-tour.tsx:18-28`; `TOUR_STEPS = 4` in `features/tab-tour/rules.ts:11`). The catalogue draws the bar (`catalogue/composites.tsx:97-115`); `mobile/README.md` describes it (:434-437, :826-828, :1054).
@@ -35,6 +35,7 @@ As the mock-up draws it:
 - `main` stays the first route (`firstRoute`, back and the edge swipe rely on it).
 - The menu screen's own behaviour: days, meals, a restaurant scrolled to.
 - Tests: `shell` (:41-84), `main` (:55-101), `tab-tour` (:127-138), `menus-screen`, `dining-layer`, `android-stack` (:61-74, uses `/menus`), `catalogue` (`.integration`), `design-system/bottom-nav.unit` (:45-72), and the Maestro subflow `mobile/maestro/subflows/map.yaml` (waits for the text 지도 with `selected: true`).
+- The tests' router registers `'(signed-in)/menus'` (`__tests__/support/app.tsx:100`); it moves with the route.
 
 ## Acceptance criteria
 
@@ -43,7 +44,7 @@ As the mock-up draws it:
 - [ ] "메뉴 보기" on a restaurant's card switches to 식단 with that restaurant, today and the current meal, and again with another restaurant on a second press. (Integration test, which fails before the change.)
 - [ ] The 파티 tab's "+ 만들기" still opens 파티 만들기; back from 식단 goes to the map. (Integration tests.)
 - [ ] The tab tour points at the five tabs. (Integration test.)
-- [ ] The bar on the map and on 식단, and the "메뉴 보기" path, on a phone with the mock build; the screens go to the orchestrator before the PR, and to 김태현. (Emulator.)
+- [ ] The bar on the map and on 식단, and the "메뉴 보기" path, on a phone with the mock build; the screens go to the orchestrator before the PR, and to the design review. (Emulator.)
 - [ ] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
