@@ -33,6 +33,7 @@ import { KeyboardHeadline } from './keyboard-headline';
 import { MarkCard } from './mark-card';
 import { DockedAnswer, restOf } from './docked-answer';
 import { MarkRows } from './mark-rows';
+import { ProposalFlagRows } from './proposal-flag-rows';
 import type { Raising } from './raise-handle';
 import { ReplySteps } from './reply-steps';
 import { barOf, onScreenOf, planShown, TopBar, Words } from './reply-words';
@@ -195,9 +196,25 @@ interface OpenMarkProps {
   onClose: () => void;
 }
 
-// The card of the mark pressed on the map, while one is open and the keyboard is down: a mark of the Plan on screen.
+// The card of the mark pressed on the map, while one is open and the keyboard is down: a mark of the Plan on screen, or
+// the flag of the Proposal on screen, whose rows open the party form.
 function OpenMark({ control, stage, focus, onClose }: OpenMarkProps): ReactElement | null {
-  const { mark, closeMark, answer: shown } = control;
+  const { mark, closeMark, answer: shown, proposal } = control;
+  if (mark !== null && stage !== null && proposal !== null) {
+    const { proposals } = control.leaving;
+    return (
+      <MarkCard mark={mark} onClose={closeMark} stage={stage}>
+        <ProposalFlagRows
+          editable={proposals.makingOf(proposal.bubbleId) === 'ready'}
+          onEdit={() => {
+            closeMark();
+            proposals.edit(proposal.bubbleId, proposal.proposal);
+          }}
+          proposal={proposal.proposal}
+        />
+      </MarkCard>
+    );
+  }
   if (mark === null || stage === null || shown.answer === null || shown.plan === null) {
     return null;
   }
