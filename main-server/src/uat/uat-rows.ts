@@ -6,6 +6,7 @@
  ******************************************************************************/
 
 import { JoinPolicy, type Prisma, PrismaClient, QuestBoard } from '../generated/prisma/client.js';
+import { newFriendId } from '../users/friend-id.js';
 import { type Letter, UAT_ACCOUNT_LIST, type UatAccount } from './uat-accounts.js';
 import {
   type ClassSpec,
@@ -132,18 +133,27 @@ export async function emptyWhatUsersMade(prisma: PrismaClient): Promise<void> {
   );
 }
 
-// The Users that are not the accounts, such as the earlier UAT's and the demo's. A failure is told and does not stop
-// the preparation: they are in no UAT account's lists once the friendships are gone.
-export async function removeOtherUsers(prisma: PrismaClient, users: Users): Promise<string | null> {
-  const keep = Object.values(users);
+// The Users that are not the accounts, such as the earlier UAT's and the demo's, go before the accounts are written,
+// since the earlier UAT's accounts hold the same Friend IDs under other keys. One that cannot be deleted gives its
+// Friend ID up instead, and the failure is told without stopping the preparation: it is in no UAT account's lists once
+// the friendships are gone.
+export async function removeOtherUsers(prisma: PrismaClient): Promise<string | null> {
+  const others = { googleSubject: { notIn: UAT_ACCOUNT_LIST.map(({ key }) => key) } };
   try {
     await prisma.$transaction([
-      prisma.refreshToken.deleteMany({ where: { session: { userId: { notIn: keep } } } }),
-      prisma.session.deleteMany({ where: { userId: { notIn: keep } } }),
-      prisma.user.deleteMany({ where: { id: { notIn: keep } } }),
+      prisma.refreshToken.deleteMany({ where: { session: { user: others } } }),
+      prisma.session.deleteMany({ where: { user: others } }),
+      prisma.user.deleteMany({ where: others }),
     ]);
     return null;
   } catch (error) {
+    const holding = await prisma.user.findMany({
+      where: { ...others, friendId: { in: UAT_ACCOUNT_LIST.map(({ friendId }) => friendId) } },
+      select: { id: true },
+    });
+    await prisma.$transaction(
+      holding.map(({ id }) => prisma.user.update({ where: { id }, data: { friendId: newFriendId() } })),
+    );
     return `다른 계정을 지우지 못했어요 (진행에는 지장 없음): ${String(error).split('\n')[0] ?? ''}`;
   }
 }

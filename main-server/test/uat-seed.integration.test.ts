@@ -124,6 +124,24 @@ describe('setup: the events and the classes', () => {
 });
 
 describe('setup: a second run', () => {
+  // E's phone is in no later test, so E stands for an account that the earlier UAT held under another key.
+  it("takes the place of the earlier UAT's accounts, which hold the same Friend IDs under other keys", async () => {
+    const e = { googleSubject: 'uat-e' };
+    await stage.prisma.$executeRawUnsafe(`TRUNCATE TABLE quests, friendships, timetable_classes CASCADE`);
+    await stage.prisma.refreshToken.deleteMany({ where: { session: { user: e } } });
+    await stage.prisma.session.deleteMany({ where: { user: e } });
+    await stage.prisma.user.delete({ where: e });
+    await stage.prisma.user.create({
+      data: { googleSubject: 'uat-old', email: 'uat-old@uat.invalid', name: '예전 계정', friendId: 'UATE2345' },
+    });
+
+    await stage.setUp();
+
+    expect(await stage.prisma.user.count({ where: { googleSubject: 'uat-old' } })).toBe(0);
+    expect(await stage.prisma.user.findUniqueOrThrow({ where: { friendId: 'UATE2345' } })).toMatchObject(e);
+    expect(await stage.prisma.user.count()).toBe(7);
+  });
+
   it('keeps the phones signed in, and gives the same', async () => {
     await stage.setUp();
     expect(await stage.friendsOf('A2')).toEqual(['박지호', '윤서아']);

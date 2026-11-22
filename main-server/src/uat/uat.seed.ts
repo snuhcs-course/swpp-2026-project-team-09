@@ -35,8 +35,8 @@ export async function setUpUat(prisma: PrismaClient, redis: Redis | null, now: D
   const data = prepared(days);
   const place = await places(prisma);
   await emptyWhatUsersMade(prisma);
+  const warning = await removeOtherUsers(prisma);
   const users = await writeUsers(prisma, data.masterSwitchOn, now);
-  const warning = await removeOtherUsers(prisma, users);
   await writeEvents(prisma, place, days, data.events);
   await writeFriendships(prisma, users, now, data.friends);
   await writeQuests(prisma, place, users, now, data.quests);
