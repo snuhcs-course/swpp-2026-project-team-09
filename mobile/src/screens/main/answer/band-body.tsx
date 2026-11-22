@@ -12,7 +12,7 @@ import { Gesture, GestureDetector, type PanGesture } from 'react-native-gesture-
 import type { MealInput, TimeBand } from '@/api/assistant-types';
 import { color, radius, space, text } from '@/design-system';
 import { bandMoved, bandStepped, movingWords } from '@/features/assistant/band-move';
-import { bandEdgesOf, clashes, clockOf, shareOf, type Stretch } from '@/features/assistant/time-band';
+import { bandEdgesOf, clashes, clockOf, edgeSharesOf, shareOf, type Stretch } from '@/features/assistant/time-band';
 
 // The time band on its track, which a drag on its lanes moves whole (P02 ticket 25).
 
@@ -25,10 +25,13 @@ export function percent(share: number): DimensionValue {
   return `${share * 100}%`;
 }
 
-// The part of the track a stretch covers, as its left and its width.
+const onTrack = (share: number): number => Math.min(1, Math.max(0, share));
+
+// The part of the track a stretch covers, as its left and its width; a part outside the range, as on a folded track
+// (P04 ticket 14), is not drawn.
 export function placeOf(stretch: Stretch, range: Stretch): { left: DimensionValue; width: DimensionValue } {
-  const start = shareOf(stretch.startAt, range);
-  return { left: percent(start), width: percent(shareOf(stretch.endAt, range) - start) };
+  const start = onTrack(shareOf(stretch.startAt, range));
+  return { left: percent(start), width: percent(onTrack(shareOf(stretch.endAt, range)) - start) };
 }
 
 // What a lane draws red under the band: the parts of its busy stretches inside the window the User fixed, and none
@@ -157,18 +160,25 @@ interface EndsProps {
 }
 
 // The ends under the track: the range's beside the lanes' names, `margin` wide, or folded the busy stretches that
-// bound the span; a tick stands in place of its side's.
+// bound the span, each under its own time (P04 ticket 14); a tick stands in place of its side's.
 export function Ends({ band, folded, margin, tick }: EndsProps): ReactElement {
   const { before, after } = folded
     ? bandEdgesOf(band)
     : { before: clockOf(band.range.startAt), after: clockOf(band.range.endAt) };
+  const at = folded ? edgeSharesOf(band, band.range) : { before: 0, after: 1 };
   const end = (words: string): ReactElement => (
     <Text numberOfLines={1} style={styles.end}>
       {words}
     </Text>
   );
   return (
-    <View style={[styles.ends, !folded && { marginLeft: margin }]}>
+    <View
+      style={[
+        styles.ends,
+        !folded && { marginLeft: margin },
+        folded && { paddingLeft: percent(at.before), paddingRight: percent(1 - at.after) },
+      ]}
+    >
       {tick?.side === 'left' ? tick.node : end(before)}
       {tick?.side === 'right' ? tick.node : end(after)}
     </View>

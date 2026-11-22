@@ -155,10 +155,10 @@ function beside(): ReturnType<typeof within> {
 }
 
 // Partitions: 그대로 두기 while a meal's 바꾸기 is on its way. From PR 444's review: the choice beside a Quest already set
-// waits for 바꾸기's reply, and a Plan made wins the map.
+// waits for 바꾸기's reply, and a Plan made wins the map. Since PR 457 a meal is changed in place, as a meeting is.
 describe('그대로 두기 while 바꾸기 is on its way', () => {
   it('takes no press, and the Plan made is drawn once it comes', async () => {
-    server.on('POST /plans', { status: 201, body: PLAN_QUEST, afterMs: 3000 });
+    server.on(`PUT /plans/${LUNCH.questId}`, { status: 200, body: PLAN_QUEST.quest, afterMs: 3000 });
     const user = await askOnMap(server, LUNCH_REPLY);
 
     await user.press(beside().getByRole('button', { name: '바꾸기' }));

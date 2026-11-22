@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -14,7 +15,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { screen } from './support/app';
 import { card, mapThings, timeBar } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
-import { body, holdBody, holdLanes, layTrack } from './support/band-move';
+import { body, holdBody, holdLanes, layTrack, unfold } from './support/band-move';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT } from './support/lists';
@@ -70,6 +71,7 @@ async function meetMinSu(): Promise<void> {
   const user = await openMain();
   await press(user, row(MIN_SU));
   await meetFromCard(user);
+  await unfold();
   await layTrack(390);
 }
 

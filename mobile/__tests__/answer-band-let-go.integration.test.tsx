@@ -9,12 +9,13 @@
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
 import { MEET_ANSWER } from '@/api/mock/data/meet-answer';
+import type { TimeBand } from '@/api/assistant-types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { askOnMap, card, mapThings, timeBar } from './support/answer-map';
-import { layBand, recalculations } from './support/answer-correct';
-import { body, dragBody, layTrack, stepBody } from './support/band-move';
+import { layBand, pointsFor, recalculations } from './support/answer-correct';
+import { body, dragBody, layTrack, stepBody, unfold } from './support/band-move';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT, layStage } from './support/lists';
@@ -50,6 +51,8 @@ const FIRST_PICK = '302동 앞 · 12:15 만남';
 const SECOND = '후보 2 · 301동 앞 · 12:18';
 const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요';
 
+const MEAL_BAND: TimeBand | undefined = MEAL_ANSWER.plans[0]?.band;
+
 let server: FakeServer;
 
 beforeEach(async () => {
@@ -70,12 +73,13 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Asks "만나고 싶다" from 민수's card and lays the band's track out.
+// Asks "만나고 싶다" from 민수's card, unfolds the bar to the band's whole range, and lays the band's track out.
 async function meetMinSu(): Promise<User> {
   const user = await openMain();
   await layStage(390, 760);
   await press(user, row(MIN_SU));
   await meetFromCard(user);
+  await unfold();
   await layTrack(390);
   return user;
 }
@@ -175,14 +179,14 @@ describe("a screen reader's step of the band", () => {
   });
 });
 
-// Partitions: a meal's band, whose track is laid 240 wide over its range of 11:30 to 13:30, two points a minute.
+// Partitions: a meal's band, whose folded track is laid 240 wide over the free time around its span (P04 ticket 14).
 describe("a meal's band let go", () => {
   it('asks the meal again from 12:25 for a drag of ten minutes, and keeps the place before as the outline', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
     await askOnMap(server, MEAL_ANSWER_REPLY);
     await layBand();
 
-    await dragBody(20);
+    await dragBody(pointsFor(10, MEAL_BAND));
 
     expect(recalculations(server)).toEqual([
       {
