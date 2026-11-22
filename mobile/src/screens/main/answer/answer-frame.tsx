@@ -158,13 +158,13 @@ interface CardState {
   list: QuestionsOpen;
 }
 
-// Whether the card is raised, and whether the list of questions is open under the pill.
-function useCardState(): CardState {
-  const [raised, setRaised] = useState(false);
+// Whether the card is raised, which the control holds so that a press on the map raises it too, and whether the list
+// of questions is open under the pill.
+function useCardState({ raised, setRaised }: ChatSheetControl['card']): CardState {
   const [open, setOpen] = useState(false);
   const lower = useCallback((): void => {
     setRaised(false);
-  }, []);
+  }, [setRaised]);
   const toggle = useCallback((): void => {
     setOpen((last) => !last);
   }, []);
@@ -250,7 +250,7 @@ function Framed(props: FramedProps): ReactElement {
   const { keep } = control.howAbout;
   const title = control.howAbout.title;
   const leave = title === null ? close : keep;
-  const { raised, setRaised, lower, list } = useCardState();
+  const { raised, setRaised, lower, list } = useCardState(control.card);
   const back = list.open ? list.close : control.mark === null ? (raised ? lower : leave) : control.closeMark;
   useBackToClose(useIsFocused(), profileShown ? profile.hide : back, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);

@@ -44,3 +44,6 @@ After ticket 18, "방금 만든 파티 19시로" after 만들기 gets no second 
 
 - Agent time: about 22 minutes. This is an estimate: gaps under 5 minutes between transcript entries, summed. It includes drafting ticket 31's case table while this ticket's test runs waited for a slot.
 - Tokens: input 26,351,662 (cache reads 26,091,277, cache writes 260,149, uncached 236); output 102,656. Without cache reads, 260,385.
+- Review round (keeping the step's own time and Place): about 7 minutes more, about 29 minutes in all, estimated the same way.
+- Tokens of that round: input 9,253,887 (cache reads 9,221,603, cache writes 32,244, uncached 40); output 25,684.
+- Tokens in all: input 35,605,549 (cache reads 35,312,880, cache writes 292,393, uncached 276); output 128,340. Without cache reads, 292,669.

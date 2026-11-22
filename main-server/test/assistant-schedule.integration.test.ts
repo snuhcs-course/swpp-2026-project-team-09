@@ -100,8 +100,9 @@ describe("The User's day asked about", () => {
     expect(stage.model.toolResults()[0]).toMatchObject({ classes: [], quests: [{ ref: meeting, kind: 'meet' }] });
     const { lookup } = replySchema.parse(response.body);
     expect(lookup?.steps).toHaveLength(1);
+    // A meeting the asker leads, made from a meet's Plan, is changed in place for its people (P05 ticket 31).
     expect(lookup?.kept).toMatchObject([
-      { questId: meeting, kind: 'meet', people: [{ name: '민수', answer: 'waiting' }], mine: true, changeable: false },
+      { questId: meeting, kind: 'meet', people: [{ name: '민수', answer: 'waiting' }], mine: true, changeable: true },
     ]);
   });
 });

@@ -30,6 +30,7 @@ import {
   SIDES,
   stopDraft,
   SYMBOL_ORDER,
+  withOpenMarks,
 } from './answer-groups';
 import { type LabelView, placeLabels, type Unplaced, UPRIGHT_REACH } from './answer-labels';
 import { routeLineId } from './answer-walks';
@@ -115,6 +116,8 @@ export interface SceneSetting {
   kept?: KeptQuest | null;
   // The kind of food on screen, whose candidates stand out; left out, none.
   kind?: Cuisine | null;
+  // Every mark opens something at a press, so each title ends with "›"; left out, none.
+  opens?: boolean;
 }
 
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
@@ -271,12 +274,12 @@ export function drawingOfScene(
   view: LabelView | null = null,
   setting: SceneSetting = BARE,
 ): AnswerDrawing {
-  const drafts = [
+  const drafts = withOpenMarks(setting.opens === true, [
     ...personDrafts(scene, setting.standings),
     ...scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
     ...flagDrafts(scene),
     ...keptDrafts(setting.kept),
-  ];
+  ]);
   const placed = placeAll(drafts, view).toSorted(
     (one, other) =>
       byGroup(DRAW_ORDER)(one.draft, other.draft) || drafts.indexOf(one.draft) - drafts.indexOf(other.draft),

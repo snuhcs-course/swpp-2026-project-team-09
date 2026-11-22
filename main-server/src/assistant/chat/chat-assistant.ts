@@ -38,6 +38,7 @@ import { type PlanAnswersService } from '../plan-answers.service.js';
 import { planNewQuest } from '../recruiting/new-quest-tools.js';
 import { planQuests, RECRUITING_RULES } from '../recruiting/recruiting-tools.js';
 import { answeringOptions, type LibraryServices, libraryTools } from '../library/library-tools.js';
+import { CANCEL_RULES, proposeCancel } from '../lookup/cancel-quest.js';
 import { DAY_RULES, findDay } from '../lookup/day-tools.js';
 import { findFriend, FRIEND_RULES } from '../lookup/friend-tools.js';
 import { findMenu, MENU_RULES } from '../lookup/menu-tools.js';
@@ -184,7 +185,7 @@ function plannedOnMap(
     return place === null ? null : pointOf(place);
   };
   const earlier = ({ presented }: ToolContext): ReplyStep[] => bookingSteps(presented, kwanjeong());
-  const planned = mealsAndEvents(plans, options.drawsEvents === true, earlier);
+  const planned = mealsAndEvents(plans, options.drawsEvents === true, earlier, freeTime.days);
   if (options.drawsMeets !== true) {
     return planned;
   }
@@ -195,6 +196,7 @@ function mealsAndEvents(
   plans: PlanAnswersService,
   drawsEvents: boolean,
   earlier: (context: ToolContext) => ReplyStep[],
+  days: FreeTimeServices['days'],
 ): { rules: string[]; tools: Record<string, Tool> } {
   const { meals, events, quests } = plans;
   if (!drawsEvents) {
@@ -206,13 +208,13 @@ function mealsAndEvents(
       planMeal: planMeal(meals, earlier),
       planEvents: planEvents(events),
       planQuests: planQuests(quests),
-      planNewQuest: planNewQuest(plans),
+      planNewQuest: planNewQuest(plans, days),
     },
   };
 }
 
 // An app that draws answers also gets the Lookups drawn on the map: the way to a Place, a Restaurant's menu, where a
-// Friend is, a day's Classes, and the Tutorial Quests in order.
+// Friend is, a day's Classes, and the Tutorial Quests in order; and the cancelling of a Quest found on its day.
 function withLookups(
   planned: { rules: string[]; tools: Record<string, Tool> },
   { lookups }: ChatAssistantServices,
@@ -222,13 +224,23 @@ function withLookups(
     return planned;
   }
   return {
-    rules: [...planned.rules, WAY_RULES, MENU_RULES, FRIEND_RULES, DAY_RULES, TUTORIAL_ORDER_RULES, QUEST_WAY_RULES],
+    rules: [
+      ...planned.rules,
+      WAY_RULES,
+      MENU_RULES,
+      FRIEND_RULES,
+      DAY_RULES,
+      CANCEL_RULES,
+      TUTORIAL_ORDER_RULES,
+      QUEST_WAY_RULES,
+    ],
     tools: {
       ...planned.tools,
       findWay: findWay(lookups.ways, lookups.tutorial),
       findMenu: findMenu(lookups.menus),
       findFriend: findFriend(lookups.friends),
       findDay: findDay(lookups.days),
+      proposeCancel: proposeCancel(lookups.cancels),
       findTutorialOrder: findTutorialOrder(lookups.tutorial),
     },
   };

@@ -10,6 +10,7 @@
  ******************************************************************************/
 
 import { FriendViewService } from '../../friends/friend-view.service.js';
+import { type ReplyOffer } from '../dto/assistant-messages.dto.js';
 import { type PublishedGlobalEventDto } from '../../global-events/dto/global-event.dto.js';
 import { GlobalEventsService } from '../../global-events/global-events.service.js';
 import { JoinPolicy } from '../../generated/prisma/client.js';
@@ -23,6 +24,7 @@ import { type UserDayService } from '../free-time/user-day.service.js';
 import { changeMade } from './made-party-change.js';
 import { type MadePartyService } from './made-party.js';
 import { type FieldFailures, type Input, input, isField } from './propose-quest-input.js';
+import { offerPicks, PICK_NOTE, proposalPicks } from './pick-offers.js';
 import { proposedAnswer, refusedAnswer } from './proposed-answer.js';
 import { madeQuestIdOf, type ProposalFriend, type ProposalPlace, type QuestProposal } from '../proposal.js';
 
@@ -60,8 +62,14 @@ async function listedPlace(placeId: string, places: PlacesService): Promise<Prop
   return place === undefined ? null : { id: place.id, name: place.name, booking: await facilityBookingOf(place) };
 }
 
+// A Place tapped on the map is taken too, as a pick of 지도에서 고르기 sends it (P05 ticket 24).
 async function placeOf(placeId: string, context: ToolContext, places: PlacesService): Promise<Checked<ProposalPlace>> {
-  if (!accepted(context, 'place', placeId, context.shown?.place ? [context.shown.place.id] : [])) {
+  const { tapped } = context.context;
+  const seen = [
+    ...(context.shown?.place ? [context.shown.place.id] : []),
+    ...(tapped?.kind === 'place' ? [tapped.placeId] : []),
+  ];
+  if (!accepted(context, 'place', placeId, seen)) {
     return { failure: UNRETURNED };
   }
   const place = await listedPlace(placeId, places);
@@ -312,7 +320,11 @@ export function proposeQuest(services: ProposeQuestServices): Tool {
       }
       const checked = await proposalOf(given, context, services);
       if ('failures' in checked) {
-        return refusedAnswer(checked.failures, context.presented);
+        const refused = refusedAnswer(checked.failures, context.presented);
+        const { userId, now } = context;
+        const picks = (): Promise<ReplyOffer[]> =>
+          proposalPicks(checked.failures, given.startsAt, { userId, now, days: services.days });
+        return (await offerPicks(context, picks)) ? { ...refused, note: PICK_NOTE } : refused;
       }
       context.presented.proposal = checked.proposal;
       return proposedAnswer(checked.proposal, context.userId, { days: services.days, presented: context.presented });

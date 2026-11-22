@@ -30,6 +30,7 @@ import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use
 import { type ShownAnswer, useShownAnswer } from '@/features/assistant/use-shown-answer';
 import { type ShownLookup, type StartGuidance, useShownLookup } from '@/features/assistant/use-shown-lookup';
 import { openPost } from '../party/post-card';
+import { type CardRaise, useCardRaise } from './answer/card-raise';
 import { type MarkOpening, useOpenedMark } from './answer/opened-mark';
 import type { CardLeaving } from './chat-card-actions';
 import { useContextChat, type Where } from './use-context-chat';
@@ -51,6 +52,8 @@ export interface ChatSheetControl extends Omit<KeptConversation, 'chat'>, MarkOp
   lookup: ShownLookup;
   // What became of each reply's Plan, for the list of questions.
   outcomes: PlanOutcomes;
+  // Whether the frame's card is raised, which a press on a Lookup's mark on the map does too.
+  card: CardRaise;
   // What was pressed on the map and is open in its card, which every request carries from then on; null for nothing.
   setTapped: (tapped: Tapped | null) => void;
   // The map's visible area at rest, which every request carries as `viewport`; null before the map is ready.
@@ -128,6 +131,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
     },
     ...onScreen,
     lookup: useShownLookup(chat.bubbles, start, kept.hide),
+    card: useCardRaise(kept.framed),
     ...useOpenedMark(chat.bubbles, kept.framed),
     ...pressing,
   };

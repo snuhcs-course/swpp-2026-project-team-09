@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -11,7 +12,9 @@ import { defineTool, noneFound, type Tool, type ToolContext } from '../feature.j
 import { clockTime, dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
 import { koreaDate } from '../korea-time.js';
 import { othersText } from '../others-text.js';
+import { type UserDayService } from '../free-time/user-day.service.js';
 import { type PlanAnswersService } from '../plan-answers.service.js';
+import { offerPicks, PICK_NOTE, PICK_PLACE, pickTime } from '../tools/pick-offers.js';
 import { CAPACITY_MIN } from './new-quest-answer.js';
 
 // A new recruiting Quest planned on the map, for an app that draws it (ADR 0009): the server decides its Place when the
@@ -117,7 +120,8 @@ function planWords({ title, place, startAt, togetherMinutes, parts, candidates }
   };
 }
 
-export function planNewQuest(plans: PlanAnswersService): Tool {
+// `days`: the asker's day, whose Free Time the time wheel marks when the User must say when (P05 ticket 24).
+export function planNewQuest(plans: PlanAnswersService, days: Pick<UserDayService, 'itemsOn'>): Tool {
   return defineTool({
     description:
       "Plans a new recruiting 파티 (an Open Quest) the User would make: for a Global Event at its Place, or for an activity at the Place the User named or where the 파티 a search returned for it all meet. The server decides the time (the one named, or the earliest everyone can be there rounded up to 10 minutes), each person's way, and the Friends free then, and the app draws the plan with its button to make it. Answers result 'planned' with the plan's title, place, start, stayMinutes, people, capacity, and the Friends who could come; 'needs-place' or 'needs-time' when the User must say where or when; or 'none' with the reason.",
@@ -130,13 +134,17 @@ export function planNewQuest(plans: PlanAnswersService): Tool {
       refuseUnseen(context, given);
       const placeId = given.globalEventId === undefined ? await placeOf(plans, userId, given, now) : null;
       if (given.globalEventId === undefined && placeId === null) {
+        const shown = await offerPicks(context, () => Promise.resolve([PICK_PLACE]));
         return {
           result: 'needs-place',
           reason: 'The 파티 of the search meet at different Places, or none was given. Ask the User where.',
+          ...(shown ? { note: PICK_NOTE } : {}),
         };
       }
       if (given.globalEventId === undefined && given.time === undefined && given.date !== koreaDate(now)) {
-        return { result: 'needs-time', reason: 'A 파티 on another day needs a time. Ask the User when.' };
+        const shown = await offerPicks(context, async () => [await pickTime(days, userId, given.date, now)]);
+        const reason = 'A 파티 on another day needs a time. Ask the User when.';
+        return { result: 'needs-time', reason, ...(shown ? { note: PICK_NOTE } : {}) };
       }
       const at = { now, location: request.location };
       const first = inputOf(userId, given, placeId, given.friendIds ?? []);

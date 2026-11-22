@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Lookup } from '@/api/lookup-types';
@@ -11,6 +12,7 @@ import { WAY_LOOKUP } from '@/api/mock/data/way-lookup';
 import { isLookup } from '@/api/server/lookup-answers';
 import { color } from '@/design-system';
 import { type AnswerDrawing, drawingOfScene } from '@/features/assistant/answer-marks';
+import { LOOKUP_SETTING } from '@/features/assistant/study-area';
 import late from '@/api/mock/data/way-lookups/late.json';
 import leave from '@/api/mock/data/way-lookups/leave.json';
 import shuttle from '@/api/mock/data/way-lookups/shuttle.json';
@@ -54,6 +56,18 @@ describe('the drawing of a way to a Place (q1)', () => {
     expect(seen(drawing, 'answer:me')).toMatchObject({ symbol: { type: 'me' }, label: ME });
     expect(drawing.lines.map(({ style }) => style)).toEqual([WALK]);
     expect(ids(drawing)).toEqual(['answer:me', 'answer:pick']);
+  });
+
+  // P04 ticket 22: each of a Lookup's marks raises its card at a press, and says so with "›" after its title; its
+  // name, which a screen reader says, stays as it was.
+  it('ends every title with "›" as a Lookup draws it', () => {
+    const opens = drawingOfScene(WAY_LOOKUP.scene, null, LOOKUP_SETTING);
+
+    expect(seen(opens, 'answer:pick')).toMatchObject({
+      name: '문화관(73동) · 걸어서 18분',
+      label: label('below', 'pick', '문화관(73동) ›', { line: '걸어서 18분' }),
+    });
+    expect(seen(opens, 'answer:me')).toMatchObject({ label: label('right', 'person', '나 ›') });
   });
 });
 

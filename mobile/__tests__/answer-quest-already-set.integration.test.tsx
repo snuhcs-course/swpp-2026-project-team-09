@@ -132,8 +132,16 @@ describe('an answer beside a lunch the User holds alone', () => {
 
     expect(dock().getByText('12:16 302동식당 점심을 그대로 뒀어요')).toBeVisible();
     expect(server.received('POST /plans')).toHaveLength(0);
-    // P04 ticket 10: the list of questions says so too.
+  });
+
+  // P04 ticket 10.
+  it('says in the list of questions that the lunch was left as it is', async () => {
+    const user = await askOnMap(server, replyWith(OWN));
+    await user.press(dock().getByRole('button', { name: '그대로 두기' }));
+    await pass(300);
+
     await user.press(screen.getByTestId('answer-pill'));
+
     expect(within(screen.getByTestId('question-list')).getByRole('button', { name: /· 그대로 둠/u })).toBeVisible();
   });
 });

@@ -1,7 +1,7 @@
 # 17: The Assistant knows the User's Quests, answers from them, and changes them in place
 
 Parent: [P05 spec](../spec.md)
-Status: ready-for-agent (the case table was accepted with the amendments below; slice 1 is designed here)
+Status: done
 Blocked by: [16](16-own-meal-quest-set-aside.md), whose set-aside this widens.
 
 Native files: none. Releases: the main server (with a migration) and an app OTA update (P04 ticket 17 draws 바꾸기 / 그대로 두기).
