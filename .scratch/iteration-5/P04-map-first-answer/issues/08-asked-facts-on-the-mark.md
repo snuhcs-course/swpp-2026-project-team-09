@@ -30,3 +30,10 @@ A menu, a price, opening hours, and an event's name with its start and end are r
 - [ ] An event reply: the first event's flag shows its name and "19:30–21:00"; the others are numbered flags; the bar shows the event's time. (Integration test.)
 - [ ] A menu and an event on a phone with the mock build. (Emulator.)
 - [ ] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 15 minutes (an estimate; one Opus 5.5 session that also built tickets 06, 07, and 09, split by time).
+- Tokens: about 25,000 output; input about 17.0 million, of which about 16.9 million cache reads, 40,000 cache writes, and 80 uncached (the session's totals split by the same share).
