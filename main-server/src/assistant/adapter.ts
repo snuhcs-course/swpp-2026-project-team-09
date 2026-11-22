@@ -35,7 +35,7 @@ import {
 } from 'ai';
 import { withApprovalLine } from './approval-line.js';
 import { type ChatMessage, type Feature, type FeatureReply, type Request, type ToolContext } from './feature.js';
-import { FoundIds } from './found-ids.js';
+import { foundWithMentions } from './mentions.js';
 import { isOverload, limitOf, providerOf, waited } from './provider-failures.js';
 import { keptRefusal, lookupBeside, textBeside } from './refusals/refusals.js';
 import { FIXED_SENTENCE, wordlessText } from './wordless-reply.js';
@@ -289,7 +289,7 @@ export async function runFeature(
   const context: ToolContext = {
     ...asker,
     capabilities: new Set(asker.capabilities),
-    found: new FoundIds(),
+    found: foundWithMentions(asker.context.mentions),
     shown: lastShown(messages),
     presented: { mapButtons: [], cards: [], proposal: null, answer: null, lookup: null, refusal: null },
     judged: new Map(),

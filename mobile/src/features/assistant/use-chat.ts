@@ -30,6 +30,7 @@ import {
   sentProposalOf,
 } from '@/api/assistant-types';
 import type { Lookup } from '@/api/lookup-types';
+import type { Mention } from '@/api/mention-types';
 import type { Refusal } from '@/api/refusal-types';
 import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
@@ -40,6 +41,7 @@ import type { Slot } from '@/library/cards/payloads';
 import { useAskApp } from './app-turn';
 import { type EarlierConversation, useConversations } from './conversations';
 import { useLetGo, useWaiting } from './let-go';
+import { withSaidOf } from './mentions';
 import { shownText } from './shown-text';
 import { useProposalMade } from './proposal-made';
 
@@ -81,6 +83,8 @@ export interface ChatBubble {
   // What a User's message was said of by a press, such as a Friend picked from a question: the requests that send it
   // last carry it as `tapped`, 다시 시도's included, and no later one does.
   tapped?: Tapped;
+  // The Friends a User's message mentions with "@", which the requests that send it last carry.
+  mentions?: readonly Mention[];
   // The Quest its Proposal was made into, once 만들기 or the form made it.
   madeQuestId?: string;
   // When it was added, in milliseconds: a question's is the time the list of questions shows (P04 ticket 10).
@@ -127,7 +131,7 @@ export interface Chat {
   bubbles: readonly ChatBubble[];
   // While the Assistant works on the User's last message: the "···" bubble, and nothing more is sent.
   waiting: boolean;
-  send: (text: string, tapped?: Tapped) => void;
+  send: (text: string, tapped?: Tapped, mentions?: readonly Mention[]) => void;
   // Sends the User's last message again, after a failure the Assistant may get over.
   retry: () => void;
   // 새 대화: keeps the conversation among the earlier ones and starts an empty one; a question still on its way is
@@ -135,7 +139,7 @@ export interface Chat {
   startNew: () => void;
   // A message from the main map: keeps the conversation among the earlier ones and sends the message as a new one's
   // first (P04 ticket 33).
-  sendNew: (text: string, tapped?: Tapped) => void;
+  sendNew: (text: string, tapped?: Tapped, mentions?: readonly Mention[]) => void;
   // Takes up an earlier conversation again, by its id, keeping the current one among the earlier ones.
   resume: (id: number) => void;
   // The conversations kept beside the current one, the one left last first.
@@ -211,11 +215,6 @@ export function messagesToSend(
 }
 
 type NewBubble = Omit<ChatBubble, 'id'>;
-
-function withTapped(context: RequestContext, bubbles: readonly ChatBubble[]): RequestContext {
-  const tapped = bubbles.findLast(({ role }) => role === 'user')?.tapped;
-  return tapped === undefined ? context : { ...context, tapped };
-}
 
 // The Assistant's bubble for the conversation: its reply, or the failure.
 async function answerTo(messages: ChatMessage[], context: RequestContext): Promise<NewBubble> {
@@ -345,7 +344,7 @@ export function useChat(readContext: () => RequestContext): Chat {
   const ask = useCallback((): void => {
     const asked = conversation.current;
     setWaiting(true);
-    void answerTo(messagesToSend(said.current, roomsShown.current), withTapped(context.current(), said.current)).then(
+    void answerTo(messagesToSend(said.current, roomsShown.current), withSaidOf(context.current(), said.current)).then(
       (answer) => {
         if (asked === conversation.current) {
           add(answer);
@@ -357,9 +356,9 @@ export function useChat(readContext: () => RequestContext): Chat {
 
   // A message while a reply is on its way takes that question back first.
   const send = useCallback(
-    (text: string, tapped?: Tapped): void => {
+    (text: string, tapped?: Tapped, mentions?: readonly Mention[]): void => {
       takeBack();
-      add({ role: 'user', text, cards: [], mapButtons: [], proposal: null, failure: null, tapped });
+      add({ role: 'user', text, cards: [], mapButtons: [], proposal: null, failure: null, tapped, mentions });
       ask();
     },
     [add, ask, takeBack],

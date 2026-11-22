@@ -22,6 +22,7 @@ import { router } from 'expo-router';
 import { type ReactElement, type ReactNode, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { Mention } from '@/api/mention-types';
 import { now } from '@/clock';
 import { space } from '@/design-system';
 import { restoreOf } from '@/features/assistant/restore';
@@ -59,6 +60,7 @@ import { TutorialList } from './tutorial/tutorial-list';
 import { TutorialSheet } from './tutorial/tutorial-sheet';
 import { TutorialStartButton } from './tutorial/tutorial-start-button';
 import type { UnaskedCards } from './use-map-view';
+import { useMentionFriends } from './use-mentions';
 import type { TutorialFlow } from './tutorial/use-tutorial-flow';
 import type { TutorialPinTarget } from './tutorial/use-tutorial-pin';
 
@@ -79,10 +81,12 @@ function useKeyboardLift(framed: boolean): { lift: number; keyboardUp: boolean }
 }
 
 // A send puts the keyboard down, so that the frame's card shows the reply.
-function sendWithKeyboardDown(send: (text: string) => void): (text: string) => void {
-  return (text) => {
+function sendWithKeyboardDown(
+  send: ChatSheetControl['chat']['send'],
+): (text: string, mentions?: readonly Mention[]) => void {
+  return (text, mentions) => {
     Keyboard.dismiss();
-    send(text);
+    send(text, undefined, mentions?.length === 0 ? undefined : mentions);
   };
 }
 
@@ -231,6 +235,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const send = sendWithKeyboardDown(chat.framed ? chat.chat.send : chat.chat.sendNew);
   const action = answerActionOf(chat);
   const [empty, setEmpty] = useState(true);
+  const mentionFriends = useMentionFriends();
   return (
     <>
       {guided ? null : (
@@ -255,6 +260,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
             onEmpty={setEmpty}
             beside={besideOf(chat, action, keyboardUp)}
             inCard={chat.framed}
+            friends={mentionFriends}
           />
         ) : null}
       </View>
