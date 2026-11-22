@@ -1,7 +1,8 @@
 # 04: The bottom tabs: 식단, 파티, the map in the middle, 행사, 내 정보, and no +
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: needs-triage
+Held (2026-11-22): a change of the tabs; the fixes (06, 07) go first.
 Blocked by: [01](01-lists-go-quest-chip-opens-quests.md), which changes `main-screen.tsx` and the main screen's tests too.
 
 Native files: none. Releases: an app OTA update only.

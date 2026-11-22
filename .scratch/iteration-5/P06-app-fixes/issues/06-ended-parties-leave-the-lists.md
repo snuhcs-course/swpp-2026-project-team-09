@@ -2,7 +2,7 @@
 
 Parent: [P06 spec](../spec.md)
 Status: ready-for-agent
-Blocked by: [02](02-member-row-icon-buttons.md), which rewrites `screens/room/people-sections.tsx` and `member-friend-button.tsx`, where two of the failure toasts are.
+Blocked by: None.
 
 Native files: none. Releases: the main server and an app OTA update.
 

@@ -1,8 +1,9 @@
 # 02: The 파티 member row: three icon buttons, each asking first
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
-Blocked by: None.
+Status: needs-triage
+Held (2026-11-22): an improvement; the fixes (06, 07) go first.
+Blocked by: [06](06-ended-parties-leave-the-lists.md), which changes the failure toasts of `screens/room/people-sections.tsx` and `member-friend-button.tsx`, the files this ticket rewrites.
 
 Native files: none. Releases: an app OTA update only.
 

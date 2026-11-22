@@ -1,7 +1,8 @@
 # 01: The map's friend and Quest lists go, and the 퀘스트 chip opens the Quest list
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: needs-triage
+Held (2026-11-22): its change to the agentic map design is still being agreed; built once that is settled.
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.

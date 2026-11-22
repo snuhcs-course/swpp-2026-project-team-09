@@ -1,7 +1,8 @@
 # 05: The User's own marker reads "나"
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: needs-triage
+Held (2026-11-22): a design change; the fixes (06, 07) go first.
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.

@@ -1,7 +1,8 @@
 # 03: The map's three layers stay as the User left them, across a restart
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: needs-triage
+Held (2026-11-22): an improvement; the fixes (06, 07) go first.
 Blocked by: [01](01-lists-go-quest-chip-opens-quests.md), which removes the lists (only the three layers are left to remember) and changes the same main screen.
 
 Native files: none. Releases: an app OTA update only.
