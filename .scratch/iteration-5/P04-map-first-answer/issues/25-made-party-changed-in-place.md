@@ -29,3 +29,8 @@ Native files: none. Releases: an app OTA update only.
 - [ ] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 20 minutes in the same session as tickets 24 and 26 (an estimate from the transcript's timestamps): the change card, the room offer, the shared meal's PUT, and the latest-turn fix from the code review. No subagents.
+- Tokens: about 30% of this session's use, an estimate: output about 35k; input about 13.5M, almost all cache reads (about 13.4M), with about 110k cache writes.
