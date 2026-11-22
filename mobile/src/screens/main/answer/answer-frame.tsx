@@ -13,10 +13,8 @@
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { type ReactElement, useCallback, useEffect, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { space } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import { lastReply } from '@/features/assistant/use-shown-answer';
@@ -26,7 +24,7 @@ import type { CardActions } from '../chat-cards';
 import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
 import { FriendProfileOver, useProfileOver } from '../friend-profile';
-import { AI_INPUT, listsTop, type Room } from '../layout';
+import { AI_INPUT, type Room } from '../layout';
 import { AnswerCaption } from './answer-caption';
 import { useCardTop } from './card-top';
 import { CaptionQuestions, type QuestionsOpen, Typing } from './card-questions';
@@ -203,16 +201,13 @@ function OpenMark({ control, stage, focus, onClose }: OpenMarkProps): ReactEleme
   );
 }
 
-// The bar's height while it is shown, told to the screen for the camera's fit; 0 while there is none. The bar is the
-// top sheet from the screen's top edge (P04 ticket 52); what is told is how far it reaches below the lists' top, which
-// the camera and the raised card count from.
+// The bar's height while it is shown, told to the screen for the camera's fit; 0 while there is none.
 function useBarHeight(
   shown: boolean,
   onBarHeight: (height: number) => void,
 ): { height: number; onHeight: (height: number) => void } {
   const [height, setHeight] = useState(0);
-  const { top } = useSafeAreaInsets();
-  const told = shown && height > 0 ? Math.max(1, height - top - listsTop(top)) : 0;
+  const told = shown ? height : 0;
   useEffect(() => {
     onBarHeight(told);
   }, [told, onBarHeight]);
@@ -252,8 +247,6 @@ function Framed(props: FramedProps): ReactElement {
     <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
       <View style={[styles.top, past && styles.faded]}>
         {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
-        {/* The bar's white sheet runs under the status bar: its icons go dark while it does, and come back after. */}
-        {barShown ? <StatusBar style="dark" /> : null}
       </View>
       <AnswerCard
         timeBarHeight={bar.height}

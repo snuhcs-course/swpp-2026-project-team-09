@@ -60,6 +60,16 @@ async function dragHandle(dy: number): Promise<void> {
 
 // The lowered content is half the stage less the input's room, so the content at full height, its top at the stage's
 // top, is that and half the stage.
+// What of the scrolling part shows: it is laid out once at its highest step's height, and the tail under the content
+// is what stands below the step's (P04 ticket 52).
+function shown(): number {
+  const tail = screen.queryByTestId('answer-card-tail', { includeHiddenElements: true });
+  const style: unknown = tail?.props.style;
+  const below =
+    tail === null ? 0 : Number(StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]).height);
+  return Number(styleOf('answer-card-content').height) - below;
+}
+
 function fullOf(lowered: number): number {
   return lowered + STAGE / 2;
 }
@@ -79,12 +89,12 @@ afterEach(() => {
 describe('a drag up on the answer card', () => {
   it('takes the raised card to full height, its top at the stage’s top', async () => {
     const user = await framed();
-    const lowered = Number(styleOf('answer-card-content').maxHeight);
+    const lowered = shown();
     await press(user, HANDLE);
 
     await dragHandle(-600);
 
-    expect(styleOf('answer-card-content').height).toBe(fullOf(lowered));
+    expect(shown()).toBe(fullOf(lowered));
     expect(button(HANDLE)).toBeExpanded();
   });
 
@@ -93,7 +103,7 @@ describe('a drag up on the answer card', () => {
 
     await dragHandle(-600);
 
-    expect(styleOf('answer-card-content').height).toBeUndefined();
+    expect(screen.getByTestId('answer-card-tail')).toBeOnTheScreen();
     expect(button(HANDLE)).toBeExpanded();
   });
 });
@@ -107,17 +117,17 @@ describe('a full card', () => {
 
     await dragHandle(-600);
     await dragHandle(600);
-    expect(styleOf('answer-card-content').height).toBeUndefined();
+    expect(screen.getByTestId('answer-card-tail')).toBeOnTheScreen();
     expect(button(HANDLE)).toBeExpanded();
 
     await dragHandle(-600);
     await press(user, HANDLE);
-    expect(styleOf('answer-card-content').height).toBeUndefined();
+    expect(screen.getByTestId('answer-card-tail')).toBeOnTheScreen();
     expect(button(HANDLE)).toBeExpanded();
 
     await dragHandle(-600);
     expect(await back()).toBe(true);
-    expect(styleOf('answer-card-content').height).toBeUndefined();
+    expect(screen.getByTestId('answer-card-tail')).toBeOnTheScreen();
     expect(button(HANDLE)).toBeExpanded();
   });
 });
@@ -137,7 +147,7 @@ describe('the list of questions', () => {
     await dragHandle(-600);
     // Full, with the input giving the list its room, the sheet runs from the stage's top to one gap over its bottom, and
     // the list takes it less the content's padding.
-    expect(styleOf('answer-card-content').height).toBe(STAGE - space[3]);
+    expect(shown()).toBe(STAGE - space[3]);
     expect(styleOf('question-list').maxHeight).toBe(STAGE - space[3] - 24);
   });
 });

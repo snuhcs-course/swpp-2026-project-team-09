@@ -307,9 +307,11 @@ describe('the camera after the answer came', () => {
       await layStage(width, height);
     });
 
-    // The map is asked for no fit of its own: the one fit is the worked-out camera's.
+    // The map is asked for no fit of its own: every fit is the worked-out camera's, which fits all the points and, when
+    // that is too far out, the Plan's own (`answerCamera`). With the stage laid out, the lowered card's height is known
+    // from its steps (P04 ticket 52): with no content measured, half the stage.
     expect(worked).toHaveBeenCalled();
-    expect(fit).toHaveBeenCalledTimes(worked.mock.calls.length);
-    expect(worked.mock.lastCall?.[2]).toEqual(padding(0));
+    expect(fit.mock.calls.length).toBeLessThanOrEqual(2 * worked.mock.calls.length);
+    expect(worked.mock.lastCall?.[2]).toEqual(padding(height / 2));
   });
 });

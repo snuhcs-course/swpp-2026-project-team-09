@@ -5,14 +5,14 @@
  ******************************************************************************/
 
 import { type ReactElement, useEffect, useState } from 'react';
-import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
+import { type LayoutChangeEvent, ScrollView, StyleSheet, View } from 'react-native';
 import type { PanGesture } from 'react-native-gesture-handler';
 import Reanimated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, radius, shadow, space } from '@/design-system';
 import { listsTop } from '../layout';
 import { type Level, levelOf } from './card-levels';
-import { type CardMotion, type Targets, useCardMotion } from './card-motion';
+import { type Targets, useCardMotion } from './card-motion';
 import { CONTENT_TOP, contentMaxOf, type FrameCardProps, LEAST_CONTENT, LOWERED, OPEN_EDGE } from './frame-card-parts';
 import { GripRow } from './grip-row';
 import { useHeldHeight } from './held-height';
@@ -50,15 +50,6 @@ function targetsOf({ lowered, raised, full }: Caps, natural: number | null): Tar
   return { lowered: fit(lowered), raised: fit(raised), full };
 }
 
-// While the content's own height is not known yet and nothing moves, the step's cap as a plain style.
-function plainOf(level: Level, { lowered, raised, full }: Caps): object | undefined {
-  if (level === 'full' && full !== null) {
-    return { height: full };
-  }
-  const cap = level === 'lowered' ? lowered : (raised ?? lowered);
-  return cap === null ? undefined : { maxHeight: cap };
-}
-
 function capOf(level: Level, caps: Caps): number | null {
   if (level === 'full') {
     return caps.full;
@@ -93,77 +84,100 @@ function useToldCap(cap: number | null, onContentCap: ((cap: number | null) => v
   }, [cap, onContentCap]);
 }
 
+// The scrolling part's laid-out height: its highest step's, which the card is laid out at once and moved from.
+function roomOf({ lowered, raised, full }: Caps): number | null {
+  return full ?? raised ?? lowered;
+}
+
+function shownOf(level: Level, { lowered, raised, full }: Targets): number | null {
+  if (level === 'full') {
+    return full ?? raised;
+  }
+  return level === 'raised' ? raised : lowered;
+}
+
 interface ScrollingProps {
   props: FrameCardProps;
-  motion: CardMotion;
-  // The step's cap as a plain style, while the content's own height is not known yet and nothing moves.
-  plain: object | undefined;
+  room: number | null;
+  // What of the laid-out height stands below the step's: the content ends that far lower, so that its last part can be
+  // scrolled up into what shows.
+  tail: number;
   topped: boolean;
   onNatural: (height: number) => void;
 }
 
-// The part that scrolls under the card's top: as tall as `motion.height` while it moves or once its content is
-// measured.
-function Scrolling({ props, motion, plain, topped, onNatural }: ScrollingProps): ReactElement {
+// The part that scrolls under the card's top, laid out once at `room`: its parts measured as they are laid out, and a
+// tail under them.
+function Scrolling({ props, room, tail, topped, onNatural }: ScrollingProps): ReactElement {
   const { minHeight, onContentSizeChange, scroll } = useHeldHeight(props.hold === true);
-  // A worklet copies what it reads to the UI thread: the shared value alone, never the object holding the gesture.
-  const { height: moved } = motion;
-  const animated = useAnimatedStyle(() => ({ height: moved.value }));
-  const [known, setKnown] = useState(false);
+  const padTop = topped ? space[3] : CONTENT_TOP;
   return (
-    <Reanimated.ScrollView
-      contentContainerStyle={[styles.content, { minHeight }, topped && styles.underTop]}
+    <ScrollView
+      contentContainerStyle={[styles.content, { paddingTop: padTop }]}
       keyboardShouldPersistTaps="handled"
-      onContentSizeChange={(width, height) => {
-        setKnown(true);
-        onNatural(height);
-        onContentSizeChange(width, height);
-      }}
       ref={scroll}
+      style={room === null ? undefined : { height: room }}
       testID={`${props.testID}-content`}
-      style={motion.moving || known ? animated : plain}
     >
-      {props.children}
-    </Reanimated.ScrollView>
+      <View
+        onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+          const height = nativeEvent.layout.height + padTop;
+          onNatural(height);
+          onContentSizeChange(0, height);
+        }}
+        style={[styles.parts, minHeight === undefined ? null : { minHeight: minHeight - padTop }]}
+      >
+        {props.children}
+      </View>
+      {tail > 0 ? <View style={{ height: tail }} testID={`${props.testID}-tail`} /> : null}
+    </ScrollView>
   );
 }
 
+// The open card, moved as a sheet (`useCardMotion`), and the floor over the input's room at the screen's bottom, which
+// the card's lower part passes under, so that nothing shows beside the input.
 export function OpenCard(props: FrameCardProps & { from: number | null }): ReactElement {
   const { barRoom, onHeight, testID, raising, children } = props;
   const [above, setAbove] = useState(0);
   const [natural, setNatural] = useState<number | null>(null);
-  const [cardHeight, setCardHeight] = useState(0);
   const caps = useCaps(props, above);
   const targets = targetsOf(caps, natural);
-  const motion = useCardMotion({ raising: raising ?? LOWERED, targets, from: props.from, onHeight, cardHeight });
+  const room = roomOf(caps);
+  const extra = above + barRoom;
+  const motion = useCardMotion({ raising: raising ?? LOWERED, targets, room, from: props.from, extra, onHeight });
   const level = levelOf(raising?.raised === true, raising?.full === true);
   useToldCap(capOf(level, caps), props.onContentCap);
-  const { drop } = motion;
-  const dropped = useAnimatedStyle(() => ({ transform: [{ translateY: drop.value }] }));
+  const shown = shownOf(level, targets);
+  const { offset, drop } = motion;
+  const moved = useAnimatedStyle(() => ({ transform: [{ translateY: offset.value + drop.value }] }));
+  const floored = useAnimatedStyle(() => ({ transform: [{ translateY: drop.value }] }));
   const topped = raising !== undefined || props.onClose !== undefined || props.head !== undefined;
   const handle = raising === undefined ? null : <Handle raising={raising} />;
   return (
     <>
       <Reanimated.View
         onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-          setCardHeight(nativeEvent.layout.height);
-          motion.onCardLayout(nativeEvent.layout.height);
+          // Before the stage is laid out the card has no steps: it is as tall as its content, and tells that.
+          if (room === null && raising?.raised !== true) {
+            onHeight(nativeEvent.layout.height);
+          }
         }}
-        style={[styles.card, { paddingBottom: barRoom }, dropped]}
+        style={[styles.card, { paddingBottom: barRoom }, moved]}
         testID={testID}
       >
         {topped ? <Top handle={handle} onHeight={setAbove} pan={motion.pan} props={props} /> : null}
         {children === null ? null : (
           <Scrolling
-            motion={motion}
             onNatural={setNatural}
-            plain={plainOf(level, caps)}
             props={props}
+            room={room}
+            tail={room === null || shown === null ? 0 : Math.max(0, room - shown)}
             topped={topped}
           />
         )}
       </Reanimated.View>
-      {motion.past ? <CloseHint barRoom={barRoom} cardHeight={cardHeight} drop={drop} /> : null}
+      {room === null ? null : <Reanimated.View style={[styles.floor, { height: barRoom }, floored]} />}
+      {motion.past ? <CloseHint barRoom={barRoom} cardHeight={extra + (targets.lowered ?? 0)} drop={drop} /> : null}
     </>
   );
 }
@@ -179,9 +193,10 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.sheet,
   },
-  content: { gap: space[3], paddingTop: CONTENT_TOP, paddingHorizontal: OPEN_EDGE },
-  // Under the card's top, which stays while the content scrolls.
-  underTop: { paddingTop: space[3] },
+  content: { paddingHorizontal: OPEN_EDGE },
+  parts: { gap: space[3] },
+  // Over the input's room at the screen's bottom, under the input.
+  floor: { position: 'absolute', right: 0, bottom: 0, left: 0, pointerEvents: 'none', backgroundColor: color.surface },
   // One gap under the header row.
   head: { paddingTop: space[3], paddingHorizontal: OPEN_EDGE },
 });

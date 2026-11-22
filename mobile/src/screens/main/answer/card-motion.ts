@@ -12,15 +12,16 @@ import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { heightOf, type Level, type LevelHeights, levelAt, levelOf, rangeOf } from './card-levels';
 import { FLING_S, MOTION_MS, type Raising } from './raise-handle';
 
-// The open card moving as a sheet (P04 ticket 52): its scrolling part's height is one value on the UI thread. A drag
-// on the handle moves it with the finger; every change of step (a let-go, a press on the grip or on the line under it,
-// back) runs to the step's height in MOTION_MS, none with reduced motion; the camera hears the lowered height once the
-// card has settled.
+// The open card moving as a sheet (P04 ticket 52). It is laid out once, at its highest step's height (`room`), and moved
+// only by a translation on the UI thread, `offset`: how far below its laid-out place it stands, so that the step's
+// height shows. Nothing inside is laid out again while it moves. A drag on the header row moves it with the finger;
+// every change of step (a let-go, a press on the grip or on the line under it, back) runs to the step in MOTION_MS,
+// none with reduced motion. The camera hears the lowered card's height once it has settled.
 
 // A drag on the handle starts past this many points, so that a press stays a press.
 const PAN_STARTS = 8;
 
-// The heights of the scrolling part at each step, null until the stage is laid out.
+// The heights of the scrolling part that show at each step, null until the stage is laid out.
 export interface Targets {
   lowered: number | null;
   raised: number | null;
@@ -28,27 +29,26 @@ export interface Targets {
 }
 
 export interface CardMotion {
-  height: SharedValue<number>;
-  // How far below its lowered height the card is dragged.
+  // How far below its laid-out place the card stands for its step.
+  offset: SharedValue<number>;
+  // How far below its lowered step the card is dragged.
   drop: SharedValue<number>;
   pan: PanGesture;
-  // A drag or a run to a step is going on: the content takes `height` while it does.
-  moving: boolean;
   // Letting go now closes the answer.
   past: boolean;
-  onCardLayout: (height: number) => void;
 }
 
 interface MotionInput {
   raising: Raising;
   targets: Targets;
-  // The height the card comes from, as the docked card's when it is raised; null, its step's own.
+  // The scrolling part's laid-out height: its highest step's. Null until the stage is laid out.
+  room: number | null;
+  // The height the scrolling part shows as the card comes, as the docked card's when it is raised; null, its step's.
   from: number | null;
-  // Told the whole card's height once it has settled lowered.
+  // What the card shows over its scrolling part: its top and the input's room, so that its whole height is known.
+  extra: number;
+  // Told the whole card's height that shows once it has settled lowered.
   onHeight: (height: number) => void;
-  // The whole card's height as laid out, which a drag down past half of closes the answer. A plain number the gesture
-  // takes when it is made, each render: a value written from the JS thread reaches a worklet only later.
-  cardHeight: number;
 }
 
 function clamp(value: number, low: number, high: number): number {
@@ -60,21 +60,21 @@ function heightsOf({ lowered, raised, full }: Targets): LevelHeights | null {
   return lowered === null || raised === null ? null : { lowered, raised, full };
 }
 
-// Runs the height to `to`, telling `done` at the end; at once with reduced motion. `aimed` keeps the last height run
-// to, so that a step's new height after a let-go is not run to twice.
+// Runs the offset to `to`, telling `done` at the end; at once with reduced motion. `aimed` keeps the last offset run to,
+// so that a step's new offset after a let-go is not run to twice.
 function runTo(
-  height: SharedValue<number>,
+  offset: SharedValue<number>,
   to: number,
   { reduce, aimed }: { reduce: boolean; aimed: { current: number | null } },
   done: () => void,
 ): void {
   aimed.current = to;
   if (reduce) {
-    height.value = to;
+    offset.value = to;
     done();
     return;
   }
-  height.value = withTiming(to, { duration: MOTION_MS }, (finished) => {
+  offset.value = withTiming(to, { duration: MOTION_MS }, (finished) => {
     if (finished === true) {
       scheduleOnRN(done);
     }
@@ -102,11 +102,7 @@ function useLetGo(raising: Raising, level: Level, back: (to: Level) => void): (t
 function useCloseSide(
   raising: Raising,
   drop: SharedValue<number>,
-): {
-  past: boolean;
-  tellPast: (past: boolean) => void;
-  closeNow: () => void;
-} {
+): { past: boolean; tellPast: (past: boolean) => void; closeNow: () => void } {
   const [past, setPast] = useState(false);
   const { onPast, close, layer = null } = raising;
   const tellPast = useCallback(
@@ -128,39 +124,42 @@ function useCloseSide(
 interface PanParts {
   level: Level;
   heights: LevelHeights | null;
-  height: SharedValue<number>;
+  room: number;
+  offset: SharedValue<number>;
   drop: SharedValue<number>;
+  // The whole lowered card's height that shows, a plain number the gesture takes when it is made.
   card: number;
+  // Where the step rests, which a drag starts from: a plain number, as a value written from the JS thread reaches a
+  // worklet only later.
+  rest: number;
   closable: boolean;
-  onStart: () => void;
   onPast: (past: boolean) => void;
   onClose: () => void;
   onLetGo: (to: Level) => void;
 }
 
-// The handle's drag on the UI thread: the height follows the finger one step either way; started on the lowered card,
+// The handle's drag on the UI thread: the offset follows the finger one step either way; started on the lowered card,
 // a drag down goes on below it, and let go past half the card the answer closes.
 function usePan(parts: PanParts): PanGesture {
-  const { level, heights, height, drop, card, closable } = parts;
+  const { level, heights, room, offset, drop, card, rest, closable } = parts;
   const start = useSharedValue(0);
   const wasPast = useSharedValue(false);
-  const { onStart, onPast, onClose, onLetGo } = parts;
+  const { onPast, onClose, onLetGo } = parts;
   return Gesture.Pan()
     .withTestId('answer-card-handle')
     .enabled(heights !== null)
     .activeOffsetY([-PAN_STARTS, PAN_STARTS])
     .onStart(() => {
-      start.value = height.value;
+      start.value = rest;
       wasPast.value = false;
-      scheduleOnRN(onStart);
     })
     .onUpdate(({ translationY }) => {
       if (heights === null) {
         return;
       }
-      const at = start.value - translationY;
+      const at = room - (start.value + translationY);
       const { low, high } = rangeOf(level, heights);
-      height.value = clamp(at, low, high);
+      offset.value = room - clamp(at, low, high);
       if (closable) {
         const below = Math.max(0, heights.lowered - at);
         drop.value = below;
@@ -175,7 +174,7 @@ function usePan(parts: PanParts): PanGesture {
       if (heights === null) {
         return;
       }
-      const at = start.value - translationY - velocityY * FLING_S;
+      const at = room - (start.value + translationY + velocityY * FLING_S);
       if (closable && heights.lowered - at > card / 2) {
         scheduleOnRN(onClose);
         return;
@@ -185,94 +184,75 @@ function usePan(parts: PanParts): PanGesture {
     });
 }
 
-// The card's height running to its step: at once on a let-go or a press, and again whenever the step's height changes
-// (the content grows, the stage is laid out); settled, the lowered card's height goes to the camera.
+// The offset running to its step: at once on a let-go or a press, and again whenever the step's height changes (the
+// content grows, the stage is laid out); settled, the lowered card's whole height goes to the camera.
 function useRun(
   input: MotionInput,
   level: Level,
   heights: LevelHeights | null,
-): {
-  height: SharedValue<number>;
-  moving: boolean;
-  setMoving: (moving: boolean) => void;
-  dragging: { current: boolean };
-  cardHeight: { current: number };
-  back: (to: Level) => void;
-} {
-  const { raising, from, onHeight } = input;
+): { offset: SharedValue<number>; back: (to: Level) => void } {
+  const { raising, room, from, extra, onHeight } = input;
   const reduce = useReduceMotion();
-  const target = heights === null ? null : heightOf(level, heights);
-  const height = useSharedValue(from ?? target ?? 0);
-  // Growing from the dock, the card moves from its first frame, unless motion is reduced or it has no height to run to.
-  const [moving, setMoving] = useState(from !== null && target !== null && !reduce);
-  const dragging = useRef(false);
-  const cardHeight = useRef(0);
+  const target = heights === null || room === null ? null : room - heightOf(level, heights);
+  const offset = useSharedValue(room !== null && from !== null ? room - from : (target ?? 0));
   const aimed = useRef<number | null>(null);
+  // A run under way: the camera waits for its end.
+  const running = useRef(false);
+  const lowered = heights?.lowered ?? null;
   const settle = useCallback(() => {
-    setMoving(false);
-    if (!raising.raised && cardHeight.current > 0) {
-      onHeight(cardHeight.current);
+    running.current = false;
+    if (!raising.raised && lowered !== null) {
+      onHeight(extra + lowered);
     }
-  }, [raising.raised, onHeight]);
+  }, [raising.raised, lowered, extra, onHeight]);
+  // The card's top measured, or its lowered height changed, while it rests lowered: the camera hears it again.
+  useEffect(() => {
+    if (!running.current && !raising.raised && lowered !== null) {
+      onHeight(extra + lowered);
+    }
+  }, [extra, lowered, raising.raised, onHeight]);
   const back = useCallback(
     (to: Level) => {
-      if (heights !== null) {
-        runTo(height, heightOf(to, heights), { reduce, aimed }, settle);
+      if (heights !== null && room !== null) {
+        running.current = !reduce;
+        runTo(offset, room - heightOf(to, heights), { reduce, aimed }, settle);
       }
     },
-    [heights, height, reduce, settle],
+    [heights, room, offset, reduce, settle],
   );
   useEffect(() => {
-    if (target === null || dragging.current || target === aimed.current) {
+    if (target === null || target === aimed.current) {
       return;
     }
-    setMoving(!reduce);
-    runTo(height, target, { reduce, aimed }, settle);
-  }, [target, height, reduce, settle]);
-  return { height, moving, setMoving, dragging, cardHeight, back };
+    running.current = !reduce;
+    runTo(offset, target, { reduce, aimed }, settle);
+  }, [target, offset, reduce, settle]);
+  return { offset, back };
 }
 
 export function useCardMotion(input: MotionInput): CardMotion {
-  const { raising, targets, onHeight } = input;
+  const { raising, targets, room, extra } = input;
   const level = levelOf(raising.raised, raising.full === true);
   const heights = heightsOf(targets);
-  const { height, moving, setMoving, dragging, cardHeight, back } = useRun(input, level, heights);
+  const { offset, back } = useRun(input, level, heights);
   const drop = useSharedValue(0);
   const { past, tellPast, closeNow } = useCloseSide(raising, drop);
   const letGo = useLetGo(raising, level, back);
   const pan = usePan({
     level,
-    heights,
-    height,
+    heights: room === null ? null : heights,
+    room: room ?? 0,
+    offset,
     drop,
-    card: input.cardHeight,
+    card: extra + (heights?.lowered ?? 0),
+    rest: room === null || heights === null ? 0 : room - heightOf(level, heights),
     closable: level === 'lowered' && raising.close !== undefined,
-    onStart: () => {
-      dragging.current = true;
-      setMoving(true);
-    },
     onPast: tellPast,
-    onClose: () => {
-      dragging.current = false;
-      closeNow();
-    },
+    onClose: closeNow,
     onLetGo: (to) => {
-      dragging.current = false;
       tellPast(false);
       letGo(to);
     },
   });
-  return {
-    height,
-    drop,
-    pan,
-    moving,
-    past,
-    onCardLayout: (next) => {
-      cardHeight.current = next;
-      if (!raising.raised && !moving && !dragging.current) {
-        onHeight(next);
-      }
-    },
-  };
+  return { offset, drop, pan, past };
 }

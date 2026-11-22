@@ -22,6 +22,7 @@ import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { koreaDayWord } from '@/korea-time';
+import { ANSWER_TOP, listsTop } from '../layout';
 import type { ShownBooking } from '@/features/assistant/booking-scene';
 import type { Chat } from '@/features/assistant/use-chat';
 import { bookingKept } from '../library/booking-kept';
@@ -47,11 +48,9 @@ function ignoreDrop(): void {
   // A Lookup's band has no handles.
 }
 
-// The bar is the answer's top sheet (P04 ticket 52): full width from the screen's top edge, its background under the
-// status bar `inset` high and its content below it, only its bottom corners rounded, as the bottom sheet's top ones.
-// Under another sheet `offset` high (several requests' steps), it stands attached to that one.
-export function sheetPlace(inset: number, offset = 0): { top: number; paddingTop: number } {
-  return { top: offset - inset, paddingTop: (offset === 0 ? inset : 0) + space[3] };
+// In the lists' place, where the round "←" stands when there is no bar (the 2026-11-22 redesign).
+export function barTop(inset: number): number {
+  return listsTop(inset);
 }
 
 type BandProps = Parameters<typeof TimeBand>[0];
@@ -84,7 +83,7 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
         onHeight(nativeEvent.layout.height);
       }}
-      style={[styles.bar, sheetPlace(top, offset)]}
+      style={[styles.bar, { top: barTop(top) + offset }]}
       testID="time-bar"
     >
       <TimeBand
@@ -98,7 +97,7 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
           onLayout={({ nativeEvent }: LayoutChangeEvent) => {
             setAddWidth(Math.ceil(nativeEvent.layout.width));
           }}
-          style={[styles.add, { top: sheetPlace(top, offset).paddingTop }]}
+          style={styles.add}
           testID="time-bar-add"
         >
           {add}
@@ -220,7 +219,7 @@ export function BookingBar({
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
         onHeight(nativeEvent.layout.height);
       }}
-      style={[styles.bar, sheetPlace(top)]}
+      style={[styles.bar, { top: barTop(top) }]}
       testID="time-bar"
     >
       <SlotBand
@@ -239,18 +238,18 @@ export function BookingBar({
 const styles = StyleSheet.create({
   bar: {
     position: 'absolute',
-    right: 0,
-    left: 0,
+    right: ANSWER_TOP.side,
+    left: ANSWER_TOP.side,
+    paddingTop: space[3],
     paddingHorizontal: space[4],
     paddingBottom: space[2],
-    borderBottomLeftRadius: radius.xl,
-    borderBottomRightRadius: radius.xl,
+    borderRadius: radius.xl,
     backgroundColor: color.surface,
-    boxShadow: shadow.sheet,
+    boxShadow: shadow.float,
   },
   toggle: { alignSelf: 'center', alignItems: 'center', width: GRIP_WIDTH, paddingTop: space[2] },
   grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
   // At the right of the head row, its top at the row's top (the bar's padding), so that the two share their middle and
   // the track starts below both (P04 ticket 45).
-  add: { position: 'absolute', right: space[4] },
+  add: { position: 'absolute', top: space[3], right: space[3] },
 });

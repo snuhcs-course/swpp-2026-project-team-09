@@ -56,6 +56,16 @@ function contentStyle(): ViewStyle {
   return StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
 }
 
+// What of the scrolling part shows: it is laid out once at its highest step's height, and the tail under the content
+// is what stands below the step's (P04 ticket 52).
+function shown(): number {
+  const tail = screen.queryByTestId('answer-card-tail', { includeHiddenElements: true });
+  const style: unknown = tail?.props.style;
+  const below =
+    tail === null ? 0 : Number(StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]).height);
+  return Number(contentStyle().height) - below;
+}
+
 function handle(): ReturnType<typeof button> {
   return button(HANDLE);
 }
@@ -93,25 +103,23 @@ describe("the answer card's handle", () => {
     await framed();
 
     expect(handle()).toBeCollapsed();
-    expect(contentStyle().maxHeight).toBeLessThanOrEqual(STAGE / 2);
-    expect(contentStyle().height).toBeUndefined();
+    expect(shown()).toBeLessThanOrEqual(STAGE / 2);
   });
 
   it('raises the card as tall as its content, up to the lists’ top, by a press, and lowers it by another', async () => {
     const user = await framed();
-    const lowered = Number(contentStyle().maxHeight);
+    const lowered = shown();
 
     await press(user, HANDLE);
 
     expect(handle()).toBeExpanded();
-    expect(contentStyle().maxHeight).toBe(lowered + STAGE / 2 - TOP_ROOM);
-    expect(contentStyle().height).toBeUndefined();
+    expect(shown()).toBe(lowered + STAGE / 2 - TOP_ROOM);
     expect(button('답 닫기')).toBeVisible();
 
     await press(user, HANDLE);
 
     expect(handle()).toBeCollapsed();
-    expect(contentStyle()).toMatchObject({ maxHeight: lowered });
+    expect(shown()).toBe(lowered);
   });
 });
 
