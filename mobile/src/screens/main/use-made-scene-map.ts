@@ -101,26 +101,30 @@ function useSceneMap(
   return { contents: { markers, lines, avatars }, onPress, ...ANSWER_LIMITS };
 }
 
-function isBooked(step: ReplyStep): boolean {
-  return step.kind === 'seat' || step.kind === 'room';
+// Whether a step is the booking whose card is on screen, by the card the step shows: a refused booking beside it keeps
+// its own title (PR 462's review).
+function isCardStep(step: ReplyStep, key: string | null): boolean {
+  return key !== null && step.shows?.kind === 'card' && step.shows.key === key;
 }
 
 // Several requests as numbered flags (P04 ticket 09): the step due, or pressed, carries the seat its card offers.
 function stepsMade(
   { steps }: ShownSteps,
   active: number,
-  seat: string | null,
-  space: LibrarySpace | null,
+  booking: { key: string | null; seat: string | null; space: LibrarySpace | null },
   position: LatLng | null,
 ): Made | null {
+  const { key, seat, space } = booking;
   const first = steps.find(({ place }) => place !== null)?.place;
   if (first === undefined || first === null) {
     return null;
   }
   const at = now();
-  const lines = steps.map((step, index) => stepLine(step, index === active && isBooked(step) ? seat : null, at));
-  const titles = steps.map((step) => stepTitle(step, isBooked(step) ? space : null));
-  const setting = { ...BOOKING_SETTING, drafts: stepDrafts(steps, lines, titles) };
+  const lines = steps.map((step, index) => stepLine(step, index === active && isCardStep(step, key) ? seat : null, at));
+  const titles = steps.map((step) => stepTitle(step, isCardStep(step, key) ? space : null));
+  // The step shown opens a card only when it is the booking on screen; another step's flag makes it the step shown.
+  const opens = steps.map((step, index) => index !== active || isCardStep(step, key));
+  const setting = { ...BOOKING_SETTING, drafts: stepDrafts(steps, lines, titles, opens) };
   return {
     source: steps,
     scene: stepsScene(steps, position),
@@ -140,7 +144,7 @@ function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: La
   const space = kept?.kept.space ?? null;
   return useMemo((): Made | null => {
     if (steps !== null) {
-      return stepsMade(steps, activeStep, seat, space, position);
+      return stepsMade(steps, activeStep, { key: booking?.card.key ?? null, seat, space }, position);
     }
     if (proposal !== null) {
       const { latitude, longitude } = proposal.place;
@@ -176,7 +180,7 @@ export function useMadeSceneMap(
       onFlag(id, position);
     } else if (number - 1 !== chat.activeStep) {
       chat.setActiveStep(number - 1);
-    } else if (isBooked(step) && chat.booking !== null) {
+    } else if (isCardStep(step, chat.booking?.card.key ?? null)) {
       onFlag(id, position);
     }
   };

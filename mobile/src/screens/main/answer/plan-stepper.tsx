@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -33,10 +34,19 @@ function Arrow({ next, disabled, onPress }: { next: boolean; disabled: boolean; 
 
 // "‹ 1/3 ›" for an answer whose other Plans have no flag on the map: its scene draws no candidate, as an events or a
 // parties answer's does. With candidates on the map, their numbered flags switch the Plan and nothing stands here.
-export function PlanStepper({ shown, busy }: { shown: ShownAnswer; busy: boolean }): ReactElement | null {
+export function PlanStepper({
+  shown,
+  busy,
+  steps = false,
+}: {
+  shown: ShownAnswer;
+  busy: boolean;
+  // One of several requests, whose candidates the steps' flags take the place of (P04 ticket 09).
+  steps?: boolean;
+}): ReactElement | null {
   const { answer, plan, index, browse } = shown;
   const count = answer?.plans.length ?? 0;
-  if (plan === null || count < 2 || plan.scene.places.some(({ role }) => role === 'candidate')) {
+  if (plan === null || count < 2 || (!steps && plan.scene.places.some(({ role }) => role === 'candidate'))) {
     return null;
   }
   return (

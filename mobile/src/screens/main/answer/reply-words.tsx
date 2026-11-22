@@ -25,7 +25,7 @@ import { MadeCard } from './made-card';
 import { OfferedWords } from './offered-words';
 import { PlanCard } from './plan-card';
 import { type RefusalAsk, RefusalReply } from './refusal-reply';
-import { StepsBar } from './steps-bar';
+import { StepsTop } from './steps-bar';
 import { BookingBar, LookupBar, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
 
@@ -126,7 +126,8 @@ function onScreenCard(props: WordsProps, kind: WordsKind): ReactElement | null {
   }
   if (kind === 'plan' && answer !== null) {
     const card = { answer, invitation, onClose, over, room, shown };
-    return <PlanCard {...card} dock={props.dock} focus={focus} said={bubble.text} />;
+    const steps = (bubble.steps?.length ?? 0) > 1;
+    return <PlanCard {...card} dock={props.dock} focus={focus} said={bubble.text} steps={steps} />;
   }
   if (kind === 'made' && answer !== null && plan !== null && invitation.made !== null) {
     return <MadeCard {...{ answer, invitation, onClose, over, plan }} made={invitation.made} />;
@@ -194,8 +195,7 @@ interface TopBarProps {
 export function TopBar({ control, focus, onClose, onHeight }: TopBarProps): ReactElement | null {
   const { answer: shown, invitation, booking, steps } = control;
   if (steps !== null) {
-    const { activeStep, setActiveStep } = control;
-    return <StepsBar active={activeStep} onHeight={onHeight} onStep={setActiveStep} steps={steps.steps} />;
+    return <StepsTop control={control} focus={focus} onClose={onClose} onHeight={onHeight} />;
   }
   if (booking !== null) {
     return <BookingBar booking={booking} chat={control.chat} onHeight={onHeight} />;

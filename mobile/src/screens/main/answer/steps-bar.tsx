@@ -4,7 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
+import { type ReactElement, useEffect, useState } from 'react';
 import { type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ReplyStep } from '@/api/assistant-types';
@@ -13,7 +13,9 @@ import { color, font, radius, shadow, space, text } from '@/design-system';
 import { stepClock } from '@/features/assistant/steps-scene';
 import { koreaDayWord } from '@/korea-time';
 import { ANSWER_PILL } from '../layout';
-import { barTop } from './time-bar';
+import type { ChatSheetControl } from '../chat-sheet';
+import { barTop, PlanBar } from './time-bar';
+import type { BandFocus } from './use-corrections';
 
 const MINUTE = 60_000;
 // The bar's ends stand this far before the first step and after the last.
@@ -169,3 +171,54 @@ const styles = StyleSheet.create({
   spanNot: { backgroundColor: color.inkSubtle },
   day: { ...text.caption, color: color.inkMuted },
 });
+
+interface StepsTopProps {
+  control: ChatSheetControl;
+  focus: BandFocus;
+  onClose: () => void;
+  onHeight: (height: number) => void;
+}
+
+// The bar of several requests, and under it, while the step shown is the reply's Plan, that Plan's bar with its
+// handles and its meal's tick, as on a reply to one request (PR 462's review). The height told is both.
+export function StepsTop({ control, focus, onClose, onHeight }: StepsTopProps): ReactElement | null {
+  const [heights, setHeights] = useState({ steps: 0, plan: 0 });
+  const { steps, activeStep, setActiveStep, answer: shown, invitation } = control;
+  const step = steps?.steps[activeStep];
+  const planStep = step !== undefined && step.status === 'shown' && step.kind !== 'seat' && step.kind !== 'room';
+  const { answer, plan } = shown;
+  const withPlan = planStep && answer !== null && plan !== null;
+  const told = heights.steps + (withPlan ? heights.plan + space[2] : 0);
+  useEffect(() => {
+    onHeight(told);
+  }, [told, onHeight]);
+  if (steps === null) {
+    return null;
+  }
+  return (
+    <>
+      <StepsBar
+        active={activeStep}
+        onHeight={(height) => {
+          setHeights((last) => ({ ...last, steps: height }));
+        }}
+        onStep={setActiveStep}
+        steps={steps.steps}
+      />
+      {withPlan ? (
+        <PlanBar
+          answer={answer}
+          focus={focus}
+          invitation={invitation}
+          offset={heights.steps + space[2]}
+          onClose={onClose}
+          onHeight={(height) => {
+            setHeights((last) => ({ ...last, plan: height }));
+          }}
+          plan={plan}
+          shown={shown}
+        />
+      ) : null}
+    </>
+  );
+}

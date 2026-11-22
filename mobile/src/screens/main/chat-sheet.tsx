@@ -175,7 +175,8 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const onMap = useShownOnMap(chat, kept.framed);
   const bookingStage = useBookingStage();
   const place = onMap.booking?.place ?? null;
-  const booking = useMemo(() => ({ place, tell: bookingStage.tell }), [place, bookingStage.tell]);
+  const steps = onMap.steps !== null;
+  const booking = useMemo(() => ({ place, tell: bookingStage.tell, steps }), [place, bookingStage.tell, steps]);
   const onScreen = useAnswerOnScreen(chat.bubbles, where, shownNow);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation);
   const pick = usePicking(chat);

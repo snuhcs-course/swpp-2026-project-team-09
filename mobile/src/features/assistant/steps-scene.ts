@@ -95,9 +95,15 @@ export function stepsScene(steps: readonly ReplyStep[], me: LatLng | null): MapS
   return { people: mine, places: [], routes: [...walk, ...between], flags: [] };
 }
 
-// Each step with a place as a numbered flag: ① ② by the steps' order, its title with "›", its line, and faded when it
-// was not done.
-export function stepDrafts(steps: readonly ReplyStep[], lines: readonly string[], titles: readonly string[]): Draft[] {
+// Each step with a place as a numbered flag: ① ② by the steps' order, its title with "›" when a press does something,
+// its line, and faded when it was not done.
+export function stepDrafts(
+  steps: readonly ReplyStep[],
+  lines: readonly string[],
+  titles: readonly string[],
+  // Whether a press on each step's flag does something, which its "›" says; left out, every one.
+  opens: readonly boolean[] = [],
+): Draft[] {
   return steps.flatMap((step, index): Draft[] => {
     const { place } = step;
     if (place === null) {
@@ -105,7 +111,7 @@ export function stepDrafts(steps: readonly ReplyStep[], lines: readonly string[]
     }
     const number = index + 1;
     const done = step.status === 'shown';
-    const title = `${titles[index] ?? step.title} ›`;
+    const title = (opens[index] ?? true) ? `${titles[index] ?? step.title} ›` : (titles[index] ?? step.title);
     const line = lines[index] ?? null;
     return [
       {
