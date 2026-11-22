@@ -121,3 +121,25 @@ describe('a meal answer beside a lunch already set', () => {
     expect(dock().getByTestId('dock-line')).toBeVisible();
   });
 });
+
+// Partitions: the list raised once 바꾸기 changed the lunch held (review of PR 477).
+describe('the raised list once 바꾸기 changed the lunch held', () => {
+  it('chooses nothing again: its rows and kinds take no press, and the changed line stays', async () => {
+    server.on(`PUT /plans/${LUNCH.questId}`, { status: 200, body: PLAN_QUEST.quest });
+    const user = await askOnMap(server, REPLY);
+    await user.press(beside().getByRole('button', { name: '바꾸기' }));
+    await pass(500);
+    expect(dock().getByText(/바꿨어요/u)).toBeVisible();
+
+    await user.press(screen.getByTestId('dock-line'));
+    const row = within(screen.getByTestId('meal-list')).getByTestId('meal-row-2');
+    expect(row).toBeDisabled();
+    expect(within(screen.getByTestId('kind-chips')).getByRole('button', { name: KOREAN })).toBeDisabled();
+    await user.press(row);
+    await pass(300);
+
+    expect(screen.queryByTestId('meal-menu')).toBeNull();
+    expect(server.received(`PUT /plans/${LUNCH.questId}`)).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: '바꾸기' })).toBeNull();
+  });
+});

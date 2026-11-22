@@ -212,6 +212,12 @@ interface PlanCardProps extends CardProps {
 // A Friend chosen and a drop of the band ask for a recalculation, and none takes a press while a recalculation or
 // "이대로 초대" is on its way. The Plan's people, its start, its place, and its time are changed on the map and the
 // time bar.
+// Once the answer is settled (its Plan made, or 바꾸기 or 그대로 두기 done beside a Quest the User holds), nothing is
+// chosen again: the answer says so and offers nothing more (review of PR 477).
+function settled({ made, changed, left }: PlanInvitation): boolean {
+  return made !== null || changed !== null || left !== null;
+}
+
 // A meal answer's raised card holds the list of its candidates (board E3), or the chosen one's menu (board E4).
 function MealSheet({
   shown,
@@ -263,7 +269,7 @@ export function PlanCard(props: PlanCardProps): ReactElement {
         />
       )}
       {docked ? null : <Said lines={linesOf(shown, answer, fix.adding, over)} said={meal ? '' : said} />}
-      {meal ? <MealSheet answer={answer} busy={busy || invitation.made !== null} shown={shown} /> : null}
+      {meal ? <MealSheet answer={answer} busy={busy || settled(invitation)} shown={shown} /> : null}
       {docked ? null : (
         <Below
           answer={answer}
