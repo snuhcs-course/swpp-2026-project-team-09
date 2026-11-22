@@ -90,7 +90,7 @@ describe('Lunch with 민수 (the worked example)', () => {
       `302동식당 ${time('12:15')}–${time('12:43')} (28)`,
       `학생회관식당 ${time('12:33')}–${time('12:59')} (26)`,
       `3식당 ${time('12:31')}–${time('12:54')} (23)`,
-      `자하연식당 2층 ${time('12:35')}–${time('12:55')} (20)`,
+      `자하연식당 2층 ${time('12:31')}–${time('12:55')} (24)`,
     ]);
     expect(answer.plans[2]?.meeting).toMatchObject({
       place: { label: '301동' },

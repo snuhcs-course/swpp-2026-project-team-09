@@ -12,6 +12,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The conversation's control: the conversation with the Assistant, which the main screen holds, and what the answer
@@ -44,6 +45,7 @@ import { type CardRaise, useCardRaise } from './answer/card-raise';
 import { type MarkOpening, useOpenedMark } from './answer/opened-mark';
 import type { CardLeaving } from './chat-card-actions';
 import { useContextChat, type Where } from './use-context-chat';
+import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
 import type { LocationMissing } from '@/api/refusal-types';
 import { type KeptConversation, useKeptConversation } from './use-kept-conversation';
 import { type BookingStage, useBookingStage } from './library/booking-stage';
@@ -182,17 +184,22 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const { chat: said, ...pressing } = useContextChat(where, shownNow);
   const { chat, ...kept } = useKeptConversation(said);
   const proposals = useProposalMaking(said.proposalMade, { latest: kept.latest, bubbles: said.bubbles });
-  const onMap = useShownOnMap(chat, kept.framed);
+  // The map's scene reads the latest turn that draws one: a follow-up answered with words alone keeps the answer
+  // before it on the map, its bar, marks, and main button, while the card says the new words (P04 ticket 46).
+  const sceneBubbles = useMemo(() => sceneBubblesOf(chat.bubbles), [chat.bubbles]);
+  const onMap = useShownOnMap({ ...chat, bubbles: sceneBubbles }, kept.framed);
   const bookingStage = useBookingStage();
   const place = onMap.booking?.place ?? null;
   const steps = onMap.steps !== null;
   const card = useCardRaise(kept.framed);
   const { raised } = card;
+  const point = onMap.booking?.point ?? null;
+  const { walk } = bookingStage;
   const booking = useMemo(
-    () => ({ place, tell: bookingStage.tell, steps, raised }),
-    [place, bookingStage.tell, steps, raised],
+    () => ({ place, tell: bookingStage.tell, steps, raised, point, walk }),
+    [place, bookingStage.tell, steps, raised, point, walk],
   );
-  const onScreen = useAnswerOnScreen(chat.bubbles, where, shownNow);
+  const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation);
   const pick = usePicking(chat);
   return {
@@ -210,7 +217,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
       booking,
     },
     ...onScreen,
-    lookup: useShownLookup(chat.bubbles, start, kept.hide),
+    lookup: useShownLookup(sceneBubbles, start, kept.hide),
     ...onMap,
     ...useActiveStep(onMap.steps),
     bookingStage,

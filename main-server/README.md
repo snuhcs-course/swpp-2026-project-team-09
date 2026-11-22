@@ -2455,8 +2455,10 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     when everyone could stay 15 minutes alone, who arrives last and who leaves first. Each person's part of a meal or a
     meet carries `arriveAt`, the earliest they can be at the place, `null` when their position is unknown. A person's
     own way to the place, and their way on to their next item, takes the shuttle of that day and hour when the walk is
-    10 minutes or more and the shuttle, with the average wait at the stop, is 3 or more minutes faster; meeting on the
-    way stays on foot. The part of such a way carries `mode: 'shuttle'` and `shuttle: { boardAt, getOffAt }` (stop
+    10 minutes or more and the shuttle, with the average wait at the stop, is 3 or more minutes faster. Meeting on the
+    way stays on foot, and is kept only for those it gets there no later than their own way by the shuttle: a Friend
+    whose own shuttle is sooner goes their own way, and when the asker's is sooner nobody meets. Riding one shuttle
+    together is not planned. The part of such a way carries `mode: 'shuttle'` and `shuttle: { boardAt, getOffAt }` (stop
     names), `next.by: 'shuttle'` says the way on is by the shuttle, and a scene route of role `me`, `friend`, or `next`
     by the shuttle carries `mode: 'shuttle'`; a walk carries none of them. `walkMinutes` is then the minutes of the way,
     however it is gone. A person's
@@ -2652,7 +2654,13 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       the clock (`mealByClock`): lunch until lunch's window ends, then dinner, judged at the start the User asked for
       and today no earlier than now. It answers the model `planned` with the meal, each plan's Restaurant, clock times,
       meeting, and each person's way in minutes, and the Restaurants dropped, or `none` with the meal and the reason,
-      never coordinates, course names, or rooms. A day with no menu at all is a day whose menus are not posted yet (the
+      never coordinates, course names, or rooms. The plans come in order (`gathering/plan-order.ts`): those where
+      everyone has 30 minutes first, then the shorter ones. Within each group, the least walking for everyone together
+      comes first, counting the walk there and on to each one's next item; then the smaller largest walk, the earlier
+      start, and the key. When the asker's starting place is not known (a later day with no item before the meal, and
+      no location), their walk there cannot count. After the walking that is known, the earliest start comes first,
+      then the longest time to eat, then the key. `planned` then carries `order`, which tells the model that the first
+      plan is not the nearest. A day with no menu at all is a day whose menus are not posted yet (the
       worker reads today to six days ahead, so a week ahead never has one): the card's `noPlan.lines` say
       `11/30(월) 메뉴는 아직 올라오지 않았어요` and `메뉴는 엿새 뒤 날짜까지 볼 수 있어요` (today the first line alone), the
       reason stays `no-menu`, and the model is told the menus are not posted yet, never that nothing is open. `findMenu`
@@ -2680,9 +2688,10 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
       another meal is not served that day (`serves: false`), not a meal still to come.
       Today it adds `now` and `servingNow`, the meal whose hours hold now, or null. With a meal answer on screen (the
       context's `conditions`), it plans that answer again from them and puts it in the reply's `answer`, so that the
-      reply keeps the plan on screen; any other reply in words alone takes it off. Without one, the reply's `lookup`
-      (kind `place`, `lookup/hours-lookup.ts`) picks the Restaurant out on the map, with a place flag at the same point
-      whose words after the name the map writes as the label's second line: today `지금 영업 중 · 14:00까지`,
+      reply carries the plan again; a reply in words alone leaves the plan on screen as it was, since the app keeps
+      the answer before it. Without one, the reply's `lookup` (kind `place`, `lookup/hours-lookup.ts`) picks the
+      Restaurant out on the map, with a place flag at the same point whose words after the name the map writes as the
+      label's second line: today `지금 영업 중 · 14:00까지`,
       `지금 닫음 · 08:00 아침`, or `지금 닫음 · 오늘 영업 끝`, another day each meal's span; its basis lists each meal's
       hours, and its action guides there.
     - `planEvents(date, eventIds?)` and `EVENT_RULES` join for an app that sends both `answer` and `events` (`events/`).

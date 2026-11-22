@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -35,6 +36,10 @@ export interface BookingStage {
   tell: (told: BookingTold | null) => void;
   press: () => void;
   pick: () => void;
+  // The minutes of the walk the map draws from the User to the booking's building; null without the User's position
+  // (P01 ticket 06).
+  walk: number | null;
+  tellWalk: (minutes: number | null) => void;
 }
 
 function same(one: BookingSeen | null, other: BookingSeen | null): boolean {
@@ -66,7 +71,8 @@ export function useBookingStage(): BookingStage {
   const pick = useCallback(() => {
     presses.current.pick();
   }, []);
-  return { seen, tell, press, pick };
+  const [walk, tellWalk] = useState<number | null>(null);
+  return { seen, tell, press, pick, walk, tellWalk };
 }
 
 export type Tell = BookingStage['tell'];

@@ -11,6 +11,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -59,6 +60,7 @@ function Done({ done, actions }: { done: LibraryDone; actions: CardActions }): R
   return (
     <LibraryDoneRows
       done={done}
+      walk={actions.library.bookingWalk?.() ?? null}
       onSeats={() => {
         actions.library.addOwn({ text: '좌석 현황이에요.', cards: [{ kind: 'library', library: done.seatsCard }] });
       }}

@@ -27,6 +27,7 @@ import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import { AI_INPUT, type Room } from '../layout';
 import { AnswerCaption } from './answer-caption';
 import { CaptionQuestions, type QuestionsOpen, Typing } from './card-questions';
+import { KeptCards } from './kept-scene';
 import { BackButton } from './back-button';
 import { WaitingReply } from './failed-and-waiting';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
@@ -81,6 +82,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
       {typing || control.answer.menuFor !== null ? null : (
         <AnswerCaption control={control} listOpen={list.open} onList={list.toggle} />
       )}
+      {typing || list.open ? null : <KeptCards cardActions={props.cardActions} control={control} />}
       {typing ? (
         <Typing control={control} />
       ) : list.open ? (
@@ -280,7 +282,8 @@ function Framed(props: FramedProps): ReactElement {
   useBackToClose(useIsFocused(), profileShown ? profile.hide : back, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   const focus = useBandFocus();
-  const drawnBar = control.booking !== null || control.steps !== null;
+  // A booked seat has no bar: "←" is the round button over the map (P01 ticket 04).
+  const drawnBar = (control.booking !== null && !control.booking.booked) || control.steps !== null;
   const barShown = !keyboardUp && (drawnBar || barOf(chat.bubbles, onScreenOf(control)) !== null);
   const bar = useBarHeight(barShown, onBarHeight);
   const [past, setPast] = useState(false);

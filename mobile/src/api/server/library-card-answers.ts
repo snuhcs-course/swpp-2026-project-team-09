@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibraryAction, LibraryCardData, LibrarySpace } from '@/api/assistant-types';
@@ -84,6 +85,18 @@ export function isLibraryCardData(value: unknown): value is LibraryCardData {
   );
 }
 
+function isArrival(value: unknown): value is NonNullable<LibraryCardData['arrival']> {
+  const walk = field(value, 'walkMinutes');
+  return isText(field(value, 'at')) && typeof walk === 'number' && walk >= 0 && isText(field(value, 'from'));
+}
+
+// A filled seat's arrival and leave-by, kept only when well formed (P01 ticket 06); a released app ignores both.
+function arrivalOf(given: Partial<LibraryCardData>): Pick<LibraryCardData, 'arrival' | 'leaveBy'> {
+  const arrival = isArrival(given.arrival) ? { arrival: given.arrival } : {};
+  const leaveBy = given.leaveBy === null || isText(given.leaveBy) ? { leaveBy: given.leaveBy } : {};
+  return { ...arrival, ...leaveBy };
+}
+
 // The card with every field the server left out filled as empty: null, or no items.
 export function withLibraryDefaults(data: LibraryCardData): LibraryCardData {
   const given: Partial<LibraryCardData> = data;
@@ -103,5 +116,6 @@ export function withLibraryDefaults(data: LibraryCardData): LibraryCardData {
     notes: given.notes ?? [],
     until: given.until ?? null,
     target: given.target ?? null,
+    ...arrivalOf(given),
   };
 }

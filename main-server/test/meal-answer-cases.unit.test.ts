@@ -99,22 +99,23 @@ describe('A Friend whose position the asker may not see', () => {
 });
 
 describe('A meeting, when a Friend who comes on their own arrives last', () => {
-  // 지은's Class ends at 12:50 and she reaches the Jahayeon cafeteria at 12:53. The asker and 민수 could be there at
-  // 12:35, so they meet as late as still has them there at 12:53: at 12:36, 17 minutes away.
+  // 지은's Class ends at 12:50 and she reaches Cafeteria 3 at 13:00. The asker and 민수 could be there at 12:31, so they
+  // meet as late as still has them there at 13:00: at 12:47, 13 minutes away. (To the Jahayeon cafeteria 민수 takes the
+  // shuttle, and nobody meets on the way: P05 ticket 39.)
   it('moves with the start, and the legs of the walk stay what they are', () => {
     const asker = person(ME, '유상', [classAt('11:00', '11:50', '제1공학관')]);
     const late = person(JIEUN, '지은', [classAt('12:00', '12:50', '두산인문관')]);
 
-    const answer = answerOf([asker, minsu(), late], { candidates: [{ key: '자하연식당', placeId: id('자하연식당') }] });
+    const answer = answerOf([asker, minsu(), late], { candidates: [{ key: '3식당', placeId: id('제3학생식당') }] });
 
     const { id: key, startAt, meeting, subQuests, basis, scene } = firstPlan(answer);
 
-    expect({ key, startAt }).toEqual({ key: '자하연식당', startAt: time('12:53') });
-    expect(meeting?.at).toBe(time('12:36'));
-    expect(subQuests[0]).toMatchObject({ at: time('12:36'), title: '유상, 민수: 301동 앞에서 만나기' });
-    expect(basis[0]).toBe('민수 12:15 302동 수업 끝 · 301동까지 걸어서 3분, 같이 17분');
+    expect({ key, startAt }).toEqual({ key: '3식당', startAt: time('13:00') });
+    expect(meeting?.at).toBe(time('12:47'));
+    expect(subQuests[0]).toMatchObject({ at: time('12:47'), title: '유상, 민수: 301동 앞에서 만나기' });
+    expect(basis[0]).toBe('민수 12:15 302동 수업 끝 · 301동까지 걸어서 3분, 같이 13분');
     expect(scene.routes[0]).toMatchObject({ role: 'friend', minutes: 3 });
-    expect(scene.flags[1]?.text).toBe('12:36 민수와 만남');
+    expect(scene.flags[1]?.text).toBe('12:47 민수와 만남');
   });
 });
 
