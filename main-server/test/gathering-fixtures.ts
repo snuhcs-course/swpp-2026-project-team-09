@@ -2,10 +2,16 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type DayItem, type FreeInterval } from '../src/assistant/free-time/free-time.js';
-import { type GatheringPerson, type GatheringPlace } from '../src/assistant/gathering/gathering.js';
+import {
+  type GatheringPerson,
+  type GatheringPlace,
+  type GatheringTravel,
+  onFoot,
+} from '../src/assistant/gathering/gathering.js';
 
 // Hand-made days for the gathering's unit tests, on Tuesday 2026-11-17 in Korea.
 
@@ -13,12 +19,12 @@ export const at = (clock: string): Date => new Date(`2026-11-17T${clock}:00+09:0
 
 export const window = { start: at('11:00'), end: at('14:30') };
 
-// A walking table of seconds between hand-made Places, the same both ways.
-export function walks(...legs: [string, string, number][]): { walkingSeconds: (from: string, to: string) => number } {
+// A walking table of seconds between hand-made Places, the same both ways, without the shuttle.
+export function walks(...legs: [string, string, number][]): GatheringTravel {
   const seconds = new Map(
     legs.flatMap(([from, to, value]) => [[`${from}>${to}`, value] as const, [`${to}>${from}`, value] as const]),
   );
-  return {
+  return onFoot({
     walkingSeconds: (from, to) => {
       const value = seconds.get(`${from}>${to}`);
       if (value === undefined) {
@@ -26,7 +32,7 @@ export function walks(...legs: [string, string, number][]): { walkingSeconds: (f
       }
       return value;
     },
-  };
+  });
 }
 
 export const item = (start: string, end: string, placeId: string | null): DayItem => ({

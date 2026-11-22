@@ -2446,6 +2446,12 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     stays there shortest and why (`지은은 12:31에 도착해 13분만 먹어요` / `13:00 수업에 가려면 12:44엔 나서야 해요`), or,
     when everyone could stay 15 minutes alone, who arrives last and who leaves first. Each person's part of a meal or a
     meet carries `arriveAt`, the earliest they can be at the place, `null` when their position is unknown. A person's
+    own way to the place, and their way on to their next item, takes the shuttle of that day and hour when the walk is
+    10 minutes or more and the shuttle, with the average wait at the stop, is 3 or more minutes faster; meeting on the
+    way stays on foot. The part of such a way carries `mode: 'shuttle'` and `shuttle: { boardAt, getOffAt }` (stop
+    names), `next.by: 'shuttle'` says the way on is by the shuttle, and a scene route of role `me`, `friend`, or `next`
+    by the shuttle carries `mode: 'shuttle'`; a walk carries none of them. `walkMinutes` is then the minutes of the way,
+    however it is gone. A person's
     constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
     are ready at the earliest; where they set out from is still decided by their own time), and `leaveBy` (the latest
     they leave).
@@ -2454,7 +2460,8 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     place where they
     are together longest, from the latest arrival to the earliest leave-by, at least 15 minutes; at most five Plans. The
     places are 학생회관, the buildings of `GET /study-spaces`, the Restaurants open that day, and the buildings each
-    person sets out from, each walked to directly, with no merging point. A fixed start shows as a `from` chip, and a
+    person sets out from, each gone to directly (on foot, or by the day's shuttle as a meal's ways are), with no merging
+    point. A fixed start shows as a `from` chip, and a
     fixed Place that does not fit is worded as a meal's (`12:45부터 14분만 있을 수 있어요`). `people` holds the asker and
     at least one Friend.
   - **Refused with 400:** a body of another shape, a window whose `from` is not before its `until`, an input whose first
@@ -3520,7 +3527,8 @@ after its signal, with the time of the Quests' `CLOCK`, without the answer waiti
 warning and the answer stays as it is.
 
 `leave-by` is kept when `POST /plans` makes a party: `PlansService` schedules the Leader's for the time the Leader's
-part of the Plan sets out, with the Plan's Place and the Leader's own walking minutes, after the transaction and its
+part of the Plan sets out, with the Plan's Place and the minutes of the Leader's own way (by the shuttle when the part's
+`mode` says so), after the transaction and its
 signals, without the answer waiting for it; a failure is logged as a warning. None is kept when the Leader's starting
 Place is unknown or the walk is 0 minutes.
 

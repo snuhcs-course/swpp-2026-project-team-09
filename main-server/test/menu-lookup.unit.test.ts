@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -162,6 +163,14 @@ describe('The time to eat', () => {
       '301동 → 학생회관식당 걸어서 15분',
       '24동까지 걸어서 1분이라 12:59에 나서요',
     ]);
+  });
+
+  it('says the shuttle where the way there is by it, a Restaurant at 58동 being 25 minutes on foot', () => {
+    const { basis } = lookupOf('학생회관식당', 'SK경영관', boardDay());
+
+    expect(basis).toContainEqual(
+      expect.stringMatching(/^301동 → 학생회관식당 셔틀로 \d+분 \(301동 정류장 → 경영대 정류장\)$/u),
+    );
   });
 
   it("ends at the end of the meal's hours when nothing follows", () => {

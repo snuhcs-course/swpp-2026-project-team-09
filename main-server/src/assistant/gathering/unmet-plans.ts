@@ -7,11 +7,17 @@
 
 import { type Hours } from '../../menus/restaurant-hours.js';
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
-import { type TravelProvider } from '../../travel/travel.js';
 import { type MealInput } from '../dto/answer.dto.js';
 import { clockOf, type DayItem, onDay } from '../free-time/free-time.js';
 import { earliest, type Interval, latest, mealWindow } from '../free-time/meal-fit.js';
-import { gather, type Gathering, type GatheringPerson, type GatheringPlace, MINUTE_MS } from './gathering.js';
+import {
+  gather,
+  type Gathering,
+  type GatheringPerson,
+  type GatheringPlace,
+  type GatheringTravel,
+  MINUTE_MS,
+} from './gathering.js';
 import { windowOf } from './plan-conditions.js';
 
 // The calculation of a meal whose conditions cannot all be met (P02-14): a Restaurant's own hours, a meal "now"
@@ -23,7 +29,7 @@ export const NOW_MINUTES = 30;
 // The start offered for a meal 지금 that nobody can make is rounded up to the half hour, as the time band marks it.
 const RELAX_STEP_MINUTES = 30;
 
-type Walking = Pick<TravelProvider, 'walkingSeconds'>;
+type Walking = GatheringTravel;
 
 // A condition to ease, as the words of the answer name it.
 export type Relax = { kind: 'without'; userId: string } | { kind: 'from'; time: string };
