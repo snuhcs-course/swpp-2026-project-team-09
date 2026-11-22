@@ -7,7 +7,9 @@
 
 import { useMemo } from 'react';
 import type { AnswerDrawing } from '@/features/assistant/answer-marks';
+import type { ViewArea } from '@/features/assistant/answer-camera';
 import { faceBox, labelBoxAt, type LabelView, overlaps } from '@/features/assistant/answer-labels';
+import { ANSWER_SYMBOL_BOX } from '@/design-system';
 import { nearOwnMark } from '@/features/assistant/answer-marks';
 import { nearKeptWords } from '@/features/assistant/kept-drawing';
 import type { CardView } from '@/features/map/adapter';
@@ -16,7 +18,7 @@ import type { LatLng } from '@/api/types';
 import { peopleOf } from '@/features/assistant/plan-input';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { friendIdOf } from '@/features/map/adapter';
-import { type MapAvatar, type MarkerLook, useMarkerImages } from '@/map';
+import { inView, type MapAvatar, type MarkerLook, useMarkerImages } from '@/map';
 import { SELECTED_ORDER } from './use-things';
 
 // The face a Friend's Avatar shows while an answer is on screen: the selected look while their add is on its way, and
@@ -104,19 +106,36 @@ export function othersOf(
   );
 }
 
-// The faces with those under the chosen place's label left out: the map draws every Avatar over every marker, and the
-// chosen place's label stays on top (the answer screen's redesign).
+// The boxes a face must not cover: the chosen place's label, and every candidate's and the pick's dot, so that no
+// candidate vanishes under a face (the map draws every Avatar over every marker).
+function keptBoxes(placed: AnswerDrawing, view: LabelView): ViewArea[] {
+  const boxes: ViewArea[] = [];
+  for (const { id, position, look } of placed.things) {
+    const dot = look.kind === 'answer' && look.symbol?.type === 'dot' ? look.symbol : null;
+    if (dot !== null && (dot.role === 'candidate' || dot.role === 'pick')) {
+      const { x, y } = inView(position, view.camera, view.size);
+      boxes.push({ top: y - DOT_HALF, right: x + DOT_HALF, bottom: y + DOT_HALF, left: x - DOT_HALF });
+    }
+    if (id === 'answer:pick' && look.kind === 'answer' && look.label !== null) {
+      boxes.push(labelBoxAt(view, position, look.label));
+    }
+  }
+  return boxes;
+}
+
+const DOT_HALF = ANSWER_SYMBOL_BOX / 2;
+
+// The faces with those over the chosen place's label or over a candidate's dot left out: the chosen label stays on
+// top, and every candidate keeps a dot to be pressed (the answer screen's redesign).
 export function facesClearOf(
   faces: readonly MapAvatar[],
   placed: AnswerDrawing,
   view: LabelView | null,
 ): readonly MapAvatar[] {
-  const pick = placed.things.find(({ id }) => id === 'answer:pick');
-  const label = pick?.look.kind === 'answer' ? pick.look.label : null;
-  if (view === null || pick === undefined || label === null) {
+  if (view === null) {
     return faces;
   }
-  const box = labelBoxAt(view, pick.position, label);
-  const clear = faces.filter(({ position }) => !overlaps(faceBox(view, position), box));
+  const boxes = keptBoxes(placed, view);
+  const clear = faces.filter(({ position }) => !boxes.some((box) => overlaps(faceBox(view, position), box)));
   return clear.length === faces.length ? faces : clear;
 }
