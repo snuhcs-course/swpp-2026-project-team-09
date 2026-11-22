@@ -69,6 +69,19 @@ function boxIn(view: LabelView, position: LatLng, label: AnswerLabel): ViewArea 
   return { top: y + box.top, right: x + box.right, bottom: y + box.bottom, left: x + box.left };
 }
 
+// A Friend's face over the map: a pin standing on its point, about 44 points wide and 52 high.
+const FACE = { half: 22, above: 52, below: 4 };
+
+export function faceBox(view: LabelView, position: LatLng): ViewArea {
+  const { x, y } = inView(position, view.camera, view.size);
+  return { top: y - FACE.above, right: x + FACE.half, bottom: y + FACE.below, left: x - FACE.half };
+}
+
+// A label's box at a view, around its mark's point.
+export function labelBoxAt(view: LabelView, position: LatLng, label: AnswerLabel): ViewArea {
+  return boxIn(view, position, label);
+}
+
 function symbolBox(view: LabelView, position: LatLng): ViewArea {
   const { x, y } = inView(position, view.camera, view.size);
   const half = ANSWER_SYMBOL_BOX / 2;
@@ -84,7 +97,7 @@ export function inside({ top, right, bottom, left }: ViewArea, area: ViewArea): 
   );
 }
 
-function overlaps(one: ViewArea, other: ViewArea): boolean {
+export function overlaps(one: ViewArea, other: ViewArea): boolean {
   return one.left < other.right && other.left < one.right && one.top < other.bottom && other.top < one.bottom;
 }
 
@@ -214,7 +227,7 @@ export function placeLabels(
 ): (AnswerLabel | null)[] {
   const taken = points.map(() => new Set<LabelSide>());
   const symbols = view === null ? [] : points.map(({ symbol }) => (symbol === null ? null : symbolBox(view, symbol)));
-  const faces = view === null ? [] : (view.avoid ?? []).map((position) => symbolBox(view, position));
+  const faces = view === null ? [] : (view.avoid ?? []).map((position) => faceBox(view, position));
   const boxes: ViewArea[] = [];
   const labels = marks.map(({ point, position, words, sides, kept = false }): AnswerLabel | null => {
     const free = taken[point];

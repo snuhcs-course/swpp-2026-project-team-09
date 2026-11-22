@@ -38,7 +38,7 @@ import { type LabelView, placeLabels, type Unplaced, UPRIGHT_REACH } from './ans
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 import { candidateDraft, leftOutByRank, pickLine, sideRank } from './answer-candidates';
 import { kindShown } from './meal-kinds';
-import { mealDrafts, sceneLines } from './meal-marks';
+import { drawsMeal, mealDrafts, sceneLines } from './meal-marks';
 import { mealPickWords } from './meal-pick';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
@@ -315,7 +315,7 @@ export function drawingOf(
     day,
     kind: kindShown(answer),
     kept: answer.planSet,
-    meal: answer.input.kind === 'meal' && answer.plans.some(({ menu }) => menu !== undefined),
+    meal: drawsMeal(answer),
   });
 }
 

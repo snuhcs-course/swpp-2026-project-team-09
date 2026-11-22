@@ -10,10 +10,8 @@
  ******************************************************************************/
 
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AnswerReply, MapScene } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import { answerCamera } from '@/features/assistant/answer-camera';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import { type AnswerDrawing, drawingOf, drawingOfScene, looksOf } from '@/features/assistant/answer-marks';
 import { keptDrawingOf } from '@/features/assistant/kept-drawing';
@@ -26,15 +24,20 @@ import {
   type MapMarker,
   type MarkerLook,
   NATIVE_MIN_LEVEL,
-  nativeLevelZoom,
-  type Size,
   useMarkerImages,
-  ZOOM_OFFSET,
 } from '@/map';
 import { ignoreMark, type OnMark, planPress, pressableWhile, takesNoPress } from './answer-presses';
-import { labelArea, paddingOf } from './answer-padding';
+import {
+  ANSWER_MIN_LEVEL,
+  ANSWER_OUTER_ZOOM,
+  type Framing,
+  labelViewOf,
+  useFraming,
+  useHeldView,
+} from './answer-framing';
+import { paddingOf } from './answer-padding';
 import type { Room } from './layout';
-import { othersOf, useFacePoints, useFaces } from './use-answer-faces';
+import { facesClearOf, othersOf, useFacePoints, useFaces } from './use-answer-faces';
 import { useChoosingRing } from './use-choosing-ring';
 
 export { othersOf };
@@ -42,6 +45,7 @@ import { useAnswerWalks } from './use-answer-walks';
 import type { MainMap } from './use-main-map';
 
 export { labelArea, paddingOf } from './answer-padding';
+export { useFraming } from './answer-framing';
 
 // What the map draws: its markers, its Avatars, and its lines.
 export interface MapContents {
@@ -49,14 +53,6 @@ export interface MapContents {
   avatars: readonly MapAvatar[];
   lines: readonly MapLine[];
 }
-
-// A Plan may span the campus, and on a phone Kakao's level 15, where a campus map's pinch out stops, is closer than
-// the lowest zoom of the camera's rules: while a Plan is drawn, a native map may go one level further out.
-const ANSWER_MIN_LEVEL = NATIVE_MIN_LEVEL - 1;
-// Where the lowest zoom is too close for the Plan's own points, the camera may go out to that level's zoom
-// (`nativeLevelZoom`), kept a quarter of a level clear of it: on Android the module shows a view taller than when it
-// opened by sending each zoom that much lower (`useScaleShift` in `native-map.tsx`, 0.146 on the emulator).
-const ANSWER_OUTER_ZOOM = nativeLevelZoom(ANSWER_MIN_LEVEL) + 0.25;
 
 const NO_LOOKS: readonly MarkerLook[] = [];
 const NO_LINES: readonly MapLine[] = [];
@@ -81,52 +77,6 @@ function alone(answer: AnswerReply, index: number): AnswerReply {
 function keptDrawOf(answer: AnswerReply, index: number): ((view: LabelView | null) => AnswerDrawing) | null {
   const base = keptDrawingOf(answer, index);
   return base === null ? null : (view: LabelView | null): AnswerDrawing => keptDrawingOf(answer, index, view) ?? base;
-}
-
-// What frames an answer on the map: the status bar, the card, the pill or none, and, once the stage is laid out and
-// the map has told its fit zoom, the map's view, under the status bar too, with the closest zoom of its camera.
-interface Framing {
-  top: number;
-  card: number | null;
-  pill: boolean;
-  // The time bar under the pill, 0 for none.
-  timeBar: number;
-  view: { size: Size; closest: number } | null;
-}
-
-export function useFraming({ fitZoom }: MainMap, room: Room, pill: boolean): Framing {
-  const { answerHeight, stage, timeBarHeight = 0 } = room;
-  const timeBar = pill ? timeBarHeight : 0;
-  const { top } = useSafeAreaInsets();
-  const width = stage?.width;
-  const height = stage?.height;
-  return useMemo(() => {
-    const known = width !== undefined && height !== undefined && fitZoom !== null;
-    const view = known ? { size: { width, height: height + top }, closest: fitZoom + ZOOM_OFFSET.close } : null;
-    return { top, card: answerHeight, pill, timeBar, view };
-  }, [top, answerHeight, pill, timeBar, width, height, fitZoom]);
-}
-
-// The camera `answerCamera` works out for a drawing whose labels' sides are chosen in metres, and the area its labels
-// stay in. Null until the view is known. The room for labels is measured from the points the camera fits: every point,
-// or the Plan's own alone.
-function labelViewOf(
-  drawing: AnswerDrawing,
-  { top, card, pill, timeBar, view }: Framing,
-  avoid: readonly LatLng[] = NO_POINTS,
-): LabelView | null {
-  if (view === null) {
-    return null;
-  }
-  const padding = paddingOf(top, card, drawing, pill, timeBar);
-  const own = drawing.keep ?? drawing.own;
-  const ownPadding = paddingOf(top, card, { ...drawing, points: own }, pill, timeBar);
-  const camera = answerCamera({ ...drawing, own }, view.size, padding, view.closest, {
-    padding: ownPadding,
-    outer: ANSWER_OUTER_ZOOM,
-  });
-  const area = labelArea(top, card, view.size, pill, timeBar);
-  return camera === null ? null : { camera, size: view.size, area, avoid };
 }
 
 // How long the drawing and the card's height stay the same before the camera follows an answer that replaced another,
@@ -237,6 +187,9 @@ interface Drawn {
   lines: readonly MapLine[];
   // With its labels' sides chosen in metres: its things, points, and people are the same at any view.
   drawing: AnswerDrawing;
+  // As drawn, at the view it is shown at.
+  placed: AnswerDrawing;
+  view: LabelView | null;
 }
 
 // The drawing with its labels' sides chosen in metres.
@@ -261,8 +214,13 @@ export function useDrawnMap(
   // The marks that take a press although they are no Plan's: those that open a card.
   pressable: (id: string) => boolean = takesNoPress,
   avoid: readonly LatLng[] = NO_POINTS,
+  // A view kept in place of the drawing's own, as a meal answer's while another place is chosen.
+  held: LabelView | null = null,
 ): Drawn | null {
-  const shown = useMemo(() => (base === null ? null : labelViewOf(base, framing, avoid)), [base, framing, avoid]);
+  const shown = useMemo(
+    () => held ?? (base === null ? null : labelViewOf(base, framing, avoid)),
+    [held, base, framing, avoid],
+  );
   const drawing = useMemo(() => (draw === null || shown === null ? base : draw(shown)), [draw, base, shown]);
   const things = drawing?.things ?? [];
   const images = useMarkerImages([...things.map(({ look }) => look), ...looks]);
@@ -278,7 +236,7 @@ export function useDrawnMap(
       ? []
       : [{ id, name: thing.name, position, image, order, passive: planId === null && !pressable(id) }];
   });
-  return { markers, lines, drawing: base };
+  return { markers, lines, drawing: base, placed: drawing, view: shown };
 }
 
 export function ignorePress(): void {
@@ -346,13 +304,15 @@ export function useAnswerMap(
   const sent = sending || settled || changing || leftAlone;
   const avoid = useFacePoints(faces);
   const ring = useChoosingRing(draw, looks, index);
-  const drawn = useDrawnMap(ring.draw, base, answer, ring.looks, map, framing, routes, pressableWhile(sent), avoid);
+  const held = useHeldView(answer !== null && !sent ? answer : null, standings, framing, avoid, base?.pick ?? null);
+  const press = pressableWhile(sent);
+  const drawn = useDrawnMap(ring.draw, base, answer, ring.looks, map, framing, routes, press, avoid, held);
   if (drawn === null) {
     return null;
   }
-  const { markers, lines, drawing } = drawn;
+  const { markers, lines, drawing, placed, view } = drawn;
   return {
-    contents: { markers, lines, avatars: faces },
+    contents: { markers, lines, avatars: facesClearOf(faces, placed, view) },
     onPress: planPress(drawing, shown, sent, onMark),
     ...ANSWER_LIMITS,
   };

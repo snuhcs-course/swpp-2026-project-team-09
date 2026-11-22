@@ -4,7 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { MapScene, Plan } from '@/api/assistant-types';
+import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { color } from '@/design-system';
 import { koreaClock } from '@/korea-time';
@@ -12,6 +12,11 @@ import type { MapLine } from '@/map';
 import { type Draft, ROUTE_STYLES } from './answer-groups';
 import { metresBetween } from './answer-drawing';
 import { fixedAfter, fixedBefore, routeLineId } from './answer-walks';
+
+// Whether an answer is drawn as a meal answer of the redesign: a meal whose Plans have menus.
+export function drawsMeal({ input, plans }: AnswerReply): boolean {
+  return input.kind === 'meal' && plans.some(({ menu }) => menu !== undefined);
+}
 
 // A meal answer's route on the map (the answer screen's redesign, board E1): the way to the chosen place solid, the
 // way on to the next fixed thing dotted, each leg with its minutes, and the start and the next thing as dark labels

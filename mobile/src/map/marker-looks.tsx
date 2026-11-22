@@ -131,6 +131,7 @@ function parts(...names: (string | false)[]): string {
 }
 
 // Words may hold the separator of `parts`, so an answer's look is named by a list of what it draws, in a fixed order.
+// Every field that changes the picture is part of the name, so that a look never takes another's kept picture.
 function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | null): string {
   const drawn = [
     symbol?.type ?? null,
@@ -142,7 +143,15 @@ function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | null): str
           ...(symbol.exact === true ? ['exact'] : []),
         ]
       : null,
-    symbol?.type === 'dot' ? [symbol.role, symbol.number] : null,
+    symbol?.type === 'dot'
+      ? [
+          symbol.role,
+          symbol.number,
+          ...(symbol.faded === true ? ['faded'] : []),
+          ...(symbol.ring === undefined ? [] : [{ ring: symbol.ring }]),
+          ...(symbol.pop === true ? ['pop'] : []),
+        ]
+      : null,
     label === null
       ? null
       : [
@@ -153,6 +162,9 @@ function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | null): str
           label.number,
           ...(label.shift === undefined ? [] : [label.shift]),
           ...(label.sub === undefined || label.sub === null ? [] : [{ sub: label.sub }]),
+          ...(label.note === undefined || label.note === null ? [] : [{ note: label.note }]),
+          ...(label.action === undefined || label.action === null ? [] : [{ action: label.action }]),
+          ...(label.faded === true ? ['faded'] : []),
         ],
   ];
   return `answer:${JSON.stringify(drawn)}`;

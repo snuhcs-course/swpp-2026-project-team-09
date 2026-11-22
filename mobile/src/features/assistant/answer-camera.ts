@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -22,7 +23,7 @@ import {
 import { fit, outerRules, settle } from '@/map/projection';
 import { ANSWER_SYMBOL_BOX, answerLabelBox } from '@/design-system';
 import { type AnswerDrawing, offset } from './answer-drawing';
-import { inside, ONE_POINT } from './answer-labels';
+import { inside, type LabelView, ONE_POINT } from './answer-labels';
 
 // What the pill and the card leave of the map, with the room for labels, in points of the map's view: each edge as a
 // distance from the view's top or left.
@@ -166,4 +167,27 @@ export function answerCamera(
   const camera = wider ?? fitted;
   const centre = correctedCentre(drawing, camera, size, areaOf(padding, size), ownArea);
   return centre === null ? camera : settle({ centre, zoom: camera.zoom }, rules);
+}
+
+// Room kept between a place brought into view and the area's edge, for its dot.
+const PAN_MARGIN = ANSWER_SYMBOL_BOX;
+
+function into(at: number, start: number, end: number): number {
+  if (at < start + PAN_MARGIN) {
+    return start + PAN_MARGIN - at;
+  }
+  return at > end - PAN_MARGIN ? end - PAN_MARGIN - at : 0;
+}
+
+// The view moved, at its zoom, just enough to bring a position into its area; the same view when it is in already.
+export function panToShow(view: LabelView, position: LatLng): LabelView {
+  const { camera, size, area } = view;
+  const { x, y } = inView(position, camera, size);
+  const dx = into(x, area.left, area.right);
+  const dy = into(y, area.top, area.bottom);
+  if (dx === 0 && dy === 0) {
+    return view;
+  }
+  const centre = project(camera.centre, camera.zoom);
+  return { ...view, camera: { ...camera, centre: unproject({ x: centre.x - dx, y: centre.y - dy }, camera.zoom) } };
 }

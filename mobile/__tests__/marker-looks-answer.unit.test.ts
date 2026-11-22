@@ -156,3 +156,38 @@ describe("a candidate's tag with dishes (P04 ticket 13)", () => {
     expect(lookName(tag('뚝배기불고기 외 4'))).toBe(lookName(tag('뚝배기불고기 외 4')));
   });
 });
+
+// Partitions: a dot faded or not, at each ring stage or none, popped or not; a label faded or not, with "메뉴 ›" or
+// without, with a note or without (the answer screen's redesign).
+function dot(more: object): MarkerLook {
+  return {
+    kind: 'answer',
+    symbol: { type: 'dot', role: 'pick', number: 1, ...more },
+    label: null,
+  };
+}
+function label(more: object): MarkerLook {
+  return {
+    kind: 'answer',
+    symbol: null,
+    label: { side: 'below', tone: 'pick', title: '학생회관식당', line: '목살슬라이스덮밥 외 2', number: null, ...more },
+  };
+}
+
+describe("a meal answer's looks that differ only in how they are drawn", () => {
+  it('have names of their own, so that a phone never draws a kept picture of another', () => {
+    const looks = [
+      dot({}),
+      dot({ faded: true }),
+      dot({ ring: 0.2 }),
+      dot({ ring: 0.6 }),
+      dot({ ring: 1, pop: true }),
+      dot({ ring: 1 }),
+      label({}),
+      label({ faded: true }),
+      label({ action: '메뉴 ›' }),
+      label({ note: '11:00 · 걸음 32분' }),
+    ];
+    expect(new Set(looks.map((look) => lookName(look))).size).toBe(looks.length);
+  });
+});

@@ -7,6 +7,7 @@
 
 import { useMemo } from 'react';
 import type { AnswerDrawing } from '@/features/assistant/answer-marks';
+import { faceBox, labelBoxAt, type LabelView, overlaps } from '@/features/assistant/answer-labels';
 import { nearOwnMark } from '@/features/assistant/answer-marks';
 import { nearKeptWords } from '@/features/assistant/kept-drawing';
 import type { CardView } from '@/features/map/adapter';
@@ -101,4 +102,21 @@ export function othersOf(
   return avatars.filter(
     ({ id, position }) => others.has(id) && !nearOwnMark(drawing, position) && !nearKeptWords(drawing, position),
   );
+}
+
+// The faces with those under the chosen place's label left out: the map draws every Avatar over every marker, and the
+// chosen place's label stays on top (the answer screen's redesign).
+export function facesClearOf(
+  faces: readonly MapAvatar[],
+  placed: AnswerDrawing,
+  view: LabelView | null,
+): readonly MapAvatar[] {
+  const pick = placed.things.find(({ id }) => id === 'answer:pick');
+  const label = pick?.look.kind === 'answer' ? pick.look.label : null;
+  if (view === null || pick === undefined || label === null) {
+    return faces;
+  }
+  const box = labelBoxAt(view, pick.position, label);
+  const clear = faces.filter(({ position }) => !overlaps(faceBox(view, position), box));
+  return clear.length === faces.length ? faces : clear;
 }
