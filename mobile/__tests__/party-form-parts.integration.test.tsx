@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -16,7 +17,7 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { MY_HIKE, openAt } from './support/party';
 import { answerForm, FESTIVAL, fillPublic, permission, PHOTO_URI, submit } from './support/party-form';
-import { toast } from './support/room';
+import { toast, toastIcon } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 import { readQuestEntries } from '@/storage/quest-entries';
 
@@ -127,6 +128,7 @@ describe('사진 not taken', () => {
     await pass(0);
 
     expect(toast()).toHaveTextContent('사진을 가져오지 못했어요. 다시 시도해 주세요');
+    expect(toastIcon()).toBe('alert');
     expect(screen.queryByTestId('photo-preview')).toBeNull();
   });
 });

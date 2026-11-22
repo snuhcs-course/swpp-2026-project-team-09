@@ -5,6 +5,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -15,7 +16,7 @@ import { sockets } from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
-import { toast } from './support/room';
+import { toast, toastIcon } from './support/room';
 import { answerParty, openAt } from './support/party';
 import { askMainServer, DINNER, INVITATION, PHONE_NOW } from './support/server';
 
@@ -70,6 +71,7 @@ describe('초대', () => {
 
     expect(server.received(`POST /quest-invitations/${INVITATION.id}/accept`)).toHaveLength(1);
     expect(toast()).toHaveTextContent('파티에 참여했어요');
+    expect(toastIcon()).toBe('check');
   });
 
   it('declines with 거절, which removes the card', async () => {
@@ -91,7 +93,7 @@ describe('a refused acceptance', () => {
     [refusal(409, 'QUEST_FULL'), '자리가 다 찼어요'],
     [refusal(409, 'QUEST_ENDED'), '이미 끝난 파티예요'],
     [refusal(409, 'SHARED_QUEST_HELD'), '이 행사에 함께 가는 파티가 이미 있어요'],
-  ] as [Reply, string][])('says why an acceptance was refused and keeps the invitation: %j', async (reply, words) => {
+  ] as [Reply, string][])('alerts why an acceptance was refused and keeps the invitation: %j', async (reply, words) => {
     server.on(`POST /quest-invitations/${INVITATION.id}/accept`, reply);
     const user = await openAt('/party?tab=invites');
 
@@ -99,6 +101,7 @@ describe('a refused acceptance', () => {
     await pass(500);
 
     expect(toast()).toHaveTextContent(words);
+    expect(toastIcon()).toBe('alert');
     expect(screen.getByText(INVITATION.quest.title)).toBeVisible();
   });
 });

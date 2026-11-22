@@ -5,6 +5,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Keyboard } from 'react-native';
@@ -15,7 +16,7 @@ import { sockets } from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
-import { answer, MIN_JUN_HOLDER, SEO_YEON_HOLDER, toast } from './support/room';
+import { answer, MIN_JUN_HOLDER, SEO_YEON_HOLDER, toast, toastIcon } from './support/room';
 import { answerParty, MY_HIKE, openAt } from './support/party';
 import { askMainServer, PHONE_NOW } from './support/server';
 
@@ -124,6 +125,7 @@ describe('a public 파티', () => {
       { userId: SEO_YEON_HOLDER.id },
     ]);
     expect(toast()).toHaveTextContent('파티를 올렸어요 · 1명에게 초대 요청 · 1명은 초대하지 못했어요');
+    expect(toastIcon()).toBe('check');
     expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
   });
 });
@@ -175,7 +177,7 @@ describe('a refused 파티 올리기', () => {
     [refusal(403, 'NOT_QUEST_LEADER'), '파티장만 할 수 있어요'],
     [refusal(404, 'PLACE_NOT_FOUND'), '장소를 다시 골라 주세요'],
     [refusal(500), '저장하지 못했어요. 다시 시도해 주세요'],
-  ] as [Reply, string][])('says why it was refused and stays open: %j', async (reply, words) => {
+  ] as [Reply, string][])('says why it was refused, with the alert, and stays open: %j', async (reply, words) => {
     server.on('POST /quests/own', reply);
     const user = await openForm();
     await fillPublic(user);
@@ -184,6 +186,7 @@ describe('a refused 파티 올리기', () => {
     await pass(500);
 
     expect(toast()).toHaveTextContent(words);
+    expect(toastIcon()).toBe('alert');
     expect(screen.getByRole('header', { name: '파티 만들기' })).toBeVisible();
   });
 });

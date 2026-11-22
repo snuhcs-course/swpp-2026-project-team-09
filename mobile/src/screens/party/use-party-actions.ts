@@ -7,6 +7,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -143,7 +144,7 @@ export function usePartyActions(): PartyActions {
         }
         return true;
       } catch (error) {
-        showToast((await refused?.(error)) ?? refusalWords(error, ENTERING));
+        showToast((await refused?.(error)) ?? refusalWords(error, ENTERING), undefined, 'alert');
         return false;
       } finally {
         for (const queryKey of PARTY_KEYS) {
@@ -185,7 +186,7 @@ export function useFindActions(): FindActions {
       try {
         await saving();
       } catch {
-        showToast(NOT_KEPT);
+        showToast(NOT_KEPT, undefined, 'alert');
         return false;
       }
       await queryClient.invalidateQueries({ queryKey });

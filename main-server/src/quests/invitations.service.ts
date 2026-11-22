@@ -10,6 +10,7 @@
  * 2026-11-15  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -23,7 +24,7 @@ import { NotificationsService } from '../notifications/notifications.service.js'
 import { invitationMessage } from '../push/messages.js';
 import { PushService } from '../push/push.service.js';
 import { CLOCK, type Clock } from './clock.js';
-import { QuestDto } from './dto/quest.dto.js';
+import { QuestDto, subQuestsAheadWhere } from './dto/quest.dto.js';
 import {
   toWaitingDto,
   toWaitingUserDto,
@@ -44,7 +45,8 @@ export type AcceptedListener = (userId: string, questId: string) => void;
 const invitationNotFound = (): NotFoundException => notFound('QUEST_INVITATION_NOT_FOUND', 'No such invitation waits.');
 
 // The Leader's invitations of Friends. An invitation admits whatever the Join Policy is, waits until the invited User
-// answers it, and ends with the Quest and when the User enters it in any way (RecruitingService.enter).
+// answers it, and ends with the Quest and when the User enters it in any way (RecruitingService.enter). One into a
+// Quest with no Sub Quest ahead stays stored but is listed nowhere: accepting it would be refused.
 @Injectable()
 export class InvitationsService {
   private readonly logger = new Logger(InvitationsService.name);
@@ -101,7 +103,7 @@ export class InvitationsService {
   // The User's invitations, the newest first.
   async list(userId: string): Promise<WaitingDto[]> {
     const invitations = await this.prisma.questInvitation.findMany({
-      where: { userId },
+      where: { userId, quest: subQuestsAheadWhere(this.clock.now()) },
       include: WAITING_INCLUDE,
       orderBy: [{ sentAt: 'desc' }, { id: 'desc' }],
     });
@@ -113,7 +115,7 @@ export class InvitationsService {
     return this.prisma.$transaction(async (tx) => {
       await this.leader.lockLed(questId, leaderId, tx);
       const invitations = await tx.questInvitation.findMany({
-        where: { questId },
+        where: { questId, quest: subQuestsAheadWhere(this.clock.now()) },
         include: WAITING_USER_INCLUDE,
         orderBy: [{ sentAt: 'desc' }, { id: 'desc' }],
       });

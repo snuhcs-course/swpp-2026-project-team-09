@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import * as ImagePicker from 'expo-image-picker';
@@ -96,13 +97,13 @@ function useTake(onChange: (photo: QuestPhoto) => void): (source: Source) => voi
     void pick(source)
       .then(({ refused, uri }) => {
         if (refused) {
-          showToast(CAMERA_REFUSED);
+          showToast(CAMERA_REFUSED, undefined, 'alert');
         } else if (uri !== null) {
           onChange({ kind: 'picked', uri, caption: PICKED_CAPTION });
         }
       })
       .catch(() => {
-        showToast(NOT_PICKED);
+        showToast(NOT_PICKED, undefined, 'alert');
       });
   };
 }
