@@ -26,6 +26,8 @@ interface ChatProposalCardProps {
   onMake: () => void;
   // 수정: opens the party form filled with it.
   onEdit: () => void;
+  // The rows a change of a made 파티 moves, whose values stand out (P04 ticket 28).
+  moved?: readonly string[];
 }
 
 const EMPTY = '없음';
@@ -113,7 +115,13 @@ function BookingButton({ booking }: { booking: FacilityBooking }): ReactElement 
 // Place is booked online shows 시설 예약하기 under them.
 // With a change of a 파티 already made (P04 ticket 25), it is that 파티 with the new time or place, and its buttons
 // are 파티 보기, which opens its room, and 바꾸기.
-export function ChatProposalCard({ proposal, making, onMake, onEdit }: ChatProposalCardProps): ReactElement {
+export function ChatProposalCard({
+  proposal,
+  making,
+  onMake,
+  onEdit,
+  moved = [],
+}: ChatProposalCardProps): ReactElement {
   const form = proposalForm(proposal);
   const changes = proposal.change !== undefined;
   return (
@@ -126,7 +134,9 @@ export function ChatProposalCard({ proposal, making, onMake, onEdit }: ChatPropo
           <View accessibilityLabel={`${label} ${value}`} accessible key={label} style={styles.row}>
             <Icon color={color.inkMuted} name={icon} size={16} />
             <Text style={styles.label}>{label}</Text>
-            <Text style={[styles.value, value === EMPTY && styles.empty]}>{value}</Text>
+            <Text style={[styles.value, value === EMPTY && styles.empty, moved.includes(label) && styles.moved]}>
+              {value}
+            </Text>
           </View>
         ))}
       </View>
@@ -163,6 +173,7 @@ const styles = StyleSheet.create({
   label: { ...text.body, width: 72, color: color.inkMuted },
   value: { ...text.body, flex: 1, textAlign: 'right', color: color.ink },
   empty: { color: color.inkMuted },
+  moved: { fontFamily: font.semiBold, color: color.party },
   buttons: { flexDirection: 'row', gap: space[2], marginTop: space[3] },
   button: { flex: 1 },
   booking: { gap: space[1], marginTop: space[2] },

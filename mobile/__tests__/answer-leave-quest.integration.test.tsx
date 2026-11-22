@@ -110,7 +110,7 @@ describe('its button pressed', () => {
     await pass(500);
 
     expect(server.received('DELETE /quests/q-dinner')).toHaveLength(1);
-    expect(dock().getByText('‘저녁 약속’ 취소했어요.')).toBeVisible();
+    expect(dock().getByText('‘저녁 약속’을 취소했어요')).toBeVisible();
     expect(screen.queryByTestId('leave-quest')).toBeNull();
   });
 
@@ -121,7 +121,7 @@ describe('its button pressed', () => {
     await user.press(screen.getByRole('button', { name: /^취소하기/u }));
     await pass(500);
 
-    expect(dock().getByText('‘저녁 약속’ 취소했어요.')).toBeVisible();
+    expect(dock().getByText('‘저녁 약속’을 취소했어요')).toBeVisible();
     expect(screen.queryByTestId('leave-quest')).toBeNull();
   });
 
@@ -132,7 +132,7 @@ describe('its button pressed', () => {
     await user.press(screen.getByRole('button', { name: /^취소하기/u }));
     await pass(500);
 
-    expect(dock().getByText('취소하지 못했어요. 다시 눌러 주세요.')).toBeVisible();
+    expect(dock().getByText('취소하지 못했어요. 다시 눌러 주세요')).toBeVisible();
     expect(screen.getByRole('button', { name: /^취소하기/u })).toBeEnabled();
   });
 });
