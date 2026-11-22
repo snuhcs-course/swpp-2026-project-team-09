@@ -5,11 +5,19 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Keyboard } from 'react-native';
+import { Keyboard, StyleSheet, Text, View } from 'react-native';
+import { now } from '@/clock';
+import { color, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
+import { type TypingWords, typingWordsOf } from '@/features/assistant/typing-words';
+import { koreaDateKey } from '@/korea-time';
+import { markdownLabel } from '../chat-markdown';
 import { lastReply } from '@/features/assistant/use-shown-answer';
 import type { ChatSheetControl } from '../chat-sheet';
+import { DockChip } from './dock-chips';
+import { restOf } from './docked-answer';
 import { FollowUpChips } from './follow-up-chips';
+import { pressOffer } from './refusal-reply';
 import { QuestionList, questionRowsOf } from './question-list';
 
 // Whether the list of questions is open in the card, and what opens and closes it.
@@ -21,6 +29,10 @@ export interface QuestionsOpen {
 
 // The most the questions take in the card: about four rows, which scroll beyond.
 export const QUESTIONS_MAX = 240;
+// A question above the keyboard takes up to three lines, a sentence up to two.
+const QUESTION_LINES = 3;
+const SENTENCE_LINES = 2;
+
 // While typing, about two rows above the input.
 const TYPING_QUESTIONS_MAX = 150;
 
@@ -47,19 +59,78 @@ export function CardQuestions({
   );
 }
 
-// While the keyboard is up on the answer: the conversation's questions as one-line rows, and the follow-ups of the turn
-// on screen, above the input (board 6 of the 2026-11-22 redesign), so that what is typed reads as going on.
+// The reply's words that stand above the keyboard (the rule of 2026-11-22): its question whole, up to three lines, or
+// its first sentence, up to two, in the docked line's type. Nothing while the next reply is on its way.
+function TypingLine({ said }: { said: TypingWords }): ReactElement | null {
+  return said.words === '' ? null : (
+    <Text numberOfLines={said.asks ? QUESTION_LINES : SENTENCE_LINES} style={styles.words} testID="typing-words">
+      {said.words}
+    </Text>
+  );
+}
+
+// The ways to answer that the reply offers, which stay above the keyboard: its offers' chips, and 지도에서 고르기 and
+// 시간 고르기 while the turn is the latest (P04 ticket 26).
+function TypingOffers({ control }: { control: ChatSheetControl }): ReactElement | null {
+  const rest = restOf(control, turnOf(control.chat.bubbles)?.after ?? []);
+  if (rest?.kind !== 'words') {
+    return null;
+  }
+  const { offers } = rest.words;
+  const today = koreaDateKey(now());
+  const picks = control.latest
+    ? (rest.words.picks ?? []).filter((offer) => offer.kind !== 'pick-time' || offer.date >= today)
+    : [];
+  const { send, waiting } = control.chat;
+  return offers.length === 0 && picks.length === 0 ? null : (
+    <View style={styles.offers} testID="typing-offers">
+      {offers.map((offer) => (
+        <DockChip
+          disabled={waiting}
+          key={offer.label}
+          onPress={() => {
+            pressOffer(offer, send);
+          }}
+          words={offer.label}
+        />
+      ))}
+      {picks.map((offer) => (
+        <DockChip
+          disabled={waiting}
+          key={offer.kind}
+          onPress={() => {
+            control.pick.start(offer);
+          }}
+          words={offer.label}
+        />
+      ))}
+    </View>
+  );
+}
+
+// While the keyboard is up on the answer, above the input (the rule of 2026-11-22): only what the User answers, never
+// cut, in the type it has with the keyboard down. A reply that asks shows its question whole with the ways it offers to
+// answer; one that asks nothing shows its first sentence, the conversation's questions as one-line rows, its offers,
+// and its follow-ups (board 6 of the 2026-11-22 redesign). The caption and the card's other buttons give way.
 export function Typing({ control }: { control: ChatSheetControl }): ReactElement {
+  const { bubbles, waiting } = control.chat;
+  const reply = turnOf(bubbles)?.after[0];
+  const said = reply === undefined || waiting ? null : typingWordsOf(markdownLabel(reply.text));
+  const asks = said?.asks === true;
   return (
     <>
-      <CardQuestions
-        control={control}
-        maxHeight={TYPING_QUESTIONS_MAX}
-        onDone={() => {
-          Keyboard.dismiss();
-        }}
-      />
-      {control.chat.waiting ? null : <FollowUps control={control} />}
+      {said === null ? null : <TypingLine said={said} />}
+      {asks ? null : (
+        <CardQuestions
+          control={control}
+          maxHeight={TYPING_QUESTIONS_MAX}
+          onDone={() => {
+            Keyboard.dismiss();
+          }}
+        />
+      )}
+      <TypingOffers control={control} />
+      {waiting || asks ? null : <FollowUps control={control} />}
     </>
   );
 }
@@ -81,3 +152,9 @@ function FollowUps({ control }: { control: ChatSheetControl }): ReactElement | n
     />
   );
 }
+
+const styles = StyleSheet.create({
+  // The docked line's type (`DockLine`), so that the words keep their look when the keyboard comes up.
+  words: { ...text.body, color: color.ink },
+  offers: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+});

@@ -24,7 +24,7 @@ Rules 2 to 5 of the redesign, boards 1 and 6:
 - **The caption.** What was asked is a small caption at the top of the answer's card, docked or raised; a press opens the conversation's questions in the card. For a meal answer with several Plans, its right side says "올리면 N곳 목록" while docked (a press raises the card) and "걸음이 적은 순" while raised.
 - **The time bar's head.** The words stand at the left after "←" and are cut short before "＋ 같이" instead of running under it.
 - **The main map's bottom** is ticket 33 (merged first): only "이어서 · {question} ›" above the input, "무엇이든 물어보세요", and a new conversation for what is typed there. Here the kept conversation is reached from the new answer's caption.
-- **Continuing on the answer.** While the input on the answer has focus, the card shows the conversation's questions as rows above the input (a press shows that turn), and the follow-up chips.
+- **Continuing on the answer.** While the input on the answer has focus, above it stands only what the User answers, never cut, in the docked line's type (decided at 19:58 from a booking reply cut at "예를 …"): a reply that asks shows its question sentence whole (up to three lines; in a longer reply the sentence ending in "?" is kept and the others dropped), and an example sentence ("예를 들어 …처럼 알려 주세요") goes into the input's placeholder ("예: 14:00부터 16:00") in place of "이어서 말하기". A reply that asks nothing shows its first sentence (up to two lines), the conversation's questions as rows (a press shows that turn), and the follow-up chips. The reply's offers (its chips, 지도에서 고르기, 시간 고르기) stay above the input either way; the caption and the card's other buttons give way.
 
 Where the meal answer's card meets this: the caption is drawn here for every answer. Once the card can open a restaurant's menu, the caption hides while a menu is open, and back closes the menu before it lowers the card. Whichever of the two pull requests merges second adds those two lines.
 
@@ -33,7 +33,7 @@ Where the meal answer's card meets this: the caption is drawn here for every ans
 - [ ] No pill and no "새 대화" anywhere; "뒤로" closes the answer and keeps the conversation. (Integration tests.)
 - [ ] The caption shows the question and opens the questions in the card. (Integration tests.)
 - [ ] After "뒤로", what is typed on the main map starts a new conversation, and the one before is among the new answer's questions. (Integration tests.)
-- [ ] While typing on the answer, the questions stand above the input. (Integration test.)
+- [ ] While typing on the answer, a question reply stands whole in the docked type with its example as the placeholder, a long reply keeps only its question, and a sentence stands with the questions' rows. (Unit and integration tests.)
 - [x] Pictures with the crowded mock: the answer with "←" in the bar and the caption, the caption's questions, and the main map after "←". (Emulator; typing on the answer is not pictured, since the phone's keyboard would be on screen.)
 - [x] No native file changes; lint, format, and types pass on the app.
 

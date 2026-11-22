@@ -16,6 +16,7 @@ import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { hideKeyboard, KEYBOARD, quietDismiss, showKeyboard } from './support/keyboard';
+import { text as type } from '@/design-system';
 import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
@@ -46,6 +47,14 @@ const TEXT_REPLY = { text: REPLY, mapButtons: [], cards: [], proposal: null };
 const EVENTS = [MAJOR, CAREER].map((globalEvent) => ({ kind: 'globalEvent', globalEvent }));
 const EVENTS_REPLY = { text: '설명회 두 개가 있어요.', mapButtons: [], cards: EVENTS, proposal: null };
 const PLAN_MARK = '302동식당 · 12:15 점심';
+// The booking reply seen on the phone at 19:58 that asks the time, and a longer one around it.
+const BOOKING_ASK = '내일 몇 시부터 몇 시까지 예약할까요? 예를 들어 14:00부터 16:00처럼 알려 주세요.';
+const BOOKING_QUESTION = '내일 몇 시부터 몇 시까지 예약할까요?';
+const LONG_ASK = `관정도서관 7층 열람실은 내일 9시부터 열어요. 지금은 자리가 넉넉해요. ${BOOKING_ASK}`;
+
+function textReply(text: string): object {
+  return { text, mapButtons: [], cards: [], proposal: null };
+}
 
 let server: FakeServer;
 
@@ -172,6 +181,44 @@ describe('the card while the keyboard is up', () => {
       `13:00, ${ASKED}, 302동식당 12:15 · 아직 만들지 않음`,
     ]);
     expect(card().queryByText('정문 셔틀이 먼저 와요.')).toBeNull();
+  });
+});
+
+// Partitions: a reply that asks, with an example; a long reply that asks; a sentence (the rule of 2026-11-22: above the
+// keyboard only what the User answers, never cut, in the docked line's type).
+describe("the reply's words above the keyboard", () => {
+  it('show a question whole in the docked type, its example as the placeholder, without the rows', async () => {
+    await talk([['내일 관정 예약해 줘', textReply(BOOKING_ASK)]]);
+
+    await showKeyboard(KEYBOARD);
+
+    const words = screen.getByTestId('typing-words');
+    expect(words).toHaveTextContent(BOOKING_QUESTION, { exact: true });
+    expect(words).toHaveProp('numberOfLines', 3);
+    expect(words).toHaveStyle({ fontFamily: type.body.fontFamily, fontSize: type.body.fontSize });
+    expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', '예: 14:00부터 16:00');
+    expect(screen.queryByTestId('question-list')).toBeNull();
+  });
+
+  it('keep only the question of a long reply', async () => {
+    await talk([['내일 관정 예약해 줘', textReply(LONG_ASK)]]);
+
+    await showKeyboard(KEYBOARD);
+
+    expect(screen.getByTestId('typing-words')).toHaveTextContent(BOOKING_QUESTION, { exact: true });
+    expect(card().queryByText(/넉넉해요/u)).toBeNull();
+  });
+
+  it("show a sentence's first sentence on two lines, with the rows, and the placeholder as it was", async () => {
+    await talk([['셔틀 어디 있어?', TEXT_REPLY]]);
+
+    await showKeyboard(KEYBOARD);
+
+    const words = screen.getByTestId('typing-words');
+    expect(words).toHaveTextContent('셔틀 두 대가 정문과 자연대에 있어요.', { exact: true });
+    expect(words).toHaveProp('numberOfLines', 2);
+    expect(screen.getByTestId('question-list')).toBeVisible();
+    expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', '이어서 말하기');
   });
 });
 
