@@ -250,7 +250,7 @@ function plannedWords(
     plans: answer.plans.map((plan) => planWords(plan, served)),
     dropped: answer.dropped.map(({ place }) => place.label),
     ...(kind === null ? {} : { cuisine: kind, servedBy: servingKind(answer.plans, kind) }),
-    ...alreadySetWords(answer.mealSet),
+    ...alreadySetWords(answer.mealSet, answer.planSet),
     ...relatedWords(answer.related),
   };
 }
@@ -313,7 +313,11 @@ export const PLAN_RULES = `A meal is planned on the map: the server decides the 
 - When the User names a kind of food (한식, 중식, 일식, 양식, 분식), in the same message as the meal or in the next, call planMeal with the conditions on screen, if any, as they are, and cuisine set to that kind: the plans of the Restaurants that serve it come first, and the app shows that kind. When servedBy is empty, say in one sentence that none serves it then, with what the first plan serves. 'any' lets it go (아무거나).
 - Each plan has its Restaurant's menu for the meal and when it closes, and the app shows the menus. When the User picks by a dish or a taste, in the same message as the meal or in the next (돈까스 먹고 싶어, 더 가벼운 걸로, 국물 있는 거), call planMeal with the conditions on screen, if any, as they are, and read the plans' menus. When one serves what they asked for, call planMeal again with the same conditions and that plan's restaurant. When none does, say so in one sentence with what the first plan serves. Never name a dish that no plan's menu has, and never answer with a list of menus or dishes in words.
 - A question about what a Restaurant the User names serves (학생회관 오늘 메뉴 뭐야, 302동 저녁 뭐 나와) is a menu question, by the menu rules. Any other question about what or where to eat, menus included (오늘 점심 뭐야?), is a meal wish, planned with planMeal.
-- When planMeal answers alreadySet, the User already put that meal in their schedule, and the plans are new ones that would replace it. Your reply says so and asks whether to change it, such as "이미 12:16 302동식당 점심이 있어요. 바꿀까요?": the app offers 바꾸기 and 그대로 두기. When alreadySet.shared is true, it is with others (alreadySet.with) and is changed only in that 파티, so say so instead, such as "이미 민수와 12:16 302동식당 점심이 있어요. 바꾸려면 그 파티에서 바꿔요."
+- When planMeal answers alreadySet, the User already put that meal in their schedule, and the plans are what it would become. Your reply names it, with whom (alreadySet.with), and:
+  - when alreadySet.changeable is true, asks whether to change it, such as "이미 민수와 12:16 302동식당 점심이 있어요. 바꿀까요?": the app offers 바꾸기, which changes it in place for everyone in it, and 그대로 두기. With alreadySet.declined, changing it asks them again: "민수가 거절한 12:16 점심이 있어요. 이 시간으로 다시 물어볼까요?";
+  - with alreadySet.leader, says that Friend set it and changes it: "민수가 잡은 12:16 점심이 있어요. 바꾸려면 민수에게 말해 주세요.";
+  - when it is shared and the plans are for other people, offers to change it with its people, such as "이미 민수와 12:16 302동식당 점심이 있어요. 민수와 같이 바꿀까요?", and on yes plans again for them;
+  - when it is not shared, says that making a plan replaces it: "혼자 먹기로 한 12:16 점심이 있어요. 만들면 이걸로 바뀌어요."
 - When planMeal answers related, the User already has those Quests that day, of this meal or with a Friend asked for. Your sentence mentions the one that matters, such as "민수와는 13:00에 약속이 이미 있어요", whether or not it limits the plans; never treat it as free.
 - When planMeal answers none with busy, say what fills the time, by the User's own items, such as "점심 시간엔 13:00까지 수업이 있어요."
 - When planMeal answers none, say plainly why. Name someone busy only if they are a Friend in the plan, and say only when their Class ends or starts, never the course or the room; never name anyone who is not the User's Friend.

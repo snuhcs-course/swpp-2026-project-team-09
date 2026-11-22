@@ -41,7 +41,7 @@ import { keptDto } from '../lookup/day-quests.js';
 import { type GatheringPerson, MINUTE_MS } from './gathering.js';
 import { type AnswerPerson, mealAnswer, type MealAnswerArgs } from './meal-answer.js';
 import { type ServedMenu } from './meal-menu.js';
-import { type BusyItem, busyIn, leaveOut, mealSetOf } from './meal-plan-parts.js';
+import { type BusyItem, busyIn, forItsPeople, leaveOut, mealSetOf } from './meal-plan-parts.js';
 import { type MissingInputs } from './missing-inputs.js';
 import { placeLabelOf } from './place-naming.js';
 import { relatedOf } from './related-quests.js';
@@ -294,7 +294,10 @@ export class MealPlanService {
       planSet:
         set === undefined
           ? null
-          : { ...this.keptDtoOf(set), ...(setAsideChangeable === undefined ? {} : { changeable: setAsideChangeable }) },
+          : {
+              ...this.keptDtoOf(set),
+              changeable: setAsideChangeable ?? (set.changeable && forItsPeople(set, friendIds)),
+            },
       related: relatedOf(kept, { kinds, friendIds, around, setAside }).map((quest) => this.keptDtoOf(quest)),
     };
   }

@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 import { type HeldMeal } from '../../quests/held-meal.js';
+import { type KeptQuest } from '../../quests/kept-quests.js';
 import { type AnswerReply } from '../dto/answer.dto.js';
 import { clockOf, type DayItem } from '../free-time/free-time.js';
 import { type Interval } from '../free-time/meal-fit.js';
@@ -49,4 +50,13 @@ export function mealSetOf(held: HeldMeal | null): AnswerReply['mealSet'] {
     friendNames: others,
     shared: others.length > 0,
   };
+}
+
+// Whether a plan for these Friends is for the set-aside Quest's people, as `PUT /plans/:questId` takes it
+// (better-plan.service.ts): the others in it or invited, or, when every other declined, those who declined (P05
+// ticket 17, row 6). Only then may 바꾸기 change it in place (P05 ticket 31).
+export function forItsPeople({ people }: Pick<KeptQuest, 'people'>, friendIds: readonly string[]): boolean {
+  const inIt = people.filter(({ answer }) => answer !== 'declined');
+  const own = (inIt.length > 0 ? inIt : people).map(({ userId }) => userId);
+  return own.length === friendIds.length && own.every((id) => friendIds.includes(id));
 }

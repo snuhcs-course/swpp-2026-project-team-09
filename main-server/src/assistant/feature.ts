@@ -77,7 +77,9 @@ export type Card = GlobalEventCard | QuestCard | RestaurantCard | LibraryCard;
 // meet. `area`: with `answer`, it sends the visible map area and draws its study spaces. `plan-set`: it draws 바꾸기
 // and 그대로 두기 for a meeting or a meal already set (`planSet`) and words their 409s, so the server sets a meeting
 // aside and refuses a second one only for it; an app without it is planned for as before (P05 ticket 17).
-export const CLIENT_CAPABILITIES = ['library', 'answer', 'events', 'meet', 'area', 'plan-set'] as const;
+// `quest-cancel`: it draws the button of a `leave-quest` offer and sends it as `DELETE /quests/:questId`, so
+// proposeCancel shows one only for it (P05 ticket 31).
+export const CLIENT_CAPABILITIES = ['library', 'answer', 'events', 'meet', 'area', 'plan-set', 'quest-cancel'] as const;
 
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
 
