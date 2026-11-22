@@ -69,7 +69,8 @@ Privacy is as in PR 422:
 - Meal: `planSet.changeable` is true for the set-aside meal the User leads, not started, when the asked people are its people and, when others are in it, the app says `plan-set` (from the review of PR 447: an app without it would make a second lunch). The words name `changeable` and the leader, and the meal rule asks "바꿀까요?" or says why not.
 - `KeptQuest.changeable` as above. findDay's 시간 바꾸기 note covers a meal the User may change.
 - A new tool, `proposeCancel`, with `ref`:
-  - With `quest-cancel`, it answers `cancel-shown` with what pressing does (`deleted` or `left`, the next Leader, the invitations that go), and a reply offer `{ kind: 'leave-quest', label: '취소하기' | '나가기', questId }`, which the app sends as `DELETE /quests/:questId`.
+  - With `quest-cancel`, it answers `cancel-shown` with what pressing does (`deleted` or `left`, the next Leader, the invitations that go), and a reply offer `{ kind: 'leave-quest', label: '취소하기' | '나가기', title, startsAt, questId }`, which the app shows with its title and start and sends as `DELETE /quests/:questId`.
+  - One reply cancels one Quest: a second call in the same reply answers `one-at-a-time` (from the review).
   - It answers `invited`, `over`, `seat` or `none` with no button.
   - It clears the reply's Lookup and answer, so that its button stays.
   - Without `quest-cancel`, it answers `in-room`.

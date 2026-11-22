@@ -9,6 +9,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -171,7 +172,12 @@ export const assistantClient: Pick<ApiClient, 'askAssistant' | 'recalculateAnswe
   // A main server before P02-13 refuses a key it does not know, so the reason is sent only when there is one.
   recalculateAnswer: (input, location, missing) =>
     call('POST', '/assistant/answers', isAnswerReply, {
-      body: { input, location, ...((missing ?? null) === null ? {} : { locationMissing: missing }) },
+      body: {
+        input,
+        location,
+        ...((missing ?? null) === null ? {} : { locationMissing: missing }),
+        clientCapabilities: ANSWER_CAPABILITIES,
+      },
     }),
   answerTap: (tapped, location) => call('POST', '/assistant/taps', isLookup, { body: { tapped, location } }),
 };

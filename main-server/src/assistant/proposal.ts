@@ -9,7 +9,12 @@
 import { z } from 'zod';
 import { type PublishedGlobalEventDto } from '../global-events/dto/global-event.dto.js';
 import { JoinPolicy, QuestBoard } from '../generated/prisma/client.js';
-import { descriptionSchema, titleSchema } from '../quests/dto/quest-requests.dto.js';
+import {
+  descriptionSchema,
+  type SubQuestContentDto,
+  subQuestContentSchema,
+  titleSchema,
+} from '../quests/dto/quest-requests.dto.js';
 import { type FacilityBooking } from './facility-booking.js';
 import { othersText } from './others-text.js';
 
@@ -32,8 +37,18 @@ export interface ProposalFriend {
   name: string;
 }
 
+// A Proposal that changes a 파티 already made, in place (P05 ticket 30): its 바꾸기 sends `step` as it is to the room's
+// 일정 수정, `PUT /quests/:questId/sub-quests/:subQuestId`, which tells the other Holders as a change in the room does.
+// `told` is how many other Holders that is, for the line after it.
+export interface ProposalChange {
+  questId: string;
+  subQuestId: string;
+  step: SubQuestContentDto;
+  told: number;
+}
+
 // The Proposal of a reply. Its Global Event is whole, as the 행사 tab's cards are, so that the app fills the form's
-// 관련 행사 and makes the Quest without asking for it.
+// 관련 행사 and makes the Quest without asking for it. With `change`, it changes the made 파티 instead of making one.
 export interface QuestProposal {
   title: string;
   description: string;
@@ -44,6 +59,7 @@ export interface QuestProposal {
   place: ProposalPlace | null;
   globalEvent: PublishedGlobalEventDto | null;
   invitees: ProposalFriend[];
+  change?: ProposalChange;
 }
 
 // What the text of a name sent back may hold: no more than a Place's, a User's or an event's.
@@ -80,6 +96,10 @@ export const questProposalSchema = z.strictObject({
   // The Quest 만들기 made of it, once made: the model reads it as a 파티 already posted, which proposeQuest does not
   // propose again.
   madeQuestId: z.uuid().optional(),
+  // The change of a made 파티 it showed, before 바꾸기 was pressed: its 파티 is made, as above.
+  change: z
+    .strictObject({ questId: z.uuid(), subQuestId: z.uuid(), step: subQuestContentSchema, told: z.int().min(0) })
+    .optional(),
 });
 
 export type SentProposal = z.infer<typeof questProposalSchema>;
@@ -93,7 +113,12 @@ export function proposalLength({ title, description, place, globalEvent, invitee
 
 // The Proposal as the model reads it, in a tool's answer or sent back: the event's title and the Friends' names, which
 // other people wrote, inside delimiters. The Place's booking page is the card's alone: the model is not told of it.
-export function proposalForModel({ globalEvent, invitees, place, ...values }: SentProposal): object {
+export function proposalForModel({
+  globalEvent,
+  invitees,
+  place,
+  ...values
+}: Omit<SentProposal, 'madeQuestId' | 'change'>): object {
   return {
     ...values,
     place: place === null ? null : { id: place.id, name: place.name },
@@ -103,8 +128,13 @@ export function proposalForModel({ globalEvent, invitees, place, ...values }: Se
   };
 }
 
-// The Proposal of a reply as it is sent back.
-export function sentProposalOf(proposal: QuestProposal): SentProposal {
+// The Proposal of a reply as it is sent back, without its change, which the model is told of apart.
+export function sentProposalOf({ change: _change, ...proposal }: QuestProposal): Omit<SentProposal, 'change'> {
   const { globalEvent } = proposal;
   return { ...proposal, globalEvent: globalEvent === null ? null : { id: globalEvent.id, title: globalEvent.title } };
+}
+
+// The id of the 파티 the last Proposal sent back stands for: the one made of it, or the one it showed a change of.
+export function madeQuestIdOf(shown: SentProposal | null): string | undefined {
+  return shown?.madeQuestId ?? shown?.change?.questId;
 }

@@ -188,7 +188,8 @@ interface TopBarProps {
   onHeight: (height: number) => void;
 }
 
-// The time bar of the turn on screen, while it has a time.
+// The time bar of the turn on screen, while it has a time: none once 그대로 두기 left a Quest already set as it is, for
+// the Plan is gone (P04 ticket 20).
 export function TopBar({ control, focus, onClose, onHeight }: TopBarProps): ReactElement | null {
   const { answer: shown, invitation } = control;
   const bar = barOf(control.chat.bubbles, onScreenOf(control));
@@ -198,7 +199,8 @@ export function TopBar({ control, focus, onClose, onHeight }: TopBarProps): Reac
   if (bar.kind === 'lookup') {
     return <LookupBar lookup={bar.lookup} onHeight={onHeight} />;
   }
-  return shown.answer === null || shown.plan === null ? null : (
+  const leftAlone = invitation.left !== null && invitation.made === null && invitation.changed === null;
+  return shown.answer === null || shown.plan === null || leftAlone ? null : (
     <PlanBar
       answer={shown.answer}
       focus={focus}

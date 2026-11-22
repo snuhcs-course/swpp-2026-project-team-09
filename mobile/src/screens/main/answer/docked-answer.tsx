@@ -10,6 +10,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { space } from '@/design-system';
 import { turnsOf } from '@/features/assistant/turn';
 import type { ChatBubble } from '@/features/assistant/use-chat';
+import { setQuestOf } from '@/features/assistant/set-quest';
 import { keepsShown } from '@/features/assistant/use-shown-answer';
 import type { ChatSheetControl } from '../chat-sheet';
 import { DockChip, DockLine } from './dock-chips';
@@ -18,7 +19,7 @@ import { planCardRests } from './plan-card';
 import { pressOffer } from './refusal-reply';
 import { onScreenOf, planShown, Words, wordsKindOf } from './reply-words';
 import type { BandFocus } from './use-corrections';
-import { lookupRestOf, type WordsRest, wordsRestOf } from './words-rest';
+import { lookupRestOf, setQuestRestOf, type WordsRest, wordsRestOf } from './words-rest';
 
 // How the turn on screen rests while nothing is pressed: its Plan's card docked as its chips' row (board 10), the dock
 // with a reply's one line and buttons (`WordsRest`), or null for the open card.
@@ -46,8 +47,23 @@ function planRests(control: ChatSheetControl, reply: ChatBubble): boolean {
   );
 }
 
+// A Plan beside a Quest the User holds, at rest: its line says so (P04 ticket 17).
+function besideSetQuest(control: ChatSheetControl): boolean {
+  const { answer: shown, chat } = control;
+  const { plan, adding, moving, ghost } = shown;
+  return (
+    setQuestOf(shown.answer) !== null &&
+    plan !== null &&
+    !adding &&
+    moving === null &&
+    ghost === null &&
+    planShown(chat.bubbles, onScreenOf(control))
+  );
+}
+
 // The bottom hides only what the map already says: a reply with cards, with several parts, or with nothing to draw
-// keeps the open card, and so does a Plan's card with something to read.
+// keeps the open card, and so does a Plan's card with something to read. A Plan beside a Quest the User holds docks
+// with its line.
 export function restOf(control: ChatSheetControl, after: readonly ChatBubble[]): Rest | null {
   const [reply] = after;
   if (after.length !== 1 || reply === undefined || !bare(reply)) {
@@ -55,6 +71,11 @@ export function restOf(control: ChatSheetControl, after: readonly ChatBubble[]):
   }
   const kind = wordsKindOf(reply, onScreenOf(control));
   if (kind === 'plan') {
+    if (besideSetQuest(control)) {
+      const { changed, refused, left } = control.invitation;
+      const leftAlone = changed === null && refused === null && left !== null;
+      return { kind: 'words', words: setQuestRestOf(reply.text, changed ?? refused ?? left, leftAlone) };
+    }
     return planRests(control, reply) ? { kind } : null;
   }
   const { lookup } = control.lookup;
@@ -109,10 +130,17 @@ interface DockedWordsProps {
   onRaise: Raise;
 }
 
+// 그대로 두기 waits while 바꾸기 or a recalculation is on its way (PR 444's review): the answer it would leave is about to
+// change.
+function choosing({ invitation, answer }: ChatSheetControl): boolean {
+  return invitation.sending || invitation.changing || answer.recalculating;
+}
+
 // The reply's buttons as chips, which scroll sideways: its offers and 다시 시도, disabled while the next reply is on its
-// way, for they act on the turn before; 근거 ›, which raises the card; and the folded chips.
+// way, for they act on the turn before; 근거 ›, which raises the card; 그대로 두기 beside a Quest the User holds, which
+// leaves it as it is (P04 ticket 20); and the folded chips.
 function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement {
-  const { offers, retry, note, basis } = rest;
+  const { offers, retry, note, basis, keep = false } = rest;
   const { send, waiting } = control.chat;
   return (
     <ScrollView
@@ -121,6 +149,7 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
       keyboardShouldPersistTaps="handled"
       showsHorizontalScrollIndicator={false}
       style={styles.chipsBox}
+      testID="dock-chips"
     >
       {offers.map((offer) => (
         <DockChip
@@ -141,6 +170,7 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
         />
       ) : null}
       {retry ? <DockChip disabled={waiting} onPress={control.chat.retry} words="다시 시도" /> : null}
+      {keep ? <DockChip disabled={choosing(control)} onPress={control.invitation.leave} words="그대로 두기" /> : null}
       <FoldedChips control={control} note={note} onRaise={onRaise} />
     </ScrollView>
   );
@@ -159,9 +189,13 @@ function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement
       {line === null ? null : (
         <DockLine
           line={line}
-          onPress={() => {
-            onRaise(false);
-          }}
+          onPress={
+            rest.still === true
+              ? undefined
+              : () => {
+                  onRaise(false);
+                }
+          }
         />
       )}
       <ReplyChips control={control} onRaise={onRaise} rest={rest} />
@@ -219,8 +253,9 @@ export function DockedAnswer({
 }
 
 const styles = StyleSheet.create({
-  // One row, as board 8 draws it: the line keeps at least half and is cut, and the chips scroll sideways.
+  // One row, as board 8 draws it: the chips keep their own width, so that a chip is always whole, and scroll sideways
+  // past half the row; the line takes what is left and is cut at its two lines.
   row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  chipsBox: { flexGrow: 0, flexShrink: 1 },
+  chipsBox: { flexGrow: 0, flexShrink: 0, maxWidth: '50%' },
   chips: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
 });

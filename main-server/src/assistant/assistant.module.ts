@@ -38,6 +38,7 @@ import { DayLookupService } from './lookup/day.service.js';
 import { FriendLookupService } from './lookup/friend.service.js';
 import { QuestCancelService } from './lookup/cancel-quest.js';
 import { LookupServices } from './lookup/lookup-services.js';
+import { MadePartyService } from './tools/made-party.js';
 import { MenuLookupService } from './lookup/menu.service.js';
 import { PlaceCardService } from './lookup/place.service.js';
 import { StudyAreaService } from './lookup/study.service.js';
@@ -87,6 +88,7 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
     TutorialOrderService,
     LookupServices,
     StudyAreaService,
+    MadePartyService,
     QuestCancelService,
     // The space catalogue is read once, at start; a bad file stops the start.
     { provide: LIBRARY_CATALOGUE, useFactory: (): Promise<Catalogue> => readCatalogue(CATALOGUE_FILE) },

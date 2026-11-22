@@ -94,6 +94,44 @@ describe('A Quest nobody else holds', () => {
   });
 });
 
+describe('Two Quests asked to cancel in one message', () => {
+  it('shows the button of the first alone, which names it, and the second is refused (one at a time)', async () => {
+    const lunch = await ownQuest(app, asker, {
+      title: '점심 같이 먹어요',
+      subQuest: { title: '점심', startsAt: `${TOMORROW}T12:00:00+09:00` },
+    });
+    const dinnerId = await dinner(asker);
+    model.script(
+      { tool: 'proposeCancel', input: { ref: lunch.slice(0, 8) } },
+      { tool: 'proposeCancel', input: { ref: dinnerId.slice(0, 8) } },
+      { text: '…' },
+    );
+
+    const response = await postAssistantMessages(
+      app,
+      asker.accessToken,
+      ask('점심이랑 저녁 둘 다 취소해 줘'),
+      CANCEL_APP,
+    );
+
+    expect(response.body).toMatchObject({
+      offers: [
+        {
+          kind: 'leave-quest',
+          label: '취소하기',
+          title: '점심 같이 먹어요',
+          startsAt: `${TOMORROW}T12:00:00+09:00`,
+          questId: lunch,
+        },
+      ],
+    });
+    expect(model.toolResults()).toEqual([
+      expect.objectContaining({ result: 'cancel-shown' }),
+      expect.objectContaining({ result: 'one-at-a-time' }),
+    ]);
+  });
+});
+
 describe('A Quest others hold', () => {
   it('is shown with 나가기, names who leads it next, and the button leaves it to them (row C2)', async () => {
     const questId = await dinner(asker, { joinPolicy: 'open' });

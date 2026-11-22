@@ -13,6 +13,17 @@ import { proposalForModel, type SentProposal } from './proposal.js';
 // What runFeature (adapter.ts) gives the model of a conversation and makes of its steps' text, apart from the model
 // library.
 
+// A Proposal not made yet, one made, or the change of a made one that 바꾸기 has not sent: its 파티 is as before.
+function proposalLine({ madeQuestId, change, ...proposal }: SentProposal): string {
+  if (madeQuestId !== undefined) {
+    return `[Proposal made: ${JSON.stringify({ questId: madeQuestId, ...proposalForModel(proposal) })}]`;
+  }
+  if (change !== undefined) {
+    return `[Proposal change shown: ${JSON.stringify({ questId: change.questId, ...proposalForModel(proposal) })}]`;
+  }
+  return `[Proposal shown: ${JSON.stringify(proposalForModel(proposal))}]`;
+}
+
 // What the model reads of a message: an Assistant's carries a line naming the cards it showed, and one with the values
 // of the Proposal it made, which proposeQuest is given again to change it, or, once the User made it, with the Quest's
 // id, which is no Proposal to change any more.
@@ -25,12 +36,7 @@ function contentOf(message: ChatMessage): string {
     lines.push(`[Cards shown: ${message.cards.map(({ kind, id }) => `${kind} ${id}`).join(', ')}]`);
   }
   if (message.proposal !== null) {
-    const { madeQuestId, ...proposal } = message.proposal;
-    lines.push(
-      madeQuestId === undefined
-        ? `[Proposal shown: ${JSON.stringify(proposalForModel(proposal))}]`
-        : `[Proposal made: ${JSON.stringify({ questId: madeQuestId, ...proposalForModel(proposal) })}]`,
-    );
+    lines.push(proposalLine(message.proposal));
   }
   return lines.join('\n\n');
 }

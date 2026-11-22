@@ -53,6 +53,7 @@ import { ModelPort } from './model-port.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
 import { LookupServices } from './lookup/lookup-services.js';
+import { MadePartyService } from './tools/made-party.js';
 import { PlanAnswersService } from './plan-answers.service.js';
 
 // The latest messages the model is given. Earlier ones are dropped, so that a long conversation does not make every
@@ -95,6 +96,7 @@ export class AssistantService {
     plans: PlanAnswersService,
     lookups: LookupServices,
     interests: InterestsService,
+    madeParties: MadePartyService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
@@ -113,6 +115,7 @@ export class AssistantService {
       plans,
       lookups,
       interests,
+      madeParties,
     };
     this.chats = chatsOf(services);
     this.dailyMessages = settings.get('ASSISTANT_DAILY_MESSAGES', { infer: true });
