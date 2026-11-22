@@ -45,3 +45,25 @@ export function shownWordsOf(band: TimeBand, shown: Stretch, bound: BandBound | 
   }
   return [{ text: `${from}–${until}${rest}`, strong: false }];
 }
+
+// The length at the words' end: " · 식사 1시간 12분", " · 함께 28분".
+const LENGTH_TAIL = /\s·\s(함께|식사)\s[^·]*$/u;
+// The meal named after the day: "내일(월) 점심".
+const MEAL_NAME = /\s+(아침|점심|저녁)$/u;
+
+// The bar's words shortened by `step` before they are cut at the bar's width (P04 ticket 37): 0 whole; 1 without the
+// length; 2 without the meal's name after the day too. A dragged end's strong part stays; words that say who cannot
+// come keep their tail, which is no length.
+export function shortenedOf(
+  day: string,
+  parts: readonly BandWordsPart[],
+  step: number,
+): { day: string; parts: readonly BandWordsPart[] } {
+  if (step < 1) {
+    return { day, parts };
+  }
+  const short = parts
+    .map(({ text, strong }) => ({ text: strong ? text : text.replace(LENGTH_TAIL, ''), strong }))
+    .filter(({ text }) => text !== '');
+  return { day: step < 2 ? day : day.replace(MEAL_NAME, ''), parts: short };
+}
