@@ -68,7 +68,7 @@ describe('the mark of a Quest already set', () => {
       planId: null,
     });
     expect(seen(drawing, 'answer:candidate:302동식당')).toMatchObject({
-      name: '후보 4 · 302동식당',
+      name: '후보 4 · 302동식당 · 11:53',
       symbol: { type: 'dot', role: 'candidate', number: 4 },
     });
     expect(seen(drawing, 'answer:kept').symbol).toBeNull();

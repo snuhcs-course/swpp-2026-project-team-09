@@ -112,7 +112,7 @@ describe('a lunch already set, on the map', () => {
   it("is marked at its place with 잡힌 점심 12:16, beside candidate 4's own mark", async () => {
     await askOnMap(server, LUNCH_REPLY);
 
-    expect(mapThings()).toEqual(expect.arrayContaining(['잡힌 점심 12:16', '후보 4 · 302동식당']));
+    expect(mapThings()).toEqual(expect.arrayContaining(['잡힌 점심 12:16', '후보 4 · 302동식당 · 11:53']));
   });
 
   it("is the only mark beside the User's own once 그대로 두기 leaves it, with the line, and nothing is sent", async () => {
