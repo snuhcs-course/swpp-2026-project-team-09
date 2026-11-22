@@ -10,6 +10,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -71,7 +72,7 @@ describe('the controls above the navigation of the main screen', () => {
     expect(findButton(/^오늘의 발자국/u)).toBeNull();
     expect(button(ACTIVE_PARTY)).toHaveTextContent('활성 파티3명 공유 중');
     expect(button(LAYERS)).toBeVisible();
-    expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', '무엇이든 부탁해 보세요');
+    expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', '무엇이든 물어보세요');
   });
 
   it('has no "활성 파티" for a User in no Party', async () => {
@@ -103,7 +104,7 @@ describe("the main screen's AI input", () => {
   it('is a field with the placeholder, whose send button is disabled', async () => {
     await openMain();
 
-    expect(screen.getByPlaceholderText('무엇이든 부탁해 보세요')).toBe(screen.getByLabelText(AI_INPUT));
+    expect(screen.getByPlaceholderText('무엇이든 물어보세요')).toBe(screen.getByLabelText(AI_INPUT));
     expect(button(SEND)).toBeDisabled();
   });
 

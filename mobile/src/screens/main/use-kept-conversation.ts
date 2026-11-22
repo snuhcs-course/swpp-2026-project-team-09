@@ -67,16 +67,20 @@ function viewOf(bubbles: readonly ChatBubble[], viewed: Viewed | null): readonly
   );
 }
 
-type Showing = Pick<Chat, 'send' | 'askApp' | 'addRecalculated' | 'addOwn' | 'resume'>;
+type Showing = Pick<Chat, 'send' | 'sendNew' | 'askApp' | 'addRecalculated' | 'addOwn' | 'resume'>;
 
 // What adds to the conversation shows the frame again.
 function useShowing(chat: Chat, show: () => void, end: number | undefined): Showing {
-  const { send, askApp, addRecalculated, addOwn, resume } = chat;
+  const { send, sendNew, askApp, addRecalculated, addOwn, resume } = chat;
   return useMemo(
     (): Showing => ({
       send: (text, tapped) => {
         show();
         send(text, tapped);
+      },
+      sendNew: (text, tapped) => {
+        show();
+        sendNew(text, tapped);
       },
       askApp: (asked, reply) => {
         show();
@@ -96,7 +100,7 @@ function useShowing(chat: Chat, show: () => void, end: number | undefined): Show
         resume(id);
       },
     }),
-    [send, askApp, addRecalculated, addOwn, resume, show, end],
+    [send, sendNew, askApp, addRecalculated, addOwn, resume, show, end],
   );
 }
 

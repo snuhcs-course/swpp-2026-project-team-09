@@ -26,6 +26,8 @@ import { CardNote } from './card-note';
 import { ConditionChips } from './condition-chips';
 import { FriendChoices } from './friend-choices';
 import { MainButtons } from './main-buttons';
+import { MealList, mealListed } from './meal-list';
+import { MealMenu } from './meal-menu';
 import { PlanStepper } from './plan-stepper';
 import { RelaxButtons } from './relax-buttons';
 import { RowFourButtons } from './row-four-buttons';
@@ -210,6 +212,29 @@ interface PlanCardProps extends CardProps {
 // A Friend chosen and a drop of the band ask for a recalculation, and none takes a press while a recalculation or
 // "이대로 초대" is on its way. The Plan's people, its start, its place, and its time are changed on the map and the
 // time bar.
+// Once the answer is settled (its Plan made, or 바꾸기 or 그대로 두기 done beside a Quest the User holds), nothing is
+// chosen again: the answer says so and offers nothing more (review of PR 477).
+function settled({ made, changed, left }: PlanInvitation): boolean {
+  return made !== null || changed !== null || left !== null;
+}
+
+// A meal answer's raised card holds the list of its candidates (board E3), or the chosen one's menu (board E4).
+function MealSheet({
+  shown,
+  answer,
+  busy,
+}: {
+  shown: ShownAnswer;
+  answer: AnswerReply;
+  busy: boolean;
+}): ReactElement | null {
+  const { plan, menuFor } = shown;
+  if (plan !== null && menuFor === plan.id) {
+    return <MealMenu answer={answer} plan={plan} shown={shown} />;
+  }
+  return <MealList answer={answer} busy={busy} shown={shown} />;
+}
+
 export function PlanCard(props: PlanCardProps): ReactElement {
   const { shown, answer, invitation, room, over = [], onClose, focus, said = '', dock } = props;
   const busy = shown.recalculating || invitation.sending || invitation.changing;
@@ -223,6 +248,7 @@ export function PlanCard(props: PlanCardProps): ReactElement {
   const addName = !barShown && (fix.adding || fix.choices.length > 0) ? addNameOf(answer.input.kind) : null;
   const faceless = facelessChips(answer, shown);
   const docked = dock !== undefined;
+  const meal = !docked && !fix.adding && shown.plan !== null && mealListed(answer);
   return (
     <View style={styles.plan}>
       {addName === null && corner === null && faceless.length === 0 && !docked ? null : (
@@ -242,7 +268,8 @@ export function PlanCard(props: PlanCardProps): ReactElement {
           onUntil={fix.focusUntil}
         />
       )}
-      {docked ? null : <Said lines={linesOf(shown, answer, fix.adding, over)} said={said} />}
+      {docked ? null : <Said lines={linesOf(shown, answer, fix.adding, over)} said={meal ? '' : said} />}
+      {meal ? <MealSheet answer={answer} busy={busy || settled(invitation)} shown={shown} /> : null}
       {docked ? null : (
         <Below
           answer={answer}

@@ -66,6 +66,9 @@ const NO_ANSWER: ShownAnswer = {
   undo: nothing,
   moving: null,
   setMoving: nothing,
+  menuFor: null,
+  openMenu: nothing,
+  closeMenu: nothing,
 };
 
 function shownAt(index: number): ShownAnswer {

@@ -38,6 +38,8 @@ interface AiInputProps {
   inCard?: boolean;
   // A change puts the focus in the field, as "새 대화" does (P04 ticket 10); the first value does nothing.
   focusKey?: number;
+  // Whether the field holds nothing but spaces, told at each change of it.
+  onEmpty?: (empty: boolean) => void;
 }
 
 // The field's height for one line, and the most it grows to before it scrolls.
@@ -160,12 +162,16 @@ export function AiInput(props: AiInputProps): ReactElement {
     beside = null,
     inCard = false,
     focusKey = 0,
+    onEmpty,
   } = props;
   const field = useFocusOn(focusKey);
   const [besideWidth, setBesideWidth] = useState(0);
   const [message, setMessage] = useMessage(restore ?? null);
   const [height, laidOut] = useBarHeight(onHeight);
   const canSend = message.trim() !== '';
+  useEffect(() => {
+    onEmpty?.(!canSend);
+  }, [canSend, onEmpty]);
   const send = (): void => {
     onSend(message.trim());
     setMessage('');
