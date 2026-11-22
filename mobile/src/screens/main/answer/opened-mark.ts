@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useState } from 'react';
@@ -14,6 +15,8 @@ import { inView, type MapCamera, type Point } from '@/map';
 export interface OpenedMark {
   id: string;
   at: Point;
+  // The pick's flag's point, which a face's card keeps clear (P04 ticket 14); left out, none.
+  clear?: Point | null;
 }
 
 export interface MarkOpening {
@@ -55,17 +58,18 @@ export function stagePointOf(
   return { x, y: y - top };
 }
 
-// The press on a mark of a Plan that has a card: its card opens at the mark's point in the stage.
+// The press on a mark of a Plan that has a card: its card opens at the mark's point in the stage, clear of the pick's
+// flag at `pick`.
 export function useMarkOpening(
   openMark: (mark: OpenedMark) => void,
   camera: MapCamera | null,
   stage: { width: number; height: number } | null,
-): (id: string, position: LatLng) => void {
+): (id: string, position: LatLng, pick?: LatLng | null) => void {
   const { top } = useSafeAreaInsets();
-  return (id, position) => {
+  return (id, position, pick = null) => {
     const at = stagePointOf(position, camera, stage, top);
     if (at !== null) {
-      openMark({ id, at });
+      openMark({ id, at, clear: pick === null ? null : stagePointOf(pick, camera, stage, top) });
     }
   };
 }
