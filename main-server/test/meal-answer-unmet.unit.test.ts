@@ -66,7 +66,7 @@ describe("Board n11's day otherwise", () => {
     const { plans, noPlan, chips } = n11({ from: null, until: null });
 
     expect(noPlan).toBeNull();
-    expect(plans[0]).toMatchObject({ id: '학생회관식당', startAt: time('12:55') });
+    expect(plans[0]).toMatchObject({ id: '301동식당', startAt: time('13:06') });
     expect(chips.map(({ text }) => text)).toEqual(['301동에서', '14:00 수업까지', '민수', '지은']);
   });
 
@@ -74,7 +74,7 @@ describe("Board n11's day otherwise", () => {
     const { plans, noPlan, chips } = answerFor({ people: [asker(), minsu()], clock: '11:50', window: NOW });
 
     expect(noPlan).toBeNull();
-    expect(plans[0]?.startAt).toBe(time('12:15'));
+    expect(plans[0]).toMatchObject({ id: '301동식당', startAt: time('12:18') });
     expect(chips.map(({ text }) => text)).toEqual(['301동에서', '14:00 수업까지', '민수']);
   });
 
@@ -102,7 +102,7 @@ const n11b = (): AnswerReply => n11({ from: '13:00', until: null, now: true });
 describe('Board n11b: 13:00 이후, the plan eased from 지금', () => {
   it('names the time, the Restaurant, and the minutes of the three, then what was eased', () => {
     expect(n11b().plans[0]?.lines).toEqual([
-      [strong('13:00 학생회관식당'), plain(' · 셋이 59분')],
+      [strong('13:06 301동식당'), plain(' · 셋이 39분')],
       [plain('지금 대신 13:00으로 미뤘어요')],
     ]);
   });
@@ -212,7 +212,7 @@ describe('Board n12: a Restaurant about to close', () => {
 
     expect(dropped.map(({ place }) => place.label)).toEqual(['학생회관식당']);
     expect(plans[0]?.lines).toEqual([
-      [strong('3식당'), plain(' · 14:00 도착')],
+      [strong('자하연식당'), plain(' · 14:00 도착')],
       [plain('학생회관식당은 14:10에 닫아요')],
     ]);
   });

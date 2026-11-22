@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PlaceDto } from '../../places/dto/place.dto.js';
@@ -96,7 +97,7 @@ export function gatherToMeet(
     },
     when,
     travel,
-    { merging: false },
+    { merging: false, order: 'together' },
   );
   return { ...gathering, fits: gathering.fits.slice(0, MEET_PLANS_MAX) };
 }
