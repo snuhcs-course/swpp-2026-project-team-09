@@ -4,19 +4,18 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { koreaDate } from '../korea-time.js';
+import { peopleRefusal } from './booking-people.js';
 import { type Catalogue, type ClockRange, type EquipmentGroup, type LibrarySpace, seatLabelOf } from './catalogue.js';
+
+export { PARTY_MAX, PARTY_REFUSAL, peopleRefusal } from './booking-people.js';
 
 // What the server checks of a 관정 booking before any card is shown: the booking window, the hours, the duration in
 // steps, the seat, the room's equipment, the 사용용도 and the people. Every refusal is listed at once, each worded for
 // the reply with its bound. Nothing here knows of seats or bookings: those stay on the phone.
-
-// A booking party is a Quest, and a Quest holds 1–8 people (quests_capacity_check).
-export const PARTY_MAX = 8;
-
-export const PARTY_REFUSAL = '파티는 최대 8명까지라 9명 이상 방 예약은 아직 못 해요 — 직접 예약해 주세요';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MINUTE_MS = 60 * 1000;
@@ -34,6 +33,10 @@ function closed(refusal: Refusal): Refusal {
   return refusal;
 }
 export const saysClosed = (refusal: Refusal): boolean => closedRefusals.has(refusal);
+
+// The refusal of a seat for a day after today: the library books seats on their day only (getSectorList: DAY_TO 0).
+const sameDayRefusals = new WeakSet<Refusal>();
+export const saysSameDayOnly = (refusal: Refusal): boolean => sameDayRefusals.has(refusal);
 
 export interface BookingRequest {
   date: string;
@@ -118,11 +121,13 @@ export function windowRefusal(space: LibrarySpace, date: string, now: Date, wait
     const reason = `${kindWord(space)}은 ${WAIT_DAYS_AHEAD}일 뒤까지만 미리 정해 둘 수 있어요`;
     return { field: 'date', reason, bound: addDays(today, WAIT_DAYS_AHEAD) };
   }
+  if (date > last && !waitsForWindow && space.bookingAheadDays === 0) {
+    const refusal = { field: 'date', reason: `${kindWord(space)}은 당일만 예약할 수 있어요`, bound: last };
+    sameDayRefusals.add(refusal);
+    return refusal;
+  }
   if (date > last && !waitsForWindow) {
-    const reason =
-      space.bookingAheadDays === 0
-        ? `${kindWord(space)}은 당일만 예약할 수 있어요`
-        : `${kindWord(space)}은 ${space.bookingAheadDays}일 뒤까지만 예약할 수 있어요`;
+    const reason = `${kindWord(space)}은 ${space.bookingAheadDays}일 뒤까지만 예약할 수 있어요`;
     return { field: 'date', reason, bound: last };
   }
   if (space.closedOnSunday && new Date(`${date}T00:00:00Z`).getUTCDay() === 0) {
@@ -155,61 +160,6 @@ export function durationRefusal(space: LibrarySpace, minutes: number): Refusal |
       field: 'minutes',
       reason: `${kindWord(space)}은 최대 ${durationWords(maxMinutes)}이에요`,
       bound: maxMinutes,
-    };
-  }
-  return null;
-}
-
-// The group study room sizes on the same floor that hold this many people and that a party can hold. A media room's
-// purpose is its own, so none is offered for another.
-function largerSizes(catalogue: Catalogue, space: LibrarySpace, people: number): { id: string; name: string }[] {
-  return catalogue.spaces
-    .filter(
-      (other) =>
-        other.id !== space.id &&
-        other.floor === space.floor &&
-        other.kind === 'group-study-room' &&
-        space.kind === 'group-study-room' &&
-        other.implemented &&
-        other.bookable &&
-        other.capacity !== null &&
-        other.capacity.min <= PARTY_MAX &&
-        other.capacity.min <= people &&
-        other.capacity.max >= people,
-    )
-    .map(({ id, name }) => ({ id, name }));
-}
-
-// GR_MIN and GR_MAX are compared as numbers: the site compares them as strings, by which "10" < "8".
-export function peopleRefusal(catalogue: Catalogue, space: LibrarySpace, people: number): Refusal | null {
-  if (space.unit === 'seat') {
-    return people > 1
-      ? { field: 'friendIds', reason: '열람실 좌석은 한 사람씩 예약해요. 함께 가는 분은 각자 예약해 주세요', bound: 1 }
-      : null;
-  }
-  const { capacity } = space;
-  if (capacity === null) {
-    return null;
-  }
-  if (people > PARTY_MAX || capacity.min > PARTY_MAX) {
-    return { field: 'friendIds', reason: PARTY_REFUSAL, bound: PARTY_MAX };
-  }
-  if (people < capacity.min) {
-    const more = capacity.min - people;
-    return {
-      field: 'friendIds',
-      reason: `${space.name}은 ${capacity.min}명 이상이어야 예약할 수 있어요. ${more}명 더 필요해요`,
-      bound: { min: capacity.min, more },
-    };
-  }
-  if (people > capacity.max) {
-    const larger = largerSizes(catalogue, space, people);
-    const offer =
-      larger.length === 0 ? '' : `. ${people}명이면 ${larger.map(({ name }) => name).join(', ')}을 예약할 수 있어요`;
-    return {
-      field: 'friendIds',
-      reason: `${space.name}은 최대 ${capacity.max}명까지예요${offer}`,
-      bound: { max: capacity.max, larger },
     };
   }
   return null;
@@ -276,6 +226,15 @@ function timeOf(
   return { refusals, start: from, minutes: length };
 }
 
+function equipmentRefusal(space: LibrarySpace): Refusal {
+  const options = space.equipmentGroups.map(({ id }) => id);
+  return {
+    field: 'equipment',
+    reason: options.length === 0 ? `${space.name}은 방을 장비로 고르지 않아요` : `${space.name}에는 그런 방이 없어요`,
+    bound: options,
+  };
+}
+
 // Checks a booking of an implemented space. Each wrong or missing field gives a refusal, all of them at once.
 export function checkBooking(
   catalogue: Catalogue,
@@ -285,6 +244,10 @@ export function checkBooking(
   waitsForWindow = false,
 ): Checked {
   const window = windowRefusal(space, request.date, now, waitsForWindow);
+  // Nothing else of a seat for a later day is asked about: any answer would be refused for the day in turn.
+  if (window !== null && saysSameDayOnly(window)) {
+    return { refusals: [window] };
+  }
   const time = timeOf(space, request, now);
   const refusals = [...(window === null ? [] : [window]), ...time.refusals];
   const seat = request.seat === undefined ? null : seatLabelOf(space, request.seat);
@@ -293,12 +256,7 @@ export function checkBooking(
   }
   const equipment = request.equipment === undefined ? undefined : equipmentOf(space, request.equipment);
   if (request.equipment !== undefined && equipment === undefined) {
-    const options = space.equipmentGroups.map(({ id }) => id);
-    refusals.push({
-      field: 'equipment',
-      reason: options.length === 0 ? `${space.name}은 방을 장비로 고르지 않아요` : `${space.name}에는 그런 방이 없어요`,
-      bound: options,
-    });
+    refusals.push(equipmentRefusal(space));
   }
   // A seat takes no 사용용도, so one given for it is left out.
   const options = space.useDescOptions;

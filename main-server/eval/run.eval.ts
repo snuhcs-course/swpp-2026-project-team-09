@@ -10,6 +10,7 @@
  * 2026-11-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fileURLToPath } from 'node:url';
@@ -42,6 +43,7 @@ const SEEDERS: Record<WorldName, typeof seedWorld> = {
   'large-world-v1': seedLargeWorld,
   p6: seedP6World,
   'p4-answer': seedP4World,
+  'p6-answer': seedP6World,
 };
 
 const options = runOptionsFromEnv();

@@ -6,6 +6,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { QuestProposal } from '@/api/assistant-types';
@@ -25,7 +26,7 @@ export type FormEvent = GlobalEvent & { source: string | null };
 export interface PartyForm {
   title: string;
   description: string;
-  // 1 to 8: the main server's limit, for 공개 and 비공개 alike.
+  // 2 to 8 under 공개, which recruits someone besides the User, and 1 to 8 under 비공개: the main server's limits.
   capacity: number;
   visibility: Visibility;
   // Under 공개: `바로 참여` or `승인 후 참여`.
@@ -40,7 +41,17 @@ export interface PartyForm {
 }
 
 export const MIN_CAPACITY = 1;
+const MIN_PUBLIC_CAPACITY = 2;
 export const MAX_CAPACITY = 8;
+
+function leastOf(visibility: Visibility): number {
+  return visibility === 'public' ? MIN_PUBLIC_CAPACITY : MIN_CAPACITY;
+}
+
+// Choosing 공개 raises an `인원` of 1 to 2.
+export function withVisibility(form: PartyForm, visibility: Visibility): Partial<PartyForm> {
+  return { visibility, capacity: Math.max(form.capacity, leastOf(visibility)) };
+}
 
 export function emptyForm(): PartyForm {
   return {
@@ -133,15 +144,17 @@ export function shownSubQuest(quest: Quest): SubQuest | null {
   return editedSubQuest(quest) ?? quest.subQuests.find((subQuest) => upcoming(subQuest)) ?? null;
 }
 
-// The form of a Quest the Leader edits, with its event as the picker knows it when it does.
+// The form of a Quest the Leader edits, with its event as the picker knows it when it does. A 공개 파티 stored for one,
+// before 공개 was for two or more, shows 2.
 export function formOf(quest: ShownQuest, event: FormEvent | null): PartyForm {
   const closed = quest.joinPolicy === 'closed';
+  const visibility = closed ? 'private' : 'public';
   return {
     ...emptyForm(),
     title: quest.title,
     description: quest.description,
-    capacity: Math.min(Math.max(quest.capacity, MIN_CAPACITY), MAX_CAPACITY),
-    visibility: closed ? 'private' : 'public',
+    capacity: Math.min(Math.max(quest.capacity, leastOf(visibility)), MAX_CAPACITY),
+    visibility,
     policy: quest.joinPolicy === 'approval' ? 'approval' : 'open',
     board: quest.board,
     startsAt: shownSubQuest(quest)?.startsAt ?? null,
@@ -151,10 +164,10 @@ export function formOf(quest: ShownQuest, event: FormEvent | null): PartyForm {
   };
 }
 
-// The least `인원`: the Holders now, at least the User, and the Friends invited in the form, so that each of them has a
-// place and a form opened from a Friend's card can always be sent.
-export function leastCapacity(holders: number, invited: number): number {
-  return Math.min(Math.max(holders, 1) + invited, MAX_CAPACITY);
+// The least `인원`: 2 under 공개, and the Holders now, at least the User, and the Friends invited in the form, so that
+// each of them has a place and a form opened from a Friend's card can always be sent.
+export function leastCapacity(holders: number, invited: number, visibility: Visibility): number {
+  return Math.min(Math.max(Math.max(holders, 1) + invited, leastOf(visibility)), MAX_CAPACITY);
 }
 
 // 파티 올리기 waits for a title, a description and a board; 파티 만들기 for a title and a Friend; 수정 완료 as the

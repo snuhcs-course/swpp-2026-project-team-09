@@ -1,6 +1,6 @@
 # P06: The app's fixes outside the Assistant
 
-Status: ready-for-agent (tickets 06 and 07; 01 to 05 are held, see Solution)
+Status: needs-triage (06 and 07 are done; 01 to 05 are held, see Solution)
 
 ## Problem Statement
 
@@ -31,6 +31,7 @@ One ticket per item, numbered as the items:
 What is built now (agreed by the team after the review, 2026-11-22): what is broken goes first, and the improvements wait.
 
 - Now: 06, then 07. 06 is a fault (an ended 파티's invitation never leaves, and a failure toast carries ✓); 07 stops a wrong state (an open 파티 nobody can enter, listed on a Board). Both change the 파티 form's send path (`screens/party/form/use-send.ts`), so 07 follows 06.
+  Done on 2026-11-22: 06 in PR 475, 07 in PR 480. Both wait for a main server Release and an app OTA update, and 06's last criterion for the Dev Server check after that Release.
 - Held, as tickets only (`Status: needs-triage`): 01 (its change to the agentic map design is still being agreed), 02, 03, 04 and 05 (improvements and design changes). They are fully written so that work can start once they are taken up.
 
 When the held tickets are taken up, tickets touching the same files never run at the same time:
@@ -113,3 +114,16 @@ Notes for the tickets:
 - The items, their screens and the code positions come from the handoff of 2026-11-22 (outside the repository), checked again on 6abd04e8.
 
 ## Comments
+
+### Agent usage (2026-11-22)
+
+Estimates: agent time is the gaps under 5 minutes between transcript entries, summed, so waiting for a person or for CI is left out. No subagents.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Orchestrator (items checked again, decisions, spec, tickets, screen reviews, merges, this wrap-up) | about 1 hour | 45,765,926 | 45,338,389 | 427,095 | 442 | 171,359 |
+| Ticket 06 | about 33 minutes | 35,820,366 | 35,550,575 | 269,477 | 314 | 93,043 |
+| Ticket 07 | about 25 minutes | 26,730,041 | 26,414,683 | 315,086 | 272 | 89,069 |
+| All | about 2 hours | 108,316,333 | 107,303,647 | 1,011,658 | 1,028 | 353,471 |
+
+Without cache reads, the input is 1,012,686 in all. The orchestrator is counted up to the writing of this entry, so its last few messages are left out.

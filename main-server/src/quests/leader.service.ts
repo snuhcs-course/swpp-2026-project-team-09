@@ -10,6 +10,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -20,7 +21,7 @@ import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
-import { type UpdateQuestDto } from './dto/quest-requests.dto.js';
+import { fitsJoinPolicy, type UpdateQuestDto } from './dto/quest-requests.dto.js';
 import { QuestDto } from './dto/quest.dto.js';
 import { QuestsService } from './quests.service.js';
 import { conflict, notFound, notLeader, questNotFound, takenAloneRefused } from './refusals.js';
@@ -64,7 +65,8 @@ export class LeaderService {
   }
 
   // A capacity below the number of Holders is refused. The Quest the changes lead to is on a board when it is Open or
-  // Approval, and on none when Closed: a change to Closed clears the board.
+  // Approval, and on none when Closed: a change to Closed clears the board. An Open or an Approval Quest of one is
+  // refused only to a change of the capacity or the Join Policy, so that one stored before still takes the others.
   async update(userId: string, questId: string, changes: UpdateQuestDto): Promise<QuestDto> {
     await this.changeAsLeader(userId, questId, async (tx, quest, holderIds) => {
       if (quest.takenAlone) {
@@ -72,6 +74,10 @@ export class LeaderService {
       }
       if (changes.capacity !== undefined && changes.capacity < holderIds.length) {
         throw conflict('CAPACITY_BELOW_HOLDERS', 'The Quest has more Holders than this capacity.');
+      }
+      const resized = changes.capacity !== undefined || changes.joinPolicy !== undefined;
+      if (resized && !fitsJoinPolicy(changes.capacity ?? quest.capacity, changes.joinPolicy ?? quest.joinPolicy)) {
+        throw conflict('OPEN_QUEST_OF_ONE', 'An Open or an Approval Quest has a capacity of 2 or more.');
       }
       const closed = (changes.joinPolicy ?? quest.joinPolicy) === JoinPolicy.closed;
       if (closed && changes.board !== undefined) {

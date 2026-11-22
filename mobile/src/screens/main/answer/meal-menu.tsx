@@ -13,7 +13,7 @@ import { menusQuery } from '@/api/queries';
 import { now } from '@/clock';
 import { color, font, radius, size, space, text } from '@/design-system';
 import { cornersOf, hoursOf, type MenuCorner, planCorner } from '@/features/assistant/meal-menus';
-import { addedWalk } from '@/features/assistant/answer-walks';
+import { travelWords } from '@/features/assistant/answer-walks';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { MEAL_NAMES, won } from '@/features/dining/adapter';
 import { koreaClock, koreaDayWord } from '@/korea-time';
@@ -114,11 +114,11 @@ function Corner({ corner }: { corner: MenuCorner }): ReactElement {
   );
 }
 
-// "12:18 도착 · 걸음 16분", or the arrival alone when the walking is not known.
+// "12:18 도착 · 걸음 16분" (or "· 이동 16분 · 셔틀"), or the arrival alone when the way is not known.
 function whenOf(plan: Plan): string {
-  const walk = addedWalk(plan);
+  const way = travelWords(plan);
   const there = `${koreaClock(plan.startAt)} 도착`;
-  return walk === null ? there : `${there} · 걸음 ${String(walk)}분`;
+  return way === null ? there : `${there} · ${way}`;
 }
 
 interface MealMenuProps {

@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -48,6 +49,13 @@ function questAt(time: string, body: object = {}): Promise<string> {
   });
 }
 
+// A Quest of two, which a second Holder fills: a 공개 파티 is for two or more.
+async function fullAt(time: string, holder: TestUser): Promise<string> {
+  const questId = await questAt(time, { capacity: 2 });
+  await joinQuest(app, holder, questId).expect(201);
+  return questId;
+}
+
 function eventAt(time: string): Promise<GlobalEvent> {
   const startsAt = new Date(`${time}+09:00`);
   return storeEvent(prisma, { startsAt, endsAt: new Date(startsAt.getTime() + 2 * 60 * 60 * 1000) });
@@ -79,7 +87,7 @@ async function questsFound(input: object): Promise<string[]> {
 
 describe('searchRecruitingQuests, by what the reader can enter', () => {
   it('never gives a Full Quest, though the Boards list it', async () => {
-    const full = await questAt('2094-01-05T18:00:00', { capacity: 1 });
+    const full = await fullAt('2094-01-05T18:00:00', await signInUser(app));
     const room = await questAt('2094-01-05T19:00:00', { capacity: 2 });
 
     expect(await questsFound({ from: '2094-01-05', to: '2094-01-05' })).toEqual([room]);
@@ -151,13 +159,18 @@ function sooner(body: object, day: string): Promise<string[]> {
   return Promise.all(Array.from({ length: 31 }, () => questAt(`${day}T09:00:00`, body)));
 }
 
+// As many full Quests, each with a second Holder of its own.
+function soonerFull(day: string): Promise<string[]> {
+  return Promise.all(Array.from({ length: 31 }, async () => fullAt(`${day}T09:00:00`, await signInUser(app))));
+}
+
 describe('searchRecruitingQuests, before the list is cut', () => {
   it.each([
-    ['Full', '2094-08-05', { capacity: 1 }, {}],
+    ['Full', '2094-08-05', null, {}],
     ['with too few places left', '2094-08-06', { capacity: 2 }, { minPlacesLeft: 2 }],
     ['of another capacity', '2094-08-07', { capacity: 3 }, { capacity: 4 }],
   ])('finds the later Quest past those %s', async (_, day, body, condition) => {
-    await sooner(body, day);
+    await (body === null ? soonerFull(day) : sooner(body, day));
     const later = await questAt(`${day}T18:00:00`, { capacity: 4 });
 
     expect(await questsFound({ from: day, to: day, ...condition })).toEqual([later]);

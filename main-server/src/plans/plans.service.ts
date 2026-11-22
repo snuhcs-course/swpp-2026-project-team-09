@@ -312,7 +312,14 @@ export class PlansService {
     if (part === undefined || part.leaveAt === null || part.walkMinutes === null || part.walkMinutes === 0) {
       return;
     }
-    const told = { kind: 'leave-by', questId, placeLabel: plan.place.label, walkMinutes: part.walkMinutes } as const;
+    const by = part.mode === 'shuttle' ? { by: 'shuttle' as const } : {};
+    const told = {
+      kind: 'leave-by',
+      questId,
+      placeLabel: plan.place.label,
+      walkMinutes: part.walkMinutes,
+      ...by,
+    } as const;
     this.notifications.schedule(userId, told, new Date(part.leaveAt)).catch((error: unknown) => {
       this.logger.warn(`The Leader's time to leave was not kept: ${String(error)}`);
     });

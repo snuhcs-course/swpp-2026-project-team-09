@@ -5,6 +5,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -73,10 +74,14 @@ export function friendsNamed<Friend extends { name: string; department: string }
   return exact.length > 0 && !alsoCalledSo ? exact : matched;
 }
 
-// The Friend the User tapped, when the words fit them among others: a press on a cell of the question sends the
-// Friend's name with them tapped, and two Friends may share that name.
-function tappedAmong<Friend extends { id: string }>(matched: Friend[], { tapped }: RequestContext): Friend[] {
-  const picked = tapped?.kind === 'friend' ? matched.filter(({ id }) => id === tapped.userId) : [];
+// The Friend the User tapped or mentioned with "@", when the words fit them among others: a press on a cell of the
+// question sends the Friend's name with them tapped, a mention names them by id, and two Friends may share that name.
+function tappedAmong<Friend extends { id: string }>(matched: Friend[], { tapped, mentions }: RequestContext): Friend[] {
+  const chosen = new Set((mentions ?? []).map(({ userId }) => userId));
+  if (tapped?.kind === 'friend') {
+    chosen.add(tapped.userId);
+  }
+  const picked = matched.filter(({ id }) => chosen.has(id));
   return picked.length > 0 ? picked : matched;
 }
 

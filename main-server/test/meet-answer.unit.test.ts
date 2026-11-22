@@ -129,12 +129,13 @@ describe("a5's time band", () => {
 const a6 = (): ReturnType<typeof meetOf> => meetOf([me(), minsu()], { window: { from: '14:00', until: null } });
 
 describe('a6: 민수, the band let go at 14:00', () => {
-  it('meets at 302동 앞 for 83 minutes, ahead of 신양학술정보관 앞 from 14:00 to 15:20 for 80', () => {
+  // A way by the Tuesday shuttle when it is 3 minutes faster: 302동 앞 starts at 14:04, and 24동 앞 ends at 15:16.
+  it('meets at 302동 앞 for 86 minutes, ahead of 신양학술정보관 앞 from 14:00 to 15:20 for 80', () => {
     expect(summary(a6())).toEqual([
-      `302동 앞 ${time('14:07')}–${time('15:30')} (83)`,
+      `302동 앞 ${time('14:04')}–${time('15:30')} (86)`,
       `신양학술정보관 앞 ${time('14:00')}–${time('15:20')} (80)`,
+      `24동 앞 ${time('14:00')}–${time('15:16')} (76)`,
       `중앙도서관 관정관 앞 ${time('14:00')}–${time('15:14')} (74)`,
-      `24동 앞 ${time('14:00')}–${time('15:13')} (73)`,
       `학생회관 ${time('14:00')}–${time('15:13')} (73)`,
     ]);
   });

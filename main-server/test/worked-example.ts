@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type DayItem, freeTimeOf, onDay } from '../src/assistant/free-time/free-time.js';
@@ -35,6 +36,7 @@ const PLACES = [
   { name: '자하연식당', number: '109', latitude: 37.46098, longitude: 126.95252 },
   { name: '자연과학관6', number: '24', latitude: 37.45942, longitude: 126.94989 },
   { name: '두산인문관', number: '8', latitude: 37.46016, longitude: 126.95398 },
+  { name: 'SK경영관', number: '58', latitude: 37.46568, longitude: 126.95203 },
 ];
 
 let travel: SeedTravel | null = null;

@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -130,7 +131,7 @@ describe('Lunch with 민수 and 지은: the map', () => {
       { place: point('자하연식당', '자하연식당'), role: 'candidate', tag: '자하연식당' },
       { place: point('제3학생식당', '3식당'), role: 'candidate', tag: '3식당' },
       { place: point('제1공학관', '301동식당'), role: 'dropped', tag: '301동식당 · 지은은 13분밖에 못 있어요' },
-      { place: point('제2공학관', '302동식당'), role: 'dropped', tag: '302동식당 · 지은은 8분밖에 못 있어요' },
+      { place: point('제2공학관', '302동식당'), role: 'dropped', tag: '302동식당 · 9분밖에 못 있어요' },
       { place: point('자연과학관6', '24동'), role: 'next', tag: '13:00 수업 · 24동' },
       { place: point('제1공학관', '301동'), role: 'meeting', tag: null },
     ]);
@@ -183,12 +184,12 @@ describe('Lunch with 민수 and 지은: the time band and the other places', () 
     });
   });
 
-  it('drops the two engineering Places, naming 지은, who could stay the shortest', () => {
+  it('drops the two engineering Places, naming who could stay the shortest', () => {
     const { dropped, noPlan } = withBoth();
 
     expect(dropped).toEqual([
       { place: point('제1공학관', '301동식당'), reason: '지은은 13분밖에 못 있어요' },
-      { place: point('제2공학관', '302동식당'), reason: '지은은 8분밖에 못 있어요' },
+      { place: point('제2공학관', '302동식당'), reason: '9분밖에 못 있어요' },
     ]);
     expect(noPlan).toBeNull();
   });

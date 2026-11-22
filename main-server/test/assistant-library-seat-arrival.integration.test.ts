@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -183,18 +184,27 @@ describe('From an app that draws answers, as today', () => {
       refusals: [{ field: 'start', reason: '몇 시부터 예약할지 알려 주세요' }],
     });
   });
+});
 
-  it('a seat for tomorrow is refused as today', async () => {
+// "내일 공부할 자리" (P05 ticket 34): the library books a seat on its day only, so nothing of it is asked about.
+describe('A seat for a day after today, from an app that draws answers', () => {
+  const sameDay = {
+    result: 'refused',
+    refusals: [{ field: 'date', reason: '열람실은 당일만 예약할 수 있어요', bound: '2026-11-04' }],
+    sameDayOnly: { opens: '07:00' },
+  };
+
+  it('is refused for the day alone, with when the 열람실 opens, and no time to ask for', async () => {
     const { cards, result } = await book({ ...seatToday, date: '2026-11-05' });
 
-    expect(result).toEqual({
-      result: 'refused',
-      refusals: [
-        { field: 'date', reason: '열람실은 당일만 예약할 수 있어요', bound: '2026-11-04' },
-        { field: 'start', reason: '몇 시부터 예약할지 알려 주세요' },
-        { field: 'minutes', reason: '몇 시간 또는 몇 시까지 예약할지 알려 주세요' },
-      ],
-    });
+    expect(result).toEqual(sameDay);
+    expect(cards).toEqual([]);
+  });
+
+  it('is refused for the day alone when the User gave a time', async () => {
+    const { cards, result } = await book({ ...seatToday, date: '2026-11-05', start: '09:00', minutes: 180 });
+
+    expect(result).toEqual(sameDay);
     expect(cards).toEqual([]);
   });
 });

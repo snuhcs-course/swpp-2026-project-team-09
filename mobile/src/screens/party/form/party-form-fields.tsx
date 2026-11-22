@@ -3,13 +3,14 @@
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Chip, color, font, Icon, radius, space, TextField } from '@/design-system';
 import { boardName } from '@/features/party/boards';
-import { MAX_CAPACITY, type PartyForm, type Visibility } from '@/features/party/making';
+import { MAX_CAPACITY, type PartyForm, type Visibility, withVisibility } from '@/features/party/making';
 import { BoardSheet } from './board-sheet';
 import { FieldHead } from './field-head';
 
@@ -57,12 +58,12 @@ interface StepButtonProps {
 
 interface CapacityFieldProps {
   form: PartyForm;
-  // The Holders now and the Friends invited: `인원` goes no lower.
+  // 2 under 공개, and the Holders now and the Friends invited: `인원` goes no lower.
   least: number;
   onChange: Change;
 }
 
-// `인원`: a stepper up to 8, for 공개 and 비공개 alike, from the Holders and the Friends invited.
+// `인원`: a stepper up to 8, from 2 under 공개 and 1 under 비공개, and from the Holders and the Friends invited.
 export function CapacityField({ form, least, onChange }: CapacityFieldProps): ReactElement {
   const { capacity } = form;
   return (
@@ -96,7 +97,7 @@ const VISIBILITY: readonly { key: Visibility; label: string; icon: 'users' | 'lo
   { key: 'private', label: '비공개', icon: 'lock' },
 ];
 
-// `공개 범위`, and under 공개 the Join Policy's chips.
+// `공개 범위`, and under 공개 the Join Policy's chips. Choosing 공개 raises `인원` to its least.
 export function VisibilityField({ form, onChange }: { form: PartyForm; onChange: Change }): ReactElement {
   const open = form.visibility === 'public';
   return (
@@ -112,7 +113,7 @@ export function VisibilityField({ form, onChange }: { form: PartyForm; onChange:
               accessibilityState={{ checked: on }}
               key={key}
               onPress={() => {
-                onChange({ visibility: key });
+                onChange(withVisibility(form, key));
               }}
               style={[styles.radio, on && styles.radioOn]}
             >

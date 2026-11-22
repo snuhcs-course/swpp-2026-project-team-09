@@ -6,18 +6,18 @@
 
 import type { Cuisine, Plan } from '@/api/assistant-types';
 import { koreaClock } from '@/korea-time';
-import { addedWalk } from './answer-walks';
+import { travelWords } from './answer-walks';
 import { menuLine } from './meal-menus';
 
 // The two-line name label of a meal answer's pick (the answer screen's redesign, board E1): its name with its time and
-// walking ("학생회관식당 11:00 · 걸음 32분"), then its main dish, the count of the rest, and the lowest price.
+// way ("학생회관식당 11:00 · 걸음 32분", or "· 이동 32분 · 셔틀" with a leg by shuttle), then its main dish, the count of the rest, and the lowest price.
 export function mealPickWords(
   plan: Plan,
   title: string,
   kind: Cuisine | null,
 ): { name: string; title: string; note: string; line: string | null; action: string } {
-  const walk = addedWalk(plan);
-  const note = [koreaClock(plan.startAt), ...(walk === null ? [] : [`걸음 ${String(walk)}분`])].join(' · ');
+  const way = travelWords(plan);
+  const note = [koreaClock(plan.startAt), ...(way === null ? [] : [way])].join(' · ');
   const line = menuLine(plan.menu, kind);
   return { name: [title, note, ...(line === null ? [] : [line])].join(' · '), title, note, line, action: '메뉴 ›' };
 }

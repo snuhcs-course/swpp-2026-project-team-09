@@ -31,6 +31,15 @@ export interface RequestContext {
   conditions: PlanInput | null;
   // The plan on screen.
   planId: string | null;
+  // The Friends the User's new message mentions with "@". Left out by an app before the mention, and checked against
+  // the asker's Friends before anything reads it.
+  mentions?: Mention[];
+}
+
+// A Friend the User picked with "@" from their Friend list: exactly that Friend, never found by the name.
+export interface Mention {
+  userId: string;
+  name: string;
 }
 
 export interface AnswerReply extends WithMissing {
@@ -166,9 +175,12 @@ export interface PlanPart {
   arriveAt?: string | null;
   // Null when nothing follows.
   leaveBy: string | null;
-  next: { startAt: string; place: PlacePoint | null } | null;
+  // `by`: 'shuttle' when they go on to it by the shuttle, absent for a walk.
+  next: { startAt: string; place: PlacePoint | null; by?: 'shuttle' } | null;
   // How they travel, absent for a walk.
   mode?: 'walk' | 'shuttle';
+  // The stops of a way by the shuttle, by name ("301동", "경영대").
+  shuttle?: { boardAt: string; getOffAt: string };
 }
 
 // A shuttle stop's point holds the stop's id, not a Place's.
@@ -260,6 +272,10 @@ const tappedSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('place'), placeId: z.uuid() }),
   z.strictObject({ kind: z.literal('friend'), userId: z.uuid() }),
 ]);
+// More than an input holds of distinct Friends is a wrong request.
+const MENTIONS_MAX = 20;
+const NAME_MAX = 100;
+const mentionSchema = z.strictObject({ userId: z.uuid(), name: z.string().trim().min(1).max(NAME_MAX) });
 const locationMissingSchema = z.enum(['permission', 'off-campus']).nullable().default(null);
 
 export const requestContextSchema = z.strictObject({
@@ -272,6 +288,7 @@ export const requestContextSchema = z.strictObject({
   tapped: tappedSchema.nullable().default(null),
   conditions: planInputSchema.nullable().default(null),
   planId: z.string().min(1).max(PLAN_ID_MAX).nullable().default(null),
+  mentions: z.array(mentionSchema).max(MENTIONS_MAX).optional(),
 }) satisfies z.ZodType<RequestContext>;
 
 // The body of a recalculation: the changed input, and where the asker is now or why that is not sent.

@@ -27,7 +27,7 @@ import { koreaDateKey, koreaNextDay } from '@/korea-time';
 import { RECRUITING_QUESTS } from './data/boards';
 import { FRIENDS } from './data/friends';
 import { MENUS } from './data/menus';
-import { CROWDED_ASKED, crowdedMealAnswer, crowdedMealReply } from './data/crowded-meal';
+import { CROWDED_ASKED, crowdedMealAnswer, crowdedMealReply, crowdedWithFriend } from './data/crowded-meal';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
 import { MEAL_ANSWER_MENUS_REPLY, MEAL_DINNER_MENUS } from './data/meal-answer-menus';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
@@ -203,8 +203,11 @@ function copyFor(input: PlanInput): AnswerReply {
   if (input.kind === 'meal' && input.meal === 'dinner') {
     return MEAL_DINNER_MENUS;
   }
-  if (input.kind === 'meal' && input.date === koreaDateKey(koreaNextDay(now())) && input.people.length <= 1) {
-    return crowdedMealAnswer(input.date, now().toISOString());
+  if (input.kind === 'meal' && input.date === koreaDateKey(koreaNextDay(now())) && input.people.length <= 2) {
+    const [, friend] = input.people;
+    return friend === undefined
+      ? crowdedMealAnswer(input.date, now().toISOString())
+      : crowdedWithFriend(input.date, now().toISOString(), friend.userId);
   }
   const people = input.kind === 'meal' || input.kind === 'new-quest' ? input.people : [];
   const from = input.kind === 'meal' ? input.window.from : null;

@@ -14,7 +14,8 @@ import { askedBy } from '../refusals/friend-question.js';
 import { busyAt } from './busy-at.js';
 import { relatedWords } from './meal-tool-words.js';
 import { type MeetPlanned, type MeetPlanService } from './meet-plan.service.js';
-import { FRIENDS_MAX, refuseUnseen, timesAndWays } from './plan-tools.js';
+import { FRIENDS_MAX, refuseUnseen } from './plan-tools.js';
+import { timesAndWays } from './plan-times.js';
 
 // A meet planned on the map, for an app that draws it: as for a meal, the server decides when and where, and the model
 // passes the User's words as conditions and writes one sentence. Coordinates, ids of Places, course names, and rooms
@@ -163,7 +164,7 @@ function plannedWords(
 export const MEET_RULES = `A meet with Friends is planned on the map too: the server decides when the User and the Friends are free together, where they are together longest, and when everyone is there, and the app draws the plans.
 
 - When the User wants to meet or see Friends they name, not for a meal (민수랑 만나고 싶어, 지은이 언제 볼 수 있어?), call planMeet with the day (today when they name none) and the Friends, each found with resolveFriend first.
-- The app draws the plans and writes their times, ways, and minutes itself, the first one first. Your reply is one sentence about the first plan only, its place and when everyone is there, such as "12:15에 302동 앞에서 만나요." Write nothing more, and do not call showOnMap for a plan.
+- The app draws the plans and writes their times, ways, and minutes itself, the first one first. Your reply is one sentence about the first plan only, its place and when everyone is there, such as "12:15에 302동 앞에서 만나요." Write nothing more, and do not call showOnMap for a plan. When the User's way to the first plan is by the shuttle (나's by is a shuttle, with its stops), the sentence may say so in a few words, such as "셔틀로 가면 12:15에 302동 앞에서 만나요."; never call a way by the shuttle 걸어서.
 - When planMeet answers related, the User already has those Quests that day, meetings or with a Friend asked for. Your sentence mentions the one that matters, such as "민수와는 내일 14:00 SK경영관 앞에서 약속이 이미 있어요", whether or not it limits the plans.
 - A 파티 or 약속 only with Friends the User names, with or without a place and a time ("내일 이민수랑 학생회관에서 두시에 만나는 파티", "민수랑 3시에 보자"), is a meeting: call planMeet with those Friends, the place as placeId and the time as at, not proposeQuest. This comes before the rule for a closed 파티. proposeQuest still makes an open or approval 파티, or one with a capacity, a Board or a title the User gave.
 - When planMeet answers asked with fits false, the first plan is the nearest time everyone can be there, and your one sentence says why the asked time does not fit and offers it: a Friend of the plan only by when their Class or Quest ends ("민수는 15:15까지 수업이에요. 15:20은 어때요?"), never what it is or where, and never anyone not in the plan; your own Class or Quest by its name ("내일 14:00엔 운영체제 수업이 있어요. 16:20은 어때요?"); with nobody busy, that it is the earliest everyone is there.

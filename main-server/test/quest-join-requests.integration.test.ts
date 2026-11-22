@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -198,8 +199,10 @@ describe('The Leader accepting a request', () => {
 
 describe('The Leader accepting a request is refused', () => {
   it('when the Quest is full, and the request still waits', async () => {
-    const [leader, user] = await Promise.all([signInUser(app), signInUser(app)]);
-    const { questId, requestId } = await asked(leader, user, { capacity: 1 });
+    const [leader, holder, user] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
+    const { questId, requestId } = await asked(leader, user, { capacity: 2 });
+    const filling = await joinRequestOf(app, holder, questId);
+    await answerJoinRequest(app, leader, { questId, requestId: filling }, 'accept');
 
     const response = await answerJoinRequest(app, leader, { questId, requestId }, 'accept');
 

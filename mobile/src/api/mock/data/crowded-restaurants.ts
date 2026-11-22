@@ -19,6 +19,8 @@ export interface Restaurant {
   opens: string;
   price: number | null;
   dishes: Dish[];
+  // Reached from 301동 by the shuttle, as the shuttle-aware Plan sends it: its minutes and its stops' names.
+  shuttle?: { minutes: number; boardAt: string; getOffAt: string };
 }
 
 export const B301 = { latitude: 37.45016, longitude: 126.95259 };
@@ -89,7 +91,8 @@ export const RESTAURANTS: readonly Restaurant[] = [
     name: '자하연식당 2층',
     building: '109',
     at: { latitude: 37.46098, longitude: 126.95252 },
-    opens: '11:00',
+    opens: '11:30',
+    shuttle: { minutes: 13, boardAt: '301동', getOffAt: '자하연' },
     price: 6000,
     dishes: [
       ['낙지연포탕', null, '한식'],
@@ -122,7 +125,7 @@ export const RESTAURANTS: readonly Restaurant[] = [
     name: '감골식당',
     building: '101',
     at: { latitude: 37.46328, longitude: 126.95015 },
-    opens: '11:00',
+    opens: '14:50',
     price: 5500,
     dishes: [
       ['닭갈비볶음밥', null, '한식'],
@@ -144,7 +147,7 @@ export const RESTAURANTS: readonly Restaurant[] = [
     name: '기숙사식당 (관악사 919동)',
     building: '919',
     at: { latitude: 37.46306, longitude: 126.95872 },
-    opens: '11:30',
+    opens: '15:10',
     price: null,
     dishes: [
       ['함박스테이크와 감자튀김', 6500, '양식'],

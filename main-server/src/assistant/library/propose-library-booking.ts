@@ -5,6 +5,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { NotFoundException } from '@nestjs/common';
@@ -21,6 +22,7 @@ import {
   minutesOfClock,
   type Refusal,
   saysClosed,
+  saysSameDayOnly,
 } from './booking-rules.js';
 import { KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
 import { firstOfSeveralNote } from './find-library-space.js';
@@ -131,7 +133,7 @@ function summaryOf(
 const DESCRIPTION =
   "Checks a 관정도서관 booking and shows a book card, which books nothing until the User presses 예약하기 on it. Give the space's id from findLibrarySpace, the day, start, and minutes or end, as the User said them, and only what they said of the seat, the room's equipment, the 사용용도 and companions. Answers 'shown' with a summary; 'refused' with every refusal at once, each with its reason and bound; or the space's status with its reason.";
 
-const FILLING_DESCRIPTION = `${DESCRIPTION} A seat for today without start is filled from when the User arrives at 관정관, and 'shown' then also gives the arrival and leaveBy, when to leave for what follows.`;
+const FILLING_DESCRIPTION = `${DESCRIPTION} A seat for today without start is filled from when the User arrives at 관정관, and 'shown' then also gives the arrival and leaveBy, when to leave for what follows. A seat for a day after today is refused for that day alone, with sameDayOnly and when the space opens.`;
 
 export interface BookingOptions {
   // The app draws answers on the map: a seat for today without a start gets its time from the User's arrival.
@@ -255,7 +257,9 @@ export function proposeLibraryBooking(services: LibraryServices, options?: Booki
         step,
         refusals.some((refusal) => saysClosed(refusal)),
       );
-      return refused(refusals);
+      // A seat for a later day: the reply says so and when the room opens that day, with nothing to ask.
+      const sameDay = refusals.some((refusal) => saysSameDayOnly(refusal));
+      return sameDay ? { ...refused(refusals), sameDayOnly: { opens: space.hours?.open ?? null } } : refused(refusals);
     }
     const { booking } = result;
     return shownBooking(services, context, { space, booking, party, filling, askedToBook: asked.askedToBook });

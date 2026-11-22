@@ -6,8 +6,8 @@
 
 import { isLibraryAsk, libraryReply } from '@/api/mock/library-replies';
 
-// The mock Assistant's study-seat answers (P01 ticket 03), as the main server's rules have them: "공부할 자리" is a
-// reading-room seat card, and a seat for tomorrow is asked about without a time and refused with one.
+// The mock Assistant's study-seat answers (P01 ticket 03), as the main server's rules have them (P05 ticket 34):
+// "공부할 자리" is a reading-room seat card, and a seat for tomorrow is refused at once.
 
 describe('the mock’s study-seat answers', () => {
   it('answers "공부할 자리" with the seat card', () => {
@@ -19,15 +19,14 @@ describe('the mock’s study-seat answers', () => {
     expect(card?.kind === 'library' ? card.library.action : null).toBe('book');
   });
 
-  it('asks the time of a seat for tomorrow, with no card', () => {
-    const reply = libraryReply('내일 공부할 자리');
-
-    expect(reply.text).toBe('몇 시부터 몇 시까지 예약할까요?');
-    expect(reply.cards).toEqual([]);
-  });
-
-  it('refuses a seat for tomorrow with a time: seats are booked for today only', () => {
-    expect(libraryReply('내일 14시에 공부할 자리').text).toBe('열람실은 당일만 예약할 수 있어요.');
+  it('refuses a seat for tomorrow at once, with a time or without: seats are booked for today only', () => {
+    const today =
+      '관정도서관 열람실은 당일만 예약할 수 있어서 지금은 예약할 수 없어요. 내일 07:00에 열람실이 열면 다시 말해 주세요.';
+    for (const words of ['내일 공부할 자리', '내일 14시에 공부할 자리']) {
+      const reply = libraryReply(words);
+      expect(reply.text).toBe(today);
+      expect(reply.cards).toEqual([]);
+    }
   });
 
   it('leaves tomorrow’s study rooms to their own card', () => {

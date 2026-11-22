@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { WORLD_REQUEST_FIELDS, WORLDS } from '../eval/cases.ts';
@@ -28,14 +29,17 @@ describe('the eval runner request fields', () => {
     expect(assistantMessagesSchema.parse(body).clientCapabilities).toEqual(['library']);
   });
 
-  it("sends clientCapabilities ['library', 'answer'] in the p4-answer world, as the app does with a context", () => {
-    const body = bodyOf('p4-answer');
+  it.each(['p4-answer', 'p6-answer'] as const)(
+    "sends clientCapabilities ['library', 'answer'] in the %s world, as the app does with a context",
+    (world) => {
+      const body = bodyOf(world);
 
-    expect(body).toEqual({ messages, clientCapabilities: ['library', 'answer'] });
-    expect(assistantMessagesSchema.parse(body).clientCapabilities).toEqual(['library', 'answer']);
-  });
+      expect(body).toEqual({ messages, clientCapabilities: ['library', 'answer'] });
+      expect(assistantMessagesSchema.parse(body).clientCapabilities).toEqual(['library', 'answer']);
+    },
+  );
 
-  it.each(WORLDS.filter((world) => world !== 'p6' && world !== 'p4-answer'))(
+  it.each(WORLDS.filter((world) => !['p6', 'p4-answer', 'p6-answer'].includes(world)))(
     'sends only the messages in the %s world',
     (world) => {
       expect(JSON.stringify(bodyOf(world))).toBe(JSON.stringify({ messages }));

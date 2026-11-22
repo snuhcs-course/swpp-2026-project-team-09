@@ -48,7 +48,7 @@ A 관정도서관 seat card whose building is on the map stands there as a label
 - "바꾼 시간이에요. 위 답의 시각은 처음 시간 기준이에요." is gone.
 - The seat picture's way back is "←" at the left of its head ("좌석 현황 닫기" to a screen reader).
 - After a booking, "확인" is the main button and closes the answer, keeping the conversation. The done card's "좌석 현황 보기" is the second way on.
-- The mock answers "공부할 자리" with the study card. It follows the main server's rules (`main-server/src/assistant/library/library-rules.ts`): a seat for tomorrow without a time is asked about ("몇 시부터 몇 시까지 예약할까요?"), and one with a time is refused ("열람실은 당일만 예약할 수 있어요.").
+- The mock answers "공부할 자리" with the study card. It follows the main server's rules (`main-server/src/assistant/library/library-rules.ts`, as P05 ticket 34 left them): a seat for tomorrow is refused at once, with a time or without ("관정도서관 열람실은 당일만 예약할 수 있어서 지금은 예약할 수 없어요. 내일 07:00에 열람실이 열면 다시 말해 주세요.").
 
 ## What stays as it is
 
@@ -65,7 +65,7 @@ A 관정도서관 seat card whose building is on the map stands there as a label
 - [x] Logged out, there is exactly one "로그인", beside the input. (Integration test.)
 - [x] The label's card names the room once; the seat picture's head says "관정 7층 열람실 좌석 현황" with "좌석 현황 닫기". (Integration tests.)
 - [x] After 예약하기, the done card shows, and "확인" beside the input closes the answer. (Integration test.)
-- [x] The mock answers "공부할 자리" with a seat card, asks the time of "내일 공부할 자리", and refuses "내일 14시에 공부할 자리". (Unit test.)
+- [x] The mock answers "공부할 자리" with a seat card, and refuses "내일 공부할 자리" and "내일 14시에 공부할 자리" at once. (Unit test.)
 - [x] No native file changes; oxlint, Prettier, and tsc pass on the app.
 
 ## Comments

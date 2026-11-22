@@ -92,6 +92,29 @@ export function addedWalk({ parts, scene }: Pick<Plan, 'parts' | 'scene'>): numb
   return there + (on?.minutes ?? 0);
 }
 
+// The way a meal Plan adds to the User's day, as `addedWalk` counts it, and whether a leg of it is by shuttle: the way
+// there (the User's part's `mode`) or a leg of the scene's routes, the way on included. Null when where they start is
+// not known. A main server before the shuttle-aware Plan sends no `mode`, which reads as walking.
+export function travelOf(plan: Pick<Plan, 'parts' | 'scene'>): { minutes: number; shuttle: boolean } | null {
+  const minutes = addedWalk(plan);
+  if (minutes === null) {
+    return null;
+  }
+  const shuttle =
+    plan.parts.some(({ me, mode }) => me && mode === 'shuttle') ||
+    plan.scene.routes.some(({ role, mode }) => (role === 'me' || role === 'next') && mode === 'shuttle');
+  return { minutes, shuttle };
+}
+
+// "걸음 16분" where every leg is on foot, "이동 16분 · 셔틀" where one is by shuttle; null when not known.
+export function travelWords(plan: Pick<Plan, 'parts' | 'scene'>): string | null {
+  const travel = travelOf(plan);
+  if (travel === null) {
+    return null;
+  }
+  return travel.shuttle ? `이동 ${String(travel.minutes)}분 · 셔틀` : `걸음 ${String(travel.minutes)}분`;
+}
+
 // A fixed thing of the User's day beside a Plan, from their lane of its band: its time and what it is ("302동 수업").
 export interface FixedThing {
   at: string;
@@ -122,8 +145,6 @@ export function fixedAfter(plan: Pick<Plan, 'band' | 'parts' | 'endAt'>): FixedT
 const MINUTE = 60_000;
 // How long a meal takes at least, for whether a candidate fits.
 const SHORTEST_MEAL = 20;
-// Walking beyond this fades a candidate.
-const FAR = 30;
 
 // Whether a meal Plan fits its band: arriving inside it, twenty minutes there, and the walk on, before the next fixed
 // thing, or before the band's end with none.
@@ -135,8 +156,8 @@ export function fitsBand(plan: Pick<Plan, 'band' | 'parts' | 'scene' | 'startAt'
   return start >= Date.parse(plan.band.range.startAt) && start + (SHORTEST_MEAL + on) * MINUTE <= end;
 }
 
-// A candidate the map fades: it does not fit its band, or its walking is over thirty minutes.
+// A candidate the map and the list fade: it cannot be done in the time, as it does not fit its band. A long walk alone
+// fades nothing: the list's order by walking says it already.
 export function fadedPlan(plan: Pick<Plan, 'band' | 'parts' | 'scene' | 'startAt' | 'endAt'>): boolean {
-  const walk = addedWalk(plan);
-  return !fitsBand(plan) || (walk !== null && walk > FAR);
+  return !fitsBand(plan);
 }
