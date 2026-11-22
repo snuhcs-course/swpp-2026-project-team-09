@@ -4,299 +4,192 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, type ReactNode, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { AnswerReply, MenuDish } from '@/api/assistant-types';
-import { color, font, radius, size, space, text } from '@/design-system';
-import { MEAL_NAMES, won } from '@/features/dining/adapter';
+import type { ReactElement } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import type { AnswerReply, Cuisine, Plan } from '@/api/assistant-types';
+import { color, font, radius, space, text } from '@/design-system';
+import { addedWalk, fadedPlan } from '@/features/assistant/answer-walks';
+import { kindShown, serves } from '@/features/assistant/meal-kinds';
+import { dishWords, priceWords } from '@/features/assistant/meal-menus';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
-import { koreaClock, koreaWeekdayName } from '@/korea-time';
-import { kindChipsOf } from '@/features/assistant/meal-kinds';
+import { koreaClock } from '@/korea-time';
 import { KindChips } from './kind-chips';
 
-// 메뉴 모두 보기 (P04 ticket 15, board 23): every candidate of a meal answer with all its dishes and prices, in the
-// map's order, above the dock's chips.
+// The raised card of a meal answer (board E3): every candidate as a row, the kinds of food over them as the filter.
 
-export interface MenuGroup {
+export interface CandidateRow {
   // As the map numbers it.
   number: number;
   planId: string;
   name: string;
-  // "11:53 도착"
-  arrival: string;
-  // A buffet's or a self corner's own price, null for none.
-  price: number | null;
-  dishes: readonly MenuDish[];
+  // The walking this choice adds to the User's day, "걸음 16분", or when the User is there, "11:53 도착", when where
+  // they start is not known.
+  when: string;
+  // In minutes, null when not known.
+  walk: number | null;
+  // It does not fit the band or its walking is long: faded, as on the map, unless chosen.
+  faded: boolean;
+  // "순살안동식찜닭 외 2", null without dishes.
+  dishes: string | null;
+  // "5,000원부터", null without prices.
+  price: string | null;
+  startAt: string;
 }
 
-// One group per Plan of a meal answer. None for an answer that is no meal, or with fewer than two Plans whose menus
-// hold dishes: the list then compares nothing.
-export function menuGroupsOf(answer: AnswerReply | null): MenuGroup[] {
-  if (answer?.input.kind !== 'meal') {
-    return [];
-  }
-  const groups = answer.plans.map((plan, index) => ({
+function rowOf(plan: Plan, index: number, kind: Cuisine | null): CandidateRow {
+  const walk = addedWalk(plan);
+  return {
     number: index + 1,
     planId: plan.id,
     name: plan.place.label,
-    arrival: `${koreaClock(plan.startAt)} 도착`,
-    price: plan.menu?.price ?? null,
-    dishes: plan.menu?.dishes ?? [],
-  }));
-  return groups.filter(({ dishes }) => dishes.length > 0).length < 2 ? [] : groups;
+    when: walk === null ? `${koreaClock(plan.startAt)} 도착` : `걸음 ${String(walk)}분`,
+    walk,
+    faded: fadedPlan(plan),
+    dishes: plan.menu === undefined ? null : dishWords(plan.menu, kind),
+    price: plan.menu === undefined ? null : priceWords(plan.menu),
+    startAt: plan.startAt,
+  };
 }
 
-// "메뉴 모두 보기 · 화 점심"
-export function menuListTitle(answer: AnswerReply): string {
-  const { input } = answer;
-  if (input.kind !== 'meal') {
-    return '메뉴 모두 보기';
+// A meal answer with more than one candidate, whose raised card lists them.
+export function mealListed(answer: AnswerReply | null): boolean {
+  return answer?.input.kind === 'meal' && answer.plans.length > 1;
+}
+
+// The candidates of a meal answer with more than one, those of the kind on screen alone when one is chosen, the least
+// walking first, then the earliest there, then the map's order. None for any other answer.
+export function candidateRowsOf(answer: AnswerReply | null): CandidateRow[] {
+  if (answer === null || !mealListed(answer)) {
+    return [];
   }
-  const day = koreaWeekdayName(new Date(`${input.date}T12:00:00+09:00`));
-  return `메뉴 모두 보기 · ${day} ${MEAL_NAMES[input.meal]}`;
+  const kind = kindShown(answer);
+  return answer.plans
+    .map((plan, index) => ({ plan, row: rowOf(plan, index, kind) }))
+    .filter(({ plan }) => kind === null || serves(plan, kind))
+    .map(({ row }) => row)
+    .toSorted(
+      (one, other) =>
+        (one.walk ?? Infinity) - (other.walk ?? Infinity) ||
+        one.startAt.localeCompare(other.startAt) ||
+        one.number - other.number,
+    );
 }
 
-const CHIP_HEIGHT = 34;
-const HIT_SLOP = (size.touchMin - CHIP_HEIGHT) / 2;
+const BADGE = 22;
 
-// The row's chip that opens and folds the list, short so that the kinds of ticket 16 have room beside it.
-export function MenuListChip({ open, onPress }: { open: boolean; onPress: () => void }): ReactElement {
-  return (
-    <Pressable
-      accessibilityLabel="메뉴 보기"
-      accessibilityRole="button"
-      accessibilityState={{ expanded: open }}
-      hitSlop={HIT_SLOP}
-      onPress={onPress}
-      style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
-      testID="menu-list-chip"
-    >
-      <Text numberOfLines={1} style={styles.chipWords}>
-        {open ? '메뉴 보기 ▼' : '메뉴 보기 ▲'}
-      </Text>
-    </Pressable>
-  );
-}
-
-function DishRow({ name, price }: { name: string; price: number | null }): ReactElement {
-  return (
-    <View style={styles.dish}>
-      <Text numberOfLines={1} style={styles.dishName}>
-        {name}
-      </Text>
-      {price === null ? null : <Text style={styles.dishPrice}>{won(price)}</Text>}
-    </View>
-  );
-}
-
-function Group({
-  group,
-  picked,
+function Row({
+  row,
+  chosen,
   disabled,
-  onPick,
+  onPress,
 }: {
-  group: MenuGroup;
-  picked: boolean;
+  row: CandidateRow;
+  chosen: boolean;
   disabled: boolean;
-  onPick: (planId: string) => void;
+  onPress: () => void;
 }): ReactElement {
-  const { number, planId, name, arrival, price, dishes } = group;
-  const said = [
-    `${String(number)} ${name}`,
-    arrival,
-    ...(price === null ? [] : [`1인 ${won(price)}`]),
-    ...(picked ? ['고른 곳'] : []),
-  ].join(' · ');
+  const { number, name, when, dishes, price } = row;
+  const said = [`${String(number)} ${name}`, when, dishes, price, chosen ? '고른 곳' : null]
+    .filter((words) => words !== null)
+    .join(' · ');
   return (
     <Pressable
       accessibilityLabel={said}
       accessibilityRole="button"
-      accessibilityState={{ selected: picked, disabled }}
+      accessibilityState={{ selected: chosen, disabled }}
       disabled={disabled}
-      onPress={() => {
-        onPick(planId);
-      }}
-      style={({ pressed }) => [styles.group, picked && styles.picked, pressed && !picked && styles.pressed]}
-      testID={`menu-group-${String(number)}`}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.row,
+        chosen && styles.chosen,
+        row.faded && !chosen && styles.faded,
+        pressed && styles.pressed,
+      ]}
+      testID={`meal-row-${String(number)}`}
     >
-      <View style={styles.head}>
-        <View style={styles.badge}>
-          <Text style={styles.number}>{number}</Text>
-        </View>
+      <View style={[styles.badge, chosen && styles.chosenBadge]}>
+        <Text style={styles.number}>{number}</Text>
+      </View>
+      <View style={styles.middle}>
         <Text numberOfLines={1} style={styles.name}>
           {name}
         </Text>
-        <Text numberOfLines={1} style={styles.arrival}>
-          {price === null ? arrival : `${arrival} · 1인 ${won(price)}`}
+        <Text numberOfLines={1} style={styles.when}>
+          {when}
         </Text>
-        <Text style={picked ? styles.pickedWords : styles.more}>{picked ? '고른 곳' : '›'}</Text>
+        {dishes === null ? null : (
+          <Text numberOfLines={1} style={styles.dishes}>
+            {dishes}
+          </Text>
+        )}
       </View>
-      {dishes.map((dish, at) => (
-        // A menu may list a dish twice; its place in the menu tells them apart.
-        // oxlint-disable-next-line react/no-array-index-key
-        <DishRow key={`${String(at)}:${dish.name}`} name={dish.name} price={price === null ? dish.price : null} />
-      ))}
+      {price === null ? null : <Text style={styles.price}>{price}</Text>}
     </Pressable>
   );
 }
 
-interface MenuListProps {
+interface MealListProps {
   answer: AnswerReply;
-  shown: Pick<ShownAnswer, 'index' | 'show'>;
-  // A Plan is being sent or is made, or a recalculation is on its way: nothing is picked, as on the map.
+  shown: Pick<ShownAnswer, 'index' | 'openMenu' | 'chooseKind'>;
+  // A Plan is being sent or is made, or a recalculation is on its way: nothing is chosen, as on the map.
   busy: boolean;
-  onFold: () => void;
 }
 
-// The list over the dock's chips: its title with "접기", then one group per candidate. A press on another group makes
-// that place the pick, as a press on its tag does, and folds the list; while `busy`, the groups take no press.
-export function MenuList({ answer, shown, busy, onFold }: MenuListProps): ReactElement | null {
-  const groups = menuGroupsOf(answer);
-  if (groups.length === 0) {
+// The kinds of food on top, then a row per candidate; the chosen one is marked. A press on a row chooses that place,
+// as a press on its tag does, and opens its menu (board E4).
+export function MealList({ answer, shown, busy }: MealListProps): ReactElement | null {
+  const rows = candidateRowsOf(answer);
+  const chosen = answer.plans[shown.index]?.id;
+  if (rows.length === 0) {
     return null;
   }
   return (
-    <View style={styles.list} testID="menu-list">
-      <View style={styles.title}>
-        <Text accessibilityRole="header" numberOfLines={1} style={styles.titleWords}>
-          {menuListTitle(answer)}
-        </Text>
-        <Pressable accessibilityRole="button" hitSlop={space[3]} onPress={onFold}>
-          <Text style={styles.fold}>접기</Text>
-        </Pressable>
-      </View>
-      <ScrollView style={styles.groups}>
-        {groups.map((group) => (
-          <Group
-            disabled={busy}
-            group={group}
-            key={group.planId}
-            onPick={(planId) => {
-              if (group.number - 1 !== shown.index) {
-                shown.show(planId);
-              }
-              onFold();
-            }}
-            picked={group.number - 1 === shown.index}
-          />
-        ))}
-      </ScrollView>
+    <View style={styles.list} testID="meal-list">
+      <KindChips answer={answer} disabled={busy} onChoose={shown.chooseKind} />
+      {rows.map((row) => (
+        <Row
+          chosen={row.planId === chosen}
+          disabled={busy}
+          key={row.planId}
+          onPress={() => {
+            shown.openMenu(row.planId);
+          }}
+          row={row}
+        />
+      ))}
     </View>
   );
 }
 
-interface WithMenuListProps {
-  shown: Pick<ShownAnswer, 'answer' | 'index' | 'show' | 'chooseKind' | 'recalculating'>;
-  // A Plan is being sent or is made: neither the list nor the kinds change the Plan on screen, as the map does.
-  sent: boolean;
-  // The dock's own chips (the note), which stand before 메뉴 모두 보기.
-  folded: ReactNode;
-  // A chip before the kinds: 그대로 두기 beside a Quest already set (P04 ticket 21); left out, none.
-  lead?: ReactNode;
-  // The Plan's dock, given its chips.
-  children: (dock: ReactNode) => ReactNode;
-}
-
-// A meal answer's dock: its kinds of food first (`KindChips`), the dock's own chips, and 메뉴 모두 보기 as the row's
-// last chip (board 24), with the list, while open, over the row. The list folds when another answer comes.
-export function WithMenuList({ shown, sent, folded, lead = null, children }: WithMenuListProps): ReactElement {
-  const { answer } = shown;
-  const [openFor, setOpenFor] = useState<AnswerReply | null>(null);
-  const listed = menuGroupsOf(answer).length > 0;
-  const open = listed && answer !== null && openFor === answer;
-  const fold = (): void => {
-    setOpenFor(null);
-  };
-  const kinds = answer === null ? [] : kindChipsOf(answer.plans);
-  const menuChip = listed ? (
-    <MenuListChip
-      onPress={() => {
-        setOpenFor(open ? null : answer);
-      }}
-      open={open}
-    />
-  ) : null;
-  // One row (board 24): the kinds and the dock's own chips scroll sideways, and 메뉴 모두 보기 stays at the right.
-  const dock =
-    kinds.length === 0 && !listed ? (
-      <>
-        {lead}
-        {folded}
-      </>
-    ) : (
-      <View style={styles.mealRow}>
-        <ScrollView
-          contentContainerStyle={styles.mealChips}
-          horizontal
-          keyboardShouldPersistTaps="handled"
-          showsHorizontalScrollIndicator={false}
-          style={styles.mealScroll}
-        >
-          {lead}
-          <KindChips answer={answer} disabled={sent || shown.recalculating} onChoose={shown.chooseKind} />
-          {folded}
-        </ScrollView>
-        {menuChip}
-      </View>
-    );
-  return (
-    <>
-      {open ? <MenuList answer={answer} busy={sent || shown.recalculating} onFold={fold} shown={shown} /> : null}
-      {children(dock)}
-    </>
-  );
-}
-
-const BADGE = 20;
-// The list stands over the map: at most this high, and it scrolls.
-const LIST_MAX = 420;
-
 const styles = StyleSheet.create({
-  chip: {
-    flexShrink: 0,
-    justifyContent: 'center',
-    height: CHIP_HEIGHT,
-    paddingHorizontal: space[3],
-    borderRadius: radius.full,
-    borderWidth: 1.5,
-    borderColor: color.snuBlue,
-    backgroundColor: color.surface,
-  },
-  chipWords: { ...text.label, color: color.snuBlue },
-  mealRow: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 0,
-    minWidth: '50%',
+  list: { gap: space[1] },
+  row: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
+    alignItems: 'flex-start',
+    gap: space[3],
+    paddingVertical: space[2],
+    paddingHorizontal: space[2],
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
   },
-  mealScroll: { flexGrow: 1, flexShrink: 1 },
-  mealChips: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  chosen: { borderColor: color.quest, backgroundColor: color.questSoft },
   pressed: { opacity: 0.6 },
-  list: { gap: space[2], paddingBottom: space[2] },
-  title: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] },
-  titleWords: { ...text.label, flexShrink: 1, fontFamily: font.bold, color: color.ink },
-  fold: { ...text.label, color: color.snuBlue },
-  groups: { maxHeight: LIST_MAX },
-  group: { gap: space[1], paddingVertical: space[2], paddingHorizontal: space[2], borderRadius: radius.md },
-  picked: { backgroundColor: color.blue50 },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  faded: { opacity: 0.45 },
   badge: {
     alignItems: 'center',
     justifyContent: 'center',
     width: BADGE,
     height: BADGE,
+    marginTop: 2,
     borderRadius: radius.full,
     backgroundColor: color.snuBlue,
   },
+  chosenBadge: { backgroundColor: color.quest },
   number: { ...text.micro, color: color.onPrimary },
-  name: { ...text.label, flexShrink: 1, fontFamily: font.bold, color: color.ink },
-  arrival: { ...text.caption, flexGrow: 1, color: color.inkMuted },
-  pickedWords: { ...text.caption, fontFamily: font.bold, color: color.snuBlue },
-  more: { ...text.label, color: color.inkSubtle },
-  dish: { flexDirection: 'row', justifyContent: 'space-between', gap: space[2], paddingLeft: BADGE + space[2] },
-  dishName: { ...text.body, flexShrink: 1, color: color.ink },
-  dishPrice: { ...text.body, fontFamily: font.semiBold, color: color.ink },
+  middle: { flex: 1, gap: 2 },
+  name: { ...text.body, fontFamily: font.bold, color: color.ink },
+  when: { ...text.caption, fontFamily: font.semiBold, color: color.quest },
+  dishes: { ...text.caption, color: color.inkMuted },
+  price: { ...text.caption, color: color.inkMuted },
 });

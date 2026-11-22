@@ -59,6 +59,11 @@ export interface ShownAnswer {
   // input gives way to it.
   moving: Stretch | null;
   setMoving: (at: Stretch | null) => void;
+  // The Plan whose restaurant's menu the raised card shows (board E4), null for the list of candidates (board E3).
+  menuFor: string | null;
+  // Shows that Plan and opens its restaurant's menu; `closeMenu` returns to the list.
+  openMenu: (planId: string) => void;
+  closeMenu: () => void;
 }
 
 // Where the User is, or why that is not known, which a recalculation sends, and what a failed one says.
@@ -85,6 +90,8 @@ interface AnswerState extends Shown {
   recalculating: boolean;
   pendingAdd: string | null;
   moving: Stretch | null;
+  // The Plan on screen's menu is open in the raised card; a new answer closes it.
+  menu: boolean;
   // Counts the replies: an answer that comes for an earlier one is dropped.
   epoch: number;
 }
@@ -121,6 +128,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
     recalculating: false,
     pendingAdd: null,
     moving: null,
+    menu: false,
     epoch,
   };
 }
@@ -143,7 +151,7 @@ function replaced(last: AnswerState, next: AnswerReply, by: ChangeBy | undefined
       : 0;
   const kept = by === undefined ? null : { answer: last.answer, index: last.index };
   const adding = last.adding && last.pendingAdd === null;
-  const settled = { recalculating: false, pendingAdd: null, moving: null };
+  const settled = { recalculating: false, pendingAdd: null, moving: null, menu: false };
   return { ...last, answer: next, index, basisOpen: opensBasis(next.plans[index]), adding, kept, ...settled };
 }
 
@@ -216,6 +224,21 @@ function useKindChoice(setStored: SetStored): ShownAnswer['chooseKind'] {
   );
 }
 
+// Opens the menu of a Plan, which it shows, and closes it again.
+function useMenuOpening(setStored: SetStored, show: ShownAnswer['show']): Pick<ShownAnswer, 'openMenu' | 'closeMenu'> {
+  const openMenu = useCallback(
+    (planId: string): void => {
+      show(planId);
+      setStored((last) => (last.menu ? last : { ...last, menu: true }));
+    },
+    [setStored, show],
+  );
+  const closeMenu = useCallback((): void => {
+    setStored((last) => (last.menu ? { ...last, menu: false } : last));
+  }, [setStored]);
+  return { openMenu, closeMenu };
+}
+
 // A change of the conditions, and the Friend it adds, when it adds one.
 type Ask = (alter: (input: PlanInput) => PlanInput, by: ChangeBy | undefined, adds: string | null) => void;
 
@@ -278,10 +301,12 @@ export function useShownAnswer(
   const ask = useChange(current, setStored, recalculation);
   const browsing = useBrowsing(setStored);
   const chooseKind = useKindChoice(setStored);
+  const menu = useMenuOpening(setStored, browsing.show);
+  const plan = current.answer?.plans[current.index] ?? null;
   return {
     source: current.source,
     answer: current.answer,
-    plan: current.answer?.plans[current.index] ?? null,
+    plan,
     index: current.index,
     ...browsing,
     chooseKind,
@@ -297,5 +322,7 @@ export function useShownAnswer(
     pendingAdd: current.pendingAdd,
     ghost: ghostOf(current.kept),
     moving: current.moving,
+    menuFor: current.menu && plan !== null ? plan.id : null,
+    ...menu,
   };
 }
