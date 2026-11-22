@@ -213,7 +213,16 @@ function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null, held
           ...(faded ? { faded } : {}),
           number: group === 'candidate' || symbol === null ? number : null,
         };
-  return { point, position, words, sides: SIDES[group], kept: group === 'pick' || held };
+  const { sides = SIDES[group], clearOf, either, always = false } = draft;
+  return {
+    point,
+    position,
+    words,
+    sides,
+    kept: group === 'pick' || held || always,
+    ...(clearOf === undefined ? {} : { clearOf }),
+    ...(either === undefined ? {} : { either }),
+  };
 }
 
 // One symbol at each point, and the labels placed (`placeLabels`) in the order their kinds take sides, so that the
@@ -239,10 +248,11 @@ function placeAll(drafts: Draft[], view: LabelView | null): Placed[] {
   const marks = placed.map(({ draft, point, symbol, held }) => unplaced(draft, point, symbol, held));
   const symbols = points.map(({ position, drawn }) => ({ position, symbol: drawn?.position ?? null }));
   const labels = placeLabels(symbols, marks, view);
-  return leftOutByRank(
-    placed.map(({ draft, symbol, held }, at) => ({ draft, symbol, held, label: labels[at] ?? null })),
-    view,
-  );
+  // Of the places one label may stand at, only the one it took is drawn.
+  const drawn = placed
+    .map(({ draft, symbol, held }, at) => ({ draft, symbol, held, label: labels[at] ?? null }))
+    .filter(({ draft, label }) => draft.either === undefined || label !== null);
+  return leftOutByRank(drawn, view);
 }
 
 // A meal candidate's number stands in its tag (it has no `sub`); its dot carries it only when the tag is left out.
