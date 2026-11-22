@@ -15,6 +15,7 @@ import type { AnswerOffer } from '@/api/refusal-types';
 import { Button, color, space, text } from '@/design-system';
 import { movingWords } from '@/features/assistant/band-move';
 import { easedFromNow } from '@/features/assistant/relaxed-plan';
+import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -216,8 +217,10 @@ export function PlanCard(props: PlanCardProps): ReactElement {
   const openProfile = useOpenFriendProfile();
   const corner = fix.adding ? { words: '그대로', icon: null, onPress: fix.toggleAdding } : null;
   // While the Plan can take more people: the map does not draw every Friend's face (one near the answer's own marks
-  // gives way), so the + on a face is not enough.
-  const addName = fix.adding || fix.choices.length > 0 ? addNameOf(answer.input.kind) : null;
+  // gives way), so the + on a face is not enough. It stands in the time bar (P04 ticket 14), and here only where no
+  // bar is: an answer without a Plan, or while the keyboard hides the bar.
+  const barShown = useKeyboardHeight() === 0 && shown.plan !== null;
+  const addName = !barShown && (fix.adding || fix.choices.length > 0) ? addNameOf(answer.input.kind) : null;
   const faceless = facelessChips(answer, shown);
   const docked = dock !== undefined;
   return (

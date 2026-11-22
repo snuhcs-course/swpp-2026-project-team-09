@@ -13,7 +13,7 @@ Five corrections from the phone screens of tickets 01 to 04, so that they look a
 1. **The folded bar shows the free time around the Plan** (branch `5.0/P04-14c-folded-bar`). Folded, the bar's track runs from the busy edge before the span to the busy edge after it, with a little margin on each side (for a meal from 12:15 to 12:43 between 민수's class ending at 12:15 and the User's class at 13:00, about 12:00 to 13:15), and each end's words stand under their own time. Board 1 draws 13:30 to 15:45 for a Plan from 14:00 to 15:00. Unfolded, the bar keeps the band's whole range. Today the folded track keeps the whole range (12:00 to 18:30), the span is a sliver whose two handles overlap, and the end words sit at the track's ends.
 2. **A face's card is small and attached to the face** (done before the Release in its own pull request, branch `5.0/P04-14a-small-face-card`; left for this ticket: choosing the side that keeps the pick's flag clear). It holds the name, the face's own line ("12:15 302동 수업 끝"), and 빼기 (and 프로필 for a Friend), in a card the width of its words beside the face, not a wide card over the middle of the map.
 3. **The pick's flag looks pressable** (done in its own pull request, branch `5.0/P04-14b-pick-flag-mark`). Its first line ends with "›", as boards 10 and 12 draw it. The flag's card keeps its content, the basis lines included.
-4. **"＋ 같이" moves to the time bar.** It stands at the right end of the bar's words row, beside the per-person rows that people belong with, so that the dock is always one row (the input and the main button).
+4. **"＋ 같이" moves to the time bar** (branch `5.0/P04-14e-add-in-bar`). It stands at the right end of the bar's words row, beside the per-person rows that people belong with, so that the dock is always one row (the input and the main button).
 5. **A raised card is as tall as what it holds**, up to today's highest, not the whole height for one short list (seen with one earlier turn open). Done in ticket 05's pull request.
 
 ## Must not break
@@ -32,7 +32,7 @@ Five corrections from the phone screens of tickets 01 to 04, so that they look a
 - [x] The face's card takes the side that keeps the pick's flag clear. (Unit test of its place.)
 - [x] The pick's label ends its first line with "›". (Unit test of the mark.)
 - [x] Raised, the card is as tall as its content (ticket 05). (Integration test of its height.)
-- [ ] "＋ 같이" is in the time bar's words row and opens the list of Friends; the dock holds the input row alone. (Integration test.)
+- [x] "＋ 같이" is in the time bar's words row and opens the list of Friends; the dock holds the input row alone; an answer without a bar keeps it in the card. (Integration test.)
 - [ ] The three states on a phone with the mock build. (Emulator.)
 - [ ] No native file changes; lint, format, and types pass on the app.
 
@@ -52,3 +52,8 @@ Five corrections from the phone screens of tickets 01 to 04, so that they look a
 
 - Agent time: about 40 minutes in this session (an estimate from the transcript's timestamps, 15:55–16:15 and 16:40–17:05): the folded range test-first, the bar's track and ends, the drag tests reworked (far moves unfolded, short ones in minutes from the folded range), and a test left behind by PR 457. No subagents.
 - Tokens: an estimate from this session's use over those stretches: output about 40k; input about 35M, almost all cache reads, about 100k cache writes, and about 150 uncached.
+
+### Agent usage (2026-11-22, item 4)
+
+- Agent time: about 35 minutes in this session (an estimate from the transcript's timestamps, 16:27–16:38 and 17:24–17:50): the chip in the bar, its place where no bar is, the tests that found it in the card, and a test left behind by PR 457's capability list. No subagents.
+- Tokens: an estimate from this session's use over those stretches: output about 35k; input about 30M, almost all cache reads, about 90k cache writes, and about 120 uncached.

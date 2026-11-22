@@ -16,7 +16,7 @@ import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
-import { askOnMap, card, mapThings } from './support/answer-map';
+import { askOnMap, card, mapThings, timeBar } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT, layStage } from './support/lists';
@@ -127,7 +127,7 @@ describe('a press of "만들고 초대 보내기"', () => {
     await pass(500);
 
     expect(screen.queryByRole('adjustable', { name: '시작 시각' })).toBeNull();
-    expect(card().queryByRole('button', { name: '같이 먹을 친구 추가' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '같이 먹을 친구 추가' })).toBeNull();
     expect(screen.queryByTestId('ai-input-beside')).toBeNull();
   });
 });
@@ -171,7 +171,7 @@ describe('"만들고 초대 보내기" beside the list of Friends', () => {
   it('gives way to the open list, and comes back with "그대로"', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(card().getByRole('button', { name: '같이 먹을 친구 추가' }));
+    await user.press(timeBar().getByRole('button', { name: '같이 먹을 친구 추가' }));
     expect(screen.queryByRole('button', { name: INVITE })).toBeNull();
     await user.press(card().getByRole('button', { name: '그대로' }));
 

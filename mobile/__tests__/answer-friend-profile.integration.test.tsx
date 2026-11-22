@@ -13,7 +13,7 @@ import type { Friend } from '@/api/types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, shownAddress } from './support/app';
-import { askOnMap, card, mapThings } from './support/answer-map';
+import { askOnMap, card, mapThings, timeBar } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import { holdBackButton } from './support/back';
 import type { FakeServer } from './support/fake-server';
@@ -235,7 +235,7 @@ describe('a new reply', () => {
 describe("a cell's mark in the open list of Friends", () => {
   it('opens the profile without choosing, and closing returns to the open list', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: ADD }));
+    await user.press(timeBar().getByRole('button', { name: ADD }));
 
     await user.press(card().getByRole('button', { name: '서지우 프로필' }));
 
@@ -263,7 +263,7 @@ describe('full names', () => {
     expect(markCard().queryByRole('button', { name: '민수 프로필' })).toBeNull();
     await press(user, '카드 닫기');
     await pass(100);
-    await user.press(card().getByRole('button', { name: ADD }));
+    await user.press(timeBar().getByRole('button', { name: ADD }));
 
     expect(card().getByRole('button', { name: '김민준, 컴퓨터공학부, 1.2km, 추가' })).toHaveTextContent(
       '김민준컴퓨터공학부1.2km',

@@ -13,7 +13,7 @@ import { MEAL_ANSWER_ALONE, MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answe
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
-import { askOnMap, card, mapThings } from './support/answer-map';
+import { askOnMap, card, mapThings, timeBar } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -100,7 +100,7 @@ describe('adding a Friend', () => {
   it("lists the User's Friends nearest first, the one without a position last, and 그대로 closes the list", async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(card().getByRole('button', { name: ADD }));
+    await user.press(timeBar().getByRole('button', { name: ADD }));
 
     const cells = within(card().getByTestId('choice-grid'))
       .getAllByRole('button')
@@ -117,7 +117,7 @@ describe('adding a Friend', () => {
     const input = { ...MEAL_ANSWER.input, people: [ASKER, { userId: MIN_JUN.id, constraints: [] }] };
     const user = await askOnMap(server, { ...MEAL_ANSWER_REPLY, answer: { ...MEAL_ANSWER, input } });
 
-    await user.press(card().getByRole('button', { name: ADD }));
+    await user.press(timeBar().getByRole('button', { name: ADD }));
 
     expect(card().queryByRole('button', { name: MIN_JUN_CELL })).toBeNull();
     expect(card().getByRole('button', { name: JI_WOO_CELL })).toBeVisible();
@@ -129,7 +129,7 @@ describe('adding a Friend chosen', () => {
   it('sends the conditions with the Friend chosen, without constraints, and draws the answer for three', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_THREE });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: ADD }));
+    await user.press(timeBar().getByRole('button', { name: ADD }));
 
     await user.press(card().getByRole('button', { name: JI_WOO_CELL }));
     await pass(500);

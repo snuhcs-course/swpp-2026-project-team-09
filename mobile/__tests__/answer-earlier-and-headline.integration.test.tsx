@@ -145,7 +145,7 @@ describe('the card while the keyboard is up', () => {
 
     expect(headline()).toHaveTextContent(PLAN_LINE);
     expect(headline()).toHaveProp('numberOfLines', 1);
-    expect(card().queryByRole('button', { name: '같이 먹을 친구 추가' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '같이 먹을 친구 추가' })).toBeNull();
     expect(screen.queryByTestId('ai-input-beside')).toBeNull();
     expect(screen.getByLabelText('302동식당 · 12:15 점심')).toBeOnTheScreen();
   });

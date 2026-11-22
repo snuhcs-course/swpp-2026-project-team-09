@@ -19,6 +19,7 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerRecalculations, ASKER, chats, firstPlan, JOB_FAIR, QUESTS_REPLY, sayOnMap } from './support/row-four';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // A recruiting parties' answer in the answer frame (P02 ticket 30, boards Join 1 to 3 and Together 5 to 7), over the
 // fake main server, which answers "배드민턴 칠 사람" with the stored real answer of row 5: the 18:00 party at the
@@ -172,7 +173,7 @@ describe('"새로 모집" on a party\'s Plan', () => {
           people: [{ userId: ASKER, constraints: [] }],
         },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(card().getByRole('button', { name: '만들고 모집하기' })).toBeEnabled();

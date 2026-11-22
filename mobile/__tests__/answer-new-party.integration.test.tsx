@@ -113,7 +113,7 @@ describe("a new party's answer (board Recruit 4)", () => {
     const user = await sayWithMarks(NEW_QUEST_REPLY);
 
     expect(timeBar().getByText('17:10–17:40 · 30분')).toBeVisible();
-    expect(card().getByRole('button', { name: '초대할 친구 추가' })).toBeEnabled();
+    expect(timeBar().getByRole('button', { name: '초대할 친구 추가' })).toBeEnabled();
     expect(card().getByRole('button', { name: POST })).toBeEnabled();
     expect(screen.queryByTestId('ai-input-beside')).toBeNull();
     expect(screen.queryByLabelText('시작 시각')).toBeNull();
@@ -138,7 +138,7 @@ describe("a new party's Friends (board Recruit 4)", () => {
   it('asks who to invite while the list of Friends is open', async () => {
     const user = await sayOnMap(server, ASKED, NEW_QUEST_REPLY);
 
-    await user.press(card().getByRole('button', { name: '초대할 친구 추가' }));
+    await user.press(timeBar().getByRole('button', { name: '초대할 친구 추가' }));
 
     expect(card().getByText('누구를 초대할까요?')).toBeVisible();
   });
