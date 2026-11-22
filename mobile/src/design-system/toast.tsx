@@ -7,6 +7,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import {
@@ -126,7 +127,7 @@ function ToastBar({ toast, bottom, onDone }: { toast: Toast; bottom: number; onD
     <View style={[styles.layer, toast.action !== undefined && styles.acting, { bottom }]} testID="toast-layer">
       <View style={styles.toast}>
         <View accessibilityLiveRegion="polite" accessibilityRole="alert" accessible style={styles.said}>
-          <Icon color={color.onPrimary} name={toast.icon} size={ICON} />
+          <Icon color={color.onPrimary} name={toast.icon} size={ICON} testID={`toast-icon-${toast.icon}`} />
           <Text style={styles.words}>{toast.message}</Text>
         </View>
         {toast.action === undefined ? null : <ActionWord action={toast.action} onDone={onDone} />}

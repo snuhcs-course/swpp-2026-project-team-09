@@ -7,15 +7,18 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { JoinPolicy, QuestJoinRequest } from '../generated/prisma/client.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
+import { CLOCK, type Clock } from './clock.js';
+import { subQuestsAheadWhere } from './dto/quest.dto.js';
 import {
   JoinRequestUserDto,
   QuestRemovalDto,
@@ -37,7 +40,7 @@ const joinRequestNotFound = (): NotFoundException =>
 // Requests to join an Approval Quest, or an Open one the Leader removed the User from (QuestRemoval). A request waits
 // until the User withdraws it or the Leader answers it, and ends with the Quest and when the User enters it in any way
 // (RecruitingService.enter). Withdrawing and answering lock the User who asked first, so that one request gets one of
-// them.
+// them. One to a Quest with no Sub Quest ahead stays stored but is listed nowhere: accepting it would be refused.
 @Injectable()
 export class JoinRequestsService {
   constructor(
@@ -49,6 +52,7 @@ export class JoinRequestsService {
     private readonly signals: SignalsService,
     private readonly classQuests: ClassQuestsService,
     private readonly roomRequests: RoomRequestSync,
+    @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
   // A Closed Quest is answered as unknown, as joining it is. A User who holds the Quest alone for its Global Event may
@@ -88,7 +92,7 @@ export class JoinRequestsService {
   // The User's own waiting requests, the newest first.
   async listSent(userId: string): Promise<WaitingDto[]> {
     const requests = await this.prisma.questJoinRequest.findMany({
-      where: { userId },
+      where: { userId, quest: subQuestsAheadWhere(this.clock.now()) },
       include: WAITING_INCLUDE,
       orderBy: [{ sentAt: 'desc' }, { id: 'desc' }],
     });
@@ -125,7 +129,7 @@ export class JoinRequestsService {
     await this.leader.ledBy(questId, leaderId);
     const [requests, removals] = await Promise.all([
       this.prisma.questJoinRequest.findMany({
-        where: { questId },
+        where: { questId, quest: subQuestsAheadWhere(this.clock.now()) },
         include: WAITING_USER_INCLUDE,
         orderBy: [{ sentAt: 'desc' }, { id: 'desc' }],
       }),

@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -14,7 +15,7 @@ import { sockets } from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
-import { answer, HIS_PICNIC, toast } from './support/room';
+import { answer, HIS_PICNIC, toast, toastIcon } from './support/room';
 import { answerParty, CODING, JAZZ, MY_HIKE, openAt, requestFor, RUN } from './support/party';
 import { askMainServer, DINNER, PHONE_NOW } from './support/server';
 
@@ -142,6 +143,7 @@ describe('파티 모집글', () => {
     await pass(500);
 
     expect(toast()).toHaveTextContent('파티장이 신청을 받지 않았어요');
+    expect(toastIcon()).toBe('alert');
   });
 });
 

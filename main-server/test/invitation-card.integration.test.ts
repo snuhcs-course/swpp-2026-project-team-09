@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import request from 'supertest';
@@ -220,6 +221,17 @@ describe('An invitation already answered', () => {
     await answerInvitation(stage.app, minsu, invitationId, 'decline').expect(204);
 
     expect((await getCard(minsu, invitationId)).body).toMatchObject(refused(404, 'QUEST_INVITATION_NOT_FOUND'));
+  });
+});
+
+describe('An invitation into a Quest with no Sub Quest ahead', () => {
+  it('is answered 404, as one that waits no more', async () => {
+    const date = '2088-06-22';
+    const { friend, invitationId } = await freeFriendInvited(date);
+    // The meal, the last step, ends at 12:55.
+    stage.standAt(time(date, '12:55'));
+
+    expect((await getCard(friend, invitationId)).body).toMatchObject(refused(404, 'QUEST_INVITATION_NOT_FOUND'));
   });
 });
 

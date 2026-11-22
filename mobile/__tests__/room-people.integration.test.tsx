@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -25,6 +26,7 @@ import {
   PICNIC,
   SEO_YEON_HOLDER,
   toast,
+  toastIcon,
 } from './support/room';
 import { askMainServer, JI_WOO, JOIN_REQUESTS, ME_ID, MIN_JUN, PHONE_NOW } from './support/server';
 
@@ -107,6 +109,7 @@ describe('신청', () => {
     await pass(500);
 
     expect(toast()).toHaveTextContent('자리가 다 찼어요');
+    expect(toastIcon()).toBe('alert');
   });
 });
 
@@ -123,6 +126,7 @@ describe('초대 중', () => {
 
     expect(server.received(`DELETE ${QUEST}/invitations/qi9`)).toHaveLength(1);
     expect(toast()).toHaveTextContent('서지우님 초대를 취소했어요');
+    expect(toastIcon()).toBe('check');
   });
 
   it('says that an invitation ended, and fetches the list again', async () => {
@@ -135,6 +139,7 @@ describe('초대 중', () => {
     await pass(500);
 
     expect(toast()).toHaveTextContent('이미 끝난 초대예요');
+    expect(toastIcon()).toBe('alert');
     expect(server.received(`GET ${QUEST}/invitations`).length).toBeGreaterThan(before);
   });
 
@@ -223,6 +228,7 @@ describe("the Leader's controls of 멤버", () => {
 
     await user.press(section('멤버').getByRole('button', { name: '서지우' }));
     expect(toast()).toHaveTextContent('서지우님은 위치가 꺼져 있어요');
+    expect(toastIcon()).toBe('alert');
 
     await user.press(section('멤버').getByRole('button', { name: '김민준' }));
     await pass(500);

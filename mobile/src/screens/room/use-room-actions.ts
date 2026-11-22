@@ -8,6 +8,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -103,16 +104,21 @@ function enteringWords(ended: string | null, error: unknown): string {
   return ended === null ? refusalWords(error) : `‘${ended}’ 활성화는 꺼졌지만 새 파티에 들어가지 못했어요`;
 }
 
-// What every action uses: the cache, the toast, and `run`, which runs requests, says `done` once they were taken or
-// why not, and fetches what the room shows again either way.
+// What every action uses: the cache, the toasts, with the check mark for what was done and the alert for why not, and
+// `run`, which runs requests, says `done` once they were taken or why not, and fetches what the room shows again either
+// way.
 interface Tools {
   queryClient: QueryClient;
   showToast: (words: string) => void;
+  showFailure: (words: string) => void;
   refetch: () => void;
   run: (requests: () => Promise<unknown>, done: string | null) => Promise<boolean>;
 }
 
-function toolsOf(queryClient: QueryClient, showToast: (words: string) => void): Tools {
+function toolsOf(queryClient: QueryClient, showToast: ReturnType<typeof useToast>): Tools {
+  const showFailure = (words: string): void => {
+    showToast(words, undefined, 'alert');
+  };
   const refetch = (): void => {
     for (const queryKey of ROOM_KEYS) {
       void queryClient.invalidateQueries({ queryKey });
@@ -126,13 +132,13 @@ function toolsOf(queryClient: QueryClient, showToast: (words: string) => void): 
       }
       return true;
     } catch (error) {
-      showToast(refusalWords(error));
+      showFailure(refusalWords(error));
       return false;
     } finally {
       refetch();
     }
   };
-  return { queryClient, showToast, refetch, run };
+  return { queryClient, showToast, showFailure, refetch, run };
 }
 
 function enter(queryClient: QueryClient, party: MyParty): void {
@@ -144,7 +150,7 @@ function showSharing(queryClient: QueryClient, on: boolean): void {
 }
 
 // Opens the Quest's Party, or enters the one another Holder opened at the same moment.
-function openPartyWith({ queryClient, showToast, refetch, run }: Tools): RoomActions['openParty'] {
+function openPartyWith({ queryClient, showToast, showFailure, refetch, run }: Tools): RoomActions['openParty'] {
   return async (quest, others, leaveFirst) => {
     let ended: string | null = null;
     try {
@@ -157,7 +163,7 @@ function openPartyWith({ queryClient, showToast, refetch, run }: Tools): RoomAct
     } catch (error) {
       const running = runningPartyOf(error);
       if (running === null) {
-        showToast(enteringWords(ended, error));
+        showFailure(enteringWords(ended, error));
       } else {
         await run(async () => {
           enter(queryClient, await apiClient.joinParty(running));
@@ -172,7 +178,7 @@ function openPartyWith({ queryClient, showToast, refetch, run }: Tools): RoomAct
 type PartyActions = Pick<RoomActions, 'joinParty' | 'leaveParty' | 'endParty' | 'setSharing'>;
 
 function partyActions(tools: Tools): PartyActions {
-  const { queryClient, showToast, refetch, run } = tools;
+  const { queryClient, showToast, showFailure, refetch, run } = tools;
   return {
     joinParty: async (partyId, leaveFirst) => {
       let ended: string | null = null;
@@ -181,7 +187,7 @@ function partyActions(tools: Tools): PartyActions {
         enter(queryClient, await apiClient.joinParty(partyId));
         showToast('활성화에 참여했어요 · 위치 공유 시작');
       } catch (error) {
-        showToast(enteringWords(ended, error));
+        showFailure(enteringWords(ended, error));
       } finally {
         refetch();
       }
