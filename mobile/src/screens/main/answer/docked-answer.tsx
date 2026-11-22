@@ -18,8 +18,8 @@ import { koreaDateKey } from '@/korea-time';
 import type { ChatSheetControl } from '../chat-sheet';
 import { DockChip, DockLine } from './dock-chips';
 import { LeaveRow } from './leave-button';
+import { MealDock } from './meal-dock';
 import { PickTimeSheet } from './pick-time-sheet';
-import { WithMenuList } from './meal-list';
 import { planCardRests } from './plan-card';
 import { wordsLine } from './keyboard-headline';
 import { pressOffer } from './refusal-reply';
@@ -102,7 +102,7 @@ export function restOf(control: ChatSheetControl, after: readonly ChatBubble[]):
   return words === null ? null : { kind: 'words', words };
 }
 
-type Raise = (earlier: boolean) => void;
+export type Raise = (earlier: boolean) => void;
 
 const PICKING_PLACE = '지도에서 건물을 눌러 주세요';
 
@@ -232,36 +232,25 @@ function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement
   );
 }
 
-// A meal answer beside a Quest already set keeps its kinds and its list (P04 ticket 21, the shape agreed 2026-11-22):
-// the line alone on the top row, and under it the meal's chip row with 그대로 두기 first, the kinds scrolling sideways,
-// and 메뉴 보기 at the right. 그대로 두기 or 바꾸기 leaves the line alone, as a meeting's dock is.
+// A meal answer beside a Quest already set (P04 ticket 21): the line alone on the top row, and 그대로 두기 under it.
+// 그대로 두기 or 바꾸기 leaves the line alone, as a meeting's dock is.
 function MealBesideSetQuest({ control, rest, onRaise }: DockedWordsProps): ReactElement {
   const { line, note } = rest;
-  const { invitation } = control;
-  const keep = <DockChip disabled={choosing(control)} onPress={invitation.leave} words="그대로 두기" />;
   return (
-    <WithMenuList
-      folded={<FoldedChips control={control} note={note} onRaise={onRaise} />}
-      lead={keep}
-      sent={invitation.sending || invitation.changing || invitation.made !== null}
-      shown={control.answer}
-    >
-      {(dock) => (
-        <View style={styles.rows} testID="dock-row">
-          {line === null ? null : (
-            <DockLine
-              line={line}
-              onPress={() => {
-                onRaise(false);
-              }}
-            />
-          )}
-          <View style={styles.row} testID="dock-chip-row">
-            {dock}
-          </View>
-        </View>
+    <View style={styles.rows} testID="dock-row">
+      {line === null ? null : (
+        <DockLine
+          line={line}
+          onPress={() => {
+            onRaise(false);
+          }}
+        />
       )}
-    </WithMenuList>
+      <View style={styles.row} testID="dock-chip-row">
+        <DockChip disabled={choosing(control)} onPress={control.invitation.leave} words="그대로 두기" />
+        <FoldedChips control={control} note={note} onRaise={onRaise} />
+      </View>
+    </View>
   );
 }
 
@@ -275,8 +264,7 @@ interface DockedAnswerProps {
   onRaise: Raise;
 }
 
-// The docked card's content: a reply's dock, or the Plan's chips' row with the folded chips, and in a meal answer
-// 메뉴 모두 보기 and its list (`WithMenuList`).
+// The docked card's content: a reply's dock, a meal answer's sentence, or the Plan's chips' row with the folded chips.
 export function DockedAnswer({
   control,
   bubble,
@@ -293,29 +281,24 @@ export function DockedAnswer({
       <DockedWords control={control} onRaise={onRaise} rest={rest.words} />
     );
   }
+  if (control.answer.answer?.input.kind === 'meal') {
+    return <MealDock bubble={bubble} control={control} onRaise={onRaise} />;
+  }
   const folded = <FoldedChips control={control} note={control.answer.answer?.note ?? null} onRaise={onRaise} />;
   return (
-    <WithMenuList
-      folded={folded}
-      sent={control.invitation.sending || control.invitation.made !== null}
+    <Words
+      addRecalculated={control.chat.addRecalculated}
+      bubble={bubble}
+      dock={folded}
+      focus={focus}
+      howAbout={control.howAbout}
+      invitation={control.invitation}
+      lookup={control.lookup}
+      onAsk={control.chat.send}
+      onClose={onClose}
+      room={null}
       shown={control.answer}
-    >
-      {(dock) => (
-        <Words
-          addRecalculated={control.chat.addRecalculated}
-          bubble={bubble}
-          dock={dock}
-          focus={focus}
-          howAbout={control.howAbout}
-          invitation={control.invitation}
-          lookup={control.lookup}
-          onAsk={control.chat.send}
-          onClose={onClose}
-          room={null}
-          shown={control.answer}
-        />
-      )}
-    </WithMenuList>
+    />
   );
 }
 
