@@ -1,4 +1,4 @@
-# 32: A Plan's travel takes the shuttle of its day and time
+# 33: A Plan's travel takes the shuttle of its day and time
 
 Parent: [P05 spec](../spec.md); a report from the released app (`26.11.22-17`): planning Monday's lunch on a Sunday, the times assumed walking, while on Monday the shuttle runs
 Status: ready-for-human
