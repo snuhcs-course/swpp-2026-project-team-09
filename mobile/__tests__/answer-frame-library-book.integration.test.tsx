@@ -137,12 +137,12 @@ describe('예약하기 on the seat book card', () => {
       },
     ]);
     const done = inFrame().getByTestId('library-done');
-    expect(inFrame().getByText('7193번 예약되었어요!')).toBeVisible();
-    expect(inFrame().getByLabelText('장소 관정관 (62-1동) 7층 7A 열람실 2 구역')).toBeVisible();
-    expect(inFrame().getByLabelText('좌석 7193번')).toBeVisible();
-    expect(inFrame().getByLabelText('시간 오늘 17:00–18:00')).toBeVisible();
+    expect(inFrame().getByText('✓ 예약했어요')).toBeVisible();
+    expect(inFrame().getByText('관정 7층 열람실 7193번 · 오늘 17:00–18:00')).toBeVisible();
     expect(inFrame().getByLabelText('예약 번호 2000001')).toBeVisible();
-    expect(inFrame().getByText(/30분 안에 좌석배정기\(키오스크\)에서 확인해 주세요/u)).toBeVisible();
+    expect(
+      inFrame().getByText(/^\d{2}:\d{2}까지 좌석배정기에서 확인해 주세요\. 확인하지 않으면 자동으로 반납돼요\.$/u),
+    ).toBeVisible();
     expect(inFrame().getByText(/다 쓰면 꼭 반납해 주세요/u)).toBeVisible();
     expect(done).toBeVisible();
     expect(seatCard().queryByRole('button', { name: '예약하기' })).toBeNull();
@@ -299,6 +299,6 @@ describe("the seat book card's network and session", () => {
     await pass(0);
 
     expect(library.writes()).toHaveLength(2);
-    expect(inFrame().getByText('7193번 예약되었어요!')).toBeVisible();
+    expect(inFrame().getByText('✓ 예약했어요')).toBeVisible();
   });
 });

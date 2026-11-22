@@ -206,7 +206,7 @@ export function BookingBar({
   const { top } = useSafeAreaInsets();
   const { kept, keep, live } = bookingKept(booking, chat);
   const pending = chat.outcomes.get(booking.place)?.kind === 'pending';
-  return live === null || pending ? null : (
+  return live === null || pending || booking.booked ? null : (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
         onHeight(nativeEvent.layout.height);

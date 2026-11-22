@@ -9,7 +9,7 @@ import type { LatLng, Place } from '@/api/types';
 import { koreaDateKey, koreaDayWord } from '@/korea-time';
 import { seatWords } from '@/library/cards/bookings';
 import type { Slot } from '@/library/cards/payloads';
-import { roomOf, shortName } from '@/library/cards/seat-rooms';
+import { roomTitle } from '@/library/cards/seat-rooms';
 import { rangeWords } from '@/library/cards/times';
 import type { SceneSetting } from './answer-marks';
 import { NO_STANDINGS } from './invited-friends';
@@ -25,6 +25,8 @@ export interface ShownBooking {
   card: LibraryCardData;
   space: LibrarySpace;
   point: PlacePoint;
+  // Booked: the map keeps it with "· 예약됨" until 확인 closes the answer (P01 ticket 03).
+  booked: boolean;
 }
 
 // The seat card the turn on screen replied with alone, while it is open and its space's building is in the list of
@@ -36,9 +38,11 @@ export function shownBookingOf(
   outcomeOf: (place: string) => CardOutcome | null,
 ): ShownBooking | null {
   const after = turnOf(bubbles)?.after ?? [];
-  const [reply] = after;
+  const [reply, then] = after;
   const [card] = reply?.cards ?? [];
-  if (after.length !== 1 || reply === undefined || reply.cards.length !== 1 || card?.kind !== 'library') {
+  // The reply alone, or followed by its booking's done message (P01 ticket 03).
+  const alone = after.length === 1 || (after.length === 2 && then?.done !== undefined);
+  if (!alone || reply === undefined || reply.cards.length !== 1 || card?.kind !== 'library') {
     return null;
   }
   // A seat card that is one of several requests is that step's: the steps draw it, and its 예약하기 is the step's
@@ -56,7 +60,8 @@ export function shownBookingOf(
   const place = cardPlace(reply.id, library.key);
   const outcome = outcomeOf(place);
   const building = places.find(({ number }) => number === space.placeNumber);
-  if ((outcome !== null && outcome.kind !== 'pending') || building === undefined) {
+  const booked = outcome?.kind === 'booked';
+  if ((outcome !== null && outcome.kind !== 'pending' && !booked) || building === undefined) {
     return null;
   }
   const { id, latitude, longitude } = building;
@@ -66,12 +71,13 @@ export function shownBookingOf(
     card: library,
     space,
     point: { placeId: id, label: building.name, latitude, longitude },
+    booked,
   };
 }
 
 // "관정 7층 열람실": the room's chip words, or its floor and short name.
 export function bookingTitle(space: LibrarySpace): string {
-  return `관정 ${roomOf(space)?.label ?? `${String(space.floor)}층 ${shortName(space)}`}`;
+  return roomTitle(space);
 }
 
 // The flag's second line: the seat, its day when it is not today, and the booking's time ("7233번 14:00–16:30").

@@ -97,10 +97,9 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
 function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElement {
   const { control, cardActions, focus, onClose, room } = props;
   const { bubbles, waiting, retry } = control.chat;
-  // A booking on the map alone, lowered, says its one sentence in its card in place of the reply's words (P01 ticket
-  // 03); a seat card that is one of several requests keeps the reply's Plan (PR 490's review).
-  const docked =
-    control.booking !== null && control.steps === null && !props.raising.raised ? control.booking.bubbleId : null;
+  // A booking on the map alone says its own sentence in its card in place of the reply's words, lowered, raised, and
+  // booked (P01 ticket 03); a seat card that is one of several requests keeps the reply's Plan (PR 490's review).
+  const docked = control.booking !== null && control.steps === null ? control.booking.bubbleId : null;
   const turn = turnOf(bubbles);
   const last = bubbles.at(-1);
   return (

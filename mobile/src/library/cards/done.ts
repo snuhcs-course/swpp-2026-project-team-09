@@ -9,7 +9,8 @@ import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
 import { seatWords } from './bookings';
 import { seatsCardOf } from './made';
 import type { Slot } from './payloads';
-import { whenWords } from './times';
+import { roomTitle } from './seat-rooms';
+import { kioskDeadline, whenWords } from './times';
 
 // The done message of a booking (the MainChatLibReserved frame): the app's own bubble, which is never sent to the
 // Assistant. The 예약 번호 (BSEQNO) is shown on the phone only.
@@ -21,6 +22,12 @@ export const RETURN_SENTENCE = '다 쓰면 꼭 반납해 주세요. 키오스크
 
 export interface LibraryDone {
   title: string;
+  // A seat's one line with the room's one name: "관정 8층 정숙 열람실 8001번 · 오늘 14:00–17:00" (P01 ticket 03).
+  line?: string;
+  // A seat's kiosk sentence with its clock time, in place of KIOSK_SENTENCE.
+  kiosk?: string;
+  // The seat booked ("8001"), which the map's label keeps until 확인.
+  seatLabel?: string;
   rows: { label: string; value: string }[];
   // A seat is confirmed at the kiosk.
   seat: boolean;
@@ -35,6 +42,17 @@ export function doneOf(
 ): LibraryDone {
   const { slot, label, bseqno, notes } = booked;
   const seat = space.unit === 'seat';
+  if (seat) {
+    return {
+      title: '✓ 예약했어요',
+      line: `${roomTitle(space)} ${seatWords(label)} · ${whenWords(slot.date, slot.start, slot.minutes, now)}`,
+      kiosk: `${kioskDeadline(now)}까지 좌석배정기에서 확인해 주세요. 확인하지 않으면 자동으로 반납돼요.`,
+      seatLabel: label,
+      rows: [{ label: '예약 번호', value: bseqno }],
+      seat,
+      seatsCard: seatsCardOf(space, notes),
+    };
+  }
   return {
     title: `${seatWords(label)} 예약되었어요!`,
     rows: [

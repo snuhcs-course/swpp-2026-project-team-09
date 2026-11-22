@@ -157,28 +157,28 @@ async function raised(): Promise<Awaited<ReturnType<typeof asked>>> {
 
 // P01 ticket 03: the raised card holds what the lowered one leaves out.
 describe('the raised seat card on the map', () => {
-  it('holds the reply, the room chip, the seat with its time, 다른 자리 고르기, and the kiosk foot', async () => {
+  it('opens with the sentence, then the room chip, the seat with its time, 다른 자리 고르기, and the kiosk foot', async () => {
     await raised();
     const card = within(screen.getByTestId('answer-card'));
 
-    expect(card.getByText('카드에서 확인해 주세요.')).toBeVisible();
+    expect(card.getByText(DOCKED)).toBeVisible();
+    expect(card.queryByText('카드에서 확인해 주세요.')).toBeNull();
     expect(card.getByRole('button', { name: CHIP })).toBeVisible();
     expect(card.getByText(/^관정 7층 열람실 · \d+번$/u)).toBeVisible();
     expect(card.getByText(/^빈 자리 \d+석$/u)).toBeVisible();
     expect(card.getByRole('button', { name: '다른 자리 고르기' })).toBeVisible();
     expect(card.getByText(/좌석배정기에서 확인해야 해요/u)).toBeVisible();
-    expect(card.queryByText(DOCKED)).toBeNull();
     expectNoWrite(library);
   });
 
-  it('offers no 예약하기 while the rooms are listed', async () => {
+  it('keeps 예약하기 in place, disabled, while the rooms are listed', async () => {
     const { user } = await raised();
 
     await user.press(within(screen.getByTestId('answer-card')).getByRole('button', { name: CHIP }));
     await pass(500);
 
     expect(screen.getByText('어느 열람실로 할까요?')).toBeVisible();
-    expect(screen.queryByRole('button', { name: '예약하기' })).toBeNull();
+    expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '예약하기' })).toBeDisabled();
     expectNoWrite(library);
   });
 });
@@ -192,6 +192,11 @@ describe('a seat booked on the map', () => {
     await pass(500);
 
     expect(screen.getByTestId('library-done')).toBeVisible();
+    expect(screen.getByText('✓ 예약했어요')).toBeVisible();
+    expect(screen.getByText(/^관정 7층 열람실 \d+번 · 오늘 17:00–18:00$/u)).toBeVisible();
+    expect(screen.queryByText('카드에서 확인해 주세요.')).toBeNull();
+    expect(screen.queryByText('예약했어요')).toBeNull();
+    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 › · \d+번 17:00–18:00 · 예약됨$/u));
     await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '확인' }));
     await pass(500);
 

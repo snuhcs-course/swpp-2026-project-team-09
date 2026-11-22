@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -15,6 +16,7 @@ import { Pill, Pills } from './library-parts';
 export function LibraryDoneRows({ done, onSeats }: { done: LibraryDone; onSeats: () => void }): ReactElement {
   return (
     <View style={styles.done} testID="library-done">
+      {done.line === undefined ? null : <Text style={styles.sentence}>{done.line}</Text>}
       <View style={styles.rows}>
         {done.rows.map(({ label, value }, index) => (
           <View
@@ -28,7 +30,7 @@ export function LibraryDoneRows({ done, onSeats }: { done: LibraryDone; onSeats:
           </View>
         ))}
       </View>
-      {done.seat ? <Text style={styles.sentence}>{KIOSK_SENTENCE}</Text> : null}
+      {done.seat ? <Text style={styles.sentence}>{done.kiosk ?? KIOSK_SENTENCE}</Text> : null}
       <Text style={styles.sentence}>{RETURN_SENTENCE}</Text>
       <Pills>
         <Pill label="좌석 현황 보기" onPress={onSeats} />

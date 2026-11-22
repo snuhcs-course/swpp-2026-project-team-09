@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -44,7 +45,10 @@ function One({ card, own, bubbleId, actions }: OneProps): ReactElement | null {
   const place = cardPlace(bubbleId, data.key);
   const outcome = actions.outcomeOf(place);
   if (outcome !== null && outcome.kind !== 'pending') {
-    return <Finished card={card} words={outcome.words} />;
+    // A booking on the map has its done message's head ("✓ 예약했어요"), so its card adds no line (P01 ticket 03).
+    return outcome.kind === 'booked' && actions.bandOnBar?.(place) === true ? null : (
+      <Finished card={card} words={outcome.words} />
+    );
   }
   switch (data.action) {
     case 'book':

@@ -217,7 +217,7 @@ describe('a switch of room', () => {
     await pressIn(seatCard(), '예약하기');
 
     expect(library.writes().map(({ body }) => body.sectorNo)).toEqual(['18202']);
-    expect(inFrame().getByLabelText('장소 관정관 (62-1동) 8층 8A 열람실 2 구역(노트북존)')).toBeVisible();
+    expect(inFrame().getByText(/^관정 8층 노트북존 \d+번 · 오늘 \d{2}:\d{2}–\d{2}:\d{2}$/u)).toBeVisible();
 
     await sendFromBar(chat.user, '고마워');
 

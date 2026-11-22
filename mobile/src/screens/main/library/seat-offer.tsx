@@ -12,8 +12,6 @@ import { color, font } from '@/design-system';
 import { bookingTitle } from '@/features/assistant/booking-scene';
 import { seatWords, spaceWords } from '@/library/cards/bookings';
 import type { Slot } from '@/library/cards/payloads';
-import { freeSeats } from '@/library/cards/seats';
-import { lengthWords } from '@/library/cards/slot-band';
 import { kioskDeadline, whenWords } from '@/library/cards/times';
 import type { LibrarySeat } from '@/library/replies';
 import { FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
@@ -104,16 +102,12 @@ function KioskFoot(): ReactElement {
   return <Text style={styles.foot}>{`예약하면 ${kioskDeadline(now())}까지 ${KIOSK}에서 확인해야 해요.`}</Text>;
 }
 
-// The booking on the map, lowered: the room, the time, and the free seats in one sentence (P01 ticket 03).
-function dockedWords(space: LibrarySpace, slot: Slot, free: number): string {
-  return `${bookingTitle(space)}에 ${slot.start}부터 ${lengthWords(slot.minutes)}, 빈 자리 ${String(free)}석이에요.`;
-}
-
-// The top of the offer: on the map lowered, the one sentence; otherwise the room with the seat, and the time. On the
+// The top of the offer: the room with the seat, and the time; nothing on the map lowered, where the study answer's
+// sentence above says it. On the
 // map the room has the one name it has on the map's label and the bar's card ("관정 7층 열람실").
-function OfferHead({ space, seat, seats, slot, write, docked, onMap }: OfferProps): ReactElement {
+function OfferHead({ space, seat, slot, docked, onMap }: OfferProps): ReactElement | null {
   if (docked) {
-    return <Said>{write.busy ? BOOKING : dockedWords(space, slot, freeSeats(seats).length)}</Said>;
+    return null;
   }
   return (
     <SpaceRow

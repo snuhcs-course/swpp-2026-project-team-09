@@ -21,7 +21,7 @@ import {
   stepsScene,
   stepTitle,
 } from '@/features/assistant/steps-scene';
-import type { MapAvatar, MarkerLook } from '@/map';
+import type { MapAvatar, MapMarker, MarkerLook } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
 import { useFadedFaces } from './use-answer-faces';
@@ -65,7 +65,16 @@ interface Made {
 }
 
 function isPick(id: string): boolean {
-  return id === MADE_FLAG_ID || stepNumberOf(id) !== null || cardNumberOf(id) !== null;
+  return id.startsWith(MADE_FLAG_ID) || stepNumberOf(id) !== null || cardNumberOf(id) !== null;
+}
+
+// The flag's mark carries its words in its id, so that a change of its words (a time dragged on the bar) is a new mark
+// the map draws at once: a mark that keeps its id keeps its old picture until the new one is made (P01 ticket 03, as
+// PR 491 found for a meal's legs).
+function withWordsInId(markers: readonly MapMarker[]): MapMarker[] {
+  return markers.map((marker) =>
+    marker.id === MADE_FLAG_ID ? { ...marker, id: `${MADE_FLAG_ID}:${marker.name}` } : marker,
+  );
 }
 
 // A scene the app made drawn on the map as a Plan is: its flag, which opens its card with `onFlag`, the User's walk,
@@ -92,7 +101,8 @@ function useSceneMap(
   if (drawn === null || made === null) {
     return null;
   }
-  const { markers, lines } = drawn;
+  const markers = withWordsInId(drawn.markers);
+  const { lines } = drawn;
   const avatars = me.position === null ? [...faces, ...me.avatars] : faces;
   const onPress = (id: string): void => {
     if (isPick(id)) {
@@ -152,7 +162,14 @@ function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: La
   const { proposal, booking, bookingStage, chat: said, steps, activeStep, cards } = chat;
   const seat = bookingStage.seen?.place === booking?.place ? (bookingStage.seen?.seat ?? null) : null;
   const kept = booking === null ? null : bookingKept(booking, said);
-  const line = kept === null ? null : bookingLine(seat ?? kept.kept.seat, kept.kept.slot, now());
+  const done =
+    booking?.booked === true ? said.bubbles.findLast((bubble) => bubble.done !== undefined)?.done : undefined;
+  const line =
+    kept === null
+      ? null
+      : done === undefined
+        ? bookingLine(seat ?? kept.kept.seat, kept.kept.slot, now())
+        : `${bookingLine(done.seatLabel ?? null, kept.kept.slot, now())} · 예약됨`;
   const space = kept?.kept.space ?? null;
   return useMemo((): Made | null => {
     if (steps !== null) {
