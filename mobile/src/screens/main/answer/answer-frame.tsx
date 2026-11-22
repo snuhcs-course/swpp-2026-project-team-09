@@ -32,6 +32,7 @@ import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { KeyboardHeadline } from './keyboard-headline';
 import { MarkCard } from './mark-card';
 import { DockedAnswer, restOf } from './docked-answer';
+import { LeaveRow } from './leave-button';
 import { MarkRows } from './mark-rows';
 import type { Raising } from './raise-handle';
 import { ReplySteps } from './reply-steps';
@@ -118,7 +119,7 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
           />
         </View>
       ))}
-      {waiting ? <WaitingReply onStop={control.chat.stop} /> : null}
+      {waiting ? <WaitingReply onStop={control.chat.stop} /> : <LeaveRow control={control} />}
     </>
   );
 }

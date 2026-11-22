@@ -14,6 +14,7 @@ import { leaveOfferOf, leaveWordsOf } from '@/features/assistant/use-quest-leavi
 import { keepsShown } from '@/features/assistant/use-shown-answer';
 import type { ChatSheetControl } from '../chat-sheet';
 import { DockChip, DockLine } from './dock-chips';
+import { LeaveRow } from './leave-button';
 import { WithMenuList } from './meal-list';
 import { planCardRests } from './plan-card';
 import { pressOffer } from './refusal-reply';
@@ -171,20 +172,23 @@ function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement
     return null;
   }
   return (
-    <View style={styles.row} testID="dock-row">
-      {line === null ? null : (
-        <DockLine
-          line={line}
-          onPress={
-            rest.still === true
-              ? undefined
-              : () => {
-                  onRaise(false);
-                }
-          }
-        />
-      )}
-      <ReplyChips control={control} onRaise={onRaise} rest={rest} />
+    <View style={styles.rest}>
+      <View style={styles.row} testID="dock-row">
+        {line === null ? null : (
+          <DockLine
+            line={line}
+            onPress={
+              rest.still === true
+                ? undefined
+                : () => {
+                    onRaise(false);
+                  }
+            }
+          />
+        )}
+        <ReplyChips control={control} onRaise={onRaise} rest={rest} />
+      </View>
+      <LeaveRow control={control} />
     </View>
   );
 }
@@ -241,6 +245,7 @@ export function DockedAnswer({
 const styles = StyleSheet.create({
   // One row, as board 8 draws it: the chips keep their own width, so that a chip is always whole, and scroll sideways
   // past half the row; the line takes what is left and is cut at its two lines.
+  rest: { gap: space[2] },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   chipsBox: { flexGrow: 0, flexShrink: 0, maxWidth: '50%' },
   chips: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
