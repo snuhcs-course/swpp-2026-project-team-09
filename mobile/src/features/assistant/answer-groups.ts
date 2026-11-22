@@ -8,7 +8,8 @@
 import type { KeptQuest, MapScene } from '@/api/assistant-types';
 import type { FlagRole } from '@/api/scene-roles';
 import type { LatLng } from '@/api/types';
-import { type AnswerLabel, type AnswerSymbol, color, initials, type LabelSide } from '@/design-system';
+import { type AnswerLabel, type AnswerSymbol, color, type FaceBadge, initials, type LabelSide } from '@/design-system';
+import type { Standing } from './invited-friends';
 import { keptTagOf } from './set-quest';
 
 // The groups in the order their labels take sides, which is also the order of their symbols at one point but for the
@@ -67,6 +68,8 @@ export interface Draft {
   line: string | null;
   // A candidate's dishes and price under its title and time; left out, none.
   sub?: string | null;
+  // A meal pick's time and walking after its title; left out, none.
+  note?: string | null;
   // The number a pick or a candidate carries in its label when its dot is not drawn.
   number: number | null;
 }
@@ -150,4 +153,27 @@ export function faceTitle(name: string, tag: string): string | null {
 // How many candidates stand at one point.
 export function candidatesAt(here: readonly Draft[]): number {
   return here.filter(({ group }) => group === 'candidate').length;
+}
+
+const BADGES: Partial<Record<Standing['state'], FaceBadge>> = {
+  invited: 'waiting',
+  accepted: 'accepted',
+  late: 'accepted',
+};
+
+type Face = Extract<AnswerSymbol, { type: 'face' }>;
+
+export function faceOf(
+  name: string,
+  source: MapScene['people'][number]['source'],
+  standing: Standing | undefined,
+): Face {
+  const badge = standing === undefined ? undefined : BADGES[standing.state];
+  const face: Face = {
+    type: 'face',
+    name,
+    dashed: source === 'timetable',
+    ...(source === 'exact' ? { exact: true } : {}),
+  };
+  return badge === undefined ? face : { ...face, badge };
 }

@@ -41,6 +41,8 @@ export interface AnswerLabel {
   line: string | null;
   // A candidate's line under its title and time: its dishes and price. Left out, none.
   sub?: string | null;
+  // Words after the title in the pick's colour, as a meal pick's time and walking ("11:00 · 걸음 32분"). Left out, none.
+  note?: string | null;
   // A number badge before the title, when the mark's own dot is not drawn.
   number: number | null;
   // How much further than the gap a label at the left or the right stands from the symbol box, in points, so that it
@@ -94,7 +96,7 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
 }
 
 // A label's title and its line: a candidate's side by side, with its dishes under them (`sub`).
-function LabelWords({ tone, title, line, sub = null }: AnswerLabel): ReactElement {
+function LabelWords({ tone, title, line, sub = null, note = null }: AnswerLabel): ReactElement {
   const candidate = tone === 'candidate';
   const head = (
     <>
@@ -112,11 +114,12 @@ function LabelWords({ tone, title, line, sub = null }: AnswerLabel): ReactElemen
         ]}
       >
         {title}
+        {note === null ? null : <Text style={styles.note}>{` ${note}`}</Text>}
       </Text>
       {line === null ? null : (
         <Text
           numberOfLines={1}
-          style={[styles.line, tone === 'pick' && styles.pickLine, tone === 'stop' && styles.stopLine]}
+          style={[styles.line, tone === 'pick' && note === null && styles.pickLine, tone === 'stop' && styles.stopLine]}
         >
           {line}
         </Text>
@@ -187,7 +190,7 @@ export function MapAnswerMark({
   );
 }
 
-const PICK_DOT = 24;
+const PICK_DOT = 30;
 const CANDIDATE_DOT = 20;
 const SMALL_DOT = 14;
 const NEXT_SQUARE = 18;
@@ -290,6 +293,7 @@ const styles = StyleSheet.create({
   flagTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.ink },
   lateTitle: { color: color.danger },
   shuttleTitle: { color: color.svcShuttle },
+  note: { color: color.quest },
   line: { ...mapText.rowLine, color: color.inkMuted },
   pickLine: { color: color.quest },
   stopLine: { color: color.svcShuttle },

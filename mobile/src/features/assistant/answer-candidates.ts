@@ -11,6 +11,7 @@ import type { AnswerLabel } from '@/design-system';
 import { inView } from '@/map';
 import { type Draft, SIDE_ORDER } from './answer-groups';
 import { inside, type LabelView } from './answer-labels';
+import { addedWalk } from './answer-walks';
 import { serves } from './meal-kinds';
 import { dishWords, menuLine } from './meal-menus';
 
@@ -59,12 +60,34 @@ function recededDraft(plan: Plan, { place, tag }: MapScene['places'][number]): D
   };
 }
 
-// Another candidate: its number, its name, and its arrival time, and in a meal answer its dishes and price under
-// them, its dish of the kind on screen first. A screen reader reads the same words. One without that kind recedes.
+// A meal answer's candidate (the answer screen's redesign, board E1): a small tag of its number and the walking it adds
+// to the User's day ("26분"), or its arrival time when that walking is not known. A screen reader reads its name too.
+function mealDraft(plan: Plan, number: number, { place, tag }: MapScene['places'][number]): Draft {
+  const title = tag ?? place.label;
+  const walk = addedWalk(plan);
+  const value = walk === null ? koreaClock(plan.startAt) : `${String(walk)}분`;
+  const said = walk === null ? `${value} 도착` : `걸음 ${value}`;
+  return {
+    id: `answer:candidate:${place.label}`,
+    name: [`후보 ${String(number)}`, title, said].join(' · '),
+    position: { latitude: place.latitude, longitude: place.longitude },
+    planId: plan.id,
+    group: 'candidate',
+    symbol: { type: 'dot', role: 'candidate', number },
+    tone: 'candidate',
+    title: value,
+    line: null,
+    number,
+  };
+}
+
+// Another candidate: its number, its name, and its arrival time. A meal answer's is a small tag (`mealDraft`); one
+// without the kind of food on screen recedes.
 export function candidateDraft(
   plans: readonly Plan[],
   item: MapScene['places'][number],
   kind: Cuisine | null = null,
+  meal = false,
 ): Draft {
   const { place, tag } = item;
   const title = tag ?? place.label;
@@ -72,6 +95,9 @@ export function candidateDraft(
   const plan: Plan | undefined = plans[index];
   if (plan !== undefined && kind !== null && !serves(plan, kind)) {
     return recededDraft(plan, item);
+  }
+  if (plan !== undefined && meal) {
+    return mealDraft(plan, index + 1, item);
   }
   const number = plan === undefined ? null : index + 1;
   const time = plan === undefined ? null : koreaClock(plan.startAt);

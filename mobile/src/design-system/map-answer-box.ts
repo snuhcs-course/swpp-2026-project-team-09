@@ -55,7 +55,7 @@ function wordsWidth(words: string, size: number): number {
 // side of the symbol box, the gap and its `shift` away, and centred on the point the other way. Its width is its
 // words' with the padding, the pick's border, and the number's badge, at most `LABEL_MAX`. The camera's room for
 // labels and the choice of a label's side both read it.
-export function answerLabelBox({ side, tone, title, line, number, shift = 0, sub = null }: AnswerLabel): {
+export function answerLabelBox({ side, tone, title, line, number, shift = 0, sub = null, note = null }: AnswerLabel): {
   left: number;
   top: number;
   right: number;
@@ -63,10 +63,9 @@ export function answerLabelBox({ side, tone, title, line, number, shift = 0, sub
 } {
   const titleSize = tone === 'pick' ? mapText.buttonTitle.fontSize : mapText.rowLine.fontSize;
   const lineWidth = line === null ? 0 : wordsWidth(line, mapText.rowLine.fontSize);
+  const titleWidth = wordsWidth(title, titleSize) + (note === null ? 0 : wordsWidth(` ${note}`, titleSize));
   const head =
-    tone === 'candidate' && line !== null
-      ? wordsWidth(title, titleSize) + space[1] + lineWidth
-      : Math.max(wordsWidth(title, titleSize), lineWidth);
+    tone === 'candidate' && line !== null ? titleWidth + space[1] + lineWidth : Math.max(titleWidth, lineWidth);
   const words = Math.max(head, sub === null ? 0 : wordsWidth(sub, mapText.rowLine.fontSize));
   const frame = 2 * space[2] + (tone === 'pick' ? 2 * RING : 0) + (number === null ? 0 : BADGE + space[1]);
   const width = Math.ceil(Math.min(sub === null && tone !== 'pick' ? LABEL_MAX : SUB_MAX, frame + words));

@@ -12,7 +12,7 @@
 
 import type { AnswerReply, Cuisine, KeptQuest, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import { type AnswerLabel, type AnswerSymbol, type FaceBadge } from '@/design-system';
+import { type AnswerLabel, type AnswerSymbol } from '@/design-system';
 import { koreaDayWord } from '@/korea-time';
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
@@ -20,6 +20,7 @@ import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './a
 import {
   candidatesAt,
   destinationOf,
+  faceOf,
   faceTitle,
   type Draft,
   DRAW_ORDER,
@@ -39,6 +40,7 @@ import { routeLineId } from './answer-walks';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 import { candidateDraft, leftOutByRank, pickLine, sideRank } from './answer-candidates';
 import { kindShown } from './meal-kinds';
+import { mealPickWords } from './meal-pick';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
 
@@ -55,25 +57,6 @@ export function nearOwnMark({ own }: Pick<AnswerDrawing, 'own'>, position: LatLn
     const { east, north } = offset(mark, position);
     return Math.abs(north) <= UPRIGHT_REACH.along && Math.abs(east) <= UPRIGHT_REACH.across;
   });
-}
-
-const BADGES: Partial<Record<Standing['state'], FaceBadge>> = {
-  invited: 'waiting',
-  accepted: 'accepted',
-  late: 'accepted',
-};
-
-type Face = Extract<AnswerSymbol, { type: 'face' }>;
-
-function faceOf(name: string, source: MapScene['people'][number]['source'], standing: Standing | undefined): Face {
-  const badge = standing === undefined ? undefined : BADGES[standing.state];
-  const face: Face = {
-    type: 'face',
-    name,
-    dashed: source === 'timetable',
-    ...(source === 'exact' ? { exact: true } : {}),
-  };
-  return badge === undefined ? face : { ...face, badge };
 }
 
 // A Friend who was invited is named with how they stand, in place of the tag.
@@ -113,12 +96,15 @@ export interface SceneSetting {
   opens?: boolean | 'pick';
   // Marks made beside the scene's own, as the numbered flags of several requests (P04 ticket 09); left out, none.
   drafts?: readonly Draft[];
+  // A meal answer's with menus: its candidates are small tags and its pick's label says its walking (the answer
+  // screen's redesign, board E1). Left out, not.
+  meal?: boolean;
 }
 
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
 
 function placeDraft(
-  { number: pickNumber, plans, day, kind = null }: SceneSetting,
+  { number: pickNumber, plans, day, kind = null, meal = false }: SceneSetting,
   scene: MapScene,
   item: MapScene['places'][number],
 ): Draft | null {
@@ -129,9 +115,13 @@ function placeDraft(
   if (role === 'pick') {
     const flag = scene.flags.find(({ at, role: flagRole }) => flagRole === 'place' && samePoint(at, position));
     const plan = pickNumber === null ? undefined : plans[pickNumber - 1];
+    const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber };
+    if (meal && plan !== undefined) {
+      const words = mealPickWords(plan, title, kind);
+      return { ...base, id: 'answer:pick', group: role, symbol, tone: role, number: pickNumber, ...words };
+    }
     const line = pickLine(flag === undefined ? null : restOf(title, flag.text), day, plan, kind);
     const name = line === null ? title : `${title} · ${line}`;
-    const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber };
     return {
       ...base,
       id: 'answer:pick',
@@ -144,7 +134,7 @@ function placeDraft(
     };
   }
   if (role === 'candidate') {
-    return candidateDraft(plans, item, kind);
+    return candidateDraft(plans, item, kind, meal);
   }
   if (role === 'stop' || role === 'meeting') {
     return role === 'stop' ? stopDraft(item) : null;
@@ -210,7 +200,7 @@ interface Placed {
 // same numbers). The pick's label is kept, the answer's main mark, and so is a held candidate's, whose tag is its own
 // way to be pressed (`held`).
 function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null, held: boolean): Unplaced {
-  const { position, group, tone, title, line, sub = null, number } = draft;
+  const { position, group, tone, title, line, sub = null, note = null, number } = draft;
   const words =
     title === null
       ? null
@@ -219,6 +209,7 @@ function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null, held
           title,
           line,
           ...(sub === null ? {} : { sub }),
+          ...(note === null ? {} : { note }),
           number: group === 'candidate' || symbol === null ? number : null,
         };
   return { point, position, words, sides: SIDES[group], kept: group === 'pick' || held };
@@ -253,9 +244,15 @@ function placeAll(drafts: Draft[], view: LabelView | null): Placed[] {
   );
 }
 
-function thingOf({ draft, symbol, label }: Placed, order: number): AnswerThing {
-  const { id, name, position, planId } = draft;
-  return { id, name, position, look: { kind: 'answer', symbol, label }, planId, order };
+// A meal candidate's number stands in its tag (it has no `sub`); its dot carries it only when the tag is left out.
+function symbolOf({ draft, symbol, label }: Placed): AnswerSymbol | null {
+  const tagged = draft.group === 'candidate' && draft.sub === undefined && label !== null;
+  return tagged && symbol?.type === 'dot' ? { ...symbol, number: null } : symbol;
+}
+
+function thingOf(placed: Placed, order: number): AnswerThing {
+  const { id, name, position, planId } = placed.draft;
+  return { id, name, position, look: { kind: 'answer', symbol: symbolOf(placed), label: placed.label }, planId, order };
 }
 
 // What the map shows for a scene: its marks, its lines, and the points the camera fits. At a view, the labels' sides
@@ -314,6 +311,7 @@ export function drawingOf(
     day,
     kind: kindShown(answer),
     kept: answer.planSet,
+    meal: answer.input.kind === 'meal' && answer.plans.some(({ menu }) => menu !== undefined),
   });
 }
 
