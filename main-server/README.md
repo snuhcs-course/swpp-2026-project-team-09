@@ -1053,7 +1053,8 @@ Friend is a Closed Quest the User makes and invites the Friend into. The routes,
   the title has 1 to 50 characters, `subQuest` is the body of adding a Sub Quest below and becomes the Quest's first,
   and `capacity` (1 to 8), `joinPolicy` (`open`, `approval` or `closed`), `board` and `description` are optional in
   the schema. `board` is required for an `open` or `approval` Quest and refused for a Closed one, also when
-  `joinPolicy` is left out (see the boards below).
+  `joinPolicy` is left out (see the boards below). An `open` or `approval` Quest of capacity 1 is refused with 400 on
+  `capacity`: it recruits someone besides its Leader.
 - `GET /quests/recruiting` answers the list of recruiting Quests, `GET /quests/recruiting?globalEventId=...` the same
   for one Global Event and `GET /quests/recruiting?board=meal` for one board; the two combine (see below).
 - `POST /quests/:questId/join` joins an Open Quest and answers 201 with it. A second join is refused, so it takes no
@@ -1194,9 +1195,10 @@ Event allows one such row. A Quest without a Global Event leaves the column empt
 Attending locks the User's row first, so that two attempts at the same moment run one after the other and the later
 finds the Quest of the earlier.
 
-**Leader, capacity and Join Policy.** The Leader is one of the Holders. The capacity, from 1 to 8, is the most Holders
-the Quest takes. The Join Policy says how others enter: `open`, whoever can see the Quest joins at once; `approval`,
-they ask and the Leader decides; `closed`, only by the Leader's invitation. A Quest starts by how it came to be:
+**Leader, capacity and Join Policy.** The Leader is one of the Holders. The capacity, from 1 to 8, or 2 to 8 for an
+`open` or `approval` Quest, is the most Holders the Quest takes. The Join Policy says how others enter: `open`, whoever
+can see the Quest joins at once; `approval`, they ask and the Leader decides; `closed`, only by the Leader's invitation.
+A Quest starts by how it came to be:
 
 - from attending a Global Event: led by the User, `closed`, capacity 4. The Leader opens it to others by changing the
   Join Policy.
@@ -1293,10 +1295,12 @@ the lists are the newest first.
 
 - `PATCH /quests/:questId` with any of `{ "title", "capacity", "joinPolicy", "board", "description" }` changes the
   settings and answers 200 with the Quest. What is left out stays, and the Quest the change leads to is checked: an
-  `open` or `approval` Quest without a board, from the body or stored, is refused with `BOARD_REQUIRED`; a `board` in
-  a body that leaves the Quest Closed with `BOARD_FOR_CLOSED_QUEST`; a change to `closed` without a board clears the
-  stored one, and a `description` of `""` clears it. A Quest with a Global Event takes a title like any other. Making a
-  Quest from attending `open` or `approval`, on a board, is how it starts gathering people.
+  `open` or `approval` Quest without a board, from the body or stored, is refused with `BOARD_REQUIRED`; a `board` in a
+  body that leaves the Quest Closed with `BOARD_FOR_CLOSED_QUEST`; a change of the capacity or the Join Policy that
+  leads to an `open` or `approval` Quest of capacity 1 with `OPEN_QUEST_OF_ONE`, while one stored so before that rule
+  still takes a change of anything else; a change to `closed` without a board clears the stored one, and a `description`
+  of `""` clears it. A Quest with a Global Event takes a title like any other. Making a Quest from attending `open` or
+  `approval`, on a board, is how it starts gathering people.
 - `PUT /quests/:questId/leader` with `{ "userId": "..." }` hands the role to another Holder and answers 204.
 - `DELETE /quests/:questId/holders/:userId` removes a Holder and answers 204. The Holder goes as one who dropped the
   Quest, with their progress. The removal is kept in `quest_removals` in the same transaction, so that the User comes
@@ -1326,6 +1330,7 @@ other.
 | A Leader's action by another Holder                                   | 403    | `NOT_QUEST_LEADER`                |
 | A Leader's action by a User who does not hold the Quest               | 404    | `QUEST_NOT_FOUND`                 |
 | A capacity below the number of Holders                                | 409    | `CAPACITY_BELOW_HOLDERS`          |
+| A change to an `open` or `approval` Quest of capacity 1               | 409    | `OPEN_QUEST_OF_ONE`               |
 | An `open` or `approval` Quest without a board                         | 409    | `BOARD_REQUIRED`                  |
 | A `board` for a Quest that stays or becomes Closed                    | 409    | `BOARD_FOR_CLOSED_QUEST`          |
 | Handing the role to, or removing, a User who does not hold the Quest  | 404    | `NOT_QUEST_HOLDER`                |

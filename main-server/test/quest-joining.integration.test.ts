@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -87,7 +88,6 @@ describe('Joining a Quest that does not take the User', () => {
   it.each([
     ['an Approval Quest', { joinPolicy: 'approval' }, 409, 'QUEST_NOT_OPEN'],
     ['a Closed Quest', { joinPolicy: 'closed' }, 404, 'QUEST_NOT_FOUND'],
-    ['a full Quest', { joinPolicy: 'open', capacity: 1 }, 409, 'QUEST_FULL'],
     [
       'a Quest whose Sub Quests have all passed',
       { joinPolicy: 'open', subQuest: { title: '점심', endsAt: new Date(Date.now() - 1000).toISOString() } },
@@ -102,6 +102,19 @@ describe('Joining a Quest that does not take the User', () => {
 
     expect(response.body).toMatchObject(refused(status, code));
     expect((await getQuest(app, leader, questId)).body).toMatchObject({ holders: [{ id: leader.id }] });
+  });
+
+  it('is refused: a full Quest', async () => {
+    const [leader, holder, user] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
+    const questId = await ownQuest(app, leader, { joinPolicy: 'open', capacity: 2 });
+    await joinQuest(app, holder, questId);
+
+    const response = await joinQuest(app, user, questId);
+
+    expect(response.body).toMatchObject(refused(409, 'QUEST_FULL'));
+    expect((await getQuest(app, leader, questId)).body).toMatchObject({
+      holders: [{ id: leader.id }, { id: holder.id }],
+    });
   });
 
   it('is refused for an unknown Quest', async () => {

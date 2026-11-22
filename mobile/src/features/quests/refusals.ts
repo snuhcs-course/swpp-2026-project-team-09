@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
@@ -37,6 +38,7 @@ const WORDS: Readonly<Record<string, string>> = {
   QUEST_JOIN_REQUEST_ALREADY_SENT: '이미 참여를 신청했어요',
   QUEST_JOIN_REQUEST_NOT_FOUND: '이미 끝난 신청이에요',
   CAPACITY_BELOW_HOLDERS: '지금 멤버 수보다 적게 정할 수 없어요',
+  OPEN_QUEST_OF_ONE: '공개 파티는 2명 이상으로 정해 주세요',
   BOARD_REQUIRED: '게시판을 골라 주세요',
   GLOBAL_EVENT_STARTED: '이미 시작한 행사예요',
   GLOBAL_EVENT_NOT_FOUND: '행사를 찾을 수 없어요',
