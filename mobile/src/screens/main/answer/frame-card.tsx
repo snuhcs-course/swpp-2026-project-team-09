@@ -4,13 +4,16 @@
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useState } from 'react';
 import { Animated, type LayoutChangeEvent, StyleSheet, View } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, radius, shadow, space, text } from '@/design-system';
-import { ANSWER_TOP, listsTop } from '../layout';
+import { backBottom } from './back-button';
+import { DockGrip, useDockDrag } from './dock-drag';
 import { useHeldHeight } from './held-height';
 import { CloseHint, type Raising, useRaiseDrag } from './raise-handle';
 
@@ -28,9 +31,9 @@ interface FrameCardProps {
   hold?: boolean;
   // The handle that raises the card up to the pill and lowers it again. Left out, the card has one height.
   raising?: Raising;
-  // The time bar's height under the pill, which the raised card stops under. Left out, none.
+  // The time bar's height, under which "←" stands, which the raised card stops under. Left out, none.
   timeBarHeight?: number;
-  // Nothing to read: one rounded row around the input, inset from the sides, with no handle (board 10).
+  // Nothing to read: one rounded row around the input, inset from the sides, with the handle (board 10).
   docked?: boolean;
   // The AI input's bottom from the stage's bottom, which the docked card's edge stands just under.
   inputBottom?: number;
@@ -55,8 +58,8 @@ const LOWERED: Raising = {
   },
 };
 
-// The content's height while raised: from under the time bar, or the round "←" when there is none, to the bar's room. Null
-// until the stage is laid out.
+// The content's height while raised: from under "←", which stands under the time bar when there is one, to the bar's
+// room, so that "←" stays in sight. Null until the stage is laid out.
 function useRaisedHeight(
   stageHeight: number | null,
   barRoom: number,
@@ -64,7 +67,7 @@ function useRaisedHeight(
   timeBarHeight: number,
 ): number | null {
   const { top } = useSafeAreaInsets();
-  const pillRoom = listsTop(top) + (timeBarHeight > 0 ? timeBarHeight : ANSWER_TOP.height) + space[2];
+  const pillRoom = backBottom(top, timeBarHeight) + space[2];
   return stageHeight === null || raising === undefined
     ? null
     : Math.max(LEAST_CONTENT, stageHeight - pillRoom - barRoom);
@@ -75,30 +78,44 @@ const DOCK_BELOW = 6;
 const DOCK_ABOVE = space[2];
 const DOCK_SIDE = space[2] + 2;
 
-// The docked card: its content, when there is any, in one row over the input, and the input's room under it. It tells
-// its height from the stage's bottom, so that the camera keeps the answer clear of it.
-function DockedCard({ barRoom, inputBottom = 0, onHeight, testID, children }: FrameCardProps): ReactElement {
+// The docked card: the handle, its content, when there is any, in one row over the input, and the input's room under
+// it. It tells its height from the stage's bottom, so that the camera keeps the answer clear of it. The whole card takes
+// a drag: down closes the answer, up raises the card (`useDockDrag`).
+function DockedCard({ barRoom, inputBottom = 0, onHeight, raising, testID, children }: FrameCardProps): ReactElement {
   const [inner, setInner] = useState(0);
+  const [height, setHeight] = useState(0);
+  const drag = useDockDrag(raising ?? LOWERED);
   const inputTop = barRoom - space[3];
   const bottom = Math.max(0, inputBottom - DOCK_BELOW);
   return (
-    <View
-      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-        onHeight(nativeEvent.layout.height + bottom);
-      }}
-      style={[styles.dock, { bottom, paddingBottom: inputTop - bottom + DOCK_ABOVE }]}
-      testID={testID}
-    >
-      <View
-        onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-          setInner(nativeEvent.layout.height);
-        }}
-        style={[styles.dockContent, inner > 0 && { paddingTop: DOCK_ABOVE }]}
-        testID={`${testID}-content`}
-      >
-        {children}
-      </View>
-    </View>
+    <>
+      <GestureDetector gesture={drag.pan}>
+        <Animated.View
+          onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+            drag.onCardHeight(nativeEvent.layout.height);
+            setHeight(nativeEvent.layout.height + bottom);
+            onHeight(nativeEvent.layout.height + bottom);
+          }}
+          style={[
+            styles.dock,
+            { bottom, paddingBottom: inputTop - bottom + DOCK_ABOVE, transform: [{ translateY: drag.drop }] },
+          ]}
+          testID={testID}
+        >
+          <DockGrip raising={raising ?? LOWERED} />
+          <View
+            onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+              setInner(nativeEvent.layout.height);
+            }}
+            style={[styles.dockContent, inner > 0 && { paddingTop: DOCK_ABOVE }]}
+            testID={`${testID}-content`}
+          >
+            {children}
+          </View>
+        </Animated.View>
+      </GestureDetector>
+      {drag.past ? <CloseHint barRoom={barRoom} cardHeight={height} drop={drag.drop} /> : null}
+    </>
   );
 }
 

@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type RefObject, useRef, useState } from 'react';
@@ -11,15 +12,15 @@ import { Gesture, GestureDetector, type PanGesture } from 'react-native-gesture-
 import { color, radius, space, text } from '@/design-system';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
 
-const RAISE_LABEL = '답 크게 보기';
-const CLOSE_LABEL = '답 닫기';
+export const RAISE_LABEL = '답 크게 보기';
+export const CLOSE_LABEL = '답 닫기';
 export const CLOSE_HINT = '놓으면 지도 화면으로 돌아가요';
 
 // A drag on the handle starts past this many points, so that a press stays a press.
 const PAN_STARTS = 8;
 // How far a fling carries the let-go point, in seconds of its speed.
-const FLING_S = 0.15;
-const SETTLE_MS = 180;
+export const FLING_S = 0.15;
+export const SETTLE_MS = 180;
 
 // The answer card's two heights, lowered and raised, and below them the answer closed (P04 ticket 12).
 export interface Raising {
@@ -29,6 +30,9 @@ export interface Raising {
   close?: () => void;
   // The card is dragged below its lowered height, or no longer.
   onPast?: (past: boolean) => void;
+  // What a drag down takes away first, as back does: the list of questions, a mark's card, or a restaurant's menu, one
+  // layer a drag, before the raised card is lowered or the answer closed (P04 ticket 52). Left out or null, none.
+  layer?: (() => void) | null;
 }
 
 // The handle's drag between the two heights. `content` is the content's height while it is dragged or settling, null
@@ -178,15 +182,17 @@ function useClosing(raising: Raising, setDragging: (dragging: boolean) => void):
   const closable = useRef(false);
   const below = useRef(false);
   const [past, setPast] = useState(false);
-  const { close, onPast } = raising;
+  const { close, onPast, layer = null } = raising;
   if (close === undefined) {
     return null;
   }
+  // Past half the card the hint says the answer closes; with a layer to take away, it does not.
   const tell = (next: boolean): void => {
-    if (below.current !== next) {
-      below.current = next;
-      setPast(next);
-      onPast?.(next);
+    const shown = next && layer === null;
+    if (below.current !== shown) {
+      below.current = shown;
+      setPast(shown);
+      onPast?.(shown);
     }
   };
   return {
@@ -197,7 +203,7 @@ function useClosing(raising: Raising, setDragging: (dragging: boolean) => void):
       tell(false);
       setDragging(false);
       drop.setValue(0);
-      close();
+      (layer ?? close)();
     },
     past,
     raised: raising.raised,
@@ -211,7 +217,11 @@ export function useRaiseDrag(raising: Raising, raisedHeight: number | null): Dra
   const content = useRef(new Animated.Value(0)).current;
   const heights: Heights = { shown: useRef(0), lowered: useRef(0), from: useRef(0), card: useRef(0) };
   const closing = useClosing(raising, setDragging);
-  const settle = (raised: boolean): void => {
+  const settle = (letGo: boolean): void => {
+    // Let go lower on a raised card with a layer over it, the layer goes and the card stays raised.
+    const layer = !letGo && raising.raised ? (raising.layer ?? null) : null;
+    layer?.();
+    const raised = letGo || layer !== null;
     const done = (): void => {
       raising.setRaised(raised);
       setDragging(false);

@@ -10,9 +10,9 @@ import { StyleSheet, Text, type TextLayoutEvent, View } from 'react-native';
 import { color, font, text } from '@/design-system';
 import { type BandWordsPart, shortenedOf } from '@/features/assistant/band-words';
 
-// What the bar's head keeps clear at each side of its words: "←" at the left, "＋ 같이" at the right.
+// What the bar's head keeps clear at the right of its words, for "＋ 같이"; the words start at its left edge, "←" being
+// under the bar (P04 ticket 52).
 export interface HeadRoom {
-  left: number;
   right: number;
   // The head row's least height: that of "＋ 같이", whose middle the words share, so that the track starts below it
   // (P04 ticket 45). Left out, the words' own.
@@ -65,11 +65,10 @@ function useFittedStep(key: string): {
 }
 
 // The band's words with the day before them, the dragged end's time in the stronger weight. In a bar's head they stand
-// on one line between "←" and "＋ 같이": too long for it, they drop the length first, then the meal's name, and only
+// on one line from the bar's left edge to "＋ 같이": too long for it, they drop the length first, then the meal's name, and only
 // then are they cut (P04 ticket 37).
 export function BandWords({ parts, day, head }: BandWordsProps): ReactElement {
-  const room =
-    head === undefined ? null : { paddingLeft: head.left, paddingRight: head.right, textAlign: 'left' as const };
+  const room = head === undefined ? null : { paddingRight: head.right, textAlign: 'left' as const };
   const key = `${day}|${parts.map(({ text: part }) => part).join('')}`;
   const { step, onLayout } = useFittedStep(key);
   const shown = head === undefined ? { day, parts } : shortenedOf(day, parts, step);

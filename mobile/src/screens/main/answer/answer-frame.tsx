@@ -179,19 +179,22 @@ interface BackLayers {
   leave: () => void;
 }
 
-// What Android's back takes away, one layer a press: the list of questions, a mark's card, a restaurant's menu (back to
-// the list of candidates), the raised card, then the answer.
-function backOf({ list, control, raised, lower, leave }: BackLayers): () => void {
+// What back takes away before the card's height: the list of questions, a mark's card, or a restaurant's menu (back to
+// the list of candidates); null when none is open. A drag down on the card takes it away first too (P04 ticket 52).
+function layerOf(list: QuestionsOpen, control: ChatSheetControl): (() => void) | null {
   if (list.open) {
     return list.close;
   }
   if (control.mark !== null) {
     return control.closeMark;
   }
-  if (control.answer.menuFor !== null) {
-    return control.answer.closeMenu;
-  }
-  return raised ? lower : leave;
+  return control.answer.menuFor === null ? null : control.answer.closeMenu;
+}
+
+// What Android's back takes away, one layer a press: the layer over the card (`layerOf`), the raised card, then the
+// answer.
+function backOf({ list, control, raised, lower, leave }: BackLayers): () => void {
+  return layerOf(list, control) ?? (raised ? lower : leave);
 }
 
 interface FramedProps {
@@ -257,14 +260,14 @@ function useBarHeight(
   return { height: told, onHeight: setHeight };
 }
 
-// The frame itself: the time bar at the top when the answer has a time, with "←" in its head, else "←" as a round button
-// over the map, and one card at the bottom with what was asked as its caption and the reply over the input (the
-// 2026-11-22 redesign). "←", Android's back button, and dragging the docked card down hide the frame and keep the
-// conversation, a reply on its way included. While a building is asked about over the answer ("여기면 어때?"), "←" and
+// The frame itself: the time bar at the top when the answer has a time, "←" as a round button over the map at the top
+// left, under the bar when there is one, and one card at the bottom with what was asked as its caption and the reply over the input (the
+// 2026-11-22 redesign). "←", Android's back button, and dragging the card down, docked or lowered, hide the frame and keep
+// the conversation, a reply on its way included. While a building is asked about over the answer ("여기면 어때?"), "←" and
 // back return to the answer instead, and the caption names the building. A Friend's profile opened from the card stands
 // over it until a new reply; while it is shown, the back button hides it alone. This handler is the only one, and
 // listens only while the main screen is in front, so a screen pushed from the profile goes back to it. Back takes away
-// one layer per press (`backOf`). While a restaurant's menu is open the caption gives way to the menu's own head.
+// one layer per press (`backOf`), and so does a drag down. While a restaurant's menu is open the caption gives way to the menu's own head.
 function Framed(props: FramedProps): ReactElement {
   const { control, barRoom, stageHeight, keyboardUp, onHeight, onBarHeight, stage, inputBottom } = props;
   const { chat, leaving, hide } = control;
@@ -282,7 +285,7 @@ function Framed(props: FramedProps): ReactElement {
   useBackToClose(useIsFocused(), profileShown ? profile.hide : back, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   const focus = useBandFocus();
-  // A booked seat has no bar: "←" is the round button over the map (P01 ticket 04).
+  // A booked seat has no bar: "←" stands at the top (P01 ticket 04).
   const drawnBar = (control.booking !== null && !control.booking.booked) || control.steps !== null;
   const barShown = !keyboardUp && (drawnBar || barOf(chat.bubbles, onScreenOf(control)) !== null);
   const bar = useBarHeight(barShown, onBarHeight);
@@ -291,7 +294,7 @@ function Framed(props: FramedProps): ReactElement {
     <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
       <View style={[styles.top, past && styles.faded]}>
         {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
-        <BackButton onBar={barShown && bar.height > 0} onPress={leave} />
+        <BackButton onPress={leave} under={bar.height} />
       </View>
       <AnswerCard
         timeBarHeight={bar.height}
@@ -304,7 +307,7 @@ function Framed(props: FramedProps): ReactElement {
         list={list}
         onClose={close}
         onHeight={onHeight}
-        raising={{ raised, setRaised, close: leave, onPast: setPast }}
+        raising={{ raised, setRaised, close: leave, layer: layerOf(list, control), onPast: setPast }}
         stageHeight={stageHeight}
       />
       {keyboardUp ? null : <OpenMark control={control} focus={focus} onClose={close} stage={stage} />}
