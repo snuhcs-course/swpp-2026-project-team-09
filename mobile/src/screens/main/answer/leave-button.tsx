@@ -16,7 +16,8 @@ import type { ChatSheetControl } from '../chat-sheet';
 // its start, never cut; at its right the label in the danger colour. One press does it: the question and the row that
 // names the Quest are the confirmation. It takes no press while the request is on its way and is gone once taken.
 export function LeaveRow({ control }: { control: ChatSheetControl }): ReactElement | null {
-  const shown = control.framed ? leaveOnScreen(control.chat.bubbles) : null;
+  // Only on the conversation's latest turn: an earlier one reopened from the pill's list cancels nothing.
+  const shown = control.framed && control.latest ? leaveOnScreen(control.chat.bubbles) : null;
   const state = shown === null ? null : control.leave.stateOf(shown.bubbleId, shown.offer.questId);
   if (shown === null || state === 'left') {
     return null;
