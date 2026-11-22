@@ -26,7 +26,7 @@ import type { UnaskedCards } from './use-map-view';
 import type { Me } from './use-me';
 import { useReceivedInvitation } from './use-received-invitation';
 import type { Selection } from './use-selection';
-import { pastChatsShown } from './past-chats';
+import { mapChipOf } from './past-chats';
 
 // While the map is in front, a toast sits over the row of buttons or above an open card; while the answer frame is
 // shown, above its card once that is laid out, and where it sits without a card until then.
@@ -132,7 +132,7 @@ export function useFramedRoom(
   const framed = chat.framed || invitation.shown || madeCard.shown !== null;
   useHideTabBarOnMain(framed || guided);
   const madeLine = madeCard.first !== null;
-  const pastChats = pastChatsShown(chat);
+  const pastChats = mapChipOf(chat) !== null;
   const bottom = useBottomRoom(selection, { tutorialStart, framed, madeLine, pastChats });
   return { unasked: { invitation, made: madeCard }, framed, ...bottom };
 }

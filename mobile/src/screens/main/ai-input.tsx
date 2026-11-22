@@ -32,10 +32,6 @@ interface AiInputProps {
   placeholder?: string;
   // The words of a message that failed, while that failure is the last thing said.
   restore?: Restore | null;
-  // "이전 답" at the bar's left, which shows the hidden answer frame again; null or left out for none.
-  onEarlier?: (() => void) | null;
-  // A reply arrived while the frame was hidden: a dot on "이전 답" until the frame is shown.
-  unseen?: boolean;
   // The answer's main button, at the bar's right on the same line; the bar gives it room.
   beside?: ReactNode;
   // Inside the answer's card or dock: a sunken field on its white, without the bar's own border and shadow.
@@ -47,9 +43,6 @@ interface AiInputProps {
 // The field's height for one line, and the most it grows to before it scrolls.
 export const AI_FIELD = 40;
 const FIELD_MAX = 120;
-// The dot of a reply not yet seen, at the icon's top right.
-const UNSEEN = 10;
-const UNSEEN_INSET = 6;
 // Above and below the text.
 const FIELD_PADDING = space[2];
 // A button of 48 in its touch area, in the middle of the bar of 50.
@@ -104,26 +97,12 @@ function useFocusOn(key: number): RefObject<TextInput | null> {
   return field;
 }
 
-function EarlierButton({ onPress, unseen }: { onPress: () => void; unseen: boolean }): ReactElement {
-  return (
-    <Pressable
-      accessibilityLabel={unseen ? '이전 답, 새 답 있음' : '이전 답'}
-      accessibilityRole="button"
-      hitSlop={space[1]}
-      onPress={onPress}
-      style={styles.send}
-    >
-      <Icon color={color.ink} name="history" size={18} />
-      {unseen ? <View style={styles.unseen} testID="earlier-unseen" /> : null}
-    </Pressable>
-  );
-}
-
 // The AI input of the `Main` frame: the white bar with the placeholder and the send button. It grows with its text up
 // to 120, takes at most the characters the Assistant takes in a message, Enter starts a new line, and only the send
 // button sends, in the key colour while there is something to send. The field grows by itself, between its least and
 // its most height: nothing sets its height from its content, which would lay it out again and could swing it between
-// two heights. "이전 답", when given, stands at the left as the send button does at the right.
+// two heights. The conversation kept while the answer is closed is the map screen's chip, not the input's (P04
+// ticket 11).
 interface FieldProps {
   message: string;
   onChange: (message: string) => void;
@@ -178,8 +157,6 @@ export function AiInput(props: AiInputProps): ReactElement {
     onHeight,
     placeholder = '무엇이든 부탁해 보세요',
     restore,
-    onEarlier = null,
-    unseen = false,
     beside = null,
     inCard = false,
     focusKey = 0,
@@ -202,12 +179,10 @@ export function AiInput(props: AiInputProps): ReactElement {
           styles.bar,
           { bottom: AI_INPUT.bottom + lift, right: AI_INPUT.side + room },
           height > AI_INPUT.height && { borderRadius: BAR_RADIUS_TALL },
-          onEarlier !== null && styles.barEarlier,
           inCard && styles.inCard,
         ]}
         testID="ai-input"
       >
-        {onEarlier === null ? null : <EarlierButton onPress={onEarlier} unseen={unseen} />}
         <Field field={field} message={message} onChange={setMessage} placeholder={placeholder} />
         <SendButton canSend={canSend} onPress={send} />
       </View>
@@ -253,7 +228,6 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.float,
   },
-  barEarlier: { paddingLeft: space[1] },
   inCard: { borderWidth: 0, backgroundColor: color.surfaceSunken, boxShadow: 'none' },
   beside: { position: 'absolute', right: AI_INPUT.side },
   field: {
@@ -275,15 +249,4 @@ const styles = StyleSheet.create({
     backgroundColor: color.surfaceSunken,
   },
   sendReady: { backgroundColor: color.snuBlue },
-  unseen: {
-    position: 'absolute',
-    top: UNSEEN_INSET,
-    right: UNSEEN_INSET,
-    width: UNSEEN,
-    height: UNSEEN,
-    borderRadius: UNSEEN / 2,
-    borderWidth: 2,
-    borderColor: color.surface,
-    backgroundColor: color.danger,
-  },
 });

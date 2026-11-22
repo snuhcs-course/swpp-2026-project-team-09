@@ -20,6 +20,7 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { answerShuttle } from './support/shuttle';
+import { CONTINUE, reopenAnswer } from './support/questions';
 
 // P04 ticket 10 against the fake main server: the pill counts the conversation's questions and opens the list of every
 // question kept (board 16), whose rows bring their answers back to the map; "＋ 새 대화" keeps the conversation in that
@@ -190,7 +191,7 @@ describe('"새 대화"', () => {
     expect(screen.getByLabelText(AI_INPUT)).toHaveDisplayValue('');
     expect(screen.getByPlaceholderText('새로 물어보기 · 예: 공부할 자리')).toBeVisible();
     expect(focus).toHaveBeenCalled();
-    expect(screen.queryByRole('button', { name: /^이전 답/u })).toBeNull();
+    expect(screen.queryByRole('button', { name: CONTINUE })).toBeNull();
     await user.press(screen.getByRole('button', { name: '지난 대화 1개' }));
     await user.press(list().getByRole('button', { name: new RegExp(`^${ASKED_AT}, ${SHUTTLE}`, 'u') }));
 
@@ -233,12 +234,12 @@ describe('closing the answer', () => {
     await user.press(pill().getByRole('button', { name: '답 닫기' }));
     expectClosed();
 
-    await user.press(screen.getByRole('button', { name: /^이전 답/u }));
+    await reopenAnswer(user);
     await showKeyboard(KEYBOARD);
     await user.press(pill().getByRole('button', { name: '답 닫기' }));
     expectClosed();
 
-    await user.press(screen.getByRole('button', { name: /^이전 답/u }));
+    await reopenAnswer(user);
     await openList(user);
     await user.press(pill().getByRole('button', { name: '답 닫기' }));
     expectClosed();

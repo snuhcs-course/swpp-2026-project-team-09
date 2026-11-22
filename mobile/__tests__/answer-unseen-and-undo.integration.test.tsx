@@ -15,10 +15,11 @@ import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { reopenAnswer } from './support/questions';
 
-// P02 ticket 35 against the fake main server: a reply that arrives while the answer frame is hidden puts a dot on
-// "이전 답" until the frame is shown; "새 대화" keeps the conversation in the list of questions, with no toast to undo
-// it (P04 ticket 10).
+// P02 ticket 35 against the fake main server: a reply that arrives while the answer frame is hidden puts a dot on the
+// map screen's chip "이어서 · …" until the frame is shown (P04 ticket 11); "새 대화" keeps the conversation in the list
+// of questions, with no toast to undo it (P04 ticket 10).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -78,22 +79,23 @@ function card(): ReturnType<typeof within> {
 }
 
 // Partitions: a reply that arrives while hidden; one that arrived before the frame was hidden.
-describe('"이전 답" while the frame is hidden', () => {
+describe('the chip "이어서" while the frame is hidden (P04 ticket 11)', () => {
   it('has a dot once a reply arrived meanwhile, and loses it when the frame is shown', async () => {
     answerWith(REPLY, 1000);
     const user = await openMain();
     await send(user, '셔틀 어디 있어?');
     await user.press(pill().getByRole('button', { name: '답 닫기' }));
-    expect(screen.queryByTestId('earlier-unseen')).toBeNull();
+    expect(screen.queryByTestId('continue-unseen')).toBeNull();
 
     await pass(1000);
 
-    expect(screen.getByTestId('earlier-unseen')).toBeVisible();
-    await user.press(screen.getByRole('button', { name: '이전 답, 새 답 있음' }));
+    expect(screen.getByTestId('continue-unseen')).toBeVisible();
+    expect(screen.getByRole('button', { name: '이어서, 셔틀 어디 있어?, 새 답 있음' })).toBeVisible();
+    await reopenAnswer(user);
     expect(card().getByText(REPLY)).toBeVisible();
     await user.press(pill().getByRole('button', { name: '답 닫기' }));
-    expect(screen.queryByTestId('earlier-unseen')).toBeNull();
-    expect(screen.getByRole('button', { name: '이전 답' })).toBeVisible();
+    expect(screen.queryByTestId('continue-unseen')).toBeNull();
+    expect(screen.getByRole('button', { name: '이어서, 셔틀 어디 있어?' })).toBeVisible();
   });
 
   it('has no dot for a reply seen before the frame was hidden', async () => {
@@ -104,7 +106,7 @@ describe('"이전 답" while the frame is hidden', () => {
 
     await user.press(pill().getByRole('button', { name: '답 닫기' }));
 
-    expect(screen.queryByTestId('earlier-unseen')).toBeNull();
+    expect(screen.queryByTestId('continue-unseen')).toBeNull();
   });
 });
 
