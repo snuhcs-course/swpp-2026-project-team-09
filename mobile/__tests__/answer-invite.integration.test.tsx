@@ -108,8 +108,8 @@ describe('a press of "만들고 초대 보내기"', () => {
       },
     ]);
     expect(sent[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);
-    expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
-    expect(card().getByText('답이 없어도 12:15에 가면 돼요')).toBeVisible();
+    expect(card().getByText('김민수에게 점심 초대를 보냈어요')).toBeVisible();
+    expect(card().getByText('12:15 302동식당 · 수락하면 알려 드려요')).toBeVisible();
     const steps = within(card().getByTestId('quest-steps'));
     expect(steps.getByText('12:15')).toBeVisible();
     expect(steps.getByText('302동식당에서 식사')).toBeVisible();
@@ -209,6 +209,6 @@ describe('"만들고 초대 보내기" on its way', () => {
     await pass(HELD_MS);
 
     expect(server.received('POST /plans')).toHaveLength(1);
-    expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
+    expect(card().getByText('김민수에게 점심 초대를 보냈어요')).toBeVisible();
   });
 });

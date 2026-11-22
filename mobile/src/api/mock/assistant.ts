@@ -144,9 +144,26 @@ function closedProposal(): QuestProposal {
   };
 }
 
+// "민준이랑 내일 2시 학생회관에서 볼 사람 모집해줘": open, at 학생회관 tomorrow at 14:00, inviting the Friend it names or 김민준.
+function unionProposal(asked: string): QuestProposal {
+  const friend = FRIENDS.find(({ name }) => asked.includes(name.slice(1))) ?? FRIENDS.find(({ id }) => id === 'f1');
+  return {
+    ...lunchProposal(),
+    title: '학생회관에서 만나요',
+    description: '내일 2시에 학생회관에서 만나요',
+    board: 'hobby',
+    startsAt: lunchProposal().startsAt.replace('T12:00', 'T14:00'),
+    place: { id: 'place-63', name: '학생회관', booking: null },
+    invitees: friend === undefined ? [] : [{ id: friend.id, name: friend.name }],
+  };
+}
+
 function proposalOf(asked: string): QuestProposal {
   if (asked.includes('비공개')) {
     return closedProposal();
+  }
+  if (asked.includes('학생회관')) {
+    return unionProposal(asked);
   }
   return asked.includes('301') ? studyProposal() : lunchProposal();
 }

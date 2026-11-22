@@ -64,9 +64,13 @@ function besideSetQuest(control: ChatSheetControl): boolean {
 
 // The bottom hides only what the map already says: a reply with cards, with several parts, or with nothing to draw
 // keeps the open card, and so does a Plan's card with something to read. A Plan beside a Quest the User holds docks
-// with its line.
+// with its line, and a Proposal on the map docks.
 export function restOf(control: ChatSheetControl, after: readonly ChatBubble[]): Rest | null {
   const [reply] = after;
+  // A Proposal drawn on the map docks with nothing to read: its flag says what and when (P04 ticket 06).
+  if (reply !== undefined && control.proposal?.bubbleId === reply.id) {
+    return { kind: 'words', words: { line: null, offers: [], retry: false, note: null } };
+  }
   if (after.length !== 1 || reply === undefined || !bare(reply)) {
     return null;
   }

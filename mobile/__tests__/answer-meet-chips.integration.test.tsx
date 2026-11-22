@@ -45,7 +45,7 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 const ASKER = { userId: ME_ID, constraints: [] };
 const WITH_MIN_SU = { userId: MIN_SU.id, constraints: [] };
 const WITH_MIN_JUN = { userId: MIN_JUN.id, constraints: [] };
-const JI_WOO_CELL = '서지우, 경영학과, 자리 모름, 추가';
+const JI_WOO_CELL = '서지우, 경영학과, 위치 모름, 추가';
 // "＋ 같이" read aloud on a meet.
 const ADD = '같이 만날 친구 추가';
 
