@@ -19,6 +19,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -72,6 +73,7 @@ const FIXED_SETTINGS = {
   JUDGEMENT_TIMEOUT_MS: '60000',
   JUDGEMENT_MAX_OUTPUT_TOKENS: '4000',
   LIBRARY_BOOKING_ENABLED: 'true',
+  HE_ACCOUNTS: 'off',
   TUTORIAL_KWANJEONG_CHECK: 'false',
   // No timers: a test calls NotificationSender.sendDue() itself, and runs the topics step itself.
   NOTIFICATIONS_TICK_SECONDS: '0',
