@@ -24,3 +24,8 @@ Native files: none. Releases: an app OTA update only.
 - `mobile/__tests__/answer-question-list.integration.test.tsx`: the chip's new name; the list's title and "새 질문"; the row closes the answer, keeps the conversation, and focuses the main input; a message typed then carries no earlier message.
 
 ## Comments
+
+### Agent usage (2026-11-23)
+
+- Agent time: about 60 minutes in one session, no subagents (an estimate, 00:45 to 01:46 KST; most of it integration tests at load 30–40).
+- Tokens: about 8 M input, of which about 7.7 M cache reads and 0.3 M cache writes, and about 40 k output (an estimate; the session reports no per-ticket count).
