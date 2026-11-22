@@ -127,8 +127,20 @@ export function bookingActionOf({ booking, bookingStage, framed, chat }: ChatShe
   return { words: seen.words, onPress: press, disabled: seen.disabled || chat.waiting };
 }
 
+// Of several requests (P04 ticket 09), the button is the shown step's action: its booking's, or its Plan's.
+function stepActionOf(control: ChatSheetControl): PlanAction | null {
+  const step = control.steps?.steps[control.activeStep];
+  if (step === undefined || step.status !== 'shown') {
+    return null;
+  }
+  return step.kind === 'seat' || step.kind === 'room' ? bookingActionOf(control) : planActionOf(control);
+}
+
 export function answerActionOf(control: ChatSheetControl): AnswerAction | null {
-  const plan = planActionOf(control) ?? proposalActionOf(control) ?? bookingActionOf(control);
+  const plan =
+    control.steps === null
+      ? (planActionOf(control) ?? proposalActionOf(control) ?? bookingActionOf(control))
+      : stepActionOf(control);
   if (plan !== null) {
     return { kind: 'plan', plan };
   }

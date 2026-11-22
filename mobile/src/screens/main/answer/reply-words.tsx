@@ -25,6 +25,7 @@ import { MadeCard } from './made-card';
 import { OfferedWords } from './offered-words';
 import { PlanCard } from './plan-card';
 import { type RefusalAsk, RefusalReply } from './refusal-reply';
+import { StepsBar } from './steps-bar';
 import { BookingBar, LookupBar, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
 
@@ -191,7 +192,11 @@ interface TopBarProps {
 // The time bar of the turn on screen, while it has a time, a booking's on the map first (P04 ticket 07): none once 그대로 두기 left a Quest already set as it is, for
 // the Plan is gone (P04 ticket 20).
 export function TopBar({ control, focus, onClose, onHeight }: TopBarProps): ReactElement | null {
-  const { answer: shown, invitation, booking } = control;
+  const { answer: shown, invitation, booking, steps } = control;
+  if (steps !== null) {
+    const { activeStep, setActiveStep } = control;
+    return <StepsBar active={activeStep} onHeight={onHeight} onStep={setActiveStep} steps={steps.steps} />;
+  }
   if (booking !== null) {
     return <BookingBar booking={booking} chat={control.chat} onHeight={onHeight} />;
   }

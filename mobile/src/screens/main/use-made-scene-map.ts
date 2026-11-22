@@ -5,13 +5,21 @@
  ******************************************************************************/
 
 import { useMemo } from 'react';
-import type { MapScene } from '@/api/assistant-types';
+import type { LibrarySpace, MapScene, ReplyStep } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { now } from '@/clock';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import { type AnswerDrawing, drawingOfScene, type SceneSetting } from '@/features/assistant/answer-marks';
 import { BOOKING_SETTING, bookingLine, bookingScene } from '@/features/assistant/booking-scene';
 import { proposalScene, proposalSetting } from '@/features/assistant/proposal-scene';
+import {
+  type ShownSteps,
+  stepDrafts,
+  stepLine,
+  stepNumberOf,
+  stepsScene,
+  stepTitle,
+} from '@/features/assistant/steps-scene';
 import type { MapAvatar, MarkerLook } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
@@ -56,7 +64,7 @@ interface Made {
 }
 
 function isPick(id: string): boolean {
-  return id === MADE_FLAG_ID;
+  return id === MADE_FLAG_ID || stepNumberOf(id) !== null;
 }
 
 // A scene the app made drawn on the map as a Plan is: its flag, which opens its card with `onFlag`, the User's walk,
@@ -87,22 +95,53 @@ function useSceneMap(
   const avatars = me.position === null ? [...faces, ...me.avatars] : faces;
   const onPress = (id: string): void => {
     if (isPick(id)) {
-      onFlag(id, made.flag);
+      onFlag(id, markers.find((marker) => marker.id === id)?.position ?? made.flag);
     }
   };
   return { contents: { markers, lines, avatars }, onPress, ...ANSWER_LIMITS };
 }
 
-// The scene of the Proposal on screen (P04 ticket 06), or of the seat card's booking (ticket 07) with the room, the
+function isBooked(step: ReplyStep): boolean {
+  return step.kind === 'seat' || step.kind === 'room';
+}
+
+// Several requests as numbered flags (P04 ticket 09): the step due, or pressed, carries the seat its card offers.
+function stepsMade(
+  { steps }: ShownSteps,
+  active: number,
+  seat: string | null,
+  space: LibrarySpace | null,
+  position: LatLng | null,
+): Made | null {
+  const first = steps.find(({ place }) => place !== null)?.place;
+  if (first === undefined || first === null) {
+    return null;
+  }
+  const at = now();
+  const lines = steps.map((step, index) => stepLine(step, index === active && isBooked(step) ? seat : null, at));
+  const titles = steps.map((step) => stepTitle(step, isBooked(step) ? space : null));
+  const setting = { ...BOOKING_SETTING, drafts: stepDrafts(steps, lines, titles) };
+  return {
+    source: steps,
+    scene: stepsScene(steps, position),
+    setting,
+    flag: { latitude: first.latitude, longitude: first.longitude },
+  };
+}
+
+// The scene of several requests (ticket 09), of the Proposal on screen (P04 ticket 06), or of the seat card's booking (ticket 07) with the room, the
 // seat, and the time the card holds now.
 function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: LatLng | null): Made | null {
   const friends = useMemo(() => friendPositions(everyday), [everyday]);
-  const { proposal, booking, bookingStage, chat: said } = chat;
+  const { proposal, booking, bookingStage, chat: said, steps, activeStep } = chat;
   const seat = bookingStage.seen?.place === booking?.place ? (bookingStage.seen?.seat ?? null) : null;
   const kept = booking === null ? null : bookingKept(booking, said);
   const line = kept === null ? null : bookingLine(seat ?? kept.kept.seat, kept.kept.slot, now());
   const space = kept?.kept.space ?? null;
   return useMemo((): Made | null => {
+    if (steps !== null) {
+      return stepsMade(steps, activeStep, seat, space, position);
+    }
     if (proposal !== null) {
       const { latitude, longitude } = proposal.place;
       const scene = proposalScene(proposal, position, friends);
@@ -115,7 +154,7 @@ function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: La
     const { latitude, longitude } = booking.point;
     const scene = bookingScene(booking.point, space, line, position);
     return { source: booking, scene, setting: BOOKING_SETTING, flag: { latitude, longitude } };
-  }, [proposal, booking, line, space, position, friends]);
+  }, [steps, activeStep, seat, proposal, booking, line, space, position, friends]);
 }
 
 // What the map draws of a reply the app makes the scene of: a Proposal (P04 ticket 06) or a seat card (ticket 07).
@@ -129,5 +168,17 @@ export function useMadeSceneMap(
   onFlag: (id: string, position: LatLng) => void,
 ): AnswerMap | null {
   const made = useMade(chat, everyday, me.position);
-  return useSceneMap(made, map, room, everyday, me, onFlag);
+  // A press on another step's flag makes it the step shown; one on the step shown opens its card when it is a booking.
+  const onMark = (id: string, position: LatLng): void => {
+    const number = stepNumberOf(id);
+    const step = number === null ? undefined : chat.steps?.steps[number - 1];
+    if (number === null || step === undefined) {
+      onFlag(id, position);
+    } else if (number - 1 !== chat.activeStep) {
+      chat.setActiveStep(number - 1);
+    } else if (isBooked(step) && chat.booking !== null) {
+      onFlag(id, position);
+    }
+  };
+  return useSceneMap(made, map, room, everyday, me, onMark);
 }

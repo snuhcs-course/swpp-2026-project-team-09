@@ -12,13 +12,14 @@
 
 import type { AnswerReply, Cuisine, KeptQuest, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import { type AnswerLabel, type AnswerSymbol, type FaceBadge, initials } from '@/design-system';
+import { type AnswerLabel, type AnswerSymbol, type FaceBadge } from '@/design-system';
 import { koreaDayWord } from '@/korea-time';
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
 import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
 import {
   destinationOf,
+  faceTitle,
   type Draft,
   DRAW_ORDER,
   FLAG_TONES,
@@ -74,15 +75,6 @@ function faceOf(name: string, source: MapScene['people'][number]['source'], stan
   return badge === undefined ? face : { ...face, badge };
 }
 
-// The words of a face's tag that the face does not show already: a face shows the everyday Avatar's letters, so the
-// tag of a name they show whole leaves the name out, and is none when the name is all it says.
-function faceTitle(name: string, tag: string): string | null {
-  if (initials(name) !== name) {
-    return tag;
-  }
-  return tag === name ? null : restOf(name, tag);
-}
-
 // A Friend who was invited is named with how they stand, in place of the tag.
 function personDrafts(scene: MapScene, standings: ReadonlyMap<string, Standing>): Draft[] {
   const people = [...scene.people.filter((person) => person.me), ...scene.people.filter((person) => !person.me)];
@@ -118,6 +110,8 @@ export interface SceneSetting {
   kind?: Cuisine | null;
   // Every mark opens something at a press, so each title ends with "›"; left out, none.
   opens?: boolean;
+  // Marks made beside the scene's own, as the numbered flags of several requests (P04 ticket 09); left out, none.
+  drafts?: readonly Draft[];
 }
 
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
@@ -279,6 +273,7 @@ export function drawingOfScene(
     ...scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
     ...flagDrafts(scene),
     ...keptDrafts(setting.kept),
+    ...(setting.drafts ?? []),
   ]);
   const placed = placeAll(drafts, view).toSorted(
     (one, other) =>

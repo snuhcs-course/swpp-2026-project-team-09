@@ -8,7 +8,7 @@
 import type { KeptQuest, MapScene } from '@/api/assistant-types';
 import type { FlagRole } from '@/api/scene-roles';
 import type { LatLng } from '@/api/types';
-import { type AnswerLabel, type AnswerSymbol, color, type LabelSide } from '@/design-system';
+import { type AnswerLabel, type AnswerSymbol, color, initials, type LabelSide } from '@/design-system';
 import { keptTagOf } from './set-quest';
 
 // The groups in the order their labels take sides, which is also the order of their symbols at one point but for the
@@ -134,4 +134,13 @@ export function withOpenMarks(opens: boolean, drafts: Draft[]): Draft[] {
     marked.push(draft.title === null ? draft : { ...draft, title: `${draft.title} ›` });
   }
   return marked;
+}
+
+// The words of a face's tag that the face does not show already: a face shows the everyday Avatar's letters, so the
+// tag of a name they show whole leaves the name out, and is none when the name is all it says.
+export function faceTitle(name: string, tag: string): string | null {
+  if (initials(name) !== name) {
+    return tag;
+  }
+  return tag === name ? null : restOf(name, tag);
 }
