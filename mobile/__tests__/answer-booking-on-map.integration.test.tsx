@@ -126,10 +126,10 @@ describe('a seat card on the map', () => {
   });
 });
 
-// PR 460's review: a reply that also holds a Plan (several requests, P03) keeps its own drawing, and the seat card keeps
-// its own band and 예약하기.
-describe('a seat card beside a Plan', () => {
-  it('is not drawn on the map, and the card keeps its band and 예약하기', async () => {
+// PR 460's review: the seat card of several requests (P03) is never left without its 예약하기. With the steps on the map
+// (P04 ticket 09) the seat is step ①, shown first, and its 예약하기 stands beside the input.
+describe('a seat card that is one of several requests', () => {
+  it('is step ① on the map, with 예약하기 beside the input', async () => {
     const reply = stepsReplyOn('2026-11-02');
     await markLibraryLoggedIn();
     server.on('POST /assistant/messages', { status: 200, body: reply });
@@ -138,12 +138,8 @@ describe('a seat card beside a Plan', () => {
     await sendFromBar(user, '17시 반에 관정 갔다가 19시쯤 저녁 먹을래');
     await pass(500);
 
-    expect(mapThings()).not.toContainEqual(expect.stringMatching(/^관정 7층 열람실 ›/u));
-    const seatCard = within(screen.getByTestId('answer-card')).getByTestId(
-      `library-book-${reply.cards[0]?.kind === 'library' ? reply.cards[0].library.key : ''}`,
-    );
-    expect(within(seatCard).getByTestId('slot-band')).toBeVisible();
-    expect(within(seatCard).getByRole('button', { name: '예약하기' })).toBeVisible();
+    expect(mapThings()).toContainEqual(expect.stringMatching(/^1 관정 7층 열람실 ›/u));
+    expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '예약하기' })).toBeVisible();
     expectNoWrite(library);
   });
 });
