@@ -12,6 +12,7 @@ import { AI_INPUT, button, DINNER_ROW, findButton, FRIEND_ROW, SEND } from './su
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { FRIEND, marker, press } from './support/markers';
 import { startFresh } from './support/mocks';
+import { CONTINUE, reopenAnswer } from './support/questions';
 
 // A press beside the AI input while its keyboard is up only puts the keyboard down (P15 ticket 09), on the everyday
 // map and in the answer frame, which the mocks answer. The tests' renderer lays nothing out, so a press reaches the
@@ -26,7 +27,7 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 
 const SCRIM = '키보드 내리기';
 const NOTICE = '대화 내용은 AI 제공자에게 전송돼요';
-const EARLIER = '이전 답';
+const EARLIER = CONTINUE;
 
 type User = Awaited<ReturnType<typeof openMain>>;
 type Found = ReturnType<typeof screen.getByTestId>;
@@ -133,7 +134,7 @@ describe('a press on the scrim on the everyday map', () => {
   });
 });
 
-// Partitions: the bar's field and buttons, an example and the line under the examples, "이전 답".
+// Partitions: the bar's field and buttons, an example and the line under the examples, the chip "이어서" (P04 ticket 11).
 describe("the AI input's own parts while the keyboard is up", () => {
   it('stand over the scrim: the bar and the examples', async () => {
     await openMain();
@@ -164,13 +165,13 @@ describe("the AI input's own parts while the keyboard is up", () => {
     expect(screen.getByTestId('answer-pill')).toHaveTextContent(/^배고파/u);
   });
 
-  it('show the hidden answer frame again by "이전 답"', async () => {
+  it('show the hidden answer frame again by the chip "이어서"', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
     await press(user, '답 닫기');
     await showKeyboard(KEYBOARD);
 
-    await press(user, EARLIER);
+    await reopenAnswer(user);
 
     expect(screen.getByTestId('answer-pill')).toHaveTextContent(/^식사 메뉴 추천/u);
   });
@@ -244,7 +245,7 @@ describe("the answer pill's buttons while the keyboard is up", () => {
     await press(user, '답 닫기');
 
     expect(screen.queryByTestId('answer-pill')).toBeNull();
-    expect(button(EARLIER)).toBeVisible();
+    expect(screen.getByRole('button', { name: EARLIER })).toBeVisible();
   });
 
   it('keeps the conversation aside by "새 대화", whose list "지난 대화 1개" opens (P04 ticket 10)', async () => {

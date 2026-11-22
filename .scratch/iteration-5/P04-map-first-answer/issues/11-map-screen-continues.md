@@ -1,7 +1,7 @@
 # 11: The map screen says what it continues, and starts anew at one press
 
 Parent: [P04 spec](../spec.md)
-Status: ready-for-agent
+Status: in-progress
 Blocked by: [10](10-earlier-questions-in-the-pill.md) for the list and the kept conversations.
 
 Native files: none. Releases: an app OTA update only.
@@ -26,11 +26,18 @@ With the answer closed and a conversation kept, the map screen shows a chip abov
 - A message on the map screen continues the kept conversation (decided).
 - The first run's card, the tutorial's start, the made Quest's line, and the examples over the keyboard.
 
+## Decided while building (2026-11-22)
+
+- The chip names the latest question of the conversation kept ("이어서 · 셔틀 어디 있어? ▾", cut at the end when long) and stands where ticket 10's "지난 대화 N ▾" stands: at the left with the made Quest's line while the keyboard is down, over the input under the examples while it is up. Board 17's own row right above the input would push the everyday map's row of buttons and the left column up.
+- "이전 답" leaves the input; the unseen dot is on the chip ("이어서, {question}, 새 답 있음" to a screen reader).
+- "새 대화" beside the input is board 17's outlined button, in the place of the answer's main button; it starts a new conversation at one press and the input takes the focus.
+- The chip's list is ticket 10's card standing on the chip, without the 새 대화 row.
+
 ## Acceptance criteria
 
-- [ ] After an answer and ✕, the chip names its question; a tap opens the list; a tap on the row reopens the answer. (Integration test.)
-- [ ] A message sent from the map screen continues the conversation. (Integration test.)
-- [ ] "새 대화" there starts a conversation whose message sends none of the old one, and the old one is in the list. (Integration test.)
-- [ ] A reply that came while the answer was closed puts the dot on the chip. (Integration test.)
+- [x] After an answer and ✕, the chip names its question; a tap opens the list; a tap on the row reopens the answer. (Integration test.)
+- [x] A message sent from the map screen continues the conversation. (Integration test.)
+- [x] "새 대화" there starts a conversation whose message sends none of the old one, and the old one is in the list. (Integration test.)
+- [x] A reply that came while the answer was closed puts the dot on the chip. (Integration test.)
 - [ ] The map screen with the chip on a phone with the mock build. (Emulator.)
-- [ ] No native file changes; lint, format, and types pass on the app.
+- [x] No native file changes; lint, format, and types pass on the app.
