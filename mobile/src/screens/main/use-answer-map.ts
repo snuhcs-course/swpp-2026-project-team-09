@@ -13,7 +13,7 @@ import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
 import type { AnswerReply, MapScene } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import type { LabelView } from '@/features/assistant/answer-labels';
-import { type AnswerDrawing, drawingOf, drawingOfScene, looksOf } from '@/features/assistant/answer-marks';
+import { type AnswerDrawing, drawingOf, drawingOfScene } from '@/features/assistant/answer-marks';
 import { keptDrawingOf } from '@/features/assistant/kept-drawing';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -33,7 +33,7 @@ import {
   type Framing,
   labelViewOf,
   useFraming,
-  useHeldView,
+  useHeldViews,
 } from './answer-framing';
 import { paddingOf } from './answer-padding';
 import type { Room } from './layout';
@@ -291,10 +291,6 @@ export function useAnswerMap(
     return (view: LabelView | null): AnswerDrawing => drawingOf(drawn, at, standings, view);
   }, [answer, index, standings, settled, leftAlone]);
   const framing = useFraming(map, room, true);
-  const looks = useMemo(
-    () => (answer === null ? NO_LOOKS : looksOf(answer, (drawing) => labelViewOf(drawing, framing))),
-    [answer, framing],
-  );
   const base = useBase(draw);
   const others = base === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, base);
   const everydayFaces = useFaces(others, shown, made !== null);
@@ -303,8 +299,8 @@ export function useAnswerMap(
   // While 바꾸기 is on its way nothing can be chosen either, nor once 그대로 두기 left the Quest as it is.
   const sent = sending || settled || changing || leftAlone;
   const avoid = useFacePoints(faces);
+  const { held, looks } = useHeldViews(answer, sent, standings, framing, avoid, base);
   const ring = useChoosingRing(draw, looks, index);
-  const held = useHeldView(answer !== null && !sent ? answer : null, standings, framing, avoid, base?.pick ?? null);
   const press = pressableWhile(sent);
   const drawn = useDrawnMap(ring.draw, base, answer, ring.looks, map, framing, routes, press, avoid, held);
   if (drawn === null) {

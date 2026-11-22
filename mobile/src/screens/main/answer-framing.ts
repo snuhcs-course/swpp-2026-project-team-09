@@ -10,10 +10,10 @@ import type { AnswerReply } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { answerCamera, panToShow } from '@/features/assistant/answer-camera';
 import type { LabelView } from '@/features/assistant/answer-labels';
-import { type AnswerDrawing, drawingOf } from '@/features/assistant/answer-marks';
+import { type AnswerDrawing, drawingOf, looksOf } from '@/features/assistant/answer-marks';
 import type { Standing } from '@/features/assistant/invited-friends';
 import { drawsMeal } from '@/features/assistant/meal-marks';
-import { NATIVE_MIN_LEVEL, nativeLevelZoom, type Size, ZOOM_OFFSET } from '@/map';
+import { type MarkerLook, NATIVE_MIN_LEVEL, nativeLevelZoom, type Size, ZOOM_OFFSET } from '@/map';
 import { labelArea, paddingOf } from './answer-padding';
 import type { Room } from './layout';
 import type { MainMap } from './use-main-map';
@@ -86,17 +86,41 @@ export function heldView(first: LabelView | null, pick: LatLng | null): LabelVie
   return first === null || pick === null ? first : panToShow(first, pick);
 }
 
-// The view a meal answer keeps (`heldView`) while it can be chosen from, or null for any other answer.
-export function useHeldView(
+// The first Plan's view, which a meal answer keeps (`heldView`) while it can be chosen from; null for any other answer.
+export function useFirstView(
   answer: AnswerReply | null,
   standings: ReadonlyMap<string, Standing>,
   framing: Framing,
   avoid: readonly LatLng[],
-  pick: LatLng | null,
 ): LabelView | null {
-  const first = useMemo(
+  return useMemo(
     () => (answer === null || !drawsMeal(answer) ? null : labelViewOf(drawingOf(answer, 0, standings), framing, avoid)),
     [answer, standings, framing, avoid],
   );
-  return useMemo(() => heldView(first, pick), [first, pick]);
+}
+
+const NO_LOOKS: readonly MarkerLook[] = [];
+
+// The view kept while a meal answer can be chosen from (`sent` false), or null to frame the drawing itself, and every
+// Plan's looks at the view each is drawn at, their rings' too, so that a choice never waits for a picture.
+export function useHeldViews(
+  answer: AnswerReply | null,
+  sent: boolean,
+  standings: ReadonlyMap<string, Standing>,
+  framing: Framing,
+  avoid: readonly LatLng[],
+  base: AnswerDrawing | null,
+): { held: LabelView | null; looks: readonly MarkerLook[] } {
+  const first = useFirstView(sent ? null : answer, standings, framing, avoid);
+  const held = useMemo(() => heldView(first, base?.pick ?? null), [first, base]);
+  const looks = useMemo(
+    () =>
+      answer === null
+        ? NO_LOOKS
+        : looksOf(answer, (drawing) =>
+            first === null ? labelViewOf(drawing, framing) : heldView(first, drawing.pick),
+          ),
+    [answer, framing, first],
+  );
+  return { held, looks };
 }
