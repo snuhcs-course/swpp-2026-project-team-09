@@ -57,6 +57,7 @@ export function CardQuestions({
       maxHeight={maxHeight}
       onAskNew={onAskNew}
       onClearEarlier={control.chat.clearEarlier}
+      onRemoveEarlier={control.chat.removeEarlier}
       onPick={(row) => {
         onDone();
         control.showTurn(row.turnId, row.conversation);

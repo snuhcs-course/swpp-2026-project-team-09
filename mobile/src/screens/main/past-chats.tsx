@@ -86,6 +86,7 @@ function ChipList({ control, bottom, stageHeight, onClose }: ChipListProps): Rea
             control.focusInput();
           }}
           onClearEarlier={control.chat.clearEarlier}
+          onRemoveEarlier={control.chat.removeEarlier}
           onPick={(row) => {
             onClose();
             control.showTurn(row.turnId, row.conversation);

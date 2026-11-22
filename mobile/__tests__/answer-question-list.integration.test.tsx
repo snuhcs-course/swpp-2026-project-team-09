@@ -214,11 +214,10 @@ describe('a question typed on the main map while a conversation is kept', () => 
     expect(caption().getByText(NEW)).toBeVisible();
     expect(screen.queryByRole('button', { name: CONTINUE })).toBeNull();
     await openList(user);
+    // The kept conversation is one row since P04 ticket 49: its first question, and its last one's outcome.
     expect(rowNames()).toEqual([
       `${ASKED_AT}, ${NEW}, ${NEW_REPLY}, 지금`,
-      `${ASKED_AT}, ${GATE}, ${GATE_REPLY}`,
-      `${ASKED_AT}, ${SHUTTLE}, ${SHUTTLE_REPLY}`,
-      `${ASKED_AT}, ${MEAL}, 302동식당 12:15 · 아직 만들지 않음`,
+      `${ASKED_AT}, ${MEAL}, 질문 3개 · ${GATE_REPLY}`,
     ]);
   });
 
@@ -226,10 +225,10 @@ describe('a question typed on the main map while a conversation is kept', () => 
     const user = await askedAnew();
     await openList(user);
 
-    await user.press(list().getByRole('button', { name: new RegExp(`^${ASKED_AT}, ${SHUTTLE}`, 'u') }));
+    await user.press(list().getByRole('button', { name: new RegExp(`^${ASKED_AT}, ${MEAL}, 질문 3개`, 'u') }));
 
-    expect(caption().getByText(SHUTTLE)).toBeVisible();
-    expect(card().getByText(SHUTTLE_REPLY)).toBeVisible();
+    expect(caption().getByText(GATE)).toBeVisible();
+    expect(card().getByText(GATE_REPLY)).toBeVisible();
     await ask(user, '고마워', text('천만에요.'));
     const body = server.received('POST /assistant/messages').at(-1)?.body;
     const earlier: unknown = expect.arrayContaining([

@@ -38,9 +38,22 @@ From the phone test on Main 87aa3554:
   - two equal design-system Buttons, 취소 (secondary) and 지우기 (destructive).
   The earlier rows stay under it. Android's back takes the block away first.
 
+## Third round, from the phone
+
+- **The answer on screen:** no "지금" word at the row's right. The row on screen is tinted (`color.blue50`), and the other rows keep their chevron. A screen reader still hears "지금" and the row's selected state.
+- **"이전 대화", one row per kept conversation, latest first:**
+  - line 1 is its first question;
+  - line 2, muted, is "질문 N개 · <its last question's outcome>", or just the outcome for one question;
+  - the time column shows its last question's time.
+  - A press takes it up again at its last turn, and its questions then stand under "지금 대화".
+  - A trash button at the right ("이 대화 지우기", a 44 touch area) erases that conversation at once, with no question (`removeEarlier`, with the same pruning of outcomes).
+- **"모두 지우기"** asks in the design system's `Dialog`, as other destructive confirms do: "이전 대화를 모두 지울까요?", "지금 대화는 그대로 남아요.", 취소 and 지우기 (danger). The inline block and its back handler are gone; the Dialog's own cancel answers Android's back.
+- **Edges:** round 2's edges stay. The trash marks end on the same right line as "＋ 새 질문" and "모두 지우기".
+
 ## Tests
 
-- `mobile/__tests__/answer-clear-earlier.integration.test.tsx`: the two groups and the header's "새 질문"; "모두 지우기" asks in its block, with the rows still under it, and 취소 keeps everything; Android's back takes the block away first; 지우기 leaves only the current conversation, and the next message goes on from it.
+- `mobile/__tests__/answer-clear-earlier.integration.test.tsx`: the groups, the tinted row with no "지금" word, and one row per kept conversation; a kept conversation taken up at its last question; one trashed at once; "모두 지우기" in the Dialog, 취소 and 지우기, and the next message goes on from the current conversation only.
+- `mobile/__tests__/answer-question-list.integration.test.tsx`: a kept conversation of three questions is one row, and a press brings back its last turn.
 - `mobile/__tests__/answer-question-list.integration.test.tsx`: the test of the title and "새 질문" is renamed for the header.
 
 ## Comments

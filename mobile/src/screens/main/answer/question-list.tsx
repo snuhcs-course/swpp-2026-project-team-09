@@ -5,27 +5,29 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, useCallback, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Button, color, Icon, radius, shadow, space, text } from '@/design-system';
-import { useBackToClose } from '@/hooks/use-back-to-close';
+import { color, Dialog, Icon, radius, shadow, space, text } from '@/design-system';
 import { type QuestionRow, questionRows } from '@/features/assistant/turn-outcome';
 import { turnOf } from '@/features/assistant/turn';
 import type { ChatSheetControl } from '../chat-sheet';
 
 const TITLE = '이전 질문';
+// What a screen reader hears of the question on screen, which the row's tint shows.
 const ON_SCREEN = '지금';
 // The time's column, as wide as "00:00", so that the questions stand in line; the time starts at its left.
 const TIME_WIDTH = 48;
 // The one left and right edge of the title, the group names, the rows' times, and the words and marks at the right
 // (P04 ticket 49): in the answer's card, this inside the card's own padding; over the map, inside the rows' padding.
 const INSET = space[2];
-// The word buttons' touch area beyond their words, about 44 high.
+// The touch area beyond words and marks at a row's right, about 44 square.
 const WORD_SLOP = { top: 6, bottom: 6, left: space[3], right: space[3] };
+const TRASH = 20;
+const TRASH_SLOP = (44 - TRASH) / 2;
 
 interface QuestionListProps {
   rows: readonly QuestionRow[];
-  // A question pressed: its turn on the map, in its conversation.
+  // A question pressed, or a kept conversation's row: its turn on the map, in its conversation.
   onPick: (row: QuestionRow) => void;
   // The most the list's card takes; it scrolls beyond.
   maxHeight: number;
@@ -33,52 +35,122 @@ interface QuestionListProps {
   flat?: boolean;
   // "＋ 새 질문" at the header's right; none without it.
   onAskNew?: () => void;
-  // "모두 지우기" on the earlier conversations' group, once the User says 지우기.
+  // "모두 지우기", once the User says 지우기 in its dialog.
   onClearEarlier: () => void;
+  // A kept conversation's trash: erases it at once, by its id.
+  onRemoveEarlier: (conversation: number) => void;
 }
 
-// The rows in two groups, each latest first: the current conversation's, and the kept conversations' (P04 ticket 49).
-export function groupsOf(rows: readonly QuestionRow[]): { now: QuestionRow[]; earlier: QuestionRow[] } {
+// A kept conversation as one row: its first question, how many it holds, and its last question's time, outcome and turn,
+// which a press brings back.
+export interface ConversationRow {
+  conversation: number;
+  first: string;
+  count: number;
+  last: QuestionRow;
+}
+
+// The current conversation's questions, latest first, and the kept conversations, each as one row, the latest first
+// (P04 ticket 49).
+export function groupsOf(rows: readonly QuestionRow[]): { now: QuestionRow[]; earlier: ConversationRow[] } {
+  const byConversation = new Map<number, QuestionRow[]>();
+  for (const row of rows) {
+    if (row.conversation !== null) {
+      byConversation.set(row.conversation, [...(byConversation.get(row.conversation) ?? []), row]);
+    }
+  }
+  const earlier = [...byConversation].flatMap(([conversation, questions]): ConversationRow[] => {
+    const inOrder = questions.toSorted((one, other) => one.turnId - other.turnId);
+    const [first] = inOrder;
+    const last = inOrder.at(-1);
+    return first === undefined || last === undefined
+      ? []
+      : [{ conversation, first: first.asked, count: questions.length, last }];
+  });
   return {
     now: rows.filter(({ conversation }) => conversation === null),
-    earlier: rows.filter(({ conversation }) => conversation !== null),
+    earlier: earlier.toSorted((one, other) => other.last.turnId - one.last.turnId),
   };
 }
 
+// The second line of a kept conversation's row: "질문 3개 · 셔틀 두 대가 …", or just the outcome of a single question.
+function conversationLine({ count, last }: ConversationRow): string {
+  return count === 1
+    ? last.outcome
+    : [`질문 ${String(count)}개`, last.outcome].filter((part) => part !== '').join(' · ');
+}
+
+// A row's time, its two lines, and what stands at its right.
+function RowWords({ time, first, second }: { time: string; first: string; second: string }): ReactElement {
+  return (
+    <>
+      <Text numberOfLines={1} style={[styles.time, styles.timeWords]}>
+        {time}
+      </Text>
+      <View style={styles.words}>
+        <Text numberOfLines={1} style={styles.asked}>
+          {first}
+        </Text>
+        {second === '' ? null : (
+          <Text numberOfLines={1} style={styles.outcome}>
+            {second}
+          </Text>
+        )}
+      </View>
+    </>
+  );
+}
+
+// A question of the current conversation. The one on screen is tinted, with no mark at its right; the others have a
+// chevron.
 function Question({ row, onPress }: { row: QuestionRow; onPress: () => void }): ReactElement {
   const label = [row.time, row.asked, row.outcome, row.onScreen ? ON_SCREEN : ''].filter((part) => part !== '');
   return (
     <Pressable
       accessibilityLabel={label.join(', ')}
       accessibilityRole="button"
+      accessibilityState={{ selected: row.onScreen }}
       onPress={onPress}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.row, row.onScreen && styles.onScreen, pressed && styles.pressed]}
       testID="question-row"
     >
-      <Text numberOfLines={1} style={[styles.time, styles.timeWords]}>
-        {row.time}
-      </Text>
-      <View style={styles.words}>
-        <Text numberOfLines={1} style={styles.asked}>
-          {row.asked}
-        </Text>
-        {row.outcome === '' ? null : (
-          <Text numberOfLines={1} style={styles.outcome}>
-            {row.outcome}
-          </Text>
-        )}
-      </View>
-      {row.onScreen ? (
-        <Text style={styles.now}>{ON_SCREEN}</Text>
-      ) : (
-        <Icon color={color.inkMuted} name="chevronRight" size={16} />
-      )}
+      <RowWords first={row.asked} second={row.outcome} time={row.time} />
+      {row.onScreen ? null : <Icon color={color.inkMuted} name="chevronRight" size={16} />}
     </Pressable>
   );
 }
 
+// A kept conversation: a press takes it up again at its last turn; its trash erases it at once.
+function Conversation(props: { row: ConversationRow; onPick: () => void; onRemove: () => void }): ReactElement {
+  const { row, onPick, onRemove } = props;
+  const second = conversationLine(row);
+  const label = [row.last.time, row.first, second].filter((part) => part !== '').join(', ');
+  return (
+    <View style={styles.conversation}>
+      <Pressable
+        accessibilityLabel={label}
+        accessibilityRole="button"
+        onPress={onPick}
+        style={({ pressed }) => [styles.row, styles.conversationBody, pressed && styles.pressed]}
+        testID="question-row"
+      >
+        <RowWords first={row.first} second={second} time={row.last.time} />
+      </Pressable>
+      <Pressable
+        accessibilityLabel="이 대화 지우기"
+        accessibilityRole="button"
+        hitSlop={TRASH_SLOP}
+        onPress={onRemove}
+        style={({ pressed }) => [styles.trash, pressed && styles.pressed]}
+      >
+        <Icon color={color.inkMuted} name="trash" size={TRASH} />
+      </Pressable>
+    </View>
+  );
+}
+
 // A small word button at a row's right: "＋ 새 질문" and "모두 지우기". Its words end at the row's right edge, as the
-// rows' chevrons do; the touch area reaches past them.
+// rows' chevrons and the trash marks do; the touch area reaches past them.
 function WordButton(props: { words: string; label?: string; onPress: () => void; strong?: boolean }): ReactElement {
   const { words, label = words, onPress, strong = false } = props;
   return (
@@ -94,17 +166,17 @@ function WordButton(props: { words: string; label?: string; onPress: () => void;
   );
 }
 
-// The earlier conversations' header: its name and "모두 지우기", which puts in its place a block of its own that asks
-// whether to erase them, with 취소 and 지우기 (no dialog), over the rows it would erase. The current conversation stays,
-// what "이어서 말하기" goes on from. Android's back takes the block away first.
-function EarlierHeader({ count, onClear }: { count: number; onClear: () => void }): ReactElement {
+// The kept conversations: their header with "모두 지우기", which asks in the app's own dialog, and one row each. The
+// current conversation stays, what "이어서 말하기" goes on from.
+function Earlier(
+  props: Pick<QuestionListProps, 'onPick' | 'onClearEarlier' | 'onRemoveEarlier'> & {
+    rows: readonly ConversationRow[];
+  },
+): ReactElement {
+  const { rows, onPick, onClearEarlier, onRemoveEarlier } = props;
   const [asking, setAsking] = useState(false);
-  const cancel = useCallback((): void => {
-    setAsking(false);
-  }, []);
-  useBackToClose(asking, cancel, { edge: false });
-  if (!asking) {
-    return (
+  return (
+    <>
       <View style={styles.groupRow}>
         <Text style={styles.group}>이전 대화</Text>
         <WordButton
@@ -114,45 +186,45 @@ function EarlierHeader({ count, onClear }: { count: number; onClear: () => void 
           words="모두 지우기"
         />
       </View>
-    );
-  }
-  return (
-    <View style={styles.confirm} testID="clear-earlier-question">
-      <Text style={styles.question}>{`이전 대화의 질문 ${String(count)}개를 지울까요?`}</Text>
-      <Text style={styles.keepNote}>지금 대화는 그대로 남아요.</Text>
-      <View style={styles.confirmButtons}>
-        <View style={styles.half}>
-          <Button full onPress={cancel} variant="secondary">
-            취소
-          </Button>
-        </View>
-        <View style={styles.half}>
-          <Button full onPress={onClear} variant="destructive">
-            지우기
-          </Button>
-        </View>
-      </View>
-    </View>
+      {rows.map((row) => (
+        <Conversation
+          key={row.conversation}
+          onPick={() => {
+            onPick(row.last);
+          }}
+          onRemove={() => {
+            onRemoveEarlier(row.conversation);
+          }}
+          row={row}
+        />
+      ))}
+      <Dialog
+        body="지금 대화는 그대로 남아요."
+        cancelLabel="취소"
+        confirmLabel="지우기"
+        onCancel={() => {
+          setAsking(false);
+        }}
+        onConfirm={() => {
+          setAsking(false);
+          onClearEarlier();
+        }}
+        title="이전 대화를 모두 지울까요?"
+        tone="danger"
+        visible={asking}
+      />
+    </>
   );
 }
 
 // Every question of the conversations kept while the app runs (board 16), under the title "이전 질문" with "＋ 새 질문"
 // always in reach at its right, outside the scroll (P04 ticket 49). The current conversation's questions come first
-// ("지금 대화"), then the kept ones' ("이전 대화", with "모두 지우기"), each latest first, with when each was asked and what
-// it came to; the turn on screen is marked 지금 (board 9). A press brings that answer back to the map. In the answer's
-// card it is flat (board 6 of the 2026-11-22 redesign).
+// ("지금 대화"), each with when it was asked and what it came to, the one on screen tinted (board 9). The kept
+// conversations follow ("이전 대화"), one row each. A press brings that answer back to the map. In the answer's card
+// it is flat (board 6 of the 2026-11-22 redesign).
 export function QuestionList(props: QuestionListProps): ReactElement {
-  const { rows, onPick, maxHeight, flat = false, onAskNew, onClearEarlier } = props;
+  const { rows, onPick, maxHeight, flat = false, onAskNew, onClearEarlier, onRemoveEarlier } = props;
   const { now, earlier } = groupsOf(rows);
-  const question = (row: QuestionRow): ReactElement => (
-    <Question
-      key={row.turnId}
-      onPress={() => {
-        onPick(row);
-      }}
-      row={row}
-    />
-  );
   return (
     <View style={[flat ? styles.flat : styles.card, { maxHeight }]} testID="question-list">
       <View style={[styles.header, flat && styles.flatHeader]}>
@@ -161,9 +233,18 @@ export function QuestionList(props: QuestionListProps): ReactElement {
       </View>
       <ScrollView contentContainerStyle={!flat && styles.rows} keyboardShouldPersistTaps="handled">
         {earlier.length > 0 && now.length > 0 ? <Text style={[styles.group, styles.groupRow]}>지금 대화</Text> : null}
-        {now.map((row) => question(row))}
-        {earlier.length === 0 ? null : <EarlierHeader count={earlier.length} onClear={onClearEarlier} />}
-        {earlier.map((row) => question(row))}
+        {now.map((row) => (
+          <Question
+            key={row.turnId}
+            onPress={() => {
+              onPick(row);
+            }}
+            row={row}
+          />
+        ))}
+        {earlier.length === 0 ? null : (
+          <Earlier onClearEarlier={onClearEarlier} onPick={onPick} onRemoveEarlier={onRemoveEarlier} rows={earlier} />
+        )}
       </ScrollView>
     </View>
   );
@@ -201,17 +282,10 @@ const styles = StyleSheet.create({
     paddingTop: space[2],
   },
   group: { ...text.caption, flexShrink: 1, color: color.inkSubtle },
-  confirm: {
-    gap: space[1],
-    marginTop: space[2],
-    padding: space[3],
-    borderRadius: radius.md,
-    backgroundColor: color.surfaceSunken,
-  },
-  question: { ...text.label, color: color.ink },
-  keepNote: { ...text.caption, color: color.inkMuted },
-  confirmButtons: { flexDirection: 'row', gap: space[2], marginTop: space[2] },
-  half: { flex: 1 },
+  onScreen: { backgroundColor: color.blue50 },
+  conversation: { flexDirection: 'row', alignItems: 'center' },
+  conversationBody: { flex: 1, minWidth: 0 },
+  trash: { marginRight: INSET },
   wordButton: { justifyContent: 'center', minHeight: 32 },
   wordButtonWords: { ...text.label, color: color.inkMuted },
   strong: { color: color.snuBlue },
@@ -232,7 +306,6 @@ const styles = StyleSheet.create({
   words: { flex: 1, minWidth: 0, gap: 2 },
   asked: { ...text.label, color: color.ink },
   outcome: { ...text.caption, color: color.inkMuted },
-  now: { ...text.label, color: color.snuBlue },
 });
 
 // Where the list stands and how much it may take, over the map.
