@@ -34,3 +34,10 @@ A reply with a library book card is drawn on the map (board 5): a flag on 관정
 - [ ] A tap on the flag opens 다른 자리 고르기. (Integration test.)
 - [ ] The booking on a phone with the mock build, logged out of the library. (Emulator.)
 - [ ] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 25 minutes (an estimate; one Opus 5.5 session that also built ticket 06, split by time).
+- Tokens: about 55,000 output; input about 29.5 million, of which about 29.3 million cache reads, 179,000 cache writes, and 200 uncached (the session's totals split by the same share).
