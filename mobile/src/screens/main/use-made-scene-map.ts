@@ -15,6 +15,7 @@ import { proposalScene, proposalSetting } from '@/features/assistant/proposal-sc
 import type { MapAvatar, MarkerLook } from '@/map';
 import type { ChatSheetControl } from './chat-sheet';
 import type { Room } from './layout';
+import { useFadedFaces } from './use-answer-faces';
 import { bookingKept } from './library/booking-kept';
 import {
   ANSWER_LIMITS,
@@ -28,6 +29,7 @@ import {
 import type { MainMap } from './use-main-map';
 
 const NO_LOOKS: readonly MarkerLook[] = [];
+const NO_AVATARS: readonly MapAvatar[] = [];
 export const MADE_FLAG_ID = 'answer:pick';
 
 // The positions of the everyday map's Friends, by user id.
@@ -58,7 +60,8 @@ function isPick(id: string): boolean {
 }
 
 // A scene the app made drawn on the map as a Plan is: its flag, which opens its card with `onFlag`, the User's walk,
-// and the faces it draws. The everyday Avatars of other people stay, and the User's own when the User has no position.
+// and the faces it draws. The everyday Avatars of other people stay, faint as behind a Plan (`useFadedFaces`), and the
+// User's own when the User has no position.
 function useSceneMap(
   made: Made | null,
   map: MainMap,
@@ -74,13 +77,14 @@ function useSceneMap(
   );
   const framing = useFraming(map, room, true);
   const base = useBase(draw);
+  const others = base === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, base);
+  const faces = useFadedFaces(others);
   const drawn = useDrawnMap(draw, base, made?.source ?? null, NO_LOOKS, map, framing, made?.scene.routes, isPick);
   if (drawn === null || made === null) {
     return null;
   }
-  const { markers, lines, drawing } = drawn;
-  const others = othersOf(everyday.avatars, everyday.cards, drawing);
-  const avatars = me.position === null ? [...others, ...me.avatars] : others;
+  const { markers, lines } = drawn;
+  const avatars = me.position === null ? [...faces, ...me.avatars] : faces;
   const onPress = (id: string): void => {
     if (isPick(id)) {
       onFlag(id, made.flag);
