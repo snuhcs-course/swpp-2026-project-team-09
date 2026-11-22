@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type DayItem, freeTimeOf, type FreeInterval, startOfDay } from '../free-time/free-time.js';
@@ -55,6 +56,14 @@ export interface LeaveBy {
   at: string;
   for: '수업' | '일정';
   start: string;
+}
+
+// A filled seat's arrival on its card: when the User reaches 관정관, their walk, and the label of the Place they set out
+// from.
+export interface SeatArrival {
+  at: string;
+  walkMinutes: number;
+  from: string;
 }
 
 // Minutes of the day in Korea, a part of a minute counted as a whole one.
@@ -134,6 +143,18 @@ export function leaveByOf(facts: SeatFacts, arrival: string, bookingEnd: string)
     for: next.isClass ? '수업' : '일정',
     start: clockOfMinutes(next.minutes),
   };
+}
+
+// The card's arrival; none when where the User sets out from is not known, the seat then being filled from now.
+export function cardArrival(
+  { arrival }: Pick<SeatFill, 'arrival'>,
+  placeLabel: (placeId: string) => string | null,
+): SeatArrival | null {
+  const from = arrival.fromPlaceId === null ? null : placeLabel(arrival.fromPlaceId);
+  if (from === null || arrival.walkMinutes === null) {
+    return null;
+  }
+  return { at: arrival.at, walkMinutes: arrival.walkMinutes, from };
 }
 
 // The words of a filled seat: when the User arrives and the booking starts, and when to leave for what follows. The

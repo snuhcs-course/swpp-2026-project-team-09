@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { NotFoundException } from '@nestjs/common';
@@ -14,6 +15,7 @@ import { defineTool, type Tool, type ToolContext } from '../feature.js';
 import { koreaDate } from '../korea-time.js';
 import { shownMinutes } from '../../travel/travel.js';
 import { clockTime, dateInput } from '../free-time/tool-parts.js';
+import { placeLabelOf } from '../gathering/place-naming.js';
 import { noteNotDone, refusedBookingStep } from '../steps/plan-steps.js';
 import {
   checkBooking,
@@ -36,7 +38,15 @@ import {
   SIGN_IN_FIRST,
   spaceIdInput,
 } from './library-parts.js';
-import { fillSeat, filledWords, leaveByOf, type SeatFacts, type SeatFill, seatedAt } from './seat-arrival.js';
+import {
+  cardArrival,
+  fillSeat,
+  filledWords,
+  leaveByOf,
+  type SeatFacts,
+  type SeatFill,
+  seatedAt,
+} from './seat-arrival.js';
 
 const words = (max: number): z.ZodString => z.string().trim().min(1).max(max);
 
@@ -200,6 +210,14 @@ interface Checked {
 // Shows the book card of a booking that passed, and answers its summary, with the arrival of a filled seat.
 function shownBooking(services: LibraryServices, context: ToolContext, checked: Checked): object {
   const { space, booking, party, filling, askedToBook } = checked;
+  const end = clockOfMinutes(minutesOfClock(booking.start) + booking.minutes);
+  const leaveBy = filling === null ? null : leaveByOf(filling.facts, filling.fill.arrival.at, end);
+  const { places } = services.arrival;
+  const placeLabel = (id: string): string | null => {
+    const place = places.byId(id);
+    return place === null ? null : placeLabelOf(place);
+  };
+  const arrival = filling === null ? null : cardArrival(filling.fill, placeLabel);
   showCard(
     context.presented,
     bookCard(space, {
@@ -211,13 +229,12 @@ function shownBooking(services: LibraryServices, context: ToolContext, checked: 
         ...(filling === null ? [] : [filling.fill.note]),
         ...firstOfSeveralNote(context, space.id),
       ],
+      ...(filling === null ? {} : { leaveBy: leaveBy?.at ?? null, ...(arrival === null ? {} : { arrival }) }),
     }),
   );
   if (filling === null) {
     return { result: 'shown', summary: summaryOf(space, booking, party, context.now, { askedToBook }) };
   }
-  const end = clockOfMinutes(minutesOfClock(booking.start) + booking.minutes);
-  const leaveBy = leaveByOf(filling.facts, filling.fill.arrival.at, end);
   const filled = filledWords(filling.fill, leaveBy, end);
   return {
     result: 'shown',
