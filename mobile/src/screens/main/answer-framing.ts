@@ -11,13 +11,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AnswerReply } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { answerCamera, panToShow, type ViewArea } from '@/features/assistant/answer-camera';
-import type { LabelView } from '@/features/assistant/answer-labels';
+import { type LabelView, ONE_POINT } from '@/features/assistant/answer-labels';
 import { type AnswerDrawing, drawingOf, looksOf } from '@/features/assistant/answer-marks';
 import type { Standing } from '@/features/assistant/invited-friends';
 import { drawsMeal } from '@/features/assistant/meal-marks';
 import { ANSWER_SYMBOL_BOX, answerLabelBox } from '@/design-system';
-import { type FitPadding, type MarkerLook, NATIVE_MIN_LEVEL, nativeLevelZoom, type Size, ZOOM_OFFSET } from '@/map';
-import { labelArea, paddingOf } from './answer-padding';
+import {
+  type FitPadding,
+  inView,
+  type MarkerLook,
+  NATIVE_MIN_LEVEL,
+  nativeLevelZoom,
+  type Size,
+  ZOOM_OFFSET,
+} from '@/map';
+import { backCorner, labelArea, paddingOf } from './answer-padding';
 import type { Room } from './layout';
 import type { MainMap } from './use-main-map';
 
@@ -85,7 +93,9 @@ export function labelViewOf(
   });
   const whole = labelArea(top, card, view.size, pill, timeBar);
   const area = drawing.keep === undefined ? whole : { ...whole, bottom: whole.bottom - CREDIT };
-  return camera === null ? null : { camera, size: view.size, area, avoid, fontScale };
+  const back = backCorner(top, pill, timeBar);
+  const blocked = back === null ? [] : [back];
+  return camera === null ? null : { camera, size: view.size, area, avoid, fontScale, blocked };
 }
 
 function withCredit(padding: FitPadding, credit: number): FitPadding {
@@ -126,9 +136,25 @@ function pickRoom(drawing: AnswerDrawing, fontScale: number | undefined): ViewAr
 // labels' area.
 export function heldView(first: LabelView | null, drawing: AnswerDrawing | null): LabelView | null {
   const pick = drawing?.pick ?? null;
-  return first === null || drawing === null || pick === null
-    ? first
-    : panToShow(first, pick, pickRoom(drawing, first.fontScale));
+  if (first === null || drawing === null || pick === null) {
+    return first;
+  }
+  const room = pickRoom(drawing, first.fontScale);
+  const shown = panToShow(first, pick, room);
+  return room === undefined ? shown : clearOfControls(shown, pick, room);
+}
+
+// The view panned further down when the chosen place's room would reach under a control over the map's top, as the
+// round "←" under the time bar.
+function clearOfControls(view: LabelView, pick: LatLng, room: ViewArea): LabelView {
+  const { x, y } = inView(pick, view.camera, view.size);
+  const under = (view.blocked ?? []).filter(
+    (box) => x + room.left < box.right && x + room.right > box.left && y + room.top < box.bottom,
+  );
+  const below = Math.max(...under.map(({ bottom }) => bottom));
+  return under.length === 0
+    ? view
+    : panToShow(view, pick, { ...room, top: room.top - (below - view.area.top) - ONE_POINT });
 }
 
 // The first Plan's view, which a meal answer keeps (`heldView`) while it can be chosen from; null for any other answer.

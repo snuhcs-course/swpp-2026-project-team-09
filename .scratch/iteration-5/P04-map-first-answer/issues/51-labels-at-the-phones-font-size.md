@@ -29,12 +29,14 @@ There are three causes:
   - A tag held at a shared point first tries every side clear of the other labels, the faces, and the User's own mark. Failing that, it keeps its number only. Its number is never left out, since it has no dot of its own.
   - The start and the next thing's dark labels may take any side of their point.
   - The chosen place's label and the User's dot never move.
+- **The round "←" under the time bar** (P04 ticket 52): the labels keep clear of its corner, and the view kept while another place is chosen pans the chosen place's label clear of it. Where there is no bar, "←" is in the top the camera already keeps clear of.
 - **Tests run at the usual font scale of 1**, set in the Jest setup; the React Native preset's window says 2.
 
 ## Acceptance criteria
 
 - [x] A meal from 301동 with one Friend there and a few places nearby, at a font scale of 1.3: for every Plan chosen, no label covers another, the User's own mark, or the Friend's face. The exception: with the chosen place at the start's own building, its label, which never moves, stands over the Friend's face beside it. (Unit test.)
 - [x] A label at a font scale of 1.3 is wider and taller than at 1. (Unit test.)
+- [x] No label stands under the round "←" below the time bar, for every Plan chosen. (Unit test.)
 - [x] Answers other than meals keep their drawing. (Existing tests.)
 - [x] No native file changes; lint, format, and types pass on the app.
 

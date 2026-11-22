@@ -14,6 +14,7 @@ import { faceBox, labelBoxAt, type LabelView, overlaps } from '@/features/assist
 import { type AnswerDrawing, drawingOf } from '@/features/assistant/answer-marks';
 import { inView, ZOOM_OFFSET } from '@/map';
 import { heldView, labelViewOf } from '@/screens/main/answer-framing';
+import { backCorner } from '@/screens/main/answer-padding';
 import { LOWEST, SIZE, STATUS_BAR } from '../support/answer-view';
 
 // The labels of a meal answer on a phone with a large system font (P04 ticket 51): a meal from 301동 with one Friend
@@ -103,6 +104,11 @@ describe.each(ANSWER.plans.map(({ place }) => place.label))('%s chosen, at a fon
       labels.slice(at + 1).flatMap((other) => (overlaps(one.box, other.box) ? [`${one.id} × ${other.id}`] : [])),
     );
     expect(covering).toEqual([]);
+  });
+
+  it('draws no label under the round "←" below the time bar', () => {
+    const back = backCorner(STATUS_BAR, true, FRAMING.timeBar);
+    expect(labels.filter(({ box }) => back !== null && overlaps(box, back)).map(({ id }) => id)).toEqual([]);
   });
 
   it("draws no label over the User's own mark or the Friend's face", () => {

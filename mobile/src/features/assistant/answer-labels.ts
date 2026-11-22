@@ -33,6 +33,8 @@ export interface LabelView {
   avoid?: readonly LatLng[];
   // The phone's font size as a share of the usual, which the labels' words are drawn at; left out, 1.
   fontScale?: number;
+  // Controls over the map that labels keep clear of, as the round "←" under the time bar; left out, none.
+  blocked?: readonly ViewArea[];
 }
 
 // What a label says before it has a side.
@@ -219,7 +221,7 @@ export function placeLabels(
   // The people's marks, the User's own and the Friends' faces, which a label that gives way keeps clear of too.
   const pins = view === null ? [] : symbolBoxes(view, points, ({ person = false }) => person);
   const pinned = pins.some((pin) => pin !== null);
-  const boxes: ViewArea[] = [];
+  const boxes: ViewArea[] = [...(view?.blocked ?? [])];
   const placedEither = new Set<string>();
   const labels = marks.map((mark): AnswerLabel | null => {
     const { point, position, words, sides, either } = mark;
