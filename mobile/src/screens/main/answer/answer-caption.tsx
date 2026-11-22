@@ -9,6 +9,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import type { ChatSheetControl } from '../chat-sheet';
+import { MentionWords } from '../mention-words';
 
 interface AnswerCaptionProps {
   control: ChatSheetControl;
@@ -55,7 +56,7 @@ export function AnswerCaption({ control, listOpen, onList }: AnswerCaptionProps)
         testID="answer-caption"
       >
         <Text ellipsizeMode="tail" numberOfLines={1} style={styles.words}>
-          {asked}
+          <MentionWords mentions={control.chat.bubbles.flatMap(({ mentions = [] }) => mentions)} words={asked} />
         </Text>
       </Pressable>
       {list === null ? null : list.onPress === null ? (

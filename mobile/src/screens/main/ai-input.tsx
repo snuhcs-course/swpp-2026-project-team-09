@@ -15,15 +15,18 @@
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
-import { type LayoutChangeEvent, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { type LayoutChangeEvent, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { USER_MESSAGE_MAX } from '@/api/assistant-types';
+import type { Mention } from '@/api/mention-types';
 import { color, Icon, NOT_AUTOFILLED, radius, shadow, space, text } from '@/design-system';
 import type { Restore } from '@/features/assistant/restore';
 import { AI_INPUT } from './layout';
+import { MentionList } from './mention-list';
+import { type MentionFriend, type Mentions, useMentions } from './use-mentions';
 
 // A message sent while a reply is on its way takes that question back (`useChat`'s `send`), so the input never waits.
 interface AiInputProps {
-  onSend: (text: string) => void;
+  onSend: (text: string, mentions: Mention[]) => void;
   // How much higher than its place the bar stands: over the keyboard while it is up, 0 while it is down.
   lift: number;
   // The bar's height, 50 for a line, so that the answer frame's card keeps its content clear of the bar.
@@ -40,6 +43,8 @@ interface AiInputProps {
   focusKey?: number;
   // Whether the field holds nothing but spaces, told at each change of it.
   onEmpty?: (empty: boolean) => void;
+  // The User's Friends, whom "@" lists to mention; none without them.
+  friends?: readonly MentionFriend[];
 }
 
 // The field's height for one line, and the most it grows to before it scrolls.
@@ -54,6 +59,7 @@ const BESIDE_LIFT = 1;
 // The bar is `AI_INPUT.height` high while it holds a line.
 const BAR_RADIUS = 28;
 const BAR_RADIUS_TALL = 22;
+const NO_FRIENDS: readonly MentionFriend[] = [];
 
 // The bar's height from its own layout, whole: a change under 1 is no change. What it sets, the corners and the room
 // the answer frame's card keeps, does not change it. The first layout is always told, so that a bar that comes back
@@ -107,12 +113,14 @@ function useFocusOn(key: number): RefObject<TextInput | null> {
 // ticket 11).
 interface FieldProps {
   message: string;
-  onChange: (message: string) => void;
   placeholder: string;
   field: RefObject<TextInput | null>;
+  mention: Mentions;
 }
 
+// While a mention stands in the words, the field draws them as parts, the mentions in the Friend colour.
 function Field(props: FieldProps): ReactElement {
+  const { mention } = props;
   return (
     <TextInput
       {...NOT_AUTOFILLED}
@@ -120,13 +128,26 @@ function Field(props: FieldProps): ReactElement {
       accessibilityLabel="AI에게 메시지"
       maxLength={USER_MESSAGE_MAX}
       multiline
-      onChangeText={props.onChange}
+      onBlur={mention.onBlur}
+      onChangeText={mention.onChangeText}
+      onFocus={mention.onFocus}
+      onSelectionChange={mention.onSelectionChange}
       placeholder={props.placeholder}
       placeholderTextColor={color.inkMuted}
+      selection={mention.selection}
       style={styles.field}
       submitBehavior="newline"
-      value={props.message}
-    />
+      value={mention.shown ? undefined : props.message}
+    >
+      {mention.shown
+        ? mention.parts.map(({ words, mention: isMention }, index) => (
+            // oxlint-disable-next-line react/no-array-index-key -- the parts are the words in order
+            <Text key={index} style={isMention ? styles.mention : undefined}>
+              {words}
+            </Text>
+          ))
+        : undefined}
+    </TextInput>
   );
 }
 
@@ -168,13 +189,14 @@ export function AiInput(props: AiInputProps): ReactElement {
   const field = useFocusOn(focusKey);
   const [besideWidth, setBesideWidth] = useState(0);
   const [message, setMessage] = useMessage(restore ?? null);
+  const mention = useMentions(message, setMessage, props.friends ?? NO_FRIENDS);
   const [height, laidOut] = useBarHeight(onHeight);
   const canSend = message.trim() !== '';
   useEffect(() => {
     onEmpty?.(!canSend);
   }, [canSend, onEmpty]);
   const send = (): void => {
-    onSend(message.trim());
+    onSend(message.trim(), mention.mentions);
     setMessage('');
   };
   const room = beside === null ? 0 : besideWidth + space[2];
@@ -190,9 +212,10 @@ export function AiInput(props: AiInputProps): ReactElement {
         ]}
         testID="ai-input"
       >
-        <Field field={field} message={message} onChange={setMessage} placeholder={placeholder} />
+        <Field field={field} mention={mention} message={message} placeholder={placeholder} />
         <SendButton canSend={canSend} onPress={send} />
       </View>
+      <MentionList bottom={AI_INPUT.bottom + lift + height + space[2]} mention={mention} />
       {beside === null ? null : (
         <Beside lift={lift} onWidth={setBesideWidth}>
           {beside}
@@ -256,4 +279,5 @@ const styles = StyleSheet.create({
     backgroundColor: color.surfaceSunken,
   },
   sendReady: { backgroundColor: color.snuBlue },
+  mention: { color: color.friend, fontWeight: '600' },
 });
