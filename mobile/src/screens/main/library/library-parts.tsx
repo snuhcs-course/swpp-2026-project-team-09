@@ -105,8 +105,11 @@ export function Notes({ notes }: { notes: readonly string[] }): ReactElement | n
   );
 }
 
+// The word of a button that ends a card without a booking: it does not close anything, it declines (P04 ticket 53).
+export const DECLINE = '예약 안 함';
+
 // What a card that read the library offers when the read failed for another reason than the session: what it could
-// not read, 다시 시도, which reads again, and 닫기.
+// not read, 다시 시도, which reads again, and 예약 안 함.
 export interface ReadAgain {
   words: string;
   onRetry: () => void;
@@ -138,7 +141,7 @@ export function FailureNote({
         <Said tone="danger">{reading.words}</Said>
         <Pills>
           <Pill label={reading.retryWords ?? '다시 시도'} onPress={reading.onRetry} primary />
-          <Pill label="닫기" onPress={reading.onClose} />
+          <Pill label={DECLINE} onPress={reading.onClose} />
         </Pills>
       </View>
     );
