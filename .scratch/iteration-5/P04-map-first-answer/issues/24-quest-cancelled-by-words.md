@@ -31,3 +31,8 @@ Native files: none. Releases: an app OTA update only.
 - [ ] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 30 minutes in one session (an estimate from the transcript's timestamps over 14:28–15:42, which it shared with tickets 25 and 26): the offer, the guard, the row from the screen review, the 파티 fix from the code review, and one failed emulator try. No subagents.
+- Tokens: about 40% of this session's use, an estimate: output about 45k; input about 18M, almost all cache reads (about 17.8M), with about 150k cache writes.
