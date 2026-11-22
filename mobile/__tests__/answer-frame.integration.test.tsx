@@ -48,8 +48,6 @@ const ANSWERED = { status: 200, body: { text: REPLY, mapButtons: [], cards: [], 
 const FAILED = '답을 가져오지 못했어요.';
 const WAITING = '보는 중';
 const CLOSE = '답 닫기';
-// PHONE_NOW, 04:00 UTC, in Korea.
-const ASKED_AT = '13:00';
 const NOTICE = '대화 내용은 AI 제공자에게 전송돼요';
 // The request context of this ticket: the User's position, no reason it is missing, and nothing of an answer on screen
 // yet.
@@ -284,7 +282,7 @@ describe('a failure in the frame', () => {
 });
 
 describe('the bar and the keyboard', () => {
-  it("stands over the keyboard, and the card's caption and content give way to the conversation's questions", async () => {
+  it("stands over the keyboard, and the card's caption gives way to the reply's first line, with no questions", async () => {
     const user = await openMain();
     await ask(user);
 
@@ -292,8 +290,9 @@ describe('the bar and the keyboard', () => {
 
     // The bar's 12 above the keyboard, which the tests' phone counts from the bottom of the screen.
     expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 + KEYBOARD });
-    const questions = within(card().getByTestId('question-list'));
-    expect(questions.getByRole('button', { name: `${ASKED_AT}, ${ASKED}, ${REPLY}, 지금` })).toBeVisible();
+    // P04 ticket 52: the input's focus opens no questions; the history chip alone does.
+    expect(card().queryByTestId('question-list')).toBeNull();
+    expect(screen.getByTestId('typing-words')).toHaveTextContent(REPLY);
     expect(screen.queryByTestId('answer-caption')).toBeNull();
   });
 

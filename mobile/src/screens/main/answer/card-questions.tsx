@@ -35,9 +35,6 @@ export const QUESTIONS_MAX = 240;
 const QUESTION_LINES = 3;
 const SENTENCE_LINES = 2;
 
-// While typing, about two rows above the input.
-const TYPING_QUESTIONS_MAX = 150;
-
 // "＋ 새 질문" under the questions the caption opened: it leaves the answer as "←" does, keeping the conversation, and
 // puts the cursor in the main map's input, whose message starts a new conversation (P04 ticket 44).
 function AskNewRow({ onPress }: { onPress: () => void }): ReactElement {
@@ -157,8 +154,9 @@ function TypingOffers({ control }: { control: ChatSheetControl }): ReactElement 
 
 // While the keyboard is up on the answer, above the input (the rule of 2026-11-22): only what the User answers, never
 // cut, in the type it has with the keyboard down. A reply that asks shows its question whole with the ways it offers to
-// answer; one that asks nothing shows its first sentence, the conversation's questions as one-line rows, its offers,
-// and its follow-ups (board 6 of the 2026-11-22 redesign). The caption and the card's other buttons give way.
+// answer; one that asks nothing shows its first sentence, its offers, and its follow-ups. The conversation's questions
+// open by the history chip alone, never by the input's focus (P04 ticket 52). The caption and the card's other buttons
+// give way.
 export function Typing({ control }: { control: ChatSheetControl }): ReactElement {
   const { bubbles, waiting } = control.chat;
   const reply = turnOf(bubbles)?.after[0];
@@ -167,15 +165,6 @@ export function Typing({ control }: { control: ChatSheetControl }): ReactElement
   return (
     <>
       {said === null ? null : <TypingLine said={said} />}
-      {asks ? null : (
-        <CardQuestions
-          control={control}
-          maxHeight={TYPING_QUESTIONS_MAX}
-          onDone={() => {
-            Keyboard.dismiss();
-          }}
-        />
-      )}
       <TypingOffers control={control} />
       {waiting ? null : <LeaveRow control={control} />}
       {waiting || asks ? null : <FollowUps control={control} />}

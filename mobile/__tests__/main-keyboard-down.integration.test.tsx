@@ -163,8 +163,10 @@ describe("the AI input's own parts while the keyboard is up", () => {
 
     await press(user, '배고파');
     await pass(300);
+    // The tests' phone has no keyboard of its own to put down; down, the caption names what was asked.
+    await hideKeyboard();
 
-    expect(screen.getByTestId('answer-card')).toHaveTextContent(/배고파/u);
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent(/배고파/u);
   });
 
   it('show the hidden answer frame again by the chip "이어서"', async () => {
@@ -174,8 +176,9 @@ describe("the AI input's own parts while the keyboard is up", () => {
     await showKeyboard(KEYBOARD);
 
     await reopenAnswer(user);
+    await hideKeyboard();
 
-    expect(screen.getByTestId('answer-card')).toHaveTextContent(/식사 메뉴 추천/u);
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent(/식사 메뉴 추천/u);
   });
 });
 
@@ -220,27 +223,22 @@ describe('a press beside the AI input in the answer frame', () => {
     await press(user, SCRIM);
 
     expect(dismiss).toHaveBeenCalled();
-    expect(screen.getByTestId('answer-card')).toHaveTextContent(/식사 메뉴 추천/u);
+    await hideKeyboard();
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent(/식사 메뉴 추천/u);
     expect(screen.getByTestId('answer-card')).toBeVisible();
   });
 });
 
-// Partitions: the keyboard up, where the card shows the questions above the input (board 6 of the 2026-11-22 redesign),
-// and down, where the caption opens them.
+// Partitions: the keyboard up, where the input's focus opens no questions (P04 ticket 52), and down, where the caption
+// opens them.
 describe("the conversation's questions in the answer's card", () => {
-  it('stand above the input while the keyboard is up, and a press on one puts the keyboard down', async () => {
+  it('stay closed while the keyboard is up: the input brings the keyboard and the follow-ups alone', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
+
     await showKeyboard(KEYBOARD);
-    const dismiss = quietDismiss();
 
-    const [row] = within(screen.getByTestId('question-list')).getAllByTestId('question-row');
-    if (row === undefined) {
-      throw new Error('no question in the card');
-    }
-    await user.press(row);
-
-    expect(dismiss).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('question-list')).toBeNull();
     expect(screen.getByTestId('answer-card')).toBeVisible();
   });
 

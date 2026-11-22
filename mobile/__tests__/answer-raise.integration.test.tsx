@@ -7,7 +7,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { act, fireEvent, within } from '@testing-library/react-native';
+import { act, fireEvent } from '@testing-library/react-native';
 import { StyleSheet, type ViewStyle } from 'react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { listsTop } from '@/screens/main/layout';
@@ -150,8 +150,8 @@ describe("a drag on the answer card's handle", () => {
   });
 });
 
-// Partitions: the keyboard up while raised and lowered. Board 6 of the 2026-11-22 redesign: while typing on the lowered
-// card, the conversation's questions stand above the input in place of the answer and its caption.
+// Partitions: the keyboard up while raised and lowered. While typing on the lowered card, the reply's first line stands
+// above the input in place of the answer and its caption; the questions open by the history chip alone (P04 ticket 52).
 describe('the raised card while the keyboard is up', () => {
   it('shows the answer under its caption, not the questions, over the input standing on the keyboard', async () => {
     const user = await framed();
@@ -165,7 +165,7 @@ describe('the raised card while the keyboard is up', () => {
     expect(screen.getByTestId('answer-card-content')).toHaveTextContent(/^오늘 메뉴예요\./u);
   });
 
-  it('shows the questions in place of the answer once lowered, the one on screen marked 지금', async () => {
+  it("shows the reply's first line in place of the answer once lowered, and no questions (P04 ticket 52)", async () => {
     const user = await framed();
     await press(user, HANDLE);
     await showKeyboard(KEYBOARD);
@@ -173,8 +173,8 @@ describe('the raised card while the keyboard is up', () => {
     await press(user, HANDLE);
 
     expect(screen.queryByTestId('answer-caption')).toBeNull();
-    const list = within(screen.getByTestId('question-list'));
-    expect(list.getByRole('button', { name: /식사 메뉴 추천, .+, 지금$/u })).toBeVisible();
+    expect(screen.queryByTestId('question-list')).toBeNull();
+    expect(screen.getByTestId('typing-words')).toHaveTextContent(/^오늘 메뉴예요\./u);
   });
 });
 

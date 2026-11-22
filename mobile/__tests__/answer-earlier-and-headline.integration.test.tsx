@@ -5,6 +5,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -15,7 +16,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { hideKeyboard, KEYBOARD, quietDismiss, showKeyboard } from './support/keyboard';
+import { KEYBOARD, showKeyboard } from './support/keyboard';
 import { text as type } from '@/design-system';
 import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
@@ -97,10 +98,6 @@ function card(): ReturnType<typeof within> {
   return within(screen.getByTestId('answer-card'));
 }
 
-function caption(): ReturnType<typeof within> {
-  return within(screen.getByTestId('answer-caption'));
-}
-
 function questions(): string[] {
   return within(screen.getByTestId('question-list'))
     .getAllByTestId('question-row')
@@ -144,31 +141,31 @@ describe('the earlier turns', () => {
   });
 });
 
-// Partitions: a Plan's, a Lookup's and a sentence's reply.
+// Partitions: a Plan's, a Lookup's and a sentence's reply. P04 ticket 52: the input's focus never opens the
+// conversation's questions; they open by the history chip alone.
 describe('the card while the keyboard is up', () => {
-  it("shows the conversation's question in place of the caption and the Plan, and leaves the map as it is", async () => {
+  it("shows neither the questions, the caption, nor the Plan's buttons, and leaves the map as it is", async () => {
     await talk([[ASKED, MEAL_ANSWER_REPLY]]);
 
     await showKeyboard(KEYBOARD);
 
-    expect(questions()).toEqual([`13:00, ${ASKED}, 302동식당 12:15 · 아직 만들지 않음, 지금`]);
-    expect(card().getByTestId('question-list')).toBeVisible();
+    expect(screen.queryByTestId('question-list')).toBeNull();
     expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(screen.queryByRole('button', { name: '같이 먹을 친구 추가' })).toBeNull();
     expect(screen.queryByTestId('ai-input-beside')).toBeNull();
     expect(screen.getByLabelText(PLAN_MARK)).toBeOnTheScreen();
   });
 
-  it("names the Lookup's reply in its question's row, without the Lookup's buttons", async () => {
+  it("leaves out a Lookup's buttons and the questions", async () => {
     await talk([['문화관이 어디야?', WAY_LOOKUP_REPLY]]);
 
     await showKeyboard(KEYBOARD);
 
-    expect(questions()).toEqual([`13:00, 문화관이 어디야?, ${WAY_LOOKUP_REPLY.text}, 지금`]);
+    expect(screen.queryByTestId('question-list')).toBeNull();
     expect(card().queryByRole('button', { name: '길 안내' })).toBeNull();
   });
 
-  it("gives a sentence's reply its first line alone, the latest question first", async () => {
+  it("gives a sentence's reply its first line alone", async () => {
     await talk([
       [ASKED, MEAL_ANSWER_REPLY],
       ['셔틀 어디 있어?', TEXT_REPLY],
@@ -176,10 +173,10 @@ describe('the card while the keyboard is up', () => {
 
     await showKeyboard(KEYBOARD);
 
-    expect(questions()).toEqual([
-      '13:00, 셔틀 어디 있어?, 셔틀 두 대가 정문과 자연대에 있어요., 지금',
-      `13:00, ${ASKED}, 302동식당 12:15 · 아직 만들지 않음`,
-    ]);
+    expect(screen.getByTestId('typing-words')).toHaveTextContent('셔틀 두 대가 정문과 자연대에 있어요.', {
+      exact: true,
+    });
+    expect(screen.queryByTestId('question-list')).toBeNull();
     expect(card().queryByText('정문 셔틀이 먼저 와요.')).toBeNull();
   });
 });
@@ -209,7 +206,7 @@ describe("the reply's words above the keyboard", () => {
     expect(card().queryByText(/넉넉해요/u)).toBeNull();
   });
 
-  it("show a sentence's first sentence on two lines, with the rows, and the placeholder as it was", async () => {
+  it("show a sentence's first sentence on two lines, without the rows, and the placeholder as it was", async () => {
     await talk([['셔틀 어디 있어?', TEXT_REPLY]]);
 
     await showKeyboard(KEYBOARD);
@@ -217,18 +214,21 @@ describe("the reply's words above the keyboard", () => {
     const words = screen.getByTestId('typing-words');
     expect(words).toHaveTextContent('셔틀 두 대가 정문과 자연대에 있어요.', { exact: true });
     expect(words).toHaveProp('numberOfLines', 2);
-    expect(screen.getByTestId('question-list')).toBeVisible();
+    expect(screen.queryByTestId('question-list')).toBeNull();
     expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', '이어서 말하기');
   });
 });
 
-// Partitions: a message sent while the caption's list is open (PR 479's review).
+// Partitions: the caption's list open, then closed for a message (PR 479's review; P04 ticket 52: the input gives the
+// list its room).
 describe("the caption's list across turns", () => {
-  it('closes when a message is sent, so that the card shows the new turn', async () => {
+  it("takes the input's room, gives it back when it closes, and a message then shows the new turn", async () => {
     const user = await talk([[ASKED, MEAL_ANSWER_REPLY]]);
     await user.press(screen.getByTestId('answer-caption'));
     expect(card().getByTestId('question-list')).toBeVisible();
+    expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
 
+    await user.press(screen.getByTestId('answer-caption'));
     server.on('POST /assistant/messages', { status: 200, body: TEXT_REPLY, afterMs: 500 });
     await send(user, '셔틀 어디 있어?');
     await pass(500);
@@ -238,33 +238,17 @@ describe("the caption's list across turns", () => {
   });
 });
 
-// Partitions: the reply on its way; an earlier question pressed.
-describe('the questions while the keyboard is up', () => {
-  it('mark the question on its way as waiting, with neither the dots nor 그만', async () => {
+// Partitions: the reply on its way while typing.
+describe('the card while the keyboard is up and a reply is on its way', () => {
+  it('shows neither the dots, 그만, nor the questions', async () => {
     server.on('POST /assistant/messages', { status: 200, body: TEXT_REPLY, afterMs: 1000 });
     const user = await openMain();
     await send(user, '셔틀 어디 있어?');
 
     await showKeyboard(KEYBOARD);
 
-    expect(questions()).toEqual(['13:00, 셔틀 어디 있어?, 답을 기다리는 중, 지금']);
+    expect(screen.queryByTestId('question-list')).toBeNull();
     expect(card().queryByLabelText('보는 중')).toBeNull();
     expect(card().queryByRole('button', { name: '그만' })).toBeNull();
-  });
-
-  it('put the keyboard down when one is pressed, and show its turn', async () => {
-    const user = await talk([
-      [ASKED, MEAL_ANSWER_REPLY],
-      ['셔틀 어디 있어?', TEXT_REPLY],
-    ]);
-    await showKeyboard(KEYBOARD);
-    const dismiss = quietDismiss();
-
-    await user.press(card().getByRole('button', { name: new RegExp(`^13:00, ${ASKED}`, 'u') }));
-    // The tests' phone has no keyboard of its own to put down.
-    await hideKeyboard();
-
-    expect(dismiss).toHaveBeenCalled();
-    expect(caption().getByText(ASKED)).toBeVisible();
   });
 });
