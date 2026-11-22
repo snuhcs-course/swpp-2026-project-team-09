@@ -196,7 +196,7 @@ describe("the pick's label of board a6's first Plan at the emulator's camera", (
     expect(seen(drawing, 'answer:pick').label).toMatchObject({
       side: 'above',
       tone: 'pick',
-      title: '302동 앞',
+      title: '302동 앞 ›',
       line: '14:07 만남',
       number: 1,
     });

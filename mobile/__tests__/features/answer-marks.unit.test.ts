@@ -45,7 +45,7 @@ describe('the marks of the answer for two people, its first Plan', () => {
     expect(seen(drawing, 'answer:pick')).toEqual({
       name: '302동식당 · 12:15 점심',
       symbol: null,
-      label: label('below', 'pick', '302동식당', { line: '12:15 점심', number: 1 }),
+      label: label('below', 'pick', '302동식당 ›', { line: '12:15 점심', number: 1 }),
       planId: null,
     });
   });
@@ -173,7 +173,7 @@ describe('the marks of the answer for two people, its third Plan', () => {
     expect(seen(drawing, 'answer:pick')).toEqual({
       name: '학생회관식당 · 12:33 점심',
       symbol: { type: 'dot', role: 'pick', number: 3 },
-      label: label('below', 'pick', '학생회관식당', { line: '12:33 점심' }),
+      label: label('below', 'pick', '학생회관식당 ›', { line: '12:33 점심' }),
       planId: null,
     });
     expect(seen(drawing, 'answer:candidate:3식당')).toMatchObject({ symbol: { number: 4 }, label: { side: 'left' } });
@@ -290,7 +290,7 @@ describe("the pick's day", () => {
     expect(seen(drawingOf(tomorrow, 0), 'answer:pick')).toEqual({
       name: '302동식당 · 내일(화) 12:15 점심',
       symbol: null,
-      label: label('below', 'pick', '302동식당', { line: '내일(화) 12:15 점심', number: 1 }),
+      label: label('below', 'pick', '302동식당 ›', { line: '내일(화) 12:15 점심', number: 1 }),
       planId: null,
     });
   });
