@@ -11,6 +11,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -41,7 +42,7 @@ import type { Slot } from '@/library/cards/payloads';
 import { useAskApp } from './app-turn';
 import { type EarlierConversation, useConversations } from './conversations';
 import { useLetGo, useWaiting } from './let-go';
-import { withSaidOf } from './mentions';
+import { contextFor } from './request-context';
 import { shownText } from './shown-text';
 import { useProposalMade } from './proposal-made';
 
@@ -344,7 +345,7 @@ export function useChat(readContext: () => RequestContext): Chat {
   const ask = useCallback((): void => {
     const asked = conversation.current;
     setWaiting(true);
-    void answerTo(messagesToSend(said.current, roomsShown.current), withSaidOf(context.current(), said.current)).then(
+    void answerTo(messagesToSend(said.current, roomsShown.current), contextFor(context.current(), said.current)).then(
       (answer) => {
         if (asked === conversation.current) {
           add(answer);
