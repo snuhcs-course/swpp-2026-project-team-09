@@ -3604,9 +3604,16 @@ signalled, so that the Quests' module need not import the Plans' module. `Invite
 `src/plans/invitee-time-to-leave.service.ts` is one: it works out the User's own way as the invitation's card does, from
 their Timetable alone since the accept carries no position, and leaves the Quest's own steps out of their day. It
 schedules the `leave-by` for the time that way sets out, with the Restaurant of a Plan's meal step (its title reads
-"<Restaurant>에서 식사") or else the gathering's Place as `placeLabel()` names it, and the walking minutes of the whole
-way, without the answer waiting for it; a failure is logged as a warning. None is kept when the way has no time to set
-out or the walk is 0 minutes.
+"<Restaurant>에서 식사") or else the gathering's Place as `placeLabel()` names it, and the minutes of the whole way,
+by the shuttle (`by: 'shuttle'`) when the way is, without the answer waiting for it; a failure is logged as a warning.
+None is kept when the way has no time to set out or the way is 0 minutes.
+
+The User's own way (`src/plans/own-way.ts`, `own-way-going.ts`) follows the rules the Plan was made by. It goes through
+the Merging Point on foot when that lies on their way and they can be there by its start, unless their own way by the
+shuttle would get them there sooner. Otherwise it goes straight, by the shuttle of that day and hour when that is 3
+minutes faster, weighed again at the time they set out. The card's `OwnWay` then carries `mode: 'shuttle'` and
+`shuttle: { boardAt, getOffAt }`, its line says "셔틀로 13분 (301동 정류장 → 경영대 정류장)", and its route carries
+`mode: 'shuttle'`.
 
 A User has one `leave-by` for a party. It is cancelled when the User leaves the Quest, by dropping it or by the Leader's
 removal, and when the Leader ends the Quest, for every Holder it had. No answer waits for a cancel, and a failure is

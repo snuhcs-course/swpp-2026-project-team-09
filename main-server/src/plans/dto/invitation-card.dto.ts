@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -40,6 +41,9 @@ export interface OwnWay {
   // At most two.
   lines: AnswerLine[];
   scene: MapScene;
+  // 'shuttle' when their own way is by the shuttle, with its stops by name; absent for a walk.
+  mode?: 'shuttle';
+  shuttle?: { boardAt: string; getOffAt: string };
 }
 
 // Where the invitee's phone is now: both or neither.

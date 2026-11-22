@@ -4,22 +4,24 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type MapScene, type PlacePoint } from '../assistant/dto/answer.dto.js';
 import { clockOf, type DayItem, freeTimeOf } from '../assistant/free-time/free-time.js';
 import { itemAt, withAnd } from '../assistant/gathering/answer-words.js';
-import { DETOUR_MINUTES, gather, MINUTE_MS, onFoot } from '../assistant/gathering/gathering.js';
+import { gather, type GatheringTravel, MINUTE_MS, onFoot } from '../assistant/gathering/gathering.js';
 import { koreaDate, koreaTime } from '../assistant/korea-time.js';
 import { type Position } from '../common/geometry.js';
 import { type PlaceDto } from '../places/dto/place.dto.js';
-import { shownMinutes, type TravelProvider } from '../travel/travel.js';
+import { shownMinutes } from '../travel/travel.js';
+import { goingFrom, type OwnLeg } from './own-way-going.js';
 import { type OwnWay } from './dto/invitation-card.dto.js';
 
 // A person's own way to a Quest's gathering from the Quest's steps, their day, and their location, by the gathering
 // calculation's rules; a late Holder sets out `lateMinutes` after the way on time. It knows nothing of the database.
 
-type Walking = Pick<TravelProvider, 'walkingSeconds'>;
+type Walking = GatheringTravel;
 
 export interface CardStep {
   id: string;
@@ -95,18 +97,12 @@ export function placePoint(placeId: string, placeOf: (placeId: string) => PlaceD
   return { placeId, label: placeLabel(place), latitude: place.latitude, longitude: place.longitude };
 }
 
-interface Leg {
-  from: string;
-  to: string;
-  minutes: number;
-}
-
 interface Way {
   status: OwnWay['status'];
   origin: { placeId: string; basis: 'timetable' | 'location' } | null;
   leaveAt: Date | null;
   arriveAt: Date | null;
-  legs: Leg[];
+  legs: OwnLeg[];
   // Their Merging Point, when they take it.
   meeting: TimedStep | null;
   next: { start: Date; placeId: string | null; isClass: boolean } | null;
@@ -114,38 +110,6 @@ interface Way {
 }
 
 const NO_WAY = { origin: null, leaveAt: null, arriveAt: null, legs: [], meeting: null };
-
-type Going = Pick<Way, 'arriveAt' | 'legs' | 'meeting'> & { leaveAt: Date };
-
-// Through the Merging Point when it lies on their way and they can be there by its start; straight otherwise, as late
-// as still has them there at the start, or as soon as they are ready.
-function goingFrom(from: string, readyAt: Date, { destination, meeting }: Gathered, travel: Walking): Going {
-  const straight = minutes(from, destination.placeId, travel);
-  if (meeting !== null && from !== meeting.placeId && from !== destination.placeId) {
-    const toMeeting = minutes(from, meeting.placeId, travel);
-    const onward = minutes(meeting.placeId, destination.placeId, travel);
-    const onTheWay = toMeeting + onward - straight <= DETOUR_MINUTES;
-    if (onTheWay && plusMinutes(readyAt, toMeeting) <= meeting.start) {
-      return {
-        leaveAt: plusMinutes(meeting.start, -toMeeting),
-        arriveAt: plusMinutes(meeting.start, onward),
-        legs: [
-          { from, to: meeting.placeId, minutes: toMeeting },
-          { from: meeting.placeId, to: destination.placeId, minutes: onward },
-        ],
-        meeting,
-      };
-    }
-  }
-  const canArriveAt = plusMinutes(readyAt, straight);
-  const late = canArriveAt > destination.start;
-  return {
-    leaveAt: late ? readyAt : plusMinutes(destination.start, -straight),
-    arriveAt: late ? canArriveAt : destination.start,
-    legs: [{ from, to: destination.placeId, minutes: straight }],
-    meeting: null,
-  };
-}
 
 function wayOf({ gathered, invitee, items, location, now, travel }: OwnWayArgs, late?: number): Way {
   const { destination } = gathered;
@@ -183,6 +147,17 @@ function wayOf({ gathered, invitee, items, location, now, travel }: OwnWayArgs, 
 
 const plain = (text: string): AnswerLine => [{ text, strong: false }];
 
+// "걸어서 12분", or by the shuttle "셔틀로 12분 (301동 정류장 → 경영대 정류장)".
+function wayWords(total: number, legs: readonly OwnLeg[]): string {
+  const stops = legs.find((leg) => leg.by === 'shuttle')?.shuttle;
+  if (stops === undefined) {
+    return `걸어서 ${total}분`;
+  }
+  return stops === null
+    ? `셔틀로 ${total}분`
+    : `셔틀로 ${total}분 (${stops.boardAt} 정류장 → ${stops.getOffAt} 정류장)`;
+}
+
 function wayLine({ status, leaveAt, arriveAt, legs }: Way, walkMinutes: number, args: OwnWayArgs): AnswerLine | null {
   if (status === 'busy') {
     return plain('그 시간에는 다른 일정이 있어요.');
@@ -193,7 +168,7 @@ function wayLine({ status, leaveAt, arriveAt, legs }: Way, walkMinutes: number, 
   if (leaveAt === null || arriveAt === null || legs.length === 0) {
     return null;
   }
-  const walked = walkMinutes > 0 ? [{ text: ` 걸어서 ${walkMinutes}분.`, strong: false }] : [];
+  const walked = walkMinutes > 0 ? [{ text: ` ${wayWords(walkMinutes, legs)}.`, strong: false }] : [];
   if (arriveAt > args.gathered.destination.start) {
     return [{ text: `${clockOf(arriveAt)}에야 도착해요.`, strong: true }, ...walked];
   }
@@ -258,6 +233,7 @@ function sceneOf(way: Way, walkMinutes: number, args: OwnWayArgs): MapScene {
     from: at(leg.from),
     to: at(leg.to),
     minutes: leg.minutes,
+    ...(leg.by === 'shuttle' ? { mode: 'shuttle' as const } : {}),
   }));
   const flags: MapScene['flags'] = [
     { at: at(destination.placeId), text: `${clockOf(destination.start)} ${destination.title}`, role: 'place' },
@@ -297,6 +273,7 @@ export function ownWay(args: OwnWayArgs, lateMinutes?: number): OwnWay {
   const way = wayOf(args, lateMinutes);
   const { placeOf } = args;
   const walkMinutes = way.legs.reduce((total, leg) => total + leg.minutes, 0);
+  const shuttle = way.legs.find((leg) => leg.by === 'shuttle');
   return {
     status: way.status,
     origin: way.origin === null ? null : { place: placePoint(way.origin.placeId, placeOf), basis: way.origin.basis },
@@ -317,5 +294,7 @@ export function ownWay(args: OwnWayArgs, lateMinutes?: number): OwnWay {
           },
     lines: linesOf(way, walkMinutes, args),
     scene: sceneOf(way, walkMinutes, args),
+    ...(shuttle === undefined ? {} : { mode: 'shuttle' as const }),
+    ...(shuttle === undefined || shuttle.shuttle === null ? {} : { shuttle: shuttle.shuttle }),
   };
 }
