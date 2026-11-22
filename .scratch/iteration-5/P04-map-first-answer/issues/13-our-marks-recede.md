@@ -1,7 +1,7 @@
 # 13: Our own marks recede while an answer is up
 
 Parent: [P04 spec](../spec.md)
-Status: ready-for-agent
+Status: in-progress
 Blocked by: [05](05-lookups-and-words-one-line.md), so that every answer draws on the map the same way first.
 
 Native files: none. Releases: an app OTA update only.
@@ -30,11 +30,26 @@ While an answer is up, only the answer's place, its route, and its people stand 
 - A press on a candidate shows its Plan; a press on a Friend's face with + adds them.
 - The camera's fit and the labels' placement (`answer-labels`, `answer-camera-kept`).
 
+## Decided while building (2026-11-22)
+
+- More than five candidates: every candidate keeps its numbered dot. Where room is short the tags of candidates standing alone in the view are left out from the lowest rank upward, never a higher-ranked one before a lower-ranked one; the pick always keeps its flag; a dot without a tag still takes the press and gets its flag when pressed.
+- A candidate without a menu: one line (number, name, time). A buffet (`Plan.menu.price`): its price once, without 부터 ("나가사키꼬치어묵 외 1 · 6,500원"); dishes of equal price: one price without 부터.
+- The faces of Friends the answer does not draw are faint (opacity 0.55); the face whose add is on its way is lit. The app's own campus marks are already replaced while an answer is up; Kakao's base labels stay.
+- Every candidate's tag carries its number, and its dot at the place keeps it too (screen review: a tag read alone says which candidate it is, the number the list of ticket 15 uses). Two-line tags and the pick's flag may grow to 260 points.
+- A screen reader reads a candidate as its tag reads ("후보 2 · 301동식당 · 12:18 · 부대짬뽕&군만두 외 4 · 5,000원부터").
+
 ## Acceptance criteria
 
-- [ ] A meal answer with five Plans: candidates 2 to 5 keep number, name, and time; only the pick's route is drawn; a press on candidate 2 makes it the pick and candidate 1 a tag. (Integration test, from the map's markers and lines.)
-- [ ] The Avatars outside the answer and the campus labels have the faded style. (Unit test of the drawing.)
-- [ ] With `Plan.menu`, a meal candidate's tag reads its first dish, the count of the rest, and its lowest price; a dish without a price shows no price; without `Plan.menu` the tag has one line. (Unit test of the marks.)
-- [ ] Two candidates at one point keep both labels when room is short, and a press on each picks it. (Unit test of the labels; integration test of the presses.)
-- [ ] The answer on a phone with the mock build, next to the same answer before. (Emulator.)
-- [ ] No native file changes; lint, format, and types pass on the app.
+- [x] A meal answer with five Plans: candidates 2 to 5 keep number, name, and time; only the pick's route is drawn; a press on candidate 2 makes it the pick and candidate 1 a tag. (Integration test, from the map's markers and lines.)
+- [x] The Avatars outside the answer have the faded style; the campus labels are the app's markers, which an answer already replaces. (Unit test of the drawing.)
+- [x] With `Plan.menu`, a meal candidate's tag reads its first dish, the count of the rest, and its lowest price; a dish without a price shows no price; without `Plan.menu` the tag has one line. (Unit test of the marks.)
+- [x] Two candidates at one point keep both labels when room is short, and a press on each picks it. (Unit test of the labels; integration test of the presses.)
+- [x] The answer on a phone with the mock build, next to the same answer before. (Emulator.)
+- [x] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 1.5 hours, an estimate: one session built tickets 13, 15, and 16 together from 01:47 to 05:09 (3.4 hours, most of it waiting on tests and an emulator slowed by the Mac's load; waits for the screen review not counted), and this ticket took about 45% of it. No subagents.
+- Tokens: the whole session (13, 15, and 16) output 262k; input 221.4M, of which 220.7M cache reads, 691k cache writes, and 1.1k uncached. This ticket's share is about 45% of each.

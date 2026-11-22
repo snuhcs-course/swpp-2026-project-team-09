@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -83,7 +84,9 @@ describe('the candidates on the map', () => {
   it('number the other Plans, with no arrows or count in the card', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    expect(mapThings()).toEqual(expect.arrayContaining([PICK, '후보 2 · 301동식당', '후보 5 · 자하연식당 2층']));
+    expect(mapThings()).toEqual(
+      expect.arrayContaining([PICK, '후보 2 · 301동식당 · 12:18', '후보 5 · 자하연식당 2층 · 12:35']),
+    );
     expect(card().queryByRole('button', { name: BEFORE })).toBeNull();
     expect(card().queryByRole('button', { name: NEXT })).toBeNull();
     expect(card().queryByText('1/5')).toBeNull();
@@ -92,9 +95,9 @@ describe('the candidates on the map', () => {
   it('go to the third Plan at a press on its flag, and the map draws it', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await press(user, '후보 3 · 학생회관식당');
+    await press(user, '후보 3 · 학생회관식당 · 12:33');
 
-    expect(mapThings()).toEqual(expect.arrayContaining(['학생회관식당 · 12:33 점심', '후보 1 · 302동식당']));
+    expect(mapThings()).toEqual(expect.arrayContaining(['학생회관식당 · 12:33 점심', '후보 1 · 302동식당 · 12:15']));
     expect(screen.getByLabelText('12:18 민수와 만남')).toBeOnTheScreen();
     expect(screen.getByLabelText('민수 · 18분')).toBeOnTheScreen();
     expect(screen.queryByLabelText('나 · 3분')).toBeNull();
@@ -103,7 +106,7 @@ describe('the candidates on the map', () => {
   it('go to the last Plan from the first at a press on its flag', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await press(user, '후보 5 · 자하연식당 2층');
+    await press(user, '후보 5 · 자하연식당 2층 · 12:35');
 
     expect(mapThings()).toContain('자하연식당 2층 · 12:35 점심');
   });
@@ -158,7 +161,7 @@ describe('the other ways through the Plans', () => {
     await pressMarker(user, '민수');
     await user.press(within(screen.getByTestId('mark-card')).getByRole('button', { name: '민수 빼기' }));
 
-    await press(user, '후보 2 · 301동식당');
+    await press(user, '후보 2 · 301동식당 · 12:18');
 
     expect(mapThings()).toContain(PICK);
     await pass(3000);
@@ -202,7 +205,7 @@ describe('the basis', () => {
 
   it('is that of the Plan on screen', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
-    await pressMarker(user, '후보 3 · 학생회관식당');
+    await pressMarker(user, '후보 3 · 학생회관식당 · 12:33');
 
     await pressMarker(user, '학생회관식당 · 12:33 점심');
 

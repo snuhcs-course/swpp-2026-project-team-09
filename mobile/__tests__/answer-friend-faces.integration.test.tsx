@@ -85,7 +85,9 @@ describe('the + on a face', () => {
     expect(plus).toMatch(ADDABLE);
     const asked = jest.mocked(useMarkerImages).mock.calls.flatMap(([looks]) => looks.map((look) => lookName(look)));
     expect(asked).toContain(plus);
-    expect(asked).toContain(plus.replace(/:addable$/u, ':selected'));
+    // The face is faint while the answer is up (P04 ticket 13), and lit, not faint, once pressed.
+    expect(plus).toMatch(/:faded:addable$/u);
+    expect(asked).toContain(plus.replace(/:faded:addable$/u, ':selected'));
   });
 
   it('is not on the face of a Friend whom the conditions hold', async () => {

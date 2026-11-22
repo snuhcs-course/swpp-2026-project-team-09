@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -76,7 +77,7 @@ function lastContext(): unknown {
 describe('words sent with an answer on screen', () => {
   it('carry its conditions and the id of the Plan on screen', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
-    await pressMarker(user, '후보 3 · 학생회관식당');
+    await pressMarker(user, '후보 3 · 학생회관식당 · 12:33');
 
     await say(user);
     await pass(500);

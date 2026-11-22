@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MarkerLook } from '@/map';
@@ -18,6 +19,14 @@ const FACE: MarkerLook = {
   symbol: { type: 'face', name: '민수', dashed: true },
   label: { side: 'right', tone: 'person', title: '민수 · 18분', line: null, number: null },
 };
+
+function tag(sub: string): MarkerLook {
+  return {
+    kind: 'answer',
+    symbol: null,
+    label: { side: 'left', tone: 'candidate', title: '301동식당', line: '12:18', number: 2, sub },
+  };
+}
 
 function withLabel(side: 'above' | 'below' | 'left' | 'right'): MarkerLook {
   return { kind: 'answer', symbol: null, label: { side, tone: 'candidate', title: '3식당', line: null, number: 4 } };
@@ -135,5 +144,15 @@ describe("a look's anchor as shares of its box", () => {
 
   it('is the middle while the box has no size yet', () => {
     expect(anchorShare(FACE, { width: 0, height: 0 })).toEqual({ x: 0.5, y: 0.5 });
+  });
+});
+
+// Partitions: two tags that differ in their second line only, and the same tag twice.
+describe("a candidate's tag with dishes (P04 ticket 13)", () => {
+  it('has another name when its second line differs, and one name for the same line', () => {
+    expect(lookName(tag('부대짬뽕&군만두 외 4 · 5,000원부터'))).not.toBe(
+      lookName(tag('뚝배기불고기 외 4 · 5,000원부터')),
+    );
+    expect(lookName(tag('뚝배기불고기 외 4'))).toBe(lookName(tag('뚝배기불고기 외 4')));
   });
 });

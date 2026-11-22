@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -121,7 +122,7 @@ describe('the Plan on screen', () => {
   it('lets the candidates, the pick, and the people take a press, and not the next Class', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    expect(screen.getByRole('button', { name: '후보 3 · 학생회관식당' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: '후보 3 · 학생회관식당 · 12:33' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: '302동식당 · 12:15 점심' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: '나 · 3분' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: '민수' })).toBeOnTheScreen();
@@ -271,7 +272,7 @@ describe('the camera after the answer came', () => {
     await layAnswerCard(240);
     const before = fit.mock.calls.length;
 
-    await press(user, '후보 2 · 301동식당');
+    await press(user, '후보 2 · 301동식당 · 12:18');
     // The Plans of the stored answer stand at the same points (their people at 301동 and 302동, and the same
     // Restaurants), so what can differ is that a fit is asked again, and with the card as it then is. The second
     // Plan's pick 301동식당 has its two lines under 301동, 0.00129° = 143.6 metres north of 302동: 66 - 143.6 / 4.5 = 34.1.

@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -134,7 +135,7 @@ describe('a failed recalculation', () => {
     expect(invite()).toBeEnabled();
     expect(handle('from')).toHaveAccessibilityValue({ text: '12:15' });
     expect(screen.queryByTestId('time-band-ghost')).toBeNull();
-    await pressMarker(user, '후보 2 · 301동식당');
+    await pressMarker(user, '후보 2 · 301동식당 · 12:18');
     expect(mapThings()).toContain('301동식당 · 12:18 점심');
   });
 });
