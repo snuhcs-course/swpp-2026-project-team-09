@@ -15,7 +15,7 @@ import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
-import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { answerMainScreen, askMainServer, ME_ID, PHONE_NOW } from './support/server';
 
 // P04 ticket 24: "저녁 약속 취소해 줘" answers with one row in the dock, the Quest's title and start with 취소하기 or 나가기,
 // which sends DELETE /quests/{questId} as the room's 나가기 does. Taken, the dock's line says so and the
@@ -134,5 +134,51 @@ describe('its button pressed', () => {
 
     expect(dock().getByText('취소하지 못했어요. 다시 눌러 주세요.')).toBeVisible();
     expect(screen.getByRole('button', { name: /^취소하기/u })).toBeEnabled();
+  });
+});
+
+function partyOf(leads: boolean): object {
+  return {
+    id: 'party-dinner',
+    title: '저녁 약속',
+    capacity: 4,
+    joinPolicy: 'closed',
+    quest: { id: DINNER.questId, title: DINNER.title, globalEvent: null },
+    sharing: true,
+    members: [
+      { id: ME_ID, name: '홍길동', department: '컴퓨터공학부', leader: leads, visible: true },
+      { id: 'friend-1', name: '민수', department: '경영학과', leader: !leads, visible: true },
+    ],
+  };
+}
+
+// From PR 454's review: as the room does, the User first gets out of the Quest's live 파티, so that sharing stops.
+// Partitions: the Leader cancelling, a member leaving.
+describe("the Quest's live 파티", () => {
+  it('is ended before the DELETE when its Leader cancels the Quest', async () => {
+    server.on('GET /parties/mine', { status: 200, body: partyOf(true) });
+    server.on('POST /parties/mine/end', { status: 204 });
+    server.on('DELETE /quests/q-dinner', { status: 204 });
+    const user = await askOnMap(server, replyWith(DINNER));
+
+    await user.press(screen.getByRole('button', { name: /^취소하기/u }));
+    await pass(500);
+
+    expect(server.received('POST /parties/mine/end')).toHaveLength(1);
+    expect(server.received('DELETE /quests/q-dinner')).toHaveLength(1);
+  });
+
+  it('is left before the DELETE by a member who leaves the Quest', async () => {
+    server.on('GET /parties/mine', { status: 200, body: partyOf(false) });
+    server.on('POST /parties/mine/leave', { status: 204 });
+    server.on('DELETE /quests/q-dinner', { status: 204 });
+    const user = await askOnMap(server, replyWith({ ...DINNER, label: '나가기' }));
+
+    await user.press(screen.getByRole('button', { name: /^나가기/u }));
+    await pass(500);
+
+    expect(server.received('POST /parties/mine/leave')).toHaveLength(1);
+    expect(server.received('POST /parties/mine/end')).toHaveLength(0);
+    expect(server.received('DELETE /quests/q-dinner')).toHaveLength(1);
   });
 });
