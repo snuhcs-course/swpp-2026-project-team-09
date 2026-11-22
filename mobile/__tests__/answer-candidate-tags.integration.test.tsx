@@ -71,10 +71,13 @@ describe('a meal answer with five Plans and their menus', () => {
     expect(screen.queryByText(/\d+\/5/u)).toBeNull();
   });
 
-  it("draws the pick's own routes alone: the User's walk and the way on to the next Class", async () => {
+  it("draws the pick's own routes alone: the User's walk whole and the way on to the next Class as dots", async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
-    expect(mapLines()).toEqual(['answer:route:0', 'answer:route:1']);
+    const [walk, ...dots] = mapLines();
+    expect(walk).toBe('answer:route:0');
+    expect(dots.length).toBeGreaterThan(0);
+    expect(dots.every((id) => id.startsWith('answer:route:1:dot:'))).toBe(true);
   });
 
   it('makes candidate 2 the pick on a press, and the old pick candidate 1', async () => {
