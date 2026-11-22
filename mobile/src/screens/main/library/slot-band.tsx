@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useMemo, useState } from 'react';
@@ -27,6 +28,7 @@ import {
   wholeMoved,
 } from '@/library/cards/slot-band';
 import { clockOf } from '@/library/cards/times';
+import { dayAround, type FixedThing, stretchesOn, wordsOn } from '@/features/assistant/booking-day';
 import { percent } from '../answer/band-body';
 
 // The seat book card's time as a band (P15 ticket 57, the kit's time band as `AmStudy-a1` and `AmFrame-f14` draw it):
@@ -40,6 +42,8 @@ interface SlotBandProps {
   onChange: (slot: Slot) => void;
   // The words over the track instead of under it: the time bar's head.
   wordsFirst?: boolean;
+  // The User's Classes and Quests of the slot's date, drawn on the track and named around the band; none, nothing.
+  day?: readonly FixedThing[];
 }
 
 // A move of the band, worked out against the limits at the moment it is used: during a drag, and again with `now` at
@@ -54,6 +58,7 @@ const HANDLE_WIDTH = 16;
 const HANDLE_TOUCH = 44;
 const HANDLE_SLOP = (HANDLE_TOUCH - HANDLE_WIDTH) / 2;
 const PAN_STARTS = 10;
+const NO_DAY: readonly FixedThing[] = [];
 
 function placeOf(span: Span, limits: SpanLimits): { left: DimensionValue; width: DimensionValue } {
   const start = shareOn(span.start, limits);
@@ -160,6 +165,32 @@ function useMoving({ slot, space, onChange }: SlotBandProps): { moving: Span | n
   return { moving, move };
 }
 
+interface DayProps {
+  fixed: readonly FixedThing[];
+  shown: Span;
+}
+
+// The band's words: its span and length, or the Class or Quest it runs into in the warning colour (P01 ticket 05).
+function SpanSaid({ fixed, shown, head }: DayProps & { head: boolean }): ReactElement {
+  const said = wordsOn(shown, fixed);
+  return (
+    <Text style={[styles.words, said.clash && styles.clash, head && styles.head]} testID="slot-band-words">
+      {said.words}
+    </Text>
+  );
+}
+
+// Under the track's hours: the User's thing before the band at the left and the one after it at the right.
+function Around({ fixed, shown }: DayProps): ReactElement | null {
+  const { before, after } = dayAround(fixed, shown);
+  return before === null && after === null ? null : (
+    <View style={styles.ends} testID="slot-band-around">
+      <Text style={styles.end}>{before ?? ''}</Text>
+      <Text style={styles.end}>{after ?? ''}</Text>
+    </View>
+  );
+}
+
 export function SlotBand(props: SlotBandProps): ReactElement {
   const { slot, space } = props;
   const [width, setWidth] = useState(0);
@@ -171,9 +202,10 @@ export function SlotBand(props: SlotBandProps): ReactElement {
   const whole = useSpanPan('whole', span, limits, width, move);
   const part = { span, shown, limits, move };
   const nowAt = nowOn(slot.date, now(), limits);
+  const fixed = props.day ?? NO_DAY;
   return (
     <View style={styles.band} testID="slot-band">
-      {props.wordsFirst === true ? <Text style={[styles.words, styles.head]}>{spanWords(shown)}</Text> : null}
+      {props.wordsFirst === true ? <SpanSaid fixed={fixed} head shown={shown} /> : null}
       <GestureDetector gesture={whole}>
         <View
           collapsable={false}
@@ -184,6 +216,9 @@ export function SlotBand(props: SlotBandProps): ReactElement {
           testID="slot-band-track"
         >
           <View style={styles.rail} />
+          {stretchesOn(fixed, limits).map((stretch) => (
+            <View key={stretch.start} style={[styles.busy, placeOf(stretch, limits)]} testID="slot-band-busy" />
+          ))}
           {moving === null ? null : <View style={[styles.ghost, placeOf(span, limits)]} testID="slot-band-ghost" />}
           <View {...stepsOf({ ...part, kind: 'whole' })} style={[styles.body, placeOf(shown, limits)]} />
           {nowAt === null ? null : <View style={[styles.now, { left: percent(shareOn(nowAt, limits)) }]} />}
@@ -195,7 +230,8 @@ export function SlotBand(props: SlotBandProps): ReactElement {
         <Text style={styles.end}>{clockOf(limits.open)}</Text>
         <Text style={styles.end}>{clockOf(limits.close)}</Text>
       </View>
-      {props.wordsFirst === true ? null : <Text style={styles.words}>{spanWords(shown)}</Text>}
+      <Around fixed={fixed} shown={shown} />
+      {props.wordsFirst === true ? null : <SpanSaid fixed={fixed} head={false} shown={shown} />}
     </View>
   );
 }
@@ -239,4 +275,14 @@ const styles = StyleSheet.create({
   words: { ...text.label, color: color.quest, textAlign: 'center' },
   // In the time bar's head, beside "←", as a meal's bar has its words (P01 ticket 03).
   head: { textAlign: 'left' },
+  // The band runs into one of the User's Classes or Quests: said in the warning colour, not stopped.
+  clash: { color: color.warning },
+  // A Class or a Quest of the day on the rail, as a meal's bar draws a busy stretch.
+  busy: {
+    position: 'absolute',
+    top: (TRACK_HEIGHT - RAIL_HEIGHT) / 2,
+    height: RAIL_HEIGHT,
+    borderRadius: radius.full,
+    backgroundColor: color.borderStrong,
+  },
 });
