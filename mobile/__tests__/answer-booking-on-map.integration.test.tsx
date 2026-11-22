@@ -201,6 +201,10 @@ describe('a seat booked on the map', () => {
     expect(screen.queryByText('카드에서 확인해 주세요.')).toBeNull();
     expect(screen.queryByText('예약했어요')).toBeNull();
     expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 › · \d+번 17:00–18:00 · 예약됨$/u));
+    expect(screen.queryByTestId('time-bar')).toBeNull();
+    expect(screen.getByText(/^걸음 \d+분( ·|이라) /u)).toBeVisible();
+    expect(within(screen.getByTestId('library-done')).getByRole('button', { name: '길 안내' })).toBeVisible();
+    expect(screen.getByTestId('answer-back')).toHaveStyle({ backgroundColor: color.surface });
     await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '확인' }));
     await pass(500);
 

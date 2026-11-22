@@ -15,6 +15,7 @@ import type { LibrarySpace } from '@/api/assistant-types';
 import { now } from '@/clock';
 import { bookingTitle } from '@/features/assistant/booking-scene';
 import type { CardOutcome } from '@/features/assistant/use-chat';
+import { startFromWalk } from '@/library/cards/done';
 import type { Slot } from '@/library/cards/payloads';
 import { chooseSeat, freeSeats } from '@/library/cards/seats';
 import { lengthWords, liveSlot, sameSlot } from '@/library/cards/slot-band';
@@ -100,23 +101,24 @@ function StudyLine({
   slot,
   free,
   busy,
+  walk,
 }: {
   space: LibrarySpace;
   slot: Slot;
   free: number | null;
   busy: boolean;
+  walk: number | null;
 }): ReactElement {
   const when = `${slot.start}부터 ${lengthWords(slot.minutes)}`;
   if (busy) {
     return <Said>예약하는 중이에요</Said>;
   }
-  return (
-    <Said>
-      {free === null
-        ? `${bookingTitle(space)}에서 ${when}, 빈 자리를 찾고 있어요.`
-        : `${bookingTitle(space)}에 ${when}, 빈 자리 ${String(free)}석이에요.`}
-    </Said>
-  );
+  if (free === null) {
+    return <Said>{`${bookingTitle(space)}에서 ${when}, 빈 자리를 찾고 있어요.`}</Said>;
+  }
+  // A start the User reaches walking from now is why it is that start (P01 ticket 06).
+  const why = walk !== null && startFromWalk(slot.start, walk, now()) ? `걸음 ${String(walk)}분이라 ` : '';
+  return <Said>{`${why}${bookingTitle(space)}에 ${when}, 빈 자리 ${String(free)}석이에요.`}</Said>;
 }
 
 // The seats' reading and the booking's write for the room and time on screen.
@@ -155,7 +157,7 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
   const seat = chooseSeat(seats, named);
   const searching = useFullRoomSwap(room, props.space, loaded.state === 'ready' && seat === null);
   // While the rooms are listed no seat is offered, so the button beside the input does not book one out of sight.
-  const onMap = useSeatOnMap(actions.onMap?.(place) ?? null, {
+  const told = {
     place,
     seat: room.listing ? null : seat,
     loaded,
@@ -163,7 +165,8 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
     logIn,
     shown,
     choosing: room.listing || searching,
-  });
+  };
+  const onMap = useSeatOnMap(actions.onMap?.(place) ?? null, told);
   const mapped = actions.bandOnBar?.(place) === true;
   const offer = { ...props, space: shown, seats, choose: setNamed, write, close, undo: room.undo, ...onMap };
   const looking = loaded.state === 'loading' || searching;
@@ -171,22 +174,19 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
   const line = looking || (seat !== null && loaded.state === 'ready');
   return (
     <>
-      {mapped && line ? <StudyLine busy={write.busy} free={free} slot={props.slot} space={shown} /> : null}
+      {mapped && line ? (
+        <StudyLine
+          busy={write.busy}
+          free={free}
+          slot={props.slot}
+          space={shown}
+          walk={actions.bookingWalk?.()?.minutes ?? null}
+        />
+      ) : null}
       {props.top}
       {room.listing ? null : (
         <SeatRest {...props} free={free} looking={looking && !mapped}>
-          <FailureNote
-            failure={loaded.state === 'failed' ? loaded.failure : null}
-            onLogIn={mapped ? null : logIn}
-            reading={{
-              words: mapped ? `${bookingTitle(shown)}의 빈 자리를 받지 못했어요.` : SEATS_UNREAD,
-              retryWords: mapped ? '다시 찾기' : undefined,
-              onRetry: reload,
-              onClose: () => {
-                close('declined');
-              },
-            }}
-          />
+          <SeatsFailure close={close} loaded={loaded} logIn={logIn} mapped={mapped} reload={reload} shown={shown} />
           {loaded.state === 'ready' && seat === null && !searching ? (
             <NoFreeSeat actions={actions} card={card} space={shown} />
           ) : null}
@@ -194,6 +194,32 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
         </SeatRest>
       )}
     </>
+  );
+}
+
+// The seats' read that failed: 로그인, or a line with 다시 시도, or on the map "다시 찾기" (P01 ticket 04).
+function SeatsFailure(props: {
+  loaded: Loaded<readonly LibrarySeat[]>;
+  mapped: boolean;
+  shown: LibrarySpace;
+  logIn: () => void;
+  reload: () => void;
+  close: (closed: Closed) => void;
+}): ReactElement | null {
+  const { loaded, mapped, shown, logIn, reload, close } = props;
+  return (
+    <FailureNote
+      failure={loaded.state === 'failed' ? loaded.failure : null}
+      onLogIn={mapped ? null : logIn}
+      reading={{
+        words: mapped ? `${bookingTitle(shown)}의 빈 자리를 받지 못했어요.` : SEATS_UNREAD,
+        retryWords: mapped ? '다시 찾기' : undefined,
+        onRetry: reload,
+        onClose: () => {
+          close('declined');
+        },
+      }}
+    />
   );
 }
 

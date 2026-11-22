@@ -12,6 +12,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The conversation's control: the conversation with the Assistant, which the main screen holds, and what the answer
@@ -188,9 +189,11 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const steps = onMap.steps !== null;
   const card = useCardRaise(kept.framed);
   const { raised } = card;
+  const point = onMap.booking?.point ?? null;
+  const { walk } = bookingStage;
   const booking = useMemo(
-    () => ({ place, tell: bookingStage.tell, steps, raised }),
-    [place, bookingStage.tell, steps, raised],
+    () => ({ place, tell: bookingStage.tell, steps, raised, point, walk }),
+    [place, bookingStage.tell, steps, raised, point, walk],
   );
   const onScreen = useAnswerOnScreen(chat.bubbles, where, shownNow);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation);
