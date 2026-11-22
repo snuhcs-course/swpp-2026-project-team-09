@@ -105,7 +105,7 @@ describe('a refusal beside a Lookup', () => {
     expect(card().getByText('12:15에 302동에서 수업이 끝나요')).toBeVisible();
     expect(card().queryByText('민수는 12:15까지 302동 수업이에요')).toBeNull();
     expect(card().queryByText('지금 위치는 보여 주지 않아요')).toBeNull();
-    expect(card().getByRole('button', { name: '답 ✕' })).toBeVisible();
+    expect(card().getByRole('button', { name: '답 닫기' })).toBeVisible();
 
     await user.press(beside().getByRole('button', { name: '만나고 싶다' }));
     await pass(500);
@@ -126,7 +126,7 @@ describe('a refusal beside a Lookup', () => {
     expect(card().getByText('신양학술정보관은 그곳의 방식으로 예약해요')).toBeVisible();
     expect(card().queryByText('신양학술정보관(44-1동)은 여기예요')).toBeNull();
     expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
-    expect(card().getByRole('button', { name: '답 ✕' })).toBeVisible();
+    expect(card().getByRole('button', { name: '답 닫기' })).toBeVisible();
 
     await user.press(beside().getByRole('button', { name: '관정 스터디룸' }));
     await pass(500);
@@ -151,7 +151,7 @@ describe('a refusal to accept for a Friend (board n8b)', () => {
     expect(card().queryByText('김민수에게 점심 초대를 보냈어요')).toBeNull();
     expect(card().getByText('김민수 · 아직 안 봄')).toBeVisible();
     expect(mapThings()).toContain('민수 · 아직 안 봄');
-    expect(card().getByRole('button', { name: '답 ✕' })).toBeVisible();
+    expect(card().getByRole('button', { name: '답 닫기' })).toBeVisible();
   });
 
   it('keeps the Plan on screen and says only its line in the card', async () => {
@@ -180,6 +180,6 @@ describe('a way asked about the shuttle when it is not running (board n21)', () 
     expect(card().getByText('셔틀은 지금 다니지 않아요 (평일 8–21시)')).toBeVisible();
     expect(card().getByText('(관악사)학부 생활관(919동)까지 걸어서 11분이에요')).toBeVisible();
     expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
-    expect(card().getByRole('button', { name: '답 ✕' })).toBeVisible();
+    expect(card().getByRole('button', { name: '답 닫기' })).toBeVisible();
   });
 });

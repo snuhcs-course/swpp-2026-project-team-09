@@ -86,10 +86,10 @@ function list(): ReturnType<typeof within> {
   return within(screen.getByTestId('question-list'));
 }
 
-// What a screen reader says of each row of the list, the latest first.
+// What a screen reader says of each question's row of the list, the latest first; "＋ 새 질문" is not one.
 function rowNames(): string[] {
   return list()
-    .getAllByRole('button')
+    .getAllByTestId('question-row')
     .map((row) => String(row.props.accessibilityLabel));
 }
 

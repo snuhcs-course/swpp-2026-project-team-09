@@ -116,7 +116,7 @@ describe('a press of "만들고 초대 보내기"', () => {
     expect(steps.getByText('302동식당에서 식사')).toBeVisible();
     expect(card().getByText('김민수 · 아직 안 봄')).toBeVisible();
     expect(card().getByText('301동에서')).toBeVisible();
-    expect(card().getByRole('button', { name: '답 ✕' })).toBeEnabled();
+    expect(card().getByRole('button', { name: '답 닫기' })).toBeEnabled();
   });
 
   it('leaves no band, no "＋ 같이", and no main button after inviting', async () => {

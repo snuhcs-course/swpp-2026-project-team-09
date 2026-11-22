@@ -90,7 +90,7 @@ describe("a made Quest's card, opened again", () => {
     expect(madeCard().getByText('민수에게 점심 초대를 보냈어요')).toBeVisible();
     expect(madeCard().getByText('11/17(화) 12:15 302동식당 · 수락하면 알려 드려요')).toBeVisible();
     expect(madeCard().getByText('302동식당에서 식사')).toBeVisible();
-    expect(madeCard().getByRole('button', { name: '답 ✕' })).toBeEnabled();
+    expect(madeCard().getByRole('button', { name: '답 닫기' })).toBeEnabled();
     expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
     expect(screen.queryByRole('tab', { name: '지도' })).toBeNull();
   });
@@ -119,7 +119,7 @@ describe("a made Quest's card, closed", () => {
     const user = await openMain(KEPT_MADE);
     await pressMarker(user, FLAG);
 
-    await user.press(madeCard().getByRole('button', { name: '답 ✕' }));
+    await user.press(madeCard().getByRole('button', { name: '답 닫기' }));
     await pass(500);
 
     expect(screen.queryByTestId('made-quest-frame')).toBeNull();

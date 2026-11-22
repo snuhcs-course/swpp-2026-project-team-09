@@ -79,7 +79,7 @@ async function inviteAndClose(): Promise<void> {
   const user = await askOnMap(server, MEAL_ANSWER_REPLY);
   await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' }));
   await pass(500);
-  await user.press(card().getByRole('button', { name: '답 ✕' }));
+  await user.press(card().getByRole('button', { name: '답 닫기' }));
   await pass(500);
 }
 
