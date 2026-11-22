@@ -82,3 +82,44 @@
       forbidden: [findMenu, planMeal]
     text:
       absent: [데이터에 없, 기록되어 있지 않, 확인해 보]
+
+# P05 ticket 38: a day whose menus are not posted yet is said as not posted, never as closed. The P4 world has menus
+# for 11-02 to 11-05 and 11-07, and none for Friday 11-06.
+- id: menus-not-posted-meal
+  category: menus-not-posted
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 금요일 점심 뭐 먹지
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+    text:
+      absent: [여는 식당이 없, 쉬어, 문을 닫, 수집]
+
+- id: menus-not-posted-menu
+  category: menus-not-posted
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 금요일 학생회관식당 메뉴 뭐야?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findMenu]
+    text:
+      absent: [쉬어, 문을 닫, 수집]
+
+- id: menus-not-posted-hours
+  category: menus-not-posted
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 금요일 학생회관식당 언제까지 해?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [restaurantHours]
+    text:
+      absent: [쉬어, 문을 닫, 데이터에 없]

@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type AnswerReply, type ConditionChip, type Plan } from '../dto/answer.dto.js';
@@ -31,6 +32,7 @@ import { type GatheringFit, type GatheringSide, type PersonPart } from './gather
 import { kindFirst, mainMenu, menuBasis, withMenu } from './meal-menu.js';
 import { bandOf, mealSpan, sceneOf } from './meal-scene.js';
 import { missingParts, nearestFirst } from './missing-inputs.js';
+import { notPostedLines } from './not-posted.js';
 import { conditionsOf, type PersonConditions, windowOf } from './plan-conditions.js';
 import { droppedOf, partOf, unfitLines } from './plan-parts.js';
 import { notNowPlan, timeChip, unmetBasis, unmetLines } from './unmet-words.js';
@@ -107,7 +109,7 @@ function noPlanOf(naming: Naming): AnswerReply['noPlan'] {
   const { menus, gathering, people, input } = naming.args;
   const meal = mealWord(naming);
   if (menus === 'none') {
-    return { reason: 'no-menu', lines: [plain('그날은 수집된 메뉴가 없어요')] };
+    return { reason: 'no-menu', lines: notPostedLines(input.date, naming.args.now).map((text) => plain(text)) };
   }
   if (menus === 'closed') {
     return { reason: 'no-menu', lines: [plain(`${meal}에 여는 식당이 없어요`)] };

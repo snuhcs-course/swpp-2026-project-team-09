@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -24,6 +25,7 @@ import { menuWords, type ServedMenu } from './meal-menu.js';
 import { timesAndWays } from './plan-times.js';
 import { type MealPlanService } from './meal-plan.service.js';
 import { alreadySetWords, busyWords, relatedWords, servingKind } from './meal-tool-words.js';
+import { NOT_POSTED } from './not-posted.js';
 
 // A meal planned on the map, for an app that draws answers (ADR 0009): the server decides everything, the model passes
 // the User's words as conditions and writes one sentence. Coordinates, ids of Places, course names, and rooms stay here.
@@ -32,7 +34,7 @@ import { alreadySetWords, busyWords, relatedWords, servingKind } from './meal-to
 export const FRIENDS_MAX = 7;
 
 const NONE_REASONS: Record<NonNullable<AnswerReply['noPlan']>['reason'], string> = {
-  'no-menu': 'No Restaurant is open for that meal that day, or no menu was collected for it.',
+  'no-menu': 'No Restaurant serves that meal that day: every menu collected for it holds only notes.',
   'no-shared-time': 'There is no free time everyone shares during that meal.',
   'no-fit': 'No Restaurant can be reached, eaten at, and left in time.',
 };
@@ -51,7 +53,7 @@ const friendNames = ({ chips }: AnswerReply): string[] =>
 function noneOf(
   answer: AnswerReply,
   input: MealInput,
-  { now, presented }: { now: Date; presented: Presented },
+  { now, presented, posted }: { now: Date; presented: Presented; posted: boolean },
 ): object {
   const relax = answer.noPlan?.relax ?? [];
   const next = relax.length === 0 ? mealAfter(input, now) : null;
@@ -61,6 +63,9 @@ function noneOf(
     return { result: 'none', meal: input.meal, reason: overToday(next.words) };
   }
   const reason = answer.noPlan?.reason ?? 'no-fit';
+  if (!posted) {
+    return { result: 'none', meal: input.meal, reason: NOT_POSTED };
+  }
   return { result: 'none', meal: input.meal, reason: relax.length > 0 ? NOT_NOW : NONE_REASONS[reason] };
 }
 
@@ -264,12 +269,12 @@ export function planMeal(
       const chained = afterEarlierSteps(planInput, earlier(toolContext));
       const setsAside = toolContext.capabilities.has('plan-set');
       const at = { now, location, locationMissing, setsAside };
-      const { answer, served, busy = [] } = await plans.planned(userId, chained, at);
+      const { answer, served, busy = [], posted = true } = await plans.planned(userId, chained, at);
       presented.answer = answer;
       presented.lookup = null;
       presented.mapButtons.length = 0;
       if (answer.noPlan !== null) {
-        return { ...noneOf(answer, planInput, { now, presented }), ...busyWords(busy) };
+        return { ...noneOf(answer, planInput, { now, presented, posted }), ...busyWords(busy) };
       }
       return plannedWords(answer, served, { meal, kind });
     },
@@ -293,7 +298,7 @@ export const PLAN_RULES = `A meal is planned on the map: the server decides the 
   - when it is not shared, says that making a plan replaces it: "혼자 먹기로 한 12:16 점심이 있어요. 만들면 이걸로 바뀌어요."
 - When planMeal answers related, the User already has those Quests that day, of this meal or with a Friend asked for. Your sentence mentions the one that matters, such as "민수와는 13:00에 약속이 이미 있어요", whether or not it limits the plans; never treat it as free.
 - When planMeal answers none with busy, say what fills the time, by the User's own items, such as "점심 시간엔 13:00까지 수업이 있어요."
-- When planMeal answers none, say plainly why. Name someone busy only if they are a Friend in the plan, and say only when their Class ends or starts, never the course or the room; never name anyone who is not the User's Friend.
+- When planMeal answers none, say plainly why. Name someone busy only if they are a Friend in the plan, and say only when their Class ends or starts, never the course or the room; never name anyone who is not the User's Friend. A day whose menus are not posted yet is not a closed day: say that its menu is not posted yet and comes later, never that no Restaurant is open.
 - When the User asks who is free for a meal ("오늘 점심에 누구 돼?"), call findFreeFriends. Your reply says the User's Free Time in that window and the names of the Friends it returned.
 - When resolveFriend answers several, ask which one ${WHICH_FRIEND}, and wait for the answer.
 - Breakfast is not covered: say that lunch and dinner are.
