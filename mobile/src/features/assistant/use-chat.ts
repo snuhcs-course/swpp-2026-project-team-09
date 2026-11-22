@@ -140,7 +140,9 @@ export interface Chat {
   // 그만: takes back the question on its way, and drops its reply when it comes.
   stop: () => void;
   // Adds the app's own bubble, which no request sends.
-  addOwn: (bubble: OwnBubble) => void;
+  // `after`, the id of a bubble, puts it right after that one: a card of an earlier turn on screen adds to that turn
+  // (P04 ticket 10's review).
+  addOwn: (bubble: OwnBubble, after?: number) => void;
   // Adds a turn a card's button asked of the recalculation: its words as what was asked, and its answer as the reply.
   addRecalculated: (asked: string, answer: AnswerReply) => void;
   // A turn the app asks itself, answered without the model, such as a tap on a mark of the map: `asked` stands as the
@@ -232,7 +234,8 @@ export interface Bubbles {
   // What was said, as the next request sends it, without waiting for a render.
   said: { readonly current: readonly ChatBubble[] };
   show: (next: readonly ChatBubble[]) => void;
-  add: (bubble: NewBubble) => void;
+  // Adds at the end, or right after the bubble whose id is `after`.
+  add: (bubble: NewBubble, after?: number) => void;
 }
 
 function useBubbles(): Bubbles {
@@ -244,9 +247,11 @@ function useBubbles(): Bubbles {
     setBubbles(next);
   }, []);
   const add = useCallback(
-    (bubble: NewBubble): void => {
+    (bubble: NewBubble, after?: number): void => {
       nextId.current += 1;
-      show([...said.current, { ...bubble, id: nextId.current, at: now().getTime() }]);
+      const added = { ...bubble, id: nextId.current, at: now().getTime() };
+      const at = after === undefined ? -1 : said.current.findIndex(({ id }) => id === after);
+      show(at < 0 ? [...said.current, added] : said.current.toSpliced(at + 1, 0, added));
     },
     [show],
   );
@@ -256,8 +261,8 @@ function useBubbles(): Bubbles {
 // The app's own bubbles, added after what was said, and the turns of a card's button.
 function useAddOwn(add: Bubbles['add'], takeBack: () => void): Pick<Chat, 'addOwn' | 'addRecalculated'> {
   const addOwn = useCallback(
-    ({ text, cards = [], done }: OwnBubble): void => {
-      add({ role: 'assistant', text, cards, mapButtons: [], proposal: null, failure: null, own: true, done });
+    ({ text, cards = [], done }: OwnBubble, after?: number): void => {
+      add({ role: 'assistant', text, cards, mapButtons: [], proposal: null, failure: null, own: true, done }, after);
     },
     [add],
   );

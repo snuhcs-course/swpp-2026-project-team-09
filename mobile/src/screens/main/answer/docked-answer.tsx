@@ -150,7 +150,7 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
           words={offer.label}
         />
       ))}
-      {retry ? <DockChip disabled={waiting} onPress={control.chat.retry} words="다시 시도" /> : null}
+      {retry && control.latest ? <DockChip disabled={waiting} onPress={control.chat.retry} words="다시 시도" /> : null}
       {keep ? <DockChip disabled={choosing(control)} onPress={control.invitation.leave} words="그대로 두기" /> : null}
       <FoldedChips control={control} note={note} onRaise={onRaise} />
     </ScrollView>

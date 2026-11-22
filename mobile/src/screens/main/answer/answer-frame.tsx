@@ -99,7 +99,7 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
           <BubbleParts
             bubble={bubble}
             cardActions={cardActions}
-            onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting ? retry : null}
+            onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting && control.latest ? retry : null}
             onShowLayer={control.leaving.showLayer}
             words={
               <Words
