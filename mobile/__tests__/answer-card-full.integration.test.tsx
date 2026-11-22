@@ -110,7 +110,7 @@ describe('a drag up on the answer card', () => {
 
 // Partitions: a drag down, the grip's step down for a screen reader, and back, each from full height.
 describe('a full card', () => {
-  it('goes one step down, to raised, by a drag down, the grip\'s step down, or back', async () => {
+  it("goes one step down, to raised, by a drag down, the grip's step down, or back", async () => {
     const back = holdBackButton();
     await framed();
     await raiseCard();

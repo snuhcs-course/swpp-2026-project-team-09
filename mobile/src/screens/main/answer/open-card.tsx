@@ -59,9 +59,7 @@ function capOf(level: Level, caps: Caps): number | null {
 
 function Top(p: { props: FrameCardProps; pan: PanGesture; onHeight: (h: number) => void }): ReactElement {
   const { raising = null, onClose = null, onAskNew = null, gripLabel = null, chip = null } = p.props;
-  const header = (
-    <CardHeader chip={chip} label={gripLabel} onAskNew={onAskNew} onClose={onClose} raising={raising} />
-  );
+  const header = <CardHeader chip={chip} label={gripLabel} onAskNew={onAskNew} onClose={onClose} raising={raising} />;
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
