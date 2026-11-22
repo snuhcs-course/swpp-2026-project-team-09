@@ -27,6 +27,7 @@ import { now } from '@/clock';
 import type { Place } from '@/api/types';
 import { useToast } from '@/design-system';
 import { type ShownBooking, shownBookingOf } from '@/features/assistant/booking-scene';
+import { type ShownCards, shownCardsOf } from '@/features/assistant/cards-scene';
 import { type ShownProposal, shownProposalOf } from '@/features/assistant/proposal-scene';
 import { dueStepOf, type ShownSteps, shownStepsOf } from '@/features/assistant/steps-scene';
 import type { Viewport } from '@/features/assistant/study-area';
@@ -69,6 +70,8 @@ export interface ChatSheetControl extends Omit<KeptConversation, 'chat'>, MarkOp
   // The requests of the turn on screen when it answered several, drawn as numbered flags, and the index of the one
   // whose detail and action are shown: the step due first until a press on another's flag (P04 ticket 09).
   steps: ShownSteps | null;
+  // The restaurant or event cards of the turn on screen, drawn as flags whose cards hold the facts asked (P04 ticket 08).
+  cards: ShownCards | null;
   activeStep: number;
   setActiveStep: (index: number) => void;
   // What became of each reply's Plan, for the list of questions.
@@ -123,7 +126,10 @@ function useActiveStep(steps: ShownSteps | null): Pick<ChatSheetControl, 'active
   };
 }
 
-function useShownOnMap(chat: Chat, framed: boolean): Pick<ChatSheetControl, 'proposal' | 'booking' | 'steps'> {
+function useShownOnMap(
+  chat: Chat,
+  framed: boolean,
+): Pick<ChatSheetControl, 'proposal' | 'booking' | 'steps' | 'cards'> {
   const places = useQuery(placesQuery).data ?? NO_PLACES;
   const { bubbles, outcomes } = chat;
   return useMemo(
@@ -131,6 +137,7 @@ function useShownOnMap(chat: Chat, framed: boolean): Pick<ChatSheetControl, 'pro
       proposal: framed ? shownProposalOf(bubbles, places) : null,
       booking: framed ? shownBookingOf(bubbles, places, (place) => outcomes.get(place) ?? null) : null,
       steps: framed ? shownStepsOf(bubbles) : null,
+      cards: framed ? shownCardsOf(bubbles, places, now()) : null,
     }),
     [bubbles, places, outcomes, framed],
   );

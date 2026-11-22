@@ -203,7 +203,11 @@ interface OpenMarkProps {
 // the flag of a Proposal or a booking on screen (`MadeMarkCard`).
 function OpenMark({ control, stage, focus, onClose }: OpenMarkProps): ReactElement | null {
   const { mark, closeMark, answer: shown } = control;
-  if (mark !== null && stage !== null && (control.proposal !== null || control.booking !== null)) {
+  if (
+    mark !== null &&
+    stage !== null &&
+    (control.proposal !== null || control.booking !== null || control.cards !== null)
+  ) {
     return <MadeMarkCard control={control} mark={mark} stage={stage} />;
   }
   if (mark === null || stage === null || shown.answer === null || shown.plan === null) {
