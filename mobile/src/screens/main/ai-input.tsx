@@ -112,52 +112,40 @@ interface FieldProps {
 }
 
 // While a mention stands in the words, the field draws them as parts, the mentions in the Friend colour. While it is
-// empty, its placeholder stands on one line, cut with "…", at any font size (P04 ticket 50): the field's own hint, which
-// a multiline field wraps, is kept for screen readers and unseen, and the field keeps the height of one line.
+// empty it holds one line (P04 ticket 50): its own hint, which a multiline field would wrap at a large font, stays on
+// that line and stands exactly where typed words and the cursor start, as the same field draws both. Typing lifts the
+// limit, which changes no input type, so the keyboard and the focus stay.
 function Field(props: FieldProps): ReactElement {
   const { mention } = props;
   const empty = props.message === '' && !mention.shown;
   return (
-    <View style={styles.fieldBox}>
-      <TextInput
-        {...NOT_AUTOFILLED}
-        ref={props.field}
-        accessibilityLabel="AI에게 메시지"
-        maxLength={USER_MESSAGE_MAX}
-        multiline
-        onBlur={mention.onBlur}
-        onChangeText={mention.onChangeText}
-        onFocus={mention.onFocus}
-        onSelectionChange={mention.onSelectionChange}
-        placeholder={props.placeholder}
-        placeholderTextColor="transparent"
-        selection={mention.selection}
-        style={[styles.field, empty && styles.fieldEmpty]}
-        submitBehavior="newline"
-        value={mention.shown ? undefined : props.message}
-      >
-        {mention.shown
-          ? mention.parts.map(({ words, mention: isMention }, index) => (
-              // oxlint-disable-next-line react/no-array-index-key -- the parts are the words in order
-              <Text key={index} style={isMention ? styles.mention : undefined}>
-                {words}
-              </Text>
-            ))
-          : undefined}
-      </TextInput>
-      {empty ? (
-        <Text
-          accessibilityElementsHidden
-          ellipsizeMode="tail"
-          importantForAccessibility="no-hide-descendants"
-          numberOfLines={1}
-          style={styles.placeholder}
-          testID="ai-input-placeholder"
-        >
-          {props.placeholder}
-        </Text>
-      ) : null}
-    </View>
+    <TextInput
+      {...NOT_AUTOFILLED}
+      ref={props.field}
+      accessibilityLabel="AI에게 메시지"
+      maxLength={USER_MESSAGE_MAX}
+      multiline
+      numberOfLines={empty ? 1 : undefined}
+      onBlur={mention.onBlur}
+      onChangeText={mention.onChangeText}
+      onFocus={mention.onFocus}
+      onSelectionChange={mention.onSelectionChange}
+      placeholder={props.placeholder}
+      placeholderTextColor={color.inkMuted}
+      selection={mention.selection}
+      style={[styles.field, empty && styles.fieldEmpty]}
+      submitBehavior="newline"
+      value={mention.shown ? undefined : props.message}
+    >
+      {mention.shown
+        ? mention.parts.map(({ words, mention: isMention }, index) => (
+            // oxlint-disable-next-line react/no-array-index-key -- the parts are the words in order
+            <Text key={index} style={isMention ? styles.mention : undefined}>
+              {words}
+            </Text>
+          ))
+        : undefined}
+    </TextInput>
   );
 }
 
@@ -285,16 +273,6 @@ const styles = StyleSheet.create({
   },
   inCard: { borderWidth: 0, backgroundColor: color.surfaceSunken, boxShadow: 'none' },
   mainRow: { position: 'absolute', right: AI_INPUT.side, left: AI_INPUT.side },
-  fieldBox: { flex: 1, minWidth: 0 },
-  placeholder: {
-    ...text.bodyLg,
-    position: 'absolute',
-    top: FIELD_PADDING,
-    right: 0,
-    left: 0,
-    color: color.inkMuted,
-    pointerEvents: 'none',
-  },
   fieldEmpty: { maxHeight: AI_FIELD },
   field: {
     ...text.bodyLg,

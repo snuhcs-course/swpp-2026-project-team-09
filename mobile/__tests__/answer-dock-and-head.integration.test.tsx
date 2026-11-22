@@ -77,13 +77,17 @@ describe('the main button above the input', () => {
     expect(screen.getByTestId('ai-input')).toHaveStyle({ right: AI_INPUT.side, left: AI_INPUT.side });
   });
 
-  it('leaves the input’s placeholder on one line, the field one line high while empty', async () => {
-    await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+  it('leaves the input’s own placeholder on one line while empty, where typed words start, and lifts it on typing', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
-    const placeholder = screen.getByTestId('ai-input-placeholder', { includeHiddenElements: true });
-    expect(placeholder.props.numberOfLines).toBe(1);
-    expect(placeholder).toHaveTextContent('이어서 말하기');
-    expect(screen.getByLabelText('AI에게 메시지')).toHaveStyle({ maxHeight: AI_FIELD });
+    const field = screen.getByLabelText('AI에게 메시지');
+    expect(field).toHaveProp('placeholder', '이어서 말하기');
+    expect(field).toHaveProp('numberOfLines', 1);
+    expect(field).toHaveStyle({ maxHeight: AI_FIELD });
+    expect(screen.queryByTestId('ai-input-placeholder', { includeHiddenElements: true })).toBeNull();
+
+    await user.type(field, '더 싼 데');
+    expect(screen.getByLabelText('AI에게 메시지').props.numberOfLines).toBeUndefined();
   });
 });
 
