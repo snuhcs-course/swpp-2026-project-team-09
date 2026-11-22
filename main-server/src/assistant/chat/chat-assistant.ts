@@ -185,7 +185,7 @@ function plannedOnMap(
     return place === null ? null : pointOf(place);
   };
   const earlier = ({ presented }: ToolContext): ReplyStep[] => bookingSteps(presented, kwanjeong());
-  const planned = mealsAndEvents(plans, options.drawsEvents === true, earlier);
+  const planned = mealsAndEvents(plans, options.drawsEvents === true, earlier, freeTime.days);
   if (options.drawsMeets !== true) {
     return planned;
   }
@@ -196,6 +196,7 @@ function mealsAndEvents(
   plans: PlanAnswersService,
   drawsEvents: boolean,
   earlier: (context: ToolContext) => ReplyStep[],
+  days: FreeTimeServices['days'],
 ): { rules: string[]; tools: Record<string, Tool> } {
   const { meals, events, quests } = plans;
   if (!drawsEvents) {
@@ -207,7 +208,7 @@ function mealsAndEvents(
       planMeal: planMeal(meals, earlier),
       planEvents: planEvents(events),
       planQuests: planQuests(quests),
-      planNewQuest: planNewQuest(plans),
+      planNewQuest: planNewQuest(plans, days),
     },
   };
 }

@@ -82,6 +82,7 @@ export type Card = GlobalEventCard | QuestCard | RestaurantCard | LibraryCard;
 // for it (P05 ticket 30).
 // `quest-cancel`: it draws the button of a `leave-quest` offer and sends it as `DELETE /quests/:questId`, so
 // proposeCancel shows one only for it (P05 ticket 31).
+// `pick`: it draws the `pick-place` and `pick-time` offers under a question for a Place or a time (P05 ticket 24).
 export const CLIENT_CAPABILITIES = [
   'library',
   'answer',
@@ -91,6 +92,7 @@ export const CLIENT_CAPABILITIES = [
   'plan-set',
   'party-change',
   'quest-cancel',
+  'pick',
 ] as const;
 
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
