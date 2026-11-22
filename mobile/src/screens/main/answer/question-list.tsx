@@ -17,9 +17,10 @@ const TITLE = '이전 질문';
 const ON_SCREEN = '지금';
 // The time's column, as wide as "00:00", so that the questions stand in line; the time starts at its left.
 const TIME_WIDTH = 48;
-// The one left and right edge of the title, the group names, the rows' times, and the words and marks at the right
-// (P04 ticket 49): in the answer's card, this inside the card's own padding; over the map, inside the rows' padding.
-const INSET = space[2];
+// The title, the group names, the rows' times, and the words and marks at the right stand on the two lines of the
+// sheet's own inset, with no side padding of their own (P04 ticket 49); over the map, the card's. A row's tint and
+// press area reach this far past those lines, so that its words stay on them.
+const BLEED = space[2];
 // The touch area beyond words and marks at a row's right, about 44 square.
 const WORD_SLOP = { top: 6, bottom: 6, left: space[3], right: space[3] };
 const TRASH = 20;
@@ -141,7 +142,7 @@ function Conversation(props: { row: ConversationRow; onPick: () => void; onRemov
         accessibilityRole="button"
         hitSlop={TRASH_SLOP}
         onPress={onRemove}
-        style={({ pressed }) => [styles.trash, pressed && styles.pressed]}
+        style={({ pressed }) => [pressed && styles.pressed]}
       >
         <Icon color={color.inkMuted} name="trash" size={TRASH} />
       </Pressable>
@@ -269,7 +270,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[4],
     paddingBottom: space[2],
   },
-  flatHeader: { paddingHorizontal: INSET, paddingBottom: space[1] },
+  flatHeader: { paddingHorizontal: 0, paddingBottom: space[1] },
   title: { ...text.caption, flexShrink: 1, color: color.inkMuted },
   groupRow: {
     flexDirection: 'row',
@@ -278,25 +279,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: space[2],
     minHeight: 36,
-    paddingHorizontal: INSET,
     paddingTop: space[2],
   },
   group: { ...text.caption, flexShrink: 1, color: color.inkSubtle },
   onScreen: { backgroundColor: color.blue50 },
   conversation: { flexDirection: 'row', alignItems: 'center' },
-  conversationBody: { flex: 1, minWidth: 0 },
-  trash: { marginRight: INSET },
+  conversationBody: { flex: 1, minWidth: 0, marginRight: 0, paddingRight: space[2] },
   wordButton: { justifyContent: 'center', minHeight: 32 },
   wordButtonWords: { ...text.label, color: color.inkMuted },
   strong: { color: color.snuBlue },
-  rows: { paddingHorizontal: space[2] },
+  rows: { paddingHorizontal: space[4] },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[3],
     minHeight: 56,
     paddingVertical: space[2],
-    paddingHorizontal: INSET,
+    paddingHorizontal: BLEED,
+    marginHorizontal: -BLEED,
     borderRadius: radius.md,
   },
   pressed: { opacity: 0.6 },
