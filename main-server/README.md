@@ -2435,7 +2435,7 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     own way to the place, and their way on to their next item, takes the shuttle of that day and hour when the walk is
     10 minutes or more and the shuttle, with the average wait at the stop, is 3 or more minutes faster; meeting on the
     way stays on foot. The part of such a way carries `mode: 'shuttle'` and `shuttle: { boardAt, getOffAt }` (stop
-    names), `next.by: 'shuttle'` says the way on is by the shuttle, and a scene route of role `me`, `friend` or `next`
+    names), `next.by: 'shuttle'` says the way on is by the shuttle, and a scene route of role `me`, `friend`, or `next`
     by the shuttle carries `mode: 'shuttle'`; a walk carries none of them. `walkMinutes` is then the minutes of the way,
     however it is gone. A person's
     constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
@@ -3513,7 +3513,8 @@ after its signal, with the time of the Quests' `CLOCK`, without the answer waiti
 warning and the answer stays as it is.
 
 `leave-by` is kept when `POST /plans` makes a party: `PlansService` schedules the Leader's for the time the Leader's
-part of the Plan sets out, with the Plan's Place and the Leader's own walking minutes, after the transaction and its
+part of the Plan sets out, with the Plan's Place and the minutes of the Leader's own way (by the shuttle when the part's
+`mode` says so), after the transaction and its
 signals, without the answer waiting for it; a failure is logged as a warning. None is kept when the Leader's starting
 Place is unknown or the walk is 0 minutes.
 

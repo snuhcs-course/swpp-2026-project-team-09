@@ -22,6 +22,7 @@ Native files: none. Releases: the main server, in the same Release as the app's 
 - The model's plan tool result gives each person `by`: `'walk'`, or `{ shuttle: { boardAt, getOffAt } }`. The meal and meet rules let the sentence say the shuttle in a few words and never call a way by the shuttle 걸어서.
 - The weighing lives in `gathering/gathering-travel.ts` and the model's words of a Plan in `gathering/plan-times.ts`, so that `gathering.ts` and `plan-tools.ts` stay within the line limit.
 - A Quest's own way (`plans/own-way.ts`) uses the gathering only for the sides and keeps walking (`onFoot`).
+- A party's Leader's `leave-by`, kept by `POST /plans`, says "셔틀로 N분" when the Leader's part is by the shuttle, as a Plan taken alone's already did.
 
 ## What the app must change (not in this ticket)
 
