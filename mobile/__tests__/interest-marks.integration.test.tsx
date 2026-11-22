@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -162,7 +163,11 @@ describe('the marks', () => {
     await pass(500);
 
     expect(server.received('POST /assistant/answers').map(({ body }) => body)).toEqual([
-      { input: { kind: 'events', date: '2026-10-06', eventIds: [JOB_FAIR.id, TALK.id] }, location: ON_CAMPUS },
+      {
+        input: { kind: 'events', date: '2026-10-06', eventIds: [JOB_FAIR.id, TALK.id] },
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
     ]);
     expect(within(screen.getByTestId('answer-pill')).getByText(MARK)).toBeVisible();
     expect(screen.getByTestId('answer-card')).toBeVisible();

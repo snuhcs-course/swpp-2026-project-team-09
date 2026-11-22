@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AssistantReply } from '@/api/assistant-types';
@@ -84,7 +85,7 @@ describe('the time bar', () => {
   it("says the span's day when it is not today", async () => {
     await askOnMap(server, ASKED_ON_MONDAY);
 
-    expect(bar().getByText('내일(화) 12:15–12:43 · 식사 28분')).toBeVisible();
+    expect(bar().getByText('내일(화) 점심 12:15–12:43 · 식사 28분')).toBeVisible();
   });
 
   it("is folded to one row, bounded by the busy stretches at the span's ends", async () => {

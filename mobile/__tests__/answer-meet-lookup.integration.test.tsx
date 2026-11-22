@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -88,7 +89,13 @@ describe("the meet of a Friend's Lookup (q6)", () => {
     await user.press(beside().getByRole('button', { name: MEET }));
     await pass(500);
 
-    expect(recalculations(server)).toEqual([{ input: meetWith(MIN_SU.id), location: ON_CAMPUS }]);
+    expect(recalculations(server)).toEqual([
+      {
+        input: meetWith(MIN_SU.id),
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
+    ]);
     expect(pill().getByText('김민수 · 만나고 싶다')).toBeVisible();
     expect(pill().getByTestId('answer-pill-user', { includeHiddenElements: true })).toBeOnTheScreen();
     expect(mapThings()).toContain('302동 앞 · 12:15 만남');
@@ -129,7 +136,7 @@ describe('words typed while a meet is on screen', () => {
 
     expect(lastContext()).toMatchObject({ conditions: MET_MIN_SU.input, planId: '302동 앞' });
     expect(server.received('POST /assistant/messages').at(-1)?.body).toMatchObject({
-      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
     });
   });
 });

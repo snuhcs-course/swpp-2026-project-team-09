@@ -53,6 +53,7 @@ const NO_ANSWER: ShownAnswer = {
   index: 0,
   browse: nothing,
   show: nothing,
+  chooseKind: nothing,
   basisOpen: false,
   toggleBasis: nothing,
   adding: false,
@@ -80,7 +81,7 @@ interface Given {
 const FIRST: Given = { shown: shownAt(0), room: ROOM, fitZoom: FIT_ZOOM };
 
 // No Plan made into a Quest.
-const NOT_INVITED = { sending: false, made: null, standings: NO_STANDINGS };
+const NOT_INVITED = { sending: false, made: null, standings: NO_STANDINGS, changed: null, changing: false, left: null };
 
 async function render(asked: Asked, given: Given = FIRST): Promise<(next: Given) => Promise<void>> {
   const { rerender } = await renderHook(

@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -55,6 +56,7 @@ const PICK_FOR_THREE = '학생회관식당 · 12:33 점심';
 const WITH_MIN_JUN = {
   input: { ...MEAL_ANSWER.input, people: [...MEAL_ANSWER.input.people, { userId: MIN_JUN.id, constraints: [] }] },
   location: ON_CAMPUS,
+  clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
 };
 
 let server: FakeServer;

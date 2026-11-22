@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useState } from 'react';
@@ -207,7 +208,7 @@ interface PlanCardProps extends CardProps {
 // time bar.
 export function PlanCard(props: PlanCardProps): ReactElement {
   const { shown, answer, invitation, room, over = [], onClose, focus, said = '', dock } = props;
-  const busy = shown.recalculating || invitation.sending;
+  const busy = shown.recalculating || invitation.sending || invitation.changing;
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const openProfile = useOpenFriendProfile();
   const corner = fix.adding ? { words: '그대로', icon: null, onPress: fix.toggleAdding } : null;

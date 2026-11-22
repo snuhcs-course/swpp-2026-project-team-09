@@ -28,7 +28,7 @@ import { RECRUITING_QUESTS } from './data/boards';
 import { FRIENDS } from './data/friends';
 import { MENUS } from './data/menus';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
-import { MEAL_ANSWER_MENUS_REPLY } from './data/meal-answer-menus';
+import { MEAL_ANSWER_MENUS_REPLY, MEAL_DINNER_MENUS } from './data/meal-answer-menus';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from './data/menu-lookup';
 import { NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from './data/missing-inputs';
@@ -55,6 +55,8 @@ import {
 import { MEET_ANSWER, MEET_ANSWER_FROM_14 } from './data/meet-answer';
 import { GLOBAL_EVENTS } from './data/quests';
 import { isLibraryAsk, libraryReply } from './library-replies';
+import { withMealSet } from './meal-set';
+import { mockMadeQuests } from './plan-quest';
 import { rowFourCopyOf, rowFourReplyOf } from './row-four-copies';
 import { mockTimetable } from './timetable';
 
@@ -182,6 +184,9 @@ function copyFor(input: PlanInput): AnswerReply {
   if (input.kind === 'meet') {
     return input.window.from === MEET_ANSWER_FROM_14.input.window.from ? MEET_ANSWER_FROM_14 : MEET_ANSWER;
   }
+  if (input.kind === 'meal' && input.meal === 'dinner') {
+    return MEAL_DINNER_MENUS;
+  }
   const people = input.kind === 'meal' || input.kind === 'new-quest' ? input.people : [];
   const from = input.kind === 'meal' ? input.window.from : null;
   if (input.kind === 'meal' && input.window.now === true && (from !== null || people.length >= 3)) {
@@ -221,12 +226,15 @@ export function mockTap(tapped: Tapped): Lookup {
 }
 
 // The stored answer of 배고파, the one of board n13 without the location permission, and else that of board n15 when
-// the mock's Timetable holds no Class.
+// the mock's Timetable holds no Class; each beside a lunch the User made from a Plan names it (P04 ticket 17).
 function hungryReplyOf({ locationMissing }: RequestContext): AssistantReply {
+  let reply = MEAL_ANSWER_REPLY;
   if (locationMissing === 'permission') {
-    return NO_LOCATION_REPLY;
+    reply = NO_LOCATION_REPLY;
+  } else if (mockTimetable.listClasses().length === 0) {
+    reply = NO_TIMETABLE_REPLY;
   }
-  return mockTimetable.listClasses().length === 0 ? NO_TIMETABLE_REPLY : MEAL_ANSWER_REPLY;
+  return withMealSet(reply, mockMadeQuests());
 }
 
 // The stored refusal of a board of row 8, answers of 배고파, and Lookups of 301동식당's menu, of a place to study near

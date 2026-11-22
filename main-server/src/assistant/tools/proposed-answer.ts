@@ -11,6 +11,7 @@ import { itemName } from '../free-time/tool-parts.js';
 import { type UserDayService } from '../free-time/user-day.service.js';
 import { koreaDate } from '../korea-time.js';
 import { proposalForModel, type QuestProposal, sentProposalOf } from '../proposal.js';
+import { type ChangedParty } from './made-party-change.js';
 import { type FieldFailures } from './propose-quest-input.js';
 
 // What proposeQuest answers of a Proposal it made: its values as the model reads them, and what of the asker's own day it
@@ -31,12 +32,17 @@ export interface Clash {
   end: string;
 }
 
-async function clashesOf(days: Pick<UserDayService, 'itemsOn'>, userId: string, startsAt: string): Promise<Clash[]> {
+async function clashesOf(
+  days: Pick<UserDayService, 'itemsOn'>,
+  userId: string,
+  startsAt: string,
+  exceptStepIds: readonly string[],
+): Promise<Clash[]> {
   const start = new Date(startsAt);
   const end = busyEnd(start, null);
   const items = await days.itemsOn(userId, koreaDate(start));
   return items
-    .filter((item) => item.start < end && start < item.end)
+    .filter((item) => item.start < end && start < item.end && !exceptStepIds.includes(item.id))
     .toSorted((one, other) => one.start.getTime() - other.start.getTime())
     .slice(0, CLASHES_MAX)
     .map((item) => ({
@@ -79,15 +85,28 @@ export function refusedAnswer(fields: FieldFailures, presented: Presented): obje
   return { result: 'refused', fields, ...(boardOnly ? { note: BOARD_NOTE } : {}) };
 }
 
+// What the model is told of a change of a made 파티 shown as a card (P05 ticket 30): whom pressing 바꾸기 tells.
+const CHANGE_SHOWN =
+  'A card with 바꾸기 is shown: the 파티 changes only when the User presses it. Say the new time or place in a sentence. When told is above 0, add that pressing 바꾸기 tells the people who joined, such as "바꾸면 참여한 2명에게 알림이 가요"; when waiting is above 0, that the invited Friends who have not answered see the new time. Never say it changed.';
+
+// What proposeQuest answers of a Proposal it made, or of a change of a made 파티, whose own steps are no clash.
 export async function proposedAnswer(
   proposal: QuestProposal,
   userId: string,
-  { days, presented }: { days: Pick<UserDayService, 'itemsOn'>; presented: Presented },
+  {
+    days,
+    presented,
+    change,
+  }: { days: Pick<UserDayService, 'itemsOn'>; presented: Presented; change?: Omit<ChangedParty, 'kind'> },
 ): Promise<object> {
   withBoards(presented, false);
-  const clashes = await clashesOf(days, userId, proposal.startsAt);
+  const clashes = await clashesOf(days, userId, proposal.startsAt, change?.stepIds ?? []);
+  const changed =
+    change === undefined
+      ? { result: 'proposed' }
+      : { result: 'change-shown', told: change.others, waiting: change.waiting, reason: CHANGE_SHOWN };
   return {
-    result: 'proposed',
+    ...changed,
     proposal: proposalForModel(sentProposalOf(proposal)),
     ...(clashes.length > 0 ? { clashes } : {}),
     note: NOTE,

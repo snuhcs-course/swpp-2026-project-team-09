@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useMemo } from 'react';
@@ -142,20 +143,34 @@ export function BandOnTrack(props: BandProps): ReactElement {
   );
 }
 
+// What stands at one end of the bar in place of its label: the day's other meal (P04 ticket 16, board 26).
+export interface BandTick {
+  side: 'left' | 'right';
+  node: ReactNode;
+}
+
+interface EndsProps {
+  band: TimeBand;
+  folded: boolean;
+  margin: number;
+  tick?: BandTick;
+}
+
 // The ends under the track: the range's beside the lanes' names, `margin` wide, or folded the busy stretches that
-// bound the span.
-export function Ends({ band, folded, margin }: { band: TimeBand; folded: boolean; margin: number }): ReactElement {
+// bound the span; a tick stands in place of its side's.
+export function Ends({ band, folded, margin, tick }: EndsProps): ReactElement {
   const { before, after } = folded
     ? bandEdgesOf(band)
     : { before: clockOf(band.range.startAt), after: clockOf(band.range.endAt) };
+  const end = (words: string): ReactElement => (
+    <Text numberOfLines={1} style={styles.end}>
+      {words}
+    </Text>
+  );
   return (
     <View style={[styles.ends, !folded && { marginLeft: margin }]}>
-      <Text numberOfLines={1} style={styles.end}>
-        {before}
-      </Text>
-      <Text numberOfLines={1} style={styles.end}>
-        {after}
-      </Text>
+      {tick?.side === 'left' ? tick.node : end(before)}
+      {tick?.side === 'right' ? tick.node : end(after)}
     </View>
   );
 }

@@ -88,7 +88,11 @@ describe('the band of a5 let go at 14:00 (board a6)', () => {
   it("asks from 14:00, and draws a6's first Plan, its people, its band, and the outline of a5's", async () => {
     const user = await letGoAt14();
 
-    expect(recalculations(server).at(-1)).toEqual({ input: MEET_ANSWER_FROM_14.input, location: ON_CAMPUS });
+    expect(recalculations(server).at(-1)).toEqual({
+      input: MEET_ANSWER_FROM_14.input,
+      location: ON_CAMPUS,
+      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+    });
     expect(mapThings()).toEqual(expect.arrayContaining([PICK, '민수']));
     expect(timeBar().getByText('14:07–15:30 · 함께 83분')).toBeVisible();
     expect(screen.getByTestId('time-band-ghost')).toHaveStyle({ left: `${(15 / 390) * 100}%` });

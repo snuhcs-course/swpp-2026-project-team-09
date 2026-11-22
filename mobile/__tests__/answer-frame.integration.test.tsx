@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -190,7 +191,7 @@ describe('the request', () => {
       {
         messages: [{ role: 'user', text: ASKED }],
         context: CONTEXT,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
       },
     ]);
   });
@@ -221,7 +222,7 @@ describe('the request', () => {
         { role: 'user', text: '한식' },
       ],
       context: CONTEXT,
-      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
     });
   });
 });

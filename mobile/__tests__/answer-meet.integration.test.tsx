@@ -82,6 +82,14 @@ function markCard(): ReturnType<typeof within> {
   return within(screen.getByTestId('mark-card'));
 }
 
+function meetAsked(friendId: string): object {
+  return {
+    input: meetWith(friendId),
+    location: ON_CAMPUS,
+    clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+  };
+}
+
 // Partitions: the card of a face and the card of a Friend whom the map does not show; the answer that comes, and a
 // request that fails.
 describe('"만나고 싶다" on a Friend\'s card', () => {
@@ -102,7 +110,7 @@ describe('"만나고 싶다" on a Friend\'s card', () => {
 
     await meetFromCard(user);
 
-    expect(recalculations(server)).toEqual([{ input: meetWith(MIN_JUN.id), location: ON_CAMPUS }]);
+    expect(recalculations(server)).toEqual([meetAsked(MIN_JUN.id)]);
     expect(server.received('POST /assistant/messages')).toEqual([]);
     expect(pill().getByText('김민준 · 만나고 싶다')).toBeVisible();
     expect(pill().getByTestId('answer-pill-user', { includeHiddenElements: true })).toBeOnTheScreen();
@@ -115,7 +123,7 @@ describe('"만나고 싶다" on a Friend\'s card', () => {
 
     await meetFromCard(user);
 
-    expect(recalculations(server)).toEqual([{ input: meetWith(MIN_SU.id), location: ON_CAMPUS }]);
+    expect(recalculations(server)).toEqual([meetAsked(MIN_SU.id)]);
     expect(pill().getByText('김민수 · 만나고 싶다')).toBeVisible();
   });
 
@@ -205,7 +213,13 @@ describe("the controls of a meet's answer", () => {
     await pass(500);
 
     expect(server.received('POST /plans').map(({ body }) => body)).toEqual([
-      { input: MEET_ANSWER.input, planId: '302동 앞', startAt: '2026-11-17T12:15:00+09:00', location: ON_CAMPUS },
+      {
+        input: MEET_ANSWER.input,
+        planId: '302동 앞',
+        startAt: '2026-11-17T12:15:00+09:00',
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
     ]);
     expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
     expect(card().getByText('답이 없어도 12:15에 가면 돼요')).toBeVisible();
