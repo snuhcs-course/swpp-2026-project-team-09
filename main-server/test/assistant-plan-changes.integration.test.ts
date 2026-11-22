@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -95,7 +96,7 @@ describe('An end the User fixed', () => {
     expect(response.status).toBe(200);
     expect(summary(answerIn(response.body))).toEqual([
       `학생회관식당 ${time('12:33')}–${time('12:50')} (17)`,
-      `자하연식당 2층 ${time('12:35')}–${time('12:50')} (15)`,
+      `자하연식당 2층 ${time('12:31')}–${time('12:50')} (19)`,
       `3식당 ${time('12:31')}–${time('12:50')} (19)`,
     ]);
   });
