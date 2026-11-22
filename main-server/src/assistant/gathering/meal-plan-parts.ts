@@ -54,9 +54,21 @@ export function mealSetOf(held: HeldMeal | null): AnswerReply['mealSet'] {
 
 // Whether a plan for these Friends is for the set-aside Quest's people, as `PUT /plans/:questId` takes it
 // (better-plan.service.ts): the others in it or invited, or, when every other declined, those who declined (P05
-// ticket 17, row 6). Only then may 바꾸기 change it in place (P05 ticket 31).
-export function forItsPeople({ people }: Pick<KeptQuest, 'people'>, friendIds: readonly string[]): boolean {
+// ticket 17, row 6).
+function forItsPeople({ people }: Pick<KeptQuest, 'people'>, friendIds: readonly string[]): boolean {
   const inIt = people.filter(({ answer }) => answer !== 'declined');
   const own = (inIt.length > 0 ? inIt : people).map(({ userId }) => userId);
   return own.length === friendIds.length && own.every((id) => friendIds.includes(id));
+}
+
+// Whether 바꾸기 changes the meal set aside in place (P05 ticket 31): the asker may change it, the plans are for its
+// people, and, when others are in it, the app draws 바꾸기 (`drawsChange`). An app without it has only the plan's
+// button, which makes a second meal beside a shared one, so a shared meal is never offered to change there.
+export function mealChangeable(
+  set: Pick<KeptQuest, 'people' | 'changeable'>,
+  friendIds: readonly string[],
+  drawsChange: boolean,
+): boolean {
+  const shared = set.people.some(({ answer }) => answer !== 'declined');
+  return set.changeable && forItsPeople(set, friendIds) && (drawsChange || !shared);
 }

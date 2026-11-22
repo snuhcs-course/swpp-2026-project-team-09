@@ -40,6 +40,7 @@ async function askLunch(
   date: string,
   friends: readonly Named[],
   text: string,
+  app: object = PLAN_SET,
 ): Promise<{ response: request.Response; words: unknown }> {
   const steps = [
     ...friends.map(({ name }) => resolve(name)),
@@ -48,7 +49,7 @@ async function askLunch(
       friends.map(({ id }) => id),
     ),
   ];
-  const response = await stage.send([...steps, { text: '…' }], PLAN_SET, text);
+  const response = await stage.send([...steps, { text: '…' }], app, text);
   const words = stage.model
     .toolResults()
     .find((result) => z.object({ result: z.literal('planned') }).safeParse(result).success);
@@ -96,6 +97,16 @@ describe('A lunch the asker leads with Friends, asked for with its people', () =
     expect(changed.status).toBe(200);
     expect(await membersOf(questId)).toEqual(expect.arrayContaining([stage.asker.id, minsu.id]));
     expect(await stage.invitationTo(jieun, questId)).toBeDefined();
+  });
+
+  it('asked for with its people from an app that draws no 바꾸기, is not changeable (row 20j)', async () => {
+    const { minsu, jieun, questId } = worked;
+    const released = { clientCapabilities: ['library', 'answer'] };
+
+    const { response, words } = await askLunch(date, [minsu, jieun], '민수랑 지은이랑 점심 먹자', released);
+
+    expect(answerIn(response.body).planSet).toMatchObject({ questId, changeable: false });
+    expect(words).toMatchObject({ alreadySet: { shared: true, changeable: false } });
   });
 
   it('asked for alone, is set aside but not changeable (row 20b)', async () => {

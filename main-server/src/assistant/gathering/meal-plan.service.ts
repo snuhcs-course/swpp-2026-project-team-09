@@ -41,7 +41,7 @@ import { keptDto } from '../lookup/day-quests.js';
 import { type GatheringPerson, MINUTE_MS } from './gathering.js';
 import { type AnswerPerson, mealAnswer, type MealAnswerArgs } from './meal-answer.js';
 import { type ServedMenu } from './meal-menu.js';
-import { type BusyItem, busyIn, forItsPeople, leaveOut, mealSetOf } from './meal-plan-parts.js';
+import { type BusyItem, busyIn, leaveOut, mealChangeable, mealSetOf } from './meal-plan-parts.js';
 import { type MissingInputs } from './missing-inputs.js';
 import { placeLabelOf } from './place-naming.js';
 import { relatedOf } from './related-quests.js';
@@ -83,6 +83,8 @@ interface PlanAt {
   location: Position | null;
   locationMissing?: LocationMissing;
   leftOut?: readonly string[];
+  // The app draws 바꾸기 for `planSet` (`plan-set`): only then is a meal shared with others changeable (P05 ticket 31).
+  setsAside?: boolean;
 }
 
 // The Place the Friend view puts a Friend in now: the one of their position at 'exact', and all there is at 'building'.
@@ -157,7 +159,7 @@ export class MealPlanService {
     });
     const busy = this.busyOf(answer, people[0]?.items ?? [], input);
     const otherMeal = this.otherMealOf(collected, input, now);
-    const touched = await this.touched(askerId, input, { now, kinds: [`meal-${meal}`], setAside: held?.id ?? null });
+    const touched = await this.touched(askerId, input, { ...at, now, kinds: [`meal-${meal}`], setAside: held?.id });
     return { answer: { ...answer, otherMeal, ...touched, mealSet: mealSetOf(held) }, served: menus, busy };
   }
 
@@ -284,7 +286,15 @@ export class MealPlanService {
       kinds,
       setAside,
       setAsideChangeable,
-    }: { now: Date; kinds: readonly KeptKind[]; setAside: string | null; setAsideChangeable?: boolean },
+      setsAside = false,
+    }: {
+      now: Date;
+      kinds: readonly KeptKind[];
+      setAside: string | null | undefined;
+      setAsideChangeable?: boolean;
+      // The app draws 바꾸기 (`plan-set`), which a meal shared with others needs to be changeable.
+      setsAside?: boolean;
+    },
   ): Promise<Pick<AnswerReply, 'planSet' | 'related'>> {
     const kept = await keptQuestsOf(this.prisma, askerId, { date, now });
     const set = kept.find(({ questId }) => questId === setAside);
@@ -296,9 +306,11 @@ export class MealPlanService {
           ? null
           : {
               ...this.keptDtoOf(set),
-              changeable: setAsideChangeable ?? (set.changeable && forItsPeople(set, friendIds)),
+              changeable: setAsideChangeable ?? mealChangeable(set, friendIds, setsAside),
             },
-      related: relatedOf(kept, { kinds, friendIds, around, setAside }).map((quest) => this.keptDtoOf(quest)),
+      related: relatedOf(kept, { kinds, friendIds, around, setAside: setAside ?? null }).map((quest) =>
+        this.keptDtoOf(quest),
+      ),
     };
   }
 

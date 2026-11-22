@@ -291,7 +291,9 @@ export function planMeal(
       };
       const { location, locationMissing } = context;
       const chained = afterEarlierSteps(planInput, earlier(toolContext));
-      const { answer, served, busy = [] } = await plans.planned(userId, chained, { now, location, locationMissing });
+      const setsAside = toolContext.capabilities.has('plan-set');
+      const at = { now, location, locationMissing, setsAside };
+      const { answer, served, busy = [] } = await plans.planned(userId, chained, at);
       presented.answer = answer;
       presented.lookup = null;
       presented.mapButtons.length = 0;
@@ -316,7 +318,7 @@ export const PLAN_RULES = `A meal is planned on the map: the server decides the 
 - When planMeal answers alreadySet, the User already put that meal in their schedule, and the plans are what it would become. Your reply names it, with whom (alreadySet.with), and:
   - when alreadySet.changeable is true, asks whether to change it, such as "이미 민수와 12:16 302동식당 점심이 있어요. 바꿀까요?": the app offers 바꾸기, which changes it in place for everyone in it, and 그대로 두기. With alreadySet.declined, changing it asks them again: "민수가 거절한 12:16 점심이 있어요. 이 시간으로 다시 물어볼까요?";
   - with alreadySet.leader, says that Friend set it and changes it: "민수가 잡은 12:16 점심이 있어요. 바꾸려면 민수에게 말해 주세요.";
-  - when it is shared and the plans are for other people, offers to change it with its people, such as "이미 민수와 12:16 302동식당 점심이 있어요. 민수와 같이 바꿀까요?", and on yes plans again for them;
+  - otherwise, when it is shared, says it is changed in that 파티: "이미 민수와 12:16 302동식당 점심이 있어요. 바꾸려면 그 파티에서 바꿔요.";
   - when it is not shared, says that making a plan replaces it: "혼자 먹기로 한 12:16 점심이 있어요. 만들면 이걸로 바뀌어요."
 - When planMeal answers related, the User already has those Quests that day, of this meal or with a Friend asked for. Your sentence mentions the one that matters, such as "민수와는 13:00에 약속이 이미 있어요", whether or not it limits the plans; never treat it as free.
 - When planMeal answers none with busy, say what fills the time, by the User's own items, such as "점심 시간엔 13:00까지 수업이 있어요."

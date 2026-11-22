@@ -27,13 +27,14 @@ Words:
 | # | Exists | Asked | Answer | 바꾸기 / making | Told |
 |---|---|---|---|---|---|
 | 20a | My lunch with 민수 (waiting or accepted) | 민수랑 점심 먹자 | Set aside, with `planSet.changeable` true. Line: "이미 민수와 12:16 302동식당 점심이 있어요. 바꿀까요?" | 바꾸기 = `PUT /plans/:questId` with the plan shown: the same Quest at a new time and place. `POST /plans` answers 409 `MEAL_ALREADY_SET` `{ questId }`, as now. | 민수, if a Holder, gets `step-changed`. If waiting, 민수 stays invited and the invitation shows the new time. |
-| 20b | My lunch with 민수 | 점심 뭐 먹지? (me alone) | Set aside as now, but not changeable: the plan's people are not its people, so the `PUT` would refuse. Line: "이미 민수와 12:16 302동식당 점심이 있어요. 민수와 같이 바꿀까요?" On yes, the model plans for its people. | Making answers 409. | — |
-| 20c | My lunch with 민수 | 민수랑 지은이랑 점심 먹자 (one more) | As 20b. The line says 지은 is invited in its room. | Making answers 409. | — |
+| 20b | My lunch with 민수 | 점심 뭐 먹지? (me alone) | Set aside as now, but not changeable: the plan's people are not its people, so the `PUT` would refuse. Line, as now: "이미 민수와 12:16 302동식당 점심이 있어요. 바꾸려면 그 파티에서 바꿔요." | Making answers 409. | — |
+| 20c | My lunch with 민수 | 민수랑 지은이랑 점심 먹자 (one more) | As 20b. | Making answers 409. | — |
 | 20d | 민수's lunch, which I accepted | 민수랑 점심 먹자 | Set aside as now, not changeable. Line: "민수가 잡은 12:16 점심이 있어요. 바꾸려면 민수에게 말해 주세요." | Making answers 409. | — |
 | 20e | My lunch, which 민수, its only invitee, declined | 민수랑 점심 먹자 | The same meal (row 6): set aside and changeable. Line: "민수가 거절한 12:16 점심이 있어요. 이 시간으로 다시 물어볼까요?" | 바꾸기 changes it in place and invites 민수 again (PR 443's path, the same for a meal). | 민수 gets the invitation's push. |
 | 20f | My lunch with 민수 accepted and 지은 declined | 민수랑 점심 먹자 | Its people are me and 민수: changeable. Asked with 지은 too, it is not (row 7). | — | — |
 | 20g | It has started or is over | — | Not changeable. | Making answers 409, as now. | — |
 | 20h | My lunch alone | 점심 뭐 먹지? | As ticket 16: set aside and changeable. Making replaces it, as now. | — | — |
+| 20j | My lunch with 민수, asked from an app without `plan-set` | 민수랑 점심 먹자 | Not changeable: that app has no 바꾸기, and its plan's button would make a second lunch beside the shared one. Line, as 20b. | Making is not refused for that app, as now. | — |
 | 20i | My lunch alone | 민수랑 점심 먹자 | Set aside, but not changeable: the `PUT` is only for its people. Making replaces it, as ticket 16 does. Line: "혼자 먹기로 한 12:16 점심이 있어요. 만들면 이걸로 바뀌어요." | `POST /plans` replaces it. | 민수 is invited by the new Quest. |
 
 One rule for the app: `planSet.changeable` is true exactly when `PUT /plans/:questId` with the plan shown would change it. So 바꾸기 always goes through `PUT`.
@@ -65,7 +66,7 @@ Privacy is as in PR 422:
 
 ## What to build
 
-- Meal: `planSet.changeable` is true for the set-aside meal the User leads, not started, when the asked people are its people. The words name `changeable` and the leader, and the meal rule asks "바꿀까요?" or says why not.
+- Meal: `planSet.changeable` is true for the set-aside meal the User leads, not started, when the asked people are its people and, when others are in it, the app says `plan-set` (from the review of PR 447: an app without it would make a second lunch). The words name `changeable` and the leader, and the meal rule asks "바꿀까요?" or says why not.
 - `KeptQuest.changeable` as above. findDay's 시간 바꾸기 note covers a meal the User may change.
 - A new tool, `proposeCancel`, with `ref`:
   - With `quest-cancel`, it answers `cancel-shown` with what pressing does (`deleted` or `left`, the next Leader, the invitations that go), and a reply offer `{ kind: 'leave-quest', label: '취소하기' | '나가기', questId }`, which the app sends as `DELETE /quests/:questId`.
@@ -76,7 +77,7 @@ Privacy is as in PR 422:
 
 ## Acceptance criteria
 
-- [x] 20a: a shared lunch is set aside changeable, and the plan's `PUT` changes it in place, with the Friend still in. 20b, 20d and 20i are not changeable. 20e invites again. (`assistant-shared-meal-change.integration.test.ts`)
+- [x] 20a: a shared lunch is set aside changeable, and the plan's `PUT` changes it in place, with the Friend still in. 20b, 20d, 20i and 20j are not changeable. 20e invites again. (`assistant-shared-meal-change.integration.test.ts`)
 - [x] Kept Quests: a shared lunch the User leads is changeable in findDay, which offers 시간 바꾸기. (the same file)
 - [x] C1 to C5, C7, C8, C12 and C14 through proposeCancel, and the button's `DELETE` does what the answer said. (`assistant-cancel-quest.integration.test.ts`)
 - [x] Lint, format and types of the main server pass.
