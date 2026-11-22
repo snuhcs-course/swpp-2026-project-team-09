@@ -12,6 +12,7 @@ import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { MenusService } from '../../menus/menus.service.js';
 import { servedLines } from '../../menus/open-rule.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
+import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { type AnswerReply, type Lookup, type MealInput, type Plan } from '../dto/answer.dto.js';
 import { type HandledMeal } from '../free-time/meal-fit.js';
 import { MealPlanService } from '../gathering/meal-plan.service.js';
@@ -59,6 +60,11 @@ export class MenuLookupService {
         hours: await this.menus.hoursOf(key, meal, date),
       })),
     );
+  }
+
+  // The Place of the Restaurant, null when it has none.
+  placeOf(key: string): PlaceDto | null {
+    return this.restaurantPlaces.placeOf(key);
   }
 
   // The meal answer on screen planned again, so that a reply in words keeps it there.
