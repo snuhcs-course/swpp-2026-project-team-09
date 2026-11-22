@@ -35,6 +35,9 @@ export const QUESTIONS_MAX = 240;
 const QUESTION_LINES = 3;
 const SENTENCE_LINES = 2;
 
+// While typing, about two rows above the input.
+export const TYPING_QUESTIONS_MAX = 150;
+
 // "＋ 새 질문" under the questions the caption opened: it leaves the answer as "←" does, keeping the conversation, and
 // puts the cursor in the main map's input, whose message starts a new conversation (P04 ticket 44).
 function AskNewRow({ onPress }: { onPress: () => void }): ReactElement {
