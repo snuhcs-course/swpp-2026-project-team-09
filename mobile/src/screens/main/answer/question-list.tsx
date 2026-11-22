@@ -5,14 +5,14 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement, ReactNode } from 'react';
+import { type ReactElement, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { color, Icon, radius, shadow, space, text } from '@/design-system';
 import { type QuestionRow, questionRows } from '@/features/assistant/turn-outcome';
 import { turnOf } from '@/features/assistant/turn';
 import type { ChatSheetControl } from '../chat-sheet';
 
-const HEADER = '물은 것 · 누르면 그 답이 지도로 돌아와요';
+const TITLE = '이전 질문';
 const ON_SCREEN = '지금';
 // The time's column, as wide as "00:00", so that the questions stand in line.
 const TIME_WIDTH = 48;
@@ -25,10 +25,18 @@ interface QuestionListProps {
   maxHeight: number;
   // In the answer's card: no card of its own around it.
   flat?: boolean;
-  // In place of the header's words.
-  title?: string;
-  // Under the rows, outside their scroll.
-  footer?: ReactNode;
+  // "＋ 새 질문" at the header's right; none without it.
+  onAskNew?: () => void;
+  // "모두 지우기" on the earlier conversations' group, once the User says 지우기.
+  onClearEarlier: () => void;
+}
+
+// The rows in two groups, each latest first: the current conversation's, and the kept conversations' (P04 ticket 49).
+export function groupsOf(rows: readonly QuestionRow[]): { now: QuestionRow[]; earlier: QuestionRow[] } {
+  return {
+    now: rows.filter(({ conversation }) => conversation === null),
+    earlier: rows.filter(({ conversation }) => conversation !== null),
+  };
 }
 
 function Question({ row, onPress }: { row: QuestionRow; onPress: () => void }): ReactElement {
@@ -61,26 +69,84 @@ function Question({ row, onPress }: { row: QuestionRow; onPress: () => void }): 
   );
 }
 
-// Every question of the conversations kept while the app runs, the latest first, each with when it was asked and
-// what it came to (board 16); the turn on screen is marked 지금 (board 9). A press brings that answer back to the map.
-// In the answer's card it is flat, above the input (board 6 of the 2026-11-22 redesign).
+// A small word button at a row's right: "＋ 새 질문", "모두 지우기", 지우기 and 취소.
+function WordButton(props: { words: string; label?: string; onPress: () => void; strong?: boolean }): ReactElement {
+  const { words, label = words, onPress, strong = false } = props;
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      hitSlop={space[2]}
+      onPress={onPress}
+      style={({ pressed }) => [styles.wordButton, pressed && styles.pressed]}
+    >
+      <Text style={[styles.wordButtonWords, strong && styles.strong]}>{words}</Text>
+    </Pressable>
+  );
+}
+
+// The earlier conversations' header: its name and "모두 지우기", which turns it into the question whether to erase them,
+// in the row itself: no dialog. The current conversation stays, what "이어서 말하기" goes on from.
+function EarlierHeader({ count, onClear }: { count: number; onClear: () => void }): ReactElement {
+  const [asking, setAsking] = useState(false);
+  if (!asking) {
+    return (
+      <View style={styles.groupRow}>
+        <Text style={styles.group}>이전 대화</Text>
+        <WordButton
+          onPress={() => {
+            setAsking(true);
+          }}
+          words="모두 지우기"
+        />
+      </View>
+    );
+  }
+  return (
+    <View style={[styles.groupRow, styles.asking]} testID="clear-earlier-question">
+      <Text style={styles.question}>{`이전 대화의 질문 ${String(count)}개를 지울까요?`}</Text>
+      <View style={styles.answers}>
+        <WordButton
+          onPress={() => {
+            setAsking(false);
+          }}
+          words="취소"
+        />
+        <WordButton onPress={onClear} strong words="지우기" />
+      </View>
+    </View>
+  );
+}
+
+// Every question of the conversations kept while the app runs (board 16), under the title "이전 질문" with "＋ 새 질문"
+// always in reach at its right, outside the scroll (P04 ticket 49). The current conversation's questions come first
+// ("지금 대화"), then the kept ones' ("이전 대화", with "모두 지우기"), each latest first, with when each was asked and what
+// it came to; the turn on screen is marked 지금 (board 9). A press brings that answer back to the map. In the answer's
+// card it is flat (board 6 of the 2026-11-22 redesign).
 export function QuestionList(props: QuestionListProps): ReactElement {
-  const { rows, onPick, maxHeight, flat = false, title = HEADER, footer = null } = props;
+  const { rows, onPick, maxHeight, flat = false, onAskNew, onClearEarlier } = props;
+  const { now, earlier } = groupsOf(rows);
+  const question = (row: QuestionRow): ReactElement => (
+    <Question
+      key={row.turnId}
+      onPress={() => {
+        onPick(row);
+      }}
+      row={row}
+    />
+  );
   return (
     <View style={[flat ? styles.flat : styles.card, { maxHeight }]} testID="question-list">
-      <Text style={[styles.header, flat && styles.flatHeader]}>{title}</Text>
+      <View style={[styles.header, flat && styles.flatHeader]}>
+        <Text style={styles.title}>{TITLE}</Text>
+        {onAskNew === undefined ? null : <WordButton label="새 질문" onPress={onAskNew} strong words="＋ 새 질문" />}
+      </View>
       <ScrollView contentContainerStyle={!flat && styles.rows} keyboardShouldPersistTaps="handled">
-        {rows.map((row) => (
-          <Question
-            key={row.turnId}
-            onPress={() => {
-              onPick(row);
-            }}
-            row={row}
-          />
-        ))}
+        {earlier.length > 0 && now.length > 0 ? <Text style={[styles.group, styles.groupRow]}>지금 대화</Text> : null}
+        {now.map((row) => question(row))}
+        {earlier.length === 0 ? null : <EarlierHeader count={earlier.length} onClear={onClearEarlier} />}
+        {earlier.map((row) => question(row))}
       </ScrollView>
-      {footer}
     </View>
   );
 }
@@ -94,8 +160,35 @@ const styles = StyleSheet.create({
     boxShadow: shadow.float,
   },
   flat: { flexShrink: 1 },
-  header: { ...text.caption, paddingHorizontal: space[4], paddingBottom: space[2], color: color.inkMuted },
+  // Words shorten or wrap inside their own row at a large font: nothing overlaps.
+  header: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space[2],
+    paddingHorizontal: space[4],
+    paddingBottom: space[2],
+  },
   flatHeader: { paddingHorizontal: 0, paddingBottom: space[1] },
+  title: { ...text.caption, flexShrink: 1, color: color.inkMuted },
+  groupRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space[2],
+    minHeight: 36,
+    paddingHorizontal: space[2],
+    paddingTop: space[2],
+  },
+  group: { ...text.caption, flexShrink: 1, color: color.inkSubtle },
+  asking: { paddingBottom: space[2], borderRadius: radius.md, backgroundColor: color.surfaceSunken },
+  question: { ...text.label, flexShrink: 1, color: color.ink },
+  answers: { flexDirection: 'row', gap: space[2], marginLeft: 'auto' },
+  wordButton: { justifyContent: 'center', minHeight: 32, paddingHorizontal: space[2] },
+  wordButtonWords: { ...text.label, color: color.inkMuted },
+  strong: { color: color.snuBlue },
   rows: { paddingHorizontal: space[2] },
   row: {
     flexDirection: 'row',

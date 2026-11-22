@@ -244,7 +244,7 @@ describe('a question typed on the main map while a conversation is kept', () => 
 
 // P04 ticket 44. Partitions: the list's title; "＋ 새 질문" pressed; a message typed after it.
 describe('"＋ 새 질문" under the caption\'s list', () => {
-  it('titles the list "이전 질문" and ends it with "새 질문"', async () => {
+  it('titles the list "이전 질문" with "새 질문" in its header', async () => {
     const user = await askedThrice();
 
     await openList(user);

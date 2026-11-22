@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect, useState } from 'react';
+import type { EarlierConversation } from '@/features/assistant/conversations';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { type PlanOutcome, type PlanOutcomes, planWhat } from '@/features/assistant/turn-outcome';
@@ -35,8 +37,17 @@ export function usePlanOutcomes(
   bubbles: readonly ChatBubble[],
   shown: ShownAnswer,
   invitation: PlanInvitation,
+  earlier: readonly EarlierConversation[] = [],
 ): PlanOutcomes {
   const [outcomes, setOutcomes] = useState<PlanOutcomes>(new Map());
+  // The outcomes of erased conversations go with them (P04 ticket 49).
+  useEffect(() => {
+    const alive = new Set([...bubbles, ...earlier.flatMap((kept) => kept.bubbles)].map(({ id }) => id));
+    setOutcomes((last) => {
+      const kept = [...last].filter(([id]) => alive.has(id));
+      return kept.length === last.size ? last : new Map(kept);
+    });
+  }, [bubbles, earlier]);
   const { made, changed, left } = invitation;
   const { source, plan } = shown;
   const replyId = source === null ? null : (bubbles.find(({ answer }) => answer === source)?.id ?? null);
