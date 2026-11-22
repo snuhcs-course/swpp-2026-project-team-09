@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -14,7 +15,7 @@ const ME_ID = 'answer:me';
 const PERSON_ID = 'answer:person:';
 
 // A mark whose card opens at a press, with its position.
-export type OnMark = (id: string, position: LatLng) => void;
+export type OnMark = (id: string, position: LatLng, pick?: LatLng | null) => void;
 
 export function takesNoPress(): boolean {
   return false;
@@ -59,7 +60,7 @@ export function planPress(
   return (id) => {
     const thing = drawing.things.find((one) => one.id === id);
     if (thing !== undefined && pressableWhile(sent)(id)) {
-      onMark(id, thing.position);
+      onMark(id, thing.position, drawing.pick);
       return;
     }
     if (sent) {
