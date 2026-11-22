@@ -24,7 +24,7 @@ if [[ $TEAM_GROUP == root ]]; then
 fi
 
 REPOSITORY=https://github.com/snuhcs-course/swpp-2026-project-team-09.git
-BRANCH=5.0/UAT-cycle-2
+BRANCH=uat/Main
 # git, curl and jq for the clone and the deploy run, which a minimal image may lack.
 PACKAGES=(docker.io docker-compose-v2 docker-buildx git curl jq)
 UNITS=(snu-now-deploy.service snu-now-deploy.timer snu-now-demo-refresh.service snu-now-demo-refresh.timer

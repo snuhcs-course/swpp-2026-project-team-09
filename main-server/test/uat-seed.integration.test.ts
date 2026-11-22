@@ -5,7 +5,7 @@
  * 2026-11-23  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
-import { ASKED_QUEST, UAT_EVENT, uatId } from '../src/uat/uat-scenarios.js';
+import { ASKED_QUEST, UAT_EVENT, uatId } from '../src/uat/uat-specs.js';
 import { inKorea, NOW, UatStage } from './uat-stage.js';
 
 // The UAT data (cycle 2): what `setup`, `reset`, `s2-cancel` and `status` leave, read as the phones read it.
@@ -35,8 +35,15 @@ describe('setup', () => {
   });
 
   it('turns 위치 공유 on for B and D only, with nobody having turned it off', async () => {
-    const users = await stage.prisma.user.findMany({ select: { name: true, masterSwitchOn: true, masterOffAskedAt: true } });
-    expect(users.filter(({ masterSwitchOn }) => masterSwitchOn).map(({ name }) => name).toSorted()).toEqual(['이도현', '한지우']);
+    const users = await stage.prisma.user.findMany({
+      select: { name: true, masterSwitchOn: true, masterOffAskedAt: true },
+    });
+    expect(
+      users
+        .filter(({ masterSwitchOn }) => masterSwitchOn)
+        .map(({ name }) => name)
+        .toSorted(),
+    ).toEqual(['이도현', '한지우']);
     expect(users.every(({ masterOffAskedAt }) => masterOffAskedAt === null)).toBe(true);
   });
 
@@ -67,9 +74,15 @@ describe('setup', () => {
   });
 
   it("has every tester's request to [UAT] 공강 신청함 waiting, and a party of two each leads", async () => {
-    const asked = await stage.prisma.questJoinRequest.findMany({ where: { questId: ASKED_QUEST }, select: { user: { select: { name: true } } } });
+    const asked = await stage.prisma.questJoinRequest.findMany({
+      where: { questId: ASKED_QUEST },
+      select: { user: { select: { name: true } } },
+    });
     expect(asked.map(({ user }) => user.name).toSorted()).toEqual(['김서연', '정하윤', '최민준']);
-    const own = await stage.prisma.quest.findUniqueOrThrow({ where: { id: uatId('quest:two:A1') }, include: { holders: true, leader: true } });
+    const own = await stage.prisma.quest.findUniqueOrThrow({
+      where: { id: uatId('quest:two:A1') },
+      include: { holders: true, leader: true },
+    });
     expect(own).toMatchObject({ title: '[UAT] 2인 파티 · 김서연', capacity: 2, joinPolicy: 'open' });
     expect(own.leader.name).toBe('김서연');
     expect(own.holders).toHaveLength(1);
@@ -77,16 +90,27 @@ describe('setup', () => {
 
   it('lists the published [UAT] events, without the Draft, the cancelled one and what was collected for these days', async () => {
     expect(await stage.eventTitles('A1')).toEqual(
-      ['[UAT] Event', '[UAT] 공강 행사 29분', '[UAT] 공강 행사 30분', '[UAT] 배드민턴 대회', '[UAT] 짧은 행사', '수집 사흘 뒤'].toSorted(),
+      [
+        '[UAT] Event',
+        '[UAT] 공강 행사 29분',
+        '[UAT] 공강 행사 30분',
+        '[UAT] 배드민턴 대회',
+        '[UAT] 짧은 행사',
+        '수집 사흘 뒤',
+      ].toSorted(),
     );
   });
 
   it("gives the testers' classes tomorrow, and C ten and E fifteen minutes of their gap", async () => {
-    const classes = await stage.prisma.timetableClass.findMany({ include: { times: true, user: { select: { name: true } } } });
+    const classes = await stage.prisma.timetableClass.findMany({
+      include: { times: true, user: { select: { name: true } } },
+    });
     const of = (name: string): string[] =>
       classes
         .filter(({ user }) => user.name === name)
-        .flatMap(({ courseName, times }) => times.map(({ weekday, startTime, endTime }) => `${courseName} ${weekday} ${startTime}-${endTime}`))
+        .flatMap(({ courseName, times }) =>
+          times.map(({ weekday, startTime, endTime }) => `${courseName} ${weekday} ${startTime}-${endTime}`),
+        )
         .toSorted();
     expect(of('김서연')).toEqual(['[UAT] 수업1 tuesday 10:00-11:30', '[UAT] 수업2 tuesday 13:00-14:30']);
     expect(of('박지호')).toEqual(['[UAT] C 수업 tuesday 11:00-12:50', '[UAT] C 저녁 tuesday 18:00-22:00']);
@@ -111,7 +135,14 @@ describe('reset', () => {
     await stage.prisma.user.update({ where: { id: a1 }, data: { masterSwitchOn: true, masterOffAskedAt: NOW } });
     await stage.prisma.questHolder.create({ data: { questId: uatId('quest:minton-open'), userId: a1 } });
     await stage.prisma.quest.create({
-      data: { title: '볼링', leaderId: a1, joinPolicy: 'open', board: 'hobby', holders: { create: [{ userId: a1 }, { userId: b }] }, subQuests: { create: { title: '볼링', startsAt: new Date(inKorea('2026-11-24T21:30')) } } },
+      data: {
+        title: '볼링',
+        leaderId: a1,
+        joinPolicy: 'open',
+        board: 'hobby',
+        holders: { create: [{ userId: a1 }, { userId: b }] },
+        subQuests: { create: { title: '볼링', startsAt: new Date(inKorea('2026-11-24T21:30')) } },
+      },
     });
     await stage.redis.set(`assistant:messages:${a1}:2026-11-23`, '9');
     return a1;
@@ -123,8 +154,14 @@ describe('reset', () => {
     await stage.reset('A1');
 
     expect(await stage.friendsOf('A1')).toEqual(['박지호', '윤서아']);
-    expect(await stage.prisma.user.findUniqueOrThrow({ where: { id: a1 } })).toMatchObject({ masterSwitchOn: false, masterOffAskedAt: null });
-    const held = await stage.prisma.questHolder.findMany({ where: { userId: a1 }, select: { quest: { select: { title: true } } } });
+    expect(await stage.prisma.user.findUniqueOrThrow({ where: { id: a1 } })).toMatchObject({
+      masterSwitchOn: false,
+      masterOffAskedAt: null,
+    });
+    const held = await stage.prisma.questHolder.findMany({
+      where: { userId: a1 },
+      select: { quest: { select: { title: true } } },
+    });
     expect(held.map(({ quest }) => quest.title)).toEqual(['[UAT] 2인 파티 · 김서연']);
     expect(await stage.prisma.quest.count({ where: { title: '볼링' } })).toBe(0);
     expect(await stage.prisma.questJoinRequest.count({ where: { questId: ASKED_QUEST, userId: a1 } })).toBe(1);
@@ -139,7 +176,10 @@ describe('reset', () => {
 
     await stage.reset('A1');
 
-    const open = await stage.prisma.quest.findUniqueOrThrow({ where: { id: uatId('quest:minton-open') }, include: { holders: { select: { user: { select: { name: true } } } } } });
+    const open = await stage.prisma.quest.findUniqueOrThrow({
+      where: { id: uatId('quest:minton-open') },
+      include: { holders: { select: { user: { select: { name: true } } } } },
+    });
     expect(open.holders.map(({ user }) => user.name).toSorted()).toEqual(['박지호', '이도현', '정하윤']);
     expect(await stage.friendsOf('A2')).toEqual(['박지호', '윤서아']);
     expect(await stage.friendsOf('B')).toEqual(['박지호']);
@@ -152,7 +192,9 @@ describe('s2-cancel', () => {
     expect(await stage.cancel()).toEqual(['[UAT] Event를 취소했어요.']);
 
     expect(await stage.eventTitles('A1')).not.toContain('[UAT] Event');
-    expect(await stage.prisma.globalEvent.findUniqueOrThrow({ where: { id: UAT_EVENT } })).toMatchObject({ state: 'cancelled' });
+    expect(await stage.prisma.globalEvent.findUniqueOrThrow({ where: { id: UAT_EVENT } })).toMatchObject({
+      state: 'cancelled',
+    });
     expect((await stage.cancel())[0]).toContain('취소할 [UAT] Event가 없어요');
   });
 });

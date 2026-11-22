@@ -9,16 +9,12 @@ import { Redis } from 'ioredis';
 import { koreaDate } from '../assistant/korea-time.js';
 import { PrismaClient } from '../generated/prisma/client.js';
 import { accountOf, type Letter, type Tester, UAT_ACCOUNT_LIST } from './uat-accounts.js';
+import { clearKept, emptyTester, ensureLunch, signal, tellApps } from './uat-kept.js';
 import {
-  clearKept,
-  emptyTester,
   emptyWhatUsersMade,
-  ensureLunch,
   places,
   readUsers,
   removeOtherUsers,
-  signal,
-  tellApps,
   type Users,
   writeClasses,
   writeEvents,
@@ -27,7 +23,8 @@ import {
   writeUser,
   writeUsers,
 } from './uat-rows.js';
-import { ASKED_QUEST, classesOf, daysFrom, friendsOf, ownQuest, prepared, UAT_EVENT } from './uat-scenarios.js';
+import { classesOf, friendsOf, ownQuest, prepared } from './uat-scenarios.js';
+import { ASKED_QUEST, daysFrom, UAT_EVENT } from './uat-specs.js';
 
 // The data of the User Acceptance Test (cycle 2) on swpp-a (README.md: UAT data). `setup` leaves the database as the
 // sheet's first step needs it, whatever it held; `reset` sets one tester back and leaves the others as they are;
@@ -103,27 +100,57 @@ export async function cancelUatEvent(prisma: PrismaClient, redis: Redis | null):
     await signal(redis, { name: 'global-events-changed' });
     await tellApps(redis, Object.values(await readUsers(prisma)));
   }
-  return [count === 1 ? '[UAT] Event를 취소했어요.' : '취소할 [UAT] Event가 없어요 (이미 취소됐거나 setup을 돌리지 않았어요).'];
+  return [
+    count === 1
+      ? '[UAT] Event를 취소했어요.'
+      : '취소할 [UAT] Event가 없어요 (이미 취소됐거나 setup을 돌리지 않았어요).',
+  ];
 }
 
-async function accountLine(prisma: PrismaClient, redis: Redis | null, letter: Letter, id: string, now: Date): Promise<string> {
+async function accountLine(
+  prisma: PrismaClient,
+  redis: Redis | null,
+  letter: Letter,
+  id: string,
+  now: Date,
+): Promise<string> {
   const user = await prisma.user.findUniqueOrThrow({
     where: { id },
-    select: { name: true, masterSwitchOn: true, masterOffAskedAt: true, _count: { select: { sessions: { where: { endedAt: null } } } } },
+    select: {
+      name: true,
+      masterSwitchOn: true,
+      masterOffAskedAt: true,
+      _count: { select: { sessions: { where: { endedAt: null } } } },
+    },
   });
   const friendships = await prisma.friendship.findMany({
     where: { OR: [{ userAId: id }, { userBId: id }] },
-    select: { userAId: true, userBId: true, acceptedAt: true, userA: { select: { name: true } }, userB: { select: { name: true } } },
+    select: {
+      userAId: true,
+      userBId: true,
+      acceptedAt: true,
+      userA: { select: { name: true } },
+      userB: { select: { name: true } },
+    },
   });
   const friends = friendships
-    .map(({ userAId, userA, userB, acceptedAt }) => `${userAId === id ? userB.name : userA.name}${acceptedAt === null ? '(요청 중)' : ''}`)
+    .map(
+      ({ userAId, userA, userB, acceptedAt }) =>
+        `${userAId === id ? userB.name : userA.name}${acceptedAt === null ? '(요청 중)' : ''}`,
+    )
     .toSorted();
   const quests = await prisma.questHolder.findMany({
     where: { userId: id },
     select: { quest: { select: { title: true, leaderId: true } } },
   });
-  const asked = await prisma.questJoinRequest.findMany({ where: { userId: id }, select: { quest: { select: { title: true } } } });
-  const invited = await prisma.questInvitation.findMany({ where: { userId: id }, select: { quest: { select: { title: true } } } });
+  const asked = await prisma.questJoinRequest.findMany({
+    where: { userId: id },
+    select: { quest: { select: { title: true } } },
+  });
+  const invited = await prisma.questInvitation.findMany({
+    where: { userId: id },
+    select: { quest: { select: { title: true } } },
+  });
   const messages = redis === null ? '?' : ((await redis.get(`assistant:messages:${id}:${koreaDate(now)}`)) ?? '0');
   return [
     `${letter} ${user.name}: 로그인 ${String(user._count.sessions)}대 · 위치 공유 ${user.masterSwitchOn ? '켬' : '끔'}${user.masterOffAskedAt === null ? '' : '(끈 적 있음)'} · AI ${messages}개`,
@@ -140,17 +167,23 @@ export async function uatStatus(prisma: PrismaClient, redis: Redis | null, now: 
   const lines: string[] = [];
   for (const { letter } of UAT_ACCOUNT_LIST) {
     const id = users[letter];
-    lines.push(id === undefined ? `${letter}: 계정 없음 (setup 전)` : await accountLine(prisma, redis, letter, id, now));
+    lines.push(
+      id === undefined ? `${letter}: 계정 없음 (setup 전)` : await accountLine(prisma, redis, letter, id, now),
+    );
   }
   const events = await prisma.globalEvent.findMany({
     where: { title: { startsWith: '[UAT]' } },
     orderBy: { startsAt: 'asc' },
     select: { title: true, state: true, startsAt: true, endsAt: true },
   });
-  const local = (at: Date | null): string => (at === null ? '?' : new Date(at.getTime() + 9 * 3600 * 1000).toISOString().slice(5, 16).replace('T', ' '));
+  const local = (at: Date | null): string =>
+    at === null ? '?' : new Date(at.getTime() + 9 * 3600 * 1000).toISOString().slice(5, 16).replace('T', ' ');
   lines.push(
     `행사: ${events.length === 0 ? '없음' : ''}`,
-    ...events.map(({ title, state, startsAt, endsAt }) => `   ${title} · ${state} · ${local(startsAt)}–${local(endsAt)}${endsAt !== null && endsAt <= now ? ' (끝남)' : ''}`),
+    ...events.map(
+      ({ title, state, startsAt, endsAt }) =>
+        `   ${title} · ${state} · ${local(startsAt)}–${local(endsAt)}${endsAt !== null && endsAt <= now ? ' (끝남)' : ''}`,
+    ),
   );
   return lines;
 }

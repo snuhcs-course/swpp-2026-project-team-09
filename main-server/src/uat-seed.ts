@@ -17,10 +17,18 @@ function testerOf(word: string | undefined): Tester | undefined {
   return TESTER_LETTERS.find((letter) => letter.toLowerCase() === word?.toLowerCase());
 }
 
-async function run(prisma: PrismaClient, redis: Redis | null, command: string | undefined, word: string | undefined): Promise<string[]> {
+async function run(
+  prisma: PrismaClient,
+  redis: Redis | null,
+  command: string | undefined,
+  word: string | undefined,
+): Promise<string[]> {
   const now = new Date();
   if (command === 'setup' && word === undefined) {
-    return ['[setup] 세션 시작 상태로 준비했어요. 모든 폰의 앱을 껐다 켜세요.', ...(await setUpUat(prisma, redis, now))];
+    return [
+      '[setup] 세션 시작 상태로 준비했어요. 모든 폰의 앱을 껐다 켜세요.',
+      ...(await setUpUat(prisma, redis, now)),
+    ];
   }
   const tester = testerOf(word);
   if (command === 'reset' && tester !== undefined) {

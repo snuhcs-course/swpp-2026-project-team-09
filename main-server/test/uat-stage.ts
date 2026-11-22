@@ -108,7 +108,10 @@ export class UatStage {
 
   // The User's id of an account.
   async idOf(letter: Letter): Promise<string> {
-    const { id } = await this.prisma.user.findUniqueOrThrow({ where: { googleSubject: keyOf(letter) }, select: { id: true } });
+    const { id } = await this.prisma.user.findUniqueOrThrow({
+      where: { googleSubject: keyOf(letter) },
+      select: { id: true },
+    });
     return id;
   }
 
@@ -141,7 +144,9 @@ export class UatStage {
   }
 
   private async signIn(letter: Letter): Promise<void> {
-    const response = await request(this.app.getHttpServer()).post('/auth/google').send({ idToken: keyOf(letter) });
+    const response = await request(this.app.getHttpServer())
+      .post('/auth/google')
+      .send({ idToken: keyOf(letter) });
     expect(response.status).toBe(200);
     this.tokens.set(letter, signInResultSchema.parse(response.body).accessToken);
   }

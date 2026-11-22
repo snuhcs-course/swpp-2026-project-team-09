@@ -1,0 +1,85 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-23  Fable 5.2  prompted by AhnJinYoung
+################################################################################
+
+# Builds the APK of the User Acceptance Test (cycle 2), which talks to swpp-a. It exists only on the branch uat/Main
+# and runs only for pushes to it that change the app, or by hand from that branch. It makes one thing, the run's
+# artifact `snu-now-uat-apk`: no tag, no GitHub Release, no app-version.json, no EAS update and no AWS, so Production
+# and its Releases (.github/workflows/release.yml) are not touched. The APK asks EAS Update for the channel `uat`,
+# which nothing publishes to, so it never takes Production's bundles.
+name: UAT APK
+
+on:
+  push:
+    branches: ['uat/Main']
+    paths: ['mobile/**', '.github/workflows/uat-apk.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uat-apk
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: build the UAT APK
+    if: github.ref == 'refs/heads/uat/Main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      EXPO_PUBLIC_MAIN_SERVER_URL: http://swpp26t09.147-46-242-169.sslip.io
+      EXPO_PUBLIC_SOCKET_SERVER_URL: http://swpp26t09.147-46-242-169.sslip.io
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ vars.PRODUCTION_APP_GOOGLE_WEB_CLIENT_ID }}
+      # Over plain HTTP an Invite Link opens the app only through snunow://, so no host is claimed.
+      INVITE_LINK_HOST: ''
+      UPDATE_CHANNEL: uat
+      EXPO_PUBLIC_RELEASE_TAG: uat/cycle-2 on 26.11.22-12
+      APK: mobile/android/app/build/outputs/apk/release/app-release.apk
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: echo "EXPO_PUBLIC_RELEASE_COMMIT=$(git rev-parse HEAD)" >>"$GITHUB_ENV"
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          working-directory: mobile
+          node-version-file: ../.nvmrc
+          cache: true
+          require-lockfile: true
+      - name: Make room for the Android build
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/.ghcup /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      # As the Release builds it (release.yml), signed with the template's debug key.
+      - name: Build the APK
+        working-directory: mobile
+        env:
+          KAKAO_NATIVE_APP_KEY: ${{ secrets.KAKAO_NATIVE_APP_KEY }}
+        run: |
+          if [[ -z "$KAKAO_NATIVE_APP_KEY" ]]; then
+            echo "::error::The repository secret KAKAO_NATIVE_APP_KEY is empty or not set; the APK is not built."
+            exit 1
+          fi
+          CI=1 pnpm expo prebuild --platform android --no-install
+          echo "sdk.dir=$ANDROID_HOME" >android/local.properties
+          (cd android && ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=2g")
+      - name: Name the APK
+        run: |
+          name="snu-now-uat-$(date -u +%F)-${EXPO_PUBLIC_RELEASE_COMMIT:0:8}.apk"
+          cp "$APK" "$RUNNER_TEMP/$name"
+          ls -l "$RUNNER_TEMP/$name"
+          echo "APK_FILE=$RUNNER_TEMP/$name" >>"$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snu-now-uat-apk
+          path: ${{ env.APK_FILE }}
+          if-no-files-found: error
+          retention-days: 14
