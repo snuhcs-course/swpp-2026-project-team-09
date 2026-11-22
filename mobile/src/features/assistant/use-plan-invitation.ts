@@ -4,6 +4,8 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -21,6 +23,9 @@ import { onInvitationAnswer } from '@/live/invitation-answers';
 import { useAskForPush } from '@/push/push-ask-host';
 import { friendStandings, type HeardAnswer, NO_STANDINGS, type ReadMembers, type Standing } from './invited-friends';
 import { useKeepMadeQuest } from './made-quest-ids';
+import { samePlanConditions } from './plan-conditions';
+import { setRefusalWords } from './set-refusals';
+import { usePlanChange } from './use-plan-change';
 import type { ShownAnswer } from './use-shown-answer';
 
 export interface PlanInvitation {
@@ -36,6 +41,13 @@ export interface PlanInvitation {
   again: () => void;
   // "다시 고르기" is on its way.
   dropping: boolean;
+  // 바꾸기 of a meeting already set (P04 ticket 17): the Plan on screen becomes that Quest's; then `changed` is the
+  // answer's line, which says so.
+  change: (questId: string) => void;
+  changing: boolean;
+  changed: string | null;
+  // 바꾸기 refused for good (PR 442's review): the answer's line, which sends the User to the 파티.
+  refused: string | null;
 }
 
 // Where the User is or why that is not known, which the request sends, and how a refusal or a Quest made out of sight
@@ -48,12 +60,16 @@ export interface Inviting {
 
 // The answer's conditions, the Plan on screen, and where the User is or why that is not known, the reason left out
 // when it is, since a main server before P02-13 refuses the key.
-function makingOf(answer: AnswerReply, plan: Plan, { location, locationMissing = null }: Inviting): MakePlanQuest {
+export function makingOf(
+  answer: AnswerReply,
+  plan: Plan,
+  { location, locationMissing = null }: Inviting,
+): MakePlanQuest {
   const why = locationMissing === null ? {} : { locationMissing };
   return { input: answer.input, planId: plan.id, startAt: plan.startAt, location, ...why };
 }
 
-const CHANGED = '계획이 바뀌었어요. 다시 확인해 주세요';
+export const CHANGED = '계획이 바뀌었어요. 다시 확인해 주세요';
 const FAILED = '초대하지 못했어요. 잠시 후 다시 시도해 주세요';
 const SENT = '파티를 만들고 초대를 보냈어요';
 const TAKEN = '여기로 정했어요';
@@ -90,10 +106,14 @@ function fresh(answer: AnswerReply | null, planId: string | null): InvitationSta
   return { answer, sent: new Map(), planId, made: null, heard: [] };
 }
 
-// What is held for the answer and the Plan on screen: another answer drops everything, another Plan what was made.
+// What is held for the answer and the Plan on screen. Another answer keeps, while nothing was made, the request of each
+// Plan that stands the same in it (its id, day, start, place, and people), as after a kind chip pressed after a
+// failure, so that its retry keeps its key; every other Plan starts fresh. Another Plan drops what was made.
 function heldFor(stored: InvitationState, answer: AnswerReply | null, planId: string | null): InvitationState {
   if (stored.answer !== answer) {
-    return fresh(answer, planId);
+    const kept = [...stored.sent].filter(([id]) => samePlanConditions(stored.answer, answer, id));
+    const next = fresh(answer, planId);
+    return stored.made === null && kept.length > 0 ? { ...next, sent: new Map(kept) } : next;
   }
   return stored.planId === planId ? stored : { ...stored, planId, made: null, heard: [] };
 }
@@ -132,6 +152,8 @@ function tellRefusal(error: unknown, say: Inviting['say'], change: ShownAnswer['
   if (isRefusal(error, 409, 'PLAN_CHANGED')) {
     say(CHANGED);
     change((input) => ({ ...input }));
+  } else if (setRefusalWords(error) !== null) {
+    say(setRefusalWords(error) ?? FAILED);
   } else if (alone) {
     // A 파티 of the User's own for the event refuses "여기로" with SHARED_QUEST_HELD, worded as 파티 says it.
     say(isRefusal(error, 409, 'SHARED_QUEST_HELD') ? refusalWords(error) : NOT_TAKEN);
@@ -317,10 +339,11 @@ export function usePlanInvitation(shown: OnScreen, inviting: Inviting): PlanInvi
   const members = useMembers(made);
   useHeard(made, setStored);
   const { again, dropping } = useAgain(made, setStored, inviting.say);
+  const { change, changing, changed, refused } = usePlanChange(shown, inviting);
   useGathered(made, setStored);
   const standings = useMemo(
     () => (made === null ? NO_STANDINGS : friendStandings(made, members, heard)),
     [made, members, heard],
   );
-  return { sending, made, standings, invite, again, dropping };
+  return { sending, made, standings, invite, again, dropping, change, changing, changed, refused };
 }

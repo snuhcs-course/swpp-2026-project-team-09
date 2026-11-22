@@ -37,9 +37,10 @@ export interface CardReference {
 
 // What the app tells the main server it can draw, with every chat request: library cards, an answer on the map, the
 // study spaces of the visible area it sends as `viewport`, a meet ("민수랑 만나고 싶어"), and the answers of events,
-// recruiting parties, and a new party ("오늘 볼 만한 거 있어?", "배드민턴 칠 사람"). An app without it (the 1.0.0 bundle)
-// is never sent one.
-export const ANSWER_CAPABILITIES = ['library', 'answer', 'area', 'meet', 'events'] as const;
+// recruiting parties, and a new party ("오늘 볼 만한 거 있어?", "배드민턴 칠 사람"), and 바꾸기 / 그대로 두기 beside a Quest
+// already set (`plan-set`, P04 ticket 17), which it also sends with POST /plans and POST /assistant/answers. An app
+// without it (the 1.0.0 bundle) is never sent one; a main server before P05 ticket 17 refuses `plan-set`.
+export const ANSWER_CAPABILITIES = ['library', 'answer', 'area', 'meet', 'events', 'plan-set'] as const;
 
 // A Place or a Friend of a Proposal, by id and the words the card shows: the Place's name, the Friend's name. Never
 // where a Friend is.

@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen } from '@testing-library/react-native';
@@ -96,7 +97,13 @@ describe('"여기로" on an events Plan (Alone 3)', () => {
 
     const sent = server.received('POST /plans');
     expect(sent.map(({ body }) => body)).toEqual([
-      { input: EVENTS_ANSWER.input, planId: JOB_FAIR, startAt: '2026-11-20T13:54:00+09:00', location: ON_CAMPUS },
+      {
+        input: EVENTS_ANSWER.input,
+        planId: JOB_FAIR,
+        startAt: '2026-11-20T13:54:00+09:00',
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
     ]);
     expect(sent[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);
   });

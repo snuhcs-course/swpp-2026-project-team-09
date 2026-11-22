@@ -96,7 +96,8 @@ interface PlanBarProps {
 // stands at one end (`MealTick`).
 export function PlanBar({ shown, answer, plan, invitation, focus, onClose, onHeight }: PlanBarProps): ReactElement {
   const fix = useCorrections(shown, answer.input, onClose, focus);
-  const fixed = bandIsFixed(answer.input.kind);
+  // A meeting changed in place (P04 ticket 17) is set: its band is read, not moved.
+  const fixed = bandIsFixed(answer.input.kind) || invitation.changed !== null;
   const tick = mealTickOf(answer);
   const sent = invitation.sending || invitation.made !== null;
   return (
@@ -107,7 +108,7 @@ export function PlanBar({ shown, answer, plan, invitation, focus, onClose, onHei
             ? undefined
             : { side: tick.side, node: <MealTick sent={sent} shown={shown} words={tick.words} /> },
         band: plan.band,
-        disabled: shown.recalculating || invitation.sending,
+        disabled: shown.recalculating || invitation.sending || invitation.changing,
         fixed: windowOf(answer.input),
         focus: fix.focus,
         ghost: shown.ghost,

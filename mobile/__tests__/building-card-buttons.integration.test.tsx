@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -81,7 +82,11 @@ describe('"여기서 먹기" on the card of a pressed building', () => {
     await pass(500);
 
     expect(server.received('POST /assistant/answers').map(({ body }) => body)).toEqual([
-      { input: EAT_HERE?.kind === 'plan' ? EAT_HERE.input : null, location: ON_CAMPUS },
+      {
+        input: EAT_HERE?.kind === 'plan' ? EAT_HERE.input : null,
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
     ]);
     expect(server.received('POST /assistant/messages')).toEqual([]);
     expect(screen.getByTestId('answer-pill')).toHaveTextContent('63동 · 여기서 먹기');
@@ -179,7 +184,11 @@ describe("a2's buttons on the card of 문화관", () => {
     await pass(500);
 
     expect(recalculations(server)).toEqual([
-      { input: { kind: 'events', date: '2026-11-20', eventIds: [JOB_FAIR, TALK] }, location: ON_CAMPUS },
+      {
+        input: { kind: 'events', date: '2026-11-20', eventIds: [JOB_FAIR, TALK] },
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
     ]);
     expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 행사 보기');
     expect(screen.getByTestId('time-bar')).toBeOnTheScreen();
@@ -194,7 +203,11 @@ describe("a2's buttons on the card of 문화관", () => {
     await pass(500);
 
     expect(recalculations(server)).toEqual([
-      { input: { kind: 'quests', globalEventId: JOB_FAIR, questIds: null }, location: ON_CAMPUS },
+      {
+        input: { kind: 'quests', globalEventId: JOB_FAIR, questIds: null },
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
     ]);
     expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 같이 갈 파티');
     expect(screen.getByTestId('time-bar')).toBeOnTheScreen();

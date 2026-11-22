@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -122,6 +123,14 @@ function planKept(): void {
   expect(screen.getByTestId('answer-pill')).toBeVisible();
 }
 
+function withoutMinJun(): object {
+  return {
+    input: { ...replyWithMinJun().answer.input, people: [ASKER] },
+    location: ON_CAMPUS,
+    clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+  };
+}
+
 // Partitions: opened and closed by its ✕ and by Android's back button; 빼기 beside it.
 describe("the profile of a face of an answer's Plan", () => {
   it('opens the profile over the answer card, asks nothing, and its ✕ brings the answer back as it was', async () => {
@@ -165,9 +174,7 @@ describe("the profile of a face of an answer's Plan", () => {
     await user.press(markCard().getByRole('button', { name: `${FACE} 빼기` }));
     await pass(500);
 
-    expect(recalculations(server)).toEqual([
-      { input: { ...replyWithMinJun().answer.input, people: [ASKER] }, location: ON_CAMPUS },
-    ]);
+    expect(recalculations(server)).toEqual([withoutMinJun()]);
     expect(mapThings()).not.toContain(FACE);
   });
 });

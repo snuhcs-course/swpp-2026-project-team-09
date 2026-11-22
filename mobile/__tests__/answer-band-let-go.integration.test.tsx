@@ -81,7 +81,11 @@ async function meetMinSu(): Promise<User> {
 
 // What the app asks when the band is let go: a5's conditions with the window from `from`, its end left open.
 function startingAt(from: string): object {
-  return { input: { ...MEET_ANSWER.input, window: { from, until: null } }, location: ON_CAMPUS };
+  return {
+    input: { ...MEET_ANSWER.input, window: { from, until: null } },
+    location: ON_CAMPUS,
+    clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+  };
 }
 
 // Partitions: the band let go at 14:00 (board a6's request); a band off the five-minute grid; past the range's end;
@@ -180,7 +184,11 @@ describe("a meal's band let go", () => {
     await dragBody(20);
 
     expect(recalculations(server)).toEqual([
-      { input: { ...MEAL_ANSWER.input, window: { from: '12:25', until: null } }, location: ON_CAMPUS },
+      {
+        input: { ...MEAL_ANSWER.input, window: { from: '12:25', until: null } },
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
     ]);
     expect(mapThings()).toContain('학생회관식당 · 12:40 점심');
     expect(screen.getByTestId('time-band-ghost')).toHaveStyle({ borderStyle: 'dashed' });
