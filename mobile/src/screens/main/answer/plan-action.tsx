@@ -3,6 +3,7 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -83,7 +84,7 @@ function setQuestAction(set: SetQuest, { invitation }: ChatSheetControl, disable
 
 export function PlanActionButton({ action }: { action: PlanAction }): ReactElement {
   return (
-    <Button disabled={action.disabled} onPress={action.onPress}>
+    <Button disabled={action.disabled} onPress={action.onPress} size="bar">
       {action.words}
     </Button>
   );
@@ -201,7 +202,7 @@ function LookupActionButton({ control, lookup, refusal }: LookupActionProps): Re
   });
   // Disabled while the next reply is on its way: it would act on the turn before.
   return main === null ? null : (
-    <Button disabled={chat.waiting} onPress={main.onPress}>
+    <Button disabled={chat.waiting} onPress={main.onPress} size="bar">
       {main.label}
     </Button>
   );

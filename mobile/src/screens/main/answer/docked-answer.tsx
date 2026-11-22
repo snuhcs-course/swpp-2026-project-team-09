@@ -3,6 +3,7 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -16,7 +17,7 @@ import { leaveOfferOf, leaveWordsOf } from '@/features/assistant/use-quest-leavi
 import { keepsShown } from '@/features/assistant/use-shown-answer';
 import { koreaDateKey } from '@/korea-time';
 import type { ChatSheetControl } from '../chat-sheet';
-import { DockChip, DockLine } from './dock-chips';
+import { DockChip, DockLine, WORDS_LINES } from './dock-chips';
 import { LeaveRow } from './leave-button';
 import { MealDock } from './meal-dock';
 import { PickTimeSheet } from './pick-time-sheet';
@@ -212,6 +213,8 @@ function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement
         {line === null ? null : (
           <DockLine
             line={line}
+            // A reply of words alone shows up to five lines before it is cut (P04 ticket 43).
+            lines={WORDS_LINES}
             onPress={
               // While a Place is picked, the line says what to do and raises nothing (P04 ticket 26).
               rest.still === true || control.pick.place !== null
@@ -282,7 +285,7 @@ export function DockedAnswer({
     );
   }
   if (control.answer.answer?.input.kind === 'meal') {
-    return <MealDock bubble={bubble} control={control} />;
+    return <MealDock bubble={bubble} control={control} onRaise={onRaise} />;
   }
   const folded = <FoldedChips control={control} note={control.answer.answer?.note ?? null} onRaise={onRaise} />;
   return (

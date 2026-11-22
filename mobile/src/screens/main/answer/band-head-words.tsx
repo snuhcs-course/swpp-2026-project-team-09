@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -13,6 +14,9 @@ import { type BandWordsPart, shortenedOf } from '@/features/assistant/band-words
 export interface HeadRoom {
   left: number;
   right: number;
+  // The head row's least height: that of "＋ 같이", whose middle the words share, so that the track starts below it
+  // (P04 ticket 43). Left out, the words' own.
+  height?: number;
 }
 
 interface BandWordsProps {
@@ -70,7 +74,10 @@ export function BandWords({ parts, day, head }: BandWordsProps): ReactElement {
   const { step, onLayout } = useFittedStep(key);
   const shown = head === undefined ? { day, parts } : shortenedOf(day, parts, step);
   return (
-    <View>
+    <View
+      style={head?.height === undefined ? undefined : [styles.head, { minHeight: head.height }]}
+      testID={head?.height === undefined ? undefined : 'time-band-head'}
+    >
       <Text ellipsizeMode="tail" numberOfLines={1} style={[styles.words, room]} testID="time-band-words">
         <Words day={shown.day} parts={shown.parts} />
       </Text>
@@ -92,6 +99,7 @@ export function BandWords({ parts, day, head }: BandWordsProps): ReactElement {
 const styles = StyleSheet.create({
   words: { ...text.label, color: color.quest, textAlign: 'center' },
   strong: { fontFamily: font.bold },
+  head: { justifyContent: 'center' },
   // Laid out at the words' width, unseen and untouchable, only to count its lines.
   measure: { position: 'absolute', top: 0, right: 0, left: 0, opacity: 0, pointerEvents: 'none' },
 });

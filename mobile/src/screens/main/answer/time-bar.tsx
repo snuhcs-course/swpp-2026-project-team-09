@@ -27,7 +27,7 @@ import type { ShownBooking } from '@/features/assistant/booking-scene';
 import type { Chat } from '@/features/assistant/use-chat';
 import { bookingKept } from '../library/booking-kept';
 import { SlotBand } from '../library/slot-band';
-import { AddChip } from './condition-chips';
+import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
 import { BACK_ROOM } from './back-button';
 import { TimeBand } from './time-band';
@@ -91,7 +91,7 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
         {...band}
         day={day ?? koreaDayWord(startAt, new Date(now))}
         folded={folded}
-        head={{ left: BACK_ROOM, right: add === null ? 0 : addWidth }}
+        head={{ left: BACK_ROOM, right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
       />
       {add === null ? null : (
         <View
@@ -164,7 +164,7 @@ export function PlanBar(props: PlanBarProps): ReactElement {
       }}
       add={
         addName === null ? null : (
-          <AddChip adding={fix.adding} disabled={busy} name={addName} onAdd={fix.toggleAdding} />
+          <AddChip adding={fix.adding} disabled={busy} inBar name={addName} onAdd={fix.toggleAdding} />
         )
       }
       day={mealDayOf(answer, plan)}
@@ -250,8 +250,9 @@ const styles = StyleSheet.create({
   },
   toggle: { alignSelf: 'center', alignItems: 'center', width: GRIP_WIDTH, paddingTop: space[2] },
   grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
-  // At the right of the words row, over the bar's padding.
-  add: { position: 'absolute', top: space[2], right: space[3] },
+  // At the right of the head row, its top at the row's top (the bar's padding), so that the two share their middle and
+  // the track starts below both (P04 ticket 43).
+  add: { position: 'absolute', top: space[3], right: space[3] },
   // A seat's band starts clear of "←" at its head's left.
   booking: { paddingLeft: space[4] + BACK_ROOM },
 });
