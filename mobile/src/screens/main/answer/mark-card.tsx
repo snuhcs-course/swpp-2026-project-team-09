@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useState } from 'react';
@@ -31,14 +32,25 @@ interface MarkCardProps {
 const BESIDE_GAP = 28;
 const BESIDE_MAX = 220;
 
-function besidePlace(
+// At the right, unless it does not fit there, or the pick's flag (`clear`) stands where it would and the left has room
+// (P04 ticket 14, item 2).
+export function besidePlace(
   at: OpenedMark['at'],
   size: { width: number; height: number },
   stage: MarkCardProps['stage'],
+  clear: OpenedMark['at'] | null = null,
 ): { left: number; top: number } {
   const right = at.x + BESIDE_GAP;
-  const left = right + size.width + EDGE <= stage.width ? right : Math.max(EDGE, at.x - BESIDE_GAP - size.width);
+  const leftSide = at.x - BESIDE_GAP - size.width;
   const top = Math.min(Math.max(EDGE, at.y - size.height / 2), stage.height - size.height - EDGE);
+  const covers =
+    clear !== null &&
+    clear.x >= right &&
+    clear.x <= right + size.width &&
+    clear.y >= top - LABEL_ROOM / 2 &&
+    clear.y <= top + size.height + LABEL_ROOM / 2;
+  const fitsRight = right + size.width + EDGE <= stage.width;
+  const left = fitsRight && !(covers && leftSide >= EDGE) ? right : Math.max(EDGE, leftSide);
   return { left, top };
 }
 
@@ -50,7 +62,7 @@ export function MarkCard({ mark, stage, onClose, beside = false, children }: Mar
   const below = mark.at.y + LABEL_ROOM;
   const fits = below + height <= stage.height / 2 + LABEL_ROOM;
   const place = beside
-    ? besidePlace(mark.at, size, stage)
+    ? besidePlace(mark.at, size, stage, mark.clear ?? null)
     : {
         left: Math.min(Math.max(mark.at.x - WIDTH / 2, EDGE), stage.width - WIDTH - EDGE),
         top: fits ? below : Math.max(EDGE, mark.at.y - LABEL_ROOM - height),
