@@ -126,3 +126,18 @@ describe('"＋ 같이" in the bar’s head', () => {
     expect(screen.getByTestId('time-band-head')).toHaveStyle({ minHeight: BAR_ADD_HEIGHT });
   });
 });
+
+// Partitions: the list raised with every kind; one kind chosen (P04 ticket 50, the user's phone).
+describe('the raised list’s first line', () => {
+  it('says how many places it shows and how they are ordered, the kind on screen’s count once one is chosen', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await user.press(screen.getByText(/^올리면 \d+곳 목록$/u));
+
+    const total = MEAL_ANSWER_MENUS_REPLY.answer.plans.length;
+    expect(screen.getByTestId('meal-list-order')).toHaveTextContent(`${String(total)}곳 · 걸음이 적은 순`);
+    expect(screen.getByTestId('meal-list-order').props.numberOfLines).toBe(1);
+
+    await user.press(screen.getByRole('button', { name: '한식 4곳' }));
+    expect(screen.getByTestId('meal-list-order')).toHaveTextContent('4곳 · 걸음이 적은 순');
+  });
+});

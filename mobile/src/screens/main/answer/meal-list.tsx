@@ -110,6 +110,12 @@ export function walksKnown(answer: AnswerReply): boolean {
   return answer.plans.some((plan) => addedWalk(plan) !== null);
 }
 
+// The raised list's first line (P04 ticket 50): how many places it shows, of the kind on screen when one is chosen, and
+// how it is ordered ("11곳 · 걸음이 적은 순"). Not pressable: the grip's line says how to lower the card.
+export function orderLineOf(answer: AnswerReply, shown: number): string {
+  return `${String(shown)}곳 · ${listOrderWords(answer)}`;
+}
+
 // How the raised list is ordered, which the caption says: by walking, or, without it, by the main server's order,
 // the earliest open first (P04 ticket 48).
 export function listOrderWords(answer: AnswerReply): string {
@@ -228,6 +234,9 @@ export function MealList({ answer, shown, busy }: MealListProps): ReactElement |
   );
   return (
     <View style={styles.list} testID="meal-list">
+      <Text numberOfLines={1} style={styles.order} testID="meal-list-order">
+        {orderLineOf(answer, rows.length)}
+      </Text>
       <KindChips answer={answer} disabled={busy} onChoose={shown.chooseKind} />
       {rows.filter((one) => !late.includes(one)).map((one) => row(one))}
       {late.length === 0 ? null : <Heading words={LATE_HEADING} />}
@@ -267,6 +276,8 @@ const styles = StyleSheet.create({
   chosenBadge: { backgroundColor: color.quest },
   droppedBadge: { backgroundColor: color.inkSubtle },
   heading: { ...text.caption, marginTop: space[2], paddingHorizontal: space[2], color: color.inkMuted },
+  // On the list's left edge, above the kinds.
+  order: { ...text.caption, color: color.inkMuted },
   number: { ...text.micro, color: color.onPrimary },
   middle: { flex: 1, gap: 2 },
   name: { ...text.body, fontFamily: font.bold, color: color.ink },
