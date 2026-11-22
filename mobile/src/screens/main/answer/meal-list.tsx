@@ -52,12 +52,6 @@ function rowOf(plan: Plan, index: number, kind: Cuisine | null): CandidateRow {
   };
 }
 
-// A meal answer with a Plan and more than one place, candidates or places dropped, whose raised card lists them: one
-// that kept a single Plan of many still lists the others, so that they never vanish without a word.
-export function mealListed(answer: AnswerReply | null): boolean {
-  return answer?.input.kind === 'meal' && answer.plans.length > 0 && answer.plans.length + answer.dropped.length > 1;
-}
-
 // A meal answer with a Plan, whose raised card is the list, though it holds one place.
 export function mealCard(answer: AnswerReply | null): boolean {
   return answer?.input.kind === 'meal' && answer.plans.length > 0;

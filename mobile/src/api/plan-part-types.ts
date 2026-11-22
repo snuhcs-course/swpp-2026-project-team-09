@@ -22,13 +22,11 @@ export interface PlanPart {
   arriveAt?: string | null;
   // Null when nothing follows.
   leaveBy: string | null;
-  // `by`: how they go on to it, absent from a main server before the shuttle-aware Plan (a walk).
-  next: { startAt: string; place: PlacePoint | null; by?: 'walk' | 'shuttle' } | null;
-  // How they travel, absent for a walk.
+  next: { startAt: string; place: PlacePoint | null } | null;
+  // How they travel, absent for a walk. With the shuttle-aware Plan, 'shuttle' when their way to the place is by the
+  // shuttle, `walkMinutes` then being the minutes of the way, and `shuttle` the names of the stops they board and get
+  // off at ("301동", "경영대"). A main server before it sends neither for a meal, which reads as a walk.
   mode?: 'walk' | 'shuttle';
-  // How they go to the place, and with the shuttle where they board and get off; absent from a main server before the
-  // shuttle-aware Plan, which reads as a walk. `walkMinutes` is then the minutes of the way, however it is gone.
-  by?: 'walk' | 'shuttle';
   shuttle?: { boardAt: string; getOffAt: string };
 }
 

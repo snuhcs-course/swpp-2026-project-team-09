@@ -19,6 +19,8 @@ export interface Restaurant {
   opens: string;
   price: number | null;
   dishes: Dish[];
+  // Reached from 301동 by the shuttle, as the shuttle-aware Plan sends it: its minutes and its stops' names.
+  shuttle?: { minutes: number; boardAt: string; getOffAt: string };
 }
 
 export const B301 = { latitude: 37.45016, longitude: 126.95259 };
@@ -90,6 +92,7 @@ export const RESTAURANTS: readonly Restaurant[] = [
     building: '109',
     at: { latitude: 37.46098, longitude: 126.95252 },
     opens: '11:00',
+    shuttle: { minutes: 13, boardAt: '301동', getOffAt: '자하연' },
     price: 6000,
     dishes: [
       ['낙지연포탕', null, '한식'],

@@ -14,7 +14,7 @@ import { FRIENDS } from './friends';
 // 뭐 먹을까" answered tomorrow with eleven restaurants at their buildings' points, two of them sharing 109동 and two
 // 75-1동, between a Class ending at 301동 at 10:45 and one at 302동 at 15:30. Long names and long dish names are among
 // them. The walks are worked out from the straight distance; the menus and prices are examples. 감골식당 and the
-// 기숙사식당 open late, so they cannot be done before the Class at 15:30.
+// 기숙사식당 open late, so they cannot be done before the Class at 15:30. 자하연식당 2층 is reached by the shuttle.
 
 export const CROWDED_ASKED = '내일 점심 뭐 먹을까';
 
@@ -69,7 +69,8 @@ const NEXT = point({ name: '302동', building: '302', at: B302 });
 function scene(chosen: Restaurant, there: number, on: number): MapScene {
   const routes: MapScene['routes'] = [];
   if (metres(B301, chosen.at) > ONE_POINT) {
-    routes.push({ userId: ME.id, role: 'me', from: B301, to: chosen.at, minutes: there });
+    const by = chosen.shuttle === undefined ? {} : { mode: 'shuttle' as const };
+    routes.push({ userId: ME.id, role: 'me', from: B301, to: chosen.at, minutes: there, ...by });
   }
   if (metres(chosen.at, B302) > ONE_POINT) {
     routes.push({ userId: ME.id, role: 'next', from: chosen.at, to: B302, minutes: on });
@@ -109,8 +110,24 @@ function bandOf(date: string, now: string, start: number, end: number): Plan['ba
   };
 }
 
+// A part reached by the shuttle, as the shuttle-aware Plan sends it; nothing for a walk.
+function byShuttleOf({ shuttle }: Restaurant): Pick<Plan['parts'][number], 'mode' | 'shuttle'> {
+  return shuttle === undefined
+    ? {}
+    : { mode: 'shuttle', shuttle: { boardAt: shuttle.boardAt, getOffAt: shuttle.getOffAt } };
+}
+
+function basisOf(one: Restaurant, there: number, on: number): string[] {
+  const way =
+    one.shuttle === undefined
+      ? `301동 → ${one.name} 걸어서 ${String(there)}분`
+      : `301동 → ${one.name} 셔틀로 ${String(there)}분 (${one.shuttle.boardAt} 정류장 → ${one.shuttle.getOffAt} 정류장)`;
+  return [way, `${one.name} → 302동 걸어서 ${String(on)}분`];
+}
+
 function planOf(date: string, now: string, one: Restaurant): Plan {
-  const there = minutes(B301, one.at);
+  const there = one.shuttle?.minutes ?? minutes(B301, one.at);
+  const by = byShuttleOf(one);
   const on = minutes(one.at, B302);
   const start = Math.max(CLASS_END + there, clockMinutes(one.opens));
   const end = start + EATING;
@@ -134,6 +151,7 @@ function planOf(date: string, now: string, one: Restaurant): Plan {
         arriveAt: at(date, CLASS_END + there),
         leaveBy: at(date, NEXT_CLASS - on),
         next: { startAt: at(date, NEXT_CLASS), place: NEXT },
+        ...by,
       },
     ],
     subQuests: [{ at: at(date, start), placeId: `place-${one.building}`, title: `${one.name}에서 식사` }],
@@ -143,7 +161,7 @@ function planOf(date: string, now: string, one: Restaurant): Plan {
         { text: `${time} ${one.name}`, strong: true },
       ],
     ],
-    basis: [`301동 → ${one.name} 걸어서 ${String(there)}분`, `${one.name} → 302동 걸어서 ${String(on)}분`],
+    basis: basisOf(one, there, on),
     scene: scene(one, there, on),
     band: bandOf(date, now, start, end),
     menu: {

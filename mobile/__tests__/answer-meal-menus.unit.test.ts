@@ -10,7 +10,7 @@ import { cornersOf, hoursOf, planCorner } from '@/features/assistant/meal-menus'
 import { crowdedMealAnswer } from '@/api/mock/data/crowded-meal';
 import { travelWords } from '@/features/assistant/answer-walks';
 import { mealPickWords } from '@/features/assistant/meal-pick';
-import { candidateRowsOf, droppedHeading, listedCount, mealListed } from '@/screens/main/answer/meal-list';
+import { candidateRowsOf, droppedHeading, listedCount, mealCard } from '@/screens/main/answer/meal-list';
 import { mealTabsOf, restaurantOf } from '@/screens/main/answer/meal-menu';
 import { mealDockLine, mealSentenceOf } from '@/screens/main/answer/meal-dock';
 
@@ -134,10 +134,11 @@ describe('the list of candidates', () => {
     expect(candidateRowsOf(answer)).toHaveLength(2);
   });
 
-  it('counts one candidate alone as no list for the caption, though the raised card shows its row', () => {
+  it('lists one candidate alone as one row, which the caption counts as 1', () => {
     const answer = { ...MEAL_ANSWER_MENUS, plans: MEAL_ANSWER_MENUS.plans.slice(0, 1) };
 
-    expect(mealListed(answer)).toBe(false);
+    expect(mealCard(answer)).toBe(true);
+    expect(listedCount(answer)).toBe(1);
     expect(candidateRowsOf(answer)).toHaveLength(1);
   });
 });
@@ -181,7 +182,7 @@ describe('one Plan kept of many', () => {
   const kept = { ...MEAL_ANSWER_MENUS, plans: first === undefined ? [] : [first], dropped };
 
   it('is still listed, counting the places dropped', () => {
-    expect(mealListed(kept)).toBe(true);
+    expect(mealCard(kept)).toBe(true);
     expect(listedCount(kept)).toBe(3);
   });
 
@@ -211,7 +212,8 @@ describe('the crowded answer’s late restaurants', () => {
   });
 });
 
-// Partitions: every leg on foot; the way there by shuttle; an old reply without `by` (the shuttle-aware Plan).
+// Partitions: every leg on foot, as a reply without `mode` reads; the way there by shuttle, as the shuttle-aware Plan
+// sends it (`mode: 'shuttle'` and the stops' names).
 describe('the words of the way', () => {
   const plan = crowdedMealAnswer('2026-10-07', '2026-10-06T04:00:00Z').plans[0];
   if (plan === undefined) {
@@ -220,17 +222,11 @@ describe('the words of the way', () => {
   const byShuttle = {
     ...plan,
     parts: plan.parts.map((part) =>
-      part.me
-        ? {
-            ...part,
-            by: 'shuttle' as const,
-            shuttle: { boardAt: '2026-10-07T10:50:00+09:00', getOffAt: '2026-10-07T11:00:00+09:00' },
-          }
-        : part,
+      part.me ? { ...part, mode: 'shuttle' as const, shuttle: { boardAt: '301동', getOffAt: '경영대' } } : part,
     ),
   };
 
-  it('says 걸음 where every leg is on foot, as a reply without `by` reads', () => {
+  it('says 걸음 where every leg is on foot, as a reply without `mode` reads', () => {
     expect(travelWords(plan)).toMatch(/^걸음 \d+분$/u);
     expect(mealPickWords(plan, plan.place.label, null).note).toMatch(/ · 걸음 \d+분$/u);
   });

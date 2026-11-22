@@ -195,3 +195,19 @@ describe('the crowded meal answer raised', () => {
     expect(list().getByText(LATE_HEADING)).toBeOnTheScreen();
   });
 });
+
+// Partitions: one Plan and nothing dropped (review of PR 483: the dock's line takes no press).
+describe('a meal answer of one place', () => {
+  it('raises by "올리면 1곳 목록", to the people and the row', async () => {
+    const answer: AnswerReply = {
+      ...MEAL_ANSWER_MENUS_REPLY.answer,
+      plans: MEAL_ANSWER_MENUS_REPLY.answer.plans.slice(0, 1),
+    };
+    const user = await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, answer });
+
+    await user.press(screen.getByText('올리면 1곳 목록'));
+
+    expect(card().getByText('김민수')).toBeOnTheScreen();
+    expect(list().getByTestId('meal-row-1')).toBeEnabled();
+  });
+});

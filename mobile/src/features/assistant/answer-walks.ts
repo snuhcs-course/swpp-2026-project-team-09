@@ -93,18 +93,15 @@ export function addedWalk({ parts, scene }: Pick<Plan, 'parts' | 'scene'>): numb
 }
 
 // The way a meal Plan adds to the User's day, as `addedWalk` counts it, and whether a leg of it is by shuttle: the way
-// there, the way on, or a route of the scene. Null when where they start is not known. A main server before the
-// shuttle-aware Plan sends no `by`, which reads as walking.
+// there (the User's part's `mode`) or a leg of the scene's routes, the way on included. Null when where they start is
+// not known. A main server before the shuttle-aware Plan sends no `mode`, which reads as walking.
 export function travelOf(plan: Pick<Plan, 'parts' | 'scene'>): { minutes: number; shuttle: boolean } | null {
   const minutes = addedWalk(plan);
   if (minutes === null) {
     return null;
   }
-  const me = plan.parts.find((part) => part.me);
   const shuttle =
-    me?.by === 'shuttle' ||
-    me?.mode === 'shuttle' ||
-    me?.next?.by === 'shuttle' ||
+    plan.parts.some(({ me, mode }) => me && mode === 'shuttle') ||
     plan.scene.routes.some(({ role, mode }) => (role === 'me' || role === 'next') && mode === 'shuttle');
   return { minutes, shuttle };
 }
