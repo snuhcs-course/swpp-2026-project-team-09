@@ -7,7 +7,7 @@
 import type { MenuLine, RestaurantMenus } from '@/api/menu-types';
 import { MEAL_ANSWER_MENUS } from '@/api/mock/data/meal-answer-menus';
 import { cornersOf, hoursOf, planCorner } from '@/features/assistant/meal-menus';
-import { crowdedMealAnswer } from '@/api/mock/data/crowded-meal';
+import { crowdedMealAnswer, crowdedWithFriend } from '@/api/mock/data/crowded-meal';
 import { travelWords } from '@/features/assistant/answer-walks';
 import { mealPickWords } from '@/features/assistant/meal-pick';
 import { candidateRowsOf, droppedHeading, listedCount, mealCard } from '@/screens/main/answer/meal-list';
@@ -238,5 +238,15 @@ describe('the words of the way', () => {
     expect(mealPickWords(byShuttle, plan.place.label, null).note).not.toContain('걸음');
     const rows = candidateRowsOf({ ...MEAL_ANSWER_MENUS, plans: [byShuttle, ...MEAL_ANSWER_MENUS.plans.slice(1, 2)] });
     expect(rows.find(({ planId }) => planId === byShuttle.id)?.when).toMatch(/^이동 \d+분 · 셔틀$/u);
+  });
+});
+
+// Partitions: a Friend's name ending in a final consonant (강도윤) in the crowded mock's reasons.
+describe('the crowded mock with a Friend', () => {
+  it('gives every reason the topic particle the main server gives: 은 after 윤', () => {
+    const reasons = crowdedWithFriend('2026-10-07', '2026-10-06T04:00:00Z', 'f6').dropped.map(({ reason }) => reason);
+
+    expect(reasons.filter((reason) => reason.startsWith('강도윤'))).not.toHaveLength(0);
+    expect(reasons.every((reason) => !reason.startsWith('강도윤는'))).toBe(true);
   });
 });

@@ -9,6 +9,7 @@ import type { LatLng } from '@/api/types';
 import { B301, B302, type Restaurant, RESTAURANTS } from './crowded-restaurants';
 import { ME } from './frame';
 import { FRIENDS } from './friends';
+import { objectParticle } from '@/features/map/short-name';
 
 // The crowded meal answer, for checking the map with real data (the answer screen's redesign, 2026-11-22): "내일 점심
 // 뭐 먹을까" answered tomorrow with eleven restaurants at their buildings' points, two of them sharing 109동 and two
@@ -206,10 +207,11 @@ export function crowdedWithFriend(date: string, now: string, userId: string): An
   const name = FRIENDS.find(({ id }) => id === userId)?.name ?? '친구';
   const kept = alone.plans.find(({ place }) => place.label === '302동식당') ?? alone.plans[0];
   const others = alone.plans.filter((plan) => plan !== kept);
+  // The topic particle as the main server chooses it (`withTopic`): 은 after a final consonant, else 는.
+  const topic = objectParticle(name) === '을' ? '은' : '는';
   const dropped = others.map(({ place }, index) => ({
     place,
-    reason:
-      index % 3 === 0 ? `${name}${index % 2 === 0 ? '은' : '는'} 10분밖에 못 있어요` : '같이 있는 시간이 15분뿐이에요',
+    reason: index % 3 === 0 ? `${name}${topic} 10분밖에 못 있어요` : '같이 있는 시간이 15분뿐이에요',
   }));
   // As the main server draws them: the others dropped, each tagged with its reason.
   const places = (kept?.scene.places ?? []).map((item) => {
@@ -229,7 +231,7 @@ export function crowdedWithFriend(date: string, now: string, userId: string): An
 
 export function crowdedMealReply(date: string, now: string): AssistantReply & { answer: AnswerReply } {
   return {
-    text: '302동식당 순살안동식찜닭이 좋아요. 걸음 2분이고 11:30에 열어요. 학생회관식당은 목살슬라이스덮밥이고 걸음 32분이에요.',
+    text: '302동식당 순살안동식찜닭이 좋아요. 걸음 2분이고 11:30에 열어요. 가까운 301동식당은 들기름막국수이고 걸음 2분이에요.',
     mapButtons: [],
     cards: [],
     proposal: null,
