@@ -231,6 +231,39 @@ function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement
   );
 }
 
+// A meal answer beside a Quest already set keeps its kinds and its list (P04 ticket 21, the shape agreed 2026-11-22):
+// the line alone on the top row, and under it the meal's chip row with 그대로 두기 first, the kinds scrolling sideways,
+// and 메뉴 보기 at the right. 그대로 두기 or 바꾸기 leaves the line alone, as a meeting's dock is.
+function MealBesideSetQuest({ control, rest, onRaise }: DockedWordsProps): ReactElement {
+  const { line, note } = rest;
+  const { invitation } = control;
+  const keep = <DockChip disabled={choosing(control)} onPress={invitation.leave} words="그대로 두기" />;
+  return (
+    <WithMenuList
+      folded={<FoldedChips control={control} note={note} onRaise={onRaise} />}
+      lead={keep}
+      sent={invitation.sending || invitation.changing || invitation.made !== null}
+      shown={control.answer}
+    >
+      {(dock) => (
+        <View style={styles.rows} testID="dock-row">
+          {line === null ? null : (
+            <DockLine
+              line={line}
+              onPress={() => {
+                onRaise(false);
+              }}
+            />
+          )}
+          <View style={styles.row} testID="dock-chip-row">
+            {dock}
+          </View>
+        </View>
+      )}
+    </WithMenuList>
+  );
+}
+
 interface DockedAnswerProps {
   control: ChatSheetControl;
   bubble: ChatBubble;
@@ -252,7 +285,12 @@ export function DockedAnswer({
   onRaise,
 }: DockedAnswerProps): ReactElement | null {
   if (rest.kind === 'words') {
-    return <DockedWords control={control} onRaise={onRaise} rest={rest.words} />;
+    const mealBeside = rest.words.keep === true && control.answer.answer?.input.kind === 'meal';
+    return mealBeside ? (
+      <MealBesideSetQuest control={control} onRaise={onRaise} rest={rest.words} />
+    ) : (
+      <DockedWords control={control} onRaise={onRaise} rest={rest.words} />
+    );
   }
   const folded = <FoldedChips control={control} note={control.answer.answer?.note ?? null} onRaise={onRaise} />;
   return (
@@ -287,4 +325,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   chipsBox: { flexGrow: 0, flexShrink: 0, maxWidth: '50%' },
   chips: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  // The line alone above the meal's chip row (P04 ticket 21).
+  rows: { gap: space[2] },
 });
