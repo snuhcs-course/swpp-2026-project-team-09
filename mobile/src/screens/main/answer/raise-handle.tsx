@@ -7,14 +7,11 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { GestureDetector, type PanGesture } from 'react-native-gesture-handler';
 import Reanimated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { color, radius, space, text } from '@/design-system';
-import { GRIP_ROW, GRIP_SIDE } from './grip-row';
 
-export const RAISE_LABEL = '답 크게 보기';
-export const CLOSE_LABEL = '답 닫기';
 export const CLOSE_HINT = '놓으면 지도 화면으로 돌아가요';
 
 // How far a fling carries the let-go point, in seconds of its speed.
@@ -42,43 +39,8 @@ export interface Raising {
   stepDown?: () => void;
 }
 
-// The grip in the middle of the card's header row, which the drag (`useCardMotion`) moves. A press raises the lowered
-// card, and takes a raised or a full card one step down as back does, a layer first (`stepDown`).
-export function Handle({ raising }: { raising: Raising }): ReactElement {
-  const { raised, setRaised, full = false, setFull, close, stepDown } = raising;
-  return (
-    <Pressable
-      accessibilityActions={close === undefined ? undefined : [{ name: 'close', label: CLOSE_LABEL }]}
-      accessibilityLabel={RAISE_LABEL}
-      accessibilityRole="button"
-      accessibilityState={{ expanded: raised }}
-      collapsable={false}
-      onAccessibilityAction={({ nativeEvent }) => {
-        if (nativeEvent.actionName === 'close') {
-          close?.();
-        }
-      }}
-      onPress={() => {
-        if (!raised) {
-          setRaised(true);
-        } else if (stepDown !== undefined) {
-          stepDown();
-        } else if (full && setFull !== undefined) {
-          setFull(false);
-        } else {
-          setRaised(false);
-        }
-      }}
-      style={styles.handle}
-      testID="answer-card-handle"
-    >
-      <View style={styles.grip} />
-    </Pressable>
-  );
-}
-
-// The card's header row takes the drag (`useCardMotion`) wherever the finger starts on it, the grip, the line under it,
-// or beside ✕; a press on the line or ✕ stays a press.
+// The card's header takes the drag (`useCardMotion`) wherever the finger starts on it, the grip, its label, or beside
+// the chip and the buttons; a press on the chip or a button stays a press.
 export function DragRow({ pan, children }: { pan: PanGesture; children: ReactElement }): ReactElement {
   return (
     <GestureDetector gesture={pan}>
@@ -116,17 +78,6 @@ export function CloseHint({
 }
 
 const styles = StyleSheet.create({
-  // Between ✕'s room at the right and as much at the left, so that the grip stays centred and never covers ✕.
-  handle: {
-    position: 'absolute',
-    top: 0,
-    right: GRIP_SIDE,
-    left: GRIP_SIDE,
-    alignItems: 'center',
-    height: GRIP_ROW,
-    paddingTop: space[2],
-  },
-  grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
   hint: {
     position: 'absolute',
     alignSelf: 'center',

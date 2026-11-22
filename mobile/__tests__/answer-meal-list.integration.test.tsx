@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -11,6 +12,7 @@ import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
 import { koreaDateKey, koreaNextDay } from '@/korea-time';
 import { LATE_HEADING } from '@/screens/main/answer/meal-list';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
+import { gripLabel, raiseCard } from './support/card-grip';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { askOnMap, card } from './support/answer-map';
@@ -66,12 +68,6 @@ function fourOf(reply: typeof MEAL_ANSWER_MENUS_REPLY): typeof MEAL_ANSWER_MENUS
   return { ...reply, answer };
 }
 
-type User = Awaited<ReturnType<typeof askOnMap>>;
-
-async function raise(user: User): Promise<void> {
-  await user.press(screen.getByText(/^올리면 \d+곳 목록$/u));
-}
-
 // Partitions: docked; raised by the caption.
 describe('a meal answer with four candidates', () => {
   it('docks with the sentence alone: no kind chips and no 메뉴 보기', async () => {
@@ -83,9 +79,9 @@ describe('a meal answer with four candidates', () => {
   });
 
   it('lists every candidate when raised, the least walking first, the chosen one marked, under the kinds', async () => {
-    const user = await askOnMap(server, fourOf(MEAL_ANSWER_MENUS_REPLY));
+    await askOnMap(server, fourOf(MEAL_ANSWER_MENUS_REPLY));
 
-    await raise(user);
+    await raiseCard();
 
     const rows = ['1', '2', '3', '4'].map((number) => list().getByTestId(`meal-row-${number}`));
     expect(rows.map((row) => String(row.props.accessibilityLabel).split(' · ')[0])).toEqual([
@@ -110,7 +106,7 @@ describe('a meal answer with four candidates', () => {
 describe('a row of the list pressed', () => {
   it('chooses that place and opens its menu, and ‹ 4곳 목록 returns to the list', async () => {
     const user = await askOnMap(server, fourOf(MEAL_ANSWER_MENUS_REPLY));
-    await raise(user);
+    await raiseCard();
 
     await user.press(list().getByTestId('meal-row-2'));
 
@@ -132,7 +128,7 @@ describe('the list while the Plan is sent', () => {
   it('chooses nothing while "만들고 초대 보내기" is on its way, and the made card shows for the Plan sent', async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST, afterMs: HELD_MS });
     const user = await askOnMap(server, fourOf(MEAL_ANSWER_MENUS_REPLY));
-    await raise(user);
+    await raiseCard();
 
     await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' }));
     const third = list().getByTestId('meal-row-3');
@@ -155,18 +151,18 @@ function keptOne(text: string): typeof MEAL_ANSWER_MENUS_REPLY {
 
 // Partitions: one Plan left of many, with the model's words and without; the candidates that cannot be done in time.
 describe('a meal answer that kept one Plan of many', () => {
-  it('says in the dock that one place alone fits, with no "›", and the caption raises the list', async () => {
+  it('says in the dock that one place alone fits, with no "›", and the grip\'s label names the list', async () => {
     await askOnMap(server, keptOne('아래에서 확인해 보세요.'));
 
     expect(screen.getByTestId('dock-line-words')).toHaveTextContent(/^김민수와 시간이 맞는 곳은 302동식당뿐이에요 · /u);
     expect(screen.getByTestId('dock-line').props.accessibilityRole).toBeUndefined();
-    expect(screen.getByText('올리면 3곳 목록')).toBeOnTheScreen();
+    expect(gripLabel()).toBe('3곳 목록');
   });
 
   it('lists the Plan, then the places dropped under their reason, faded and not pressable, under the people', async () => {
-    const user = await askOnMap(server, keptOne(SENTENCE));
+    await askOnMap(server, keptOne(SENTENCE));
 
-    await raise(user);
+    await raiseCard();
 
     expect(card().getByText('김민수')).toBeOnTheScreen();
     expect(list().getByTestId('meal-row-1')).toBeEnabled();
@@ -184,9 +180,9 @@ describe('a meal answer that kept one Plan of many', () => {
 describe('the crowded meal answer raised', () => {
   it('lists the candidates that cannot be done in the time last, under one line that says so', async () => {
     const date = koreaDateKey(koreaNextDay(PHONE_NOW));
-    const user = await askOnMap(server, crowdedMealReply(date, PHONE_NOW.toISOString()));
+    await askOnMap(server, crowdedMealReply(date, PHONE_NOW.toISOString()));
 
-    await raise(user);
+    await raiseCard();
 
     const labels = list()
       .getAllByRole('button', { name: /^\d+ /u })
@@ -198,14 +194,15 @@ describe('the crowded meal answer raised', () => {
 
 // Partitions: one Plan and nothing dropped (review of PR 483: the dock's line takes no press).
 describe('a meal answer of one place', () => {
-  it('raises by "올리면 1곳 목록", to the people and the row', async () => {
+  it('names "1곳 목록" under the grip, and raised shows the people and the row', async () => {
     const answer: AnswerReply = {
       ...MEAL_ANSWER_MENUS_REPLY.answer,
       plans: MEAL_ANSWER_MENUS_REPLY.answer.plans.slice(0, 1),
     };
-    const user = await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, answer });
+    await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, answer });
 
-    await user.press(screen.getByText('올리면 1곳 목록'));
+    expect(gripLabel()).toBe('1곳 목록');
+    await raiseCard();
 
     expect(card().getByText('김민수')).toBeOnTheScreen();
     expect(list().getByTestId('meal-row-1')).toBeEnabled();

@@ -69,11 +69,11 @@ interface AnswerCardProps {
 function AnswerCard(props: AnswerCardProps): ReactElement {
   const { control, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, focus, timeBarHeight, list } = props;
   const card = { barRoom, onHeight, raising, stageHeight, timeBarHeight, inputBottom: props.inputBottom };
-  const { askNew, listMax, ...top } = useCardTop(control, raising, list, onClose);
+  const typing = keyboardUp && !raising.raised;
+  const { listMax, ...top } = useCardTop(control, raising, list, { onClose, typing });
   const { bubbles, waiting } = control.chat;
   const after = turnOf(bubbles)?.after ?? [];
   const contentMax = contentMaxOf(stageHeight, barRoom);
-  const typing = keyboardUp && !raising.raised;
   const rest = keyboardUp || raising.raised || waiting || list.open ? null : restOf(control, after);
   const [reply] = after;
   const raise = (): void => {
@@ -84,9 +84,9 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
       {...card}
       {...top}
       docked={rest !== null}
-      head={
-        typing || control.answer.menuFor !== null ? undefined : (
-          <AnswerCaption control={control} listOpen={list.open} onAskNew={askNew} onList={list.toggle} />
+      chip={
+        typing || control.answer.menuFor !== null ? null : (
+          <AnswerCaption control={control} listOpen={list.open} onList={list.toggle} />
         )
       }
       hold={waiting}

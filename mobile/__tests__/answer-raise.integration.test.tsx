@@ -13,6 +13,7 @@ import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-han
 import { listsTop } from '@/screens/main/layout';
 import { pass, screen } from './support/app';
 import { holdBackButton } from './support/back';
+import { grip, lowerCard, raiseCard } from './support/card-grip';
 import { KEYBOARD, showKeyboard } from './support/keyboard';
 import { AI_INPUT, button, layStage, SEND } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
@@ -29,7 +30,6 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotionSetting: (): boolean => true,
 }));
 
-const HANDLE = '답 크게 보기';
 const ASKED = '식사 메뉴 추천';
 const STAGE = 760;
 // Where the raised card stops, the answer having no time bar: the lists' top, the tests' status bar taking nothing
@@ -66,10 +66,6 @@ function shown(): number {
   return Number(contentStyle().height) - below;
 }
 
-function handle(): ReturnType<typeof button> {
-  return button(HANDLE);
-}
-
 async function layContent(height: number): Promise<void> {
   await fireEvent(screen.getByTestId('answer-card-content'), 'layout', {
     nativeEvent: { layout: { x: 0, y: 0, width: 390, height } },
@@ -97,28 +93,28 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-// Partitions: lowered and raised by a press.
+// Partitions: lowered, and raised and lowered by the grip's steps for a screen reader: nothing is pressed (P04 ticket 52).
 describe("the answer card's handle", () => {
   it('stands on the lowered card, which takes at most about half the stage as before', async () => {
     await framed();
 
-    expect(handle()).toBeCollapsed();
+    expect(grip()).toBeCollapsed();
     expect(shown()).toBeLessThanOrEqual(STAGE / 2);
   });
 
-  it('raises the card as tall as its content, up to the lists’ top, by a press, and lowers it by another', async () => {
-    const user = await framed();
+  it('raises the card as tall as its content, up to the lists’ top, by a step up, and lowers it by a step down', async () => {
+    await framed();
     const lowered = shown();
 
-    await press(user, HANDLE);
+    await raiseCard();
 
-    expect(handle()).toBeExpanded();
+    expect(grip()).toBeExpanded();
     expect(shown()).toBe(lowered + STAGE / 2 - TOP_ROOM);
     expect(button('답 닫기')).toBeVisible();
 
-    await press(user, HANDLE);
+    await lowerCard();
 
-    expect(handle()).toBeCollapsed();
+    expect(grip()).toBeCollapsed();
     expect(shown()).toBe(lowered);
   });
 });
@@ -130,10 +126,10 @@ describe("a drag on the answer card's handle", () => {
     await layContent(200);
 
     await dragHandle(-300);
-    expect(handle()).toBeExpanded();
+    expect(grip()).toBeExpanded();
 
     await dragHandle(300);
-    expect(handle()).toBeCollapsed();
+    expect(grip()).toBeCollapsed();
   });
 
   it('keeps the card where it was after a short drag', async () => {
@@ -142,15 +138,15 @@ describe("a drag on the answer card's handle", () => {
 
     await dragHandle(-40);
 
-    expect(handle()).toBeCollapsed();
+    expect(grip()).toBeCollapsed();
   });
 
   it('keeps the conversation and the words being written', async () => {
     const user = await framed();
     await user.type(screen.getByLabelText(AI_INPUT), '저녁은?');
 
-    await press(user, HANDLE);
-    await press(user, HANDLE);
+    await raiseCard();
+    await lowerCard();
 
     expect(screen.getByTestId('answer-caption')).toHaveTextContent('식사 메뉴 추천');
     expect(screen.getByTestId('answer-card-content')).toHaveTextContent(/^오늘 메뉴예요\./u);
@@ -162,8 +158,8 @@ describe("a drag on the answer card's handle", () => {
 // above the input in place of the answer and its caption; the questions open by the history chip alone (P04 ticket 52).
 describe('the raised card while the keyboard is up', () => {
   it('shows the answer under its caption, not the questions, over the input standing on the keyboard', async () => {
-    const user = await framed();
-    await press(user, HANDLE);
+    await framed();
+    await raiseCard();
 
     await showKeyboard(KEYBOARD);
 
@@ -174,11 +170,11 @@ describe('the raised card while the keyboard is up', () => {
   });
 
   it("shows the reply's first line in place of the answer once lowered, and no questions (P04 ticket 52)", async () => {
-    const user = await framed();
-    await press(user, HANDLE);
+    await framed();
+    await raiseCard();
     await showKeyboard(KEYBOARD);
 
-    await press(user, HANDLE);
+    await lowerCard();
 
     expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(screen.queryByTestId('question-list')).toBeNull();
@@ -190,11 +186,11 @@ describe('the raised card while the keyboard is up', () => {
 describe("Android's back button", () => {
   it('lowers a raised card first, and then hides the frame', async () => {
     const back = holdBackButton();
-    const user = await framed();
-    await press(user, HANDLE);
+    await framed();
+    await raiseCard();
 
     expect(await back()).toBe(true);
-    expect(handle()).toBeCollapsed();
+    expect(grip()).toBeCollapsed();
     expect(screen.getByTestId('answer-caption')).toBeVisible();
 
     expect(await back()).toBe(true);
@@ -231,18 +227,18 @@ describe("a drag down on the lowered card's handle", () => {
     await dragHandle(80);
 
     expect(screen.getByTestId('answer-caption')).toBeVisible();
-    expect(handle()).toBeCollapsed();
+    expect(grip()).toBeCollapsed();
     expect(screen.queryByTestId('answer-close-hint')).toBeNull();
   });
 
   it('only lowers a raised card, and the next drag closes', async () => {
-    const user = await framed();
+    await framed();
     await layContent(200);
     await layCard(300);
-    await press(user, HANDLE);
+    await raiseCard();
 
     await dragHandle(400);
-    expect(handle()).toBeCollapsed();
+    expect(grip()).toBeCollapsed();
     expect(screen.getByTestId('answer-caption')).toBeVisible();
 
     await dragHandle(400);

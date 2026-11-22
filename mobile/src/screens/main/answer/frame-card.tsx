@@ -13,9 +13,9 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import Reanimated, { useAnimatedStyle } from 'react-native-reanimated';
 import { color, radius, shadow, space } from '@/design-system';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
-import { DockGrip, useDockDrag } from './dock-drag';
+import { CardHeader, HEADER_HEIGHT } from './card-header';
+import { useDockDrag } from './dock-drag';
 import { type FrameCardProps, LOWERED, OPEN_EDGE } from './frame-card-parts';
-import { GRIP_ROW, GripRow } from './grip-row';
 import { OpenCard } from './open-card';
 import { CloseHint, MOTION_MS } from './raise-handle';
 
@@ -23,13 +23,12 @@ export { CONTENT_TOP, contentMaxOf } from './frame-card-parts';
 
 // The gap between the sheet's rows (P04 ticket 52).
 const GAP = space[3];
-// About what the open card's top takes over its scrolling part: the handle's row and the caption row. The open card
-// grows from the docked card's height less this, so that its top starts where the docked card's stood.
-const OPEN_TOP_GUESS = GRIP_ROW + GAP + space[8];
+// What the open card's top takes over its scrolling part: the header. The open card grows from the docked card's height
+// less this, so that its top starts where the docked card's stood.
+const OPEN_TOP_GUESS = HEADER_HEIGHT;
 
 // The docked card, the bottom sheet at its lowest (P04 ticket 52): full width on the screen's bottom edge, only its top
-// corners rounded, as the open card: the header row, the caption row, its content, when there is any, and the input's
-// room under it. It tells its height from the stage's bottom, so that the camera keeps the answer clear of it. The whole
+// corners rounded, as the open card: the header, its content, when there is any, and the input's room under it. It tells its height from the stage's bottom, so that the camera keeps the answer clear of it. The whole
 // card takes a drag on the UI thread: down closes the answer, up raises the card (`useDockDrag`).
 function DockedCard(props: FrameCardProps): ReactElement {
   const { barRoom, onHeight, raising, testID, children } = props;
@@ -52,13 +51,13 @@ function DockedCard(props: FrameCardProps): ReactElement {
           style={[styles.dock, { paddingBottom: barRoom }, dropped]}
           testID={testID}
         >
-          <GripRow
-            edge={OPEN_EDGE}
-            handle={<DockGrip raising={raising ?? LOWERED} />}
+          <CardHeader
+            chip={props.chip ?? null}
+            label={props.gripLabel ?? null}
+            onAskNew={props.onAskNew ?? null}
             onClose={props.onClose ?? null}
-            words={props.gripWords ?? null}
+            raising={raising ?? LOWERED}
           />
-          {props.head === undefined ? null : <View style={styles.dockHead}>{props.head}</View>}
           <View style={[styles.dockContent, filled && { paddingTop: GAP }]} testID={`${testID}-content`}>
             <View
               onLayout={({ nativeEvent }: LayoutChangeEvent) => {
@@ -148,6 +147,5 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.sheet,
   },
-  dockHead: { paddingTop: GAP, paddingHorizontal: OPEN_EDGE },
   dockContent: { paddingHorizontal: OPEN_EDGE },
 });

@@ -14,12 +14,12 @@ import { listsTop } from '../layout';
 import { type Level, levelOf } from './card-levels';
 import { type Targets, useCardMotion } from './card-motion';
 import { CONTENT_TOP, contentMaxOf, type FrameCardProps, LEAST_CONTENT, LOWERED, OPEN_EDGE } from './frame-card-parts';
-import { GripRow } from './grip-row';
+import { CardHeader } from './card-header';
 import { useHeldHeight } from './held-height';
-import { CloseHint, DragRow, Handle } from './raise-handle';
+import { CloseHint, DragRow } from './raise-handle';
 
-// The frame's open card, attached to the bottom of the screen (moved out of `frame-card.tsx` for its length). Its top,
-// the handle's row and the caption row, stays while the rest scrolls under it. Lowered, the rest takes at most about
+// The frame's open card, attached to the bottom of the screen (moved out of `frame-card.tsx` for its length). Its
+// header stays while the rest scrolls under it. Lowered, the rest takes at most about
 // half the stage; raised, as much as its content up to under the time bar; full, the card's top is just under the status
 // bar (P04 ticket 52). It moves as a sheet (`useCardMotion`). Only the lowered card tells its height, once settled, so
 // that the camera fits the answer to the lowered card alone.
@@ -57,22 +57,18 @@ function capOf(level: Level, caps: Caps): number | null {
   return level === 'raised' ? caps.raised : caps.lowered;
 }
 
-function Top(p: {
-  props: FrameCardProps;
-  handle: ReactElement | null;
-  pan: PanGesture;
-  onHeight: (h: number) => void;
-}): ReactElement {
-  const { onClose = null, gripWords = null, head } = p.props;
-  const row = <GripRow edge={OPEN_EDGE} handle={p.handle} onClose={onClose} words={gripWords} />;
+function Top(p: { props: FrameCardProps; pan: PanGesture; onHeight: (h: number) => void }): ReactElement {
+  const { raising = null, onClose = null, onAskNew = null, gripLabel = null, chip = null } = p.props;
+  const header = (
+    <CardHeader chip={chip} label={gripLabel} onAskNew={onAskNew} onClose={onClose} raising={raising} />
+  );
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
         p.onHeight(nativeEvent.layout.height);
       }}
     >
-      {p.handle === null && onClose === null ? null : p.handle === null ? row : <DragRow pan={p.pan}>{row}</DragRow>}
-      {head === undefined ? null : <View style={styles.head}>{head}</View>}
+      {raising === null ? header : <DragRow pan={p.pan}>{header}</DragRow>}
     </View>
   );
 }
@@ -151,8 +147,7 @@ export function OpenCard(props: FrameCardProps & { from: number | null }): React
   const { offset, drop } = motion;
   const moved = useAnimatedStyle(() => ({ transform: [{ translateY: offset.value + drop.value }] }));
   const floored = useAnimatedStyle(() => ({ transform: [{ translateY: drop.value }] }));
-  const topped = raising !== undefined || props.onClose !== undefined || props.head !== undefined;
-  const handle = raising === undefined ? null : <Handle raising={raising} />;
+  const topped = raising !== undefined || props.onClose !== undefined;
   return (
     <>
       <Reanimated.View
@@ -165,7 +160,7 @@ export function OpenCard(props: FrameCardProps & { from: number | null }): React
         style={[styles.card, { paddingBottom: barRoom }, moved]}
         testID={testID}
       >
-        {topped ? <Top handle={handle} onHeight={setAbove} pan={motion.pan} props={props} /> : null}
+        {topped ? <Top onHeight={setAbove} pan={motion.pan} props={props} /> : null}
         {children === null ? null : (
           <Scrolling
             onNatural={setNatural}
@@ -197,6 +192,4 @@ const styles = StyleSheet.create({
   parts: { gap: space[3] },
   // Over the input's room at the screen's bottom, under the input.
   floor: { position: 'absolute', right: 0, bottom: 0, left: 0, pointerEvents: 'none', backgroundColor: color.surface },
-  // One gap under the header row.
-  head: { paddingTop: space[3], paddingHorizontal: OPEN_EDGE },
 });

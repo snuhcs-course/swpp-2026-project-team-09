@@ -2,11 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
 import { MEAL_ANSWER_MENUS, MEAL_ANSWER_MENUS_REPLY, MEAL_DINNER_MENUS } from '@/api/mock/data/meal-answer-menus';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
+import { raiseCard } from './support/card-grip';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
@@ -66,21 +68,14 @@ function lastContext(): unknown {
   return typeof body === 'object' && body !== null && 'context' in body ? body.context : undefined;
 }
 
-type User = Awaited<ReturnType<typeof askOnMap>>;
-
-// The card raised to the list by the caption's "올리면 N곳 목록", where the kinds stand.
-async function raise(user: User): Promise<void> {
-  await user.press(screen.getByText(/^올리면 \d+곳 목록$/u));
-}
-
 // Partitions: the chips at first; a kind the pick serves pressed, then pressed again; a kind it does not serve.
 describe('the kind chips of a meal answer', () => {
   it('stand over the raised list in the order of their counts after 전체, only 전체 filled, without a label', async () => {
-    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
     expect(screen.queryByRole('button', { name: KOREAN })).toBeNull();
     expect(screen.queryByRole('button', { name: '메뉴 보기' })).toBeNull();
 
-    await raise(user);
+    await raiseCard();
 
     expect(screen.queryByText('종류')).toBeNull();
     const chips = within(screen.getByTestId('kind-chips')).getAllByRole('button');
@@ -101,7 +96,7 @@ describe('the kind chips of a meal answer', () => {
 describe('a kind chip pressed', () => {
   it('fill on a press, recede a candidate without the kind, put the kind first in each line, and clear again', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
-    await raise(user);
+    await raiseCard();
 
     await user.press(screen.getByRole('button', { name: KOREAN }));
 
@@ -120,7 +115,7 @@ describe('a kind chip pressed', () => {
 
   it('move the pick to the first candidate that serves a kind the pick does not', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
-    await raise(user);
+    await raiseCard();
 
     await user.press(screen.getByRole('button', { name: JAPANESE }));
 
@@ -131,7 +126,7 @@ describe('a kind chip pressed', () => {
 
   it('clear when a grey tag is pressed, which becomes the pick', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
-    await raise(user);
+    await raiseCard();
     await user.press(screen.getByRole('button', { name: KOREAN }));
 
     await user.press(screen.getByRole('button', { name: '자하연식당 2층' }));
@@ -145,7 +140,7 @@ describe('a kind chip pressed', () => {
 describe('the kind on screen and the conversation', () => {
   it('goes with the next message as the condition cuisine', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
-    await raise(user);
+    await raiseCard();
     await user.press(screen.getByRole('button', { name: KOREAN }));
 
     await user.type(screen.getByLabelText(AI_INPUT), '더 싼 데');
@@ -159,8 +154,8 @@ describe('the kind on screen and the conversation', () => {
 
   it('fills the chip of a reply that carries a kind', async () => {
     const answer = { ...MEAL_ANSWER_MENUS, input: { ...MEAL_ANSWER_MENUS.input, cuisine: '한식' as const } };
-    const user = await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, answer });
-    await raise(user);
+    await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, answer });
+    await raiseCard();
 
     expect(selected(KOREAN)).toBe(true);
     expect(screen.getByRole('button', { name: '자하연식당 2층' })).toBeOnTheScreen();

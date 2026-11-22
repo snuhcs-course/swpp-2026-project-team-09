@@ -7,22 +7,25 @@
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
 import { StyleSheet, TextInput, type TextStyle } from 'react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
+import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { askOnMap } from './support/answer-map';
+import { askOnMap, card, timeBar } from './support/answer-map';
 import { pass } from './support/app';
+import { grip, gripLabel, HIDDEN, lowerCard } from './support/card-grip';
 import type { FakeServer } from './support/fake-server';
-import { layStage } from './support/lists';
+import { AI_INPUT, layStage } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { sockets } from './support/fake-socket';
 
-// From the user's phone (P04 ticket 52): the answer has no "←"; it closes by ✕ at the right end of the card's top row,
-// a drag down, and Android's back, and "＋ 새 질문" is one press away on the caption row. The bar's words start at its
-// left edge. The docked card shows the handle and takes a drag, down closing the answer and up raising the card; a drag
-// down on the card takes the list of questions away first, as back does.
+// From the user's phone (P04 ticket 52): the answer has no "←"; it closes by ✕ at the right end of the sheet's header
+// row, a drag down, and Android's back, and "＋ 새 대화" stands just left of ✕ in every state. The grip's small label
+// says what a drag up brings while the sheet shows the answer itself; nothing is pressed to raise or lower the card.
+// The bar's words start at its left edge. The docked card takes a drag, down closing the answer and up raising the
+// card; a drag down on the card takes the list of questions away first, as back does.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -38,8 +41,9 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-const HANDLE = '답 크게 보기';
 const CLOSE = '답 닫기';
+const ASK_NEW = '새 대화';
+const NEW = '예술계 점심';
 // The conversation kept on the main screen once the answer is closed.
 const KEPT = /^이어서, 배고파, 민수랑 같이/u;
 const BAR = 96;
@@ -77,7 +81,7 @@ async function drag(gesture: string, dy: number): Promise<void> {
   });
 }
 
-// Partitions: the docked card of an answer with a time bar; ✕ and "＋ 새 질문" pressed there.
+// Partitions: the docked card of an answer with a time bar; ✕ and "＋ 새 대화" pressed there, and a message after it.
 describe('the way out of the answer', () => {
   it('is ✕ at the right end of the card’s top row, no "←", and the bar’s words start at its edge', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
@@ -100,24 +104,89 @@ describe('the way out of the answer', () => {
     expect(screen.getByRole('button', { name: KEPT })).toBeVisible();
   });
 
-  it('starts a new question in one press of "＋ 새 질문" on the caption row, the cursor in the main map’s input', async () => {
+  it('starts a new conversation in one press of "＋ 새 대화", the cursor in the main map’s input', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
     const focus = jest.spyOn(TextInput.prototype, 'focus');
 
-    await user.press(within(screen.getByTestId('answer-card')).getByRole('button', { name: '새 질문' }));
+    await user.press(card().getByRole('button', { name: ASK_NEW }));
     await pass(100);
 
     expect(screen.queryByTestId('answer-card')).toBeNull();
     expect(screen.getByRole('button', { name: KEPT })).toBeVisible();
     expect(focus).toHaveBeenCalled();
   });
+
+  it('sends the message typed after "＋ 새 대화" as the first of its own conversation, with nothing of the answer', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await user.press(card().getByRole('button', { name: ASK_NEW }));
+
+    await user.type(screen.getByLabelText(AI_INPUT), NEW);
+    await user.press(screen.getByRole('button', { name: '보내기' }));
+    await pass(500);
+
+    expect(server.received('POST /assistant/messages').at(-1)?.body).toMatchObject({
+      messages: [{ role: 'user', text: NEW }],
+      context: { conditions: null, planId: null, tapped: null },
+    });
+  });
+});
+
+// Partitions: the sheet showing the answer docked, raised, and with the earlier questions or the list of Friends to add
+// open; an answer with nothing to raise to is not a case here (`answer-dock-and-head`).
+describe("the sheet's header", () => {
+  it('holds the grip, its label with "⌃", the history chip, "＋ 새 대화", and ✕ on the docked card', async () => {
+    await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+
+    expect(gripLabel()).toMatch(/^\d+곳 목록$/u);
+    expect(screen.getByTestId('answer-grip-up', HIDDEN)).toBeOnTheScreen();
+    expect(grip()).toHaveAccessibleName(/^답 카드 높이, \d+곳 목록$/u);
+    for (const name of [/이전 질문 보기$/u, ASK_NEW, CLOSE]) {
+      expect(card().getByRole('button', { name })).toBeVisible();
+    }
+    expect(card().queryByText(/올리면/u)).toBeNull();
+  });
+
+  it('keeps the label without "⌃" on the raised card, and the same buttons', async () => {
+    await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await lay('answer-card', CARD);
+
+    await drag('answer-dock-drag', -80);
+
+    expect(grip()).toBeExpanded();
+    expect(gripLabel()).toMatch(/^\d+곳 목록$/u);
+    expect(screen.queryByTestId('answer-grip-up', HIDDEN)).toBeNull();
+    expect(card().getByRole('button', { name: ASK_NEW })).toBeVisible();
+    expect(card().getByRole('button', { name: CLOSE })).toBeVisible();
+    expect(card().queryByText('내리기')).toBeNull();
+  });
+
+  it('has no label while the earlier questions are open, and keeps "＋ 새 대화" and ✕', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+
+    await user.press(screen.getByTestId('answer-caption'));
+
+    expect(screen.getByTestId('question-list')).toBeVisible();
+    expect(gripLabel()).toBeNull();
+    expect(card().getByRole('button', { name: ASK_NEW })).toBeVisible();
+    expect(card().getByRole('button', { name: CLOSE })).toBeVisible();
+  });
+
+  it('has no label while the list of Friends to add is open', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    expect(gripLabel()).toMatch(/^\d+곳 목록$/u);
+
+    await user.press(timeBar().getByRole('button', { name: '같이 먹을 친구 추가' }));
+
+    expect(gripLabel()).toBeNull();
+    expect(card().getByRole('button', { name: CLOSE })).toBeVisible();
+  });
 });
 
 // Partitions: a drag down past half the docked card; a short one; a drag up.
 describe('the docked card', () => {
-  it('shows the handle, and a drag down past half the card closes the answer and keeps the conversation', async () => {
+  it('shows the grip, and a drag down past half the card closes the answer and keeps the conversation', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
-    expect(within(screen.getByTestId('answer-card')).getByRole('button', { name: HANDLE })).toBeCollapsed();
+    expect(grip()).toBeCollapsed();
     await lay('answer-card', CARD);
 
     await drag('answer-dock-drag', CARD);
@@ -133,23 +202,28 @@ describe('the docked card', () => {
     await drag('answer-dock-drag', 30);
 
     expect(screen.getByTestId('answer-caption')).toBeVisible();
-    expect(screen.getByRole('button', { name: HANDLE })).toBeCollapsed();
+    expect(grip()).toBeCollapsed();
     expect(screen.queryByTestId('answer-close-hint')).toBeNull();
   });
 
-  it('is raised by a drag up, and "내리기" under the grip then lowers it', async () => {
-    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+  it('is raised by a drag up, and a screen reader steps it down by the grip', async () => {
+    await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
     await lay('answer-card', CARD);
 
-    expect(screen.getByText(/^올리면 \d+곳 목록$/u)).toBeVisible();
-
     await drag('answer-dock-drag', -80);
+    expect(grip()).toBeExpanded();
 
-    expect(screen.getByRole('button', { name: HANDLE })).toBeExpanded();
-    // Raised, the line under the grip says the way down, and a press on it takes the card one step down.
-    expect(screen.queryByText(/^올리면 \d+곳 목록$/u)).toBeNull();
-    await user.press(screen.getByText('내리기'));
-    expect(screen.getByRole('button', { name: HANDLE })).toBeCollapsed();
+    await lowerCard();
+    expect(grip()).toBeCollapsed();
+  });
+
+  it('is not raised by a press on the grip or on its label', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+
+    await user.press(grip());
+    await user.press(screen.getByTestId('answer-grip-label', HIDDEN));
+
+    expect(grip()).toBeCollapsed();
   });
 });
 
@@ -157,12 +231,12 @@ describe('the docked card', () => {
 describe('a drag down with the list of questions open', () => {
   it('takes the list away and leaves the answer, as back does', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
-    // The open card's handle takes a drag once the stage is laid out, as it always is on a phone.
+    // The open card's header takes a drag once the stage is laid out, as it always is on a phone.
     await layStage(390, 760);
     await user.press(screen.getByTestId('answer-caption'));
     expect(screen.getByTestId('question-list')).toBeVisible();
-    // The places' line has nothing to say about the questions, and the input gives the list its room.
-    expect(screen.queryByText(/^올리면 \d+곳 목록$/u)).toBeNull();
+    // The grip's label has nothing to say about the questions, and the input gives the list its room.
+    expect(gripLabel()).toBeNull();
     expect(screen.queryByLabelText('AI에게 메시지')).toBeNull();
     await lay('answer-card-content', 200);
     await lay('answer-card', 300);

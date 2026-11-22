@@ -7,7 +7,6 @@
 import type { ReactNode } from 'react';
 import { space, text } from '@/design-system';
 import { AI_INPUT } from '../layout';
-import type { GripWords } from './grip-row';
 import type { Raising } from './raise-handle';
 
 // What the frame's card, docked and open, shares (moved out of `frame-card.tsx` for its length).
@@ -26,12 +25,14 @@ export interface FrameCardProps {
   hold?: boolean;
   // The handle that raises the card up to the pill and lowers it again. Left out, the card has one height.
   raising?: Raising;
-  // ✕ at the right end of the handle's row, which closes the answer (P04 ticket 52). Left out, none.
+  // ✕ at the right end of the header's row, which closes the answer (P04 ticket 52). Left out, none.
   onClose?: () => void;
-  // The line under the grip: "올리면 N곳 목록 ⌃" docked, "내리기 ⌄" raised. Left out or null, none.
-  gripWords?: GripWords | null;
-  // What stays at the top of the card under the handle's row while the rest scrolls: the caption row (P04 ticket 52).
-  head?: ReactNode;
+  // "＋ 새 대화" just left of ✕. Left out, none.
+  onAskNew?: () => void;
+  // The small label under the grip: what a drag up brings ("11곳 목록"). Left out or null, none.
+  gripLabel?: string | null;
+  // The history chip at the left of the header's row. Left out or null, none.
+  chip?: ReactNode;
   // Told the most the scrolling part may take at the card's height now, so that a list in it can end above the input
   // and scroll inside itself.
   onContentCap?: (cap: number | null) => void;
@@ -63,5 +64,5 @@ export const LOWERED: Raising = {
 };
 
 // The bottom sheet's content inset from the screen's sides, in every state, and the time bar's: everything in it starts
-// and ends on it, and ✕, "＋ 새 질문", the stop button, and the input end on it (P04 ticket 52).
+// and ends on it, and ✕, the stop button, and the input end on it (P04 ticket 52).
 export const OPEN_EDGE = AI_INPUT.side;

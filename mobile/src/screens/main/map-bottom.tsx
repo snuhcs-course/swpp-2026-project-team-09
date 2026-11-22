@@ -212,7 +212,7 @@ function TutorialParts({
 
 // The open list of Friends to add takes the input's place in the answer's card, and so does the list of earlier
 // questions, which reaches the sheet's bottom (P04 ticket 52); the input stays mounted under it, hidden, so that
-// "＋ 새 질문" can put the cursor in it as the list closes. The time band moved whole hides the input but keeps its room,
+// "＋ 새 대화" can put the cursor in it as the list closes. The time band moved whole hides the input but keeps its room,
 // so that the card and its lanes stay under the finger.
 function inputStateOf(chat: MapBottomProps['chat']): { listOpen: boolean; inputGone: boolean; inputShown: boolean } {
   const listOpen = chat.framed && chat.card.earlier.open;

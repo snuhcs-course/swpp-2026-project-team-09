@@ -12,6 +12,7 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { holdBackButton } from './support/back';
+import { grip, raiseCard } from './support/card-grip';
 import { answerDining } from './support/dining';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -53,7 +54,6 @@ const NEW_REPLY = '어디서 먹을까요?';
 const PLAN_MARK = '302동식당 · 12:15 점심';
 // PHONE_NOW, 04:00 UTC, in Korea.
 const ASKED_AT = '13:00';
-const HANDLE = '답 크게 보기';
 const BACK = '답 닫기';
 
 let server: FakeServer;
@@ -253,7 +253,7 @@ describe('"＋ 새 질문" under the caption\'s list', () => {
     expect(list().getByRole('button', { name: '새 질문' })).toBeVisible();
   });
 
-  it("closes the answer as ✕ does, keeps the conversation, and puts the cursor in the main map's input", async () => {
+  it('closes the answer as "←" does, keeps the conversation, and puts the cursor in the main map\'s input', async () => {
     const user = await askedThrice();
     await openList(user);
     const focus = jest.spyOn(TextInput.prototype, 'focus');
@@ -286,7 +286,7 @@ describe('closing the answer', () => {
   it('closes with ✕ while the card is raised, the keyboard is up, or the list is open', async () => {
     const user = await askedThrice();
 
-    await user.press(screen.getByRole('button', { name: HANDLE }));
+    await raiseCard();
     await user.press(screen.getByRole('button', { name: BACK }));
     expectClosed();
 
@@ -305,15 +305,15 @@ describe('closing the answer', () => {
 
   it('takes one layer away per back press: the list, the raised card, then the answer', async () => {
     const user = await askedThrice();
-    await user.press(screen.getByRole('button', { name: HANDLE }));
+    await raiseCard();
     await openList(user);
 
     expect(await back()).toBe(true);
     expect(screen.queryByTestId('question-list')).toBeNull();
-    expect(screen.getByRole('button', { name: HANDLE })).toBeExpanded();
+    expect(grip()).toBeExpanded();
 
     expect(await back()).toBe(true);
-    expect(screen.getByRole('button', { name: HANDLE })).toBeCollapsed();
+    expect(grip()).toBeCollapsed();
 
     expect(await back()).toBe(true);
     expectClosed();

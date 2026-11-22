@@ -10,7 +10,8 @@ import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-han
 import { space } from '@/design-system';
 import { pass, screen } from './support/app';
 import { holdBackButton } from './support/back';
-import { AI_INPUT, button, layStage, SEND } from './support/lists';
+import { grip, lowerCard, raiseCard } from './support/card-grip';
+import { AI_INPUT, layStage, SEND } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
@@ -26,7 +27,6 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotionSetting: (): boolean => true,
 }));
 
-const HANDLE = '답 크게 보기';
 const STAGE = 760;
 
 type User = Awaited<ReturnType<typeof openMain>>;
@@ -88,14 +88,14 @@ afterEach(() => {
 // Partitions: a drag up on the raised card; a drag up on the lowered card.
 describe('a drag up on the answer card', () => {
   it('takes the raised card to full height, its top at the stage’s top', async () => {
-    const user = await framed();
+    await framed();
     const lowered = shown();
-    await press(user, HANDLE);
+    await raiseCard();
 
     await dragHandle(-600);
 
     expect(shown()).toBe(fullOf(lowered));
-    expect(button(HANDLE)).toBeExpanded();
+    expect(grip()).toBeExpanded();
   });
 
   it('takes the lowered card one step only, to raised', async () => {
@@ -104,31 +104,31 @@ describe('a drag up on the answer card', () => {
     await dragHandle(-600);
 
     expect(screen.getByTestId('answer-card-tail')).toBeOnTheScreen();
-    expect(button(HANDLE)).toBeExpanded();
+    expect(grip()).toBeExpanded();
   });
 });
 
-// Partitions: a drag down, a press on the handle, and back, each from full height.
+// Partitions: a drag down, the grip's step down for a screen reader, and back, each from full height.
 describe('a full card', () => {
-  it('goes one step down, to raised, by a drag down, a press on the handle, or back', async () => {
+  it('goes one step down, to raised, by a drag down, the grip\'s step down, or back', async () => {
     const back = holdBackButton();
-    const user = await framed();
-    await press(user, HANDLE);
+    await framed();
+    await raiseCard();
 
     await dragHandle(-600);
     await dragHandle(600);
     expect(screen.getByTestId('answer-card-tail')).toBeOnTheScreen();
-    expect(button(HANDLE)).toBeExpanded();
+    expect(grip()).toBeExpanded();
 
     await dragHandle(-600);
-    await press(user, HANDLE);
+    await lowerCard();
     expect(screen.getByTestId('answer-card-tail')).toBeOnTheScreen();
-    expect(button(HANDLE)).toBeExpanded();
+    expect(grip()).toBeExpanded();
 
     await dragHandle(-600);
     expect(await back()).toBe(true);
     expect(screen.getByTestId('answer-card-tail')).toBeOnTheScreen();
-    expect(button(HANDLE)).toBeExpanded();
+    expect(grip()).toBeExpanded();
   });
 });
 
@@ -140,7 +140,7 @@ describe('the list of questions', () => {
     expect(styleOf('question-list').maxHeight).toBeLessThan(STAGE / 2);
 
     const loweredList = Number(styleOf('question-list').maxHeight);
-    await press(user, HANDLE);
+    await raiseCard();
     // Raised, the list takes the raised card's room, ending above the input (P04 ticket 52).
     expect(Number(styleOf('question-list').maxHeight)).toBeGreaterThan(loweredList);
 
