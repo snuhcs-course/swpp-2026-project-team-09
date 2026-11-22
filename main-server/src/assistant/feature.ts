@@ -77,8 +77,20 @@ export type Card = GlobalEventCard | QuestCard | RestaurantCard | LibraryCard;
 // meet. `area`: with `answer`, it sends the visible map area and draws its study spaces. `plan-set`: it draws 바꾸기
 // and 그대로 두기 for a meeting or a meal already set (`planSet`) and words their 409s, so the server sets a meeting
 // aside and refuses a second one only for it; an app without it is planned for as before (P05 ticket 17).
+// `party-change`: it draws 바꾸기 for a Proposal that changes a 파티 already made (`change`) and sends its step to the
+// room's 일정 수정, and opens a 파티's room for a `quest` offer, so proposeQuest changes a made 파티's time and place only
+// for it (P05 ticket 30).
 // `pick`: it draws the `pick-place` and `pick-time` offers under a question for a Place or a time (P05 ticket 24).
-export const CLIENT_CAPABILITIES = ['library', 'answer', 'events', 'meet', 'area', 'plan-set', 'pick'] as const;
+export const CLIENT_CAPABILITIES = [
+  'library',
+  'answer',
+  'events',
+  'meet',
+  'area',
+  'plan-set',
+  'party-change',
+  'pick',
+] as const;
 
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
 

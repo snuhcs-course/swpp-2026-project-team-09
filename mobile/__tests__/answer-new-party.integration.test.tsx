@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -149,7 +150,11 @@ describe("a new party's Friends (board Recruit 4)", () => {
     await pass(500);
 
     expect(recalculations(server)).toEqual([
-      { input: { ...STORED, people: [...ALONE, { userId: SEO_JUN, constraints: [] }] }, location: ON_CAMPUS },
+      {
+        input: { ...STORED, people: [...ALONE, { userId: SEO_JUN, constraints: [] }] },
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
     ]);
   });
 
@@ -159,7 +164,13 @@ describe("a new party's Friends (board Recruit 4)", () => {
     await user.press((await pressOnMap(user, /^서준/u)).getByRole('button', { name: '서준 빼기' }));
     await pass(500);
 
-    expect(recalculations(server)).toEqual([{ input: { ...STORED, people: ALONE }, location: ON_CAMPUS }]);
+    expect(recalculations(server)).toEqual([
+      {
+        input: { ...STORED, people: ALONE },
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
+    ]);
   });
 });
 
@@ -174,7 +185,13 @@ describe('"만들고 모집하기" (boards Together 11 and Recruit 5)', () => {
 
     const sent = server.received('POST /plans');
     expect(sent.map(({ body }) => body)).toEqual([
-      { input: NEW_QUEST_ANSWER.input, planId: GYM, startAt: '2026-11-19T17:10:00+09:00', location: ON_CAMPUS },
+      {
+        input: NEW_QUEST_ANSWER.input,
+        planId: GYM,
+        startAt: '2026-11-19T17:10:00+09:00',
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
     ]);
     expect(sent[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);
     expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
@@ -192,7 +209,13 @@ describe('"만들고 모집하기" (boards Together 11 and Recruit 5)', () => {
     await pass(500);
 
     expect(server.received('POST /plans').map(({ body }) => body)).toEqual([
-      { input: OPEN_TO_ALL.input, planId: GYM, startAt: '2026-11-19T17:10:00+09:00', location: ON_CAMPUS },
+      {
+        input: OPEN_TO_ALL.input,
+        planId: GYM,
+        startAt: '2026-11-19T17:10:00+09:00',
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
     ]);
     expect(card().getByText('파티를 모집했어요')).toBeVisible();
     expect(card().getByText('17:10에 가면 돼요')).toBeVisible();

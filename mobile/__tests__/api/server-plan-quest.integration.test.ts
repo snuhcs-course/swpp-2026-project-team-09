@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -53,7 +54,10 @@ describe('a Plan made into a Quest by the main server', () => {
 
     await expect(apiClient.makePlanQuest(MAKING, 'plan-key')).resolves.toEqual(PLAN_QUEST);
     expect(server.received('POST /plans').map(({ body, idempotencyKey }) => ({ body, idempotencyKey }))).toEqual([
-      { body: MAKING, idempotencyKey: 'plan-key' },
+      {
+        body: { ...MAKING, clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'] },
+        idempotencyKey: 'plan-key',
+      },
     ]);
   });
 
@@ -111,7 +115,9 @@ describe('the better Plan after a decline, by the main server', () => {
     const making = { input: BETTER_PLAN.input, planId: better.id, startAt: better.startAt, location: null };
 
     await expect(apiClient.changePlanQuest(QUEST_ID, making)).resolves.toEqual(CHANGED_PLAN_QUEST);
-    expect(server.received(`PUT /plans/${QUEST_ID}`).map(({ body }) => body)).toEqual([making]);
+    expect(server.received(`PUT /plans/${QUEST_ID}`).map(({ body }) => body)).toEqual([
+      { ...making, clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'] },
+    ]);
   });
 });
 

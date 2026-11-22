@@ -100,6 +100,13 @@ export interface AssistantReplyDto {
   steps?: ReplyStep[];
 }
 
+// A button that opens a 파티's room at its 수정 (P05 ticket 30), sent only to an app that says `party-change`.
+export interface QuestOffer {
+  kind: 'quest';
+  label: string;
+  questId: string;
+}
+
 // A Place picked on the map (P05 ticket 24): a press turns the map into picking, and a tap on a building sends `text` as
 // the User's words with that Place tapped. Sent only to an app that says `pick`.
 export interface PickPlaceOffer {
@@ -117,6 +124,6 @@ export interface PickTimeOffer {
   free: { from: string; until: string }[];
 }
 
-// A button under a reply's text: one sent as the User's words, such as a Tutorial quest's 가는 길 보기 (P01-14), or a
-// picker of a Place or a time.
-export type ReplyOffer = Extract<RefusalOffer, { kind: 'ask' }> | PickPlaceOffer | PickTimeOffer;
+// A button under a reply's text: one sent as the User's words, such as a Tutorial quest's 가는 길 보기 (P01-14), one
+// that opens a 파티's room, or a picker of a Place or a time.
+export type ReplyOffer = Extract<RefusalOffer, { kind: 'ask' }> | QuestOffer | PickPlaceOffer | PickTimeOffer;

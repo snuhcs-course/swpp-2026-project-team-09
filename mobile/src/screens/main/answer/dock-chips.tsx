@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { AnswerLine } from '@/api/assistant-types';
 import { color, font, radius, size, space, text } from '@/design-system';
 
@@ -46,7 +46,29 @@ export function DockChip({
 // the raised card. Two lines, not one (P04 ticket 18): one sentence of the model fits, its question included.
 const LINES = 2;
 
-export function DockLine({ line, onPress }: { line: AnswerLine; onPress: () => void }): ReactElement {
+function LineWords({ line }: { line: AnswerLine }): ReactElement {
+  return (
+    <Text ellipsizeMode="tail" numberOfLines={LINES} style={styles.lineWords} testID="dock-line-words">
+      {line.map(({ text: words, strong }, part) => (
+        // The parts have no id, and their order is their meaning.
+        // oxlint-disable-next-line react/no-array-index-key
+        <Text key={part} style={strong ? styles.strong : undefined}>
+          {words}
+        </Text>
+      ))}
+    </Text>
+  );
+}
+
+// Without `onPress`, the line has nothing behind it to open: no "›", and it takes no press.
+export function DockLine({ line, onPress }: { line: AnswerLine; onPress?: () => void }): ReactElement {
+  if (onPress === undefined) {
+    return (
+      <View style={styles.line} testID="dock-line">
+        <LineWords line={line} />
+      </View>
+    );
+  }
   return (
     <Pressable
       accessibilityHint="전체 보기"
@@ -55,15 +77,7 @@ export function DockLine({ line, onPress }: { line: AnswerLine; onPress: () => v
       style={({ pressed }) => [styles.line, pressed && styles.pressed]}
       testID="dock-line"
     >
-      <Text ellipsizeMode="tail" numberOfLines={LINES} style={styles.lineWords} testID="dock-line-words">
-        {line.map(({ text: words, strong }, part) => (
-          // The parts have no id, and their order is their meaning.
-          // oxlint-disable-next-line react/no-array-index-key
-          <Text key={part} style={strong ? styles.strong : undefined}>
-            {words}
-          </Text>
-        ))}
-      </Text>
+      <LineWords line={line} />
       <Text accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.more}>
         ›
       </Text>
@@ -88,7 +102,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexGrow: 1,
     flexShrink: 1,
-    minWidth: '50%',
     gap: space[1],
     minHeight: CHIP_HEIGHT,
   },

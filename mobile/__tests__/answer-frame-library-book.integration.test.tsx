@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { libraryCard, READING_ROOM, SEAT_NOTES } from '@/api/mock/data/library';
@@ -157,7 +158,7 @@ describe('the done message', () => {
     const sent = server.received('POST /assistant/messages');
     expect(sent).toHaveLength(2);
     expect(sent[1]?.body).toEqual({
-      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
       context: ASK_CONTEXT,
       messages: [
         { role: 'user', text: '관정 7층 열람실 17시에 한 시간 예약해줘' },

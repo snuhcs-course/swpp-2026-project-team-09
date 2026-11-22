@@ -99,7 +99,13 @@ describe('a press of "만들고 초대 보내기"', () => {
 
     const sent = server.received('POST /plans');
     expect(sent.map(({ body }) => body)).toEqual([
-      { input: MEAL_ANSWER.input, planId: '302동식당', startAt: MEAL_PLAN_1.startAt, location: ON_CAMPUS },
+      {
+        input: MEAL_ANSWER.input,
+        planId: '302동식당',
+        startAt: MEAL_PLAN_1.startAt,
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
     ]);
     expect(sent[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);
     expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
@@ -122,6 +128,22 @@ describe('a press of "만들고 초대 보내기"', () => {
     expect(screen.queryByRole('adjustable', { name: '시작 시각' })).toBeNull();
     expect(card().queryByRole('button', { name: '같이 먹을 친구 추가' })).toBeNull();
     expect(screen.queryByTestId('ai-input-beside')).toBeNull();
+  });
+});
+
+// P04 ticket 17: a Plan made draws only itself; nothing can be chosen any more.
+describe('the map after inviting', () => {
+  it('draws only the Plan made, without the other candidates', async () => {
+    server.on('POST /plans', { status: 201, body: PLAN_QUEST });
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    expect(mapThings()).toContain(SECOND);
+
+    await user.press(beside().getByRole('button', { name: INVITE }));
+    await pass(500);
+
+    // No other candidate, numbered or not.
+    expect(mapThings().filter((name) => /301동식당|학생회관식당|3식당|자하연식당/u.test(name))).toEqual([]);
+    expect(mapThings()).toContain('302동식당 · 12:15 점심');
   });
 });
 

@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -78,7 +79,13 @@ describe('taking a Friend out', () => {
     await user.press(within(screen.getByTestId('mark-card')).getByRole('button', { name: '민수 빼기' }));
     await pass(500);
 
-    expect(recalculations(server)).toEqual([{ input: { ...MEAL_ANSWER.input, people: [ASKER] }, location: ON_CAMPUS }]);
+    expect(recalculations(server)).toEqual([
+      {
+        input: { ...MEAL_ANSWER.input, people: [ASKER] },
+        location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
+    ]);
     // Who eats changed, so the first Plan of the answer for the User alone is shown, which the User takes alone.
     expect(mapThings()).toContain(ALONE_PICK);
     expect(mapThings()).not.toContain('민수');
@@ -130,6 +137,7 @@ describe('adding a Friend chosen', () => {
       {
         input: { ...MEAL_ANSWER.input, people: [...MEAL_ANSWER.input.people, { userId: JI_WOO.id, constraints: [] }] },
         location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
       },
     ]);
     expect(mapThings()).toEqual(expect.arrayContaining([THREE_PICK, '민수 · 18분', '지은 · 5분']));
@@ -146,6 +154,7 @@ describe('adding a Friend chosen', () => {
       {
         input: { ...MEAL_ANSWER.input, people: [...MEAL_ANSWER.input.people, { userId: MIN_JUN.id, constraints: [] }] },
         location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
       },
     ]);
     expect(mapThings()).toContain(THREE_PICK);

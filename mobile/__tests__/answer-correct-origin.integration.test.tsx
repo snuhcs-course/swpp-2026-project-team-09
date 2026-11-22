@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -101,6 +102,7 @@ describe("the User's start", () => {
           people: [{ ...asker, constraints: [{ kind: 'from', placeId: STUDENT_HALL.id, source: 'asker' }] }, ...others],
         },
         location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
       },
     ]);
     await openStart(user);

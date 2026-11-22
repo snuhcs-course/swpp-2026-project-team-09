@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -57,7 +58,11 @@ describe("the Assistant's request to the main server", () => {
     await apiClient.askAssistant(MESSAGES, CONTEXT);
 
     expect(server.received('POST /assistant/messages').map(({ body }) => body)).toEqual([
-      { clientCapabilities: ['library', 'answer', 'area', 'meet', 'events'], context: CONTEXT, messages: MESSAGES },
+      {
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        context: CONTEXT,
+        messages: MESSAGES,
+      },
     ]);
   });
 });
@@ -121,7 +126,11 @@ describe('a recalculation by the main server', () => {
 
     await expect(apiClient.recalculateAnswer(INPUT, LOCATION)).resolves.toEqual(MEAL_ANSWER);
     expect(server.received('POST /assistant/answers').map(({ body }) => body)).toEqual([
-      { input: INPUT, location: LOCATION },
+      {
+        input: INPUT,
+        location: LOCATION,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      },
     ]);
   });
 
