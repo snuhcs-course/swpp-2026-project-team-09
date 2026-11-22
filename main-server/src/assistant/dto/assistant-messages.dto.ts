@@ -9,6 +9,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -99,5 +100,13 @@ export interface AssistantReplyDto {
   steps?: ReplyStep[];
 }
 
-// A button under a reply's text, sent as the User's words: a Tutorial quest's 가는 길 보기 (P01-14).
-export type ReplyOffer = Extract<RefusalOffer, { kind: 'ask' }>;
+// A button that opens a 파티's room at its 수정 (P05 ticket 30), sent only to an app that says `party-change`.
+export interface QuestOffer {
+  kind: 'quest';
+  label: string;
+  questId: string;
+}
+
+// A button under a reply's text: one sent as the User's words, such as a Tutorial quest's 가는 길 보기 (P01-14), or
+// one that opens a 파티's room.
+export type ReplyOffer = Extract<RefusalOffer, { kind: 'ask' }> | QuestOffer;

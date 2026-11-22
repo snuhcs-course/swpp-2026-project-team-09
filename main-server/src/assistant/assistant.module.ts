@@ -9,6 +9,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
@@ -36,6 +37,7 @@ import { FREE_TIME_PORT, type FreeTimePort, userDayFreeTime } from './library/fr
 import { DayLookupService } from './lookup/day.service.js';
 import { FriendLookupService } from './lookup/friend.service.js';
 import { LookupServices } from './lookup/lookup-services.js';
+import { MadePartyService } from './tools/made-party.js';
 import { MenuLookupService } from './lookup/menu.service.js';
 import { PlaceCardService } from './lookup/place.service.js';
 import { StudyAreaService } from './lookup/study.service.js';
@@ -85,6 +87,7 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
     TutorialOrderService,
     LookupServices,
     StudyAreaService,
+    MadePartyService,
     // The space catalogue is read once, at start; a bad file stops the start.
     { provide: LIBRARY_CATALOGUE, useFactory: (): Promise<Catalogue> => readCatalogue(CATALOGUE_FILE) },
     // The P6 eval world binds a day of its own here.

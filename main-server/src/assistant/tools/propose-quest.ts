@@ -20,16 +20,19 @@ import { defineTool, type Tool, type ToolContext } from '../feature.js';
 import { contestedReason, type FoundKind } from '../found-ids.js';
 import { koreaTime } from '../korea-time.js';
 import { type UserDayService } from '../free-time/user-day.service.js';
+import { changeMade } from './made-party-change.js';
+import { type MadePartyService } from './made-party.js';
 import { type FieldFailures, type Input, input, isField } from './propose-quest-input.js';
 import { proposedAnswer, refusedAnswer } from './proposed-answer.js';
-import { type ProposalFriend, type ProposalPlace, type QuestProposal } from '../proposal.js';
+import { madeQuestIdOf, type ProposalFriend, type ProposalPlace, type QuestProposal } from '../proposal.js';
 
-// The services proposeQuest checks the resolved ids with, and reads the asker's day from.
+// The services proposeQuest checks the resolved ids with, and reads the asker's day and their made 파티 from.
 export interface ProposeQuestServices {
   friends: FriendViewService;
   places: PlacesService;
   globalEvents: GlobalEventsService;
   days: Pick<UserDayService, 'itemsOn'>;
+  madeParties: Pick<MadePartyService, 'of'>;
 }
 
 // What one id of the input names, checked again, or why it was refused.
@@ -51,14 +54,18 @@ function accepted({ found }: ToolContext, kind: FoundKind, id: string, shownIds:
 const UNRETURNED =
   'No resolver returned this id in this message, and it is not in the last Proposal. Call the resolver with the User’s words.';
 
+// A Place of the list as the card shows it, with its booking page, or null when it is no longer there.
+async function listedPlace(placeId: string, places: PlacesService): Promise<ProposalPlace | null> {
+  const place = (await places.list()).find(({ id }) => id === placeId);
+  return place === undefined ? null : { id: place.id, name: place.name, booking: await facilityBookingOf(place) };
+}
+
 async function placeOf(placeId: string, context: ToolContext, places: PlacesService): Promise<Checked<ProposalPlace>> {
   if (!accepted(context, 'place', placeId, context.shown?.place ? [context.shown.place.id] : [])) {
     return { failure: UNRETURNED };
   }
-  const place = (await places.list()).find(({ id }) => id === placeId);
-  return place === undefined
-    ? { failure: 'This Place is no longer in the list. Tell the User.' }
-    : { value: { id: place.id, name: place.name, booking: await facilityBookingOf(place) } };
+  const place = await listedPlace(placeId, places);
+  return place === null ? { failure: 'This Place is no longer in the list. Tell the User.' } : { value: place };
 }
 
 async function eventOf(
@@ -230,60 +237,85 @@ function inThePast(startsAt: string | undefined, now: Date): FieldFailures {
   return { startsAt: `In the past: it is ${koreaTime(now)} now. Ask the User for a time ahead.` };
 }
 
-// What the model is told when the last Proposal was made already: a second card would make a second Quest, never
-// change the first.
+// What the model is told when the last Proposal was made already and the app draws no change of it: a second card
+// would make a second Quest, never change the first.
 const MADE =
   'The 파티 of [Proposal made: …] is made already: nothing was changed and no card is shown. Say it is already posted (이미 올린 파티예요), never that it changed, and that the User changes it with 수정 in its room in 내 파티. Give another: true only when the User asks for another 파티 beside it.';
+
+// The Proposal of the input, checked against the party form's rules with the ids the resolvers found, or what is
+// missing or wrong in it, field by field.
+async function proposalOf(
+  given: Input,
+  context: ToolContext,
+  services: ProposeQuestServices,
+): Promise<{ proposal: QuestProposal } | { failures: FieldFailures }> {
+  const resolved = await resolvedOf(given, context, services);
+  const startsAt = startOf(given.startsAt, resolved.globalEvent);
+  const failures: FieldFailures = {
+    ...refusedByServer(given, startsAt),
+    ...inThePast(startsAt, context.now),
+    ...afterTheEvent(startsAt, resolved.globalEvent),
+    ...unready(given, startsAt, resolved.invitees.length),
+    ...overCapacity(given.capacity, resolved.invitees.length),
+    ...resolved.failures,
+  };
+  const { title, description = '', joinPolicy, board, capacity } = given;
+  if (
+    Object.keys(failures).length > 0 ||
+    title === undefined ||
+    joinPolicy === undefined ||
+    capacity === undefined ||
+    startsAt === undefined
+  ) {
+    return { failures };
+  }
+  const proposal: QuestProposal = {
+    title: title.trim(),
+    description: description.trim(),
+    joinPolicy,
+    board: board ?? null,
+    capacity,
+    startsAt: koreaTime(new Date(startsAt)),
+    place: resolved.place,
+    globalEvent: resolved.globalEvent,
+    invitees: resolved.invitees,
+  };
+  return { proposal };
+}
 
 // The proposer: it checks a 파티 the User described against the party form's rules, with the Place, the Global Event
 // and the Friends the resolvers found, and adds it to the reply as the Proposal card. It makes nothing: the User makes
 // the Quest with the card's 만들기. A second Proposal in one reply replaces the first. On a failure it answers what is
 // missing or wrong, field by field, and adds nothing. A Proposal over the asker's own Classes or Quests is still made,
-// and its answer names them. While the last Proposal sent back was made, it proposes only
-// another 파티 beside it.
+// and its answer names them. While the last Proposal sent back was made, it proposes only another 파티 beside it, or,
+// for an app that draws one, a change of the made 파티's time and place.
 export function proposeQuest(services: ProposeQuestServices): Tool {
   return defineTool({
     description:
-      'Proposes a 파티 (a Quest) the User asked to make or recruit for: 공개 (open or approval, on a Board) or 비공개 (closed, with invited Friends), optionally at a Place and for a Global Event. It is shown under your reply as a card with 만들기, which makes it. Nothing is made until the User presses it. Give only ids the resolvers returned in this message or those in [Proposal shown: …]. To change a Proposal shown before, give its values again with only the change. A 파티 in [Proposal made: …] is made already and is not changed here: it answers "made". When it answers "refused", ask the User for the fields it names, except a Board the activity plainly gives. When its answer has clashes, Classes or Quests of the User at that time, the card is still shown: say the first and ask whether to keep the time.',
+      'Proposes a 파티 (a Quest) the User asked to make or recruit for: 공개 (open or approval, on a Board) or 비공개 (closed, with invited Friends), optionally at a Place and for a Global Event. It is shown under your reply as a card with 만들기, which makes it. Nothing is made until the User presses it. Give only ids the resolvers returned in this message or those in [Proposal shown: …]. To change a Proposal shown before, give its values again with only the change. A 파티 in [Proposal made: …] or [Proposal change shown: …] is made already: give its values again with only the change, and it answers whether its time and place are shown as a change or how else it is changed. When it answers "refused", ask the User for the fields it names, except a Board the activity plainly gives. When its answer has clashes, Classes or Quests of the User at that time, the card is still shown: say the first and ask whether to keep the time.',
     input,
     run: async (given, context) => {
-      const madeQuestId = context.shown?.madeQuestId;
-      if (madeQuestId !== undefined && given.another !== true) {
-        return { result: 'made', questId: madeQuestId, reason: MADE };
+      const madeQuestId = madeQuestIdOf(context.shown);
+      if (madeQuestId !== undefined && context.shown !== null && given.another !== true) {
+        return context.capabilities.has('party-change')
+          ? changeMade(
+              madeQuestId,
+              given,
+              { context, shown: context.shown },
+              {
+                ...services,
+                proposalOf: (changed) => proposalOf(changed, context, services),
+                placeOf: (placeId) => listedPlace(placeId, services.places),
+              },
+            )
+          : { result: 'made', questId: madeQuestId, reason: MADE };
       }
-      const resolved = await resolvedOf(given, context, services);
-      const startsAt = startOf(given.startsAt, resolved.globalEvent);
-      const failures: FieldFailures = {
-        ...refusedByServer(given, startsAt),
-        ...inThePast(startsAt, context.now),
-        ...afterTheEvent(startsAt, resolved.globalEvent),
-        ...unready(given, startsAt, resolved.invitees.length),
-        ...overCapacity(given.capacity, resolved.invitees.length),
-        ...resolved.failures,
-      };
-      const { title, description = '', joinPolicy, board, capacity } = given;
-      if (
-        Object.keys(failures).length > 0 ||
-        title === undefined ||
-        joinPolicy === undefined ||
-        capacity === undefined ||
-        startsAt === undefined
-      ) {
-        return refusedAnswer(failures, context.presented);
+      const checked = await proposalOf(given, context, services);
+      if ('failures' in checked) {
+        return refusedAnswer(checked.failures, context.presented);
       }
-      const proposal: QuestProposal = {
-        title: title.trim(),
-        description: description.trim(),
-        joinPolicy,
-        board: board ?? null,
-        capacity,
-        startsAt: koreaTime(new Date(startsAt)),
-        place: resolved.place,
-        globalEvent: resolved.globalEvent,
-        invitees: resolved.invitees,
-      };
-      context.presented.proposal = proposal;
-      return proposedAnswer(proposal, context.userId, { days: services.days, presented: context.presented });
+      context.presented.proposal = checked.proposal;
+      return proposedAnswer(checked.proposal, context.userId, { days: services.days, presented: context.presented });
     },
   });
 }
