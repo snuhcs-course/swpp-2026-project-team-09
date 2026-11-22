@@ -1,7 +1,7 @@
 # 07: A 공개 파티 is for two or more
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: [06](06-ended-parties-leave-the-lists.md), which changes the 파티 form's send path (`screens/party/form/use-send.ts`).
 
 Native files: none. Releases: the main server and an app OTA update. The main server's change also reaches what the Assistant proposes.
@@ -39,15 +39,21 @@ Decided 2026-11-22: a 공개 파티 (Join Policy Open or Approval) has a capacit
 - `isReady` is unchanged: under 공개 the form never holds less than 2 (the empty form's 4, the − stopping at 2, 공개 raising 1, the edit form's 2).
 - `proposalForm`, the form a Proposal fills, is left as it is: the Assistant no longer proposes an open 파티 of one, and one proposed before this change and made from its card is refused by the main server with a plain 400 ("저장하지 못했어요").
 - Server fixtures: `quest-joining`'s full Quest leaves its `it.each` for a test of its own, because its second Holder changes the Holders the table checks; `assistant-search-room`'s 31 Full Quests each get a second Holder of their own, joined in parallel.
+- From the screen review (2026-11-22): the three screens and the refusal words accepted as taken.
 
 ## Acceptance criteria
 
-- [ ] Making an open Quest with capacity 1 is refused; a Closed one with capacity 1 is made. (Main server integration test, which fails before the change.)
-- [ ] Changing an open Quest's capacity to 1, or making a Closed Quest of capacity 1 open, is refused with the new code. (Main server integration test, which fails before the change.)
-- [ ] The Assistant does not propose an open 파티 of one: asked for one, its Proposal carries the capacity's message. (Main server Assistant test, which fails before the change.)
-- [ ] Changing only the title of an open Quest stored with capacity 1 is accepted. (Main server integration test.)
-- [ ] Under 공개 the form's − stops at 2, and choosing 공개 raises 1 to 2. (App integration test, which fails before the change.)
-- [ ] The form under 공개 and 비공개 on a phone with the mock build; the screens go to the orchestrator before the PR. (Emulator.)
-- [ ] No native file changes; lint, format, and types pass on the app and the main server.
+- [x] Making an open Quest with capacity 1 is refused; a Closed one with capacity 1 is made. (Main server integration test, which fails before the change.)
+- [x] Changing an open Quest's capacity to 1, or making a Closed Quest of capacity 1 open, is refused with the new code. (Main server integration test, which fails before the change.)
+- [x] The Assistant does not propose an open 파티 of one: asked for one, its Proposal carries the capacity's message. (Main server Assistant test, which fails before the change.)
+- [x] Changing only the title of an open Quest stored with capacity 1 is accepted. (Main server integration test.)
+- [x] Under 공개 the form's − stops at 2, and choosing 공개 raises 1 to 2. (App integration test, which fails before the change.)
+- [x] The form under 공개 and 비공개 on a phone with the mock build; the screens go to the orchestrator before the PR. (Emulator.)
+- [x] No native file changes; lint, format, and types pass on the app and the main server.
 
 ## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 25 minutes, in one implementation session (screen review and pull request included). This is an estimate: gaps under 5 minutes between transcript entries, summed. The orchestrator session's own time is not counted here.
+- Tokens: input 22,657,089 (cache reads 22,434,279, cache writes 222,588, uncached 222); output 73,925. Without cache reads, 222,810. No subagents. Counted up to the writing of this entry, so the last few messages are left out.
