@@ -1053,7 +1053,8 @@ Friend is a Closed Quest the User makes and invites the Friend into. The routes,
   the title has 1 to 50 characters, `subQuest` is the body of adding a Sub Quest below and becomes the Quest's first,
   and `capacity` (1 to 8), `joinPolicy` (`open`, `approval` or `closed`), `board` and `description` are optional in
   the schema. `board` is required for an `open` or `approval` Quest and refused for a Closed one, also when
-  `joinPolicy` is left out (see the boards below).
+  `joinPolicy` is left out (see the boards below). An `open` or `approval` Quest of capacity 1 is refused with 400 on
+  `capacity`: it recruits someone besides its Leader.
 - `GET /quests/recruiting` answers the list of recruiting Quests, `GET /quests/recruiting?globalEventId=...` the same
   for one Global Event and `GET /quests/recruiting?board=meal` for one board; the two combine (see below).
 - `POST /quests/:questId/join` joins an Open Quest and answers 201 with it. A second join is refused, so it takes no
@@ -1194,9 +1195,10 @@ Event allows one such row. A Quest without a Global Event leaves the column empt
 Attending locks the User's row first, so that two attempts at the same moment run one after the other and the later
 finds the Quest of the earlier.
 
-**Leader, capacity and Join Policy.** The Leader is one of the Holders. The capacity, from 1 to 8, is the most Holders
-the Quest takes. The Join Policy says how others enter: `open`, whoever can see the Quest joins at once; `approval`,
-they ask and the Leader decides; `closed`, only by the Leader's invitation. A Quest starts by how it came to be:
+**Leader, capacity and Join Policy.** The Leader is one of the Holders. The capacity, from 1 to 8, or 2 to 8 for an
+`open` or `approval` Quest, is the most Holders the Quest takes. The Join Policy says how others enter: `open`, whoever
+can see the Quest joins at once; `approval`, they ask and the Leader decides; `closed`, only by the Leader's invitation.
+A Quest starts by how it came to be:
 
 - from attending a Global Event: led by the User, `closed`, capacity 4. The Leader opens it to others by changing the
   Join Policy.
@@ -1293,10 +1295,12 @@ the lists are the newest first.
 
 - `PATCH /quests/:questId` with any of `{ "title", "capacity", "joinPolicy", "board", "description" }` changes the
   settings and answers 200 with the Quest. What is left out stays, and the Quest the change leads to is checked: an
-  `open` or `approval` Quest without a board, from the body or stored, is refused with `BOARD_REQUIRED`; a `board` in
-  a body that leaves the Quest Closed with `BOARD_FOR_CLOSED_QUEST`; a change to `closed` without a board clears the
-  stored one, and a `description` of `""` clears it. A Quest with a Global Event takes a title like any other. Making a
-  Quest from attending `open` or `approval`, on a board, is how it starts gathering people.
+  `open` or `approval` Quest without a board, from the body or stored, is refused with `BOARD_REQUIRED`; a `board` in a
+  body that leaves the Quest Closed with `BOARD_FOR_CLOSED_QUEST`; a change of the capacity or the Join Policy that
+  leads to an `open` or `approval` Quest of capacity 1 with `OPEN_QUEST_OF_ONE`, while one stored so before that rule
+  still takes a change of anything else; a change to `closed` without a board clears the stored one, and a `description`
+  of `""` clears it. A Quest with a Global Event takes a title like any other. Making a Quest from attending `open` or
+  `approval`, on a board, is how it starts gathering people.
 - `PUT /quests/:questId/leader` with `{ "userId": "..." }` hands the role to another Holder and answers 204.
 - `DELETE /quests/:questId/holders/:userId` removes a Holder and answers 204. The Holder goes as one who dropped the
   Quest, with their progress. The removal is kept in `quest_removals` in the same transaction, so that the User comes
@@ -1326,6 +1330,7 @@ other.
 | A Leader's action by another Holder                                   | 403    | `NOT_QUEST_LEADER`                |
 | A Leader's action by a User who does not hold the Quest               | 404    | `QUEST_NOT_FOUND`                 |
 | A capacity below the number of Holders                                | 409    | `CAPACITY_BELOW_HOLDERS`          |
+| A change to an `open` or `approval` Quest of capacity 1               | 409    | `OPEN_QUEST_OF_ONE`               |
 | An `open` or `approval` Quest without a board                         | 409    | `BOARD_REQUIRED`                  |
 | A `board` for a Quest that stays or becomes Closed                    | 409    | `BOARD_FOR_CLOSED_QUEST`          |
 | Handing the role to, or removing, a User who does not hold the Quest  | 404    | `NOT_QUEST_HOLDER`                |
@@ -2441,6 +2446,12 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     stays there shortest and why (`지은은 12:31에 도착해 13분만 먹어요` / `13:00 수업에 가려면 12:44엔 나서야 해요`), or,
     when everyone could stay 15 minutes alone, who arrives last and who leaves first. Each person's part of a meal or a
     meet carries `arriveAt`, the earliest they can be at the place, `null` when their position is unknown. A person's
+    own way to the place, and their way on to their next item, takes the shuttle of that day and hour when the walk is
+    10 minutes or more and the shuttle, with the average wait at the stop, is 3 or more minutes faster; meeting on the
+    way stays on foot. The part of such a way carries `mode: 'shuttle'` and `shuttle: { boardAt, getOffAt }` (stop
+    names), `next.by: 'shuttle'` says the way on is by the shuttle, and a scene route of role `me`, `friend`, or `next`
+    by the shuttle carries `mode: 'shuttle'`; a walk carries none of them. `walkMinutes` is then the minutes of the way,
+    however it is gone. A person's
     constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
     are ready at the earliest; where they set out from is still decided by their own time), and `leaveBy` (the latest
     they leave).
@@ -2449,7 +2460,8 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     place where they
     are together longest, from the latest arrival to the earliest leave-by, at least 15 minutes; at most five Plans. The
     places are 학생회관, the buildings of `GET /study-spaces`, the Restaurants open that day, and the buildings each
-    person sets out from, each walked to directly, with no merging point. A fixed start shows as a `from` chip, and a
+    person sets out from, each gone to directly (on foot, or by the day's shuttle as a meal's ways are), with no merging
+    point. A fixed start shows as a `from` chip, and a
     fixed Place that does not fit is worded as a meal's (`12:45부터 14분만 있을 수 있어요`). `people` holds the asker and
     at least one Friend.
   - **Refused with 400:** a body of another shape, a window whose `from` is not before its `until`, an input whose first
@@ -3515,7 +3527,8 @@ after its signal, with the time of the Quests' `CLOCK`, without the answer waiti
 warning and the answer stays as it is.
 
 `leave-by` is kept when `POST /plans` makes a party: `PlansService` schedules the Leader's for the time the Leader's
-part of the Plan sets out, with the Plan's Place and the Leader's own walking minutes, after the transaction and its
+part of the Plan sets out, with the Plan's Place and the minutes of the Leader's own way (by the shuttle when the part's
+`mode` says so), after the transaction and its
 signals, without the answer waiting for it; a failure is logged as a warning. None is kept when the Leader's starting
 Place is unknown or the walk is 0 minutes.
 

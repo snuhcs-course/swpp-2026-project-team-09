@@ -7,6 +7,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -151,6 +152,18 @@ describe('proposeQuest, refusing a field', () => {
     const response = await send(ask('점심 같이 먹을 사람 모집해줘'));
 
     expect(refusedFields()).toEqual(['capacity']);
+    expect(response.body).toMatchObject({ proposal: null });
+  });
+
+  // A 공개 파티 is for two or more (P06 ticket 07), and its 만들기 would be refused.
+  it.each(['open', 'approval'])("refuses an %s 파티 of one, with the main server's message", async (joinPolicy) => {
+    scriptProposal(lunch({ joinPolicy, capacity: 1 }));
+
+    const response = await send(ask('나 혼자 점심 먹는 공개 파티 올려줘'));
+
+    expect(refused()).toEqual({
+      capacity: 'An Open or an Approval Quest has a capacity of 2 or more, and a Closed Quest 1 or more',
+    });
     expect(response.body).toMatchObject({ proposal: null });
   });
 });

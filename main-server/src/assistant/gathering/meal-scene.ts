@@ -4,12 +4,13 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type MapScene, type TimeBand } from '../dto/answer.dto.js';
 import { byStart, clockOf, type DayItem, onDay } from '../free-time/free-time.js';
 import { koreaTime } from '../korea-time.js';
-import { type GatheringNaming, itemAt, mergingLegs, type Naming, wayOn, withAnd } from './answer-words.js';
+import { type GatheringNaming, itemAt, mergingLegs, modeOf, type Naming, wayOn, withAnd } from './answer-words.js';
 import { endedByItem, type GatheringFit, MINUTE_MS, minutesSaid, type PersonPart } from './gathering.js';
 
 // What the map draws of a plan, and its time band.
@@ -83,12 +84,13 @@ function routes({ placeId, meeting, parts }: GatheringFit, naming: GatheringNami
   }
   if (mine !== undefined && mine.origin !== null && mine.walkMinutes !== null) {
     const from = naming.position(meeting?.placeId ?? mine.origin.placeId);
-    ways.push({ userId: mine.personId, role: 'me', from, to, minutes: mine.walkMinutes });
+    ways.push({ userId: mine.personId, role: 'me', from, to, minutes: mine.walkMinutes, ...modeOf(mine) });
   }
   for (const part of theirs) {
     const { personId, origin, walkMinutes } = part;
     if (mergingLegs(part, meeting) === null && origin !== null && walkMinutes !== null) {
-      ways.push({ userId: personId, role: 'friend', from: naming.position(origin.placeId), to, minutes: walkMinutes });
+      const from = naming.position(origin.placeId);
+      ways.push({ userId: personId, role: 'friend', from, to, minutes: walkMinutes, ...modeOf(part) });
     }
   }
   const onward = wayOn(mine);
@@ -99,6 +101,7 @@ function routes({ placeId, meeting, parts }: GatheringFit, naming: GatheringNami
       from: to,
       to: naming.position(onward.placeId),
       minutes: onward.minutes,
+      ...modeOf(onward),
     });
   }
   return ways.filter(({ minutes }) => minutes > 0);

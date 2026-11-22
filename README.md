@@ -122,14 +122,14 @@ Production runs everything below.
 - **Friends**: Friend Requests by Friend ID, one-time Invite Links sent through any messenger, whose address opens a
   web page that opens the app, 친구 추가 between members of a party, and ending a friendship. A Friend's line shows
   the Place nearest them and the walk there.
-- **Parties (파티)**: a party for a Global Event or a plan of the User's own, with a capacity of 1 to 8 and a Join
-  Policy: 공개 파티 recruit on the 식사, 진로, 취미 and 공연 Boards (바로 참여 or 승인 후 참여), 비공개 파티 only
-  among invited Friends. The 파티 tab with 찾기, the Boards, 내 파티 and 초대, moved between by a sideways swipe; the
-  tab bar's + opens 파티 만들기; a card in 찾기 opens its post; 참여 중인 파티 on 내 정보 opens 내 파티 as a screen of
-  its own; join requests and invitations, with 보낸 신청 that the User can take back and waiting invitations the
-  Leader can cancel; the room with the party's steps (일정), walking times, the Leader's controls and the hand-over of
-  the Leader's role. A member the Leader removed comes back only by a request the Leader accepts. Something a User
-  does alone, a meal, a seat or an event, is a Quest too, with no members.
+- **Parties (파티)**: a party for a Global Event or a plan of the User's own, with a capacity of 1 to 8 (2 to 8 for a
+  공개 파티) and a Join Policy: 공개 파티 recruit on the 식사, 진로, 취미 and 공연 Boards (바로 참여 or 승인 후 참여),
+  비공개 파티 only among invited Friends. The 파티 tab with 찾기, the Boards, 내 파티 and 초대, moved between by a
+  sideways swipe; the tab bar's + opens 파티 만들기; a card in 찾기 opens its post; 참여 중인 파티 on 내 정보 opens 내
+  파티 as a screen of its own; join requests and invitations, with 보낸 신청 that the User can take back and waiting
+  invitations the Leader can cancel; the room with the party's steps (일정), walking times, the Leader's controls and
+  the hand-over of the Leader's role. A member the Leader removed comes back only by a request the Leader accepts.
+  Something a User does alone, a meal, a seat or an event, is a Quest too, with no members.
 - **Active party (활성 파티)**: any member activates the party when they are about to meet; the members who accept see
   each other on the map, Friends or not, until they pause, leave or the Leader ends it. A User is in at most one.
 - **Notifications (알림)**: an accepted or declined invitation, the time to leave for a step (지금 나서요, with the

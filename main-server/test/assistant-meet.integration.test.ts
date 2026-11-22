@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -102,11 +103,12 @@ const A5_FIRST_IN_WORDS = {
   togetherMinutes: 28,
   meeting: null,
   people: [
-    { name: '나', from: '301동', walkMinutes: 3, leaveAt: '12:12', leaveBy: '12:43' },
+    { name: '나', from: '301동', walkMinutes: 3, by: 'walk', leaveAt: '12:12', leaveBy: '12:43' },
     {
       name: '<data label="friend.name">민수</data>',
       from: '302동',
       walkMinutes: 0,
+      by: 'walk',
       leaveAt: '12:15',
       leaveBy: '15:30',
     },
@@ -159,6 +161,7 @@ describe('a5: "민수랑 만나고 싶어"', () => {
 });
 
 describe('a6: the band let go at 14:00', () => {
+  // A way to 302동 앞 by the Tuesday shuttle is faster than the walk, so the meet starts 3 minutes earlier.
   it('is recalculated without the model, 302동 앞 first and 신양학술정보관 앞 from 14:00 to 15:20 among the plans', async () => {
     const date = '2086-03-12';
     const time = timeOn(date);
@@ -170,7 +173,7 @@ describe('a6: the band let go at 14:00', () => {
     expect(response.status).toBe(200);
     const answer = z.custom<AnswerReply>().parse(response.body);
     const plans = summary(answer);
-    expect(plans[0]).toBe(`302동 앞 ${time('14:07')}–${time('15:30')} (83)`);
+    expect(plans[0]).toBe(`302동 앞 ${time('14:04')}–${time('15:30')} (86)`);
     expect(plans).toContain(`신양학술정보관 앞 ${time('14:00')}–${time('15:20')} (80)`);
     expect(answer.chips).toEqual([
       { kind: 'origin', text: '24동에서', userId: null },

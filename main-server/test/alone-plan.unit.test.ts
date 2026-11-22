@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Plan, type PlanPart } from '../src/assistant/dto/answer.dto.js';
@@ -216,6 +217,26 @@ describe('what the next item is called', () => {
 });
 
 // Expected values: board s5's push and the design's 6.3 Alone 2.
+describe('the leave-by of a Plan taken alone, on by the shuttle', () => {
+  it('says the shuttle when the way on to the Class is by it', () => {
+    const byShuttle = plan(
+      R301,
+      part({
+        walkMinutes: 0,
+        leaveAt: '2026-11-17T11:50:00+09:00',
+        leaveBy: '2026-11-17T12:47:00+09:00',
+        next: { ...CLASS, by: 'shuttle' },
+      }),
+    );
+    const { facts } = aloneLeaveBy(byShuttle, '수업', NOW);
+
+    expect(facts).toMatchObject({ walkMinutes: 13, by: 'shuttle' });
+    expect(facts === null ? null : wordsOf({ ...facts, questId: 'q' }, new Date('2026-11-17T03:47:00Z')).line).toBe(
+      '24동까지 셔틀로 13분',
+    );
+  });
+});
+
 describe('the words of the leave-by of a Plan taken alone', () => {
   it("read board s5's push, with the Class it is for", () => {
     const told = {

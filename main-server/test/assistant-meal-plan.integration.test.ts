@@ -171,11 +171,12 @@ describe('What the model is told of the plans', () => {
           togetherMinutes: 26,
           meeting: { at: '12:18', place: '301동', with: ['<data label="friend.name">민수</data>'] },
           people: [
-            { name: '나', from: '301동', walkMinutes: 15, leaveAt: '12:18', leaveBy: '12:59' },
+            { name: '나', from: '301동', walkMinutes: 15, by: 'walk', leaveAt: '12:18', leaveBy: '12:59' },
             {
               name: '<data label="friend.name">민수</data>',
               from: '302동',
               walkMinutes: 18,
+              by: 'walk',
               leaveAt: '12:15',
               leaveBy: null,
             },

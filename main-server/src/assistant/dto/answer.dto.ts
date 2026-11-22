@@ -175,9 +175,12 @@ export interface PlanPart {
   arriveAt?: string | null;
   // Null when nothing follows.
   leaveBy: string | null;
-  next: { startAt: string; place: PlacePoint | null } | null;
+  // `by`: 'shuttle' when they go on to it by the shuttle, absent for a walk.
+  next: { startAt: string; place: PlacePoint | null; by?: 'shuttle' } | null;
   // How they travel, absent for a walk.
   mode?: 'walk' | 'shuttle';
+  // The stops of a way by the shuttle, by name ("301동", "경영대").
+  shuttle?: { boardAt: string; getOffAt: string };
 }
 
 // A shuttle stop's point holds the stop's id, not a Place's.

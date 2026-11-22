@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Cuisines } from '../../menus/cuisine-words.js';
@@ -95,6 +96,20 @@ function linesOf(args: MenuArgs, plan: Plan): AnswerLine[] {
   return [firstLine(args), whenLine(plan)];
 }
 
+type Part = Plan['parts'][number];
+
+// "걸어서 12분", or by the shuttle "셔틀로 12분 (301동 정류장 → 경영대 정류장)".
+function thereWords(mine: Part | undefined, minutes: number): string {
+  if (mine?.mode !== 'shuttle') {
+    return `걸어서 ${minutes}분`;
+  }
+  const stops = mine.shuttle === undefined ? '' : ` (${mine.shuttle.boardAt} 정류장 → ${mine.shuttle.getOffAt} 정류장)`;
+  return `셔틀로 ${minutes}분${stops}`;
+}
+
+const shuttleOn = (mine: Part | undefined, onward: Plan['scene']['routes'][number]): boolean =>
+  mine?.next?.by === 'shuttle' || onward.mode === 'shuttle';
+
 // The dishes with their prices, the walk there, then why the meal ends: the walk on to the next item, or the end of
 // the meal's hours. The hours are the plan's, from the hours collected, so that no line contradicts another.
 function basisOf({ key, meal, lines: menu }: MenuArgs, plan: Plan): string[] {
@@ -104,7 +119,7 @@ function basisOf({ key, meal, lines: menu }: MenuArgs, plan: Plan): string[] {
   const priced = pricedDishes(menu);
   const lines = [
     ...(priced.length === 0 ? [] : [priced.join(' · ')]),
-    ...(origin !== null && walk > 0 ? [`${origin.place.label} → ${key} 걸어서 ${walk}분`] : []),
+    ...(origin !== null && walk > 0 ? [`${origin.place.label} → ${key} ${thereWords(mine, walk)}`] : []),
   ];
   const leaveBy = mine?.leaveBy ?? null;
   if (leaveBy !== plan.endAt || leaveBy === null) {
@@ -117,7 +132,7 @@ function basisOf({ key, meal, lines: menu }: MenuArgs, plan: Plan): string[] {
     ...lines,
     nextPlace === null || onward === undefined
       ? leaving
-      : `${nextPlace.label}까지 걸어서 ${onward.minutes}분이라 ${leaving}`,
+      : `${nextPlace.label}까지 ${shuttleOn(mine, onward) ? '셔틀로' : '걸어서'} ${onward.minutes}분이라 ${leaving}`,
   ];
 }
 

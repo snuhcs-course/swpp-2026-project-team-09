@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type AnswerReply, type Plan, type PlanInput } from '../assistant/dto/answer.dto.js';
@@ -61,7 +62,8 @@ function walkOn(plan: Plan, nextWord: NextWord, now: Date): AloneLeaveBy {
     return { facts: null, at: null, line: `${clockOf(at)}엔 나서야 해요` };
   }
   const toward = { start: clockOf(new Date(startAt)), word: nextWord };
-  return kept({ kind: 'leave-by', placeLabel: place.label, walkMinutes, toward }, at);
+  const by = part.next.by === 'shuttle' ? { by: 'shuttle' as const } : {};
+  return kept({ kind: 'leave-by', placeLabel: place.label, walkMinutes, toward, ...by }, at);
 }
 
 // The first walk of 5 minutes or more whose time is still ahead: to the Plan's Place, as for an event later in the

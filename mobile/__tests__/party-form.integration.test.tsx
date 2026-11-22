@@ -173,6 +173,7 @@ describe('언제', () => {
 describe('a refused 파티 올리기', () => {
   it.each([
     [refusal(409, 'CAPACITY_BELOW_HOLDERS'), '지금 멤버 수보다 적게 정할 수 없어요'],
+    [refusal(409, 'OPEN_QUEST_OF_ONE'), '공개 파티는 2명 이상으로 정해 주세요'],
     [refusal(409, 'BOARD_REQUIRED'), '게시판을 골라 주세요'],
     [refusal(403, 'NOT_QUEST_LEADER'), '파티장만 할 수 있어요'],
     [refusal(404, 'PLACE_NOT_FOUND'), '장소를 다시 골라 주세요'],
