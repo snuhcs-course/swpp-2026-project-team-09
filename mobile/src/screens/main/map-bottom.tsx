@@ -19,7 +19,7 @@
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import type { ReactElement, ReactNode } from 'react';
+import { type ReactElement, type ReactNode, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { now } from '@/clock';
@@ -53,7 +53,7 @@ import {
   tutorialStartBottom,
 } from './layout';
 import { MadeQuestLine } from './made-quest-line';
-import { mapChipOf, NewChatBeside, PastChats, placeholderOf } from './past-chats';
+import { mapChipOf, PastChats, placeholderOf } from './past-chats';
 import { type GuideActions, TutorialGuideOverlay } from './tutorial/tutorial-guide';
 import { TutorialList } from './tutorial/tutorial-list';
 import { TutorialSheet } from './tutorial/tutorial-sheet';
@@ -206,12 +206,13 @@ function TutorialParts({
 }
 
 // What is at the bottom of the map: the everyday map's own (`EverydayBottom`), the answer frame, and the AI input. A
-// card at the bottom hides the row and the button. While the keyboard is up and nothing is asked, the examples stand
-// above the input. A message sent from the AI input shows the answer frame, which hides the rest, and the input is its
+// card at the bottom hides the row and the button. While the keyboard is up and the input is empty, the examples stand
+// above it. A message sent from the main map starts a new conversation and shows the answer frame, which hides the
+// rest, and the input is its
 // card's: it stays in the same place in the tree, so that it keeps the focus. While the keyboard is up, the input
 // stands right above it, and a scrim under the frame, the examples and the input puts the keyboard down for a press
-// anywhere else (`KeyboardScrim`). The conversation is kept while the app runs: while the frame is hidden, "이전 답" in
-// the input shows it again. A card nobody asked for, a received invitation's or a made Quest's, takes the bottom
+// anywhere else (`KeyboardScrim`). The conversation is kept while the app runs: while the frame is hidden, the chip
+// "이어서 · …" over the input shows it again. A card nobody asked for, a received invitation's or a made Quest's, takes the bottom
 // without the input. A 새내기 튜토리얼 quest's guide takes the whole map while it is open, with no scrim: it has no field,
 // and the input is hidden under it.
 export function MapBottom(props: MapBottomProps): ReactElement {
@@ -226,12 +227,21 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const inputGone = chat.framed && chat.answer.adding;
   const inputShown = !inputGone && !(chat.framed && chat.answer.moving !== null);
   const inputTop = inputGone ? lift : aiInputTop(room) + lift;
-  const send = sendWithKeyboardDown(chat.chat.send);
+  // On the main map a message always starts a new conversation; in the answer it goes on with the one on screen.
+  const send = sendWithKeyboardDown(chat.framed ? chat.chat.send : chat.chat.sendNew);
   const action = answerActionOf(chat);
+  const [empty, setEmpty] = useState(true);
   return (
     <>
       {guided ? null : (
-        <FramedParts {...props} cardShown={cardShown} inputTop={inputTop} keyboardUp={keyboardUp} send={send} />
+        <FramedParts
+          {...props}
+          cardShown={cardShown}
+          empty={empty}
+          inputTop={inputTop}
+          keyboardUp={keyboardUp}
+          send={send}
+        />
       )}
       <View style={[styles.inputLayer, guided && styles.gone]}>
         {inputShown && !cardShown ? (
@@ -242,6 +252,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
             placeholder={placeholderOf(chat)}
             restore={restoreOf(chat.said)}
             onSend={send}
+            onEmpty={setEmpty}
             beside={besideOf(chat, action, keyboardUp)}
             inCard={chat.framed}
           />
@@ -254,6 +265,8 @@ export function MapBottom(props: MapBottomProps): ReactElement {
 
 type FramedProps = MapBottomProps & {
   cardShown: boolean;
+  // The AI input holds nothing: only then do the examples stand over the keyboard.
+  empty: boolean;
   inputTop: number;
   keyboardUp: boolean;
   send: (text: string) => void;
@@ -262,7 +275,7 @@ type FramedProps = MapBottomProps & {
 // The everyday map's bottom, the answer frame, the examples over the keyboard, and the cards nobody asked for: none of
 // them while a quest's guide is open.
 function FramedParts(props: FramedProps): ReactElement {
-  const { chat, room, unasked, onAnswerHeight, onTimeBarHeight, cardShown, inputTop, keyboardUp, send } = props;
+  const { chat, room, unasked, onAnswerHeight, onTimeBarHeight, cardShown, inputTop, keyboardUp, empty, send } = props;
   const { invitation, made } = unasked;
   return (
     <>
@@ -279,7 +292,7 @@ function FramedParts(props: FramedProps): ReactElement {
         />
       </RowFourProvider>
       <MapQuestions {...props} />
-      {!chat.framed && keyboardUp ? <AskedExamples bottom={examplesBottom(props)} onSend={send} /> : null}
+      {!chat.framed && keyboardUp && empty ? <AskedExamples bottom={examplesBottom(props)} onSend={send} /> : null}
       {invitation.shown ? <InvitationFrame invitation={invitation} onHeight={onAnswerHeight} room={room} /> : null}
       {made.shown === null ? null : (
         <MadeQuestFrame made={made.shown} onClose={made.closeCard} onHeight={onAnswerHeight} room={room} />
@@ -310,18 +323,9 @@ function MapQuestions(props: FramedProps): ReactElement | null {
   );
 }
 
-// At the input's right: the answer's main button while the keyboard is down, or "새 대화" while a conversation is kept
-// with the answer closed (P04 ticket 11).
+// At the input's right: the answer's main button while the keyboard is down. The main map has nothing there: a message
+// from it starts a new conversation by itself (P04 ticket 33).
 function besideOf(chat: ChatSheetControl, action: ReturnType<typeof answerActionOf>, keyboardUp: boolean): ReactNode {
-  if (mapChipOf(chat)?.kind === 'continue') {
-    return (
-      <NewChatBeside
-        onPress={() => {
-          chat.chat.startNew();
-        }}
-      />
-    );
-  }
   return action === null || keyboardUp ? null : <AnswerActionButton action={action} control={chat} />;
 }
 

@@ -7,7 +7,7 @@
 import { useIsFocused } from 'expo-router';
 import { type ReactElement, useCallback, useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
-import { color, font, Icon, radius, shadow, size, space } from '@/design-system';
+import { color, font, Icon, type IconName, radius, shadow, size, space } from '@/design-system';
 import { questionsOf } from '@/features/assistant/turn-outcome';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { QUESTION_LIST, QuestionList, questionRowsOf } from './answer/question-list';
@@ -31,20 +31,13 @@ export function mapChipOf({ framed, said, chat, unseen }: Chipped): MapChip | nu
   return chat.earlier.length > 0 ? { kind: 'past', count: chat.earlier.length } : null;
 }
 
-export const NEW_PLACEHOLDER = '새로 물어보기 · 예: 공부할 자리';
+export const MAP_PLACEHOLDER = '무엇이든 물어보세요';
 export const CONTINUE_PLACEHOLDER = '이어서 말하기';
 
-// The AI input's placeholder: "이어서 말하기" while a conversation is kept, the new one's after "새 대화", else the
-// input's own.
-export function placeholderOf(control: Chipped): string | undefined {
-  if (control.framed) {
-    return CONTINUE_PLACEHOLDER;
-  }
-  const chip = mapChipOf(control);
-  if (chip === null) {
-    return undefined;
-  }
-  return chip.kind === 'continue' ? CONTINUE_PLACEHOLDER : NEW_PLACEHOLDER;
+// The AI input's placeholder: "이어서 말하기" in the answer, where a message goes on with the conversation; on the main
+// map, where a message always starts a new one, "무엇이든 물어보세요" (P04 ticket 33).
+export function placeholderOf({ framed }: Pick<Chipped, 'framed'>): string {
+  return framed ? CONTINUE_PLACEHOLDER : MAP_PLACEHOLDER;
 }
 
 interface PastChatsProps {
@@ -89,10 +82,10 @@ function ChipList({ control, bottom, stageHeight, onClose }: ChipListProps): Rea
   );
 }
 
-// The map screen's chip over the input, "이어서 · {question} ▾" or "지난 대화 N ▾", and the list of questions it opens
-// as a card standing on it (P04 tickets 10 and 11). A press outside the list or Android's back button closes it; a
-// question brings its answer back, in its conversation. A reply that came while the answer was closed puts a dot on
-// the chip until the answer is shown again.
+// The map screen's chip over the input. "이어서 · {question} ›" brings the kept answer back at a press (P04 ticket 33);
+// "지난 대화 N ▾" opens the list of questions as a card standing on it (P04 ticket 10), which a press outside it or
+// Android's back button closes, and whose questions bring their answers back, in their conversations. A reply that
+// came while the answer was closed puts a dot on the chip until the answer is shown again.
 export function PastChats({ control, chip, bottom, stageHeight }: PastChatsProps): ReactElement {
   const [open, setOpen] = useState(false);
   const close = useCallback((): void => {
@@ -108,11 +101,15 @@ export function PastChats({ control, chip, bottom, stageHeight }: PastChatsProps
       <Pressable
         accessibilityLabel={label}
         accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
+        accessibilityState={chip.kind === 'past' ? { expanded: open } : undefined}
         hitSlop={(size.touchMin - PAST_CHATS.height) / 2}
         onPress={() => {
           Keyboard.dismiss();
-          setOpen(!open);
+          if (chip.kind === 'continue') {
+            control.showAgain?.();
+          } else {
+            setOpen(!open);
+          }
         }}
         style={({ pressed }) => [
           styles.chip,
@@ -125,11 +122,18 @@ export function PastChats({ control, chip, bottom, stageHeight }: PastChatsProps
         <Text ellipsizeMode="tail" numberOfLines={1} style={[styles.words, chip.kind === 'continue' && styles.strong]}>
           {words}
         </Text>
-        <Icon color={color.ink} name={open ? 'chevronUp' : 'chevronDown'} size={14} />
+        <Icon color={color.ink} name={chevronOf(chip, open)} size={14} />
         {chip.kind === 'continue' && chip.unseen ? <View style={styles.unseen} testID="continue-unseen" /> : null}
       </Pressable>
     </>
   );
+}
+
+function chevronOf(chip: MapChip, open: boolean): IconName {
+  if (chip.kind === 'continue') {
+    return 'chevronRight';
+  }
+  return open ? 'chevronUp' : 'chevronDown';
 }
 
 // The dot of a reply not yet seen, at the chip's top right.
@@ -169,34 +173,4 @@ const styles = StyleSheet.create({
     borderColor: color.surface,
     backgroundColor: color.danger,
   },
-});
-
-// "새 대화" beside the input while a conversation is kept and the answer is closed (board 17): it starts a new one at one
-// press, and the input takes the focus; the kept one stays in the list.
-export function NewChatBeside({ onPress }: { onPress: () => void }): ReactElement {
-  return (
-    <Pressable
-      accessibilityLabel="새 대화"
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [besideStyles.button, pressed && styles.pressed]}
-    >
-      <Text style={besideStyles.words}>새 대화</Text>
-    </Pressable>
-  );
-}
-
-const besideStyles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: size.touchMin,
-    paddingHorizontal: space[5],
-    borderWidth: 1.5,
-    borderColor: color.snuBlue,
-    borderRadius: radius.full,
-    backgroundColor: color.surface,
-    boxShadow: shadow.float,
-  },
-  words: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 20, color: color.snuBlue },
 });

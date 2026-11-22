@@ -133,6 +133,9 @@ export interface Chat {
   // 새 대화: keeps the conversation among the earlier ones and starts an empty one; a question still on its way is
   // dropped (P04 ticket 10).
   startNew: () => void;
+  // A message from the main map: keeps the conversation among the earlier ones and sends the message as a new one's
+  // first (P04 ticket 33).
+  sendNew: (text: string, tapped?: Tapped) => void;
   // Takes up an earlier conversation again, by its id, keeping the current one among the earlier ones.
   resume: (id: number) => void;
   // The conversations kept beside the current one, the one left last first.
@@ -337,7 +340,6 @@ export function useChat(readContext: () => RequestContext): Chat {
   const conversation = useRef(0);
   const { sent: roomsShown, ...cardsKept } = useCardsKept();
   const { leave, stop, takeBack } = useLetGo({ said, show }, conversation, { setWaiting, waitingNow });
-  const conversations = useConversations(show, leave);
 
   // Asks the Assistant to answer the conversation as it stands, the User's message last.
   const ask = useCallback((): void => {
@@ -362,6 +364,8 @@ export function useChat(readContext: () => RequestContext): Chat {
     },
     [add, ask, takeBack],
   );
+
+  const conversations = useConversations(show, leave, send);
 
   const retry = useCallback((): void => {
     if (said.current.at(-1)?.failure !== 'unavailable') {

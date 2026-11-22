@@ -28,8 +28,9 @@ import { answerShuttle } from './support/shuttle';
 import { CONTINUE, reopenAnswer } from './support/questions';
 
 // P02 ticket 32 against the fake main server: leaving the answer frame hides it and keeps the conversation, the map
-// screen's chip "이어서 · …" shows it again (P04 ticket 11), a message from the everyday map goes on with it, and "새 대화" keeps it aside in the
-// list of questions (P04 ticket 10).
+// screen's chip "이어서 · …" shows it again (P04 tickets 11 and 33), a message from the everyday map starts a new
+// conversation and keeps the old one aside (P04 ticket 33), and "새 대화" keeps it aside in the list of questions (P04
+// ticket 10).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -216,11 +217,21 @@ describe('the map while the frame is hidden', () => {
   });
 });
 
-// Partitions: a message from the everyday map, and "새 대화".
-describe('going on, and starting over', () => {
-  it('sends a message from the everyday map with the earlier turns, and shows the frame', async () => {
+// Partitions: a message from the everyday map, and one from the answer's own input.
+describe('a message after a reply', () => {
+  it('starts a new conversation from the everyday map: only its own message goes, and the frame shows', async () => {
     const user = await asked(TEXT_REPLY, '셔틀 어디 있어?');
     await user.press(pill().getByRole('button', { name: '답 닫기' }));
+
+    await send(user, '정문 셔틀은?');
+    await pass(500);
+
+    expect(lastSent()).toEqual(sentWith([{ role: 'user', text: '정문 셔틀은?' }]));
+    expect(pill().getByText('정문 셔틀은?')).toBeVisible();
+  });
+
+  it("goes on with the conversation from the answer's own input, with the earlier turns", async () => {
+    const user = await asked(TEXT_REPLY, '셔틀 어디 있어?');
 
     await send(user, '정문 셔틀은?');
     await pass(500);
@@ -232,9 +243,11 @@ describe('going on, and starting over', () => {
         { role: 'user', text: '정문 셔틀은?' },
       ]),
     );
-    expect(pill().getByText('정문 셔틀은?')).toBeVisible();
   });
+});
 
+// Partitions: "새 대화" after a reply, and while a question is on its way.
+describe('starting over', () => {
   it('keeps the conversation aside with "새 대화": no "이어서", and the next request carries only its own message', async () => {
     const user = await asked(TEXT_REPLY, '셔틀 어디 있어?');
 
