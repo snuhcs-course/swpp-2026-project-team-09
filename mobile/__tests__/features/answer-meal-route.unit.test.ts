@@ -16,11 +16,13 @@ import { AREA, FIRST_CAMERA, positionAt, viewAt } from '../support/answer-view';
 // The crowded meal answer's map (the answer screen's redesign, boards E1 and E2): eleven restaurants between a Class
 // ending at 301동 at 10:45 and one at 302동 at 15:30.
 const CROWDED = crowdedMealAnswer('2026-10-07', '2026-10-06T04:00:00Z');
+// The crowded answer's Plans are in the order of their walking; a test names the one it shows.
+const at = (name: string): number => CROWDED.plans.findIndex(({ place }) => place.label === name);
 
 // Partitions: the Assistant's pick with a way there and a way on; another pick in the next Class's building, with no
 // way on.
-describe("the crowded meal answer's first pick", () => {
-  const drawing = drawingOf(CROWDED, 0);
+describe('학생회관식당 chosen in the crowded meal answer', () => {
+  const drawing = drawingOf(CROWDED, at('학생회관식당'));
 
   it('says where the User starts and the next Class as dark labels with their times', () => {
     expect(seen(drawing, 'answer:me').label).toMatchObject({ tone: 'meeting', title: '10:45 301동' });
@@ -60,7 +62,7 @@ describe("the crowded meal answer's first pick", () => {
 });
 
 describe('302동식당 chosen', () => {
-  const drawing = drawingOf(CROWDED, 1);
+  const drawing = drawingOf(CROWDED, at('302동식당'));
 
   it('moves the label to it, with only the way there drawn and its minutes', () => {
     expect(seen(drawing, 'answer:pick').label).toMatchObject({ title: '302동식당', note: '11:30 · 걸음 2분' });
@@ -86,19 +88,12 @@ describe('the view a meal answer keeps while another place is chosen', () => {
   });
 });
 
-// Partitions: the way there by shuttle (the shuttle-aware Plan); the line stays as drawn.
+// Partitions: the way there by shuttle (the shuttle-aware Plan, the crowded mock's 자하연식당 2층); the way on on foot.
 describe('a leg by shuttle', () => {
-  it('reads "셔틀 N분" on its label', () => {
-    const [plan, ...rest] = CROWDED.plans;
-    if (plan === undefined) {
-      throw new Error('The crowded answer has Plans');
-    }
-    const routes = plan.scene.routes.map((route) =>
-      route.role === 'me' ? { ...route, mode: 'shuttle' as const } : route,
-    );
-    const drawing = drawingOf({ ...CROWDED, plans: [{ ...plan, scene: { ...plan.scene, routes } }, ...rest] }, 0);
+  it('reads "셔틀 N분" on its label, and the way on its minutes alone', () => {
+    const drawing = drawingOf(CROWDED, at('자하연식당 2층'));
 
-    expect(seen(drawing, 'answer:leg:0').label).toMatchObject({ tone: 'leg', title: '셔틀 15분' });
-    expect(seen(drawing, 'answer:leg:1').label).toMatchObject({ tone: 'leg', title: '17분' });
+    expect(seen(drawing, 'answer:leg:0').label).toMatchObject({ tone: 'leg', title: '셔틀 13분' });
+    expect(seen(drawing, 'answer:leg:1').label).toMatchObject({ tone: 'leg', title: '20분' });
   });
 });

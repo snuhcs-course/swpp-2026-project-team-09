@@ -215,7 +215,9 @@ describe('the crowded answer’s late restaurants', () => {
 // Partitions: every leg on foot, as a reply without `mode` reads; the way there by shuttle, as the shuttle-aware Plan
 // sends it (`mode: 'shuttle'` and the stops' names).
 describe('the words of the way', () => {
-  const plan = crowdedMealAnswer('2026-10-07', '2026-10-06T04:00:00Z').plans[0];
+  const plan = crowdedMealAnswer('2026-10-07', '2026-10-06T04:00:00Z').plans.find(
+    ({ place }) => place.label === '학생회관식당',
+  );
   if (plan === undefined) {
     throw new Error('The crowded answer has Plans');
   }

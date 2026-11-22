@@ -91,7 +91,7 @@ export const RESTAURANTS: readonly Restaurant[] = [
     name: '자하연식당 2층',
     building: '109',
     at: { latitude: 37.46098, longitude: 126.95252 },
-    opens: '11:00',
+    opens: '11:30',
     shuttle: { minutes: 13, boardAt: '301동', getOffAt: '자하연' },
     price: 6000,
     dishes: [

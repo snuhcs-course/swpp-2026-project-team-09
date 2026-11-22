@@ -171,7 +171,13 @@ function planOf(date: string, now: string, one: Restaurant): Plan {
   };
 }
 
-// The answer for tomorrow (`date`, YYYY-MM-DD in Korea), asked at `now`: the Assistant's pick, 학생회관식당, first.
+// The way a restaurant adds to the day: there, by the shuttle or on foot, and on to 302동.
+function walkOf(one: Restaurant): number {
+  return (one.shuttle?.minutes ?? minutes(B301, one.at)) + minutes(one.at, B302);
+}
+
+// The answer for tomorrow (`date`, YYYY-MM-DD in Korea), asked at `now`: the least walking first, as the main server
+// ranks a meal since P05 ticket 32, so that the pick is 302동식당.
 export function crowdedMealAnswer(date: string, now: string): AnswerReply & { input: MealInput } {
   return {
     input: {
@@ -186,7 +192,7 @@ export function crowdedMealAnswer(date: string, now: string): AnswerReply & { in
       { kind: 'origin', text: '301동에서', userId: null },
       { kind: 'until', text: '15:30 수업까지', userId: null },
     ],
-    plans: RESTAURANTS.map((one) => planOf(date, now, one)),
+    plans: RESTAURANTS.toSorted((one, other) => walkOf(one) - walkOf(other)).map((one) => planOf(date, now, one)),
     dropped: [],
     noPlan: null,
     otherMeal: { meal: 'dinner', start: '17:00' },
@@ -223,7 +229,7 @@ export function crowdedWithFriend(date: string, now: string, userId: string): An
 
 export function crowdedMealReply(date: string, now: string): AssistantReply & { answer: AnswerReply } {
   return {
-    text: '학생회관식당 목살슬라이스덮밥이 좋아요. 가까운 302동식당은 찜닭이고 걸음 2분, 11:30에 열어요.',
+    text: '302동식당 순살안동식찜닭이 좋아요. 걸음 2분이고 11:30에 열어요. 학생회관식당은 목살슬라이스덮밥이고 걸음 32분이에요.',
     mapButtons: [],
     cards: [],
     proposal: null,
