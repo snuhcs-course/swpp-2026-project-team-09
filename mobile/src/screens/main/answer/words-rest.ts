@@ -5,7 +5,8 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerLine } from '@/api/assistant-types';
+import type { AnswerLine, AskOffer, ReplyOffer } from '@/api/assistant-types';
+import type { PickOffer } from '@/api/pick-types';
 import type { Lookup, LookupAction } from '@/api/lookup-types';
 import type { Refusal } from '@/api/refusal-types';
 import type { ChatBubble } from '@/features/assistant/use-chat';
@@ -26,6 +27,8 @@ export interface WordsRest {
   keep?: boolean;
   // A line with nothing behind it to raise: a Quest left as it is (ticket 20), whose Plans are gone.
   still?: boolean;
+  // 지도에서 고르기 and 시간 고르기 (ticket 26), chips after the offers.
+  picks?: readonly PickOffer[];
 }
 
 // A Plan beside a Quest the User holds: the model's line, which says so, with 그대로 두기; once the User chose (바꾸기
@@ -76,10 +79,23 @@ function asksBack(words: string): boolean {
   return /[?？]\s*$/u.test(words);
 }
 
+function isAsk(offer: ReplyOffer): offer is AskOffer {
+  return offer.kind === 'ask';
+}
+
+function isPick(offer: ReplyOffer): offer is PickOffer {
+  return offer.kind === 'pick-place' || offer.kind === 'pick-time';
+}
+
 // A refusal, a failure, or a question back (words that ask, with offers): the first line, with the buttons as chips. A
 // refusal that asks which Friend keeps its grid in the open card, and any other words their card, with their offers
-// under them (decision 3). Null for the open card.
-export function wordsRestOf({ refusal = null, failure, offers = [], text }: ChatBubble): WordsRest | null {
+// under them (decision 3). A Quest to cancel (P04 ticket 24) or a 파티 to change in its room (ticket 25) always docks:
+// its button stands beside the input, and `left`, once it was pressed, says in the line how that went. So does a
+// question back with a picker of a Place or a time (ticket 26), as chips. Null for the open card.
+export function wordsRestOf(
+  { refusal = null, failure, offers = [], text }: ChatBubble,
+  left: string | null = null,
+): WordsRest | null {
   const rest = { retry: false, note: null };
   if (refusal !== null) {
     return refusal.offers.every(isButton)
@@ -89,5 +105,13 @@ export function wordsRestOf({ refusal = null, failure, offers = [], text }: Chat
   if (failure !== null) {
     return { ...rest, line: wordsLine(text), offers: [], retry: failure === 'unavailable' };
   }
-  return offers.length > 0 && asksBack(text) ? { ...rest, line: wordsLine(text), offers } : null;
+  const asks = offers.filter((offer) => isAsk(offer));
+  const picks = offers.filter((offer) => isPick(offer));
+  if (picks.length > 0) {
+    return { ...rest, line: wordsLine(text), offers: asks, picks };
+  }
+  if (offers.some((offer) => offer.kind === 'leave-quest' || offer.kind === 'quest')) {
+    return { ...rest, line: wordsLine(left ?? text), offers: asks };
+  }
+  return asks.length > 0 && asksBack(text) ? { ...rest, line: wordsLine(text), offers: asks } : null;
 }

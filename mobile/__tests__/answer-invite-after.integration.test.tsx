@@ -22,6 +22,7 @@ import { socketServer } from './support/live';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, DINNER, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // What follows a press of "만들고 초대 보내기" beside the input, once "이대로 초대" on the card, for the answer to "배고파, 민수랑 같이" (P02 ticket 05), against the
 // fake main server: a signal of 민수's answer, each refusal, and "닫기". The Quest is the stored
@@ -141,7 +142,7 @@ describe('a refused "만들고 초대 보내기"', () => {
       {
         input: MEAL_ANSWER.input,
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(mapThings()).toContain(PICK);
