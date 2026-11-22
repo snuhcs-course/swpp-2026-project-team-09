@@ -18,7 +18,8 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// The kinds of food as chips and lunch and dinner on the bar (P04 ticket 16, boards 24 to 26): a press filters on the phone with no turn to the model,
+// The kinds of food as chips over the raised card's list (board E3) and lunch and dinner on the bar (P04 ticket 16,
+// boards 24 to 26): a press filters on the phone with no turn to the model,
 // a candidate without the kind recedes to a grey name tag, the pick moves to the first candidate that serves it, and
 // the kind on screen goes with the next message; a reply that carries a kind shows its chip filled.
 
@@ -65,29 +66,51 @@ function lastContext(): unknown {
   return typeof body === 'object' && body !== null && 'context' in body ? body.context : undefined;
 }
 
+type User = Awaited<ReturnType<typeof askOnMap>>;
+
+// The card raised to the list by its sentence, where the kinds stand.
+async function raise(user: User): Promise<void> {
+  await user.press(screen.getByTestId('dock-line'));
+}
+
 // Partitions: the chips at first; a kind the pick serves pressed, then pressed again; a kind it does not serve.
 describe('the kind chips of a meal answer', () => {
-  it('stand in the order of their counts, none filled, without a label', async () => {
-    await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+  it('stand over the raised list in the order of their counts after 전체, only 전체 filled, without a label', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    expect(screen.queryByRole('button', { name: KOREAN })).toBeNull();
+    expect(screen.queryByRole('button', { name: '메뉴 보기' })).toBeNull();
+
+    await raise(user);
 
     expect(screen.queryByText('종류')).toBeNull();
+    const chips = within(screen.getByTestId('kind-chips')).getAllByRole('button');
+    expect(chips.map((chip) => String(chip.props.accessibilityLabel)).slice(1)).toEqual([
+      KOREAN,
+      JAPANESE,
+      '양식 2곳',
+      '중식 1곳',
+    ]);
+    expect(String(chips[0]?.props.accessibilityLabel)).toMatch(/^전체 \d+곳$/u);
     for (const name of [KOREAN, JAPANESE, '양식 2곳', '중식 1곳']) {
       expect(selected(name)).toBe(false);
     }
-    expect(screen.getByRole('button', { name: '메뉴 보기' })).toBeOnTheScreen();
   });
+});
 
+// Partitions: a kind the pick serves pressed, then pressed again; a kind it does not serve; a grey tag pressed.
+describe('a kind chip pressed', () => {
   it('fill on a press, recede a candidate without the kind, put the kind first in each line, and clear again', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await raise(user);
 
     await user.press(screen.getByRole('button', { name: KOREAN }));
 
     expect(selected(KOREAN)).toBe(true);
     expect(screen.getByRole('button', { name: '자하연식당 2층' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: '후보 2 · 301동식당 · 걸음 15분' })).toBeOnTheScreen();
     expect(
-      screen.getByRole('button', { name: '후보 2 · 301동식당 · 12:18 · 뚝배기불고기 외 4 · 5,000원부터' }),
+      screen.getByRole('button', { name: /^302동식당 · 12:15 · 걸음 20분 · 뼈없는감자탕 외 5 · /u }),
     ).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: /^302동식당 · 12:15 점심 · 뼈없는감자탕 외 5$/u })).toBeOnTheScreen();
 
     await user.press(screen.getByRole('button', { name: KOREAN }));
 
@@ -97,16 +120,18 @@ describe('the kind chips of a meal answer', () => {
 
   it('move the pick to the first candidate that serves a kind the pick does not', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await raise(user);
 
     await user.press(screen.getByRole('button', { name: JAPANESE }));
 
-    expect(screen.getByRole('button', { name: /^3식당 · .*돈까스카레 외 2$/u })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /^3식당 · .*돈까스카레 외 2 · /u })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: '302동식당' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: /^후보 5 · 자하연식당 2층 · /u })).toBeOnTheScreen();
   });
 
   it('clear when a grey tag is pressed, which becomes the pick', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await raise(user);
     await user.press(screen.getByRole('button', { name: KOREAN }));
 
     await user.press(screen.getByRole('button', { name: '자하연식당 2층' }));
@@ -120,6 +145,7 @@ describe('the kind chips of a meal answer', () => {
 describe('the kind on screen and the conversation', () => {
   it('goes with the next message as the condition cuisine', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await raise(user);
     await user.press(screen.getByRole('button', { name: KOREAN }));
 
     await user.type(screen.getByLabelText(AI_INPUT), '더 싼 데');
@@ -133,7 +159,8 @@ describe('the kind on screen and the conversation', () => {
 
   it('fills the chip of a reply that carries a kind', async () => {
     const answer = { ...MEAL_ANSWER_MENUS, input: { ...MEAL_ANSWER_MENUS.input, cuisine: '한식' as const } };
-    await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, answer });
+    const user = await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, answer });
+    await raise(user);
 
     expect(selected(KOREAN)).toBe(true);
     expect(screen.getByRole('button', { name: '자하연식당 2층' })).toBeOnTheScreen();
@@ -196,7 +223,7 @@ describe('the kinds and the other meal while the Plan is sent', () => {
     await user.press(dinner);
     await pass(3000);
 
-    expect(screen.getByRole('button', { name: /^302동식당 · 12:15 점심/u })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /^302동식당 · 12:15 · /u })).toBeOnTheScreen();
     expect(server.received('POST /assistant/answers')).toHaveLength(0);
   });
 });

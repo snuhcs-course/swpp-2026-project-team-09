@@ -18,9 +18,8 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// P04 ticket 21: a meal answer beside a Quest already set keeps its kinds of food and 메뉴 보기. The dock has two rows:
-// the line alone on top, and under it 그대로 두기 first, the kind chips, and 메뉴 보기 at the right. Expected values: the
-// shape agreed on 2026-11-22 and the kinds of the stored answer (P04 ticket 16).
+// P04 ticket 21: a meal answer beside a Quest already set docks in two rows: the line alone on top, and 그대로 두기 under
+// it. The kinds of food stand over the raised card's list (board E3), not in the dock, and 메뉴 보기 is gone.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -88,39 +87,27 @@ function buttonNames(): string[] {
     .map((button) => String(button.props.accessibilityLabel ?? ''));
 }
 
-// Partitions: the dock at first, a kind pressed, 바꾸기 on its way, and 그대로 두기 pressed.
+// Partitions: the dock at first, 바꾸기 on its way, and 그대로 두기 pressed.
 describe('a meal answer beside a lunch already set', () => {
-  it('has the line on top and 그대로 두기, the kinds, and 메뉴 보기 under it, in that order', async () => {
+  it('has the line on top and 그대로 두기 under it, with no kinds and no 메뉴 보기', async () => {
     await askOnMap(server, REPLY);
 
     expect(dock().getByTestId('dock-line')).toHaveTextContent(LINE, { exact: false });
     const names = buttonNames();
-    expect(names.indexOf(KEEP)).toBeGreaterThanOrEqual(0);
-    expect(names.indexOf(KEEP)).toBeLessThan(names.indexOf(KOREAN));
-    expect(names.at(-1)).toBe(MENUS);
+    expect(names).toContain(KEEP);
+    expect(names).not.toContain(KOREAN);
+    expect(names).not.toContain(MENUS);
     expect(beside().getByRole('button', { name: '바꾸기' })).toBeEnabled();
   });
 
-  it('chooses a kind as an ordinary meal answer does', async () => {
-    const user = await askOnMap(server, REPLY);
-
-    await user.press(dock().getByRole('button', { name: KOREAN }));
-    await pass(300);
-
-    expect(dock().getByRole('button', { name: KOREAN })).toHaveProp(
-      'accessibilityState',
-      expect.objectContaining({ selected: true }),
-    );
-  });
-
-  it('holds the kinds and 그대로 두기 while 바꾸기 is on its way', async () => {
-    server.on('POST /plans', { status: 201, body: PLAN_QUEST, afterMs: 3000 });
+  it('holds 그대로 두기 while 바꾸기 is on its way', async () => {
+    // A lunch the User holds changes in place.
+    server.on(`PUT /plans/${LUNCH.questId}`, { status: 200, body: PLAN_QUEST, afterMs: 3000 });
     const user = await askOnMap(server, REPLY);
 
     await user.press(beside().getByRole('button', { name: '바꾸기' }));
     await pass(300);
 
-    expect(dock().getByRole('button', { name: KOREAN })).toBeDisabled();
     expect(dock().getByRole('button', { name: KEEP })).toBeDisabled();
   });
 
@@ -130,8 +117,29 @@ describe('a meal answer beside a lunch already set', () => {
     await user.press(dock().getByRole('button', { name: KEEP }));
     await pass(300);
 
-    expect(card().queryByRole('button', { name: KOREAN })).toBeNull();
-    expect(card().queryByRole('button', { name: MENUS })).toBeNull();
+    expect(card().queryByRole('button', { name: KEEP })).toBeNull();
     expect(dock().getByTestId('dock-line')).toBeVisible();
+  });
+});
+
+// Partitions: the list raised once 바꾸기 changed the lunch held (review of PR 477).
+describe('the raised list once 바꾸기 changed the lunch held', () => {
+  it('chooses nothing again: its rows and kinds take no press, and the changed line stays', async () => {
+    server.on(`PUT /plans/${LUNCH.questId}`, { status: 200, body: PLAN_QUEST.quest });
+    const user = await askOnMap(server, REPLY);
+    await user.press(beside().getByRole('button', { name: '바꾸기' }));
+    await pass(500);
+    expect(dock().getByText(/바꿨어요/u)).toBeVisible();
+
+    await user.press(screen.getByTestId('dock-line'));
+    const row = within(screen.getByTestId('meal-list')).getByTestId('meal-row-2');
+    expect(row).toBeDisabled();
+    expect(within(screen.getByTestId('kind-chips')).getByRole('button', { name: KOREAN })).toBeDisabled();
+    await user.press(row);
+    await pass(300);
+
+    expect(screen.queryByTestId('meal-menu')).toBeNull();
+    expect(server.received(`PUT /plans/${LUNCH.questId}`)).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: '바꾸기' })).toBeNull();
   });
 });
