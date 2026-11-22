@@ -30,6 +30,16 @@ Decided 2026-11-22: a 공개 파티 (Join Policy Open or Approval) has a capacit
 - Tests: main server `quest-settings`, `own-quests`, `quests`, `assistant-proposals`, `assistant-closed-proposals`, `party-entry` (`.integration`); app `party-form`, `party-form-edit`, `party-form-parts`, `events-party-form` (`.integration`).
 - `party-form-edit.integration.test.tsx:89-95` ("goes down to the User alone with no Friend invited") presses − down to 1명 on the form's default, 공개. It moves to 비공개, or expects 2명 under 공개.
 
+## Decided while building (2026-11-22)
+
+- The new conflict code is `OPEN_QUEST_OF_ONE` (409, "An Open or an Approval Quest has a capacity of 2 or more."). Its words in `refusals.ts` are "공개 파티는 2명 이상으로 정해 주세요", worded as `BOARD_REQUIRED`'s "게시판을 골라 주세요" asks for what the form needs.
+- `makeQuestSchema`'s new message, which the Assistant's Proposal gives the model as it is, is "An Open or an Approval Quest has a capacity of 2 or more, and a Closed Quest 1 or more", worded as the Board's refinement beside it. A capacity left out (4) never meets it.
+- One rule, `fitsJoinPolicy` in `quest-requests.dto.ts`, serves both the schema and `LeaderService.update`. The update's check comes after `CAPACITY_BELOW_HOLDERS`, so a capacity below the Holders still answers that code.
+- App: `making.ts` holds the least. `leastCapacity` takes the visibility, `withVisibility` raises 1 to 2 when 공개 is chosen, and `formOf` shows 2 for an open Quest stored with 1. Saving that edit form sends capacity 2, which the main server takes: the Leader sees 2 and saves 2.
+- `isReady` is unchanged: under 공개 the form never holds less than 2 (the empty form's 4, the − stopping at 2, 공개 raising 1, the edit form's 2).
+- `proposalForm`, the form a Proposal fills, is left as it is: the Assistant no longer proposes an open 파티 of one, and one proposed before this change and made from its card is refused by the main server with a plain 400 ("저장하지 못했어요").
+- Server fixtures: `quest-joining`'s full Quest leaves its `it.each` for a test of its own, because its second Holder changes the Holders the table checks; `assistant-search-room`'s 31 Full Quests each get a second Holder of their own, joined in parallel.
+
 ## Acceptance criteria
 
 - [ ] Making an open Quest with capacity 1 is refused; a Closed one with capacity 1 is made. (Main server integration test, which fails before the change.)

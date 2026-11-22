@@ -8,6 +8,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -219,7 +220,7 @@ export function useFormState(props: FormProps): FormState {
     chosen: shownChosen,
     setChosen,
     most,
-    least: leastCapacity(holderCount, shownChosen.length),
+    least: leastCapacity(holderCount, shownChosen.length, form.visibility),
     words: where.words,
     setWords: where.setWords,
     picked: where.picked,

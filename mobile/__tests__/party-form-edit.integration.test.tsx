@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -85,13 +86,40 @@ describe('인원', () => {
     expect(server.received('POST /quests/own')[0]?.body).toMatchObject({ capacity: 2, joinPolicy: 'closed' });
     expect(server.received(`POST /quests/${MY_HIKE.id}/invitations`)).toHaveLength(1);
   });
+});
 
-  it('goes down to the User alone with no Friend invited', async () => {
+// A 공개 파티 is for two or more, a 비공개 파티 one or more (P06 ticket 07).
+describe('the least 인원', () => {
+  it('is 2 for a public 파티, which recruits someone besides the User', async () => {
     const user = await openAt('/party-form');
+
+    await pressTimes(user, '인원 줄이기', 2);
+
+    expect(screen.getByText('2명')).toBeVisible();
+    expect(screen.getByRole('button', { name: '인원 줄이기' })).toBeDisabled();
+  });
+
+  it('is the User alone for 비공개 with no Friend invited, and 공개 chosen then raises 1 to 2', async () => {
+    const user = await openAt('/party-form');
+    await user.press(screen.getByRole('radio', { name: '비공개' }));
 
     await pressTimes(user, '인원 줄이기', 3);
 
     expect(screen.getByText('1명')).toBeVisible();
+    expect(screen.getByRole('button', { name: '인원 줄이기' })).toBeDisabled();
+
+    await user.press(screen.getByRole('radio', { name: '공개' }));
+
+    expect(screen.getByText('2명')).toBeVisible();
+    expect(screen.getByRole('button', { name: '인원 줄이기' })).toBeDisabled();
+  });
+
+  it('shows 2 for a public 파티 stored for the User alone, before 공개 was for two or more', async () => {
+    const alone = { ...MY_HIKE, capacity: 1 };
+    server.on(`GET /quests/${alone.id}`, { status: 200, body: alone });
+    await openAt(`/party-form?questId=${alone.id}`);
+
+    expect(screen.getByText('2명')).toBeVisible();
     expect(screen.getByRole('button', { name: '인원 줄이기' })).toBeDisabled();
   });
 });

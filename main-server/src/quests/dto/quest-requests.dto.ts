@@ -6,6 +6,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -14,6 +15,11 @@ import { JoinPolicy, QuestBoard } from '../../generated/prisma/client.js';
 export const titleSchema = z.string().trim().min(1).max(50);
 
 const capacitySchema = z.int().min(1).max(8);
+
+// An Open or an Approval Quest recruits someone besides its Leader; a Closed one may be the Leader's alone.
+export function fitsJoinPolicy(capacity: number, joinPolicy: JoinPolicy): boolean {
+  return joinPolicy === JoinPolicy.closed || capacity >= 2;
+}
 
 // The recruiting post. Empty is none.
 export const descriptionSchema = z.string().trim().max(200);
@@ -54,7 +60,8 @@ export const subQuestContentSchema = z
 export type SubQuestContentDto = z.infer<typeof subQuestContentSchema>;
 
 // A Quest of the User's own, without a Global Event. Left out, the capacity is 4, the Join Policy Closed and the
-// description empty. An Open or an Approval Quest is posted on a board, and a Closed one on none.
+// description empty. An Open or an Approval Quest is posted on a board and holds two or more, and a Closed one is on
+// none. The Assistant's Proposal runs this schema too, and gives the model these messages as they are.
 export const makeQuestSchema = z
   .strictObject({
     title: titleSchema,
@@ -67,7 +74,14 @@ export const makeQuestSchema = z
   .refine(({ joinPolicy = JoinPolicy.closed, board }) => (board === undefined) === (joinPolicy === JoinPolicy.closed), {
     path: ['board'],
     message: 'An Open or an Approval Quest has a board, and a Closed Quest none',
-  });
+  })
+  .refine(
+    ({ joinPolicy = JoinPolicy.closed, capacity }) => capacity === undefined || fitsJoinPolicy(capacity, joinPolicy),
+    {
+      path: ['capacity'],
+      message: 'An Open or an Approval Quest has a capacity of 2 or more, and a Closed Quest 1 or more',
+    },
+  );
 
 export type MakeQuestDto = z.infer<typeof makeQuestSchema>;
 

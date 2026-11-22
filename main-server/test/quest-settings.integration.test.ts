@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -89,6 +90,41 @@ describe('The Leader changing the settings', () => {
   });
 });
 
+describe('A Quest of one', () => {
+  it('is taken Closed: a Closed Quest changed to one, and an Open Quest made Closed of one in one change', async () => {
+    const leader = await signInUser(app);
+    const closed = await ownQuest(app, leader);
+    const open = await ownQuest(app, leader, { joinPolicy: 'open' });
+
+    expect((await changeQuest(app, leader, closed, { capacity: 1 })).body).toMatchObject({ capacity: 1 });
+    expect((await changeQuest(app, leader, open, { capacity: 1, joinPolicy: 'closed' })).body).toMatchObject({
+      capacity: 1,
+      joinPolicy: 'closed',
+      board: null,
+    });
+  });
+
+  // Stored before 공개 파티 were two or more (P06 ticket 07): left as it is.
+  it('stored Open takes a change of the title or the Board, and is refused a Join Policy that keeps it open', async () => {
+    const leader = await signInUser(app);
+    const questId = await ownQuest(app, leader, { joinPolicy: 'open' });
+    await prisma.quest.update({ where: { id: questId }, data: { capacity: 1 } });
+
+    expect((await changeQuest(app, leader, questId, { title: '혼자 산책' })).status).toBe(200);
+    expect((await changeQuest(app, leader, questId, { board: 'meal', description: '산책' })).status).toBe(200);
+    expect((await changeQuest(app, leader, questId, { joinPolicy: 'approval' })).body).toMatchObject(
+      refused(409, 'OPEN_QUEST_OF_ONE'),
+    );
+    expect((await getQuest(app, leader, questId)).body).toMatchObject({
+      title: '혼자 산책',
+      capacity: 1,
+      joinPolicy: 'open',
+      board: 'meal',
+    });
+    expect((await changeQuest(app, leader, questId, { capacity: 2 })).status).toBe(200);
+  });
+});
+
 describe('The Leader of a Quest with a Global Event', () => {
   it('changes its title, which still names the event', async () => {
     const leader = await signInUser(app);
@@ -116,6 +152,29 @@ describe('Changing the settings is refused', () => {
     expect(response.status).toBe(409);
     expect(response.body).toMatchObject(refused(409, 'CAPACITY_BELOW_HOLDERS'));
     expect((await changeQuest(app, leader, questId, { capacity: 3 })).status).toBe(200);
+  });
+
+  it.each(['open', 'approval'])('for an %s Quest of one, with its own code', async (joinPolicy) => {
+    const leader = await signInUser(app);
+    const questId = await ownQuest(app, leader, { joinPolicy, capacity: 2 });
+
+    const response = await changeQuest(app, leader, questId, { capacity: 1 });
+
+    expect(response.body).toMatchObject(refused(409, 'OPEN_QUEST_OF_ONE'));
+    expect((await getQuest(app, leader, questId)).body).toMatchObject({ capacity: 2 });
+  });
+
+  it.each([
+    ['open', { joinPolicy: 'open', board: 'hobby' }],
+    ['approval with the capacity of one in the same change', { capacity: 1, joinPolicy: 'approval', board: 'hobby' }],
+  ])('for a Closed Quest made %s', async (_case, changes) => {
+    const leader = await signInUser(app);
+    const questId = await ownQuest(app, leader, { capacity: 1 });
+
+    const response = await changeQuest(app, leader, questId, changes);
+
+    expect(response.body).toMatchObject(refused(409, 'OPEN_QUEST_OF_ONE'));
+    expect((await getQuest(app, leader, questId)).body).toMatchObject({ capacity: 1, joinPolicy: 'closed' });
   });
 
   it.each([{ capacity: 0 }, { capacity: 9 }, { title: '' }, { joinPolicy: 'secret' }, { leaderId: randomUUID() }])(

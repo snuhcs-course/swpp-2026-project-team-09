@@ -7,6 +7,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -96,6 +97,27 @@ describe('Making a Quest of one’s own', () => {
   });
 });
 
+// A 공개 파티 is for two or more, a 비공개 파티 one or more (P06 ticket 07).
+describe('Making a Quest of few', () => {
+  it('takes a Closed Quest of one, the User alone', async () => {
+    const user = await signInUser(app);
+
+    const response = await makeQuest(app, user, { title: '산책', subQuest: { title: '산책' }, capacity: 1 });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ capacity: 1, joinPolicy: 'closed' });
+  });
+
+  it.each(['open', 'approval'])('takes an %s Quest of two', async (joinPolicy) => {
+    const user = await signInUser(app);
+
+    const response = await makeQuest(app, user, { title: '산책', subQuest, ...post, joinPolicy, capacity: 2 });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ capacity: 2, joinPolicy });
+  });
+});
+
 describe('Making a Quest', () => {
   it('tells the User', async () => {
     const user = await signInUser(app);
@@ -155,6 +177,12 @@ describe('Making a Quest with a body that does not match', () => {
     ],
     ['a capacity of 0', { title: '산책', subQuest: { title: '산책' }, capacity: 0 }, 'capacity'],
     ['a capacity of 9', { title: '산책', subQuest: { title: '산책' }, capacity: 9 }, 'capacity'],
+    ['an Open Quest of one', { title: '산책', subQuest: { title: '산책' }, ...post, capacity: 1 }, 'capacity'],
+    [
+      'an Approval Quest of one',
+      { title: '산책', subQuest: { title: '산책' }, ...post, joinPolicy: 'approval', capacity: 1 },
+      'capacity',
+    ],
     ['an unknown Join Policy', { title: '산책', subQuest: { title: '산책' }, joinPolicy: 'public' }, 'joinPolicy'],
   ])('is refused: %s', async (_case, body, field) => {
     const user = await signInUser(app);
