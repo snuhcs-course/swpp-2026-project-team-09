@@ -35,7 +35,7 @@ import { DockedAnswer, restOf } from './docked-answer';
 import { LeaveRow } from './leave-button';
 import { MarkRows } from './mark-rows';
 import { MadeMarkCard } from './made-mark-card';
-import type { Raising } from './raise-handle';
+import { CloseHint, type Raising } from './raise-handle';
 import { ReplySteps } from './reply-steps';
 import { barOf, onScreenOf, planShown, TopBar, Words } from './reply-words';
 import { type BandFocus, useBandFocus } from './use-corrections';
@@ -291,6 +291,7 @@ function Framed(props: FramedProps): ReactElement {
         stageHeight={stageHeight}
       />
       {keyboardUp ? null : <OpenMark control={control} focus={focus} onClose={close} stage={stage} />}
+      {past ? <CloseHint bottom={barRoom + space[3]} /> : null}
       {sheets}
     </FriendProfileOver>
   );

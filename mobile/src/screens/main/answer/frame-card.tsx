@@ -134,7 +134,6 @@ function OpenCard(props: FrameCardProps): ReactElement {
       ]}
       testID={testID}
     >
-      {drag.hint}
       {raising === undefined ? null : drag.handle}
       {children === null ? null : (
         <Animated.ScrollView

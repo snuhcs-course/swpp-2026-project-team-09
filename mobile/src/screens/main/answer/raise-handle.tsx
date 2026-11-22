@@ -40,8 +40,6 @@ interface Drag {
   // How far below its lowered height the card is dragged, while it is; null otherwise.
   drop: Animated.Value | null;
   onCardLayout: (event: LayoutChangeEvent) => void;
-  // "놓으면 지도 화면으로 돌아가요" over the card while it is dragged below its lowered height.
-  hint: ReactElement | null;
 }
 
 // The content's height as laid out, the lowered height, the height a drag started from, and the whole card's height.
@@ -59,8 +57,6 @@ interface Closing {
   closable: RefObject<boolean>;
   onPast: (past: boolean) => void;
   onClose: () => void;
-  // The card is below its lowered height now.
-  past: boolean;
   // The card is raised: a drag from there only lowers it.
   raised: boolean;
 }
@@ -142,13 +138,22 @@ function Handle({ pan, raising }: { pan: PanGesture; raising: Raising }): ReactE
   );
 }
 
+// "놓으면 지도 화면으로 돌아가요" while the card is dragged below its lowered height (board 19). It stands fixed over the
+// AI input, `bottom` from the stage's bottom, since the card moves under the input, which stays.
+export function CloseHint({ bottom }: { bottom: number }): ReactElement {
+  return (
+    <View style={[styles.hint, { bottom }]} testID="answer-close-hint">
+      <Text style={styles.hintWords}>{CLOSE_HINT}</Text>
+    </View>
+  );
+}
+
 // `raisedHeight`: the content's height while raised, null until the stage is laid out.
 // What a drag below the lowered card holds: how far it is, whether it is below at all, and the closing it passes on.
 function useClosing(raising: Raising, setDragging: (dragging: boolean) => void): Closing | null {
   const drop = useRef(new Animated.Value(0)).current;
   const closable = useRef(false);
   const below = useRef(false);
-  const [past, setPast] = useState(false);
   const { close, onPast } = raising;
   if (close === undefined) {
     return null;
@@ -156,7 +161,6 @@ function useClosing(raising: Raising, setDragging: (dragging: boolean) => void):
   const tell = (next: boolean): void => {
     if (below.current !== next) {
       below.current = next;
-      setPast(next);
       onPast?.(next);
     }
   };
@@ -170,7 +174,6 @@ function useClosing(raising: Raising, setDragging: (dragging: boolean) => void):
       drop.setValue(0);
       close();
     },
-    past,
     raised: raising.raised,
   };
 }
@@ -200,7 +203,6 @@ export function useRaiseDrag(raising: Raising, raisedHeight: number | null): Dra
     setDragging(true);
   };
   const pan = panOf({ heights, content, raisedHeight, onStart, onLetGo: settle, closing });
-  const past = closing?.past === true;
   return {
     content: dragging ? content : null,
     onContentLayout: (height) => {
@@ -214,11 +216,6 @@ export function useRaiseDrag(raising: Raising, raisedHeight: number | null): Dra
     onCardLayout: ({ nativeEvent }) => {
       heights.card.current = nativeEvent.layout.height;
     },
-    hint: past ? (
-      <View style={styles.hint} testID="answer-close-hint">
-        <Text style={styles.hintWords}>{CLOSE_HINT}</Text>
-      </View>
-    ) : null,
   };
 }
 
@@ -236,9 +233,8 @@ const styles = StyleSheet.create({
   grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
   hint: {
     position: 'absolute',
-    bottom: '100%',
     alignSelf: 'center',
-    marginBottom: space[6],
+    pointerEvents: 'none',
     paddingVertical: space[2],
     paddingHorizontal: space[4],
     borderRadius: radius.full,
