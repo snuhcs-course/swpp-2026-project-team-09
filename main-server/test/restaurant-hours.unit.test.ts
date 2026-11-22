@@ -8,7 +8,8 @@ import { type AnswerReply, type MealInput, NO_CONTEXT } from '../src/assistant/d
 import { type ClientCapability, type ToolContext } from '../src/assistant/feature.js';
 import { FoundIds } from '../src/assistant/found-ids.js';
 import { restaurantHours } from '../src/assistant/lookup/hours-tools.js';
-import { hoursWords, type MealOfDay } from '../src/assistant/lookup/hours-words.js';
+import { stateOf } from '../src/assistant/lookup/hours-lookup.js';
+import { hoursWords, type MealOfDay, noteHours } from '../src/assistant/lookup/hours-words.js';
 import { MenuLineKind } from '../src/generated/prisma/client.js';
 import { type MenuLineDto } from '../src/menus/dto/restaurant-menus.dto.js';
 
@@ -85,9 +86,9 @@ describe('A meal it does not serve, or serves without hours', () => {
     });
   });
 
-  it('says a meal served with no hours recorded, with the notes that may state them', () => {
+  it('says a meal served with no hours recorded and no times in its notes, with the notes', () => {
     const meals: MealOfDay[] = [
-      { meal: 'dinner', lines: [dish('김치찌개'), note('※ 운영시간 17:00~19:00')], hours: null },
+      { meal: 'dinner', lines: [dish('김치찌개'), note('※ 운영시간은 학기 중에 바뀌어요')], hours: null },
     ];
 
     expect(hoursWords('예술계식당', TUESDAY, at(TUESDAY, '10:00'), meals)).toMatchObject({
@@ -97,7 +98,7 @@ describe('A meal it does not serve, or serves without hours', () => {
           meal: 'dinner',
           serves: true,
           hours: 'not recorded',
-          notes: ['<data label="menu.line">※ 운영시간 17:00~19:00</data>'],
+          notes: ['<data label="menu.line">※ 운영시간은 학기 중에 바뀌어요</data>'],
         },
       ],
     });
@@ -122,6 +123,15 @@ const MEAL_ON_SCREEN: MealInput = {
   placeId: null,
 };
 
+const PLACE = {
+  id: 'b0c2e3a4-0000-4000-8000-000000000049',
+  number: '49',
+  name: '예술계복합연구동',
+  latitude: 37.466,
+  longitude: 126.955,
+};
+const POINT = { latitude: 37.466, longitude: 126.955 };
+
 // The tool over hand-made reads: 예술계식당 alone is named by 예술계, and a meal answer planned again is recorded.
 function toolOf(): { tool: ReturnType<typeof restaurantHours>; replanned: MealInput[] } {
   const replanned: MealInput[] = [];
@@ -129,6 +139,7 @@ function toolOf(): { tool: ReturnType<typeof restaurantHours>; replanned: MealIn
     named: (words) => (words === '예술계' ? ['예술계식당'] : []),
     at: () => [],
     mealsOf: () => Promise.resolve(served()),
+    placeOf: () => PLACE,
     replan: (_userId, input) => {
       replanned.push(input);
       const answer: AnswerReply = { input, chips: [], plans: [], dropped: [], noPlan: null };
@@ -164,7 +175,7 @@ describe('restaurantHours', () => {
     expect(context.presented.answer?.input).toEqual(MEAL_ON_SCREEN);
   });
 
-  it('draws nothing without a meal plan on screen', async () => {
+  it('shows the Restaurant on the map without a meal plan on screen, its label saying its state now', async () => {
     const { tool, replanned } = toolOf();
     const context = contextAt(at(TUESDAY, '12:30'), null);
 
@@ -172,6 +183,22 @@ describe('restaurantHours', () => {
 
     expect(replanned).toEqual([]);
     expect(context.presented.answer).toBeNull();
+    expect(context.presented.lookup?.scene).toEqual({
+      people: [],
+      places: [{ place: { placeId: PLACE.id, label: '예술계식당', ...POINT }, role: 'pick', tag: '예술계식당' }],
+      routes: [],
+      flags: [{ at: POINT, text: '예술계식당 · 지금 영업 중 · 14:00까지', role: 'place' }],
+    });
+    expect(context.presented.lookup?.basis).toEqual(['점심 11:30–14:00', '저녁 17:00–18:30']);
+  });
+
+  it('keeps the meal plan on screen in place of the Restaurant', async () => {
+    const { tool } = toolOf();
+    const context = contextAt(at(TUESDAY, '12:30'), MEAL_ON_SCREEN);
+
+    await tool.run({ date: TUESDAY, restaurant: '예술계' }, context);
+
+    expect(context.presented.lookup).toBeNull();
   });
 
   it('answers none for words that name no Restaurant', async () => {
@@ -182,5 +209,89 @@ describe('restaurantHours', () => {
     ).toMatchObject({
       result: 'none',
     });
+  });
+});
+
+// 예술계식당's lunch as the Co-op page gave it on 2026-10-01: each corner's time is a note after its dish line.
+const ARTS_LUNCH: MenuLineDto[] = [
+  dish('<A코너>제육김치덮밥, 잡채, 떡꼬치구이 : 6,000원'),
+  note('※ 운영시간 : 11:30 ~ 14:00'),
+  dish('<B코너>오므라이스, 까르보떡볶이, 수제소시지구이 : 6,500원'),
+  note('※ 운영시간 : 11:30 ~ 13:00'),
+  dish('<C코너>셀프라면,밥,김치 : 3,000원'),
+];
+
+describe("Times a meal's notes give, with no hours kept", () => {
+  it('reads each with the corner of the dish line it follows', () => {
+    expect(noteHours(ARTS_LUNCH)).toEqual([
+      { corner: 'A코너', opensAt: '11:30', closesAt: '14:00' },
+      { corner: 'B코너', opensAt: '11:30', closesAt: '13:00' },
+    ]);
+  });
+
+  it('gives the lunch by corner, and serving now while any corner is open', () => {
+    const meals: MealOfDay[] = [{ meal: 'lunch', lines: ARTS_LUNCH, hours: null }];
+
+    expect(hoursWords('예술계식당', TUESDAY, at(TUESDAY, '13:30'), meals)).toMatchObject({
+      servingNow: 'lunch',
+      meals: [
+        {
+          meal: 'lunch',
+          serves: true,
+          byCorner: [
+            { corner: 'A코너', opensAt: '11:30', closesAt: '14:00' },
+            { corner: 'B코너', opensAt: '11:30', closesAt: '13:00' },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("gives a single time with no corner as the meal's hours", () => {
+    const meals: MealOfDay[] = [
+      { meal: 'dinner', lines: [dish('치킨까스정식'), note('※ 운영시간 : 17:00 ~ 18:30')], hours: null },
+    ];
+
+    expect(hoursWords('예술계식당', TUESDAY, at(TUESDAY, '10:00'), meals)).toMatchObject({
+      meals: [{ meal: 'dinner', serves: true, opensAt: '17:00', closesAt: '18:30' }],
+    });
+  });
+});
+
+const stateAt = (date: string, clock: string, meals = served()): string => {
+  const found = hoursWords('학생회관식당', date, at(date, clock), meals);
+  if (found.result !== 'found') {
+    throw new Error('No hours');
+  }
+  return stateOf(found, at(date, clock));
+};
+const withBreakfast = (): MealOfDay[] => [
+  { meal: 'breakfast', lines: [dish('토스트')], hours: { opensAt: '08:00', closesAt: '10:00' } },
+  ...served(),
+];
+
+describe('The state the map writes beside the Restaurant', () => {
+  it.each([
+    ['00:40', '지금 닫음 · 08:00 아침'],
+    ['09:00', '지금 영업 중 · 10:00까지'],
+    ['10:30', '지금 닫음 · 11:30 점심'],
+    ['14:00', '지금 닫음 · 17:00 저녁'],
+    ['19:00', '지금 닫음 · 오늘 영업 끝'],
+  ])('at %s is "%s"', (clock, state) => {
+    expect(stateAt(TUESDAY, clock, withBreakfast())).toBe(state);
+  });
+
+  it('closes a lunch by corner at the latest corner', () => {
+    expect(stateAt(TUESDAY, '12:00', [{ meal: 'lunch', lines: ARTS_LUNCH, hours: null }])).toBe(
+      '지금 영업 중 · 14:00까지',
+    );
+  });
+
+  it("says another day's spans", () => {
+    const found = hoursWords('예술계식당', TUESDAY, at('2026-11-23', '00:40'), served());
+    if (found.result !== 'found') {
+      throw new Error('No hours');
+    }
+    expect(stateOf(found, at('2026-11-23', '00:40'))).toBe('점심 11:30–14:00 · 저녁 17:00–18:30');
   });
 });
