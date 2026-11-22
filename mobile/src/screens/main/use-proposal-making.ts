@@ -20,7 +20,7 @@ import { useSendParty } from '../party/form/use-send';
 import { showMine } from '../party/use-party-actions';
 import type { ProposalActions } from './chat-cards';
 import type { ProposalMaking } from './chat-proposal-card';
-import { changeWith, useStepBaselines, withChanges } from './party-change';
+import { useStepBaselines, withChanges } from './party-change';
 
 const NOT_READY = '빠진 내용이 있어요. 채팅으로 알려 주세요';
 const STARTED = '시작 시간이 지났어요. 새 시간을 채팅으로 알려 주세요';
@@ -47,6 +47,24 @@ export function openProposalForm(proposal: QuestProposal, made: (questId: string
 // A Quest made in the form 수정 opens counts as made here too, so that the card does not make it again; coming back
 // without making leaves the card as it was.
 // `onMade` tells the chat the Quest a bubble's Proposal was made into, which goes back with it (P04 ticket 19).
+// 수정: the party form filled with the Proposal; a Quest made there counts as made here too.
+function editWith(
+  mark: (bubbleId: number, state: ProposalMaking) => void,
+  onMade: Made,
+): (bubbleId: number, proposal: QuestProposal) => void {
+  return (bubbleId, proposal) => {
+    openProposalForm(proposal, (questId) => {
+      mark(bubbleId, 'made');
+      onMade(bubbleId, questId);
+    });
+  };
+}
+
+// A new Proposal moves nothing: every row is new.
+function none(): readonly string[] {
+  return [];
+}
+
 type Made = (bubbleId: number, questId: string) => void;
 
 interface Kept {
@@ -69,7 +87,6 @@ export function useProposalMaking(onMade: Made, { latest, bubbles }: Kept = EVER
     setMaking((held) => new Map(held).set(bubbleId, state));
   }, []);
   const baselineOf = useStepBaselines(bubbles);
-  const change = changeWith({ sending: sending.current, mark, say: showToast, onMade, latest, baselineOf });
   const make = (bubbleId: number, proposal: QuestProposal): void => {
     if (sending.current.has(bubbleId)) {
       return;
@@ -99,11 +116,12 @@ export function useProposalMaking(onMade: Made, { latest, bubbles }: Kept = EVER
       }
     });
   };
-  const edit = (bubbleId: number, proposal: QuestProposal): void => {
-    openProposalForm(proposal, (questId) => {
-      mark(bubbleId, 'made');
-      onMade(bubbleId, questId);
-    });
+  const edit = editWith(mark, onMade);
+  const actions: ProposalActions = {
+    makingOf: (bubbleId) => making.get(bubbleId) ?? 'ready',
+    make,
+    edit,
+    movedOf: none,
   };
-  return withChanges({ makingOf: (bubbleId) => making.get(bubbleId) ?? 'ready', make, edit }, change);
+  return withChanges(actions, { sending: sending.current, mark, say: showToast, onMade, latest, baselineOf });
 }

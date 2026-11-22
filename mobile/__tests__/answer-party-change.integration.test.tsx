@@ -5,6 +5,8 @@
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
+import { color } from '@/design-system';
 import { ANSWER_CAPABILITIES, type QuestProposal } from '@/api/assistant-types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -98,6 +100,17 @@ describe('a made 파티 changed in place', () => {
     expect(card().getByRole('button', { name: '파티 보기' })).toBeEnabled();
   });
 
+  // From the screens: only what a change moves, and the title, so that its buttons stay in view.
+  it('shows only its title, time, and place', async () => {
+    await askOnMap(server, { ...REPLY, proposal: { ...CHANGED, description: '학생회관에서 저녁 같이 먹어요' } });
+
+    expect(card().getByLabelText('제목 학식 같이 먹어요')).toBeVisible();
+    expect(card().getByLabelText(/^언제 /u)).toBeVisible();
+    expect(card().getByLabelText('어디서 없음')).toBeVisible();
+    expect(card().queryByLabelText('인원 4명')).toBeNull();
+    expect(card().queryByText('학생회관에서 저녁 같이 먹어요')).toBeNull();
+  });
+
   it('opens the room from 파티 보기', async () => {
     const user = await askOnMap(server, REPLY);
 
@@ -148,7 +161,7 @@ describe('its 바꾸기', () => {
 
 function questAt(startsAt: string): object {
   const [step] = MY_CAREER.subQuests;
-  return { ...MY_CAREER, id: QUEST_ID, subQuests: [{ ...step, id: STEP_ID, startsAt }] };
+  return { ...MY_CAREER, id: QUEST_ID, subQuests: [{ ...step, id: STEP_ID, startsAt, place: null }] };
 }
 
 // P04 ticket 27, from PR 456's review: the step is read when the change comes and again on 바꾸기, which sends
@@ -166,6 +179,18 @@ describe('a step changed since the change came', () => {
     expect(server.received(`PUT /quests/${QUEST_ID}/sub-quests/${STEP_ID}`)).toHaveLength(0);
     expect(toast()).toHaveTextContent('파티가 그사이 바뀌었어요. 다시 물어봐 주세요');
     expect(card().getByRole('button', { name: '바꾸기' })).toBeDisabled();
+  });
+
+  // From the screens: the row the change moves stands out, the others plain.
+  it('marks the time it moves, and not the place it keeps', async () => {
+    server.on(`GET /quests/${QUEST_ID}`, { status: 200, body: questAt('2026-10-07T12:00:00+09:00') });
+    await askOnMap(server, REPLY);
+    await pass(500);
+
+    const when = within(card().getByLabelText(/^언제 /u)).getByText(/19:00/u);
+    expect(StyleSheet.flatten(when.props.style)).toMatchObject({ color: color.party });
+    const where = within(card().getByLabelText('어디서 없음')).getByText('없음');
+    expect(StyleSheet.flatten(where.props.style)).not.toMatchObject({ color: color.party });
   });
 
   it('sends the change when the step still stands as it did', async () => {

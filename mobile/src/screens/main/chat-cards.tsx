@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -20,6 +21,8 @@ export interface ProposalActions {
   makingOf: (bubbleId: number) => ProposalMaking;
   make: (bubbleId: number, proposal: QuestProposal) => void;
   edit: (bubbleId: number, proposal: QuestProposal) => void;
+  // The card's rows a change of a made 파티 moves (P04 ticket 28), which stand out.
+  movedOf: (bubbleId: number, proposal: QuestProposal) => readonly string[];
 }
 
 // What the cards of the answers do.
