@@ -44,8 +44,6 @@ export type Words = Omit<AnswerLabel, 'side'>;
 export interface MarkPoint {
   position: LatLng;
   symbol: LatLng | null;
-  // The symbol is a Friend's face, a pin standing on its point; left out, a dot around it.
-  face?: boolean;
   // The symbol is a person's, the User's own or a Friend's face, which a tag that gives way keeps clear of.
   person?: boolean;
 }

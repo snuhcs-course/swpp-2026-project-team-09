@@ -61,7 +61,8 @@ export function boxIn(view: LabelView, position: LatLng, label: AnswerLabel): Vi
   return { top: y + box.top, right: x + box.right, bottom: y + box.bottom, left: x + box.left };
 }
 
-// A Friend's face over the map: a pin standing on its point, about 44 points wide and 52 high.
+// A Friend's face drawn over the map by the map itself (`LabelView.avoid`, an everyday Avatar): a pin standing on its
+// point, about 44 points wide and 52 high. A face that is a mark's symbol is a circle on its point, as a dot is.
 const FACE = { half: 22, above: 52, below: 4 };
 
 export function faceBox(view: LabelView, position: LatLng): ViewArea {
@@ -169,11 +170,8 @@ export function symbolBoxes(
   which: (point: MarkPoint) => boolean,
 ): (ViewArea | null)[] {
   return points.map((point) => {
-    const { symbol, face = false } = point;
-    if (symbol === null || !which(point)) {
-      return null;
-    }
-    return face ? faceBox(view, symbol) : symbolBox(view, symbol);
+    const { symbol } = point;
+    return symbol === null || !which(point) ? null : symbolBox(view, symbol);
   });
 }
 
@@ -195,7 +193,8 @@ export function sideAtView(
   if (!kept) {
     return null;
   }
-  if (shrinks) {
+  // A tag with no number, as a receded candidate's, keeps its words: shrunk, it would say nothing.
+  if (shrinks && words.number !== null) {
     return shrunk(view, position, words, list, rooms);
   }
   const held =

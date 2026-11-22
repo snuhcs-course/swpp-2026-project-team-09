@@ -10,7 +10,7 @@ import { B301 } from '@/api/mock/data/crowded-restaurants';
 import type { LatLng } from '@/api/types';
 import { ANSWER_SYMBOL_BOX, answerLabelBox } from '@/design-system';
 import type { ViewArea } from '@/features/assistant/answer-camera';
-import { faceBox, labelBoxAt, type LabelView, overlaps } from '@/features/assistant/answer-labels';
+import { labelBoxAt, type LabelView, overlaps } from '@/features/assistant/answer-labels';
 import { type AnswerDrawing, drawingOf } from '@/features/assistant/answer-marks';
 import { inView, ZOOM_OFFSET } from '@/map';
 import { heldView, labelViewOf } from '@/screens/main/answer-framing';
@@ -75,13 +75,11 @@ function labelBoxes({ things }: AnswerDrawing, view: LabelView): Box[] {
   );
 }
 
+// Every symbol as it is drawn: a circle or a dot, 36 across, on its point; a Friend's face among them.
 function symbolBoxes({ things }: AnswerDrawing, view: LabelView): Box[] {
   return things.flatMap(({ id, position, look }): Box[] => {
     if (look.kind !== 'answer' || look.symbol === null) {
       return [];
-    }
-    if (look.symbol.type === 'face') {
-      return [{ id, box: faceBox(view, position) }];
     }
     const { x, y } = inView(position, view.camera, view.size);
     const half = ANSWER_SYMBOL_BOX / 2;

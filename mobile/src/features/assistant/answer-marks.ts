@@ -202,20 +202,17 @@ interface Placed {
 
 // One symbol at each point, and the labels placed (`placeLabels`) in the order their kinds take sides, so that the
 // Plan's own marks take theirs first.
-// A point's symbol: a meal answer's faces keep their pins' room, and its people's marks are told apart.
+// A point's symbol: a meal answer's people's marks, the User's own and the Friends' faces, are told apart.
 function markPoint(position: LatLng, drawn: Draft | undefined, meal: boolean): MarkPoint {
   const type = drawn?.symbol?.type;
   const point: MarkPoint = { position, symbol: drawn?.position ?? null };
-  if (meal && type === 'face') {
-    point.face = true;
-  }
   if (meal && (type === 'face' || type === 'me')) {
     point.person = true;
   }
   return point;
 }
 
-// A meal answer's (`meal`) faces keep their pins' room and its held tags give way (P04 ticket 51).
+// A meal answer's (`meal`) labels keep clear of its people's marks and its held tags give way (P04 ticket 51).
 function placeAll(drafts: Draft[], view: LabelView | null, meal: boolean): Placed[] {
   const points = pointsOf(drafts).map(({ position, drafts: here }) => ({
     position,

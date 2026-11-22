@@ -12,10 +12,9 @@ The case: a phone with a large system font, and a meal answer for lunch with one
 - The start's dark label "10:45 301동" and the User's dot stand over a tag ("② 3분"); with the camera further out, a leg's minute label stands over the same tag.
 - The Friend's face stands on the leg's start and over the map's attribution.
 
-There are three causes:
+There are two causes:
 
 - **Font size.** The labels' words follow the phone's font size, but their placement boxes (`answerLabelBox`) are worked out at the usual size, so each label is drawn larger than the room it was given.
-- **Faces.** A Friend's face counts as a 36-point square around its point, though the pin stands above the point.
 - **Fallbacks.**
   - A tag held at a point it shares with another mark falls back to covering anything when no side is free.
   - A leg's minutes are placed before the tags and never left out.
@@ -23,7 +22,7 @@ There are three causes:
 ## What changes
 
 - **The phone's font size** (`useWindowDimensions().fontScale`) goes into every label's box, into the camera's room for the marks, and into the room the chosen place's label is panned into view with.
-- **A meal answer's Friends' faces** keep their pin's room. The camera keeps a meal answer's marks clear of the map's credit at the bottom, and keeps room above and below its outermost marks for a tag at the phone's font size.
+- **A meal answer's labels keep clear of its people's marks** (the User's own and the Friends' faces, circles on their points). The camera keeps a meal answer's marks clear of the map's credit at the bottom, and keeps room above and below its outermost marks for a tag at the phone's font size.
 - **When there is no room, labels give way in order**:
   - A leg's minutes move along their line, and with no free place they are left out. They now take their place after the tags.
   - A tag held at a shared point first tries every side clear of the other labels, the faces, and the User's own mark. Failing that, it keeps its number only. Its number is never left out, since it has no dot of its own.
