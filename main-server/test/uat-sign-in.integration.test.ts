@@ -98,7 +98,7 @@ describe('With HE_ACCOUNTS on', () => {
 
 describe('With HE_ACCOUNTS on, any other ID token', () => {
   it('refuses an unknown key as an invalid ID token', async () => {
-    const response = await postIdToken(on, 'uat-d');
+    const response = await postIdToken(on, 'uat-z');
 
     expect(response.status).toBe(401);
     expect(response.body).toMatchObject(INVALID);

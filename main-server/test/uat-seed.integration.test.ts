@@ -67,7 +67,7 @@ describe('setup: the parties', () => {
       ].toSorted(),
     );
     const byTitle = new Map(posts.map((post) => [post.title, post]));
-    expect(byTitle.get('[UAT] 민턴 바로')).toMatchObject({ holderCount: 2, capacity: 10, joinPolicy: 'open' });
+    expect(byTitle.get('[UAT] 민턴 바로')).toMatchObject({ holderCount: 2, capacity: 8, joinPolicy: 'open' });
     expect(byTitle.get('[UAT] 민턴 승인')).toMatchObject({ holderCount: 1, capacity: 2, joinPolicy: 'approval' });
     expect(byTitle.get('[UAT] 민턴 바로')?.nextSubQuest.startsAt).toBe(inKorea('2026-11-24T19:20'));
     expect(byTitle.get('[UAT] 민턴 승인')?.nextSubQuest.startsAt).toBe(inKorea('2026-11-24T18:50'));

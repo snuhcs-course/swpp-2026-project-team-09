@@ -38,7 +38,7 @@ function eveningQuests({ at }: Days): QuestSpec[] {
   return [
     partyOf('B', BADMINTON, 'minton-open', '[UAT] 민턴 바로', {
       ...open,
-      capacity: 10,
+      capacity: 8,
       startsAt: at(1, '19:20'),
       place: '301',
       members: ['C'],
