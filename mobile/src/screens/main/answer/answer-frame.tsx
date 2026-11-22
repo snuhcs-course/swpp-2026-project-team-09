@@ -9,6 +9,7 @@
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -25,7 +26,7 @@ import type { ChatSheetControl } from '../chat-sheet';
 import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import { AI_INPUT, type Room } from '../layout';
 import { AnswerCaption } from './answer-caption';
-import { CardQuestions, QUESTIONS_MAX, type QuestionsOpen, Typing } from './card-questions';
+import { CaptionQuestions, type QuestionsOpen, Typing } from './card-questions';
 import { BackButton } from './back-button';
 import { WaitingReply } from './failed-and-waiting';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
@@ -83,7 +84,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
       {typing ? (
         <Typing control={control} />
       ) : list.open ? (
-        <CardQuestions control={control} maxHeight={QUESTIONS_MAX} onDone={list.close} />
+        <CaptionQuestions control={control} list={list} onClose={onClose} />
       ) : rest !== null && reply !== undefined ? (
         <DockedAnswer bubble={reply} control={control} focus={focus} onClose={onClose} onRaise={raise} rest={rest} />
       ) : (
