@@ -7,6 +7,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
@@ -41,7 +42,7 @@ import { facesClearOf, othersOf, useFacePoints, useFaces } from './use-answer-fa
 import { useChoosingRing } from './use-choosing-ring';
 
 export { othersOf };
-import { useAnswerWalks } from './use-answer-walks';
+import { useAnswerWalks, useMealWays } from './use-answer-walks';
 import type { MainMap } from './use-main-map';
 
 export { labelArea, paddingOf } from './answer-padding';
@@ -280,6 +281,9 @@ export function useAnswerMap(
   const settled = made !== null || changed !== null;
   // A Plan made or changed wins the drawing over 그대로 두기 (PR 444's review).
   const leftAlone = left !== null && !settled;
+  const routes = answer?.plans[index]?.scene.routes;
+  // A meal Plan's legs are drawn, and say their minutes, on the ways it is gone (`meal-marks.ts`).
+  const ways = useMealWays(answer?.plans[index]);
   const draw = useMemo(() => {
     if (answer === null) {
       return null;
@@ -288,14 +292,13 @@ export function useAnswerMap(
       return keptDrawOf(answer, index);
     }
     const [drawn, at] = settled ? [alone(answer, index), 0] : [answer, index];
-    return (view: LabelView | null): AnswerDrawing => drawingOf(drawn, at, standings, view);
-  }, [answer, index, standings, settled, leftAlone]);
+    return (view: LabelView | null): AnswerDrawing => drawingOf(drawn, at, standings, view, ways);
+  }, [answer, index, standings, settled, leftAlone, ways]);
   const framing = useFraming(map, room, true);
   const base = useBase(draw);
   const others = base === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, base);
   const everydayFaces = useFaces(others, shown, made !== null);
   const faces = leftAlone ? NO_AVATARS : everydayFaces;
-  const routes = answer?.plans[index]?.scene.routes;
   // While 바꾸기 is on its way nothing can be chosen either, nor once 그대로 두기 left the Quest as it is.
   const sent = sending || settled || changing || leftAlone;
   const avoid = useFacePoints(faces);

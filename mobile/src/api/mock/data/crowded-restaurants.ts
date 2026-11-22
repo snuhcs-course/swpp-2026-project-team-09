@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Cuisine } from '@/api/assistant-types';
@@ -92,7 +93,7 @@ export const RESTAURANTS: readonly Restaurant[] = [
     building: '109',
     at: { latitude: 37.46098, longitude: 126.95252 },
     opens: '11:30',
-    shuttle: { minutes: 13, boardAt: '301동', getOffAt: '자하연' },
+    shuttle: { minutes: 13, boardAt: '301동', getOffAt: '기숙사삼거리' },
     price: 6000,
     dishes: [
       ['낙지연포탕', null, '한식'],
