@@ -98,6 +98,17 @@ describe('a made 파티 changed in place', () => {
     expect(card().getByRole('button', { name: '파티 보기' })).toBeEnabled();
   });
 
+  // From the screens: only what a change moves, and the title, so that its buttons stay in view.
+  it('shows only its title, time, and place', async () => {
+    await askOnMap(server, { ...REPLY, proposal: { ...CHANGED, description: '학생회관에서 저녁 같이 먹어요' } });
+
+    expect(card().getByLabelText('제목 학식 같이 먹어요')).toBeVisible();
+    expect(card().getByLabelText(/^언제 /u)).toBeVisible();
+    expect(card().getByLabelText('어디서 없음')).toBeVisible();
+    expect(card().queryByLabelText('인원 4명')).toBeNull();
+    expect(card().queryByText('학생회관에서 저녁 같이 먹어요')).toBeNull();
+  });
+
   it('opens the room from 파티 보기', async () => {
     const user = await askOnMap(server, REPLY);
 

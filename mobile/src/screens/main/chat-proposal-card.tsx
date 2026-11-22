@@ -65,6 +65,14 @@ function rowsOf(proposal: QuestProposal, form: PartyForm): Row[] {
   ];
 }
 
+// What a change of a made 파티 can move, and the title that names it: its other rows and its text stay as made, and
+// leaving them out keeps 파티 보기 and 바꾸기 in view (from the screens of P04 ticket 25).
+const CHANGED_ROWS = new Set(['제목', '언제', '어디서']);
+
+function changedRows(rows: readonly Row[]): Row[] {
+  return rows.filter(({ label }) => CHANGED_ROWS.has(label));
+}
+
 const MAKE_WORDS: Record<ProposalMaking, string> = {
   ready: '만들기',
   making: '만드는 중',
@@ -114,7 +122,7 @@ export function ChatProposalCard({ proposal, making, onMake, onEdit }: ChatPropo
         {changes ? '파티 바꾸기' : '새 파티'}
       </Text>
       <View>
-        {rowsOf(proposal, form).map(({ icon, label, value }) => (
+        {(changes ? changedRows(rowsOf(proposal, form)) : rowsOf(proposal, form)).map(({ icon, label, value }) => (
           <View accessibilityLabel={`${label} ${value}`} accessible key={label} style={styles.row}>
             <Icon color={color.inkMuted} name={icon} size={16} />
             <Text style={styles.label}>{label}</Text>
@@ -122,7 +130,7 @@ export function ChatProposalCard({ proposal, making, onMake, onEdit }: ChatPropo
           </View>
         ))}
       </View>
-      {form.description === '' ? null : <Text style={styles.description}>{form.description}</Text>}
+      {form.description === '' || changes ? null : <Text style={styles.description}>{form.description}</Text>}
       <View style={styles.buttons}>
         <View style={styles.button}>
           <Button disabled={making !== 'ready' && !changes} full onPress={onEdit} variant="secondary">

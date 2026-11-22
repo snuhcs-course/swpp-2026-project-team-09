@@ -213,7 +213,8 @@ function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement
           <DockLine
             line={line}
             onPress={
-              rest.still === true
+              // While a Place is picked, the line says what to do and raises nothing (P04 ticket 26).
+              rest.still === true || control.pick.place !== null
                 ? undefined
                 : () => {
                     onRaise(false);
