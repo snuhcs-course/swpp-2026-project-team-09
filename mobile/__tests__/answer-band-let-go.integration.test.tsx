@@ -24,6 +24,7 @@ import { press } from './support/markers';
 import { answerFriendsWithMinSu, meetFromCard, MIN_SU, row } from './support/meet';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // The band dragged whole and let go (P02 ticket 25, "Letting go"), over the fake main server, which answers the meet
 // with 민수 and its recalculations with the stored real answer of board a5 (`meet-answer.json`): its first Plan, 302동
@@ -84,7 +85,7 @@ function startingAt(from: string): object {
   return {
     input: { ...MEET_ANSWER.input, window: { from, until: null } },
     location: ON_CAMPUS,
-    clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+    clientCapabilities: SENT_CAPABILITIES,
   };
 }
 
@@ -187,7 +188,7 @@ describe("a meal's band let go", () => {
       {
         input: { ...MEAL_ANSWER.input, window: { from: '12:25', until: null } },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(mapThings()).toContain('학생회관식당 · 12:40 점심');

@@ -71,10 +71,18 @@ function isNamed(value: unknown): value is { id: string; name: string } {
   return hasTexts(value, ['id', 'name']);
 }
 
+// A made 파티's change (P04 ticket 25): its ids, a step with its title, and how many it tells.
+function isChange(value: unknown): boolean {
+  const step = field(value, 'step');
+  return hasTexts(value, ['questId', 'subQuestId']) && isText(field(step, 'title')) && isNumber(field(value, 'told'));
+}
+
 function isQuestProposal(value: unknown): value is QuestProposal {
   const place = field(value, 'place');
   const globalEvent = field(value, 'globalEvent');
+  const change = field(value, 'change');
   return (
+    (change === undefined || isChange(change)) &&
     hasTexts(value, ['title', 'description', 'startsAt']) &&
     isJoinPolicy(field(value, 'joinPolicy')) &&
     isBoard(field(value, 'board')) &&
@@ -135,8 +143,25 @@ function filled(card: ChatCard): ChatCard {
 }
 
 // A main server before P01-01 leaves the answer out, one before P01-06 the Lookup, and one before P03 the steps.
+function isFree(value: unknown): value is { from: string; until: string } {
+  return hasTexts(value, ['from', 'until']);
+}
+
 function isReplyOffer(value: unknown): value is ReplyOffer {
-  return field(value, 'kind') === 'ask' && hasTexts(value, ['label', 'text']);
+  switch (field(value, 'kind')) {
+    case 'ask':
+      return hasTexts(value, ['label', 'text']);
+    case 'leave-quest':
+      return hasTexts(value, ['label', 'title', 'startsAt', 'questId']);
+    case 'quest':
+      return hasTexts(value, ['label', 'questId']);
+    case 'pick-place':
+      return hasTexts(value, ['label', 'text']);
+    case 'pick-time':
+      return hasTexts(value, ['label', 'date']) && listOf(isFree)(field(value, 'free'));
+    default:
+      return false;
+  }
 }
 
 function isAssistantReply(value: unknown): value is AssistantReply {

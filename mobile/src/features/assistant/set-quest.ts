@@ -9,9 +9,10 @@ import type { AnswerReply, KeptQuest } from '@/api/assistant-types';
 import { koreaClock } from '@/korea-time';
 
 // A Quest the User already holds that an answer stands beside (P04 ticket 17): what it is, when and where, with whom,
-// whether others share it, whether this answer may change it, and whether 바꾸기 changes it in place (a meeting,
-// `PUT /plans/{questId}`) or makes the answer's Plan in its place (a meal, `POST /plans`). One shape for every
-// planner's answer: the main server's `planSet` first, else a meal answer's `mealSet` of a server before it.
+// whether others share it, whether this answer may change it, and whether 바꾸기 changes it in place
+// (`PUT /plans/{questId}`: any changeable meeting or meal, P05 ticket 31) or makes the answer's Plan in its place (a
+// meal of a server before it, `POST /plans`). One shape for every planner's answer: the main server's `planSet` first,
+// else a meal answer's `mealSet` of a server before it.
 export interface SetQuest {
   questId: string;
   title: string;
@@ -54,7 +55,7 @@ function ofKept({ kind, questId, title, startAt, place, people, mine, changeable
     people: others.map(({ name }) => name),
     shared: !mine || others.length > 0,
     changeable,
-    inPlace: kind === 'meet',
+    inPlace: true,
     word: KIND_WORDS[kind],
   };
 }
@@ -89,9 +90,10 @@ export function keptTagOf({ kind, startAt }: Pick<KeptQuest, 'kind' | 'startAt'>
   return `잡힌 ${KIND_WORDS[kind]} ${koreaClock(startAt)}`;
 }
 
-// The answer's line once 바꾸기 changed a meeting in place (P04 ticket 17): its new time, and whom it told.
-export function changedLineOf(startAt: string, people: readonly string[]): string {
-  const changed = `약속을 ${koreaClock(startAt)}으로 바꿨어요`;
+// The answer's line once 바꾸기 changed a meeting or a meal in place (P04 ticket 17): its new time, and whom it told.
+// Every word of `word` ends in a final consonant, so it takes 을.
+export function changedLineOf(startAt: string, people: readonly string[], word = '약속'): string {
+  const changed = `${word}을 ${koreaClock(startAt)}으로 바꿨어요`;
   return people.length === 0 ? changed : `${changed}. ${toldOf(people)}에게 알렸어요`;
 }
 

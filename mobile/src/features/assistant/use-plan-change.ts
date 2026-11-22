@@ -71,7 +71,8 @@ export function usePlanChange(shown: Pick<ShownAnswer, 'answer' | 'plan' | 'chan
     apiClient.changePlanQuest(questId, makingOf(answer, plan, inviting)).then(
       () => {
         settle();
-        const line = changedLineOf(plan.startAt, setQuestOf(answer)?.people ?? []);
+        const set = setQuestOf(answer);
+        const line = changedLineOf(plan.startAt, set?.people ?? [], set?.word);
         setChosen({ answer, planId: plan.id, line, how: 'changed' });
       },
       (error: unknown) => {

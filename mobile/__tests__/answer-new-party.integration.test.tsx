@@ -32,6 +32,7 @@ import {
   SEO_JUN,
 } from './support/row-four';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // A new party's answer in the answer frame (P02 ticket 30, boards Together 8 to 11 and Recruit 4 and 5), over the fake
 // main server, which answers "새로 모집" with the stored real answer of row 5: badminton at the gymnasium at 17:10
@@ -153,7 +154,7 @@ describe("a new party's Friends (board Recruit 4)", () => {
       {
         input: { ...STORED, people: [...ALONE, { userId: SEO_JUN, constraints: [] }] },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
   });
@@ -168,7 +169,7 @@ describe("a new party's Friends (board Recruit 4)", () => {
       {
         input: { ...STORED, people: ALONE },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
   });
@@ -190,7 +191,7 @@ describe('"만들고 모집하기" (boards Together 11 and Recruit 5)', () => {
         planId: GYM,
         startAt: '2026-11-19T17:10:00+09:00',
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(sent[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);
@@ -214,7 +215,7 @@ describe('"만들고 모집하기" (boards Together 11 and Recruit 5)', () => {
         planId: GYM,
         startAt: '2026-11-19T17:10:00+09:00',
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(card().getByText('파티를 모집했어요')).toBeVisible();

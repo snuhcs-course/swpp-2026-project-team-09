@@ -21,6 +21,7 @@ import { pressMarker } from './support/made-quest';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // P04 ticket 03: the faces of the Plan's people and the User's start do what the condition chips do. Over the stored
 // answer to "배고파, 민수랑 같이": 민수's face says "민수", the User's start "나 · 3분" from 301동.
@@ -75,7 +76,7 @@ describe("a face of the Plan's people", () => {
       {
         input: { ...MEAL_ANSWER.input, people: [ASKER] },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(screen.queryByTestId('mark-card')).toBeNull();
