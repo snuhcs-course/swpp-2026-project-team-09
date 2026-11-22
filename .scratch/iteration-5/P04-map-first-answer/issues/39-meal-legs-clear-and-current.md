@@ -21,5 +21,12 @@ Native files: none. Releases: an app OTA update only.
 
 - [x] A leg whose words change with the choice is a new mark with a new picture name; one whose words stay keeps its mark. (Unit test.)
 - [x] For every Plan of the crowded mock at the view the app keeps, the chosen place's label covers neither leg's line nor either leg's minutes, and the two legs' minutes do not cover each other, with 302동식당's 2-minute first leg among them. (Unit test.)
-- [ ] The crowded mock on the emulator: the first answer, another place pressed, and 자하연식당 2층 pressed, with "셔틀 13분" readable. (Pictures.)
+- [x] The crowded mock on the emulator: the first answer, another place pressed, and 자하연식당 2층 pressed, with "셔틀 13분" readable. (Pictures.)
 - [x] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 25 minutes (an estimate; one Opus 5.5 session, the emulator hold and test runs included).
+- Tokens: about 65,000 output; input about 18.9 million, of which about 18.7 million cache reads, 225,000 cache writes, and 180 uncached.
