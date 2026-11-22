@@ -5,13 +5,17 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
-import { ANSWER_SYMBOL_BOX, type AnswerLabel, answerLabelBox, type LabelSide } from '@/design-system';
+import { ANSWER_SYMBOL_BOX, type AnswerLabel, type LabelSide } from '@/design-system';
 import { inView, type MapCamera, type Size } from '@/map';
 import type { ViewArea } from './answer-camera';
 import { offset } from './answer-drawing';
+import { boxIn, faceBox, lineBoxes, othersThan, overlaps, sideAtView, symbolBoxes } from './answer-label-fits';
+
+export { faceBox, inside, ONE_POINT, overlaps } from './answer-label-fits';
 
 // How far a label reaches from its point: sideways and how far up or down for a side label, up or down and how far
 // sideways for one above or below.
@@ -19,9 +23,6 @@ const SIDE_REACH = { along: 400, across: 50 };
 export const UPRIGHT_REACH = { along: 120, across: 150 };
 // Labels at one side of marks this near each other share that side's outer edge.
 const NEIGHBOURS = { upAndDown: 60, across: ANSWER_SYMBOL_BOX };
-// A box or a point this near the area's edge is inside it, and a move of less is none: a camera's fit rests in its
-// last digits.
-export const ONE_POINT = 1;
 
 // The camera an answer is shown at, its view's size, and the area of the view its labels stay in, in its points.
 export interface LabelView {
@@ -30,6 +31,8 @@ export interface LabelView {
   area: ViewArea;
   // Faces drawn over the map that labels keep clear of, as Friends' Avatars; left out, none.
   avoid?: readonly LatLng[];
+  // The phone's font size as a share of the usual, which the labels' words are drawn at; left out, 1.
+  fontScale?: number;
 }
 
 // What a label says before it has a side.
@@ -39,6 +42,10 @@ export type Words = Omit<AnswerLabel, 'side'>;
 export interface MarkPoint {
   position: LatLng;
   symbol: LatLng | null;
+  // The symbol is a Friend's face, a pin standing on its point; left out, a dot around it.
+  face?: boolean;
+  // The symbol is a person's, the User's own or a Friend's face, which a tag that gives way keeps clear of.
+  person?: boolean;
 }
 
 // A mark that may take a label: the index of its point, its own position, the words of its label, null for none, and
@@ -54,6 +61,8 @@ export interface Unplaced {
   either?: string;
   // A label that may stand over a face (`LabelView.avoid`).
   overFaces?: boolean;
+  // A kept tag that gives way to the other labels: where no side is clear of them, it keeps its number only, or none.
+  shrinks?: boolean;
 }
 
 // Whether another point lies within a label's reach on that side of its point.
@@ -68,66 +77,9 @@ function blocked(at: LatLng, side: LabelSide, others: readonly LatLng[]): boolea
   });
 }
 
-function boxIn(view: LabelView, position: LatLng, label: AnswerLabel): ViewArea {
-  const { x, y } = inView(position, view.camera, view.size);
-  const box = answerLabelBox(label);
-  return { top: y + box.top, right: x + box.right, bottom: y + box.bottom, left: x + box.left };
-}
-
-// A Friend's face over the map: a pin standing on its point, about 44 points wide and 52 high.
-const FACE = { half: 22, above: 52, below: 4 };
-
-export function faceBox(view: LabelView, position: LatLng): ViewArea {
-  const { x, y } = inView(position, view.camera, view.size);
-  return { top: y - FACE.above, right: x + FACE.half, bottom: y + FACE.below, left: x - FACE.half };
-}
-
 // A label's box at a view, around its mark's point.
 export function labelBoxAt(view: LabelView, position: LatLng, label: AnswerLabel): ViewArea {
   return boxIn(view, position, label);
-}
-
-// A line at a view as small boxes along it, every few points, as wide as a route is drawn.
-const LINE = { every: 6, half: 4 };
-
-function lineBoxes(view: LabelView, lines: readonly (readonly LatLng[])[]): ViewArea[] {
-  const boxes: ViewArea[] = [];
-  for (const line of lines) {
-    const points = line.map((point) => inView(point, view.camera, view.size));
-    points.slice(1).forEach((to, at) => {
-      const from = points[at] ?? to;
-      const steps = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / LINE.every));
-      for (let step = 0; step <= steps; step += 1) {
-        const x = from.x + ((to.x - from.x) * step) / steps;
-        const y = from.y + ((to.y - from.y) * step) / steps;
-        boxes.push({ top: y - LINE.half, right: x + LINE.half, bottom: y + LINE.half, left: x - LINE.half });
-      }
-    });
-  }
-  return boxes;
-}
-
-function symbolBox(view: LabelView, position: LatLng): ViewArea {
-  const { x, y } = inView(position, view.camera, view.size);
-  const half = ANSWER_SYMBOL_BOX / 2;
-  return { top: y - half, right: x + half, bottom: y + half, left: x - half };
-}
-
-export function inside({ top, right, bottom, left }: ViewArea, area: ViewArea): boolean {
-  return (
-    left >= area.left - ONE_POINT &&
-    right <= area.right + ONE_POINT &&
-    top >= area.top - ONE_POINT &&
-    bottom <= area.bottom + ONE_POINT
-  );
-}
-
-export function overlaps(one: ViewArea, other: ViewArea): boolean {
-  return one.left < other.right && other.left < one.right && one.top < other.bottom && other.top < one.bottom;
-}
-
-function othersThan(symbols: readonly (ViewArea | null)[], point: number): ViewArea[] {
-  return symbols.filter((box, at): box is ViewArea => box !== null && at !== point);
 }
 
 // The first side of a list with no other point within its reach in metres, or else the first.
@@ -138,21 +90,6 @@ function inMetres(points: readonly MarkPoint[], point: number, list: readonly La
   }
   const others = points.filter((_, other) => other !== point).map(({ position }) => position);
   return list.find((one) => !blocked(at, one, others)) ?? list[0] ?? null;
-}
-
-// The first side of a list whose box stays inside the area and covers none of `covering`, or none.
-function atView(
-  view: LabelView,
-  position: LatLng,
-  words: Words,
-  list: readonly LabelSide[],
-  covering: readonly ViewArea[],
-): LabelSide | null {
-  const side = list.find((one) => {
-    const box = boxIn(view, position, { ...words, side: one });
-    return inside(box, view.area) && !covering.some((other) => overlaps(box, other));
-  });
-  return side ?? null;
 }
 
 interface Laid {
@@ -224,28 +161,46 @@ function sharedEdges(
   });
 }
 
-// The sides a kept label may also take when none of its own stays inside the area, as a pick near the screen's edge.
-const SIDEWAYS: readonly LabelSide[] = ['left', 'right'];
+// What the labels placed so far and the marks leave a label: the symbols' boxes, the people's, the faces', and the
+// labels', and the sides its point's other labels took.
+interface Placing {
+  symbols: readonly (ViewArea | null)[];
+  pins: readonly (ViewArea | null)[];
+  faces: readonly ViewArea[];
+  boxes: readonly ViewArea[];
+  free: ReadonlySet<LabelSide>;
+  pinned: boolean;
+}
 
-// The side a kept label takes at a view where none is free: the first that covers no line it keeps clear of nor a label
-// placed before it, else the first whose box stays inside the area, else the left or the right that does and that no
-// other label at its point took, else the first.
-function keptAt(
-  view: LabelView,
-  position: LatLng,
-  words: Words,
+// The side and the words of one mark's label: in metres without a view, else at the view (`sideAtView`).
+function placeOne(
+  view: LabelView | null,
+  points: readonly MarkPoint[],
+  {
+    point,
+    position,
+    words,
+    kept = false,
+    clearOf = [],
+    overFaces = false,
+    shrinks = false,
+  }: Unplaced & { words: Words },
   list: readonly LabelSide[],
-  taken: ReadonlySet<LabelSide>,
-  clear: readonly ViewArea[],
-): LabelSide | null {
-  const sideways = SIDEWAYS.filter((side) => !list.includes(side) && !taken.has(side));
-  return (
-    (clear.length > 0 ? atView(view, position, words, list, clear) : null) ??
-    atView(view, position, words, list, []) ??
-    atView(view, position, words, sideways, []) ??
-    list[0] ??
-    null
-  );
+  { symbols, pins, faces, boxes, free, pinned }: Placing,
+): { side: LabelSide; words: Words } | null {
+  if (view === null) {
+    const side = inMetres(points, point, list);
+    return side === null ? null : { side, words };
+  }
+  const lines = lineBoxes(view, clearOf);
+  const rooms = {
+    covering: [...othersThan(symbols, point), ...boxes, ...(overFaces ? [] : faces), ...lines],
+    clear: [...othersThan(pins, point), ...boxes, ...faces, ...lines],
+    labels: [...boxes, ...lines],
+    taken: free,
+    pinned,
+  };
+  return sideAtView(view, position, words, list, rooms, { kept, shrinks });
 }
 
 // The labels of an answer's marks, taken in the order given, each at a side of its list that no earlier label at its
@@ -259,37 +214,33 @@ export function placeLabels(
   view: LabelView | null,
 ): (AnswerLabel | null)[] {
   const taken = points.map(() => new Set<LabelSide>());
-  const symbols = view === null ? [] : points.map(({ symbol }) => (symbol === null ? null : symbolBox(view, symbol)));
+  const symbols = view === null ? [] : symbolBoxes(view, points, () => true);
   const faces = view === null ? [] : (view.avoid ?? []).map((position) => faceBox(view, position));
+  // The people's marks, the User's own and the Friends' faces, which a label that gives way keeps clear of too.
+  const pins = view === null ? [] : symbolBoxes(view, points, ({ person = false }) => person);
+  const pinned = pins.some((pin) => pin !== null);
   const boxes: ViewArea[] = [];
   const placedEither = new Set<string>();
-  const labels = marks.map(
-    ({ point, position, words, sides, kept = false, clearOf = [], either, overFaces = false }): AnswerLabel | null => {
-      const free = taken[point];
-      if (words === null || free === undefined || (either !== undefined && placedEither.has(either))) {
-        return null;
-      }
-      const list = sides.filter((side) => !free.has(side));
-      const lines = view === null ? [] : lineBoxes(view, clearOf);
-      const covering = [...othersThan(symbols, point), ...boxes, ...(overFaces ? [] : faces), ...lines];
-      const side =
-        view === null
-          ? inMetres(points, point, list)
-          : (atView(view, position, words, list, covering) ??
-            (kept ? keptAt(view, position, words, list, free, [...boxes, ...lines]) : null));
-      if (side === null) {
-        return null;
-      }
-      if (either !== undefined) {
-        placedEither.add(either);
-      }
-      free.add(side);
-      const label = { ...words, side };
-      if (view !== null) {
-        boxes.push(boxIn(view, position, label));
-      }
-      return label;
-    },
-  );
+  const labels = marks.map((mark): AnswerLabel | null => {
+    const { point, position, words, sides, either } = mark;
+    const free = taken[point];
+    if (words === null || free === undefined || (either !== undefined && placedEither.has(either))) {
+      return null;
+    }
+    const list = sides.filter((side) => !free.has(side));
+    const placed = placeOne(view, points, { ...mark, words }, list, { symbols, pins, faces, boxes, free, pinned });
+    if (placed === null) {
+      return null;
+    }
+    if (either !== undefined) {
+      placedEither.add(either);
+    }
+    free.add(placed.side);
+    const label = { ...placed.words, side: placed.side };
+    if (view !== null) {
+      boxes.push(boxIn(view, position, label));
+    }
+    return label;
+  });
   return view === null ? labels : sharedEdges(view, marks, labels, symbols);
 }

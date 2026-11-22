@@ -5,6 +5,7 @@
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -40,31 +41,42 @@ const METRES_PER_POINT = 4.5;
 const LEAST_ROOM = ANSWER_SYMBOL_BOX / 2 + 6;
 
 // The room a mark needs on one side of its point: half its symbol box, or its label's box when the label is there.
-function needOn(side: 'above' | 'below', { look }: AnswerDrawing['things'][number]): number {
+function needOn(side: 'above' | 'below', { look }: AnswerDrawing['things'][number], fontScale: number): number {
   const label = look.kind === 'answer' ? look.label : null;
   if (label?.side !== side) {
     return ANSWER_SYMBOL_BOX / 2;
   }
-  const box = answerLabelBox(label);
+  const box = answerLabelBox(label, fontScale);
   return side === 'above' ? -box.top : box.bottom;
 }
 
 // The room the marks of a drawing need above its top-most point and below its bottom-most, in points: a mark that
 // stands south of the top-most point needs that much less above, and one north of the bottom-most that much less
-// below; at least `LEAST_ROOM` each.
-export function roomsOf({ things, points }: Pick<AnswerDrawing, 'things' | 'points'>): {
+// below; at least `LEAST_ROOM` each. A meal answer's (`keep`) extreme marks keep room for a tag above or below them
+// at the phone's font size (`fontScale`), so that a tag crowded off its sides still has one.
+export function roomsOf(
+  { things, points, keep }: Pick<AnswerDrawing, 'things' | 'points' | 'keep'>,
+  fontScale = 1,
+): {
   above: number;
   below: number;
 } {
+  const least =
+    keep === undefined
+      ? LEAST_ROOM
+      : Math.max(
+          LEAST_ROOM,
+          answerLabelBox({ side: 'below', tone: 'candidate', title: '00분', line: null, number: 9 }, fontScale).bottom,
+        );
   const latitudes = points.map(({ latitude }) => latitude);
   const top = Math.max(...latitudes);
   const bottom = Math.min(...latitudes);
   const room = (side: 'above' | 'below', edge: number): number =>
     Math.max(
-      LEAST_ROOM,
+      least,
       ...things.map((thing) => {
         const { north } = offset({ latitude: edge, longitude: thing.position.longitude }, thing.position);
-        return needOn(side, thing) - Math.abs(north) / METRES_PER_POINT;
+        return needOn(side, thing, fontScale) - Math.abs(north) / METRES_PER_POINT;
       }),
     );
   return { above: room('above', top), below: room('below', bottom) };

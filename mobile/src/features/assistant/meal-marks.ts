@@ -76,16 +76,15 @@ function legsOf(scene: MapScene): { route: MapScene['routes'][number]; index: nu
 }
 
 // The places a leg's minutes may stand at, in order: along its drawn line clear of faces, then over a face, which then
-// gives way (`facesClearOf`), then its middle whatever it covers but the lines and the labels placed before it.
-function legPlaces(line: readonly LatLng[]): { position: LatLng; overFaces: boolean; always: boolean }[] {
+// gives way (`facesClearOf`). With none free, the minutes are left out: they give way to every other label.
+function legPlaces(line: readonly LatLng[]): { position: LatLng; overFaces: boolean }[] {
   const at = (share: number): LatLng[] => {
     const point = pointAlong(line, share);
     return point === null ? [] : [point];
   };
   return [
-    ...ALONG.flatMap((share) => at(share).map((position) => ({ position, overFaces: false, always: false }))),
-    ...ALONG.flatMap((share) => at(share).map((position) => ({ position, overFaces: true, always: false }))),
-    ...at(ALONG[0]).map((position) => ({ position, overFaces: true, always: true })),
+    ...ALONG.flatMap((share) => at(share).map((position) => ({ position, overFaces: false }))),
+    ...ALONG.flatMap((share) => at(share).map((position) => ({ position, overFaces: true }))),
   ];
 }
 
@@ -96,7 +95,7 @@ function legDrafts(scene: MapScene, ways: Ways, lines: readonly (readonly LatLng
   return legsOf(scene).flatMap(({ route: { minutes, mode }, index }): Draft[] => {
     const title = mode === 'shuttle' ? `셔틀 ${String(minutes)}분` : `${String(minutes)}분`;
     const id = `answer:leg:${String(index)}:${title}`;
-    return legPlaces(legLine(scene, index, ways)).map(({ position, overFaces, always }) => ({
+    return legPlaces(legLine(scene, index, ways)).map(({ position, overFaces }) => ({
       id,
       name: mode === 'shuttle' ? title : `걸음 ${String(minutes)}분`,
       position,
@@ -110,7 +109,6 @@ function legDrafts(scene: MapScene, ways: Ways, lines: readonly (readonly LatLng
       clearOf: lines,
       either: id,
       overFaces,
-      always,
     }));
   });
 }
@@ -129,8 +127,13 @@ function nextWords(plan: Plan, place: string | null): string | null {
   return after === null || what === null ? null : `${koreaClock(after.at)} ${what}`;
 }
 
+// A dark label may stand on any side of its point, so that it moves round when a side is taken.
+const DARK_SIDES: LabelSide[] = ['left', 'right', 'above', 'below'];
+
 function dark(draft: Draft, words: string | null): Draft {
-  return words === null ? draft : { ...draft, name: words, title: words, line: null, tone: 'meeting' };
+  return words === null
+    ? draft
+    : { ...draft, name: words, title: words, line: null, tone: 'meeting', sides: DARK_SIDES };
 }
 
 // A meal pick's label may also stand beside it, so that it can keep clear of the route.

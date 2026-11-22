@@ -3,6 +3,7 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { space } from '@/design-system';
@@ -30,8 +31,9 @@ export function paddingOf(
   drawing: AnswerDrawing,
   pill: boolean,
   timeBar = 0,
+  fontScale = 1,
 ): FitPadding {
-  const { above, below } = roomsOf(drawing);
+  const { above, below } = roomsOf(drawing, fontScale);
   return {
     top: coveredTop(top, pill, timeBar) + CLEAR + above,
     right: SIDE,
