@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -13,20 +14,24 @@ import type { ShownChatCard } from '@/api/quest-parts-types';
 import { color, font, Icon, size, space, text } from '@/design-system';
 import { type Turn, turnsOf } from '@/features/assistant/turn';
 import type { ChatBubble } from '@/features/assistant/use-chat';
+import { modelWordsOf } from '@/features/assistant/model-words';
 import { markdownLabel } from '../chat-markdown';
 
 const LINE_HEIGHT = 32;
 const LINE_SLOP = (size.touchMin - LINE_HEIGHT) / 2;
 
-// What an earlier turn shows of a bubble after its words: a Plan's reply its first Plan's lines, a Lookup's its lines,
-// any other its words. Null for a bubble with nothing to show.
+// What an earlier turn shows of a bubble after its words: a Plan's reply its first Plan's lines, a Lookup's the model's
+// words and then its lines (P04 ticket 18: the words are never dropped), any other its words. Null for a bubble with
+// nothing to show.
 function linesOf({ answer, lookup, text: words }: ChatBubble): readonly AnswerLine[] | null {
-  const lines = answer?.plans[0]?.lines ?? answer?.noPlan?.lines ?? lookup?.lines;
+  const lines = answer?.plans[0]?.lines ?? answer?.noPlan?.lines;
   if (lines !== undefined) {
     return lines;
   }
-  const said = markdownLabel(words).trim();
-  return said === '' ? null : said.split('\n').map((line) => [{ text: line, strong: false }]);
+  const said = markdownLabel(lookup === undefined || lookup === null ? words : modelWordsOf(words)).trim();
+  const spoken = said === '' ? [] : said.split('\n').map((line): AnswerLine => [{ text: line, strong: false }]);
+  const all = [...spoken, ...(lookup?.lines ?? [])];
+  return all.length === 0 ? null : all;
 }
 
 // A card's name as its card shows it on top.

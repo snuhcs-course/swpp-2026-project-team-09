@@ -153,3 +153,4 @@ Each keeps the answer screen whole. Tickets 13 and 14 came from the phone screen
 15. [15 — 메뉴 모두 보기, every candidate's dishes in one list](issues/15-all-menus-list.md)
 16. [16 — Kinds of food as chips, lunch and dinner on the bar](issues/16-food-kinds-and-meals-on-the-bar.md)
 17. [17 — A meal already in the schedule is changed, not doubled](issues/17-meal-already-set.md) (its place in the order not yet set)
+18. [18 — The model's words are never dropped beside a Lookup](issues/18-words-beside-a-lookup.md)

@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -164,16 +165,18 @@ describe('a refusal to accept for a Friend (board n8b)', () => {
   });
 });
 
-// Expected values: board n21, on the copy written at 22:10 at 관정.
+// Expected values: board n21, on the copy written at 22:10 at 관정; the model's words are the dock's line (P04 ticket
+// 18).
 describe('a way asked about the shuttle when it is not running (board n21)', () => {
   it('says so in the dock, and raised, the walk with only 닫기', async () => {
     const user = await askOnMap(server, NOT_RUNNING_LOOKUP_REPLY);
 
-    expect(card().getByText('셔틀은 지금 다니지 않아요 (평일 8–21시)')).toBeVisible();
+    expect(card().getByText(NOT_RUNNING_LOOKUP_REPLY.text)).toBeVisible();
     expect(screen.queryByTestId('ai-input-beside')).toBeNull();
 
-    await user.press(card().getByText('셔틀은 지금 다니지 않아요 (평일 8–21시)'));
+    await user.press(card().getByText(NOT_RUNNING_LOOKUP_REPLY.text));
 
+    expect(card().getByText('셔틀은 지금 다니지 않아요 (평일 8–21시)')).toBeVisible();
     expect(card().getByText('(관악사)학부 생활관(919동)까지 걸어서 11분이에요')).toBeVisible();
     expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
     expect(card().getByRole('button', { name: '닫기' })).toBeVisible();

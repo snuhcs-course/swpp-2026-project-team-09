@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -142,10 +143,10 @@ const TIMETABLE_ONLY = {
 };
 
 // Partitions: a Lookup whose scene is empty. Expected values: the everyday map's things, the User's own Avatar among
-// them, under the dock that says the line.
+// them, under the dock that says the line: the Lookup's own, as the model said nothing (P04 ticket 18).
 describe('a Lookup that draws nothing', () => {
   it('leaves the everyday map under its dock', async () => {
-    await askOnMap(server, replyOf(TIMETABLE_ONLY));
+    await askOnMap(server, { ...replyOf(TIMETABLE_ONLY), text: '' });
 
     expect(card().getByText('민수 · 공강 · 14:00까지')).toBeVisible();
     expect(beside().getByRole('button', { name: '만나고 싶다' })).toBeVisible();

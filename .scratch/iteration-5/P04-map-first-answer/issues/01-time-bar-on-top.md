@@ -1,7 +1,7 @@
 # 01: The time bar under the pill
 
 Parent: [P04 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: none.
 
 Native files: none. Releases: an app OTA update only.

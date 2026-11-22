@@ -1,7 +1,7 @@
 # 02: The place's flag says what and when, and opens a card
 
 Parent: [P04 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: [01](01-time-bar-on-top.md) for the day words.
 
 Native files: none. Releases: an app OTA update only.
