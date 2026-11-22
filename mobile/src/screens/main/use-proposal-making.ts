@@ -35,6 +35,9 @@ function blockOf(proposal: QuestProposal, form: PartyForm): string | null {
   return form.startsAt !== null && new Date(form.startsAt) <= now() ? STARTED : null;
 }
 
+// 바꾸기 on an earlier turn reopened from the pill's list (PR 456's review): its change may undo a newer one.
+const EARLIER_CHANGE = '지난 답이에요. 마지막 답에서 바꿔 주세요';
+
 // The toast once 바꾸기 changed a made 파티 (P04 ticket 25), with how many it told.
 export function changedWords({ told }: ProposalChange): string {
   return told > 0 ? `파티를 바꿨어요. 참여한 ${String(told)}명에게 알렸어요` : '파티를 바꿨어요';
@@ -56,11 +59,22 @@ interface Changing {
   mark: (bubbleId: number, state: ProposalMaking) => void;
   say: (words: string) => void;
   onMade: (bubbleId: number, questId: string) => void;
+  latest: boolean;
 }
 
 // 바꾸기 of a bubble's change: on its way, then changed, the 파티 going back as made, or ready again.
-function changeWith({ sending, mark, say, onMade }: Changing): (bubbleId: number, made: ProposalChange) => void {
+function changeWith({
+  sending,
+  mark,
+  say,
+  onMade,
+  latest,
+}: Changing): (bubbleId: number, made: ProposalChange) => void {
   return (bubbleId, made) => {
+    if (!latest) {
+      say(EARLIER_CHANGE);
+      return;
+    }
     if (sending.has(bubbleId)) {
       return;
     }
@@ -114,7 +128,8 @@ export function openProposalForm(proposal: QuestProposal, made: (questId: string
 // A Quest made in the form 수정 opens counts as made here too, so that the card does not make it again; coming back
 // without making leaves the card as it was.
 // `onMade` tells the chat the Quest a bubble's Proposal was made into, which goes back with it (P04 ticket 19).
-export function useProposalMaking(onMade: (bubbleId: number, questId: string) => void): ProposalActions {
+// `latest` is false while an earlier turn is reopened from the pill's list, where a change of a made 파티 is not sent.
+export function useProposalMaking(onMade: (bubbleId: number, questId: string) => void, latest = true): ProposalActions {
   const sendParty = useSendParty(null);
   const showToast = useToast();
   const announcers = useQuery(globalEventAnnouncersQuery).data;
@@ -124,7 +139,7 @@ export function useProposalMaking(onMade: (bubbleId: number, questId: string) =>
   const mark = useCallback((bubbleId: number, state: ProposalMaking): void => {
     setMaking((held) => new Map(held).set(bubbleId, state));
   }, []);
-  const change = changeWith({ sending: sending.current, mark, say: showToast, onMade });
+  const change = changeWith({ sending: sending.current, mark, say: showToast, onMade, latest });
   const make = (bubbleId: number, proposal: QuestProposal): void => {
     if (sending.current.has(bubbleId)) {
       return;
