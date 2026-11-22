@@ -193,9 +193,11 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const steps = onMap.steps !== null;
   const card = useCardRaise(kept.framed);
   const { raised } = card;
+  const point = onMap.booking?.point ?? null;
+  const { walk } = bookingStage;
   const booking = useMemo(
-    () => ({ place, tell: bookingStage.tell, steps, raised }),
-    [place, bookingStage.tell, steps, raised],
+    () => ({ place, tell: bookingStage.tell, steps, raised, point, walk }),
+    [place, bookingStage.tell, steps, raised, point, walk],
   );
   const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation);

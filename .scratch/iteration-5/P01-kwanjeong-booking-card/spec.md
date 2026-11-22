@@ -21,6 +21,7 @@ The screenshot with the request came from an app that was older than Iteration 4
 - Reported on 2026-11-22, the login: [02 — a login page that fits the phone, and no login ID in the AI input](issues/02-library-login-screen.md).
 - The study-seat answer on the map, against the answer screen's redesign: [03 — the study-seat answer in the meal answer's shape](issues/03-study-seat-dock.md).
 - What 03 left for later: [04 — the study answer's seats that do not come, its walk, and back over the room list](issues/04-study-seat-retry.md).
+- [06 — the study answer's walk tied to its time](issues/06-study-walk-and-time.md).
 
 ## Out of Scope
 

@@ -5,11 +5,12 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { type ReactElement, useMemo, useState } from 'react';
-import type { QuestProposal } from '@/api/assistant-types';
+import type { PlacePoint, QuestProposal } from '@/api/assistant-types';
 import { questsQuery } from '@/api/queries';
 import type { Chat } from '@/features/assistant/use-chat';
 import type { PostView } from '@/features/party/posts';
@@ -18,6 +19,7 @@ import { JoinSheet } from '../party/join-sheet';
 import { usePartyActions } from '../party/use-party-actions';
 import type { CardActions, ProposalActions } from './chat-cards';
 import type { Tell } from './library/booking-stage';
+import type { LibraryCardActions } from './library/use-library-call';
 import type { EventCardActions } from './chat-event-cards';
 import type { QuestCardActions } from './chat-quest-cards';
 
@@ -65,7 +67,34 @@ export interface CardLeaving {
   proposals: ProposalActions;
   // The seat card whose booking the map draws, by its place, and how it tells what it offers (P04 ticket 07).
   // `raised`: the answer's card is raised, so the seat card shows all it holds; lowered, it says one sentence.
-  booking?: { place: string | null; tell: Tell; steps: boolean; raised: boolean };
+  // `point` and `walk`: the booking's building and the minutes of the walk the map draws there (P01 ticket 06).
+  booking?: {
+    place: string | null;
+    tell: Tell;
+    steps: boolean;
+    raised: boolean;
+    point: PlacePoint | null;
+    walk: number | null;
+  };
+}
+
+type LeavingBooking = CardLeaving['booking'];
+
+// What a seat card learns of the booking on the map: how it tells what it offers, whether its band is on the bar, whether
+// the card is lowered, and the walk there (P04 ticket 07; P01 tickets 03 and 06).
+function bookingActionsOf(
+  booking: LeavingBooking,
+): Pick<LibraryCardActions, 'onMap' | 'bandOnBar' | 'docked' | 'bookingWalk'> {
+  const alone = (card: string): boolean => booking !== undefined && booking.place === card && !booking.steps;
+  return {
+    onMap: (card: string) => (booking !== undefined && booking.place === card ? booking.tell : null),
+    bandOnBar: alone,
+    docked: (card: string) => alone(card) && booking?.raised === false,
+    bookingWalk: () =>
+      booking === undefined || booking.point === null || booking.steps
+        ? null
+        : { minutes: booking.walk, to: booking.point },
+  };
 }
 
 // What the cards of the conversation's answers do, and the sheets their buttons open over the chat.
@@ -89,9 +118,7 @@ export function useCardActions(chat: Chat, leaving: CardLeaving): { actions: Car
         showRoom,
         askedBefore: (bubbleId: number) =>
           bubbles.findLast(({ id, role }) => role === 'user' && id < bubbleId)?.text ?? '',
-        onMap: (card: string) => (booking !== undefined && booking.place === card ? booking.tell : null),
-        bandOnBar: (card: string) => booking !== undefined && booking.place === card && !booking.steps,
-        docked: (card: string) => booking !== undefined && booking.place === card && !booking.steps && !booking.raised,
+        ...bookingActionsOf(booking),
       },
     }),
     [

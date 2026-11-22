@@ -5,7 +5,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { LibrarySpace, MapScene, ReplyStep } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import { now } from '@/clock';
@@ -208,6 +208,13 @@ export function useMadeSceneMap(
   onFlag: (id: string, position: LatLng) => void,
 ): AnswerMap | null {
   const made = useMade(chat, everyday, me.position);
+  // The walk's minutes, which the seat card's sentence and its done message say (P01 ticket 06).
+  const point = chat.booking?.point ?? null;
+  const walk = point === null || me.position === null ? null : (meAndWalk(me.position, point).walk[0]?.minutes ?? null);
+  const { tellWalk } = chat.bookingStage;
+  useEffect(() => {
+    tellWalk(walk);
+  }, [walk, tellWalk]);
   // A press on another step's flag makes it the step shown; one on the step shown opens its card when it is a booking.
   const onMark = (id: string, position: LatLng): void => {
     const number = stepNumberOf(id);

@@ -5,9 +5,11 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useState } from 'react';
+import type { PlacePoint } from '@/api/assistant-types';
 import {
   type ConfirmedPress,
   confirmedPress,
@@ -220,6 +222,9 @@ export interface LibraryCardActions {
   // Whether the seat card at a place is the booking on the map while the answer's card is lowered: it says one sentence,
   // and the rest waits for the raised card (P01 ticket 03). Left out, none is.
   docked?: (card: string) => boolean;
+  // The booking on the map alone: its building and the minutes of the walk there, null minutes without the User's
+  // position (P01 ticket 06). Left out, or null, none.
+  bookingWalk?: () => { minutes: number | null; to: PlacePoint } | null;
 }
 
 // How a card's write is marked with the chat while it is on its way.

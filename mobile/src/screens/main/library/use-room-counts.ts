@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -16,6 +17,7 @@ import { siteBookTime, siteDate } from '@/library/cards/times';
 import { library } from '@/library/library';
 import { useLibrarySession } from '@/library/library-session';
 import type { LibrarySeat } from '@/library/replies';
+import { SEATS_WAIT_MS, withinWait } from './seats-wait';
 
 // A sector's seats for a time, as the library lists them.
 export function seatsFor(space: LibrarySpace, slot: Slot): Promise<LibrarySeat[]> {
@@ -42,6 +44,28 @@ function countOf(result: PromiseSettledResult<LibrarySeat[]> | undefined): RoomC
   return result?.status === 'fulfilled' ? freeSeats(result.value).length : 'failed';
 }
 
+function withCount(rooms: Extract<Rooms, { state: 'listed' }>, id: string, count: RoomCount): Rooms {
+  return { ...rooms, counts: new Map(rooms.counts).set(id, count) };
+}
+
+// One sector's seats within the wait, its count told as soon as they come or as failed when they do not.
+function countedOne(
+  sector: LibrarySpace,
+  slot: Slot,
+  tell: (id: string, count: RoomCount) => void,
+): Promise<LibrarySeat[]> {
+  const seats = withinWait(seatsFor(sector, slot), SEATS_WAIT_MS);
+  void seats.then(
+    (value) => {
+      tell(sector.id, freeSeats(value).length);
+    },
+    () => {
+      tell(sector.id, 'failed');
+    },
+  );
+  return seats;
+}
+
 // `read` lists the sectors and reads each one's seats for the slot at once; a read that fails leaves the others.
 // Without a library session it lists the sectors and reads nothing. The newest read wins.
 export function useRoomCounts(slot: Slot): { rooms: Rooms; read: () => Promise<Rooms> } {
@@ -58,6 +82,11 @@ export function useRoomCounts(slot: Slot): { rooms: Rooms; read: () => Promise<R
       }
       return next;
     };
+    const countOne = (id: string, count: RoomCount): void => {
+      if (mine === round.current) {
+        setRooms((last) => (last.state === 'listed' && last.counts !== null ? withCount(last, id, count) : last));
+      }
+    };
     setRooms((last) => (last.state === 'listed' ? last : { state: 'listing' }));
     const sectors = await queryClient.query({ ...studySpacesQuery, staleTime: 'static' }).then(sectorsOf, () => null);
     if (sectors === null) {
@@ -67,7 +96,8 @@ export function useRoomCounts(slot: Slot): { rooms: Rooms; read: () => Promise<R
       return settle({ state: 'listed', sectors, counts: null });
     }
     settle({ state: 'listed', sectors, counts: new Map(sectors.map(({ id }) => [id, 'pending'])) });
-    const results = await Promise.allSettled(sectors.map((sector) => seatsFor(sector, slot)));
+    // Each count shows as it arrives, and one that does not come within the wait shows as failed (P01 ticket 06).
+    const results = await Promise.allSettled(sectors.map((sector) => countedOne(sector, slot, countOne)));
     const counts = new Map(sectors.map(({ id }, index): [string, RoomCount] => [id, countOf(results[index])]));
     return settle({ state: 'listed', sectors, counts });
   }, [queryClient, loggedIn, slot]);
