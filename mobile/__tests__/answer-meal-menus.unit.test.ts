@@ -10,7 +10,14 @@ import { cornersOf, hoursOf, planCorner } from '@/features/assistant/meal-menus'
 import { crowdedMealAnswer, crowdedWithFriend } from '@/api/mock/data/crowded-meal';
 import { travelWords } from '@/features/assistant/answer-walks';
 import { mealPickWords } from '@/features/assistant/meal-pick';
-import { candidateRowsOf, droppedHeading, listedCount, mealCard } from '@/screens/main/answer/meal-list';
+import {
+  candidateRowsOf,
+  droppedHeading,
+  listedCount,
+  listOrderWords,
+  mealCard,
+  walksKnown,
+} from '@/screens/main/answer/meal-list';
 import { mealTabsOf, restaurantOf } from '@/screens/main/answer/meal-menu';
 import { mealDockLine, mealSentenceOf } from '@/screens/main/answer/meal-dock';
 
@@ -248,5 +255,36 @@ describe('the crowded mock with a Friend', () => {
 
     expect(reasons.filter((reason) => reason.startsWith('강도윤'))).not.toHaveLength(0);
     expect(reasons.every((reason) => !reason.startsWith('강도윤는'))).toBe(true);
+  });
+});
+
+// Partitions: no starting place, so no walking for any Plan (P05 ticket 40's order); walking known.
+describe('the list without walking', () => {
+  // The server's order, which is not the order of arrival: the third candidate first.
+  const plans = [2, 0, 1].flatMap((at) => MEAL_ANSWER_MENUS.plans[at] ?? []);
+  const unknown = {
+    ...MEAL_ANSWER_MENUS,
+    plans: plans.map((plan) => ({
+      ...plan,
+      parts: plan.parts.map((part) => (part.me ? { ...part, origin: null, walkMinutes: null } : part)),
+    })),
+  };
+
+  it('keeps the main server’s order, says arrivals, and the caption says 일찍 여는 순', () => {
+    const rows = candidateRowsOf(unknown);
+
+    expect(walksKnown(unknown)).toBe(false);
+    expect(rows.map(({ planId }) => planId)).toEqual(plans.map(({ id }) => id));
+    expect(rows.every(({ when }) => /^\d{2}:\d{2} 도착$/u.test(when))).toBe(true);
+    expect(listOrderWords(unknown)).toBe('일찍 여는 순');
+  });
+
+  it('orders by walking with walking known, and the caption says 걸음이 적은 순', () => {
+    const known = { ...MEAL_ANSWER_MENUS, plans };
+    const walks = candidateRowsOf(known).map(({ walk }) => walk ?? Infinity);
+
+    expect(walksKnown(known)).toBe(true);
+    expect(walks).toEqual(walks.toSorted((one, other) => one - other));
+    expect(listOrderWords(known)).toBe('걸음이 적은 순');
   });
 });

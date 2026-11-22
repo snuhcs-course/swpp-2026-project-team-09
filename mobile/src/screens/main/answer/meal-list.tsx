@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -80,22 +81,39 @@ export function withFriendsOf(answer: AnswerReply): string | null {
 }
 
 // The candidates of a meal answer with more than one, those of the kind on screen alone when one is chosen, the least
-// walking first, then the earliest there, then the map's order. None for any other answer.
+// walking first, then the earliest there, then the map's order; without any walking, in the main server's order. None
+// for any other answer.
 export function candidateRowsOf(answer: AnswerReply | null): CandidateRow[] {
   if (answer === null || !mealCard(answer)) {
     return [];
   }
   const kind = kindShown(answer);
-  return answer.plans
+  const rows = answer.plans
     .map((plan, index) => ({ plan, row: rowOf(plan, index, kind) }))
     .filter(({ plan }) => kind === null || serves(plan, kind))
-    .map(({ row }) => row)
-    .toSorted(
-      (one, other) =>
-        (one.walk ?? Infinity) - (other.walk ?? Infinity) ||
-        one.startAt.localeCompare(other.startAt) ||
-        one.number - other.number,
-    );
+    .map(({ row }) => row);
+  // Without a walk anywhere, the main server's order stands: its walk on to the next item, the earliest start, the
+  // longest time to eat (P05 ticket 40), which an order of the phone's would scramble.
+  return walksKnown(answer)
+    ? rows.toSorted(
+        (one, other) =>
+          (one.walk ?? Infinity) - (other.walk ?? Infinity) ||
+          one.startAt.localeCompare(other.startAt) ||
+          one.number - other.number,
+      )
+    : rows;
+}
+
+// Whether the User's walking is known for any of the answer's Plans: not when they have no starting place (tomorrow
+// with no Class before the meal, a weekend, late at night off campus).
+export function walksKnown(answer: AnswerReply): boolean {
+  return answer.plans.some((plan) => addedWalk(plan) !== null);
+}
+
+// How the raised list is ordered, which the caption says: by walking, or, without it, by the main server's order,
+// the earliest open first (P04 ticket 48).
+export function listOrderWords(answer: AnswerReply): string {
+  return walksKnown(answer) ? '걸음이 적은 순' : '일찍 여는 순';
 }
 
 const BADGE = 22;
