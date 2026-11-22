@@ -21,6 +21,7 @@ import { givePhone, OFF_CAMPUS, ON_CAMPUS, openMain } from './support/main';
 import { DINNER, press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // The answer frame (P02 tickets 01 and 04) against the fake main server: what the User asks stays as a pill at the top
 // and one card at the bottom holds the reply.
@@ -191,7 +192,7 @@ describe('the request', () => {
       {
         messages: [{ role: 'user', text: ASKED }],
         context: CONTEXT,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
   });
@@ -222,7 +223,7 @@ describe('the request', () => {
         { role: 'user', text: '한식' },
       ],
       context: CONTEXT,
-      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      clientCapabilities: SENT_CAPABILITIES,
     });
   });
 });

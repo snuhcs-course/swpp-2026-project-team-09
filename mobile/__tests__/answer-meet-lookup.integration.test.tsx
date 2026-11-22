@@ -31,6 +31,7 @@ import {
 } from './support/meet';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // A Friend Lookup's `meet` action (P02 ticket 24), over the fake main server: the stored real Lookup of "민수 어디야?"
 // (`friend-lookup.json`, board q6), which carries `meet` for 민수, draws "만나고 싶다" as its main button beside
@@ -93,7 +94,7 @@ describe("the meet of a Friend's Lookup (q6)", () => {
       {
         input: meetWith(MIN_SU.id),
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(pill().getByText('김민수 · 만나고 싶다')).toBeVisible();
@@ -136,7 +137,7 @@ describe('words typed while a meet is on screen', () => {
 
     expect(lastContext()).toMatchObject({ conditions: MET_MIN_SU.input, planId: '302동 앞' });
     expect(server.received('POST /assistant/messages').at(-1)?.body).toMatchObject({
-      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      clientCapabilities: SENT_CAPABILITIES,
     });
   });
 });

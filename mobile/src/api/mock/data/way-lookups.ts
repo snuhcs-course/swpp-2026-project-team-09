@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AssistantReply } from '@/api/assistant-types';
@@ -35,3 +36,18 @@ export const LATE_LOOKUP_REPLY = replyOf('지금 가도 5분 늦어요.', checke
 export const SHUTTLE_LOOKUP_REPLY = replyOf('16:43에 나서 셔틀을 타면 16:53에 도착해요.', checked(shuttle, 'shuttle'));
 
 export const NOT_RUNNING_LOOKUP_REPLY = replyOf('셔틀은 지금 다니지 않아요.', checked(notRunning, 'not running'));
+
+// The stored Lookups of a way, by the words of boards q4, q3, q2, and n21: by the shuttle, late, on time, and the
+// shuttle not running. A question about the shuttle's arrival with no Place ("셔틀 몇 분 뒤에 와?") is none of them.
+export function wayReplyOf(last: string): AssistantReply | null {
+  if (last.includes('셔틀 탈까')) {
+    return SHUTTLE_LOOKUP_REPLY;
+  }
+  if (last.includes('기숙사 가는 셔틀')) {
+    return NOT_RUNNING_LOOKUP_REPLY;
+  }
+  if (last.includes('늦나')) {
+    return LATE_LOOKUP_REPLY;
+  }
+  return last.includes('까지 몇 분') ? LEAVE_LOOKUP_REPLY : null;
+}
