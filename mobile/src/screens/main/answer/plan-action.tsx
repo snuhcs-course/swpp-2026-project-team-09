@@ -84,7 +84,7 @@ function setQuestAction(set: SetQuest, { invitation }: ChatSheetControl, disable
 
 export function PlanActionButton({ action }: { action: PlanAction }): ReactElement {
   return (
-    <Button disabled={action.disabled} onPress={action.onPress} size="bar">
+    <Button disabled={action.disabled} onPress={action.onPress} full size="bar">
       {action.words}
     </Button>
   );
@@ -202,7 +202,7 @@ function LookupActionButton({ control, lookup, refusal }: LookupActionProps): Re
   });
   // Disabled while the next reply is on its way: it would act on the turn before.
   return main === null ? null : (
-    <Button disabled={chat.waiting} onPress={main.onPress} size="bar">
+    <Button disabled={chat.waiting} onPress={main.onPress} full size="bar">
       {main.label}
     </Button>
   );

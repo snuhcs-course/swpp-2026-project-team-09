@@ -33,6 +33,7 @@ export function RoomOfferButton({ offer, disabled }: { offer: QuestOffer; disabl
   return (
     <Button
       disabled={disabled}
+      full
       size="bar"
       onPress={() => {
         router.push(`/room/${offer.questId}`);
