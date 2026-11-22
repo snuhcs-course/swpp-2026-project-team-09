@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -74,7 +75,7 @@ async function ask(user: User, words: string): Promise<void> {
 }
 
 function pill(): ReturnType<typeof within> {
-  return within(screen.getByTestId('answer-pill'));
+  return within(screen.getByTestId('answer-caption'));
 }
 
 function sentBodies(): unknown[] {

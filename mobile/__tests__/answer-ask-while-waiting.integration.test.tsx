@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -81,13 +82,13 @@ async function send(user: User, words: string): Promise<void> {
 }
 
 function pill(): ReturnType<typeof within> {
-  return within(screen.getByTestId('answer-pill'));
+  return within(screen.getByTestId('answer-caption'));
 }
 
 // Asks FIRST and hides the frame with ✕ while its reply is on its way.
 async function askThenHide(user: User): Promise<void> {
   await send(user, FIRST);
-  await user.press(pill().getByRole('button', { name: '답 닫기' }));
+  await user.press(pill().getByRole('button', { name: '뒤로' }));
 }
 
 // Presses an example above the AI input, which the everyday map shows while the keyboard is up.

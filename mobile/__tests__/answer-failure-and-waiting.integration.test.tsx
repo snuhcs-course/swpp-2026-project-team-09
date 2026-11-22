@@ -19,7 +19,6 @@ import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
-import { reopenAnswer } from './support/questions';
 
 // P02 ticket 12 against the fake main server: a request that failed says so in two lines and keeps the words in the
 // input (n16), and while the reply is on its way the card shows the dots (보는 중) with 그만, and the input is hidden
@@ -169,27 +168,39 @@ describe('the words kept after a failure, in the frame (n16)', () => {
     expect(card().getByText(REPLY)).toBeVisible();
     expect(input()).toHaveDisplayValue('');
   });
+});
 
-  it('keeps the words when the frame is hidden with ✕, and empties the input untouched with 새 대화', async () => {
+// Rule 4 of the 2026-11-22 redesign: what is sent from the main map starts a new conversation, and the one kept goes
+// among the earlier ones, whose questions the caption's list holds.
+describe('the words kept after a failure, on the main map (n16)', () => {
+  it('stay when the frame is hidden with ←, and are sent from the map in a new conversation', async () => {
     const user = await failedInFrame();
+    server.on('POST /assistant/messages', ANSWERED);
 
-    await user.press(screen.getByRole('button', { name: '답 닫기' }));
+    await user.press(screen.getByRole('button', { name: '뒤로' }));
     expect(input()).toHaveDisplayValue(ASKED);
-    await reopenAnswer(user);
-    await user.press(screen.getByRole('button', { name: '새 대화' }));
+    expect(input()).toHaveProp('placeholder', '무엇이든 물어보세요');
+    await user.press(screen.getByRole('button', { name: '보내기' }));
+    await pass(1000);
 
+    expect(sentBodies().at(-1)).toEqual(sentWith([{ role: 'user', text: ASKED }]));
+    expect(card().getByText(REPLY)).toBeVisible();
     expect(input()).toHaveDisplayValue('');
+    await user.press(screen.getByTestId('answer-caption'));
+    const list = within(screen.getByTestId('question-list'));
+    expect(list.getAllByTestId('question-row')).toHaveLength(2);
+    expect(list.getByRole('button', { name: /배고파, 답을 가져오지 못함$/u })).toBeVisible();
   });
 });
 
 // Partitions: waiting, then the reply.
 describe('waiting for the reply (n18)', () => {
-  it('shows the question and the dots, labelled 보는 중, with a 그만 icon button, and keeps the input', async () => {
+  it('shows the question as the caption and the dots, labelled 보는 중, with a 그만 icon button, and keeps the input', async () => {
     const user = await openMain();
 
     await send(user, ASKED);
 
-    expect(card().getByTestId('turn-question')).toHaveTextContent(ASKED);
+    expect(card().getByTestId('answer-caption')).toHaveTextContent(ASKED);
     expect(card().getByLabelText('보는 중')).toBeVisible();
     expect(card().queryByText('보는 중')).toBeNull();
     expect(card().getByRole('button', { name: '그만' })).toBeVisible();
@@ -209,7 +220,7 @@ describe('waiting for the reply (n18)', () => {
     expect(content.props.contentContainerStyle).toContainEqual({ minHeight: 420 });
   });
 
-  it('starts at the top of the card, where the next question stands, however far the reply was scrolled', async () => {
+  it("starts at the top of the card, where the next question's caption stands, however far the reply was scrolled", async () => {
     const scrolled = jest.spyOn(ScrollView.prototype, 'scrollTo');
     const user = await openMain();
     await ask(user);
@@ -243,7 +254,7 @@ describe('그만 while the reply is on its way (n18)', () => {
     await user.press(card().getByRole('button', { name: '그만' }));
     await pass(1000);
 
-    expect(within(screen.getByTestId('answer-pill')).getByText(ASKED)).toBeVisible();
+    expect(within(screen.getByTestId('answer-caption')).getByText(ASKED)).toBeVisible();
     expect(card().getByText(REPLY)).toBeVisible();
     expect(screen.queryByText('한식이요')).toBeNull();
     await ask(user, '양식');
@@ -264,7 +275,7 @@ describe('그만 while the reply is on its way (n18)', () => {
     await pass(1000);
 
     expect(screen.queryByTestId('answer-card')).toBeNull();
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(input()).toBeVisible();
     await ask(user, '한식');
     expect(sentBodies().at(-1)).toEqual(sentWith([{ role: 'user', text: '한식' }]));

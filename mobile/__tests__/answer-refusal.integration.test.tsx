@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -97,7 +98,7 @@ describe('the card of a refusal', () => {
     for (const label of ['배고파', '공부할 자리', '오늘 볼 만한 거 있어?']) {
       expect(card().getByRole('button', { name: label })).toBeVisible();
     }
-    expect(within(screen.getByTestId('answer-pill')).getByText('자료구조 과제 풀어 줘')).toBeVisible();
+    expect(within(screen.getByTestId('answer-caption')).getByText('자료구조 과제 풀어 줘')).toBeVisible();
     expect(screen.queryByTestId('condition-chips')).toBeNull();
     expect(card().queryByText('근거')).toBeNull();
 

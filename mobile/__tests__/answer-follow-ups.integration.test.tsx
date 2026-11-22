@@ -3,6 +3,7 @@
  *
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -91,7 +92,7 @@ describe('the follow-ups of the reply', () => {
     expect(followUps().getByRole('button', { name: '김민수랑 내일 점심 먹자' })).toBeVisible();
     await user.press(followUps().getByRole('button', { name: NEXT }));
 
-    expect(within(screen.getByTestId('answer-pill')).getByText(NEXT)).toBeVisible();
+    expect(within(screen.getByTestId('answer-caption')).getByText(NEXT)).toBeVisible();
     expect(JSON.stringify(lastSent())).toContain(JSON.stringify({ role: 'user', text: NEXT }));
   });
 

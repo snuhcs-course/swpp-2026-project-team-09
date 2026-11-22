@@ -49,7 +49,7 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-const CLOSE = '답 닫기';
+const CLOSE = '뒤로';
 // 김민준's Avatar, as the fake server's Friend without a status.
 const FRIEND = '김민준';
 const EVENT = '공식 행사 · AI 커리어 설명회';

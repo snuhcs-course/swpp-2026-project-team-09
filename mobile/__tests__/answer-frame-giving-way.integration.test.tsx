@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -70,7 +71,7 @@ async function ask(user: User): Promise<void> {
 }
 
 async function closeFrame(user: User): Promise<void> {
-  await user.press(within(screen.getByTestId('answer-pill')).getByRole('button', { name: '답 닫기' }));
+  await user.press(screen.getByRole('button', { name: '뒤로' }));
 }
 
 // Partitions: a thing selected before asking.
@@ -114,7 +115,7 @@ describe('the tab bar while the frame is shown', () => {
 
     await user.press(screen.getByRole('tab', { name: '지도' }));
     await pass(500);
-    expect(screen.getByTestId('answer-pill')).toBeVisible();
+    expect(screen.getByTestId('answer-caption')).toBeVisible();
     expect(screen.queryByRole('tab', { name: '행사' })).toBeNull();
   });
 });

@@ -126,7 +126,7 @@ describe("a Friend's ✕ in a meet", () => {
     await takeOut(user, '민수', '민수');
 
     expect(recalculations(server)).toHaveLength(1);
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(friendCard().getByRole('header', { name: MIN_SU.name })).toBeVisible();
   });
 
@@ -139,7 +139,7 @@ describe("a Friend's ✕ in a meet", () => {
 
     expect(peopleAsked().at(-1)).toEqual({ ...MET_MIN_SU.input, people: [ASKER, WITH_MIN_SU] });
     expect(mapThings()).not.toContain('민준');
-    expect(screen.getByTestId('answer-pill')).toBeVisible();
+    expect(screen.getByTestId('answer-caption')).toBeVisible();
   });
 
   it('recalculates without 민수, too, when another Friend stays', async () => {

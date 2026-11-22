@@ -135,14 +135,14 @@ describe('an answer beside a lunch the User holds alone', () => {
   });
 });
 
-// P04 ticket 10: the list of questions says what 그대로 두기 did.
+// P04 ticket 10: the list of questions, opened from the answer's caption, says what 그대로 두기 did.
 describe('the list of questions beside a lunch left as it is', () => {
   it('says the lunch was left as it is', async () => {
     const user = await askOnMap(server, replyWith(OWN));
     await user.press(dock().getByRole('button', { name: '그대로 두기' }));
     await pass(300);
 
-    await user.press(screen.getByTestId('answer-pill'));
+    await user.press(screen.getByTestId('answer-caption'));
 
     expect(within(screen.getByTestId('question-list')).getByRole('button', { name: /· 그대로 둠/u })).toBeVisible();
   });
@@ -209,7 +209,7 @@ describe("the main server's planSet", () => {
     expect(mapThings().filter((name) => /301동 앞|유회진|신양|학생회관/u.test(name))).toEqual([]);
     expect(screen.queryByRole('adjustable', { name: '시작 시각' })).toBeNull();
     // P04 ticket 10: the list of questions says so too.
-    await user.press(screen.getByTestId('answer-pill'));
+    await user.press(screen.getByTestId('answer-caption'));
     expect(within(screen.getByTestId('question-list')).getByRole('button', { name: /12:15 · 바꿈/u })).toBeVisible();
   });
 

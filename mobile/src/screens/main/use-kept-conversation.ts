@@ -117,16 +117,18 @@ function useHidden(bubbles: Chat['bubbles']): { hidden: boolean; show: () => voi
   return { hidden, show, hide, unseen };
 }
 
-// A new question in a new conversation, the current one kept among the earlier ones, from the turn on screen's latest.
-function useAskNew(chat: Chat, setViewed: (viewed: null) => void): (text: string) => void {
+// A new question in a new conversation, the current one kept among the earlier ones, shown in the frame as every
+// message is.
+function useAskNew(chat: Chat, setViewed: (viewed: null) => void, show: () => void): (text: string) => void {
   const { startNew, send } = chat;
   return useCallback(
     (text: string): void => {
       setViewed(null);
       startNew();
+      show();
       send(text);
     },
-    [startNew, send, setViewed],
+    [startNew, send, setViewed, show],
   );
 }
 
@@ -148,7 +150,7 @@ export function useKeptConversation(chat: Chat): KeptConversation {
     setStarted((count) => count + 1);
     startNew();
   }, [startNew]);
-  const askNew = useAskNew(chat, setViewed);
+  const askNew = useAskNew(chat, setViewed, show);
   const showTurn = useCallback(
     (turnId: number, conversation: number | null): void => {
       const shown = conversation === null ? bubbles : earlier.find(({ id }) => id === conversation)?.bubbles;

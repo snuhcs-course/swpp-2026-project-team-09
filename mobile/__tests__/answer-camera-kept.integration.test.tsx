@@ -2,9 +2,9 @@
  * AI-generated with Claude
  *
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { within } from '@testing-library/react-native';
 import { Dimensions } from 'react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import type { Point } from '@/map';
@@ -89,7 +89,7 @@ describe("the frame's own way out", () => {
     [
       '✕',
       async (user: User): Promise<void> => {
-        await user.press(within(screen.getByTestId('answer-pill')).getByRole('button', { name: '답 닫기' }));
+        await user.press(screen.getByRole('button', { name: '뒤로' }));
       },
     ],
     [

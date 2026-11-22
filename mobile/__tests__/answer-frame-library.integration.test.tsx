@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -92,7 +93,7 @@ describe("관정관's 좌석 현황", () => {
     await user.press(within(screen.getByTestId('map-card')).getByRole('button', { name: '좌석 현황' }));
     await pass(500);
 
-    expect(within(screen.getByTestId('answer-pill')).getByText('관정도서관 좌석 현황 보여줘')).toBeVisible();
+    expect(within(screen.getByTestId('answer-caption')).getByText('관정도서관 좌석 현황 보여줘')).toBeVisible();
     expect(card().getByText('좌석 현황이에요.')).toBeVisible();
     expect(screen.queryByTestId('chat-sheet')).toBeNull();
   });

@@ -90,7 +90,7 @@ describe('"여기서 먹기" on the card of a pressed building', () => {
       },
     ]);
     expect(server.received('POST /assistant/messages')).toEqual([]);
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent('63동 · 여기서 먹기', { exact: false });
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent('63동 · 여기서 먹기', { exact: false });
     // The answer is on the map and the bar, its button beside the input (P04 ticket 04).
     expect(screen.getByTestId('time-bar')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: '일정에 넣기' })).toBeVisible();
@@ -103,7 +103,7 @@ describe('"여기서 먹기" on the card of a pressed building', () => {
     await user.press(buildingCard().getByRole('button', { name: '여기서 먹기' }));
     await pass(500);
 
-    await user.press(screen.getByRole('button', { name: '답 닫기' }));
+    await user.press(screen.getByRole('button', { name: '뒤로' }));
 
     expect(buildingCard().getByRole('header', { name: '63동' })).toBeVisible();
   });
@@ -117,7 +117,7 @@ describe('"여기서 먹기" on the card of a pressed building', () => {
     await pass(500);
 
     expect(screen.getByText('답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요')).toBeVisible();
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(buildingCard().getByRole('header', { name: '63동' })).toBeVisible();
   });
 });
@@ -191,7 +191,7 @@ describe("a2's buttons on the card of 문화관", () => {
         clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 행사 보기', { exact: false });
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent('73동 · 행사 보기', { exact: false });
     expect(screen.getByTestId('time-bar')).toBeOnTheScreen();
     expect(card().getByRole('button', { name: '같이 갈 파티' })).toBeEnabled();
   });
@@ -210,7 +210,7 @@ describe("a2's buttons on the card of 문화관", () => {
         clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 같이 갈 파티', { exact: false });
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent('73동 · 같이 갈 파티', { exact: false });
     expect(screen.getByTestId('time-bar')).toBeOnTheScreen();
   });
 });

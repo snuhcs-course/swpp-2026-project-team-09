@@ -45,13 +45,14 @@ export function AnswerCaption({ control, listOpen, onList }: AnswerCaptionProps)
   const asked = control.howAbout.title ?? turnOf(control.chat.bubbles)?.asked ?? '';
   const list = listWordsOf(control);
   return (
-    <View style={styles.row} testID="answer-caption">
+    <View style={styles.row}>
       <Pressable
         accessibilityLabel={`${asked}, 물은 것 ${listOpen ? '닫기' : '보기'}`}
         accessibilityRole="button"
         accessibilityState={{ expanded: listOpen }}
         onPress={onList}
         style={styles.asked}
+        testID="answer-caption"
       >
         <Text ellipsizeMode="tail" numberOfLines={1} style={styles.words}>
           {asked}

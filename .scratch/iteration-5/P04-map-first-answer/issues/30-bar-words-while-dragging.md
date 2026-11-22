@@ -25,7 +25,7 @@ The card after "일정에 넣기" has "다시 고르기" and "닫기", and "닫�
 - [x] A held start handle on the unfolded bar and a held end handle on the folded bar each change the words, the dragged time in bold. (Unit test.)
 - [x] After letting go, the dropped times stay while the recalculation runs, then the new band's words, or the Plan's own after a failure. (Unit test.)
 - [x] "확인" closes without a route; "길 안내" guides; off campus "길 안내" is disabled with its reason and no toast. (Integration test.)
-- [ ] A picture taken mid-drag on the emulator. (Emulator: one hold; the slow swipe had not moved the handle 2.2 s in.)
+- [x] A picture taken mid-drag on the emulator: the end handle held at 12:35 with the finger down (`input motionevent`), "12:15–12:35 · 식사 20분" with 12:35 in bold. (Emulator.)
 - [x] No native file changes; lint, format, and types pass on the app.
 
 ## Comments

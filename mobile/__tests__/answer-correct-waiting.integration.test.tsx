@@ -107,11 +107,11 @@ describe('a recalculation on its way', () => {
     });
     await takeMinSuOut(user);
 
-    await user.press(screen.getByRole('button', { name: '답 닫기' }));
+    await user.press(screen.getByRole('button', { name: '뒤로' }));
     await pass(HELD_MS);
 
     expect(screen.queryByTestId('answer-card')).toBeNull();
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(screen.queryByText('301동식당')).toBeNull();
     expect(mapThings().filter((name) => FIRST_PLAN_MARKS.includes(name))).toEqual([]);
     expect(mapThings()).toEqual(everyday);

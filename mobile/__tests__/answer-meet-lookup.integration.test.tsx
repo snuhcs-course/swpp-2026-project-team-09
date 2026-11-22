@@ -98,7 +98,6 @@ describe("the meet of a Friend's Lookup (q6)", () => {
       },
     ]);
     expect(pill().getByText('김민수 · 만나고 싶다')).toBeVisible();
-    expect(pill().getByTestId('answer-pill-user', { includeHiddenElements: true })).toBeOnTheScreen();
     expect(mapThings()).toContain('302동 앞 · 12:15 만남');
     expect(screen.queryByTestId('lookup-card')).toBeNull();
   });
@@ -113,7 +112,7 @@ describe("the meet of a Friend's Lookup (q6)", () => {
     await pass(500);
 
     expect(recalculations(server)).toHaveLength(1);
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(friendCard().getByRole('header', { name: MIN_SU.name })).toBeVisible();
   });
 });

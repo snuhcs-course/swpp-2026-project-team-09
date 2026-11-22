@@ -208,7 +208,7 @@ describe("board a9's buttons", () => {
     await pass(500);
 
     expect(findWalkingRoute).toHaveBeenLastCalledWith(ON_CAMPUS, SHINYANG);
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
   });
 
   it('"관정 보기" sends "관정 지금 자리 있어?" as the next words of the User', async () => {
@@ -228,7 +228,7 @@ describe("board a9's buttons", () => {
       await pass(100);
     });
 
-    await user.press(screen.getByRole('button', { name: '답 닫기' }));
+    await user.press(screen.getByRole('button', { name: '뒤로' }));
 
     expect(screen.queryByTestId('answer-card')).toBeNull();
     expect(mapLines()).not.toContain('answer:area');

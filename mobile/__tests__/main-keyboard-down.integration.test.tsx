@@ -134,6 +134,20 @@ describe('a press on the scrim on the everyday map', () => {
   });
 });
 
+// Partitions: an empty field and one with words.
+describe("the suggestions over the main map's input", () => {
+  it('show only while the field is empty', async () => {
+    const user = await openMain();
+    await showKeyboard(KEYBOARD);
+    expect(screen.getByTestId('asked-examples')).toBeVisible();
+
+    await user.type(screen.getByLabelText(AI_INPUT), '도서관');
+
+    expect(screen.queryByTestId('asked-examples')).toBeNull();
+    expect(screen.queryByText(NOTICE)).toBeNull();
+  });
+});
+
 // Partitions: the bar's field and buttons, an example and the line under the examples, the chip "이어서" (P04 ticket 11).
 describe("the AI input's own parts while the keyboard is up", () => {
   it('stand over the scrim: the bar and the examples', async () => {
@@ -162,24 +176,24 @@ describe("the AI input's own parts while the keyboard is up", () => {
     await press(user, '배고파');
     await pass(300);
 
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent(/^배고파/u);
+    expect(screen.getByTestId('answer-card')).toHaveTextContent(/배고파/u);
   });
 
   it('show the hidden answer frame again by the chip "이어서"', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
-    await press(user, '답 닫기');
+    await press(user, '뒤로');
     await showKeyboard(KEYBOARD);
 
     await reopenAnswer(user);
 
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent(/^식사 메뉴 추천/u);
+    expect(screen.getByTestId('answer-card')).toHaveTextContent(/식사 메뉴 추천/u);
   });
 });
 
 // Partitions: what the scrim stands over and under; a press on it.
 describe('a press beside the AI input in the answer frame', () => {
-  it('lands, while the keyboard is up, on a scrim over the map, under the card, the pill and the bar', async () => {
+  it('lands, while the keyboard is up, on a scrim over the map, under the card, "뒤로", and the bar', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
 
@@ -187,7 +201,7 @@ describe('a press beside the AI input in the answer frame', () => {
 
     const scrim = button(SCRIM);
     expect(drawnOver(scrim, mapTouches())).toBe(true);
-    for (const over of [screen.getByTestId('answer-card'), button('답 닫기'), button('새 대화')]) {
+    for (const over of [screen.getByTestId('answer-card'), button('뒤로')]) {
       expect(drawnOver(over, scrim)).toBe(true);
     }
     expect(drawnOver(screen.getByTestId('ai-input'), scrim)).toBe(true);
@@ -202,61 +216,67 @@ describe('a press beside the AI input in the answer frame', () => {
     await press(user, SCRIM);
 
     expect(dismiss).toHaveBeenCalled();
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent(/^식사 메뉴 추천/u);
+    expect(screen.getByTestId('answer-card')).toHaveTextContent(/식사 메뉴 추천/u);
     expect(screen.getByTestId('answer-card')).toBeVisible();
   });
 });
 
-// Partitions: the keyboard up and down.
-describe("a press on the answer pill's words", () => {
-  it('puts the keyboard down while it is up, and keeps the frame', async () => {
+// Partitions: the keyboard up, where the card shows the questions above the input (board 6 of the 2026-11-22 redesign),
+// and down, where the caption opens them.
+describe("the conversation's questions in the answer's card", () => {
+  it('stand above the input while the keyboard is up, and a press on one puts the keyboard down', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
     await showKeyboard(KEYBOARD);
     const dismiss = quietDismiss();
 
-    await user.press(within(screen.getByTestId('answer-pill')).getByText('식사 메뉴 추천'));
+    const [row] = within(screen.getByTestId('question-list')).getAllByTestId('question-row');
+    if (row === undefined) {
+      throw new Error('no question in the card');
+    }
+    await user.press(row);
 
     expect(dismiss).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent(/^식사 메뉴 추천/u);
+    expect(screen.getByTestId('answer-card')).toBeVisible();
   });
 
-  it('opens the list of questions while the keyboard is down (P04 ticket 10)', async () => {
+  it('open from the caption while the keyboard is down (P04 ticket 10)', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
     const dismiss = quietDismiss();
 
-    await user.press(within(screen.getByTestId('answer-pill')).getByText('식사 메뉴 추천'));
+    await user.press(within(screen.getByTestId('answer-caption')).getByText('식사 메뉴 추천'));
 
     expect(dismiss).not.toHaveBeenCalled();
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent(/^식사 메뉴 추천/u);
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent(/^식사 메뉴 추천/u);
     expect(screen.getByTestId('question-list')).toBeVisible();
   });
 });
 
-// Partitions: "답 닫기" and "새 대화".
-describe("the answer pill's buttons while the keyboard is up", () => {
-  it('closes the frame by "답 닫기", keeping the conversation, as before', async () => {
+// Partitions: "뒤로"; a new question typed on the main map.
+describe('leaving the answer and asking anew', () => {
+  it('closes the frame by "뒤로", keeping the conversation, as before', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
     await showKeyboard(KEYBOARD);
     quietDismiss();
 
-    await press(user, '답 닫기');
+    await press(user, '뒤로');
 
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(screen.getByRole('button', { name: EARLIER })).toBeVisible();
   });
 
-  it('keeps the conversation aside by "새 대화", whose list "지난 대화 1개" opens (P04 ticket 10)', async () => {
+  it('starts a new conversation by what is typed on the main map, the one before among its questions', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
-    await showKeyboard(KEYBOARD);
+    await press(user, '뒤로');
 
-    await press(user, '새 대화');
+    await ask(user, '배고파');
 
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent(/^배고파/u);
+    await user.press(screen.getByTestId('answer-caption'));
+    expect(within(screen.getByTestId('question-list')).getByText('식사 메뉴 추천')).toBeVisible();
     expect(findButton(EARLIER)).toBeNull();
-    expect(button('지난 대화 1개')).toBeVisible();
   });
 });
