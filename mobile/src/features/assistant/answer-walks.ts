@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { MapScene } from '@/api/assistant-types';
+import type { MapScene, Plan } from '@/api/assistant-types';
 import type { RouteRole } from '@/api/scene-roles';
 import type { LatLng } from '@/api/types';
 import type { WalkingRoute } from '@/api/walking-route-types';
@@ -77,4 +78,65 @@ export function linesAlongPaths(
     }
     return { ...line, points: joined(walk, route.route.line) };
   });
+}
+
+// The walking a meal Plan adds to the User's day (the answer screen's redesign, board E1): the way from where they
+// start to the place, plus the way on from it to the next fixed thing when one follows. Null when where they start is
+// not known.
+export function addedWalk({ parts, scene }: Pick<Plan, 'parts' | 'scene'>): number | null {
+  const there = parts.find(({ me }) => me)?.walkMinutes ?? null;
+  if (there === null) {
+    return null;
+  }
+  const on = scene.routes.find(({ role }) => role === 'next');
+  return there + (on?.minutes ?? 0);
+}
+
+// A fixed thing of the User's day beside a Plan, from their lane of its band: its time and what it is ("302동 수업").
+export interface FixedThing {
+  at: string;
+  label: string | null;
+}
+
+function myBusy({ band, parts }: Pick<Plan, 'band' | 'parts'>): Plan['band']['lanes'][number]['busy'] {
+  const me = parts.find((part) => part.me)?.userId;
+  const lane = band.lanes.find(({ userId }) => userId === me) ?? band.lanes[0];
+  return lane?.busy ?? [];
+}
+
+// The fixed thing before the Plan, ending at or before its start, with the time it ends; null for none.
+export function fixedBefore(plan: Pick<Plan, 'band' | 'parts' | 'startAt'>): FixedThing | null {
+  const start = Date.parse(plan.startAt);
+  const before = myBusy(plan).filter(({ endAt }) => Date.parse(endAt) <= start);
+  const last = before.at(-1);
+  return last === undefined ? null : { at: last.endAt, label: last.label ?? null };
+}
+
+// The fixed thing after the Plan, starting at or after its end, with the time it starts; null for none.
+export function fixedAfter(plan: Pick<Plan, 'band' | 'parts' | 'endAt'>): FixedThing | null {
+  const end = Date.parse(plan.endAt);
+  const next = myBusy(plan).find(({ startAt }) => Date.parse(startAt) >= end);
+  return next === undefined ? null : { at: next.startAt, label: next.label ?? null };
+}
+
+const MINUTE = 60_000;
+// How long a meal takes at least, for whether a candidate fits.
+const SHORTEST_MEAL = 20;
+// Walking beyond this fades a candidate.
+const FAR = 30;
+
+// Whether a meal Plan fits its band: arriving inside it, twenty minutes there, and the walk on, before the next fixed
+// thing, or before the band's end with none.
+export function fitsBand(plan: Pick<Plan, 'band' | 'parts' | 'scene' | 'startAt' | 'endAt'>): boolean {
+  const start = Date.parse(plan.startAt);
+  const on = plan.scene.routes.find(({ role }) => role === 'next')?.minutes ?? 0;
+  const next = fixedAfter(plan);
+  const end = Date.parse(next?.at ?? plan.band.range.endAt);
+  return start >= Date.parse(plan.band.range.startAt) && start + (SHORTEST_MEAL + on) * MINUTE <= end;
+}
+
+// A candidate the map fades: it does not fit its band, or its walking is over thirty minutes.
+export function fadedPlan(plan: Pick<Plan, 'band' | 'parts' | 'scene' | 'startAt' | 'endAt'>): boolean {
+  const walk = addedWalk(plan);
+  return !fitsBand(plan) || (walk !== null && walk > FAR);
 }

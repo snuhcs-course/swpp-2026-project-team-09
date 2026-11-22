@@ -18,29 +18,25 @@ import { inView } from '@/map';
 // arrival time, and in a meal answer its dishes and price under them; the pick's flag with its own first dish; two
 // candidates at one point both labelled; and the faces of Friends outside the answer faint.
 
-// Partitions: a meal answer with menus (dishes with differing prices, a buffet's own price), and without.
+// Partitions: a meal answer with menus (a small tag of walking; the pick's two-line label), and without.
 describe('the tags of a meal answer with menus', () => {
   const drawing = drawingOf(MEAL_ANSWER_MENUS, 0);
 
-  it("gives a candidate its arrival time beside its name, and its first dish, the rest's count, and its lowest price under them", () => {
-    expect(seen(drawing, 'answer:candidate:학생회관식당')).toMatchObject({
-      name: '후보 3 · 학생회관식당 · 12:33 · 눈꽃치즈닭갈비 외 2 · 1,000원부터',
-      label: { tone: 'candidate', title: '학생회관식당', line: '12:33', sub: '눈꽃치즈닭갈비 외 2 · 1,000원부터' },
-      planId: '학생회관식당',
-    });
+  it('gives a candidate a small tag of its number and the walking it adds, with no dishes and no price', () => {
+    const { name, label } = seen(drawing, 'answer:candidate:학생회관식당');
+    expect(name).toBe('후보 3 · 학생회관식당 · 걸음 16분');
+    expect(label).toMatchObject({ tone: 'candidate', title: '16분', line: null, number: 3 });
+    expect(label).not.toHaveProperty('sub');
   });
 
-  it("says a buffet's own price once", () => {
-    expect(seen(drawing, 'answer:candidate:자하연식당 2층').label).toMatchObject({
-      line: '12:35',
-      sub: '나가사키꼬치어묵 외 1 · 6,500원',
-    });
+  it('counts the way there and the way on to the next Class', () => {
+    expect(seen(drawing, 'answer:candidate:자하연식당 2층').label).toMatchObject({ title: '22분', line: null });
   });
 
-  it("gives the pick's flag its own first dish and the count of the rest after its time", () => {
+  it("gives the pick's label its time and walking after its name, and its first dish, the rest's count, and its lowest price under them", () => {
     expect(seen(drawing, 'answer:pick')).toMatchObject({
-      name: '302동식당 · 12:15 점심 · 뼈없는감자탕 외 5',
-      label: { tone: 'pick', line: '12:15 점심 · 뼈없는감자탕 외 5' },
+      name: '302동식당 · 12:15 · 걸음 20분 · 뼈없는감자탕 외 5 · 4,000원부터',
+      label: { tone: 'pick', title: '302동식당 ›', note: '12:15 · 걸음 20분', line: '뼈없는감자탕 외 5 · 4,000원부터' },
     });
   });
 });
