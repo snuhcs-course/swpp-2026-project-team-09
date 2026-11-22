@@ -10,18 +10,17 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import type { QuestProposal } from '@/api/assistant-types';
-import { apiClient } from '@/api/client';
-import type { ProposalChange } from '@/api/party-change-types';
 import { globalEventAnnouncersQuery } from '@/api/queries';
 import { now } from '@/clock';
 import { useToast } from '@/design-system';
 import { holdProposal } from '@/features/party/held-proposal';
 import { isReady, type PartyForm, proposalForm } from '@/features/party/making';
-import { refusalWords } from '@/features/quests/refusals';
+import type { ChatBubble } from '@/features/assistant/use-chat';
 import { useSendParty } from '../party/form/use-send';
 import { showMine } from '../party/use-party-actions';
 import type { ProposalActions } from './chat-cards';
 import type { ProposalMaking } from './chat-proposal-card';
+import { changeWith, useStepBaselines, withChanges } from './party-change';
 
 const NOT_READY = '빠진 내용이 있어요. 채팅으로 알려 주세요';
 const STARTED = '시작 시간이 지났어요. 새 시간을 채팅으로 알려 주세요';
@@ -33,86 +32,6 @@ function blockOf(proposal: QuestProposal, form: PartyForm): string | null {
     return NOT_READY;
   }
   return form.startsAt !== null && new Date(form.startsAt) <= now() ? STARTED : null;
-}
-
-// 바꾸기 on an earlier turn reopened from the pill's list (PR 456's review): its change may undo a newer one.
-const EARLIER_CHANGE = '지난 답이에요. 마지막 답에서 바꿔 주세요';
-
-// The toast once 바꾸기 changed a made 파티 (P04 ticket 25), with how many it told.
-export function changedWords({ told }: ProposalChange): string {
-  return told > 0 ? `파티를 바꿨어요. 참여한 ${String(told)}명에게 알렸어요` : '파티를 바꿨어요';
-}
-
-// 바꾸기 sends the main server's step as it is to the room's 일정 수정: true once it is taken.
-function changeParty({ questId, subQuestId, step }: ProposalChange, say: (words: string) => void): Promise<boolean> {
-  return apiClient.editSubQuest(questId, subQuestId, step).then(
-    () => true,
-    (error: unknown) => {
-      say(refusalWords(error));
-      return false;
-    },
-  );
-}
-
-interface Changing {
-  sending: Set<number>;
-  mark: (bubbleId: number, state: ProposalMaking) => void;
-  say: (words: string) => void;
-  onMade: (bubbleId: number, questId: string) => void;
-  latest: boolean;
-}
-
-// 바꾸기 of a bubble's change: on its way, then changed, the 파티 going back as made, or ready again.
-function changeWith({
-  sending,
-  mark,
-  say,
-  onMade,
-  latest,
-}: Changing): (bubbleId: number, made: ProposalChange) => void {
-  return (bubbleId, made) => {
-    if (!latest) {
-      say(EARLIER_CHANGE);
-      return;
-    }
-    if (sending.has(bubbleId)) {
-      return;
-    }
-    sending.add(bubbleId);
-    mark(bubbleId, 'making');
-    void changeParty(made, say).then((changed) => {
-      sending.delete(bubbleId);
-      mark(bubbleId, changed ? 'made' : 'ready');
-      if (changed) {
-        say(changedWords(made));
-        onMade(bubbleId, made.questId);
-      }
-    });
-  };
-}
-
-// A made 파티's change (P04 ticket 25): 바꾸기 changes it in place, and 파티 보기 opens its room.
-function withChanges(
-  actions: ProposalActions,
-  change: (bubbleId: number, made: ProposalChange) => void,
-): ProposalActions {
-  return {
-    ...actions,
-    make: (bubbleId, proposal) => {
-      if (proposal.change === undefined) {
-        actions.make(bubbleId, proposal);
-      } else {
-        change(bubbleId, proposal.change);
-      }
-    },
-    edit: (bubbleId, proposal) => {
-      if (proposal.change === undefined) {
-        actions.edit(bubbleId, proposal);
-      } else {
-        router.push(`/room/${proposal.change.questId}`);
-      }
-    },
-  };
 }
 
 // Opens the party form filled with the Proposal, which tells `made` once it made the Quest.
@@ -128,8 +47,18 @@ export function openProposalForm(proposal: QuestProposal, made: (questId: string
 // A Quest made in the form 수정 opens counts as made here too, so that the card does not make it again; coming back
 // without making leaves the card as it was.
 // `onMade` tells the chat the Quest a bubble's Proposal was made into, which goes back with it (P04 ticket 19).
+type Made = (bubbleId: number, questId: string) => void;
+
+interface Kept {
+  latest: boolean;
+  bubbles: readonly ChatBubble[];
+}
+
+const EVERY_TURN: Kept = { latest: true, bubbles: [] };
+
 // `latest` is false while an earlier turn is reopened from the pill's list, where a change of a made 파티 is not sent.
-export function useProposalMaking(onMade: (bubbleId: number, questId: string) => void, latest = true): ProposalActions {
+// `bubbles` are the conversation's, whose changes of a made 파티 keep the step they were worked out from.
+export function useProposalMaking(onMade: Made, { latest, bubbles }: Kept = EVERY_TURN): ProposalActions {
   const sendParty = useSendParty(null);
   const showToast = useToast();
   const announcers = useQuery(globalEventAnnouncersQuery).data;
@@ -139,7 +68,8 @@ export function useProposalMaking(onMade: (bubbleId: number, questId: string) =>
   const mark = useCallback((bubbleId: number, state: ProposalMaking): void => {
     setMaking((held) => new Map(held).set(bubbleId, state));
   }, []);
-  const change = changeWith({ sending: sending.current, mark, say: showToast, onMade, latest });
+  const baselineOf = useStepBaselines(bubbles);
+  const change = changeWith({ sending: sending.current, mark, say: showToast, onMade, latest, baselineOf });
   const make = (bubbleId: number, proposal: QuestProposal): void => {
     if (sending.current.has(bubbleId)) {
       return;
