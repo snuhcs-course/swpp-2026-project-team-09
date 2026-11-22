@@ -3,6 +3,7 @@
 #
 # 2026-11-21  Opus 5.5   prompted by fyoon46
 # 2026-11-22  Opus 5.5   prompted by fyoon46
+# 2026-11-23  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Choosing what or where to eat is planned on the map (P05 ticket 14). In use of the released app, "월요일에 밥 뭐
@@ -153,3 +154,21 @@
     text:
       mentions: [301동식당, [가까, 바로]]
       absent: ['까지 먹을 수']
+
+# P05 ticket 40: on Thursday the asker's Class before lunch has no Place, so where they set out from is not known and
+# the plans are not ordered by distance. The reply must not call the first plan near. Written, not yet run.
+- id: meal-wish-origin-not-known
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 목요일 점심 뭐 먹지
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    args:
+      planMeal: { date: '2026-11-05' }
+    text:
+      absent: [가장 가까, 가까워서, 가까워요, 가까운 곳이에요]
