@@ -2455,8 +2455,10 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     when everyone could stay 15 minutes alone, who arrives last and who leaves first. Each person's part of a meal or a
     meet carries `arriveAt`, the earliest they can be at the place, `null` when their position is unknown. A person's
     own way to the place, and their way on to their next item, takes the shuttle of that day and hour when the walk is
-    10 minutes or more and the shuttle, with the average wait at the stop, is 3 or more minutes faster; meeting on the
-    way stays on foot. The part of such a way carries `mode: 'shuttle'` and `shuttle: { boardAt, getOffAt }` (stop
+    10 minutes or more and the shuttle, with the average wait at the stop, is 3 or more minutes faster. Meeting on the
+    way stays on foot, and is kept only for those it gets there no later than their own way by the shuttle: a Friend
+    whose own shuttle is sooner goes their own way, and when the asker's is sooner nobody meets. Riding one shuttle
+    together is not planned. The part of such a way carries `mode: 'shuttle'` and `shuttle: { boardAt, getOffAt }` (stop
     names), `next.by: 'shuttle'` says the way on is by the shuttle, and a scene route of role `me`, `friend`, or `next`
     by the shuttle carries `mode: 'shuttle'`; a walk carries none of them. `walkMinutes` is then the minutes of the way,
     however it is gone. A person's

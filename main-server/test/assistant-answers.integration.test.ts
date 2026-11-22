@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Redis } from 'ioredis';
@@ -141,7 +142,8 @@ async function withBoth(date: string): Promise<string[]> {
 }
 
 describe('"여기면 어때?": a Place pressed during the Plan with 민수 and 지은', () => {
-  it("a7: plans 자하연식당 with each person's earliest arrival, 나 and 민수 12:35, 지은 12:18", async () => {
+  // 민수 takes the shuttle, 16 minutes against 19 on foot by way of 301동, so nobody meets on the way (P05 ticket 39).
+  it("a7: plans 자하연식당 with each person's earliest arrival, 나 12:07, 민수 12:31, 지은 12:18", async () => {
     const date = '2088-07-20';
     const time = timeOn(date);
     const friendIds = await withBoth(date);
@@ -153,11 +155,11 @@ describe('"여기면 어때?": a Place pressed during the Plan with 민수 and �
     const [plan] = answerIn(response.body).plans;
     expect(plan).toMatchObject({
       id: '자하연식당 2층',
-      startAt: time('12:35'),
+      startAt: time('12:31'),
       endAt: time('12:55'),
-      togetherMinutes: 20,
+      togetherMinutes: 24,
     });
-    expect(plan?.parts.map(({ arriveAt }) => arriveAt)).toEqual([time('12:35'), time('12:35'), time('12:18')]);
+    expect(plan?.parts.map(({ arriveAt }) => arriveAt)).toEqual([time('12:07'), time('12:31'), time('12:18')]);
   });
 
   it("a8: drops 301동식당 with each person's part, and names 지은, who stays shortest, and why", async () => {
