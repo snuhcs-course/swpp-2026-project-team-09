@@ -9,6 +9,7 @@
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -279,7 +280,8 @@ function Framed(props: FramedProps): ReactElement {
   useBackToClose(useIsFocused(), profileShown ? profile.hide : back, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   const focus = useBandFocus();
-  const drawnBar = control.booking !== null || control.steps !== null;
+  // A booked seat has no bar: "←" is the round button over the map (P01 ticket 04).
+  const drawnBar = (control.booking !== null && !control.booking.booked) || control.steps !== null;
   const barShown = !keyboardUp && (drawnBar || barOf(chat.bubbles, onScreenOf(control)) !== null);
   const bar = useBarHeight(barShown, onBarHeight);
   const [past, setPast] = useState(false);
