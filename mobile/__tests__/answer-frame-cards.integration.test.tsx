@@ -104,12 +104,14 @@ describe('a reply that carries an answer', () => {
     answerParty(server);
   });
 
-  it("draws the first Plan on the map, with neither its lines nor the model's sentence in the card", async () => {
+  // Since the meal answer's card docks as the Assistant's sentence (board E1 of the 2026-11-22 redesign, #477), the
+  // dock says the model's sentence, and the Plan's lines stay out of it.
+  it("draws the first Plan on the map, with the model's sentence in the dock and not the Plan's lines", async () => {
     await askFramed(MEAL_ANSWER_REPLY);
 
     expect(mapThings()).toContain('302동식당 · 12:15 점심');
     expect(card().queryByTestId('answer-lines')).toBeNull();
-    expect(card().queryByText(MEAL_ANSWER_REPLY.text)).toBeNull();
+    expect(card().getByText(MEAL_ANSWER_REPLY.text)).toBeVisible();
     expect(
       within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' }),
     ).toBeVisible();
