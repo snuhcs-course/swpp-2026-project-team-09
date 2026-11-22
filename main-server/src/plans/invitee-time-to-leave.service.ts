@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
@@ -57,7 +58,7 @@ export class InviteeTimeToLeave implements OnModuleInit {
     }
     // Holding the Quest now puts its own steps in the User's day; the card, read before, had none of them.
     const leaveOut = quest.subQuests.map(({ id }) => id);
-    const { leaveAt, walkMinutes } = await this.reader.way(gathered, userId, quest.leader.name, {
+    const { leaveAt, walkMinutes, mode } = await this.reader.way(gathered, userId, quest.leader.name, {
       now,
       position: null,
       leaveOut,
@@ -67,7 +68,8 @@ export class InviteeTimeToLeave implements OnModuleInit {
     }
     const { destination } = gathered;
     const placeName = mealPlaceOf(destination.title) ?? placeLabel(this.reader.placeOf(destination.placeId));
-    return { told: { kind: 'leave-by', questId, placeLabel: placeName, walkMinutes }, at: new Date(leaveAt) };
+    const by = mode === 'shuttle' ? { by: 'shuttle' as const } : {};
+    return { told: { kind: 'leave-by', questId, placeLabel: placeName, walkMinutes, ...by }, at: new Date(leaveAt) };
   }
 }
 
