@@ -17,7 +17,7 @@ Received: "현재 앱은 껐다키면 친구/퀘스트 리스트는 펼쳐져있
 ## What to build
 
 - The on/off of 공부공간, 셔틀버스 and 식당 is stored per User in a new `src/storage/` file, whenever it changes: from the stack's buttons or from the chat's `turnOn` (decided 2026-11-22: the last state, the chat's included).
-- When the main screen starts, the stored state is read and the layers start as stored. A User with nothing stored starts with all three off, as now. Another User signing in on the same phone gets their own.
+- When the main screen starts, the stored state is read and the layers start as stored. A User with nothing stored starts with all three off, as now. Another User signing in on the same phone gets their own. With no signed-in User, nothing is read or written.
 - Until the read ends, the layers are off and nothing is written, so the start's "off" never overwrites what was stored; a change made before the read ends wins over it. A failed read counts as all off.
 - The comment at `layers.tsx:18-19` says what is true afterwards.
 

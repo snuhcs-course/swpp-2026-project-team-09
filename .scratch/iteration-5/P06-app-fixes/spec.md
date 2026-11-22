@@ -30,7 +30,7 @@ One ticket per item, numbered as the items:
 
 Order of work. Tickets touching the same files never run at the same time:
 
-- First, together: 01, 02 and 05. They share no file.
+- First, together: 01, 02 and 05. They share no source file, but each may touch `mobile/README.md` and the catalogue test, so each merges `5.0/Main` before its pull request.
 - After 01: 03 and 04 (both on the main screen, which 01 changes). They barely share a file, but both may touch the `dining-layer` test, so each merges `5.0/Main` before its pull request.
 - After 02: 06. Its failure toasts are in `screens/room/people-sections.tsx` and `member-friend-button.tsx`, which 02 rewrites. The handoff planned 06 beside 02; this order replaces that, for this reason.
 - After 06: 07. Both change the 파티 form's send path (`screens/party/form/use-send.ts`), and 07 is the least urgent.
@@ -61,7 +61,7 @@ Decided on 2026-11-22:
 - 01: the lists go, and the 퀘스트 chip opens the Quest list on the whole screen (`/quests`); the ↗ button goes. This changes the agentic map design, which keeps a Friend whose whereabouts are not known in the map screen's Friend list as "the app's philosophy" (`.scratch/iteration-4/agentic-map-design.md:141`); ticket 01 changes those lines of the design with the screen, so that such a Friend is seen in the friend panel the 친구 chip opens. Confirmed after the review, for the reason that a Friend who shares their location is on the map as a marker anyway. The rows listed every Friend (`friend-list.tsx:120-122`), so a Friend who does not share it, as the three rows of `references/01-1-map-now.webp` ("위치 꺼짐"), is afterwards seen only in the friend panel.
 - 02: the A design of 2026-11-19 (three 40 pt icon buttons: new `usersPlus`, `crown`, new `userMinus` in the danger colour; title-only confirm dialogs). The dialogs' cancel says **취소**, as every confirm dialog and sheet of the app already does; the mock-up's "닫기" is not used, and no other screen's wording changes. The friend button's 수락 state stays a text button. The 요청됨 state is the `usersPlus` button dimmed and disabled (`references/02-3-requested-dimmed.png`).
 - 03: the three layers' on/off is stored per User, a layer turned on by the chat included (the last state is what comes back).
-- 04: the tab order of the mock-up; a restaurant card's "메뉴 보기" switches to the 식단 tab with that restaurant, today and the current meal; the menu screen's ✕ goes.
+- 04: the tab order of the mock-up; a restaurant card's "메뉴 보기" switches to the 식단 tab with that restaurant at the meal served next, as it opens the menu screen now; the menu screen's ✕ goes.
 - 05: a round marker with "나" in it inside a blue ring, smaller than the first mock-up (`references/05-2-own-marker-chosen.png`; the three options shown were `references/05-3-options-shown.png`). Neither the User's name nor their photo.
 - 06: received invitations, the Leader's sent invitations and both join request lists leave out ended 파티; every failure toast of the 파티 tab and the room carries the alert icon.
 - 07: a 공개 파티 has a capacity of 2 or more; a 비공개 파티 1 or more.

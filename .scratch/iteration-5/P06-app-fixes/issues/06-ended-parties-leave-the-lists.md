@@ -19,7 +19,7 @@ Received: "이미 기간이 지난, 하지만 아직 수락하지 않은 비공�
 
 ## What to build
 
-- The main server leaves Quests with no Sub Quest ahead (`subQuestsAheadWhere` at the injected clock's now) out of: the received invitations, a Leader's 초대 중, the User's sent join requests and a Leader's received join requests; a per-Quest list of an ended Quest is empty. The card of an invitation to an ended Quest is answered as one that waits no more (404), which the app already handles. The rows stay in the database.
+- The main server leaves Quests with no Sub Quest ahead (`subQuestsAheadWhere` at the injected clock's now; `InvitationsService` has `CLOCK`, `JoinRequestsService` gets it, `join-requests.service.ts:41-50`) out of: the received invitations, a Leader's 초대 중, the User's sent join requests and a Leader's received join requests; a per-Quest list of an ended Quest is empty. The card of an invitation to an ended Quest is answered as one that waits no more (404), which the app already handles. The rows stay in the database.
 - The badge, the 초대 tab's count, 알림's rows and the map's cards follow from the list.
 - Every failure toast of the 파티 tab and the room shows the alert icon, "이미 끝난 파티예요" included: the toasts shown for a refusal or a failure in `screens/party/` (`use-party-actions.ts`, `form/use-send.ts`, `form/photo-field.tsx`) and `screens/room/` (`use-room-actions.ts`, `people-sections.tsx`, `member-friend-button.tsx`). Success toasts keep ✓.
 
@@ -35,7 +35,7 @@ Received: "이미 기간이 지난, 하지만 아직 수락하지 않은 비공�
 - [ ] A Leader's 초대 중, the sent and the received join requests leave out an ended Quest. (Main server integration tests.)
 - [ ] `GET /quest-invitations/:id` answers an ended Quest's invitation as it answers a missing one. (Main server integration test.)
 - [ ] A refused accept shows "이미 끝난 파티예요" with the alert icon; a successful one keeps ✓. (App integration test, which fails before the change.)
-- [ ] The 초대 tab without the ended invitation, and a failure toast with its icon, on a phone with the mock build; the screens go to the orchestrator before the PR. (Emulator.)
+- [ ] A failure toast with its alert icon (an accept the mock refuses, added to the mock if it has none) on a phone with the mock build; the screens go to the orchestrator before the PR. (Emulator.) The mock answers a fixed list of invitations (`mobile/src/api/mock/client.ts:210`), so the 초대 tab without the ended invitation is checked on the Dev Server once the main server is released.
 - [ ] No native file changes; lint, format, and types pass on the app and the main server.
 
 ## Comments

@@ -25,7 +25,8 @@ As the mock-up draws it:
 - The bar reads 식단, 파티, 지도, 행사, 내 정보. 지도 in the middle is a round button: a navy circle with a white map icon while the map is in front, a light (`blue100`) circle with a navy icon on another tab. It is a tab, not an action: role tab, selected while the map is in front. 식단 uses the `meal` icon (`icon.tsx:51-56`) and, selected, the pill as the other tabs do.
 - The 식단 tab is the menu screen, without ✕. The menu screen moves into `(tabs)` and leaves `ABOVE_TABS`, so that only one `/menus` route exists. Its bottom clears the tab bar.
 - The + (올리기) goes. 파티 만들기 stays on the 파티 tab's "+ 만들기".
-- A restaurant card's "메뉴 보기" switches to the 식단 tab and shows that restaurant, today, at the current meal, also when the tab was opened before with other choices: the screen reads new params each time and scrolls to the restaurant each time. The 지도 button brings the User back to the map.
+- A restaurant card's "메뉴 보기" switches to the 식단 tab and shows that restaurant at the meal served next, as it does now (`nextMeal(now())` in `map-bottom.tsx:66-69`, so after dinner tomorrow's breakfast), also when the tab was opened before with other choices: the screen reads new params each time and scrolls to the restaurant each time. The 지도 button brings the User back to the map.
+- A plain press on the 식단 tab shows, the first time, the meal served next with no restaurant picked, as the menu screen does today when opened without a restaurant; afterwards the tab keeps what the User last chose, as the other tabs do.
 - The map stays the first route: Android's back and the edge swipe on another tab go to the map, as now.
 - The tab tour has five steps, one per tab in the bar's order. 식단's words are decided while building and shown at the screen review; the other four keep theirs.
 
@@ -41,7 +42,7 @@ As the mock-up draws it:
 
 - [ ] The bar reads 식단, 파티, 지도, 행사, 내 정보, with no 올리기; 지도 in the middle is a tab, selected while the map is in front. (Unit test of `BottomNav` and integration test, which fail before the change.)
 - [ ] The 식단 tab shows the menus with no ✕. (Integration test.)
-- [ ] "메뉴 보기" on a restaurant's card switches to 식단 with that restaurant, today and the current meal, and again with another restaurant on a second press. (Integration test, which fails before the change.)
+- [ ] "메뉴 보기" on a restaurant's card switches to 식단 with that restaurant at the meal served next, and again with another restaurant on a second press. (Integration test, which fails before the change.)
 - [ ] The 파티 tab's "+ 만들기" still opens 파티 만들기; back from 식단 goes to the map. (Integration tests.)
 - [ ] The tab tour points at the five tabs. (Integration test.)
 - [ ] The bar on the map and on 식단, and the "메뉴 보기" path, on a phone with the mock build; the screens go to the orchestrator before the PR, and to the design review. (Emulator.)
