@@ -240,7 +240,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
             onHeight={onInputHeight}
             focusKey={chat.started}
             placeholder={placeholderOf(chat)}
-            restore={restoreOf(chat.chat.bubbles)}
+            restore={restoreOf(chat.said)}
             onSend={send}
             beside={besideOf(chat, action, keyboardUp)}
             inCard={chat.framed}
@@ -291,7 +291,7 @@ function FramedParts(props: FramedProps): ReactElement {
 // "지난 대화 N ▾" while it shows: over the input while the keyboard is up, under the examples; else at the left with
 // the made Quest's line.
 function pastChatsAt({ chat, room, cardShown, inputTop, keyboardUp }: FramedProps): number | null {
-  if (mapChipOf(chat) === null || cardShown) {
+  if (mapChipOf(chat) === null || cardShown || room.pastChats !== true) {
     return null;
   }
   return keyboardUp ? inputTop + space[2] : pastChatsBottom(room);

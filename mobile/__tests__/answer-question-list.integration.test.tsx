@@ -158,6 +158,27 @@ describe("the pill's list of questions", () => {
   });
 });
 
+// Partitions: an earlier turn that failed, opened from the list (PR 451's review).
+describe('an earlier turn that failed', () => {
+  it('shows no 다시 시도 and puts no words back in the input, which act on the latest turn only', async () => {
+    const user = await openMain();
+    server.on('POST /assistant/messages', { status: 500, body: {}, afterMs: 500 });
+    await user.type(screen.getByLabelText(AI_INPUT), SHUTTLE);
+    await user.press(screen.getByRole('button', { name: '보내기' }));
+    await pass(500);
+    // The failed words stand in the input again; the next question is typed in their place.
+    await user.clear(screen.getByLabelText(AI_INPUT));
+    await ask(user, GATE, text(GATE_REPLY));
+    await openList(user);
+
+    await user.press(list().getByRole('button', { name: `${ASKED_AT}, ${SHUTTLE}, 답을 가져오지 못함` }));
+
+    expect(pill().getByText(SHUTTLE)).toBeVisible();
+    expect(screen.queryByRole('button', { name: '다시 시도' })).toBeNull();
+    expect(screen.getByLabelText(AI_INPUT)).toHaveDisplayValue('');
+  });
+});
+
 // Partitions: "＋ 새 대화" at the top; the list's own row; a message after it.
 describe('"새 대화"', () => {
   it('closes the answer for an empty, focused input under "지난 대화 1", whose list brings the conversation back', async () => {
