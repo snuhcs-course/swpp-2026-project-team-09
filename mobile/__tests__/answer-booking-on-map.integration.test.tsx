@@ -204,7 +204,7 @@ describe('a seat booked on the map', () => {
     expect(screen.queryByTestId('time-bar')).toBeNull();
     expect(screen.getByText(/^걸음 \d+분( ·|이라) /u)).toBeVisible();
     expect(within(screen.getByTestId('library-done')).getByRole('button', { name: '길 안내' })).toBeVisible();
-    expect(screen.getByTestId('answer-back')).toHaveStyle({ backgroundColor: color.surface });
+    expect(within(screen.getByTestId('answer-card')).getByRole('button', { name: '답 닫기' })).toBeVisible();
     await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '확인' }));
     await pass(500);
 

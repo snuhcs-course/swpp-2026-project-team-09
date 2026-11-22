@@ -5,14 +5,13 @@
  ******************************************************************************/
 
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
-import { StyleSheet, type TextStyle } from 'react-native';
+import { StyleSheet, TextInput, type TextStyle } from 'react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
-import { color, space } from '@/design-system';
-import { ANSWER_TOP, listsTop } from '@/screens/main/layout';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { askOnMap } from './support/answer-map';
+import { pass } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import { layStage } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
@@ -20,9 +19,10 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { sockets } from './support/fake-socket';
 
-// From the user's phone (P04 ticket 52): "←" is never inside the time bar but the round button under it, the bar's
-// words starting at its left edge; the docked card shows the handle and takes a drag, down closing the answer and up
-// raising the card; a drag down on the card takes the list of questions away first, as back does.
+// From the user's phone (P04 ticket 52): the answer has no "←"; it closes by ✕ at the right end of the card's top row,
+// a drag down, and Android's back, and "＋ 새 질문" is one press away on the caption row. The bar's words start at its
+// left edge. The docked card shows the handle and takes a drag, down closing the answer and up raising the card; a drag
+// down on the card takes the list of questions away first, as back does.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -39,6 +39,7 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const HANDLE = '답 크게 보기';
+const CLOSE = '답 닫기';
 // The conversation kept on the main screen once the answer is closed.
 const KEPT = /^이어서, 배고파, 민수랑 같이/u;
 const BAR = 96;
@@ -76,22 +77,39 @@ async function drag(gesture: string, dy: number): Promise<void> {
   });
 }
 
-// Partitions: an answer with a time bar laid out.
-describe('"←" with a time bar', () => {
-  it('is the round button directly under the bar, at the map’s left margin, and the bar’s words start at its edge', async () => {
+// Partitions: the docked card of an answer with a time bar; ✕ and "＋ 새 질문" pressed there.
+describe('the way out of the answer', () => {
+  it('is ✕ at the right end of the card’s top row, no "←", and the bar’s words start at its edge', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
     await lay('time-bar', BAR);
 
-    // The tests' status bar takes nothing.
-    expect(screen.getByTestId('answer-back')).toHaveStyle({
-      top: listsTop(0) + BAR + space[2],
-      left: ANSWER_TOP.side,
-      width: ANSWER_TOP.height,
-      backgroundColor: color.surface,
-    });
+    expect(screen.queryByTestId('answer-back')).toBeNull();
+    expect(screen.queryByRole('button', { name: '뒤로' })).toBeNull();
+    expect(within(screen.getByTestId('answer-card')).getByRole('button', { name: CLOSE })).toBeVisible();
     const words: unknown = screen.getByTestId('time-band-words').props.style;
     expect(StyleSheet.flatten<TextStyle>(Array.isArray(words) ? words : [words]).paddingLeft ?? 0).toBe(0);
+  });
+
+  it('closes the answer by ✕ and keeps the conversation', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+
+    await user.press(screen.getByRole('button', { name: CLOSE }));
+
+    expect(screen.queryByTestId('answer-card')).toBeNull();
+    expect(screen.getByRole('button', { name: KEPT })).toBeVisible();
+  });
+
+  it('starts a new question in one press of "＋ 새 질문" on the caption row, the cursor in the main map’s input', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    const focus = jest.spyOn(TextInput.prototype, 'focus');
+
+    await user.press(within(screen.getByTestId('answer-card')).getByRole('button', { name: '새 질문' }));
+    await pass(100);
+
+    expect(screen.queryByTestId('answer-card')).toBeNull();
+    expect(screen.getByRole('button', { name: KEPT })).toBeVisible();
+    expect(focus).toHaveBeenCalled();
   });
 });
 
@@ -119,13 +137,17 @@ describe('the docked card', () => {
     expect(screen.queryByTestId('answer-close-hint')).toBeNull();
   });
 
-  it('is raised by a drag up', async () => {
+  it('is raised by a drag up, the line under the grip then heading the list', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
     await lay('answer-card', CARD);
+
+    expect(screen.getByText(/^올리면 \d+곳 목록$/u)).toBeVisible();
 
     await drag('answer-dock-drag', -80);
 
     expect(screen.getByRole('button', { name: HANDLE })).toBeExpanded();
+    // Raised, the line under the grip heads the list: its count and its order.
+    expect(screen.getByText(/^\d+곳 · (걸음이 적은|일찍 여는) 순$/u)).toBeVisible();
   });
 });
 

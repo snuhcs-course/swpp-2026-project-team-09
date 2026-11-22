@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import * as projection from '@/map/projection';
@@ -89,7 +90,7 @@ describe("a made Quest's card, opened again", () => {
     expect(madeCard().getByText('민수에게 점심 초대를 보냈어요')).toBeVisible();
     expect(madeCard().getByText('11/17(화) 12:15 302동식당 · 수락하면 알려 드려요')).toBeVisible();
     expect(madeCard().getByText('302동식당에서 식사')).toBeVisible();
-    expect(madeCard().getByRole('button', { name: '닫기' })).toBeEnabled();
+    expect(madeCard().getByRole('button', { name: '답 ✕' })).toBeEnabled();
     expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
     expect(screen.queryByRole('tab', { name: '지도' })).toBeNull();
   });
@@ -108,17 +109,17 @@ describe("a made Quest's card, opened again", () => {
   });
 });
 
-// Partitions: "닫기"; Android's back button.
+// Partitions: ✕; Android's back button.
 describe("a made Quest's card, closed", () => {
   beforeEach(() => {
     givePhone({ permission: 'granted', position: ON_CAMPUS });
   });
 
-  it('closes with "닫기" to the everyday map, the flag and the line back', async () => {
+  it('closes with ✕ to the everyday map, the flag and the line back', async () => {
     const user = await openMain(KEPT_MADE);
     await pressMarker(user, FLAG);
 
-    await user.press(madeCard().getByRole('button', { name: '닫기' }));
+    await user.press(madeCard().getByRole('button', { name: '답 ✕' }));
     await pass(500);
 
     expect(screen.queryByTestId('made-quest-frame')).toBeNull();
@@ -126,7 +127,7 @@ describe("a made Quest's card, closed", () => {
     expect(madeLine()).toHaveTextContent(FLAG);
   });
 
-  it('closes with Android\'s back button as with "닫기"', async () => {
+  it("closes with Android's back button as with ✕", async () => {
     const back = holdBackButton();
     const user = await openMain(KEPT_MADE);
     await pressMarker(user, FLAG);

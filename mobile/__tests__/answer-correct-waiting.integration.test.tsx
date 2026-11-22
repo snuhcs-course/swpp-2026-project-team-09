@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -107,7 +108,7 @@ describe('a recalculation on its way', () => {
     });
     await takeMinSuOut(user);
 
-    await user.press(screen.getByRole('button', { name: '뒤로' }));
+    await user.press(screen.getByRole('button', { name: '답 닫기' }));
     await pass(HELD_MS);
 
     expect(screen.queryByTestId('answer-card')).toBeNull();

@@ -12,10 +12,13 @@ import { Animated, type LayoutChangeEvent, StyleSheet, View } from 'react-native
 import { GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, radius, shadow, space, text } from '@/design-system';
-import { backBottom } from './back-button';
+import { listsTop } from '../layout';
 import { DockGrip, useDockDrag } from './dock-drag';
+import { GRIP_ROW, GripRow, type GripWords } from './grip-row';
 import { useHeldHeight } from './held-height';
-import { CloseHint, type Raising, useRaiseDrag } from './raise-handle';
+import { CloseHint, type Raising, type Steps, useRaiseDrag } from './raise-handle';
+
+type Drag = ReturnType<typeof useRaiseDrag>;
 
 // Above the first of the card's parts.
 export const CONTENT_TOP = space[5];
@@ -31,7 +34,11 @@ interface FrameCardProps {
   hold?: boolean;
   // The handle that raises the card up to the pill and lowers it again. Left out, the card has one height.
   raising?: Raising;
-  // The time bar's height, under which "←" stands, which the raised card stops under. Left out, none.
+  // ✕ at the right end of the handle's row, which closes the answer (P04 ticket 52). Left out, none.
+  onClose?: () => void;
+  // The line under the grip: how to reach the answer's list, or how it is ordered. Left out or null, none.
+  gripWords?: GripWords | null;
+  // The time bar's height, which the raised card stops under. Left out, none.
   timeBarHeight?: number;
   // Nothing to read: one rounded row around the input, inset from the sides, with the handle (board 10).
   docked?: boolean;
@@ -58,8 +65,8 @@ const LOWERED: Raising = {
   },
 };
 
-// The content's height while raised: from under "←", which stands under the time bar when there is one, to the bar's
-// room, so that "←" stays in sight. Null until the stage is laid out.
+// The content's height while raised: from under the time bar, or the lists' top when there is none, to the bar's room.
+// Null until the stage is laid out.
 function useRaisedHeight(
   stageHeight: number | null,
   barRoom: number,
@@ -67,7 +74,7 @@ function useRaisedHeight(
   timeBarHeight: number,
 ): number | null {
   const { top } = useSafeAreaInsets();
-  const pillRoom = backBottom(top, timeBarHeight) + space[2];
+  const pillRoom = listsTop(top) + (timeBarHeight > 0 ? timeBarHeight + space[2] : 0);
   return stageHeight === null || raising === undefined
     ? null
     : Math.max(LEAST_CONTENT, stageHeight - pillRoom - barRoom);
@@ -81,7 +88,8 @@ const DOCK_SIDE = space[2] + 2;
 // The docked card: the handle, its content, when there is any, in one row over the input, and the input's room under
 // it. It tells its height from the stage's bottom, so that the camera keeps the answer clear of it. The whole card takes
 // a drag: down closes the answer, up raises the card (`useDockDrag`).
-function DockedCard({ barRoom, inputBottom = 0, onHeight, raising, testID, children }: FrameCardProps): ReactElement {
+function DockedCard(props: FrameCardProps): ReactElement {
+  const { barRoom, inputBottom = 0, onHeight, raising, testID, children } = props;
   const [inner, setInner] = useState(0);
   const [height, setHeight] = useState(0);
   const drag = useDockDrag(raising ?? LOWERED);
@@ -102,7 +110,12 @@ function DockedCard({ barRoom, inputBottom = 0, onHeight, raising, testID, child
           ]}
           testID={testID}
         >
-          <DockGrip raising={raising ?? LOWERED} />
+          <GripRow
+            handle={<DockGrip raising={raising ?? LOWERED} />}
+            onClose={props.onClose ?? null}
+            over={false}
+            words={props.gripWords ?? null}
+          />
           <View
             onLayout={({ nativeEvent }: LayoutChangeEvent) => {
               setInner(nativeEvent.layout.height);
@@ -120,33 +133,92 @@ function DockedCard({ barRoom, inputBottom = 0, onHeight, raising, testID, child
 }
 
 // The frame's card, attached to the bottom of the screen. Its content scrolls inside it. Raised, it is as tall as its
-// content, up to the pill. Only the lowered card tells its height, so that the camera fits the answer to the lowered card alone.
+// content, up to the pill; full, its top is just under the status bar. Only the lowered card tells its height, so that
+// the camera fits the answer to the lowered card alone, and keeps it while the card is raised or full.
 export function FrameCard(props: FrameCardProps): ReactElement {
   return props.docked === true ? <DockedCard {...props} /> : <OpenCard {...props} />;
 }
 
-// The handle's drag, with the raised height it stops at and the content's height it learns.
+// The content's height at full height (P04 ticket 52): the card's top just under the status bar, over the time bar and
+// "←", down to the bar's room. Null until the stage is laid out, or for a card without that step.
+function fullHeightOf(stageHeight: number | null, barRoom: number, raising: Raising | undefined): number | null {
+  return stageHeight === null || raising?.setFull === undefined ? null : Math.max(LEAST_CONTENT, stageHeight - barRoom);
+}
+
+// The handle's drag, with the raised and the full heights it stops at and the content's height it learns.
 function useCardDrag({ stageHeight, barRoom, raising, timeBarHeight = 0 }: FrameCardProps): {
   drag: ReturnType<typeof useRaiseDrag>;
   raisedHeight: number | null;
+  steps: Steps;
   setNatural: (height: number) => void;
   card: { height: number; setHeight: (height: number) => void };
 } {
   const [height, setHeight] = useState(0);
   const raisedHeight = useRaisedHeight(stageHeight, barRoom, raising, timeBarHeight);
-  // Raised, the card is as tall as its content, up to under the pill, and a drag goes no higher.
+  // Raised, the card is as tall as its content, up to under the pill, and a drag goes no higher but to full height.
   const [natural, setNatural] = useState<number | null>(null);
   const raisedTo = raisedHeight === null || natural === null ? raisedHeight : Math.min(raisedHeight, natural);
-  return { drag: useRaiseDrag(raising ?? LOWERED, raisedTo), raisedHeight, setNatural, card: { height, setHeight } };
+  const steps = { raised: raisedTo, full: fullHeightOf(stageHeight, barRoom, raising) };
+  return {
+    drag: useRaiseDrag(raising ?? LOWERED, steps),
+    raisedHeight,
+    steps,
+    setNatural,
+    card: { height, setHeight },
+  };
+}
+
+// The content's height at rest: full, the whole height, scrolling inside it; raised, up to the raised height; lowered,
+// up to about half the stage.
+function shownHeight(at: {
+  raised: boolean;
+  full: boolean;
+  raisedHeight: number | null;
+  fullHeight: number | null;
+  contentMax: number | null;
+}): { height: number } | { maxHeight: number | null } {
+  const { raised, full, raisedHeight, fullHeight, contentMax } = at;
+  if (raised && full && fullHeight !== null) {
+    return { height: fullHeight };
+  }
+  return { maxHeight: raised && raisedHeight !== null ? raisedHeight : contentMax };
+}
+
+// The handle's row with ✕ over the content's top, for a card with the handle or ✕ (P04 ticket 52).
+function rowShownOf({ raising, onClose }: FrameCardProps): boolean {
+  return raising !== undefined || onClose !== undefined;
+}
+
+function TopRow({ props, handle }: { props: FrameCardProps; handle: ReactElement }): ReactElement | null {
+  const { raising, onClose = null, gripWords = null } = props;
+  return rowShownOf(props) ? (
+    <GripRow handle={raising === undefined ? null : handle} onClose={onClose} over words={gripWords} />
+  ) : null;
+}
+
+// "놓으면 지도 화면으로 돌아가요" while letting go would close the answer.
+function DropHint({
+  drag,
+  cardHeight,
+  barRoom,
+}: {
+  drag: Drag;
+  cardHeight: number;
+  barRoom: number;
+}): ReactElement | null {
+  return drag.past && drag.drop !== null ? (
+    <CloseHint barRoom={barRoom} cardHeight={cardHeight} drop={drag.drop} />
+  ) : null;
 }
 
 function OpenCard(props: FrameCardProps): ReactElement {
   const { barRoom, stageHeight, onHeight, testID, hold = false, raising, children } = props;
   const contentMax = contentMaxOf(stageHeight, barRoom);
-  const { raised } = raising ?? LOWERED;
-  const { drag, raisedHeight, setNatural, card } = useCardDrag(props);
+  const { raised, full = false } = raising ?? LOWERED;
+  const { drag, raisedHeight, steps, setNatural, card } = useCardDrag(props);
   const { minHeight, onContentSizeChange, scroll } = useHeldHeight(hold);
-  const shown = { maxHeight: raised && raisedHeight !== null ? raisedHeight : contentMax };
+  const shown = shownHeight({ raised, full, raisedHeight, fullHeight: steps.full, contentMax });
+  const rowShown = rowShownOf(props);
   return (
     <>
       <Animated.View
@@ -164,10 +236,10 @@ function OpenCard(props: FrameCardProps): ReactElement {
         ]}
         testID={testID}
       >
-        {raising === undefined ? null : drag.handle}
+        <TopRow handle={drag.handle} props={props} />
         {children === null ? null : (
           <Animated.ScrollView
-            contentContainerStyle={[styles.content, { minHeight }]}
+            contentContainerStyle={[styles.content, { minHeight }, rowShown && styles.underRow]}
             keyboardShouldPersistTaps="handled"
             onContentSizeChange={(width, height) => {
               setNatural(height);
@@ -184,9 +256,7 @@ function OpenCard(props: FrameCardProps): ReactElement {
           </Animated.ScrollView>
         )}
       </Animated.View>
-      {drag.past && drag.drop !== null ? (
-        <CloseHint barRoom={barRoom} cardHeight={card.height} drop={drag.drop} />
-      ) : null}
+      <DropHint barRoom={barRoom} cardHeight={card.height} drag={drag} />
     </>
   );
 }
@@ -203,6 +273,8 @@ const styles = StyleSheet.create({
     boxShadow: shadow.sheet,
   },
   content: { gap: space[3], paddingTop: CONTENT_TOP, paddingHorizontal: space[4] },
+  // Under the handle's row, which stands over the content's top.
+  underRow: { paddingTop: GRIP_ROW + space[1] },
   dock: {
     position: 'absolute',
     right: DOCK_SIDE,

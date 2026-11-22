@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -78,7 +79,7 @@ async function inviteAndClose(): Promise<void> {
   const user = await askOnMap(server, MEAL_ANSWER_REPLY);
   await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' }));
   await pass(500);
-  await user.press(card().getByRole('button', { name: '닫기' }));
+  await user.press(card().getByRole('button', { name: '답 ✕' }));
   await pass(500);
 }
 
@@ -102,7 +103,7 @@ describe('the flag of a made Quest', () => {
     expect(flag.getByText('11월 17일 (화) · 수락 0/1', { includeHiddenElements: true })).toBeOnTheScreen();
   });
 
-  it('stands where the answer was after "만들고 초대 보내기" and "닫기", the phone keeping the Quest\'s id', async () => {
+  it('stands where the answer was after "만들고 초대 보내기" and ✕, the phone keeping the Quest\'s id', async () => {
     await inviteAndClose();
 
     expect(mapThings()).toContain(FLAG);

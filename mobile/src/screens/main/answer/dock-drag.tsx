@@ -9,6 +9,7 @@ import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import { Gesture, type PanGesture } from 'react-native-gesture-handler';
 import { color, radius, space } from '@/design-system';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
+import { GRIP_ROW, GRIP_SIDE } from './grip-row';
 import { CLOSE_LABEL, FLING_S, RAISE_LABEL, type Raising, SETTLE_MS } from './raise-handle';
 
 // The docked card's drag (P04 ticket 52): the whole card takes it, the input and the main button beside it being
@@ -91,7 +92,7 @@ export function useDockDrag({ setRaised, close, layer = null, onPast }: Raising)
   };
 }
 
-// The docked card's handle, the raised card's grip: a press raises the card.
+// The docked card's handle, the raised card's grip, in the middle of the handle's row: a press raises the card.
 export function DockGrip({ raising }: { raising: Raising }): ReactElement {
   const { setRaised, close } = raising;
   return (
@@ -117,6 +118,14 @@ export function DockGrip({ raising }: { raising: Raising }): ReactElement {
 }
 
 const styles = StyleSheet.create({
-  handle: { alignItems: 'center', paddingTop: space[2] },
+  handle: {
+    position: 'absolute',
+    top: 0,
+    right: GRIP_SIDE,
+    left: GRIP_SIDE,
+    alignItems: 'center',
+    height: GRIP_ROW,
+    paddingTop: space[2],
+  },
   grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
 });

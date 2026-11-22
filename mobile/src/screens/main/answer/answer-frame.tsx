@@ -25,10 +25,10 @@ import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
 import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import { AI_INPUT, type Room } from '../layout';
-import { AnswerCaption } from './answer-caption';
+import { AnswerCaption, listWordsOf } from './answer-caption';
 import { CaptionQuestions, type QuestionsOpen, Typing } from './card-questions';
+import { backOf, layerOf, useCardState } from './card-state';
 import { KeptCards } from './kept-scene';
-import { BackButton } from './back-button';
 import { WaitingReply } from './failed-and-waiting';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { MarkCard } from './mark-card';
@@ -68,6 +68,14 @@ interface AnswerCardProps {
 function AnswerCard(props: AnswerCardProps): ReactElement {
   const { control, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, focus, timeBarHeight, list } = props;
   const card = { barRoom, onHeight, raising, stageHeight, timeBarHeight, inputBottom: props.inputBottom };
+  // ✕ closes the answer as "←" did, and the line under the grip says how to reach the answer's list (P04 ticket 52).
+  const top = { onClose: raising.close, gripWords: listWordsOf(control) };
+  // "＋ 새 질문": the answer closed as ✕ closes it, then the cursor in the main map's input.
+  const askNew = (): void => {
+    list.close();
+    onClose();
+    control.focusInput();
+  };
   const { bubbles, waiting } = control.chat;
   const after = turnOf(bubbles)?.after ?? [];
   const contentMax = contentMaxOf(stageHeight, barRoom);
@@ -78,15 +86,20 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
     raising.setRaised(true);
   };
   return (
-    <FrameCard {...card} docked={rest !== null} hold={waiting} testID="answer-card">
+    <FrameCard {...card} {...top} docked={rest !== null} hold={waiting} testID="answer-card">
       {typing || control.answer.menuFor !== null ? null : (
-        <AnswerCaption control={control} listOpen={list.open} onList={list.toggle} />
+        <AnswerCaption control={control} listOpen={list.open} onAskNew={askNew} onList={list.toggle} />
       )}
       {typing || list.open ? null : <KeptCards cardActions={props.cardActions} control={control} />}
       {typing ? (
         <Typing control={control} />
       ) : list.open ? (
-        <CaptionQuestions control={control} list={list} onClose={onClose} />
+        <CaptionQuestions
+          control={control}
+          list={list}
+          maxHeight={raising.raised ? (stageHeight ?? undefined) : undefined}
+          onClose={onClose}
+        />
       ) : rest !== null && reply !== undefined ? (
         <DockedAnswer bubble={reply} control={control} focus={focus} onClose={onClose} onRaise={raise} rest={rest} />
       ) : (
@@ -139,62 +152,6 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
       {waiting ? <WaitingReply onStop={control.chat.stop} /> : <LeaveRow control={control} />}
     </>
   );
-}
-
-interface CardState {
-  raised: boolean;
-  setRaised: (raised: boolean) => void;
-  lower: () => void;
-  list: QuestionsOpen;
-}
-
-// Whether the card is raised, which the control holds so that a press on the map raises it too, and whether the list
-// of questions is open in the card.
-// The list closes when the turn on screen changes (`turn`, its last bubble's id): a message sent, a reply come, or a
-// question pressed while typing, so that the card shows that turn (PR 479's review).
-function useCardState({ raised, setRaised }: ChatSheetControl['card'], turn: number | null): CardState {
-  const [open, setOpen] = useState(false);
-  const [seen, setSeen] = useState(turn);
-  if (seen !== turn) {
-    setSeen(turn);
-    setOpen(false);
-  }
-  const lower = useCallback((): void => {
-    setRaised(false);
-  }, [setRaised]);
-  const toggle = useCallback((): void => {
-    setOpen((last) => !last);
-  }, []);
-  const close = useCallback((): void => {
-    setOpen(false);
-  }, []);
-  return { raised, setRaised, lower, list: { open, toggle, close } };
-}
-
-interface BackLayers {
-  list: QuestionsOpen;
-  control: ChatSheetControl;
-  raised: boolean;
-  lower: () => void;
-  leave: () => void;
-}
-
-// What back takes away before the card's height: the list of questions, a mark's card, or a restaurant's menu (back to
-// the list of candidates); null when none is open. A drag down on the card takes it away first too (P04 ticket 52).
-function layerOf(list: QuestionsOpen, control: ChatSheetControl): (() => void) | null {
-  if (list.open) {
-    return list.close;
-  }
-  if (control.mark !== null) {
-    return control.closeMark;
-  }
-  return control.answer.menuFor === null ? null : control.answer.closeMenu;
-}
-
-// What Android's back takes away, one layer a press: the layer over the card (`layerOf`), the raised card, then the
-// answer.
-function backOf({ list, control, raised, lower, leave }: BackLayers): () => void {
-  return layerOf(list, control) ?? (raised ? lower : leave);
 }
 
 interface FramedProps {
@@ -280,8 +237,11 @@ function Framed(props: FramedProps): ReactElement {
   const { keep } = control.howAbout;
   const title = control.howAbout.title;
   const leave = title === null ? close : keep;
-  const { raised, setRaised, lower, list } = useCardState(control.card, chat.bubbles.at(-1)?.id ?? null);
-  const back = backOf({ list, control, raised, lower, leave });
+  const { raised, setRaised, full, setFull, unfull, lower, list } = useCardState(
+    control.card,
+    chat.bubbles.at(-1)?.id ?? null,
+  );
+  const back = backOf({ list, control, raised, lower, unfull, leave });
   useBackToClose(useIsFocused(), profileShown ? profile.hide : back, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   const focus = useBandFocus();
@@ -294,7 +254,6 @@ function Framed(props: FramedProps): ReactElement {
     <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
       <View style={[styles.top, past && styles.faded]}>
         {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
-        <BackButton onPress={leave} under={bar.height} />
       </View>
       <AnswerCard
         timeBarHeight={bar.height}
@@ -307,7 +266,7 @@ function Framed(props: FramedProps): ReactElement {
         list={list}
         onClose={close}
         onHeight={onHeight}
-        raising={{ raised, setRaised, close: leave, layer: layerOf(list, control), onPast: setPast }}
+        raising={{ raised, setRaised, full, setFull, close: leave, layer: layerOf(list, control), onPast: setPast }}
         stageHeight={stageHeight}
       />
       {keyboardUp ? null : <OpenMark control={control} focus={focus} onClose={close} stage={stage} />}

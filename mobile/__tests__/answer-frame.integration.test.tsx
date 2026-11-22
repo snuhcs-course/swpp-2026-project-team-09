@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -25,7 +26,7 @@ import { SENT_CAPABILITIES } from './support/capabilities';
 import { CONTINUE } from './support/questions';
 
 // The answer frame (P02 tickets 01 and 04) against the fake main server: one card at the bottom holds the reply, under a
-// small caption of what the User asked, and "←" at the top left closes it (rules 2 and 5 of the 2026-11-22 redesign).
+// small caption of what the User asked, and its ✕ closes it (rule 5 of the 2026-11-22 redesign, P04 ticket 52).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -46,7 +47,7 @@ const REPLY = '오늘 학생회관식당 점심은 제육볶음이에요.';
 const ANSWERED = { status: 200, body: { text: REPLY, mapButtons: [], cards: [], proposal: null } };
 const FAILED = '답을 가져오지 못했어요.';
 const WAITING = '보는 중';
-const CLOSE = '뒤로';
+const CLOSE = '답 닫기';
 // PHONE_NOW, 04:00 UTC, in Korea.
 const ASKED_AT = '13:00';
 const NOTICE = '대화 내용은 AI 제공자에게 전송돼요';
@@ -108,7 +109,7 @@ const GIVING_WAY = [FRIEND_PILL, FULL_SCREEN, LAYERS, '확대'];
 
 // Partitions: the conversation empty, waiting, answered, and failed.
 describe('the frame', () => {
-  it('shows the words as the caption of the card, waiting with 보는 중, 뒤로, and no 새 대화 or chat sheet', async () => {
+  it('shows the words as the caption of the card, waiting with 보는 중, ✕, and no 새 대화 or chat sheet', async () => {
     const user = await openMain();
 
     await send(user, ASKED);
@@ -228,7 +229,7 @@ describe('the request', () => {
 });
 
 describe('closing the frame', () => {
-  it('hides the frame with 뒤로, keeping the conversation and a reply on its way, which "이어서" goes on with', async () => {
+  it('hides the frame with ✕, keeping the conversation and a reply on its way, which "이어서" goes on with', async () => {
     const user = await openMain();
     await send(user, ASKED);
 

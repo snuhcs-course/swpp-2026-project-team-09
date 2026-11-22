@@ -25,7 +25,7 @@ import { CONTINUE, reopenAnswer } from './support/questions';
 
 // P04 ticket 10 against the fake main server, as the 2026-11-22 redesign has it: the caption of what was asked opens,
 // in the answer's card, the list of every question kept (board 16), whose rows bring their answers back to the map;
-// what is typed on the main map starts a new conversation and keeps the old one in that list (rule 4); "←" and back
+// what is typed on the main map starts a new conversation and keeps the old one in that list (rule 4); ✕ and back
 // close the answer in every state (rule 2).
 
 jest.mock('expo-location');
@@ -54,7 +54,7 @@ const PLAN_MARK = '302동식당 · 12:15 점심';
 // PHONE_NOW, 04:00 UTC, in Korea.
 const ASKED_AT = '13:00';
 const HANDLE = '답 크게 보기';
-const BACK = '뒤로';
+const BACK = '답 닫기';
 
 let server: FakeServer;
 let back: () => Promise<boolean>;
@@ -121,7 +121,7 @@ function rowNames(): string[] {
 }
 
 function expectClosed(): void {
-  expect(screen.queryByTestId('answer-back')).toBeNull();
+  expect(screen.queryByTestId('answer-close')).toBeNull();
   expect(screen.queryByTestId('answer-card')).toBeNull();
 }
 
@@ -195,7 +195,7 @@ describe('an earlier turn that failed', () => {
   });
 });
 
-// The conversation of three questions closed with "←", then a question typed on the main map.
+// The conversation of three questions closed with ✕, then a question typed on the main map.
 async function askedAnew(): Promise<User> {
   const user = await askedThrice();
   await user.press(screen.getByRole('button', { name: BACK }));
@@ -253,7 +253,7 @@ describe('"＋ 새 질문" under the caption\'s list', () => {
     expect(list().getByRole('button', { name: '새 질문' })).toBeVisible();
   });
 
-  it('closes the answer as "←" does, keeps the conversation, and puts the cursor in the main map\'s input', async () => {
+  it("closes the answer as ✕ does, keeps the conversation, and puts the cursor in the main map's input", async () => {
     const user = await askedThrice();
     await openList(user);
     const focus = jest.spyOn(TextInput.prototype, 'focus');
@@ -281,9 +281,9 @@ describe('"＋ 새 질문" under the caption\'s list', () => {
   });
 });
 
-// Partitions: "←" with the card raised, with the keyboard up, with the list open; back through each layer.
+// Partitions: ✕ with the card raised, with the keyboard up, with the list open; back through each layer.
 describe('closing the answer', () => {
-  it('closes with "←" while the card is raised, the keyboard is up, or the list is open', async () => {
+  it('closes with ✕ while the card is raised, the keyboard is up, or the list is open', async () => {
     const user = await askedThrice();
 
     await user.press(screen.getByRole('button', { name: HANDLE }));

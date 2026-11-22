@@ -4,13 +4,13 @@
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, within } from '@testing-library/react-native';
 import { StyleSheet, type ViewStyle } from 'react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
-import { space } from '@/design-system';
-import { ANSWER_TOP, listsTop } from '@/screens/main/layout';
+import { listsTop } from '@/screens/main/layout';
 import { pass, screen } from './support/app';
 import { holdBackButton } from './support/back';
 import { KEYBOARD, showKeyboard } from './support/keyboard';
@@ -19,7 +19,7 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 
-// P02 ticket 38: the answer card's handle raises the card up to under "←" and lowers it again, by a press or a drag,
+// P02 ticket 38: the answer card's handle raises the card up to under the time bar and lowers it again, by a press or a drag,
 // and Android's back button lowers a raised card first. The mocks answer.
 
 jest.mock('expo-location');
@@ -32,8 +32,9 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 const HANDLE = '답 크게 보기';
 const ASKED = '식사 메뉴 추천';
 const STAGE = 760;
-// What the round "←" keeps from the stage's top, the answer having no time bar: the tests' status bar takes nothing.
-const TOP_ROOM = listsTop(0) + ANSWER_TOP.height + space[2];
+// Where the raised card stops, the answer having no time bar: the lists' top, the tests' status bar taking nothing
+// (P04 ticket 52: no "←" stands there any more).
+const TOP_ROOM = listsTop(0);
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
@@ -96,7 +97,7 @@ describe("the answer card's handle", () => {
     expect(contentStyle().height).toBeUndefined();
   });
 
-  it('raises the card as tall as its content, up to under "←", by a press, and lowers it by another', async () => {
+  it('raises the card as tall as its content, up to the lists’ top, by a press, and lowers it by another', async () => {
     const user = await framed();
     const lowered = Number(contentStyle().maxHeight);
 
@@ -105,7 +106,7 @@ describe("the answer card's handle", () => {
     expect(handle()).toBeExpanded();
     expect(contentStyle().maxHeight).toBe(lowered + STAGE / 2 - TOP_ROOM);
     expect(contentStyle().height).toBeUndefined();
-    expect(button('뒤로')).toBeVisible();
+    expect(button('답 닫기')).toBeVisible();
 
     await press(user, HANDLE);
 
@@ -191,7 +192,7 @@ describe("Android's back button", () => {
   });
 });
 
-// P04 ticket 12: below the lowered card, a drag down closes the answer as "←" does.
+// P04 ticket 12: below the lowered card, a drag down closes the answer as ✕ does.
 async function layCard(height: number): Promise<void> {
   await fireEvent(screen.getByTestId('answer-card'), 'layout', {
     nativeEvent: { layout: { x: 0, y: 0, width: 390, height } },

@@ -11,6 +11,8 @@ import { Animated, type LayoutChangeEvent, Pressable, StyleSheet, Text, View } f
 import { Gesture, GestureDetector, type PanGesture } from 'react-native-gesture-handler';
 import { color, radius, space, text } from '@/design-system';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
+import { heightOf, type Level, type LevelHeights, levelAt, levelOf, rangeOf } from './card-levels';
+import { GRIP_ROW, GRIP_SIDE } from './grip-row';
 
 export const RAISE_LABEL = '답 크게 보기';
 export const CLOSE_LABEL = '답 닫기';
@@ -22,10 +24,14 @@ const PAN_STARTS = 8;
 export const FLING_S = 0.15;
 export const SETTLE_MS = 180;
 
-// The answer card's two heights, lowered and raised, and below them the answer closed (P04 ticket 12).
+// The answer card's heights, lowered, raised, and full (`card-levels.ts`), and below them the answer closed (P04 tickets
+// 12 and 52).
 export interface Raising {
   raised: boolean;
   setRaised: (raised: boolean) => void;
+  // The raised card taken one step further up, its top just under the status bar. Left out, the card has no such step.
+  full?: boolean;
+  setFull?: (full: boolean) => void;
   // Closes the answer as ✕ does: a drag down from the lowered card past half its height. Left out, none.
   close?: () => void;
   // The card is dragged below its lowered height, or no longer.
@@ -35,7 +41,7 @@ export interface Raising {
   layer?: (() => void) | null;
 }
 
-// The handle's drag between the two heights. `content` is the content's height while it is dragged or settling, null
+// The handle's drag between the heights. `content` is the content's height while it is dragged or settling, null
 // otherwise.
 interface Drag {
   content: Animated.Value | null;
@@ -69,28 +75,41 @@ interface Closing {
   raised: boolean;
 }
 
+// The raised and the full content's heights, null until the stage is laid out; `full` is null without that step.
+export interface Steps {
+  raised: number | null;
+  full: number | null;
+}
+
 interface PanInput {
   heights: Heights;
   content: Animated.Value;
-  raisedHeight: number | null;
+  steps: Steps;
+  // Where the card stands as the drag starts.
+  level: Level;
   onStart: () => void;
-  onLetGo: (raised: boolean) => void;
+  onLetGo: (level: Level) => void;
   closing: Closing | null;
+}
+
+function levelHeights({ lowered, from }: Heights, { raised, full }: Steps): LevelHeights {
+  return { lowered: lowered.current, raised: raised ?? from.current, full };
 }
 
 function clamp(value: number, low: number, high: number): number {
   return Math.min(high, Math.max(low, value));
 }
 
-// A drag up or down on the handle: the content follows the finger between the two heights, and the let-go point, a
-// fling carried on, picks the nearer height. Started on the lowered card, a drag down goes on below it: the card
-// follows the finger, and let go past half its height the answer closes; before, it goes back (P04 ticket 12).
-function panOf({ heights, content, raisedHeight, onStart, onLetGo, closing }: PanInput): PanGesture {
+// A drag up or down on the handle: the content follows the finger one step either way from where it started
+// (`rangeOf`), and the let-go point, a fling carried on, picks the nearer height (`levelAt`). Started on the lowered card,
+// a drag down goes on below it: the card follows the finger, and let go past half its height the answer closes;
+// before, it goes back (P04 ticket 12).
+function panOf({ heights, content, steps, level, onStart, onLetGo, closing }: PanInput): PanGesture {
   const { shown, lowered, from, card } = heights;
   return Gesture.Pan()
     .withTestId('answer-card-handle')
     .runOnJS(true)
-    .enabled(raisedHeight !== null)
+    .enabled(steps.raised !== null)
     .activeOffsetY([-PAN_STARTS, PAN_STARTS])
     .onStart(() => {
       from.current = shown.current;
@@ -102,7 +121,8 @@ function panOf({ heights, content, raisedHeight, onStart, onLetGo, closing }: Pa
     })
     .onUpdate(({ translationY }) => {
       const at = from.current - translationY;
-      content.setValue(clamp(at, lowered.current, raisedHeight ?? from.current));
+      const { low, high } = rangeOf(level, levelHeights(heights, steps));
+      content.setValue(clamp(at, low, high));
       if (closing?.closable.current === true) {
         const below = Math.max(0, lowered.current - at);
         closing.drop.setValue(below);
@@ -115,12 +135,13 @@ function panOf({ heights, content, raisedHeight, onStart, onLetGo, closing }: Pa
         closing.onClose();
         return;
       }
-      onLetGo(at > (lowered.current + (raisedHeight ?? 0)) / 2);
+      onLetGo(levelAt(level, at, levelHeights(heights, steps)));
     });
 }
 
+// A press raises the lowered card, and takes a raised or a full card one step down.
 function Handle({ pan, raising }: { pan: PanGesture; raising: Raising }): ReactElement {
-  const { raised, setRaised, close } = raising;
+  const { raised, setRaised, full = false, setFull, close } = raising;
   return (
     <GestureDetector gesture={pan}>
       <Pressable
@@ -135,6 +156,10 @@ function Handle({ pan, raising }: { pan: PanGesture; raising: Raising }): ReactE
           }
         }}
         onPress={() => {
+          if (full && setFull !== undefined) {
+            setFull(false);
+            return;
+          }
           setRaised(!raised);
         }}
         style={styles.handle}
@@ -175,7 +200,6 @@ export function CloseHint({
   );
 }
 
-// `raisedHeight`: the content's height while raised, null until the stage is laid out.
 // What a drag below the lowered card holds: how far it is, whether it is below at all, and the closing it passes on.
 function useClosing(raising: Raising, setDragging: (dragging: boolean) => void): Closing | null {
   const drop = useRef(new Animated.Value(0)).current;
@@ -210,35 +234,36 @@ function useClosing(raising: Raising, setDragging: (dragging: boolean) => void):
   };
 }
 
-// `raisedHeight`: the content's height while raised, null until the stage is laid out.
-export function useRaiseDrag(raising: Raising, raisedHeight: number | null): Drag {
+export function useRaiseDrag(raising: Raising, steps: Steps): Drag {
   const reduceMotion = useReduceMotion();
   const [dragging, setDragging] = useState(false);
   const content = useRef(new Animated.Value(0)).current;
   const heights: Heights = { shown: useRef(0), lowered: useRef(0), from: useRef(0), card: useRef(0) };
   const closing = useClosing(raising, setDragging);
-  const settle = (letGo: boolean): void => {
+  const level = levelOf(raising.raised, raising.full === true);
+  const settle = (letGo: Level): void => {
     // Let go lower on a raised card with a layer over it, the layer goes and the card stays raised.
-    const layer = !letGo && raising.raised ? (raising.layer ?? null) : null;
+    const layer = letGo === 'lowered' && level === 'raised' ? (raising.layer ?? null) : null;
     layer?.();
-    const raised = letGo || layer !== null;
+    const to = layer === null ? letGo : 'raised';
     const done = (): void => {
-      raising.setRaised(raised);
+      raising.setRaised(to !== 'lowered');
+      raising.setFull?.(to === 'full');
       setDragging(false);
       closing?.onPast(false);
     };
     closing?.drop.setValue(0);
-    if (reduceMotion || raisedHeight === null) {
+    if (reduceMotion || steps.raised === null) {
       done();
       return;
     }
-    const toValue = raised ? raisedHeight : heights.lowered.current;
+    const toValue = heightOf(to, levelHeights(heights, steps));
     Animated.timing(content, { toValue, duration: SETTLE_MS, useNativeDriver: false }).start(done);
   };
   const onStart = (): void => {
     setDragging(true);
   };
-  const pan = panOf({ heights, content, raisedHeight, onStart, onLetGo: settle, closing });
+  const pan = panOf({ heights, content, steps, level, onStart, onLetGo: settle, closing });
   const past = closing?.past === true;
   return {
     content: dragging ? content : null,
@@ -258,14 +283,14 @@ export function useRaiseDrag(raising: Raising, raisedHeight: number | null): Dra
 }
 
 const styles = StyleSheet.create({
+  // Between ✕'s room at the right and as much at the left, so that the grip stays centred and never covers ✕.
   handle: {
     position: 'absolute',
     top: 0,
-    right: 0,
-    left: 0,
-    zIndex: 1,
+    right: GRIP_SIDE,
+    left: GRIP_SIDE,
     alignItems: 'center',
-    height: space[6],
+    height: GRIP_ROW,
     paddingTop: space[2],
   },
   grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },

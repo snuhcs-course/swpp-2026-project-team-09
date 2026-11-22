@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -168,7 +169,7 @@ describe("the AI input's own parts while the keyboard is up", () => {
   it('show the hidden answer frame again by the chip "이어서"', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
-    await press(user, '뒤로');
+    await press(user, '답 닫기');
     await showKeyboard(KEYBOARD);
 
     await reopenAnswer(user);
@@ -195,7 +196,7 @@ describe('the examples over the keyboard', () => {
 
 // Partitions: what the scrim stands over and under; a press on it.
 describe('a press beside the AI input in the answer frame', () => {
-  it('lands, while the keyboard is up, on a scrim over the map, under the card, "뒤로", and the bar', async () => {
+  it('lands, while the keyboard is up, on a scrim over the map, under the card, ✕, and the bar', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
 
@@ -203,7 +204,7 @@ describe('a press beside the AI input in the answer frame', () => {
 
     const scrim = button(SCRIM);
     expect(drawnOver(scrim, mapTouches())).toBe(true);
-    for (const over of [screen.getByTestId('answer-card'), button('뒤로')]) {
+    for (const over of [screen.getByTestId('answer-card'), button('답 닫기')]) {
       expect(drawnOver(over, scrim)).toBe(true);
     }
     expect(drawnOver(screen.getByTestId('ai-input'), scrim)).toBe(true);
@@ -255,15 +256,15 @@ describe("the conversation's questions in the answer's card", () => {
   });
 });
 
-// Partitions: "뒤로"; a new question typed on the main map.
+// Partitions: ✕; a new question typed on the main map.
 describe('leaving the answer and asking anew', () => {
-  it('closes the frame by "뒤로", keeping the conversation, as before', async () => {
+  it('closes the frame by ✕, keeping the conversation, as before', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
     await showKeyboard(KEYBOARD);
     quietDismiss();
 
-    await press(user, '뒤로');
+    await press(user, '답 닫기');
 
     expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(screen.getByRole('button', { name: EARLIER })).toBeVisible();
@@ -272,7 +273,7 @@ describe('leaving the answer and asking anew', () => {
   it('starts a new conversation by what is typed on the main map, the one before among its questions', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
-    await press(user, '뒤로');
+    await press(user, '답 닫기');
 
     await ask(user, '배고파');
 

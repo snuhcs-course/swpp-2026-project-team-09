@@ -18,13 +18,15 @@ interface AnswerCaptionProps {
   // Whether the list of questions is open in the card.
   listOpen: boolean;
   onList: () => void;
+  // "＋ 새 질문" at the row's right end (P04 ticket 52).
+  onAskNew: () => void;
 }
 
-// What the caption's right side says for a meal answer with a Plan, one place or many ("올리면 1곳 목록"): while
-// docked, a press that raises the card to the list of every place, the only way the docked card is raised; while
-// raised, how that list is ordered. For a booking on the map, while lowered, a press that raises the card to the room,
+// What the line under the card's grip says for a meal answer with a Plan, one place or many ("올리면 1곳 목록"): while
+// docked, a press that raises the card to the list of every place; while raised, the list's heading, its count and how
+// it is ordered ("11곳 · 걸음이 적은 순"). For a booking on the map, while lowered, a press that raises the card to the room,
 // the seat, and the rest (P01 ticket 03). Null for any other answer.
-function listWordsOf({
+export function listWordsOf({
   answer: shown,
   card,
   booking,
@@ -44,8 +46,9 @@ function listWordsOf({
     return null;
   }
   const count = listedCount(shown.answer);
+  // Raised, the list's heading: how many places and how they are ordered (P04 ticket 52).
   if (card.raised) {
-    return { words: listOrderWords(shown.answer), onPress: null };
+    return { words: `${String(count)}곳 · ${listOrderWords(shown.answer)}`, onPress: null };
   }
   return {
     words: `올리면 ${String(count)}곳 목록`,
@@ -66,25 +69,31 @@ function askedOf({ howAbout, chat }: ChatSheetControl): string | null {
   return turn === null || turn.after.some(({ id }) => id === turn.id) ? null : turn.asked;
 }
 
-// The right side: a press that raises the card, in the link colour with an up-chevron, or the list's order in words.
-function ListWords({ list }: { list: NonNullable<ReturnType<typeof listWordsOf>> }): ReactElement {
-  return list.onPress === null ? (
-    <Text style={styles.side}>{list.words}</Text>
-  ) : (
-    <Pressable accessibilityRole="button" hitSlop={space[3]} onPress={list.onPress} style={styles.link}>
-      <Text style={styles.linkWords}>{list.words}</Text>
-      <Icon color={color.blue600} name="chevronUp" size={14} />
+// "＋ 새 질문", one press from the docked card (P04 ticket 52): what the list of questions' own "＋ 새 질문" does.
+function AskNew({ onPress }: { onPress: () => void }): ReactElement {
+  return (
+    <Pressable
+      accessibilityLabel="새 질문"
+      accessibilityRole="button"
+      hitSlop={CHIP_SLOP}
+      onPress={onPress}
+      style={({ pressed }) => [styles.askNew, pressed && styles.pressed]}
+      testID="answer-ask-new"
+    >
+      <Icon color={color.snuBlue} name="plus" size={14} />
+      <Text numberOfLines={1} style={styles.askNewWords}>
+        새 질문
+      </Text>
     </Pressable>
   );
 }
 
 // What the User asked, at the top of the answer's card (rule 5 of the 2026-11-22 redesign), or the building asked about
 // over the answer ("여기면 어때?"), as a chip with the history mark and "⌄" so that it reads as a control (P04 ticket 44):
-// a press opens the conversation's earlier questions in the card. A meal answer with several Plans says at the right how
-// to reach the list of them. None when the User asked nothing.
-export function AnswerCaption({ control, listOpen, onList }: AnswerCaptionProps): ReactElement | null {
+// a press opens the conversation's earlier questions in the card. "＋ 새 질문" stands at the row's right end, and the chip
+// gives way first, cut with "…"; while the list is open, the list's own header has it. None when the User asked nothing.
+export function AnswerCaption({ control, listOpen, onList, onAskNew }: AnswerCaptionProps): ReactElement | null {
   const asked = askedOf(control);
-  const list = listWordsOf(control);
   if (asked === null) {
     return null;
   }
@@ -105,7 +114,7 @@ export function AnswerCaption({ control, listOpen, onList }: AnswerCaptionProps)
         </Text>
         <Icon color={color.inkMuted} name={listOpen ? 'chevronUp' : 'chevronDown'} size={14} />
       </Pressable>
-      {list === null ? null : <ListWords list={list} />}
+      {listOpen ? null : <AskNew onPress={onAskNew} />}
     </View>
   );
 }
@@ -128,7 +137,14 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.6 },
   words: { ...text.label, flexShrink: 1, color: color.inkMuted },
-  side: { ...text.caption, marginLeft: 'auto', color: color.inkSubtle },
-  link: { flexDirection: 'row', alignItems: 'center', gap: 2, marginLeft: 'auto' },
-  linkWords: { ...text.caption, color: color.blue600 },
+  // As high as the chip, at the row's right end; it never shrinks.
+  askNew: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[1],
+    height: CHIP_HEIGHT,
+    marginLeft: 'auto',
+    paddingHorizontal: space[2],
+  },
+  askNewWords: { ...text.label, color: color.snuBlue },
 });

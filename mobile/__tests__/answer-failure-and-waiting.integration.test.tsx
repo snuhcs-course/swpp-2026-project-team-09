@@ -6,6 +6,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -173,11 +174,11 @@ describe('the words kept after a failure, in the frame (n16)', () => {
 // Rule 4 of the 2026-11-22 redesign: what is sent from the main map starts a new conversation, and the one kept goes
 // among the earlier ones, whose questions the caption's list holds.
 describe('the words kept after a failure, on the main map (n16)', () => {
-  it('stay when the frame is hidden with ←, and are sent from the map in a new conversation', async () => {
+  it('stay when the frame is hidden with ✕, and are sent from the map in a new conversation', async () => {
     const user = await failedInFrame();
     server.on('POST /assistant/messages', ANSWERED);
 
-    await user.press(screen.getByRole('button', { name: '뒤로' }));
+    await user.press(screen.getByRole('button', { name: '답 닫기' }));
     expect(input()).toHaveDisplayValue(ASKED);
     expect(input()).toHaveProp('placeholder', '무엇이든 물어보세요');
     await user.press(screen.getByRole('button', { name: '보내기' }));

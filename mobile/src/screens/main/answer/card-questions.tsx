@@ -88,12 +88,14 @@ export function CaptionQuestions(props: {
   control: ChatSheetControl;
   list: QuestionsOpen;
   onClose: () => void;
+  // The list's most height; left out, about four rows. A raised card lifts it (P04 ticket 52).
+  maxHeight?: number;
 }): ReactElement {
-  const { control, list, onClose } = props;
+  const { control, list, onClose, maxHeight = QUESTIONS_MAX } = props;
   return (
     <CardQuestions
       control={control}
-      maxHeight={QUESTIONS_MAX}
+      maxHeight={maxHeight}
       onAskNew={() => {
         list.close();
         onClose();

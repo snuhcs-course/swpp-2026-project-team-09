@@ -6,6 +6,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -36,7 +37,7 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 // Two replies in some tests.
 jest.setTimeout(150000);
 
-const CLOSE = '뒤로';
+const CLOSE = '답 ✕';
 const CULTURE_HALL = { latitude: 37.46159, longitude: 126.95104 };
 
 let findWalkingRoute = jest.spyOn(apiClient, 'findWalkingRoute');
@@ -75,7 +76,7 @@ function beside(): ReturnType<typeof within> {
 // Partitions: the dock; a way with nothing to read stays docked, as board 10 draws it, with no handle to raise it
 // (P04 ticket 10). Expected values: the copy of board q1.
 describe('the card of a way to a Place (q1)', () => {
-  it('docks with "길 안내" beside the input and nothing the map says: no chips, lines, or "닫기"', async () => {
+  it('docks with "길 안내" beside the input and nothing the map says: no chips, lines, or ✕', async () => {
     await ask('문화관이 어디야?');
 
     expect(beside().getByRole('button', { name: '길 안내' })).toBeVisible();
@@ -139,7 +140,7 @@ describe('a menu (q8)', () => {
     expect(card().queryByRole('button', { name: '닫기' })).toBeNull();
   });
 
-  it('raises the chips, both lines, and "닫기" at a press on the line', async () => {
+  it('raises the chips, both lines, and ✕ at a press on the line', async () => {
     const user = await ask('오늘 301동식당 메뉴 뭐야?');
 
     await user.press(card().getByText(MENU_WORDS));
@@ -147,7 +148,7 @@ describe('a menu (q8)', () => {
     expect(card().getByText('301동식당 오늘 점심은 부대짬뽕&군만두')).toBeVisible();
     expect(card().getByText('13:00 수업까지')).toBeVisible();
     expect(card().getByText('12:45까지 55분 먹을 수 있어요')).toBeVisible();
-    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
+    expect(card().getByRole('button', { name: '답 ✕' })).toBeVisible();
   });
 
   it('draws the 식당 with its menu, and the way on to the next Class', async () => {
@@ -160,7 +161,7 @@ describe('a menu (q8)', () => {
   });
 });
 
-// Partitions: a Lookup whose only action is `meet` (ticket 24), its line in the dock, a person's chip, and "닫기".
+// Partitions: a Lookup whose only action is `meet` (ticket 24), its line in the dock, a person's chip, and ✕.
 // Expected values: the copy of board q6.
 describe('where a Friend is (q6)', () => {
   it('docks with the model\'s words and "만나고 싶다" beside the input, and draws his face', async () => {
@@ -172,7 +173,7 @@ describe('where a Friend is (q6)', () => {
     expect(mapThings()).toContain('민수 · 지금 302동');
   });
 
-  it('shows 민수\'s chip with no ✕, the lines, and "닫기" raised by a press on the line', async () => {
+  it("shows 민수's chip with no ✕, the lines, and ✕ raised by a press on the line", async () => {
     const user = await ask('민수 어디야?');
 
     await user.press(card().getByText(FRIEND_WORDS));
@@ -185,7 +186,7 @@ describe('where a Friend is (q6)', () => {
     expect(card().queryByRole('button', { name: '길 안내' })).toBeNull();
     expect(card().queryByRole('button', { name: '만나고 싶다' })).toBeNull();
     expect(beside().getByRole('button', { name: '만나고 싶다' })).toBeVisible();
-    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
+    expect(card().getByRole('button', { name: '답 ✕' })).toBeVisible();
   });
 
   it("keeps the User's own Avatar, which the Lookup does not draw", async () => {
@@ -194,11 +195,11 @@ describe('where a Friend is (q6)', () => {
     expect(mapThings()).toContain(ME);
   });
 
-  it('returns to the everyday map with "닫기" of the raised card', async () => {
+  it('returns to the everyday map with ✕ of the raised card', async () => {
     const user = await ask('민수 어디야?');
 
     await user.press(card().getByText(FRIEND_WORDS));
-    await user.press(card().getByRole('button', { name: '닫기' }));
+    await user.press(card().getByRole('button', { name: '답 ✕' }));
 
     expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(mapThings()).not.toContain('민수 · 지금 302동');

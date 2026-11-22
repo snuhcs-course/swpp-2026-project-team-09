@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -79,17 +80,12 @@ interface ButtonsProps {
   // The Lookup's `ask` actions, whose words are sent as if typed ("관정 보기").
   asks: readonly AskAction[];
   onAsk: (words: string) => void;
-  onClose: () => void;
 }
 
-// "길 안내" and any `ask` with "닫기" beside them, or "닫기" alone across the card.
-function Buttons({ main, asks, onAsk, onClose }: ButtonsProps): ReactElement {
+// "길 안내" and any `ask` beside it; none when the Lookup has neither. The card closes by ✕ (P04 ticket 52).
+function Buttons({ main, asks, onAsk }: ButtonsProps): ReactElement | null {
   if (main === null && asks.length === 0) {
-    return (
-      <Button full onPress={onClose} variant="secondary">
-        닫기
-      </Button>
-    );
+    return null;
   }
   return (
     <View style={styles.buttons}>
@@ -111,9 +107,6 @@ function Buttons({ main, asks, onAsk, onClose }: ButtonsProps): ReactElement {
           {label}
         </Button>
       ))}
-      <Button onPress={onClose} variant="secondary">
-        닫기
-      </Button>
     </View>
   );
 }
@@ -124,7 +117,6 @@ interface LookupCardProps {
   // A refusal of the part that cannot be answered, beside the Lookup (boards n4, n20), or null.
   refusal: Refusal | null;
   onAsk: (words: string) => void;
-  onClose: () => void;
   addRecalculated: Chat['addRecalculated'];
 }
 
@@ -182,11 +174,11 @@ function useLookupMeet(lookup: Lookup, addRecalculated: Chat['addRecalculated'])
 
 // A Lookup in the answer frame's card, as a Plan's card without its arrows and "이대로 초대": its chips, its two lines,
 // the basis while open, the band without handles when a time matters, and the first action the app draws as the main
-// button, then its `ask` actions, beside "닫기". A Lookup that docks has its main button beside the input instead
+// button, then its `ask` actions. A Lookup that docks has its main button beside the input instead
 // (`answerActionOf`). Beside a refusal, the refusal's lines stand in place of the Lookup's, and its offer in place of
 // the buttons.
 export function LookupCard(props: LookupCardProps): ReactElement {
-  const { lookup, shown, refusal, onClose } = props;
+  const { lookup, shown, refusal } = props;
   const { basisOpen, toggleBasis } = shown;
   const main = useLookupMain(props);
   return (
@@ -203,12 +195,7 @@ export function LookupCard(props: LookupCardProps): ReactElement {
         </View>
       ) : null}
       <CardNote note={lookup.note} />
-      <Buttons
-        asks={asksOf(props)}
-        main={lookupDocks(lookup, refusal) ? null : main}
-        onAsk={props.onAsk}
-        onClose={onClose}
-      />
+      <Buttons asks={asksOf(props)} main={lookupDocks(lookup, refusal) ? null : main} onAsk={props.onAsk} />
     </View>
   );
 }
