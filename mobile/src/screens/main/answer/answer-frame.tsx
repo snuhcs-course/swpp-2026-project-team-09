@@ -13,8 +13,10 @@
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { type ReactElement, useCallback, useEffect, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { space } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import { lastReply } from '@/features/assistant/use-shown-answer';
@@ -24,11 +26,11 @@ import type { CardActions } from '../chat-cards';
 import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
 import { FriendProfileOver, useProfileOver } from '../friend-profile';
-import { AI_INPUT, type Room } from '../layout';
+import { AI_INPUT, listsTop, type Room } from '../layout';
 import { AnswerCaption } from './answer-caption';
 import { useCardTop } from './card-top';
 import { CaptionQuestions, type QuestionsOpen, Typing } from './card-questions';
-import { backOf, layerOf, useCardState } from './card-state';
+import { useAnswerRaising } from './card-state';
 import { KeptCards } from './kept-scene';
 import { WaitingReply } from './failed-and-waiting';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
@@ -201,13 +203,16 @@ function OpenMark({ control, stage, focus, onClose }: OpenMarkProps): ReactEleme
   );
 }
 
-// The bar's height while it is shown, told to the screen for the camera's fit; 0 while there is none.
+// The bar's height while it is shown, told to the screen for the camera's fit; 0 while there is none. The bar is the
+// top sheet from the screen's top edge (P04 ticket 52); what is told is how far it reaches below the lists' top, which
+// the camera and the raised card count from.
 function useBarHeight(
   shown: boolean,
   onBarHeight: (height: number) => void,
 ): { height: number; onHeight: (height: number) => void } {
   const [height, setHeight] = useState(0);
-  const told = shown ? height : 0;
+  const { top } = useSafeAreaInsets();
+  const told = shown && height > 0 ? Math.max(1, height - top - listsTop(top)) : 0;
   useEffect(() => {
     onBarHeight(told);
   }, [told, onBarHeight]);
@@ -234,11 +239,8 @@ function Framed(props: FramedProps): ReactElement {
   const { keep } = control.howAbout;
   const title = control.howAbout.title;
   const leave = title === null ? close : keep;
-  const { raised, setRaised, full, setFull, unfull, lower, list } = useCardState(
-    control.card,
-    chat.bubbles.at(-1)?.id ?? null,
-  );
-  const back = backOf({ list, control, raised, lower, unfull, leave });
+  const [past, setPast] = useState(false);
+  const { raising, list, back } = useAnswerRaising(control, leave, setPast);
   useBackToClose(useIsFocused(), profileShown ? profile.hide : back, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   const focus = useBandFocus();
@@ -246,11 +248,12 @@ function Framed(props: FramedProps): ReactElement {
   const drawnBar = (control.booking !== null && !control.booking.booked) || control.steps !== null;
   const barShown = !keyboardUp && (drawnBar || barOf(chat.bubbles, onScreenOf(control)) !== null);
   const bar = useBarHeight(barShown, onBarHeight);
-  const [past, setPast] = useState(false);
   return (
     <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
       <View style={[styles.top, past && styles.faded]}>
         {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
+        {/* The bar's white sheet runs under the status bar: its icons go dark while it does, and come back after. */}
+        {barShown ? <StatusBar style="dark" /> : null}
       </View>
       <AnswerCard
         timeBarHeight={bar.height}
@@ -263,7 +266,7 @@ function Framed(props: FramedProps): ReactElement {
         list={list}
         onClose={close}
         onHeight={onHeight}
-        raising={{ raised, setRaised, full, setFull, close: leave, layer: layerOf(list, control), onPast: setPast }}
+        raising={raising}
         stageHeight={stageHeight}
       />
       {keyboardUp ? null : <OpenMark control={control} focus={focus} onClose={close} stage={stage} />}

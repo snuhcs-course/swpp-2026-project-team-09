@@ -8,17 +8,23 @@ import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, Icon, radius, size, space, text } from '@/design-system';
 
-// The answer card's top row (P04 ticket 52): the handle in the middle, one muted line of the list's words under the
-// grip, and ✕ at the right end, which closes the answer and keeps the conversation. Every card over the map closes by
+// The answer card's header row (P04 ticket 52): the grip at the top centre, one muted line on ✕'s centre line, and ✕
+// at the right, as far from the card's top edge as from its right edge (the content inset; a corner radius of `xl`
+// keeps the whole circle inside the card), which closes the answer and keeps the conversation. Every card over the map closes by
 // ✕, a drag down, and Android's back; "←" is only for a page pushed from the right.
 
 export const CLOSE_ANSWER_LABEL = '답 닫기';
 
-// The row's height, and the room ✕ keeps at each end so that the handle between stays centred and never covers it.
-export const GRIP_ROW = 40;
-export const GRIP_SIDE = 64;
 // ✕'s visible circle, as wide as the stop button's (`RoundButton`), whose press reaches past it to the least touch size.
 const CLOSE_MARK = 36;
+// The card's content inset, which ✕ keeps from the card's top edge as from its right edge (the corner rule).
+const INSET = space[4];
+// The header row: as tall as ✕ and its inset, in every state of the card, so that nothing shifts when the line under
+// the grip is absent. The room ✕ keeps at each end, so that the handle and the line between stay centred.
+export const GRIP_ROW = INSET + CLOSE_MARK;
+export const GRIP_SIDE = INSET + CLOSE_MARK + space[3];
+// The line's height, which shares ✕'s centre line.
+const LINE = 16;
 
 // What the line under the grip says, and what a press on it does: docked, raise the card ("올리면 11곳 목록 ⌃"); raised
 // or full, take it one step down ("내리기 ⌄"). Without a press it only says.
@@ -87,7 +93,8 @@ const styles = StyleSheet.create({
   // Under the grip (8 down and 4 high), centred between the ends.
   line: {
     position: 'absolute',
-    top: space[4],
+    top: INSET + CLOSE_MARK / 2 - LINE / 2,
+    height: LINE,
     right: GRIP_SIDE,
     left: GRIP_SIDE,
     flexDirection: 'row',
@@ -99,7 +106,7 @@ const styles = StyleSheet.create({
   words: { ...text.caption, flexShrink: 1, color: color.inkSubtle },
   close: {
     position: 'absolute',
-    top: (GRIP_ROW - CLOSE_MARK) / 2,
+    top: INSET,
     alignItems: 'center',
     justifyContent: 'center',
     width: CLOSE_MARK,

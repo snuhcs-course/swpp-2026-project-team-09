@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ChatSheetControl } from '../chat-sheet';
 import type { QuestionsOpen } from './card-questions';
+import type { Raising } from './raise-handle';
 
 // The answer card's state, moved out of `answer-frame.tsx`: how high the card stands, whether the list of questions is
 // open in it, and what back takes away first.
@@ -93,4 +94,35 @@ export function layerOf(list: QuestionsOpen, control: ChatSheetControl): (() => 
 // (`layerOf`), the raised card, then the answer.
 export function backOf({ list, control, raised, lower, unfull, leave }: BackLayers): () => void {
   return unfull ?? layerOf(list, control) ?? (raised ? lower : leave);
+}
+
+// One step down from a raised or full card, as back takes it, short of closing the answer: what a press on the handle
+// and "내리기 ⌄" do (PR 516's review).
+export function stepDownOf(layers: BackLayers): () => void {
+  return backOf({ ...layers, leave: layers.lower });
+}
+
+// The answer card's way up and down for the frame: the card's state, what back takes away, and the `Raising` the card
+// moves by, its drag, its handle, and "내리기 ⌄" stepping down as back does.
+export function useAnswerRaising(
+  control: ChatSheetControl,
+  leave: () => void,
+  onPast: (past: boolean) => void,
+): { raising: Raising; list: QuestionsOpen; back: () => void } {
+  const { raised, setRaised, full, setFull, unfull, lower, list } = useCardState(
+    control.card,
+    control.chat.bubbles.at(-1)?.id ?? null,
+  );
+  const layers = { list, control, raised, lower, unfull, leave };
+  const raising: Raising = {
+    raised,
+    setRaised,
+    full,
+    setFull,
+    close: leave,
+    layer: layerOf(list, control),
+    onPast,
+    stepDown: stepDownOf(layers),
+  };
+  return { raising, list, back: backOf(layers) };
 }

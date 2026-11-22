@@ -13,9 +13,8 @@ import { now } from '@/clock';
 import { color, font, radius, shadow, space, text } from '@/design-system';
 import { stepClock } from '@/features/assistant/steps-scene';
 import { koreaDayWord } from '@/korea-time';
-import { ANSWER_TOP } from '../layout';
 import type { ChatSheetControl } from '../chat-sheet';
-import { barTop, PlanBar } from './time-bar';
+import { PlanBar, sheetPlace } from './time-bar';
 import type { BandFocus } from './use-corrections';
 
 const MINUTE = 60_000;
@@ -117,7 +116,7 @@ export function StepsBar({ steps, active, onStep, onHeight }: StepsBarProps): Re
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
         onHeight(nativeEvent.layout.height);
       }}
-      style={[styles.bar, { top: barTop(top) }]}
+      style={[styles.bar, sheetPlace(top)]}
       testID="time-bar"
     >
       <View style={styles.words}>
@@ -144,16 +143,18 @@ export function StepsBar({ steps, active, onStep, onHeight }: StepsBarProps): Re
 }
 
 const styles = StyleSheet.create({
+  // The answer's top sheet, as the time bar (`sheetPlace`).
   bar: {
     position: 'absolute',
-    right: ANSWER_TOP.side,
-    left: ANSWER_TOP.side,
+    right: 0,
+    left: 0,
     gap: space[2],
-    paddingVertical: space[3],
+    paddingBottom: space[3],
     paddingHorizontal: space[4],
-    borderRadius: radius.xl,
+    borderBottomLeftRadius: radius.xl,
+    borderBottomRightRadius: radius.xl,
     backgroundColor: color.surface,
-    boxShadow: shadow.float,
+    boxShadow: shadow.sheet,
   },
   // From the bar's left edge, "←" being under the bar (P04 ticket 52).
   words: {
@@ -194,7 +195,7 @@ export function StepsTop({ control, focus, onClose, onHeight }: StepsTopProps): 
   const planStep = step !== undefined && step.status === 'shown' && step.kind !== 'seat' && step.kind !== 'room';
   const { answer, plan } = shown;
   const withPlan = planStep && answer !== null && plan !== null;
-  const told = heights.steps + (withPlan ? heights.plan + space[2] : 0);
+  const told = heights.steps + (withPlan ? heights.plan : 0);
   useEffect(() => {
     onHeight(told);
   }, [told, onHeight]);
@@ -216,7 +217,7 @@ export function StepsTop({ control, focus, onClose, onHeight }: StepsTopProps): 
           answer={answer}
           focus={focus}
           invitation={invitation}
-          offset={heights.steps + space[2]}
+          offset={heights.steps}
           onClose={onClose}
           onHeight={(height) => {
             setHeights((last) => ({ ...last, plan: height }));

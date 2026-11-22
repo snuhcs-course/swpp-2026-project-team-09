@@ -161,6 +161,9 @@ describe('a drag down with the list of questions open', () => {
     await layStage(390, 760);
     await user.press(screen.getByTestId('answer-caption'));
     expect(screen.getByTestId('question-list')).toBeVisible();
+    // The places' line has nothing to say about the questions, and the input gives the list its room.
+    expect(screen.queryByText(/^올리면 \d+곳 목록$/u)).toBeNull();
+    expect(screen.queryByLabelText('AI에게 메시지')).toBeNull();
     await lay('answer-card-content', 200);
     await lay('answer-card', 300);
 

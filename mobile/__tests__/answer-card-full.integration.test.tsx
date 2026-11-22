@@ -7,6 +7,7 @@
 import { act, fireEvent } from '@testing-library/react-native';
 import { StyleSheet, type ViewStyle } from 'react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
+import { space } from '@/design-system';
 import { pass, screen } from './support/app';
 import { holdBackButton } from './support/back';
 import { AI_INPUT, button, layStage, SEND } from './support/lists';
@@ -125,7 +126,6 @@ describe('a full card', () => {
 describe('the list of questions', () => {
   it('fits the card’s room at each height, lowered, raised, and full, ending above the input', async () => {
     const user = await framed();
-    const lowered = Number(styleOf('answer-card-content').maxHeight);
     await user.press(screen.getByTestId('answer-caption'));
     expect(styleOf('question-list').maxHeight).toBeLessThan(STAGE / 2);
 
@@ -135,8 +135,9 @@ describe('the list of questions', () => {
     expect(Number(styleOf('question-list').maxHeight)).toBeGreaterThan(loweredList);
 
     await dragHandle(-600);
-    expect(styleOf('answer-card-content').height).toBe(fullOf(lowered));
-    // Full, the list takes the whole scrolling part less its padding, so that it ends above the input.
-    expect(styleOf('question-list').maxHeight).toBe(fullOf(lowered) - 24);
+    // Full, with the input giving the list its room, the sheet runs from the stage's top to one gap over its bottom, and
+    // the list takes it less the content's padding.
+    expect(styleOf('answer-card-content').height).toBe(STAGE - space[3]);
+    expect(styleOf('question-list').maxHeight).toBe(STAGE - space[3] - 24);
   });
 });

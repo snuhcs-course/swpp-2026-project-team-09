@@ -16,6 +16,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -209,6 +210,20 @@ function TutorialParts({
   );
 }
 
+// The open list of Friends to add takes the input's place in the answer's card, and so does the list of earlier
+// questions, which reaches the sheet's bottom (P04 ticket 52); the input stays mounted under it, hidden, so that
+// "＋ 새 질문" can put the cursor in it as the list closes. The time band moved whole hides the input but keeps its room,
+// so that the card and its lanes stay under the finger.
+function inputStateOf(chat: MapBottomProps['chat']): { listOpen: boolean; inputGone: boolean; inputShown: boolean } {
+  const listOpen = chat.framed && chat.card.earlier.open;
+  const adding = chat.framed && chat.answer.adding;
+  return {
+    listOpen,
+    inputGone: adding || listOpen,
+    inputShown: !adding && !(chat.framed && chat.answer.moving !== null),
+  };
+}
+
 // What is at the bottom of the map: the everyday map's own (`EverydayBottom`), the answer frame, and the AI input. A
 // card at the bottom hides the row and the button. While the keyboard is up and the input is empty, the examples stand
 // above it. A message sent from the main map starts a new conversation and shows the answer frame, which hides the
@@ -226,10 +241,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   // While a quest's guide is open it takes the whole map. The AI input stays mounted, hidden, so that a draft is kept.
   const guided = tutorial.guide !== null;
   const cardShown = invitation.shown || made.shown !== null;
-  // The open list of Friends to add takes the input's place in the answer's card. The time band moved whole hides the
-  // input but keeps its room, so that the card and its lanes stay under the finger.
-  const inputGone = chat.framed && chat.answer.adding;
-  const inputShown = !inputGone && !(chat.framed && chat.answer.moving !== null);
+  const { listOpen, inputGone, inputShown } = inputStateOf(chat);
   const inputTop = inputGone ? lift : aiInputTop(room) + lift;
   // On the main map a message always starts a new conversation; in the answer it goes on with the one on screen.
   const send = sendWithKeyboardDown(chat.framed ? chat.chat.send : chat.chat.sendNew);
@@ -248,7 +260,7 @@ export function MapBottom(props: MapBottomProps): ReactElement {
           send={send}
         />
       )}
-      <View style={[styles.inputLayer, guided && styles.gone]}>
+      <View style={[styles.inputLayer, (guided || listOpen) && styles.gone]}>
         {inputShown && !cardShown ? (
           <AiInput
             lift={lift}

@@ -31,21 +31,24 @@ interface CardTop {
 }
 
 // Docked, the line under the grip raises the card ("올리면 N곳 목록 ⌃"); raised or full, "내리기 ⌄" takes it one step
-// down, as a press on the grip does.
-function gripWordsOf(control: ChatSheetControl, raising: Raising): GripWords | null {
+// down, as a press on the grip does. While the earlier questions are open, the places' line has nothing to say: none
+// lowered, "내리기 ⌄" raised.
+function gripWordsOf(control: ChatSheetControl, raising: Raising, listOpen: boolean): GripWords | null {
   if (!raising.raised) {
-    const words = listWordsOf(control);
+    const words = listOpen ? null : listWordsOf(control);
     return words === null ? null : { ...words, way: 'up' };
   }
   return {
     words: LOWER_WORDS,
     way: 'down',
     onPress: () => {
-      if (raising.full === true && raising.setFull !== undefined) {
+      if (raising.stepDown !== undefined) {
+        raising.stepDown();
+      } else if (raising.full === true && raising.setFull !== undefined) {
         raising.setFull(false);
-        return;
+      } else {
+        raising.setRaised(false);
       }
-      raising.setRaised(false);
     },
   };
 }
@@ -59,7 +62,7 @@ export function useCardTop(
   const [cap, setCap] = useState<number | null>(null);
   return {
     onClose: raising.close,
-    gripWords: gripWordsOf(control, raising),
+    gripWords: gripWordsOf(control, raising, list.open),
     onContentCap: setCap,
     askNew: () => {
       list.close();

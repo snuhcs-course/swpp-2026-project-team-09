@@ -15,6 +15,10 @@ From the user's phone tests (2026-11-23, on 5.0/Main 87aa3554):
 3. "채팅을 위로 올려서 더 큰 화면으로 볼 수 있는 기능도 있으면 좋을듯": the raised card stops under the top, and the earlier questions' list is capped at about four rows.
 4. "여전히 새 질문을 누르기 위한 depth가 너무 깊은 것 같아": "＋ 새 질문" is reached only through the earlier questions' list.
 
+5. (Third pass, 04:23) "좀 짤리네?": with the earlier questions open, the history chip was drawn half over the card's top edge, and the list's last rows were cut by the input. "X와 멈추기 버튼이 좀 정렬이 안맞는게 아쉽네": ✕ and the stop button stood on different right lines at different sizes. "올리면 11곳 목록 윗화살표로 해놓고 내릴 때는 안내가 없네." "채팅을 위로 span할 때와 아래로 shrink할 때 좀 부자연스러운 것 같은데": the card's height jumped on every press, and a drag ran on the JS thread.
+
+6. (04:38–04:50) "X를 둘러싸는 원의 위치와 채팅의 테두리 곡면을 잘 고려해서 UI를 디자인해줘"; "시계열을 누르면 채팅이 양쪽까지 꽉 차고 채팅할 때는 양쪽이 꽉 안차네? … 폭을 정할 때는 위의 시계바와도 통일"; "텍스트가 너무 왼쪽에 여백이 없이 붙어있는"; "과거 히스토리를 볼 때는 채팅란이 아예 필요가 없지 않을까".
+
 Cause of 2: the docked form of the card drew no handle and attached no gesture. Only the open card's handle had the drag, and the open card is what shows while the earlier questions are listed.
 
 ## What to build
@@ -24,7 +28,12 @@ The rule for everything that sits over the map as a card: it closes by a ✕ ico
 - The answer has no "←". Its card's top row holds the handle in the middle and ✕ at the right end, in every form: docked, lowered, raised with the list of places, a restaurant's menu, or the earlier questions, and at full height, so that it is never covered. ✕ closes the answer and keeps the conversation; it reads "답 닫기" to a screen reader and takes a press of at least 48. The open card's handle is narrowed to the middle so that it never covers ✕.
 - The time bar's head has no room for a button: its words start at its left edge, a seat's band and the several requests' words too.
 - "＋ 새 질문" stands at the right end of the caption row, one press from the docked card: it closes the answer as ✕ does, keeping the conversation, and puts the cursor in the main map's input, where a message starts a new conversation. The history chip at the left gives way first, cut with "…". While the list of questions is open, the list's own header has it.
-- The line that says how to reach the answer's list ("올리면 11곳 목록", "올리면 자리·열람실") or how it is ordered stands under the grip, one small muted line, cut with "…" when there is no room.
+- The card's top, the handle's row and the caption row, stays in the card while the rest scrolls under it, so nothing is drawn past the card's edge. The list of earlier questions takes the room the card has at its height, ends above the input, and scrolls inside.
+- Two sheets, both edge to edge, sharing one content inset of 16 (`space[4]`) from the screen's sides: the bottom card in every state (docked included, no floating card), attached to the bottom, only its top corners rounded; the time bar, attached to the top, its background under the status bar and its content below it, only its bottom corners rounded, with the same corner radius (`xl`) and shadow (`shadow.sheet`). While the bar's sheet is under the status bar, the status bar's icons are dark.
+- The bottom sheet's header row is 52 high in every state (the inset and ✕'s circle): the grip at the top centre, the line under it on ✕'s centre line, ✕'s circle (36, the stop button's) 16 from the sheet's top edge and 16 from its right edge. A concentric fit would need a corner radius of 34; with `xl` (24) the circle stays wholly inside the curve. Rows stand one gap (`space[3]`) apart under it. ✕, "＋ 새 질문", the stop button, and the input end on the right line.
+- While the earlier questions are open the sheet shows no input and no main button, and the list reaches the sheet's bottom padding; the line under the grip says nothing lowered and "내리기 ⌄" raised. The input stays mounted, hidden, so that "＋ 새 질문" puts the cursor in it.
+- The line under the grip is symmetric, one small muted line cut with "…": docked, "올리면 N곳 목록 ⌃" (or "올리면 자리·열람실 ⌃"), which raises the card; raised or full, "내리기 ⌄", one step down. The list's order is the list's own heading (P04 ticket 50).
+- The card moves as a sheet: its height is one value on the UI thread (Reanimated). While a finger drags the grip or the docked card, the card follows it; on release, and on a press of the grip, the line under it, or back, it runs to its step in 220 ms. Raised from the dock, it grows from the dock's height; lowered to the dock, it runs down before the dock takes its place. With reduced motion, none of it moves. The camera hears the lowered card's height once it has settled.
 - The docked card shows the same handle as the raised card; a press on it raises the card. The whole docked card takes a drag, except the input and the main button beside it, which are outside the card; a press on a chip or the line stays a press. A drag down past half the card closes the answer and keeps the conversation, with the hint "놓으면 지도 화면으로 돌아가요". A drag up raises the card.
 - A raised card has one more step up: a drag up takes it to full height, its top just under the status bar, over the time bar, its content scrolling inside, the input still at the bottom. The camera stays as it is for the lowered card. The earlier questions' list keeps its cap on the lowered card and lifts it once the card is raised.
 - A drag down, a press on the handle, and Android's back go one step down at a time: full, raised, lowered (or docked), closed. Before the raised card is lowered, they take away the list of earlier questions, a mark's card, or a restaurant's menu, with no hint.
@@ -41,7 +50,11 @@ The rule for everything that sits over the map as a card: it closes by a ✕ ico
 - [x] The Lookup's card and the card after inviting have no "닫기"; ✕ closes them. (Integration tests.)
 - [x] Every test that closed the answer by "뒤로" closes it by ✕.
 - [x] The top row and the caption row read at a font scale of 1.3: ✕ and the grip hold no text, the line under the grip is cut with "…", and the history chip shrinks before "＋ 새 질문".
-- [x] No native file changes; lint, format, and types pass on the app.
+- [x] The caption row stays under the grip row at every height with the list open, and the list ends above the input. (Integration test.)
+- [x] "내리기 ⌄" under the grip takes the raised card down; docked, "올리면 N곳 목록 ⌃". (Integration test.)
+- [x] Both sheets edge to edge on the 16 lines, the header row and ✕ by the corner rule, the dark status bar under the bar's sheet, and the earlier questions without the input. (Emulator pictures, checked against the layout; the list's hidden input and missing line, integration test.)
+- [x] The card's steps are run on the UI thread; the drag and the steps still land where they did. (Integration tests, with reduced motion.) The motion itself is checked on the phone.
+- [x] No native file changes (the native fingerprint is the same, 5f21af6f, with the tests' Jest resolver added); lint, format, and types pass on the app.
 
 ## Comments
 
@@ -49,3 +62,8 @@ The rule for everything that sits over the map as a card: it closes by a ✕ ico
 
 - Agent time: about 1 hour 45 minutes in the map-first-answer session over three rounds (an estimate from the transcript's timestamps). No subagents.
 - Tokens: an estimate: output about 90k; input about 30M, almost all cache reads, with about 300k cache writes.
+
+### Agent usage (2026-11-23, third pass)
+
+- Agent time: about 1 hour 50 minutes more in the map-first-answer session for the review threads, the motion, the sheets' layout, and the emulator pictures (an estimate from the transcript's timestamps). No subagents.
+- Tokens: an estimate: output about 120k; input about 45M, almost all cache reads, with about 400k cache writes.

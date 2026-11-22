@@ -3,6 +3,7 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -130,7 +131,7 @@ describe('a Lookup in the dock', () => {
 // The feedback of 2026-11-22: the flag opens what 근거 › opened, and the chip goes. Partitions: a way without the
 // model's words, and one with them.
 describe("a Lookup's flag", () => {
-  it("raises a first way's card, its chips, basis, and 닫기, when the model said nothing", async () => {
+  it("raises a first way's card, its chips and basis under the card's ✕, when the model said nothing", async () => {
     const user = await askOnMap(server, { ...WAY_LOOKUP_REPLY, text: '' });
 
     expect(card().queryByTestId('dock-line')).toBeNull();
@@ -139,7 +140,7 @@ describe("a Lookup's flag", () => {
     await pass(300);
 
     expect(card().getByTestId('lookup-card')).toBeVisible();
-    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
+    expect(card().getByRole('button', { name: '답 닫기' })).toBeVisible();
     expect(card().getByRole('button', { name: /근거/u })).toBeVisible();
   });
 
