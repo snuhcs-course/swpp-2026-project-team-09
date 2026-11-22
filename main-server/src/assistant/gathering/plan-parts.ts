@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -10,7 +11,7 @@ import { type AnswerLine, type DroppedPlace, type PlanPart } from '../dto/answer
 import { clockOf, onDay } from '../free-time/free-time.js';
 import { type Interval, latest } from '../free-time/meal-fit.js';
 import { koreaTime } from '../korea-time.js';
-import { type GatheringNaming, itemAt, withTopic } from './answer-words.js';
+import { type GatheringNaming, itemAt, modeOf, withTopic } from './answer-words.js';
 import { type GatheringDrop, MINUTE_MS, type PersonPart } from './gathering.js';
 
 // Each person's part of a gathering, a meal's or a meet's, and the words of the Place the User fixed when it does not
@@ -38,6 +39,8 @@ export function partOf(part: PersonPart, naming: GatheringNaming): PlanPart {
       next === null
         ? null
         : { startAt: koreaTime(next.start), place: next.placeId === null ? null : naming.placePoint(next.placeId) },
+    ...modeOf(part),
+    ...(part.shuttle === null ? {} : { shuttle: part.shuttle }),
   };
 }
 

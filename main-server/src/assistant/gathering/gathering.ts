@@ -10,9 +10,18 @@
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
-import { shownMinutes, type TravelProvider } from '../../travel/travel.js';
 import { type FreeInterval } from '../free-time/free-time.js';
 import { aroundShared, earliest, type Interval, latest, sharedTime } from '../free-time/meal-fit.js';
+import {
+  type GatheringTravel,
+  type Leg,
+  legOf,
+  nextOf,
+  ON_FOOT,
+  walkingMinutes as minutes,
+} from './gathering-travel.js';
+
+export { type GatheringTravel, onFoot, type ShuttleStops } from './gathering-travel.js';
 
 export interface GatheringPerson {
   id: string;
@@ -43,16 +52,20 @@ export interface PersonPart {
   readyAt: Date;
   // `assumed`: taken from the Timetable because the location was missing.
   origin: { placeId: string; basis: OriginBasis; assumed?: true } | null;
-  // Their whole way, to the merging point and on to the place. Null when the origin is unknown.
+  // The minutes of their whole way, to the merging point and on to the place, on foot or by the shuttle as `by` says.
+  // Null when the origin is unknown.
   walkMinutes: number | null;
+  by: Leg['by'];
+  // The stops of a way by the shuttle, else null.
+  shuttle: Leg['shuttle'];
   // The earliest they can be at the place. Null when the origin is unknown.
   canArriveAt: Date | null;
   // When they set out to be there at the start. Null when the origin is unknown.
   leaveAt: Date | null;
   // When they must leave the place. Null when nothing follows.
   leaveBy: Date | null;
-  // The walk is from the place to the next item's Place, null when it has none.
-  next: { start: Date; placeId: string | null; walkMinutes: number | null } | null;
+  // The way from the place to the next item's Place, its minutes null when it has none.
+  next: ({ start: Date; placeId: string | null; walkMinutes: number | null } & Pick<Leg, 'by' | 'shuttle'>) | null;
 }
 
 // A person's side of the stretch the plan lies in.
@@ -134,7 +147,7 @@ export function gather(
   people: readonly [GatheringPerson, ...GatheringPerson[]],
   places: GatheringPlaces,
   when: { window: Interval; now: Date },
-  travel: Pick<TravelProvider, 'walkingSeconds'>,
+  travel: GatheringTravel,
   { merging = true, startsBy }: { merging?: boolean; startsBy?: Date } = {},
 ): Gathering {
   const stretches = sharedTime(
@@ -204,17 +217,13 @@ function dropOf(fit: GatheringFit, place: GatheringPlace, gatheringWindow: Inter
     : { ...drop, closing: { at: closesAt, walkMinutes: parts[0]?.walkMinutes ?? null } };
 }
 
-type Walking = Pick<TravelProvider, 'walkingSeconds'>;
+type Walking = GatheringTravel;
 
 export const MINUTE_MS = 60 * 1000;
 
 const plusMinutes = (at: Date, count: number): Date => new Date(at.getTime() + count * MINUTE_MS);
 
 export const minutesBetween = (from: Date, to: Date): number => (to.getTime() - from.getTime()) / MINUTE_MS;
-
-function minutes(from: string, to: string, travel: Walking): number {
-  return from === to ? 0 : shownMinutes(travel.walkingSeconds(from, to));
-}
 
 // Where a person sets out from for a stretch of Free Time: what the asker chose, else the Place of the item that keeps
 // them until then, else the Place of their location, else, when their location is said to be missing, that of the
@@ -252,13 +261,6 @@ function sideOf(person: GatheringPerson, stretch: Interval, now: Date): Gatherin
     next: next === null ? null : { start: next.start, placeId: next.placeId },
     leaveBy: person.leaveBy,
   };
-}
-
-function nextOf(next: GatheringSide['next'], placeId: string, travel: Walking): PersonPart['next'] {
-  if (next === null) {
-    return null;
-  }
-  return { ...next, walkMinutes: next.placeId === null ? null : minutes(placeId, next.placeId, travel) };
 }
 
 function leaveByOf(next: PersonPart['next'], fixed: Date | undefined): Date | null {
@@ -311,14 +313,15 @@ function partOf(
   const next = nextOf(side.next, placeId, travel);
   const known = { ...side, next, leaveBy: leaveByOf(next, side.leaveBy) };
   if (side.origin === null) {
-    return { ...known, walkMinutes: null, canArriveAt: null };
+    return { ...known, walkMinutes: null, ...ON_FOOT, canArriveAt: null };
   }
   if (meeting === null || !meeting.personIds.includes(side.personId)) {
-    const walkMinutes = minutes(side.origin.placeId, placeId, travel);
-    return { ...known, walkMinutes, canArriveAt: plusMinutes(side.readyAt, walkMinutes) };
+    const { minutes: walkMinutes, by, shuttle } = legOf(side.origin.placeId, placeId, travel, side.readyAt);
+    return { ...known, walkMinutes, by, shuttle, canArriveAt: plusMinutes(side.readyAt, walkMinutes) };
   }
+  // Meeting on the way is on foot.
   const walkMinutes = minutes(side.origin.placeId, meeting.placeId, travel) + meeting.onwardMinutes;
-  return { ...known, walkMinutes, canArriveAt: plusMinutes(meeting.at, meeting.onwardMinutes) };
+  return { ...known, walkMinutes, ...ON_FOOT, canArriveAt: plusMinutes(meeting.at, meeting.onwardMinutes) };
 }
 
 function settingOut(part: Omit<PersonPart, 'leaveAt'>, start: Date): PersonPart {

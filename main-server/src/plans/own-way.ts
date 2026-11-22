@@ -3,12 +3,13 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type MapScene, type PlacePoint } from '../assistant/dto/answer.dto.js';
 import { clockOf, type DayItem, freeTimeOf } from '../assistant/free-time/free-time.js';
 import { itemAt, withAnd } from '../assistant/gathering/answer-words.js';
-import { DETOUR_MINUTES, gather, MINUTE_MS } from '../assistant/gathering/gathering.js';
+import { DETOUR_MINUTES, gather, MINUTE_MS, onFoot } from '../assistant/gathering/gathering.js';
 import { koreaDate, koreaTime } from '../assistant/korea-time.js';
 import { type Position } from '../common/geometry.js';
 import { type PlaceDto } from '../places/dto/place.dto.js';
@@ -155,7 +156,7 @@ function wayOf({ gathered, invitee, items, location, now, travel }: OwnWayArgs, 
     locationPlaceId: location?.onCampus === true ? location.placeId : null,
   };
   const place = { key: destination.id, placeId: destination.placeId };
-  const { shared, sides } = gather([person], [place], { window, now }, travel);
+  const { shared, sides } = gather([person], [place], { window, now }, onFoot(travel));
   const side = sides[0];
   if (shared === null || side === undefined) {
     return { status: 'busy', ...NO_WAY, next: null, leaveBy: null };

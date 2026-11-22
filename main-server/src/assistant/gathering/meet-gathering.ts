@@ -2,14 +2,21 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PlaceDto } from '../../places/dto/place.dto.js';
-import { type TravelProvider } from '../../travel/travel.js';
 import { type MeetInput } from '../dto/answer.dto.js';
 import { onDay } from '../free-time/free-time.js';
 import { earliest, type Interval, latest } from '../free-time/meal-fit.js';
-import { gather, type Gathering, type GatheringPerson, type GatheringPlace, type GatheringSide } from './gathering.js';
+import {
+  gather,
+  type Gathering,
+  type GatheringPerson,
+  type GatheringPlace,
+  type GatheringSide,
+  type GatheringTravel,
+} from './gathering.js';
 import { placeLabelOf } from './place-naming.js';
 
 // When and where people meet: the hours of the day a meet lies in, and the Places it may be at.
@@ -83,7 +90,7 @@ export function gatherToMeet(
   places: MeetingPlaces,
   fixedPlaceId: string | null,
   when: { window: Interval; now: Date },
-  travel: Pick<TravelProvider, 'walkingSeconds'>,
+  travel: GatheringTravel,
 ): Gathering {
   const gathering = gather(
     people,

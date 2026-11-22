@@ -125,14 +125,30 @@ export function mergingLegs(
   return { toMeeting: walkMinutes - meeting.onwardMinutes, onward: meeting.onwardMinutes };
 }
 
-// The asker's walk from the place to their next item's Place, when it has one.
-export function wayOn(part: PersonPart | undefined): { placeId: string; minutes: number } | null {
+// The asker's way from the place to their next item's Place, when it has one.
+export function wayOn(
+  part: PersonPart | undefined,
+): ({ placeId: string; minutes: number } & Pick<PersonPart, 'by' | 'shuttle'>) | null {
   const next = part?.next ?? null;
   if (next === null || next.placeId === null || next.walkMinutes === null) {
     return null;
   }
-  return { placeId: next.placeId, minutes: next.walkMinutes };
+  return { placeId: next.placeId, minutes: next.walkMinutes, by: next.by, shuttle: next.shuttle };
 }
+
+// "걸어서 12분", or "셔틀로 12분 (301동 정류장 → 경영대 정류장)".
+export function wayWords(minutes: number, { by, shuttle }: Pick<PersonPart, 'by' | 'shuttle'>): string {
+  if (by === 'walk') {
+    return `걸어서 ${minutes}분`;
+  }
+  return shuttle === null
+    ? `셔틀로 ${minutes}분`
+    : `셔틀로 ${minutes}분 (${shuttle.boardAt} 정류장 → ${shuttle.getOffAt} 정류장)`;
+}
+
+// A route or a Plan's part says the shuttle, and nothing for a walk.
+export const modeOf = ({ by }: Pick<PersonPart, 'by'>): { mode?: 'shuttle' } =>
+  by === 'shuttle' ? { mode: 'shuttle' } : {};
 
 export { placeLabelOf } from './place-naming.js';
 

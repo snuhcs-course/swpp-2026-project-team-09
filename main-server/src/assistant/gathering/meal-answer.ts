@@ -23,6 +23,7 @@ import {
   type Naming,
   unknownOriginChip,
   wayOn,
+  wayWords,
   withSubject,
   withTopic,
 } from './answer-words.js';
@@ -144,14 +145,16 @@ export function meetingOf({ meeting }: GatheringFit, naming: GatheringNaming): P
     : { place: naming.placePoint(meeting.placeId), at: koreaTime(meeting.at), userIds: meeting.personIds };
 }
 
-// The second line of a plan alone: how long the asker walks and when they must leave.
+// The second line of a plan alone: how long the asker's way is and when they must leave.
 function aloneLine(mine: PersonPart | undefined): string | null {
   const walk = mine?.walkMinutes ?? 0;
   const leaveBy = mine?.leaveBy ?? null;
+  const shuttle = mine?.by === 'shuttle';
   if (leaveBy !== null) {
-    return walk > 0 ? `${walk}분을 걷고 ${clockOf(leaveBy)}엔 나서야 해요` : `${clockOf(leaveBy)}엔 나서야 해요`;
+    const going = shuttle ? `셔틀로 ${walk}분 가고` : `${walk}분을 걷고`;
+    return walk > 0 ? `${going} ${clockOf(leaveBy)}엔 나서야 해요` : `${clockOf(leaveBy)}엔 나서야 해요`;
   }
-  return walk > 0 ? `걸어서 ${walk}분이에요` : null;
+  return walk > 0 ? `${shuttle ? '셔틀로' : '걸어서'} ${walk}분이에요` : null;
 }
 
 // The first of the parts by `at`, the earlier person on a tie.
@@ -248,7 +251,7 @@ function friendBasis(part: PersonPart, { key, meeting }: GatheringFit, naming: G
   } else if (legs !== null && meeting !== null) {
     pieces.push(`${naming.placeLabel(meeting.placeId)}까지 걸어서 ${legs.toMeeting}분, 같이 ${legs.onward}분`);
   } else if (walkMinutes !== null && walkMinutes > 0) {
-    pieces.push(`${key}까지 걸어서 ${walkMinutes}분`);
+    pieces.push(`${key}까지 ${wayWords(walkMinutes, part)}`);
   }
   if (leaveBy !== null) {
     pieces.push(`${clockOf(leaveBy)}에 나서요`);
@@ -265,7 +268,7 @@ export function basisOf(fit: GatheringFit, naming: GatheringNaming): string[] {
   }
   const { origin, walkMinutes, leaveBy } = mine;
   if (fit.meeting === null && origin !== null && walkMinutes !== null && walkMinutes > 0) {
-    lines.push(`${naming.placeLabel(origin.placeId)} → ${fit.key} 걸어서 ${walkMinutes}분`);
+    lines.push(`${naming.placeLabel(origin.placeId)} → ${fit.key} ${wayWords(walkMinutes, mine)}`);
   }
   if (leaveBy !== null) {
     const leaving = `${clockOf(leaveBy)}에 나서요`;
@@ -273,7 +276,7 @@ export function basisOf(fit: GatheringFit, naming: GatheringNaming): string[] {
     lines.push(
       onward === null
         ? leaving
-        : `${fit.key} → ${naming.placeLabel(onward.placeId)} 걸어서 ${onward.minutes}분, 그래서 ${leaving}`,
+        : `${fit.key} → ${naming.placeLabel(onward.placeId)} ${wayWords(onward.minutes, onward)}, 그래서 ${leaving}`,
     );
   }
   return lines;
