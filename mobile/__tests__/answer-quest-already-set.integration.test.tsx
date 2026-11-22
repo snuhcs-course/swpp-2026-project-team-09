@@ -243,11 +243,11 @@ describe("a meeting's 바꾸기 refused or on its way", () => {
 
     await user.press(beside().getByRole('button', { name: '바꾸기' }));
     await pass(300);
-    await pressMarker(user, '후보 2 · 301동 앞');
+    await pressMarker(user, '후보 2 · 301동 앞 · 12:18');
     await pass(300);
 
     expect(beside().getByRole('button', { name: '바꾸는 중이에요' })).toBeDisabled();
-    expect(mapThings()).toContain('후보 2 · 301동 앞');
+    expect(mapThings()).toContain('후보 2 · 301동 앞 · 12:18');
   });
 });
 
