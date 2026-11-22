@@ -535,7 +535,7 @@ A Release is tagged on the newest commit of the iteration branch, here `4.0/Main
 second line finds. The merge queue runs only the basic checks, and the iteration branch's own push the full level, every
 test but the app's integration tests ([Running the tests](../../README.md#running-the-tests) has the kinds of run). That
 push's run goes one at a time on the newest commit and covers every commit merged before it; a run still waiting when a
-newer commit lands is replaced by the newer one's. The app's integration tests run nightly and by hand only, and no
+newer commit lands is replaced by the newer one's. The app's integration tests run at the nightly level only, and no
 Release waits for them: to see them pass on the commit first, start CI at the nightly level on it
 ([The nightly level](../../README.md#the-nightly-level)) and tag once that run is green. The third line lists the day's earlier Releases of the target, from which N follows.
 

@@ -17,10 +17,15 @@ import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { koreaDayWord } from '@/korea-time';
 import { ANSWER_PILL, listsTop } from '../layout';
+import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
 import { TimeBand } from './time-band';
 import { type BandFocus, useCorrections } from './use-corrections';
 
 const NO_WINDOW = { from: null, until: null };
+// The grip takes a press 44 high around its middle only, so that the ends' labels, the day's other meal among them,
+// keep their own presses.
+const GRIP_WIDTH = 72;
+const GRIP_SLOP = { top: 16, bottom: 16, left: space[2], right: space[2] };
 
 function ignoreDrop(): void {
   // A Lookup's band has no handles.
@@ -35,12 +40,14 @@ type BandProps = Parameters<typeof TimeBand>[0];
 
 interface BarProps {
   band: Omit<BandProps, 'folded' | 'day'>;
+  // The words before the span's; left out, its day word.
+  day?: string;
   onHeight: (height: number) => void;
 }
 
 // The time bar: the answer's band in one white row under the pill, folded to one row, which a press on its grip
 // unfolds to a row for each person when there is more than one, and folds again.
-function Bar({ band, onHeight }: BarProps): ReactElement {
+function Bar({ band, day, onHeight }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
   const [unfolded, setUnfolded] = useState(false);
   const { lanes, startAt, now } = band.band;
@@ -55,13 +62,13 @@ function Bar({ band, onHeight }: BarProps): ReactElement {
       style={[styles.bar, { top: barTop(top) }]}
       testID="time-bar"
     >
-      <TimeBand {...band} day={koreaDayWord(startAt, new Date(now))} folded={folded} />
+      <TimeBand {...band} day={day ?? koreaDayWord(startAt, new Date(now))} folded={folded} />
       {lanes.length > 1 ? (
         <Pressable
           accessibilityLabel={label}
           accessibilityRole="button"
           accessibilityState={{ expanded: !folded }}
-          hitSlop={space[2]}
+          hitSlop={GRIP_SLOP}
           onPress={() => {
             setUnfolded(folded);
           }}
@@ -85,14 +92,21 @@ interface PlanBarProps {
 }
 
 // The bar of the Plan on screen: its handles and its lanes move it as the card's band did, unless the answer's kind
-// fixes the time.
+// fixes the time. A meal's names the meal with its day when it is not under way today, and the day's other meal
+// stands at one end (`MealTick`).
 export function PlanBar({ shown, answer, plan, invitation, focus, onClose, onHeight }: PlanBarProps): ReactElement {
   const fix = useCorrections(shown, answer.input, onClose, focus);
   // A meeting changed in place (P04 ticket 17) is set: its band is read, not moved.
   const fixed = bandIsFixed(answer.input.kind) || invitation.changed !== null;
+  const tick = mealTickOf(answer);
+  const sent = invitation.sending || invitation.made !== null;
   return (
     <Bar
       band={{
+        tick:
+          tick === null
+            ? undefined
+            : { side: tick.side, node: <MealTick sent={sent} shown={shown} words={tick.words} /> },
         band: plan.band,
         disabled: shown.recalculating || invitation.sending || invitation.changing,
         fixed: windowOf(answer.input),
@@ -103,6 +117,7 @@ export function PlanBar({ shown, answer, plan, invitation, focus, onClose, onHei
         onDrop: fix.drop,
         onMove: fixed ? undefined : fix.move,
       }}
+      day={mealDayOf(answer, plan)}
       onHeight={onHeight}
     />
   );
@@ -144,6 +159,6 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.float,
   },
-  toggle: { alignItems: 'center', paddingTop: space[2] },
+  toggle: { alignSelf: 'center', alignItems: 'center', width: GRIP_WIDTH, paddingTop: space[2] },
   grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
 });
