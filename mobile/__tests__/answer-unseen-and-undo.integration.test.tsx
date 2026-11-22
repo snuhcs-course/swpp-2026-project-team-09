@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -16,7 +17,8 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // P02 ticket 35 against the fake main server: a reply that arrives while the answer frame is hidden puts a dot on
-// "이전 답" until the frame is shown, and "새 대화" forgets the conversation at one press with 되돌리기 in its toast.
+// "이전 답" until the frame is shown; "새 대화" keeps the conversation in the list of questions, with no toast to undo
+// it (P04 ticket 10).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -118,42 +120,44 @@ async function talkTwice(): Promise<User> {
   return user;
 }
 
-// Partitions: 되돌리기 pressed; the toast gone by itself; a new message before 되돌리기.
+function questions(): ReturnType<typeof within> {
+  return within(screen.getByTestId('question-list'));
+}
+
+// Partitions: the conversation brought back from "지난 대화"; no toast; a new message after it (P04 ticket 10).
 describe('"새 대화"', () => {
-  it('forgets at one press, and 되돌리기 brings every turn back with the frame', async () => {
+  it('keeps the conversation in the list of questions, which brings it back with the frame', async () => {
     const user = await talkTwice();
 
     await user.press(screen.getByRole('button', { name: '새 대화' }));
     expect(screen.queryByTestId('answer-card')).toBeNull();
-    expect(screen.getByText(FORGOTTEN)).toBeVisible();
-    await user.press(screen.getByRole('button', { name: '되돌리기' }));
+    await user.press(screen.getByRole('button', { name: '지난 대화 1개' }));
+    expect(questions().getAllByTestId('question-row')).toHaveLength(2);
+    await user.press(questions().getByRole('button', { name: /정문 셔틀은\?/u }));
 
-    expect(screen.queryByText(FORGOTTEN)).toBeNull();
+    expect(pill().getByText('정문 셔틀은?')).toBeVisible();
     expect(card().getByText(NEXT_REPLY)).toBeVisible();
-    await user.press(card().getByRole('button', { name: '지난 답 1개' }));
-    expect(card().getByText(REPLY)).toBeVisible();
   });
 
-  it('stays forgotten once the toast is gone', async () => {
+  it('erases nothing, so no toast offers 되돌리기', async () => {
     const user = await talkTwice();
 
     await user.press(screen.getByRole('button', { name: '새 대화' }));
-    await pass(5000);
 
+    expect(screen.queryByText(FORGOTTEN)).toBeNull();
     expect(screen.queryByRole('button', { name: '되돌리기' })).toBeNull();
-    expect(screen.queryByRole('button', { name: /^이전 답/u })).toBeNull();
   });
 
-  it('brings nothing back over a message sent since', async () => {
+  it('starts a conversation of its own with the next message, the earlier one still listed', async () => {
     const user = await talkTwice();
     await user.press(screen.getByRole('button', { name: '새 대화' }));
     answerWith('새 답이에요.');
     await send(user, '배고파');
     await pass(500);
 
-    await user.press(screen.getByRole('button', { name: '되돌리기' }));
-
     expect(pill().getByText('배고파')).toBeVisible();
-    expect(card().queryByRole('button', { name: /^지난 답/u })).toBeNull();
+    expect(within(screen.getByTestId('answer-pill-count')).getByText('1')).toBeVisible();
+    await user.press(screen.getByTestId('answer-pill'));
+    expect(questions().getAllByTestId('question-row')).toHaveLength(3);
   });
 });

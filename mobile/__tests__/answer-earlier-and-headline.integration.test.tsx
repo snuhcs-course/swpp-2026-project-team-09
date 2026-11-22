@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -21,9 +22,9 @@ import { startFresh } from './support/mocks';
 import { CAREER, MAJOR } from './support/events';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// P02 tickets 32 and 35 against the fake main server: the answer card shows the turn on screen first, with its
-// question, and "지난 답 N개" under it opens the earlier turns read-only, the latest first; while the keyboard is up
-// the card shows the headline of the turn on screen on one line.
+// P02 tickets 32 and 35 against the fake main server: the answer card shows the turn on screen, with its question, and
+// the earlier turns are in the pill's list (P04 ticket 10); while the keyboard is up the card shows the headline of the
+// turn on screen on one line.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -88,13 +89,15 @@ function card(): ReturnType<typeof within> {
   return within(screen.getByTestId('answer-card'));
 }
 
-function earlier(): ReturnType<typeof within>[] {
-  return screen.queryAllByTestId('earlier-turn').map((turn) => within(turn));
+function questions(): string[] {
+  return within(screen.getByTestId('question-list'))
+    .getAllByTestId('question-row')
+    .map((row) => String(row.props.accessibilityLabel));
 }
 
-// Partitions: no earlier turn; a Plan's, a Lookup's and a sentence's reply; opened and closed.
+// Partitions: one turn, and several turns of a Plan, a Lookup, words, and cards.
 describe('the turn on screen', () => {
-  it('stands first in the card with its question, and "지난 답 N개" under its reply', async () => {
+  it('stands alone in the card with its question over its reply', async () => {
     await talk([
       [ASKED, MEAL_ANSWER_REPLY],
       ['셔틀 어디 있어?', TEXT_REPLY],
@@ -103,67 +106,29 @@ describe('the turn on screen', () => {
     expect(card().getByTestId('turn-question')).toHaveTextContent('셔틀 어디 있어?');
     const drawn = JSON.stringify(screen.toJSON());
     expect(drawn.indexOf('셔틀 어디 있어?')).toBeLessThan(drawn.indexOf('정문 셔틀이 먼저 와요.'));
-    expect(drawn.indexOf('정문 셔틀이 먼저 와요.')).toBeLessThan(drawn.indexOf('지난 답 1개'));
+    expect(card().queryByText(ASKED)).toBeNull();
   });
 });
 
-describe('"지난 답 N개"', () => {
-  it('is not shown on the first turn', async () => {
-    await talk([[ASKED, MEAL_ANSWER_REPLY]]);
-
-    expect(card().queryByRole('button', { name: /^지난 답/u })).toBeNull();
-  });
-
-  it("opens the earlier turns under the turn on screen, the latest first, each the words asked and the reply's lines, without a button", async () => {
+// P04 ticket 10: "지난 답 N개" went; the earlier turns are the pill's list of questions.
+describe('the earlier turns', () => {
+  it("are not in the card, but in the pill's list, each with what it came to", async () => {
     const user = await talk([
       [ASKED, MEAL_ANSWER_REPLY],
       ['문화관이 어디야?', WAY_LOOKUP_REPLY],
-      ['셔틀 어디 있어?', TEXT_REPLY],
-      ['정문 셔틀은?', TEXT_REPLY],
-    ]);
-    expect(earlier()).toHaveLength(0);
-
-    await user.press(card().getByRole('button', { name: '지난 답 3개' }));
-
-    const [words, lookup, plan] = earlier();
-    expect(plan?.getByText(ASKED)).toBeVisible();
-    expect(plan?.getByText(PLAN_LINE)).toBeVisible();
-    expect(lookup?.getByText('문화관이 어디야?')).toBeVisible();
-    expect(lookup?.getByText(LOOKUP_TITLE)).toBeVisible();
-    expect(words?.getByText('셔틀 어디 있어?')).toBeVisible();
-    expect(words?.getByText('정문 셔틀이 먼저 와요.')).toBeVisible();
-    for (const turn of earlier()) {
-      expect(turn.queryAllByRole('button')).toHaveLength(0);
-    }
-  });
-
-  it('closes them with "접기"', async () => {
-    const user = await talk([
-      [ASKED, MEAL_ANSWER_REPLY],
-      ['셔틀 어디 있어?', TEXT_REPLY],
-    ]);
-    await user.press(card().getByRole('button', { name: '지난 답 1개' }));
-    expect(earlier()).toHaveLength(1);
-
-    await user.press(card().getByRole('button', { name: '접기' }));
-
-    expect(earlier()).toHaveLength(0);
-    expect(card().getByRole('button', { name: '지난 답 1개' })).toBeVisible();
-  });
-});
-
-describe('an earlier turn with cards', () => {
-  it('names the cards of an earlier turn', async () => {
-    const user = await talk([
       ['설명회 있어?', EVENTS_REPLY],
       ['셔틀 어디 있어?', TEXT_REPLY],
     ]);
+    expect(card().queryByRole('button', { name: /^지난 답/u })).toBeNull();
 
-    await user.press(card().getByRole('button', { name: '지난 답 1개' }));
+    await user.press(screen.getByTestId('answer-pill'));
 
-    const [events] = earlier();
-    expect(events?.getByText(`· ${MAJOR.title}`)).toBeVisible();
-    expect(events?.getByText(`· ${CAREER.title}`)).toBeVisible();
+    expect(questions()).toEqual([
+      '13:00, 셔틀 어디 있어?, 셔틀 두 대가 정문과 자연대에 있어요., 지금',
+      '13:00, 설명회 있어?, 설명회 두 개가 있어요.',
+      `13:00, 문화관이 어디야?, ${WAY_LOOKUP_REPLY.text}`,
+      `13:00, ${ASKED}, 302동식당 12:15 · 아직 만들지 않음`,
+    ]);
   });
 });
 

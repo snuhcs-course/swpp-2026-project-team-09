@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -26,7 +27,8 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { answerShuttle } from './support/shuttle';
 
 // P02 ticket 32 against the fake main server: leaving the answer frame hides it and keeps the conversation, "이전 답"
-// in the AI input shows it again, a message from the everyday map goes on with it, and "새 대화" forgets it.
+// in the AI input shows it again, a message from the everyday map goes on with it, and "새 대화" keeps it aside in the
+// list of questions (P04 ticket 10).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -232,19 +234,20 @@ describe('going on, and starting over', () => {
     expect(pill().getByText('정문 셔틀은?')).toBeVisible();
   });
 
-  it('forgets the conversation with "새 대화": no "이전 답", and the next request carries only its own message', async () => {
+  it('keeps the conversation aside with "새 대화": no "이전 답", and the next request carries only its own message', async () => {
     const user = await asked(TEXT_REPLY, '셔틀 어디 있어?');
 
     await user.press(screen.getByRole('button', { name: '새 대화' }));
 
     expect(screen.queryByTestId('answer-pill')).toBeNull();
     expect(screen.queryByRole('button', { name: EARLIER })).toBeNull();
+    expect(screen.getByRole('button', { name: '지난 대화 1개' })).toBeVisible();
     await send(user, '정문 셔틀은?');
     await pass(500);
     expect(lastSent()).toEqual(sentWith([{ role: 'user', text: '정문 셔틀은?' }]));
   });
 
-  it('forgets a reply on its way with "새 대화"', async () => {
+  it('drops a question still on its way with "새 대화", which keeps nothing then (P04 ticket 10)', async () => {
     answerWith(TEXT_REPLY, 1000);
     const user = await openMain();
     await send(user, '셔틀 어디 있어?');
@@ -254,5 +257,6 @@ describe('going on, and starting over', () => {
 
     expect(screen.queryByTestId('answer-card')).toBeNull();
     expect(screen.queryByRole('button', { name: EARLIER })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^지난 대화/u })).toBeNull();
   });
 });

@@ -8,6 +8,7 @@
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -25,6 +26,7 @@ import type { UnaskedCards } from './use-map-view';
 import type { Me } from './use-me';
 import { useReceivedInvitation } from './use-received-invitation';
 import type { Selection } from './use-selection';
+import { pastChatsShown } from './past-chats';
 
 // While the map is in front, a toast sits over the row of buttons or above an open card; while the answer frame is
 // shown, above its card once that is laid out, and where it sits without a card until then.
@@ -58,7 +60,7 @@ export function useRoom(
   tutorialStart: boolean,
   framed: boolean,
   interestsHint = false,
-  madeLine = false,
+  { madeLine = false, pastChats = false }: { madeLine?: boolean; pastChats?: boolean } = {},
 ): RoomParts {
   const atBottom = bottomCard;
   const party = useActiveParty();
@@ -78,6 +80,7 @@ export function useRoom(
     tutorialStart: tutorialStart && !atBottom,
     interestsHint: interestsHint && !atBottom,
     madeLine: madeLine && !atBottom,
+    pastChats: pastChats && !atBottom,
     buttonRow: party !== null && !atBottom,
     inputHeight,
   };
@@ -98,17 +101,21 @@ export function useRoom(
 // What takes the bottom of the map, and the room the rest has. The first run's card shows while nothing is selected,
 // the User's own card and a pressed building's neither, and the answer frame is not shown. `framed`:
 // the answer frame, a received invitation's card, or a made Quest's. `madeLine`: a Quest made from a Plan has its line
-// over the input.
+// over the input, and `pastChats` "지난 대화 N ▾".
 export function useBottomRoom(
   selection: Selection,
-  { tutorialStart, framed, madeLine }: { tutorialStart: boolean; framed: boolean; madeLine: boolean },
+  {
+    tutorialStart,
+    framed,
+    ...lines
+  }: { tutorialStart: boolean; framed: boolean; madeLine: boolean; pastChats: boolean },
 ): ReturnType<typeof useRoom> & { taken: Taken; firstRun: FirstRun } {
   const asked = useFirstRun();
   const free = !selection.open && !framed;
   const firstRun = { ...asked, card: free ? asked.card : null };
   const otherCard = firstRun.card !== null || selection.mine || selection.place !== null || selection.friend !== null;
   const taken = takenBy(selection.selected, otherCard);
-  return { taken, firstRun, ...useRoom(taken, tutorialStart, framed, asked.asksForInterests, madeLine) };
+  return { taken, firstRun, ...useRoom(taken, tutorialStart, framed, asked.asksForInterests, lines) };
 }
 
 // The cards nobody asked for, a received invitation's and a made Quest's card after inviting; whether the answer
@@ -125,6 +132,7 @@ export function useFramedRoom(
   const framed = chat.framed || invitation.shown || madeCard.shown !== null;
   useHideTabBarOnMain(framed || guided);
   const madeLine = madeCard.first !== null;
-  const bottom = useBottomRoom(selection, { tutorialStart, framed, madeLine });
+  const pastChats = pastChatsShown(chat);
+  const bottom = useBottomRoom(selection, { tutorialStart, framed, madeLine, pastChats });
   return { unasked: { invitation, made: madeCard }, framed, ...bottom };
 }

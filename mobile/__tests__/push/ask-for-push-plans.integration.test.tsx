@@ -96,7 +96,7 @@ describe('the sheet after a Plan made into a Quest', () => {
     await user.press(card().getByRole('button', { name: '만들고 모집하기' }));
     await pass(500);
 
-    expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
+    expect(card().getByText('서준에게 약속 초대를 보냈어요')).toBeVisible();
     expect(screen.getByRole('header', { name: QUESTION })).toBeVisible();
   });
 
@@ -133,7 +133,7 @@ describe('no sheet after a Plan made into a Quest', () => {
     await user.press(screen.getByRole('button', { name: '만들고 초대 보내기' }));
     await pass(500);
 
-    expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
+    expect(card().getByText('김민수에게 점심 초대를 보냈어요')).toBeVisible();
     expect(sheetShown()).toBe(false);
   });
 });
