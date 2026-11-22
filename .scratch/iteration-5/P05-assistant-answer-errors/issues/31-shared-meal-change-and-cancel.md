@@ -89,3 +89,6 @@ Privacy is as in PR 422:
 
 - Agent time: about 11 minutes. This is an estimate: gaps under 5 minutes between transcript entries, summed. Drafting the case table, done earlier while ticket 30's test runs waited for a slot, is counted in ticket 30.
 - Tokens: input 20,338,118 (cache reads 20,252,133, cache writes 85,873, uncached 112); output 54,193. Without cache reads, 85,985.
+- Review round (a shared meal changeable only with `plan-set`, one cancel per reply, and the merge of 5.0/Main): about 14 minutes more, about 25 minutes in all, estimated the same way.
+- Tokens of that round: input 14,029,862 (cache reads 13,987,173, cache writes 42,633, uncached 56); output 25,419.
+- Tokens in all: input 34,367,980 (cache reads 34,239,306, cache writes 128,506, uncached 168); output 79,612. Without cache reads, 128,674.

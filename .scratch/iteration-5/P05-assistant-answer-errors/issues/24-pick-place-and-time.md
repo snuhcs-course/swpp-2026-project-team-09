@@ -40,3 +40,6 @@ The main server's side only. The app's side is P04's and is not counted here.
 
 - Agent time: about 6 minutes. This is an estimate: gaps under 5 minutes between transcript entries, summed.
 - Tokens: input 8,563,005 (cache reads 8,531,682, cache writes 31,283, uncached 40); output 21,854. Without cache reads, 31,323.
+- Review round (the two merges of 5.0/Main, with PRs 446 and 447): about 8 minutes more, about 14 minutes in all, estimated the same way.
+- Tokens of that round: input 12,304,761 (cache reads 12,279,926, cache writes 24,781, uncached 54); output 16,396.
+- Tokens in all: input 20,867,766 (cache reads 20,811,608, cache writes 56,064, uncached 94); output 38,250. Without cache reads, 56,158.
