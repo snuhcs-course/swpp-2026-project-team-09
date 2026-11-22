@@ -110,7 +110,7 @@ describe('the band of a5 let go at 14:00 (board a6)', () => {
     expect(markCard().getByText('302동 앞 → 58동 걸어서 27분, 그래서 16:33에 나서요')).toBeVisible();
     await press(user, '카드 닫기');
 
-    await pressMarker(user, '후보 2 · 유회진 학술정보관 앞');
+    await pressMarker(user, '후보 2 · 유회진 학술정보관 앞 · 14:04');
     expect(mapThings()).toContain('유회진 학술정보관 앞 · 14:04 만남');
     expect(timeBar().getByText('14:04–15:26 · 함께 82분')).toBeVisible();
   });

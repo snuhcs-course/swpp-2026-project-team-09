@@ -65,6 +65,8 @@ export interface Draft {
   // Null for a mark that takes no label.
   title: string | null;
   line: string | null;
+  // A candidate's dishes and price under its title and time; left out, none.
+  sub?: string | null;
   // The number a pick or a candidate carries in its label when its dot is not drawn.
   number: number | null;
 }

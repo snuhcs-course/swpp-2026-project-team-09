@@ -46,7 +46,7 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const FIRST_PICK = '302동 앞 · 12:15 만남';
-const SECOND = '후보 2 · 301동 앞';
+const SECOND = '후보 2 · 301동 앞 · 12:18';
 const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요';
 
 let server: FakeServer;

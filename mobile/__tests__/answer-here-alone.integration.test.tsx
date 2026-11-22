@@ -180,7 +180,7 @@ describe('"일정에 넣기" on a Plan the User walks to (s2 → s4)', () => {
   it('says no leave-by is kept for a short walk on, and "닫기" guides the User to the Restaurant', async () => {
     server.on('POST /plans', { status: 201, body: madeAlone(S4) });
     const user = await askOnMap(server, REPLY, () => layStage(390, 760));
-    await pressMarker(user, '후보 2 · 학생회관식당');
+    await pressMarker(user, '후보 2 · 학생회관식당 · 12:05');
     await take(user);
     await user.press(screen.getByRole('button', { name: '나중에' }));
 

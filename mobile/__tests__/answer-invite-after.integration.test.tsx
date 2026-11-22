@@ -157,7 +157,7 @@ describe('a refused "만들고 초대 보내기"', () => {
 
     expect(toasts().getByText('초대하지 못했어요. 잠시 후 다시 시도해 주세요')).toBeVisible();
     expect(recalculations(server)).toEqual([]);
-    expect(mapThings()).toEqual(expect.arrayContaining([PICK, '후보 5 · 자하연식당 2층']));
+    expect(mapThings()).toEqual(expect.arrayContaining([PICK, '후보 5 · 자하연식당 2층 · 12:35']));
     expect(inviteButton()).toBeEnabled();
     expect(card().queryByText('파티를 만들고 초대를 보냈어요')).toBeNull();
   });

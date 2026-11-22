@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { PlanInput } from '@/api/assistant-types';
@@ -13,8 +14,9 @@ import { SELECTED_ORDER } from './use-things';
 
 // The face a Friend's Avatar shows while an answer is on screen: the selected look while their add is on its way, and
 // a "+" while a press would add them. Anyone else's, and every face once the Plan is sent, is the everyday map's look
-// unselected: a selection made before asking stands behind the frame, and only the add lights a face.
-function faceOf(
+// unselected: a selection made before asking stands behind the frame, and only the add lights a face. Every face but
+// the lit one is faint, as the answer's own marks stand out.
+export function answerFaceOf(
   { id, image: { view } }: MapAvatar,
   input: PlanInput,
   pendingAdd: string | null,
@@ -23,13 +25,13 @@ function faceOf(
   if (view.kind !== 'person') {
     return view;
   }
-  const face = { ...view, selected: false };
+  const face = { ...view, selected: false, faded: true };
   const userId = friendIdOf(id);
   if (userId === null || sent) {
     return face;
   }
   if (userId === pendingAdd) {
-    return { ...face, selected: true };
+    return { ...face, selected: true, faded: false };
   }
   return peopleOf(input).some((person) => person.userId === userId) ? face : { ...face, addable: true };
 }
@@ -43,10 +45,10 @@ export function useFaces(
   sent: boolean,
 ): MapAvatar[] {
   const looks = avatars.map((avatar) =>
-    answer === null ? avatar.image.view : faceOf(avatar, answer.input, pendingAdd, sent),
+    answer === null ? avatar.image.view : answerFaceOf(avatar, answer.input, pendingAdd, sent),
   );
   const ahead = looks.flatMap((look) =>
-    look.kind === 'person' && look.addable === true ? [{ ...look, addable: false, selected: true }] : [],
+    look.kind === 'person' && look.addable === true ? [{ ...look, addable: false, selected: true, faded: false }] : [],
   );
   const images = useMarkerImages([...looks, ...ahead]);
   return avatars.map((avatar, at) => {

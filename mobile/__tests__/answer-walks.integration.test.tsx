@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -221,7 +222,7 @@ describe('a Plan that leaves the screen', () => {
     server.on(WALKING_ROUTE, (request) => pathOf(request, 5000));
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    await user.press(screen.getByRole('button', { name: '후보 3 · 학생회관식당' }));
+    await user.press(screen.getByRole('button', { name: '후보 3 · 학생회관식당 · 12:33' }));
     await pass(500);
 
     // The first Plan's two walks were given up; the third Plan's three are on their way.
@@ -234,9 +235,9 @@ describe('a Plan that leaves the screen', () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
     await pass(500);
 
-    await user.press(screen.getByRole('button', { name: '후보 3 · 학생회관식당' }));
+    await user.press(screen.getByRole('button', { name: '후보 3 · 학생회관식당 · 12:33' }));
     await pass(500);
-    await user.press(screen.getByRole('button', { name: '후보 1 · 302동식당' }));
+    await user.press(screen.getByRole('button', { name: '후보 1 · 302동식당 · 12:15' }));
     await pass(500);
 
     expect(server.received(WALKING_ROUTE).filter((request) => endsAt(request, RESTAURANT))).toHaveLength(2);
