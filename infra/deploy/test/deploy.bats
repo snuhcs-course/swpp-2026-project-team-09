@@ -6,6 +6,7 @@
 # 2026-11-15  Opus 5.5   prompted by fyoon46
 # 2026-11-18  Opus 5.5   prompted by fyoon46
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-23  Fable 5.2  prompted by AhnJinYoung
 ################################################################################
 
 # Each test runs in a subshell of its own, so that its exports reach no other test, as meant.
@@ -136,7 +137,10 @@ serve_check_runs() {
   # A service gone from the Compose files, such as the retired AI 매칭's, is removed with its container.
   grep -q -E '^docker compose .* up --detach --remove-orphans$' "$FAKE_CALLS"
   [ "$(field 'keys_unsorted | join(" ")')" = "trackedRef checkedAt result candidateCommit attempt deployedCommit deployedAt checks recreatedServices" ]
-  [ "$(field '[.trackedRef, .result, .candidateCommit, .attempt, .deployedCommit] | join(" ")')" = "development deployed $TIP 1 $TIP" ]
+  [ "$(field '[.trackedRef, .result, .candidateCommit, .attempt, .deployedCommit] | join(" ")')" = "3.0/P15-he deployed $TIP 1 $TIP" ]
+  grep -qx 'git fetch --quiet origin 3.0/P15-he' "$FAKE_CALLS"
+  # By the commit, since a branch name with a slash is no path segment of GitHub's API.
+  grep -q "https://api.github.com/repos/snuhcs-course/swpp-2026-project-team-09/commits/$TIP/check-runs" "$FAKE_CALLS"
   [[ "$(field .checkedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]] || false
   [[ "$(field .deployedAt)" =~ ^20[0-9]{2}-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z$ ]] || false
   [[ ! "$(field .deployedAt)" < "$(field .checkedAt)" ]] || false

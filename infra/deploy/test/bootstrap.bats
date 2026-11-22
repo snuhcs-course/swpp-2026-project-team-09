@@ -7,6 +7,7 @@
 # 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-23  Fable 5.2  prompted by AhnJinYoung
 ################################################################################
 
 # Runs bootstrap.sh on a pretend machine under $BATS_TEST_TMPDIR: the team folder, systemd's unit folder and, through
@@ -17,7 +18,7 @@ CONTRACT=(
   COMPOSE_PROFILES DEPLOY_STATUS_DIR DEPLOY_APK_DIR
   POSTGRES_PASSWORD MAIN_DB_PASSWORD ACCESS_TOKEN_PRIVATE_KEY ACCESS_TOKEN_PUBLIC_KEY WORKER_TOKEN
   PUBLIC_URL GOOGLE_APP_CLIENT_ID GOOGLE_ADMIN_CLIENT_ID ANDROID_CERTIFICATE_FINGERPRINTS
-  EXTRA_SNU_COLLECTION
+  EXTRA_SNU_COLLECTION HE_ACCOUNTS
   KAKAO_REST_API_KEY INITIAL_ADMINISTRATOR_EMAILS DEMO_ACCOUNT_EMAILS OPENROUTER_API_KEY LLM_KEYS
 )
 
@@ -96,11 +97,13 @@ example_value_of() {
     value_of "$name"
   done | sort -u | grep -c .)" -eq 5 ]
 
-  [ "$(grep CHANGE_ME "$SETTINGS" | sort)" = "$(printf '%s\n' DEMO_ACCOUNT_EMAILS=CHANGE_ME \
-    INITIAL_ADMINISTRATOR_EMAILS=CHANGE_ME KAKAO_REST_API_KEY=CHANGE_ME)" ]
+  [ "$(grep CHANGE_ME "$SETTINGS" | sort)" = "$(printf '%s\n' INITIAL_ADMINISTRATOR_EMAILS=CHANGE_ME \
+    KAKAO_REST_API_KEY=CHANGE_ME)" ]
+  grep -qx 'DEMO_ACCOUNT_EMAILS=' "$SETTINGS"
 
-  [ "$(value_of PUBLIC_URL)" = http://swpp26t09.147-46-242-174.sslip.io ]
+  [ "$(value_of PUBLIC_URL)" = http://swpp26t09.147-46-242-169.sslip.io ]
   [ "$(value_of COMPOSE_PROFILES)" = demo ]
+  [ "$(value_of HE_ACCOUNTS)" = on ]
   for name in GOOGLE_APP_CLIENT_ID GOOGLE_ADMIN_CLIENT_ID ANDROID_CERTIFICATE_FINGERPRINTS; do
     [ -n "$(example_value_of "$name")" ]
     [ "$(value_of "$name")" = "$(example_value_of "$name")" ]
@@ -147,7 +150,7 @@ example_value_of() {
   for package in docker.io docker-compose-v2 docker-buildx jq; do
     [[ $packages == *" $package "* ]] || false
   done
-  grep -qx "git clone --branch development https://github.com/snuhcs-course/swpp-2026-project-team-09.git $CHECKOUT" \
+  grep -qx "git clone --branch 3.0/P15-he https://github.com/snuhcs-course/swpp-2026-project-team-09.git $CHECKOUT" \
     "$calls"
   grep -qx "git config --system --add safe.directory $CHECKOUT" "$calls"
   for unit in snu-now-deploy.service snu-now-deploy.timer snu-now-demo-refresh.service snu-now-demo-refresh.timer \

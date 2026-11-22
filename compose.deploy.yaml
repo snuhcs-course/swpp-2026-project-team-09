@@ -7,6 +7,7 @@
 # 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-23  Fable 5.2  prompted by AhnJinYoung
 ################################################################################
 
 # The Dev Server's stack: compose.yaml with this file over it, and the settings file as Compose's --env-file
@@ -18,7 +19,7 @@ x-deployed: &deployed
     driver: json-file
     options:
       max-size: 10m
-      max-file: '3'
+      max-file: "3"
 
 services:
   postgres:
@@ -55,6 +56,7 @@ services:
       AUTOMATIC_JUDGEMENT: ${AUTOMATIC_JUDGEMENT:-off}
       SAME_EVENT_TITLE_RULE: ${SAME_EVENT_TITLE_RULE:-off}
       SAME_EVENT_AI_CHOICE: ${SAME_EVENT_AI_CHOICE:-off}
+      HE_ACCOUNTS: ${HE_ACCOUNTS:-off}
     ports: !reset []
 
   socket-server:
@@ -73,8 +75,12 @@ services:
       EXTRA_SNU_COLLECTION: ${EXTRA_SNU_COLLECTION:-off}
     ports: !reset []
 
+  # On the UAT branch the two write nothing and move nobody: the UAT data (main-server/README.md: UAT data) is all that
+  # the three accounts see. They stay in the demo profile, which swpp-a's settings file names, so that the deploy run
+  # replaces the containers of the deployment before with these, and the demo refresh timer's restart does nothing.
   demo-seed:
     <<: *deployed
+    command: ["sh", "-c", "touch /tmp/demo-seeded && exec sleep infinity"]
     env_file: !reset []
     environment:
       DATABASE_URL: postgresql://main:${MAIN_DB_PASSWORD}@postgres:5432/main
@@ -82,6 +88,7 @@ services:
 
   demo-walker:
     <<: *deployed
+    command: ["sleep", "infinity"]
     env_file: !reset []
     environment:
       ACCESS_TOKEN_PRIVATE_KEY: ${ACCESS_TOKEN_PRIVATE_KEY}
@@ -96,7 +103,7 @@ services:
     <<: *deployed
     build: infra/proxy
     ports:
-      - '80:80'
+      - "80:80"
     # The folders, not the files, so that a file replaced by a rename is seen.
     volumes:
       - ${DEPLOY_STATUS_DIR}:/srv/deploy-status:ro

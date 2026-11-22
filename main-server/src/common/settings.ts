@@ -13,12 +13,14 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-03  Opus 5.5   prompted by TaeHyun79
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -182,6 +184,12 @@ export const settingsSchema = z
     // How often, in seconds, the topics of new events and recruiting Quests are read (README.md: Interests). 0 never,
     // so an empty value is refused rather than read as 0.
     TOPICS_TICK_SECONDS: z.string().regex(/^\d+$/u).default('60').pipe(z.coerce.number<string>().max(3600)),
+    // Whether the UAT accounts sign in by their keys in place of Google's ID token (src/uat/uat-accounts.ts). On only
+    // on swpp-a, whose settings file already holds it under this name from the Heuristic Evaluation.
+    HE_ACCOUNTS: z
+      .enum(['on', 'off'])
+      .default('off')
+      .transform((value) => value === 'on'),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),

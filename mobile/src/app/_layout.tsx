@@ -5,6 +5,8 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-03  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-16  Fable 5.2  prompted by TaeHyun79
  ******************************************************************************/
 
 import '@/polyfills';
@@ -17,7 +19,6 @@ import pretendardRegular from '../../assets/fonts/Pretendard-Regular.otf';
 import pretendardSemiBold from '../../assets/fonts/Pretendard-SemiBold.otf';
 import { AppProviders } from '@/app-providers';
 import { font } from '@/design-system';
-import { UpdateCheck } from '@/update/update-check';
 
 // The native splash image stays until the fonts are ready, so that no screen appears in the system font first.
 void SplashScreen.preventAutoHideAsync();
@@ -39,11 +40,10 @@ export default function RootLayout(): ReactElement | null {
   if (!ready) {
     return null;
   }
+  // The UAT build leaves out the check for a newer native build: the APK installed is what is tested.
   return (
     <AppProviders>
       <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />
-      {/* The check for a newer native build starts with the first screen and shows its dialog over it. */}
-      <UpdateCheck />
     </AppProviders>
   );
 }

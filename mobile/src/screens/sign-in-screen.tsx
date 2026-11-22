@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-23  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import { type ReactElement, useEffect } from 'react';
@@ -12,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import wordmark from '../../assets/images/sign-in-wordmark.png';
 import { Button, color, space, text } from '@/design-system';
 import { SignInButton } from './sign-in-button';
+import { UatAccountSheet } from './uat-account-sheet';
 import { type SignInPhase, useSignIn } from './use-sign-in';
 
 // The frame is 390 by 844 and counts the phone's own bars in it: 44 at the top and 34 at the bottom. The screen
@@ -103,6 +105,7 @@ export function SignInScreen(): ReactElement {
           />
         </View>
       </View>
+      <UatAccountSheet />
     </ScrollView>
   );
 }
