@@ -2661,6 +2661,15 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       tool puts the Lookup in the reply's `lookup`: the minutes, when to set out, how late the User is if they set out
       now, and a leave-by notification while that time is ahead and the walk takes 5 minutes or more. It answers the
       model `found` with Place names, minutes, and clock times, or `none` with the reason.
+    - `restaurantHours(date, restaurant?)`, with `HOURS_RULES`, for an app that sends `answer` (`lookup/hours-*`). It
+      finds the Restaurant as `findMenu` does and answers, in words only, each meal of the day: `opensAt` and
+      `closesAt` as `RestaurantHours` keeps them for that kind of day when its menu serves the meal; `hours: 'not
+recorded'` with the menu's notes when it serves the meal without kept hours; `serves: false` with the notes when
+      its menu holds only notes; and `serves: 'not known'` with the usual hours when that day's menu is not collected
+      yet. A meal with neither a menu nor hours is left out, and a Restaurant with neither for any meal answers `none`.
+      Today it adds `now` and `servingNow`, the meal whose hours hold now, or null. With a meal answer on screen (the
+      context's `conditions`), it plans that answer again from them and puts it in the reply's `answer`, so that the
+      reply keeps the plan on screen; any other reply in words alone takes it off.
     - `planEvents(date, eventIds?)` and `EVENT_RULES` join for an app that sends both `answer` and `events` (`events/`).
       It plans the published Global Events of a day the asker can attend between their items (`EventsInput`, kind
       `events`): `EventsPlanService` reads the asker's day, the day's events, and the Places, and `fitEvents` keeps
