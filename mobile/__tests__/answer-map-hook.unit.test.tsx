@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -30,9 +31,15 @@ jest.mock('@/map/marker-images', () => {
 });
 // The walking route service is no part of these hooks' units: an answer's walks keep their straight lines (P15
 // ticket 56 tests the walks).
-jest.mock('@/screens/main/use-answer-walks', () => ({
-  useAnswerWalks: (lines: readonly unknown[]): readonly unknown[] => lines,
-}));
+const mockWays: { current: object } = { current: { paths: new Map(), legs: [] } };
+jest.mock('@/screens/main/use-answer-walks', () => {
+  const none = new Map();
+  return {
+    useAnswerWalks: (lines: readonly unknown[]): readonly unknown[] => lines,
+    useWalkPaths: (): ReadonlyMap<string, unknown> => none,
+    useMealWays: (): object => mockWays.current,
+  };
+});
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: (): object => ({ top: 0, right: 0, bottom: 0, left: 0 }),
 }));
@@ -152,6 +159,17 @@ describe("the answer's camera", () => {
 });
 
 // Partitions: the stage is not laid out; the map has not told its fit zoom; both come.
+// Partitions: a walk's path comes back after the answer is drawn.
+describe("the answer's camera while the walks' paths come", () => {
+  it("moves nothing when a walk's path comes back (PR 497's review)", async () => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const rerender = await render(asked);
+    mockWays.current = { paths: new Map([['answer:route:0', [{ latitude: 37.455, longitude: 126.955 }]]]), legs: [] };
+    await rerender(FIRST);
+    expect(asked.cameras).toHaveLength(1);
+  });
+});
+
 describe("the answer's camera before the view is known", () => {
   it('asks the map to fit the points while the stage is not laid out', async () => {
     const asked: Asked = { fits: 0, cameras: [] };

@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -50,6 +51,8 @@ interface ConditionChipsProps {
 
 const CHIP_HEIGHT = 34;
 const CHIP_BORDER = 1;
+// "＋ 같이" in the time bar's head, the head row's height.
+export const BAR_ADD_HEIGHT = 32;
 const HIT_SLOP = (size.touchMin - CHIP_HEIGHT) / 2;
 
 function pressedStyle(base: StyleProp<ViewStyle>): ({ pressed }: { pressed: boolean }) => StyleProp<ViewStyle> {
@@ -155,9 +158,17 @@ interface AddChipProps {
   // A meal's when left out.
   name?: string;
   onAdd: () => void;
+  // In the time bar's head: a solid outline of the head row's height (P04 ticket 45); else dashed, in the card's chips.
+  inBar?: boolean;
 }
 
-export function AddChip({ adding, disabled, name = '같이 먹을 친구 추가', onAdd }: AddChipProps): ReactElement {
+export function AddChip({
+  adding,
+  disabled,
+  name = '같이 먹을 친구 추가',
+  onAdd,
+  inBar = false,
+}: AddChipProps): ReactElement {
   return (
     <Pressable
       accessibilityLabel={name}
@@ -166,7 +177,7 @@ export function AddChip({ adding, disabled, name = '같이 먹을 친구 추가'
       disabled={disabled}
       hitSlop={HIT_SLOP}
       onPress={onAdd}
-      style={pressedStyle([styles.chip, styles.add, adding && styles.adding])}
+      style={pressedStyle([styles.chip, inBar ? styles.inBar : styles.add, adding && styles.adding])}
     >
       <Text style={[styles.label, adding && styles.personLabel]}>＋ 같이</Text>
     </Pressable>
@@ -251,6 +262,7 @@ const styles = StyleSheet.create({
   marked: { borderColor: color.quest, backgroundColor: color.questSoft },
   markedLabel: { color: color.quest },
   add: { borderStyle: 'dashed' },
+  inBar: { height: BAR_ADD_HEIGHT },
   adding: { borderStyle: 'solid', borderColor: color.snuBlue, backgroundColor: color.blue100 },
   pressed: { opacity: 0.6 },
   label: { ...text.label, color: color.ink },

@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useState } from 'react';
@@ -14,6 +15,7 @@ import type { AnswerLine, AnswerReply, ConditionChip } from '@/api/assistant-typ
 import type { AnswerOffer } from '@/api/refusal-types';
 import { Button, color, space, text } from '@/design-system';
 import { movingWords } from '@/features/assistant/band-move';
+import { modelWordsOf } from '@/features/assistant/model-words';
 import { easedFromNow } from '@/features/assistant/relaxed-plan';
 import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import { bandIsFixed } from '@/features/assistant/row-four-inputs';
@@ -226,6 +228,27 @@ function settled({ made, changed, left }: PlanInvitation): boolean {
   return made !== null || changed !== null || left !== null;
 }
 
+// The Assistant's whole words over a meal answer's list, which the dock cuts at two lines (P04 ticket 45); none over a
+// restaurant's menu.
+function MealWords({ said, shown }: { said: string; shown: ShownAnswer }): ReactElement | null {
+  const words = modelWordsOf(said);
+  return words === '' || shown.menuFor !== null ? null : (
+    <View testID="meal-words">
+      <ChatMarkdown style={styles.words} text={words} />
+    </View>
+  );
+}
+
+// A meal answer's raised card: the Assistant's whole words over its list, or the chosen one's menu.
+function MealBody(props: { said: string; shown: ShownAnswer; answer: AnswerReply; busy: boolean }): ReactElement {
+  return (
+    <>
+      <MealWords said={props.said} shown={props.shown} />
+      <MealSheet answer={props.answer} busy={props.busy} shown={props.shown} />
+    </>
+  );
+}
+
 // A meal answer's raised card holds the list of its candidates (board E3), or the chosen one's menu (board E4).
 function MealSheet({
   shown,
@@ -277,7 +300,7 @@ export function PlanCard(props: PlanCardProps): ReactElement {
         />
       )}
       {docked ? null : <Said lines={linesOf(shown, answer, fix.adding, over)} said={meal ? '' : said} />}
-      {meal ? <MealSheet answer={answer} busy={busy || settled(invitation)} shown={shown} /> : null}
+      {meal ? <MealBody answer={answer} busy={busy || settled(invitation)} said={said} shown={shown} /> : null}
       {docked ? null : (
         <Below
           answer={answer}

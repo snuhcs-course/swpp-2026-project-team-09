@@ -67,3 +67,18 @@
       forbidden: [findMenu]
     text:
       absent: [데이터에 없, 데이터가 없]
+
+# P05 ticket 37: a meal whose notes give each corner its time is said as times, with no advice to ask the Restaurant.
+- id: restaurant-hours-by-corner
+  category: restaurant-hours
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 예술계식당 점심 언제까지 해?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [restaurantHours]
+      forbidden: [findMenu, planMeal]
+    text:
+      absent: [데이터에 없, 기록되어 있지 않, 확인해 보]

@@ -2666,11 +2666,18 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       `closesAt` as `RestaurantHours` keeps them for that kind of day when its menu serves the meal; `hours: 'not
 recorded'` with the menu's notes when it serves the meal without kept hours; `serves: false` with the notes when
       its menu holds only notes; and `serves: 'not known'` with the usual hours when that day's menu is not collected
-      yet. A meal with neither a menu nor hours is left out, and a Restaurant with neither for any meal answers `none`.
+      yet. A meal served without kept hours whose notes give times (`※ 운영시간 : 11:30 ~ 14:00`) is `byCorner`: each
+      time with the corner of the dish line the note follows (`<A코너>…`), or, for one time and no corner, the meal's
+      `opensAt` and `closesAt`. A meal with neither a menu nor hours is left out, and a Restaurant with neither for any
+      meal answers `none`.
       Today it adds `now` and `servingNow`, the meal whose hours hold now, or null. With a meal answer on screen (the
       context's `conditions`), it plans that answer again from them and puts it in the reply's `answer`, so that the
       reply carries the plan again; a reply in words alone leaves the plan on screen as it was, since the app keeps
-      the answer before it.
+      the answer before it. Without one, the reply's `lookup` (kind `place`, `lookup/hours-lookup.ts`) picks the
+      Restaurant out on the map, with a place flag at the same point whose words after the name the map writes as the
+      label's second line: today `지금 영업 중 · 14:00까지`,
+      `지금 닫음 · 08:00 아침`, or `지금 닫음 · 오늘 영업 끝`, another day each meal's span; its basis lists each meal's
+      hours, and its action guides there.
     - `planEvents(date, eventIds?)` and `EVENT_RULES` join for an app that sends both `answer` and `events` (`events/`).
       It plans the published Global Events of a day the asker can attend between their items (`EventsInput`, kind
       `events`): `EventsPlanService` reads the asker's day, the day's events, and the Places, and `fitEvents` keeps

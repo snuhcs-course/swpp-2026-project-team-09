@@ -3,6 +3,8 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -22,9 +24,15 @@ import { SELECTED_ORDER } from '@/screens/main/use-things';
 
 // The walking route service is no part of these hooks' units: an answer's walks keep their straight lines (P15
 // ticket 56 tests the walks).
-jest.mock('@/screens/main/use-answer-walks', () => ({
-  useAnswerWalks: (lines: readonly unknown[]): readonly unknown[] => lines,
-}));
+jest.mock('@/screens/main/use-answer-walks', () => {
+  const none = new Map();
+  const ways = { paths: none, legs: [] };
+  return {
+    useAnswerWalks: (lines: readonly unknown[]): readonly unknown[] => lines,
+    useWalkPaths: (): ReadonlyMap<string, unknown> => none,
+    useMealWays: (): object => ways,
+  };
+});
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: (): object => ({ top: 0, right: 0, bottom: 0, left: 0 }),
 }));

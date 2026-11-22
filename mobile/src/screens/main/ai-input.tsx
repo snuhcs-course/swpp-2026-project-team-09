@@ -12,6 +12,7 @@
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
@@ -52,8 +53,6 @@ export const AI_FIELD = 40;
 const FIELD_MAX = 120;
 // Above and below the text.
 const FIELD_PADDING = space[2];
-// A button of 48 in its touch area, in the middle of the bar of 50.
-const BESIDE_LIFT = 1;
 
 // The frame's: a bar of radius 28 around a field and a send button of 40, 22 once the field holds more than a line.
 // The bar is `AI_INPUT.height` high while it holds a line.
@@ -151,7 +150,8 @@ function Field(props: FieldProps): ReactElement {
   );
 }
 
-// The answer's main button at the bar's right, which tells its width so that the bar gives it room.
+// The answer's main button at the bar's right, which tells its width so that the bar gives it room. It is a `bar`
+// button: the bar's own height and rounding, standing on the bar's bottom, so that the two share their middle.
 function Beside({
   lift,
   onWidth,
@@ -166,7 +166,7 @@ function Beside({
       onLayout={({ nativeEvent }) => {
         onWidth(Math.round(nativeEvent.layout.width));
       }}
-      style={[styles.beside, { bottom: AI_INPUT.bottom + lift + BESIDE_LIFT }]}
+      style={[styles.beside, { bottom: AI_INPUT.bottom + lift }]}
       testID="ai-input-beside"
     >
       {children}
