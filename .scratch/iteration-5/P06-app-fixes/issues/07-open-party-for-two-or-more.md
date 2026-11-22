@@ -39,7 +39,7 @@ Decided 2026-11-22: a 공개 파티 (Join Policy Open or Approval) has a capacit
 - `isReady` is unchanged: under 공개 the form never holds less than 2 (the empty form's 4, the − stopping at 2, 공개 raising 1, the edit form's 2).
 - `proposalForm`, the form a Proposal fills, is left as it is: the Assistant no longer proposes an open 파티 of one, and one proposed before this change and made from its card is refused by the main server with a plain 400 ("저장하지 못했어요").
 - Server fixtures: `quest-joining`'s full Quest leaves its `it.each` for a test of its own, because its second Holder changes the Holders the table checks; `assistant-search-room`'s 31 Full Quests each get a second Holder of their own, joined in parallel.
-- From the screen review (2026-11-22): the three screens and the refusal words accepted as taken.
+- From the screen review (2026-11-22): the screens and the refusal words accepted as taken. The third screen taken, 공개 chosen at 1명, was byte for byte the first, since both paths end on 2명 under 공개; it was dropped at the wrap-up, and `party-form-edit` covers that path.
 
 ## Acceptance criteria
 
@@ -57,3 +57,4 @@ Decided 2026-11-22: a 공개 파티 (Join Policy Open or Approval) has a capacit
 
 - Agent time: about 25 minutes, in one implementation session (screen review and pull request included). This is an estimate: gaps under 5 minutes between transcript entries, summed. The orchestrator session's own time is not counted here.
 - Tokens: input 22,657,089 (cache reads 22,434,279, cache writes 222,588, uncached 222); output 73,925. Without cache reads, 222,810. No subagents. Counted up to the writing of this entry, so the last few messages are left out.
+- Final count at the wrap-up, read from the session's transcript (the README changes after the review included): input 26,730,041 (cache reads 26,414,683, cache writes 315,086, uncached 272); output 89,069. Without cache reads, 315,358. Agent time unchanged, about 25 minutes.

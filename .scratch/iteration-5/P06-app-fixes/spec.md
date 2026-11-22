@@ -114,3 +114,16 @@ Notes for the tickets:
 - The items, their screens and the code positions come from the handoff of 2026-11-22 (outside the repository), checked again on 6abd04e8.
 
 ## Comments
+
+### Agent usage (2026-11-22)
+
+Estimates: agent time is the gaps under 5 minutes between transcript entries, summed, so waiting for a person or for CI is left out. No subagents.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Orchestrator (items checked again, decisions, spec, tickets, screen reviews, merges, this wrap-up) | about 1 hour | 45,765,926 | 45,338,389 | 427,095 | 442 | 171,359 |
+| Ticket 06 | about 33 minutes | 35,820,366 | 35,550,575 | 269,477 | 314 | 93,043 |
+| Ticket 07 | about 25 minutes | 26,730,041 | 26,414,683 | 315,086 | 272 | 89,069 |
+| All | about 2 hours | 108,316,333 | 107,303,647 | 1,011,658 | 1,028 | 353,471 |
+
+Without cache reads, the input is 1,012,686 in all. The orchestrator is counted up to the writing of this entry, so its last few messages are left out.
