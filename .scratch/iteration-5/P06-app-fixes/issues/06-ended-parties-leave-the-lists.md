@@ -1,7 +1,7 @@
 # 06: Ended 파티 leave the invitation and request lists, and failure toasts carry the alert icon
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: None.
 
 Native files: none. Releases: the main server and an app OTA update.
@@ -40,14 +40,16 @@ Received: "이미 기간이 지난, 하지만 아직 수락하지 않은 비공�
 - The main server test "Accepting an invitation is refused once the Quest has no Sub Quest ahead" now invites into a Quest whose Sub Quest ends in an hour and moves the clock to that end: an invitation into a Quest already ended is no longer listed, where the test read its id.
 - On the emulator the mock refuses the accept through its existing failure setting (`EXPO_PUBLIC_MOCK_FAIL=acceptInvitation`), so the mock's data stays as it is; that toast reads "요청하지 못했어요. 다시 시도해 주세요" (`references/06-2-refused-accept-alert.png`; the accept done with ✓, `references/06-3-accepted-check.png`). "이미 끝난 파티예요" with the alert is covered by `party-invites.integration.test.tsx`.
 - Left as they are, outside the 파티 tab and the room: failure toasts of other screens, such as the map's invitation card (`screens/main/use-received-invitation.ts`), still carry ✓.
+- From the screen review (2026-11-22): both screens accepted as taken.
 
 ## Acceptance criteria
 
-- [ ] `GET /quest-invitations` leaves out an invitation to an ended Quest and keeps one with a Sub Quest ahead. (Main server integration test, which fails before the change.)
-- [ ] A Leader's 초대 중, the sent and the received join requests leave out an ended Quest. (Main server integration tests.)
-- [ ] `GET /quest-invitations/:id` answers an ended Quest's invitation as it answers a missing one. (Main server integration test.)
-- [ ] A refused accept shows "이미 끝난 파티예요" with the alert icon; a successful one keeps ✓. (App integration test, which fails before the change.)
-- [ ] A failure toast with its alert icon (an accept the mock refuses, added to the mock if it has none) on a phone with the mock build; the screens go to the orchestrator before the PR. (Emulator.) The mock answers a fixed list of invitations (`mobile/src/api/mock/client.ts:210`), so the 초대 tab without the ended invitation is checked on the Dev Server once the main server is released.
-- [ ] No native file changes; lint, format, and types pass on the app and the main server.
+- [x] `GET /quest-invitations` leaves out an invitation to an ended Quest and keeps one with a Sub Quest ahead. (Main server integration test, which fails before the change.)
+- [x] A Leader's 초대 중, the sent and the received join requests leave out an ended Quest. (Main server integration tests.)
+- [x] `GET /quest-invitations/:id` answers an ended Quest's invitation as it answers a missing one. (Main server integration test.)
+- [x] A refused accept shows "이미 끝난 파티예요" with the alert icon; a successful one keeps ✓. (App integration test, which fails before the change.)
+- [x] A failure toast with its alert icon (an accept the mock refuses, added to the mock if it has none) on a phone with the mock build; the screens go to the orchestrator before the PR. (Emulator.)
+- [ ] The mock answers a fixed list of invitations (`mobile/src/api/mock/client.ts:210`), so the 초대 tab without the ended invitation is checked on the Dev Server once the main server is released. (Not yet: it waits for the main server Release.)
+- [x] No native file changes; lint, format, and types pass on the app and the main server.
 
 ## Comments
