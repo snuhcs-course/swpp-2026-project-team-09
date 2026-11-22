@@ -146,7 +146,7 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
       ) : null}
       <FailureNote
         failure={loaded.state === 'failed' ? loaded.failure : null}
-        onLogIn={onMap.onMap ? null : logIn}
+        onLogIn={actions.bandOnBar?.(place) === true ? null : logIn}
         reading={{
           words: SEATS_UNREAD,
           onRetry: reload,

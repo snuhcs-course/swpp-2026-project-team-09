@@ -27,8 +27,9 @@ function listWordsOf({
   answer: shown,
   card,
   booking,
+  steps,
 }: ChatSheetControl): { words: string; onPress: (() => void) | null } | null {
-  if (booking !== null) {
+  if (booking !== null && steps === null) {
     return card.raised
       ? null
       : {

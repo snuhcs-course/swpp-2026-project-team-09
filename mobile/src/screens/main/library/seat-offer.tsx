@@ -141,7 +141,7 @@ export function SeatOffer(props: OfferProps): ReactElement {
       <FailureNote
         failure={write.failure?.failure ?? null}
         message={write.failure?.message}
-        onLogIn={onMap ? null : write.logIn}
+        onLogIn={props.actions.bandOnBar?.(props.place) === true ? null : write.logIn}
       />
       {open && onMap && !docked ? (
         <Pills>

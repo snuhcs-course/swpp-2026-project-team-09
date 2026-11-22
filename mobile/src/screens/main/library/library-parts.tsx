@@ -122,7 +122,7 @@ export function FailureNote({
   failure: LibraryFailure | null;
   // The library's own words, or a card's sentence for the failure.
   message?: string;
-  // Null where 로그인 is the screen's main button (a booking on the map): the note says why, and offers no button.
+  // Null where 로그인 is the screen's main button (a booking on the map alone): the note says why, and offers no button.
   onLogIn: (() => void) | null;
   reading?: ReadAgain;
 }): ReactElement | null {
