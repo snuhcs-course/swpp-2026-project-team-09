@@ -8,6 +8,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { awayPlaceOf } from '@/features/assistant/study-area';
@@ -130,7 +131,7 @@ function guidedView(guide: GuideMap, me: Me, around: MapTouches): MapView {
 // building opens its card and the Place is marked, and a press on an interest mark opens its answer instead of a card.
 // While a Plan of an answer is shown, the Plan is drawn in their place, and a press on a candidate shows its Plan;
 // while a received invitation's card is, its own way is; while a made Quest's card is, its Places and the User are. A
-// Lookup on screen is drawn as a Plan is, and takes no press (`useLookupMap`). Once any of them closes, a camera left
+// Lookup on screen is drawn as a Plan is, and a press on one of its marks raises its card (`useLookupMap`). Once any of them closes, a camera left
 // further out than the everyday map allows glides back in. While a meal's Plan is on screen, a press on a building asks
 // about it and the map draws that ("여기면 어때?"). On the everyday map, a tap on empty map, one that no mark keeps
 // and where no Place is found, clears the walking route with `clearRoute` (P15 ticket 55). Every request carries the
@@ -147,7 +148,8 @@ export function useMapView(
   useViewport(chat, map, room);
   const drawn = onMap(chat);
   const seats = useAwaySeats(awayPlaceOf(drawn.lookup.lookup));
-  const lookup = useLookupMap(drawn.lookup, map, room, { avatars: things.avatars, cards }, me.avatars, seats);
+  const { raise } = chat.card;
+  const lookup = useLookupMap(drawn.lookup, map, room, { avatars: things.avatars, cards }, me.avatars, seats, raise);
   const { howAbout } = chat;
   const shown = useAskingShown(drawn.answer, howAbout.point);
   const openMark = useMarkOpening(chat.openMark, map.camera, room.stage);
