@@ -753,8 +753,8 @@ take 20 to 35 minutes more. A job left out still starts and reports success unde
 branch's ruleset requires. A Release waits for the full level only
 ([infra/production/README.md](infra/production/README.md), "Following a Release"). The iteration branch's full run goes
 one at a time, on its newest commit, so an integration or end-to-end failure shows only after the merge, and a failure
-of the app's integration tests only in the next nightly run ([The nightly level](#the-nightly-level)): run the
-integration and end-to-end test files you touched before a pull request is ready (in `mobile`,
+of the app's integration tests only in the next run at the nightly level ([The nightly level](#the-nightly-level)): run
+the integration and end-to-end test files you touched before a pull request is ready (in `mobile`,
 `pnpm test:integration <file>`).
 
 A test's level, unit, integration or end-to-end, is in its file name ([ADR
@@ -823,11 +823,12 @@ Not run by `pnpm test` or CI:
 
 ### The nightly level
 
-[`.github/workflows/nightly.yml`](.github/workflows/nightly.yml) starts CI at the nightly level every night at 03:00 KST
-on the newest commit of the newest `<line>/Main`. GitHub fires a schedule only from the default branch's copy of a
-workflow, so `main` carries that file too; it skips, with a notice, a Main whose `ci.yml` cannot be started by hand.
-Anyone with write access starts the same run on a branch or a tag, for example on the iteration branch's newest commit
-before tagging a Release:
+[`.github/workflows/nightly.yml`](.github/workflows/nightly.yml) is set to start CI at the nightly level at 03:00 KST
+on the newest commit of the newest `<line>/Main`, and skips, with a notice, a Main whose `ci.yml` cannot be started by
+hand. GitHub fires a schedule only from the default branch's copy of a workflow, and `main` receives that file only when
+it is fast-forwarded to an iteration Main; no pull request or commit goes to `main` itself. Until then the nightly level
+runs only when started by hand. Anyone with write access starts it on a branch or a tag, for example on the iteration
+branch's newest commit before tagging a Release:
 
 ```bash
 gh workflow run ci.yml --ref 5.0/Main
