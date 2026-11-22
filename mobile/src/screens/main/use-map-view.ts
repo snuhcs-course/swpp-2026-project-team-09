@@ -126,6 +126,18 @@ function guidedView(guide: GuideMap, me: Me, around: MapTouches): MapView {
   };
 }
 
+type Target = Pick<Selection, 'place' | 'selectPlace'>;
+
+// While a reply asks for a Place picked on the map, a tap on a building sends it (P04 ticket 26).
+function pressTarget(
+  chat: ChatSheetControl,
+  unasked: boolean,
+  otherwise: Target,
+): { target: Target; picking: boolean } {
+  const picking = chat.pick.place !== null && chat.framed && !unasked;
+  return { target: picking ? { place: null, selectPlace: chat.pick.choosePlace } : otherwise, picking };
+}
+
 // What the map draws and what a press on it does. The everyday map: the things of the cards, the selected one drawn
 // selected, the tutorial place pin over them, the User's own Avatar, which takes a press, and the lines. A tap on a
 // building opens its card and the Place is marked, and a press on an interest mark opens its answer instead of a card.
@@ -160,9 +172,9 @@ export function useMapView(
   const limits = useEverydayLimits(map, drawsItsOwnMap({ answer, way, guide }));
   const everyday = answer === null && way === null && !chat.framed && !unasked && guide === null;
   const asking = howAbout.pressable && plan !== null && !unasked;
-  const target = asking ? howAbout.target : selection;
+  const { target, picking } = pressTarget(chat, unasked, asking ? howAbout.target : selection);
   const tapClears = everyday ? clearRoute : undefined;
-  const pressed = usePressedPlace(map.camera, target, chat.setTapped, everyday || asking, tapClears);
+  const pressed = usePressedPlace(map.camera, target, chat.setTapped, everyday || asking || picking, tapClears);
   const around = bothTouches(pin.touches, pressed);
   if (guide !== null && !chat.framed) {
     return guidedView(guide, me, around);

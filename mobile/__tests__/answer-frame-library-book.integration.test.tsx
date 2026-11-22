@@ -28,6 +28,7 @@ import {
   startLibraryChat,
 } from './support/library-chat';
 import { navigate } from './support/library-session';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // The book card of a reading-room seat in the answer frame (MainChatLibReserve) and its done message
 // (MainChatLibReserved), against the fake main server and the fake library. M4: no test sees a write before the
@@ -158,7 +159,7 @@ describe('the done message', () => {
     const sent = server.received('POST /assistant/messages');
     expect(sent).toHaveLength(2);
     expect(sent[1]?.body).toEqual({
-      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+      clientCapabilities: SENT_CAPABILITIES,
       context: ASK_CONTEXT,
       messages: [
         { role: 'user', text: '관정 7층 열람실 17시에 한 시간 예약해줘' },

@@ -19,6 +19,7 @@ import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // The time band of the card (P02 ticket 03, "A drag" and "After a drag"), over the stored answer to "배고파, 민수랑
 // 같이", whose first Plan runs from 12:15 to 12:43, and the stored answer with the start fixed at 12:40, whose first
@@ -60,7 +61,7 @@ function windowed(from: string | null, until: string | null): object {
   return {
     input: { ...MEAL_ANSWER.input, window: { from, until } },
     location: ON_CAMPUS,
-    clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+    clientCapabilities: SENT_CAPABILITIES,
   };
 }
 
@@ -101,7 +102,7 @@ describe('a handle let go', () => {
     expect(recalculations(server).at(-1)).toEqual({
       input: { ...MEAL_ANSWER_FIXED_START.input, window: { from: '12:40', until: '13:00' } },
       location: ON_CAMPUS,
-      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+      clientCapabilities: SENT_CAPABILITIES,
     });
   });
 });

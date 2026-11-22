@@ -25,6 +25,7 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerRecalculations, JOB_FAIR } from './support/row-four';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 const TALK = 'c750f9a0-887e-4dc1-99d1-34b065ff6257';
 
@@ -85,7 +86,7 @@ describe('"여기서 먹기" on the card of a pressed building', () => {
       {
         input: EAT_HERE?.kind === 'plan' ? EAT_HERE.input : null,
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(server.received('POST /assistant/messages')).toEqual([]);
@@ -187,7 +188,7 @@ describe("a2's buttons on the card of 문화관", () => {
       {
         input: { kind: 'events', date: '2026-11-20', eventIds: [JOB_FAIR, TALK] },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 행사 보기', { exact: false });
@@ -206,7 +207,7 @@ describe("a2's buttons on the card of 문화관", () => {
       {
         input: { kind: 'quests', globalEventId: JOB_FAIR, questIds: null },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(screen.getByTestId('answer-pill')).toHaveTextContent('73동 · 같이 갈 파티', { exact: false });

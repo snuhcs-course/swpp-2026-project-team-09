@@ -22,6 +22,7 @@ import { socketServer } from './support/live';
 import { lookOf } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, LOBBY, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // The marks of the watched interests on the everyday map (P05 ticket 13), against the fake main server at 13:00 on
 // 6 October 2026: the job fair and the company session share 문화관, the concert and the lecture stand elsewhere.
@@ -166,7 +167,7 @@ describe('the marks', () => {
       {
         input: { kind: 'events', date: '2026-10-06', eventIds: [JOB_FAIR.id, TALK.id] },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(within(screen.getByTestId('answer-pill')).getByText(MARK)).toBeVisible();

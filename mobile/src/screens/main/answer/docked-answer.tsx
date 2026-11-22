@@ -14,8 +14,10 @@ import { leaveOfferOf, leaveWordsOf } from '@/features/assistant/use-quest-leavi
 import { keepsShown } from '@/features/assistant/use-shown-answer';
 import type { ChatSheetControl } from '../chat-sheet';
 import { DockChip, DockLine } from './dock-chips';
+import { PickTimeSheet } from './pick-time-sheet';
 import { WithMenuList } from './meal-list';
 import { planCardRests } from './plan-card';
+import { wordsLine } from './keyboard-headline';
 import { pressOffer } from './refusal-reply';
 import { onScreenOf, planShown, Words, wordsKindOf } from './reply-words';
 import type { BandFocus } from './use-corrections';
@@ -94,6 +96,8 @@ export function restOf(control: ChatSheetControl, after: readonly ChatBubble[]):
 
 type Raise = (earlier: boolean) => void;
 
+const PICKING_PLACE = '지도에서 건물을 눌러 주세요';
+
 // The answer's note, which raises the card with what it names. Earlier questions are in the pill's list (P04 ticket
 // 10).
 function FoldedChips({
@@ -155,6 +159,20 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
           words={offer.label}
         />
       ))}
+      {(rest.picks ?? []).map((offer) => (
+        <DockChip
+          disabled={waiting}
+          key={offer.kind}
+          onPress={() => {
+            if (offer.kind === 'pick-place' && control.pick.place !== null) {
+              control.pick.stop();
+            } else {
+              control.pick.start(offer);
+            }
+          }}
+          words={offer.kind === 'pick-place' && control.pick.place !== null ? '그만 고르기' : offer.label}
+        />
+      ))}
       {retry && control.latest ? <DockChip disabled={waiting} onPress={control.chat.retry} words="다시 시도" /> : null}
       {keep ? <DockChip disabled={choosing(control)} onPress={control.invitation.leave} words="그대로 두기" /> : null}
       <FoldedChips control={control} note={note} onRaise={onRaise} />
@@ -165,7 +183,10 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
 // A reply's dock: its one line, which raises the card with the whole reply, then its buttons as chips, and the folded
 // chips. Nothing when the map says it all and nothing is folded.
 function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement | null {
-  const { line, offers, retry, note } = rest;
+  const { offers, retry, note } = rest;
+  // While the map is picking a Place (P04 ticket 26), the line says what to do.
+  const line = control.pick.place === null ? rest.line : wordsLine(PICKING_PLACE);
+  const { time } = control.pick;
   const empty = line === null && offers.length === 0 && !retry && note === null;
   if (empty) {
     return null;
@@ -185,6 +206,9 @@ function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement
         />
       )}
       <ReplyChips control={control} onRaise={onRaise} rest={rest} />
+      {time === null ? null : (
+        <PickTimeSheet offer={time} onClose={control.pick.stop} onPick={control.pick.chooseTime} />
+      )}
     </View>
   );
 }

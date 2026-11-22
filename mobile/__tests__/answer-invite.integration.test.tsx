@@ -23,6 +23,7 @@ import { AI_INPUT, layStage } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // "만들고 초대 보내기" (once "이대로 초대") beside the input, over the answer to "배고파, 민수랑 같이" (P02 ticket
 // 05), whose first Plan is "12:15 302동식당", against the fake main server. POST /plans answers with the stored reply
@@ -104,7 +105,7 @@ describe('a press of "만들고 초대 보내기"', () => {
         planId: '302동식당',
         startAt: MEAL_PLAN_1.startAt,
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(sent[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);

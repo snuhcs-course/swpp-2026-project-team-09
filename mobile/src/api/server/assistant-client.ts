@@ -143,6 +143,10 @@ function filled(card: ChatCard): ChatCard {
 }
 
 // A main server before P01-01 leaves the answer out, one before P01-06 the Lookup, and one before P03 the steps.
+function isFree(value: unknown): value is { from: string; until: string } {
+  return hasTexts(value, ['from', 'until']);
+}
+
 function isReplyOffer(value: unknown): value is ReplyOffer {
   switch (field(value, 'kind')) {
     case 'ask':
@@ -151,6 +155,10 @@ function isReplyOffer(value: unknown): value is ReplyOffer {
       return hasTexts(value, ['label', 'title', 'startsAt', 'questId']);
     case 'quest':
       return hasTexts(value, ['label', 'questId']);
+    case 'pick-place':
+      return hasTexts(value, ['label', 'text']);
+    case 'pick-time':
+      return hasTexts(value, ['label', 'date']) && listOf(isFree)(field(value, 'free'));
     default:
       return false;
   }

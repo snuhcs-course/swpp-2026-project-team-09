@@ -23,6 +23,7 @@ import { pressMarker } from './support/made-quest';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, JI_WOO, MIN_JUN, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // Correcting who eats together (P02 ticket 03, "Taking a Friend out" and "Adding a Friend"), over the stored answer
 // to "배고파, 민수랑 같이" and the fake main server's Friends, 김민준, whom the User sees on the map, and 서지우, whom
@@ -83,7 +84,7 @@ describe('taking a Friend out', () => {
       {
         input: { ...MEAL_ANSWER.input, people: [ASKER] },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     // Who eats changed, so the first Plan of the answer for the User alone is shown, which the User takes alone.
@@ -137,7 +138,7 @@ describe('adding a Friend chosen', () => {
       {
         input: { ...MEAL_ANSWER.input, people: [...MEAL_ANSWER.input.people, { userId: JI_WOO.id, constraints: [] }] },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(mapThings()).toEqual(expect.arrayContaining([THREE_PICK, '민수 · 18분', '지은 · 5분']));
@@ -154,7 +155,7 @@ describe('adding a Friend chosen', () => {
       {
         input: { ...MEAL_ANSWER.input, people: [...MEAL_ANSWER.input.people, { userId: MIN_JUN.id, constraints: [] }] },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(mapThings()).toContain(THREE_PICK);

@@ -8,8 +8,9 @@
 // study spaces of the visible area it sends as `viewport`, a meet, the answers of events, recruiting parties, and a new
 // party, 바꾸기 / 그대로 두기 beside a Quest already set (`plan-set`, P04 ticket 17), which it also sends with POST /plans
 // and POST /assistant/answers, a Quest cancelled by words (`quest-cancel`, ticket 24), and a 파티 changed in place
-// (`party-change`, ticket 25). The 1.0.0 bundle sends none of them. A main server before P05 ticket 17 refuses
-// `plan-set`, one before P05 ticket 31 `quest-cancel`, and one before P05 ticket 30 `party-change`.
+// (`party-change`, ticket 25), and a Place or a time picked (`pick`, ticket 26). The 1.0.0 bundle sends none of them.
+// A main server before P05 ticket 17 refuses `plan-set`, one before P05 ticket 31 `quest-cancel`, one before P05
+// ticket 30 `party-change`, and one before P05 ticket 24 `pick`.
 export const ANSWER_CAPABILITIES = [
   'library',
   'answer',
@@ -19,4 +20,5 @@ export const ANSWER_CAPABILITIES = [
   'plan-set',
   'quest-cancel',
   'party-change',
+  'pick',
 ] as const;

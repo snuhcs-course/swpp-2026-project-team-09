@@ -17,6 +17,7 @@ import { MEAL_PLAN_1 } from '@/api/mock/data/meal-answer-plan-1';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import type { MakePlanQuest } from '@/api/plan-quest-types';
 import { googleAvailable } from '@/auth/google';
+import { SENT_CAPABILITIES } from '../support/capabilities';
 
 // A Plan made into a Quest through the main server's client: the conditions of the answer and the Plan's id and start
 // go to POST /plans with the Idempotency-Key, and the reply is believed only in the contract's shape. After a decline,
@@ -57,16 +58,7 @@ describe('a Plan made into a Quest by the main server', () => {
       {
         body: {
           ...MAKING,
-          clientCapabilities: [
-            'library',
-            'answer',
-            'area',
-            'meet',
-            'events',
-            'plan-set',
-            'quest-cancel',
-            'party-change',
-          ],
+          clientCapabilities: SENT_CAPABILITIES,
         },
         idempotencyKey: 'plan-key',
       },
@@ -130,7 +122,7 @@ describe('the better Plan after a decline, by the main server', () => {
     expect(server.received(`PUT /plans/${QUEST_ID}`).map(({ body }) => body)).toEqual([
       {
         ...making,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
   });

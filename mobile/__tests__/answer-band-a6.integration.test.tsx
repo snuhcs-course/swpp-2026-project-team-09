@@ -23,6 +23,7 @@ import { press } from './support/markers';
 import { answerFriendsWithMinSu, meetFromCard, MIN_SU, row } from './support/meet';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // Board a6 (P02 ticket 25): a5's band let go at 14:00, over the fake main server, which answers the meet with 민수 with
 // the stored real answer of a5 (`meet-answer.json`) and the meet asked again from 14:00 with the stored real answer of
@@ -91,7 +92,7 @@ describe('the band of a5 let go at 14:00 (board a6)', () => {
     expect(recalculations(server).at(-1)).toEqual({
       input: MEET_ANSWER_FROM_14.input,
       location: ON_CAMPUS,
-      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+      clientCapabilities: SENT_CAPABILITIES,
     });
     expect(mapThings()).toEqual(expect.arrayContaining([PICK, '민수']));
     expect(timeBar().getByText('14:07–15:30 · 함께 83분')).toBeVisible();

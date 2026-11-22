@@ -19,6 +19,7 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerRecalculations, ASKER, chats, EVENTS_REPLY, JOB_FAIR, sayOnMap } from './support/row-four';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // An events answer in the answer frame (P02 ticket 30, board Alone 1), over the fake main server, which answers
 // "오늘 볼 만한 거 있어?" with the stored real answer of row 4: the job fair, the concert, and the company session that
@@ -65,7 +66,7 @@ describe('an events answer (board Alone 1)', () => {
 
     expect(chats(server)).toEqual([
       expect.objectContaining({
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+        clientCapabilities: SENT_CAPABILITIES,
       }),
     ]);
   });
@@ -124,7 +125,7 @@ describe('the buttons of an events Plan', () => {
       {
         input: { kind: 'quests', globalEventId: JOB_FAIR, questIds: null },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(chats(server)).toHaveLength(1);
@@ -150,7 +151,7 @@ describe('the buttons of an events Plan', () => {
           people: [{ userId: ASKER, constraints: [] }],
         },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(mapThings()).toContain('배드민턴 · 17:10 배드민턴');
@@ -171,7 +172,7 @@ describe('the buttons of another events Plan', () => {
       {
         input: { kind: 'quests', globalEventId: '06b0d7bf-98aa-4d49-a22c-4c06d135891c', questIds: null },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
   });

@@ -27,6 +27,7 @@ import type { PlanOutcomes } from '@/features/assistant/turn-outcome';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
 import { type HowAbout, useHowAbout } from '@/features/assistant/use-how-about';
 import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use-plan-invitation';
+import { type Picking, usePicking } from '@/features/assistant/use-picking';
 import { type QuestLeaving, useQuestLeaving } from '@/features/assistant/use-quest-leaving';
 import { type ShownAnswer, useShownAnswer } from '@/features/assistant/use-shown-answer';
 import { type ShownLookup, type StartGuidance, useShownLookup } from '@/features/assistant/use-shown-lookup';
@@ -55,6 +56,8 @@ export interface ChatSheetControl extends Omit<KeptConversation, 'chat'>, MarkOp
   outcomes: PlanOutcomes;
   // A reply's 취소하기 or 나가기, which cancels a Quest asked by words (P04 ticket 24).
   leave: QuestLeaving;
+  // A Place picked on the map, or a time on the wheel, that a reply asked for (P04 ticket 26).
+  pick: Picking;
   // Whether the frame's card is raised, which a press on a Lookup's mark on the map does too.
   card: CardRaise;
   // What was pressed on the map and is open in its card, which every request carries from then on; null for nothing.
@@ -135,6 +138,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
     ...onScreen,
     lookup: useShownLookup(chat.bubbles, start, kept.hide),
     leave: useQuestLeaving(),
+    pick: usePicking(chat),
     card: useCardRaise(kept.framed),
     ...useOpenedMark(chat.bubbles, kept.framed),
     ...pressing,

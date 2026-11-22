@@ -35,6 +35,7 @@ import {
   sendFromBar,
   startLibraryChat,
 } from './support/library-chat';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // The room book card and the seats card in the answer frame, and what a request to the Assistant sends of a library
 // card, against the fake main server and the fake library. M4: no test sees a write before the confirm press.
@@ -245,14 +246,14 @@ describe('the request to the Assistant', () => {
     const chat = await askForCards({ server, library }, [SEATS_CARD], { words: '좌석현황' });
 
     expect(server.received('POST /assistant/messages')[0]?.body).toEqual({
-      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+      clientCapabilities: SENT_CAPABILITIES,
       context: ASK_CONTEXT,
       messages: [{ role: 'user', text: '좌석현황' }],
     });
     await sendFromBar(chat.user, '고마워');
 
     expect(server.received('POST /assistant/messages')[1]?.body).toMatchObject({
-      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+      clientCapabilities: SENT_CAPABILITIES,
       messages: [
         { role: 'user' },
         { role: 'assistant', cards: [{ kind: 'library', id: 'seats:7F-7A-zone2:2026-11-02' }] },

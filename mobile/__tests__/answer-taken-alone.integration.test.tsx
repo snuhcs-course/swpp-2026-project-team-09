@@ -21,6 +21,7 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerRecalculations, ASKER, EVENTS_REPLY, firstPlan, JOB_FAIR, sayOnMap } from './support/row-four';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // "여기로" on an events Plan (P03 ticket 15, the design's 6.3 Alone 3), over the fake main server, which answers
 // "오늘 볼 만한 거 있어?" with the stored real answer of row 4 and POST /plans with the job fair taken alone: the request,
@@ -102,7 +103,7 @@ describe('"여기로" on an events Plan (Alone 3)', () => {
         planId: JOB_FAIR,
         startAt: '2026-11-20T13:54:00+09:00',
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(sent[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);

@@ -6,10 +6,11 @@
 
 import type { LeaveQuestOffer } from './leave-quest-types';
 import type { QuestOffer } from './party-change-types';
+import type { PickOffer } from './pick-types';
 import type { RefusalOffer } from './refusal-types';
 
-// A button under a reply's text: one sent as the User's words, one that cancels a Quest (P04 ticket 24), or one that
-// opens a 파티's room (ticket 25).
+// A button under a reply's text: one sent as the User's words, one that cancels a Quest (P04 ticket 24), one that
+// opens a 파티's room (ticket 25), or a picker of a Place or a time (ticket 26).
 export type AskOffer = Extract<RefusalOffer, { kind: 'ask' }>;
 
-export type ReplyOffer = AskOffer | LeaveQuestOffer | QuestOffer;
+export type ReplyOffer = AskOffer | LeaveQuestOffer | QuestOffer | PickOffer;
