@@ -30,8 +30,9 @@ export interface KeptQuest {
   people: { userId: string; name: string; answer: KeptAnswer }[];
   // The User leads it.
   mine: boolean;
-  // The User may change it from the Assistant: theirs, shared with nobody (no other Holder, and no invited Friend who has
-  // not declined), for no Global Event, no seat, and not under way.
+  // The User may change it from the Assistant: theirs, for no Global Event and no seat, and either made from a meal's or a
+  // meet's Plan and not started, which `PUT /plans/:questId` changes in place for its people however many (P05 ticket
+  // 31), or shared with nobody (no other Holder, and no invited Friend who has not declined) and not under way.
   changeable: boolean;
 }
 
@@ -88,6 +89,7 @@ function keptOf(quest: Stored, userId: string, now: Date): KeptQuest | null {
   const underWay = start <= now && (end === null || now < end);
   const people = peopleOf(quest, userId);
   const shared = people.some(({ answer }) => answer !== 'declined');
+  const planned = quest.meet || quest.meal !== null;
   return {
     kind: kindOf(quest),
     questId: quest.id,
@@ -98,7 +100,8 @@ function keptOf(quest: Stored, userId: string, now: Date): KeptQuest | null {
     placeLabel: first?.placeLabel ?? null,
     people,
     mine,
-    changeable: mine && !shared && quest.globalEventId === null && !quest.seatStay && !underWay,
+    changeable:
+      mine && quest.globalEventId === null && !quest.seatStay && (planned ? now < start : !shared && !underWay),
   };
 }
 
