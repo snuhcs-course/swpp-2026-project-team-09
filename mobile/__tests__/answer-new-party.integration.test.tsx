@@ -194,7 +194,7 @@ describe('"만들고 모집하기" (boards Together 11 and Recruit 5)', () => {
       },
     ]);
     expect(sent[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);
-    expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
+    expect(card().getByText('서준에게 약속 초대를 보냈어요')).toBeVisible();
     const steps = within(card().getByTestId('quest-steps'));
     expect(steps.getByText('유상, 서준: 체육관 앞에서 만나기')).toBeVisible();
     expect(steps.getByText('배드민턴')).toBeVisible();
