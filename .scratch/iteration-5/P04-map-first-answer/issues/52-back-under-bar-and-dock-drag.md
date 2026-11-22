@@ -58,6 +58,7 @@ The rule for everything that sits over the map as a card: it closes by a ✕ ico
 - [x] Both sheets edge to edge on the 16 lines, the header row and ✕ by the corner rule, the dark status bar under the bar's sheet, and the earlier questions without the input. (Emulator pictures, checked against the layout; the list's hidden input and missing line, integration test.)
 - [x] While typing, no questions stand above the input; the list opens by the history chip alone. (Integration tests.)
 - [x] The card's steps are run on the UI thread; the drag and the steps still land where they did. (Integration tests, with reduced motion.) The motion itself is checked on the phone.
+- [x] A card without steps (a received invitation's, a made Quest's) settles at its content's height under the cap and tells the camera that height; after any step, the camera hears only a settled lowered height, decided by the step the run went to. (Unit test; a camera log on the emulator: a drag up and back down tells nothing new.)
 - [x] No native file changes (the native fingerprint is the same, 5f21af6f, with the tests' Jest resolver added); lint, format, and types pass on the app.
 
 ## Comments

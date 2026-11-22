@@ -56,8 +56,9 @@ function clamp(value: number, low: number, high: number): number {
   return Math.min(high, Math.max(low, value));
 }
 
+// A card without steps (an invitation's, a made Quest's) has its lowered one alone, which it settles at and tells.
 function heightsOf({ lowered, raised, full }: Targets): LevelHeights | null {
-  return lowered === null || raised === null ? null : { lowered, raised, full };
+  return lowered === null ? null : { lowered, raised: raised ?? lowered, full };
 }
 
 // Runs the offset to `to`, telling `done` at the end; at once with reduced motion. `aimed` keeps the last offset run to,
@@ -198,14 +199,15 @@ function useTellOnce(onHeight: (height: number) => void): (height: number) => vo
   );
 }
 
-// The offset running to its step: at once on a let-go or a press, and again whenever the step's height changes (the
-// content grows, the stage is laid out); settled, the lowered card's whole height goes to the camera.
+// The offset running to its step: at once on a let-go or a step, and again whenever the step's height changes (the
+// content grows, the stage is laid out). Settled lowered, the card's whole height goes to the camera, decided by the step
+// the run went to rather than by the state its callback was made in (PR 516's review).
 function useRun(
   input: MotionInput,
   level: Level,
   heights: LevelHeights | null,
 ): { offset: SharedValue<number>; back: (to: Level) => void } {
-  const { raising, room, from, extra, onHeight } = input;
+  const { room, from, extra, onHeight } = input;
   const reduce = useReduceMotion();
   const target = heights === null || room === null ? null : room - heightOf(level, heights);
   const offset = useSharedValue(room !== null && from !== null ? room - from : (target ?? 0));
@@ -214,17 +216,22 @@ function useRun(
   const running = useRef(false);
   const lowered = heights?.lowered ?? null;
   const tell = useTellOnce(onHeight);
-  const settle = useCallback(() => {
-    running.current = false;
-    if (!raising.raised && lowered !== null) {
-      tell(extra + lowered);
-    }
-  }, [raising.raised, lowered, extra, tell]);
+  const settle = useCallback(
+    (step: Level) => {
+      running.current = false;
+      if (step === 'lowered' && lowered !== null) {
+        tell(extra + lowered);
+      }
+    },
+    [lowered, extra, tell],
+  );
   const back = useCallback(
     (to: Level) => {
       if (heights !== null && room !== null) {
         running.current = !reduce;
-        runTo(offset, room - heightOf(to, heights), { reduce, aimed }, settle);
+        runTo(offset, room - heightOf(to, heights), { reduce, aimed }, () => {
+          settle(to);
+        });
       }
     },
     [heights, room, offset, reduce, settle],
@@ -234,13 +241,15 @@ function useRun(
   useEffect(() => {
     if (target !== null && target !== aimed.current) {
       running.current = !reduce;
-      runTo(offset, target, { reduce, aimed }, settle);
+      runTo(offset, target, { reduce, aimed }, () => {
+        settle(level);
+      });
       return;
     }
-    if (!running.current && !raising.raised && lowered !== null) {
+    if (!running.current && level === 'lowered' && lowered !== null) {
       tell(extra + lowered);
     }
-  }, [target, offset, reduce, settle, raising.raised, lowered, extra, tell]);
+  }, [target, offset, reduce, settle, level, lowered, extra, tell]);
   return { offset, back };
 }
 

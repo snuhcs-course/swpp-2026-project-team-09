@@ -120,6 +120,7 @@ function Scrolling({ props, room, tail, topped, onNatural }: ScrollingProps): Re
           onContentSizeChange(0, height);
         }}
         style={[styles.parts, minHeight === undefined ? null : { minHeight: minHeight - padTop }]}
+        testID={`${props.testID}-parts`}
       >
         {props.children}
       </View>
