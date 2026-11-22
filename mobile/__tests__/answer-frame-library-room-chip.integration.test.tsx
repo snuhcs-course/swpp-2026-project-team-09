@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { libraryCard, READING_ROOM, SEAT_NOTES } from '@/api/mock/data/library';
@@ -24,7 +25,7 @@ import {
 } from './support/library-chat';
 
 // The room chip of the seat card ("공부할 자리"): the list of rooms by floor and kind with the free seats of the seat
-// space each would fill, a switch and 되돌리기, and a full room swapped, against the fake main server and the fake
+// space each would fill, a switch and 처음 열람실로, and a full room swapped, against the fake main server and the fake
 // library. The free seats are the design's example; the library is read for the card's time, 17:00–20:00.
 
 jest.mock('expo-location');
@@ -138,7 +139,7 @@ describe('the room chip', () => {
     await ask();
 
     expect(seatCard().getByTestId('room-chip-plain')).toHaveTextContent('7층 열람실');
-    expect(seatCard().getByText('7층 열람실 · 빈 자리 42석')).toBeVisible();
+    expect(seatCard().getByText('빈 자리 42석')).toBeVisible();
     expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
     expect(sectorsRead()).toEqual(['17202']);
   });
@@ -184,7 +185,7 @@ describe('the room list', () => {
 });
 
 describe('a switch of room', () => {
-  it('switches the room with one tap, reads its seats, clears the named seat, and 되돌리기 returns', async () => {
+  it('switches the room with one tap, reads its seats, clears the named seat, and 처음 열람실로 returns', async () => {
     await ask({ seat: '7200' });
     expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7200번')).toBeVisible();
     await pressIn(seatCard(), '열람실: 7층 열람실');
@@ -200,11 +201,11 @@ describe('a switch of room', () => {
     expect(sectorsRead().at(-1)).toBe('17201');
     expect(seatCard().getByText('오늘 17:00–20:00')).toBeVisible();
 
-    await pressIn(seatCard(), '되돌리기');
+    await pressIn(seatCard(), '처음 열람실로');
 
     expect(seatCard().getByTestId('room-chip-plain')).toHaveTextContent('7층 열람실');
     expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7200번')).toBeVisible();
-    expect(seatCard().queryByRole('button', { name: '되돌리기' })).toBeNull();
+    expect(seatCard().queryByRole('button', { name: '처음 열람실로' })).toBeNull();
     expectNoWrite(library);
   });
 
@@ -269,14 +270,14 @@ describe('the room list without a library session', () => {
 });
 
 describe('a full room', () => {
-  it('is swapped for the space of the same kind with the most free seats, with no 되돌리기', async () => {
+  it('is swapped for the space of the same kind with the most free seats, with no 처음 열람실로', async () => {
     await ask({ free: { ...EXAMPLE, 17202: 0 } });
 
     expect(seatCard().getByTestId('room-chip-changed')).toHaveTextContent('8층 정숙 열람실');
     expect(seatCard().getByText('7층 열람실은 그 시간에 다 찼어요')).toBeVisible();
-    expect(seatCard().getByText('8층 정숙 열람실 · 빈 자리 23석')).toBeVisible();
+    expect(seatCard().getByText('빈 자리 23석')).toBeVisible();
     expect(seatCard().getByText(/^관정관 8층 8A 열람실 1 구역\(QUIET ZONE\) · \d+번$/u)).toBeVisible();
-    expect(seatCard().queryByRole('button', { name: '되돌리기' })).toBeNull();
+    expect(seatCard().queryByRole('button', { name: '처음 열람실로' })).toBeNull();
     expect(seatCard().queryByText('그 시간에 빈 자리가 없어요')).toBeNull();
     expectNoWrite(library);
   });

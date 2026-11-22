@@ -142,6 +142,16 @@ export function bookingActionOf({ booking, bookingStage, framed, chat }: ChatShe
   return { words: seen.words, onPress: press, disabled: seen.disabled || chat.waiting };
 }
 
+// After a booking, "확인" closes the answer and keeps the conversation (P01 ticket 03): the done message says what was
+// booked, and its own 좌석 현황 보기 is the second way on.
+export function bookedActionOf({ framed, chat, hide }: ChatSheetControl): PlanAction | null {
+  const last = chat.bubbles.at(-1);
+  if (!framed || last?.done === undefined || chat.waiting) {
+    return null;
+  }
+  return { words: '확인', onPress: hide, disabled: false };
+}
+
 // Of several requests (P04 ticket 09), the button is the shown step's action: its booking's, or its Plan's.
 function stepActionOf(control: ChatSheetControl): PlanAction | null {
   const step = control.steps?.steps[control.activeStep];
@@ -154,7 +164,7 @@ function stepActionOf(control: ChatSheetControl): PlanAction | null {
 export function answerActionOf(control: ChatSheetControl): AnswerAction | null {
   const plan =
     control.steps === null
-      ? (planActionOf(control) ?? proposalActionOf(control) ?? bookingActionOf(control))
+      ? (planActionOf(control) ?? proposalActionOf(control) ?? bookingActionOf(control) ?? bookedActionOf(control))
       : stepActionOf(control);
   if (plan !== null) {
     return { kind: 'plan', plan };

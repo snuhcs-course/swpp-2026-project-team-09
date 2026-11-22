@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -11,7 +12,7 @@ import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-ha
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LibrarySpace } from '@/api/assistant-types';
 import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
-import { spaceWords } from '@/library/cards/bookings';
+import { bookingTitle } from '@/features/assistant/booking-scene';
 import { SEAT_BOX, freeSeats } from '@/library/cards/seats';
 import { PICTURE_HEIGHT, type Point, pictureSize, type Size, ZOOM_MOST } from '@/library/cards/seat-zoom';
 import type { LibrarySeat } from '@/library/replies';
@@ -174,15 +175,15 @@ function Picture(props: PictureProps): ReactElement {
 function Head({ space: shown, seats, onClose }: Pick<SeatPickerProps, 'space' | 'seats' | 'onClose'>): ReactElement {
   return (
     <View style={styles.head}>
+      <Pressable accessibilityLabel="좌석 현황 닫기" accessibilityRole="button" onPress={onClose} style={styles.close}>
+        <Icon color={color.ink} name="chevronLeft" size={22} />
+      </Pressable>
       <View style={styles.headWords}>
         <Text accessibilityRole="header" style={styles.title}>
-          {`${spaceWords(shown)} 좌석 현황`}
+          {`${bookingTitle(shown)} 좌석 현황`}
         </Text>
         <Text style={styles.sub}>{`빈 자리 ${String(freeSeats(seats).length)}석 / ${String(seats.length)}석`}</Text>
       </View>
-      <Pressable accessibilityLabel="닫기" accessibilityRole="button" onPress={onClose} style={styles.close}>
-        <Icon color={color.inkMuted} name="x" size={20} />
-      </Pressable>
     </View>
   );
 }
@@ -227,7 +228,7 @@ const styles = StyleSheet.create({
   headWords: { flex: 1, minWidth: 0 },
   title: { fontFamily: font.bold, fontSize: 17, lineHeight: 24, color: color.ink },
   sub: { fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.inkMuted },
-  close: { alignItems: 'center', justifyContent: 'center', width: 44, height: 44, marginTop: -10, marginRight: -10 },
+  close: { alignItems: 'center', justifyContent: 'center', width: 44, height: 44, marginTop: -10, marginLeft: -10 },
   box: {
     height: PICTURE_HEIGHT,
     overflow: 'hidden',

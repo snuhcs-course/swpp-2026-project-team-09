@@ -97,6 +97,8 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
 function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElement {
   const { control, cardActions, focus, onClose, room } = props;
   const { bubbles, waiting, retry } = control.chat;
+  // A booking on the map, lowered, says its one sentence in its card in place of the reply's words (P01 ticket 03).
+  const docked = control.booking !== null && !props.raising.raised ? control.booking.bubbleId : null;
   const turn = turnOf(bubbles);
   const last = bubbles.at(-1);
   return (
@@ -112,18 +114,20 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
             onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting && control.latest ? retry : null}
             onShowLayer={control.leaving.showLayer}
             words={
-              <Words
-                addRecalculated={control.chat.addRecalculated}
-                bubble={bubble}
-                focus={focus}
-                howAbout={control.howAbout}
-                invitation={control.invitation}
-                lookup={control.lookup}
-                onAsk={control.chat.send}
-                onClose={onClose}
-                room={room}
-                shown={control.answer}
-              />
+              bubble.id === docked ? null : (
+                <Words
+                  addRecalculated={control.chat.addRecalculated}
+                  bubble={bubble}
+                  focus={focus}
+                  howAbout={control.howAbout}
+                  invitation={control.invitation}
+                  lookup={control.lookup}
+                  onAsk={control.chat.send}
+                  onClose={onClose}
+                  room={room}
+                  shown={control.answer}
+                />
+              )
             }
           />
         </View>

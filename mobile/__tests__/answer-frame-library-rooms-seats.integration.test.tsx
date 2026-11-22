@@ -214,7 +214,7 @@ describe('the seats card, large and tapped', () => {
     await laidOut(300);
 
     await pressIn(inCard(`library-seats-${SEATS_CARD.library.key}`), '좌석 현황 크게 보기');
-    expect(screen.getByText('관정관 7층 7A 열람실 2 구역 좌석 현황')).toBeVisible();
+    expect(screen.getByText('관정 7층 열람실 좌석 현황')).toBeVisible();
     expect(screen.getByText('밀어서 옮기고, 두 손가락으로 확대해요')).toBeVisible();
     expect(screen.getByTestId('seat-map-large-map-image')).toHaveStyle({ height: 300, width: (300 * 2529) / 1198 });
 

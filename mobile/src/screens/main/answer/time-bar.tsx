@@ -220,6 +220,7 @@ export function BookingBar({
         }}
         slot={live}
         space={kept.space}
+        wordsFirst
       />
     </View>
   );

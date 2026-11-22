@@ -239,6 +239,17 @@ function freeAgain(full: LibrarySpace, rooms: Rooms): boolean {
   return typeof count === 'number' && count > 0;
 }
 
+// The space filled and its free seats: "7A 노트북존 · 빈 자리 31석". The name is left out where the chip above already
+// says it ("7층 열람실"), so the room is named once (P01 ticket 03).
+function filledWords(shown: LibrarySpace, free: number | null): string | null {
+  const name = shortName(shown);
+  const said = roomOf(shown)?.label === name;
+  if (free === null) {
+    return said ? null : name;
+  }
+  return said ? `빈 자리 ${String(free)}석` : `${name} · 빈 자리 ${String(free)}석`;
+}
+
 // What the card says of the room on screen: the seat space filled with its free seats, the room swapped out when it
 // was full, and why this space of its room.
 export function RoomWords({
@@ -253,11 +264,10 @@ export function RoomWords({
   rooms: Rooms;
 }): ReactElement {
   const basis = rooms.state === 'listed' ? basisOf(shown, rooms.sectors, rooms.counts) : null;
+  const filled = filledWords(shown, free);
   return (
     <View style={styles.words}>
-      <Text style={styles.filled}>
-        {free === null ? shortName(shown) : `${shortName(shown)} · 빈 자리 ${String(free)}석`}
-      </Text>
+      {filled === null ? null : <Text style={styles.filled}>{filled}</Text>}
       {full === null || freeAgain(full, rooms) ? null : (
         <Text style={styles.why}>{`${shortName(full)}은 그 시간에 다 찼어요`}</Text>
       )}
