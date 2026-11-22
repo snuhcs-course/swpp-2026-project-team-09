@@ -235,7 +235,13 @@ export function QuestionList(props: QuestionListProps): ReactElement {
           <WordButton label="새 대화" onPress={onAskNew} strong words="＋ 새 대화" />
         )}
       </View>
-      <ScrollView contentContainerStyle={!flat && styles.rows} keyboardShouldPersistTaps="handled">
+      {/* In the card, the scroll reaches BLEED past the lines and pads back to them, so that Android's clip at its
+          bounds leaves the rows' tint and rounded corners whole. */}
+      <ScrollView
+        contentContainerStyle={flat ? styles.flatRows : styles.rows}
+        keyboardShouldPersistTaps="handled"
+        style={flat ? styles.flatScroll : undefined}
+      >
         {earlier.length > 0 && now.length > 0 ? <Text style={[styles.group, styles.groupRow]}>지금 대화</Text> : null}
         {now.map((row) => (
           <Question
@@ -292,6 +298,8 @@ const styles = StyleSheet.create({
   wordButtonWords: { ...text.label, color: color.inkMuted },
   strong: { color: color.snuBlue },
   rows: { paddingHorizontal: space[4] },
+  flatScroll: { marginHorizontal: -BLEED },
+  flatRows: { paddingHorizontal: BLEED },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
