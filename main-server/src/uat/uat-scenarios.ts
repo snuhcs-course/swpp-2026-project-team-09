@@ -12,7 +12,6 @@ import {
   clock,
   type Days,
   type EventSpec,
-  MINUTE,
   type Prepared,
   type QuestSpec,
   UAT_EVENT,
@@ -24,7 +23,7 @@ import {
 // after; every time counts from the run, so a rehearsal on another day prepares the same. What the testers and the
 // helpers make in the steps is theirs to make, and is not here.
 
-const BADMINTON = '배드민턴 같이 쳐요. 민턴 초보도 환영!';
+const BADMINTON = '같이 해요.';
 const GAP = '공강에 같이 해요.';
 
 type Rest = Omit<QuestSpec, 'id' | 'title' | 'leader' | 'description'>;
@@ -167,18 +166,18 @@ interface Today {
   eventStarts: Date;
 }
 
-// UAT-1: today's event with its two parties, and an event that ends during the session. Their times count from the
-// run and not from the clock, so a rehearsal at any hour finds the first ahead and the second over within half an hour.
+// UAT-1: today's event with its two parties, and an event that ends during the session, at the sheet's own times: the
+// session starts at 15:45, "[UAT] 짧은 행사" ends at 16:15 and "[UAT] Event" runs from 17:00 to 22:00.
 function today(days: Days): Today {
-  const from = (minutes: number): Date => new Date(days.now.getTime() + minutes * MINUTE);
-  const [eventStarts, shortEnds] = [from(75), from(30)];
+  const { at } = days;
+  const [eventStarts, shortEnds] = [at(0, '17:00'), at(0, '16:15')];
   const going = { capacity: 6, globalEventId: UAT_EVENT };
   return {
     eventStarts,
     shortEnds,
     events: [
-      { ...eventOf('event', '[UAT] Event', eventStarts, from(5 * 60), '301', 'published'), id: UAT_EVENT },
-      eventOf('short', '[UAT] 짧은 행사', from(-30), shortEnds, '302', 'published'),
+      { ...eventOf('event', '[UAT] Event', eventStarts, at(0, '22:00'), '301', 'published'), id: UAT_EVENT },
+      eventOf('short', '[UAT] 짧은 행사', at(0, '15:00'), shortEnds, '302', 'published'),
     ],
     quests: [
       partyOf('D', '같이 가요.', 'event-open', '[UAT] Open', { ...going, joinPolicy: 'open' }),
@@ -214,7 +213,7 @@ export function prepared(days: Days): Prepared {
     notes: [
       `오늘(D0) ${days.day(0)}, 내일(D1) ${days.day(1)}.`,
       `[UAT] 짧은 행사는 ${clock(uat1.shortEnds)}에 끝나요. UAT-1 9단계(S2)는 그 뒤에 하세요.`,
-      `[UAT] Event는 ${clock(uat1.eventStarts)}에 시작해요 (그 전에 UAT-1 1~8단계).`,
+      `[UAT] Event는 오늘 ${clock(uat1.eventStarts)}–22:00이에요. 22:00이 지나면 UAT-1을 할 수 없어요.`,
       '테스터(A1~A3)의 친구는 박지호(C)와 윤서아(E)뿐이고, 위치 공유는 꺼져 있어요. 이도현(B)과 한지우(D)는 켜져 있어요.',
       `B의 친구 ID: ${accountOf('B').friendId} · 이름: B ${accountOf('B').name}, C ${accountOf('C').name}, D ${accountOf('D').name}`,
     ],

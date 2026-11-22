@@ -56,8 +56,8 @@ sudo /srv/team/snu-now/infra/deploy/uat.sh s2-cancel   # cancels "[UAT] Event" (
 
 - **`setup`** empties what Users made, removes every User but the seven, cancels the other events of today and
   tomorrow, and writes the sheet's data at times counted from the run: today is D0 and tomorrow D1. The phones stay
-  signed in. Run it right before the session, and again after a rehearsal. It prints when "[UAT] 짧은 행사" ends and
-  when "[UAT] Event" starts (30 and 75 minutes after the run), and whether tomorrow has lunch menus; when it has
+  signed in. Run it right before the session, and again after a rehearsal. "[UAT] 짧은 행사" is today 15:00–16:15 and "[UAT] Event" today 17:00–22:00, as the sheet has them, so a rehearsal
+  at another hour finds them as that hour finds them. It prints whether tomorrow has lunch menus; when it has
   none, the newest day's lunch is copied onto it.
 - **`reset a1`** sets one tester back: Friends with C and E only, 위치 공유 off and never turned off (so the question
   of UAT-3 step 9 shows again), the two classes, the request to "[UAT] 공강 신청함", the party of two, no position and
