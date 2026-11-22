@@ -203,13 +203,14 @@ function useRun(
   const reduce = useReduceMotion();
   const target = heights === null ? null : heightOf(level, heights);
   const height = useSharedValue(from ?? target ?? 0);
-  const [moving, setMoving] = useState(from !== null);
+  // Growing from the dock, the card moves from its first frame, unless motion is reduced or it has no height to run to.
+  const [moving, setMoving] = useState(from !== null && target !== null && !reduce);
   const dragging = useRef(false);
   const cardHeight = useRef(0);
   const aimed = useRef<number | null>(null);
   const settle = useCallback(() => {
     setMoving(false);
-    if (!raising.raised) {
+    if (!raising.raised && cardHeight.current > 0) {
       onHeight(cardHeight.current);
     }
   }, [raising.raised, onHeight]);
