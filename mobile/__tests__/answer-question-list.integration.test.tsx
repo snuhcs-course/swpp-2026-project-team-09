@@ -189,7 +189,7 @@ describe('"새 대화"', () => {
 
     expectClosed();
     expect(screen.getByLabelText(AI_INPUT)).toHaveDisplayValue('');
-    expect(screen.getByPlaceholderText('새로 물어보기 · 예: 공부할 자리')).toBeVisible();
+    expect(screen.getByPlaceholderText('무엇이든 물어보세요')).toBeVisible();
     expect(focus).toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: CONTINUE })).toBeNull();
     await user.press(screen.getByRole('button', { name: '지난 대화 1개' }));

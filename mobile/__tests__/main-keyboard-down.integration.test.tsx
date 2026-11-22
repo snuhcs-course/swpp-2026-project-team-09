@@ -177,6 +177,22 @@ describe("the AI input's own parts while the keyboard is up", () => {
   });
 });
 
+// Partitions: words in the input, then none again (P04 ticket 33).
+describe('the examples over the keyboard', () => {
+  it('give way once the input holds words, with the line under them, and come back when it is empty', async () => {
+    const user = await openMain();
+    await showKeyboard(KEYBOARD);
+
+    await user.type(screen.getByLabelText(AI_INPUT), '셔틀');
+
+    expect(screen.queryByTestId('asked-examples')).toBeNull();
+    expect(screen.queryByText(NOTICE)).toBeNull();
+    await user.clear(screen.getByLabelText(AI_INPUT));
+    expect(button('배고파')).toBeVisible();
+    expect(screen.getByText(NOTICE)).toBeVisible();
+  });
+});
+
 // Partitions: what the scrim stands over and under; a press on it.
 describe('a press beside the AI input in the answer frame', () => {
   it('lands, while the keyboard is up, on a scrim over the map, under the card, the pill and the bar', async () => {
