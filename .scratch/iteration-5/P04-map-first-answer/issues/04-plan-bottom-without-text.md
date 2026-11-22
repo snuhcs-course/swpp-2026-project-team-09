@@ -1,7 +1,7 @@
 # 04: A Plan's bottom holds the input and a button that says what happens
 
 Parent: [P04 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: [01](01-time-bar-on-top.md), [02](02-flag-says-what-and-when.md), and [03](03-faces-and-start-on-the-map.md): every control the card loses is on the bar or the map by then.
 
 Native files: none. Releases: an app OTA update only.

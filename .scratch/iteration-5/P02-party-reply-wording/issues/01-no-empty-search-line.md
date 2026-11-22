@@ -1,7 +1,7 @@
 # 01: Nothing said of a search that found none
 
 Parent: [P02 spec](../spec.md); a tester's feedback of 2026-11-21 and a benchmark run of `5.0/Main` (3b06611a) the same night
-Status: ready-for-agent
+Status: done
 Blocked by: none
 
 Native files: none. Releases: a main server deploy only; the app does not change.

@@ -8,7 +8,7 @@ Native files: none. Releases: an app OTA update only.
 
 ## What to build
 
-A reply that answered several requests (P03's `steps`) draws each step with a place as a numbered flag (① ②) with its time and the day word, and each step with a time as its own span on the top bar, numbered the same (boards 12 and 13). A step that could not be done is the one line above the input ("7층 자리는 당일에만 예약돼요. 내일 알려 드릴까요? ›") and its flag, if it has a place, is faded. The step due first (the earliest not yet over that has an action) is the active one: its flag carries its detail (a seat number), the button beside the input is its action, and a tap on another step's flag makes that one active.
+A reply that answered several requests (P03's `steps`) draws each step with a place as a numbered flag (① ②) with its time and the day word, and each step with a time as its own span on the top bar, numbered the same (boards 12 and 13). A step that could not be done is the one line above the input ("7층 자리는 당일에만 예약돼요 ›"; no offer to tell the User later, since nothing on the main server reminds them) and its flag, if it has a place, is faded. The step due first (the earliest not yet over that has an action) is the active one: its flag carries its detail (a seat number), the button beside the input is its action, and a tap on another step's flag makes that one active.
 
 ## What happens now
 

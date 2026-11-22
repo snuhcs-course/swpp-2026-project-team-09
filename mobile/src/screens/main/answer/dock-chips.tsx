@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -41,7 +42,10 @@ export function DockChip({
   );
 }
 
-// The dock's one line (board 8), cut to fit and ended by "›", which a press opens to the whole reply in the raised card.
+// The dock's line (board 8), at most two lines and cut there, ended by "›", which a press opens to the whole reply in
+// the raised card. Two lines, not one (P04 ticket 18): one sentence of the model fits, its question included.
+const LINES = 2;
+
 export function DockLine({ line, onPress }: { line: AnswerLine; onPress: () => void }): ReactElement {
   return (
     <Pressable
@@ -51,7 +55,7 @@ export function DockLine({ line, onPress }: { line: AnswerLine; onPress: () => v
       style={({ pressed }) => [styles.line, pressed && styles.pressed]}
       testID="dock-line"
     >
-      <Text ellipsizeMode="tail" numberOfLines={1} style={styles.lineWords}>
+      <Text ellipsizeMode="tail" numberOfLines={LINES} style={styles.lineWords} testID="dock-line-words">
         {line.map(({ text: words, strong }, part) => (
           // The parts have no id, and their order is their meaning.
           // oxlint-disable-next-line react/no-array-index-key

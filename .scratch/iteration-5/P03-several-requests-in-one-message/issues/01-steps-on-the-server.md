@@ -1,7 +1,7 @@
 # 01: Steps on the server
 
 Parent: [P03 spec](../spec.md); a tester's feedback of 2026-11-21 and a run of the message through the real model on `5.0/Main` (85b26ea1) the same night
-Status: ready-for-agent
+Status: done
 Blocked by: none
 
 Native files: none. Releases: the main server only. An app that does not know `steps` ignores it.
