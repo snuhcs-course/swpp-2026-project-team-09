@@ -1,7 +1,7 @@
 # 10: Earlier questions in the pill, and a new conversation that forgets nothing
 
 Parent: [P04 spec](../spec.md)
-Status: ready-for-agent
+Status: in-progress
 Blocked by: [01](01-time-bar-on-top.md) for the top's layout.
 
 Native files: none. Releases: an app OTA update only.
@@ -35,13 +35,22 @@ Every answer has a labelled "＋ 새 대화" button at its top right, beside the
 - A reply on its way when "새 대화" is pressed is stopped, as reset does today.
 - The kept conversation and its unseen dot (`answer-conversation-kept`, `answer-unseen-and-undo`, rewritten for the list).
 
+## Decided while building (2026-11-22)
+
+- ✕ closes the answer in every state (the card raised, the keyboard up, the list open). Back takes away one layer per press: the keyboard (Android's own), the list, a mark's card, the raised card, then the answer; ticket 12 keeps back lowering a raised card first.
+- Each row reads "{what} · {outcome}": a Plan sent "학생회관식당 12:33 · 초대 2명 보냄" (the number only, never the Friends' names), taken alone "· 혼자 가기로 함", not made "· 아직 만들지 않음"; a booking "7233번 · 14:00–16:30 예약함"; a Proposal "· 만듦" or "· 아직 만들지 않음"; otherwise the reply's first line, "답을 가져오지 못함", or "답을 기다리는 중". A Quest already set changed by 바꾸기 reads "· 바꿈" and 그대로 두기 "· 그대로 둠"; their words are in place for P04 tickets 17 and 20 to record.
+- The list is flat across conversations, latest first, under board 16's header; the turn on screen is marked 지금 (board 9). The list from "지난 대화 N ▾" is the same card standing on the chip, without the 새 대화 row, closed by a press outside or by back.
+- 새 대화, or an earlier conversation's row, while a reply is on its way drops that question, as 새 대화 did. A row of the current conversation shows that turn; a reply that arrives while the User is still in that conversation takes the screen to the latest turn.
+- "지난 대화 N ▾" stands at the left with the made Quest's line while the keyboard is down, and just over the input, under the examples, while it is up; ticket 11 moves it.
+- A docked answer with nothing to read, such as a way to a Place, stays docked as board 10 draws it, with no handle: "지난 답 N개" was the only way to raise it. Its basis is reached by its flag, which opens what "근거 ›" opened (P04's small fixes).
+
 ## Acceptance criteria
 
-- [ ] After three questions, the pill shows 3; its list shows 새 대화 and the three questions with times and outcomes, latest first. (Integration test.)
-- [ ] A tap on the first question's row draws its Plan on the map again. (Integration test.)
-- [ ] "＋ 새 대화" closes the answer and shows the map screen with an empty, focused input and "지난 대화 1 ▾"; the chip opens the list, and a tap on the old question brings that conversation back. (Integration test.)
-- [ ] A message after "새 대화" sends none of the old conversation. (Integration test.)
-- [ ] ✕ and back close the answer with the card raised and with the keyboard up. (Integration test.)
-- [ ] The outcome words for a Plan sent, a Plan not made, a booking, and words. (Unit test.)
-- [ ] The button, the map screen after it, and the list on a phone with the mock build. (Emulator.)
-- [ ] No native file changes; lint, format, and types pass on the app.
+- [x] After three questions, the pill shows 3; its list shows 새 대화 and the three questions with times and outcomes, latest first. (Integration test.)
+- [x] A tap on the first question's row draws its Plan on the map again. (Integration test.)
+- [x] "＋ 새 대화" closes the answer and shows the map screen with an empty, focused input and "지난 대화 1 ▾"; the chip opens the list, and a tap on the old question brings that conversation back. (Integration test.)
+- [x] A message after "새 대화" sends none of the old conversation. (Integration test.)
+- [x] ✕ and back close the answer with the card raised and with the keyboard up. (Integration test.)
+- [x] The outcome words for a Plan sent, a Plan not made, a booking, and words. (Unit test.)
+- [x] The button, the map screen after it, and the list on a phone with the mock build. (Emulator.)
+- [x] No native file changes; lint, format, and types pass on the app.

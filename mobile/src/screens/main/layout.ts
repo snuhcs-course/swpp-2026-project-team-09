@@ -11,6 +11,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { space } from '@/design-system';
@@ -69,6 +70,8 @@ export interface Room {
   interestsHint: boolean;
   // The line of a Quest made from a Plan is shown, above all of them. Left out, it is not.
   madeLine?: boolean;
+  // "지난 대화 N ▾": conversations are kept and the current one holds nothing (P04 ticket 10).
+  pastChats?: boolean;
   // The row of buttons is drawn: the User is in a Party. Left out, it is not.
   buttonRow?: boolean;
   // The AI input's own height, without the keyboard's lift. Left out, one line's (`AI_INPUT`).
@@ -173,9 +176,20 @@ export function madeLineBottom(room: Room): number {
   return bottomOver(interestsHintTop(room));
 }
 
+function madeLineTop(room: Room): number | null {
+  return room.madeLine === true ? madeLineBottom(room) + MADE_LINE.height : interestsHintTop(room);
+}
+
+// "지난 대화 N ▾" stands at the left as the made Quest's line does, above it, 34 high.
+export const PAST_CHATS = { left: space[4], height: 34 } as const;
+
+export function pastChatsBottom(room: Room): number {
+  return bottomOver(madeLineTop(room));
+}
+
 // The top of what stands at the left above the AI input while no card is open, null while nothing does.
 function leftControlsTop(room: Room): number | null {
-  return room.madeLine === true ? madeLineBottom(room) + MADE_LINE.height : interestsHintTop(room);
+  return room.pastChats === true ? pastChatsBottom(room) + PAST_CHATS.height : madeLineTop(room);
 }
 
 // What the credit and the logo stand over while no card is open: what stands at the left above the AI input, or the

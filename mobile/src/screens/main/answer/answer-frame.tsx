@@ -24,17 +24,15 @@ import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
 import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import { AI_INPUT, type Room } from '../layout';
-import { AnswerPill } from './answer-pill';
-import { EarlierTurns, TurnQuestion } from './earlier-turns';
+import { PillAndList, type QuestionsOpen } from './answer-pill';
+import { TurnQuestion } from './turn-question';
 import { WaitingReply } from './failed-and-waiting';
 import { FollowUpChips } from './follow-up-chips';
-import { useForgetWithUndo } from './forget-with-undo';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { KeyboardHeadline } from './keyboard-headline';
 import { MarkCard } from './mark-card';
 import { DockedAnswer, restOf } from './docked-answer';
 import { MarkRows } from './mark-rows';
-import { pillIconOf } from './pill-icon';
 import type { Raising } from './raise-handle';
 import { ReplySteps } from './reply-steps';
 import { barOf, onScreenOf, planShown, TopBar, Words } from './reply-words';
@@ -55,13 +53,11 @@ interface AnswerCardProps {
   // The time bar's height under the pill, 0 for none: the raised card stops under it.
   timeBarHeight: number;
   inputBottom: number;
-  // Whether the earlier turns are open under the turn on screen; the dock's "지난 답 N개" opens them.
-  earlier: { open: boolean; setOpen: (open: boolean) => void };
 }
 
 // The card at the bottom: what was asked, unless the Plan's card shows (the pill says it), the turn's bubbles without a
 // bubble around them, each under its steps when it answered several requests, or the dots with 그만 in their place,
-// and "지난 답 N개" under them, then the room of the bar. While the keyboard is up, the turn's headline and its
+// then the room of the bar. Earlier questions are in the pill's list (P04 ticket 10). While the keyboard is up, the turn's headline and its
 // follow-ups stand in place of its content, unless the card is raised.
 function AnswerCard(props: AnswerCardProps): ReactElement {
   const { control, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, focus, timeBarHeight } = props;
@@ -71,8 +67,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
   const contentMax = contentMaxOf(stageHeight, barRoom);
   const rest = keyboardUp || raising.raised || waiting ? null : restOf(control, after);
   const [reply] = after;
-  const raise = (open: boolean): void => {
-    props.earlier.setOpen(open);
+  const raise = (): void => {
     raising.setRaised(true);
   };
   return (
@@ -88,8 +83,8 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
   );
 }
 
-// The open card's content: what was asked, unless the Plan's card shows, the turn's bubbles, each under its steps, the
-// dots with 그만 while a reply is on its way, and the earlier turns.
+// The open card's content: what was asked, unless the Plan's card shows, the turn's bubbles, each under its steps, and
+// the dots with 그만 while a reply is on its way.
 function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElement {
   const { control, cardActions, focus, onClose, room } = props;
   const { bubbles, waiting, retry } = control.chat;
@@ -104,7 +99,7 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
           <BubbleParts
             bubble={bubble}
             cardActions={cardActions}
-            onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting ? retry : null}
+            onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting && control.latest ? retry : null}
             onShowLayer={control.leaving.showLayer}
             words={
               <Words
@@ -124,7 +119,6 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
         </View>
       ))}
       {waiting ? <WaitingReply onStop={control.chat.stop} /> : null}
-      <EarlierTurns bubbles={bubbles} opening={props.earlier} />
     </>
   );
 }
@@ -157,18 +151,27 @@ function FollowUps({ control }: { control: ChatSheetControl }): ReactElement | n
   );
 }
 
-// Whether the card is raised, which the control holds so that a press on the map raises it too, and whether its
-// earlier turns are open.
-function useCardState({ raised, setRaised, earlier }: ChatSheetControl['card']): {
+interface CardState {
   raised: boolean;
   setRaised: (raised: boolean) => void;
   lower: () => void;
-  earlier: AnswerCardProps['earlier'];
-} {
+  list: QuestionsOpen;
+}
+
+// Whether the card is raised, which the control holds so that a press on the map raises it too, and whether the list
+// of questions is open under the pill.
+function useCardState({ raised, setRaised }: ChatSheetControl['card']): CardState {
+  const [open, setOpen] = useState(false);
   const lower = useCallback((): void => {
     setRaised(false);
   }, [setRaised]);
-  return { raised, setRaised, lower, earlier };
+  const toggle = useCallback((): void => {
+    setOpen((last) => !last);
+  }, []);
+  const close = useCallback((): void => {
+    setOpen(false);
+  }, []);
+  return { raised, setRaised, lower, list: { open, toggle, close } };
 }
 
 interface FramedProps {
@@ -229,26 +232,26 @@ function useBarHeight(
 // The frame itself: what the User asked as a pill at the top with the time bar under it when the answer has a time, and
 // one card at the bottom with the reply over the input.
 // ✕, Android's back button, and a card's "닫기" hide the frame and keep the conversation, a reply on its way included;
-// "새 대화" forgets it, with 되돌리기 for a few seconds. While a building is asked about over the answer ("여기면 어때?"), ✕ and back return to the
-// answer instead, and the pill names the building. A Friend's profile opened from the card stands over it until a new
+// ✕ does in every state of the frame. "새 대화" keeps the conversation among the earlier ones and starts a new one, and
+// a press on the pill opens the list of questions (P04 ticket 10). While a building is asked about over the answer
+// ("여기면 어때?"), ✕ and back return to the answer instead, and the pill names the building. A Friend's profile opened from the card stands over it until a new
 // reply; while it is shown, the back button hides it alone. This handler is the only one, and listens only while the
-// main screen is in front, so a screen pushed from the profile goes back to it. While a mark's card is open, back closes
-// it first; while the card is raised, back lowers it first.
+// main screen is in front, so a screen pushed from the profile goes back to it. Back takes away one layer per press:
+// the keyboard (Android's own), the list of questions, a mark's card, the raised card, then the answer.
 function Framed(props: FramedProps): ReactElement {
   const { control, barRoom, stageHeight, keyboardUp, onHeight, onBarHeight, stage, inputBottom } = props;
   const { chat, leaving, hide } = control;
-  const { reset } = chat;
   const close = useCallback((): void => {
     Keyboard.dismiss();
     hide();
   }, [hide]);
-  const forget = useForgetWithUndo(reset);
   const profile = useProfileOver(lastReply(chat.bubbles)?.id ?? null);
   const profileShown = profile.friend !== null && !keyboardUp;
-  const { title, keep } = control.howAbout;
+  const { keep } = control.howAbout;
+  const title = control.howAbout.title;
   const leave = title === null ? close : keep;
-  const { raised, setRaised, lower, earlier } = useCardState(control.card);
-  const back = control.mark === null ? (raised ? lower : leave) : control.closeMark;
+  const { raised, setRaised, lower, list } = useCardState(control.card);
+  const back = list.open ? list.close : control.mark === null ? (raised ? lower : leave) : control.closeMark;
   useBackToClose(useIsFocused(), profileShown ? profile.hide : back, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   const focus = useBandFocus();
@@ -256,19 +259,12 @@ function Framed(props: FramedProps): ReactElement {
   const bar = useBarHeight(barShown, onBarHeight);
   return (
     <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
-      <AnswerPill
-        asked={title ?? turnOf(chat.bubbles)?.asked ?? ''}
-        icon={title === null ? pillIconOf(chat.bubbles) : 'pin'}
-        keyboardUp={keyboardUp}
-        onClose={leave}
-        onNew={forget}
-      />
+      <PillAndList control={control} keyboardUp={keyboardUp} list={list} onClose={leave} stageHeight={stageHeight} />
       {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
       <AnswerCard
         timeBarHeight={bar.height}
         barRoom={barRoom}
         cardActions={actions}
-        earlier={earlier}
         inputBottom={inputBottom}
         control={control}
         focus={focus}

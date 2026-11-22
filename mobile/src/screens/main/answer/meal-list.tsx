@@ -189,7 +189,7 @@ interface WithMenuListProps {
   shown: Pick<ShownAnswer, 'answer' | 'index' | 'show' | 'chooseKind' | 'recalculating'>;
   // A Plan is being sent or is made: neither the list nor the kinds change the Plan on screen, as the map does.
   sent: boolean;
-  // The dock's own chips ("지난 답 N개", the note), which stand before 메뉴 모두 보기.
+  // The dock's own chips (the note), which stand before 메뉴 모두 보기.
   folded: ReactNode;
   // The Plan's dock, given its chips.
   children: (dock: ReactNode) => ReactNode;
