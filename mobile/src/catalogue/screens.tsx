@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -206,8 +207,8 @@ export function ChoiceGrids(): ReactElement {
           { key: 'f5', name: '하은', value: '160m', faint: false, label: '하은, 160m, 추가' },
           { key: 'f6', name: '도윤', value: '720m', faint: false, label: '도윤, 720m, 추가' },
           { key: 'f1', name: '민준', value: '3분 전', faint: false, label: '민준, 3분 전, 추가' },
-          { key: 'f11', name: '지우', value: '자리 모름', faint: true, label: '지우, 자리 모름, 추가' },
-          { key: 'f12', name: '예린', value: '자리 모름', faint: true, label: '예린, 자리 모름, 추가' },
+          { key: 'f11', name: '지우', value: '위치 모름', faint: true, label: '지우, 위치 모름, 추가' },
+          { key: 'f12', name: '예린', value: '위치 모름', faint: true, label: '예린, 위치 모름, 추가' },
         ]}
         disabled={false}
         onChoose={showNotReady}

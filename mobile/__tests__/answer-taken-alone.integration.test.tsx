@@ -117,7 +117,7 @@ describe('"여기로" on an events Plan (Alone 3)', () => {
     expect(card().getByRole('button', { name: '다시 고르기' })).toBeEnabled();
     expect(card().getByRole('button', { name: '닫기' })).toBeEnabled();
     expect(card().queryByRole('button', { name: '여기로' })).toBeNull();
-    expect(screen.queryByText('파티를 만들고 초대를 보냈어요')).toBeNull();
+    expect(screen.queryByText('김민수에게 점심 초대를 보냈어요')).toBeNull();
   });
 });
 

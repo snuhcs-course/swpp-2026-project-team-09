@@ -19,7 +19,7 @@ import { HERE } from './shown-answer';
 export const MINSU = '35976b5c-4daf-454f-b10e-c8b09a33ca37';
 export const CHANGED = '계획이 바뀌었어요. 다시 확인해 주세요';
 export const FAILED = '초대하지 못했어요. 잠시 후 다시 시도해 주세요';
-export const SENT = '파티를 만들고 초대를 보냈어요';
+export const SENT = '김민수에게 점심 초대를 보냈어요';
 
 type OnScreen = Pick<ShownAnswer, 'answer' | 'plan'>;
 type Change = jest.Mock<void, Parameters<ShownAnswer['change']>>;
