@@ -1,7 +1,7 @@
 # 12: Dragging the bottom down closes the answer
 
 Parent: [P04 spec](../spec.md)
-Status: ready-for-agent
+Status: in-progress
 Blocked by: [05](05-lookups-and-words-one-line.md) for the bottom's heights, [11](11-map-screen-continues.md) for the chip that reopens.
 
 Native files: none. Releases: an app OTA update only.
@@ -23,10 +23,16 @@ A drag down on the bottom card's handle closes the answer (boards 18 and 19). Wh
 
 - Raising and lowering by drag and by press (`answer-raise`), the camera's fit to the lowered card, and back lowering a raised card first.
 
+## Decided while building (2026-11-22)
+
+- A drag below the lowered card moves the whole card down with the finger; the pill and the time bar fade to 0.35 at once (not with the distance), and "놓으면 지도 화면으로 돌아가요" stands over the card while it is below. Let go past half the card's height, a fling carried on, the answer closes as ✕ does (a building asked about over the answer returns to the answer, as ✕ does); before that it goes back.
+- A drag that starts on the raised card only lowers it, however far; the next one closes.
+- The handle's screen reader actions add "답 닫기".
+
 ## Acceptance criteria
 
-- [ ] A drag down past half the card closes the answer and keeps the conversation (the chip shows it). (Integration test.)
-- [ ] A short drag down goes back. (Integration test.)
-- [ ] Raised, the first drag down lowers; the next closes. (Integration test.)
+- [x] A drag down past half the card closes the answer and keeps the conversation (the chip shows it). (Integration test.)
+- [x] A short drag down goes back. (Integration test.)
+- [x] Raised, the first drag down lowers; the next closes. (Integration test.)
 - [ ] The drag on a phone, mid-drag with the hint. (Emulator.)
-- [ ] No native file changes; lint, format, and types pass on the app.
+- [x] No native file changes; lint, format, and types pass on the app.

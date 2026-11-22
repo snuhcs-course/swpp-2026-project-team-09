@@ -191,13 +191,15 @@ interface WithMenuListProps {
   sent: boolean;
   // The dock's own chips (the note), which stand before 메뉴 모두 보기.
   folded: ReactNode;
+  // A chip before the kinds: 그대로 두기 beside a Quest already set (P04 ticket 21); left out, none.
+  lead?: ReactNode;
   // The Plan's dock, given its chips.
   children: (dock: ReactNode) => ReactNode;
 }
 
 // A meal answer's dock: its kinds of food first (`KindChips`), the dock's own chips, and 메뉴 모두 보기 as the row's
 // last chip (board 24), with the list, while open, over the row. The list folds when another answer comes.
-export function WithMenuList({ shown, sent, folded, children }: WithMenuListProps): ReactElement {
+export function WithMenuList({ shown, sent, folded, lead = null, children }: WithMenuListProps): ReactElement {
   const { answer } = shown;
   const [openFor, setOpenFor] = useState<AnswerReply | null>(null);
   const listed = menuGroupsOf(answer).length > 0;
@@ -217,7 +219,10 @@ export function WithMenuList({ shown, sent, folded, children }: WithMenuListProp
   // One row (board 24): the kinds and the dock's own chips scroll sideways, and 메뉴 모두 보기 stays at the right.
   const dock =
     kinds.length === 0 && !listed ? (
-      folded
+      <>
+        {lead}
+        {folded}
+      </>
     ) : (
       <View style={styles.mealRow}>
         <ScrollView
@@ -227,6 +232,7 @@ export function WithMenuList({ shown, sent, folded, children }: WithMenuListProp
           showsHorizontalScrollIndicator={false}
           style={styles.mealScroll}
         >
+          {lead}
           <KindChips answer={answer} disabled={sent || shown.recalculating} onChoose={shown.chooseKind} />
           {folded}
         </ScrollView>

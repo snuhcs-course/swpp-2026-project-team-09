@@ -94,11 +94,11 @@ describe('an answer beside a lunch the User holds alone', () => {
     expect(screen.queryByRole('button', { name: '일정에 넣기' })).toBeNull();
   });
 
-  // The orchestrator's review of the screens: a chip is always whole beside a line of two lines.
-  it('keeps 그대로 두기 whole: the chips keep their own width, and the line takes what is left', async () => {
+  // The orchestrator's review of the screens; since P04 ticket 21 a meal's line has its own row above its chips.
+  it('keeps 그대로 두기 whole: the line has its own row above the chips', async () => {
     await askOnMap(server, replyWith(OWN));
 
-    expect(StyleSheet.flatten(screen.getByTestId('dock-chips').props.style)).toMatchObject({ flexShrink: 0 });
+    expect(StyleSheet.flatten(screen.getByTestId('dock-chip-row').props.style)).toMatchObject({ flexDirection: 'row' });
     expect(StyleSheet.flatten(screen.getByTestId('dock-line').props.style)).not.toHaveProperty('minWidth');
   });
 
