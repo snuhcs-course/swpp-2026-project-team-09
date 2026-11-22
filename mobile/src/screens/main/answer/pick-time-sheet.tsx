@@ -15,6 +15,8 @@ import { koreaClock, koreaDateKey, koreaDayWord, koreaWeekdayName } from '@/kore
 const ROW = 44;
 // Rows above and below the middle one, so that the first and the last time can stand in the middle.
 const PAD = 2;
+// The speed under which a let-go drag counts as stopped.
+const STILL = 0.05;
 
 // "오늘(일)", "내일(월)": the day of the wheel, from its date at noon in Korea.
 function dayWords(date: string): string {
@@ -29,10 +31,12 @@ interface WheelProps {
   first: number;
   index: number;
   onIndex: (index: number) => void;
+  // While the wheel moves: the button waits until it stops on a row, so that a fling sends no time unseen.
+  onMoving: () => void;
 }
 
 // The rows, which stop with one in the middle band.
-function Wheel({ times, free, first, index, onIndex }: WheelProps): ReactElement {
+function Wheel({ times, free, first, index, onIndex, onMoving }: WheelProps): ReactElement {
   const settle = ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>): void => {
     onIndex(Math.min(Math.max(Math.round(nativeEvent.contentOffset.y / ROW), 0), times.length - 1));
   };
@@ -44,7 +48,13 @@ function Wheel({ times, free, first, index, onIndex }: WheelProps): ReactElement
         contentOffset={{ x: 0, y: first * ROW }}
         decelerationRate="fast"
         onMomentumScrollEnd={settle}
-        onScrollEndDrag={settle}
+        onScrollBeginDrag={onMoving}
+        onScrollEndDrag={(event) => {
+          // A drag let go with no fling stops where it is; a fling settles when its momentum ends.
+          if (Math.abs(event.nativeEvent.velocity?.y ?? 0) < STILL) {
+            settle(event);
+          }
+        }}
         showsVerticalScrollIndicator={false}
         snapToInterval={ROW}
       >
@@ -86,6 +96,11 @@ export function PickTimeSheet({ offer, onPick, onClose }: PickTimeSheetProps): R
     0,
   );
   const [index, setIndex] = useState(first);
+  const [moving, setMoving] = useState(false);
+  const settled = (row: number): void => {
+    setIndex(row);
+    setMoving(false);
+  };
   const chosen = times[index] ?? null;
   return (
     <BottomSheet label="시간 고르기" onClose={onClose} open>
@@ -93,9 +108,18 @@ export function PickTimeSheet({ offer, onPick, onClose }: PickTimeSheetProps): R
         <Text accessibilityRole="header" style={styles.title}>
           {`${dayWords(offer.date)} 몇 시에?`}
         </Text>
-        <Wheel first={first} free={offer.free} index={index} onIndex={setIndex} times={times} />
+        <Wheel
+          first={first}
+          free={offer.free}
+          index={index}
+          onIndex={settled}
+          onMoving={() => {
+            setMoving(true);
+          }}
+          times={times}
+        />
         <Button
-          disabled={chosen === null}
+          disabled={chosen === null || moving}
           full
           onPress={() => {
             if (chosen !== null) {

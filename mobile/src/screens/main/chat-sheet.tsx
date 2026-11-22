@@ -124,9 +124,12 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const proposals = useProposalMaking(said.proposalMade);
   const onScreen = useAnswerOnScreen(chat.bubbles, where, shownNow);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation);
+  const pick = usePicking(chat);
   return {
     chat,
     ...kept,
+    // ✕ and back end a Place's picking before they close the answer (P04 ticket 26).
+    hide: pick.place === null ? kept.hide : pick.stop,
     outcomes,
     leaving: {
       showLayer: hidingFor(kept.hide, turnOn),
@@ -138,7 +141,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
     ...onScreen,
     lookup: useShownLookup(chat.bubbles, start, kept.hide),
     leave: useQuestLeaving(),
-    pick: usePicking(chat),
+    pick,
     card: useCardRaise(kept.framed),
     ...useOpenedMark(chat.bubbles, kept.framed),
     ...pressing,

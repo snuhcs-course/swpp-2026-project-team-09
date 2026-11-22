@@ -120,6 +120,17 @@ describe('a Place picked on the map', () => {
   });
 });
 
+// From the sketch's review: ✕ ends the picking before it closes the answer.
+it('ends the picking from ✕, and keeps the answer open', async () => {
+  const user = await askOnMap(server, asking('어디서 만날까요?', PLACE_OFFER));
+
+  await user.press(dock().getByRole('button', { name: '지도에서 고르기' }));
+  await user.press(screen.getByRole('button', { name: '답 닫기' }));
+
+  expect(dock().getByText('어디서 만날까요?')).toBeVisible();
+  expect(dock().getByRole('button', { name: '지도에서 고르기' })).toBeVisible();
+});
+
 // Partitions: the wheel opened on tomorrow; a free time and a busy one; picked and closed.
 describe('a time picked on the wheel', () => {
   it('opens on the first free time of the day, with the Free Time marked', async () => {
