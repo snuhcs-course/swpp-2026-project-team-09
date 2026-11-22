@@ -2337,8 +2337,18 @@ Anthropic API as the AI's key says
   `useDesc`, `useDescOptions` (when the card asks for the 사용용도), `pledge` (the 서약서 text or null), `companions`
   (`[{ "friendId", "name" }]`), `questId`, `notes`, `until` (the end of a myBookings period) and `target`
   (`{ "date"?, "spaceId"?, "start"? }` for cancel and return), every field always there and null when it does not
-  apply. It holds nothing live: the phone fills it from the library. It is attached only when the request carries
-  `"clientCapabilities": ["library"]` beside `messages`.
+  apply. Two keys are the exception, there only on a `book` card for a seat whose start the server filled from when the
+  User arrives at 관정관:
+  - `arrival` (`{ "at", "walkMinutes", "from": { "place", "endsAt", "kind" }, "opensAt" }`) holds when the User reaches
+    관정관, their walk, the Place they set out from, and the end of the item they set out after. That item's `kind` is
+    `수업 | 일정`; `endsAt` and `kind` are null when the time counts from now. `opensAt` is the opening when the arrival
+    is before it, else null. `arrival` is left out when where the User sets out from is not known, the seat then being
+    filled from now.
+  - `leaveBy` (`{ "at", "for", "start" }`, or null) holds when to leave 관정관 for the first item that starts before the
+    booking ends.
+
+  An older app ignores both. A card holds nothing live: the phone fills it from the library. It is attached only when
+  the request carries `"clientCapabilities": ["library"]` beside `messages`.
 
   Beside `messages` the app may send `context`, what it knew as the User asked, each part null or left out when it does
   not know it: `location` (`{ "latitude", "longitude" }`, where the User is), `viewport` (`{ "south", "west", "north",`

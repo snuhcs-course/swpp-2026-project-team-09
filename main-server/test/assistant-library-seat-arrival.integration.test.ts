@@ -6,6 +6,7 @@
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -102,6 +103,15 @@ describe('A seat asked for today without a start, from an app that draws answers
 
     expect(cards).toHaveLength(1);
     expect(cards[0]).toMatchObject({ key: 'book:7F-7A-zone2:2026-11-04:1400:360', start: '14:00', minutes: 360 });
+    expect(cards[0]).toMatchObject({
+      arrival: {
+        at: '13:54',
+        walkMinutes: 4,
+        from: { place: places.b24.name, endsAt: null, kind: null },
+        opensAt: null,
+      },
+      leaveBy: { at: '15:56', for: '수업', start: '16:00' },
+    });
     expect(cards[0]?.notes[0]).toBe('13:54 도착에 맞춰 최대 시간으로 채웠어요');
     expect(cards[0]?.notes.slice(1)).toEqual(
       expect.arrayContaining([expect.stringContaining('30분 안에 좌석배정기')]) as unknown,
@@ -113,15 +123,6 @@ describe('A seat asked for today without a start, from an app that draws answers
       arrival: { at: '13:54', from: places.b24.name, walkMinutes: 4 },
       leaveBy: { at: '15:56', for: '수업', start: '16:00' },
     });
-  });
-
-  it('gives the model no coordinate and no Place id', async () => {
-    const { result } = await book(seatToday);
-
-    const given = JSON.stringify(result);
-    for (const secret of ['latitude', String(AT_24.latitude), places.b24.id, places.kwanjeong.id]) {
-      expect(given).not.toContain(secret);
-    }
   });
 
   it('takes a named length of 120 minutes from the arrival, and nothing follows before it ends', async () => {
@@ -136,6 +137,17 @@ describe('A seat asked for today without a start, from an app that draws answers
       arrival: { at: '13:54', from: places.b24.name, walkMinutes: 4 },
       leaveBy: null,
     });
+  });
+});
+
+describe('A seat filled from the arrival, to the model', () => {
+  it('gives no coordinate and no Place id', async () => {
+    const { result } = await book(seatToday);
+
+    const given = JSON.stringify(result);
+    for (const secret of ['latitude', String(AT_24.latitude), places.b24.id, places.kwanjeong.id]) {
+      expect(given).not.toContain(secret);
+    }
   });
 });
 
@@ -168,6 +180,8 @@ describe('From an app that draws answers, as today', () => {
         '7층 7A 열람실 2 구역, 오늘 17:00–18:00 예약 카드를 보여 줬어요. 예약하기를 눌러야 예약돼요. 카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.',
     });
     expect(cards[0]?.notes.some((note) => note.includes('채웠어요'))).toBe(false);
+    expect(cards[0]).not.toHaveProperty('arrival');
+    expect(cards[0]).not.toHaveProperty('leaveBy');
   });
 
   it('a room without a start is refused for its start', async () => {

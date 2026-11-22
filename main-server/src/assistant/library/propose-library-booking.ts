@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { NotFoundException } from '@nestjs/common';
@@ -36,7 +37,15 @@ import {
   SIGN_IN_FIRST,
   spaceIdInput,
 } from './library-parts.js';
-import { fillSeat, filledWords, leaveByOf, type SeatFacts, type SeatFill, seatedAt } from './seat-arrival.js';
+import {
+  cardArrival,
+  fillSeat,
+  filledWords,
+  leaveByOf,
+  type SeatFacts,
+  type SeatFill,
+  seatedAt,
+} from './seat-arrival.js';
 
 const words = (max: number): z.ZodString => z.string().trim().min(1).max(max);
 
@@ -200,6 +209,11 @@ interface Checked {
 // Shows the book card of a booking that passed, and answers its summary, with the arrival of a filled seat.
 function shownBooking(services: LibraryServices, context: ToolContext, checked: Checked): object {
   const { space, booking, party, filling, askedToBook } = checked;
+  const end = clockOfMinutes(minutesOfClock(booking.start) + booking.minutes);
+  const leaveBy = filling === null ? null : leaveByOf(filling.facts, filling.fill.arrival.at, end);
+  const { places } = services.arrival;
+  const arrival =
+    filling === null ? null : cardArrival(filling.fill, filling.facts, (id) => places.byId(id)?.name ?? null);
   showCard(
     context.presented,
     bookCard(space, {
@@ -211,13 +225,12 @@ function shownBooking(services: LibraryServices, context: ToolContext, checked: 
         ...(filling === null ? [] : [filling.fill.note]),
         ...firstOfSeveralNote(context, space.id),
       ],
+      ...(filling === null ? {} : { leaveBy, ...(arrival === null ? {} : { arrival }) }),
     }),
   );
   if (filling === null) {
     return { result: 'shown', summary: summaryOf(space, booking, party, context.now, { askedToBook }) };
   }
-  const end = clockOfMinutes(minutesOfClock(booking.start) + booking.minutes);
-  const leaveBy = leaveByOf(filling.facts, filling.fill.arrival.at, end);
   const filled = filledWords(filling.fill, leaveBy, end);
   return {
     result: 'shown',

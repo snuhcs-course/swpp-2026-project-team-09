@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -64,6 +65,23 @@ const libraryCardSchema = z.strictObject({
     target: z
       .strictObject({ date: z.string().optional(), spaceId: z.string().optional(), start: z.string().optional() })
       .nullable(),
+    // Only on a seat filled from the User's arrival (P05 ticket 35).
+    arrival: z
+      .strictObject({
+        at: z.string(),
+        walkMinutes: z.number(),
+        from: z.strictObject({
+          place: z.string(),
+          endsAt: z.string().nullable(),
+          kind: z.enum(['수업', '일정']).nullable(),
+        }),
+        opensAt: z.string().nullable(),
+      })
+      .optional(),
+    leaveBy: z
+      .strictObject({ at: z.string(), for: z.enum(['수업', '일정']), start: z.string() })
+      .nullable()
+      .optional(),
   }),
 });
 

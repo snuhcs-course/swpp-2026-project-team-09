@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type DayItem, freeTimeOf, type FreeInterval, startOfDay } from '../free-time/free-time.js';
@@ -57,6 +58,15 @@ export interface LeaveBy {
   start: string;
 }
 
+// A filled seat's arrival on its card: when the User reaches 관정관, their walk, the Place they set out from and the
+// end of the item they set out after, and the opening an arrival before it waits for.
+export interface SeatArrival {
+  at: string;
+  walkMinutes: number;
+  from: { place: string; endsAt: string | null; kind: '수업' | '일정' | null };
+  opensAt: string | null;
+}
+
 // Minutes of the day in Korea, a part of a minute counted as a whole one.
 function minutesOfDay(date: string, at: Date): number {
   return Math.ceil((at.getTime() - startOfDay(date).getTime()) / MINUTE_MS);
@@ -74,6 +84,15 @@ function arrivalOf(
   }
   const walk = origin.placeId === kwanjeongPlaceId ? 0 : walkingMinutes(origin.placeId, kwanjeongPlaceId);
   return { at: clockOfMinutes(ready + walk), opensAt, fromPlaceId: origin.placeId, walkMinutes: walk };
+}
+
+// The item the User is in when asked, whose end the arrival counts from; null when it counts from now.
+export function countedAfter({ date, now, items }: SeatFacts): { endsAt: string; kind: '수업' | '일정' } | null {
+  const first = freeTimeOf(items, date, now)[0];
+  if (first === undefined || first.start <= now || first.previous === null) {
+    return null;
+  }
+  return { endsAt: clockOfMinutes(minutesOfDay(date, first.start)), kind: first.previous.isClass ? '수업' : '일정' };
 }
 
 function beforeOpening({ at, opensAt }: Arrival): boolean {
@@ -133,6 +152,25 @@ export function leaveByOf(facts: SeatFacts, arrival: string, bookingEnd: string)
     at: clockOfMinutes(next.minutes - walk),
     for: next.isClass ? '수업' : '일정',
     start: clockOfMinutes(next.minutes),
+  };
+}
+
+// The card's arrival; none when where the User sets out from is not known, the seat then being filled from now.
+export function cardArrival(
+  { arrival }: Pick<SeatFill, 'arrival'>,
+  facts: SeatFacts,
+  placeName: (placeId: string) => string | null,
+): SeatArrival | null {
+  const place = arrival.fromPlaceId === null ? null : placeName(arrival.fromPlaceId);
+  if (place === null || arrival.walkMinutes === null) {
+    return null;
+  }
+  const after = countedAfter(facts);
+  return {
+    at: arrival.at,
+    walkMinutes: arrival.walkMinutes,
+    from: { place, endsAt: after?.endsAt ?? null, kind: after?.kind ?? null },
+    opensAt: beforeOpening(arrival) ? arrival.opensAt : null,
   };
 }
 
