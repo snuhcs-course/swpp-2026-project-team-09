@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useState } from 'react';
@@ -119,15 +120,21 @@ function OpenCard(props: FrameCardProps): ReactElement {
   const { minHeight, onContentSizeChange, scroll } = useHeldHeight(hold);
   const shown = { maxHeight: raised && raisedHeight !== null ? raisedHeight : contentMax };
   return (
-    <View
-      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+    <Animated.View
+      onLayout={(event: LayoutChangeEvent) => {
+        drag.onCardLayout(event);
         if (!raised && drag.content === null) {
-          onHeight(nativeEvent.layout.height);
+          onHeight(event.nativeEvent.layout.height);
         }
       }}
-      style={[styles.card, { paddingBottom: barRoom }]}
+      style={[
+        styles.card,
+        { paddingBottom: barRoom },
+        drag.drop === null ? null : { transform: [{ translateY: drag.drop }] },
+      ]}
       testID={testID}
     >
+      {drag.hint}
       {raising === undefined ? null : drag.handle}
       {children === null ? null : (
         <Animated.ScrollView
@@ -147,7 +154,7 @@ function OpenCard(props: FrameCardProps): ReactElement {
           {children}
         </Animated.ScrollView>
       )}
-    </View>
+    </Animated.View>
   );
 }
 

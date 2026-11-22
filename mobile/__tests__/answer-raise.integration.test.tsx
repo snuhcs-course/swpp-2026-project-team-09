@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent } from '@testing-library/react-native';
@@ -183,6 +184,54 @@ describe("Android's back button", () => {
     expect(screen.getByTestId('answer-pill')).toBeVisible();
 
     expect(await back()).toBe(true);
+    expect(screen.queryByTestId('answer-pill')).toBeNull();
+  });
+});
+
+// P04 ticket 12: below the lowered card, a drag down closes the answer as ✕ does.
+async function layCard(height: number): Promise<void> {
+  await fireEvent(screen.getByTestId('answer-card'), 'layout', {
+    nativeEvent: { layout: { x: 0, y: 0, width: 390, height } },
+  });
+}
+
+// Partitions: past half the card; a short drag; from the raised card. The hint while held is seen on a phone: the
+// test's gesture always ends.
+describe("a drag down on the lowered card's handle", () => {
+  it('closes the answer past half the card, and keeps the conversation', async () => {
+    await framed();
+    await layContent(200);
+    await layCard(300);
+
+    await dragHandle(400);
+
+    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.getByRole('button', { name: /^이어서, 식사 메뉴 추천/u })).toBeVisible();
+  });
+
+  it('goes back after a short drag', async () => {
+    await framed();
+    await layContent(200);
+    await layCard(300);
+
+    await dragHandle(80);
+
+    expect(screen.getByTestId('answer-pill')).toBeVisible();
+    expect(handle()).toBeCollapsed();
+    expect(screen.queryByTestId('answer-close-hint')).toBeNull();
+  });
+
+  it('only lowers a raised card, and the next drag closes', async () => {
+    const user = await framed();
+    await layContent(200);
+    await layCard(300);
+    await press(user, HANDLE);
+
+    await dragHandle(400);
+    expect(handle()).toBeCollapsed();
+    expect(screen.getByTestId('answer-pill')).toBeVisible();
+
+    await dragHandle(400);
     expect(screen.queryByTestId('answer-pill')).toBeNull();
   });
 });
