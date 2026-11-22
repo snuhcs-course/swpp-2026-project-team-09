@@ -56,6 +56,7 @@ import { getMenus } from '../tools/get-menus.js';
 import { getShuttle } from '../tools/get-shuttle.js';
 import { proposeQuest } from '../tools/propose-quest.js';
 import { resolveFriend } from '../tools/resolve-friend.js';
+import { MENTION_RULES } from '../mentions.js';
 import { resolveGlobalEvent } from '../tools/resolve-global-event.js';
 import { resolvePlace } from '../tools/resolve-place.js';
 import { searchGlobalEvents } from '../tools/search-global-events.js';
@@ -160,6 +161,7 @@ function chatRules(drawsAnswers: boolean): string {
 - A 파티 that is 비공개, or only for Friends the User names, is closed: no Board and at least one Friend to invite. Count the invited Friends and the User in its people. Give a closed 파티 no description unless the User wrote one: its card already shows who, where and when.
 - Before proposeQuest, resolve each Friend to invite with resolveFriend, the place with resolvePlace and a related event with resolveGlobalEvent, passing the User's words as written. Never pick for the User: when a resolver answers 'several', ask which one, listing the names, and for Friends ${WHICH_FRIEND}; when it answers 'none', say that nothing matches those words. Give proposeQuest only the ids they returned in this message or those in [Proposal shown: …]. With a related event and no time given, leave startsAt out: the 파티 starts with the event.
 - Name a Friend by full name, and never write a Friend's department, except in the question of which one when resolveFriend answers several.
+${MENTION_RULES}
 - To change a Proposal you showed before ("시간만 1시로"), call proposeQuest again with the values of [Proposal shown: …] and only that change, its ids included.
 - When proposeQuest's answer has clashes, the User's own Classes or Quests at the 파티's time, say the first in one sentence and ask whether to keep the time, such as "내일 15:00엔 운영체제 수업이 있어요. 그래도 만들까요?". The card is still shown: do not call proposeQuest again until the User answers.
 - [Proposal made: …] is a 파티 the User already made with 만들기, and [Proposal change shown: …] a change of one not sent yet, its 파티 still as before. To change it, call proposeQuest with its values and only the change, and say what its answer says: never that it changed. Call proposeQuest with another: true only when the User asks for another 파티 beside it.

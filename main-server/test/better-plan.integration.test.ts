@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Fable 5.2  prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
@@ -35,10 +36,10 @@ afterAll(async () => {
 });
 
 describe('After 지은 declines (the worked example)', () => {
-  it('offers 302동식당 from 12:15 to 12:43 with 28 minutes against the Student Center’s 22', async () => {
+  it('offers 301동식당 from 12:18 to 12:45 with 27 minutes against the Student Center’s 22', async () => {
     const date = '2088-11-02';
     const { minsu, questId } = await stage.declined(date);
-    const [p302, p63] = [await stage.numbered('302'), await stage.numbered('63')];
+    const [p301, p63] = [await stage.numbered('301'), await stage.numbered('63')];
 
     const response = await stage.getBetter(stage.asker, questId);
 
@@ -51,12 +52,12 @@ describe('After 지은 declines (the worked example)', () => {
       togetherMinutes: 22,
     });
     expect(better).toMatchObject({
-      id: '302동식당',
-      title: '302동식당에서 점심',
-      place: { placeId: p302.id },
-      startAt: time(date, '12:15'),
-      endAt: time(date, '12:43'),
-      togetherMinutes: 28,
+      id: '301동식당',
+      title: '301동식당에서 점심',
+      place: { placeId: p301.id },
+      startAt: time(date, '12:18'),
+      endAt: time(date, '12:45'),
+      togetherMinutes: 27,
     });
     expect(input).toEqual(inputOf(date, [stage.asker.id, minsu.id]));
   });

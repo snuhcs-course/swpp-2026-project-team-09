@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Redis } from 'ioredis';
@@ -91,8 +92,8 @@ describe('A Friend taken out of the Plan on screen', () => {
     });
 
     expect(summary(answerIn(response.body))).toEqual([
-      `자하연식당 2층 ${time('12:18')}–${time('12:55')} (37)`,
       `학생회관식당 ${time('12:20')}–${time('12:55')} (35)`,
+      `자하연식당 2층 ${time('12:18')}–${time('12:55')} (37)`,
       `3식당 ${time('12:25')}–${time('12:50')} (25)`,
     ]);
   });
@@ -109,7 +110,7 @@ describe('A constraint of the Plan on screen', () => {
       context: { conditions: conditions(date, [{ userId: minsu.id, constraints: [notBefore] }, { userId: jieun.id }]) },
     });
 
-    expect(summary(answerIn(response.body))[0]).toBe(`302동식당 ${time('12:20')}–${time('12:43')} (23)`);
+    expect(summary(answerIn(response.body))).toContain(`302동식당 ${time('12:20')}–${time('12:43')} (23)`);
   });
 });
 

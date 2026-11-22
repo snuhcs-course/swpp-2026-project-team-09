@@ -104,7 +104,9 @@ describe('A meeting, when a Friend who comes on their own arrives last', () => {
     const asker = person(ME, '유상', [classAt('11:00', '11:50', '제1공학관')]);
     const late = person(JIEUN, '지은', [classAt('12:00', '12:50', '두산인문관')]);
 
-    const { id: key, startAt, meeting, subQuests, basis, scene } = firstPlan(answerOf([asker, minsu(), late]));
+    const answer = answerOf([asker, minsu(), late], { candidates: [{ key: '자하연식당', placeId: id('자하연식당') }] });
+
+    const { id: key, startAt, meeting, subQuests, basis, scene } = firstPlan(answer);
 
     expect({ key, startAt }).toEqual({ key: '자하연식당', startAt: time('12:53') });
     expect(meeting?.at).toBe(time('12:36'));

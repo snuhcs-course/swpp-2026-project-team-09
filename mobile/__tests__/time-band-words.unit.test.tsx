@@ -121,3 +121,36 @@ describe("TimeBand's words after a handle is let go", () => {
     expect(words()).toHaveTextContent('12:33–12:59 · 식사 26분');
   });
 });
+
+// The longest words the bar's head writes, seen on a phone 360 wide (P04 ticket 37), between "←" and "＋ 같이".
+const LONG = { ...band, text: '11:03–12:15 · 식사 1시간 12분' };
+const HEAD = { left: 28, right: 72 };
+
+// The hidden copy of the words lays itself out at their width; two lines mean they do not fit on one.
+async function laidOut(lines: number): Promise<void> {
+  await fireEvent(screen.getByTestId('time-band-words-measure', { includeHiddenElements: true }), 'textLayout', {
+    nativeEvent: { lines: Array.from({ length: lines }, () => ({})) },
+  });
+}
+
+// Partitions: words that fit; too long once; too long after dropping the length.
+describe("TimeBand's head words on a narrow bar", () => {
+  it('stay whole when they fit on one line', async () => {
+    await show({ band: LONG, day: '내일(월) 점심', head: HEAD });
+
+    await laidOut(1);
+
+    expect(words()).toHaveTextContent('내일(월) 점심 11:03–12:15 · 식사 1시간 12분', { exact: true });
+  });
+
+  it("drop the length first, then the meal's name, before they are cut", async () => {
+    await show({ band: LONG, day: '내일(월) 점심', head: HEAD });
+
+    await laidOut(2);
+    expect(words()).toHaveTextContent('내일(월) 점심 11:03–12:15', { exact: true });
+
+    await laidOut(2);
+    expect(words()).toHaveTextContent('내일(월) 11:03–12:15', { exact: true });
+    expect(screen.queryByTestId('time-band-words-measure', { includeHiddenElements: true })).toBeNull();
+  });
+});

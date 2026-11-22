@@ -49,6 +49,7 @@ import { type AssistantReplyDto } from './dto/assistant-messages.dto.js';
 import { type ChatMessage, type ClientCapability, type Feature, type FeatureReply } from './feature.js';
 import { UserDayService } from './free-time/user-day.service.js';
 import { koreaDate } from './korea-time.js';
+import { friendMentions } from './mentions.js';
 import { ModelPort } from './model-port.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
@@ -72,6 +73,8 @@ export class AssistantService {
   private readonly limits: RunLimits;
   // The line of what is ahead, which an app that draws answers has the model read each turn.
   private readonly ahead: (userId: string, now: Date) => Promise<string[]>;
+
+  private readonly friendViews: FriendViewService;
 
   constructor(
     private readonly models: ModelPort,
@@ -101,6 +104,7 @@ export class AssistantService {
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
     this.ahead = (userId: string, now: Date): Promise<string[]> => lookups.days.ahead(userId, now);
+    this.friendViews = friends;
     const enabled = settings.get('LIBRARY_BOOKING_ENABLED', { infer: true });
     const services = {
       menus,
@@ -145,10 +149,11 @@ export class AssistantService {
     const latest = messages.slice(-HISTORY_MAX);
     const ahead = capabilities.includes('answer') ? await this.ahead(userId, now) : [];
     try {
+      const mentions = await friendMentions(this.friendViews, userId, context.mentions);
       const reply = await runFeature(
         chosen.model,
         this.chatFor(capabilities),
-        { userId, now, capabilities, context, ahead },
+        { userId, now, capabilities, context: { ...context, mentions }, ahead },
         latest,
         this.limits,
         this.observer,

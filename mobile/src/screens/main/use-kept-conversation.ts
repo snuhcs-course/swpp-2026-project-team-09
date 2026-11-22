@@ -74,13 +74,13 @@ function useShowing(chat: Chat, show: () => void, end: number | undefined): Show
   const { send, sendNew, askApp, addRecalculated, addOwn, resume } = chat;
   return useMemo(
     (): Showing => ({
-      send: (text, tapped) => {
+      send: (text, tapped, mentions) => {
         show();
-        send(text, tapped);
+        send(text, tapped, mentions);
       },
-      sendNew: (text, tapped) => {
+      sendNew: (text, tapped, mentions) => {
         show();
-        sendNew(text, tapped);
+        sendNew(text, tapped, mentions);
       },
       askApp: (asked, reply) => {
         show();

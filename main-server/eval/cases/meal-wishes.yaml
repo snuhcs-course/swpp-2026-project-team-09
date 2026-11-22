@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-11-21  Opus 5.5   prompted by fyoon46
+# 2026-11-22  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Choosing what or where to eat is planned on the map (P05 ticket 14). In use of the released app, "월요일에 밥 뭐
@@ -130,3 +131,25 @@
     tools:
       required: [findMenu]
       forbidden: [planMeal, getMenus, showOnMap]
+
+# Reported on a Sunday night for Monday (P05 ticket 32): the first plan was a Restaurant far away, kept for closing
+# latest, and the sentence gave its hours as when to eat. The plans now come least walking first, and the sentence says
+# why the first is first and its start. Here the asker's Monday lunch is between 302동 at 12:15 and 43-1동 at 14:00,
+# and 301동식당 is 4 minutes from 302동.
+- id: meal-wish-tomorrow-nearest
+  category: meal-wishes
+  world: p4-answer
+  now: '2026-11-01T21:20:00+09:00'
+  repeat: 3
+  turns:
+    - user: 내일 점심 어디서 먹을까
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    args:
+      planMeal: { date: '2026-11-02' }
+    text:
+      mentions: [301동식당, [가까, 바로]]
+      absent: ['까지 먹을 수']

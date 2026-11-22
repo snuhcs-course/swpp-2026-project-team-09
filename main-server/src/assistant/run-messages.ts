@@ -8,6 +8,7 @@
 
 import { contextLines } from './context-lines.js';
 import { type ChatMessage, type Request } from './feature.js';
+import { mentionLines } from './mentions.js';
 import { proposalForModel, type SentProposal } from './proposal.js';
 
 // What runFeature (adapter.ts) gives the model of a conversation and makes of its steps' text, apart from the model
@@ -48,7 +49,10 @@ export function messagesFor(
   { context, capabilities, ahead = [] }: Request,
 ): { role: ChatMessage['role']; content: string }[] {
   const last = messages.length - 1;
-  const lines = capabilities.includes('answer') ? [...contextLines(context), ...ahead] : [];
+  const lines = [
+    ...mentionLines(context.mentions),
+    ...(capabilities.includes('answer') ? [...contextLines(context), ...ahead] : []),
+  ];
   return messages.map((message, index) => ({
     role: message.role,
     content: index === last ? [contentOf(message), ...lines].join('\n\n') : contentOf(message),

@@ -50,9 +50,9 @@ export function useConversations(show: Bubbles['show'], leave: () => readonly Ch
     [putAside, show],
   );
   const sendNew = useCallback(
-    (text: string, tapped?: Parameters<Chat['send']>[1]): void => {
+    (...[text, tapped, mentions]: Parameters<Chat['send']>): void => {
       startNew();
-      send(text, tapped);
+      send(text, tapped, mentions);
     },
     [send, startNew],
   );
