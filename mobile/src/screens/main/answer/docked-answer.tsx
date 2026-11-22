@@ -72,7 +72,8 @@ export function restOf(control: ChatSheetControl, after: readonly ChatBubble[]):
   if (kind === 'plan') {
     if (besideSetQuest(control)) {
       const { changed, refused, left } = control.invitation;
-      return { kind: 'words', words: setQuestRestOf(reply.text, changed ?? refused ?? left) };
+      const leftAlone = changed === null && refused === null && left !== null;
+      return { kind: 'words', words: setQuestRestOf(reply.text, changed ?? refused ?? left, leftAlone) };
     }
     return planRests(control, reply) ? { kind } : null;
   }
@@ -128,6 +129,12 @@ interface DockedWordsProps {
   onRaise: Raise;
 }
 
+// 그대로 두기 waits while 바꾸기 or a recalculation is on its way (PR 444's review): the answer it would leave is about to
+// change.
+function choosing({ invitation, answer }: ChatSheetControl): boolean {
+  return invitation.sending || invitation.changing || answer.recalculating;
+}
+
 // The reply's buttons as chips, which scroll sideways: its offers and 다시 시도, disabled while the next reply is on its
 // way, for they act on the turn before; 근거 ›, which raises the card; 그대로 두기 beside a Quest the User holds, which
 // leaves it as it is (P04 ticket 20); and the folded chips.
@@ -162,7 +169,7 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
         />
       ) : null}
       {retry ? <DockChip disabled={waiting} onPress={control.chat.retry} words="다시 시도" /> : null}
-      {keep ? <DockChip onPress={control.invitation.leave} words="그대로 두기" /> : null}
+      {keep ? <DockChip disabled={choosing(control)} onPress={control.invitation.leave} words="그대로 두기" /> : null}
       <FoldedChips control={control} note={note} onRaise={onRaise} />
     </ScrollView>
   );
@@ -181,9 +188,13 @@ function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement
       {line === null ? null : (
         <DockLine
           line={line}
-          onPress={() => {
-            onRaise(false);
-          }}
+          onPress={
+            rest.still === true
+              ? undefined
+              : () => {
+                  onRaise(false);
+                }
+          }
         />
       )}
       <ReplyChips control={control} onRaise={onRaise} rest={rest} />

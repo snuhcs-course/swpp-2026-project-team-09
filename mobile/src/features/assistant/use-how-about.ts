@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -91,12 +92,14 @@ function useAsked(
 // The Place asked about over the answer on screen. A new answer on screen, a recalculation's included, closes it.
 export function useHowAbout(
   shown: ShownAnswer,
-  { made, sending }: Pick<PlanInvitation, 'made' | 'sending'>,
+  { made, sending, left }: Pick<PlanInvitation, 'made' | 'sending' | 'left'>,
   ask: HowAboutAsk,
 ): HowAbout {
   const { answer, plan, change: recalculate } = shown;
   const { open, press, keep } = useAsked(answer, ask);
-  const pressable = answer !== null && plan !== null && answer.input.kind === 'meal' && made === null && !sending;
+  // 그대로 두기 settles the answer as a Plan made does (P04 ticket 20).
+  const pressable =
+    answer !== null && plan !== null && answer.input.kind === 'meal' && made === null && left === null && !sending;
   const place = open?.place ?? null;
   const reply = open?.reply ?? null;
   const point = useMemo(() => (place === null ? null : pointOf(place)), [place]);

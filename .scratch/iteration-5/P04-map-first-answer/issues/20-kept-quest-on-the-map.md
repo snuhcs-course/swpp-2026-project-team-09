@@ -17,6 +17,7 @@ An answer beside a Quest the User already holds says so in words ("이미 12:16 
 - **No point** (a step with no Place, a server before P05's PR 439, or a `mealSet` alone): no tag.
 - **그대로 두기** leaves the Quest as it is and keeps the answer open: the new Plan's marks, its bar, and the button go, the tag is the only mark beside the User's own ("나"), which the camera fits together as it fits a Plan (never the closest zoom on the tag alone; without the User's mark it stays where it was), and the dock's line says "12:16 302동식당 점심을 그대로 뒀어요", with no chip. ✕ or a drag down closes the answer. As a meeting's 바꾸기 does, the answer stays and shows what now stands.
 - **After 바꾸기** (a meal made, a meeting changed): the tag goes, for that time no longer stands.
+- **From PR 444's review:** 그대로 두기 settles the answer as a Plan made does: nothing on the map takes a press (a building tapped asks nothing, "나" opens no card), and the line "… 그대로 뒀어요" has no "›" and raises nothing, since no Plan stands behind it; a new message is the way on. The chip waits while 바꾸기 or a recalculation is on its way, and a Plan made or changed wins the map over it.
 
 ## Acceptance criteria
 
@@ -24,6 +25,7 @@ An answer beside a Quest the User already holds says so in words ("이미 12:16 
 - [ ] After 그대로 두기 the tag beside the User's mark, both fitted, or the tag alone with the camera still; the tag among the marks a Friend's face gives way to. (Unit test.)
 - [ ] The tag on the answer's map with the Plan's Friend still drawn, and after 그대로 두기 the only mark beside "나", with the line, no chip, no button, and no bar; nothing is sent. (Integration test.)
 - [ ] After 바꾸기 of a meeting, no tag. (Integration test.)
+- [ ] 그대로 두기 disabled while 바꾸기 is on its way, and the Plan made drawn after it; after 그대로 두기, a building tap asks nothing, "나" is no button, and the line raises nothing. (Integration test.)
 - [ ] A meal and a meeting already set, and 그대로 두기, on a phone with the mock build. (Emulator.)
 - [ ] No native file changes; lint, format, and types pass on the app.
 

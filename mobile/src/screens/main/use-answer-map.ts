@@ -324,7 +324,8 @@ export function useAnswerMap(
 ): AnswerMap | null {
   const { answer, index } = shown;
   const settled = made !== null || changed !== null;
-  const leftAlone = left !== null;
+  // A Plan made or changed wins the drawing over 그대로 두기 (PR 444's review).
+  const leftAlone = left !== null && !settled;
   const draw = useMemo(() => {
     if (answer === null) {
       return null;
@@ -345,8 +346,8 @@ export function useAnswerMap(
   const everydayFaces = useFaces(others, shown, made !== null);
   const faces = leftAlone ? NO_AVATARS : everydayFaces;
   const routes = answer?.plans[index]?.scene.routes;
-  // While 바꾸기 is on its way nothing can be chosen either.
-  const sent = sending || settled || changing;
+  // While 바꾸기 is on its way nothing can be chosen either, nor once 그대로 두기 left the Quest as it is.
+  const sent = sending || settled || changing || leftAlone;
   const drawn = useDrawnMap(draw, base, answer, looks, map, framing, routes, pressableWhile(sent));
   if (drawn === null) {
     return null;
