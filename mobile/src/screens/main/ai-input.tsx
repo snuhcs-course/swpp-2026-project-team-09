@@ -112,9 +112,10 @@ interface FieldProps {
 }
 
 // While a mention stands in the words, the field draws them as parts, the mentions in the Friend colour. While it is
-// empty it holds one line (P04 ticket 50): its own hint, which a multiline field would wrap at a large font, stays on
-// that line and stands exactly where typed words and the cursor start, as the same field draws both. Typing lifts the
-// limit, which changes no input type, so the keyboard and the focus stay.
+// empty it is one line high (P04 ticket 50): its own hint, which a multiline field may wrap at a large font, shows its
+// first line only, exactly where typed words and the cursor start, as the same field draws both. Only the height is
+// held, never `numberOfLines`: on Android an unset `numberOfLines` falls back to `setLines(1)` (its `@ReactProp`
+// default), which would keep a field with text at one line.
 function Field(props: FieldProps): ReactElement {
   const { mention } = props;
   const empty = props.message === '' && !mention.shown;
@@ -125,7 +126,6 @@ function Field(props: FieldProps): ReactElement {
       accessibilityLabel="AI에게 메시지"
       maxLength={USER_MESSAGE_MAX}
       multiline
-      numberOfLines={empty ? 1 : undefined}
       onBlur={mention.onBlur}
       onChangeText={mention.onChangeText}
       onFocus={mention.onFocus}

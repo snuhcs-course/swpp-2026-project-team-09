@@ -77,17 +77,20 @@ describe('the main button above the input', () => {
     expect(screen.getByTestId('ai-input')).toHaveStyle({ right: AI_INPUT.side, left: AI_INPUT.side });
   });
 
-  it('leaves the input’s own placeholder on one line while empty, where typed words start, and lifts it on typing', async () => {
+  it('holds the empty input one line high with its own placeholder, and never limits its lines', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
     const field = screen.getByLabelText('AI에게 메시지');
     expect(field).toHaveProp('placeholder', '이어서 말하기');
-    expect(field).toHaveProp('numberOfLines', 1);
     expect(field).toHaveStyle({ maxHeight: AI_FIELD });
     expect(screen.queryByTestId('ai-input-placeholder', { includeHiddenElements: true })).toBeNull();
+    // An unset `numberOfLines` is `setLines(1)` on Android: the field never passes one, empty or not (PR 514's review).
+    expect(field.props.numberOfLines).toBeUndefined();
 
     await user.type(field, '더 싼 데');
-    expect(screen.getByLabelText('AI에게 메시지').props.numberOfLines).toBeUndefined();
+    const typed = screen.getByLabelText('AI에게 메시지');
+    expect(typed.props.numberOfLines).toBeUndefined();
+    expect(typed).not.toHaveStyle({ maxHeight: AI_FIELD });
   });
 });
 
