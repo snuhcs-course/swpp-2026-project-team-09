@@ -13,9 +13,12 @@ import { mapLines, mapThings } from './support/answer-map';
 import { PLACES } from './support/dining';
 import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
-import { askForCards, expectNoWrite, SEAT_CARD, startLibraryChat } from './support/library-chat';
+import { askForCards, expectNoWrite, SEAT_CARD, sendFromBar, startLibraryChat } from './support/library-chat';
+import { openMain } from './support/main';
+import { markLibraryLoggedIn } from '@/library/flag';
 import { layStage } from './support/lists';
 import { pressMarker } from './support/made-quest';
+import { stepsReplyOn } from '@/api/mock/data/steps-answer';
 
 // P04 ticket 07: a 관정도서관 seat card stands on the map as a flag on 관정관 with the room, the seat, and the time, my
 // walk there, its band on the top bar, and its 예약하기 beside the input. The phone's clock stands on Monday 2026-11-02
@@ -119,6 +122,28 @@ describe('a seat card on the map', () => {
     await pass(500);
 
     expect(screen.getByText('관정관 7층 7A 열람실 2 구역 좌석 현황')).toBeVisible();
+    expectNoWrite(library);
+  });
+});
+
+// PR 460's review: a reply that also holds a Plan (several requests, P03) keeps its own drawing, and the seat card keeps
+// its own band and 예약하기.
+describe('a seat card beside a Plan', () => {
+  it('is not drawn on the map, and the card keeps its band and 예약하기', async () => {
+    const reply = stepsReplyOn('2026-11-02');
+    await markLibraryLoggedIn();
+    server.on('POST /assistant/messages', { status: 200, body: reply });
+    const user = await openMain();
+    await layStage(390, 760);
+    await sendFromBar(user, '17시 반에 관정 갔다가 19시쯤 저녁 먹을래');
+    await pass(500);
+
+    expect(mapThings()).not.toContainEqual(expect.stringMatching(/^관정 7층 열람실 ›/u));
+    const seatCard = within(screen.getByTestId('answer-card')).getByTestId(
+      `library-book-${reply.cards[0]?.kind === 'library' ? reply.cards[0].library.key : ''}`,
+    );
+    expect(within(seatCard).getByTestId('slot-band')).toBeVisible();
+    expect(within(seatCard).getByRole('button', { name: '예약하기' })).toBeVisible();
     expectNoWrite(library);
   });
 });

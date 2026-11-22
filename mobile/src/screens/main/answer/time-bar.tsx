@@ -152,19 +152,21 @@ export function LookupBar({
 }
 
 // A booking's bar (P04 ticket 07): the seat card's band, whose handles change the start and the end the chat keeps for
-// the card, within the space's hours, steps, and lengths, as they did in the card.
+// the card, within the space's hours, steps, and lengths, as they did in the card. While a booking is on its way the
+// band is hidden, as the card's was, so that the time stays as it was booked.
 export function BookingBar({
   booking,
   chat,
   onHeight,
 }: {
   booking: ShownBooking;
-  chat: Pick<Chat, 'rooms' | 'showRoom'>;
+  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes'>;
   onHeight: (height: number) => void;
 }): ReactElement | null {
   const { top } = useSafeAreaInsets();
   const { kept, keep, live } = bookingKept(booking, chat);
-  return live === null ? null : (
+  const pending = chat.outcomes.get(booking.place)?.kind === 'pending';
+  return live === null || pending ? null : (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
         onHeight(nativeEvent.layout.height);
