@@ -132,7 +132,8 @@ export function facesClearOf(
   placed: AnswerDrawing,
   view: LabelView | null,
 ): readonly MapAvatar[] {
-  if (view === null) {
+  // Only a meal answer of the redesign (`keep`); every other answer keeps its faces as they were.
+  if (view === null || placed.keep === undefined) {
     return faces;
   }
   const boxes = keptBoxes(placed, view);
