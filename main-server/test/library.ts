@@ -66,22 +66,8 @@ const libraryCardSchema = z.strictObject({
       .strictObject({ date: z.string().optional(), spaceId: z.string().optional(), start: z.string().optional() })
       .nullable(),
     // Only on a seat filled from the User's arrival (P05 ticket 35).
-    arrival: z
-      .strictObject({
-        at: z.string(),
-        walkMinutes: z.number(),
-        from: z.strictObject({
-          place: z.string(),
-          endsAt: z.string().nullable(),
-          kind: z.enum(['수업', '일정']).nullable(),
-        }),
-        opensAt: z.string().nullable(),
-      })
-      .optional(),
-    leaveBy: z
-      .strictObject({ at: z.string(), for: z.enum(['수업', '일정']), start: z.string() })
-      .nullable()
-      .optional(),
+    arrival: z.strictObject({ at: z.string(), walkMinutes: z.number(), from: z.string() }).optional(),
+    leaveBy: z.string().nullable().optional(),
   }),
 });
 

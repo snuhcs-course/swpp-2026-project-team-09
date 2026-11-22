@@ -103,15 +103,7 @@ describe('A seat asked for today without a start, from an app that draws answers
 
     expect(cards).toHaveLength(1);
     expect(cards[0]).toMatchObject({ key: 'book:7F-7A-zone2:2026-11-04:1400:360', start: '14:00', minutes: 360 });
-    expect(cards[0]).toMatchObject({
-      arrival: {
-        at: '13:54',
-        walkMinutes: 4,
-        from: { place: places.b24.name, endsAt: null, kind: null },
-        opensAt: null,
-      },
-      leaveBy: { at: '15:56', for: '수업', start: '16:00' },
-    });
+    expect(cards[0]).toMatchObject({ arrival: { at: '13:54', walkMinutes: 4, from: '24동' }, leaveBy: '15:56' });
     expect(cards[0]?.notes[0]).toBe('13:54 도착에 맞춰 최대 시간으로 채웠어요');
     expect(cards[0]?.notes.slice(1)).toEqual(
       expect.arrayContaining([expect.stringContaining('30분 안에 좌석배정기')]) as unknown,

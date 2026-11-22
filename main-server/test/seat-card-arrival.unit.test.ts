@@ -10,7 +10,7 @@ import { bookCard } from '../src/assistant/library/library-card.js';
 import { cardArrival, fillSeat, type SeatFacts, type SeatSpace } from '../src/assistant/library/seat-arrival.js';
 
 // The arrival a seat's card carries when the server filled its start from when the User arrives at 관정관 (P05 ticket
-// 35), on Wednesday 2026-11-04: from now, from the end of the item the User is in, and from the opening. None when
+// 35), on Wednesday 2026-11-04: from now, from the end of the Class the User is in, and from the opening. None when
 // where the User sets out from is not known. 24동 is 4 minutes on foot from 관정관.
 
 const DATE = '2026-11-04';
@@ -19,16 +19,16 @@ const BUILDING_24 = 'place-24';
 
 const at = (clock: string): Date => new Date(`${DATE}T${clock}:00+09:00`);
 
-const item = (start: string, end: string, isClass = true): DayItem => ({
+const classAt24 = (start: string, end: string): DayItem => ({
   id: start,
   name: '수업',
   start: at(start),
   end: at(end),
   placeId: BUILDING_24,
-  isClass,
+  isClass: true,
 });
 
-const nameOf = (placeId: string): string | null => (placeId === BUILDING_24 ? '24동' : null);
+const labelOf = (placeId: string): string | null => (placeId === BUILDING_24 ? '24동' : null);
 
 let seat: LibrarySpace & SeatSpace;
 
@@ -52,43 +52,28 @@ function facts(now: string, more: Partial<SeatFacts> = {}): SeatFacts {
   };
 }
 
-const arrivalOf = (given: SeatFacts): ReturnType<typeof cardArrival> =>
-  cardArrival(fillSeat(given, seat, {}), given, nameOf);
+const arrivalOf = (given: SeatFacts): ReturnType<typeof cardArrival> => cardArrival(fillSeat(given, seat, {}), labelOf);
 
 describe('The arrival on a filled seat’s card', () => {
   it('from now: where the User is, 4 minutes away', () => {
-    expect(arrivalOf(facts('13:50', { items: [item('13:00', '13:50')] }))).toEqual({
+    expect(arrivalOf(facts('13:50', { items: [classAt24('13:00', '13:50')] }))).toEqual({
       at: '13:54',
       walkMinutes: 4,
-      from: { place: '24동', endsAt: null, kind: null },
-      opensAt: null,
+      from: '24동',
     });
   });
 
-  it('from the end of the Class the User is in when asked', () => {
-    expect(arrivalOf(facts('13:40', { items: [item('13:00', '13:50')] }))).toEqual({
-      at: '13:54',
-      walkMinutes: 4,
-      from: { place: '24동', endsAt: '13:50', kind: '수업' },
-      opensAt: null,
-    });
+  it('from the end of the Class the User is in when asked, wherever the phone is', () => {
+    const inClass = facts('13:40', { items: [classAt24('13:00', '13:50')], locationPlaceId: 'place-elsewhere' });
+
+    expect(arrivalOf(inClass)).toEqual({ at: '13:54', walkMinutes: 4, from: '24동' });
   });
 
-  it('from the end of an item that is not a Class, called 일정', () => {
-    expect(arrivalOf(facts('13:40', { items: [item('13:00', '13:50', false)] }))?.from).toEqual({
-      place: '24동',
-      endsAt: '13:50',
-      kind: '일정',
-    });
-  });
+  it('from the opening: the real arrival, the seat starting when the space opens', () => {
+    const early = facts('06:30');
 
-  it('from the opening, for an arrival before the space opens', () => {
-    expect(arrivalOf(facts('06:30'))).toEqual({
-      at: '06:34',
-      walkMinutes: 4,
-      from: { place: '24동', endsAt: null, kind: null },
-      opensAt: '07:00',
-    });
+    expect(arrivalOf(early)).toEqual({ at: '06:34', walkMinutes: 4, from: '24동' });
+    expect(fillSeat(early, seat, {}).start).toBe('07:00');
   });
 });
 
@@ -101,8 +86,8 @@ describe('No arrival on the card', () => {
     expect(arrivalOf(facts('13:50', { kwanjeongPlaceId: null }))).toBeNull();
   });
 
-  it('when the Place set out from has no name', () => {
-    expect(arrivalOf(facts('13:50', { locationPlaceId: 'place-unnamed' }))).toBeNull();
+  it('when the Place set out from has no label', () => {
+    expect(arrivalOf(facts('13:50', { locationPlaceId: 'place-unknown' }))).toBeNull();
   });
 });
 
@@ -126,10 +111,12 @@ describe('A book card', () => {
   });
 
   it('holds the arrival and leaveBy given, leaveBy null when nothing follows', () => {
-    const arrival = { at: '13:54', walkMinutes: 4, from: { place: '24동', endsAt: null, kind: null }, opensAt: null };
+    const arrival = { at: '13:54', walkMinutes: 4, from: '24동' };
 
-    const { library } = bookCard(seat, { ...booking, arrival, leaveBy: null });
-
-    expect(library).toMatchObject({ arrival, leaveBy: null });
+    expect(bookCard(seat, { ...booking, arrival, leaveBy: '15:56' }).library).toMatchObject({
+      arrival,
+      leaveBy: '15:56',
+    });
+    expect(bookCard(seat, { ...booking, arrival, leaveBy: null }).library).toMatchObject({ leaveBy: null });
   });
 });

@@ -15,6 +15,7 @@ import { defineTool, type Tool, type ToolContext } from '../feature.js';
 import { koreaDate } from '../korea-time.js';
 import { shownMinutes } from '../../travel/travel.js';
 import { clockTime, dateInput } from '../free-time/tool-parts.js';
+import { placeLabelOf } from '../gathering/place-naming.js';
 import { noteNotDone, refusedBookingStep } from '../steps/plan-steps.js';
 import {
   checkBooking,
@@ -212,8 +213,11 @@ function shownBooking(services: LibraryServices, context: ToolContext, checked: 
   const end = clockOfMinutes(minutesOfClock(booking.start) + booking.minutes);
   const leaveBy = filling === null ? null : leaveByOf(filling.facts, filling.fill.arrival.at, end);
   const { places } = services.arrival;
-  const arrival =
-    filling === null ? null : cardArrival(filling.fill, filling.facts, (id) => places.byId(id)?.name ?? null);
+  const placeLabel = (id: string): string | null => {
+    const place = places.byId(id);
+    return place === null ? null : placeLabelOf(place);
+  };
+  const arrival = filling === null ? null : cardArrival(filling.fill, placeLabel);
   showCard(
     context.presented,
     bookCard(space, {
@@ -225,7 +229,7 @@ function shownBooking(services: LibraryServices, context: ToolContext, checked: 
         ...(filling === null ? [] : [filling.fill.note]),
         ...firstOfSeveralNote(context, space.id),
       ],
-      ...(filling === null ? {} : { leaveBy, ...(arrival === null ? {} : { arrival }) }),
+      ...(filling === null ? {} : { leaveBy: leaveBy?.at ?? null, ...(arrival === null ? {} : { arrival }) }),
     }),
   );
   if (filling === null) {

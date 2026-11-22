@@ -9,7 +9,7 @@
  ******************************************************************************/
 
 import { type ClockRange, type EquipmentGroup, KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
-import { type LeaveBy, type SeatArrival } from './seat-arrival.js';
+import { type SeatArrival } from './seat-arrival.js';
 
 // A library card: what the phone fills from the library and acts on only when the User presses its button. The server
 // fills it from the catalogue and the tool's checked input, so it holds no seat, no booking and nothing of any User's
@@ -73,9 +73,9 @@ export interface LibraryCard {
     until: string | null;
     target: LibraryTarget | null;
     // Only on a seat whose start the server filled from the User's arrival: the arrival, when it is known, and when to
-    // leave 관정관 for what follows before the booking ends, null for nothing. An older app ignores both.
+    // leave 관정관 (HH:MM) for what follows before the booking ends, null for nothing. An older app ignores both.
     arrival?: SeatArrival;
-    leaveBy?: LeaveBy | null;
+    leaveBy?: string | null;
   };
 }
 
@@ -163,7 +163,7 @@ export interface BookCardInput {
   waitsForWindow?: boolean | undefined;
   // A seat filled from the User's arrival.
   arrival?: SeatArrival | undefined;
-  leaveBy?: LeaveBy | null | undefined;
+  leaveBy?: string | null | undefined;
 }
 
 // The seat numbers the card picks from: the named room's, else the equipment group's, else the sector's rooms.
