@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // --- The library cards of a reply (main-server `assistant/library/library-card.ts`, the same shapes) ---
@@ -53,6 +54,12 @@ export interface LibraryCardData {
   notes: string[];
   until: string | null;
   target: { date?: string; spaceId?: string; start?: string } | null;
+  // A seat whose start the server filled from the User's arrival at 관정관 (P05's PR 496): when they arrive ("14:05"),
+  // their walk's minutes, and the Place they set out from ("301동"). Left out when the User gave the start, or when the
+  // server does not know where they set out from.
+  arrival?: { at: string; walkMinutes: number; from: string };
+  // With a filled seat: when to leave 관정관 for the first thing that starts before the booking ends, null when none does.
+  leaveBy?: string | null;
 }
 
 export interface LibraryCard {

@@ -10,8 +10,8 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, type ReactNode, useEffect } from 'react';
-import type { LibrarySpace } from '@/api/assistant-types';
+import { type ReactElement, type ReactNode, useEffect, useState } from 'react';
+import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
 import { now } from '@/clock';
 import { bookingTitle } from '@/features/assistant/booking-scene';
 import type { CardOutcome } from '@/features/assistant/use-chat';
@@ -21,7 +21,7 @@ import { chooseSeat, freeSeats } from '@/library/cards/seats';
 import { lengthWords, liveSlot, sameSlot } from '@/library/cards/slot-band';
 import type { LibrarySeat } from '@/library/replies';
 import { useAskForPush } from '@/push/push-ask-host';
-import { CardBox, FailureNote, Pill, Pills, Said } from './library-parts';
+import { CardBox, FailureNote, Notes, Pill, Pills, Said } from './library-parts';
 import { seatsBubble } from './own-bubbles';
 import { type Booking, NO_FREE_SEAT, SEATS_UNREAD, SEATS_WAIT_MS, sendBooking, withinWait } from './seat-booking';
 import { type BookSeatCardProps, type Closed, SeatOffer } from './seat-offer';
@@ -102,12 +102,15 @@ function StudyLine({
   free,
   busy,
   walk,
+  arrival,
 }: {
   space: LibrarySpace;
   slot: Slot;
   free: number | null;
   busy: boolean;
   walk: number | null;
+  // The server's arrival when it filled the start from it, ahead of the app's own walk.
+  arrival: NonNullable<LibraryCardData['arrival']> | null;
 }): ReactElement {
   const when = `${slot.start}부터 ${lengthWords(slot.minutes)}`;
   if (busy) {
@@ -117,13 +120,17 @@ function StudyLine({
     return <Said>{`${bookingTitle(space)}에서 ${when}, 빈 자리를 찾고 있어요.`}</Said>;
   }
   // A start the User reaches walking from now is why it is that start (P01 ticket 06).
-  const why = walk !== null && startFromWalk(slot.start, walk, now()) ? `걸음 ${String(walk)}분이라 ` : '';
+  const fromWalk = walk !== null && startFromWalk(slot.start, walk, now()) ? `걸음 ${String(walk)}분이라 ` : '';
+  const why = arrival === null ? fromWalk : `${arrival.from}에서 걸음 ${String(arrival.walkMinutes)}분이라 `;
   return <Said>{`${why}${bookingTitle(space)}에 ${when}, 빈 자리 ${String(free)}석이에요.`}</Said>;
 }
 
 // The seats' reading and the booking's write for the room and time on screen.
 function useSeatCalls({ card, actions, place, room, slot, setNamed }: SeatPartProps): {
   loaded: Loaded<readonly LibrarySeat[]>;
+  // The seats on screen: those read, or while a new time or room is read, the last ones read (P01 ticket 06).
+  seats: readonly LibrarySeat[];
+  rereading: boolean;
   reload: () => void;
   write: Write<LibrarySeat>;
   close: (closed: Closed) => void;
@@ -143,7 +150,13 @@ function useSeatCalls({ card, actions, place, room, slot, setNamed }: SeatPartPr
     undefined,
     pendingMark(actions, place),
   );
-  return { loaded, reload, write, close, logIn: useLogInReload(reload) };
+  const [last, setLast] = useState<readonly LibrarySeat[] | null>(null);
+  if (loaded.state === 'ready' && last !== loaded.value) {
+    setLast(loaded.value);
+  }
+  const rereading = loaded.state === 'loading' && last !== null;
+  const seats = loaded.state === 'ready' ? loaded.value : rereading ? last : [];
+  return { loaded, seats, rereading, reload, write, close, logIn: useLogInReload(reload) };
 }
 
 // The seats of the room on screen and what the card offers of them. It stays mounted while the room list is open, so
@@ -152,8 +165,7 @@ function useSeatCalls({ card, actions, place, room, slot, setNamed }: SeatPartPr
 function SeatPart(props: SeatPartProps): ReactElement | null {
   const { card, actions, place, room, named, setNamed } = props;
   const { shown } = room;
-  const { loaded, reload, write, close, logIn } = useSeatCalls(props);
-  const seats = loaded.state === 'ready' ? loaded.value : [];
+  const { loaded, seats, rereading, reload, write, close, logIn } = useSeatCalls(props);
   const seat = chooseSeat(seats, named);
   const searching = useFullRoomSwap(room, props.space, loaded.state === 'ready' && seat === null);
   // While the rooms are listed no seat is offered, so the button beside the input does not book one out of sight.
@@ -168,7 +180,7 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
   };
   const onMap = useSeatOnMap(actions.onMap?.(place) ?? null, told);
   const mapped = actions.bandOnBar?.(place) === true;
-  const offer = { ...props, space: shown, seats, choose: setNamed, write, close, undo: room.undo, ...onMap };
+  const offer = { ...props, space: shown, seats, choose: setNamed, write, close, undo: room.undo, rereading, ...onMap };
   const looking = loaded.state === 'loading' || searching;
   const free = loaded.state === 'ready' && !searching ? freeSeats(seats).length : null;
   const line = looking || (seat !== null && loaded.state === 'ready');
@@ -180,12 +192,13 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
           free={free}
           slot={props.slot}
           space={shown}
+          arrival={props.card.arrival ?? null}
           walk={actions.bookingWalk?.()?.minutes ?? null}
         />
       ) : null}
       {props.top}
       {room.listing ? null : (
-        <SeatRest {...props} free={free} looking={looking && !mapped}>
+        <SeatRest {...props} free={free} looking={looking && !mapped} noSeat={seat === null}>
           <SeatsFailure close={close} loaded={loaded} logIn={logIn} mapped={mapped} reload={reload} shown={shown} />
           {loaded.state === 'ready' && seat === null && !searching ? (
             <NoFreeSeat actions={actions} card={card} space={shown} />
@@ -224,10 +237,14 @@ function SeatsFailure(props: {
 }
 
 // Under the chip: the space filled with its free seats, and "빈 자리를 찾고 있어요" in the chat, then the rest.
-function SeatRest(props: SeatPartProps & { free: number | null; looking: boolean; children: ReactNode }): ReactElement {
-  const { room, free, looking, docked, children } = props;
+function SeatRest(
+  props: SeatPartProps & { free: number | null; looking: boolean; noSeat: boolean; children: ReactNode },
+): ReactElement {
+  const { room, free, looking, docked, noSeat, children } = props;
   return (
     <>
+      {/* Raised while no seat is offered yet, the card still holds the site's notes (P01 ticket 06). */}
+      {docked || !noSeat ? null : <Notes notes={props.card.notes.filter((note) => !note.includes('좌석배정기'))} />}
       {room.chip === null || docked ? null : (
         <RoomWords free={free} full={room.full} rooms={room.counting.rooms} shown={room.shown} />
       )}

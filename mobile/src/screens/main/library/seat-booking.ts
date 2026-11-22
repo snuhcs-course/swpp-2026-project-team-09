@@ -27,27 +27,7 @@ export const NOT_BOOKED = '알겠어요. 예약하지 않았어요.';
 export const BOOK_FAILED = '예약하지 못했어요';
 export const SEATS_UNREAD = '관정의 자리 정보를 받지 못했어요';
 
-// On the map the seats' read gives up after this long, so the study answer never says "찾고 있어요" without end; the
-// line that says so offers 다시 찾기 (P01 ticket 04). The read itself may still answer later, unheard.
-export const SEATS_WAIT_MS = 8_000;
-
-export function withinWait<T>(read: Promise<T>, ms: number): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => {
-      reject(new Error('The seats took too long'));
-    }, ms);
-    void read.then(
-      (value) => {
-        clearTimeout(timer);
-        resolve(value);
-      },
-      (error: unknown) => {
-        clearTimeout(timer);
-        reject(error instanceof Error ? error : new Error(String(error)));
-      },
-    );
-  });
-}
+export { SEATS_WAIT_MS, withinWait } from './seats-wait';
 // The time's start went by while the card was open.
 export const SLOT_PASSED = '시작 시각이 지났어요. 시간을 다시 골라 주세요.';
 // Under a time the User changed: the Assistant's words above were for the card's own time.

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -57,6 +58,8 @@ interface OfferProps extends BookSeatCardProps {
   onMap: boolean;
   // The booking on the map while the answer's card is lowered: one sentence (P01 ticket 03).
   docked: boolean;
+  // The seat shown is the last one read while a new time or room is read (P01 ticket 06).
+  rereading?: boolean;
 }
 
 function OfferButtons({
@@ -105,13 +108,13 @@ function KioskFoot(): ReactElement {
 // The top of the offer: the room with the seat, and the time; nothing on the map lowered, where the study answer's
 // sentence above says it. On the
 // map the room has the one name it has on the map's label and the bar's card ("관정 7층 열람실").
-function OfferHead({ space, seat, slot, docked, onMap }: OfferProps): ReactElement | null {
+function OfferHead({ space, seat, slot, docked, onMap, rereading = false }: OfferProps): ReactElement | null {
   if (docked) {
     return null;
   }
   return (
     <SpaceRow
-      meta={whenWords(slot.date, slot.start, slot.minutes, now())}
+      meta={`${whenWords(slot.date, slot.start, slot.minutes, now())}${rereading ? ' · 다시 확인하는 중' : ''}`}
       title={`${onMap ? bookingTitle(space) : spaceWords(space)} · ${seatWords(seat.VNAME)}`}
     />
   );

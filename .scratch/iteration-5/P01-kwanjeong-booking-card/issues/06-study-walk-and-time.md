@@ -33,3 +33,21 @@ What the reply carries: the card's `start`, `minutes`, and `notes`. When the ser
 - [x] No native file changes; oxlint, Prettier, and tsc pass on the app.
 
 ## Comments
+
+### Hands-on findings and the server's arrival (2026-11-23)
+
+From the first hands-on use of the study answer on the emulator:
+- **A new time or room no longer empties the card.** The card keeps the seat it last read, its row saying "· 다시 확인하는 중", until the new read returns. 예약하기 stays disabled meanwhile.
+- **The room list's counts come one by one.** Each count shows as it arrives, and one that does not come within the 8 s wait shows as failed ("—"). Before, all four counts waited for the last.
+- **Raised while the seats are first read,** the card shows the room chip and the site's notes, not only the sentence.
+
+The 8 s wait counts from the moment the read starts, with a JavaScript timer. On an emulator whose JavaScript was starved for a minute, it fired late too. Nothing in the code stops it from firing; no test held the read.
+
+With P05's PR 496 the seat card carries `arrival` (`at`, `walkMinutes`, `from`) and `leaveBy` when the server filled the start from the arrival. The app keeps both when well formed, and the sentence then says "301동에서 걸음 9분이라 …". Without them it falls back to the walk the map draws.
+
+Tonight the integration tests that mount the answer frame time out at 60 s on this Mac, `5.0/Main`'s own code included: the load average was 35 to 50, and with #495 merged. Unit tests and checks pass. These integration tests ran green before #495, at a lighter load.
+
+### Agent usage (2026-11-23)
+
+- Agent time: about 75 minutes in one session, from 00:20 to 01:40 (an estimate).
+- Tokens: see P01 ticket 04's session; this part is within the same session's totals for 2026-11-23.
