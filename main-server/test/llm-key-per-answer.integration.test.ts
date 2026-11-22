@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -104,8 +105,11 @@ afterAll(async () => {
   await database.drop();
 });
 
+// For the first case, whose pod loads the server's modules in this worker, on a machine that may be busy.
+const SLOW = { timeout: 20_000 };
+
 describe('An answer of the chat', () => {
-  it('with nothing saved, is made with the default key', async () => {
+  it('with nothing saved, is made with the default key', SLOW, async () => {
     const { app, token } = await pod();
     scripted.default.script({ text: '네' });
 
