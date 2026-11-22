@@ -2,10 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { NOT_AUTOFILLED } from './autofill';
 import { Icon } from './icon';
 import { color, radius, size, space, text } from './tokens';
 
@@ -45,6 +47,7 @@ export function TextField({
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
+        {...NOT_AUTOFILLED}
         accessibilityHint={help}
         accessibilityLabel={label}
         accessibilityState={{ disabled }}
@@ -69,12 +72,16 @@ export function TextField({
         ]}
         value={value}
       />
-      {help === undefined ? null : (
-        <View style={styles.help}>
-          {error === undefined ? null : <Icon color={color.danger} name="alert" size={14} />}
-          <Text style={[styles.helpText, error !== undefined && styles.errorText]}>{help}</Text>
-        </View>
-      )}
+      {help === undefined ? null : <Help error={error !== undefined} help={help} />}
+    </View>
+  );
+}
+
+function Help({ help, error }: { help: string; error: boolean }): ReactElement {
+  return (
+    <View style={styles.help}>
+      {error ? <Icon color={color.danger} name="alert" size={14} /> : null}
+      <Text style={[styles.helpText, error && styles.errorText]}>{help}</Text>
     </View>
   );
 }

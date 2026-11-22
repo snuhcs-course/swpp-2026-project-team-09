@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
 import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { myTagsQuery } from '@/api/queries';
-import { Button, Chip, color, font, Icon, radius, space } from '@/design-system';
+import { Button, Chip, color, font, Icon, NOT_AUTOFILLED, radius, space } from '@/design-system';
 import { FieldHead } from './field-head';
 
 const TAG_MOST = 30;
@@ -38,6 +39,7 @@ function TagInput({ onAdd }: { onAdd: (tag: string) => void }): ReactElement {
       <View style={styles.box}>
         <Text style={styles.hash}>#</Text>
         <TextInput
+          {...NOT_AUTOFILLED}
           accessibilityLabel="태그 직접 입력"
           autoFocus
           maxLength={TAG_MOST}

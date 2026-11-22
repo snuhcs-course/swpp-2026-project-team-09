@@ -2,10 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { NOT_AUTOFILLED } from './autofill';
 import { Icon } from './icon';
 import { color, font, radius, space, text } from './tokens';
 
@@ -42,6 +44,7 @@ export function ChatInput({
       <Suggestions disabled={disabled} onSend={onSend} suggestions={suggestions} />
       <View style={[styles.bar, focused && styles.focused]}>
         <TextInput
+          {...NOT_AUTOFILLED}
           accessibilityLabel="메시지"
           onBlur={() => {
             setFocused(false);
