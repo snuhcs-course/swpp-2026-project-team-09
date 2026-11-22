@@ -3,7 +3,6 @@
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
- * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The short names under the markers of the map, from the "names" level of detail on.
@@ -83,18 +82,9 @@ const HANGUL_FIRST = 0xac00;
 const HANGUL_LAST = 0xd7a3;
 const FINALS = 28;
 
-// Whether the last syllable has no final consonant; words that do not end in Hangul count as having one.
-function endsOpen(words: string): boolean {
-  const last = words.codePointAt(words.length - 1) ?? 0;
-  return last >= HANGUL_FIRST && last <= HANGUL_LAST && (last - HANGUL_FIRST) % FINALS === 0;
-}
-
 // "김민준과", "최유나와": the particle follows the last syllable's final consonant.
 export function withParticle(words: string): string {
-  return `${words}${endsOpen(words) ? '와' : '과'}`;
-}
-
-// The object particle after a word, by the same rule: "약속" takes 을, "파티" 를.
-export function objectParticle(words: string): string {
-  return endsOpen(words) ? '를' : '을';
+  const last = words.codePointAt(words.length - 1) ?? 0;
+  const open = last >= HANGUL_FIRST && last <= HANGUL_LAST && (last - HANGUL_FIRST) % FINALS === 0;
+  return `${words}${open ? '와' : '과'}`;
 }

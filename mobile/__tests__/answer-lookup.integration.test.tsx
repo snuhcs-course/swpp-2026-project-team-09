@@ -86,7 +86,7 @@ describe('the card of a way to a Place (q1)', () => {
     expect(card().queryByRole('button', { name: '닫기' })).toBeNull();
     expect(card().queryByRole('button', { name: '이대로 초대' })).toBeNull();
     expect(card().queryByRole('button', { name: '다음 후보' })).toBeNull();
-    expect(card().queryByRole('button', { name: '같이 먹을 친구 추가' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '같이 먹을 친구 추가' })).toBeNull();
   });
 });
 

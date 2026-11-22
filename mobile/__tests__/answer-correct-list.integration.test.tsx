@@ -3,13 +3,14 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { askOnMap, card } from './support/answer-map';
+import { askOnMap, card, timeBar } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT } from './support/lists';
@@ -59,8 +60,10 @@ afterEach(() => {
 describe('the open list of Friends', () => {
   it("asks in the card's lines, with 그대로 where 근거 stood, and no band, steps, 닫기, or input", async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    // P04 ticket 14: "＋ 같이" is in the time bar, and the dock holds the input's row alone.
+    expect(card().queryByRole('button', { name: ADD })).toBeNull();
 
-    await user.press(card().getByRole('button', { name: ADD }));
+    await user.press(timeBar().getByRole('button', { name: ADD }));
 
     const lines = within(card().getByTestId('answer-lines'));
     expect(lines.getByText('누구와 같이 먹을까요?')).toBeVisible();
@@ -78,7 +81,7 @@ describe('the open list of Friends', () => {
 
   it('closes with 그대로, and brings back the input with the main button beside it', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(card().getByRole('button', { name: ADD }));
+    await user.press(timeBar().getByRole('button', { name: ADD }));
 
     await user.press(card().getByRole('button', { name: '그대로' }));
 

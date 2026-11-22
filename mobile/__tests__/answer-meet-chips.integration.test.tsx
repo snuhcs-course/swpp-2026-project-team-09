@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -10,7 +11,7 @@ import type { ConditionChip, Plan } from '@/api/assistant-types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
-import { card, mapThings } from './support/answer-map';
+import { card, mapThings, timeBar } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -158,7 +159,7 @@ describe('a Friend added to a meet', () => {
   it('is asked for in words of a meet, not of a meal', async () => {
     const user = await meetMinSu();
 
-    await user.press(card().getByRole('button', { name: ADD }));
+    await user.press(timeBar().getByRole('button', { name: ADD }));
 
     expect(card().getByText('누구와 같이 만날까요?')).toBeVisible();
     expect(card().queryByText('누구와 같이 먹을까요?')).toBeNull();
@@ -166,7 +167,7 @@ describe('a Friend added to a meet', () => {
 
   it('is asked last, without constraints, when chosen in the list', async () => {
     const user = await meetMinSu();
-    await user.press(card().getByRole('button', { name: ADD }));
+    await user.press(timeBar().getByRole('button', { name: ADD }));
 
     await user.press(card().getByRole('button', { name: JI_WOO_CELL }));
     await pass(500);

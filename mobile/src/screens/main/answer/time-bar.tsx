@@ -5,7 +5,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, type ReactNode, useState } from 'react';
 import { type LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AnswerReply, Plan } from '@/api/assistant-types';
@@ -21,9 +21,11 @@ import type { ShownBooking } from '@/features/assistant/booking-scene';
 import type { Chat } from '@/features/assistant/use-chat';
 import { bookingKept } from '../library/booking-kept';
 import { SlotBand } from '../library/slot-band';
+import { AddChip } from './condition-chips';
 import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
 import { TimeBand } from './time-band';
 import { type BandFocus, useCorrections } from './use-corrections';
+import { addNameOf } from './who-words';
 
 const NO_WINDOW = { from: null, until: null };
 // The grip takes a press 44 high around its middle only, so that the ends' labels, the day's other meal among them,
@@ -46,6 +48,8 @@ interface BarProps {
   band: Omit<BandProps, 'folded' | 'day'>;
   // The words before the span's; left out, its day word.
   day?: string;
+  // "＋ 같이" at the right end of the words row (P04 ticket 14); left out, none.
+  add?: ReactNode;
   onHeight: (height: number) => void;
   // How far below its place under the pill it stands, under the bar of several requests (P04 ticket 09); left out, 0.
   offset?: number;
@@ -53,7 +57,7 @@ interface BarProps {
 
 // The time bar: the answer's band in one white row under the pill, folded to one row, which a press on its grip
 // unfolds to the band's whole range, a row for each person, and folds again.
-function Bar({ band, day, onHeight, offset = 0 }: BarProps): ReactElement {
+function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
   const [unfolded, setUnfolded] = useState(false);
   const { lanes, startAt, now } = band.band;
@@ -71,6 +75,7 @@ function Bar({ band, day, onHeight, offset = 0 }: BarProps): ReactElement {
       testID="time-bar"
     >
       <TimeBand {...band} day={day ?? koreaDayWord(startAt, new Date(now))} folded={folded} />
+      {add === null ? null : <View style={styles.add}>{add}</View>}
       <Pressable
         accessibilityLabel={label}
         accessibilityRole="button"
@@ -100,10 +105,14 @@ interface PlanBarProps {
 
 // The bar of the Plan on screen: its handles and its lanes move it as the card's band did, unless the answer's kind
 // fixes the time. A meal's names the meal with its day when it is not under way today, and the day's other meal
-// stands at one end (`MealTick`).
+// stands at one end (`MealTick`). "＋ 같이" stands at the right of its words, beside the rows people belong with, while
+// the Plan can take more people (P04 ticket 14), so that the dock is the input's row alone.
 export function PlanBar(props: PlanBarProps): ReactElement {
   const { shown, answer, plan, invitation, focus, onClose, onHeight, offset } = props;
   const fix = useCorrections(shown, answer.input, onClose, focus);
+  const settled = invitation.made !== null || invitation.changed !== null || invitation.left !== null;
+  const addName = !settled && (fix.adding || fix.choices.length > 0) ? addNameOf(answer.input.kind) : null;
+  const busy = shown.recalculating || invitation.sending || invitation.changing;
   // A meeting changed in place (P04 ticket 17) is set: its band is read, not moved.
   const fixed = bandIsFixed(answer.input.kind) || invitation.changed !== null;
   const tick = mealTickOf(answer);
@@ -116,7 +125,7 @@ export function PlanBar(props: PlanBarProps): ReactElement {
             ? undefined
             : { side: tick.side, node: <MealTick sent={sent} shown={shown} words={tick.words} /> },
         band: plan.band,
-        disabled: shown.recalculating || invitation.sending || invitation.changing,
+        disabled: busy,
         fixed: windowOf(answer.input),
         focus: fix.focus,
         ghost: shown.ghost,
@@ -125,6 +134,11 @@ export function PlanBar(props: PlanBarProps): ReactElement {
         onDrop: fix.drop,
         onMove: fixed ? undefined : fix.move,
       }}
+      add={
+        addName === null ? null : (
+          <AddChip adding={fix.adding} disabled={busy} name={addName} onAdd={fix.toggleAdding} />
+        )
+      }
       day={mealDayOf(answer, plan)}
       onHeight={onHeight}
       offset={offset}
@@ -204,4 +218,6 @@ const styles = StyleSheet.create({
   },
   toggle: { alignSelf: 'center', alignItems: 'center', width: GRIP_WIDTH, paddingTop: space[2] },
   grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
+  // At the right of the words row, over the bar's padding.
+  add: { position: 'absolute', top: space[2], right: space[3] },
 });

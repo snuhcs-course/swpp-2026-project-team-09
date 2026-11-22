@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -156,7 +157,7 @@ interface AddChipProps {
   onAdd: () => void;
 }
 
-function AddChip({ adding, disabled, name = '같이 먹을 친구 추가', onAdd }: AddChipProps): ReactElement {
+export function AddChip({ adding, disabled, name = '같이 먹을 친구 추가', onAdd }: AddChipProps): ReactElement {
   return (
     <Pressable
       accessibilityLabel={name}

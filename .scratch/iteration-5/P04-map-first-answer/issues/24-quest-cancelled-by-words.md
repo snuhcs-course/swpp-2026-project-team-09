@@ -18,8 +18,8 @@ Native files: none. Releases: an app OTA update only.
 - One press does it: the model's question and the row that names the Quest are the confirmation, with no second dialog.
 - The reply docks with the model's question as its line, even when the question has no question mark.
 - A press sends `DELETE /quests/{questId}`, as the room's 나가기 does. While it is on its way the row says "취소하는 중이에요" or "나가는 중이에요" and takes no press.
-- Taken (204, or 404 for a Quest already gone): the line says "‘저녁 약속’을 취소했어요" (을 or 를 by the title's last syllable) or "‘저녁 약속’에서 나왔어요", the row goes and does not come back for that answer, and the User's Quests are fetched again.
-- Refused: the line says "취소하지 못했어요. 다시 눌러 주세요" or "나가지 못했어요. 다시 눌러 주세요", and the row stays.
+- Taken (204, or 404 for a Quest already gone): the line says "‘저녁 약속’ 취소했어요." or "‘저녁 약속’에서 나왔어요.", the row goes and does not come back for that answer, and the User's Quests are fetched again.
+- Refused: the line says "취소하지 못했어요. 다시 눌러 주세요." or "나가지 못했어요. 다시 눌러 주세요.", and the row stays.
 
 ## Acceptance criteria
 

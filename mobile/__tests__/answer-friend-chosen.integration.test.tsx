@@ -13,7 +13,7 @@ import * as projection from '@/map/projection';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
-import { askOnMap, card, layAnswerCard, mapThings } from './support/answer-map';
+import { askOnMap, card, layAnswerCard, mapThings, timeBar } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -87,7 +87,7 @@ function ask(laid = true): Promise<User> {
 async function openList(laid = true): Promise<User> {
   server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_THREE, afterMs: HELD_MS });
   const user = await ask(laid);
-  await user.press(card().getByRole('button', { name: ADD }));
+  await user.press(timeBar().getByRole('button', { name: ADD }));
   return user;
 }
 
@@ -164,7 +164,7 @@ describe("a Friend's face pressed on the map", () => {
     await press(user, MIN_JUN.name);
 
     expect(lookOf(MIN_JUN.name)).toMatch(/^person:.+:selected$/u);
-    expect(card().getByRole('button', { name: ADD })).toBeDisabled();
+    expect(timeBar().getByRole('button', { name: ADD })).toBeDisabled();
     await press(user, MIN_JUN.name);
     await onMarkCard(user, '민수', '민수 빼기', disabled);
     await pass(HELD_MS);
@@ -221,7 +221,7 @@ describe('a failed add', () => {
   it('says so, gives the cell its fact back, keeps the list open, and puts the + back on the face', async () => {
     server.on('POST /assistant/answers', refusal(500));
     const user = await ask();
-    await user.press(card().getByRole('button', { name: ADD }));
+    await user.press(timeBar().getByRole('button', { name: ADD }));
 
     await user.press(card().getByRole('button', { name: MIN_JUN_CELL }));
     await pass(500);
