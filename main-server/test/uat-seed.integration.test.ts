@@ -26,7 +26,7 @@ beforeEach(async () => {
 
 const titles = (rows: { title: string }[]): string[] => rows.map(({ title }) => title).toSorted();
 
-describe('setup', () => {
+describe('setup: the people', () => {
   it('leaves each tester Friends with C and E only, and B with C', async () => {
     expect(await stage.friendsOf('A1')).toEqual(['박지호', '윤서아']);
     expect(await stage.friendsOf('A3')).toEqual(['박지호', '윤서아']);
@@ -46,7 +46,9 @@ describe('setup', () => {
     ).toEqual(['이도현', '한지우']);
     expect(users.every(({ masterOffAskedAt }) => masterOffAskedAt === null)).toBe(true);
   });
+});
 
+describe('setup: the parties', () => {
   it("shows a tester the sheet's recruiting parties, without the private one and with the full ones still listed", async () => {
     const posts = await stage.recruiting('A1');
     expect(titles(posts)).toEqual(
@@ -87,7 +89,9 @@ describe('setup', () => {
     expect(own.leader.name).toBe('김서연');
     expect(own.holders).toHaveLength(1);
   });
+});
 
+describe('setup: the events and the classes', () => {
   it('lists the published [UAT] events, without the Draft, the cancelled one and what was collected for these days', async () => {
     expect(await stage.eventTitles('A1')).toEqual(
       [
@@ -117,37 +121,39 @@ describe('setup', () => {
     expect(of('윤서아')).toEqual(['[UAT] E 수업 tuesday 11:00-12:45', '[UAT] E 저녁 tuesday 18:00-22:00']);
     expect(of('이도현')).toEqual(['[UAT] B 저녁 tuesday 18:00-22:00']);
   });
+});
 
-  it('keeps the phones signed in, and a second run gives the same', async () => {
+describe('setup: a second run', () => {
+  it('keeps the phones signed in, and gives the same', async () => {
     await stage.setUp();
     expect(await stage.friendsOf('A2')).toEqual(['박지호', '윤서아']);
     expect(await stage.prisma.quest.count()).toBe(13);
   });
 });
 
-describe('reset', () => {
-  // What UAT-3 and UAT-4 leave: A1 is Friends with B, turned 위치 공유 on and off, joined 민턴 바로, made a party, and
-  // spent Assistant messages.
-  async function play(): Promise<string> {
-    const [a1, b] = [await stage.idOf('A1'), await stage.idOf('B')];
-    const [userAId = '', userBId = ''] = [a1, b].toSorted();
-    await stage.prisma.friendship.create({ data: { userAId, userBId, senderId: a1, acceptedAt: NOW } });
-    await stage.prisma.user.update({ where: { id: a1 }, data: { masterSwitchOn: true, masterOffAskedAt: NOW } });
-    await stage.prisma.questHolder.create({ data: { questId: uatId('quest:minton-open'), userId: a1 } });
-    await stage.prisma.quest.create({
-      data: {
-        title: '볼링',
-        leaderId: a1,
-        joinPolicy: 'open',
-        board: 'hobby',
-        holders: { create: [{ userId: a1 }, { userId: b }] },
-        subQuests: { create: { title: '볼링', startsAt: new Date(inKorea('2026-11-24T21:30')) } },
-      },
-    });
-    await stage.redis.set(`assistant:messages:${a1}:2026-11-23`, '9');
-    return a1;
-  }
+// What UAT-3 and UAT-4 leave: A1 is Friends with B, turned 위치 공유 on and off, joined 민턴 바로, made a party, and
+// spent Assistant messages.
+async function play(): Promise<string> {
+  const [a1, b] = [await stage.idOf('A1'), await stage.idOf('B')];
+  const [userAId = '', userBId = ''] = [a1, b].toSorted();
+  await stage.prisma.friendship.create({ data: { userAId, userBId, senderId: a1, acceptedAt: NOW } });
+  await stage.prisma.user.update({ where: { id: a1 }, data: { masterSwitchOn: true, masterOffAskedAt: NOW } });
+  await stage.prisma.questHolder.create({ data: { questId: uatId('quest:minton-open'), userId: a1 } });
+  await stage.prisma.quest.create({
+    data: {
+      title: '볼링',
+      leaderId: a1,
+      joinPolicy: 'open',
+      board: 'hobby',
+      holders: { create: [{ userId: a1 }, { userId: b }] },
+      subQuests: { create: { title: '볼링', startsAt: new Date(inKorea('2026-11-24T21:30')) } },
+    },
+  });
+  await stage.redis.set(`assistant:messages:${a1}:2026-11-23`, '9');
+  return a1;
+}
 
+describe('reset', () => {
   it('sets the tester back to the start', async () => {
     const a1 = await play();
 

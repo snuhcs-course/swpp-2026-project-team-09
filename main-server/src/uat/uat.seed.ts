@@ -15,7 +15,7 @@ import {
   places,
   readUsers,
   removeOtherUsers,
-  type Users,
+  filled,
   writeClasses,
   writeEvents,
   writeFriendships,
@@ -69,7 +69,7 @@ export async function resetTester(
     await emptyTester(prisma, held[tester]);
   }
   const id = await writeUser(prisma, accountOf(tester), false, now);
-  const users = { ...held, [tester]: id } as Users;
+  const users = filled({ ...held, [tester]: id });
   await writeFriendships(prisma, users, now, friendsOf(tester));
   await writeClasses(prisma, place, users, classesOf(tester, days));
   await writeQuests(prisma, place, users, now, [ownQuest(tester, days)]);
@@ -107,6 +107,39 @@ export async function cancelUatEvent(prisma: PrismaClient, redis: Redis | null):
   ];
 }
 
+// "11-23 15:45" in Korea.
+function local(at: Date | null): string {
+  return at === null ? '?' : new Date(at.getTime() + 9 * 3600 * 1000).toISOString().slice(5, 16).replace('T', ' ');
+}
+
+async function friendNames(prisma: PrismaClient, id: string): Promise<string[]> {
+  const friendships = await prisma.friendship.findMany({
+    where: { OR: [{ userAId: id }, { userBId: id }] },
+    select: { userAId: true, acceptedAt: true, userA: { select: { name: true } }, userB: { select: { name: true } } },
+  });
+  return friendships
+    .map(
+      ({ userAId, userA, userB, acceptedAt }) =>
+        `${userAId === id ? userB.name : userA.name}${acceptedAt === null ? '(요청 중)' : ''}`,
+    )
+    .toSorted();
+}
+
+async function questLines(prisma: PrismaClient, id: string): Promise<string[]> {
+  const quest = { select: { title: true, leaderId: true } };
+  const [held, asked, invited] = await Promise.all([
+    prisma.questHolder.findMany({ where: { userId: id }, select: { quest } }),
+    prisma.questJoinRequest.findMany({ where: { userId: id }, select: { quest } }),
+    prisma.questInvitation.findMany({ where: { userId: id }, select: { quest } }),
+  ]);
+  const titles = (rows: { quest: { title: string } }[]): string => rows.map((row) => row.quest.title).join(', ');
+  return [
+    `   파티: ${held.map((row) => `${row.quest.title}${row.quest.leaderId === id ? '(파티장)' : ''}`).join(', ') || '없음'}`,
+    ...(asked.length === 0 ? [] : [`   신청 중: ${titles(asked)}`]),
+    ...(invited.length === 0 ? [] : [`   받은 초대: ${titles(invited)}`]),
+  ];
+}
+
 async function accountLine(
   prisma: PrismaClient,
   redis: Redis | null,
@@ -116,74 +149,38 @@ async function accountLine(
 ): Promise<string> {
   const user = await prisma.user.findUniqueOrThrow({
     where: { id },
-    select: {
-      name: true,
-      masterSwitchOn: true,
-      masterOffAskedAt: true,
-      _count: { select: { sessions: { where: { endedAt: null } } } },
-    },
+    select: { name: true, masterSwitchOn: true, masterOffAskedAt: true },
   });
-  const friendships = await prisma.friendship.findMany({
-    where: { OR: [{ userAId: id }, { userBId: id }] },
-    select: {
-      userAId: true,
-      userBId: true,
-      acceptedAt: true,
-      userA: { select: { name: true } },
-      userB: { select: { name: true } },
-    },
-  });
-  const friends = friendships
-    .map(
-      ({ userAId, userA, userB, acceptedAt }) =>
-        `${userAId === id ? userB.name : userA.name}${acceptedAt === null ? '(요청 중)' : ''}`,
-    )
-    .toSorted();
-  const quests = await prisma.questHolder.findMany({
-    where: { userId: id },
-    select: { quest: { select: { title: true, leaderId: true } } },
-  });
-  const asked = await prisma.questJoinRequest.findMany({
-    where: { userId: id },
-    select: { quest: { select: { title: true } } },
-  });
-  const invited = await prisma.questInvitation.findMany({
-    where: { userId: id },
-    select: { quest: { select: { title: true } } },
-  });
+  const phones = await prisma.session.count({ where: { userId: id, endedAt: null } });
   const messages = redis === null ? '?' : ((await redis.get(`assistant:messages:${id}:${koreaDate(now)}`)) ?? '0');
+  const sharing = `${user.masterSwitchOn ? '켬' : '끔'}${user.masterOffAskedAt === null ? '' : '(끈 적 있음)'}`;
   return [
-    `${letter} ${user.name}: 로그인 ${String(user._count.sessions)}대 · 위치 공유 ${user.masterSwitchOn ? '켬' : '끔'}${user.masterOffAskedAt === null ? '' : '(끈 적 있음)'} · AI ${messages}개`,
-    `   친구: ${friends.join(', ') || '없음'}`,
-    `   파티: ${quests.map(({ quest }) => `${quest.title}${quest.leaderId === id ? '(파티장)' : ''}`).join(', ') || '없음'}`,
-    ...(asked.length === 0 ? [] : [`   신청 중: ${asked.map(({ quest }) => quest.title).join(', ')}`]),
-    ...(invited.length === 0 ? [] : [`   받은 초대: ${invited.map(({ quest }) => quest.title).join(', ')}`]),
+    `${letter} ${user.name}: 로그인 ${String(phones)}대 · 위치 공유 ${sharing} · AI ${messages}개`,
+    `   친구: ${(await friendNames(prisma, id)).join(', ') || '없음'}`,
+    ...(await questLines(prisma, id)),
   ].join('\n');
 }
 
 // Where every account stands, and the UAT's events.
 export async function uatStatus(prisma: PrismaClient, redis: Redis | null, now: Date): Promise<string[]> {
   const users = await readUsers(prisma);
-  const lines: string[] = [];
-  for (const { letter } of UAT_ACCOUNT_LIST) {
-    const id = users[letter];
-    lines.push(
-      id === undefined ? `${letter}: 계정 없음 (setup 전)` : await accountLine(prisma, redis, letter, id, now),
-    );
-  }
+  const accounts = await Promise.all(
+    UAT_ACCOUNT_LIST.map(({ letter }) => {
+      const id = users[letter];
+      return id === undefined ? `${letter}: 계정 없음 (setup 전)` : accountLine(prisma, redis, letter, id, now);
+    }),
+  );
   const events = await prisma.globalEvent.findMany({
     where: { title: { startsWith: '[UAT]' } },
     orderBy: { startsAt: 'asc' },
     select: { title: true, state: true, startsAt: true, endsAt: true },
   });
-  const local = (at: Date | null): string =>
-    at === null ? '?' : new Date(at.getTime() + 9 * 3600 * 1000).toISOString().slice(5, 16).replace('T', ' ');
-  lines.push(
+  return [
+    ...accounts,
     `행사: ${events.length === 0 ? '없음' : ''}`,
     ...events.map(
       ({ title, state, startsAt, endsAt }) =>
         `   ${title} · ${state} · ${local(startsAt)}–${local(endsAt)}${endsAt !== null && endsAt <= now ? ' (끝남)' : ''}`,
     ),
-  );
-  return lines;
+  ];
 }

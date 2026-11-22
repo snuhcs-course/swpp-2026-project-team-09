@@ -27,61 +27,66 @@ import {
 const BADMINTON = '배드민턴 같이 쳐요. 민턴 초보도 환영!';
 const GAP = '공강에 같이 해요.';
 
-// UAT-4: B's four parties tomorrow evening, and three badminton events.
-function evening({ at }: Days): { quests: QuestSpec[]; events: EventSpec[] } {
-  const party = (name: string, title: string, rest: Omit<QuestSpec, 'id' | 'title' | 'leader' | 'description'>) => ({
-    id: uatId(`quest:${name}`),
-    title,
-    leader: 'B' as const,
-    description: BADMINTON,
-    ...rest,
-  });
-  const event = (name: string, title: string, start: string, end: string, state: EventSpec['state']) => ({
-    id: uatId(`global-event:${name}`),
-    title,
-    startsAt: at(1, start),
-    endsAt: at(1, end),
-    place: '71',
-    state,
-  });
-  return {
-    quests: [
-      party('minton-open', '[UAT] 민턴 바로', {
-        joinPolicy: 'open',
-        capacity: 10,
-        startsAt: at(1, '19:20'),
-        place: '301',
-        members: ['C'],
-      }),
-      party('minton-approval', '[UAT] 민턴 승인', {
-        joinPolicy: 'approval',
-        capacity: 2,
-        startsAt: at(1, '18:50'),
-        place: '302',
-      }),
-      party('minton-full', '[UAT] 민턴 마감', {
-        joinPolicy: 'open',
-        capacity: 1,
-        startsAt: at(1, '19:10'),
-        place: '301',
-      }),
-      party('minton-private', '[UAT] 민턴 비공개', {
-        capacity: 4,
-        startsAt: at(1, '19:00'),
-        place: '301',
-        members: ['C'],
-      }),
-    ],
-    events: [
-      event('badminton-open', '[UAT] 배드민턴 대회', '18:00', '20:00', 'published'),
-      event('badminton-draft', '[UAT] 배드민턴 예선', '15:00', '17:00', 'draft'),
-      event('badminton-cancelled', '[UAT] 배드민턴 친선전', '16:00', '18:00', 'cancelled'),
-    ],
-  };
+type Rest = Omit<QuestSpec, 'id' | 'title' | 'leader' | 'description'>;
+
+function partyOf(leader: Letter, description: string, name: string, title: string, rest: Rest): QuestSpec {
+  return { id: uatId(`quest:${name}`), title, leader, description, ...rest };
 }
 
-// UAT-5: the gap between a tester's two classes tomorrow, 11:30 to 13:00, with what fits it and what does not.
-function gap({ at, weekday }: Days): { quests: QuestSpec[]; events: EventSpec[]; classes: ClassSpec[] } {
+// UAT-4: B's four parties tomorrow evening.
+function eveningQuests({ at }: Days): QuestSpec[] {
+  const open = { joinPolicy: 'open' as const };
+  return [
+    partyOf('B', BADMINTON, 'minton-open', '[UAT] 민턴 바로', {
+      ...open,
+      capacity: 10,
+      startsAt: at(1, '19:20'),
+      place: '301',
+      members: ['C'],
+    }),
+    partyOf('B', BADMINTON, 'minton-approval', '[UAT] 민턴 승인', {
+      joinPolicy: 'approval',
+      capacity: 2,
+      startsAt: at(1, '18:50'),
+      place: '302',
+    }),
+    partyOf('B', BADMINTON, 'minton-full', '[UAT] 민턴 마감', {
+      ...open,
+      capacity: 1,
+      startsAt: at(1, '19:10'),
+      place: '301',
+    }),
+    partyOf('B', BADMINTON, 'minton-private', '[UAT] 민턴 비공개', {
+      capacity: 4,
+      startsAt: at(1, '19:00'),
+      place: '301',
+      members: ['C'],
+    }),
+  ];
+}
+
+function eventOf(
+  name: string,
+  title: string,
+  startsAt: Date,
+  endsAt: Date,
+  place: string,
+  state: EventSpec['state'],
+): EventSpec {
+  return { id: uatId(`global-event:${name}`), title, startsAt, endsAt, place, state };
+}
+
+// UAT-4: three badminton events tomorrow, of which only the published one is found.
+function eveningEvents({ at }: Days): EventSpec[] {
+  return [
+    eventOf('badminton-open', '[UAT] 배드민턴 대회', at(1, '18:00'), at(1, '20:00'), '71', 'published'),
+    eventOf('badminton-draft', '[UAT] 배드민턴 예선', at(1, '15:00'), at(1, '17:00'), '71', 'draft'),
+    eventOf('badminton-cancelled', '[UAT] 배드민턴 친선전', at(1, '16:00'), at(1, '18:00'), '71', 'cancelled'),
+  ];
+}
+
+// UAT-5: a tester's two classes tomorrow leave a gap from 11:30 to 13:00.
+function classes({ weekday }: Days): ClassSpec[] {
   const tomorrow = weekday(1);
   const lesson = (owner: Letter, courseName: string, startTime: string, endTime: string): ClassSpec => ({
     owner,
@@ -91,69 +96,54 @@ function gap({ at, weekday }: Days): { quests: QuestSpec[]; events: EventSpec[];
     endTime,
     place: '301',
   });
-  const party = (name: string, title: string, rest: Omit<QuestSpec, 'id' | 'title' | 'leader' | 'description'>) => ({
-    id: uatId(`quest:${name}`),
-    title,
-    leader: 'C' as const,
-    description: GAP,
-    ...rest,
-  });
-  return {
-    classes: [
-      ...TESTER_LETTERS.flatMap((tester) => [
-        lesson(tester, '[UAT] 수업1', '10:00', '11:30'),
-        lesson(tester, '[UAT] 수업2', '13:00', '14:30'),
-      ]),
-      // C shares 10 minutes of the gap and E 15: the least a meal takes is 15.
-      lesson('C', '[UAT] C 수업', '11:00', '12:50'),
-      lesson('E', '[UAT] E 수업', '11:00', '12:45'),
-      // None of the three is free for a new party in the evening, so no Friend is added to a tester's Plan.
-      lesson('B', '[UAT] B 저녁', '18:00', '22:00'),
-      lesson('C', '[UAT] C 저녁', '18:00', '22:00'),
-      lesson('E', '[UAT] E 저녁', '18:00', '22:00'),
-    ],
-    // All within C's class, since a party C leads counts C as busy for 30 minutes from its start.
-    quests: [
-      party('gap-open', '[UAT] 공강 파티', { joinPolicy: 'open', capacity: 6, startsAt: at(1, '12:00'), place: '302' }),
-      party('gap-full', '[UAT] 공강 마감', { joinPolicy: 'open', capacity: 1, startsAt: at(1, '12:10'), place: '302' }),
-      {
-        ...party('gap-asked', '[UAT] 공강 신청함', {
-          joinPolicy: 'approval',
-          capacity: 6,
-          startsAt: at(1, '11:40'),
-          place: '302',
-          asked: [...TESTER_LETTERS],
-        }),
-        id: ASKED_QUEST,
-      },
-      party('gap-no-place', '[UAT] 공강 장소없음', {
-        joinPolicy: 'open',
+  return [
+    ...TESTER_LETTERS.flatMap((tester) => [
+      lesson(tester, '[UAT] 수업1', '10:00', '11:30'),
+      lesson(tester, '[UAT] 수업2', '13:00', '14:30'),
+    ]),
+    // C shares 10 minutes of the gap and E 15: the least a meal takes is 15.
+    lesson('C', '[UAT] C 수업', '11:00', '12:50'),
+    lesson('E', '[UAT] E 수업', '11:00', '12:45'),
+    // None of the three is free for a new party in the evening, so no Friend is added to a tester's Plan.
+    lesson('B', '[UAT] B 저녁', '18:00', '22:00'),
+    lesson('C', '[UAT] C 저녁', '18:00', '22:00'),
+    lesson('E', '[UAT] E 저녁', '18:00', '22:00'),
+  ];
+}
+
+// UAT-5: C's four parties in the gap. All are within C's class, since a party C leads counts C as busy for 30 minutes
+// from its start.
+function gapQuests({ at }: Days): QuestSpec[] {
+  const open = { joinPolicy: 'open' as const };
+  return [
+    partyOf('C', GAP, 'gap-open', '[UAT] 공강 파티', { ...open, capacity: 6, startsAt: at(1, '12:00'), place: '302' }),
+    partyOf('C', GAP, 'gap-full', '[UAT] 공강 마감', { ...open, capacity: 1, startsAt: at(1, '12:10'), place: '302' }),
+    {
+      ...partyOf('C', GAP, 'gap-asked', '[UAT] 공강 신청함', {
+        joinPolicy: 'approval',
         capacity: 6,
-        startsAt: at(1, '11:50'),
-        placeLabel: '우리 동아리방',
+        startsAt: at(1, '11:40'),
+        place: '302',
+        asked: [...TESTER_LETTERS],
       }),
-    ],
-    // In the building of 수업2 the way takes no time and the app arrives a minute early, so one leaves by 12:59: a
-    // stay of 30 minutes from 12:29 and of 29 from 12:30.
-    events: [
-      {
-        id: uatId('global-event:gap-30'),
-        title: '[UAT] 공강 행사 30분',
-        startsAt: at(1, '12:29'),
-        endsAt: at(1, '13:30'),
-        place: '301',
-        state: 'published',
-      },
-      {
-        id: uatId('global-event:gap-29'),
-        title: '[UAT] 공강 행사 29분',
-        startsAt: at(1, '12:30'),
-        endsAt: at(1, '13:30'),
-        place: '301',
-        state: 'published',
-      },
-    ],
-  };
+      id: ASKED_QUEST,
+    },
+    partyOf('C', GAP, 'gap-no-place', '[UAT] 공강 장소없음', {
+      ...open,
+      capacity: 6,
+      startsAt: at(1, '11:50'),
+      placeLabel: '우리 동아리방',
+    }),
+  ];
+}
+
+// UAT-5: in the building of 수업2 the way takes no time and the app arrives a minute early, so one leaves by 12:59: a
+// stay of 30 minutes from 12:29 and of 29 from 12:30.
+function gapEvents({ at }: Days): EventSpec[] {
+  return [
+    eventOf('gap-30', '[UAT] 공강 행사 30분', at(1, '12:29'), at(1, '13:30'), '301', 'published'),
+    eventOf('gap-29', '[UAT] 공강 행사 29분', at(1, '12:30'), at(1, '13:30'), '301', 'published'),
+  ];
 }
 
 // The party each tester already leads today, which UAT-2 fills and ends.
@@ -170,52 +160,29 @@ export function ownQuest(tester: Tester, { at }: Days): QuestSpec {
   };
 }
 
+interface Today {
+  quests: QuestSpec[];
+  events: EventSpec[];
+  shortEnds: Date;
+  eventStarts: Date;
+}
+
 // UAT-1: today's event with its two parties, and an event that ends during the session. Their times count from the
 // run and not from the clock, so a rehearsal at any hour finds the first ahead and the second over within half an hour.
-function today(days: Days): { quests: QuestSpec[]; events: EventSpec[]; shortEnds: Date; eventStarts: Date } {
+function today(days: Days): Today {
   const from = (minutes: number): Date => new Date(days.now.getTime() + minutes * MINUTE);
-  const eventStarts = from(75);
-  const shortEnds = from(30);
+  const [eventStarts, shortEnds] = [from(75), from(30)];
+  const going = { capacity: 6, globalEventId: UAT_EVENT };
   return {
     eventStarts,
     shortEnds,
     events: [
-      {
-        id: UAT_EVENT,
-        title: '[UAT] Event',
-        startsAt: eventStarts,
-        endsAt: from(5 * 60),
-        place: '301',
-        state: 'published',
-      },
-      {
-        id: uatId('global-event:short'),
-        title: '[UAT] 짧은 행사',
-        startsAt: from(-30),
-        endsAt: shortEnds,
-        place: '302',
-        state: 'published',
-      },
+      { ...eventOf('event', '[UAT] Event', eventStarts, from(5 * 60), '301', 'published'), id: UAT_EVENT },
+      eventOf('short', '[UAT] 짧은 행사', from(-30), shortEnds, '302', 'published'),
     ],
     quests: [
-      {
-        id: uatId('quest:event-open'),
-        title: '[UAT] Open',
-        leader: 'D',
-        joinPolicy: 'open',
-        capacity: 6,
-        description: '같이 가요.',
-        globalEventId: UAT_EVENT,
-      },
-      {
-        id: uatId('quest:event-approval'),
-        title: '[UAT] Approval',
-        leader: 'B',
-        joinPolicy: 'approval',
-        capacity: 6,
-        description: '같이 가요.',
-        globalEventId: UAT_EVENT,
-      },
+      partyOf('D', '같이 가요.', 'event-open', '[UAT] Open', { ...going, joinPolicy: 'open' }),
+      partyOf('B', '같이 가요.', 'event-approval', '[UAT] Approval', { ...going, joinPolicy: 'approval' }),
       ...TESTER_LETTERS.map((tester) => ownQuest(tester, days)),
     ],
   };
@@ -231,20 +198,18 @@ export function friendsOf(tester: Tester): [Letter, Letter][] {
 
 // The classes a tester starts with.
 export function classesOf(tester: Tester, days: Days): ClassSpec[] {
-  return gap(days).classes.filter(({ owner }) => owner === tester);
+  return classes(days).filter(({ owner }) => owner === tester);
 }
 
 export function prepared(days: Days): Prepared {
-  const uat4 = evening(days);
-  const uat5 = gap(days);
   const uat1 = today(days);
   return {
-    friends: [...TESTER_LETTERS.flatMap(friendsOf), ['B', 'C']],
+    friends: [...TESTER_LETTERS.flatMap((tester) => friendsOf(tester)), ['B', 'C']],
     // B and D show themselves from the start; a tester turns the switch on in UAT-3.
     masterSwitchOn: ['B', 'D'],
-    events: [...uat4.events, ...uat5.events, ...uat1.events],
-    quests: [...uat4.quests, ...uat5.quests, ...uat1.quests],
-    classes: uat5.classes,
+    events: [...eveningEvents(days), ...gapEvents(days), ...uat1.events],
+    quests: [...eveningQuests(days), ...gapQuests(days), ...uat1.quests],
+    classes: classes(days),
     lunchDay: days.day(1),
     notes: [
       `오늘(D0) ${days.day(0)}, 내일(D1) ${days.day(1)}.`,

@@ -48,6 +48,19 @@ export async function places(prisma: PrismaClient): Promise<PlaceOf> {
 
 export type Users = Record<Letter, string>;
 
+// Every letter with its User's id, and '' for an account that has none yet.
+export function filled(held: Partial<Users>): Users {
+  return {
+    A1: held.A1 ?? '',
+    A2: held.A2 ?? '',
+    A3: held.A3 ?? '',
+    B: held.B ?? '',
+    C: held.C ?? '',
+    D: held.D ?? '',
+    E: held.E ?? '',
+  };
+}
+
 // The account as a User past Onboarding who never turned 위치 공유 off, kept with its Sessions when it is there, so
 // that the phone stays signed in. A key that signed in before the first run made its User, which is taken as it is.
 export async function writeUser(
@@ -87,7 +100,7 @@ export async function writeUsers(prisma: PrismaClient, masterSwitchOn: readonly 
       return [account.letter, id] as const;
     }),
   );
-  return Object.fromEntries(ids) as Users;
+  return filled(Object.fromEntries(ids));
 }
 
 // The accounts' Users as they are, for a command that leaves the others alone. An account that never signed in and

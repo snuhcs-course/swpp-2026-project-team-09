@@ -150,7 +150,7 @@ example_value_of() {
   for package in docker.io docker-compose-v2 docker-buildx jq; do
     [[ $packages == *" $package "* ]] || false
   done
-  grep -qx "git clone --branch 3.0/P15-he https://github.com/snuhcs-course/swpp-2026-project-team-09.git $CHECKOUT" \
+  grep -qx "git clone --branch uat/Main https://github.com/snuhcs-course/swpp-2026-project-team-09.git $CHECKOUT" \
     "$calls"
   grep -qx "git config --system --add safe.directory $CHECKOUT" "$calls"
   for unit in snu-now-deploy.service snu-now-deploy.timer snu-now-demo-refresh.service snu-now-demo-refresh.timer \

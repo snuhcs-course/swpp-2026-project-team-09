@@ -33,26 +33,28 @@ export async function ensureLunch(prisma: PrismaClient, day: string, now: Date):
     include: { lines: true },
   });
   await prisma.restaurantDay.deleteMany({ where: { date } });
-  for (const { source: from, restaurant, lines } of source) {
-    await prisma.restaurantDay.create({
-      data: {
-        source: from,
-        date,
-        restaurant,
-        collectedAt: now,
-        lines: {
-          create: lines.map(({ meal, position, text, kind, name, price }) => ({
-            meal,
-            position,
-            text,
-            kind,
-            name,
-            price,
-          })),
+  await prisma.$transaction(
+    source.map(({ source: from, restaurant, lines }) =>
+      prisma.restaurantDay.create({
+        data: {
+          source: from,
+          date,
+          restaurant,
+          collectedAt: now,
+          lines: {
+            create: lines.map(({ meal, position, text, kind, name, price }) => ({
+              meal,
+              position,
+              text,
+              kind,
+              name,
+              price,
+            })),
+          },
         },
-      },
-    });
-  }
+      }),
+    ),
+  );
   return `${day} 점심 메뉴가 없어서 ${koreaDate(newest.date)}의 메뉴를 옮겼어요: 식당 ${String(source.length)}곳.`;
 }
 
