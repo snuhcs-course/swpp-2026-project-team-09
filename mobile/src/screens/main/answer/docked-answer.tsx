@@ -137,10 +137,10 @@ function choosing({ invitation, answer }: ChatSheetControl): boolean {
 }
 
 // The reply's buttons as chips, which scroll sideways: its offers and 다시 시도, disabled while the next reply is on its
-// way, for they act on the turn before; 근거 ›, which raises the card; 그대로 두기 beside a Quest the User holds, which
-// leaves it as it is (P04 ticket 20); and the folded chips.
+// way, for they act on the turn before; 그대로 두기 beside a Quest the User holds, which leaves it as it is (P04
+// ticket 20); and the folded chips.
 function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement {
-  const { offers, retry, note, basis, keep = false } = rest;
+  const { offers, retry, note, keep = false } = rest;
   const { send, waiting } = control.chat;
   return (
     <ScrollView
@@ -161,14 +161,6 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
           words={offer.label}
         />
       ))}
-      {basis ? (
-        <DockChip
-          onPress={() => {
-            onRaise(false);
-          }}
-          words="근거 ›"
-        />
-      ) : null}
       {retry ? <DockChip disabled={waiting} onPress={control.chat.retry} words="다시 시도" /> : null}
       {keep ? <DockChip disabled={choosing(control)} onPress={control.invitation.leave} words="그대로 두기" /> : null}
       <FoldedChips control={control} note={note} onRaise={onRaise} />
@@ -179,8 +171,8 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
 // A reply's dock: its one line, which raises the card with the whole reply, then its buttons as chips, and the folded
 // chips. Nothing when the map says it all and nothing is folded.
 function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement | null {
-  const { line, offers, retry, note, basis } = rest;
-  const empty = line === null && offers.length === 0 && !retry && note === null && !basis;
+  const { line, offers, retry, note } = rest;
+  const empty = line === null && offers.length === 0 && !retry && note === null;
   if (empty && turnsOf(control.chat.bubbles).length < 2) {
     return null;
   }

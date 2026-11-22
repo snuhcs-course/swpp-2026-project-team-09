@@ -123,3 +123,15 @@ export function keptDrafts(kept: KeptQuest | null | undefined): Draft[] {
     },
   ];
 }
+
+// Every title ending with "›" when each mark opens something at a press (a Lookup's, P04 ticket 22), else as they are.
+export function withOpenMarks(opens: boolean, drafts: Draft[]): Draft[] {
+  if (!opens) {
+    return drafts;
+  }
+  const marked: Draft[] = [];
+  for (const draft of drafts) {
+    marked.push(draft.title === null ? draft : { ...draft, title: `${draft.title} ›` });
+  }
+  return marked;
+}

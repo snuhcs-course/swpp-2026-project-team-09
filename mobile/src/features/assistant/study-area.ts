@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MapScene, RequestContext } from '@/api/assistant-types';
@@ -9,6 +10,8 @@ import type { Lookup } from '@/api/lookup-types';
 import { color } from '@/design-system';
 import { atPoint, type LineStyle, type MapCamera, type MapLine, type Size } from '@/map';
 import type { AnswerDrawing } from './answer-drawing';
+import type { SceneSetting } from './answer-marks';
+import { NO_STANDINGS } from './invited-friends';
 
 // "이 근처" (P02 ticket 23): the visible area every request sends, and how a `study` Lookup is drawn over it.
 
@@ -83,6 +86,9 @@ export function oneMarkPerBuilding(scene: MapScene): MapScene {
   });
   return { ...scene, places };
 }
+
+// How a Lookup is drawn: each of its marks raises its card at a press, so each title ends with "›" (P04 ticket 22).
+export const LOOKUP_SETTING: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS, opens: true };
 
 // A `study` Lookup's scene as the map draws it: one faded mark a building, and the free seats on the flag to 관정.
 export function studyScene(lookup: Lookup, seats: AwaySeats | null): MapScene {

@@ -41,21 +41,15 @@ function bubble(parts: Partial<ChatBubble>): ChatBubble {
 }
 
 describe('a Lookup in the dock', () => {
-  it("has the model's words as its line for a way the map draws, and no line and 근거 when it said nothing", () => {
+  // No 근거 › since the feedback of 2026-11-22: the flag raises the card.
+  it("has the model's words as its line for a way the map draws, and no line when it said nothing", () => {
     expect(lookupRestOf(WAY_LOOKUP, null, WORDS)).toEqual({
       line: [{ text: WORDS, strong: false }],
       offers: [],
       retry: false,
       note: null,
-      basis: false,
     });
-    expect(lookupRestOf(WAY_LOOKUP, null, '')).toEqual({
-      line: null,
-      offers: [],
-      retry: false,
-      note: null,
-      basis: true,
-    });
+    expect(lookupRestOf(WAY_LOOKUP, null, '')).toEqual({ line: null, offers: [], retry: false, note: null });
     expect(lookupRestOf(LEAVE_LOOKUP_REPLY.lookup, null, '')?.line).toBeNull();
     // A blank text, as the main server sends when the map says it all, is no words either.
     expect(lookupRestOf(WAY_LOOKUP, null, '  \n')?.line).toBeNull();
@@ -139,7 +133,6 @@ describe('words that are no answer, in the dock', () => {
       offers: next,
       retry: false,
       note: null,
-      basis: false,
     });
     expect(wordsRestOf(bubble({ offers: way, text: '**두레문예관**에서 받아요.\n평일에 받아요.' }))).toBeNull();
     expect(wordsRestOf(bubble({}))).toBeNull();

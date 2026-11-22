@@ -8,6 +8,7 @@
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -156,19 +157,18 @@ function FollowUps({ control }: { control: ChatSheetControl }): ReactElement | n
   );
 }
 
-// Whether the card is raised, and whether its earlier turns are open.
-function useCardState(): {
+// Whether the card is raised, which the control holds so that a press on the map raises it too, and whether its
+// earlier turns are open.
+function useCardState({ raised, setRaised, earlier }: ChatSheetControl['card']): {
   raised: boolean;
   setRaised: (raised: boolean) => void;
   lower: () => void;
   earlier: AnswerCardProps['earlier'];
 } {
-  const [raised, setRaised] = useState(false);
-  const [open, setOpen] = useState(false);
   const lower = useCallback((): void => {
     setRaised(false);
-  }, []);
-  return { raised, setRaised, lower, earlier: { open, setOpen } };
+  }, [setRaised]);
+  return { raised, setRaised, lower, earlier };
 }
 
 interface FramedProps {
@@ -247,7 +247,7 @@ function Framed(props: FramedProps): ReactElement {
   const profileShown = profile.friend !== null && !keyboardUp;
   const { title, keep } = control.howAbout;
   const leave = title === null ? close : keep;
-  const { raised, setRaised, lower, earlier } = useCardState();
+  const { raised, setRaised, lower, earlier } = useCardState(control.card);
   const back = control.mark === null ? (raised ? lower : leave) : control.closeMark;
   useBackToClose(useIsFocused(), profileShown ? profile.hide : back, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);

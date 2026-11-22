@@ -15,15 +15,14 @@ import { wordsLine } from './keyboard-headline';
 import { type ButtonOffer, isButton } from './refusal-reply';
 
 // How a reply that is no Plan rests in the dock (P04 ticket 05): the one line, null when the map says it all, which a
-// press opens to the whole reply; the chips that do what its card's buttons did; 다시 시도; the note; `basis`, a
-// Lookup with no line whose basis the map does not show, which 근거 › opens in the raised card; and `keep`, a Plan
-// beside a Quest the User holds (ticket 17), whose 그대로 두기 leaves the Quest as it is (ticket 20).
+// press opens to the whole reply; the chips that do what its card's buttons did; 다시 시도; the note; and `keep`, a
+// Plan beside a Quest the User holds (ticket 17), whose 그대로 두기 leaves the Quest as it is (ticket 20). A Lookup's
+// card, its basis among it, opens from its line or from a press on its flag on the map.
 export interface WordsRest {
   line: AnswerLine | null;
   offers: readonly ButtonOffer[];
   retry: boolean;
   note: string | null;
-  basis: boolean;
   keep?: boolean;
   // A line with nothing behind it to raise: a Quest left as it is (ticket 20), whose Plans are gone.
   still?: boolean;
@@ -34,7 +33,7 @@ export interface WordsRest {
 // (`chosen`), alone. After 그대로 두기 (`left`) the line raises nothing: the Plans are gone.
 export function setQuestRestOf(words: string, chosen: string | null = null, left = false): WordsRest {
   const line = wordsLine(chosen ?? words);
-  return { line, offers: [], retry: false, note: null, basis: false, keep: chosen === null, still: left };
+  return { line, offers: [], retry: false, note: null, keep: chosen === null, still: left };
 }
 
 type AskAction = Extract<LookupAction, { kind: 'ask' }>;
@@ -57,8 +56,8 @@ function said(line: AnswerLine): string {
 // The line of a Lookup in the dock: beside a refusal, the refusal's first line; else the model's words, which say why
 // the Lookup is shown and are never dropped (P04 ticket 18); else, when the model said nothing, the Lookup's headline,
 // words the map does not show (the shuttle not running, a menu, a study area's state, where a Friend is), but none for a
-// way or a place with a way to take, whose flag and route say its name and minutes. Without a line, a Lookup with a
-// basis has 근거 ›, until its flag raises the card. Null for the open card.
+// way or a place with a way to take, whose flag and route say its name and minutes, and whose flag raises its card.
+// Null for the open card.
 export function lookupRestOf(lookup: Lookup, refusal: Refusal | null, words: string): WordsRest | null {
   if (!lookupDocks(lookup, refusal, words)) {
     return null;
@@ -68,13 +67,7 @@ export function lookupRestOf(lookup: Lookup, refusal: Refusal | null, words: str
   const asks = refusal === null ? lookup.actions.filter((action): action is AskAction => action.kind === 'ask') : [];
   const headline = drawn ? null : (lookup.lines[0] ?? null);
   const line = refusal?.lines[0] ?? (spoken(words) ? wordsLine(words) : headline);
-  return {
-    line,
-    offers: asks,
-    retry: false,
-    note: lookup.note ?? null,
-    basis: line === null && lookup.basis.length > 0,
-  };
+  return { line, offers: asks, retry: false, note: lookup.note ?? null };
 }
 
 // Words that ask the User back, such as the next meal offered once today's is over: the text ends with a question.
@@ -87,7 +80,7 @@ function asksBack(words: string): boolean {
 // refusal that asks which Friend keeps its grid in the open card, and any other words their card, with their offers
 // under them (decision 3). Null for the open card.
 export function wordsRestOf({ refusal = null, failure, offers = [], text }: ChatBubble): WordsRest | null {
-  const rest = { retry: false, note: null, basis: false };
+  const rest = { retry: false, note: null };
   if (refusal !== null) {
     return refusal.offers.every(isButton)
       ? { ...rest, line: refusal.lines[0] ?? wordsLine(text), offers: refusal.offers.filter(isButton) }

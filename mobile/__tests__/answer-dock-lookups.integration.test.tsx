@@ -18,6 +18,7 @@ import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
+import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
@@ -43,6 +44,7 @@ const NOT_RUNNING = '셔틀은 지금 다니지 않아요 (평일 8–21시)';
 // The model's words beside those Lookups, which are the dock's line (P04 ticket 18).
 const NOT_RUNNING_WORDS = '셔틀은 지금 다니지 않아요.';
 const WAY_WORDS = '문화관은 지금 있는 301동에서 걸어서 18분이에요.';
+const WAY_FLAG = '문화관(73동) · 걸어서 18분';
 const WALK = '(관악사)학부 생활관(919동)까지 걸어서 11분이에요';
 const HOMEWORK = '자료구조 과제 풀어 줘';
 const CANNOT = '과제는 도와 드릴 수 없어요.';
@@ -92,22 +94,11 @@ describe('a Lookup in the dock', () => {
   it('draws a way on the map with "길 안내" beside the input and the model\'s words as the one line', async () => {
     await askOnMap(server, WAY_LOOKUP_REPLY);
 
-    expect(mapThings()).toContain('문화관(73동) · 걸어서 18분');
+    expect(mapThings()).toContain(WAY_FLAG);
     expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '길 안내' })).toBeVisible();
     expect(card().getByTestId('dock-line')).toHaveTextContent(WAY_WORDS, { exact: false });
     expect(card().queryByTestId('lookup-card')).toBeNull();
     expect(card().queryByRole('button', { name: '근거 ›' })).toBeNull();
-  });
-
-  it("reaches a first way's card, its chips, basis, and 닫기, from 근거 when the model said nothing", async () => {
-    const user = await askOnMap(server, { ...WAY_LOOKUP_REPLY, text: '' });
-
-    expect(card().queryByTestId('dock-line')).toBeNull();
-    await user.press(card().getByRole('button', { name: '근거 ›' }));
-
-    expect(card().getByTestId('lookup-card')).toBeVisible();
-    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
-    expect(card().getByRole('button', { name: /근거/u })).toBeVisible();
   });
 
   it('keeps "길 안내" from acting on the turn before while the next reply is on its way', async () => {
@@ -133,6 +124,32 @@ describe('a Lookup in the dock', () => {
     expect(card().getByTestId('lookup-card')).toBeVisible();
     expect(card().getByText(NOT_RUNNING)).toBeVisible();
     expect(card().getByText(WALK)).toBeVisible();
+  });
+});
+
+// The feedback of 2026-11-22: the flag opens what 근거 › opened, and the chip goes. Partitions: a way without the
+// model's words, and one with them.
+describe("a Lookup's flag", () => {
+  it("raises a first way's card, its chips, basis, and 닫기, when the model said nothing", async () => {
+    const user = await askOnMap(server, { ...WAY_LOOKUP_REPLY, text: '' });
+
+    expect(card().queryByTestId('dock-line')).toBeNull();
+    expect(card().queryByRole('button', { name: '근거 ›' })).toBeNull();
+    await press(user, WAY_FLAG);
+    await pass(300);
+
+    expect(card().getByTestId('lookup-card')).toBeVisible();
+    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
+    expect(card().getByRole('button', { name: /근거/u })).toBeVisible();
+  });
+
+  it("raises a way's card beside the model's words too", async () => {
+    const user = await askOnMap(server, WAY_LOOKUP_REPLY);
+
+    await press(user, WAY_FLAG);
+    await pass(300);
+
+    expect(card().getByTestId('lookup-card')).toBeVisible();
   });
 });
 
