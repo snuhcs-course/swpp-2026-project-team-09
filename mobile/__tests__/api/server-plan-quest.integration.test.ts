@@ -57,7 +57,16 @@ describe('a Plan made into a Quest by the main server', () => {
       {
         body: {
           ...MAKING,
-          clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+          clientCapabilities: [
+            'library',
+            'answer',
+            'area',
+            'meet',
+            'events',
+            'plan-set',
+            'quest-cancel',
+            'party-change',
+          ],
         },
         idempotencyKey: 'plan-key',
       },
@@ -119,7 +128,10 @@ describe('the better Plan after a decline, by the main server', () => {
 
     await expect(apiClient.changePlanQuest(QUEST_ID, making)).resolves.toEqual(CHANGED_PLAN_QUEST);
     expect(server.received(`PUT /plans/${QUEST_ID}`).map(({ body }) => body)).toEqual([
-      { ...making, clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'] },
+      {
+        ...making,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel', 'party-change'],
+      },
     ]);
   });
 });
