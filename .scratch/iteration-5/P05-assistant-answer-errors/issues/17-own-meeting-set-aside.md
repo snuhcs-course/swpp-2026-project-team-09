@@ -212,3 +212,17 @@ Asked as "방금 만든 파티 19시로" after 만들기 made it. Ticket 18 only
 - The app's guard for `planSet`.
 - Eval cases for the model's lines (rows 1, 2, 10b, 14, 16, 18).
 - The sweep of all tests and mocks before each push.
+
+## Comments
+
+### Slice 2 (2026-11-22)
+
+- Done for meetings, rows 1–19 and 24–33: a change in place tells the Holders by rule D (PR 432), and a meet's plan sets the asker's meeting aside, names a Friend's, or asks which of two (PR 434). The set-aside, its question and the 409s go only to an app that says `plan-set`; a released app is planned for as before.
+- Not built: a made 파티 changed in place by words (rows 36–44). A made 파티 is still only said to be posted, with 수정 in its room (ticket 18).
+
+### Agent usage (2026-11-22)
+
+Most of slice 2 was built in the batch recorded under tickets 18 to 26 (01:30–04:00 on 2026-11-22, PRs 425 to 433, with PR 434 begun there). These figures are what came after it, 04:00–05:22: gating PR 434 on `plan-set` after its review, and its merge.
+
+- Agent time: about 16 minutes (estimate: gaps under 5 minutes between transcript entries, summed).
+- Tokens: input 43,223,501 (cache reads 43,159,569, cache writes 63,816, uncached 116); output 45,234. Without cache reads, 109,166.

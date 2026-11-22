@@ -74,6 +74,8 @@ export interface KeptQuestDto {
   startAt: string;
   endAt: string | null;
   place: string | null;
+  // Where it is, which the map marks: its first step's Place, null when that step has none or only words for one.
+  point: PlacePoint | null;
   people: { name: string; answer: 'leads' | 'accepted' | 'waiting' | 'declined' }[];
   mine: boolean;
   changeable: boolean;

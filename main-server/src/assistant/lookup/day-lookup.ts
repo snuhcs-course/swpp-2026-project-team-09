@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Weekday } from '../../generated/prisma/client.js';
@@ -216,7 +217,7 @@ export function dayAnswer({ date, now, me, travel, placeOf, kept = [], asked }: 
     band: null,
     actions: remindOf(walks, now, naming),
     steps: entries.map((entry) => ({ at: entrySpan(entry), text: entry.text })),
-    ...(focused ? { kept: quests.map((quest) => keptDto(quest, keptPlace(quest))) } : {}),
+    ...(focused ? { kept: quests.map((quest) => keptDto(quest, keptPlace(quest), placeOf)) } : {}),
   };
   return {
     result: 'found',

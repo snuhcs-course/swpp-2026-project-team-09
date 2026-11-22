@@ -12,13 +12,15 @@ import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 import { MealPlanStage, type Named, resolve } from './meal-plan.js';
 import { makePlanQuest } from './plan-quests.js';
+import { getInvitations } from './quest-recruiting.js';
 import { type Step } from './scripted-model.js';
 import { withAccessToken } from './sign-in.js';
 
 // The meeting a new meet's Plan would change (P05 ticket 17, slice 2): the asker's own one with the same Friends is set
 // aside and named as one to change (row 1); one a Friend made is theirs, and nothing is planned (row 2); one with other
 // people is no target (row 8); the model may name the one it means by its ref; two with the same Friend are asked
-// about (row 10b). Making a second one at POST /plans is refused, as it is changed in place.
+// about (row 10b). Making a second one at POST /plans is refused, as it is changed in place. One whose every Friend
+// declined is the same meeting, changed in place, and invites them again (row 6).
 
 const stage = new MealPlanStage();
 let prisma: PrismaClient;
@@ -151,8 +153,12 @@ describe('Another meeting', () => {
   });
 });
 
-// A meet's input for the asker and `friend`, and its first Plan, recalculated.
-async function firstMeet(date: string, friend: Named): Promise<object> {
+// A meet's answer for the asker and `friend`, recalculated as `app` asks it, and the making of its first Plan.
+async function firstMeet(
+  date: string,
+  friend: Named,
+  app: object = {},
+): Promise<{ answer: AnswerReply; making: object }> {
   const input = {
     kind: 'meet',
     date,
@@ -163,9 +169,10 @@ async function firstMeet(date: string, friend: Named): Promise<object> {
   const answered = await withAccessToken(
     request(stage.app.getHttpServer()).post('/assistant/answers'),
     stage.asker.accessToken,
-  ).send({ input });
-  const [plan] = z.custom<AnswerReply>().parse(answered.body).plans;
-  return { input, planId: plan?.id, startAt: plan?.startAt, location: null };
+  ).send({ input, ...app });
+  const answer = z.custom<AnswerReply>().parse(answered.body);
+  const [plan] = answer.plans;
+  return { answer, making: { input, planId: plan?.id, startAt: plan?.startAt, location: null } };
 }
 
 describe('Making a second meeting at POST /plans', () => {
@@ -181,12 +188,34 @@ describe('Making a second meeting at POST /plans', () => {
         : await meeting(date, '14:00', minsu, [stage.asker]);
 
     const response = await makePlanQuest(stage, {
-      ...(await firstMeet(date, minsu)),
+      ...(await firstMeet(date, minsu)).making,
       clientCapabilities: ['plan-set'],
     });
 
     expect(response.status).toBe(409);
     expect(response.body).toMatchObject({ code, questId: kept });
+  });
+});
+
+describe('A meeting whose every Friend declined', () => {
+  it('is set aside as one to change, and its plan changes it in place, inviting them again', async () => {
+    await stage.asking('2092-04-21', '10:30');
+    const minsu = await stage.friend('민수');
+    const kept = await meeting('2092-04-22', '14:00', stage.asker, []);
+    await prisma.questDecline.create({ data: { questId: kept, userId: minsu.id } });
+    const { answer, making } = await firstMeet('2092-04-22', minsu, { clientCapabilities: ['plan-set'] });
+
+    const response = await withAccessToken(
+      request(stage.app.getHttpServer()).put(`/plans/${kept}`),
+      stage.asker.accessToken,
+    ).send(making);
+
+    expect(answer.planSet).toMatchObject({ questId: kept, changeable: true });
+    expect(response.status).toBe(200);
+    const invitations = z.array(z.object({ quest: z.object({ id: z.string() }) }));
+    expect(invitations.parse((await getInvitations(stage.app, minsu)).body)).toEqual([
+      expect.objectContaining({ quest: expect.objectContaining({ id: kept }) as unknown }),
+    ]);
   });
 });
 
@@ -216,7 +245,7 @@ describe('An app that does not draw 바꾸기', () => {
     const minsu = await stage.friend('민수');
     await meeting('2092-04-08', '14:00', stage.asker, [minsu]);
 
-    const response = await makePlanQuest(stage, await firstMeet('2092-04-08', minsu));
+    const response = await makePlanQuest(stage, (await firstMeet('2092-04-08', minsu)).making);
 
     expect(response.status).toBe(201);
   });
