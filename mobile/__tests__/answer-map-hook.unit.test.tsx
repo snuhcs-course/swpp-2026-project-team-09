@@ -31,7 +31,6 @@ jest.mock('@/map/marker-images', () => {
 });
 // The walking route service is no part of these hooks' units: an answer's walks keep their straight lines (P15
 // ticket 56 tests the walks).
-// A meal Plan's ways are as a test sets them (`mockWays`), none at first.
 const mockWays: { current: object } = { current: { paths: new Map(), legs: [] } };
 jest.mock('@/screens/main/use-answer-walks', () => {
   const none = new Map();
@@ -148,22 +147,6 @@ describe("the answer's camera", () => {
     expect(bottom - top).toBeCloseTo(370.85, 1);
   });
 
-  it("moves nothing when a walk's path comes back (PR 497's review)", async () => {
-    const asked: Asked = { fits: 0, cameras: [] };
-    const rerender = await render(asked);
-    const [first] = MEAL_ANSWER.plans[0]?.scene.routes ?? [];
-    const bend = { latitude: 37.455, longitude: 126.955 };
-    mockWays.current = {
-      paths: new Map([['answer:route:0', first === undefined ? [] : [first.from, bend, first.to]]]),
-      legs: [],
-    };
-
-    await rerender(FIRST);
-
-    expect(asked.cameras).toHaveLength(1);
-    mockWays.current = { paths: new Map(), legs: [] };
-  });
-
   it('moves nothing when the answer is closed', async () => {
     const asked: Asked = { fits: 0, cameras: [] };
     const rerender = await render(asked);
@@ -176,6 +159,17 @@ describe("the answer's camera", () => {
 });
 
 // Partitions: the stage is not laid out; the map has not told its fit zoom; both come.
+// Partitions: a walk's path comes back after the answer is drawn.
+describe("the answer's camera while the walks' paths come", () => {
+  it("moves nothing when a walk's path comes back (PR 497's review)", async () => {
+    const asked: Asked = { fits: 0, cameras: [] };
+    const rerender = await render(asked);
+    mockWays.current = { paths: new Map([['answer:route:0', [{ latitude: 37.455, longitude: 126.955 }]]]), legs: [] };
+    await rerender(FIRST);
+    expect(asked.cameras).toHaveLength(1);
+  });
+});
+
 describe("the answer's camera before the view is known", () => {
   it('asks the map to fit the points while the stage is not laid out', async () => {
     const asked: Asked = { fits: 0, cameras: [] };
