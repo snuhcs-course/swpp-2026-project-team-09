@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { inject } from 'vitest';
@@ -115,7 +116,7 @@ describe('A book card', () => {
 
 describe('A refused booking', () => {
   it('lists every missing and wrong field at once, each with its reason, and shows no card', async () => {
-    const asked = { spaceId: '7F-7A-zone2', date: '2026-11-05', seat: '1' };
+    const asked = { spaceId: '7F-7A-zone2', date: '2026-11-04', seat: '1' };
     const response = await stage.send(user, [
       find(['7F-7A-zone2']),
       { tool: 'proposeLibraryBooking', input: asked },
@@ -125,7 +126,6 @@ describe('A refused booking', () => {
     expect(stage.model.toolResults()[1]).toEqual({
       result: 'refused',
       refusals: [
-        { field: 'date', reason: '열람실은 당일만 예약할 수 있어요', bound: '2026-11-04' },
         { field: 'start', reason: '몇 시부터 예약할지 알려 주세요' },
         { field: 'minutes', reason: '몇 시간 또는 몇 시까지 예약할지 알려 주세요' },
         { field: 'seat', reason: '1은 7A 열람실 2 구역의 자리가 아니에요', bound: '7193–7670' },

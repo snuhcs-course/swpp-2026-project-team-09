@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { inject } from 'vitest';
@@ -52,6 +53,7 @@ describe('"내일 아침 9시부터 7A 열람실 2 구역 3시간 예약해줘"'
     expect(stage.model.toolResults()[1]).toEqual({
       result: 'refused',
       refusals: [{ field: 'date', reason: '열람실은 당일만 예약할 수 있어요', bound: '2026-11-04' }],
+      sameDayOnly: { opens: '07:00' },
     });
     expect(response.body).toMatchObject({ text: reply });
     expect(libraryCards(response.body)).toEqual([]);

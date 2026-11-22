@@ -1,0 +1,64 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-22  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# A study seat asked for from the current app (`capabilities: app`), which draws answers on the map, in the P6 world on
+# Wednesday 2026-11-04 at 10:05 (P05 ticket 34). Today's seat is filled from when the User arrives at 관정관 and shown as
+# a book card. The library books a seat on its day only, so a seat for a later day is refused at once, with or without a
+# time: the reply says so and that the User can ask again that day, and asks nothing back. These cases stay out of the
+# frozen P6 suite (`pnpm eval --world p6-answer`).
+
+- id: library-answer-seat-today
+  category: library-answer
+  world: p6-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 공부할 자리
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      only: true
+    cards:
+      - { kind: library, action: book, space: 7F-7A-zone2, min: 1, max: 1 }
+    text:
+      absent: [몇 시부터]
+
+- id: library-answer-seat-tomorrow
+  category: library-answer
+  world: p6-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 내일 공부할 자리
+  expect:
+    actions: [REFUSE]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      only: true
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [당일]
+      absent: [몇 시부터, 예약할까요]
+
+- id: library-answer-seat-tomorrow-at-nine
+  category: library-answer
+  world: p6-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 내일 아침 9시에 공부할 자리 잡아 줘
+  expect:
+    actions: [REFUSE]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      only: true
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: [당일]
+      absent: [몇 시부터, 예약할까요]
