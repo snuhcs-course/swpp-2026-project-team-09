@@ -34,6 +34,7 @@ import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { MarkCard } from './mark-card';
 import { DockedAnswer, restOf } from './docked-answer';
 import { LeaveRow } from './leave-button';
+import { useToldOpen } from './card-raise';
 import { MarkRows } from './mark-rows';
 import { MadeMarkCard } from './made-mark-card';
 import type { Raising } from './raise-handle';
@@ -152,8 +153,8 @@ interface CardState {
 // of questions is open in the card.
 // The list closes when the turn on screen changes (`turn`, its last bubble's id): a message sent, a reply come, or a
 // question pressed while typing, so that the card shows that turn (PR 479's review).
-function useCardState({ raised, setRaised }: ChatSheetControl['card'], turn: number | null): CardState {
-  const [open, setOpen] = useState(false);
+function useCardState({ raised, setRaised, earlier }: ChatSheetControl['card'], turn: number | null): CardState {
+  const [open, setOpen] = useToldOpen(earlier.setOpen);
   const [seen, setSeen] = useState(turn);
   if (seen !== turn) {
     setSeen(turn);

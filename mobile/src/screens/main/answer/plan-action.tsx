@@ -163,6 +163,11 @@ function stepActionOf(control: ChatSheetControl): PlanAction | null {
 }
 
 export function answerActionOf(control: ChatSheetControl): AnswerAction | null {
+  // While the earlier questions cover the answer, its main button gives way: the list is for moving between questions
+  // (P04 ticket 50).
+  if (control.card.earlier.open) {
+    return null;
+  }
   const plan =
     control.steps === null
       ? (planActionOf(control) ?? proposalActionOf(control) ?? bookingActionOf(control) ?? bookedActionOf(control))

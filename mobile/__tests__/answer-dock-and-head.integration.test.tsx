@@ -77,6 +77,18 @@ describe('the main button above the input', () => {
     expect(screen.getByTestId('ai-input')).toHaveStyle({ right: AI_INPUT.side, left: AI_INPUT.side });
   });
 
+  it('gives way while the earlier questions are open, and comes back when they close', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    expect(screen.getByTestId('ai-input-beside')).toBeOnTheScreen();
+
+    await user.press(screen.getByTestId('answer-caption'));
+    expect(screen.queryByTestId('ai-input-beside')).toBeNull();
+    expect(screen.getByTestId('ai-input')).toBeOnTheScreen();
+
+    await user.press(screen.getByTestId('answer-caption'));
+    expect(screen.getByTestId('ai-input-beside')).toBeOnTheScreen();
+  });
+
   it('leaves the input’s placeholder on one line, the field one line high while empty', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
