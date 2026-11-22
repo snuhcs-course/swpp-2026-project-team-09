@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ChatBubble } from '@/features/assistant/use-chat';
@@ -71,7 +72,7 @@ describe('a turn of the conversation', () => {
 });
 
 // Partitions: no bubble; two turns; the app's own bubble before the User said anything, then a message. Expected
-// values: ticket 32, "지난 답 N개" lists every turn before the one on screen, the first first.
+// values: every turn, the first first, as the list of questions reads them (P04 ticket 10).
 describe('the turns of the conversation', () => {
   it('are none while nothing was said', () => {
     expect(turnsOf([])).toEqual([]);

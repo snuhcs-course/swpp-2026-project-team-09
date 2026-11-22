@@ -105,18 +105,14 @@ describe("a Plan's bottom", () => {
 });
 
 describe('a second turn', () => {
-  it('stays docked with "지난 답 1개", which raises the card with the earlier turn open', async () => {
+  it('stays docked with nothing to read and no "지난 답", the pill counting both questions (P04 ticket 10)', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
     await user.type(screen.getByLabelText(AI_INPUT), '다른 데는?');
     await user.press(screen.getByRole('button', { name: '보내기' }));
     await pass(500);
 
-    expect(card().queryByTestId('earlier-turn')).toBeNull();
-
-    await user.press(card().getByRole('button', { name: '지난 답 1개' }));
-
-    expect(card().getByTestId('earlier-turn')).toBeVisible();
-    expect(card().getByRole('button', { name: '접기' })).toBeVisible();
+    expect(card().queryByRole('button', { name: /^지난 답/u })).toBeNull();
+    expect(within(screen.getByTestId('answer-pill-count')).getByText('2')).toBeVisible();
   });
 });
 

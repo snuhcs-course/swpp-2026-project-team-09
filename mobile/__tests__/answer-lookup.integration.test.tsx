@@ -33,7 +33,7 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotionSetting: (): boolean => true,
 }));
 
-// A docked way's card is raised from a second turn's "지난 답 1개": two replies in one test.
+// Two replies in some tests.
 jest.setTimeout(150000);
 
 const CLOSE = '답 닫기';
@@ -68,19 +68,12 @@ async function ask(words: string): Promise<User> {
   return user;
 }
 
-// A way docks with nothing to read: asked after where 민수 is, its card is raised from "지난 답 1개".
-async function raisedAfter(words: string): Promise<User> {
-  const user = await ask('민수 어디야?');
-  await send(user, words);
-  await user.press(card().getByRole('button', { name: '지난 답 1개' }));
-  return user;
-}
-
 function beside(): ReturnType<typeof within> {
   return within(screen.getByTestId('ai-input-beside'));
 }
 
-// Partitions: the dock, the raised card, and the basis closed and opened. Expected values: the copy of board q1.
+// Partitions: the dock; a way with nothing to read stays docked, as board 10 draws it, with no handle to raise it
+// (P04 ticket 10). Expected values: the copy of board q1.
 describe('the card of a way to a Place (q1)', () => {
   it('docks with "길 안내" beside the input and nothing the map says: no chips, lines, or "닫기"', async () => {
     await ask('문화관이 어디야?');
@@ -94,32 +87,6 @@ describe('the card of a way to a Place (q1)', () => {
     expect(card().queryByRole('button', { name: '이대로 초대' })).toBeNull();
     expect(card().queryByRole('button', { name: '다음 후보' })).toBeNull();
     expect(card().queryByRole('button', { name: '같이 먹을 친구 추가' })).toBeNull();
-  });
-
-  it('shows the chips, which take no press, the two lines, and "닫기" raised, with "길 안내" still beside the input', async () => {
-    await raisedAfter('문화관이 어디야?');
-
-    expect(card().getByText('301동에서')).toBeVisible();
-    expect(card().queryByRole('button', { name: '301동에서' })).toBeNull();
-    expect(card().getByText('문화관(73동)은 여기예요')).toBeVisible();
-    expect(card().getByText('지금 있는 301동에서 걸어서 18분')).toBeVisible();
-    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
-    expect(card().queryByRole('button', { name: '길 안내' })).toBeNull();
-    expect(beside().getByRole('button', { name: '길 안내' })).toBeVisible();
-  });
-
-  it('opens the basis with "근거" and closes it with "근거 접기"', async () => {
-    const user = await raisedAfter('문화관이 어디야?');
-    expect(card().queryByText('셔틀은 18분 걸려 걸어요')).toBeNull();
-
-    await user.press(card().getByRole('button', { name: '근거' }));
-
-    expect(card().getByText('301동 → 문화관(73동) 걸어서 18분 · 앱의 도보표')).toBeVisible();
-    expect(card().getByText('셔틀은 18분 걸려 걸어요')).toBeVisible();
-
-    await user.press(card().getByRole('button', { name: '근거 접기' }));
-
-    expect(card().queryByText('셔틀은 18분 걸려 걸어요')).toBeNull();
   });
 });
 

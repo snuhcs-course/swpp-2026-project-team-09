@@ -15,6 +15,7 @@
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -42,8 +43,17 @@ import { LayerControls, type LayerStack } from './layers';
 import { FirstRunAsk } from './first-run/first-run-ask';
 import { InterestsHint } from './first-run/interests-hint';
 import { KeyboardScrim } from './keyboard-scrim';
-import { aiInputTop, interestsHintBottom, madeLineBottom, type Room, tutorialStartBottom } from './layout';
+import {
+  aiInputTop,
+  interestsHintBottom,
+  madeLineBottom,
+  PAST_CHATS,
+  pastChatsBottom,
+  type Room,
+  tutorialStartBottom,
+} from './layout';
 import { MadeQuestLine } from './made-quest-line';
+import { NEW_PLACEHOLDER, PastChats, pastChatsShown } from './past-chats';
 import { type GuideActions, TutorialGuideOverlay } from './tutorial/tutorial-guide';
 import { TutorialList } from './tutorial/tutorial-list';
 import { TutorialSheet } from './tutorial/tutorial-sheet';
@@ -229,7 +239,8 @@ export function MapBottom(props: MapBottomProps): ReactElement {
             lift={lift}
             onEarlier={chat.showAgain}
             onHeight={onInputHeight}
-            placeholder={chat.framed ? '이어서 말하기' : undefined}
+            focusKey={chat.started}
+            placeholder={chat.framed ? '이어서 말하기' : pastChatsShown(chat) ? NEW_PLACEHOLDER : undefined}
             restore={restoreOf(chat.chat.bubbles)}
             onSend={send}
             unseen={chat.unseen}
@@ -269,12 +280,34 @@ function FramedParts(props: FramedProps): ReactElement {
           room={room}
         />
       </RowFourProvider>
-      {!chat.framed && keyboardUp ? <AskedExamples bottom={inputTop + space[2]} onSend={send} /> : null}
+      <MapQuestions {...props} />
+      {!chat.framed && keyboardUp ? <AskedExamples bottom={examplesBottom(props)} onSend={send} /> : null}
       {invitation.shown ? <InvitationFrame invitation={invitation} onHeight={onAnswerHeight} room={room} /> : null}
       {made.shown === null ? null : (
         <MadeQuestFrame made={made.shown} onClose={made.closeCard} onHeight={onAnswerHeight} room={room} />
       )}
     </>
+  );
+}
+
+// "지난 대화 N ▾" while it shows: over the input while the keyboard is up, under the examples; else at the left with
+// the made Quest's line.
+function pastChatsAt({ chat, room, cardShown, inputTop, keyboardUp }: FramedProps): number | null {
+  if (!pastChatsShown(chat) || cardShown) {
+    return null;
+  }
+  return keyboardUp ? inputTop + space[2] : pastChatsBottom(room);
+}
+
+function examplesBottom(props: FramedProps): number {
+  const chip = props.keyboardUp ? pastChatsAt(props) : null;
+  return chip === null ? props.inputTop + space[2] : chip + PAST_CHATS.height + space[2];
+}
+
+function MapQuestions(props: FramedProps): ReactElement | null {
+  const bottom = pastChatsAt(props);
+  return bottom === null ? null : (
+    <PastChats bottom={bottom} control={props.chat} stageHeight={props.room.stage?.height ?? null} />
   );
 }
 

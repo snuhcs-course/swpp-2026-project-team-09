@@ -11,9 +11,10 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, type ReactNode, useRef, useState } from 'react';
+import { type ReactElement, type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
 import { type LayoutChangeEvent, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { USER_MESSAGE_MAX } from '@/api/assistant-types';
 import { color, Icon, radius, shadow, space, text } from '@/design-system';
@@ -39,6 +40,8 @@ interface AiInputProps {
   beside?: ReactNode;
   // Inside the answer's card or dock: a sunken field on its white, without the bar's own border and shadow.
   inCard?: boolean;
+  // A change puts the focus in the field, as "새 대화" does (P04 ticket 10); the first value does nothing.
+  focusKey?: number;
 }
 
 // The field's height for one line, and the most it grows to before it scrolls.
@@ -89,6 +92,18 @@ function useMessage(restore: Restore | null): [string, (message: string) => void
   return [message, setMessage];
 }
 
+// The field, which takes the focus each time `key` changes after its first value.
+function useFocusOn(key: number): RefObject<TextInput | null> {
+  const field = useRef<TextInput>(null);
+  const first = useRef(key);
+  useEffect(() => {
+    if (key !== first.current) {
+      field.current?.focus();
+    }
+  }, [key]);
+  return field;
+}
+
 function EarlierButton({ onPress, unseen }: { onPress: () => void; unseen: boolean }): ReactElement {
   return (
     <Pressable
@@ -109,9 +124,17 @@ function EarlierButton({ onPress, unseen }: { onPress: () => void; unseen: boole
 // button sends, in the key colour while there is something to send. The field grows by itself, between its least and
 // its most height: nothing sets its height from its content, which would lay it out again and could swing it between
 // two heights. "이전 답", when given, stands at the left as the send button does at the right.
-function Field(props: { message: string; onChange: (message: string) => void; placeholder: string }): ReactElement {
+interface FieldProps {
+  message: string;
+  onChange: (message: string) => void;
+  placeholder: string;
+  field: RefObject<TextInput | null>;
+}
+
+function Field(props: FieldProps): ReactElement {
   return (
     <TextInput
+      ref={props.field}
       accessibilityLabel="AI에게 메시지"
       maxLength={USER_MESSAGE_MAX}
       multiline
@@ -159,7 +182,9 @@ export function AiInput(props: AiInputProps): ReactElement {
     unseen = false,
     beside = null,
     inCard = false,
+    focusKey = 0,
   } = props;
+  const field = useFocusOn(focusKey);
   const [besideWidth, setBesideWidth] = useState(0);
   const [message, setMessage] = useMessage(restore ?? null);
   const [height, laidOut] = useBarHeight(onHeight);
@@ -183,7 +208,7 @@ export function AiInput(props: AiInputProps): ReactElement {
         testID="ai-input"
       >
         {onEarlier === null ? null : <EarlierButton onPress={onEarlier} unseen={unseen} />}
-        <Field message={message} onChange={setMessage} placeholder={placeholder} />
+        <Field field={field} message={message} onChange={setMessage} placeholder={placeholder} />
         <SendButton canSend={canSend} onPress={send} />
       </View>
       {beside === null ? null : (

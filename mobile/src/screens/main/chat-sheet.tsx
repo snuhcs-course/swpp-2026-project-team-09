@@ -23,6 +23,7 @@ import type { MapLayer, QuestProposal } from '@/api/assistant-types';
 import type { Tapped } from '@/api/lookup-types';
 import { useToast } from '@/design-system';
 import type { Viewport } from '@/features/assistant/study-area';
+import type { PlanOutcomes } from '@/features/assistant/turn-outcome';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
 import { type HowAbout, useHowAbout } from '@/features/assistant/use-how-about';
 import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use-plan-invitation';
@@ -33,6 +34,7 @@ import { type MarkOpening, useOpenedMark } from './answer/opened-mark';
 import type { CardLeaving } from './chat-card-actions';
 import { useContextChat, type Where } from './use-context-chat';
 import { type KeptConversation, useKeptConversation } from './use-kept-conversation';
+import { usePlanOutcomes } from './use-plan-outcomes';
 import { openProposalForm, useProposalMaking } from './use-proposal-making';
 
 export interface ChatSheetControl extends Omit<KeptConversation, 'chat'>, MarkOpening {
@@ -47,6 +49,8 @@ export interface ChatSheetControl extends Omit<KeptConversation, 'chat'>, MarkOp
   howAbout: HowAbout;
   // The Lookup on screen, which the map and the frame's card draw.
   lookup: ShownLookup;
+  // What became of each reply's Plan, for the list of questions.
+  outcomes: PlanOutcomes;
   // What was pressed on the map and is open in its card, which every request carries from then on; null for nothing.
   setTapped: (tapped: Tapped | null) => void;
   // The map's visible area at rest, which every request carries as `viewport`; null before the map is ready.
@@ -109,9 +113,12 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const { chat: said, ...pressing } = useContextChat(where, shownNow);
   const { chat, ...kept } = useKeptConversation(said);
   const proposals = useProposalMaking(said.proposalMade);
+  const onScreen = useAnswerOnScreen(chat.bubbles, where, shownNow);
+  const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation);
   return {
     chat,
     ...kept,
+    outcomes,
     leaving: {
       showLayer: hidingFor(kept.hide, turnOn),
       openEvent,
@@ -119,7 +126,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
       openPartyForm,
       proposals,
     },
-    ...useAnswerOnScreen(chat.bubbles, where, shownNow),
+    ...onScreen,
     lookup: useShownLookup(chat.bubbles, start, kept.hide),
     ...useOpenedMark(chat.bubbles, kept.framed),
     ...pressing,

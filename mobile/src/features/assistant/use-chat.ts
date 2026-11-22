@@ -33,10 +33,12 @@ import type { Lookup } from '@/api/lookup-types';
 import type { Refusal } from '@/api/refusal-types';
 import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
+import { now } from '@/clock';
 import type { ShownChatCard } from '@/api/quest-parts-types';
 import type { LibraryDone } from '@/library/cards/done';
 import type { Slot } from '@/library/cards/payloads';
 import { useAskApp } from './app-turn';
+import { type EarlierConversation, useConversations } from './conversations';
 import { useLetGo, useWaiting } from './let-go';
 import { shownText } from './shown-text';
 import { useProposalMade } from './proposal-made';
@@ -81,6 +83,8 @@ export interface ChatBubble {
   tapped?: Tapped;
   // The Quest its Proposal was made into, once 만들기 or the form made it.
   madeQuestId?: string;
+  // When it was added, in milliseconds: a question's is the time the list of questions shows (P04 ticket 10).
+  at?: number;
 }
 
 // How a library card ended: what it says in place of its buttons. It is kept with the chat, so that a card that
@@ -126,9 +130,13 @@ export interface Chat {
   send: (text: string, tapped?: Tapped) => void;
   // Sends the User's last message again, after a failure the Assistant may get over.
   retry: () => void;
-  // 새 대화: forgets the conversation, and a reply still on its way. The call it gives brings the conversation back
-  // while nothing new was said.
-  reset: () => () => void;
+  // 새 대화: keeps the conversation among the earlier ones and starts an empty one; a question still on its way is
+  // dropped (P04 ticket 10).
+  startNew: () => void;
+  // Takes up an earlier conversation again, by its id, keeping the current one among the earlier ones.
+  resume: (id: number) => void;
+  // The conversations kept beside the current one, the one left last first.
+  earlier: readonly EarlierConversation[];
   // 그만: takes back the question on its way, and drops its reply when it comes.
   stop: () => void;
   // Adds the app's own bubble, which no request sends.
@@ -238,7 +246,7 @@ function useBubbles(): Bubbles {
   const add = useCallback(
     (bubble: NewBubble): void => {
       nextId.current += 1;
-      show([...said.current, { ...bubble, id: nextId.current }]);
+      show([...said.current, { ...bubble, id: nextId.current, at: now().getTime() }]);
     },
     [show],
   );
@@ -323,7 +331,8 @@ export function useChat(readContext: () => RequestContext): Chat {
   // Which conversation a reply belongs to: 새 대화 and 그만 start another, and a reply to the one before is dropped.
   const conversation = useRef(0);
   const { sent: roomsShown, ...cardsKept } = useCardsKept();
-  const { reset, stop, takeBack } = useLetGo({ said, show }, conversation, { setWaiting, waitingNow });
+  const { leave, stop, takeBack } = useLetGo({ said, show }, conversation, { setWaiting, waitingNow });
+  const conversations = useConversations(show, leave);
 
   // Asks the Assistant to answer the conversation as it stands, the User's message last.
   const ask = useCallback((): void => {
@@ -361,5 +370,5 @@ export function useChat(readContext: () => RequestContext): Chat {
   const askApp = useAskApp({ said, show, add }, conversation, setWaiting, takeBack);
   const proposalMade = useProposalMade(said, show);
 
-  return { bubbles, waiting, send, retry, reset, stop, ...own, askApp, ...cardsKept, proposalMade };
+  return { bubbles, waiting, send, retry, ...conversations, stop, ...own, askApp, ...cardsKept, proposalMade };
 }
