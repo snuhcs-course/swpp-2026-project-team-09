@@ -228,7 +228,7 @@ export function unplaced(
     words,
     sides,
     kept: group === 'pick' || held || always,
-    // A tag held at a point it shares gives way to the other labels (P04 ticket 52).
+    // A tag held at a point it shares gives way to the other labels (P04 ticket 51).
     ...(meal && held && group === 'candidate' ? { shrinks: true } : {}),
     ...(clearOf === undefined ? {} : { clearOf }),
     ...(either === undefined ? {} : { either }),

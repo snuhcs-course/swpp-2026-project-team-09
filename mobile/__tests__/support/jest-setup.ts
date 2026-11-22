@@ -38,7 +38,7 @@ jest.mock('@/push/device', (): typeof PushDevice => ({
 }));
 
 // Every test runs at the usual font size, as a phone does by default: the React Native preset's window says 2, and the
-// answer's labels are placed at the window's font scale (P04 ticket 52).
+// answer's labels are placed at the window's font scale (P04 ticket 51).
 Dimensions.set({
   window: { ...Dimensions.get('window'), fontScale: 1 },
   screen: { ...Dimensions.get('screen'), fontScale: 1 },

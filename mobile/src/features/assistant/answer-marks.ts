@@ -215,7 +215,7 @@ function markPoint(position: LatLng, drawn: Draft | undefined, meal: boolean): M
   return point;
 }
 
-// A meal answer's (`meal`) faces keep their pins' room and its held tags give way (P04 ticket 52).
+// A meal answer's (`meal`) faces keep their pins' room and its held tags give way (P04 ticket 51).
 function placeAll(drafts: Draft[], view: LabelView | null, meal: boolean): Placed[] {
   const points = pointsOf(drafts).map(({ position, drafts: here }) => ({
     position,
