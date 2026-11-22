@@ -30,3 +30,10 @@ Native files: none. Releases: an app OTA update only.
 - [x] No native file changes; lint, format, and types pass on the app.
 
 Not pictured: checked on the phone after the Release.
+
+## Comments
+
+### Agent usage (2026-11-23)
+
+- Agent time: about 55 minutes (an estimate; one Opus 5.5 session, PR 497's review fixes and the failed picture hold included, waiting on the loaded Mac's test runs counted only where the session worked).
+- Tokens: about 83,000 output; input about 43.0 million, of which about 42.9 million cache reads, 138,000 cache writes, and 260 uncached.
