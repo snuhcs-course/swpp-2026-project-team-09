@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { PlacePoint } from './assistant-types';
@@ -21,9 +22,14 @@ export interface PlanPart {
   arriveAt?: string | null;
   // Null when nothing follows.
   leaveBy: string | null;
-  next: { startAt: string; place: PlacePoint | null } | null;
+  // `by`: how they go on to it, absent from a main server before the shuttle-aware Plan (a walk).
+  next: { startAt: string; place: PlacePoint | null; by?: 'walk' | 'shuttle' } | null;
   // How they travel, absent for a walk.
   mode?: 'walk' | 'shuttle';
+  // How they go to the place, and with the shuttle where they board and get off; absent from a main server before the
+  // shuttle-aware Plan, which reads as a walk. `walkMinutes` is then the minutes of the way, however it is gone.
+  by?: 'walk' | 'shuttle';
+  shuttle?: { boardAt: string; getOffAt: string };
 }
 
 export interface DroppedPlace {

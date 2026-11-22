@@ -15,7 +15,7 @@ import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { ChatSheetControl } from '../chat-sheet';
 import { markdownLabel } from '../chat-markdown';
 import { DockLine } from './dock-chips';
-import type { Raise } from './docked-answer';
+import { withFriendsOf } from './meal-list';
 
 // The Assistant's words in one paragraph: the pick with its dish and walking, and the nearest good alternative.
 export function mealSentenceOf(words: string): string {
@@ -23,9 +23,9 @@ export function mealSentenceOf(words: string): string {
 }
 
 // The dock's line: the Assistant's sentence while it is about the place on screen, its first pick of the answer it
-// came with; once another place is chosen, or the answer recalculated, or without the model's words, the chosen
-// place's own line ("302동식당 · 11:30 · 걸음 2분 · 순살안동식찜닭 외 2 · 5,000원부터"). Never empty, so that the card
-// can always be raised.
+// came with; when only one place is left of many, that it alone fits ("김태현과 시간이 맞는 곳은 302동식당뿐이에요 ·
+// 11:30 · 걸음 2분"); once another place is chosen, or the answer recalculated, or without the model's words, the chosen
+// place's own line ("302동식당 · 11:30 · 걸음 2분 · 순살안동식찜닭 외 2 · 5,000원부터"). Never empty.
 export function mealDockLine(
   text: string,
   { answer, source, index, plan }: Pick<ShownAnswer, 'answer' | 'source' | 'index' | 'plan'>,
@@ -34,24 +34,22 @@ export function mealDockLine(
   if (sentence !== '' && answer === source && index === 0) {
     return sentence;
   }
+  if (plan !== null && answer !== null && answer.plans.length === 1 && answer.dropped.length > 0) {
+    const { note } = mealPickWords(plan, plan.place.label, kindShown(answer));
+    const who = withFriendsOf(answer);
+    const only = who === null ? '시간이 맞는 곳은' : `${who} 시간이 맞는 곳은`;
+    return `${only} ${plan.place.label}뿐이에요 · ${note}`;
+  }
   if (plan !== null) {
     return mealPickWords(plan, plan.place.label, kindShown(answer)).name;
   }
   return sentence === '' ? `${String(answer?.plans.length ?? 0)}곳 목록 보기` : sentence;
 }
 
-// A meal answer's dock (board E1): its line (`mealDockLine`) in at most two lines, which raises the card to the list.
-// The input and the main button, which acts on the chosen place, stand under it; the kinds are in the list. A docked
+// A meal answer's dock (board E1): its line (`mealDockLine`) in at most two lines, with no "›": the caption's "올리면 N곳
+// 목록" is the one way to raise the card. The input and the main button, which acts on the chosen place, stand under it; the kinds are in the list. A docked
 // card shows no menu: the next raise opens the list.
-export function MealDock({
-  control,
-  bubble,
-  onRaise,
-}: {
-  control: ChatSheetControl;
-  bubble: ChatBubble;
-  onRaise: Raise;
-}): ReactElement {
+export function MealDock({ control, bubble }: { control: ChatSheetControl; bubble: ChatBubble }): ReactElement {
   const { menuFor, closeMenu } = control.answer;
   useEffect(() => {
     if (menuFor !== null) {
@@ -61,12 +59,7 @@ export function MealDock({
   const sentence = mealDockLine(bubble.text, control.answer);
   return (
     <View style={styles.row} testID="dock-row">
-      <DockLine
-        line={[{ text: sentence, strong: false }]}
-        onPress={() => {
-          onRaise(false);
-        }}
-      />
+      <DockLine line={[{ text: sentence, strong: false }]} />
     </View>
   );
 }

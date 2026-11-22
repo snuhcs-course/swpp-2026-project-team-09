@@ -8,11 +8,13 @@ import type { AnswerReply, AssistantReply, MapScene, MealInput, Plan } from '@/a
 import type { LatLng } from '@/api/types';
 import { B301, B302, type Restaurant, RESTAURANTS } from './crowded-restaurants';
 import { ME } from './frame';
+import { FRIENDS } from './friends';
 
 // The crowded meal answer, for checking the map with real data (the answer screen's redesign, 2026-11-22): "내일 점심
 // 뭐 먹을까" answered tomorrow with eleven restaurants at their buildings' points, two of them sharing 109동 and two
 // 75-1동, between a Class ending at 301동 at 10:45 and one at 302동 at 15:30. Long names and long dish names are among
-// them. The walks are worked out from the straight distance; the menus and prices are examples.
+// them. The walks are worked out from the straight distance; the menus and prices are examples. 감골식당 and the
+// 기숙사식당 open late, so they cannot be done before the Class at 15:30.
 
 export const CROWDED_ASKED = '내일 점심 뭐 먹을까';
 
@@ -170,6 +172,28 @@ export function crowdedMealAnswer(date: string, now: string): AnswerReply & { in
     dropped: [],
     noPlan: null,
     otherMeal: { meal: 'dinner', start: '17:00' },
+  };
+}
+
+// The answer once a Friend is added (`userId`): only 302동식당 fits the Friend's day as well, and the other ten are
+// dropped, each with its reason as the main server words it.
+export function crowdedWithFriend(date: string, now: string, userId: string): AnswerReply & { input: MealInput } {
+  const alone = crowdedMealAnswer(date, now);
+  const name = FRIENDS.find(({ id }) => id === userId)?.name ?? '친구';
+  const kept = alone.plans.find(({ place }) => place.label === '302동식당') ?? alone.plans[0];
+  const others = alone.plans.filter((plan) => plan !== kept);
+  return {
+    ...alone,
+    input: { ...alone.input, people: [...alone.input.people, { userId, constraints: [] }] },
+    chips: [...alone.chips, { kind: 'person', text: `${name} · 출발지 모름`, userId }],
+    plans: kept === undefined ? [] : [kept],
+    dropped: others.map(({ place }, index) => ({
+      place,
+      reason:
+        index % 3 === 0
+          ? `${name}${index % 2 === 0 ? '은' : '는'} 10분밖에 못 있어요`
+          : '같이 있는 시간이 15분뿐이에요',
+    })),
   };
 }
 

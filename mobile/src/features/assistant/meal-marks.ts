@@ -28,19 +28,20 @@ function midway(from: LatLng, to: LatLng): LatLng {
   return { latitude: (from.latitude + to.latitude) / 2, longitude: (from.longitude + to.longitude) / 2 };
 }
 
+// A leg's label: "셔틀 12분" by shuttle, "6분" on foot.
 function legDrafts(scene: MapScene): Draft[] {
-  return scene.routes.flatMap(({ role, from, to, minutes }, index): Draft[] =>
+  return scene.routes.flatMap(({ role, from, to, minutes, mode }, index): Draft[] =>
     (role === 'me' || role === 'next') && minutes > 0
       ? [
           {
             id: `answer:leg:${String(index)}`,
-            name: `걸음 ${String(minutes)}분`,
+            name: mode === 'shuttle' ? `셔틀 ${String(minutes)}분` : `걸음 ${String(minutes)}분`,
             position: midway(from, to),
             planId: null,
             group: 'flag',
             symbol: null,
             tone: 'leg',
-            title: `${String(minutes)}분`,
+            title: mode === 'shuttle' ? `셔틀 ${String(minutes)}분` : `${String(minutes)}분`,
             line: null,
             number: null,
           },

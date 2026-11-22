@@ -68,9 +68,9 @@ function lastContext(): unknown {
 
 type User = Awaited<ReturnType<typeof askOnMap>>;
 
-// The card raised to the list by its sentence, where the kinds stand.
+// The card raised to the list by the caption's "올리면 N곳 목록", where the kinds stand.
 async function raise(user: User): Promise<void> {
-  await user.press(screen.getByTestId('dock-line'));
+  await user.press(screen.getByText(/^올리면 \d+곳 목록$/u));
 }
 
 // Partitions: the chips at first; a kind the pick serves pressed, then pressed again; a kind it does not serve.

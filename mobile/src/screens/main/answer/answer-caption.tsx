@@ -9,6 +9,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import type { ChatSheetControl } from '../chat-sheet';
+import { listedCount, mealListed } from './meal-list';
 
 interface AnswerCaptionProps {
   control: ChatSheetControl;
@@ -17,16 +18,17 @@ interface AnswerCaptionProps {
   onList: () => void;
 }
 
-// What the caption's right side says for a meal answer with several Plans: while docked, a press that raises the card
-// to the list of every candidate; while raised, how that list is ordered. Null for any other answer.
+// What the caption's right side says for a meal answer with several places, candidates or dropped: while docked, a
+// press that raises the card to the list of every place, the only way the docked card is raised; while raised, how
+// that list is ordered. Null for any other answer.
 function listWordsOf({
   answer: shown,
   card,
 }: ChatSheetControl): { words: string; onPress: (() => void) | null } | null {
-  const count = shown.answer?.plans.length ?? 0;
-  if (shown.answer?.input.kind !== 'meal' || count < 2) {
+  if (shown.answer === null || !mealListed(shown.answer)) {
     return null;
   }
+  const count = listedCount(shown.answer);
   if (card.raised) {
     return { words: '걸음이 적은 순', onPress: null };
   }

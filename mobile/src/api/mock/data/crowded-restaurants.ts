@@ -122,7 +122,7 @@ export const RESTAURANTS: readonly Restaurant[] = [
     name: '감골식당',
     building: '101',
     at: { latitude: 37.46328, longitude: 126.95015 },
-    opens: '11:00',
+    opens: '14:50',
     price: 5500,
     dishes: [
       ['닭갈비볶음밥', null, '한식'],
@@ -144,7 +144,7 @@ export const RESTAURANTS: readonly Restaurant[] = [
     name: '기숙사식당 (관악사 919동)',
     building: '919',
     at: { latitude: 37.46306, longitude: 126.95872 },
-    opens: '11:30',
+    opens: '15:10',
     price: null,
     dishes: [
       ['함박스테이크와 감자튀김', 6500, '양식'],

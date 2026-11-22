@@ -48,8 +48,9 @@ describe("the crowded meal answer's first pick", () => {
     expect(label).not.toHaveProperty('faded');
   });
 
-  it('fades a candidate whose walking is over thirty minutes, and not one under', () => {
-    expect(seen(drawing, 'answer:candidate:자하연식당 2층').symbol).toMatchObject({ faded: true });
+  it('fades a candidate that cannot be done before the next Class, and not one only far away', () => {
+    expect(seen(drawing, 'answer:candidate:감골식당').symbol).toMatchObject({ faded: true });
+    expect(seen(drawing, 'answer:candidate:자하연식당 2층').symbol).not.toHaveProperty('faded');
     expect(seen(drawing, 'answer:candidate:3식당').symbol).not.toHaveProperty('faded');
   });
 
@@ -82,5 +83,22 @@ describe('the view a meal answer keeps while another place is chosen', () => {
     const moved = panToShow(view, below);
     expect(moved.camera.zoom).toBe(view.camera.zoom);
     expect(inView(below, moved.camera, moved.size).y).toBeCloseTo(AREA.bottom - ANSWER_SYMBOL_BOX, 3);
+  });
+});
+
+// Partitions: the way there by shuttle (the shuttle-aware Plan); the line stays as drawn.
+describe('a leg by shuttle', () => {
+  it('reads "셔틀 N분" on its label', () => {
+    const [plan, ...rest] = CROWDED.plans;
+    if (plan === undefined) {
+      throw new Error('The crowded answer has Plans');
+    }
+    const routes = plan.scene.routes.map((route) =>
+      route.role === 'me' ? { ...route, mode: 'shuttle' as const } : route,
+    );
+    const drawing = drawingOf({ ...CROWDED, plans: [{ ...plan, scene: { ...plan.scene, routes } }, ...rest] }, 0);
+
+    expect(seen(drawing, 'answer:leg:0').label).toMatchObject({ tone: 'leg', title: '셔틀 15분' });
+    expect(seen(drawing, 'answer:leg:1').label).toMatchObject({ tone: 'leg', title: '17분' });
   });
 });

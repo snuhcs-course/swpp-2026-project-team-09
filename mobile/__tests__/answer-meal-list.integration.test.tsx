@@ -6,7 +6,10 @@
 
 import { screen, within } from '@testing-library/react-native';
 import type { AnswerReply } from '@/api/assistant-types';
+import { crowdedMealReply } from '@/api/mock/data/crowded-meal';
 import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
+import { koreaDateKey, koreaNextDay } from '@/korea-time';
+import { LATE_HEADING } from '@/screens/main/answer/meal-list';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -66,10 +69,10 @@ function fourOf(reply: typeof MEAL_ANSWER_MENUS_REPLY): typeof MEAL_ANSWER_MENUS
 type User = Awaited<ReturnType<typeof askOnMap>>;
 
 async function raise(user: User): Promise<void> {
-  await user.press(screen.getByTestId('dock-line'));
+  await user.press(screen.getByText(/^올리면 \d+곳 목록$/u));
 }
 
-// Partitions: docked; raised by the sentence.
+// Partitions: docked; raised by the caption.
 describe('a meal answer with four candidates', () => {
   it('docks with the sentence alone: no kind chips and no 메뉴 보기', async () => {
     await askOnMap(server, fourOf(MEAL_ANSWER_MENUS_REPLY));
@@ -139,5 +142,56 @@ describe('the list while the Plan is sent', () => {
 
     expect(screen.getByRole('button', { name: /^302동식당 · 12:15 /u })).toBeOnTheScreen();
     expect(card().getByText('김민수에게 점심 초대를 보냈어요')).toBeVisible();
+  });
+});
+
+// The answer kept one Plan of three: the other two dropped for 김민수's time (the user's phone, 2026-11-22).
+function keptOne(text: string): typeof MEAL_ANSWER_MENUS_REPLY {
+  const [first, ...rest] = MEAL_ANSWER_MENUS_REPLY.answer.plans.slice(0, 3);
+  const dropped = rest.map(({ place }) => ({ place, reason: '김민수는 10분밖에 못 있어요' }));
+  const answer: AnswerReply = { ...MEAL_ANSWER_MENUS_REPLY.answer, plans: first === undefined ? [] : [first], dropped };
+  return { ...MEAL_ANSWER_MENUS_REPLY, text, answer };
+}
+
+// Partitions: one Plan left of many, with the model's words and without; the candidates that cannot be done in time.
+describe('a meal answer that kept one Plan of many', () => {
+  it('says in the dock that one place alone fits, with no "›", and the caption raises the list', async () => {
+    await askOnMap(server, keptOne('아래에서 확인해 보세요.'));
+
+    expect(screen.getByTestId('dock-line-words')).toHaveTextContent(/^김민수와 시간이 맞는 곳은 302동식당뿐이에요 · /u);
+    expect(screen.getByTestId('dock-line').props.accessibilityRole).toBeUndefined();
+    expect(screen.getByText('올리면 3곳 목록')).toBeOnTheScreen();
+  });
+
+  it('lists the Plan, then the places dropped under their reason, faded and not pressable, under the people', async () => {
+    const user = await askOnMap(server, keptOne(SENTENCE));
+
+    await raise(user);
+
+    expect(card().getByText('김민수')).toBeOnTheScreen();
+    expect(list().getByTestId('meal-row-1')).toBeEnabled();
+    expect(list().getByText('김민수와 시간이 맞지 않는 곳')).toBeOnTheScreen();
+    const dropped = list().getAllByTestId('meal-dropped-row');
+    expect(dropped.map((row) => String(row.props.accessibilityLabel))).toEqual([
+      '301동식당 · 김민수는 10분밖에 못 있어요',
+      '학생회관식당 · 김민수는 10분밖에 못 있어요',
+    ]);
+    expect(dropped[0]?.props.accessibilityRole).toBeUndefined();
+  });
+});
+
+// Partitions: the crowded answer, two of whose restaurants open too late for the Class at 15:30.
+describe('the crowded meal answer raised', () => {
+  it('lists the candidates that cannot be done in the time last, under one line that says so', async () => {
+    const date = koreaDateKey(koreaNextDay(PHONE_NOW));
+    const user = await askOnMap(server, crowdedMealReply(date, PHONE_NOW.toISOString()));
+
+    await raise(user);
+
+    const labels = list()
+      .getAllByRole('button', { name: /^\d+ /u })
+      .map((row) => String(row.props.accessibilityLabel).split(' · ')[0]?.replace(/^\d+ /u, ''));
+    expect(labels.slice(-2).toSorted()).toEqual(['감골식당', '기숙사식당 (관악사 919동)']);
+    expect(list().getByText(LATE_HEADING)).toBeOnTheScreen();
   });
 });
