@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -144,7 +145,7 @@ describe('an event card in the frame', () => {
 
     expect(screen.getByRole('tab', { name: '행사' })).toBeSelected();
     await backToMap(user);
-    expect(screen.getByTestId('answer-pill')).toBeVisible();
+    expect(screen.getByTestId('answer-caption')).toBeVisible();
   });
 });
 
@@ -162,7 +163,7 @@ describe('a Proposal in the frame', () => {
 
     expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
     await backToMap(user);
-    expect(screen.getByTestId('answer-pill')).toBeVisible();
+    expect(screen.getByTestId('answer-caption')).toBeVisible();
   });
 
   it("shows a refusal's toast above the card", async () => {
@@ -221,7 +222,7 @@ describe('a toast while the frame is shown', () => {
       nativeEvent: { layout: { x: 0, y: 400, width: 390, height: 300 } },
     });
 
-    await user.press(within(screen.getByTestId('answer-pill')).getByRole('button', { name: '답 닫기' }));
+    await user.press(screen.getByRole('button', { name: '뒤로' }));
     expect(screen.getByTestId('map-card')).toBeVisible();
     await press(user, '길찾기');
 
@@ -240,7 +241,7 @@ describe('a map button in the frame', () => {
     await user.press(card().getByRole('button', { name: '지도에서 셔틀 보기' }));
     await pass(500);
 
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     await press(user, LAYERS);
     expect(screen.getByRole('togglebutton', { name: '셔틀버스 끄기' })).toBeVisible();
   });

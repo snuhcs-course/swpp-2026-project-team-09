@@ -141,7 +141,7 @@ describe('a Lookup that draws nothing', () => {
 
     expect(card().getByText('민수 · 공강 · 14:00까지')).toBeVisible();
     expect(beside().getByRole('button', { name: '만나고 싶다' })).toBeVisible();
-    expect(screen.getByTestId('answer-pill')).toBeVisible();
+    expect(screen.getByTestId('answer-caption')).toBeVisible();
     expect(mapThings()).toEqual(expect.arrayContaining([MIN_JUN.name, ME]));
   });
 });

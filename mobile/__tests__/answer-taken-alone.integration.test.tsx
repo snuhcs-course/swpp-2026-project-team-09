@@ -135,7 +135,7 @@ describe('the buttons of an event taken alone', () => {
 
     expect(server.received('GET /walking-route')).toHaveLength(before);
     expect(screen.queryByText('문화관까지 길 안내')).toBeNull();
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
   });
 
   it('"길 안내" starts the route guidance to the event\'s Place and returns to the everyday map', async () => {
@@ -156,7 +156,7 @@ describe('the buttons of an event taken alone', () => {
         .map(({ query }) => query.endLatitude),
     ).toEqual([String(CULTURE_HALL.latitude)]);
     expect(screen.getByText('문화관까지 길 안내')).toBeVisible();
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
   });
 
   it('keeps "길 안내" disabled off campus and says why under it, with no toast', async () => {

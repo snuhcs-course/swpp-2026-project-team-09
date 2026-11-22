@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -50,7 +51,7 @@ function openFreshmanFramed(): Promise<User> {
 }
 
 function closeButton(): ReturnType<typeof screen.getByRole> {
-  return within(screen.getByTestId('answer-pill')).getByRole('button', { name: '답 닫기' });
+  return screen.getByRole('button', { name: '뒤로' });
 }
 
 // Partitions: the start button before asking, while the frame is shown, and after ✕.
@@ -85,7 +86,7 @@ describe("the tutorial's ask", () => {
     expect(screen.queryByLabelText(SHEET)).toBeNull();
     expect(screen.queryByTestId('chat-sheet')).toBeNull();
     expect(
-      within(screen.getByTestId('answer-pill')).getByText('관정도서관 7층 열람실에 한 자리 예약해줘'),
+      within(screen.getByTestId('answer-caption')).getByText('관정도서관 7층 열람실에 한 자리 예약해줘'),
     ).toBeVisible();
   });
 });

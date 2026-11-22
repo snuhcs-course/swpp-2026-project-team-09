@@ -170,10 +170,10 @@ describe('the marks', () => {
         clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
-    expect(within(screen.getByTestId('answer-pill')).getByText(MARK)).toBeVisible();
+    expect(within(screen.getByTestId('answer-caption')).getByText(MARK)).toBeVisible();
     expect(screen.getByTestId('answer-card')).toBeVisible();
 
-    await user.press(screen.getByRole('button', { name: '답 닫기' }));
+    await user.press(screen.getByRole('button', { name: '뒤로' }));
     await pass(500);
 
     expect(drawn(FRESH_MARK)).toBe(false);
@@ -191,7 +191,7 @@ describe('the marks', () => {
     await pass(1500);
 
     expect(screen.getByText('답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요')).toBeVisible();
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(looks(FRESH_MARK, 'fresh')).toBe(true);
   });
 });

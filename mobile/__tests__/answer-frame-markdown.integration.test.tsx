@@ -3,6 +3,7 @@
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, within } from '@testing-library/react-native';
@@ -96,7 +97,7 @@ describe("the frame's pill", () => {
     await ask('**굵게** 그리고 [링크](https://lib.snu.ac.kr)', '네.');
 
     expect(
-      within(screen.getByTestId('answer-pill')).getByText('**굵게** 그리고 [링크](https://lib.snu.ac.kr)'),
+      within(screen.getByTestId('answer-caption')).getByText('**굵게** 그리고 [링크](https://lib.snu.ac.kr)'),
     ).toBeVisible();
   });
 });

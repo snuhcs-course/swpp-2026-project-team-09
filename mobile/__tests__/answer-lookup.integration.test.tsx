@@ -36,7 +36,7 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 // Two replies in some tests.
 jest.setTimeout(150000);
 
-const CLOSE = '답 닫기';
+const CLOSE = '뒤로';
 const CULTURE_HALL = { latitude: 37.46159, longitude: 126.95104 };
 
 let findWalkingRoute = jest.spyOn(apiClient, 'findWalkingRoute');
@@ -108,7 +108,7 @@ describe('the map of a way to a Place (q1)', () => {
 
     expect(findWalkingRoute).toHaveBeenLastCalledWith(ON_CAMPUS, CULTURE_HALL);
     expect(screen.getByText('문화관(73동)까지 길 안내')).toBeVisible();
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(mapLines()).toContain('walking-route');
   });
 
@@ -200,7 +200,7 @@ describe('where a Friend is (q6)', () => {
     await user.press(card().getByText(FRIEND_WORDS));
     await user.press(card().getByRole('button', { name: '닫기' }));
 
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(mapThings()).not.toContain('민수 · 지금 302동');
   });
 });
@@ -219,7 +219,7 @@ describe('"길 안내" without a position', () => {
 
     expect(screen.getByText('위치를 찾는 중이에요')).toBeVisible();
     expect(findWalkingRoute.mock.calls.slice(before).map(([, to]) => to)).not.toContainEqual(CULTURE_HALL);
-    expect(screen.getByTestId('answer-pill')).toBeVisible();
+    expect(screen.getByTestId('answer-caption')).toBeVisible();
     expect(beside().getByRole('button', { name: '길 안내' })).toBeVisible();
   });
 });

@@ -195,7 +195,7 @@ describe('"일정에 넣기" on a Plan the User walks to (s2 → s4)', () => {
     await pass(500);
 
     expect(findWalkingRoute).toHaveBeenLastCalledWith(ON_CAMPUS, HAKGWAN);
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
   });
 });
 

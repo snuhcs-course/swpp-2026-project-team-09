@@ -114,7 +114,6 @@ describe('"만나고 싶다" on a Friend\'s card', () => {
     expect(recalculations(server)).toEqual([meetAsked(MIN_JUN.id)]);
     expect(server.received('POST /assistant/messages')).toEqual([]);
     expect(pill().getByText('김민준 · 만나고 싶다')).toBeVisible();
-    expect(pill().getByTestId('answer-pill-user', { includeHiddenElements: true })).toBeOnTheScreen();
     expect(screen.queryByTestId('map-card')).toBeNull();
   });
 
@@ -136,7 +135,7 @@ describe('"만나고 싶다" on a Friend\'s card', () => {
     await meetFromCard(user);
 
     expect(screen.getByText(NOT_ANSWERED)).toBeVisible();
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(friendCard().getByRole('header', { name: MIN_JUN.name })).toBeVisible();
   });
 });

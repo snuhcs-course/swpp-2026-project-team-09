@@ -228,7 +228,7 @@ describe('the frame after 수정', () => {
     await user.press(screen.getByRole('button', { name: '뒤로' }));
     await pass(500);
 
-    expect(screen.getByTestId('answer-pill')).toHaveTextContent(ASKED, { exact: false });
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent(ASKED, { exact: false });
     expect(screen.getByRole('button', { name: '만들고 초대 보내기' })).toBeEnabled();
     expect(server.received('POST /quests/own')).toEqual([]);
   });

@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -142,7 +143,7 @@ describe('a pressed Place that fits (a7)', () => {
     expect(card().getByText('12:35–12:55 함께 20분 · 지금 계획보다 2분 짧아요')).toBeVisible();
     expect(card().getByRole('button', { name: '여기로 바꾸기' })).toBeVisible();
     expect(card().getByRole('button', { name: '그대로' })).toBeVisible();
-    expect(within(screen.getByTestId('answer-pill')).getByText('자하연식당 2층')).toBeVisible();
+    expect(within(screen.getByTestId('answer-caption')).getByText('자하연식당 2층')).toBeVisible();
   });
 
   it('draws the Plan on screen as "지금 계획", each line to the pressed Place, and the User\'s line to the Plan faded', async () => {
@@ -183,7 +184,7 @@ async function expectPlanBack(): Promise<void> {
   await pass(500);
   expect(screen.queryByText('여기면 어때?')).toBeNull();
   expect(mapThings()).toContain('학생회관식당 · 12:33 점심');
-  expect(within(screen.getByTestId('answer-pill')).queryByText('자하연식당 2층')).toBeNull();
+  expect(within(screen.getByTestId('answer-caption')).queryByText('자하연식당 2층')).toBeNull();
   expect(recalculations(server)).toHaveLength(1);
 }
 
@@ -201,7 +202,7 @@ describe('the ways back to the Plan on screen', () => {
   it("the pill's ✕ returns to it, keeping the conversation", async () => {
     const user = await pressOver(JAHAYEON, MEAL_ANSWER_FIXED_PLACE);
 
-    await user.press(screen.getByRole('button', { name: '답 닫기' }));
+    await user.press(screen.getByRole('button', { name: '뒤로' }));
 
     await expectPlanBack();
   });

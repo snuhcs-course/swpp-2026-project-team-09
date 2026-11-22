@@ -210,7 +210,7 @@ describe('"닫기" after inviting', () => {
     await pass(500);
 
     expect(screen.queryByTestId('answer-card')).toBeNull();
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(mapThings().filter((name) => FIRST_PLAN_MARKS.includes(name))).toEqual([]);
     expect(mapThings()).toEqual(everyday);
   });

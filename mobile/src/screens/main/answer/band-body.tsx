@@ -65,10 +65,25 @@ export function wordsOf(band: TimeBand, moving: Stretch | null, held: HeldBand):
   return [{ text: movingWords(band.lanes, moving)?.text ?? band.text, strong: false }];
 }
 
+// What the bar's head keeps clear at each side of its words: "←" at the left, "＋ 같이" at the right.
+export interface HeadRoom {
+  left: number;
+  right: number;
+}
+
+interface BandWordsProps {
+  parts: BandWordsPart[];
+  day: string;
+  // In a bar's head, the words stand at the left between its buttons, cut short before the right one; else centred.
+  head?: HeadRoom;
+}
+
 // The band's words with the day before them, the dragged end's time in the stronger weight.
-export function BandWords({ parts, day }: { parts: BandWordsPart[]; day: string }): ReactElement {
+export function BandWords({ parts, day, head }: BandWordsProps): ReactElement {
+  const room =
+    head === undefined ? null : { paddingLeft: head.left, paddingRight: head.right, textAlign: 'left' as const };
   return (
-    <Text numberOfLines={1} style={styles.words} testID="time-band-words">
+    <Text ellipsizeMode="tail" numberOfLines={1} style={[styles.words, room]} testID="time-band-words">
       {day === '' ? null : `${day} `}
       {parts.map(({ text: part, strong }, at) =>
         strong ? (

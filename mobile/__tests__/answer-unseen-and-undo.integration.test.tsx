@@ -18,8 +18,9 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { reopenAnswer } from './support/questions';
 
 // P02 ticket 35 against the fake main server: a reply that arrives while the answer frame is hidden puts a dot on the
-// map screen's chip "이어서 · …" until the frame is shown (P04 ticket 11); "새 대화" keeps the conversation in the list
-// of questions, with no toast to undo it (P04 ticket 10).
+// map screen's chip "이어서 · …" until the frame is shown (P04 ticket 11); a question typed on the main map starts a
+// conversation of its own and keeps the old one in the caption's list of questions, with no toast to undo it (rule 4
+// of the 2026-11-22 redesign).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -70,8 +71,12 @@ async function send(user: User, words: string): Promise<void> {
   await user.press(screen.getByRole('button', { name: '보내기' }));
 }
 
-function pill(): ReturnType<typeof within> {
-  return within(screen.getByTestId('answer-pill'));
+function caption(): ReturnType<typeof within> {
+  return within(screen.getByTestId('answer-caption'));
+}
+
+async function closeAnswer(user: User): Promise<void> {
+  await user.press(screen.getByRole('button', { name: '뒤로' }));
 }
 
 function card(): ReturnType<typeof within> {
@@ -84,7 +89,7 @@ describe('the chip "이어서" while the frame is hidden (P04 ticket 11)', () =>
     answerWith(REPLY, 1000);
     const user = await openMain();
     await send(user, '셔틀 어디 있어?');
-    await user.press(pill().getByRole('button', { name: '답 닫기' }));
+    await closeAnswer(user);
     expect(screen.queryByTestId('continue-unseen')).toBeNull();
 
     await pass(1000);
@@ -93,7 +98,7 @@ describe('the chip "이어서" while the frame is hidden (P04 ticket 11)', () =>
     expect(screen.getByRole('button', { name: '이어서, 셔틀 어디 있어?, 새 답 있음' })).toBeVisible();
     await reopenAnswer(user);
     expect(card().getByText(REPLY)).toBeVisible();
-    await user.press(pill().getByRole('button', { name: '답 닫기' }));
+    await closeAnswer(user);
     expect(screen.queryByTestId('continue-unseen')).toBeNull();
     expect(screen.getByRole('button', { name: '이어서, 셔틀 어디 있어?' })).toBeVisible();
   });
@@ -104,7 +109,7 @@ describe('the chip "이어서" while the frame is hidden (P04 ticket 11)', () =>
     await send(user, '셔틀 어디 있어?');
     await pass(500);
 
-    await user.press(pill().getByRole('button', { name: '답 닫기' }));
+    await closeAnswer(user);
 
     expect(screen.queryByTestId('continue-unseen')).toBeNull();
   });
@@ -126,40 +131,36 @@ function questions(): ReturnType<typeof within> {
   return within(screen.getByTestId('question-list'));
 }
 
-// Partitions: the conversation brought back from "지난 대화"; no toast; a new message after it (P04 ticket 10).
-describe('"새 대화"', () => {
-  it('keeps the conversation in the list of questions, which brings it back with the frame', async () => {
+// The conversation of two questions closed with "←", then a question typed on the main map.
+async function askOnMap(user: User): Promise<void> {
+  await closeAnswer(user);
+  answerWith('새 답이에요.');
+  await send(user, '배고파');
+  await pass(500);
+}
+
+// Partitions: the earlier conversation brought back from the new one's list; no toast (rule 4 of the 2026-11-22
+// redesign).
+describe('a question typed on the main map while a conversation is kept', () => {
+  it("starts a conversation of its own, whose caption's list brings the earlier one back with its reply", async () => {
     const user = await talkTwice();
 
-    await user.press(screen.getByRole('button', { name: '새 대화' }));
-    expect(screen.queryByTestId('answer-card')).toBeNull();
-    await user.press(screen.getByRole('button', { name: '지난 대화 1개' }));
-    expect(questions().getAllByTestId('question-row')).toHaveLength(2);
-    await user.press(questions().getByRole('button', { name: /정문 셔틀은\?/u }));
+    await askOnMap(user);
 
-    expect(pill().getByText('정문 셔틀은?')).toBeVisible();
+    expect(caption().getByText('배고파')).toBeVisible();
+    await user.press(screen.getByTestId('answer-caption'));
+    expect(questions().getAllByTestId('question-row')).toHaveLength(3);
+    await user.press(questions().getByRole('button', { name: /정문 셔틀은\?/u }));
+    expect(caption().getByText('정문 셔틀은?')).toBeVisible();
     expect(card().getByText(NEXT_REPLY)).toBeVisible();
   });
 
   it('erases nothing, so no toast offers 되돌리기', async () => {
     const user = await talkTwice();
 
-    await user.press(screen.getByRole('button', { name: '새 대화' }));
+    await askOnMap(user);
 
     expect(screen.queryByText(FORGOTTEN)).toBeNull();
     expect(screen.queryByRole('button', { name: '되돌리기' })).toBeNull();
-  });
-
-  it('starts a conversation of its own with the next message, the earlier one still listed', async () => {
-    const user = await talkTwice();
-    await user.press(screen.getByRole('button', { name: '새 대화' }));
-    answerWith('새 답이에요.');
-    await send(user, '배고파');
-    await pass(500);
-
-    expect(pill().getByText('배고파')).toBeVisible();
-    expect(within(screen.getByTestId('answer-pill-count')).getByText('1')).toBeVisible();
-    await user.press(screen.getByTestId('answer-pill'));
-    expect(questions().getAllByTestId('question-row')).toHaveLength(3);
   });
 });

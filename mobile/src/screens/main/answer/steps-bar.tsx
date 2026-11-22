@@ -12,7 +12,8 @@ import { now } from '@/clock';
 import { color, font, radius, shadow, space, text } from '@/design-system';
 import { stepClock } from '@/features/assistant/steps-scene';
 import { koreaDayWord } from '@/korea-time';
-import { ANSWER_PILL } from '../layout';
+import { ANSWER_TOP } from '../layout';
+import { BACK_ROOM } from './back-button';
 import type { ChatSheetControl } from '../chat-sheet';
 import { barTop, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
@@ -145,8 +146,8 @@ export function StepsBar({ steps, active, onStep, onHeight }: StepsBarProps): Re
 const styles = StyleSheet.create({
   bar: {
     position: 'absolute',
-    right: ANSWER_PILL.side,
-    left: ANSWER_PILL.side,
+    right: ANSWER_TOP.side,
+    left: ANSWER_TOP.side,
     gap: space[2],
     paddingVertical: space[3],
     paddingHorizontal: space[4],
@@ -154,7 +155,14 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.float,
   },
-  words: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', columnGap: space[3] },
+  // Clear of "←" at the head's left (the 2026-11-22 redesign).
+  words: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    columnGap: space[3],
+    paddingLeft: BACK_ROOM,
+  },
   word: { ...text.label, color: color.inkMuted },
   wordActive: { fontFamily: font.semiBold, color: color.snuBlue },
   faint: { color: color.inkSubtle },

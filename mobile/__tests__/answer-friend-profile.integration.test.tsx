@@ -121,7 +121,7 @@ async function askWithMinJun(): Promise<User> {
 // The Plan on the map as it was asked, with 김민준's face.
 function planKept(): void {
   expect(mapThings()).toEqual(expect.arrayContaining([PICK, FACE]));
-  expect(screen.getByTestId('answer-pill')).toBeVisible();
+  expect(screen.getByTestId('answer-caption')).toBeVisible();
 }
 
 function withoutMinJun(): object {

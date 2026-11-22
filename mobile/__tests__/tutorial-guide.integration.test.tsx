@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -160,7 +161,7 @@ describe('a guide on the map', () => {
 
     expect(findButton(TO_LIST)).toBeNull();
     expect(
-      within(screen.getByTestId('answer-pill')).getByText('관정도서관 7층 열람실에 한 자리 예약해줘'),
+      within(screen.getByTestId('answer-caption')).getByText('관정도서관 7층 열람실에 한 자리 예약해줘'),
     ).toBeVisible();
   });
 

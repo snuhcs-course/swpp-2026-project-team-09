@@ -10,7 +10,7 @@ import { type ReactElement, type ReactNode, useState } from 'react';
 import { Animated, type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, radius, shadow, space, text } from '@/design-system';
-import { ANSWER_PILL, listsTop } from '../layout';
+import { ANSWER_TOP, listsTop } from '../layout';
 import { useHeldHeight } from './held-height';
 import { CloseHint, type Raising, useRaiseDrag } from './raise-handle';
 
@@ -55,7 +55,7 @@ const LOWERED: Raising = {
   },
 };
 
-// The content's height while raised: from under the pill, and the time bar when there is one, to the bar's room. Null
+// The content's height while raised: from under the time bar, or the round "←" when there is none, to the bar's room. Null
 // until the stage is laid out.
 function useRaisedHeight(
   stageHeight: number | null,
@@ -64,7 +64,7 @@ function useRaisedHeight(
   timeBarHeight: number,
 ): number | null {
   const { top } = useSafeAreaInsets();
-  const pillRoom = listsTop(top) + ANSWER_PILL.height + space[2] + (timeBarHeight > 0 ? timeBarHeight + space[2] : 0);
+  const pillRoom = listsTop(top) + (timeBarHeight > 0 ? timeBarHeight : ANSWER_TOP.height) + space[2];
   return stageHeight === null || raising === undefined
     ? null
     : Math.max(LEAST_CONTENT, stageHeight - pillRoom - barRoom);

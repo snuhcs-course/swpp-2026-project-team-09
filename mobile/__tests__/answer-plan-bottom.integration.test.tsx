@@ -73,7 +73,6 @@ describe("a Plan's bottom", () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
-    expect(card().queryByTestId('turn-question')).toBeNull();
     expect(card().queryByRole('button', { name: '301동에서' })).toBeNull();
     expect(card().queryByTestId('answer-lines')).toBeNull();
     expect(card().queryByText('1/5')).toBeNull();
@@ -105,14 +104,18 @@ describe("a Plan's bottom", () => {
 });
 
 describe('a second turn', () => {
-  it('stays docked with nothing to read and no "지난 답", the pill counting both questions (P04 ticket 10)', async () => {
+  it('stays docked with no "지난 답", and the caption\'s list keeps both questions (P04 ticket 10)', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
     await user.type(screen.getByLabelText(AI_INPUT), '다른 데는?');
     await user.press(screen.getByRole('button', { name: '보내기' }));
     await pass(500);
 
     expect(card().queryByRole('button', { name: /^지난 답/u })).toBeNull();
-    expect(within(screen.getByTestId('answer-pill-count')).getByText('2')).toBeVisible();
+    await user.press(screen.getByTestId('answer-caption'));
+    const list = within(screen.getByTestId('question-list'));
+    expect(list.getAllByTestId('question-row')).toHaveLength(2);
+    expect(list.getByRole('button', { name: /다른 데는\?, .+, 지금$/u })).toBeVisible();
+    expect(list.getByRole('button', { name: /배고파, 민수랑 같이, /u })).toBeVisible();
   });
 });
 

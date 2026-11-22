@@ -5,6 +5,7 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -288,7 +289,7 @@ describe('어시스턴트에게 예약 부탁하기', () => {
 
     expect(screen.queryByLabelText(SHEET)).toBeNull();
     expect(
-      within(screen.getByTestId('answer-pill')).getByText('관정도서관 7층 열람실에 한 자리 예약해줘'),
+      within(screen.getByTestId('answer-caption')).getByText('관정도서관 7층 열람실에 한 자리 예약해줘'),
     ).toBeVisible();
     // The Assistant's library card for 7F-7A-zone2 reads the seats and offers the first free one, writing nothing.
     const card = within(screen.getByTestId('answer-card'));

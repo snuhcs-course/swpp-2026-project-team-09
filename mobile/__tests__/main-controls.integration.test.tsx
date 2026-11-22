@@ -140,7 +140,7 @@ describe('what puts the keyboard down on the main screen', () => {
 
     await back();
 
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(dismiss).toHaveBeenCalledTimes(1);
   });
 });

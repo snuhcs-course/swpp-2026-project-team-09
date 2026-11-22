@@ -11,6 +11,9 @@ import { color, font, Icon, type IconName, radius, shadow, size, space } from '@
 import { questionsOf } from '@/features/assistant/turn-outcome';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { QUESTION_LIST, QuestionList, questionRowsOf } from './answer/question-list';
+import { turnOf } from '@/features/assistant/turn';
+import { typingWordsOf } from '@/features/assistant/typing-words';
+import { markdownLabel } from './chat-markdown';
 import type { ChatSheetControl } from './chat-sheet';
 import { PAST_CHATS } from './layout';
 
@@ -34,10 +37,16 @@ export function mapChipOf({ framed, said, chat, unseen }: Chipped): MapChip | nu
 export const MAP_PLACEHOLDER = '무엇이든 물어보세요';
 export const CONTINUE_PLACEHOLDER = '이어서 말하기';
 
-// The AI input's placeholder: "이어서 말하기" in the answer, where a message goes on with the conversation; on the main
-// map, where a message always starts a new one, "무엇이든 물어보세요" (P04 ticket 33).
-export function placeholderOf({ framed }: Pick<Chipped, 'framed'>): string {
-  return framed ? CONTINUE_PLACEHOLDER : MAP_PLACEHOLDER;
+// The AI input's placeholder: "이어서 말하기" in the answer, where a message goes on with the conversation, or the example
+// of an answer the reply on screen gives ("예: 14:00부터 16:00", the rule of 2026-11-22); on the main map, where a message
+// always starts a new one, "무엇이든 물어보세요" (P04 ticket 33).
+export function placeholderOf({ framed, chat }: Pick<Chipped, 'framed' | 'chat'>): string {
+  if (!framed) {
+    return MAP_PLACEHOLDER;
+  }
+  const reply = turnOf(chat.bubbles)?.after[0];
+  const example = reply === undefined || chat.waiting ? null : typingWordsOf(markdownLabel(reply.text)).example;
+  return example ?? CONTINUE_PLACEHOLDER;
 }
 
 interface PastChatsProps {

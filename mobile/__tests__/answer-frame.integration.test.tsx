@@ -22,9 +22,10 @@ import { DINNER, press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { SENT_CAPABILITIES } from './support/capabilities';
+import { CONTINUE } from './support/questions';
 
-// The answer frame (P02 tickets 01 and 04) against the fake main server: what the User asks stays as a pill at the top
-// and one card at the bottom holds the reply.
+// The answer frame (P02 tickets 01 and 04) against the fake main server: one card at the bottom holds the reply, under a
+// small caption of what the User asked, and "←" at the top left closes it (rules 2 and 5 of the 2026-11-22 redesign).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -45,7 +46,9 @@ const REPLY = '오늘 학생회관식당 점심은 제육볶음이에요.';
 const ANSWERED = { status: 200, body: { text: REPLY, mapButtons: [], cards: [], proposal: null } };
 const FAILED = '답을 가져오지 못했어요.';
 const WAITING = '보는 중';
-const CLOSE = '답 닫기';
+const CLOSE = '뒤로';
+// PHONE_NOW, 04:00 UTC, in Korea.
+const ASKED_AT = '13:00';
 const NOTICE = '대화 내용은 AI 제공자에게 전송돼요';
 // The request context of this ticket: the User's position, no reason it is missing, and nothing of an answer on screen
 // yet.
@@ -77,10 +80,6 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-function openFramed(): Promise<User> {
-  return openMain();
-}
-
 // Writes the words in the bar and sends them, without waiting for the reply.
 async function send(user: User, words: string): Promise<void> {
   await user.type(screen.getByLabelText(AI_INPUT), words);
@@ -92,8 +91,8 @@ async function ask(user: User, words: string = ASKED): Promise<void> {
   await pass(1000);
 }
 
-function pill(): ReturnType<typeof within> {
-  return within(screen.getByTestId('answer-pill'));
+function caption(): ReturnType<typeof within> {
+  return within(screen.getByTestId('answer-caption'));
 }
 
 function card(): ReturnType<typeof within> {
@@ -109,20 +108,20 @@ const GIVING_WAY = [FRIEND_PILL, FULL_SCREEN, LAYERS, '확대'];
 
 // Partitions: the conversation empty, waiting, answered, and failed.
 describe('the frame', () => {
-  it('shows the pill with the words, ✕, and 새 대화, the card waiting with 보는 중, and no chat sheet', async () => {
-    const user = await openFramed();
+  it('shows the words as the caption of the card, waiting with 보는 중, 뒤로, and no 새 대화 or chat sheet', async () => {
+    const user = await openMain();
 
     await send(user, ASKED);
 
-    expect(pill().getByText(ASKED)).toBeVisible();
-    expect(pill().getByRole('button', { name: CLOSE })).toBeVisible();
-    expect(screen.getByRole('button', { name: '새 대화' })).toBeVisible();
+    expect(caption().getByText(ASKED)).toBeVisible();
     expect(card().getByLabelText(WAITING)).toBeVisible();
+    expect(screen.getByRole('button', { name: CLOSE })).toBeVisible();
+    expect(screen.queryByRole('button', { name: '새 대화' })).toBeNull();
     expect(screen.queryByTestId('chat-sheet')).toBeNull();
   });
 
   it('shows the reply in the card once it comes', async () => {
-    const user = await openFramed();
+    const user = await openMain();
 
     await ask(user);
 
@@ -131,16 +130,16 @@ describe('the frame', () => {
   });
 
   it('is not shown before anything is asked', async () => {
-    await openFramed();
+    await openMain();
 
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(screen.queryByTestId('answer-card')).toBeNull();
   });
 });
 
 describe('what gives way to the frame', () => {
   it('hides the lists, the row of buttons, 편의기능, the zoom control, and the tabs', async () => {
-    const user = await openFramed();
+    const user = await openMain();
 
     await ask(user);
 
@@ -151,10 +150,10 @@ describe('what gives way to the frame', () => {
   });
 
   it('brings them back when the frame is hidden', async () => {
-    const user = await openFramed();
+    const user = await openMain();
     await ask(user);
 
-    await user.press(pill().getByRole('button', { name: CLOSE }));
+    await user.press(screen.getByRole('button', { name: CLOSE }));
 
     for (const name of GIVING_WAY) {
       expect(screen.getByRole('button', { name })).toBeVisible();
@@ -163,7 +162,7 @@ describe('what gives way to the frame', () => {
   });
 
   it("opens a marker's card on a press while nothing is asked", async () => {
-    const user = await openFramed();
+    const user = await openMain();
 
     await press(user, DINNER);
 
@@ -171,20 +170,20 @@ describe('what gives way to the frame', () => {
   });
 
   it('opens no card on a press on a marker', async () => {
-    const user = await openFramed();
+    const user = await openMain();
     await ask(user);
 
     await press(user, DINNER);
 
     expect(screen.queryByTestId('map-card')).toBeNull();
-    await user.press(pill().getByRole('button', { name: CLOSE }));
+    await user.press(screen.getByRole('button', { name: CLOSE }));
     expect(screen.queryByTestId('map-card')).toBeNull();
   });
 });
 
 describe('the request', () => {
   it("carries the User's position, nulls for the rest, and the capabilities that say the app draws answers", async () => {
-    const user = await openFramed();
+    const user = await openMain();
 
     await ask(user);
 
@@ -199,7 +198,7 @@ describe('the request', () => {
 
   it('says no position while the User is off campus, and that they are off campus (P02-13)', async () => {
     givePhone({ permission: 'granted', position: OFF_CAMPUS });
-    const user = await openFramed();
+    const user = await openMain();
 
     await ask(user);
 
@@ -208,14 +207,14 @@ describe('the request', () => {
     ]);
   });
 
-  it('joins a follow-up to the same conversation, and the pill says the new words', async () => {
-    const user = await openFramed();
+  it('joins a follow-up to the same conversation, and the caption says the new words', async () => {
+    const user = await openMain();
     await ask(user);
     expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', '이어서 말하기');
 
     await ask(user, '한식');
 
-    expect(pill().getByText('한식')).toBeVisible();
+    expect(caption().getByText('한식')).toBeVisible();
     expect(sentBodies().at(-1)).toEqual({
       messages: [
         { role: 'user', text: ASKED },
@@ -229,14 +228,16 @@ describe('the request', () => {
 });
 
 describe('closing the frame', () => {
-  it('hides the frame with ✕ and keeps the conversation, a reply on its way included', async () => {
-    const user = await openFramed();
+  it('hides the frame with 뒤로, keeping the conversation and a reply on its way, which "이어서" goes on with', async () => {
+    const user = await openMain();
     await send(user, ASKED);
 
-    await user.press(pill().getByRole('button', { name: CLOSE }));
+    await user.press(screen.getByRole('button', { name: CLOSE }));
     await pass(1000);
 
     expect(screen.queryByTestId('answer-card')).toBeNull();
+    await user.press(screen.getByRole('button', { name: CONTINUE }));
+    expect(card().getByText(REPLY)).toBeVisible();
     await ask(user, '한식');
     expect(sentBodies().at(-1)).toEqual(
       expect.objectContaining({
@@ -251,14 +252,14 @@ describe('closing the frame', () => {
 
   it("hides the frame with Android's back button, which goes no further", async () => {
     const back = holdBackButton();
-    const user = await openFramed();
+    const user = await openMain();
     await ask(user);
-    expect(screen.getByTestId('answer-pill')).toBeVisible();
+    expect(screen.getByTestId('answer-caption')).toBeVisible();
 
     const taken = await back();
 
     expect(taken).toBe(true);
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(screen.getByRole('button', { name: FRIEND_PILL })).toBeVisible();
   });
 });
@@ -266,7 +267,7 @@ describe('closing the frame', () => {
 describe('a failure in the frame', () => {
   it('shows the failure with 다시 시도, which sends the same message with the context again', async () => {
     server.on('POST /assistant/messages', refusal(503));
-    const user = await openFramed();
+    const user = await openMain();
     await ask(user);
     expect(card().getByText(FAILED)).toBeVisible();
     server.on('POST /assistant/messages', { ...ANSWERED, afterMs: 1000 });
@@ -282,19 +283,21 @@ describe('a failure in the frame', () => {
 });
 
 describe('the bar and the keyboard', () => {
-  it("stands over the keyboard, and the card's content gives way to the reply's headline", async () => {
-    const user = await openFramed();
+  it("stands over the keyboard, and the card's caption and content give way to the conversation's questions", async () => {
+    const user = await openMain();
     await ask(user);
 
     await showKeyboard(KEYBOARD);
 
     // The bar's 12 above the keyboard, which the tests' phone counts from the bottom of the screen.
     expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 + KEYBOARD });
-    expect(card().getByTestId('answer-headline')).toHaveTextContent(REPLY);
+    const questions = within(card().getByTestId('question-list'));
+    expect(questions.getByRole('button', { name: `${ASKED_AT}, ${ASKED}, ${REPLY}, 지금` })).toBeVisible();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
   });
 
   it('says where the conversation goes above the bar while the keyboard is up and nothing is asked', async () => {
-    await openFramed();
+    await openMain();
 
     await showKeyboard(KEYBOARD);
 
@@ -302,7 +305,7 @@ describe('the bar and the keyboard', () => {
   });
 
   it('says it no more once something is asked', async () => {
-    const user = await openFramed();
+    const user = await openMain();
     await showKeyboard(KEYBOARD);
 
     await ask(user);

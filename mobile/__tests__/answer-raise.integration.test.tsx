@@ -6,11 +6,11 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { act, fireEvent } from '@testing-library/react-native';
+import { act, fireEvent, within } from '@testing-library/react-native';
 import { StyleSheet, type ViewStyle } from 'react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { space } from '@/design-system';
-import { ANSWER_PILL, listsTop } from '@/screens/main/layout';
+import { ANSWER_TOP, listsTop } from '@/screens/main/layout';
 import { pass, screen } from './support/app';
 import { holdBackButton } from './support/back';
 import { KEYBOARD, showKeyboard } from './support/keyboard';
@@ -19,7 +19,7 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 
-// P02 ticket 38: the answer card's handle raises the card up to the pill and lowers it again, by a press or a drag,
+// P02 ticket 38: the answer card's handle raises the card up to under "←" and lowers it again, by a press or a drag,
 // and Android's back button lowers a raised card first. The mocks answer.
 
 jest.mock('expo-location');
@@ -32,8 +32,8 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 const HANDLE = '답 크게 보기';
 const ASKED = '식사 메뉴 추천';
 const STAGE = 760;
-// What the pill keeps from the stage's top: the tests' status bar takes nothing.
-const PILL_ROOM = listsTop(0) + ANSWER_PILL.height + space[2];
+// What the round "←" keeps from the stage's top, the answer having no time bar: the tests' status bar takes nothing.
+const TOP_ROOM = listsTop(0) + ANSWER_TOP.height + space[2];
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
@@ -96,17 +96,16 @@ describe("the answer card's handle", () => {
     expect(contentStyle().height).toBeUndefined();
   });
 
-  it('raises the card as tall as its content, up to the pill, by a press, and lowers it by another', async () => {
+  it('raises the card as tall as its content, up to under "←", by a press, and lowers it by another', async () => {
     const user = await framed();
     const lowered = Number(contentStyle().maxHeight);
 
     await press(user, HANDLE);
 
     expect(handle()).toBeExpanded();
-    expect(contentStyle().maxHeight).toBe(lowered + STAGE / 2 - PILL_ROOM);
+    expect(contentStyle().maxHeight).toBe(lowered + STAGE / 2 - TOP_ROOM);
     expect(contentStyle().height).toBeUndefined();
-    expect(button('답 닫기')).toBeVisible();
-    expect(button('새 대화')).toBeVisible();
+    expect(button('뒤로')).toBeVisible();
 
     await press(user, HANDLE);
 
@@ -149,26 +148,30 @@ describe("a drag on the answer card's handle", () => {
   });
 });
 
-// Partitions: the keyboard up while raised and lowered.
+// Partitions: the keyboard up while raised and lowered. Board 6 of the 2026-11-22 redesign: while typing on the lowered
+// card, the conversation's questions stand above the input in place of the answer and its caption.
 describe('the raised card while the keyboard is up', () => {
-  it('shows the conversation, not the headline alone, over the input standing on the keyboard', async () => {
+  it('shows the answer under its caption, not the questions, over the input standing on the keyboard', async () => {
     const user = await framed();
     await press(user, HANDLE);
 
     await showKeyboard(KEYBOARD);
 
-    expect(screen.queryByTestId('answer-headline')).toBeNull();
-    expect(screen.getByTestId('turn-question')).toHaveTextContent(ASKED);
+    expect(screen.queryByTestId('question-list')).toBeNull();
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent(ASKED);
+    expect(screen.getByTestId('answer-card')).toHaveTextContent(/^식사 메뉴 추천오늘 메뉴예요\./u);
   });
 
-  it('shows the headline again once lowered', async () => {
+  it('shows the questions in place of the answer once lowered, the one on screen marked 지금', async () => {
     const user = await framed();
     await press(user, HANDLE);
     await showKeyboard(KEYBOARD);
 
     await press(user, HANDLE);
 
-    expect(screen.getByTestId('answer-headline')).toBeVisible();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
+    const list = within(screen.getByTestId('question-list'));
+    expect(list.getByRole('button', { name: /식사 메뉴 추천, .+, 지금$/u })).toBeVisible();
   });
 });
 
@@ -181,14 +184,14 @@ describe("Android's back button", () => {
 
     expect(await back()).toBe(true);
     expect(handle()).toBeCollapsed();
-    expect(screen.getByTestId('answer-pill')).toBeVisible();
+    expect(screen.getByTestId('answer-caption')).toBeVisible();
 
     expect(await back()).toBe(true);
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
   });
 });
 
-// P04 ticket 12: below the lowered card, a drag down closes the answer as ✕ does.
+// P04 ticket 12: below the lowered card, a drag down closes the answer as "←" does.
 async function layCard(height: number): Promise<void> {
   await fireEvent(screen.getByTestId('answer-card'), 'layout', {
     nativeEvent: { layout: { x: 0, y: 0, width: 390, height } },
@@ -205,7 +208,7 @@ describe("a drag down on the lowered card's handle", () => {
 
     await dragHandle(400);
 
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(screen.getByRole('button', { name: /^이어서, 식사 메뉴 추천/u })).toBeVisible();
   });
 
@@ -216,7 +219,7 @@ describe("a drag down on the lowered card's handle", () => {
 
     await dragHandle(80);
 
-    expect(screen.getByTestId('answer-pill')).toBeVisible();
+    expect(screen.getByTestId('answer-caption')).toBeVisible();
     expect(handle()).toBeCollapsed();
     expect(screen.queryByTestId('answer-close-hint')).toBeNull();
   });
@@ -229,9 +232,9 @@ describe("a drag down on the lowered card's handle", () => {
 
     await dragHandle(400);
     expect(handle()).toBeCollapsed();
-    expect(screen.getByTestId('answer-pill')).toBeVisible();
+    expect(screen.getByTestId('answer-caption')).toBeVisible();
 
     await dragHandle(400);
-    expect(screen.queryByTestId('answer-pill')).toBeNull();
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
   });
 });

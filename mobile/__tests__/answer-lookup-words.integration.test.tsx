@@ -87,14 +87,14 @@ describe("the model's words beside the day's Lookup", () => {
     expect(card().getByTestId('lookup-card')).toBeVisible();
   });
 
-  it('stand in the list of questions once another question is asked, and come back with the Lookup (P04 ticket 10)', async () => {
+  it("stand in the caption's list of questions once another is asked, and come back with the Lookup (P04 ticket 10)", async () => {
     const user = await askOnMap(server, WITH_WORDS);
     server.on('POST /assistant/messages', { status: 200, body: NOT_RUNNING_LOOKUP_REPLY });
     await user.type(screen.getByLabelText(AI_INPUT), '기숙사 가는 셔틀 있어?');
     await user.press(screen.getByRole('button', { name: '보내기' }));
     await pass(500);
 
-    await user.press(screen.getByTestId('answer-pill'));
+    await user.press(screen.getByTestId('answer-caption'));
     const words = WORDS.replaceAll(/[.?]/gu, String.raw`\$&`);
     await user.press(within(screen.getByTestId('question-list')).getByRole('button', { name: new RegExp(words, 'u') }));
 
