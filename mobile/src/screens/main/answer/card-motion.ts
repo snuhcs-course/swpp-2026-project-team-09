@@ -184,6 +184,20 @@ function usePan(parts: PanParts): PanGesture {
     });
 }
 
+// Tells the camera a height only when it differs from the last one told, so that it hears each value once.
+function useTellOnce(onHeight: (height: number) => void): (height: number) => void {
+  const told = useRef<number | null>(null);
+  return useCallback(
+    (height: number) => {
+      if (told.current !== height) {
+        told.current = height;
+        onHeight(height);
+      }
+    },
+    [onHeight],
+  );
+}
+
 // The offset running to its step: at once on a let-go or a press, and again whenever the step's height changes (the
 // content grows, the stage is laid out); settled, the lowered card's whole height goes to the camera.
 function useRun(
@@ -199,18 +213,13 @@ function useRun(
   // A run under way: the camera waits for its end.
   const running = useRef(false);
   const lowered = heights?.lowered ?? null;
+  const tell = useTellOnce(onHeight);
   const settle = useCallback(() => {
     running.current = false;
     if (!raising.raised && lowered !== null) {
-      onHeight(extra + lowered);
+      tell(extra + lowered);
     }
-  }, [raising.raised, lowered, extra, onHeight]);
-  // The card's top measured, or its lowered height changed, while it rests lowered: the camera hears it again.
-  useEffect(() => {
-    if (!running.current && !raising.raised && lowered !== null) {
-      onHeight(extra + lowered);
-    }
-  }, [extra, lowered, raising.raised, onHeight]);
+  }, [raising.raised, lowered, extra, tell]);
   const back = useCallback(
     (to: Level) => {
       if (heights !== null && room !== null) {
@@ -220,13 +229,18 @@ function useRun(
     },
     [heights, room, offset, reduce, settle],
   );
+  // A new step's offset runs there, and the camera hears it at the end; at rest, the card's top measured or its lowered
+  // height changed without a run is told at once. One value per change, never one before a run.
   useEffect(() => {
-    if (target === null || target === aimed.current) {
+    if (target !== null && target !== aimed.current) {
+      running.current = !reduce;
+      runTo(offset, target, { reduce, aimed }, settle);
       return;
     }
-    running.current = !reduce;
-    runTo(offset, target, { reduce, aimed }, settle);
-  }, [target, offset, reduce, settle]);
+    if (!running.current && !raising.raised && lowered !== null) {
+      tell(extra + lowered);
+    }
+  }, [target, offset, reduce, settle, raising.raised, lowered, extra, tell]);
   return { offset, back };
 }
 

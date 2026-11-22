@@ -33,7 +33,9 @@ const OPEN_TOP_GUESS = GRIP_ROW + GAP + space[8];
 // card takes a drag on the UI thread: down closes the answer, up raises the card (`useDockDrag`).
 function DockedCard(props: FrameCardProps): ReactElement {
   const { barRoom, onHeight, raising, testID, children } = props;
-  const [inner, setInner] = useState(0);
+  // Whether the dock holds anything to show, assumed from the first frame, so that its padding never comes in a frame
+  // late: that shifted the card and told the camera a second height (P04 ticket 52).
+  const [filled, setFilled] = useState(true);
   const [height, setHeight] = useState(0);
   const drag = useDockDrag(raising ?? LOWERED, height);
   // The shared value alone goes to the UI thread, never the object holding the gesture.
@@ -57,14 +59,14 @@ function DockedCard(props: FrameCardProps): ReactElement {
             words={props.gripWords ?? null}
           />
           {props.head === undefined ? null : <View style={styles.dockHead}>{props.head}</View>}
-          <View
-            onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-              setInner(nativeEvent.layout.height);
-            }}
-            style={[styles.dockContent, inner > 0 && { paddingTop: GAP }]}
-            testID={`${testID}-content`}
-          >
-            {children}
+          <View style={[styles.dockContent, filled && { paddingTop: GAP }]} testID={`${testID}-content`}>
+            <View
+              onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+                setFilled(nativeEvent.layout.height > 0);
+              }}
+            >
+              {children}
+            </View>
           </View>
         </Reanimated.View>
       </GestureDetector>
@@ -112,6 +114,10 @@ function useShownForm(
   };
 }
 
+function ignoreHeight(): void {
+  // The dock tells its own height.
+}
+
 // The frame's card, attached to the bottom of the screen: docked, a row around the input, or open (`OpenCard`).
 export function FrameCard(props: FrameCardProps): ReactElement {
   const form = useShownForm(props.docked === true, props.barRoom);
@@ -126,7 +132,9 @@ export function FrameCard(props: FrameCardProps): ReactElement {
       />
     );
   }
-  return <OpenCard {...props} from={form.from} />;
+  // While the dock is about to take the open card's place, the open card tells the camera nothing: the dock's height is
+  // the one value the camera hears for that change (P04 ticket 52).
+  return <OpenCard {...props} from={form.from} onHeight={props.docked === true ? ignoreHeight : props.onHeight} />;
 }
 
 const styles = StyleSheet.create({
