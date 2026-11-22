@@ -40,8 +40,8 @@ interface Drag {
   // How far below its lowered height the card is dragged, while it is; null otherwise.
   drop: Animated.Value | null;
   onCardLayout: (event: LayoutChangeEvent) => void;
-  // "놓으면 지도 화면으로 돌아가요" over the card while it is dragged below its lowered height.
-  hint: ReactElement | null;
+  // The card is dragged far enough that letting go closes the answer.
+  past: boolean;
 }
 
 // The content's height as laid out, the lowered height, the height a drag started from, and the whole card's height.
@@ -102,7 +102,7 @@ function panOf({ heights, content, raisedHeight, onStart, onLetGo, closing }: Pa
       if (closing?.closable.current === true) {
         const below = Math.max(0, lowered.current - at);
         closing.drop.setValue(below);
-        closing.onPast(below > 0);
+        closing.onPast(below > card.current / 2);
       }
     })
     .onEnd(({ translationY, velocityY }) => {
@@ -139,6 +139,35 @@ function Handle({ pan, raising }: { pan: PanGesture; raising: Raising }): ReactE
         <View style={styles.grip} />
       </Pressable>
     </GestureDetector>
+  );
+}
+
+// Where "놓으면 지도 화면으로 돌아가요" stands, from the stage's bottom: just above the card's top edge, following the card
+// down as it is dragged, and stopping just above the AI input, whose room the card keeps (`barRoom`), so that it is
+// never behind the input or below the screen (P04 ticket 29). `maxDrop` is how far it follows.
+export const HINT_GAP = space[3];
+
+export function closeHintPlace(cardHeight: number, barRoom: number): { bottom: number; maxDrop: number } {
+  return { bottom: cardHeight + HINT_GAP, maxDrop: Math.max(0, cardHeight - barRoom) };
+}
+
+// The hint while letting go would close the answer, moved down with the card by `drop` as far as `maxDrop`.
+export function CloseHint({
+  drop,
+  cardHeight,
+  barRoom,
+}: {
+  drop: Animated.Value;
+  cardHeight: number;
+  barRoom: number;
+}): ReactElement {
+  const { bottom, maxDrop } = closeHintPlace(cardHeight, barRoom);
+  const down =
+    maxDrop > 0 ? drop.interpolate({ inputRange: [0, maxDrop], outputRange: [0, maxDrop], extrapolate: 'clamp' }) : 0;
+  return (
+    <Animated.View style={[styles.hint, { bottom, transform: [{ translateY: down }] }]} testID="answer-close-hint">
+      <Text style={styles.hintWords}>{CLOSE_HINT}</Text>
+    </Animated.View>
   );
 }
 
@@ -214,11 +243,7 @@ export function useRaiseDrag(raising: Raising, raisedHeight: number | null): Dra
     onCardLayout: ({ nativeEvent }) => {
       heights.card.current = nativeEvent.layout.height;
     },
-    hint: past ? (
-      <View style={styles.hint} testID="answer-close-hint">
-        <Text style={styles.hintWords}>{CLOSE_HINT}</Text>
-      </View>
-    ) : null,
+    past,
   };
 }
 
@@ -236,9 +261,8 @@ const styles = StyleSheet.create({
   grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
   hint: {
     position: 'absolute',
-    bottom: '100%',
     alignSelf: 'center',
-    marginBottom: space[6],
+    pointerEvents: 'none',
     paddingVertical: space[2],
     paddingHorizontal: space[4],
     borderRadius: radius.full,
