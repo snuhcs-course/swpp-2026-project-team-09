@@ -4,12 +4,14 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, useEffect, useState } from 'react';
+import { type ReactElement, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
 import { color, space as spacing, text } from '@/design-system';
+import { useBackToClose } from '@/hooks/use-back-to-close';
 import { now } from '@/clock';
 import { koreaDateKey } from '@/korea-time';
 import { seatBookCardOf } from '@/library/cards/made';
@@ -206,6 +208,11 @@ export function useFullRoomSwap(room: SeatRoom, space: LibrarySpace, ownEmpty: b
 // The chip row, and the list in the time band's place while it is open.
 export function RoomTop({ room, slot }: { room: SeatRoom; slot: Slot }): ReactElement | null {
   const { chip, listing, setListing, counting } = room;
+  const closeList = useCallback((): void => {
+    setListing(false);
+  }, [setListing]);
+  // Android's back closes the open list before anything else of the answer (P01 ticket 04).
+  useBackToClose(listing, closeList, { edge: false });
   if (chip === null) {
     return null;
   }

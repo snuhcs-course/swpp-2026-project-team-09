@@ -84,3 +84,9 @@ A seat card that is one of several requests lost its reply's Plan while the card
 
 - Agent time: about 90 minutes in one session, from the study-flow check at 21:52 to the last push at 23:21 (an estimate). It covers the code reading, the emulator holds (three of eight failed on the hung or slow emulator), the fix, the merge of `5.0/Main`, the review's fixes, the tests, and the pictures.
 - Tokens: output 163k; input 87.5M, of which 87.2M cache reads, 350k cache writes, and 380 uncached. One read-only subagent (the main server's answers to "공부할 자리"), about 95k tokens in all.
+
+### The study answer's sentence everywhere, and the booked card (2026-11-22, late)
+
+After the first pictures, the card's own sentence replaced the reply's words at every height: lowered, raised (the card opens with it, then the chip), and booked. While the seats are read it says "관정 7층 열람실에서 14:00부터 1시간, 빈 자리를 찾고 있어요.". 예약하기 stays beside the input, disabled, while the seats are read and while the room list is open. The flag's mark carries its words in its id, so a time dragged on the bar redraws the label at once; PR 491 found the same for a meal's legs. A seat's done message became one head "✓ 예약했어요", one line with the room's one name, the booking number, and the kiosk deadline as a clock time. On the map the booking stays with its label "… · 예약됨" until 확인, its bar gone, and its card adds no "예약했어요" line. Ticket 04 takes the seats that do not come, the walk on the label, and Android's back over the room list.
+
+- Agent usage for this part: about 37 minutes (an estimate). Output 70k tokens; input 41.9M, of which 41.8M were cache reads, 120k cache writes, and 128 uncached. No subagents.

@@ -20,6 +20,7 @@ The screenshot with the request came from an app that was older than Iteration 4
 - Item 2, the seat picture: [01 — whole seat numbers, and a zoom that stays where the User looks](issues/01-seat-numbers-and-zoom.md).
 - Reported on 2026-11-22, the login: [02 — a login page that fits the phone, and no login ID in the AI input](issues/02-library-login-screen.md).
 - The study-seat answer on the map, against the answer screen's redesign: [03 — the study-seat answer in the meal answer's shape](issues/03-study-seat-dock.md).
+- What 03 left for later: [04 — the study answer's seats that do not come, its walk, and back over the room list](issues/04-study-seat-retry.md).
 
 ## Out of Scope
 

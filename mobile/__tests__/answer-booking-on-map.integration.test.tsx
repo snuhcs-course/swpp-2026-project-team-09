@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -47,7 +48,7 @@ const KWANJEONG: Place = {
   latitude: 37.45903,
   longitude: 126.95247,
 };
-const FLAG = /^관정 7층 열람실 › · (\d+번 )?17:00–18:00$/u;
+const FLAG = /^관정 7층 열람실 › · (\d+번 )?17:00–18:00( · 걸음 \d+분)?$/u;
 const CHIP = '열람실: 7층 열람실';
 const DOCKED = /^관정 7층 열람실에 17:00부터 1시간, 빈 자리 \d+석이에요\.$/u;
 
@@ -87,7 +88,7 @@ describe('a seat card on the map', () => {
   it('stands as a flag with the room, the seat, and the time, with a walk, the band on top, and 예약하기', async () => {
     await asked();
 
-    expect(flagName()).toMatch(/^관정 7층 열람실 › · \d+번 17:00–18:00$/u);
+    expect(flagName()).toMatch(/^관정 7층 열람실 › · \d+번 17:00–18:00( · 걸음 \d+분)?$/u);
     expect(mapLines()).toHaveLength(1);
     expect(bar().getByText('17:00–18:00 · 1시간')).toBeVisible();
     expect(screen.getByRole('button', { name: '예약하기' })).toBeEnabled();
@@ -110,14 +111,14 @@ describe('a seat card on the map', () => {
     expect(bar().getByText('17:00–18:30 · 1시간 30분')).toBeVisible();
     expect(screen.getByText(/^관정 7층 열람실에 17:00부터 1시간 30분, 빈 자리 \d+석이에요\.$/u)).toBeVisible();
     expect(screen.queryByText(/바꾼 시간이에요/u)).toBeNull();
-    expect(mapThings()).toContainEqual(expect.stringMatching(/17:00–18:30$/u));
+    expect(mapThings()).toContainEqual(expect.stringMatching(/17:00–18:30( · 걸음 \d+분)?$/u));
     expectNoWrite(library);
   });
 
   it('says 로그인 beside the input while logged out of the library', async () => {
     await asked(false);
 
-    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 › · 17:00–18:00$/u));
+    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 › · 17:00–18:00( · 걸음 \d+분)?$/u));
     expect(screen.getAllByRole('button', { name: '로그인' })).toHaveLength(1);
     expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '로그인' })).toBeVisible();
     expect(screen.queryByRole('button', { name: '예약하기' })).toBeNull();
