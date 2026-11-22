@@ -2337,8 +2337,16 @@ Anthropic API as the AI's key says
   `useDesc`, `useDescOptions` (when the card asks for the 사용용도), `pledge` (the 서약서 text or null), `companions`
   (`[{ "friendId", "name" }]`), `questId`, `notes`, `until` (the end of a myBookings period) and `target`
   (`{ "date"?, "spaceId"?, "start"? }` for cancel and return), every field always there and null when it does not
-  apply. It holds nothing live: the phone fills it from the library. It is attached only when the request carries
-  `"clientCapabilities": ["library"]` beside `messages`.
+  apply. Two keys are the exception, there only on a `book` card for a seat whose start the server filled from when the
+  User arrives at 관정관:
+  - `arrival` (`{ "at", "walkMinutes", "from" }`) holds when the User reaches 관정관 (HH:MM), their walk in minutes, and
+    the label of the Place they set out from, such as `24동`. When the arrival is before the space opens, the card's
+    `start` is the opening. `arrival` is left out when where the User sets out from is not known, the seat then being
+    filled from now.
+  - `leaveBy` (HH:MM, or null) holds when to leave 관정관 for the first item that starts before the booking ends.
+
+  An older app ignores both. A card holds nothing live: the phone fills it from the library. It is attached only when
+  the request carries `"clientCapabilities": ["library"]` beside `messages`.
 
   Beside `messages` the app may send `context`, what it knew as the User asked, each part null or left out when it does
   not know it: `location` (`{ "latitude", "longitude" }`, where the User is), `viewport` (`{ "south", "west", "north",`
@@ -2653,6 +2661,15 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       tool puts the Lookup in the reply's `lookup`: the minutes, when to set out, how late the User is if they set out
       now, and a leave-by notification while that time is ahead and the walk takes 5 minutes or more. It answers the
       model `found` with Place names, minutes, and clock times, or `none` with the reason.
+    - `restaurantHours(date, restaurant?)`, with `HOURS_RULES`, for an app that sends `answer` (`lookup/hours-*`). It
+      finds the Restaurant as `findMenu` does and answers, in words only, each meal of the day: `opensAt` and
+      `closesAt` as `RestaurantHours` keeps them for that kind of day when its menu serves the meal; `hours: 'not
+recorded'` with the menu's notes when it serves the meal without kept hours; `serves: false` with the notes when
+      its menu holds only notes; and `serves: 'not known'` with the usual hours when that day's menu is not collected
+      yet. A meal with neither a menu nor hours is left out, and a Restaurant with neither for any meal answers `none`.
+      Today it adds `now` and `servingNow`, the meal whose hours hold now, or null. With a meal answer on screen (the
+      context's `conditions`), it plans that answer again from them and puts it in the reply's `answer`, so that the
+      reply keeps the plan on screen; any other reply in words alone takes it off.
     - `planEvents(date, eventIds?)` and `EVENT_RULES` join for an app that sends both `answer` and `events` (`events/`).
       It plans the published Global Events of a day the asker can attend between their items (`EventsInput`, kind
       `events`): `EventsPlanService` reads the asker's day, the day's events, and the Places, and `fitEvents` keeps

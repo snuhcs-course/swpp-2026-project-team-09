@@ -5,9 +5,11 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ClockRange, type EquipmentGroup, KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
+import { type SeatArrival } from './seat-arrival.js';
 
 // A library card: what the phone fills from the library and acts on only when the User presses its button. The server
 // fills it from the catalogue and the tool's checked input, so it holds no seat, no booking and nothing of any User's
@@ -70,6 +72,10 @@ export interface LibraryCard {
     // For myBookings, the period, from date to `until`.
     until: string | null;
     target: LibraryTarget | null;
+    // Only on a seat whose start the server filled from the User's arrival: the arrival, when it is known, and when to
+    // leave 관정관 (HH:MM) for what follows before the booking ends, null for nothing. An older app ignores both.
+    arrival?: SeatArrival;
+    leaveBy?: string | null;
   };
 }
 
@@ -155,6 +161,9 @@ export interface BookCardInput {
   notes?: readonly string[] | undefined;
   // A room request made from the card waits for the booking window to hold its date.
   waitsForWindow?: boolean | undefined;
+  // A seat filled from the User's arrival.
+  arrival?: SeatArrival | undefined;
+  leaveBy?: string | null | undefined;
 }
 
 // The seat numbers the card picks from: the named room's, else the equipment group's, else the sector's rooms.
@@ -194,6 +203,8 @@ export function bookCard(space: LibrarySpace, input: BookCardInput): LibraryCard
       companions,
       questId,
       notes: [...notes, ...space.notes],
+      ...(input.arrival === undefined ? {} : { arrival: input.arrival }),
+      ...(input.leaveBy === undefined ? {} : { leaveBy: input.leaveBy }),
     },
   };
 }

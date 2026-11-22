@@ -1,0 +1,69 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-23  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# A Restaurant's hours are answered from restaurantHours, never as missing data (P05 ticket 36): on the released app,
+# "예술계 밥 언제까지 해?" got "영업 종료 시간은 데이터에 없어서 확인되지 않아요". The P4 world asked from an app that
+# draws answers (`pnpm eval --world p4-answer`), on Monday 2026-11-02 at 11:30. Its menus carry no hours, so the reply
+# says what the menu shows and that the hours are not known. Written and committed, not run.
+
+- id: restaurant-hours-closing
+  category: restaurant-hours
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 학생회관식당 점심 언제까지 해?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [restaurantHours]
+      forbidden: [findMenu, planMeal, getMenus]
+    text:
+      absent: [데이터에 없, 데이터가 없]
+
+- id: restaurant-hours-opening
+  category: restaurant-hours
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 자하연 몇 시에 열어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [restaurantHours]
+      forbidden: [findMenu, planMeal]
+    text:
+      absent: [데이터에 없, 데이터가 없]
+
+- id: restaurant-hours-open-now
+  category: restaurant-hours
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 301동식당 지금 열었어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [restaurantHours]
+      forbidden: [findMenu, planMeal]
+    text:
+      absent: [데이터에 없, 데이터가 없]
+
+- id: restaurant-hours-after-a-plan
+  category: restaurant-hours
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 배고파
+    - assistant:
+        text: "점심 학생회관식당 · 11:00–14:30\n11:36 도착 · 13:20엔 나서요"
+    - user: 학생회관식당 몇 시까지 해?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [restaurantHours]
+      forbidden: [findMenu]
+    text:
+      absent: [데이터에 없, 데이터가 없]

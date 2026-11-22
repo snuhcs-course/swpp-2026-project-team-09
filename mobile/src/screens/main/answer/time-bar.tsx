@@ -3,12 +3,18 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useState } from 'react';
 import { type LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQuery } from '@tanstack/react-query';
 import type { AnswerReply, Plan } from '@/api/assistant-types';
+import { questsQuery } from '@/api/queries';
+import type { Quest } from '@/api/types';
+import { fixedOnDay } from '@/features/assistant/booking-day';
+import { spanOf } from '@/library/cards/slot-band';
 import type { Lookup } from '@/api/lookup-types';
 import { color, radius, shadow, space } from '@/design-system';
 import { windowOf } from '@/features/assistant/plan-input';
@@ -29,6 +35,7 @@ import { type BandFocus, useCorrections } from './use-corrections';
 import { addNameOf } from './who-words';
 
 const NO_WINDOW = { from: null, until: null };
+const NO_QUESTS: readonly Quest[] = [];
 // The grip takes a press 44 high around its middle only, so that the ends' labels, the day's other meal among them,
 // keep their own presses.
 const GRIP_WIDTH = 72;
@@ -206,6 +213,8 @@ export function BookingBar({
   const { top } = useSafeAreaInsets();
   const { kept, keep, live } = bookingKept(booking, chat);
   const pending = chat.outcomes.get(booking.place)?.kind === 'pending';
+  // The User's Classes and Quests of the slot's date, which the band shows and names (P01 ticket 05).
+  const quests = useQuery(questsQuery).data ?? NO_QUESTS;
   return live === null || pending || booking.booked ? null : (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
@@ -218,6 +227,7 @@ export function BookingBar({
         onChange={(slot) => {
           keep({ slot });
         }}
+        day={fixedOnDay(quests, live.date, spanOf(live))}
         slot={live}
         space={kept.space}
         wordsFirst
