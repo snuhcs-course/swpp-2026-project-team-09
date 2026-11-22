@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibraryErrorKind } from '@/library/call-script';
@@ -93,6 +94,13 @@ export class FakeLibrary {
     this.held = [];
   }
 
+  // From now on a seats' read is never answered, as a library that does not answer (P01 ticket 07).
+  private seatsHeld = false;
+
+  holdSeats(): void {
+    this.seatsHeld = true;
+  }
+
   release(): void {
     const waiting = this.held ?? [];
     this.held = null;
@@ -103,6 +111,11 @@ export class FakeLibrary {
 
   // The answer of a call: at once, or for a held write, once released.
   reply(endpoint: LibraryEndpoint, body: Body): Promise<TransportReply> {
+    if (this.seatsHeld && endpoint === 'getSeatBookingList') {
+      return new Promise(() => {
+        // Never answered.
+      });
+    }
     const waiting = this.held;
     if (waiting === null || (endpoint !== 'setRoomBooking' && endpoint !== 'setCancelBooking')) {
       return Promise.resolve(this.answer(endpoint, body));
