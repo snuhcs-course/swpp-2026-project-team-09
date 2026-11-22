@@ -131,12 +131,29 @@ describe('A Friend who sets out from the asker’s own Place', () => {
   });
 });
 
+describe('A day whose menus are not posted yet', () => {
+  // The worked example's day is Tuesday 2026-11-17; the menus are posted from today to six days ahead.
+  it.each([
+    ['2026-11-16T21:00:00+09:00', 'the day before', '내일(화)'],
+    ['2026-11-14T21:00:00+09:00', 'three days before', '11/17(화)'],
+    ['2026-11-11T21:00:00+09:00', 'six days before, the last day posted', '11/17(화)'],
+    ['2026-11-10T21:00:00+09:00', 'seven days before, which is never posted', '11/17(화)'],
+  ])('asked at %s, %s, says the day and how far ahead menus are', (asked, _when, day) => {
+    const { noPlan } = answerOf([me()], { menus: 'none', candidates: [], now: new Date(asked) });
+
+    expect(noPlan?.lines).toEqual([
+      [plain(`${day} 메뉴는 아직 올라오지 않았어요`)],
+      [plain('메뉴는 엿새 뒤 날짜까지 볼 수 있어요')],
+    ]);
+  });
+});
+
 describe('No plan', () => {
-  it('says that no menu was collected that day', () => {
+  it("says today's menu is not posted yet, never that nothing is open", () => {
     const { plans, noPlan } = answerOf([me()], { menus: 'none', candidates: [] });
 
     expect(plans).toEqual([]);
-    expect(noPlan).toEqual({ reason: 'no-menu', lines: [[plain('그날은 수집된 메뉴가 없어요')]] });
+    expect(noPlan).toEqual({ reason: 'no-menu', lines: [[plain('오늘 메뉴는 아직 올라오지 않았어요')]] });
   });
 
   it('says that no Restaurant is open for that meal', () => {

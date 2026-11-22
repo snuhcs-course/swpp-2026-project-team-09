@@ -291,7 +291,7 @@ describe('An app that does not draw answers', () => {
 });
 
 describe('A day without menus', () => {
-  it('answers no plan for want of a menu, and tells the model none', async () => {
+  it('answers no plan for want of a menu, saying it is not posted yet, and tells the model none', async () => {
     const date = '2087-03-04';
     await stage.asking(date, '11:50');
 
@@ -299,7 +299,7 @@ describe('A day without menus', () => {
 
     const answer = answerIn(response.body);
     expect(answer.plans).toEqual([]);
-    expect(answer.noPlan?.reason).toBe('no-menu');
+    expect(answer.noPlan?.lines).toEqual([[{ text: '오늘 메뉴는 아직 올라오지 않았어요', strong: false }]]);
     expect(stage.model.toolResults()[0]).toMatchObject({ result: 'none' });
   });
 });

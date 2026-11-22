@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -43,7 +44,7 @@ function reasonOf(
   { date, meal, now }: { date: string; meal: 'lunch' | 'dinner'; now: Date },
 ): string {
   if (reason === 'no-menu') {
-    return `No ${meal} menu of ${key} was collected for ${date}.`;
+    return `${key}'s ${meal} menu for ${date} is not posted yet: menus are posted up to six days ahead. Say so, and that it comes later; never that ${key} is closed.`;
   }
   if (reason === 'closed') {
     return `${key} serves no ${meal} on ${date}: its ${meal} menu holds only notes.`;

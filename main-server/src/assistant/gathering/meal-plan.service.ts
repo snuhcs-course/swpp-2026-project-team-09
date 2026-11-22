@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
@@ -119,7 +120,7 @@ export class MealPlanService {
     askerId: string,
     input: MealInput,
     at: PlanAt,
-  ): Promise<{ answer: AnswerReply; served: ReadonlyMap<string, ServedMenu>; busy?: BusyItem[] }> {
+  ): Promise<{ answer: AnswerReply; served: ReadonlyMap<string, ServedMenu>; busy?: BusyItem[]; posted?: boolean }> {
     const friends = await this.friendsOf(askerId, input);
     this.refuseUnknownPlaces(input);
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
@@ -160,7 +161,8 @@ export class MealPlanService {
     const busy = this.busyOf(answer, people[0]?.items ?? [], input);
     const otherMeal = this.otherMealOf(collected, input, now);
     const touched = await this.touched(askerId, input, { ...at, now, kinds: [`meal-${meal}`], setAside: held?.id });
-    return { answer: { ...answer, otherMeal, ...touched, mealSet: mealSetOf(held) }, served: menus, busy };
+    const posted = collected.length > 0;
+    return { answer: { ...answer, otherMeal, ...touched, mealSet: mealSetOf(held) }, served: menus, busy, posted };
   }
 
   // The asker's items that fill the meal's time, when no time is free for it and no condition can be eased: with a

@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -119,7 +120,7 @@ describe('A Restaurant with nothing to eat at that meal', () => {
 
     expect(stage.model.toolResults()[0]).toEqual({
       result: 'none',
-      reason: `No lunch menu of 301동식당 was collected for ${date}.`,
+      reason: `301동식당's lunch menu for ${date} is not posted yet: menus are posted up to six days ahead. Say so, and that it comes later; never that 301동식당 is closed.`,
       lines: [],
     });
     expect(replySchema.parse(response.body).lookup).toBeNull();

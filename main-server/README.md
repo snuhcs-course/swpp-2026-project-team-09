@@ -2660,7 +2660,11 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       start, and the key. When the asker's starting place is not known (a later day with no item before the meal, and
       no location), their walk there cannot count. After the walking that is known, the earliest start comes first,
       then the longest time to eat, then the key. `planned` then carries `order`, which tells the model that the first
-      plan is not the nearest.
+      plan is not the nearest. A day with no menu at all is a day whose menus are not posted yet (the
+      worker reads today to six days ahead, so a week ahead never has one): the card's `noPlan.lines` say
+      `11/30(월) 메뉴는 아직 올라오지 않았어요` and `메뉴는 엿새 뒤 날짜까지 볼 수 있어요` (today the first line alone), the
+      reason stays `no-menu`, and the model is told the menus are not posted yet, never that nothing is open. `findMenu`
+      and `getMenus` say the same of such a day.
     - `findWay(to?, from?, by?)`, with `WAY_RULES`, for an app that sends `answer` (`lookup/`). It finds the way on foot
       to a Place, or to the Place of the User's next item today when `to` is left out, from a Place they named; else
       the main gate (서울대 정문) when their location is off campus; else the Place their location is in, or the
@@ -2678,6 +2682,10 @@ recorded'` with the menu's notes when it serves the meal without kept hours; `se
       time with the corner of the dish line the note follows (`<A코너>…`), or, for one time and no corner, the meal's
       `opensAt` and `closesAt`. A meal with neither a menu nor hours is left out, and a Restaurant with neither for any
       meal answers `none`.
+      A day whose menus are not posted yet is not a closed day: its meals with kept hours answer `serves: 'not
+known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, today `메뉴 아직 안 올라옴 · 평소 …`),
+      never `쉬어요`, which it says only when the menus hold only notes. A meal with no line on a day whose menu has lines for
+      another meal is not served that day (`serves: false`), not a meal still to come.
       Today it adds `now` and `servingNow`, the meal whose hours hold now, or null. With a meal answer on screen (the
       context's `conditions`), it plans that answer again from them and puts it in the reply's `answer`, so that the
       reply carries the plan again; a reply in words alone leaves the plan on screen as it was, since the app keeps

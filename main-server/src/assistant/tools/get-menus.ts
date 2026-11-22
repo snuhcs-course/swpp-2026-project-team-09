@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-17  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -45,7 +46,9 @@ export function getMenus(menus: MenusService): Tool {
       const { date, meal, restaurant } = conditions;
       const days = await menus.findByDate(date);
       if (days.length === 0) {
-        return noneFound(`No menu was collected for ${date}.`);
+        return noneFound(
+          `No menu is posted yet for ${date}: menus are posted up to six days ahead. Say so; never that the restaurants are closed.`,
+        );
       }
       const restaurants = days
         .filter(({ name }) => restaurant === undefined || compact(name).includes(compact(restaurant)))

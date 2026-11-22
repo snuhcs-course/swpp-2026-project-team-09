@@ -8,6 +8,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -145,7 +146,12 @@ describe('getMenus, by day and meal', () => {
 
     await postAssistantMessages(app, accessToken, ask('내일 학식 뭐야?'));
 
-    expect(model.toolResults()).toEqual([{ result: 'none', reason: `No menu was collected for ${empty}.` }]);
+    expect(model.toolResults()).toEqual([
+      {
+        result: 'none',
+        reason: `No menu is posted yet for ${empty}: menus are posted up to six days ahead. Say so; never that the restaurants are closed.`,
+      },
+    ]);
   });
 
   it('gives only the meal asked for, and leaves out the restaurants that do not serve it', async () => {

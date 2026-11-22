@@ -23,6 +23,8 @@ export interface MealOfDay {
   // The day's lines of the meal; empty when none was collected.
   lines: readonly MenuLineDto[];
   hours: Hours | null;
+  // The Restaurant's menu that day has lines for some meal: a meal with none is then not served, not still to come.
+  posted?: boolean;
 }
 
 // A time a note gives, with the corner of the dish line it follows ("A코너"), null when none.
@@ -49,6 +51,7 @@ export interface HoursFound {
 
 const NOT_COLLECTED = "that day's menu is not collected yet; its page gives these hours for that kind of day";
 const NOTES_ONLY = 'its menu that day holds only notes, so it does not serve it';
+const NO_LINES = 'its menu that day has no line for this meal, so it does not serve it';
 
 const notesOf = (lines: readonly MenuLineDto[]): string[] =>
   lines.filter(({ kind }) => kind === MenuLineKind.note).map(({ text }) => othersText('menu.line', text));
@@ -92,7 +95,10 @@ function servedWords(meal: HoursMeal, lines: readonly MenuLineDto[], hours: Hour
     : { meal, serves: true, hours: 'not recorded', notes: notesOf(lines) };
 }
 
-function mealWords({ meal, lines, hours }: MealOfDay): MealWords | null {
+function mealWords({ meal, lines, hours, posted = false }: MealOfDay): MealWords | null {
+  if (lines.length === 0 && posted) {
+    return hours === null ? null : { meal, serves: false, why: NO_LINES, notes: [] };
+  }
   if (lines.length === 0) {
     return hours === null
       ? null
