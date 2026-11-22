@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -65,7 +66,7 @@ describe("the first Plan's labels at the emulator's camera", () => {
     expect(sideOf(drawing, 'answer:candidate:301동식당')).toBe('left');
     expect(sideOf(drawing, 'answer:candidate:3식당')).toBe('left');
     expect(seen(drawing, 'answer:candidate:자하연식당 2층')).toMatchObject({
-      name: '후보 5 · 자하연식당 2층',
+      name: '후보 5 · 자하연식당 2층 · 12:35',
       label: null,
     });
   });
@@ -105,11 +106,12 @@ describe("the third Plan's labels at the emulator's camera", () => {
     expect(sideOf(drawing, 'answer:candidate:302동식당')).toBe('left');
   });
 
-  it('keeps the pick, 3식당, and the next Class at their first sides, and leaves 자하연식당 2층 under the pill out', () => {
-    // The pick's 94 by 46: 140.6 to 234.6, 155.3 to 201.3. "3식당": 69.1 to 114.1. "13:00 수업 · 24동": 36.8 to 149.8,
-    // 119 to 145. 자하연식당 2층 at 81.1: at a side from 68.1, below from 101.1.
+  it('keeps the pick and the next Class at their first sides, puts 3식당 at its right, and leaves 자하연식당 2층 under the pill out', () => {
+    // The pick's 94 by 46: 140.6 to 234.6, 155.3 to 201.3. "3식당 12:31" with its number, 105: at the left from 9.1,
+    // past the area's 16, so at the right. "13:00 수업 · 24동": 36.8 to 149.8, 119 to 145. 자하연식당 2층 at 81.1: at a
+    // side from 68.1, below from 101.1.
     expect(sideOf(drawing, 'answer:pick')).toBe('below');
-    expect(sideOf(drawing, 'answer:candidate:3식당')).toBe('left');
+    expect(sideOf(drawing, 'answer:candidate:3식당')).toBe('right');
     expect(sideOf(drawing, NEXT_CLASS)).toBe('left');
     expect(seen(drawing, 'answer:candidate:자하연식당 2층').label).toBeNull();
   });
@@ -139,13 +141,17 @@ describe("the labels of the answer for a fixed start at the emulator's camera", 
 // Partitions: a label whose only side inside the area covers another mark; first sides under the pill and under the
 // card with a free side left.
 describe('a label near the pill, the card, and other marks', () => {
-  it("leaves 302동식당 out at the lowest zoom rather than above 302동, over the User's dot and tag", () => {
-    // At `THIRD_AT_LOWEST` 302동 stands at (244.0, 502.9): at a side or below its label reaches past 500. Above, 198.0
-    // to 290.0 and 456.9 to 482.9, it covers 301동's symbol box (224.3 to 260.3, 439.5 to 475.5) and "나 · 15분"
-    // (262.3 to 326.3, 444.5 to 470.5).
+  it("keeps 302동식당's tag at the lowest zoom although above 302동 it covers the User's dot and tag: it has no dot of its own", () => {
+    // At `THIRD_AT_LOWEST` 302동 stands at (244.0, 502.9): at a side or below its label reaches past 500, and above it
+    // covers 301동's symbol box and "나 · 15분". 302동식당 stands on 민수's point, so its tag is its only press (the
+    // review of PR 437): it is kept at its first side inside the area.
     const drawing = drawingOf(MEAL_ANSWER, 2, NO_STANDINGS, viewAt(THIRD_AT_LOWEST));
 
-    expect(seen(drawing, 'answer:candidate:302동식당')).toMatchObject({ name: '후보 1 · 302동식당', label: null });
+    expect(seen(drawing, 'answer:candidate:302동식당')).toMatchObject({
+      name: '후보 1 · 302동식당 · 12:15',
+      symbol: null,
+      label: { side: 'above', number: 1 },
+    });
   });
 
   it('puts a flag under its point when above it would lie under the pill', () => {
@@ -161,10 +167,10 @@ describe('a label near the pill, the card, and other marks', () => {
   });
 
   it('puts a candidate above its point when its left, right, and lower sides would reach under the card', () => {
-    // Changed from the stored copy: 자하연식당 2층, 91 wide, stands at the first Plan's view's (130, 492). At the left
-    // (19 to 110) and the right (150 to 241) it would reach 505, below further; above, 84.5 to 175.5 and 446 to 472,
-    // it stays clear of the pick's lines from 184.4 and covers nothing.
-    const at = positionAt(FIRST_CAMERA, { x: 130, y: 492 });
+    // Changed from the stored copy: 자하연식당 2층 with its number and time, 150 wide, stands at the first Plan's view's
+    // (95, 492). At the left it would start out of the area, at the right (115 to 265) it would reach 505, below
+    // further; above, 20 to 170 and 446 to 472, it stays clear of the pick's lines from 184.4 and covers nothing.
+    const at = positionAt(FIRST_CAMERA, { x: 95, y: 492 });
     const answer = withScene(MEAL_ANSWER, 0, placeMoved('자하연식당 2층', at));
 
     expect(sideOf(drawingOf(answer, 0, NO_STANDINGS, viewAt(FIRST_CAMERA)), 'answer:candidate:자하연식당 2층')).toBe(

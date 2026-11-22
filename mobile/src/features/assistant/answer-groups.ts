@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MapScene } from '@/api/assistant-types';
@@ -60,6 +61,8 @@ export interface Draft {
   // Null for a mark that takes no label.
   title: string | null;
   line: string | null;
+  // A candidate's dishes and price under its title and time; left out, none.
+  sub?: string | null;
   // The number a pick or a candidate carries in its label when its dot is not drawn.
   number: number | null;
 }

@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -44,7 +45,7 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 const INVITE = '만들고 초대 보내기';
 const HELD_MS = 3000;
 const PICK = '302동식당 · 12:15 점심';
-const SECOND = '후보 2 · 301동식당';
+const SECOND = '후보 2 · 301동식당 · 12:18';
 
 let server: FakeServer;
 

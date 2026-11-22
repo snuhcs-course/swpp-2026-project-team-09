@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -97,7 +98,7 @@ describe("a Plan's bottom", () => {
   it('switches to candidate 2 at a press on its flag, with no arrows', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
 
-    await pressMarker(user, '후보 2 · 301동식당');
+    await pressMarker(user, '후보 2 · 301동식당 · 12:18');
 
     expect(mapThings()).toContain('301동식당 · 12:18 점심');
   });

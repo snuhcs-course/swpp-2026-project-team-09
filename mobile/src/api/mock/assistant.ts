@@ -9,6 +9,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -27,6 +28,7 @@ import { RECRUITING_QUESTS } from './data/boards';
 import { FRIENDS } from './data/friends';
 import { MENUS } from './data/menus';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
+import { MEAL_ANSWER_MENUS_REPLY } from './data/meal-answer-menus';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from './data/menu-lookup';
 import { NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from './data/missing-inputs';
@@ -68,7 +70,7 @@ import { mockTimetable } from './timetable';
 // shuttle (셔틀 탈까), and of board n21 the way to 919동 when the shuttle is not running (기숙사 가는 셔틀). The words of a
 // board of row 8 get the main server's real refusal, before anything else. 배고파 without the location
 // permission, or with no Class in the mock's Timetable, gets the main server's real answer of board n13 or n15, and
-// board n11's words its answer of no time now. A press on a building or a face is answered with the main server's real
+// board n11's words its answer of no time now. "뭐 먹을까" gets 배고파's answer with each Plan's menu, wherever the User is. A press on a building or a face is answered with the main server's real
 // cards of row 6.
 
 const MENU_WORDS = ['메뉴', '학식', '점심', '저녁', '아침', '밥'];
@@ -239,6 +241,9 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
   }
   if (isStepsAsk(last)) {
     return stepsReplyOn(koreaDateKey(now()));
+  }
+  if (last.includes('뭐 먹을까')) {
+    return MEAL_ANSWER_MENUS_REPLY;
   }
   if (last.includes('배고파')) {
     return hungryReplyOf(context);

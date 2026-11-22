@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -156,7 +157,7 @@ describe('the answer of a meet (board a5)', () => {
     await meetFromCard(user);
 
     expect(mapThings()).toEqual(
-      expect.arrayContaining(['302동 앞 · 12:15 만남', '후보 2 · 301동 앞', '13:00 수업 · 24동', '나 · 3분']),
+      expect.arrayContaining(['302동 앞 · 12:15 만남', '후보 2 · 301동 앞 · 12:18', '13:00 수업 · 24동', '나 · 3분']),
     );
     expect(mapLines()).toEqual(['answer:route:0', 'answer:route:1']);
   });
@@ -190,7 +191,7 @@ describe("the controls of a meet's answer", () => {
   it("shows 301동 앞 for 27 minutes at a press on candidate 2's flag", async () => {
     const user = await meetMinJun();
 
-    await pressMarker(user, '후보 2 · 301동 앞');
+    await pressMarker(user, '후보 2 · 301동 앞 · 12:18');
 
     expect(mapThings()).toContain('301동 앞 · 12:18 만남');
     expect(timeBar().getByText('12:18–12:45 · 함께 27분')).toBeVisible();
