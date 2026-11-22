@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -99,7 +100,7 @@ describe('the card kept with the chat', () => {
 
     await stepBand('시간 띠', 'increment');
     expect(filledCard().getByText('17:30–20:30 · 3시간')).toBeVisible();
-    expect(filledCard().getByText('바꾼 시간이에요. 위 답의 시각은 처음 시간 기준이에요.')).toBeVisible();
+    expect(filledCard().queryByText(/바꾼 시간이에요/u)).toBeNull();
     await pressIn(filledCard(), '자리 선택하기');
     const picture = within(screen.getByTestId('seat-map-large'));
     await pressIn(picture, '7200번 빈 자리');

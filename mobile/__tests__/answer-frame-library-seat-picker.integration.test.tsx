@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, within } from '@testing-library/react-native';
@@ -89,7 +90,7 @@ describe('자리 선택하기 on the seat book card', () => {
 
     await press('자리 선택하기');
     const picture = within(screen.getByTestId('seat-map-large'));
-    expect(picture.getByText('관정관 7층 7A 열람실 2 구역 좌석 현황')).toBeVisible();
+    expect(picture.getByText('관정 7층 열람실 좌석 현황')).toBeVisible();
     expect(picture.queryByRole('button', { name: /번 선택$/u })).toBeNull();
     // A taken seat is no button.
     expect(picture.queryByRole('button', { name: '7194번 빈 자리' })).toBeNull();
@@ -133,7 +134,7 @@ describe('the seat picture, zoomed and closed', () => {
     await press('자리 선택하기');
     const picture = within(screen.getByTestId('seat-map-large'));
     await pressIn(picture, '7300번 빈 자리');
-    await pressIn(picture, '닫기');
+    await pressIn(picture, '좌석 현황 닫기');
 
     expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
   });

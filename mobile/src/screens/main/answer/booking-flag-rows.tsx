@@ -10,7 +10,6 @@ import { now } from '@/clock';
 import { Button, color, font, space, text } from '@/design-system';
 import { bookingLine, bookingTitle, type ShownBooking } from '@/features/assistant/booking-scene';
 import type { Chat } from '@/features/assistant/use-chat';
-import { spaceWords } from '@/library/cards/bookings';
 import { bookingKept } from '../library/booking-kept';
 import type { BookingStage } from '../library/booking-stage';
 
@@ -32,7 +31,6 @@ export function BookingFlagRows({ booking, chat, stage, onDone }: BookingFlagRow
       <Text accessibilityRole="header" style={styles.head}>
         {bookingTitle(kept.space)}
       </Text>
-      <Text style={styles.line}>{spaceWords(kept.space)}</Text>
       <Text style={styles.line}>{bookingLine(told?.seat ?? kept.seat, kept.slot, now())}</Text>
       {told?.picks === true ? (
         <Button

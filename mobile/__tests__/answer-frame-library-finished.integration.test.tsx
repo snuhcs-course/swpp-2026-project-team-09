@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { libraryCard } from '@/api/mock/data/library';
@@ -70,7 +71,7 @@ describe('a finished seat card when the frame draws it anew', () => {
     expect(shown.getByText('예약했어요')).toBeVisible();
     expect(shown.queryByRole('button', { name: '예약하기' })).toBeNull();
     expect(shown.queryByText(/7194번/u)).toBeNull();
-    expect(inFrame().getByText('7193번 예약되었어요!')).toBeVisible();
+    expect(inFrame().getByText('✓ 예약했어요')).toBeVisible();
     expect(library.writes()).toHaveLength(1);
   });
 
@@ -130,7 +131,7 @@ describe('a card whose write is on its way when the frame draws it anew', () => 
     await pass(0);
 
     expect(inCard(SEAT_TEST_ID).getByText('예약했어요')).toBeVisible();
-    expect(inFrame().getByText('7193번 예약되었어요!')).toBeVisible();
+    expect(inFrame().getByText('✓ 예약했어요')).toBeVisible();
     expect(library.writes()).toHaveLength(1);
   });
 

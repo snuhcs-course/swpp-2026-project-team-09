@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -246,7 +247,7 @@ describe('the sheet after a booking of the library', () => {
     await pressIn(inCard(`library-book-${SEAT_CARD.library.key}`), '예약하기');
     await pass(500);
 
-    expect(screen.getByText('7193번 예약되었어요!')).toBeVisible();
+    expect(screen.getByText('✓ 예약했어요')).toBeVisible();
     expect(screen.getByRole('header', { name: QUESTION })).toBeVisible();
     expect(phone.prompts()).toBe(0);
   });

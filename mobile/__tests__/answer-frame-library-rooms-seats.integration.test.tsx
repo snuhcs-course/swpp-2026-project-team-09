@@ -127,7 +127,7 @@ describe('the room book card', () => {
     expect(inFrame().getByText('G412 예약되었어요!')).toBeVisible();
     expect(inFrame().getByLabelText('방 G412')).toBeVisible();
     expect(screen.queryByText(/좌석배정기/u)).toBeNull();
-    expect(inFrame().getByText(/사용 다했으면 꼭 반납처리를 해주세요!/u)).toBeVisible();
+    expect(inFrame().getByText(/다 쓰면 꼭 반납해 주세요/u)).toBeVisible();
     expectNothingOfTheLibrarySent(server, ['G412']);
   });
 });
@@ -214,7 +214,7 @@ describe('the seats card, large and tapped', () => {
     await laidOut(300);
 
     await pressIn(inCard(`library-seats-${SEATS_CARD.library.key}`), '좌석 현황 크게 보기');
-    expect(screen.getByText('관정관 7층 7A 열람실 2 구역 좌석 현황')).toBeVisible();
+    expect(screen.getByText('관정 7층 열람실 좌석 현황')).toBeVisible();
     expect(screen.getByText('밀어서 옮기고, 두 손가락으로 확대해요')).toBeVisible();
     expect(screen.getByTestId('seat-map-large-map-image')).toHaveStyle({ height: 300, width: (300 * 2529) / 1198 });
 

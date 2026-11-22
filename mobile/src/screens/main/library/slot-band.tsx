@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useMemo, useState } from 'react';
@@ -37,6 +38,8 @@ interface SlotBandProps {
   slot: Slot;
   space: LibrarySpace;
   onChange: (slot: Slot) => void;
+  // The words over the track instead of under it: the time bar's head.
+  wordsFirst?: boolean;
 }
 
 // A move of the band, worked out against the limits at the moment it is used: during a drag, and again with `now` at
@@ -170,6 +173,7 @@ export function SlotBand(props: SlotBandProps): ReactElement {
   const nowAt = nowOn(slot.date, now(), limits);
   return (
     <View style={styles.band} testID="slot-band">
+      {props.wordsFirst === true ? <Text style={[styles.words, styles.head]}>{spanWords(shown)}</Text> : null}
       <GestureDetector gesture={whole}>
         <View
           collapsable={false}
@@ -191,7 +195,7 @@ export function SlotBand(props: SlotBandProps): ReactElement {
         <Text style={styles.end}>{clockOf(limits.open)}</Text>
         <Text style={styles.end}>{clockOf(limits.close)}</Text>
       </View>
-      <Text style={styles.words}>{spanWords(shown)}</Text>
+      {props.wordsFirst === true ? null : <Text style={styles.words}>{spanWords(shown)}</Text>}
     </View>
   );
 }
@@ -233,4 +237,6 @@ const styles = StyleSheet.create({
   ends: { flexDirection: 'row', justifyContent: 'space-between' },
   end: { ...text.caption, color: color.inkSubtle },
   words: { ...text.label, color: color.quest, textAlign: 'center' },
+  // In the time bar's head, beside "←", as a meal's bar has its words (P01 ticket 03).
+  head: { textAlign: 'left' },
 });

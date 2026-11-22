@@ -64,7 +64,8 @@ export interface CardLeaving {
   openPartyForm: (proposal: QuestProposal) => void;
   proposals: ProposalActions;
   // The seat card whose booking the map draws, by its place, and how it tells what it offers (P04 ticket 07).
-  booking?: { place: string | null; tell: Tell; steps: boolean };
+  // `raised`: the answer's card is raised, so the seat card shows all it holds; lowered, it says one sentence.
+  booking?: { place: string | null; tell: Tell; steps: boolean; raised: boolean };
 }
 
 // What the cards of the conversation's answers do, and the sheets their buttons open over the chat.
@@ -90,6 +91,7 @@ export function useCardActions(chat: Chat, leaving: CardLeaving): { actions: Car
           bubbles.findLast(({ id, role }) => role === 'user' && id < bubbleId)?.text ?? '',
         onMap: (card: string) => (booking !== undefined && booking.place === card ? booking.tell : null),
         bandOnBar: (card: string) => booking !== undefined && booking.place === card && !booking.steps,
+        docked: (card: string) => booking !== undefined && booking.place === card && !booking.steps && !booking.raised,
       },
     }),
     [

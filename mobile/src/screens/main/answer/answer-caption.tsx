@@ -21,11 +21,24 @@ interface AnswerCaptionProps {
 
 // What the caption's right side says for a meal answer with a Plan, one place or many ("올리면 1곳 목록"): while
 // docked, a press that raises the card to the list of every place, the only way the docked card is raised; while
-// raised, how that list is ordered. Null for any other answer.
+// raised, how that list is ordered. For a booking on the map, while lowered, a press that raises the card to the room,
+// the seat, and the rest (P01 ticket 03). Null for any other answer.
 function listWordsOf({
   answer: shown,
   card,
+  booking,
+  steps,
 }: ChatSheetControl): { words: string; onPress: (() => void) | null } | null {
+  if (booking !== null && steps === null) {
+    return card.raised
+      ? null
+      : {
+          words: '올리면 자리·열람실',
+          onPress: () => {
+            card.setRaised(true);
+          },
+        };
+  }
   if (shown.answer === null || !mealCard(shown.answer)) {
     return null;
   }

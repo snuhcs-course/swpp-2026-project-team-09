@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AssistantReply, LibraryCardData } from '@/api/assistant-types';
@@ -23,7 +24,7 @@ import {
 // cards it would show, in the spec's `library` shape. A time in the words ("17시", "17:00") is the start, else the
 // next 30 minutes.
 
-const LIBRARY_WORDS = ['관정', '도서관', '열람실', '스터디룸', '스튜디오', '내 예약', '반납'];
+const LIBRARY_WORDS = ['관정', '도서관', '열람실', '스터디룸', '스튜디오', '내 예약', '반납', '공부할 자리'];
 const USE_DESC = ['강의', '과제', '동아리활동', '연구', '취업', '기타'];
 const MEDIA_USE_DESC = ['강의', '과제', '동아리활동', '연구', '취업', '콘텐츠제작', '녹음', '기타'];
 
@@ -87,7 +88,24 @@ export function isLibraryAsk(words: string): boolean {
   return LIBRARY_WORDS.some((word) => words.includes(word));
 }
 
+// As the main server's rules have it (`library-rules.ts`, P05 ticket 34): a reading-room seat is booked for today only,
+// so a seat for tomorrow is refused at once, with a time or without, and nothing is asked back.
+const TODAY_ONLY =
+  '관정도서관 열람실은 당일만 예약할 수 있어서 지금은 예약할 수 없어요. 내일 07:00에 열람실이 열면 다시 말해 주세요.';
+const NOT_A_SEAT = ['스터디룸', '스튜디오', '취소', '반납', '내 예약', '현황'];
+
+function tomorrowsSeat(words: string): AssistantReply | null {
+  if (!words.includes('내일') || NOT_A_SEAT.some((word) => words.includes(word))) {
+    return null;
+  }
+  return { text: TODAY_ONLY, mapButtons: [], cards: [], proposal: null };
+}
+
 export function libraryReply(words: string): AssistantReply {
+  const tomorrow = tomorrowsSeat(words);
+  if (tomorrow !== null) {
+    return tomorrow;
+  }
   const card = cardFor(words);
   const text = card.action === 'book' ? SHOWN : '카드에서 확인해 주세요.';
   return { text, mapButtons: [], cards: [{ kind: 'library', library: card }], proposal: null };

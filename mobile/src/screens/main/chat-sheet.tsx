@@ -186,7 +186,12 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const bookingStage = useBookingStage();
   const place = onMap.booking?.place ?? null;
   const steps = onMap.steps !== null;
-  const booking = useMemo(() => ({ place, tell: bookingStage.tell, steps }), [place, bookingStage.tell, steps]);
+  const card = useCardRaise(kept.framed);
+  const { raised } = card;
+  const booking = useMemo(
+    () => ({ place, tell: bookingStage.tell, steps, raised }),
+    [place, bookingStage.tell, steps, raised],
+  );
   const onScreen = useAnswerOnScreen(chat.bubbles, where, shownNow);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation);
   const pick = usePicking(chat);
@@ -212,7 +217,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
     leave: useQuestLeaving(),
     pick,
     locationMissing: where.locationMissing,
-    card: useCardRaise(kept.framed),
+    card,
     ...useOpenedMark(chat.bubbles, kept.framed),
     ...pressing,
   };

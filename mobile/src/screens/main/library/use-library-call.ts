@@ -217,6 +217,9 @@ export interface LibraryCardActions {
   // Whether the time bar holds the band of the seat card at a place: a booking on the map alone; a step's card keeps its
   // own band (P04 ticket 09). Left out, none does.
   bandOnBar?: (card: string) => boolean;
+  // Whether the seat card at a place is the booking on the map while the answer's card is lowered: it says one sentence,
+  // and the rest waits for the raised card (P01 ticket 03). Left out, none is.
+  docked?: (card: string) => boolean;
 }
 
 // How a card's write is marked with the chat while it is on its way.

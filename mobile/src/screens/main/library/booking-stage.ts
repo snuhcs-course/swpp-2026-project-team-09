@@ -77,6 +77,8 @@ interface Telling {
   // The seats' reading or the last write asked for the library's login.
   logInAsked: boolean;
   busy: boolean;
+  // The seats are being read or the rooms listed: 예약하기 stays in place, disabled (P01 ticket 03).
+  waiting: boolean;
   book: () => void;
   logIn: () => void;
   pick: (() => void) | null;
@@ -84,16 +86,18 @@ interface Telling {
 
 // A seat card on the map tells the screen what it offers at each render, and that it is gone once it unmounts.
 export function useTellBooking(tell: Tell | null, telling: Telling): void {
-  const { place, seat, logInAsked, busy, book, logIn, pick } = telling;
+  const { place, seat, logInAsked, busy, waiting, book, logIn, pick } = telling;
   useEffect(() => {
     if (tell === null) {
       return;
     }
     const main = logInAsked
       ? { words: '로그인', onPress: logIn, disabled: false }
-      : seat === null
-        ? null
-        : { words: busy ? '예약하는 중' : '예약하기', onPress: book, disabled: busy };
+      : waiting
+        ? { words: '예약하기', onPress: book, disabled: true }
+        : seat === null
+          ? null
+          : { words: busy ? '예약하는 중' : '예약하기', onPress: book, disabled: busy };
     tell({ place, seat, main, pick });
   });
   useEffect(
@@ -112,13 +116,15 @@ interface SeatOnMapOf {
   // 로그인 after the seats could not be read.
   logIn: () => void;
   shown: LibrarySpace;
+  // The rooms are listed, or a full room is being swapped.
+  choosing: boolean;
 }
 
 // A seat card whose booking the map draws (`tell` given): it tells its seat, 예약하기 or 로그인, and its seat picture's
 // opening, which it holds here so that the flag's card opens it too.
 export function useSeatOnMap(
   tell: Tell | null,
-  { place, seat, loaded, write, logIn, shown }: SeatOnMapOf,
+  { place, seat, loaded, write, logIn, shown, choosing }: SeatOnMapOf,
 ): { picking: boolean; setPicking: (picking: boolean) => void; onMap: boolean } {
   const [picking, setPicking] = useState(false);
   const failures = [loaded.state === 'failed' ? loaded.failure : null, write.failure?.failure ?? null];
@@ -127,6 +133,7 @@ export function useSeatOnMap(
     seat: seat?.VNAME ?? null,
     logInAsked: failures.some((failure) => failure !== null && needsLogin(failure)),
     busy: write.busy,
+    waiting: choosing || loaded.state === 'loading',
     book: (): void => {
       if (seat !== null) {
         write.run(seat);

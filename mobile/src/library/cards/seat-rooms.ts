@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
@@ -54,6 +55,12 @@ export function roomOf(space: Pick<LibrarySpace, 'id' | 'floor' | 'kind'>): Room
     return null;
   }
   return ROOMS.find(({ floor, kind }) => floor === space.floor && kind === space.kind) ?? null;
+}
+
+// "관정 7층 열람실": the room's chip words, or its floor and short name; the room's one name on the map and in the done
+// message (P01 ticket 03).
+export function roomTitle(space: Pick<LibrarySpace, 'id' | 'floor' | 'kind' | 'name'>): string {
+  return `관정 ${roomOf(space)?.label ?? `${String(space.floor)}층 ${shortName(space)}`}`;
 }
 
 // "7A 노트북존", or the space's own name for one the phone has no short name for.

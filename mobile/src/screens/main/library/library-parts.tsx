@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -121,7 +122,8 @@ export function FailureNote({
   failure: LibraryFailure | null;
   // The library's own words, or a card's sentence for the failure.
   message?: string;
-  onLogIn: () => void;
+  // Null where 로그인 is the screen's main button (a booking on the map alone): the note says why, and offers no button.
+  onLogIn: (() => void) | null;
   reading?: ReadAgain;
 }): ReactElement | null {
   if (failure === null && message === undefined) {
@@ -141,7 +143,7 @@ export function FailureNote({
   return (
     <View style={styles.failure}>
       <Said tone="danger">{message ?? (failure === null ? '' : LIBRARY_FAILURE_TEXT[failure])}</Said>
-      {failure !== null && needsLogin(failure) ? (
+      {failure !== null && needsLogin(failure) && onLogIn !== null ? (
         <Pills>
           <Pill label="로그인" onPress={onLogIn} primary />
         </Pills>

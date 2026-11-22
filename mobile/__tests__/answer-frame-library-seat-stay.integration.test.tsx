@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -87,7 +88,7 @@ describe('the stay of a seat booked', () => {
     await pass(500);
 
     expect(library.writes()).toHaveLength(1);
-    expect(inFrame().getByText('7193번 예약되었어요!')).toBeVisible();
+    expect(inFrame().getByText('✓ 예약했어요')).toBeVisible();
   });
 });
 
