@@ -47,7 +47,7 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 
 const ASKER = MEAL_ANSWER.input.people[0];
 const ADD = '같이 먹을 친구 추가';
-const JI_WOO_CELL = '서지우, 경영학과, 자리 모름, 추가';
+const JI_WOO_CELL = '서지우, 경영학과, 위치 모름, 추가';
 const PICK = '302동식당 · 12:15 점심';
 // 김민준's face on the Plan, named apart from his Avatar on the everyday map.
 const FACE = '민준';
@@ -267,6 +267,6 @@ describe('full names', () => {
     expect(card().getByRole('button', { name: '김민준, 컴퓨터공학부, 1.2km, 추가' })).toHaveTextContent(
       '김민준컴퓨터공학부1.2km',
     );
-    expect(card().getByRole('button', { name: JI_WOO_CELL })).toHaveTextContent('서지우경영학과자리 모름');
+    expect(card().getByRole('button', { name: JI_WOO_CELL })).toHaveTextContent('서지우경영학과위치 모름');
   });
 });

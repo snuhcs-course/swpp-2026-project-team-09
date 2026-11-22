@@ -7,6 +7,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -27,6 +28,7 @@ import type { JoinRequest } from '@/api/waiting-types';
 import { useToast } from '@/design-system';
 import { useDeclineParty } from '@/features/parties/declined';
 import { leavingOnPurpose } from '@/features/quests/leaving';
+import { outOfParty } from '@/features/quests/out-of-party';
 import { refusalWords } from '@/features/quests/refusals';
 import type { MemberView } from '@/features/quests/room-adapter';
 
@@ -99,15 +101,6 @@ async function leaveIf(queryClient: QueryClient, first: LeaveFirst): Promise<str
 // Why entering the other Party failed: after ending the User's own, that it is off although the User is in no Party.
 function enteringWords(ended: string | null, error: unknown): string {
   return ended === null ? refusalWords(error) : `‘${ended}’ 활성화는 꺼졌지만 새 파티에 들어가지 못했어요`;
-}
-
-// How the User leaves the Quest's Party before the Quest: the Leader of the Party ends it, a member leaves it.
-async function outOfParty(party: 'leads' | 'member' | 'none', ends: boolean): Promise<void> {
-  if (party === 'leads' && ends) {
-    await apiClient.endParty();
-  } else if (party !== 'none') {
-    await apiClient.leaveParty();
-  }
 }
 
 // What every action uses: the cache, the toast, and `run`, which runs requests, says `done` once they were taken or

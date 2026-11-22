@@ -3,10 +3,12 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { now } from '@/clock';
 import { space } from '@/design-system';
 import { friendChips } from '@/features/assistant/made-quests';
 import type { MadeQuestView } from '@/features/assistant/use-made-quests';
@@ -39,6 +41,8 @@ export function MadeQuestFrame({ made, onClose, room, onHeight }: MadeQuestFrame
         standings={made.standings}
         startAt={made.destination.startsAt}
         steps={made.quest.subQuests}
+        title={made.quest.title}
+        now={now()}
       />
     </FrameCard>
   );

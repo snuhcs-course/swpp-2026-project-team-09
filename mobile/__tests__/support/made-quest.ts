@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type userEvent, within } from '@testing-library/react-native';
@@ -54,7 +55,7 @@ export function madeCard(): ReturnType<typeof within> {
 }
 
 // A press on a marker of the map: the flag, which the line above the input names the same, or another.
-export async function pressMarker(user: ReturnType<typeof userEvent.setup>, words: string): Promise<void> {
+export async function pressMarker(user: ReturnType<typeof userEvent.setup>, words: string | RegExp): Promise<void> {
   await user.press(within(screen.getByTestId('main-map-touches')).getByRole('button', { name: words }));
 }
 

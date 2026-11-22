@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -18,6 +19,7 @@ import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { reopenAnswer } from './support/questions';
 
 // P02 ticket 12 against the fake main server: a request that failed says so in two lines and keeps the words in the
 // input (n16), and while the reply is on its way the card shows the dots (보는 중) with 그만, and the input is hidden
@@ -173,7 +175,7 @@ describe('the words kept after a failure, in the frame (n16)', () => {
 
     await user.press(screen.getByRole('button', { name: '답 닫기' }));
     expect(input()).toHaveDisplayValue(ASKED);
-    await user.press(screen.getByRole('button', { name: '이전 답' }));
+    await reopenAnswer(user);
     await user.press(screen.getByRole('button', { name: '새 대화' }));
 
     expect(input()).toHaveDisplayValue('');

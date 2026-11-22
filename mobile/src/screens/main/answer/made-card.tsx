@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -42,6 +43,8 @@ export function MadeCard({ answer, plan, made, invitation, over, onClose }: Made
       standings={invitation.standings}
       startAt={plan.startAt}
       steps={made.quest.subQuests}
+      title={made.quest.title}
+      now={new Date(plan.band.now)}
     />
   );
 }

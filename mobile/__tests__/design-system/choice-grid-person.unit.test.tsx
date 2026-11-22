@@ -30,9 +30,9 @@ function person(more?: GridChoice['more']): GridChoice[] {
       key: 'f11',
       name: '서지우',
       sub: '심리학과',
-      value: '자리 모름',
+      value: '위치 모름',
       faint: true,
-      label: '서지우, 심리학과, 자리 모름, 추가',
+      label: '서지우, 심리학과, 위치 모름, 추가',
     },
   ];
 }

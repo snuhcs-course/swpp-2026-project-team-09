@@ -61,7 +61,7 @@ describe('FriendChoices in order', () => {
   // Partitions: Friends at a distance under a kilometre and from one, one without a position, and no Plan to measure
   // from; a tie between two whose full names and given names go in opposite orders. The rule: the decision of
   // 2026-11-15, with ticket 18's full name and department, the distance to the picked Restaurant ("350m" to 10 metres
-  // under a kilometre, "1.2km" from one), "자리 모름" without a position; nearest first, those without last, and ties
+  // under a kilometre, "1.2km" from one), "위치 모름" without a position; nearest first, those without last, and ties
   // by the full name (ticket 18's decision 10).
   it('lists the Friends nearest first by their full names and distances, those without a position last', async () => {
     await show();
@@ -71,7 +71,7 @@ describe('FriendChoices in order', () => {
       '강도윤, 수리과학부, 720m, 추가',
       '임채원, 화학생물공학부, 1.1km, 추가',
       '김민준, 컴퓨터공학부, 1.2km, 추가',
-      '서지우, 심리학과, 자리 모름, 추가',
+      '서지우, 심리학과, 위치 모름, 추가',
     ]);
     expect(screen.getByRole('button', { name: '정하은, 컴퓨터공학부, 160m, 추가' })).toHaveTextContent(
       '정하은컴퓨터공학부160m',
@@ -102,7 +102,7 @@ describe('FriendChoices in order', () => {
       '김민준, 컴퓨터공학부, 추가',
       '임채원, 화학생물공학부, 추가',
       '정하은, 컴퓨터공학부, 추가',
-      '서지우, 심리학과, 자리 모름, 추가',
+      '서지우, 심리학과, 위치 모름, 추가',
     ]);
   });
 });
@@ -183,7 +183,7 @@ describe('FriendChoices pressed', () => {
     const onChoose = jest.fn<void, [string]>();
     await show({ onChoose });
 
-    await userEvent.press(screen.getByRole('button', { name: '서지우, 심리학과, 자리 모름, 추가' }));
+    await userEvent.press(screen.getByRole('button', { name: '서지우, 심리학과, 위치 모름, 추가' }));
 
     expect(onChoose).toHaveBeenCalledWith('f11');
   });

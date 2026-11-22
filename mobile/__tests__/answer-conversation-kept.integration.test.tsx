@@ -25,9 +25,10 @@ import { DINNER, press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { answerShuttle } from './support/shuttle';
+import { CONTINUE, reopenAnswer } from './support/questions';
 
-// P02 ticket 32 against the fake main server: leaving the answer frame hides it and keeps the conversation, "이전 답"
-// in the AI input shows it again, a message from the everyday map goes on with it, and "새 대화" keeps it aside in the
+// P02 ticket 32 against the fake main server: leaving the answer frame hides it and keeps the conversation, the map
+// screen's chip "이어서 · …" shows it again (P04 ticket 11), a message from the everyday map goes on with it, and "새 대화" keeps it aside in the
 // list of questions (P04 ticket 10).
 
 jest.mock('expo-location');
@@ -49,8 +50,8 @@ const REPLY = '셔틀 두 대가 정문과 자연대에 있어요.';
 const TEXT_REPLY = { text: REPLY, mapButtons: ['shuttle'], cards: [], proposal: null };
 // A mark of the first Plan on the map.
 const PLAN_MARK = '302동식당 · 12:15 점심';
-// Named "이전 답, 새 답 있음" while it holds a reply not yet seen.
-const EARLIER = /^이전 답/u;
+// The map screen's chip of the conversation kept (P04 ticket 11), in place of "이전 답".
+const EARLIER = CONTINUE;
 
 let server: FakeServer;
 let back: () => Promise<boolean>;
@@ -122,15 +123,15 @@ function expectHidden(): void {
   expect(screen.getByRole('button', { name: EARLIER })).toBeVisible();
 }
 
-// Partitions: the four ways to leave, ✕, back, a layer, and route guidance; each shown again by "이전 답".
+// Partitions: the four ways to leave, ✕, back, a layer, and route guidance; each shown again by the chip "이어서".
 describe('leaving the frame', () => {
-  it('hides it with ✕, and "이전 답" shows the same turn again', async () => {
+  it('hides it with ✕, and the chip "이어서" shows the same turn again', async () => {
     const user = await asked(MEAL_ANSWER_REPLY);
 
     await user.press(pill().getByRole('button', { name: '답 닫기' }));
 
     expectHidden();
-    await user.press(screen.getByRole('button', { name: EARLIER }));
+    await reopenAnswer(user);
     expect(pill().getByText(ASKED)).toBeVisible();
     expectPlanShown();
     expect(screen.queryByRole('button', { name: EARLIER })).toBeNull();
@@ -142,7 +143,7 @@ describe('leaving the frame', () => {
     await expect(back()).resolves.toBe(true);
 
     expectHidden();
-    await user.press(screen.getByRole('button', { name: EARLIER }));
+    await reopenAnswer(user);
     expectPlanShown();
   });
 
@@ -154,7 +155,7 @@ describe('leaving the frame', () => {
 
     expectHidden();
     expect(server.received('GET /shuttle')).toHaveLength(1);
-    await user.press(screen.getByRole('button', { name: EARLIER }));
+    await reopenAnswer(user);
     expect(card().getByText(REPLY)).toBeVisible();
   });
 
@@ -169,13 +170,13 @@ describe('leaving the frame', () => {
       expect.objectContaining({ endLatitude: '37.46159', endLongitude: '126.95104' }),
     );
     expectHidden();
-    await user.press(screen.getByRole('button', { name: EARLIER }));
+    await reopenAnswer(user);
     expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '길 안내' })).toBeVisible();
   });
 });
 
 describe('a reply on its way when the frame is left', () => {
-  it('is kept, and "이전 답" shows it', async () => {
+  it('is kept, and the chip "이어서" shows it', async () => {
     answerWith(TEXT_REPLY, 1000);
     const user = await openMain();
     await send(user, '셔틀 어디 있어?');
@@ -184,7 +185,7 @@ describe('a reply on its way when the frame is left', () => {
     await pass(1000);
 
     expectHidden();
-    await user.press(screen.getByRole('button', { name: EARLIER }));
+    await reopenAnswer(user);
     expect(card().getByText(REPLY)).toBeVisible();
   });
 });
@@ -201,13 +202,13 @@ describe('the map while the frame is hidden', () => {
     expect(screen.getByTestId('map-card')).toBeVisible();
   });
 
-  it('draws the answer and fits the camera to it again once "이전 답" shows the frame', async () => {
+  it('draws the answer and fits the camera to it again once the chip "이어서" shows the frame', async () => {
     const fit = jest.spyOn(projection, 'fit');
     const user = await asked(MEAL_ANSWER_REPLY);
     await user.press(pill().getByRole('button', { name: '답 닫기' }));
     const hidden = fit.mock.calls.length;
 
-    await user.press(screen.getByRole('button', { name: EARLIER }));
+    await reopenAnswer(user);
 
     expect(screen.getByLabelText(PLAN_MARK)).toBeOnTheScreen();
     expect(mapLines()).toEqual(['answer:route:0', 'answer:route:1']);
@@ -234,7 +235,7 @@ describe('going on, and starting over', () => {
     expect(pill().getByText('정문 셔틀은?')).toBeVisible();
   });
 
-  it('keeps the conversation aside with "새 대화": no "이전 답", and the next request carries only its own message', async () => {
+  it('keeps the conversation aside with "새 대화": no "이어서", and the next request carries only its own message', async () => {
     const user = await asked(TEXT_REPLY, '셔틀 어디 있어?');
 
     await user.press(screen.getByRole('button', { name: '새 대화' }));

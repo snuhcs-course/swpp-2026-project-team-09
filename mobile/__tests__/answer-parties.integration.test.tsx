@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply } from '@/api/assistant-types';
@@ -171,6 +172,7 @@ describe('"새로 모집" on a party\'s Plan', () => {
           people: [{ userId: ASKER, constraints: [] }],
         },
         location: ON_CAMPUS,
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
       },
     ]);
     expect(card().getByRole('button', { name: '만들고 모집하기' })).toBeEnabled();
