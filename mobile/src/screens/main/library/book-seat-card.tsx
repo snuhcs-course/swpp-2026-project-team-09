@@ -10,34 +10,25 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, type ReactNode, useEffect, useState } from 'react';
+import { type ReactElement, type ReactNode, useEffect } from 'react';
 import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
 import { now } from '@/clock';
 import { bookingTitle } from '@/features/assistant/booking-scene';
-import type { CardOutcome } from '@/features/assistant/use-chat';
+import { seatWords } from '@/library/cards/bookings';
+import { whenWords } from '@/library/cards/times';
 import type { Slot } from '@/library/cards/payloads';
 import { chooseSeat, freeSeats } from '@/library/cards/seats';
 import { lengthWords, liveSlot, sameSlot } from '@/library/cards/slot-band';
 import type { LibrarySeat } from '@/library/replies';
-import { useAskForPush } from '@/push/push-ask-host';
-import { CardBox, FailureNote, Notes, Pill, Pills, Said } from './library-parts';
+import { CardBox, FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
 import { seatsBubble } from './own-bubbles';
-import { type Booking, NO_FREE_SEAT, SEATS_UNREAD, SEATS_WAIT_MS, sendBooking, withinWait } from './seat-booking';
+import { NO_FREE_SEAT, SEATS_UNREAD } from './seat-booking';
 import { type BookSeatCardProps, type Closed, SeatOffer } from './seat-offer';
 import { RoomTop, RoomWords, type SeatRoom, useFullRoomSwap, useSeatRoom } from './seat-room';
 import { BOOKING_CLOSED } from './seats-card';
 import { SlotBand } from './slot-band';
-import {
-  type LibraryCardActions,
-  useLibraryLoad,
-  useLogInReload,
-  pendingMark,
-  type Loaded,
-  useWrite,
-  type Write,
-} from './use-library-call';
-import { seatsFor } from './use-room-counts';
-import { useSeatStay } from './use-seat-stay';
+import type { Loaded } from './use-library-call';
+import { useSeatCalls } from './seat-calls';
 import { useSeatOnMap } from './booking-stage';
 
 // The book card of a reading room's seat (the MainChatLibReserve frame). It reads the sector's seats for the time,
@@ -49,11 +40,7 @@ import { useSeatOnMap } from './booking-stage';
 
 export { BOOK_FAILED, NO_FREE_SEAT, NOT_BOOKED, SEAT_TAKEN, SEATS_UNREAD, SLOT_PASSED } from './seat-booking';
 export { type Closed, UNDO_ROOM } from './seat-offer';
-
-export const CLOSED: Readonly<Record<Closed, CardOutcome>> = {
-  booked: { kind: 'booked', words: '예약했어요' },
-  declined: { kind: 'declined', words: '예약하지 않았어요' },
-};
+export { CLOSED } from './seat-calls';
 
 function NoFreeSeat({ space, card, actions }: Pick<BookSeatCardProps, 'space' | 'card' | 'actions'>): ReactElement {
   return (
@@ -69,17 +56,6 @@ function NoFreeSeat({ space, card, actions }: Pick<BookSeatCardProps, 'space' | 
       </Pills>
     </>
   );
-}
-
-// After 예약하기 or 닫기: the chat keeps how the card ended, and a booking asks for push.
-function useClose(actions: LibraryCardActions, place: string): (closed: Closed) => void {
-  const askForPush = useAskForPush();
-  return (closed) => {
-    actions.finish(place, CLOSED[closed]);
-    if (closed === 'booked') {
-      askForPush();
-    }
-  };
 }
 
 interface SeatPartProps extends BookSeatCardProps {
@@ -122,47 +98,14 @@ function StudyLine({
   return <Said>{`${why}${bookingTitle(space)}에 ${when}, 빈 자리 ${String(free)}석이에요.`}</Said>;
 }
 
-// The seats' reading and the booking's write for the room and time on screen.
-function useSeatCalls({ card, actions, place, room, slot, setNamed }: SeatPartProps): {
-  loaded: Loaded<readonly LibrarySeat[]>;
-  // The seats on screen: those read, or while a new time or room is read, the last ones read (P01 ticket 06).
-  seats: readonly LibrarySeat[];
-  rereading: boolean;
-  reload: () => void;
-  write: Write<LibrarySeat>;
-  close: (closed: Closed) => void;
-  logIn: () => void;
-} {
-  const { shown } = room;
-  const close = useClose(actions, place);
-  const mapped = actions.bandOnBar?.(place) === true;
-  const { loaded, reload } = useLibraryLoad(
-    () => (mapped ? withinWait(seatsFor(shown, slot), SEATS_WAIT_MS) : seatsFor(shown, slot)),
-    `${shown.id} ${slot.start} ${String(slot.minutes)}`,
-  );
-  const hold = useSeatStay();
-  const booking: Booking = { card, space: shown, slot, actions, close, choose: setNamed, reload, hold };
-  const write = useWrite<LibrarySeat>(
-    (seat, press) => sendBooking(booking, seat, press),
-    undefined,
-    pendingMark(actions, place),
-  );
-  const [last, setLast] = useState<readonly LibrarySeat[] | null>(null);
-  if (loaded.state === 'ready' && last !== loaded.value) {
-    setLast(loaded.value);
-  }
-  const rereading = loaded.state === 'loading' && last !== null;
-  const seats = loaded.state === 'ready' ? loaded.value : rereading ? last : [];
-  return { loaded, seats, rereading, reload, write, close, logIn: useLogInReload(reload) };
-}
-
 // The seats of the room on screen and what the card offers of them. It stays mounted while the room list is open, so
 // that a booking under way is not lost, and shows only the room chip and its list then. On the map it opens with the
 // study answer's sentence.
 function SeatPart(props: SeatPartProps): ReactElement | null {
   const { card, actions, place, room, named, setNamed } = props;
   const { shown } = room;
-  const { loaded, seats, rereading, reload, write, close, logIn } = useSeatCalls(props);
+  const { loaded, last, reload, write, close, logIn } = useSeatCalls(props);
+  const seats = loaded.state === 'ready' ? loaded.value : [];
   const seat = chooseSeat(seats, named);
   const searching = useFullRoomSwap(room, props.space, loaded.state === 'ready' && seat === null);
   // While the rooms are listed no seat is offered, so the button beside the input does not book one out of sight.
@@ -177,7 +120,7 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
   };
   const onMap = useSeatOnMap(actions.onMap?.(place) ?? null, told);
   const mapped = actions.bandOnBar?.(place) === true;
-  const offer = { ...props, space: shown, seats, choose: setNamed, write, close, undo: room.undo, rereading, ...onMap };
+  const offer = { ...props, space: shown, seats, choose: setNamed, write, close, undo: room.undo, ...onMap };
   const looking = loaded.state === 'loading' || searching;
   const free = loaded.state === 'ready' && !searching ? freeSeats(seats).length : null;
   const line = looking || (seat !== null && loaded.state === 'ready');
@@ -194,9 +137,34 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
             <NoFreeSeat actions={actions} card={card} space={shown} />
           ) : null}
           {seat === null ? null : <SeatOffer {...offer} seat={seat} />}
+          {seat === null && last !== null && !props.docked ? (
+            <SeatRechecked seat={chooseSeat(last, named)} slot={props.slot} space={shown} />
+          ) : null}
         </SeatRest>
       )}
     </>
+  );
+}
+
+// While a new time or room is read, the seat last offered, for the eye only, with no button: nothing can book it
+// (PR 500's review).
+function SeatRechecked({
+  seat,
+  slot,
+  space,
+}: {
+  seat: LibrarySeat | null;
+  slot: Slot;
+  space: LibrarySpace;
+}): ReactElement | null {
+  if (seat === null) {
+    return null;
+  }
+  return (
+    <SpaceRow
+      meta={`${whenWords(slot.date, slot.start, slot.minutes, now())} · 다시 확인하는 중`}
+      title={`${bookingTitle(space)} · ${seatWords(seat.VNAME)}`}
+    />
   );
 }
 

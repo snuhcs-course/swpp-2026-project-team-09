@@ -45,7 +45,17 @@ export interface Booking {
   reload: () => void;
   // The stay held as the User's own Quest once booked (P05-14).
   hold: HoldStay;
+  // The room and time the offered seats were read for (`readKeyOf`), null while none is: a seat is sent only for the
+  // room and time it was read for (PR 500's review).
+  readFor: string | null;
 }
+
+// The room and time a seats' read is for.
+export function readKeyOf(space: Pick<LibrarySpace, 'id'>, slot: Slot): string {
+  return `${space.id} ${slot.start} ${String(slot.minutes)}`;
+}
+
+export const SEATS_STALE = '자리를 다시 확인하고 있어요. 확인이 끝나면 다시 눌러 주세요.';
 
 // 예약하기: the booking, then the done message; a seat just taken offers the next free one. A time whose start has
 // gone by at the press, or that the space no longer has room for, is never sent, whatever the band did.
@@ -55,6 +65,9 @@ export async function sendBooking(
   press: ConfirmedPress,
 ): Promise<CardFailure | null> {
   const { card, space, slot } = booking;
+  if (booking.readFor !== readKeyOf(space, slot)) {
+    return { failure: null, message: SEATS_STALE };
+  }
   const live = liveSlot(space, slot, now());
   if (live === null || !sameSlot(live, slot)) {
     return { failure: null, message: live === null ? BOOKING_CLOSED : SLOT_PASSED };
