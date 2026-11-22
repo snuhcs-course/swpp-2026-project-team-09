@@ -220,7 +220,8 @@ const FIRST_PLAN_POINTS = distinct([
   { latitude: 37.45942, longitude: 126.94989 },
 ]);
 
-// The test's phone has no status bar: the pill's 52 from the top and its 48, the 8 of ticket 08's area, and the room
+// The test's phone has no status bar: the top's 52 from the top and the round "←"'s 44 (the 2026-11-22 redesign; the
+// test's answer has no time bar), the 8 of ticket 08's area, and the room
 // the marks need above the top-most point, 24 (자하연식당 2층's label is at its left); below, the card, the 8 of ticket
 // 08's area, and the room the marks need under the bottom-most point: for the first Plan 66, half the symbol box and
 // the gap and the two lines of the pick's label under 302동, 18 + 2 + 46; 64 at each side.
@@ -229,7 +230,7 @@ const FIRST_PLAN_POINTS = distinct([
 const DOCKED = 6;
 
 function padding(cardHeight: number): object {
-  return { top: 52 + 48 + 8 + 24, right: 64, bottom: cardHeight + 8 + 66, left: 64 };
+  return { top: 52 + 44 + 8 + 24, right: 64, bottom: cardHeight + 8 + 66, left: 64 };
 }
 
 // The bottom of a fit's padding, its other sides checked to be those of `padding`.
@@ -244,7 +245,7 @@ function bottomBeside(given: Parameters<typeof projection.fit>[1]['padding']): n
 
 // Partitions: the answer comes before the card is laid out, and the card is laid out.
 describe('the camera', () => {
-  it("fits the first Plan's points into what the pill leaves, when the answer comes", async () => {
+  it("fits the first Plan's points into what the top leaves, when the answer comes", async () => {
     const fit = jest.spyOn(projection, 'fit');
 
     await askOnMap(server, MEAL_ANSWER_REPLY);
