@@ -188,9 +188,11 @@ describe('a message typed while a reply is on its way', () => {
 });
 
 // Partitions: 그만 on the turn that took the waiting question back, with a turn answered before both. Expected values:
-// the review, where 그만 left the first question without its reply.
+// the review, where 그만 left the first question without its reply. Since an example on the main map starts a
+// conversation of its own (P04 ticket 33), 그만 there takes back its only question: the answer closes, and the turn
+// before stays in the conversation put aside, without the question that was still on its way.
 describe('그만 on that turn', () => {
-  it('leaves the turn before, with no question left without its reply', async () => {
+  it('leaves no question without its reply, and the next message starts anew', async () => {
     answerInTurn([
       { text: OPENING_REPLY, afterMs: 0 },
       { text: LATE, afterMs: 2000 },
@@ -205,15 +207,10 @@ describe('그만 on that turn', () => {
     await user.press(screen.getByRole('button', { name: '그만' }));
     await pass(3500);
 
-    expect(pill().getByText(OPENING)).toBeVisible();
-    expect(screen.getByText(OPENING_REPLY)).toBeVisible();
+    expect(screen.queryByTestId('answer-card')).toBeNull();
     expect(screen.queryByText(LATE)).toBeNull();
     expect(screen.queryByText(SECOND_REPLY)).toBeNull();
     await send(user, '고마워');
-    expectSent([
-      { role: 'user', text: OPENING },
-      { role: 'assistant', text: OPENING_REPLY, cards: [] },
-      { role: 'user', text: '고마워' },
-    ]);
+    expectSent([{ role: 'user', text: '고마워' }]);
   });
 });

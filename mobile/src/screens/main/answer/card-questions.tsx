@@ -17,6 +17,7 @@ import type { ChatSheetControl } from '../chat-sheet';
 import { DockChip } from './dock-chips';
 import { restOf } from './docked-answer';
 import { FollowUpChips } from './follow-up-chips';
+import { LeaveRow } from './leave-button';
 import { pressOffer } from './refusal-reply';
 import { QuestionList, questionRowsOf } from './question-list';
 
@@ -70,7 +71,7 @@ function TypingLine({ said }: { said: TypingWords }): ReactElement | null {
 }
 
 // The ways to answer that the reply offers, which stay above the keyboard: its offers' chips, and 지도에서 고르기 and
-// 시간 고르기 while the turn is the latest (P04 ticket 26).
+// 시간 고르기 while the turn is the latest (P04 ticket 26). A Quest's 취소하기 or 나가기 row stays too (`LeaveRow`).
 function TypingOffers({ control }: { control: ChatSheetControl }): ReactElement | null {
   const rest = restOf(control, turnOf(control.chat.bubbles)?.after ?? []);
   if (rest?.kind !== 'words') {
@@ -130,6 +131,7 @@ export function Typing({ control }: { control: ChatSheetControl }): ReactElement
         />
       )}
       <TypingOffers control={control} />
+      {waiting ? null : <LeaveRow control={control} />}
       {waiting || asks ? null : <FollowUps control={control} />}
     </>
   );
