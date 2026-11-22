@@ -17,8 +17,8 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// P04 ticket 24: "저녁 약속 취소해 줘" answers with one button beside the input, 취소하기 or 나가기 over the Quest's title
-// and start, which sends DELETE /quests/{questId} as the room's 나가기 does. Taken, the dock's line says so and the
+// P04 ticket 24: "저녁 약속 취소해 줘" answers with one row in the dock, the Quest's title and start with 취소하기 or 나가기,
+// which sends DELETE /quests/{questId} as the room's 나가기 does. Taken, the dock's line says so and the
 // button goes; refused, the line says so and the button stays. Expected values: the main server's offer of PR 447
 // and the words of the ticket. The phone's clock is Tuesday 2026-10-06 13:00 in Korea.
 
@@ -65,10 +65,6 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-function beside(): ReturnType<typeof within> {
-  return within(screen.getByTestId('ai-input-beside'));
-}
-
 function dock(): ReturnType<typeof within> {
   return within(screen.getByTestId('dock-row'));
 }
@@ -79,13 +75,16 @@ it('says quest-cancel to the main server', () => {
 
 // Partitions: 취소하기 and 나가기; today and tomorrow.
 describe('a Quest asked to be cancelled', () => {
-  it('stands as one button beside the input with the Quest it cancels, under the question', async () => {
+  it('stands as its own row with the Quest it cancels, under the question', async () => {
     await askOnMap(server, replyWith(DINNER));
 
     expect(dock().getByText(QUESTION)).toBeVisible();
-    const button = beside().getByRole('button', { name: '취소하기, 저녁 약속 · 오늘(화) 18:00' });
-    expect(button).toBeEnabled();
-    expect(within(button).getByText('저녁 약속 · 오늘(화) 18:00')).toBeVisible();
+    const row = screen.getByRole('button', { name: '취소하기, 저녁 약속 · 오늘(화) 18:00' });
+    expect(row).toBeEnabled();
+    expect(within(row).getByText('저녁 약속')).toBeVisible();
+    expect(within(row).getByText('취소하기')).toBeVisible();
+    // Its own row: no main button beside the input.
+    expect(screen.queryByTestId('ai-input-beside')).toBeNull();
   });
 
   it('says 나가기 and the day of a Quest tomorrow that others hold', async () => {
@@ -97,7 +96,7 @@ describe('a Quest asked to be cancelled', () => {
     };
     await askOnMap(server, replyWith(lunch, '민수와의 점심에서 나갈까요?'));
 
-    expect(beside().getByRole('button', { name: '나가기, 민수와 점심 · 내일(수) 12:30' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: '나가기, 민수와 점심 · 내일(수) 12:30' })).toBeEnabled();
   });
 });
 
@@ -107,7 +106,7 @@ describe('its button pressed', () => {
     server.on('DELETE /quests/q-dinner', { status: 204 });
     const user = await askOnMap(server, replyWith(DINNER));
 
-    await user.press(beside().getByRole('button', { name: /^취소하기/u }));
+    await user.press(screen.getByRole('button', { name: /^취소하기/u }));
     await pass(500);
 
     expect(server.received('DELETE /quests/q-dinner')).toHaveLength(1);
@@ -119,7 +118,7 @@ describe('its button pressed', () => {
     server.on('DELETE /quests/q-dinner', refusal(404, 'QUEST_NOT_FOUND'));
     const user = await askOnMap(server, replyWith(DINNER));
 
-    await user.press(beside().getByRole('button', { name: /^취소하기/u }));
+    await user.press(screen.getByRole('button', { name: /^취소하기/u }));
     await pass(500);
 
     expect(dock().getByText('‘저녁 약속’ 취소했어요.')).toBeVisible();
@@ -130,10 +129,10 @@ describe('its button pressed', () => {
     server.on('DELETE /quests/q-dinner', { status: 500, body: {} });
     const user = await askOnMap(server, replyWith(DINNER));
 
-    await user.press(beside().getByRole('button', { name: /^취소하기/u }));
+    await user.press(screen.getByRole('button', { name: /^취소하기/u }));
     await pass(500);
 
     expect(dock().getByText('취소하지 못했어요. 다시 눌러 주세요.')).toBeVisible();
-    expect(beside().getByRole('button', { name: /^취소하기/u })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^취소하기/u })).toBeEnabled();
   });
 });
