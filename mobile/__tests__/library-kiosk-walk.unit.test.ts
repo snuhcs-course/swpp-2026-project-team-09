@@ -4,10 +4,10 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { kioskWalkWords, startFromWalk } from '@/library/cards/done';
+import { kioskWalkWords } from '@/library/cards/done';
 
-// The study answer's walk tied to the time (P01 ticket 06): after booking, the kiosk deadline with the walk there;
-// before, why the start is that start. The clock stands at 13:37 in Korea.
+// The study answer's walk tied to the time (P01 ticket 06): after booking, the kiosk deadline with the walk there.
+// The clock stands at 13:37 in Korea.
 
 const NOW = new Date('2026-10-01T04:37:00.000Z');
 
@@ -33,17 +33,5 @@ describe('the kiosk deadline with the walk', () => {
   it('says nothing of the walk without its minutes or the deadline', () => {
     expect(kioskWalkWords('14:07', null, NOW)).toBeNull();
     expect(kioskWalkWords(undefined, 9, NOW)).toBeNull();
-  });
-});
-
-describe('a start the walk reaches', () => {
-  it('is the first step at or after the arrival', () => {
-    expect(startFromWalk('14:00', 9, NOW)).toBe(true);
-    expect(startFromWalk('14:30', 9, NOW)).toBe(false);
-    expect(startFromWalk('14:00', 30, NOW)).toBe(false);
-  });
-
-  it('is never said without the walk', () => {
-    expect(startFromWalk('14:00', null, NOW)).toBe(false);
   });
 });

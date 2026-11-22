@@ -91,13 +91,3 @@ export function kioskWalkWords(deadline: string | undefined, walk: number | null
   }
   return `걸음 ${String(walk)}분 · ${clockOf(leaveBy)}까지 출발하면 ${deadline} 전에 좌석배정기에서 확인할 수 있어요.`;
 }
-
-// Whether a seat's start is the first step the User reaches walking from now (P01 ticket 06): the server fills a seat's
-// start from the arrival at 관정관, and the sentence then says why that start.
-export function startFromWalk(start: string, walk: number | null, now: Date, step = 30): boolean {
-  if (walk === null) {
-    return false;
-  }
-  const after = minutesOf(start) - (koreaMinutes(now) + walk);
-  return after >= 0 && after < step;
-}

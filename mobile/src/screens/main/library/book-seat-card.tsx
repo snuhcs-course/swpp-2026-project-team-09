@@ -15,7 +15,6 @@ import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
 import { now } from '@/clock';
 import { bookingTitle } from '@/features/assistant/booking-scene';
 import type { CardOutcome } from '@/features/assistant/use-chat';
-import { startFromWalk } from '@/library/cards/done';
 import type { Slot } from '@/library/cards/payloads';
 import { chooseSeat, freeSeats } from '@/library/cards/seats';
 import { lengthWords, liveSlot, sameSlot } from '@/library/cards/slot-band';
@@ -101,15 +100,13 @@ function StudyLine({
   slot,
   free,
   busy,
-  walk,
   arrival,
 }: {
   space: LibrarySpace;
   slot: Slot;
   free: number | null;
   busy: boolean;
-  walk: number | null;
-  // The server's arrival when it filled the start from it, ahead of the app's own walk.
+  // The server's arrival when it filled the start from it (P05's PR 496): the reason for the start.
   arrival: NonNullable<LibraryCardData['arrival']> | null;
 }): ReactElement {
   const when = `${slot.start}부터 ${lengthWords(slot.minutes)}`;
@@ -120,8 +117,8 @@ function StudyLine({
     return <Said>{`${bookingTitle(space)}에서 ${when}, 빈 자리를 찾고 있어요.`}</Said>;
   }
   // A start the User reaches walking from now is why it is that start (P01 ticket 06).
-  const fromWalk = walk !== null && startFromWalk(slot.start, walk, now()) ? `걸음 ${String(walk)}분이라 ` : '';
-  const why = arrival === null ? fromWalk : `${arrival.from}에서 걸음 ${String(arrival.walkMinutes)}분이라 `;
+  // Only a start the server filled from the arrival has a reason; a time the User named has none (PR 500's review).
+  const why = arrival === null ? '' : `${arrival.from}에서 걸음 ${String(arrival.walkMinutes)}분이라 `;
   return <Said>{`${why}${bookingTitle(space)}에 ${when}, 빈 자리 ${String(free)}석이에요.`}</Said>;
 }
 
@@ -187,14 +184,7 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
   return (
     <>
       {mapped && line ? (
-        <StudyLine
-          busy={write.busy}
-          free={free}
-          slot={props.slot}
-          space={shown}
-          arrival={props.card.arrival ?? null}
-          walk={actions.bookingWalk?.()?.minutes ?? null}
-        />
+        <StudyLine busy={write.busy} free={free} slot={props.slot} space={shown} arrival={props.card.arrival ?? null} />
       ) : null}
       {props.top}
       {room.listing ? null : (
