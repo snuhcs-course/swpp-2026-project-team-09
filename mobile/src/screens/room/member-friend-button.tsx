@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -49,7 +50,7 @@ function useFriendPresses(member: MemberView): { send: () => void; accept: (requ
   const changes = useFriendChanges();
   const showToast = useToast();
   const refusedToast = (error: unknown): void => {
-    showToast(refusedWords(error));
+    showToast(refusedWords(error), undefined, 'alert');
   };
   return {
     send: () => {

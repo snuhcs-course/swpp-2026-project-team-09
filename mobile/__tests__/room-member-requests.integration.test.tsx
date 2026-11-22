@@ -2,17 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import type { FakeServer } from './support/fake-server';
+import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
-import { answerRoom, HIS_PICNIC, openRoom, PICNIC, SEO_YEON_HOLDER, toast } from './support/room';
+import { answerRoom, HIS_PICNIC, openRoom, PICNIC, SEO_YEON_HOLDER, toast, toastIcon } from './support/room';
 import { askMainServer, JOIN_REQUESTS, PHONE_NOW } from './support/server';
 
 // The room's 친구 추가 on another member's row, and the Leader's mark on a request from a User the Leader removed,
@@ -72,6 +73,7 @@ describe('친구 추가 on 멤버', () => {
 
     expect(server.received('POST /friend-requests').map(({ body }) => body)).toEqual([{ userId: SEO_YEON.id }]);
     expect(toast()).toHaveTextContent('이서연님에게 친구 요청을 보냈어요');
+    expect(toastIcon()).toBe('check');
   });
 
   it('is 요청됨, not pressable, once the User sent a request', async () => {
@@ -101,6 +103,19 @@ describe('친구 추가 on 멤버', () => {
     await openRoom(HIS_PICNIC);
 
     expect(section('멤버').getByRole('button', { name: '이서연님 친구 추가' })).toBeVisible();
+  });
+});
+
+describe('친구 추가 refused', () => {
+  it('says why, with the alert', async () => {
+    server.on('POST /friend-requests', refusal(409, 'FRIEND_REQUEST_ALREADY_SENT'));
+    const user = await openRoom();
+
+    await user.press(section('멤버').getByRole('button', { name: '이서연님 친구 추가' }));
+    await pass(500);
+
+    expect(toast()).toHaveTextContent('이미 친구 요청을 보냈어요');
+    expect(toastIcon()).toBe('alert');
   });
 });
 

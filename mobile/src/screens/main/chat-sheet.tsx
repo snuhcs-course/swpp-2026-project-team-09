@@ -44,6 +44,7 @@ import { type CardRaise, useCardRaise } from './answer/card-raise';
 import { type MarkOpening, useOpenedMark } from './answer/opened-mark';
 import type { CardLeaving } from './chat-card-actions';
 import { useContextChat, type Where } from './use-context-chat';
+import type { LocationMissing } from '@/api/refusal-types';
 import { type KeptConversation, useKeptConversation } from './use-kept-conversation';
 import { type BookingStage, useBookingStage } from './library/booking-stage';
 import { usePlanOutcomes } from './use-plan-outcomes';
@@ -80,6 +81,8 @@ export interface ChatSheetControl extends Omit<KeptConversation, 'chat'>, MarkOp
   leave: QuestLeaving;
   // A Place picked on the map, or a time on the wheel, that a reply asked for (P04 ticket 26).
   pick: Picking;
+  // Why the Assistant is sent no position, which also keeps "길 안내" from starting: null while one is known.
+  locationMissing: LocationMissing;
   // Whether the frame's card is raised, which a press on a Lookup's mark on the map does too.
   card: CardRaise;
   // What was pressed on the map and is open in its card, which every request carries from then on; null for nothing.
@@ -208,6 +211,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
     bookingStage,
     leave: useQuestLeaving(),
     pick,
+    locationMissing: where.locationMissing,
     card: useCardRaise(kept.framed),
     ...useOpenedMark(chat.bubbles, kept.framed),
     ...pressing,

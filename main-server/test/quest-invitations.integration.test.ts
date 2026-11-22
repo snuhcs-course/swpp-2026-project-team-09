@@ -3,13 +3,22 @@
  *
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
+import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { befriend, signInUser, TestUser } from './friends.js';
-import { answerInvitation, getInvitations, invitationOf, invite, setQuest } from './quest-recruiting.js';
+import {
+  answerInvitation,
+  getInvitations,
+  getSentInvitations,
+  invitationOf,
+  invite,
+  setQuest,
+} from './quest-recruiting.js';
 import { getQuest, joinQuest, ownQuest } from './quests.js';
 import { ANY_STRING, refused, SignalWatcher } from './signals.js';
 import { startApp } from './start-app.js';
@@ -19,6 +28,10 @@ let watcher: SignalWatcher;
 
 beforeAll(async () => {
   [app, watcher] = await Promise.all([startApp(inject('settings')), SignalWatcher.start()]);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 afterAll(async () => {
@@ -79,6 +92,34 @@ describe('The Leader inviting a Friend', () => {
     await vi.waitFor(() => {
       expect(signalsTo(friend)).toBe(1);
     });
+  });
+});
+
+// The only Sub Quest passed a second before the test file started, so the Quest has none ahead.
+const ENDED = { subQuest: { title: '점심', endsAt: new Date(Date.now() - 1000).toISOString() } };
+
+describe('An invitation into a Quest with no Sub Quest ahead', () => {
+  it('is left out of the invited User’s invitations, which keep one into a Quest with a Sub Quest ahead', async () => {
+    const [leader, friend] = await friends();
+    const [ended, ahead] = await Promise.all([ownQuest(app, leader, ENDED), ownQuest(app, leader)]);
+    await invite(app, leader, ended, friend.id).expect(204);
+    await invite(app, leader, ahead, friend.id).expect(204);
+
+    const response = await getInvitations(app, friend);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject([{ quest: { id: ahead } }]);
+  });
+
+  it('is left out of the Leader’s invitations of the Quest', async () => {
+    const [leader, friend] = await friends();
+    const ended = await ownQuest(app, leader, ENDED);
+    await invite(app, leader, ended, friend.id).expect(204);
+
+    const response = await getSentInvitations(app, leader, ended);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([]);
   });
 });
 
@@ -175,10 +216,13 @@ describe('Accepting an invitation is refused', () => {
     expect((await getInvitations(app, friend)).body).toHaveLength(1);
   });
 
-  it('when the Quest has no Sub Quest ahead', async () => {
+  it('once the Quest has no Sub Quest ahead', async () => {
     const [leader, friend] = await friends();
-    const endsAt = new Date(Date.now() - 1000).toISOString();
-    const { invitationId } = await invited(leader, friend, { subQuest: { title: '점심', endsAt } });
+    const endsAt = new Date(Date.now() + 60 * 60 * 1000);
+    const { invitationId } = await invited(leader, friend, {
+      subQuest: { title: '점심', endsAt: endsAt.toISOString() },
+    });
+    vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(endsAt);
 
     const response = await answerInvitation(app, friend, invitationId, 'accept');
 

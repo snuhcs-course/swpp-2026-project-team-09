@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -24,6 +25,7 @@ import {
   PICNIC,
   PICNIC_PARTY,
   toast,
+  toastIcon,
 } from './support/room';
 import { askMainServer, JOIN_REQUESTS, ME_ID, PHONE_NOW } from './support/server';
 import { apiClient } from '@/api/client';
@@ -254,6 +256,7 @@ describe('switching from another Party that ended, into one that refuses', () =>
     await answer(user, '나가고 참여');
 
     expect(toast()).toHaveTextContent('‘저녁 먹으러 가요’ 활성화는 꺼졌지만 새 파티에 들어가지 못했어요');
+    expect(toastIcon()).toBe('alert');
     expect(asked()).toEqual([mine + 1, parties + 1, quests + 1]);
     // The room no longer names the ended Party as the one the User is in.
     await user.press(screen.getByRole('button', { name: '참여' }));
@@ -270,6 +273,7 @@ describe('switching from another Party that ended, into one that refuses', () =>
     await answer(user, '활성화');
 
     expect(toast()).toHaveTextContent('‘저녁 먹으러 가요’ 활성화는 꺼졌지만 새 파티에 들어가지 못했어요');
+    expect(toastIcon()).toBe('alert');
   });
 });
 

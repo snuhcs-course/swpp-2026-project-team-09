@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -104,7 +105,7 @@ function useShowMember(): (member: MemberView) => void {
     if (member.seen) {
       router.dismissTo({ pathname: '/main', params: { person: member.id } });
     } else {
-      showToast(`${member.name}님은 위치가 꺼져 있어요`);
+      showToast(`${member.name}님은 위치가 꺼져 있어요`, undefined, 'alert');
     }
   };
 }

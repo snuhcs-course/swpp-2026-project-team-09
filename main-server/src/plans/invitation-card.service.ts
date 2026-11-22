@@ -2,30 +2,34 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { koreaTime } from '../assistant/korea-time.js';
 import { type Position } from '../common/geometry.js';
 import { PrismaService } from '../common/prisma.service.js';
-import { QUEST_INCLUDE, toQuestSummaryDto } from '../quests/dto/quest.dto.js';
+import { CLOCK, type Clock } from '../quests/clock.js';
+import { QUEST_INCLUDE, subQuestsAheadWhere, toQuestSummaryDto } from '../quests/dto/quest.dto.js';
 import { notFound } from '../quests/refusals.js';
 import { type InvitationCardDto } from './dto/invitation-card.dto.js';
 import { placePoint } from './own-way.js';
 import { OwnWayReader } from './own-way-reader.service.js';
 
 // The invitation as the invited User opens it, with their own way, computed at each read. Nothing of it is stored,
-// logged, or sent to anyone.
+// logged, or sent to anyone. One into a Quest with no Sub Quest ahead is answered as one that waits no more, as the
+// User's invitations leave it out.
 @Injectable()
 export class InvitationCardService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ways: OwnWayReader,
+    @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
   async read(userId: string, invitationId: string, position: Position | null): Promise<InvitationCardDto> {
     const invitation = await this.prisma.questInvitation.findFirst({
-      where: { id: invitationId, userId },
+      where: { id: invitationId, userId, quest: subQuestsAheadWhere(this.clock.now()) },
       include: { quest: { include: QUEST_INCLUDE } },
     });
     if (invitation === null) {

@@ -17,7 +17,7 @@ import { card, mapThings, timeBar } from './support/answer-map';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { socketServer } from './support/live';
-import { givePhone, ON_CAMPUS } from './support/main';
+import { givePhone, OFF_CAMPUS, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerRecalculations, ASKER, EVENTS_REPLY, firstPlan, JOB_FAIR, sayOnMap } from './support/row-four';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
@@ -25,7 +25,7 @@ import { SENT_CAPABILITIES } from './support/capabilities';
 
 // "여기로" on an events Plan (P03 ticket 15, the design's 6.3 Alone 3), over the fake main server, which answers
 // "오늘 볼 만한 거 있어?" with the stored real answer of row 4 and POST /plans with the job fair taken alone: the request,
-// the card after it, "닫기", and "다시 고르기". Expected values: the stored answer, and the main server's reply as the
+// the card after it, "확인", "길 안내", and "다시 고르기" (board 5 of the 2026-11-22 redesign). Expected values: the stored answer, and the main server's reply as the
 // ticket's contract gives it.
 
 jest.mock('expo-location');
@@ -109,22 +109,36 @@ describe('"여기로" on an events Plan (Alone 3)', () => {
     expect(sent[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);
   });
 
-  it('says where the User goes and when they will be told to leave, with "다시 고르기" and "닫기"', async () => {
+  it('says where the User goes and when they will be told to leave, with "확인", "길 안내", and "다시 고르기"', async () => {
     await takeJobFair();
 
     expect(card().getByTestId('taken-card')).toBeVisible();
     expect(card().getByText('채용박람회에 가요')).toBeVisible();
     expect(card().getByText('15:12에 나설 시각을 알려 드릴게요')).toBeVisible();
+    expect(card().getByRole('button', { name: '확인' })).toBeEnabled();
+    expect(card().getByRole('button', { name: '길 안내' })).toBeEnabled();
     expect(card().getByRole('button', { name: '다시 고르기' })).toBeEnabled();
-    expect(card().getByRole('button', { name: '닫기' })).toBeEnabled();
+    expect(card().queryByRole('button', { name: '닫기' })).toBeNull();
     expect(card().queryByRole('button', { name: '여기로' })).toBeNull();
     expect(screen.queryByText('김민수에게 점심 초대를 보냈어요')).toBeNull();
   });
 });
 
-// Partitions: "닫기" with a walk to the Place; "다시 고르기" answered, and refused.
-describe('the card of an event taken alone', () => {
-  it('"닫기" starts the route guidance to the event\'s Place and returns to the everyday map', async () => {
+// Partitions: "확인"; "길 안내" with a walk to the Place, and off campus.
+describe('the buttons of an event taken alone', () => {
+  it('"확인" closes the answer and returns to the everyday map without a route', async () => {
+    const user = await takeJobFair();
+    const before = server.received('GET /walking-route').length;
+
+    await user.press(card().getByRole('button', { name: '확인' }));
+    await pass(500);
+
+    expect(server.received('GET /walking-route')).toHaveLength(before);
+    expect(screen.queryByText('문화관까지 길 안내')).toBeNull();
+    expect(screen.queryByTestId('answer-pill')).toBeNull();
+  });
+
+  it('"길 안내" starts the route guidance to the event\'s Place and returns to the everyday map', async () => {
     server.on('GET /walking-route', {
       status: 200,
       body: { status: 'OK', route: { line: [ON_CAMPUS, CULTURE_HALL], distance: 400, duration: 300 } },
@@ -132,7 +146,7 @@ describe('the card of an event taken alone', () => {
     const user = await takeJobFair();
     const before = server.received('GET /walking-route').length;
 
-    await user.press(card().getByRole('button', { name: '닫기' }));
+    await user.press(card().getByRole('button', { name: '길 안내' }));
     await pass(500);
 
     expect(
@@ -145,6 +159,22 @@ describe('the card of an event taken alone', () => {
     expect(screen.queryByTestId('answer-pill')).toBeNull();
   });
 
+  it('keeps "길 안내" disabled off campus and says why under it, with no toast', async () => {
+    givePhone({ permission: 'granted', position: OFF_CAMPUS });
+    const user = await takeJobFair();
+
+    await user.press(card().getByRole('button', { name: '길 안내' }));
+    await pass(500);
+
+    expect(card().getByRole('button', { name: '길 안내' })).toBeDisabled();
+    expect(card().getByText('캠퍼스 밖이라 길 안내를 할 수 없어요')).toBeVisible();
+    expect(screen.queryByText('캠퍼스 밖에 있어요')).toBeNull();
+    expect(card().getByTestId('taken-card')).toBeVisible();
+  });
+});
+
+// Partitions: "다시 고르기" answered, and refused.
+describe('the card of an event taken alone', () => {
   it('"다시 고르기" ends the Quest, shows the Plan again, and "여기로" then makes another', async () => {
     server.on(DROP, { status: 204 });
     const user = await takeJobFair();

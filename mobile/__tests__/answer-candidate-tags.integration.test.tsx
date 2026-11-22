@@ -35,12 +35,12 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-const PICK = '302동식당 · 12:15 점심 · 뼈없는감자탕 외 5';
+const PICK = '302동식당 · 12:15 · 걸음 20분 · 뼈없는감자탕 외 5 · 4,000원부터';
 const CANDIDATES = [
-  '후보 2 · 301동식당 · 12:18 · 부대짬뽕&군만두 외 4 · 5,000원부터',
-  '후보 3 · 학생회관식당 · 12:33 · 눈꽃치즈닭갈비 외 2 · 1,000원부터',
-  '후보 4 · 3식당 · 12:31 · 치즈한장부대찌개 외 2 · 4,000원부터',
-  '후보 5 · 자하연식당 2층 · 12:35 · 나가사키꼬치어묵 외 1 · 6,500원',
+  '후보 2 · 301동식당 · 걸음 15분',
+  '후보 3 · 학생회관식당 · 걸음 16분',
+  '후보 4 · 3식당 · 걸음 19분',
+  '후보 5 · 자하연식당 2층 · 걸음 22분',
 ];
 
 let server: FakeServer;
@@ -61,7 +61,7 @@ afterEach(() => {
 
 // Partitions: the first Plan on screen; a candidate pressed.
 describe('a meal answer with five Plans and their menus', () => {
-  it('shows the pick with its first dish and candidates 2 to 5 with number, name, time, dishes, and price', async () => {
+  it('shows the pick with its time, walking, first dish, and price, and candidates 2 to 5 as tags of their walking', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
     expect(screen.getByRole('button', { name: PICK })).toBeOnTheScreen();
@@ -82,10 +82,10 @@ describe('a meal answer with five Plans and their menus', () => {
 
     await press(user, CANDIDATES[0] ?? '');
 
-    expect(screen.getByRole('button', { name: /^301동식당 · 12:18 .*부대짬뽕&군만두 외 4$/u })).toBeOnTheScreen();
     expect(
-      screen.getByRole('button', { name: '후보 1 · 302동식당 · 12:15 · 뼈없는감자탕 외 5 · 4,000원부터' }),
+      screen.getByRole('button', { name: /^301동식당 · 12:18 · 걸음 15분 · 부대짬뽕&군만두 외 4/u }),
     ).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: '후보 1 · 302동식당 · 걸음 20분' })).toBeOnTheScreen();
     expect(mapThings().filter((name) => name.startsWith('후보 '))).toHaveLength(4);
   });
 });
@@ -114,9 +114,9 @@ describe('two candidates in one building', () => {
     const user = await askOnMap(server, reply);
 
     await press(user, CANDIDATES[2] ?? '');
-    expect(screen.getByRole('button', { name: /^3식당 · .*치즈한장부대찌개 외 2$/u })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /^3식당 · .*치즈한장부대찌개 외 2/u })).toBeOnTheScreen();
 
-    await press(user, '후보 5 · 자하연식당 2층 · 12:35 · 나가사키꼬치어묵 외 1 · 6,500원');
+    await press(user, '후보 5 · 자하연식당 2층 · 걸음 22분');
     expect(screen.getByRole('button', { name: /^자하연식당 2층 · 12:35/u })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: /^후보 4 · 3식당/u })).toBeOnTheScreen();
   });

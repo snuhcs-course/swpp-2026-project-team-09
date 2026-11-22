@@ -7,6 +7,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -136,7 +137,8 @@ export function useSend(
   const showToast = useToast();
   return async (form, friends, plan) => {
     const sending = await sendParty(form, friends, plan);
-    showToast(sending.toast);
+    // A Quest that was made or changed is done, even with a Friend left uninvited.
+    showToast(sending.toast, undefined, sending.sent === 'taken' ? 'check' : 'alert');
     if (sending.sent === 'room') {
       router.replace(`/room/${sending.questId}`);
     }

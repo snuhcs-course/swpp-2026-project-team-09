@@ -146,6 +146,8 @@ describe('"일정에 넣기" on a Plan where the User is (s1 → s4b)', () => {
     expect(card().getByText('301동식당에서 먹어요')).toBeVisible();
     expect(card().getByText('12:45에 나설 시각을 알려 드릴게요')).toBeVisible();
     expect(card().getByRole('button', { name: '다시 고르기' })).toBeVisible();
+    expect(card().getByRole('button', { name: '확인' })).toBeVisible();
+    expect(card().queryByRole('button', { name: '길 안내' })).toBeNull();
     expect(screen.queryByRole('button', { name: TAKE })).toBeNull();
     expect(card().queryByText(/파티/u)).toBeNull();
   });
@@ -176,9 +178,9 @@ describe('"일정에 넣기" on a Plan where the User is (s1 → s4b)', () => {
   });
 });
 
-// Partitions: the Plan the User walks to, and "닫기". Expected values: boards s2 and s4.
+// Partitions: the Plan the User walks to, and "길 안내". Expected values: boards s2 and s4.
 describe('"일정에 넣기" on a Plan the User walks to (s2 → s4)', () => {
-  it('says no leave-by is kept for a short walk on, and "닫기" guides the User to the Restaurant', async () => {
+  it('says no leave-by is kept for a short walk on, and "길 안내" guides the User to the Restaurant', async () => {
     server.on('POST /plans', { status: 201, body: madeAlone(S4) });
     const user = await askOnMap(server, REPLY, () => layStage(390, 760));
     await pressMarker(user, '후보 2 · 학생회관식당 · 12:05');
@@ -189,7 +191,7 @@ describe('"일정에 넣기" on a Plan the User walks to (s2 → s4)', () => {
     expect(card().getByText('학생회관식당으로 가요')).toBeVisible();
     expect(card().getByText('수업까지 1분이라 나설 알림은 없어요')).toBeVisible();
 
-    await user.press(card().getByRole('button', { name: '닫기' }));
+    await user.press(card().getByRole('button', { name: '길 안내' }));
     await pass(500);
 
     expect(findWalkingRoute).toHaveBeenLastCalledWith(ON_CAMPUS, HAKGWAN);

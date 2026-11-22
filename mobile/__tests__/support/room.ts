@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act, type userEvent, within } from '@testing-library/react-native';
@@ -151,6 +152,13 @@ export function activationBox(): ReturnType<typeof within> {
 
 export function toast(): ReturnType<typeof screen.getByTestId> {
   return screen.getByTestId('toast-layer');
+}
+
+// The icon before the toast's words: `check` after something was done, `alert` after a refusal or a failure.
+export function toastIcon(): string {
+  const icon = within(toast()).getByTestId(/^toast-icon-/u, { includeHiddenElements: true });
+  const testID: unknown = icon.props.testID;
+  return String(testID).replace('toast-icon-', '');
 }
 
 // Presses a button of the open sheet or dialog, which is drawn last when the room has one of the same name, and lets
