@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { clockOf } from '../src/assistant/free-time/free-time.js';
@@ -24,8 +25,10 @@ const lines = ({ fits }: Gathering): string[] =>
 const fitOf = (gathering: Gathering, key: string): Gathering['fits'][number] | undefined =>
   gathering.fits.find((fit) => fit.key === key);
 
+// The least walking first: alone 15, 16, 19, 20 and 22 minutes; with 민수 18 (301동식당) against 20 (302동식당),
+// though 302동식당 gives a minute longer together; with 지은 26, 28 and 39; with both 44, 48 and 55.
 describe('Lunch alone', () => {
-  it('fits every place, the longest first', () => {
+  it('fits every place, the least walking first', () => {
     expect(lines(plan([me()]))).toEqual([
       '301동식당 11:50–12:45 (55)',
       '학생회관식당 12:05–12:59 (54)',
@@ -44,10 +47,10 @@ describe('Lunch alone', () => {
 });
 
 describe('Lunch with 민수', () => {
-  it('fits every place, the longest first', () => {
+  it('fits every place, the least walking first', () => {
     expect(lines(plan([me(), minsu()]))).toEqual([
-      '302동식당 12:15–12:43 (28)',
       '301동식당 12:18–12:45 (27)',
+      '302동식당 12:15–12:43 (28)',
       '학생회관식당 12:33–12:59 (26)',
       '3식당 12:31–12:54 (23)',
       '자하연식당 12:35–12:55 (20)',
@@ -87,12 +90,12 @@ describe('Lunch with 민수', () => {
 });
 
 describe('Lunch with 지은', () => {
-  it('fits three places, the longest first, with no merging point', () => {
+  it('fits three places, the least walking first, with no merging point', () => {
     const gathering = plan([me(), jieun()]);
 
     expect(lines(gathering)).toEqual([
-      '자하연식당 12:18–12:55 (37)',
       '학생회관식당 12:20–12:55 (35)',
+      '자하연식당 12:18–12:55 (37)',
       '3식당 12:25–12:50 (25)',
     ]);
     expect(gathering.fits.map(({ meeting }) => meeting)).toEqual([null, null, null]);
@@ -108,7 +111,7 @@ describe('Lunch with 지은', () => {
 });
 
 describe('Lunch with 민수 and 지은', () => {
-  it('fits three places, the longest first', () => {
+  it('fits three places, the least walking first', () => {
     expect(lines(plan([me(), minsu(), jieun()]))).toEqual([
       '학생회관식당 12:33–12:55 (22)',
       '자하연식당 12:35–12:55 (20)',

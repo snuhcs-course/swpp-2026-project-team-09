@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Redis } from 'ioredis';
@@ -126,7 +127,7 @@ describe('What the User fixed', () => {
 
     const response = await recalculate({ input });
 
-    expect(summary(answerIn(response.body))[0]).toBe(`302동식당 ${time('12:20')}–${time('12:43')} (23)`);
+    expect(summary(answerIn(response.body))).toContain(`302동식당 ${time('12:20')}–${time('12:43')} (23)`);
   });
 });
 

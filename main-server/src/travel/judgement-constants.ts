@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The numbers of the judgement, in one table, frozen with the evaluation.
@@ -27,6 +28,9 @@ export const NEAREST_PLACE_METRES = 150;
 
 // The shortest meal, and the shortest stretch a Friend must share with the User to be free.
 export const SHORTEST_MEAL_SECONDS = 15 * 60;
+
+// An unhurried meal: a meal's plans where everyone has this long come before the shorter ones, however near those are.
+export const UNHURRIED_MEAL_SECONDS = 30 * 60;
 
 // A meal's start rounds up to the next of these.
 export const MEAL_START_STEP_SECONDS = 5 * 60;

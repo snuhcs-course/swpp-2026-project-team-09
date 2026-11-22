@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { clockOf } from '../src/assistant/free-time/free-time.js';
@@ -24,11 +25,11 @@ const lines = ({ fits }: Gathering): string[] =>
 const narrowed = (from: string, to: string): ReturnType<typeof mealWindow> => mealWindow(DATE, 'lunch', { from, to });
 
 describe('Lunch with 민수 and 지은, the window ending at 12:50', () => {
-  it('fits the three places to 12:50, the longest first', () => {
+  it('fits the three places to 12:50, the least walking first', () => {
     expect(lines(plan([me(), minsu(), jieun()], undefined, NOW, narrowed('11:00', '12:50')))).toEqual([
-      '3식당 12:31–12:50 (19)',
       '학생회관식당 12:33–12:50 (17)',
       '자하연식당 12:35–12:50 (15)',
+      '3식당 12:31–12:50 (19)',
     ]);
   });
 });

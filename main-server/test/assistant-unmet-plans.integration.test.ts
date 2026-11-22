@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
@@ -122,7 +123,7 @@ describe('The recalculations the buttons and chips of board n11 ask for', () => 
     expect(response.status).toBe(200);
     const eased = z.custom<AnswerReply>().parse(response.body);
     expect(textsOf(eased.plans[0]?.lines)).toEqual([
-      '13:00 학생회관식당 · 셋이 59분',
+      '13:06 301동식당 · 셋이 39분',
       '오늘 제육볶음',
       '지금 대신 13:00으로 미뤘어요',
     ]);
@@ -142,7 +143,7 @@ describe('The recalculations the buttons and chips of board n11 ask for', () => 
 
     const without = z.custom<AnswerReply>().parse(response.body);
     expect(without.noPlan).toBeNull();
-    expect(without.plans[0]?.startAt).toBe('2080-01-30T12:15:00+09:00');
+    expect(without.plans[0]).toMatchObject({ id: '301동식당', startAt: '2080-01-30T12:18:00+09:00' });
   });
 
   it('refuses a window whose now is not true or false', async () => {

@@ -74,7 +74,7 @@ async function jieun(): Promise<Named> {
 }
 
 describe('Lunch with 민수 (the worked example)', () => {
-  it('plans every Restaurant, the longest time together first, meeting at 301동 on the way', async () => {
+  it('plans every Restaurant, the least walking first, meeting at 301동 on the way', async () => {
     const date = '2087-01-07';
     const time = timeOn(date);
     await workedExample(date);
@@ -85,8 +85,8 @@ describe('Lunch with 민수 (the worked example)', () => {
     expect(response.status).toBe(200);
     const answer = answerIn(response.body);
     expect(summary(answer)).toEqual([
-      `302동식당 ${time('12:15')}–${time('12:43')} (28)`,
       `301동식당 ${time('12:18')}–${time('12:45')} (27)`,
+      `302동식당 ${time('12:15')}–${time('12:43')} (28)`,
       `학생회관식당 ${time('12:33')}–${time('12:59')} (26)`,
       `3식당 ${time('12:31')}–${time('12:54')} (23)`,
       `자하연식당 2층 ${time('12:35')}–${time('12:55')} (20)`,
