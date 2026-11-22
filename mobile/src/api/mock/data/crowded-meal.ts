@@ -200,18 +200,24 @@ export function crowdedWithFriend(date: string, now: string, userId: string): An
   const name = FRIENDS.find(({ id }) => id === userId)?.name ?? '친구';
   const kept = alone.plans.find(({ place }) => place.label === '302동식당') ?? alone.plans[0];
   const others = alone.plans.filter((plan) => plan !== kept);
+  const dropped = others.map(({ place }, index) => ({
+    place,
+    reason:
+      index % 3 === 0 ? `${name}${index % 2 === 0 ? '은' : '는'} 10분밖에 못 있어요` : '같이 있는 시간이 15분뿐이에요',
+  }));
+  // As the main server draws them: the others dropped, each tagged with its reason.
+  const places = (kept?.scene.places ?? []).map((item) => {
+    const drop = dropped.find(({ place }) => place.label === item.place.label);
+    return drop === undefined
+      ? item
+      : { place: item.place, role: 'dropped' as const, tag: `${drop.place.label} · ${drop.reason}` };
+  });
   return {
     ...alone,
     input: { ...alone.input, people: [...alone.input.people, { userId, constraints: [] }] },
     chips: [...alone.chips, { kind: 'person', text: `${name} · 출발지 모름`, userId }],
-    plans: kept === undefined ? [] : [kept],
-    dropped: others.map(({ place }, index) => ({
-      place,
-      reason:
-        index % 3 === 0
-          ? `${name}${index % 2 === 0 ? '은' : '는'} 10분밖에 못 있어요`
-          : '같이 있는 시간이 15분뿐이에요',
-    })),
+    plans: kept === undefined ? [] : [{ ...kept, scene: { ...kept.scene, places } }],
+    dropped,
   };
 }
 
