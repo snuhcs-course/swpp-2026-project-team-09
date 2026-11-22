@@ -54,14 +54,18 @@ function accepted({ found }: ToolContext, kind: FoundKind, id: string, shownIds:
 const UNRETURNED =
   'No resolver returned this id in this message, and it is not in the last Proposal. Call the resolver with the User’s words.';
 
+// A Place of the list as the card shows it, with its booking page, or null when it is no longer there.
+async function listedPlace(placeId: string, places: PlacesService): Promise<ProposalPlace | null> {
+  const place = (await places.list()).find(({ id }) => id === placeId);
+  return place === undefined ? null : { id: place.id, name: place.name, booking: await facilityBookingOf(place) };
+}
+
 async function placeOf(placeId: string, context: ToolContext, places: PlacesService): Promise<Checked<ProposalPlace>> {
   if (!accepted(context, 'place', placeId, context.shown?.place ? [context.shown.place.id] : [])) {
     return { failure: UNRETURNED };
   }
-  const place = (await places.list()).find(({ id }) => id === placeId);
-  return place === undefined
-    ? { failure: 'This Place is no longer in the list. Tell the User.' }
-    : { value: { id: place.id, name: place.name, booking: await facilityBookingOf(place) } };
+  const place = await listedPlace(placeId, places);
+  return place === null ? { failure: 'This Place is no longer in the list. Tell the User.' } : { value: place };
 }
 
 async function eventOf(
@@ -301,6 +305,7 @@ export function proposeQuest(services: ProposeQuestServices): Tool {
               {
                 ...services,
                 proposalOf: (changed) => proposalOf(changed, context, services),
+                placeOf: (placeId) => listedPlace(placeId, services.places),
               },
             )
           : { result: 'made', questId: madeQuestId, reason: MADE };

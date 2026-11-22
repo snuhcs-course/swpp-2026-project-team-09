@@ -4,121 +4,39 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { INestApplication } from '@nestjs/common';
-import { Server } from 'node:http';
-import request from 'supertest';
-import { inject } from 'vitest';
+import { type INestApplication } from '@nestjs/common';
+import { type Server } from 'node:http';
 import { z } from 'zod';
 import { type QuestProposal } from '../src/assistant/proposal.js';
-import { PrismaClient } from '../src/generated/prisma/client.js';
-import { CLOCK, type Clock } from '../src/quests/clock.js';
+import { type PrismaClient } from '../src/generated/prisma/client.js';
 import { postAssistantMessages } from './assistant.js';
-import { befriend, signInUser, TestUser } from './friends.js';
-import { answerInvitation, handOver, invitationOf, joinRequestOf } from './quest-recruiting.js';
-import { connectToDatabase, dropQuest, joinQuest, makeQuest } from './quests.js';
-import { ScriptedModel } from './scripted-model.js';
-import { withAccessToken } from './sign-in.js';
-import { startApp } from './start-app.js';
-import { refuseKakao } from './walking-route.js';
+import { type TestUser } from './friends.js';
+import { LUNCH, MadePartyStage } from './made-party.js';
+import { answerInvitation, handOver, joinRequestOf } from './quest-recruiting.js';
+import { dropQuest, joinQuest } from './quests.js';
 
 // A 파티 the User made with 만들기, changed in place from the Assistant (P05 ticket 30; rows 30 to 38 of ticket 17's
 // case table for a made 파티). For an app that says `party-change`, proposeQuest shows a change of its time or place as
 // a card whose 바꾸기 sends the step to the room's 일정 수정, which keeps everyone who is in. The rest of it is changed
-// in its room, and one gone, led by another, or started is not changed.
+// in its room, and one gone, led by another, or started is not changed. A time or a Place the User did not ask to
+// change is the step's own, whatever the made Proposal said.
 
+const stage = new MadePartyStage();
+const { model, made, afterMaking, ask, pressChange, stepOf, editedInRoom } = stage;
 let app: INestApplication<Server>;
 let prisma: PrismaClient;
 let leader: TestUser;
 let minsu: TestUser;
 let jieun: TestUser;
 let place301: string;
-const model = new ScriptedModel();
+let place302: string;
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [], refuseKakao, model.model);
-  // 2096-05-07 09:00 in Korea.
-  vi.spyOn(app.get<Clock>(CLOCK), 'now').mockReturnValue(new Date('2096-05-07T00:00:00Z'));
-  prisma = connectToDatabase();
-  [leader, minsu, jieun] = [await signInUser(app), await signInUser(app), await signInUser(app)];
-  await befriend(app, leader, minsu);
-  await befriend(app, leader, jieun);
-  place301 = (await prisma.place.findFirstOrThrow({ where: { number: '301' } })).id;
+  await stage.start();
+  ({ app, prisma, leader, minsu, jieun, place301, place302 } = stage);
 });
 
-afterAll(async () => {
-  await prisma.$disconnect();
-  await app.close();
-});
-
-const LUNCH: QuestProposal = {
-  title: '2096 학식 같이 먹어요',
-  description: '내일 점심 학식 같이 먹을 사람 모집해요',
-  joinPolicy: 'open',
-  board: 'meal',
-  capacity: 4,
-  startsAt: '2096-05-08T12:00:00+09:00',
-  place: null,
-  globalEvent: null,
-  invitees: [],
-};
-
-// Makes the Proposal as 만들기 does, and answers the Quest's id.
-async function made(proposal: QuestProposal): Promise<string> {
-  const { title, description, joinPolicy, board, capacity, startsAt, invitees } = proposal;
-  const response = await makeQuest(app, leader, {
-    title,
-    subQuest: { title, startsAt },
-    capacity,
-    joinPolicy,
-    ...(board === null ? {} : { board, description }),
-  });
-  const { id } = z.object({ id: z.string() }).parse(response.body);
-  for (const { id: userId } of invitees) {
-    // oxlint-disable-next-line no-await-in-loop -- one invitation at a time, as the party form sends them
-    await invitationOf(app, leader, id, userId === minsu.id ? minsu : jieun);
-  }
-  return id;
-}
-
-// The conversation after 만들기, the User asking for a change in their last message.
-function afterMaking(proposal: QuestProposal, questId: string, asked = '방금 만든 파티 시간 바꿔줘'): object[] {
-  return [
-    { role: 'user', text: '파티 만들어줘' },
-    {
-      role: 'assistant',
-      text: '만들기를 누르면 파티가 만들어져요.',
-      cards: [],
-      proposal: { ...proposal, madeQuestId: questId },
-    },
-    { role: 'user', text: asked },
-  ];
-}
-
-function ask(proposal: QuestProposal, questId: string, given: object): request.Test {
-  model.script({ tool: 'proposeQuest', input: given }, { text: '…' });
-  return postAssistantMessages(app, leader.accessToken, afterMaking(proposal, questId), {
-    clientCapabilities: ['party-change'],
-  });
-}
-
-const changeOf = z.object({
-  proposal: z.object({
-    change: z.object({ questId: z.string(), subQuestId: z.string(), step: z.object({}).loose(), told: z.number() }),
-  }),
-});
-
-// Presses 바꾸기: the step goes to the room's 일정 수정 as it is.
-function pressChange(body: unknown): request.Test {
-  const { change } = changeOf.parse(body).proposal;
-  return withAccessToken(
-    request(app.getHttpServer()).put(`/quests/${change.questId}/sub-quests/${change.subQuestId}`),
-    leader.accessToken,
-  ).send(change.step);
-}
-
-function stepOf(questId: string): Promise<{ startsAt: Date | null; placeId: string | null }> {
-  return prisma.subQuest.findFirstOrThrow({ where: { questId }, select: { startsAt: true, placeId: true } });
-}
+afterAll(() => stage.stop());
 
 describe('A made 파티 asked to start at another time', () => {
   it('with nobody else in it, is shown as a change, not a clash with itself, and 바꾸기 moves it in place (row 30)', async () => {
@@ -278,6 +196,46 @@ describe('A made 파티 no longer the User’s to change', () => {
 
     expect(response.body).toMatchObject({ proposal: null });
     expect(model.toolResults()).toEqual([expect.objectContaining({ result: 'made', questId })]);
+  });
+});
+
+describe('A made 파티 changed in its room since', () => {
+  it('asked for another time only, keeps the Place it has now, not the made Proposal’s', async () => {
+    const at301 = { ...LUNCH, place: { id: place301, name: '301동', booking: null } };
+    const questId = await made(at301);
+    await editedInRoom(questId, { startsAt: LUNCH.startsAt, place: { placeId: place302 } });
+
+    const response = await ask(at301, questId, {
+      ...LUNCH,
+      placeId: place301,
+      startsAt: '2096-05-08T13:00:00+09:00',
+    });
+
+    expect(response.body).toMatchObject({
+      proposal: { place: { id: place302 }, change: { step: { place: { placeId: place302 } } } },
+    });
+    expect((await pressChange(response.body)).status).toBe(200);
+    expect(await stepOf(questId)).toEqual({ startsAt: new Date('2096-05-08T04:00:00Z'), placeId: place302 });
+  });
+
+  it('asked for another Place only, keeps the time it has now, not the made Proposal’s', async () => {
+    const questId = await made(LUNCH);
+    await editedInRoom(questId, { startsAt: '2096-05-08T12:30:00+09:00' });
+    model.script(
+      { tool: 'resolvePlace', input: { words: '301동' } },
+      { tool: 'proposeQuest', input: { ...LUNCH, placeId: place301 } },
+      { text: '…' },
+    );
+
+    const response = await postAssistantMessages(app, leader.accessToken, afterMaking(LUNCH, questId, '301동으로'), {
+      clientCapabilities: ['party-change'],
+    });
+
+    expect(response.body).toMatchObject({
+      proposal: { startsAt: '2096-05-08T12:30:00+09:00', change: { step: { place: { placeId: place301 } } } },
+    });
+    expect((await pressChange(response.body)).status).toBe(200);
+    expect(await stepOf(questId)).toEqual({ startsAt: new Date('2096-05-08T03:30:00Z'), placeId: place301 });
   });
 });
 

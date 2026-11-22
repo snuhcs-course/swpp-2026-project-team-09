@@ -9,7 +9,7 @@ import { type SubQuestContentDto } from '../../quests/dto/quest-requests.dto.js'
 import { type ToolContext } from '../feature.js';
 import { koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
-import { type ProposalChange, type QuestProposal, type SentProposal } from '../proposal.js';
+import { type ProposalChange, type ProposalPlace, type QuestProposal, type SentProposal } from '../proposal.js';
 import { type UserDayService } from '../free-time/user-day.service.js';
 import { type MadeParty, type MadePartyService } from './made-party.js';
 import { type FieldFailures, type Input } from './propose-quest-input.js';
@@ -88,19 +88,26 @@ function madeTarget(
   return { ...party, step };
 }
 
-// The input of the change: the made Proposal's values, with the time and the place given. A time left out is the
-// step's, and a place left out the made Proposal's, so that leaving one out never moves or drops it.
-function changedInput(given: Input, shown: SentProposal, step: SubQuest): Input {
+// The input of the change: the made Proposal's values, with the time and the Place given. A time or a Place left out,
+// or given as the made Proposal's, keeps the step's own, which may have changed since in the room or in the card's 수정
+// form: only one the User asked for moves it. The step's Place is no input: `keepsPlace` says to keep it.
+function changedInput(given: Input, shown: SentProposal, step: SubQuest): { input: Input; keepsPlace: boolean } {
+  const keepsTime =
+    given.startsAt === undefined || new Date(given.startsAt).getTime() === new Date(shown.startsAt).getTime();
+  const keepsPlace = given.placeId === undefined || given.placeId === shown.place?.id;
   return {
-    title: shown.title,
-    description: shown.description,
-    joinPolicy: shown.joinPolicy,
-    board: shown.board ?? undefined,
-    capacity: shown.capacity,
-    startsAt: given.startsAt ?? (step.startsAt === null ? undefined : koreaTime(step.startsAt)),
-    placeId: given.placeId ?? shown.place?.id,
-    globalEventId: shown.globalEvent?.id,
-    inviteeIds: shown.invitees.map(({ id }) => id),
+    keepsPlace,
+    input: {
+      title: shown.title,
+      description: shown.description,
+      joinPolicy: shown.joinPolicy,
+      board: shown.board ?? undefined,
+      capacity: shown.capacity,
+      startsAt: keepsTime ? (step.startsAt === null ? undefined : koreaTime(step.startsAt)) : given.startsAt,
+      ...(keepsPlace ? {} : { placeId: given.placeId }),
+      globalEventId: shown.globalEvent?.id,
+      inviteeIds: shown.invitees.map(({ id }) => id),
+    },
   };
 }
 
@@ -115,13 +122,17 @@ function placeOf({ placeId, latitude, longitude, placeLabel }: SubQuest): SubQue
   return placeLabel === null ? null : { label: placeLabel };
 }
 
-// The step as the change leaves it: the Proposal's time, with its end moved as far, and its Place when that moved. Null
-// when neither moved.
-function changeOf(party: ChangedParty, proposal: QuestProposal, questId: string): ProposalChange | null {
+// The step as the change leaves it: the Proposal's time, with its end moved as far, and its Place when one was asked
+// for and differs. Null when neither moved.
+function changeOf(
+  party: ChangedParty,
+  { proposal, keepsPlace }: { proposal: QuestProposal; keepsPlace: boolean },
+  questId: string,
+): ProposalChange | null {
   const { step } = party;
   const start = new Date(proposal.startsAt);
   const was = step.startsAt?.getTime() ?? start.getTime();
-  const placeMoved = proposal.place !== null && proposal.place.id !== step.placeId;
+  const placeMoved = !keepsPlace && proposal.place !== null && proposal.place.id !== step.placeId;
   if (!placeMoved && was === start.getTime()) {
     return null;
   }
@@ -145,6 +156,8 @@ export interface ChangeMadeServices {
   madeParties: Pick<MadePartyService, 'of'>;
   // proposeQuest's own checks of a Proposal.
   proposalOf: (given: Input) => Promise<{ proposal: QuestProposal } | { failures: FieldFailures }>;
+  // A Place of the list as a card shows it, or null when it is no longer there.
+  placeOf: (placeId: string) => Promise<ProposalPlace | null>;
 }
 
 // A change of the made 파티's time or place, shown as a card with 바꾸기, or why it is not changed here.
@@ -158,16 +171,20 @@ export async function changeMade(
   if ('answer' in target) {
     return target.answer;
   }
-  const checked = await services.proposalOf(changedInput(given, shown, target.step));
+  const { input: changed, keepsPlace } = changedInput(given, shown, target.step);
+  const checked = await services.proposalOf(changed);
   if ('failures' in checked) {
     return refusedAnswer(checked.failures, context.presented);
   }
-  const change = changeOf(target, checked.proposal, questId);
+  const change = changeOf(target, { proposal: checked.proposal, keepsPlace }, questId);
   if (change === null) {
     return { result: 'unchanged', questId, reason: UNCHANGED };
   }
-  context.presented.proposal = { ...checked.proposal, change };
-  return proposedAnswer(checked.proposal, context.userId, {
+  const { placeId } = target.step;
+  const kept = keepsPlace && placeId !== null ? await services.placeOf(placeId) : null;
+  const card = keepsPlace ? { ...checked.proposal, place: kept } : checked.proposal;
+  context.presented.proposal = { ...card, change };
+  return proposedAnswer(card, context.userId, {
     days: services.days,
     presented: context.presented,
     change: target,

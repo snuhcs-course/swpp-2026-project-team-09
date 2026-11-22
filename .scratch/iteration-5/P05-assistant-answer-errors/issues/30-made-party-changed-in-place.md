@@ -17,7 +17,7 @@ After ticket 18, "방금 만든 파티 19시로" after 만들기 gets no second 
   - The reply's Proposal is the 파티 with the new time or place and a `change`: `{ questId, subQuestId, step, told }`. Its 바꾸기 sends `step` unchanged to the room's 일정 수정, `PUT /quests/:questId/sub-quests/:subQuestId`. That call keeps everyone who is in, tells each other Holder with `step-changed`, and forgets the old times to leave (ticket 21). `told` counts the other Holders.
   - The model is told `told` and `waiting`, and says it before the change: "바꾸면 참여한 2명에게 알림이 가요". The app says it after.
   - The 파티's own step is never a clash with its new time.
-  - A time left out keeps the step's. A place left out keeps the 파티's.
+  - A time or a place left out, or given as the made Proposal's, keeps the step's own. The step may have changed since 만들기, in the room or in the card's 수정 form, and only what the User asked for moves it.
 - Not changed here:
   - Row 34: a change to anything else (title, capacity, Join Policy, Board, description, event, invited Friends) answers `in-room`. The reply has no card, and has a `quest` offer, 파티 수정하기, which opens the room.
   - Row 35: started or over answers `started`.
@@ -32,7 +32,7 @@ After ticket 18, "방금 만든 파티 19시로" after 만들기 gets no second 
 ## Acceptance criteria
 
 - [x] Rows 30 to 33 each show a change whose step `PUT` takes. Nobody leaves, requests and invitations stay, and the counts are right. (`assistant-made-party-change.integration.test.ts`. Before the change, Main refuses `party-change` with 400.)
-- [x] A place change keeps the time.
+- [x] A place change keeps the time, and a time change keeps the place, each as the step has it now, after a change in the room.
 - [x] Rows 34 to 37 answer `in-room` with the room's offer, `started`, `gone` and `led-by-other`, with no card.
 - [x] An app without `party-change` gets `made`, as before.
 - [x] A change shown and sent back is read as `[Proposal change shown: …]` and changed again.
