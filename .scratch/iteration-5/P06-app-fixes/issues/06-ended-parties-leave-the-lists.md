@@ -53,3 +53,8 @@ Received: "이미 기간이 지난, 하지만 아직 수락하지 않은 비공�
 - [x] No native file changes; lint, format, and types pass on the app and the main server.
 
 ## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 33 minutes, in one implementation session (screen review and pull request included). This is an estimate: gaps under 5 minutes between transcript entries, summed. The orchestrator session's own time is not counted here.
+- Tokens: input 33,602,420 (cache reads 33,336,432, cache writes 265,688, uncached 300); output 89,995. Without cache reads, 265,988. No subagents. Counted up to the writing of this entry, so the last few messages are left out.
