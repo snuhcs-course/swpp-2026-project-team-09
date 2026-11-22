@@ -16,13 +16,14 @@ import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { koreaDayWord } from '@/korea-time';
-import { ANSWER_PILL, listsTop } from '../layout';
+import { ANSWER_TOP, listsTop } from '../layout';
 import type { ShownBooking } from '@/features/assistant/booking-scene';
 import type { Chat } from '@/features/assistant/use-chat';
 import { bookingKept } from '../library/booking-kept';
 import { SlotBand } from '../library/slot-band';
 import { AddChip } from './condition-chips';
 import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
+import { BACK_ROOM } from './back-button';
 import { TimeBand } from './time-band';
 import { type BandFocus, useCorrections } from './use-corrections';
 import { addNameOf } from './who-words';
@@ -32,14 +33,16 @@ const NO_WINDOW = { from: null, until: null };
 // keep their own presses.
 const GRIP_WIDTH = 72;
 const GRIP_SLOP = { top: 16, bottom: 16, left: space[2], right: space[2] };
+// The words' room at the right while "＋ 같이" stands there: the chip's width and its gap, less the bar's padding.
+const ADD_ROOM = 72;
 
 function ignoreDrop(): void {
   // A Lookup's band has no handles.
 }
 
-// Under the pill, by the pill's own gap.
+// In the lists' place, where the round "←" stands when there is no bar (the 2026-11-22 redesign).
 export function barTop(inset: number): number {
-  return listsTop(inset) + ANSWER_PILL.height + space[2];
+  return listsTop(inset);
 }
 
 type BandProps = Parameters<typeof TimeBand>[0];
@@ -55,7 +58,7 @@ interface BarProps {
   offset?: number;
 }
 
-// The time bar: the answer's band in one white row under the pill, folded to one row, which a press on its grip
+// The time bar: the answer's band in one white row at the top, its head "←", the words, and "＋ 같이", folded to one row, which a press on its grip
 // unfolds to the band's whole range, a row for each person, and folds again.
 function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
@@ -74,7 +77,12 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
       style={[styles.bar, { top: barTop(top) + offset }]}
       testID="time-bar"
     >
-      <TimeBand {...band} day={day ?? koreaDayWord(startAt, new Date(now))} folded={folded} />
+      <TimeBand
+        {...band}
+        day={day ?? koreaDayWord(startAt, new Date(now))}
+        folded={folded}
+        head={{ left: BACK_ROOM, right: add === null ? 0 : ADD_ROOM }}
+      />
       {add === null ? null : <View style={styles.add}>{add}</View>}
       <Pressable
         accessibilityLabel={label}
@@ -190,7 +198,7 @@ export function BookingBar({
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
         onHeight(nativeEvent.layout.height);
       }}
-      style={[styles.bar, { top: barTop(top) }]}
+      style={[styles.bar, styles.booking, { top: barTop(top) }]}
       testID="time-bar"
     >
       <SlotBand
@@ -207,8 +215,8 @@ export function BookingBar({
 const styles = StyleSheet.create({
   bar: {
     position: 'absolute',
-    right: ANSWER_PILL.side,
-    left: ANSWER_PILL.side,
+    right: ANSWER_TOP.side,
+    left: ANSWER_TOP.side,
     paddingTop: space[3],
     paddingHorizontal: space[4],
     paddingBottom: space[2],
@@ -220,4 +228,6 @@ const styles = StyleSheet.create({
   grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
   // At the right of the words row, over the bar's padding.
   add: { position: 'absolute', top: space[2], right: space[3] },
+  // A seat's band starts clear of "←" at its head's left.
+  booking: { paddingLeft: space[4] + BACK_ROOM },
 });

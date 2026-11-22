@@ -36,8 +36,10 @@ interface AiInputProps {
   beside?: ReactNode;
   // Inside the answer's card or dock: a sunken field on its white, without the bar's own border and shadow.
   inCard?: boolean;
-  // A change puts the focus in the field, as "새 대화" does (P04 ticket 10); the first value does nothing.
+  // A change puts the focus in the field (P04 ticket 10); the first value does nothing.
   focusKey?: number;
+  // Told each time the field becomes empty or not: the main map shows its suggestions only over an empty field.
+  onEmpty?: (empty: boolean) => void;
 }
 
 // The field's height for one line, and the most it grows to before it scrolls.
@@ -160,10 +162,15 @@ export function AiInput(props: AiInputProps): ReactElement {
     beside = null,
     inCard = false,
     focusKey = 0,
+    onEmpty,
   } = props;
   const field = useFocusOn(focusKey);
   const [besideWidth, setBesideWidth] = useState(0);
   const [message, setMessage] = useMessage(restore ?? null);
+  const empty = message === '';
+  useEffect(() => {
+    onEmpty?.(empty);
+  }, [empty, onEmpty]);
   const [height, laidOut] = useBarHeight(onHeight);
   const canSend = message.trim() !== '';
   const send = (): void => {

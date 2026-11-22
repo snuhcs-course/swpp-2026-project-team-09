@@ -28,8 +28,11 @@ export interface KeptConversation {
   // A question of the list: its turn of the current conversation on screen, or an earlier conversation taken up again
   // at that turn; either shows the frame.
   showTurn: (turnId: number, conversation: number | null) => void;
-  // Counts each "새 대화", so that the map screen puts the focus in the empty input.
+  // Counts each new conversation started, so that the map screen puts the focus in the empty input.
   started: number;
+  // What is typed on the main map: a new question in a new conversation, the current one kept among the earlier ones
+  // (rule 4 of the 2026-11-22 redesign).
+  askNew: (text: string) => void;
   // The turn on screen is the conversation's latest: only then do 다시 시도 and the failed words put back act on it.
   latest: boolean;
 }
@@ -114,6 +117,19 @@ function useHidden(bubbles: Chat['bubbles']): { hidden: boolean; show: () => voi
   return { hidden, show, hide, unseen };
 }
 
+// A new question in a new conversation, the current one kept among the earlier ones, from the turn on screen's latest.
+function useAskNew(chat: Chat, setViewed: (viewed: null) => void): (text: string) => void {
+  const { startNew, send } = chat;
+  return useCallback(
+    (text: string): void => {
+      setViewed(null);
+      startNew();
+      send(text);
+    },
+    [startNew, send, setViewed],
+  );
+}
+
 // The conversation outlives the frame: leaving hides the frame, and a reply on its way while it is hidden is kept
 // without showing it. Whatever the User or the app adds to the conversation shows it again: a message, a turn of a
 // card's button or of a mark, the app's own bubble. 새 대화 keeps the conversation among the earlier ones and closes
@@ -132,6 +148,7 @@ export function useKeptConversation(chat: Chat): KeptConversation {
     setStarted((count) => count + 1);
     startNew();
   }, [startNew]);
+  const askNew = useAskNew(chat, setViewed);
   const showTurn = useCallback(
     (turnId: number, conversation: number | null): void => {
       const shown = conversation === null ? bubbles : earlier.find(({ id }) => id === conversation)?.bubbles;
@@ -158,6 +175,7 @@ export function useKeptConversation(chat: Chat): KeptConversation {
     unseen,
     showTurn,
     started,
+    askNew,
     latest: view === null,
   };
 }

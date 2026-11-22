@@ -19,7 +19,7 @@
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import type { ReactElement, ReactNode } from 'react';
+import { type ReactElement, type ReactNode, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { now } from '@/clock';
@@ -53,7 +53,7 @@ import {
   tutorialStartBottom,
 } from './layout';
 import { MadeQuestLine } from './made-quest-line';
-import { mapChipOf, NewChatBeside, PastChats, placeholderOf } from './past-chats';
+import { mapChipOf, PastChats, placeholderOf } from './past-chats';
 import { type GuideActions, TutorialGuideOverlay } from './tutorial/tutorial-guide';
 import { TutorialList } from './tutorial/tutorial-list';
 import { TutorialSheet } from './tutorial/tutorial-sheet';
@@ -226,12 +226,22 @@ export function MapBottom(props: MapBottomProps): ReactElement {
   const inputGone = chat.framed && chat.answer.adding;
   const inputShown = !inputGone && !(chat.framed && chat.answer.moving !== null);
   const inputTop = inputGone ? lift : aiInputTop(room) + lift;
-  const send = sendWithKeyboardDown(chat.chat.send);
+  // On the main map what is typed starts a new conversation, the kept one put among the earlier ones; on the answer it
+  // goes on (rule 4 of the 2026-11-22 redesign).
+  const send = sendWithKeyboardDown(chat.framed || mapChipOf(chat) === null ? chat.chat.send : chat.askNew);
   const action = answerActionOf(chat);
+  const [empty, setEmpty] = useState(true);
   return (
     <>
       {guided ? null : (
-        <FramedParts {...props} cardShown={cardShown} inputTop={inputTop} keyboardUp={keyboardUp} send={send} />
+        <FramedParts
+          {...props}
+          cardShown={cardShown}
+          empty={empty}
+          inputTop={inputTop}
+          keyboardUp={keyboardUp}
+          send={send}
+        />
       )}
       <View style={[styles.inputLayer, guided && styles.gone]}>
         {inputShown && !cardShown ? (
@@ -242,7 +252,8 @@ export function MapBottom(props: MapBottomProps): ReactElement {
             placeholder={placeholderOf(chat)}
             restore={restoreOf(chat.said)}
             onSend={send}
-            beside={besideOf(chat, action, keyboardUp)}
+            onEmpty={setEmpty}
+            beside={besideOf(action, chat, keyboardUp)}
             inCard={chat.framed}
           />
         ) : null}
@@ -254,6 +265,8 @@ export function MapBottom(props: MapBottomProps): ReactElement {
 
 type FramedProps = MapBottomProps & {
   cardShown: boolean;
+  // The AI input holds no words: the suggestions show only over an empty field.
+  empty: boolean;
   inputTop: number;
   keyboardUp: boolean;
   send: (text: string) => void;
@@ -262,7 +275,7 @@ type FramedProps = MapBottomProps & {
 // The everyday map's bottom, the answer frame, the examples over the keyboard, and the cards nobody asked for: none of
 // them while a quest's guide is open.
 function FramedParts(props: FramedProps): ReactElement {
-  const { chat, room, unasked, onAnswerHeight, onTimeBarHeight, cardShown, inputTop, keyboardUp, send } = props;
+  const { chat, room, unasked, onAnswerHeight, onTimeBarHeight, cardShown, inputTop, keyboardUp, send, empty } = props;
   const { invitation, made } = unasked;
   return (
     <>
@@ -279,7 +292,7 @@ function FramedParts(props: FramedProps): ReactElement {
         />
       </RowFourProvider>
       <MapQuestions {...props} />
-      {!chat.framed && keyboardUp ? <AskedExamples bottom={examplesBottom(props)} onSend={send} /> : null}
+      {!chat.framed && keyboardUp && empty ? <AskedExamples bottom={examplesBottom(props)} onSend={send} /> : null}
       {invitation.shown ? <InvitationFrame invitation={invitation} onHeight={onAnswerHeight} room={room} /> : null}
       {made.shown === null ? null : (
         <MadeQuestFrame made={made.shown} onClose={made.closeCard} onHeight={onAnswerHeight} room={room} />
@@ -288,7 +301,7 @@ function FramedParts(props: FramedProps): ReactElement {
   );
 }
 
-// "지난 대화 N ▾" while it shows: over the input while the keyboard is up, under the examples; else at the left with
+// "이어서 · {question} ›" while it shows: over the input while the keyboard is up, under the examples; else at the left with
 // the made Quest's line.
 function pastChatsAt({ chat, room, cardShown, inputTop, keyboardUp }: FramedProps): number | null {
   if (mapChipOf(chat) === null || cardShown || room.pastChats !== true) {
@@ -305,23 +318,11 @@ function examplesBottom(props: FramedProps): number {
 function MapQuestions(props: FramedProps): ReactElement | null {
   const bottom = pastChatsAt(props);
   const chip = mapChipOf(props.chat);
-  return bottom === null || chip === null ? null : (
-    <PastChats bottom={bottom} chip={chip} control={props.chat} stageHeight={props.room.stage?.height ?? null} />
-  );
+  return bottom === null || chip === null ? null : <PastChats bottom={bottom} chip={chip} control={props.chat} />;
 }
 
-// At the input's right: the answer's main button while the keyboard is down, or "새 대화" while a conversation is kept
-// with the answer closed (P04 ticket 11).
-function besideOf(chat: ChatSheetControl, action: ReturnType<typeof answerActionOf>, keyboardUp: boolean): ReactNode {
-  if (mapChipOf(chat)?.kind === 'continue') {
-    return (
-      <NewChatBeside
-        onPress={() => {
-          chat.chat.startNew();
-        }}
-      />
-    );
-  }
+// At the input's right: the answer's main button while the keyboard is down.
+function besideOf(action: ReturnType<typeof answerActionOf>, chat: ChatSheetControl, keyboardUp: boolean): ReactNode {
   return action === null || keyboardUp ? null : <AnswerActionButton action={action} control={chat} />;
 }
 

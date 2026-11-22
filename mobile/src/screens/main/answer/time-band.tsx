@@ -26,6 +26,7 @@ import {
 import {
   type BandTick,
   BandOnTrack,
+  type HeadRoom,
   BandWords,
   Ends,
   type HeldBand,
@@ -62,6 +63,8 @@ interface TimeBandProps {
   day?: string;
   // The day's other meal at one end, in place of that end's label.
   tick?: BandTick;
+  // In a bar's head: the room its buttons keep beside the words.
+  head?: HeadRoom;
 }
 
 // A handle moved by a drag, or let go and held while the recalculation it asked for is on its way.
@@ -283,7 +286,7 @@ export function TimeBand(props: TimeBandProps): ReactElement {
   );
   return (
     <View style={styles.timeBand}>
-      <BandWords day={day} parts={wordsOf(band, moving, moved)} />
+      <BandWords day={day} head={props.head} parts={wordsOf(band, moving, moved)} />
       <View style={styles.lanes}>
         {folded ? null : <Names lanes={band.lanes} />}
         <Track onWidth={setTrackWidth} whole={whole}>

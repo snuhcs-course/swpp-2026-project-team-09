@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, MapScene } from '@/api/assistant-types';
@@ -9,17 +10,18 @@ import type { LatLng } from '@/api/types';
 import type { ViewArea } from '@/features/assistant/answer-camera';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import { type MapCamera, project, unproject } from '@/map';
-import { ANSWER_PILL, listsTop } from '@/screens/main/layout';
+import { ANSWER_TOP, listsTop } from '@/screens/main/layout';
 
 // The emulator's view while an answer is shown: 411 by 914 points (1080 by 2400 pixels at a density of 2.625), under a
 // status bar of 24, the tab bar hidden.
 export const SIZE = { width: 411, height: 914 };
 export const STATUS_BAR = 24;
-// The pill's bottom: the status bar, the lists' top under it, and the pill's height, 24 + 28 + 48 = 100.
-export const PILL_BOTTOM = STATUS_BAR + listsTop(STATUS_BAR) + ANSWER_PILL.height;
+// The bottom of the answer's top without a time bar: the status bar, the lists' top under it, and the round "←",
+// 24 + 28 + 44 = 96.
+export const PILL_BOTTOM = STATUS_BAR + listsTop(STATUS_BAR) + ANSWER_TOP.height;
 // The card of the stored answer to "배고파, 민수랑 같이" as measured on the emulator, its top at 508.
 export const CARD = 406;
-// Ticket 08's area: 8 under the pill and 8 over the card, 16 from each side: from 108 to 500, and from 16 to 395.
+// Ticket 08's area: 8 under the top and 8 over the card, 16 from each side: from 104 to 500, and from 16 to 395.
 export const AREA: ViewArea = {
   top: PILL_BOTTOM + 8,
   right: SIZE.width - 16,

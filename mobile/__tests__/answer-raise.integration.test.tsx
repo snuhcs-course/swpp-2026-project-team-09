@@ -10,7 +10,7 @@ import { act, fireEvent } from '@testing-library/react-native';
 import { StyleSheet, type ViewStyle } from 'react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { space } from '@/design-system';
-import { ANSWER_PILL, listsTop } from '@/screens/main/layout';
+import { ANSWER_TOP, listsTop } from '@/screens/main/layout';
 import { pass, screen } from './support/app';
 import { holdBackButton } from './support/back';
 import { KEYBOARD, showKeyboard } from './support/keyboard';
@@ -33,7 +33,7 @@ const HANDLE = '답 크게 보기';
 const ASKED = '식사 메뉴 추천';
 const STAGE = 760;
 // What the pill keeps from the stage's top: the tests' status bar takes nothing.
-const PILL_ROOM = listsTop(0) + ANSWER_PILL.height + space[2];
+const PILL_ROOM = listsTop(0) + ANSWER_TOP.height + space[2];
 
 type User = Awaited<ReturnType<typeof openMain>>;
 

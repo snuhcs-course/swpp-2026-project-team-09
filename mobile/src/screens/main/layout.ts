@@ -47,8 +47,9 @@ export const LISTS = {
   rows: 3,
 } as const;
 
-// The answer frame's pill, in the lists' place: 16 from the sides, 48 high, its top where the lists' is (`listsTop`).
-export const ANSWER_PILL = { side: space[4], height: 48 } as const;
+// The answer frame's top, in the lists' place: 16 from the sides, its top where the lists' is (`listsTop`). The time bar
+// stands there when the answer has a time; else the round "←", 44 high (the 2026-11-22 redesign).
+export const ANSWER_TOP = { side: space[4], height: 44 } as const;
 
 // A list's distance from the top of what floats over the map, which starts under the status bar, `inset` high.
 export function listsTop(inset: number): number {
