@@ -44,3 +44,8 @@ Native files: none. Releases: the main server.
 
 - The request's system lines give "Now in Korea" with the date, and the meal rules say the day is today when the User names none. At 00:40 on Monday that is Monday, and `mealByClock` takes lunch, since Monday's lunch has not ended. The answer's own words name that day 오늘 (`meal-menu.ts`).
 - No rule speaks of the hours past midnight. A "내일" in the reply would be the model's own word for the coming day of someone who has not slept yet, or a plan for Tuesday from the model's own choice of date; `mealAfterHours` offers "내일 점심" only once today's meal is over, which is not the case at 00:40. The screenshot's plan is for 11/24 (Tuesday): if it was asked at 00:40 on Monday 11/23, the model chose Tuesday against the rule; if it was asked at 00:40 on Tuesday, it is today's lunch and "내일" is the model's word. The run's record is needed to tell which.
+
+### Agent usage (2026-11-23)
+
+- Agent time: about 15 minutes of one session. An estimate from the transcript's timestamps.
+- Tokens: input about 30.8 million, of which about 30.3 million cache reads and 0.49 million cache writes; output about 31,000. No subagents. Measured from the session's transcript at the time of the pull request.
