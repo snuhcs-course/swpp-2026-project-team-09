@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -33,8 +34,14 @@ describe('barOf', () => {
     expect(barOf([ASKED, REPLY, bubble(3, 'user', '3시로')], ON_SCREEN)).toEqual({ kind: 'plan' });
   });
 
-  it('draws none for a reply of words after it', () => {
+  // The answer stays on the map under a follow-up answered with words alone (P04 ticket 46), and so does its band.
+  it('keeps the bar of the answer before a reply of words', () => {
     const words = bubble(4, 'assistant', '네, 알겠어요.');
-    expect(barOf([ASKED, REPLY, bubble(3, 'user', '고마워'), words], ON_SCREEN)).toBeNull();
+    expect(barOf([ASKED, REPLY, bubble(3, 'user', '고마워'), words], ON_SCREEN)).toEqual({ kind: 'plan' });
+  });
+
+  it('draws none for a reply of words with no answer before it', () => {
+    const words = bubble(4, 'assistant', '네, 알겠어요.');
+    expect(barOf([bubble(3, 'user', '고마워'), words], ON_SCREEN)).toBeNull();
   });
 });

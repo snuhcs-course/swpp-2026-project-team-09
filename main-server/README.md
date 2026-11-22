@@ -2672,9 +2672,10 @@ recorded'` with the menu's notes when it serves the meal without kept hours; `se
       meal answers `none`.
       Today it adds `now` and `servingNow`, the meal whose hours hold now, or null. With a meal answer on screen (the
       context's `conditions`), it plans that answer again from them and puts it in the reply's `answer`, so that the
-      reply keeps the plan on screen; any other reply in words alone takes it off. Without one, the reply's `lookup`
-      (kind `place`, `lookup/hours-lookup.ts`) picks the Restaurant out on the map, with a place flag at the same point
-      whose words after the name the map writes as the label's second line: today `지금 영업 중 · 14:00까지`,
+      reply carries the plan again; a reply in words alone leaves the plan on screen as it was, since the app keeps
+      the answer before it. Without one, the reply's `lookup` (kind `place`, `lookup/hours-lookup.ts`) picks the
+      Restaurant out on the map, with a place flag at the same point whose words after the name the map writes as the
+      label's second line: today `지금 영업 중 · 14:00까지`,
       `지금 닫음 · 08:00 아침`, or `지금 닫음 · 오늘 영업 끝`, another day each meal's span; its basis lists each meal's
       hours, and its action guides there.
     - `planEvents(date, eventIds?)` and `EVENT_RULES` join for an app that sends both `answer` and `events` (`events/`).
