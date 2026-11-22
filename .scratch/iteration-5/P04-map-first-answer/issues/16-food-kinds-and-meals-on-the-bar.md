@@ -1,7 +1,7 @@
 # 16: Kinds of food as chips, lunch and dinner on the bar
 
 Parent: [P04 spec](../spec.md)
-Status: ready-for-agent
+Status: in-progress
 Blocked by: [13](13-our-marks-recede.md) and [15](15-all-menus-list.md) for the candidates' tags and the chip row; P05's PR 416 for each dish's kind, the kind on screen, and `otherMeal`.
 
 Native files: none. Releases: an app OTA update only.
@@ -38,11 +38,27 @@ A meal question is answered on the map at once, and what it leaves open is chose
 - The candidates' tags and their presses (ticket 13), 메뉴 모두 보기 (ticket 15), the band's drag and recalculation (`answer-band-*`), and the conditions sent with the next message (`answer-correct-*`).
 - A meal answer without `cuisine` on its dishes: no kind chips, as today.
 
+## Decided while building (2026-11-22)
+
+- A grey (receded) tag pressed becomes the pick, and the kind filter clears.
+- A kind pressed while the pick has no dish of it: the pick moves on the phone to the first candidate that serves it (the lowest number among them), as a pressed tag does; clearing the chip leaves the pick where it is. Reason: saying "한식" makes the server put such a place first, and a press must end on the same screen as the words.
+- The bar's title keeps the app's one day helper (`koreaDayWord`): "내일(월) 점심 …", "11/23(월) 점심 …", or the meal alone today before its window opens ("저녁 …"), not board 26's "월(23일)". The tick stands in place of the bar's end label on its side.
+- The meal switch sends the kept input with `meal` switched, `window: { from: null, until: null }`, every person's constraints empty, `placeId: null`, and `cuisine` left out (P05: absent is what a server before the kinds also accepts).
+- Chips of the same count stand in the order 한식, 중식, 일식, 양식, 분식. From the screen review: no grey label 종류 (a chip "한식 4" says what it is), and the row is one line: the kinds, "지난 답 N개", and the note scroll sideways, and "메뉴 보기 ▲" stays at the right. On a phone 360 wide two kinds stand whole beside "＋ 같이" with the next one peeking.
+- The bar's grip takes a press only around its middle (72 wide, 44 high), so the other meal's tick keeps its own press (agreed with P04).
+
 ## Acceptance criteria
 
-- [ ] The kinds and counts of a meal answer: "한식 3", "양식 1"; no chip for a kind nobody serves; none with fewer than two kinds. (Unit test.)
-- [ ] A press on 한식 fills it and makes the candidate without 한식 a grey name tag; the others keep their numbers with their 한식 dish first; a second press clears it. (Integration test.)
-- [ ] A message sent with 한식 filled carries `cuisine: '한식'` in its conditions; a reply whose input has `cuisine: '한식'` shows the chip filled. (Integration test.)
-- [ ] A Monday lunch answer shows "월(23일) 점심" with "저녁 17:00 ›"; a press asks the recalculation for dinner without the kind and shows "‹ 점심" with the lunch tick's start. (Integration test.)
-- [ ] Boards 24, 25, and 26 on a phone with the mock build. (Emulator.)
-- [ ] No native file changes; lint, format, and types pass on the app.
+- [x] The kinds and counts of a meal answer: "한식 3", "양식 1"; no chip for a kind nobody serves; none with fewer than two kinds. (Unit test.)
+- [x] A press on 한식 fills it and makes the candidate without 한식 a grey name tag; the others keep their numbers with their 한식 dish first; a second press clears it. (Integration test.)
+- [x] A message sent with 한식 filled carries `cuisine: '한식'` in its conditions; a reply whose input has `cuisine: '한식'` shows the chip filled. (Integration test.)
+- [x] A lunch answer of a later day shows "내일(화) 점심" with "저녁 17:00 ›"; a press asks the recalculation for dinner without the kind and shows "‹ 점심" with the lunch tick's start. (Integration test.)
+- [x] Boards 24, 25, and 26 on a phone with the mock build. (Emulator.)
+- [x] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 1.2 hours, an estimate: one session built tickets 13, 15, and 16 together from 01:47 to about 06:00 (most of it waiting on tests and an emulator slowed by the Mac's load; waits for the screen review not counted), and this ticket took about 35% of it. No subagents.
+- Tokens: the whole session (13, 15, and 16) output about 262k by 05:09 and more after; input about 221M, nearly all cache reads (see ticket 13). This ticket's share is about 35% of each.

@@ -53,6 +53,7 @@ const NO_ANSWER: ShownAnswer = {
   index: 0,
   browse: nothing,
   show: nothing,
+  chooseKind: nothing,
   basisOpen: false,
   toggleBasis: nothing,
   adding: false,

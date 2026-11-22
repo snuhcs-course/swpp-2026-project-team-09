@@ -11,6 +11,8 @@ import { color, font, radius, size, space, text } from '@/design-system';
 import { MEAL_NAMES, won } from '@/features/dining/adapter';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { koreaClock, koreaWeekdayName } from '@/korea-time';
+import { kindChipsOf } from '@/features/assistant/meal-kinds';
+import { KindChips } from './kind-chips';
 
 // 메뉴 모두 보기 (P04 ticket 15, board 23): every candidate of a meal answer with all its dishes and prices, in the
 // map's order, above the dock's chips.
@@ -184,8 +186,8 @@ export function MenuList({ answer, shown, busy, onFold }: MenuListProps): ReactE
 }
 
 interface WithMenuListProps {
-  shown: Pick<ShownAnswer, 'answer' | 'index' | 'show' | 'recalculating'>;
-  // A Plan is being sent or is made: the list picks nothing, as the map does.
+  shown: Pick<ShownAnswer, 'answer' | 'index' | 'show' | 'chooseKind' | 'recalculating'>;
+  // A Plan is being sent or is made: neither the list nor the kinds change the Plan on screen, as the map does.
   sent: boolean;
   // The dock's own chips ("지난 답 N개", the note), which stand before 메뉴 모두 보기.
   folded: ReactNode;
@@ -193,8 +195,8 @@ interface WithMenuListProps {
   children: (dock: ReactNode) => ReactNode;
 }
 
-// A meal answer's dock with 메뉴 모두 보기 as its row's last chip (board 24), and the list, while open, over the row.
-// The list folds when another answer comes.
+// A meal answer's dock: its kinds of food first (`KindChips`), the dock's own chips, and 메뉴 모두 보기 as the row's
+// last chip (board 24), with the list, while open, over the row. The list folds when another answer comes.
 export function WithMenuList({ shown, sent, folded, children }: WithMenuListProps): ReactElement {
   const { answer } = shown;
   const [openFor, setOpenFor] = useState<AnswerReply | null>(null);
@@ -203,19 +205,34 @@ export function WithMenuList({ shown, sent, folded, children }: WithMenuListProp
   const fold = (): void => {
     setOpenFor(null);
   };
-  const dock = (
-    <>
-      {folded}
-      {listed ? (
-        <MenuListChip
-          onPress={() => {
-            setOpenFor(open ? null : answer);
-          }}
-          open={open}
-        />
-      ) : null}
-    </>
-  );
+  const kinds = answer === null ? [] : kindChipsOf(answer.plans);
+  const menuChip = listed ? (
+    <MenuListChip
+      onPress={() => {
+        setOpenFor(open ? null : answer);
+      }}
+      open={open}
+    />
+  ) : null;
+  // One row (board 24): the kinds and the dock's own chips scroll sideways, and 메뉴 모두 보기 stays at the right.
+  const dock =
+    kinds.length === 0 && !listed ? (
+      folded
+    ) : (
+      <View style={styles.mealRow}>
+        <ScrollView
+          contentContainerStyle={styles.mealChips}
+          horizontal
+          keyboardShouldPersistTaps="handled"
+          showsHorizontalScrollIndicator={false}
+          style={styles.mealScroll}
+        >
+          <KindChips answer={answer} disabled={sent || shown.recalculating} onChoose={shown.chooseKind} />
+          {folded}
+        </ScrollView>
+        {menuChip}
+      </View>
+    );
   return (
     <>
       {open ? <MenuList answer={answer} busy={sent || shown.recalculating} onFold={fold} shown={shown} /> : null}
@@ -240,6 +257,17 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
   },
   chipWords: { ...text.label, color: color.snuBlue },
+  mealRow: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minWidth: '50%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+  },
+  mealScroll: { flexGrow: 1, flexShrink: 1 },
+  mealChips: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   pressed: { opacity: 0.6 },
   list: { gap: space[2], paddingBottom: space[2] },
   title: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] },
