@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useEffect, useState } from 'react';
@@ -77,7 +78,7 @@ export function cardSlot(card: LibraryCardData, at: Date): Slot {
 
 // What the card shows, kept with the chat: its room, its time and its seat. The card as it came is kept as nothing;
 // anything changed is kept with the key of the book card as it is on screen, which later requests send back.
-interface Shown {
+export interface Shown {
   space: LibrarySpace;
   first: LibrarySpace;
   full: LibrarySpace | null;
@@ -85,9 +86,15 @@ interface Shown {
   seat: string | null;
 }
 
-function useKept(of: SeatRoomOf): { kept: Shown; keep: (next: Partial<Shown>) => void } {
-  const { card, space, place, actions } = of;
-  const [own] = useState(() => cardSlot(card, now()));
+type Kept = Pick<LibraryCardActions, 'roomOf' | 'showRoom'>;
+
+// What a card at `place` shows, and how a change is kept, from the chat alone: the card's own time is `own`. The time
+// bar and the flag of a booking on the map (P04 ticket 07) read and change it as the card does.
+export function keptRoom(
+  { card, space, place }: Pick<SeatRoomOf, 'card' | 'space' | 'place'>,
+  actions: Kept,
+  own: Slot,
+): { kept: Shown; keep: (next: Partial<Shown>) => void } {
   const room = actions.roomOf(place);
   const kept: Shown = {
     space: room?.space ?? space,
@@ -103,6 +110,11 @@ function useKept(of: SeatRoomOf): { kept: Shown; keep: (next: Partial<Shown>) =>
     actions.showRoom(place, asCame ? null : { ...all, key });
   };
   return { kept, keep };
+}
+
+function useKept(of: SeatRoomOf): { kept: Shown; keep: (next: Partial<Shown>) => void } {
+  const [own] = useState(() => cardSlot(of.card, now()));
+  return keptRoom(of, of.actions, own);
 }
 
 // The room on screen, the time and the seat the card offers, all kept with the chat; the seat the card named comes back
