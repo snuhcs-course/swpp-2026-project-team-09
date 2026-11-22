@@ -12,10 +12,11 @@
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AnswerReply, MapScene } from '@/api/assistant-types';
+import type { LatLng } from '@/api/types';
 import { answerCamera } from '@/features/assistant/answer-camera';
 import type { LabelView } from '@/features/assistant/answer-labels';
-import { type AnswerDrawing, drawingOf, drawingOfScene, looksOf, nearOwnMark } from '@/features/assistant/answer-marks';
-import { keptDrawingOf, nearKeptWords } from '@/features/assistant/kept-drawing';
+import { type AnswerDrawing, drawingOf, drawingOfScene, looksOf } from '@/features/assistant/answer-marks';
+import { keptDrawingOf } from '@/features/assistant/kept-drawing';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { CardView } from '@/features/map/adapter';
@@ -33,7 +34,10 @@ import {
 import { ignoreMark, type OnMark, planPress, pressableWhile, takesNoPress } from './answer-presses';
 import { labelArea, paddingOf } from './answer-padding';
 import type { Room } from './layout';
-import { useFaces } from './use-answer-faces';
+import { othersOf, useFacePoints, useFaces } from './use-answer-faces';
+import { useChoosingRing } from './use-choosing-ring';
+
+export { othersOf };
 import { useAnswerWalks } from './use-answer-walks';
 import type { MainMap } from './use-main-map';
 
@@ -57,6 +61,7 @@ const ANSWER_OUTER_ZOOM = nativeLevelZoom(ANSWER_MIN_LEVEL) + 0.25;
 const NO_LOOKS: readonly MarkerLook[] = [];
 const NO_LINES: readonly MapLine[] = [];
 const NO_ROUTES: MapScene['routes'] = [];
+const NO_POINTS: readonly LatLng[] = [];
 
 type Invited = Pick<PlanInvitation, 'sending' | 'made' | 'standings' | 'changed' | 'changing' | 'left'>;
 
@@ -105,17 +110,23 @@ export function useFraming({ fitZoom }: MainMap, room: Room, pill: boolean): Fra
 // The camera `answerCamera` works out for a drawing whose labels' sides are chosen in metres, and the area its labels
 // stay in. Null until the view is known. The room for labels is measured from the points the camera fits: every point,
 // or the Plan's own alone.
-function labelViewOf(drawing: AnswerDrawing, { top, card, pill, timeBar, view }: Framing): LabelView | null {
+function labelViewOf(
+  drawing: AnswerDrawing,
+  { top, card, pill, timeBar, view }: Framing,
+  avoid: readonly LatLng[] = NO_POINTS,
+): LabelView | null {
   if (view === null) {
     return null;
   }
   const padding = paddingOf(top, card, drawing, pill, timeBar);
-  const ownPadding = paddingOf(top, card, { ...drawing, points: drawing.own }, pill, timeBar);
-  const camera = answerCamera(drawing, view.size, padding, view.closest, {
+  const own = drawing.keep ?? drawing.own;
+  const ownPadding = paddingOf(top, card, { ...drawing, points: own }, pill, timeBar);
+  const camera = answerCamera({ ...drawing, own }, view.size, padding, view.closest, {
     padding: ownPadding,
     outer: ANSWER_OUTER_ZOOM,
   });
-  return camera === null ? null : { camera, size: view.size, area: labelArea(top, card, view.size, pill, timeBar) };
+  const area = labelArea(top, card, view.size, pill, timeBar);
+  return camera === null ? null : { camera, size: view.size, area, avoid };
 }
 
 // How long the drawing and the card's height stay the same before the camera follows an answer that replaced another,
@@ -174,22 +185,6 @@ function useAnswerCamera(
       }
     };
   }, [drawing, framing]);
-}
-
-// The Avatars of people the Plan does not draw: Friends and the other people of the User's Party, not the User's own
-// nor the shuttle's vehicles. One near one of the Plan's own marks, or under the words of a Quest already set (P04
-// ticket 20), gives way too: the map draws every Avatar above every marker, so it would lie over the mark or its words.
-export function othersOf(
-  avatars: readonly MapAvatar[],
-  cards: readonly CardView[],
-  drawing: AnswerDrawing,
-): MapAvatar[] {
-  const others = new Set(
-    cards.flatMap(({ id, mark }) => (mark.type === 'person' && !drawing.userIds.includes(mark.id) ? [id] : [])),
-  );
-  return avatars.filter(
-    ({ id, position }) => others.has(id) && !nearOwnMark(drawing, position) && !nearKeptWords(drawing, position),
-  );
 }
 
 export interface AnswerMap {
@@ -254,7 +249,7 @@ export function useBase(draw: Draw | null): AnswerDrawing | null {
 // and the marks are drawn with their sides chosen at that camera. Null while there is nothing to draw. `looks` are
 // asked for with the drawing's own, so that a change of drawing never waits for a picture. `answer` is the answer
 // drawn, or the reply of a Lookup, for the camera to tell one that replaced another. `routes` are those of the scene
-// drawn: its walks follow their paths once found (`useAnswerWalks`).
+// drawn: its walks follow their paths once found (`useAnswerWalks`). Labels keep clear of the faces at `avoid`.
 export function useDrawnMap(
   draw: Draw | null,
   base: AnswerDrawing | null,
@@ -265,8 +260,9 @@ export function useDrawnMap(
   routes: MapScene['routes'] = NO_ROUTES,
   // The marks that take a press although they are no Plan's: those that open a card.
   pressable: (id: string) => boolean = takesNoPress,
+  avoid: readonly LatLng[] = NO_POINTS,
 ): Drawn | null {
-  const shown = useMemo(() => (base === null ? null : labelViewOf(base, framing)), [base, framing]);
+  const shown = useMemo(() => (base === null ? null : labelViewOf(base, framing, avoid)), [base, framing, avoid]);
   const drawing = useMemo(() => (draw === null || shown === null ? base : draw(shown)), [draw, base, shown]);
   const things = drawing?.things ?? [];
   const images = useMarkerImages([...things.map(({ look }) => look), ...looks]);
@@ -348,7 +344,9 @@ export function useAnswerMap(
   const routes = answer?.plans[index]?.scene.routes;
   // While 바꾸기 is on its way nothing can be chosen either, nor once 그대로 두기 left the Quest as it is.
   const sent = sending || settled || changing || leftAlone;
-  const drawn = useDrawnMap(draw, base, answer, looks, map, framing, routes, pressableWhile(sent));
+  const avoid = useFacePoints(faces);
+  const ring = useChoosingRing(draw, looks, index);
+  const drawn = useDrawnMap(ring.draw, base, answer, ring.looks, map, framing, routes, pressableWhile(sent), avoid);
   if (drawn === null) {
     return null;
   }

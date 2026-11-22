@@ -12,8 +12,9 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { initials } from './avatar';
 import { MapPin } from './map-pin';
-import { ANSWER_SYMBOL_BOX, BADGE, GAP, LABEL_MAX, RING, SUB_MAX } from './map-answer-box';
-import { color, mapText, radius, shadow, space, text } from './tokens';
+import { ANSWER_SYMBOL_BOX, GAP, RING } from './map-answer-box';
+import { MapAnswerLabel } from './map-answer-label';
+import { color, mapText, radius, shadow, text } from './tokens';
 
 export { ANSWER_SYMBOL_BOX, answerLabelBox } from './map-answer-box';
 
@@ -23,7 +24,16 @@ export type AnswerSymbol =
   // measured at the exact level. `badge`: a "?" (`waiting`) or a "✓" (`accepted`) at the face's upper right; the
   // caller says what it means.
   | { type: 'face'; name: string; dashed: boolean; badge?: FaceBadge; exact?: boolean }
-  | { type: 'dot'; role: 'pick' | 'candidate' | 'dropped' | 'next' | 'stop' | 'kept'; number: number | null };
+  // `faded`: drawn pale. `ring`: how far, from 0 to 1, the ring spreading from a pick just chosen has gone, and `pop`
+  // its dot a little larger as it is chosen; left out, none.
+  | {
+      type: 'dot';
+      role: 'pick' | 'candidate' | 'dropped' | 'next' | 'stop' | 'kept';
+      number: number | null;
+      faded?: boolean;
+      ring?: number;
+      pop?: boolean;
+    };
 
 export type FaceBadge = 'waiting' | 'accepted';
 
@@ -35,7 +45,8 @@ type WayTone = 'leave' | 'late' | 'shuttle';
 export interface AnswerLabel {
   side: LabelSide;
   // `stop` is a shuttle stop's; `kept` a Quest already set's.
-  tone: 'pick' | 'candidate' | 'dropped' | 'next' | 'person' | 'meeting' | 'stop' | 'kept' | WayTone;
+  // `leg` is a route's minutes.
+  tone: 'pick' | 'candidate' | 'dropped' | 'next' | 'person' | 'meeting' | 'stop' | 'kept' | 'leg' | WayTone;
   title: string;
   // A second line, under the title; a candidate's stands beside its title (its arrival time).
   line: string | null;
@@ -43,6 +54,10 @@ export interface AnswerLabel {
   sub?: string | null;
   // Words after the title in the pick's colour, as a meal pick's time and walking ("11:00 · 걸음 32분"). Left out, none.
   note?: string | null;
+  // Words after the line that say what a press opens ("메뉴 ›"), in the link's colour. Left out, none.
+  action?: string | null;
+  // Drawn pale, as a candidate that does not fit or is far. Left out, not.
+  faded?: boolean;
   // A number badge before the title, when the mark's own dot is not drawn.
   number: number | null;
   // How much further than the gap a label at the left or the right stands from the symbol box, in points, so that it
@@ -61,11 +76,21 @@ function partOf(testID: string | undefined, part: string): string | undefined {
   return testID === undefined ? undefined : `${testID}:${part}`;
 }
 
-function Dot({ role, number, testID }: Extract<AnswerSymbol, { type: 'dot' }> & { testID?: string }): ReactElement {
+type DotSymbol = Extract<AnswerSymbol, { type: 'dot' }>;
+
+function Dot({ role, number, ring, pop = false, testID }: DotSymbol & { testID?: string }): ReactElement {
   return (
-    <View style={[styles.dot, styles[role]]} testID={testID}>
-      {number === null ? null : <Text style={role === 'pick' ? styles.pickNumber : styles.number}>{number}</Text>}
-    </View>
+    <>
+      {ring === undefined ? null : (
+        <View
+          style={[styles.ring, { opacity: 1 - ring, transform: [{ scale: 1 + ring * RING_GROWTH }] }]}
+          testID={partOf(testID, 'ring')}
+        />
+      )}
+      <View style={[styles.dot, styles[role], pop && styles.pop]} testID={testID}>
+        {number === null ? null : <Text style={role === 'pick' ? styles.pickNumber : styles.number}>{number}</Text>}
+      </View>
+    </>
   );
 }
 
@@ -95,80 +120,6 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
   return <Dot {...symbol} testID={partOf(testID, 'dot')} />;
 }
 
-// A label's title and its line: a candidate's side by side, with its dishes under them (`sub`).
-function LabelWords({ tone, title, line, sub = null, note = null }: AnswerLabel): ReactElement {
-  const candidate = tone === 'candidate';
-  const head = (
-    <>
-      <Text
-        numberOfLines={1}
-        style={[
-          tone === 'pick' ? styles.pickTitle : styles.title,
-          candidate && styles.candidateTitle,
-          tone === 'meeting' && styles.meetingTitle,
-          tone === 'dropped' && styles.droppedTitle,
-          tone === 'kept' && styles.keptTitle,
-          WAY_FLAGS.has(tone) && styles.flagTitle,
-          tone === 'late' && styles.lateTitle,
-          tone === 'shuttle' && styles.shuttleTitle,
-        ]}
-      >
-        {title}
-        {note === null ? null : <Text style={styles.note}>{` ${note}`}</Text>}
-      </Text>
-      {line === null ? null : (
-        <Text
-          numberOfLines={1}
-          style={[styles.line, tone === 'pick' && note === null && styles.pickLine, tone === 'stop' && styles.stopLine]}
-        >
-          {line}
-        </Text>
-      )}
-    </>
-  );
-  if (!candidate) {
-    return <View style={styles.words}>{head}</View>;
-  }
-  return (
-    <View style={styles.words}>
-      <View style={styles.inline}>{head}</View>
-      {sub === null ? null : (
-        <Text numberOfLines={1} style={styles.sub}>
-          {sub}
-        </Text>
-      )}
-    </View>
-  );
-}
-
-function Label({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
-  const { side, tone, line, number, shift, sub = null } = label;
-  return (
-    <View
-      style={[
-        styles.label,
-        ((line !== null && tone !== 'candidate') || sub !== null) && styles.twoLines,
-        tone === 'pick' && styles.pickLabel,
-        tone === 'candidate' && styles.candidateLabel,
-        tone === 'kept' && styles.keptLabel,
-        (sub !== null || tone === 'pick') && styles.subLabel,
-        tone === 'meeting' && styles.meetingLabel,
-        tone === 'late' && styles.lateLabel,
-        tone === 'shuttle' && styles.shuttleLabel,
-        shift !== undefined && (side === 'left' ? { marginRight: shift } : { marginLeft: shift }),
-      ]}
-      testID={partOf(testID, 'label')}
-    >
-      {number === null ? null : (
-        <View style={[styles.badge, tone === 'pick' ? styles.pick : styles.candidate]}>
-          <Text style={styles.number}>{number}</Text>
-        </View>
-      )}
-      <LabelWords {...label} />
-    </View>
-  );
-}
-
 // A mark of an answer on the map, as one picture: a symbol box of 36 by 36, which may be empty, and a label at one
 // side of it. Its anchor is the centre of the symbol box, so that a label never covers its own point.
 export function MapAnswerMark({
@@ -181,25 +132,43 @@ export function MapAnswerMark({
   testID?: string;
 }): ReactElement {
   return (
-    <View style={[styles.mark, { flexDirection: DIRECTION[label?.side ?? 'right'] }]} testID={testID}>
+    <View
+      style={[
+        styles.mark,
+        { flexDirection: DIRECTION[label?.side ?? 'right'] },
+        (label?.faded === true || (symbol?.type === 'dot' && symbol.faded === true)) && styles.faded,
+      ]}
+      testID={testID}
+    >
       <View style={styles.box} testID={partOf(testID, 'symbol')}>
         {symbol === null ? null : <MarkSymbol symbol={symbol} testID={testID} />}
       </View>
-      {label === null ? null : <Label label={label} testID={testID} />}
+      {label === null ? null : <MapAnswerLabel label={label} testID={partOf(testID, 'label')} />}
     </View>
   );
 }
 
 const PICK_DOT = 30;
+// How much wider than the pick's dot its ring spreads, as a share of the dot.
+const RING_GROWTH = 1.4;
 const CANDIDATE_DOT = 20;
 const SMALL_DOT = 14;
 const NEXT_SQUARE = 18;
 const FACE_BADGE = 14;
 const EXACT_DOT = 11;
-const WAY_FLAGS = new Set<AnswerLabel['tone']>(['leave', 'late', 'shuttle']);
 
 const styles = StyleSheet.create({
   mark: { alignSelf: 'flex-start', alignItems: 'center', gap: GAP },
+  faded: { opacity: 0.45 },
+  ring: {
+    position: 'absolute',
+    width: PICK_DOT,
+    height: PICK_DOT,
+    borderRadius: radius.full,
+    borderWidth: RING,
+    borderColor: color.quest,
+  },
+  pop: { transform: [{ scale: 1.2 }] },
   box: { alignItems: 'center', justifyContent: 'center', width: ANSWER_SYMBOL_BOX, height: ANSWER_SYMBOL_BOX },
   face: {
     alignItems: 'center',
@@ -252,49 +221,4 @@ const styles = StyleSheet.create({
   accepted: { backgroundColor: color.friend },
   pickNumber: { ...mapText.smallTitle, color: color.onPrimary },
   number: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
-  badge: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: BADGE,
-    height: BADGE,
-    borderRadius: radius.full,
-  },
-  label: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1],
-    maxWidth: LABEL_MAX,
-    paddingVertical: GAP,
-    paddingHorizontal: space[2],
-    borderRadius: radius.full,
-    backgroundColor: color.surface,
-    boxShadow: shadow.mapName,
-  },
-  twoLines: { paddingVertical: space[1], borderRadius: radius.md },
-  pickLabel: { borderWidth: RING, borderColor: color.quest },
-  // Another candidate (boards 20 and 21): its number, its name, and its time on one line, in a tag that reads as one
-  // to press.
-  candidateLabel: { borderWidth: 1.5, borderColor: color.snuBlue },
-  inline: { flexDirection: 'row', alignItems: 'baseline', gap: space[1] },
-  candidateTitle: { fontFamily: mapText.smallTitle.fontFamily },
-  // A Quest already set (P04 ticket 20): grey, apart from the candidates, with no number.
-  keptLabel: { borderWidth: 1.5, borderColor: color.inkMuted },
-  keptTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.inkMuted },
-  sub: { ...mapText.rowLine, color: color.inkMuted },
-  subLabel: { maxWidth: SUB_MAX },
-  meetingLabel: { backgroundColor: color.ink },
-  lateLabel: { backgroundColor: color.dangerSoft },
-  shuttleLabel: { backgroundColor: color.svcShuttleSoft },
-  words: { flexShrink: 1 },
-  title: { ...mapText.rowLine, color: color.ink },
-  pickTitle: { ...mapText.buttonTitle, color: color.ink },
-  meetingTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.onPrimary },
-  droppedTitle: { color: color.inkMuted },
-  flagTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.ink },
-  lateTitle: { color: color.danger },
-  shuttleTitle: { color: color.svcShuttle },
-  note: { color: color.quest },
-  line: { ...mapText.rowLine, color: color.inkMuted },
-  pickLine: { color: color.quest },
-  stopLine: { color: color.svcShuttle },
 });

@@ -55,14 +55,25 @@ function wordsWidth(words: string, size: number): number {
 // side of the symbol box, the gap and its `shift` away, and centred on the point the other way. Its width is its
 // words' with the padding, the pick's border, and the number's badge, at most `LABEL_MAX`. The camera's room for
 // labels and the choice of a label's side both read it.
-export function answerLabelBox({ side, tone, title, line, number, shift = 0, sub = null, note = null }: AnswerLabel): {
+export function answerLabelBox({
+  side,
+  tone,
+  title,
+  line,
+  number,
+  shift = 0,
+  sub = null,
+  note = null,
+  action = null,
+}: AnswerLabel): {
   left: number;
   top: number;
   right: number;
   bottom: number;
 } {
   const titleSize = tone === 'pick' ? mapText.buttonTitle.fontSize : mapText.rowLine.fontSize;
-  const lineWidth = line === null ? 0 : wordsWidth(line, mapText.rowLine.fontSize);
+  const lineWords = line === null ? null : action === null ? line : `${line} ${action}`;
+  const lineWidth = lineWords === null ? 0 : wordsWidth(lineWords, mapText.rowLine.fontSize);
   const titleWidth = wordsWidth(title, titleSize) + (note === null ? 0 : wordsWidth(` ${note}`, titleSize));
   const head =
     tone === 'candidate' && line !== null ? titleWidth + space[1] + lineWidth : Math.max(titleWidth, lineWidth);

@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -27,6 +28,8 @@ export interface LabelView {
   camera: MapCamera;
   size: Size;
   area: ViewArea;
+  // Faces drawn over the map that labels keep clear of, as Friends' Avatars; left out, none.
+  avoid?: readonly LatLng[];
 }
 
 // What a label says before it has a side.
@@ -211,6 +214,7 @@ export function placeLabels(
 ): (AnswerLabel | null)[] {
   const taken = points.map(() => new Set<LabelSide>());
   const symbols = view === null ? [] : points.map(({ symbol }) => (symbol === null ? null : symbolBox(view, symbol)));
+  const faces = view === null ? [] : (view.avoid ?? []).map((position) => symbolBox(view, position));
   const boxes: ViewArea[] = [];
   const labels = marks.map(({ point, position, words, sides, kept = false }): AnswerLabel | null => {
     const free = taken[point];
@@ -218,7 +222,7 @@ export function placeLabels(
       return null;
     }
     const list = sides.filter((side) => !free.has(side));
-    const covering = [...othersThan(symbols, point), ...boxes];
+    const covering = [...othersThan(symbols, point), ...boxes, ...faces];
     const side =
       view === null
         ? inMetres(points, point, list)

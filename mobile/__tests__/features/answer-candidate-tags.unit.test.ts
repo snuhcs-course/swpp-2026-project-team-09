@@ -36,7 +36,13 @@ describe('the tags of a meal answer with menus', () => {
   it("gives the pick's label its time and walking after its name, and its first dish, the rest's count, and its lowest price under them", () => {
     expect(seen(drawing, 'answer:pick')).toMatchObject({
       name: '302동식당 · 12:15 · 걸음 20분 · 뼈없는감자탕 외 5 · 4,000원부터',
-      label: { tone: 'pick', title: '302동식당 ›', note: '12:15 · 걸음 20분', line: '뼈없는감자탕 외 5 · 4,000원부터' },
+      label: {
+        tone: 'pick',
+        title: '302동식당',
+        note: '12:15 · 걸음 20분',
+        line: '뼈없는감자탕 외 5 · 4,000원부터',
+        action: '메뉴 ›',
+      },
     });
   });
 });

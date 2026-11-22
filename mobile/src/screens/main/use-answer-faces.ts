@@ -5,7 +5,13 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { useMemo } from 'react';
+import type { AnswerDrawing } from '@/features/assistant/answer-marks';
+import { nearOwnMark } from '@/features/assistant/answer-marks';
+import { nearKeptWords } from '@/features/assistant/kept-drawing';
+import type { CardView } from '@/features/map/adapter';
 import type { PlanInput } from '@/api/assistant-types';
+import type { LatLng } from '@/api/types';
 import { peopleOf } from '@/features/assistant/plan-input';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { friendIdOf } from '@/features/map/adapter';
@@ -72,4 +78,27 @@ export function useFadedFaces(avatars: readonly MapAvatar[]): MapAvatar[] {
     const made = image === undefined || (image.uri === null && avatar.image.uri !== null) ? avatar.image : image;
     return { ...avatar, image: made, order: 0 };
   });
+}
+
+// The faces' points, the same array while they stay where they are.
+export function useFacePoints(faces: readonly MapAvatar[]): readonly LatLng[] {
+  const key = faces.map(({ position }) => `${String(position.latitude)},${String(position.longitude)}`).join(';');
+  // oxlint-disable-next-line react-hooks/exhaustive-deps -- the key stands for the faces' points.
+  return useMemo(() => faces.map(({ position }) => position), [key]);
+}
+
+// The Avatars of people the Plan does not draw: Friends and the other people of the User's Party, not the User's own
+// nor the shuttle's vehicles. One near one of the Plan's own marks, or under the words of a Quest already set (P04
+// ticket 20), gives way too: the map draws every Avatar above every marker, so it would lie over the mark or its words.
+export function othersOf(
+  avatars: readonly MapAvatar[],
+  cards: readonly CardView[],
+  drawing: AnswerDrawing,
+): MapAvatar[] {
+  const others = new Set(
+    cards.flatMap(({ id, mark }) => (mark.type === 'person' && !drawing.userIds.includes(mark.id) ? [id] : [])),
+  );
+  return avatars.filter(
+    ({ id, position }) => others.has(id) && !nearOwnMark(drawing, position) && !nearKeptWords(drawing, position),
+  );
 }
