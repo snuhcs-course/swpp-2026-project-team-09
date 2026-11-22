@@ -171,20 +171,22 @@ export function answerCamera(
 
 // Room kept between a place brought into view and the area's edge, for its dot.
 const PAN_MARGIN = ANSWER_SYMBOL_BOX;
+const DOT_ROOM: ViewArea = { top: -PAN_MARGIN, right: PAN_MARGIN, bottom: PAN_MARGIN, left: -PAN_MARGIN };
 
-function into(at: number, start: number, end: number): number {
-  if (at < start + PAN_MARGIN) {
-    return start + PAN_MARGIN - at;
+function into(at: number, before: number, after: number, start: number, end: number): number {
+  if (at + before < start) {
+    return start - at - before;
   }
-  return at > end - PAN_MARGIN ? end - PAN_MARGIN - at : 0;
+  return at + after > end ? end - at - after : 0;
 }
 
-// The view moved, at its zoom, just enough to bring a position into its area; the same view when it is in already.
-export function panToShow(view: LabelView, position: LatLng): LabelView {
+// The view moved, at its zoom, just enough to bring a position into its area with the room around it (`room`, in
+// points from it, its dot's by default); the same view when it is in already.
+export function panToShow(view: LabelView, position: LatLng, room: ViewArea = DOT_ROOM): LabelView {
   const { camera, size, area } = view;
   const { x, y } = inView(position, camera, size);
-  const dx = into(x, area.left, area.right);
-  const dy = into(y, area.top, area.bottom);
+  const dx = into(x, room.left, room.right, area.left, area.right);
+  const dy = into(y, room.top, room.bottom, area.top, area.bottom);
   if (dx === 0 && dy === 0) {
     return view;
   }

@@ -31,8 +31,8 @@ describe('학생회관식당 chosen in the crowded meal answer', () => {
 
   it('draws the way there solid and the way on dotted, each with its minutes', () => {
     expect(drawing.lines.map(({ style }) => style.dash)).toEqual([undefined, [1, 8]]);
-    expect(seen(drawing, 'answer:leg:0').label).toMatchObject({ tone: 'leg', title: '15분' });
-    expect(seen(drawing, 'answer:leg:1').label).toMatchObject({ tone: 'leg', title: '17분' });
+    expect(seen(drawing, 'answer:leg:0:15분').label).toMatchObject({ tone: 'leg', title: '15분' });
+    expect(seen(drawing, 'answer:leg:1:17분').label).toMatchObject({ tone: 'leg', title: '17분' });
   });
 
   it('draws the way on as dots, which the native map cannot dash, and the way there whole', () => {
@@ -67,7 +67,7 @@ describe('302동식당 chosen', () => {
   it('moves the label to it, with only the way there drawn and its minutes', () => {
     expect(seen(drawing, 'answer:pick').label).toMatchObject({ title: '302동식당', note: '11:30 · 걸음 2분' });
     expect(drawing.lines).toHaveLength(1);
-    expect(seen(drawing, 'answer:leg:0').label).toMatchObject({ title: '2분' });
+    expect(seen(drawing, 'answer:leg:0:2분').label).toMatchObject({ title: '2분' });
   });
 });
 
@@ -93,7 +93,7 @@ describe('a leg by shuttle', () => {
   it('reads "셔틀 N분" on its label, and the way on its minutes alone', () => {
     const drawing = drawingOf(CROWDED, at('자하연식당 2층'));
 
-    expect(seen(drawing, 'answer:leg:0').label).toMatchObject({ tone: 'leg', title: '셔틀 13분' });
-    expect(seen(drawing, 'answer:leg:1').label).toMatchObject({ tone: 'leg', title: '20분' });
+    expect(seen(drawing, 'answer:leg:0:셔틀 13분').label).toMatchObject({ tone: 'leg', title: '셔틀 13분' });
+    expect(seen(drawing, 'answer:leg:1:20분').label).toMatchObject({ tone: 'leg', title: '20분' });
   });
 });

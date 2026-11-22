@@ -8,11 +8,12 @@ import { useMemo } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AnswerReply } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import { answerCamera, panToShow } from '@/features/assistant/answer-camera';
+import { answerCamera, panToShow, type ViewArea } from '@/features/assistant/answer-camera';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import { type AnswerDrawing, drawingOf, looksOf } from '@/features/assistant/answer-marks';
 import type { Standing } from '@/features/assistant/invited-friends';
 import { drawsMeal } from '@/features/assistant/meal-marks';
+import { ANSWER_SYMBOL_BOX, answerLabelBox } from '@/design-system';
 import { type MarkerLook, NATIVE_MIN_LEVEL, nativeLevelZoom, type Size, ZOOM_OFFSET } from '@/map';
 import { labelArea, paddingOf } from './answer-padding';
 import type { Room } from './layout';
@@ -80,10 +81,41 @@ export function labelViewOf(
   return camera === null ? null : { camera, size: view.size, area, avoid };
 }
 
+// The side of a meal pick away from its route: above when the route leaves it southwards, as most lines down the
+// screen, below otherwise.
+function awaySide({ lines, pick }: AnswerDrawing): 'above' | 'below' {
+  if (pick === null) {
+    return 'below';
+  }
+  const north = lines.flatMap(({ points }) => points.map(({ latitude }) => latitude - pick.latitude));
+  const sum = north.reduce((total, one) => total + one, 0);
+  return sum < 0 ? 'above' : 'below';
+}
+
+// The room a meal pick takes around its point: its dot, and its label on the side away from its route, which may
+// move to another side when that one is taken.
+function pickRoom(drawing: AnswerDrawing): ViewArea | undefined {
+  const look = drawing.things.find(({ id }) => id === 'answer:pick')?.look;
+  if (look?.kind !== 'answer' || look.label === null) {
+    return undefined;
+  }
+  const { shift: _shift, ...words } = look.label;
+  const box = answerLabelBox({ ...words, side: awaySide(drawing) });
+  const dot = ANSWER_SYMBOL_BOX;
+  return {
+    top: Math.min(-dot, box.top),
+    right: Math.max(dot, box.right),
+    bottom: Math.max(dot, box.bottom),
+    left: Math.min(-dot, box.left),
+  };
+}
+
 // A meal answer's view while another place is chosen (the answer screen's redesign, board E2): the first Plan's,
-// kept so that nothing else on the map moves, panned just enough to bring the chosen place into the labels' area.
-export function heldView(first: LabelView | null, pick: LatLng | null): LabelView | null {
-  return first === null || pick === null ? first : panToShow(first, pick);
+// kept so that nothing else on the map moves, panned just enough to bring the chosen place and its label into the
+// labels' area.
+export function heldView(first: LabelView | null, drawing: AnswerDrawing | null): LabelView | null {
+  const pick = drawing?.pick ?? null;
+  return first === null || drawing === null || pick === null ? first : panToShow(first, pick, pickRoom(drawing));
 }
 
 // The first Plan's view, which a meal answer keeps (`heldView`) while it can be chosen from; null for any other answer.
@@ -112,14 +144,12 @@ export function useHeldViews(
   base: AnswerDrawing | null,
 ): { held: LabelView | null; looks: readonly MarkerLook[] } {
   const first = useFirstView(sent ? null : answer, standings, framing, avoid);
-  const held = useMemo(() => heldView(first, base?.pick ?? null), [first, base]);
+  const held = useMemo(() => heldView(first, base), [first, base]);
   const looks = useMemo(
     () =>
       answer === null
         ? NO_LOOKS
-        : looksOf(answer, (drawing) =>
-            first === null ? labelViewOf(drawing, framing) : heldView(first, drawing.pick),
-          ),
+        : looksOf(answer, (drawing) => (first === null ? labelViewOf(drawing, framing) : heldView(first, drawing))),
     [answer, framing, first],
   );
   return { held, looks };

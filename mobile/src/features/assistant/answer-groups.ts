@@ -15,18 +15,19 @@ import { keptTagOf } from './set-quest';
 // The groups in the order their labels take sides, which is also the order of their symbols at one point but for the
 // flags, which have none. `kept` is a Quest already set (P04 ticket 20): at a candidate's place the candidate's dot
 // is drawn, and the point carries both labels.
-export type Group = 'flag' | 'pick' | 'person' | 'next' | 'stop' | 'kept' | 'candidate' | 'dropped';
+export type Group = 'flag' | 'pick' | 'leg' | 'person' | 'next' | 'stop' | 'kept' | 'candidate' | 'dropped';
 
-export const SIDE_ORDER: Group[] = ['flag', 'pick', 'person', 'next', 'stop', 'kept', 'candidate', 'dropped'];
+export const SIDE_ORDER: Group[] = ['flag', 'pick', 'leg', 'person', 'next', 'stop', 'kept', 'candidate', 'dropped'];
 export const SYMBOL_ORDER: Group[] = ['person', 'pick', 'next', 'stop', 'candidate', 'kept', 'dropped'];
-export const DRAW_ORDER: Group[] = ['pick', 'person', 'flag', 'next', 'stop', 'kept', 'candidate', 'dropped'];
+export const DRAW_ORDER: Group[] = ['pick', 'person', 'flag', 'leg', 'next', 'stop', 'kept', 'candidate', 'dropped'];
 // A shuttle stop is the way's own: the camera keeps the stop to walk to in view. So is a Quest already set (P04 ticket
 // 20): the camera keeps it in view, and a Friend's face near it gives way, so that its words are whole.
-export const OWN = new Set<Group>(['person', 'pick', 'next', 'stop', 'flag', 'kept']);
+export const OWN = new Set<Group>(['person', 'pick', 'next', 'stop', 'flag', 'leg', 'kept']);
 
 export const SIDES: Record<Group, LabelSide[]> = {
   flag: ['above', 'below', 'right', 'left'],
   pick: ['below', 'above'],
+  leg: ['right', 'left', 'above', 'below'],
   person: ['right', 'left'],
   next: ['left', 'below', 'right', 'above'],
   stop: ['left', 'right', 'below', 'above'],
@@ -75,6 +76,14 @@ export interface Draft {
   faded?: boolean;
   // The number a pick or a candidate carries in its label when its dot is not drawn.
   number: number | null;
+  // The sides its label may take in place of its group's; left out, its group's.
+  sides?: LabelSide[];
+  // Lines its label keeps clear of, as a meal Plan's legs; left out, none.
+  clearOf?: readonly (readonly LatLng[])[];
+  // Places one label may stand at: of the drafts with the same `either`, only the first whose label is placed is drawn.
+  either?: string;
+  // A label never left out, as the pick's; left out, not.
+  always?: boolean;
 }
 
 // Words without the name they start with, which the mark says already.
