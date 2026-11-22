@@ -11,7 +11,7 @@ import { color, Icon, radius, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import type { ChatSheetControl } from '../chat-sheet';
 import { MentionWords } from '../mention-words';
-import { listedCount, mealCard } from './meal-list';
+import { listedCount, listOrderWords, mealCard } from './meal-list';
 
 interface AnswerCaptionProps {
   control: ChatSheetControl;
@@ -45,7 +45,7 @@ function listWordsOf({
   }
   const count = listedCount(shown.answer);
   if (card.raised) {
-    return { words: '걸음이 적은 순', onPress: null };
+    return { words: listOrderWords(shown.answer), onPress: null };
   }
   return {
     words: `올리면 ${String(count)}곳 목록`,
