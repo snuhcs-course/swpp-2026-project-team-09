@@ -76,7 +76,11 @@ The debug app on an Android emulator with the mock servers, and the tests' fake 
 
 The done card's "사용 다했으면 꼭 반납처리를 해주세요! 저한테 말해주셔도 되고 키오스크를 이용해 반납하셔도 돼요!" became "다 쓰면 꼭 반납해 주세요. 키오스크에서 하거나, 여기서 "반납해 줘"라고 말하면 돼요." in the app's own voice. Still as they were: the finished card's "예약했어요" above "8001번 예약되었어요!", and the reply's words in the open card after the booking.
 
+### Review (2026-11-22)
+
+A seat card that is one of several requests lost its reply's Plan while the card was lowered, since the booking on the map includes a step's seat card. The lowered sentence, the hidden words, and "올리면 자리·열람실" are now for a booking on the map alone, and a step's seat card keeps its own 로그인. The mock now follows P05 ticket 34, merged meanwhile: a seat for tomorrow is refused at once. `answer-frame-cards` ("draws the first Plan on the map…") and `answer-frame-library-room-window` fail on `5.0/Main`'s own code as well, so they are not this ticket's. `tutorial-kwanjeong-check` read the seat row that the lowered card no longer shows, and now reads the sentence.
+
 ### Agent usage (2026-11-22)
 
-- Agent time: about 65 minutes in one session, from the study-flow check at 21:52 to the pull request's last push (an estimate). It covers the code reading, the emulator holds (two of six failed on the hung emulator), the fix, the tests, and the pictures.
-- Tokens: output 137k; input 67.9M, of which 67.6M cache reads, 308k cache writes, and 316 uncached. One read-only subagent (the main server's answers to "공부할 자리"), about 95k tokens in all.
+- Agent time: about 90 minutes in one session, from the study-flow check at 21:52 to the last push at 23:21 (an estimate). It covers the code reading, the emulator holds (three of eight failed on the hung or slow emulator), the fix, the merge of `5.0/Main`, the review's fixes, the tests, and the pictures.
+- Tokens: output 163k; input 87.5M, of which 87.2M cache reads, 350k cache writes, and 380 uncached. One read-only subagent (the main server's answers to "공부할 자리"), about 95k tokens in all.
