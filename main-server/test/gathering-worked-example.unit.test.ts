@@ -4,13 +4,15 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { clockOf } from '../src/assistant/free-time/free-time.js';
 import { type Gathering, type GatheringPerson } from '../src/assistant/gathering/gathering.js';
 import { at, gatheringPerson, id, jieunDay, minsuDay, myDay, plan, readWorld } from './worked-example.js';
 
-// The design's worked example: lunch on Tuesday 2026-11-17, asked at 11:50, on the seed's walking table.
+// The design's worked example: lunch on Tuesday 2026-11-17, asked at 11:50, on the seed's walking table and shuttle
+// timing.
 
 beforeAll(() => readWorld());
 
@@ -26,7 +28,9 @@ const fitOf = (gathering: Gathering, key: string): Gathering['fits'][number] | u
   gathering.fits.find((fit) => fit.key === key);
 
 // The least walking first: alone 15, 16, 19, 20 and 22 minutes; with 민수 18 (301동식당) against 20 (302동식당),
-// though 302동식당 gives a minute longer together; with 지은 26, 28 and 39; with both 44, 48 and 55.
+// though 302동식당 gives a minute longer together; with 지은 26, 28 and 39; with both 44, 44 and 55, 학생회관식당 before
+// 자하연식당 for its smaller largest walk, 18 against 22. To 자하연식당 민수 takes the shuttle, 16 minutes against 19 on
+// foot through 301동, so nobody meets on the way there (P05 ticket 39).
 describe('Lunch alone', () => {
   it('fits every place, the least walking first', () => {
     expect(lines(plan([me()]))).toEqual([
@@ -53,7 +57,7 @@ describe('Lunch with 민수', () => {
       '302동식당 12:15–12:43 (28)',
       '학생회관식당 12:33–12:59 (26)',
       '3식당 12:31–12:54 (23)',
-      '자하연식당 12:35–12:55 (20)',
+      '자하연식당 12:31–12:55 (24)',
     ]);
   });
 
@@ -80,12 +84,20 @@ describe('Lunch with 민수', () => {
     });
   });
 
-  it('meets at 301동 at 12:18 on the way to Cafeteria 3 and the Jahayeon cafeteria', () => {
-    const gathering = plan([me(), minsu()]);
+  it('meets at 301동 at 12:18 on the way to Cafeteria 3', () => {
     const meeting = { placeId: id('제1공학관'), at: at('12:18'), personIds: ['나', '민수'] };
 
-    expect(fitOf(gathering, '3식당')?.meeting).toEqual({ ...meeting, onwardMinutes: 13 });
-    expect(fitOf(gathering, '자하연식당')?.meeting).toEqual({ ...meeting, onwardMinutes: 17 });
+    expect(fitOf(plan([me(), minsu()]), '3식당')?.meeting).toEqual({ ...meeting, onwardMinutes: 13 });
+  });
+
+  it('meets nobody on the way to the Jahayeon cafeteria, 민수 taking the shuttle, 16 minutes against 19', () => {
+    const fit = fitOf(plan([me(), minsu()]), '자하연식당');
+
+    expect(fit?.meeting).toBeNull();
+    expect(fit?.parts.map(({ walkMinutes, by }) => [walkMinutes, by])).toEqual([
+      [17, 'walk'],
+      [16, 'shuttle'],
+    ]);
   });
 });
 
@@ -114,7 +126,7 @@ describe('Lunch with 민수 and 지은', () => {
   it('fits three places, the least walking first', () => {
     expect(lines(plan([me(), minsu(), jieun()]))).toEqual([
       '학생회관식당 12:33–12:55 (22)',
-      '자하연식당 12:35–12:55 (20)',
+      '자하연식당 12:31–12:55 (24)',
       '3식당 12:31–12:50 (19)',
     ]);
   });
@@ -126,8 +138,8 @@ describe('Lunch with 민수 and 지은', () => {
     });
   });
 
-  it('meets at 301동 at 12:18 on the way to the Jahayeon cafeteria', () => {
-    expect(fitOf(plan([me(), minsu(), jieun()]), '자하연식당')?.meeting).toMatchObject({ at: at('12:18') });
+  it('meets nobody on the way to the Jahayeon cafeteria, where 민수 takes the shuttle', () => {
+    expect(fitOf(plan([me(), minsu(), jieun()]), '자하연식당')?.meeting).toBeNull();
   });
 
   it('drops the two engineering Places', () => {

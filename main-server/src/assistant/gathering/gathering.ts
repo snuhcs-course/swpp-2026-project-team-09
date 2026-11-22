@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -21,7 +22,10 @@ import {
   settledShuttle,
   walkingMinutes as minutes,
 } from './gathering-travel.js';
+import { type Meeting, meetingOnTheWay } from './merging-point.js';
 import { PLAN_ORDERS, type PlanOrder } from './plan-order.js';
+
+export { DETOUR_MINUTES } from './merging-point.js';
 
 export { type GatheringTravel, onFoot, type ShuttleStops } from './gathering-travel.js';
 
@@ -134,9 +138,6 @@ export interface Gathering {
 
 // A person free now without a location is still at the Place of an item that ended at most this long ago.
 export const RECENT_CLASS_MINUTES = 15;
-
-// The most a Friend's way may grow by going through the asker's origin to meet there.
-export const DETOUR_MINUTES = 1;
 
 // The Places, or those of a stretch from its sides, as a meet adds the buildings the people set out from.
 export type GatheringPlaces =
@@ -266,38 +267,6 @@ function leaveByOf(next: PersonPart['next'], fixed: Date | undefined): Date | nu
   return earliest([own, fixed]);
 }
 
-type Meeting = NonNullable<GatheringFit['meeting']>;
-
-// Friends whose way passes the asker's origin meet the asker there; never two Friends without the asker.
-function meetingOf(
-  placeId: string,
-  asker: GatheringSide,
-  friends: readonly GatheringSide[],
-  travel: Walking,
-): Meeting | null {
-  const meetAt = asker.origin?.placeId;
-  if (meetAt === undefined || meetAt === placeId) {
-    return null;
-  }
-  const onwardMinutes = minutes(meetAt, placeId, travel);
-  const merging = friends.filter(({ origin }) => {
-    if (origin === null || origin.placeId === placeId) {
-      return false;
-    }
-    const detour = minutes(origin.placeId, meetAt, travel) + onwardMinutes - minutes(origin.placeId, placeId, travel);
-    return detour <= DETOUR_MINUTES;
-  });
-  if (merging.length === 0) {
-    return null;
-  }
-  const at = latest([
-    asker.readyAt,
-    ...merging.map(({ readyAt, origin }) => plusMinutes(readyAt, minutes(origin?.placeId ?? meetAt, meetAt, travel))),
-  ]);
-  const personIds = [asker.personId, ...merging.map(({ personId }) => personId)];
-  return { placeId: meetAt, at, personIds, onwardMinutes };
-}
-
 // Their way and the earliest they can arrive. When they set out follows from the start.
 function partOf(
   side: GatheringSide,
@@ -331,8 +300,10 @@ function fitAt(
 ): GatheringFit {
   const place = { key, placeId };
   const window = own ?? gatheringWindow;
-  const earliestMeeting = merging ? meetingOf(place.placeId, asker, friends, travel) : null;
-  const weighed = [asker, ...friends].map((side) => partOf(side, place.placeId, earliestMeeting, travel));
+  const wayOf = (side: GatheringSide, meeting: Meeting | null): Omit<PersonPart, 'leaveAt'> =>
+    partOf(side, place.placeId, meeting, travel);
+  const earliestMeeting = merging ? meetingOnTheWay(place.placeId, [asker, ...friends], travel, wayOf) : null;
+  const weighed = [asker, ...friends].map((side) => wayOf(side, earliestMeeting));
   const first = latest([window.start, ...weighed.map((part) => part.canArriveAt ?? part.readyAt)]);
   const arriving = weighed.map((part) => settledShuttle(part, place.placeId, first, travel));
   const start = latest([window.start, ...arriving.map((part) => part.canArriveAt ?? part.readyAt)]);

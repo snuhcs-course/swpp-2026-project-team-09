@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
@@ -51,25 +52,26 @@ const lines = (...texts: string[]): AnswerReply['noPlan'] => ({
 });
 
 describe('a7: 자하연식당 pressed', () => {
-  it('plans 12:35 to 12:55, 20 minutes, with no Place dropped', () => {
+  it('plans 12:31 to 12:55, 24 minutes, with no Place dropped', () => {
     const answer = pressed([me(), minsu(), jieun()], jahayeon());
 
     expect(firstPlan(answer)).toMatchObject({
       id: '자하연식당',
-      startAt: time('12:35'),
+      startAt: time('12:31'),
       endAt: time('12:55'),
-      togetherMinutes: 20,
+      togetherMinutes: 24,
     });
     expect(answer.dropped).toEqual([]);
     expect(answer.noPlan).toBeNull();
   });
 
-  it("gives each person's earliest arrival: 나 and 민수 12:35 by way of 301동, 지은 12:18", () => {
+  // 민수 takes the shuttle, 16 minutes against 19 on foot by way of 301동, so nobody meets on the way (P05 ticket 39).
+  it("gives each person's earliest arrival: 나 12:07, 민수 12:31 by the shuttle, 지은 12:18", () => {
     const { parts } = firstPlan(pressed([me(), minsu(), jieun()], jahayeon()));
 
     expect(parts.map(({ userId, arriveAt }) => [userId, arriveAt])).toEqual([
-      [ME, time('12:35')],
-      [MINSU, time('12:35')],
+      [ME, time('12:07')],
+      [MINSU, time('12:31')],
       [JIEUN, time('12:18')],
     ]);
   });
