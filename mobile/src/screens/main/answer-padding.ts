@@ -10,17 +10,17 @@ import { space } from '@/design-system';
 import { roomsOf, type ViewArea } from '@/features/assistant/answer-camera';
 import type { AnswerDrawing } from '@/features/assistant/answer-marks';
 import type { FitPadding, Size } from '@/map';
-import { ANSWER_TOP, listsTop } from './layout';
+import { listsTop } from './layout';
 
 const SIDE = 64;
 // Between the area an answer's labels stay in and what covers the map at the top and at the bottom, and the edges.
 const CLEAR = space[2];
 const EDGE = space[4];
 
-// What covers the map at the top under a status bar `top` high: the answer's time bar `timeBar` high, or its round "←"
-// when it has none (0), or, for a received invitation, which has neither, the status bar alone.
+// What covers the map at the top under a status bar `top` high: the answer's time bar `timeBar` high in the lists'
+// place, or with none (0), as for a received invitation, the status bar alone: the way back is in the card.
 function coveredTop(top: number, pill: boolean, timeBar: number): number {
-  return pill ? top + listsTop(top) + (timeBar > 0 ? timeBar : ANSWER_TOP.height) : top;
+  return pill && timeBar > 0 ? top + listsTop(top) + timeBar : top;
 }
 
 // What covers the map at the top and the card at the bottom, each with the clear room of the labels' area

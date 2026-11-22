@@ -28,6 +28,7 @@ There are two causes:
   - A tag held at a shared point first tries every side clear of the other labels, the faces, and the User's own mark. Failing that, it keeps its number only. Its number is never left out, since it has no dot of its own.
   - The start and the next thing's dark labels may take any side of their point.
   - The chosen place's label and the User's dot never move.
+- **An answer without a time bar keeps no room at the top** for the round "←", which leaves the map for the card (P04 ticket 52): the camera and the labels' area start under the status bar.
 - **Tests run at the usual font scale of 1**, set in the Jest setup; the React Native preset's window says 2.
 
 ## Acceptance criteria
