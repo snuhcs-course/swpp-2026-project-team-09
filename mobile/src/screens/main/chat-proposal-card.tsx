@@ -26,6 +26,8 @@ interface ChatProposalCardProps {
   onMake: () => void;
   // 수정: opens the party form filled with it.
   onEdit: () => void;
+  // The rows a change of a made 파티 moves, whose values stand out (P04 ticket 28).
+  moved?: readonly string[];
 }
 
 const EMPTY = '없음';
@@ -63,6 +65,14 @@ function rowsOf(proposal: QuestProposal, form: PartyForm): Row[] {
     { icon: 'user', label: '친구 초대', value: invitees === '' ? EMPTY : invitees },
     { icon: 'users', label: '인원', value: `${String(form.capacity)}명` },
   ];
+}
+
+// What a change of a made 파티 can move, and the title that names it: its other rows and its text stay as made, and
+// leaving them out keeps 파티 보기 and 바꾸기 in view (from the screens of P04 ticket 25).
+const CHANGED_ROWS = new Set(['제목', '언제', '어디서']);
+
+function changedRows(rows: readonly Row[]): Row[] {
+  return rows.filter(({ label }) => CHANGED_ROWS.has(label));
 }
 
 const MAKE_WORDS: Record<ProposalMaking, string> = {
@@ -105,7 +115,13 @@ function BookingButton({ booking }: { booking: FacilityBooking }): ReactElement 
 // Place is booked online shows 시설 예약하기 under them.
 // With a change of a 파티 already made (P04 ticket 25), it is that 파티 with the new time or place, and its buttons
 // are 파티 보기, which opens its room, and 바꾸기.
-export function ChatProposalCard({ proposal, making, onMake, onEdit }: ChatProposalCardProps): ReactElement {
+export function ChatProposalCard({
+  proposal,
+  making,
+  onMake,
+  onEdit,
+  moved = [],
+}: ChatProposalCardProps): ReactElement {
   const form = proposalForm(proposal);
   const changes = proposal.change !== undefined;
   return (
@@ -114,15 +130,17 @@ export function ChatProposalCard({ proposal, making, onMake, onEdit }: ChatPropo
         {changes ? '파티 바꾸기' : '새 파티'}
       </Text>
       <View>
-        {rowsOf(proposal, form).map(({ icon, label, value }) => (
+        {(changes ? changedRows(rowsOf(proposal, form)) : rowsOf(proposal, form)).map(({ icon, label, value }) => (
           <View accessibilityLabel={`${label} ${value}`} accessible key={label} style={styles.row}>
             <Icon color={color.inkMuted} name={icon} size={16} />
             <Text style={styles.label}>{label}</Text>
-            <Text style={[styles.value, value === EMPTY && styles.empty]}>{value}</Text>
+            <Text style={[styles.value, value === EMPTY && styles.empty, moved.includes(label) && styles.moved]}>
+              {value}
+            </Text>
           </View>
         ))}
       </View>
-      {form.description === '' ? null : <Text style={styles.description}>{form.description}</Text>}
+      {form.description === '' || changes ? null : <Text style={styles.description}>{form.description}</Text>}
       <View style={styles.buttons}>
         <View style={styles.button}>
           <Button disabled={making !== 'ready' && !changes} full onPress={onEdit} variant="secondary">
@@ -155,6 +173,7 @@ const styles = StyleSheet.create({
   label: { ...text.body, width: 72, color: color.inkMuted },
   value: { ...text.body, flex: 1, textAlign: 'right', color: color.ink },
   empty: { color: color.inkMuted },
+  moved: { fontFamily: font.semiBold, color: color.party },
   buttons: { flexDirection: 'row', gap: space[2], marginTop: space[3] },
   button: { flex: 1 },
   booking: { gap: space[1], marginTop: space[2] },

@@ -14,6 +14,7 @@ import { myUserId } from '@/auth/sign-in';
 import { MY_PARTY_KEY, PARTIES_KEY, QUESTS_KEY, SENT_INVITATIONS_KEY } from '@/api/queries';
 import { leavingOnPurpose } from '@/features/quests/leaving';
 import { outOfParty } from '@/features/quests/out-of-party';
+import { objectParticle } from '@/features/map/short-name';
 import { koreaClock, koreaDayWord, koreaWeekdayName } from '@/korea-time';
 import { turnsOf } from './turn';
 import type { ChatBubble } from './use-chat';
@@ -62,10 +63,12 @@ function cancels({ label }: LeaveQuestOffer): boolean {
 // The line in place of the model's question once the press was answered: null before it, and while it is on its way.
 export function leaveWordsOf(offer: LeaveQuestOffer, state: LeaveState | null): string | null {
   if (state === 'left') {
-    return cancels(offer) ? `‘${offer.title}’ 취소했어요.` : `‘${offer.title}’에서 나왔어요.`;
+    return cancels(offer)
+      ? `‘${offer.title}’${objectParticle(offer.title)} 취소했어요`
+      : `‘${offer.title}’에서 나왔어요`;
   }
   if (state === 'failed') {
-    return cancels(offer) ? '취소하지 못했어요. 다시 눌러 주세요.' : '나가지 못했어요. 다시 눌러 주세요.';
+    return cancels(offer) ? '취소하지 못했어요. 다시 눌러 주세요' : '나가지 못했어요. 다시 눌러 주세요';
   }
   return null;
 }

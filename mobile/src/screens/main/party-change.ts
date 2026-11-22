@@ -5,9 +5,10 @@
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { apiClient } from '@/api/client';
 import type { ProposalChange } from '@/api/party-change-types';
+import type { SubQuestPlace } from '@/api/room-types';
 import type { SubQuest } from '@/api/types';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { refusalWords } from '@/features/quests/refusals';
@@ -24,12 +25,11 @@ function stepKeyOf({ startsAt, endsAt, place }: SubQuest): string {
   return JSON.stringify([startsAt, endsAt, place?.placeId ?? null, place?.label ?? null]);
 }
 
-// The step's key as it stands now, null when it cannot be read or is gone.
-async function readStepKey({ questId, subQuestId }: ProposalChange): Promise<string | null> {
+// The step as it stands now, null when it cannot be read or is gone.
+async function readStep({ questId, subQuestId }: ProposalChange): Promise<SubQuest | null> {
   try {
     const quest = await apiClient.getQuest(questId);
-    const step = quest.subQuests.find(({ id }) => id === subQuestId);
-    return step === undefined ? null : stepKeyOf(step);
+    return quest.subQuests.find(({ id }) => id === subQuestId) ?? null;
   } catch {
     return null;
   }
@@ -37,29 +37,47 @@ async function readStepKey({ questId, subQuestId }: ProposalChange): Promise<str
 
 // Whether the step still stands as it did when the change came. With no step read then, or none read now, there is
 // nothing to hold the change against, and the main server's own checks decide.
-async function unchanged(made: ProposalChange, baseline: string | null): Promise<boolean> {
+async function unchanged(made: ProposalChange, baseline: SubQuest | null): Promise<boolean> {
   if (baseline === null) {
     return true;
   }
-  const now = await readStepKey(made);
-  return now === null || now === baseline;
+  const now = await readStep(made);
+  return now === null || stepKeyOf(now) === stepKeyOf(baseline);
+}
+
+// The main server sends a step with no place as null, which the type leaves out.
+function samePlace(sent: SubQuestPlace | null | undefined, kept: SubQuest['place']): boolean {
+  if (sent === undefined || sent === null || kept === null) {
+    return (sent === undefined || sent === null) && kept === null;
+  }
+  return 'placeId' in sent ? sent.placeId === kept.placeId : 'label' in sent && sent.label === kept.label;
+}
+
+// The card's rows a change moves (P04 ticket 28), against the step read when it came: none while it is not read.
+export function movedRows({ step }: ProposalChange, kept: SubQuest | null): string[] {
+  if (kept === null) {
+    return [];
+  }
+  const sameTime = kept.startsAt !== null && Date.parse(step.startsAt) === Date.parse(kept.startsAt);
+  return [...(sameTime ? [] : ['언제']), ...(samePlace(step.place, kept.place) ? [] : ['어디서'])];
 }
 
 // The step of each bubble's change as read when it came, by bubble.
-export function useStepBaselines(bubbles: readonly ChatBubble[]): (bubbleId: number) => string | null {
-  const baselines = useRef(new Map<number, string | null>());
+export function useStepBaselines(bubbles: readonly ChatBubble[]): (bubbleId: number) => SubQuest | null {
+  const asked = useRef(new Set<number>());
+  const [baselines, setBaselines] = useState<ReadonlyMap<number, SubQuest | null>>(new Map());
   useEffect(() => {
     for (const { id, proposal } of bubbles) {
       const change = proposal?.change;
-      if (change !== undefined && !baselines.current.has(id)) {
-        baselines.current.set(id, null);
-        void readStepKey(change).then((key) => {
-          baselines.current.set(id, key);
+      if (change !== undefined && !asked.current.has(id)) {
+        asked.current.add(id);
+        void readStep(change).then((step) => {
+          setBaselines((last) => new Map(last).set(id, step));
         });
       }
     }
   }, [bubbles]);
-  return (bubbleId) => baselines.current.get(bubbleId) ?? null;
+  return (bubbleId) => baselines.get(bubbleId) ?? null;
 }
 
 // 바꾸기 on an earlier turn reopened from the pill's list (PR 456's review): its change may undo a newer one.
@@ -88,12 +106,12 @@ interface Changing {
   onMade: (bubbleId: number, questId: string) => void;
   latest: boolean;
   // The step as it stood when the bubble's change came, null when it could not be read.
-  baselineOf: (bubbleId: number) => string | null;
+  baselineOf: (bubbleId: number) => SubQuest | null;
 }
 
 // 바꾸기 of a bubble's change: on its way, then changed, the 파티 going back as made, or ready again. A step changed
 // since the change came (in the room, or by another change) is not overwritten: the card says so and takes no press.
-export function changeWith({
+function changeWith({
   sending,
   mark,
   say,
@@ -130,12 +148,12 @@ export function changeWith({
 }
 
 // A made 파티's change (P04 ticket 25): 바꾸기 changes it in place, and 파티 보기 opens its room.
-export function withChanges(
-  actions: ProposalActions,
-  change: (bubbleId: number, made: ProposalChange) => void,
-): ProposalActions {
+export function withChanges(actions: ProposalActions, changing: Changing): ProposalActions {
+  const change = changeWith(changing);
+  const { baselineOf } = changing;
   return {
     ...actions,
+    movedOf: (bubbleId, { change: made }) => (made === undefined ? [] : movedRows(made, baselineOf(bubbleId))),
     make: (bubbleId, proposal) => {
       if (proposal.change === undefined) {
         actions.make(bubbleId, proposal);
