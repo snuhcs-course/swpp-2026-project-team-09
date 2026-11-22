@@ -1,4 +1,4 @@
-# 45: A new conversation's first message carries none of the answer before it
+# 47: A new conversation's first message carries none of the answer before it
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
@@ -23,3 +23,8 @@ The user asked for tomorrow's lunch, went back with "←", typed "예술계 점�
 - `mobile/__tests__/answer-new-conversation-context.integration.test.tsx`: a follow-up on a meal answer carries its `conditions` and `planId`. The first message on the main map after "←", and the one after "＋ 새 질문", carry neither, with `tapped` null and no earlier message.
 
 ## Comments
+
+### Agent usage (2026-11-23)
+
+- Agent time: about 35 minutes in one session, no subagents (an estimate, 01:46 to 02:20 KST, the rename included).
+- Tokens: about 5 M input, of which about 4.8 M cache reads and 0.2 M cache writes, and about 20 k output (an estimate).

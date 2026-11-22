@@ -16,7 +16,7 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// P04 ticket 45, against the fake main server: the first message of a new conversation carries none of the answer
+// P04 ticket 47, against the fake main server: the first message of a new conversation carries none of the answer
 // before it, neither its conditions nor its Plan, although that answer is still kept until the next render; a
 // follow-up typed on the answer still carries both. Before, a meal asked for tomorrow made the next question on the
 // main map ("예술계 점심") plan tomorrow again.
