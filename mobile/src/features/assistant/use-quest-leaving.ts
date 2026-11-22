@@ -10,7 +10,8 @@ import type { ReplyOffer } from '@/api/assistant-types';
 import type { LeaveQuestOffer } from '@/api/leave-quest-types';
 import { apiClient } from '@/api/client';
 import { isRefusal } from '@/api/errors';
-import { MY_PARTY_KEY, QUESTS_KEY, SENT_INVITATIONS_KEY } from '@/api/queries';
+import { myUserId } from '@/auth/sign-in';
+import { MY_PARTY_KEY, PARTIES_KEY, QUESTS_KEY, SENT_INVITATIONS_KEY } from '@/api/queries';
 import { leavingOnPurpose } from '@/features/quests/leaving';
 import { koreaClock, koreaDayWord, koreaWeekdayName } from '@/korea-time';
 import { turnsOf } from './turn';
@@ -68,12 +69,27 @@ export function leaveWordsOf(offer: LeaveQuestOffer, state: LeaveState | null): 
   return null;
 }
 
+// As the room's 나가기 and 파티 없애기 do, the User first gets out of the Quest's live 파티, so that sharing a position
+// with its members stops (PR 454's review): its Leader ends it when the Quest is cancelled for all, and anyone else
+// leaves it.
+async function outOfItsParty(questId: string, forAll: boolean): Promise<void> {
+  const party = await apiClient.getMyParty();
+  if (party?.quest?.id !== questId) {
+    return;
+  }
+  const leads = party.members.some(({ id, leader }) => id === myUserId() && leader);
+  await (leads && forAll ? apiClient.endParty() : apiClient.leaveParty());
+}
+
 // Whether the Quest is gone: a Quest already gone (404) is as good as left.
-function dropped(questId: string): Promise<boolean> {
-  return apiClient.dropQuest(questId).then(
-    () => true,
-    (error: unknown) => isRefusal(error, 404, 'QUEST_NOT_FOUND'),
-  );
+async function dropped({ questId, label }: LeaveQuestOffer): Promise<boolean> {
+  try {
+    await outOfItsParty(questId, label !== '나가기');
+    await apiClient.dropQuest(questId);
+    return true;
+  } catch (error) {
+    return isRefusal(error, 404, 'QUEST_NOT_FOUND');
+  }
 }
 
 function placeOf(bubbleId: number, questId: string): string {
@@ -88,16 +104,17 @@ export function useQuestLeaving(): QuestLeaving {
     [states],
   );
   const leave = useCallback(
-    (bubbleId: number, { questId }: LeaveQuestOffer): void => {
+    (bubbleId: number, offer: LeaveQuestOffer): void => {
+      const { questId } = offer;
       const place = placeOf(bubbleId, questId);
       const mark = (state: LeaveState): void => {
         setStates((last) => new Map(last).set(place, state));
       };
       mark('sending');
-      void leavingOnPurpose(questId, () => dropped(questId)).then((left) => {
+      void leavingOnPurpose(questId, () => dropped(offer)).then((left) => {
         mark(left ? 'left' : 'failed');
         if (left) {
-          for (const queryKey of [QUESTS_KEY, MY_PARTY_KEY, SENT_INVITATIONS_KEY]) {
+          for (const queryKey of [QUESTS_KEY, MY_PARTY_KEY, PARTIES_KEY, SENT_INVITATIONS_KEY]) {
             void queryClient.invalidateQueries({ queryKey });
           }
         }
