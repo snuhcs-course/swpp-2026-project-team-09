@@ -294,7 +294,8 @@ describe('어시스턴트에게 예약 부탁하기', () => {
     // The Assistant's library card for 7F-7A-zone2 reads the seats and offers the first free one, writing nothing.
     const card = within(screen.getByTestId('answer-card'));
     expect(card.getByText(/^관정관 7층 7A 열람실 2 구역 · 7193번$/u)).toBeVisible();
-    expect(card.getByRole('button', { name: '예약하기' })).toBeVisible();
+    // Since the seat card stands on the map (P04 ticket 07), its "예약하기" is the main button beside the input.
+    expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '예약하기' })).toBeVisible();
     expect(library.requestsTo('getSeatBookingList')).toHaveLength(1);
     expect(await status()).toBe('started');
   });
