@@ -2654,7 +2654,13 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       the clock (`mealByClock`): lunch until lunch's window ends, then dinner, judged at the start the User asked for
       and today no earlier than now. It answers the model `planned` with the meal, each plan's Restaurant, clock times,
       meeting, and each person's way in minutes, and the Restaurants dropped, or `none` with the meal and the reason,
-      never coordinates, course names, or rooms.
+      never coordinates, course names, or rooms. The plans come in order (`gathering/plan-order.ts`): those where
+      everyone has 30 minutes first, then the shorter ones. Within each group, the least walking for everyone together
+      comes first, counting the walk there and on to each one's next item; then the smaller largest walk, the earlier
+      start, and the key. When the asker's starting place is not known (a later day with no item before the meal, and
+      no location), their walk there cannot count. After the walking that is known, the earliest start comes first,
+      then the longest time to eat, then the key. `planned` then carries `order`, which tells the model that the first
+      plan is not the nearest.
     - `findWay(to?, from?, by?)`, with `WAY_RULES`, for an app that sends `answer` (`lookup/`). It finds the way on foot
       to a Place, or to the Place of the User's next item today when `to` is left out, from a Place they named; else
       the main gate (서울대 정문) when their location is off campus; else the Place their location is in, or the
