@@ -23,7 +23,19 @@ import {
   type Stretch,
   stepped,
 } from '@/features/assistant/time-band';
-import { type BandTick, BandOnTrack, Ends, percent, placeOf, redOf, Track, useWholeMove, wordsOf } from './band-body';
+import {
+  type BandTick,
+  BandOnTrack,
+  BandWords,
+  Ends,
+  type HeldBand,
+  percent,
+  placeOf,
+  redOf,
+  Track,
+  useWholeMove,
+  wordsOf,
+} from './band-body';
 import { NowMark, Red, useShownBand } from './band-track';
 
 interface TimeBandProps {
@@ -180,8 +192,7 @@ function RedOver({ band, moving, folded }: Pick<LanesProps, 'band' | 'moving' | 
   );
 }
 
-interface MovedBand {
-  shown: Stretch;
+interface MovedBand extends HeldBand {
   onMove: (moved: Moved) => void;
   onLetGo: (moved: Moved) => void;
 }
@@ -221,7 +232,7 @@ function useMovedBand(band: TimeBandData, disabled: boolean, onDrop: TimeBandPro
     startAt: moved?.bound === 'from' ? onBandDay(moved.clock, band) : band.startAt,
     endAt: moved?.bound === 'until' ? onBandDay(moved.clock, band) : band.endAt,
   };
-  return { shown, ...handlers };
+  return { shown, bound: moved?.bound ?? null, ...handlers };
 }
 
 function Names({ lanes }: { lanes: TimeBandData['lanes'] }): ReactElement {
@@ -265,16 +276,14 @@ export function TimeBand(props: TimeBandProps): ReactElement {
       focused={focus === bound}
       trackWidth={trackWidth}
       whole={whole}
-      {...moved}
+      onLetGo={moved.onLetGo}
+      onMove={moved.onMove}
       shown={shown}
     />
   );
-  const words = wordsOf(band, moving);
   return (
     <View style={styles.timeBand}>
-      <Text numberOfLines={1} style={styles.words} testID="time-band-words">
-        {day === '' ? words : `${day} ${words}`}
-      </Text>
+      <BandWords day={day} parts={wordsOf(band, moving, moved)} />
       <View style={styles.lanes}>
         {folded ? null : <Names lanes={band.lanes} />}
         <Track onWidth={setTrackWidth} whole={whole}>
@@ -315,5 +324,4 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
   },
   focused: { borderWidth: 3, borderColor: color.focusRing },
-  words: { ...text.label, color: color.quest, textAlign: 'center' },
 });

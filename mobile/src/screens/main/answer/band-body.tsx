@@ -10,9 +10,18 @@ import { type ReactElement, type ReactNode, useMemo } from 'react';
 import { type DimensionValue, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector, type PanGesture } from 'react-native-gesture-handler';
 import type { MealInput, TimeBand } from '@/api/assistant-types';
-import { color, radius, space, text } from '@/design-system';
+import { color, font, radius, space, text } from '@/design-system';
 import { bandMoved, bandStepped, movingWords } from '@/features/assistant/band-move';
-import { bandEdgesOf, clashes, clockOf, edgeSharesOf, shareOf, type Stretch } from '@/features/assistant/time-band';
+import { type BandWordsPart, shownWordsOf } from '@/features/assistant/band-words';
+import {
+  type BandBound,
+  bandEdgesOf,
+  clashes,
+  clockOf,
+  edgeSharesOf,
+  shareOf,
+  type Stretch,
+} from '@/features/assistant/time-band';
 
 // The time band on its track, which a drag on its lanes moves whole (P02 ticket 25).
 
@@ -40,9 +49,38 @@ export function redOf(lane: Lane, fixed: MealInput['window'], band: TimeBand, mo
   return moving === null ? clashes(lane.busy, fixed, band) : [];
 }
 
-// The words under the band: who cannot come while it is moved over someone's busy stretch, else its own.
-export function wordsOf(band: TimeBand, moving: Stretch | null): string {
-  return (moving === null ? null : movingWords(band.lanes, moving)?.text) ?? band.text;
+// The band where a handle has it, while dragged or held after it is let go, and that handle; the Plan's band and none
+// otherwise.
+export interface HeldBand {
+  shown: Stretch;
+  bound: BandBound | null;
+}
+
+// The words over the band: while it is moved whole, who cannot come over someone's busy stretch, else its own (P02
+// ticket 25); else its words where a handle has it (P04 ticket 30).
+export function wordsOf(band: TimeBand, moving: Stretch | null, held: HeldBand): BandWordsPart[] {
+  if (moving === null) {
+    return shownWordsOf(band, held.shown, held.bound);
+  }
+  return [{ text: movingWords(band.lanes, moving)?.text ?? band.text, strong: false }];
+}
+
+// The band's words with the day before them, the dragged end's time in the stronger weight.
+export function BandWords({ parts, day }: { parts: BandWordsPart[]; day: string }): ReactElement {
+  return (
+    <Text numberOfLines={1} style={styles.words} testID="time-band-words">
+      {day === '' ? null : `${day} `}
+      {parts.map(({ text: part, strong }, at) =>
+        strong ? (
+          <Text key={`${at}-${part}`} style={styles.strong}>
+            {part}
+          </Text>
+        ) : (
+          part
+        ),
+      )}
+    </Text>
+  );
 }
 
 // The track's drag, which moves the band whole by the finger's distance in steps of five minutes and says where the
@@ -186,6 +224,8 @@ export function Ends({ band, folded, margin, tick }: EndsProps): ReactElement {
 }
 
 const styles = StyleSheet.create({
+  words: { ...text.label, color: color.quest, textAlign: 'center' },
+  strong: { fontFamily: font.bold },
   ends: { flexDirection: 'row', justifyContent: 'space-between', gap: space[2] },
   end: { ...text.caption, color: color.inkSubtle },
   track: { flex: 1 },
