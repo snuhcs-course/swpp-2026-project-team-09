@@ -59,7 +59,7 @@ function Question({ row, onPress }: { row: QuestionRow; onPress: () => void }): 
       accessibilityLabel={label.join(', ')}
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => [styles.row, row.onScreen && styles.onScreen, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
       testID="question-row"
     >
       <Text style={[styles.time, styles.timeWords]}>{row.time}</Text>
@@ -126,7 +126,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   newRow: { backgroundColor: color.surfaceSunken },
-  onScreen: { backgroundColor: color.surfaceSunken },
   pressed: { opacity: 0.6 },
   time: { width: TIME_WIDTH, alignItems: 'center' },
   timeWords: { ...text.label, color: color.inkMuted, textAlign: 'center' },

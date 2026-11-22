@@ -132,6 +132,9 @@ describe('an answer beside a lunch the User holds alone', () => {
 
     expect(dock().getByText('12:16 302동식당 점심을 그대로 뒀어요')).toBeVisible();
     expect(server.received('POST /plans')).toHaveLength(0);
+    // P04 ticket 10: the list of questions says so too.
+    await user.press(screen.getByTestId('answer-pill'));
+    expect(within(screen.getByTestId('question-list')).getByRole('button', { name: /· 그대로 둠/u })).toBeVisible();
   });
 });
 
@@ -195,6 +198,9 @@ describe("the main server's planSet", () => {
     // Only the meeting as it now stands: no other candidate, no handle on the bar.
     expect(mapThings().filter((name) => /301동 앞|유회진|신양|학생회관/u.test(name))).toEqual([]);
     expect(screen.queryByRole('adjustable', { name: '시작 시각' })).toBeNull();
+    // P04 ticket 10: the list of questions says so too.
+    await user.press(screen.getByTestId('answer-pill'));
+    expect(within(screen.getByTestId('question-list')).getByRole('button', { name: /12:15 · 바꿈/u })).toBeVisible();
   });
 
   it("is read before a meal's mealSet, so that a shared one shows 파티 보기", async () => {
