@@ -161,8 +161,9 @@ export function gatherMeal(
   const startsBy = startsByOf(input, now);
   const gathering = gather(people, places, when, travel, { startsBy });
   const [asker] = people;
+  const aloneFits = people.length === 1 ? [] : gather([asker], places, when, travel, { startsBy }).fits;
   const aloneMinutes =
-    people.length === 1 ? null : (gather([asker], places, when, travel, { startsBy }).fits[0]?.togetherMinutes ?? null);
+    aloneFits.length === 0 ? null : Math.max(...aloneFits.map(({ togetherMinutes }) => togetherMinutes));
   if (startsBy !== undefined) {
     const unmet = gathering.fits.length > 0 ? NOTHING_UNMET : notNow(people, { places, when, travel }, startsBy);
     return { gathering, unmet: { ...unmet, opensAt }, aloneMinutes };

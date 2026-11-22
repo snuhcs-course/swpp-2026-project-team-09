@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -93,9 +94,9 @@ describe('An end the User fixed', () => {
 
     expect(response.status).toBe(200);
     expect(summary(answerIn(response.body))).toEqual([
-      `3식당 ${time('12:31')}–${time('12:50')} (19)`,
       `학생회관식당 ${time('12:33')}–${time('12:50')} (17)`,
       `자하연식당 2층 ${time('12:35')}–${time('12:50')} (15)`,
+      `3식당 ${time('12:31')}–${time('12:50')} (19)`,
     ]);
   });
 });
@@ -153,7 +154,7 @@ describe("A person's constraint on screen", () => {
       context: { conditions: conditions(date, [{ userId: friend.id, constraints: [notBefore] }]) },
     });
 
-    expect(summary(answerIn(response.body))[0]).toBe(`302동식당 ${time('12:20')}–${time('12:43')} (23)`);
+    expect(summary(answerIn(response.body))).toContain(`302동식당 ${time('12:20')}–${time('12:43')} (23)`);
   });
 
   it('is not kept when the plan on screen is of another day', async () => {
@@ -166,7 +167,7 @@ describe("A person's constraint on screen", () => {
       context: { conditions: conditions('2087-06-25', [{ userId: friend.id, constraints: [notBefore] }]) },
     });
 
-    expect(summary(answerIn(response.body))[0]).toBe(`302동식당 ${time('12:15')}–${time('12:43')} (28)`);
+    expect(summary(answerIn(response.body))).toContain(`302동식당 ${time('12:15')}–${time('12:43')} (28)`);
   });
 });
 

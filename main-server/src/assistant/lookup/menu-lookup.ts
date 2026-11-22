@@ -99,16 +99,16 @@ function linesOf(args: MenuArgs, plan: Plan): AnswerLine[] {
 type Part = Plan['parts'][number];
 
 // "걸어서 12분", or by the shuttle "셔틀로 12분 (301동 정류장 → 경영대 정류장)".
-function thereWords(part: Part | undefined, minutes: number): string {
-  if (part?.mode !== 'shuttle') {
+function thereWords(mine: Part | undefined, minutes: number): string {
+  if (mine?.mode !== 'shuttle') {
     return `걸어서 ${minutes}분`;
   }
-  const stops = part.shuttle === undefined ? '' : ` (${part.shuttle.boardAt} 정류장 → ${part.shuttle.getOffAt} 정류장)`;
+  const stops = mine.shuttle === undefined ? '' : ` (${mine.shuttle.boardAt} 정류장 → ${mine.shuttle.getOffAt} 정류장)`;
   return `셔틀로 ${minutes}분${stops}`;
 }
 
-const shuttleOn = (part: Part | undefined, onward: Plan['scene']['routes'][number]): boolean =>
-  part?.next?.by === 'shuttle' || onward.mode === 'shuttle';
+const shuttleOn = (mine: Part | undefined, onward: Plan['scene']['routes'][number]): boolean =>
+  mine?.next?.by === 'shuttle' || onward.mode === 'shuttle';
 
 // The dishes with their prices, the walk there, then why the meal ends: the walk on to the next item, or the end of
 // the meal's hours. The hours are the plan's, from the hours collected, so that no line contradicts another.

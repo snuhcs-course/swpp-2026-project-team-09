@@ -22,6 +22,9 @@ Native files: none. Releases: the main server, in the same Release as the app's 
 - The model's plan tool result gives each person `by`: `'walk'`, or `{ shuttle: { boardAt, getOffAt } }`. The meal and meet rules let the sentence say the shuttle in a few words and never call a way by the shuttle 걸어서.
 - The weighing lives in `gathering/gathering-travel.ts` and the model's words of a Plan in `gathering/plan-times.ts`, so that `gathering.ts` and `plan-tools.ts` stay within the line limit.
 - A Quest's own way (`plans/own-way.ts`) uses the gathering only for the sides and keeps walking (`onFoot`).
+- **A way by the shuttle is weighed again once the start is fixed**, at the setting-out the start then gives, since the shuttle is slower after 19:00 and stops at 21:00: its minutes then, or the walk when the shuttle no longer wins. The way on to the next item is weighed again at its own setting-out the same way.
+- A lone meal's `leave-by` for the next item says "셔틀로 N분" when that way is by the shuttle, and the menu answer's basis says "셔틀로 N분 (… 정류장 → … 정류장)" for the way there and "셔틀로" for the way on.
+- A meal's plans come least travel first (the order sums each way's minutes, on foot or by the shuttle), and the rules and planMeal's description say "least travel".
 - A party's Leader's `leave-by`, kept by `POST /plans`, says "셔틀로 N분" when the Leader's part is by the shuttle, as a Plan taken alone's already did.
 
 ## What the app must change (not in this ticket)
@@ -34,6 +37,8 @@ Native files: none. Releases: the main server, in the same Release as the app's 
 - [x] A Monday lunch planned on Sunday from 301동 to 58동 goes by the shuttle, 13 minutes against a 25-minute walk, with its stops, and the way on to a 301동 Class by the shuttle too.
 - [x] The same lunch on a Saturday walks, 25 minutes.
 - [x] A walk under 10 minutes never asks the provider about the shuttle.
+- [x] Free from 18:30 with the start at 19:30: the shuttle of the 19–21 band, 21 minutes, setting out at 19:09. With the start at 21:30: the walk, 25 minutes, setting out at 21:05.
+- [x] A lone meal's leave-by on by the shuttle reads "24동까지 셔틀로 13분"; the menu answer's basis for a Restaurant at 58동 says the shuttle with its stops.
 - [x] The tests that pinned walking minutes on a Tuesday daytime are updated: `meal-answer.unit.test.ts` (302동식당 is now the User's shortest stay, 9 minutes), `meet-answer.unit.test.ts` and `assistant-meet.integration.test.ts` (a6: 302동 앞 from 14:04 for 86 minutes, 24동 앞 until 15:16), and the model's results in `assistant-meet` and `assistant-meal-plan` give `by`.
 - [x] Lint, format, and types of the main server pass.
 

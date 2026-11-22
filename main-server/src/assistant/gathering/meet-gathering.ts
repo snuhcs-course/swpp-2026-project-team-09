@@ -103,7 +103,7 @@ export function gatherToMeet(
     },
     when,
     travel,
-    { merging: false },
+    { merging: false, order: 'together' },
   );
   return { ...gathering, fits: gathering.fits.slice(0, MEET_PLANS_MAX) };
 }

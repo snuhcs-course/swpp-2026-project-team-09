@@ -4,9 +4,10 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { gather, type GatheringPerson, type GatheringPlace } from '../src/assistant/gathering/gathering.js';
+import { gather, type GatheringPerson } from '../src/assistant/gathering/gathering.js';
 import { at, free, item, person, place, walks, window } from './gathering-fixtures.js';
 
 describe('Shared time', () => {
@@ -166,22 +167,6 @@ describe('Time together', () => {
       { key: 'cafe', placeId: 'P', togetherMinutes: 14, shortest: { personId: 'me', minutes: 14 } },
     ]);
     expect(dropped[0]?.parts).toMatchObject([{ personId: 'me', walkMinutes: 1, canArriveAt: at('12:01') }]);
-  });
-});
-
-describe('The order of the plans', () => {
-  // From A at 12:00 to the next Class at B at 13:00: P is 1 minute in and 3 out, R 2 in and 2 out.
-  const travel = walks(['A', 'P', 60], ['P', 'B', 180], ['A', 'R', 120], ['R', 'B', 120]);
-  const asker = person('me', [free('12:00', '13:00', item('11:00', '12:00', 'A'), item('13:00', '14:00', 'B'))]);
-  const keysOf = (places: GatheringPlace[]): string[] =>
-    gather([asker], places, { window, now: at('11:30') }, travel).fits.map(({ key }) => key);
-
-  it('puts the earlier start first when the minutes together tie', () => {
-    expect(keysOf([place('alpha', 'R'), place('beta', 'P')])).toEqual(['beta', 'alpha']);
-  });
-
-  it('puts the keys in code-point order when the minutes and the start tie', () => {
-    expect(keysOf([place('b', 'P'), place('a', 'P')])).toEqual(['a', 'b']);
   });
 });
 

@@ -13,14 +13,15 @@ import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
 import { type FreeInterval } from '../free-time/free-time.js';
 import { aroundShared, earliest, type Interval, latest, sharedTime } from '../free-time/meal-fit.js';
 import {
-  atSettingOut,
   type GatheringTravel,
   type Leg,
   legOf,
   nextOf,
   ON_FOOT,
+  settledShuttle,
   walkingMinutes as minutes,
 } from './gathering-travel.js';
+import { PLAN_ORDERS, type PlanOrder } from './plan-order.js';
 
 export { type GatheringTravel, onFoot, type ShuttleStops } from './gathering-travel.js';
 
@@ -143,19 +144,20 @@ export type GatheringPlaces =
 
 // The asker is the first person. `now` is a whole minute. Without `merging`, everyone walks to the place on their own,
 // as for a meet, where meeting on the way would be the meet itself. With `startsBy`, only a stretch that starts by then
-// is planned: when none fits, the first stretch's sides come back with nothing fitted.
+// is planned: when none fits, the first stretch's sides come back with nothing fitted. The plans are a meal's, the
+// least travel first, unless `order` says otherwise.
 export function gather(
   people: readonly [GatheringPerson, ...GatheringPerson[]],
   places: GatheringPlaces,
   when: { window: Interval; now: Date },
   travel: GatheringTravel,
-  { merging = true, startsBy }: { merging?: boolean; startsBy?: Date } = {},
+  { merging = true, startsBy, order = 'walking' }: { merging?: boolean; startsBy?: Date; order?: PlanOrder } = {},
 ): Gathering {
   const stretches = sharedTime(
     people.map(({ free }) => free),
     when.window,
   );
-  const plans = stretches.map((stretch) => planIn(stretch, people, places, when, { travel, merging }));
+  const plans = stretches.map((stretch) => planIn(stretch, people, places, when, { travel, merging, order }));
   const held =
     startsBy === undefined ? plans : plans.filter(({ shared }) => shared !== null && shared.start <= startsBy);
   const first = plans[0] ?? { shared: null, sides: [], fits: [], dropped: [] };
@@ -170,7 +172,7 @@ function planIn(
   [asker, ...friends]: readonly [GatheringPerson, ...GatheringPerson[]],
   places: GatheringPlaces,
   { window, now }: { window: Interval; now: Date },
-  { travel, merging }: { travel: Walking; merging: boolean },
+  { travel, merging, order }: { travel: Walking; merging: boolean; order: PlanOrder },
 ): Gathering {
   const sides: [GatheringSide, ...GatheringSide[]] = [
     sideOf(asker, stretch, now),
@@ -178,17 +180,9 @@ function planIn(
   ];
   const candidates = typeof places === 'function' ? places(sides) : places;
   const all = candidates.map((place) => ({ place, fit: fitAt(place, sides, window, { travel, merging }) }));
-  const fits = all.flatMap(({ fit }) => (fitsTogether(fit) ? [fit] : [])).toSorted(byLongestTogether);
+  const fits = all.flatMap(({ fit }) => (fitsTogether(fit) ? [fit] : [])).toSorted(PLAN_ORDERS[order]);
   const dropped = all.flatMap(({ place, fit }) => (fitsTogether(fit) ? [] : [dropOf(fit, place, window)]));
   return { shared: stretch, sides, fits, dropped };
-}
-
-function byLongestTogether(a: GatheringFit, b: GatheringFit): number {
-  return (
-    b.togetherMinutes - a.togetherMinutes ||
-    a.start.getTime() - b.start.getTime() ||
-    (a.key < b.key ? -1 : Number(a.key > b.key))
-  );
 }
 
 const fitsTogether = ({ togetherMinutes }: GatheringFit): boolean => togetherMinutes >= SHORTEST_MEAL_SECONDS / 60;
@@ -323,22 +317,6 @@ function partOf(
   // Meeting on the way is on foot.
   const walkMinutes = minutes(side.origin.placeId, meeting.placeId, travel) + meeting.onwardMinutes;
   return { ...known, walkMinutes, ...ON_FOOT, canArriveAt: plusMinutes(meeting.at, meeting.onwardMinutes) };
-}
-
-// A way by the shuttle weighed again at the setting-out the start fixes, so that it is not priced for a band the person
-// does not travel in; the earliest arrival follows it.
-function settledShuttle(
-  part: Omit<PersonPart, 'leaveAt'>,
-  placeId: string,
-  start: Date,
-  travel: Walking,
-): Omit<PersonPart, 'leaveAt'> {
-  if (part.origin === null || part.walkMinutes === null || part.by !== 'shuttle') {
-    return part;
-  }
-  const leg = { minutes: part.walkMinutes, by: part.by, shuttle: part.shuttle };
-  const { minutes: walkMinutes, by, shuttle } = atSettingOut(part.origin.placeId, placeId, travel, leg, start);
-  return { ...part, walkMinutes, by, shuttle, canArriveAt: plusMinutes(part.readyAt, walkMinutes) };
 }
 
 function settingOut(part: Omit<PersonPart, 'leaveAt'>, start: Date): PersonPart {

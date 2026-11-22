@@ -33,7 +33,9 @@ const NO_WINDOW = { from: null, until: null };
 // keep their own presses.
 const GRIP_WIDTH = 72;
 const GRIP_SLOP = { top: 16, bottom: 16, left: space[2], right: space[2] };
-// The words' room at the right while "＋ 같이" stands there: the chip's width and its gap, less the bar's padding.
+// The words' room at the right while "＋ 같이" stands there, until the chip is laid out: its width on a phone at the
+// usual text size. Laid out, the chip's own width is the room, so that a larger text size widens both (P04 ticket 37):
+// the chip stands 12 from the bar's edge, 4 short of the bar's padding of 16, which is the gap before the words.
 const ADD_ROOM = 72;
 
 function ignoreDrop(): void {
@@ -63,6 +65,7 @@ interface BarProps {
 function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
   const [unfolded, setUnfolded] = useState(false);
+  const [addWidth, setAddWidth] = useState(ADD_ROOM);
   const { lanes, startAt, now } = band.band;
   // Folded, the track runs over the free time around the span (P04 ticket 14); every bar unfolds to the band's whole
   // range, a bar of one lane too, so that a move further away is made there (PR 465's review).
@@ -81,9 +84,19 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
         {...band}
         day={day ?? koreaDayWord(startAt, new Date(now))}
         folded={folded}
-        head={{ left: BACK_ROOM, right: add === null ? 0 : ADD_ROOM }}
+        head={{ left: BACK_ROOM, right: add === null ? 0 : addWidth }}
       />
-      {add === null ? null : <View style={styles.add}>{add}</View>}
+      {add === null ? null : (
+        <View
+          onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+            setAddWidth(Math.ceil(nativeEvent.layout.width));
+          }}
+          style={styles.add}
+          testID="time-bar-add"
+        >
+          {add}
+        </View>
+      )}
       <Pressable
         accessibilityLabel={label}
         accessibilityRole="button"

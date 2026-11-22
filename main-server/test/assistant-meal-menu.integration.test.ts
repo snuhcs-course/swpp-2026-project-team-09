@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
@@ -100,9 +101,8 @@ describe("A meal Plan's menu", () => {
     const friend = await stage.friend('민수');
     await stage.classAt(friend, '11:00', '12:15', '302');
     const response = await stage.send([resolve('민수'), planMeal(date, [friend.id]), { text: '…' }]).expect(200);
-    const [first] = answerIn(response.body).plans;
-    expect(first?.id).toBe('302동식당');
-    expect(words(first?.lines[1])).toBe('오늘 돈까스 외 1');
+    const plan = answerIn(response.body).plans.find(({ id }) => id === '302동식당');
+    expect(words(plan?.lines[1])).toBe('오늘 돈까스 외 1');
   });
 });
 

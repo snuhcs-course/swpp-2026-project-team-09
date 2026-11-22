@@ -82,3 +82,19 @@ export function nextOf(next: GatheringSide['next'], placeId: string, travel: Gat
   const { minutes: walkMinutes, by, shuttle } = atSettingOut(placeId, next.placeId, travel, leg, next.start);
   return { ...next, walkMinutes, by, shuttle };
 }
+
+// A way by the shuttle weighed again at the setting-out the start fixes, so that it is not priced for a band the person
+// does not travel in; the earliest arrival follows it.
+export function settledShuttle(
+  part: Omit<PersonPart, 'leaveAt'>,
+  placeId: string,
+  start: Date,
+  travel: GatheringTravel,
+): Omit<PersonPart, 'leaveAt'> {
+  if (part.origin === null || part.walkMinutes === null || part.by !== 'shuttle') {
+    return part;
+  }
+  const leg = { minutes: part.walkMinutes, by: part.by, shuttle: part.shuttle };
+  const { minutes: walkMinutes, by, shuttle } = atSettingOut(part.origin.placeId, placeId, travel, leg, start);
+  return { ...part, walkMinutes, by, shuttle, canArriveAt: new Date(part.readyAt.getTime() + walkMinutes * MINUTE_MS) };
+}
