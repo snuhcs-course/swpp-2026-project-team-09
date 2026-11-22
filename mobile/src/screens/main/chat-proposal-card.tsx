@@ -15,8 +15,9 @@ import { boardName } from '@/features/party/boards';
 import { type PartyForm, proposalForm } from '@/features/party/making';
 import { whenOf } from '@/features/party/posts';
 
-// Where a Proposal's making stands: not yet, on its way, or done, after which the card makes nothing more.
-export type ProposalMaking = 'ready' | 'making' | 'made';
+// Where a Proposal's making stands: not yet, on its way, or done, after which the card makes nothing more; `stale`, a
+// change of a made 파티 whose step changed since it came (P04 ticket 27), which sends nothing more either.
+export type ProposalMaking = 'ready' | 'making' | 'made' | 'stale';
 
 interface ChatProposalCardProps {
   proposal: QuestProposal;
@@ -64,9 +65,19 @@ function rowsOf(proposal: QuestProposal, form: PartyForm): Row[] {
   ];
 }
 
-const MAKE_WORDS: Record<ProposalMaking, string> = { ready: '만들기', making: '만드는 중', made: '만들었어요' };
+const MAKE_WORDS: Record<ProposalMaking, string> = {
+  ready: '만들기',
+  making: '만드는 중',
+  made: '만들었어요',
+  stale: '만들기',
+};
 // A 파티 already made, changed in place (P04 ticket 25).
-const CHANGE_WORDS: Record<ProposalMaking, string> = { ready: '바꾸기', making: '바꾸는 중', made: '바꿨어요' };
+export const CHANGE_WORDS: Record<ProposalMaking, string> = {
+  ready: '바꾸기',
+  making: '바꾸는 중',
+  made: '바꿨어요',
+  stale: '바꾸기',
+};
 
 // 시설 예약하기 under a made Proposal at a Place booked online: it opens the Place's booking page, since the Assistant
 // cannot book the facility itself. Its label names the page, such as 체육시설 예약 목록.
