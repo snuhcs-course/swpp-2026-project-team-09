@@ -21,6 +21,7 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { pressMarker } from './support/made-quest';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // Where the User sets out from (P02 ticket 03), chosen from the User's start on the map (P04 ticket 03), over the
 // stored answer to "배고파, 민수랑 같이", which sets out "301동에서", and the stored answer from another starting
@@ -102,7 +103,7 @@ describe("the User's start", () => {
           people: [{ ...asker, constraints: [{ kind: 'from', placeId: STUDENT_HALL.id, source: 'asker' }] }, ...others],
         },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     await openStart(user);

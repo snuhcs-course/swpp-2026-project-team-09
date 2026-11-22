@@ -25,6 +25,7 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, JI_WOO, MIN_JUN, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // A Friend's profile card inside the answer frame (P02 ticket 18), over the stored answer to "배고파, 민수랑 같이" and
 // the fake main server's Friends: 김민준, seen at the exact position, and 서지우, of whom the User sees the Timetable
@@ -127,7 +128,7 @@ function withoutMinJun(): object {
   return {
     input: { ...replyWithMinJun().answer.input, people: [ASKER] },
     location: ON_CAMPUS,
-    clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+    clientCapabilities: SENT_CAPABILITIES,
   };
 }
 

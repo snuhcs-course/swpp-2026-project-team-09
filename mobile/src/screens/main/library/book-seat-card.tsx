@@ -293,7 +293,7 @@ export function BookSeatCard(props: BookSeatCardProps): ReactElement {
   const changed = card.start !== null && !sameSlot(room.slot, cardSlot(card, now()));
   return (
     <CardBox testID={`library-book-${card.key}`}>
-      {room.listing || busy || live === null || props.actions.onMap?.(props.place) ? null : (
+      {room.listing || busy || live === null || props.actions.bandOnBar?.(props.place) === true ? null : (
         <SlotBand onChange={room.setSlot} slot={live} space={room.shown} />
       )}
       {changed && !room.listing ? <Text style={styles.foot}>{TIME_CHANGED}</Text> : null}

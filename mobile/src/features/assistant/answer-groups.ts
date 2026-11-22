@@ -124,14 +124,16 @@ export function keptDrafts(kept: KeptQuest | null | undefined): Draft[] {
   ];
 }
 
-// Every title ending with "›" when each mark opens something at a press (a Lookup's, P04 ticket 22), else as they are.
-export function withOpenMarks(opens: boolean, drafts: Draft[]): Draft[] {
-  if (!opens) {
+// The titles of the marks that open something at a press end with "›": every mark of a Lookup (`true`, P04 ticket 22),
+// or a Plan's pick alone, whose press opens its flag's card (`'pick'`, ticket 14, boards 10 and 12).
+export function withOpenMarks(opens: boolean | 'pick', drafts: Draft[]): Draft[] {
+  if (opens === false) {
     return drafts;
   }
   const marked: Draft[] = [];
   for (const draft of drafts) {
-    marked.push(draft.title === null ? draft : { ...draft, title: `${draft.title} ›` });
+    const open = opens === true || draft.group === 'pick';
+    marked.push(draft.title === null || !open ? draft : { ...draft, title: `${draft.title} ›` });
   }
   return marked;
 }
@@ -143,4 +145,9 @@ export function faceTitle(name: string, tag: string): string | null {
     return tag;
   }
   return tag === name ? null : restOf(name, tag);
+}
+
+// How many candidates stand at one point.
+export function candidatesAt(here: readonly Draft[]): number {
+  return here.filter(({ group }) => group === 'candidate').length;
 }

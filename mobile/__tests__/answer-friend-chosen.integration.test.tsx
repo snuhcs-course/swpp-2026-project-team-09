@@ -23,6 +23,7 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { lookOf, press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, MIN_JUN, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // One pending add, shared by a cell of the open list and a Friend's face on the map (P02 ticket 09), over the stored
 // answer to "배고파, 민수랑 같이" and the fake main server's Friends: 김민준, whose face is on the map 1.2km from the
@@ -56,7 +57,7 @@ const PICK_FOR_THREE = '학생회관식당 · 12:33 점심';
 const WITH_MIN_JUN = {
   input: { ...MEAL_ANSWER.input, people: [...MEAL_ANSWER.input.people, { userId: MIN_JUN.id, constraints: [] }] },
   location: ON_CAMPUS,
-  clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+  clientCapabilities: SENT_CAPABILITIES,
 };
 
 let server: FakeServer;

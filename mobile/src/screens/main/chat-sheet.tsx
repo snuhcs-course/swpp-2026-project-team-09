@@ -35,6 +35,8 @@ import type { PlanOutcomes } from '@/features/assistant/turn-outcome';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
 import { type HowAbout, useHowAbout } from '@/features/assistant/use-how-about';
 import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use-plan-invitation';
+import { type Picking, usePicking } from '@/features/assistant/use-picking';
+import { type QuestLeaving, useQuestLeaving } from '@/features/assistant/use-quest-leaving';
 import { type ShownAnswer, useShownAnswer } from '@/features/assistant/use-shown-answer';
 import { type ShownLookup, type StartGuidance, useShownLookup } from '@/features/assistant/use-shown-lookup';
 import { openPost } from '../party/post-card';
@@ -74,6 +76,10 @@ export interface ChatSheetControl extends Omit<KeptConversation, 'chat'>, MarkOp
   setActiveStep: (index: number) => void;
   // What became of each reply's Plan, for the list of questions.
   outcomes: PlanOutcomes;
+  // A reply's 취소하기 or 나가기, which cancels a Quest asked by words (P04 ticket 24).
+  leave: QuestLeaving;
+  // A Place picked on the map, or a time on the wheel, that a reply asked for (P04 ticket 26).
+  pick: Picking;
   // Whether the frame's card is raised, which a press on a Lookup's mark on the map does too.
   card: CardRaise;
   // What was pressed on the map and is open in its card, which every request carries from then on; null for nothing.
@@ -172,16 +178,20 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const shownNow = useRef<ShownAnswer | null>(null);
   const { chat: said, ...pressing } = useContextChat(where, shownNow);
   const { chat, ...kept } = useKeptConversation(said);
-  const proposals = useProposalMaking(said.proposalMade);
+  const proposals = useProposalMaking(said.proposalMade, kept.latest);
   const onMap = useShownOnMap(chat, kept.framed);
   const bookingStage = useBookingStage();
   const place = onMap.booking?.place ?? null;
-  const booking = useMemo(() => ({ place, tell: bookingStage.tell }), [place, bookingStage.tell]);
+  const steps = onMap.steps !== null;
+  const booking = useMemo(() => ({ place, tell: bookingStage.tell, steps }), [place, bookingStage.tell, steps]);
   const onScreen = useAnswerOnScreen(chat.bubbles, where, shownNow);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation);
+  const pick = usePicking(chat);
   return {
     chat,
     ...kept,
+    // ✕ and back end a Place's picking before they close the answer (P04 ticket 26).
+    hide: pick.place === null ? kept.hide : pick.stop,
     outcomes,
     leaving: {
       showLayer: hidingFor(kept.hide, turnOn),
@@ -196,6 +206,8 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
     ...onMap,
     ...useActiveStep(onMap.steps),
     bookingStage,
+    leave: useQuestLeaving(),
+    pick,
     card: useCardRaise(kept.framed),
     ...useOpenedMark(chat.bubbles, kept.framed),
     ...pressing,

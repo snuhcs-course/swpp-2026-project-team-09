@@ -28,6 +28,7 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { givePushPhone } from './support/push';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { SENT_CAPABILITIES } from './support/capabilities';
 
 // "일정에 넣기" beside the input (P05-14's "여기로", P04 ticket 04) against the fake main server, over its stored
 // answer to "배고파" for the User alone (boards s1 and s2: 301동식당 where the User is, then 학생회관식당 15 minutes
@@ -138,7 +139,7 @@ describe('"일정에 넣기" on a Plan where the User is (s1 → s4b)', () => {
         planId: '301동식당',
         startAt: MEAL_ANSWER_ALONE.plans[0]?.startAt,
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: SENT_CAPABILITIES,
       },
     ]);
     expect(server.received('POST /plans')[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);

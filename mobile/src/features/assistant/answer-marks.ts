@@ -18,6 +18,7 @@ import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
 import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
 import {
+  candidatesAt,
   destinationOf,
   faceTitle,
   type Draft,
@@ -108,8 +109,8 @@ export interface SceneSetting {
   kept?: KeptQuest | null;
   // The kind of food on screen, whose candidates stand out; left out, none.
   kind?: Cuisine | null;
-  // Every mark opens something at a press, so each title ends with "›"; left out, none.
-  opens?: boolean;
+  // The marks that open something at a press, whose titles end with "›": every one, the pick alone, or none.
+  opens?: boolean | 'pick';
   // Marks made beside the scene's own, as the numbered flags of several requests (P04 ticket 09); left out, none.
   drafts?: readonly Draft[];
 }
@@ -223,10 +224,6 @@ function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null, held
   return { point, position, words, sides: SIDES[group], kept: group === 'pick' || held };
 }
 
-function candidatesAt(here: readonly Draft[]): number {
-  return here.filter(({ group }) => group === 'candidate').length;
-}
-
 // One symbol at each point, and the labels placed (`placeLabels`) in the order their kinds take sides, so that the
 // Plan's own marks take theirs first.
 function placeAll(drafts: Draft[], view: LabelView | null): Placed[] {
@@ -268,7 +265,7 @@ export function drawingOfScene(
   view: LabelView | null = null,
   setting: SceneSetting = BARE,
 ): AnswerDrawing {
-  const drafts = withOpenMarks(setting.opens === true, [
+  const drafts = withOpenMarks(setting.opens ?? false, [
     ...personDrafts(scene, setting.standings),
     ...scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
     ...flagDrafts(scene),
@@ -310,6 +307,7 @@ export function drawingOf(
   }
   const day = koreaDayWord(plan.startAt, new Date(plan.band.now));
   return drawingOfScene(plan.scene, view, {
+    opens: 'pick',
     number: planIndex + 1,
     plans: answer.plans,
     standings,
