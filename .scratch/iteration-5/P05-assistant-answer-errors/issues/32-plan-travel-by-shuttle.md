@@ -37,3 +37,14 @@ Native files: none. Releases: the main server, in the same Release as the app's 
 - [x] Lint, format, and types of the main server pass.
 
 ## Comments
+
+### The fields the app reads (2026-11-22)
+
+- A part by the shuttle: `mode: 'shuttle'` and `shuttle: { boardAt, getOffAt }` (stop names, "301동", "경영대"). A walk sends neither.
+- Its `next`: `by: 'shuttle'` when the way on to the next item is by the shuttle, absent for a walk.
+- A scene route of the 'me', 'friend', or 'next' role by the shuttle: `mode: 'shuttle'`, absent for a walk.
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 40 minutes of one session, waits for the design's go and for test runs on a loaded Mac included. An estimate from the transcript's timestamps.
+- Tokens: input about 31.6 million, of which about 31.2 million cache reads and 0.34 million cache writes; output about 61,000. One short web-reading subagent of the earlier ticket is not counted here. Measured from the session's transcript at the time of the pull request.

@@ -6,9 +6,9 @@
 
 import { onDay } from '../src/assistant/free-time/free-time.js';
 import { gather, type GatheringPerson, type PersonPart } from '../src/assistant/gathering/gathering.js';
-import { type GatheringNaming, wayWords } from '../src/assistant/gathering/answer-words.js';
+import { GatheringNaming, wayWords } from '../src/assistant/gathering/answer-words.js';
 import { partOf } from '../src/assistant/gathering/plan-parts.js';
-import { classAt, id, readCampus, seedTravel } from './way-example.js';
+import { classAt, id, placeOf, readCampus, seedTravel } from './way-example.js';
 
 // A lunch planned the evening before, on the seed's walking table and shuttle timing: the way from 301동 to 58동 is
 // 25 minutes on foot, and the shuttle from the 301동 stop to the 경영대 stop on a weekday at noon.
@@ -74,21 +74,33 @@ describe('A way the shuttle does not take', () => {
   });
 });
 
-describe('What the app is sent of a way by the shuttle', () => {
-  const naming = {
-    personOf: () => ({ userId: 'me', name: '유상', me: true, items: [] }),
-    placePoint: (placeId: string) => ({ placeId, label: placeId, latitude: 0, longitude: 0 }),
-  } as unknown as GatheringNaming;
+// A Monday lunch's naming, the asker alone.
+const naming = (): GatheringNaming =>
+  new GatheringNaming({
+    input: {
+      kind: 'meal',
+      date: MONDAY,
+      meal: 'lunch',
+      people: [{ userId: 'me', constraints: [] }],
+      window: { from: null, until: null },
+      placeId: null,
+    },
+    now: onDay(SUNDAY, '21:00'),
+    people: [{ userId: 'me', name: '유상', me: true, items: [], position: null }],
+    gathering: { shared: null, sides: [], fits: [], dropped: [] },
+    placeOf,
+  });
 
+describe('What the app is sent of a way by the shuttle', () => {
   it('sets mode and the stops on the part, and by on its next', () => {
-    const sent = partOf(lunchOn(MONDAY, 'SK경영관', '제1공학관'), naming);
+    const sent = partOf(lunchOn(MONDAY, 'SK경영관', '제1공학관'), naming());
 
     expect(sent).toMatchObject({ walkMinutes: 13, mode: 'shuttle', shuttle: { boardAt: '301동', getOffAt: '경영대' } });
     expect(sent.next?.by).toBe('shuttle');
   });
 
   it('sends a walk as before, without mode, stops, or by', () => {
-    const sent = partOf(lunchOn(SATURDAY, 'SK경영관', '제1공학관'), naming);
+    const sent = partOf(lunchOn(SATURDAY, 'SK경영관', '제1공학관'), naming());
 
     expect(sent).not.toHaveProperty('mode');
     expect(sent).not.toHaveProperty('shuttle');
