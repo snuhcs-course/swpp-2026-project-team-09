@@ -10,6 +10,7 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
 import { askOnMap } from './support/answer-map';
+import { MY_CAREER } from './support/events';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT } from './support/lists';
@@ -109,7 +110,7 @@ describe('a made 파티 changed in place', () => {
 // Partitions: 바꾸기 taken and refused; the change sent back before and after it.
 describe('its 바꾸기', () => {
   it('sends the step to 일정 수정, says whom it told, and sends the 파티 back without its change', async () => {
-    server.on(`PUT /quests/${QUEST_ID}/sub-quests/${STEP_ID}`, { status: 200, body: {} });
+    server.on(`PUT /quests/${QUEST_ID}/sub-quests/${STEP_ID}`, { status: 200, body: MY_CAREER.subQuests[0] });
     const user = await askOnMap(server, REPLY);
 
     await user.press(card().getByRole('button', { name: '바꾸기' }));
