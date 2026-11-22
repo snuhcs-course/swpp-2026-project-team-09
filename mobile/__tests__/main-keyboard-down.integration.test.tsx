@@ -134,20 +134,6 @@ describe('a press on the scrim on the everyday map', () => {
   });
 });
 
-// Partitions: an empty field and one with words.
-describe("the suggestions over the main map's input", () => {
-  it('show only while the field is empty', async () => {
-    const user = await openMain();
-    await showKeyboard(KEYBOARD);
-    expect(screen.getByTestId('asked-examples')).toBeVisible();
-
-    await user.type(screen.getByLabelText(AI_INPUT), '도서관');
-
-    expect(screen.queryByTestId('asked-examples')).toBeNull();
-    expect(screen.queryByText(NOTICE)).toBeNull();
-  });
-});
-
 // Partitions: the bar's field and buttons, an example and the line under the examples, the chip "이어서" (P04 ticket 11).
 describe("the AI input's own parts while the keyboard is up", () => {
   it('stand over the scrim: the bar and the examples', async () => {
@@ -188,6 +174,22 @@ describe("the AI input's own parts while the keyboard is up", () => {
     await reopenAnswer(user);
 
     expect(screen.getByTestId('answer-card')).toHaveTextContent(/식사 메뉴 추천/u);
+  });
+});
+
+// Partitions: words in the input, then none again (P04 ticket 33).
+describe('the examples over the keyboard', () => {
+  it('give way once the input holds words, with the line under them, and come back when it is empty', async () => {
+    const user = await openMain();
+    await showKeyboard(KEYBOARD);
+
+    await user.type(screen.getByLabelText(AI_INPUT), '셔틀');
+
+    expect(screen.queryByTestId('asked-examples')).toBeNull();
+    expect(screen.queryByText(NOTICE)).toBeNull();
+    await user.clear(screen.getByLabelText(AI_INPUT));
+    expect(button('배고파')).toBeVisible();
+    expect(screen.getByText(NOTICE)).toBeVisible();
   });
 });
 

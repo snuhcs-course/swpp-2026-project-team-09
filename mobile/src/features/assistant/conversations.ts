@@ -7,6 +7,8 @@
 import { useCallback, useRef, useState } from 'react';
 import type { Bubbles, Chat, ChatBubble } from './use-chat';
 
+type Kept = Pick<Chat, 'earlier' | 'startNew' | 'resume' | 'sendNew'>;
+
 // A conversation the User left for another, kept while the app runs (P04 ticket 10). Its id is its first bubble's, which
 // is never given again.
 export interface EarlierConversation {
@@ -16,11 +18,9 @@ export interface EarlierConversation {
 
 // The conversations kept beside the current one: "새 대화" moves the current one among them, and a press on one of
 // their questions takes it up again in place of the current one, which is kept in its turn. Nothing is erased; a
-// conversation that holds nothing is not kept. Leaving drops a question still on its way (`leave`).
-export function useConversations(
-  show: Bubbles['show'],
-  leave: () => readonly ChatBubble[],
-): Pick<Chat, 'earlier' | 'startNew' | 'resume'> {
+// conversation that holds nothing is not kept. Leaving drops a question still on its way (`leave`). A message from the
+// main map starts a new one with it (`sendNew`, P04 ticket 33).
+export function useConversations(show: Bubbles['show'], leave: () => readonly ChatBubble[], send: Chat['send']): Kept {
   const [earlier, setEarlier] = useState<readonly EarlierConversation[]>([]);
   const keptNow = useRef<readonly EarlierConversation[]>([]);
   const keep = useCallback((next: readonly EarlierConversation[]): void => {
@@ -49,5 +49,12 @@ export function useConversations(
     },
     [putAside, show],
   );
-  return { earlier, startNew, resume };
+  const sendNew = useCallback(
+    (text: string, tapped?: Parameters<Chat['send']>[1]): void => {
+      startNew();
+      send(text, tapped);
+    },
+    [send, startNew],
+  );
+  return { earlier, startNew, resume, sendNew };
 }

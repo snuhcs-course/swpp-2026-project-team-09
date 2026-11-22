@@ -108,6 +108,9 @@ const styles = StyleSheet.create({
   now: { ...text.label, color: color.snuBlue },
 });
 
+// Where the list stands and how much it may take, over the map.
+export const QUESTION_LIST = { side: space[4], gap: space[2], share: 0.6 } as const;
+
 // The rows of the list for the conversations a control keeps, the turn on screen marked.
 export function questionRowsOf(control: ChatSheetControl): QuestionRow[] {
   return questionRows({
