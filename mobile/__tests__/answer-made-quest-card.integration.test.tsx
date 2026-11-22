@@ -86,8 +86,8 @@ describe("a made Quest's card, opened again", () => {
     await pressMarker(user, FLAG);
 
     expect(madeCard().getByText('민수 · 아직 안 봄')).toBeVisible();
-    expect(madeCard().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
-    expect(madeCard().getByText('답이 없어도 12:15에 가면 돼요')).toBeVisible();
+    expect(madeCard().getByText('민수에게 점심 초대를 보냈어요')).toBeVisible();
+    expect(madeCard().getByText('11/17(화) 12:15 302동식당 · 수락하면 알려 드려요')).toBeVisible();
     expect(madeCard().getByText('302동식당에서 식사')).toBeVisible();
     expect(madeCard().getByRole('button', { name: '닫기' })).toBeEnabled();
     expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
