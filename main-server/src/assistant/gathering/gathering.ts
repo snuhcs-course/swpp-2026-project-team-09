@@ -13,6 +13,7 @@ import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
 import { type FreeInterval } from '../free-time/free-time.js';
 import { aroundShared, earliest, type Interval, latest, sharedTime } from '../free-time/meal-fit.js';
 import {
+  atSettingOut,
   type GatheringTravel,
   type Leg,
   legOf,
@@ -324,6 +325,22 @@ function partOf(
   return { ...known, walkMinutes, ...ON_FOOT, canArriveAt: plusMinutes(meeting.at, meeting.onwardMinutes) };
 }
 
+// A way by the shuttle weighed again at the setting-out the start fixes, so that it is not priced for a band the person
+// does not travel in; the earliest arrival follows it.
+function settledShuttle(
+  part: Omit<PersonPart, 'leaveAt'>,
+  placeId: string,
+  start: Date,
+  travel: Walking,
+): Omit<PersonPart, 'leaveAt'> {
+  if (part.origin === null || part.walkMinutes === null || part.by !== 'shuttle') {
+    return part;
+  }
+  const leg = { minutes: part.walkMinutes, by: part.by, shuttle: part.shuttle };
+  const { minutes: walkMinutes, by, shuttle } = atSettingOut(part.origin.placeId, placeId, travel, leg, start);
+  return { ...part, walkMinutes, by, shuttle, canArriveAt: plusMinutes(part.readyAt, walkMinutes) };
+}
+
 function settingOut(part: Omit<PersonPart, 'leaveAt'>, start: Date): PersonPart {
   return { ...part, leaveAt: part.walkMinutes === null ? null : plusMinutes(start, -part.walkMinutes) };
 }
@@ -337,7 +354,9 @@ function fitAt(
   const place = { key, placeId };
   const window = own ?? gatheringWindow;
   const earliestMeeting = merging ? meetingOf(place.placeId, asker, friends, travel) : null;
-  const arriving = [asker, ...friends].map((side) => partOf(side, place.placeId, earliestMeeting, travel));
+  const weighed = [asker, ...friends].map((side) => partOf(side, place.placeId, earliestMeeting, travel));
+  const first = latest([window.start, ...weighed.map((part) => part.canArriveAt ?? part.readyAt)]);
+  const arriving = weighed.map((part) => settledShuttle(part, place.placeId, first, travel));
   const start = latest([window.start, ...arriving.map((part) => part.canArriveAt ?? part.readyAt)]);
   const end = earliest([window.end, ...arriving.flatMap(({ leaveBy }) => (leaveBy === null ? [] : [leaveBy]))]);
   // Everyone sets out as late as still has them there at the start, so the meeting moves with the start.

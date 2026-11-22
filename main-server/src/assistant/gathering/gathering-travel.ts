@@ -60,6 +60,15 @@ export function legOf(from: string, to: string, travel: GatheringTravel, departu
   };
 }
 
+// A way by the shuttle weighed again at the setting-out an arrival then fixes, since the shuttle is slower in a later
+// band and does not run after hours: its minutes then, or the walk when the shuttle no longer wins.
+export function atSettingOut(from: string, to: string, travel: GatheringTravel, leg: Leg, arrival: Date): Leg {
+  if (leg.by !== 'shuttle') {
+    return leg;
+  }
+  return legOf(from, to, travel, new Date(arrival.getTime() - leg.minutes * MINUTE_MS));
+}
+
 // The way on from the place to the next item's Place, leaving in time for its start.
 export function nextOf(next: GatheringSide['next'], placeId: string, travel: GatheringTravel): PersonPart['next'] {
   if (next === null) {
@@ -69,6 +78,7 @@ export function nextOf(next: GatheringSide['next'], placeId: string, travel: Gat
     return { ...next, walkMinutes: null, ...ON_FOOT };
   }
   const departure = new Date(next.start.getTime() - walkingMinutes(placeId, next.placeId, travel) * MINUTE_MS);
-  const { minutes: walkMinutes, by, shuttle } = legOf(placeId, next.placeId, travel, departure);
+  const leg = legOf(placeId, next.placeId, travel, departure);
+  const { minutes: walkMinutes, by, shuttle } = atSettingOut(placeId, next.placeId, travel, leg, next.start);
   return { ...next, walkMinutes, by, shuttle };
 }

@@ -107,3 +107,46 @@ describe('What the app is sent of a way by the shuttle', () => {
     expect(sent.next).not.toHaveProperty('by');
   });
 });
+
+// Meeting a Friend at 58동 on a Monday evening: the asker is free from 18:30 at 301동 and the Friend, already at 58동,
+// from a later time, so that the asker sets out well after being free.
+function eveningWith(friendFrom: string): PersonPart {
+  const window = { start: onDay(MONDAY, '18:30'), end: onDay(MONDAY, '22:00') };
+  const me: GatheringPerson = {
+    id: 'me',
+    free: [{ ...window, previous: null, next: null }],
+    locationPlaceId: null,
+    chosenPlaceId: id('제1공학관'),
+  };
+  const friend: GatheringPerson = {
+    id: 'friend',
+    free: [{ start: onDay(MONDAY, friendFrom), end: window.end, previous: null, next: null }],
+    locationPlaceId: null,
+    chosenPlaceId: id('SK경영관'),
+  };
+  const place = [{ key: '58동', placeId: id('SK경영관') }];
+  const { fits } = gather([me, friend], place, { window, now: onDay(SUNDAY, '21:00') }, seedTravel(), {
+    merging: false,
+  });
+  const [part] = fits[0]?.parts ?? [];
+  if (part === undefined) {
+    throw new Error('No plan');
+  }
+  return part;
+}
+
+describe('A way by the shuttle weighed when the person sets out', () => {
+  it('takes the 19–21 shuttle when the start makes them set out after 19:00, not the faster one at 18:30', () => {
+    // 13 minutes when free at 18:30, 21 minutes setting out at 19:09, still 4 faster than the 25-minute walk.
+    expect(eveningWith('19:30')).toMatchObject({ walkMinutes: 21, by: 'shuttle', leaveAt: onDay(MONDAY, '19:09') });
+  });
+
+  it('walks when the start makes them set out after the shuttle stops at 21:00', () => {
+    expect(eveningWith('21:30')).toMatchObject({
+      walkMinutes: 25,
+      by: 'walk',
+      shuttle: null,
+      leaveAt: onDay(MONDAY, '21:05'),
+    });
+  });
+});
