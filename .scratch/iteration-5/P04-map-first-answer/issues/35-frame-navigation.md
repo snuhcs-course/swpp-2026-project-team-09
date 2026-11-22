@@ -1,4 +1,4 @@
-# 32: The answer's frame: "←", the caption, and one meaning per input
+# 35: The answer's frame: "←", the caption, and one meaning per input
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent

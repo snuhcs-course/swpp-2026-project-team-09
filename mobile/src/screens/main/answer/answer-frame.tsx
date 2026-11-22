@@ -77,7 +77,9 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
   };
   return (
     <FrameCard {...card} docked={rest !== null} hold={waiting} testID="answer-card">
-      {typing ? null : <AnswerCaption control={control} listOpen={list.open} onList={list.toggle} />}
+      {typing || control.answer.menuFor !== null ? null : (
+        <AnswerCaption control={control} listOpen={list.open} onList={list.toggle} />
+      )}
       {typing ? (
         <Typing control={control} />
       ) : list.open ? (
@@ -154,6 +156,29 @@ function useCardState({ raised, setRaised }: ChatSheetControl['card']): CardStat
   return { raised, setRaised, lower, list: { open, toggle, close } };
 }
 
+interface BackLayers {
+  list: QuestionsOpen;
+  control: ChatSheetControl;
+  raised: boolean;
+  lower: () => void;
+  leave: () => void;
+}
+
+// What Android's back takes away, one layer a press: the list of questions, a mark's card, a restaurant's menu (back to
+// the list of candidates), the raised card, then the answer.
+function backOf({ list, control, raised, lower, leave }: BackLayers): () => void {
+  if (list.open) {
+    return list.close;
+  }
+  if (control.mark !== null) {
+    return control.closeMark;
+  }
+  if (control.answer.menuFor !== null) {
+    return control.answer.closeMenu;
+  }
+  return raised ? lower : leave;
+}
+
 interface FramedProps {
   control: ChatSheetControl;
   barRoom: number;
@@ -224,8 +249,7 @@ function useBarHeight(
 // back return to the answer instead, and the caption names the building. A Friend's profile opened from the card stands
 // over it until a new reply; while it is shown, the back button hides it alone. This handler is the only one, and
 // listens only while the main screen is in front, so a screen pushed from the profile goes back to it. Back takes away
-// one layer per press: the keyboard (Android's own), the list of questions, a mark's card, the raised card, then the
-// answer.
+// one layer per press (`backOf`). While a restaurant's menu is open the caption gives way to the menu's own head.
 function Framed(props: FramedProps): ReactElement {
   const { control, barRoom, stageHeight, keyboardUp, onHeight, onBarHeight, stage, inputBottom } = props;
   const { chat, leaving, hide } = control;
@@ -239,7 +263,7 @@ function Framed(props: FramedProps): ReactElement {
   const title = control.howAbout.title;
   const leave = title === null ? close : keep;
   const { raised, setRaised, lower, list } = useCardState(control.card);
-  const back = list.open ? list.close : control.mark === null ? (raised ? lower : leave) : control.closeMark;
+  const back = backOf({ list, control, raised, lower, leave });
   useBackToClose(useIsFocused(), profileShown ? profile.hide : back, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   const focus = useBandFocus();
