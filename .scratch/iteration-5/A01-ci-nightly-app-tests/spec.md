@@ -24,14 +24,14 @@ CI runs at one of three levels, set by the run's event alone in `.github/ci/chan
 - At the full level the four `mobile-tests` jobs start, skip their work with a notice, and report success, so the Iteration Main ruleset's required checks are unchanged.
 - The `mobile` job runs the app's unit tests at every level. The `mobile-tests` shards run only the integration project (`pnpm test:integration`), so no test runs twice at the nightly level.
 - `ci.yml` takes `workflow_dispatch`. Such a run is named "Nightly level on <ref>" and has a concurrency group of its own, so it neither waits for a Main's push run nor holds one up.
-- `.github/workflows/nightly.yml` is set to run at 03:00 KST and start `ci.yml` on the newest `<line>/Main`, with `actions: write` and `contents: read` only. A Main whose `ci.yml` has no `workflow_dispatch` yet is skipped with a notice. GitHub fires a schedule only from the default branch's copy of a workflow, and `main` receives the file only when it is fast-forwarded to an iteration Main, so until then the nightly level is started by hand: `gh workflow run ci.yml --ref 5.0/Main`.
+- `.github/workflows/nightly.yml` is set to run at 03:00 KST and start `ci.yml` on the newest `<line>/Main`, with `actions: write` and `contents: read` only. A Main whose `ci.yml` has no `workflow_dispatch` yet is skipped with a notice. GitHub fires a schedule only from the default branch's copy of a workflow, so this schedule takes effect only once `main` is fast-forwarded to an iteration Main. Until then the same run is started on the newest `<line>/Main` with `gh workflow run ci.yml --ref <line>/Main`, by hand or by a scheduler outside GitHub at about 03:00 KST.
 - The Release gate (`release.sh`'s `read_ci_jobs`) reads only push runs: the tag's own and those of a `<line>/Main`, `main` or `development`. A run started by hand or by the nightly is never read, whichever way it ended, and does not stand for the tag's own run.
 
 ## Decisions
 
 - `main-server` (8 to 9 minutes) and `flow-tests` (about 2) stay at the full level. They were green in every full run measured on 2026-11-21, and `main-server` alone sets the full level's time.
 - No Release waits for the app's integration tests, for now. Whoever wants them green first starts the nightly level on the commit before tagging.
-- `nightly.yml` reaches `main` only when `main` is fast-forwarded to an iteration Main. No pull request or commit goes to `main` itself, whatever the reason, and no repository setting or ruleset changes. Until that fast-forward no schedule fires, and the nightly level runs only when started by hand.
+- `nightly.yml` reaches `main` only when `main` is fast-forwarded to an iteration Main. No pull request or commit goes to `main` itself, whatever the reason, and no repository setting or ruleset changes. Until that fast-forward GitHub fires no schedule, and a scheduler outside GitHub starts the same run every night at about 03:00 KST, on the newest `<line>/Main`, as `nightly.yml` would.
 
 ## Out of Scope
 

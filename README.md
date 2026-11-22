@@ -825,10 +825,11 @@ Not run by `pnpm test` or CI:
 
 [`.github/workflows/nightly.yml`](.github/workflows/nightly.yml) is set to start CI at the nightly level at 03:00 KST
 on the newest commit of the newest `<line>/Main`, and skips, with a notice, a Main whose `ci.yml` cannot be started by
-hand. GitHub fires a schedule only from the default branch's copy of a workflow, and `main` receives that file only when
-it is fast-forwarded to an iteration Main; no pull request or commit goes to `main` itself. Until then the nightly level
-runs only when started by hand. Anyone with write access starts it on a branch or a tag, for example on the iteration
-branch's newest commit before tagging a Release:
+hand. GitHub fires a schedule only from the default branch's copy of a workflow, so that schedule takes effect only once
+`main` is fast-forwarded to an iteration Main; no pull request or commit goes to `main` itself. Until then the same run
+is started on the newest `<line>/Main` with the command below, by hand or by a scheduler outside GitHub at about the
+same hour. Anyone with write access starts it on a branch or a tag, for example on the iteration branch's newest commit
+before tagging a Release:
 
 ```bash
 gh workflow run ci.yml --ref 5.0/Main
@@ -846,8 +847,8 @@ gh workflow run ci.yml --ref 5.0/check-<commit>
 ```
 
 Such a run is named "Nightly level on" and its ref, and no merge or Release waits for it. GitHub mails a failure to
-whoever started a run by hand, but nobody for the nightly's, so look for a red one the next morning in the CI workflow's
-runs started by `workflow_dispatch`:
+whoever started the run, and to nobody for a run that `nightly.yml` started, so look for a red one the next morning in
+the CI workflow's runs started by `workflow_dispatch`:
 
 ```bash
 gh run list --workflow ci.yml --event workflow_dispatch --limit 5

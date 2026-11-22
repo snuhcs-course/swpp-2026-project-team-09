@@ -6,11 +6,11 @@
 ################################################################################
 
 # Starts CI at the nightly level (.github/ci/changes.sh), with the app's integration tests, on the newest commit of the
-# newest iteration Main, at 03:00 KST. GitHub fires a schedule only from the default branch's copy of this file, and
-# `main` receives it only when it is fast-forwarded to an iteration Main; until then the nightly level is started by
-# hand. A Main whose ci.yml cannot be started this way yet (no `workflow_dispatch`) is skipped with a notice. A run
-# started with the workflow's token sends GitHub's failure mail to nobody: a red one is found by its name, "Nightly
-# level on <line>/Main", in CI's list of runs (README.md § The nightly level).
+# newest iteration Main, at 03:00 KST. GitHub fires a schedule only from the default branch's copy of this file, so it
+# takes effect only once `main` is fast-forwarded to an iteration Main; until then the same run is started by hand or
+# by a scheduler outside GitHub. A Main whose ci.yml cannot be started this way yet (no `workflow_dispatch`) is skipped
+# with a notice. A run started with the workflow's token sends GitHub's failure mail to nobody: a red one is found by
+# its name, "Nightly level on <line>/Main", in CI's list of runs (README.md § The nightly level).
 name: Nightly
 
 on:
