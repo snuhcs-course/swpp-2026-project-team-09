@@ -282,7 +282,7 @@ export function DockedAnswer({
     );
   }
   if (control.answer.answer?.input.kind === 'meal') {
-    return <MealDock bubble={bubble} control={control} onRaise={onRaise} />;
+    return <MealDock bubble={bubble} control={control} />;
   }
   const folded = <FoldedChips control={control} note={control.answer.answer?.note ?? null} onRaise={onRaise} />;
   return (

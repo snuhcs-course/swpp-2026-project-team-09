@@ -26,7 +26,7 @@ import { CardNote } from './card-note';
 import { ConditionChips } from './condition-chips';
 import { FriendChoices } from './friend-choices';
 import { MainButtons } from './main-buttons';
-import { MealList, mealListed } from './meal-list';
+import { MealList, mealCard } from './meal-list';
 import { MealMenu } from './meal-menu';
 import { PlanStepper } from './plan-stepper';
 import { RelaxButtons } from './relax-buttons';
@@ -188,6 +188,14 @@ export function planCardRests(
   );
 }
 
+// The person chips over the card: a meal answer's raised card has every person of the Plan over its list, with ✕ where
+// one can be taken out; any other card those whom the map draws no face for.
+function chipsOf(answer: AnswerReply, shown: Pick<ShownAnswer, 'plan'>, meal: boolean): ConditionChip[] {
+  return meal
+    ? answer.chips.filter(({ kind, userId }) => kind === 'person' && userId !== null)
+    : facelessChips(answer, shown);
+}
+
 // The chips of the Plan's people whom the scene draws no face for, those whose position is unknown ("민수 · 자리
 // 모름"): their chip keeps their profile and their ✕, since the map has no face to press.
 export function facelessChips(answer: AnswerReply, { plan }: Pick<ShownAnswer, 'plan'>): ConditionChip[] {
@@ -246,9 +254,9 @@ export function PlanCard(props: PlanCardProps): ReactElement {
   // bar is: an answer without a Plan, or while the keyboard hides the bar.
   const barShown = useKeyboardHeight() === 0 && shown.plan !== null;
   const addName = !barShown && (fix.adding || fix.choices.length > 0) ? addNameOf(answer.input.kind) : null;
-  const faceless = facelessChips(answer, shown);
   const docked = dock !== undefined;
-  const meal = !docked && !fix.adding && shown.plan !== null && mealListed(answer);
+  const meal = !docked && !fix.adding && shown.plan !== null && mealCard(answer);
+  const faceless = chipsOf(answer, shown, meal);
   return (
     <View style={styles.plan}>
       {addName === null && corner === null && faceless.length === 0 && !docked ? null : (

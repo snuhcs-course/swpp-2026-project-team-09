@@ -8,10 +8,11 @@ import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { AnswerReply, Cuisine, Plan } from '@/api/assistant-types';
 import { color, font, radius, space, text } from '@/design-system';
-import { addedWalk, fadedPlan } from '@/features/assistant/answer-walks';
+import { addedWalk, fadedPlan, travelWords } from '@/features/assistant/answer-walks';
 import { kindShown, serves } from '@/features/assistant/meal-kinds';
 import { dishWords, priceWords } from '@/features/assistant/meal-menus';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
+import { withParticle } from '@/features/map/short-name';
 import { koreaClock } from '@/korea-time';
 import { KindChips } from './kind-chips';
 
@@ -22,12 +23,12 @@ export interface CandidateRow {
   number: number;
   planId: string;
   name: string;
-  // The walking this choice adds to the User's day, "걸음 16분", or when the User is there, "11:53 도착", when where
-  // they start is not known.
+  // The way this choice adds to the User's day, "걸음 16분", or "이동 16분 · 셔틀" with a leg by shuttle, or when the User
+  // is there, "11:53 도착", when where they start is not known.
   when: string;
   // In minutes, null when not known.
   walk: number | null;
-  // It does not fit the band or its walking is long: faded, as on the map, unless chosen.
+  // It cannot be done in the time (`fadedPlan`): faded, as on the map, and listed last unless chosen.
   faded: boolean;
   // "순살안동식찜닭 외 2", null without dishes.
   dishes: string | null;
@@ -42,7 +43,7 @@ function rowOf(plan: Plan, index: number, kind: Cuisine | null): CandidateRow {
     number: index + 1,
     planId: plan.id,
     name: plan.place.label,
-    when: walk === null ? `${koreaClock(plan.startAt)} 도착` : `걸음 ${String(walk)}분`,
+    when: travelWords(plan) ?? `${koreaClock(plan.startAt)} 도착`,
     walk,
     faded: fadedPlan(plan),
     dishes: plan.menu === undefined ? null : dishWords(plan.menu, kind),
@@ -51,15 +52,37 @@ function rowOf(plan: Plan, index: number, kind: Cuisine | null): CandidateRow {
   };
 }
 
-// A meal answer with more than one candidate, whose raised card lists them.
-export function mealListed(answer: AnswerReply | null): boolean {
-  return answer?.input.kind === 'meal' && answer.plans.length > 1;
+// A meal answer with a Plan, whose raised card is the list, though it holds one place.
+export function mealCard(answer: AnswerReply | null): boolean {
+  return answer?.input.kind === 'meal' && answer.plans.length > 0;
+}
+
+// The places the list counts ("올리면 12곳 목록"): the candidates and the places dropped.
+export function listedCount(answer: AnswerReply): number {
+  return answer.plans.length + answer.dropped.length;
+}
+
+// The line over the candidates that cannot be done in the time.
+export const LATE_HEADING = '시간 안에 다녀오기 어려운 곳';
+
+// The line over the places dropped: with Friends, whose time they do not fit ("김태현과 시간이 맞지 않는 곳").
+export function droppedHeading(answer: AnswerReply): string {
+  const who = withFriendsOf(answer);
+  return who === null ? '시간이 맞지 않는 곳' : `${who} 시간이 맞지 않는 곳`;
+}
+
+// The Friends of the conditions with their particle, "김태현과"; null for none. A chip's name is before " · ".
+export function withFriendsOf(answer: AnswerReply): string | null {
+  const names = answer.chips
+    .filter(({ kind }) => kind === 'person')
+    .map(({ text: words }) => words.split(' · ')[0] ?? words);
+  return names.length === 0 ? null : withParticle(names.join(', '));
 }
 
 // The candidates of a meal answer with more than one, those of the kind on screen alone when one is chosen, the least
 // walking first, then the earliest there, then the map's order. None for any other answer.
 export function candidateRowsOf(answer: AnswerReply | null): CandidateRow[] {
-  if (answer === null || !mealListed(answer)) {
+  if (answer === null || !mealCard(answer)) {
     return [];
   }
   const kind = kindShown(answer);
@@ -128,6 +151,36 @@ function Row({
   );
 }
 
+// A place dropped: its name and the reason, faded, and no press.
+function DroppedRow({ name, reason }: { name: string; reason: string }): ReactElement {
+  return (
+    <View
+      accessibilityLabel={`${name} · ${reason}`}
+      accessible
+      style={[styles.row, styles.faded]}
+      testID="meal-dropped-row"
+    >
+      <View style={[styles.badge, styles.droppedBadge]} />
+      <View style={styles.middle}>
+        <Text numberOfLines={1} style={styles.name}>
+          {name}
+        </Text>
+        <Text numberOfLines={2} style={styles.dishes}>
+          {reason}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function Heading({ words }: { words: string }): ReactElement {
+  return (
+    <Text accessibilityRole="header" style={styles.heading}>
+      {words}
+    </Text>
+  );
+}
+
 interface MealListProps {
   answer: AnswerReply;
   shown: Pick<ShownAnswer, 'index' | 'openMenu' | 'chooseKind'>;
@@ -138,24 +191,32 @@ interface MealListProps {
 // The kinds of food on top, then a row per candidate; the chosen one is marked. A press on a row chooses that place,
 // as a press on its tag does, and opens its menu (board E4).
 export function MealList({ answer, shown, busy }: MealListProps): ReactElement | null {
-  const rows = candidateRowsOf(answer);
-  const chosen = answer.plans[shown.index]?.id;
-  if (rows.length === 0) {
+  if (!mealCard(answer)) {
     return null;
   }
+  const chosen = answer.plans[shown.index]?.id;
+  const rows = candidateRowsOf(answer);
+  const late = rows.filter((row) => row.faded && row.planId !== chosen);
+  const row = (one: CandidateRow): ReactElement => (
+    <Row
+      chosen={one.planId === chosen}
+      disabled={busy}
+      key={one.planId}
+      onPress={() => {
+        shown.openMenu(one.planId);
+      }}
+      row={one}
+    />
+  );
   return (
     <View style={styles.list} testID="meal-list">
       <KindChips answer={answer} disabled={busy} onChoose={shown.chooseKind} />
-      {rows.map((row) => (
-        <Row
-          chosen={row.planId === chosen}
-          disabled={busy}
-          key={row.planId}
-          onPress={() => {
-            shown.openMenu(row.planId);
-          }}
-          row={row}
-        />
+      {rows.filter((one) => !late.includes(one)).map((one) => row(one))}
+      {late.length === 0 ? null : <Heading words={LATE_HEADING} />}
+      {late.map((one) => row(one))}
+      {answer.dropped.length === 0 ? null : <Heading words={droppedHeading(answer)} />}
+      {answer.dropped.map(({ place, reason }) => (
+        <DroppedRow key={`${place.placeId}:${place.label}`} name={place.label} reason={reason} />
       ))}
     </View>
   );
@@ -186,6 +247,8 @@ const styles = StyleSheet.create({
     backgroundColor: color.snuBlue,
   },
   chosenBadge: { backgroundColor: color.quest },
+  droppedBadge: { backgroundColor: color.inkSubtle },
+  heading: { ...text.caption, marginTop: space[2], paddingHorizontal: space[2], color: color.inkMuted },
   number: { ...text.micro, color: color.onPrimary },
   middle: { flex: 1, gap: 2 },
   name: { ...text.body, fontFamily: font.bold, color: color.ink },

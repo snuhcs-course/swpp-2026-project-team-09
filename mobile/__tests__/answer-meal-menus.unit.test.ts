@@ -7,7 +7,10 @@
 import type { MenuLine, RestaurantMenus } from '@/api/menu-types';
 import { MEAL_ANSWER_MENUS } from '@/api/mock/data/meal-answer-menus';
 import { cornersOf, hoursOf, planCorner } from '@/features/assistant/meal-menus';
-import { candidateRowsOf, mealListed } from '@/screens/main/answer/meal-list';
+import { crowdedMealAnswer } from '@/api/mock/data/crowded-meal';
+import { travelWords } from '@/features/assistant/answer-walks';
+import { mealPickWords } from '@/features/assistant/meal-pick';
+import { candidateRowsOf, droppedHeading, listedCount, mealCard } from '@/screens/main/answer/meal-list';
 import { mealTabsOf, restaurantOf } from '@/screens/main/answer/meal-menu';
 import { mealDockLine, mealSentenceOf } from '@/screens/main/answer/meal-dock';
 
@@ -131,11 +134,12 @@ describe('the list of candidates', () => {
     expect(candidateRowsOf(answer)).toHaveLength(2);
   });
 
-  it('lists nothing for one candidate', () => {
+  it('lists one candidate alone as one row, which the caption counts as 1', () => {
     const answer = { ...MEAL_ANSWER_MENUS, plans: MEAL_ANSWER_MENUS.plans.slice(0, 1) };
 
-    expect(mealListed(answer)).toBe(false);
-    expect(candidateRowsOf(answer)).toEqual([]);
+    expect(mealCard(answer)).toBe(true);
+    expect(listedCount(answer)).toBe(1);
+    expect(candidateRowsOf(answer)).toHaveLength(1);
   });
 });
 
@@ -168,5 +172,71 @@ describe('the dock’s line', () => {
     const second = { ...shown, index: 1, plan: MEAL_ANSWER_MENUS.plans[1] ?? null };
 
     expect(mealDockLine('302동식당이 좋아요.', second)).toMatch(/^301동식당 · /u);
+  });
+});
+
+// Partitions: one Plan kept of three, with a Friend and without; the crowded answer's late restaurants.
+describe('one Plan kept of many', () => {
+  const [first, ...rest] = MEAL_ANSWER_MENUS.plans.slice(0, 3);
+  const dropped = rest.map(({ place }) => ({ place, reason: '김민수는 10분밖에 못 있어요' }));
+  const kept = { ...MEAL_ANSWER_MENUS, plans: first === undefined ? [] : [first], dropped };
+
+  it('is still listed, counting the places dropped', () => {
+    expect(mealCard(kept)).toBe(true);
+    expect(listedCount(kept)).toBe(3);
+  });
+
+  it('names the Friend whose time the places dropped do not fit, and says the one place alone fits', () => {
+    expect(droppedHeading(kept)).toBe('김민수와 시간이 맞지 않는 곳');
+    const shown = { answer: kept, source: kept, index: 0, plan: first ?? null };
+    expect(mealDockLine('', shown)).toMatch(/^김민수와 시간이 맞는 곳은 302동식당뿐이에요 · \d{2}:\d{2}/u);
+  });
+
+  it('says only the time without a Friend', () => {
+    const alone = { ...kept, chips: kept.chips.filter(({ kind }) => kind !== 'person') };
+    expect(droppedHeading(alone)).toBe('시간이 맞지 않는 곳');
+  });
+});
+
+describe('the crowded answer’s late restaurants', () => {
+  it('fades only those that cannot be done before the next Class, however far the rest are', () => {
+    const rows = candidateRowsOf(crowdedMealAnswer('2026-10-07', '2026-10-06T04:00:00Z'));
+
+    expect(
+      rows
+        .filter(({ faded }) => faded)
+        .map(({ name }) => name)
+        .toSorted(),
+    ).toEqual(['감골식당', '기숙사식당 (관악사 919동)']);
+    expect(rows.some(({ walk, faded }) => (walk ?? 0) > 30 && !faded)).toBe(true);
+  });
+});
+
+// Partitions: every leg on foot, as a reply without `mode` reads; the way there by shuttle, as the shuttle-aware Plan
+// sends it (`mode: 'shuttle'` and the stops' names).
+describe('the words of the way', () => {
+  const plan = crowdedMealAnswer('2026-10-07', '2026-10-06T04:00:00Z').plans.find(
+    ({ place }) => place.label === '학생회관식당',
+  );
+  if (plan === undefined) {
+    throw new Error('The crowded answer has Plans');
+  }
+  const byShuttle = {
+    ...plan,
+    parts: plan.parts.map((part) =>
+      part.me ? { ...part, mode: 'shuttle' as const, shuttle: { boardAt: '301동', getOffAt: '경영대' } } : part,
+    ),
+  };
+
+  it('says 걸음 where every leg is on foot, as a reply without `mode` reads', () => {
+    expect(travelWords(plan)).toMatch(/^걸음 \d+분$/u);
+    expect(mealPickWords(plan, plan.place.label, null).note).toMatch(/ · 걸음 \d+분$/u);
+  });
+
+  it('says 이동 with 셔틀, and never 걸음, where a leg is by shuttle', () => {
+    expect(travelWords(byShuttle)).toMatch(/^이동 \d+분 · 셔틀$/u);
+    expect(mealPickWords(byShuttle, plan.place.label, null).note).not.toContain('걸음');
+    const rows = candidateRowsOf({ ...MEAL_ANSWER_MENUS, plans: [byShuttle, ...MEAL_ANSWER_MENUS.plans.slice(1, 2)] });
+    expect(rows.find(({ planId }) => planId === byShuttle.id)?.when).toMatch(/^이동 \d+분 · 셔틀$/u);
   });
 });

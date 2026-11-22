@@ -51,9 +51,9 @@ function Chip({
 
 // The kinds of food of a meal answer over its list (board E3), which filter it: "전체" with the count of every
 // candidate, then a chip per kind with its count of places. The kind on screen is filled, and the map recedes the
-// candidates without it (P04 ticket 16). Nothing with fewer than two kinds.
+// candidates without it (P04 ticket 16). Nothing with fewer than two kinds, or with one candidate alone.
 export function KindChips({ answer, disabled, onChoose }: KindChipsProps): ReactElement | null {
-  const chips = answer === null ? [] : kindChipsOf(answer.plans);
+  const chips = answer === null || answer.plans.length < 2 ? [] : kindChipsOf(answer.plans);
   if (answer === null || chips.length === 0) {
     return null;
   }
