@@ -9,6 +9,7 @@ import type { AssistantReply } from '@/api/assistant-types';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
+import { fireEvent } from '@testing-library/react-native';
 import { screen } from './support/app';
 import { askOnMap, card, timeBar as bar } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
@@ -75,7 +76,7 @@ afterEach(() => {
 });
 
 describe('the time bar', () => {
-  it("stands under the pill with the span's words, and the card holds no band", async () => {
+  it("stands at the top with the span's words, and the card holds no band", async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
 
     expect(bar().getByText('12:15–12:43 · 식사 28분')).toBeVisible();
@@ -128,5 +129,20 @@ describe('an answer without a time', () => {
 
     expect(screen.getByText('학생증은 학생지원센터에서 다시 받아요.')).toBeVisible();
     expect(screen.queryByTestId('time-bar')).toBeNull();
+  });
+});
+
+// Partitions: the chip at the usual text size, and wider at a larger one (P04 ticket 37: on a phone 360 wide the words
+// ran under "＋ 같이").
+describe("the bar's head", () => {
+  it('keeps the words clear of "＋ 같이" by the chip\'s own width once it is laid out', async () => {
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+    expect(screen.getByTestId('time-band-words')).toHaveStyle({ paddingRight: 72 });
+
+    await fireEvent(screen.getByTestId('time-bar-add'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 95.4, height: 34 } },
+    });
+
+    expect(screen.getByTestId('time-band-words')).toHaveStyle({ paddingRight: 96 });
   });
 });
