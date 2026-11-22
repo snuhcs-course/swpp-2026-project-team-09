@@ -50,10 +50,13 @@ Reported from the released app on a Sunday at 21:20: "내일 점심 어디서 �
 ## Acceptance criteria
 
 - [x] Rows 1 and 2: the integration test fails on 5.0/Main, where 학생회관식당 comes first, and passes after.
-- [x] Rows 3 to 7 and 9: the order's unit tests fail on 5.0/Main, except row 9's, and pass after.
+- [x] Rows 3 to 6: the order's unit tests fail on 5.0/Main and pass after. Rows 7 and 9 hold on both.
 - [x] The worked examples and the boards keep what they test; where they read the first plan, it is now the least walking.
 - [x] The meal rule and planMeal's description say the order and why the first is first, and forbid the Restaurant's hours as the meal's time.
-- [ ] An eval case in the P4 answer world asks "내일 점심 어디서 먹을까" on Sunday night and checks the sentence.
+- [x] An eval case in the P4 answer world (`meal-wish-tomorrow-nearest`) asks "내일 점심 어디서 먹을까" on Sunday night. Its reply must name 301동식당, say why, and not say "까지 먹을 수".
+  - Run 3 times on this branch, every reply said why, such as "301동식당이 가장 가까워서 12:19에 먹어요", and none gave the hours.
+  - On 5.0/Main every reply named only the time and the place, such as "내일 점심은 12:19에 301동식당에서 먹어요".
+  - Two of the branch's three runs still fail the case, because the model calls showOnMap after planMeal. That failure is 5.0/Main's too: it fails 7 of the other meal-wish runs there and 9 on this branch. It is not this ticket's.
 - [x] Lint, format and types of the main server pass.
 
 ## Comments

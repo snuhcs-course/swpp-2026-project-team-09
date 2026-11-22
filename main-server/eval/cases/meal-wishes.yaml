@@ -134,7 +134,8 @@
 
 # Reported on a Sunday night for Monday (P05 ticket 32): the first plan was a Restaurant far away, kept for closing
 # latest, and the sentence gave its hours as when to eat. The plans now come least walking first, and the sentence says
-# why the first is first and its start. Here the asker's Monday lunch is between 302동 at 12:15 and 43-1동 at 14:00.
+# why the first is first and its start. Here the asker's Monday lunch is between 302동 at 12:15 and 43-1동 at 14:00,
+# and 301동식당 is 4 minutes from 302동.
 - id: meal-wish-tomorrow-nearest
   category: meal-wishes
   world: p4-answer
@@ -150,5 +151,5 @@
     args:
       planMeal: { date: '2026-11-02' }
     text:
-      mentions: [두레미담, [가까, 바로]]
+      mentions: [301동식당, [가까, 바로]]
       absent: ['까지 먹을 수']
