@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { color, Icon, radius, shadow, space, text } from '@/design-system';
 import { type QuestionRow, questionRows } from '@/features/assistant/turn-outcome';
@@ -24,6 +25,10 @@ interface QuestionListProps {
   maxHeight: number;
   // In the answer's card: no card of its own around it.
   flat?: boolean;
+  // In place of the header's words.
+  title?: string;
+  // Under the rows, outside their scroll.
+  footer?: ReactNode;
 }
 
 function Question({ row, onPress }: { row: QuestionRow; onPress: () => void }): ReactElement {
@@ -59,10 +64,11 @@ function Question({ row, onPress }: { row: QuestionRow; onPress: () => void }): 
 // Every question of the conversations kept while the app runs, the latest first, each with when it was asked and
 // what it came to (board 16); the turn on screen is marked 지금 (board 9). A press brings that answer back to the map.
 // In the answer's card it is flat, above the input (board 6 of the 2026-11-22 redesign).
-export function QuestionList({ rows, onPick, maxHeight, flat = false }: QuestionListProps): ReactElement {
+export function QuestionList(props: QuestionListProps): ReactElement {
+  const { rows, onPick, maxHeight, flat = false, title = HEADER, footer = null } = props;
   return (
     <View style={[flat ? styles.flat : styles.card, { maxHeight }]} testID="question-list">
-      <Text style={[styles.header, flat && styles.flatHeader]}>{HEADER}</Text>
+      <Text style={[styles.header, flat && styles.flatHeader]}>{title}</Text>
       <ScrollView contentContainerStyle={!flat && styles.rows} keyboardShouldPersistTaps="handled">
         {rows.map((row) => (
           <Question
@@ -74,6 +80,7 @@ export function QuestionList({ rows, onPick, maxHeight, flat = false }: Question
           />
         ))}
       </ScrollView>
+      {footer}
     </View>
   );
 }

@@ -2,12 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Keyboard, StyleSheet, Text, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { now } from '@/clock';
-import { color, space, text } from '@/design-system';
+import { color, Icon, radius, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import { type TypingWords, typingWordsOf } from '@/features/assistant/typing-words';
 import { koreaDateKey } from '@/korea-time';
@@ -37,25 +38,68 @@ const SENTENCE_LINES = 2;
 // While typing, about two rows above the input.
 const TYPING_QUESTIONS_MAX = 150;
 
-// The conversations' questions in the card, flat (board 6 of the 2026-11-22 redesign): a press shows that turn.
+// "＋ 새 질문" under the questions the caption opened: it leaves the answer as "←" does, keeping the conversation, and
+// puts the cursor in the main map's input, whose message starts a new conversation (P04 ticket 44).
+function AskNewRow({ onPress }: { onPress: () => void }): ReactElement {
+  return (
+    <Pressable
+      accessibilityLabel="새 질문"
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.askNew, pressed && styles.pressed]}
+    >
+      <Icon color={color.snuBlue} name="plus" size={16} />
+      <Text style={styles.askNewWords}>새 질문</Text>
+    </Pressable>
+  );
+}
+
+// The conversations' questions in the card, flat (board 6 of the 2026-11-22 redesign): a press shows that turn. Opened
+// by the caption, it is titled "이전 질문" and ends with "＋ 새 질문" (`onAskNew`).
 export function CardQuestions({
   control,
   onDone,
   maxHeight,
+  onAskNew,
 }: {
   control: ChatSheetControl;
   onDone: () => void;
   maxHeight: number;
+  onAskNew?: () => void;
 }): ReactElement {
   return (
     <QuestionList
       flat
+      footer={onAskNew === undefined ? null : <AskNewRow onPress={onAskNew} />}
       maxHeight={maxHeight}
       onPick={(row) => {
         onDone();
         control.showTurn(row.turnId, row.conversation);
       }}
       rows={questionRowsOf(control)}
+      title={onAskNew === undefined ? undefined : '이전 질문'}
+    />
+  );
+}
+
+// The questions the caption opens, and "＋ 새 질문": the answer closed as "←" closes it, then the cursor in the main
+// map's input.
+export function CaptionQuestions(props: {
+  control: ChatSheetControl;
+  list: QuestionsOpen;
+  onClose: () => void;
+}): ReactElement {
+  const { control, list, onClose } = props;
+  return (
+    <CardQuestions
+      control={control}
+      maxHeight={QUESTIONS_MAX}
+      onAskNew={() => {
+        list.close();
+        onClose();
+        control.focusInput();
+      }}
+      onDone={list.close}
     />
   );
 }
@@ -159,4 +203,15 @@ const styles = StyleSheet.create({
   // The docked line's type (`DockLine`), so that the words keep their look when the keyboard comes up.
   words: { ...text.body, color: color.ink },
   offers: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  // As high as a question's row, its mark in the time's column.
+  askNew: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    minHeight: 48,
+    paddingHorizontal: space[2] + space[4],
+    borderRadius: radius.md,
+  },
+  pressed: { opacity: 0.6 },
+  askNewWords: { ...text.label, color: color.snuBlue },
 });

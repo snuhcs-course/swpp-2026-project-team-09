@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useMemo, useState } from 'react';
@@ -28,8 +29,10 @@ export interface KeptConversation {
   // A question of the list: its turn of the current conversation on screen, or an earlier conversation taken up again
   // at that turn; either shows the frame.
   showTurn: (turnId: number, conversation: number | null) => void;
-  // Counts each "새 대화", so that the map screen puts the focus in the empty input.
+  // Counts each "새 대화" and "＋ 새 질문", so that the map screen puts the focus in the input.
   started: number;
+  // "＋ 새 질문": the focus in the main map's input, once the frame is left (P04 ticket 44).
+  focusInput: () => void;
   // The turn on screen is the conversation's latest: only then do 다시 시도 and the failed words put back act on it.
   latest: boolean;
 }
@@ -150,6 +153,9 @@ export function useKeptConversation(chat: Chat): KeptConversation {
     },
     [bubbles, earlier, resume, show],
   );
+  const focusInput = useCallback((): void => {
+    setStarted((count) => count + 1);
+  }, []);
   const held = bubbles.length > 0 || chat.waiting;
   const onScreen = view === null ? chat : { ...chat, bubbles: view, waiting: false };
   return {
@@ -162,6 +168,7 @@ export function useKeptConversation(chat: Chat): KeptConversation {
     unseen,
     showTurn,
     started,
+    focusInput,
     latest: view === null,
   };
 }
