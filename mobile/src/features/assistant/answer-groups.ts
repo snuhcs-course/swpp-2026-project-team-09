@@ -9,6 +9,7 @@ import type { KeptQuest, MapScene } from '@/api/assistant-types';
 import type { FlagRole } from '@/api/scene-roles';
 import type { LatLng } from '@/api/types';
 import { type AnswerLabel, type AnswerSymbol, color, type FaceBadge, initials, type LabelSide } from '@/design-system';
+import type { Unplaced } from './answer-labels';
 import type { Standing } from './invited-friends';
 import { keptTagOf } from './set-quest';
 
@@ -84,6 +85,8 @@ export interface Draft {
   either?: string;
   // A label never left out, as the pick's; left out, not.
   always?: boolean;
+  // A label that may stand over a Friend's face, which then gives way; left out, not.
+  overFaces?: boolean;
 }
 
 // Words without the name they start with, which the mark says already.
@@ -188,4 +191,40 @@ export function faceOf(
     ...(source === 'exact' ? { exact: true } : {}),
   };
   return badge === undefined ? face : { ...face, badge };
+}
+
+// A draft at the point of that index, its label without its side: a candidate carries its number in it, as the pick
+// does when its dot is not drawn, so that a tag read alone says which candidate it is (the list of ticket 15 uses the
+// same numbers). The pick's label is kept, the answer's main mark, and so is a held candidate's, whose tag is its own
+// way to be pressed (`held`).
+export function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null, held: boolean): Unplaced {
+  const { position, group, tone, title, line, sub = null, note = null, action = null, faded = false, number } = draft;
+  const words =
+    title === null
+      ? null
+      : {
+          tone,
+          title,
+          line,
+          ...(sub === null ? {} : { sub }),
+          ...(note === null ? {} : { note }),
+          ...(action === null ? {} : { action }),
+          ...(faded ? { faded } : {}),
+          number: group === 'candidate' || symbol === null ? number : null,
+        };
+  const { sides = SIDES[group], clearOf, either, always = false, overFaces = false } = draft;
+  return {
+    point,
+    position,
+    words,
+    sides,
+    kept: group === 'pick' || held || always,
+    ...(clearOf === undefined ? {} : { clearOf }),
+    ...(either === undefined ? {} : { either }),
+    ...(overFaces ? { overFaces } : {}),
+  };
+}
+
+export function eitherOrder(drafts: readonly Draft[], one: Draft, other: Draft): number {
+  return one.either !== undefined && one.either === other.either ? drafts.indexOf(one) - drafts.indexOf(other) : 0;
 }

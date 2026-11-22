@@ -7,6 +7,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
@@ -14,7 +15,10 @@ import type { AnswerReply, MapScene } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import { type AnswerDrawing, drawingOf, drawingOfScene } from '@/features/assistant/answer-marks';
+import type { Standing } from '@/features/assistant/invited-friends';
 import { keptDrawingOf } from '@/features/assistant/kept-drawing';
+import { drawsMeal } from '@/features/assistant/meal-marks';
+import type { Ways } from '@/features/assistant/shuttle-legs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { CardView } from '@/features/map/adapter';
@@ -41,7 +45,7 @@ import { facesClearOf, othersOf, useFacePoints, useFaces } from './use-answer-fa
 import { useChoosingRing } from './use-choosing-ring';
 
 export { othersOf };
-import { useAnswerWalks } from './use-answer-walks';
+import { useAnswerWalks, useMealWays } from './use-answer-walks';
 import type { MainMap } from './use-main-map';
 
 export { labelArea, paddingOf } from './answer-padding';
@@ -77,6 +81,26 @@ function alone(answer: AnswerReply, index: number): AnswerReply {
 function keptDrawOf(answer: AnswerReply, index: number): ((view: LabelView | null) => AnswerDrawing) | null {
   const base = keptDrawingOf(answer, index);
   return base === null ? null : (view: LabelView | null): AnswerDrawing => keptDrawingOf(answer, index, view) ?? base;
+}
+
+// The drawing of the Plan on screen: alone once made or changed, the kept Quest's tag once left as it is, else the
+// answer's with its other Plans as candidates. Null with no answer.
+function drawOf(
+  answer: AnswerReply | null,
+  index: number,
+  standings: ReadonlyMap<string, Standing>,
+  settled: boolean,
+  leftAlone: boolean,
+  ways?: Ways,
+): Draw | null {
+  if (answer === null) {
+    return null;
+  }
+  if (leftAlone) {
+    return keptDrawOf(answer, index);
+  }
+  const [drawn, at] = settled ? [alone(answer, index), 0] : [answer, index];
+  return (view: LabelView | null): AnswerDrawing => drawingOf(drawn, at, standings, view, ways);
 }
 
 // How long the drawing and the card's height stay the same before the camera follows an answer that replaced another,
@@ -280,22 +304,24 @@ export function useAnswerMap(
   const settled = made !== null || changed !== null;
   // A Plan made or changed wins the drawing over 그대로 두기 (PR 444's review).
   const leftAlone = left !== null && !settled;
-  const draw = useMemo(() => {
-    if (answer === null) {
-      return null;
-    }
-    if (leftAlone) {
-      return keptDrawOf(answer, index);
-    }
-    const [drawn, at] = settled ? [alone(answer, index), 0] : [answer, index];
-    return (view: LabelView | null): AnswerDrawing => drawingOf(drawn, at, standings, view);
-  }, [answer, index, standings, settled, leftAlone]);
+  const routes = answer?.plans[index]?.scene.routes;
+  // A meal Plan's legs are drawn, and say their minutes, on the ways it is gone (`meal-marks.ts`); no other answer asks
+  // for them.
+  const ways = useMealWays(answer !== null && drawsMeal(answer) ? answer.plans[index] : undefined);
+  const plain = useMemo(
+    () => drawOf(answer, index, standings, settled, leftAlone),
+    [answer, index, standings, settled, leftAlone],
+  );
+  const draw = useMemo(
+    () => drawOf(answer, index, standings, settled, leftAlone, ways),
+    [answer, index, standings, settled, leftAlone, ways],
+  );
   const framing = useFraming(map, room, true);
-  const base = useBase(draw);
+  // The camera is worked out without the ways, so that it stays put while their paths come.
+  const base = useBase(plain);
   const others = base === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, base);
   const everydayFaces = useFaces(others, shown, made !== null);
   const faces = leftAlone ? NO_AVATARS : everydayFaces;
-  const routes = answer?.plans[index]?.scene.routes;
   // While 바꾸기 is on its way nothing can be chosen either, nor once 그대로 두기 left the Quest as it is.
   const sent = sending || settled || changing || leftAlone;
   const avoid = useFacePoints(faces);

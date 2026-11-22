@@ -52,6 +52,8 @@ export interface Unplaced {
   kept?: boolean;
   clearOf?: readonly (readonly LatLng[])[];
   either?: string;
+  // A label that may stand over a face (`LabelView.avoid`).
+  overFaces?: boolean;
 }
 
 // Whether another point lies within a label's reach on that side of its point.
@@ -262,14 +264,14 @@ export function placeLabels(
   const boxes: ViewArea[] = [];
   const placedEither = new Set<string>();
   const labels = marks.map(
-    ({ point, position, words, sides, kept = false, clearOf = [], either }): AnswerLabel | null => {
+    ({ point, position, words, sides, kept = false, clearOf = [], either, overFaces = false }): AnswerLabel | null => {
       const free = taken[point];
       if (words === null || free === undefined || (either !== undefined && placedEither.has(either))) {
         return null;
       }
       const list = sides.filter((side) => !free.has(side));
       const lines = view === null ? [] : lineBoxes(view, clearOf);
-      const covering = [...othersThan(symbols, point), ...boxes, ...faces, ...lines];
+      const covering = [...othersThan(symbols, point), ...boxes, ...(overFaces ? [] : faces), ...lines];
       const side =
         view === null
           ? inMetres(points, point, list)

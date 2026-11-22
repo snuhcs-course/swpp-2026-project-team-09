@@ -106,8 +106,8 @@ export function othersOf(
   );
 }
 
-// The boxes a face must not cover: the chosen place's label, and every candidate's and the pick's dot, so that no
-// candidate vanishes under a face (the map draws every Avatar over every marker).
+// The boxes a face must not cover: the chosen place's label, its legs' minutes, and every candidate's and the pick's
+// dot, so that no candidate vanishes under a face (the map draws every Avatar over every marker).
 function keptBoxes(placed: AnswerDrawing, view: LabelView): ViewArea[] {
   const boxes: ViewArea[] = [];
   for (const { id, position, look } of placed.things) {
@@ -116,7 +116,7 @@ function keptBoxes(placed: AnswerDrawing, view: LabelView): ViewArea[] {
       const { x, y } = inView(position, view.camera, view.size);
       boxes.push({ top: y - DOT_HALF, right: x + DOT_HALF, bottom: y + DOT_HALF, left: x - DOT_HALF });
     }
-    if (id === 'answer:pick' && look.kind === 'answer' && look.label !== null) {
+    if ((id === 'answer:pick' || id.startsWith('answer:leg:')) && look.kind === 'answer' && look.label !== null) {
       boxes.push(labelBoxAt(view, position, look.label));
     }
   }
@@ -125,8 +125,8 @@ function keptBoxes(placed: AnswerDrawing, view: LabelView): ViewArea[] {
 
 const DOT_HALF = ANSWER_SYMBOL_BOX / 2;
 
-// The faces with those over the chosen place's label or over a candidate's dot left out: the chosen label stays on
-// top, and every candidate keeps a dot to be pressed (the answer screen's redesign).
+// The faces with those over the chosen place's label, its legs' minutes, or a candidate's dot left out: the chosen
+// label and the minutes stay on top, and every candidate keeps a dot to be pressed (the answer screen's redesign).
 export function facesClearOf(
   faces: readonly MapAvatar[],
   placed: AnswerDrawing,

@@ -8,6 +8,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, Cuisine, KeptQuest, MapScene, Plan } from '@/api/assistant-types';
@@ -20,6 +21,7 @@ import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './a
 import {
   candidatesAt,
   destinationOf,
+  eitherOrder,
   faceOf,
   faceTitle,
   type Draft,
@@ -29,16 +31,17 @@ import {
   keptDrafts,
   OWN,
   restOf,
-  SIDES,
   stopDraft,
   SYMBOL_ORDER,
+  unplaced,
   withOpenMarks,
 } from './answer-groups';
-import { type LabelView, placeLabels, type Unplaced, UPRIGHT_REACH } from './answer-labels';
+import { type LabelView, placeLabels, UPRIGHT_REACH } from './answer-labels';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 import { candidateDraft, leftOutByRank, pickLine, sideRank } from './answer-candidates';
 import { kindShown } from './meal-kinds';
 import { drawsMeal, mealDrafts, sceneLines } from './meal-marks';
+import type { Ways } from './shuttle-legs';
 import { mealPickWords } from './meal-pick';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
@@ -98,6 +101,9 @@ export interface SceneSetting {
   // A meal answer's with menus: its candidates are small tags and its pick's label says its walking (the answer
   // screen's redesign, board E1). Left out, not.
   meal?: boolean;
+  // The paths its walks were found along and its legs by the shuttle, which a meal Plan's legs are drawn on; left
+  // out, none.
+  ways?: Ways;
 }
 
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
@@ -194,37 +200,6 @@ interface Placed {
   label: AnswerLabel | null;
 }
 
-// A draft at the point of that index, its label without its side: a candidate carries its number in it, as the pick
-// does when its dot is not drawn, so that a tag read alone says which candidate it is (the list of ticket 15 uses the
-// same numbers). The pick's label is kept, the answer's main mark, and so is a held candidate's, whose tag is its own
-// way to be pressed (`held`).
-function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null, held: boolean): Unplaced {
-  const { position, group, tone, title, line, sub = null, note = null, action = null, faded = false, number } = draft;
-  const words =
-    title === null
-      ? null
-      : {
-          tone,
-          title,
-          line,
-          ...(sub === null ? {} : { sub }),
-          ...(note === null ? {} : { note }),
-          ...(action === null ? {} : { action }),
-          ...(faded ? { faded } : {}),
-          number: group === 'candidate' || symbol === null ? number : null,
-        };
-  const { sides = SIDES[group], clearOf, either, always = false } = draft;
-  return {
-    point,
-    position,
-    words,
-    sides,
-    kept: group === 'pick' || held || always,
-    ...(clearOf === undefined ? {} : { clearOf }),
-    ...(either === undefined ? {} : { either }),
-  };
-}
-
 // One symbol at each point, and the labels placed (`placeLabels`) in the order their kinds take sides, so that the
 // Plan's own marks take theirs first.
 function placeAll(drafts: Draft[], view: LabelView | null): Placed[] {
@@ -244,7 +219,8 @@ function placeAll(drafts: Draft[], view: LabelView | null): Placed[] {
         held: draft.group === 'candidate' && (candidatesAt(here) > 1 || draft !== drawn),
       })),
     )
-    .toSorted((one, other) => sideRank(one) - sideRank(other));
+    // The places one label may stand at are tried in their own order, whatever points they share.
+    .toSorted((one, other) => sideRank(one) - sideRank(other) || eitherOrder(drafts, one.draft, other.draft));
   const marks = placed.map(({ draft, point, symbol, held }) => unplaced(draft, point, symbol, held));
   const symbols = points.map(({ position, drawn }) => ({ position, symbol: drawn?.position ?? null }));
   const labels = placeLabels(symbols, marks, view);
@@ -277,13 +253,18 @@ export function drawingOfScene(
   // A meal pick's label says "메뉴 ›" in place of the "›" after its name.
   const drafts = withOpenMarks(
     meal === undefined ? (setting.opens ?? false) : false,
-    mealDrafts(meal, scene, [
-      ...personDrafts(scene, setting.standings),
-      ...scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
-      ...flagDrafts(scene),
-      ...keptDrafts(setting.kept),
-      ...(setting.drafts ?? []),
-    ]),
+    mealDrafts(
+      meal,
+      scene,
+      [
+        ...personDrafts(scene, setting.standings),
+        ...scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
+        ...flagDrafts(scene),
+        ...keptDrafts(setting.kept),
+        ...(setting.drafts ?? []),
+      ],
+      setting.ways,
+    ),
   );
   const placed = placeAll(drafts, view).toSorted(
     (one, other) =>
@@ -293,7 +274,7 @@ export function drawingOfScene(
   const points = [...things.map(({ position }) => position), ...scene.routes.flatMap(({ from, to }) => [from, to])];
   return {
     things,
-    lines: sceneLines(scene, meal !== undefined),
+    lines: sceneLines(scene, meal !== undefined, setting.ways),
     points,
     // A meal answer's camera keeps every candidate in view (the answer screen's redesign).
     ...(meal === undefined ? {} : { keep: points }),
@@ -311,6 +292,7 @@ export function drawingOf(
   planIndex: number,
   standings: ReadonlyMap<string, Standing> = NO_STANDINGS,
   view: LabelView | null = null,
+  ways?: Ways,
 ): AnswerDrawing {
   const plan = answer.plans[planIndex];
   if (plan === undefined) {
@@ -326,6 +308,7 @@ export function drawingOf(
     kind: kindShown(answer),
     kept: answer.planSet,
     meal: drawsMeal(answer),
+    ...(ways === undefined ? {} : { ways }),
   });
 }
 

@@ -62,6 +62,19 @@ function joined(walk: Walk, path: readonly LatLng[]): LatLng[] {
   ];
 }
 
+// The paths found for a scene's walks (`found`, by `endsOf`), joined onto their ends, by their lines' ids. A walk not
+// found yet, failed, or with no path is not in it.
+export function pathsOf(walks: readonly Walk[], found: ReadonlyMap<string, WalkingRoute>): Map<string, LatLng[]> {
+  return new Map(
+    walks.flatMap((walk): [string, LatLng[]][] => {
+      const route = found.get(endsOf(walk));
+      return route?.status !== 'OK' || route.route.line.length < 2
+        ? []
+        : [[walk.lineId, joined(walk, route.route.line)]];
+    }),
+  );
+}
+
 // The lines to draw: each walk's line along the path the walking route service found for its two ends (`found`, by
 // `endsOf`), joined onto its ends, in the line's own colour, width and style. A line whose walk was not found yet,
 // failed, or found no path stays the straight line from its start to its end, as does every line that is not a walk.
@@ -70,13 +83,14 @@ export function linesAlongPaths(
   walks: readonly Walk[],
   found: ReadonlyMap<string, WalkingRoute>,
 ): MapLine[] {
+  return linesOn(lines, pathsOf(walks, found));
+}
+
+// The lines with those of `paths`, by their ids, along their paths; the others as they are.
+export function linesOn(lines: readonly MapLine[], paths: ReadonlyMap<string, readonly LatLng[]>): MapLine[] {
   return lines.map((line) => {
-    const walk = walks.find(({ lineId }) => lineId === line.id);
-    const route = walk === undefined ? undefined : found.get(endsOf(walk));
-    if (walk === undefined || route?.status !== 'OK' || route.route.line.length < 2) {
-      return line;
-    }
-    return { ...line, points: joined(walk, route.route.line) };
+    const points = paths.get(line.id);
+    return points === undefined ? line : { ...line, points };
   });
 }
 
