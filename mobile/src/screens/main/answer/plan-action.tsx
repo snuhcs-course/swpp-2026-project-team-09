@@ -117,8 +117,18 @@ export function proposalActionOf(control: ChatSheetControl): PlanAction | null {
   };
 }
 
+// The button of the seat card's booking on the map (P04 ticket 07): the card's main action, "예약하기", or "로그인"
+// while logged out of the library. None until the card told it.
+export function bookingActionOf({ booking, bookingStage, framed, chat }: ChatSheetControl): PlanAction | null {
+  const { seen, press } = bookingStage;
+  if (!framed || booking === null || seen === null || seen.place !== booking.place || seen.words === null) {
+    return null;
+  }
+  return { words: seen.words, onPress: press, disabled: seen.disabled || chat.waiting };
+}
+
 export function answerActionOf(control: ChatSheetControl): AnswerAction | null {
-  const plan = planActionOf(control) ?? proposalActionOf(control);
+  const plan = planActionOf(control) ?? proposalActionOf(control) ?? bookingActionOf(control);
   if (plan !== null) {
     return { kind: 'plan', plan };
   }

@@ -47,6 +47,19 @@ export function shownProposalOf(bubbles: readonly ChatBubble[], places: readonly
 // About 80 metres a minute on foot.
 const WALK_METRES_A_MINUTE = 80;
 
+// The User at `me` and a walk from there to `at`, both none without a position: what a scene the app makes draws of the
+// User (a Proposal's, a booking's).
+export function meAndWalk(me: LatLng | null, at: LatLng): { mine: MapScene['people']; walk: MapScene['routes'] } {
+  if (me === null) {
+    return { mine: [], walk: [] };
+  }
+  const minutes = Math.max(1, Math.round(metresBetween(me, at) / WALK_METRES_A_MINUTE));
+  return {
+    mine: [{ userId: 'me', name: '나', me: true, at: me, source: 'exact', tag: '나' }],
+    walk: [{ userId: 'me', role: 'me', from: me, to: at, minutes }],
+  };
+}
+
 // The words a Proposal's flag says after its day: its start and who sees it ("14:00 · 비공개").
 function flagWords({ startsAt, joinPolicy }: QuestProposal): string {
   return `${koreaClock(startsAt)} · ${joinPolicy === 'closed' ? '비공개' : '공개'}`;
@@ -65,20 +78,7 @@ export function proposalScene(
     const position = friends.get(id);
     return position === undefined ? [] : [{ userId: id, name, me: false, at: position, source: 'building', tag: name }];
   });
-  const mine: MapScene['people'] =
-    me === null ? [] : [{ userId: 'me', name: '나', me: true, at: me, source: 'exact', tag: '나' }];
-  const walk: MapScene['routes'] =
-    me === null
-      ? []
-      : [
-          {
-            userId: 'me',
-            role: 'me',
-            from: me,
-            to: at,
-            minutes: Math.max(1, Math.round(metresBetween(me, at) / WALK_METRES_A_MINUTE)),
-          },
-        ];
+  const { mine, walk } = meAndWalk(me, at);
   return {
     people: [...mine, ...invited],
     places: [{ place, role: 'pick', tag: `${proposal.title} ›` }],

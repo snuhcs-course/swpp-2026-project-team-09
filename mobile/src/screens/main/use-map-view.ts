@@ -32,7 +32,7 @@ import {
   useInvitationMap,
 } from './use-answer-map';
 import { useLookupMap } from './use-lookup-map';
-import { useProposalMap } from './use-proposal-map';
+import { useMadeSceneMap } from './use-made-scene-map';
 import { pressOnMap } from './use-main-layers';
 import type { MainMap } from './use-main-map';
 import type { MadeQuestCard } from './use-made-quest-card';
@@ -134,10 +134,10 @@ function guidedView(guide: GuideMap, me: Me, around: MapTouches): MapView {
 // While a Plan of an answer is shown, the Plan is drawn in their place, and a press on a candidate shows its Plan;
 // while a received invitation's card is, its own way is; while a made Quest's card is, its Places and the User are. A
 // Lookup on screen is drawn as a Plan is, and a press on one of its marks raises its card (`useLookupMap`); so is a
-// Proposal, the turn's reply alone, which wins over an answer kept from a turn before, and a press on its flag opens
-// its card (`useProposalMap`). Once any of them closes, a camera left further out than the everyday map allows glides
-// back in. While a meal's Plan is on screen, a press on a building asks
-// about it and the map draws that ("여기면 어때?"). On the everyday map, a tap on empty map, one that no mark keeps
+// Proposal or a 관정도서관 seat card, the turn's reply alone, which wins over an answer kept from a turn before, and a
+// press on its flag opens its card (`useMadeSceneMap`). Once any of them closes, a camera left further out than the
+// everyday map allows glides back in. While a meal's Plan is on screen, a press on a building asks about it and the
+// map draws that ("여기면 어때?"). On the everyday map, a tap on empty map, one that no mark keeps
 // and where no Place is found, clears the walking route with `clearRoute` (P15 ticket 55). Every request carries the
 // map's visible area at rest (`useViewport`).
 export function useMapView(
@@ -158,7 +158,7 @@ export function useMapView(
   const shown = useAskingShown(drawn.answer, howAbout.point);
   const openMark = useMarkOpening(chat.openMark, map.camera, room.stage);
   const plan = useAnswerMap(shown, map, room, people, chat.invitation, openMark);
-  const answer = useProposalMap(chat.proposal, map, room, people, me, openMark) ?? plan ?? lookup;
+  const answer = useMadeSceneMap(chat, map, room, people, me, openMark) ?? plan ?? lookup;
   const unasked = invitation.shown || made.shown !== null;
   const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);
   const limits = useEverydayLimits(map, drawsItsOwnMap({ answer, way, guide }));

@@ -17,6 +17,10 @@ import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { koreaDayWord } from '@/korea-time';
 import { ANSWER_PILL, listsTop } from '../layout';
+import type { ShownBooking } from '@/features/assistant/booking-scene';
+import type { Chat } from '@/features/assistant/use-chat';
+import { bookingKept } from '../library/booking-kept';
+import { SlotBand } from '../library/slot-band';
 import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
 import { TimeBand } from './time-band';
 import { type BandFocus, useCorrections } from './use-corrections';
@@ -144,6 +148,38 @@ export function LookupBar({
       }}
       onHeight={onHeight}
     />
+  );
+}
+
+// A booking's bar (P04 ticket 07): the seat card's band, whose handles change the start and the end the chat keeps for
+// the card, within the space's hours, steps, and lengths, as they did in the card.
+export function BookingBar({
+  booking,
+  chat,
+  onHeight,
+}: {
+  booking: ShownBooking;
+  chat: Pick<Chat, 'rooms' | 'showRoom'>;
+  onHeight: (height: number) => void;
+}): ReactElement | null {
+  const { top } = useSafeAreaInsets();
+  const { kept, keep, live } = bookingKept(booking, chat);
+  return live === null ? null : (
+    <View
+      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+        onHeight(nativeEvent.layout.height);
+      }}
+      style={[styles.bar, { top: barTop(top) }]}
+      testID="time-bar"
+    >
+      <SlotBand
+        onChange={(slot) => {
+          keep({ slot });
+        }}
+        slot={live}
+        space={kept.space}
+      />
+    </View>
   );
 }
 
