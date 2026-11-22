@@ -7,11 +7,14 @@
 
 import type { ReactElement } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import type { PickOffer } from '@/api/pick-types';
+import { now } from '@/clock';
 import { space } from '@/design-system';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { setQuestOf } from '@/features/assistant/set-quest';
 import { leaveOfferOf, leaveWordsOf } from '@/features/assistant/use-quest-leaving';
 import { keepsShown } from '@/features/assistant/use-shown-answer';
+import { koreaDateKey } from '@/korea-time';
 import type { ChatSheetControl } from '../chat-sheet';
 import { DockChip, DockLine } from './dock-chips';
 import { LeaveRow } from './leave-button';
@@ -99,6 +102,13 @@ type Raise = (earlier: boolean) => void;
 
 const PICKING_PLACE = '지도에서 건물을 눌러 주세요';
 
+// The pickers act only on the conversation's latest turn, whose question they answer, and offer no day that has
+// passed (P04 ticket 26).
+function livePicks({ latest }: ChatSheetControl, { picks = [] }: WordsRest): readonly PickOffer[] {
+  const today = koreaDateKey(now());
+  return latest ? picks.filter((offer) => offer.kind !== 'pick-time' || offer.date >= today) : [];
+}
+
 // The answer's note, which raises the card with what it names. Earlier questions are in the pill's list (P04 ticket
 // 10).
 function FoldedChips({
@@ -160,7 +170,7 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
           words={offer.label}
         />
       ))}
-      {(rest.picks ?? []).map((offer) => (
+      {livePicks(control, rest).map((offer) => (
         <DockChip
           disabled={waiting}
           key={offer.kind}

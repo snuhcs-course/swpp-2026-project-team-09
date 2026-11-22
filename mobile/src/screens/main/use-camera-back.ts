@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -30,16 +31,20 @@ export function useCameraBack(
   const shown = useRef(false);
   const [to, setTo] = useState<MapCamera | null>(null);
   const { framed, hide } = chat;
+  const picking = chat.pick.place !== null;
   useEffect(() => {
     if (framed && !shown.current) {
       everyday.current = camera;
     }
     shown.current = framed;
   }, [framed, camera]);
+  // ✕ or back while a Place is picked only ends the picking (P04 ticket 26): the frame stays, and so does the camera.
   const leave = useCallback((): void => {
     hide();
-    setTo(everyday.current);
-  }, [hide]);
+    if (!picking) {
+      setTo(everyday.current);
+    }
+  }, [hide, picking]);
   const done = useCallback((): void => {
     setTo(null);
   }, []);

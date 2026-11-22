@@ -145,6 +145,14 @@ describe('a time picked on the wheel', () => {
     expect(sheet.getByRole('button', { name: '09:00에' })).toBeEnabled();
   });
 
+  // From PR 457's review: a day that has passed offers no wheel.
+  it('offers no wheel for a day that has passed', async () => {
+    await askOnMap(server, asking('언제 만날까요?', { ...TIME_OFFER, date: '2026-10-05' }));
+
+    expect(dock().getByText('언제 만날까요?')).toBeVisible();
+    expect(dock().queryByRole('button', { name: '시간 고르기' })).toBeNull();
+  });
+
   it("sends the time in the middle as the User's words", async () => {
     const user = await askOnMap(server, asking('내일 몇 시에 만날까요?', TIME_OFFER));
     await user.press(dock().getByRole('button', { name: '시간 고르기' }));
