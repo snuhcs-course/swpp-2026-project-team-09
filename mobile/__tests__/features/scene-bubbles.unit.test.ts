@@ -9,7 +9,7 @@ import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { SEAT_CARD } from '../support/library-chat';
 
-// The bubbles the map's scene is drawn from (P04 ticket 43): a follow-up answered with words alone, or still on its
+// The bubbles the map's scene is drawn from (P04 ticket 46): a follow-up answered with words alone, or still on its
 // way, keeps the answer before it on the map. Expected values: the conversations written here, by their ids.
 function bubble(id: number, role: 'user' | 'assistant', extra: Partial<ChatBubble> = {}): ChatBubble {
   return {

@@ -19,7 +19,7 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// P04 ticket 43: a follow-up answered with words alone keeps the answer before it on the map, its Plan's marks, its
+// P04 ticket 46: a follow-up answered with words alone keeps the answer before it on the map, its Plan's marks, its
 // bar, and its main button, while the card says the new words and the caption the new question; a follow-up with its
 // own cards replaces the scene. Over the stored answer to "배고파, 민수랑 같이": its first Plan, 302동식당 at 12:15.
 

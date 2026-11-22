@@ -120,10 +120,10 @@ function requestInstructionsOf(now: Date): string {
 }
 
 // In the chat of an app that draws answers, an earlier reply that drew an answer comes back as the words the User saw
-// (its lines), and a reply in words alone takes the plan off the screen.
+// (its lines), and the answer on the screen stays under a reply in words alone (the app keeps it, P04 ticket 46).
 const EARLIER_REPLIES = `
 - An earlier reply of yours is given as the words the User saw. Never take it back or call it unfounded because no tool returned it in this message: call the tool again when you need the fact, and correct only what that result contradicts.
-- Speak of the plan on the screen only in a reply that calls planMeal or restaurantHours, which keep it there: any other reply in words alone takes the plan off the screen.`;
+- The answer on the screen, a meal's plan or a seat card, stays there under any reply of yours, one in words alone included, so you may speak of it in any reply. planMeal and restaurantHours plan it again from its conditions.`;
 
 // In the chat of an app that does not draw answers, a meal is recommended from the menus after asking the User's taste.
 // An app that draws answers plans it on the map at once (PLAN_RULES).

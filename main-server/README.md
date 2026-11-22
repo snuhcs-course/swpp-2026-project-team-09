@@ -2669,7 +2669,8 @@ recorded'` with the menu's notes when it serves the meal without kept hours; `se
       yet. A meal with neither a menu nor hours is left out, and a Restaurant with neither for any meal answers `none`.
       Today it adds `now` and `servingNow`, the meal whose hours hold now, or null. With a meal answer on screen (the
       context's `conditions`), it plans that answer again from them and puts it in the reply's `answer`, so that the
-      reply keeps the plan on screen; any other reply in words alone takes it off.
+      reply carries the plan again; a reply in words alone leaves the plan on screen as it was, since the app keeps
+      the answer before it.
     - `planEvents(date, eventIds?)` and `EVENT_RULES` join for an app that sends both `answer` and `events` (`events/`).
       It plans the published Global Events of a day the asker can attend between their items (`EventsInput`, kind
       `events`): `EventsPlanService` reads the asker's day, the day's events, and the Places, and `fitEvents` keeps

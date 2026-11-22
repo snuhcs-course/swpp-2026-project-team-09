@@ -185,7 +185,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const { chat, ...kept } = useKeptConversation(said);
   const proposals = useProposalMaking(said.proposalMade, { latest: kept.latest, bubbles: said.bubbles });
   // The map's scene reads the latest turn that draws one: a follow-up answered with words alone keeps the answer
-  // before it on the map, its bar, marks, and main button, while the card says the new words (P04 ticket 43).
+  // before it on the map, its bar, marks, and main button, while the card says the new words (P04 ticket 46).
   const sceneBubbles = useMemo(() => sceneBubblesOf(chat.bubbles), [chat.bubbles]);
   const onMap = useShownOnMap({ ...chat, bubbles: sceneBubbles }, kept.framed);
   const bookingStage = useBookingStage();

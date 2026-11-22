@@ -1,4 +1,4 @@
-# 43: An answer's scene stays under a follow-up answered with words alone
+# 46: An answer's scene stays under a follow-up answered with words alone
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent

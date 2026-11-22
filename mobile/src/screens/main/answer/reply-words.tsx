@@ -78,7 +78,7 @@ export function onScreenOf({ answer, lookup, invitation, howAbout }: ChatSheetCo
 export function barOf(bubbles: readonly ChatBubble[], onScreen: Seen): BarOf {
   // While a follow-up's reply is on its way its turn holds nothing yet, and the answer before it stays on the map:
   // its bar stays too, as the card keeps its height, so that the camera does not move twice. So does it under a
-  // follow-up answered with words alone (P04 ticket 43, `sceneBubblesOf`).
+  // follow-up answered with words alone (P04 ticket 46, `sceneBubblesOf`).
   const turn = turnsOf(sceneBubblesOf(bubbles)).findLast(({ after }) => after.length > 0);
   for (const bubble of turn?.after ?? []) {
     const kind = wordsKindOf(bubble, onScreen);

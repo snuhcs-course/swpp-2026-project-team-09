@@ -20,7 +20,7 @@ function drawsItsOwn(bubble: ChatBubble): boolean {
   );
 }
 
-// The bubbles the map's scene is drawn from (P04 ticket 43): all of them, unless the latest turns draw nothing of their
+// The bubbles the map's scene is drawn from (P04 ticket 46): all of them, unless the latest turns draw nothing of their
 // own (words alone, or a reply still on its way); then up to the latest turn that does, so that its scene, its bar, its
 // marks, its chosen place, and its main button stay while the card says the new words. With no turn that draws a scene,
 // all of them.

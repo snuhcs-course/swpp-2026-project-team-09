@@ -11,7 +11,7 @@ import { BubbleParts } from '../chat-bubbles';
 import type { CardActions } from '../chat-cards';
 import type { ChatSheetControl } from '../chat-sheet';
 
-// The cards of the answer the map still draws under a follow-up answered with words alone (P04 ticket 43): a seat card
+// The cards of the answer the map still draws under a follow-up answered with words alone (P04 ticket 46): a seat card
 // stays in the card, docked as before, so that its seat, its band, and 예약하기 beside the input go on working while
 // the card says the new words. Its words are not repeated; nothing while the turn on screen draws its own scene.
 export function KeptCards({

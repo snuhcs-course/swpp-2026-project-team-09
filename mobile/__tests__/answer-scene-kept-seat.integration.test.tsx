@@ -16,7 +16,7 @@ import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { askForCards, SEAT_CARD, sendFromBar, startLibraryChat } from './support/library-chat';
 import { layStage } from './support/lists';
 
-// P04 ticket 43, from a hands-on pass on the study answer: a seat card on the map (7층 7A 열람실 2 구역 today from
+// P04 ticket 46, from a hands-on pass on the study answer: a seat card on the map (7층 7A 열람실 2 구역 today from
 // 17:00 for an hour), then a follow-up the Assistant answers with words alone, as a refusal or a question back. The
 // card's flag, its bar, and 예약하기 stay; the card says the new words and the caption the new question.
 
