@@ -37,7 +37,7 @@ interface AiInputProps {
   placeholder?: string;
   // The words of a message that failed, while that failure is the last thing said.
   restore?: Restore | null;
-  // The answer's main button, on its own full-width row above the bar (P04 ticket 49).
+  // The answer's main button, on its own full-width row above the bar (P04 ticket 50).
   beside?: ReactNode;
   // Inside the answer's card or dock: a sunken field on its white, without the bar's own border and shadow.
   inCard?: boolean;
@@ -112,7 +112,7 @@ interface FieldProps {
 }
 
 // While a mention stands in the words, the field draws them as parts, the mentions in the Friend colour. While it is
-// empty, its placeholder stands on one line, cut with "…", at any font size (P04 ticket 49): the field's own hint, which
+// empty, its placeholder stands on one line, cut with "…", at any font size (P04 ticket 50): the field's own hint, which
 // a multiline field wraps, is kept for screen readers and unseen, and the field keeps the height of one line.
 function Field(props: FieldProps): ReactElement {
   const { mention } = props;
@@ -161,7 +161,7 @@ function Field(props: FieldProps): ReactElement {
   );
 }
 
-// The answer's main button on its own row above the bar, full width (P04 ticket 49): at a large font size and a long
+// The answer's main button on its own row above the bar, full width (P04 ticket 50): at a large font size and a long
 // label a button beside the bar left the bar too narrow for its words. It tells its height, so that the bar's room
 // counts it.
 function MainRow({

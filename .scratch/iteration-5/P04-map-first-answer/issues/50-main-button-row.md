@@ -1,4 +1,4 @@
-# 49: The main button takes its own row above the input
+# 50: The main button takes its own row above the input
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent

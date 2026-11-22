@@ -20,7 +20,7 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { sockets } from './support/fake-socket';
 
-// The dock and the bar's head from the user's phone (P04 tickets 45 and 49): the main button is the input's height, on
+// The dock and the bar's head from the user's phone (P04 tickets 45 and 50): the main button is the input's height, on
 // its own full-width row above the input, whose placeholder stays on one line; a cut sentence says "더 보기" and raises the card to the whole words; "＋ 같이" is a solid chip of the
 // head row's height, clear of the track.
 
@@ -68,7 +68,7 @@ describe('the main button above the input', () => {
       height: AI_INPUT.height,
       borderRadius: radius.full,
     });
-    // Its own full-width row above the input (P04 ticket 49), which keeps the whole width.
+    // Its own full-width row above the input (P04 ticket 50), which keeps the whole width.
     expect(screen.getByTestId('ai-input-beside')).toHaveStyle({
       bottom: AI_INPUT.bottom + AI_INPUT.height + space[2],
       left: AI_INPUT.side,
