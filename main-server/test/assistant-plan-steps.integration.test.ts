@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -41,8 +42,8 @@ const replySchema = z.object({
 
 type Reply = z.infer<typeof replySchema>;
 
-async function asked(steps: Step[], text = WORDS): Promise<Reply> {
-  await stage.asking(DATE, '09:00');
+async function asked(steps: Step[], text = WORDS, clock = '09:00'): Promise<Reply> {
+  await stage.asking(DATE, clock);
   await stage.menusOn(DATE, RESTAURANTS);
   await stage.classAt(stage.asker, '09:30', '10:45', '301');
   const response = await stage.send(steps, {}, text);
@@ -150,13 +151,13 @@ describe('A seat that cannot be booked, and then lunch', () => {
 });
 
 describe('A seat refused because 관정 is closed then', () => {
+  // Asked at 05:30 for 06:00, before 관정 opens at 07:00: a seat for a later day is refused for its day alone.
   it('has no place, and lunch does not set out from 관정', async () => {
-    await stage.menusOn(NEXT_DAY, RESTAURANTS);
     const early: Step = {
       tool: 'proposeLibraryBooking',
-      input: { spaceId: '7F-7A-zone2', date: NEXT_DAY, start: '06:00', end: '08:00' },
+      input: { spaceId: '7F-7A-zone2', date: DATE, start: '06:00', end: '08:00' },
     };
-    const reply = await asked([find(['7F-7A-zone2']), early, lunch({}, NEXT_DAY), said]);
+    const reply = await asked([find(['7F-7A-zone2']), early, lunch(), said], WORDS, '05:30');
 
     expect(reply.steps?.[0]).toMatchObject({ kind: 'seat', status: 'not-done', place: null });
     expect(reply.steps?.[0]?.reason).toContain('07:00–23:00에 이용할 수 있어요');

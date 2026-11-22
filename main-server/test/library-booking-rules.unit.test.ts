@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -10,6 +11,7 @@ import {
   earliestStartMinutes,
   PARTY_REFUSAL,
   type Refusal,
+  saysSameDayOnly,
 } from '../src/assistant/library/booking-rules.js';
 import { CATALOGUE_FILE, type Catalogue, readCatalogue } from '../src/assistant/library/catalogue.js';
 
@@ -93,7 +95,7 @@ describe('The checks beside the table', () => {
   });
 
   it('lists every missing and wrong field at once', () => {
-    expect(refusalsOf(seat, { date: '2026-11-05', seat: '9999', people: 2 }).map(({ field }) => field)).toEqual([
+    expect(refusalsOf(room, { date: '2026-11-08', seat: '9999', people: 9 }).map(({ field }) => field)).toEqual([
       'date',
       'start',
       'minutes',
@@ -182,5 +184,31 @@ describe('The seat, the equipment and the 사용용도', () => {
 
     expect(checked).toMatchObject({ booking: { equipment: { id: 'with-monitor' }, useDesc: null } });
     expect(seatChecked).toMatchObject({ booking: { useDesc: null } });
+  });
+});
+
+// The library books a seat on its day only (getSectorList: DAY_FROM 0, DAY_TO 0 for every seat space), so a seat for a
+// later day is refused for the day alone: a time, a seat or people asked about could only be refused in turn.
+describe('A seat for a day after today', () => {
+  const sameDay = { field: 'date', reason: '열람실은 당일만 예약할 수 있어요', bound: '2026-11-04' };
+
+  it('is refused for the day alone, with no time to ask for', () => {
+    expect(refusalsOf(seat, { date: '2026-11-05' })).toEqual([sameDay]);
+  });
+
+  it('is refused for the day alone when the time, the seat and the people are given or wrong', () => {
+    expect(refusalsOf(seat, { date: '2026-11-06', start: '09:00', minutes: 180, seat: '9999', people: 2 })).toEqual([
+      sameDay,
+    ]);
+  });
+
+  it('is told apart from a room past its window and a day already past', () => {
+    const [tomorrow] = refusalsOf(seat, { date: '2026-11-05' });
+    const [roomLater] = refusalsOf(room, { date: '2026-11-08', start: '15:00', minutes: 60, people: 4 });
+    const [yesterday] = refusalsOf(seat, { date: '2026-11-03', start: '17:00', minutes: 60 });
+
+    expect(
+      [tomorrow, roomLater, yesterday].map((refusal) => refusal !== undefined && saysSameDayOnly(refusal)),
+    ).toEqual([true, false, false]);
   });
 });

@@ -39,14 +39,15 @@ const P6_CASES_DIRECTORY = new URL('p6/cases/', import.meta.url);
 
 // The worlds a case can run in: `small`, P19's (eval/world.ts), `p4`, of the 공강 tools (eval/p4/world.ts), `p5`, of
 // joining and finding (eval/p5/world.ts), `large-world-v1`, of finding at scale (eval/p5/large-world/world.ts), `p6`,
-// of 관정 booking and the tutorial (eval/p6/world.ts), and `p4-answer`, the P4 world asked from an app that draws
-// answers on the map, whose cases stay out of the P4 suite. A run is of one world.
-export const WORLDS = ['small', 'p4', 'p5', 'large-world-v1', 'p6', 'p4-answer'] as const;
+// of 관정 booking and the tutorial (eval/p6/world.ts), `p4-answer`, the P4 world asked from an app that draws
+// answers on the map, whose cases stay out of the P4 suite, and `p6-answer`, the P6 world asked from such an app, whose
+// cases stay out of the frozen P6 suite. A run is of one world.
+export const WORLDS = ['small', 'p4', 'p5', 'large-world-v1', 'p6', 'p4-answer', 'p6-answer'] as const;
 
 export type WorldName = (typeof WORLDS)[number];
 
 // When a run of each world stands in Korea, unless a case gives its own `now`: 2026-10-21 (수) 14:05, 2026-11-02 (월)
-// 11:30 for both of P4's, 2026-11-02 (월) 14:05 for both of P05's, and 2026-11-04 (수) 10:05 for P6's.
+// 11:30 for both of P4's, 2026-11-02 (월) 14:05 for both of P05's, and 2026-11-04 (수) 10:05 for both of P6's.
 export const WORLD_CLOCKS: Record<WorldName, string> = {
   small: '2026-10-21T14:05:00+09:00',
   p4: '2026-11-02T11:30:00+09:00',
@@ -54,11 +55,12 @@ export const WORLD_CLOCKS: Record<WorldName, string> = {
   'large-world-v1': '2026-11-02T14:05:00+09:00',
   p6: '2026-11-04T10:05:00+09:00',
   'p4-answer': '2026-11-02T11:30:00+09:00',
+  'p6-answer': '2026-11-04T10:05:00+09:00',
 };
 
 // What a run of each world sends beside the messages. P6's says the app can show 관정 booking, without which the library
-// tools answer that the app is too old, and `p4-answer`'s says what the app sends with a context, that it also draws
-// answers; the other worlds send nothing more, so their requests stay as their earlier runs'.
+// tools answer that the app is too old, and `p4-answer`'s and `p6-answer`'s say what the app sends with a context, that
+// it also draws answers; the other worlds send nothing more, so their requests stay as their earlier runs'.
 export const WORLD_REQUEST_FIELDS: Record<WorldName, { clientCapabilities?: ClientCapability[] }> = {
   small: {},
   p4: {},
@@ -66,6 +68,7 @@ export const WORLD_REQUEST_FIELDS: Record<WorldName, { clientCapabilities?: Clie
   'large-world-v1': {},
   p6: { clientCapabilities: ['library'] },
   'p4-answer': { clientCapabilities: ['library', 'answer'] },
+  'p6-answer': { clientCapabilities: ['library', 'answer'] },
 };
 
 // What the current app says it draws with every chat request (ANSWER_CAPABILITIES in mobile/src/api/assistant-types.ts).
