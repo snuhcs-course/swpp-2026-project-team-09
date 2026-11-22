@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, radius, shadow, space, text } from '@/design-system';
 import { ANSWER_PILL, listsTop } from '../layout';
 import { useHeldHeight } from './held-height';
-import { type Raising, useRaiseDrag } from './raise-handle';
+import { CloseHint, type Raising, useRaiseDrag } from './raise-handle';
 
 // Above the first of the card's parts.
 export const CONTENT_TOP = space[5];
@@ -108,53 +108,69 @@ export function FrameCard(props: FrameCardProps): ReactElement {
   return props.docked === true ? <DockedCard {...props} /> : <OpenCard {...props} />;
 }
 
-function OpenCard(props: FrameCardProps): ReactElement {
-  const { barRoom, stageHeight, onHeight, testID, hold = false, raising, timeBarHeight = 0, children } = props;
-  const contentMax = contentMaxOf(stageHeight, barRoom);
-  const { raised } = raising ?? LOWERED;
+// The handle's drag, with the raised height it stops at and the content's height it learns.
+function useCardDrag({ stageHeight, barRoom, raising, timeBarHeight = 0 }: FrameCardProps): {
+  drag: ReturnType<typeof useRaiseDrag>;
+  raisedHeight: number | null;
+  setNatural: (height: number) => void;
+  card: { height: number; setHeight: (height: number) => void };
+} {
+  const [height, setHeight] = useState(0);
   const raisedHeight = useRaisedHeight(stageHeight, barRoom, raising, timeBarHeight);
   // Raised, the card is as tall as its content, up to under the pill, and a drag goes no higher.
   const [natural, setNatural] = useState<number | null>(null);
   const raisedTo = raisedHeight === null || natural === null ? raisedHeight : Math.min(raisedHeight, natural);
-  const drag = useRaiseDrag(raising ?? LOWERED, raisedTo);
+  return { drag: useRaiseDrag(raising ?? LOWERED, raisedTo), raisedHeight, setNatural, card: { height, setHeight } };
+}
+
+function OpenCard(props: FrameCardProps): ReactElement {
+  const { barRoom, stageHeight, onHeight, testID, hold = false, raising, children } = props;
+  const contentMax = contentMaxOf(stageHeight, barRoom);
+  const { raised } = raising ?? LOWERED;
+  const { drag, raisedHeight, setNatural, card } = useCardDrag(props);
   const { minHeight, onContentSizeChange, scroll } = useHeldHeight(hold);
   const shown = { maxHeight: raised && raisedHeight !== null ? raisedHeight : contentMax };
   return (
-    <Animated.View
-      onLayout={(event: LayoutChangeEvent) => {
-        drag.onCardLayout(event);
-        if (!raised && drag.content === null) {
-          onHeight(event.nativeEvent.layout.height);
-        }
-      }}
-      style={[
-        styles.card,
-        { paddingBottom: barRoom },
-        drag.drop === null ? null : { transform: [{ translateY: drag.drop }] },
-      ]}
-      testID={testID}
-    >
-      {drag.hint}
-      {raising === undefined ? null : drag.handle}
-      {children === null ? null : (
-        <Animated.ScrollView
-          contentContainerStyle={[styles.content, { minHeight }]}
-          keyboardShouldPersistTaps="handled"
-          onContentSizeChange={(width, height) => {
-            setNatural(height);
-            onContentSizeChange(width, height);
-          }}
-          onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-            drag.onContentLayout(nativeEvent.layout.height);
-          }}
-          ref={scroll}
-          testID={`${testID}-content`}
-          style={drag.content === null ? (contentMax === null ? undefined : shown) : { height: drag.content }}
-        >
-          {children}
-        </Animated.ScrollView>
-      )}
-    </Animated.View>
+    <>
+      <Animated.View
+        onLayout={(event: LayoutChangeEvent) => {
+          drag.onCardLayout(event);
+          card.setHeight(event.nativeEvent.layout.height);
+          if (!raised && drag.content === null) {
+            onHeight(event.nativeEvent.layout.height);
+          }
+        }}
+        style={[
+          styles.card,
+          { paddingBottom: barRoom },
+          drag.drop === null ? null : { transform: [{ translateY: drag.drop }] },
+        ]}
+        testID={testID}
+      >
+        {raising === undefined ? null : drag.handle}
+        {children === null ? null : (
+          <Animated.ScrollView
+            contentContainerStyle={[styles.content, { minHeight }]}
+            keyboardShouldPersistTaps="handled"
+            onContentSizeChange={(width, height) => {
+              setNatural(height);
+              onContentSizeChange(width, height);
+            }}
+            onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+              drag.onContentLayout(nativeEvent.layout.height);
+            }}
+            ref={scroll}
+            testID={`${testID}-content`}
+            style={drag.content === null ? (contentMax === null ? undefined : shown) : { height: drag.content }}
+          >
+            {children}
+          </Animated.ScrollView>
+        )}
+      </Animated.View>
+      {drag.past && drag.drop !== null ? (
+        <CloseHint barRoom={barRoom} cardHeight={card.height} drop={drag.drop} />
+      ) : null}
+    </>
   );
 }
 
