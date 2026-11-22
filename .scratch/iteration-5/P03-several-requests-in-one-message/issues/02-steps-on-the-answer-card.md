@@ -1,7 +1,7 @@
 # 02: Steps on the answer card
 
 Parent: [P03 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: [01](01-steps-on-the-server.md) for the steps to arrive; the app works without them.
 
 Native files: none. Releases: an app OTA update only.

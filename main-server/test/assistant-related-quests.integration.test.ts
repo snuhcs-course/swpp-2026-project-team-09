@@ -6,7 +6,7 @@
 
 import request from 'supertest';
 import { z } from 'zod';
-import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
+import { type AnswerReply, type PlacePoint } from '../src/assistant/dto/answer.dto.js';
 import { MealPlanStage, resolve } from './meal-plan.js';
 import { answerIn } from './plan-answers.js';
 import { firstPlan, inputOf, makePlanQuest } from './plan-quests.js';
@@ -29,8 +29,16 @@ const MEET_APP = { clientCapabilities: ['library', 'answer', 'meet'] };
 
 const questIdOf = (body: unknown): string => z.object({ quest: z.object({ id: z.string() }) }).parse(body).quest.id;
 
+interface DayWithQuests {
+  lunch: string;
+  meeting: string;
+  minsu: string;
+  // The Places of the lunch's and the meeting's Plans.
+  places: { lunch: PlacePoint | undefined; meeting: PlacePoint | undefined };
+}
+
 // A lunch taken alone and a meeting with 민수 at 14:00, made from their Plans on `date`, asked at 10:30.
-async function dayWithQuests(date: string): Promise<{ lunch: string; meeting: string; minsu: string }> {
+async function dayWithQuests(date: string): Promise<DayWithQuests> {
   await stage.asking(date, '10:30');
   await stage.menusOn(date, RESTAURANTS);
   const minsu = await stage.friend('민수');
@@ -60,8 +68,20 @@ async function dayWithQuests(date: string): Promise<{ lunch: string; meeting: st
     location: null,
   });
   expect([lunch.status, meeting.status]).toEqual([201, 201]);
-  return { lunch: questIdOf(lunch.body), meeting: questIdOf(meeting.body), minsu: minsu.id };
+  return {
+    lunch: questIdOf(lunch.body),
+    meeting: questIdOf(meeting.body),
+    minsu: minsu.id,
+    places: { lunch: lunchPlan.place, meeting: meetPlan?.place },
+  };
 }
+
+// Where a Plan's Place is, as a kept Quest's point gives it.
+const spotOf = (place: PlacePoint | undefined): object => ({
+  placeId: place?.placeId,
+  latitude: place?.latitude,
+  longitude: place?.longitude,
+});
 
 const planMeal = (date: string, friendIds: string[] = []): Step => ({
   tool: 'planMeal',
@@ -71,25 +91,26 @@ const planMeal = (date: string, friendIds: string[] = []): Step => ({
 describe("A meal's answer", () => {
   it('names the lunch kept as the Quest it sets aside, and not as related', async () => {
     const date = '2089-11-07';
-    const { lunch } = await dayWithQuests(date);
+    const { lunch, places } = await dayWithQuests(date);
 
     const answer = answerIn((await stage.send([planMeal(date), { text: '…' }], {}, '점심 뭐 먹지?')).body);
 
     expect(answer.planSet).toMatchObject({ questId: lunch, kind: 'meal-lunch', mine: true, changeable: true });
+    expect(answer.planSet?.point).toMatchObject(spotOf(places.lunch));
     expect(answer.mealSet).toMatchObject({ questId: lunch });
     expect(answer.related ?? []).toEqual([]);
   });
 
   it('names a meeting with a Friend asked for as related, and the model is told it', async () => {
     const date = '2089-11-14';
-    const { meeting, minsu } = await dayWithQuests(date);
+    const { meeting, minsu, places } = await dayWithQuests(date);
 
     const answer = answerIn(
       (await stage.send([resolve('민수'), planMeal(date, [minsu]), { text: '…' }], {}, '민수랑 점심 먹자')).body,
     );
 
     expect(answer.related).toMatchObject([
-      { questId: meeting, kind: 'meet', people: [{ name: '민수', answer: 'waiting' }] },
+      { questId: meeting, kind: 'meet', people: [{ name: '민수', answer: 'waiting' }], point: spotOf(places.meeting) },
     ]);
     expect(stage.model.toolResults()[1]).toMatchObject({ related: [{ ref: meeting, kind: 'meet' }] });
   });

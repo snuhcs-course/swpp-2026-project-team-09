@@ -8,6 +8,8 @@ Native files: none. Releases: an app OTA update only.
 
 ## What to build
 
+Only what stays a Proposal is drawn here: an open 파티 or one that needs approval. A 파티 with a named Friend at a time and a place is sent by the main server to the meeting planner (P05), so it arrives as a Plan and the map answer of tickets 01 to 05 draws it.
+
 A reply with a Proposal (the 파티 the Assistant filled in) is drawn on the map like a Plan (boards 10 and 11): a flag at the Proposal's Place with its title and its start with the day word ("민수와 만나기 ›" / "14:00 내일(수) · 비공개"), my way there, and the invited Friends' faces where their positions can be seen. A tap on the flag opens the attached card with the form's rows (제목, 공개 범위, 정원, 초대, and the board for a 공개 Quest); a tap on a row opens the existing edit form at that field. The bar shows the Proposal's day with my classes that day from my timetable and a mark at its start (a Proposal has no end). The button beside the input reads "만들고 초대 보내기" when it invites someone, else "만들기".
 
 ## What happens now

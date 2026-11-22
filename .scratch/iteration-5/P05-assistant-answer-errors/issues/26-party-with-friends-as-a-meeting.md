@@ -21,6 +21,15 @@ planMeet fixed a place but not a start: `from` is the window's start, so a fixed
 
 ## Acceptance criteria
 
-- [ ] At a free time the plan starts then and `asked.fits` is true; with a Friend in a Class then, `busy` names the Friend and the Class's end and never the course; with the asker's own Class, its name. (`assistant-meet-at.integration.test.ts`.)
-- [ ] Eval `meet-at`: the asked time fits; it does not because of the Friend; it does not because of the asker's own Class; a place only; a time only (a known failure of the eval world's travel table).
-- [ ] Lint, format and types of the main server pass.
+- [x] At a free time the plan starts then and `asked.fits` is true; with a Friend in a Class then, `busy` names the Friend and the Class's end and never the course; with the asker's own Class, its name. (`assistant-meet-at.integration.test.ts`.)
+- [x] Eval `meet-at`: the asked time fits; it does not because of the Friend; it does not because of the asker's own Class; a place only; a time only (a known failure of the eval world's travel table).
+- [x] Lint, format and types of the main server pass.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+Tickets 18 to 26 were done together in one session, 01:30–04:00 on 2026-11-22, with PRs 425 to 433; these figures are the whole batch's, not this ticket's alone.
+
+- Agent time: about 2.2 hours (estimate: gaps under 5 minutes between transcript entries, summed).
+- Tokens: input 220,838,000 (cache reads 220,158,000, cache writes 679,000, uncached 1,000); output 331,000. Without cache reads, 1,010,000.

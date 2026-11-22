@@ -2,13 +2,16 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type KeptKind, type KeptQuest } from '../../quests/kept-quests.js';
+import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { type KeptQuestDto } from '../dto/answer.dto.js';
 import { clockOf } from '../free-time/free-time.js';
 import { koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
+import { pointOf } from '../steps/plan-steps.js';
 
 // The User's Quests of a day as the day's Lookup draws them and the model reads them. The drawing gives a Quest's title
 // and the others in it, as the User sees them in their own schedule; a Class stays its time and building. The model
@@ -63,8 +66,9 @@ export function keptStep({ title, people }: KeptQuest): string {
   return [title, ...people.filter(({ answer }) => answer !== 'declined').map(({ name }) => name)].join(' · ');
 }
 
-export function keptDto(kept: KeptQuest, place: string | null): KeptQuestDto {
-  const { kind, questId, title, start, end, people, mine, changeable } = kept;
+// A kept Quest as the app reads it: its Place by `place`, the words for it, and by its point.
+export function keptDto(kept: KeptQuest, place: string | null, placeOf: (placeId: string) => PlaceDto): KeptQuestDto {
+  const { kind, questId, title, start, end, placeId, people, mine, changeable } = kept;
   return {
     kind,
     questId,
@@ -72,6 +76,7 @@ export function keptDto(kept: KeptQuest, place: string | null): KeptQuestDto {
     startAt: koreaTime(start),
     endAt: end === null ? null : koreaTime(end),
     place,
+    point: placeId === null ? null : pointOf(placeOf(placeId)),
     people: people.map(({ name, answer }) => ({ name, answer })),
     mine,
     changeable,

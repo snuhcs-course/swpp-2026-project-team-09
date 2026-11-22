@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -39,6 +40,9 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const NOT_RUNNING = '셔틀은 지금 다니지 않아요 (평일 8–21시)';
+// The model's words beside those Lookups, which are the dock's line (P04 ticket 18).
+const NOT_RUNNING_WORDS = '셔틀은 지금 다니지 않아요.';
+const WAY_WORDS = '문화관은 지금 있는 301동에서 걸어서 18분이에요.';
 const WALK = '(관악사)학부 생활관(919동)까지 걸어서 11분이에요';
 const HOMEWORK = '자료구조 과제 풀어 줘';
 const CANNOT = '과제는 도와 드릴 수 없어요.';
@@ -85,19 +89,20 @@ function sentBodies(): unknown[] {
 
 // Partitions: a Lookup the map draws, and one whose answer is words the map does not show.
 describe('a Lookup in the dock', () => {
-  it('draws a way on the map with "길 안내" beside the input and no lines', async () => {
+  it('draws a way on the map with "길 안내" beside the input and the model\'s words as the one line', async () => {
     await askOnMap(server, WAY_LOOKUP_REPLY);
 
     expect(mapThings()).toContain('문화관(73동) · 걸어서 18분');
     expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '길 안내' })).toBeVisible();
-    expect(card().queryByText('문화관(73동)은 여기예요')).toBeNull();
+    expect(card().getByTestId('dock-line')).toHaveTextContent(WAY_WORDS, { exact: false });
     expect(card().queryByTestId('lookup-card')).toBeNull();
-    expect(card().queryByRole('button', { name: '닫기' })).toBeNull();
+    expect(card().queryByRole('button', { name: '근거 ›' })).toBeNull();
   });
 
-  it("reaches a first way's card, its chips, basis, and 닫기, from 근거 in the dock", async () => {
-    const user = await askOnMap(server, WAY_LOOKUP_REPLY);
+  it("reaches a first way's card, its chips, basis, and 닫기, from 근거 when the model said nothing", async () => {
+    const user = await askOnMap(server, { ...WAY_LOOKUP_REPLY, text: '' });
 
+    expect(card().queryByTestId('dock-line')).toBeNull();
     await user.press(card().getByRole('button', { name: '근거 ›' }));
 
     expect(card().getByTestId('lookup-card')).toBeVisible();
@@ -119,13 +124,14 @@ describe('a Lookup in the dock', () => {
   it('says that the shuttle is not running in one line, whose press raises the rest', async () => {
     const user = await askOnMap(server, NOT_RUNNING_LOOKUP_REPLY);
 
-    expect(card().getByText(NOT_RUNNING)).toBeVisible();
+    expect(card().getByText(NOT_RUNNING_WORDS)).toBeVisible();
     expect(card().queryByText(WALK)).toBeNull();
     expect(screen.queryByTestId('ai-input-beside')).toBeNull();
 
-    await user.press(card().getByText(NOT_RUNNING));
+    await user.press(card().getByText(NOT_RUNNING_WORDS));
 
     expect(card().getByTestId('lookup-card')).toBeVisible();
+    expect(card().getByText(NOT_RUNNING)).toBeVisible();
     expect(card().getByText(WALK)).toBeVisible();
   });
 });

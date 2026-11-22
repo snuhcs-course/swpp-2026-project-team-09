@@ -21,6 +21,7 @@ import { SignalsService } from '../common/signals.service.js';
 import { type Prisma } from '../generated/prisma/client.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
+import { type CreatedInvitation, InvitationsService } from '../quests/invitations.service.js';
 import { QUEST_INCLUDE, type QuestDto, type StoredQuest } from '../quests/dto/quest.dto.js';
 import { LeaderService } from '../quests/leader.service.js';
 import { QuestsService } from '../quests/quests.service.js';
@@ -47,17 +48,27 @@ const peopleOf = ({ leaderId, holders, invitations }: StoredQuest): string[] => 
   ...invitations.map(({ userId }) => userId),
 ];
 
-function refuseOtherPeople({ people }: Pick<MealInput, 'people'>, quest: StoredQuest): void {
-  const [leaderId, ...others] = peopleOf(quest);
-  const [first, ...rest] = people.map(({ userId }) => userId);
-  if (first !== leaderId || rest.length !== others.length || !others.every((id) => rest.includes(id))) {
-    throw new BadRequestException({
-      statusCode: HttpStatus.BAD_REQUEST,
-      error: 'Bad Request',
-      code: 'PLAN_PEOPLE_CHANGED',
-      message: 'The plan is not for the people of the Quest. Ask for a better plan again.',
-    });
+const samePeople = ([first, ...rest]: string[], [leaderId, ...others]: string[]): boolean =>
+  first === leaderId && rest.length === others.length && others.every((id) => rest.includes(id));
+
+// The plan is for the Quest's people, or, when nobody but the Leader is left in it, for the Leader and every Friend who
+// declined, as the same meeting counts them (P05 ticket 17, row 6). Those are invited again, and given back.
+function invitedAgain({ people }: Pick<MealInput, 'people'>, quest: StoredQuest): string[] {
+  const asked = people.map(({ userId }) => userId);
+  const own = peopleOf(quest);
+  if (samePeople(asked, own)) {
+    return [];
   }
+  const declined = own.length === 1 ? quest.declines.map(({ userId }) => userId) : [];
+  if (declined.length > 0 && samePeople(asked, [quest.leaderId, ...declined])) {
+    return declined;
+  }
+  throw new BadRequestException({
+    statusCode: HttpStatus.BAD_REQUEST,
+    error: 'Bad Request',
+    code: 'PLAN_PEOPLE_CHANGED',
+    message: 'The plan is not for the people of the Quest. Ask for a better plan again.',
+  });
 }
 
 // After a decline: whether the people left have a better Plan than the Quest as it stands, and the change to it.
@@ -71,6 +82,7 @@ export class BetterPlanService {
     private readonly mealPlans: MealPlanService,
     private readonly quests: QuestsService,
     private readonly leaders: LeaderService,
+    private readonly invitations: InvitationsService,
     private readonly signals: SignalsService,
     private readonly ways: OwnWayReader,
     private readonly notifications: NotificationsService,
@@ -128,7 +140,7 @@ export class BetterPlanService {
     }
     const quest = await this.stored(questId);
     const input = mealOrMeetInputOf(making.input);
-    refuseOtherPeople(input, quest);
+    invitedAgain(input, quest);
     const plan = await this.plans.replanned(
       userId,
       making,
@@ -137,12 +149,21 @@ export class BetterPlanService {
     const told = await this.prisma.$transaction(async (tx) => {
       await this.leaders.lockLed(questId, userId, tx);
       const locked = await this.stored(questId, tx);
-      refuseOtherPeople(input, locked);
+      const again = invitedAgain(input, locked);
       await tx.quest.update({
         where: { id: questId },
         data: { title: plan.title, subQuests: { deleteMany: {}, create: inOrder(subQuestsOf(plan)) } },
       });
-      return { people: peopleOf(locked), holderIds: locked.holders.map((holder) => holder.userId), by: locked.leader };
+      const invited: CreatedInvitation[] = [];
+      for (const friendId of again) {
+        // oxlint-disable-next-line no-await-in-loop -- a transaction runs one query at a time
+        invited.push(await this.invitations.create(userId, questId, friendId, tx));
+      }
+      const holderIds = locked.holders.map((holder) => holder.userId);
+      return { people: peopleOf(locked), holderIds, by: locked.leader, invited };
+    });
+    told.invited.forEach((invitation) => {
+      this.invitations.announce(invitation);
     });
     this.signals.send(told.people, 'plan-changed', { questId });
     this.signals.send(told.people, 'quests-changed');
