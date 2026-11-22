@@ -6,7 +6,8 @@
 
 import { onDay } from '../src/assistant/free-time/free-time.js';
 import { gather, type GatheringPerson, type PersonPart } from '../src/assistant/gathering/gathering.js';
-import { wayWords } from '../src/assistant/gathering/answer-words.js';
+import { type GatheringNaming, wayWords } from '../src/assistant/gathering/answer-words.js';
+import { partOf } from '../src/assistant/gathering/plan-parts.js';
 import { classAt, id, readCampus, seedTravel } from './way-example.js';
 
 // A lunch planned the evening before, on the seed's walking table and shuttle timing: the way from 301동 to 58동 is
@@ -70,5 +71,27 @@ describe('A way the shuttle does not take', () => {
     expect(part).toMatchObject({ walkMinutes: 3, by: 'walk', shuttle: null });
     expect(asked).not.toHaveBeenCalled();
     asked.mockRestore();
+  });
+});
+
+describe('What the app is sent of a way by the shuttle', () => {
+  const naming = {
+    personOf: () => ({ userId: 'me', name: '유상', me: true, items: [] }),
+    placePoint: (placeId: string) => ({ placeId, label: placeId, latitude: 0, longitude: 0 }),
+  } as unknown as GatheringNaming;
+
+  it('sets mode and the stops on the part, and by on its next', () => {
+    const sent = partOf(lunchOn(MONDAY, 'SK경영관', '제1공학관'), naming);
+
+    expect(sent).toMatchObject({ walkMinutes: 13, mode: 'shuttle', shuttle: { boardAt: '301동', getOffAt: '경영대' } });
+    expect(sent.next?.by).toBe('shuttle');
+  });
+
+  it('sends a walk as before, without mode, stops, or by', () => {
+    const sent = partOf(lunchOn(SATURDAY, 'SK경영관', '제1공학관'), naming);
+
+    expect(sent).not.toHaveProperty('mode');
+    expect(sent).not.toHaveProperty('shuttle');
+    expect(sent.next).not.toHaveProperty('by');
   });
 });

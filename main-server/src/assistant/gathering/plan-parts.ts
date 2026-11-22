@@ -38,7 +38,11 @@ export function partOf(part: PersonPart, naming: GatheringNaming): PlanPart {
     next:
       next === null
         ? null
-        : { startAt: koreaTime(next.start), place: next.placeId === null ? null : naming.placePoint(next.placeId) },
+        : {
+            startAt: koreaTime(next.start),
+            place: next.placeId === null ? null : naming.placePoint(next.placeId),
+            ...(next.by === 'shuttle' ? { by: 'shuttle' as const } : {}),
+          },
     ...modeOf(part),
     ...(part.shuttle === null ? {} : { shuttle: part.shuttle }),
   };
