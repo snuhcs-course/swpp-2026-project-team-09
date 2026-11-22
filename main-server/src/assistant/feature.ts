@@ -80,7 +80,18 @@ export type Card = GlobalEventCard | QuestCard | RestaurantCard | LibraryCard;
 // `party-change`: it draws 바꾸기 for a Proposal that changes a 파티 already made (`change`) and sends its step to the
 // room's 일정 수정, and opens a 파티's room for a `quest` offer, so proposeQuest changes a made 파티's time and place only
 // for it (P05 ticket 30).
-export const CLIENT_CAPABILITIES = ['library', 'answer', 'events', 'meet', 'area', 'plan-set', 'party-change'] as const;
+// `quest-cancel`: it draws the button of a `leave-quest` offer and sends it as `DELETE /quests/:questId`, so
+// proposeCancel shows one only for it (P05 ticket 31).
+export const CLIENT_CAPABILITIES = [
+  'library',
+  'answer',
+  'events',
+  'meet',
+  'area',
+  'plan-set',
+  'party-change',
+  'quest-cancel',
+] as const;
 
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
 

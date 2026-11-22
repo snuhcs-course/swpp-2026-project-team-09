@@ -19,18 +19,26 @@ const clock = (time: string): string => time.slice(11, 16);
 export const servingKind = (plans: readonly Plan[], kind: CuisineWord): string[] =>
   plans.filter(({ menu }) => menu?.dishes.some(({ cuisine }) => cuisine === kind) === true).map(({ id }) => id);
 
-// The meal the User already put in their schedule, which the plans set aside and making one replaces.
-export function alreadySetWords(mealSet: AnswerReply['mealSet']): object {
+// The meal the User already put in their schedule, which the plans set aside: whether 바꾸기 changes it in place for
+// these plans (`changeable`), the Friend who set it, when not the User, and those who declined it, when nobody else is
+// in it (P05 ticket 31).
+export function alreadySetWords(mealSet: AnswerReply['mealSet'], planSet: AnswerReply['planSet']): object {
   if (mealSet === null || mealSet === undefined) {
     return {};
   }
   const { startAt, place, friendNames: others, shared } = mealSet;
+  const people = planSet?.people ?? [];
+  const leader = planSet?.mine === false ? people.find(({ answer }) => answer === 'leads')?.name : undefined;
+  const declined = shared ? [] : people.filter(({ answer }) => answer === 'declined').map(({ name }) => name);
   return {
     alreadySet: {
       start: clock(startAt),
       place: othersText('quest.place', place),
       with: others.map((name) => othersText('friend.name', name)),
       shared,
+      changeable: planSet?.changeable ?? false,
+      ...(leader === undefined ? {} : { leader: othersText('friend.name', leader) }),
+      ...(declined.length === 0 ? {} : { declined: declined.map((name) => othersText('friend.name', name)) }),
     },
   };
 }

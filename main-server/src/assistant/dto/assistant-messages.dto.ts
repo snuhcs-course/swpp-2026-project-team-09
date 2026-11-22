@@ -107,6 +107,17 @@ export interface QuestOffer {
   questId: string;
 }
 
+// A button that cancels one of the User's Quests, which the app sends as `DELETE /quests/:questId` (P05 ticket 31):
+// 취소하기 when nobody else holds it, 나가기 when others do, with the Quest's title and start, which the app shows on it
+// so that the press names what it cancels. Sent only to an app that says `quest-cancel`.
+export interface LeaveQuestOffer {
+  kind: 'leave-quest';
+  label: '취소하기' | '나가기';
+  title: string;
+  startsAt: string;
+  questId: string;
+}
+
 // A button under a reply's text: one sent as the User's words, such as a Tutorial quest's 가는 길 보기 (P01-14), or
-// one that opens a 파티's room.
-export type ReplyOffer = Extract<RefusalOffer, { kind: 'ask' }> | QuestOffer;
+// one that opens a 파티's room, or one that cancels a Quest.
+export type ReplyOffer = Extract<RefusalOffer, { kind: 'ask' }> | QuestOffer | LeaveQuestOffer;

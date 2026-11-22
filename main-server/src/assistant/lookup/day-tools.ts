@@ -48,19 +48,23 @@ export function findDay(days: DayLookupService): Tool {
       presented.lookup = answer.lookup;
       presented.answer = null;
       presented.mapButtons.length = 0;
-      const offered = capabilities.has('plan-set') && changeableMeeting(answer.lookup.kept, now);
+      const offered = capabilities.has('plan-set') && changeableAsked(answer.lookup.kept, now);
       return { result: 'found', ...answer.words, ...(offered ? { note: CHANGE_OFFERED } : {}) };
     },
   });
 }
 
-// For an app that draws 바꾸기 (`plan-set`), a meeting of the asker's asked about that has not started (P05 ticket 17,
-// row 14).
-const CHANGE_OFFERED = 'The app offers 바꾸기 for this meeting: ask whether to change its time (시간을 바꿀까요?).';
+// For an app that draws 바꾸기 (`plan-set`), a meeting or a meal of the asker's asked about that they may change and
+// has not started (P05 ticket 17, row 14; ticket 31).
+const CHANGE_OFFERED = 'The app offers 바꾸기 for this Quest: ask whether to change its time (시간을 바꿀까요?).';
+
+const PLANNED_KINDS: ReadonlySet<string> = new Set(['meet', 'meal-lunch', 'meal-dinner']);
 
 // `kept` is given only for Quests asked about by their ref.
-const changeableMeeting = (kept: readonly KeptQuestDto[] | undefined, now: Date): boolean =>
-  (kept ?? []).some(({ kind, mine, startAt }) => kind === 'meet' && mine && new Date(startAt) > now);
+const changeableAsked = (kept: readonly KeptQuestDto[] | undefined, now: Date): boolean =>
+  (kept ?? []).some(
+    ({ kind, changeable, startAt }) => PLANNED_KINDS.has(kind) && changeable && new Date(startAt) > now,
+  );
 
 // The rules of a day drawn on the map, a fragment of the chat's system prompt for an app that draws answers.
 export const DAY_RULES = `A day is drawn on the map: the server lists the User's Classes and Quests of a day in order at their places, with the Free Time and the walks between the Classes, and the app draws them.
