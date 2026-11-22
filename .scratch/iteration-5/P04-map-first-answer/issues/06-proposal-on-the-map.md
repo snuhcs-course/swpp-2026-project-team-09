@@ -36,3 +36,10 @@ A reply with a Proposal (the 파티 the Assistant filled in) is drawn on the map
 - [ ] The scene made for a Proposal. (Unit test.)
 - [ ] The Proposal on a phone with the mock build. (Emulator.)
 - [ ] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+### Agent usage (2026-11-22)
+
+- Agent time: about 30 minutes (an estimate; one Opus 5.5 session that also built ticket 07, split by time).
+- Tokens: about 67,000 output; input about 36.1 million, of which about 35.9 million cache reads, 219,000 cache writes, and 250 uncached (the session's totals split by the same share).

@@ -46,7 +46,7 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 
 const ADD = '같이 먹을 친구 추가';
 const MIN_JUN_CELL = '김민준, 컴퓨터공학부, 1.2km, 추가';
-const JI_WOO_CELL = '서지우, 경영학과, 자리 모름, 추가';
+const JI_WOO_CELL = '서지우, 경영학과, 위치 모름, 추가';
 const MIN_JUN_ADDING = '김민준, 컴퓨터공학부, 넣는 중';
 const JI_WOO_ADDING = '서지우, 경영학과, 넣는 중';
 const QUESTION = '누구와 같이 먹을까요?';

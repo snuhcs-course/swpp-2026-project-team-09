@@ -19,7 +19,7 @@
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { now } from '@/clock';
@@ -53,7 +53,7 @@ import {
   tutorialStartBottom,
 } from './layout';
 import { MadeQuestLine } from './made-quest-line';
-import { NEW_PLACEHOLDER, PastChats, pastChatsShown } from './past-chats';
+import { mapChipOf, NewChatBeside, PastChats, placeholderOf } from './past-chats';
 import { type GuideActions, TutorialGuideOverlay } from './tutorial/tutorial-guide';
 import { TutorialList } from './tutorial/tutorial-list';
 import { TutorialSheet } from './tutorial/tutorial-sheet';
@@ -237,14 +237,12 @@ export function MapBottom(props: MapBottomProps): ReactElement {
         {inputShown && !cardShown ? (
           <AiInput
             lift={lift}
-            onEarlier={chat.showAgain}
             onHeight={onInputHeight}
             focusKey={chat.started}
-            placeholder={chat.framed ? '이어서 말하기' : pastChatsShown(chat) ? NEW_PLACEHOLDER : undefined}
+            placeholder={placeholderOf(chat)}
             restore={restoreOf(chat.said)}
             onSend={send}
-            unseen={chat.unseen}
-            beside={action === null || keyboardUp ? null : <AnswerActionButton action={action} control={chat} />}
+            beside={besideOf(chat, action, keyboardUp)}
             inCard={chat.framed}
           />
         ) : null}
@@ -293,7 +291,7 @@ function FramedParts(props: FramedProps): ReactElement {
 // "지난 대화 N ▾" while it shows: over the input while the keyboard is up, under the examples; else at the left with
 // the made Quest's line.
 function pastChatsAt({ chat, room, cardShown, inputTop, keyboardUp }: FramedProps): number | null {
-  if (!pastChatsShown(chat) || cardShown || room.pastChats !== true) {
+  if (mapChipOf(chat) === null || cardShown || room.pastChats !== true) {
     return null;
   }
   return keyboardUp ? inputTop + space[2] : pastChatsBottom(room);
@@ -306,9 +304,25 @@ function examplesBottom(props: FramedProps): number {
 
 function MapQuestions(props: FramedProps): ReactElement | null {
   const bottom = pastChatsAt(props);
-  return bottom === null ? null : (
-    <PastChats bottom={bottom} control={props.chat} stageHeight={props.room.stage?.height ?? null} />
+  const chip = mapChipOf(props.chat);
+  return bottom === null || chip === null ? null : (
+    <PastChats bottom={bottom} chip={chip} control={props.chat} stageHeight={props.room.stage?.height ?? null} />
   );
+}
+
+// At the input's right: the answer's main button while the keyboard is down, or "새 대화" while a conversation is kept
+// with the answer closed (P04 ticket 11).
+function besideOf(chat: ChatSheetControl, action: ReturnType<typeof answerActionOf>, keyboardUp: boolean): ReactNode {
+  if (mapChipOf(chat)?.kind === 'continue') {
+    return (
+      <NewChatBeside
+        onPress={() => {
+          chat.chat.startNew();
+        }}
+      />
+    );
+  }
+  return action === null || keyboardUp ? null : <AnswerActionButton action={action} control={chat} />;
 }
 
 const styles = StyleSheet.create({

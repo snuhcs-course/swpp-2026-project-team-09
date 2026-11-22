@@ -14,6 +14,7 @@ import { Button } from '@/design-system';
 import { peopleOf } from '@/features/assistant/plan-input';
 import { type SetQuest, setQuestOf } from '@/features/assistant/set-quest';
 import type { ChatSheetControl } from '../chat-sheet';
+import type { ProposalMaking } from '../chat-proposal-card';
 import { lookupMainOf, useLookupMain } from './lookup-card';
 import { RoomOfferButton, roomOfferOn } from './room-offer';
 import { lookupReplyOf, onScreenOf, planShown } from './reply-words';
@@ -95,8 +96,33 @@ export type AnswerAction =
   | { kind: 'lookup'; lookup: Lookup; refusal: Refusal | null }
   | { kind: 'room'; offer: QuestOffer };
 
+const PROPOSAL_MAKING_WORDS: Record<ProposalMaking, string> = {
+  ready: '만들기',
+  making: '만드는 중',
+  made: '만들었어요',
+};
+
+// The button of the Proposal on the map (P04 ticket 06): "만들고 초대 보내기" when it invites someone, else "만들기", which
+// makes the Quest as the Proposal card's 만들기 does. None while no Proposal is drawn.
+export function proposalActionOf(control: ChatSheetControl): PlanAction | null {
+  const { proposal: shown, framed, leaving, chat } = control;
+  if (!framed || shown === null) {
+    return null;
+  }
+  const { bubbleId, proposal } = shown;
+  const making = leaving.proposals.makingOf(bubbleId);
+  const ready = proposal.invitees.length > 0 ? '만들고 초대 보내기' : '만들기';
+  return {
+    words: making === 'ready' ? ready : PROPOSAL_MAKING_WORDS[making],
+    onPress: () => {
+      leaving.proposals.make(bubbleId, proposal);
+    },
+    disabled: making !== 'ready' || chat.waiting,
+  };
+}
+
 export function answerActionOf(control: ChatSheetControl): AnswerAction | null {
-  const plan = planActionOf(control);
+  const plan = planActionOf(control) ?? proposalActionOf(control);
   if (plan !== null) {
     return { kind: 'plan', plan };
   }

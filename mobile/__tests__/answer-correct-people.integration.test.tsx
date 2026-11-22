@@ -29,7 +29,7 @@ import { SENT_CAPABILITIES } from './support/capabilities';
 // to "배고파, 민수랑 같이" and the fake main server's Friends, 김민준, whom the User sees on the map, and 서지우, whom
 // the User cannot see. The list says each by the full name with the department (ticket 18) and the distance from their
 // position to the picked Restaurant, 302동식당: 김민준's at 37.4598, 126.9521 is 1217.7 metres from it by the spec's
-// flat map, "1.2km"; 서지우 has no position, "자리 모름". A person is taken out from their face on the map (P04 ticket
+// flat map, "1.2km"; 서지우 has no position, "위치 모름". A person is taken out from their face on the map (P04 ticket
 // 03), and the Plan's place and people are read on the map.
 
 jest.mock('expo-location');
@@ -49,7 +49,7 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 const ASKER = MEAL_ANSWER.input.people[0];
 const ADD = '같이 먹을 친구 추가';
 const MIN_JUN_CELL = '김민준, 컴퓨터공학부, 1.2km, 추가';
-const JI_WOO_CELL = '서지우, 경영학과, 자리 모름, 추가';
+const JI_WOO_CELL = '서지우, 경영학과, 위치 모름, 추가';
 // The pick's flag of the first Plan of the stored answers for the User alone and for three.
 const ALONE_PICK = '301동식당 · 11:50 점심';
 const THREE_PICK = '학생회관식당 · 12:33 점심';

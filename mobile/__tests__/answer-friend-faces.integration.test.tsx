@@ -107,7 +107,7 @@ describe('the + on a face', () => {
     await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' }));
     await pass(500);
 
-    expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
+    expect(card().getByText('김민수에게 점심 초대를 보냈어요')).toBeVisible();
     expect(lookOf(MIN_JUN.name)).toMatch(/^person:/u);
     expect(lookOf(MIN_JUN.name)).not.toMatch(/addable/u);
   });

@@ -15,14 +15,15 @@ import { PLACES } from './support/dining';
 import { CAREER, MY_CAREER } from './support/events';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { AI_INPUT } from './support/lists';
+import { AI_INPUT, layStage } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
+import { pressMarker } from './support/made-quest';
 import { startFresh } from './support/mocks';
 import { answerParty, MY_HIKE, YU_NA } from './support/party';
 import { MIN_JUN_HOLDER, SEO_YEON_HOLDER, toast } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// 수정 on the Proposal card in the answer frame: the party form filled with the Proposal, and making the Quest from it,
+// 수정 on the Proposal card in the answer frame, or a row of its flag's card on the map: the party form filled with the Proposal, and making the Quest from it,
 // against the fake main server.
 
 jest.mock('expo-location');
@@ -99,14 +100,21 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Asks for a 파티 from the map's bar, lets the Assistant answer with this Proposal and presses 수정 on its card.
+// Asks for a 파티 from the map's bar, lets the Assistant answer with this Proposal and opens the form: from the 제목 row
+// of its flag's card on the map when it has a Place (P04 ticket 06), else with 수정 on its card.
 async function edited(proposal: QuestProposal): Promise<User> {
   server.on('POST /assistant/messages', { status: 200, body: { text: REPLY, mapButtons: [], cards: [], proposal } });
   const user = await openMain();
+  await layStage(390, 760);
   await user.type(screen.getByLabelText(AI_INPUT), ASKED);
   await user.press(screen.getByRole('button', { name: '보내기' }));
   await pass(500);
-  await user.press(card().getByRole('button', { name: '수정' }));
+  if (proposal.place === null) {
+    await user.press(card().getByRole('button', { name: '수정' }));
+  } else {
+    await pressMarker(user, new RegExp(`^${proposal.title} ›`, 'u'));
+    await user.press(within(screen.getByTestId('mark-card')).getByRole('button', { name: /^제목/u }));
+  }
   await pass(500);
   return user;
 }
@@ -214,16 +222,14 @@ describe('수정 on a Proposal of a 비공개 파티 for an event', () => {
 });
 
 describe('the frame after 수정', () => {
-  it('keeps the conversation and the card as they were when the User comes back without making', async () => {
+  it('keeps the conversation and the Proposal on the map as they were when the User comes back without making', async () => {
     const user = await edited(LUNCH);
 
     await user.press(screen.getByRole('button', { name: '뒤로' }));
     await pass(500);
 
     expect(screen.getByTestId('answer-pill')).toHaveTextContent(ASKED, { exact: false });
-    expect(screen.getByTestId('answer-card')).toHaveTextContent(REPLY, { exact: false });
-    expect(card().getByRole('button', { name: '만들기' })).toBeEnabled();
-    expect(card().getByRole('button', { name: '수정' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: '만들고 초대 보내기' })).toBeEnabled();
     expect(server.received('POST /quests/own')).toEqual([]);
   });
 
@@ -234,8 +240,7 @@ describe('the frame after 수정', () => {
 
     await user.press(screen.getByRole('tab', { name: '지도' }));
 
-    expect(card().getByRole('button', { name: '만들었어요' })).toBeDisabled();
-    expect(card().getByRole('button', { name: '수정' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '만들었어요' })).toBeDisabled();
     expect(server.received('POST /quests/own')).toHaveLength(1);
   });
 

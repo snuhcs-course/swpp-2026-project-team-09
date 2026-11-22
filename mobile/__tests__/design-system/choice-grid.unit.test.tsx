@@ -11,11 +11,11 @@ import { ChoiceGrid, choiceRowsWithin, color, type GridChoice } from '@/design-s
 
 type Props = ComponentProps<typeof ChoiceGrid>;
 
-// Three cells as the Friends to add draw them: a given name, and a distance or "자리 모름".
+// Three cells as the Friends to add draw them: a given name, and a distance or "위치 모름".
 const CHOICES: GridChoice[] = [
   { key: 'f5', name: '하은', value: '160m', faint: false, label: '하은, 160m, 추가' },
   { key: 'f6', name: '도윤', value: '720m', faint: false, label: '도윤, 720m, 추가' },
-  { key: 'f11', name: '지우', value: '자리 모름', faint: true, label: '지우, 자리 모름, 추가' },
+  { key: 'f11', name: '지우', value: '위치 모름', faint: true, label: '지우, 위치 모름, 추가' },
 ];
 
 const noop = (): void => undefined;
@@ -65,14 +65,14 @@ describe('ChoiceGrid laid out', () => {
 
     expect(rows()).toEqual([
       ['하은, 160m, 추가', '도윤, 720m, 추가'],
-      ['지우, 자리 모름, 추가', 'choice-grid-empty'],
+      ['지우, 위치 모름, 추가', 'choice-grid-empty'],
     ]);
   });
 
   it('gives every cell and the empty partner the same share of a row, 44 high', async () => {
     await show();
 
-    for (const label of ['하은, 160m, 추가', '도윤, 720m, 추가', '지우, 자리 모름, 추가']) {
+    for (const label of ['하은, 160m, 추가', '도윤, 720m, 추가', '지우, 위치 모름, 추가']) {
       expect(screen.getByRole('button', { name: label })).toHaveStyle({ flex: 1, height: 44 });
     }
     expect(screen.getByTestId('choice-grid-empty')).toHaveStyle({ flex: 1 });
@@ -86,7 +86,7 @@ describe('ChoiceGrid shown', () => {
 
     expect(screen.getByRole('button', { name: '하은, 160m, 추가' })).toHaveTextContent('하은160m');
     expect(screen.getByText('160m')).toHaveStyle({ color: color.inkMuted, textAlign: 'right' });
-    expect(screen.getByText('자리 모름')).toHaveStyle({ color: color.inkSubtle });
+    expect(screen.getByText('위치 모름')).toHaveStyle({ color: color.inkSubtle });
   });
 });
 
@@ -166,7 +166,7 @@ describe('ChoiceGrid pressed', () => {
     const onChoose = jest.fn<void, [string]>();
     await show({ onChoose });
 
-    await userEvent.press(screen.getByRole('button', { name: '지우, 자리 모름, 추가' }));
+    await userEvent.press(screen.getByRole('button', { name: '지우, 위치 모름, 추가' }));
 
     expect(onChoose).toHaveBeenCalledWith('f11');
   });

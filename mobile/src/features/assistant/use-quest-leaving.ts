@@ -13,6 +13,7 @@ import { isRefusal } from '@/api/errors';
 import { myUserId } from '@/auth/sign-in';
 import { MY_PARTY_KEY, PARTIES_KEY, QUESTS_KEY, SENT_INVITATIONS_KEY } from '@/api/queries';
 import { leavingOnPurpose } from '@/features/quests/leaving';
+import { outOfParty } from '@/features/quests/out-of-party';
 import { koreaClock, koreaDayWord, koreaWeekdayName } from '@/korea-time';
 import { turnsOf } from './turn';
 import type { ChatBubble } from './use-chat';
@@ -69,16 +70,16 @@ export function leaveWordsOf(offer: LeaveQuestOffer, state: LeaveState | null): 
   return null;
 }
 
-// As the room's 나가기 and 파티 없애기 do, the User first gets out of the Quest's live 파티, so that sharing a position
-// with its members stops (PR 454's review): its Leader ends it when the Quest is cancelled for all, and anyone else
-// leaves it.
+// As the room's 나가기 and 파티 없애기 do, with their `outOfParty`, the User first gets out of the Quest's live 파티, so that
+// sharing a position with its members stops (PR 454's review): its Leader ends it when the Quest is cancelled for
+// all, and anyone else leaves it.
 async function outOfItsParty(questId: string, forAll: boolean): Promise<void> {
   const party = await apiClient.getMyParty();
   if (party?.quest?.id !== questId) {
     return;
   }
   const leads = party.members.some(({ id, leader }) => id === myUserId() && leader);
-  await (leads && forAll ? apiClient.endParty() : apiClient.leaveParty());
+  await outOfParty(leads ? 'leads' : 'member', forAll);
 }
 
 // Whether the Quest is gone: a Quest already gone (404) is as good as left.

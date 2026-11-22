@@ -17,11 +17,15 @@
 // The conversation's control: the conversation with the Assistant, which the main screen holds, and what the answer
 // frame and the map draw of it. The chat sheet this file is named after is gone; the answer frame is the only screen.
 
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { type RefObject, useEffect, useRef } from 'react';
+import { type RefObject, useEffect, useMemo, useRef } from 'react';
 import type { MapLayer, QuestProposal } from '@/api/assistant-types';
 import type { Tapped } from '@/api/lookup-types';
+import { placesQuery } from '@/api/queries';
+import type { Place } from '@/api/types';
 import { useToast } from '@/design-system';
+import { type ShownProposal, shownProposalOf } from '@/features/assistant/proposal-scene';
 import type { Viewport } from '@/features/assistant/study-area';
 import type { PlanOutcomes } from '@/features/assistant/turn-outcome';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
@@ -52,6 +56,8 @@ export interface ChatSheetControl extends Omit<KeptConversation, 'chat'>, MarkOp
   howAbout: HowAbout;
   // The Lookup on screen, which the map and the frame's card draw.
   lookup: ShownLookup;
+  // The Proposal of the turn on screen with a place to stand at, which the map draws as a flag (P04 ticket 06).
+  proposal: ShownProposal | null;
   // What became of each reply's Plan, for the list of questions.
   outcomes: PlanOutcomes;
   // A reply's 취소하기 or 나가기, which cancels a Quest asked by words (P04 ticket 24).
@@ -84,6 +90,14 @@ function hidingFor(hide: () => void, turnOn: (layer: MapLayer) => void): (layer:
     hide();
     turnOn(layer);
   };
+}
+
+const NO_PLACES: readonly Place[] = [];
+
+// The Proposal of the turn on screen that the map draws, while the frame is shown.
+function useShownProposal(bubbles: readonly ChatBubble[], framed: boolean): ShownProposal | null {
+  const places = useQuery(placesQuery).data ?? NO_PLACES;
+  return useMemo(() => (framed ? shownProposalOf(bubbles, places) : null), [bubbles, places, framed]);
 }
 
 const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요';
@@ -140,6 +154,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
     },
     ...onScreen,
     lookup: useShownLookup(chat.bubbles, start, kept.hide),
+    proposal: useShownProposal(chat.bubbles, kept.framed),
     leave: useQuestLeaving(),
     pick,
     card: useCardRaise(kept.framed),

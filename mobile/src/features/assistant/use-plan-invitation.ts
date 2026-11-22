@@ -22,6 +22,7 @@ import type { LatLng, Quest } from '@/api/types';
 import { onInvitationAnswer } from '@/live/invitation-answers';
 import { useAskForPush } from '@/push/push-ask-host';
 import { friendStandings, type HeardAnswer, NO_STANDINGS, type ReadMembers, type Standing } from './invited-friends';
+import { sentToastOf } from './invited-words';
 import { useKeepMadeQuest } from './made-quest-ids';
 import { samePlanConditions } from './plan-conditions';
 import { setRefusalWords } from './set-refusals';
@@ -74,7 +75,6 @@ export function makingOf(
 
 export const CHANGED = '계획이 바뀌었어요. 다시 확인해 주세요';
 const FAILED = '초대하지 못했어요. 잠시 후 다시 시도해 주세요';
-const SENT = '파티를 만들고 초대를 보냈어요';
 const TAKEN = '여기로 정했어요';
 const NOT_DROPPED = '다시 고르지 못했어요. 잠시 후 다시 시도해 주세요';
 // "여기로" invites nobody.
@@ -237,7 +237,7 @@ function useInvite(
         if (settle()) {
           setStored((last) => (last.answer === answer && last.planId === plan.id ? { ...last, made } : last));
         } else {
-          live.current.inviting.say(made.alone === undefined ? SENT : TAKEN);
+          live.current.inviting.say(made.alone === undefined ? sentToastOf(answer.chips, made.quest.title) : TAKEN);
         }
       },
       (error: unknown) => {

@@ -160,7 +160,7 @@ describe('a refused "만들고 초대 보내기"', () => {
     expect(recalculations(server)).toEqual([]);
     expect(mapThings()).toEqual(expect.arrayContaining([PICK, '후보 5 · 자하연식당 2층 · 12:35']));
     expect(inviteButton()).toBeEnabled();
-    expect(card().queryByText('파티를 만들고 초대를 보냈어요')).toBeNull();
+    expect(card().queryByText('김민수에게 점심 초대를 보냈어요')).toBeNull();
   });
 
   it('after a 500 sends the same Idempotency-Key at the next press', async () => {
@@ -175,7 +175,7 @@ describe('a refused "만들고 초대 보내기"', () => {
 
     const [first, again] = server.received('POST /plans').map(({ idempotencyKey }) => idempotencyKey);
     expect(again).toBe(first);
-    expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
+    expect(card().getByText('김민수에게 점심 초대를 보냈어요')).toBeVisible();
   });
 });
 
@@ -190,7 +190,7 @@ describe('the map after inviting', () => {
 
     expect(mapThings().filter((name) => /301동식당|학생회관식당|3식당|자하연식당/u.test(name))).toEqual([]);
     expect(mapThings()).toContain(PICK);
-    expect(card().getByText('파티를 만들고 초대를 보냈어요')).toBeVisible();
+    expect(card().getByText('김민수에게 점심 초대를 보냈어요')).toBeVisible();
   });
 });
 
