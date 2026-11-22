@@ -58,3 +58,4 @@ Received: "이미 기간이 지난, 하지만 아직 수락하지 않은 비공�
 
 - Agent time: about 33 minutes, in one implementation session (screen review and pull request included). This is an estimate: gaps under 5 minutes between transcript entries, summed. The orchestrator session's own time is not counted here.
 - Tokens: input 33,602,420 (cache reads 33,336,432, cache writes 265,688, uncached 300); output 89,995. Without cache reads, 265,988. No subagents. Counted up to the writing of this entry, so the last few messages are left out.
+- Final count at the wrap-up, read from the session's transcript: input 35,820,366 (cache reads 35,550,575, cache writes 269,477, uncached 314); output 93,043. Without cache reads, 269,791. Agent time unchanged, about 33 minutes.
