@@ -25,6 +25,7 @@ import type { Tapped } from '@/api/lookup-types';
 import { placesQuery } from '@/api/queries';
 import type { Place } from '@/api/types';
 import { useToast } from '@/design-system';
+import { type ShownBooking, shownBookingOf } from '@/features/assistant/booking-scene';
 import { type ShownProposal, shownProposalOf } from '@/features/assistant/proposal-scene';
 import type { Viewport } from '@/features/assistant/study-area';
 import type { PlanOutcomes } from '@/features/assistant/turn-outcome';
@@ -41,6 +42,7 @@ import { type MarkOpening, useOpenedMark } from './answer/opened-mark';
 import type { CardLeaving } from './chat-card-actions';
 import { useContextChat, type Where } from './use-context-chat';
 import { type KeptConversation, useKeptConversation } from './use-kept-conversation';
+import { type BookingStage, useBookingStage } from './library/booking-stage';
 import { usePlanOutcomes } from './use-plan-outcomes';
 import { openProposalForm, useProposalMaking } from './use-proposal-making';
 
@@ -58,6 +60,10 @@ export interface ChatSheetControl extends Omit<KeptConversation, 'chat'>, MarkOp
   lookup: ShownLookup;
   // The Proposal of the turn on screen with a place to stand at, which the map draws as a flag (P04 ticket 06).
   proposal: ShownProposal | null;
+  // The seat card of the turn on screen whose building is known, which the map draws as a flag and the time bar holds
+  // the time of (P04 ticket 07), and what the card tells of its seat and main action.
+  booking: ShownBooking | null;
+  bookingStage: BookingStage;
   // What became of each reply's Plan, for the list of questions.
   outcomes: PlanOutcomes;
   // A reply's 취소하기 or 나가기, which cancels a Quest asked by words (P04 ticket 24).
@@ -94,10 +100,17 @@ function hidingFor(hide: () => void, turnOn: (layer: MapLayer) => void): (layer:
 
 const NO_PLACES: readonly Place[] = [];
 
-// The Proposal of the turn on screen that the map draws, while the frame is shown.
-function useShownProposal(bubbles: readonly ChatBubble[], framed: boolean): ShownProposal | null {
+// The Proposal and the seat card of the turn on screen that the map draws, while the frame is shown.
+function useShownOnMap(chat: Chat, framed: boolean): Pick<ChatSheetControl, 'proposal' | 'booking'> {
   const places = useQuery(placesQuery).data ?? NO_PLACES;
-  return useMemo(() => (framed ? shownProposalOf(bubbles, places) : null), [bubbles, places, framed]);
+  const { bubbles, outcomes } = chat;
+  return useMemo(
+    () => ({
+      proposal: framed ? shownProposalOf(bubbles, places) : null,
+      booking: framed ? shownBookingOf(bubbles, places, (place) => outcomes.get(place) ?? null) : null,
+    }),
+    [bubbles, places, outcomes, framed],
+  );
 }
 
 const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요';
@@ -136,6 +149,10 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const { chat: said, ...pressing } = useContextChat(where, shownNow);
   const { chat, ...kept } = useKeptConversation(said);
   const proposals = useProposalMaking(said.proposalMade, kept.latest);
+  const onMap = useShownOnMap(chat, kept.framed);
+  const bookingStage = useBookingStage();
+  const place = onMap.booking?.place ?? null;
+  const booking = useMemo(() => ({ place, tell: bookingStage.tell }), [place, bookingStage.tell]);
   const onScreen = useAnswerOnScreen(chat.bubbles, where, shownNow);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation);
   const pick = usePicking(chat);
@@ -151,10 +168,12 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
       openQuestPost: openPost,
       openPartyForm,
       proposals,
+      booking,
     },
     ...onScreen,
     lookup: useShownLookup(chat.bubbles, start, kept.hide),
-    proposal: useShownProposal(chat.bubbles, kept.framed),
+    ...onMap,
+    bookingStage,
     leave: useQuestLeaving(),
     pick,
     card: useCardRaise(kept.framed),

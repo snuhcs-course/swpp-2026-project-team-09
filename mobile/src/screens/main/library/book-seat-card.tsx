@@ -6,9 +6,10 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, useEffect, useState } from 'react';
+import { type ReactElement, useEffect } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
 import { now } from '@/clock';
@@ -38,6 +39,7 @@ import {
 } from './use-library-call';
 import { seatsFor } from './use-room-counts';
 import { useSeatStay } from './use-seat-stay';
+import { useSeatOnMap } from './booking-stage';
 
 // The book card of a reading room's seat (the MainChatLibReserve frame). It reads the sector's seats for the time,
 // offers the named or tapped seat, else the first free one, and books it only on 예약하기; 닫기 beside it ends the card
@@ -87,6 +89,11 @@ interface OfferProps extends BookSeatCardProps {
   close: (closed: Closed) => void;
   // 되돌리기, while the card shows another room than the one it first showed.
   undo: (() => void) | null;
+  picking: boolean;
+  setPicking: (picking: boolean) => void;
+  // The map draws its booking: the time bar holds its band, the button beside the input 예약하기, and the flag's card
+  // 다른 자리 고르기 (P04 ticket 07).
+  onMap: boolean;
 }
 
 function OfferButtons({
@@ -131,8 +138,7 @@ function KioskFoot(): ReactElement {
 
 // The seat offered, its time, the card's buttons and the site's notes.
 function SeatOffer(props: OfferProps): ReactElement {
-  const { card, space, seat, seats, slot, choose, write } = props;
-  const [picking, setPicking] = useState(false);
+  const { card, space, seat, seats, slot, choose, write, picking, setPicking, onMap } = props;
   const open = !write.busy;
   return (
     <>
@@ -141,7 +147,12 @@ function SeatOffer(props: OfferProps): ReactElement {
         title={`${spaceWords(space)} · ${seatWords(seat.VNAME)}`}
       />
       <FailureNote failure={write.failure?.failure ?? null} message={write.failure?.message} onLogIn={write.logIn} />
-      {open ? (
+      {open && onMap && props.undo !== null ? (
+        <Pills>
+          <Pill label="되돌리기" onPress={props.undo} />
+        </Pills>
+      ) : null}
+      {open && !onMap ? (
         <OfferButtons
           {...props}
           onPick={
@@ -229,10 +240,11 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
   const seats = loaded.state === 'ready' ? loaded.value : [];
   const seat = chooseSeat(seats, named);
   const searching = useFullRoomSwap(room, props.space, loaded.state === 'ready' && seat === null);
+  const onMap = useSeatOnMap(actions.onMap?.(place) ?? null, { place, seat, loaded, write, logIn, shown });
   if (room.listing) {
     return null;
   }
-  const offer = { ...props, space: shown, seats, choose: setNamed, write, close, undo: room.undo };
+  const offer = { ...props, space: shown, seats, choose: setNamed, write, close, undo: room.undo, ...onMap };
   const free = loaded.state === 'ready' ? freeSeats(seats).length : null;
   return (
     <>
@@ -281,7 +293,7 @@ export function BookSeatCard(props: BookSeatCardProps): ReactElement {
   const changed = card.start !== null && !sameSlot(room.slot, cardSlot(card, now()));
   return (
     <CardBox testID={`library-book-${card.key}`}>
-      {room.listing || busy || live === null ? null : (
+      {room.listing || busy || live === null || props.actions.onMap?.(props.place) ? null : (
         <SlotBand onChange={room.setSlot} slot={live} space={room.shown} />
       )}
       {changed && !room.listing ? <Text style={styles.foot}>{TIME_CHANGED}</Text> : null}

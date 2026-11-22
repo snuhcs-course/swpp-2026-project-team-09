@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -16,6 +17,7 @@ import { EventSheets, useEventSheets } from '../events/event-sheets';
 import { JoinSheet } from '../party/join-sheet';
 import { usePartyActions } from '../party/use-party-actions';
 import type { CardActions, ProposalActions } from './chat-cards';
+import type { Tell } from './library/booking-stage';
 import type { EventCardActions } from './chat-event-cards';
 import type { QuestCardActions } from './chat-quest-cards';
 
@@ -61,11 +63,13 @@ export interface CardLeaving {
   openQuestPost: (questId: string) => void;
   openPartyForm: (proposal: QuestProposal) => void;
   proposals: ProposalActions;
+  // The seat card whose booking the map draws, by its place, and how it tells what it offers (P04 ticket 07).
+  booking?: { place: string | null; tell: Tell };
 }
 
 // What the cards of the conversation's answers do, and the sheets their buttons open over the chat.
 export function useCardActions(chat: Chat, leaving: CardLeaving): { actions: CardActions; sheets: ReactElement } {
-  const { openEvent, openQuestPost, openPartyForm, proposals } = leaving;
+  const { openEvent, openQuestPost, openPartyForm, proposals, booking } = leaving;
   const eventCards = useEventCards(openEvent);
   const questCards = useQuestCards(openQuestPost);
   const { addOwn, outcomes, finish, unfinish, rooms, showRoom, bubbles } = chat;
@@ -84,6 +88,7 @@ export function useCardActions(chat: Chat, leaving: CardLeaving): { actions: Car
         showRoom,
         askedBefore: (bubbleId: number) =>
           bubbles.findLast(({ id, role }) => role === 'user' && id < bubbleId)?.text ?? '',
+        onMap: (card: string) => (booking !== undefined && booking.place === card ? booking.tell : null),
       },
     }),
     [
@@ -98,6 +103,7 @@ export function useCardActions(chat: Chat, leaving: CardLeaving): { actions: Car
       rooms,
       showRoom,
       bubbles,
+      booking,
     ],
   );
   return {

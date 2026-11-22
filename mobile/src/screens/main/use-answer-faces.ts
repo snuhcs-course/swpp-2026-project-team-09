@@ -59,3 +59,17 @@ export function useFaces(
     return { ...avatar, image: made, order: lit ? SELECTED_ORDER : 0 };
   });
 }
+
+// The everyday Friends' faces behind a scene the app made (a Proposal's, P04 ticket 06), all faint, as a Plan's are:
+// the scene's own marks stand out. A look whose picture is still to be made keeps the picture the face has.
+export function useFadedFaces(avatars: readonly MapAvatar[]): MapAvatar[] {
+  const looks = avatars.map(({ image: { view } }) =>
+    view.kind === 'person' ? { ...view, selected: false, faded: true } : view,
+  );
+  const images = useMarkerImages(looks);
+  return avatars.map((avatar, at) => {
+    const image = images[at];
+    const made = image === undefined || (image.uri === null && avatar.image.uri !== null) ? avatar.image : image;
+    return { ...avatar, image: made, order: 0 };
+  });
+}
