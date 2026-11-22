@@ -1,6 +1,6 @@
 # P06: The app's fixes outside the Assistant
 
-Status: ready-for-agent (tickets 06 and 07; 01 to 05 are held, see Solution)
+Status: needs-triage (06 and 07 are done; 01 to 05 are held, see Solution)
 
 ## Problem Statement
 
@@ -31,6 +31,7 @@ One ticket per item, numbered as the items:
 What is built now (agreed by the team after the review, 2026-11-22): what is broken goes first, and the improvements wait.
 
 - Now: 06, then 07. 06 is a fault (an ended 파티's invitation never leaves, and a failure toast carries ✓); 07 stops a wrong state (an open 파티 nobody can enter, listed on a Board). Both change the 파티 form's send path (`screens/party/form/use-send.ts`), so 07 follows 06.
+  Done on 2026-11-22: 06 in PR 475, 07 in PR 480. Both wait for a main server Release and an app OTA update, and 06's last criterion for the Dev Server check after that Release.
 - Held, as tickets only (`Status: needs-triage`): 01 (its change to the agentic map design is still being agreed), 02, 03, 04 and 05 (improvements and design changes). They are fully written so that work can start once they are taken up.
 
 When the held tickets are taken up, tickets touching the same files never run at the same time:
