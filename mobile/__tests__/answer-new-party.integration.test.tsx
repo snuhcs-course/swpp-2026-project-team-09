@@ -153,7 +153,7 @@ describe("a new party's Friends (board Recruit 4)", () => {
       {
         input: { ...STORED, people: [...ALONE, { userId: SEO_JUN, constraints: [] }] },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
       },
     ]);
   });
@@ -168,7 +168,7 @@ describe("a new party's Friends (board Recruit 4)", () => {
       {
         input: { ...STORED, people: ALONE },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
       },
     ]);
   });
@@ -190,7 +190,7 @@ describe('"만들고 모집하기" (boards Together 11 and Recruit 5)', () => {
         planId: GYM,
         startAt: '2026-11-19T17:10:00+09:00',
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
       },
     ]);
     expect(sent[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);
@@ -214,7 +214,7 @@ describe('"만들고 모집하기" (boards Together 11 and Recruit 5)', () => {
         planId: GYM,
         startAt: '2026-11-19T17:10:00+09:00',
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
       },
     ]);
     expect(card().getByText('파티를 모집했어요')).toBeVisible();

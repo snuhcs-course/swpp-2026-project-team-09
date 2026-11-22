@@ -136,7 +136,14 @@ function filled(card: ChatCard): ChatCard {
 
 // A main server before P01-01 leaves the answer out, one before P01-06 the Lookup, and one before P03 the steps.
 function isReplyOffer(value: unknown): value is ReplyOffer {
-  return field(value, 'kind') === 'ask' && hasTexts(value, ['label', 'text']);
+  switch (field(value, 'kind')) {
+    case 'ask':
+      return hasTexts(value, ['label', 'text']);
+    case 'leave-quest':
+      return hasTexts(value, ['label', 'title', 'startsAt', 'questId']);
+    default:
+      return false;
+  }
 }
 
 function isAssistantReply(value: unknown): value is AssistantReply {

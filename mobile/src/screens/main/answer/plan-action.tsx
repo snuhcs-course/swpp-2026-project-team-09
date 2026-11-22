@@ -7,12 +7,15 @@
 
 import { router } from 'expo-router';
 import type { ReactElement } from 'react';
+import type { LeaveQuestOffer } from '@/api/leave-quest-types';
 import type { Lookup } from '@/api/lookup-types';
 import type { Refusal } from '@/api/refusal-types';
 import { Button } from '@/design-system';
 import { peopleOf } from '@/features/assistant/plan-input';
 import { type SetQuest, setQuestOf } from '@/features/assistant/set-quest';
+import { leaveOnScreen } from '@/features/assistant/use-quest-leaving';
 import type { ChatSheetControl } from '../chat-sheet';
+import { LeaveButton } from './leave-button';
 import { lookupMainOf, useLookupMain } from './lookup-card';
 import { lookupReplyOf, onScreenOf, planShown } from './reply-words';
 import { lookupDocks } from './words-rest';
@@ -87,14 +90,21 @@ export function PlanActionButton({ action }: { action: PlanAction }): ReactEleme
 }
 
 // The answer's main button beside the input: the Plan's, else that of the Lookup on screen when it docks ("길 안내",
-// "가는 길", "만나고 싶다", or the first offer of a refusal beside it).
+// "가는 길", "만나고 싶다", or the first offer of a refusal beside it), else a reply's 취소하기 or 나가기 until it is taken
+// (P04 ticket 24).
 export type AnswerAction =
-  { kind: 'plan'; plan: PlanAction } | { kind: 'lookup'; lookup: Lookup; refusal: Refusal | null };
+  | { kind: 'plan'; plan: PlanAction }
+  | { kind: 'lookup'; lookup: Lookup; refusal: Refusal | null }
+  | { kind: 'leave'; bubbleId: number; offer: LeaveQuestOffer };
 
 export function answerActionOf(control: ChatSheetControl): AnswerAction | null {
   const plan = planActionOf(control);
   if (plan !== null) {
     return { kind: 'plan', plan };
+  }
+  const leave = control.framed ? leaveOnScreen(control.chat.bubbles) : null;
+  if (leave !== null && control.leave.stateOf(leave.bubbleId, leave.offer.questId) !== 'left') {
+    return { kind: 'leave', ...leave };
   }
   const { lookup } = control.lookup;
   const reply = control.framed ? lookupReplyOf(control.chat.bubbles, onScreenOf(control)) : undefined;
@@ -137,9 +147,12 @@ export function AnswerActionButton({
   action: AnswerAction;
   control: ChatSheetControl;
 }): ReactElement {
-  return action.kind === 'plan' ? (
-    <PlanActionButton action={action.plan} />
-  ) : (
+  if (action.kind === 'plan') {
+    return <PlanActionButton action={action.plan} />;
+  }
+  return action.kind === 'lookup' ? (
     <LookupActionButton control={control} lookup={action.lookup} refusal={action.refusal} />
+  ) : (
+    <LeaveButton bubbleId={action.bubbleId} control={control} offer={action.offer} />
   );
 }

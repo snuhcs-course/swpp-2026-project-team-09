@@ -141,7 +141,7 @@ describe('a refused "만들고 초대 보내기"', () => {
       {
         input: MEAL_ANSWER.input,
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
       },
     ]);
     expect(mapThings()).toContain(PICK);

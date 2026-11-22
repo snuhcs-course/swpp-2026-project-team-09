@@ -5,7 +5,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerLine } from '@/api/assistant-types';
+import type { AnswerLine, AskOffer, ReplyOffer } from '@/api/assistant-types';
 import type { Lookup, LookupAction } from '@/api/lookup-types';
 import type { Refusal } from '@/api/refusal-types';
 import type { ChatBubble } from '@/features/assistant/use-chat';
@@ -76,10 +76,18 @@ function asksBack(words: string): boolean {
   return /[?？]\s*$/u.test(words);
 }
 
+function isAsk(offer: ReplyOffer): offer is AskOffer {
+  return offer.kind === 'ask';
+}
+
 // A refusal, a failure, or a question back (words that ask, with offers): the first line, with the buttons as chips. A
 // refusal that asks which Friend keeps its grid in the open card, and any other words their card, with their offers
-// under them (decision 3). Null for the open card.
-export function wordsRestOf({ refusal = null, failure, offers = [], text }: ChatBubble): WordsRest | null {
+// under them (decision 3). A Quest to cancel (P04 ticket 24) always docks: its button stands beside the input, and
+// `left`, once it was pressed, says in the line how that went. Null for the open card.
+export function wordsRestOf(
+  { refusal = null, failure, offers = [], text }: ChatBubble,
+  left: string | null = null,
+): WordsRest | null {
   const rest = { retry: false, note: null };
   if (refusal !== null) {
     return refusal.offers.every(isButton)
@@ -89,5 +97,9 @@ export function wordsRestOf({ refusal = null, failure, offers = [], text }: Chat
   if (failure !== null) {
     return { ...rest, line: wordsLine(text), offers: [], retry: failure === 'unavailable' };
   }
-  return offers.length > 0 && asksBack(text) ? { ...rest, line: wordsLine(text), offers } : null;
+  const asks = offers.filter((offer) => isAsk(offer));
+  if (offers.some((offer) => offer.kind === 'leave-quest')) {
+    return { ...rest, line: wordsLine(left ?? text), offers: asks };
+  }
+  return asks.length > 0 && asksBack(text) ? { ...rest, line: wordsLine(text), offers: asks } : null;
 }

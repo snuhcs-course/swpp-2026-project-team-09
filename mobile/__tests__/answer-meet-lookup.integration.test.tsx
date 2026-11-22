@@ -93,7 +93,7 @@ describe("the meet of a Friend's Lookup (q6)", () => {
       {
         input: meetWith(MIN_SU.id),
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
       },
     ]);
     expect(pill().getByText('김민수 · 만나고 싶다')).toBeVisible();
@@ -136,7 +136,7 @@ describe('words typed while a meet is on screen', () => {
 
     expect(lastContext()).toMatchObject({ conditions: MET_MIN_SU.input, planId: '302동 앞' });
     expect(server.received('POST /assistant/messages').at(-1)?.body).toMatchObject({
-      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
     });
   });
 });

@@ -166,7 +166,7 @@ describe('the marks', () => {
       {
         input: { kind: 'events', date: '2026-10-06', eventIds: [JOB_FAIR.id, TALK.id] },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
       },
     ]);
     expect(within(screen.getByTestId('answer-pill')).getByText(MARK)).toBeVisible();

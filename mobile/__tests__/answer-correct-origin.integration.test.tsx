@@ -102,7 +102,7 @@ describe("the User's start", () => {
           people: [{ ...asker, constraints: [{ kind: 'from', placeId: STUDENT_HALL.id, source: 'asker' }] }, ...others],
         },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
       },
     ]);
     await openStart(user);

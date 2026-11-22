@@ -30,6 +30,7 @@ import { MENUS } from './data/menus';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
 import { MEAL_ANSWER_MENUS_REPLY, MEAL_DINNER_MENUS } from './data/meal-answer-menus';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
+import { cancelReplyTo } from './data/cancel-quest';
 import { MENU_LOOKUP_REPLY } from './data/menu-lookup';
 import { NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from './data/missing-inputs';
 import { refusalReplyTo } from './data/refusals';
@@ -246,6 +247,10 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
   }
   if (last.includes(NOT_NOW_ASKED)) {
     return NOT_NOW_REPLY;
+  }
+  const cancel = cancelReplyTo(last);
+  if (cancel !== null) {
+    return cancel;
   }
   if (isStepsAsk(last)) {
     return stepsReplyOn(koreaDateKey(now()));

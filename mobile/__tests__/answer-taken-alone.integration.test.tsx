@@ -102,7 +102,7 @@ describe('"여기로" on an events Plan (Alone 3)', () => {
         planId: JOB_FAIR,
         startAt: '2026-11-20T13:54:00+09:00',
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
       },
     ]);
     expect(sent[0]?.idempotencyKey).toMatch(/^[\da-f-]{36}$/u);

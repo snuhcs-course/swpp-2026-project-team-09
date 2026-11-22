@@ -83,7 +83,7 @@ describe('taking a Friend out', () => {
       {
         input: { ...MEAL_ANSWER.input, people: [ASKER] },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
       },
     ]);
     // Who eats changed, so the first Plan of the answer for the User alone is shown, which the User takes alone.
@@ -137,7 +137,7 @@ describe('adding a Friend chosen', () => {
       {
         input: { ...MEAL_ANSWER.input, people: [...MEAL_ANSWER.input.people, { userId: JI_WOO.id, constraints: [] }] },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
       },
     ]);
     expect(mapThings()).toEqual(expect.arrayContaining([THREE_PICK, '민수 · 18분', '지은 · 5분']));
@@ -154,7 +154,7 @@ describe('adding a Friend chosen', () => {
       {
         input: { ...MEAL_ANSWER.input, people: [...MEAL_ANSWER.input.people, { userId: MIN_JUN.id, constraints: [] }] },
         location: ON_CAMPUS,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
       },
     ]);
     expect(mapThings()).toContain(THREE_PICK);

@@ -59,7 +59,7 @@ describe("the Assistant's request to the main server", () => {
 
     expect(server.received('POST /assistant/messages').map(({ body }) => body)).toEqual([
       {
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
         context: CONTEXT,
         messages: MESSAGES,
       },
@@ -129,7 +129,7 @@ describe('a recalculation by the main server', () => {
       {
         input: INPUT,
         location: LOCATION,
-        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+        clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
       },
     ]);
   });

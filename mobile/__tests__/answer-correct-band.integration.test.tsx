@@ -60,7 +60,7 @@ function windowed(from: string | null, until: string | null): object {
   return {
     input: { ...MEAL_ANSWER.input, window: { from, until } },
     location: ON_CAMPUS,
-    clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+    clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
   };
 }
 
@@ -101,7 +101,7 @@ describe('a handle let go', () => {
     expect(recalculations(server).at(-1)).toEqual({
       input: { ...MEAL_ANSWER_FIXED_START.input, window: { from: '12:40', until: '13:00' } },
       location: ON_CAMPUS,
-      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set'],
+      clientCapabilities: ['library', 'answer', 'area', 'meet', 'events', 'plan-set', 'quest-cancel'],
     });
   });
 });

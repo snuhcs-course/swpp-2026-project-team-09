@@ -10,6 +10,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { space } from '@/design-system';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { setQuestOf } from '@/features/assistant/set-quest';
+import { leaveOfferOf, leaveWordsOf } from '@/features/assistant/use-quest-leaving';
 import { keepsShown } from '@/features/assistant/use-shown-answer';
 import type { ChatSheetControl } from '../chat-sheet';
 import { DockChip, DockLine } from './dock-chips';
@@ -82,7 +83,11 @@ export function restOf(control: ChatSheetControl, after: readonly ChatBubble[]):
   if (kind === 'lookup' && lookup !== null) {
     words = lookupRestOf(lookup, reply.refusal ?? null, reply.text);
   } else if (kind === 'own') {
-    words = wordsRestOf(reply);
+    const leave = leaveOfferOf(reply);
+    words = wordsRestOf(
+      reply,
+      leave === null ? null : leaveWordsOf(leave, control.leave.stateOf(reply.id, leave.questId)),
+    );
   }
   return words === null ? null : { kind: 'words', words };
 }
