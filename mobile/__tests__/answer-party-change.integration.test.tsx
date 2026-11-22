@@ -10,6 +10,7 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen, shownAddress } from './support/app';
 import { askOnMap } from './support/answer-map';
+import { PLACES } from './support/dining';
 import { MY_CAREER } from './support/events';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -143,6 +144,49 @@ describe('its 바꾸기', () => {
       messages: [{}, { proposal: { change: { questId: QUEST_ID, told: 2 } } }, {}],
     });
   });
+});
+
+function questAt(startsAt: string): object {
+  const [step] = MY_CAREER.subQuests;
+  return { ...MY_CAREER, id: QUEST_ID, subQuests: [{ ...step, id: STEP_ID, startsAt }] };
+}
+
+// P04 ticket 27, from PR 456's review: the step is read when the change comes and again on 바꾸기, which sends
+// nothing once the step changed in between. Partitions: changed in the room meanwhile; unchanged.
+describe('a step changed since the change came', () => {
+  it('sends nothing, says the 파티 changed, and keeps 바꾸기 from a second press', async () => {
+    server.on(`GET /quests/${QUEST_ID}`, { status: 200, body: questAt('2026-10-07T12:00:00+09:00') });
+    server.on(`PUT /quests/${QUEST_ID}/sub-quests/${STEP_ID}`, { status: 200, body: MY_CAREER.subQuests[0] });
+    const user = await askOnMap(server, REPLY);
+    server.on(`GET /quests/${QUEST_ID}`, { status: 200, body: questAt('2026-10-07T12:30:00+09:00') });
+
+    await user.press(card().getByRole('button', { name: '바꾸기' }));
+    await pass(500);
+
+    expect(server.received(`PUT /quests/${QUEST_ID}/sub-quests/${STEP_ID}`)).toHaveLength(0);
+    expect(toast()).toHaveTextContent('파티가 그사이 바뀌었어요. 다시 물어봐 주세요');
+    expect(card().getByRole('button', { name: '바꾸기' })).toBeDisabled();
+  });
+
+  it('sends the change when the step still stands as it did', async () => {
+    server.on(`GET /quests/${QUEST_ID}`, { status: 200, body: questAt('2026-10-07T12:00:00+09:00') });
+    server.on(`PUT /quests/${QUEST_ID}/sub-quests/${STEP_ID}`, { status: 200, body: MY_CAREER.subQuests[0] });
+    const user = await askOnMap(server, REPLY);
+
+    await user.press(card().getByRole('button', { name: '바꾸기' }));
+    await pass(500);
+
+    expect(server.received(`PUT /quests/${QUEST_ID}/sub-quests/${STEP_ID}`)).toHaveLength(1);
+  });
+});
+
+// With #459, a Proposal with a Place stands on the map with its button beside the input: for a change, 바꾸기.
+it('says 바꾸기 beside the input for a change with a Place on the map', async () => {
+  server.on('GET /places', { status: 200, body: PLACES });
+  await askOnMap(server, { ...REPLY, proposal: { ...CHANGED, place: { id: 'p63', name: '학생회관' } } });
+
+  expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '바꾸기' })).toBeEnabled();
+  expect(screen.queryByRole('button', { name: '만들기' })).toBeNull();
 });
 
 describe('a change the Assistant cannot make', () => {
