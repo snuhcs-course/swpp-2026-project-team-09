@@ -41,12 +41,26 @@ function listWordsOf({
   };
 }
 
+// What the caption says: the building asked about over the answer, else the turn's question; nothing for a turn the
+// app opened with its own words (a room-window Notification's "예약 창이 열렸어요", P04 ticket 40), which the card
+// already shows and which the User did not ask.
+function askedOf({ howAbout, chat }: ChatSheetControl): string | null {
+  if (howAbout.title !== null) {
+    return howAbout.title;
+  }
+  const turn = turnOf(chat.bubbles);
+  return turn === null || turn.after.some(({ id }) => id === turn.id) ? null : turn.asked;
+}
+
 // What the User asked, as a small caption at the top of the answer's card (rule 5 of the 2026-11-22 redesign), or the
 // building asked about over the answer ("여기면 어때?"). A press opens the conversation's earlier questions in the card.
-// A meal answer with several Plans says at the right how to reach the list of them.
-export function AnswerCaption({ control, listOpen, onList }: AnswerCaptionProps): ReactElement {
-  const asked = control.howAbout.title ?? turnOf(control.chat.bubbles)?.asked ?? '';
+// A meal answer with several Plans says at the right how to reach the list of them. None when the User asked nothing.
+export function AnswerCaption({ control, listOpen, onList }: AnswerCaptionProps): ReactElement | null {
+  const asked = askedOf(control);
   const list = listWordsOf(control);
+  if (asked === null) {
+    return null;
+  }
   return (
     <View style={styles.row}>
       <Pressable
