@@ -301,7 +301,8 @@ export class MealPlanService {
 
   // A Quest of the asker's as the app reads it, its Place by its label.
   keptDtoOf(quest: KeptQuest): KeptQuestDto {
-    return keptDto(quest, quest.placeId === null ? quest.placeLabel : placeLabelOf(this.placeOf(quest.placeId)));
+    const place = quest.placeId === null ? quest.placeLabel : placeLabelOf(this.placeOf(quest.placeId));
+    return keptDto(quest, place, (placeId) => this.placeOf(placeId));
   }
 
   placeOf(placeId: string): PlaceDto {

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -25,6 +26,7 @@ export type Party = z.infer<typeof partySchema>;
 const planSchema = z.object({
   id: z.string(),
   startAt: z.string(),
+  place: z.object({ placeId: z.string(), label: z.string(), latitude: z.number(), longitude: z.number() }),
   parts: z.array(z.object({ me: z.boolean(), origin: z.unknown(), walkMinutes: z.number().nullable() })),
 });
 

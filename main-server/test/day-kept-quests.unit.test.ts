@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-22  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { onDay } from '../src/assistant/free-time/free-time.js';
@@ -97,6 +98,7 @@ describe('A day with Quests', () => {
 
 describe('A Quest asked about', () => {
   it('is drawn alone, without the Classes, when asked for by its ref or the first 8 characters of it', () => {
+    const sk = placeOf(id('SK경영관'));
     for (const asked of [[MEETING_ID], [MEETING_ID.slice(0, 8)]]) {
       const { lookup, words } = found(dayWith(asked));
 
@@ -109,6 +111,7 @@ describe('A Quest asked about', () => {
           startAt: '2026-11-17T14:00:00+09:00',
           endAt: '2026-11-17T15:00:00+09:00',
           place: '58동',
+          point: { placeId: id('SK경영관'), label: '58동', latitude: sk.latitude, longitude: sk.longitude },
           people: [{ name: '민수', answer: 'waiting' }],
           mine: true,
           changeable: true,
@@ -131,5 +134,19 @@ describe('A Quest asked about', () => {
     }
 
     expect(dayWith(['1a2b3c4d'], twins)).toEqual({ result: 'none', reason: 'ambiguous' });
+  });
+});
+
+describe("A kept Quest's point", () => {
+  it('has no point when its place is only words', () => {
+    const [lunch, meeting] = kept();
+    if (meeting === undefined || lunch === undefined) {
+      throw new Error('No meeting');
+    }
+    const handWritten = { ...meeting, placeId: null, placeLabel: '정문 앞' };
+
+    const { lookup } = found(dayWith([MEETING_ID], [lunch, handWritten]));
+
+    expect(lookup.kept).toMatchObject([{ questId: MEETING_ID, place: '정문 앞', point: null }]);
   });
 });
