@@ -23,18 +23,6 @@ function coveredTop(top: number, pill: boolean, timeBar: number): number {
   return pill ? top + listsTop(top) + (timeBar > 0 ? timeBar : ANSWER_TOP.height) : top;
 }
 
-// The round "←" of an answer with a time bar, 44 across, 8 under the bar and 16 from the left (P04 ticket 52), with the
-// clear room of the labels' area around it: the labels keep clear of it. Null without a bar, where "←" is in the top.
-const BACK = 44;
-
-export function backCorner(top: number, pill: boolean, timeBar: number): ViewArea | null {
-  if (!pill || timeBar <= 0) {
-    return null;
-  }
-  const backTop = coveredTop(top, pill, timeBar) + CLEAR;
-  return { top: backTop - CLEAR, right: EDGE + BACK + CLEAR, bottom: backTop + BACK + CLEAR, left: 0 };
-}
-
 // What covers the map at the top and the card at the bottom, each with the clear room of the labels' area
 // (`labelArea`) and the room the drawing's marks there need.
 export function paddingOf(

@@ -33,8 +33,6 @@ export interface LabelView {
   avoid?: readonly LatLng[];
   // The phone's font size as a share of the usual, which the labels' words are drawn at; left out, 1.
   fontScale?: number;
-  // Controls over the map that labels keep clear of, as the round "←" under the time bar; left out, none.
-  blocked?: readonly ViewArea[];
 }
 
 // What a label says before it has a side.
@@ -153,8 +151,7 @@ function sharedEdges(
     const moved = { ...label, shift };
     const box = boxIn(view, mark.position, moved);
     const others = boxes.filter((other, otherAt): other is ViewArea => other !== null && otherAt !== index);
-    const controls = view.blocked ?? [];
-    if ([...othersThan(symbols, mark.point), ...others, ...controls].some((other) => overlaps(box, other))) {
+    if ([...othersThan(symbols, mark.point), ...others].some((other) => overlaps(box, other))) {
       return label;
     }
     boxes[index] = box;
@@ -220,7 +217,7 @@ export function placeLabels(
   // The people's marks, the User's own and the Friends' faces, which a label that gives way keeps clear of too.
   const pins = view === null ? [] : symbolBoxes(view, points, ({ person = false }) => person);
   const pinned = pins.some((pin) => pin !== null);
-  const boxes: ViewArea[] = [...(view?.blocked ?? [])];
+  const boxes: ViewArea[] = [];
   const placedEither = new Set<string>();
   const labels = marks.map((mark): AnswerLabel | null => {
     const { point, position, words, sides, either } = mark;
