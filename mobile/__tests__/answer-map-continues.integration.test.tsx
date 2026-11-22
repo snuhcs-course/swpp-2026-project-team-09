@@ -5,7 +5,6 @@
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
-import { TextInput } from 'react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -19,9 +18,11 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { answerShuttle } from './support/shuttle';
 import { CONTINUE } from './support/questions';
 
-// P04 ticket 11 against the fake main server: with the answer closed and a conversation kept, the map screen's chip
-// names the question the next message continues and opens the list of questions, and "새 대화" beside the input starts
-// a new conversation at one press (board 17); after it the chip is "지난 대화 N" (board 27).
+const MAP_PLACEHOLDER = '무엇이든 물어보세요';
+
+// P04 tickets 11 and 33 against the fake main server: with the answer closed and a conversation kept, the map
+// screen's chip names its question and brings its answer back at a press; the input beside it has no "새 대화", and a
+// message from it always starts a new conversation, the old one kept among the earlier ones.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -87,52 +88,51 @@ async function closedAfterAsking(): Promise<User> {
   return user;
 }
 
-// Partitions: nothing kept; a conversation kept with the answer closed; "새 대화" beside the input.
+// Partitions: nothing kept; a conversation kept with the answer closed; a message from the main map.
 describe('the map screen while nothing is kept', () => {
-  it('has no chip and no "새 대화" beside the input', async () => {
+  it('has no chip and no "새 대화" beside the input, which says "무엇이든 물어보세요"', async () => {
     await openMain();
 
     expect(screen.queryByTestId('past-chats')).toBeNull();
     expect(screen.queryByRole('button', { name: '새 대화' })).toBeNull();
-    expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', '무엇이든 부탁해 보세요');
+    expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', MAP_PLACEHOLDER);
   });
 });
 
 describe('the map screen with a conversation kept', () => {
-  it('names the question it continues, says "이어서 말하기", and has "새 대화" beside the input', async () => {
+  it('names the question in the chip only: the input says "무엇이든 물어보세요", with no "새 대화"', async () => {
     await closedAfterAsking();
 
     expect(screen.getByRole('button', { name: `이어서, ${SHUTTLE}` })).toBeVisible();
     expect(within(screen.getByTestId('past-chats')).getByText(`이어서 · ${SHUTTLE}`)).toBeVisible();
-    expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', '이어서 말하기');
-    expect(screen.getByRole('button', { name: '새 대화' })).toBeVisible();
-    expect(screen.queryByRole('button', { name: /^이전 답/u })).toBeNull();
+    expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', MAP_PLACEHOLDER);
+    expect(screen.queryByRole('button', { name: '새 대화' })).toBeNull();
+    expect(screen.queryByTestId('ai-input-beside')).toBeNull();
   });
 
-  it('opens the list from the chip, whose row brings the answer back', async () => {
+  it('brings the answer back at a press on the chip', async () => {
     const user = await closedAfterAsking();
 
     await user.press(screen.getByRole('button', { name: CONTINUE }));
-    await user.press(list().getByRole('button', { name: /셔틀 어디 있어\?/u }));
 
     expect(pill().getByText(SHUTTLE)).toBeVisible();
+    expect(screen.queryByTestId('question-list')).toBeNull();
     expect(screen.queryByTestId('past-chats')).toBeNull();
   });
+});
 
-  it('starts a new conversation from "새 대화", whose message sends none of the old one, the old one listed', async () => {
+describe('a message from the main map', () => {
+  it('starts a new conversation, which sends none of the old one, and lists the old one among the earlier ones', async () => {
     const user = await closedAfterAsking();
-    const focus = jest.spyOn(TextInput.prototype, 'focus');
 
-    await user.press(screen.getByRole('button', { name: '새 대화' }));
-
-    expect(focus).toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: '지난 대화 1개' })).toBeVisible();
-    expect(screen.queryByRole('button', { name: '새 대화' })).toBeNull();
     await ask(user, '배고파', text('어디서 먹을까요?'));
+
     expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual(
       expect.objectContaining({ messages: [{ role: 'user', text: '배고파' }] }),
     );
+    expect(pill().getByText('배고파')).toBeVisible();
     await user.press(screen.getByTestId('answer-pill'));
     expect(list().getAllByTestId('question-row')).toHaveLength(2);
+    expect(list().getByRole('button', { name: /셔틀 어디 있어\?/u })).toBeVisible();
   });
 });
