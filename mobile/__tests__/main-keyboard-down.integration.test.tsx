@@ -131,7 +131,8 @@ describe('a press on the scrim on the everyday map', () => {
     expect(screen.getByLabelText(AI_INPUT)).toHaveDisplayValue('식사 메뉴 추천');
     await press(user, SEND);
     await pass(300);
-    expect(screen.getByTestId('answer-card')).toHaveTextContent(/^식사 메뉴 추천오늘 메뉴예요\./u);
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent('식사 메뉴 추천');
+    expect(screen.getByTestId('answer-card-content')).toHaveTextContent(/^오늘 메뉴예요\./u);
   });
 });
 

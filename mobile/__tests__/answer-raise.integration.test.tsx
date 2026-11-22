@@ -144,7 +144,8 @@ describe("a drag on the answer card's handle", () => {
     await press(user, HANDLE);
     await press(user, HANDLE);
 
-    expect(screen.getByTestId('answer-card')).toHaveTextContent(/^식사 메뉴 추천오늘 메뉴예요\./u);
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent('식사 메뉴 추천');
+    expect(screen.getByTestId('answer-card-content')).toHaveTextContent(/^오늘 메뉴예요\./u);
     expect(screen.getByLabelText(AI_INPUT)).toHaveDisplayValue('저녁은?');
   });
 });
@@ -160,7 +161,8 @@ describe('the raised card while the keyboard is up', () => {
 
     expect(screen.queryByTestId('question-list')).toBeNull();
     expect(screen.getByTestId('answer-caption')).toHaveTextContent(ASKED);
-    expect(screen.getByTestId('answer-card')).toHaveTextContent(/^식사 메뉴 추천오늘 메뉴예요\./u);
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent('식사 메뉴 추천');
+    expect(screen.getByTestId('answer-card-content')).toHaveTextContent(/^오늘 메뉴예요\./u);
   });
 
   it('shows the questions in place of the answer once lowered, the one on screen marked 지금', async () => {

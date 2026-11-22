@@ -16,13 +16,17 @@ export const CLOSE_ANSWER_LABEL = '답 닫기';
 
 // The row's height, and the room ✕ keeps at each end so that the handle between stays centred and never covers it.
 export const GRIP_ROW = 40;
-export const GRIP_SIDE = size.touchMin + space[1];
+export const GRIP_SIDE = 64;
+// ✕'s visible circle, as wide as the stop button's (`RoundButton`), whose press reaches past it to the least touch size.
+const CLOSE_MARK = 36;
 
-// What the line under the grip says, and what a press on it does: raise the card to the list ("올리면 11곳 목록 ⌃"), or
-// nothing while it heads the raised list ("11곳 · 걸음이 적은 순").
+// What the line under the grip says, and what a press on it does: docked, raise the card ("올리면 11곳 목록 ⌃"); raised
+// or full, take it one step down ("내리기 ⌄"). Without a press it only says.
 export interface GripWords {
   words: string;
   onPress: (() => void) | null;
+  // The way a press moves the card: up or down.
+  way?: 'up' | 'down';
 }
 
 function Line({ words }: { words: GripWords }): ReactElement {
@@ -36,24 +40,23 @@ function Line({ words }: { words: GripWords }): ReactElement {
   ) : (
     <Pressable accessibilityRole="button" hitSlop={space[2]} onPress={words.onPress} style={styles.line}>
       {line}
-      <Icon color={color.inkSubtle} name="chevronUp" size={12} />
+      <Icon color={color.inkSubtle} name={words.way === 'down' ? 'chevronDown' : 'chevronUp'} size={12} />
     </Pressable>
   );
 }
 
-function CloseButton({ onPress }: { onPress: () => void }): ReactElement {
+// ✕ with its circle's right edge on the card's right line (`edge`).
+function CloseButton({ onPress, edge }: { onPress: () => void; edge: number }): ReactElement {
   return (
     <Pressable
       accessibilityLabel={CLOSE_ANSWER_LABEL}
       accessibilityRole="button"
-      hitSlop={(size.touchMin - GRIP_ROW) / 2}
+      hitSlop={(size.touchMin - CLOSE_MARK) / 2}
       onPress={onPress}
-      style={({ pressed }) => [styles.close, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.close, { right: edge }, pressed && styles.pressed]}
       testID="answer-close"
     >
-      <View style={styles.closeMark}>
-        <Icon color={color.inkMuted} name="x" size={18} />
-      </View>
+      <Icon color={color.ink} name="x" size={18} />
     </Pressable>
   );
 }
@@ -65,23 +68,22 @@ interface GripRowProps {
   words: GripWords | null;
   // ✕; null leaves it out.
   onClose: (() => void) | null;
-  // Over the top of the open card's content, or in the docked card's flow.
-  over: boolean;
+  // The card's right line, from its right edge, which ✕'s circle ends on.
+  edge: number;
 }
 
-export function GripRow({ handle, words, onClose, over }: GripRowProps): ReactElement {
+export function GripRow({ handle, words, onClose, edge }: GripRowProps): ReactElement {
   return (
-    <View style={[styles.row, over && styles.over]}>
+    <View style={styles.row}>
       {handle}
       {words === null ? null : <Line words={words} />}
-      {onClose === null ? null : <CloseButton onPress={onClose} />}
+      {onClose === null ? null : <CloseButton edge={edge} onPress={onClose} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   row: { height: GRIP_ROW, pointerEvents: 'box-none' },
-  over: { position: 'absolute', top: 0, right: 0, left: 0, zIndex: 1 },
   // Under the grip (8 down and 4 high), centred between the ends.
   line: {
     position: 'absolute',
@@ -97,18 +99,11 @@ const styles = StyleSheet.create({
   words: { ...text.caption, flexShrink: 1, color: color.inkSubtle },
   close: {
     position: 'absolute',
-    top: 0,
-    right: space[1],
+    top: (GRIP_ROW - CLOSE_MARK) / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    width: size.touchMin,
-    height: GRIP_ROW,
-  },
-  closeMark: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 32,
-    height: 32,
+    width: CLOSE_MARK,
+    height: CLOSE_MARK,
     borderRadius: radius.full,
     backgroundColor: color.surfaceSunken,
   },

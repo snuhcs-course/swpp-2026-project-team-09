@@ -11,6 +11,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -113,7 +114,8 @@ describe("the main screen's AI input", () => {
 
     await ask(user, '식사 메뉴 추천');
 
-    expect(screen.getByTestId('answer-card')).toHaveTextContent(/^식사 메뉴 추천오늘 메뉴예요\./u);
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent('식사 메뉴 추천');
+    expect(screen.getByTestId('answer-card-content')).toHaveTextContent(/^오늘 메뉴예요\./u);
   });
 });
 

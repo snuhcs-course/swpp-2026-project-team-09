@@ -25,7 +25,8 @@ import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
 import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import { AI_INPUT, type Room } from '../layout';
-import { AnswerCaption, listWordsOf } from './answer-caption';
+import { AnswerCaption } from './answer-caption';
+import { useCardTop } from './card-top';
 import { CaptionQuestions, type QuestionsOpen, Typing } from './card-questions';
 import { backOf, layerOf, useCardState } from './card-state';
 import { KeptCards } from './kept-scene';
@@ -68,14 +69,7 @@ interface AnswerCardProps {
 function AnswerCard(props: AnswerCardProps): ReactElement {
   const { control, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, focus, timeBarHeight, list } = props;
   const card = { barRoom, onHeight, raising, stageHeight, timeBarHeight, inputBottom: props.inputBottom };
-  // ✕ closes the answer as "←" did, and the line under the grip says how to reach the answer's list (P04 ticket 52).
-  const top = { onClose: raising.close, gripWords: listWordsOf(control) };
-  // "＋ 새 질문": the answer closed as ✕ closes it, then the cursor in the main map's input.
-  const askNew = (): void => {
-    list.close();
-    onClose();
-    control.focusInput();
-  };
+  const { askNew, listMax, ...top } = useCardTop(control, raising, list, onClose);
   const { bubbles, waiting } = control.chat;
   const after = turnOf(bubbles)?.after ?? [];
   const contentMax = contentMaxOf(stageHeight, barRoom);
@@ -86,20 +80,23 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
     raising.setRaised(true);
   };
   return (
-    <FrameCard {...card} {...top} docked={rest !== null} hold={waiting} testID="answer-card">
-      {typing || control.answer.menuFor !== null ? null : (
-        <AnswerCaption control={control} listOpen={list.open} onAskNew={askNew} onList={list.toggle} />
-      )}
+    <FrameCard
+      {...card}
+      {...top}
+      docked={rest !== null}
+      head={
+        typing || control.answer.menuFor !== null ? undefined : (
+          <AnswerCaption control={control} listOpen={list.open} onAskNew={askNew} onList={list.toggle} />
+        )
+      }
+      hold={waiting}
+      testID="answer-card"
+    >
       {typing || list.open ? null : <KeptCards cardActions={props.cardActions} control={control} />}
       {typing ? (
         <Typing control={control} />
       ) : list.open ? (
-        <CaptionQuestions
-          control={control}
-          list={list}
-          maxHeight={raising.raised ? (stageHeight ?? undefined) : undefined}
-          onClose={onClose}
-        />
+        <CaptionQuestions control={control} list={list} maxHeight={listMax} onClose={onClose} />
       ) : rest !== null && reply !== undefined ? (
         <DockedAnswer bubble={reply} control={control} focus={focus} onClose={onClose} onRaise={raise} rest={rest} />
       ) : (

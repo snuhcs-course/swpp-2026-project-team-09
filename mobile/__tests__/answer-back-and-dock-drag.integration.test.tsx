@@ -137,8 +137,8 @@ describe('the docked card', () => {
     expect(screen.queryByTestId('answer-close-hint')).toBeNull();
   });
 
-  it('is raised by a drag up, the line under the grip then heading the list', async () => {
-    await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+  it('is raised by a drag up, and "내리기" under the grip then lowers it', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
     await lay('answer-card', CARD);
 
     expect(screen.getByText(/^올리면 \d+곳 목록$/u)).toBeVisible();
@@ -146,8 +146,10 @@ describe('the docked card', () => {
     await drag('answer-dock-drag', -80);
 
     expect(screen.getByRole('button', { name: HANDLE })).toBeExpanded();
-    // Raised, the line under the grip heads the list: its count and its order.
-    expect(screen.getByText(/^\d+곳 · (걸음이 적은|일찍 여는) 순$/u)).toBeVisible();
+    // Raised, the line under the grip says the way down, and a press on it takes the card one step down.
+    expect(screen.queryByText(/^올리면 \d+곳 목록$/u)).toBeNull();
+    await user.press(screen.getByText('내리기'));
+    expect(screen.getByRole('button', { name: HANDLE })).toBeCollapsed();
   });
 });
 

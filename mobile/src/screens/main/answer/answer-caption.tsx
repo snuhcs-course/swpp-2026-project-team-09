@@ -11,7 +11,7 @@ import { color, Icon, radius, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import type { ChatSheetControl } from '../chat-sheet';
 import { MentionWords } from '../mention-words';
-import { listedCount, listOrderWords, mealCard } from './meal-list';
+import { listedCount, mealCard } from './meal-list';
 
 interface AnswerCaptionProps {
   control: ChatSheetControl;
@@ -23,8 +23,7 @@ interface AnswerCaptionProps {
 }
 
 // What the line under the card's grip says for a meal answer with a Plan, one place or many ("올리면 1곳 목록"): while
-// docked, a press that raises the card to the list of every place; while raised, the list's heading, its count and how
-// it is ordered ("11곳 · 걸음이 적은 순"). For a booking on the map, while lowered, a press that raises the card to the room,
+// docked, a press that raises the card to the list of every place; none while raised. For a booking on the map, while lowered, a press that raises the card to the room,
 // the seat, and the rest (P01 ticket 03). Null for any other answer.
 export function listWordsOf({
   answer: shown,
@@ -46,9 +45,9 @@ export function listWordsOf({
     return null;
   }
   const count = listedCount(shown.answer);
-  // Raised, the list's heading: how many places and how they are ordered (P04 ticket 52).
+  // Raised, the line under the grip says "내리기" (`card-top.ts`), and the list heads itself.
   if (card.raised) {
-    return { words: `${String(count)}곳 · ${listOrderWords(shown.answer)}`, onPress: null };
+    return null;
   }
   return {
     words: `올리면 ${String(count)}곳 목록`,
@@ -144,7 +143,8 @@ const styles = StyleSheet.create({
     gap: space[1],
     height: CHIP_HEIGHT,
     marginLeft: 'auto',
-    paddingHorizontal: space[2],
+    // Its words end on the card's right line (P04 ticket 52).
+    paddingLeft: space[2],
   },
   askNewWords: { ...text.label, color: color.snuBlue },
 });

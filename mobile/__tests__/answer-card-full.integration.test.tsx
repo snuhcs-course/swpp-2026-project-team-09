@@ -123,17 +123,20 @@ describe('a full card', () => {
 
 // Partitions: the caption's list of questions on the lowered card and on the raised one.
 describe('the list of questions', () => {
-  it('keeps its cap on the lowered card, lifts it once raised, and goes to full height with the card', async () => {
+  it('fits the card’s room at each height, lowered, raised, and full, ending above the input', async () => {
     const user = await framed();
     const lowered = Number(styleOf('answer-card-content').maxHeight);
     await user.press(screen.getByTestId('answer-caption'));
     expect(styleOf('question-list').maxHeight).toBeLessThan(STAGE / 2);
 
+    const loweredList = Number(styleOf('question-list').maxHeight);
     await press(user, HANDLE);
-    expect(styleOf('question-list').maxHeight).toBe(STAGE);
+    // Raised, the list takes the raised card's room, ending above the input (P04 ticket 52).
+    expect(Number(styleOf('question-list').maxHeight)).toBeGreaterThan(loweredList);
 
     await dragHandle(-600);
     expect(styleOf('answer-card-content').height).toBe(fullOf(lowered));
-    expect(screen.getByTestId('question-list')).toBeVisible();
+    // Full, the list takes the whole scrolling part less its padding, so that it ends above the input.
+    expect(styleOf('question-list').maxHeight).toBe(fullOf(lowered) - 24);
   });
 });
