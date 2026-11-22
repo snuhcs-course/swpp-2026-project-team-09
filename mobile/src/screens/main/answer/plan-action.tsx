@@ -16,6 +16,7 @@ import { peopleOf } from '@/features/assistant/plan-input';
 import { type SetQuest, setQuestOf } from '@/features/assistant/set-quest';
 import type { ChatSheetControl } from '../chat-sheet';
 import { CHANGE_WORDS, type ProposalMaking } from '../chat-proposal-card';
+import { type Choice, ChoiceRow } from './choice-row';
 import { lookupMainOf, useLookupMain } from './lookup-card';
 import { RoomOfferButton, roomOfferOn } from './room-offer';
 import { lookupReplyOf, onScreenOf, planShown } from './reply-words';
@@ -26,6 +27,8 @@ export interface PlanAction {
   words: string;
   onPress: () => void;
   disabled: boolean;
+  // A secondary choice on the same row, at the left (P04 ticket 50): 그대로 두기 beside a Quest the User holds.
+  secondary?: Choice;
 }
 
 // "만들고 초대 보내기" for a Plan with a Friend, as "이대로 초대" made it into a Quest and invited them; "일정에 넣기" for a meal's Plan
@@ -48,7 +51,16 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
   if (set !== null) {
     // Once 바꾸기 changed the meeting, or 그대로 두기 left the Quest, the answer says so and offers nothing more.
     const chosen = invitation.changed !== null || invitation.left !== null;
-    return chosen ? null : setQuestAction(set, control, disabled || invitation.changing);
+    if (chosen) {
+      return null;
+    }
+    // 그대로 두기 waits while 바꾸기 or a recalculation is on its way: the answer it would leave is about to change.
+    const keep = {
+      words: '그대로 두기',
+      onPress: invitation.leave,
+      disabled: invitation.sending || invitation.changing || shown.recalculating,
+    };
+    return { ...setQuestAction(set, control, disabled || invitation.changing), secondary: keep };
   }
   if (kind !== 'new-quest' && people > 1) {
     return {
@@ -83,6 +95,9 @@ function setQuestAction(set: SetQuest, { invitation }: ChatSheetControl, disable
 }
 
 export function PlanActionButton({ action }: { action: PlanAction }): ReactElement {
+  if (action.secondary !== undefined) {
+    return <ChoiceRow main={action} secondary={action.secondary} />;
+  }
   return (
     <Button disabled={action.disabled} onPress={action.onPress} full size="bar">
       {action.words}
