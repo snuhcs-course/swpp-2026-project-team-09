@@ -59,7 +59,7 @@ Asked on Wednesday 2026-11-04, from the app that draws answers.
 - [x] Rows 1, 2, 6 and 8 are unchanged.
 - [x] The answer app's rule asks nothing of a seat for a later day and says what `sameDayOnly` means. The text chat's rules are unchanged.
 - [x] Eval cases for "공부할 자리", "내일 공부할 자리" and "내일 아침 9시에 공부할 자리" from the current app, in a new world `p6-answer` that leaves the frozen P6 suite as it is.
-- [ ] The eval cases are run once on a cheap model.
+- [ ] The eval cases are run once on a cheap model. Not run yet: this worktree has no `.env` with the team's model key, and a session may not read one. How sessions may reach the key is the user's decision. They run once a way is allowed.
 - [x] Lint, format and types of the main server pass.
 
 ## Comments
