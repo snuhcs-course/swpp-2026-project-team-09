@@ -26,8 +26,6 @@ import {
 import {
   type BandTick,
   BandOnTrack,
-  type HeadRoom,
-  BandWords,
   Ends,
   type HeldBand,
   percent,
@@ -37,6 +35,7 @@ import {
   useWholeMove,
   wordsOf,
 } from './band-body';
+import { BandWords, type HeadRoom } from './band-head-words';
 import { NowMark, Red, useShownBand } from './band-track';
 
 interface TimeBandProps {
