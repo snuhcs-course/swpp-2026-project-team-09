@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -24,7 +25,7 @@ import { roomCancelCardOf } from '@/library/cards/made';
 import { useAskForPush } from '@/push/push-ask-host';
 import { type RoomRequest, roomRequests } from '@/api/room-requests';
 import { BOOK_FAILED, CLOSED, type Closed, NOT_BOOKED } from './book-seat-card';
-import { CardBox, FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
+import { CardBox, DECLINE, FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
 import { Choices, Pledge } from './room-parts';
 import { checkedCompanions, PartyStatus, usePartyRequest } from './room-party';
 import { roomTimesFor } from './room-times';
@@ -124,7 +125,7 @@ interface FormProps extends BookRoomCardProps {
   close: (closed: Closed) => void;
 }
 
-// The room's choices, 예약하기 once both the 사용 용도 and the 서약서 are given, and 취소.
+// The room's choices, 예약하기 once both the 사용 용도 and the 서약서 are given, and 예약 안 함.
 function RoomChoices(props: FormProps): ReactElement {
   const { card, room, rooms, choose, write, close, actions, place } = props;
   const [useDesc, setUseDesc] = useState<string | null>(card.useDesc);
@@ -174,12 +175,12 @@ function RoomChoices(props: FormProps): ReactElement {
   );
 }
 
-// 예약하기, which waits for the 사용 용도 and the 서약서, and 취소.
+// 예약하기, which waits for the 사용 용도 and the 서약서, and 예약 안 함.
 function RoomButtons({ onBook, onDecline }: { onBook: (() => void) | null; onDecline: () => void }): ReactElement {
   return (
     <Pills>
       <Pill disabled={onBook === null} label="예약하기" onPress={onBook ?? onDecline} primary />
-      <Pill label="취소" onPress={onDecline} />
+      <Pill label={DECLINE} onPress={onDecline} />
     </Pills>
   );
 }

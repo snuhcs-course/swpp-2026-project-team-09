@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -68,7 +69,7 @@ function OneMorePicker({ request, onAsked, onClose }: AskOneMoreProps & { onClos
           }}
           primary
         />
-        <Pill label="닫기" onPress={onClose} />
+        <Pill label="취소" onPress={onClose} />
       </Pills>
     </>
   );

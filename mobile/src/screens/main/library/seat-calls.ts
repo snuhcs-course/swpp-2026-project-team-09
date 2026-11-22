@@ -33,7 +33,7 @@ export const CLOSED: Readonly<Record<Closed, CardOutcome>> = {
   declined: { kind: 'declined', words: '예약하지 않았어요' },
 };
 
-// After 예약하기 or 닫기: the chat keeps how the card ended, and a booking asks for push.
+// After 예약하기 or 예약 안 함: the chat keeps how the card ended, and a booking asks for push.
 function useClose(actions: LibraryCardActions, place: string): (closed: Closed) => void {
   const askForPush = useAskForPush();
   return (closed) => {

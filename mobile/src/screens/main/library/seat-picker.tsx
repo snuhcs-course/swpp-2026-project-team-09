@@ -4,6 +4,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -175,15 +176,16 @@ function Picture(props: PictureProps): ReactElement {
 function Head({ space: shown, seats, onClose }: Pick<SeatPickerProps, 'space' | 'seats' | 'onClose'>): ReactElement {
   return (
     <View style={styles.head}>
-      <Pressable accessibilityLabel="좌석 현황 닫기" accessibilityRole="button" onPress={onClose} style={styles.close}>
-        <Icon color={color.ink} name="chevronLeft" size={22} />
-      </Pressable>
       <View style={styles.headWords}>
         <Text accessibilityRole="header" style={styles.title}>
           {`${bookingTitle(shown)} 좌석 현황`}
         </Text>
         <Text style={styles.sub}>{`빈 자리 ${String(freeSeats(seats).length)}석 / ${String(seats.length)}석`}</Text>
       </View>
+      {/* A card over the map closes by ✕ at its top right, and by Android's back (P04 ticket 53). */}
+      <Pressable accessibilityLabel="좌석 현황 닫기" accessibilityRole="button" onPress={onClose} style={styles.close}>
+        <Icon color={color.inkMuted} name="x" size={20} />
+      </Pressable>
     </View>
   );
 }
@@ -228,7 +230,7 @@ const styles = StyleSheet.create({
   headWords: { flex: 1, minWidth: 0 },
   title: { fontFamily: font.bold, fontSize: 17, lineHeight: 24, color: color.ink },
   sub: { fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.inkMuted },
-  close: { alignItems: 'center', justifyContent: 'center', width: 44, height: 44, marginTop: -10, marginLeft: -10 },
+  close: { alignItems: 'center', justifyContent: 'center', width: 44, height: 44, marginTop: -10, marginRight: -10 },
   box: {
     height: PICTURE_HEIGHT,
     overflow: 'hidden',

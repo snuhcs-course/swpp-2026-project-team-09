@@ -5,6 +5,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -267,7 +268,7 @@ describe('the sheet after a booking of the library', () => {
   it('does not show when the booking is declined', async () => {
     await askForCards(library, [SEAT_CARD]);
 
-    await pressIn(inCard(`library-book-${SEAT_CARD.library.key}`), '닫기');
+    await pressIn(inCard(`library-book-${SEAT_CARD.library.key}`), '예약 안 함');
     await pass(500);
 
     expect(sheetShown()).toBe(false);

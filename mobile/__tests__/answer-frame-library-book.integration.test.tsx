@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { libraryCard, READING_ROOM, SEAT_NOTES } from '@/api/mock/data/library';
@@ -92,7 +93,7 @@ describe('the seat book card', () => {
     ]);
     expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
     expect(seatCard().getByText('오늘 17:00–18:00')).toBeVisible();
-    for (const name of ['예약하기', '닫기', '자리 선택하기']) {
+    for (const name of ['예약하기', '예약 안 함', '자리 선택하기']) {
       expect(seatCard().getByRole('button', { name })).toBeVisible();
     }
     expect(seatCard().getByText(`· ${SEAT_NOTES[1] ?? ''}`)).toBeVisible();
@@ -174,23 +175,23 @@ describe('the done message', () => {
 describe('the seat book card when the User asked the Assistant to book it ("그냥 예약해 줘")', () => {
   const asked = card({ ...SEAT_CARD.library, notes: [OWN_PRESS, ...SEAT_NOTES] });
 
-  it("says first among its notes that the booking is the User's own press, with 닫기 beside 예약하기", async () => {
+  it("says first among its notes that the booking is the User's own press, with 예약 안 함 beside 예약하기", async () => {
     await askForCards({ server, library }, [asked], { words: '그냥 예약해 줘' });
 
     expect(seatCard().getAllByText(/^· /u)[0]).toHaveTextContent(`· ${OWN_PRESS}`);
     const buttons = seatCard()
       .getAllByRole('button')
       .map((button) => String(button.props.accessibilityLabel));
-    expect(buttons.indexOf('닫기')).toBe(buttons.indexOf('예약하기') + 1);
+    expect(buttons.indexOf('예약 안 함')).toBe(buttons.indexOf('예약하기') + 1);
     expectNoWrite(library);
   });
 });
 
-describe('닫기 on the seat book card', () => {
-  it('says "알겠어요. 예약하지 않았어요." on 닫기 and books nothing', async () => {
+describe('예약 안 함 on the seat book card', () => {
+  it('says "알겠어요. 예약하지 않았어요." on 예약 안 함 and books nothing', async () => {
     await askForCards({ server, library }, [SEAT_CARD]);
 
-    await press('닫기');
+    await press('예약 안 함');
 
     expect(inFrame().getByText('알겠어요. 예약하지 않았어요.')).toBeVisible();
     expect(seatCard().queryByRole('button', { name: '예약하기' })).toBeNull();
