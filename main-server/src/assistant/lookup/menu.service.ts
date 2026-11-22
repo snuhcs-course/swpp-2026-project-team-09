@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -11,9 +12,10 @@ import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { MenusService } from '../../menus/menus.service.js';
 import { servedLines } from '../../menus/open-rule.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
-import { type Lookup, type Plan } from '../dto/answer.dto.js';
+import { type AnswerReply, type Lookup, type MealInput, type Plan } from '../dto/answer.dto.js';
 import { type HandledMeal } from '../free-time/meal-fit.js';
 import { MealPlanService } from '../gathering/meal-plan.service.js';
+import { type HoursMeal, type MealOfDay } from './hours-words.js';
 import { menuAnswer } from './menu-lookup.js';
 
 export type MenuFound =
@@ -43,6 +45,25 @@ export class MenuLookupService {
   // The Restaurants that stand at the Place.
   at(placeId: string): string[] {
     return this.restaurantPlaces.names().filter((name) => this.restaurantPlaces.placeOf(name)?.id === placeId);
+  }
+
+  // Each meal's lines of the Restaurant's menu on the day, empty when none was collected, with its hours for that kind
+  // of day.
+  async mealsOf(key: string, date: string): Promise<MealOfDay[]> {
+    const day = (await this.menus.findByDate(date)).find(({ name }) => name === key);
+    const meals: HoursMeal[] = ['breakfast', 'lunch', 'dinner'];
+    return Promise.all(
+      meals.map(async (meal) => ({
+        meal,
+        lines: day?.meals.find((served) => served.meal === meal)?.lines ?? [],
+        hours: await this.menus.hoursOf(key, meal, date),
+      })),
+    );
+  }
+
+  // The meal answer on screen planned again, so that a reply in words keeps it there.
+  replan(userId: string, input: MealInput, at: { now: Date; location: Position | null }): Promise<AnswerReply> {
+    return this.mealPlans.plan(userId, input, at);
   }
 
   async find(

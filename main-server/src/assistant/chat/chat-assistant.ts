@@ -13,6 +13,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { FriendViewService } from '../../friends/friend-view.service.js';
@@ -41,6 +42,7 @@ import { answeringOptions, type LibraryServices, libraryTools } from '../library
 import { CANCEL_RULES, proposeCancel } from '../lookup/cancel-quest.js';
 import { DAY_RULES, findDay } from '../lookup/day-tools.js';
 import { findFriend, FRIEND_RULES } from '../lookup/friend-tools.js';
+import { HOURS_RULES, restaurantHours } from '../lookup/hours-tools.js';
 import { findMenu, MENU_RULES } from '../lookup/menu-tools.js';
 import { withStudyArea } from '../lookup/study-tools.js';
 import { type LookupServices } from '../lookup/lookup-services.js';
@@ -121,7 +123,7 @@ function requestInstructionsOf(now: Date): string {
 // (its lines), and a reply in words alone takes the plan off the screen.
 const EARLIER_REPLIES = `
 - An earlier reply of yours is given as the words the User saw. Never take it back or call it unfounded because no tool returned it in this message: call the tool again when you need the fact, and correct only what that result contradicts.
-- Speak of the plan on the screen only in a reply that calls planMeal: a reply in words alone takes the plan off the screen.`;
+- Speak of the plan on the screen only in a reply that calls planMeal or restaurantHours, which keep it there: any other reply in words alone takes the plan off the screen.`;
 
 // In the chat of an app that does not draw answers, a meal is recommended from the menus after asking the User's taste.
 // An app that draws answers plans it on the map at once (PLAN_RULES).
@@ -230,6 +232,7 @@ function withLookups(
       ...planned.rules,
       WAY_RULES,
       MENU_RULES,
+      HOURS_RULES,
       FRIEND_RULES,
       DAY_RULES,
       CANCEL_RULES,
@@ -240,6 +243,7 @@ function withLookups(
       ...planned.tools,
       findWay: findWay(lookups.ways, lookups.tutorial),
       findMenu: findMenu(lookups.menus),
+      restaurantHours: restaurantHours(lookups.menus),
       findFriend: findFriend(lookups.friends),
       findDay: findDay(lookups.days),
       proposeCancel: proposeCancel(lookups.cancels),
