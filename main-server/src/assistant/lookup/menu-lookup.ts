@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Cuisines } from '../../menus/cuisine-words.js';
@@ -160,6 +161,7 @@ export function menuAnswer(args: MenuArgs): MenuAnswer {
     band: plan.band,
     actions: [{ kind: 'guide', to: plan.place }],
     menu: menuOf(args),
+    fact: true,
   };
   return { result: 'found', plan, lookup };
 }

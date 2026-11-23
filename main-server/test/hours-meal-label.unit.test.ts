@@ -152,3 +152,11 @@ describe('A Restaurant whose corners have their own times', () => {
     expect(context.presented.lookup?.basis).toEqual(['점심 A코너 11:30–14:00, B코너 11:30–13:00']);
   });
 });
+
+// P05 ticket 47: an hours answer only tells a fact, so the dock shows no main button; the way stays for the card.
+it('is a fact, keeping its way among the actions', async () => {
+  const context = contextAt(at('12:40'));
+  await tool.run({ date: MONDAY, restaurant: '학생회관' }, context);
+
+  expect(context.presented.lookup).toMatchObject({ fact: true, actions: [{ kind: 'guide' }] });
+});

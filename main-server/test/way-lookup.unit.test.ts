@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Lookup } from '../src/assistant/dto/answer.dto.js';
@@ -71,4 +72,9 @@ describe('Where 문화관 is, from 301동', () => {
       actions: [{ kind: 'guide', to: point('문화관', '문화관(73동)') }],
     });
   });
+});
+
+// P05 ticket 47: only an hours or a menu answer is a fact; "X 어디야?" keeps 길 안내 as its main button.
+it('is no fact, for where a Place is', () => {
+  expect(whereIsCultureHall()).not.toHaveProperty('fact');
 });

@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -36,6 +37,9 @@ export interface Lookup {
   steps?: LookupStep[];
   // One short line of the card above its buttons.
   note?: string;
+  // An answer that only tells a fact (a Restaurant's hours or menu): the dock shows no main button, while `actions` keep
+  // the way for the Restaurant's own card. Absent from any other Lookup.
+  fact?: true;
   // A menu's facts, which the map writes on the Restaurant's flag and its card: the meal's hours that day, null when
   // none were kept, and the dishes of its main corner with their prices. Only a menu Lookup has it.
   menu?: LookupMenu;

@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Lookup } from '../src/assistant/dto/answer.dto.js';
@@ -151,4 +152,9 @@ describe('Board q4 with the shuttle just gone', () => {
       basis: ['걸어서 25분 · 지금 16:40', '셔틀은 26분 걸려 걸어요'],
     });
   });
+});
+
+// P05 ticket 47: only an hours or a menu answer is a fact.
+it('is no fact, by the shuttle', () => {
+  expect(shuttleOrWalk()).not.toHaveProperty('fact');
 });

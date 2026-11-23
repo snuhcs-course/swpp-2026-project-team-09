@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -254,4 +255,9 @@ describe("The main line's dishes", () => {
   it('are the lines listed under a heading with a set price, at most three', () => {
     expect(dishesOf(lunchOf('302동식당'))).toEqual(['뼈없는감자탕', '미트볼굴소스조림', '참깨소스냉두부']);
   });
+});
+
+// P05 ticket 47: a menu only tells a fact, so the dock shows no main button; the way stays for the Restaurant's card.
+it('is a fact, keeping its way among the actions', () => {
+  expect(boardQ8()).toMatchObject({ fact: true, actions: [{ kind: 'guide' }] });
 });

@@ -119,5 +119,6 @@ export function hoursLookup(found: HoursFound, place: PlaceDto, now: Date, meal?
     },
     band: null,
     actions: [{ kind: 'guide', to: { placeId: place.id, label: restaurant, ...at } }],
+    fact: true,
   };
 }
