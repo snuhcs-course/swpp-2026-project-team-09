@@ -58,9 +58,10 @@ export function mealCard(answer: AnswerReply | null): boolean {
   return answer?.input.kind === 'meal' && answer.plans.length > 0;
 }
 
-// The places the list counts ("올리면 12곳 목록"): the candidates and the places dropped.
+// The places the list offers ("8곳 목록"), as its first line and "전체" count them: the candidates. The places dropped
+// stand under their own heading in the list and are not counted.
 export function listedCount(answer: AnswerReply): number {
-  return answer.plans.length + answer.dropped.length;
+  return answer.plans.length;
 }
 
 // The line over the candidates that cannot be done in the time.

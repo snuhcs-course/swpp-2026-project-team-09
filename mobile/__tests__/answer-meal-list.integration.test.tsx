@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -155,12 +156,13 @@ function keptOne(text: string): typeof MEAL_ANSWER_MENUS_REPLY {
 
 // Partitions: one Plan left of many, with the model's words and without; the candidates that cannot be done in time.
 describe('a meal answer that kept one Plan of many', () => {
-  it('says in the dock that one place alone fits, with no "›", and the caption raises the list', async () => {
+  it('says in the dock that one place alone fits, with no "›", and the caption counts the place offered', async () => {
     await askOnMap(server, keptOne('아래에서 확인해 보세요.'));
 
     expect(screen.getByTestId('dock-line-words')).toHaveTextContent(/^김민수와 시간이 맞는 곳은 302동식당뿐이에요 · /u);
     expect(screen.getByTestId('dock-line').props.accessibilityRole).toBeUndefined();
-    expect(screen.getByText('올리면 3곳 목록')).toBeOnTheScreen();
+    // The place offered, as the list's first line counts it; the two dropped stand under their own heading.
+    expect(screen.getByText('올리면 1곳 목록')).toBeOnTheScreen();
   });
 
   it('lists the Plan, then the places dropped under their reason, faded and not pressable, under the people', async () => {
@@ -170,6 +172,8 @@ describe('a meal answer that kept one Plan of many', () => {
 
     expect(card().getByText('김민수')).toBeOnTheScreen();
     expect(list().getByTestId('meal-row-1')).toBeEnabled();
+    // The same count as the caption's "올리면 1곳 목록": the place offered, not the places dropped.
+    expect(list().getByTestId('meal-list-order')).toHaveTextContent(/^1곳 · /u);
     expect(list().getByText('김민수와 시간이 맞지 않는 곳')).toBeOnTheScreen();
     const dropped = list().getAllByTestId('meal-dropped-row');
     expect(dropped.map((row) => String(row.props.accessibilityLabel))).toEqual([
@@ -209,5 +213,7 @@ describe('a meal answer of one place', () => {
 
     expect(card().getByText('김민수')).toBeOnTheScreen();
     expect(list().getByTestId('meal-row-1')).toBeEnabled();
+    // The same count as the caption's "올리면 1곳 목록": the place offered, not the places dropped.
+    expect(list().getByTestId('meal-list-order')).toHaveTextContent(/^1곳 · /u);
   });
 });

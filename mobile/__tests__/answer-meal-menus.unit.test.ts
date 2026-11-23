@@ -188,9 +188,9 @@ describe('one Plan kept of many', () => {
   const dropped = rest.map(({ place }) => ({ place, reason: '김민수는 10분밖에 못 있어요' }));
   const kept = { ...MEAL_ANSWER_MENUS, plans: first === undefined ? [] : [first], dropped };
 
-  it('is still listed, counting the places dropped', () => {
+  it('is still listed, counting only the place offered, as the list’s first line does', () => {
     expect(mealCard(kept)).toBe(true);
-    expect(listedCount(kept)).toBe(3);
+    expect(listedCount(kept)).toBe(1);
   });
 
   it('names the Friend whose time the places dropped do not fit, and says the one place alone fits', () => {
