@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { CardFact, Lookup, LookupAction, LookupCard, LookupStep } from '@/api/lookup-types';
@@ -95,6 +96,7 @@ export function isLookup(value: unknown): value is Lookup {
     (steps === undefined || listOf(isStep)(steps)) &&
     isNote(field(value, 'note')) &&
     isMenuOrAbsent(field(value, 'menu')) &&
-    isKeptOrAbsent(field(value, 'kept'))
+    isKeptOrAbsent(field(value, 'kept')) &&
+    (field(value, 'fact') === undefined || field(value, 'fact') === true)
   );
 }

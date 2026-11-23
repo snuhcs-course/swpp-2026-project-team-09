@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -45,6 +46,9 @@ export interface Lookup {
   // A day's: the User's Quests the question asked about, nearest first (P05 ticket 17). Absent from any other Lookup, and
   // from a main server before it.
   kept?: KeptQuest[];
+  // An answer that only tells a fact (P05 ticket 47): a Restaurant's hours or its menu. It has no main action of its own
+  // in the dock; its `actions` stay for the Place's card. Absent from any other Lookup, and from a main server before it.
+  fact?: true;
 }
 
 export interface LookupMenu {
