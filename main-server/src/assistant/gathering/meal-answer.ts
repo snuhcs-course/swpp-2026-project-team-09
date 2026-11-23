@@ -55,14 +55,13 @@ function askerFixed({
   return { ...conditions, end };
 }
 
-// The asker's chosen origin, else the one of their side, marked when it was assumed for a missing location.
+// The asker's chosen origin, else the one of their side.
 export function originChip(naming: GatheringNaming, mine: GatheringSide | undefined): ConditionChip | null {
   const placeId = askerFixed(naming.args.input).chosenPlaceId ?? mine?.origin?.placeId ?? null;
   if (placeId === null) {
     return null;
   }
-  const chip: ConditionChip = { kind: 'origin', text: `${naming.placeLabel(placeId)}에서`, userId: null };
-  return mine?.origin?.assumed === true ? { ...chip, mark: 'assumed' } : chip;
+  return { kind: 'origin', text: `${naming.placeLabel(placeId)}에서`, userId: null };
 }
 
 // The end the User fixed when it is earlier than both the asker's next item and the window's own end (the meal's),

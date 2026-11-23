@@ -35,8 +35,8 @@ export interface GatheringPerson {
   free: readonly FreeInterval[];
   // The Place of the position the asker may use for them now, or null.
   locationPlaceId: string | null;
-  // The asker's app sent no location and said why: they set out from their previous item's Place at any time.
-  locationMissing?: boolean;
+  // The asker of a meal: where they are now is known only from their position, never from an item that has ended.
+  positionOnly?: true;
   // What the asker fixed for them: where they set out from, the earliest they are ready, and the latest they leave.
   chosenPlaceId?: string;
   notBefore?: Date;
@@ -56,8 +56,7 @@ export type OriginBasis = 'timetable' | 'location' | 'chosen';
 export interface PersonPart {
   personId: string;
   readyAt: Date;
-  // `assumed`: taken from the Timetable because the location was missing.
-  origin: { placeId: string; basis: OriginBasis; assumed?: true } | null;
+  origin: { placeId: string; basis: OriginBasis } | null;
   // The minutes of their whole way, to the merging point and on to the place, on foot or by the shuttle as `by` says.
   // Null when the origin is unknown.
   walkMinutes: number | null;
@@ -222,10 +221,11 @@ const plusMinutes = (at: Date, count: number): Date => new Date(at.getTime() + c
 export const minutesBetween = (from: Date, to: Date): number => (to.getTime() - from.getTime()) / MINUTE_MS;
 
 // Where a person sets out from for a stretch of Free Time: what the asker chose, else the Place of the item that keeps
-// them until then, else the Place of their location, else, when their location is said to be missing, that of the
-// previous item however long ago it ended, else that of an item that ended at most RECENT_CLASS_MINUTES ago.
+// them until then or ends now, else the Place of their location. Otherwise nowhere known for the asker of a meal (`positionOnly`),
+// who may never have gone to an item that has ended or may have left it long ago; for anyone else, the Place of an
+// item that ended at most RECENT_CLASS_MINUTES ago.
 export function originOf(
-  person: Pick<GatheringPerson, 'chosenPlaceId' | 'locationPlaceId' | 'locationMissing'>,
+  person: Pick<GatheringPerson, 'chosenPlaceId' | 'locationPlaceId' | 'positionOnly'>,
   { start, previous }: Pick<FreeInterval, 'start' | 'previous'>,
   now: Date,
 ): PersonPart['origin'] {
@@ -234,14 +234,15 @@ export function originOf(
   }
   const placeId = previous?.placeId ?? null;
   const timetable = placeId === null ? null : { placeId, basis: 'timetable' as const };
-  if (start > now) {
+  // An item that ends at the minute asked still keeps them there.
+  if (start > now || (previous !== null && previous.end >= now)) {
     return timetable;
   }
   if (person.locationPlaceId !== null) {
     return { placeId: person.locationPlaceId, basis: 'location' };
   }
-  if (person.locationMissing === true) {
-    return timetable === null ? null : { ...timetable, assumed: true };
+  if (person.positionOnly === true) {
+    return null;
   }
   return previous !== null && minutesBetween(previous.end, now) <= RECENT_CLASS_MINUTES ? timetable : null;
 }

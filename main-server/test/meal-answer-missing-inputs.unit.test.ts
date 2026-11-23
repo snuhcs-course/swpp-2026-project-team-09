@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply, type LocationMissing, type MealInput } from '../src/assistant/dto/answer.dto.js';
@@ -14,42 +15,38 @@ import { at as atClock, free, item, person as gatheringOf, place, walks, window 
 import { ME, person, plain, strong } from './meal-answers.js';
 import { at, DATE, gatheringPerson, id, myDay, placeOf, plan, readWorld, restaurants } from './worked-example.js';
 
-// Without a location or a Timetable (P02-13, boards n13 and n15): where the asker sets out from without a location,
-// and what the answer says it assumed instead.
+// Without a location or a Timetable (P02-13, boards n13 and n15). Since P05 ticket 42 the asker of a meal without a
+// position sets out from where nobody knows: an item that has ended is never taken as where they are.
 
 beforeAll(() => readWorld());
 
-const missing = (intervals: Parameters<typeof gatheringOf>[1]): GatheringPerson => ({
+const mealAsker = (intervals: Parameters<typeof gatheringOf>[1]): GatheringPerson => ({
   ...gatheringOf('me', intervals),
-  locationMissing: true,
+  positionOnly: true,
 });
 
-describe('Where the asker sets out from without a location', () => {
+describe('Where the asker of a meal sets out from without a position', () => {
   const travel = walks(['A', 'P', 60]);
-  const originAt = (asker: GatheringPerson, now: string): object | null =>
-    gather([asker], [place('cafe', 'P')], { window, now: atClock(now) }, travel).fits[0]?.parts[0]?.origin ?? null;
+  const originAt = (who: GatheringPerson, now: string): object | null =>
+    gather([who], [place('cafe', 'P')], { window, now: atClock(now) }, travel).fits[0]?.parts[0]?.origin ?? null;
 
-  // Partitions: the previous item ended within 15 minutes, long before, or there is none; the mark or none.
-  it('is the Place of the previous Class however long ago it ended, marked assumed', () => {
-    const asker = missing([free('12:00', '14:30', item('09:00', '09:50', 'A'), null)]);
-
-    expect(originAt(asker, '12:40')).toEqual({ placeId: 'A', basis: 'timetable', assumed: true });
+  // Partitions: the previous item ended within 15 minutes, long before, or there is none; the asker or not.
+  it('is unknown however long ago the previous Class ended', () => {
+    expect(originAt(mealAsker([free('12:00', '14:30', item('09:00', '09:50', 'A'), null)]), '12:40')).toBeNull();
   });
 
-  it('is marked assumed when the Class ended within 15 minutes too', () => {
-    const asker = missing([free('12:00', '14:30', item('11:00', '11:59', 'A'), null)]);
-
-    expect(originAt(asker, '12:00')).toEqual({ placeId: 'A', basis: 'timetable', assumed: true });
+  it('is unknown when the Class ended within 15 minutes too', () => {
+    expect(originAt(mealAsker([free('12:00', '14:30', item('11:00', '11:59', 'A'), null)]), '12:00')).toBeNull();
   });
 
   it('is unknown with no previous item', () => {
-    expect(originAt(missing([free('12:00', '14:30', null, null)]), '12:00')).toBeNull();
+    expect(originAt(mealAsker([free('12:00', '14:30', null, null)]), '12:00')).toBeNull();
   });
 
-  it('is unknown after 15 minutes for a person whose location is not said to be missing', () => {
-    const asker = gatheringOf('me', [free('12:00', '14:30', item('11:00', '11:44', 'A'), null)]);
+  it('is unknown after 15 minutes for a person who is not the asker of a meal, as before', () => {
+    const someone = gatheringOf('me', [free('12:00', '14:30', item('11:00', '11:44', 'A'), null)]);
 
-    expect(originAt(asker, '12:00')).toBeNull();
+    expect(originAt(someone, '12:00')).toBeNull();
   });
 });
 
@@ -76,10 +73,7 @@ interface Asking {
 // The asker alone, asking at that time of the worked example's Tuesday.
 function answerFor({ clock, items, located, locationMissing, input = lunch(NO_BOUNDS) }: Asking): AnswerReply {
   const now = at(clock);
-  const asker: GatheringPerson = {
-    ...gatheringPerson(ME, items, located, now),
-    locationMissing: located === null && locationMissing !== null,
-  };
+  const asker: GatheringPerson = { ...gatheringPerson(ME, items, located, now), positionOnly: true };
   return mealAnswer({
     input,
     now,
@@ -98,26 +92,17 @@ const n13 = (): AnswerReply =>
 const at301 = (): AnswerReply =>
   answerFor({ clock: '12:30', items: myDay(), located: id('제1공학관'), locationMissing: null });
 
+// Board n13 assumed the Class's 301동; since P05 ticket 42 the asker without a position sets out from where nobody knows.
 describe('Board n13: no location permission, at 12:30, the Class in 301동 over at 11:50', () => {
-  it('sets out from 301동, its chip marked assumed', () => {
-    expect(n13().chips).toEqual([
-      { kind: 'origin', text: '301동에서', userId: null, mark: 'assumed' },
-      { kind: 'until', text: '13:00 수업까지', userId: null },
-    ]);
+  it('has no origin chip', () => {
+    expect(n13().chips).toEqual([{ kind: 'until', text: '13:00 수업까지', userId: null }]);
   });
 
-  it("says so in place of the first Plan's lines", () => {
-    expect(n13().plans[0]?.lines).toEqual([
-      [plain('위치를 몰라 직전 수업의')],
-      [strong('301동'), plain('에서 출발로 잡았어요')],
-    ]);
-  });
+  it('plans no way for the asker and says nothing of 301동 as where they set out from', () => {
+    const [first] = n13().plans;
 
-  it("keeps the candidates, their order, and the other Plans' lines", () => {
-    const [assumed, located] = [n13(), at301()];
-
-    expect(assumed.plans.map(({ id: key }) => key)).toEqual(located.plans.map(({ id: key }) => key));
-    expect(assumed.plans.slice(1).map(({ lines }) => lines)).toEqual(located.plans.slice(1).map(({ lines }) => lines));
+    expect(first?.parts[0]).toMatchObject({ origin: null, walkMinutes: null });
+    expect(first?.lines.flat().map(({ text }) => text)).not.toContain('에서 출발로 잡았어요');
   });
 
   it('offers 위치 켜기, which opens the explanation of the location, and no note', () => {
@@ -130,7 +115,7 @@ describe('Board n13: no location permission, at 12:30, the Class in 301동 over 
   it('offers nothing off campus, where the location is on', () => {
     const answer = answerFor({ clock: '12:30', items: myDay(), located: null, locationMissing: 'off-campus' });
 
-    expect(answer.chips[0]).toEqual({ kind: 'origin', text: '301동에서', userId: null, mark: 'assumed' });
+    expect(answer.chips.map(({ kind }) => kind)).not.toContain('origin');
     expect(answer).not.toHaveProperty('offers');
   });
 

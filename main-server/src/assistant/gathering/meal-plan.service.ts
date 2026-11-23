@@ -136,7 +136,7 @@ export class MealPlanService {
       id: userId,
       free: freeTimeOf(items, date, now),
       locationPlaceId: index === 0 ? this.placeIdAt(position) : locationPlaceOf(friends[index - 1]),
-      locationMissing: index === 0 && missing.locationMissing !== null,
+      ...(index === 0 ? { positionOnly: true as const } : {}),
       ...conditionsOf(input.people[index]?.constraints ?? [], date),
     }));
     if (askerPerson === undefined) {
