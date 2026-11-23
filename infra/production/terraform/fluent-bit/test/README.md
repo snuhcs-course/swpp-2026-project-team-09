@@ -32,16 +32,16 @@ From this folder (`infra/production/terraform/fluent-bit`), in one terminal:
 
    ```bash
    append() { printf '%s stdout F %s\n' "$(date -u +%Y-%m-%dT%H:%M:%S.000000000Z)" "$1" >>"$log"; }
-   append '{"level":"log","pid":1,"timestamp":1763884800000,"message":"A test info line, by hand","context":"Ticket06"}'
-   append '{"level":"warn","pid":1,"timestamp":1763884800000,"message":"A test warning, by hand","context":"Ticket06"}'
-   append '{"level":"error","pid":1,"timestamp":1763884800000,"message":"A test error, by hand","context":"Ticket06","stack":"Error: a test error\n    at Ticket06 (by-hand.js:1:1)"}'
+   append '{"level":"log","pid":1,"timestamp":1795420800000,"message":"A test info line, by hand","context":"Ticket06"}'
+   append '{"level":"warn","pid":1,"timestamp":1795420800000,"message":"A test warning, by hand","context":"Ticket06"}'
+   append '{"level":"error","pid":1,"timestamp":1795420800000,"message":"A test error, by hand","context":"Ticket06","stack":"Error: a test error\n    at Ticket06 (by-hand.js:1:1)"}'
    append 'A line that is not JSON, by hand'
    ```
 
-   Within a few seconds the channel gets one post, or two, with a line for the warning and one for the error. The info line and the line that is not JSON are not posted. Each line reads like:
+   Within a few seconds the channel gets one post, or two, with a line for the warning and one for the error. The info line and the line that is not JSON are not posted. Each line reads like this, with the time the line was written:
 
    ```text
-   ["timestamp": 1763884800.000000000, {"server"=>"main-server", "level"=>"warn", "context"=>"Ticket06", "message"=>"A test warning, by hand"}]
+   ["timestamp": 1795420800.000000000, {"server"=>"main-server", "level"=>"warn", "context"=>"Ticket06", "message"=>"A test warning, by hand"}]
    ```
 
    The stack's line breaks show as `\x0a`, and any character outside ASCII as `\x..` bytes.
@@ -50,7 +50,7 @@ From this folder (`infra/production/terraform/fluent-bit`), in one terminal:
 
    ```bash
    sleep 65
-   for i in $(seq 30); do append '{"level":"warn","pid":1,"timestamp":1763884800000,"message":"A burst warning, by hand","context":"Ticket06"}'; done
+   for i in $(seq 30); do append '{"level":"warn","pid":1,"timestamp":1795420800000,"message":"A burst warning, by hand","context":"Ticket06"}'; done
    ```
 
    The channel gets 10 of them. Each flush is one post with a line per record, so the 10 most likely come as a single post of 10 lines, not as 10 posts.

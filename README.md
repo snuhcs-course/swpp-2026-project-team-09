@@ -795,7 +795,8 @@ node --test 'scripts/test/*.test.ts'
 ```
 
 The Release script and the Dev Server's scripts have Bats tests, which CI runs: `bats --recursive .github/release` and
-`bats --recursive infra/deploy`.
+`bats --recursive infra/deploy`. So does Production's Fluent Bit pipeline, whose test starts Fluent Bit in Docker:
+`bats --recursive infra/production/terraform/fluent-bit`.
 
 Not run by `pnpm test` or CI:
 

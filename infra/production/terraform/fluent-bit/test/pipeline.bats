@@ -29,12 +29,15 @@ teardown() {
   docker rm --force "$container" >/dev/null 2>&1 || true
 }
 
-# Starts Fluent Bit on the pipeline with stdout in place of Slack's output, and waits until it watches the main
-# server's file.
-start_fluent_bit() {
+# The configuration as the Helm release puts it together, the chart's [SERVICE] first, then the given output files.
+assemble() {
   cat "$BATS_TEST_DIRNAME/service.conf" "$pipeline/inputs.conf" "$pipeline/filters.conf" \
-    "$pipeline/server-filters.conf" >"$config/fluent-bit.conf"
-  cat >>"$config/fluent-bit.conf" <<'EOF'
+    "$pipeline/server-filters.conf" "$@" >"$config/fluent-bit.conf"
+}
+
+# Starts Fluent Bit and waits until it watches the main server's file.
+start_fluent_bit() {
+  cat >"$BATS_TEST_TMPDIR/stdout.conf" <<'EOF'
 
 [OUTPUT]
     Name           stdout
@@ -42,6 +45,7 @@ start_fluent_bit() {
     Format         json_lines
     json_date_key  false
 EOF
+  assemble "$BATS_TEST_TMPDIR/stdout.conf"
   docker run --detach --name "$container" --volume "$config:/config:ro" \
     --volume "$BATS_TEST_TMPDIR/log:/var/log:ro" "$IMAGE" --config /config/fluent-bit.conf >/dev/null
   eventually watches "$MAIN_SERVER_FILE"
@@ -79,11 +83,18 @@ posted() {
   records | jq -r .message | grep -Fxq "$1"
 }
 
-# A log entry in ConsoleLogger's JSON shape: level message [context [stack]].
+posted_count() {
+  records | jq -s length
+}
+
+posted_at_least() {
+  [ "$(posted_count)" -ge "$1" ]
+}
+
+# A log entry in ConsoleLogger's JSON shape: level message context [stack].
 entry() {
-  jq -cn --arg level "$1" --arg message "$2" --arg context "${3-}" --arg stack "${4-}" \
-    '{level: $level, pid: 1, timestamp: 1763884800123, message: $message}
-      + if $context == "" then {} else {context: $context} end
+  jq -cn --arg level "$1" --arg message "$2" --arg context "$3" --arg stack "${4-}" \
+    '{level: $level, pid: 1, timestamp: 1795420800123, message: $message, context: $context}
       + if $stack == "" then {} else {stack: $stack} end'
 }
 
@@ -141,23 +152,30 @@ append() {
   [ "$(records | jq -r 'select(.level == "error") | .stack')" = "$STACK" ]
 }
 
-@test "a burst of 30 warnings within a minute lets 10 through" {
+@test "a burst of 30 warnings within a minute lets 10 through, and a minute later 10 more" {
   local line _
   line=$(entry warn 'A push to a User was not sent: timeout' PushService)
   start_fluent_bit
   for _ in $(seq 30); do append "$line"; done
 
-  count() { [ "$(records | jq -s length)" -ge 10 ]; }
-  eventually count
+  eventually posted_at_least 10
   # Three more flushes, for any record that the throttle let through after the tenth.
   sleep 3
-  [ "$(records | jq -s length)" -eq 10 ]
+  [ "$(posted_count)" -eq 10 ]
+
+  # The draft's window of five minutes would let none of this second burst through.
+  sleep 60
+  for _ in $(seq 30); do append "$line"; done
+  eventually posted_at_least 20
+  sleep 3
+  [ "$(posted_count)" -eq 20 ]
 }
 
 @test "the whole pipeline, Slack output included, passes Fluent Bit's configuration check with a stand-in webhook" {
-  cat "$BATS_TEST_DIRNAME/service.conf" "$pipeline/inputs.conf" "$pipeline/filters.conf" \
-    "$pipeline/server-filters.conf" "$pipeline/outputs.conf" >"$config/fluent-bit.conf"
+  assemble "$pipeline/outputs.conf"
 
+  # --dry-run checks every section's property names, not the plugins' own checks: a throttle Window that Fluent Bit
+  # replaces with its default, or a webhook that is not https, still passes.
   run docker run --rm --env SLACK_WEBHOOK_MAIN_SERVER=https://hooks.slack.invalid/stand-in \
     --volume "$config:/config:ro" "$IMAGE" --dry-run --config /config/fluent-bit.conf
   [ "$status" -eq 0 ]

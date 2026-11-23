@@ -180,7 +180,8 @@ members' IAM users stay out of it, so that no password or key lands in the state
 
 A team member applies it from a laptop, signed in to the account as their own IAM user. The state lives in the
 account's state bucket, and the lock file that Terraform writes beside it stops two applies at once. The `terraform`
-CI job runs `terraform fmt -check` and `terraform validate` on every push, without a backend or AWS credentials.
+CI job runs `terraform fmt -check` and `terraform validate` on every push, without a backend or AWS credentials, and
+the Fluent Bit pipeline's test (`fluent-bit/test/pipeline.bats`).
 
 | In `terraform/`          | What it is                                                                         |
 | ------------------------ | ---------------------------------------------------------------------------------- |
@@ -1246,9 +1247,9 @@ The database's final snapshot, the parameters, the state bucket, the hosted zone
 
 ## What CI does not cover
 
-CI checks Terraform's format and validity (the `terraform` job), renders all six Kustomize targets (the `manifests`
-job), runs the admin site's tests, its health routes among them, and runs the servers' and the flows' tests. What
-reaches AWS is checked by hand instead, in
+CI checks Terraform's format and validity and runs the Fluent Bit pipeline in Docker (the `terraform` job), renders
+all six Kustomize targets (the `manifests` job), runs the admin site's tests, its health routes among them, and runs
+the servers' and the flows' tests. What reaches AWS is checked by hand instead, in
 [ticket 08 of A01](../../.scratch/iteration-2/A01-aws-production/issues/08-first-setup-and-checks-by-hand.md):
 
 - The first setup, and the first Release's OIDC token against the deploy role's trust.
