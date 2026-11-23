@@ -12,8 +12,6 @@ import { writeTestLine } from './actions';
 
 const LEVELS = ['info', 'warn', 'error'] as const;
 
-// A button for each level; after a press, that the line was sent and where each level goes, or the main server's
-// refusal.
 export function LogTestButtons(): ReactElement {
   const [answer, writeAction, pending] = useActionState(writeTestLine, null);
 

@@ -11,9 +11,8 @@ import { settingsSchema } from './settings.js';
 // The same in both formats (README.md: Logging): no code logs at debug or verbose.
 const LOG_LEVELS: LogLevel[] = ['log', 'warn', 'error', 'fatal'];
 
-// The server's logger, chosen from LOG_FORMAT before the Nest application is created, so that a start's first lines are
-// already in that format, the error of a start refused for its settings among them. An invalid value throws, which
-// refuses the start. The tests start the application without it and keep NestJS's text.
+// Chosen from LOG_FORMAT before the Nest application is created, so that a start's first lines are already in that
+// format.
 export function createLogger(env: Record<string, string | undefined>): ConsoleLogger {
   const { LOG_FORMAT } = z.object({ LOG_FORMAT: settingsSchema.shape.LOG_FORMAT }).parse(env);
   return new ConsoleLogger({ json: LOG_FORMAT === 'json', logLevels: LOG_LEVELS });

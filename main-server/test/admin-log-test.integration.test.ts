@@ -8,9 +8,14 @@ import { INestApplication, Logger } from '@nestjs/common';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
-import { z } from 'zod';
 import { captureLogs } from './assistant.js';
-import { removedAdministratorToken, signIn, signInAsAdministrator, withAccessToken } from './sign-in.js';
+import {
+  removedAdministratorToken,
+  signIn,
+  signInAsAdministrator,
+  signInAsNewAdministrator,
+  withAccessToken,
+} from './sign-in.js';
 import { startApp } from './start-app.js';
 
 let app: INestApplication<Server>;
@@ -42,12 +47,6 @@ function postLogTest(accessToken: string | undefined, body?: object): request.Te
   return body === undefined ? call : call.send(body);
 }
 
-async function administrator(): Promise<{ id: string; accessToken: string }> {
-  const { accessToken } = await signInAsAdministrator(app);
-  const me = await request(app.getHttpServer()).get('/admin/auth/me').auth(accessToken, { type: 'bearer' });
-  return { id: z.object({ id: z.string() }).parse(me.body).id, accessToken };
-}
-
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -58,7 +57,7 @@ describe("An Administrator's test log line", () => {
     ['warn', 'warn', 'A test warning from the admin site'],
     ['error', 'error', 'A test error from the admin site'],
   ])('%s → 204, and exactly one line at %s naming the Administrator by ID', async (level, logged, text) => {
-    const { id, accessToken } = await administrator();
+    const { id, accessToken } = await signInAsNewAdministrator(app);
     const lines = captureLevels();
 
     const response = await postLogTest(accessToken, { level });
@@ -93,7 +92,7 @@ describe('A test log line refused', () => {
     ['no level', {}],
     ['no body', undefined],
   ])('with %s → 400, and nothing is logged', async (_case, body) => {
-    const { accessToken } = await administrator();
+    const { accessToken } = await signInAsAdministrator(app);
     const logs = captureLogs();
 
     const response = await postLogTest(accessToken, body);

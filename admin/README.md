@@ -4,8 +4,8 @@ The SNU Now admin site, built with Next.js 16, the App Router and Tailwind CSS. 
 review, correct, create and publish Global Events, check the Places on a map, see whether each Source is collected, make
 and end friendships between Users, manage the Administrators, change the global settings and write a test log line. The
 site keeps no data of its own: every page and every change goes to the main server's administrator routes
-(`/admin/...`, see the main server's README, sections Administrators, Global settings, Global Events, Places and
-Friends).
+(`/admin/...`, see the main server's README, sections Administrators, Global settings, Global Events, Places, Friends
+and Logging).
 
 ## Run it
 

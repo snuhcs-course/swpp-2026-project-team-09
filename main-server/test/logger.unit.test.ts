@@ -90,7 +90,8 @@ describe('createLogger', () => {
     expect(lines.join('\n')).not.toMatch(/A line at (?:debug|verbose)/u);
   });
 
-  it.each(['JSON', 'pretty', ''])('%j → refused, naming LOG_FORMAT', (value) => {
-    expect(() => createLogger({ LOG_FORMAT: value })).toThrow('LOG_FORMAT');
+  // The other invalid values: test/settings-log-format.unit.test.ts.
+  it('JSON → refused, naming LOG_FORMAT', () => {
+    expect(() => createLogger({ LOG_FORMAT: 'JSON' })).toThrow('LOG_FORMAT');
   });
 });

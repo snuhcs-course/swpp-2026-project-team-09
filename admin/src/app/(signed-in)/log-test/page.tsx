@@ -10,8 +10,6 @@ import { asAdministrator } from '@/session';
 
 import { LogTestButtons } from './log-test-buttons';
 
-// Writes a harmless line at a chosen level in the main server's log, to check that warnings and errors reach the Slack
-// channel (main-server README: Administrators, Logging).
 export default async function LogTestPage(): Promise<ReactElement> {
   // The page reads nothing from the main server, but a person without a session still goes to sign in first.
   await asAdministrator('/log-test', () => Promise.resolve());
