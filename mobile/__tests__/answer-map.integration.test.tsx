@@ -221,16 +221,16 @@ const FIRST_PLAN_POINTS = distinct([
   { latitude: 37.45942, longitude: 126.94989 },
 ]);
 
-// The test's phone has no status bar: the top's 52 from the top and the round "←"'s 44 (the 2026-11-22 redesign; the
-// test's answer has no time bar), the 8 of ticket 08's area, and the room
-// the marks need above the top-most point, 24 (자하연식당 2층's label is at its left); below, the card, the 8 of ticket
+// The test's phone has no status bar, and nothing stands over the map's top: the plain ground lays out no time bar, and
+// the way back is in the card (P04 ticket 52). So the top is the 8 of ticket 08's area and the room the marks need
+// above the top-most point, 24 (자하연식당 2층's label is at its left); below, the card, the 8 of ticket
 // 08's area, and the room the marks need under the bottom-most point: for the first Plan 66, half the symbol box and
 // the gap and the two lines of the pick's label under 302동, 18 + 2 + 46; 64 at each side.
 // A Plan's card at rest is docked (P04 ticket 04), the bottom sheet on the screen's bottom edge (P04 ticket 52): it covers
 // its own height.
 
 function padding(cardHeight: number): object {
-  return { top: 52 + 44 + 8 + 24, right: 64, bottom: cardHeight + 8 + 66, left: 64 };
+  return { top: 8 + 24, right: 64, bottom: cardHeight + 8 + 66, left: 64 };
 }
 
 // The bottom of a fit's padding, its other sides checked to be those of `padding`.
