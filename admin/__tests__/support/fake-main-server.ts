@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type {
@@ -20,7 +21,7 @@ import type {
 } from '@/main-server';
 import type * as MainServerModule from '@/main-server';
 
-import { SettingsRoutes } from './fake-settings-routes';
+import { LogTestRoutes } from './fake-log-test-routes';
 import { FakeUsers } from './fake-users';
 import {
   byStart,
@@ -41,7 +42,7 @@ interface Account extends Administrator {
 }
 
 // Behaves like the main server's administrator routes, and records each request as "METHOD /path".
-class FakeMainServer extends SettingsRoutes implements MainServer {
+class FakeMainServer extends LogTestRoutes implements MainServer {
   requests: string[] = [];
   private accounts: Account[] = [];
   private issued = 0;
@@ -63,6 +64,7 @@ class FakeMainServer extends SettingsRoutes implements MainServer {
     this.unsettled = [];
     this.sameEvent.reset();
     this.users.reset();
+    this.resetTestLines();
   }
 
   hasCollectionStatuses(...statuses: CollectionStatus[]): void {

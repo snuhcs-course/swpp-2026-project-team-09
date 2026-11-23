@@ -6,6 +6,7 @@
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import 'server-only';
@@ -305,6 +306,8 @@ export const mainServer = {
   // A refused value gets 400 with the reason as its message.
   saveSetting: (token: string, name: string, value: string): Promise<{ appliesAt: string }> =>
     request('PUT', `/admin/settings/${encodeURIComponent(name)}`, token, { value }),
+  // One test line at the level in the main server's log; a level other than info, warn and error gets 400.
+  writeTestLine: (token: string, level: string): Promise<void> => request('POST', '/admin/log-test', token, { level }),
 };
 
 export type MainServer = typeof mainServer;

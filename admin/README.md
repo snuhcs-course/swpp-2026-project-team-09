@@ -2,9 +2,10 @@
 
 The SNU Now admin site, built with Next.js 16, the App Router and Tailwind CSS. Administrators sign in with Google,
 review, correct, create and publish Global Events, check the Places on a map, see whether each Source is collected, make
-and end friendships between Users, manage the Administrators and change the global settings. The site keeps no data of
-its own: every page and every change goes to the main server's administrator routes (`/admin/...`, see the main
-server's README, sections Administrators, Global settings, Global Events, Places and Friends).
+and end friendships between Users, manage the Administrators, change the global settings and write a test log line. The
+site keeps no data of its own: every page and every change goes to the main server's administrator routes
+(`/admin/...`, see the main server's README, sections Administrators, Global settings, Global Events, Places and
+Friends).
 
 ## Run it
 
@@ -102,6 +103,7 @@ controls and tables so that every page looks alike.
 | `/collection`     | Collection status: each Source with its last success and last failure, a broken Source marked, and below them the posts that are not settled.                                                                                                                                                                                       |
 | `/administrators` | Lists the Administrators with whether each has signed in; registers an address; removes one, the signed-in one included, after a confirmation. The main server keeps the last one and the page says so.                                                                                                                             |
 | `/settings`       | Settings: every global setting the main server registers, with its value, an input for its type and a save after a confirmation; `llm.key` is a select of the keys' names with their providers. A saved row shows "applies at HH:MM:00" (Seoul), then "applied"; a refused save shows the reason. Below, the history, newest first. |
+| `/log-test`       | Log test: info, warn and error buttons, each writing one test line at its level in the main server's log (main-server README: Logging). A press says the line was sent and where each level goes; a refusal shows the main server's message.                                                                                        |
 
 ## Global Events
 
@@ -247,6 +249,7 @@ src/app/(signed-in)/users/        the Users page, and in [id]/ a User's page wit
 src/app/(signed-in)/queue/        the same-event queue, with its Server Action
 src/app/(signed-in)/collection/   the Collection status page
 src/app/(signed-in)/settings/     the Settings page, a setting's row (setting-row.tsx) and its Server Action
+src/app/(signed-in)/log-test/     the Log test page, its buttons (log-test-buttons.tsx) and its Server Action
 src/app/health/          /health/live and /health/ready, answered without a session; ready while the main server is live
 src/app/globals.css      the palette, the font and the shared classes
 src/main-server.ts       the only way the site calls the main server; server-only
