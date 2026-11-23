@@ -1,4 +1,4 @@
-# 55: Three of the frame's tests follow the answer screen as it is after ticket 52
+# 56: Three of the frame's tests follow the answer screen as it is after ticket 52
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
