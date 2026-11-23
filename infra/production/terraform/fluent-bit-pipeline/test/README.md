@@ -4,7 +4,7 @@
 
 **The webhook URL is a secret.** It goes in through `read -rs` and an environment variable only: never on a command line, in a file, in chat or in a screenshot. Fluent Bit's log names Slack's host and port, never the URL's path.
 
-From this folder (`infra/production/terraform/fluent-bit`), in one terminal:
+From this folder (`infra/production/terraform/fluent-bit-pipeline`), in one terminal:
 
 1. Put the pipeline together as the Helm release does, with a log file named like a main-server pod's:
 

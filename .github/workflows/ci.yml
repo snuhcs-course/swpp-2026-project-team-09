@@ -273,9 +273,9 @@ jobs:
         if: steps.changes.outputs.run != 'false'
       - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends bats shellcheck jq
         if: steps.changes.outputs.run != 'false'
-      - run: find fluent-bit \( -name '*.sh' -o -name '*.bats' \) -print0 | xargs -0 shellcheck
+      - run: find fluent-bit-pipeline \( -name '*.sh' -o -name '*.bats' \) -print0 | xargs -0 shellcheck
         if: steps.changes.outputs.run != 'false'
-      - run: bats --recursive fluent-bit
+      - run: bats --recursive fluent-bit-pipeline
         if: steps.changes.outputs.run != 'false'
 
   # Production's manifests: each target renders with stand-ins for the secrets that the Release workflow writes, and

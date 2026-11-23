@@ -4,13 +4,14 @@
 # 2026-11-23  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
-# Fluent Bit posts the servers' warnings and errors to Slack, with the pipeline in fluent-bit/. Reading the nodes' logs
-# takes a hostPath volume, which snunow's Pod Security baseline forbids, so it has a namespace of its own, without that
-# label.
+# Fluent Bit posts the servers' warnings and errors to Slack. Reading the nodes' logs takes a hostPath volume, which
+# snunow's Pod Security baseline forbids, so it has a namespace of its own, without that label.
 
 locals {
   # The pipeline's test runs this tag too.
   fluent_bit_image_tag = "5.1.5"
+  # Not named after the chart: Helm loads a local folder named like the chart before it looks in the repository.
+  fluent_bit_pipeline = "${path.module}/fluent-bit-pipeline"
 }
 
 resource "kubernetes_namespace_v1" "logging" {
@@ -59,9 +60,9 @@ resource "helm_release" "fluent_bit" {
     # The chart's default service section stays: it loads the parsers file with the json parser, and serves the
     # health check behind the probes.
     config = {
-      inputs  = file("${path.module}/fluent-bit/inputs.conf")
-      filters = join("\n", [file("${path.module}/fluent-bit/filters.conf"), file("${path.module}/fluent-bit/server-filters.conf")])
-      outputs = file("${path.module}/fluent-bit/outputs.conf")
+      inputs  = file("${local.fluent_bit_pipeline}/inputs.conf")
+      filters = join("\n", [file("${local.fluent_bit_pipeline}/filters.conf"), file("${local.fluent_bit_pipeline}/server-filters.conf")])
+      outputs = file("${local.fluent_bit_pipeline}/outputs.conf")
     }
   })]
 

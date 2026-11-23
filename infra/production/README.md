@@ -190,7 +190,7 @@ password or key lands in the state.
 A team member applies it from a laptop, signed in to the account as their own IAM user. The state lives in the
 account's state bucket, and the lock file that Terraform writes beside it stops two applies at once. The `terraform`
 CI job runs `terraform fmt -check` and `terraform validate` on every push, without a backend or AWS credentials, and
-the Fluent Bit pipeline's test (`fluent-bit/test/pipeline.bats`).
+the Fluent Bit pipeline's test (`fluent-bit-pipeline/test/pipeline.bats`).
 
 | In `terraform/`          | What it is                                                                         |
 | ------------------------ | ---------------------------------------------------------------------------------- |
@@ -198,7 +198,7 @@ the Fluent Bit pipeline's test (`fluent-bit/test/pipeline.bats`).
 | `account.tfvars.example` | Every variable, with placeholders                                                  |
 | `account-a.tfvars`       | Account A's variables file, which git ignores ([below](#the-variables-file))       |
 | `.terraform.lock.hcl`    | The providers' versions and checksums, for macOS, Linux, and Windows               |
-| `fluent-bit/`            | Fluent Bit's pipeline, which `fluent_bit.tf` reads, and its test                   |
+| `fluent-bit-pipeline/`   | Fluent Bit's pipeline, which `fluent_bit.tf` reads, and its test                   |
 
 The commands below run in `infra/production/terraform`, signed in to account A.
 
@@ -426,8 +426,8 @@ reading the nodes' logs takes a hostPath volume, which `snunow`'s Pod Security b
 Security label and no NetworkPolicy, and the Release workflow's deploy role has no rights there. Fluent Bit mounts
 `/var/log` read-only, and has no RBAC and no service account token, since it never calls the Kubernetes API.
 
-**The pipeline** is in `terraform/fluent-bit/`, in Fluent Bit's classic format, and the Helm release reads those files.
-For each record it:
+**The pipeline** is in `terraform/fluent-bit-pipeline/`, in Fluent Bit's classic format, and the Helm release reads
+those files. For each record it:
 
 1. reads the server's container log files (the main server's pods' only, in `snunow`). A file already there when
    Fluent Bit starts is read from its end, so a restart posts nothing twice; a new pod's file is found within a minute
@@ -441,8 +441,8 @@ For each record it:
    fails after 3 retries is dropped.
 
 `inputs.conf`, `server-filters.conf` and `outputs.conf` hold a part per server, and `filters.conf` the part every
-server shares. `fluent-bit/test/pipeline.bats` runs them in the same Fluent Bit image with stdout in place of Slack, in
-CI's `terraform` job, and `fluent-bit/test/README.md` runs them once against the real webhook.
+server shares. `fluent-bit-pipeline/test/pipeline.bats` runs them in the same Fluent Bit image with stdout in place of
+Slack, in CI's `terraform` job, and `fluent-bit-pipeline/test/README.md` runs them once against the real webhook.
 
 **The webhooks** are in the Secret `slack-webhooks` in `logging`, one key per server: `main-server` now. A person
 makes it by hand, reading the value with `read -rs`, so that it stays out of Terraform's state ([First
@@ -480,7 +480,7 @@ The worker and socket servers have channels of their own. To post a server's war
    `.env.example` and the root README's table, and set it to `json` in the server's manifest. The worker and socket
    servers' settings unit tests compare the whole parsed `.env.example`, so they need the new key.
 2. **The pipeline.** Add an input to `inputs.conf`, a `server` field and a throttle to `server-filters.conf`, and an
-   output to `outputs.conf`, each matching the server's tag, and a case to `fluent-bit/test/pipeline.bats`.
+   output to `outputs.conf`, each matching the server's tag, and a case to `fluent-bit-pipeline/test/pipeline.bats`.
 3. **The webhook.** Add a webhook for the server's channel to the same Slack app, and its key to `slack-webhooks`
    before the apply, since a missing key keeps every Fluent Bit pod from starting. The Secret's commands in
    [First setup](#first-setup) and [Moving to account B](#moving-to-account-b) gain the key too.
