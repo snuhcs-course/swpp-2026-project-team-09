@@ -142,7 +142,7 @@ Production runs everything below.
 - **SNU Now AI**: one screen, the answer frame over the map: what the User asks from the map's input bar stands as a
   pill at the top, and the answer as one card at the bottom and as marks and routes on the map. It answers about
   today's menus and the shuttle, finds Global Events and recruiting parties, understands the campus's short names
-  (학관, 중도), and turns one sentence into a Proposal that the User makes or edits. 50 messages per User a day; the
+  (학관, 중도), and turns one sentence into a Proposal that the User makes or edits. 500 messages per User a day; the
   conversation stays on the phone. It calls Claude Haiku 5.5 through the Anthropic API or OpenRouter, by the key an
   Administrator chooses. Added in Iteration 3 and kept: searches with a time window that leave out parties the User
   cannot enter, joining before recruiting, 공강 파티, 관정도서관 booking, answers about the tutorial, and 시설
@@ -519,7 +519,7 @@ file's.
 | `OPENROUTER_API_KEY`                  | The OpenRouter key SNU Now AI calls its model with, the key `llm.key` names `default`. Empty, the Assistant answers it is unavailable.     |
 | `LLM_KEYS`                            | Optional: the AI's other keys by name, a JSON object such as `{"anthropic":"sk-ant-…"}`; `{}` unless set. `llm.key` chooses among them.    |
 | `MODEL_CACHE`                         | Optional: what an Anthropic key's requests cache, `breakpoints`, `auto` or `off`; `breakpoints` unless set.                                |
-| `ASSISTANT_DAILY_MESSAGES`            | Optional: the messages a User may send in a day in Korea; 50 unless set.                                                                   |
+| `ASSISTANT_DAILY_MESSAGES`            | Optional: the messages a User may send in a day in Korea; 500 unless set.                                                                  |
 | `ASSISTANT_MAX_STEPS`                 | Optional: the model calls per message; 8 unless set.                                                                                       |
 | `ASSISTANT_TIMEOUT_MS`                | Optional: the milliseconds over all of a message's model calls; 30000 unless set.                                                          |
 | `ASSISTANT_MAX_OUTPUT_TOKENS`         | Optional: the tokens the model may write in each call; 4000 unless set.                                                                    |
