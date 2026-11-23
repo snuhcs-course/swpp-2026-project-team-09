@@ -33,6 +33,7 @@ There are two causes:
   - an older reply's place alone ("301동");
   - "지금 · 내 위치" from the User's position;
   - nothing when the start is not known, and then no line is drawn to the place.
+- **The walking a choice adds, with the start not known,** is the way on to the next fixed thing, which every choice adds all the same; its tags and the chosen place's label say it ("15분", "걸음 15분"), and the list's rows read the same number. Only with neither a start nor a next thing does a tag say its time.
 - **Tests run at the usual font scale of 1**, set in the Jest setup; the React Native preset's window says 2.
 
 ## Acceptance criteria

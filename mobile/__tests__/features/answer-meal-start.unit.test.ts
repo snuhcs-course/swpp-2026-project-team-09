@@ -74,3 +74,36 @@ describe('where a face says it sets out from', () => {
     expect(after === undefined ? null : startOf(after)).toEqual({ kind: 'place', place: '301동' });
   });
 });
+
+// The answer with the User's way there not known, and with or without the way on to the next Class.
+function noWayThere(answer: AnswerReply, withNext: boolean): AnswerReply {
+  const plans = answer.plans.map((plan) => ({
+    ...plan,
+    parts: plan.parts.map((part) => (part.me ? Object.assign({}, part, { walkMinutes: null }) : part)),
+    scene: withNext ? plan.scene : { ...plan.scene, routes: plan.scene.routes.filter(({ role }) => role !== 'next') },
+  }));
+  return { ...answer, plans };
+}
+
+// Partitions, the start not known: a next Class after the meal, whose way on every choice adds; no next Class either.
+describe('the walking a choice adds with the start not known', () => {
+  const unknown = answerAt(AFTER, null);
+
+  it("is the way on to the next Class, on the tags and the chosen place's label", () => {
+    const answer = noWayThere(unknown, true);
+    const index = answer.plans.findIndex(({ place }) => place.label === PICK);
+    const drawing = drawingOf(answer, index);
+
+    expect(seen(drawing, 'answer:pick').label).toMatchObject({ note: '11:00 · 걸음 17분' });
+    expect(seen(drawing, 'answer:candidate:3식당').label).toMatchObject({ title: '14분' });
+  });
+
+  it('is not said with no next Class either: a tag says its time', () => {
+    const answer = noWayThere(unknown, false);
+    const index = answer.plans.findIndex(({ place }) => place.label === PICK);
+    const drawing = drawingOf(answer, index);
+
+    expect(seen(drawing, 'answer:pick').label?.note).toBe('11:00');
+    expect(seen(drawing, 'answer:candidate:3식당').label?.title).toMatch(/^\d{2}:\d{2}$/u);
+  });
+});

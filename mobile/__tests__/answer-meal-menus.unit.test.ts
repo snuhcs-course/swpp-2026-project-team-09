@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MenuLine, RestaurantMenus } from '@/api/menu-types';
@@ -258,7 +259,7 @@ describe('the crowded mock with a Friend', () => {
   });
 });
 
-// Partitions: no starting place, so no walking for any Plan (P05 ticket 40's order); walking known.
+// Partitions: no starting place and no way on, so no walking for any Plan (P05 ticket 40's order); walking known.
 describe('the list without walking', () => {
   // The server's order, which is not the order of arrival: the third candidate first.
   const plans = [2, 0, 1].flatMap((at) => MEAL_ANSWER_MENUS.plans[at] ?? []);
@@ -267,6 +268,7 @@ describe('the list without walking', () => {
     plans: plans.map((plan) => ({
       ...plan,
       parts: plan.parts.map((part) => (part.me ? { ...part, origin: null, walkMinutes: null } : part)),
+      scene: { ...plan.scene, routes: plan.scene.routes.filter(({ role }) => role !== 'next') },
     })),
   };
 
