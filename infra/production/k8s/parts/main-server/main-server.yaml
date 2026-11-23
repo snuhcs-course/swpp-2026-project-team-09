@@ -6,6 +6,7 @@
 # 2026-11-01  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-23  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 apiVersion: apps/v1
@@ -45,6 +46,9 @@ spec:
           env:
             - name: PORT
               value: '3000'
+            # One JSON line per log entry, which Fluent Bit reads for the Slack channel (main-server README: Logging).
+            - name: LOG_FORMAT
+              value: json
             - name: DATABASE_URL
               valueFrom: { secretKeyRef: { name: secrets, key: MAIN_DATABASE_URL } }
             - name: REDIS_HOST

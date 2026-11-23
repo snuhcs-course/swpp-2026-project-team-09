@@ -3,6 +3,7 @@
  *
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // The main-server client through mainServer's calls, fetch stubbed: its setting, each call's headers and body, and
@@ -108,6 +109,21 @@ describe('The unsettled posts', () => {
       url: `${ADDRESS}/admin/global-events/unsettled-posts`,
       method: 'GET',
       headers: { authorization: `Bearer ${TOKEN}` },
+    });
+  });
+});
+
+describe('A test log line', () => {
+  it('posts its level to its own path, with the token, and answers nothing on 204', async () => {
+    answer(new Response(null, { status: 204 }));
+
+    await expect(mainServer.writeTestLine(TOKEN, 'warn')).resolves.toBeUndefined();
+
+    expect(sent()).toMatchObject({
+      url: `${ADDRESS}/admin/log-test`,
+      method: 'POST',
+      headers: { authorization: `Bearer ${TOKEN}`, 'content-type': 'application/json' },
+      body: { level: 'warn' },
     });
   });
 });

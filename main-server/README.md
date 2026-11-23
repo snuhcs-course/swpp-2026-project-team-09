@@ -494,6 +494,19 @@ Registering and removing:
   404 and an id that is not a UUID 400. Removing the last one gets 409, also when two Administrators remove each other
   at the same moment.
 
+Writing a test log line, for the admin site's Log test page:
+
+- `POST /admin/log-test` with `{ "level": "info" | "warn" | "error" }` writes exactly one line at that level through
+  `LogTestController`'s logger (info through `log`) and answers 204. The Administrator is named by ID, never by email
+  address:
+  - `A test info line from the admin site, by Administrator <id>`
+  - `A test warning from the admin site, by Administrator <id>`
+  - `A test error from the admin site, by Administrator <id>`
+- Another level, or no body, gets 400 and nothing is logged.
+- It changes nothing else, so it needs no Idempotency-Key: a repeat writes one more test line. In Production the warn
+  and error lines reach the Slack channel and the info line does not ([Logging](#logging)), which is how the page checks
+  the whole path. The load balancer refuses `/admin/*`, so there only the admin site reaches it.
+
 Mark an administrative route, or a whole controller, with `@AdministratorOnly()` from
 `src/common/administrator-only.decorator.ts`, and put its path under `/admin`:
 
@@ -3225,6 +3238,7 @@ src/
 ├── app.module.ts                    root module, imports every feature module
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
+│   ├── logger.ts                    the logger LOG_FORMAT chooses, text or JSON lines (Logging)
 │   ├── seed-directory.ts            where the seed files are, and how one is read
 │   ├── geometry.ts                  a position, and whether a ring holds it or how far it is from it
 │   ├── campus-boundary.ts           the Campus Boundary, read from its seed file
@@ -3255,6 +3269,7 @@ src/
 │                                    sees whom
 ├── lobby/                           a feature: what the app needs when it starts
 ├── administrators/                  a feature: the Administrators, who register and remove each other
+├── log-test/                        a feature: an Administrator's test log line at a chosen level
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
 ├── global-settings/                 the global settings an Administrator changes, their registry, and each pod's
@@ -3403,6 +3418,38 @@ create(@Body({ schema: createPartySchema }) body: CreatePartyDto, @CurrentUser()
 - In a test, send the key with `.set('Idempotency-Key', randomUUID())`, as `test/idempotency.integration.test.ts` does.
 
 The results are kept in Redis by `src/common/redis-idempotency.store.ts`.
+
+## Logging
+
+Each class logs through its own `new Logger(ClassName.name)`; server code has no `console.log`. Locally and in the
+tests the server prints NestJS's coloured text. With `LOG_FORMAT=json`, as in Production, each entry is one JSON line
+holding `level`, `pid`, `timestamp`, `message`, `context`, and `stack` when the logger was given one; errors go to
+stderr and the rest to stdout. `src/common/logger.ts` chooses the logger from `LOG_FORMAT` before the application is
+created, so a start's first lines are already JSON, the error of a start refused for its settings among them. An
+invalid `LOG_FORMAT` refuses the start. The tests start the application without it and keep the text.
+
+In Production, warn, error and fatal lines are posted to the private Slack channel `#team9-main-server-error`, and info
+lines stay in the pod's log. The rules below decide what reaches the channel; the socket and worker servers follow them
+too.
+
+| Level | Call             | When                                                                                                                                                    | Posted to Slack |
+| ----- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| error | `logger.error()` | A person must look; it will not heal by itself: a whole step failed, recording a failure failed, data disagree                                          | Yes             |
+| warn  | `logger.warn()`  | One item failed and the server carries on with a fallback: Kakao, the AI, the library or a push did not answer, a Signal to another server was not sent | Yes             |
+| info  | `logger.log()`   | A notable normal event: the server started, a scheduled job began or ended with its counts, a setting turned a feature on or off                        | No              |
+
+- No debug or verbose: the server prints neither. Fatal counts as error.
+- A User's mistake (400, 401, 403, 404, 429) is not logged.
+- NestJS logs an unhandled 500 itself; do not log it a second time.
+- Log a failure once, where it is finally handled.
+- A loop logs no line per item, only one summary ("N of M").
+- A line says what failed, then a colon and the cause, as a full English sentence in [GLOSSARY](../GLOSSARY.md)
+  words, with IDs (User ID, Quest ID), such as `The push to User 3f2c… was not sent: Expo answered 503`.
+- Never logged, at any level: tokens, keys, passwords, Authorization headers, cookies, webhook URLs; names, emails,
+  student IDs, phone numbers (a person is named by ID); coordinates, timetables, the Assistant's prompts and answers;
+  whole request or response bodies (status codes and error types only).
+
+Existing lines that break a rule are left as they are until someone changes that code.
 
 ## Signals
 

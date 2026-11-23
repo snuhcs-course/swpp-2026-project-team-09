@@ -536,6 +536,7 @@ file's.
 | `JUDGEMENT_MAX_OUTPUT_TOKENS`         | Optional: the tokens the model may write in a Judgement; 4000 unless set.                                                                  |
 | `LIBRARY_BOOKING_ENABLED`             | Optional: `false` answers library requests with the official site and no card; `true` unless set.                                          |
 | `TUTORIAL_KWANJEONG_CHECK`            | Optional: `true`, with `LIBRARY_BOOKING_ENABLED` on, completes the 관정 tutorial quest by the phone's booking check; `false` unless set.   |
+| `LOG_FORMAT`                          | Optional: `json` prints each log entry as one JSON line, as Production does (main-server README: Logging); `text` unless set.              |
 
 ### socket-server
 

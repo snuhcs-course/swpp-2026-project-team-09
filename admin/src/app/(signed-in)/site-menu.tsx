@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 'use client';
@@ -23,6 +24,7 @@ const SECTIONS = [
   { href: '/collection', under: '/collection', label: 'Collection status' },
   { href: '/administrators', under: '/administrators', label: 'Administrators' },
   { href: '/settings', under: '/settings', label: 'Settings' },
+  { href: '/log-test', under: '/log-test', label: 'Log test' },
 ];
 
 function isCurrent(pathname: string | null, { href, under }: (typeof SECTIONS)[number]): boolean {

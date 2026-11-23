@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react';
@@ -12,6 +13,7 @@ import SignedInLayout from '@/app/(signed-in)/layout';
 import AdministratorsPage from '@/app/(signed-in)/administrators/page';
 import CollectionPage from '@/app/(signed-in)/collection/page';
 import EventPage from '@/app/(signed-in)/events/[id]/page';
+import LogTestPage from '@/app/(signed-in)/log-test/page';
 import NewEventPage from '@/app/(signed-in)/events/new/page';
 import PlacesPage from '@/app/(signed-in)/places/page';
 import QueuePage from '@/app/(signed-in)/queue/page';
@@ -60,6 +62,10 @@ export async function openCollection(): Promise<void> {
 
 export async function openSettings(): Promise<void> {
   await openPage(async () => SignedInLayout({ children: await SettingsPage() }));
+}
+
+export async function openLogTest(): Promise<void> {
+  await openPage(async () => SignedInLayout({ children: await LogTestPage() }));
 }
 
 export async function openPlaces(): Promise<void> {
