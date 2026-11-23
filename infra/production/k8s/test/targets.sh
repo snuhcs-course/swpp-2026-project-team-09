@@ -5,6 +5,7 @@
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 # 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-23  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # Renders each target with stand-in secrets, as a Release would, and checks the objects that the cluster would receive.
@@ -131,6 +132,13 @@ passes_the_ai_keys() {
       ; .))' "$work/$1.json" >/dev/null
 }
 
+# The main server prints one JSON line per log entry, which Fluent Bit reads (main-server README: Logging).
+logs_json() {
+  jq -e '[.[] | select(.kind == "Deployment" and .metadata.name == "main-server")
+    | .spec.template.spec.containers[] | select(.name == "main-server") | .env[]
+    | select(.name == "LOG_FORMAT") | .value] == ["json"]' "$work/$1.json" >/dev/null
+}
+
 ignored_by_git() {
   git -C "$k8s" check-ignore --quiet "$1"
 }
@@ -203,6 +211,9 @@ check "all's policies allow exactly the listed connections" allows_only_the_list
 check "every Service's port is its pods' container port" serves_on_container_ports all
 for target in main-server all; do
   check "$target passes the main server OPENROUTER_API_KEY and LLM_KEYS from the Secret" passes_the_ai_keys "$target"
+done
+for target in main-server all; do
+  check "$target sets the main server's LOG_FORMAT to json" logs_json "$target"
 done
 for file in secrets.env access-token-private-key.pem access-token-public-key.pem; do
   check "git ignores $file" ignored_by_git "parts/shared/secrets/$file"

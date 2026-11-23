@@ -18,6 +18,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -77,6 +78,8 @@ const FIXED_SETTINGS = {
   TOPICS_TICK_SECONDS: '0',
   // No reading of dishes' kinds of food after a Collection, which would call the scripted model of another test.
   DISH_CUISINES: 'off',
+  // Read by src/main.ts only: the tests start the application without its logger.
+  LOG_FORMAT: 'text',
 } satisfies Partial<SettingValues>;
 
 // Starts PostgreSQL and Redis once for every test file, brings the empty main database up to the current schema and

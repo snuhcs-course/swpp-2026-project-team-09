@@ -20,6 +20,7 @@
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Fable 5.2  prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -183,6 +184,9 @@ export const settingsSchema = z
     // How often, in seconds, the topics of new events and recruiting Quests are read (README.md: Interests). 0 never,
     // so an empty value is refused rather than read as 0.
     TOPICS_TICK_SECONDS: z.string().regex(/^\d+$/u).default('60').pipe(z.coerce.number<string>().max(3600)),
+    // How the server prints its log: "text" is NestJS's coloured text, "json" one JSON line per entry, as Production's
+    // log collector reads them (README.md: Logging). src/common/logger.ts reads it before the application is created.
+    LOG_FORMAT: z.enum(['text', 'json']).default('text'),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),
