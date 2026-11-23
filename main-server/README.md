@@ -2374,6 +2374,8 @@ Anthropic API as the AI's key says
   condition chips; the dropped places; and the `input` to send back changed to recalculate. It also always carries
   `lookup`, `null` when there is none: an answer drawn on the map that has no Plan (`kind` `way`), with its condition
   chips, at most two lines, basis, map scene, time band or `null`, and the card's actions (`guide`, `remind`, `meet`).
+  A Lookup that only tells a fact, a Restaurant's hours or menu, carries `fact: true`: the app shows no main button in
+  the dock, while its actions keep the way for the Restaurant's own card. Every other Lookup leaves it out.
   A tool that draws a Plan clears the Lookup, and one that draws a Lookup clears the answer. The full shape of each is
   in `src/assistant/dto/answer.dto.ts`. An app that also sends `meet` is offered `planMeet` ("민수랑 만나고 싶어"),
   whose answer is a meet's (`kind` `meet`, below); one that does not keeps the prompt and the tools it had. For such an

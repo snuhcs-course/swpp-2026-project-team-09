@@ -258,3 +258,8 @@ describe("The main line's dishes", () => {
     expect(dishesOf(lunchOf('302동식당'))).toEqual(['뼈없는감자탕', '미트볼굴소스조림', '참깨소스냉두부']);
   });
 });
+
+// P05 ticket 47: a menu only tells a fact, so the dock shows no main button; the way stays for the Restaurant's card.
+it('is a fact, keeping its way among the actions', () => {
+  expect(boardQ8()).toMatchObject({ fact: true, actions: [{ kind: 'guide' }] });
+});

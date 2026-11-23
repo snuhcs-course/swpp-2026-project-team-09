@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Lookup } from '../src/assistant/dto/answer.dto.js';
@@ -255,4 +256,9 @@ describe('Nothing to draw', () => {
   it('without a location and before any item has ended today', () => {
     expect(asked({ clock: '10:00', location: null })).toEqual({ result: 'none', reason: 'no-start' });
   });
+});
+
+// P05 ticket 47: only an hours or a menu answer is a fact.
+it('is no fact', () => {
+  expect(lookupOf(asked())).not.toHaveProperty('fact');
 });

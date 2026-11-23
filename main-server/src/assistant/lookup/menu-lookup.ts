@@ -166,6 +166,7 @@ export function menuAnswer(args: MenuArgs): MenuAnswer {
     band: plan.band,
     actions: [{ kind: 'guide', to: plan.place }],
     menu: menuOf(args),
+    fact: true,
   };
   return { result: 'found', plan, lookup };
 }

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Lookup } from '../src/assistant/dto/answer.dto.js';
@@ -90,4 +91,9 @@ describe('58동 pressed at 22:00, when the shuttle does not run', () => {
     expect(lookup.basis).toEqual(['301동에서 58동까지 걸어서 25분', '셔틀은 지금 다니지 않아요 (평일 8–21시)']);
     expect(lookup.actions).toEqual([{ kind: 'guide', to: point('SK경영관', '58동') }]);
   });
+});
+
+// P05 ticket 47: only an hours or a menu answer is a fact.
+it("is no fact, for a pressed building's card", () => {
+  expect(atTen()).not.toHaveProperty('fact');
 });
