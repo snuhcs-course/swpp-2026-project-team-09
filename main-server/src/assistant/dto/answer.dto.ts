@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -71,6 +72,13 @@ export interface AnswerReply extends WithMissing {
     friendNames: string[];
     shared: boolean;
   } | null;
+  // A meal's: the Friends the plans add to `planSet`, which 바꾸기 invites to that same Quest (P05 ticket 44), its
+  // meal's start, and the start the first plan moves it to, null when it keeps it. Absent when the plans add nobody.
+  adding?: {
+    friends: { userId: string; name: string }[];
+    startAt: string;
+    movesTo: string | null;
+  };
 }
 
 // One of the User's Quests as the app reads it: those set aside by a plan (`planSet`), related to one (`related`), and

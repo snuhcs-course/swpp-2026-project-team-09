@@ -40,7 +40,8 @@ import { type OpenRestaurant } from '../free-time/restaurant-card.js';
 import { UserDayService } from '../free-time/user-day.service.js';
 import { keptDto } from '../lookup/day-quests.js';
 import { type GatheringPerson, MINUTE_MS } from './gathering.js';
-import { type AnswerPerson, mealAnswer, type MealAnswerArgs } from './meal-answer.js';
+import { addingDto, addingOf, type Asked, askedFor, candidatesOf } from './meal-adding.js';
+import { type AnswerPerson, mealAnswer, menusOf } from './meal-answer.js';
 import { type ServedMenu } from './meal-menu.js';
 import { type BusyItem, busyIn, leaveOut, mealChangeable, mealSetOf } from './meal-plan-parts.js';
 import { type MissingInputs } from './missing-inputs.js';
@@ -51,15 +52,6 @@ import { gatherMeal, withHours } from './unmet-plans.js';
 
 // The one place that gathers what a meal's plan needs: the tool, the recalculation, and the making of a Quest call it,
 // so that the three agree.
-const menusOf = (collected: number, open: number, there: number): MealAnswerArgs['menus'] => {
-  if (collected === 0) {
-    return 'none';
-  }
-  if (open === 0) {
-    return 'closed';
-  }
-  return there === 0 ? 'closed-at-place' : 'open';
-};
 
 // Each candidate's menu for the meal, by its key, with when it closes.
 function servedOf(
@@ -118,33 +110,34 @@ export class MealPlanService {
   // Plan would replace it.
   async planned(
     askerId: string,
-    input: MealInput,
+    given: MealInput,
     at: PlanAt,
   ): Promise<{ answer: AnswerReply; served: ReadonlyMap<string, ServedMenu>; busy?: BusyItem[]; posted?: boolean }> {
-    const friends = await this.friendsOf(askerId, input);
-    this.refuseUnknownPlaces(input);
+    const friends = await this.friendsOf(askerId, given);
+    this.refuseUnknownPlaces(given);
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
-    const { date, meal } = input;
+    const { date, meal } = given;
     const [people, collected, missing, held] = await Promise.all([
       this.peopleOf(askerId, friends, date, at.location),
       this.menus.findByDate(date),
       this.missingOf(askerId, at),
-      heldMealOf(this.prisma, askerId, input),
+      heldMealOf(this.prisma, askerId, given),
     ]);
     leaveOut(people, [...(at.leftOut ?? []), ...(held?.subQuestIds ?? [])]);
+    const { adding, asked: input } = addingOf(held, given);
     const [askerPerson, ...friendPeople] = people.map(({ userId, items, position }, index): GatheringPerson => ({
       id: userId,
       free: freeTimeOf(items, date, now),
       locationPlaceId: index === 0 ? this.placeIdAt(position) : locationPlaceOf(friends[index - 1]),
       ...(index === 0 ? { positionOnly: true as const } : {}),
-      ...conditionsOf(input.people[index]?.constraints ?? [], date),
+      ...conditionsOf(given.people[index]?.constraints ?? [], date),
     }));
     if (askerPerson === undefined) {
       throw new Error('A plan has its asker');
     }
     const restaurants = openRestaurants(collected, meal, this.restaurantPlaces);
     const open = restaurants.map(({ key, place }) => ({ key, placeId: place.id }));
-    const candidates = input.placeId === null ? open : open.filter(({ placeId }) => placeId === input.placeId);
+    const candidates = candidatesOf(open, input.placeId, adding);
     const { hours, menus } = await this.servedMenus(restaurants, candidates, input);
     const { places, ...served } = withHours(input, candidates, hours);
     const gathered = gatherMeal([askerPerson, ...friendPeople], places, { input, now, ...served }, this.travel);
@@ -161,9 +154,15 @@ export class MealPlanService {
     const busy = this.busyOf(answer, people[0]?.items ?? [], input);
     const otherMeal = this.otherMealOf(collected, input, now);
     const touched = await this.touched(askerId, input, { ...at, now, kinds: [`meal-${meal}`], setAside: held?.id });
-    const posted = collected.length > 0;
-    return { answer: { ...answer, otherMeal, ...touched, mealSet: mealSetOf(held) }, served: menus, busy, posted };
+    const set = { ...touched, mealSet: mealSetOf(held), ...addingDto(adding, people, answer.plans) };
+    return { answer: { ...answer, otherMeal, ...set }, served: menus, busy, posted: collected.length > 0 };
   }
+
+  // The input as planMeal plans it (P05 ticket 44): with everyone of the meal the asker holds that day when the User asked
+  // for a Friend new to it, so that the Friend is added to it; or, for a User who holds no such meal but was invited to
+  // one and asked for a Friend, that meal, of which nothing is planned. `alreadyIn` names the Friends asked for who are
+  // in the meal held or invited to it.
+  readonly asked = (askerId: string, input: MealInput): Promise<Asked> => askedFor(this.prisma, askerId, input);
 
   // The asker's items that fill the meal's time, when no time is free for it and no condition can be eased: with a
   // button to ease "지금", the model says only that.

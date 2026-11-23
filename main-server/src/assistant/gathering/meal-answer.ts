@@ -37,7 +37,7 @@ import { conditionsOf, type PersonConditions, windowOf } from './plan-conditions
 import { droppedOf, partOf, unfitLines } from './plan-parts.js';
 import { notNowPlan, timeChip, unmetBasis, unmetLines } from './unmet-words.js';
 
-export { type AnswerPerson, type MealAnswerArgs } from './answer-words.js';
+export { type AnswerPerson, type MealAnswerArgs, menusOf } from './answer-words.js';
 
 // The words of a calculated meal: what the app draws and writes for each plan. Nothing here is sent to the model.
 

@@ -233,8 +233,8 @@ describe('Refused changes', () => {
     ({ minsu, jieun, questId } = await stage.declined(date));
   });
 
-  it('an input of other people with 400 PLAN_PEOPLE_CHANGED', async () => {
-    const people = [stage.asker.id, minsu.id, jieun.id];
+  it('an input that leaves someone of it out with 400 PLAN_PEOPLE_CHANGED', async () => {
+    const people = [stage.asker.id, jieun.id];
 
     const response = await stage.changePlan(stage.asker, questId, making(date, people));
 
