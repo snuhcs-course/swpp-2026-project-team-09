@@ -11,6 +11,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibraryCard } from './library-card-types';
@@ -18,7 +19,7 @@ import type { Lookup } from './lookup-types';
 import type { MeetInput } from './meet-plan-types';
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
-import type { DroppedPlace, PlanPart } from './plan-part-types';
+import type { DroppedPlace, PlanPart, WithAdding } from './plan-part-types';
 import type { ProposalChange } from './party-change-types';
 import type { ReplyOffer } from './reply-offer-types';
 import type { WithLocationMissing, WithMark, WithMissing, WithRefusal } from './refusal-types';
@@ -225,7 +226,7 @@ export type PersonConstraint =
   | { kind: 'notBefore'; time: string; source: 'asker' | 'person' }
   | { kind: 'leaveBy'; time: string; source: 'asker' | 'person' };
 
-export interface AnswerReply extends WithMissing {
+export interface AnswerReply extends WithMissing, WithAdding {
   // Sent back, changed, to recalculate.
   input: PlanInput;
   chips: ConditionChip[];

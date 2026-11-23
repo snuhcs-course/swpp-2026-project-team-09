@@ -144,3 +144,37 @@ describe('the raised list once 바꾸기 changed the lunch held', () => {
     expect(screen.queryByRole('button', { name: '바꾸기' })).toBeNull();
   });
 });
+
+// The reply whose plans add 지은 to the lunch held, its start moved to `movesTo` or kept for null (P05 ticket 44).
+function adding(movesTo: string | null): AssistantReply {
+  return {
+    ...REPLY,
+    answer: {
+      ...MEAL_ANSWER_MENUS,
+      planSet: LUNCH,
+      adding: { friends: [{ userId: 'u-jieun', name: '지은' }], startAt: LUNCH.startAt, movesTo },
+    },
+  };
+}
+
+// Partitions: the start kept and moved; no Friend added.
+describe('a Friend added to the lunch held', () => {
+  it('says whom the press invites in place of 바꾸기', async () => {
+    await askOnMap(server, adding(null));
+
+    expect(beside().getByRole('button', { name: '지은이 초대 보내기' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: '바꾸기' })).toBeNull();
+  });
+
+  it('says the move first when the start moves', async () => {
+    await askOnMap(server, adding('2026-11-17T12:58:00+09:00'));
+
+    expect(beside().getByRole('button', { name: '12:58로 옮기고 지은이 초대 보내기' })).toBeEnabled();
+  });
+
+  it('keeps 바꾸기 without the field', async () => {
+    await askOnMap(server, REPLY);
+
+    expect(beside().getByRole('button', { name: '바꾸기' })).toBeEnabled();
+  });
+});

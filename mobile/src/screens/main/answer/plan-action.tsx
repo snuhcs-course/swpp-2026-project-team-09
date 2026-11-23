@@ -12,6 +12,7 @@ import type { QuestOffer } from '@/api/party-change-types';
 import type { Lookup } from '@/api/lookup-types';
 import type { Refusal } from '@/api/refusal-types';
 import { Button } from '@/design-system';
+import { addingWordsOf } from '@/features/assistant/adding-words';
 import { peopleOf } from '@/features/assistant/plan-input';
 import { type SetQuest, setQuestOf } from '@/features/assistant/set-quest';
 import type { ChatSheetControl } from '../chat-sheet';
@@ -78,8 +79,8 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
 }
 
 // Beside a Quest the User holds (P04 ticket 17): "바꾸기" makes the Plan in its place, or for a meeting changes that
-// Quest in place; one the User may not change is changed in its 파티, which "파티 보기" opens.
-function setQuestAction(set: SetQuest, { invitation }: ChatSheetControl, disabled: boolean): PlanAction {
+// Quest in place, saying whom it invites when it adds Friends to it (P05 ticket 44); one the User may not change is changed in its 파티, which "파티 보기" opens.
+function setQuestAction(set: SetQuest, { invitation, answer }: ChatSheetControl, disabled: boolean): PlanAction {
   // A 바꾸기 refused for good sends the User to the 파티 too.
   if (!set.changeable || invitation.refused !== null) {
     return {
@@ -94,7 +95,11 @@ function setQuestAction(set: SetQuest, { invitation }: ChatSheetControl, disable
     const onPress = (): void => {
       invitation.change(set.questId);
     };
-    return { words: invitation.changing ? '바꾸는 중이에요' : '바꾸기', onPress, disabled };
+    // Friends added to the meal the User holds: the press says whom it invites (P05 ticket 44).
+    const { adding } = answer.answer ?? {};
+    const words =
+      adding === undefined || adding === null || adding.friends.length === 0 ? '바꾸기' : addingWordsOf(adding);
+    return { words: invitation.changing ? '바꾸는 중이에요' : words, onPress, disabled };
   }
   return { words: invitation.sending ? '바꾸는 중이에요' : '바꾸기', onPress: invitation.invite, disabled };
 }
