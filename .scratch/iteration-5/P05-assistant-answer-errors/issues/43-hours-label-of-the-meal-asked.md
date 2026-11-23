@@ -21,6 +21,8 @@ Native files: none. Releases: the main server.
 
 - [x] At 12:40, "학생회관 언제까지 해?" labels "학생회관식당 · 지금 영업 중 · 14:00까지", and the follow-up with dinner labels "학생회관식당 · 저녁 17:00–19:00". (Unit test, two turns.)
 - [x] The label of the meal asked while served, outside its hours, not served on a posted day, and on a day not posted. (Unit tests.)
+- [x] "지금 영업 중" only for the meal being served now, and the hours of a meal later today. (Unit test.)
+- [x] A Restaurant whose corners have their own times keeps a short label (the corners' span) and gives the corners in the card's basis. (Unit test.)
 - [x] The rules tell the model to call again for another meal. (Unit test.)
 - [x] README; lint, format, and types of the main server.
 

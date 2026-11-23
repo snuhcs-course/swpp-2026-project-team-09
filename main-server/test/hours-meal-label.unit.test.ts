@@ -111,3 +111,44 @@ describe('The label of the meal asked', () => {
     expect(stateAt(NEXT_MONDAY, '12:40', notPosted, 'dinner')).toBe('평소 저녁 17:00–19:00');
   });
 });
+
+describe('The label of a meal served now against one later today', () => {
+  it('says 지금 영업 중 only for the meal being served, and the hours of one not started', () => {
+    expect(stateAt(MONDAY, '17:30', both(), 'dinner')).toBe('저녁 · 지금 영업 중 · 19:00까지');
+    expect(stateAt(MONDAY, '12:40', both(), 'dinner')).toBe('저녁 17:00–19:00');
+  });
+});
+
+// 예술계식당's lunch as the Co-op page gives it: each corner's time is a note after its dish line.
+const note = (text: string): MealOfDay['lines'][number] => ({ text, kind: MenuLineKind.note, name: null, price: null });
+const byCorner = (): MealOfDay[] => [
+  {
+    meal: 'lunch',
+    lines: [
+      { ...dish, text: '<A코너>제육김치덮밥 : 6,000원' },
+      note('※ 운영시간 : 11:30 ~ 14:00'),
+      { ...dish, text: '<B코너>오므라이스 : 6,500원' },
+      note('※ 운영시간 : 11:30 ~ 13:00'),
+    ],
+    hours: null,
+    posted: true,
+  },
+];
+
+describe('A Restaurant whose corners have their own times', () => {
+  it('keeps the label short, the span of its corners, and puts the corners in the card', async () => {
+    const corners = restaurantHours({
+      named: () => ['예술계식당'],
+      at: () => [],
+      mealsOf: () => Promise.resolve(byCorner()),
+      placeOf: () => PLACE,
+      replan: () => Promise.reject(new Error('No meal plan on screen')),
+    });
+    const context = contextAt(at('15:00'));
+
+    await corners.run({ date: MONDAY, restaurant: '예술계', meal: 'lunch' }, context);
+
+    expect(labelOf(context)).toBe('예술계식당 · 점심 11:30–14:00');
+    expect(context.presented.lookup?.basis).toEqual(['점심 A코너 11:30–14:00, B코너 11:30–13:00']);
+  });
+});
