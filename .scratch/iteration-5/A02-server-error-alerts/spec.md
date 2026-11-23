@@ -1,6 +1,6 @@
 # A02: The main server's warnings and errors are posted to Slack
 
-Status: ready-for-agent
+Status: done (ticket 11, what a post carries, is a needs-triage follow-up)
 
 ## Problem Statement
 
@@ -11,7 +11,7 @@ The plan was agreed with its author on 2026-11-23 (`server-logging-guide.ko (1).
 ## Solution
 
 - In Production the main server prints each log entry as one JSON line with a `level` and a `message`.
-- Fluent Bit runs on each node, in a `logging` namespace that Terraform makes. It reads the main server's container logs, keeps warn, error and fatal, and posts them to the private Slack channel `#team9-main-server-error`, at most 10 posts a minute.
+- Fluent Bit runs on each node, in a `logging` namespace that Terraform makes. It reads the main server's container logs, keeps warn, error and fatal, and posts them to the private Slack channel `#team9-main-server-error`, at most 10 records a minute; a burst comes as one post of up to 10 lines.
 - An Administrator checks the whole path from the admin site's Log test page. Its info, warn and error buttons each write one test line in the main server; the warn and error lines appear in the channel and the info line does not.
 - The socket and worker servers already have channels of their own. This spec does not connect them, but every piece is shaped so that adding one takes a setting, a few blocks of Fluent Bit configuration, one Secret key and one environment variable ([Adding the worker or socket server](#adding-the-worker-or-socket-server)).
 
@@ -22,16 +22,17 @@ The work lands as two pull requests to `5.0/Main`, and each is harmless alone:
 
 | # | Ticket | PR | Status | Blocked by |
 | --- | --- | --- | --- | --- |
-| 01 | [In Production the main server prints one JSON line per log entry](issues/01-main-server-json-logs.md) | A | ready-for-agent | None |
-| 02 | [An Administrator writes a test log line from the admin site's Log test page](issues/02-log-test-page.md) | A | ready-for-agent | None |
-| 03 | [Fluent Bit's pipeline keeps only the main server's warnings and errors, and a test in CI shows it](issues/03-fluent-bit-pipeline.md) | B | ready-for-agent | None |
-| 04 | [Terraform installs Fluent Bit in a `logging` namespace, and the infra README says where warnings go](issues/04-terraform-fluent-bit.md) | B | ready-for-agent | 03 |
-| 05 | [The Slack app and the webhook for #team9-main-server-error](issues/05-slack-webhook.md) | | ready-for-human | None |
-| 06 | [The pipeline runs once locally against the real webhook](issues/06-pipeline-against-slack.md) | | ready-for-human | 03, 05 |
-| 07 | [The team hears about the Production changes before they are made](issues/07-tell-the-team.md) | | ready-for-human | 01, 02, 03, 04 |
-| 08 | [PR A is merged, and the main server and admin site are Released](issues/08-merge-pr-a-and-release.md) | A | ready-for-human | 01, 02, 07 |
-| 09 | [The account's owner plans and applies PR B's Terraform, in order](issues/09-plan-and-apply.md) | B | ready-for-human | 04, 05, 06, 07 |
-| 10 | [Warnings and errors from Production reach #team9-main-server-error](issues/10-production-check.md) | | ready-for-human | 08, 09 |
+| 01 | [In Production the main server prints one JSON line per log entry](issues/01-main-server-json-logs.md) | A | done | None |
+| 02 | [An Administrator writes a test log line from the admin site's Log test page](issues/02-log-test-page.md) | A | done | None |
+| 03 | [Fluent Bit's pipeline keeps only the main server's warnings and errors, and a test in CI shows it](issues/03-fluent-bit-pipeline.md) | B | done | None |
+| 04 | [Terraform installs Fluent Bit in a `logging` namespace, and the infra README says where warnings go](issues/04-terraform-fluent-bit.md) | B | done | 03 |
+| 05 | [The Slack app and the webhook for #team9-main-server-error](issues/05-slack-webhook.md) | | done | None |
+| 06 | [The pipeline runs once locally against the real webhook](issues/06-pipeline-against-slack.md) | | done | 03, 05 |
+| 07 | [The team hears about the Production changes before they are made](issues/07-tell-the-team.md) | | done | 01, 02, 03, 04 |
+| 08 | [PR A is merged, and the main server and admin site are Released](issues/08-merge-pr-a-and-release.md) | A | done | 01, 02, 07 |
+| 09 | [The account's owner plans and applies PR B's Terraform, in order](issues/09-plan-and-apply.md) | B | done | 04, 05, 06, 07 |
+| 10 | [Warnings and errors from Production reach #team9-main-server-error](issues/10-production-check.md) | | done | 08, 09 |
+| 11 | [A post to Slack carries a cut message, no whole stack, and no mention](issues/11-what-a-post-carries.md) | | needs-triage | 04 |
 
 ## User Stories
 
@@ -39,7 +40,7 @@ The work lands as two pull requests to `5.0/Main`, and each is harmless alone:
 2. As a team member, I want each post to name the server, the level, the class that logged it and what failed, so that the channel alone tells me whether to look now.
 3. As a team member, I want an error's stack in the post when the logger was given one, so that I can find the line that failed.
 4. As a team member, I want info lines kept out of Slack, so that the channel shows only what needs a person.
-5. As a team member, I want a burst of errors to give at most 10 posts a minute, so that a failing loop neither buries the channel nor runs into Slack's rate limit.
+5. As a team member, I want a burst of errors to give at most 10 records a minute, so that a failing loop neither buries the channel nor runs into Slack's rate limit.
 6. As a team member, I want an unhandled 500 to reach the channel through NestJS's own exception log, so that failures no handler caught are not missed.
 7. As a team member, I want the error of a start refused for bad settings to be a JSON line too, so that a broken Release reaches the channel before the server ever listens.
 8. As a team member, I want the posts in a private channel, so that the servers' log text stays within the team.
@@ -125,10 +126,11 @@ The pipeline has a part per server and a shared part:
 
 - The main server's input reads only its own pods' files (pods and container named `main-server`, namespace `snunow`), with the CRI multiline parser, a 5 MB memory buffer and long lines skipped. Each input's tag names its server, and the per-server parts match that tag.
 - A line that is not JSON, such as a crash printed outside NestJS's logger, has no `level` and is dropped.
-- The throttle is per server, with rate 10, window 1 and interval 1 minute: at most 10 records a minute pass and the rest are dropped. The agreed draft's rate 10, window 5 averages over five minutes and lets up to 50 through in one minute after a quiet spell.
+- The throttle is per server: at most 10 records a minute pass and the rest are dropped. It is written `Rate 2, Window 5, Interval 12s`, so a record is dropped once the last five 12-second intervals hold 10: Fluent Bit 5.1.5 replaces a `Window` of 1 or less with 5, so "rate 10, window 1, interval 1 minute" would average over five minutes, as the agreed draft's rate 10, window 5 does, and let up to 50 through in one minute after a quiet spell (ticket 03).
+- The Slack output posts once per flush, with a line per record, so a burst arrives as one post of up to 10 lines, not as 10 posts (ticket 06).
 - `time`, `stream` and `_p` (from the CRI parser) and `pid` and `timestamp` (from NestJS) are dropped, so a post holds only the kept fields.
 - A post's text is the record as Fluent Bit prints it (`"server"=>"main-server", "level"=>"warn", …`). The Slack output has no option to format it, and this is accepted. It retries a failed post a few times, then drops it; Fluent Bit ignores Slack's `Retry-After`.
-- The pipeline is in Fluent Bit's classic format, because the chart's `config` takes classic sections. Its files sit next to the Terraform. The Helm release and the pipeline test read the same files, so what is tested is what runs.
+- The pipeline is in Fluent Bit's classic format, because the chart's `config` takes classic sections. Its files sit next to the Terraform, in `fluent-bit-pipeline/`: a folder named after the chart would be loaded as the chart, since Helm tries a local path with the chart's name first (ticket 04). The Helm release and the pipeline test read the same files, so what is tested is what runs.
 - Fluent Bit 5.1.5 for both the test and the chart's image tag; its image has an arm64 build, which the ARM64 nodes need.
 
 ### Terraform
@@ -140,7 +142,8 @@ The pipeline has a part per server and a shared part:
   - The default inputs, filters (the Kubernetes filter) and outputs (two Elasticsearch outputs) are replaced by the pipeline.
   - No RBAC and no service account token: without the Kubernetes filter, Fluent Bit never calls the Kubernetes API.
   - One hostPath volume, `/var/log`, read-only. The chart's default also mounts `/var/lib/docker/containers` and `/etc/machine-id`, which containerd does not need.
-  - Memory request 32Mi and limit 64Mi, checked against what the pipeline test's run uses.
+  - Memory request 32Mi and limit 64Mi, checked against what the pipeline test's run uses (22.6 MiB at most).
+  - A read-only root filesystem, no capability and no privilege escalation; it runs as root, which owns the nodes' log files (from the review of PR B).
   - The environment variable `SLACK_WEBHOOK_MAIN_SERVER` comes from the `main-server` key of the Secret `slack-webhooks` in `logging`.
 - Terraform does not create the Secret, so its value stays out of the state (infra README: Terraform). A person makes it with `kubectl create secret generic`, reading the value with `read -rs`, as for `database-setup`.
 - The first apply goes in this order: `terraform apply -target` the namespace, create the Secret, then a full apply. `helm_release` waits for the pods to be ready, and a pod without its Secret never is. Nobody makes the namespace by hand, because Terraform would then fail to create it.
@@ -219,9 +222,29 @@ These need a person, and become `ready-for-human` tickets. **The webhook URL is 
 
 Before connecting them:
 
-- **The worker** logs `The Collection of shuttle_vehicles failed: …` about 4 times a minute (2026-11-23, 16:29 to 18:00). Posted as is, it would use 4 of the 10 posts every minute. Decide whether it is a warning and whether to fix it first.
+- **The worker** logs `The Collection of shuttle_vehicles failed: …` about 4 times a minute (2026-11-23, 16:29 to 18:00). Posted as is, it would use 4 of the 10 records every minute. Decide whether it is a warning and whether to fix it first.
 - **The socket server** has no `Logger` of its own; its lines are NestJS's, such as Redis's connection line at info.
 
 ### Why not in `snunow`
 
 `snunow` enforces the Pod Security baseline, which forbids hostPath volumes. On the same k3s version as the repository's local cluster, a hostPath DaemonSet in a baseline namespace is created with a warning, but every pod is refused. Loosening the label is a security question, not a setting: the deploy role comes with any pushed `snunow/*` tag, no ruleset protects those tags, and a privileged pod reaches its node and, from there, the load balancer controller's IAM role in `kube-system`. A namespace that only Terraform changes keeps that boundary.
+
+## Comments
+
+### Agent usage (2026-11-23)
+
+Estimates: agent time is the gaps under 5 minutes between transcript entries, summed, so waiting for a person is left out (waiting for CI or a test inside a session counts). Subagents are included in their session's row: the orchestrator's two reviewers of PR A (input 4,589,477, of which cache reads 4,413,757 and cache writes 175,626; output 32,429), and session B's four reviewers (see tickets 03 and 04). Tickets 05 to 10 were people's steps; the orchestrator's work on them is in its row.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+| --- | --- | --- | --- | --- | --- | --- |
+| Orchestrator (spec and tickets read, both sessions' briefs and reviews, PR A's two review subagents, guiding tickets 05 to 10 and checking them in Production, PR B's plan in its body, this wrap-up) | about 67 minutes | 43,121,913 | 42,618,151 | 503,320 | 442 | 148,690 |
+| Session A, ticket 01 | about 11 minutes | 14,347,980 | 14,128,196 | 219,636 | 148 | 49,367 |
+| Session A, ticket 02 | about 15 minutes | 25,847,781 | 25,741,669 | 105,940 | 172 | 66,621 |
+| Session B, ticket 03 (two review subagents included) | about 33 minutes | 20,613,201 | 20,178,743 | 434,232 | 226 | 150,091 |
+| Session B, ticket 04 (two review subagents, the chart folder's fix and the check of 893f640d included) | about 47 minutes | 59,755,735 | 59,339,614 | 415,755 | 366 | 174,057 |
+| All | about 2 hours 53 minutes | 163,686,610 | 162,006,373 | 1,678,883 | 1,354 | 588,826 |
+
+Without cache reads, the input is 1,680,237 in all. The orchestrator is counted up to the writing of this entry, so its last few messages are left out.
+
+- Done on 2026-11-23: PR #530 (tickets 01 and 02) and PR #531 (tickets 03 and 04) merged into `5.0/Main`, the main server and the admin site Released in `snunow/all/26.11.23-17`, and Fluent Bit applied in Production. The warn and error presses on the Production Log test page each reached `#team9-main-server-error`, and the info press did not (ticket 10).
+- Left: ticket 11 (what a post carries), and connecting the socket and worker servers (Further Notes).

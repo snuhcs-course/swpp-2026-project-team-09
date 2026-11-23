@@ -1,7 +1,7 @@
 # 05: The Slack app and the webhook for #team9-main-server-error
 
 Parent: [A02 spec](../spec.md)
-Status: ready-for-human
+Status: done
 Blocked by: None (can start immediately)
 
 Native files: none. Releases: none.
@@ -24,7 +24,13 @@ Native files: none. Releases: none.
 
 ## Done when
 
-- [ ] The test post appears in `#team9-main-server-error`.
-- [ ] The URL is in one place only: the password manager of the person who made it.
+- [x] The test post appears in `#team9-main-server-error`.
+- [x] The URL is in one place only: the password manager of the person who made it.
 
 ## Comments
+
+- Done on 2026-11-23 by TaeHyun79: the Slack app "SNU Now server logs" with an Incoming Webhook for `#team9-main-server-error`. The terminal's test post appeared in the channel. The URL is in their password manager only; it reached no chat, file or session.
+
+### Agent usage (2026-11-23)
+
+- No agent worked on this ticket by itself: the orchestrator's guidance and checks (commands, reading the results, `kubectl get` and `kubectl logs` after the owner signed in) are counted in the spec's table.

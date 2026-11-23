@@ -1,7 +1,7 @@
 # 07: The team hears about the Production changes before they are made
 
 Parent: [A02 spec](../spec.md)
-Status: ready-for-human
+Status: done
 Blocked by: 01, 02, 03, 04
 
 Native files: none. Releases: none.
@@ -21,7 +21,15 @@ Both pull requests are reviewed and approved like any other, the infrastructure 
 
 ## Done when
 
-- [ ] The announcement is posted where the team announces Production changes.
-- [ ] PR A and PR B each have an approval.
+- [x] The announcement is posted where the team announces Production changes.
+- [x] PR A and PR B each have an approval.
 
 ## Comments
+
+- Done on 2026-11-23: TaeHyun79 posted the announcement where the team announces Production changes, with both pull requests, the Release, the `logging` namespace and Fluent Bit's pods, the hand-made Secret `slack-webhooks` (never its value), who makes each change, and how to undo it.
+- Approvals: PR #530 by Jaehyun0320, AhnJinYoung and fyoon46; PR #531 by Jaehyun0320.
+- Ticket 09's first plan also showed four EKS add-on updates unrelated to PR B (`cluster.tf` takes each add-on's newest build). They were announced separately and applied before Fluent Bit (ticket 09).
+
+### Agent usage (2026-11-23)
+
+- No agent worked on this ticket by itself: the orchestrator's guidance and checks (commands, reading the results, `kubectl get` and `kubectl logs` after the owner signed in) are counted in the spec's table.

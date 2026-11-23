@@ -1,7 +1,7 @@
 # 02: An Administrator writes a test log line from the admin site's Log test page
 
 Parent: [A02 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: None (can start immediately)
 
 PR: A. Native files: none. Releases: the main server and the admin site.
@@ -33,12 +33,22 @@ The line is written in whichever format ticket 01 sets; this ticket does not dep
 
 ## Acceptance criteria
 
-- [ ] As an Administrator, each level answers 204, and exactly one captured line has that level and the Administrator's ID. (Main server integration test, with the log capture helper.)
-- [ ] Without a token, with a User's token or with a removed Administrator's token, the request is refused and nothing is logged; the route joins the list in the admin changing-refusals test. (Integration tests.)
-- [ ] A level outside the three, or no body, answers 400 and nothing is logged. (Integration test.)
-- [ ] The page shows the three buttons; a press on warn sends `{"level":"warn"}` to `/admin/log-test` with the Administrator's bearer token and shows the "Sent." line; a refusal shows the main server's message. (Admin site integration test, against the fake main server.)
-- [ ] Locally, each button prints its level's line in the main server's terminal. (Hand check; the PR shows a screenshot of the page and of the three lines.)
-- [ ] The main server's README documents the API in the Administrators section.
-- [ ] Lint, format and types of the main server and the admin site pass.
+- [x] As an Administrator, each level answers 204, and exactly one captured line has that level and the Administrator's ID. (Main server integration test, with the log capture helper.)
+- [x] Without a token, with a User's token or with a removed Administrator's token, the request is refused and nothing is logged; the route joins the list in the admin changing-refusals test. (Integration tests.)
+- [x] A level outside the three, or no body, answers 400 and nothing is logged. (Integration test.)
+- [x] The page shows the three buttons; a press on warn sends `{"level":"warn"}` to `/admin/log-test` with the Administrator's bearer token and shows the "Sent." line; a refusal shows the main server's message. (Admin site integration test, against the fake main server.)
+- [x] Locally, each button prints its level's line in the main server's terminal. (Hand check; the PR shows a screenshot of the page and of the three lines.)
+- [x] The main server's README documents the API in the Administrators section.
+- [x] Lint, format and types of the main server and the admin site pass.
 
 ## Comments
+
+- Done in PR #530 (merged into `5.0/Main` as 1e9eafcc on 2026-11-23) and Released in `snunow/all/26.11.23-17`.
+- The page shows any refusal but a 401 inline, with the main server's message or "The main server answered N.". An admin site Released before the main server gets 404 from `/admin/log-test`, and the page shows it. A 401 sends the person to sign in, as on every page.
+- The wire format (the path, `Authorization: Bearer`, the body `{"level":"warn"}`) is checked in `admin/__tests__/main-server.unit.test.ts`; the page test checks the fake's `{ token, level }`.
+- Hand check: [02-log-test-page.png](../references/02-log-test-page.png) (the page after a press) and [02-three-lines.png](../references/02-three-lines.png) (the three lines in the local main server's output).
+
+### Agent usage (2026-11-23)
+
+- Agent time: about 15 minutes, in session A after ticket 01's commit: ticket 02, the hand checks, the review changes and the pull request. This is an estimate: the gaps under 5 minutes between transcript entries, summed, so waiting for a person is left out.
+- Tokens: input 25,847,781 (cache reads 25,741,669, cache writes 105,940, uncached 172); output 66,621. No subagents.
