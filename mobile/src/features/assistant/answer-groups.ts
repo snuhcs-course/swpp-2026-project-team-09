@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { KeptQuest, MapScene } from '@/api/assistant-types';
@@ -18,7 +19,9 @@ import { keptTagOf } from './set-quest';
 // is drawn, and the point carries both labels.
 export type Group = 'flag' | 'pick' | 'leg' | 'person' | 'next' | 'stop' | 'kept' | 'candidate' | 'dropped';
 
-export const SIDE_ORDER: Group[] = ['flag', 'pick', 'leg', 'person', 'next', 'stop', 'kept', 'candidate', 'dropped'];
+// A meal Plan's legs' minutes take their sides last but for the places dropped, so that they give way to every other
+// label: they move along their line, or are left out.
+export const SIDE_ORDER: Group[] = ['flag', 'pick', 'person', 'next', 'stop', 'kept', 'candidate', 'leg', 'dropped'];
 export const SYMBOL_ORDER: Group[] = ['person', 'pick', 'next', 'stop', 'candidate', 'kept', 'dropped'];
 export const DRAW_ORDER: Group[] = ['pick', 'person', 'flag', 'leg', 'next', 'stop', 'kept', 'candidate', 'dropped'];
 // A shuttle stop is the way's own: the camera keeps the stop to walk to in view. So is a Quest already set (P04 ticket
@@ -197,7 +200,13 @@ export function faceOf(
 // does when its dot is not drawn, so that a tag read alone says which candidate it is (the list of ticket 15 uses the
 // same numbers). The pick's label is kept, the answer's main mark, and so is a held candidate's, whose tag is its own
 // way to be pressed (`held`).
-export function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | null, held: boolean): Unplaced {
+export function unplaced(
+  draft: Draft,
+  point: number,
+  symbol: AnswerSymbol | null,
+  held: boolean,
+  meal = false,
+): Unplaced {
   const { position, group, tone, title, line, sub = null, note = null, action = null, faded = false, number } = draft;
   const words =
     title === null
@@ -219,6 +228,8 @@ export function unplaced(draft: Draft, point: number, symbol: AnswerSymbol | nul
     words,
     sides,
     kept: group === 'pick' || held || always,
+    // A tag held at a point it shares gives way to the other labels (P04 ticket 51).
+    ...(meal && held && group === 'candidate' ? { shrinks: true } : {}),
     ...(clearOf === undefined ? {} : { clearOf }),
     ...(either === undefined ? {} : { either }),
     ...(overFaces ? { overFaces } : {}),

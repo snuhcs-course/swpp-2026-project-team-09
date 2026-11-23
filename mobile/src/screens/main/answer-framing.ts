@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo } from 'react';
+import { useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AnswerReply } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
@@ -14,7 +16,7 @@ import { type AnswerDrawing, drawingOf, looksOf } from '@/features/assistant/ans
 import type { Standing } from '@/features/assistant/invited-friends';
 import { drawsMeal } from '@/features/assistant/meal-marks';
 import { ANSWER_SYMBOL_BOX, answerLabelBox } from '@/design-system';
-import { type MarkerLook, NATIVE_MIN_LEVEL, nativeLevelZoom, type Size, ZOOM_OFFSET } from '@/map';
+import { type FitPadding, type MarkerLook, NATIVE_MIN_LEVEL, nativeLevelZoom, type Size, ZOOM_OFFSET } from '@/map';
 import { labelArea, paddingOf } from './answer-padding';
 import type { Room } from './layout';
 import type { MainMap } from './use-main-map';
@@ -43,19 +45,22 @@ export interface Framing {
   // The time bar under the pill, 0 for none.
   timeBar: number;
   view: { size: Size; closest: number } | null;
+  // The phone's font size as a share of the usual, which the labels' words are drawn at; left out, 1.
+  fontScale?: number;
 }
 
 export function useFraming({ fitZoom }: MainMap, room: Room, pill: boolean): Framing {
   const { answerHeight, stage, timeBarHeight = 0 } = room;
   const timeBar = pill ? timeBarHeight : 0;
   const { top } = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
   const width = stage?.width;
   const height = stage?.height;
   return useMemo(() => {
     const known = width !== undefined && height !== undefined && fitZoom !== null;
     const view = known ? { size: { width, height: height + top }, closest: fitZoom + ZOOM_OFFSET.close } : null;
-    return { top, card: answerHeight, pill, timeBar, view };
-  }, [top, answerHeight, pill, timeBar, width, height, fitZoom]);
+    return { top, card: answerHeight, pill, timeBar, view, fontScale };
+  }, [top, answerHeight, pill, timeBar, width, height, fitZoom, fontScale]);
 }
 
 // The camera `answerCamera` works out for a drawing whose labels' sides are chosen in metres, and the area its labels
@@ -63,22 +68,28 @@ export function useFraming({ fitZoom }: MainMap, room: Room, pill: boolean): Fra
 // or the Plan's own alone.
 export function labelViewOf(
   drawing: AnswerDrawing,
-  { top, card, pill, timeBar, view }: Framing,
+  { top, card, pill, timeBar, view, fontScale = 1 }: Framing,
   avoid: readonly LatLng[] = NO_POINTS,
 ): LabelView | null {
   if (view === null) {
     return null;
   }
-  const padding = paddingOf(top, card, drawing, pill, timeBar);
+  // A meal answer's camera also keeps its marks, Friends' faces among them, clear of the map's credit at the bottom.
+  const credit = drawing.keep === undefined ? 0 : CREDIT;
+  const padding = withCredit(paddingOf(top, card, drawing, pill, timeBar, fontScale), credit);
   const own = drawing.keep ?? drawing.own;
-  const ownPadding = paddingOf(top, card, { ...drawing, points: own }, pill, timeBar);
+  const ownPadding = withCredit(paddingOf(top, card, { ...drawing, points: own }, pill, timeBar, fontScale), credit);
   const camera = answerCamera({ ...drawing, own }, view.size, padding, view.closest, {
     padding: ownPadding,
     outer: ANSWER_OUTER_ZOOM,
   });
   const whole = labelArea(top, card, view.size, pill, timeBar);
   const area = drawing.keep === undefined ? whole : { ...whole, bottom: whole.bottom - CREDIT };
-  return camera === null ? null : { camera, size: view.size, area, avoid };
+  return camera === null ? null : { camera, size: view.size, area, avoid, fontScale };
+}
+
+function withCredit(padding: FitPadding, credit: number): FitPadding {
+  return { ...padding, bottom: padding.bottom + credit };
 }
 
 // The side of a meal pick away from its route: above when the route leaves it southwards, as most lines down the
@@ -94,13 +105,13 @@ function awaySide({ lines, pick }: AnswerDrawing): 'above' | 'below' {
 
 // The room a meal pick takes around its point: its dot, and its label on the side away from its route, which may
 // move to another side when that one is taken.
-function pickRoom(drawing: AnswerDrawing): ViewArea | undefined {
+function pickRoom(drawing: AnswerDrawing, fontScale: number | undefined): ViewArea | undefined {
   const look = drawing.things.find(({ id }) => id === 'answer:pick')?.look;
   if (look?.kind !== 'answer' || look.label === null) {
     return undefined;
   }
   const { shift: _shift, ...words } = look.label;
-  const box = answerLabelBox({ ...words, side: awaySide(drawing) });
+  const box = answerLabelBox({ ...words, side: awaySide(drawing) }, fontScale);
   const dot = ANSWER_SYMBOL_BOX;
   return {
     top: Math.min(-dot, box.top),
@@ -115,7 +126,9 @@ function pickRoom(drawing: AnswerDrawing): ViewArea | undefined {
 // labels' area.
 export function heldView(first: LabelView | null, drawing: AnswerDrawing | null): LabelView | null {
   const pick = drawing?.pick ?? null;
-  return first === null || drawing === null || pick === null ? first : panToShow(first, pick, pickRoom(drawing));
+  return first === null || drawing === null || pick === null
+    ? first
+    : panToShow(first, pick, pickRoom(drawing, first.fontScale));
 }
 
 // The first Plan's view, which a meal answer keeps (`heldView`) while it can be chosen from; null for any other answer.

@@ -6,6 +6,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-23  Opus 5.5   prompted by TaeHyun79
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -75,15 +76,17 @@ describe('the 식당 layer', () => {
   it("asks for today's menus and the Places when it is turned on, and again when it is turned on again", async () => {
     const user = await openMain();
     expect(server.received('GET /menus')).toHaveLength(0);
+    // The chat sheet reads the Places from the start, for the Places of a reply's marks (P04 ticket 06).
+    const before = server.received('GET /places').length;
 
     await toggleDining(user);
     expect(server.received('GET /menus').map(({ query }) => query.date)).toEqual(['2026-10-06']);
-    expect(server.received('GET /places')).toHaveLength(1);
+    expect(server.received('GET /places')).toHaveLength(before + 1);
 
     await toggleDining(user);
     await toggleDining(user);
     expect(server.received('GET /menus')).toHaveLength(2);
-    expect(server.received('GET /places')).toHaveLength(2);
+    expect(server.received('GET /places')).toHaveLength(before + 2);
   });
 
   it('puts a pin on the Place of each restaurant with menus today, one for two restaurants that share it', async () => {

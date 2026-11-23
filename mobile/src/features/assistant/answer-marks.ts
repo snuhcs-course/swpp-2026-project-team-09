@@ -36,11 +36,11 @@ import {
   unplaced,
   withOpenMarks,
 } from './answer-groups';
-import { type LabelView, placeLabels, UPRIGHT_REACH } from './answer-labels';
+import { type LabelView, type MarkPoint, placeLabels, UPRIGHT_REACH } from './answer-labels';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 import { candidateDraft, leftOutByRank, pickLine, sideRank } from './answer-candidates';
 import { kindShown } from './meal-kinds';
-import { drawsMeal, mealDrafts, sceneLines } from './meal-marks';
+import { drawsMeal, hiddenRoutes, mealDrafts, sceneLines } from './meal-marks';
 import type { Ways } from './shuttle-legs';
 import { mealPickWords } from './meal-pick';
 
@@ -202,7 +202,18 @@ interface Placed {
 
 // One symbol at each point, and the labels placed (`placeLabels`) in the order their kinds take sides, so that the
 // Plan's own marks take theirs first.
-function placeAll(drafts: Draft[], view: LabelView | null): Placed[] {
+// A point's symbol: a meal answer's people's marks, the User's own and the Friends' faces, are told apart.
+function markPoint(position: LatLng, drawn: Draft | undefined, meal: boolean): MarkPoint {
+  const type = drawn?.symbol?.type;
+  const point: MarkPoint = { position, symbol: drawn?.position ?? null };
+  if (meal && (type === 'face' || type === 'me')) {
+    point.person = true;
+  }
+  return point;
+}
+
+// A meal answer's (`meal`) labels keep clear of its people's marks and its held tags give way (P04 ticket 51).
+function placeAll(drafts: Draft[], view: LabelView | null, meal: boolean): Placed[] {
   const points = pointsOf(drafts).map(({ position, drafts: here }) => ({
     position,
     here,
@@ -221,8 +232,8 @@ function placeAll(drafts: Draft[], view: LabelView | null): Placed[] {
     )
     // The places one label may stand at are tried in their own order, whatever points they share.
     .toSorted((one, other) => sideRank(one) - sideRank(other) || eitherOrder(drafts, one.draft, other.draft));
-  const marks = placed.map(({ draft, point, symbol, held }) => unplaced(draft, point, symbol, held));
-  const symbols = points.map(({ position, drawn }) => ({ position, symbol: drawn?.position ?? null }));
+  const marks = placed.map(({ draft, point, symbol, held }) => unplaced(draft, point, symbol, held, meal));
+  const symbols = points.map(({ position, drawn }) => markPoint(position, drawn, meal));
   const labels = placeLabels(symbols, marks, view);
   // Of the places one label may stand at, only the one it took is drawn.
   const drawn = placed
@@ -250,6 +261,7 @@ export function drawingOfScene(
   setting: SceneSetting = BARE,
 ): AnswerDrawing {
   const meal = setting.meal === true && setting.number !== null ? setting.plans[setting.number - 1] : undefined;
+  const hidden = hiddenRoutes(meal, scene);
   // A meal pick's label says "메뉴 ›" in place of the "›" after its name.
   const drafts = withOpenMarks(
     meal === undefined ? (setting.opens ?? false) : false,
@@ -266,15 +278,16 @@ export function drawingOfScene(
       setting.ways,
     ),
   );
-  const placed = placeAll(drafts, view).toSorted(
+  const placed = placeAll(drafts, view, meal !== undefined).toSorted(
     (one, other) =>
       byGroup(DRAW_ORDER)(one.draft, other.draft) || drafts.indexOf(one.draft) - drafts.indexOf(other.draft),
   );
   const things = placed.map((one, index) => thingOf(one, placed.length - index));
-  const points = [...things.map(({ position }) => position), ...scene.routes.flatMap(({ from, to }) => [from, to])];
+  const routes = scene.routes.filter((_, index) => !hidden.has(index));
+  const points = [...things.map(({ position }) => position), ...routes.flatMap(({ from, to }) => [from, to])];
   return {
     things,
-    lines: sceneLines(scene, meal !== undefined, setting.ways),
+    lines: sceneLines(scene, meal !== undefined, setting.ways, hidden),
     points,
     // A meal answer's camera keeps every candidate in view (the answer screen's redesign).
     ...(meal === undefined ? {} : { keep: points }),
