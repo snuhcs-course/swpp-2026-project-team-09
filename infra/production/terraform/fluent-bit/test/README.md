@@ -44,7 +44,7 @@ From this folder (`infra/production/terraform/fluent-bit`), in one terminal:
    ["timestamp": 1795420800.000000000, {"server"=>"main-server", "level"=>"warn", "context"=>"Ticket06", "message"=>"A test warning, by hand"}]
    ```
 
-   The stack's line breaks show as `\x0a`, and any character outside ASCII as `\x..` bytes.
+   The stack keeps its line breaks in Slack. A character outside ASCII may show as `\x..` bytes.
 
 5. Wait a little over a minute, so that those two lines leave the throttle's window, then append a burst of 30 identical warnings:
 

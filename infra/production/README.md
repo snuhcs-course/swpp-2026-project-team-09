@@ -463,7 +463,7 @@ main server:
 
 ```bash
 read -rs SLACK_WEBHOOK_MAIN_SERVER
-kubectl --namespace logging patch secret slack-webhooks --type merge \
+[ -n "$SLACK_WEBHOOK_MAIN_SERVER" ] && kubectl --namespace logging patch secret slack-webhooks --type merge \
   --patch "{\"stringData\":{\"main-server\":\"$SLACK_WEBHOOK_MAIN_SERVER\"}}"
 unset SLACK_WEBHOOK_MAIN_SERVER
 kubectl --namespace logging rollout restart daemonset/fluent-bit
@@ -506,7 +506,7 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
    terraform apply -var-file=account-a.tfvars -target=kubernetes_namespace_v1.logging
    aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-production
    read -rs SLACK_WEBHOOK_MAIN_SERVER
-   kubectl --namespace logging create secret generic slack-webhooks \
+   [ -n "$SLACK_WEBHOOK_MAIN_SERVER" ] && kubectl --namespace logging create secret generic slack-webhooks \
      --from-literal=main-server="$SLACK_WEBHOOK_MAIN_SERVER"
    unset SLACK_WEBHOOK_MAIN_SERVER
    terraform apply -var-file=account-a.tfvars
@@ -514,7 +514,8 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
 
    The Fluent Bit release waits until its pods are ready, and a pod never is without its Secret, so a single apply
    would fail on it. The namespace's own apply also makes the cluster, which the Secret needs. Nobody makes the
-   namespace by hand: Terraform would then fail to create it. On a cluster that runs without Fluent Bit, the same
+   namespace by hand: Terraform would then fail to create it. An empty value, such as an Enter pressed by mistake,
+   writes no Secret, whose empty key would start the pods broken. On a cluster that runs without Fluent Bit, the same
    three steps add it. In the account that holds the zone, the last apply waits until the certificate is issued.
 3. **The database.** [Prepare it](#preparing-a-new-database), which also puts its two passwords in Parameter Store.
 4. **The repository variables.** In the repository's **Settings** › **Secrets and variables** › **Actions** ›
@@ -1177,8 +1178,8 @@ aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-p
    terraform apply -var-file=account-b.tfvars -target=kubernetes_namespace_v1.logging
    aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-production-b --profile account-b
    read -rs SLACK_WEBHOOK_MAIN_SERVER
-   kubectl --context snunow-production-b --namespace logging create secret generic slack-webhooks \
-     --from-literal=main-server="$SLACK_WEBHOOK_MAIN_SERVER"
+   [ -n "$SLACK_WEBHOOK_MAIN_SERVER" ] && kubectl --context snunow-production-b --namespace logging \
+     create secret generic slack-webhooks --from-literal=main-server="$SLACK_WEBHOOK_MAIN_SERVER"
    unset SLACK_WEBHOOK_MAIN_SERVER
    terraform apply -var-file=account-b.tfvars
    terraform output certificate_validation_records
