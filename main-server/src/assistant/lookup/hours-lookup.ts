@@ -82,10 +82,30 @@ function basisOf({ meals }: HoursFound): string[] {
   });
 }
 
-export function hoursLookup(found: HoursFound, place: PlaceDto, now: Date): Lookup {
+// The meal asked about: its hours, serving now until when, the usual ones on a day not posted, or not served.
+export function mealStateOf({ date, meals, servingNow }: HoursFound, meal: HoursMeal, now: Date): string {
+  const name = MEAL_WORDS[meal];
+  const words = meals.find((each) => each.meal === meal);
+  if (words === undefined || words.serves === false) {
+    return `${name}은 안 해요`;
+  }
+  const usual = usualWords(words);
+  if (usual !== null) {
+    return `평소 ${usual}`;
+  }
+  const span = spanOf(words);
+  if (span === null) {
+    return `${name} · 시간은 몰라요`;
+  }
+  const open = servingNow === meal && onDay(date, span.closesAt) > now;
+  return open ? `${name} · 지금 영업 중 · ${span.closesAt}까지` : `${name} ${span.opensAt}–${span.closesAt}`;
+}
+
+// The Restaurant picked out, its label the meal asked about, or its state now when none was.
+export function hoursLookup(found: HoursFound, place: PlaceDto, now: Date, meal?: HoursMeal): Lookup {
   const { restaurant } = found;
   const at = { latitude: place.latitude, longitude: place.longitude };
-  const state = stateOf(found, now);
+  const state = meal === undefined ? stateOf(found, now) : mealStateOf(found, meal, now);
   return {
     kind: 'place',
     chips: [],
