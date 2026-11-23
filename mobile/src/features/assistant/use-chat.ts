@@ -145,6 +145,10 @@ export interface Chat {
   resume: (id: number) => void;
   // The conversations kept beside the current one, the one left last first.
   earlier: readonly EarlierConversation[];
+  // "모두 지우기": erases the kept conversations, never the current one (P04 ticket 49).
+  clearEarlier: () => void;
+  // A kept conversation's trash: erases that one, by its id.
+  removeEarlier: (id: number) => void;
   // 그만: takes back the question on its way, and drops its reply when it comes.
   stop: () => void;
   // Adds the app's own bubble, which no request sends.

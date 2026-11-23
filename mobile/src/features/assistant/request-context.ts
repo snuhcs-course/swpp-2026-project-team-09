@@ -11,7 +11,7 @@ import type { ChatBubble } from './use-chat';
 
 // The context a request of the conversation `bubbles` carries. The conditions and the Plan on screen belong to the
 // conversation whose reply drew them: a conversation without a reply yet, such as one just started on the main map
-// (`sendNew`) or by "＋ 새 질문", sends neither, although the answer of the one before is still kept for a render (P04
+// (`sendNew`) or by "＋ 새 대화", sends neither, although the answer of the one before is still kept for a render (P04
 // ticket 47). What was pressed on the map stays: it is what the User sees now.
 export function contextFor(
   context: RequestContext,

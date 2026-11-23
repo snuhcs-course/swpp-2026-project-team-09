@@ -150,8 +150,9 @@ describe('a question typed on the main map while a conversation is kept', () => 
 
     expect(caption().getByText('배고파')).toBeVisible();
     await user.press(screen.getByTestId('answer-caption'));
-    expect(questions().getAllByTestId('question-row')).toHaveLength(3);
-    await user.press(questions().getByRole('button', { name: /정문 셔틀은\?/u }));
+    // The earlier conversation of two questions is one row since P04 ticket 49; it comes back at its last question.
+    expect(questions().getAllByTestId('question-row')).toHaveLength(2);
+    await user.press(questions().getByRole('button', { name: /질문 2개/u }));
     expect(caption().getByText('정문 셔틀은?')).toBeVisible();
     expect(card().getByText(NEXT_REPLY)).toBeVisible();
   });
