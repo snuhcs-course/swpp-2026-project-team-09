@@ -1,0 +1,76 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
+import type { AnswerReply, Plan } from '@/api/assistant-types';
+import { crowdedMealAnswer } from '@/api/mock/data/crowded-meal';
+import { drawingOf } from '@/features/assistant/answer-marks';
+import { startOf } from '@/features/assistant/answer-walks';
+import { seen } from '../support/answer-marks';
+
+// Where a meal answer's map says the User sets out from (P04 ticket 51): the start the answer used, never the end of a
+// Class already over paired with a place. The crowded meal is on 2026-10-07, after a Class at 301동 ending at 10:45.
+const PICK = '학생회관식당';
+// 09:00 in Korea, before the Class ends; 12:00, the Class over.
+const BEFORE = '2026-10-07T00:00:00Z';
+const AFTER = '2026-10-07T03:00:00Z';
+
+function answerAt(now: string, origin?: Plan['parts'][number]['origin']): AnswerReply {
+  const answer = crowdedMealAnswer('2026-10-07', now);
+  if (origin === undefined) {
+    return answer;
+  }
+  const plans = answer.plans.map((plan) => ({
+    ...plan,
+    parts: plan.parts.map((part) => (part.me ? Object.assign({}, part, { origin }) : part)),
+  }));
+  return { ...answer, plans };
+}
+
+function shown(answer: AnswerReply): { label: string | undefined; plan: Plan | undefined } {
+  const index = answer.plans.findIndex(({ place }) => place.label === PICK);
+  const drawing = drawingOf(answer, index);
+  return { label: seen(drawing, 'answer:me').label?.title, plan: answer.plans[index] };
+}
+
+// Partitions: the Class the User sets out from still to end; that Class over, from an older reply that keeps its place;
+// the User's position; and a start not known.
+describe('the start of a meal answer on the map', () => {
+  it('is the end of the Class still to end, at its place', () => {
+    expect(shown(answerAt(BEFORE)).label).toBe('10:45 301동');
+  });
+
+  it('is the place alone once that Class is over', () => {
+    expect(shown(answerAt(AFTER)).label).toBe('301동');
+  });
+
+  it("is the User's position, with no time", () => {
+    const here: Plan['parts'][number]['origin'] = {
+      place: { placeId: 'here', label: '내 위치', latitude: 37.45, longitude: 126.95 },
+      basis: 'location',
+    };
+    expect(shown(answerAt(AFTER, here)).label).toBe('지금 · 내 위치');
+  });
+
+  it('is not said, and no line is drawn to the place, when it is not known', () => {
+    const answer = answerAt(AFTER, null);
+    const index = answer.plans.findIndex(({ place }) => place.label === PICK);
+    const drawing = drawingOf(answer, index);
+
+    expect(seen(drawing, 'answer:me').label?.title).not.toMatch(/\d\d:\d\d|301동/u);
+    expect(drawing.lines.map(({ id }) => id)).toEqual(['answer:route:1']);
+    expect(drawing.things.filter(({ id }) => id.startsWith('answer:leg:0')).length).toBe(0);
+  });
+});
+
+describe('where a face says it sets out from', () => {
+  it('names the Class only while it is still to end', () => {
+    const before = shown(answerAt(BEFORE)).plan;
+    const after = shown(answerAt(AFTER)).plan;
+
+    expect(before === undefined ? null : startOf(before)).toMatchObject({ kind: 'item', label: '301동 수업' });
+    expect(after === undefined ? null : startOf(after)).toEqual({ kind: 'place', place: '301동' });
+  });
+});

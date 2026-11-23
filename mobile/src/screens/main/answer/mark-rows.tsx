@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { AnswerReply, Plan } from '@/api/assistant-types';
 import { Button, color, font, space, text } from '@/design-system';
+import { startOf } from '@/features/assistant/answer-walks';
 import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { koreaClock } from '@/korea-time';
@@ -79,15 +81,18 @@ function FaceAction(props: { words: string; label: string; disabled?: boolean; o
   );
 }
 
-// What a face says of the Plan's time: the busy stretch of theirs that ends last before it ("12:15 302동 수업 끝").
+// What a face says of where they set out from (`startOf`): the end of the Class or the Quest the answer set them out
+// from ("12:15 302동 수업 끝"), its place, or their position; nothing when it is not known. An older thing of theirs,
+// over before now, is never said.
 function faceLineOf(plan: Plan, userId: string): string | null {
-  const lane = plan.band.lanes.find((one) => one.userId === userId);
-  const start = Date.parse(plan.band.startAt);
-  const ended = (lane?.busy ?? [])
-    .filter(({ endAt }) => Date.parse(endAt) <= start)
-    .toSorted((one, other) => Date.parse(other.endAt) - Date.parse(one.endAt));
-  const [last] = ended;
-  return last === undefined ? null : `${koreaClock(last.endAt)} ${last.label ?? '일정'} 끝`;
+  const start = startOf(plan, userId);
+  if (start === null) {
+    return null;
+  }
+  if (start.kind === 'here') {
+    return '지금 위치에서';
+  }
+  return start.kind === 'item' ? `${koreaClock(start.at)} ${start.label ?? '일정'} 끝` : `${start.place}에서`;
 }
 
 interface FaceProps extends ChangeProps {

@@ -149,6 +149,32 @@ export function fixedBefore(plan: Pick<Plan, 'band' | 'parts' | 'startAt'>): Fix
   return last === undefined ? null : { at: last.endAt, label: last.label ?? null };
 }
 
+// Where a person of a Plan sets out from, as the answer used it: the end of a fixed thing of theirs at its place (a
+// Class or a Quest ending between now and the Plan's start), the place alone when no such thing ends there in that
+// time, as an older reply gives for a Class already over, their own position, or null when it is not known.
+export type StartPoint =
+  | { kind: 'item'; at: string; label: string | null; place: string }
+  | { kind: 'place'; place: string }
+  | { kind: 'here' };
+
+export function startOf(plan: Pick<Plan, 'band' | 'parts' | 'startAt'>, userId?: string): StartPoint | null {
+  const part = plan.parts.find((one) => (userId === undefined ? one.me : one.userId === userId));
+  const origin = part?.origin ?? null;
+  if (part === undefined || origin === null) {
+    return null;
+  }
+  if (origin.basis === 'location') {
+    return { kind: 'here' };
+  }
+  const now = Date.parse(plan.band.now);
+  const start = Date.parse(plan.startAt);
+  const lane = plan.band.lanes.find((one) => one.userId === part.userId);
+  const item = (lane?.busy ?? []).findLast(({ endAt }) => Date.parse(endAt) >= now && Date.parse(endAt) <= start);
+  return item === undefined
+    ? { kind: 'place', place: origin.place.label }
+    : { kind: 'item', at: item.endAt, label: item.label ?? null, place: origin.place.label };
+}
+
 // The fixed thing after the Plan, starting at or after its end, with the time it starts; null for none.
 export function fixedAfter(plan: Pick<Plan, 'band' | 'parts' | 'endAt'>): FixedThing | null {
   const end = Date.parse(plan.endAt);

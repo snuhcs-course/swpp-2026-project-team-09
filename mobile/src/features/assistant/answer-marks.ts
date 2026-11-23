@@ -40,7 +40,7 @@ import { type LabelView, type MarkPoint, placeLabels, UPRIGHT_REACH } from './an
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 import { candidateDraft, leftOutByRank, pickLine, sideRank } from './answer-candidates';
 import { kindShown } from './meal-kinds';
-import { drawsMeal, mealDrafts, sceneLines } from './meal-marks';
+import { drawsMeal, hiddenRoutes, mealDrafts, sceneLines } from './meal-marks';
 import type { Ways } from './shuttle-legs';
 import { mealPickWords } from './meal-pick';
 
@@ -261,6 +261,7 @@ export function drawingOfScene(
   setting: SceneSetting = BARE,
 ): AnswerDrawing {
   const meal = setting.meal === true && setting.number !== null ? setting.plans[setting.number - 1] : undefined;
+  const hidden = hiddenRoutes(meal, scene);
   // A meal pick's label says "메뉴 ›" in place of the "›" after its name.
   const drafts = withOpenMarks(
     meal === undefined ? (setting.opens ?? false) : false,
@@ -282,10 +283,11 @@ export function drawingOfScene(
       byGroup(DRAW_ORDER)(one.draft, other.draft) || drafts.indexOf(one.draft) - drafts.indexOf(other.draft),
   );
   const things = placed.map((one, index) => thingOf(one, placed.length - index));
-  const points = [...things.map(({ position }) => position), ...scene.routes.flatMap(({ from, to }) => [from, to])];
+  const routes = scene.routes.filter((_, index) => !hidden.has(index));
+  const points = [...things.map(({ position }) => position), ...routes.flatMap(({ from, to }) => [from, to])];
   return {
     things,
-    lines: sceneLines(scene, meal !== undefined, setting.ways),
+    lines: sceneLines(scene, meal !== undefined, setting.ways, hidden),
     points,
     // A meal answer's camera keeps every candidate in view (the answer screen's redesign).
     ...(meal === undefined ? {} : { keep: points }),

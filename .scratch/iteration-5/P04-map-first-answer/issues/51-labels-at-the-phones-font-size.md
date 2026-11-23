@@ -29,6 +29,10 @@ There are two causes:
   - The start and the next thing's dark labels may take any side of their point.
   - The chosen place's label and the User's dot never move.
 - **An answer without a time bar keeps no room at the top** for the round "←", which leaves the map for the card (P04 ticket 52): the camera and the labels' area start under the status bar.
+- **The start is the one the answer used.** The map's start label and a face's line say the end of a Class or a Quest only when the User sets out from it and it ends between now and the meal ("10:45 301동"). Otherwise:
+  - an older reply's place alone ("301동");
+  - "지금 · 내 위치" from the User's position;
+  - nothing when the start is not known, and then no line is drawn to the place.
 - **Tests run at the usual font scale of 1**, set in the Jest setup; the React Native preset's window says 2.
 
 ## Acceptance criteria
@@ -36,6 +40,7 @@ There are two causes:
 - [x] A meal from 301동 with one Friend there and a few places nearby, at a font scale of 1.3: for every Plan chosen, no label covers another, the User's own mark, or the Friend's face. The exception: with the chosen place at the start's own building, its label, which never moves, stands over the Friend's face beside it. (Unit test.)
 - [x] A label at a font scale of 1.3 is wider and taller than at 1. (Unit test.)
 - [x] Answers other than meals keep their drawing. (Existing tests.)
+- [x] At a pinned clock: a Class still to end gives "10:45 301동"; the same Class over gives "301동"; the User's position "지금 · 내 위치"; an unknown start no start and no line to the place. (Unit test.)
 - [x] No native file changes; lint, format, and types pass on the app.
 
 Not pictured: checked on a phone before the merge.
