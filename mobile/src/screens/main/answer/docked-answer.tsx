@@ -144,17 +144,11 @@ interface DockedWordsProps {
   onRaise: Raise;
 }
 
-// 그대로 두기 waits while 바꾸기 or a recalculation is on its way (PR 444's review): the answer it would leave is about to
-// change.
-function choosing({ invitation, answer }: ChatSheetControl): boolean {
-  return invitation.sending || invitation.changing || answer.recalculating;
-}
-
 // The reply's buttons as chips, which scroll sideways: its offers and 다시 시도, disabled while the next reply is on its
 // way, for they act on the turn before; 그대로 두기 beside a Quest the User holds, which leaves it as it is (P04
 // ticket 20); and the folded chips.
 function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement {
-  const { offers, retry, note, keep = false } = rest;
+  const { offers, retry, note } = rest;
   const { send, waiting } = control.chat;
   return (
     <ScrollView
@@ -190,7 +184,6 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
         />
       ))}
       {retry && control.latest ? <DockChip disabled={waiting} onPress={control.chat.retry} words="다시 시도" /> : null}
-      {keep ? <DockChip disabled={choosing(control)} onPress={control.invitation.leave} words="그대로 두기" /> : null}
       <FoldedChips control={control} note={note} onRaise={onRaise} />
     </ScrollView>
   );
@@ -235,28 +228,6 @@ function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement
   );
 }
 
-// A meal answer beside a Quest already set (P04 ticket 21): the line alone on the top row, and 그대로 두기 under it.
-// 그대로 두기 or 바꾸기 leaves the line alone, as a meeting's dock is.
-function MealBesideSetQuest({ control, rest, onRaise }: DockedWordsProps): ReactElement {
-  const { line, note } = rest;
-  return (
-    <View style={styles.rows} testID="dock-row">
-      {line === null ? null : (
-        <DockLine
-          line={line}
-          onPress={() => {
-            onRaise(false);
-          }}
-        />
-      )}
-      <View style={styles.row} testID="dock-chip-row">
-        <DockChip disabled={choosing(control)} onPress={control.invitation.leave} words="그대로 두기" />
-        <FoldedChips control={control} note={note} onRaise={onRaise} />
-      </View>
-    </View>
-  );
-}
-
 interface DockedAnswerProps {
   control: ChatSheetControl;
   bubble: ChatBubble;
@@ -277,12 +248,8 @@ export function DockedAnswer({
   onRaise,
 }: DockedAnswerProps): ReactElement | null {
   if (rest.kind === 'words') {
-    const mealBeside = rest.words.keep === true && control.answer.answer?.input.kind === 'meal';
-    return mealBeside ? (
-      <MealBesideSetQuest control={control} onRaise={onRaise} rest={rest.words} />
-    ) : (
-      <DockedWords control={control} onRaise={onRaise} rest={rest.words} />
-    );
+    // 그대로 두기 beside a Quest the User holds stands with 바꾸기 on the main row (P04 ticket 50), not here.
+    return <DockedWords control={control} onRaise={onRaise} rest={rest.words} />;
   }
   if (control.answer.answer?.input.kind === 'meal') {
     return <MealDock bubble={bubble} control={control} onRaise={onRaise} />;

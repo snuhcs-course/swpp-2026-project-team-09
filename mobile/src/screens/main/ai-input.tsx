@@ -30,13 +30,14 @@ interface AiInputProps {
   onSend: (text: string, mentions: Mention[]) => void;
   // How much higher than its place the bar stands: over the keyboard while it is up, 0 while it is down.
   lift: number;
-  // The bar's height, 50 for a line, so that the answer frame's card keeps its content clear of the bar.
+  // The room the input takes above its place: the bar, 50 for a line, and the main button's row above it with its gap,
+  // so that the answer frame's card and the camera keep clear of both.
   onHeight: (height: number) => void;
   // In place of "무엇이든 부탁해 보세요".
   placeholder?: string;
   // The words of a message that failed, while that failure is the last thing said.
   restore?: Restore | null;
-  // The answer's main button, at the bar's right on the same line; the bar gives it room.
+  // The answer's main button, on its own full-width row above the bar (P04 ticket 50).
   beside?: ReactNode;
   // Inside the answer's card or dock: a sunken field on its white, without the bar's own border and shadow.
   inCard?: boolean;
@@ -61,19 +62,12 @@ const BAR_RADIUS_TALL = 22;
 const NO_FRIENDS: readonly MentionFriend[] = [];
 
 // The bar's height from its own layout, whole: a change under 1 is no change. What it sets, the corners and the room
-// the answer frame's card keeps, does not change it. The first layout is always told, so that a bar that comes back
-// at one line after a card hid it does not leave the screen counting the taller bar before.
-function useBarHeight(onHeight: (height: number) => void): [number, (event: LayoutChangeEvent) => void] {
+// the answer frame's card keeps (`useToldRoom`), does not change it.
+function useBarHeight(): [number, (event: LayoutChangeEvent) => void] {
   const [height, setHeight] = useState<number>(AI_INPUT.height);
-  const told = useRef<number | null>(null);
   const laidOut = ({ nativeEvent }: LayoutChangeEvent): void => {
     const next = Math.round(nativeEvent.layout.height);
-    if (told.current !== null && Math.abs(next - told.current) < 1) {
-      return;
-    }
-    told.current = next;
-    setHeight(next);
-    onHeight(next);
+    setHeight((last) => (Math.abs(next - last) < 1 ? last : next));
   };
   return [height, laidOut];
 }
@@ -117,9 +111,14 @@ interface FieldProps {
   mention: Mentions;
 }
 
-// While a mention stands in the words, the field draws them as parts, the mentions in the Friend colour.
+// While a mention stands in the words, the field draws them as parts, the mentions in the Friend colour. While it is
+// empty it is one line high (P04 ticket 50): its own hint, which a multiline field may wrap at a large font, shows its
+// first line only, exactly where typed words and the cursor start, as the same field draws both. Only the height is
+// held, never `numberOfLines`: on Android an unset `numberOfLines` falls back to `setLines(1)` (its `@ReactProp`
+// default), which would keep a field with text at one line.
 function Field(props: FieldProps): ReactElement {
   const { mention } = props;
+  const empty = props.message === '' && !mention.shown;
   return (
     <TextInput
       {...NOT_AUTOFILLED}
@@ -134,7 +133,7 @@ function Field(props: FieldProps): ReactElement {
       placeholder={props.placeholder}
       placeholderTextColor={color.inkMuted}
       selection={mention.selection}
-      style={styles.field}
+      style={[styles.field, empty && styles.fieldEmpty]}
       submitBehavior="newline"
       value={mention.shown ? undefined : props.message}
     >
@@ -150,28 +149,42 @@ function Field(props: FieldProps): ReactElement {
   );
 }
 
-// The answer's main button at the bar's right, which tells its width so that the bar gives it room. It is a `bar`
-// button: the bar's own height and rounding, standing on the bar's bottom, so that the two share their middle.
-function Beside({
-  lift,
-  onWidth,
+// The answer's main button on its own row above the bar, full width (P04 ticket 50): at a large font size and a long
+// label a button beside the bar left the bar too narrow for its words. It tells its height, so that the bar's room
+// counts it.
+function MainRow({
+  bottom,
+  onHeight,
   children,
 }: {
-  lift: number;
-  onWidth: (width: number) => void;
+  bottom: number;
+  onHeight: (height: number) => void;
   children: ReactNode;
 }): ReactElement {
   return (
     <View
       onLayout={({ nativeEvent }) => {
-        onWidth(Math.round(nativeEvent.layout.width));
+        onHeight(Math.round(nativeEvent.layout.height));
       }}
-      style={[styles.beside, { bottom: AI_INPUT.bottom + lift }]}
+      style={[styles.mainRow, { bottom }]}
       testID="ai-input-beside"
     >
       {children}
     </View>
   );
+}
+
+// The room the input takes from the screen's bottom: the bar, and the main button's row above it with its gap. Told
+// at each change, so that the answer's card and the camera keep clear of both.
+function useToldRoom(onHeight: (height: number) => void, bar: number, row: number | null): void {
+  const room = row === null ? bar : bar + space[2] + row;
+  const told = useRef<number | null>(null);
+  useEffect(() => {
+    if (told.current !== room) {
+      told.current = room;
+      onHeight(room);
+    }
+  }, [room, onHeight]);
 }
 
 export function AiInput(props: AiInputProps): ReactElement {
@@ -187,10 +200,11 @@ export function AiInput(props: AiInputProps): ReactElement {
     onEmpty,
   } = props;
   const field = useFocusOn(focusKey);
-  const [besideWidth, setBesideWidth] = useState(0);
+  const [rowHeight, setRowHeight] = useState<number | null>(null);
   const [message, setMessage] = useMessage(restore ?? null);
   const mention = useMentions(message, setMessage, props.friends ?? NO_FRIENDS);
-  const [height, laidOut] = useBarHeight(onHeight);
+  const [height, laidOut] = useBarHeight();
+  useToldRoom(onHeight, height, beside === null ? null : rowHeight);
   const canSend = message.trim() !== '';
   useEffect(() => {
     onEmpty?.(!canSend);
@@ -199,14 +213,13 @@ export function AiInput(props: AiInputProps): ReactElement {
     onSend(message.trim(), mention.mentions);
     setMessage('');
   };
-  const room = beside === null ? 0 : besideWidth + space[2];
   return (
     <>
       <View
         onLayout={laidOut}
         style={[
           styles.bar,
-          { bottom: AI_INPUT.bottom + lift, right: AI_INPUT.side + room },
+          { bottom: AI_INPUT.bottom + lift },
           height > AI_INPUT.height && { borderRadius: BAR_RADIUS_TALL },
           inCard && styles.inCard,
         ]}
@@ -217,9 +230,9 @@ export function AiInput(props: AiInputProps): ReactElement {
       </View>
       <MentionList bottom={AI_INPUT.bottom + lift + height + space[2]} mention={mention} />
       {beside === null ? null : (
-        <Beside lift={lift} onWidth={setBesideWidth}>
+        <MainRow bottom={AI_INPUT.bottom + lift + height + space[2]} onHeight={setRowHeight}>
           {beside}
-        </Beside>
+        </MainRow>
       )}
     </>
   );
@@ -259,7 +272,8 @@ const styles = StyleSheet.create({
     boxShadow: shadow.float,
   },
   inCard: { borderWidth: 0, backgroundColor: color.surfaceSunken, boxShadow: 'none' },
-  beside: { position: 'absolute', right: AI_INPUT.side },
+  mainRow: { position: 'absolute', right: AI_INPUT.side, left: AI_INPUT.side },
+  fieldEmpty: { maxHeight: AI_FIELD },
   field: {
     ...text.bodyLg,
     flex: 1,

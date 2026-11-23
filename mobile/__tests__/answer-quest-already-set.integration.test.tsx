@@ -83,23 +83,29 @@ function dock(): ReturnType<typeof within> {
   return within(screen.getByTestId('dock-row'));
 }
 
+// Partitions: an answer beside a lunch the User holds alone, at rest (P04 ticket 50).
+describe('the row above the input beside a lunch the User holds', () => {
+  it('puts 그대로 두기 at the left of 바꾸기 on one row, in two equal cells', async () => {
+    await askOnMap(server, replyWith(OWN));
+
+    const choices = screen.getByTestId('answer-choices');
+    expect(StyleSheet.flatten(choices.props.style)).toMatchObject({ flexDirection: 'row' });
+    const [left, right] = within(choices).getAllByRole('button');
+    expect(left).toHaveTextContent('그대로 두기');
+    expect(right).toHaveTextContent('바꾸기');
+    expect(dock().queryByRole('button', { name: '그대로 두기' })).toBeNull();
+  });
+});
+
 // Partitions: the line and its buttons; 바꾸기 pressed, answered and refused; 그대로 두기 pressed.
 describe('an answer beside a lunch the User holds alone', () => {
-  it('says so in the dock with 그대로 두기, and 바꾸기 stands beside the input', async () => {
+  it('says so in the dock, and 그대로 두기 and 바꾸기 stand on the row above the input', async () => {
     await askOnMap(server, replyWith(OWN));
 
     expect(dock().getByText(LINE)).toBeVisible();
-    expect(dock().getByRole('button', { name: '그대로 두기' })).toBeVisible();
+    expect(beside().getByRole('button', { name: '그대로 두기' })).toBeVisible();
     expect(beside().getByRole('button', { name: '바꾸기' })).toBeEnabled();
     expect(screen.queryByRole('button', { name: '일정에 넣기' })).toBeNull();
-  });
-
-  // The orchestrator's review of the screens; since P04 ticket 21 a meal's line has its own row above its chips.
-  it('keeps 그대로 두기 whole: the line has its own row above the chips', async () => {
-    await askOnMap(server, replyWith(OWN));
-
-    expect(StyleSheet.flatten(screen.getByTestId('dock-chip-row').props.style)).toMatchObject({ flexDirection: 'row' });
-    expect(StyleSheet.flatten(screen.getByTestId('dock-line').props.style)).not.toHaveProperty('minWidth');
   });
 
   it('makes the new Plan from 바꾸기, which the main server puts in place of the held one', async () => {
@@ -127,7 +133,7 @@ describe('an answer beside a lunch the User holds alone', () => {
   it('leaves the lunch as it is from 그대로 두기, says so, and sends nothing', async () => {
     const user = await askOnMap(server, replyWith(OWN));
 
-    await user.press(dock().getByRole('button', { name: '그대로 두기' }));
+    await user.press(beside().getByRole('button', { name: '그대로 두기' }));
     await pass(300);
 
     expect(dock().getByText('12:16 302동식당 점심을 그대로 뒀어요')).toBeVisible();
@@ -139,7 +145,7 @@ describe('an answer beside a lunch the User holds alone', () => {
 describe('the list of questions beside a lunch left as it is', () => {
   it('says the lunch was left as it is', async () => {
     const user = await askOnMap(server, replyWith(OWN));
-    await user.press(dock().getByRole('button', { name: '그대로 두기' }));
+    await user.press(beside().getByRole('button', { name: '그대로 두기' }));
     await pass(300);
 
     await user.press(screen.getByTestId('answer-caption'));
@@ -154,7 +160,7 @@ describe('an answer beside a lunch shared with a Friend', () => {
     await askOnMap(server, replyWith(SHARED, SHARED_LINE));
 
     expect(dock().getByText(SHARED_LINE)).toBeVisible();
-    expect(dock().getByRole('button', { name: '그대로 두기' })).toBeVisible();
+    expect(beside().getByRole('button', { name: '그대로 두기' })).toBeVisible();
     expect(beside().getByRole('button', { name: '파티 보기' })).toBeEnabled();
     expect(screen.queryByRole('button', { name: '바꾸기' })).toBeNull();
   });
@@ -263,6 +269,9 @@ describe("a meeting's 바꾸기 refused or on its way", () => {
     expect(dock().getByText('이 약속은 여기서 바꿀 수 없어요. 파티에서 바꿔 주세요')).toBeVisible();
     expect(screen.queryByText('바꾸지 못했어요. 잠시 후 다시 시도해 주세요')).toBeNull();
     expect(screen.queryByRole('button', { name: '바꾸기' })).toBeNull();
+    // Nothing is left to keep: 파티 보기 stands alone, full width, with no 그대로 두기 (PR 514's review).
+    expect(screen.queryByRole('button', { name: '그대로 두기' })).toBeNull();
+    expect(screen.queryByTestId('answer-choices')).toBeNull();
     await user.press(beside().getByRole('button', { name: '파티 보기' }));
     await pass(300);
     expect(shownAddress()).toBe(`/room/${MEETING.questId}`);

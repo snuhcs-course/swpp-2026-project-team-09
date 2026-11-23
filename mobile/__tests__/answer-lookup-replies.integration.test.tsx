@@ -5,8 +5,10 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import { pass, screen } from './support/app';
 import { mapThings } from './support/answer-map';
 import { AI_INPUT } from './support/lists';
@@ -56,8 +58,12 @@ async function ask(user: User, words: string): Promise<void> {
   await pass(3000);
 }
 
+// A meal's Plan docks with its main button above the input (P04 tickets 32 and 50) and its pick on the map.
 function showsPlan(): boolean {
-  return screen.queryByTestId('condition-chips') !== null && mapThings().includes(PLAN_PICK);
+  const beside = screen.queryByTestId('ai-input-beside');
+  const main =
+    beside === null ? null : within(beside).queryByRole('button', { name: /만들고 초대 보내기|일정에 넣기/u });
+  return main !== null && mapThings().includes(PLAN_PICK);
 }
 
 // A way docks with its "길 안내" beside the input (P04 ticket 05).

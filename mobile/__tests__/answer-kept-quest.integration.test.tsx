@@ -118,7 +118,7 @@ describe('a lunch already set, on the map', () => {
   it("is the only mark beside the User's own once 그대로 두기 leaves it, with the line, and nothing is sent", async () => {
     const user = await askOnMap(server, LUNCH_REPLY);
 
-    await user.press(dock().getByRole('button', { name: '그대로 두기' }));
+    await user.press(beside().getByRole('button', { name: '그대로 두기' }));
     await pass(300);
 
     expect(screen.getByTestId('answer-card')).toBeVisible();
@@ -163,7 +163,7 @@ describe('그대로 두기 while 바꾸기 is on its way', () => {
 
     await user.press(beside().getByRole('button', { name: '바꾸기' }));
     await pass(300);
-    expect(dock().getByRole('button', { name: '그대로 두기' })).toBeDisabled();
+    expect(beside().getByRole('button', { name: '그대로 두기' })).toBeDisabled();
     await pass(3500);
 
     expect(mapThings().filter((name) => name.startsWith('잡힌'))).toEqual([]);
@@ -176,7 +176,7 @@ describe('그대로 두기 while 바꾸기 is on its way', () => {
 describe('the answer after 그대로 두기', () => {
   it('asks nothing of a building tapped', async () => {
     const user = await askOnMap(server, LUNCH_REPLY);
-    await user.press(dock().getByRole('button', { name: '그대로 두기' }));
+    await user.press(beside().getByRole('button', { name: '그대로 두기' }));
     await pass(300);
     server.on('GET /places/at', { status: 200, body: { place: ENGINEERING_1, relation: 'inside' } });
 
@@ -188,7 +188,7 @@ describe('the answer after 그대로 두기', () => {
 
   it('draws 나 as no button, and its line raises nothing', async () => {
     const user = await askOnMap(server, LUNCH_REPLY);
-    await user.press(dock().getByRole('button', { name: '그대로 두기' }));
+    await user.press(beside().getByRole('button', { name: '그대로 두기' }));
     await pass(300);
 
     expect(within(screen.getByTestId('main-map-touches')).queryByRole('button', { name: '나' })).toBeNull();

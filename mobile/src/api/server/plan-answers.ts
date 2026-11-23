@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -261,6 +262,20 @@ function isOtherMealOrAbsent(value: unknown): boolean {
   );
 }
 
+// A Friend the plans add to the meal the User holds, and those Friends with the start (P05 ticket 44).
+function isAddedFriend(value: unknown): value is { userId: string; name: string } {
+  return isText(field(value, 'userId')) && isText(field(value, 'name'));
+}
+function isAddingOrAbsent(value: unknown): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    (listOf(isAddedFriend)(field(value, 'friends')) &&
+      isText(field(value, 'startAt')) &&
+      isTextOrNull(field(value, 'movesTo')))
+  );
+}
+
 export function isDish(value: unknown): value is MenuDish {
   const cuisine = field(value, 'cuisine');
   return (
@@ -304,6 +319,7 @@ export function isAnswerReply(value: unknown): value is AnswerReply {
     isMealSetOrAbsent(field(value, 'mealSet')) &&
     isKeptOneOrAbsent(field(value, 'planSet')) &&
     isKeptOrAbsent(field(value, 'related')) &&
+    isAddingOrAbsent(field(value, 'adding')) &&
     hasMissingParts(value)
   );
 }

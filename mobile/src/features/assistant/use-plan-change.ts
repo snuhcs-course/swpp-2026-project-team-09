@@ -2,12 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useRef, useState } from 'react';
-import type { AnswerReply } from '@/api/assistant-types';
+import type { AnswerReply, Plan } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { isRefusal } from '@/api/errors';
+import { addedLineOf } from './adding-words';
 import { changedLineOf, leftLineOf, setQuestOf } from './set-quest';
 import { NOT_HERE, refusedHere } from './set-refusals';
 import type { Inviting } from './use-plan-invitation';
@@ -53,6 +55,16 @@ interface PlanChange {
 // to its 파티; any other failure is told, and 바꾸기 can be pressed again. A second press while one is on its way does
 // nothing, and `changing` holds the answer still until it returns. 그대로 두기 (`leave`, ticket 20) leaves the Quest as
 // it is and sends nothing; the answer stays too, and `left` is its line.
+// The line once 바꾸기 changed the Quest held: a press that added Friends says so (P05 ticket 44); any other, the new
+// time and whom it told.
+function changedOf(answer: AnswerReply, plan: Plan): string {
+  const set = setQuestOf(answer);
+  const { adding } = answer;
+  return adding === undefined || adding === null || adding.friends.length === 0
+    ? changedLineOf(plan.startAt, set?.people ?? [], set?.word)
+    : addedLineOf(adding, set?.word);
+}
+
 export function usePlanChange(shown: Pick<ShownAnswer, 'answer' | 'plan' | 'change'>, inviting: Inviting): PlanChange {
   const [changing, setChanging] = useState(false);
   const [chosen, setChosen] = useState<Chosen | null>(null);
@@ -71,9 +83,7 @@ export function usePlanChange(shown: Pick<ShownAnswer, 'answer' | 'plan' | 'chan
     apiClient.changePlanQuest(questId, makingOf(answer, plan, inviting)).then(
       () => {
         settle();
-        const set = setQuestOf(answer);
-        const line = changedLineOf(plan.startAt, set?.people ?? [], set?.word);
-        setChosen({ answer, planId: plan.id, line, how: 'changed' });
+        setChosen({ answer, planId: plan.id, line: changedOf(answer, plan), how: 'changed' });
       },
       (error: unknown) => {
         settle();

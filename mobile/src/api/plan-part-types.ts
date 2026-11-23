@@ -36,3 +36,17 @@ export interface DroppedPlace {
   // Each person's part there, given for the Place the input fixed ("여기면 어때?").
   parts?: PlanPart[];
 }
+
+// A meal answer's Friends whom its plans add to the meal the User holds (`planSet`, P05 ticket 44): those added (not
+// those already in it), the Quest's start in Korea time with its offset, and the first plan's start when it moves, else
+// null. The answer's `adding`, absent otherwise and from a main server before it.
+export interface AddingFriends {
+  friends: { userId: string; name: string }[];
+  startAt: string;
+  movesTo: string | null;
+}
+
+// A meal answer's `adding` (P05 ticket 44).
+export interface WithAdding {
+  adding?: AddingFriends | null;
+}

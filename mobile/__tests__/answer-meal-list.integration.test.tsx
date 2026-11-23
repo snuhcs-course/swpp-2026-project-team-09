@@ -156,7 +156,8 @@ describe('a meal answer that kept one Plan of many', () => {
 
     expect(screen.getByTestId('dock-line-words')).toHaveTextContent(/^김민수와 시간이 맞는 곳은 302동식당뿐이에요 · /u);
     expect(screen.getByTestId('dock-line').props.accessibilityRole).toBeUndefined();
-    expect(gripLabel()).toBe('3곳 목록');
+    // The place offered, as the list's first line counts it; the two dropped stand under their own heading.
+    expect(gripLabel()).toBe('1곳 목록');
   });
 
   it('lists the Plan, then the places dropped under their reason, faded and not pressable, under the people', async () => {
@@ -166,6 +167,8 @@ describe('a meal answer that kept one Plan of many', () => {
 
     expect(card().getByText('김민수')).toBeOnTheScreen();
     expect(list().getByTestId('meal-row-1')).toBeEnabled();
+    // The same count as the grip's "1곳 목록": the place offered, not the places dropped.
+    expect(list().getByTestId('meal-list-order')).toHaveTextContent(/^1곳 · /u);
     expect(list().getByText('김민수와 시간이 맞지 않는 곳')).toBeOnTheScreen();
     const dropped = list().getAllByTestId('meal-dropped-row');
     expect(dropped.map((row) => String(row.props.accessibilityLabel))).toEqual([

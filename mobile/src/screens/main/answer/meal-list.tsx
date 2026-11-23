@@ -58,9 +58,10 @@ export function mealCard(answer: AnswerReply | null): boolean {
   return answer?.input.kind === 'meal' && answer.plans.length > 0;
 }
 
-// The places the list counts ("올리면 12곳 목록"): the candidates and the places dropped.
+// The places the list offers ("8곳 목록"), as its first line and "전체" count them: the candidates. The places dropped
+// stand under their own heading in the list and are not counted.
 export function listedCount(answer: AnswerReply): number {
-  return answer.plans.length + answer.dropped.length;
+  return answer.plans.length;
 }
 
 // The line over the candidates that cannot be done in the time.
@@ -92,9 +93,11 @@ export function candidateRowsOf(answer: AnswerReply | null): CandidateRow[] {
     .map((plan, index) => ({ plan, row: rowOf(plan, index, kind) }))
     .filter(({ plan }) => kind === null || serves(plan, kind))
     .map(({ row }) => row);
-  // Without a walk anywhere, the main server's order stands: its walk on to the next item, the earliest start, the
-  // longest time to eat (P05 ticket 40), which an order of the phone's would scramble.
-  return walksKnown(answer)
+  // Only where the User starts is known is the main server's order the least walking. Otherwise it stands as it came:
+  // without a walk anywhere, the walk on to the next item, the earliest start, the longest time to eat (P05 ticket 40);
+  // with a way on alone, those where everyone has thirty minutes first (P05 ticket 45). An order of the phone's would
+  // scramble it.
+  return byWalking(answer)
     ? rows.toSorted(
         (one, other) =>
           (one.walk ?? Infinity) - (other.walk ?? Infinity) ||
@@ -110,10 +113,26 @@ export function walksKnown(answer: AnswerReply): boolean {
   return answer.plans.some((plan) => addedWalk(plan) !== null);
 }
 
-// How the raised list is ordered, which the caption says: by walking, or, without it, by the main server's order,
-// the earliest open first (P04 ticket 48).
+// The raised list's first line (P04 ticket 50): how many places it shows, of the kind on screen when one is chosen, and
+// how it is ordered ("11곳 · 걸음이 적은 순"). Not pressable: the grip's line says how to lower the card.
+export function orderLineOf(answer: AnswerReply, shown: number): string {
+  return `${String(shown)}곳 · ${listOrderWords(answer)}`;
+}
+
+// Whether the list is ordered by walking: where the User starts is known, and with it their walking.
+function byWalking(answer: AnswerReply): boolean {
+  const known = answer.plans.some((plan) => plan.parts.some(({ me, origin }) => me && origin !== null));
+  return known && walksKnown(answer);
+}
+
+// How the raised list is ordered, which its first line says: by walking ("걸음이 적은 순"); without any walking, the main
+// server's order, the earliest open first ("일찍 여는 순", P04 ticket 48); with a way on alone, where the User starts
+// being unknown, the main server's order of its pick first ("추천 순").
 export function listOrderWords(answer: AnswerReply): string {
-  return walksKnown(answer) ? '걸음이 적은 순' : '일찍 여는 순';
+  if (byWalking(answer)) {
+    return '걸음이 적은 순';
+  }
+  return walksKnown(answer) ? '추천 순' : '일찍 여는 순';
 }
 
 const BADGE = 22;
@@ -228,6 +247,9 @@ export function MealList({ answer, shown, busy }: MealListProps): ReactElement |
   );
   return (
     <View style={styles.list} testID="meal-list">
+      <Text numberOfLines={1} style={styles.order} testID="meal-list-order">
+        {orderLineOf(answer, rows.length)}
+      </Text>
       <KindChips answer={answer} disabled={busy} onChoose={shown.chooseKind} />
       {rows.filter((one) => !late.includes(one)).map((one) => row(one))}
       {late.length === 0 ? null : <Heading words={LATE_HEADING} />}
@@ -266,7 +288,9 @@ const styles = StyleSheet.create({
   },
   chosenBadge: { backgroundColor: color.quest },
   droppedBadge: { backgroundColor: color.inkSubtle },
-  heading: { ...text.caption, marginTop: space[2], paddingHorizontal: space[2], color: color.inkMuted },
+  heading: { ...text.caption, marginTop: space[2], color: color.inkMuted },
+  // On the list's left edge, above the kinds.
+  order: { ...text.caption, color: color.inkMuted },
   number: { ...text.micro, color: color.onPrimary },
   middle: { flex: 1, gap: 2 },
   name: { ...text.body, fontFamily: font.bold, color: color.ink },

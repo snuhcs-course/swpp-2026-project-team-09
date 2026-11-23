@@ -9,7 +9,9 @@ import { StyleSheet } from 'react-native';
 import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
 import { radius, space } from '@/design-system';
 import { BAR_ADD_HEIGHT } from '@/screens/main/answer/condition-chips';
+import { AI_FIELD } from '@/screens/main/ai-input';
 import { AI_INPUT } from '@/screens/main/layout';
+import { raiseCard } from './support/card-grip';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { askOnMap } from './support/answer-map';
@@ -19,8 +21,8 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { sockets } from './support/fake-socket';
 
-// The dock and the bar's head from the user's phone (P04 ticket 45): the main button is the input's height on the
-// input's bottom; a cut sentence says "더 보기" and raises the card to the whole words; "＋ 같이" is a solid chip of the
+// The dock and the bar's head from the user's phone (P04 tickets 45 and 50): the main button is the input's height, on
+// its own full-width row above the input, whose placeholder stays on one line; a cut sentence says "더 보기" and raises the card to the whole words; "＋ 같이" is a solid chip of the
 // head row's height, clear of the track.
 
 jest.mock('expo-location');
@@ -58,8 +60,8 @@ afterEach(() => {
 });
 
 // Partitions: the meal answer's main button beside the input.
-describe('the main button beside the input', () => {
-  it('is the input’s height, fully rounded, standing on the input’s bottom', async () => {
+describe('the main button above the input', () => {
+  it('is the input’s height, fully rounded, on its own full-width row above the input', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
     const button = within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' });
@@ -67,7 +69,29 @@ describe('the main button beside the input', () => {
       height: AI_INPUT.height,
       borderRadius: radius.full,
     });
-    expect(screen.getByTestId('ai-input-beside')).toHaveStyle({ bottom: AI_INPUT.bottom });
+    // Its own full-width row above the input (P04 ticket 50), which keeps the whole width.
+    expect(screen.getByTestId('ai-input-beside')).toHaveStyle({
+      bottom: AI_INPUT.bottom + AI_INPUT.height + space[2],
+      left: AI_INPUT.side,
+      right: AI_INPUT.side,
+    });
+    expect(screen.getByTestId('ai-input')).toHaveStyle({ right: AI_INPUT.side, left: AI_INPUT.side });
+  });
+
+  it('holds the empty input one line high with its own placeholder, and never limits its lines', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+
+    const field = screen.getByLabelText('AI에게 메시지');
+    expect(field).toHaveProp('placeholder', '이어서 말하기');
+    expect(field).toHaveStyle({ maxHeight: AI_FIELD });
+    expect(screen.queryByTestId('ai-input-placeholder', { includeHiddenElements: true })).toBeNull();
+    // An unset `numberOfLines` is `setLines(1)` on Android: the field never passes one, empty or not (PR 514's review).
+    expect(field.props.numberOfLines).toBeUndefined();
+
+    await user.type(field, '더 싼 데');
+    const typed = screen.getByLabelText('AI에게 메시지');
+    expect(typed.props.numberOfLines).toBeUndefined();
+    expect(typed).not.toHaveStyle({ maxHeight: AI_FIELD });
   });
 });
 
@@ -108,5 +132,20 @@ describe('"＋ 같이" in the bar’s head', () => {
     expect(screen.getByTestId('time-bar')).toHaveStyle({ paddingTop: space[3] });
     expect(screen.getByTestId('time-bar-add')).toHaveStyle({ top: space[3] });
     expect(screen.getByTestId('time-band-head')).toHaveStyle({ minHeight: BAR_ADD_HEIGHT });
+  });
+});
+
+// Partitions: the list raised with every kind; one kind chosen (P04 ticket 50, the user's phone).
+describe('the raised list’s first line', () => {
+  it('says how many places it shows and how they are ordered, the kind on screen’s count once one is chosen', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await raiseCard();
+
+    const total = MEAL_ANSWER_MENUS_REPLY.answer.plans.length;
+    expect(screen.getByTestId('meal-list-order')).toHaveTextContent(`${String(total)}곳 · 걸음이 적은 순`);
+    expect(screen.getByTestId('meal-list-order').props.numberOfLines).toBe(1);
+
+    await user.press(screen.getByRole('button', { name: '한식 4곳' }));
+    expect(screen.getByTestId('meal-list-order')).toHaveTextContent('4곳 · 걸음이 적은 순');
   });
 });

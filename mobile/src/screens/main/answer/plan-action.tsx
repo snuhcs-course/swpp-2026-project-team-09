@@ -12,10 +12,12 @@ import type { QuestOffer } from '@/api/party-change-types';
 import type { Lookup } from '@/api/lookup-types';
 import type { Refusal } from '@/api/refusal-types';
 import { Button } from '@/design-system';
+import { addingWordsOf } from '@/features/assistant/adding-words';
 import { peopleOf } from '@/features/assistant/plan-input';
 import { type SetQuest, setQuestOf } from '@/features/assistant/set-quest';
 import type { ChatSheetControl } from '../chat-sheet';
 import { CHANGE_WORDS, type ProposalMaking } from '../chat-proposal-card';
+import { type Choice, ChoiceRow } from './choice-row';
 import { lookupMainOf, useLookupMain } from './lookup-card';
 import { RoomOfferButton, roomOfferOn } from './room-offer';
 import { lookupReplyOf, onScreenOf, planShown } from './reply-words';
@@ -26,6 +28,8 @@ export interface PlanAction {
   words: string;
   onPress: () => void;
   disabled: boolean;
+  // A secondary choice on the same row, at the left (P04 ticket 50): 그대로 두기 beside a Quest the User holds.
+  secondary?: Choice;
 }
 
 // "만들고 초대 보내기" for a Plan with a Friend, as "이대로 초대" made it into a Quest and invited them; "일정에 넣기" for a meal's Plan
@@ -48,7 +52,21 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
   if (set !== null) {
     // Once 바꾸기 changed the meeting, or 그대로 두기 left the Quest, the answer says so and offers nothing more.
     const chosen = invitation.changed !== null || invitation.left !== null;
-    return chosen ? null : setQuestAction(set, control, disabled || invitation.changing);
+    if (chosen) {
+      return null;
+    }
+    const main = setQuestAction(set, control, disabled || invitation.changing);
+    // After a 바꾸기 refused for good there is nothing left to keep or change: "파티 보기" alone (PR 514's review).
+    if (invitation.refused !== null) {
+      return main;
+    }
+    // 그대로 두기 waits while 바꾸기 or a recalculation is on its way: the answer it would leave is about to change.
+    const keep = {
+      words: '그대로 두기',
+      onPress: invitation.leave,
+      disabled: invitation.sending || invitation.changing || shown.recalculating,
+    };
+    return { ...main, secondary: keep };
   }
   if (kind !== 'new-quest' && people > 1) {
     return {
@@ -61,8 +79,8 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
 }
 
 // Beside a Quest the User holds (P04 ticket 17): "바꾸기" makes the Plan in its place, or for a meeting changes that
-// Quest in place; one the User may not change is changed in its 파티, which "파티 보기" opens.
-function setQuestAction(set: SetQuest, { invitation }: ChatSheetControl, disabled: boolean): PlanAction {
+// Quest in place, saying whom it invites when it adds Friends to it (P05 ticket 44); one the User may not change is changed in its 파티, which "파티 보기" opens.
+function setQuestAction(set: SetQuest, { invitation, answer }: ChatSheetControl, disabled: boolean): PlanAction {
   // A 바꾸기 refused for good sends the User to the 파티 too.
   if (!set.changeable || invitation.refused !== null) {
     return {
@@ -77,14 +95,21 @@ function setQuestAction(set: SetQuest, { invitation }: ChatSheetControl, disable
     const onPress = (): void => {
       invitation.change(set.questId);
     };
-    return { words: invitation.changing ? '바꾸는 중이에요' : '바꾸기', onPress, disabled };
+    // Friends added to the meal the User holds: the press says whom it invites (P05 ticket 44).
+    const { adding } = answer.answer ?? {};
+    const words =
+      adding === undefined || adding === null || adding.friends.length === 0 ? '바꾸기' : addingWordsOf(adding);
+    return { words: invitation.changing ? '바꾸는 중이에요' : words, onPress, disabled };
   }
   return { words: invitation.sending ? '바꾸는 중이에요' : '바꾸기', onPress: invitation.invite, disabled };
 }
 
 export function PlanActionButton({ action }: { action: PlanAction }): ReactElement {
+  if (action.secondary !== undefined) {
+    return <ChoiceRow main={action} secondary={action.secondary} />;
+  }
   return (
-    <Button disabled={action.disabled} onPress={action.onPress} size="bar">
+    <Button disabled={action.disabled} onPress={action.onPress} full size="bar">
       {action.words}
     </Button>
   );
@@ -163,6 +188,11 @@ function stepActionOf(control: ChatSheetControl): PlanAction | null {
 }
 
 export function answerActionOf(control: ChatSheetControl): AnswerAction | null {
+  // While the earlier questions cover the answer, its main button gives way: the list is for moving between questions
+  // (P04 ticket 50).
+  if (control.card.earlier.open) {
+    return null;
+  }
   const plan =
     control.steps === null
       ? (planActionOf(control) ?? proposalActionOf(control) ?? bookingActionOf(control) ?? bookedActionOf(control))
@@ -202,7 +232,7 @@ function LookupActionButton({ control, lookup, refusal }: LookupActionProps): Re
   });
   // Disabled while the next reply is on its way: it would act on the turn before.
   return main === null ? null : (
-    <Button disabled={chat.waiting} onPress={main.onPress} size="bar">
+    <Button disabled={chat.waiting} onPress={main.onPress} full size="bar">
       {main.label}
     </Button>
   );
