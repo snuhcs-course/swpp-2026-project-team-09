@@ -3,6 +3,7 @@
  *
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -76,7 +77,7 @@ function caption(): ReturnType<typeof within> {
 }
 
 async function closeAnswer(user: User): Promise<void> {
-  await user.press(screen.getByRole('button', { name: '뒤로' }));
+  await user.press(screen.getByRole('button', { name: '답 닫기' }));
 }
 
 function card(): ReturnType<typeof within> {
@@ -131,7 +132,7 @@ function questions(): ReturnType<typeof within> {
   return within(screen.getByTestId('question-list'));
 }
 
-// The conversation of two questions closed with "←", then a question typed on the main map.
+// The conversation of two questions closed with ✕, then a question typed on the main map.
 async function askOnMap(user: User): Promise<void> {
   await closeAnswer(user);
   answerWith('새 답이에요.');

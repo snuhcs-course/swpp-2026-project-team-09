@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -12,7 +13,6 @@ import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_PLAN_1 } from '@/api/mock/data/meal-answer-plan-1';
 import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
-import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -116,7 +116,7 @@ describe('a press of "만들고 초대 보내기"', () => {
     expect(steps.getByText('302동식당에서 식사')).toBeVisible();
     expect(card().getByText('김민수 · 아직 안 봄')).toBeVisible();
     expect(card().getByText('301동에서')).toBeVisible();
-    expect(card().getByRole('button', { name: '닫기' })).toBeEnabled();
+    expect(card().getByRole('button', { name: '답 닫기' })).toBeEnabled();
   });
 
   it('leaves no band, no "＋ 같이", and no main button after inviting', async () => {
@@ -148,20 +148,19 @@ describe('the map after inviting', () => {
   });
 });
 
-// Partitions: the card's last part. Expected values: fix 5 of the design review of 2026-11-15, "닫기" the secondary
-// button across the card's content in the place the main button had.
+// Partitions: the card's last part. Expected values: P04 ticket 52, a card over the map closes by its ✕, and no
+// "닫기" word button closes it.
 describe('the card after inviting', () => {
-  it('ends with "닫기" across its width', async () => {
+  it("ends with its steps, and closes by the card's ✕ to the everyday map", async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
     await user.press(beside().getByRole('button', { name: INVITE }));
     await pass(500);
 
-    const close = card().getByRole('button', { name: '닫기' });
-    expect(close).toHaveStyle({ alignSelf: 'stretch', height: 40, borderColor: color.borderStrong });
-    const holder: unknown = close.parent?.props.testID;
-    expect(holder).toBe('invited-card');
+    expect(within(screen.getByTestId('invited-card')).queryByRole('button', { name: '닫기' })).toBeNull();
+    await user.press(card().getByRole('button', { name: '답 닫기' }));
+    expect(screen.queryByTestId('invited-card')).toBeNull();
   });
 });
 

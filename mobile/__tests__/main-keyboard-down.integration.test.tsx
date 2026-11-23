@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -130,7 +131,8 @@ describe('a press on the scrim on the everyday map', () => {
     expect(screen.getByLabelText(AI_INPUT)).toHaveDisplayValue('식사 메뉴 추천');
     await press(user, SEND);
     await pass(300);
-    expect(screen.getByTestId('answer-card')).toHaveTextContent(/^식사 메뉴 추천오늘 메뉴예요\./u);
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent('식사 메뉴 추천');
+    expect(screen.getByTestId('answer-card-content')).toHaveTextContent(/^오늘 메뉴예요\./u);
   });
 });
 
@@ -161,19 +163,22 @@ describe("the AI input's own parts while the keyboard is up", () => {
 
     await press(user, '배고파');
     await pass(300);
+    // The tests' phone has no keyboard of its own to put down; down, the caption names what was asked.
+    await hideKeyboard();
 
-    expect(screen.getByTestId('answer-card')).toHaveTextContent(/배고파/u);
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent(/배고파/u);
   });
 
   it('show the hidden answer frame again by the chip "이어서"', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
-    await press(user, '뒤로');
+    await press(user, '답 닫기');
     await showKeyboard(KEYBOARD);
 
     await reopenAnswer(user);
+    await hideKeyboard();
 
-    expect(screen.getByTestId('answer-card')).toHaveTextContent(/식사 메뉴 추천/u);
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent(/식사 메뉴 추천/u);
   });
 });
 
@@ -195,7 +200,7 @@ describe('the examples over the keyboard', () => {
 
 // Partitions: what the scrim stands over and under; a press on it.
 describe('a press beside the AI input in the answer frame', () => {
-  it('lands, while the keyboard is up, on a scrim over the map, under the card, "뒤로", and the bar', async () => {
+  it('lands, while the keyboard is up, on a scrim over the map, under the card, ✕, and the bar', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
 
@@ -203,7 +208,7 @@ describe('a press beside the AI input in the answer frame', () => {
 
     const scrim = button(SCRIM);
     expect(drawnOver(scrim, mapTouches())).toBe(true);
-    for (const over of [screen.getByTestId('answer-card'), button('뒤로')]) {
+    for (const over of [screen.getByTestId('answer-card'), button('답 닫기')]) {
       expect(drawnOver(over, scrim)).toBe(true);
     }
     expect(drawnOver(screen.getByTestId('ai-input'), scrim)).toBe(true);
@@ -218,27 +223,22 @@ describe('a press beside the AI input in the answer frame', () => {
     await press(user, SCRIM);
 
     expect(dismiss).toHaveBeenCalled();
-    expect(screen.getByTestId('answer-card')).toHaveTextContent(/식사 메뉴 추천/u);
+    await hideKeyboard();
+    expect(screen.getByTestId('answer-caption')).toHaveTextContent(/식사 메뉴 추천/u);
     expect(screen.getByTestId('answer-card')).toBeVisible();
   });
 });
 
-// Partitions: the keyboard up, where the card shows the questions above the input (board 6 of the 2026-11-22 redesign),
-// and down, where the caption opens them.
+// Partitions: the keyboard up, where the input's focus opens no questions (P04 ticket 52), and down, where the caption
+// opens them.
 describe("the conversation's questions in the answer's card", () => {
-  it('stand above the input while the keyboard is up, and a press on one puts the keyboard down', async () => {
+  it('stay closed while the keyboard is up: the input brings the keyboard and the follow-ups alone', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
+
     await showKeyboard(KEYBOARD);
-    const dismiss = quietDismiss();
 
-    const [row] = within(screen.getByTestId('question-list')).getAllByTestId('question-row');
-    if (row === undefined) {
-      throw new Error('no question in the card');
-    }
-    await user.press(row);
-
-    expect(dismiss).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('question-list')).toBeNull();
     expect(screen.getByTestId('answer-card')).toBeVisible();
   });
 
@@ -255,15 +255,15 @@ describe("the conversation's questions in the answer's card", () => {
   });
 });
 
-// Partitions: "뒤로"; a new question typed on the main map.
+// Partitions: ✕; a new question typed on the main map.
 describe('leaving the answer and asking anew', () => {
-  it('closes the frame by "뒤로", keeping the conversation, as before', async () => {
+  it('closes the frame by ✕, keeping the conversation, as before', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
     await showKeyboard(KEYBOARD);
     quietDismiss();
 
-    await press(user, '뒤로');
+    await press(user, '답 닫기');
 
     expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(screen.getByRole('button', { name: EARLIER })).toBeVisible();
@@ -272,7 +272,7 @@ describe('leaving the answer and asking anew', () => {
   it('starts a new conversation by what is typed on the main map, the one before among its questions', async () => {
     const user = await openMain();
     await ask(user, '식사 메뉴 추천');
-    await press(user, '뒤로');
+    await press(user, '답 닫기');
 
     await ask(user, '배고파');
 

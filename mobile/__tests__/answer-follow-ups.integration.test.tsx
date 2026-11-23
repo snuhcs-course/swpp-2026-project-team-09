@@ -4,6 +4,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -13,7 +14,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { KEYBOARD, showKeyboard } from './support/keyboard';
+import { hideKeyboard, KEYBOARD, quietDismiss, showKeyboard } from './support/keyboard';
 import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
@@ -90,10 +91,16 @@ describe('the follow-ups of the reply', () => {
 
     expect(followUps().getAllByRole('button')).toHaveLength(2);
     expect(followUps().getByRole('button', { name: '김민수랑 내일 점심 먹자' })).toBeVisible();
+    const dismiss = quietDismiss();
     await user.press(followUps().getByRole('button', { name: NEXT }));
 
-    expect(within(screen.getByTestId('answer-caption')).getByText(NEXT)).toBeVisible();
     expect(JSON.stringify(lastSent())).toContain(JSON.stringify({ role: 'user', text: NEXT }));
+    expect(dismiss).toHaveBeenCalled();
+    // While typing the caption gives way (P04 ticket 35); the press puts the keyboard down, and the caption then names
+    // what was sent. The tests' phone has no keyboard of its own to put down.
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
+    await hideKeyboard();
+    expect(within(screen.getByTestId('answer-caption')).getByText(NEXT)).toBeVisible();
   });
 
   it('are not offered while the next reply is on its way, nor under words alone', async () => {

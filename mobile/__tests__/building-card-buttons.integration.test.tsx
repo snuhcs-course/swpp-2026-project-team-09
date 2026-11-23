@@ -6,6 +6,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -103,7 +104,7 @@ describe('"여기서 먹기" on the card of a pressed building', () => {
     await user.press(buildingCard().getByRole('button', { name: '여기서 먹기' }));
     await pass(500);
 
-    await user.press(screen.getByRole('button', { name: '뒤로' }));
+    await user.press(screen.getByRole('button', { name: '답 닫기' }));
 
     expect(buildingCard().getByRole('header', { name: '63동' })).toBeVisible();
   });

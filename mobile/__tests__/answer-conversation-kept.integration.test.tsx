@@ -5,6 +5,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -53,8 +54,8 @@ const GATE_REPLY = '정문 셔틀이 먼저 와요.';
 const GATE_TEXT = { text: GATE_REPLY, mapButtons: [], cards: [], proposal: null };
 // A mark of the first Plan on the map.
 const PLAN_MARK = '302동식당 · 12:15 점심';
-// "←" at the answer's top left (rule 2 of the 2026-11-22 redesign).
-const BACK = '뒤로';
+// ✕ at the right end of the card's top row (P04 ticket 52).
+const BACK = '답 닫기';
 
 let server: FakeServer;
 let back: () => Promise<boolean>;
@@ -135,9 +136,9 @@ function expectHidden(): void {
   expect(screen.getByRole('button', { name: CONTINUE })).toBeVisible();
 }
 
-// Partitions: the four ways to leave, 뒤로, back, a layer, and route guidance; each shown again by the chip "이어서".
+// Partitions: the four ways to leave, ✕, back, a layer, and route guidance; each shown again by the chip "이어서".
 describe('leaving the frame', () => {
-  it('hides it with 뒤로, and the chip "이어서" shows the same turn again', async () => {
+  it('hides it with ✕, and the chip "이어서" shows the same turn again', async () => {
     const user = await asked(MEAL_ANSWER_REPLY);
 
     await leave(user);

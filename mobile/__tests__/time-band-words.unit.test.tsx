@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -122,9 +123,10 @@ describe("TimeBand's words after a handle is let go", () => {
   });
 });
 
-// The longest words the bar's head writes, seen on a phone 360 wide (P04 ticket 37), between "←" and "＋ 같이".
+// The longest words the bar's head writes, seen on a phone 360 wide (P04 ticket 37), from the bar's left edge to
+// "＋ 같이" ("←" left the answer in P04 ticket 52).
 const LONG = { ...band, text: '11:03–12:15 · 식사 1시간 12분' };
-const HEAD = { left: 28, right: 72 };
+const HEAD = { right: 72 };
 
 // The hidden copy of the words lays itself out at their width; two lines mean they do not fit on one.
 async function laidOut(lines: number): Promise<void> {

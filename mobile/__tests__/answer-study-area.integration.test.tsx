@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -151,7 +152,7 @@ describe("board a9's answer", () => {
     expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
   });
 
-  it('raises the chips, the two lines, "관정 보기", and "닫기" at a press on the line', async () => {
+  it('raises the chips, the two lines, "관정 보기", under the card’s ✕, at a press on the line', async () => {
     const user = await askOnMap(server, REPLY);
 
     await user.press(card().getByText(REPLY.text));
@@ -162,7 +163,7 @@ describe("board a9's answer", () => {
     }
     expect(card().getByText('빈 자리 수는 관정만 알 수 있어요')).toBeVisible();
     expect(card().getByRole('button', { name: '관정 보기' })).toBeVisible();
-    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
+    expect(card().getByRole('button', { name: '답 닫기' })).toBeVisible();
     expect(card().queryByRole('button', { name: '가는 길' })).toBeNull();
     expect(beside().getByRole('button', { name: '가는 길' })).toBeVisible();
   });
@@ -228,7 +229,7 @@ describe("board a9's buttons", () => {
       await pass(100);
     });
 
-    await user.press(screen.getByRole('button', { name: '뒤로' }));
+    await user.press(screen.getByRole('button', { name: '답 닫기' }));
 
     expect(screen.queryByTestId('answer-card')).toBeNull();
     expect(mapLines()).not.toContain('answer:area');

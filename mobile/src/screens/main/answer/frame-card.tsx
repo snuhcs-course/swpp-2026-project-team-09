@@ -4,178 +4,140 @@
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, type ReactNode, useState } from 'react';
-import { Animated, type LayoutChangeEvent, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { color, radius, shadow, space, text } from '@/design-system';
-import { ANSWER_TOP, listsTop } from '../layout';
-import { useHeldHeight } from './held-height';
-import { CloseHint, type Raising, useRaiseDrag } from './raise-handle';
+import { type ReactElement, useEffect, useRef, useState } from 'react';
+import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
+import Reanimated, { useAnimatedStyle } from 'react-native-reanimated';
+import { color, radius, shadow, space } from '@/design-system';
+import { useReduceMotion } from '@/hooks/use-reduce-motion';
+import { CardHeader, HEADER_HEIGHT } from './card-header';
+import { useDockDrag } from './dock-drag';
+import { type FrameCardProps, LOWERED, OPEN_EDGE } from './frame-card-parts';
+import { OpenCard } from './open-card';
+import { CloseHint, MOTION_MS } from './raise-handle';
 
-// Above the first of the card's parts.
-export const CONTENT_TOP = space[5];
+export { CONTENT_TOP, contentMaxOf } from './frame-card-parts';
 
-interface FrameCardProps {
-  // From the stage's bottom: the room the card keeps under its content.
-  barRoom: number;
-  // The stage's height, null until it is laid out: the card takes at most about half of it.
-  stageHeight: number | null;
-  onHeight: (height: number) => void;
-  testID: string;
-  // Keeps the content's height, while a reply is on its way.
-  hold?: boolean;
-  // The handle that raises the card up to the pill and lowers it again. Left out, the card has one height.
-  raising?: Raising;
-  // The time bar's height under the pill, which the raised card stops under. Left out, none.
-  timeBarHeight?: number;
-  // Nothing to read: one rounded row around the input, inset from the sides, with no handle (board 10).
-  docked?: boolean;
-  // The AI input's bottom from the stage's bottom, which the docked card's edge stands just under.
-  inputBottom?: number;
-  // Null leaves the card empty.
-  children: ReactNode;
-}
+// The gap between the sheet's rows (P04 ticket 52).
+const GAP = space[3];
+// What the open card's top takes over its scrolling part: the header. The open card grows from the docked card's height
+// less this, so that its top starts where the docked card's stood.
+const OPEN_TOP_GUESS = HEADER_HEIGHT;
 
-// The most the card's content takes, about half the stage, null until the stage is laid out. It never takes less
-// than the headline's line and one row of follow-ups, which is all it shows while the keyboard is up and leaves little
-// of the stage.
-const FOLLOW_UP_ROW = 32;
-const LEAST_CONTENT = CONTENT_TOP + text.title.lineHeight + space[3] + FOLLOW_UP_ROW;
-
-export function contentMaxOf(stageHeight: number | null, barRoom: number): number | null {
-  return stageHeight === null ? null : Math.max(LEAST_CONTENT, stageHeight / 2 - barRoom);
-}
-
-const LOWERED: Raising = {
-  raised: false,
-  setRaised: () => {
-    // A card without the handle stays lowered.
-  },
-};
-
-// The content's height while raised: from under the time bar, or the round "←" when there is none, to the bar's room. Null
-// until the stage is laid out.
-function useRaisedHeight(
-  stageHeight: number | null,
-  barRoom: number,
-  raising: Raising | undefined,
-  timeBarHeight: number,
-): number | null {
-  const { top } = useSafeAreaInsets();
-  const pillRoom = listsTop(top) + (timeBarHeight > 0 ? timeBarHeight : ANSWER_TOP.height) + space[2];
-  return stageHeight === null || raising === undefined
-    ? null
-    : Math.max(LEAST_CONTENT, stageHeight - pillRoom - barRoom);
-}
-
-// The dock's edge under the input and its room above it, and its inset from the screen's sides.
-const DOCK_BELOW = 6;
-const DOCK_ABOVE = space[2];
-const DOCK_SIDE = space[2] + 2;
-
-// The docked card: its content, when there is any, in one row over the input, and the input's room under it. It tells
-// its height from the stage's bottom, so that the camera keeps the answer clear of it.
-function DockedCard({ barRoom, inputBottom = 0, onHeight, testID, children }: FrameCardProps): ReactElement {
-  const [inner, setInner] = useState(0);
-  const inputTop = barRoom - space[3];
-  const bottom = Math.max(0, inputBottom - DOCK_BELOW);
-  return (
-    <View
-      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-        onHeight(nativeEvent.layout.height + bottom);
-      }}
-      style={[styles.dock, { bottom, paddingBottom: inputTop - bottom + DOCK_ABOVE }]}
-      testID={testID}
-    >
-      <View
-        onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-          setInner(nativeEvent.layout.height);
-        }}
-        style={[styles.dockContent, inner > 0 && { paddingTop: DOCK_ABOVE }]}
-        testID={`${testID}-content`}
-      >
-        {children}
-      </View>
-    </View>
-  );
-}
-
-// The frame's card, attached to the bottom of the screen. Its content scrolls inside it. Raised, it is as tall as its
-// content, up to the pill. Only the lowered card tells its height, so that the camera fits the answer to the lowered card alone.
-export function FrameCard(props: FrameCardProps): ReactElement {
-  return props.docked === true ? <DockedCard {...props} /> : <OpenCard {...props} />;
-}
-
-// The handle's drag, with the raised height it stops at and the content's height it learns.
-function useCardDrag({ stageHeight, barRoom, raising, timeBarHeight = 0 }: FrameCardProps): {
-  drag: ReturnType<typeof useRaiseDrag>;
-  raisedHeight: number | null;
-  setNatural: (height: number) => void;
-  card: { height: number; setHeight: (height: number) => void };
-} {
+// The docked card, the bottom sheet at its lowest (P04 ticket 52): full width on the screen's bottom edge, only its top
+// corners rounded, as the open card: the header, its content, when there is any, and the input's room under it. It tells its height from the stage's bottom, so that the camera keeps the answer clear of it. The whole
+// card takes a drag on the UI thread: down closes the answer, up raises the card (`useDockDrag`).
+function DockedCard(props: FrameCardProps): ReactElement {
+  const { barRoom, onHeight, raising, testID, children } = props;
+  // Whether the dock holds anything to show, assumed from the first frame, so that its padding never comes in a frame
+  // late: that shifted the card and told the camera a second height (P04 ticket 52).
+  const [filled, setFilled] = useState(true);
   const [height, setHeight] = useState(0);
-  const raisedHeight = useRaisedHeight(stageHeight, barRoom, raising, timeBarHeight);
-  // Raised, the card is as tall as its content, up to under the pill, and a drag goes no higher.
-  const [natural, setNatural] = useState<number | null>(null);
-  const raisedTo = raisedHeight === null || natural === null ? raisedHeight : Math.min(raisedHeight, natural);
-  return { drag: useRaiseDrag(raising ?? LOWERED, raisedTo), raisedHeight, setNatural, card: { height, setHeight } };
-}
-
-function OpenCard(props: FrameCardProps): ReactElement {
-  const { barRoom, stageHeight, onHeight, testID, hold = false, raising, children } = props;
-  const contentMax = contentMaxOf(stageHeight, barRoom);
-  const { raised } = raising ?? LOWERED;
-  const { drag, raisedHeight, setNatural, card } = useCardDrag(props);
-  const { minHeight, onContentSizeChange, scroll } = useHeldHeight(hold);
-  const shown = { maxHeight: raised && raisedHeight !== null ? raisedHeight : contentMax };
+  const drag = useDockDrag(raising ?? LOWERED, height);
+  // The shared value alone goes to the UI thread, never the object holding the gesture.
+  const { drop } = drag;
+  const dropped = useAnimatedStyle(() => ({ transform: [{ translateY: drop.value }] }));
   return (
     <>
-      <Animated.View
-        onLayout={(event: LayoutChangeEvent) => {
-          drag.onCardLayout(event);
-          card.setHeight(event.nativeEvent.layout.height);
-          if (!raised && drag.content === null) {
-            onHeight(event.nativeEvent.layout.height);
-          }
-        }}
-        style={[
-          styles.card,
-          { paddingBottom: barRoom },
-          drag.drop === null ? null : { transform: [{ translateY: drag.drop }] },
-        ]}
-        testID={testID}
-      >
-        {raising === undefined ? null : drag.handle}
-        {children === null ? null : (
-          <Animated.ScrollView
-            contentContainerStyle={[styles.content, { minHeight }]}
-            keyboardShouldPersistTaps="handled"
-            onContentSizeChange={(width, height) => {
-              setNatural(height);
-              onContentSizeChange(width, height);
-            }}
-            onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-              drag.onContentLayout(nativeEvent.layout.height);
-            }}
-            ref={scroll}
-            testID={`${testID}-content`}
-            style={drag.content === null ? (contentMax === null ? undefined : shown) : { height: drag.content }}
-          >
-            {children}
-          </Animated.ScrollView>
-        )}
-      </Animated.View>
-      {drag.past && drag.drop !== null ? (
-        <CloseHint barRoom={barRoom} cardHeight={card.height} drop={drag.drop} />
-      ) : null}
+      <GestureDetector gesture={drag.pan}>
+        <Reanimated.View
+          onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+            setHeight(nativeEvent.layout.height);
+            onHeight(nativeEvent.layout.height);
+          }}
+          style={[styles.dock, { paddingBottom: barRoom }, dropped]}
+          testID={testID}
+        >
+          <CardHeader
+            chip={props.chip ?? null}
+            label={props.gripLabel ?? null}
+            onAskNew={props.onAskNew ?? null}
+            onClose={props.onClose ?? null}
+            raising={raising ?? LOWERED}
+          />
+          <View style={[styles.dockContent, filled && { paddingTop: GAP }]} testID={`${testID}-content`}>
+            <View
+              onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+                setFilled(nativeEvent.layout.height > 0);
+              }}
+            >
+              {children}
+            </View>
+          </View>
+        </Reanimated.View>
+      </GestureDetector>
+      {drag.past ? <CloseHint barRoom={barRoom} cardHeight={height} drop={drop} /> : null}
     </>
   );
 }
 
+// Which form stands now: the docked one comes in only once the open card has run down to it, so that lowering a raised
+// card moves rather than jumps; the open one comes at once, growing from the docked card's height (P04 ticket 52).
+function useShownForm(
+  docked: boolean,
+  barRoom: number,
+): { docked: boolean; from: number | null; onDock: (h: number) => void } {
+  const reduce = useReduceMotion();
+  const [shown, setShown] = useState(docked);
+  const [from, setFrom] = useState<number | null>(null);
+  const dockHeight = useRef<number | null>(null);
+  // Raised from the dock, or lowered with reduced motion: at once.
+  if (shown !== docked && (!docked || reduce)) {
+    setShown(docked);
+    if (!docked) {
+      setFrom(dockHeight.current === null ? null : Math.max(0, dockHeight.current - barRoom - OPEN_TOP_GUESS));
+    }
+  }
+  useEffect(() => {
+    const timer =
+      docked && !shown
+        ? setTimeout(() => {
+            setShown(true);
+          }, MOTION_MS)
+        : null;
+    return (): void => {
+      if (timer !== null) {
+        clearTimeout(timer);
+      }
+    };
+  }, [docked, shown]);
+  return {
+    docked: shown,
+    from,
+    onDock: (h: number): void => {
+      dockHeight.current = h;
+    },
+  };
+}
+
+function ignoreHeight(): void {
+  // The dock tells its own height.
+}
+
+// The frame's card, attached to the bottom of the screen: docked, a row around the input, or open (`OpenCard`).
+export function FrameCard(props: FrameCardProps): ReactElement {
+  const form = useShownForm(props.docked === true, props.barRoom);
+  if (form.docked) {
+    return (
+      <DockedCard
+        {...props}
+        onHeight={(h) => {
+          form.onDock(h);
+          props.onHeight(h);
+        }}
+      />
+    );
+  }
+  // While the dock is about to take the open card's place, the open card tells the camera nothing: the dock's height is
+  // the one value the camera hears for that change (P04 ticket 52).
+  return <OpenCard {...props} from={form.from} onHeight={props.docked === true ? ignoreHeight : props.onHeight} />;
+}
+
 const styles = StyleSheet.create({
-  card: {
+  dock: {
     position: 'absolute',
     right: 0,
     bottom: 0,
@@ -185,14 +147,5 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.sheet,
   },
-  content: { gap: space[3], paddingTop: CONTENT_TOP, paddingHorizontal: space[4] },
-  dock: {
-    position: 'absolute',
-    right: DOCK_SIDE,
-    left: DOCK_SIDE,
-    borderRadius: radius.xl,
-    backgroundColor: color.surface,
-    boxShadow: shadow.float,
-  },
-  dockContent: { paddingHorizontal: space[3] },
+  dockContent: { paddingHorizontal: OPEN_EDGE },
 });

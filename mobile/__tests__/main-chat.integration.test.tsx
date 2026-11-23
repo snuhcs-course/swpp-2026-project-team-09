@@ -10,6 +10,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -79,7 +80,7 @@ describe('the frame and the keyboard', () => {
     await say(user, '오늘 점심 뭐 나와?');
     const dismiss = quietDismiss();
 
-    await user.press(screen.getByRole('button', { name: '뒤로' }));
+    await user.press(screen.getByRole('button', { name: '답 닫기' }));
 
     expect(dismiss).toHaveBeenCalledTimes(1);
   });

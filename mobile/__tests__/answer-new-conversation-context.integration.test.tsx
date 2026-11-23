@@ -88,10 +88,10 @@ describe("the context of a conversation's first message", () => {
     });
   });
 
-  it('carries no conditions, Plan, or tap of the answer before when typed on the main map after "←"', async () => {
+  it('carries no conditions, Plan, or tap of the answer before when typed on the main map after ✕', async () => {
     const user = await openMain();
     await ask(user, MEAL);
-    await user.press(screen.getByRole('button', { name: '뒤로' }));
+    await user.press(screen.getByRole('button', { name: '답 닫기' }));
 
     await ask(user, NEW);
 

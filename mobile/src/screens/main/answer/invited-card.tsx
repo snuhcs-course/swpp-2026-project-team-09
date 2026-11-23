@@ -4,13 +4,14 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { AnswerLine, ConditionChip } from '@/api/assistant-types';
 import type { SubQuest } from '@/api/types';
-import { Button, space } from '@/design-system';
+import { space } from '@/design-system';
 import { type Standing, standingWords } from '@/features/assistant/invited-friends';
 import {
   invitedNamesOf,
@@ -36,7 +37,6 @@ interface InvitedCardProps {
   standings: ReadonlyMap<string, Standing>;
   // A refusal's lines, which stand in place of the card's first (board n8b).
   over?: readonly AnswerLine[];
-  onClose: () => void;
 }
 
 // With Friends invited, whom and to what, then when and where (P04 ticket 23): "민수에게 점심 초대를 보냈어요" and
@@ -78,18 +78,15 @@ function SentChips({ chips, standings }: Pick<InvitedCardProps, 'chips' | 'stand
 }
 
 // The card of the answer on screen once its Plan was made into a Quest: the conditions with how each Friend stands,
-// two lines that say whom the invitations went to and when and where, the Quest's steps in order, and "닫기" across
-// the card, where "이대로 초대" stood. A Quest made from a Plan opened again from the everyday map has the same card.
+// two lines that say whom the invitations went to and when and where, and the Quest's steps in order. It closes by the
+// card's ✕ (P04 ticket 52). A Quest made from a Plan opened again from the everyday map has the same card.
 export function InvitedCard(props: InvitedCardProps): ReactElement {
-  const { chips, steps, standings, over = [], onClose } = props;
+  const { chips, steps, standings, over = [] } = props;
   return (
     <View style={styles.card} testID="invited-card">
       <SentChips chips={chips} standings={standings} />
       <AnswerLines lines={[...over, ...linesOf(props).slice(over.length)]} />
       <QuestSteps steps={steps} />
-      <Button full onPress={onClose} variant="secondary">
-        닫기
-      </Button>
     </View>
   );
 }

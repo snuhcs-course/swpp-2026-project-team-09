@@ -11,6 +11,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { mapThings } from './support/answer-map';
 import { holdBackButton } from './support/back';
+import { raiseCard } from './support/card-grip';
 import { PLACES } from './support/dining';
 import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
@@ -88,7 +89,7 @@ describe('the seats that do not come', () => {
 describe("Android's back over the room list", () => {
   it('closes the list first and keeps the answer', async () => {
     const { user } = await asked();
-    await user.press(screen.getByText('올리면 자리·열람실'));
+    await raiseCard();
     await pass(500);
     await user.press(card().getByRole('button', { name: '열람실: 7층 열람실' }));
     await pass(500);

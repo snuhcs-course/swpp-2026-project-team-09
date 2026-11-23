@@ -6,6 +6,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -51,7 +52,7 @@ function openFreshmanFramed(): Promise<User> {
 }
 
 function closeButton(): ReturnType<typeof screen.getByRole> {
-  return screen.getByRole('button', { name: '뒤로' });
+  return screen.getByRole('button', { name: '답 닫기' });
 }
 
 // Partitions: the start button before asking, while the frame is shown, and after ✕.

@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -90,7 +91,7 @@ function lastAsked(): unknown {
 // Lookup, whose offer stands in place of "길 안내". Each docks as the refusal's first line with its offer beside the
 // input (P04 ticket 05), and a press on the line raises the rest. Expected values: boards n4 and n20.
 describe('a refusal beside a Lookup', () => {
-  it("draws 민수 and puts the refusal's lines in place of the Lookup's, with 만나고 싶다 and 닫기 (board n4)", async () => {
+  it("draws 민수 and puts the refusal's lines in place of the Lookup's, with 만나고 싶다 and ✕ (board n4)", async () => {
     const user = await askOnMap(server, copyOf('민수 지금 무슨 수업 들어?'));
 
     expect(card().getByText('과목과 강의실은 보이지 않아요')).toBeVisible();
@@ -104,7 +105,7 @@ describe('a refusal beside a Lookup', () => {
     expect(card().getByText('12:15에 302동에서 수업이 끝나요')).toBeVisible();
     expect(card().queryByText('민수는 12:15까지 302동 수업이에요')).toBeNull();
     expect(card().queryByText('지금 위치는 보여 주지 않아요')).toBeNull();
-    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
+    expect(card().getByRole('button', { name: '답 닫기' })).toBeVisible();
 
     await user.press(beside().getByRole('button', { name: '만나고 싶다' }));
     await pass(500);
@@ -125,7 +126,7 @@ describe('a refusal beside a Lookup', () => {
     expect(card().getByText('신양학술정보관은 그곳의 방식으로 예약해요')).toBeVisible();
     expect(card().queryByText('신양학술정보관(44-1동)은 여기예요')).toBeNull();
     expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
-    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
+    expect(card().getByRole('button', { name: '답 닫기' })).toBeVisible();
 
     await user.press(beside().getByRole('button', { name: '관정 스터디룸' }));
     await pass(500);
@@ -150,7 +151,7 @@ describe('a refusal to accept for a Friend (board n8b)', () => {
     expect(card().queryByText('김민수에게 점심 초대를 보냈어요')).toBeNull();
     expect(card().getByText('김민수 · 아직 안 봄')).toBeVisible();
     expect(mapThings()).toContain('민수 · 아직 안 봄');
-    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
+    expect(card().getByRole('button', { name: '답 닫기' })).toBeVisible();
   });
 
   it('keeps the Plan on screen and says only its line in the card', async () => {
@@ -168,7 +169,7 @@ describe('a refusal to accept for a Friend (board n8b)', () => {
 // Expected values: board n21, on the copy written at 22:10 at 관정; the model's words are the dock's line (P04 ticket
 // 18).
 describe('a way asked about the shuttle when it is not running (board n21)', () => {
-  it('says so in the dock, and raised, the walk with only 닫기', async () => {
+  it('says so in the dock, and raised, the walk with only ✕', async () => {
     const user = await askOnMap(server, NOT_RUNNING_LOOKUP_REPLY);
 
     expect(card().getByText(NOT_RUNNING_LOOKUP_REPLY.text)).toBeVisible();
@@ -179,6 +180,6 @@ describe('a way asked about the shuttle when it is not running (board n21)', () 
     expect(card().getByText('셔틀은 지금 다니지 않아요 (평일 8–21시)')).toBeVisible();
     expect(card().getByText('(관악사)학부 생활관(919동)까지 걸어서 11분이에요')).toBeVisible();
     expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
-    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
+    expect(card().getByRole('button', { name: '답 닫기' })).toBeVisible();
   });
 });
