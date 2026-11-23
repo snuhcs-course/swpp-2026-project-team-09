@@ -18,14 +18,14 @@ import { movingWords } from '@/features/assistant/band-move';
 import { modelWordsOf } from '@/features/assistant/model-words';
 import { easedFromNow } from '@/features/assistant/relaxed-plan';
 import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
-import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { ChatMarkdown } from '../chat-markdown';
 import { useOpenFriendProfile } from '../friend-profile';
 import { AnswerLines } from './answer-lines';
 import { CardNote } from './card-note';
-import { ConditionChips } from './condition-chips';
+import { PlanChips } from './plan-chips';
+import { LINE_LEAST } from './dock-chips';
 import { FriendChoices } from './friend-choices';
 import { MainButtons } from './main-buttons';
 import { MealList, mealCard } from './meal-list';
@@ -229,22 +229,25 @@ function settled({ made, changed, left }: PlanInvitation): boolean {
 }
 
 // The Assistant's whole words over a meal answer's list, which the dock cuts at two lines (P04 ticket 45); none over a
-// restaurant's menu, nor under a refusal's lines over the Plan, which already say them.
+// restaurant's menu, nor under a refusal's lines over the Plan, which already say them. They come first and keep the
+// dock's line's box, so that lowered to the dock's height the card shows what the dock shows (P04 ticket 54).
 function MealWords({ said, shown }: { said: string; shown: ShownAnswer }): ReactElement | null {
   const words = modelWordsOf(said);
   return words === '' || shown.menuFor !== null ? null : (
-    <View testID="meal-words">
+    <View style={styles.mealWords} testID="meal-words">
       <ChatMarkdown style={styles.words} text={words} />
     </View>
   );
 }
 
-// A meal answer's raised card: the Assistant's whole words over its list, or the chosen one's menu.
-function MealBody(props: PlanCardProps & { busy: boolean }): ReactElement {
+// A meal answer's raised card: the Assistant's whole words, the person chips under them (`chips`), then its list, or
+// the chosen one's menu (P04 ticket 54).
+function MealBody(props: PlanCardProps & { busy: boolean; chips: ReactNode }): ReactElement {
   const { shown, answer, invitation, over = [], said = '' } = props;
   return (
     <>
       <MealWords said={over.length > 0 ? '' : said} shown={shown} />
+      {props.chips}
       <MealSheet answer={answer} busy={props.busy || settled(invitation)} shown={shown} />
     </>
   );
@@ -281,27 +284,24 @@ export function PlanCard(props: PlanCardProps): ReactElement {
   const docked = dock !== undefined;
   const meal = !docked && !fix.adding && shown.plan !== null && mealCard(answer);
   const faceless = chipsOf(answer, shown, meal);
+  const chips =
+    addName === null && corner === null && faceless.length === 0 && !docked ? null : (
+      <PlanChips
+        addName={addName}
+        answer={answer}
+        busy={busy}
+        chips={faceless}
+        corner={corner}
+        dock={dock}
+        fix={fix}
+        onProfile={openProfile}
+      />
+    );
   return (
     <View style={styles.plan}>
-      {addName === null && corner === null && faceless.length === 0 && !docked ? null : (
-        <ConditionChips
-          adding={fix.adding}
-          addName={addName}
-          chips={faceless}
-          corner={corner}
-          disabled={busy}
-          extra={dock}
-          fixed={bandIsFixed(answer.input.kind)}
-          friendIds={fix.friendIds}
-          onAdd={fix.toggleAdding}
-          onOrigin={fix.chooseOrigin}
-          onProfile={openProfile}
-          onRemove={fix.remove}
-          onUntil={fix.focusUntil}
-        />
-      )}
+      {meal ? null : chips}
       {docked ? null : <Said lines={linesOf(shown, answer, fix.adding, over)} said={meal ? '' : said} />}
-      {meal ? <MealBody {...props} busy={busy} /> : null}
+      {meal ? <MealBody {...props} busy={busy} chips={chips} /> : null}
       {docked ? null : (
         <Below
           answer={answer}
@@ -322,6 +322,7 @@ const styles = StyleSheet.create({
   plan: { gap: space[3] },
   said: { gap: space[2] },
   words: { ...text.body, color: color.ink },
+  mealWords: { justifyContent: 'center', minHeight: LINE_LEAST },
   steps: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   undo: { width: UNDO_WIDTH },
 });

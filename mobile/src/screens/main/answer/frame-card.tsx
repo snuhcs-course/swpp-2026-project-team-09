@@ -64,7 +64,7 @@ function DockedCard(props: FrameCardProps): ReactElement {
                 setFilled(nativeEvent.layout.height > 0);
               }}
             >
-              {children}
+              {props.dock ?? children}
             </View>
           </View>
         </Reanimated.View>
@@ -79,7 +79,7 @@ function DockedCard(props: FrameCardProps): ReactElement {
 function useShownForm(
   docked: boolean,
   barRoom: number,
-): { docked: boolean; from: number | null; onDock: (h: number) => void } {
+): { docked: boolean; from: number | null; toDock: number | null; onDock: (h: number) => void } {
   const reduce = useReduceMotion();
   const [shown, setShown] = useState(docked);
   const [from, setFrom] = useState<number | null>(null);
@@ -107,6 +107,9 @@ function useShownForm(
   return {
     docked: shown,
     from,
+    // While the dock is about to take the open card's place: its height when it last stood, which the open card runs
+    // down to, so that the dock takes its place at the same height (P04 ticket 54).
+    toDock: docked && !shown ? dockHeight.current : null,
     onDock: (h: number): void => {
       dockHeight.current = h;
     },
@@ -133,7 +136,14 @@ export function FrameCard(props: FrameCardProps): ReactElement {
   }
   // While the dock is about to take the open card's place, the open card tells the camera nothing: the dock's height is
   // the one value the camera hears for that change (P04 ticket 52).
-  return <OpenCard {...props} from={form.from} onHeight={props.docked === true ? ignoreHeight : props.onHeight} />;
+  return (
+    <OpenCard
+      {...props}
+      from={form.from}
+      onHeight={props.docked === true ? ignoreHeight : props.onHeight}
+      toDock={form.toDock}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
