@@ -25,7 +25,7 @@ Reported on 2026-11-23 just after Release 26.11.23-12. "배고파" at 13:05 from
 - A new `fellBack` names the plans with less walking than the first that the 30 minutes put after it, and why, as words to say: "302동식당과 301동식당은 13:30에 닫아 25분뿐이에요". The end is "에 닫아" when the Restaurant closes, or "엔 나서야 해서" when someone must leave then.
 - **The meal rule:**
   - with `order`, never call the order 가까운 순서 or nearest to a Place, and give the true reason from `order`;
-  - with `fellBack`, say it as it is before that sentence.
+  - with `fellBack`, say it as it is after that sentence, the one other sentence: the dock shows two lines, so the pick is the part in view.
 - The order itself is unchanged.
 
 ## Case table
@@ -42,7 +42,7 @@ All four are in `order-words.unit.test.ts`, through the real planner on the seed
 ## Acceptance criteria
 
 - [x] Rows 1 to 4. Row 1's words fail on 5.0/Main, and its order passes on both.
-- [x] The meal rule forbids "가까운 순서" for this order and says `fellBack` as it is.
+- [x] The meal rule forbids "가까운 순서" for this order and says `fellBack` as it is, after the first plan's sentence, as the one exception to its single sentence.
 - [ ] Eval: not run. The run needs the team's model key, which this worktree does not have.
 - [x] Lint, format and types of the main server pass.
 
