@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type DayItem, freeTimeOf, onDay } from '../src/assistant/free-time/free-time.js';
@@ -13,6 +14,8 @@ import {
   type GatheringPerson,
   type GatheringPlace,
 } from '../src/assistant/gathering/gathering.js';
+import { gatherMeal, withHours } from '../src/assistant/gathering/unmet-plans.js';
+import { type MealInput } from '../src/assistant/dto/answer.dto.js';
 import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { type PlaceDto } from '../src/places/dto/place.dto.js';
 import { readSeedTravel, type SeedTravel } from '../src/travel/travel.js';
@@ -117,4 +120,23 @@ export function plan(
     throw new Error('Read the world first');
   }
   return gather(people, candidates, { window, now }, travel);
+}
+
+// A meal planned as the server plans it (P05 ticket 46): each Restaurant served until its window's end, the meal ended
+// by the people's own time, the end the User set, or the longest meal.
+export function planMeal(
+  people: [GatheringPerson, ...GatheringPerson[]],
+  input: MealInput,
+  candidates = restaurants(),
+  now = NOW,
+): Gathering {
+  if (travel === null) {
+    throw new Error('Read the world first');
+  }
+  const { places: held, ...served } = withHours(
+    input,
+    candidates,
+    candidates.map(() => null),
+  );
+  return gatherMeal(people, held, { input, now, ...served }, travel).gathering;
 }

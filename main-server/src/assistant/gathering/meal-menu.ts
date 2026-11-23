@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MenuLineKind } from '../../generated/prisma/client.js';
@@ -122,7 +123,7 @@ export function menuLine({ lines, closesAt }: ServedMenu, date: string, now: Dat
   }
   const main = dishName(first).split(',')[0]?.trim() ?? '';
   const others = items.length > 1 ? ` 외 ${items.length - 1}` : '';
-  const closing = closesAt === null ? '' : ` · ${closesAt}까지`;
+  const closing = closesAt === null ? '' : ` · ${closesAt}까지 배식`;
   const line: AnswerLine = [
     { text: `${dayOf(date, now)} `, strong: false },
     { text: main, strong: true },
@@ -136,14 +137,14 @@ export function menuBasis({ lines, closesAt }: ServedMenu): string[] {
   if (words.length === 0) {
     return [];
   }
-  return [...words, closesAt === null ? `메뉴: ${SOURCE}` : `메뉴와 닫는 시각: ${SOURCE}`];
+  return [...words, closesAt === null ? `메뉴: ${SOURCE}` : `메뉴와 배식 시각: ${SOURCE}`];
 }
 
 const wordsOf = (line: AnswerLine): string => line.map(({ text }) => text).join('');
 
 // The Plan's lines with the menu line second, right after a first line that names the Restaurant, else last, after
-// lines that say something else first (where the asker was taken to set out from). The closing time is left out of it
-// when a line already says that the Restaurant closes ("302동식당은 13:30에 닫아요").
+// lines that say something else first (where the asker was taken to set out from). The serving end is left out of it
+// when a line already says it ("302동식당은 13:30에 배식이 끝나요").
 export function withMenu(
   lines: AnswerLine[],
   served: ServedMenu | undefined,
@@ -152,7 +153,7 @@ export function withMenu(
   if (served === undefined) {
     return lines;
   }
-  const closed = lines.some((line) => wordsOf(line).includes(key) && wordsOf(line).includes('닫아요'));
+  const closed = lines.some((line) => wordsOf(line).includes(key) && wordsOf(line).includes('배식'));
   const line = menuLine(closed ? { ...served, closesAt: null } : served, date, now);
   const [first, ...rest] = lines;
   if (line === null) {

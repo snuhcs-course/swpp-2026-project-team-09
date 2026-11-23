@@ -157,13 +157,14 @@ describe('The recalculations the buttons and chips of board n11 ask for', () => 
   });
 });
 
-describe("Board n12: 배고파 at 13:47, 학생회관식당's lunch closing at 14:00", () => {
-  it('drops it with its closing time and names it in the lines of the pick', async () => {
+// One who arrives in the last 10 minutes of serving is not offered the Restaurant (P05 ticket 46).
+describe("Board n12: 배고파 at 13:47, 학생회관식당's lunch served until 13:55", () => {
+  it('drops it with when serving ends and names it in the lines of the pick', async () => {
     const date = '2080-02-13';
     await stage.asking(date, '13:47');
     await stage.menusOn(date, RESTAURANTS);
     await stage.classAt(stage.asker, '12:30', '13:45', '24');
-    stage.hoursAre({ 학생회관식당: { lunch: { opensAt: '11:00', closesAt: '14:00' } } });
+    stage.hoursAre({ 학생회관식당: { lunch: { opensAt: '11:00', closesAt: '13:55' } } });
     // The User is at 24동, as the board has it. A Class that has ended is not where they are without a position (P05
     // ticket 42), so the app's position says it.
     const { latitude, longitude } = await stage.numbered('24');
@@ -174,13 +175,13 @@ describe("Board n12: 배고파 at 13:47, 학생회관식당's lunch closing at 1
 
     const answer = answerIn(response.body);
     expect(answer.dropped.map(({ place, reason }) => `${place.label} ${reason}`)).toEqual([
-      '학생회관식당 14:00 닫아요',
+      '학생회관식당 13:55에 배식이 끝나요',
     ]);
     expect(answer.plans[0]?.id).toBe('자하연식당 2층');
     expect(textsOf(answer.plans[0]?.lines)).toEqual([
       '자하연식당 2층 · 13:52 도착',
       '오늘 제육볶음',
-      '학생회관식당은 14:00에 닫아요',
+      '학생회관식당은 13:55에 배식이 끝나요',
     ]);
   });
 });

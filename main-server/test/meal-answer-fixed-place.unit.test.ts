@@ -145,11 +145,12 @@ describe('Who stays shortest at a fixed Place, and why', () => {
     );
   });
 
-  it("gives a Friend whose position is unknown from when they are free, and the meal's own end", () => {
-    const haeun = person('b0c2e3a4-0000-4000-8000-000000000004', '하은', [nowhere('11:00', '14:20')]);
+  // Lunch is served until 14:30, and one who comes in its last 10 minutes is not offered it (P05 ticket 46).
+  it('gives a Friend whose position is unknown from when they are free, inside the last 10 minutes of serving', () => {
+    const haeun = person('b0c2e3a4-0000-4000-8000-000000000004', '하은', [nowhere('11:00', '14:25')]);
 
     expect(pressed([person(ME, '유상', []), haeun], studentCenter()).noPlan).toEqual(
-      lines('하은은 14:20부터 10분만 먹어요', '점심은 14:30까지예요'),
+      lines('14:30에 배식이 끝나요', '하은은 14:25에 시간이 돼요'),
     );
   });
 });

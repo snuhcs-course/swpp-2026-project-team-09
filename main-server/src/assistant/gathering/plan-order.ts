@@ -85,8 +85,9 @@ function namesOf(plans: readonly OrderedPlan[]): string {
   return [...(joined.length === 0 ? [] : [joined.join(', ')]), withTopic(last)].join(' ');
 }
 
-// The plans with less walking than the first that its 30 minutes put after it, one sentence for each end, such as
-// "302동식당과 301동식당은 13:30에 닫아 25분뿐이에요"; null when none.
+// The plans with less walking than the first that its 30 minutes put after it because someone must leave, one sentence
+// for each end, such as "302동식당과 301동식당은 13:30엔 나서야 해서 25분뿐이에요"; null when none. A Restaurant's
+// closing ends no meal (P05 ticket 46).
 function fellBackWords(plans: readonly OrderedPlan[]): string | null {
   const [first, ...rest] = plans;
   if (first === undefined || first.togetherMinutes < UNHURRIED_MINUTES) {
@@ -95,19 +96,17 @@ function fellBackWords(plans: readonly OrderedPlan[]): string | null {
   const walk = shownWalk(first);
   const ends = new Map<string, OrderedPlan[]>();
   for (const plan of rest) {
-    if (plan.togetherMinutes < UNHURRIED_MINUTES && shownWalk(plan) < walk) {
+    const leaving = plan.parts.some(({ leaveBy }) => leaveBy === plan.endAt);
+    if (leaving && plan.togetherMinutes < UNHURRIED_MINUTES && shownWalk(plan) < walk) {
       const end = `${plan.endAt}|${plan.togetherMinutes}`;
       ends.set(end, [...(ends.get(end) ?? []), plan]);
     }
   }
   const sentences = [...ends.values()].flatMap((group) => {
     const [one] = group;
-    if (one === undefined) {
-      return [];
-    }
-    const leaving = one.parts.some(({ leaveBy }) => leaveBy === one.endAt);
-    const why = leaving ? `${clockOf(one.endAt)}엔 나서야 해서` : `${clockOf(one.endAt)}에 닫아`;
-    return [`${namesOf(group)} ${why} ${one.togetherMinutes}분뿐이에요`];
+    return one === undefined
+      ? []
+      : [`${namesOf(group)} ${clockOf(one.endAt)}엔 나서야 해서 ${one.togetherMinutes}분뿐이에요`];
   });
   return sentences.length === 0 ? null : sentences.join(' ');
 }

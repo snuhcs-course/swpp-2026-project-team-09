@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Fable 5.2  prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
@@ -18,6 +19,7 @@ import {
   MINSU,
   person,
   plain,
+  strong,
   time,
 } from './meal-answers.js';
 import { at, classAt, id, readWorld } from './worked-example.js';
@@ -66,21 +68,22 @@ describe("A plan held by the meal's own window", () => {
 
     expect([plan?.startAt, plan?.endAt, plan?.lines[1]]).toEqual([
       time('11:00'),
-      time('12:45'),
+      time('12:00'),
       [plain('점심은 11:00부터예요')],
     ]);
   });
 
-  it('says until when the meal is served when that is earlier than the window, with no until chip', () => {
+  // Serving ends at 14:30, before the end set at 15:00, yet it ends no meal (P05 ticket 46).
+  it('ends an hour after the start, says nothing of when serving ends, and shows no until chip', () => {
     const free = person(ME, '유상', [classAt('11:00', '11:50', '제1공학관')]);
 
     const answer = answerOf([free], { fixed: window(null, '15:00') });
     const plan = answer.plans.find(({ id: key }) => key === '301동식당');
 
-    expect([plan?.startAt, plan?.endAt, plan?.lines[1]]).toEqual([
+    expect([plan?.startAt, plan?.endAt, plan?.lines]).toEqual([
       time('11:50'),
-      time('14:30'),
-      [plain('점심은 14:30까지예요')],
+      time('12:50'),
+      [[plain('점심 '), strong('301동식당'), plain(' · 식사 60분')]],
     ]);
     expect(answer.chips).toEqual([{ kind: 'origin', text: '301동에서', userId: null }]);
   });
