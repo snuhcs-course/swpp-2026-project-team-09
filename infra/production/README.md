@@ -97,6 +97,11 @@ kubeconfig in the same way. Its automatic EKS integration is on paid plans only,
 
 ### Looking into a problem
 
+**Warnings and errors.** The main server's warn and error lines are posted to the private Slack channel
+`#team9-main-server-error`, at most 10 a minute ([Server logs in Slack](#server-logs-in-slack)). To check the whole
+path, an Administrator presses a button on the admin site's **Log test** page, which writes one test line at that
+level: within seconds a warn or an error appears in the channel, and an info line does not.
+
 **Logs.** The commands below are for the main server; the other servers are `socket-server`, `worker-server`,
 and `admin`.
 
@@ -134,9 +139,10 @@ and 6379 for Redis. In Freelens, a Service's page has **Forward** beside each po
 
 ### Logs last as long as their pod
 
-Kubernetes keeps a container's log only while its pod exists, and nothing else in Production keeps them. A Release or a
-restart replaces a server's pods, and their logs go with them; `--previous` shows only the last crash. So a tester's
-report is looked into the same day, before the next Release, and the lines that matter are copied into the issue.
+Kubernetes keeps a container's log only while its pod exists. A Release or a restart replaces a server's pods, and their
+logs go with them; `--previous` shows only the last crash. Only the main server's warn and error lines outlast their
+pod, up to 10 a minute, in Slack ([Server logs in Slack](#server-logs-in-slack)). So a tester's report is looked into
+the same day, before the next Release, and the lines that matter are copied into the issue.
 
 ### kubectl's version
 
@@ -154,6 +160,8 @@ versions: a laptop's 1.36 with the cluster's 1.37 is fine. When the cluster's `k
 - The infrastructure in `terraform/` changes through a pull request, then `terraform apply` from a laptop.
 - Secret values change with `aws ssm put-parameter --overwrite`, then an `all` Release rolls them to every server
   ([Rotating a secret](#rotating-a-secret)).
+- The Slack webhooks are the one secret kept outside Parameter Store: a person puts them in the `logging` namespace's
+  Secret by hand, and no Release touches them ([Replacing a webhook](#replacing-a-webhook)).
 - Release tags go only on reviewed commits of the iteration branch.
 
 ### Adding or removing a team member
@@ -175,12 +183,14 @@ Administrator, another Administrator removes them on the admin site's Administra
 ## Terraform
 
 `terraform/` is one root configuration that holds every AWS resource Production needs: the network, the cluster, the
-database, the image registries, the Release workflow's role, the certificate and DNS records, and the budget. The team
-members' IAM users stay out of it, so that no password or key lands in the state.
+database, the image registries, the Release workflow's role, the certificate and DNS records, and the budget. It also
+installs the load balancer controller and Fluent Bit with Helm. The team members' IAM users stay out of it, so that no
+password or key lands in the state.
 
 A team member applies it from a laptop, signed in to the account as their own IAM user. The state lives in the
 account's state bucket, and the lock file that Terraform writes beside it stops two applies at once. The `terraform`
-CI job runs `terraform fmt -check` and `terraform validate` on every push, without a backend or AWS credentials.
+CI job runs `terraform fmt -check` and `terraform validate` on every push, without a backend or AWS credentials, and
+the Fluent Bit pipeline's test (`fluent-bit-pipeline/test/pipeline.bats`).
 
 | In `terraform/`          | What it is                                                                         |
 | ------------------------ | ---------------------------------------------------------------------------------- |
@@ -188,6 +198,7 @@ CI job runs `terraform fmt -check` and `terraform validate` on every push, witho
 | `account.tfvars.example` | Every variable, with placeholders                                                  |
 | `account-a.tfvars`       | Account A's variables file, which git ignores ([below](#the-variables-file))       |
 | `.terraform.lock.hcl`    | The providers' versions and checksums, for macOS, Linux, and Windows               |
+| `fluent-bit-pipeline/`   | Fluent Bit's pipeline, which `fluent_bit.tf` reads, and its test                   |
 
 The commands below run in `infra/production/terraform`, signed in to account A.
 
@@ -407,6 +418,85 @@ Release of each end's server, has applied both ends' policies. A Release of an e
 commit's shared policies.
 `k8s/test/cluster.sh` runs the policies in a throwaway k3s cluster in Docker and tries every connection.
 
+## Server logs in Slack
+
+Fluent Bit runs a pod on each node and posts the main server's warn, error and fatal lines to the private Slack channel
+`#team9-main-server-error`. Terraform installs it (`terraform/fluent_bit.tf`) in a namespace of its own, `logging`:
+reading the nodes' logs takes a hostPath volume, which `snunow`'s Pod Security baseline forbids. `logging` has no Pod
+Security label, and the Release workflow's deploy role has no rights there. Its NetworkPolicy, also in
+`fluent_bit.tf`, lets Fluent Bit take no connection and reach only DNS and the internet on 443, where Slack is.
+Fluent Bit mounts `/var/log` read-only, and has no RBAC and no service account token, since it never calls the
+Kubernetes API. It runs as root, which owns the nodes' log files, with a read-only root filesystem, no capability, and
+no way to gain a privilege.
+
+**Taking it out** is `terraform destroy -var-file=account-a.tfvars -target=kubernetes_namespace_v1.logging`, which
+removes the namespace with the Helm release, the NetworkPolicy, and the Secret in it; no server notices. Putting it
+back is the three steps of [First setup](#first-setup), step 2, the Secret among them.
+
+**The pipeline** is in `terraform/fluent-bit-pipeline/`, in Fluent Bit's classic format, and the Helm release reads
+those files. For each record it:
+
+1. reads the server's container log files (the main server's pods' only, in `snunow`). A file already there when
+   Fluent Bit starts is read from its end, so a restart posts nothing twice; a new pod's file is found within a minute
+   and read from its first line;
+2. parses the line as JSON and keeps it only if its `level` is `warn`, `error` or `fatal`. Info lines and lines that
+   are not JSON, such as Node's own crash output, are not posted; `kubectl logs --previous` still shows them;
+3. keeps only `server`, `level`, `context`, `message` and `stack`;
+4. lets at most 10 records a minute through for each server, and drops the rest;
+5. posts to the server's own channel. Each flush is one post, with a line per record as Fluent Bit prints it
+   (`{"server"=>"main-server", "level"=>"warn", …}`), so a burst comes as one post of up to 10 lines. A post that still
+   fails after 3 retries is dropped.
+
+`inputs.conf`, `server-filters.conf` and `outputs.conf` hold a part per server, and `filters.conf` the part every
+server shares. `fluent-bit-pipeline/test/pipeline.bats` runs them in the same Fluent Bit image with stdout in place of
+Slack, in CI's `terraform` job, and `fluent-bit-pipeline/test/README.md` runs them once against the real webhook.
+
+**The webhooks** are in the Secret `slack-webhooks` in `logging`, one key per server: `main-server` now. A person
+makes it by hand, reading the value with `read -rs`, so that it stays out of Terraform's state ([First
+setup](#first-setup), step 2). The commands pipe the value in with the shell's own `printf`, so the webhook is on
+no command line that `ps` would show. A Fluent Bit pod does not start while a key is missing.
+
+```bash
+kubectl --namespace logging get pods
+kubectl --namespace logging logs daemonset/fluent-bit | grep slack
+```
+
+Each post logs `hooks.slack.com:443, HTTP status=200`; the log never holds the webhook's path.
+
+### Replacing a webhook
+
+When a webhook leaks, add a new one for the channel to the Slack app and remove the old one. Then put the new one in
+the server's key and restart Fluent Bit, which reads its environment only when it starts. No Release is needed. For the
+main server:
+
+```bash
+read -rs SLACK_WEBHOOK_MAIN_SERVER
+[ -n "$SLACK_WEBHOOK_MAIN_SERVER" ] && printf '{"stringData":{"main-server":"%s"}}' "$SLACK_WEBHOOK_MAIN_SERVER" |
+  kubectl --namespace logging patch secret slack-webhooks --type merge --patch-file /dev/stdin
+unset SLACK_WEBHOOK_MAIN_SERVER
+kubectl --namespace logging rollout restart daemonset/fluent-bit
+kubectl --namespace logging rollout status daemonset/fluent-bit
+```
+
+The patch changes that key and keeps the others.
+
+### Connecting another server
+
+The worker and socket servers have channels of their own. To post a server's warnings to its channel:
+
+1. **The log format.** Copy the main server's logger function, add `LOG_FORMAT` to the server's settings, its
+   `.env.example` and the root README's table, and set it to `json` in the server's manifest. The worker and socket
+   servers' settings unit tests compare the whole parsed `.env.example`, so they need the new key.
+2. **The pipeline.** Add an input to `inputs.conf`, a `server` field and a throttle to `server-filters.conf`, and an
+   output to `outputs.conf`, each matching the server's tag, and a case to `fluent-bit-pipeline/test/pipeline.bats`.
+3. **The webhook.** Add a webhook for the server's channel to the same Slack app, and its key to `slack-webhooks`
+   before the apply, since a missing key keeps every Fluent Bit pod from starting. The Secret's commands in
+   [First setup](#first-setup) and [Moving to account B](#moving-to-account-b) gain the key too.
+4. **Terraform.** Add the server's environment variable to the chart's `env` in `fluent_bit.tf`, then plan and apply.
+
+The worker logs `The Collection of shuttle_vehicles failed: …` about 4 times a minute, which would take 4 of its 10
+records every minute, so decide first whether that is a warning.
+
 ## First setup
 
 Once, in this order. A move to another account has its own steps ([Moving to account B](#moving-to-account-b)).
@@ -416,8 +506,25 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
    account A, whose registrant email is verified within 15 days. The account's service quotas allow four `t4g.small`
    instances at once, for a node group replacement, and an ALB.
 2. **The first apply.** [Create the state bucket](#creating-the-state-bucket), write
-   [the variables file](#the-variables-file) with `enable_dns_records = false`, and [apply](#init-plan-and-apply). In
-   the account that holds the zone, the apply waits until the certificate is issued.
+   [the variables file](#the-variables-file) with `enable_dns_records = false`, and run
+   `terraform init -backend-config=account-a.s3.tfbackend`. The apply then goes in three steps: the `logging` namespace
+   alone, the Slack webhooks' Secret in it ([Server logs in Slack](#server-logs-in-slack)), then everything:
+
+   ```bash
+   terraform apply -var-file=account-a.tfvars -target=kubernetes_namespace_v1.logging
+   aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-production
+   read -rs SLACK_WEBHOOK_MAIN_SERVER
+   [ -n "$SLACK_WEBHOOK_MAIN_SERVER" ] && printf '%s' "$SLACK_WEBHOOK_MAIN_SERVER" |
+     kubectl --namespace logging create secret generic slack-webhooks --from-file=main-server=/dev/stdin
+   unset SLACK_WEBHOOK_MAIN_SERVER
+   terraform apply -var-file=account-a.tfvars
+   ```
+
+   The Fluent Bit release waits until its pods are ready, and a pod never is without its Secret, so a single apply
+   would fail on it. The namespace's own apply also makes the cluster, which the Secret needs. Nobody makes the
+   namespace by hand: Terraform would then fail to create it. An empty value, such as an Enter pressed by mistake,
+   writes no Secret, whose empty key would start the pods broken. On a cluster that runs without Fluent Bit, the same
+   three steps add it. In the account that holds the zone, the last apply waits until the certificate is issued.
 3. **The database.** [Prepare it](#preparing-a-new-database), which also puts its two passwords in Parameter Store.
 4. **The repository variables.** In the repository's **Settings** › **Secrets and variables** › **Actions** ›
    **Variables**, set the Release workflow's variables from `terraform output -raw <output>`, and the admin site's two
@@ -823,6 +930,10 @@ request and limit in its part, `k8s/parts/<server>/<server>.yaml`, and Redis in 
 is placed only on a node with room for its request, and a container that goes over its limit is killed and restarted:
 `kubectl --namespace snunow describe pod <pod>` shows `OOMKilled` as the last state then.
 
+A `t4g.small` node holds at most 11 pods, so the two nodes have 22 pod slots. Production fills 18 of them, two of which
+are Fluent Bit's, at 32Mi each. During an `all` Release the main and socket servers and the admin site each start a
+new pod before stopping an old one, which makes 21.
+
 - **A container's memory** is raised in its part through a pull request, then a Release of that server.
 - **The node size** is `node_instance_type` in `terraform/variables.tf`, `t4g.small` (2 GiB) by default, for example
   `t4g.medium` (4 GiB). Change it through a pull request, then apply at a quiet time. EKS cannot change a node group's
@@ -1072,9 +1183,19 @@ aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-p
 
    ```bash
    terraform init -reconfigure -backend-config=account-b.s3.tfbackend
+   terraform apply -var-file=account-b.tfvars -target=kubernetes_namespace_v1.logging
+   aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-production-b --profile account-b
+   read -rs SLACK_WEBHOOK_MAIN_SERVER
+   [ -n "$SLACK_WEBHOOK_MAIN_SERVER" ] && printf '%s' "$SLACK_WEBHOOK_MAIN_SERVER" | kubectl \
+     --context snunow-production-b --namespace logging create secret generic slack-webhooks \
+     --from-file=main-server=/dev/stdin
+   unset SLACK_WEBHOOK_MAIN_SERVER
    terraform apply -var-file=account-b.tfvars
    terraform output certificate_validation_records
    ```
+
+   The Slack webhooks' Secret goes in between, as in [First setup](#first-setup), step 2; the same webhook works from
+   either account.
 
    B's apply requests the certificate without waiting for it, creates B's budget, whose addresses verify their emails
    as in A, and outputs a validation record for each of `api.snunow.com` and `admin.snunow.com`. Add both to A's zone,
@@ -1246,9 +1367,9 @@ The database's final snapshot, the parameters, the state bucket, the hosted zone
 
 ## What CI does not cover
 
-CI checks Terraform's format and validity (the `terraform` job), renders all six Kustomize targets (the `manifests`
-job), runs the admin site's tests, its health routes among them, and runs the servers' and the flows' tests. What
-reaches AWS is checked by hand instead, in
+CI checks Terraform's format and validity and runs the Fluent Bit pipeline in Docker (the `terraform` job), renders
+all six Kustomize targets (the `manifests` job), runs the admin site's tests, its health routes among them, and runs
+the servers' and the flows' tests. What reaches AWS is checked by hand instead, in
 [ticket 08 of A01](../../.scratch/iteration-2/A01-aws-production/issues/08-first-setup-and-checks-by-hand.md):
 
 - The first setup, and the first Release's OIDC token against the deploy role's trust.
