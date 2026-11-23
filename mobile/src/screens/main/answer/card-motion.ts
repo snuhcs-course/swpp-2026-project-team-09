@@ -185,18 +185,21 @@ function usePan(parts: PanParts): PanGesture {
     });
 }
 
-// Tells the camera a height only when it differs from the last one told, so that it hears each value once.
+// Tells the camera a height only when it differs from the last one told, so that it hears each value once, and through
+// the latest `onHeight`: a run that ends after the card began to give way to the dock tells nothing (the frame passes
+// a card about to be docked one that ignores it), where the run's own callback would still hold the one before.
 function useTellOnce(onHeight: (height: number) => void): (height: number) => void {
   const told = useRef<number | null>(null);
-  return useCallback(
-    (height: number) => {
-      if (told.current !== height) {
-        told.current = height;
-        onHeight(height);
-      }
-    },
-    [onHeight],
-  );
+  const latest = useRef(onHeight);
+  useEffect(() => {
+    latest.current = onHeight;
+  }, [onHeight]);
+  return useCallback((height: number) => {
+    if (told.current !== height) {
+      told.current = height;
+      latest.current(height);
+    }
+  }, []);
 }
 
 // The offset running to its step: at once on a let-go or a step, and again whenever the step's height changes (the
@@ -207,7 +210,7 @@ function useRun(
   level: Level,
   heights: LevelHeights | null,
 ): { offset: SharedValue<number>; back: (to: Level) => void } {
-  const { room, from, extra, onHeight } = input;
+  const { raising, room, from, extra, onHeight } = input;
   const reduce = useReduceMotion();
   const target = heights === null || room === null ? null : room - heightOf(level, heights);
   const offset = useSharedValue(room !== null && from !== null ? room - from : (target ?? 0));
@@ -216,10 +219,18 @@ function useRun(
   const running = useRef(false);
   const lowered = heights?.lowered ?? null;
   const tell = useTellOnce(onHeight);
+  // The card's step as last committed. A run can end before the step it ran to is committed (a let-go sets it at the
+  // same time, and the render may come later): it then tells nothing, and the commit tells, through the latest
+  // `onHeight`, which a card about to give way to the dock ignores. So lowering into the dock tells the dock's height
+  // alone.
+  const raisedNow = useRef(raising.raised);
+  useEffect(() => {
+    raisedNow.current = raising.raised;
+  }, [raising.raised]);
   const settle = useCallback(
     (step: Level) => {
       running.current = false;
-      if (step === 'lowered' && lowered !== null) {
+      if (step === 'lowered' && !raisedNow.current && lowered !== null) {
         tell(extra + lowered);
       }
     },

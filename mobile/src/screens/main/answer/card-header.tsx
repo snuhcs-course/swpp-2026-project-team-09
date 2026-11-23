@@ -29,9 +29,11 @@ const GRIP_ZONE = GRIP_TOP + GRIP_HEIGHT + LABEL_GAP + text.caption.lineHeight +
 // The whole header's height, with or without a label.
 export const HEADER_HEIGHT = GRIP_ZONE + MARK;
 
-// The look the history chip and "＋ 새 대화" share: 32 high, and a press area of 44 around it.
-export const CHIP_HEIGHT = 32;
-export const CHIP_SLOP = { top: 6, bottom: 6 };
+// The look the history chip and "＋ 새 대화" share: as high as ✕'s circle, so that the row's three shapes are one height
+// (the user's phone test), and a press area of the least touch size around it.
+export const CHIP_HEIGHT = MARK;
+const CHIP_REACH = (size.touchMin - CHIP_HEIGHT) / 2;
+export const CHIP_SLOP = { top: CHIP_REACH, bottom: CHIP_REACH };
 export const chipLook = StyleSheet.create({
   chip: {
     flexDirection: 'row',
