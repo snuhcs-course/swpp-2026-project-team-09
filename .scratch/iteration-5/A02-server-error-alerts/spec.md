@@ -248,3 +248,27 @@ Without cache reads, the input is 1,680,237 in all. The orchestrator is counted 
 
 - Done on 2026-11-23: PR #530 (tickets 01 and 02) and PR #531 (tickets 03 and 04) merged into `5.0/Main`, the main server and the admin site Released in `snunow/all/26.11.23-17`, and Fluent Bit applied in Production. The warn and error presses on the Production Log test page each reached `#team9-main-server-error`, and the info press did not (ticket 10).
 - Left: ticket 11 (what a post carries), and connecting the socket and worker servers (Further Notes).
+
+### Worker and socket servers connected (2026-11-24)
+
+The worker and socket servers' warnings and errors now reach their own Slack channels, by the steps in [Adding the worker or socket server](#adding-the-worker-or-socket-server), without new tickets.
+
+- **PR #533** (log format): the logger function, `LOG_FORMAT` in both servers' settings, `.env.example`, the root README and the Production manifests, with unit tests and `targets.sh` checks. The user approved four departures, listed in the PR: the extra tests, `LOG_FORMAT` in `test/global-setup.ts`, the worker's by-hand `collect` command keeping the default logger, and no Logging section of their own in the two servers' READMEs. Merged as 55904c98 and Released as `snunow/worker-server/26.11.24-1` and `snunow/socket-server/26.11.24-1`. Every line in both servers' Production logs is JSON.
+- **PR #534** (pipeline): an input, a `server` field, a throttle (Rate 2, Window 5, Interval 12s) and an output per server, two bats cases, the two environment variables in `fluent_bit.tf`, and three-key Secret commands in the README. The one departure, approved by the user, is that the Secret is created with three `--from-file=<key>=<(printf …)` entries, since stdin carries one value. Review changed the README line on the worker's `shuttle_vehicles` error: it stays an error, and the throttle caps it. Merged as 96cb91f5.
+- **Production**: the user added the `worker-server` and `socket-server` keys to `slack-webhooks` before the apply. The plan changed only `helm_release.fluent_bit`, in place. After the apply, both Fluent Bit pods were Running with no restarts, and their metrics showed the three inputs.
+- **Check**: no real warning was at hand, so a warn-level JSON line with `context` `SlackCheck` was written to each server's container output with `kubectl exec`. In the worker pod PID 1 is `pause`, so that line went to the `node` process's stdout. Slack answered HTTP 200 for both, and each post reached its channel with the right `server` field.
+
+![The socket server's test warning in its channel](references/ws-socket-post-on-slack.png)
+
+![The worker server's test warning in its channel](references/ws-worker-post-on-slack.png)
+
+#### Agent usage (2026-11-24)
+
+Estimates. The orchestrator's time is the gaps under 5 minutes between its transcript entries, summed. The implementers' rows are their own reports. No subagents ran. The pipeline row was reported before the README change from review.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+| --- | --- | --- | --- | --- | --- | --- |
+| Orchestrator (briefs, reviews against the spec, merges, the Release tags, the Production checks, this entry) | about 42 minutes | 13,540,947 | 13,407,302 | 133,407 | 238 | 41,077 |
+| Log format (PR #533) | about 25 minutes | 6,860,682 | 6,668,369 | 192,187 | 126 | 24,109 |
+| Pipeline (PR #534) | about 35 minutes | 9,217,133 | 8,986,738 | 230,243 | 152 | 40,429 |
+| All | about 1 hour 42 minutes | 29,618,762 | 29,062,409 | 555,837 | 516 | 105,615 |
