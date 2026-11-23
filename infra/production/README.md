@@ -496,8 +496,9 @@ The main, worker and socket servers are connected. To post another server's warn
    in [First setup](#first-setup) and [Moving to account B](#moving-to-account-b) gain the key too.
 4. **Terraform.** Add the server's environment variable to the chart's `env` in `fluent_bit.tf`, then plan and apply.
 
-The worker logs `The Collection of shuttle_vehicles failed: …` about 4 times a minute, which would take 4 of its 10
-records every minute, so decide first whether that is a warning.
+The worker's `The Collection of shuttle_vehicles failed: …` error, about 4 times a minute on 2026-11-23 from 16:29 to
+18:00, came while the site it collects shuttles from was down, and stopped when it came back. It stays an error: a
+Collection that keeps failing is what the worker's channel is for, and the throttle caps it at 10 records a minute.
 
 ## First setup
 
