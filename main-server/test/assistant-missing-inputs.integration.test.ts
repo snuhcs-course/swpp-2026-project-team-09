@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
@@ -43,10 +44,12 @@ async function lunchAt(date: string, clock: string): Promise<void> {
   await stage.menusOn(date, RESTAURANTS);
 }
 
+// Board n13 set out from the building of the Class that ended; since P05 ticket 42 an ended Class is never the asker's
+// origin, so without a position it is unknown.
 describe('Board n13: 배고파 without the location permission', () => {
-  it('sets out from the building of the Class that ended, says so, and offers 위치 켜기', async () => {
+  it('sets out from where nobody knows, though a Class ended five minutes ago, and offers 위치 켜기', async () => {
     const date = '2079-01-03';
-    await lunchAt(date, '11:50');
+    await lunchAt(date, '11:55');
     await stage.classAt(stage.asker, '11:00', '11:50', '301');
     await stage.classAt(stage.asker, '13:00', '13:50', '24');
 
@@ -54,19 +57,13 @@ describe('Board n13: 배고파 without the location permission', () => {
 
     expect(response.status).toBe(200);
     const answer = answerIn(response.body);
-    expect(answer.chips).toEqual([
-      { kind: 'origin', text: '301동에서', userId: null, mark: 'assumed' },
-      { kind: 'until', text: '13:00 수업까지', userId: null },
-    ]);
-    expect(linesOf(answer.plans[0]?.lines)).toEqual([
-      '위치를 몰라 직전 수업의',
-      '301동에서 출발로 잡았어요',
-      '오늘 제육볶음',
-    ]);
+    expect(answer.chips).toEqual([{ kind: 'until', text: '13:00 수업까지', userId: null }]);
+    expect(answer.plans[0]?.parts[0]?.origin).toBeNull();
+    expect(linesOf(answer.plans[0]?.lines)).not.toContain('301동에서 출발로 잡았어요');
     expect(answer.offers).toEqual([{ kind: 'open', label: '위치 켜기', screen: 'location' }]);
   });
 
-  it('sets out from there long after the Class ended', async () => {
+  it('sets out from where nobody knows long after the Class ended', async () => {
     const date = '2079-01-10';
     await lunchAt(date, '12:40');
     await stage.classAt(stage.asker, '09:00', '10:15', '301');
@@ -75,13 +72,13 @@ describe('Board n13: 배고파 without the location permission', () => {
     const response = await stage.send([planMeal(date), { text: '…' }], { context: { locationMissing: 'permission' } });
 
     const answer = answerIn(response.body);
-    expect(answer.chips[0]).toEqual({ kind: 'origin', text: '301동에서', userId: null, mark: 'assumed' });
-    expect(answer.plans[0]?.parts[0]?.origin).toMatchObject({ basis: 'timetable', place: { label: '301동' } });
+    expect(answer.chips.map(({ kind }) => kind)).not.toContain('origin');
+    expect(answer.plans[0]?.parts[0]?.origin).toBeNull();
   });
 });
 
 describe('A recalculation of board n13', () => {
-  it('keeps the assumed origin when it says the permission is missing', async () => {
+  it('keeps no origin when it says the permission is missing', async () => {
     const date = '2079-01-31';
     await lunchAt(date, '12:40');
     await stage.classAt(stage.asker, '09:00', '10:15', '301');
@@ -99,13 +96,13 @@ describe('A recalculation of board n13', () => {
 
     expect(response.status).toBe(200);
     const answer = z.custom<AnswerReply>().parse(response.body);
-    expect(answer.chips[0]).toEqual({ kind: 'origin', text: '301동에서', userId: null, mark: 'assumed' });
+    expect(answer.chips.map(({ kind }) => kind)).not.toContain('origin');
     expect(answer.offers).toEqual([{ kind: 'open', label: '위치 켜기', screen: 'location' }]);
   });
 });
 
 describe('A Quest made from an answer of board n13 (review 2026-11-16)', () => {
-  it('is made from the Plan the asker saw, the assumed origin deciding its start', async () => {
+  it('is made from the Plan the asker saw, with no origin for the asker', async () => {
     const date = '2079-02-07';
     await lunchAt(date, '12:40');
     await stage.classAt(stage.asker, '09:00', '10:15', '301');
@@ -120,7 +117,7 @@ describe('A Quest made from an answer of board n13 (review 2026-11-16)', () => {
       .custom<AnswerReply>()
       .parse(answered.body)
       .plans.find(({ id }) => id === '302동식당');
-    expect(plan?.parts[0]?.walkMinutes).toBeGreaterThan(0);
+    expect(plan?.parts[0]).toMatchObject({ origin: null, walkMinutes: null });
 
     const response = await makePlanQuest(stage, {
       input,

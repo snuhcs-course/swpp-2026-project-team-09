@@ -172,3 +172,23 @@
       planMeal: { date: '2026-11-05' }
     text:
       absent: [가장 가까, 가까워서, 가까워요, 가까운 곳이에요]
+
+# Asked at 12:20 on Monday with no position, five minutes after the asker's Class in 302동 ended (P05 ticket 42): an
+# item that has ended is never where the User sets out from, however recently, so the plans have no origin and the
+# reply names none. Before, a Class that ended within 15 minutes was taken as where the User was.
+- id: meal-wish-after-class-no-position
+  category: meal-wishes
+  world: p4-answer
+  now: '2026-11-02T12:20:00+09:00'
+  repeat: 3
+  turns:
+    - user: 점심 어디서 먹을까
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, findMenu, proposeQuest]
+    args:
+      planMeal: { date: '2026-11-02' }
+    text:
+      absent: [302동에서, 301동에서]

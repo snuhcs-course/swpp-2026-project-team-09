@@ -3,10 +3,11 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type AnswerOffer, type AnswerReply, type LocationMissing } from '../dto/answer.dto.js';
-import { itemBefore, type MealAnswerArgs, type Naming, withSubject } from './answer-words.js';
+import { type MealAnswerArgs, withSubject } from './answer-words.js';
 import { type GatheringFit } from './gathering.js';
 
 // What a meal's answer says when the app could not give an input: where the asker was taken to set out from without
@@ -36,21 +37,8 @@ export function nearestFirst({ missing, people, gathering, input }: MealAnswerAr
   return gathering.fits.toSorted((a, b) => askerWalk(a) - askerWalk(b));
 }
 
-// The first Plan's lines: where the asker was taken to set out from without a location, or that the first Restaurant
-// is the nearest without a Timetable. Null when neither holds.
-export function missingLines({ key, parts }: GatheringFit, naming: Naming, nearest: boolean): AnswerLine[] | null {
-  const [mine] = parts;
-  const origin = mine?.origin ?? null;
-  if (mine !== undefined && origin?.assumed === true) {
-    const before = itemBefore(naming.asker.items, mine.readyAt);
-    return [
-      [{ text: `위치를 몰라 직전 ${(before?.isClass ?? true) ? '수업' : '일정'}의`, strong: false }],
-      [
-        { text: naming.placeLabel(origin.placeId), strong: true },
-        { text: '에서 출발로 잡았어요', strong: false },
-      ],
-    ];
-  }
+// The first Plan's lines: that the first Restaurant is the nearest without a Timetable. Null otherwise.
+export function missingLines({ key }: GatheringFit, nearest: boolean): AnswerLine[] | null {
   if (!nearest) {
     return null;
   }

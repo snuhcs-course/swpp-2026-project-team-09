@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -192,7 +193,7 @@ export function unmetLines(
   { first, nearest }: { first: boolean; nearest: boolean },
 ): AnswerLine[] | null {
   return (
-    (first ? missingLines(fit, naming, nearest) : null) ??
+    (first ? missingLines(fit, nearest) : null) ??
     easedLines(fit, naming) ??
     tooSoonLines(fit, naming) ??
     unknownLines(fit, naming) ??

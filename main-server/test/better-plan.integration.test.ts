@@ -6,6 +6,7 @@
  * 2026-11-15  Fable 5.2  prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
@@ -75,14 +76,15 @@ describe('After 지은 declines a Quest made without the location permission (bo
     ({ questId } = await stage.declinedWithoutLocation(date));
   });
 
-  it('plans from the building of the Class that ended, as the making did, when the reason comes along', async () => {
+  // The Class in 301동 ended at 10:15: with no position it is not where the Leader is (P05 ticket 42).
+  it('knows no origin of the Leader when the reason comes along either, and plans where 민수 is', async () => {
     const response = await stage.getBetter(stage.asker, questId, { locationMissing: 'permission' });
 
     expect(response.status).toBe(200);
     const better = betterOf(response.body);
-    expect(better?.id).toBe('301동식당');
-    expect(better?.parts[0]).toMatchObject({ origin: { basis: 'timetable', place: { label: '301동' } } });
-    expect(linesOf(better?.lines)).toEqual(['위치를 몰라 직전 수업의', '301동에서 출발로 잡았어요', '오늘 제육볶음']);
+    expect(better?.id).toBe('302동식당');
+    expect(better?.parts[0]).toMatchObject({ origin: null, walkMinutes: null });
+    expect(linesOf(better?.lines)).not.toContain('301동에서 출발로 잡았어요');
   });
 
   it('knows no origin of the Leader without the reason, and plans where 민수 is', async () => {
