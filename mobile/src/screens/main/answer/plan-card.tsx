@@ -229,7 +229,7 @@ function settled({ made, changed, left }: PlanInvitation): boolean {
 }
 
 // The Assistant's whole words over a meal answer's list, which the dock cuts at two lines (P04 ticket 45); none over a
-// restaurant's menu.
+// restaurant's menu, nor under a refusal's lines over the Plan, which already say them.
 function MealWords({ said, shown }: { said: string; shown: ShownAnswer }): ReactElement | null {
   const words = modelWordsOf(said);
   return words === '' || shown.menuFor !== null ? null : (
@@ -240,11 +240,12 @@ function MealWords({ said, shown }: { said: string; shown: ShownAnswer }): React
 }
 
 // A meal answer's raised card: the Assistant's whole words over its list, or the chosen one's menu.
-function MealBody(props: { said: string; shown: ShownAnswer; answer: AnswerReply; busy: boolean }): ReactElement {
+function MealBody(props: PlanCardProps & { busy: boolean }): ReactElement {
+  const { shown, answer, invitation, over = [], said = '' } = props;
   return (
     <>
-      <MealWords said={props.said} shown={props.shown} />
-      <MealSheet answer={props.answer} busy={props.busy} shown={props.shown} />
+      <MealWords said={over.length > 0 ? '' : said} shown={shown} />
+      <MealSheet answer={answer} busy={props.busy || settled(invitation)} shown={shown} />
     </>
   );
 }
@@ -300,7 +301,7 @@ export function PlanCard(props: PlanCardProps): ReactElement {
         />
       )}
       {docked ? null : <Said lines={linesOf(shown, answer, fix.adding, over)} said={meal ? '' : said} />}
-      {meal ? <MealBody answer={answer} busy={busy || settled(invitation)} said={said} shown={shown} /> : null}
+      {meal ? <MealBody {...props} busy={busy} /> : null}
       {docked ? null : (
         <Below
           answer={answer}
