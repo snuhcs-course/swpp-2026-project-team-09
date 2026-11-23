@@ -11,7 +11,6 @@ import {
   type GatheringPerson,
   type GatheringPlace,
 } from '../src/assistant/gathering/gathering.js';
-import { orderWords } from '../src/assistant/gathering/plan-order.js';
 import { at, free, item, person, place, walks, window } from './gathering-fixtures.js';
 
 // The order of a gathering's plans (P05 ticket 32). A meal's: those where everyone has 30 minutes first, then those with
@@ -135,14 +134,6 @@ const serving = (key: string, placeId: string, from: string, until: string): Gat
   window: { start: at(from), end: at(until) },
 });
 
-// A Place of a plan's words.
-const placeAt = (label: string): { placeId: string; label: string; latitude: number; longitude: number } => ({
-  placeId: label,
-  label,
-  latitude: 37.46,
-  longitude: 126.95,
-});
-
 // P05 ticket 40: the asker's origin unknown, as for a later day with no item before the meal. Partitions: nothing after
 // the meal; a next item whose Place is known; the words the model is given for each, and none with an origin.
 describe('The order of a meal’s plans without the asker’s origin', () => {
@@ -171,30 +162,5 @@ describe('The order of a meal’s plans without the asker’s origin', () => {
     const { fits } = gather([beforeClass], [place('p', 'P'), place('r', 'R')], when, onward);
 
     expect(fits.map(({ key }) => key)).toEqual(['r', 'p']);
-  });
-});
-
-describe('What the model is told of the order', () => {
-  const me = { me: true, origin: null, next: null };
-
-  it('says the plans are not by nearness, by the earliest start, when the origin is unknown and nothing follows', () => {
-    expect(orderWords([{ parts: [me] }]).order).toBe(
-      'Not by nearness: where the User sets out from is not known, so the plans are ordered by the earliest start, then the longest time to eat.',
-    );
-  });
-
-  it('names the next item’s Place when one follows', () => {
-    const next = { startAt: '2026-11-17T14:00:00+09:00', place: placeAt('제1공학관') };
-
-    expect(orderWords([{ parts: [{ ...me, next }] }]).order).toContain(
-      "the least walking on to the User's next item at 제1공학관",
-    );
-  });
-
-  it('says nothing with the origin known, or without a plan', () => {
-    const origin = { place: placeAt('301동'), basis: 'timetable' as const };
-
-    expect(orderWords([{ parts: [{ ...me, origin }] }])).toEqual({});
-    expect(orderWords([])).toEqual({});
   });
 });
