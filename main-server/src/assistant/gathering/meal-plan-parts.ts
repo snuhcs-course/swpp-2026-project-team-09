@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type HeldMeal } from '../../quests/held-meal.js';
@@ -53,12 +54,10 @@ export function mealSetOf(held: HeldMeal | null): AnswerReply['mealSet'] {
 }
 
 // Whether a plan for these Friends is for the set-aside Quest's people, as `PUT /plans/:questId` takes it
-// (better-plan.service.ts): the others in it or invited, or, when every other declined, those who declined (P05
-// ticket 17, row 6).
+// (better-plan.service.ts): every other in it or invited is asked for, and perhaps Friends more, those who declined
+// among them, whom the press invites (P05 ticket 44).
 function forItsPeople({ people }: Pick<KeptQuest, 'people'>, friendIds: readonly string[]): boolean {
-  const inIt = people.filter(({ answer }) => answer !== 'declined');
-  const own = (inIt.length > 0 ? inIt : people).map(({ userId }) => userId);
-  return own.length === friendIds.length && own.every((id) => friendIds.includes(id));
+  return people.every(({ userId, answer }) => answer === 'declined' || friendIds.includes(userId));
 }
 
 // Whether 바꾸기 changes the meal set aside in place (P05 ticket 31): the asker may change it, the plans are for its

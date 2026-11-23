@@ -25,6 +25,7 @@ const at = (date: string, clock: string): Date => new Date(`${date}T${clock}:00+
 function plannedWith(posted: boolean): ReturnType<typeof planMeal> {
   return planMeal({
     restaurantPlaceId: () => null,
+    asked: (_askerId, input: MealInput) => Promise.resolve({ input, alreadyIn: [] }),
     planned: (_askerId, input: MealInput) => {
       const answer: AnswerReply = {
         input,
