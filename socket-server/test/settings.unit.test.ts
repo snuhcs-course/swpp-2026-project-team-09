@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // Partitions: each setting missing, malformed and on either side of its bound, and keys of each wrong kind (P09 spec,
@@ -41,6 +42,7 @@ describe('settingsSchema', () => {
       REDIS_HOST: 'localhost',
       REDIS_PORT: 6379,
       ACCESS_TOKEN_PUBLIC_KEY: keys.publicKey,
+      LOG_FORMAT: 'text',
     });
   });
 });
@@ -81,5 +83,19 @@ describe('settingsSchema: ACCESS_TOKEN_PUBLIC_KEY', () => {
     ['an RSA key', rsaKeyPair().publicKey],
   ])('%s → refused, naming ACCESS_TOKEN_PUBLIC_KEY', (_as, value) => {
     expect(refused({ ...valid, ACCESS_TOKEN_PUBLIC_KEY: value })).toEqual(['ACCESS_TOKEN_PUBLIC_KEY']);
+  });
+});
+
+describe('settingsSchema: LOG_FORMAT', () => {
+  it.each([
+    ['unset', undefined, 'text'],
+    ['text', 'text', 'text'],
+    ['json', 'json', 'json'],
+  ])('%s → %s', (_as, value, format) => {
+    expect(settingsSchema.parse({ ...valid, LOG_FORMAT: value })).toMatchObject({ LOG_FORMAT: format });
+  });
+
+  it.each(['JSON', 'pretty', ''])('%j → refused, naming LOG_FORMAT', (value) => {
+    expect(refused({ ...valid, LOG_FORMAT: value })).toEqual(['LOG_FORMAT']);
   });
 });

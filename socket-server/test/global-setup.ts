@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -27,6 +28,8 @@ export default async function setup({ provide }: TestProject): Promise<() => Pro
     PORT: '3001',
     ...redisSettings(redis),
     ACCESS_TOKEN_PUBLIC_KEY: accessTokenKeys.publicKey,
+    // Read by src/main.ts only: the tests start the application without its logger.
+    LOG_FORMAT: 'text',
   };
   provide('settings', settings);
   provide('accessTokenPrivateKey', accessTokenKeys.privateKey);

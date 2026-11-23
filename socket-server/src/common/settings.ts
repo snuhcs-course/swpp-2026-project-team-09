@@ -3,6 +3,7 @@
  *
  * 2026-09-28  Opus 5.5   prompted by TaeHyun79
  * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { createPublicKey } from 'node:crypto';
@@ -31,6 +32,10 @@ export const settingsSchema = z.object({
   REDIS_HOST: z.string().min(1),
   REDIS_PORT: port,
   ACCESS_TOKEN_PUBLIC_KEY: es256PublicKey,
+  // How the server prints its log: "text" is NestJS's coloured text, "json" one JSON line per entry, as Production's
+  // log collector reads them (main-server README: Logging). src/common/logger.ts reads it before the application is
+  // created.
+  LOG_FORMAT: z.enum(['text', 'json']).default('text'),
 });
 
 export type Settings = z.infer<typeof settingsSchema>;

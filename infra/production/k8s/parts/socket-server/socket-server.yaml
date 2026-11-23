@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-11-23  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 apiVersion: apps/v1
@@ -47,6 +48,9 @@ spec:
               valueFrom: { configMapKeyRef: { name: settings, key: REDIS_PORT } }
             - name: ACCESS_TOKEN_PUBLIC_KEY
               valueFrom: { secretKeyRef: { name: secrets, key: ACCESS_TOKEN_PUBLIC_KEY } }
+            # One JSON line per log entry, which Fluent Bit reads for the Slack channel (main-server README: Logging).
+            - name: LOG_FORMAT
+              value: json
           resources:
             requests:
               memory: 128Mi

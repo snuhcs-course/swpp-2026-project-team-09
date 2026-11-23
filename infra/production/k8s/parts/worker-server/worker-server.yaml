@@ -3,6 +3,7 @@
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
 # 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+# 2026-11-23  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # One worker at a time, as its README requires, so a Release stops the old pod before it starts the new one.
@@ -40,6 +41,9 @@ spec:
               valueFrom: { secretKeyRef: { name: secrets, key: WORKER_TOKEN } }
             - name: EXTRA_SNU_COLLECTION
               valueFrom: { configMapKeyRef: { name: settings, key: EXTRA_SNU_COLLECTION } }
+            # One JSON line per log entry, which Fluent Bit reads for the Slack channel (main-server README: Logging).
+            - name: LOG_FORMAT
+              value: json
           resources:
             requests:
               memory: 256Mi

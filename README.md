@@ -540,21 +540,23 @@ file's.
 
 ### socket-server
 
-| Setting                   | What it is                                                                     |
-| ------------------------- | ------------------------------------------------------------------------------ |
-| `PORT`                    | The port of the HTTP server and the Socket.IO connections.                     |
-| `REDIS_HOST`              | Redis's host.                                                                  |
-| `REDIS_PORT`              | Redis's port.                                                                  |
-| `ACCESS_TOKEN_PUBLIC_KEY` | The main server's public key, copied from `main-server/.env`, to check tokens. |
+| Setting                   | What it is                                                                                                                    |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                    | The port of the HTTP server and the Socket.IO connections.                                                                    |
+| `REDIS_HOST`              | Redis's host.                                                                                                                 |
+| `REDIS_PORT`              | Redis's port.                                                                                                                 |
+| `ACCESS_TOKEN_PUBLIC_KEY` | The main server's public key, copied from `main-server/.env`, to check tokens.                                                |
+| `LOG_FORMAT`              | Optional: `json` prints each log entry as one JSON line, as Production does (main-server README: Logging); `text` unless set. |
 
 ### worker-server
 
-| Setting                | What it is                                                              |
-| ---------------------- | ----------------------------------------------------------------------- |
-| `PORT`                 | The port the HTTP server listens on.                                    |
-| `MAIN_SERVER_URL`      | Where the main server is reached, to hand over what is collected.       |
-| `WORKER_TOKEN`         | The same line as in `main-server/.env`.                                 |
-| `EXTRA_SNU_COLLECTION` | `on` lets the schedule start extra.snu's Collections; `off` unless set. |
+| Setting                | What it is                                                                                                                    |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                 | The port the HTTP server listens on.                                                                                          |
+| `MAIN_SERVER_URL`      | Where the main server is reached, to hand over what is collected.                                                             |
+| `WORKER_TOKEN`         | The same line as in `main-server/.env`.                                                                                       |
+| `EXTRA_SNU_COLLECTION` | `on` lets the schedule start extra.snu's Collections; `off` unless set.                                                       |
+| `LOG_FORMAT`           | Optional: `json` prints each log entry as one JSON line, as Production does (main-server README: Logging); `text` unless set. |
 
 ### admin
 
