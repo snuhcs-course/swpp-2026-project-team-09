@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-11-23  Opus 5.5   prompted by TaeHyun79
+# 2026-11-23  Fable 5.2  prompted by fyoon46
 ################################################################################
 
 # Fluent Bit's pipeline in the real Fluent Bit image: its inputs and filters unchanged, with a stdout output in place
@@ -53,8 +54,10 @@ start_fluent_bit() {
     json_date_key  false
 EOF
   assemble "$BATS_TEST_TMPDIR/stdout.conf"
-  docker run --detach --name "$container" --volume "$config:/config:ro" \
-    --volume "$BATS_TEST_TMPDIR/log:/var/log:ro" "$IMAGE" --config /config/fluent-bit.conf >/dev/null
+  # As the Helm release's security context has it: a read-only root filesystem, no capability, no new privilege.
+  docker run --detach --name "$container" --read-only --cap-drop ALL --security-opt no-new-privileges \
+    --volume "$config:/config:ro" --volume "$BATS_TEST_TMPDIR/log:/var/log:ro" "$IMAGE" \
+    --config /config/fluent-bit.conf >/dev/null
   eventually watches "$MAIN_SERVER_FILE"
 }
 
