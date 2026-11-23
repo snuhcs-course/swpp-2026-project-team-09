@@ -55,7 +55,7 @@ The work lands as two pull requests to `5.0/Main`, and each is harmless alone:
 18. As a developer, I want the tests that read log lines to pass unchanged, so that the format change does not show in them.
 19. As a developer changing Fluent Bit's pipeline, I want a test that runs the real Fluent Bit on sample container log lines, so that I know which lines would be posted before anything reaches Production.
 20. As a developer, I want that test to run in CI whenever the pipeline or the Terraform changes, so that a broken filter is caught in review.
-21. As a reviewer, I want `terraform plan`'s output in the pull request, showing one namespace and one Helm release added and nothing else changed, so that I can approve an infrastructure change I cannot apply myself.
+21. As a reviewer, I want `terraform plan`'s output in the pull request, showing one namespace, its NetworkPolicy, and one Helm release added and nothing else changed, so that I can approve an infrastructure change I cannot apply myself.
 22. As the account's owner, I want the first apply's order written down (namespace, Secret, the rest), so that the apply does not fail on a missing Secret.
 23. As the account's owner, I want the webhook URL kept out of Terraform's state, the repository, chat, pull requests and issues, so that a leak of any of them does not leak the channel.
 24. As the team, I want `snunow`'s Pod Security baseline, its NetworkPolicies and the Release workflow's rights unchanged, so that collecting logs opens no path from a pushed tag to the nodes.
@@ -134,7 +134,7 @@ The pipeline has a part per server and a shared part:
 ### Terraform
 
 - One new Terraform file, modelled on the load balancer controller's, makes a `logging` namespace and a `helm_release` of the official `fluent-bit` chart (repository `https://fluent.github.io/helm-charts`), pinned at 0.58.3 with the image tag 5.1.5.
-- `logging` has no Pod Security label, so the cluster's default admits the read-only hostPath. The Release workflow's deploy role has no rights there. It has no NetworkPolicy, so Fluent Bit reaches Slack.
+- `logging` has no Pod Security label, so the cluster's default admits the read-only hostPath. The Release workflow's deploy role has no rights there. Its NetworkPolicy lets Fluent Bit take no connection and reach only DNS and the internet on 443, where Slack is.
 - The chart's values:
   - The chart's default `service` section stays. It loads the parsers file that the JSON parser comes from, and runs the HTTP server and health check behind the chart's liveness and readiness probes; without them the pods restart.
   - The default inputs, filters (the Kubernetes filter) and outputs (two Elasticsearch outputs) are replaced by the pipeline.
@@ -204,7 +204,7 @@ These need a person, and become `ready-for-human` tickets. **The webhook URL is 
 - Keeping or searching logs; the Latency and Traffic signals.
 - Rewriting existing logs to the rules, including the worker's repeating error and the "Connected to Redis" lines.
 - Lines printed outside NestJS's logger, such as Node's own output when it crashes. The pipeline drops them; `kubectl logs --previous` still shows them.
-- Formatting posts beyond what Fluent Bit's Slack output prints.
+- Formatting posts beyond what Fluent Bit's Slack output prints. A post carries an error's `message` and `stack` whole until [ticket 11](issues/11-what-a-post-carries.md) cuts them; the team accepts that for the private channel until then.
 - Changing `snunow`'s Pod Security label, the NetworkPolicies, the Release workflow or the deploy role.
 - The app's native files.
 

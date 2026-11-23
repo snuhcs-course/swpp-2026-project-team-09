@@ -11,7 +11,7 @@ Native files: none. Releases: none; this is a `terraform apply` from the account
 ## What to do
 
 1. Sign in to account A (`aws login`) and initialize with the state backend, as the infra README's "Init, plan, and apply" describes.
-2. On PR B's branch, run `terraform plan`. It must add one namespace and one Helm release, and change nothing else. Put its output in PR B's body.
+2. On PR B's branch, run `terraform plan`. It must add three resources (the `logging` namespace, its NetworkPolicy, and the Helm release) and change nothing else. Put its output in PR B's body.
 3. Merge PR B into `5.0/Main` once it is approved.
 4. On the merged commit, follow the order that ticket 04 wrote into the infra README's "First setup":
    1. `terraform apply -target` on the `logging` namespace;
@@ -22,7 +22,7 @@ Native files: none. Releases: none; this is a `terraform apply` from the account
 
 ## Done when
 
-- [ ] PR B's body holds the plan's output, which adds one namespace and one Helm release and changes nothing else.
+- [ ] PR B's body holds the plan's output, which adds the namespace, its NetworkPolicy, and the Helm release and changes nothing else.
 - [ ] The full apply ends without an error.
 
 ## Comments
