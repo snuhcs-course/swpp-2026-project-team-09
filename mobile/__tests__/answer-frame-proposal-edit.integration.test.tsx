@@ -226,7 +226,8 @@ describe('the frame after 수정', () => {
   it('keeps the conversation and the Proposal on the map as they were when the User comes back without making', async () => {
     const user = await edited(LUNCH);
 
-    await user.press(screen.getByRole('button', { name: '답 닫기' }));
+    // The form's own way back, its app bar's "뒤로": the form is a screen pushed from the right.
+    await user.press(screen.getByRole('button', { name: '뒤로' }));
     await pass(500);
 
     expect(screen.getByTestId('answer-caption')).toHaveTextContent(ASKED, { exact: false });

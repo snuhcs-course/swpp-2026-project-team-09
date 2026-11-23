@@ -123,7 +123,7 @@ describe('the tab bar while the frame is shown', () => {
 
 // Partitions: the frame's card laid out; the frame closed.
 describe("the map's credit while the frame is shown", () => {
-  it("sits above the frame's card, and back above the AI input after ✕ for a User in no Party", async () => {
+  it("sits above the frame's card, and after ✕ above the 이어서 chip that keeps the conversation, for a User in no Party", async () => {
     await start();
     const user = await openMain();
     await ask(user);
@@ -135,9 +135,11 @@ describe("the map's credit while the frame is shown", () => {
     // The card's 300 from the stage's bottom, which the hidden tab bar leaves at the screen's, and the map's own 8.
     expect(button('지도 데이터 출처 보기')).toHaveStyle({ left: 16, bottom: 308 });
     await closeFrame(user);
-    // As main-controls.integration.test.tsx has it with nothing open in no Party: 8 above the input's top, 62 above the
-    // navigation the map lies under.
-    expect(button('지도 데이터 출처 보기')).toHaveStyle({ left: 16, bottom: 80 + 70 });
+    // The conversation is kept, so the 이어서 chip stands over the input, and the credit 8 above it: what stands alone
+    // at the left above the input puts the map's inset at 112 (main-layout.unit.test.ts), 50 over the input's 62, and
+    // the navigation the map lies under adds its 70.
+    expect(screen.getByRole('button', { name: /^이어서, /u })).toBeVisible();
+    expect(button('지도 데이터 출처 보기')).toHaveStyle({ left: 16, bottom: 80 + 50 + 70 });
   });
 });
 

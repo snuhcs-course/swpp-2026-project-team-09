@@ -79,6 +79,12 @@ async function ask(user: User, words: string = ASKED): Promise<void> {
   await pass(1000);
 }
 
+async function layParts(height: number): Promise<void> {
+  await fireEvent(screen.getByTestId('answer-card-parts'), 'layout', {
+    nativeEvent: { layout: { x: 0, y: 0, width: 390, height } },
+  });
+}
+
 function card(): ReturnType<typeof within> {
   return within(screen.getByTestId('answer-card'));
 }
@@ -212,13 +218,13 @@ describe('waiting for the reply (n18)', () => {
   it('keeps the card as high as the reply before while the next one is on its way', async () => {
     const user = await openMain();
     await ask(user);
-    const content = screen.getByTestId('answer-card-content');
-    await fireEvent(content, 'contentSizeChange', 390, 420);
+    // The card's height is its content's, measured on the parts under its top's padding of 12 (P04 ticket 52).
+    await layParts(408);
 
     await send(user, '한식');
-    await fireEvent(content, 'contentSizeChange', 390, 120);
+    await layParts(108);
 
-    expect(content.props.contentContainerStyle).toContainEqual({ minHeight: 420 });
+    expect(screen.getByTestId('answer-card-parts')).toHaveStyle({ minHeight: 408 });
   });
 
   it("starts at the top of the card, where the next question's caption stands, however far the reply was scrolled", async () => {
