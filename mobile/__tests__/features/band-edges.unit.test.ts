@@ -3,10 +3,11 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { TimeBand } from '@/api/assistant-types';
-import { bandEdgesOf, foldedRangeOf } from '@/features/assistant/time-band';
+import { bandEdgesOf, edgeSharesOf, foldedRangeOf } from '@/features/assistant/time-band';
 
 const at = (clock: string): string => `2026-11-18T${clock}:00+09:00`;
 const stretch = (start: string, end: string, label?: string): TimeBand['lanes'][number]['busy'][number] => ({
@@ -64,5 +65,42 @@ describe('foldedRangeOf', () => {
   it('starts 15 minutes before now when now is in the range before the span', () => {
     const today = { ...BAND, now: at('13:50'), lanes: [{ userId: 'me', name: '나', busy: [] }] };
     expect(foldedRangeOf(today).startAt).toBe(at('13:35'));
+  });
+});
+
+// From the user's phone (P04 ticket 52, with P05 ticket 42): lunch asked at 12:00, his first Class over since 10:45. The
+// clock is the band's own `now`. Partitions:
+// - a Plan that starts from now (the asker's origin is their position, chosen, or unknown): it starts at or after now;
+// - a Plan that starts after an item going on now, the asker's origin;
+// - a reply from before P05 ticket 42, whose Plan started from the Class that had ended.
+describe('the left edge for where the Plan starts', () => {
+  const LUNCH: TimeBand = {
+    range: { startAt: at('10:30'), endAt: at('14:00') },
+    now: at('12:00'),
+    lanes: [
+      { userId: 'me', name: '나', busy: [stretch('09:30', '10:45', '301동 수업'), stretch('13:30', '14:45', '수업')] },
+    ],
+    startAt: at('12:15'),
+    endAt: at('12:45'),
+    text: '12:15–12:45 · 식사 30분',
+  };
+
+  it('says "지금" at now for a Plan from now, with no Class that ended before it, and folds and places it at now', () => {
+    expect(bandEdgesOf(LUNCH).before).toBe('12:00 지금');
+    expect(foldedRangeOf(LUNCH).startAt).toBe(at('11:45'));
+    const folded = { startAt: at('11:45'), endAt: at('13:45') };
+    expect(edgeSharesOf(LUNCH, folded).before).toBeCloseTo(15 / 120);
+  });
+
+  it('names the item going on now that the Plan starts after', () => {
+    const going = { ...LUNCH, lanes: [{ userId: 'me', name: '나', busy: [stretch('11:00', '12:10', '302동 수업')] }] };
+
+    expect(bandEdgesOf(going).before).toBe('12:10 302동 수업 끝');
+  });
+
+  it('keeps a reply from before P05 ticket 42 as it was: its Plan starts after the ended Class, which it names', () => {
+    const old = { ...LUNCH, startAt: at('11:00'), endAt: at('11:30') };
+
+    expect(bandEdgesOf(old).before).toBe('10:45 301동 수업 끝');
   });
 });

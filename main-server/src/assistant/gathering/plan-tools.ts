@@ -25,7 +25,7 @@ import { menuWords, type ServedMenu } from './meal-menu.js';
 import { orderWords } from './plan-order.js';
 import { timesAndWays } from './plan-times.js';
 import { type MealPlanService } from './meal-plan.service.js';
-import { alreadySetWords, busyWords, relatedWords, servingKind } from './meal-tool-words.js';
+import { addingWords, alreadySetWords, busyWords, invitedWords, relatedWords, servingKind } from './meal-tool-words.js';
 import { NOT_POSTED } from './not-posted.js';
 
 // A meal planned on the map, for an app that draws answers (ADR 0009): the server decides everything, the model passes
@@ -233,22 +233,47 @@ function plannedWords(
   };
 }
 
+// Plans the input as planMeal answers it; nothing for a meal the User was only invited to (P05 ticket 44).
+async function plannedFor(
+  plans: Pick<MealPlanService, 'asked' | 'planned'>,
+  chained: MealInput,
+  { toolContext, planInput, kind }: { toolContext: ToolContext; planInput: MealInput; kind: CuisineWord | null },
+): Promise<object> {
+  const { userId, now, context, presented } = toolContext;
+  const { location, locationMissing } = context;
+  const at = { now, location, locationMissing, setsAside: toolContext.capabilities.has('plan-set') };
+  const asked = await plans.asked(userId, chained);
+  presented.lookup = null;
+  presented.mapButtons.length = 0;
+  if ('invited' in asked) {
+    presented.answer = null;
+    return invitedWords(asked.invited, planInput.meal);
+  }
+  const { answer, served, busy = [], posted = true } = await plans.planned(userId, asked.input, at);
+  presented.answer = answer;
+  const adding = addingWords(answer, asked.alreadyIn);
+  if (answer.noPlan !== null) {
+    return { ...noneOf(answer, planInput, { now, presented, posted }), ...busyWords(busy), ...adding };
+  }
+  return { ...plannedWords(answer, served, { meal: planInput.meal, kind }), ...adding };
+}
+
 // `earlier`: the steps shown before the meal in this message, which it sets out from (P03).
 export function planMeal(
-  plans: Pick<MealPlanService, 'planned' | 'restaurantPlaceId'>,
+  plans: Pick<MealPlanService, 'asked' | 'planned' | 'restaurantPlaceId'>,
   earlier: (context: ToolContext) => readonly ReplyStep[] = () => [],
 ): Tool {
   return defineTool({
     description:
       "Plans a meal for the User alone or with Friends on a day from today to a week ahead. The server decides the Restaurant, when everyone is there, how long they can eat, and where they meet on the way, those with 30 minutes for everyone first, each the least travel for everyone first, on foot or by the shuttle, (to the Restaurant and on to each one's next item), and the app draws the plans on the map. Answers result 'planned' with the meal and the plans in order, each with its restaurant, its menu for the meal and closesAt, start, end, togetherMinutes, meeting, and each person's way, and the Restaurants dropped, or result 'none' with the meal and the reason.",
     input,
-    run: async (
+    run: (
       { date, meal: named, friendIds, from, until, now: soon, restaurant, placeId, cuisine, startPlaceId },
       toolContext,
     ) => {
       const { userId, now, context, found, presented } = toolContext;
       if (outOfReach(date, now)) {
-        return noDay(date);
+        return Promise.resolve(noDay(date));
       }
       const meal = named ?? mealByClock(date, now, from);
       const seen = seenIds(context);
@@ -267,18 +292,11 @@ export function planMeal(
         placeId: placeIdOf(plans, restaurant, placeId),
         ...(kind === null ? {} : { cuisine: kind }),
       };
-      const { location, locationMissing } = context;
-      const chained = afterEarlierSteps(planInput, earlier(toolContext));
-      const setsAside = toolContext.capabilities.has('plan-set');
-      const at = { now, location, locationMissing, setsAside };
-      const { answer, served, busy = [], posted = true } = await plans.planned(userId, chained, at);
-      presented.answer = answer;
-      presented.lookup = null;
-      presented.mapButtons.length = 0;
-      if (answer.noPlan !== null) {
-        return { ...noneOf(answer, planInput, { now, presented, posted }), ...busyWords(busy) };
-      }
-      return plannedWords(answer, served, { meal, kind });
+      return plannedFor(plans, afterEarlierSteps(planInput, earlier(toolContext)), {
+        toolContext,
+        planInput,
+        kind,
+      });
     },
   });
 }
@@ -289,15 +307,17 @@ export const PLAN_RULES = `A meal is planned on the map: the server decides the 
 
 - When the User is hungry, wants a meal, or is choosing what or where to eat (배고파, 밥 먹자, 점심 같이 먹자, 뭐 먹을까, 뭐 먹지, 밥 추천해 줘, 어디서 먹지, 먹을 만한 데), on any day, alone or with Friends they name, call planMeal with the day (today when they name none), the meal only when their words name one (lunch for 점심, dinner for 저녁; left out otherwise: the server takes the one being served or the next one today, and lunch on a later day), and the Friends, each found with resolveFriend first. With no Friend it plans for the User alone. A time they name for the meal (오후 3시쯤 저녁) is from, as HH:MM, even when it is before the meal's hours: the server fits it to them. Plan first: do not ask back about the kind of food, about lunch or dinner, or about the time.
 - On a later day with no meal named, the plans are lunch's: your sentence may end by saying that 저녁 plans dinner, such as "월요일 점심은 12:10에 학생회관식당에서 먹어요, 저녁이면 '저녁'이라고 해 주세요."
-- The app draws the plans on the map and writes their times, ways, and minutes itself, the first one first, and the User browses the others with arrows. The plans where everyone has 30 minutes come first, then the shorter ones, each least travel first, for everyone together, to the Restaurant and on to each one's next Class; with a kind of food, those that serve it come first. Your reply is one sentence about the first plan only: why it comes first, in the User's terms (가장 가까워요, 수업 끝나고 바로 가요, 둘 다 가까워요, or with a kind of food that it serves it), and its start, when everyone is there, such as "301동식당이 가장 가까워서 11:00에 먹어요." When planned has order, where the User sets out from is not known and the first plan is not the nearest: never call it near or quick to reach; the sentence says the true reason, such as "어디서 출발하는지 몰라서 가장 일찍 여는 학생회관식당으로, 11:00에 먹어요.", and may be followed by one short question of where they will be, such as "어디서 출발해요?". A plan's end is when someone must leave or the Restaurant closes: never give its start and end, or the Restaurant's hours, as when the meal is (never "11:00부터 14:30까지 먹을 수 있어요"). Write nothing more: no second sentence, no other plan, nobody's minutes on the way or time to set out, nothing about the map, and nothing that was dropped. Do not call showOnMap for a plan: the app already draws it. When the User's way to the first plan is by the shuttle (나's by is a shuttle, with its stops), the sentence may say so in a few words, such as "셔틀로 가면 가장 빨라서 12:33에 학생회관식당에서 먹어요."; never call a way by the shuttle 걸어서.
+- The app draws the plans on the map and writes their times, ways, and minutes itself, the first one first, and the User browses the others with arrows. The plans where everyone has 30 minutes come first, then the shorter ones, each least travel first, for everyone together, to the Restaurant and on to each one's next Class; with a kind of food, those that serve it come first. Your reply is one sentence about the first plan only, followed by fellBack's sentence when planned has it: why it comes first, in the User's terms (가장 가까워요, 수업 끝나고 바로 가요, 둘 다 가까워요, or with a kind of food that it serves it), and its start, when everyone is there, such as "301동식당이 가장 가까워서 11:00에 먹어요." When planned has order, where the User sets out from is not known and the first plan is not the nearest: never call it near or quick to reach, and never call the order 가까운 순서 or nearest to a Place; the sentence says the true reason from order, such as "15:30 302동 수업까지 가장 덜 걸어서 3식당으로, 13:05에 먹어요." or "어디서 출발하는지 몰라서 가장 일찍 여는 학생회관식당으로, 11:00에 먹어요.". When planned has fellBack, say it as it is after that sentence, such as "15:30 302동 수업까지 가장 덜 걸어서 3식당을 먼저 골랐어요. 302동식당과 301동식당은 13:30엔 나서야 해서 25분뿐이에요.": it is the one other sentence, and the only other plans the reply names. The reply may end with one short question of where they will be, such as "어디서 출발해요?". A plan's end is when someone must leave, the end the User set, or an hour after its start. A Restaurant's closesAt is when it last serves food, not when the meal ends: never give a plan's start and end, or the Restaurant's hours, as when the meal is (never "11:00부터 14:30까지 먹을 수 있어요"), and never say a meal ends because the Restaurant closes. Write nothing more: no second sentence and no other plan beyond fellBack's, nobody's minutes on the way or time to set out, nothing about the map, and nothing that was dropped. Do not call showOnMap for a plan: the app already draws it. When the User's way to the first plan is by the shuttle (나's by is a shuttle, with its stops), the sentence may say so in a few words, such as "셔틀로 가면 가장 빨라서 12:33에 학생회관식당에서 먹어요."; never call a way by the shuttle 걸어서.
 - When the User names a kind of food (한식, 중식, 일식, 양식, 분식), in the same message as the meal or in the next, call planMeal with the conditions on screen, if any, as they are, and cuisine set to that kind: the plans of the Restaurants that serve it come first, and the app shows that kind. When servedBy is empty, say in one sentence that none serves it then, with what the first plan serves. 'any' lets it go (아무거나).
 - Each plan has its Restaurant's menu for the meal and when it closes, and the app shows the menus. When the User picks by a dish or a taste, in the same message as the meal or in the next (돈까스 먹고 싶어, 더 가벼운 걸로, 국물 있는 거), call planMeal with the conditions on screen, if any, as they are, and read the plans' menus. When one serves what they asked for, call planMeal again with the same conditions and that plan's restaurant. When none does, say so in one sentence with what the first plan serves. Never name a dish that no plan's menu has, and never answer with a list of menus or dishes in words.
 - A question about what a Restaurant the User names serves (학생회관 오늘 메뉴 뭐야, 302동 저녁 뭐 나와) is a menu question, by the menu rules. Any other question about what or where to eat, menus included (오늘 점심 뭐야?), is a meal wish, planned with planMeal.
 - When planMeal answers alreadySet, the User already put that meal in their schedule, and the plans are what it would become. Your reply names it, with whom (alreadySet.with), and:
-  - when alreadySet.changeable is true, asks whether to change it, such as "이미 민수와 12:16 302동식당 점심이 있어요. 바꿀까요?": the app offers 바꾸기, which changes it in place for everyone in it, and 그대로 두기. With alreadySet.declined, changing it asks them again: "민수가 거절한 12:16 점심이 있어요. 이 시간으로 다시 물어볼까요?";
+  - when alreadySet.changeable is true and planMeal answers no adding, asks whether to change it, such as "이미 민수와 12:16 302동식당 점심이 있어요. 바꿀까요?": the app offers 바꾸기, which changes it in place for everyone in it, and 그대로 두기. With alreadySet.declined, changing it asks them again: "민수가 거절한 12:16 점심이 있어요. 이 시간으로 다시 물어볼까요?";
   - with alreadySet.leader, says that Friend set it and changes it: "민수가 잡은 12:16 점심이 있어요. 바꾸려면 민수에게 말해 주세요.";
   - otherwise, when it is shared, says it is changed in that 파티: "이미 민수와 12:16 302동식당 점심이 있어요. 바꾸려면 그 파티에서 바꿔요.";
   - when it is not shared, says that making a plan replaces it: "혼자 먹기로 한 12:16 점심이 있어요. 만들면 이걸로 바뀌어요."
+- To add a Friend to a meal already set (지은이도 추가해 줘, 지은이도 불러 줘), call planMeal for its day and meal with that Friend: the server keeps everyone in it, its Restaurant and its start. When planMeal answers adding, the plan adds those Friends to it, and the app's button invites them to that same 파티. Nothing is sent until the User presses it: never say an invitation was sent. With adding.movesTo null, say they can come then and ask whether to invite them, such as "지은이도 12:16 302동식당에 올 수 있어요. 초대할까요?". With adding.movesTo, say they can come only then and ask whether to move the meal and invite them, such as "지은이는 12:58에야 와요. 12:58로 옮기고 초대할까요?". With adding.fits false, say plainly why they cannot join it, and offer nothing.
+- When planMeal answers alreadyIn and the User asked to add those Friends, they are in that meal already (in) or invited to it without an answer yet (invited): say so, such as "지은이는 이미 같이 먹어요." or "지은이에게는 이미 초대를 보냈어요.", and invite nobody again.
 - When planMeal answers related, the User already has those Quests that day, of this meal or with a Friend asked for. Your sentence mentions the one that matters, such as "민수와는 13:00에 약속이 이미 있어요", whether or not it limits the plans; never treat it as free.
 - When planMeal answers none with busy, say what fills the time, by the User's own items, such as "점심 시간엔 13:00까지 수업이 있어요."
 - When planMeal answers none, say plainly why. Name someone busy only if they are a Friend in the plan, and say only when their Class ends or starts, never the course or the room; never name anyone who is not the User's Friend. A day whose menus are not posted yet is not a closed day: say that its menu is not posted yet and comes later, never that no Restaurant is open.

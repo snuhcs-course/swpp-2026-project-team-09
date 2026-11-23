@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useEffect, useState } from 'react';
@@ -13,7 +14,6 @@ import { color, font, radius, shadow, space, text } from '@/design-system';
 import { stepClock } from '@/features/assistant/steps-scene';
 import { koreaDayWord } from '@/korea-time';
 import { ANSWER_TOP } from '../layout';
-import { BACK_ROOM } from './back-button';
 import type { ChatSheetControl } from '../chat-sheet';
 import { barTop, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
@@ -155,13 +155,11 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.float,
   },
-  // Clear of "←" at the head's left (the 2026-11-22 redesign).
+  // From the bar's left edge, "←" being under the bar (P04 ticket 52).
   words: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'flex-end',
     columnGap: space[3],
-    paddingLeft: BACK_ROOM,
   },
   word: { ...text.label, color: color.inkMuted },
   wordActive: { fontFamily: font.semiBold, color: color.snuBlue },

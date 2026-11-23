@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -85,10 +86,10 @@ function list(): ReturnType<typeof within> {
   return within(screen.getByTestId('question-list'));
 }
 
-// What a screen reader says of each row of the list, the latest first.
+// What a screen reader says of each question's row of the list, the latest first; "＋ 새 질문" is not one.
 function rowNames(): string[] {
   return list()
-    .getAllByRole('button')
+    .getAllByTestId('question-row')
     .map((row) => String(row.props.accessibilityLabel));
 }
 
@@ -96,11 +97,11 @@ function lastSent(): unknown {
   return server.received('POST /assistant/messages').at(-1)?.body;
 }
 
-// Asks once and closes the answer with 뒤로.
+// Asks once and closes the answer with ✕.
 async function closedAfterAsking(): Promise<User> {
   const user = await openMain();
   await ask(user, SHUTTLE, text(SHUTTLE_REPLY));
-  await user.press(screen.getByRole('button', { name: '뒤로' }));
+  await user.press(screen.getByRole('button', { name: '답 닫기' }));
   return user;
 }
 

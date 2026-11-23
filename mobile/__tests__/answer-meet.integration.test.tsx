@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -225,6 +226,6 @@ describe("the controls of a meet's answer", () => {
     expect(card().getByText('12:15 제2공학관 · 수락하면 알려 드려요')).toBeVisible();
     expect(within(card().getByTestId('quest-steps')).getByText('302동 앞에서 만나기')).toBeVisible();
     expect(card().getByText('민수 · 아직 안 봄')).toBeVisible();
-    expect(card().getByRole('button', { name: '닫기' })).toBeEnabled();
+    expect(card().getByRole('button', { name: '답 닫기' })).toBeEnabled();
   });
 });

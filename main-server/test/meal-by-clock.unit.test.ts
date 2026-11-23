@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply, type MealInput, NO_CONTEXT } from '../src/assistant/dto/answer.dto.js';
@@ -66,6 +67,7 @@ function planned(): { tool: Tool; inputs: MealInput[] } {
   const inputs: MealInput[] = [];
   const tool = planMeal({
     restaurantPlaceId: () => null,
+    asked: (_askerId, input) => Promise.resolve({ input, alreadyIn: [] }),
     planned: (_askerId, input) => {
       inputs.push(input);
       const answer: AnswerReply = {

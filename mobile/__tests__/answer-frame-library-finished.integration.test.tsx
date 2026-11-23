@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { libraryCard } from '@/api/mock/data/library';
@@ -75,9 +76,9 @@ describe('a finished seat card when the frame draws it anew', () => {
     expect(library.writes()).toHaveLength(1);
   });
 
-  it('stays declined after 닫기', async () => {
+  it('stays declined after 예약 안 함', async () => {
     await askForCards({ server, library }, [SEAT_CARD]);
-    await pressIn(inCard(SEAT_TEST_ID), '닫기');
+    await pressIn(inCard(SEAT_TEST_ID), '예약 안 함');
 
     await redrawFrame();
 

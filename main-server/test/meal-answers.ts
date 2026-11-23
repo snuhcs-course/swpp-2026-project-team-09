@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -15,7 +16,7 @@ import {
 import { type DayItem } from '../src/assistant/free-time/free-time.js';
 import { type GatheringPlace } from '../src/assistant/gathering/gathering.js';
 import { type AnswerPerson, mealAnswer, type MealAnswerArgs } from '../src/assistant/gathering/meal-answer.js';
-import { conditionsOf, windowOf } from '../src/assistant/gathering/plan-conditions.js';
+import { conditionsOf } from '../src/assistant/gathering/plan-conditions.js';
 import { type Position } from '../src/common/geometry.js';
 import {
   DATE,
@@ -25,8 +26,8 @@ import {
   minsuDay,
   myDay,
   NOW,
-  plan,
   placeOf,
+  planMeal,
   restaurants,
 } from './worked-example.js';
 
@@ -100,7 +101,7 @@ export function answerOf(
     input,
     now,
     people,
-    gathering: plan([first, ...rest], candidates, now, windowOf(input)),
+    gathering: planMeal([first, ...rest], input, candidates, now),
     aloneMinutes,
     menus,
     placeOf,

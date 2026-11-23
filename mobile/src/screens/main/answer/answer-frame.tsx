@@ -26,9 +26,10 @@ import type { ChatSheetControl } from '../chat-sheet';
 import { FriendProfileOver, useProfileOver } from '../friend-profile';
 import { AI_INPUT, type Room } from '../layout';
 import { AnswerCaption } from './answer-caption';
+import { useCardTop } from './card-top';
 import { CaptionQuestions, type QuestionsOpen, Typing } from './card-questions';
+import { useAnswerRaising } from './card-state';
 import { KeptCards } from './kept-scene';
-import { BackButton } from './back-button';
 import { WaitingReply } from './failed-and-waiting';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { MarkCard } from './mark-card';
@@ -68,25 +69,34 @@ interface AnswerCardProps {
 function AnswerCard(props: AnswerCardProps): ReactElement {
   const { control, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, focus, timeBarHeight, list } = props;
   const card = { barRoom, onHeight, raising, stageHeight, timeBarHeight, inputBottom: props.inputBottom };
+  const typing = keyboardUp && !raising.raised;
+  const { listMax, ...top } = useCardTop(control, raising, list, { onClose, typing });
   const { bubbles, waiting } = control.chat;
   const after = turnOf(bubbles)?.after ?? [];
   const contentMax = contentMaxOf(stageHeight, barRoom);
-  const typing = keyboardUp && !raising.raised;
   const rest = keyboardUp || raising.raised || waiting || list.open ? null : restOf(control, after);
   const [reply] = after;
   const raise = (): void => {
     raising.setRaised(true);
   };
   return (
-    <FrameCard {...card} docked={rest !== null} hold={waiting} testID="answer-card">
-      {typing || control.answer.menuFor !== null ? null : (
-        <AnswerCaption control={control} listOpen={list.open} onList={list.toggle} />
-      )}
+    <FrameCard
+      {...card}
+      {...top}
+      docked={rest !== null}
+      chip={
+        typing || control.answer.menuFor !== null ? null : (
+          <AnswerCaption control={control} listOpen={list.open} onList={list.toggle} />
+        )
+      }
+      hold={waiting}
+      testID="answer-card"
+    >
       {typing || list.open ? null : <KeptCards cardActions={props.cardActions} control={control} />}
       {typing ? (
         <Typing control={control} />
       ) : list.open ? (
-        <CaptionQuestions control={control} list={list} onClose={onClose} />
+        <CaptionQuestions control={control} list={list} maxHeight={listMax} onClose={onClose} />
       ) : rest !== null && reply !== undefined ? (
         <DockedAnswer bubble={reply} control={control} focus={focus} onClose={onClose} onRaise={raise} rest={rest} />
       ) : (
@@ -139,59 +149,6 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
       {waiting ? <WaitingReply onStop={control.chat.stop} /> : <LeaveRow control={control} />}
     </>
   );
-}
-
-interface CardState {
-  raised: boolean;
-  setRaised: (raised: boolean) => void;
-  lower: () => void;
-  list: QuestionsOpen;
-}
-
-// Whether the card is raised, which the control holds so that a press on the map raises it too, and whether the list
-// of questions is open in the card.
-// The list closes when the turn on screen changes (`turn`, its last bubble's id): a message sent, a reply come, or a
-// question pressed while typing, so that the card shows that turn (PR 479's review).
-function useCardState({ raised, setRaised }: ChatSheetControl['card'], turn: number | null): CardState {
-  const [open, setOpen] = useState(false);
-  const [seen, setSeen] = useState(turn);
-  if (seen !== turn) {
-    setSeen(turn);
-    setOpen(false);
-  }
-  const lower = useCallback((): void => {
-    setRaised(false);
-  }, [setRaised]);
-  const toggle = useCallback((): void => {
-    setOpen((last) => !last);
-  }, []);
-  const close = useCallback((): void => {
-    setOpen(false);
-  }, []);
-  return { raised, setRaised, lower, list: { open, toggle, close } };
-}
-
-interface BackLayers {
-  list: QuestionsOpen;
-  control: ChatSheetControl;
-  raised: boolean;
-  lower: () => void;
-  leave: () => void;
-}
-
-// What Android's back takes away, one layer a press: the list of questions, a mark's card, a restaurant's menu (back to
-// the list of candidates), the raised card, then the answer.
-function backOf({ list, control, raised, lower, leave }: BackLayers): () => void {
-  if (list.open) {
-    return list.close;
-  }
-  if (control.mark !== null) {
-    return control.closeMark;
-  }
-  if (control.answer.menuFor !== null) {
-    return control.answer.closeMenu;
-  }
-  return raised ? lower : leave;
 }
 
 interface FramedProps {
@@ -257,14 +214,14 @@ function useBarHeight(
   return { height: told, onHeight: setHeight };
 }
 
-// The frame itself: the time bar at the top when the answer has a time, with "←" in its head, else "←" as a round button
-// over the map, and one card at the bottom with what was asked as its caption and the reply over the input (the
-// 2026-11-22 redesign). "←", Android's back button, and dragging the docked card down hide the frame and keep the
-// conversation, a reply on its way included. While a building is asked about over the answer ("여기면 어때?"), "←" and
+// The frame itself: the time bar at the top when the answer has a time, "←" as a round button over the map at the top
+// left, under the bar when there is one, and one card at the bottom with what was asked as its caption and the reply over the input (the
+// 2026-11-22 redesign). "←", Android's back button, and dragging the card down, docked or lowered, hide the frame and keep
+// the conversation, a reply on its way included. While a building is asked about over the answer ("여기면 어때?"), "←" and
 // back return to the answer instead, and the caption names the building. A Friend's profile opened from the card stands
 // over it until a new reply; while it is shown, the back button hides it alone. This handler is the only one, and
 // listens only while the main screen is in front, so a screen pushed from the profile goes back to it. Back takes away
-// one layer per press (`backOf`). While a restaurant's menu is open the caption gives way to the menu's own head.
+// one layer per press (`backOf`), and so does a drag down. While a restaurant's menu is open the caption gives way to the menu's own head.
 function Framed(props: FramedProps): ReactElement {
   const { control, barRoom, stageHeight, keyboardUp, onHeight, onBarHeight, stage, inputBottom } = props;
   const { chat, leaving, hide } = control;
@@ -277,21 +234,19 @@ function Framed(props: FramedProps): ReactElement {
   const { keep } = control.howAbout;
   const title = control.howAbout.title;
   const leave = title === null ? close : keep;
-  const { raised, setRaised, lower, list } = useCardState(control.card, chat.bubbles.at(-1)?.id ?? null);
-  const back = backOf({ list, control, raised, lower, leave });
+  const [past, setPast] = useState(false);
+  const { raising, list, back } = useAnswerRaising(control, leave, setPast);
   useBackToClose(useIsFocused(), profileShown ? profile.hide : back, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   const focus = useBandFocus();
-  // A booked seat has no bar: "←" is the round button over the map (P01 ticket 04).
+  // A booked seat has no bar: "←" stands at the top (P01 ticket 04).
   const drawnBar = (control.booking !== null && !control.booking.booked) || control.steps !== null;
   const barShown = !keyboardUp && (drawnBar || barOf(chat.bubbles, onScreenOf(control)) !== null);
   const bar = useBarHeight(barShown, onBarHeight);
-  const [past, setPast] = useState(false);
   return (
     <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
       <View style={[styles.top, past && styles.faded]}>
         {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
-        <BackButton onBar={barShown && bar.height > 0} onPress={leave} />
       </View>
       <AnswerCard
         timeBarHeight={bar.height}
@@ -304,7 +259,7 @@ function Framed(props: FramedProps): ReactElement {
         list={list}
         onClose={close}
         onHeight={onHeight}
-        raising={{ raised, setRaised, close: leave, onPast: setPast }}
+        raising={raising}
         stageHeight={stageHeight}
       />
       {keyboardUp ? null : <OpenMark control={control} focus={focus} onClose={close} stage={stage} />}

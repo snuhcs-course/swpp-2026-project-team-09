@@ -2673,7 +2673,7 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       tool puts the Lookup in the reply's `lookup`: the minutes, when to set out, how late the User is if they set out
       now, and a leave-by notification while that time is ahead and the walk takes 5 minutes or more. It answers the
       model `found` with Place names, minutes, and clock times, or `none` with the reason.
-    - `restaurantHours(date, restaurant?)`, with `HOURS_RULES`, for an app that sends `answer` (`lookup/hours-*`). It
+    - `restaurantHours(date, restaurant?, meal?)`, with `HOURS_RULES`, for an app that sends `answer` (`lookup/hours-*`). It
       finds the Restaurant as `findMenu` does and answers, in words only, each meal of the day: `opensAt` and
       `closesAt` as `RestaurantHours` keeps them for that kind of day when its menu serves the meal; `hours: 'not
 recorded'` with the menu's notes when it serves the meal without kept hours; `serves: false` with the notes when
@@ -2692,7 +2692,10 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
       the answer before it. Without one, the reply's `lookup` (kind `place`, `lookup/hours-lookup.ts`) picks the
       Restaurant out on the map, with a place flag at the same point whose words after the name the map writes as the
       label's second line: today `지금 영업 중 · 14:00까지`,
-      `지금 닫음 · 08:00 아침`, or `지금 닫음 · 오늘 영업 끝`, another day each meal's span; its basis lists each meal's
+      `지금 닫음 · 08:00 아침`, or `지금 닫음 · 오늘 영업 끝`, another day each meal's span; with `meal`, that meal
+      alone (`저녁 17:00–19:00`, `저녁 · 지금 영업 중 · 19:00까지`, `저녁은 안 해요`, or `평소 저녁 …` on a day not
+      posted), so that a follow-up about another meal, which the rules send to the tool again, never keeps another
+      meal's label; its basis lists each meal's
       hours, and its action guides there.
     - `planEvents(date, eventIds?)` and `EVENT_RULES` join for an app that sends both `answer` and `events` (`events/`).
       It plans the published Global Events of a day the asker can attend between their items (`EventsInput`, kind
@@ -3586,6 +3589,16 @@ were not there, and the answer's `mealSet` names it. Other Quests and Classes st
 into a Quest (`POST /plans`) replaces it in the same transaction: the asker drops it, it is deleted with nobody left,
 and its `leave-by` is cancelled. A meal held with another Holder or a waiting invitation is never dropped from a new
 Plan: the making answers 409 `MEAL_ALREADY_SET` with its `questId`, and it is changed in that Quest.
+
+A Friend is added to the meal held (P05 ticket 44, `gathering/meal-adding.ts`). When planMeal is asked for a Friend new
+to it, the input takes everyone of it too. A plan for everyone of it and someone more is planned at its Restaurant and
+from its meal step's start: everyone is there by then, or the plan starts later. Such a plan is `changeable` for its
+Leader, and the answer's `adding` names the Friends it adds (`friends`), the meal's start (`startAt`) and the start the
+plan moves it to (`movesTo`, null when it keeps it). Nothing is sent before the press. 바꾸기, `PUT /plans/{id}`, keeps
+the same Quest and invites the Friends new to it, decliners again. A Quest taken alone then gathers others with
+capacity 4, and the Holders are told (`step-changed`) only when the meal's step moves. A plan that leaves someone of it
+out answers 400 `PLAN_PEOPLE_CHANGED`. A User who holds no meal of that day but an invitation to one, asking for a
+Friend, has nothing planned; the model is told its Holders alone.
 
 A meeting is set aside the same way (`quests/held-meeting.ts`): a new meet's Plan takes the asker's meeting made from a
 meet's Plan that day, not started, that the model names by its ref (`planMeet`'s `questId`), else the one whose

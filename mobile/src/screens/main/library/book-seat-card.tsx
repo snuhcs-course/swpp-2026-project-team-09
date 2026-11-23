@@ -32,7 +32,7 @@ import { useSeatCalls } from './seat-calls';
 import { useSeatOnMap } from './booking-stage';
 
 // The book card of a reading room's seat (the MainChatLibReserve frame). It reads the sector's seats for the time,
-// offers the named or tapped seat, else the first free one, and books it only on 예약하기; 닫기 beside it ends the card
+// offers the named or tapped seat, else the first free one, and books it only on 예약하기; 예약 안 함 beside it ends the card
 // unbooked, and the foot under them says until when a seat booked now is confirmed at the seat kiosk. The done message
 // is the app's own bubble. A card the Assistant gave for a seat space the room chip knows starts with that chip: it
 // lists the rooms by floor and kind and switches the card to another for the same time, and a room full for that time

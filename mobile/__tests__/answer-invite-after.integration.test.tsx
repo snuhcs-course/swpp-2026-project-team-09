@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -25,7 +26,7 @@ import { answerMainScreen, askMainServer, DINNER, PHONE_NOW } from './support/se
 import { SENT_CAPABILITIES } from './support/capabilities';
 
 // What follows a press of "만들고 초대 보내기" beside the input, once "이대로 초대" on the card, for the answer to "배고파, 민수랑 같이" (P02 ticket 05), against the
-// fake main server: a signal of 민수's answer, each refusal, and "닫기". The Quest is the stored
+// fake main server: a signal of 민수's answer, each refusal, and the card's ✕. The Quest is the stored
 // reply to POST /plans for the first Plan, with 민수 invited.
 
 jest.mock('expo-location');
@@ -194,8 +195,8 @@ describe('the map after inviting', () => {
   });
 });
 
-// Partitions: "닫기" on the card after inviting.
-describe('"닫기" after inviting', () => {
+// Partitions: ✕ on the card after inviting.
+describe('✕ after inviting', () => {
   it('brings the everyday map back', async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST });
     const everyday: string[] = [];
@@ -206,7 +207,7 @@ describe('"닫기" after inviting', () => {
     await user.press(inviteButton());
     await pass(500);
 
-    await user.press(card().getByRole('button', { name: '닫기' }));
+    await user.press(card().getByRole('button', { name: '답 닫기' }));
     await pass(500);
 
     expect(screen.queryByTestId('answer-card')).toBeNull();

@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -25,7 +26,7 @@ import { SENT_CAPABILITIES } from './support/capabilities';
 import { CONTINUE } from './support/questions';
 
 // The answer frame (P02 tickets 01 and 04) against the fake main server: one card at the bottom holds the reply, under a
-// small caption of what the User asked, and "←" at the top left closes it (rules 2 and 5 of the 2026-11-22 redesign).
+// small caption of what the User asked, and its ✕ closes it (rule 5 of the 2026-11-22 redesign, P04 ticket 52).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -46,9 +47,7 @@ const REPLY = '오늘 학생회관식당 점심은 제육볶음이에요.';
 const ANSWERED = { status: 200, body: { text: REPLY, mapButtons: [], cards: [], proposal: null } };
 const FAILED = '답을 가져오지 못했어요.';
 const WAITING = '보는 중';
-const CLOSE = '뒤로';
-// PHONE_NOW, 04:00 UTC, in Korea.
-const ASKED_AT = '13:00';
+const CLOSE = '답 닫기';
 const NOTICE = '대화 내용은 AI 제공자에게 전송돼요';
 // The request context of this ticket: the User's position, no reason it is missing, and nothing of an answer on screen
 // yet.
@@ -108,15 +107,16 @@ const GIVING_WAY = [FRIEND_PILL, FULL_SCREEN, LAYERS, '확대'];
 
 // Partitions: the conversation empty, waiting, answered, and failed.
 describe('the frame', () => {
-  it('shows the words as the caption of the card, waiting with 보는 중, 뒤로, and no 새 대화 or chat sheet', async () => {
+  it('shows the words as the caption of the card, waiting with 보는 중, with "＋ 새 대화" and ✕, and no chat sheet', async () => {
     const user = await openMain();
 
     await send(user, ASKED);
 
     expect(caption().getByText(ASKED)).toBeVisible();
     expect(card().getByLabelText(WAITING)).toBeVisible();
+    // The header's pill and ✕ stand in every state, the waiting card's too (P04 ticket 52).
+    expect(card().getByRole('button', { name: '새 대화' })).toBeVisible();
     expect(screen.getByRole('button', { name: CLOSE })).toBeVisible();
-    expect(screen.queryByRole('button', { name: '새 대화' })).toBeNull();
     expect(screen.queryByTestId('chat-sheet')).toBeNull();
   });
 
@@ -228,7 +228,7 @@ describe('the request', () => {
 });
 
 describe('closing the frame', () => {
-  it('hides the frame with 뒤로, keeping the conversation and a reply on its way, which "이어서" goes on with', async () => {
+  it('hides the frame with ✕, keeping the conversation and a reply on its way, which "이어서" goes on with', async () => {
     const user = await openMain();
     await send(user, ASKED);
 
@@ -283,7 +283,7 @@ describe('a failure in the frame', () => {
 });
 
 describe('the bar and the keyboard', () => {
-  it("stands over the keyboard, and the card's caption and content give way to the conversation's questions", async () => {
+  it("stands over the keyboard, and the card's caption gives way to the reply's first line, with no questions", async () => {
     const user = await openMain();
     await ask(user);
 
@@ -291,8 +291,9 @@ describe('the bar and the keyboard', () => {
 
     // The bar's 12 above the keyboard, which the tests' phone counts from the bottom of the screen.
     expect(screen.getByTestId('ai-input')).toHaveStyle({ bottom: 12 + KEYBOARD });
-    const questions = within(card().getByTestId('question-list'));
-    expect(questions.getByRole('button', { name: `${ASKED_AT}, ${ASKED}, ${REPLY}, 지금` })).toBeVisible();
+    // P04 ticket 52: the input's focus opens no questions; the history chip alone does.
+    expect(card().queryByTestId('question-list')).toBeNull();
+    expect(screen.getByTestId('typing-words')).toHaveTextContent(REPLY);
     expect(screen.queryByTestId('answer-caption')).toBeNull();
   });
 

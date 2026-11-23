@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Friend } from '@/api/types';
@@ -158,6 +159,22 @@ describe('one more Friend asked from the booker’s room card', () => {
     expect(after.getByText('친구가 아닌 사람이 있어요')).toBeVisible();
     expect(after.getByRole('checkbox', { name: HA_EUN.name })).toBeVisible();
     expect(after.getByText('1명 더 필요해요')).toBeVisible();
+  });
+});
+
+describe('취소 in the picker for one more Friend', () => {
+  it('folds the picker back and asks nobody', async () => {
+    const shown = await cardWith(ONE_OUT);
+
+    await pressIn(shown, ASK_ONE_MORE);
+    await pressIn(shown, HA_EUN.name, 'checkbox');
+    await pressIn(shown, '취소');
+
+    const after = inCard(CARD_ID);
+    expect(after.queryByRole('checkbox', { name: HA_EUN.name })).toBeNull();
+    expect(after.getByRole('button', { name: ASK_ONE_MORE })).toBeEnabled();
+    expect(after.getByText('1명 더 필요해요')).toBeVisible();
+    expect(server.received(`POST /library/room-requests/${REQUEST_ID}/companions`)).toEqual([]);
   });
 });
 

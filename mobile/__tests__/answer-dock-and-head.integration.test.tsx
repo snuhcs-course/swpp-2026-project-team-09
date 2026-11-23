@@ -11,6 +11,7 @@ import { radius, space } from '@/design-system';
 import { BAR_ADD_HEIGHT } from '@/screens/main/answer/condition-chips';
 import { AI_FIELD } from '@/screens/main/ai-input';
 import { AI_INPUT } from '@/screens/main/layout';
+import { raiseCard } from './support/card-grip';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { askOnMap } from './support/answer-map';
@@ -138,7 +139,7 @@ describe('"＋ 같이" in the bar’s head', () => {
 describe('the raised list’s first line', () => {
   it('says how many places it shows and how they are ordered, the kind on screen’s count once one is chosen', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
-    await user.press(screen.getByText(/^올리면 \d+곳 목록$/u));
+    await raiseCard();
 
     const total = MEAL_ANSWER_MENUS_REPLY.answer.plans.length;
     expect(screen.getByTestId('meal-list-order')).toHaveTextContent(`${String(total)}곳 · 걸음이 적은 순`);

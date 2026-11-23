@@ -7,6 +7,7 @@
 
 import { fireEvent, within } from '@testing-library/react-native';
 import type { Place } from '@/api/types';
+import { gripLabel, raiseCard } from './support/card-grip';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -97,7 +98,7 @@ describe('a seat card on the map', () => {
     expect(screen.getByRole('button', { name: '예약하기' })).toBeEnabled();
     const card = within(screen.getByTestId('answer-card'));
     expect(card.getByText(DOCKED)).toBeVisible();
-    expect(card.getByText('올리면 자리·열람실')).toBeVisible();
+    expect(gripLabel()).toBe('자리·열람실');
     expect(card.queryByText('카드에서 확인해 주세요.')).toBeNull();
     expect(card.queryByRole('button', { name: CHIP })).toBeNull();
     expectNoWrite(library);
@@ -154,7 +155,7 @@ describe("the booking's flag", () => {
 
 async function raised(): Promise<Awaited<ReturnType<typeof asked>>> {
   const chat = await asked();
-  await chat.user.press(screen.getByText('올리면 자리·열람실'));
+  await raiseCard();
   await pass(500);
   return chat;
 }
@@ -204,7 +205,7 @@ describe('a seat booked on the map', () => {
     expect(screen.queryByTestId('time-bar')).toBeNull();
     expect(screen.getByText(/^걸음 \d+분( ·|이라) /u)).toBeVisible();
     expect(within(screen.getByTestId('library-done')).getByRole('button', { name: '길 안내' })).toBeVisible();
-    expect(screen.getByTestId('answer-back')).toHaveStyle({ backgroundColor: color.surface });
+    expect(within(screen.getByTestId('answer-card')).getByRole('button', { name: '답 닫기' })).toBeVisible();
     await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '확인' }));
     await pass(500);
 

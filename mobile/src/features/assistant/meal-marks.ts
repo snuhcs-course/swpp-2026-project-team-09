@@ -12,7 +12,7 @@ import { koreaClock } from '@/korea-time';
 import type { MapLine } from '@/map';
 import { type Draft, ROUTE_STYLES } from './answer-groups';
 import { metresBetween } from './answer-drawing';
-import { fixedAfter, fixedBefore, routeLineId } from './answer-walks';
+import { fixedAfter, routeLineId, startOf } from './answer-walks';
 import { BY_SHUTTLE, NO_WAYS, shuttleLines, shuttleRouteLines, stopDrafts, type Ways } from './shuttle-legs';
 
 // Whether an answer is drawn as a meal answer of the redesign: a meal whose Plans have menus.
@@ -69,34 +69,38 @@ function pointAlong(line: readonly LatLng[], share: number): LatLng | null {
 }
 
 // The Plan's legs: the way to the place and the way on, with their indexes among the scene's routes.
-function legsOf(scene: MapScene): { route: MapScene['routes'][number]; index: number }[] {
+function legsOf(scene: MapScene, hidden: ReadonlySet<number>): { route: MapScene['routes'][number]; index: number }[] {
   return scene.routes.flatMap((route, index) =>
-    (route.role === 'me' || route.role === 'next') && route.minutes > 0 ? [{ route, index }] : [],
+    (route.role === 'me' || route.role === 'next') && route.minutes > 0 && !hidden.has(index) ? [{ route, index }] : [],
   );
 }
 
 // The places a leg's minutes may stand at, in order: along its drawn line clear of faces, then over a face, which then
-// gives way (`facesClearOf`), then its middle whatever it covers but the lines and the labels placed before it.
-function legPlaces(line: readonly LatLng[]): { position: LatLng; overFaces: boolean; always: boolean }[] {
+// gives way (`facesClearOf`). With none free, the minutes are left out: they give way to every other label.
+function legPlaces(line: readonly LatLng[]): { position: LatLng; overFaces: boolean }[] {
   const at = (share: number): LatLng[] => {
     const point = pointAlong(line, share);
     return point === null ? [] : [point];
   };
   return [
-    ...ALONG.flatMap((share) => at(share).map((position) => ({ position, overFaces: false, always: false }))),
-    ...ALONG.flatMap((share) => at(share).map((position) => ({ position, overFaces: true, always: false }))),
-    ...at(ALONG[0]).map((position) => ({ position, overFaces: true, always: true })),
+    ...ALONG.flatMap((share) => at(share).map((position) => ({ position, overFaces: false }))),
+    ...ALONG.flatMap((share) => at(share).map((position) => ({ position, overFaces: true }))),
   ];
 }
 
 // A leg's label: "셔틀 12분" by shuttle, "6분" on foot. It may stand anywhere along its leg as drawn (`either`) and keeps
 // clear of the legs' lines. Its id carries its words, so that a leg whose words change is a new mark: the native map
 // would otherwise keep the picture of the words before until the new one is made.
-function legDrafts(scene: MapScene, ways: Ways, lines: readonly (readonly LatLng[])[]): Draft[] {
-  return legsOf(scene).flatMap(({ route: { minutes, mode }, index }): Draft[] => {
+function legDrafts(
+  scene: MapScene,
+  ways: Ways,
+  lines: readonly (readonly LatLng[])[],
+  hidden: ReadonlySet<number>,
+): Draft[] {
+  return legsOf(scene, hidden).flatMap(({ route: { minutes, mode }, index }): Draft[] => {
     const title = mode === 'shuttle' ? `셔틀 ${String(minutes)}분` : `${String(minutes)}분`;
     const id = `answer:leg:${String(index)}:${title}`;
-    return legPlaces(legLine(scene, index, ways)).map(({ position, overFaces, always }) => ({
+    return legPlaces(legLine(scene, index, ways)).map(({ position, overFaces }) => ({
       id,
       name: mode === 'shuttle' ? title : `걸음 ${String(minutes)}분`,
       position,
@@ -110,17 +114,37 @@ function legDrafts(scene: MapScene, ways: Ways, lines: readonly (readonly LatLng
       clearOf: lines,
       either: id,
       overFaces,
-      always,
     }));
   });
 }
 
-// "10:45 301동": when the thing before ends, and where the User sets out from.
+// Where the User sets out from, as the answer used it (`startOf`): "10:45 301동", the end of the Class or the Quest there;
+// "301동" alone when no such thing ends there between now and the meal; "지금 · 내 위치" from their position; none
+// when it is not known.
 function startWords(plan: Plan): string | null {
-  const before = fixedBefore(plan);
-  const from = plan.parts.find(({ me }) => me)?.origin?.place.label;
-  return before === null || from === undefined ? null : `${koreaClock(before.at)} ${from}`;
+  const start = startOf(plan);
+  if (start === null) {
+    return null;
+  }
+  if (start.kind === 'here') {
+    return '지금 · 내 위치';
+  }
+  return start.kind === 'item' ? `${koreaClock(start.at)} ${start.place}` : start.place;
 }
+
+// The indexes of a meal Plan's routes not drawn: the User's way to the place when where they set out from is not known,
+// so that no line is drawn from nowhere. Their indexes keep the other routes' lines and paths as they are.
+export function hiddenRoutes(plan: Plan | undefined, scene: MapScene): ReadonlySet<number> {
+  const me = plan?.parts.find((part) => part.me);
+  if (me === undefined || me.origin !== null) {
+    return NONE_HIDDEN;
+  }
+  return new Set(
+    scene.routes.flatMap(({ role, userId }, index) => (role === 'me' && userId === me.userId ? [index] : [])),
+  );
+}
+
+const NONE_HIDDEN: ReadonlySet<number> = new Set();
 
 // "15:30 302동 수업": when the next fixed thing starts, and what it is.
 function nextWords(plan: Plan, place: string | null): string | null {
@@ -129,8 +153,13 @@ function nextWords(plan: Plan, place: string | null): string | null {
   return after === null || what === null ? null : `${koreaClock(after.at)} ${what}`;
 }
 
+// A dark label may stand on any side of its point, so that it moves round when a side is taken.
+const DARK_SIDES: LabelSide[] = ['left', 'right', 'above', 'below'];
+
 function dark(draft: Draft, words: string | null): Draft {
-  return words === null ? draft : { ...draft, name: words, title: words, line: null, tone: 'meeting' };
+  return words === null
+    ? draft
+    : { ...draft, name: words, title: words, line: null, tone: 'meeting', sides: DARK_SIDES };
 }
 
 // A meal pick's label may also stand beside it, so that it can keep clear of the route.
@@ -147,7 +176,8 @@ export function mealDrafts(
   if (plan === undefined) {
     return [...drafts];
   }
-  const lines = legsOf(scene).flatMap(({ index }) => drawnLines(scene, index, ways));
+  const hidden = hiddenRoutes(plan, scene);
+  const lines = legsOf(scene, hidden).flatMap(({ index }) => drawnLines(scene, index, ways));
   const marked = drafts.map((draft) => {
     if (draft.id === 'answer:me') {
       return dark(draft, startWords(plan));
@@ -157,14 +187,22 @@ export function mealDrafts(
     }
     return draft.group === 'next' ? dark(draft, nextWords(plan, draft.title)) : draft;
   });
-  return [...marked, ...legDrafts(scene, ways, lines), ...stopDrafts(ways.legs)];
+  return [...marked, ...legDrafts(scene, ways, lines, hidden), ...stopDrafts(ways.legs)];
 }
 
 // The lines of a scene's routes: a meal Plan's way on to the next fixed thing dotted, a meal Plan's leg by the shuttle
 // as its walks and its ride (`shuttleRouteLines`), the rest in their own style.
-export function sceneLines(scene: MapScene, meal: boolean, ways: Ways = NO_WAYS): MapLine[] {
+export function sceneLines(
+  scene: MapScene,
+  meal: boolean,
+  ways: Ways = NO_WAYS,
+  hidden: ReadonlySet<number> = NONE_HIDDEN,
+): MapLine[] {
   return scene.routes.flatMap((route, index): MapLine[] => {
     const { role, from, to, mode } = route;
+    if (hidden.has(index)) {
+      return [];
+    }
     if (meal && mode === 'shuttle' && (role === 'me' || role === 'next')) {
       return shuttleRouteLines(route, index, ways);
     }

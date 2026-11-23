@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Fable 5.2  prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen } from '@testing-library/react-native';
@@ -88,7 +89,7 @@ describe("the lowest level of Kakao's map", () => {
     expect(before).toEqual([15]);
     expect(level()).toBe(14);
 
-    await user.press(screen.getByRole('button', { name: '뒤로' }));
+    await user.press(screen.getByRole('button', { name: '답 닫기' }));
 
     expect(level()).toBe(15);
   });

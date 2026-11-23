@@ -7,6 +7,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -71,7 +72,7 @@ async function ask(user: User): Promise<void> {
 }
 
 async function closeFrame(user: User): Promise<void> {
-  await user.press(screen.getByRole('button', { name: '뒤로' }));
+  await user.press(screen.getByRole('button', { name: '답 닫기' }));
 }
 
 // Partitions: a thing selected before asking.

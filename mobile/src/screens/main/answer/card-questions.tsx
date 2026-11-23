@@ -6,9 +6,9 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Keyboard, StyleSheet, Text, View } from 'react-native';
 import { now } from '@/clock';
-import { color, Icon, radius, space, text } from '@/design-system';
+import { color, space, text } from '@/design-system';
 import { turnOf } from '@/features/assistant/turn';
 import { type TypingWords, typingWordsOf } from '@/features/assistant/typing-words';
 import { koreaDateKey } from '@/korea-time';
@@ -36,26 +36,10 @@ const QUESTION_LINES = 3;
 const SENTENCE_LINES = 2;
 
 // While typing, about two rows above the input.
-const TYPING_QUESTIONS_MAX = 150;
-
-// "＋ 새 질문" under the questions the caption opened: it leaves the answer as "←" does, keeping the conversation, and
-// puts the cursor in the main map's input, whose message starts a new conversation (P04 ticket 44).
-function AskNewRow({ onPress }: { onPress: () => void }): ReactElement {
-  return (
-    <Pressable
-      accessibilityLabel="새 질문"
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [styles.askNew, pressed && styles.pressed]}
-    >
-      <Icon color={color.snuBlue} name="plus" size={16} />
-      <Text style={styles.askNewWords}>새 질문</Text>
-    </Pressable>
-  );
-}
+export const TYPING_QUESTIONS_MAX = 150;
 
 // The conversations' questions in the card, flat (board 6 of the 2026-11-22 redesign): a press shows that turn. Opened
-// by the caption, it is titled "이전 질문" and ends with "＋ 새 질문" (`onAskNew`).
+// by the caption, its header has "＋ 새 질문" (`onAskNew`, P04 tickets 44 and 49).
 export function CardQuestions({
   control,
   onDone,
@@ -70,30 +54,33 @@ export function CardQuestions({
   return (
     <QuestionList
       flat
-      footer={onAskNew === undefined ? null : <AskNewRow onPress={onAskNew} />}
       maxHeight={maxHeight}
+      onAskNew={onAskNew}
+      onClearEarlier={control.chat.clearEarlier}
+      onRemoveEarlier={control.chat.removeEarlier}
       onPick={(row) => {
         onDone();
         control.showTurn(row.turnId, row.conversation);
       }}
       rows={questionRowsOf(control)}
-      title={onAskNew === undefined ? undefined : '이전 질문'}
     />
   );
 }
 
-// The questions the caption opens, and "＋ 새 질문": the answer closed as "←" closes it, then the cursor in the main
-// map's input.
+// The questions the caption opens, and "＋ 새 질문" in their header: the answer closed as "←" closes it, then the cursor
+// in the main map's input.
 export function CaptionQuestions(props: {
   control: ChatSheetControl;
   list: QuestionsOpen;
   onClose: () => void;
+  // The list's most height; left out, about four rows. A raised card lifts it (P04 ticket 52).
+  maxHeight?: number;
 }): ReactElement {
-  const { control, list, onClose } = props;
+  const { control, list, onClose, maxHeight = QUESTIONS_MAX } = props;
   return (
     <CardQuestions
       control={control}
-      maxHeight={QUESTIONS_MAX}
+      maxHeight={maxHeight}
       onAskNew={() => {
         list.close();
         onClose();
@@ -155,8 +142,9 @@ function TypingOffers({ control }: { control: ChatSheetControl }): ReactElement 
 
 // While the keyboard is up on the answer, above the input (the rule of 2026-11-22): only what the User answers, never
 // cut, in the type it has with the keyboard down. A reply that asks shows its question whole with the ways it offers to
-// answer; one that asks nothing shows its first sentence, the conversation's questions as one-line rows, its offers,
-// and its follow-ups (board 6 of the 2026-11-22 redesign). The caption and the card's other buttons give way.
+// answer; one that asks nothing shows its first sentence, its offers, and its follow-ups. The conversation's questions
+// open by the history chip alone, never by the input's focus (P04 ticket 52). The caption and the card's other buttons
+// give way.
 export function Typing({ control }: { control: ChatSheetControl }): ReactElement {
   const { bubbles, waiting } = control.chat;
   const reply = turnOf(bubbles)?.after[0];
@@ -165,15 +153,6 @@ export function Typing({ control }: { control: ChatSheetControl }): ReactElement
   return (
     <>
       {said === null ? null : <TypingLine said={said} />}
-      {asks ? null : (
-        <CardQuestions
-          control={control}
-          maxHeight={TYPING_QUESTIONS_MAX}
-          onDone={() => {
-            Keyboard.dismiss();
-          }}
-        />
-      )}
       <TypingOffers control={control} />
       {waiting ? null : <LeaveRow control={control} />}
       {waiting || asks ? null : <FollowUps control={control} />}
@@ -203,15 +182,4 @@ const styles = StyleSheet.create({
   // The docked line's type (`DockLine`), so that the words keep their look when the keyboard comes up.
   words: { ...text.body, color: color.ink },
   offers: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  // As high as a question's row, its mark in the time's column.
-  askNew: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    minHeight: 48,
-    paddingHorizontal: space[2] + space[4],
-    borderRadius: radius.md,
-  },
-  pressed: { opacity: 0.6 },
-  askNewWords: { ...text.label, color: color.snuBlue },
 });

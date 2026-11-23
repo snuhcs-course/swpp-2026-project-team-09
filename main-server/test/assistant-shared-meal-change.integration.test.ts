@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -164,7 +165,8 @@ describe('A lunch whose only invited Friend declined', () => {
 });
 
 describe('A lunch the asker keeps alone, asked for with a Friend', () => {
-  it('is not changeable: making the new plan replaces it (row 20i)', async () => {
+  // Row 20i made a new Quest in its place; P05 ticket 44 adds the Friend to the same one.
+  it('is changeable in place, adding the Friend (row 20i, P05 ticket 44)', async () => {
     const date = '2088-11-23';
     // Before lunch, so that the lunch kept has not started (row 20g).
     await stage.asking(date, '10:30');
@@ -174,8 +176,9 @@ describe('A lunch the asker keeps alone, asked for with a Friend', () => {
 
     const { response, words } = await askLunch(date, [minsu], '민수랑 점심 먹자');
 
-    expect(answerIn(response.body).planSet).toMatchObject({ questId: kept, changeable: false });
-    expect(words).toMatchObject({ alreadySet: { shared: false, changeable: false } });
+    expect(answerIn(response.body).planSet).toMatchObject({ questId: kept, changeable: true });
+    expect(answerIn(response.body).adding?.friends).toEqual([{ userId: minsu.id, name: '민수' }]);
+    expect(words).toMatchObject({ alreadySet: { shared: false, changeable: true } });
   });
 });
 

@@ -2,12 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
 import type { Bubbles, Chat, ChatBubble } from './use-chat';
 
-type Kept = Pick<Chat, 'earlier' | 'startNew' | 'resume' | 'sendNew'>;
+type Kept = Pick<Chat, 'earlier' | 'startNew' | 'resume' | 'sendNew' | 'clearEarlier' | 'removeEarlier'>;
 
 // A conversation the User left for another, kept while the app runs (P04 ticket 10). Its id is its first bubble's, which
 // is never given again.
@@ -17,7 +18,8 @@ export interface EarlierConversation {
 }
 
 // The conversations kept beside the current one: "새 대화" moves the current one among them, and a press on one of
-// their questions takes it up again in place of the current one, which is kept in its turn. Nothing is erased; a
+// their questions takes it up again in place of the current one, which is kept in its turn. "모두 지우기" erases the
+// kept ones, and a kept one's trash that one, never the current one (`clearEarlier`, `removeEarlier`, P04 ticket 49); a
 // conversation that holds nothing is not kept. Leaving drops a question still on its way (`leave`). A message from the
 // main map starts a new one with it (`sendNew`, P04 ticket 33).
 export function useConversations(show: Bubbles['show'], leave: () => readonly ChatBubble[], send: Chat['send']): Kept {
@@ -56,5 +58,14 @@ export function useConversations(show: Bubbles['show'], leave: () => readonly Ch
     },
     [send, startNew],
   );
-  return { earlier, startNew, resume, sendNew };
+  const clearEarlier = useCallback((): void => {
+    keep([]);
+  }, [keep]);
+  const removeEarlier = useCallback(
+    (id: number): void => {
+      keep(keptNow.current.filter((kept) => kept.id !== id));
+    },
+    [keep],
+  );
+  return { earlier, startNew, resume, sendNew, clearEarlier, removeEarlier };
 }

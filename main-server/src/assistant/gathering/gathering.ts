@@ -10,7 +10,11 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
+import {
+  LONGEST_MEAL_SECONDS,
+  SERVING_CUTOFF_SECONDS,
+  SHORTEST_MEAL_SECONDS,
+} from '../../travel/judgement-constants.js';
 import { type FreeInterval } from '../free-time/free-time.js';
 import { aroundShared, earliest, type Interval, latest, sharedTime } from '../free-time/meal-fit.js';
 import {
@@ -35,8 +39,8 @@ export interface GatheringPerson {
   free: readonly FreeInterval[];
   // The Place of the position the asker may use for them now, or null.
   locationPlaceId: string | null;
-  // The asker's app sent no location and said why: they set out from their previous item's Place at any time.
-  locationMissing?: boolean;
+  // The asker of a meal: where they are now is known only from their position, never from an item that has ended.
+  positionOnly?: true;
   // What the asker fixed for them: where they set out from, the earliest they are ready, and the latest they leave.
   chosenPlaceId?: string;
   notBefore?: Date;
@@ -46,9 +50,16 @@ export interface GatheringPerson {
 export interface GatheringPlace {
   key: string;
   placeId: string;
-  // A Restaurant's own window, from the hours its page gave, in place of the gathering's; and when it closes.
+  // A Restaurant's own window, from the hours its page gave, in place of the gathering's. For a meal its end is when
+  // the food is last served.
   window?: Interval;
-  closesAt?: Date;
+}
+
+// A meal's: the window's end is when the food is last served, not when the meal ends (P05 ticket 46). Everyone is there
+// at least SERVING_CUTOFF_SECONDS before it, and the meal ends at the earliest leave-by, the end the User set
+// (`until`), or LONGEST_MEAL_SECONDS after it starts.
+export interface Serving {
+  until: Date | null;
 }
 
 export type OriginBasis = 'timetable' | 'location' | 'chosen';
@@ -56,8 +67,7 @@ export type OriginBasis = 'timetable' | 'location' | 'chosen';
 export interface PersonPart {
   personId: string;
   readyAt: Date;
-  // `assumed`: taken from the Timetable because the location was missing.
-  origin: { placeId: string; basis: OriginBasis; assumed?: true } | null;
+  origin: { placeId: string; basis: OriginBasis } | null;
   // The minutes of their whole way, to the merging point and on to the place, on foot or by the shuttle as `by` says.
   // Null when the origin is unknown.
   walkMinutes: number | null;
@@ -98,6 +108,8 @@ export interface GatheringFit {
   parts: PersonPart[];
   // The Restaurant's own window it was fitted in, when its hours gave one.
   window?: Interval;
+  // A meal's latest start the Restaurant still serves.
+  servedBy?: Date;
 }
 
 // A plan's minutes are said only up to two hours, a stay a person can act on. A longer one is said by its end, or
@@ -121,7 +133,7 @@ export interface GatheringDrop {
   shortest: { personId: string; minutes: number };
   // In the order of the people.
   parts: PersonPart[];
-  // The Restaurant closes before a meal fits: when, and the asker's walk there.
+  // The Restaurant stops serving before everyone can be there: when its serving ends, and the asker's walk there.
   closing?: { at: Date; walkMinutes: number | null };
   // The Restaurant's own window, when its hours gave one.
   window?: Interval;
@@ -152,13 +164,18 @@ export function gather(
   places: GatheringPlaces,
   when: { window: Interval; now: Date },
   travel: GatheringTravel,
-  { merging = true, startsBy, order = 'walking' }: { merging?: boolean; startsBy?: Date; order?: PlanOrder } = {},
+  {
+    merging = true,
+    startsBy,
+    order = 'walking',
+    serving,
+  }: { merging?: boolean; startsBy?: Date; order?: PlanOrder; serving?: Serving } = {},
 ): Gathering {
   const stretches = sharedTime(
     people.map(({ free }) => free),
     when.window,
   );
-  const plans = stretches.map((stretch) => planIn(stretch, people, places, when, { travel, merging, order }));
+  const plans = stretches.map((stretch) => planIn(stretch, people, places, when, { travel, merging, order, serving }));
   const held =
     startsBy === undefined ? plans : plans.filter(({ shared }) => shared !== null && shared.start <= startsBy);
   const first = plans[0] ?? { shared: null, sides: [], fits: [], dropped: [] };
@@ -173,31 +190,40 @@ function planIn(
   [asker, ...friends]: readonly [GatheringPerson, ...GatheringPerson[]],
   places: GatheringPlaces,
   { window, now }: { window: Interval; now: Date },
-  { travel, merging, order }: { travel: Walking; merging: boolean; order: PlanOrder },
+  { travel, merging, order, serving }: { travel: Walking; merging: boolean; order: PlanOrder; serving?: Serving },
 ): Gathering {
   const sides: [GatheringSide, ...GatheringSide[]] = [
     sideOf(asker, stretch, now),
     ...friends.map((friend) => sideOf(friend, stretch, now)),
   ];
   const candidates = typeof places === 'function' ? places(sides) : places;
-  const all = candidates.map((place) => ({ place, fit: fitAt(place, sides, window, { travel, merging }) }));
-  const fits = all.flatMap(({ fit }) => (fitsTogether(fit) ? [fit] : [])).toSorted(PLAN_ORDERS[order]);
-  const dropped = all.flatMap(({ place, fit }) => (fitsTogether(fit) ? [] : [dropOf(fit, place, window)]));
+  const all = candidates.map((place) => fitAt(place, sides, window, { travel, merging, serving }));
+  const fits = all.filter((fit) => fitsTogether(fit)).toSorted(PLAN_ORDERS[order]);
+  const dropped = all.flatMap((fit) => (fitsTogether(fit) ? [] : [dropOf(fit, window, serving)]));
   return { shared: stretch, sides, fits, dropped };
 }
 
-const fitsTogether = ({ togetherMinutes }: GatheringFit): boolean => togetherMinutes >= SHORTEST_MEAL_SECONDS / 60;
+const fitsTogether = ({ togetherMinutes, start, servedBy }: GatheringFit): boolean =>
+  togetherMinutes >= SHORTEST_MEAL_SECONDS / 60 && (servedBy === undefined || start <= servedBy);
 
-function dropOf(fit: GatheringFit, place: GatheringPlace, gatheringWindow: Interval): GatheringDrop {
-  const { key, placeId, togetherMinutes, end, parts, window: own } = fit;
+// The end a person's stay or a meal has: for a meal, the earliest leave-by, the end the User set, or the longest meal
+// after `from`; else the window's end or a leave-by before it.
+function endOf(leaveBys: readonly Date[], from: Date, window: Interval, serving: Serving | undefined): Date {
+  if (serving === undefined) {
+    return earliest([window.end, ...leaveBys]);
+  }
+  const until = serving.until === null ? [] : [serving.until];
+  return earliest([...leaveBys, ...until, plusMinutes(from, LONGEST_MEAL_SECONDS / 60)]);
+}
+
+function dropOf(fit: GatheringFit, gatheringWindow: Interval, serving: Serving | undefined): GatheringDrop {
+  const { key, placeId, togetherMinutes, parts, window: own, start, servedBy } = fit;
   const window = own ?? gatheringWindow;
-  const stays = parts.map(({ personId, canArriveAt, readyAt, leaveBy }) => ({
-    personId,
-    minutes: Math.max(
-      0,
-      minutesBetween(latest([window.start, canArriveAt ?? readyAt]), earliest([window.end, leaveBy ?? window.end])),
-    ),
-  }));
+  const stays = parts.map(({ personId, canArriveAt, readyAt, leaveBy }) => {
+    const from = latest([window.start, canArriveAt ?? readyAt]);
+    const to = endOf(leaveBy === null ? [] : [leaveBy], from, window, serving);
+    return { personId, minutes: Math.max(0, minutesBetween(from, to)) };
+  });
   const shortest = stays.reduce((least, stay) => (stay.minutes < least.minutes ? stay : least));
   const drop = {
     key,
@@ -207,10 +233,9 @@ function dropOf(fit: GatheringFit, place: GatheringPlace, gatheringWindow: Inter
     parts,
     ...(own === undefined ? {} : { window: own }),
   };
-  const { closesAt } = place;
-  return closesAt === undefined || end.getTime() !== closesAt.getTime()
+  return servedBy === undefined || start <= servedBy
     ? drop
-    : { ...drop, closing: { at: closesAt, walkMinutes: parts[0]?.walkMinutes ?? null } };
+    : { ...drop, closing: { at: window.end, walkMinutes: parts[0]?.walkMinutes ?? null } };
 }
 
 type Walking = GatheringTravel;
@@ -222,10 +247,11 @@ const plusMinutes = (at: Date, count: number): Date => new Date(at.getTime() + c
 export const minutesBetween = (from: Date, to: Date): number => (to.getTime() - from.getTime()) / MINUTE_MS;
 
 // Where a person sets out from for a stretch of Free Time: what the asker chose, else the Place of the item that keeps
-// them until then, else the Place of their location, else, when their location is said to be missing, that of the
-// previous item however long ago it ended, else that of an item that ended at most RECENT_CLASS_MINUTES ago.
+// them until then or ends now, else the Place of their location. Otherwise nowhere known for the asker of a meal (`positionOnly`),
+// who may never have gone to an item that has ended or may have left it long ago; for anyone else, the Place of an
+// item that ended at most RECENT_CLASS_MINUTES ago.
 export function originOf(
-  person: Pick<GatheringPerson, 'chosenPlaceId' | 'locationPlaceId' | 'locationMissing'>,
+  person: Pick<GatheringPerson, 'chosenPlaceId' | 'locationPlaceId' | 'positionOnly'>,
   { start, previous }: Pick<FreeInterval, 'start' | 'previous'>,
   now: Date,
 ): PersonPart['origin'] {
@@ -234,14 +260,15 @@ export function originOf(
   }
   const placeId = previous?.placeId ?? null;
   const timetable = placeId === null ? null : { placeId, basis: 'timetable' as const };
-  if (start > now) {
+  // An item that ends at the minute asked still keeps them there.
+  if (start > now || (previous !== null && previous.end >= now)) {
     return timetable;
   }
   if (person.locationPlaceId !== null) {
     return { placeId: person.locationPlaceId, basis: 'location' };
   }
-  if (person.locationMissing === true) {
-    return timetable === null ? null : { ...timetable, assumed: true };
+  if (person.positionOnly === true) {
+    return null;
   }
   return previous !== null && minutesBetween(previous.end, now) <= RECENT_CLASS_MINUTES ? timetable : null;
 }
@@ -296,7 +323,7 @@ function fitAt(
   { key, placeId, window: own }: GatheringPlace,
   [asker, ...friends]: readonly [GatheringSide, ...GatheringSide[]],
   gatheringWindow: Interval,
-  { travel, merging }: { travel: Walking; merging: boolean },
+  { travel, merging, serving }: { travel: Walking; merging: boolean; serving: Serving | undefined },
 ): GatheringFit {
   const place = { key, placeId };
   const window = own ?? gatheringWindow;
@@ -307,11 +334,17 @@ function fitAt(
   const first = latest([window.start, ...weighed.map((part) => part.canArriveAt ?? part.readyAt)]);
   const arriving = weighed.map((part) => settledShuttle(part, place.placeId, first, travel));
   const start = latest([window.start, ...arriving.map((part) => part.canArriveAt ?? part.readyAt)]);
-  const end = earliest([window.end, ...arriving.flatMap(({ leaveBy }) => (leaveBy === null ? [] : [leaveBy]))]);
+  const end = endOf(
+    arriving.flatMap(({ leaveBy }) => (leaveBy === null ? [] : [leaveBy])),
+    start,
+    window,
+    serving,
+  );
   // Everyone sets out as late as still has them there at the start, so the meeting moves with the start.
   const parts = arriving.map((part) => settingOut(part, start));
   const meeting =
     earliestMeeting === null ? null : { ...earliestMeeting, at: plusMinutes(start, -earliestMeeting.onwardMinutes) };
   const fit = { ...place, start, end, togetherMinutes: minutesBetween(start, end), meeting, parts };
-  return own === undefined ? fit : { ...fit, window: own };
+  const served = serving === undefined ? {} : { servedBy: plusMinutes(window.end, -SERVING_CUTOFF_SECONDS / 60) };
+  return { ...fit, ...served, ...(own === undefined ? {} : { window: own }) };
 }

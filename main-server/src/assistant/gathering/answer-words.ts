@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
@@ -65,6 +66,17 @@ export interface MealAnswerArgs extends GatheringArgs<MealInput> {
   // Each open Restaurant's menu for the meal, by its key, which its Plan says.
   served?: ReadonlyMap<string, ServedMenu>;
 }
+
+// Whether the day's menus were collected, any Restaurant serves the meal, and any at the Place asked for.
+export const menusOf = (collected: number, open: number, there: number): MealAnswerArgs['menus'] => {
+  if (collected === 0) {
+    return 'none';
+  }
+  if (open === 0) {
+    return 'closed';
+  }
+  return there === 0 ? 'closed-at-place' : 'open';
+};
 
 const SHORTEST_MEAL_MINUTES = SHORTEST_MEAL_SECONDS / 60;
 const HANGUL_FIRST = 0xac_00;
@@ -172,7 +184,7 @@ export class GatheringNaming<Args extends GatheringArgs = GatheringArgs> extends
 
   dropReason({ togetherMinutes, shortest, closing }: GatheringDrop): string {
     if (closing !== undefined) {
-      return `${clockOf(closing.at)} 닫아요`;
+      return `${clockOf(closing.at)}에 배식이 끝나요`;
     }
     if (shortest.minutes >= SHORTEST_MEAL_MINUTES) {
       return `같이 있는 시간이 ${togetherMinutes}분뿐이에요`;

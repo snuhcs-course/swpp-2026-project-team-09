@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -38,7 +39,6 @@ export function MadeCard({ answer, plan, made, invitation, over, onClose }: Made
   return (
     <InvitedCard
       chips={answer.chips}
-      onClose={onClose}
       over={over}
       standings={invitation.standings}
       startAt={plan.startAt}

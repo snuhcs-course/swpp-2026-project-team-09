@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -130,10 +131,10 @@ describe('board n15: no Timetable', () => {
   });
 });
 
-// A way with no button docks with the model's words and the note as a chip (P04 tickets 05, 18); raised, 닫기 stands
+// A way with no button docks with the model's words and the note as a chip (P04 tickets 05, 18); raised, the card's ✕ stands
 // alone.
 describe('board n14: off campus', () => {
-  it('notes that Friends do not see the User, with 닫기 alone', async () => {
+  it('notes that Friends do not see the User, with the card’s ✕ alone', async () => {
     givePhone({ permission: 'granted', position: ON_CAMPUS });
     const lookup = { ...LEAVE_LOOKUP_REPLY.lookup, note: N14_NOTE, actions: [] };
     const user = await askOnMap(server, { ...LEAVE_LOOKUP_REPLY, lookup });
@@ -145,7 +146,7 @@ describe('board n14: off campus', () => {
 
     expect(card().getByText('24동까지 걸어서 15분')).toBeVisible();
     expect(card().getByText(N14_NOTE)).toBeVisible();
-    expect(card().getByRole('button', { name: '닫기' })).toBeVisible();
+    expect(card().getByRole('button', { name: '답 닫기' })).toBeVisible();
     expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
   });
 });

@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply, planInputSchema } from '../src/assistant/dto/answer.dto.js';
@@ -173,56 +174,70 @@ describe('Board n10: 배고파 alone ten minutes before a Class', () => {
   });
 });
 
-// Board n12: on Tuesday at 13:47, the asker's Class in 24동 ended at 13:45; 학생회관식당, a minute away, closes at 14:00.
+// Board n12: on Tuesday at 13:47, the asker's Class in 24동 ended at 13:45; 학생회관식당, a minute away, stops serving
+// soon. One who arrives in its last 10 minutes of serving is not offered it (P05 ticket 46).
 const n12Day = (): AnswerPerson => person(ME, '유상', [classAt('12:30', '13:45', '자연과학관6')]);
 const closing = (closesAt: string): (Hours | null)[] =>
   restaurants().map(({ key }) => (key === '학생회관식당' ? { opensAt: '11:00', closesAt } : null));
 
 const n12 = (hours?: (Hours | null)[]): AnswerReply => answerFor({ people: [n12Day()], clock: '13:47', hours });
 
-describe('Board n12: a Restaurant about to close', () => {
-  it('drops the Restaurant that closes before the asker can eat there, saying when it closes', () => {
-    const { dropped } = n12(closing('14:00'));
+describe('Board n12: a Restaurant about to stop serving', () => {
+  it('drops the Restaurant the asker reaches in its last 10 minutes of serving, saying when serving ends', () => {
+    const { dropped } = n12(closing('13:55'));
 
-    expect(dropped.map(({ place, reason }) => [place.label, reason])).toEqual([['학생회관식당', '14:00 닫아요']]);
+    expect(dropped.map(({ place, reason }) => [place.label, reason])).toEqual([
+      ['학생회관식당', '13:55에 배식이 끝나요'],
+    ]);
   });
 
-  it('drops one the asker reaches only after it closes', () => {
-    expect(n12(closing('13:45')).dropped.map(({ reason }) => reason)).toEqual(['13:45 닫아요']);
+  it('keeps it when the asker arrives at 13:48, before its last 10 minutes from 13:50', () => {
+    const { plans, dropped } = n12(closing('14:00'));
+
+    expect(dropped).toEqual([]);
+    expect(plans[0]).toMatchObject({ id: '학생회관식당', startAt: time('13:48') });
   });
 
-  it('names the nearer Restaurant that closes in the lines of the pick', () => {
-    const [pick, next] = n12(closing('14:00')).plans;
+  it('drops one the asker reaches only after serving ends', () => {
+    expect(n12(closing('13:45')).dropped.map(({ reason }) => reason)).toEqual(['13:45에 배식이 끝나요']);
+  });
+
+  it('names the nearer Restaurant that stops serving in the lines of the pick', () => {
+    const [pick, next] = n12(closing('13:55')).plans;
 
     expect(pick?.id).toBe('자하연식당');
     expect(pick?.lines).toEqual([
       [strong('자하연식당'), plain(' · 13:52 도착')],
-      [plain('학생회관식당은 14:00에 닫아요')],
+      [plain('학생회관식당은 13:55에 배식이 끝나요')],
     ]);
-    expect(next?.lines[0]).toEqual([plain('점심 '), strong('3식당'), plain(' · 식사 37분')]);
+    expect(next?.lines[0]).toEqual([plain('점심 '), strong('3식당'), plain(' · 식사 60분')]);
   });
+});
 
+describe('Board n12 at a start the User set', () => {
   it('says the arrival at the start the User set, not when the asker could first get there', () => {
     const { plans, dropped } = answerFor({
       people: [n12Day()],
       clock: '13:47',
-      hours: closing('14:10'),
+      hours: closing('14:05'),
       window: { from: '14:00', until: null },
     });
 
     expect(dropped.map(({ place }) => place.label)).toEqual(['학생회관식당']);
     expect(plans[0]?.lines).toEqual([
       [strong('자하연식당'), plain(' · 14:00 도착')],
-      [plain('학생회관식당은 14:10에 닫아요')],
+      [plain('학생회관식당은 14:05에 배식이 끝나요')],
     ]);
   });
+});
 
-  it('drops nothing and says nothing of closing when no hours were read', () => {
+describe('Board n12 with no hours read', () => {
+  it('drops nothing and says nothing of serving when no hours were read', () => {
     const { plans, dropped } = n12();
 
     expect(dropped).toEqual([]);
     expect(plans[0]?.id).toBe('학생회관식당');
-    expect(plans[0]?.lines[0]).toEqual([plain('점심 '), strong('학생회관식당'), plain(' · 식사 42분')]);
+    expect(plans[0]?.lines[0]).toEqual([plain('점심 '), strong('학생회관식당'), plain(' · 식사 60분')]);
   });
 });
 

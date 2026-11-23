@@ -200,7 +200,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
     [place, bookingStage.tell, steps, raised, point, walk],
   );
   const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow);
-  const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation);
+  const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation, chat.earlier);
   const pick = usePicking(chat);
   return {
     chat,

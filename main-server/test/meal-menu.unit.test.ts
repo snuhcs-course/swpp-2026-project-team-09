@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -56,11 +57,11 @@ const lineOf = (name: string, closesAt: string | null = null, date = TODAY): Ans
   menuLine({ lines: lunchOf(name), closesAt }, date, NOW);
 
 describe("A meal Plan's menu line", () => {
-  it('names the first dish without its price, how many more there are, and the closing time', () => {
+  it('names the first dish without its price, how many more there are, and when serving ends', () => {
     expect(lineOf('학생회관식당', '14:30')).toEqual([
       plain('오늘 '),
       strong('눈꽃치즈닭갈비'),
-      plain(' 외 2 · 14:30까지'),
+      plain(' 외 2 · 14:30까지 배식'),
     ]);
   });
 
@@ -69,7 +70,11 @@ describe("A meal Plan's menu line", () => {
   });
 
   it("names a buffet's first dish and counts the others", () => {
-    expect(lineOf('302동식당', '13:30')).toEqual([plain('오늘 '), strong('뼈없는감자탕'), plain(' 외 5 · 13:30까지')]);
+    expect(lineOf('302동식당', '13:30')).toEqual([
+      plain('오늘 '),
+      strong('뼈없는감자탕'),
+      plain(' 외 5 · 13:30까지 배식'),
+    ]);
   });
 
   it('leaves plain rice out, and counts the order menu under the buffet', () => {
@@ -99,10 +104,10 @@ describe("A meal Plan's menu line", () => {
 });
 
 describe("A meal Plan's menu in 근거", () => {
-  it('lists the dishes with their prices, then where the menu and the closing time come from', () => {
+  it('lists the dishes with their prices, then where the menu and the serving end come from', () => {
     expect(menuBasis({ lines: lunchOf('학생회관식당'), closesAt: '14:30' })).toEqual([
       '눈꽃치즈닭갈비 6,000원 · 단호박영양밥&양념장(#) 3,000원 · 수제탕수육 6,000원',
-      '메뉴와 닫는 시각: 오늘의 식단',
+      '메뉴와 배식 시각: 오늘의 식단',
     ]);
   });
 
@@ -140,7 +145,7 @@ describe("The menu line among a Plan's lines", () => {
   const named: AnswerLine = [plain('점심 '), strong('302동식당'), plain(' · 식사 50분')];
   const other: AnswerLine = [plain('위치를 몰라 직전 수업의')];
   const leave: AnswerLine = [plain('12:43엔 나서야 해요')];
-  const menu = [plain('오늘 '), strong('뼈없는감자탕'), plain(' 외 5 · 13:30까지')];
+  const menu = [plain('오늘 '), strong('뼈없는감자탕'), plain(' 외 5 · 13:30까지 배식')];
 
   it('comes right after a first line that names the Restaurant, else last', () => {
     expect(withMenu([named, leave], served, at)).toEqual([named, menu, leave]);
@@ -148,10 +153,10 @@ describe("The menu line among a Plan's lines", () => {
     expect(withMenu([named], undefined, at)).toEqual([named]);
   });
 
-  it('leaves the closing time out when a line already says the Restaurant closes, not when another one does', () => {
-    const closes: AnswerLine = [plain('302동식당은 13:30에 닫아요')];
+  it('leaves the serving end out when a line already says when the Restaurant stops serving, not when another one does', () => {
+    const closes: AnswerLine = [plain('302동식당은 13:30에 배식이 끝나요')];
     expect(withMenu([named, closes], served, at)[1]).toEqual([plain('오늘 '), strong('뼈없는감자탕'), plain(' 외 5')]);
-    const another: AnswerLine = [plain('학생회관식당은 14:00에 닫아요')];
+    const another: AnswerLine = [plain('학생회관식당은 14:00에 배식이 끝나요')];
     expect(withMenu([named, another], served, at)).toEqual([named, menu, another]);
   });
 
@@ -161,16 +166,16 @@ describe("The menu line among a Plan's lines", () => {
     const alone = answerOf([me()], { served: menus }).plans.find(({ id }) => id === '학생회관식당');
     expect(alone?.lines.map((line) => line.map(({ text }) => text).join(''))).toEqual([
       '점심 학생회관식당 · 식사 54분',
-      '오늘 눈꽃치즈닭갈비 외 2 · 14:30까지',
+      '오늘 눈꽃치즈닭갈비 외 2 · 14:30까지 배식',
       '15분을 걷고 12:59엔 나서야 해요',
     ]);
     expect(alone?.basis.slice(-2)).toEqual([
       '눈꽃치즈닭갈비 6,000원 · 단호박영양밥&양념장(#) 3,000원 · 수제탕수육 6,000원',
-      '메뉴와 닫는 시각: 오늘의 식단',
+      '메뉴와 배식 시각: 오늘의 식단',
     ]);
     const together = firstPlan(answerOf([me(), minsu(), jieun()], { aloneMinutes: 55, served: menus }));
     expect(together.id).toBe('학생회관식당');
-    expect(together.lines[1]).toEqual([plain('오늘 '), strong('눈꽃치즈닭갈비'), plain(' 외 2 · 14:30까지')]);
+    expect(together.lines[1]).toEqual([plain('오늘 '), strong('눈꽃치즈닭갈비'), plain(' 외 2 · 14:30까지 배식')]);
   });
 });
 

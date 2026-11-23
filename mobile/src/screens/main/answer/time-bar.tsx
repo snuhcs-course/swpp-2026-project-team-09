@@ -29,7 +29,6 @@ import { bookingKept } from '../library/booking-kept';
 import { SlotBand } from '../library/slot-band';
 import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
-import { BACK_ROOM } from './back-button';
 import { TimeBand } from './time-band';
 import { type BandFocus, useCorrections } from './use-corrections';
 import { addNameOf } from './who-words';
@@ -67,7 +66,7 @@ interface BarProps {
   offset?: number;
 }
 
-// The time bar: the answer's band in one white row at the top, its head "←", the words, and "＋ 같이", folded to one row, which a press on its grip
+// The time bar: the answer's band in one white row at the top, its head the words and "＋ 같이", folded to one row, which a press on its grip
 // unfolds to the band's whole range, a row for each person, and folds again.
 function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
@@ -91,7 +90,7 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
         {...band}
         day={day ?? koreaDayWord(startAt, new Date(now))}
         folded={folded}
-        head={{ left: BACK_ROOM, right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
+        head={{ right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
       />
       {add === null ? null : (
         <View
@@ -220,7 +219,7 @@ export function BookingBar({
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
         onHeight(nativeEvent.layout.height);
       }}
-      style={[styles.bar, styles.booking, { top: barTop(top) }]}
+      style={[styles.bar, { top: barTop(top) }]}
       testID="time-bar"
     >
       <SlotBand
@@ -253,6 +252,4 @@ const styles = StyleSheet.create({
   // At the right of the head row, its top at the row's top (the bar's padding), so that the two share their middle and
   // the track starts below both (P04 ticket 45).
   add: { position: 'absolute', top: space[3], right: space[3] },
-  // A seat's band starts clear of "←" at its head's left.
-  booking: { paddingLeft: space[4] + BACK_ROOM },
 });

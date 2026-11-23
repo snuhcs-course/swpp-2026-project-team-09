@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLabel } from './map-answer';
@@ -21,8 +22,14 @@ export const BADGE = 16;
 
 // A label's height, the tallest of its kind: one line of the pick's title with the padding and the pick's border at
 // the top and at the bottom, or that title and a line under it.
-const ONE_LINE = mapText.buttonTitle.lineHeight + 2 * GAP + 2 * RING;
-const TWO_LINES = mapText.buttonTitle.lineHeight + mapText.rowLine.lineHeight + 2 * space[1] + 2 * RING;
+// The words scale with the phone's font size (`fontScale`); the padding and the border do not.
+function oneLine(scale: number): number {
+  return mapText.buttonTitle.lineHeight * scale + 2 * GAP + 2 * RING;
+}
+
+function twoLines(scale: number): number {
+  return (mapText.buttonTitle.lineHeight + mapText.rowLine.lineHeight) * scale + 2 * space[1] + 2 * RING;
+}
 // The advance widths of `assets/fonts/Pretendard-SemiBold.otf` and `Pretendard-Bold.otf` as shares of the font's
 // size, each class at its widest letter in either font, rounded up: a Hangul syllable 0.864; a space, "·", ":", ".",
 // and "," 0.287; "W", "M", "m", "w", "%", "@", and the capitals "A", "C", "D", "G", "H", "N", "O", "Q", "U", "V", "X",
@@ -54,33 +61,28 @@ function wordsWidth(words: string, size: number): number {
 // A label's box around its mark's point, in points, x to the right and y down, as `MapAnswerMark` lays it out: at its
 // side of the symbol box, the gap and its `shift` away, and centred on the point the other way. Its width is its
 // words' with the padding, the pick's border, and the number's badge, at most `LABEL_MAX`. The camera's room for
-// labels and the choice of a label's side both read it.
-export function answerLabelBox({
-  side,
-  tone,
-  title,
-  line,
-  number,
-  shift = 0,
-  sub = null,
-  note = null,
-  action = null,
-}: AnswerLabel): {
+// labels and the choice of a label's side both read it. `fontScale` is the phone's font size as a share of the usual,
+// which the words are drawn at (a large system font makes every label larger).
+export function answerLabelBox(
+  { side, tone, title, line, number, shift = 0, sub = null, note = null, action = null }: AnswerLabel,
+  fontScale = 1,
+): {
   left: number;
   top: number;
   right: number;
   bottom: number;
 } {
-  const titleSize = tone === 'pick' ? mapText.buttonTitle.fontSize : mapText.rowLine.fontSize;
+  const titleSize = (tone === 'pick' ? mapText.buttonTitle.fontSize : mapText.rowLine.fontSize) * fontScale;
+  const rowSize = mapText.rowLine.fontSize * fontScale;
   const lineWords = line === null ? null : action === null ? line : `${line} ${action}`;
-  const lineWidth = lineWords === null ? 0 : wordsWidth(lineWords, mapText.rowLine.fontSize);
+  const lineWidth = lineWords === null ? 0 : wordsWidth(lineWords, rowSize);
   const titleWidth = wordsWidth(title, titleSize) + (note === null ? 0 : wordsWidth(` ${note}`, titleSize));
   const head =
     tone === 'candidate' && line !== null ? titleWidth + space[1] + lineWidth : Math.max(titleWidth, lineWidth);
-  const words = Math.max(head, sub === null ? 0 : wordsWidth(sub, mapText.rowLine.fontSize));
+  const words = Math.max(head, sub === null ? 0 : wordsWidth(sub, rowSize));
   const frame = 2 * space[2] + (tone === 'pick' ? 2 * RING : 0) + (number === null ? 0 : BADGE + space[1]);
   const width = Math.ceil(Math.min(sub === null && tone !== 'pick' ? LABEL_MAX : SUB_MAX, frame + words));
-  const height = (line === null || tone === 'candidate') && sub === null ? ONE_LINE : TWO_LINES;
+  const height = (line === null || tone === 'candidate') && sub === null ? oneLine(fontScale) : twoLines(fontScale);
   const reach = ANSWER_SYMBOL_BOX / 2 + GAP + shift;
   if (side === 'left' || side === 'right') {
     const left = side === 'right' ? reach : -reach - width;

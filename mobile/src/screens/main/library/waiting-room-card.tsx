@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -12,7 +13,7 @@ import { bookKeyOf, windowWords } from '@/library/cards/room-window';
 import { whenWords } from '@/library/cards/times';
 import { keepWaitingRoom } from '@/library/room-bookings';
 import { CLOSED, NOT_BOOKED } from './book-seat-card';
-import { CardBox, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
+import { CardBox, DECLINE, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
 import { Choices } from './room-parts';
 import { PartyStatus, usePartyRequest } from './room-party';
 import type { LibraryCardActions } from './use-library-call';
@@ -56,7 +57,7 @@ export function WaitingRoomCard({ card, space, place, actions }: WaitingRoomCard
       {status === 'gathering' || status === 'ready' ? <Said>{windowWords(date)}</Said> : null}
       <Pills>
         <Pill disabled label="예약하기" onPress={decline} primary />
-        <Pill label="취소" onPress={decline} />
+        <Pill label={DECLINE} onPress={decline} />
       </Pills>
       <Notes notes={card.notes} />
     </CardBox>

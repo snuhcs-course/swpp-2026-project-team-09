@@ -29,9 +29,9 @@ export interface KeptConversation {
   // A question of the list: its turn of the current conversation on screen, or an earlier conversation taken up again
   // at that turn; either shows the frame.
   showTurn: (turnId: number, conversation: number | null) => void;
-  // Counts each "새 대화" and "＋ 새 질문", so that the map screen puts the focus in the input.
+  // Counts each "새 대화", from the card or the list of questions, so that the map screen puts the focus in the input.
   started: number;
-  // "＋ 새 질문": the focus in the main map's input, once the frame is left (P04 ticket 44).
+  // "＋ 새 대화": the focus in the main map's input, once the frame is left (P04 tickets 44 and 49).
   focusInput: () => void;
   // The turn on screen is the conversation's latest: only then do 다시 시도 and the failed words put back act on it.
   latest: boolean;

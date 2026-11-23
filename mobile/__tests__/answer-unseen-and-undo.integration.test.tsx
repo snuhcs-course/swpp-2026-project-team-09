@@ -3,6 +3,7 @@
  *
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -76,7 +77,7 @@ function caption(): ReturnType<typeof within> {
 }
 
 async function closeAnswer(user: User): Promise<void> {
-  await user.press(screen.getByRole('button', { name: '뒤로' }));
+  await user.press(screen.getByRole('button', { name: '답 닫기' }));
 }
 
 function card(): ReturnType<typeof within> {
@@ -131,7 +132,7 @@ function questions(): ReturnType<typeof within> {
   return within(screen.getByTestId('question-list'));
 }
 
-// The conversation of two questions closed with "←", then a question typed on the main map.
+// The conversation of two questions closed with ✕, then a question typed on the main map.
 async function askOnMap(user: User): Promise<void> {
   await closeAnswer(user);
   answerWith('새 답이에요.');
@@ -149,8 +150,9 @@ describe('a question typed on the main map while a conversation is kept', () => 
 
     expect(caption().getByText('배고파')).toBeVisible();
     await user.press(screen.getByTestId('answer-caption'));
-    expect(questions().getAllByTestId('question-row')).toHaveLength(3);
-    await user.press(questions().getByRole('button', { name: /정문 셔틀은\?/u }));
+    // The earlier conversation of two questions is one row since P04 ticket 49; it comes back at its last question.
+    expect(questions().getAllByTestId('question-row')).toHaveLength(2);
+    await user.press(questions().getByRole('button', { name: /질문 2개/u }));
     expect(caption().getByText('정문 셔틀은?')).toBeVisible();
     expect(card().getByText(NEXT_REPLY)).toBeVisible();
   });

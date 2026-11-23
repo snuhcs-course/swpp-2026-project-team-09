@@ -6,6 +6,7 @@
  * 2026-11-15  Fable 5.2  prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
@@ -28,6 +29,7 @@ import { QuestsService } from '../quests/quests.service.js';
 import { inOrder } from '../quests/sub-quest-order.js';
 import { conflict } from '../quests/refusals.js';
 import { tellStepChanged } from '../quests/step-told.js';
+import { gatheringFrom, PARTY_CAPACITY } from '../quests/taken-alone.js';
 import { type BetterPlanDto } from './dto/better-plan.dto.js';
 import { type PlanQuestBody } from './dto/plan-quest.dto.js';
 import { placePoint } from './own-way.js';
@@ -48,20 +50,14 @@ const peopleOf = ({ leaderId, holders, invitations }: StoredQuest): string[] => 
   ...invitations.map(({ userId }) => userId),
 ];
 
-const samePeople = ([first, ...rest]: string[], [leaderId, ...others]: string[]): boolean =>
-  first === leaderId && rest.length === others.length && others.every((id) => rest.includes(id));
-
-// The plan is for the Quest's people, or, when nobody but the Leader is left in it, for the Leader and every Friend who
-// declined, as the same meeting counts them (P05 ticket 17, row 6). Those are invited again, and given back.
+// The plan is for the Quest's people, each of them asked for and the Leader first, and perhaps Friends more: those
+// who declined it (P05 ticket 17, row 6) or new to it (P05 ticket 44). Those more are invited, and given back. Leaving
+// someone out is refused.
 function invitedAgain({ people }: Pick<MealInput, 'people'>, quest: StoredQuest): string[] {
   const asked = people.map(({ userId }) => userId);
   const own = peopleOf(quest);
-  if (samePeople(asked, own)) {
-    return [];
-  }
-  const declined = own.length === 1 ? quest.declines.map(({ userId }) => userId) : [];
-  if (declined.length > 0 && samePeople(asked, [quest.leaderId, ...declined])) {
-    return declined;
+  if (asked[0] === quest.leaderId && own.every((id) => asked.includes(id))) {
+    return asked.filter((id) => !own.includes(id));
   }
   throw new BadRequestException({
     statusCode: HttpStatus.BAD_REQUEST,
@@ -69,6 +65,15 @@ function invitedAgain({ people }: Pick<MealInput, 'people'>, quest: StoredQuest)
     code: 'PLAN_PEOPLE_CHANGED',
     message: 'The plan is not for the people of the Quest. Ask for a better plan again.',
   });
+}
+
+const ms = (at: Date | null | undefined): number | null => at?.getTime() ?? null;
+
+// The meal's own step, the last to start: whether the plan moves it, in time or Place.
+function movesMeal({ subQuests }: StoredQuest, plan: Plan): boolean {
+  const [stored] = subQuests.toSorted((a, b) => (ms(b.startsAt) ?? 0) - (ms(a.startsAt) ?? 0));
+  const planned = subQuestsOf(plan).at(-1);
+  return ms(stored?.startsAt) !== ms(planned?.startsAt) || stored?.placeId !== planned?.placeId;
 }
 
 // After a decline: whether the people left have a better Plan than the Quest as it stands, and the change to it.
@@ -150,33 +155,31 @@ export class BetterPlanService {
       await this.leaders.lockLed(questId, userId, tx);
       const locked = await this.stored(questId, tx);
       const again = invitedAgain(input, locked);
+      const moved = movesMeal(locked, plan);
       await tx.quest.update({
         where: { id: questId },
         data: { title: plan.title, subQuests: { deleteMany: {}, create: inOrder(subQuestsOf(plan)) } },
       });
+      if (again.length > 0) {
+        await this.makeRoom(questId, locked, plan, tx);
+      }
       const invited: CreatedInvitation[] = [];
       for (const friendId of again) {
         // oxlint-disable-next-line no-await-in-loop -- a transaction runs one query at a time
         invited.push(await this.invitations.create(userId, questId, friendId, tx));
       }
       const holderIds = locked.holders.map((holder) => holder.userId);
-      return { people: peopleOf(locked), holderIds, by: locked.leader, invited };
+      return { people: peopleOf(locked), holderIds, by: locked.leader, invited, moved };
     });
     told.invited.forEach((invitation) => {
       this.invitations.announce(invitation);
     });
     this.signals.send(told.people, 'plan-changed', { questId });
     this.signals.send(told.people, 'quests-changed');
-    // As the room's 일정 수정 tells it: the Holders are told and their times to leave forgotten, the Leader's kept again.
-    const [first] = subQuestsOf(plan);
-    const changed = { questId, byId: userId, byName: told.by.name, stepTitle: first?.title ?? plan.title };
-    const { notifications, logger } = this;
-    await tellStepChanged(
-      { notifications, logger },
-      told.holderIds,
-      { ...changed, startsAt: first?.startsAt ?? null, cancelled: false },
-      this.clock.now(),
-    );
+    // A plan that only invites more people keeps the meal where and when it was, and tells the Holders nothing.
+    if (told.moved) {
+      await this.tellMoved(questId, { userId, name: told.by.name }, told.holderIds, plan);
+    }
     this.plans.keepTimeToLeave(userId, questId, plan);
     return this.quests.read(userId, questId);
   }
@@ -200,6 +203,28 @@ export class BetterPlanService {
         return [];
       }
       throw error;
+    }
+  }
+
+  // As the room's 일정 수정 tells it: the Holders are told and their times to leave forgotten, the Leader's kept again.
+  private async tellMoved(
+    questId: string,
+    by: { userId: string; name: string },
+    holderIds: readonly string[],
+    plan: Plan,
+  ): Promise<void> {
+    const [first] = subQuestsOf(plan);
+    const changed = { questId, byId: by.userId, byName: by.name, stepTitle: first?.title ?? plan.title };
+    const { notifications, logger } = this;
+    const told = { ...changed, startsAt: first?.startsAt ?? null, cancelled: false };
+    await tellStepChanged({ notifications, logger }, holderIds, told, this.clock.now());
+  }
+
+  // A Quest taken alone gathers others from now on (`gatheringFrom`), and every Quest holds the plan's people.
+  private async makeRoom(questId: string, quest: StoredQuest, plan: Plan, tx: Prisma.TransactionClient): Promise<void> {
+    const capacity = (await gatheringFrom(questId, tx)) ? PARTY_CAPACITY : quest.capacity;
+    if (capacity < plan.parts.length) {
+      await tx.quest.update({ where: { id: questId }, data: { capacity: plan.parts.length } });
     }
   }
 

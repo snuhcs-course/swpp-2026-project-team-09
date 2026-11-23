@@ -79,6 +79,7 @@
       {
         "displayName": "unit",
         "preset": "jest-expo",
+        "resolver": "<rootDir>/__tests__/support/worklets-resolver.js",
         "setupFiles": [
           "react-native-gesture-handler/jestSetup",
           "<rootDir>/__tests__/support/jest-setup.ts"
@@ -93,6 +94,7 @@
       {
         "displayName": "integration",
         "preset": "jest-expo",
+        "resolver": "<rootDir>/__tests__/support/worklets-resolver.js",
         "setupFiles": [
           "react-native-gesture-handler/jestSetup",
           "<rootDir>/__tests__/support/jest-setup.ts"

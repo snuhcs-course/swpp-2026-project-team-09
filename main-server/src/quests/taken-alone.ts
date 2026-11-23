@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Logger } from '@nestjs/common';
@@ -11,7 +12,7 @@ import { type NotificationsService } from '../notifications/notifications.servic
 // What ends a Quest taken alone as one (P03 tickets 15 and 17).
 
 // A new Quest's capacity when none is given, as the schema's default.
-const PARTY_CAPACITY = 4;
+export const PARTY_CAPACITY = 4;
 
 // The Quest, if the User took it alone, from now on gathers others: it is no longer taken alone and takes the usual
 // capacity. True when it was taken alone.

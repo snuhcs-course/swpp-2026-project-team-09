@@ -8,6 +8,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -49,7 +50,7 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-const CLOSE = '뒤로';
+const CLOSE = '답 닫기';
 // 김민준's Avatar, as the fake server's Friend without a status.
 const FRIEND = '김민준';
 const EVENT = '공식 행사 · AI 커리어 설명회';
@@ -225,9 +226,8 @@ const FIRST_PLAN_POINTS = distinct([
 // the marks need above the top-most point, 24 (자하연식당 2층's label is at its left); below, the card, the 8 of ticket
 // 08's area, and the room the marks need under the bottom-most point: for the first Plan 66, half the symbol box and
 // the gap and the two lines of the pick's label under 302동, 18 + 2 + 46; 64 at each side.
-// A Plan's card at rest is docked (P04 ticket 04): it stands 6 over the input's bottom, 12 over the stage's, and covers
-// its own height and those 6 under it.
-const DOCKED = 6;
+// A Plan's card at rest is docked (P04 ticket 04), the bottom sheet on the screen's bottom edge (P04 ticket 52): it covers
+// its own height.
 
 function padding(cardHeight: number): object {
   return { top: 52 + 44 + 8 + 24, right: 64, bottom: cardHeight + 8 + 66, left: 64 };
@@ -261,7 +261,7 @@ describe('the camera', () => {
 
     await layAnswerCard(240);
 
-    expect(fit.mock.lastCall?.[1]).toEqual(expect.objectContaining({ padding: padding(240 + DOCKED) }));
+    expect(fit.mock.lastCall?.[1]).toEqual(expect.objectContaining({ padding: padding(240) }));
   });
 });
 
@@ -279,10 +279,7 @@ describe('the camera after the answer came', () => {
     // Plan's pick 301동식당 has its two lines under 301동, 0.00129° = 143.6 metres north of 302동: 66 - 143.6 / 4.5 = 34.1.
     // The 8 is ticket 08's area.
     expect(fit.mock.calls).toHaveLength(before + 1);
-    expect(bottomBeside(fit.mock.lastCall?.[1].padding)).toBeCloseTo(
-      240 + DOCKED + 8 + 66 - (0.00129 * 111_320) / 4.5,
-      6,
-    );
+    expect(bottomBeside(fit.mock.lastCall?.[1].padding)).toBeCloseTo(240 + 8 + 66 - (0.00129 * 111_320) / 4.5, 6);
 
     await user.press(screen.getByRole('button', { name: CLOSE }));
 
@@ -310,9 +307,11 @@ describe('the camera after the answer came', () => {
       await layStage(width, height);
     });
 
-    // The map is asked for no fit of its own: the one fit is the worked-out camera's.
+    // The map is asked for no fit of its own: every fit is the worked-out camera's, which fits all the points and, when
+    // that is too far out, the Plan's own (`answerCamera`). With the stage laid out, the lowered card's height is known
+    // from its steps (P04 ticket 52): with no content measured, half the stage.
     expect(worked).toHaveBeenCalled();
-    expect(fit).toHaveBeenCalledTimes(worked.mock.calls.length);
-    expect(worked.mock.lastCall?.[2]).toEqual(padding(0));
+    expect(fit.mock.calls.length).toBeLessThanOrEqual(2 * worked.mock.calls.length);
+    expect(worked.mock.lastCall?.[2]).toEqual(padding(height / 2));
   });
 });

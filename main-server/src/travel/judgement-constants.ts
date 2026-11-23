@@ -4,6 +4,7 @@
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The numbers of the judgement, in one table, frozen with the evaluation.
@@ -34,6 +35,13 @@ export const UNHURRIED_MEAL_SECONDS = 30 * 60;
 
 // A meal's start rounds up to the next of these.
 export const MEAL_START_STEP_SECONDS = 5 * 60;
+
+// A Restaurant's closing is when its food is last served, not when a meal there ends. One who arrives this close to it
+// may find the food or the queue run out, so a meal starts at least this long before.
+export const SERVING_CUTOFF_SECONDS = 10 * 60;
+
+// The longest a meal lasts when nothing ends it sooner: no next item, no end the User set.
+export const LONGEST_MEAL_SECONDS = 60 * 60;
 
 // When each meal is served across all Restaurants, in Korea. Breakfast is not handled.
 export const MEAL_WINDOWS = {

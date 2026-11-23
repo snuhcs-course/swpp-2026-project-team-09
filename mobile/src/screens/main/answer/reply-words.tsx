@@ -143,7 +143,7 @@ function onScreenCard(props: WordsProps, kind: WordsKind): ReactElement | null {
 // the lines of its answer's first Plan or those that say why it has none in place of the model's sentence; otherwise
 // the sentence as Markdown, or a Lookup's lines when the model said nothing (P04 ticket 18: words are never dropped).
 export function Words(props: WordsProps): ReactElement {
-  const { bubble, onClose, onAsk, addRecalculated } = props;
+  const { bubble, onAsk, addRecalculated } = props;
   const { answer, refusal = null } = bubble;
   const kind = wordsKindOf(bubble, props);
   const own = onScreenCard(props, kind);
@@ -157,7 +157,6 @@ export function Words(props: WordsProps): ReactElement {
         addRecalculated={addRecalculated}
         lookup={lookup}
         onAsk={onAsk}
-        onClose={onClose}
         refusal={refusal}
         shown={props.lookup}
       />

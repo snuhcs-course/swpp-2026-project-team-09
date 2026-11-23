@@ -4,6 +4,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -225,7 +226,7 @@ describe('the frame after 수정', () => {
   it('keeps the conversation and the Proposal on the map as they were when the User comes back without making', async () => {
     const user = await edited(LUNCH);
 
-    await user.press(screen.getByRole('button', { name: '뒤로' }));
+    await user.press(screen.getByRole('button', { name: '답 닫기' }));
     await pass(500);
 
     expect(screen.getByTestId('answer-caption')).toHaveTextContent(ASKED, { exact: false });

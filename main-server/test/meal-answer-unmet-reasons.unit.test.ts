@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PersonConstraint } from '../src/assistant/dto/answer.dto.js';
-import { JIEUN, ME, MINSU, person, plain } from './meal-answers.js';
+import { JIEUN, ME, MINSU, person, plain, time } from './meal-answers.js';
 import { answerFor, NOW_WINDOW, readUnmetWorld } from './unmet-answers.js';
 import { classAt, id, restaurants } from './worked-example.js';
 
@@ -87,7 +88,8 @@ describe("A Plan's words, measured by its Restaurant's hours", () => {
     expect(plans.find(({ id: key }) => key === '301동식당')?.lines[1]).toEqual([plain('301동식당은 11:30에 열어요')]);
   });
 
-  it("says a fixed Place closes, not when the meal's hours end, when a meal does not fit before it closes", () => {
+  // One who comes in the last 10 minutes of serving is not offered it (P05 ticket 46).
+  it('says when a fixed Place stops serving and when the asker arrives, when that is in its last 10 minutes', () => {
     const day = person(ME, '유상', [classAt('12:30', '13:45', '자연과학관6')]);
     const place = { key: '학생회관식당', placeId: id('학생회관') };
 
@@ -95,10 +97,25 @@ describe("A Plan's words, measured by its Restaurant's hours", () => {
       people: [day],
       clock: '13:47',
       candidates: [place],
+      hours: [{ opensAt: '11:00', closesAt: '13:55' }],
+      placeId: place.placeId,
+    });
+
+    expect(noPlan?.lines).toEqual([[plain('13:55에 배식이 끝나요')], [plain('나는 13:48에 도착해요')]]);
+  });
+
+  it('plans a whole meal at a fixed Place reached before its last 10 minutes of serving', () => {
+    const day = person(ME, '유상', [classAt('12:30', '13:45', '자연과학관6')]);
+    const place = { key: '학생회관식당', placeId: id('학생회관') };
+
+    const { plans } = answerFor({
+      people: [day],
+      clock: '13:47',
+      candidates: [place],
       hours: [{ opensAt: '11:00', closesAt: '14:00' }],
       placeId: place.placeId,
     });
 
-    expect(noPlan?.lines).toEqual([[plain('13:48에 도착해 12분만 먹어요')], [plain('학생회관식당은 14:00에 닫아요')]]);
+    expect(plans[0]).toMatchObject({ id: '학생회관식당', startAt: time('13:48'), togetherMinutes: 60 });
   });
 });

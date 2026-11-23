@@ -15,7 +15,7 @@ import { seatWords, spaceWords } from '@/library/cards/bookings';
 import type { Slot } from '@/library/cards/payloads';
 import { kioskDeadline, whenWords } from '@/library/cards/times';
 import type { LibrarySeat } from '@/library/replies';
-import { FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
+import { DECLINE, FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
 import { NOT_BOOKED } from './seat-booking';
 import { SeatPicker } from './seat-picker';
 import type { LibraryCardActions, Write } from './use-library-call';
@@ -23,7 +23,7 @@ import type { LibraryCardActions, Write } from './use-library-call';
 // What the seat card offers of the seat it chose (moved out of `book-seat-card.tsx` with P01 ticket 03): the seat
 // with its time, the card's buttons, and the notes; on the map, one sentence while the answer's card is lowered.
 
-// After 예약하기 or 취소 (the seat card's 닫기), the card offers nothing more: the chat keeps how it ended
+// After 예약하기 or 예약 안 함, the card offers nothing more: the chat keeps how it ended
 // (`LibraryCardActions.finish`).
 export type Closed = 'booked' | 'declined';
 
@@ -82,7 +82,7 @@ function OfferButtons({
         primary
       />
       <Pill
-        label="닫기"
+        label={DECLINE}
         onPress={() => {
           close('declined');
           actions.addOwn({ text: NOT_BOOKED });

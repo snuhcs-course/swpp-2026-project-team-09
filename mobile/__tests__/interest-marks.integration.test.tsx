@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -173,7 +174,7 @@ describe('the marks', () => {
     expect(within(screen.getByTestId('answer-caption')).getByText(MARK)).toBeVisible();
     expect(screen.getByTestId('answer-card')).toBeVisible();
 
-    await user.press(screen.getByRole('button', { name: '뒤로' }));
+    await user.press(screen.getByRole('button', { name: '답 닫기' }));
     await pass(500);
 
     expect(drawn(FRESH_MARK)).toBe(false);

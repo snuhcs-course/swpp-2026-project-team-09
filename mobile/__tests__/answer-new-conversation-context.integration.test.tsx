@@ -75,7 +75,7 @@ const FRESH = {
   context: { conditions: null, planId: null, tapped: null },
 };
 
-// Partitions: a follow-up on the answer; a new conversation from the main map after "←"; one after "＋ 새 질문".
+// Partitions: a follow-up on the answer; a new conversation from the main map after "←".
 describe("the context of a conversation's first message", () => {
   it('carries the conditions and the Plan on screen for a follow-up typed on the answer', async () => {
     const user = await openMain();
@@ -88,21 +88,10 @@ describe("the context of a conversation's first message", () => {
     });
   });
 
-  it('carries no conditions, Plan, or tap of the answer before when typed on the main map after "←"', async () => {
+  it('carries no conditions, Plan, or tap of the answer before when typed on the main map after ✕', async () => {
     const user = await openMain();
     await ask(user, MEAL);
-    await user.press(screen.getByRole('button', { name: '뒤로' }));
-
-    await ask(user, NEW);
-
-    expect(lastRequest()).toMatchObject(FRESH);
-  });
-
-  it('carries none of them either after "＋ 새 질문"', async () => {
-    const user = await openMain();
-    await ask(user, MEAL);
-    await user.press(screen.getByTestId('answer-caption'));
-    await user.press(screen.getByRole('button', { name: '새 질문' }));
+    await user.press(screen.getByRole('button', { name: '답 닫기' }));
 
     await ask(user, NEW);
 

@@ -6,12 +6,12 @@
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
-import { TextInput } from 'react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { holdBackButton } from './support/back';
+import { grip, raiseCard } from './support/card-grip';
 import { answerDining } from './support/dining';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -25,7 +25,7 @@ import { CONTINUE, reopenAnswer } from './support/questions';
 
 // P04 ticket 10 against the fake main server, as the 2026-11-22 redesign has it: the caption of what was asked opens,
 // in the answer's card, the list of every question kept (board 16), whose rows bring their answers back to the map;
-// what is typed on the main map starts a new conversation and keeps the old one in that list (rule 4); "←" and back
+// what is typed on the main map starts a new conversation and keeps the old one in that list (rule 4); ✕ and back
 // close the answer in every state (rule 2).
 
 jest.mock('expo-location');
@@ -53,8 +53,7 @@ const NEW_REPLY = '어디서 먹을까요?';
 const PLAN_MARK = '302동식당 · 12:15 점심';
 // PHONE_NOW, 04:00 UTC, in Korea.
 const ASKED_AT = '13:00';
-const HANDLE = '답 크게 보기';
-const BACK = '뒤로';
+const BACK = '답 닫기';
 
 let server: FakeServer;
 let back: () => Promise<boolean>;
@@ -121,7 +120,7 @@ function rowNames(): string[] {
 }
 
 function expectClosed(): void {
-  expect(screen.queryByTestId('answer-back')).toBeNull();
+  expect(screen.queryByTestId('answer-close')).toBeNull();
   expect(screen.queryByTestId('answer-card')).toBeNull();
 }
 
@@ -195,7 +194,7 @@ describe('an earlier turn that failed', () => {
   });
 });
 
-// The conversation of three questions closed with "←", then a question typed on the main map.
+// The conversation of three questions closed with ✕, then a question typed on the main map.
 async function askedAnew(): Promise<User> {
   const user = await askedThrice();
   await user.press(screen.getByRole('button', { name: BACK }));
@@ -214,11 +213,10 @@ describe('a question typed on the main map while a conversation is kept', () => 
     expect(caption().getByText(NEW)).toBeVisible();
     expect(screen.queryByRole('button', { name: CONTINUE })).toBeNull();
     await openList(user);
+    // The kept conversation is one row since P04 ticket 49: its first question, and its last one's outcome.
     expect(rowNames()).toEqual([
       `${ASKED_AT}, ${NEW}, ${NEW_REPLY}, 지금`,
-      `${ASKED_AT}, ${GATE}, ${GATE_REPLY}`,
-      `${ASKED_AT}, ${SHUTTLE}, ${SHUTTLE_REPLY}`,
-      `${ASKED_AT}, ${MEAL}, 302동식당 12:15 · 아직 만들지 않음`,
+      `${ASKED_AT}, ${MEAL}, 질문 3개 · ${GATE_REPLY}`,
     ]);
   });
 
@@ -226,10 +224,10 @@ describe('a question typed on the main map while a conversation is kept', () => 
     const user = await askedAnew();
     await openList(user);
 
-    await user.press(list().getByRole('button', { name: new RegExp(`^${ASKED_AT}, ${SHUTTLE}`, 'u') }));
+    await user.press(list().getByRole('button', { name: new RegExp(`^${ASKED_AT}, ${MEAL}, 질문 3개`, 'u') }));
 
-    expect(caption().getByText(SHUTTLE)).toBeVisible();
-    expect(card().getByText(SHUTTLE_REPLY)).toBeVisible();
+    expect(caption().getByText(GATE)).toBeVisible();
+    expect(card().getByText(GATE_REPLY)).toBeVisible();
     await ask(user, '고마워', text('천만에요.'));
     const body = server.received('POST /assistant/messages').at(-1)?.body;
     const earlier: unknown = expect.arrayContaining([
@@ -242,51 +240,24 @@ describe('a question typed on the main map while a conversation is kept', () => 
   });
 });
 
-// P04 ticket 44. Partitions: the list's title; "＋ 새 질문" pressed; a message typed after it.
-describe('"＋ 새 질문" under the caption\'s list', () => {
-  it('titles the list "이전 질문" and ends it with "새 질문"', async () => {
+// P04 tickets 44 and 49: the list's header is its title alone; a new question is the card's own "＋", not the list's.
+describe("the caption's list header", () => {
+  it('titles the list "이전 질문", with no "새 대화" of its own', async () => {
     const user = await askedThrice();
 
     await openList(user);
 
     expect(list().getByText('이전 질문')).toBeVisible();
-    expect(list().getByRole('button', { name: '새 질문' })).toBeVisible();
-  });
-
-  it('closes the answer as "←" does, keeps the conversation, and puts the cursor in the main map\'s input', async () => {
-    const user = await askedThrice();
-    await openList(user);
-    const focus = jest.spyOn(TextInput.prototype, 'focus');
-
-    await user.press(list().getByRole('button', { name: '새 질문' }));
-    await pass(100);
-
-    expectClosed();
-    expect(screen.getByRole('button', { name: CONTINUE })).toBeOnTheScreen();
-    expect(screen.getByLabelText(AI_INPUT)).toHaveProp('placeholder', '무엇이든 물어보세요');
-    expect(focus).toHaveBeenCalled();
-  });
-
-  it('starts a new conversation with the message typed then, which carries no earlier message', async () => {
-    const user = await askedThrice();
-    await openList(user);
-    await user.press(list().getByRole('button', { name: '새 질문' }));
-
-    await ask(user, NEW, text(NEW_REPLY));
-
-    expect(server.received('POST /assistant/messages').at(-1)?.body).toEqual(
-      expect.objectContaining({ messages: [{ role: 'user', text: NEW }] }),
-    );
-    expect(caption().getByText(NEW)).toBeVisible();
+    expect(list().queryByRole('button', { name: '새 대화' })).toBeNull();
   });
 });
 
-// Partitions: "←" with the card raised, with the keyboard up, with the list open; back through each layer.
+// Partitions: ✕ with the card raised, with the keyboard up, with the list open; back through each layer.
 describe('closing the answer', () => {
-  it('closes with "←" while the card is raised, the keyboard is up, or the list is open', async () => {
+  it('closes with ✕ while the card is raised, the keyboard is up, or the list is open', async () => {
     const user = await askedThrice();
 
-    await user.press(screen.getByRole('button', { name: HANDLE }));
+    await raiseCard();
     await user.press(screen.getByRole('button', { name: BACK }));
     expectClosed();
 
@@ -305,15 +276,15 @@ describe('closing the answer', () => {
 
   it('takes one layer away per back press: the list, the raised card, then the answer', async () => {
     const user = await askedThrice();
-    await user.press(screen.getByRole('button', { name: HANDLE }));
+    await raiseCard();
     await openList(user);
 
     expect(await back()).toBe(true);
     expect(screen.queryByTestId('question-list')).toBeNull();
-    expect(screen.getByRole('button', { name: HANDLE })).toBeExpanded();
+    expect(grip()).toBeExpanded();
 
     expect(await back()).toBe(true);
-    expect(screen.getByRole('button', { name: HANDLE })).toBeCollapsed();
+    expect(grip()).toBeCollapsed();
 
     expect(await back()).toBe(true);
     expectClosed();

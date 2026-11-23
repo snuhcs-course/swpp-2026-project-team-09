@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { color } from '@/design-system';
@@ -12,7 +13,7 @@ import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { askForCards, expectNoWrite, inCard, pressIn, SEAT_CARD, startLibraryChat } from './support/library-chat';
 
 // P02 ticket 12, n17: the seat book card whose seats could not be read, against the fake main server and the fake
-// library. It says so with 다시 시도, which reads again, and 닫기; a session that ended still asks for the login.
+// library. It says so with 다시 시도, which reads again, and 예약 안 함; a session that ended still asks for the login.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -46,16 +47,16 @@ function seatCard(): ReturnType<typeof inCard> {
   return inCard(`library-book-${SEAT_CARD.library.key}`);
 }
 
-// Partitions: the read failed, then answers or fails again; 닫기; the session ended.
+// Partitions: the read failed, then answers or fails again; 예약 안 함; the session ended.
 describe('the seat book card whose seats could not be read', () => {
-  it('says so with 다시 시도 as the main button and 닫기, and offers no seat', async () => {
+  it('says so with 다시 시도 as the main button and 예약 안 함, and offers no seat', async () => {
     library.answerNext('network');
 
     await askForCards({ server, library }, [SEAT_CARD]);
 
     expect(seatCard().getByText(UNREAD)).toBeVisible();
     expect(seatCard().getByRole('button', { name: '다시 시도' })).toHaveStyle({ backgroundColor: color.snuBlue });
-    expect(seatCard().getByRole('button', { name: '닫기' })).toHaveStyle({ backgroundColor: color.surface });
+    expect(seatCard().getByRole('button', { name: '예약 안 함' })).toHaveStyle({ backgroundColor: color.surface });
     expect(seatCard().queryByRole('button', { name: '예약하기' })).toBeNull();
     expect(seatCard().queryByRole('button', { name: '로그인' })).toBeNull();
   });
@@ -85,12 +86,12 @@ describe('the seat book card whose seats could not be read', () => {
   });
 });
 
-describe("the unread seat book card's 닫기 and session", () => {
-  it('ends the card with 닫기, booking nothing', async () => {
+describe("the unread seat book card's 예약 안 함 and session", () => {
+  it('ends the card with 예약 안 함, booking nothing', async () => {
     library.answerNext('network');
     await askForCards({ server, library }, [SEAT_CARD]);
 
-    await pressIn(seatCard(), '닫기');
+    await pressIn(seatCard(), '예약 안 함');
 
     expect(seatCard().getByText('예약하지 않았어요')).toBeVisible();
     expect(seatCard().queryByRole('button')).toBeNull();

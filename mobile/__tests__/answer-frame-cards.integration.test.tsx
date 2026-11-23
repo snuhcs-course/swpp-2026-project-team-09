@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -224,7 +225,7 @@ describe('a toast while the frame is shown', () => {
       nativeEvent: { layout: { x: 0, y: 400, width: 390, height: 300 } },
     });
 
-    await user.press(screen.getByRole('button', { name: '뒤로' }));
+    await user.press(screen.getByRole('button', { name: '답 닫기' }));
     expect(screen.getByTestId('map-card')).toBeVisible();
     await press(user, '길찾기');
 

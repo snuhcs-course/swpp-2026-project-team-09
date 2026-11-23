@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -200,5 +201,38 @@ describe('labels placed one by one at points of a view', () => {
     expect(right).toMatchObject({ side: 'right', shift: 10 });
     expect(left).toMatchObject({ side: 'left' });
     expect(left).not.toHaveProperty('shift');
+  });
+});
+
+// Two points 10 apart across: the first label takes the left of (200, 300), from 135 to 180; the second, at
+// (210, 300) with only its left, would cover it, and its other sides are not in its list.
+function crowded(number: number | null): ReturnType<typeof placeLabels> {
+  const first = seenAt(200, 300);
+  const second = seenAt(210, 300);
+  return placeLabels(
+    [first, second].map((position) => ({ position, symbol: position })),
+    [
+      { point: 0, position: first, words: words('3식당'), sides: ['left'] },
+      {
+        point: 1,
+        position: second,
+        words: { ...words('자하연식당 2층'), number },
+        sides: ['left'],
+        kept: true,
+        shrinks: true,
+      },
+    ],
+    viewAt(THIRD_AT_LOWEST),
+  );
+}
+
+// Partitions: a tag that gives way with its number, and one with none, as a receded candidate's (PR 515's review).
+describe('a held tag with no side free', () => {
+  it('keeps its number only', () => {
+    expect(crowded(5)[1]).toMatchObject({ title: '', number: 5 });
+  });
+
+  it('keeps its words when it has no number to keep', () => {
+    expect(crowded(null)[1]).toMatchObject({ title: '자하연식당 2층', number: null });
   });
 });

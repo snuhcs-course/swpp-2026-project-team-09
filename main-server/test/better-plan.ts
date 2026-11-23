@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -105,7 +106,8 @@ export class BetterPlanStage extends MealPlanStage {
 
   // Board n13 on that day, asked at 12:40 without the location permission: the asker's Class in 301동 ended at 10:15,
   // 민수's in 302동 and 지은's in 8동 end at 12:40, and 지은 has another there at 13:30. The Quest is made, as the app
-  // makes it, of the first Plan of the answer, planned from the assumed origin; 민수 accepts and 지은 declines.
+  // makes it, of the first Plan of the answer, planned with no origin for the asker (P05 ticket 42); 민수 accepts and
+  // 지은 declines.
   async declinedWithoutLocation(date: string): Promise<WorkedQuest> {
     await this.asking(date, '12:40');
     await this.menusOn(date, RESTAURANTS);
