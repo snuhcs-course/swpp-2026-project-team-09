@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -63,10 +64,12 @@ export function droppedOf(naming: GatheringNaming): DroppedPlace[] {
   });
 }
 
-// What the people gather for (점심, 만남) and what they do for the minutes they stay (먹어요, 있을 수 있어요).
+// What the people gather for (점심, 만남) and what they do for the minutes they stay (먹어요, 있을 수 있어요). A meal's
+// `serving`: the window's end is when the food is last served, which ends no stay; the end the User set does.
 export interface StayWords {
   word: string;
   stay: string;
+  serving?: { until: Date | null };
 }
 
 const arrivalOf = ({ canArriveAt, readyAt }: PersonPart): Date => canArriveAt ?? readyAt;
@@ -77,10 +80,20 @@ function topicOf(part: PersonPart, naming: GatheringNaming): string {
 }
 
 // What ends a person's stay: their next item, the leave-by the User fixed for them, the end the User fixed, or the
-// hours of the gathering or of the Restaurant, as `ownEnd` says them.
-function leaveLine(part: PersonPart, naming: GatheringNaming, window: Interval, ownEnd: string): string {
+// hours of the gathering or of the Restaurant, as `ownEnd` says them. At a meal the end the User set comes first when
+// it is no later than the leave-by, and the Restaurant's serving end ends no stay.
+function leaveLine(
+  part: PersonPart,
+  naming: GatheringNaming,
+  window: Interval,
+  { ownEnd, serving }: { ownEnd: string; serving: StayWords['serving'] },
+): string {
   const { leaveBy, next } = part;
-  if (leaveBy !== null && leaveBy <= window.end) {
+  const until = serving?.until ?? null;
+  if (until !== null && (leaveBy === null || until <= leaveBy)) {
+    return `${clockOf(until)}까지로 정했어요`;
+  }
+  if (leaveBy !== null && (serving !== undefined || leaveBy <= window.end)) {
     const ownLeaveBy = next === null ? null : next.start.getTime() - (next.walkMinutes ?? 0) * MINUTE_MS;
     if (next === null || ownLeaveBy !== leaveBy.getTime()) {
       return `${clockOf(leaveBy)}엔 나서야 해요`;
@@ -119,8 +132,15 @@ function shortestLines(
   const ownEnd =
     drop.window === undefined
       ? `${withTopic(words.word)} ${close}까지예요`
-      : `${withTopic(drop.key)} ${close}에 닫아요`;
-  return [plain(first), plain(leaveLine(part, naming, window, ownEnd))];
+      : `${withTopic(drop.key)} ${close}${words.serving === undefined ? '에 닫아요' : '까지 배식해요'}`;
+  return [plain(first), plain(leaveLine(part, naming, window, { ownEnd, serving: words.serving }))];
+}
+
+// A Restaurant that stops serving before everyone is there: when it stops, and who arrives last, and when.
+function servedLateLines(drop: GatheringDrop, naming: GatheringNaming): AnswerLine[] {
+  const last = drop.parts.reduce((one, other) => (arrivalOf(other) > arrivalOf(one) ? other : one));
+  const coming = last.canArriveAt === null ? '시간이 돼요' : '도착해요';
+  return [plain(naming.dropReason(drop)), plain(`${topicOf(last, naming)} ${clockOf(arrivalOf(last))}에 ${coming}`)];
 }
 
 // Everyone could stay long enough alone but not together: one arrives after the other must leave, or nearly.
@@ -147,6 +167,9 @@ export function unfitLines(naming: GatheringNaming, window: Interval, words: Sta
   }
   const held = drop.window ?? window;
   const shortest = drop.parts.find(({ personId }) => personId === drop.shortest.personId);
+  if (drop.closing !== undefined) {
+    return servedLateLines(drop, naming);
+  }
   return shortest !== undefined && drop.shortest.minutes < SHORTEST_MINUTES
     ? shortestLines(drop, shortest, naming, held, words)
     : togetherLines(drop, naming, held);

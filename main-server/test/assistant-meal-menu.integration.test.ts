@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
@@ -75,17 +76,17 @@ async function workedExample(date: string): Promise<void> {
 }
 
 describe("A meal Plan's menu", () => {
-  it('stands second on the card with the closing time read, and whole at the end of 근거', async () => {
+  it('stands second on the card with when serving ends, and whole at the end of 근거', async () => {
     const date = '2098-09-02';
     await workedExample(date);
     const answer = answerIn((await stage.send([planMeal(date), { text: '…' }]).expect(200)).body);
     const here = planAt(answer, '301동식당');
     expect(here.lines.map((line) => words(line))).toEqual([
       '점심 301동식당 · 식사 55분',
-      '오늘 부대짬뽕&군만두 외 1 · 13:30까지',
+      '오늘 부대짬뽕&군만두 외 1 · 13:30까지 배식',
       '12:45엔 나서야 해요',
     ]);
-    expect(here.basis.slice(-2)).toEqual(['부대짬뽕&군만두 6,500원 · 순댓국 6,500원', '메뉴와 닫는 시각: 오늘의 식단']);
+    expect(here.basis.slice(-2)).toEqual(['부대짬뽕&군만두 6,500원 · 순댓국 6,500원', '메뉴와 배식 시각: 오늘의 식단']);
     const buffet = planAt(answer, '302동식당');
     expect(buffet.lines[1]).toEqual([
       { text: '오늘 ', strong: false },

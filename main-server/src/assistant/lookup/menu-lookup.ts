@@ -5,11 +5,13 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Cuisines } from '../../menus/cuisine-words.js';
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { dishName } from '../../menus/dish-name.js';
+import { LONGEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
 import { type AnswerLine, type AnswerReply, type Lookup, type MapScene, type Plan } from '../dto/answer.dto.js';
 import { type LookupMenu } from '../dto/lookup.dto.js';
 import { type HandledMeal } from '../free-time/meal-fit.js';
@@ -110,8 +112,8 @@ function thereWords(mine: Part | undefined, minutes: number): string {
 const shuttleOn = (mine: Part | undefined, onward: Plan['scene']['routes'][number]): boolean =>
   mine?.next?.by === 'shuttle' || onward.mode === 'shuttle';
 
-// The dishes with their prices, the walk there, then why the meal ends: the walk on to the next item, or the end of
-// the meal's hours. The hours are the plan's, from the hours collected, so that no line contradicts another.
+// The dishes with their prices, the walk there, then why the meal ends: the walk on to the next item, the hour a meal
+// lasts at most, or the end the User set. A Restaurant's closing is when it last serves, which ends no meal.
 function basisOf({ key, meal, lines: menu }: MenuArgs, plan: Plan): string[] {
   const [mine] = plan.parts;
   const origin = mine?.origin ?? null;
@@ -123,7 +125,11 @@ function basisOf({ key, meal, lines: menu }: MenuArgs, plan: Plan): string[] {
   ];
   const leaveBy = mine?.leaveBy ?? null;
   if (leaveBy !== plan.endAt || leaveBy === null) {
-    return [...lines, `${withTopic(mealWord(meal))} ${clock(plan.endAt)}까지예요`];
+    const hour = plan.togetherMinutes >= LONGEST_MEAL_SECONDS / 60;
+    return [
+      ...lines,
+      hour ? '식사는 한 시간으로 잡았어요' : `${withTopic(mealWord(meal))} ${clock(plan.endAt)}까지예요`,
+    ];
   }
   const leaving = `${clock(leaveBy)}에 나서요`;
   const onward = plan.scene.routes.find(({ role }) => role === 'next');

@@ -5,13 +5,14 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type MapScene, type TimeBand } from '../dto/answer.dto.js';
 import { byStart, clockOf, type DayItem, onDay } from '../free-time/free-time.js';
 import { koreaTime } from '../korea-time.js';
 import { type GatheringNaming, itemAt, mergingLegs, modeOf, type Naming, wayOn, withAnd } from './answer-words.js';
-import { endedByItem, type GatheringFit, MINUTE_MS, minutesSaid, type PersonPart } from './gathering.js';
+import { type GatheringFit, MINUTE_MS, minutesSaid, type PersonPart } from './gathering.js';
 
 // What the map draws of a plan, and its time band.
 
@@ -161,17 +162,10 @@ export function busyIn(
     });
 }
 
-// How long the meal can last: its minutes before someone's next item, else when the User must leave or the
-// Restaurant closes.
-export function mealSpan(fit: GatheringFit): string {
-  if (minutesSaid(fit)) {
-    return `식사 ${fit.togetherMinutes}분`;
-  }
-  const end = clockOf(fit.end);
-  if (endedByItem(fit)) {
-    return `${end}엔 나서요`;
-  }
-  return fit.window === undefined ? `${end}까지` : `${end}에 닫아요`;
+// How long the meal lasts. It ends when someone must leave, at the end the User set, or an hour after its start, so it
+// is always said in minutes. A Restaurant's closing is when it last serves, which ends no meal (P05 ticket 46).
+export function mealSpan({ togetherMinutes }: GatheringFit): string {
+  return `식사 ${togetherMinutes}분`;
 }
 
 // Each person's lane over the range, the asker's named 나.

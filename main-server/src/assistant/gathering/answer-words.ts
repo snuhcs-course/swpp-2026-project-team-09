@@ -184,7 +184,7 @@ export class GatheringNaming<Args extends GatheringArgs = GatheringArgs> extends
 
   dropReason({ togetherMinutes, shortest, closing }: GatheringDrop): string {
     if (closing !== undefined) {
-      return `${clockOf(closing.at)} 닫아요`;
+      return `${clockOf(closing.at)}에 배식이 끝나요`;
     }
     if (shortest.minutes >= SHORTEST_MEAL_MINUTES) {
       return `같이 있는 시간이 ${togetherMinutes}분뿐이에요`;

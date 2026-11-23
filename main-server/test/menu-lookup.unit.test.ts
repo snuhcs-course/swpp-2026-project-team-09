@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -173,24 +174,26 @@ describe('The time to eat', () => {
     );
   });
 
-  it("ends at the end of the meal's hours when nothing follows", () => {
+  it('ends an hour after it starts when nothing follows: the closing at 14:30 is when 301동식당 last serves', () => {
     const lookup = lookupOf('301동식당', '제1공학관', [classAt('11:00', '11:50', '제1공학관')]);
 
-    expect(lookup.band).toMatchObject({ startAt: time('11:50'), endAt: time('14:30') });
-    // 160 minutes would read as a meal that long: a stretch over two hours is said by its times.
-    expect(lookup.lines[1]).toEqual([plain('11:50–14:30')]);
-    expect(lookup.basis).toEqual(['부대짬뽕&군만두 6,500원 · (뚝)순댓국&계란장조림 6,500원', '점심은 14:30까지예요']);
+    expect(lookup.band).toMatchObject({ startAt: time('11:50'), endAt: time('12:50') });
+    expect(lookup.lines[1]).toEqual([plain('12:50까지 60분 먹을 수 있어요')]);
+    expect(lookup.basis).toEqual([
+      '부대짬뽕&군만두 6,500원 · (뚝)순댓국&계란장조림 6,500원',
+      '식사는 한 시간으로 잡았어요',
+    ]);
     expect(lookup.chips).toEqual([{ kind: 'origin', text: '301동에서', userId: null }]);
   });
 
   it("ends when the next Class starts when that Class is in the Restaurant's building, with no walk on to name", () => {
     const lookup = lookupOf('301동식당', '제1공학관', [
       classAt('11:00', '11:50', '제1공학관'),
-      classAt('13:00', '13:50', '제1공학관'),
+      classAt('12:30', '13:20', '제1공학관'),
     ]);
 
-    expect(lookup.band).toMatchObject({ startAt: time('11:50'), endAt: time('13:00') });
-    expect(lookup.basis).toEqual(['부대짬뽕&군만두 6,500원 · (뚝)순댓국&계란장조림 6,500원', '13:00에 나서요']);
+    expect(lookup.band).toMatchObject({ startAt: time('11:50'), endAt: time('12:30') });
+    expect(lookup.basis).toEqual(['부대짬뽕&군만두 6,500원 · (뚝)순댓국&계란장조림 6,500원', '12:30에 나서요']);
   });
 });
 

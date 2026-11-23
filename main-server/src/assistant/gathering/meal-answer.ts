@@ -33,7 +33,7 @@ import { kindFirst, mainMenu, menuBasis, withMenu } from './meal-menu.js';
 import { bandOf, mealSpan, sceneOf } from './meal-scene.js';
 import { missingParts, nearestFirst } from './missing-inputs.js';
 import { notPostedLines } from './not-posted.js';
-import { conditionsOf, type PersonConditions, windowOf } from './plan-conditions.js';
+import { conditionsOf, type PersonConditions, servingWindowOf, untilOf, windowOf } from './plan-conditions.js';
 import { droppedOf, partOf, unfitLines } from './plan-parts.js';
 import { notNowPlan, timeChip, unmetBasis, unmetLines } from './unmet-words.js';
 
@@ -121,7 +121,11 @@ function noPlanOf(naming: Naming): AnswerReply['noPlan'] {
     const text = people.length > 1 ? `${when}에는 같이 비는 시간이 없어요` : `${when}에는 비는 시간이 없어요`;
     return { reason: 'no-shared-time', lines: [plain(text)] };
   }
-  const unfit = unfitLines(naming, windowOf(input), { word: meal, stay: '먹어요' });
+  const unfit = unfitLines(naming, servingWindowOf(input), {
+    word: meal,
+    stay: '먹어요',
+    serving: { until: untilOf(input) },
+  });
   return { reason: 'no-fit', lines: unfit ?? [plain('시간 안에 다녀올 수 있는 식당이 없어요')] };
 }
 
@@ -191,17 +195,11 @@ function missedLine({ key, start, end, parts, window: own }: GatheringFit, namin
         : `${withTopic(key)} ${clockOf(held.start)}에 열어요`;
     }
   }
-  if (window.until !== null) {
-    if (end < held.end) {
-      const first = firstBy(parts, (part) => (part.leaveBy ?? end).getTime());
-      const { me, name } = naming.personOf(first?.personId ?? naming.asker.userId);
-      return me ? `${clockOf(end)}엔 나서야 해요` : `${withTopic(name)} ${clockOf(end)}에 나서야 해요`;
-    }
-    if (held.end < onDay(date, window.until)) {
-      return own === undefined
-        ? `${withTopic(meal)} ${clockOf(held.end)}까지예요`
-        : `${withTopic(key)} ${clockOf(held.end)}에 닫아요`;
-    }
+  // A Restaurant's serving end ends no meal (P05 ticket 46): only someone leaving before the end set does.
+  const leaving = parts.find(({ leaveBy }) => leaveBy !== null && leaveBy.getTime() === end.getTime());
+  if (window.until !== null && end < onDay(date, window.until) && leaving !== undefined) {
+    const { me, name } = naming.personOf(leaving.personId);
+    return me ? `${clockOf(end)}엔 나서야 해요` : `${withTopic(name)} ${clockOf(end)}에 나서야 해요`;
   }
   return null;
 }

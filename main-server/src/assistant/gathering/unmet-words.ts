@@ -181,7 +181,7 @@ function closingLines({ key, start, parts }: GatheringFit, { args }: Naming): An
   }
   return [
     [strong(key), plain(` · ${clockOf(start)} 도착`)],
-    [plain(`${withTopic(nearer.closed)} ${clockOf(nearer.at)}에 닫아요`)],
+    [plain(`${withTopic(nearer.closed)} ${clockOf(nearer.at)}에 배식이 끝나요`)],
   ];
 }
 

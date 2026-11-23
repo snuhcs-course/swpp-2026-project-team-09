@@ -5,15 +5,16 @@
  ******************************************************************************/
 
 import { type AnswerReply } from '../src/assistant/dto/answer.dto.js';
+import { type DayItem } from '../src/assistant/free-time/free-time.js';
 import { type GatheringPlace } from '../src/assistant/gathering/gathering.js';
 import { orderWords } from '../src/assistant/gathering/plan-order.js';
-import { answerOf, ME, person } from './meal-answers.js';
+import { answerOf, ME, MINSU, person } from './meal-answers.js';
 import { at, classAt, id, readWorld } from './worked-example.js';
 
-// What the model is told of the order when the User's origin is unknown (P05 ticket 45), on the seed's walking table.
-// Reported on 2026-11-23: "배고파" at 13:05 from home, the first Class over at 10:45 in 301동 and the next at 15:30 in
-// 302동. The plans came 3식당 first while the reply said they were ordered by nearness to 302동: 301동식당 and
-// 302동식당, nearer to it, close at 13:30 and fell after 3식당 for having under 30 minutes.
+// What the model is told of the order when the User's origin is unknown (P05 tickets 45 and 46), on the seed's walking
+// table. Reported on 2026-11-23: "배고파" from home, the first Class over at 10:45 in 301동 and the next at 15:30 in
+// 302동. 301동식당 and 302동식당, nearest to 302동, serve until 13:30. A Restaurant's closing is when it last serves:
+// one reached before its last 10 minutes of serving fits with a whole meal, one reached after is dropped.
 
 beforeAll(() => readWorld());
 
@@ -21,7 +22,6 @@ const serving = (key: string, building: string, opens: string, closes: string): 
   key,
   placeId: id(building),
   window: { start: at(opens), end: at(closes) },
-  closesAt: at(closes),
 });
 
 const lunches = (): GatheringPlace[] => [
@@ -31,18 +31,19 @@ const lunches = (): GatheringPlace[] => [
   serving('학생회관식당', '학생회관', '11:00', '14:30'),
 ];
 
+const myDay = (): DayItem[] => [classAt('09:30', '10:45', '제1공학관'), classAt('15:30', '16:45', '제2공학관')];
+
 // The asker alone with no position, the first Class over and the next ahead.
-const fromHome = (
-  items = [classAt('09:30', '10:45', '제1공학관'), classAt('15:30', '16:45', '제2공학관')],
-): AnswerReply => answerOf([person(ME, '유상', items)], { now: at('13:05'), candidates: lunches() });
+const fromHome = (clock = '13:05', items = myDay()): AnswerReply =>
+  answerOf([person(ME, '유상', items)], { now: at(clock), candidates: lunches() });
 
 describe('The order told at 13:05 with no position, the next Class at 15:30 in 302동', () => {
-  it('keeps the order: 3식당 first, and 302동식당 and 301동식당 after it for their 25 minutes', () => {
+  it('puts 302동식당 and 301동식당 first: reached before 13:20, they serve a whole meal', () => {
     expect(fromHome().plans.map(({ id: key, togetherMinutes }) => [key, togetherMinutes])).toEqual([
-      ['3식당', 55],
-      ['학생회관식당', 85],
-      ['302동식당', 25],
-      ['301동식당', 25],
+      ['302동식당', 60],
+      ['301동식당', 60],
+      ['3식당', 60],
+      ['학생회관식당', 60],
     ]);
   });
 
@@ -54,14 +55,37 @@ describe('The order told at 13:05 with no position, the next Class at 15:30 in 3
     );
   });
 
-  it('names the nearer plans the 30 minutes put after the first, and why, as words to say', () => {
-    expect(orderWords(fromHome().plans).fellBack).toBe('302동식당과 301동식당은 13:30에 닫아 25분뿐이에요');
+  it('names no plan that fell back: serving ending at 13:30 ends no meal', () => {
+    expect(orderWords(fromHome().plans)).not.toHaveProperty('fellBack');
+  });
+});
+
+describe('The order told at 13:34, as reported', () => {
+  it('drops 302동식당 and 301동식당, whose serving ends at 13:30, and puts 3식당 first by the walk on to 302동', () => {
+    const { plans, dropped } = fromHome('13:34');
+
+    expect(plans.map(({ id: key }) => key)).toEqual(['3식당', '학생회관식당']);
+    expect(dropped.map(({ place, reason }) => [place.label, reason])).toEqual([
+      ['301동식당', '13:30에 배식이 끝나요'],
+      ['302동식당', '13:30에 배식이 끝나요'],
+    ]);
+    expect(orderWords(plans)).not.toHaveProperty('fellBack');
+  });
+});
+
+describe('A nearer plan the 30 minutes put after the first because a Friend must leave', () => {
+  it('names it, with when the Friend must leave, as words to say', () => {
+    const minsu = person(MINSU, '민수', [classAt('13:50', '15:00', '학생회관')]);
+    const { plans } = answerOf([person(ME, '유상', myDay()), minsu], { now: at('13:05'), candidates: lunches() });
+
+    expect(plans.at(-1)).toMatchObject({ id: '302동식당', togetherMinutes: 28 });
+    expect(orderWords(plans).fellBack).toBe('302동식당은 13:33엔 나서야 해서 28분뿐이에요');
   });
 });
 
 describe('The order told with no position and nothing ahead', () => {
   it('says the 30 minutes come first, then the earliest start, and names none that fell back by walking', () => {
-    const words = orderWords(fromHome([classAt('09:30', '10:45', '제1공학관')]).plans);
+    const words = orderWords(fromHome('13:05', [classAt('09:30', '10:45', '제1공학관')]).plans);
 
     expect(words.order).toContain('in each the order is by the earliest start, then the longest time to eat');
     expect(words).not.toHaveProperty('fellBack');
@@ -72,7 +96,7 @@ describe('The order told with the origin known', () => {
   it('is nothing: the plans come least travel first from where the User sets out', () => {
     const inClass = [classAt('12:00', '13:05', '제1공학관'), classAt('15:30', '16:45', '제2공학관')];
 
-    expect(orderWords(fromHome(inClass).plans)).toEqual({});
+    expect(orderWords(fromHome('13:05', inClass).plans)).toEqual({});
   });
 
   it('is nothing without a plan', () => {
