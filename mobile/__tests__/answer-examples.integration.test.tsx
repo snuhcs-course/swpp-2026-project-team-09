@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -12,7 +13,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { KEYBOARD, showKeyboard } from './support/keyboard';
+import { hideKeyboard, KEYBOARD, showKeyboard } from './support/keyboard';
 import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
@@ -121,6 +122,10 @@ describe('the examples above the bar (P02 ticket 04)', () => {
     await user.press(screen.getByRole('button', { name: '오늘 볼 만한 거 있어?' }));
     await pass(1000);
 
+    // While typing the caption gives way (P04 ticket 35); once the keyboard is down it says what was sent. The tests'
+    // phone has no keyboard of its own to put down.
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
+    await hideKeyboard();
     expect(pill().getByText('오늘 볼 만한 거 있어?')).toBeVisible();
     expect(sentBodies()).toEqual([
       expect.objectContaining({ messages: [{ role: 'user', text: '오늘 볼 만한 거 있어?' }], context: CONTEXT }),
