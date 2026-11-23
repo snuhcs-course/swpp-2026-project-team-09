@@ -11,6 +11,7 @@
 # 2026-11-18  Opus 5.5   prompted by fyoon46
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-21  Opus 5.5   prompted by fyoon46
+# 2026-11-23  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 name: CI
@@ -239,7 +240,9 @@ jobs:
       - run: bats --recursive .github/release .github/ci
         if: steps.changes.outputs.run != 'false'
 
-  # Production's Terraform, checked without a backend or AWS credentials.
+  # Production's Terraform, checked without a backend or AWS credentials, and the Fluent Bit pipeline that its Helm
+  # release reads. The pipeline's test starts Fluent Bit in Docker, but runs at every level, so that a broken filter is
+  # caught in review.
   terraform:
     name: terraform
     runs-on: ubuntu-latest
@@ -267,6 +270,12 @@ jobs:
       - run: terraform init -backend=false -input=false -lockfile=readonly
         if: steps.changes.outputs.run != 'false'
       - run: terraform validate
+        if: steps.changes.outputs.run != 'false'
+      - run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends bats shellcheck jq
+        if: steps.changes.outputs.run != 'false'
+      - run: find fluent-bit \( -name '*.sh' -o -name '*.bats' \) -print0 | xargs -0 shellcheck
+        if: steps.changes.outputs.run != 'false'
+      - run: bats --recursive fluent-bit
         if: steps.changes.outputs.run != 'false'
 
   # Production's manifests: each target renders with stand-ins for the secrets that the Release workflow writes, and
