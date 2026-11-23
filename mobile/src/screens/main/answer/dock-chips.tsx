@@ -47,6 +47,9 @@ export function DockChip({
 // question included); a reply of words alone takes up to five (P04 ticket 45).
 const LINES = 2;
 export const WORDS_LINES = 5;
+// The line's least height, which the raised meal card's words keep too, so that they stand where the dock's line stands
+// (P04 ticket 54).
+export const LINE_LEAST = CHIP_HEIGHT;
 
 function LineWords({ line, lines }: { line: AnswerLine; lines: number }): ReactElement {
   return (
@@ -151,7 +154,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexShrink: 1,
     gap: space[1],
-    minHeight: CHIP_HEIGHT,
+    minHeight: LINE_LEAST,
   },
   lineWords: { ...text.body, flexShrink: 1, color: color.ink },
   more: { ...text.body, color: color.inkMuted },

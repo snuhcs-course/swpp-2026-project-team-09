@@ -195,6 +195,39 @@ describe('the crowded meal answer raised', () => {
   });
 });
 
+type Found = ReturnType<typeof screen.getByTestId>;
+
+// Whether `first` comes before `second` in the card: of the children of the nearest element that holds both, the earlier.
+function comesBefore(first: Found, second: Found): boolean {
+  const line: Found[] = [];
+  for (let at: Found | null = second; at !== null; at = at.parent) {
+    line.push(at);
+  }
+  let child = first;
+  for (let at = first.parent; at !== null; child = at, at = at.parent) {
+    const index = line.indexOf(at);
+    if (index > 0) {
+      return at.children.indexOf(child) < at.children.indexOf(line[index - 1]);
+    }
+  }
+  return false;
+}
+
+// P04 ticket 54: the raised meal card starts with the Assistant's words, as the dock does, so that lowering into the dock
+// moves nothing at the swap. Partitions: the words, the person chips, and the list.
+describe("the raised meal card's order", () => {
+  it('is the words, then the person chips, then the list', async () => {
+    await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+
+    await raiseCard();
+
+    const words = screen.getByTestId('meal-words');
+    const person = card().getByText('김민수');
+    expect(comesBefore(words, person)).toBe(true);
+    expect(comesBefore(person, list().getByTestId('meal-row-1'))).toBe(true);
+  });
+});
+
 // Partitions: one Plan and nothing dropped (review of PR 483: the dock's line takes no press).
 describe('a meal answer of one place', () => {
   it('names "1곳 목록" under the grip, and raised shows the people and the row', async () => {

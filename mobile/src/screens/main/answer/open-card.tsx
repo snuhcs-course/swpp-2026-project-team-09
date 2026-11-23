@@ -50,6 +50,12 @@ function targetsOf({ lowered, raised, full }: Caps, natural: number | null): Tar
   return { lowered: fit(lowered), raised: fit(raised), full };
 }
 
+// Lowering into the dock, the lowered step is the dock's own height, the card's top and the input's room taken away, so
+// that the dock takes the open card's place at the same height (P04 ticket 54).
+function toDockOf(targets: Targets, toDock: number | null, extra: number): Targets {
+  return toDock === null ? targets : { ...targets, lowered: Math.max(0, toDock - extra) };
+}
+
 function capOf(level: Level, caps: Caps): number | null {
   if (level === 'full') {
     return caps.full;
@@ -131,14 +137,14 @@ function Scrolling({ props, room, tail, topped, onNatural }: ScrollingProps): Re
 
 // The open card, moved as a sheet (`useCardMotion`), and the floor over the input's room at the screen's bottom, which
 // the card's lower part passes under, so that nothing shows beside the input.
-export function OpenCard(props: FrameCardProps & { from: number | null }): ReactElement {
+export function OpenCard(props: FrameCardProps & { from: number | null; toDock: number | null }): ReactElement {
   const { barRoom, onHeight, testID, raising, children } = props;
   const [above, setAbove] = useState(0);
   const [natural, setNatural] = useState<number | null>(null);
   const caps = useCaps(props, above);
-  const targets = targetsOf(caps, natural);
-  const room = roomOf(caps);
   const extra = above + barRoom;
+  const targets = toDockOf(targetsOf(caps, natural), props.toDock, extra);
+  const room = roomOf(caps);
   const motion = useCardMotion({ raising: raising ?? LOWERED, targets, room, from: props.from, extra, onHeight });
   const level = levelOf(raising?.raised === true, raising?.full === true);
   useToldCap(capOf(level, caps), props.onContentCap);

@@ -79,26 +79,35 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
   const raise = (): void => {
     raising.setRaised(true);
   };
+  const kept = typing || list.open ? null : <KeptCards cardActions={props.cardActions} control={control} />;
+  // The docked form's content, and the open form's: the open card keeps its own while it runs down to the dock's
+  // height, and the dock takes its place there (P04 ticket 54).
+  const dock =
+    rest === null || reply === undefined ? undefined : (
+      <>
+        {kept}
+        <DockedAnswer bubble={reply} control={control} focus={focus} onClose={onClose} onRaise={raise} rest={rest} />
+      </>
+    );
   return (
     <FrameCard
       {...card}
       {...top}
-      docked={rest !== null}
       chip={
         typing || control.answer.menuFor !== null ? null : (
           <AnswerCaption control={control} listOpen={list.open} onList={list.toggle} />
         )
       }
+      dock={dock}
+      docked={dock !== undefined}
       hold={waiting}
       testID="answer-card"
     >
-      {typing || list.open ? null : <KeptCards cardActions={props.cardActions} control={control} />}
+      {kept}
       {typing ? (
         <Typing control={control} />
       ) : list.open ? (
         <CaptionQuestions control={control} list={list} maxHeight={listMax} onClose={onClose} />
-      ) : rest !== null && reply !== undefined ? (
-        <DockedAnswer bubble={reply} control={control} focus={focus} onClose={onClose} onRaise={raise} rest={rest} />
       ) : (
         <OpenAnswer {...props} room={contentMax === null ? null : contentMax - CONTENT_TOP} />
       )}

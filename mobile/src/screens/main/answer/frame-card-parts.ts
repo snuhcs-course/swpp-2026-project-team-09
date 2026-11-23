@@ -42,6 +42,8 @@ export interface FrameCardProps {
   docked?: boolean;
   // The AI input's bottom from the stage's bottom, which the docked card's edge stands just under.
   inputBottom?: number;
+  // The docked form's content; left out, the children (P04 ticket 54).
+  dock?: ReactNode;
   // Null leaves the card empty.
   children: ReactNode;
 }
