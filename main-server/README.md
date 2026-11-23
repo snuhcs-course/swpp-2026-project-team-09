@@ -494,6 +494,19 @@ Registering and removing:
   404 and an id that is not a UUID 400. Removing the last one gets 409, also when two Administrators remove each other
   at the same moment.
 
+Writing a test log line, for the admin site's Log test page:
+
+- `POST /admin/log-test` with `{ "level": "info" | "warn" | "error" }` writes exactly one line at that level through
+  `LogTestController`'s logger (info through `log`) and answers 204. The Administrator is named by ID, never by email
+  address:
+  - `A test info line from the admin site, by Administrator <id>`
+  - `A test warning from the admin site, by Administrator <id>`
+  - `A test error from the admin site, by Administrator <id>`
+- Another level, or no body, gets 400 and nothing is logged.
+- It changes nothing else, so it needs no Idempotency-Key: a repeat writes one more test line. In Production the warn
+  and error lines reach the Slack channel and the info line does not ([Logging](#logging)), which is how the page checks
+  the whole path. The load balancer refuses `/admin/*`, so there only the admin site reaches it.
+
 Mark an administrative route, or a whole controller, with `@AdministratorOnly()` from
 `src/common/administrator-only.decorator.ts`, and put its path under `/admin`:
 
@@ -3256,6 +3269,7 @@ src/
 │                                    sees whom
 ├── lobby/                           a feature: what the app needs when it starts
 ├── administrators/                  a feature: the Administrators, who register and remove each other
+├── log-test/                        a feature: an Administrator's test log line at a chosen level
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
 ├── global-settings/                 the global settings an Administrator changes, their registry, and each pod's

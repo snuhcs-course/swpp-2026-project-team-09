@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -30,6 +31,7 @@ describe.each([
   ['post', `/admin/global-events/${id}/publish`, { version: 1 }],
   ['post', `/admin/global-events/${id}/discard`, { version: 1 }],
   ['post', `/admin/global-events/${id}/cancel`, { version: 1 }],
+  ['post', '/admin/log-test', { level: 'warn' }],
 ] as const)('%s %s', (method, path, body) => {
   it.each([
     ['no access token', (): undefined => undefined],
