@@ -4,7 +4,7 @@ Parent: [P05 spec](../spec.md); fault 5 of the meal checklist report
 Status: ready-for-human
 Blocked by: nothing
 
-Native files: none. Releases: the main server. The app's button words are the Cards session's, in PR 514.
+Native files: none. Releases: the main server. The app reads nothing new yet: its button words are a follow-up.
 
 ## What happened
 
@@ -31,7 +31,7 @@ Native files: none. Releases: the main server. The app's button words are the Ca
 - **Changeable** (`meal-plan-parts.ts`): the plans are for the meal's people when everyone of it is asked for, Friends more allowed.
 - **The press** (`plans/better-plan.service.ts`): `PUT /plans/{questId}` invites the Friends new to the Quest, decliners again, and refuses one that leaves someone out (400 `PLAN_PEOPLE_CHANGED`). A Quest taken alone gathers others (`gatheringFrom`); the capacity holds the plan's people. The Holders are told only when the meal's step moves.
 - **The model** is told `adding` (`friends`, `movesTo`, `fits`), `alreadyIn`, and, for a meal the User only holds an invitation to, `invitedTo` with its Holders, by new lines of `PLAN_RULES`.
-- **The app's contract** for the button's words (Cards session, PR 514): with `answer.adding` and `answer.planSet.changeable`, 바꾸기 reads "<names> 초대 보내기", or "<HH:MM of movesTo>로 옮기고 <names> 초대 보내기" when `movesTo` is set. Until then it reads 바꾸기, and the press works the same.
+- **The app** has no reader of `adding` yet: today's app shows 바꾸기, and the press works the same. The button's words are a follow-up in the app: with `answer.adding` and `answer.planSet.changeable`, 바꾸기 would read "<names> 초대 보내기", or "<HH:MM of movesTo>로 옮기고 <names> 초대 보내기" when `movesTo` is set.
 
 ## Acceptance criteria
 
