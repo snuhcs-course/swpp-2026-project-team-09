@@ -133,9 +133,10 @@ passes_the_ai_keys() {
 }
 
 # The main server prints one JSON line per log entry, which Fluent Bit reads (main-server README: Logging).
+# $1 the target, $2 the server whose Deployment it checks.
 logs_json() {
-  jq -e '[.[] | select(.kind == "Deployment" and .metadata.name == "main-server")
-    | .spec.template.spec.containers[] | select(.name == "main-server") | .env[]
+  jq -e --arg server "$2" '[.[] | select(.kind == "Deployment" and .metadata.name == $server)
+    | .spec.template.spec.containers[] | select(.name == $server) | .env[]
     | select(.name == "LOG_FORMAT") | .value] == ["json"]' "$work/$1.json" >/dev/null
 }
 
@@ -212,8 +213,10 @@ check "every Service's port is its pods' container port" serves_on_container_por
 for target in main-server all; do
   check "$target passes the main server OPENROUTER_API_KEY and LLM_KEYS from the Secret" passes_the_ai_keys "$target"
 done
-for target in main-server all; do
-  check "$target sets the main server's LOG_FORMAT to json" logs_json "$target"
+for server in main-server socket-server worker-server; do
+  for target in "$server" all; do
+    check "$target sets $server's LOG_FORMAT to json" logs_json "$target" "$server"
+  done
 done
 for file in secrets.env access-token-private-key.pem access-token-public-key.pem; do
   check "git ignores $file" ignored_by_git "parts/shared/secrets/$file"

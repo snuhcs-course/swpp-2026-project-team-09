@@ -5,6 +5,7 @@
  * 2026-09-29  Opus 5.5   prompted by fyoon46
  * 2026-10-03  Opus 5.5   prompted by fyoon46
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -24,6 +25,10 @@ export const settingsSchema = z.object({
     .enum(['on', 'off'])
     .default('off')
     .transform((value) => value === 'on'),
+  // How the server prints its log: "text" is NestJS's coloured text, "json" one JSON line per entry, as Production's
+  // log collector reads them (main-server README: Logging). src/common/logger.ts reads it before the application is
+  // created.
+  LOG_FORMAT: z.enum(['text', 'json']).default('text'),
 });
 
 export type Settings = z.infer<typeof settingsSchema>;

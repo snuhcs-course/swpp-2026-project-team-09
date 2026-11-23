@@ -3,16 +3,18 @@
  *
  * 2026-09-28  Opus 5.5   prompted by TaeHyun79
  * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import { messagingOptions } from './common/messaging.js';
+import { createLogger } from './common/logger.js';
 import { Settings } from './common/settings.js';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { logger: createLogger(process.env) });
   // On SIGTERM, finish the requests in progress and close messaging, then exit.
   app.enableShutdownHooks();
   const settings = app.get<ConfigService<Settings, true>>(ConfigService);

@@ -3,6 +3,7 @@
  *
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 // Partitions: each setting missing, malformed and on either side of its bound (P09 spec, (a)). The valid settings and
@@ -33,6 +34,7 @@ describe('settingsSchema', () => {
       MAIN_SERVER_URL: 'http://localhost:3000',
       WORKER_TOKEN: valid.WORKER_TOKEN,
       EXTRA_SNU_COLLECTION: false,
+      LOG_FORMAT: 'text',
     });
   });
 });
@@ -88,5 +90,19 @@ describe('settingsSchema: EXTRA_SNU_COLLECTION', () => {
 
   it('anything else → refused, naming EXTRA_SNU_COLLECTION', () => {
     expect(refused({ ...valid, EXTRA_SNU_COLLECTION: 'true' })).toEqual(['EXTRA_SNU_COLLECTION']);
+  });
+});
+
+describe('settingsSchema: LOG_FORMAT', () => {
+  it.each([
+    ['unset', undefined, 'text'],
+    ['text', 'text', 'text'],
+    ['json', 'json', 'json'],
+  ])('%s → %s', (_as, value, format) => {
+    expect(settingsSchema.parse({ ...valid, LOG_FORMAT: value })).toMatchObject({ LOG_FORMAT: format });
+  });
+
+  it.each(['JSON', 'pretty', ''])('%j → refused, naming LOG_FORMAT', (value) => {
+    expect(refused({ ...valid, LOG_FORMAT: value })).toEqual(['LOG_FORMAT']);
   });
 });
