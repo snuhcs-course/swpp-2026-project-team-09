@@ -3,6 +3,7 @@
 #
 # 2026-11-23  Opus 5.5   prompted by TaeHyun79
 # 2026-11-23  Fable 5.2  prompted by fyoon46
+# 2026-11-23  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # Fluent Bit posts the servers' warnings and errors to Slack. Reading the nodes' logs takes a hostPath volume, which
@@ -106,6 +107,14 @@ resource "helm_release" "fluent_bit" {
       {
         name      = "SLACK_WEBHOOK_MAIN_SERVER"
         valueFrom = { secretKeyRef = { name = "slack-webhooks", key = "main-server" } }
+      },
+      {
+        name      = "SLACK_WEBHOOK_WORKER_SERVER"
+        valueFrom = { secretKeyRef = { name = "slack-webhooks", key = "worker-server" } }
+      },
+      {
+        name      = "SLACK_WEBHOOK_SOCKET_SERVER"
+        valueFrom = { secretKeyRef = { name = "slack-webhooks", key = "socket-server" } }
       },
     ]
     # containerd's logs are under /var/log; the chart's default also mounts Docker's and /etc/machine-id.

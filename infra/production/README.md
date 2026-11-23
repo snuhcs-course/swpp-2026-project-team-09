@@ -420,14 +420,14 @@ commit's shared policies.
 
 ## Server logs in Slack
 
-Fluent Bit runs a pod on each node and posts the main server's warn, error and fatal lines to the private Slack channel
-`#team9-main-server-error`. Terraform installs it (`terraform/fluent_bit.tf`) in a namespace of its own, `logging`:
-reading the nodes' logs takes a hostPath volume, which `snunow`'s Pod Security baseline forbids. `logging` has no Pod
-Security label, and the Release workflow's deploy role has no rights there. Its NetworkPolicy, also in
-`fluent_bit.tf`, lets Fluent Bit take no connection and reach only DNS and the internet on 443, where Slack is.
-Fluent Bit mounts `/var/log` read-only, and has no RBAC and no service account token, since it never calls the
-Kubernetes API. It runs as root, which owns the nodes' log files, with a read-only root filesystem, no capability, and
-no way to gain a privilege.
+Fluent Bit runs a pod on each node and posts the main, worker and socket servers' warn, error and fatal lines, each
+server's to its own private Slack channel: the main server's to `#team9-main-server-error`. Terraform installs it
+(`terraform/fluent_bit.tf`) in a namespace of its own, `logging`: reading the nodes' logs takes a hostPath volume, which
+`snunow`'s Pod Security baseline forbids. `logging` has no Pod Security label, and the Release workflow's deploy role
+has no rights there. Its NetworkPolicy, also in `fluent_bit.tf`, lets Fluent Bit take no connection and reach only DNS
+and the internet on 443, where Slack is. Fluent Bit mounts `/var/log` read-only, and has no RBAC and no service account
+token, since it never calls the Kubernetes API. It runs as root, which owns the nodes' log files, with a read-only root
+filesystem, no capability, and no way to gain a privilege.
 
 **Taking it out** is `terraform destroy -var-file=account-a.tfvars -target=kubernetes_namespace_v1.logging`, which
 removes the namespace with the Helm release, the NetworkPolicy, and the Secret in it; no server notices. Putting it
@@ -436,9 +436,9 @@ back is the three steps of [First setup](#first-setup), step 2, the Secret among
 **The pipeline** is in `terraform/fluent-bit-pipeline/`, in Fluent Bit's classic format, and the Helm release reads
 those files. For each record it:
 
-1. reads the server's container log files (the main server's pods' only, in `snunow`). A file already there when
-   Fluent Bit starts is read from its end, so a restart posts nothing twice; a new pod's file is found within a minute
-   and read from its first line;
+1. reads the servers' container log files (the main, worker and socket servers' pods' only, in `snunow`). A file already
+   there when Fluent Bit starts is read from its end, so a restart posts nothing twice; a new pod's file is found within
+   a minute and read from its first line;
 2. parses the line as JSON and keeps it only if its `level` is `warn`, `error` or `fatal`. Info lines and lines that
    are not JSON, such as Node's own crash output, are not posted; `kubectl logs --previous` still shows them;
 3. keeps only `server`, `level`, `context`, `message` and `stack`;
@@ -451,10 +451,11 @@ those files. For each record it:
 server shares. `fluent-bit-pipeline/test/pipeline.bats` runs them in the same Fluent Bit image with stdout in place of
 Slack, in CI's `terraform` job, and `fluent-bit-pipeline/test/README.md` runs them once against the real webhook.
 
-**The webhooks** are in the Secret `slack-webhooks` in `logging`, one key per server: `main-server` now. A person
-makes it by hand, reading the value with `read -rs`, so that it stays out of Terraform's state ([First
-setup](#first-setup), step 2). The commands pipe the value in with the shell's own `printf`, so the webhook is on
-no command line that `ps` would show. A Fluent Bit pod does not start while a key is missing.
+**The webhooks** are in the Secret `slack-webhooks` in `logging`, one key per server: `main-server`, `worker-server` and
+`socket-server`. A person makes it by hand, reading the value with `read -rs`, so that it stays out of Terraform's state
+([First setup](#first-setup), step 2). The commands pass each value through the shell's own `printf`, piped or as a
+`<(…)` file, so the webhook is on no command line that `ps` would show. A Fluent Bit pod does not start while a key is
+missing.
 
 ```bash
 kubectl --namespace logging get pods
@@ -482,7 +483,7 @@ The patch changes that key and keeps the others.
 
 ### Connecting another server
 
-The worker and socket servers have channels of their own. To post a server's warnings to its channel:
+The main, worker and socket servers are connected. To post another server's warnings to a channel of its own:
 
 1. **The log format.** Copy the main server's logger function, add `LOG_FORMAT` to the server's settings, its
    `.env.example` and the root README's table, and set it to `json` in the server's manifest. The worker and socket
@@ -490,12 +491,14 @@ The worker and socket servers have channels of their own. To post a server's war
 2. **The pipeline.** Add an input to `inputs.conf`, a `server` field and a throttle to `server-filters.conf`, and an
    output to `outputs.conf`, each matching the server's tag, and a case to `fluent-bit-pipeline/test/pipeline.bats`.
 3. **The webhook.** Add a webhook for the server's channel to the same Slack app, and its key to `slack-webhooks`
-   before the apply, since a missing key keeps every Fluent Bit pod from starting. The Secret's commands in
-   [First setup](#first-setup) and [Moving to account B](#moving-to-account-b) gain the key too.
+   before the apply, since a missing key keeps every Fluent Bit pod from starting. In a running cluster, the patch in
+   [Replacing a webhook](#replacing-a-webhook), with the new key, adds it and keeps the others. The Secret's commands
+   in [First setup](#first-setup) and [Moving to account B](#moving-to-account-b) gain the key too.
 4. **Terraform.** Add the server's environment variable to the chart's `env` in `fluent_bit.tf`, then plan and apply.
 
-The worker logs `The Collection of shuttle_vehicles failed: …` about 4 times a minute, which would take 4 of its 10
-records every minute, so decide first whether that is a warning.
+The worker's `The Collection of shuttle_vehicles failed: …` error, about 4 times a minute on 2026-11-23 from 16:29 to
+18:00, came while the site it collects shuttles from was down, and stopped when it came back. It stays an error: a
+Collection that keeps failing is what the worker's channel is for, and the throttle caps it at 10 records a minute.
 
 ## First setup
 
@@ -514,17 +517,23 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
    terraform apply -var-file=account-a.tfvars -target=kubernetes_namespace_v1.logging
    aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-production
    read -rs SLACK_WEBHOOK_MAIN_SERVER
-   [ -n "$SLACK_WEBHOOK_MAIN_SERVER" ] && printf '%s' "$SLACK_WEBHOOK_MAIN_SERVER" |
-     kubectl --namespace logging create secret generic slack-webhooks --from-file=main-server=/dev/stdin
-   unset SLACK_WEBHOOK_MAIN_SERVER
+   read -rs SLACK_WEBHOOK_WORKER_SERVER
+   read -rs SLACK_WEBHOOK_SOCKET_SERVER
+   [ -n "$SLACK_WEBHOOK_MAIN_SERVER" ] && [ -n "$SLACK_WEBHOOK_WORKER_SERVER" ] && [ -n "$SLACK_WEBHOOK_SOCKET_SERVER" ] &&
+     kubectl --namespace logging create secret generic slack-webhooks \
+       --from-file=main-server=<(printf '%s' "$SLACK_WEBHOOK_MAIN_SERVER") \
+       --from-file=worker-server=<(printf '%s' "$SLACK_WEBHOOK_WORKER_SERVER") \
+       --from-file=socket-server=<(printf '%s' "$SLACK_WEBHOOK_SOCKET_SERVER")
+   unset SLACK_WEBHOOK_MAIN_SERVER SLACK_WEBHOOK_WORKER_SERVER SLACK_WEBHOOK_SOCKET_SERVER
    terraform apply -var-file=account-a.tfvars
    ```
 
-   The Fluent Bit release waits until its pods are ready, and a pod never is without its Secret, so a single apply
-   would fail on it. The namespace's own apply also makes the cluster, which the Secret needs. Nobody makes the
-   namespace by hand: Terraform would then fail to create it. An empty value, such as an Enter pressed by mistake,
-   writes no Secret, whose empty key would start the pods broken. On a cluster that runs without Fluent Bit, the same
-   three steps add it. In the account that holds the zone, the last apply waits until the certificate is issued.
+   The Fluent Bit release waits until its pods are ready, and a pod never is without its Secret, so a single apply would
+   fail on it. The namespace's own apply also makes the cluster, which the Secret needs. Nobody makes the namespace by
+   hand: Terraform would then fail to create it. Each `read -rs` takes one server's webhook. An empty value, such as an
+   Enter pressed by mistake, writes no Secret, whose empty key would start the pods broken. On a cluster that runs
+   without Fluent Bit, the same three steps add it. In the account that holds the zone, the last apply waits until the
+   certificate is issued.
 3. **The database.** [Prepare it](#preparing-a-new-database), which also puts its two passwords in Parameter Store.
 4. **The repository variables.** In the repository's **Settings** › **Secrets and variables** › **Actions** ›
    **Variables**, set the Release workflow's variables from `terraform output -raw <output>`, and the admin site's two
@@ -1186,10 +1195,14 @@ aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-p
    terraform apply -var-file=account-b.tfvars -target=kubernetes_namespace_v1.logging
    aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-production-b --profile account-b
    read -rs SLACK_WEBHOOK_MAIN_SERVER
-   [ -n "$SLACK_WEBHOOK_MAIN_SERVER" ] && printf '%s' "$SLACK_WEBHOOK_MAIN_SERVER" | kubectl \
-     --context snunow-production-b --namespace logging create secret generic slack-webhooks \
-     --from-file=main-server=/dev/stdin
-   unset SLACK_WEBHOOK_MAIN_SERVER
+   read -rs SLACK_WEBHOOK_WORKER_SERVER
+   read -rs SLACK_WEBHOOK_SOCKET_SERVER
+   [ -n "$SLACK_WEBHOOK_MAIN_SERVER" ] && [ -n "$SLACK_WEBHOOK_WORKER_SERVER" ] && [ -n "$SLACK_WEBHOOK_SOCKET_SERVER" ] &&
+     kubectl --context snunow-production-b --namespace logging create secret generic slack-webhooks \
+       --from-file=main-server=<(printf '%s' "$SLACK_WEBHOOK_MAIN_SERVER") \
+       --from-file=worker-server=<(printf '%s' "$SLACK_WEBHOOK_WORKER_SERVER") \
+       --from-file=socket-server=<(printf '%s' "$SLACK_WEBHOOK_SOCKET_SERVER")
+   unset SLACK_WEBHOOK_MAIN_SERVER SLACK_WEBHOOK_WORKER_SERVER SLACK_WEBHOOK_SOCKET_SERVER
    terraform apply -var-file=account-b.tfvars
    terraform output certificate_validation_records
    ```

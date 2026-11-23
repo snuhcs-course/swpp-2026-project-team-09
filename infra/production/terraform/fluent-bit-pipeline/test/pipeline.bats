@@ -4,6 +4,7 @@
 #
 # 2026-11-23  Opus 5.5   prompted by TaeHyun79
 # 2026-11-23  Fable 5.2  prompted by fyoon46
+# 2026-11-23  Opus 5.5   prompted by TaeHyun79
 ################################################################################
 
 # Fluent Bit's pipeline in the real Fluent Bit image: its inputs and filters unchanged, with a stdout output in place
@@ -12,6 +13,8 @@
 # `|| false` because bash before 4.1, which macOS has, does not fail a test on a [[ ]] that is not its last command.
 
 MAIN_SERVER_FILE=main-server-6d5f7c8b9-x2k4p_snunow_main-server-3f9a1c0b7e2d4a6f8b1c9e0d2a4f6b8c1e3d5a7f9b0c2e4d6a8f1b3c5e7d9a0b.log
+WORKER_SERVER_FILE=worker-server-5b8c7d6e4-m3n7r_snunow_worker-server-4d2b6f8a0c1e3a5b7d9f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a3c5e7b9d1f3a.log
+SOCKET_SERVER_FILE=socket-server-7c9d8e6f5-q8w2e_snunow_socket-server-9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d.log
 STACK=$'Error: connect ETIMEDOUT\n    at CollectionService.collect (/app/dist/collection/collection.service.js:88:13)'
 
 # The tag that the Helm release runs. The chart pulls it from cr.fluentbit.io, which serves the same image as Docker
@@ -31,6 +34,8 @@ setup() {
   mkdir -p "$config" "$logs"
   # Created before Fluent Bit starts, which reads such a file from its end, so a test reads only what it appends.
   : >"$logs/$MAIN_SERVER_FILE"
+  : >"$logs/$WORKER_SERVER_FILE"
+  : >"$logs/$SOCKET_SERVER_FILE"
 }
 
 teardown() {
@@ -43,7 +48,7 @@ assemble() {
     "$pipeline/server-filters.conf" "$@" >"$config/fluent-bit.conf"
 }
 
-# Starts Fluent Bit and waits until it watches the main server's file.
+# Starts Fluent Bit and waits until it watches each server's file.
 start_fluent_bit() {
   cat >"$BATS_TEST_TMPDIR/stdout.conf" <<'EOF'
 
@@ -59,6 +64,8 @@ EOF
     --volume "$config:/config:ro" --volume "$BATS_TEST_TMPDIR/log:/var/log:ro" "$IMAGE" \
     --config /config/fluent-bit.conf >/dev/null
   eventually watches "$MAIN_SERVER_FILE"
+  eventually watches "$WORKER_SERVER_FILE"
+  eventually watches "$SOCKET_SERVER_FILE"
 }
 
 # Retries a command for up to 30 seconds.
@@ -135,19 +142,51 @@ append() {
   [ "$(records | jq -r .message)" = 'Kakao did not answer: timeout' ]
 }
 
-@test "a file of another server, or of another namespace, is not read" {
-  socket_server_file=socket-server-7c9d8e6f5-q8w2e_snunow_socket-server-9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d.log
+@test "a file of another namespace, or of another container, is not read" {
   other_namespace_file=main-server-6d5f7c8b9-x2k4p_default_main-server-1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b.log
-  : >"$logs/$socket_server_file"
+  other_container_file=admin-8f7e6d5c4-z9y8x_snunow_admin-2b4d6f8a1c3e5a7b9d1f3b5d7f9a2c4e6b8d1f3a5c7e9b2d4f6a8c1e3b5d7f9a.log
   : >"$logs/$other_namespace_file"
+  : >"$logs/$other_container_file"
   start_fluent_bit
-  append "$(entry warn 'Redis did not answer: timeout' RedisIoAdapter)" stdout "$socket_server_file"
   append "$(entry warn 'A Quest was not found: Quest ID 7' QuestService)" stdout "$other_namespace_file"
+  append "$(entry warn 'An upload failed: timeout' UploadService)" stdout "$other_container_file"
   append "$(entry warn 'Kakao did not answer: timeout' KakaoService)"
 
   eventually posted 'Kakao did not answer: timeout'
   [ "$(records | jq -r .message)" = 'Kakao did not answer: timeout' ]
-  [ "$(watched_files)" = "$MAIN_SERVER_FILE" ]
+  [ "$(watched_files)" = "$(printf '%s\n' "$MAIN_SERVER_FILE" "$SOCKET_SERVER_FILE" "$WORKER_SERVER_FILE" | sort)" ]
+}
+
+@test "the worker and socket servers' warnings are kept, each with its own server" {
+  start_fluent_bit
+  append "$(entry log 'A Collection finished' CollectionService)" stdout "$WORKER_SERVER_FILE"
+  append "$(entry warn 'The Collection of shuttle_vehicles failed: timeout' CollectionService)" stdout "$WORKER_SERVER_FILE"
+  append "$(entry error 'Redis did not answer: timeout' RedisIoAdapter "$STACK")" stderr "$SOCKET_SERVER_FILE"
+  append 'A line that is not JSON' stderr "$SOCKET_SERVER_FILE"
+
+  eventually posted_at_least 2
+  sleep 3
+  [ "$(records | jq -rs 'sort_by(.server) | map("\(.server) \(.level) \(.message)") | join("|")')" = \
+    'socket-server error Redis did not answer: timeout|worker-server warn The Collection of shuttle_vehicles failed: timeout' ]
+  [ "$(records | jq -c 'select(.server == "socket-server") | keys_unsorted')" = '["server","level","context","message","stack"]' ]
+}
+
+@test "each server has a throttle of its own" {
+  local main_line worker_line socket_line _
+  main_line=$(entry warn 'A push to a User was not sent: timeout' PushService)
+  worker_line=$(entry warn 'The Collection of shuttle_vehicles failed: timeout' CollectionService)
+  socket_line=$(entry warn 'Redis did not answer: timeout' RedisIoAdapter)
+  start_fluent_bit
+  for _ in $(seq 30); do
+    append "$main_line"
+    append "$worker_line" stdout "$WORKER_SERVER_FILE"
+    append "$socket_line" stdout "$SOCKET_SERVER_FILE"
+  done
+
+  eventually posted_at_least 30
+  sleep 3
+  [ "$(records | jq -rs 'group_by(.server) | map("\(.[0].server) \(length)") | join(" ")')" = \
+    'main-server 10 socket-server 10 worker-server 10' ]
 }
 
 @test "a kept record has only server, level, context, message and stack, in that order" {
@@ -187,6 +226,8 @@ append() {
   # --dry-run checks every section's property names, not the plugins' own checks: a throttle Window that Fluent Bit
   # replaces with its default, or a webhook that is not https, still passes.
   run docker run --rm --env SLACK_WEBHOOK_MAIN_SERVER=https://hooks.slack.invalid/stand-in \
+    --env SLACK_WEBHOOK_WORKER_SERVER=https://hooks.slack.invalid/stand-in \
+    --env SLACK_WEBHOOK_SOCKET_SERVER=https://hooks.slack.invalid/stand-in \
     --volume "$config:/config:ro" "$IMAGE" --dry-run --config /config/fluent-bit.conf
   [ "$status" -eq 0 ]
   [[ $output == *'configuration test is successful'* ]] || false
