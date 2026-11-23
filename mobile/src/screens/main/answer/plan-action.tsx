@@ -210,7 +210,10 @@ export function answerActionOf(control: ChatSheetControl): AnswerAction | null {
     return null;
   }
   const refusal = reply.refusal ?? null;
-  return lookupDocks(lookup, refusal) && lookupMainOf(lookup, refusal) !== null
+  // An answer that only tells a fact (an hours or a menu answer) has no main action in the dock; its Place's card keeps
+  // the way (P04 ticket 55). A refusal's offer beside it is still the reply's own.
+  const fact = lookup.fact === true && refusal === null;
+  return !fact && lookupDocks(lookup, refusal) && lookupMainOf(lookup, refusal) !== null
     ? { kind: 'lookup', lookup, refusal }
     : null;
 }

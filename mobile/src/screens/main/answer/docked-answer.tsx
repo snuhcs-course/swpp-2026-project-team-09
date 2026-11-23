@@ -7,10 +7,10 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { PickOffer } from '@/api/pick-types';
 import { now } from '@/clock';
-import { space } from '@/design-system';
+import { color, space, text } from '@/design-system';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { setQuestOf } from '@/features/assistant/set-quest';
 import { leaveOfferOf, leaveWordsOf } from '@/features/assistant/use-quest-leaving';
@@ -147,8 +147,8 @@ interface DockedWordsProps {
 // The reply's buttons as chips, which scroll sideways: its offers and 다시 시도, disabled while the next reply is on its
 // way, for they act on the turn before; 그대로 두기 beside a Quest the User holds, which leaves it as it is (P04
 // ticket 20); and the folded chips.
-function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement {
-  const { offers, retry, note } = rest;
+function ReplyChips({ control, rest }: Omit<DockedWordsProps, 'onRaise'>): ReactElement {
+  const { offers, retry } = rest;
   const { send, waiting } = control.chat;
   return (
     <ScrollView
@@ -184,7 +184,6 @@ function ReplyChips({ control, rest, onRaise }: DockedWordsProps): ReactElement 
         />
       ))}
       {retry && control.latest ? <DockChip disabled={waiting} onPress={control.chat.retry} words="다시 시도" /> : null}
-      <FoldedChips control={control} note={note} onRaise={onRaise} />
     </ScrollView>
   );
 }
@@ -218,8 +217,17 @@ function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement
             }
           />
         )}
-        <ReplyChips control={control} onRaise={onRaise} rest={rest} />
+        <ReplyChips control={control} rest={rest} />
       </View>
+      {
+        // A note says a fact ("캠퍼스 밖이라 친구에게 내 위치가 보이지 않아요"): plain words on the sheet's lines, wrapping, with
+        // no box and no press (P04 ticket 55).
+        note === null ? null : (
+          <Text style={styles.note} testID="dock-note">
+            {note}
+          </Text>
+        )
+      }
       <LeaveRow control={control} />
       {time === null ? null : (
         <PickTimeSheet offer={time} onClose={control.pick.stop} onPick={control.pick.chooseTime} />
@@ -281,4 +289,5 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   // The line alone above the meal's chip row (P04 ticket 21).
   rows: { gap: space[2] },
+  note: { ...text.caption, color: color.inkMuted },
 });
