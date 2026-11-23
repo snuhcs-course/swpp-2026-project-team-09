@@ -8,6 +8,7 @@
  * 2026-11-02  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-23  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 // Partitions: each setting missing; all but DATABASE_URL and REDIS_HOST malformed or by a bound;
@@ -209,7 +210,7 @@ describe("settingsSchema: the Assistant's settings", () => {
 
     expect(settingsSchema.parse(unset)).toMatchObject({
       OPENROUTER_API_KEY: '',
-      ASSISTANT_DAILY_MESSAGES: 50,
+      ASSISTANT_DAILY_MESSAGES: 500,
       ASSISTANT_MAX_STEPS: 8,
       ASSISTANT_TIMEOUT_MS: 30_000,
       ASSISTANT_MAX_OUTPUT_TOKENS: 4000,

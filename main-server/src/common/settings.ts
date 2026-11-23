@@ -19,6 +19,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Fable 5.2  prompted by fyoon46
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -117,7 +118,7 @@ export const settingsSchema = z
     // The Assistant's limits: the messages a User may send in a day in Korea, and per message the model calls, the
     // time in milliseconds and the tokens the model may write in each call. Its reasoning counts towards those tokens,
     // and at 1,000 it could use them all and leave no answer (eval/p5/r0a.md).
-    ASSISTANT_DAILY_MESSAGES: count(50),
+    ASSISTANT_DAILY_MESSAGES: count(500),
     ASSISTANT_MAX_STEPS: count(8),
     ASSISTANT_TIMEOUT_MS: count(30_000),
     ASSISTANT_MAX_OUTPUT_TOKENS: count(4000),
