@@ -13,7 +13,8 @@
 MAIN_SERVER_FILE=main-server-6d5f7c8b9-x2k4p_snunow_main-server-3f9a1c0b7e2d4a6f8b1c9e0d2a4f6b8c1e3d5a7f9b0c2e4d6a8f1b3c5e7d9a0b.log
 STACK=$'Error: connect ETIMEDOUT\n    at CollectionService.collect (/app/dist/collection/collection.service.js:88:13)'
 
-# The tag that the Helm release runs. The chart pulls it from cr.fluentbit.io, which serves the same image as Docker Hub.
+# The tag that the Helm release runs. The chart pulls it from cr.fluentbit.io, which serves the same image as Docker
+# Hub.
 setup_file() {
   local tag
   tag=$(sed -n 's/^ *fluent_bit_image_tag *= *"\([^"]*\)".*/\1/p' "$BATS_TEST_DIRNAME/../../fluent_bit.tf")

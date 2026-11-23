@@ -5,8 +5,8 @@
 ################################################################################
 
 # Fluent Bit posts the servers' warnings and errors to Slack, with the pipeline in fluent-bit/. Reading the nodes' logs
-# takes a hostPath volume, which snunow's Pod Security baseline forbids, so it has a namespace of its own: no Pod
-# Security label, no NetworkPolicy, and no rights for the Release workflow's deploy role.
+# takes a hostPath volume, which snunow's Pod Security baseline forbids, so it has a namespace of its own, without that
+# label.
 
 locals {
   # The pipeline's test runs this tag too.
@@ -20,7 +20,7 @@ resource "kubernetes_namespace_v1" "logging" {
 }
 
 # Waits for a ready pod on each node, and a pod starts only once the Secret slack-webhooks, which a person makes so
-# that the webhooks stay out of the state, holds every key below (infra README: Server logs in Slack).
+# that the webhooks stay out of the state, holds every key below (infra/production/README.md: Server logs in Slack).
 resource "helm_release" "fluent_bit" {
   name       = "fluent-bit"
   repository = "https://fluent.github.io/helm-charts"
@@ -57,7 +57,7 @@ resource "helm_release" "fluent_bit" {
     daemonSetVolumes      = [{ name = "varlog", hostPath = { path = "/var/log" } }]
     daemonSetVolumeMounts = [{ name = "varlog", mountPath = "/var/log", readOnly = true }]
     # The chart's default service section stays: it loads the parsers file with the json parser, and serves the
-    # health check behind the probes. The shared filters come before each server's own.
+    # health check behind the probes.
     config = {
       inputs  = file("${path.module}/fluent-bit/inputs.conf")
       filters = join("\n", [file("${path.module}/fluent-bit/filters.conf"), file("${path.module}/fluent-bit/server-filters.conf")])

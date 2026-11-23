@@ -140,9 +140,9 @@ and 6379 for Redis. In Freelens, a Service's page has **Forward** beside each po
 ### Logs last as long as their pod
 
 Kubernetes keeps a container's log only while its pod exists. A Release or a restart replaces a server's pods, and their
-logs go with them; `--previous` shows only the last crash. Only the main server's warn and error lines are kept beyond
-that, since they are also posted to Slack ([Server logs in Slack](#server-logs-in-slack)). So a tester's report is
-looked into the same day, before the next Release, and the lines that matter are copied into the issue.
+logs go with them; `--previous` shows only the last crash. Only the main server's warn and error lines outlast their
+pod, up to 10 a minute, in Slack ([Server logs in Slack](#server-logs-in-slack)). So a tester's report is looked into
+the same day, before the next Release, and the lines that matter are copied into the issue.
 
 ### kubectl's version
 
@@ -183,8 +183,9 @@ Administrator, another Administrator removes them on the admin site's Administra
 ## Terraform
 
 `terraform/` is one root configuration that holds every AWS resource Production needs: the network, the cluster, the
-database, the image registries, the Release workflow's role, the certificate and DNS records, and the budget. The team
-members' IAM users stay out of it, so that no password or key lands in the state.
+database, the image registries, the Release workflow's role, the certificate and DNS records, and the budget. It also
+installs the load balancer controller and Fluent Bit with Helm. The team members' IAM users stay out of it, so that no
+password or key lands in the state.
 
 A team member applies it from a laptop, signed in to the account as their own IAM user. The state lives in the
 account's state bucket, and the lock file that Terraform writes beside it stops two applies at once. The `terraform`
@@ -457,13 +458,14 @@ Each post logs `hooks.slack.com:443, HTTP status=200`; the log never holds the w
 ### Replacing a webhook
 
 When a webhook leaks, add a new one for the channel to the Slack app and remove the old one. Then put the new one in
-the Secret's key and restart Fluent Bit, which reads its environment only when it starts. No Release is needed:
+the server's key and restart Fluent Bit, which reads its environment only when it starts. No Release is needed. For the
+main server:
 
 ```bash
-read -rs SLACK_WEBHOOK
+read -rs SLACK_WEBHOOK_MAIN_SERVER
 kubectl --namespace logging patch secret slack-webhooks --type merge \
-  --patch "{\"stringData\":{\"main-server\":\"$SLACK_WEBHOOK\"}}"
-unset SLACK_WEBHOOK
+  --patch "{\"stringData\":{\"main-server\":\"$SLACK_WEBHOOK_MAIN_SERVER\"}}"
+unset SLACK_WEBHOOK_MAIN_SERVER
 kubectl --namespace logging rollout restart daemonset/fluent-bit
 kubectl --namespace logging rollout status daemonset/fluent-bit
 ```
@@ -480,7 +482,8 @@ The worker and socket servers have channels of their own. To post a server's war
 2. **The pipeline.** Add an input to `inputs.conf`, a `server` field and a throttle to `server-filters.conf`, and an
    output to `outputs.conf`, each matching the server's tag, and a case to `fluent-bit/test/pipeline.bats`.
 3. **The webhook.** Add a webhook for the server's channel to the same Slack app, and its key to `slack-webhooks`
-   before the apply, since a missing key keeps every Fluent Bit pod from starting.
+   before the apply, since a missing key keeps every Fluent Bit pod from starting. The Secret's commands in
+   [First setup](#first-setup) and [Moving to account B](#moving-to-account-b) gain the key too.
 4. **Terraform.** Add the server's environment variable to the chart's `env` in `fluent_bit.tf`, then plan and apply.
 
 The worker logs `The Collection of shuttle_vehicles failed: …` about 4 times a minute, which would take 4 of its 10
@@ -495,15 +498,15 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
    account A, whose registrant email is verified within 15 days. The account's service quotas allow four `t4g.small`
    instances at once, for a node group replacement, and an ALB.
 2. **The first apply.** [Create the state bucket](#creating-the-state-bucket), write
-   [the variables file](#the-variables-file) with `enable_dns_records = false`, and run `terraform init`
-   ([Init, plan, and apply](#init-plan-and-apply)). The apply then goes in three steps: the `logging` namespace alone,
-   the Slack webhooks' Secret in it ([Server logs in Slack](#server-logs-in-slack)), then everything:
+   [the variables file](#the-variables-file) with `enable_dns_records = false`, and run
+   `terraform init -backend-config=account-a.s3.tfbackend`. The apply then goes in three steps: the `logging` namespace
+   alone, the Slack webhooks' Secret in it ([Server logs in Slack](#server-logs-in-slack)), then everything:
 
    ```bash
    terraform apply -var-file=account-a.tfvars -target=kubernetes_namespace_v1.logging
    aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-production
    read -rs SLACK_WEBHOOK_MAIN_SERVER
-   kubectl --context snunow-production --namespace logging create secret generic slack-webhooks \
+   kubectl --namespace logging create secret generic slack-webhooks \
      --from-literal=main-server="$SLACK_WEBHOOK_MAIN_SERVER"
    unset SLACK_WEBHOOK_MAIN_SERVER
    terraform apply -var-file=account-a.tfvars
@@ -918,9 +921,9 @@ request and limit in its part, `k8s/parts/<server>/<server>.yaml`, and Redis in 
 is placed only on a node with room for its request, and a container that goes over its limit is killed and restarted:
 `kubectl --namespace snunow describe pod <pod>` shows `OOMKilled` as the last state then.
 
-A `t4g.small` node holds at most 11 pods, so the two nodes have 22 pod slots, and Production fills 18: `aws-node` and
-`kube-proxy` on each node, two each of CoreDNS and `metrics-server`, and the load balancer controller in `kube-system`;
-the seven pods of `snunow`; and Fluent Bit's two in `logging`, which request 32Mi each. A Release's extra pod makes 19.
+A `t4g.small` node holds at most 11 pods, so the two nodes have 22 pod slots. Production fills 18 of them, two of which
+are Fluent Bit's, at 32Mi each. During an `all` Release the main and socket servers and the admin site each start a
+new pod before stopping an old one, which makes 21.
 
 - **A container's memory** is raised in its part through a pull request, then a Release of that server.
 - **The node size** is `node_instance_type` in `terraform/variables.tf`, `t4g.small` (2 GiB) by default, for example
