@@ -28,3 +28,12 @@ export function addingWordsOf(adding: Adding): string {
   const invite = `${whom(adding)} 초대 보내기`;
   return adding.movesTo === null ? invite : `${koreaClock(adding.movesTo)}로 옮기고 ${invite}`;
 }
+
+// The answer's line once that press changed the meal held (P05 ticket 44): what it did, "지은에게 초대를 보냈어요", or
+// "점심을 12:58로 옮기고 지은에게 초대를 보냈어요" when the start moved. `word` is the meal's ("점심"), which ends in a
+// final consonant and so takes 을.
+export function addedLineOf(adding: Adding, word = '약속'): string {
+  const names = adding.friends.map(({ name }) => name).join(', ');
+  const sent = `${names}에게 초대를 보냈어요`;
+  return adding.movesTo === null ? sent : `${word}을 ${koreaClock(adding.movesTo)}로 옮기고 ${sent}`;
+}

@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-23  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MapScene, Plan } from '@/api/assistant-types';
@@ -95,15 +96,15 @@ export function linesOn(lines: readonly MapLine[], paths: ReadonlyMap<string, re
 }
 
 // The walking a meal Plan adds to the User's day (the answer screen's redesign, board E1): the way from where they
-// start to the place, plus the way on from it to the next fixed thing when one follows. Null when where they start is
-// not known.
+// start to the place, plus the way on from it to the next fixed thing when one follows. When where they start is not
+// known, the way on alone, which every choice adds all the same; null with neither.
 export function addedWalk({ parts, scene }: Pick<Plan, 'parts' | 'scene'>): number | null {
   const there = parts.find(({ me }) => me)?.walkMinutes ?? null;
+  const on = scene.routes.find(({ role }) => role === 'next')?.minutes ?? null;
   if (there === null) {
-    return null;
+    return on;
   }
-  const on = scene.routes.find(({ role }) => role === 'next');
-  return there + (on?.minutes ?? 0);
+  return there + (on ?? 0);
 }
 
 // The way a meal Plan adds to the User's day, as `addedWalk` counts it, and whether a leg of it is by shuttle: the way

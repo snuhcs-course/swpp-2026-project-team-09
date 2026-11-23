@@ -92,9 +92,11 @@ export function candidateRowsOf(answer: AnswerReply | null): CandidateRow[] {
     .map((plan, index) => ({ plan, row: rowOf(plan, index, kind) }))
     .filter(({ plan }) => kind === null || serves(plan, kind))
     .map(({ row }) => row);
-  // Without a walk anywhere, the main server's order stands: its walk on to the next item, the earliest start, the
-  // longest time to eat (P05 ticket 40), which an order of the phone's would scramble.
-  return walksKnown(answer)
+  // Only where the User starts is known is the main server's order the least walking. Otherwise it stands as it came:
+  // without a walk anywhere, the walk on to the next item, the earliest start, the longest time to eat (P05 ticket 40);
+  // with a way on alone, those where everyone has thirty minutes first (P05 ticket 45). An order of the phone's would
+  // scramble it.
+  return byWalking(answer)
     ? rows.toSorted(
         (one, other) =>
           (one.walk ?? Infinity) - (other.walk ?? Infinity) ||
@@ -116,10 +118,20 @@ export function orderLineOf(answer: AnswerReply, shown: number): string {
   return `${String(shown)}곳 · ${listOrderWords(answer)}`;
 }
 
-// How the raised list is ordered, which the caption says: by walking, or, without it, by the main server's order,
-// the earliest open first (P04 ticket 48).
+// Whether the list is ordered by walking: where the User starts is known, and with it their walking.
+function byWalking(answer: AnswerReply): boolean {
+  const known = answer.plans.some((plan) => plan.parts.some(({ me, origin }) => me && origin !== null));
+  return known && walksKnown(answer);
+}
+
+// How the raised list is ordered, which its first line says: by walking ("걸음이 적은 순"); without any walking, the main
+// server's order, the earliest open first ("일찍 여는 순", P04 ticket 48); with a way on alone, where the User starts
+// being unknown, the main server's order of its pick first ("추천 순").
 export function listOrderWords(answer: AnswerReply): string {
-  return walksKnown(answer) ? '걸음이 적은 순' : '일찍 여는 순';
+  if (byWalking(answer)) {
+    return '걸음이 적은 순';
+  }
+  return walksKnown(answer) ? '추천 순' : '일찍 여는 순';
 }
 
 const BADGE = 22;

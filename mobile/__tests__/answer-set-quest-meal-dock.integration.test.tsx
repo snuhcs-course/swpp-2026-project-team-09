@@ -172,6 +172,17 @@ describe('a Friend added to the lunch held', () => {
     expect(beside().getByRole('button', { name: '12:58로 옮기고 지은이 초대 보내기' })).toBeEnabled();
   });
 
+  it('says the invitation went once the press changed the lunch, not 바꿨어요', async () => {
+    server.on(`PUT /plans/${LUNCH.questId}`, { status: 200, body: PLAN_QUEST.quest });
+    const user = await askOnMap(server, adding(null));
+
+    await user.press(beside().getByRole('button', { name: '지은이 초대 보내기' }));
+    await pass(500);
+
+    expect(dock().getByText('지은에게 초대를 보냈어요')).toBeVisible();
+    expect(screen.queryByText(/바꿨어요/u)).toBeNull();
+  });
+
   it('keeps 바꾸기 without the field', async () => {
     await askOnMap(server, REPLY);
 
