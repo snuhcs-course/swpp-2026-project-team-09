@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { type AccessibilityActionInfo, Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, Icon, radius, size, space, text } from '@/design-system';
 import { OPEN_EDGE } from './frame-card-parts';
 import type { Raising } from './raise-handle';
@@ -46,17 +46,30 @@ export const chipLook = StyleSheet.create({
   pressed: { opacity: 0.6 },
 });
 
-// The steps a screen reader takes the card through: up, one step down as back takes it (`stepDown`), and close.
+// The steps a screen reader takes the card through, in the order back and a drag take it (`backOf`): up a step; down
+// a step, a raised or full card as back takes it (`stepDown`), a lowered one by taking its layer away (the earlier
+// questions, a mark's card, a menu); and close. Only the steps that can act now are offered (PR 516's review).
+function stepsOf(raising: Raising): AccessibilityActionInfo[] {
+  const { raised, full = false, setFull, close, layer = null } = raising;
+  return [
+    ...(!raised || (!full && setFull !== undefined) ? [{ name: 'increment', label: '답 크게 보기' }] : []),
+    ...(raised || layer !== null ? [{ name: 'decrement', label: '답 작게 보기' }] : []),
+    ...(close === undefined ? [] : [{ name: 'close', label: CLOSE_ANSWER_LABEL }]),
+  ];
+}
+
 function adjust(raising: Raising, action: string): void {
-  const { raised, setRaised, full = false, setFull, close, stepDown } = raising;
+  const { raised, setRaised, full = false, setFull, close, stepDown, layer = null } = raising;
   if (action === 'increment') {
     if (!raised) {
       setRaised(true);
     } else if (!full) {
       setFull?.(true);
     }
-  } else if (action === 'decrement' && raised) {
-    if (stepDown !== undefined) {
+  } else if (action === 'decrement') {
+    if (!raised) {
+      layer?.();
+    } else if (stepDown !== undefined) {
       stepDown();
     } else if (full && setFull !== undefined) {
       setFull(false);
@@ -71,14 +84,10 @@ function adjust(raising: Raising, action: string): void {
 // The grip and the label under it. The label is said once, as part of the grip's name; "⌃" follows it while the card
 // is docked or lowered.
 function Grip({ raising, label }: { raising: Raising; label: string | null }): ReactElement {
-  const { raised, full = false, close } = raising;
+  const { raised, full = false } = raising;
   return (
     <View
-      accessibilityActions={[
-        { name: 'increment', label: '답 크게 보기' },
-        { name: 'decrement', label: '답 작게 보기' },
-        ...(close === undefined ? [] : [{ name: 'close', label: CLOSE_ANSWER_LABEL }]),
-      ]}
+      accessibilityActions={stepsOf(raising)}
       accessibilityLabel={label === null ? GRIP_LABEL : `${GRIP_LABEL}, ${label}`}
       accessibilityRole="adjustable"
       accessibilityState={{ expanded: raised }}

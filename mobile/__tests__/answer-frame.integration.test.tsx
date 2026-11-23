@@ -107,15 +107,16 @@ const GIVING_WAY = [FRIEND_PILL, FULL_SCREEN, LAYERS, '확대'];
 
 // Partitions: the conversation empty, waiting, answered, and failed.
 describe('the frame', () => {
-  it('shows the words as the caption of the card, waiting with 보는 중, ✕, and no 새 대화 or chat sheet', async () => {
+  it('shows the words as the caption of the card, waiting with 보는 중, with "＋ 새 대화" and ✕, and no chat sheet', async () => {
     const user = await openMain();
 
     await send(user, ASKED);
 
     expect(caption().getByText(ASKED)).toBeVisible();
     expect(card().getByLabelText(WAITING)).toBeVisible();
+    // The header's pill and ✕ stand in every state, the waiting card's too (P04 ticket 52).
+    expect(card().getByRole('button', { name: '새 대화' })).toBeVisible();
     expect(screen.getByRole('button', { name: CLOSE })).toBeVisible();
-    expect(screen.queryByRole('button', { name: '새 대화' })).toBeNull();
     expect(screen.queryByTestId('chat-sheet')).toBeNull();
   });
 

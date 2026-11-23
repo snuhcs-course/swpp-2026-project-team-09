@@ -13,7 +13,7 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { askOnMap, card, timeBar } from './support/answer-map';
 import { pass } from './support/app';
-import { grip, gripLabel, HIDDEN, lowerCard } from './support/card-grip';
+import { grip, gripLabel, HIDDEN, lowerCard, raiseCard } from './support/card-grip';
 import type { FakeServer } from './support/fake-server';
 import { AI_INPUT, layStage } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
@@ -224,6 +224,44 @@ describe('the docked card', () => {
     await user.press(screen.getByTestId('answer-grip-label', HIDDEN));
 
     expect(grip()).toBeCollapsed();
+  });
+});
+
+// The steps a screen reader is offered on the grip, by name.
+function steps(): unknown[] {
+  const offered: unknown = grip().props.accessibilityActions;
+  return Array.isArray(offered) ? offered.map((step: { name: string }) => step.name) : [];
+}
+
+// Partitions: docked with nothing over the answer; full; lowered with the earlier questions open. The steps follow
+// back's order, and only those that can act are offered (PR 516's review).
+describe("the grip's steps for a screen reader", () => {
+  it('offers up and close on the docked card, and no step down', async () => {
+    await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+
+    expect(steps()).toEqual(['increment', 'close']);
+  });
+
+  it('offers down and close on the full card, and no step up', async () => {
+    await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+
+    await raiseCard();
+    await raiseCard();
+
+    expect(grip()).toHaveAccessibilityValue({ text: '전체' });
+    expect(steps()).toEqual(['decrement', 'close']);
+  });
+
+  it('takes the earlier questions away by a step down on the lowered card, as back does, and keeps the answer', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await user.press(screen.getByTestId('answer-caption'));
+    expect(steps()).toEqual(['increment', 'decrement', 'close']);
+
+    await lowerCard();
+
+    expect(screen.queryByTestId('question-list')).toBeNull();
+    expect(screen.getByTestId('answer-caption')).toBeVisible();
+    expect(steps()).toEqual(['increment', 'close']);
   });
 });
 
