@@ -202,6 +202,30 @@ function useTellOnce(onHeight: (height: number) => void): (height: number) => vo
   }, []);
 }
 
+// What a run's end does: the camera hears the lowered card's whole height, once the lowered step is committed. A run can
+// end before the step it ran to is committed (a let-go sets it at the same time, and the render may come later): it
+// then tells nothing, and the commit tells, through the latest `onHeight`, which a card about to give way to the dock
+// ignores. So lowering into the dock tells the dock's height alone.
+function useSettle(
+  raised: boolean,
+  { lowered, extra, tell }: { lowered: number | null; extra: number; tell: (height: number) => void },
+  running: { current: boolean },
+): (step: Level) => void {
+  const raisedNow = useRef(raised);
+  useEffect(() => {
+    raisedNow.current = raised;
+  }, [raised]);
+  return useCallback(
+    (step: Level) => {
+      running.current = false;
+      if (step === 'lowered' && !raisedNow.current && lowered !== null) {
+        tell(extra + lowered);
+      }
+    },
+    [lowered, extra, tell, running],
+  );
+}
+
 // The offset running to its step: at once on a let-go or a step, and again whenever the step's height changes (the
 // content grows, the stage is laid out). Settled lowered, the card's whole height goes to the camera, decided by the step
 // the run went to rather than by the state its callback was made in (PR 516's review).
@@ -219,23 +243,7 @@ function useRun(
   const running = useRef(false);
   const lowered = heights?.lowered ?? null;
   const tell = useTellOnce(onHeight);
-  // The card's step as last committed. A run can end before the step it ran to is committed (a let-go sets it at the
-  // same time, and the render may come later): it then tells nothing, and the commit tells, through the latest
-  // `onHeight`, which a card about to give way to the dock ignores. So lowering into the dock tells the dock's height
-  // alone.
-  const raisedNow = useRef(raising.raised);
-  useEffect(() => {
-    raisedNow.current = raising.raised;
-  }, [raising.raised]);
-  const settle = useCallback(
-    (step: Level) => {
-      running.current = false;
-      if (step === 'lowered' && !raisedNow.current && lowered !== null) {
-        tell(extra + lowered);
-      }
-    },
-    [lowered, extra, tell],
-  );
+  const settle = useSettle(raising.raised, { lowered, extra, tell }, running);
   const back = useCallback(
     (to: Level) => {
       if (heights !== null && room !== null) {

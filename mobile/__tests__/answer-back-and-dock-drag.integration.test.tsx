@@ -146,14 +146,6 @@ describe("the sheet's header", () => {
     expect(card().queryByText(/올리면/u)).toBeNull();
   });
 
-  it('draws the history chip, "＋ 새 대화", and ✕ one height, ✕\'s 36', async () => {
-    await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
-
-    for (const id of ['answer-caption', 'answer-ask-new', 'answer-close']) {
-      expect(screen.getByTestId(id)).toHaveStyle({ height: 36 });
-    }
-  });
-
   it('keeps the label without "⌃" on the raised card, and the same buttons', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
     await lay('answer-card', CARD);
@@ -232,6 +224,17 @@ describe('the docked card', () => {
     await user.press(screen.getByTestId('answer-grip-label', HIDDEN));
 
     expect(grip()).toBeCollapsed();
+  });
+});
+
+// The user's phone test: the history chip, "＋ 새 대화", and ✕ are one height.
+describe("the header row's shapes", () => {
+  it('draws the history chip, "＋ 새 대화", and ✕ one height, ✕\'s 36', async () => {
+    await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+
+    for (const id of ['answer-caption', 'answer-ask-new', 'answer-close']) {
+      expect(screen.getByTestId(id)).toHaveStyle({ height: 36 });
+    }
   });
 });
 
