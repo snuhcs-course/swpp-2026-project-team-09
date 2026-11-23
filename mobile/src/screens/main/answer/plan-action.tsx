@@ -54,13 +54,18 @@ export function planActionOf(control: ChatSheetControl): PlanAction | null {
     if (chosen) {
       return null;
     }
+    const main = setQuestAction(set, control, disabled || invitation.changing);
+    // After a 바꾸기 refused for good there is nothing left to keep or change: "파티 보기" alone (PR 514's review).
+    if (invitation.refused !== null) {
+      return main;
+    }
     // 그대로 두기 waits while 바꾸기 or a recalculation is on its way: the answer it would leave is about to change.
     const keep = {
       words: '그대로 두기',
       onPress: invitation.leave,
       disabled: invitation.sending || invitation.changing || shown.recalculating,
     };
-    return { ...setQuestAction(set, control, disabled || invitation.changing), secondary: keep };
+    return { ...main, secondary: keep };
   }
   if (kind !== 'new-quest' && people > 1) {
     return {

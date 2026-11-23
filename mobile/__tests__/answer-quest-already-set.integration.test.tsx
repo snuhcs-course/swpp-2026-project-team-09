@@ -269,6 +269,9 @@ describe("a meeting's 바꾸기 refused or on its way", () => {
     expect(dock().getByText('이 약속은 여기서 바꿀 수 없어요. 파티에서 바꿔 주세요')).toBeVisible();
     expect(screen.queryByText('바꾸지 못했어요. 잠시 후 다시 시도해 주세요')).toBeNull();
     expect(screen.queryByRole('button', { name: '바꾸기' })).toBeNull();
+    // Nothing is left to keep: 파티 보기 stands alone, full width, with no 그대로 두기 (PR 514's review).
+    expect(screen.queryByRole('button', { name: '그대로 두기' })).toBeNull();
+    expect(screen.queryByTestId('answer-choices')).toBeNull();
     await user.press(beside().getByRole('button', { name: '파티 보기' }));
     await pass(300);
     expect(shownAddress()).toBe(`/room/${MEETING.questId}`);
