@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type AnswerReply, type MealInput, NO_CONTEXT } from '../src/assistant/dto/answer.dto.js';
+import { type MealInput, NO_CONTEXT } from '../src/assistant/dto/answer.dto.js';
 import { type ClientCapability, type ToolContext } from '../src/assistant/feature.js';
 import { FoundIds } from '../src/assistant/found-ids.js';
 import { restaurantHours } from '../src/assistant/lookup/hours-tools.js';
@@ -132,21 +133,14 @@ const PLACE = {
 };
 const POINT = { latitude: 37.466, longitude: 126.955 };
 
-// The tool over hand-made reads: 예술계식당 alone is named by 예술계, and a meal answer planned again is recorded.
-function toolOf(): { tool: ReturnType<typeof restaurantHours>; replanned: MealInput[] } {
-  const replanned: MealInput[] = [];
-  const tool = restaurantHours({
+// The tool over hand-made reads: 예술계식당 alone is named by 예술계.
+function toolOf(): ReturnType<typeof restaurantHours> {
+  return restaurantHours({
     named: (words) => (words === '예술계' ? ['예술계식당'] : []),
     at: () => [],
     mealsOf: () => Promise.resolve(served()),
     placeOf: () => PLACE,
-    replan: (_userId, input) => {
-      replanned.push(input);
-      const answer: AnswerReply = { input, chips: [], plans: [], dropped: [], noPlan: null };
-      return Promise.resolve(answer);
-    },
   });
-  return { tool, replanned };
 }
 
 function contextAt(now: Date, conditions: MealInput | null): ToolContext {
@@ -163,49 +157,40 @@ function contextAt(now: Date, conditions: MealInput | null): ToolContext {
   };
 }
 
+const SCENE = {
+  people: [],
+  places: [{ place: { placeId: PLACE.id, label: '예술계식당', ...POINT }, role: 'pick', tag: '예술계식당' }],
+  routes: [],
+  flags: [{ at: POINT, text: '예술계식당 · 지금 영업 중 · 14:00까지', role: 'place' }],
+};
+
+// Partitions: no meal plan on screen; a meal plan on screen (P04 ticket 59: the question is about the Restaurant, so the
+// Restaurant replaces the plan); words that name no Restaurant.
 describe('restaurantHours', () => {
-  it('answers the hours, and plans the meal on screen again so that the reply keeps it', async () => {
-    const { tool, replanned } = toolOf();
-    const context = contextAt(at(TUESDAY, '12:30'), MEAL_ON_SCREEN);
-
-    const result = await tool.run({ date: TUESDAY, restaurant: '예술계' }, context);
-
-    expect(result).toMatchObject({ result: 'found', restaurant: '예술계식당', servingNow: 'lunch' });
-    expect(replanned).toEqual([MEAL_ON_SCREEN]);
-    expect(context.presented.answer?.input).toEqual(MEAL_ON_SCREEN);
-  });
-
   it('shows the Restaurant on the map without a meal plan on screen, its label saying its state now', async () => {
-    const { tool, replanned } = toolOf();
     const context = contextAt(at(TUESDAY, '12:30'), null);
 
-    await tool.run({ date: TUESDAY, restaurant: '예술계' }, context);
+    const result = await toolOf().run({ date: TUESDAY, restaurant: '예술계' }, context);
 
-    expect(replanned).toEqual([]);
+    expect(result).toMatchObject({ result: 'found', restaurant: '예술계식당', servingNow: 'lunch' });
     expect(context.presented.answer).toBeNull();
-    expect(context.presented.lookup?.scene).toEqual({
-      people: [],
-      places: [{ place: { placeId: PLACE.id, label: '예술계식당', ...POINT }, role: 'pick', tag: '예술계식당' }],
-      routes: [],
-      flags: [{ at: POINT, text: '예술계식당 · 지금 영업 중 · 14:00까지', role: 'place' }],
-    });
+    expect(context.presented.lookup?.scene).toEqual(SCENE);
     expect(context.presented.lookup?.basis).toEqual(['점심 11:30–14:00', '저녁 17:00–18:30']);
   });
 
-  it('keeps the meal plan on screen in place of the Restaurant', async () => {
-    const { tool } = toolOf();
+  it('shows the Restaurant in place of a meal plan on screen, which it does not plan again', async () => {
     const context = contextAt(at(TUESDAY, '12:30'), MEAL_ON_SCREEN);
 
-    await tool.run({ date: TUESDAY, restaurant: '예술계' }, context);
+    await toolOf().run({ date: TUESDAY, restaurant: '예술계' }, context);
 
-    expect(context.presented.lookup).toBeNull();
+    expect(context.presented.answer).toBeNull();
+    expect(context.presented.lookup?.scene).toEqual(SCENE);
+    expect(context.presented.lookup?.fact).toBe(true);
   });
 
   it('answers none for words that name no Restaurant', async () => {
-    const { tool } = toolOf();
-
     expect(
-      await tool.run({ date: TUESDAY, restaurant: '없는식당' }, contextAt(at(TUESDAY, '12:30'), null)),
+      await toolOf().run({ date: TUESDAY, restaurant: '없는식당' }, contextAt(at(TUESDAY, '12:30'), null)),
     ).toMatchObject({
       result: 'none',
     });

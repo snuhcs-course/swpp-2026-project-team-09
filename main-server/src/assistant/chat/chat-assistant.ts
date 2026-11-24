@@ -14,6 +14,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { FriendViewService } from '../../friends/friend-view.service.js';
@@ -123,7 +124,7 @@ function requestInstructionsOf(now: Date): string {
 // (its lines), and the answer on the screen stays under a reply in words alone (the app keeps it, P04 ticket 46).
 const EARLIER_REPLIES = `
 - An earlier reply of yours is given as the words the User saw. Never take it back or call it unfounded because no tool returned it in this message: call the tool again when you need the fact, and correct only what that result contradicts.
-- The answer on the screen, a meal's plan or a seat card, stays there under any reply of yours, one in words alone included, so you may speak of it in any reply. planMeal and restaurantHours plan it again from its conditions.`;
+- The answer on the screen, a meal's plan or a seat card, stays there under any reply of yours, one in words alone included, so you may speak of it in any reply. planMeal plans it again from its conditions. A question about a Restaurant's hours or menu brings that Restaurant to the map in its place.`;
 
 // In the chat of an app that does not draw answers, a meal is recommended from the menus after asking the User's taste.
 // An app that draws answers plans it on the map at once (PLAN_RULES).

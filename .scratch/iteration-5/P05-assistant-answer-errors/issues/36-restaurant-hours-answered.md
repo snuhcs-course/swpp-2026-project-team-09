@@ -23,17 +23,16 @@ Native files: none. Releases: the main server.
 | A Restaurant with no hours kept | `hours: 'not recorded'` with the menu's notes | that it serves the meal, that the hours are not known, and a time a note states |
 | A day whose menu is not collected yet | `serves: 'not known'` with the usual hours for that kind of day | the usual hours, as usual ones |
 | Neither a menu nor hours | `none` with the reason | that nothing is known for that day |
-| Any of these with a meal plan on the screen | the same, and the plan planned again from the context's conditions into the reply's `answer` | the plan stays on the screen |
-| Without a plan on the screen | the same, nothing drawn | words only |
+| Any of these, with or without a meal plan on the screen | the same; the Restaurant drawn on the map (P05 ticket 37), in place of a meal plan on the screen (P04 ticket 59) | the hours in words |
 
 ## What changes
 
 - A new tool `restaurantHours(date, restaurant?)` with `HOURS_RULES`, for an app that draws answers (`lookup/hours-tools.ts`, `lookup/hours-words.ts`). The rules send every question about when a Restaurant opens, closes, or serves a meal to it, answered in one or two plain sentences, and forbid saying that the hours are not in the data when the tool gave them.
-- **The plan on the screen stays.** With a meal answer on the screen, the tool plans it again from the context's conditions and puts it in the reply's `answer`. `EARLIER_REPLIES` now names `restaurantHours` beside `planMeal` as a reply that keeps the plan. The app redraws the answer from its first plan, so a plan reached with the arrows comes back as the first one. Keeping the very plan browsed to would need the app to keep the frame on a reply in words, which is out of this ticket.
+- **The Restaurant takes the place of a meal plan on the screen** (P04 ticket 59). The question is about the Restaurant, so the reply draws it, not the plan.
 
 ## Acceptance criteria
 
-- [x] Unit tests (`restaurant-hours.unit.test.ts`): each case of the table, the edges of `servingNow` (11:29, 11:30, 13:59, 14:00, 17:30, 18:30), another day without `now`, and the tool planning the meal on the screen again, or drawing nothing without one.
+- [x] Unit tests (`restaurant-hours.unit.test.ts`): each case of the table, the edges of `servingNow` (11:29, 11:30, 13:59, 14:00, 17:30, 18:30), another day without `now`, and the tool drawing the Restaurant with or without a meal plan on the screen.
 - [x] Eval cases (`eval/cases/restaurant-hours.yaml`): the close, the open, "지금 열었어?", and a question after a plan; written and committed, not run (no key in the worktree).
 - [x] The README describes `restaurantHours`.
 - [x] Lint, format, and types of the main server pass.

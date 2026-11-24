@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -111,7 +112,7 @@ describe('The menu of 301동식당 at 11:40 (board q8)', () => {
 });
 
 describe('A Restaurant with nothing to eat at that meal', () => {
-  it('answers none when no menu of it was collected, and nothing is drawn', async () => {
+  it('answers none when no menu of it was collected, and draws the Restaurant saying so', async () => {
     const date = '2086-01-15';
     await boardQ8(date);
     await stage.menusOn(date, ['학생회관식당']);
@@ -123,10 +124,14 @@ describe('A Restaurant with nothing to eat at that meal', () => {
       reason: `301동식당's lunch menu for ${date} is not posted yet: menus are posted up to six days ahead. Say so, and that it comes later; never that 301동식당 is closed.`,
       lines: [],
     });
-    expect(replySchema.parse(response.body).lookup).toBeNull();
+    expect(lookupIn(response.body)).toMatchObject({
+      kind: 'place',
+      fact: true,
+      scene: { flags: [{ text: '301동식당 · 오늘 점심 메뉴 아직 안 올라옴', role: 'place' }] },
+    });
   });
 
-  it('answers none when its lunch holds only notes, with the notes', async () => {
+  it('answers none when its lunch holds only notes, with the notes, and draws the Restaurant not serving', async () => {
     const date = '2086-01-22';
     await boardQ8(date);
     const closed = { meal: 'lunch', text: '※ 개교기념일 휴무', kind: 'note', name: null, price: null };
@@ -143,7 +148,7 @@ describe('A Restaurant with nothing to eat at that meal', () => {
       reason: `301동식당 serves no lunch on ${date}: its lunch menu holds only notes.`,
       lines: ['<data label="menu.line">※ 개교기념일 휴무</data>'],
     });
-    expect(replySchema.parse(response.body).lookup).toBeNull();
+    expect(lookupIn(response.body).scene.flags).toMatchObject([{ text: '301동식당 · 오늘 점심은 안 해요' }]);
   });
 });
 

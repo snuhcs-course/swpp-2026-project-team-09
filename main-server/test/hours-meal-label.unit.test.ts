@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { NO_CONTEXT } from '../src/assistant/dto/answer.dto.js';
@@ -55,7 +56,6 @@ const tool = restaurantHours({
   at: () => [],
   mealsOf: () => Promise.resolve(both()),
   placeOf: () => PLACE,
-  replan: () => Promise.reject(new Error('No meal plan on screen')),
 });
 
 const labelOf = (context: ToolContext): string | undefined =>
@@ -142,7 +142,6 @@ describe('A Restaurant whose corners have their own times', () => {
       at: () => [],
       mealsOf: () => Promise.resolve(byCorner()),
       placeOf: () => PLACE,
-      replan: () => Promise.reject(new Error('No meal plan on screen')),
     });
     const context = contextAt(at('15:00'));
 
