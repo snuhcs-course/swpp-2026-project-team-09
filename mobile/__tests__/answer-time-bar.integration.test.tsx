@@ -3,6 +3,7 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AssistantReply } from '@/api/assistant-types';
@@ -10,6 +11,7 @@ import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { fireEvent } from '@testing-library/react-native';
+import { StyleSheet, type ViewStyle } from 'react-native';
 import { screen } from './support/app';
 import { askOnMap, card, timeBar as bar } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
@@ -144,5 +146,38 @@ describe("the bar's head", () => {
     });
 
     expect(screen.getByTestId('time-band-words')).toHaveStyle({ paddingRight: 96 });
+  });
+});
+
+// The bar's translation as React holds it: where it rests (P04 ticket 61).
+function barShift(): number {
+  const style: unknown = screen.getByTestId('time-bar').props.style;
+  const flat = StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
+  const shift: unknown = Array.isArray(flat.transform) ? flat.transform[0] : undefined;
+  return typeof shift === 'object' && shift !== null && 'translateY' in shift ? Number(shift.translateY) : 0;
+}
+
+async function stepGrip(actionName: 'tuck' | 'untuck'): Promise<void> {
+  await fireEvent(screen.getByTestId('time-card-grip'), 'accessibilityAction', { nativeEvent: { actionName } });
+}
+
+// P04 ticket 61 (boards k1–k4). Partitions: tucked and back, by the grip's steps for a screen reader. Expected values:
+// a bar laid out 100 high under a stage top of 0 leaves a strip of 20.
+describe("the time bar's tuck", () => {
+  it('slides up by its grip until a strip shows, and comes back down', async () => {
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+    const timeBar = screen.getByTestId('time-bar');
+    await fireEvent(timeBar, 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 360, height: 100 } } });
+    const style: unknown = timeBar.props.style;
+    const top = Number(StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]).top);
+
+    await stepGrip('tuck');
+    expect(barShift()).toBe(-(top + 100 - 20));
+    expect(screen.getByTestId('time-card-grip')).toHaveProp('accessibilityActions', [
+      { name: 'untuck', label: '시간 카드 펴기' },
+    ]);
+
+    await stepGrip('untuck');
+    expect(barShift()).toBe(0);
   });
 });

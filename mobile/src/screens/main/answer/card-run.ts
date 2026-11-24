@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -107,6 +108,8 @@ function usePlace({ target, room, level, reduce, offset, aimed, ranLevel, runnin
   if (target !== null && target !== aimed.current && !runs) {
     aimed.current = target;
     offset.value = target;
+    // Set at once, the place ends any run under way.
+    running.current = false;
   } else if (target === null && aimed.current === null && room !== null) {
     offset.value = room;
   }

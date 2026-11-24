@@ -4,10 +4,14 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useState } from 'react';
 import { type LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
+import Reanimated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import type { AnswerReply, Plan } from '@/api/assistant-types';
@@ -30,6 +34,7 @@ import { SlotBand } from '../library/slot-band';
 import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
 import { TimeBand } from './time-band';
+import { type Tuck, useTuck } from './time-card-tuck';
 import { type BandFocus, useCorrections } from './use-corrections';
 import { addNameOf } from './who-words';
 
@@ -66,12 +71,41 @@ interface BarProps {
   offset?: number;
 }
 
+// The bar's grip: a press unfolds the bar or folds it again; a drag tucks it away or brings it back (`useTuck`), and a
+// screen reader steps it.
+function Grip(p: { tuck: Tuck; label: string; folded: boolean; onToggle: () => void }): ReactElement {
+  const { tuck, label, folded, onToggle } = p;
+  return (
+    <GestureDetector gesture={tuck.pan}>
+      <Pressable
+        accessibilityActions={tuck.actions}
+        accessibilityLabel={label}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: !folded }}
+        hitSlop={GRIP_SLOP}
+        onAccessibilityAction={({ nativeEvent }) => {
+          tuck.onAction(nativeEvent.actionName);
+        }}
+        onPress={onToggle}
+        style={styles.toggle}
+        testID="time-card-grip"
+      >
+        <View style={styles.grip} />
+      </Pressable>
+    </GestureDetector>
+  );
+}
+
 // The time bar: the answer's band in one white row at the top, its head the words and "＋ 같이", folded to one row, which a press on its grip
-// unfolds to the band's whole range, a row for each person, and folds again.
+// unfolds to the band's whole range, a row for each person, and folds again. Its grip pushes it up out of the way
+// (`useTuck`, P04 ticket 61).
 function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
   const [unfolded, setUnfolded] = useState(false);
   const [addWidth, setAddWidth] = useState(ADD_ROOM);
+  const [height, setHeight] = useState(0);
+  const barY = barTop(top) + offset;
+  const tuck = useTuck({ height, top: barY });
   const { lanes, startAt, now } = band.band;
   // Folded, the track runs over the free time around the span (P04 ticket 14); every bar unfolds to the band's whole
   // range, a bar of one lane too, so that a move further away is made there (PR 465's review).
@@ -79,11 +113,12 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
   const what = lanes.length > 1 ? '사람별 시간' : '하루 시간';
   const label = folded ? `${what} 펼치기` : `${what} 접기`;
   return (
-    <View
+    <Reanimated.View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+        setHeight(nativeEvent.layout.height);
         onHeight(nativeEvent.layout.height);
       }}
-      style={[styles.bar, { top: barTop(top) + offset }]}
+      style={[styles.bar, { top: barY }, tuck.moved, tuck.rested]}
       testID="time-bar"
     >
       <TimeBand
@@ -103,19 +138,15 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
           {add}
         </View>
       )}
-      <Pressable
-        accessibilityLabel={label}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: !folded }}
-        hitSlop={GRIP_SLOP}
-        onPress={() => {
+      <Grip
+        folded={folded}
+        label={label}
+        onToggle={() => {
           setUnfolded(folded);
         }}
-        style={styles.toggle}
-      >
-        <View style={styles.grip} />
-      </Pressable>
-    </View>
+        tuck={tuck}
+      />
+    </Reanimated.View>
   );
 }
 
