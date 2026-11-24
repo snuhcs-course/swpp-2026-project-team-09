@@ -25,7 +25,7 @@ Native files: none. Releases: an app over-the-air update.
 - Off holds at once, not only from the next launch, since Sentry's own handlers and its session tracking are already
   running: `reportError` does nothing, `beforeSend` drops every event, and the layer closes Sentry's client (how
   8.36.0 closes and starts a client again is checked against its reference and written under Comments). At the next
-  launch `startTelemetry()` starts nothing. A native crash kept from before is discarded, not sent. On again starts
+  launch `startTelemetry()` starts nothing. A native crash kept from before stays on the phone and is not sent while the switch is off; it is sent if the switch is turned on again (the SDK gives JavaScript no way to discard it). On again starts
   Sentry in that run.
 - The mobile README's "Crash reports" says the above.
 
