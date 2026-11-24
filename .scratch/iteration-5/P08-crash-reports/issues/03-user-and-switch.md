@@ -112,4 +112,4 @@ Native files: none. Releases: an app over-the-air update.
 - Agent time: about 1 hour 45 minutes in one implementation session, an estimate; about 40 minutes of it waited on
   test runs, one of which ran the whole unit suite by mistake (`--selectProjects unit <file>` took the file as a
   project name).
-- Tokens: to be filled in by the orchestrator, who has the session's usage.
+- Tokens: 229,442 in all for the implementation session, as its usage reports; the split into input, cache reads, cache writes and output was not available.
