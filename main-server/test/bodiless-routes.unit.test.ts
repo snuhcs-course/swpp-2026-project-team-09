@@ -30,6 +30,8 @@ describe('A request line without bodies', () => {
     ['an Assistant message', '/assistant/messages'],
     ['an Assistant answer', '/assistant/answers'],
     ['an Assistant tap', '/assistant/taps'],
+    ['a later Assistant route, nested deeper', '/assistant/messages/m-1/feedback'],
+    ['the Assistant itself', '/assistant'],
     ["the shuttles' positions collected", '/shuttle/vehicles/collected'],
     ["the shuttles' positions read", '/shuttle/vehicles'],
   ])('%s → no bodies', (_case, path) => {
@@ -45,6 +47,7 @@ describe('A request line without bodies', () => {
     ["an invitation's answer", '/quest-invitations/65298f3b-0000-4000-8000-000000000002/accept'],
     ['a Quest left', '/quests/65298f3b-0000-4000-8000-000000000002/leave'],
     ['a path that only starts like one', '/positionsx'],
+    ['a path that only starts like the Assistant', '/assistants'],
     ["the shuttle's route and stops", '/shuttle'],
     ["the shuttle's stops collected", '/shuttle/stops/collected'],
   ])('%s → bodies kept', (_case, path) => {

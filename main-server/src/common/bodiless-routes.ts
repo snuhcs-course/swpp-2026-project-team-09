@@ -7,7 +7,8 @@
 // The routes whose request line carries no body (README.md: Logging), each because the app promises Users that what
 // it carries is not kept: their positions and their Friends', a 학번 and a registered name, a timetable picture, and the
 // conversation with the Assistant; and the shuttles' positions, of which Production keeps no history. Any method, with
-// or without a trailing slash.
+// or without a trailing slash. Each pattern is an exact path, except the Assistant's, which is a prefix: every route
+// under /assistant carries the conversation, at any depth.
 export const BODILESS_ROUTES: readonly { kind: string; path: RegExp }[] = [
   { kind: 'position', path: /^\/positions\/?$/u },
   // A walking route starts at the User's position.
@@ -24,7 +25,7 @@ export const BODILESS_ROUTES: readonly { kind: string; path: RegExp }[] = [
   { kind: 'profile', path: /^\/lobby\/?$/u },
   { kind: 'profile', path: /^\/library\/room-requests\/[^/]+\/companions\/?$/u },
   { kind: 'timetable picture', path: /^\/timetable\/readings\/?$/u },
-  { kind: 'Assistant', path: /^\/assistant\/[^/]+\/?$/u },
+  { kind: 'Assistant', path: /^\/assistant(?:\/|$)/u },
   // The worker's Collection every 15 seconds, and the app's read.
   { kind: 'shuttle positions', path: /^\/shuttle\/vehicles(?:\/collected)?\/?$/u },
 ];
