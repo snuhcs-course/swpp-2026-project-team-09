@@ -160,8 +160,8 @@ describe('the sheet’s steps', () => {
   });
 });
 
-// Partitions: at middle, a drag up and down within the content's range, then down past its top; at low, a drag up on a
-// content longer than what shows.
+// Partitions: at middle, a drag up and down within the content's range, then down past its top; a drag on the content
+// while the card runs to its step; at low, a drag up on a content longer than what shows.
 describe('a drag on the content', () => {
   it('scrolls a long content at middle and leaves the card there until the content is back at its top', async () => {
     const setLevel = jest.fn<undefined, [Level]>();
@@ -179,6 +179,22 @@ describe('a drag on the content', () => {
     // 50 scrolls the content back to its top, and the card comes 200 down, nearer low than middle.
     await drag(250);
     expect(setLevel).toHaveBeenCalledWith('low');
+  });
+
+  // PR 545's review: a drag that only scrolled stopped the card's run part-way between two steps.
+  it('leaves a card running to its step to arrive there when the drag only scrolls the content', async () => {
+    const view = await render(card('low'));
+    await layContent(1000);
+    await settle();
+
+    await view.rerender(card('mid'));
+    await act(() => {
+      jest.advanceTimersByTime(30);
+    });
+    await drag(-60);
+    await settle();
+
+    expect(shown()).toBe(MID);
   });
 
   it('scrolls a long content at low too, and leaves the card low', async () => {
