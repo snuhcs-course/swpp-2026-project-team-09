@@ -143,7 +143,8 @@ Production runs everything below.
   pill at the top, and the answer as one card at the bottom and as marks and routes on the map. It answers about
   today's menus and the shuttle, finds Global Events and recruiting parties, understands the campus's short names
   (학관, 중도), and turns one sentence into a Proposal that the User makes or edits. 500 messages per User a day; the
-  conversation stays on the phone. It calls Claude Haiku 5.5 through the Anthropic API or OpenRouter, by the key an
+  server stores no conversation, and each request's conversation and answer stay on its request line in the main
+  server's log until the pod is replaced. It calls Claude Haiku 5.5 through the Anthropic API or OpenRouter, by the key an
   Administrator chooses. Added in Iteration 3 and kept: searches with a time window that leave out parties the User
   cannot enter, joining before recruiting, 공강 파티, 관정도서관 booking, answers about the tutorial, and 시설
   예약하기 on a Proposal at a bookable Place. Added in Iteration 4:

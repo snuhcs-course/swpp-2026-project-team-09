@@ -404,7 +404,8 @@ An upload is refused, and nothing is stored, with these codes. The three numbers
 What is stored: only each User's latest position, in Redis under `position:<userId>` as
 `{ "latitude", "longitude", "measuredAt", "placeId" }`, `placeId` being the Place it is in or null, which expires 10
 minutes after it was stored. Redis counts the 10
-minutes. No position is written to the database or to a log, and no history is kept. The position is cleared when the
+minutes. No position is written to the database, and no history is kept; an uploaded position, like any request's
+body, is on its request line in the pod's log until the pod is replaced ([Logging](#requests)). The position is cleared when the
 User turns the Master Switch off, uploads a position off campus or inside one of their Private Zones, makes a Private
 Zone round the position stored, and when the User's session ends, by a sign-in on
 another phone, a sign-out or a used refresh token, so that the phone's last position does not linger.
@@ -1737,8 +1738,9 @@ The app asks for a walking route between two points and draws its line. The main
 - Any other answer, such as a quota or key error, or no answer within 5 seconds, gets 502
   `{ "statusCode": 502, "error": "Bad Gateway", "message": "Kakao's walking route API failed." }`. The server logs a
   warning with Kakao's HTTP status and Kakao's own `status` or error `code`, such as
-  `Kakao's walking route API failed: HTTP 429 {"code":-10}`, or why Kakao gave no answer. The log never holds a route
-  or the points asked for.
+  `Kakao's walking route API failed: HTTP 429 {"code":-10}`, or why Kakao gave no answer. The warning never holds a
+  route or the points asked for; the request line holds the route answered, up to 2 KB, and not the points, which are
+  in the query string ([Logging](#requests)).
 - A coordinate that is missing, is not a decimal number, or lies outside -90 to 90 for a latitude or -180 to 180 for a
   longitude gets 400 with a message that starts with the field, and Kakao is not asked.
 
@@ -2139,8 +2141,9 @@ blocks itself.
 or `{ "kind": "none" }` for a picture with no timetable. Refused with 400 for a body of another shape, 413 above the
 limit, 422 `UNREADABLE_IMAGE` for bytes that are no picture the model takes, 429 once a User has asked
 `TIMETABLE_READING_DAILY` times that day in Korea (a setting, 10 unless set), and 503 when the model fails or the server has no key by the
-name `llm.key` gives; the app then reads the picture on the phone. The picture is neither stored nor logged, nor is
-what was read; the log says only how many classes and blocks left out. A reading makes at most 7 model calls
+name `llm.key` gives; the app then reads the picture on the phone. The picture is not stored, nor is what was read.
+Outside the request line, which holds the first 2 KB of each body ([Logging](#requests)), the log says only how many
+classes and blocks left out. A reading makes at most 7 model calls
 (`MOST_MODEL_CALLS`: the layout and the text, at most 3 fading ends asked again, one re-read, one second look at
 near-miss names) and the grid at most 48 blocks; `TIMETABLE_READING_TIMEOUT_MS` (24 000) is one deadline over all of
 a reading's calls, under the phone's 25 s, and `TIMETABLE_READING_MAX_OUTPUT_TOKENS` (6000) bounds each call. A
@@ -2436,6 +2439,7 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     a model error, exhausted credit (OpenRouter's 402) or a reached spend limit (Anthropic's 429), the time running out, the step cap reached without an answer,
     or a run with no text and nothing to show. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
     message's text, the model's answer or an error's message or body, which can hold the request sent to the model.
+    The request line holds the conversation sent and the reply, as it holds every body ([Logging](#requests)).
 
 - `POST /assistant/answers` with a User's access token, the `input` of an answer changed as the User dragged the time
   band or added or removed a Friend, and where the User is now (`location`, `{ "latitude", "longitude" }`, null or left
@@ -2883,7 +2887,7 @@ the hard stop. The baseline on both providers (A02, 2026-11-15) is recorded besi
 The recorder (`eval/recorder.ts`) wraps the model and records each step: its tool calls and inputs, its finish
 reason and its usage with cache reads and writes. A step cut at the output limit also keeps `cut`: its content parts,
 its reasoning tokens and the provider's response as it came, which the benchmark's fetch (`RawResponses`) keeps because
-the provider library's schema drops what it does not know. Only the trace holds these, never the server's logs. The tool results come through the run observer, the one seam in the
+the provider library's schema drops what it does not know. Only the trace holds these; the server's logs hold at most a cut step's text, as the reply on its request line. The tool results come through the run observer, the one seam in the
 server: `runFeature` takes an optional `RunObserver` (`adapter.ts`) that it tells of each tool's result or error and
 each step's end, with the step's tool errors, so that a call whose input the tool's schema refused before it ran
 shows its error too, and of the reply's text before the Approval line. `AssistantService` passes the one bound to
@@ -3239,6 +3243,10 @@ src/
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
 │   ├── logger.ts                    the logger LOG_FORMAT chooses, text or JSON lines (Logging)
+│   ├── request-context.ts           the request being handled, its ID and User, for every line it logs (Logging)
+│   ├── request-logging.middleware.ts  the request ID and one line per request, with its bodies (Logging)
+│   ├── log-body.ts                  a body as the request line writes it: secrets masked, cut at 2 KB (Logging)
+│   ├── unexpected-error.filter.ts   logs an error no handler expected and answers 500 with the request ID (Logging)
 │   ├── seed-directory.ts            where the seed files are, and how one is read
 │   ├── geometry.ts                  a position, and whether a ring holds it or how far it is from it
 │   ├── campus-boundary.ts           the Campus Boundary, read from its seed file
@@ -3439,17 +3447,66 @@ too.
 | info  | `logger.log()`   | A notable normal event: the server started, a scheduled job began or ended with its counts, a setting turned a feature on or off                        | No              |
 
 - No debug or verbose: the server prints neither. Fatal counts as error.
-- A User's mistake (400, 401, 403, 404, 429) is not logged.
-- NestJS logs an unhandled 500 itself; do not log it a second time.
+- A User's mistake (400, 401, 403, 404, 429) gets no line of its own; its request line shows it.
+- The exception filter logs an error no handler expected; do not log it a second time.
 - Log a failure once, where it is finally handled.
 - A loop logs no line per item, only one summary ("N of M").
 - A line says what failed, then a colon and the cause, as a full English sentence in [GLOSSARY](../GLOSSARY.md)
   words, with IDs (User ID, Quest ID), such as `The push to User 3f2c… was not sent: Expo answered 503`.
-- Never logged, at any level: tokens, keys, passwords, Authorization headers, cookies, webhook URLs; names, emails,
-  student IDs, phone numbers (a person is named by ID); coordinates, timetables, the Assistant's prompts and answers;
-  whole request or response bodies (status codes and error types only).
+- Never logged, at any level: tokens, keys, passwords, Authorization headers, cookies, webhook URLs, query strings, IP
+  addresses.
+- Outside the request lines, also never logged: names, emails, student IDs, phone numbers (a person is named by ID);
+  coordinates, timetables, the Assistant's prompts and answers; request or response bodies.
 
 Existing lines that break a rule are left as they are until someone changes that code.
+
+### Requests
+
+Every request but the health checks leaves one info line, the request line, when its response has been sent. The
+lines below are made up:
+
+```text
+{"level":"log","pid":1,"timestamp":1795500533415,"message":"PUT /quests/65298f3b-… 200 84ms","context":"HTTP","req_body":"{\"title\":\"점심\"}","res_body":"{\"id\":\"65298f3b-…\",\"title\":\"점심\"}","req_id":"3f1c0d6e-…","user_id":"8a1d2c4e-…"}
+```
+
+- `message` is the method, the path with its IDs but without its query string, the status and the time taken.
+  `req_body` and `res_body` are the request's and the response's bodies; a request or a response with none has no such
+  field. `/health/live` and `/health/ready` leave no line: the load balancer and the kubelet call them every few seconds.
+- The middleware `src/common/request-logging.middleware.ts` makes the line, on every path, so a request a guard refuses,
+  one the idempotency interceptor answers from its store and a path no route matches each leave one too.
+- The bodies pass `logBody` (`src/common/log-body.ts`): the value of any field whose name holds `token`, `password`,
+  `secret` or `authorization`, in any case and at any depth, becomes `"[masked]"`; the result is cut at 2 KB and ends
+  in `…(truncated)` when cut; a body that is not JSON, such as a file, is written as its type and size, such as
+  `[multipart/form-data 48213 bytes]`. Everything else is written as it was sent: a User's conversation with the
+  Assistant, positions, timetables and profiles, up to 2 KB. A timetable picture sent for reading is base64 in JSON, so
+  its first 2 KB are on the request line.
+- So the request lines hold what Users send and receive. They stay in the pod's log until the pod is replaced and are
+  never posted to Slack. Copy no request line into an issue, a pull request, a chat or a document: take only what is
+  needed, with no person and no value in it.
+
+**The request ID.** The middleware makes an ID for each request (`crypto.randomUUID()`) and answers it in the
+`X-Request-Id` header of every response; it never takes one the client sends. While the request is handled, every JSON
+line, whichever class logs it, carries it as `req_id`, and, once a guard has let a User or an Administrator through,
+their ID as `user_id`. Fluent Bit keeps `req_id` on a Slack post, so the request's other lines can be found with it
+(the infra README's "Server logs in Slack"). The text format prints neither.
+
+- `src/common/request-context.ts` holds the request's context in Node's `AsyncLocalStorage`; the middleware opens it,
+  and `AccessTokenGuard` and `AdministratorGuard` write the ID they let through. It depends on nothing else of the
+  server's, so the socket and worker servers can take it over.
+- The logger of `src/common/logger.ts` adds `req_id` and `user_id` to a JSON line by overriding `ConsoleLogger`'s
+  `getJsonLogObject`, which NestJS does not document: check it when NestJS is upgraded. A plain object given after the
+  message puts its fields on the JSON line (`flattenParams`), as the request line's bodies are:
+  `this.logger.log(message, { req_body })`; the logger's own fields win over a field of the same name.
+
+**Errors no handler expected.** The global filter `src/common/unexpected-error.filter.ts` takes every exception of an
+HTTP request:
+
+- An `HttpException`, which the code throws on purpose, is answered as NestJS answers it, and logged nowhere but on the
+  request line.
+- Anything else is logged once, as an error line: `<method> <path> 500 <ms>ms - <name>: <message>`, with the whole stack
+  as `stack`, and answered `500 { "statusCode": 500, "message": "Internal server error", "requestId": "<req_id>" }`.
+  NestJS's own handler does not log it again. The error line is posted to Slack; the same request's request line, with
+  the bodies, is found in the pod's log by its `req_id`.
 
 ## Signals
 
