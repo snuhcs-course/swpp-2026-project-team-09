@@ -10,6 +10,7 @@
 # 2026-11-18  Opus 5.5   prompted by fyoon46
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-21  Opus 5.5   prompted by fyoon46
+# 2026-11-24  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Release workflow's steps (.github/workflows/release.yml), one command each. The functions under Deciding take
@@ -194,6 +195,29 @@ app_version_json() {
   jq --null-input --arg latest "$version" --arg minimum "$minimum" --arg android "$android" --arg ios "$ios" \
     --arg url "$url" '{latest: $latest, minimum: $minimum, fingerprint: {android: $android, ios: $ios},
     download: {android: $url, ios: null}}'
+}
+
+# Prints upload or skip for an upload to Sentry of what $1 names, given SENTRY_AUTH_TOKEN, SENTRY_ORG and
+# SENTRY_PROJECT in the environment. Without the token, as in a fork or a repository without the secret, the upload is
+# skipped with a notice, and the Release goes on with stacks that stay minified. With it, the organisation and the
+# project must be set too. It prints none of the three values.
+sentry_upload() {
+  local what=$1 name
+  if [[ -z "${SENTRY_AUTH_TOKEN:-}" ]]; then
+    echo "::notice::Not uploaded to Sentry: $what. The repository secret SENTRY_AUTH_TOKEN is not set, so the" \
+      "stacks from it stay minified." >&2
+    echo skip
+    return
+  fi
+  for name in SENTRY_ORG SENTRY_PROJECT; do
+    if [[ -z "${!name:-}" ]]; then
+      echo "::error::SENTRY_AUTH_TOKEN is set but the repository variable $name is not, so $what cannot be" \
+        "uploaded to Sentry." >&2
+      return 1
+    fi
+  done
+  echo "sentry: uploading $what" >&2
+  echo upload
 }
 
 # Prints `name<TAB>status<TAB>conclusion` for each job of a CI run, given the run's status and GitHub's jobs answer on
@@ -487,6 +511,51 @@ clean() {
   kubectl delete --namespace "$NAMESPACE" --ignore-not-found "${objects[@]}"
 }
 
+# Uploads the source maps of the update that `eas update` has just published, given the folder it exported the update
+# to (mobile/dist), with Sentry's script for Expo updates from @sentry/react-native. The Metro plugin gave each bundle
+# and its map one Debug ID, by which Sentry finds the map for a stack, so no release name is passed. Skipped without
+# SENTRY_AUTH_TOKEN (sentry_upload). The script reads the token, the organisation and the project from the environment,
+# never from its command line, and passes as an upload a folder without maps, so each bundle's map is checked first.
+# Any failure says that the update is already out.
+upload_update_sourcemaps() {
+  local dist=$1 mode bundles=() bundle missing=()
+  if ! mode=$(sentry_upload "the update's source maps"); then
+    update_sourcemaps_failed
+    return 1
+  fi
+  [[ "$mode" == upload ]] || return 0
+  if [[ -d "$dist" ]]; then
+    dist=$(cd "$dist" && pwd)
+    mapfile -t bundles < <(find "$dist" -type f \( -name '*.hbc' -o -name '*.js' \) | sort)
+  fi
+  for bundle in "${bundles[@]}"; do
+    [[ -f "$bundle.map" ]] || missing+=("${bundle#"$dist"/}")
+  done
+  if ((${#bundles[@]} == 0)); then
+    echo "sentry: $1 holds no bundle" >&2
+    update_sourcemaps_failed
+    return 1
+  fi
+  if ((${#missing[@]} > 0)); then
+    echo "sentry: no source map beside ${missing[*]}" >&2
+    update_sourcemaps_failed
+    return 1
+  fi
+  echo "sentry: ${#bundles[@]} bundles with their maps in $1" >&2
+  if ! (cd "$REPOSITORY_ROOT/mobile" &&
+    PATH="$PATH:$REPOSITORY_ROOT/mobile/node_modules/.bin" sentry-expo-upload-sourcemaps "$dist"); then
+    update_sourcemaps_failed
+    return 1
+  fi
+}
+
+update_sourcemaps_failed() {
+  echo "::error::The update is published, but its source maps did not reach Sentry, so the stacks from it stay" \
+    "minified. Re-run this job: its ordering check publishes the same bundle again and uploads its maps, or skips" \
+    "if a newer commit's bundle is out. Or upload them by hand (infra/production/README.md § Uploading an update's" \
+    "source maps by hand)." >&2
+}
+
 main() {
   local command=$1
   shift
@@ -500,6 +569,8 @@ main() {
     check-published) check_published "$@" ;;
     check-apk) check_apk "$@" ;;
     app-version-json) app_version_json "$@" ;;
+    sentry-upload) sentry_upload "$@" ;;
+    upload-update-sourcemaps) upload_update_sourcemaps "$@" ;;
     fingerprint-and-decide) fingerprint_and_decide "$@" ;;
     gate) gate "$@" ;;
     write-secrets) write_secrets "$@" ;;

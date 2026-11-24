@@ -835,7 +835,7 @@ It then computes the app's Android and iOS fingerprints and compares them with `
 - The file cannot be downloaded or read: it fails.
 
 After publishing, it checks that EAS Update published each platform under the fingerprint it computed, and fails if
-not.
+not. Then it uploads the update's source maps to Sentry ([Source maps in Sentry](#source-maps-in-sentry)).
 
 It takes the build settings ([Its settings](#its-settings)) only from these repository variables, the
 Organization's developer robot token from the repository secret `EXPO_TOKEN`, and, for an APK, the Kakao key from the
@@ -849,8 +849,35 @@ repository secret `KAKAO_NATIVE_APP_KEY`. It alone has `contents: write`, to cre
 | `PRODUCTION_APP_GOOGLE_IOS_CLIENT_ID`  | `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` |
 | `PRODUCTION_APP_GOOGLE_IOS_URL_SCHEME` | `GOOGLE_IOS_URL_SCHEME`            |
 | `PRODUCTION_APP_INVITE_LINK_HOST`      | `INVITE_LINK_HOST`                 |
+| `PRODUCTION_APP_SENTRY_DSN`            | `EXPO_PUBLIC_SENTRY_DSN`           |
 
 Each must equal the native build's value: a different one changes the fingerprint or points the bundle elsewhere.
+`PRODUCTION_APP_SENTRY_DSN` alone may be unset: the app then reports no crash, and the Release goes on.
+
+### Source maps in Sentry
+
+A stack from a minified bundle names only `index.android.bundle` and a column. Sentry reads it against the bundle's
+source map, which the Release uploads. Sentry's Metro plugin (`mobile/metro.config.js`) gives each bundle and its map
+one Debug ID, by which Sentry finds the map for a stack, so no release name has to match.
+
+The uploads take the repository secret `SENTRY_AUTH_TOKEN` and the repository variables `SENTRY_ORG` and
+`SENTRY_PROJECT`, the organisation's and the project's slugs. The `release app` job gives the three to the two steps
+that upload and to no other step, by environment, never on a command line:
+
+- **Build the APK**, on a native Release: Sentry's Gradle step (`sentry.gradle.kts`, from the Expo plugin) uploads the
+  APK's own bundle and source map with `sentry-cli` as part of `./gradlew assembleRelease`. A failed upload fails the
+  build, before the APK or `app-version.json` goes out.
+- **Upload the update's source maps to Sentry**, after every publish: `eas update` exports the bundles with their source
+  maps (`expo export --source-maps`) to `mobile/dist`, and `release.sh upload-update-sourcemaps dist` checks that each
+  bundle has its map and uploads them with Sentry's script for Expo updates, `sentry-expo-upload-sourcemaps` from
+  `@sentry/react-native`. The update is out by then: a failed upload fails the job with an error that says so, and the
+  stacks from that update stay minified until its maps are uploaded
+  ([Uploading an update's source maps by hand](#uploading-an-updates-source-maps-by-hand)).
+
+Without `SENTRY_AUTH_TOKEN`, as in a fork, both uploads are skipped with a notice, the APK is built with
+`SENTRY_DISABLE_AUTO_UPLOAD=true`, and the Release publishes as it would without Sentry. With the token but without
+`SENTRY_ORG` or `SENTRY_PROJECT`, the step that would upload fails, naming the variable. The UAT's and the Dev Server's
+builds get no DSN and upload nothing.
 
 The EAS project keeps no environment variables. `--environment production` is required since eas-cli 26 and would
 load any variables stored on EAS for that environment, so they must stay empty for the bundle to use only the
@@ -971,7 +998,13 @@ INVITE_LINK_HOST=api.snunow.com
 KAKAO_NATIVE_APP_KEY=<the team's key>
 EXPO_PUBLIC_RELEASE_TAG=snunow/app/26.11.13-1
 EXPO_PUBLIC_RELEASE_COMMIT=<the tag's full commit>
+EXPO_PUBLIC_SENTRY_DSN=<the Sentry project's DSN>
+SENTRY_DISABLE_AUTO_UPLOAD=true
 ```
+
+`SENTRY_DISABLE_AUTO_UPLOAD=true` skips Sentry's upload of the source map, which fails a release build without a token;
+to upload it from a hand build, leave it out and give `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` and `SENTRY_PROJECT` in the
+environment instead ([Source maps in Sentry](#source-maps-in-sentry)).
 
 `ANDROID_X86_64` is never set, and `UPDATE_CHANNEL` is left unset, which means `production`. The release tag and commit are the Release's own, below; 내 정보 shows them.
 
@@ -1032,7 +1065,8 @@ Its `release app` job finds that the fingerprint changed and `version` was raise
 
 1. builds the APK as the hand build does (`CI=1 pnpm expo prebuild --platform android --no-install`, then
    `./gradlew assembleRelease` with JDK 21 and the runner's Android SDK), with the build settings from the repository
-   variables and the Kakao key from the repository secret `KAKAO_NATIVE_APP_KEY`;
+   variables and the Kakao key from the repository secret `KAKAO_NATIVE_APP_KEY`; with `SENTRY_AUTH_TOKEN`, the build
+   uploads its bundle's source map to Sentry ([Source maps in Sentry](#source-maps-in-sentry));
 2. checks that the APK embeds the computed Android fingerprint (`assets/fingerprint`) and is signed by the shared debug
    key (SHA-256 `fac61745…3b9c`), so that it installs over the builds on phones;
 3. attaches it, named after the tag with `/` as `-`, to the tag's GitHub Release, creating the Release if there is
@@ -1076,7 +1110,35 @@ eas update --channel production --environment production --platform all --messag
 `--environment` is required in a non-interactive run since eas-cli 26. The project keeps no variables on EAS, so it
 adds nothing, and the settings come from `mobile/.env`.
 
-An installed app downloads it the next time it starts and runs it from the start after that.
+An installed app downloads it the next time it starts and runs it from the start after that. Its source maps are then
+uploaded as below.
+
+### Uploading an update's source maps by hand
+
+When the Release's step **Upload the update's source maps to Sentry** fails, the update is already out, and the stacks
+from it stay minified until its maps reach Sentry.
+
+The simplest way is **Re-run failed jobs** on the run, once Sentry answers again. The `release app` job runs again with
+the same tag: its ordering check finds this commit's bundle published and publishes it again, as a new update that
+phones take at their next start, and uploads that update's maps. If a newer commit's bundle has been published since,
+the check skips instead, and nothing is uploaded: upload by hand.
+
+By hand, from `mobile/` at the tagged commit with `pnpm install` done and the settings of
+[Publishing an update by hand](#publishing-an-update-by-hand) in `mobile/.env`, `EXPO_PUBLIC_SENTRY_DSN` among them:
+export the bundles as `eas update` did, put the three Sentry settings in the environment without typing the token on
+the command line, and upload:
+
+```bash
+npx expo export --output-dir dist --source-maps --platform ios --platform android --clear
+read -rs SENTRY_AUTH_TOKEN && export SENTRY_AUTH_TOKEN
+export SENTRY_ORG=<the organisation's slug> SENTRY_PROJECT=<the project's slug>
+../.github/release/release.sh upload-update-sourcemaps dist
+```
+
+A bundle exported again from the same commit with the same settings is expected to be the same bundle, with the same
+Debug ID, so its map serves the published update's stacks. Check it on the update's next error: Sentry names a source
+file of ours, not `index.android.bundle`. If it does not, publish the bundle again by hand and upload that update's
+`dist` the same way.
 
 ## The Production iOS build
 

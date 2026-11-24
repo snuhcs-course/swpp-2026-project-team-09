@@ -2009,6 +2009,16 @@ from the environment when a native build is made, so they change no fingerprint.
 build, put a test project's DSN in `.env` and start the app again; a debug build uploads no source map, and its stack
 is read by the development server.
 
+### The Release
+
+The Release workflow's app job takes the DSN from the repository variable `PRODUCTION_APP_SENTRY_DSN`, and uploads
+source maps with the repository secret `SENTRY_AUTH_TOKEN` and the variables `SENTRY_ORG` and `SENTRY_PROJECT`: the
+APK's build uploads its own bundle's map, and after `eas update` a step uploads that update's maps. Without the token
+both are skipped with a notice and the Release goes on; a failed upload after an update fails the job, which says that
+the update is out. How to upload them again is in
+[Source maps in Sentry](../infra/production/README.md#source-maps-in-sentry). The UAT's and the Dev Server's APKs get no
+DSN.
+
 Adding Sentry changed the app's native part, so it came with `version` 1.0.4 and a new APK
 ([The Production APK](../infra/production/README.md#the-production-apk)).
 

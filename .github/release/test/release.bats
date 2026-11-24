@@ -10,11 +10,13 @@
 # 2026-11-18  Opus 5.5   prompted by fyoon46
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-21  Opus 5.5   prompted by fyoon46
+# 2026-11-24  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Release workflow's script, through its commands: the name check, the gate with gh faked on PATH, the app's
 # publish decision, its ordering and its check of the published updates, its checks of a built APK and its new
-# app-version.json, the secrets files, and the choice of generated objects to delete.
+# app-version.json, the uploads to Sentry with Sentry's script faked on PATH, the secrets files, and the choice of
+# generated objects to delete.
 
 # The app's decision tests read $stderr, which bats's `run --separate-stderr` sets.
 # shellcheck disable=SC2154
@@ -363,6 +365,141 @@ print_certs() {
     [ "$output" = '' ]
     [[ "$stderr" == *"needs version as x.y.z"* ]] || false
   done
+}
+
+TOKEN=sntrys_eyJpYXQiOjE3NjQwMDAwMDB9_faketoken0123456789
+
+# Sets the Sentry settings the Release's upload steps get, from the secret and the two variables; an empty argument
+# leaves that one unset, as a repository without it does.
+sentry_settings() {
+  unset SENTRY_AUTH_TOKEN SENTRY_ORG SENTRY_PROJECT
+  [[ -z "$1" ]] || export SENTRY_AUTH_TOKEN=$1
+  [[ -z "$2" ]] || export SENTRY_ORG=$2
+  [[ -z "$3" ]] || export SENTRY_PROJECT=$3
+}
+
+# Writes what `eas update` exports to mobile/dist: an Android and an iOS Hermes bundle, each with its source map
+# unless the further arguments name the platforms without one, and an asset.
+exported_update() {
+  local dist=$BATS_TEST_TMPDIR/dist platform
+  mkdir -p "$dist/_expo/static/js/android" "$dist/_expo/static/js/ios" "$dist/assets"
+  for platform in android ios; do
+    printf 'bundle' >"$dist/_expo/static/js/$platform/entry-0a1b2c.hbc"
+    [[ " $* " == *" $platform "* ]] ||
+      printf '{"version":3,"debugId":"5f0c2a9d-8e7f-4a5b-9c3d-2e1f0a9b8c7d"}' \
+        >"$dist/_expo/static/js/$platform/entry-0a1b2c.hbc.map"
+  done
+  printf '{"version":0,"bundler":"metro"}' >"$dist/metadata.json"
+  printf 'png' >"$dist/assets/3f2a1b"
+}
+
+# Stands in for Sentry's sentry-expo-upload-sourcemaps on PATH: it records its arguments, its folder and which Sentry
+# settings it got, and exits with $FAKE_UPLOAD_STATUS.
+fake_uploader() {
+  cat >"$BATS_TEST_TMPDIR/bin/sentry-expo-upload-sourcemaps" <<'SCRIPT'
+#!/usr/bin/env bash
+printf 'upload %s in %s with token=%s org=%s project=%s\n' "$*" "$PWD" "${SENTRY_AUTH_TOKEN:+set}" \
+  "${SENTRY_ORG:-}" "${SENTRY_PROJECT:-}" >>"$FAKE_CALLS"
+exit "${FAKE_UPLOAD_STATUS:-0}"
+SCRIPT
+  chmod +x "$BATS_TEST_TMPDIR/bin/sentry-expo-upload-sourcemaps"
+}
+
+@test "without SENTRY_AUTH_TOKEN, the APK's upload and the update's are skipped with a notice and the job goes on" {
+  fake_uploader
+  exported_update
+  local org
+  for org in '' snunow; do
+    sentry_settings '' "$org" "${org:+snu-now-app}"
+
+    run --separate-stderr "$RELEASE" sentry-upload "the APK's source map"
+    [ "$status" -eq 0 ]
+    [ "$output" = skip ]
+    [[ "$stderr" == "::notice::Not uploaded to Sentry: the APK's source map. The repository secret"* ]] || false
+
+    run --separate-stderr "$RELEASE" upload-update-sourcemaps "$BATS_TEST_TMPDIR/dist"
+    [ "$status" -eq 0 ]
+    [[ "$stderr" == "::notice::Not uploaded to Sentry: the update's source maps."* ]] || false
+  done
+  # Nothing reaches Sentry, even with no exported update at all.
+  run --separate-stderr "$RELEASE" upload-update-sourcemaps "$BATS_TEST_TMPDIR/nothing"
+  [ "$status" -eq 0 ]
+  [ "$(cat "$FAKE_CALLS")" = '' ]
+}
+
+@test "with SENTRY_AUTH_TOKEN, the APK's build uploads, and needs the organisation and the project, printing no token" {
+  sentry_settings "$TOKEN" snunow snu-now-app
+  run --separate-stderr "$RELEASE" sentry-upload "the APK's source map"
+  [ "$status" -eq 0 ]
+  [ "$output" = upload ]
+  [[ "$stderr" != *"$TOKEN"* ]] || false
+
+  local missing
+  for missing in SENTRY_ORG SENTRY_PROJECT; do
+    sentry_settings "$TOKEN" snunow snu-now-app
+    unset "$missing"
+    run --separate-stderr "$RELEASE" sentry-upload "the APK's source map"
+    [ "$status" -eq 1 ] || { echo "accepted without $missing"; false; }
+    [ "$output" = '' ]
+    [[ "$stderr" == *"::error::SENTRY_AUTH_TOKEN is set but the repository variable $missing is not"* ]] || false
+    [[ "$stderr" != *"$TOKEN"* ]] || false
+  done
+}
+
+@test "with SENTRY_AUTH_TOKEN, the update's source maps are uploaded once from mobile/, the token passed by environment alone" {
+  fake_uploader
+  exported_update
+  sentry_settings "$TOKEN" snunow snu-now-app
+
+  run --separate-stderr "$RELEASE" upload-update-sourcemaps "$BATS_TEST_TMPDIR/dist"
+
+  [ "$status" -eq 0 ]
+  local mobile
+  mobile=$(cd "$BATS_TEST_DIRNAME/../../../mobile" && pwd)
+  [ "$(cat "$FAKE_CALLS")" = "upload $BATS_TEST_TMPDIR/dist in $mobile with token=set org=snunow project=snu-now-app" ]
+  [[ "$stderr" == *"sentry: 2 bundles with their maps in $BATS_TEST_TMPDIR/dist"* ]] || false
+  [[ "$output$stderr" != *"$TOKEN"* ]] || false
+}
+
+@test "with SENTRY_AUTH_TOKEN, a failed upload fails the job, saying the update is out and how to upload again" {
+  fake_uploader
+  exported_update
+  sentry_settings "$TOKEN" snunow snu-now-app
+  export FAKE_UPLOAD_STATUS=1
+
+  run --separate-stderr "$RELEASE" upload-update-sourcemaps "$BATS_TEST_TMPDIR/dist"
+
+  [ "$status" -eq 1 ]
+  [ "$(wc -l <"$FAKE_CALLS")" -eq 1 ]
+  [[ "$stderr" == *"::error::The update is published, but its source maps did not reach Sentry"* ]] || false
+  [[ "$stderr" == *"Re-run this job"* ]] || false
+  [[ "$stderr" == *"infra/production/README.md § Uploading an update's source maps by hand"* ]] || false
+  [[ "$stderr" != *"$TOKEN"* ]] || false
+}
+
+@test "with SENTRY_AUTH_TOKEN, an export without a bundle or with a bundle without its map, or a missing variable, fails the same way before any upload" {
+  fake_uploader
+  sentry_settings "$TOKEN" snunow snu-now-app
+
+  run --separate-stderr "$RELEASE" upload-update-sourcemaps "$BATS_TEST_TMPDIR/dist"
+  [ "$status" -eq 1 ]
+  [[ "$stderr" == *"sentry: $BATS_TEST_TMPDIR/dist holds no bundle"* ]] || false
+  [[ "$stderr" == *"::error::The update is published"* ]] || false
+
+  exported_update ios
+  run --separate-stderr "$RELEASE" upload-update-sourcemaps "$BATS_TEST_TMPDIR/dist"
+  [ "$status" -eq 1 ]
+  [[ "$stderr" == *"sentry: no source map beside _expo/static/js/ios/entry-0a1b2c.hbc"* ]] || false
+  [[ "$stderr" == *"::error::The update is published"* ]] || false
+
+  exported_update
+  sentry_settings "$TOKEN" snunow ''
+  run --separate-stderr "$RELEASE" upload-update-sourcemaps "$BATS_TEST_TMPDIR/dist"
+  [ "$status" -eq 1 ]
+  [[ "$stderr" == *"the repository variable SENTRY_PROJECT is not"* ]] || false
+  [[ "$stderr" == *"::error::The update is published"* ]] || false
+
+  [ "$(cat "$FAKE_CALLS")" = '' ]
 }
 
 @test "the gate goes on once every CI job of the commit has passed, and only reads CI's runs and their jobs" {
