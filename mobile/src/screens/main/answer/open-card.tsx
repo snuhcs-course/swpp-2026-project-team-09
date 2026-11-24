@@ -21,7 +21,7 @@ import { type Caps, FADE, heightsOf, underOf, useCaps } from './card-caps';
 import { type Level, type LevelHeights, LEVELS, stepsOf } from './card-levels';
 import { type CardMotion, useCardMotion } from './card-motion';
 import { CONTENT_TOP, type FrameCardProps, LOWERED, OPEN_EDGE } from './frame-card-parts';
-import { CardHeader } from './card-header';
+import { CardTop } from './card-header';
 import { useHeldHeight, useTopWhen } from './held-height';
 import { CloseHint } from './raise-handle';
 import { SheetHint, useSheetHint } from './sheet-hint';
@@ -37,19 +37,6 @@ import { SheetHint, useSheetHint } from './sheet-hint';
 const FADED: ViewStyle = {
   experimental_backgroundImage: `linear-gradient(to bottom, rgba(255, 255, 255, 0), ${color.surface})`,
 };
-
-function Top(p: { props: FrameCardProps; steps: readonly Level[]; onHeight: (h: number) => void }): ReactElement {
-  const { raising = null, onClose = null, onAskNew = null, chip = null } = p.props;
-  return (
-    <View
-      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-        p.onHeight(nativeEvent.layout.height);
-      }}
-    >
-      <CardHeader chip={chip} onAskNew={onAskNew} onClose={onClose} raising={raising} steps={p.steps} />
-    </View>
-  );
-}
 
 // Tells the scrolling part's cap at the card's step now.
 function useToldCap(cap: number | null, onContentCap: ((cap: number | null) => void) | undefined): void {
@@ -117,6 +104,8 @@ interface OpenCardState {
   onScroll: ReturnType<typeof useAnimatedScrollHandler>;
   scrolls: boolean;
   padBottom: number;
+  // A hairline parts the header from a content that shows something.
+  ruled: boolean;
   // The low card's whole height, which the hints stand over.
   lowHeight: number;
   hint: ReturnType<typeof useSheetHint>;
@@ -241,6 +230,7 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
     onScroll,
     scrolls,
     padBottom,
+    ruled: props.children !== null && (heights === null || heights.high > 0),
     hint,
     lowHeight: heights === null ? laid : extra + heights.low,
     onLayout,
@@ -271,7 +261,7 @@ export function OpenCard(props: FrameCardProps): ReactElement {
         >
           <View style={{ paddingBottom: barRoom }}>
             {props.raising !== undefined || props.onClose !== undefined ? (
-              <Top onHeight={card.setAbove} props={props} steps={card.steps} />
+              <CardTop onHeight={card.setAbove} props={props} ruled={card.ruled} steps={card.steps} />
             ) : null}
             {children === null ? null : (
               <Scrolling

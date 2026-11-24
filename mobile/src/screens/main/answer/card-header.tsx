@@ -3,13 +3,14 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
-import { type AccessibilityActionInfo, Pressable, StyleSheet, Text, View } from 'react-native';
+import { type AccessibilityActionInfo, type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, Icon, radius, size, space, text } from '@/design-system';
 import type { Level } from './card-levels';
-import { OPEN_EDGE } from './frame-card-parts';
+import { type FrameCardProps, OPEN_EDGE } from './frame-card-parts';
 import type { Raising } from './raise-handle';
 
 // The bottom sheet's header (P04 ticket 52), the same in every state: the grip at the top centre and one row under it,
@@ -164,7 +165,40 @@ export function CardHeader({ raising, steps, chip, onAskNew, onClose }: CardHead
   );
 }
 
+// The header, which stays while the content scrolls under it, and a hairline under its row that parts the two, as
+// comment sheets do (the user's phone check): only over a content that shows something. The line lies over the header's
+// room under the row and takes none of its own, so that drawing it never changes the header's height, which the steps
+// are measured against.
+export function CardTop(p: {
+  props: Pick<FrameCardProps, 'raising' | 'onClose' | 'onAskNew' | 'chip' | 'testID'>;
+  steps: readonly Level[];
+  ruled: boolean;
+  onHeight: (height: number) => void;
+}): ReactElement {
+  const { raising = null, onClose = null, onAskNew = null, chip = null } = p.props;
+  return (
+    <View
+      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+        p.onHeight(nativeEvent.layout.height);
+      }}
+      style={styles.top}
+    >
+      <CardHeader chip={chip} onAskNew={onAskNew} onClose={onClose} raising={raising} steps={p.steps} />
+      {p.ruled ? <View style={styles.rule} testID={`${p.props.testID}-rule`} /> : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  top: { paddingBottom: space[2] },
+  rule: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    left: 0,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: color.border,
+  },
   header: { height: HEADER_HEIGHT },
   zone: { alignItems: 'center', height: GRIP_ZONE, paddingTop: GRIP_TOP },
   grip: { width: 36, height: GRIP_HEIGHT, borderRadius: radius.full, backgroundColor: color.border },

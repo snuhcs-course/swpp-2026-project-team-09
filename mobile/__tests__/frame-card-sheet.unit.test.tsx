@@ -12,7 +12,7 @@ import { useEffect } from 'react';
 import { StyleSheet, Text, type ViewStyle } from 'react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { getAnimatedStyle } from 'react-native-reanimated';
-import { text } from '@/design-system';
+import { color, text } from '@/design-system';
 import type { Level } from '@/screens/main/answer/card-levels';
 import { FrameCard } from '@/screens/main/answer/frame-card';
 import { SHEET_HINT } from '@/screens/main/answer/sheet-hint';
@@ -209,6 +209,33 @@ describe('a drag on the content', () => {
 
     expect(shown()).toBe(LOW);
     expect(setLevel).not.toHaveBeenCalled();
+  });
+});
+
+// The user's phone check: a hairline parts the header, which stays, from the content that scrolls under it, as comment
+// sheets do. Partitions: a content that shows something, scrolled or not; a content that shows nothing.
+describe('the hairline under the header', () => {
+  it('parts the header from the content, and stays while the content scrolls', async () => {
+    await render(card('mid'));
+    await layContent(1000);
+    await settle();
+    expect(screen.getByTestId('card-rule')).toHaveStyle({
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: color.border,
+    });
+
+    await drag(-200);
+    await settle();
+
+    expect(screen.getByTestId('card-rule')).toBeOnTheScreen();
+  });
+
+  it('is not drawn over a content that shows nothing', async () => {
+    await render(card('low'));
+    await layContent(12);
+    await settle();
+
+    expect(screen.queryByTestId('card-rule')).toBeNull();
   });
 });
 
