@@ -5,6 +5,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -150,6 +151,36 @@ describe('301동식당 at 11:40 on the map (board q8)', () => {
       basis: ['부대짬뽕&군만두 6,500원 · (뚝)순댓국&계란장조림 6,500원', '24동까지 걸어서 15분이라 12:45에 나서요'],
       actions: [{ kind: 'guide', to: point('제1공학관', '301동식당') }],
     });
+  });
+});
+
+// P04 ticket 60: asked the day before, the label and the first line name the day, as the meal Plan's time bar does.
+describe('301동식당 asked the day before', () => {
+  it('names the day before the meal and the dishes', () => {
+    const answer = answerOf([person(ME, '유상', boardDay())], {
+      candidates: [{ key: '301동식당', placeId: id('제1공학관') }],
+      now: NOW,
+      fixed: { placeId: id('제1공학관') },
+    });
+    const dayBefore = new Date(NOW.getTime() - 24 * 60 * 60 * 1000);
+
+    const found = menuAnswer({
+      key: '301동식당',
+      date: DATE,
+      meal: 'lunch',
+      now: dayBefore,
+      lines: lunchOf('301동식당'),
+      answer,
+      hours: HOURS,
+    });
+
+    expect(found.result === 'found' && found.lookup.scene.flags).toEqual([
+      { at: position('제1공학관'), text: '내일(화) 점심 · 부대짬뽕&군만두 · (뚝)순댓국&계란장조림', role: 'place' },
+    ]);
+    expect(found.result === 'found' && found.lookup.lines[0]).toEqual([
+      strong('301동식당'),
+      plain(' 내일(화) 점심은 부대짬뽕&군만두 6,500원 외 1'),
+    ]);
   });
 });
 

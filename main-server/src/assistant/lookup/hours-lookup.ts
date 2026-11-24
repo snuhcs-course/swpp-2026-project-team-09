@@ -2,11 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { type Lookup } from '../dto/answer.dto.js';
 import { onDay } from '../free-time/free-time.js';
+import { dayWordsFrom } from '../korea-time.js';
 import { type HoursFound, type HoursMeal, type MealWords, spanOf } from './hours-words.js';
 
 // What the map draws of a Restaurant's hours: the Restaurant picked out, the camera on it, its label saying its state
@@ -36,9 +38,20 @@ function usualOf(meals: readonly MealWords[]): string | null {
   return usual.length === 0 ? null : `평소 ${usual.join(' · ')}`;
 }
 
-// Today: serving until when, closed until the next meal, or done for the day. Another day: each meal's span. Closed
-// only when the menus say so.
-export function stateOf({ date, meals, servingNow }: HoursFound, now: Date): string {
+// The state after the day it is of, "내일(수) 점심 11:30–13:30", as the meal Plan's time bar names it, whenever that is
+// not today (P04 ticket 60): a follow-up keeps the day of the conversation, and the label says which.
+const onTheDay = (date: string, now: Date, state: string): string => {
+  const day = dayWordsFrom(date, now);
+  return day === '' ? state : `${day} ${state}`;
+};
+
+// Today: serving until when, closed until the next meal, or done for the day. Another day: each meal's span, after the
+// day. Closed only when the menus say so.
+export function stateOf(found: HoursFound, now: Date): string {
+  return onTheDay(found.date, now, todayOrSpans(found, now));
+}
+
+function todayOrSpans({ date, meals, servingNow }: HoursFound, now: Date): string {
   const served = meals.flatMap((words) => {
     const span = spanOf(words);
     return span === null ? [] : [{ meal: words.meal, ...span }];
@@ -46,7 +59,7 @@ export function stateOf({ date, meals, servingNow }: HoursFound, now: Date): str
   const usual = usualOf(meals);
   if (servingNow === undefined) {
     const spans = [...saidOf(meals, spanWords), ...(usual === null ? [] : [usual])];
-    return spans.length === 0 ? '그날은 쉬어요' : spans.join(' · ');
+    return spans.length === 0 ? '쉬어요' : spans.join(' · ');
   }
   const serving = served.find(({ meal }) => meal === servingNow);
   if (serving !== undefined) {
@@ -82,8 +95,13 @@ function basisOf({ meals }: HoursFound): string[] {
   });
 }
 
-// The meal asked about: its hours, serving now until when, the usual ones on a day not posted, or not served.
-export function mealStateOf({ date, meals, servingNow }: HoursFound, meal: HoursMeal, now: Date): string {
+// The meal asked about: its hours, serving now until when, the usual ones on a day not posted, or not served; after the
+// day when that is not today.
+export function mealStateOf(found: HoursFound, meal: HoursMeal, now: Date): string {
+  return onTheDay(found.date, now, mealState(found, meal, now));
+}
+
+function mealState({ date, meals, servingNow }: HoursFound, meal: HoursMeal, now: Date): string {
   const name = MEAL_WORDS[meal];
   const words = meals.find((each) => each.meal === meal);
   if (words === undefined || words.serves === false) {

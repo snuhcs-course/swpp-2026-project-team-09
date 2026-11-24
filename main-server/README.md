@@ -2680,8 +2680,10 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       `11/30(월) 메뉴는 아직 올라오지 않았어요` and `메뉴는 엿새 뒤 날짜까지 볼 수 있어요` (today the first line alone), the
       reason stays `no-menu`, and the model is told the menus are not posted yet, never that nothing is open. `findMenu`
       and `getMenus` say the same of such a day. A `findMenu` that answers `none` still draws the Restaurant
-      (`menuNoneLookup`, kind `place`), its label saying why: `내일 점심 메뉴 아직 안 올라옴`, `내일 점심은 안 해요`, or
-      its dishes when the User has no time to eat there (P04 ticket 59).
+      (`menuNoneLookup`, kind `place`), its label saying why: `내일(수) 점심 메뉴 아직 안 올라옴` when that
+      Restaurant's day was not collected, `오늘 저녁 메뉴 없음` when the day was collected with another meal but not this
+      one (reason `no-meal`), `내일(수) 점심은 안 해요`, or its dishes when the User has no time to eat there (P04 tickets
+      59 and 60). A menu not posted today is never said to come "up to six days ahead".
     - `findWay(to?, from?, by?)`, with `WAY_RULES`, for an app that sends `answer` (`lookup/`). It finds the way on foot
       to a Place, or to the Place of the User's next item today when `to` is left out, from a Place they named; else
       the main gate (서울대 정문) when their location is off campus; else the Place their location is in, or the
@@ -2707,7 +2709,8 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
       `lookup/hours-lookup.ts`), also in place of a meal answer on screen, since the question is about the Restaurant
       (P04 ticket 59), picks the Restaurant out on the map, with a place flag at the same point whose words after the name the map writes as the
       label's second line: today `지금 영업 중 · 14:00까지`,
-      `지금 닫음 · 08:00 아침`, or `지금 닫음 · 오늘 영업 끝`, another day each meal's span; with `meal`, that meal
+      `지금 닫음 · 08:00 아침`, or `지금 닫음 · 오늘 영업 끝`, another day each meal's span after the day as the meal Plan's time bar names it (`내일(수) 점심 11:30–13:30`, P04
+      ticket 60); with `meal`, that meal
       alone (`저녁 17:00–19:00`, `저녁 · 지금 영업 중 · 19:00까지`, `저녁은 안 해요`, or `평소 저녁 …` on a day not
       posted), so that a follow-up about another meal, which the rules send to the tool again, never keeps another
       meal's label; its basis lists each meal's
