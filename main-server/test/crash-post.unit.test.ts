@@ -72,21 +72,21 @@ describe('crashPostText', () => {
 
   it("puts a title's lines on one line and escapes &, < and >", () => {
     expect(crashPostText({ title: 'a\n<!here>\t& b', culprit: '<@U1>' })).toBe(
-      'App crash: a &lt;!here&gt; &amp; b\nat &lt;@U1&gt;',
+      'App crash: `a &lt;!here&gt; &amp; b`\nat `&lt;@U1&gt;`',
     );
   });
 
-  it('writes :// as [://], so that Slack makes no link of a bare address in the words', () => {
-    expect(crashPostText({ title: '다시 로그인하세요 https://evil.example/x', culprit: 'http://a.example' })).toBe(
-      'App crash: 다시 로그인하세요 https[://]evil.example/x\nat http[://]a.example',
+  it('writes each part as inline code, so that Slack makes no link of an address or a domain in the words', () => {
+    expect(crashPostText({ title: '다시 `로그인`하세요 https://evil.example/x', culprit: 'www.a.example' })).toBe(
+      "App crash: `다시 '로그인'하세요 https://evil.example/x`\nat `www.a.example`",
     );
   });
 
   it('cuts the title to 200 characters, the last one an ellipsis', () => {
     const [line] = crashPostText({ title: '가'.repeat(500) }).split('\n');
 
-    expect(Array.from(line?.replace('App crash: ', '') ?? '')).toHaveLength(200);
-    expect(line?.endsWith('…')).toBe(true);
+    expect(Array.from(line?.replace('App crash: ', '') ?? '')).toHaveLength(202);
+    expect(line?.endsWith('…`')).toBe(true);
   });
 
   it("escapes & in the link's query", () => {

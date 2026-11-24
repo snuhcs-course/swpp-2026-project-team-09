@@ -74,14 +74,15 @@ export function readAlert(body: unknown): CrashAlert {
   };
 }
 
-// One line, at most `limit` characters, with Slack's control characters escaped, so that a crash's words can neither
-// mention a channel or a person nor make a link of Slack's own form. Slack also turns a bare `https://…` into a link,
-// and the DSN is in the APK, so anyone can send an event with words of their choice: `://` is written `[://]`, which
-// Slack leaves as text.
+// One line, at most `limit` characters, written as inline code. The DSN is in the APK, so anyone can send an event
+// with words of their choice, and Slack makes a link of a bare address or domain as well as of its own `<…>` forms.
+// Inside inline code Slack makes no link and no mention; backticks in the words are written `'` so that they cannot
+// end the code, and `&`, `<` and `>` are escaped as Slack asks of every text.
 function inert(value: string, limit: number): string {
-  const characters = Array.from(value.replaceAll(/\s+/gu, ' ').trim());
+  const characters = Array.from(value.replaceAll(/\s+/gu, ' ').replaceAll('`', "'").trim());
   const cut = characters.length > limit ? `${characters.slice(0, limit - 1).join('')}…` : characters.join('');
-  return cut.replaceAll('://', '[://]').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  const escaped = cut.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  return escaped === '' ? '(empty)' : `\`${escaped}\``;
 }
 
 export const TITLE_LIMIT = 200;

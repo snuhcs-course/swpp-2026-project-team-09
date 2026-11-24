@@ -76,8 +76,8 @@ describe('A signed issue alert from Sentry', () => {
 
     await postsMade(1);
     const [first, second] = String(slack.posts[0]?.text).split('\n');
-    expect(first).toBe(`App crash: &lt;!channel&gt; &amp; &lt;@U123&gt; ${'x'.repeat(178)}…`);
-    expect(second).toContain('at &lt;https://evil.example|click&gt;');
+    expect(first).toBe(`App crash: \`&lt;!channel&gt; &amp; &lt;@U123&gt; ${'x'.repeat(178)}…\``);
+    expect(second).toContain('at `&lt;https://evil.example|click&gt;`');
   });
 });
 
