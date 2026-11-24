@@ -89,6 +89,13 @@ not reach Sentry…`, which says to re-run the job (its ordering check publishes
 - **Checks run:** shellcheck and bats over `.github/release` and `.github/ci`, as CI's `release-script` job does (all
   pass, 5 new tests), and actionlint on `release.yml` with shellcheck (clean).
 
+### After the review (2026-11-25)
+
+- **The variable `PRODUCTION_APP_SENTRY_DSN` is unset again.** It had been set when the account was made, so the first
+  app Release after this ticket would have sent reports before the privacy policy said so and before the switch was
+  in. It was removed from the repository's variables on 2026-11-25; a Release then builds an app that reports nothing.
+  A person sets it in ticket 07, once tickets 03 and 05 are on the main line. The infra README says so.
+
 ### Agent usage (2026-11-24)
 
 - Agent time: about 1 hour in one implementation session, an estimate; about 10 minutes of it waited on the bats run.

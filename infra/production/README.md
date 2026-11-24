@@ -358,12 +358,12 @@ Its pod carries the labels `app=database-setup` and `database-client=true`, whic
 reach the database ([below](#network-policies)). It reads the Secret `database-setup`, which is created by hand just
 before it and deleted after it:
 
-| Key                 | Value                                            |
-| ------------------- | ------------------------------------------------ |
-| `PGHOST`            | `terraform output -raw database_endpoint`        |
-| `PGUSER`            | `terraform output -raw database_master_username` |
-| `PGPASSWORD`        | `terraform output -raw database_master_password` |
-| `MAIN_DB_PASSWORD`  | The `main` role's new password                   |
+| Key                | Value                                            |
+| ------------------ | ------------------------------------------------ |
+| `PGHOST`           | `terraform output -raw database_endpoint`        |
+| `PGUSER`           | `terraform output -raw database_master_username` |
+| `PGPASSWORD`       | `terraform output -raw database_master_password` |
+| `MAIN_DB_PASSWORD` | The `main` role's new password                   |
 
 The new password also goes into the account's Parameter Store, as the `SecureString` parameter
 `/snunow/production/main-db-password`, from which the Release workflow assembles the main server's `DATABASE_URL`.
@@ -608,6 +608,7 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
    Enter pressed by mistake, writes no Secret, whose empty key would start the pods broken. On a cluster that runs
    without Fluent Bit, the same three steps add it. In the account that holds the zone, the last apply waits until the
    certificate is issued.
+
 3. **The database.** [Prepare it](#preparing-a-new-database), which also puts its two passwords in Parameter Store.
 4. **The repository variables.** In the repository's **Settings** › **Secrets and variables** › **Actions** ›
    **Variables**, set the Release workflow's variables from `terraform output -raw <output>`, and the admin site's two
@@ -927,6 +928,11 @@ repository secret `KAKAO_NATIVE_APP_KEY`. It alone has `contents: write`, to cre
 
 Each must equal the native build's value: a different one changes the fingerprint or points the bundle elsewhere.
 `PRODUCTION_APP_SENTRY_DSN` alone may be unset: the app then reports no crash, and the Release goes on.
+
+**`PRODUCTION_APP_SENTRY_DSN` is what turns the reports on, and it stays unset until the privacy policy's part on
+crash reports and the switch in 내 정보 (P08 tickets 03 and 05) are on the main line.** The first app Release with the
+variable set sends crash reports, with the User's id, to Sentry in the United States, so the policy must say so in that
+same Release. P08 ticket 07 is where a person sets it.
 
 ### Source maps in Sentry
 
