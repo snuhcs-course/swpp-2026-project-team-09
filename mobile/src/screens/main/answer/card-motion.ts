@@ -3,13 +3,20 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useState } from 'react';
 import type { PanGesture } from 'react-native-gesture-handler';
 import type Reanimated from 'react-native-reanimated';
-import { type AnimatedRef, type SharedValue, useSharedValue } from 'react-native-reanimated';
-import { usePan, useListY } from './card-drag';
+import {
+  type AnimatedRef,
+  scrollTo,
+  type SharedValue,
+  useAnimatedReaction,
+  useSharedValue,
+} from 'react-native-reanimated';
+import { rangeAt, usePan, useListY } from './card-drag';
 import { useRun } from './card-run';
 import { useReduceMotionSetting } from '@/hooks/use-reduce-motion';
 import { heightOf, type Level, type LevelHeights } from './card-levels';
@@ -17,8 +24,8 @@ import type { Raising } from './raise-handle';
 
 // The answer sheet moving (P04 tickets 52 and 61). It is laid out once, at its highest step's height (`room`), and
 // moved only by a translation on the UI thread, `offset`: how far below its laid-out place it stands, so that the step's
-// height shows. Nothing inside is laid out again while it moves. A drag anywhere on the card moves it with the finger;
-// at high its content scrolls first, and with the content at its top a drag down moves the card. A let-go lands as
+// height shows. Nothing inside is laid out again while it moves. A drag on the header moves it with the finger; on the
+// content it scrolls the content first, at every step, and moves the card only at the content's ends. A let-go lands as
 // `landingOf` says, carried by the finger's speed; every change of step runs to it, none with reduced motion. The camera
 // hears the low card's height once it has settled.
 
@@ -47,13 +54,12 @@ interface MotionInput {
   header: number;
   // The whole card's laid-out height, which a drag down measures against before the stage is laid out.
   laid: number;
-  // The content's scroll view and how far it is scrolled.
+  // The content's scroll view and how far it is scrolled. It keeps its place when the card changes step.
   scroll: AnimatedRef<Reanimated.ScrollView>;
   scrollY: SharedValue<number>;
-  // The content scrolls at the card's step now: it is taller than what shows, and the card stands at its highest step.
-  scrolls: boolean;
-  // How far the content scrolls there.
-  maxScroll: number;
+  // The content's whole height with the fade's room under it, 0 until laid out: it scrolls by what it has more than
+  // shows at the card's height.
+  whole: number;
   // Told the whole card's height that shows once it has settled at low.
   onHeight: (height: number) => void;
 }
@@ -107,8 +113,36 @@ function useLetGo(
   );
 }
 
+interface KeptEnd {
+  room: number | null;
+  whole: number;
+  scroll: AnimatedRef<Reanimated.ScrollView>;
+  scrollY: SharedValue<number>;
+  listY: SharedValue<number>;
+}
+
+// Raised by a run, the card shows more of the content: scrolled further than it then scrolls, the content comes back
+// with it, so that its end stays clear of the footer and its fade.
+function useKeptEnd(offset: SharedValue<number>, { room, whole, scroll, scrollY, listY }: KeptEnd): void {
+  useAnimatedReaction(
+    () => offset.value,
+    (at) => {
+      if (room === null) {
+        return;
+      }
+      const limit = rangeAt(whole, room - at);
+      if (scrollY.value > limit + 0.5) {
+        scrollTo(scroll, 0, limit, false);
+        scrollY.value = limit;
+        listY.value = limit;
+      }
+    },
+    [room, whole],
+  );
+}
+
 export function useCardMotion(input: MotionInput): CardMotion {
-  const { raising, heights, room, extra, laid, header, scroll, scrollY, scrolls, maxScroll } = input;
+  const { raising, heights, room, extra, laid, header, scroll, scrollY, whole } = input;
   const { level } = raising;
   // Until the phone has said whether it asks for less motion, nothing runs.
   const reduce = useReduceMotionSetting() !== false;
@@ -117,7 +151,8 @@ export function useCardMotion(input: MotionInput): CardMotion {
   const { past, tellPast, closeNow } = useCloseSide(raising, drop);
   const letGo = useLetGo(raising, back, heights);
   const stepped = room !== null && heights !== null;
-  const listY = useListY(scroll);
+  const listY = useListY(scroll, scrollY);
+  useKeptEnd(offset, { room, whole, scroll, scrollY, listY });
   const pan = usePan({
     level,
     heights: stepped ? heights : null,
@@ -127,10 +162,8 @@ export function useCardMotion(input: MotionInput): CardMotion {
     closeAt: (stepped ? header + heights.low : laid - extra + header) / 2,
     closable: raising.close !== undefined,
     header,
-    scroll,
+    whole,
     scrollY,
-    scrolls,
-    maxScroll,
     listY,
     reduce,
     onPast: tellPast,

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -24,25 +25,42 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { FLING_SPEED, landingOf, type Level, type LevelHeights } from './card-levels';
 import { SETTLE } from './card-run';
 
-// The answer sheet's drag on the UI thread (moved out of `card-motion.ts` for its length, P04 ticket 61): anywhere on
-// the card it moves the card between its steps, and at high it scrolls the content first. The content's scroll view
-// takes no touch of its own: on Android a native view that takes the touch cancels every gesture, so the drag scrolls
-// it, and a let-go runs it on with the finger's speed.
+// The answer sheet's drag on the UI thread (moved out of `card-motion.ts` for its length, P04 ticket 61). On the header
+// it moves the card between its steps. On the content it scrolls the content first, at every step, as far as the
+// content has more than shows there; only at its ends does it move the card: down with the content at its top, up with
+// it at its end or all of it shown. The content's scroll view takes no touch of its own: on Android a native view that
+// takes the touch cancels every gesture, so the drag scrolls it, and a let-go runs it on with the finger's speed.
 
 // A drag starts past this many points, so that a press stays a press.
 const PAN_STARTS = 8;
 // A drag sideways gives way to a row that scrolls sideways (the chips).
 const SIDEWAYS = 16;
-// Under this the content stands at its top.
-const AT_TOP = 0.5;
-
-// What a drag does, decided when it starts: moves the card, or leaves the content to scroll.
-const CARD = 0;
-const CONTENT = 1;
 
 function clamp(value: number, low: number, high: number): number {
   'worklet';
   return Math.min(high, Math.max(low, value));
+}
+
+// How far the content scrolls with `shown` of it in sight: as far as lets its end come clear of the footer and its fade.
+export function rangeAt(whole: number, shown: number): number {
+  'worklet';
+  return Math.max(0, whole - shown);
+}
+
+// How a move of the finger, `delta` down, is shared out on the content: back toward where the card started this drag,
+// the card goes first; then the content scrolls as far as it can; what is left moves the card. `card` is how far down
+// the card has moved this drag, `list` how far the content is scrolled, and `range` how far it scrolls.
+export function shareMove(delta: number, card: number, list: number, range: number): { card: number; list: number } {
+  'worklet';
+  let rest = delta;
+  let moved = card;
+  if (moved * rest < 0) {
+    const back = Math.sign(rest) * Math.min(Math.abs(rest), Math.abs(moved));
+    moved += back;
+    rest -= back;
+  }
+  const to = clamp(list - rest, 0, Math.max(list, range));
+  return { card: moved + rest - (list - to), list: to };
 }
 
 export interface PanParts {
@@ -55,12 +73,10 @@ export interface PanParts {
   closeAt: number;
   closable: boolean;
   header: number;
-  scroll: AnimatedRef<Reanimated.ScrollView>;
+  // The content's whole height with the fade's room under it, 0 until it is laid out: it scrolls by what it has more
+  // than shows.
+  whole: number;
   scrollY: SharedValue<number>;
-  // The content scrolls at the card's step now, as far as `maxScroll`, by the drag itself: the scroll view takes no touch
-  // of its own, as a native view that takes the touch cancels every gesture on Android.
-  scrolls: boolean;
-  maxScroll: number;
   listY: SharedValue<number>;
   reduce: boolean;
   onPast: (past: boolean) => void;
@@ -74,44 +90,46 @@ interface PanState {
   // How much of the content showed when the drag started.
   from: SharedValue<number>;
   onHeader: SharedValue<boolean>;
-  mode: SharedValue<number>;
-  // Where the content was scrolled to when the drag started: it is held there while the card moves.
-  listAt: SharedValue<number>;
   wasPast: SharedValue<boolean>;
-  // Where the finger came down, and how far it had moved down when the drag took the touch, which decides whether the
-  // drag is the card's or the content's.
+  // Where the finger came down. Once the drag has taken the touch, a move sideways no longer gives it away (PR 545's
+  // review: the card let go under a finger that drifted sideways).
   downX: SharedValue<number>;
   downY: SharedValue<number>;
-  firstDy: SharedValue<number>;
+  active: SharedValue<boolean>;
+  // The finger's way down at the last move, and how far down of it the card has gone.
+  lastY: SharedValue<number>;
+  cardY: SharedValue<number>;
 }
 
 function usePanState(): PanState {
   return {
-    downX: useSharedValue(0),
-    downY: useSharedValue(0),
-    firstDy: useSharedValue(0),
     from: useSharedValue(0),
     onHeader: useSharedValue(false),
-    mode: useSharedValue(CARD),
-    listAt: useSharedValue(0),
     wasPast: useSharedValue(false),
+    downX: useSharedValue(0),
+    downY: useSharedValue(0),
+    active: useSharedValue(false),
+    lastY: useSharedValue(0),
+    cardY: useSharedValue(0),
   };
 }
 
-// How much of the content shows at the finger: what showed when the drag started, less the finger's way down.
-function shownAt(heights: LevelHeights | null, state: PanState, translationY: number): number {
+// How much of the content shows with the card `cardY` down from where the drag started.
+function shownAt(heights: LevelHeights | null, state: PanState, cardY: number): number {
   'worklet';
-  return heights === null ? -translationY : state.from.value - translationY;
+  return heights === null ? -cardY : state.from.value - cardY;
 }
 
-// Where the drag's let-go lands, or that the answer closes, or that the card has no steps to land on.
+// Where the drag's let-go lands, or that the answer closes, or that the card has no steps to land on. A drag taken
+// away from the finger (`closable` false) never closes.
 function landOf(
   parts: PanParts,
   at: number,
   velocityY: number,
+  closable: boolean,
 ): { kind: 'close' } | { kind: 'stay' } | { kind: 'step'; to: Level } {
   'worklet';
-  const { heights, closable, closeAt, level } = parts;
+  const { heights, closeAt, level } = parts;
   if (heights === null) {
     const closes = closable && (-at > closeAt || (velocityY > FLING_SPEED && -at > 0));
     return closes ? { kind: 'close' } : { kind: 'stay' };
@@ -120,12 +138,12 @@ function landOf(
   return to === 'close' ? { kind: 'close' } : { kind: 'step', to };
 }
 
-// The card follows the finger between low and high; started at low, it goes on below low, and past the close point
-// the hint says letting go closes the answer.
-function moveCard(parts: PanParts, state: PanState, translationY: number): void {
+// The card stands `cardY` down from where the drag started, between low and high; started at low, it goes on below
+// low, and past the close point the hint says letting go closes the answer.
+function moveCard(parts: PanParts, state: PanState, cardY: number): void {
   'worklet';
   const { heights, room, offset, drop, closable, closeAt, level, onPast } = parts;
-  const at = shownAt(heights, state, translationY);
+  const at = shownAt(heights, state, cardY);
   if (heights !== null) {
     offset.value = room - clamp(at, heights.low, heights.high);
   }
@@ -140,10 +158,35 @@ function moveCard(parts: PanParts, state: PanState, translationY: number): void 
   }
 }
 
-function release(parts: PanParts, state: PanState, translationY: number, velocityY: number): void {
+// The finger's move since the last: on the header the card takes it all; on the content it is shared out
+// (`shareMove`). The card stops at high, and at low unless it closes from there; raised, it shows more of the content,
+// whose end then stays clear of the footer.
+function follow(parts: PanParts, state: PanState, translationY: number): void {
+  'worklet';
+  const { heights, listY, whole } = parts;
+  const delta = translationY - state.lastY.value;
+  state.lastY.value = translationY;
+  if (heights === null) {
+    state.cardY.value = translationY;
+    moveCard(parts, state, translationY);
+    return;
+  }
+  const from = state.from.value;
+  const shared = state.onHeader.value
+    ? { card: state.cardY.value + delta, list: listY.value }
+    : shareMove(delta, state.cardY.value, listY.value, rangeAt(whole, from - state.cardY.value));
+  const lowest = parts.closable && parts.level === 'low' ? Number.POSITIVE_INFINITY : from - heights.low;
+  const cardY = clamp(shared.card, from - heights.high, lowest);
+  state.cardY.value = cardY;
+  moveCard(parts, state, cardY);
+  listY.value = Math.min(shared.list, rangeAt(whole, from - cardY));
+}
+
+function release(parts: PanParts, state: PanState, velocityY: number, closable: boolean): void {
   'worklet';
   const { drop, reduce, onClose, onStay, onLetGo } = parts;
-  const land = landOf(parts, shownAt(parts.heights, state, translationY), velocityY);
+  const at = shownAt(parts.heights, state, state.cardY.value);
+  const land = landOf(parts, at, velocityY, parts.closable && closable);
   if (land.kind === 'close') {
     scheduleOnRN(onClose);
     return;
@@ -156,30 +199,20 @@ function release(parts: PanParts, state: PanState, translationY: number, velocit
   }
 }
 
-// Whether a drag, `dy` down so far, scrolls the content rather than move the card: at high, started on the content,
-// while it is scrolled or the finger moves up.
-function listFirst(parts: PanParts, state: PanState, dy: number): boolean {
-  'worklet';
-  return parts.scrolls && !state.onHeader.value && (parts.scrollY.value > AT_TOP || dy < 0);
-}
-
-// The content follows the finger while it scrolls, and runs on with the let-go's speed.
-function scrollContent(parts: PanParts, state: PanState, translationY: number): void {
-  'worklet';
-  parts.listY.value = clamp(state.listAt.value - translationY, 0, parts.maxScroll);
-}
-
+// A let-go of the content alone runs it on with the finger's speed, within its range at the card's step.
 function letContentGo(parts: PanParts, velocityY: number): void {
   'worklet';
-  parts.listY.value = withDecay({ velocity: -velocityY, clamp: [0, parts.maxScroll] });
+  const { heights, room, offset, listY, whole } = parts;
+  const range = heights === null ? 0 : rangeAt(whole, room - offset.value);
+  listY.value = withDecay({ velocity: -velocityY, clamp: [0, Math.max(range, listY.value)] });
 }
 
-// The drag takes the touch once the finger has moved PAN_STARTS up or down, and gives way sideways to a row that
-// scrolls sideways.
+// Until it has taken the touch, the drag takes it once the finger has moved PAN_STARTS up or down, and gives way
+// sideways to a row that scrolls sideways.
 function decide(state: PanState, { allTouches }: GestureTouchEvent, manager: GestureStateManager): void {
   'worklet';
   const [touch] = allTouches;
-  if (touch === undefined) {
+  if (touch === undefined || state.active.value) {
     return;
   }
   const dx = touch.absoluteX - state.downX.value;
@@ -187,14 +220,14 @@ function decide(state: PanState, { allTouches }: GestureTouchEvent, manager: Ges
   if (Math.abs(dx) > SIDEWAYS && Math.abs(dx) > Math.abs(dy)) {
     manager.fail();
   } else if (Math.abs(dy) >= PAN_STARTS) {
-    state.firstDy.value = dy;
+    state.active.value = true;
     manager.activate();
   }
 }
 
-// The card's drag on the UI thread, anywhere on the card. It takes the touch once the finger has moved PAN_STARTS up
-// or down, and gives way sideways to a row that scrolls sideways. At high it scrolls the content first (`listFirst`);
-// otherwise it moves the card.
+// The card's drag on the UI thread, anywhere on the card (`follow`). A let-go after the card moved lands on a step or
+// closes the answer; after the content alone scrolled, the content runs on. A drag taken away from the finger lands
+// without closing.
 export function usePan(parts: PanParts): PanGesture {
   const { heights, room, offset, header, scrollY, listY } = parts;
   const state = usePanState();
@@ -204,7 +237,7 @@ export function usePan(parts: PanParts): PanGesture {
     .onTouchesDown(({ allTouches }) => {
       'worklet';
       const [touch] = allTouches;
-      if (touch !== undefined) {
+      if (touch !== undefined && !state.active.value) {
         state.downX.value = touch.absoluteX;
         state.downY.value = touch.absoluteY;
         state.onHeader.value = touch.y < header;
@@ -214,44 +247,46 @@ export function usePan(parts: PanParts): PanGesture {
       'worklet';
       decide(state, event, manager);
     })
-    .onStart(({ translationY }) => {
+    .onStart(() => {
       'worklet';
       state.from.value = heights === null ? 0 : room - offset.value;
       state.wasPast.value = false;
+      state.lastY.value = 0;
+      state.cardY.value = 0;
       // Where the content stands now, which also stops it running on from the last let-go.
-      state.listAt.value = scrollY.value;
       listY.value = scrollY.value;
-      // A drag the tests drive takes no touches: its first move says its way.
-      const dy = state.firstDy.value === 0 ? translationY : state.firstDy.value;
-      state.firstDy.value = 0;
-      state.mode.value = listFirst(parts, state, dy) ? CONTENT : CARD;
     })
     .onUpdate(({ translationY }) => {
       'worklet';
-      if (state.mode.value === CARD) {
-        moveCard(parts, state, translationY);
-      } else {
-        scrollContent(parts, state, translationY);
-      }
+      follow(parts, state, translationY);
     })
-    .onEnd(({ translationY, velocityY }) => {
+    .onEnd(({ velocityY }, success) => {
       'worklet';
-      if (state.mode.value === CARD) {
-        release(parts, state, translationY, velocityY);
+      if (state.cardY.value !== 0 || state.onHeader.value) {
+        release(parts, state, velocityY, success);
       } else {
         letContentGo(parts, velocityY);
       }
+    })
+    .onFinalize(() => {
+      'worklet';
+      state.active.value = false;
     });
 }
 
-// The content's scroll, written by the drag: each change scrolls the scroll view on the UI thread.
-export function useListY(scroll: AnimatedRef<Reanimated.ScrollView>): SharedValue<number> {
+// The content's scroll, written by the drag: each change scrolls the scroll view on the UI thread, and is where the
+// content stands from then on.
+export function useListY(
+  scroll: AnimatedRef<Reanimated.ScrollView>,
+  scrollY: SharedValue<number>,
+): SharedValue<number> {
   const listY = useSharedValue(0);
   useAnimatedReaction(
     () => listY.value,
     (y, last) => {
       if (last !== null && y !== last) {
         scrollTo(scroll, 0, y, false);
+        scrollY.value = y;
       }
     },
   );

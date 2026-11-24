@@ -11,6 +11,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -109,11 +110,15 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
   const docked = control.booking !== null && control.steps === null ? control.booking.bubbleId : null;
   const turn = turnOf(bubbles);
   const last = bubbles.at(-1);
+  // While a Place is picked on the map the card is mostly low: the picking line and its chip that stops it come first,
+  // where the low card shows them, as the dock had them (PR 545's review).
+  const picking = control.pick.place !== null;
   return (
     <>
       {(turn?.after ?? []).map((bubble) => (
         <View key={bubble.id} style={styles.part}>
           {bubble === turn?.after[0] ? <SetQuestLine control={control} /> : null}
+          {bubble === last && picking ? <ReplyPicks control={control} /> : null}
           {bubble.steps === undefined ? null : (
             <ReplySteps onMap={control.steps?.bubbleId === bubble.id} steps={bubble.steps} />
           )}
@@ -139,7 +144,7 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
               )
             }
           />
-          {bubble === last ? <ReplyPicks control={control} /> : null}
+          {bubble === last && !picking ? <ReplyPicks control={control} /> : null}
         </View>
       ))}
       {waiting ? <WaitingReply onStop={control.chat.stop} /> : <LeaveRow control={control} />}

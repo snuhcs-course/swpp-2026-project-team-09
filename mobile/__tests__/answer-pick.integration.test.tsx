@@ -4,6 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -100,6 +101,12 @@ describe('a Place picked on the map', () => {
     expect(dock().getByText('어디서 만날까요?')).toBeVisible();
     await user.press(dock().getByRole('button', { name: '지도에서 고르기' }));
     expect(dock().getByText('지도에서 건물을 눌러 주세요')).toBeVisible();
+    // While picking, the line comes before the reply's words, where the low card shows it (PR 545's review).
+    const lines = dock().getAllByText(/^(?:어디서 만날까요\?|지도에서 건물을 눌러 주세요)$/u);
+    expect(lines.map((line): unknown => line.props.children)).toEqual([
+      '지도에서 건물을 눌러 주세요',
+      '어디서 만날까요?',
+    ]);
     // From the screens: the line raises nothing while picking.
     expect(dock().queryByText('›')).toBeNull();
     server.on('POST /assistant/messages', { status: 200, body: asking('좋아요.', PLACE_OFFER) });

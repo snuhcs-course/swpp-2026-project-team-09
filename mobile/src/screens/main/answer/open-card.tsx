@@ -3,10 +3,11 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { type LayoutChangeEvent, StyleSheet, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { type LayoutChangeEvent, StyleSheet, View, type ViewStyle } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Reanimated, {
   type SharedValue,
@@ -15,12 +16,11 @@ import Reanimated, {
   useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { color, radius, shadow, space, text } from '@/design-system';
-import { listsTop } from '../layout';
+import { color, radius, shadow, space } from '@/design-system';
+import { type Caps, FADE, heightsOf, useCaps } from './card-caps';
 import { type Level, type LevelHeights, LEVELS, stepsOf } from './card-levels';
 import { type CardMotion, useCardMotion } from './card-motion';
-import { CONTENT_TOP, contentMaxOf, type FrameCardProps, LEAST_CONTENT, LOWERED, OPEN_EDGE } from './frame-card-parts';
+import { CONTENT_TOP, type FrameCardProps, LOWERED, OPEN_EDGE } from './frame-card-parts';
 import { CardHeader } from './card-header';
 import { useHeldHeight } from './held-height';
 import { CloseHint } from './raise-handle';
@@ -29,49 +29,14 @@ import { SheetHint, useSheetHint } from './sheet-hint';
 // The frame's sheet, attached to the bottom of the screen (P04 tickets 52, 57, and 61): one surface whose content is
 // laid out once. Its header stays at the top while the content scrolls under it; the footer, the input and the main
 // button, stands fixed over its bottom, and the content passes under it with a soft fade. Low shows the header and
-// about two lines of the content, middle about half the stage, high up to just under the time card. It moves as a sheet
-// (`useCardMotion`). Only the low card tells its height, once settled, so that the camera fits the answer to it alone.
+// about two lines of the content; middle has its top edge at half the screen; high stands just under the time card. At
+// every step the content scrolls as far as lets its end come clear of the fade, and keeps its place when the card
+// changes step. It moves as a sheet (`useCardMotion`). Only the low card tells its height, once settled, so that the
+// camera fits the answer to it alone.
 
-// Low shows this many lines of the content's words, at the phone's font size, over the fade.
-const LOW_LINES = 2;
-// The soft edge where the content passes under the footer.
-const FADE = space[3];
 const FADED: ViewStyle = {
   experimental_backgroundImage: `linear-gradient(to bottom, rgba(255, 255, 255, 0), ${color.surface})`,
 };
-
-interface Caps extends LevelHeights {
-  // The scrolling part's laid-out height: the highest step's.
-  room: number;
-}
-
-// The most the scrolling part shows at each step, under the card's header (`above`); null until the stage is laid out.
-// No step reads how much the answer says: a card shorter than a step stops at its own height (`heightsOf`).
-function useCaps(props: FrameCardProps, above: number, padTop: number): Caps | null {
-  const { stageHeight, barRoom, raising, timeBarHeight = 0, fit = false } = props;
-  const { top } = useSafeAreaInsets();
-  const { fontScale } = useWindowDimensions();
-  if (stageHeight === null) {
-    return null;
-  }
-  const mid = Math.max(LEAST_CONTENT, (contentMaxOf(stageHeight, barRoom) ?? LEAST_CONTENT) - above);
-  if (raising === undefined) {
-    return { low: mid, mid, high: mid, room: mid };
-  }
-  // High stops just under the time card as it stands by default, tucked away or not (h1, h2, k4).
-  const pillRoom = listsTop(top) + (timeBarHeight > 0 ? timeBarHeight + space[2] : 0);
-  const high = Math.max(mid, stageHeight - pillRoom - barRoom - above);
-  const low = fit ? mid : Math.min(mid, padTop + LOW_LINES * text.bodyLg.lineHeight * fontScale + FADE);
-  return { low, mid, high, room: high };
-}
-
-// The heights the card runs to: as much as its content, up to each step's cap.
-function heightsOf(caps: Caps, natural: number | null): LevelHeights {
-  const fit = (cap: number): number => (natural === null ? cap : Math.min(cap, natural));
-  const high = fit(caps.high);
-  const mid = Math.min(fit(caps.mid), high);
-  return { low: Math.min(fit(caps.low), mid), mid, high };
-}
 
 function Top(p: { props: FrameCardProps; steps: readonly Level[]; onHeight: (h: number) => void }): ReactElement {
   const { raising = null, onClose = null, onAskNew = null, chip = null } = p.props;
@@ -97,7 +62,9 @@ interface ScrollingProps {
   props: FrameCardProps;
   room: number | null;
   padTop: number;
-  // It scrolls only at high, where the card does not move up any further.
+  // Room under the content, so that it scrolls as far as the low card needs.
+  padBottom: number;
+  // It has more than shows at the card's step.
   scrolls: boolean;
   scroll: ReturnType<typeof useAnimatedRef<Reanimated.ScrollView>>;
   onScroll: ReturnType<typeof useAnimatedScrollHandler>;
@@ -106,12 +73,12 @@ interface ScrollingProps {
 
 // The part that scrolls under the card's header, laid out once at `room`, its parts measured as they are laid out.
 function Scrolling(p: ScrollingProps): ReactElement {
-  const { props, room, padTop, scrolls, scroll, onScroll, onNatural } = p;
+  const { props, room, padTop, padBottom, scrolls, scroll, onScroll, onNatural } = p;
   const { minHeight, onContentSizeChange } = useHeldHeight(props.hold === true, scroll);
   return (
     // The card's drag scrolls it (`useCardMotion`): it takes no touch of its own.
     <Reanimated.ScrollView
-      contentContainerStyle={[styles.content, { paddingTop: padTop }]}
+      contentContainerStyle={[styles.content, { paddingTop: padTop, paddingBottom: padBottom }]}
       keyboardShouldPersistTaps="handled"
       onScroll={onScroll}
       overScrollMode="never"
@@ -148,6 +115,7 @@ interface OpenCardState {
   scroll: ReturnType<typeof useAnimatedRef<Reanimated.ScrollView>>;
   onScroll: ReturnType<typeof useAnimatedScrollHandler>;
   scrolls: boolean;
+  padBottom: number;
   // The low card's whole height, which the hints stand over.
   lowHeight: number;
   hint: ReturnType<typeof useSheetHint>;
@@ -176,27 +144,27 @@ function useMeasures(props: FrameCardProps): {
   return { padTop, above, setAbove, natural, setNatural, caps, heights, steps };
 }
 
-// The content's scroll view, how far it is scrolled, and whether it scrolls now: where the card stands at its highest
-// step and the content is taller than that. Lowered from there, the content goes back to its top with the card.
+// The content's scroll view, how far it is scrolled, and its whole height with the fade's room under it, by which it
+// scrolls at each step as far as it has more than shows there. It keeps its place when the card changes step; a new
+// question starts it at its top (`useHeldHeight`).
 function useContentScroll(
   { caps, heights, natural }: Pick<ReturnType<typeof useMeasures>, 'caps' | 'heights' | 'natural'>,
   level: Level,
-): Pick<OpenCardState, 'scroll' | 'onScroll' | 'scrolls'> & { scrollY: SharedValue<number>; maxScroll: number } {
+): Pick<OpenCardState, 'scroll' | 'onScroll' | 'scrolls' | 'padBottom'> & {
+  scrollY: SharedValue<number>;
+  whole: number;
+} {
   const scroll = useAnimatedRef<Reanimated.ScrollView>();
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((event) => {
     scrollY.value = event.contentOffset.y;
   });
-  const scrolls =
-    caps !== null && heights !== null && natural !== null && natural > caps.high + 1 && heights[level] >= heights.high;
-  useEffect(() => {
-    if (!scrolls) {
-      scroll.current?.scrollTo({ y: 0, animated: true });
-    }
-  }, [scrolls, scroll]);
-  // The scroll view is laid out at the highest step's cap: the content scrolls by what it has more than that.
-  const maxScroll = scrolls && caps !== null && natural !== null ? natural - caps.high : 0;
-  return { scroll, scrollY, onScroll, scrolls, maxScroll };
+  const whole = natural === null ? 0 : natural + FADE;
+  const scrolls = heights !== null && whole > heights[level] + 1;
+  // The scroll view is laid out at the highest step's height: under the content it needs as much room as the low card
+  // shows less, so that the content scrolls its end clear of the fade there too.
+  const padBottom = caps === null || heights === null ? 0 : caps.room - heights.low + FADE;
+  return { scroll, scrollY, onScroll, scrolls, whole, padBottom };
 }
 
 // Before the stage is laid out the card has no steps: it is as tall as its content, and tells that. The callback stays
@@ -230,7 +198,7 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
   // Before the stage is laid out: the card's height as laid out, which a drag down measures against.
   const [laid, setLaid] = useState(0);
   const extra = above + barRoom;
-  const { scroll, scrollY, onScroll, scrolls, maxScroll } = useContentScroll(measures, level);
+  const { scroll, scrollY, onScroll, scrolls, whole, padBottom } = useContentScroll(measures, level);
   // The hint waits until the stage and the content are laid out, so that it shows only over a card with more to show.
   const hint = useSheetHint(
     raising !== undefined && level === 'low' && measures.natural !== null && heights !== null && steps.length > 1,
@@ -245,8 +213,7 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
     laid,
     scroll,
     scrollY,
-    scrolls,
-    maxScroll,
+    whole,
     onHeight,
   });
   useToldCap(caps === null ? null : caps[level], props.onContentCap);
@@ -262,6 +229,7 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
     scroll,
     onScroll,
     scrolls,
+    padBottom,
     hint,
     lowHeight: heights === null ? laid : extra + heights.low,
     onLayout,
@@ -298,6 +266,7 @@ export function OpenCard(props: FrameCardProps): ReactElement {
               <Scrolling
                 onNatural={card.setNatural}
                 onScroll={card.onScroll}
+                padBottom={card.padBottom}
                 padTop={card.padTop}
                 props={props}
                 room={room}
