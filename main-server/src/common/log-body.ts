@@ -9,6 +9,14 @@
 export const BODY_LIMIT_BYTES = 2048;
 const TRUNCATED = '…(truncated)';
 const SECRET_NAME = /token|password|secret|authorization/iu;
+// Deeper objects and arrays are written as "[…]", so that a body nested thousands of levels deep cannot overflow the stack.
+const MOST_LEVELS = 20;
+// An Invite Link's token, in a path or in an address: GET /invite/<token>, /invite-links/<token>/accept.
+const INVITE_TOKEN = /(\/invite(?:-links)?\/)[^/?#\s"]+/gu;
+
+export function withoutInviteTokens(text: string): string {
+  return text.replace(INVITE_TOKEN, '$1[masked]');
+}
 
 // The body as one text for the log: JSON with every secret's value masked and cut at BODY_LIMIT_BYTES, or, for a body
 // that is not JSON, its type and size only. No body gives undefined.
@@ -42,16 +50,22 @@ function isJsonType(contentType: string | undefined): boolean {
   return contentType?.split(';')[0]?.trim().endsWith('json') ?? false;
 }
 
-function masked(value: unknown): unknown {
+function masked(value: unknown, level = 0): unknown {
+  if (typeof value === 'string') {
+    return withoutInviteTokens(value);
+  }
+  if (typeof value !== 'object' || value === null) {
+    return value;
+  }
+  if (level >= MOST_LEVELS) {
+    return '[…]';
+  }
   if (Array.isArray(value)) {
-    return value.map((item) => masked(item));
+    return value.map((item) => masked(item, level + 1));
   }
-  if (typeof value === 'object' && value !== null) {
-    return Object.fromEntries(
-      Object.entries(value).map(([name, item]) => [name, SECRET_NAME.test(name) ? '[masked]' : masked(item)]),
-    );
-  }
-  return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([name, item]) => [name, SECRET_NAME.test(name) ? '[masked]' : masked(item, level + 1)]),
+  );
 }
 
 function truncate(text: string): string {

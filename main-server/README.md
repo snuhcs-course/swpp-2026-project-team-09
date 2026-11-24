@@ -3474,8 +3474,11 @@ lines below are made up:
   field. `/health/live` and `/health/ready` leave no line: the load balancer and the kubelet call them every few seconds.
 - The middleware `src/common/request-logging.middleware.ts` makes the line, on every path, so a request a guard refuses,
   one the idempotency interceptor answers from its store and a path no route matches each leave one too.
+- An Invite Link's token is written `[masked]`, in a path (`/invite/[masked]`, `/invite-links/[masked]/accept`) and in
+  a body's text, such as the address `POST /invite-links` answers.
 - The bodies pass `logBody` (`src/common/log-body.ts`): the value of any field whose name holds `token`, `password`,
-  `secret` or `authorization`, in any case and at any depth, becomes `"[masked]"`; the result is cut at 2 KB and ends
+  `secret` or `authorization`, in any case and at any depth, becomes `"[masked]"`; objects and arrays deeper than 20
+  levels are written `"[…]"`, and a body that still cannot be written is left off the line; the result is cut at 2 KB and ends
   in `…(truncated)` when cut; a body that is not JSON, such as a file, is written as its type and size, such as
   `[multipart/form-data 48213 bytes]`. Everything else is written as it was sent: a User's conversation with the
   Assistant, positions, timetables and profiles, up to 2 KB. A timetable picture sent for reading is base64 in JSON, so

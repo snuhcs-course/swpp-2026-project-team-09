@@ -7,7 +7,7 @@
 // Partitions of a body: none, a JSON value (object, array, text holding JSON), text that is not JSON, bytes; a field's
 // name with or without a secret's word, at the top or deep; short or over the limit.
 
-import { BODY_LIMIT_BYTES, logBody } from '../src/common/log-body.js';
+import { BODY_LIMIT_BYTES, logBody, withoutInviteTokens } from '../src/common/log-body.js';
 
 describe('A JSON body, or none', () => {
   it.each([
@@ -81,5 +81,33 @@ describe('A body that is not JSON', () => {
     ['bytes with no type', Buffer.alloc(3), undefined, '[unknown type 3 bytes]'],
   ])('%s → its type and size only', (_case, body, type, logged) => {
     expect(logBody(body, type)).toBe(logged);
+  });
+});
+
+describe('A body nested deeper than the log goes', () => {
+  it('20,000 levels of arrays → written without throwing, cut off past 20 levels', () => {
+    const body: unknown = JSON.parse(`${'['.repeat(20_000)}${']'.repeat(20_000)}`);
+
+    const logged = logBody(body, 'application/json') ?? '';
+
+    expect(logged).toBe(`${'['.repeat(20)}"[…]"${']'.repeat(20)}`);
+  });
+});
+
+describe('An Invite Link token', () => {
+  it.each([
+    ['an Invite Link read', '/invite-links/made-up-token', '/invite-links/[masked]'],
+    ['an Invite Link accepted', '/invite-links/made-up-token/accept', '/invite-links/[masked]/accept'],
+    ["the link's page", '/invite/made-up-token', '/invite/[masked]'],
+    ['an address', 'https://snunow.example/invite/made-up-token', 'https://snunow.example/invite/[masked]'],
+    ['a new Invite Link', '/invite-links', '/invite-links'],
+  ])('in %s → masked', (_case, text, written) => {
+    expect(withoutInviteTokens(text)).toBe(written);
+  });
+
+  it("in a body's text → masked", () => {
+    expect(logBody({ url: 'https://snunow.example/invite/made-up-token' }, 'application/json')).toBe(
+      '{"url":"https://snunow.example/invite/[masked]"}',
+    );
   });
 });

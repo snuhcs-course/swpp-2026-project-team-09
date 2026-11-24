@@ -7,7 +7,7 @@
 import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
 import { type Request, type Response } from 'express';
 import { randomUUID } from 'node:crypto';
-import { bodySize, logBody } from './log-body.js';
+import { bodySize, logBody, withoutInviteTokens } from './log-body.js';
 import { requestContext, type RequestContextValues } from './request-context.js';
 
 export const REQUEST_ID_HEADER = 'X-Request-Id';
@@ -15,9 +15,9 @@ export const REQUEST_ID_HEADER = 'X-Request-Id';
 // The load balancer and the kubelet call these every few seconds.
 const UNLOGGED_PATHS = new Set(['/health/live', '/health/ready']);
 
-// A request's path as the log writes it: with its IDs, without its query string.
+// A request's path as the log writes it: with its IDs, without its query string or an Invite Link's token.
 export function requestPath(request: Request): string {
-  return request.originalUrl.split('?')[0] ?? '';
+  return withoutInviteTokens(request.originalUrl.split('?')[0] ?? '');
 }
 
 export function elapsedMs(values: RequestContextValues | undefined): number {
@@ -49,16 +49,15 @@ export class RequestLoggingMiddleware implements NestMiddleware {
       return send(body);
     };
     response.once('finish', () => {
-      const fields: Record<string, string> = {};
-      const requestBody = this.requestBody(request);
-      if (requestBody !== undefined) {
-        fields.req_body = requestBody;
-      }
-      const responseBody = logBody(sent, headerText(response.getHeader('content-type')));
-      if (responseBody !== undefined) {
-        fields.res_body = responseBody;
-      }
       const line = `${request.method} ${requestPath(request)} ${response.statusCode} ${elapsedMs(values)}ms`;
+      // A listener's throw would end the process, since nothing of Nest's catches it: a body that cannot be written is
+      // left out.
+      let fields: Record<string, string> = {};
+      try {
+        fields = this.bodies(request, response, sent);
+      } catch {
+        // The line without its bodies.
+      }
       requestContext.run(values, () => {
         if (Object.keys(fields).length === 0) {
           this.logger.log(line);
@@ -67,6 +66,19 @@ export class RequestLoggingMiddleware implements NestMiddleware {
         }
       });
     });
+  }
+
+  private bodies(request: Request, response: Response, sent: unknown): Record<string, string> {
+    const fields: Record<string, string> = {};
+    const requestBody = this.requestBody(request);
+    if (requestBody !== undefined) {
+      fields.req_body = requestBody;
+    }
+    const responseBody = logBody(sent, headerText(response.getHeader('content-type')));
+    if (responseBody !== undefined) {
+      fields.res_body = responseBody;
+    }
+    return fields;
   }
 
   private requestBody(request: Request): string | undefined {

@@ -6,6 +6,7 @@
 
 import { Body, Controller, INestApplication, Param, Put } from '@nestjs/common';
 import { Server } from 'node:http';
+import { z } from 'zod';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { Public } from '../src/common/public.decorator.js';
@@ -14,6 +15,7 @@ import { captureJsonLines, requestLine, useJsonLogs } from './request-logs.js';
 import {
   postRefreshToken,
   postSignIn,
+  signIn,
   signInAsNewAdministrator,
   signInResultSchema,
   tokensSchema,
@@ -30,6 +32,8 @@ class EchoController {
     return { id, ...body };
   }
 }
+
+const inviteLinkSchema = z.object({ url: z.string() });
 
 let app: INestApplication<Server>;
 
@@ -138,6 +142,41 @@ describe('Which requests leave a line', () => {
 
     await requestLine(lines, 'GET /no-such-path 404');
     expect(lines().filter((line) => line.message.includes('/health/'))).toEqual([]);
+  });
+});
+
+describe('A body or a path the log must not keep whole', () => {
+  it('a JSON body nested 20,000 levels deep → the server answers it and the next request, and logs both', async () => {
+    const { lines } = captureJsonLines();
+
+    const deep = await request(app.getHttpServer())
+      .put('/no-such-path')
+      .set('Content-Type', 'application/json')
+      .send(`${'['.repeat(20_000)}${']'.repeat(20_000)}`);
+    const next = await request(app.getHttpServer()).get('/health/live');
+
+    expect(deep.status).toBe(404);
+    expect(next.status).toBe(200);
+    const line = await requestLine(lines, 'PUT /no-such-path 404');
+    expect(line.req_body).toEqual(expect.stringContaining('"[…]"'));
+  });
+
+  it('an Invite Link made, read and its page opened → its token in no log line, only as [masked]', async () => {
+    const { accessToken } = await signIn(app);
+    const { lines, text } = captureJsonLines();
+
+    const made = await withAccessToken(request(app.getHttpServer()).post('/invite-links'), accessToken).expect(201);
+    const { url } = inviteLinkSchema.parse(made.body);
+    const token = url.split('/invite/')[1] ?? '';
+    await withAccessToken(request(app.getHttpServer()).get(`/invite-links/${token}`), accessToken);
+    await request(app.getHttpServer()).get(`/invite/${token}`);
+
+    await requestLine(lines, 'GET /invite/[masked] ');
+    await requestLine(lines, 'GET /invite-links/[masked] ');
+    const madeLine = await requestLine(lines, 'POST /invite-links 201');
+    expect(madeLine.res_body).toEqual(expect.stringContaining('/invite/[masked]'));
+    expect(token.length).toBeGreaterThan(10);
+    expect(text()).not.toContain(token);
   });
 });
 
