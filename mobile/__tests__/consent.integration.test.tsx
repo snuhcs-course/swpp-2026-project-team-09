@@ -3,12 +3,15 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { userEvent } from '@testing-library/react-native';
+import { fireEvent, userEvent } from '@testing-library/react-native';
+import { ScrollView } from 'react-native';
 import { pass, screen, startApp } from './support/app';
 import { startFresh } from './support/mocks';
 import { ONBOARDING } from './support/onboarding';
+import { CONSENT_ERROR_REPORTS } from '@/screens/consent-screen';
 import { keep, readKept } from '@/storage/kept';
 
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -57,6 +60,14 @@ describe('the consent screen', () => {
     }
     expect(screen.queryByRole('header', { name: ONBOARDING })).toBeNull();
     expect((await readKept()).consented).toBe(false);
+  });
+
+  it("names the privacy policy's part on error reports, and how to turn them off", async () => {
+    await signInFresh();
+
+    expect(screen.getByText(CONSENT_ERROR_REPORTS)).toBeVisible();
+    expect(screen.getByText(/개인정보 처리방침의 '오류 보고'/u)).toBeVisible();
+    expect(screen.getByText(/내 정보 › 오류 보고 보내기에서 언제든 끌 수 있어요/u)).toBeVisible();
   });
 
   it('leads a new User on to Onboarding on "동의하고 시작", and the phone keeps the answer', async () => {
@@ -161,5 +172,46 @@ describe('a legal document', () => {
     await pass(700);
 
     expect(screen.getByRole('button', { name: SIGN_IN })).toBeVisible();
+  });
+});
+
+describe("the privacy policy's part on error reports", () => {
+  it('says what a report holds, what it does not, where it goes, for how long, and how to stop it', async () => {
+    await startApp('/legal/privacy');
+
+    expect(screen.getByRole('header', { name: '오류 보고' })).toBeVisible();
+    for (const words of [
+      /오류를 찾아 고치기 위해 오류 보고를 보내요/u,
+      /오류의 내용과 앱 코드에서 오류가 난 곳, 그때까지 본 화면의 이름\(주소에서 id를 지운 것\), 앱의 버전과 업데이트, 휴대폰의 기종과 OS 버전, 계정의 내부 id/u,
+      /이름·이메일·학번이 아니에요/u,
+      /^이름, 이메일, 학번, 위치, 친구, 파티 제목, 입력한 내용은 보내지 않아요\.$/u,
+      /네이티브 부분이 멈춘 경우에는 휴대폰의 오류 보고 기능이 .* 그대로 보내요/u,
+      /Functional Software, Inc\.\(Sentry\)가 받아 미국에 있는 서버에 보관해요\(개인정보의 국외 이전\)\. 보관 기간은 30일이에요/u,
+      /처음에 켜져 있어요\. 내 정보 › 오류 보고 보내기에서 언제든 끌 수 있고, 꺼 두는 동안에는 아무것도 보내지 않아요/u,
+      /다시 켤 때에만 보내요/u,
+    ]) {
+      expect(screen.getByText(words)).toBeVisible();
+    }
+    // The parts written before stay.
+    expect(screen.getByRole('header', { name: '학번, 학적상 이름, 소속' })).toBeVisible();
+    expect(screen.getByRole('header', { name: '도서관 로그인' })).toBeVisible();
+  });
+
+  it.each([
+    ['/legal/privacy?part=error-reports', true],
+    ['/legal/privacy', false],
+  ])('opened at %s, is scrolled to the part on error reports: %s', async (address, scrolled) => {
+    const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
+    await startApp(address);
+    await fireEvent(screen.getByTestId('legal-part-error-reports'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 640, width: 390, height: 300 } },
+    });
+
+    if (scrolled) {
+      expect(scrollTo).toHaveBeenLastCalledWith({ y: 640, animated: false });
+    } else {
+      expect(scrollTo).not.toHaveBeenCalled();
+    }
+    scrollTo.mockRestore();
   });
 });

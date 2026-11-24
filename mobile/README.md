@@ -1209,7 +1209,11 @@ the campus; when the camera stops it asks `GET /places/at` and the sheet says th
 
 The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and
 `/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
-closes back to the screen it was opened from. The documents' texts are placeholders.
+closes back to the screen it was opened from. `?part=` opens a document at one of its parts:
+`/legal/privacy?part=error-reports` scrolls to the privacy policy's part "오류 보고". Of the privacy policy three parts
+are written (학번, 학적상 이름, 소속; 도서관 로그인; 오류 보고), and the consent screen names the part on error reports
+in a sentence under the documents; the other two documents are placeholders. Consent is kept once per phone without a
+version, so a changed text does not ask a User who agreed again.
 
 **The update check** (`src/update/`) runs once at every start: `UpdateCheck`, in the root layout beside the stack,
 fetches `app-version.json` from the `app-version` Release on GitHub with a 5-second timeout, without holding back the
@@ -2007,7 +2011,7 @@ given to it when it starts.
 ### The switch in 내 정보
 
 "오류 보고 보내기", a switch above 로그아웃, says under it what a report holds (the screens visited, the app's and the
-phone's version; no name and no position) and links to the privacy policy. It is on at first. The choice is the
+phone's version; no name and no position) and links to the privacy policy's part on error reports. It is on at first. The choice is the
 phone's, not the account's: it is kept under its own key, `snunow.error-reports` in AsyncStorage
 (`src/storage/error-reports.ts`), which neither a sign-out, the end of a Session nor the development setting for the
 first state clears, so it holds before a sign-in and from one User to the next.

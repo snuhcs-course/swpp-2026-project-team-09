@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -12,7 +13,10 @@ import { signOut } from '@/auth/sign-in';
 import { Button, color, size, space, text } from '@/design-system';
 import { useSession } from '@/session/session';
 import { keep } from '@/storage/kept';
-import { LEGAL_DOCUMENTS, type LegalDocument } from './legal-documents';
+import { ERROR_REPORTS_HEADING, LEGAL_DOCUMENTS, type LegalDocument } from './legal-documents';
+
+// Names the privacy policy's part on error reports, which are sent from the start unless the User turns them off.
+export const CONSENT_ERROR_REPORTS = `개인정보 처리방침의 '${ERROR_REPORTS_HEADING}'에 앱에 오류가 나면 무엇을 누구에게 보내는지 적혀 있어요. 내 정보 › 오류 보고 보내기에서 언제든 끌 수 있어요.`;
 
 const DOCUMENTS: readonly LegalDocument[] = ['terms', 'privacy', 'location'];
 const WIDEST = 390;
@@ -70,6 +74,7 @@ export function ConsentScreen(): ReactElement {
               <DocumentRow document={document} key={document} />
             ))}
           </View>
+          <Text style={styles.note}>{CONSENT_ERROR_REPORTS}</Text>
         </ScrollView>
         <View style={[styles.foot, { paddingBottom: insets.bottom + space[4] }]}>
           <Button disabled={working} full onPress={agreed} size="lg">
@@ -101,5 +106,6 @@ const styles = StyleSheet.create({
   },
   rowPressed: { backgroundColor: color.blue50 },
   rowWords: { ...text.bodyLg, color: color.blue600 },
+  note: { ...text.body, marginTop: space[4], color: color.inkMuted },
   foot: { gap: space[3], paddingTop: space[3], paddingHorizontal: space[6] },
 });
