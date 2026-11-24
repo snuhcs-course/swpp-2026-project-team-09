@@ -24,6 +24,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -68,6 +69,7 @@ import { PlacesModule } from './places/places.module.js';
 import { PlansModule } from './plans/plans.module.js';
 import { PushModule } from './push/push.module.js';
 import { QuestsModule } from './quests/quests.module.js';
+import { SentryAlertsModule } from './sentry-alerts/sentry-alerts.module.js';
 import { ShuttleModule } from './shuttle/shuttle.module.js';
 import { StudySpacesModule } from './study-spaces/study-spaces.module.js';
 import { TimetableModule } from './timetable/timetable.module.js';
@@ -135,6 +137,7 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
     NotificationSenderModule,
     InterestsModule,
     LogTestModule,
+    SentryAlertsModule,
   ],
   providers: [
     // Validates a handler parameter against the schema given in its decorator: @Body({ schema: signInSchema }).

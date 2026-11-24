@@ -3282,6 +3282,7 @@ src/
 ├── lobby/                           a feature: what the app needs when it starts
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── log-test/                        a feature: an Administrator's test log line at a chosen level
+├── sentry-alerts/                   a feature: Sentry's alerts on the app's crashes, posted to the team's Slack channel
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
 ├── global-settings/                 the global settings an Administrator changes, their registry, and each pod's
@@ -3465,6 +3466,62 @@ too.
   timetables; request or response bodies.
 
 Existing lines that break a rule are left as they are until someone changes that code.
+
+## Crash alerts from Sentry
+
+When Sentry alerts on a crash in the app (a new issue, or one that came back), it calls the main server, which posts one
+short line to the private Slack channel `#team9-app-crash` through an Incoming Webhook made for that channel alone. The
+channel is fixed by the webhook: the server holds no channel name and can post nowhere else. Sentry's free plan has no
+Slack integration of its own, so this stands in for it (P08 ticket 09).
+
+**The route.** `POST /sentry/alerts` is `@Public()`, since Sentry has no token of ours; the signature stands for one.
+
+- With `SENTRY_WEBHOOK_SECRET` or `APP_CRASH_SLACK_WEBHOOK` empty, as in development, the Dev Server and the tests that
+  do not set them, it answers 404 and does nothing.
+- Sentry sends `Sentry-Hook-Signature`, the hex HMAC-SHA256 of the request body's bytes with the integration's client
+  secret, `SENTRY_WEBHOOK_SECRET`. The route takes its body unparsed, as Sentry signed it
+  (`src/common/json-body-limit.ts`, up to 1 MB), and compares the two in constant time. A missing or wrong signature,
+  or a body changed after signing, is answered 401 and posts nothing; like any refusal, it is not logged.
+- Once the signature holds, Sentry is answered 200 at once, whatever becomes of the post, so that it does not send the
+  alert again: Sentry waits 1 second for an answer, and Slack is given 5. Two resources are posted: an issue
+  webhook (`Sentry-Hook-Resource: issue`) whose `action` is `created` or `unresolved`, which is what Sentry's free plan
+  sends, and an issue alert (`event_alert`), which needs a plan with alert actions. An issue's other actions, Sentry's
+  other resources, and a body that is not JSON are answered 200 and not posted (the last with a warning).
+
+**What a post holds.** One message per alert, `{ "text": … }`, made from `data.issue` (or `data.event` of an issue
+alert, which also gives the release). An issue that is unresolved again starts with "App crash again":
+
+```text
+App crash: `TypeError: Cannot read property 'x' of undefined`
+at `app/(tabs)/index.tsx` · level `error` · platform `javascript`
+<https://snu-xh.sentry.io/issues/…/|Open the issue in Sentry>
+```
+
+- The title (cut to 200 characters), where it happened (`culprit`), the level, and the `release_tag` and `platform` tags
+  when the event carries them. A field that is missing leaves its part out; an alert without any is still posted, as
+  `App crash: an issue without a title`.
+- Each part is put on one line, cut, and written as inline code with `&`, `<` and `>` escaped and its backticks
+  replaced, so that a crash's words cannot mention a channel or a person, or become a link. Anyone who reads the DSN
+  out of the APK can send an event with words of their choice.
+- The link is `web_url`, written by the server in Slack's `<url|text>` form, and only when it is an `https://` URL on
+  `sentry.io` or one of its subdomains; otherwise the post has no link.
+- Never: the stack, the user, the breadcrumbs, the request, other tags or anything else of the event. They stay in
+  Sentry.
+
+**Limits.** At most 10 posts a minute for each pod, counted in memory. An alert over the cap is dropped, and the
+minute's drops are counted in one warning once the minute is over:
+`2 crash alerts from Sentry were not posted to Slack in the minute from …: over 10 a minute`. A Slack answer other than
+200, or none within 5 seconds, is a warning, such as
+`A crash alert from Sentry was not posted to Slack: Slack answered 404`, and is not retried. No line names the
+webhook's URL, the secret, or an error's own text, which could quote the URL.
+
+**The settings**, both optional and both secrets, never logged and in no answer: `SENTRY_WEBHOOK_SECRET`, the client
+secret of Sentry's internal integration, and `APP_CRASH_SLACK_WEBHOOK`, the Incoming Webhook's `https://` URL. In
+Production they are the parameters `sentry-webhook-secret` and `app-crash-slack-webhook`, and the people's steps in
+Slack and in Sentry are in `infra/production/README.md` (Crash alerts in Slack).
+
+In a test, `test/sentry-alerts.ts` signs and sends an alert as Sentry does, with placeholder settings, and `SlackStub`
+stands in for the webhook: `startApp(…, { fetchSlack: slack.fetch })`.
 
 ### Requests
 

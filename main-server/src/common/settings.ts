@@ -21,6 +21,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Fable 5.2  prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -187,6 +188,15 @@ export const settingsSchema = z
     // How the server prints its log: "text" is NestJS's coloured text, "json" one JSON line per entry, as Production's
     // log collector reads them (README.md: Logging). src/common/logger.ts reads it before the application is created.
     LOG_FORMAT: z.enum(['text', 'json']).default('text'),
+    // A crash in the app, which Sentry alerts on, posted to the team's Slack channel (README.md: Crash alerts from
+    // Sentry): the client secret of Sentry's internal integration, with which Sentry signs each alert, and the URL of
+    // the Incoming Webhook made for the channel. Both secrets; with either empty, POST /sentry/alerts answers 404. A
+    // refusal never repeats the value.
+    SENTRY_WEBHOOK_SECRET: z.string().default(''),
+    APP_CRASH_SLACK_WEBHOOK: z
+      .string()
+      .default('')
+      .refine((url) => url === '' || URL.parse(url)?.protocol === 'https:', 'Expected an https:// URL or nothing'),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),
