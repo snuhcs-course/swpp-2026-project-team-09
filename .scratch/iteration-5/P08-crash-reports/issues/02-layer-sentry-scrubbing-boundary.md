@@ -118,7 +118,10 @@ Releases: an `all` or `app` Release, which builds a new APK.
 
 ### Screenshots (2026-11-24)
 
-Taken on an x86_64 emulator from a mock build of this branch, with one screen made to throw for the picture.
+Taken on an x86_64 emulator from a mock build of ticket 03's branch, which is this branch with ticket 03's work on top,
+and with one screen made to throw for the picture. So the picture of the dialog also shows ticket 03's row "오류 보고
+보내기" behind it, which this ticket does not add. The after picture and the failed screen are of a second build with
+the `EmptyState` change on top.
 
 - `../references/02-screen-failed.png`: the screen a throwing screen is replaced with.
 - `../references/02-test-error-dialog.png`: the dialog a long press on the build line opens.
