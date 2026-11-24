@@ -130,7 +130,7 @@ Decisions and differences from the ticket:
   minute, so that a burst with no later alert is still counted.
 - A failed post's warning names the error's type only (`TypeError`), never its message, which could hold the URL.
 - The post's first line reads `App crash: <title>`, the second `at <culprit> · level <level> · release <release_tag> ·
-  platform <platform>`, the third `<web_url|Open the issue in Sentry>`.
+platform <platform>`, the third `<web_url|Open the issue in Sentry>`.
 
 Checks run: `pnpm lint`, `prettier --check .` and `tsc --noEmit` in `main-server`; `test/crash-post.unit.test.ts` and
 `test/settings.unit.test.ts`; `test/sentry-alerts.integration.test.ts`, `test/sentry-alerts-failures.integration.test.ts`,
@@ -142,4 +142,4 @@ absent, present, and over two lines, and gave what the new cases expect. CI's `r
 ### Agent usage (2026-11-24)
 
 - Agent time: about 1 hour (an estimate), in one session.
-- Tokens: to be filled in by the orchestrator.
+- Tokens: 237,758 in all for the implementation session, as its usage reports; the split into input, cache reads, cache writes and output was not available when this was written.
