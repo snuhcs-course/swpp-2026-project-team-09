@@ -3,6 +3,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by TaeHyun79
+# 2026-11-24  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # `pnpm build:mock-apk`: the release APK that `pnpm test:device` runs (README.md, "Device runs"). With no server
@@ -21,8 +22,11 @@ JAVA_HOME="$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home"
 export JAVA_HOME
 export ANDROID_HOME=${ANDROID_HOME:-$HOME/Library/Android/sdk}
 # Empty, not unset: @expo/env takes a value from .env only for a variable that is undefined.
-export EXPO_PUBLIC_MAIN_SERVER_URL='' EXPO_PUBLIC_SOCKET_SERVER_URL='' EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID='' INVITE_LINK_HOST=''
+export EXPO_PUBLIC_MAIN_SERVER_URL='' EXPO_PUBLIC_SOCKET_SERVER_URL='' EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID='' INVITE_LINK_HOST='' \
+  EXPO_PUBLIC_SENTRY_DSN=''
 unset ANDROID_X86_64
+# The mock APK reports no crashes and uploads no source maps to Sentry (README.md, "Crash reports").
+export SENTRY_DISABLE_AUTO_UPLOAD=true
 
 pnpm expo prebuild --platform android --clean
 (cd android && ./gradlew assembleRelease)

@@ -3,7 +3,7 @@
     "name": "SNU Now",
     "slug": "snu-now",
     "owner": "snu-now",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "runtimeVersion": {
       "policy": "fingerprint"
     },
@@ -69,6 +69,7 @@
           "microphonePermission": false
         }
       ],
+      "@sentry/react-native",
       "./modules/snu-now-map/app.plugin.ts",
       "./plugins/ios-scene-life-cycle.ts",
       "./plugins/ios-without-push.ts",

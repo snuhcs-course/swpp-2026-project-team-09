@@ -5,6 +5,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-28  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import '@/polyfills';
@@ -17,10 +18,14 @@ import pretendardRegular from '../../assets/fonts/Pretendard-Regular.otf';
 import pretendardSemiBold from '../../assets/fonts/Pretendard-SemiBold.otf';
 import { AppProviders } from '@/app-providers';
 import { font } from '@/design-system';
+import { RouteBreadcrumb, startTelemetry, TelemetryBoundary } from '@/telemetry';
 import { UpdateCheck } from '@/update/update-check';
 
 // The native splash image stays until the fonts are ready, so that no screen appears in the system font first.
 void SplashScreen.preventAutoHideAsync();
+
+// Crash reports start before the first screen; without a DSN in the build they start nothing.
+startTelemetry();
 
 export default function RootLayout(): ReactElement | null {
   const [fontsLoaded, fontsError] = useFonts({
@@ -41,7 +46,11 @@ export default function RootLayout(): ReactElement | null {
   }
   return (
     <AppProviders>
-      <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />
+      {/* A screen that throws while drawing shows a message and "다시 시도" in place of a white screen. */}
+      <TelemetryBoundary>
+        <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />
+      </TelemetryBoundary>
+      <RouteBreadcrumb />
       {/* The check for a newer native build starts with the first screen and shows its dialog over it. */}
       <UpdateCheck />
     </AppProviders>

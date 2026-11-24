@@ -169,6 +169,9 @@ The app's identifier is `com.bonnieandclaude.snunow`. Kakao accepts the map only
 key whose key hash is registered. A development build is signed with the debug key that Expo's template ships, whose
 key hash, `Xo8WBi6jzSxKDVR4drqm84yr9iU=`, is registered, so a teammate needs no key of their own.
 
+A release build uploads its source map to Sentry and fails without `SENTRY_AUTH_TOKEN`; `.env.example` sets
+`SENTRY_DISABLE_AUTO_UPLOAD=true`, which skips the upload. A debug build uploads nothing. See "Crash reports".
+
 ### The commands
 
 ```bash
@@ -399,6 +402,7 @@ src/session/        where the User is in the flow between the screens, and the w
 src/library/        관정도서관: the library client, its hidden web view and login, and the end of its session
 src/update/         the check at start for a newer native build, and its dialog
 src/push/           the wrapper over the notifications library: the permission, the Expo push token, the channel
+src/telemetry/      crash reports: the only folder that imports Sentry, its scrubbing, and the error boundary
 src/screens/        the screens that the routes show; a screen of several files has a folder
 modules/            the native modules, local Expo modules: the map (snu-now-map), text recognition (snu-now-ocr) and
                     the web views' cookie clearing (snu-now-web-cookies)
@@ -1922,6 +1926,91 @@ asks and never registers, and its `registerPushToken` does nothing.
   to the front while no Session is ready on it (nobody signed in, or a User still at the consent or in Onboarding).
   No token of the ended Session is kept for this. What is owed goes before the next registration, and a registration
   that goes through clears it.
+
+## Crash reports
+
+A Release's build reports to Sentry (sentry.io, US): unhandled JavaScript errors and promise rejections, native crashes
+on Android and iOS, Android's ANR and iOS app hangs, and sessions, which give the share of sessions and Users without a
+crash for each release. Tracing, profiling, session replay, screenshots, the view hierarchy and Sentry's logs are
+off. The SDK is `@sentry/react-native` 8.36.0, with its Expo config plugin (`app.json`) and its Metro plugin
+(`metro.config.js`), which give each bundle and its source map one Debug ID so that a stack is read against its own
+source map.
+
+### The layer
+
+`src/telemetry/` is the only folder that imports `@sentry/react-native`, and a test that reads the source tree fails
+on an import anywhere else (`__tests__/telemetry/sentry-import-boundary.unit.test.ts`). App code calls what
+`src/telemetry/index.ts` exports:
+
+- `startTelemetry()`, called once by the root layout before the first screen. Without `EXPO_PUBLIC_SENTRY_DSN` it
+  starts nothing and every other function does nothing: tests, a local build, the mock APK and the Dev Server's and a
+  UAT's APK report nothing.
+- `reportError(error, where)`, for an error the app caught. `where` is one of a closed list in
+  `src/telemetry/sentry.ts`: `screen` and `test-error`.
+- `TelemetryBoundary` and `RouteBreadcrumb`, below.
+
+Every report is tagged with `release_tag` and `release_commit` (the build's `EXPO_PUBLIC_RELEASE_TAG` and
+`EXPO_PUBLIC_RELEASE_COMMIT`, which 내 정보 shows), `ota_update_id` and `runtime_version` (from `expo-updates`),
+`app_version` and `platform`; a missing value is `none`. `environment` is `production`, or `development` in a
+development build. `release` and `dist` are left to the SDK, which takes them from the native build.
+
+A refusal the main server answers on purpose, an `ApiError` with a 4xx status, is not an error of the app and is never
+reported, whether it was passed to `reportError` or nothing caught it.
+
+### What is taken out before a report leaves
+
+`beforeSend` and `beforeBreadcrumb` pass every report and breadcrumb through `src/telemetry/scrub.ts`:
+
+- every URL loses its query string and fragment, and each path segment that is a UUID or a number becomes `:id`
+  (`/quests/3f2a…?lat=37.45&lng=126.95` becomes `/quests/:id`). This holds for the report's request, for each HTTP
+  breadcrumb and for the URLs in other breadcrumbs' data;
+- console breadcrumbs are dropped, and of an HTTP breadcrumb only the method, the scrubbed path and the status are
+  kept;
+- an error's message, and a breadcrumb's, is cut to 200 characters;
+- the User is the id alone, and the device's name and the server name are dropped.
+
+`sendDefaultPii` is off. The native SDKs' own breadcrumbs never pass `beforeBreadcrumb`, so those that could hold a
+URL or a touch are off: iOS's network breadcrumbs and automatic breadcrumbs, and Android's user interaction
+breadcrumbs. A native crash and an ANR are sent by the native SDK at the next start and do not pass `beforeSend`
+either: they carry the scope the JavaScript set, which was scrubbed, and the native stack.
+
+### The screens before a crash
+
+`RouteBreadcrumb`, in the root layout, leaves a breadcrumb at each change of screen with the route's pattern from
+expo-router's segments, without the groups: `/room/[questId]`, never the id. Touches are not recorded.
+
+### A screen that fails to draw
+
+`TelemetryBoundary` is around the root layout's `Stack`. A screen that throws while drawing shows "문제가 생겼어요"
+with "다시 시도", and the error is reported once. "다시 시도" draws the Stack anew, which starts from the start
+screen, as a start of the app does.
+
+### The test error
+
+A long press on the build line at the bottom of 내 정보 asks "시험 오류를 보낼까요?", and "보내기" reports one handled
+error, "A test error, sent from the build line in 내 정보", with `where` `test-error`. The line looks as it did; the way
+in is unmarked, and what it sends is one harmless report. Use it to check a build: in Sentry's Issues, the error should
+appear with the Release's `release_tag`, and with a stack that names `src/screens/me/build-line.tsx` when the build's
+source map was uploaded.
+
+### The settings
+
+| Variable                     | Read by                   | What it does                                                         |
+| ---------------------------- | ------------------------- | -------------------------------------------------------------------- |
+| `EXPO_PUBLIC_SENTRY_DSN`     | the app's bundle          | Where reports go. Without it the app reports nothing                 |
+| `SENTRY_ORG`                 | a native build, an upload | The organisation's slug in Sentry                                    |
+| `SENTRY_PROJECT`             | a native build, an upload | The project's slug in Sentry                                         |
+| `SENTRY_AUTH_TOKEN`          | a native build, an upload | Uploads source maps and native symbols. Never committed              |
+| `SENTRY_DISABLE_AUTO_UPLOAD` | a native release build    | `true` skips the upload, which fails a release build without a token |
+
+The DSN is in the app's bundle by design: it only allows sending. Neither the DSN nor the token is committed, pasted
+into a chat or shown in a screenshot. The organisation and the project are not in `app.json`: the plugin reads them
+from the environment when a native build is made, so they change no fingerprint. To check reports from a development
+build, put a test project's DSN in `.env` and start the app again; a debug build uploads no source map, and its stack
+is read by the development server.
+
+Adding Sentry changed the app's native part, so it came with `version` 1.0.4 and a new APK
+([The Production APK](../infra/production/README.md#the-production-apk)).
 
 ## 관정도서관 (P06)
 

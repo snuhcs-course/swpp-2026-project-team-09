@@ -5,12 +5,17 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Dimensions } from 'react-native';
 import type * as PushDevice from '@/push/device';
 import type * as Worklets from 'react-native-worklets';
+import type * as SentryStandIn from './sentry';
 import type * as WebViewStub from './web-view';
+
+// Every test runs with the Sentry stand-in (`sentry.ts`), which records the telemetry layer's calls and sends nothing.
+jest.mock('@sentry/react-native', () => jest.requireActual<typeof SentryStandIn>('./sentry').sentryModule());
 
 // Every test runs with the web view stand-in (`web-view.tsx`): the app's root mounts the library session's views, and
 // the real `react-native-webview` needs its native module, which no test has.

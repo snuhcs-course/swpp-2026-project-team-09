@@ -1,0 +1,11 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+################################################################################
+
+# pnpm runs a dependency's install scripts only when it is allowed here.
+allowBuilds:
+  # Sentry's CLI, which uploads source maps and symbols, comes in a package of its own for each platform. Its install
+  # script only downloads the binary when that package is missing, so it is not needed.
+  '@sentry/cli': false
