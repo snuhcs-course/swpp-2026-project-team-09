@@ -75,11 +75,13 @@ export function readAlert(body: unknown): CrashAlert {
 }
 
 // One line, at most `limit` characters, with Slack's control characters escaped, so that a crash's words can neither
-// mention a channel or a person nor make a link.
+// mention a channel or a person nor make a link of Slack's own form. Slack also turns a bare `https://…` into a link,
+// and the DSN is in the APK, so anyone can send an event with words of their choice: `://` is written `[://]`, which
+// Slack leaves as text.
 function inert(value: string, limit: number): string {
   const characters = Array.from(value.replaceAll(/\s+/gu, ' ').trim());
   const cut = characters.length > limit ? `${characters.slice(0, limit - 1).join('')}…` : characters.join('');
-  return cut.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  return cut.replaceAll('://', '[://]').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }
 
 export const TITLE_LIMIT = 200;

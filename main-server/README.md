@@ -3487,7 +3487,8 @@ at app/(tabs)/index.tsx · level error · release snunow/all/26.11.24-1 · platf
   when the event carries them. A field that is missing leaves its part out; an alert without any is still posted, as
   `App crash: an issue without a title`.
 - Each part is put on one line, cut, and has `&`, `<` and `>` escaped, so that a crash's words cannot mention a channel
-  or a person, or make a link.
+  or a person, or make a link of Slack's own form. `://` is written `[://]`, since Slack also makes a link of a bare
+  address, and anyone who reads the DSN out of the APK can send an event with words of their choice.
 - The link is `web_url`, written by the server in Slack's `<url|text>` form, and only when it is an `https://` URL on
   `sentry.io` or one of its subdomains; otherwise the post has no link.
 - Never: the stack, the user, the breadcrumbs, the request, other tags or anything else of the event. They stay in

@@ -76,6 +76,12 @@ describe('crashPostText', () => {
     );
   });
 
+  it('writes :// as [://], so that Slack makes no link of a bare address in the words', () => {
+    expect(crashPostText({ title: '다시 로그인하세요 https://evil.example/x', culprit: 'http://a.example' })).toBe(
+      'App crash: 다시 로그인하세요 https[://]evil.example/x\nat http[://]a.example',
+    );
+  });
+
   it('cuts the title to 200 characters, the last one an ellipsis', () => {
     const [line] = crashPostText({ title: '가'.repeat(500) }).split('\n');
 
