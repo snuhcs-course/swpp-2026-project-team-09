@@ -22,7 +22,7 @@ import { menuAnswer, menuNoneLookup, type NoMenuReason } from './menu-lookup.js'
 
 export type MenuFound =
   | { result: 'found'; collectedAt: Date; lines: MenuLineDto[]; plan: Plan; lookup: Lookup }
-  // No line collected for the meal, only notes, or no time to be there and eat. The lines are the meal's, and the
+  // The day not collected, collected without the meal (P04 ticket 60), only notes, or no time to be there and eat. The lines are the meal's, and the
   // Lookup draws the Restaurant with why (P04 ticket 59).
   | { result: 'none'; reason: NoMenuReason; lines: MenuLineDto[]; lookup: Lookup };
 
@@ -89,8 +89,11 @@ export class MenuLookupService {
       lines,
       lookup: menuNoneLookup({ key, date, meal, now: at.now, lines }, reason, place),
     });
-    if (day === undefined || lines.length === 0) {
+    if (day === undefined) {
       return none('no-menu');
+    }
+    if (lines.length === 0) {
+      return none(day.meals.some((served) => served.lines.length > 0) ? 'no-meal' : 'no-menu');
     }
     if (servedLines(lines).length === 0) {
       return none('closed');

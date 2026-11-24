@@ -39,26 +39,42 @@ const sceneSaying = (state: string): unknown => ({
   flags: [{ at: POINT, text: `301동식당 · ${state}`, role: 'place' }],
 });
 
-// Partitions by why it is none: the menu not posted yet; only notes (not served); no free time to eat there.
+// Partitions by why it is none: the menu not posted yet; posted, but without the meal (P04 ticket 60); only notes (not
+// served); no free time to eat there; and today against another day (P04 ticket 60: the day is named but today's).
 describe('menuNoneLookup', () => {
   it('says the menu is not posted yet', () => {
     const lookup = menuNoneLookup({ ...ARGS, lines: [] }, 'no-menu', PLACE);
 
     expect(lookup).toMatchObject({
       kind: 'place',
-      lines: [[{ text: '301동식당', strong: true }], [{ text: '내일 점심 메뉴 아직 안 올라옴', strong: false }]],
+      lines: [[{ text: '301동식당', strong: true }], [{ text: '내일(수) 점심 메뉴 아직 안 올라옴', strong: false }]],
       basis: [],
       band: null,
       actions: [{ kind: 'guide', to: { placeId: PLACE.id, label: '301동식당', ...POINT } }],
       fact: true,
     });
-    expect(lookup.scene).toEqual(sceneSaying('내일 점심 메뉴 아직 안 올라옴'));
+    expect(lookup.scene).toEqual(sceneSaying('내일(수) 점심 메뉴 아직 안 올라옴'));
+  });
+
+  it('says there is no menu of the meal when the day was posted without it', () => {
+    const lookup = menuNoneLookup({ ...ARGS, lines: [] }, 'no-meal', PLACE);
+
+    expect(lookup.scene).toEqual(sceneSaying('내일(수) 점심 메뉴 없음'));
+  });
+
+  it('says today as 오늘', () => {
+    const today = { ...ARGS, date: '2026-11-24', meal: 'dinner' as const, lines: [] };
+
+    expect(menuNoneLookup(today, 'no-meal', PLACE).scene.flags[0]?.text).toBe('301동식당 · 오늘 저녁 메뉴 없음');
+    expect(menuNoneLookup(today, 'no-menu', PLACE).scene.flags[0]?.text).toBe(
+      '301동식당 · 오늘 저녁 메뉴 아직 안 올라옴',
+    );
   });
 
   it('says the meal is not served that day', () => {
     const lookup = menuNoneLookup({ ...ARGS, lines: [note('※ 개교기념일 휴무')] }, 'closed', PLACE);
 
-    expect(lookup.scene).toEqual(sceneSaying('내일 점심은 안 해요'));
+    expect(lookup.scene).toEqual(sceneSaying('내일(수) 점심은 안 해요'));
   });
 
   it('names the dishes when the User has no time to eat there, with their prices as its basis', () => {
@@ -66,7 +82,7 @@ describe('menuNoneLookup', () => {
 
     const lookup = menuNoneLookup({ ...ARGS, lines }, 'no-time', PLACE);
 
-    expect(lookup.scene).toEqual(sceneSaying('제육볶음 · 돈까스'));
+    expect(lookup.scene).toEqual(sceneSaying('내일(수) 점심 · 제육볶음 · 돈까스'));
     expect(lookup.basis).toEqual(['제육볶음 6,000원 · 돈까스 6,500원']);
   });
 });

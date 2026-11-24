@@ -71,6 +71,26 @@
     text:
       absent: [데이터에 없, 데이터가 없]
 
+# P04 ticket 60: a follow-up that names no day keeps the day the conversation is about, and the words name it.
+- id: restaurant-hours-keeps-the-day
+  category: restaurant-hours
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 내일 점심 뭐 먹을까?
+    - assistant:
+        text: "내일(화) 점심 학생회관식당 · 11:00–14:30\n12:00 도착 · 13:00엔 나서요"
+    - user: 학생회관식당 몇 시까지 해?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [restaurantHours]
+      forbidden: [findMenu, planMeal]
+    args:
+      restaurantHours: { date: '2026-11-03' }
+    text:
+      mentions: [내일]
+
 # P05 ticket 37: a meal whose notes give each corner its time is said as times, with no advice to ask the Restaurant.
 - id: restaurant-hours-by-corner
   category: restaurant-hours
