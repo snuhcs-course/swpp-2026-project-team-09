@@ -33,6 +33,7 @@ The work lands as two pull requests to `5.0/Main`, and each is harmless alone:
 | 09 | [The account's owner plans and applies PR B's Terraform, in order](issues/09-plan-and-apply.md) | B | done | 04, 05, 06, 07 |
 | 10 | [Warnings and errors from Production reach #team9-main-server-error](issues/10-production-check.md) | | done | 08, 09 |
 | 11 | [A post to Slack carries a cut message, no whole stack, and no mention](issues/11-what-a-post-carries.md) | | needs-triage | 04 |
+| 12 | [Each main-server request leaves one line with a request ID, and an unexpected error one error line with its stack](issues/12-request-logging.md) | | ready-for-agent | None |
 
 ## User Stories
 

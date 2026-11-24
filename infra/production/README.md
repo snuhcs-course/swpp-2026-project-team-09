@@ -142,7 +142,8 @@ and 6379 for Redis. In Freelens, a Service's page has **Forward** beside each po
 Kubernetes keeps a container's log only while its pod exists. A Release or a restart replaces a server's pods, and their
 logs go with them; `--previous` shows only the last crash. Only the main server's warn and error lines outlast their
 pod, up to 10 a minute, in Slack ([Server logs in Slack](#server-logs-in-slack)). So a tester's report is looked into
-the same day, before the next Release, and the lines that matter are copied into the issue.
+the same day, before the next Release, and the lines that matter are copied into the issue, a request line's bodies
+only in part, with no person and no value in them.
 
 ### kubectl's version
 
@@ -441,11 +442,22 @@ those files. For each record it:
    a minute and read from its first line;
 2. parses the line as JSON and keeps it only if its `level` is `warn`, `error` or `fatal`. Info lines and lines that
    are not JSON, such as Node's own crash output, are not posted; `kubectl logs --previous` still shows them;
-3. keeps only `server`, `level`, `context`, `message` and `stack`;
+3. keeps only `server`, `level`, `context`, `req_id`, `message` and `stack`: a request's bodies and its User's ID
+   (`req_body`, `res_body`, `user_id`) are never posted;
 4. lets at most 10 records a minute through for each server, and drops the rest;
 5. posts to the server's own channel. Each flush is one post, with a line per record as Fluent Bit prints it
    (`{"server"=>"main-server", "level"=>"warn", …}`), so a burst comes as one post of up to 10 lines. A post that still
    fails after 3 retries is dropped.
+
+**Finding a request.** A main-server line written during a request carries the request's ID as `req_id` (the main
+server's README, "Logging"). Every line of that request, its request line with the bodies among them, is in the pods'
+logs until the pods are replaced:
+
+```bash
+kubectl --namespace snunow logs --selector app=main-server --prefix --tail=-1 | grep '"req_id":"<req_id>"'
+```
+
+A request line holds what the User sent and received: copy only what is needed, with no person and no value in it.
 
 `inputs.conf`, `server-filters.conf` and `outputs.conf` hold a part per server, and `filters.conf` the part every
 server shares. `fluent-bit-pipeline/test/pipeline.bats` runs them in the same Fluent Bit image with stdout in place of
