@@ -24,16 +24,16 @@ From the user's phone (2026-11-24): the bottom card has two forms, the dock and 
 4. Drags (b, c, d, e). A drag may start anywhere on the card's body; presses on the header row, the main button, and the input stay presses. A drag on the header always moves the card. A drag on the content scrolls the content at every step, low included, whenever the content is longer than what shows there, as far as lets its last row come clear of the footer and its fade. The card moves only at the content's ends: dragged down with the content at its top, the card comes down; dragged up with the content at its end, or all of it shown, the card rises (d1–d5). The content keeps its scroll position when the card changes step, clamped only as far as the new step requires; a new question starts it at its top. From low, one more drag down or a fling closes the answer to the main map (e1–e3). A let-go lands on the step a fling points to, or on the step nearest where it would come to.
 5. The top time card (k1–k4) keeps today's layout and floats with its margins. Pushed up by its grip it slides up as it is, nothing laid out again or reworded, until a thin strip with the grip shows; pulled down, it comes back. Its vertical drag starts only on the grip's 48 dp zone (the band keeps its handles). A press on the card's body no longer opens the per-person view.
 6. Open (p1, p2, variant A). The time card has three places by its grip: tucked, default, and open. Open keeps today's unfolded meaning: the track shows the band's whole range, where a band is moved further away (PR 465's review), and with Friends one row per person. It opens by pulling the grip down, and a press on the grip opens or folds it as a step; a press on the body opens nothing. Every bar shares one axis: in open the combined bar and each person's bar have the same left and right ends and the same scale, the name a small caption over the bar's left end, so that times line up straight down. As the card is pulled from default to open, the track's range widens from the folded span to the whole range in step with the pull, and the rows come out below as the card grows; let go, it settles at the nearest place or the one a fling points to. Alone, open is the whole range without rows.
-7. Closing removes only the sheet: the main map's input stands where the footer's input stood.
+7. Moved out to [ticket 62](62-closing-keeps-the-input.md): closing removes only the sheet, and the main map's input stands where the footer's input stood. Closing stays as it is in this ticket; the user decides it after trying closing on his phone.
 
 ## Acceptance criteria
 
-- [ ] The card's steps and its let-go rule are unit tested: the nearest step, a fling one step on, a fling down from low closing, a card shorter than a step.
-- [ ] Raising and lowering keep the same content mounted, and no label stands under the grip.
-- [ ] The hint shows once on a phone and leaves at the first touch.
-- [ ] The frame's integration tests pass with the new steps.
-- [ ] On the emulator (mock build), the meal answer, a route Lookup, and a refusal rise, scroll, lower, and close as the boards draw them, at font scale 1.0 and 1.3.
-- [ ] The time card tucks and comes back by its grip, and opens to the whole range by it, with a row per person when it has Friends.
-- [ ] No native file changes; lint, format, and types pass on the app.
+- [x] The card's steps and its let-go rule are unit tested: the nearest step, a fling one step on, a fling down from low closing, a card shorter than a step.
+- [x] Raising and lowering keep the same content mounted, and no label stands under the grip.
+- [x] The hint shows once on a phone and leaves at the first touch.
+- [x] The frame's integration tests pass with the new steps.
+- [x] On the emulator (mock build), the meal answer, a route Lookup, and a refusal rise, scroll, lower, and close as the boards draw them, at font scale 1.0 and 1.3. The route and the refusal are shorter than the middle step: raised, they stop at their own height, with nothing to scroll.
+- [x] The time card tucks and comes back by its grip, and opens to the whole range by it, with a row per person when it has Friends.
+- [x] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
