@@ -17,7 +17,7 @@ import Reanimated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import { color, radius, shadow, space } from '@/design-system';
-import { type Caps, FADE, heightsOf, useCaps } from './card-caps';
+import { type Caps, FADE, heightsOf, underOf, useCaps } from './card-caps';
 import { type Level, type LevelHeights, LEVELS, stepsOf } from './card-levels';
 import { type CardMotion, useCardMotion } from './card-motion';
 import { CONTENT_TOP, type FrameCardProps, LOWERED, OPEN_EDGE } from './frame-card-parts';
@@ -138,7 +138,7 @@ function useMeasures(props: FrameCardProps): {
   const [above, setAbove] = useState(0);
   const [natural, setNatural] = useState<number | null>(null);
   const caps = useCaps(props, above, padTop);
-  const heights = caps === null ? null : heightsOf(caps, natural, padTop);
+  const heights = caps === null ? null : heightsOf(caps, natural, { padTop, under: underOf(props) });
   // Before the stage is laid out every step is offered; laid out, those of different heights.
   const steps = heights === null ? LEVELS : stepsOf(heights);
   return { padTop, above, setAbove, natural, setNatural, caps, heights, steps };
@@ -148,7 +148,14 @@ function useMeasures(props: FrameCardProps): {
 // scrolls at each step as far as it has more than shows there. It keeps its place when the card changes step; a new
 // question starts it at its top (`useHeldHeight`).
 function useContentScroll(
-  { caps, heights, natural }: Pick<ReturnType<typeof useMeasures>, 'caps' | 'heights' | 'natural'>,
+  {
+    caps,
+    heights,
+    natural,
+    under,
+  }: Pick<ReturnType<typeof useMeasures>, 'caps' | 'heights' | 'natural'> & {
+    under: number;
+  },
   level: Level,
 ): Pick<OpenCardState, 'scroll' | 'onScroll' | 'scrolls' | 'padBottom'> & {
   scrollY: SharedValue<number>;
@@ -159,7 +166,7 @@ function useContentScroll(
   const onScroll = useAnimatedScrollHandler((event) => {
     scrollY.value = event.contentOffset.y;
   });
-  const whole = natural === null ? 0 : natural + FADE;
+  const whole = natural === null ? 0 : natural + under;
   const scrolls = heights !== null && whole > heights[level] + 1;
   // The scroll view is laid out at the highest step's height: under the content it needs as much room as the low card
   // shows less, so that the content scrolls its end clear of the fade there too.
@@ -198,7 +205,10 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
   // Before the stage is laid out: the card's height as laid out, which a drag down measures against.
   const [laid, setLaid] = useState(0);
   const extra = above + barRoom;
-  const { scroll, scrollY, onScroll, scrolls, whole, padBottom } = useContentScroll(measures, level);
+  const { scroll, scrollY, onScroll, scrolls, whole, padBottom } = useContentScroll(
+    { ...measures, under: underOf(props) },
+    level,
+  );
   // The hint waits until the stage and the content are laid out, so that it shows only over a card with more to show.
   const hint = useSheetHint(
     raising !== undefined && level === 'low' && measures.natural !== null && heights !== null && steps.length > 1,

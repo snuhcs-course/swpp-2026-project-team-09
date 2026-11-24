@@ -49,14 +49,24 @@ export function useCaps(props: FrameCardProps, above: number, padTop: number): C
   return { low, mid, high, room: high };
 }
 
-// The heights the card runs to: as much as its content with the fade's room under it, up to each step's cap. A content
-// that lays out nothing below its top padding takes no room: the card is its header alone.
-export function heightsOf(caps: Caps, natural: number | null, padTop: number): LevelHeights {
+// Under a stepped card's content, the room that lets its last row come clear of the fade; a card without steps shows
+// its content whole, as it did, and tells that height (PR 516's review).
+export function underOf(props: Pick<FrameCardProps, 'raising'>): number {
+  return props.raising === undefined ? 0 : FADE;
+}
+
+// The heights the card runs to: as much as its content and the room under it (`under`), up to each step's cap. A
+// content that lays out nothing below its top padding takes no room: the card is its header alone.
+export function heightsOf(
+  caps: Caps,
+  natural: number | null,
+  { padTop, under }: { padTop: number; under: number },
+): LevelHeights {
   const fit = (cap: number): number => {
     if (natural === null) {
       return cap;
     }
-    return natural <= padTop + 0.5 ? 0 : Math.min(cap, natural + FADE);
+    return natural <= padTop + 0.5 ? 0 : Math.min(cap, natural + under);
   };
   const high = fit(caps.high);
   const mid = Math.min(fit(caps.mid), high);
