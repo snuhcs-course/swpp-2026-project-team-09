@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useEffect, useState } from 'react';
@@ -16,6 +17,7 @@ import { type Targets, useCardMotion } from './card-motion';
 import { CONTENT_TOP, contentMaxOf, type FrameCardProps, LEAST_CONTENT, LOWERED, OPEN_EDGE } from './frame-card-parts';
 import { CardHeader } from './card-header';
 import { useHeldHeight } from './held-height';
+import { DockLayer, hiddenProps } from './dock-layer';
 import { CloseHint, DragRow } from './raise-handle';
 
 // The frame's open card, attached to the bottom of the screen (moved out of `frame-card.tsx` for its length). Its
@@ -23,6 +25,9 @@ import { CloseHint, DragRow } from './raise-handle';
 // half the stage; raised, as much as its content up to under the time bar; full, the card's top is just under the status
 // bar (P04 ticket 52). It moves as a sheet (`useCardMotion`). Only the lowered card tells its height, once settled, so
 // that the camera fits the answer to the lowered card alone.
+// An answer that docks is the same card (P04 ticket 57): its dock lies over the top of the scrolling part, its lowered
+// step is the dock's height, and the dock fades in over the last stretch of the way down, on the UI thread with the
+// card, so that lowering and raising move one card and nothing is swapped when the motion ends.
 
 // The most the scrolling part takes at each step, under the card's top (`above`); null until the stage is laid out.
 type Caps = Targets;
@@ -50,10 +55,9 @@ function targetsOf({ lowered, raised, full }: Caps, natural: number | null): Tar
   return { lowered: fit(lowered), raised: fit(raised), full };
 }
 
-// Lowering into the dock, the lowered step is the dock's own height, the card's top and the input's room taken away, so
-// that the dock takes the open card's place at the same height (P04 ticket 54).
-function toDockOf(targets: Targets, toDock: number | null, extra: number): Targets {
-  return toDock === null ? targets : { ...targets, lowered: Math.max(0, toDock - extra) };
+// With a dock, the lowered step is the dock's height once it is laid out (P04 ticket 57).
+function withDock(targets: Targets, dock: number | null): Targets {
+  return dock === null ? targets : { ...targets, lowered: dock };
 }
 
 function capOf(level: Level, caps: Caps): number | null {
@@ -103,16 +107,19 @@ interface ScrollingProps {
   // scrolled up into what shows.
   tail: number;
   topped: boolean;
+  // Under the dock at rest: hidden from screen readers and touches, as the dock covers it (P04 ticket 57).
+  under: boolean;
   onNatural: (height: number) => void;
 }
 
 // The part that scrolls under the card's top, laid out once at `room`: its parts measured as they are laid out, and a
 // tail under them.
-function Scrolling({ props, room, tail, topped, onNatural }: ScrollingProps): ReactElement {
+function Scrolling({ props, room, tail, topped, under, onNatural }: ScrollingProps): ReactElement {
   const { minHeight, onContentSizeChange, scroll } = useHeldHeight(props.hold === true);
   const padTop = topped ? space[3] : CONTENT_TOP;
   return (
     <ScrollView
+      {...hiddenProps(under)}
       contentContainerStyle={[styles.content, { paddingTop: padTop }]}
       keyboardShouldPersistTaps="handled"
       ref={scroll}
@@ -135,49 +142,119 @@ function Scrolling({ props, room, tail, topped, onNatural }: ScrollingProps): Re
   );
 }
 
-// The open card, moved as a sheet (`useCardMotion`), and the floor over the input's room at the screen's bottom, which
-// the card's lower part passes under, so that nothing shows beside the input.
-export function OpenCard(props: FrameCardProps & { from: number | null; toDock: number | null }): ReactElement {
-  const { barRoom, onHeight, testID, raising, children } = props;
+function ignoreHeight(): void {
+  // Nothing to tell yet.
+}
+
+type Setter<T> = (value: T) => void;
+
+interface OpenCardState {
+  topped: boolean;
+  setAbove: Setter<number>;
+  setNatural: Setter<number>;
+  dockHeight: number | null;
+  setDockHeight: Setter<number>;
+  extra: number;
+  targets: Targets;
+  room: number | null;
+  motion: ReturnType<typeof useCardMotion>;
+  tail: number;
+  // The lowered card's whole height, which the hint stands over while letting go closes the answer.
+  hintHeight: number;
+  atRest: boolean;
+  onLayout: (event: LayoutChangeEvent) => void;
+}
+
+// The card's measures, steps, and motion.
+function useOpenCard(props: FrameCardProps): OpenCardState {
+  const { barRoom, onHeight, raising, dock } = props;
+  const topped = raising !== undefined || props.onClose !== undefined;
   const [above, setAbove] = useState(0);
   const [natural, setNatural] = useState<number | null>(null);
+  const [dockHeight, setDockHeight] = useState<number | null>(null);
+  // Before the stage is laid out: the card's height as laid out, which a drag down measures against.
+  const [laid, setLaid] = useState(0);
   const caps = useCaps(props, above);
   const extra = above + barRoom;
-  const targets = toDockOf(targetsOf(caps, natural), props.toDock, extra);
+  const docks = dock !== undefined;
+  const targets = withDock(targetsOf(caps, natural), docks ? dockHeight : null);
   const room = roomOf(caps);
-  const motion = useCardMotion({ raising: raising ?? LOWERED, targets, room, from: props.from, extra, onHeight });
+  // Until the dock is laid out its height is not known: the camera hears nothing, so that it hears the dock's alone.
+  const told = docks && dockHeight === null ? ignoreHeight : onHeight;
+  const motion = useCardMotion({ raising: raising ?? LOWERED, targets, room, extra, laid, onHeight: told });
   const level = levelOf(raising?.raised === true, raising?.full === true);
   useToldCap(capOf(level, caps), props.onContentCap);
   const shown = shownOf(level, targets);
-  const { offset, drop } = motion;
+  return {
+    topped,
+    setAbove,
+    setNatural,
+    dockHeight,
+    setDockHeight,
+    extra,
+    targets,
+    room,
+    motion,
+    tail: room === null || shown === null ? 0 : Math.max(0, room - shown),
+    hintHeight: room === null ? laid : extra + (targets.lowered ?? 0),
+    atRest: docks && level === 'lowered',
+    onLayout: ({ nativeEvent }: LayoutChangeEvent): void => {
+      // Before the stage is laid out the card has no steps: it is as tall as its content, and tells that.
+      if (room === null && raising?.raised !== true) {
+        setLaid(nativeEvent.layout.height);
+        onHeight(nativeEvent.layout.height);
+      }
+    },
+  };
+}
+
+// The open card, moved as a sheet (`useCardMotion`), and the floor over the input's room at the screen's bottom, which
+// the card's lower part passes under, so that nothing shows beside the input.
+export function OpenCard(props: FrameCardProps): ReactElement {
+  const { barRoom, testID, children, dock } = props;
+  const card = useOpenCard(props);
+  const { topped, room, motion, targets, atRest } = card;
+  const { drop, offset } = motion;
   const moved = useAnimatedStyle(() => ({ transform: [{ translateY: offset.value + drop.value }] }));
   const floored = useAnimatedStyle(() => ({ transform: [{ translateY: drop.value }] }));
-  const topped = raising !== undefined || props.onClose !== undefined;
   return (
     <>
       <Reanimated.View
-        onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-          // Before the stage is laid out the card has no steps: it is as tall as its content, and tells that.
-          if (room === null && raising?.raised !== true) {
-            onHeight(nativeEvent.layout.height);
-          }
-        }}
+        onLayout={card.onLayout}
         style={[styles.card, { paddingBottom: barRoom }, moved]}
         testID={testID}
       >
-        {topped ? <Top onHeight={setAbove} pan={motion.pan} props={props} /> : null}
-        {children === null ? null : (
-          <Scrolling
-            onNatural={setNatural}
-            props={props}
-            room={room}
-            tail={room === null || shown === null ? 0 : Math.max(0, room - shown)}
-            topped={topped}
-          />
-        )}
+        {topped ? <Top onHeight={card.setAbove} pan={motion.pan} props={props} /> : null}
+        {/* The dock stands at the top of what is under the header, by layout (P04 ticket 57). */}
+        <View>
+          {children === null ? null : (
+            <Scrolling
+              onNatural={card.setNatural}
+              props={props}
+              room={room}
+              tail={card.tail}
+              topped={topped}
+              under={atRest}
+            />
+          )}
+          {dock === undefined ? null : (
+            <DockLayer
+              atRest={atRest}
+              height={card.dockHeight}
+              offset={offset}
+              onHeight={card.setDockHeight}
+              pan={motion.dockPan}
+              raised={targets.raised}
+              room={room}
+              testID={testID}
+            >
+              {dock}
+            </DockLayer>
+          )}
+        </View>
       </Reanimated.View>
       {room === null ? null : <Reanimated.View style={[styles.floor, { height: barRoom }, floored]} />}
-      {motion.past ? <CloseHint barRoom={barRoom} cardHeight={extra + (targets.lowered ?? 0)} drop={drop} /> : null}
+      {motion.past ? <CloseHint barRoom={barRoom} cardHeight={card.hintHeight} drop={drop} /> : null}
     </>
   );
 }

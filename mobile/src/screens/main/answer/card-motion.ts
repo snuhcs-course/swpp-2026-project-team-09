@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -9,7 +10,7 @@ import { Gesture, type PanGesture } from 'react-native-gesture-handler';
 import { type SharedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
-import { heightOf, type Level, type LevelHeights, levelAt, levelOf, rangeOf } from './card-levels';
+import { heightOf, landingOf, type Level, type LevelHeights, levelOf, rangeOf } from './card-levels';
 import { FLING_S, MOTION_MS, type Raising } from './raise-handle';
 
 // The open card moving as a sheet (P04 ticket 52). It is laid out once, at its highest step's height (`room`), and moved
@@ -20,6 +21,8 @@ import { FLING_S, MOTION_MS, type Raising } from './raise-handle';
 
 // A drag on the handle starts past this many points, so that a press stays a press.
 const PAN_STARTS = 8;
+// On the dock, a drag sideways gives way to its row of chips (P04 ticket 52).
+const SIDEWAYS = 16;
 
 // The heights of the scrolling part that show at each step, null until the stage is laid out.
 export interface Targets {
@@ -34,6 +37,8 @@ export interface CardMotion {
   // How far below its lowered step the card is dragged.
   drop: SharedValue<number>;
   pan: PanGesture;
+  // The dock's drag: the whole dock takes it, as the header does (P04 tickets 52 and 57).
+  dockPan: PanGesture;
   // Letting go now closes the answer.
   past: boolean;
 }
@@ -43,10 +48,10 @@ interface MotionInput {
   targets: Targets;
   // The scrolling part's laid-out height: its highest step's. Null until the stage is laid out.
   room: number | null;
-  // The height the scrolling part shows as the card comes, as the docked card's when it is raised; null, its step's.
-  from: number | null;
   // What the card shows over its scrolling part: its top and the input's room, so that its whole height is known.
   extra: number;
+  // The whole card's laid-out height, which a drag down measures against before the stage is laid out.
+  laid: number;
   // Told the whole card's height that shows once it has settled lowered.
   onHeight: (height: number) => void;
 }
@@ -134,35 +139,41 @@ interface PanParts {
   // worklet only later.
   rest: number;
   closable: boolean;
+  // The dock's drag rather than the header's: it gives way sideways, works before the stage is laid out, and raises the
+  // card past RAISES_AT up.
+  dock: boolean;
+  reduce: boolean;
   onPast: (past: boolean) => void;
   onClose: () => void;
   onLetGo: (to: Level) => void;
+  // A let-go with no steps to run to (the stage not laid out): only the past hint goes.
+  onStay: () => void;
 }
 
 // The handle's drag on the UI thread: the offset follows the finger one step either way; started on the lowered card,
-// a drag down goes on below it, and let go past half the card the answer closes.
+// a drag down goes on below it, and let go past half the card the answer closes. The dock's drag does the same, and
+// before the stage is laid out it moves the card down alone.
 function usePan(parts: PanParts): PanGesture {
-  const { level, heights, room, offset, drop, card, rest, closable } = parts;
+  const { level, heights, room, offset, drop, card, rest, closable, dock, reduce } = parts;
   const start = useSharedValue(0);
   const wasPast = useSharedValue(false);
-  const { onPast, onClose, onLetGo } = parts;
-  return Gesture.Pan()
-    .withTestId('answer-card-handle')
-    .enabled(heights !== null)
-    .activeOffsetY([-PAN_STARTS, PAN_STARTS])
+  const { onPast, onClose, onLetGo, onStay } = parts;
+  return panOf(dock, heights !== null)
     .onStart(() => {
+      'worklet';
       start.value = rest;
       wasPast.value = false;
     })
     .onUpdate(({ translationY }) => {
-      if (heights === null) {
-        return;
+      'worklet';
+      const lowered = heights?.lowered ?? 0;
+      const at = heights === null ? -translationY : room - (start.value + translationY);
+      if (heights) {
+        const { low, high } = rangeOf(level, heights);
+        offset.value = room - clamp(at, low, high);
       }
-      const at = room - (start.value + translationY);
-      const { low, high } = rangeOf(level, heights);
-      offset.value = room - clamp(at, low, high);
       if (closable) {
-        const below = Math.max(0, heights.lowered - at);
+        const below = Math.max(0, lowered - at);
         drop.value = below;
         const past = below > card / 2;
         if (past !== wasPast.value) {
@@ -172,22 +183,37 @@ function usePan(parts: PanParts): PanGesture {
       }
     })
     .onEnd(({ translationY, velocityY }) => {
-      if (heights === null) {
-        return;
-      }
-      const at = room - (start.value + translationY + velocityY * FLING_S);
-      if (closable && heights.lowered - at > card / 2) {
+      'worklet';
+      const moved = translationY + velocityY * FLING_S;
+      const lowered = heights?.lowered ?? 0;
+      const at = heights === null ? -moved : room - (start.value + moved);
+      if (closable && lowered - at > card / 2) {
         scheduleOnRN(onClose);
         return;
       }
-      drop.value = 0;
-      scheduleOnRN(onLetGo, levelAt(level, at, heights));
+      // Back up from below the lowered step with the card, never at once (P04 ticket 57).
+      drop.value = reduce ? 0 : withTiming(0, { duration: MOTION_MS });
+      const to = landingOf({ dock, level, moved, at, heights });
+      if (to === null) {
+        scheduleOnRN(onStay);
+      } else {
+        scheduleOnRN(onLetGo, to);
+      }
     });
 }
 
+// The header's drag, or the dock's, which gives way sideways to its chips and works before the stage is laid out.
+function panOf(dock: boolean, stepped: boolean): PanGesture {
+  const pan = Gesture.Pan()
+    .withTestId(dock ? 'answer-dock-drag' : 'answer-card-handle')
+    .enabled(dock || stepped)
+    .activeOffsetY([-PAN_STARTS, PAN_STARTS]);
+  return dock ? pan.failOffsetX([-SIDEWAYS, SIDEWAYS]) : pan;
+}
+
 // Tells the camera a height only when it differs from the last one told, so that it hears each value once, and through
-// the latest `onHeight`: a run that ends after the card began to give way to the dock tells nothing (the frame passes
-// a card about to be docked one that ignores it), where the run's own callback would still hold the one before.
+// the latest `onHeight`: a run that ends while the dock is not yet laid out tells nothing (the card passes one that
+// ignores it then), where the run's own callback would still hold the one before.
 function useTellOnce(onHeight: (height: number) => void): (height: number) => void {
   const told = useRef<number | null>(null);
   const latest = useRef(onHeight);
@@ -204,8 +230,8 @@ function useTellOnce(onHeight: (height: number) => void): (height: number) => vo
 
 // What a run's end does: the camera hears the lowered card's whole height, once the lowered step is committed. A run can
 // end before the step it ran to is committed (a let-go sets it at the same time, and the render may come later): it
-// then tells nothing, and the commit tells, through the latest `onHeight`, which a card about to give way to the dock
-// ignores. So lowering into the dock tells the dock's height alone.
+// then tells nothing, and the commit tells, through the latest `onHeight`. So lowering into the dock tells the dock's
+// height alone (P04 ticket 57).
 function useSettle(
   raised: boolean,
   { lowered, extra, tell }: { lowered: number | null; extra: number; tell: (height: number) => void },
@@ -234,10 +260,10 @@ function useRun(
   level: Level,
   heights: LevelHeights | null,
 ): { offset: SharedValue<number>; back: (to: Level) => void } {
-  const { raising, room, from, extra, onHeight } = input;
+  const { raising, room, extra, onHeight } = input;
   const reduce = useReduceMotion();
   const target = heights === null || room === null ? null : room - heightOf(level, heights);
-  const offset = useSharedValue(room !== null && from !== null ? room - from : (target ?? 0));
+  const offset = useSharedValue(target ?? 0);
   const aimed = useRef<number | null>(null);
   // A run under way: the camera waits for its end.
   const running = useRef(false);
@@ -273,28 +299,35 @@ function useRun(
 }
 
 export function useCardMotion(input: MotionInput): CardMotion {
-  const { raising, targets, room, extra } = input;
+  const { raising, targets, room, extra, laid } = input;
   const level = levelOf(raising.raised, raising.full === true);
   const heights = heightsOf(targets);
   const { offset, back } = useRun(input, level, heights);
   const drop = useSharedValue(0);
   const { past, tellPast, closeNow } = useCloseSide(raising, drop);
   const letGo = useLetGo(raising, level, back);
-  const pan = usePan({
+  const reduce = useReduceMotion();
+  const parts = {
     level,
+    reduce,
     heights: room === null ? null : heights,
     room: room ?? 0,
     offset,
     drop,
-    card: extra + (heights?.lowered ?? 0),
+    card: room === null || heights === null ? laid : extra + heights.lowered,
     rest: room === null || heights === null ? 0 : room - heightOf(level, heights),
     closable: level === 'lowered' && raising.close !== undefined,
     onPast: tellPast,
     onClose: closeNow,
-    onLetGo: (to) => {
+    onLetGo: (to: Level): void => {
       tellPast(false);
       letGo(to);
     },
-  });
-  return { offset, drop, pan, past };
+    onStay: (): void => {
+      tellPast(false);
+    },
+  };
+  const pan = usePan({ ...parts, dock: false });
+  const dockPan = usePan({ ...parts, dock: true });
+  return { offset, drop, pan, dockPan, past };
 }

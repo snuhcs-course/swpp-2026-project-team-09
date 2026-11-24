@@ -10,6 +10,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -74,19 +75,20 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
   const { bubbles, waiting } = control.chat;
   const after = turnOf(bubbles)?.after ?? [];
   const contentMax = contentMaxOf(stageHeight, barRoom);
-  const rest = keyboardUp || raising.raised || waiting || list.open ? null : restOf(control, after);
+  // The dock stands in the card while it is raised too, under the open content, so that lowering fades it in rather
+  // than swapping it in at the end (P04 ticket 57).
+  const rest = keyboardUp || waiting || list.open ? null : restOf(control, after);
   const [reply] = after;
   const raise = (): void => {
     raising.setRaised(true);
   };
   const kept = typing || list.open ? null : <KeptCards cardActions={props.cardActions} control={control} />;
-  // The docked form's content, and the open form's: the open card keeps its own while it runs down to the dock's
-  // height, and the dock takes its place there (P04 ticket 54).
+  // The dock, which the card shows at its lowest step over its open content (P04 ticket 57).
   const dock =
     rest === null || reply === undefined ? undefined : (
       <>
         {kept}
-        <DockedAnswer bubble={reply} control={control} focus={focus} onClose={onClose} onRaise={raise} rest={rest} />
+        <DockedAnswer {...{ bubble: reply, control, focus, onClose, rest }} atRest={!raising.raised} onRaise={raise} />
       </>
     );
   return (
@@ -99,7 +101,6 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
         )
       }
       dock={dock}
-      docked={dock !== undefined}
       hold={waiting}
       testID="answer-card"
     >
