@@ -2679,7 +2679,9 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       worker reads today to six days ahead, so a week ahead never has one): the card's `noPlan.lines` say
       `11/30(월) 메뉴는 아직 올라오지 않았어요` and `메뉴는 엿새 뒤 날짜까지 볼 수 있어요` (today the first line alone), the
       reason stays `no-menu`, and the model is told the menus are not posted yet, never that nothing is open. `findMenu`
-      and `getMenus` say the same of such a day.
+      and `getMenus` say the same of such a day. A `findMenu` that answers `none` still draws the Restaurant
+      (`menuNoneLookup`, kind `place`), its label saying why: `내일 점심 메뉴 아직 안 올라옴`, `내일 점심은 안 해요`, or
+      its dishes when the User has no time to eat there (P04 ticket 59).
     - `findWay(to?, from?, by?)`, with `WAY_RULES`, for an app that sends `answer` (`lookup/`). It finds the way on foot
       to a Place, or to the Place of the User's next item today when `to` is left out, from a Place they named; else
       the main gate (서울대 정문) when their location is off campus; else the Place their location is in, or the
@@ -2701,11 +2703,9 @@ recorded'` with the menu's notes when it serves the meal without kept hours; `se
 known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, today `메뉴 아직 안 올라옴 · 평소 …`),
       never `쉬어요`, which it says only when the menus hold only notes. A meal with no line on a day whose menu has lines for
       another meal is not served that day (`serves: false`), not a meal still to come.
-      Today it adds `now` and `servingNow`, the meal whose hours hold now, or null. With a meal answer on screen (the
-      context's `conditions`), it plans that answer again from them and puts it in the reply's `answer`, so that the
-      reply carries the plan again; a reply in words alone leaves the plan on screen as it was, since the app keeps
-      the answer before it. Without one, the reply's `lookup` (kind `place`, `lookup/hours-lookup.ts`) picks the
-      Restaurant out on the map, with a place flag at the same point whose words after the name the map writes as the
+      Today it adds `now` and `servingNow`, the meal whose hours hold now, or null. The reply's `lookup` (kind `place`,
+      `lookup/hours-lookup.ts`), also in place of a meal answer on screen, since the question is about the Restaurant
+      (P04 ticket 59), picks the Restaurant out on the map, with a place flag at the same point whose words after the name the map writes as the
       label's second line: today `지금 영업 중 · 14:00까지`,
       `지금 닫음 · 08:00 아침`, or `지금 닫음 · 오늘 영업 끝`, another day each meal's span; with `meal`, that meal
       alone (`저녁 17:00–19:00`, `저녁 · 지금 영업 중 · 19:00까지`, `저녁은 안 해요`, or `평소 저녁 …` on a day not

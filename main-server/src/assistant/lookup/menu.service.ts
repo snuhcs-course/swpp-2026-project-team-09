@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -13,16 +14,17 @@ import { MenusService } from '../../menus/menus.service.js';
 import { servedLines } from '../../menus/open-rule.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
-import { type AnswerReply, type Lookup, type MealInput, type Plan } from '../dto/answer.dto.js';
+import { type Lookup, type Plan } from '../dto/answer.dto.js';
 import { type HandledMeal } from '../free-time/meal-fit.js';
 import { MealPlanService } from '../gathering/meal-plan.service.js';
 import { type HoursMeal, type MealOfDay } from './hours-words.js';
-import { menuAnswer } from './menu-lookup.js';
+import { menuAnswer, menuNoneLookup, type NoMenuReason } from './menu-lookup.js';
 
 export type MenuFound =
   | { result: 'found'; collectedAt: Date; lines: MenuLineDto[]; plan: Plan; lookup: Lookup }
-  // No line collected for the meal, only notes, or no time to be there and eat. The lines are the meal's.
-  | { result: 'none'; reason: 'no-menu' | 'closed' | 'no-time'; lines: MenuLineDto[] };
+  // No line collected for the meal, only notes, or no time to be there and eat. The lines are the meal's, and the
+  // Lookup draws the Restaurant with why (P04 ticket 59).
+  | { result: 'none'; reason: NoMenuReason; lines: MenuLineDto[]; lookup: Lookup };
 
 // Spaces and case do not count when a name is matched, as in getMenus.
 const compact = (words: string): string => words.replaceAll(/\s/gu, '').toLowerCase();
@@ -69,11 +71,6 @@ export class MenuLookupService {
     return this.restaurantPlaces.placeOf(key);
   }
 
-  // The meal answer on screen planned again, so that a reply in words keeps it there.
-  replan(userId: string, input: MealInput, at: { now: Date; location: Position | null }): Promise<AnswerReply> {
-    return this.mealPlans.plan(userId, input, at);
-  }
-
   async find(
     userId: string,
     ask: { date: string; meal: HandledMeal; key: string },
@@ -86,11 +83,17 @@ export class MenuLookupService {
     }
     const day = (await this.menus.findByDate(date)).find(({ name }) => name === key);
     const lines = day?.meals.find((served) => served.meal === meal)?.lines ?? [];
+    const none = (reason: NoMenuReason): MenuFound => ({
+      result: 'none',
+      reason,
+      lines,
+      lookup: menuNoneLookup({ key, date, meal, now: at.now, lines }, reason, place),
+    });
     if (day === undefined || lines.length === 0) {
-      return { result: 'none', reason: 'no-menu', lines };
+      return none('no-menu');
     }
     if (servedLines(lines).length === 0) {
-      return { result: 'none', reason: 'closed', lines };
+      return none('closed');
     }
     const answer = await this.mealPlans.plan(
       userId,
@@ -107,7 +110,7 @@ export class MenuLookupService {
     const [hours, cuisines] = await Promise.all([this.menus.hoursOf(key, meal, date), this.menus.cuisinesOf(lines)]);
     const found = menuAnswer({ key, date, meal, now: at.now, lines, answer, hours, cuisines });
     if (found.result === 'none') {
-      return { result: 'none', reason: found.reason, lines };
+      return none(found.reason);
     }
     return { ...found, collectedAt: day.collectedAt, lines };
   }
