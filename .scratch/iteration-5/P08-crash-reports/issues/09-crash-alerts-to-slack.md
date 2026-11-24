@@ -1,7 +1,7 @@
 # 09: A new crash in Sentry is posted to the team's Slack channel by the main server
 
 Parent: [P08 spec](../spec.md)
-Status: done
+Status: ready-for-human
 Blocked by: None (the main server only; it needs nothing of tickets 02 to 05)
 
 Native files: none. Releases: the main server. A person adds two settings before the Release, and the alert in Sentry
