@@ -10,7 +10,8 @@ import type { AssistantReply } from '@/api/assistant-types';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { fireEvent } from '@testing-library/react-native';
+import { act, fireEvent } from '@testing-library/react-native';
+import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { StyleSheet, type ViewStyle } from 'react-native';
 import { screen } from './support/app';
 import { askOnMap, card, timeBar as bar } from './support/answer-map';
@@ -179,5 +180,46 @@ describe("the time bar's tuck", () => {
 
     await stepGrip('untuck');
     expect(barShift()).toBe(0);
+  });
+});
+
+// A drag on the grip, `dy` down, let go slowly.
+async function dragGrip(dy: number): Promise<void> {
+  await act(() => {
+    fireGestureHandler(getByGestureTestId('time-card-grip-drag'), [
+      { translationY: 0, velocityY: 0 },
+      { translationY: dy / 2, velocityY: 0 },
+      { translationY: dy, velocityY: 0 },
+    ]);
+  });
+}
+
+// P04 ticket 61 (boards p1, p2). Partitions: pulled down past half of the way open, and pushed back up; a press on the
+// band's words. Expected values: the band's whole range is 11:30 to 13:30, and its folded ends the busy stretches
+// around the span.
+describe("the time bar's grip pulled down", () => {
+  it('opens to the whole range with a row for each person, and folds again when pushed up', async () => {
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+
+    await dragGrip(120);
+
+    expect(bar().getByText('나')).toBeVisible();
+    expect(bar().getByText('민수')).toBeVisible();
+    expect(bar().getByText('11:30')).toBeVisible();
+    expect(screen.getByTestId('time-card-grip')).toBeExpanded();
+
+    await dragGrip(-120);
+
+    expect(bar().queryByText('민수')).toBeNull();
+    expect(bar().getByText('민수 12:15 302동 수업 끝')).toBeVisible();
+  });
+
+  it('opens nothing at a press on the band’s words', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+
+    await user.press(screen.getByTestId('time-band-words'));
+
+    expect(bar().queryByText('민수')).toBeNull();
+    expect(screen.getByTestId('time-card-grip')).toBeCollapsed();
   });
 });

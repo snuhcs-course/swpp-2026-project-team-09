@@ -6,13 +6,15 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector, type PanGesture } from 'react-native-gesture-handler';
+import Reanimated, { type SharedValue } from 'react-native-reanimated';
 import type { MealInput, TimeBand as TimeBandData } from '@/api/assistant-types';
-import { color, radius, space, text } from '@/design-system';
+import { color, radius, space } from '@/design-system';
 import { clashesAt } from '@/features/assistant/band-move';
 import {
   type BandBound,
@@ -23,18 +25,8 @@ import {
   type Stretch,
   stepped,
 } from '@/features/assistant/time-band';
-import {
-  type BandTick,
-  BandOnTrack,
-  Ends,
-  type HeldBand,
-  percent,
-  placeOf,
-  redOf,
-  Track,
-  useWholeMove,
-  wordsOf,
-} from './band-body';
+import { type BandTick, BandOnTrack, Ends, type HeldBand, redOf, Track, useWholeMove, wordsOf } from './band-body';
+import { type Axis, Placed, useAxis, usePoint } from './band-axis';
 import { BandWords, type HeadRoom } from './band-head-words';
 import { NowMark, Red, useShownBand } from './band-track';
 
@@ -56,8 +48,12 @@ interface TimeBandProps {
   moving?: Stretch | null;
   // Where a drag on the lanes moves the band whole, and where it is let go or stepped. Without it nothing does.
   onMove?: (at: Stretch, letGo: boolean) => void;
-  // Every lane on one row, without names, and the busy stretches that bound the span at its ends.
+  // The track over the free time around the span, and the busy stretches that bound it at its ends; else over the
+  // band's whole range, and its ends.
   folded?: boolean;
+  // How far the track is opened from folded (0) to the whole range (1) as the time card is pulled (P04 ticket 61); left
+  // out, as `folded` says.
+  open?: SharedValue<number>;
   // The span's day beside its words: "내일(수)", or nothing for today.
   day?: string;
   // The day's other meal at one end, in place of that end's label.
@@ -82,11 +78,11 @@ const HANDLE_SLOP = (HANDLE_TOUCH - HANDLE_WIDTH) / 2;
 // Up and down too, so that a folded bar's handle, one lane high, still takes a touch the design system's height.
 const HANDLE_SLOP_Y = (HANDLE_TOUCH - LANE_HEIGHT) / 2;
 const PAN_STARTS = 10;
-const NAME_WIDTH = 40;
 
 interface HandleProps {
   bound: BandBound;
   band: TimeBandData;
+  axis: Axis;
   shown: Stretch;
   trackWidth: number;
   focused: boolean;
@@ -98,7 +94,7 @@ interface HandleProps {
 }
 
 function Handle(props: HandleProps): ReactElement {
-  const { bound, band, shown, trackWidth, focused, disabled, onMove, onLetGo, whole } = props;
+  const { bound, band, axis, shown, trackWidth, focused, disabled, onMove, onLetGo, whole } = props;
   const own = bound === 'from' ? band.startAt : band.endAt;
   const pan = useMemo(() => {
     const at = (translationX: number): Moved => ({
@@ -121,9 +117,10 @@ function Handle(props: HandleProps): ReactElement {
       });
   }, [bound, band, own, trackWidth, disabled, onMove, onLetGo, whole]);
   const time = bound === 'from' ? shown.startAt : shown.endAt;
+  const [moving, rested] = usePoint(time, axis);
   return (
     <GestureDetector gesture={pan}>
-      <View
+      <Reanimated.View
         accessible
         accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
         accessibilityLabel={bound === 'from' ? '시작 시각' : '끝 시각'}
@@ -136,7 +133,7 @@ function Handle(props: HandleProps): ReactElement {
             onLetGo({ bound, clock: stepped(bound, actionName === 'increment' ? 1 : -1, band) });
           }
         }}
-        style={[styles.handle, { left: percent(shareOf(time, band.range)) }, focused && styles.focused]}
+        style={[styles.handle, moving, rested, focused && styles.focused]}
       />
     </GestureDetector>
   );
@@ -144,49 +141,47 @@ function Handle(props: HandleProps): ReactElement {
 
 interface LanesProps {
   band: TimeBandData;
+  axis: Axis;
   fixed: MealInput['window'];
   moving: Stretch | null;
-  folded: boolean;
 }
 
-function Lanes({ band, fixed, moving, folded }: LanesProps): ReactElement {
+// Every lane on one row, each over the one before it: the people's busy stretches together (P04 ticket 61; a row for
+// each person stands under the card's ends, `PersonRows`).
+function Lanes({ band, axis, fixed, moving }: LanesProps): ReactElement {
   return (
     <>
       {band.lanes.map((lane, at) => (
         <View
           key={lane.userId}
-          style={[styles.lane, folded && at > 0 && styles.stacked]}
+          style={[styles.lane, at > 0 && styles.stacked]}
           testID={`time-band-lane-${lane.userId}`}
         >
-          <View style={[styles.bar, folded && at > 0 && styles.clear]}>
+          <View style={[styles.bar, at > 0 && styles.clear]}>
             {lane.busy.map((stretch) => (
-              <View key={`busy-${stretch.startAt}`} style={[styles.busy, placeOf(stretch, band.range)]} />
+              <Placed axis={axis} key={`busy-${stretch.startAt}`} stretch={stretch} style={styles.busy} />
             ))}
-            <Red range={band.range} stretches={redOf(lane, fixed, band, moving)} />
+            <Red axis={axis} stretches={redOf(lane, fixed, band, moving)} />
           </View>
         </View>
       ))}
-      <NowMark band={band} />
+      <NowMark axis={axis} band={band} />
     </>
   );
 }
 
 // While the band is moved whole, the parts of the busy stretches it covers, red on their lanes over the band and its
 // handles, which would hide them: the handles cover most of a narrow band.
-function RedOver({ band, moving, folded }: Pick<LanesProps, 'band' | 'moving' | 'folded'>): ReactElement | null {
+function RedOver({ band, axis, moving }: Pick<LanesProps, 'band' | 'axis' | 'moving'>): ReactElement | null {
   if (moving === null) {
     return null;
   }
   return (
     <View style={styles.over} testID="time-band-red">
       {band.lanes.map((lane, at) => (
-        <View
-          key={lane.userId}
-          style={[styles.lane, folded && at > 0 && styles.stacked]}
-          testID={`time-band-red-${lane.userId}`}
-        >
+        <View key={lane.userId} style={[styles.lane, at > 0 && styles.stacked]} testID={`time-band-red-${lane.userId}`}>
           <View style={styles.redBar}>
-            <Red range={band.range} stretches={clashesAt([lane], moving)} />
+            <Red axis={axis} stretches={clashesAt([lane], moving)} />
           </View>
         </View>
       ))}
@@ -237,21 +232,9 @@ function useMovedBand(band: TimeBandData, disabled: boolean, onDrop: TimeBandPro
   return { shown, bound: moved?.bound ?? null, ...handlers };
 }
 
-function Names({ lanes }: { lanes: TimeBandData['lanes'] }): ReactElement {
-  return (
-    <View style={styles.names}>
-      {lanes.map(({ userId, name }) => (
-        <Text key={userId} numberOfLines={1} style={styles.name}>
-          {name}
-        </Text>
-      ))}
-    </View>
-  );
-}
-
-// The time bar's band: its words with the day on top, then each person's busy stretches, the line of now, and the
-// band with a handle at each end, which a drag or a screen reader's step moves by five minutes, and lanes that move it
-// whole. Folded, the lanes lie on one row without names.
+// The time bar's band: its words with the day on top, then the people's busy stretches on one row, the line of now,
+// and the band with a handle at each end, which a drag or a screen reader's step moves by five minutes, and lanes that
+// move it whole. Folded, the track runs over the free time around the span; opened, over the whole range.
 export function TimeBand(props: TimeBandProps): ReactElement {
   const {
     band: given,
@@ -266,12 +249,14 @@ export function TimeBand(props: TimeBandProps): ReactElement {
     day = '',
   } = props;
   const band = useShownBand(given, folded);
+  const axis = useAxis(given, folded, props.open);
   const [trackWidth, setTrackWidth] = useState(0);
   const moved = useMovedBand(band, disabled, onDrop);
   const whole = useWholeMove(band, trackWidth, disabled, onMove);
   const shown = moving ?? moved.shown;
   const handle = (bound: BandBound): ReactElement => (
     <Handle
+      axis={axis}
       band={band}
       bound={bound}
       disabled={disabled}
@@ -287,16 +272,15 @@ export function TimeBand(props: TimeBandProps): ReactElement {
     <View style={styles.timeBand}>
       <BandWords day={day} head={props.head} parts={wordsOf(band, moving, moved)} />
       <View style={styles.lanes}>
-        {folded ? null : <Names lanes={band.lanes} />}
         <Track onWidth={setTrackWidth} whole={whole}>
-          <Lanes band={band} fixed={fixed} folded={folded} moving={moving} />
-          <BandOnTrack {...props} band={band} moving={moving} shown={shown} />
+          <Lanes axis={axis} band={band} fixed={fixed} moving={moving} />
+          <BandOnTrack {...props} axis={axis} band={band} moving={moving} shown={shown} />
           {handles ? handle('from') : null}
           {handles ? handle('until') : null}
-          <RedOver band={band} folded={folded} moving={moving} />
+          <RedOver axis={axis} band={band} moving={moving} />
         </Track>
       </View>
-      <Ends band={band} folded={folded} margin={NAME_WIDTH} tick={props.tick} />
+      <Ends axis={axis} band={band} folded={folded} tick={props.tick} />
     </View>
   );
 }
@@ -304,8 +288,6 @@ export function TimeBand(props: TimeBandProps): ReactElement {
 const styles = StyleSheet.create({
   timeBand: { gap: space[1] },
   lanes: { flexDirection: 'row' },
-  names: { width: NAME_WIDTH },
-  name: { ...text.caption, height: LANE_HEIGHT, lineHeight: LANE_HEIGHT, color: color.inkMuted },
   lane: { height: LANE_HEIGHT, justifyContent: 'center' },
   stacked: { position: 'absolute', top: 0, right: 0, left: 0 },
   bar: { height: BAR_HEIGHT, borderRadius: radius.full, backgroundColor: color.surfaceSunken },

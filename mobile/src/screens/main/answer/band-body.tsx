@@ -4,11 +4,13 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useMemo } from 'react';
-import { type DimensionValue, StyleSheet, Text, View } from 'react-native';
+import { type DimensionValue, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector, type PanGesture } from 'react-native-gesture-handler';
+import Reanimated, { useAnimatedStyle } from 'react-native-reanimated';
 import type { MealInput, TimeBand } from '@/api/assistant-types';
 import { color, radius, space, text } from '@/design-system';
 import { bandMoved, bandStepped, movingWords } from '@/features/assistant/band-move';
@@ -22,6 +24,7 @@ import {
   shareOf,
   type Stretch,
 } from '@/features/assistant/time-band';
+import { type Axis, Placed, usePlaced } from './band-axis';
 
 // The time band on its track, which a drag on its lanes moves whole (P02 ticket 25).
 
@@ -118,6 +121,7 @@ export function Track({ whole, onWidth, children }: TrackProps): ReactElement {
 
 interface BandProps {
   band: TimeBand;
+  axis: Axis;
   // Where the band is drawn.
   shown: Stretch;
   // Where the band was before the last drag, drawn as a dashed outline.
@@ -130,9 +134,10 @@ interface BandProps {
 }
 
 // The body between the handles, which a screen reader's step moves whole by five minutes and lets go there.
-function Body({ band, shown, disabled, onMove }: BandProps & { onMove: OnMove }): ReactElement {
+function Body({ band, axis, shown, disabled, onMove }: BandProps & { onMove: OnMove }): ReactElement {
+  const [moving, rested] = usePlaced(shown, axis);
   return (
-    <View
+    <Reanimated.View
       accessible
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       accessibilityLabel="시간 띠"
@@ -144,7 +149,7 @@ function Body({ band, shown, disabled, onMove }: BandProps & { onMove: OnMove })
           onMove(bandStepped(band, actionName === 'increment' ? 1 : -1), true);
         }
       }}
-      style={[styles.band, placeOf(shown, band.range)]}
+      style={[styles.band, moving, rested]}
     />
   );
 }
@@ -152,13 +157,13 @@ function Body({ band, shown, disabled, onMove }: BandProps & { onMove: OnMove })
 // The band where it is drawn, and the dashed outline of where it was before a drag: while it is moved whole, its own
 // place.
 export function BandOnTrack(props: BandProps): ReactElement {
-  const { band, ghost, moving, shown, onMove } = props;
+  const { band, axis, ghost, moving, shown, onMove } = props;
   const outline = moving === null ? ghost : { startAt: band.startAt, endAt: band.endAt };
   return (
     <>
-      {outline === null ? null : <View style={[styles.ghost, placeOf(outline, band.range)]} testID="time-band-ghost" />}
+      {outline === null ? null : <Placed axis={axis} stretch={outline} style={styles.ghost} testID="time-band-ghost" />}
       {onMove === undefined ? (
-        <View style={[styles.band, placeOf(shown, band.range)]} />
+        <Placed axis={axis} stretch={shown} style={styles.band} />
       ) : (
         <Body {...props} onMove={onMove} />
       )}
@@ -175,33 +180,35 @@ export interface BandTick {
 interface EndsProps {
   band: TimeBand;
   folded: boolean;
-  margin: number;
+  axis: Axis;
   tick?: BandTick;
 }
 
-// The ends under the track: the range's beside the lanes' names, `margin` wide, or folded the busy stretches that
-// bound the span, each under its own time (P04 ticket 14); a tick stands in place of its side's.
-export function Ends({ band, folded, margin, tick }: EndsProps): ReactElement {
+// The ends under the track: the range's, or folded the busy stretches that bound the span, each under its own time
+// (P04 ticket 14); a tick stands in place of its side's. As the track opens they go out to its ends.
+export function Ends({ band, folded, axis, tick }: EndsProps): ReactElement {
   const { before, after } = folded
     ? bandEdgesOf(band)
     : { before: clockOf(band.range.startAt), after: clockOf(band.range.endAt) };
-  const at = folded ? edgeSharesOf(band, band.range) : { before: 0, after: 1 };
+  const at = edgeSharesOf(band, axis.folded);
+  const { open } = axis;
+  const rested: ViewStyle = folded
+    ? { paddingLeft: percent(at.before), paddingRight: percent(1 - at.after) }
+    : { paddingLeft: 0, paddingRight: 0 };
+  const moving = useAnimatedStyle<ViewStyle>(() => {
+    const shut = 1 - Math.min(1, Math.max(0, open.value));
+    return { paddingLeft: `${at.before * shut * 100}%`, paddingRight: `${(1 - at.after) * shut * 100}%` };
+  });
   const end = (words: string): ReactElement => (
     <Text numberOfLines={1} style={styles.end}>
       {words}
     </Text>
   );
   return (
-    <View
-      style={[
-        styles.ends,
-        !folded && { marginLeft: margin },
-        folded && { paddingLeft: percent(at.before), paddingRight: percent(1 - at.after) },
-      ]}
-    >
+    <Reanimated.View style={[styles.ends, moving, rested]}>
       {tick?.side === 'left' ? tick.node : end(before)}
       {tick?.side === 'right' ? tick.node : end(after)}
-    </View>
+    </Reanimated.View>
   );
 }
 

@@ -33,8 +33,10 @@ import { bookingKept } from '../library/booking-kept';
 import { SlotBand } from '../library/slot-band';
 import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
+import { useAxis } from './band-axis';
+import { PersonRows } from './person-rows';
 import { TimeBand } from './time-band';
-import { type Tuck, useTuck } from './time-card-tuck';
+import { type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
 import { type BandFocus, useCorrections } from './use-corrections';
 import { addNameOf } from './who-words';
 
@@ -71,22 +73,22 @@ interface BarProps {
   offset?: number;
 }
 
-// The bar's grip: a press unfolds the bar or folds it again; a drag tucks it away or brings it back (`useTuck`), and a
-// screen reader steps it.
-function Grip(p: { tuck: Tuck; label: string; folded: boolean; onToggle: () => void }): ReactElement {
-  const { tuck, label, folded, onToggle } = p;
+// The bar's grip: a drag moves the card between tucked, its place, and open (`useTimeCardGrip`); a press opens it or
+// folds it again, and a screen reader tucks it away or back.
+function Grip(p: { grip: TimeCardGrip; label: string; folded: boolean }): ReactElement {
+  const { grip, label, folded } = p;
   return (
-    <GestureDetector gesture={tuck.pan}>
+    <GestureDetector gesture={grip.pan}>
       <Pressable
-        accessibilityActions={tuck.actions}
+        accessibilityActions={grip.actions}
         accessibilityLabel={label}
         accessibilityRole="button"
         accessibilityState={{ expanded: !folded }}
         hitSlop={GRIP_SLOP}
         onAccessibilityAction={({ nativeEvent }) => {
-          tuck.onAction(nativeEvent.actionName);
+          grip.onAction(nativeEvent.actionName);
         }}
-        onPress={onToggle}
+        onPress={grip.toggle}
         style={styles.toggle}
         testID="time-card-grip"
       >
@@ -96,29 +98,53 @@ function Grip(p: { tuck: Tuck; label: string; folded: boolean; onToggle: () => v
   );
 }
 
-// The time bar: the answer's band in one white row at the top, its head the words and "＋ 같이", folded to one row, which a press on its grip
-// unfolds to the band's whole range, a row for each person, and folds again. Its grip pushes it up out of the way
-// (`useTuck`, P04 ticket 61).
+// The rows for each person under the open card, in the room that grows as the card is pulled open.
+function OpenRows(p: { band: BarProps['band']; grip: TimeCardGrip; onHeight: (height: number) => void }): ReactElement {
+  const { band, grip } = p;
+  const folded = grip.place !== 'open';
+  const axis = useAxis(band.band, folded, grip.open);
+  return (
+    <Reanimated.View style={[styles.grown, grip.grown, grip.grownRest]}>
+      <PersonRows
+        axis={axis}
+        band={band.band}
+        fixed={band.fixed}
+        hidden={folded}
+        moving={band.moving ?? null}
+        onHeight={p.onHeight}
+        shown={{ startAt: band.band.startAt, endAt: band.band.endAt }}
+      />
+    </Reanimated.View>
+  );
+}
+
+// The time bar: the answer's band in one white row at the top, its head the words and "＋ 같이", its track over the
+// free time around the span. Pulled open by its grip, the track widens to the band's whole range, a bar of one lane too,
+// so that a move further away is made there (PR 465's review), and with Friends a row for each person comes out under
+// it on the same axis (P04 ticket 61). Its grip also pushes it up out of the way. The height it tells is its folded
+// one: open, it lies over the map for a while.
 function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
-  const [unfolded, setUnfolded] = useState(false);
   const [addWidth, setAddWidth] = useState(ADD_ROOM);
   const [height, setHeight] = useState(0);
+  const [rows, setRows] = useState(0);
   const barY = barTop(top) + offset;
-  const tuck = useTuck({ height, top: barY });
   const { lanes, startAt, now } = band.band;
-  // Folded, the track runs over the free time around the span (P04 ticket 14); every bar unfolds to the band's whole
-  // range, a bar of one lane too, so that a move further away is made there (PR 465's review).
-  const folded = !unfolded;
-  const what = lanes.length > 1 ? '사람별 시간' : '하루 시간';
+  const friends = lanes.length > 1;
+  const grip = useTimeCardGrip({ height, top: barY, rows: friends ? rows : 0 });
+  const folded = grip.place !== 'open';
+  const what = friends ? '사람별 시간' : '하루 시간';
   const label = folded ? `${what} 펼치기` : `${what} 접기`;
   return (
     <Reanimated.View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-        setHeight(nativeEvent.layout.height);
-        onHeight(nativeEvent.layout.height);
+        if (!grip.moving) {
+          const own = nativeEvent.layout.height - (folded ? 0 : rows);
+          setHeight(own);
+          onHeight(own);
+        }
       }}
-      style={[styles.bar, { top: barY }, tuck.moved, tuck.rested]}
+      style={[styles.bar, { top: barY }, grip.moved, grip.rested]}
       testID="time-bar"
     >
       <TimeBand
@@ -126,7 +152,9 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
         day={day ?? koreaDayWord(startAt, new Date(now))}
         folded={folded}
         head={{ right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
+        open={grip.open}
       />
+      {friends ? <OpenRows band={band} grip={grip} onHeight={setRows} /> : null}
       {add === null ? null : (
         <View
           onLayout={({ nativeEvent }: LayoutChangeEvent) => {
@@ -138,14 +166,7 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
           {add}
         </View>
       )}
-      <Grip
-        folded={folded}
-        label={label}
-        onToggle={() => {
-          setUnfolded(folded);
-        }}
-        tuck={tuck}
-      />
+      <Grip folded={folded} grip={grip} label={label} />
     </Reanimated.View>
   );
 }
@@ -278,6 +299,8 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     boxShadow: shadow.float,
   },
+  // The rows' room, which grows as the card is pulled open.
+  grown: { overflow: 'hidden' },
   toggle: { alignSelf: 'center', alignItems: 'center', width: GRIP_WIDTH, paddingTop: space[2] },
   grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
   // At the right of the head row, its top at the row's top (the bar's padding), so that the two share their middle and
