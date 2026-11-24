@@ -11,8 +11,9 @@ Native files: none. Releases: none; this is a `terraform apply` from the account
 Follow the infra README's "Replacing the nodes":
 
 1. Pick a quiet time with no Release running or due in the next hour.
-2. `terraform plan -var-file=account-a.tfvars`: two resources changed in place (the launch template's `volume_size` 20 → 40 and the node group's `launch_template` `version`), nothing added or destroyed.
-3. `terraform apply -var-file=account-a.tfvars`, with `kubectl get nodes --watch` in a second terminal. It takes about 15 to 30 minutes.
+2. `terraform plan -var-file=account-a.tfvars`: the launch template's `volume_size` 20 → 40 and the node group's `launch_template` `version`, both in place, and nothing else.
+3. If the plan shows anything else, stop. Another merged pull request's change that is not applied yet (a Helm release, for example) is applied first, on its own, from the commit before this one, and checked as its own ticket says; never together with the node replacement. Then plan again.
+4. `terraform apply -var-file=account-a.tfvars`, with `kubectl get nodes --watch` in a second terminal. It takes about 15 to 30 minutes.
 
 ## Done when
 
@@ -22,3 +23,5 @@ Follow the infra README's "Replacing the nodes":
 - [ ] The next `all` Release leaves no node in DiskPressure (`kubectl describe node` shows no `NodeHasDiskPressure` event).
 
 ## Comments
+
+- 2026-11-24: a read-only plan from this branch, with #542 in it and #542's Fluent Bit change already applied, shows only these two updates (0 added, 2 changed, 0 destroyed).

@@ -270,11 +270,17 @@ expired link is sent again with **Resend verification** on the budget's page in 
 ### Replacing the nodes
 
 A change to the nodes' launch template in `cluster.tf`, such as the disk's `volume_size`, replaces both nodes one
-after the other. The plan shows exactly two resources updated in place and nothing added or destroyed: the node group's
-`aws_launch_template`, with the changed value, and its `aws_eks_node_group`, whose `launch_template` `version` becomes
-`(known after apply)`. The apply saves a new version of the launch template and asks EKS to move the node group to it,
-then waits until EKS has finished, usually 15 to 30 minutes. A plan that replaces or destroys the node group is a
-different change: stop and look again.
+after the other. Its plan updates the node group's `aws_launch_template` in place, with the changed value, and its
+`aws_eks_node_group`, whose `launch_template` `version` becomes `(known after apply)`, and nothing else. The apply saves
+a new version of the launch template and asks EKS to move the node group to it, then waits until EKS has finished,
+usually 15 to 30 minutes.
+
+A node replacement is applied alone. If the plan shows anything else, stop:
+
+- Another merged pull request's change that is not applied yet, such as `helm_release.fluent_bit` after a change to
+  `fluent-bit-pipeline/`, is applied first, on its own, from the commit before the node change, and checked as its own
+  steps say. Then plan again.
+- A plan that replaces or destroys the node group is a different change: look again.
 
 EKS replaces the nodes in this order
 ([Understand each phase of node updates](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-update-behavior.html)):
@@ -307,7 +313,7 @@ The new nodes join before an old one is drained, so the evicted pods always find
 Apply such a change at a quiet time, with no Release running or due:
 
 ```bash
-terraform plan -var-file=account-a.tfvars    # two resources changed in place, nothing added or destroyed
+terraform plan -var-file=account-a.tfvars    # only the launch template and the node group, in place
 terraform apply -var-file=account-a.tfvars
 ```
 
