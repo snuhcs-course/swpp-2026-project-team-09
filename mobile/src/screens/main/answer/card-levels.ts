@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The answer card's heights: lowered, raised up to under "←", and full, its top just under the status bar (P04 tickets
@@ -58,4 +59,28 @@ export function levelAt(start: Level, at: number, { lowered, raised, full }: Lev
     return 'full';
   }
   return at < below ? 'lowered' : 'raised';
+}
+
+// From the dock, a drag up this far, a fling carried on, raises the card (P04 ticket 52).
+const RAISES_AT = 40;
+
+// The step a let-go lands on: from the dock, up past RAISES_AT raises the card; else the nearer step; null with no steps.
+export function landingOf({
+  dock,
+  level,
+  moved,
+  at,
+  heights,
+}: {
+  dock: boolean;
+  level: Level;
+  moved: number;
+  at: number;
+  heights: LevelHeights | null;
+}): Level | null {
+  'worklet';
+  if (dock && level === 'lowered' && -moved > RAISES_AT) {
+    return 'raised';
+  }
+  return heights === null ? null : levelAt(level, at, heights);
 }
