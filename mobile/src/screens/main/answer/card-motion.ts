@@ -11,7 +11,7 @@ import type Reanimated from 'react-native-reanimated';
 import { type AnimatedRef, type SharedValue, useSharedValue } from 'react-native-reanimated';
 import { usePan, useListY } from './card-drag';
 import { useRun } from './card-run';
-import { useReduceMotion } from '@/hooks/use-reduce-motion';
+import { useReduceMotionSetting } from '@/hooks/use-reduce-motion';
 import { heightOf, type Level, type LevelHeights } from './card-levels';
 import type { Raising } from './raise-handle';
 
@@ -23,8 +23,9 @@ import type { Raising } from './raise-handle';
 // hears the low card's height once it has settled.
 
 export interface CardMotion {
-  // How far below its laid-out place the card stands for its step.
+  // How far below its laid-out place the card stands for its step, and where it rests, which React holds for the view.
   offset: SharedValue<number>;
+  rest: number;
   // How far below low the card is dragged.
   drop: SharedValue<number>;
   // The card's drag, anywhere on it, which also scrolls the content where it scrolls.
@@ -109,8 +110,9 @@ function useLetGo(
 export function useCardMotion(input: MotionInput): CardMotion {
   const { raising, heights, room, extra, laid, header, scroll, scrollY, scrolls, maxScroll } = input;
   const { level } = raising;
-  const reduce = useReduceMotion();
-  const { offset, back } = useRun(input, level, reduce);
+  // Until the phone has said whether it asks for less motion, nothing runs.
+  const reduce = useReduceMotionSetting() !== false;
+  const { offset, rest, back } = useRun(input, level, reduce);
   const drop = useSharedValue(0);
   const { past, tellPast, closeNow } = useCloseSide(raising, drop);
   const letGo = useLetGo(raising, back, heights);
@@ -141,5 +143,5 @@ export function useCardMotion(input: MotionInput): CardMotion {
       tellPast(false);
     },
   });
-  return { offset, drop, pan, past };
+  return { offset, rest, drop, pan, past };
 }

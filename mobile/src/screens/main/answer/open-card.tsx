@@ -5,7 +5,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Reanimated, {
@@ -154,7 +154,6 @@ interface OpenCardState {
   onLayout: (event: LayoutChangeEvent) => void;
 }
 
-// The card's measures, steps, and motion.
 // The sheet's measures: its header's and its content's heights, the caps, and the steps they make.
 function useMeasures(props: FrameCardProps): {
   padTop: number;
@@ -277,16 +276,18 @@ export function OpenCard(props: FrameCardProps): ReactElement {
   const { room, motion } = card;
   const { drop, offset } = motion;
   const moved = useAnimatedStyle(() => ({ transform: [{ translateY: offset.value + drop.value }] }));
+  // What React holds for the view is where it rests, after the animated style, so that a commit of React's lays the
+  // right place again (`useRun`); the UI thread moves it from there.
+  const rested = useMemo(() => ({ transform: [{ translateY: motion.rest }] }), [motion.rest]);
   return (
     <>
       <GestureDetector gesture={motion.pan}>
-        {/* The moved view's own props stay the same from render to render, so that no commit of React's lays an old
-            translation over the one the UI thread gave it; what changes stands on the view inside it. */}
+        {/* The moved view's own props change only with where it rests; the rest stands on the view inside it. */}
         <Reanimated.View
           onLayout={card.onLayout}
           // The first touch of the card takes the first-time hint away.
           onTouchStart={card.hint.leave}
-          style={[styles.card, moved]}
+          style={[styles.card, moved, rested]}
           testID={testID}
         >
           <View style={{ paddingBottom: barRoom }}>

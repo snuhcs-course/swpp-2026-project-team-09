@@ -4,7 +4,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { type SharedValue, useSharedValue, withSpring } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { heightOf, type Level, type LevelHeights } from './card-levels';
@@ -86,30 +86,71 @@ function useSettle(
   );
 }
 
-// The offset running to its step: on a let-go or a step, and again whenever the step's height changes (the content
-// grows, the stage is laid out). The first step the card comes to once it is laid out, it stands at at once (PR 537's
-// review). Settled at low, the card's whole height goes to the camera.
+interface Place {
+  target: number | null;
+  room: number | null;
+  level: Level;
+  reduce: boolean;
+  offset: SharedValue<number>;
+  aimed: { current: number | null };
+  ranLevel: { current: Level };
+  running: { current: boolean };
+  rest: number;
+  setRest: (rest: number) => void;
+}
+
+// In the render: whether the step's new place is run to (a step the User asked for, with motion), or else sets it at
+// once and tells React (`rest`).
+function usePlace({ target, room, level, reduce, offset, aimed, ranLevel, running, rest, setRest }: Place): boolean {
+  const stepped = ranLevel.current !== level && aimed.current !== null;
+  const runs = target !== null && target !== aimed.current && stepped && !reduce;
+  if (target !== null && target !== aimed.current && !runs) {
+    aimed.current = target;
+    offset.value = target;
+  } else if (target === null && aimed.current === null && room !== null) {
+    offset.value = room;
+  }
+  const placedAt = target !== null && !runs ? target : aimed.current === null ? (room ?? 0) : null;
+  if (placedAt !== null && placedAt !== rest && !running.current) {
+    setRest(placedAt);
+  }
+  ranLevel.current = level;
+  return runs;
+}
+
+// The offset running to its step. A step the User asked for runs: a let-go by `back`, a screen reader's or back's step
+// here. Anything else, the card's first place, a change of the step's height alone (the stage, the header, the
+// keyboard, the content laid out), and every step with reduced motion, is set in the render itself, before the moved
+// view's place is told to React (`rest`): React lays what it holds for the view again over a place set on the UI thread
+// alone, which on a fresh start's first answer left the card where it was first laid out (P04 ticket 61). A run tells
+// React its place when it ends, as it then stands there too. Settled at low, the card's whole height goes to the camera.
 export function useRun(
   input: RunInput,
   level: Level,
   reduce: boolean,
-): { offset: SharedValue<number>; back: (to: Level, velocity?: number) => void } {
+): { offset: SharedValue<number>; rest: number; back: (to: Level, velocity?: number) => void } {
   const { heights, room, extra, onHeight } = input;
   const target = heights === null || room === null ? null : room - heightOf(level, heights);
   // Laid out with no steps yet, the card waits wholly under its place.
   const offset = useSharedValue(target ?? room ?? 0);
-  const aimed = useRef<number | null>(null);
-  const placed = useRef(target !== null);
+  // Where the card rests, which React holds for the moved view: set with each place set at once, and at the end of
+  // each run, when the run stands there too.
+  const [rest, setRest] = useState(target ?? room ?? 0);
+  const aimed = useRef<number | null>(target);
+  const ranLevel = useRef(level);
   // A run under way: the camera waits for its end.
   const running = useRef(false);
   const low = heights?.low ?? null;
   const tell = useTellOnce(onHeight);
   const settle = useSettle(level, { low, extra, tell }, running);
+  const runs = usePlace({ target, room, level, reduce, offset, aimed, ranLevel, running, rest, setRest });
   const back = useCallback(
     (to: Level, velocity = 0) => {
       if (heights !== null && room !== null) {
         running.current = !reduce;
-        runTo(offset, room - heightOf(to, heights), { reduce, aimed, velocity }, () => {
+        const at = room - heightOf(to, heights);
+        runTo(offset, at, { reduce, aimed, velocity }, () => {
+          setRest(at);
           settle(to);
         });
       }
@@ -117,21 +158,17 @@ export function useRun(
     [heights, room, offset, reduce, settle],
   );
   useEffect(() => {
-    if (target !== null && target !== aimed.current) {
-      const first = !placed.current;
-      placed.current = true;
-      running.current = !reduce && !first;
-      runTo(offset, target, { reduce: reduce || first, aimed }, () => {
+    if (runs && target !== null) {
+      running.current = true;
+      runTo(offset, target, { reduce: false, aimed }, () => {
+        setRest(target);
         settle(level);
       });
       return;
     }
-    if (target === null && room !== null && !placed.current) {
-      offset.value = room;
-    }
     if (!running.current && level === 'low' && low !== null) {
       tell(extra + low);
     }
-  }, [target, room, offset, reduce, settle, level, low, extra, tell]);
-  return { offset, back };
+  }, [runs, target, offset, settle, level, low, extra, tell]);
+  return { offset, rest, back };
 }
