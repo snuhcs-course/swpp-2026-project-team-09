@@ -112,11 +112,16 @@ the privacy policy. It is kept on the phone, not on the account, so it holds bef
 
 Off holds at once and at every later launch:
 
-- at once, `reportError` does nothing, `beforeSend` drops every event (an unhandled error and a native crash kept
-  from before among them), and the layer closes Sentry's client so that the session's updates stop too;
+- at once, `reportError` does nothing, `beforeSend` drops every event (an unhandled error among them), and the layer
+  closes Sentry's client so that the session's updates and the native crash handling stop too;
 - at the next launch, Sentry is not started.
 
 Turning it on again starts Sentry in that run.
+
+A native crash is kept by the native SDK in its own cache and sent when the SDK next starts, without `beforeSend`, and
+the SDK gives JavaScript no way to empty that cache. So a crash kept from a run when the switch was on, and not yet
+sent, is not discarded: it stays on the phone while the switch is off, since the SDK is not started, and is sent if
+the switch is turned on again.
 
 ### The test error
 
