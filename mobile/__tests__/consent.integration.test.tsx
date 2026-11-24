@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import { fireEvent, userEvent } from '@testing-library/react-native';
@@ -182,9 +183,11 @@ describe("the privacy policy's part on error reports", () => {
     expect(screen.getByRole('header', { name: '오류 보고' })).toBeVisible();
     for (const words of [
       /오류를 찾아 고치기 위해 오류 보고를 보내요/u,
-      /오류의 내용과 앱 코드에서 오류가 난 곳, 그때까지 본 화면의 이름\(주소에서 id를 지운 것\), 앱의 버전과 업데이트, 휴대폰의 기종과 OS 버전, 계정의 내부 id/u,
+      /오류의 내용\(오류 메시지는 200자까지\)과 앱 코드에서 오류가 난 곳, 그때까지 본 화면의 이름과 앱이 서버에 보낸 요청의 종류·결과\(둘 다 주소에서 id를 지운 것\), 앱의 버전과 업데이트, 휴대폰의 기종과 OS 버전, 계정의 내부 id/u,
       /이름·이메일·학번이 아니에요/u,
-      /^이름, 이메일, 학번, 위치, 친구, 파티 제목, 입력한 내용은 보내지 않아요\.$/u,
+      /앱을 연 횟수와 오류 없이 끝났는지도 함께 보내요/u,
+      /^이름, 이메일, 학번, 위치, 친구, 파티 제목은 보내지 않아요\./u,
+      /오류 메시지에 입력한 내용이 섞여 있으면 그 부분이 함께 담길 수 있어요/u,
       /네이티브 부분이 멈춘 경우에는 휴대폰의 오류 보고 기능이 .* 그대로 보내요/u,
       /Functional Software, Inc\.\(Sentry\)가 받아 미국에 있는 서버에 보관해요\(개인정보의 국외 이전\)\. 보관 기간은 30일이에요/u,
       /처음에 켜져 있어요\. 내 정보 › 오류 보고 보내기에서 언제든 끌 수 있고, 꺼 두는 동안에는 아무것도 보내지 않아요/u,

@@ -70,8 +70,23 @@ Native files: none. Releases: an app over-the-air update. A person reviews the w
   opening at the part and at the top) and `__tests__/telemetry/error-reports-switch.integration.test.tsx` (the
   switch's link opens the part).
 
+### After the build (2026-11-25)
+
+The three points the build flagged for the reviewer were true of the code, so the policy's words were changed to say
+them rather than left for later:
+
+- **Requests.** A report also holds the requests the app made (method, path with ids removed, status). The policy now
+  names "앱이 서버에 보낸 요청의 종류·결과" beside the screens.
+- **Sessions.** While the switch is on, Sentry is also told of each start of the app and whether it ended without an
+  error. The policy has a sentence for it.
+- **An error's message** is cut to 200 characters, not removed, and may hold what a User typed. The policy no longer
+  says that what was typed is never sent; it says a message may carry it.
+
+Still a person's: the review of the wording, and whether Users who already agreed should be asked again (today's
+consent keeps no version of the texts, so they are not).
+
 ### Agent usage (2026-11-24)
 
 - Agent time: about 45 minutes in one implementation session, an estimate; most of it waited on the slow integration
   tests on a loaded machine.
-- Tokens: to be filled in by the orchestrator, who has the session's usage.
+- Tokens: 114,882 in all for the implementation session, as its usage reports; the split into input, cache reads, cache writes and output was not available.
