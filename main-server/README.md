@@ -3241,9 +3241,13 @@ src/
 │   ├── settings.ts                  settings schema, checked at startup
 │   ├── logger.ts                    the logger LOG_FORMAT chooses, text or JSON lines (Logging)
 │   ├── request-context.ts           the request being handled, its ID and User, for every line it logs (Logging)
-│   ├── request-logging.middleware.ts  the request ID and one line per request, with its bodies (Logging)
+│   ├── request-context.middleware.ts  the request ID and the request's context, before the guards (Logging)
+│   ├── request-logging.interceptor.ts  the request line of a request its handler answered (Logging)
+│   ├── request-logging.module.ts    registers that interceptor inside the idempotency one (Logging)
+│   ├── request-line.ts              the request line's parts, shared by the interceptor and the filter (Logging)
+│   ├── bodiless-routes.ts           the routes whose request line has no body (Logging)
 │   ├── log-body.ts                  a body as the request line writes it: secrets masked, cut at 2 KB (Logging)
-│   ├── unexpected-error.filter.ts   logs an error no handler expected and answers 500 with the request ID (Logging)
+│   ├── unexpected-error.filter.ts   the line of a request that ended in an exception; an unexpected one answers 500 (Logging)
 │   ├── seed-directory.ts            where the seed files are, and how one is read
 │   ├── geometry.ts                  a position, and whether a ring holds it or how far it is from it
 │   ├── campus-boundary.ts           the Campus Boundary, read from its seed file
@@ -3461,18 +3465,34 @@ Existing lines that break a rule are left as they are until someone changes that
 
 ### Requests
 
-Every request but the health checks leaves one info line, the request line, when its response has been sent. The
-lines below are made up:
+Every request but the health checks leaves one line, its request line. Three pieces make it, each where NestJS's
+documentation puts it:
+
+| Piece            | Where                                                                                   | Does                                                                                                                  |
+| ---------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Middleware       | `src/common/request-context.middleware.ts`, on every path, before the guards            | makes the request's ID, answers it as `X-Request-Id`, and opens the request's context; logs nothing                   |
+| Interceptor      | `src/common/request-logging.interceptor.ts`, global, inside the idempotency interceptor | the request line of a request its handler answered, once the answer is there, with the handler's answer as `res_body` |
+| Exception filter | `src/common/unexpected-error.filter.ts`, global                                         | the line of a request that ended in an exception, and nothing else logs it                                            |
+
+The lines below are made up:
 
 ```text
 {"level":"log","pid":1,"timestamp":1795500533415,"message":"PUT /quests/65298f3b-… 200 84ms","context":"HTTP","req_body":"{\"title\":\"점심\"}","res_body":"{\"id\":\"65298f3b-…\",\"title\":\"점심\"}","req_id":"3f1c0d6e-…","user_id":"8a1d2c4e-…"}
 ```
 
-- `message` is the method, the path with its IDs but without its query string, the status and the time taken.
-  `req_body` and `res_body` are the request's and the response's bodies; a request or a response with none has no such
-  field. `/health/live` and `/health/ready` leave no line: the load balancer and the kubelet call them every few seconds.
-- The middleware `src/common/request-logging.middleware.ts` makes the line, on every path, so a request a guard refuses,
-  one the idempotency interceptor answers from its store and a path no route matches each leave one too.
+- `message` is the method, the path with its IDs but without its query string, the status and the time taken until the
+  handler answered or the exception was caught. `req_body` and `res_body` are the request's body and the answer; a
+  request or an answer with none has no such field. `/health/live` and `/health/ready` leave no line: the load
+  balancer and the kubelet call them every few seconds.
+- The status is the one the client gets: the router sets it, `@HttpCode` included, before the interceptor runs; for a
+  `@Redirect()`, which the router applies after, the interceptor reads it as the router does. No route redirects today.
+- What the code throws on purpose (`HttpException`: a guard's 401 or 403, a validation's 400, a 404 for a path no route
+  matches, a 429) is answered as NestJS answers it, and the filter writes an info line with that answer as `res_body`.
+- A replay of the idempotency interceptor leaves no line when it replays an answer, since it answers without running
+  the interceptors inside it; a replayed error leaves its line through the filter.
+- A body the JSON parser refuses, malformed (400) or over its limit (413), is refused before the middleware: the filter
+  answers it as before and writes its info line, with the body's type and size only and no `req_id`, and the response
+  has no `X-Request-Id`. No route serves files or streams.
 - An Invite Link's token is written `[masked]`, in a path (`/invite/[masked]`, `/invite-links/[masked]/accept`) and in
   a body's text, such as the address `POST /invite-links` answers.
 - The bodies pass `logBody` (`src/common/log-body.ts`): the value of any field whose name holds `token`, `password`,
@@ -3515,15 +3535,11 @@ their ID as `user_id`. Fluent Bit keeps `req_id` on a Slack post, so the request
   message puts its fields on the JSON line (`flattenParams`), as the request line's bodies are:
   `this.logger.log(message, { req_body })`; the logger's own fields win over a field of the same name.
 
-**Errors no handler expected.** The global filter `src/common/unexpected-error.filter.ts` takes every exception of an
-HTTP request:
-
-- An `HttpException`, which the code throws on purpose, is answered as NestJS answers it, and logged nowhere but on the
-  request line.
-- Anything else is logged once, as an error line: `<method> <path> 500 <ms>ms - <name>: <message>`, with the whole stack
-  as `stack`, and answered `500 { "statusCode": 500, "message": "Internal server error", "requestId": "<req_id>" }`.
-  NestJS's own handler does not log it again. The error line is posted to Slack; the same request's request line, with
-  the bodies, is found in the pod's log by its `req_id`.
+**Errors no handler expected.** Any exception that is not an `HttpException` is the request's one line, an error line:
+`<method> <path> 500 <ms>ms - <name>: <message>`, with the whole stack as `stack` and the request's body as `req_body`
+(none for a route of `BODILESS_ROUTES`). It is answered
+`500 { "statusCode": 500, "message": "Internal server error", "requestId": "<req_id>" }`, and NestJS's own handler does
+not log it again. The error line is posted to Slack without `req_body`; the pod's log has it, found by its `req_id`.
 
 ## Signals
 

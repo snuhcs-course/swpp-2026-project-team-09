@@ -38,6 +38,15 @@ export function captureJsonLines(): { lines: () => LogLine[]; text: () => string
   return { lines, text };
 }
 
+// Every line of one request, by its ID, once at least one is there.
+export function linesOf(lines: () => LogLine[], reqId: unknown): Promise<LogLine[]> {
+  return vi.waitFor(() => {
+    const found = lines().filter((line) => line.req_id === reqId);
+    expect(found).not.toEqual([]);
+    return found;
+  });
+}
+
 // The request line of the one request whose message starts with `start`, once its response has been logged.
 export function requestLine(lines: () => LogLine[], start: string): Promise<LogLine> {
   return vi.waitFor(() => {

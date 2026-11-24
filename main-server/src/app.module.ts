@@ -43,7 +43,8 @@ import { MessagingModule } from './common/messaging.module.js';
 import { PrismaModule } from './common/prisma.module.js';
 import { RedisIdempotencyStore } from './common/redis-idempotency.store.js';
 import { RedisModule } from './common/redis.module.js';
-import { RequestLoggingMiddleware } from './common/request-logging.middleware.js';
+import { RequestContextMiddleware } from './common/request-context.middleware.js';
+import { RequestLoggingModule } from './common/request-logging.module.js';
 import { settingsSchema } from './common/settings.js';
 import { SignalsModule } from './common/signals.module.js';
 import { UnexpectedErrorFilter } from './common/unexpected-error.filter.js';
@@ -102,6 +103,8 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
       scope: (request: { user?: SignedInUser; administrator?: SignedInAdministrator }) =>
         request.user?.id ?? request.administrator?.id,
     }),
+    // The request line of a request its handler answered (README.md: Logging), inside the idempotency interceptor.
+    RequestLoggingModule,
     HealthModule,
     AuthModule,
     UsersModule,
@@ -136,15 +139,16 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
   providers: [
     // Validates a handler parameter against the schema given in its decorator: @Body({ schema: signInSchema }).
     { provide: APP_PIPE, useClass: StandardSchemaValidationPipe },
-    // Logs an error no handler expected, once, and answers 500 with the request's ID (README.md: Logging).
+    // Writes the line of a request that ended in an exception, and answers an unexpected one 500 with the request's ID
+    // (README.md: Logging).
     { provide: APP_FILTER, useClass: UnexpectedErrorFilter },
     // Registers itself with IdempotencyStorage when Nest creates it.
     RedisIdempotencyStore,
   ],
 })
 export class AppModule implements NestModule {
-  // Every path, including those no route matches: one line per request (README.md: Logging).
+  // Every path, including those no route matches: the request's ID and context, before the guards (README.md: Logging).
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(RequestLoggingMiddleware).forRoutes('*');
+    consumer.apply(RequestContextMiddleware).forRoutes('*');
   }
 }

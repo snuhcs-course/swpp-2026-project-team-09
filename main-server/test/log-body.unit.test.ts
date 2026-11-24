@@ -35,7 +35,9 @@ describe('A JSON body, or none', () => {
       administrator: { password: '[masked]', clientSecret: '[masked]', Authorization: '[masked]' },
     });
   });
+});
 
+describe('A JSON body with a secret', () => {
   it('a whole object under a secret name → masked whole', () => {
     expect(logBody({ tokens: { accessToken: 'a', refreshToken: 'b' } }, 'application/json')).toBe(
       '{"tokens":"[masked]"}',
@@ -45,6 +47,12 @@ describe('A JSON body, or none', () => {
   it('JSON as text, as a response is sent → parsed, masked and written back', () => {
     expect(logBody('{"accessToken":"made-up","title":"점심"}', 'application/json; charset=utf-8')).toBe(
       '{"accessToken":"[masked]","title":"점심"}',
+    );
+  });
+
+  it("a handler's answer holding a Date → the Date as JSON writes it", () => {
+    expect(logBody({ at: new Date('2026-11-24T00:00:00Z'), title: '점심' }, 'application/json')).toBe(
+      '{"at":"2026-11-24T00:00:00.000Z","title":"점심"}',
     );
   });
 

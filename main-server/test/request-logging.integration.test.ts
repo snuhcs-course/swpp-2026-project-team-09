@@ -4,14 +4,25 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { Body, Controller, INestApplication, Param, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  INestApplication,
+  Param,
+  Post,
+  Put,
+  Redirect,
+} from '@nestjs/common';
 import { Server } from 'node:http';
 import { z } from 'zod';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { Public } from '../src/common/public.decorator.js';
 import { captureLogs } from './assistant.js';
-import { captureJsonLines, requestLine, useJsonLogs } from './request-logs.js';
+import { captureJsonLines, linesOf, requestLine, useJsonLogs } from './request-logs.js';
 import {
   postRefreshToken,
   postSignIn,
@@ -23,13 +34,38 @@ import {
 } from './sign-in.js';
 import { startApp } from './start-app.js';
 
-// A route that exists only in this test: it answers its body back with the path's ID.
+// Routes that exist only in this test: one answers its body back with the path's ID, the others each answer with a
+// status of their own. The router sets a redirect's status after the interceptors have run.
 @Public()
-@Controller('request-logging-test')
-class EchoController {
-  @Put(':id')
+@Controller()
+class TestRoutesController {
+  @Put('request-logging-test/:id')
   echo(@Param('id') id: string, @Body() body: Record<string, unknown>): Record<string, unknown> {
     return { id, ...body };
+  }
+
+  @Post('request-logging-codes/accepted')
+  @HttpCode(HttpStatus.ACCEPTED)
+  accepted(): { accepted: boolean } {
+    return { accepted: true };
+  }
+
+  @Get('request-logging-codes/moved')
+  @Redirect('https://example.com/elsewhere', HttpStatus.MOVED_PERMANENTLY)
+  moved(): void {
+    // The decorator answers.
+  }
+
+  @Get('request-logging-codes/moved-by-answer')
+  @Redirect('https://example.com/elsewhere')
+  movedByAnswer(): { url: string; statusCode: number } {
+    return { url: 'https://example.com/other', statusCode: HttpStatus.TEMPORARY_REDIRECT };
+  }
+
+  @Get('request-logging-codes/moved-by-default')
+  @Redirect('https://example.com/elsewhere')
+  movedByDefault(): void {
+    // The decorator answers, with its default status.
   }
 }
 
@@ -38,7 +74,7 @@ const inviteLinkSchema = z.object({ url: z.string() });
 let app: INestApplication<Server>;
 
 beforeAll(async () => {
-  app = await startApp(inject('settings'), [EchoController]);
+  app = await startApp(inject('settings'), [TestRoutesController]);
   await useJsonLogs(app);
 });
 
@@ -133,6 +169,24 @@ describe('Which requests leave a line', () => {
     expect(line.res_body).toEqual(expect.stringContaining(`"statusCode":${start.slice(-3)}`));
   });
 
+  it('a body the JSON parser refuses → 400 as before, and one info line with its size only, refused before any ID', async () => {
+    const { lines } = captureJsonLines();
+
+    const response = await request(app.getHttpServer())
+      .post('/auth/refresh')
+      .set('Content-Type', 'application/json')
+      .send('{"refreshToken": "made-up-refresh-token');
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual(expect.objectContaining({ statusCode: 400, error: 'Bad Request' }));
+    expect(response.headers['x-request-id']).toBeUndefined();
+    const line = await requestLine(lines, 'POST /auth/refresh 400');
+    expect(line.req_body).toBe('[application/json 39 bytes]');
+    expect(line).not.toHaveProperty('req_id');
+    expect(JSON.stringify(lines())).not.toContain('made-up-refresh-token');
+    expect(lines().filter((logged) => logged.level === 'error')).toEqual([]);
+  });
+
   it('the health checks → no line', async () => {
     const { lines } = captureJsonLines();
 
@@ -177,6 +231,42 @@ describe('A body or a path the log must not keep whole', () => {
     expect(madeLine.res_body).toEqual(expect.stringContaining('/invite/[masked]'));
     expect(token.length).toBeGreaterThan(10);
     expect(text()).not.toContain(token);
+  });
+});
+
+describe("The line's status", () => {
+  it.each([
+    ['@HttpCode', 'post', '/request-logging-codes/accepted', 202],
+    ['@Redirect with a status', 'get', '/request-logging-codes/moved', 301],
+    ['@Redirect, the handler answering the status', 'get', '/request-logging-codes/moved-by-answer', 307],
+    ['@Redirect with no status', 'get', '/request-logging-codes/moved-by-default', 302],
+  ] as const)('%s → the status the client gets', async (_case, method, path, status) => {
+    const { lines } = captureJsonLines();
+
+    const response = await request(app.getHttpServer())[method](path);
+
+    expect(response.status).toBe(status);
+    await requestLine(lines, `${method.toUpperCase()} ${path} ${status} `);
+  });
+});
+
+describe('One line a request', () => {
+  it.each([
+    ['answered by its handler', 'put', '/request-logging-test/q-2', 200],
+    ['refused by a guard', 'get', '/users/me', 401],
+    ['matching no route', 'get', '/no-such-path', 404],
+  ] as const)('a request %s → exactly one line', async (_case, method, path, status) => {
+    const { lines } = captureJsonLines();
+
+    const response = await request(app.getHttpServer())[method](path).send({});
+
+    expect(response.status).toBe(status);
+    expect(await linesOf(lines, response.headers['x-request-id'])).toEqual([
+      expect.objectContaining({
+        level: 'log',
+        message: expect.stringMatching(`^${method.toUpperCase()} ${path} ${status} `) as unknown,
+      }),
+    ]);
   });
 });
 

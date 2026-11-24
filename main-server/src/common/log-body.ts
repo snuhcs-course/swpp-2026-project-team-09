@@ -60,6 +60,12 @@ function masked(value: unknown, level = 0): unknown {
   if (level >= MOST_LEVELS) {
     return '[…]';
   }
+  // A Date, and anything else with toJSON(), as JSON.stringify writes it.
+  const toJSON: unknown = Reflect.get(value, 'toJSON');
+  if (typeof toJSON === 'function') {
+    const json: unknown = Reflect.apply(toJSON, value, []);
+    return masked(json, level + 1);
+  }
   if (Array.isArray(value)) {
     return value.map((item) => masked(item, level + 1));
   }
