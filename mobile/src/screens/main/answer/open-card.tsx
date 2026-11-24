@@ -78,7 +78,7 @@ function Top(p: { props: FrameCardProps; pan: PanGesture; onHeight: (h: number) 
       }}
     >
       {raising === null ? header : <DragRow pan={p.pan}>{header}</DragRow>}
-      {p.props.lead}
+      {p.props.lead === undefined ? null : <View style={styles.lead}>{p.props.lead}</View>}
     </View>
   );
 }
@@ -273,6 +273,7 @@ const styles = StyleSheet.create({
     boxShadow: shadow.sheet,
   },
   content: { paddingHorizontal: OPEN_EDGE },
+  lead: { paddingHorizontal: OPEN_EDGE },
   parts: { gap: space[3] },
   // Over the input's room at the screen's bottom, under the input.
   floor: { position: 'absolute', right: 0, bottom: 0, left: 0, pointerEvents: 'none', backgroundColor: color.surface },
