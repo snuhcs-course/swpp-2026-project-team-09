@@ -138,7 +138,7 @@ function useMeasures(props: FrameCardProps): {
   const [above, setAbove] = useState(0);
   const [natural, setNatural] = useState<number | null>(null);
   const caps = useCaps(props, above, padTop);
-  const heights = caps === null ? null : heightsOf(caps, natural);
+  const heights = caps === null ? null : heightsOf(caps, natural, padTop);
   // Before the stage is laid out every step is offered; laid out, those of different heights.
   const steps = heights === null ? LEVELS : stepsOf(heights);
   return { padTop, above, setAbove, natural, setNatural, caps, heights, steps };

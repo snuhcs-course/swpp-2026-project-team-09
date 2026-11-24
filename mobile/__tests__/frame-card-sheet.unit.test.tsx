@@ -114,7 +114,7 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-// Partitions: low, high; a content taller than every step and one shorter than low.
+// Partitions: low, high, middle; a content taller than every step, one shorter than low, and one with nothing.
 describe('the sheet’s steps', () => {
   it('shows two lines of the content at low and keeps one content mounted up to high', async () => {
     const view = await render(card('low'));
@@ -135,6 +135,14 @@ describe('the sheet’s steps', () => {
     await settle();
 
     expect(shown()).toBe(50 + FADE);
+  });
+
+  it('takes no room for a content that lays out nothing, as a meet whose Friend has a face on the map', async () => {
+    await render(card('low'));
+    await layContent(12);
+    await settle();
+
+    expect(shown()).toBe(0);
   });
 
   it('stands middle at half the stage', async () => {
