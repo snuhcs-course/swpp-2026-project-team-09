@@ -83,13 +83,11 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
     raising.setRaised(true);
   };
   const kept = typing || list.open ? null : <KeptCards cardActions={props.cardActions} control={control} />;
-  // The dock, which the card shows at its lowest step over its open content (P04 ticket 57).
+  // The dock, which the card shows at its lowest step over its open content (P04 ticket 57). A kept card then stands
+  // under the header at every step, mounted once (PR 537's review).
   const dock =
     rest === null || reply === undefined ? undefined : (
-      <>
-        {kept}
-        <DockedAnswer {...{ bubble: reply, control, focus, onClose, rest }} atRest={!raising.raised} onRaise={raise} />
-      </>
+      <DockedAnswer {...{ bubble: reply, control, focus, onClose, rest }} atRest={!raising.raised} onRaise={raise} />
     );
   return (
     <FrameCard
@@ -102,9 +100,10 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
       }
       dock={dock}
       hold={waiting}
+      lead={dock === undefined ? undefined : kept}
       testID="answer-card"
     >
-      {kept}
+      {dock === undefined ? kept : null}
       {typing ? (
         <Typing control={control} />
       ) : list.open ? (

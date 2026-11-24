@@ -55,9 +55,10 @@ function targetsOf({ lowered, raised, full }: Caps, natural: number | null): Tar
   return { lowered: fit(lowered), raised: fit(raised), full };
 }
 
-// With a dock, the lowered step is the dock's height once it is laid out (P04 ticket 57).
-function withDock(targets: Targets, dock: number | null): Targets {
-  return dock === null ? targets : { ...targets, lowered: dock };
+// With a dock, the lowered step is the dock's height, unknown until it is laid out (P04 ticket 57): the card then has no
+// steps and waits under its place, so that it stands at the dock at once rather than running down from the open content.
+function withDock(targets: Targets, docks: boolean, dock: number | null): Targets {
+  return docks ? { ...targets, lowered: dock } : targets;
 }
 
 function capOf(level: Level, caps: Caps): number | null {
@@ -77,6 +78,7 @@ function Top(p: { props: FrameCardProps; pan: PanGesture; onHeight: (h: number) 
       }}
     >
       {raising === null ? header : <DragRow pan={p.pan}>{header}</DragRow>}
+      {p.props.lead}
     </View>
   );
 }
@@ -177,7 +179,7 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
   const caps = useCaps(props, above);
   const extra = above + barRoom;
   const docks = dock !== undefined;
-  const targets = withDock(targetsOf(caps, natural), docks ? dockHeight : null);
+  const targets = withDock(targetsOf(caps, natural), docks, dockHeight);
   const room = roomOf(caps);
   // Until the dock is laid out its height is not known: the camera hears nothing, so that it hears the dock's alone.
   const told = docks && dockHeight === null ? ignoreHeight : onHeight;
@@ -224,7 +226,7 @@ export function OpenCard(props: FrameCardProps): ReactElement {
         style={[styles.card, { paddingBottom: barRoom }, moved]}
         testID={testID}
       >
-        {topped ? <Top onHeight={card.setAbove} pan={motion.pan} props={props} /> : null}
+        {topped || props.lead !== undefined ? <Top onHeight={card.setAbove} pan={motion.pan} props={props} /> : null}
         {/* The dock stands at the top of what is under the header, by layout (P04 ticket 57). */}
         <View>
           {children === null ? null : (

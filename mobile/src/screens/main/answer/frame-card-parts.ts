@@ -44,6 +44,9 @@ export interface FrameCardProps {
   // What the card shows at its lowest step, the dock, held over its children and shown as the card comes down to its
   // height (P04 ticket 57). Left out, the card has no dock and its lowest step is the lowered one.
   dock?: ReactNode;
+  // What stands under the header at every step, outside both the scrolling part and the dock, so that it is mounted once
+  // when the answer docks (a kept seat card, PR 537's review).
+  lead?: ReactNode;
   // Null leaves the card empty.
   children: ReactNode;
 }

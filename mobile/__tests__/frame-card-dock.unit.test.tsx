@@ -8,6 +8,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useEffect } from 'react';
 import { StyleSheet, Text, type ViewStyle } from 'react-native';
+import { getAnimatedStyle } from 'react-native-reanimated';
 import { FrameCard } from '@/screens/main/answer/frame-card';
 import type { Raising } from '@/screens/main/answer/raise-handle';
 
@@ -32,10 +33,11 @@ const DOCK_CONTENT = 188;
 const DOCK = DOCK_CONTENT + 12;
 const OPEN = '12:15에 302동식당에서 민수와 만나 먹어요.';
 const DOCKED = '도크의 한 줄';
+const LEAD = '남겨 둔 좌석 카드';
 
-const mounts = { open: 0, dock: 0 };
+const mounts = { open: 0, dock: 0, lead: 0 };
 
-function Counted({ kind, words }: { kind: 'open' | 'dock'; words: string }): React.ReactElement {
+function Counted({ kind, words }: { kind: keyof typeof mounts; words: string }): React.ReactElement {
   useEffect(() => {
     mounts[kind] += 1;
   }, [kind]);
@@ -51,6 +53,7 @@ function card(raised: boolean): React.ReactElement {
     <FrameCard
       barRoom={BAR_ROOM}
       dock={<Counted kind="dock" words={DOCKED} />}
+      lead={<Counted kind="lead" words={LEAD} />}
       onClose={jest.fn<undefined, []>()}
       onHeight={jest.fn<undefined, [number]>()}
       raising={raisingOf(raised)}
@@ -60,6 +63,13 @@ function card(raised: boolean): React.ReactElement {
       <Counted kind="open" words={OPEN} />
     </FrameCard>
   );
+}
+
+function translateOf(id: string): number {
+  const style: unknown = getAnimatedStyle(screen.getByTestId(id));
+  const { transform } = StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
+  const shift: unknown = Array.isArray(transform) ? transform[0] : undefined;
+  return typeof shift === 'object' && shift !== null && 'translateY' in shift ? Number(shift.translateY) : Number.NaN;
 }
 
 function heightOf(id: string): number {
@@ -77,6 +87,7 @@ beforeEach(() => {
   jest.useFakeTimers();
   mounts.open = 0;
   mounts.dock = 0;
+  mounts.lead = 0;
 });
 
 afterEach(() => {
@@ -94,7 +105,7 @@ describe('a card that docks', () => {
     });
 
     expect(heightOf('card-content') - heightOf('card-tail')).toBe(DOCK);
-    expect(mounts).toEqual({ open: 1, dock: 1 });
+    expect(mounts).toEqual({ open: 1, dock: 1, lead: 1 });
   });
 
   it('shows the dock to a screen reader at rest and the open content raised, mounting neither again', async () => {
@@ -112,6 +123,32 @@ describe('a card that docks', () => {
       jest.advanceTimersByTime(300);
     });
     expect(screen.getByText(DOCKED)).toBeOnTheScreen();
-    expect(mounts).toEqual({ open: 1, dock: 1 });
+    expect(mounts).toEqual({ open: 1, dock: 1, lead: 1 });
+  });
+});
+
+describe('a card that docks, opened lowered', () => {
+  it('opens lowered at the dock’s height at once, not running down from the open content (PR 537’s review)', async () => {
+    await render(card(false));
+    const room = heightOf('card-content');
+    expect(translateOf('card')).toBe(room);
+
+    await layDock();
+    // One frame: a run over MOTION_MS would stand barely below where it started.
+    await act(() => {
+      jest.advanceTimersByTime(16);
+    });
+
+    expect(translateOf('card')).toBe(room - DOCK);
+  });
+
+  it('shows what leads under the header once, at every step', async () => {
+    const view = await render(card(false));
+    await layDock();
+    expect(screen.getByText(LEAD)).toBeOnTheScreen();
+
+    await view.rerender(card(true));
+    expect(screen.getByText(LEAD)).toBeOnTheScreen();
+    expect(screen.getAllByText(LEAD, { includeHiddenElements: true })).toHaveLength(1);
   });
 });

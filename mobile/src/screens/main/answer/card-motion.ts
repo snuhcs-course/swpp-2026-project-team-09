@@ -263,8 +263,11 @@ function useRun(
   const { raising, room, extra, onHeight } = input;
   const reduce = useReduceMotion();
   const target = heights === null || room === null ? null : room - heightOf(level, heights);
-  const offset = useSharedValue(target ?? 0);
+  // Laid out with no steps yet (a dock not yet laid out), the card waits wholly under its place.
+  const offset = useSharedValue(target ?? room ?? 0);
   const aimed = useRef<number | null>(null);
+  // The card has stood at a step: the first step it comes to, once it is laid out after mounting, it stands at at once.
+  const placed = useRef(target !== null);
   // A run under way: the camera waits for its end.
   const running = useRef(false);
   const lowered = heights?.lowered ?? null;
@@ -285,16 +288,21 @@ function useRun(
   // height changed without a run is told at once. One value per change, never one before a run.
   useEffect(() => {
     if (target !== null && target !== aimed.current) {
-      running.current = !reduce;
-      runTo(offset, target, { reduce, aimed }, () => {
+      const first = !placed.current;
+      placed.current = true;
+      running.current = !reduce && !first;
+      runTo(offset, target, { reduce: reduce || first, aimed }, () => {
         settle(level);
       });
       return;
     }
+    if (target === null && room !== null && !placed.current) {
+      offset.value = room;
+    }
     if (!running.current && level === 'lowered' && lowered !== null) {
       tell(extra + lowered);
     }
-  }, [target, offset, reduce, settle, level, lowered, extra, tell]);
+  }, [target, room, offset, reduce, settle, level, lowered, extra, tell]);
   return { offset, back };
 }
 
