@@ -13,6 +13,7 @@ import { getPositions, KEPT_POSITION, keptPositionIn, sharingFriends, uploadPosi
 import { getProfile, patchProfile } from './profile.js';
 import { type LogLine, captureJsonLines, requestLine, useJsonLogs } from './request-logs.js';
 import { signInUser } from './friends.js';
+import { vehiclesMessage } from './shuttle.js';
 import { withAccessToken } from './sign-in.js';
 import { startApp } from './start-app.js';
 
@@ -72,6 +73,29 @@ describe('A request whose bodies the log leaves out, about a person', () => {
     for (const secret of ['202617391', '2026-17391', '가짜이름', '2026-1739x', '다른가짜']) {
       expect(logs()).not.toContain(secret);
     }
+  });
+});
+
+describe("The shuttles' positions, of which Production keeps no history", () => {
+  it("the worker's Collection, refused, and a User's read → no body on either line, and the vehicle in no line", async () => {
+    const { id, accessToken } = await signInUser(app);
+    const logs = captureLogs();
+    const { lines } = captureJsonLines();
+
+    // Refused for its x, so nothing is stored or sent to the shuttle test's listeners; its body would be logged all the
+    // same.
+    await request(app.getHttpServer())
+      .post('/shuttle/vehicles/collected')
+      .auth(inject('settings').WORKER_TOKEN, { type: 'bearer' })
+      .send(vehiclesMessage([{ carId: '9137', x: 'made-up', y: 40 }]))
+      .expect(400);
+    await withAccessToken(request(app.getHttpServer()).get('/shuttle/vehicles'), accessToken).expect(200);
+
+    const collected = await requestLine(lines, 'POST /shuttle/vehicles/collected 400');
+    expect(collected).not.toHaveProperty('req_body');
+    expect(collected).not.toHaveProperty('res_body');
+    expectNoBodies(await requestLine(lines, 'GET /shuttle/vehicles 200'), id);
+    expect(logs()).not.toContain('9137');
   });
 });
 

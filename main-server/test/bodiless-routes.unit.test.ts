@@ -24,6 +24,8 @@ describe('A request line without bodies', () => {
     ['an Assistant message', '/assistant/messages'],
     ['an Assistant answer', '/assistant/answers'],
     ['an Assistant tap', '/assistant/taps'],
+    ["the shuttles' positions collected", '/shuttle/vehicles/collected'],
+    ["the shuttles' positions read", '/shuttle/vehicles'],
   ])('%s → no bodies', (_case, path) => {
     expect(keepsBodies(path)).toBe(false);
   });
@@ -35,6 +37,8 @@ describe('A request line without bodies', () => {
     ['a room request', '/library/room-requests/0b4f5a52-0000-4000-8000-000000000001'],
     ['a Place at a position, whose query is not on the line', '/places/at'],
     ['a path that only starts like one', '/positionsx'],
+    ["the shuttle's route and stops", '/shuttle'],
+    ["the shuttle's stops collected", '/shuttle/stops/collected'],
   ])('%s → bodies kept', (_case, path) => {
     expect(keepsBodies(path)).toBe(true);
   });
