@@ -22,8 +22,11 @@ Native files: none. Releases: an app over-the-air update.
 - A row in 내 정보, "오류 보고 보내기", a switch with a caption saying what an error report holds (the screen it
   happened on, the app's and the phone's version, no name and no position) and a link to the privacy policy's part
   (ticket 04 writes the part; until then the link opens the privacy policy).
-- Off: `reportError` does nothing at once, and `startTelemetry()` starts nothing at the next launch. A native crash
-  kept from before is discarded when the app next starts with the switch off.
+- Off holds at once, not only from the next launch, since Sentry's own handlers and its session tracking are already
+  running: `reportError` does nothing, `beforeSend` drops every event, and the layer closes Sentry's client (how
+  8.36.0 closes and starts a client again is checked against its reference and written under Comments). At the next
+  launch `startTelemetry()` starts nothing. A native crash kept from before is discarded, not sent. On again starts
+  Sentry in that run.
 - The mobile README's "Crash reports" says the above.
 
 ## Must not break
@@ -38,6 +41,9 @@ Native files: none. Releases: an app over-the-air update.
       out, and a session ended by the server, clear it. (Integration tests.)
 - [ ] With the switch off, the test error and a thrown screen report nothing; the choice holds after a restart and
       after signing out and in. (Integration tests.)
+- [ ] Turned off while the app runs, an unhandled error (not one passed to `reportError`) is not sent in that same
+      run: `beforeSend` answers nothing for it, and the client was closed. (Unit test on the layer with the SDK's
+      fake.)
 - [ ] With the switch off at start, Sentry is not started. (Unit test.)
 - [ ] The row, on and off, on a phone with the mock build; the screens go to the orchestrator before the pull request.
       (Emulator.)

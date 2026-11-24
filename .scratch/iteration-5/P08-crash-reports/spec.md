@@ -110,8 +110,13 @@ names in place of their values (`/quests/[questId]`, never the id). Touches are 
 내 정보 gains a row "오류 보고 보내기", on at first, with a caption that says what an error report holds and links to
 the privacy policy. It is kept on the phone, not on the account, so it holds before sign-in.
 
-Off: `reportError` does nothing, and Sentry is not started at the next launch, so neither a crash nor a session is
-sent. A native crash kept from before the switch was turned off is discarded, not sent.
+Off holds at once and at every later launch:
+
+- at once, `reportError` does nothing, `beforeSend` drops every event (an unhandled error and a native crash kept
+  from before among them), and the layer closes Sentry's client so that the session's updates stop too;
+- at the next launch, Sentry is not started.
+
+Turning it on again starts Sentry in that run.
 
 ### The test error
 
