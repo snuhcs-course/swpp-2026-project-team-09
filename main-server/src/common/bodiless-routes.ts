@@ -12,6 +12,13 @@ export const BODILESS_ROUTES: readonly { kind: string; path: RegExp }[] = [
   { kind: 'position', path: /^\/positions\/?$/u },
   // A walking route starts at the User's position.
   { kind: 'position', path: /^\/walking-route\/?$/u },
+  // The Place at a point, which the app asks of a Friend's position.
+  { kind: 'position', path: /^\/places\/at\/?$/u },
+  // These take where the phone is, in the body or the query, and answer the way from there, which starts at the Place
+  // the User is at: a late report, a Plan made or changed into a Quest, its better Plan, and an invitation's card.
+  { kind: 'position', path: /^\/quests\/[^/]+\/late\/?$/u },
+  { kind: 'position', path: /^\/plans(?:\/[^/]+(?:\/better)?)?\/?$/u },
+  { kind: 'position', path: /^\/quest-invitations\/[^/]+\/?$/u },
   { kind: 'profile', path: /^\/users\/me\/profile\/?$/u },
   // The lobby answers the profile too.
   { kind: 'profile', path: /^\/lobby\/?$/u },

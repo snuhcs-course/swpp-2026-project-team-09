@@ -41,7 +41,7 @@ function expectNoBodies(line: LogLine, userId: string): void {
   expect(line).toEqual(expect.objectContaining({ user_id: userId, req_id: expect.any(String) as unknown }));
 }
 
-describe('A request whose bodies the log leaves out, about a person', () => {
+describe('A request whose bodies the log leaves out, about a position', () => {
   it("positions: a Friend's upload and the User's read → neither the coordinates nor the Place in any line", async () => {
     const [viewer, friend] = await sharingFriends(app);
     const logs = captureLogs();
@@ -56,6 +56,28 @@ describe('A request whose bodies the log leaves out, about a person', () => {
     expect(keptPositionIn(logs())).toEqual([]);
   });
 
+  it("where the phone is, sent with a late report, a Plan or a Place's lookup → in no line, nor the Place it is at", async () => {
+    const { id, accessToken } = await signInUser(app);
+    const questId = '65298f3b-0000-4000-8000-00000000000a';
+    const logs = captureLogs();
+    const { lines } = captureJsonLines();
+    const server = app.getHttpServer();
+
+    const late = await withAccessToken(request(server).post(`/quests/${questId}/late`), accessToken).send({
+      minutes: 10,
+      location: KEPT_POSITION,
+    });
+    const plan = await withAccessToken(request(server).post('/plans'), accessToken).send({ location: KEPT_POSITION });
+    await withAccessToken(request(server).get('/places/at'), accessToken).query(KEPT_POSITION).expect(200);
+
+    expectNoBodies(await requestLine(lines, `POST /quests/${questId}/late ${late.status}`), id);
+    expectNoBodies(await requestLine(lines, `POST /plans ${plan.status}`), id);
+    expectNoBodies(await requestLine(lines, 'GET /places/at 200'), id);
+    expect(keptPositionIn(logs())).toEqual([]);
+  });
+});
+
+describe('A request whose bodies the log leaves out, about a profile', () => {
   it('the profile: a 학번 and a registered name saved, read, answered by the lobby and refused → in no line', async () => {
     const { id, accessToken } = await signInUser(app);
     const logs = captureLogs();
