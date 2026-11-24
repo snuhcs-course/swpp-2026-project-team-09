@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by fyoon46
+# 2026-11-24  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 data "aws_iam_user" "team_member" {
@@ -65,7 +66,8 @@ module "eks" {
         xvda = {
           device_name = "/dev/xvda"
           ebs = {
-            volume_size           = 20
+            # At 20 GB a Release's image pulls put a node in DiskPressure, and the kubelet evicted Fluent Bit.
+            volume_size           = 40
             volume_type           = "gp3"
             encrypted             = true
             delete_on_termination = true

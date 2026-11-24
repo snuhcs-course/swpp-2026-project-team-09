@@ -256,7 +256,8 @@ nothing until you answer `yes`.
 
 The nodes keep the AMI release they were created with; setting `ami_release_version` in `cluster.tf` moves them to
 another. A plan that shows `release_version` or `version` changing on the node group replaces both nodes one after the
-other, which restarts every pod and empties Redis, so apply it at a quiet time.
+other, which restarts every pod and empties Redis, so apply it at a quiet time, as
+[Replacing the nodes](#replacing-the-nodes) describes.
 
 The first apply starts the budget's period, which runs to the end of 2026 without resetting each month; later applies
 keep its start. The budget counts gross spend, so what credits pay counts too, and it emails every address at $50,
@@ -265,6 +266,61 @@ $100, $150, $200, $250, and $300 actually spent.
 An address receives nothing until its owner verifies it. After the apply that adds an address, AWS Budgets sends it a
 verification email; its owner opens the link within 12 hours while signed in to account A as their own IAM user. An
 expired link is sent again with **Resend verification** on the budget's page in the Budgets console.
+
+### Replacing the nodes
+
+A change to the nodes' launch template in `cluster.tf`, such as the disk's `volume_size`, replaces both nodes one
+after the other. The plan shows exactly two resources updated in place and nothing added or destroyed: the node group's
+`aws_launch_template`, with the changed value, and its `aws_eks_node_group`, whose `launch_template` `version` becomes
+`(known after apply)`. The apply saves a new version of the launch template and asks EKS to move the node group to it,
+then waits until EKS has finished, usually 15 to 30 minutes. A plan that replaces or destroys the node group is a
+different change: stop and look again.
+
+EKS replaces the nodes in this order
+([Understand each phase of node updates](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-update-behavior.html)):
+
+1. It starts new nodes from the new version, at least one in each of the two Availability Zones and up to four, and
+   waits until they are Ready. A node that takes over 15 minutes to join fails the update.
+2. It cordons the old nodes, so that no new pod goes to them.
+3. It drains one old node, waits 60 seconds, and terminates it; then the other. A pod that does not leave within 15
+   minutes fails the update.
+4. It brings the node group back to two nodes. If it started more than two, the extra ones are drained too, so a pod
+   may move twice.
+
+The new nodes join before an old one is drained, so the evicted pods always find room: the 11-pod limit of a
+`t4g.small` does not hold them back. What each pod does:
+
+- **`main-server` and `socket-server`**, two pods each, one in each zone. Draining a node evicts one of each while the
+  other keeps serving, and a new pod starts on a new node in the same zone. No PodDisruptionBudget holds the second
+  node's drain until that pod is Ready, so if it starts slowly both pods may be away for a moment.
+- **`worker-server`, `admin`, and Redis**, one pod each, stop once and start on a new node: a short gap each.
+- **Redis** keeps nothing on disk, so it starts empty: Users' latest positions until their apps send the next one,
+  every User's Assistant message count for the day, the shuttles' positions until the worker's next round, and the
+  records that make a repeated request safe.
+- **The load balancer controller**, one pod in `kube-system`, restarts once. The load balancer sends to pod IPs, and
+  the controller registers each new pod with it, so a pod started while the controller is away gets requests only once
+  it is back.
+- **Fluent Bit** is a DaemonSet: each new node starts its own pod, and an old node's pod goes with the node. Logs keep
+  reaching Slack from the pods on the new nodes.
+- **`coredns` and `metrics-server`**, two pods each, move one at a time under their own PodDisruptionBudgets.
+
+Apply such a change at a quiet time, with no Release running or due:
+
+```bash
+terraform plan -var-file=account-a.tfvars    # two resources changed in place, nothing added or destroyed
+terraform apply -var-file=account-a.tfvars
+```
+
+In a second terminal, `kubectl get nodes --watch` shows the new nodes join and the old ones leave. If the apply fails,
+`aws eks list-updates --cluster-name snunow --nodegroup-name <node group>` and `aws eks describe-update` give EKS's
+reason; fix it before applying again. Afterwards check that:
+
+- two nodes are Ready, both new, each with about 40 GiB of ephemeral storage, which
+  `kubectl get nodes -o custom-columns=NAME:.metadata.name,STORAGE:.status.capacity.ephemeral-storage` shows in bytes;
+- every pod is Running and none is Pending: `kubectl get pods --all-namespaces --output wide`, with one Fluent Bit pod
+  on each node;
+- the warn button on the admin site's **Log test** page posts to `#team9-main-server-error`
+  ([Server logs in Slack](#server-logs-in-slack)).
 
 ## The database
 
@@ -960,6 +1016,10 @@ new pod before stopping an old one, which makes 21.
   `t4g.medium` (4 GiB). Change it through a pull request, then apply at a quiet time. EKS cannot change a node group's
   instance type in place, so the apply creates a new node group before it deletes the old one: every pod restarts and
   Redis empties.
+- **The node's disk** is the launch template's `volume_size` in `terraform/cluster.tf`, 40 GiB. Each node keeps the
+  images of the pods it runs, and an `all` Release pulls new ones before the old ones are removed. At 20 GiB that put
+  a node in DiskPressure, and the kubelet evicted its Fluent Bit pod until it had freed space. A change replaces both
+  nodes ([Replacing the nodes](#replacing-the-nodes)).
 
 ## The Production APK
 
