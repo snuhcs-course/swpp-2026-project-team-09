@@ -3,6 +3,7 @@
  *
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-24  Fable 5.2  prompted by AhnJinYoung
+ * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 // Partitions: each field present or missing; tags as pairs, as objects, or not a list; a link on sentry.io, on a
@@ -12,7 +13,7 @@
 import { createHmac } from 'node:crypto';
 import { z } from 'zod';
 import { settingsSchema } from '../src/common/settings.js';
-import { crashPostText, readAlert, signatureHolds } from '../src/sentry-alerts/crash-post.js';
+import { crashPostText, readAlert, readIssue, signatureHolds } from '../src/sentry-alerts/crash-post.js';
 
 function alertWith(event: unknown): unknown {
   return { action: 'triggered', data: { event, triggered_rule: 'A new crash' } };
@@ -66,7 +67,44 @@ describe('readAlert', () => {
   });
 });
 
+describe('readIssue', () => {
+  const issue = {
+    title: 'Error: boom',
+    culprit: 'app/index.tsx',
+    level: 'fatal',
+    platform: 'javascript',
+    web_url: 'https://example-org.sentry.io/issues/1/',
+    url: 'https://sentry.io/api/0/issues/1/',
+  };
+
+  it.each([
+    ['created', false],
+    ['unresolved', true],
+  ])('of a %s issue → its title, culprit, level, platform and web link', (action, again) => {
+    expect(readIssue({ action, data: { issue } })).toEqual({
+      again,
+      title: 'Error: boom',
+      culprit: 'app/index.tsx',
+      level: 'fatal',
+      platform: 'javascript',
+      link: 'https://example-org.sentry.io/issues/1/',
+    });
+  });
+
+  it.each(['resolved', 'assigned', 'archived', undefined])('of the action %s → nothing to tell', (action) => {
+    expect(readIssue({ action, data: { issue } })).toBeUndefined();
+  });
+
+  it('without an issue → only that it is new', () => {
+    expect(readIssue({ action: 'created' })).toEqual({ again: false });
+  });
+});
+
 describe('crashPostText', () => {
+  it('says so when the issue is unresolved again', () => {
+    expect(crashPostText({ again: true, title: 'Error: boom' })).toBe('App crash again: `Error: boom`');
+  });
+
   it('without fields → only the first line', () => {
     expect(crashPostText({})).toBe('App crash: an issue without a title');
   });

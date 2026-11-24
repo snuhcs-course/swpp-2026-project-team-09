@@ -5,6 +5,7 @@
 # 2026-11-23  Opus 5.5   prompted by TaeHyun79
 # 2026-11-23  Fable 5.2  prompted by fyoon46
 # 2026-11-23  Opus 5.5   prompted by TaeHyun79
+# 2026-11-24  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Fluent Bit's pipeline in the real Fluent Bit image: its inputs and filters unchanged, with a stdout output in place
@@ -108,12 +109,16 @@ posted_at_least() {
   [ "$(posted_count)" -ge "$1" ]
 }
 
-# A log entry in ConsoleLogger's JSON shape: level message context [stack].
+# A log entry in ConsoleLogger's JSON shape: level message context [stack [fields]], the fields as a JSON object.
 entry() {
-  jq -cn --arg level "$1" --arg message "$2" --arg context "$3" --arg stack "${4-}" \
+  local fields=${5:-}
+  jq -cn --arg level "$1" --arg message "$2" --arg context "$3" --arg stack "${4-}" --argjson fields "${fields:-null}" \
     '{level: $level, pid: 1, timestamp: 1795420800123, message: $message, context: $context}
-      + if $stack == "" then {} else {stack: $stack} end'
+      + if $stack == "" then {} else {stack: $stack} end + ($fields // {})'
 }
+
+# The fields the main server adds to a line written in a request, with made-up values.
+REQUEST_FIELDS='{"req_id":"3f1c0d6e-0000-4000-8000-000000000001","user_id":"65298f3b-0000-4000-8000-000000000002"}'
 
 # Appends a line to a container's log file in CRI's format: text [stream [file]], by default the main server's stdout.
 append() {
@@ -189,16 +194,32 @@ append() {
     'main-server 10 socket-server 10 worker-server 10' ]
 }
 
-@test "a kept record has only server, level, context, message and stack, in that order" {
+@test "a kept record has only server, level, context, req_id, message and stack, in that order" {
   start_fluent_bit
   append "$(entry warn 'Kakao did not answer: timeout' KakaoService)"
-  append "$(entry error 'The Collection of shuttle_vehicles failed: timeout' CollectionService "$STACK")" stderr
+  append "$(entry error 'The Collection of shuttle_vehicles failed: timeout' CollectionService "$STACK" "$REQUEST_FIELDS")" stderr
 
   eventually posted 'The Collection of shuttle_vehicles failed: timeout'
   [ "$(records | jq -c keys_unsorted)" = '["server","level","context","message"]
-["server","level","context","message","stack"]' ]
+["server","level","context","req_id","message","stack"]' ]
+  [ "$(records | jq -r 'select(.level == "error") | .req_id')" = 3f1c0d6e-0000-4000-8000-000000000001 ]
   [ "$(records | jq -rs 'map(.server) | unique | join(" ")')" = main-server ]
   [ "$(records | jq -r 'select(.level == "error") | .stack')" = "$STACK" ]
+}
+
+@test "a request's bodies and its User never reach the output" {
+  local fields
+  fields=$(jq -c '. + {req_body: "{\"title\":\"made-up-request-body\"}", res_body: "{\"title\":\"made-up-response-body\"}"}' <<<"$REQUEST_FIELDS")
+  start_fluent_bit
+  append "$(entry warn 'PUT /quests/q-1 200 8ms' HTTP '' "$fields")"
+  append "$(entry error 'PUT /plans/p-1 500 12ms - TypeError: made-up' HTTP "$STACK" "$fields")" stderr
+
+  eventually posted 'PUT /plans/p-1 500 12ms - TypeError: made-up'
+  sleep 3
+  [ "$(posted_count)" -eq 2 ]
+  [ "$(records | jq -rs 'map(keys_unsorted | join(",")) | unique | join("|")')" = \
+    'server,level,context,req_id,message|server,level,context,req_id,message,stack' ]
+  ! records | grep -Eq 'made-up-(request|response)-body|65298f3b' || false
 }
 
 @test "a burst of 30 warnings within a minute lets 10 through, and a minute later 10 more" {

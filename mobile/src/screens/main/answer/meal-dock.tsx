@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useEffect } from 'react';
@@ -55,17 +56,20 @@ export function MealDock({
   control,
   bubble,
   onRaise,
+  atRest,
 }: {
   control: ChatSheetControl;
   bubble: ChatBubble;
   onRaise: Raise;
+  // Raised, the dock lies under the open card, whose menu stays (P04 ticket 57).
+  atRest: boolean;
 }): ReactElement {
   const { menuFor, closeMenu } = control.answer;
   useEffect(() => {
-    if (menuFor !== null) {
+    if (atRest && menuFor !== null) {
       closeMenu();
     }
-  }, [menuFor, closeMenu]);
+  }, [atRest, menuFor, closeMenu]);
   const sentence = mealDockLine(bubble.text, control.answer);
   return (
     <View style={styles.row} testID="dock-row">

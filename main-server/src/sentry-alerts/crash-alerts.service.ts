@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -9,7 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { Settings } from '../common/settings.js';
 import { CLOCK, type Clock } from '../quests/clock.js';
-import { crashPostText, readAlert, signatureHolds } from './crash-post.js';
+import { crashPostText, readAlert, readIssue, signatureHolds } from './crash-post.js';
 
 // Injection token of the HTTP call to Slack's Incoming Webhook. The tests replace it with a stand-in.
 export const FETCH_SLACK = 'FETCH_SLACK';
@@ -49,21 +50,24 @@ export class CrashAlertsService {
     return signatureHolds(body, signature, this.secret);
   }
 
-  // Takes a signed request. Only an issue alert is posted; Sentry's other resources are taken and left. The post is
-  // not awaited, since Sentry waits 1 second for its answer and Slack is given 5.
+  // Takes a signed request. A new or again-unresolved issue (resource `issue`, which every plan sends) and an issue
+  // alert (`event_alert`, which Sentry's free plan does not offer) are posted; Sentry's other resources and an issue's
+  // other actions are taken and left. The post is not awaited, since Sentry waits 1 second for its answer and Slack
+  // is given 5.
   take(resource: string | undefined, body: Buffer): void {
-    if (resource !== 'event_alert') {
+    if (resource !== 'issue' && resource !== 'event_alert') {
       return;
     }
-    let alert: unknown;
+    let parsed: unknown;
     try {
-      alert = JSON.parse(body.toString('utf8'));
+      parsed = JSON.parse(body.toString('utf8'));
     } catch {
       this.logger.warn('A crash alert from Sentry was not posted to Slack: its body is not JSON');
       return;
     }
-    if (this.withinCap()) {
-      void this.post(crashPostText(readAlert(alert)));
+    const alert = resource === 'issue' ? readIssue(parsed) : readAlert(parsed);
+    if (alert !== undefined && this.withinCap()) {
+      void this.post(crashPostText(alert));
     }
   }
 

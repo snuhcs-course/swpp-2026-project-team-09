@@ -25,11 +25,12 @@
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { Module, StandardSchemaValidationPipe } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, StandardSchemaValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { IdempotencyModule } from '@nestjs/idempotency';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AdministratorsModule } from './administrators/administrators.module.js';
@@ -43,8 +44,11 @@ import { MessagingModule } from './common/messaging.module.js';
 import { PrismaModule } from './common/prisma.module.js';
 import { RedisIdempotencyStore } from './common/redis-idempotency.store.js';
 import { RedisModule } from './common/redis.module.js';
+import { RequestContextMiddleware } from './common/request-context.middleware.js';
+import { RequestLoggingModule } from './common/request-logging.module.js';
 import { settingsSchema } from './common/settings.js';
 import { SignalsModule } from './common/signals.module.js';
+import { UnexpectedErrorFilter } from './common/unexpected-error.filter.js';
 import { FriendsModule } from './friends/friends.module.js';
 import { GlobalEventsModule } from './global-events/global-events.module.js';
 import { AiKeysModule } from './common/ai-keys.module.js';
@@ -101,6 +105,8 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
       scope: (request: { user?: SignedInUser; administrator?: SignedInAdministrator }) =>
         request.user?.id ?? request.administrator?.id,
     }),
+    // The request line of a request its handler answered (README.md: Logging), inside the idempotency interceptor.
+    RequestLoggingModule,
     HealthModule,
     AuthModule,
     UsersModule,
@@ -136,8 +142,16 @@ import { WalkingRouteModule } from './walking-route/walking-route.module.js';
   providers: [
     // Validates a handler parameter against the schema given in its decorator: @Body({ schema: signInSchema }).
     { provide: APP_PIPE, useClass: StandardSchemaValidationPipe },
+    // Writes the line of a request that ended in an exception, and answers an unexpected one 500 with the request's ID
+    // (README.md: Logging).
+    { provide: APP_FILTER, useClass: UnexpectedErrorFilter },
     // Registers itself with IdempotencyStorage when Nest creates it.
     RedisIdempotencyStore,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  // Every path, including those no route matches: the request's ID and context, before the guards (README.md: Logging).
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(RequestContextMiddleware).forRoutes('*');
+  }
+}

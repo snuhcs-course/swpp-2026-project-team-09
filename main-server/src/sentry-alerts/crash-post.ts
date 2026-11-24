@@ -3,11 +3,12 @@
  *
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-24  Fable 5.2  prompted by AhnJinYoung
+ * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-// What Sentry's issue alert (resource `event_alert`) tells of a crash, and the one Slack line made of it
+// What Sentry's issue webhook (resource `issue`) or issue alert (resource `event_alert`) tells of a crash, and the one Slack line made of it
 // (README.md: Crash alerts from Sentry). Every field may be missing: a missing one only shortens the line.
 export interface CrashAlert {
   title?: string;
@@ -16,6 +17,8 @@ export interface CrashAlert {
   releaseTag?: string;
   platform?: string;
   link?: string;
+  // The issue was resolved and is unresolved again.
+  again?: boolean;
 }
 
 // Sentry signs the body's bytes as it sent them: the hex HMAC-SHA256 with the integration's client secret.
@@ -62,6 +65,7 @@ function sentryLink(value: unknown): string | undefined {
   return /[|<>\s]/u.test(url.href) ? undefined : url.href;
 }
 
+// An issue alert (resource `event_alert`) tells of the event, with its tags.
 export function readAlert(body: unknown): CrashAlert {
   const event = field(field(body, 'data'), 'event');
   const tags = field(event, 'tags');
@@ -72,6 +76,25 @@ export function readAlert(body: unknown): CrashAlert {
     releaseTag: tag(tags, 'release_tag'),
     platform: tag(tags, 'platform'),
     link: sentryLink(field(event, 'web_url')),
+  };
+}
+
+// An issue webhook (resource `issue`) tells of the issue alone: no tags, so no release. Of its actions only a new
+// issue (`created`) and one that is unresolved again (`unresolved`) are a crash to tell of; the others (`resolved`,
+// `assigned`, `archived`) are what a person did in Sentry, and give undefined.
+export function readIssue(body: unknown): CrashAlert | undefined {
+  const action = field(body, 'action');
+  if (action !== 'created' && action !== 'unresolved') {
+    return undefined;
+  }
+  const issue = field(field(body, 'data'), 'issue');
+  return {
+    again: action === 'unresolved',
+    title: text(field(issue, 'title')),
+    culprit: text(field(issue, 'culprit')),
+    level: text(field(issue, 'level')),
+    platform: text(field(issue, 'platform')),
+    link: sentryLink(field(issue, 'web_url')),
   };
 }
 
@@ -92,7 +115,7 @@ const SHORT_LIMIT = 50;
 
 export function crashPostText(alert: CrashAlert): string {
   const lines = [
-    `App crash: ${alert.title === undefined ? 'an issue without a title' : inert(alert.title, TITLE_LIMIT)}`,
+    `${alert.again === true ? 'App crash again' : 'App crash'}: ${alert.title === undefined ? 'an issue without a title' : inert(alert.title, TITLE_LIMIT)}`,
   ];
   const facts = [
     alert.culprit === undefined ? undefined : `at ${inert(alert.culprit, CULPRIT_LIMIT)}`,

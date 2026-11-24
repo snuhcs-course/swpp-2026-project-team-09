@@ -49,15 +49,11 @@ webhook: the main server holds no channel name and cannot post anywhere else.
 
 1. In Slack, make the private channel `#team9-app-crash`, and in the app that holds the servers' webhooks add an
    Incoming Webhook for it. The URL is a secret: `read -rs`, never in chat or a document.
-2. In Sentry: Settings › Developer Settings › a new internal integration with the webhook URL
-   `https://api.snunow.com/sentry/alerts` and "Alert Rule Action" on. Its client secret is a secret too.
+2. In Sentry: Settings › Custom Integrations › a new internal integration with the webhook URL
+   `https://api.snunow.com/sentry/alerts`, the permission Issue & Event: Read, and the webhook Issues with Created and
+   Unresolved ticked. Its client secret is a secret too.
 3. Put the two values where the main server's secrets are kept, then Release the main server.
-4. In Sentry, an alert rule for the project: when a new issue is created, and when an issue changes from resolved to
-   unresolved, send a notification through the integration.
-5. Send the test error from the app (ticket 02) and see the post in the channel.
-
-If the plan does not offer internal integrations or their alert action, this ticket stops at step 2, and the team is
-told by email as now.
+4. Send the test error from the app (ticket 02) and see the post in the channel.
 
 ## Must not break
 
@@ -138,6 +134,22 @@ Checks run: `pnpm lint`, `prettier --check .` and `tsc --noEmit` in `main-server
 changed `startApp` and body parsers; `infra/production/k8s/test/targets.sh`. `bats` and `shellcheck` are not installed
 on the machine it was built on, so `release.bats` was not run there; `write-secrets` was run by hand with the parameters
 absent, present, and over two lines, and gave what the new cases expect. CI's `release-script` job runs them.
+
+### The plan's check (2026-11-25)
+
+Seen on the account, on the page that makes an internal integration:
+
+- **Alert Action is locked** on the free plan, so an alert rule cannot call the main server. The route as first built,
+  which read only an issue alert (`event_alert`), would never have been called.
+- **The integration itself can be made,** and with Issue & Event: Read its webhook **Issues** can be ticked, with
+  Created and Unresolved, without a lock.
+
+So the route now also reads Sentry's issue webhook (`Sentry-Hook-Resource: issue`; Integration Platform › Webhooks ›
+Issues, read on 2026-11-25): `action` is one of `created`, `resolved`, `assigned`, `archived`, `unresolved`, and
+`data.issue` holds `title`, `culprit`, `level`, `platform` and `web_url`. Only `created` and `unresolved` are posted,
+the second as "App crash again". The issue webhook has no tags, so such a post has no release; the link leads to it.
+The alert form is kept for a plan that offers it. The people's steps lose the alert rule. Not seen yet: a real
+request from Sentry, which the last criterion's check will show.
 
 ### Agent usage (2026-11-24)
 

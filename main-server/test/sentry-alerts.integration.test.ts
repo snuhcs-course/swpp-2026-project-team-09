@@ -3,6 +3,7 @@
  *
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-24  Fable 5.2  prompted by AhnJinYoung
+ * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -99,6 +100,23 @@ describe('A signed issue alert, read tolerantly', () => {
     expect(response.status).toBe(200);
     await postsMade(1);
     expect(slack.posts[0]?.text).toBe('App crash: an issue without a title');
+  });
+
+  it("of Sentry's issue webhook: a new issue and one unresolved again are posted, a resolved one is not", async () => {
+    const issue = { title: 'Error: boom', culprit: 'app/index.tsx', level: 'fatal', platform: 'javascript' };
+    const body = (action: string): string => JSON.stringify({ action, data: { issue } });
+
+    const resolved = await postAlert(app, body('resolved'), { resource: 'issue' });
+    const created = await postAlert(app, body('created'), { resource: 'issue' });
+    await postsMade(1);
+    const unresolved = await postAlert(app, body('unresolved'), { resource: 'issue' });
+    await postsMade(2);
+
+    expect([resolved.status, created.status, unresolved.status]).toEqual([200, 200, 200]);
+    expect(slack.posts.map((post) => post.text)).toEqual([
+      'App crash: `Error: boom`\nat `app/index.tsx` · level `fatal` · platform `javascript`',
+      'App crash again: `Error: boom`\nat `app/index.tsx` · level `fatal` · platform `javascript`',
+    ]);
   });
 
   it('of another resource, or not JSON → 200, and nothing posted', async () => {
