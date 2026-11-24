@@ -343,8 +343,13 @@ SDK: [mobile/README.md](../../mobile/README.md), "Build the app for Android"):
    pnpm install
    pnpm expo prebuild --platform android
    cd android
+   export SENTRY_DISABLE_AUTO_UPLOAD=true
    ./gradlew assembleRelease
    ```
+
+   The export keeps Sentry's Gradle step from uploading a source map: without it a release build fails for want of
+   Sentry's token, and `./gradlew` does not read `mobile/.env`. The dev APK has no DSN and reports nothing
+   ([mobile/README.md](../../mobile/README.md), "Crash reports").
 
 3. Copy it into the APK folder under today's date:
 

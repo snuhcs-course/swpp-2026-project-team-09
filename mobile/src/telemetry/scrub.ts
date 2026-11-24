@@ -12,9 +12,10 @@ import type { Breadcrumb, ErrorEvent } from '@sentry/react-native';
 // An error's message is cut to this many characters, as a message may hold what a User typed.
 export const MESSAGE_LIMIT = 200;
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
-// A number, also with a sign or a decimal part, such as a coordinate in a path.
-const NUMBER = /^-?\d+(?:\.\d+)?$/u;
+// A word of a route, such as `quests` or `friend-ids`: lower-case letters and hyphens. Every route word the app calls
+// (src/api/client.ts) is one, and no value is: not a UUID, a number or a coordinate, and not a Friend ID or an Invite
+// Link's token either, which are letters and digits a pattern for ids would let through.
+const ROUTE_WORD = /^[a-z][a-z-]*$/u;
 // The scheme and host of an absolute URL, kept as they are.
 const ORIGIN = /^[a-z][a-z\d+.-]*:\/\/[^/?#]*/iu;
 
@@ -22,11 +23,12 @@ export function cutMessage(message: string): string {
   return message.length > MESSAGE_LIMIT ? message.slice(0, MESSAGE_LIMIT) : message;
 }
 
+// A segment is kept only when it is a route word. Whatever else stands in a path is a value, and becomes `:id`.
 function scrubSegment(segment: string): string {
-  return UUID.test(segment) || NUMBER.test(segment) ? ':id' : segment;
+  return segment === '' || ROUTE_WORD.test(segment) ? segment : ':id';
 }
 
-// The URL without its query and fragment, and with every path segment that is a UUID or a number as `:id`:
+// The URL without its query and fragment, and with every path segment that is not a route word as `:id`:
 // "https://api.snunow.com/quests/42?lat=37.45#top" becomes "https://api.snunow.com/quests/:id".
 export function scrubUrl(url: string): string {
   const origin = ORIGIN.exec(url)?.[0] ?? '';

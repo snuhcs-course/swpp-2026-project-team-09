@@ -1186,7 +1186,12 @@ instead of `ffd1bd8f…` this way, and took no update. In `mobile/ios/.xcode.env
 ```bash
 export PATH=/opt/homebrew/opt/node@24/bin:$PATH
 export NODE_BINARY=/opt/homebrew/opt/node@24/bin/node
+export SENTRY_DISABLE_AUTO_UPLOAD=true
 ```
+
+The last line keeps Sentry's build phases from uploading the source map and the dSYM files: without it a Release
+build fails for want of Sentry's token, and an `export` in a terminal does not reach Xcode's build phases. P08 ticket 08
+replaces it with the upload.
 
 Then, in Xcode:
 
