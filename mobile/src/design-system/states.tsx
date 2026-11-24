@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-24  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -28,7 +29,7 @@ export function EmptyState({ words, icon, action }: EmptyStateProps): ReactEleme
       {icon === undefined ? null : <Icon color={color.inkFaint} name={icon} size={28} />}
       <Text style={styles.words}>{words}</Text>
       {action === undefined ? null : (
-        <Button onPress={action.onPress} variant="secondary">
+        <Button centred onPress={action.onPress} variant="secondary">
           {action.label}
         </Button>
       )}

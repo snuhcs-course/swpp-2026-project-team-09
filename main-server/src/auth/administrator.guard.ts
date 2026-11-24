@@ -3,6 +3,7 @@
  *
  * 2026-09-29  Opus 5.5   prompted by TaeHyun79
  * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
@@ -10,6 +11,7 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { AdministratorsService } from '../administrators/administrators.service.js';
 import { SignedInAdministratorRequest } from '../common/current-administrator.decorator.js';
+import { recordUserId } from '../common/request-context.js';
 import { routeAccess } from '../common/route-access.js';
 import { bearerToken } from './access-token.guard.js';
 
@@ -42,6 +44,7 @@ export class AdministratorGuard implements CanActivate {
       throw new UnauthorizedException();
     }
     request.administrator = { id: administrator.id };
+    recordUserId(administrator.id);
     return true;
   }
 

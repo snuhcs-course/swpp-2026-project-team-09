@@ -25,7 +25,7 @@ Native files: none. Releases: an app over-the-air update.
 - Off holds at once, not only from the next launch, since Sentry's own handlers and its session tracking are already
   running: `reportError` does nothing, `beforeSend` drops every event, and the layer closes Sentry's client (how
   8.36.0 closes and starts a client again is checked against its reference and written under Comments). At the next
-  launch `startTelemetry()` starts nothing. A native crash kept from before is discarded, not sent. On again starts
+  launch `startTelemetry()` starts nothing. A native crash kept from before stays on the phone and is not sent while the switch is off; it is sent if the switch is turned on again (the SDK gives JavaScript no way to discard it). On again starts
   Sentry in that run.
 - The mobile README's "Crash reports" says the above.
 
@@ -73,7 +73,7 @@ Native files: none. Releases: an app over-the-air update.
   caching of every report. So the ticket's "a native crash kept from before is discarded" is not built. What holds
   instead: with the switch off the SDK is never started, so nothing is sent while it is off; a crash kept from a run
   when the switch was on, and not yet sent (the next start normally sends it at once), goes out when the switch is
-  turned on again. **A difference from the spec, for the orchestrator to decide** (the README says it plainly).
+  turned on again. The owner took this as it is on 2026-11-24, and "What to build" above now says it.
 - **The start waits for the choice, not the first screen.** `startTelemetry()` is still called at module scope in
   the root layout; it returns a promise and starts Sentry once the choice is read from AsyncStorage and is on. The
   first screen does not wait. In that moment (one storage read, while the splash and the fonts load) Sentry is not
@@ -96,7 +96,7 @@ Native files: none. Releases: an app over-the-air update.
   also in a build without a DSN, so the row works in the mock build.
 - **The row** is a card of its own after 관정도서관 로그인 and before 로그아웃, with the other rows that set something
   on this phone (탭 안내 다시 보기, the library's login); the wireframe's `Profile` frame has no such row. Caption:
-  "앱에 오류가 나면 그때까지 본 화면과 앱·휴대폰의 버전을 보내요. 이름과 위치는 보내지 않아요."; the link
+  "앱에 오류가 나면 그때까지 본 화면, 앱·휴대폰의 버전, 계정 번호를 보내요. 이름과 위치는 보내지 않아요."; the link
   "개인정보 처리방침 보기" opens `/legal/privacy` until ticket 05 adds the part.
 - **Tests:** `__tests__/telemetry/sending.unit.test.ts` (the switch at a start, turned while running, the user),
   `sentry-user.integration.test.tsx` (sign-in, kept Session, sign-out, Session ended by the server, against the fake
@@ -112,4 +112,4 @@ Native files: none. Releases: an app over-the-air update.
 - Agent time: about 1 hour 45 minutes in one implementation session, an estimate; about 40 minutes of it waited on
   test runs, one of which ran the whole unit suite by mistake (`--selectProjects unit <file>` took the file as a
   project name).
-- Tokens: to be filled in by the orchestrator, who has the session's usage.
+- Tokens: 229,442 in all for the implementation session, as its usage reports; the split into input, cache reads, cache writes and output was not available.

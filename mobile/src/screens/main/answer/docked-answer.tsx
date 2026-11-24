@@ -4,6 +4,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -142,12 +143,14 @@ interface DockedWordsProps {
   control: ChatSheetControl;
   rest: WordsRest;
   onRaise: Raise;
+  // The card rests at the dock; raised, the dock lies hidden under the open content (P04 ticket 57).
+  atRest: boolean;
 }
 
 // The reply's buttons as chips, which scroll sideways: its offers and 다시 시도, disabled while the next reply is on its
 // way, for they act on the turn before; 그대로 두기 beside a Quest the User holds, which leaves it as it is (P04
 // ticket 20); and the folded chips.
-function ReplyChips({ control, rest }: Omit<DockedWordsProps, 'onRaise'>): ReactElement {
+function ReplyChips({ control, rest }: Pick<DockedWordsProps, 'control' | 'rest'>): ReactElement {
   const { offers, retry } = rest;
   const { send, waiting } = control.chat;
   return (
@@ -190,7 +193,7 @@ function ReplyChips({ control, rest }: Omit<DockedWordsProps, 'onRaise'>): React
 
 // A reply's dock: its one line, which raises the card with the whole reply, then its buttons as chips, and the folded
 // chips. Nothing when the map says it all and nothing is folded.
-function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement | null {
+function DockedWords({ control, rest, onRaise, atRest }: DockedWordsProps): ReactElement | null {
   const { offers, retry, note } = rest;
   // While the map is picking a Place (P04 ticket 26), the line says what to do.
   const line = control.pick.place === null ? rest.line : wordsLine(PICKING_PLACE);
@@ -229,7 +232,7 @@ function DockedWords({ control, rest, onRaise }: DockedWordsProps): ReactElement
         )
       }
       <LeaveRow control={control} />
-      {time === null ? null : (
+      {time === null || !atRest ? null : (
         <PickTimeSheet offer={time} onClose={control.pick.stop} onPick={control.pick.chooseTime} />
       )}
     </View>
@@ -244,6 +247,8 @@ interface DockedAnswerProps {
   onClose: () => void;
   // Raises the card, with the earlier turns open when `earlier` is true.
   onRaise: Raise;
+  // The card rests at the dock; raised, the dock lies hidden under the open content (P04 ticket 57).
+  atRest: boolean;
 }
 
 // The docked card's content: a reply's dock, a meal answer's sentence, or the Plan's chips' row with the folded chips.
@@ -254,13 +259,14 @@ export function DockedAnswer({
   focus,
   onClose,
   onRaise,
+  atRest,
 }: DockedAnswerProps): ReactElement | null {
   if (rest.kind === 'words') {
     // 그대로 두기 beside a Quest the User holds stands with 바꾸기 on the main row (P04 ticket 50), not here.
-    return <DockedWords control={control} onRaise={onRaise} rest={rest.words} />;
+    return <DockedWords atRest={atRest} control={control} onRaise={onRaise} rest={rest.words} />;
   }
   if (control.answer.answer?.input.kind === 'meal') {
-    return <MealDock bubble={bubble} control={control} onRaise={onRaise} />;
+    return <MealDock atRest={atRest} bubble={bubble} control={control} onRaise={onRaise} />;
   }
   const folded = <FoldedChips control={control} note={control.answer.answer?.note ?? null} onRaise={onRaise} />;
   return (

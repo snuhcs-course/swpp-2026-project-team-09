@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactNode } from 'react';
@@ -9,7 +10,7 @@ import { space, text } from '@/design-system';
 import { AI_INPUT } from '../layout';
 import type { Raising } from './raise-handle';
 
-// What the frame's card, docked and open, shares (moved out of `frame-card.tsx` for its length).
+// What the frame's card shares (moved out of `frame-card.tsx` for its length).
 
 // Above the first of the card's parts.
 export const CONTENT_TOP = space[5];
@@ -38,12 +39,14 @@ export interface FrameCardProps {
   onContentCap?: (cap: number | null) => void;
   // The time bar's height, which the raised card stops under. Left out, none.
   timeBarHeight?: number;
-  // Nothing to read: one rounded row around the input, inset from the sides, with the handle (board 10).
-  docked?: boolean;
   // The AI input's bottom from the stage's bottom, which the docked card's edge stands just under.
   inputBottom?: number;
-  // The docked form's content; left out, the children (P04 ticket 54).
+  // What the card shows at its lowest step, the dock, held over its children and shown as the card comes down to its
+  // height (P04 ticket 57). Left out, the card has no dock and its lowest step is the lowered one.
   dock?: ReactNode;
+  // What stands under the header at every step, outside both the scrolling part and the dock, so that it is mounted once
+  // when the answer docks (a kept seat card, PR 537's review).
+  lead?: ReactNode;
   // Null leaves the card empty.
   children: ReactNode;
 }

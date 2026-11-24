@@ -51,9 +51,10 @@ function maySend(): boolean {
   return choice === true;
 }
 
-// A refusal the main server answers on purpose, such as 404 NOT_IN_PARTY, is not an error of the app.
+// A refusal the main server answers on purpose, a 4xx with its own code such as 404 NOT_IN_PARTY, is not an error of
+// the app. A 4xx without a code is: a body the app sent wrong, or a proxy's 413 or 429.
 function isServerRefusal(error: unknown): boolean {
-  return error instanceof ApiError && error.status >= 400 && error.status < 500;
+  return error instanceof ApiError && error.status >= 400 && error.status < 500 && error.code !== null;
 }
 
 // What `beforeSend` does with a report of an error that nothing caught, or of one handed to `reportError`.
