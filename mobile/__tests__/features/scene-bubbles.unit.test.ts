@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
+import { MENU_LOOKUP } from '@/api/mock/data/menu-lookup';
 import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { SEAT_CARD } from '../support/library-chat';
@@ -26,6 +28,7 @@ function bubble(id: number, role: 'user' | 'assistant', extra: Partial<ChatBubbl
 
 const ANSWER = MEAL_ANSWER;
 const LIBRARY = [SEAT_CARD];
+const FACT = { ...MENU_LOOKUP, fact: true as const };
 
 const ids = (bubbles: readonly ChatBubble[]): number[] => bubbles.map(({ id }) => id);
 
@@ -86,5 +89,37 @@ describe('sceneBubblesOf over several turns', () => {
     const talk = [bubble(1, 'user'), bubble(2, 'assistant'), bubble(3, 'user'), bubble(4, 'assistant')];
 
     expect(ids(sceneBubblesOf(talk))).toEqual([1, 2, 3, 4]);
+  });
+});
+
+// P04 ticket 58. Partitions: a fact Lookup under words alone; under a reply still on its way; a Lookup that is not a
+// fact under words alone.
+describe('sceneBubblesOf after a fact', () => {
+  it('lets a fact go once a follow-up is answered with words alone', () => {
+    const talk = [
+      bubble(1, 'user'),
+      bubble(2, 'assistant', { lookup: FACT }),
+      bubble(3, 'user'),
+      bubble(4, 'assistant'),
+    ];
+
+    expect(ids(sceneBubblesOf(talk))).toEqual([1, 2, 3, 4]);
+  });
+
+  it('keeps a fact while the follow-up is on its way', () => {
+    const talk = [bubble(1, 'user'), bubble(2, 'assistant', { lookup: FACT }), bubble(3, 'user')];
+
+    expect(ids(sceneBubblesOf(talk))).toEqual([1, 2]);
+  });
+
+  it('keeps a Lookup that is not a fact under words alone', () => {
+    const talk = [
+      bubble(1, 'user'),
+      bubble(2, 'assistant', { lookup: MENU_LOOKUP }),
+      bubble(3, 'user'),
+      bubble(4, 'assistant'),
+    ];
+
+    expect(ids(sceneBubblesOf(talk))).toEqual([1, 2]);
   });
 });

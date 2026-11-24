@@ -42,9 +42,9 @@ function lookupIn(body: unknown): Lookup {
   return lookup;
 }
 
-const findMenu = (date: string, words?: string): Step => ({
+const findMenu = (date: string, words?: string, meal = 'lunch'): Step => ({
   tool: 'findMenu',
-  input: { date, meal: 'lunch', ...(words === undefined ? {} : { restaurant: words }) },
+  input: { date, meal, ...(words === undefined ? {} : { restaurant: words }) },
 });
 
 const time = (date: string, clock: string): string => `${date}T${clock}:00+09:00`;
@@ -121,7 +121,7 @@ describe('A Restaurant with nothing to eat at that meal', () => {
 
     expect(stage.model.toolResults()[0]).toEqual({
       result: 'none',
-      reason: `301동식당's lunch menu for ${date} is not posted yet: menus are posted up to six days ahead. Say so, and that it comes later; never that 301동식당 is closed.`,
+      reason: "301동식당's lunch menu for today is not posted yet. Say so; never that 301동식당 is closed.",
       lines: [],
     });
     expect(lookupIn(response.body)).toMatchObject({
@@ -149,6 +149,36 @@ describe('A Restaurant with nothing to eat at that meal', () => {
       lines: ['<data label="menu.line">※ 개교기념일 휴무</data>'],
     });
     expect(lookupIn(response.body).scene.flags).toMatchObject([{ text: '301동식당 · 오늘 점심은 안 해요' }]);
+  });
+});
+
+// P04 ticket 60: a meal missing from a day collected is none that day, and today is never "posted up to six days ahead".
+describe('A meal not posted', () => {
+  it('answers none for a dinner missing from a day posted with its lunch, never as not posted yet', async () => {
+    const date = '2086-04-09';
+    await boardQ8(date);
+    await stage.menusOn(date, ['301동식당']);
+
+    const response = await stage.send([findMenu(date, '301동식당', 'dinner'), { text: '…' }]);
+
+    expect(stage.model.toolResults()[0]).toEqual({
+      result: 'none',
+      reason: `301동식당 has no dinner menu on ${date}, though its menus of that day were collected: say there is no dinner menu that day, never that it is not posted yet or comes later.`,
+      lines: [],
+    });
+    expect(lookupIn(response.body).scene.flags).toMatchObject([{ text: '301동식당 · 오늘 저녁 메뉴 없음' }]);
+  });
+
+  it('tells the model a menu not posted today without the days ahead', async () => {
+    const date = '2086-04-16';
+    await boardQ8(date);
+    await stage.menusOn(date, ['학생회관식당']);
+
+    await stage.send([findMenu(date, '301동식당', 'dinner'), { text: '…' }]);
+
+    expect(stage.model.toolResults()[0]).toMatchObject({
+      reason: "301동식당's dinner menu for today is not posted yet. Say so; never that 301동식당 is closed.",
+    });
   });
 });
 
