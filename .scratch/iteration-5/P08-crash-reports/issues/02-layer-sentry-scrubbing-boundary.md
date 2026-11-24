@@ -105,6 +105,17 @@ Releases: an `all` or `app` Release, which builds a new APK.
 - **The test error's message** is "A test error, sent from the build line in 내 정보", with the tag `where: test-error`.
 - **Open:** the check on a phone with a DSN, which needs a person and ticket 06's project.
 
+### After the review (2026-11-24)
+
+- **A path keeps only its route words.** The first rule turned UUID and number segments into `:id`, which let a
+  typed Friend ID (`/friend-ids/K7M3XQ9A`) and an Invite Link's token (`/invite-links/<token>`, a credential for a
+  day) through. Now a segment stays only when it is lower-case letters and hyphens, as every route word in
+  `src/api/client.ts` is, and anything else becomes `:id`. The spec's "UUIDs or numbers" is the narrower wording.
+- **A refusal is a 4xx with a code,** as the spec has it. A 4xx without the main server's code (a body the app sent
+  wrong, a proxy's 413 or 429) is reported.
+- **The two builds made by hand** (the Dev Server's APK, the iOS build) turn Sentry's upload off in their documented
+  steps.
+
 ### Agent usage (2026-11-24)
 
 - Agent time: about 2 hours 15 minutes in one implementation session, an estimate; about 20 minutes of it waited on

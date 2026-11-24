@@ -1961,8 +1961,10 @@ reported, whether it was passed to `reportError` or nothing caught it.
 
 `beforeSend` and `beforeBreadcrumb` pass every report and breadcrumb through `src/telemetry/scrub.ts`:
 
-- every URL loses its query string and fragment, and each path segment that is a UUID or a number becomes `:id`
-  (`/quests/3f2a…?lat=37.45&lng=126.95` becomes `/quests/:id`). This holds for the report's request, for each HTTP
+- every URL loses its query string and fragment, and a path segment is kept only when it is a route word (lower-case
+  letters and hyphens); every other segment becomes `:id`, so that no id, coordinate, Friend ID or Invite Link token
+  stays (`/quests/3f2a…?lat=37.45&lng=126.95` becomes `/quests/:id`, `/friend-ids/K7M3XQ9A` becomes
+  `/friend-ids/:id`). This holds for the report's request, for each HTTP
   breadcrumb and for the URLs in other breadcrumbs' data;
 - console breadcrumbs are dropped, and of an HTTP breadcrumb only the method, the scrubbed path and the status are
   kept;

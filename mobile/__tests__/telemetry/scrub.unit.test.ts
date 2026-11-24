@@ -37,6 +37,21 @@ describe('scrubUrl', () => {
     expect(scrubUrl('/me/friends/requests')).toBe('/me/friends/requests');
   });
 
+  it('keeps no Friend ID a User typed, which is letters and digits and no UUID', () => {
+    expect(scrubUrl('https://api.snunow.com/friend-ids/K7M3XQ9A')).toBe('https://api.snunow.com/friend-ids/:id');
+  });
+
+  it("keeps no Invite Link's token, which opens the link for a day", () => {
+    const token = 'q3J_8dZk-0aVb1Yx7mN2pLr5sT9uWc4eHf6gIjKlMnO';
+    expect(scrubUrl(`/invite-links/${token}`)).toBe('/invite-links/:id');
+    expect(scrubUrl(`/invite-links/${token}/accept`)).toBe('/invite-links/:id/accept');
+  });
+
+  it('keeps only route words: a segment with a capital, a digit, a dot or an escape is a value', () => {
+    expect(scrubUrl('/places/301/menus/Lunch/v2/%EC%8B%9D%EB%8B%B9/a.b')).toBe('/places/:id/menus/:id/:id/:id/:id');
+    expect(scrubUrl('/quest-invitations/sent')).toBe('/quest-invitations/sent');
+  });
+
   it('keeps the host, also an address with digits in it', () => {
     expect(scrubUrl('http://swpp26t09.147-46-242-174.sslip.io/lobby?x=1')).toBe(
       'http://swpp26t09.147-46-242-174.sslip.io/lobby',
