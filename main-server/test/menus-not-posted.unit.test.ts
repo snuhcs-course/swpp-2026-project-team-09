@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply, type MealInput, NO_CONTEXT } from '../src/assistant/dto/answer.dto.js';
@@ -88,7 +89,9 @@ const stateAt = (date: string, now: Date, meals: MealOfDay[]): string => {
 
 describe("The map's label of an hours answer on a day not posted", () => {
   it('says the usual hours on another day, never that it is closed', () => {
-    expect(stateAt(NEXT_MONDAY, at(MONDAY, '12:00'), notPosted())).toBe('평소 점심 11:00–14:30 · 저녁 17:00–19:00');
+    expect(stateAt(NEXT_MONDAY, at(MONDAY, '12:00'), notPosted())).toBe(
+      '11/30(월) 평소 점심 11:00–14:30 · 저녁 17:00–19:00',
+    );
   });
 
   it('says today that the menu is not posted yet, with the usual hours', () => {
@@ -103,7 +106,7 @@ describe("The map's label of an hours answer on a day not posted", () => {
     ];
 
     expect(stateAt(MONDAY, at(MONDAY, '12:00'), closed)).toBe('지금 닫음 · 오늘은 쉬어요');
-    expect(stateAt(NEXT_MONDAY, at(MONDAY, '12:00'), closed)).toBe('그날은 쉬어요');
+    expect(stateAt(NEXT_MONDAY, at(MONDAY, '12:00'), closed)).toBe('11/30(월) 쉬어요');
   });
 });
 

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication, Logger } from '@nestjs/common';
@@ -74,7 +75,7 @@ describe('A test log line refused', () => {
     ['no access token', (): undefined => undefined],
     ["a User's access token", async (): Promise<string> => (await signIn(app)).accessToken],
     ['a removed Administrator', (): Promise<string> => removedAdministratorToken(app)],
-  ])('with %s → 401, and nothing is logged', async (_case, accessToken) => {
+  ])('with %s → 401, and no test line is logged', async (_case, accessToken) => {
     const token = await accessToken();
     const logs = captureLogs();
 
@@ -91,7 +92,7 @@ describe('A test log line refused', () => {
     ['a number', { level: 1 }],
     ['no level', {}],
     ['no body', undefined],
-  ])('with %s → 400, and nothing is logged', async (_case, body) => {
+  ])('with %s → 400, and no test line is logged', async (_case, body) => {
     const { accessToken } = await signInAsAdministrator(app);
     const logs = captureLogs();
 

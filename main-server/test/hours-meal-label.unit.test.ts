@@ -108,7 +108,23 @@ describe('The label of the meal asked', () => {
   it('gives the usual hours on a day not posted yet', () => {
     const notPosted: MealOfDay[] = [{ meal: 'dinner', lines: [], hours: DINNER }];
 
-    expect(stateAt(NEXT_MONDAY, '12:40', notPosted, 'dinner')).toBe('평소 저녁 17:00–19:00');
+    expect(stateAt(NEXT_MONDAY, '12:40', notPosted, 'dinner')).toBe('11/30(월) 평소 저녁 17:00–19:00');
+  });
+});
+
+// P04 ticket 60: the label names the day whenever it is not today, in the words of the meal Plan's time bar.
+describe('The label of a meal on another day', () => {
+  it('names tomorrow before the hours', () => {
+    expect(stateAt('2026-11-24', '15:00', both(), 'lunch')).toBe('내일(화) 점심 11:00–14:00');
+  });
+
+  it('names the day of a meal not served then', () => {
+    const lunchOnly: MealOfDay[] = [
+      { meal: 'lunch', lines: [dish], hours: LUNCH, posted: true },
+      { meal: 'dinner', lines: [], hours: DINNER, posted: true },
+    ];
+
+    expect(stateAt('2026-11-24', '15:00', lunchOnly, 'dinner')).toBe('내일(화) 저녁은 안 해요');
   });
 });
 

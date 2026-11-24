@@ -272,11 +272,11 @@ describe('The state the map writes beside the Restaurant', () => {
     );
   });
 
-  it("says another day's spans", () => {
+  it("says another day's spans after the day (P04 ticket 60)", () => {
     const found = hoursWords('예술계식당', TUESDAY, at('2026-11-23', '00:40'), served());
     if (found.result !== 'found') {
       throw new Error('No hours');
     }
-    expect(stateOf(found, at('2026-11-23', '00:40'))).toBe('점심 11:30–14:00 · 저녁 17:00–18:30');
+    expect(stateOf(found, at('2026-11-23', '00:40'))).toBe('내일(화) 점심 11:30–14:00 · 저녁 17:00–18:30');
   });
 });
