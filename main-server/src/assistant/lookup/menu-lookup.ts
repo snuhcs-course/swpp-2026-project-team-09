@@ -20,7 +20,7 @@ import { type HandledMeal } from '../free-time/meal-fit.js';
 import { withTopic } from '../gathering/answer-words.js';
 import { MINUTES_SAID_MAX } from '../gathering/gathering.js';
 import { cornersOf, mainMenu } from '../gathering/meal-menu.js';
-import { dayWords } from '../library/library-parts.js';
+import { dayWordsFrom } from '../korea-time.js';
 import { part } from './way-naming.js';
 
 // A Restaurant's menu drawn on the map: the meal Plan for the User alone at its Place says when they can be there and
@@ -45,8 +45,12 @@ export interface MenuArgs {
 
 export type MenuAnswer = { result: 'found'; plan: Plan; lookup: Lookup } | { result: 'none'; reason: 'no-time' };
 
-// Why a menu asked of a Restaurant has no meal Plan to draw: not posted yet, only notes, or no time to eat there.
-export type NoMenuReason = 'no-menu' | 'closed' | 'no-time';
+// Why a menu asked of a Restaurant has no meal Plan to draw: its day not posted yet, posted without the meal, only
+// notes, or no time to eat there.
+export type NoMenuReason = 'no-menu' | 'no-meal' | 'closed' | 'no-time';
+
+// The day as the meal Plan's time bar names it ("내일(수)", "11/30(월)"), and 오늘 for today (P04 ticket 60).
+export const dayOf = (date: string, now: Date): string => dayWordsFrom(date, now) || '오늘';
 
 // The label beside the Restaurant is one line on the map.
 const DISHES_MAX = 3;
@@ -86,7 +90,7 @@ function firstLine({ key, date, meal, now, lines }: MenuArgs): AnswerLine {
   const dish =
     first === undefined ? '' : first.price === null ? dishName(first) : `${dishName(first)} ${won(first.price)}`;
   const rest = more.length > 0 ? ` 외 ${more.length}` : '';
-  return [part(key, true), part(` ${dayWords(date, now)} ${withTopic(mealWord(meal))} ${dish}${rest}`)];
+  return [part(key, true), part(` ${dayOf(date, now)} ${withTopic(mealWord(meal))} ${dish}${rest}`)];
 }
 
 // When the User can eat there: the minutes up to two hours, else from the start until they must leave for their next
@@ -147,12 +151,18 @@ function basisOf({ key, meal, lines: menu }: MenuArgs, plan: Plan): string[] {
   ];
 }
 
+// The dishes as the line of the Restaurant's label, after the day and the meal when that is not today (P04 ticket 60).
+function dishesLine({ date, meal, now }: Pick<MenuArgs, 'date' | 'meal' | 'now'>, dishes: readonly string[]): string {
+  const day = dayWordsFrom(date, now);
+  return [...(day === '' ? [] : [`${day} ${mealWord(meal)}`]), ...dishes].join(' · ');
+}
+
 // The Plan's scene without the other Restaurants, with the dishes as the line of the Restaurant's label.
-function sceneOf({ scene }: Plan, dishes: readonly string[]): MapScene {
+function sceneOf({ scene }: Plan, text: string): MapScene {
   return {
     ...scene,
     places: scene.places.filter(({ role }) => role !== 'candidate' && role !== 'dropped'),
-    flags: scene.flags.map((flag) => (flag.role === 'place' ? { ...flag, text: dishes.join(' · ') } : flag)),
+    flags: scene.flags.map((flag) => (flag.role === 'place' ? { ...flag, text } : flag)),
   };
 }
 
@@ -167,7 +177,7 @@ export function menuAnswer(args: MenuArgs): MenuAnswer {
     chips: args.answer.chips,
     lines: linesOf(args, plan),
     basis: basisOf(args, plan),
-    scene: sceneOf(plan, dishes),
+    scene: sceneOf(plan, dishesLine(args, dishes)),
     band: plan.band,
     actions: [{ kind: 'guide', to: plan.place }],
     menu: menuOf(args),
@@ -176,18 +186,23 @@ export function menuAnswer(args: MenuArgs): MenuAnswer {
   return { result: 'found', plan, lookup };
 }
 
-// What the Restaurant's label says when there is no meal Plan: the menu not posted yet ("내일 점심 메뉴 아직 안 올라옴"),
-// the meal not served ("내일 점심은 안 해요"), or, with no time to eat there, its dishes.
-function noneState({ date, meal, now, lines }: Omit<MenuArgs, 'answer' | 'hours'>, reason: NoMenuReason): string {
-  const day = dayWords(date, now);
+// What the Restaurant's label says when there is no meal Plan: its day not posted yet ("내일(수) 점심 메뉴 아직 안
+// 올라옴"), posted without the meal ("오늘 저녁 메뉴 없음"), the meal not served ("내일(수) 점심은 안 해요"), or, with no
+// time to eat there, its dishes.
+function noneState(args: Omit<MenuArgs, 'answer' | 'hours'>, reason: NoMenuReason): string {
+  const { date, meal, now, lines } = args;
+  const day = dayOf(date, now);
   if (reason === 'no-menu') {
     return `${day} ${mealWord(meal)} 메뉴 아직 안 올라옴`;
+  }
+  if (reason === 'no-meal') {
+    return `${day} ${mealWord(meal)} 메뉴 없음`;
   }
   const dishes = dishesOf(lines);
   if (reason === 'closed' || dishes.length === 0) {
     return `${day} ${withTopic(mealWord(meal))} 안 해요`;
   }
-  return dishes.join(' · ');
+  return dishesLine(args, dishes);
 }
 
 // A menu asked of a Restaurant with no meal Plan to draw still brings the Restaurant to the map (P04 ticket 59), as an

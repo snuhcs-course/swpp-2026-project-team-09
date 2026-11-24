@@ -404,7 +404,8 @@ An upload is refused, and nothing is stored, with these codes. The three numbers
 What is stored: only each User's latest position, in Redis under `position:<userId>` as
 `{ "latitude", "longitude", "measuredAt", "placeId" }`, `placeId` being the Place it is in or null, which expires 10
 minutes after it was stored. Redis counts the 10
-minutes. No position is written to the database or to a log, and no history is kept. The position is cleared when the
+minutes. No position is written to the database or to a log (the request lines of `/positions` carry no body,
+[Logging](#requests)), and no history is kept. The position is cleared when the
 User turns the Master Switch off, uploads a position off campus or inside one of their Private Zones, makes a Private
 Zone round the position stored, and when the User's session ends, by a sign-in on
 another phone, a sign-out or a used refresh token, so that the phone's last position does not linger.
@@ -1738,7 +1739,7 @@ The app asks for a walking route between two points and draws its line. The main
   `{ "statusCode": 502, "error": "Bad Gateway", "message": "Kakao's walking route API failed." }`. The server logs a
   warning with Kakao's HTTP status and Kakao's own `status` or error `code`, such as
   `Kakao's walking route API failed: HTTP 429 {"code":-10}`, or why Kakao gave no answer. The log never holds a route
-  or the points asked for.
+  or the points asked for: the request line leaves out the query string and the body ([Logging](#requests)).
 - A coordinate that is missing, is not a decimal number, or lies outside -90 to 90 for a latitude or -180 to 180 for a
   longitude gets 400 with a message that starts with the field, and Kakao is not asked.
 
@@ -2680,8 +2681,10 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       `11/30(월) 메뉴는 아직 올라오지 않았어요` and `메뉴는 엿새 뒤 날짜까지 볼 수 있어요` (today the first line alone), the
       reason stays `no-menu`, and the model is told the menus are not posted yet, never that nothing is open. `findMenu`
       and `getMenus` say the same of such a day. A `findMenu` that answers `none` still draws the Restaurant
-      (`menuNoneLookup`, kind `place`), its label saying why: `내일 점심 메뉴 아직 안 올라옴`, `내일 점심은 안 해요`, or
-      its dishes when the User has no time to eat there (P04 ticket 59).
+      (`menuNoneLookup`, kind `place`), its label saying why: `내일(수) 점심 메뉴 아직 안 올라옴` when that
+      Restaurant's day was not collected, `오늘 저녁 메뉴 없음` when the day was collected with another meal but not this
+      one (reason `no-meal`), `내일(수) 점심은 안 해요`, or its dishes when the User has no time to eat there (P04 tickets
+      59 and 60). A menu not posted today is never said to come "up to six days ahead".
     - `findWay(to?, from?, by?)`, with `WAY_RULES`, for an app that sends `answer` (`lookup/`). It finds the way on foot
       to a Place, or to the Place of the User's next item today when `to` is left out, from a Place they named; else
       the main gate (서울대 정문) when their location is off campus; else the Place their location is in, or the
@@ -2707,7 +2710,8 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
       `lookup/hours-lookup.ts`), also in place of a meal answer on screen, since the question is about the Restaurant
       (P04 ticket 59), picks the Restaurant out on the map, with a place flag at the same point whose words after the name the map writes as the
       label's second line: today `지금 영업 중 · 14:00까지`,
-      `지금 닫음 · 08:00 아침`, or `지금 닫음 · 오늘 영업 끝`, another day each meal's span; with `meal`, that meal
+      `지금 닫음 · 08:00 아침`, or `지금 닫음 · 오늘 영업 끝`, another day each meal's span after the day as the meal Plan's time bar names it (`내일(수) 점심 11:30–13:30`, P04
+      ticket 60); with `meal`, that meal
       alone (`저녁 17:00–19:00`, `저녁 · 지금 영업 중 · 19:00까지`, `저녁은 안 해요`, or `평소 저녁 …` on a day not
       posted), so that a follow-up about another meal, which the rules send to the tool again, never keeps another
       meal's label; its basis lists each meal's
@@ -3239,6 +3243,14 @@ src/
 ├── common/                          code shared by two or more features
 │   ├── settings.ts                  settings schema, checked at startup
 │   ├── logger.ts                    the logger LOG_FORMAT chooses, text or JSON lines (Logging)
+│   ├── request-context.ts           the request being handled, its ID and User, for every line it logs (Logging)
+│   ├── request-context.middleware.ts  the request ID and the request's context, before the guards (Logging)
+│   ├── request-logging.interceptor.ts  the request line of a request its handler answered (Logging)
+│   ├── request-logging.module.ts    registers that interceptor inside the idempotency one (Logging)
+│   ├── request-line.ts              the request line's parts, shared by the interceptor and the filter (Logging)
+│   ├── bodiless-routes.ts           the routes whose request line has no body (Logging)
+│   ├── log-body.ts                  a body as the request line writes it: secrets masked, cut at 2 KB (Logging)
+│   ├── unexpected-error.filter.ts   the line of a request that ended in an exception; an unexpected one answers 500 (Logging)
 │   ├── seed-directory.ts            where the seed files are, and how one is read
 │   ├── geometry.ts                  a position, and whether a ring holds it or how far it is from it
 │   ├── campus-boundary.ts           the Campus Boundary, read from its seed file
@@ -3439,17 +3451,101 @@ too.
 | info  | `logger.log()`   | A notable normal event: the server started, a scheduled job began or ended with its counts, a setting turned a feature on or off                        | No              |
 
 - No debug or verbose: the server prints neither. Fatal counts as error.
-- A User's mistake (400, 401, 403, 404, 429) is not logged.
-- NestJS logs an unhandled 500 itself; do not log it a second time.
+- A User's mistake (400, 401, 403, 404, 429) gets no line of its own; its request line shows it.
+- The exception filter logs an error no handler expected; do not log it a second time.
 - Log a failure once, where it is finally handled.
 - A loop logs no line per item, only one summary ("N of M").
 - A line says what failed, then a colon and the cause, as a full English sentence in [GLOSSARY](../GLOSSARY.md)
   words, with IDs (User ID, Quest ID), such as `The push to User 3f2c… was not sent: Expo answered 503`.
-- Never logged, at any level: tokens, keys, passwords, Authorization headers, cookies, webhook URLs; names, emails,
-  student IDs, phone numbers (a person is named by ID); coordinates, timetables, the Assistant's prompts and answers;
-  whole request or response bodies (status codes and error types only).
+- Never logged, at any level: tokens, keys, passwords, Authorization headers, cookies, webhook URLs, query strings, IP
+  addresses.
+- Never logged either: student IDs, registered names, a User's or a Friend's position, a timetable picture, the
+  Assistant's prompts and answers. The routes that carry them leave no body on their request line.
+- Outside the request lines, also never logged: names, emails, phone numbers (a person is named by ID); coordinates,
+  timetables; request or response bodies.
 
 Existing lines that break a rule are left as they are until someone changes that code.
+
+### Requests
+
+Every request but the health checks leaves one line, its request line. Three pieces make it, each where NestJS's
+documentation puts it:
+
+| Piece            | Where                                                                                   | Does                                                                                                                  |
+| ---------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Middleware       | `src/common/request-context.middleware.ts`, on every path, before the guards            | makes the request's ID, answers it as `X-Request-Id`, and opens the request's context; logs nothing                   |
+| Interceptor      | `src/common/request-logging.interceptor.ts`, global, inside the idempotency interceptor | the request line of a request its handler answered, once the answer is there, with the handler's answer as `res_body` |
+| Exception filter | `src/common/unexpected-error.filter.ts`, global                                         | the line of a request that ended in an exception, and nothing else logs it                                            |
+
+The lines below are made up:
+
+```text
+{"level":"log","pid":1,"timestamp":1795500533415,"message":"PUT /quests/65298f3b-… 200 84ms","context":"HTTP","req_body":"{\"title\":\"점심\"}","res_body":"{\"id\":\"65298f3b-…\",\"title\":\"점심\"}","req_id":"3f1c0d6e-…","user_id":"8a1d2c4e-…"}
+```
+
+- `message` is the method, the path with its IDs but without its query string, the status and the time taken until the
+  handler answered or the exception was caught. `req_body` and `res_body` are the request's body and the answer; a
+  request or an answer with none has no such field. `/health/live` and `/health/ready` leave no line: the load
+  balancer and the kubelet call them every few seconds.
+- The status is the one the client gets: the router sets it, `@HttpCode` included, before the interceptor runs; for a
+  `@Redirect()`, which the router applies after, the interceptor reads it as the router does. No route redirects today.
+- What the code throws on purpose (`HttpException`: a guard's 401 or 403, a validation's 400, a 404 for a path no route
+  matches, a 429) is answered as NestJS answers it, and the filter writes an info line with that answer as `res_body`.
+- **A replayed answer leaves no request line.** The idempotency interceptor stays outermost, as its library asks (a
+  global interceptor outside it gets a warning at every start), and it answers a replay from its store without running
+  the interceptors inside it. The first handling of that `Idempotency-Key` left the line, with the same answer. A
+  replayed error still leaves its line, through the filter. The library exports `IdempotencyEvents`, whose `replayed`
+  event (the handler, the key and the status) could write a replay's line later.
+- A body the JSON parser refuses, malformed (400) or over its limit (413), is refused before the middleware: the filter
+  answers it as before and writes its info line, with the body's type and size only and no `req_id`, and the response
+  has no `X-Request-Id`. No route serves files or streams.
+- An Invite Link's token is written `[masked]`, in a path (`/invite/[masked]`, `/invite-links/[masked]/accept`) and in
+  a body's text, such as the address `POST /invite-links` answers.
+- The bodies pass `logBody` (`src/common/log-body.ts`): the value of any field whose name holds `token`, `password`,
+  `secret` or `authorization`, in any case and at any depth, becomes `"[masked]"`; objects and arrays deeper than 20
+  levels are written `"[…]"`, and a body that still cannot be written is left off the line; the result is cut at 2 KB and ends
+  in `…(truncated)` when cut; a body that is not JSON, such as a file, is written as its type and size, such as
+  `[multipart/form-data 48213 bytes]`. Everything else is written as it was sent, up to 2 KB: a Quest's title, a
+  Party's name, a Friend's name and department, a timetable's Classes.
+- **Requests that leave no body.** `BODILESS_ROUTES` in `src/common/bodiless-routes.ts` lists them, any method: their
+  request line has the method, the path, the status, the time, `req_id` and `user_id`, and no `req_body` or `res_body`.
+  Each carries something the app tells Users is not kept, or, for the shuttles, something Production keeps no
+  history of. Each route is an exact path, except `/assistant`, which is a prefix: every path under it, at any depth,
+  leaves no body.
+
+  | Kind              | Routes                                                                                                                                                                                                                                                                                                      | What the app promises                                                                                          |
+  | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+  | Position          | `/positions` (an upload, and the Friends' positions read), `/walking-route` (from the User's position), `/places/at` (asked of a Friend's position), `/quests/:id/late`, `/plans`, `/plans/:id`, `/plans/:id/better` and `/quest-invitations/:id` (where the phone is, and the way from the Place it is at) | 지난 위치 저장 안 함; 칠한 곳 안의 위치는 저장하지 않아요                                                      |
+  | Profile           | `/users/me/profile`, `/lobby` (it answers the profile), `/library/room-requests/:id/companions` (the companions' 학번)                                                                                                                                                                                      | 학번 and 학적상 이름 are gone from the server once deleted                                                     |
+  | Timetable picture | `/timetable/readings`                                                                                                                                                                                                                                                                                       | 우리 서버에는 저장하지 않아요                                                                                  |
+  | Assistant         | `/assistant` and every path under it (prefix)                                                                                                                                                                                                                                                               | the conversation stays on the phone; 누가 찾았는지는 기록하지 않아요                                           |
+  | Shuttle positions | `/shuttle/vehicles/collected` (the worker's, every 15 seconds), `/shuttle/vehicles`                                                                                                                                                                                                                         | no history of them in Production ([Shuttle times from the Dev log](#shuttle-times-from-the-dev-log), ADR 0010) |
+
+  A new route that carries one of these joins the list, with a case in `test/request-line-bodies.integration.test.ts`.
+
+- So the other request lines hold what Users send and receive. They stay in the pod's log until the pod is replaced and are
+  never posted to Slack. Copy no request line into an issue, a pull request, a chat or a document: take only what is
+  needed, with no person and no value in it.
+
+**The request ID.** The middleware makes an ID for each request (`crypto.randomUUID()`) and answers it in the
+`X-Request-Id` header of every response; it never takes one the client sends. While the request is handled, every JSON
+line, whichever class logs it, carries it as `req_id`, and, once a guard has let a User or an Administrator through,
+their ID as `user_id`. Fluent Bit keeps `req_id` on a Slack post, so the request's other lines can be found with it
+(the infra README's "Server logs in Slack"). The text format prints neither.
+
+- `src/common/request-context.ts` holds the request's context in Node's `AsyncLocalStorage`; the middleware opens it,
+  and `AccessTokenGuard` and `AdministratorGuard` write the ID they let through. It depends on nothing else of the
+  server's, so the socket and worker servers can take it over.
+- The logger of `src/common/logger.ts` adds `req_id` and `user_id` to a JSON line by overriding `ConsoleLogger`'s
+  `getJsonLogObject`, which NestJS does not document: check it when NestJS is upgraded. A plain object given after the
+  message puts its fields on the JSON line (`flattenParams`), as the request line's bodies are:
+  `this.logger.log(message, { req_body })`; the logger's own fields win over a field of the same name.
+
+**Errors no handler expected.** Any exception that is not an `HttpException` is the request's one line, an error line:
+`<method> <path> 500 <ms>ms - <name>: <message>`, with the whole stack as `stack` and the request's body as `req_body`
+(none for a route of `BODILESS_ROUTES`). It is answered
+`500 { "statusCode": 500, "message": "Internal server error", "requestId": "<req_id>" }`, and NestJS's own handler does
+not log it again. The error line is posted to Slack without `req_body`; the pod's log has it, found by its `req_id`.
 
 ## Signals
 

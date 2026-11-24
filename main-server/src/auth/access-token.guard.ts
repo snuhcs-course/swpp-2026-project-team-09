@@ -5,6 +5,7 @@
  * 2026-09-29  Opus 5.5   prompted by fyoon46
  * 2026-09-30  Opus 5.5   prompted by fyoon46
  * 2026-10-01  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -20,6 +21,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { allowsBeforeOnboarding } from '../common/allow-before-onboarding.decorator.js';
 import { SignedInRequest } from '../common/current-user.decorator.js';
+import { recordUserId } from '../common/request-context.js';
 import { routeAccess } from '../common/route-access.js';
 import { UsersService } from '../users/users.service.js';
 import { SessionsService } from './sessions.service.js';
@@ -81,6 +83,7 @@ export class AccessTokenGuard implements CanActivate {
       });
     }
     request.user = { id: sub, sessionId: sid };
+    recordUserId(sub);
     return true;
   }
 

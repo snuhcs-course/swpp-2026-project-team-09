@@ -1,0 +1,56 @@
+/*******************************************************************************
+ * AI-generated with Claude
+ *
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
+ ******************************************************************************/
+
+// Partitions of a path: each kind's routes, with and without a trailing slash; a neighbour that shares a prefix; an
+// ordinary route.
+
+import { keepsBodies } from '../src/common/bodiless-routes.js';
+
+describe('A request line without bodies', () => {
+  it.each([
+    ['a position uploaded, or the positions read', '/positions'],
+    ['the same with a trailing slash', '/positions/'],
+    ["a walking route, from the User's position", '/walking-route'],
+    ["the Place at a Friend's position", '/places/at'],
+    ['a late report', '/quests/65298f3b-0000-4000-8000-000000000002/late'],
+    ['a Plan made into a Quest', '/plans'],
+    ['a Plan changed', '/plans/65298f3b-0000-4000-8000-000000000002'],
+    ['a better Plan', '/plans/65298f3b-0000-4000-8000-000000000002/better'],
+    ["an invitation's card", '/quest-invitations/65298f3b-0000-4000-8000-000000000002'],
+    ['the profile', '/users/me/profile'],
+    ['the lobby, which answers the profile', '/lobby'],
+    [
+      "a room request's companions, with their 학번",
+      '/library/room-requests/0b4f5a52-0000-4000-8000-000000000001/companions',
+    ],
+    ['a timetable picture', '/timetable/readings'],
+    ['an Assistant message', '/assistant/messages'],
+    ['an Assistant answer', '/assistant/answers'],
+    ['an Assistant tap', '/assistant/taps'],
+    ['a later Assistant route, nested deeper', '/assistant/messages/m-1/feedback'],
+    ['the Assistant itself', '/assistant'],
+    ["the shuttles' positions collected", '/shuttle/vehicles/collected'],
+    ["the shuttles' positions read", '/shuttle/vehicles'],
+  ])('%s → no bodies', (_case, path) => {
+    expect(keepsBodies(path)).toBe(false);
+  });
+
+  it.each([
+    ['a Quest', '/quests/65298f3b-0000-4000-8000-000000000002'],
+    ['the signed-in User', '/users/me'],
+    ['the Master Switch', '/users/me/master-switch'],
+    ['a room request', '/library/room-requests/0b4f5a52-0000-4000-8000-000000000001'],
+    ['a Place', '/places/65298f3b-0000-4000-8000-000000000003'],
+    ["an invitation's answer", '/quest-invitations/65298f3b-0000-4000-8000-000000000002/accept'],
+    ['a Quest left', '/quests/65298f3b-0000-4000-8000-000000000002/leave'],
+    ['a path that only starts like one', '/positionsx'],
+    ['a path that only starts like the Assistant', '/assistants'],
+    ["the shuttle's route and stops", '/shuttle'],
+    ["the shuttle's stops collected", '/shuttle/stops/collected'],
+  ])('%s → bodies kept', (_case, path) => {
+    expect(keepsBodies(path)).toBe(true);
+  });
+});
