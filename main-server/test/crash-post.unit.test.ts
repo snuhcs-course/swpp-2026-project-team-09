@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-24  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 // Partitions: each field present or missing; tags as pairs, as objects, or not a list; a link on sentry.io, on a
