@@ -96,7 +96,7 @@ Native files: none. Releases: an app over-the-air update.
   also in a build without a DSN, so the row works in the mock build.
 - **The row** is a card of its own after 관정도서관 로그인 and before 로그아웃, with the other rows that set something
   on this phone (탭 안내 다시 보기, the library's login); the wireframe's `Profile` frame has no such row. Caption:
-  "앱에 오류가 나면 그때까지 본 화면과 앱·휴대폰의 버전을 보내요. 이름과 위치는 보내지 않아요."; the link
+  "앱에 오류가 나면 그때까지 본 화면, 앱·휴대폰의 버전, 계정 번호를 보내요. 이름과 위치는 보내지 않아요."; the link
   "개인정보 처리방침 보기" opens `/legal/privacy` until ticket 05 adds the part.
 - **Tests:** `__tests__/telemetry/sending.unit.test.ts` (the switch at a start, turned while running, the user),
   `sentry-user.integration.test.tsx` (sign-in, kept Session, sign-out, Session ended by the server, against the fake

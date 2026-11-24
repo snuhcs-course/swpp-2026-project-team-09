@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as Errors from '@/api/errors';
@@ -189,9 +190,9 @@ describe("a refusal of the main server's", () => {
     expect(sentry.captureException).toHaveBeenCalledTimes(2);
   });
 
-  it('is not one without a code: a 4xx the main server did not name is reported', () => {
+  it('is not one without a code: a 4xx the main server did not name is reported', async () => {
     const { layer, sentry, ApiError } = loadLayer(DSN);
-    layer.startTelemetry();
+    await layer.startTelemetry();
 
     layer.reportError(new ApiError(400), 'screen');
     layer.reportError(new ApiError(413), 'screen');

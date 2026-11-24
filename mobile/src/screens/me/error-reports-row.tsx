@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -12,7 +13,7 @@ import { setSending, useSending } from '@/telemetry';
 
 // What an error report holds, under the switch.
 export const ERROR_REPORTS_CAPTION =
-  '앱에 오류가 나면 그때까지 본 화면과 앱·휴대폰의 버전을 보내요. 이름과 위치는 보내지 않아요.';
+  '앱에 오류가 나면 그때까지 본 화면, 앱·휴대폰의 버전, 계정 번호를 보내요. 이름과 위치는 보내지 않아요.';
 
 // "오류 보고 보내기" (P08 ticket 03): whether the phone sends error reports, on at first. The choice is the phone's, so
 // it holds across sign-outs; off stops the sending at once. The link opens the privacy policy, whose part on error
