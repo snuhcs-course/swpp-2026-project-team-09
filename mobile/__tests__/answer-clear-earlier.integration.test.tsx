@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -83,9 +84,9 @@ async function threeConversations(): Promise<User> {
   const user = await openMain();
   await ask(user, FIRST);
   await ask(user, SECOND);
-  await user.press(screen.getByRole('button', { name: '뒤로' }));
+  await user.press(screen.getByRole('button', { name: '답 닫기' }));
   await ask(user, OTHER);
-  await user.press(screen.getByRole('button', { name: '뒤로' }));
+  await user.press(screen.getByRole('button', { name: '답 닫기' }));
   await ask(user, NOW);
   await user.press(screen.getByTestId('answer-caption'));
   return user;
