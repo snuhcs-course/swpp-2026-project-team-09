@@ -6,6 +6,7 @@
 # 2026-11-03  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-21  Opus 5.5   prompted by fyoon46
+# 2026-11-24  Fable 5.2  prompted by AhnJinYoung
 ################################################################################
 
 # Deploys a Release to Production: a pushed tag snunow/<target>/YY.MM.DD-N deploys its target at the tag's commit once
@@ -218,6 +219,9 @@ jobs:
           KAKAO_NATIVE_APP_KEY: ${{ secrets.KAKAO_NATIVE_APP_KEY }}
           EXPO_PUBLIC_RELEASE_TAG: ${{ github.ref_name }}
           EXPO_PUBLIC_RELEASE_COMMIT: ${{ env.COMMIT }}
+          # Sentry's Gradle step uploads the source map and fails the build without a token. Until P08 ticket 04 gives
+          # it one, the upload is off; the build has no DSN yet either, so it reports nothing.
+          SENTRY_DISABLE_AUTO_UPLOAD: 'true'
         run: |
           if [[ -z "$KAKAO_NATIVE_APP_KEY" ]]; then
             echo "::error::The repository secret KAKAO_NATIVE_APP_KEY is empty or not set; the APK is not built."

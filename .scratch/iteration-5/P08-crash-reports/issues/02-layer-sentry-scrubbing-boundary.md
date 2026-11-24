@@ -1,7 +1,7 @@
 # 02: The telemetry layer starts Sentry, scrubs what leaves, and shows a failed screen's message
 
 Parent: [P08 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: 01
 
 Native files: yes (`@sentry/react-native` and its Expo plugin change the fingerprint; `version` goes to 1.0.4).
@@ -49,21 +49,65 @@ Releases: an `all` or `app` Release, which builds a new APK.
 
 ## Acceptance criteria
 
-- [ ] An import of `@sentry/react-native` outside `mobile/src/telemetry/` fails a test that reads the source tree.
-- [ ] Without the DSN, `startTelemetry()` starts nothing and `reportError` does nothing. (Unit test.)
-- [ ] The scrubbing drops a URL's query and fragment, turns UUID and number segments into `:id`, keeps of an HTTP
+- [x] An import of `@sentry/react-native` outside `mobile/src/telemetry/` fails a test that reads the source tree.
+- [x] Without the DSN, `startTelemetry()` starts nothing and `reportError` does nothing. (Unit test.)
+- [x] The scrubbing drops a URL's query and fragment, turns UUID and number segments into `:id`, keeps of an HTTP
       breadcrumb only method, path and status, drops console breadcrumbs, and cuts a message to 200 characters; a
       case with coordinates in a query shows none of them after it. (Unit tests.)
-- [ ] The route breadcrumb of a screen with a parameter holds the parameter's name and not its value. (Unit test.)
-- [ ] A screen that throws shows "문제가 생겼어요", reports once, and draws again on "다시 시도". (Integration test.)
-- [ ] An `ApiError` with a 4xx status reports nothing. (Unit test.)
-- [ ] A long press on the build line asks first, reports once on "보내기" and nothing on a cancel. (Integration test.)
-- [ ] Sentry's options are those of the spec, each checked against 8.36.0's reference; a difference in a name or a
+- [x] The route breadcrumb of a screen with a parameter holds the parameter's name and not its value. (Unit test.)
+- [x] A screen that throws shows "문제가 생겼어요", reports once, and draws again on "다시 시도". (Integration test.)
+- [x] An `ApiError` with a 4xx status reports nothing. (Unit test.)
+- [x] A long press on the build line asks first, reports once on "보내기" and nothing on a cancel. (Integration test.)
+- [x] Sentry's options are those of the spec, each checked against 8.36.0's reference; a difference in a name or a
       default is written under Comments.
-- [ ] `version` is 1.0.4, and the pull request names the native files changed.
+- [x] `version` is 1.0.4, and the pull request names the native files changed.
 - [ ] On a phone with a development build that has a test DSN: the test error arrives in Sentry, and its event holds
       no query string, no id in a path and no user beyond an id. The screens go to the orchestrator before the pull
       request. (Hand check; needs ticket 06's DSN, or a person's own test project.)
-- [ ] Lint, format and types of the app pass.
+- [x] Lint, format and types of the app pass.
 
 ## Comments
+
+### Built (2026-11-24)
+
+- **Where 8.36.0 differs from the spec's wording** (read in `node_modules/@sentry/react-native`):
+  - Android's ANR has no option in the React Native SDK: the Android SDK detects it by default, and
+    `enableNativeCrashHandling` keeps it.
+  - iOS app hangs are `enableAppHangTracking`; session tracking is `enableAutoSessionTracking`. Both are set.
+  - Tracing, profiling and replay have no switch: they are off while their sample rates are left unset. A number,
+    even 0, adds their integrations, so none is set, and a test checks that.
+  - Sentry Logs is `enableLogs`; screenshots and the view hierarchy are `attachScreenshot` and
+    `attachViewHierarchy`; all three and `sendDefaultPii` are set false.
+  - `release` and `dist` are left to the SDK, as the Expo guide has them. `environment` is `production` outside a
+    development build.
+- **What the JavaScript cannot scrub.** A native crash or ANR is sent by the native SDK and does not pass
+  `beforeSend`: it carries the user, the tags and the breadcrumbs the JavaScript set, but the 200-character cut and
+  the URL scrubbing do not reach a native exception's own message. The native SDKs' breadcrumbs skip
+  `beforeBreadcrumb` too, so they are off (`enableNetworkBreadcrumbs`, `enableAutoBreadcrumbTracking`,
+  `enableUserInteractionBreadcrumbs`), and `enableCaptureFailedRequests` is off. Ticket 06 turns on the project's own
+  scrubbing on Sentry's side as the guard behind this.
+- **More scrubbing than asked:** the device's name and `server_name` are dropped, and a number in a path counts with
+  its sign and decimals, so a coordinate in a path becomes `:id`.
+- **Unhandled errors** go through Sentry's own handlers, promise rejections among them. `beforeSend` drops an
+  `ApiError` with a status of 400 to 499; a status of 0 and a 5xx are reported.
+- **"다시 시도" starts the screens anew.** The boundary is around the `Stack`, as the ticket says, so a retry draws the
+  Stack from its first screen, as a new start of the app does, and not the screen that failed. A boundary for each
+  screen (the Stack's `screenLayout`) would keep the screen; it is left as a later choice.
+- **The Expo plugin** is a plain `"@sentry/react-native"` in `app.json`, with no organisation or project: they come
+  from `SENTRY_ORG` and `SENTRY_PROJECT` at build time, so they change no fingerprint.
+- **A release build without `SENTRY_AUTH_TOKEN` fails at the upload** unless `SENTRY_DISABLE_AUTO_UPLOAD=true` (read
+  in `sentry.gradle.kts` and `sentry-xcode.sh`, not run). The mock APK's script and `.env.example` set it, and so
+  does the Release workflow's "Build the APK" step until ticket 04 gives it the token.
+- **`mobile/pnpm-workspace.yaml` is new:** pnpm 12 refused the install until `@sentry/cli`'s install script was
+  answered, and it is not needed, since the binary comes in a package for each platform.
+- **Native files changed:** `package.json` (the SDK), `app.json` (the plugin and `version` 1.0.4) and the new
+  `metro.config.js`. The fingerprint changes.
+- **The test error's message** is "A test error, sent from the build line in 내 정보", with the tag `where: test-error`.
+- **Open:** the check on a phone with a DSN, which needs a person and ticket 06's project.
+
+### Agent usage (2026-11-24)
+
+- Agent time: about 2 hours 15 minutes in one implementation session, an estimate; about 20 minutes of it waited on
+  four existing test files. The orchestrator's time is not counted here.
+- Tokens: 272,829 in all for the implementation session, as its usage reports; the split into input, cache reads,
+  cache writes and output was not available when this was written.
