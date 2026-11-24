@@ -188,6 +188,16 @@ describe("a refusal of the main server's", () => {
 
     expect(sentry.captureException).toHaveBeenCalledTimes(2);
   });
+
+  it('is not one without a code: a 4xx the main server did not name is reported', () => {
+    const { layer, sentry, ApiError } = loadLayer(DSN);
+    layer.startTelemetry();
+
+    layer.reportError(new ApiError(400), 'screen');
+    layer.reportError(new ApiError(413), 'screen');
+
+    expect(sentry.captureException).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('beforeSend and beforeBreadcrumb', () => {

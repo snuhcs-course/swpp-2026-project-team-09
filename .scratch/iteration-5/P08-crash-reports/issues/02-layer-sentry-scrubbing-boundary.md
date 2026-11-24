@@ -105,6 +105,32 @@ Releases: an `all` or `app` Release, which builds a new APK.
 - **The test error's message** is "A test error, sent from the build line in 내 정보", with the tag `where: test-error`.
 - **Open:** the check on a phone with a DSN, which needs a person and ticket 06's project.
 
+### After the review (2026-11-24)
+
+- **A path keeps only its route words.** The first rule turned UUID and number segments into `:id`, which let a
+  typed Friend ID (`/friend-ids/K7M3XQ9A`) and an Invite Link's token (`/invite-links/<token>`, a credential for a
+  day) through. Now a segment stays only when it is lower-case letters and hyphens, as every route word in
+  `src/api/client.ts` is, and anything else becomes `:id`. The spec's "UUIDs or numbers" is the narrower wording.
+- **A refusal is a 4xx with a code,** as the spec has it. A 4xx without the main server's code (a body the app sent
+  wrong, a proxy's 413 or 429) is reported.
+- **The two builds made by hand** (the Dev Server's APK, the iOS build) turn Sentry's upload off in their documented
+  steps.
+
+### Screenshots (2026-11-24)
+
+Taken on an x86_64 emulator from a mock build of ticket 03's branch, which is this branch with ticket 03's work on top,
+and with one screen made to throw for the picture. So the picture of the dialog also shows ticket 03's row "오류 보고
+보내기" behind it, which this ticket does not add. The after picture and the failed screen are of a second build with
+the `EmptyState` change on top.
+
+- `../references/02-screen-failed.png`: the screen a throwing screen is replaced with.
+- `../references/02-test-error-dialog.png`: the dialog a long press on the build line opens.
+- `../references/02-empty-state-before.png` and `02-empty-state-after.png`: 파티 › 초대's empty 보낸 신청.
+
+The first picture of the failed screen showed 다시 시도 at the left edge. A `Button` stands at its container's start
+unless told otherwise, so every `EmptyState` with an action had its button there; `EmptyState` now centres it, which
+moves the button of every such empty state (about three screens offer one).
+
 ### Agent usage (2026-11-24)
 
 - Agent time: about 2 hours 15 minutes in one implementation session, an estimate; about 20 minutes of it waited on
