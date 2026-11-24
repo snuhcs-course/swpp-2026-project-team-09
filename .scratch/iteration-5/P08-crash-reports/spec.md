@@ -72,7 +72,7 @@ With no `EXPO_PUBLIC_SENTRY_DSN` in the build, every function does nothing and S
 ### Sentry's settings
 
 One project in sentry.io (US) for Android and iOS, with `@sentry/react-native` 8.36.0, which supports Expo 57 and
-React Native 0.86 (ticket 00).
+React Native 0.86 (ticket 01).
 
 - On: native crash handling, Android ANR, iOS app hangs, and session tracking (release health), which counts
   crash-free sessions and Users.
@@ -154,15 +154,15 @@ before it is released.
 ### Reading
 
 - Sentry's Issues page for crashes, and its Releases page for crash-free sessions and Users.
-- An alert on a new issue and on a regression. The free plan has one member and, as far as ticket 00 found, no Slack
-  integration, so the alert goes by email until ticket 05 settles how the team is told.
+- An alert on a new issue and on a regression. The free plan has one member and, as far as ticket 01 found, no Slack
+  integration, so the alert goes by email until ticket 06 settles how the team is told.
 - The mobile README gains a "Crash reports" section: the layer, the settings and the scrubbing above, how to open an
   issue and read its Release and update, and how to check a build.
 
 ### Dates
 
 The beta test starts on 2026-11-25. Before testers are given the app, the 1.0.4 APK is Released, and a test error
-sent from that build has arrived in Sentry with a readable stack (ticket 06).
+sent from that build has arrived in Sentry with a readable stack (ticket 07).
 
 ## Testing Decisions
 
@@ -191,16 +191,16 @@ sent from that build has arrived in Sentry with a readable stack (ticket 06).
 
 | #   | Ticket                                                                              | Kind                          | Blocked by                                        |
 | --- | ----------------------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------- |
-| 00  | Sentry's support for Expo 57 and React Native 0.86, and two points of the free plan | A person, with what was found | None                                              |
-| 01  | The layer, Sentry, the scrubbing, the error boundary, the test error                | Code                          | 00                                                |
-| 02  | The user at sign-in and sign-out, and the switch in 내 정보                         | Code                          | 01                                                |
-| 03  | The Release workflow uploads source maps                                            | Code                          | 01                                                |
-| 04  | The privacy policy's part for error reports, and the consent screen                 | Code and a person's review    | 02                                                |
-| 05  | The account, the keys and the alert                                                 | A person                      | 00                                                |
-| 06  | The Release, the APK to the testers, and the check on the Release's build           | A person                      | 01 to 05                                          |
-| 07  | iOS: the build, its dSYM upload and its check                                       | A person                      | 06, and the decision whether the beta has iPhones |
+| 01  | Sentry's support for Expo 57 and React Native 0.86, and two points of the free plan | A person, with what was found | None                                              |
+| 02  | The layer, Sentry, the scrubbing, the error boundary, the test error                | Code                          | 01                                                |
+| 03  | The user at sign-in and sign-out, and the switch in 내 정보                         | Code                          | 02                                                |
+| 04  | The Release workflow uploads source maps                                            | Code                          | 02                                                |
+| 05  | The privacy policy's part for error reports, and the consent screen                 | Code and a person's review    | 03                                                |
+| 06  | The account, the keys and the alert                                                 | A person                      | 01                                                |
+| 07  | The Release, the APK to the testers, and the check on the Release's build           | A person                      | 02 to 06                                          |
+| 08  | iOS: the build, its dSYM upload and its check                                       | A person                      | 07, and the decision whether the beta has iPhones |
 
-01, 02 and 04 can be built before the account exists, since a build without the DSN is silent. Ticket 01 changes
-native files and raises `version`; 02 to 04 do not.
+02, 03 and 05 can be built before the account exists, since a build without the DSN is silent. Ticket 02 changes
+native files and raises `version`; 03 to 05 do not.
 
 ## Comments

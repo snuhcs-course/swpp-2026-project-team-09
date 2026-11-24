@@ -1,8 +1,8 @@
-# 05: The Sentry account, its keys, and the alert
+# 06: The Sentry account, its keys, and the alert
 
 Parent: [P08 spec](../spec.md)
 Status: ready-for-human
-Blocked by: 00
+Blocked by: 01
 
 Native files: none. Releases: none.
 
@@ -11,14 +11,14 @@ configuration file, a test or a screenshot. The DSN is not a secret, but it is k
 
 ## What to do
 
-1. Make the Sentry organisation and one project (platform React Native) in the US region, by the owner ticket 00
+1. Make the Sentry organisation and one project (platform React Native) in the US region, by the owner ticket 01
    names.
 2. In the project's settings: turn off the storing of IP addresses, and turn on the scrubbing of data on the server
    as a second guard behind the app's own.
 3. Put `EXPO_PUBLIC_SENTRY_DSN`, the organisation's slug and the project's slug in the repository's Actions
    variables, and an auth token that may upload source maps in its secrets as `SENTRY_AUTH_TOKEN`.
-4. Make an alert for a new issue and for a regression, sent the way ticket 00 decided.
-5. Read the plan's retention of events and write it under Comments, for ticket 04's wording.
+4. Make an alert for a new issue and for a regression, sent the way ticket 01 decided.
+5. Read the plan's retention of events and write it under Comments, for ticket 05's wording.
 
 ## Done when
 

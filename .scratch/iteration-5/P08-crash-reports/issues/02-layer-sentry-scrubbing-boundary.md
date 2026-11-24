@@ -1,8 +1,8 @@
-# 01: The telemetry layer starts Sentry, scrubs what leaves, and shows a failed screen's message
+# 02: The telemetry layer starts Sentry, scrubs what leaves, and shows a failed screen's message
 
 Parent: [P08 spec](../spec.md)
 Status: ready-for-agent
-Blocked by: 00
+Blocked by: 01
 
 Native files: yes (`@sentry/react-native` and its Expo plugin change the fingerprint; `version` goes to 1.0.4).
 Releases: an `all` or `app` Release, which builds a new APK.
@@ -63,7 +63,7 @@ Releases: an `all` or `app` Release, which builds a new APK.
 - [ ] `version` is 1.0.4, and the pull request names the native files changed.
 - [ ] On a phone with a development build that has a test DSN: the test error arrives in Sentry, and its event holds
       no query string, no id in a path and no user beyond an id. The screens go to the orchestrator before the pull
-      request. (Hand check; needs ticket 05's DSN, or a person's own test project.)
+      request. (Hand check; needs ticket 06's DSN, or a person's own test project.)
 - [ ] Lint, format and types of the app pass.
 
 ## Comments

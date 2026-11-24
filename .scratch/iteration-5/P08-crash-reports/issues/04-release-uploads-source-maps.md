@@ -1,8 +1,8 @@
-# 03: The Release workflow uploads source maps, so that a stack is readable
+# 04: The Release workflow uploads source maps, so that a stack is readable
 
 Parent: [P08 spec](../spec.md)
 Status: ready-for-agent
-Blocked by: 01
+Blocked by: 02
 
 Native files: none. Releases: none by itself; the next Release uses it.
 
@@ -21,7 +21,7 @@ Native files: none. Releases: none by itself; the next Release uses it.
 - The APK's build uploads its source map and native symbols through Sentry's Gradle and Metro plugins.
 - After `eas update`, a step uploads that update's source maps with Sentry's script for Expo updates
   (`sentry-expo-upload-sourcemaps`; the package's name is checked against 8.36.0's guide).
-- With no `SENTRY_AUTH_TOKEN` (a fork, or before ticket 05), both uploads are skipped with a notice and the job goes
+- With no `SENTRY_AUTH_TOKEN` (a fork, or before ticket 06), both uploads are skipped with a notice and the job goes
   on. With the token, a failed upload after the update fails the job with a message saying that the update is out and
   how to run the upload again.
 - The same for the UAT's and the Dev Server's builds is not wanted: they have no DSN.
@@ -45,7 +45,7 @@ Native files: none. Releases: none by itself; the next Release uses it.
 - [ ] The workflow passes the token to the upload steps only. (Read from the diff; the pull request says so.)
 - [ ] The infra README says how to run the upload again by hand for an update.
 - [ ] CI's `release-script` job passes.
-- [ ] After ticket 06's Release: a test error's stack in Sentry names a source file and line of ours. (Ticket 06
+- [ ] After ticket 07's Release: a test error's stack in Sentry names a source file and line of ours. (Ticket 07
       checks it and writes the result here.)
 
 ## Comments

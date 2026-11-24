@@ -1,8 +1,8 @@
-# 04: The privacy policy says what an error report holds and where it goes
+# 05: The privacy policy says what an error report holds and where it goes
 
 Parent: [P08 spec](../spec.md)
 Status: ready-for-agent
-Blocked by: 02
+Blocked by: 03
 
 Native files: none. Releases: an app over-the-air update. A person reviews the wording before the Release.
 
@@ -20,10 +20,10 @@ Native files: none. Releases: an app over-the-air update. A person reviews the w
   - what is not: names, 학번, positions, Friends, parties' words, anything typed;
   - why: to find and fix crashes;
   - to whom: Functional Software, Inc. (Sentry), in the United States, as a transfer abroad, with how long it is kept
-    (the plan's retention, which ticket 05 reads from the account);
+    (the plan's retention, which ticket 06 reads from the account);
   - how to stop: the switch "오류 보고 보내기" in 내 정보.
 - The consent screen names the part where it lists what the User agrees to.
-- The switch's link (ticket 02) opens this part.
+- The switch's link (ticket 03) opens this part.
 
 ## Must not break
 
@@ -35,7 +35,7 @@ Native files: none. Releases: an app over-the-air update. A person reviews the w
 - [ ] The privacy policy shows the part with the five points above. (Integration test on the text's presence.)
 - [ ] The consent screen names it. (Integration test.)
 - [ ] The switch's link opens the part. (Integration test.)
-- [ ] A person has read the wording and written "reviewed" with their name and the date under Comments.
+- [ ] A person has read the wording and written "reviewed" and the date under Comments.
 - [ ] Lint, format and types of the app pass.
 
 ## Comments

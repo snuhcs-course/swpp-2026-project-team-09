@@ -1,4 +1,4 @@
-# 00: Sentry supports Expo 57 and React Native 0.86, and two points of the free plan
+# 01: Sentry supports Expo 57 and React Native 0.86, and two points of the free plan
 
 Parent: [P08 spec](../spec.md)
 Status: ready-for-human

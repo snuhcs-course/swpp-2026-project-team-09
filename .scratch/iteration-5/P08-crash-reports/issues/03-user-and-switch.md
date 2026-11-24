@@ -1,8 +1,8 @@
-# 02: Sentry's user follows sign-in and sign-out, and 내 정보 has the switch
+# 03: Sentry's user follows sign-in and sign-out, and 내 정보 has the switch
 
 Parent: [P08 spec](../spec.md)
 Status: ready-for-agent
-Blocked by: 01
+Blocked by: 02
 
 Native files: none. Releases: an app over-the-air update.
 
@@ -21,7 +21,7 @@ Native files: none. Releases: an app over-the-air update.
   holds before sign-in and across accounts. It is on when nothing is kept.
 - A row in 내 정보, "오류 보고 보내기", a switch with a caption saying what an error report holds (the screen it
   happened on, the app's and the phone's version, no name and no position) and a link to the privacy policy's part
-  (ticket 04 writes the part; until then the link opens the privacy policy).
+  (ticket 05 writes the part; until then the link opens the privacy policy).
 - Off holds at once, not only from the next launch, since Sentry's own handlers and its session tracking are already
   running: `reportError` does nothing, `beforeSend` drops every event, and the layer closes Sentry's client (how
   8.36.0 closes and starts a client again is checked against its reference and written under Comments). At the next
@@ -47,6 +47,6 @@ Native files: none. Releases: an app over-the-air update.
 - [ ] With the switch off at start, Sentry is not started. (Unit test.)
 - [ ] The row, on and off, on a phone with the mock build; the screens go to the orchestrator before the pull request.
       (Emulator.)
-- [ ] Lint, format and types of the app pass. No native file changes: the fingerprint is as ticket 01 left it.
+- [ ] Lint, format and types of the app pass. No native file changes: the fingerprint is as ticket 02 left it.
 
 ## Comments
