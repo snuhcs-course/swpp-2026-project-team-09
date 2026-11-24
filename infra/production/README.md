@@ -500,6 +500,67 @@ The worker's `The Collection of shuttle_vehicles failed: …` error, about 4 tim
 18:00, came while the site it collects shuttles from was down, and stopped when it came back. It stays an error: a
 Collection that keeps failing is what the worker's channel is for, and the throttle caps it at 10 records a minute.
 
+## Crash alerts in Slack
+
+Sentry alerts on a new crash in the app, and on one that came back, by calling the main server, which posts one short
+line to the private Slack channel `#team9-app-crash` (main-server README: Crash alerts from Sentry). Sentry's free plan
+has no Slack integration, and its one member would be the only one told, by email. The post holds the crash's title,
+where it happened, its level, the app's Release tag and platform, and the link to the issue in Sentry; never the stack,
+the user, the breadcrumbs or the request. Each pod posts at most 10 a minute.
+
+**The two secrets** are parameters of their own under `/snunow/production/`, read by every Release with the others
+and handed to the main server in Secret `secrets`:
+
+| Parameter                 | Setting                   | What it is                                                  |
+| ------------------------- | ------------------------- | ----------------------------------------------------------- |
+| `sentry-webhook-secret`   | `SENTRY_WEBHOOK_SECRET`   | The client secret of Sentry's internal integration          |
+| `app-crash-slack-webhook` | `APP_CRASH_SLACK_WEBHOOK` | The URL of the Incoming Webhook made for `#team9-app-crash` |
+
+Both are optional. While either is absent, a Release writes it empty, the pods start as before, and
+`POST https://api.snunow.com/sentry/alerts` answers 404. The deploy role reads them through its `GetParametersByPath`
+call on `/snunow/production`, so Terraform does not change. A value over one line fails the Release at its secrets step,
+naming the parameter and never printing the value.
+
+**Setting it up**, by a person, in this order. Each value is a secret: it is typed with `read -rs`, never pasted into a
+chat, a document or a screenshot, and the guard writes nothing when it is empty.
+
+1. **Slack.** Make the private channel `#team9-app-crash`. In the Slack app that holds the servers' webhooks
+   ([Server logs in Slack](#server-logs-in-slack)), open **Incoming Webhooks**, **Add New Webhook to Workspace**, and
+   choose `#team9-app-crash`. Copy the URL it shows.
+2. **Sentry.** In **Settings › Developer Settings**, make a **New Internal Integration** with the Webhook URL
+   `https://api.snunow.com/sentry/alerts` and **Alert Rule Action** on. It needs no permission and no webhook
+   subscription. Save it, and copy its **Client Secret**. If the plan offers no internal integration or no alert rule
+   action, stop here: the alert stays an email.
+3. **The parameters**, then a `main-server` or `all` Release of the newest reviewed commit ([Releases](#releases)):
+
+   ```bash
+   read -rs SENTRY_WEBHOOK_SECRET
+   [ -n "$SENTRY_WEBHOOK_SECRET" ] && aws ssm put-parameter --region ap-northeast-2 \
+     --name /snunow/production/sentry-webhook-secret --type SecureString --value "$SENTRY_WEBHOOK_SECRET" --overwrite
+   unset SENTRY_WEBHOOK_SECRET
+   read -rs APP_CRASH_SLACK_WEBHOOK
+   [ -n "$APP_CRASH_SLACK_WEBHOOK" ] && aws ssm put-parameter --region ap-northeast-2 \
+     --name /snunow/production/app-crash-slack-webhook --type SecureString --value "$APP_CRASH_SLACK_WEBHOOK" --overwrite
+   unset APP_CRASH_SLACK_WEBHOOK
+   ```
+
+4. **The alert rule.** In Sentry, under **Alerts**, make an issue alert for the app's project: when a new issue is
+   created, and when an issue changes state from resolved to unresolved, send a notification through the internal
+   integration made in step 2.
+5. **The check.** Send the test error from a released build of the app (P08 ticket 02: a long press on the build line
+   at the bottom of 내 정보), and see its post in `#team9-app-crash`. A request without Sentry's signature is answered
+   401, and one before the parameters reached the pods 404.
+
+**Replacing a value**, when either leaks: make a new webhook for the channel in the Slack app and remove the old one,
+or rotate the integration's client secret in Sentry; put the new value over the parameter with the commands above,
+and push a `main-server` or `all` Release. Until it has rolled out, alerts signed with the new secret are refused with
+401 and are not sent again. **Turning it off** is deleting both parameters and pushing a Release:
+
+```bash
+aws ssm delete-parameter --region ap-northeast-2 --name /snunow/production/sentry-webhook-secret
+aws ssm delete-parameter --region ap-northeast-2 --name /snunow/production/app-crash-slack-webhook
+```
+
 ## First setup
 
 Once, in this order. A move to another account has its own steps ([Moving to account B](#moving-to-account-b)).
@@ -534,6 +595,7 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
    Enter pressed by mistake, writes no Secret, whose empty key would start the pods broken. On a cluster that runs
    without Fluent Bit, the same three steps add it. In the account that holds the zone, the last apply waits until the
    certificate is issued.
+
 3. **The database.** [Prepare it](#preparing-a-new-database), which also puts its two passwords in Parameter Store.
 4. **The repository variables.** In the repository's **Settings** › **Secrets and variables** › **Actions** ›
    **Variables**, set the Release workflow's variables from `terraform output -raw <output>`, and the admin site's two
@@ -590,7 +652,8 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
    The Kakao key is the REST API key of the team's Kakao app, and the OpenRouter key is the Assistant's
    (`main-server/.env.example` says how to make one). The administrators' addresses are those the team members sign in
    to the admin site with, separated by commas. The last command lists the seven parameters. The AI's other keys, the
-   `llm-key-<name>` parameters, are added later and only when wanted ([The AI's keys](#the-ais-keys)).
+   `llm-key-<name>` parameters, are added later and only when wanted ([The AI's keys](#the-ais-keys)), and so are the
+   crash alerts' two ([Crash alerts in Slack](#crash-alerts-in-slack)).
 
 6. **The consoles, by hand.**
    - In the Google Cloud project, add `https://admin.snunow.com` to the admin Google client's authorized JavaScript
@@ -1246,7 +1309,8 @@ aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-p
    aws ssm get-parameters-by-path --region ap-northeast-2 --path /snunow/production --query 'Parameters[].Name'
    ```
 
-   The last command lists the seven parameters in B, and any `llm-key-<name>` parameters. A's stay as they are.
+   The last command lists the seven parameters in B, any `llm-key-<name>` parameters, and the crash alerts' two if
+   they are set ([Crash alerts in Slack](#crash-alerts-in-slack)). A's stay as they are.
 
 5. **B's first Release.** With `kubectx snunow-production-b`, [prepare B's database](#preparing-a-new-database),
    leaving out its first command, which would point `snunow-production` at B. Its `--overwrite` puts B's new database

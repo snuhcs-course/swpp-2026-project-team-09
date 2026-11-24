@@ -7,6 +7,7 @@
 # 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-23  Opus 5.5   prompted by TaeHyun79
+# 2026-11-24  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 apiVersion: apps/v1
@@ -78,6 +79,12 @@ spec:
             # The AI's other keys by name, as JSON (infra/production/README.md: The AI's keys).
             - name: LLM_KEYS
               valueFrom: { secretKeyRef: { name: secrets, key: LLM_KEYS } }
+            # The app's crash alerts from Sentry to Slack, empty until a person stores them (main-server README: Crash
+            # alerts from Sentry). Empty, POST /sentry/alerts answers 404.
+            - name: SENTRY_WEBHOOK_SECRET
+              valueFrom: { secretKeyRef: { name: secrets, key: SENTRY_WEBHOOK_SECRET } }
+            - name: APP_CRASH_SLACK_WEBHOOK
+              valueFrom: { secretKeyRef: { name: secrets, key: APP_CRASH_SLACK_WEBHOOK } }
             - name: AUTOMATIC_PUBLICATION
               valueFrom: { configMapKeyRef: { name: settings, key: AUTOMATIC_PUBLICATION } }
             - name: AUTOMATIC_JUDGEMENT

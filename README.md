@@ -537,6 +537,8 @@ file's.
 | `LIBRARY_BOOKING_ENABLED`             | Optional: `false` answers library requests with the official site and no card; `true` unless set.                                          |
 | `TUTORIAL_KWANJEONG_CHECK`            | Optional: `true`, with `LIBRARY_BOOKING_ENABLED` on, completes the 관정 tutorial quest by the phone's booking check; `false` unless set.   |
 | `LOG_FORMAT`                          | Optional: `json` prints each log entry as one JSON line, as Production does (main-server README: Logging); `text` unless set.              |
+| `SENTRY_WEBHOOK_SECRET`               | Optional secret: the client secret of Sentry's internal integration, which signs its crash alerts. Unset, `POST /sentry/alerts` is 404.    |
+| `APP_CRASH_SLACK_WEBHOOK`             | Optional secret: the Incoming Webhook of `#team9-app-crash`, where crash alerts are posted (main-server README: Crash alerts from Sentry). |
 
 ### socket-server
 
