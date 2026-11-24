@@ -22,7 +22,7 @@ import { type Level, type LevelHeights, LEVELS, stepsOf } from './card-levels';
 import { type CardMotion, useCardMotion } from './card-motion';
 import { CONTENT_TOP, type FrameCardProps, LOWERED, OPEN_EDGE } from './frame-card-parts';
 import { CardHeader } from './card-header';
-import { useHeldHeight } from './held-height';
+import { useHeldHeight, useTopWhen } from './held-height';
 import { CloseHint } from './raise-handle';
 import { SheetHint, useSheetHint } from './sheet-hint';
 
@@ -75,6 +75,7 @@ interface ScrollingProps {
 function Scrolling(p: ScrollingProps): ReactElement {
   const { props, room, padTop, padBottom, scrolls, scroll, onScroll, onNatural } = p;
   const { minHeight, onContentSizeChange } = useHeldHeight(props.hold === true, scroll);
+  useTopWhen(props.atTop === true, scroll);
   return (
     // The card's drag scrolls it (`useCardMotion`): it takes no touch of its own.
     <Reanimated.ScrollView

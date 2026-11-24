@@ -3,6 +3,7 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactNode } from 'react';
@@ -24,6 +25,8 @@ export interface FrameCardProps {
   testID: string;
   // Keeps the content's height, while a reply is on its way.
   hold?: boolean;
+  // Brings the content to its top each time it turns true.
+  atTop?: boolean;
   // The card's step, low, middle, or high (P04 ticket 61). Left out, the card has one height.
   raising?: Raising;
   // ✕ at the right end of the header's row, which closes the answer (P04 ticket 52). Left out, none.

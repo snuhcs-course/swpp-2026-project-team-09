@@ -8,6 +8,7 @@
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
+import { ScrollView } from 'react-native';
 import { ANSWER_CAPABILITIES, type AssistantReply } from '@/api/assistant-types';
 import type { PickPlaceOffer, PickTimeOffer } from '@/api/pick-types';
 import type { Place } from '@/api/types';
@@ -99,8 +100,11 @@ describe('a Place picked on the map', () => {
     const user = await askOnMap(server, asking('어디서 만날까요?', PLACE_OFFER));
 
     expect(dock().getByText('어디서 만날까요?')).toBeVisible();
+    const scrolled = jest.spyOn(ScrollView.prototype, 'scrollTo');
     await user.press(dock().getByRole('button', { name: '지도에서 고르기' }));
     expect(dock().getByText('지도에서 건물을 눌러 주세요')).toBeVisible();
+    // The content goes back to its top, where the picking line now stands, however far it was scrolled.
+    expect(scrolled).toHaveBeenCalledWith({ y: 0, animated: true });
     // While picking, the line comes before the reply's words, where the low card shows it (PR 545's review).
     const lines = dock().getAllByText(/^(?:어디서 만날까요\?|지도에서 건물을 눌러 주세요)$/u);
     expect(lines.map((line): unknown => line.props.children)).toEqual([
