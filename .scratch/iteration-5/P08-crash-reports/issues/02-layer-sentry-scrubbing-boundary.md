@@ -116,6 +116,18 @@ Releases: an `all` or `app` Release, which builds a new APK.
 - **The two builds made by hand** (the Dev Server's APK, the iOS build) turn Sentry's upload off in their documented
   steps.
 
+### Screenshots (2026-11-24)
+
+Taken on an x86_64 emulator from a mock build of this branch, with one screen made to throw for the picture.
+
+- `../references/02-screen-failed.png`: the screen a throwing screen is replaced with.
+- `../references/02-test-error-dialog.png`: the dialog a long press on the build line opens.
+- `../references/02-empty-state-before.png` and `02-empty-state-after.png`: 파티 › 초대's empty 보낸 신청.
+
+The first picture of the failed screen showed 다시 시도 at the left edge. A `Button` stands at its container's start
+unless told otherwise, so every `EmptyState` with an action had its button there; `EmptyState` now centres it, which
+moves the button of every such empty state (about three screens offer one).
+
 ### Agent usage (2026-11-24)
 
 - Agent time: about 2 hours 15 minutes in one implementation session, an estimate; about 20 minutes of it waited on
