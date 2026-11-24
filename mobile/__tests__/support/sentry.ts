@@ -15,6 +15,7 @@ export interface FakeSentry {
   captureException: jest.Mock<string, [unknown, unknown?]>;
   addBreadcrumb: jest.Mock<void, [Sentry.Breadcrumb]>;
   close: jest.Mock<Promise<void>, []>;
+  setUser: jest.Mock<void, [Sentry.User | null]>;
 }
 
 // A new stand-in, for `jest.mock`'s factory.
@@ -24,6 +25,7 @@ export function sentryModule(): FakeSentry {
     captureException: jest.fn((_error: unknown, _context?: unknown) => 'event-id'),
     addBreadcrumb: jest.fn<void, [Sentry.Breadcrumb]>(),
     close: jest.fn(() => Promise.resolve()),
+    setUser: jest.fn<void, [Sentry.User | null]>(),
   };
 }
 

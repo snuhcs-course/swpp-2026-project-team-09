@@ -11,6 +11,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
@@ -28,6 +29,7 @@ import { endLibrarySessionInBackground } from '@/library/end-session';
 import { unregisterPush } from '@/push/device';
 import { keep, readKept } from '@/storage/kept';
 import { forgetReadingAgreement } from '@/storage/reading-notice';
+import { forgetUser, identifyUser } from '@/telemetry';
 
 // Sign-in lives behind these two operations. A build that holds Google's sign-in module asks Google which account.
 // Where the app asks the main server (`asksMainServer()`), Google's ID token goes to the main server, whose answer says
@@ -47,6 +49,8 @@ async function enter(suggestion: Suggestion): Promise<SignInResult> {
   const { onboardingCompleted } = await readKept();
   const onboarding: Onboarding = onboardingCompleted ? { completed: true } : { completed: false, suggestion };
   await keep({ signedIn: true, suggestion: onboarding.completed ? null : onboarding.suggestion });
+  // Crash reports carry the User's id, and nothing else of the User.
+  identifyUser(myUserId());
   return { outcome: 'signed-in', onboarding };
 }
 
@@ -82,6 +86,8 @@ async function enterMainServer(idToken: string): Promise<SignInResult> {
     onboardingCompleted: onboarding.completed,
     suggestion: onboarding.completed ? null : onboarding.suggestion,
   });
+  // Crash reports carry the User's id, the access token's subject, and nothing else of the User.
+  identifyUser(myUserId());
   return { outcome: 'signed-in', onboarding };
 }
 
@@ -147,6 +153,7 @@ export async function signOut(): Promise<void> {
   }
   endLibrarySessionInBackground();
   await keep({ signedIn: false, suggestion: null });
+  forgetUser();
   // The next User on this phone is asked again before a timetable picture is sent (P15-52).
   await forgetReadingAgreement();
   if (googleAvailable()) {

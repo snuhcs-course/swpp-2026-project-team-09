@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { QueryClient } from '@tanstack/react-query';
@@ -10,8 +11,10 @@ import { ApiError, isRefusal } from '@/api/errors';
 import { lobbyQuery } from '@/api/queries';
 import { suggestionOf } from '@/api/server/http';
 import { asksMainServer } from '@/api/servers';
+import { myUserId } from '@/auth/sign-in';
 import { loadTokens } from '@/auth/tokens';
 import { openKept } from '@/storage/kept';
+import { identifyUser } from '@/telemetry';
 import { behindConsent, type Opened } from './session';
 
 // The work of the loading screen: reads what the phone keeps and, for a User who is signed in, agreed to the legal
@@ -31,6 +34,8 @@ export async function readStart(queryClient: QueryClient, onKeptRead: () => void
   if (!signedIn || (server && tokens === null)) {
     return { status: 'signed-out', suggestion: null };
   }
+  // A start with a kept Session: crash reports carry the User's id, and nothing else of the User.
+  identifyUser(myUserId());
   if (!consented) {
     return behindConsent(
       onboardingCompleted ? { status: 'ready', suggestion: null } : { status: 'onboarding', suggestion },

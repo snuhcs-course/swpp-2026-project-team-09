@@ -24,8 +24,9 @@ import { UpdateCheck } from '@/update/update-check';
 // The native splash image stays until the fonts are ready, so that no screen appears in the system font first.
 void SplashScreen.preventAutoHideAsync();
 
-// Crash reports start before the first screen; without a DSN in the build they start nothing.
-startTelemetry();
+// Crash reports start as soon as the phone's choice in 내 정보 is read, without holding back the first screen; without a
+// DSN in the build, or with the choice off, they start nothing.
+void startTelemetry();
 
 export default function RootLayout(): ReactElement | null {
   const [fontsLoaded, fontsError] = useFonts({
