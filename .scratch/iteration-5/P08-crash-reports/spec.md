@@ -149,7 +149,7 @@ before it is released.
 - After `eas update`, the app job uploads that update's source maps, so that a stack from any update is readable. A
   failed upload fails the job after the update is published and says so: the update is out, and its stacks are
   unreadable until the step is run again.
-- iOS is built by hand as now; its dSYM upload is ticket 07.
+- iOS is built by hand as now; its dSYM upload is ticket 08.
 
 ### Reading
 

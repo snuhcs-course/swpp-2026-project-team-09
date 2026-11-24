@@ -11,7 +11,7 @@ made, and the app's code for iOS is ticket 02's all the same.
 
 ## What to do
 
-1. Build iOS by hand as the infra README's "The Production iOS build" says, with the Sentry plugin of ticket 01.
+1. Build iOS by hand as the infra README's "The Production iOS build" says, with the Sentry plugin of ticket 02.
 2. Upload the build's dSYM files to Sentry with a person's own auth token, and add the step to that section of the
    README.
 3. Do ticket 07's steps 2 to 4 on an iPhone.
