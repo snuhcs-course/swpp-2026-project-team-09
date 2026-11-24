@@ -66,7 +66,7 @@ Native files: none. Releases: none by itself; the next Release uses it.
   `sentry.gradle.kts` runs `sentry-cli react-native gradle --bundle … --sourcemap …`, reading the token from the
   environment.
 - **The update:** eas-cli 26.0.0 with SDK 57 runs `expo export --output-dir dist --source-maps --dump-assetmap
-  --platform ios --platform android --clear` (read in eas-cli's `publish.js`: `--source-maps` defaults to `true`), so
+--platform ios --platform android --clear` (read in eas-cli's `publish.js`: `--source-maps` defaults to `true`), so
   `mobile/dist` holds each Hermes bundle with its `.map`, and nothing has to change in the `eas update` call. The new
   step runs `release.sh upload-update-sourcemaps dist`, which checks that every bundle has its map (Sentry's script
   passes with only a warning when none has) and runs `sentry-expo-upload-sourcemaps dist` from `mobile/`
@@ -74,7 +74,7 @@ Native files: none. Releases: none by itself; the next Release uses it.
   `sentry-cli sourcemaps upload --debug-id-reference` for each bundle). Debug IDs, an MD5 of the bundle from the Metro
   plugin, tie a stack to its map; no release name is passed.
 - **A failed upload after the update** fails the job with `::error::The update is published, but its source maps did
-  not reach Sentry…`, which says to re-run the job (its ordering check publishes the same bundle again, or skips if a
+not reach Sentry…`, which says to re-run the job (its ordering check publishes the same bundle again, or skips if a
   newer one is out) or to upload by hand (infra README § Uploading an update's source maps by hand). With the token but
   without `SENTRY_ORG` or `SENTRY_PROJECT`, the upload step fails the same way, and the APK's build stops before
   building.
@@ -93,4 +93,4 @@ Native files: none. Releases: none by itself; the next Release uses it.
 
 - Agent time: about 1 hour in one implementation session, an estimate; about 10 minutes of it waited on the bats run.
   The orchestrator's time is not counted here.
-- Tokens: not available to the implementation session as a split; the orchestrator adds them from the session's usage.
+- Tokens: 177,293 in all for the implementation session, as its usage reports; the split into input, cache reads, cache writes and output was not available.
