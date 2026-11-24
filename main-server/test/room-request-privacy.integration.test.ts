@@ -3,12 +3,11 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
- * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
 import { inject } from 'vitest';
-import { captureLogsApart } from './assistant.js';
+import { captureLogs } from './assistant.js';
 import { type TestUser } from './friends.js';
 import { removeHolder } from './quest-recruiting.js';
 import { companionsSchema, RoomStage } from './room-requests.js';
@@ -84,9 +83,8 @@ describe('The companions reply', () => {
 });
 
 describe('Everything else', () => {
-  // A request line holds the request's body, such as a profile saved with its 학번 (README.md: Logging).
-  it('holds no 학번 and no registered name, in a reply or a log line other than a request line', async () => {
-    const { otherLines } = captureLogsApart();
+  it('holds no 학번 and no registered name, in a reply or a log line', async () => {
+    const logs = captureLogs();
     const { people, id } = await readyRequest();
     const [booker, minsu] = people;
     const { questId } = await stage.status(booker, id);
@@ -105,7 +103,7 @@ describe('Everything else', () => {
         stage.replies.push(JSON.stringify(response.body));
       }
     }
-    const seen = [...stage.replies, otherLines()].join('\n');
+    const seen = [...stage.replies, logs()].join('\n');
 
     expect(stage.replies.length).toBeGreaterThan(20);
 

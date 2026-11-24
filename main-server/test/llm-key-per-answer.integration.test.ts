@@ -5,7 +5,6 @@
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by fyoon46
- * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -16,7 +15,7 @@ import { inject } from 'vitest';
 import { type Model } from '../src/assistant/adapter.js';
 import { type ModelFactory } from '../src/assistant/model-port.js';
 import { type GlobalSettings } from '../src/global-settings/global-settings.service.js';
-import { ask, captureLogs, captureLogsApart, postAssistantMessages } from './assistant.js';
+import { ask, captureLogs, postAssistantMessages } from './assistant.js';
 import { connect, seededDatabase } from './containers.js';
 import { ScriptedModel } from './scripted-model.js';
 import { signIn } from './sign-in.js';
@@ -140,19 +139,18 @@ describe('An answer of the chat', () => {
     expect((await postAssistantMessages(app, token, ask('안녕'))).body).toMatchObject({ text: '다른 키' });
   });
 
-  it("logs one line for each call with the key's name and provider, never the key, and what was sent only on the request line", async () => {
+  it("logs one line for each call with the key's name and provider, never the key or what was sent", async () => {
     const { app, settings, token } = await pod();
     await settings.save('llm.key', 'claude', administratorId);
     await settings.check();
     scripted.claude.script({ text: '네' });
-    const { requestLines, otherLines } = captureLogsApart();
+    const logs = captureLogs();
 
     await postAssistantMessages(app, token, ask('비밀 메시지'));
 
-    expect(otherLines()).toContain('Model call with key claude on Anthropic: answered, finish stop');
-    expect(`${requestLines()}${otherLines()}`).not.toContain(ANTHROPIC_KEY);
-    expect(otherLines()).not.toContain('비밀 메시지');
-    expect(requestLines()).toContain('비밀 메시지');
+    expect(logs()).toContain('Model call with key claude on Anthropic: answered, finish stop');
+    expect(logs()).not.toContain(ANTHROPIC_KEY);
+    expect(logs()).not.toContain('비밀 메시지');
   });
 });
 

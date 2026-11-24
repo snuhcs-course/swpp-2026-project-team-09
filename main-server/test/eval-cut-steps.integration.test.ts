@@ -2,7 +2,6 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
- * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { generateText } from 'ai';
@@ -15,7 +14,7 @@ import { RawResponses } from '../eval/raw-responses.ts';
 import { Recorder } from '../eval/recorder.ts';
 import { type EvalApp, runCase, startEvalApp } from '../eval/runner.ts';
 import { seedWorld, type World } from '../eval/world.ts';
-import { captureLogs, captureLogsApart } from './assistant.js';
+import { captureLogs } from './assistant.js';
 import { type SeededDatabase, seededDatabase } from './containers.js';
 import { ScriptedModel } from './scripted-model.js';
 
@@ -102,7 +101,7 @@ describe('A step cut at the output limit', () => {
   });
 
   it('with text answers with that text as before, and the trace keeps it', async () => {
-    const { requestLines, otherLines } = captureLogsApart();
+    const logs = captureLogs();
     model.script({ cut: { text: '잘린 답이', reasoningTokens: 0, rawResponse: RAW_RESPONSE } });
 
     const run = await runCase(evalApp, world, sample(), 1, OPTIONS);
@@ -111,9 +110,7 @@ describe('A step cut at the output limit', () => {
     expect(turn?.status).toBe(200);
     expect(turn?.reply).toMatchObject({ text: '잘린 답이', cards: [], mapButtons: [], proposal: null });
     expect(turn?.steps[0]?.cut).toMatchObject({ content: [{ type: 'text', text: '잘린 답이' }], reasoningTokens: 0 });
-    // In the answer's body on its request line only (README.md: Logging).
-    expect(otherLines()).not.toContain('잘린 답이');
-    expect(requestLines()).toContain('잘린 답이');
+    expect(logs()).not.toContain('잘린 답이');
   });
 });
 

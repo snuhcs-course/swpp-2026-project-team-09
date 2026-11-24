@@ -404,8 +404,8 @@ An upload is refused, and nothing is stored, with these codes. The three numbers
 What is stored: only each User's latest position, in Redis under `position:<userId>` as
 `{ "latitude", "longitude", "measuredAt", "placeId" }`, `placeId` being the Place it is in or null, which expires 10
 minutes after it was stored. Redis counts the 10
-minutes. No position is written to the database, and no history is kept; an uploaded position, like any request's
-body, is on its request line in the pod's log until the pod is replaced ([Logging](#requests)). The position is cleared when the
+minutes. No position is written to the database or to a log (the request lines of `/positions` carry no body,
+[Logging](#requests)), and no history is kept. The position is cleared when the
 User turns the Master Switch off, uploads a position off campus or inside one of their Private Zones, makes a Private
 Zone round the position stored, and when the User's session ends, by a sign-in on
 another phone, a sign-out or a used refresh token, so that the phone's last position does not linger.
@@ -1738,9 +1738,8 @@ The app asks for a walking route between two points and draws its line. The main
 - Any other answer, such as a quota or key error, or no answer within 5 seconds, gets 502
   `{ "statusCode": 502, "error": "Bad Gateway", "message": "Kakao's walking route API failed." }`. The server logs a
   warning with Kakao's HTTP status and Kakao's own `status` or error `code`, such as
-  `Kakao's walking route API failed: HTTP 429 {"code":-10}`, or why Kakao gave no answer. The warning never holds a
-  route or the points asked for; the request line holds the route answered, up to 2 KB, and not the points, which are
-  in the query string ([Logging](#requests)).
+  `Kakao's walking route API failed: HTTP 429 {"code":-10}`, or why Kakao gave no answer. The log never holds a route
+  or the points asked for: the request line leaves out the query string and the body ([Logging](#requests)).
 - A coordinate that is missing, is not a decimal number, or lies outside -90 to 90 for a latitude or -180 to 180 for a
   longitude gets 400 with a message that starts with the field, and Kakao is not asked.
 
@@ -2141,9 +2140,8 @@ blocks itself.
 or `{ "kind": "none" }` for a picture with no timetable. Refused with 400 for a body of another shape, 413 above the
 limit, 422 `UNREADABLE_IMAGE` for bytes that are no picture the model takes, 429 once a User has asked
 `TIMETABLE_READING_DAILY` times that day in Korea (a setting, 10 unless set), and 503 when the model fails or the server has no key by the
-name `llm.key` gives; the app then reads the picture on the phone. The picture is not stored, nor is what was read.
-Outside the request line, which holds the first 2 KB of each body ([Logging](#requests)), the log says only how many
-classes and blocks left out. A reading makes at most 7 model calls
+name `llm.key` gives; the app then reads the picture on the phone. The picture is neither stored nor logged, nor is
+what was read; the log says only how many classes and blocks left out. A reading makes at most 7 model calls
 (`MOST_MODEL_CALLS`: the layout and the text, at most 3 fading ends asked again, one re-read, one second look at
 near-miss names) and the grid at most 48 blocks; `TIMETABLE_READING_TIMEOUT_MS` (24 000) is one deadline over all of
 a reading's calls, under the phone's 25 s, and `TIMETABLE_READING_MAX_OUTPUT_TOKENS` (6000) bounds each call. A
@@ -2439,7 +2437,6 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     a model error, exhausted credit (OpenRouter's 402) or a reached spend limit (Anthropic's 429), the time running out, the step cap reached without an answer,
     or a run with no text and nothing to show. The server logs the cause, such as `APICallError: HTTP 402, the OpenRouter credit is used up`, and never a
     message's text, the model's answer or an error's message or body, which can hold the request sent to the model.
-    The request line holds the conversation sent and the reply, as it holds every body ([Logging](#requests)).
 
 - `POST /assistant/answers` with a User's access token, the `input` of an answer changed as the User dragged the time
   band or added or removed a Friend, and where the User is now (`location`, `{ "latitude", "longitude" }`, null or left
@@ -2887,7 +2884,7 @@ the hard stop. The baseline on both providers (A02, 2026-11-15) is recorded besi
 The recorder (`eval/recorder.ts`) wraps the model and records each step: its tool calls and inputs, its finish
 reason and its usage with cache reads and writes. A step cut at the output limit also keeps `cut`: its content parts,
 its reasoning tokens and the provider's response as it came, which the benchmark's fetch (`RawResponses`) keeps because
-the provider library's schema drops what it does not know. Only the trace holds these; the server's logs hold at most a cut step's text, as the reply on its request line. The tool results come through the run observer, the one seam in the
+the provider library's schema drops what it does not know. Only the trace holds these, never the server's logs. The tool results come through the run observer, the one seam in the
 server: `runFeature` takes an optional `RunObserver` (`adapter.ts`) that it tells of each tool's result or error and
 each step's end, with the step's tool errors, so that a call whose input the tool's schema refused before it ran
 shows its error too, and of the reply's text before the Approval line. `AssistantService` passes the one bound to
@@ -3455,8 +3452,10 @@ too.
   words, with IDs (User ID, Quest ID), such as `The push to User 3f2c… was not sent: Expo answered 503`.
 - Never logged, at any level: tokens, keys, passwords, Authorization headers, cookies, webhook URLs, query strings, IP
   addresses.
-- Outside the request lines, also never logged: names, emails, student IDs, phone numbers (a person is named by ID);
-  coordinates, timetables, the Assistant's prompts and answers; request or response bodies.
+- Never logged either: student IDs, registered names, a User's or a Friend's position, a timetable picture, the
+  Assistant's prompts and answers. The routes that carry them leave no body on their request line.
+- Outside the request lines, also never logged: names, emails, phone numbers (a person is named by ID); coordinates,
+  timetables; request or response bodies.
 
 Existing lines that break a rule are left as they are until someone changes that code.
 
@@ -3480,10 +3479,22 @@ lines below are made up:
   `secret` or `authorization`, in any case and at any depth, becomes `"[masked]"`; objects and arrays deeper than 20
   levels are written `"[…]"`, and a body that still cannot be written is left off the line; the result is cut at 2 KB and ends
   in `…(truncated)` when cut; a body that is not JSON, such as a file, is written as its type and size, such as
-  `[multipart/form-data 48213 bytes]`. Everything else is written as it was sent: a User's conversation with the
-  Assistant, positions, timetables and profiles, up to 2 KB. A timetable picture sent for reading is base64 in JSON, so
-  its first 2 KB are on the request line.
-- So the request lines hold what Users send and receive. They stay in the pod's log until the pod is replaced and are
+  `[multipart/form-data 48213 bytes]`. Everything else is written as it was sent, up to 2 KB: a Quest's title, a
+  Party's name, a Friend's name and department, a timetable's Classes.
+- **Requests that leave no body.** `BODILESS_ROUTES` in `src/common/bodiless-routes.ts` lists them, any method: their
+  request line has the method, the path, the status, the time, `req_id` and `user_id`, and no `req_body` or `res_body`.
+  Each carries something the app tells Users is not kept:
+
+  | Kind              | Routes                                                                                                                 | What the app promises                                                |
+  | ----------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+  | Position          | `/positions` (an upload, and the Friends' positions read), `/walking-route` (from the User's position)                 | 지난 위치 저장 안 함; 칠한 곳 안의 위치는 저장하지 않아요            |
+  | Profile           | `/users/me/profile`, `/lobby` (it answers the profile), `/library/room-requests/:id/companions` (the companions' 학번) | 학번 and 학적상 이름 are gone from the server once deleted           |
+  | Timetable picture | `/timetable/readings`                                                                                                  | 우리 서버에는 저장하지 않아요                                        |
+  | Assistant         | `/assistant/*`                                                                                                         | the conversation stays on the phone; 누가 찾았는지는 기록하지 않아요 |
+
+  A new route that carries one of these joins the list, with a case in `test/request-line-bodies.integration.test.ts`.
+
+- So the other request lines hold what Users send and receive. They stay in the pod's log until the pod is replaced and are
   never posted to Slack. Copy no request line into an issue, a pull request, a chat or a document: take only what is
   needed, with no person and no value in it.
 

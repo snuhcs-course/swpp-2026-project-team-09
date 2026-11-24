@@ -7,6 +7,7 @@
 import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
 import { type Request, type Response } from 'express';
 import { randomUUID } from 'node:crypto';
+import { keepsBodies } from './bodiless-routes.js';
 import { bodySize, logBody, withoutInviteTokens } from './log-body.js';
 import { requestContext, type RequestContextValues } from './request-context.js';
 
@@ -15,9 +16,13 @@ export const REQUEST_ID_HEADER = 'X-Request-Id';
 // The load balancer and the kubelet call these every few seconds.
 const UNLOGGED_PATHS = new Set(['/health/live', '/health/ready']);
 
+function pathOf(request: Request): string {
+  return request.originalUrl.split('?')[0] ?? '';
+}
+
 // A request's path as the log writes it: with its IDs, without its query string or an Invite Link's token.
 export function requestPath(request: Request): string {
-  return withoutInviteTokens(request.originalUrl.split('?')[0] ?? '');
+  return withoutInviteTokens(pathOf(request));
 }
 
 export function elapsedMs(values: RequestContextValues | undefined): number {
@@ -34,13 +39,14 @@ export class RequestLoggingMiddleware implements NestMiddleware {
   use(request: Request, response: Response, next: () => void): void {
     const values: RequestContextValues = { reqId: randomUUID(), startedAt: performance.now() };
     response.setHeader(REQUEST_ID_HEADER, values.reqId);
-    if (!UNLOGGED_PATHS.has(requestPath(request))) {
-      this.logWhenSent(request, response, values);
+    const path = pathOf(request);
+    if (!UNLOGGED_PATHS.has(path)) {
+      this.logWhenSent(request, response, values, keepsBodies(path));
     }
     requestContext.run(values, next);
   }
 
-  private logWhenSent(request: Request, response: Response, values: RequestContextValues): void {
+  private logWhenSent(request: Request, response: Response, values: RequestContextValues, withBodies: boolean): void {
     let sent: unknown;
     const send = response.send.bind(response);
     // Express's json() ends in send() too, with the JSON as text: the last body given is the one sent.
@@ -54,7 +60,7 @@ export class RequestLoggingMiddleware implements NestMiddleware {
       // left out.
       let fields: Record<string, string> = {};
       try {
-        fields = this.bodies(request, response, sent);
+        fields = withBodies ? this.bodies(request, response, sent) : {};
       } catch {
         // The line without its bodies.
       }

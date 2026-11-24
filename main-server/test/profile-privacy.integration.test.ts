@@ -2,13 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
- * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The 학번 and the registered name are the User's own: every reply that shows the User to another User leaves them
 // out, and the profile's routes never write them to the log.
 
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, Logger } from '@nestjs/common';
 import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
@@ -22,7 +21,6 @@ import {
   signInUser,
   TestUser,
 } from './friends.js';
-import { captureLogsApart } from './assistant.js';
 import { answerInvitation, getInvitations, getMyParty, invitationOf, partyOf } from './parties.js';
 import { getProfile, patchProfile } from './profile.js';
 import { askToJoin, getInvitations as getQuestInvitations, getJoinRequests, invite } from './quest-recruiting.js';
@@ -114,11 +112,30 @@ describe("Another User's view of a User with a 학번 and a registered name", ()
   });
 });
 
+// Everything written to the server's log, to the console and to the process's output, from now on.
+function captureLogs(): () => string {
+  const spies = [
+    ...(['log', 'warn', 'error', 'debug', 'verbose', 'fatal'] as const).map((level) =>
+      vi.spyOn(Logger.prototype, level),
+    ),
+    ...(['log', 'warn', 'error', 'info', 'debug'] as const).map((level) => vi.spyOn(console, level)),
+    vi.spyOn(process.stdout, 'write'),
+    vi.spyOn(process.stderr, 'write'),
+  ];
+  return () =>
+    spies
+      .flatMap((spy) => {
+        const values: unknown[] = spy.mock.calls.flat();
+        return values;
+      })
+      .map((value) => (value instanceof Error ? `${value.message} ${value.stack}` : JSON.stringify(value)))
+      .join('\n');
+}
+
 describe("The profile's routes", () => {
-  // The request lines hold the saved and the refused body (README.md: Logging); no other line holds them.
-  it('write the 학번 and the registered name, saved or refused, to the request lines only', async () => {
+  it('write neither the 학번 nor the registered name to the log, saved or refused', async () => {
     const { accessToken } = await signInUser(app);
-    const { requestLines, otherLines } = captureLogsApart();
+    const logs = captureLogs();
 
     await patchProfile(app, accessToken, { studentNumber: '2026-12345', registeredName: REGISTERED_NAME });
     await getProfile(app, accessToken);
@@ -126,10 +143,9 @@ describe("The profile's routes", () => {
     const refused = await patchProfile(app, accessToken, { studentNumber: '2026-1234x', registeredName: '김비밀김' });
 
     expect(refused.status).toBe(400);
-    const written = otherLines();
+    const written = logs();
     for (const secret of [...SECRETS, '2026-1234x', '김비밀김']) {
       expect(written).not.toContain(secret);
     }
-    expect(requestLines()).toContain('2026-1234x');
   });
 });

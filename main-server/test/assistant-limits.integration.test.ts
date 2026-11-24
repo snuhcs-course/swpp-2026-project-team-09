@@ -4,7 +4,6 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-01  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
- * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -14,7 +13,7 @@ import { Server } from 'node:http';
 import request from 'supertest';
 import { inject } from 'vitest';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
-import { ask, captureLogs, captureLogsApart, postAssistantMessages, type SentMessage } from './assistant.js';
+import { ask, captureLogs, postAssistantMessages, type SentMessage } from './assistant.js';
 import { ScriptedModel } from './scripted-model.js';
 import { signIn } from './sign-in.js';
 import { startApp } from './start-app.js';
@@ -91,9 +90,8 @@ describe("The server's log", () => {
   const SECRET = '비밀 메시지 7f3a';
   const ANSWER = '비밀 답변 9c1d';
 
-  // The request lines hold the conversation in their bodies (README.md: Logging); no other line holds any of it.
-  it("holds the User's text and the model's answer in the request lines only, whether the model answers or fails", async () => {
-    const { requestLines, otherLines } = captureLogsApart();
+  it("holds none of the User's text or the model's answer, whether the model answers or fails", async () => {
+    const logs = captureLogs();
 
     model.script({ tool: 'getMenus', input: { date: '2027-02-02' } }, { text: ANSWER });
     await postAssistantMessages(app, accessToken, ask(SECRET));
@@ -108,11 +106,9 @@ describe("The server's log", () => {
     const response = await postAssistantMessages(app, accessToken, ask(SECRET));
 
     expect(JSON.stringify(response.body)).not.toContain(SECRET);
-    expect(otherLines()).toContain('APICallError: HTTP 503');
-    expect(otherLines()).not.toContain(SECRET);
-    expect(otherLines()).not.toContain(ANSWER);
-    expect(requestLines()).toContain(SECRET);
-    expect(requestLines()).toContain(ANSWER);
+    expect(logs()).toContain('APICallError: HTTP 503');
+    expect(logs()).not.toContain(SECRET);
+    expect(logs()).not.toContain(ANSWER);
   });
 });
 
