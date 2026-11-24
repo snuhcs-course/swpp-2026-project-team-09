@@ -73,7 +73,7 @@ Native files: none. Releases: an app over-the-air update.
   caching of every report. So the ticket's "a native crash kept from before is discarded" is not built. What holds
   instead: with the switch off the SDK is never started, so nothing is sent while it is off; a crash kept from a run
   when the switch was on, and not yet sent (the next start normally sends it at once), goes out when the switch is
-  turned on again. **A difference from the spec, for the orchestrator to decide** (the README says it plainly).
+  turned on again. The owner took this as it is on 2026-11-24, and "What to build" above now says it.
 - **The start waits for the choice, not the first screen.** `startTelemetry()` is still called at module scope in
   the root layout; it returns a promise and starts Sentry once the choice is read from AsyncStorage and is on. The
   first screen does not wait. In that moment (one storage read, while the splash and the fonts load) Sentry is not
