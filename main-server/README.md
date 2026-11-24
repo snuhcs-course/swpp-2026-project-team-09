@@ -3488,8 +3488,11 @@ The lines below are made up:
   `@Redirect()`, which the router applies after, the interceptor reads it as the router does. No route redirects today.
 - What the code throws on purpose (`HttpException`: a guard's 401 or 403, a validation's 400, a 404 for a path no route
   matches, a 429) is answered as NestJS answers it, and the filter writes an info line with that answer as `res_body`.
-- A replay of the idempotency interceptor leaves no line when it replays an answer, since it answers without running
-  the interceptors inside it; a replayed error leaves its line through the filter.
+- **A replayed answer leaves no request line.** The idempotency interceptor stays outermost, as its library asks (a
+  global interceptor outside it gets a warning at every start), and it answers a replay from its store without running
+  the interceptors inside it. The first handling of that `Idempotency-Key` left the line, with the same answer. A
+  replayed error still leaves its line, through the filter. The library exports `IdempotencyEvents`, whose `replayed`
+  event (the handler, the key and the status) could write a replay's line later.
 - A body the JSON parser refuses, malformed (400) or over its limit (413), is refused before the middleware: the filter
   answers it as before and writes its info line, with the body's type and size only and no `req_id`, and the response
   has no `X-Request-Id`. No route serves files or streams.
