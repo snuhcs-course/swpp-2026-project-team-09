@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-11-23  Opus 5.5   prompted by fyoon46
+# 2026-11-24  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # A Restaurant's hours are answered from restaurantHours, never as missing data (P05 ticket 36): on the released app,
@@ -51,6 +52,8 @@
     text:
       absent: [데이터에 없, 데이터가 없]
 
+# P04 ticket 59: a Restaurant's hours asked under a meal plan bring the Restaurant to the map in the plan's place, so
+# the model asks restaurantHours alone and never plans the meal again.
 - id: restaurant-hours-after-a-plan
   category: restaurant-hours
   world: p4-answer
@@ -64,7 +67,7 @@
     actions: [TOOL]
     tools:
       required: [restaurantHours]
-      forbidden: [findMenu]
+      forbidden: [findMenu, planMeal]
     text:
       absent: [데이터에 없, 데이터가 없]
 

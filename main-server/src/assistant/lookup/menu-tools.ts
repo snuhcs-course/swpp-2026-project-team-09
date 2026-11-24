@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -87,13 +88,13 @@ export function findMenu(menus: MenuLookupService): Tool {
       }
       const key = chosen.candidate.name;
       const found = await menus.find(userId, { date, meal, key }, { now, location: context.location });
+      presented.lookup = found.lookup;
+      presented.answer = null;
+      presented.mapButtons.length = 0;
       if (found.result === 'none') {
         return { ...noneFound(reasonOf(found, key, { date, meal, now })), lines: menuLines(found.lines) };
       }
-      const { collectedAt, lines, plan, lookup } = found;
-      presented.lookup = lookup;
-      presented.answer = null;
-      presented.mapButtons.length = 0;
+      const { collectedAt, lines, plan } = found;
       const [mine] = plan.parts;
       return {
         result: 'found',
@@ -118,5 +119,5 @@ export const MENU_RULES = `A Restaurant's menu is drawn on the map: the server f
 - Only a question about what a Restaurant the User names serves is a menu question. One that names no Restaurant (오늘 점심 뭐야?, 월요일에 뭐 먹을까, 한식 뭐 있어?) is a meal wish: call planMeal by the meal rules, whose plans carry their menus, and never list menus in words. A question about breakfast, which planMeal does not plan, is answered with getMenus.
 - When findMenu answers several, ask which one, listing the names, and call it again with the name the User chose. When it answers none because no Restaurant on the map has that name, call getMenus with the same words.
 - The app draws the Restaurant with its menu and writes the time to eat itself. Your reply is one sentence, such as "301동식당 오늘 점심은 제육볶음이에요." Do not call showOnMap for a menu: the app already draws it.
-- When findMenu answers none, say plainly why; when the User has no time to eat there, still say the menu from its lines.
+- When findMenu answers none, say plainly why; when the User has no time to eat there, still say the menu from its lines. The app still draws the Restaurant, with why on its label.
 - For a menu findMenu drew, say when it was collected only when the User asks, or when it is not the menu of the day asked: this takes the place of saying collectedAt every time.`;
