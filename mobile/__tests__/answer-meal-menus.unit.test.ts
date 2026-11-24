@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MenuLine, RestaurantMenus } from '@/api/menu-types';
@@ -20,7 +21,6 @@ import {
   walksKnown,
 } from '@/screens/main/answer/meal-list';
 import { mealTabsOf, restaurantOf } from '@/screens/main/answer/meal-menu';
-import { mealDockLine, mealSentenceOf } from '@/screens/main/answer/meal-dock';
 
 // A restaurant's menu as corners (board E4) and the list of candidates (board E3). Partitions: a menu of a priced
 // corner, one of dishes ordered one by one, and lines before any heading; hours in a note, and none; the list's order,
@@ -151,38 +151,6 @@ describe('the list of candidates', () => {
   });
 });
 
-describe('the dock’s sentence', () => {
-  it('is the Assistant’s words in one paragraph without markdown', () => {
-    expect(mealSentenceOf('**학생회관식당**은 걸음 32분이에요.\n가까운 302동식당은 걸음 2분.')).toBe(
-      '학생회관식당은 걸음 32분이에요. 가까운 302동식당은 걸음 2분.',
-    );
-  });
-});
-
-// Partitions: the sentence about the pick on screen; the stand-in; another place chosen (review of PR 477).
-describe('the dock’s line', () => {
-  const shown = {
-    answer: MEAL_ANSWER_MENUS,
-    source: MEAL_ANSWER_MENUS,
-    index: 0,
-    plan: MEAL_ANSWER_MENUS.plans[0] ?? null,
-  };
-
-  it('is the Assistant’s sentence while the first pick is on screen', () => {
-    expect(mealDockLine('302동식당이 좋아요.', shown)).toBe('302동식당이 좋아요.');
-  });
-
-  it('is the chosen place’s own line without the model’s words', () => {
-    expect(mealDockLine('아래에서 확인해 보세요.', shown)).toMatch(/^302동식당 · 12:15 · /u);
-  });
-
-  it('is the chosen place’s own line once another is chosen', () => {
-    const second = { ...shown, index: 1, plan: MEAL_ANSWER_MENUS.plans[1] ?? null };
-
-    expect(mealDockLine('302동식당이 좋아요.', second)).toMatch(/^301동식당 · /u);
-  });
-});
-
 // Partitions: one Plan kept of three, with a Friend and without; the crowded answer's late restaurants.
 describe('one Plan kept of many', () => {
   const [first, ...rest] = MEAL_ANSWER_MENUS.plans.slice(0, 3);
@@ -194,10 +162,8 @@ describe('one Plan kept of many', () => {
     expect(listedCount(kept)).toBe(1);
   });
 
-  it('names the Friend whose time the places dropped do not fit, and says the one place alone fits', () => {
+  it('names the Friend whose time the places dropped do not fit', () => {
     expect(droppedHeading(kept)).toBe('김민수와 시간이 맞지 않는 곳');
-    const shown = { answer: kept, source: kept, index: 0, plan: first ?? null };
-    expect(mealDockLine('', shown)).toMatch(/^김민수와 시간이 맞는 곳은 302동식당뿐이에요 · \d{2}:\d{2}/u);
   });
 
   it('says only the time without a Friend', () => {

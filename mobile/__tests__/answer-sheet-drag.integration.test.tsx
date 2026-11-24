@@ -2,18 +2,19 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
 import { StyleSheet, TextInput, type TextStyle } from 'react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
-import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { askOnMap, card, timeBar } from './support/answer-map';
+import { askOnMap, card } from './support/answer-map';
 import { pass } from './support/app';
-import { grip, gripLabel, HIDDEN, lowerCard, raiseCard } from './support/card-grip';
+import { FLING_SPEED } from '@/screens/main/answer/card-levels';
+import { grip, lowerCard, raiseCard } from './support/card-grip';
 import type { FakeServer } from './support/fake-server';
 import { AI_INPUT, layStage } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
@@ -21,11 +22,11 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { sockets } from './support/fake-socket';
 
-// From the user's phone (P04 ticket 52): the answer has no "←"; it closes by ✕ at the right end of the sheet's header
-// row, a drag down, and Android's back, and "＋ 새 대화" stands just left of ✕ in every state. The grip's small label
-// says what a drag up brings while the sheet shows the answer itself; nothing is pressed to raise or lower the card.
-// The bar's words start at its left edge. The docked card takes a drag, down closing the answer and up raising the
-// card; a drag down on the card takes the list of questions away first, as back does.
+// From the user's phone (P04 tickets 52 and 61): the answer has no "←"; it closes by ✕ at the right end of the sheet's
+// header row, a drag down from low, and Android's back, and "＋ 새 대화" stands just left of ✕ in every state. No words
+// stand under the grip, and nothing is pressed to raise or lower the card. The bar's words start at its left edge. The
+// card takes a drag anywhere: from low, down past half of it or a fling closes the answer, and a fling up raises it a
+// step; a drag down on the card takes the list of questions away first, as back does.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -48,6 +49,7 @@ const NEW = '예술계 점심';
 const KEPT = /^이어서, 배고파, 민수랑 같이/u;
 const BAR = 96;
 const CARD = 140;
+const FLING = FLING_SPEED * 2;
 
 let server: FakeServer;
 
@@ -71,12 +73,12 @@ async function lay(testId: string, height: number): Promise<void> {
   });
 }
 
-async function drag(gesture: string, dy: number): Promise<void> {
+async function drag(gesture: string, dy: number, velocityY = 0): Promise<void> {
   await act(() => {
     fireGestureHandler(getByGestureTestId(gesture), [
       { translationX: 0, translationY: 0, velocityY: 0 },
-      { translationX: 0, translationY: dy / 2, velocityY: 0 },
-      { translationX: 0, translationY: dy, velocityY: 0 },
+      { translationX: 0, translationY: dy / 2, velocityY },
+      { translationX: 0, translationY: dy, velocityY },
     ]);
   });
 }
@@ -131,65 +133,51 @@ describe('the way out of the answer', () => {
   });
 });
 
-// Partitions: the sheet showing the answer docked, raised, and with the earlier questions or the list of Friends to add
+// Partitions: the sheet showing the answer low, raised, and with the earlier questions or the list of Friends to add
 // open; an answer with nothing to raise to is not a case here (`answer-dock-and-head`).
 describe("the sheet's header", () => {
-  it('holds the grip, its label with "⌃", the history chip, "＋ 새 대화", and ✕ on the docked card', async () => {
+  it('holds the grip with no words under it, the history chip, "＋ 새 대화", and ✕ on the low card', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
-    expect(gripLabel()).toMatch(/^\d+곳 목록$/u);
-    expect(screen.getByTestId('answer-grip-up', HIDDEN)).toBeOnTheScreen();
-    expect(grip()).toHaveAccessibleName(/^답 카드 높이, \d+곳 목록$/u);
+    expect(grip()).toHaveAccessibleName('답 카드 높이');
+    expect(within(grip()).queryByText(/./u)).toBeNull();
+    expect(screen.queryByText(/곳 목록/u)).toBeNull();
     for (const name of [/이전 질문 보기$/u, ASK_NEW, CLOSE]) {
       expect(card().getByRole('button', { name })).toBeVisible();
     }
-    expect(card().queryByText(/올리면/u)).toBeNull();
   });
 
-  it('keeps the label without "⌃" on the raised card, and the same buttons', async () => {
+  it('keeps the same buttons on the raised card', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
-    await lay('answer-card', CARD);
+    await layStage(390, 760);
 
-    await drag('answer-dock-drag', -80);
+    await drag('answer-card-drag', -80, -FLING);
 
     expect(grip()).toBeExpanded();
-    expect(gripLabel()).toMatch(/^\d+곳 목록$/u);
-    expect(screen.queryByTestId('answer-grip-up', HIDDEN)).toBeNull();
     expect(card().getByRole('button', { name: ASK_NEW })).toBeVisible();
     expect(card().getByRole('button', { name: CLOSE })).toBeVisible();
     expect(card().queryByText('내리기')).toBeNull();
   });
 
-  it('has no label while the earlier questions are open, and keeps "＋ 새 대화" and ✕', async () => {
+  it('keeps "＋ 새 대화" and ✕ while the earlier questions are open', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
     await user.press(screen.getByTestId('answer-caption'));
 
     expect(screen.getByTestId('question-list')).toBeVisible();
-    expect(gripLabel()).toBeNull();
     expect(card().getByRole('button', { name: ASK_NEW })).toBeVisible();
-    expect(card().getByRole('button', { name: CLOSE })).toBeVisible();
-  });
-
-  it('has no label while the list of Friends to add is open', async () => {
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    expect(gripLabel()).toMatch(/^\d+곳 목록$/u);
-
-    await user.press(timeBar().getByRole('button', { name: '같이 먹을 친구 추가' }));
-
-    expect(gripLabel()).toBeNull();
     expect(card().getByRole('button', { name: CLOSE })).toBeVisible();
   });
 });
 
-// Partitions: a drag down past half the docked card; a short one; a drag up.
-describe('the docked card', () => {
+// Partitions: a drag down from low past half the card, a short one, and a fling down; a fling up.
+describe('the low card', () => {
   it('shows the grip, and a drag down past half the card closes the answer and keeps the conversation', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
     expect(grip()).toBeCollapsed();
     await lay('answer-card', CARD);
 
-    await drag('answer-dock-drag', CARD);
+    await drag('answer-card-drag', CARD);
 
     expect(screen.queryByTestId('answer-card')).toBeNull();
     expect(screen.getByRole('button', { name: KEPT })).toBeVisible();
@@ -199,29 +187,41 @@ describe('the docked card', () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
     await lay('answer-card', CARD);
 
-    await drag('answer-dock-drag', 30);
+    await drag('answer-card-drag', 20);
 
     expect(screen.getByTestId('answer-caption')).toBeVisible();
     expect(grip()).toBeCollapsed();
     expect(screen.queryByTestId('answer-close-hint')).toBeNull();
   });
 
-  it('is raised by a drag up, and a screen reader steps it down by the grip', async () => {
+  it('closes on a fling down once the stage is laid out', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
-    await lay('answer-card', CARD);
+    await layStage(390, 760);
 
-    await drag('answer-dock-drag', -80);
+    await drag('answer-card-drag', 20, FLING);
+
+    expect(screen.queryByTestId('answer-card')).toBeNull();
+  });
+
+  it('is raised a step by a fling up, and a screen reader steps it down by the grip', async () => {
+    await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await layStage(390, 760);
+
+    await drag('answer-card-drag', -30, -FLING);
     expect(grip()).toBeExpanded();
+    expect(grip()).toHaveAccessibilityValue({ text: '중간' });
 
     await lowerCard();
     expect(grip()).toBeCollapsed();
   });
+});
 
-  it('is not raised by a press on the grip or on its label', async () => {
+// Partitions: a press on the grip.
+describe('the grip', () => {
+  it('raises nothing at a press', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
     await user.press(grip());
-    await user.press(screen.getByTestId('answer-grip-label', HIDDEN));
 
     expect(grip()).toBeCollapsed();
   });
@@ -244,26 +244,26 @@ function steps(): unknown[] {
   return Array.isArray(offered) ? offered.map((step: { name: string }) => step.name) : [];
 }
 
-// Partitions: docked with nothing over the answer; full; lowered with the earlier questions open. The steps follow
-// back's order, and only those that can act are offered (PR 516's review).
+// Partitions: low with nothing over the answer; high; low with the earlier questions open. Only the steps that can act
+// are offered (PR 516's review).
 describe("the grip's steps for a screen reader", () => {
-  it('offers up and close on the docked card, and no step down', async () => {
+  it('offers up and close on the low card, and no step down', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
     expect(steps()).toEqual(['increment', 'close']);
   });
 
-  it('offers down and close on the full card, and no step up', async () => {
+  it('offers down and close on the high card, and no step up', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
     await raiseCard();
     await raiseCard();
 
-    expect(grip()).toHaveAccessibilityValue({ text: '전체' });
+    expect(grip()).toHaveAccessibilityValue({ text: '크게' });
     expect(steps()).toEqual(['decrement', 'close']);
   });
 
-  it('takes the earlier questions away by a step down on the lowered card, as back does, and keeps the answer', async () => {
+  it('takes the earlier questions away by a step down on the low card, as back does, and keeps the answer', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
     await user.press(screen.getByTestId('answer-caption'));
     expect(steps()).toEqual(['increment', 'decrement', 'close']);
@@ -276,21 +276,19 @@ describe("the grip's steps for a screen reader", () => {
   });
 });
 
-// Partitions: the list of questions open on the lowered card.
+// Partitions: the list of questions open on the low card.
 describe('a drag down with the list of questions open', () => {
   it('takes the list away and leaves the answer, as back does', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
-    // The open card's header takes a drag once the stage is laid out, as it always is on a phone.
     await layStage(390, 760);
     await user.press(screen.getByTestId('answer-caption'));
     expect(screen.getByTestId('question-list')).toBeVisible();
-    // The grip's label has nothing to say about the questions, and the input gives the list its room.
-    expect(gripLabel()).toBeNull();
+    // The input gives the list its room.
     expect(screen.queryByLabelText('AI에게 메시지')).toBeNull();
     await lay('answer-card-content', 200);
     await lay('answer-card', 300);
 
-    await drag('answer-card-handle', 400);
+    await drag('answer-card-drag', 400);
 
     expect(screen.queryByTestId('question-list')).toBeNull();
     expect(screen.getByTestId('answer-caption')).toBeVisible();

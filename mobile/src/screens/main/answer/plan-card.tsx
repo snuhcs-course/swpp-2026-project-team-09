@@ -7,6 +7,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useState } from 'react';
@@ -25,7 +26,6 @@ import { useOpenFriendProfile } from '../friend-profile';
 import { AnswerLines } from './answer-lines';
 import { CardNote } from './card-note';
 import { PlanChips } from './plan-chips';
-import { LINE_LEAST } from './dock-chips';
 import { FriendChoices } from './friend-choices';
 import { MainButtons } from './main-buttons';
 import { MealList, mealCard } from './meal-list';
@@ -168,8 +168,7 @@ function Said({ lines, said }: { lines: readonly AnswerLine[]; said: string }): 
 }
 
 // Whether the Plan's card has nothing to read: no line, step, relax button, or the buttons of events and parties. Then
-// the frame docks it: one row with the input and the main button, and the chips "＋ 같이", "지난 답 N개", and the note
-// when they show.
+// the keyboard's view shows it in brief (`restOf`).
 export function planCardRests(
   shown: Pick<ShownAnswer, 'plan' | 'ghost' | 'adding' | 'moving'>,
   answer: AnswerReply,
@@ -210,8 +209,6 @@ interface PlanCardProps extends CardProps {
   focus: BandFocus;
   // The model's words of the reply, which the line opens.
   said?: string;
-  // Docked: the card is its chips' row alone, these chips after "＋ 같이"; the note is one of them.
-  dock?: ReactNode;
   // One of several requests, whose candidates have no flag on the map (P04 ticket 09): the stepper switches them.
   steps?: boolean;
 }
@@ -228,13 +225,12 @@ function settled({ made, changed, left }: PlanInvitation): boolean {
   return made !== null || changed !== null || left !== null;
 }
 
-// The Assistant's whole words over a meal answer's list, which the dock cuts at two lines (P04 ticket 45); none over a
-// restaurant's menu, nor under a refusal's lines over the Plan, which already say them. They come first and keep the
-// dock's line's box, so that lowered to the dock's height the card shows what the dock shows (P04 ticket 54).
+// The Assistant's whole words over a meal answer's list; none over a restaurant's menu, nor under a refusal's lines
+// over the Plan, which already say them. They come first, so that the low sheet shows them (P04 ticket 61).
 function MealWords({ said, shown }: { said: string; shown: ShownAnswer }): ReactElement | null {
   const words = modelWordsOf(said);
   return words === '' || shown.menuFor !== null ? null : (
-    <View style={styles.mealWords} testID="meal-words">
+    <View testID="meal-words">
       <ChatMarkdown style={styles.words} text={words} />
     </View>
   );
@@ -271,7 +267,7 @@ function MealSheet({
 }
 
 export function PlanCard(props: PlanCardProps): ReactElement {
-  const { shown, answer, invitation, room, over = [], onClose, focus, said = '', dock } = props;
+  const { shown, answer, invitation, room, over = [], onClose, focus, said = '' } = props;
   const busy = shown.recalculating || invitation.sending || invitation.changing;
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const openProfile = useOpenFriendProfile();
@@ -281,18 +277,16 @@ export function PlanCard(props: PlanCardProps): ReactElement {
   // bar is: an answer without a Plan, or while the keyboard hides the bar.
   const barShown = useKeyboardHeight() === 0 && shown.plan !== null;
   const addName = !barShown && (fix.adding || fix.choices.length > 0) ? addNameOf(answer.input.kind) : null;
-  const docked = dock !== undefined;
-  const meal = !docked && !fix.adding && shown.plan !== null && mealCard(answer);
+  const meal = !fix.adding && shown.plan !== null && mealCard(answer);
   const faceless = chipsOf(answer, shown, meal);
   const chips =
-    addName === null && corner === null && faceless.length === 0 && !docked ? null : (
+    addName === null && corner === null && faceless.length === 0 ? null : (
       <PlanChips
         addName={addName}
         answer={answer}
         busy={busy}
         chips={faceless}
         corner={corner}
-        dock={dock}
         fix={fix}
         onProfile={openProfile}
       />
@@ -300,20 +294,18 @@ export function PlanCard(props: PlanCardProps): ReactElement {
   return (
     <View style={styles.plan}>
       {meal ? null : chips}
-      {docked ? null : <Said lines={linesOf(shown, answer, fix.adding, over)} said={meal ? '' : said} />}
+      <Said lines={linesOf(shown, answer, fix.adding, over)} said={meal ? '' : said} />
       {meal ? <MealBody {...props} busy={busy} chips={chips} /> : null}
-      {docked ? null : (
-        <Below
-          answer={answer}
-          busy={busy}
-          fix={fix}
-          invitation={invitation}
-          onProfile={openProfile}
-          room={room}
-          shown={shown}
-          steps={props.steps}
-        />
-      )}
+      <Below
+        answer={answer}
+        busy={busy}
+        fix={fix}
+        invitation={invitation}
+        onProfile={openProfile}
+        room={room}
+        shown={shown}
+        steps={props.steps}
+      />
     </View>
   );
 }
@@ -322,7 +314,6 @@ const styles = StyleSheet.create({
   plan: { gap: space[3] },
   said: { gap: space[2] },
   words: { ...text.body, color: color.ink },
-  mealWords: { justifyContent: 'center', minHeight: LINE_LEAST },
   steps: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   undo: { width: UNDO_WIDTH },
 });

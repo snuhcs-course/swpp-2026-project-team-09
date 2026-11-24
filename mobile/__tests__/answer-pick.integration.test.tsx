@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -77,8 +78,9 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// The question back and its pickers stand in the sheet, under the reply's words (P04 ticket 61).
 function dock(): ReturnType<typeof within> {
-  return within(screen.getByTestId('dock-row'));
+  return within(screen.getByTestId('answer-card'));
 }
 
 function lastAsked(): unknown {

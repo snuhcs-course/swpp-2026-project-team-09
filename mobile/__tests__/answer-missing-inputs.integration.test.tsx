@@ -5,11 +5,13 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
+import { raiseCard } from './support/card-grip';
 import { askOnMap, card } from './support/answer-map';
 import { recalculations, step } from './support/answer-correct';
 import { pass, screen, shownAddress } from './support/app';
@@ -131,20 +133,20 @@ describe('board n15: no Timetable', () => {
   });
 });
 
-// A way with no button docks with the model’s words and the note as plain words (P04 tickets 05, 18, 55); raised, the card’s ✕ stands
-// alone.
+// A way with no button: the model’s words, the Lookup, and the note as plain words in one sheet (P04 tickets 05, 18, 55,
+// and 61); raised, the card’s ✕ stands alone.
 describe('board n14: off campus', () => {
   it('notes that Friends do not see the User, with the card’s ✕ alone', async () => {
     givePhone({ permission: 'granted', position: ON_CAMPUS });
     const lookup = { ...LEAVE_LOOKUP_REPLY.lookup, note: N14_NOTE, actions: [] };
-    const user = await askOnMap(server, { ...LEAVE_LOOKUP_REPLY, lookup });
+    await askOnMap(server, { ...LEAVE_LOOKUP_REPLY, lookup });
 
-    // A note is plain words under the line, wrapping, not a chip to press (P04 ticket 55).
-    expect(card().getByTestId('dock-note')).toHaveTextContent(N14_NOTE);
+    // A note is plain words, wrapping, not a chip to press (P04 ticket 55).
+    expect(card().getByText(N14_NOTE)).toBeOnTheScreen();
     expect(card().queryByRole('button', { name: N14_NOTE })).toBeNull();
     expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
 
-    await user.press(card().getByText(LEAVE_LOOKUP_REPLY.text));
+    await raiseCard();
 
     expect(card().getByText('24동까지 걸어서 15분')).toBeVisible();
     expect(card().getByText(N14_NOTE)).toBeVisible();

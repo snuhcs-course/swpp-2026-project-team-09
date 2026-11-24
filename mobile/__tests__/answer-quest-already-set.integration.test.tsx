@@ -3,6 +3,7 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -24,7 +25,7 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // P04 ticket 17: an answer beside a Quest the User already holds. The main server sets the held lunch aside, plans as
-// if it were not there, and names it (`mealSet`); its line stands in the dock with 그대로 두기, and the button beside
+// if it were not there, and names it (`mealSet`); its line stands first in the sheet with 그대로 두기, and the button beside
 // the input changes it (바꾸기), or, for one shared with others, opens its 파티 (파티 보기). Over the stored answer to
 // "배고파" for the User alone, with the main server's line of P05 ticket 16. Expected values: that line and the
 // buttons as the ticket and its review agreed them.
@@ -79,8 +80,9 @@ function beside(): ReturnType<typeof within> {
   return within(screen.getByTestId('ai-input-beside'));
 }
 
+// The line and its outcome stand first in the sheet (P04 ticket 61).
 function dock(): ReturnType<typeof within> {
-  return within(screen.getByTestId('dock-row'));
+  return within(screen.getByTestId('answer-card'));
 }
 
 // Partitions: an answer beside a lunch the User holds alone, at rest (P04 ticket 50).
@@ -99,7 +101,7 @@ describe('the row above the input beside a lunch the User holds', () => {
 
 // Partitions: the line and its buttons; 바꾸기 pressed, answered and refused; 그대로 두기 pressed.
 describe('an answer beside a lunch the User holds alone', () => {
-  it('says so in the dock, and 그대로 두기 and 바꾸기 stand on the row above the input', async () => {
+  it('says so first in the sheet, and 그대로 두기 and 바꾸기 stand on the row above the input', async () => {
     await askOnMap(server, replyWith(OWN));
 
     expect(dock().getByText(LINE)).toBeVisible();

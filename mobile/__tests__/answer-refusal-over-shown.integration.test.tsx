@@ -5,6 +5,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -15,6 +16,7 @@ import { NOT_RUNNING_LOOKUP_REPLY } from '@/api/mock/data/way-lookups';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
+import { raiseCard } from './support/card-grip';
 import { askOnMap, card, mapThings } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -88,18 +90,17 @@ function lastAsked(): unknown {
 }
 
 // Partitions: a refusal with a Friend Lookup, whose only offer stands where the Lookup's action would; one with a way
-// Lookup, whose offer stands in place of "길 안내". Each docks as the refusal's first line with its offer beside the
-// input (P04 ticket 05), and a press on the line raises the rest. Expected values: boards n4 and n20.
+// Lookup, whose offer stands in place of "길 안내". Each starts with the refusal's lines, its offer beside the input (P04
+// ticket 05), and the rest under them in the one sheet (P04 ticket 61). Expected values: boards n4 and n20.
 describe('a refusal beside a Lookup', () => {
   it("draws 민수 and puts the refusal's lines in place of the Lookup's, with 만나고 싶다 and ✕ (board n4)", async () => {
     const user = await askOnMap(server, copyOf('민수 지금 무슨 수업 들어?'));
 
     expect(card().getByText('과목과 강의실은 보이지 않아요')).toBeVisible();
-    expect(card().queryByText('12:15에 302동에서 수업이 끝나요')).toBeNull();
     expect(mapThings()).toContain('민수 · 수업 중 12:15까지');
     expect(card().queryByRole('button', { name: '닫기' })).toBeNull();
 
-    await user.press(card().getByText('과목과 강의실은 보이지 않아요'));
+    await raiseCard();
 
     expect(card().getByText('민수 · 시간표')).toBeVisible();
     expect(card().getByText('12:15에 302동에서 수업이 끝나요')).toBeVisible();
@@ -117,10 +118,9 @@ describe('a refusal beside a Lookup', () => {
     const user = await askOnMap(server, copyOf('신양 스터디룸 예약해 줘'));
 
     expect(card().getByText('앱이 예약하는 곳은 관정뿐이에요')).toBeVisible();
-    expect(card().queryByText('신양학술정보관은 그곳의 방식으로 예약해요')).toBeNull();
     expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
 
-    await user.press(card().getByText('앱이 예약하는 곳은 관정뿐이에요'));
+    await raiseCard();
 
     expect(card().getByText('301동에서')).toBeVisible();
     expect(card().getByText('신양학술정보관은 그곳의 방식으로 예약해요')).toBeVisible();

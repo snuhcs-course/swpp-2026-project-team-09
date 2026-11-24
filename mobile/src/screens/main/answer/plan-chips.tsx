@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement, ReactNode } from 'react';
+import type { ReactElement } from 'react';
 import type { AnswerReply, ConditionChip } from '@/api/assistant-types';
 import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import { ConditionChips } from './condition-chips';
@@ -17,21 +18,11 @@ interface PlanChipsProps {
   addName: string | null;
   corner: { words: string; icon: null; onPress: () => void } | null;
   busy: boolean;
-  dock: ReactNode;
   onProfile: ((userId: string) => void) | null;
 }
 
 // The condition chips over a Plan's card, or under a meal card's words (`MealBody`, P04 ticket 54).
-export function PlanChips({
-  answer,
-  fix,
-  chips,
-  addName,
-  corner,
-  busy,
-  dock,
-  onProfile,
-}: PlanChipsProps): ReactElement {
+export function PlanChips({ answer, fix, chips, addName, corner, busy, onProfile }: PlanChipsProps): ReactElement {
   return (
     <ConditionChips
       adding={fix.adding}
@@ -39,7 +30,6 @@ export function PlanChips({
       chips={chips}
       corner={corner}
       disabled={busy}
-      extra={dock}
       fixed={bandIsFixed(answer.input.kind)}
       friendIds={fix.friendIds}
       onAdd={fix.toggleAdding}

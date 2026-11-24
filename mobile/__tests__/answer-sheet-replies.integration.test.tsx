@@ -4,6 +4,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -14,6 +15,7 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { ASKED, askOnMap, card, mapThings } from './support/answer-map';
+import { raiseCard } from './support/card-grip';
 import { answerEvents, MAJOR } from './support/events';
 import { type FakeServer, refusal } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -23,9 +25,9 @@ import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// P04 ticket 05: the bottom hides only what the map already says. A way Lookup docks with "길 안내" beside the input
-// and no lines; the shuttle not running, a refusal, and a failure dock as their first line, whose press raises the
-// rest, with their buttons as chips; a procedure in words and a reply with cards keep their card open.
+// P04 tickets 05 and 61: every reply stands in one sheet, its words first, laid out once; low shows its top and a drag
+// brings up the rest. A way Lookup has "길 안내" beside the input; the shuttle not running, a refusal, and a failure
+// start with their words, their buttons under them; a procedure in words and a reply with cards stand whole.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -42,7 +44,7 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const NOT_RUNNING = '셔틀은 지금 다니지 않아요 (평일 8–21시)';
-// The model's words beside those Lookups, which are the dock's line (P04 ticket 18).
+// The model's words beside those Lookups, which come first (P04 ticket 18).
 const NOT_RUNNING_WORDS = '셔틀은 지금 다니지 않아요.';
 const WAY_WORDS = '문화관은 지금 있는 301동에서 걸어서 18분이에요.';
 const WAY_FLAG = '문화관(73동) · 걸어서 18분';
@@ -70,10 +72,6 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-function dock(): ReturnType<typeof within> {
-  return within(screen.getByTestId('dock-row'));
-}
-
 type User = Awaited<ReturnType<typeof openMain>>;
 
 // Starts the app and asks; the main server fails the request.
@@ -91,15 +89,14 @@ function sentBodies(): unknown[] {
 }
 
 // Partitions: a Lookup the map draws, and one whose answer is words the map does not show.
-describe('a Lookup in the dock', () => {
-  it('draws a way on the map with "길 안내" beside the input and the model\'s words as the one line', async () => {
+describe('a Lookup in the sheet', () => {
+  it('draws a way on the map with "길 안내" beside the input and the model\'s words first in the sheet', async () => {
     await askOnMap(server, WAY_LOOKUP_REPLY);
 
     expect(mapThings()).toContain(WAY_FLAG);
     expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '길 안내' })).toBeVisible();
-    expect(card().getByTestId('dock-line')).toHaveTextContent(WAY_WORDS, { exact: false });
-    expect(card().queryByTestId('lookup-card')).toBeNull();
-    expect(card().queryByRole('button', { name: '근거 ›' })).toBeNull();
+    expect(card().getByText(WAY_WORDS)).toBeVisible();
+    expect(card().getByTestId('lookup-card')).toBeOnTheScreen();
   });
 
   it('keeps "길 안내" from acting on the turn before while the next reply is on its way', async () => {
@@ -113,14 +110,13 @@ describe('a Lookup in the dock', () => {
     expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '길 안내' })).toBeDisabled();
   });
 
-  it('says that the shuttle is not running in one line, whose press raises the rest', async () => {
-    const user = await askOnMap(server, NOT_RUNNING_LOOKUP_REPLY);
+  it('says first that the shuttle is not running, with the rest under it, raised by the grip', async () => {
+    await askOnMap(server, NOT_RUNNING_LOOKUP_REPLY);
 
     expect(card().getByText(NOT_RUNNING_WORDS)).toBeVisible();
-    expect(card().queryByText(WALK)).toBeNull();
     expect(screen.queryByTestId('ai-input-beside')).toBeNull();
 
-    await user.press(card().getByText(NOT_RUNNING_WORDS));
+    await raiseCard();
 
     expect(card().getByTestId('lookup-card')).toBeVisible();
     expect(card().getByText(NOT_RUNNING)).toBeVisible();
@@ -134,8 +130,6 @@ describe("a Lookup's flag", () => {
   it("raises a first way's card, its chips and basis under the card's ✕, when the model said nothing", async () => {
     const user = await askOnMap(server, { ...WAY_LOOKUP_REPLY, text: '' });
 
-    expect(card().queryByTestId('dock-line')).toBeNull();
-    expect(card().queryByRole('button', { name: '근거 ›' })).toBeNull();
     await press(user, WAY_FLAG);
     await pass(300);
 
@@ -155,28 +149,27 @@ describe("a Lookup's flag", () => {
 });
 
 // Partitions: the line, and an offer pressed.
-describe('a refusal in the dock', () => {
-  it("shows a refusal's first line with its offers as chips, and a press on the line raises the whole text", async () => {
+describe('a refusal in the sheet', () => {
+  it("shows a refusal's lines first with its offers under them, the whole raised by the grip", async () => {
     const reply = REFUSAL_REPLIES.get(HOMEWORK);
-    const user = await askOnMap(server, { ...reply, text: '그건 도와 드릴 수 없어요.' });
+    await askOnMap(server, { ...reply, text: '그건 도와 드릴 수 없어요.' });
 
     expect(card().getByText(CANNOT)).toBeVisible();
-    expect(card().queryByText(INSTEAD)).toBeNull();
     for (const label of ['배고파', '공부할 자리', '오늘 볼 만한 거 있어?']) {
-      expect(dock().getByRole('button', { name: label })).toBeVisible();
+      expect(card().getByRole('button', { name: label })).toBeOnTheScreen();
     }
 
-    await user.press(card().getByText(CANNOT));
+    await raiseCard();
 
     expect(card().getByText(INSTEAD)).toBeVisible();
     expect(card().getByTestId('refusal-offers')).toBeVisible();
   });
 
-  it('sends an offer from its chip as a new turn', async () => {
+  it('sends an offer from its button as a new turn', async () => {
     const reply = REFUSAL_REPLIES.get(HOMEWORK);
     const user = await askOnMap(server, { ...reply, text: '그건 도와 드릴 수 없어요.' });
 
-    await user.press(dock().getByRole('button', { name: '공부할 자리' }));
+    await user.press(card().getByRole('button', { name: '공부할 자리' }));
     await pass(500);
 
     expect(sentBodies().at(-1)).toMatchObject({
@@ -190,23 +183,22 @@ describe('a refusal in the dock', () => {
 });
 
 // Partitions: the line, and 다시 시도 pressed.
-describe('a failure in the dock', () => {
-  it('shows a failure in one line with 다시 시도, and a press on the line raises the whole text', async () => {
-    const user = await askFailing();
+describe('a failure in the sheet', () => {
+  it('shows a failure first with 다시 시도, the whole text raised by the grip', async () => {
+    await askFailing();
 
     expect(card().getByText(FAILED_FIRST)).toBeVisible();
-    expect(card().queryByText(FAILED_SECOND)).toBeNull();
-    expect(dock().getByRole('button', { name: '다시 시도' })).toBeVisible();
+    expect(card().getByRole('button', { name: '다시 시도' })).toBeOnTheScreen();
 
-    await user.press(card().getByText(FAILED_FIRST));
+    await raiseCard();
 
     expect(card().getByText(FAILED_SECOND)).toBeVisible();
   });
 
-  it('sends the same message again from the 다시 시도 chip', async () => {
+  it('sends the same message again from 다시 시도', async () => {
     const user = await askFailing();
 
-    await user.press(dock().getByRole('button', { name: '다시 시도' }));
+    await user.press(card().getByRole('button', { name: '다시 시도' }));
     await pass(500);
 
     const [first, again] = sentBodies();
@@ -223,7 +215,6 @@ describe('a reply the map does not carry', () => {
     expect(card().getByText('학생증은 이렇게 받아요.')).toBeVisible();
     expect(card().getByText('MySNU에서 신청해요')).toBeVisible();
     expect(card().getByText('다음 날 67동 2층에서 받아요')).toBeVisible();
-    expect(screen.queryByTestId('dock-row')).toBeNull();
   });
 
   it('keeps a reply with an event card open', async () => {
@@ -237,6 +228,5 @@ describe('a reply the map does not carry', () => {
 
     expect(card().getByText('설명회가 있어요.')).toBeVisible();
     expect(card().getByRole('link', { name: MAJOR.title })).toBeVisible();
-    expect(screen.queryByTestId('dock-row')).toBeNull();
   });
 });

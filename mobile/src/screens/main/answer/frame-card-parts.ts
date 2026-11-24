@@ -24,29 +24,21 @@ export interface FrameCardProps {
   testID: string;
   // Keeps the content's height, while a reply is on its way.
   hold?: boolean;
-  // The handle that raises the card up to the pill and lowers it again. Left out, the card has one height.
+  // The card's step, low, middle, or high (P04 ticket 61). Left out, the card has one height.
   raising?: Raising;
   // ✕ at the right end of the header's row, which closes the answer (P04 ticket 52). Left out, none.
   onClose?: () => void;
   // "＋ 새 대화" just left of ✕. Left out, none.
   onAskNew?: () => void;
-  // The small label under the grip: what a drag up brings ("11곳 목록"). Left out or null, none.
-  gripLabel?: string | null;
   // The history chip at the left of the header's row. Left out or null, none.
   chip?: ReactNode;
   // Told the most the scrolling part may take at the card's height now, so that a list in it can end above the input
   // and scroll inside itself.
   onContentCap?: (cap: number | null) => void;
-  // The time bar's height, which the raised card stops under. Left out, none.
+  // The time card's height as it stands by default, which high stops under. Left out, none.
   timeBarHeight?: number;
-  // The AI input's bottom from the stage's bottom, which the docked card's edge stands just under.
-  inputBottom?: number;
-  // What the card shows at its lowest step, the dock, held over its children and shown as the card comes down to its
-  // height (P04 ticket 57). Left out, the card has no dock and its lowest step is the lowered one.
-  dock?: ReactNode;
-  // What stands under the header at every step, outside both the scrolling part and the dock, so that it is mounted once
-  // when the answer docks (a kept seat card, PR 537's review).
-  lead?: ReactNode;
+  // Low shows the content whole up to the middle step, as while the keyboard is up or the list of questions is open.
+  fit?: boolean;
   // Null leaves the card empty.
   children: ReactNode;
 }
@@ -62,9 +54,9 @@ export function contentMaxOf(stageHeight: number | null, barRoom: number): numbe
 }
 
 export const LOWERED: Raising = {
-  raised: false,
-  setRaised: () => {
-    // A card without the handle stays lowered.
+  level: 'low',
+  setLevel: () => {
+    // A card without steps stays as it is.
   },
 };
 

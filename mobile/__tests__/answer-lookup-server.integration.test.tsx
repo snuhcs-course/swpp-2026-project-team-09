@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -80,17 +81,16 @@ async function askAfterWay(lookup: object): Promise<User> {
   return user;
 }
 
-// Partitions: a late way and one on time, docked. Expected values: the copies of boards q3 and q2. A way with nothing
-// to read stays docked, with no handle to raise it (board 10, P04 ticket 10); its basis is reached by its flag.
+// Partitions: a late way and one on time. Expected values: the copies of boards q3 and q2. Its basis is reached by its
+// flag.
 describe('the basis of a way', () => {
-  it('docks a way that is late with the lateness on the map, its basis folded', async () => {
+  it('draws a way that is late with the lateness on the map', async () => {
     await askAfterWay(late);
 
     expect(mapThings()).toContain('13:05 도착 · 5분 늦어요');
-    expect(card().queryByText('걸어서 15분 · 지금 12:50')).toBeNull();
   });
 
-  it('docks a way on time, whose main button is "길 안내" until the leave-by notification is drawn', async () => {
+  it('draws a way on time, whose main button is "길 안내" until the leave-by notification is drawn', async () => {
     await askAfterWay(leave);
 
     expect(beside().getByRole('button', { name: '길 안내' })).toBeVisible();
