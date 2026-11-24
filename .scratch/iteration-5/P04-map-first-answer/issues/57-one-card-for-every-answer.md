@@ -51,3 +51,8 @@ A drag down from the lowered card that is let go short of closing snapped back u
 
 - Agent time: about 2 hours 10 minutes in this session, the emulator checks and the test runs included (an estimate from the session's timestamps). No subagents.
 - Tokens: an estimate: output about 70k; input about 60M, almost all cache reads, with about 600k cache writes.
+
+### Agent usage (2026-11-24, review pass)
+
+- Agent time: about 1 hour 30 minutes more in this session for PR 537's review (the kept seat card mounted once, the docked answer opening at its dock, the lead's padding), the test runs, and the emulator pictures (an estimate from the session's timestamps). No subagents.
+- Tokens: an estimate: output about 40k; input about 35M, almost all cache reads, with about 300k cache writes.
