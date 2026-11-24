@@ -8,6 +8,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useState } from 'react';
@@ -16,7 +17,6 @@ import type { AnswerLine, AnswerReply, ConditionChip } from '@/api/assistant-typ
 import type { AnswerOffer } from '@/api/refusal-types';
 import { Button, color, space, text } from '@/design-system';
 import { movingWords } from '@/features/assistant/band-move';
-import { modelWordsOf } from '@/features/assistant/model-words';
 import { easedFromNow } from '@/features/assistant/relaxed-plan';
 import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
@@ -30,6 +30,7 @@ import { FriendChoices } from './friend-choices';
 import { MainButtons } from './main-buttons';
 import { MealList, mealCard } from './meal-list';
 import { MealMenu } from './meal-menu';
+import { mealWordsOf } from './meal-words';
 import { PlanStepper } from './plan-stepper';
 import { RelaxButtons } from './relax-buttons';
 import { RowFourButtons } from './row-four-buttons';
@@ -225,10 +226,10 @@ function settled({ made, changed, left }: PlanInvitation): boolean {
   return made !== null || changed !== null || left !== null;
 }
 
-// The Assistant's whole words over a meal answer's list; none over a restaurant's menu, nor under a refusal's lines
-// over the Plan, which already say them. They come first, so that the low sheet shows them (P04 ticket 61).
+// The words over a meal answer's list (`mealWordsOf`); none over a restaurant's menu, nor under a refusal's lines over
+// the Plan, which already say them. They come first, so that the low sheet shows them (P04 ticket 61).
 function MealWords({ said, shown }: { said: string; shown: ShownAnswer }): ReactElement | null {
-  const words = modelWordsOf(said);
+  const words = mealWordsOf(said, shown);
   return words === '' || shown.menuFor !== null ? null : (
     <View testID="meal-words">
       <ChatMarkdown style={styles.words} text={words} />
@@ -242,7 +243,7 @@ function MealBody(props: PlanCardProps & { busy: boolean; chips: ReactNode }): R
   const { shown, answer, invitation, over = [], said = '' } = props;
   return (
     <>
-      <MealWords said={over.length > 0 ? '' : said} shown={shown} />
+      {over.length > 0 ? null : <MealWords said={said} shown={shown} />}
       {props.chips}
       <MealSheet answer={answer} busy={props.busy || settled(invitation)} shown={shown} />
     </>
