@@ -77,8 +77,20 @@ Known, on hold by the user's decision (2026-11-25): the band at low is measured 
 
 The user's phone, on a preview merging PR 552 with this ticket: "＋ 같이" gave "Maximum update depth exceeded" at once. Opening picking lays the time card out again, and its reported height came back a fraction of a point different each time (its rows' fractional height taken from a height the phone rounds to its pixels: 112, then 111.79, then 111.71 on the emulator). With every step at its share, the sheet's place hung on that height at every step, so each report moved the sheet in render; on the phone it never settled. The time card's, the header's, and the content's measured heights now move the sheet only by half a point or more (`steady.ts`). Test: `frame-card-steady`. On PR 552's side, its own `onLayout` reports (`time-bar.tsx` subtracting the rows' height, `person-rows.tsx`) still set state on any fraction; guarding them the same way is theirs to decide.
 
+### High over the time card (2026-11-26, commit `4ffba01df`)
+
+The user's phone, on the preview merging PR 552 at `0285b1ce3` with this ticket at `068eb1c32`: "하단 카드 높게를 화면 전체로 수정했구나? 원래는 시간 바 밑까지였잖아". It happened once, after people picking with the sheet raised and lowered while new bundles were arriving over Metro. After reopening the app high stood under the time card again, and he could not bring it back on purpose. Not reproduced here: on the emulator the first meal answer told its folded time card at 115.8 points and high stood under it, and then the emulator's Android restarted itself under the Mac's load before the picking steps ran.
+
+The cause, from the code: the time card told its folded height as its laid-out height less its rows' room as React held it (`time-bar.tsx`, since ticket 61). The sheet rising to high under an open card shuts the rows' room on the UI thread first (`sheet-link`). A layout then, with React still holding the card open, told the folded height less the rows' room: below 0 while picking, whose rows run to about 200 points. React folded the card, nothing was laid out again, and high rose to the stage's top until the card was next laid out. PR 552 fixed it where the height is told (`8c7709b59`: the band's bottom, the gap, and the grip's strip, each as laid out).
+
+Here, as a backstop, high measures only by a time card's height of at least its folded least, its head's row and its grip's strip (52 points), and keeps the last such height otherwise; 0 is still no time card (`card-caps.ts`). Test: `frame-card-high`, 3 of 4 fail before (a told −90 put high at 616, the whole stage, instead of 496).
+
 ### Agent usage (2026-11-25)
 
 - Agent time: about 60 minutes in this session (an estimate), plus the other session's start on rule 1 (commit `4281d90e7`, not measured here).
 - Tokens (this session, no subagents): input 614 uncached, plus cache reads 88,996,060 and cache writes 440,837; output 139,541.
 
+### Agent usage (2026-11-26)
+
+- Agent time: about 70 minutes in this session (an estimate) on the high over the time card, its guard, and a fix for PR 552's file that its own commit `8c7709b59` made needless.
+- Tokens (this session, no subagents, since 2026-11-26 00:00 KST): input 278 uncached, plus cache reads 29,031,023 and cache writes 256,391; output 106,099 (up to this entry).
