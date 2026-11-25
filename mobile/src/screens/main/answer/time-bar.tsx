@@ -6,6 +6,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, use, useState } from 'react';
@@ -33,7 +34,11 @@ import { bookingKept } from '../library/booking-kept';
 import { SlotBand } from '../library/slot-band';
 import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
-import { PersonRows } from './person-rows';
+import { type Picking, PersonRows } from './person-rows';
+import { usePickingBar } from './pick-head';
+import { usePickingPlace } from './picking-place';
+import { PickHint } from './sheet-hint';
+import { useFoldedHeight } from './folded-height';
 import { SheetLinkContext } from './sheet-link';
 import { TimeBand } from './time-band';
 import { STRIP_SLOP, type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
@@ -46,8 +51,8 @@ const NO_QUESTS: readonly Quest[] = [];
 // usual text size. Laid out, the chip's own width is the room, so that a larger text size widens both (P04 ticket 37):
 // the chip stands 12 from the bar's edge, 4 short of the bar's padding of 16, which is the gap before the words.
 const ADD_ROOM = 72;
-// The grip's name alone, where it opens nothing.
-const GRIP_ALONE = '시간 카드 손잡이';
+// The gap over the grip's strip, which the folded height counts (`useFoldedHeight`).
+const STRIP_TOP = space[1];
 
 function ignoreDrop(): void {
   // A Lookup's band has no handles.
@@ -69,27 +74,29 @@ interface BarProps {
   onHeight: (height: number) => void;
   // How far below its place under the pill it stands, under the bar of several requests (P04 ticket 09); left out, 0.
   offset?: number;
+  // People are picked in its rows (P04 ticket 64), which opens it.
+  picking?: Picking | null;
 }
 
 // The bar's grip in its strip, the card's whole width at its bottom (the user's phone check), under a hairline that
 // parts it from the card's content as the answer sheet's header is parted, left out when the card is tucked to the
-// strip alone. A drag anywhere on the strip moves the card between tucked, its place, and with Friends open
-// (`useTimeCardGrip`); a press opens it or folds it again, and a screen reader tucks it away or back. Alone (`label`
-// null) it only tucks.
-function Grip(p: { grip: TimeCardGrip; label: string | null; folded: boolean }): ReactElement {
-  const { grip, label, folded } = p;
+// strip alone. A drag anywhere on the strip moves the card between tucked, its place, and open (`useTimeCardGrip`); a
+// press opens it or folds it again, and a screen reader tucks it away or back.
+function Grip(p: { grip: TimeCardGrip; folded: boolean; onLayout: (event: LayoutChangeEvent) => void }): ReactElement {
+  const { grip, folded } = p;
   return (
     <GestureDetector gesture={grip.pan}>
       <Pressable
         accessibilityActions={grip.actions}
-        accessibilityLabel={label ?? GRIP_ALONE}
-        accessibilityRole={label === null ? undefined : 'button'}
-        accessibilityState={label === null ? undefined : { expanded: !folded }}
+        accessibilityLabel={`사람별 시간 ${folded ? '펼치기' : '접기'}`}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: !folded }}
         hitSlop={STRIP_SLOP}
         onAccessibilityAction={({ nativeEvent }) => {
           grip.onAction(nativeEvent.actionName);
         }}
-        onPress={label === null ? undefined : grip.toggle}
+        onLayout={p.onLayout}
+        onPress={grip.toggle}
         style={styles.strip}
         testID="time-card-grip"
       >
@@ -101,7 +108,12 @@ function Grip(p: { grip: TimeCardGrip; label: string | null; folded: boolean }):
 }
 
 // The rows for each person under the open card, in the room that grows as the card is pulled open.
-function OpenRows(p: { band: BarProps['band']; grip: TimeCardGrip; onHeight: (height: number) => void }): ReactElement {
+function OpenRows(p: {
+  band: BarProps['band'];
+  grip: TimeCardGrip;
+  picking: Picking | null;
+  onHeight: (height: number) => void;
+}): ReactElement {
   const { band, grip } = p;
   const folded = grip.place !== 'open';
   return (
@@ -112,6 +124,7 @@ function OpenRows(p: { band: BarProps['band']; grip: TimeCardGrip; onHeight: (he
         hidden={folded}
         moving={band.moving ?? null}
         onHeight={p.onHeight}
+        picking={p.picking}
         shown={{ startAt: band.band.startAt, endAt: band.band.endAt }}
       />
     </Reanimated.View>
@@ -119,41 +132,32 @@ function OpenRows(p: { band: BarProps['band']; grip: TimeCardGrip; onHeight: (he
 }
 
 // The time bar: the answer's band in one white row at the top, its head the words and "＋ 같이", its track over the
-// free time around the span, at one range and scale whether it is open or not. With Friends, pulled open by its grip, a
-// row for each person comes out under the track over the same range, four people at most in sight and the rest
-// scrolled to (P04 ticket 61). A time outside that range is
-// reached by asking in the chat, not by a drag. Its grip also pushes it up out of the way. The height it tells is its
+// free time around the span, at one range and scale whether it is open or not. Pulled open by its grip, a row for each
+// person comes out under the track over the same range, 나's alone when nobody is added, four people at most in sight
+// and the rest scrolled to (P04 ticket 61); people are picked in those rows (P04 ticket 64). A time outside that range
+// is asked for in the chat, not by a drag. Its grip also pushes it up out of the way. The height it tells is its
 // folded one: open, it lies over the map for a while.
-function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactElement {
+function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
   const [addWidth, setAddWidth] = useState(ADD_ROOM);
-  const [height, setHeight] = useState(0);
   const [rows, setRows] = useState(0);
+  const { height, onBand, onStrip } = useFoldedHeight(STRIP_TOP, onHeight);
   const barY = barTop(top) + offset;
-  const { lanes, startAt, now } = band.band;
-  const friends = lanes.length > 1;
-  const grip = useTimeCardGrip({ height, top: barY, opens: friends, rows, sheet: use(SheetLinkContext) });
-  const folded = !friends || grip.place !== 'open';
-  const label = friends ? `사람별 시간 ${folded ? '펼치기' : '접기'}` : null;
+  const { startAt, now } = band.band;
+  const sheet = use(SheetLinkContext);
+  const grip = useTimeCardGrip({ height, top: barY, rows, sheet });
+  usePickingPlace(picking !== null, grip, sheet.high);
   return (
-    <Reanimated.View
-      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-        if (!grip.moving && grip.followsSheet.value === 0) {
-          const own = nativeEvent.layout.height - (folded ? 0 : rows);
-          setHeight(own);
-          onHeight(own);
-        }
-      }}
-      style={[styles.bar, { top: barY }, grip.moved, grip.rested]}
-      testID="time-bar"
-    >
-      <TimeBand
-        {...band}
-        day={day ?? koreaDayWord(startAt, new Date(now))}
-        folded
-        head={{ right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
-      />
-      {friends ? <OpenRows band={band} grip={grip} onHeight={setRows} /> : null}
+    <Reanimated.View style={[styles.bar, { top: barY }, grip.moved, grip.rested]} testID="time-bar">
+      <View onLayout={onBand} testID="time-card-head">
+        <TimeBand
+          {...band}
+          day={day ?? koreaDayWord(startAt, new Date(now))}
+          folded
+          head={{ right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
+        />
+      </View>
+      <OpenRows band={band} grip={grip} onHeight={setRows} picking={picking} />
       {add === null ? null : (
         <View
           onLayout={({ nativeEvent }: LayoutChangeEvent) => {
@@ -165,7 +169,8 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
           {add}
         </View>
       )}
-      <Grip folded={folded} grip={grip} label={label} />
+      <Grip folded={grip.place !== 'open'} grip={grip} onLayout={onStrip} />
+      {picking === null ? null : <PickHint friends={picking.rows.length > 1} />}
     </Reanimated.View>
   );
 }
@@ -189,20 +194,22 @@ export function PlanBar(props: PlanBarProps): ReactElement {
   const { shown, answer, plan, invitation, focus, onClose, onHeight, offset } = props;
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const settled = invitation.made !== null || invitation.changed !== null || invitation.left !== null;
-  const addName = !settled && (fix.adding || fix.choices.length > 0) ? addNameOf(answer.input.kind) : null;
+  const addName = settled ? null : addNameOf(answer.input.kind);
   const busy = shown.recalculating || invitation.sending || invitation.changing;
   // A meeting changed in place (P04 ticket 17) is set: its band is read, not moved.
   const fixed = bandIsFixed(answer.input.kind) || invitation.changed !== null;
   const tick = mealTickOf(answer);
   const sent = invitation.sending || invitation.made !== null;
+  const pickingBar = usePickingBar(shown, plan, { busy, onClose });
   return (
     <Bar
+      picking={pickingBar.picking}
       band={{
         tick:
           tick === null
             ? undefined
             : { side: tick.side, node: <MealTick sent={sent} shown={shown} words={tick.words} /> },
-        band: plan.band,
+        band: pickingBar.band,
         disabled: busy,
         fixed: windowOf(answer.input),
         focus: fix.focus,
@@ -213,9 +220,10 @@ export function PlanBar(props: PlanBarProps): ReactElement {
         onMove: fixed ? undefined : fix.move,
       }}
       add={
-        addName === null ? null : (
-          <AddChip adding={fix.adding} disabled={busy} inBar name={addName} onAdd={fix.toggleAdding} />
-        )
+        pickingBar.head ??
+        (addName === null ? null : (
+          <AddChip disabled={busy} inBar name={addName} onAdd={fix.toggleAdding} inPlan={pickingBar.inPlan} />
+        ))
       }
       day={mealDayOf(answer, plan)}
       onHeight={onHeight}
@@ -300,7 +308,7 @@ const styles = StyleSheet.create({
   // The rows' room, which grows as the card is pulled open.
   grown: { overflow: 'hidden' },
   // The card's whole width, its padding included, 20 high from the hairline to the card's edge (`TUCK_STRIP`).
-  strip: { alignItems: 'center', marginTop: space[1], marginHorizontal: -space[4], paddingVertical: space[2] },
+  strip: { alignItems: 'center', marginTop: STRIP_TOP, marginHorizontal: -space[4], paddingVertical: space[2] },
   rule: {
     position: 'absolute',
     top: 0,

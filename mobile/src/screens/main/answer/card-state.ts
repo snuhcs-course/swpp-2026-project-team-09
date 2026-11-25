@@ -3,6 +3,7 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useState } from 'react';
@@ -87,9 +88,14 @@ export function layerOf(list: QuestionsOpen, control: ChatSheetControl): (() => 
   return control.answer.menuFor === null ? null : control.answer.closeMenu;
 }
 
-// What Android's back takes away, one layer a press: the layer over the card (`layerOf`), the raised card down to low,
-// then the answer.
+// What Android's back takes away, one layer a press: picking people in the time card, leaving the Plan as it was (P04
+// ticket 64), the layer over the card (`layerOf`), the raised card down to low, then the answer.
 export function backOf({ list, control, level, lower, leave }: BackLayers): () => void {
+  if (control.answer.adding) {
+    return (): void => {
+      control.answer.setAdding(false);
+    };
+  }
   return layerOf(list, control) ?? (level === 'low' ? leave : lower);
 }
 

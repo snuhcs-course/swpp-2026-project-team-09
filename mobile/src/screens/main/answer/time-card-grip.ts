@@ -3,6 +3,7 @@
  *
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -49,8 +50,7 @@ interface GripInput {
   // The card's height folded, and its top from the stage's top, which is under the status bar.
   height: number;
   top: number;
-  // With Friends it opens, and the rows for each person add this much to it open.
-  opens: boolean;
+  // The rows for each person add this much to it open.
   rows: number;
   // The answer sheet under it: opening brings a high sheet down, and the sheet rising to high folds the card.
   sheet: SheetLink;
@@ -71,6 +71,8 @@ export interface TimeCardGrip {
   grown: Moved;
   grownRest: ViewStyle;
   toggle: () => void;
+  // Settles the card at a place, as picking people does (P04 ticket 64).
+  settleTo: (to: GripPlace) => void;
   // 1 while the card's open height follows the sheet's move (`sheet-link`): its laid-out height then is not its own.
   followsSheet: SharedValue<number>;
   // A screen reader's steps on the grip.
@@ -265,10 +267,10 @@ function useFoldUnder(high: boolean, place: GripPlace, settle: (index: number) =
   }, [high, place, settle]);
 }
 
-export function useTimeCardGrip({ height, top, opens, rows, sheet }: GripInput): TimeCardGrip {
+export function useTimeCardGrip({ height, top, rows, sheet }: GripInput): TimeCardGrip {
   // How far up the card goes: until its last TUCK_STRIP points stand at the stage's top, under the status bar.
   const reach = Math.max(0, top + height - TUCK_STRIP);
-  const stops = useMemo(() => (opens ? [-reach, 0, rows] : [-reach, 0]), [reach, opens, rows]);
+  const stops = useMemo(() => [-reach, 0, rows], [reach, rows]);
   const y = useSharedValue(0);
   const { place, moving, setMoving, settle } = useSettling(stops, y, sheet);
   useFoldUnder(sheet.high, place, settle);
@@ -286,8 +288,11 @@ export function useTimeCardGrip({ height, top, opens, rows, sheet }: GripInput):
     ...styles,
     followsSheet,
     toggle: () => {
-      if (opens) {
-        settle(place === 'shown' ? 2 : 1);
+      settle(place === 'shown' ? 2 : 1);
+    },
+    settleTo: (to: GripPlace) => {
+      if (to !== place) {
+        settle(PLACES.indexOf(to));
       }
     },
     actions: [place === 'tucked' ? { name: 'untuck', label: UNTUCK_LABEL } : { name: 'tuck', label: TUCK_LABEL }],

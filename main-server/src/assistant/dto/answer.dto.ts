@@ -7,6 +7,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -233,6 +234,15 @@ export interface TimeBand {
   now: string;
   // A busy stretch of a Plan's band says what it is: "302동 수업", "수업", or "일정".
   lanes: { userId: string; name: string; busy: { startAt: string; endAt: string; label?: string }[] }[];
+  // A meal's or a meeting's Plan: each of the asker's Friends not in the plan, in the order of their Friend list, for
+  // the time card to offer adding before one recalculation. `busy` as a lane's; `walkMinutes` from the Place nearest
+  // them to the Plan's, null when the asker may not see where they are.
+  others?: {
+    userId: string;
+    name: string;
+    busy: { startAt: string; endAt: string; label?: string }[];
+    walkMinutes: number | null;
+  }[];
   startAt: string;
   endAt: string;
   text: string;

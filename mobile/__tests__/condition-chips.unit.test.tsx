@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen, userEvent, within } from '@testing-library/react-native';
@@ -11,7 +12,8 @@ import type { ComponentProps } from 'react';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { NO_LOCATION_ANSWER } from '@/api/mock/data/missing-inputs';
 import { color } from '@/design-system';
-import { ConditionChips } from '@/screens/main/answer/condition-chips';
+import { AddChip, ConditionChips } from '@/screens/main/answer/condition-chips';
+import { chipLook } from '@/screens/main/answer/card-header';
 
 const MINSU = '35976b5c-4daf-454f-b10e-c8b09a33ca37';
 
@@ -76,7 +78,7 @@ describe('ConditionChips shown', () => {
     expect(screen.getByRole('button', { name: '13:00 수업까지' })).toHaveStyle({ borderColor: color.borderStrong });
   });
 
-  it('draws ＋ 같이 chosen while the list of Friends is open', async () => {
+  it('draws ＋ 같이 chosen while people are picked', async () => {
     await show({ adding: true });
 
     expect(screen.getByRole('button', { name: '같이 먹을 친구 추가' })).toBeSelected();
@@ -84,8 +86,7 @@ describe('ConditionChips shown', () => {
 });
 
 describe("ConditionChips' corner", () => {
-  // Partitions: the corner's action, the basis closed, open, none to open, and "그대로" while the list of Friends is
-  // open; and a press on it.
+  // Partitions: the corner's action, the basis closed, open, and none to open; and a press on it.
   it('draws no 근거 without a basis to open', async () => {
     await show({ corner: null });
 
@@ -98,14 +99,6 @@ describe("ConditionChips' corner", () => {
     await show({ corner: { words: '근거 접기', icon: 'chevronUp', onPress: noop } });
 
     expect(screen.getByRole('button', { name: '근거 접기' })).toBeVisible();
-    expect(screen.queryByRole('button', { name: '근거' })).toBeNull();
-  });
-
-  it('says 그대로 where 근거 stands while the list of Friends is open', async () => {
-    await show({ adding: true, corner: { words: '그대로', icon: null, onPress: noop } });
-
-    const holder: unknown = screen.getByRole('button', { name: '그대로' }).parent?.props.testID;
-    expect(holder).toBe('condition-chips');
     expect(screen.queryByRole('button', { name: '근거' })).toBeNull();
   });
 
@@ -258,5 +251,22 @@ describe("ConditionChips of a Friend's chip", () => {
     await userEvent.press(screen.getByRole('button', { name: '김민수 프로필' }));
 
     expect(onProfile).toHaveBeenCalledWith(MINSU);
+  });
+});
+
+// Partitions: no Friend in the Plan; two. Expected values: the answer sheet's header chips' look (the user's choice of
+// 2026-11-25): filled, no outline, the words muted with the plus before "같이", and "같이 2 ›" in ink.
+describe('the time bar’s "＋ 같이"', () => {
+  it.each([
+    [0, '같이', color.inkMuted],
+    [2, '같이 2 ›', color.ink],
+  ])('with %i Friends in the Plan reads %s, in its colour', async (inPlan, words, ink) => {
+    await render(<AddChip disabled={false} inBar inPlan={inPlan} name="같이 먹을 친구 추가" onAdd={noop} />);
+    const chip = screen.getByRole('button', { name: '같이 먹을 친구 추가' });
+
+    expect(chip).toHaveStyle({ backgroundColor: chipLook.chip.backgroundColor });
+    expect(chip).not.toHaveStyle({ borderWidth: 1 });
+    expect(chip).toHaveTextContent(words);
+    expect(screen.getByText(words)).toHaveStyle({ color: ink });
   });
 });

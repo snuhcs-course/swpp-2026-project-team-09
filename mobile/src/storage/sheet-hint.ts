@@ -2,26 +2,31 @@
  * AI-generated with Claude
  *
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Whether the answer sheet's first-time hint, "손잡이를 올리면 더 볼 수 있어요", was shown on this phone (P04 ticket 61). It
-// shows once a phone, whoever is signed in.
+// Whether a first-time hint was shown on this phone: the answer sheet's, "손잡이를 올리면 더 볼 수 있어요" (P04 ticket 61),
+// or picking's, "지도의 얼굴을 눌러도 골라져요" (P04 ticket 64). Each shows once a phone, whoever is signed in.
 
-const KEY = 'snunow.sheet-hint';
+export type HintName = 'sheet' | 'pick';
 
-export async function sheetHintSeen(): Promise<boolean> {
+function keyOf(name: HintName): string {
+  return `snunow.${name}-hint`;
+}
+
+export async function hintSeen(name: HintName): Promise<boolean> {
   try {
-    return (await AsyncStorage.getItem(KEY)) === 'seen';
+    return (await AsyncStorage.getItem(keyOf(name))) === 'seen';
   } catch {
     return true;
   }
 }
 
-export async function keepSheetHintSeen(): Promise<void> {
+export async function keepHintSeen(name: HintName): Promise<void> {
   try {
-    await AsyncStorage.setItem(KEY, 'seen');
+    await AsyncStorage.setItem(keyOf(name), 'seen');
   } catch {
     // Shown again next time.
   }

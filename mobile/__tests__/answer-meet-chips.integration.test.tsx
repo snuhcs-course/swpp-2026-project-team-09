@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -11,7 +12,7 @@ import type { ConditionChip, Plan } from '@/api/assistant-types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
-import { card, mapThings, timeBar } from './support/answer-map';
+import { mapThings, timeBar } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -21,13 +22,14 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { answerFriendsWithMinSu, friendCard, meetFromCard, MET_MIN_SU, MIN_SU, row } from './support/meet';
 import { startFresh } from './support/mocks';
+import { checkedRows, pickDone, pickRow } from './support/picking';
 import { answerMainScreen, askMainServer, JI_WOO, ME_ID, MIN_JUN, PHONE_NOW } from './support/server';
 
-// The person chips of a meet's answer (P02 ticket 24), over the fake main server: in a meet with 민수 alone, "민수 ✕"
-// goes back to 민수's card, since a meet without its Friend has nothing to plan (board a5's chip); a Friend added by
-// "＋ 같이" or a face is planned with (P02 ticket 09), and in a meet with two Friends each ✕ recalculates as a meal's.
-// The meet is asked from 민수's card, opened from the friend list. A person's ✕ is "빼기" in the card of their face on
-// the map (P04 ticket 03).
+// The people of a meet's answer (P02 ticket 24), over the fake main server: in a meet with 민수 alone, "민수 ✕" goes
+// back to 민수's card, since a meet without its Friend has nothing to plan (board a5's chip), and so does 민수
+// unchecked at 완료; a Friend picked in the time card or by a face is planned with (P04 ticket 64), and in a meet with
+// two Friends each ✕ recalculates as a meal's. The meet is asked from 민수's card, opened from the friend list. A
+// person's ✕ is "빼기" in the card of their face on the map (P04 ticket 03).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -46,7 +48,8 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 const ASKER = { userId: ME_ID, constraints: [] };
 const WITH_MIN_SU = { userId: MIN_SU.id, constraints: [] };
 const WITH_MIN_JUN = { userId: MIN_JUN.id, constraints: [] };
-const JI_WOO_CELL = '서지우, 경영학과, 위치 모름, 추가';
+// 민수's row in the time card, by the band's name for 민수 and the Plan's walk.
+const MIN_SU_ROW = '민수 · 걸음 0분';
 // "＋ 같이" read aloud on a meet.
 const ADD = '같이 만날 친구 추가';
 
@@ -153,37 +156,76 @@ describe("a Friend's ✕ in a meet", () => {
   });
 });
 
-// Partitions: the words of "＋ 같이" and of the list it opens, a Friend chosen in that list, and a face pressed on the
-// map.
-describe('a Friend added to a meet', () => {
-  it('is asked for in words of a meet, not of a meal', async () => {
+// Partitions: picking opened by the meet's "＋ 같이"; a Friend checked in its rows; a face pressed on the map; the only
+// Friend, 민수, unchecked at 완료.
+describe('Friends picked in a meet', () => {
+  it('opens picking from "＋ 같이" read in words of a meet, with 민수 checked', async () => {
     const user = await meetMinSu();
 
     await user.press(timeBar().getByRole('button', { name: ADD }));
 
-    expect(card().getByText('누구와 같이 만날까요?')).toBeVisible();
-    expect(card().queryByText('누구와 같이 먹을까요?')).toBeNull();
+    expect(checkedRows()).toEqual([MIN_SU_ROW]);
+    expect(pickDone()).toHaveTextContent(/^완료$/u);
+    expect(timeBar().queryByRole('button', { name: '같이 먹을 친구 추가' })).toBeNull();
   });
 
-  it('is asked last, without constraints, when chosen in the list', async () => {
+  it('asks a Friend checked in the rows last, without constraints, once, at 완료', async () => {
     const user = await meetMinSu();
     await user.press(timeBar().getByRole('button', { name: ADD }));
 
-    await user.press(card().getByRole('button', { name: JI_WOO_CELL }));
+    await user.press(pickRow(JI_WOO.name));
+    await user.press(pickDone());
     await pass(500);
 
+    expect(peopleAsked()).toHaveLength(2);
     expect(peopleAsked().at(-1)).toEqual({
       ...MET_MIN_SU.input,
       people: [ASKER, WITH_MIN_SU, { userId: JI_WOO.id, constraints: [] }],
     });
   });
 
-  it('is asked the same when their face is pressed on the map', async () => {
+  it('asks the same for a Friend whose face is pressed on the map', async () => {
     const user = await meetMinSu();
 
     await press(user, MIN_JUN.name);
+    await user.press(pickDone());
     await pass(500);
 
     expect(peopleAsked().at(-1)).toEqual({ ...MET_MIN_SU.input, people: [ASKER, WITH_MIN_SU, WITH_MIN_JUN] });
+  });
+
+  it("closes the answer and brings back 민수's card when 민수, the only Friend, is unchecked, asking nothing", async () => {
+    const user = await meetMinSu();
+    await user.press(timeBar().getByRole('button', { name: ADD }));
+
+    await user.press(pickRow('민수'));
+    expect(pickDone()).toHaveTextContent(/^완료$/u);
+    await user.press(pickDone());
+    await pass(500);
+
+    expect(recalculations(server)).toHaveLength(1);
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
+    expect(friendCard().getByRole('header', { name: MIN_SU.name })).toBeVisible();
+  });
+});
+
+// Partitions: a meet of two Friends with both unchecked at 완료.
+describe('a meet left with no Friend picked', () => {
+  // From PR 552's review: with two Friends unchecked the meet asked the main server for a meet of one, which it
+  // refuses (400).
+  it("closes the answer and brings back 민수's card when both of two Friends are unchecked, asking nothing more", async () => {
+    server.on('POST /assistant/answers', { status: 200, body: MET_BOTH });
+    const user = await meetMinSu();
+    await user.press(timeBar().getByRole('button', { name: ADD }));
+
+    await user.press(pickRow('민수'));
+    await user.press(pickRow(MIN_JUN.name));
+    expect(pickDone()).toHaveTextContent(/^완료$/u);
+    await user.press(pickDone());
+    await pass(500);
+
+    expect(recalculations(server)).toHaveLength(1);
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
+    expect(friendCard().getByRole('header', { name: MIN_SU.name })).toBeVisible();
   });
 });

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, Plan } from '@/api/assistant-types';
@@ -171,9 +172,9 @@ describe('the faces of Friends the answer does not draw', () => {
   const input = MEAL_ANSWER.input;
   const inAnswer = input.people[1]?.userId ?? '';
 
-  it('are faint, whether a press would add them or not', () => {
+  it('are faint where a press would add them or the Plan is sent, and lit while in the Plan', () => {
     expect(answerFaceOf(avatarOf('friend-1'), input, null, false)).toMatchObject({ faded: true, addable: true });
-    expect(answerFaceOf(avatarOf(inAnswer), input, null, false)).toMatchObject({ faded: true });
+    expect(answerFaceOf(avatarOf(inAnswer), input, null, false)).toMatchObject({ selected: true, faded: false });
     expect(answerFaceOf(avatarOf('friend-1'), input, null, true)).toMatchObject({ faded: true });
   });
 

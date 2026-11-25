@@ -17,6 +17,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -210,17 +211,16 @@ function TutorialParts({
   );
 }
 
-// The open list of Friends to add takes the input's place in the answer's card, and so does the list of earlier
-// questions, which reaches the sheet's bottom (P04 ticket 52); the input stays mounted under it, hidden, so that
+// The list of earlier questions takes the input's place in the answer's card, as it reaches the sheet's bottom (P04
+// ticket 52); people picked in the time card leave the input where it is (P04 ticket 64). The input stays mounted, hidden, so that
 // "＋ 새 대화" can put the cursor in it as the list closes. The time band moved whole hides the input but keeps its room,
 // so that the card and its lanes stay under the finger.
 function inputStateOf(chat: MapBottomProps['chat']): { listOpen: boolean; inputGone: boolean; inputShown: boolean } {
   const listOpen = chat.framed && chat.card.earlier.open;
-  const adding = chat.framed && chat.answer.adding;
   return {
     listOpen,
-    inputGone: adding || listOpen,
-    inputShown: !adding && !(chat.framed && chat.answer.moving !== null),
+    inputGone: listOpen,
+    inputShown: !(chat.framed && chat.answer.moving !== null),
   };
 }
 
@@ -344,7 +344,10 @@ function MapQuestions(props: FramedProps): ReactElement | null {
 // At the input's right: the answer's main button while the keyboard is down. The main map has nothing there: a message
 // from it starts a new conversation by itself (P04 ticket 33).
 function besideOf(chat: ChatSheetControl, action: ReturnType<typeof answerActionOf>, keyboardUp: boolean): ReactNode {
-  return action === null || keyboardUp ? null : <AnswerActionButton action={action} control={chat} />;
+  // While people are picked the main button waits for 완료 (P04 ticket 64).
+  return action === null || keyboardUp || (chat.framed && chat.answer.adding) ? null : (
+    <AnswerActionButton action={action} control={chat} />
+  );
 }
 
 const styles = StyleSheet.create({

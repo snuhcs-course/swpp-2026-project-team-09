@@ -7,6 +7,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
@@ -45,6 +46,7 @@ import { type AnswerPerson, mealAnswer, menusOf } from './meal-answer.js';
 import { type ServedMenu } from './meal-menu.js';
 import { type BusyItem, busyIn, leaveOut, mealChangeable, mealSetOf } from './meal-plan-parts.js';
 import { type MissingInputs } from './missing-inputs.js';
+import { locationPlaceOf, otherFriendsOf } from './other-friends.js';
 import { placeLabelOf } from './place-naming.js';
 import { relatedOf } from './related-quests.js';
 import { conditionsOf } from './plan-conditions.js';
@@ -80,10 +82,6 @@ interface PlanAt {
   setsAside?: boolean;
 }
 
-// The Place the Friend view puts a Friend in now: the one of their position at 'exact', and all there is at 'building'.
-export const locationPlaceOf = (friend: FriendView | undefined): string | null =>
-  friend === undefined || friend.level === 'timetable' ? null : friend.placeId;
-
 @Injectable()
 export class MealPlanService {
   constructor(
@@ -113,17 +111,17 @@ export class MealPlanService {
     given: MealInput,
     at: PlanAt,
   ): Promise<{ answer: AnswerReply; served: ReadonlyMap<string, ServedMenu>; busy?: BusyItem[]; posted?: boolean }> {
-    const friends = await this.friendsOf(askerId, given);
-    this.refuseUnknownPlaces(given);
+    const { friends, others: notInPlan } = await this.friendsOf(askerId, given);
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
     const { date, meal } = given;
-    const [people, collected, missing, held] = await Promise.all([
+    const [people, others, collected, missing, held] = await Promise.all([
       this.peopleOf(askerId, friends, date, at.location),
+      otherFriendsOf(notInPlan, date, { days: this.days, travel: this.travel }),
       this.menus.findByDate(date),
       this.missingOf(askerId, at),
       heldMealOf(this.prisma, askerId, given),
     ]);
-    leaveOut(people, [...(at.leftOut ?? []), ...(held?.subQuestIds ?? [])]);
+    leaveOut([...people, ...others], [...(at.leftOut ?? []), ...(held?.subQuestIds ?? [])]);
     const { adding, asked: input } = addingOf(held, given);
     const [askerPerson, ...friendPeople] = people.map(({ userId, items, position }, index): GatheringPerson => ({
       id: userId,
@@ -145,6 +143,7 @@ export class MealPlanService {
       input,
       now,
       people,
+      others,
       ...gathered,
       menus: menusOf(collected.length, open.length, candidates.length),
       placeOf: (placeId) => this.placeOf(placeId),
@@ -213,10 +212,14 @@ export class MealPlanService {
     return { locationMissing: location === null ? locationMissing : null, noClasses: classes.length === 0 };
   }
 
-  // The Friends of the plan, in its order, refusing a plan that does not start with the asker, names anyone else or
-  // anyone twice, or holds a constraint the asker did not set. A meet's people are read the same way.
-  async friendsOf(askerId: string, input: Pick<MealInput, 'people'>): Promise<FriendView[]> {
-    const [first, ...others] = input.people;
+  // The Friends of the plan, in its order, and the asker's other Friends, in the order of their list, refusing a plan
+  // that does not start with the asker, names anyone else or anyone twice, holds a constraint the asker did not set, or
+  // names a Place there is not. A meet's people are read the same way.
+  async friendsOf(
+    askerId: string,
+    input: Pick<MealInput, 'people' | 'placeId'>,
+  ): Promise<{ friends: FriendView[]; others: FriendView[] }> {
+    const [first, ...named] = input.people;
     if (first?.userId !== askerId) {
       throw new BadRequestException('The first person of a plan is the asker');
     }
@@ -227,16 +230,18 @@ export class MealPlanService {
       throw new BadRequestException('Only the asker sets constraints');
     }
     const listed = await this.friends.list(askerId);
-    return others.map(({ userId }) => {
+    const friends = named.map(({ userId }) => {
       const friend = listed.find(({ id }) => id === userId);
       if (friend === undefined) {
         throw new BadRequestException("Only the asker's Friends can be in a plan");
       }
       return friend;
     });
+    this.refuseUnknownPlaces(input);
+    return { friends, others: listed.filter(({ id }) => !friends.some((friend) => friend.id === id)) };
   }
 
-  refuseUnknownPlaces({ placeId, people }: Pick<MealInput, 'placeId' | 'people'>): void {
+  private refuseUnknownPlaces({ placeId, people }: Pick<MealInput, 'placeId' | 'people'>): void {
     const placeIds = people.flatMap(({ constraints }) =>
       constraints.flatMap((constraint) => (constraint.kind === 'from' ? [constraint.placeId] : [])),
     );

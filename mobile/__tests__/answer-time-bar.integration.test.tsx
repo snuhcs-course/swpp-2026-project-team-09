@@ -4,6 +4,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AssistantReply } from '@/api/assistant-types';
@@ -17,6 +18,7 @@ import { StyleSheet, type ViewStyle } from 'react-native';
 import { screen } from './support/app';
 import { askOnMap, card, timeBar as bar } from './support/answer-map';
 import { grip as sheetGrip, raiseCard } from './support/card-grip';
+import { barShift, barTopOf, layFolded, layRows, stepGrip } from './support/time-card';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { layStage } from './support/lists';
@@ -154,28 +156,14 @@ describe("the bar's head", () => {
   });
 });
 
-// The bar's translation as React holds it: where it rests (P04 ticket 61).
-function barShift(): number {
-  const style: unknown = screen.getByTestId('time-bar').props.style;
-  const flat = StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
-  const shift: unknown = Array.isArray(flat.transform) ? flat.transform[0] : undefined;
-  return typeof shift === 'object' && shift !== null && 'translateY' in shift ? Number(shift.translateY) : 0;
-}
-
-async function stepGrip(actionName: 'tuck' | 'untuck'): Promise<void> {
-  await fireEvent(screen.getByTestId('time-card-grip'), 'accessibilityAction', { nativeEvent: { actionName } });
-}
-
 // P04 ticket 61 (boards k1–k4). Partitions: tucked and back, by the grip's steps for a screen reader. Expected values:
 // a bar laid out 100 high under a stage top of 0 leaves a strip of 20; the hairline over the strip parts it from the
 // card's content, and with the strip alone in sight there is none.
 describe("the time bar's tuck", () => {
   it('slides up by its grip until a strip shows without its hairline, and comes back down', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
-    const timeBar = screen.getByTestId('time-bar');
-    await fireEvent(timeBar, 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 360, height: 100 } } });
-    const style: unknown = timeBar.props.style;
-    const top = Number(StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]).top);
+    await layFolded(100);
+    const top = barTopOf();
     expect(screen.getByTestId('time-card-rule')).toHaveStyle({ height: StyleSheet.hairlineWidth });
 
     await stepGrip('tuck');
@@ -202,14 +190,6 @@ async function dragGrip(dy: number): Promise<void> {
   });
 }
 
-// The rows for each person laid out `height` high, as a phone lays them out before the card opens, while a screen
-// reader still passes them by.
-async function layRows(height: number): Promise<void> {
-  await fireEvent(screen.getByTestId('time-card-rows', { includeHiddenElements: true }), 'layout', {
-    nativeEvent: { layout: { x: 0, y: 0, width: 320, height } },
-  });
-}
-
 function placeOf(element: ReturnType<typeof screen.getByTestId>): Pick<ViewStyle, 'left' | 'width'> {
   const style: unknown = element.props.style;
   const { left, width } = StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
@@ -222,10 +202,9 @@ function bodyPlace(): Pick<ViewStyle, 'left' | 'width'> {
 }
 
 // P04 ticket 61 (boards p1, p2). Partitions: pulled down past the rows' height and pushed back up; a press on the band's
-// words; a bar of one lane pulled down. Expected values: open, the track keeps its range, the free time around the span
-// between the busy stretches at its ends, 12:00 to 13:15, and not the band's whole range of 11:30 to 13:30; a busy
-// stretch that runs past it is cut at the track's end: 나's class from 13:00 to 13:30 at 80% to the end, 민수's from
-// 11:30 to 12:15 from the start to 20%.
+// words. Expected values: open, the track keeps its range, the free time around the span between the busy stretches at
+// its ends, 12:00 to 13:15, and not the band's whole range of 11:30 to 13:30; a busy stretch that runs past it is cut at
+// the track's end: 나's class from 13:00 to 13:30 at 80% to the end, 민수's from 11:30 to 12:15 from the start to 20%.
 describe("the time bar's grip pulled down", () => {
   it('brings out a row for each person under a track that keeps its range, and folds them when pushed up', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
@@ -254,17 +233,6 @@ describe("the time bar's grip pulled down", () => {
     expect(barShift()).toBe(0);
   });
 
-  it('opens nothing on a bar of one lane, whose grip only tucks', async () => {
-    await askOnMap(server, { ...MEAL_ANSWER_REPLY, answer: MEAL_ANSWER_ALONE });
-
-    await dragGrip(120);
-
-    expect(barShift()).toBe(0);
-    expect(screen.queryByTestId('time-card-rows', { includeHiddenElements: true })).toBeNull();
-    expect(screen.getByTestId('time-card-grip')).toHaveProp('accessibilityLabel', '시간 카드 손잡이');
-    expect(screen.queryByRole('button', { name: /시간 펼치기/u })).toBeNull();
-  });
-
   it('opens nothing at a press on the band’s words', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
@@ -272,6 +240,27 @@ describe("the time bar's grip pulled down", () => {
 
     expect(bar().queryByText('민수')).toBeNull();
     expect(screen.getByTestId('time-card-grip')).toBeCollapsed();
+  });
+});
+
+// P04 ticket 64, the user's word (2026-11-26): with nobody added the card opens too, to 나's row alone. Partitions:
+// pulled open by the grip, then folded by a press on it.
+describe('a bar of 나 alone, its grip pulled down', () => {
+  it('opens to the row of 나, and folds at a press on the grip', async () => {
+    const user = await askOnMap(server, { ...MEAL_ANSWER_REPLY, answer: MEAL_ANSWER_ALONE });
+    await layRows(32);
+
+    await dragGrip(120);
+
+    const rows = within(screen.getByTestId('time-card-rows'));
+    expect(rows.getByText('나')).toBeVisible();
+    expect(rows.getAllByTestId('time-card-busy').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('time-card-grip')).toBeExpanded();
+
+    await press(user, FOLD);
+
+    expect(bar().queryByText('나')).toBeNull();
+    expect(screen.getByRole('button', { name: UNFOLD })).toBeCollapsed();
   });
 });
 

@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -75,10 +76,13 @@ export function droppedHeading(answer: AnswerReply): string {
 
 // The Friends of the conditions with their particle, "김태현과"; null for none. A chip's name is before " · ".
 export function withFriendsOf(answer: AnswerReply): string | null {
-  const names = answer.chips
-    .filter(({ kind }) => kind === 'person')
-    .map(({ text: words }) => words.split(' · ')[0] ?? words);
+  const names = friendNamesOf(answer);
   return names.length === 0 ? null : withParticle(names.join(', '));
+}
+
+// The names of the Friends in the answer's Plan, from its people's chips.
+export function friendNamesOf(answer: AnswerReply): string[] {
+  return answer.chips.filter(({ kind }) => kind === 'person').map(({ text: words }) => words.split(' · ')[0] ?? words);
 }
 
 // The candidates of a meal answer with more than one, those of the kind on screen alone when one is chosen, the least
