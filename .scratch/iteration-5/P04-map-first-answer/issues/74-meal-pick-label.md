@@ -2,7 +2,7 @@
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
-Pull request: none yet.
+Pull request: #575
 Blocked by: none.
 
 Native files: none. Releases: a main server deployment and an app OTA update.
@@ -28,3 +28,12 @@ On a meal answer's map, the chosen Restaurant's label reads "예술계식당 17:
 - [x] "외 N" on the label is the main server's count of the menu words.
 - [x] The label is at most 200 wide, where another pick's may be 260.
 - [x] No native file changes; lint, format, and types pass on the main server and the app.
+
+## Comments
+
+Built in PR #575. The main server sends the count as the Plan menu's `others`, from the same items `menuLine` counts; the app keeps the menu's own dish words when a main server sends none. The label keeps "메뉴 ›" after the dish, as before. At a font scale of 1.3, the narrower label chosen at 301동식당 no longer covers the Friend's face beside it.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 41 minutes in one session, test runs included (an estimate).
+- Tokens: input 86,276,235 (cache reads 86,010,814, cache writes 265,109, uncached 312); output 95,502. No subagents.
