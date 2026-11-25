@@ -93,6 +93,15 @@ organisation's Subscription page, and a policy must not state a guess. It now re
 요금제에 정해 둔 기간이고, 그 기간이 지나면 Sentry가 지워요." Once ticket 06 records the account's figure, the number
 can go back in.
 
+### Screenshots (2026-11-25)
+
+Taken on an x86_64 emulator from a mock build of this branch.
+
+- `../references/05-consent.png`: the consent screen with its new sentence.
+- `../references/05-policy-error-reports.png`: the privacy policy as the switch's link opens it, without a scroll by
+  hand. The part is the policy's last, so the screen is at its end: the heading stands a few lines below the top, and
+  the whole part down to its last sentence is in the one picture. There is no separate picture of the part's end.
+
 ### Agent usage (2026-11-24)
 
 - Agent time: about 45 minutes in one implementation session, an estimate; most of it waited on the slow integration
