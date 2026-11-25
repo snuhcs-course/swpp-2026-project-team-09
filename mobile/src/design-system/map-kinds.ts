@@ -25,9 +25,3 @@ const KINDS: Record<MapPlaceKind, { fill: string; icon: IconName; service: boole
 export function placeKindLook(kind: MapPlaceKind): { fill: string; icon: IconName; service: boolean; name: string } {
   return KINDS[kind];
 }
-
-// A colour of the design system, given as #RRGGBB, at `alpha`.
-export function seeThrough(hex: string, alpha: number): string {
-  const [red, green, blue] = [1, 3, 5].map((start) => Number.parseInt(hex.slice(start, start + 2), 16));
-  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-}

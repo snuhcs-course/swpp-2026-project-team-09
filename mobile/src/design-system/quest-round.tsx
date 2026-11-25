@@ -7,7 +7,7 @@
 import type { ReactElement } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon } from './icon';
-import { seeThrough } from './map-kinds';
+import { seeThrough } from './see-through';
 import { color, questTone, radius, shadow, size } from './tokens';
 
 const TONES = {

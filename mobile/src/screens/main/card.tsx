@@ -215,8 +215,7 @@ export function CardFrame({
 }
 
 // The card of what was pressed on the map: the leading mark, the sub-label, the title, the lines or the choices,
-// and the card's button. A Friend's card is their profile, with its rows among the
-// lines.
+// and the card's button. A Friend's card is their profile, with its rows among the lines.
 export function Card({ card, onPrimary, onClose, onChoose, onHeight, top, onSeen, lead }: CardProps): ReactElement {
   return (
     <CardFrame onHeight={onHeight} top={top}>

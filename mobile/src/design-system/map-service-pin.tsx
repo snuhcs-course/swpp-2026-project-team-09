@@ -8,7 +8,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Icon } from './icon';
-import { seeThrough } from './map-kinds';
+import { seeThrough } from './see-through';
 import { color, halo, radius } from './tokens';
 
 // The canvas's open book, drawn by us: two pages, lightly filled, and the spine.
@@ -54,10 +54,12 @@ function RoundPin({ name, fill, glyph, selected, muted = false }: RoundPinProps)
       accessible
       style={[styles.pin, muted && styles.muted]}
     >
-      <View style={[styles.round, { backgroundColor: seeThrough(fill, 0.9) }, selected && styles.selectedRound]}>
+      <View
+        style={[styles.round, { backgroundColor: seeThrough(fill, ROUND_ALPHA) }, selected && styles.selectedRound]}
+      >
         {glyph}
       </View>
-      <View style={[styles.tail, { borderTopColor: seeThrough(fill, 0.88) }]} />
+      <View style={[styles.tail, { borderTopColor: seeThrough(fill, TAIL_ALPHA) }]} />
     </View>
   );
 }
@@ -99,6 +101,9 @@ const ROUND = 22;
 const SELECTED_ROUND = 26;
 const TAIL = 4;
 const GLYPH = 14;
+// The board's round and tail, a little see-through.
+const ROUND_ALPHA = 0.9;
+const TAIL_ALPHA = 0.88;
 const SHADOW = `0 0 0 2px ${color.surface}, 0 1px 4px rgba(14, 19, 48, 0.3)`;
 
 const styles = StyleSheet.create({

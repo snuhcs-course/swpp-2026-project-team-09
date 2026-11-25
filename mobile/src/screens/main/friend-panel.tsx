@@ -81,9 +81,9 @@ function FriendRow({ friend, onMeet, onShow }: { friend: FriendView } & Omit<Gro
           onPress={() => {
             onMeet(friend);
           }}
-          style={({ pressed }) => pressed && styles.pressed}
+          style={({ pressed }) => [styles.meet, pressed && styles.pressed]}
         >
-          <Glass level="inner" style={styles.meet}>
+          <Glass level="inner" style={styles.fill}>
             <Icon color={color.snuBlue} name="calendar" size={18} />
           </Glass>
         </Pressable>
@@ -136,8 +136,12 @@ function Footer({ onLeave }: { onLeave: () => void }): ReactElement {
       <Pressable accessibilityRole="link" hitSlop={space[2]} onPress={onShare} style={styles.sharing}>
         <Text style={styles.link}>공유 설정</Text>
       </Pressable>
-      <Pressable accessibilityRole="button" onPress={onAdd} style={({ pressed }) => pressed && styles.pressed}>
-        <Glass level="inner" style={styles.add}>
+      <Pressable
+        accessibilityRole="button"
+        onPress={onAdd}
+        style={({ pressed }) => [styles.add, pressed && styles.pressed]}
+      >
+        <Glass level="inner" style={[styles.fill, styles.addFill]}>
           <Icon color={color.snuBlue} name="plus" size={20} />
           <Text style={styles.addWords}>친구 추가</Text>
         </Glass>
@@ -195,39 +199,27 @@ export function FriendPanel({ open, onClose, onShow }: FriendPanelProps): ReactE
 }
 
 const MEET = 44;
+// The board's faint line of the ink at 8%: the calendar button's rim and the line over the footer.
+const FAINT_LINE = 'rgba(14, 19, 48, 0.08)';
 
 const styles = StyleSheet.create({
   search: { paddingTop: space[3], paddingHorizontal: space[5] },
   scroll: { flex: 1 },
   list: { paddingRight: space[3], paddingBottom: space[3], paddingLeft: space[5] },
-  // The `MainFriends` board's glass buttons: a faint rim, and the key colour's for 친구 추가.
-  meet: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: MEET,
-    height: MEET,
-    borderWidth: 1,
-    borderColor: 'rgba(14, 19, 48, 0.08)',
-    borderRadius: radius.full,
-  },
+  // The `MainFriends` board's glass buttons: a frame with a faint rim, or the key colour's for 친구 추가, around the
+  // glass that fills it.
+  meet: { width: MEET, height: MEET, borderWidth: 1, borderColor: FAINT_LINE, borderRadius: radius.full },
+  fill: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: radius.full },
   pressed: { opacity: 0.6 },
   footer: {
     gap: space[3],
     paddingTop: space[3],
     paddingHorizontal: space[5],
     borderTopWidth: 1,
-    borderTopColor: 'rgba(14, 19, 48, 0.08)',
+    borderTopColor: FAINT_LINE,
   },
-  add: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[2],
-    height: size.button,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 26, 114, 0.22)',
-    borderRadius: radius.md,
-  },
+  add: { height: size.button, borderWidth: 1, borderColor: 'rgba(0, 26, 114, 0.22)', borderRadius: radius.md },
+  addFill: { flexDirection: 'row', gap: space[2], borderRadius: radius.md },
   addWords: { ...text.bodyLg, fontFamily: font.semiBold, color: color.snuBlue },
   sharing: { alignSelf: 'flex-end' },
   link: { ...text.label, paddingVertical: space[3], color: color.blue600 },

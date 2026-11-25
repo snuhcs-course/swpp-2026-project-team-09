@@ -10,7 +10,8 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Glass } from './glass';
 import { Icon } from './icon';
-import { type MapPlaceKind, placeKindLook, seeThrough } from './map-kinds';
+import { type MapPlaceKind, placeKindLook } from './map-kinds';
+import { seeThrough } from './see-through';
 import { TAG, tagStyles } from './map-tag';
 import { color, radius } from './tokens';
 
@@ -66,31 +67,30 @@ function GroupTag({ kinds, selected = false, starred = false, label, far = false
       accessible
       style={styles.pin}
     >
-      <Glass
-        level="inner"
-        style={[styles.tag, { height: size.box }, named && styles.namedTag, selected && styles.selectedTag]}
-      >
-        {kinds.map((kind) => {
-          const { fill, icon } = placeKindLook(kind);
-          const star = starred && kind === 'official';
-          return (
-            <View
-              key={kind}
-              style={[
-                styles.round,
-                { width: size.round, height: size.round, backgroundColor: seeThrough(fill, TAG.tint) },
-              ]}
-            >
-              <Icon color={fill} filled={star} name={star ? 'star' : icon} size={size.icon} />
-            </View>
-          );
-        })}
-        {named ? (
-          <Text numberOfLines={1} style={styles.name}>
-            {label}
-          </Text>
-        ) : null}
-      </Glass>
+      <View style={[styles.frame, { height: size.box }, selected && styles.selectedFrame]}>
+        <Glass level="inner" style={[styles.fill, named && styles.namedTag]}>
+          {kinds.map((kind) => {
+            const { fill, icon } = placeKindLook(kind);
+            const star = starred && kind === 'official';
+            return (
+              <View
+                key={kind}
+                style={[
+                  styles.round,
+                  { width: size.round, height: size.round, backgroundColor: seeThrough(fill, TAG.tint) },
+                ]}
+              >
+                <Icon color={fill} filled={star} name={star ? 'star' : icon} size={size.icon} />
+              </View>
+            );
+          })}
+          {named ? (
+            <Text numberOfLines={1} style={styles.name}>
+              {label}
+            </Text>
+          ) : null}
+        </Glass>
+      </View>
     </View>
   );
 }
@@ -112,7 +112,8 @@ const GAP = 2;
 const styles = StyleSheet.create({
   ...tagStyles,
   pin: { alignItems: 'center', alignSelf: 'flex-start' },
-  tag: { ...tagStyles.tag, gap: GAP, paddingHorizontal: GAP, borderColor: color.border },
+  frame: { ...tagStyles.frame, borderColor: color.border },
+  fill: { ...tagStyles.fill, gap: GAP, paddingHorizontal: GAP },
   namedTag: { paddingRight: 9 },
   name: { ...tagStyles.name, marginLeft: 3 },
   kind: { alignItems: 'center', justifyContent: 'center', width: KIND, height: KIND, borderRadius: radius.full },

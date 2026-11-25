@@ -68,7 +68,7 @@ function ShuttlePin({ count = 0, selected = false, label }: Omit<CategoryPinProp
   const { fill, icon, name } = placeKindLook('shuttle');
   return (
     <View
-      accessibilityLabel={label ?? name}
+      accessibilityLabel={count > 0 ? `${label ?? name} ${count}` : (label ?? name)}
       accessibilityRole="image"
       accessibilityState={{ selected }}
       accessible
