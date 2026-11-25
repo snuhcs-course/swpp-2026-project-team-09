@@ -22,6 +22,7 @@ The user's idea: "저녁 화면에서 같이 버튼이 눌린 상태로 제시�
 5. Only the arrival of a new answer opens it. An answer restored, shown again by 이어서, or taken up again as an earlier turn opens nothing by itself.
 6. Named Friends work as before, with no picking.
 7. The mock answers such a wish the same way.
+8. A fault found on the user's phone the same day, fixed in the same PR: "저녁" alone was answered "예술계식당이 가장 가까워서 17:00에 먹어요. 83동에서 도보 3분이에요.", although the meal rules ask for one sentence with nobody's minutes on the way. The walk is on the map, in one place only. The rule now names that reply as what never to write. The main server also drops a later sentence that gives a walk in minutes from a reply that draws a Plan (`withoutWalkSentences`), keeping the sentences the rules allow.
 
 ## Acceptance criteria
 
@@ -29,6 +30,7 @@ The user's idea: "저녁 화면에서 같이 버튼이 눌린 상태로 제시�
 - [x] The main server sets the flag only with someone left to pick, and plans with the named Friends.
 - [x] The app opens picking for an answer that arrives with the flag, and not for one shown again.
 - [x] Each fault's test fails on the code before.
+- [x] A meal reply with a walk in a second sentence reaches the app as its first sentence alone.
 - [x] No native file changes; lint, format, and types pass on the app and the main server.
 
 ## Comments

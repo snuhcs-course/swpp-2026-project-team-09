@@ -33,6 +33,11 @@ async function askerWithDay(): Promise<void> {
   await stage.classAt(stage.asker, '13:00', '13:50', '24');
 }
 
+// Who the plan is for, the asker first.
+function peopleIn({ input }: ReturnType<typeof answerIn>): string[] {
+  return 'people' in input ? input.people.map(({ userId }) => userId) : [];
+}
+
 async function answered(steps: Step[], text: string): Promise<ReturnType<typeof answerIn>> {
   return answerIn((await stage.send([...steps, { text: '…' }], {}, text)).body);
 }
@@ -47,7 +52,7 @@ describe('A meal with Friends the User did not name', () => {
     const answer = await answered([pickingMeal()], '친구 두명이랑 점심');
 
     expect(answer.pickPeople).toBe(true);
-    expect(answer.input.people.map(({ userId }) => userId)).toEqual([stage.asker.id]);
+    expect(peopleIn(answer)).toEqual([stage.asker.id]);
     expect(answer.plans[0]?.band.others?.map(({ userId }) => userId)).toEqual([jieun.id]);
   });
 
@@ -59,7 +64,7 @@ describe('A meal with Friends the User did not name', () => {
     const answer = await answered([resolve('민수'), pickingMeal([minsu.id])], '민수랑 친구 한 명 더 해서 점심');
 
     expect(answer.pickPeople).toBe(true);
-    expect(answer.input.people.map(({ userId }) => userId)).toEqual([stage.asker.id, minsu.id]);
+    expect(peopleIn(answer)).toEqual([stage.asker.id, minsu.id]);
   });
 
   it('opens nothing for a User without Friends, whose plan is theirs alone', async () => {
