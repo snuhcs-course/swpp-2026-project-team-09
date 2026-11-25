@@ -59,7 +59,8 @@ Native files: none. Releases: an app over-the-air update. A person reviews the w
     ticket's "parties' words".
   - What is sent adds the app's update, and says the User id is a random id of ours, not the name, email or 학번.
   - A sentence on native crashes, sent by the phone's own crash reporter without the scrubbing step.
-  - Retention is written as 30 days, not read from the account (ticket 06).
+  - Retention was first written as 30 days, not read from the account; the figure was then taken out (see The
+    retention below).
   - The policy says sending is on at first, and that a crash stored while it was on is sent only when it is turned on
     again.
 - **Words to check in the review** (the code sends more than the decided list names): Sentry's sessions (release
