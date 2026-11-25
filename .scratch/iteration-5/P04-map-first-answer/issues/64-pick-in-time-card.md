@@ -14,7 +14,7 @@ Native files: none expected. Releases: a main server deploy and an app OTA updat
 
 1. "＋ 같이" opens the time card for picking. Under the combined bar, one row per Friend: a check, the name, one state at the right ("걸음 4분", "위치 모름"), and that person's bar on the same range and scale as the combined bar (the rows of ticket 61). "나" first, always checked. A press on a row checks or unchecks it; unchecked rows are quieter.
 2. Order: checked first, then the nearest, a Friend whose location is not known last. Four and a half rows, then the rows scroll between the head and the grip's strip (ticket 61).
-3. The card's top-right button reads "완료", or "완료 · 2명" with people checked beyond those of the Plan. A way out leaves the Plan as it was, Android's back too.
+3. The card's top-right button reads "완료", with no count. A way out leaves the Plan as it was, Android's back too.
 4. Each check changes the combined bar at once (the common free time, worked out on the phone from the lanes); the places and the way are asked once, at 완료.
 5. The bottom card keeps showing the answer, at middle if it was high. Its input stays; its main button is hidden while picking.
 6. A Friend's face on the map checks or unchecks the same row. A one-line translucent hint says so once, with no button.
