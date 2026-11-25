@@ -1584,20 +1584,25 @@ the map stays in sight while the User reads. `Glass` draws that surface at a nam
 its own layout (size, padding, radius) and never a colour, a border or a strength. The levels' values are
 `glass` in `tokens.ts`, which nothing but `Glass` reads.
 
-| Level      | Takes                                                                                        | Look                                                             |
-| ---------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `panel`    | the outer bars, the bottom sheets and the cards over the map                                 | white at 50%, a thin light line along its top, a floating shadow |
-| `inner`    | the chips, boxes, white buttons and light coloured chips inside a panel                      | white at 80%                                                     |
-| `field`    | a grey input field inside a panel                                                            | navy at 5%                                                       |
-| `mapChip`  | a small chip standing on the map itself: a walk's minutes, a candidate's tag, a route's time | white at 60% with a light rim, a light shadow                    |
-| `darkChip` | the black chip of a time and a place ("10:45 301동")                                         | the ink at 48%, for white words                                  |
+| Level      | Takes                                                                                        | Look                                                                                            |
+| ---------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `panel`    | the outer bars, the bottom sheets and the cards over the map                                 | a blur, or white at 80% where nothing blurs; a thin light line along its top, a floating shadow |
+| `inner`    | the chips, boxes, white buttons and light coloured chips inside a panel                      | white at 90%                                                                                    |
+| `field`    | a grey input field inside a panel                                                            | navy at 5%                                                                                      |
+| `mapChip`  | a small chip standing on the map itself: a walk's minutes, a candidate's tag, a route's time | white at 60% with a light rim, a light shadow                                                   |
+| `darkChip` | the black chip of a time and a place ("10:45 301동")                                         | the ink at 48%, for white words                                                                 |
 
 Never glass: the navy main buttons ("여기로", "일정에 넣기", "완료"), which stay solid so that the action to take stands
 out, and the full-screen white pages, such as the chat's first screen, which have no map behind them.
 
-A new Assistant panel over the map uses `Glass` at the level that fits, not colours of its own. The blur behind a
-panel, when it comes, is added inside `Glass`, so no caller changes. The catalogue's `Glass` section shows each level
-over stripes that show through.
+A new Assistant panel over the map uses `Glass` at the level that fits, not colours of its own. The catalogue's `Glass`
+section shows each level over stripes that show through.
+
+A `panel` blurs what is behind it on iOS 26 and later, with the system's Liquid Glass (`GlassView` from
+`expo-glass-effect`), with no white of its own over the blur. Android does not blur: the Kakao map
+draws on a GL surface of its own, behind the app's views, and a view's blur sees only the views (ticket A04-03 tried
+`expo-blur` on the emulator). There, and on iOS before 26, the panel is white at 80%, so that its words never run into
+the map's lines. Which one a phone gets is decided inside `Glass`; no caller asks.
 
 ## Map
 
