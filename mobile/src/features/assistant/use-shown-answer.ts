@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -15,6 +16,7 @@ import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
 import { showing, withKind } from './meal-kinds';
 import { useMenuOpening } from './use-menu-opening';
+import { newestOf, openedIfArrived } from './picking-on-arrival';
 import { usePeoplePicking } from './use-people-picking';
 import { withPerson } from './plan-input';
 import { opensBasis } from './relaxed-plan';
@@ -112,6 +114,8 @@ interface AnswerState extends Shown {
   menu: boolean;
   // Counts the replies: an answer that comes for an earlier one is dropped.
   epoch: number;
+  // The highest bubble id seen: a reply above it has just arrived (`openedIfArrived`).
+  newest: number;
 }
 
 function sayNothing(): void {
@@ -151,6 +155,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
     moving: null,
     menu: false,
     epoch,
+    newest: reply?.id ?? 0,
   };
 }
 
@@ -310,8 +315,10 @@ export function useShownAnswer(
   recalculation: Recalculation = NO_RECALCULATION,
 ): ShownAnswer {
   const reply = lastReply(bubbles);
-  const [stored, setStored] = useState<AnswerState>(() => fresh(reply, 0));
-  const current = stored.replyId === (reply?.id ?? null) ? stored : fresh(reply, stored.epoch + 1);
+  const [stored, setStored] = useState<AnswerState>(() => ({ ...fresh(reply, 0), newest: newestOf(bubbles) }));
+  const arrived = { replyId: reply?.id, seen: stored.newest, bubbles };
+  const current =
+    stored.replyId === (reply?.id ?? null) ? stored : openedIfArrived(fresh(reply, stored.epoch + 1), arrived);
   if (current !== stored) {
     setStored(current);
   }
