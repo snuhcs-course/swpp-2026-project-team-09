@@ -8,6 +8,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQueries, useQuery } from '@tanstack/react-query';
@@ -27,7 +28,6 @@ import {
   questRemovalsQuery,
   questsQuery,
   recruitingQuery,
-  sentInvitationsQuery,
 } from '@/api/queries';
 import type { CompanionSeeker, OfficialRecruiting, ShownQuestInvitation } from '@/api/quest-parts-types';
 import { type ScreenData, askAgain, someFailed, somePending } from '@/api/screen-data';
@@ -195,14 +195,6 @@ export function usePost(questId: string): ScreenData<PostDetailView | null> {
   );
 }
 
-// The invitations still waiting, by the id of each Quest the User leads. A list not yet answered, or refused, counts
-// none: the cards do not wait for it.
-function useInvited(quests: readonly Quest[] | undefined, meId: string): Partial<Record<string, number>> {
-  const led = (quests ?? []).filter(({ leader, classQuest }) => !classQuest && leader?.id === meId);
-  const sent = useQueries({ queries: led.map(({ id }) => sentInvitationsQuery(id)) });
-  return Object.fromEntries(led.map(({ id }, index) => [id, sent[index]?.data?.length ?? 0]));
-}
-
 // The User's past Quests, once the Lobby names the User. Shown when they come: the cards do not wait for them.
 function usePastQuests(meId: string): readonly Quest[] {
   const profile = useQuery(lobbyQuery).data?.profile;
@@ -210,14 +202,12 @@ function usePastQuests(meId: string): readonly Quest[] {
   return useQuery({ ...pastQuestsQuery(me), enabled: profile !== undefined }).data ?? [];
 }
 
-// 내 파티: the User's Quests, with the running Parties, the ones declined on this phone, the invitations waiting on
-// the Quests the User leads, and the past Quests.
+// 내 파티: the User's Quests, with the running Parties, the ones declined on this phone, and the past Quests.
 export function useMineCards(): ScreenData<MineCardView[]> {
   const meId = myUserId();
   const [quests, myParty, parties, declined] = useQueries({
     queries: [questsQuery, myPartyQuery, partiesQuery, declinedPartiesQuery],
   });
-  const invited = useInvited(quests.data, meId);
   const past = usePastQuests(meId);
   return combined([quests, myParty, parties, declined], () =>
     toMineCards({
@@ -225,7 +215,6 @@ export function useMineCards(): ScreenData<MineCardView[]> {
       myParty: myParty.data ?? null,
       parties: parties.data ?? [],
       declined: declined.data ?? [],
-      invited,
       past,
       meId,
       now: now(),

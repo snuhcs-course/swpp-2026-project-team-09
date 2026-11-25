@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -140,7 +141,7 @@ describe('a Quest card pressed', () => {
     expect(shownAddress()).toBe(`/post/${FUTSAL.id}`);
   });
 
-  it('opens the post from 자세히 › as well', async () => {
+  it('opens the post from its title as well, the button a screen reader finds', async () => {
     const user = await answered(questCards);
 
     await user.press(frame().getByRole('button', { name: `${BADMINTON.title} 모집글 자세히 보기` }));

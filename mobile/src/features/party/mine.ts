@@ -6,6 +6,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { MyParty, Party, Quest } from '@/api/types';
@@ -18,7 +19,8 @@ import { whenOf } from './posts';
 export type MineFilter = 'all' | 'private' | 'public';
 
 // A Party that runs on the Quest without the User: waiting until the User answers its 활성화 알림 (`거절`, `참여`),
-// `declined` once the User declined it on this phone (`참여` alone).
+// `declined` once the User declined it on this phone (`참여` alone). `words` is "활성화 중 · 김민준", the one who
+// turned it on, or "활성화 중 · 참여 안 함".
 export interface MineStripView {
   partyId: string;
   title: string;
@@ -30,14 +32,10 @@ export interface MineCardView {
   questId: string;
   title: string;
   private: boolean;
-  badge: { label: string; live: boolean };
-  event: string | null;
-  // The next Sub Quest: "17:40 · 23분 후" or "내일 19:00", and its title and place.
-  next: { when: string; what: string } | null;
-  // The Holders' names, the User first.
-  faces: string[];
-  // "나, 정하은 외 2명"
-  people: string;
+  // "3/8명" on a Quest the User leads that recruits, "N명" otherwise.
+  count: string;
+  // The next Sub Quest's time and place: "17:40 · 23분 후 · 학생회관", "내일 19:00 · 장소 미정".
+  line: string;
   // The User is in the Quest's Party.
   live: boolean;
   strip: MineStripView | null;
@@ -98,42 +96,25 @@ function whenWords(start: string, now: Date): string {
   return whenOf(start);
 }
 
-function peopleOf(others: readonly string[]): string {
-  const [first] = others;
-  if (first === undefined) {
-    return '나';
-  }
-  return others.length > 1 ? `나, ${first} 외 ${others.length - 1}명` : `나, ${first}`;
-}
-
 export interface MineSources {
   quests: readonly Quest[];
   myParty: MyParty | null;
   parties: readonly Party[];
   // The Parties whose 활성화 the User declined on this phone.
   declined: readonly string[];
-  // The invitations still waiting for an answer, by the id of a Quest the User leads.
-  invited: Readonly<Partial<Record<string, number>>>;
   // The User's past Quests.
   past: readonly Quest[];
   meId: string;
   now: Date;
 }
 
-// While the User is in its Party: how many share their location, or `응답 대기` while only the User does. Otherwise,
-// on a Quest the User leads, how full it is and the invitations waiting; on another's, its members.
-function badgeOf(quest: Quest, live: boolean, { myParty, invited, meId }: MineSources): MineCardView['badge'] {
-  if (live && myParty !== null) {
-    const sharing = myParty.members.filter(({ id, visible }) => id !== meId && visible).length + 1;
-    return { label: sharing > 1 ? `활성화 중 · ${sharing}명 위치 공유` : '활성화 중 · 응답 대기', live: true };
-  }
+// How full a Quest the User leads and recruits for is, "3/8명"; its Holders, "N명", otherwise. The invitations the
+// User sent are not counted: the 파티 shows them inside.
+function countOf(quest: Quest, meId: string): string {
   const holders = quest.holders.length;
-  if (quest.leader?.id !== meId) {
-    return { label: `멤버 ${holders}명`, live: false };
-  }
-  const fill = quest.joinPolicy === 'closed' ? `${holders}명` : `모집 중 · ${holders}/${quest.capacity}명`;
-  const waiting = invited[quest.id] ?? 0;
-  return { label: waiting > 0 ? `${fill} · 초대 ${waiting}명 대기` : fill, live: false };
+  return quest.leader?.id === meId && quest.joinPolicy !== 'closed'
+    ? `${String(holders)}/${String(quest.capacity)}명`
+    : `${String(holders)}명`;
 }
 
 function stripOf(running: Party | undefined, declined: readonly string[]): MineStripView | null {
@@ -142,12 +123,12 @@ function stripOf(running: Party | undefined, declined: readonly string[]): MineS
   }
   const { id, title, leader } = running;
   if (declined.includes(id)) {
-    return { partyId: id, title, words: '활성화 중 · 참여하지 않는 중', declined: true };
+    return { partyId: id, title, words: '활성화 중 · 참여 안 함', declined: true };
   }
   return {
     partyId: id,
     title,
-    words: leader === undefined ? '활성화 중인 파티예요' : `${leader.name}님이 활성화했어요`,
+    words: leader === undefined ? '활성화 중' : `활성화 중 · ${leader.name}`,
     declined: false,
   };
 }
@@ -163,13 +144,10 @@ function groupOf(live: boolean, strip: MineStripView | null, start: string | nul
   return dayGroup(start, now);
 }
 
-// The step and its place. A step that takes the 파티's own title, which the card already shows, is its place alone:
-// "민수랑 학생회관에서 만나기 · 학생회관" said the place twice.
-function whatOf(step: string, title: string, place: string): string {
-  if (place === '') {
-    return step;
-  }
-  return step === title ? place : `${step} · ${place}`;
+// The next step's time and its place, "장소 미정" without one.
+function lineOf(start: string | null, place: string, now: Date): string {
+  const when = start === null ? '시간 미정' : whenWords(start, now);
+  return `${when} · ${place === '' ? '장소 미정' : place}`;
 }
 
 function cardOf(quest: Quest, sources: MineSources, past: boolean): MineCardView {
@@ -185,25 +163,12 @@ function cardOf(quest: Quest, sources: MineSources, past: boolean): MineCardView
           parties.find((party) => party.quest?.id === quest.id),
           declined,
         );
-  const others = quest.holders.filter(({ id }) => id !== meId).map(({ name }) => name);
-  const place = next?.place?.label ?? '';
   return {
     questId: quest.id,
     title: quest.title,
     private: quest.joinPolicy === 'closed',
-    badge: badgeOf(quest, live, sources),
-    event: quest.globalEvent?.title ?? null,
-    next:
-      next === null
-        ? null
-        : {
-            when: start === null ? '시간 미정' : whenWords(start, now),
-            what: whatOf(next.title, quest.title, place),
-          },
-    faces: [...quest.holders.filter(({ id }) => id === meId), ...quest.holders.filter(({ id }) => id !== meId)].map(
-      ({ name }) => name,
-    ),
-    people: peopleOf(others),
+    count: countOf(quest, meId),
+    line: lineOf(start, next?.place?.label ?? '', now),
     live,
     strip,
     group: past ? PAST : groupOf(live, strip, start, now),

@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -14,7 +15,8 @@ import {
   color,
   EmptyState,
   ErrorState,
-  EventCard,
+  eventText,
+  eventTone,
   font,
   FullScreenPanel,
   Icon,
@@ -25,9 +27,9 @@ import {
   SegmentedTabs,
   space,
 } from '@/design-system';
-import { EVENT_SEARCH_HINT, eventTime, toEventViews } from '@/features/events/adapter';
+import { EVENT_SEARCH_HINT, eventTime, type EventView, toEventViews } from '@/features/events/adapter';
 import { useEventSources } from '@/features/events/use-events';
-import { EVENT_KINDS, type EventKind, eventKindOf, eventTagsOf } from '@/features/party/event-kinds';
+import { EVENT_KINDS, type EventKind, eventKindOf } from '@/features/party/event-kinds';
 import type { FormEvent } from '@/features/party/making';
 import { FieldHead } from './field-head';
 
@@ -80,41 +82,68 @@ function Events({ kind, search, chosen, onPick }: EventsProps): ReactElement {
     return <EmptyState words={searching ? '검색 결과가 없어요' : '이 분류의 행사가 없어요'} />;
   }
   return (
-    <View style={styles.list}>
+    <View>
       {views.map((view) => {
         const event = eventOf(events, view.id);
         return event === undefined ? null : (
-          <Pressable
-            accessibilityLabel={`행사 · ${view.title}`}
-            accessibilityRole="button"
-            accessibilityState={{ selected: chosen?.id === view.id }}
+          <PickerRow
+            chosen={chosen?.id === view.id}
             key={view.id}
-            onPress={() => {
+            onPick={() => {
               onPick({ ...event, source: view.source });
             }}
-          >
-            <EventCard
-              kind="official"
-              source={sourceLine({ ...event, source: view.source })}
-              tags={eventTagsOf(event).map((tag) => `#${tag}`)}
-              time={view.time}
-              title={view.title}
-              venue={view.place ?? undefined}
-            />
-          </Pressable>
+            view={view}
+          />
         );
       })}
     </View>
   );
 }
 
-// The event picker of 파티 만들기: the tabs 진로, 이벤트 and 축제, the search over all of them, and the 행사 list's
-// cards without their buttons.
+// An event's row, shaped as the 행사 tab's: the date column, a rule, the source, the title on one line, and "time ·
+// place". The chosen one is light blue with a navy check.
+function PickerRow({ view, chosen, onPick }: { view: EventView; chosen: boolean; onPick: () => void }): ReactElement {
+  const line = view.place === null ? view.hours : `${view.hours} · ${view.place}`;
+  return (
+    <Pressable
+      accessibilityLabel={`행사 · ${view.title}`}
+      accessibilityRole="button"
+      accessibilityState={{ selected: chosen }}
+      onPress={onPick}
+      style={[styles.row, chosen && styles.rowChosen]}
+    >
+      <View style={[styles.date, { marginTop: view.source === null ? DAY_DROP - SOURCE_STEP : DAY_DROP }]}>
+        <Text style={styles.day}>{view.date.day}</Text>
+        <Text numberOfLines={1} style={styles.dayLine}>
+          {view.date.line}
+        </Text>
+      </View>
+      <View style={styles.rule} />
+      <View style={styles.rowWords}>
+        {view.source === null ? null : <Text style={styles.rowSource}>{view.source}</Text>}
+        <Text numberOfLines={1} style={styles.rowTitle}>
+          {view.title}
+        </Text>
+        <Text numberOfLines={1} style={styles.rowLine}>
+          {line}
+        </Text>
+      </View>
+      {chosen ? (
+        <View style={styles.check}>
+          <Icon color={color.onPrimary} name="check" size={14} />
+        </View>
+      ) : null}
+    </Pressable>
+  );
+}
+
+// 관련 행사 고르기, the event picker of 파티 만들기: the tabs 진로, 이벤트 and 축제, the search over all of them, and
+// rows shaped as the 행사 tab's.
 export function EventPicker({ chosen, onPick, onBack }: PickerProps): ReactElement {
   const [kind, setKind] = useState<EventKind>(chosen === null ? 'career' : eventKindOf(chosen));
   const [search, setSearch] = useState('');
   return (
-    <FullScreenPanel leave={{ kind: 'back', onPress: onBack }} title="행사">
+    <FullScreenPanel leave={{ kind: 'back', onPress: onBack }} title="관련 행사 고르기">
       <SegmentedTabs onSelect={setKind} segments={EVENT_KINDS} selected={kind} />
       <View style={styles.picker}>
         <SearchField label="행사 검색" onChangeText={setSearch} placeholder={EVENT_SEARCH_HINT} value={search} />
@@ -137,7 +166,7 @@ interface FieldProps {
 export function EventField({ event, locked, onChoose, onClear }: FieldProps): ReactElement {
   return (
     <View style={styles.field}>
-      <FieldHead label="관련 행사" />
+      <FieldHead icon="ticket" label="관련 행사" />
       {event === null ? (
         <Pressable
           accessibilityLabel="관련 행사 선택"
@@ -174,9 +203,52 @@ export function EventField({ event, locked, onChoose, onClear }: FieldProps): Re
   );
 }
 
+// The frame's measures for the picker's rows: their padding, the date column and its day, the check's round.
+const ROW_PADDING = 22;
+const DATE_WIDTH = 72;
+const DAY = { fontSize: 24, lineHeight: 30, letterSpacing: -0.48 };
+// The day sits level with the title: lowered under a source's line, raised by that line and its gap without one.
+const DAY_DROP = 18;
+const SOURCE_STEP = eventText.source.lineHeight + space[1];
+const CHECK = 24;
+
 const styles = StyleSheet.create({
-  picker: { gap: space[4], padding: space[4] },
-  list: { gap: space[3] },
+  picker: { gap: space[2], padding: space[4] },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: ROW_PADDING,
+    paddingHorizontal: space[3],
+    borderBottomWidth: 1,
+    borderBottomColor: color.border,
+  },
+  rowChosen: { backgroundColor: color.blue50 },
+  date: { width: DATE_WIDTH },
+  day: { ...eventText.day, ...DAY, color: color.ink },
+  dayLine: { ...eventText.dayLine, color: color.inkMuted },
+  rule: {
+    alignSelf: 'stretch',
+    width: 1,
+    marginVertical: space[1],
+    marginRight: space[4],
+    backgroundColor: color.border,
+  },
+  // Clear of the check.
+  rowWords: { flex: 1, minWidth: 0, gap: space[1], paddingRight: space[8] },
+  rowSource: { ...eventText.source, color: color.inkMuted },
+  rowTitle: { ...eventText.title, color: color.ink },
+  rowLine: { ...eventText.line, color: eventTone.words },
+  check: {
+    position: 'absolute',
+    top: ROW_PADDING + 2,
+    right: space[3],
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: CHECK,
+    height: CHECK,
+    borderRadius: radius.full,
+    backgroundColor: color.snuBlue,
+  },
   field: { gap: space[2] },
   choose: {
     flexDirection: 'row',
