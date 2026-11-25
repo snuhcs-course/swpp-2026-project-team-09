@@ -2,7 +2,7 @@
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
-Pull request: #567
+Pull request: #568 (#567 was closed when its branch was renamed from ticket 68)
 Blocked by: none.
 
 Native files: none. Releases: an app OTA update.
@@ -39,8 +39,25 @@ The user's decision (2026-11-26): the tags are placed again each time the map co
 
 ## Acceptance criteria
 
-- [ ] The case from the phone, with the stored meal answer: at the answer's first camera, candidates 2, 4, and 5 behind the time card have no tag and candidate 3 in view has one. At a camera that shows them all, 2 to 5 are tagged in rank order as room allows. Zoomed in on two neighbours, both are tagged, and the candidates out of view keep their numbered dots. (Unit test of `useAnswerMap`, failing before the change.)
-- [ ] While the pictures of the new placement are not made, every mark keeps the placement before it. Once they are made, every mark changes together. A wait longer than 1.5 seconds ends. (Unit test.)
-- [ ] The answer's camera moves no more than before. (Unit test.)
-- [ ] Ticket 13's rank rule holds for what is on screen; its wording says so.
-- [ ] No native file changes. Lint, format, and types pass on the app.
+- [x] The case from the phone, with the stored meal answer: at the answer's first camera, candidates 2, 4, and 5 behind the time card have no tag and candidate 3 in view has one. At a camera that shows them all, 2 to 5 are tagged in rank order as room allows. Zoomed in on two neighbours, both are tagged, and the candidates out of view keep their numbered dots. (Unit test of `useAnswerMap`, failing before the change.)
+- [x] While the pictures of the new placement are not made, every mark keeps the placement before it. Once they are made, every mark changes together. A wait longer than 1.5 seconds ends. (Unit test.)
+- [x] The answer's camera moves no more than before. (Unit test.)
+- [x] Ticket 13's rank rule holds for what is on screen; its wording says so.
+- [x] No native file changes. Lint, format, and types pass on the app.
+
+## Comments
+
+Built in PR #568.
+
+- The tags are placed again at `map.camera`, which the map's `onCameraIdle` sets, once the map rests after the answer's own camera last changed.
+- A new placement waits until all its pictures are made (at most 1.5 seconds), then every mark changes in one frame.
+- Both hooks compare by value. A first version compared the base drawing and the framing as objects, and looped on a screen that makes them new at every render (`tutorial-kwanjeong-check.integration.test.tsx`, "Too many re-renders"). That existing test caught it and passes now.
+
+On the emulator (crowded meal mock), the picture after a zoom shows 5 tagged "32분" where 5.0/Main left a numbered dot. The same zoom on 5.0/Main was not taken, because the emulator went to another session.
+
+`answer-meal-list.integration.test.tsx` fails 3 tests ("Unable to find an element with text: 김민수") with 5.0/Main's own code too. That comes before this change.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 54 minutes in the p04-58 session, from the request to the screens in the pull request. It includes about 15 minutes on ticket 70 (a press on a dropped place), cancelled before merge. An estimate from the transcript's timestamps, adding gaps under 5 minutes. No subagents.
+- Tokens: output about 199k. Input about 84.8M: cache reads about 84.4M, cache writes about 0.38M, and almost nothing uncached. Measured from the session's transcript, once per message.
