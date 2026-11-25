@@ -2398,7 +2398,13 @@ Anthropic API as the AI's key says
   not, who of the plan is busy then and until when (a Friend by name only, the asker by their own Class or Quest too);
   the first plan is the nearest time everyone can be there. A busy
   stretch of a Plan's time band carries a `label`: `302동 수업` for a Class with a Place, `수업` without one, and `일정`
-  for a Sub Quest. A message that asks for two or more things ("16시에 관정 갔다가 19시쯤 저녁, 7층 예약하고 스케줄 짜줘")
+  for a Sub Quest. A meal's or a meet's Plan band also carries `others`, for picking people in the app's time card: one
+  entry for each Friend of the asker who is not in the conditions, in the order of the asker's Friends. Each has `busy`,
+  the Friend's busy stretches cut to the band's range and labelled as the lanes' are, at every location level, and
+  `walkMinutes`, the walk from the Place the Friend view puts them in to the Plan's place. `walkMinutes` is `null` when
+  the asker may not see where the Friend is, or when the walking table has no row for that Place. An app that does not
+  know `others` ignores it (`src/assistant/gathering/other-friends.ts`).
+  A message that asks for two or more things ("16시에 관정 갔다가 19시쯤 저녁, 7층 예약하고 스케줄 짜줘")
   gets `steps` too, left out otherwise: each request in time order, a book card, a booking a library tool refused, or
   the answer, with its `kind`, `title`, `place`, `from`, `startAt`, `endAt`, `status` (`shown` or `not-done`),
   `reason`, and what `shows` it (the card's key or the answer). A meal planned after a booking sets out from 관정 when
