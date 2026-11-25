@@ -27,3 +27,12 @@ configuration file, a test or a screenshot. The DSN is not a secret, but it is k
 - [ ] The retention is written here.
 
 ## Comments
+
+### The retention (2026-11-25)
+
+- **30 days**, from Sentry's own pages, read on 2026-11-24 and 2026-11-25: "Data Retention Periods" (Security, Legal,
+  & PII › Security) lists Errors at 30 days on the Developer plan and 90 on Team, and says the retention is fixed when
+  an event is taken in, by the plan then in effect; the pricing page says "30-day lookback" for Developer. The
+  privacy policy's part (ticket 05) names 30 days from this.
+- Not yet read on the account's own Subscription page; a person adds what it shows here. A change of plan changes the
+  figure, and the policy with it.
