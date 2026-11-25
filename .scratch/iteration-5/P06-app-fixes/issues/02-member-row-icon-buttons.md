@@ -1,9 +1,9 @@
 # 02: The 파티 member row: three icon buttons, each asking first
 
 Parent: [P06 spec](../spec.md)
-Status: needs-triage
-Held (2026-11-22): an improvement; the fixes (06, 07) go first.
-Blocked by: [06](06-ended-parties-leave-the-lists.md), which changes the failure toasts of `screens/room/people-sections.tsx` and `member-friend-button.tsx`, the files this ticket rewrites.
+Status: done
+Taken up on 2026-11-25.
+Blocked by: None (06 merged as #475 on 2026-11-22).
 
 Native files: none. Releases: an app OTA update only.
 
@@ -37,14 +37,29 @@ The design of 2026-11-19 (`references/02-2-member-row-mock-up.png`), with 취소
 - Tests: `room-people` (:201, :213), `room-wireframe` (:294-295), `room-member-requests`, `me`, `friends-list` (`.integration`), `design-system/dialog.unit`, `icon.unit`, `catalogue.integration`. Tests that find these buttons by their visible words find them by their screen reader names.
 - `room-wireframe:295` gets the member by `getByRole('button', { name: /^김민준/u })` inside 멤버. Once the icons are named "김민준님 …", that matches three buttons; the query narrows to the row's own button.
 
+## Decided while building (2026-11-25)
+
+- The icon alone is `Button` with an icon and no words: a square of 40 in the same 48-point touch area as an `md` Button (`hitSlop` 4), its `label` read by a screen reader. It takes Button's variants, pressed and disabled looks, so no new component. The catalogue's Button section shows the four (친구 추가, 파티장 넘기기, 내보내기, 요청됨), and `mobile/README.md` describes the row and the icon alone.
+- The icons are 20 in the button. `usersPlus` is the front person (head and the left of the body), a second, smaller head beside its head, and + at the bottom right; `userMinus` is the same front person with − at the bottom right. The two read as one family and differ by the number of people, so neither is the other's mirror.
+- 요청됨 takes Button's disabled look (the sunken grey ground, no border, the icon in `inkMuted`), as every disabled Button does, not the mock-up's faint border.
+- One `Dialog` in `멤버` asks all three, as the hand-over's did. What was asked stays while it fades out, so its title and buttons do not change as it goes; it acts only on the confirming answer. Whether 내보내기 also takes the member out of the Party (`fromParty`) is decided on that answer, by the same rule.
+- The Leader's row tests (the three icons, 내보내기 with its 취소, 파티장 넘기기) moved from `room-people` into a new `room-member-row.integration.test.tsx`, because `room-people` would pass the lint's 300 lines. Its describe that keeps the press on a member is now "a member's row". `room-member-requests` keeps 친구 추가 and asks in its own describe.
+- `room-walking` also found the row by `/^김민준/u`. It and `room-wireframe` find it by `/^김민준(?: · |$)/u`, the row read as the name and its line, not "김민준님 …".
+- The emulator check was left to the user's check on a phone (2026-11-25).
+
 ## Acceptance criteria
 
-- [ ] 친구 추가 asks first: 요청 sends the request, 취소 sends nothing. (Integration test, which fails before the change.)
-- [ ] 내보내기 asks first: 내보내기 removes the member, 취소 removes no one. (Integration test, which fails before the change.)
-- [ ] 파티장 넘기기 still asks and hands over. (Integration test.)
-- [ ] 요청됨 shows the dimmed, disabled icon under its name; 수락 stays a text button. (Integration test.)
-- [ ] `usersPlus` and `userMinus` are in the icon set and the catalogue. (Unit test.)
-- [ ] The row, the three dialogs and the 요청됨 state on a phone with the mock build; the screens go to the orchestrator before the PR, and to the design review. (Emulator.)
-- [ ] No native file changes; lint, format, and types pass on the app.
+- [x] 친구 추가 asks first: 요청 sends the request, 취소 sends nothing. (Integration test, which fails before the change.)
+- [x] 내보내기 asks first: 내보내기 removes the member, 취소 removes no one. (Integration test, which fails before the change.)
+- [x] 파티장 넘기기 still asks and hands over. (Integration test.)
+- [x] 요청됨 shows the dimmed, disabled icon under its name; 수락 stays a text button. (Integration test.)
+- [x] `usersPlus` and `userMinus` are in the icon set and the catalogue. (Unit test.)
+- [ ] The row, the three dialogs and the 요청됨 state on a phone with the mock build; the screens go to the orchestrator before the PR, and to the design review. (Emulator.) (Not yet: the user checks it on an Android phone after the PR opens.)
+- [x] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+### Agent usage (2026-11-25)
+
+- Agent time: about 35 minutes, in one implementation session (tests, code, sweep and pull request; no emulator, as the brief changed). This is an estimate: gaps under 5 minutes between transcript entries, summed, plus the test runs waited on. The orchestrator session's own time is not counted here.
+- Tokens: input 13,793,213 (cache reads 13,575,634, cache writes 217,441, uncached 138); output 72,072. Without cache reads, 217,579. No subagents. Counted up to the writing of this entry, so the last few messages are left out.

@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -192,35 +193,9 @@ describe('멤버', () => {
   });
 });
 
-describe("the Leader's controls of 멤버", () => {
+describe("a member's row", () => {
   beforeEach(() => {
     answerRoom(server, WITH_JI_WOO);
-  });
-
-  it('removes a Holder from the Quest and from the Party the User leads', async () => {
-    answerMyParty(server, PARTY_WITH_JI_WOO);
-    server.on(`DELETE ${QUEST}/holders/${MIN_JUN.id}`, { status: 204 });
-    server.on(`DELETE /parties/mine/members/${MIN_JUN.id}`, { status: 204 });
-    const user = await openRoom(WITH_JI_WOO);
-
-    await user.press(section('멤버').getAllByRole('button', { name: '내보내기' })[0]);
-    await pass(500);
-
-    expect(server.received(`DELETE ${QUEST}/holders/${MIN_JUN.id}`)).toHaveLength(1);
-    expect(server.received(`DELETE /parties/mine/members/${MIN_JUN.id}`)).toHaveLength(1);
-    expect(toast()).toHaveTextContent('김민준님을 내보냈어요');
-  });
-
-  it('hands the role over after the dialog', async () => {
-    server.on(`PUT ${QUEST}/leader`, { status: 204 });
-    const user = await openRoom(WITH_JI_WOO);
-
-    await user.press(section('멤버').getAllByRole('button', { name: '파티장 넘기기' })[0]);
-    expect(screen.getByRole('header', { name: '김민준님에게 파티장을 넘길까요?' })).toBeVisible();
-    await answer(user, '넘기기');
-
-    expect(server.received(`PUT ${QUEST}/leader`).map(({ body }) => body)).toEqual([{ userId: MIN_JUN.id }]);
-    expect(toast()).toHaveTextContent('김민준님이 파티장이 됐어요');
   });
 
   it('shows a member the User sees on the map with the card, and says so for one the User does not see', async () => {

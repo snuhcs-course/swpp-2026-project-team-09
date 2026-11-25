@@ -1105,7 +1105,9 @@ mark the Quest while they run, are not told; nor is what happened before the app
   waits for a point while the place has words of its own. A Place is sent as `{ placeId }`, a point as a point with
   the words shown; an add carries an `Idempotency-Key` kept for its retries;
 - `신청 {n}` and `초대 중 {n}` for the Leader, and `멤버 {n}` with what the User sees of each Holder while in the
-  Party, "내보내기" and "파티장 넘기기" for the Leader, and a press that shows a seen member on the map;
+  Party, and a press that shows a seen member on the map. Another member's row has icons of 40 in a line: 친구 추가
+  (`usersPlus`; dimmed once a request is sent, the words "수락" when the member sent one, none for a Friend) and,
+  for the Leader, 파티장 넘기기 (`crown`) and 내보내기 (`userMinus`, red). Each asks first in a dialog with "취소";
 - the footer's "나가기" (`DELETE /quests/:questId`, after leaving the Party when it is the Quest's) or, for the Leader,
   "파티 없애기" (`POST /quests/:questId/end`, after ending or leaving the Party).
 
@@ -1511,6 +1513,7 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
 - **The parts the screens around the map repeat**, which the design system lacks and the frames draw:
   - `AppBar`: a tab's (title 22/700, actions at the right) or, with `leave`, a sub-screen's (✕ "닫기" or the chevron
     "뒤로" in 48, title 20/700), with an optional count after the title ("퀘스트 12"). `IconButton` is an icon in 48.
+    A `Button` with an icon and no words is the icon alone in a square of 40, read by its `label`.
   - `FullScreenPanel`: a screen above the tabs, white, with an app bar, what stays under it, a body that scrolls and
     an optional footer.
   - `SidePanel` (from the left, 324 wide, radius 24 at its right, the scrim) and `BottomSheet` (a handle, top radius

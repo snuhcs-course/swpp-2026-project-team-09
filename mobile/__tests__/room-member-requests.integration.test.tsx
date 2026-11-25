@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -13,11 +14,11 @@ import { sockets } from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
-import { answerRoom, HIS_PICNIC, openRoom, PICNIC, SEO_YEON_HOLDER, toast, toastIcon } from './support/room';
+import { answer, answerRoom, HIS_PICNIC, openRoom, PICNIC, SEO_YEON_HOLDER, toast, toastIcon } from './support/room';
 import { askMainServer, JOIN_REQUESTS, PHONE_NOW } from './support/server';
 
-// The room's 친구 추가 on another member's row, and the Leader's mark on a request from a User the Leader removed,
-// against the fake main server. 김민준 is a Friend of the User and 이서연 is not.
+// The room's 친구 추가 on another member's row, an icon that asks first, and the Leader's mark on a request from a User
+// the Leader removed, against the fake main server. 김민준 is a Friend of the User and 이서연 is not.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -62,26 +63,22 @@ function answerFriendRequests(body: object): void {
 }
 
 describe('친구 추가 on 멤버', () => {
-  it('is on the row of a member who is no Friend only, and sends a Friend Request by user id', async () => {
-    server.on('POST /friend-requests', { status: 201, body: { status: 'waiting' } });
-    const user = await openRoom();
+  it('is an icon on the row of a member who is no Friend only', async () => {
+    await openRoom();
 
     expect(section('멤버').queryByRole('button', { name: '김민준님 친구 추가' })).toBeNull();
     expect(section('멤버').queryByRole('button', { name: '홍길동님 친구 추가' })).toBeNull();
-    await user.press(section('멤버').getByRole('button', { name: '이서연님 친구 추가' }));
-    await pass(500);
-
-    expect(server.received('POST /friend-requests').map(({ body }) => body)).toEqual([{ userId: SEO_YEON.id }]);
-    expect(toast()).toHaveTextContent('이서연님에게 친구 요청을 보냈어요');
-    expect(toastIcon()).toBe('check');
+    expect(section('멤버').getByRole('button', { name: '이서연님 친구 추가' })).toHaveTextContent(/^$/u);
   });
 
-  it('is 요청됨, not pressable, once the User sent a request', async () => {
+  it('is the same icon dimmed and not pressable once the User sent a request', async () => {
     answerFriendRequests({ sent: [{ id: 'fr8', receiver: SEO_YEON, sentAt: SENT_AT }] });
 
     await openRoom();
 
-    expect(section('멤버').getByRole('button', { name: '이서연님에게 친구 요청됨' })).toBeDisabled();
+    const sent = section('멤버').getByRole('button', { name: '이서연님에게 친구 요청됨' });
+    expect(sent).toBeDisabled();
+    expect(sent).toHaveTextContent(/^$/u);
     expect(section('멤버').queryByRole('button', { name: '이서연님 친구 추가' })).toBeNull();
   });
 
@@ -90,6 +87,8 @@ describe('친구 추가 on 멤버', () => {
     server.on('POST /friend-requests/fr7/accept', { status: 204 });
     const user = await openRoom();
 
+    // Still words, and no question first.
+    expect(section('멤버').getByRole('button', { name: '이서연님의 친구 요청 수락' })).toHaveTextContent('수락');
     await user.press(section('멤버').getByRole('button', { name: '이서연님의 친구 요청 수락' }));
     await pass(500);
 
@@ -97,12 +96,40 @@ describe('친구 추가 on 멤버', () => {
     expect(toast()).toHaveTextContent('이서연님과 친구가 됐어요');
   });
 
-  it('is on the rows a Holder who does not lead sees too', async () => {
+  it('is on the rows a Holder who does not lead sees too, alone', async () => {
     answerRoom(server, HIS_PICNIC);
 
     await openRoom(HIS_PICNIC);
 
     expect(section('멤버').getByRole('button', { name: '이서연님 친구 추가' })).toBeVisible();
+    expect(section('멤버').queryByRole('button', { name: '이서연님에게 파티장 넘기기' })).toBeNull();
+    expect(section('멤버').queryByRole('button', { name: '이서연님 내보내기' })).toBeNull();
+  });
+});
+
+describe('친구 추가 asks first', () => {
+  it('sends a Friend Request by user id on 요청', async () => {
+    server.on('POST /friend-requests', { status: 201, body: { status: 'waiting' } });
+    const user = await openRoom();
+
+    await user.press(section('멤버').getByRole('button', { name: '이서연님 친구 추가' }));
+    expect(screen.getByRole('header', { name: '이서연님에게 친구 요청을 보낼까요?' })).toBeVisible();
+    expect(server.received('POST /friend-requests')).toHaveLength(0);
+    await answer(user, '요청');
+
+    expect(server.received('POST /friend-requests').map(({ body }) => body)).toEqual([{ userId: SEO_YEON.id }]);
+    expect(toast()).toHaveTextContent('이서연님에게 친구 요청을 보냈어요');
+    expect(toastIcon()).toBe('check');
+  });
+
+  it('sends nothing on 취소', async () => {
+    const user = await openRoom();
+
+    await user.press(section('멤버').getByRole('button', { name: '이서연님 친구 추가' }));
+    await answer(user, '취소');
+
+    expect(screen.queryByRole('header', { name: '이서연님에게 친구 요청을 보낼까요?' })).toBeNull();
+    expect(server.received('POST /friend-requests')).toHaveLength(0);
   });
 });
 
@@ -112,7 +139,7 @@ describe('친구 추가 refused', () => {
     const user = await openRoom();
 
     await user.press(section('멤버').getByRole('button', { name: '이서연님 친구 추가' }));
-    await pass(500);
+    await answer(user, '요청');
 
     expect(toast()).toHaveTextContent('이미 친구 요청을 보냈어요');
     expect(toastIcon()).toBe('alert');

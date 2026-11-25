@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -45,20 +46,23 @@ function refusedWords(error: unknown): string {
   return (error instanceof ApiError && error.code !== null ? REFUSED[error.code] : undefined) ?? NO_ANSWER;
 }
 
-// Sends the member a Friend Request, or accepts theirs, and toasts what came of it.
-function useFriendPresses(member: MemberView): { send: () => void; accept: (requestId: string) => void } {
+// Sends a member a Friend Request, or accepts theirs, and toasts what came of it.
+export function useFriendPresses(): {
+  send: (member: MemberView) => void;
+  accept: (member: MemberView, requestId: string) => void;
+} {
   const changes = useFriendChanges();
   const showToast = useToast();
   const refusedToast = (error: unknown): void => {
     showToast(refusedWords(error), undefined, 'alert');
   };
   return {
-    send: () => {
+    send: (member) => {
       changes.sendFriendRequestToUser(member.id).then(({ status }) => {
         showToast(status === 'friends' ? becameFriends(member.name) : `${member.name}님에게 친구 요청을 보냈어요`);
       }, refusedToast);
     },
-    accept: (requestId) => {
+    accept: (member, requestId) => {
       changes.acceptFriendRequest(requestId).then(() => {
         showToast(becameFriends(member.name));
       }, refusedToast);
@@ -66,12 +70,12 @@ function useFriendPresses(member: MemberView): { send: () => void; accept: (requ
   };
 }
 
-// `친구 추가` on another member's row: hidden for a Friend and until the lists come, `요청됨` once the User sent a
-// request, and `수락` when the member sent one.
-export function MemberFriendButton({ member }: { member: MemberView }): ReactElement | null {
+// 친구 추가 on another member's row, an icon whose press `onAdd` asks about first: hidden for a Friend and until the
+// lists come, dimmed once the User sent a request, and the words `수락` when the member sent one.
+export function MemberFriendButton({ member, onAdd }: { member: MemberView; onAdd: () => void }): ReactElement | null {
   const friends = useQuery(friendsQuery).data;
   const requests = useQuery(friendRequestsQuery).data;
-  const presses = useFriendPresses(member);
+  const presses = useFriendPresses();
   if (friends === undefined || requests === undefined) {
     return null;
   }
@@ -79,28 +83,26 @@ export function MemberFriendButton({ member }: { member: MemberView }): ReactEle
   if (friendship.kind === 'friend') {
     return null;
   }
-  if (friendship.kind === 'sent') {
-    return (
-      <Button disabled label={`${member.name}님에게 친구 요청됨`} variant="secondary">
-        요청됨
-      </Button>
-    );
-  }
   if (friendship.kind === 'received') {
     return (
       <Button
         label={`${member.name}님의 친구 요청 수락`}
         onPress={() => {
-          presses.accept(friendship.requestId);
+          presses.accept(member, friendship.requestId);
         }}
       >
         수락
       </Button>
     );
   }
+  const sent = friendship.kind === 'sent';
   return (
-    <Button label={`${member.name}님 친구 추가`} onPress={presses.send} variant="secondary">
-      친구 추가
-    </Button>
+    <Button
+      disabled={sent}
+      icon="usersPlus"
+      label={sent ? `${member.name}님에게 친구 요청됨` : `${member.name}님 친구 추가`}
+      onPress={onAdd}
+      variant="secondary"
+    />
   );
 }
