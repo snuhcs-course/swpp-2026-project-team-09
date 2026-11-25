@@ -130,9 +130,9 @@ describe('the order an answer’s pictures are made in', () => {
   });
 });
 
-// Partitions: before the everyday map has rested, and after. Expected values: the numbered dots of 1 to 12.
+// Partitions: before the everyday map has rested, and after. Expected values: the numbered dots of 1 to 12 and a stop's.
 describe('the numbered dots made ahead on the everyday map', () => {
-  it('makes none before the map has rested, then all twelve, so a first answer finds its dots made', async () => {
+  it('makes none before the map has rested, then every dot, so a first answer finds its dots made', async () => {
     const asked = LOOKS_AHEAD[2];
     if (asked === undefined) {
       throw new Error('No dot 3');
