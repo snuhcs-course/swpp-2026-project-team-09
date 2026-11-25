@@ -3,10 +3,12 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-05  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
   CLIMB_SECONDS_PER_METRE,
+  DESCENT_SECONDS_PER_METRE,
   type OsmWay,
   type Pin,
   WALKING_METRES_PER_SECOND,
@@ -162,7 +164,16 @@ describe('climbing', () => {
     expect(seconds([path], pin(0, 0, 100), pin(110, 0, 120))).toBeCloseTo(110 / SPEED + 20 * CLIMB_SECONDS_PER_METRE);
   });
 
-  it('adds nothing going down', () => {
-    expect(seconds([path], pin(0, 0, 120), pin(110, 0, 100))).toBeCloseTo(110 / SPEED);
+  it('adds the descent value per metre when the destination is lower', () => {
+    expect(seconds([path], pin(0, 0, 120), pin(110, 0, 100))).toBeCloseTo(110 / SPEED + 20 * DESCENT_SECONDS_PER_METRE);
+  });
+
+  // P04 ticket 77: a way up and the way down differ.
+  it('takes longer up than down by the climb and the descent', () => {
+    const up = seconds([path], pin(0, 0, 100), pin(110, 0, 120));
+    const down = seconds([path], pin(0, 0, 120), pin(110, 0, 100));
+
+    expect(up - down).toBeCloseTo(20 * (CLIMB_SECONDS_PER_METRE - DESCENT_SECONDS_PER_METRE));
+    expect(up).toBeGreaterThan(down);
   });
 });

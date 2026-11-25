@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-05  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { METRES_PER_DEGREE, metresPerDegreeEast, type Position } from '../common/geometry.js';
@@ -10,10 +11,15 @@ import { METRES_PER_DEGREE, metresPerDegreeEast, type Position } from '../common
 // The walking model of ADR 0010: OpenStreetMap's paths as a graph, each pin joined to it, and the walk's seconds. Only
 // the offline builder runs this; the server looks the results up.
 
-// Both fitted to the 13 calibration walks of P04's evidence/06, unrounded (P11 ticket 02). The climb value was fitted
-// below 0 and became 0.
+// The speed on the flat, fitted to the 13 calibration walks of P04's evidence/06, unrounded (P11 ticket 02).
 export const WALKING_METRES_PER_SECOND = 1.3966856966974264;
-export const CLIMB_SECONDS_PER_METRE = 0;
+// What each metre the destination stands above the origin adds, and each metre it stands below, negative when going
+// down is faster than the flat, so that a way up and the way down differ (P04 ticket 77). Heights are the two ends',
+// not summed along the path: SRTM's 30 m cells put bumps in every path, and summing them adds a climb both ways, a
+// flat pair included. The calibration's fit of a climb went below 0 on walks too short and flat to tell it (P11
+// ticket 02).
+export const CLIMB_SECONDS_PER_METRE = 6;
+export const DESCENT_SECONDS_PER_METRE = 0;
 const JOIN_MARGIN_METRES = 20;
 
 const WALKED_HIGHWAYS = new Set([
@@ -240,6 +246,16 @@ function metresBetweenJoins(toNodes: Float64Array, starts: ReadonlyMap<Segment, 
   return best;
 }
 
+// A walk of `metres` to a destination `rise` metres above its origin, below it when negative.
+export function walkSeconds(metres: number, rise: number): number {
+  return (
+    metres / WALKING_METRES_PER_SECOND +
+    Math.max(0, rise) * CLIMB_SECONDS_PER_METRE +
+    Math.max(0, -rise) * DESCENT_SECONDS_PER_METRE
+  );
+}
+
+// Each pair's seconds from each of `from` to each of `to`, in that direction.
 export function walkingSeconds(graph: WalkingGraph, from: readonly Pin[], to: readonly Pin[]): number[][] {
   const ends = to.map((pin) => joinsOf(graph, pin));
   return from.map((origin) => {
@@ -251,8 +267,7 @@ export function walkingSeconds(graph: WalkingGraph, from: readonly Pin[], to: re
         return 0;
       }
       const metres = metresBetweenJoins(toNodes, starts, ends[index] ?? []);
-      const climb = Math.max(0, destination.elevation - origin.elevation);
-      return metres / WALKING_METRES_PER_SECOND + climb * CLIMB_SECONDS_PER_METRE;
+      return Math.max(0, walkSeconds(metres, destination.elevation - origin.elevation));
     });
   });
 }
