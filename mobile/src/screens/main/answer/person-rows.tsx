@@ -102,7 +102,7 @@ function PersonLine({ lane, parts }: { lane: BandLane; parts: LaneParts }): Reac
 // A Friend's row while picking: the check, the name, the state at the right, and the bar when the main server sent
 // the Friend's lane; a press checks or unchecks it. 나 has the row of everyone's, with no check.
 function PickLine({ row, parts, onPick }: { row: PickRow; parts: LaneParts; onPick: Picking['onPick'] }): ReactElement {
-  const { userId, name, me, checked, busy } = row;
+  const { userId, name, me, checked, busy, department } = row;
   if (me) {
     return <PersonLine lane={{ userId, name, busy: busy ?? [] }} parts={parts} />;
   }
@@ -124,6 +124,9 @@ function PickLine({ row, parts, onPick }: { row: PickRow; parts: LaneParts; onPi
         </View>
         <Text numberOfLines={1} style={[styles.pickName, !checked && styles.quietName]}>
           {name}
+        </Text>
+        <Text numberOfLines={1} style={styles.department}>
+          {department ?? ''}
         </Text>
         <Text style={styles.state}>{state}</Text>
       </View>
@@ -201,7 +204,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
   },
   checked: { borderColor: color.snuBlue, backgroundColor: color.snuBlue },
-  pickName: { ...text.label, flex: 1, color: color.ink },
+  pickName: { ...text.label, flexShrink: 0, color: color.ink },
+  // Quieter than the name, and the first to give way to the state at the right (the user's phone, 2026-11-25).
+  department: { ...text.caption, flex: 1, color: color.inkSubtle },
   quietName: { color: color.inkMuted },
   state: { ...text.caption, color: color.inkMuted },
   quietBusy: { backgroundColor: color.busyQuiet },

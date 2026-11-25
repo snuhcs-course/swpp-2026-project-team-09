@@ -60,6 +60,8 @@ export interface PickRow {
   busy: BandLane['busy'] | null;
   // To the Plan's place; null where it is not known.
   walkMinutes: number | null;
+  // From the User's Friend list, shown quieter beside the name; null for the asker or one not in the list.
+  department: string | null;
 }
 
 interface RowsSource {
@@ -67,8 +69,9 @@ interface RowsSource {
   picked: readonly string[];
   // The walking minutes of the Plan's people to its place, by user id; a Friend with none takes the phone's guess.
   walks: ReadonlyMap<string, number | null>;
-  // Every Friend of the User, for those the main server sent no lane for, with the phone's guess of their walk.
-  friends: readonly { id: string; name: string; walkMinutes: number | null }[];
+  // Every Friend of the User, for those the main server sent no lane for, with the phone's guess of their walk, and
+  // each one's department for every row.
+  friends: readonly { id: string; name: string; department?: string; walkMinutes: number | null }[];
 }
 
 // A row for the asker and one for each Friend: the asker first, then the checked, then the nearest, those whose
@@ -82,6 +85,7 @@ export function pickRowsOf({ band, picked, walks, friends }: RowsSource): PickRo
     checked: picked.includes(userId),
     busy,
     walkMinutes,
+    department: friends.find(({ id }) => id === userId)?.department ?? null,
   });
   const walkOf = (userId: string): number | null =>
     walks.has(userId) ? (walks.get(userId) ?? null) : (friends.find(({ id }) => id === userId)?.walkMinutes ?? null);
@@ -111,6 +115,7 @@ export function pickRowsOf({ band, picked, walks, friends }: RowsSource): PickRo
           checked: true,
           busy: me.busy,
           walkMinutes: walks.get(me.userId) ?? null,
+          department: null,
         },
         ...sorted,
       ];

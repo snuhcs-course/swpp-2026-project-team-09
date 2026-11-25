@@ -8,7 +8,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, type ReactNode, use, useEffect, useRef, useState } from 'react';
+import { type ReactElement, type ReactNode, use, useState } from 'react';
 import { type LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Reanimated from 'react-native-reanimated';
@@ -35,6 +35,7 @@ import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
 import { type Picking, PersonRows } from './person-rows';
 import { usePickingBar } from './pick-head';
+import { usePickingPlace } from './picking-place';
 import { PickHint } from './sheet-hint';
 import { SheetLinkContext } from './sheet-link';
 import { TimeBand } from './time-band';
@@ -128,17 +129,6 @@ function OpenRows(p: {
   );
 }
 
-// Picking opens the card once, as it starts.
-function useOpenWhen(picking: boolean, open: () => void): void {
-  const was = useRef(false);
-  useEffect(() => {
-    if (picking && !was.current) {
-      open();
-    }
-    was.current = picking;
-  });
-}
-
 // The time bar: the answer's band in one white row at the top, its head the words and "＋ 같이", its track over the
 // free time around the span, at one range and scale whether it is open or not. With Friends, pulled open by its grip, a
 // row for each person comes out under the track over the same range, four people at most in sight and the rest
@@ -154,7 +144,7 @@ function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: Ba
   const { lanes, startAt, now } = band.band;
   const friends = lanes.length > 1 || picking !== null;
   const grip = useTimeCardGrip({ height, top: barY, opens: friends, rows, sheet: use(SheetLinkContext) });
-  useOpenWhen(picking !== null, grip.open);
+  usePickingPlace(picking !== null, grip);
   const folded = !friends || grip.place !== 'open';
   const label = friends ? `사람별 시간 ${folded ? '펼치기' : '접기'}` : null;
   return (

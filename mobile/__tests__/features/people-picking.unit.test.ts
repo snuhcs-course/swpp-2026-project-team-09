@@ -150,8 +150,20 @@ function minsuRowOf(walks: ReadonlyMap<string, number | null>): PickRow | undefi
   );
 }
 
-// Partitions: a Plan's Friend with a walk in the Plan, and without one.
-describe('the walk of a Plan’s Friend while picking', () => {
+// Partitions: a Plan's Friend with a walk in the Plan, and without one; their department.
+describe('the walk and department of a Plan’s Friend while picking', () => {
+  it('comes with the Friend’s department from the Friend list, and none for the asker', () => {
+    const rows = pickRowsOf({
+      band: BAND,
+      picked: [],
+      walks: new Map(),
+      friends: [{ id: 'minsu', name: '민수', department: '컴퓨터공학부', walkMinutes: 6 }],
+    });
+
+    expect(rows.find(({ userId }) => userId === 'minsu')?.department).toBe('컴퓨터공학부');
+    expect(rows[0]).toMatchObject({ me: true, department: null });
+  });
+
   it('comes from the Plan, and from the phone’s guess only without one', () => {
     expect(minsuRowOf(new Map([['minsu', 12]]))?.walkMinutes).toBe(12);
     expect(minsuRowOf(new Map([['me', 3]]))?.walkMinutes).toBe(6);

@@ -94,9 +94,10 @@ export function usePickingBar(
     return { band, picking: null, head: null, addWords };
   }
   const walks = new Map(plan.parts.map(({ userId, walkMinutes }) => [userId, walkMinutes]));
-  const guessed = friends.map(({ id, name, position }) => ({
+  const guessed = friends.map(({ id, name, department, position }) => ({
     id,
     name,
+    department,
     walkMinutes: walkGuessOf(position === null ? null : metresBetween(position, plan.place)),
   }));
   const leave = (): void => {
