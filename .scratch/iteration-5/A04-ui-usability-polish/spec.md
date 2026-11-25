@@ -126,8 +126,8 @@ Scope
 The glass layer and the Assistant (tickets 01 and 02)
 
 - One design-system component draws a glass surface. A caller names a level and never gives numbers. The levels come from the changelog's § 5-1:
-  - **panel**: outer bars, bottom sheets and cards over the map, about 50% white, a thin light line along the top, and blur when ticket 03 adds it. Ticket 03 changed it: a blur with no white on iOS 26 and later, 80% white elsewhere.
-  - **inner**: chips, boxes, white buttons and light coloured chips inside a panel, 80% white; 90% since ticket 03, to stand out on the 80% panel.
+  - **panel**: outer bars, bottom sheets and cards over the map, a thin light line along the top, over a blur with no white on iOS 26 and later, else 80% white.
+  - **inner**: chips, boxes, white buttons and light coloured chips inside a panel, 90% white.
   - **field**: grey input fields inside a panel, navy at 5%.
   - **map chip**: small chips standing on the map itself (walk minutes, candidate tags, route time chips), 60% white.
   - **dark chip**: the black time and place chips ("10:45 301동"), navy-black at 48%.
