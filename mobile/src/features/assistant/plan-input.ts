@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MealInput, PlanInput, PlanPerson } from '@/api/assistant-types';
@@ -12,7 +13,7 @@ const NO_WINDOW: MealInput['window'] = { from: null, until: null };
 
 type WithPeople = Extract<PlanInput, { people: PlanPerson[] }>;
 
-function hasPeople(input: PlanInput): input is WithPeople {
+export function hasPeople(input: PlanInput): input is WithPeople {
   return input.kind === 'meal' || input.kind === 'new-quest' || input.kind === 'meet';
 }
 

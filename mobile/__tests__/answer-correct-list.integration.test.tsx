@@ -4,24 +4,32 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
+import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { askOnMap, card, timeBar } from './support/answer-map';
+import { pass, shownAddress } from './support/app';
+import { askOnMap, card, mapThings, timeBar } from './support/answer-map';
+import { recalculations } from './support/answer-correct';
+import { holdBackButton } from './support/back';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
+import { lookOf } from './support/markers';
 import { startFresh } from './support/mocks';
-import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { pickCancel, pickDone, pickRow } from './support/picking';
+import { answerMainScreen, askMainServer, MIN_JUN, PHONE_NOW } from './support/server';
 
-// The open list of Friends to add (fix 2 of the design review of 2026-11-15, as its decision sets it), over the stored
-// answer to "배고파, 민수랑 같이": the question becomes the card's two lines, "그대로" stands at the right of the chips'
-// first line and closes the list, and the band, the steps, "닫기", and the input give way. Closed, the card says
-// nothing the map says, and the main button stands beside the input again (P04 ticket 04).
+// The time card while people are picked in it (P04 ticket 64), over the stored answer to "배고파, 민수랑 같이":
+// "＋ 같이" in the time bar's head opens the card's rows, and "취소" and "완료" take the chip's place. The bottom card
+// keeps the answer and the input, its main button waiting for 완료. A way out, "취소" or Android's back, leaves the
+// Plan as it was and asks nothing, and the main button stands beside the input again (P04 ticket 04). With 민수 in the
+// Plan, the chip reads "같이 1 ›". A User without Friends is led to adding one (board p20).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -38,7 +46,9 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const ADD = '같이 먹을 친구 추가';
-const FIRST_PLAN = '12:15 302동식당';
+const INVITE = '만들고 초대 보내기';
+const PICK = '302동식당 · 12:15 점심';
+const HINT = '지도의 얼굴을 눌러도 골라져요';
 
 let server: FakeServer;
 
@@ -56,60 +66,102 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-// Partitions: the list open; the list closed by "그대로".
-describe('the open list of Friends', () => {
-  it("asks in the card's lines, with 그대로 where 근거 stood, and no band, steps, 닫기, or input", async () => {
+// Partitions: picking open; opened the first time and again.
+describe('the time card while people are picked', () => {
+  it('opens its rows, with 취소 and 완료 in the chip’s place, the answer and the input kept, and no main button', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
     // P04 ticket 14: "＋ 같이" is in the time bar, and the dock holds the input's row alone.
     expect(card().queryByRole('button', { name: ADD })).toBeNull();
 
     await user.press(timeBar().getByRole('button', { name: ADD }));
 
-    const lines = within(card().getByTestId('answer-lines'));
-    expect(lines.getByText('누구와 같이 먹을까요?')).toBeVisible();
-    expect(lines.getByText('지도의 얼굴을 누르거나 아래에서 골라요')).toBeVisible();
-    expect(card().queryByText(FIRST_PLAN)).toBeNull();
-    const keep: unknown = card().getByRole('button', { name: '그대로' }).parent?.props.testID;
-    expect(keep).toBe('condition-chips');
-    expect(card().queryByRole('button', { name: '근거' })).toBeNull();
-    expect(card().getByTestId('choice-grid')).toBeVisible();
-    expect(card().queryByTestId('time-band-track')).toBeNull();
-    expect(card().queryByTestId('plan-steps')).toBeNull();
-    expect(card().queryByRole('button', { name: '닫기' })).toBeNull();
-    expect(screen.queryByLabelText(AI_INPUT)).toBeNull();
+    expect(screen.getByTestId('time-card-grip')).toBeExpanded();
+    expect(timeBar().queryByRole('button', { name: ADD })).toBeNull();
+    expect(pickCancel()).toHaveTextContent('취소');
+    expect(pickDone()).toHaveTextContent(/^완료$/u);
+    expect(mapThings()).toContain(PICK);
+    expect(card().queryByRole('button', { name: '그대로' })).toBeNull();
+    expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
+    expect(screen.queryByRole('button', { name: INVITE })).toBeNull();
   });
 
-  it('closes with 그대로, and brings back the input with the main button beside it', async () => {
+  it('says once, under the card, that a face on the map picks too', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+
+    await user.press(timeBar().getByRole('button', { name: ADD }));
+    expect(screen.getByTestId('pick-hint')).toHaveTextContent(HINT);
+    await user.press(pickCancel());
     await user.press(timeBar().getByRole('button', { name: ADD }));
 
-    await user.press(card().getByRole('button', { name: '그대로' }));
-
-    expect(card().queryByTestId('answer-lines')).toBeNull();
-    expect(card().queryByText('누구와 같이 먹을까요?')).toBeNull();
-    expect(card().queryByTestId('choice-grid')).toBeNull();
-    expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
-    const beside = within(screen.getByTestId('ai-input-beside'));
-    expect(beside.getByRole('button', { name: '만들고 초대 보내기' })).toBeVisible();
+    expect(screen.queryByTestId('pick-hint')).toBeNull();
   });
 });
 
-// Partitions: the list open over an answer without a Plan, which draws nothing, so the map takes no press on a face.
-describe('the open list of Friends over an answer without a Plan', () => {
-  it('says only that the nearest come first', async () => {
-    // No stored reply is without a Plan: the stored one with its Plans emptied, and the lines of a day without a menu.
-    const answer = {
-      ...MEAL_ANSWER_REPLY.answer,
-      plans: [],
-      noPlan: { reason: 'no-menu', lines: [[{ text: '오늘은 여는 식당이 없어요', strong: false }]] },
-    };
-    const user = await askOnMap(server, { ...MEAL_ANSWER_REPLY, answer });
+// Partitions: 취소; Android's back. Expected values: the Plan as it was, nothing asked, 김민준 checked and then left
+// with the "+" on his face, and the card folded again as it was before "＋ 같이".
+describe('leaving the picking', () => {
+  it.each([['취소'], ["Android's back"]])(
+    'by %s asks nothing, leaves the Plan as it was, and brings back the chip and the main button',
+    async (way) => {
+      const back = holdBackButton();
+      const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+      expect(screen.getByTestId('time-card-grip')).toHaveProp('accessibilityLabel', '사람별 시간 펼치기');
+      await user.press(timeBar().getByRole('button', { name: ADD }));
+      expect(screen.getByTestId('time-card-grip')).toHaveProp('accessibilityLabel', '사람별 시간 접기');
+      await user.press(pickRow(MIN_JUN.name));
+      expect(lookOf(MIN_JUN.name)).toMatch(/^person:.+:selected$/u);
 
-    await user.press(card().getByRole('button', { name: ADD }));
+      if (way === '취소') {
+        await user.press(pickCancel());
+      } else {
+        expect(await back()).toBe(true);
+      }
+      await pass(500);
 
-    const lines = within(card().getByTestId('answer-lines'));
-    expect(lines.getByText('누구와 같이 먹을까요?')).toBeVisible();
-    expect(lines.getByText('가까운 친구부터 보여요')).toBeVisible();
-    expect(lines.queryByText('지도의 얼굴을 누르거나 아래에서 골라요')).toBeNull();
+      expect(recalculations(server)).toEqual([]);
+      expect(screen.queryByTestId('time-card-pick-done')).toBeNull();
+      // Folded before "＋ 같이", the card is folded again (the user's phone, 2026-11-25).
+      expect(screen.getByTestId('time-card-grip')).toHaveProp('accessibilityLabel', '사람별 시간 펼치기');
+      expect(timeBar().getByRole('button', { name: ADD })).toHaveTextContent('같이 1 ›');
+      expect(lookOf(MIN_JUN.name)).toMatch(/^person:.+:addable$/u);
+      expect(mapThings()).toContain(PICK);
+      const beside = within(screen.getByTestId('ai-input-beside'));
+      expect(beside.getByRole('button', { name: INVITE })).toBeVisible();
+    },
+  );
+});
+
+// Asks with no Friend at all, over the stored answer for the User alone, and opens the picking.
+async function openAlone(): Promise<Awaited<ReturnType<typeof askOnMap>>> {
+  server.on('GET /friends', { status: 200, body: [] });
+  const user = await askOnMap(server, { ...MEAL_ANSWER_REPLY, answer: MEAL_ANSWER_ALONE });
+  await user.press(timeBar().getByRole('button', { name: ADD }));
+  return user;
+}
+
+// Partitions: no Friend at all, over the stored answer for the User alone; its 닫기 and its link. Expected values:
+// board p20, one line with "친구 추가 ›" and "닫기" alone in the head.
+describe('the picking without Friends', () => {
+  it('says there is none yet, and closes by 닫기 alone, asking nothing', async () => {
+    const user = await openAlone();
+
+    expect(screen.getByTestId('time-card-no-friends')).toHaveTextContent('아직 친구가 없어요친구 추가 ›');
+    expect(screen.queryByTestId('time-card-pick-cancel')).toBeNull();
+    expect(screen.queryByTestId('pick-hint')).toBeNull();
+    expect(pickDone()).toHaveTextContent('닫기');
+    await user.press(pickDone());
+    await pass(500);
+
+    expect(screen.queryByTestId('time-card-pick-done')).toBeNull();
+    expect(recalculations(server)).toEqual([]);
+  });
+
+  it('opens adding a Friend from 친구 추가 ›', async () => {
+    const user = await openAlone();
+
+    await user.press(screen.getByRole('link', { name: '친구 추가 ›' }));
+    await pass(500);
+
+    expect(shownAddress()).toBe('/me/friends/add');
   });
 });

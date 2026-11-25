@@ -2,51 +2,95 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { space, text } from '@/design-system';
-import { listsTop } from '../layout';
+import { AI_INPUT, listsTop } from '../layout';
 import type { LevelHeights } from './card-levels';
+import { BAR_ADD_HEIGHT } from './condition-chips';
 import { contentMaxOf, type FrameCardProps, LEAST_CONTENT } from './frame-card-parts';
+import { useSteady } from './steady';
+import { LANE_HEIGHT } from './time-band';
+import { TUCK_STRIP } from './time-card-grip';
 
-// The answer sheet's steps as heights (moved out of `open-card.tsx` for its length, P04 ticket 61): low shows the header
-// and about two lines of the content; middle has the card's top edge at half the screen; high stands just under the time
+// The answer sheet's steps as heights (moved out of `open-card.tsx` for its length, P04 ticket 61). Low has one top
+// edge for every answer and for the list of questions: the meal answer's, its header, two lines of words, the main
+// button's row, and the input (P04 ticket 63). Middle covers `MID_SHARE` of the screen. High stands just under the time
 // card.
 
-// Low shows this many lines of the content's words, at the phone's font size, over the fade.
+// Low shows this many lines of the meal answer's words, at the phone's font size, over the fade.
 const LOW_LINES = 2;
 // The soft edge where the content passes under the footer.
 export const FADE = space[3];
+// The footer low's top edge is measured over, above the navigation's inset that lifts the input (`MapBottom`): the
+// input bar of one line, and the main button's row above it with its gap (`AiInput`, the button of size "bar", 50
+// high), and the room over them (`AnswerFrame`'s `barRoom`). A footer with less, an answer with no main button or the
+// list of questions open, gives what it lacks to the content.
+const MAIN_ROW = 50;
+const FOOTER = AI_INPUT.bottom + AI_INPUT.height + space[2] + MAIN_ROW + space[3];
+// Middle's share of the screen, from the status bar's top to the screen's bottom: the card covers this much of it, far
+// enough from low's and high's that each step shows clearly more (the user's phone check of ticket 61).
+export const MID_SHARE = 0.6;
 
 export interface Caps extends LevelHeights {
   // The scrolling part's laid-out height: the highest step's.
   room: number;
+  // At low, the room under the last whole line of words that the footer's band hides, so that no line shows cut in half.
+  band: number;
+  // Every step stands at its cap for every content: one top edge for every answer at each step. Else, as for a card
+  // without steps or while typing, every step fits a shorter content.
+  fixedSteps: boolean;
+}
+
+// Low's height and the band under its whole lines: two lines over the meal answer's footer, more over a smaller one.
+function lowOf(mid: number, padTop: number, { line, footer }: { line: number; footer: number }): [number, number] {
+  const low = Math.min(mid, Math.max(padTop + line + FADE, padTop + LOW_LINES * line + FADE + footer));
+  const lines = Math.max(1, Math.floor((low - padTop - FADE) / line));
+  return [low, Math.max(0, low - padTop - lines * line)];
+}
+
+// The place the folded time card takes, as `time-bar.tsx` lays it out: its top padding, the head's row, the track's
+// lane, and the ends' row, 4 apart, then the grip's strip under a gap of 4. Its rows of words grow with the font.
+export function foldedTimeCardOf(fontScale: number): number {
+  const head = Math.max(BAR_ADD_HEIGHT, text.label.lineHeight * fontScale);
+  const ends = text.caption.lineHeight * fontScale;
+  return space[3] + head + space[1] + LANE_HEIGHT + space[1] + ends + space[1] + TUCK_STRIP;
 }
 
 // The most the scrolling part shows at each step, under the card's header (`above`); null until the stage is laid out.
-// No step reads how much the answer says: a card shorter than a step stops at its own height (`heightsOf`).
 export function useCaps(props: FrameCardProps, above: number, padTop: number): Caps | null {
-  const { stageHeight, barRoom, raising, timeBarHeight = 0, fit = false } = props;
-  const { top } = useSafeAreaInsets();
+  const { stageHeight, barRoom, raising, fit = false } = props;
+  const { top, bottom } = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
+  // The bar of several requests comes from its layout: a fraction of a point moves no step (`steady.ts`).
+  const stepsTop = useSteady(props.stepsTop ?? 0);
   if (stageHeight === null) {
     return null;
   }
   if (raising === undefined) {
     const half = Math.max(LEAST_CONTENT, (contentMaxOf(stageHeight, barRoom) ?? LEAST_CONTENT) - above);
-    return { low: half, mid: half, high: half, room: half };
+    return { low: half, mid: half, high: half, room: half, band: 0, fixedSteps: false };
   }
-  // High stops just under the time card as it stands by default, tucked away or not (h1, h2, k4). Middle's top edge
-  // stands at half the screen: the stage runs from under the status bar, `top` high, to the screen's bottom. Where the
-  // time card reaches lower than that, middle is high.
-  const pillRoom = listsTop(top) + (timeBarHeight > 0 ? timeBarHeight + space[2] : 0);
+  // High's top edge is one line for every answer and state: just under the place the folded time card takes, whether
+  // one stands there or not, tucked away or not, whatever its measured height (h1, h2, k4; the user's phone, 2026-11-26:
+  // while an answer loaded, before its time card, high covered the whole screen). Only the bar of several requests,
+  // with a Plan's bar under it, reaches lower, and high stands under it then. The stage runs from under the status bar,
+  // `top` high, to the screen's bottom. Where that place reaches lower than middle, middle is high.
+  const pillRoom = listsTop(top) + Math.max(foldedTimeCardOf(fontScale), stepsTop) + space[2];
   const under = stageHeight - pillRoom - barRoom - above;
-  const mid = Math.max(LEAST_CONTENT, Math.min(under, (stageHeight + top) / 2 - barRoom - above));
+  const mid = Math.max(LEAST_CONTENT, Math.min(under, (stageHeight + top) * MID_SHARE - barRoom - above));
   const high = Math.max(mid, under);
-  const low = fit ? mid : Math.min(mid, padTop + LOW_LINES * text.bodyLg.lineHeight * fontScale + FADE);
-  return { low, mid, high, room: high };
+  if (fit) {
+    return { low: mid, mid, high, room: high, band: 0, fixedSteps: false };
+  }
+  const [low, band] = lowOf(mid, padTop, {
+    line: text.bodyLg.lineHeight * fontScale,
+    footer: bottom + FOOTER - barRoom,
+  });
+  return { low, mid, high, room: high, band, fixedSteps: true };
 }
 
 // Under a stepped card's content, the room that lets its last row come clear of the fade; a card without steps shows
@@ -55,19 +99,23 @@ export function underOf(props: Pick<FrameCardProps, 'raising'>): number {
   return props.raising === undefined ? 0 : FADE;
 }
 
-// The heights the card runs to: as much as its content and the room under it (`under`), up to each step's cap. A
-// content that lays out nothing below its top padding takes no room: the card is its header alone.
+// The heights the card runs to. A stepped card stands at its caps whatever its content's height, so that low, middle,
+// and high are three clear steps for every answer, a short one included, the content at the top and room under it
+// (P04 ticket 63, boards k1 and k3). A card without steps, or while typing, runs as far as its content and the room
+// under it (`under`), up to each cap. A content that lays out nothing below its top padding takes no room: the card is
+// its header alone.
 export function heightsOf(
   caps: Caps,
   natural: number | null,
   { padTop, under }: { padTop: number; under: number },
 ): LevelHeights {
-  const fit = (cap: number): number => {
-    if (natural === null) {
-      return cap;
-    }
-    return natural <= padTop + 0.5 ? 0 : Math.min(cap, natural + under);
-  };
+  if (natural !== null && natural <= padTop + 0.5) {
+    return { low: 0, mid: 0, high: 0 };
+  }
+  if (caps.fixedSteps) {
+    return { low: caps.low, mid: caps.mid, high: caps.high };
+  }
+  const fit = (cap: number): number => (natural === null ? cap : Math.min(cap, natural + under));
   const high = fit(caps.high);
   const mid = Math.min(fit(caps.mid), high);
   return { low: Math.min(fit(caps.low), mid), mid, high };

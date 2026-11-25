@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -31,13 +32,15 @@ const REMOVE_PADDING = 2;
 const REMOVE_REACH = (sizes.touchMin - REMOVE_ICON - 2 * REMOVE_PADDING) / 2;
 const REMOVE_HIT_SLOP = { top: REMOVE_REACH, right: REMOVE_REACH, bottom: REMOVE_REACH, left: space[1] / 2 };
 
-// A pill for an interest hashtag or a map filter. The toggle and the × are separate controls, side by side, so that
-// a screen reader reaches each.
+// A pill that picks something: an interest hashtag, a tag, a Friend. A row of filters is `ChipRow`'s word tabs. The
+// toggle and the × are separate controls, side by side, so that a screen reader reaches each.
 export function Chip({ children, selected = false, size = 'md', onPress, onRemove }: ChipProps): ReactElement {
   const labelColor = selected ? color.snuBlue : color.ink;
   const label = (
     <>
-      {selected && onRemove === undefined ? <Icon color={labelColor} name="check" size={14} /> : null}
+      {selected && onRemove === undefined ? (
+        <Icon color={labelColor} name="check" size={14} testID="chip-check" />
+      ) : null}
       <Text numberOfLines={1} style={[size === 'sm' ? styles.labelSm : styles.label, { color: labelColor }]}>
         {children}
       </Text>

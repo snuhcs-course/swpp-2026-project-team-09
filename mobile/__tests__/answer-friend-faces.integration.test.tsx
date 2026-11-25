@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -26,12 +27,14 @@ import { layStage } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { lookOf, press } from './support/markers';
 import { startFresh } from './support/mocks';
+import { pickDone } from './support/picking';
 import { answerMainScreen, askMainServer, MIN_JUN, PHONE_NOW } from './support/server';
 import { SENT_CAPABILITIES } from './support/capabilities';
 
-// The "+" on the face of a Friend who can be added (P02 ticket 09), and a wrong add undone by 빼기 on that person's
-// face, over the stored answer to "배고파, 민수랑 같이" and the fake main server's Friend 김민준, whose face is on the
-// map and who is not in its conditions.
+// The "+" on the face of a Friend who can be picked (P02 ticket 09; P04 ticket 64, a press checks the Friend's row
+// of the time card and 완료 asks), and a wrong add undone by 빼기 on that person's face, over the stored answer to
+// "배고파, 민수랑 같이" and the fake main server's Friend 김민준, whose face is on the map and who is not in its
+// conditions.
 
 jest.mock('expo-location');
 jest.mock('@/map/marker-images', () => {
@@ -115,7 +118,7 @@ describe('the + on a face', () => {
 
 // Partitions: a Friend selected on the everyday map before asking, whose card the answer frame hides.
 describe('a face selected before asking', () => {
-  it('carries the + and is not lit: only the add on its way lights a face', async () => {
+  it('carries the + and is not lit: only picking lights a face', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY, async (opened) => {
       await press(opened, MIN_JUN.name);
       expect(lookOf(MIN_JUN.name)).toMatch(/:selected$/u);
@@ -153,6 +156,7 @@ describe('a wrong add', () => {
     server.on('POST /assistant/answers', { status: 200, body: three });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
     await press(user, MIN_JUN.name);
+    await user.press(pickDone());
     await pass(500);
     expect(mapThings()).toContain('학생회관식당 · 12:33 점심');
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER });

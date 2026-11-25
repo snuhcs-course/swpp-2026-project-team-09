@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -12,7 +13,7 @@ import { Chip, color, font, Icon, radius, space, TextField } from '@/design-syst
 import { boardName } from '@/features/party/boards';
 import { MAX_CAPACITY, type PartyForm, type Visibility, withVisibility } from '@/features/party/making';
 import { BoardSheet } from './board-sheet';
-import { FieldHead } from './field-head';
+import { FieldHead, FieldIcon } from './field-head';
 
 type Change = (change: Partial<PartyForm>) => void;
 
@@ -23,6 +24,7 @@ export function DescriptionField({ form, onChange }: { form: PartyForm; onChange
     <TextField
       helper={`${String(form.description.length)}/${String(DESCRIPTION_MOST)}`}
       label="본문"
+      labelIcon={<FieldIcon name="lines" />}
       maxLength={DESCRIPTION_MOST}
       multiline
       onChangeText={(description) => {
@@ -68,7 +70,7 @@ export function CapacityField({ form, least, onChange }: CapacityFieldProps): Re
   const { capacity } = form;
   return (
     <View style={styles.field}>
-      <FieldHead label="인원" />
+      <FieldHead icon="users" label="인원" />
       <View style={styles.stepper}>
         <StepButton
           disabled={capacity <= least}
@@ -102,7 +104,7 @@ export function VisibilityField({ form, onChange }: { form: PartyForm; onChange:
   const open = form.visibility === 'public';
   return (
     <View style={styles.field}>
-      <FieldHead hint={open ? '찾기에 올라가요' : '초대한 친구만 볼 수 있어요'} label="공개 범위" />
+      <FieldHead hint={open ? '찾기에 올라가요' : '초대한 친구만 볼 수 있어요'} icon="eye" label="공개 범위" />
       <View accessibilityRole="radiogroup" style={styles.radios}>
         {VISIBILITY.map(({ key, label, icon }) => {
           const on = form.visibility === key;
@@ -153,7 +155,7 @@ export function BoardField({ form, onChange }: { form: PartyForm; onChange: Chan
   const words = form.board === null ? '게시판 선택' : boardName(form.board);
   return (
     <View style={styles.field}>
-      <FieldHead hint="모집글이 올라갈 곳" label="게시판" />
+      <FieldHead hint="모집글이 올라갈 곳" icon="clipboard" label="게시판" />
       <Pressable
         accessibilityLabel={`게시판 ${words}`}
         accessibilityRole="button"

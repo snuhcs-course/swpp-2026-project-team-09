@@ -8,6 +8,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
@@ -42,12 +43,23 @@ export interface AnswerPerson {
   level?: FriendLevel;
 }
 
+// A Friend of the asker's who is not in the plan, whom a Plan's time card offers to add.
+export interface OtherFriend {
+  userId: string;
+  name: string;
+  items: readonly DayItem[];
+  // Their walk to a Place, null when the asker may not see where they are.
+  walkTo: (placeId: string) => number | null;
+}
+
 // What the words of a gathering's answer read, a meal's or a meet's.
 export interface GatheringArgs<Input extends MealInput | MeetInput = MealInput | MeetInput> {
   input: Input;
   now: Date;
   // In the order of input.people, the asker first.
   people: readonly [AnswerPerson, ...AnswerPerson[]];
+  // Left out where no time card offers them.
+  others?: readonly OtherFriend[];
   gathering: Gathering;
   placeOf: (placeId: string) => PlaceDto;
 }

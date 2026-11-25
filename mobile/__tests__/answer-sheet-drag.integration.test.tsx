@@ -3,6 +3,7 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
@@ -26,7 +27,8 @@ import { sockets } from './support/fake-socket';
 // header row, a drag down from low, and Android's back, and "＋ 새 대화" stands just left of ✕ in every state. No words
 // stand under the grip, and nothing is pressed to raise or lower the card. The bar's words start at its left edge. The
 // card takes a drag anywhere: from low, down past half of it or a fling closes the answer, and a fling up raises it a
-// step; a drag down on the card takes the list of questions away first, as back does.
+// step. A drag only changes the card's height or closes the answer (P04 ticket 63): the list of questions and a
+// restaurant's menu stay, and the header is the same over both.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -263,34 +265,56 @@ describe("the grip's steps for a screen reader", () => {
     expect(steps()).toEqual(['decrement', 'close']);
   });
 
-  it('takes the earlier questions away by a step down on the low card, as back does, and keeps the answer', async () => {
+  it('offers no step down on the low card with the earlier questions open, and the list stays', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
     await user.press(screen.getByTestId('answer-caption'));
-    expect(steps()).toEqual(['increment', 'decrement', 'close']);
 
-    await lowerCard();
-
-    expect(screen.queryByTestId('question-list')).toBeNull();
-    expect(screen.getByTestId('answer-caption')).toBeVisible();
     expect(steps()).toEqual(['increment', 'close']);
+    expect(screen.getByTestId('question-list')).toBeVisible();
   });
 });
 
-// Partitions: the list of questions open on the low card.
-describe('a drag down with the list of questions open', () => {
-  it('takes the list away and leaves the answer, as back does', async () => {
+// Partitions: the list of questions and a restaurant's menu over the answer; a drag up, a drag down to low, and one
+// past the close point from low (P04 ticket 63, boards k1 to k3).
+describe('a drag with a layer over the answer', () => {
+  it('raises and lowers the card with the list of questions open, and the list stays', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
     await layStage(390, 760);
     await user.press(screen.getByTestId('answer-caption'));
+    expect(grip()).toBeCollapsed();
+
+    await drag('answer-card-drag', -30, -FLING);
+    expect(grip()).toHaveAccessibilityValue({ text: '중간' });
+    await drag('answer-card-drag', 30, FLING);
+
+    expect(grip()).toBeCollapsed();
     expect(screen.getByTestId('question-list')).toBeVisible();
-    // The input gives the list its room.
-    expect(screen.queryByLabelText('AI에게 메시지')).toBeNull();
-    await lay('answer-card-content', 200);
-    await lay('answer-card', 300);
+  });
 
-    await drag('answer-card-drag', 400);
+  it('closes the answer from low past the close point with the list of questions open', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await user.press(screen.getByTestId('answer-caption'));
+    await lay('answer-card', CARD);
 
-    expect(screen.queryByTestId('question-list')).toBeNull();
-    expect(screen.getByTestId('answer-caption')).toBeVisible();
+    await drag('answer-card-drag', CARD);
+
+    expect(screen.queryByTestId('answer-card')).toBeNull();
+    expect(screen.getByRole('button', { name: KEPT })).toBeVisible();
+  });
+
+  it("keeps a restaurant's menu and the history chip through a drag down, and closes from low", async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await layStage(390, 760);
+    await raiseCard();
+    await user.press(screen.getByTestId('meal-row-2'));
+    expect(screen.getByTestId('meal-menu')).toBeVisible();
+    expect(card().getByRole('button', { name: /이전 질문 보기$/u })).toBeVisible();
+
+    await drag('answer-card-drag', 30, FLING);
+    expect(grip()).toBeCollapsed();
+    expect(screen.getByTestId('meal-menu')).toBeOnTheScreen();
+
+    await drag('answer-card-drag', 20, FLING);
+    expect(screen.queryByTestId('answer-card')).toBeNull();
   });
 });

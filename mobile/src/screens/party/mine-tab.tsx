@@ -6,6 +6,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -13,11 +14,12 @@ import { type ReactElement, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { myPartyQuery } from '@/api/queries';
 import { ChipRow, EmptyState, ErrorState, LoadingState, SectionHeader, space } from '@/design-system';
-import { filterMine, groupMine, type MineCardView, type MineFilter } from '@/features/party/mine';
+import { filterMine, groupMine, LIVE_GROUP, type MineCardView, type MineFilter } from '@/features/party/mine';
 import { useMineCards } from '@/features/party/use-party';
 import { joinAsk } from '../room/activation-box';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
 import { useRoomActions } from '../room/use-room-actions';
+import { LiveDot } from './live-dot';
 import { MineCard } from './mine-card';
 import { showFind } from './use-party-actions';
 
@@ -52,6 +54,19 @@ function useEnter(onAsk: (ask: Ask) => void): (card: MineCardView) => void {
       onAsk(joinAsk(strip.title, myParty.title, () => void actions.joinParty(strip.partyId, true)));
     }
   };
+}
+
+// A group's header; "활성화 중", the User's running 파티, after the red light.
+function GroupHeader({ title }: { title: string }): ReactElement {
+  if (title !== LIVE_GROUP) {
+    return <SectionHeader>{title}</SectionHeader>;
+  }
+  return (
+    <View style={styles.liveHeader}>
+      <LiveDot />
+      <SectionHeader>{title}</SectionHeader>
+    </View>
+  );
 }
 
 interface MineList {
@@ -91,7 +106,7 @@ export function useMineList(): MineList {
         {cards !== undefined && held(filter) === 0 ? <MineEmpty filter={filter} /> : null}
         {groupMine(shown).map((group) => (
           <View key={group.title} style={styles.group}>
-            <SectionHeader>{group.title}</SectionHeader>
+            <GroupHeader title={group.title} />
             {group.cards.map((card) => (
               <MineCard card={card} key={card.questId} onDecline={declineParty} onEnter={enter} />
             ))}
@@ -126,4 +141,5 @@ export function MineTab(): ReactElement {
 const styles = StyleSheet.create({
   body: { gap: space[5], paddingHorizontal: space[4], paddingBottom: space[6] },
   group: { gap: space[3] },
+  liveHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
 });

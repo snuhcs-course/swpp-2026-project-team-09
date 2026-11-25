@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -59,7 +60,7 @@ export function FriendPicker({ friends, chosen, most, hint, onChosen }: FriendPi
   const full = chosen.length >= most;
   return (
     <View style={styles.field}>
-      <FieldHead hint={hint} label="친구 초대" />
+      <FieldHead hint={hint} icon="personPlus" label="친구 초대" />
       {chosen.length === 0 ? null : (
         <View style={styles.chips}>
           {friends

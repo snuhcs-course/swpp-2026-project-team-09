@@ -3,6 +3,7 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -43,20 +44,21 @@ export function pressableWhile(sent: boolean): (id: string) => boolean {
   return sent ? isPick : opensCard;
 }
 
-// A press on the Avatar of a Friend whom the conditions do not hold adds the Friend.
-function addOnPress(add: ShownAnswer['add'], id: string): void {
+// A press on a Friend's Avatar checks or unchecks their row in the time card, and opens picking first when it is not
+// open, with them checked (P04 ticket 64).
+function pickOnPress(pick: ShownAnswer['pick'], id: string): void {
   const userId = friendIdOf(id);
   if (userId !== null) {
-    add(userId);
+    pick(userId);
   }
 }
 
 // A press on the map while a Plan is drawn: the pick opens its card, before the Plan is sent or after; before, the
 // User's start and a face of the Plan's people open theirs, a candidate shows its Plan unless a recalculation is on its
-// way, and a Friend's Avatar adds them.
+// way, and a Friend's Avatar is picked.
 export function planPress(
   drawing: AnswerDrawing,
-  { add, show, recalculating }: Pick<ShownAnswer, 'add' | 'show' | 'recalculating'>,
+  { pick, show, recalculating }: Pick<ShownAnswer, 'pick' | 'show' | 'recalculating'>,
   sent: boolean,
   onMark: OnMark,
 ): (id: string) => void {
@@ -74,7 +76,7 @@ export function planPress(
       return;
     }
     if (planId === null) {
-      addOnPress(add, id);
+      pickOnPress(pick, id);
     } else {
       show(planId);
     }

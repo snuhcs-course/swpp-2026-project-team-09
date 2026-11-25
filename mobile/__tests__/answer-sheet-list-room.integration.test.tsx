@@ -3,19 +3,21 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
 import { StyleSheet, type ViewStyle } from 'react-native';
 import { pass, screen } from './support/app';
-import { raiseCard } from './support/card-grip';
+import { grip, raiseCard } from './support/card-grip';
 import { AI_INPUT, layStage, SEND } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 
-// P04 tickets 52 and 61: the caption's list of questions fits the sheet's room at each of its steps, ending above the
-// input. While the list is open, low shows it whole up to the middle step. The mocks answer.
+// P04 tickets 52, 61, and 63: the caption's list of questions keeps the step the card stood at, and takes its whole
+// height in the card's content, which scrolls it, so that a drag on it moves the card as on any answer. The mocks
+// answer.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -56,17 +58,25 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-// Partitions: the caption's list of questions on the low card and on the high one.
+// Partitions: the list opened on the low card and on the middle one.
 describe('the list of questions', () => {
-  it('fits the card’s room at low and at high, ending above the input', async () => {
+  it('keeps the low step and has no scroll or most height of its own', async () => {
     const user = await framed();
     await user.press(screen.getByTestId('answer-caption'));
-    const low = Number(styleOf('question-list').maxHeight);
-    expect(low).toBeLessThan(STAGE / 2);
 
+    expect(grip()).toBeCollapsed();
+    expect(styleOf('question-list').maxHeight).toBeUndefined();
+    expect(screen.getByTestId('question-list-rows')).toHaveProp('scrollEnabled', false);
+  });
+
+  it('keeps the middle step it was opened at', async () => {
+    const user = await framed();
     await raiseCard();
+    expect(grip()).toHaveAccessibilityValue({ text: '중간' });
 
-    // High, the list takes the high card's room, ending above the input.
-    expect(Number(styleOf('question-list').maxHeight)).toBeGreaterThan(low);
+    await user.press(screen.getByTestId('answer-caption'));
+
+    expect(screen.getByTestId('question-list')).toBeVisible();
+    expect(grip()).toHaveAccessibilityValue({ text: '중간' });
   });
 });

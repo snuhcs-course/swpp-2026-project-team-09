@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -197,6 +198,46 @@ describe('a6: the band let go at 14:00', () => {
     });
 
     expect(response.status).toBe(400);
+  });
+});
+
+describe('The Friends not in a meet', () => {
+  // Board a5, with 지수 sharing the exact position in 301동 and 하늘 sharing nothing.
+  it("are in each Plan's band in the order of the Friend list, with stretches as a lane's and walks only when seen", async () => {
+    const date = '2086-04-02';
+    const time = timeOn(date);
+    const { friend } = await a5(date);
+    const [seen, hidden] = [await stage.friend('지수'), await stage.friend('하늘')];
+    await stage.classAt(seen, '11:00', '12:30', '24');
+    await stage.classAt(hidden, '17:00', '19:00', '58');
+    await shareAt(stage.app, stage.asker, seen, 'exact');
+    const { latitude, longitude } = await stage.numbered('301');
+    await expectStatus(uploadPosition(stage.app, seen, { latitude, longitude }), 200);
+
+    const response = await recalculate(stage, meetInput(date, friend.id, { from: null, until: null }));
+
+    expect(response.status).toBe(200);
+    const answer = z.custom<AnswerReply>().parse(response.body);
+    expect(answer.plans[0]?.band).toMatchObject({
+      range: { startAt: time('12:00'), endAt: time('18:30') },
+      others: [
+        {
+          userId: seen.id,
+          name: '지수',
+          busy: [{ startAt: time('12:00'), endAt: time('12:30'), label: '24동 수업' }],
+          walkMinutes: expect.any(Number) as unknown,
+        },
+        {
+          userId: hidden.id,
+          name: '하늘',
+          busy: [{ startAt: time('17:00'), endAt: time('18:30'), label: '58동 수업' }],
+          walkMinutes: null,
+        },
+      ],
+    });
+    for (const { band } of answer.plans) {
+      expect(band.others?.map(({ userId }) => userId)).toEqual([seen.id, hidden.id]);
+    }
   });
 });
 

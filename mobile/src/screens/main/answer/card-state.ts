@@ -3,6 +3,7 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useState } from 'react';
@@ -22,8 +23,10 @@ export interface CardState {
   list: QuestionsOpen;
 }
 
-// The step the card was raised to: high unless a drag or a screen reader stopped it at the middle. A press on the map
-// that raises the card (`setRaised`) takes it to the step it last stood at above low, high after it was lowered.
+// The step the card was raised to. A press that raises the card (`setRaised`: a chosen restaurant's "메뉴 ›" on the
+// map, a Lookup's own mark) takes it from low to middle, so that what it opened is seen, and leaves a raised card at
+// its step: only the User's drag or a screen reader's step takes the card to high (P04 ticket 63, the user's phone
+// check).
 type Upper = Exclude<Level, 'low'>;
 
 // The card's step, which the control holds as raised or not so that a press on the map raises it too, and whether the
@@ -37,7 +40,7 @@ export function useCardState({ raised, setRaised, earlier }: ChatSheetControl['c
   useEffect(() => {
     tellEarlier(open);
   }, [tellEarlier, open]);
-  const [upper, setUpper] = useState<Upper>('high');
+  const [upper, setUpper] = useState<Upper>('mid');
   const [seen, setSeen] = useState(turn);
   if (seen !== turn) {
     setSeen(turn);
@@ -46,7 +49,7 @@ export function useCardState({ raised, setRaised, earlier }: ChatSheetControl['c
   const setLevel = useCallback(
     (next: Level): void => {
       if (next === 'low') {
-        setUpper('high');
+        setUpper('mid');
         setRaised(false);
       } else {
         setUpper(next);
@@ -76,7 +79,8 @@ interface BackLayers {
 }
 
 // What back takes away before the card's height: the list of questions, a mark's card, or a restaurant's menu (back to
-// the list of candidates); null when none is open. A drag down on the card takes it away first too (P04 ticket 52).
+// the list of candidates); null when none is open. A drag never takes it away: it only changes the card's height or
+// closes the answer (P04 ticket 63).
 export function layerOf(list: QuestionsOpen, control: ChatSheetControl): (() => void) | null {
   if (list.open) {
     return list.close;
@@ -87,9 +91,14 @@ export function layerOf(list: QuestionsOpen, control: ChatSheetControl): (() => 
   return control.answer.menuFor === null ? null : control.answer.closeMenu;
 }
 
-// What Android's back takes away, one layer a press: the layer over the card (`layerOf`), the raised card down to low,
-// then the answer.
+// What Android's back takes away, one layer a press: picking people in the time card, leaving the Plan as it was (P04
+// ticket 64), the layer over the card (`layerOf`), the raised card down to low, then the answer.
 export function backOf({ list, control, level, lower, leave }: BackLayers): () => void {
+  if (control.answer.adding) {
+    return (): void => {
+      control.answer.setAdding(false);
+    };
+  }
   return layerOf(list, control) ?? (level === 'low' ? leave : lower);
 }
 
@@ -101,6 +110,6 @@ export function useAnswerRaising(
   onPast: (past: boolean) => void,
 ): { raising: Raising; list: QuestionsOpen; back: () => void } {
   const { level, setLevel, lower, list } = useCardState(control.card, control.chat.bubbles.at(-1)?.id ?? null);
-  const raising: Raising = { level, setLevel, close: leave, layer: layerOf(list, control), onPast };
+  const raising: Raising = { level, setLevel, close: leave, onPast };
   return { raising, list, back: backOf({ list, control, level, lower, leave }) };
 }

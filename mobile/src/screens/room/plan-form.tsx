@@ -5,10 +5,11 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, type ReactNode, useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { SubQuestContent } from '@/api/room-types';
 import type { SubQuest } from '@/api/types';
@@ -33,19 +34,29 @@ export function pickedOf(subQuest: SubQuest | null): PickedPlace | null {
   return place === null || position === null ? null : { placeId: place.placeId, position, words: place.label };
 }
 
-// `언제`: a button with the time chosen, which closes the keyboard and opens the date·time sheet.
+// `언제`: a button with the time chosen, which closes the keyboard and opens the date·time sheet. `icon` goes before
+// the label, as the 파티 form marks its fields.
 export function WhenField({
   startsAt,
   onPick,
+  icon,
 }: {
   startsAt: string | null;
   onPick: (instant: string) => void;
+  icon?: ReactNode;
 }): ReactElement {
   const [picking, setPicking] = useState(false);
   const words = startsAt === null ? '날짜·시간 선택' : whenWords(startsAt);
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>언제</Text>
+      {icon === undefined ? (
+        <Text style={styles.label}>언제</Text>
+      ) : (
+        <View style={styles.labelRow}>
+          {icon}
+          <Text style={styles.label}>언제</Text>
+        </View>
+      )}
       <Pressable
         accessibilityLabel={`언제 ${words}`}
         accessibilityRole="button"
@@ -76,16 +87,19 @@ interface WhereFieldProps {
   picked: PickedPlace | null;
   onWords: (words: string) => void;
   onPicked: (place: PickedPlace | null) => void;
+  // Before the label, as `WhenField`'s.
+  icon?: ReactNode;
 }
 
 // `어디서`: words of the User's own, and the map view, whose choice fills them. Emptied words drop the choice. Words
 // without a choice are the Place they name, or else the words alone.
-export function WhereField({ words, picked, onWords, onPicked }: WhereFieldProps): ReactElement {
+export function WhereField({ words, picked, onWords, onPicked, icon }: WhereFieldProps): ReactElement {
   return (
     <View style={styles.where}>
       <View style={styles.whereField}>
         <TextField
           label="어디서"
+          labelIcon={icon}
           onChangeText={(next) => {
             onWords(next);
             if (next.trim() === '') {
@@ -164,6 +178,7 @@ const styles = StyleSheet.create({
   },
   field: { gap: space[1] },
   label: { fontFamily: font.semiBold, fontSize: 14, lineHeight: 20, color: color.ink },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   when: {
     flexDirection: 'row',
     alignItems: 'center',
