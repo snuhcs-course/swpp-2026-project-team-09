@@ -4,16 +4,25 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { type FetchStatus, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
 import type { MapScene, Plan } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { shuttleQuery } from '@/api/queries';
 import type { WalkingRoute } from '@/api/walking-route-types';
-import { endsOf, linesOn, pathsOf, type Walk, walksOf, walksToAsk } from '@/features/assistant/answer-walks';
-import { type WalkPaths, withDots } from '@/features/assistant/meal-marks';
+import {
+  endsOf,
+  linesOn,
+  pathsOf,
+  type Walk,
+  waitingLines,
+  walksOf,
+  walksToAsk,
+} from '@/features/assistant/answer-walks';
+import { withDots } from '@/features/assistant/meal-marks';
 import { shuttleLegsOf, shuttleWalks, type Ways } from '@/features/assistant/shuttle-legs';
 import type { MapLine } from '@/map';
 
@@ -29,17 +38,35 @@ function walkKey(walk: Walk): readonly unknown[] {
   return [...ANSWER_WALK_KEY, endsOf(walk)];
 }
 
-function dataOf(results: readonly { data: WalkingRoute | undefined }[]): (WalkingRoute | undefined)[] {
-  return results.map(({ data }) => data);
+interface Answer {
+  route: WalkingRoute | undefined;
+  // On its way: asked, neither answered nor failed yet, and not held while the phone is offline, when the line stays
+  // straight.
+  waiting: boolean;
 }
 
-// The paths of a scene's walks, by their lines' ids, once found. Only the scene on screen is asked for: at most
-// `WALKS_PER_SCENE` walks, each pair of ends once, never a shuttle's ride. Kakao's policy keeps a route from being
-// stored: a path lives only while a scene on screen draws it (`gcTime: 0`), a request whose scene leaves the screen is
-// given up (the query's `signal`), and a scene shown again asks again. A failure is retried as the everyday route's
-// is, and not again when its scene comes back while it is still known. A walk not answered yet, failed, or with no
-// path has none.
-export function useWalkPaths(walks: readonly Walk[]): WalkPaths {
+function answersOf(
+  results: readonly { data: WalkingRoute | undefined; isPending: boolean; fetchStatus: FetchStatus }[],
+): Answer[] {
+  return results.map(({ data, isPending, fetchStatus }) => ({
+    route: data,
+    waiting: isPending && fetchStatus === 'fetching',
+  }));
+}
+
+export interface WalkState {
+  paths: Ways['paths'];
+  waiting: ReadonlySet<string>;
+}
+
+// The paths of a scene's walks, by their lines' ids, once found, and the lines of those still on their way. Only the
+// scene on screen is asked for: at most `WALKS_PER_SCENE` walks, each pair of ends once, never a shuttle's ride.
+// Kakao's policy keeps a route from being stored: a path is held only while the answer that draws it is on screen
+// (`useWalksHeldWhile`), in the running app's memory, so that a place of that answer chosen again asks nothing (P04
+// ticket 75). A request whose scene leaves the screen is given up (the query's `signal`). A failure is retried as the
+// everyday route's is, and not again when its scene comes back while it is still known. A walk failed or with no path
+// has none.
+export function useWalkPaths(walks: readonly Walk[]): WalkState {
   const asked = useMemo(() => walksToAsk(walks, WALKS_PER_SCENE), [walks]);
   const results = useQueries({
     queries: asked.map((walk) => ({
@@ -47,30 +74,49 @@ export function useWalkPaths(walks: readonly Walk[]): WalkPaths {
       queryFn: ({ signal }: { signal: AbortSignal }): Promise<WalkingRoute> =>
         apiClient.findWalkingRoute(walk.from, walk.to, signal),
       staleTime: Infinity,
-      gcTime: 0,
+      gcTime: Infinity,
       retryOnMount: false,
     })),
-    combine: dataOf,
+    combine: answersOf,
   });
   const found = useMemo(
     () =>
       new Map(
         asked.flatMap((walk, at): [string, WalkingRoute][] => {
-          const route = results[at];
+          const route = results[at]?.route;
           return route === undefined ? [] : [[endsOf(walk), route]];
         }),
       ),
     [asked, results],
   );
-  return useMemo(() => pathsOf(walks, found), [walks, found]);
+  const waiting = useMemo(
+    () => new Set(asked.flatMap((walk, at) => (results[at]?.waiting ? [endsOf(walk)] : []))),
+    [asked, results],
+  );
+  return useMemo(
+    () => ({ paths: pathsOf(walks, found), waiting: waitingLines(walks, waiting) }),
+    [walks, found, waiting],
+  );
 }
 
-// A scene's lines with its walks along their paths (`useWalkPaths`), joined onto their ends; until a walk is
-// answered, and when it fails or finds no path, its line stays straight.
+// Drops every walk's path no scene on screen draws once what holds them changes: the answer or the Lookup on screen
+// (`frame`, null with none) or the received invitation's or made Quest's card (`card`). A new answer and a closed one
+// drop the paths of the one before; choosing between the places of one answer, and the keyboard taking its card away
+// and back, keep them. Called after the hooks that ask for walks, whose requests have moved to the scene on screen by
+// then.
+export function useWalksHeldWhile(frame: object | null, card: object | null): void {
+  const client = useQueryClient();
+  useEffect(() => {
+    client.removeQueries({ queryKey: ANSWER_WALK_KEY, predicate: (query) => query.getObserversCount() === 0 });
+  }, [client, frame, card]);
+}
+
+// A scene's lines with its walks along their paths (`useWalkPaths`), joined onto their ends. A walk's line is not
+// drawn while its path is on its way, and stays straight when it fails or finds no path.
 export function useAnswerWalks(lines: readonly MapLine[], routes: MapScene['routes']): readonly MapLine[] {
   const walks = useMemo(() => walksOf(routes), [routes]);
-  const paths = useWalkPaths(walks);
-  return useMemo(() => withDots(linesOn(lines, paths)), [lines, paths]);
+  const { paths, waiting } = useWalkPaths(walks);
+  return useMemo(() => withDots(linesOn(lines, paths, waiting)), [lines, paths, waiting]);
 }
 
 const NO_ROUTES: MapScene['routes'] = [];
@@ -86,6 +132,6 @@ export function useMealWays(plan: Plan | undefined): Ways {
     [plan, byShuttle, shuttle],
   );
   const walks = useMemo(() => [...walksOf(routes), ...shuttleWalks(legs)], [routes, legs]);
-  const paths = useWalkPaths(walks);
-  return useMemo(() => ({ paths, legs }), [paths, legs]);
+  const { paths, waiting } = useWalkPaths(walks);
+  return useMemo(() => ({ paths, waiting, legs }), [paths, waiting, legs]);
 }

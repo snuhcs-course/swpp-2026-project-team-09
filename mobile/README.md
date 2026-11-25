@@ -702,11 +702,13 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   else of the everyday map: each mark is an `answer` look, one symbol at a point and its label at the first free side,
   and a candidate's mark takes a press, which shows its Plan; each route is a solid line. A walked route (one whose
   `mode` is absent or `walk`, never a shuttle's ride) follows the path `GET /walking-route` gives for its two ends,
-  joined onto them, in its own colour and width, and stays straight while that is on its way, when it fails and when
-  no path is found (`useAnswerWalks`, `use-answer-walks.ts`; P15 ticket 56, pending the owner's decision on Kakao's
-  rule). Only the scene on screen is asked, at most `WALKS_PER_SCENE` (3) walks, each pair of ends once, the people's
-  ways before the way on to the next Class; a scene that leaves the screen gives its requests up and keeps nothing, so
-  one shown again asks again. The minutes shown stay the main server's. The markers of
+  joined onto them, in its own colour and width. It is not drawn while that is on its way, and stays straight when it
+  fails and when no path is found (`useAnswerWalks`, `use-answer-walks.ts`; P15 ticket 56 and P04 ticket 75, pending
+  the owner's decision on Kakao's rule). Only the scene on screen is asked, at most `WALKS_PER_SCENE` (3) walks, each
+  pair of ends once, the people's ways before the way on to the next Class; a scene that leaves the screen gives its
+  requests up. A path is held only while the answer that draws it is on screen, in the running app's memory
+  (`useWalksHeldWhile`), so a place of that answer chosen again asks nothing and draws its path at once; a new answer
+  and a closed one drop the paths of the one before. The minutes shown stay the main server's. The markers of
   events, Quests, Restaurants, Study Spaces, and the shuttle, the shuttle's line, a walking route, the tutorial's pin,
   the shuttle's vehicles, and the User's own Avatar give way; the Avatars of Friends and of the other people of the
   User's Party stay, but for those of the Plan's people, whom the marks draw, and those near one of the Plan's own
@@ -1260,8 +1262,7 @@ When an operation fails:
 
 The walking route is asked when the User asks, not as the User's position moves. Pending the owner's decision (P15
 ticket 56), an answer's walks are asked by themselves too (`useAnswerWalks`): at most three for the scene on screen,
-none kept once it leaves, and a request whose scene leaves is given up. The everyday route keeps its asking only
-while it is drawn (`gcTime: 0`):
+each held only while the answer that draws it is on screen, and a request whose scene leaves is given up. The everyday route keeps its asking only while it is drawn (`gcTime: 0`):
 
 ```tsx
 const { route, isPending, isError, ask, clear } = useWalkingRoute();
