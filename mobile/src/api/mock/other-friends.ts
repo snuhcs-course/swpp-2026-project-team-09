@@ -9,6 +9,7 @@ import type { BandLane, OtherLane, TimeBand } from '@/api/time-band-types';
 import { previewOf } from '@/features/assistant/people-picking';
 import { peopleOf } from '@/features/assistant/plan-input';
 import { metresBetween } from '@/features/quests/walking-times';
+import { mockBehaviour } from '@/dev-settings';
 import { FRIENDS, POSITIONS } from './data/friends';
 
 // The mock's stand-in for the main server's other Friends on a meal's or a meet's band (P04 ticket 64). The stored
@@ -57,12 +58,14 @@ function planWith(plan: Plan, people: ReadonlySet<string>): Plan {
   const kept = band.lanes.filter(({ userId }, index) => index === 0 || people.has(userId));
   const picked = FRIENDS.filter(({ id }) => people.has(id) && !kept.some(({ userId }) => userId === id));
   const lanes = [...kept, ...picked.map(({ id, name }) => laneOf(id, name, band))];
-  const others: OtherLane[] = FRIENDS.filter(({ id }) => !people.has(id)).map(({ id, name }) => ({
-    userId: id,
-    name,
-    busy: laneOf(id, name, band).busy,
-    walkMinutes: walkOf(id, plan),
-  }));
+  const others: OtherLane[] = othersShown()
+    .filter(({ id }) => !people.has(id))
+    .map(({ id, name }) => ({
+      userId: id,
+      name,
+      busy: laneOf(id, name, band).busy,
+      walkMinutes: walkOf(id, plan),
+    }));
   const span = picked.length === 0 ? {} : previewOf(band, lanes);
   return { ...plan, band: { ...band, ...span, lanes, others } };
 }
@@ -73,8 +76,15 @@ function chipsWith(chips: readonly ConditionChip[], people: ReadonlySet<string>)
   return [...kept, ...added.map(({ id, name }): ConditionChip => ({ kind: 'person', text: name, userId: id }))];
 }
 
+// The Friends the mock sends as `others`: none when its Friend list is set empty, as a User without Friends has.
+function othersShown(): typeof FRIENDS {
+  return mockBehaviour('listFriends') === 'empty' ? [] : FRIENDS;
+}
+
+// A development setting (`EXPO_PUBLIC_MOCK_EMPTY=others`) answers as a main server before `others` did, so that the
+// app's rows without busy data can be seen.
 export function withOtherFriends(answer: AnswerReply): AnswerReply {
-  if (answer.input.kind !== 'meal' && answer.input.kind !== 'meet') {
+  if ((answer.input.kind !== 'meal' && answer.input.kind !== 'meet') || mockBehaviour('others') === 'empty') {
     return answer;
   }
   const people = new Set(peopleOf(answer.input).map(({ userId }) => userId));

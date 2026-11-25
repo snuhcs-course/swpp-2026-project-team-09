@@ -44,7 +44,9 @@ app, such as `EXPO_PUBLIC_RELEASE_TAG`, are not development settings: they are l
 | `EXPO_PUBLIC_CAMPUS_WALK`    | `1`                                                   | The User's position is a walk on campus (see below) |
 
 An operation is named as in the table under "Data" below, such as `listFriends`. `completeOnboarding` and `enterLobby`
-have no empty answer, so `EXPO_PUBLIC_MOCK_EMPTY` leaves them as they are.
+have no empty answer, so `EXPO_PUBLIC_MOCK_EMPTY` leaves them as they are. `EXPO_PUBLIC_MOCK_EMPTY` also takes `others`:
+a meal's or a meet's answer then comes without the asker's other Friends, as from a main server before them, and with
+`listFriends` the answer has none of them either.
 
 With `EXPO_PUBLIC_CAMPUS_WALK=1` the phone is not asked for its position or for the permission. The User's position
 is a fixed round on campus (`src/position/walk.ts`) that starts where the `Main` wireframe draws the User and takes a
