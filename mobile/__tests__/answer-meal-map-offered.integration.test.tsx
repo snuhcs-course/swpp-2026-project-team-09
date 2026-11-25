@@ -8,10 +8,14 @@ import { screen, within } from '@testing-library/react-native';
 import type { AnswerReply } from '@/api/assistant-types';
 import { crowdedMealReply, crowdedWithFriend } from '@/api/mock/data/crowded-meal';
 import { FRIENDS } from '@/api/mock/data/friends';
+import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
+import { MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answers';
+import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import { koreaDateKey, koreaNextDay } from '@/korea-time';
 import { raiseCard } from './support/card-grip';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
+import { pass } from './support/app';
 import { askOnMap, mapThings } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import { givePhone, ON_CAMPUS } from './support/main';
@@ -96,5 +100,21 @@ describe('the map of a meal answer', () => {
 
     expect(mapThings().filter((name) => /밖에 못 있어요|뿐이에요|휴점/u.test(name))).toEqual([]);
     expect(mapNumbers()).toEqual([1]);
+  });
+});
+
+// PR 569's review: the answer on screen is the offered one, a new object for an answer with places dropped on its map
+// (MEAL_ANSWER_THREE draws seven), and the reply it came from is still the one whose Plan was made.
+describe('a Plan made from a meal answer with places dropped', () => {
+  it('is kept as that reply’s outcome in the list of questions', async () => {
+    server.on('POST /plans', { status: 201, body: PLAN_QUEST });
+    const user = await askOnMap(server, { ...MEAL_ANSWER_REPLY, answer: MEAL_ANSWER_THREE });
+
+    await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: /^만들고/u }));
+    await pass(500);
+    await user.press(screen.getByTestId('answer-caption'));
+
+    const rows = within(screen.getByTestId('question-list')).getAllByTestId('question-row');
+    expect(rows.map((row) => String(row.props.accessibilityLabel)).join('\n')).toMatch(/초대 \d+명 보냄/u);
   });
 });
