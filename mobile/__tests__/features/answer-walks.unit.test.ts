@@ -2,11 +2,20 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MapScene } from '@/api/assistant-types';
 import type { WalkingRoute } from '@/api/walking-route-types';
-import { endsOf, linesAlongPaths, routeLineId, walksOf, walksToAsk } from '@/features/assistant/answer-walks';
+import {
+  endsOf,
+  linesAlongPaths,
+  linesOn,
+  routeLineId,
+  waitingLines,
+  walksOf,
+  walksToAsk,
+} from '@/features/assistant/answer-walks';
 import type { LineStyle, MapLine } from '@/map';
 
 // An answer's walking routes along their paths (P15 ticket 56): which routes of a scene are walked, which of them are
@@ -123,5 +132,27 @@ describe('the lines drawn', () => {
     const shuttleOnly = walksOf([route(B, C, { mode: 'shuttle' })]);
 
     expect(linesAlongPaths(LINES, shuttleOnly, pathOf(found(A, BEND, B)))).toEqual(LINES);
+  });
+});
+
+// P04 ticket 75: a straight line that turns into the path a moment later is not drawn. Partitions: a walk on its way,
+// one of the same ends, one found, one not asked; a line on its way whose path has come.
+describe('the lines of walks on their way', () => {
+  const walks = walksOf([route(A, B), route(A, B, { role: 'friend' }), route(C, D)]);
+
+  it('are the lines of every walk whose ends are on their way', () => {
+    expect(waitingLines(walks, new Set([endsOf({ from: A, to: B })]))).toEqual(
+      new Set([routeLineId(0), routeLineId(1)]),
+    );
+    expect(waitingLines(walks, new Set())).toEqual(new Set());
+  });
+
+  it('are not drawn until their paths come, while the others are drawn as they are', () => {
+    expect(linesOn(LINES, new Map(), new Set([routeLineId(0)]))).toEqual([LINES[1]]);
+    expect(linesOn(LINES, new Map([[routeLineId(0), [A, BEND, B]]]), new Set([routeLineId(0)]))[0]?.points).toEqual([
+      A,
+      BEND,
+      B,
+    ]);
   });
 });

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply } from '@/api/assistant-types';
@@ -112,9 +113,9 @@ describe.each(ANSWER.plans.map(({ place }) => place.label))('%s chosen, at a fon
         return !mine && overlaps(label.box, symbol.box) ? [`${label.id} × ${symbol.id}`] : [];
       }),
     );
-    // The chosen place's label never moves: chosen at the start's own building, with the Friend's face beside it and
-    // the way on below it, it has no side clear of both, and stands over the face.
-    expect(covering).toEqual(name === '301동식당' ? ['answer:pick × answer:person:friend-taehyun'] : []);
+    // Chosen at the start's own building, with the Friend's face beside it, the chosen place's label (its name and
+    // start over its main dish, P04 ticket 74) is narrow enough to clear the face.
+    expect(covering).toEqual([]);
   });
 });
 

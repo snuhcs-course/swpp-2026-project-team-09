@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { existsSync } from 'node:fs';
@@ -174,8 +175,10 @@ export class SeedTravel implements TravelProvider {
   }
 }
 
-export async function readSeedTravel(directory: string): Promise<SeedTravel> {
-  const table = await readSeedFile(directory, WALKING_TABLE_FILE, walkingTableSchema);
+// `walkingTable`, when given, answers in the place of the directory's: the tests about plans and ways bind a frozen
+// one, so that their numbers stay when the walking model changes (P04 ticket 77).
+export async function readSeedTravel(directory: string, walkingTable?: WalkingTable): Promise<SeedTravel> {
+  const table = walkingTable ?? (await readSeedFile(directory, WALKING_TABLE_FILE, walkingTableSchema));
   const timing = existsSync(join(directory, SHUTTLE_TIMING_FILE))
     ? await readSeedFile(directory, SHUTTLE_TIMING_FILE, shuttleTimingSchema)
     : NO_TIMING;

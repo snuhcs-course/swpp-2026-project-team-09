@@ -12,7 +12,8 @@ import { field, hasTexts, isText, isTextOrNull, listOf } from './answers';
 import { isChip } from './chip-answers';
 import { isNote } from './missing-input-answers';
 import { isKeptOrAbsent } from './kept-answers';
-import { isBand, isDish, isKeyOf, isLine, isPlacePoint, isScene } from './plan-answers';
+import { isDish } from './plan-menu-answers';
+import { isBand, isKeyOf, isLine, isPlacePoint, isScene } from './plan-answers';
 import { isInput, isOneOf } from './plan-inputs';
 
 // The app's check of a reply's Lookup, every field of it, as the answer screen draws each.

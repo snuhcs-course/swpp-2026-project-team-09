@@ -100,6 +100,8 @@ describe('the map of a way to a Place (q1)', () => {
 
     expect(mapThings()).toEqual(expect.arrayContaining(['나', '문화관(73동) · 걸어서 18분']));
     expect(mapThings()).not.toContain(ME);
+    // The walk's path comes after the reply, and no line is drawn while it is on its way (P04 ticket 75).
+    await pass(500);
     expect(mapLines()).toEqual(['answer:route:0']);
   });
 

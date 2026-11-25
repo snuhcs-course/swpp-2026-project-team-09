@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MapScene, Plan } from '@/api/assistant-types';
@@ -9,8 +10,7 @@ import type { ShuttleRoute, ShuttleStop } from '@/api/shuttle-types';
 import type { LatLng } from '@/api/types';
 import type { MapLine } from '@/map';
 import { metresBetween } from './answer-drawing';
-import type { Draft } from './answer-groups';
-import { ROUTE_STYLES } from './answer-groups';
+import { type Draft, LEG_STYLES } from './answer-groups';
 import { routeLineId, type Walk } from './answer-walks';
 
 // A meal Plan's leg by the shuttle, drawn as the User goes it (P04 ticket 41): the walk from where the leg starts to
@@ -33,6 +33,9 @@ export interface ShuttleLeg {
 export interface Ways {
   paths: ReadonlyMap<string, readonly LatLng[]>;
   legs: readonly ShuttleLeg[];
+  // The ids of the walks' lines whose paths are on their way, not drawn until they come (P04 ticket 75). Left out,
+  // none.
+  waiting?: ReadonlySet<string>;
 }
 
 export const NO_WAYS: Ways = { paths: new Map(), legs: [] };
@@ -112,29 +115,26 @@ export function shuttleWalks(legs: readonly ShuttleLeg[]): Walk[] {
   ]);
 }
 
-// A leg by the shuttle with no stops known (the shuttle's route not loaded): a dotted line in the shuttle's colour,
-// never a solid one that reads as a walk through buildings.
-export const BY_SHUTTLE = { color: ROUTE_STYLES.shuttle.color, width: 4, dash: [1, 8] } as const;
-// The ride, along the roads, in the shuttle's colour and wider than a walk.
-const RIDE = { color: ROUTE_STYLES.shuttle.color, width: 6 } as const;
-
-// The lines of a leg by the shuttle: the two walks, along their paths once found, and the ride.
-export function shuttleLines(leg: ShuttleLeg, ways: Ways): MapLine[] {
+// The lines of a leg by the shuttle: the two walks, along their paths once found, and the ride, each in its leg's
+// weight (`on`, the way on to the next fixed thing: a pale band) and its mode's hue (P04 ticket 76).
+export function shuttleLines(leg: ShuttleLeg, ways: Ways, on = false): MapLine[] {
   const { index, from, to, board, getOff, ride } = leg;
-  const walk = ROUTE_STYLES.me;
+  const walk = on ? LEG_STYLES.walkOn : LEG_STYLES.walkThere;
   return [
     { id: walkInId(index), points: ways.paths.get(walkInId(index)) ?? [from, point(board)], style: walk },
-    { id: rideId(index), points: ride, style: RIDE },
+    { id: rideId(index), points: ride, style: on ? LEG_STYLES.rideOn : LEG_STYLES.rideThere },
     { id: walkOutId(index), points: ways.paths.get(walkOutId(index)) ?? [point(getOff), to], style: walk },
   ];
 }
 
-// The line of a scene's route by the shuttle in a meal Plan: its leg's, or dotted when its stops are not known.
-export function shuttleRouteLines(route: MapScene['routes'][number], index: number, ways: Ways): MapLine[] {
+// The line of a scene's route by the shuttle in a meal Plan: its leg's, or one ride in the shuttle's hue when its stops
+// are not known, never a walk's that reads as a walk through buildings.
+export function shuttleRouteLines(route: MapScene['routes'][number], index: number, ways: Ways, on = false): MapLine[] {
   const leg = ways.legs.find((one) => one.index === index);
+  const ride = on ? LEG_STYLES.rideOn : LEG_STYLES.rideThere;
   return leg === undefined
-    ? [{ id: routeLineId(index), points: [route.from, route.to], style: BY_SHUTTLE }]
-    : shuttleLines(leg, ways);
+    ? [{ id: routeLineId(index), points: [route.from, route.to], style: ride }]
+    : shuttleLines(leg, ways, on).filter(({ id }) => ways.waiting?.has(id) !== true);
 }
 
 function stopDraft(stop: ShuttleStop, word: string, id: string): Draft {

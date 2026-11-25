@@ -36,9 +36,11 @@ export function useCardRaise(framed: boolean): CardRaise {
 
 // A menu question's answer opens at its Restaurant's menu (P04 ticket 72), which the raised card shows, as when the
 // Restaurant is pressed in a meal answer's list: the card is raised when such an answer comes.
-export function useRaisedForMenu({ answer, menuFor }: Pick<ShownAnswer, 'answer' | 'menuFor'>, raise: CardRaise): void {
+export function useRaisedForMenu(
+  { answer, menuFor }: Pick<ShownAnswer, 'answer' | 'menuFor'>,
+  setRaised: (raised: boolean) => void,
+): void {
   const opened = answer?.opened ?? null;
-  const { setRaised } = raise;
   const raiseIt = useEffectEvent(() => {
     if (opened !== null && menuFor === opened) {
       setRaised(true);

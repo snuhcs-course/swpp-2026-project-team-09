@@ -186,6 +186,9 @@ export interface PlanMenu {
   // its dishes then have none of their own.
   price: number | null;
   dishes: MenuDish[];
+  // How many other things are served that meal there, across every corner: the "외 N" of the menu's words, which the
+  // map's label of the chosen place says too (P04 ticket 74). Absent from a main server before it.
+  others?: number;
 }
 
 export interface PlanPart {

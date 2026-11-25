@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MenuLineKind } from '../../generated/prisma/client.js';
@@ -56,8 +57,15 @@ export function cornersOf(lines: readonly MenuLineDto[]): Corner[] {
   });
 }
 
+// Everything served that meal, every corner's items in the menu's order: the first is the main dish, and the rest are
+// the "외 N" of the menu's words.
+function servedItems(lines: readonly MenuLineDto[]): MenuLineDto[] {
+  return cornersOf(lines).flatMap((corner) => corner.items);
+}
+
 // The main corner, the first that holds something: its own price from its heading, and its dishes by name, price and
-// kept kind of food in the menu's order. What a meal Plan and a menu Lookup give the app of a Restaurant's menu.
+// kept kind of food in the menu's order, and how many other things are served (`others`, P04 ticket 74). What a meal
+// Plan and a menu Lookup give the app of a Restaurant's menu.
 export function mainMenu(lines: readonly MenuLineDto[], cuisines: Cuisines = new Map()): PlanMenu {
   const [main] = cornersOf(lines);
   return {
@@ -66,6 +74,7 @@ export function mainMenu(lines: readonly MenuLineDto[], cuisines: Cuisines = new
       const name = dishName(line);
       return { name, price: line.price, cuisine: cuisines.get(name) ?? null };
     }),
+    others: Math.max(0, servedItems(lines).length - 1),
   };
 }
 
@@ -116,7 +125,7 @@ function dayOf(date: string, now: Date): string {
 // "오늘 **제육덮밥** 외 2 · 14:00까지": the first dish of the first corner, how many other things are served, and the
 // closing time when it is known. Null for a menu with nothing served.
 export function menuLine({ lines, closesAt }: ServedMenu, date: string, now: Date): AnswerLine | null {
-  const items = cornersOf(lines).flatMap((corner) => corner.items);
+  const items = servedItems(lines);
   const [first] = items;
   if (first === undefined) {
     return null;

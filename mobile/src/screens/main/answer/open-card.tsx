@@ -4,6 +4,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -22,7 +23,7 @@ import { type Level, type LevelHeights, LEVELS, stepsOf } from './card-levels';
 import { type CardMotion, useCardMotion } from './card-motion';
 import { CONTENT_TOP, type FrameCardProps, LOWERED, OPEN_EDGE } from './frame-card-parts';
 import { CardTop } from './card-header';
-import { useHeldHeight, useTopWhen } from './held-height';
+import { useHeldHeight, useLayerScroll, useTopWhen } from './held-height';
 import { CloseHint } from './raise-handle';
 import { SheetHint, useSheetHint } from './sheet-hint';
 import { useFollowPull } from './sheet-link';
@@ -215,6 +216,7 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
     onHeight,
   });
   useFollowPull(motion.offset, level, { heights, room });
+  useLayerScroll(props.layer ?? null, props.layerOf ?? null, scroll, scrollY);
   const onLayout = useLaidHeight(caps === null && level === 'low', setLaid, onHeight);
   return {
     setAbove,

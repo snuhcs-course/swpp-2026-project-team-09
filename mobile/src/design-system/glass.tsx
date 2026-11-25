@@ -2,8 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import type { ReactElement, ReactNode } from 'react';
 import { type StyleProp, StyleSheet, View, type ViewProps, type ViewStyle } from 'react-native';
 import { glass } from './tokens';
@@ -22,14 +24,61 @@ interface GlassProps extends Omit<ViewProps, 'style' | 'children'> {
 }
 
 // A see-through surface at a named level, for what the Assistant draws over the map. A caller gives a level and never
-// a colour. The surface is drawn here alone, so that a blur (ticket A04-03) goes in behind the children here and no
-// caller changes.
+// a colour.
+//
+// A panel blurs what is behind it where the phone can blur the map: iOS 26 and later, with the system's Liquid Glass,
+// which blurs as the screen is composed, and no white of its own over it. Android cannot blur the Kakao map, which
+// draws on a GL surface of its own that a view's blur never sees (A04-03), nor can iOS before 26; there the panel is a
+// dense white with no blur.
 export function Glass({ level, style, children, ...view }: GlassProps): ReactElement {
+  if (level !== 'panel' || !blurs()) {
+    return (
+      <View {...view} style={[style, surfaces[level]]}>
+        {children}
+      </View>
+    );
+  }
+  const fill = [StyleSheet.absoluteFill, surfaces.through, cornersOf(style)];
   return (
-    <View {...view} style={[style, surfaces[level]]}>
+    <View {...view} style={[style, surfaces.panelShadow]}>
+      <GlassView glassEffectStyle="regular" style={fill} />
+      <View style={[fill, surfaces.panelLine]} testID="glass-line" />
       {children}
     </View>
   );
+}
+
+// Whether the phone has Liquid Glass, and the API that draws it, which some betas of iOS 26 lack (`expo-glass-effect`
+// says to ask both).
+function blurs(): boolean {
+  return isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
+}
+
+// The caller's corners, so that the layers under a panel's children are rounded as the panel is, a bottom sheet's
+// top corners alone included.
+function cornersOf(style: StyleProp<ViewStyle>): ViewStyle {
+  const {
+    borderRadius,
+    borderTopLeftRadius,
+    borderTopRightRadius,
+    borderBottomLeftRadius,
+    borderBottomRightRadius,
+    borderTopStartRadius,
+    borderTopEndRadius,
+    borderBottomStartRadius,
+    borderBottomEndRadius,
+  } = StyleSheet.flatten(style) ?? {};
+  return {
+    borderRadius,
+    borderTopLeftRadius,
+    borderTopRightRadius,
+    borderBottomLeftRadius,
+    borderBottomRightRadius,
+    borderTopStartRadius,
+    borderTopEndRadius,
+    borderBottomStartRadius,
+    borderBottomEndRadius,
+  };
 }
 
 const surfaces = StyleSheet.create({
@@ -37,6 +86,12 @@ const surfaces = StyleSheet.create({
     backgroundColor: glass.panel.ground,
     boxShadow: `${glass.panel.shadow}, ${glass.line}`,
   },
+  // A blurred panel: the shadow on the panel, and the line on a layer over the blur, which would hide it if it were on
+  // the panel itself.
+  panelShadow: { backgroundColor: 'transparent', boxShadow: glass.panel.shadow },
+  panelLine: { boxShadow: glass.line },
+  // A layer under a panel's children: it never takes a touch.
+  through: { pointerEvents: 'none' },
   inner: { backgroundColor: glass.inner.ground },
   field: { backgroundColor: glass.field.ground },
   mapChip: {

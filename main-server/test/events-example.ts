@@ -2,14 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type DayEvent } from '../src/assistant/events/event-fit.js';
 import { type DayItem, onDay } from '../src/assistant/free-time/free-time.js';
-import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { type PlaceDto } from '../src/places/dto/place.dto.js';
-import { readSeedTravel, type TravelProvider } from '../src/travel/travel.js';
-import { WALKING_TABLE_FILE, walkingTableSchema } from '../src/travel/walking-table.js';
+import { type TravelProvider } from '../src/travel/travel.js';
+import { readFrozenTravel, readFrozenWalkingTable } from './frozen-travel.js';
 
 // The design's worked example of events (section 6.3): Friday 2026-11-20, asked at 13:50, on the seed's walking table,
 // where 24동 to 문화관 is 4 minutes, 문화관 to 301동 18, 301동 to 두레문예관 22, and 38동 to 문화관 11. The seed's
@@ -39,8 +39,8 @@ const ids = new Map<string, string>();
 let seed: TravelProvider | null = null;
 
 export async function readExample(): Promise<void> {
-  seed = await readSeedTravel(SEED_DIRECTORY);
-  const table = await readSeedFile(SEED_DIRECTORY, WALKING_TABLE_FILE, walkingTableSchema);
+  seed = await readFrozenTravel();
+  const table = await readFrozenWalkingTable();
   for (const [building, { name }] of Object.entries(PLACES)) {
     const found = table.places.find((place) => place.name === name);
     if (found === undefined) {

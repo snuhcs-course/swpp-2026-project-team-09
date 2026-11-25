@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen } from '@testing-library/react-native';
@@ -9,7 +10,7 @@ import type { AnswerReply, Plan } from '@/api/assistant-types';
 import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { askOnMap, mapLines, mapThings } from './support/answer-map';
+import { askOnMap, mapThings } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { press } from './support/markers';
@@ -71,13 +72,12 @@ describe('a meal answer with five Plans and their menus', () => {
     expect(screen.queryByText(/\d+\/5/u)).toBeNull();
   });
 
-  it("draws the pick's own routes alone: the User's walk whole and the way on to the next Class as dots", async () => {
+  it("draws the pick's own routes alone: the way on to the next Class as a band under the User's walk, no dots", async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
-    const [walk, ...dots] = mapLines();
-    expect(walk).toBe('answer:route:0');
-    expect(dots.length).toBeGreaterThan(0);
-    expect(dots.every((id) => id.startsWith('answer:route:1:dot:'))).toBe(true);
+    // In the order the map draws them, the band first so that the walk lies on it (P04 ticket 76).
+    const drawn = screen.queryAllByTestId(/^line:/u).map((line): unknown => line.props.testID);
+    expect(drawn).toEqual(['line:answer:route:1', 'line:answer:route:0']);
   });
 
   it('makes candidate 2 the pick on a press, and the old pick candidate 1', async () => {
