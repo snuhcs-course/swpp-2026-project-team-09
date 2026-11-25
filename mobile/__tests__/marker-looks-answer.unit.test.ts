@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MarkerLook } from '@/map';
@@ -186,7 +187,7 @@ describe("a meal answer's looks that differ only in how they are drawn", () => {
       label({}),
       label({ faded: true }),
       label({ action: '메뉴 ›' }),
-      label({ note: '11:00 · 걸음 32분' }),
+      label({ note: '11:00' }),
     ];
     expect(new Set(looks.map((look) => lookName(look))).size).toBe(looks.length);
   });

@@ -57,7 +57,8 @@ export interface AnswerLabel {
   line: string | null;
   // A candidate's line under its title and time: its dishes and price. Left out, none.
   sub?: string | null;
-  // Words after the title in the pick's colour, as a meal pick's time and walking ("11:00 · 걸음 32분"). Left out, none.
+  // Words after the title in the pick's colour, as a meal pick's time ("11:00"), which marks a meal pick's label.
+  // Left out, none.
   note?: string | null;
   // Words after the line that say what a press opens ("메뉴 ›"), in the link's colour. Left out, none.
   action?: string | null;

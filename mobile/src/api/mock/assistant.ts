@@ -11,6 +11,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -31,6 +32,7 @@ import { MENUS } from './data/menus';
 import { CROWDED_ASKED, crowdedMealAnswer, crowdedMealReply, crowdedWithFriend } from './data/crowded-meal';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
 import { MEAL_ANSWER_MENUS_REPLY, MEAL_DINNER_MENUS } from './data/meal-answer-menus';
+import { asksUnnamedCompany, UNNAMED_COMPANY_REPLY } from './data/unnamed-company';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
 import { cancelReplyTo } from './data/cancel-quest';
 import { partyChangeReplyTo } from './data/party-change';
@@ -267,6 +269,9 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
   }
   if (last.includes(CROWDED_ASKED)) {
     return crowdedMealReply(koreaDateKey(koreaNextDay(now())), now().toISOString());
+  }
+  if (asksUnnamedCompany(last)) {
+    return UNNAMED_COMPANY_REPLY;
   }
   if (last.includes('뭐 먹을까')) {
     return MEAL_ANSWER_MENUS_REPLY;

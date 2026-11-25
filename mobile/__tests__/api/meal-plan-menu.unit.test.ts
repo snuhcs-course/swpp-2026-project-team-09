@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -21,6 +22,7 @@ describe("A meal Plan's menu", () => {
     ['with dishes and their prices', { price: null, dishes: [{ name: '눈꽃치즈닭갈비', price: 6000 }] }],
     ['of a buffet, priced once', { price: 6500, dishes: [{ name: '뼈없는감자탕', price: null }] }],
     ['with no dishes served', { price: null, dishes: [] }],
+    ['with the count of the other things served (P04 ticket 74)', { price: 7000, dishes: [], others: 2 }],
   ])('is believed %s', (_, menu) => {
     expect(isAnswerReply(withMenu(menu))).toBe(true);
   });
@@ -34,6 +36,7 @@ describe("A meal Plan's menu", () => {
     ['without its own price', { dishes: [] }],
     ['with a price as words', { price: null, dishes: [{ name: '수제탕수육', price: '6,000원' }] }],
     ['with a dish without a name', { price: null, dishes: [{ price: 6000 }] }],
+    ['with the count of the others as words', { price: null, dishes: [], others: '외 2' }],
   ])('is refused %s', (_, menu) => {
     expect(isAnswerReply(withMenu(menu))).toBe(false);
   });

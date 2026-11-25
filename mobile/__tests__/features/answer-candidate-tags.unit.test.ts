@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, Plan } from '@/api/assistant-types';
@@ -34,14 +35,16 @@ describe('the tags of a meal answer with menus', () => {
     expect(seen(drawing, 'answer:candidate:자하연식당 2층').label).toMatchObject({ title: '22분', line: null });
   });
 
-  it("gives the pick's label its time and walking after its name, and its first dish, the rest's count, and its lowest price under them", () => {
+  // P04 ticket 74: the walk is the route's own pill; the label says the name and start over the main dish. A screen
+  // reader still reads it whole.
+  it("gives the pick's label its time after its name, and its first dish and the rest's count under them", () => {
     expect(seen(drawing, 'answer:pick')).toMatchObject({
       name: '302동식당 · 12:15 · 걸음 20분 · 뼈없는감자탕 외 5 · 4,000원부터',
       label: {
         tone: 'pick',
         title: '302동식당',
-        note: '12:15 · 걸음 20분',
-        line: '뼈없는감자탕 외 5 · 4,000원부터',
+        note: '12:15',
+        line: '뼈없는감자탕 외 5',
         action: '메뉴 ›',
       },
     });
