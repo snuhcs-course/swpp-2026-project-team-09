@@ -39,9 +39,16 @@ Native files: none. Releases: an app OTA update.
   | --- | --- | --- | --- | --- | --- |
   | 5.0/Main | 1.9 s | 5.8 s | 12.5 s | 7.0 s | 89 |
   | This ticket, before `later` | at arrival (4 dots made ahead) | 1.5 s | 5.3 s | 40 ms | 5 |
+  | This ticket | at arrival (4 dots made ahead) | 1.5 s | 2.6 s (all 12 marks at 2.8 s) | 44 ms | 5 |
 
-  Before `later`, the 3 seconds after the chosen place were the other Plans' chosen places. They ranked with it and came before the numbered places. `later` puts them behind the board on screen. Its timing is to follow.
+  Before `later`, the 3 seconds after the chosen place were the other Plans' chosen places. They ranked with it and came before the numbered places. `later` puts them behind the board on screen.
 - One capture costs about 40 ms when the stage holds three: drawing the look, the view-shot, and writing the PNG. It took 7 seconds when 89 waited on the native side together.
 - A batch as one view-shot of a sheet cut into pieces needs the native side to read part of a picture. `Things.kt` reads a whole file per look (`BitmapFactory.decodeFile`), and cutting a PNG in JavaScript needs a native image library. So it is not done here (no native change).
 - Splitting a candidate into parts that repeat (asked on 2026-11-26): the numbered dot, made ahead, and its minutes tag as a picture of its own, named by its side and words alone ("26분" is then one picture for every candidate and every answer), drawn as two marks at one position. The native side allows it without a change: each picture has its own anchor (`anchorX`, `anchorY`, the symbol box's centre in the picture), and a tag already stands without its dot (`symbol: null`). Not built here, since the candidates' look is about to change.
 - Of the two looks the user is choosing between, the coral numbered circle with the minutes in a glass tag is cheaper for this pipeline: the circles 1 to 12 are made ahead, and the "N분" tags are few and repeat across answers. A fork icon with the Restaurant's name and minutes is one picture per Restaurant, like today's tag per candidate. Nothing in this ticket depends on today's look: what is made ahead is a list of looks, and the order reads only a look's role and number.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 50 minutes on this ticket in the p04-58 session (an estimate), including two emulator runs of about 15 and 10 minutes. No subagents.
+- Tokens: the session's tokens from 2026-11-25 20:22 UTC to this entry cover this ticket, ticket 80, P04-69's wait without a time limit, ticket 76's pill fix, two merges into PR 573, and the late-marks measurement, about 1 hour 50 minutes of agent time in all. They are not split by ticket. Input 664 uncached, cache reads 140,943,642 and cache writes 449,676; output 251,858.
+

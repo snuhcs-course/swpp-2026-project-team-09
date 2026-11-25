@@ -38,3 +38,9 @@ The user's decisions (2026-11-26):
 - The next Class's time is the Plan's next fixed thing's. When the Plan holds none after the meal, the time is the one its place's tag begins with. Its place is the scene place's own name, not the tag or the busy item's label ("302동 수업").
 - A leg's mark id carries its words ("answer:leg:0:13분"), so a leg whose words change is a new mark, as before.
 - With the stops' labels gone, a stop's dot is the same picture in every answer, so P04 ticket 81 can make it ahead on the everyday map.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 20 minutes on this ticket in the p04-58 session (an estimate), and about 5 minutes of an emulator run for its picture. No subagents.
+- Tokens: counted with P04 ticket 81's, in its ticket's Agent usage; the session's tokens over that stretch are not split by ticket.
+
