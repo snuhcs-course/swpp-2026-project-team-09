@@ -235,7 +235,7 @@ describe('a new reply', () => {
 // Partitions: the rows of the time card while people are picked; the face of the stored answer's person, who is none
 // of the User's Friends.
 describe('full names', () => {
-  it('are in the rows of the picking, and a face opens the profile only of a Friend', async () => {
+  it('are in the rows of the picking with the department, and a face opens the profile only of a Friend', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
 
     await pressMarker(user, '민수');
@@ -245,7 +245,7 @@ describe('full names', () => {
     await pass(100);
     await user.press(timeBar().getByRole('button', { name: ADD }));
 
-    expect(pickRow(MIN_JUN.name)).toHaveTextContent(`${MIN_JUN.name}걸음 16분`);
-    expect(pickRow(JI_WOO.name)).toHaveTextContent(`${JI_WOO.name}위치 모름`);
+    expect(pickRow(MIN_JUN.name)).toHaveTextContent(`${MIN_JUN.name}${MIN_JUN.department}걸음 16분`);
+    expect(pickRow(JI_WOO.name)).toHaveTextContent(`${JI_WOO.name}${JI_WOO.department}위치 모름`);
   });
 });
