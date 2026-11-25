@@ -34,6 +34,9 @@ export interface Caps extends LevelHeights {
   room: number;
   // At low, the room under the last whole line of words that the footer's band hides, so that no line shows cut in half.
   band: number;
+  // Low stands at its cap for every content: one top edge for every answer. Else, as for a card without steps or while
+  // typing, every step fits a shorter content.
+  fixedLow: boolean;
 }
 
 // Low's height and the band under its whole lines: two lines over the meal answer's footer, more over a smaller one.
@@ -53,7 +56,7 @@ export function useCaps(props: FrameCardProps, above: number, padTop: number): C
   }
   if (raising === undefined) {
     const half = Math.max(LEAST_CONTENT, (contentMaxOf(stageHeight, barRoom) ?? LEAST_CONTENT) - above);
-    return { low: half, mid: half, high: half, room: half, band: 0 };
+    return { low: half, mid: half, high: half, room: half, band: 0, fixedLow: false };
   }
   // High stops just under the time card as it stands by default, tucked away or not (h1, h2, k4). The stage runs from
   // under the status bar, `top` high, to the screen's bottom. Where the time card reaches lower than middle, middle is
@@ -63,10 +66,10 @@ export function useCaps(props: FrameCardProps, above: number, padTop: number): C
   const mid = Math.max(LEAST_CONTENT, Math.min(under, (stageHeight + top) * MID_SHARE - barRoom - above));
   const high = Math.max(mid, under);
   if (fit) {
-    return { low: mid, mid, high, room: high, band: 0 };
+    return { low: mid, mid, high, room: high, band: 0, fixedLow: false };
   }
   const [low, band] = lowOf(mid, padTop, { line: text.bodyLg.lineHeight * fontScale, barRoom });
-  return { low, mid, high, room: high, band };
+  return { low, mid, high, room: high, band, fixedLow: true };
 }
 
 // Under a stepped card's content, the room that lets its last row come clear of the fade; a card without steps shows
@@ -75,10 +78,10 @@ export function underOf(props: Pick<FrameCardProps, 'raising'>): number {
   return props.raising === undefined ? 0 : FADE;
 }
 
-// The heights the card runs to. Low is its cap for every content, a short one too, so that its top edge is one for
-// every answer (P04 ticket 63); middle and high run as far as the content and the room under it (`under`), up to their
-// caps, and never under low. A content that lays out nothing below its top padding takes no room: the card is its
-// header alone.
+// The heights the card runs to: as much as its content and the room under it (`under`), up to each step's cap. A fixed
+// low is its cap for every content, a short one too, so that its top edge is one for every answer (P04 ticket 63), and
+// middle and high are never under it. A content that lays out nothing below its top padding takes no room: the card is
+// its header alone.
 export function heightsOf(
   caps: Caps,
   natural: number | null,
@@ -88,7 +91,8 @@ export function heightsOf(
     return { low: 0, mid: 0, high: 0 };
   }
   const fit = (cap: number): number => (natural === null ? cap : Math.min(cap, natural + under));
-  const { low } = caps;
-  const high = Math.max(low, fit(caps.high));
-  return { low, mid: Math.max(low, Math.min(fit(caps.mid), high)), high };
+  const least = caps.fixedLow ? caps.low : 0;
+  const high = Math.max(least, fit(caps.high));
+  const mid = Math.max(least, Math.min(fit(caps.mid), high));
+  return { low: caps.fixedLow ? caps.low : Math.min(fit(caps.low), mid), mid, high };
 }
