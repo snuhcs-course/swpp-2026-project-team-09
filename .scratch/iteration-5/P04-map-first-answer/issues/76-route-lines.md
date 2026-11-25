@@ -37,3 +37,8 @@ Native files: none. Releases: an app OTA update.
 - Styles: `LEG_STYLES` in `answer-groups.ts` holds the four (`walkThere`, `walkOn`, `rideThere`, `rideOn`); `walkThere` is `ROUTE_STYLES.me`, the same object as before. The pills are the label tones `leg`, `legOn`, `legShuttle` and `legShuttleOn`.
 - Other answers keep `ROUTE_STYLES`: the User's way `snuBlue` 5, a Friend's in their colour 4, the next fixed thing's `borderStrong` 3, the shuttle's `svcShuttle` 4, and another way `inkSubtle` 2. They have no minutes pills; only a meal Plan's legs do.
 - `withDots` stays as a pass-through, since `use-answer-walks.ts` calls it and is ticket 75's file. Ticket 75 can drop the call and the function.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 45 minutes in this session (an estimate), most of it waiting on tests at a high machine load. No subagents.
+- Tokens: this session, input 214 uncached, cache reads 36,794,831 and cache writes 204,220; output 74,939. These also hold about 8 minutes of merging 5.0/Main into PR 573, and they are counted up to this entry. The pictures, if taken later, are not in them.
