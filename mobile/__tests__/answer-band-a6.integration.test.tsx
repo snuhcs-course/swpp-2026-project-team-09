@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -13,7 +14,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { screen } from './support/app';
 import { card, mapThings, timeBar } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
-import { dragBody, layTrack, unfold } from './support/band-move';
+import { dragBody, layTrack } from './support/band-move';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { layStage } from './support/lists';
@@ -25,11 +26,13 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { SENT_CAPABILITIES } from './support/capabilities';
 
-// Board a6 (P02 ticket 25): a5's band let go at 14:00, over the fake main server, which answers the meet with 민수 with
-// the stored real answer of a5 (`meet-answer.json`) and the meet asked again from 14:00 with the stored real answer of
-// a6 (`meet-answer-a6.json`). Expected values: the stored a6 answer, whose first Plan is 302동 앞 for 83 minutes where
-// the board drew 신양학술정보관 앞 for 80. The Plan's place and people are on the map, its time on the time bar, and
-// its basis in the card of its flag (P04 tickets 01 to 04).
+// Board a6 (P02 ticket 25): a5's band let go and the answer that comes back, over the fake main server, which answers
+// the meet with 민수 with the stored real answer of a5 (`meet-answer.json`) and the request after the let-go with the
+// stored real answer of a6 (`meet-answer-a6.json`), asked from 14:00. The time card's track keeps the free time around
+// a5's span, 12:00 to 13:15 (P04 ticket 61), so the band is let go at 12:30, the furthest a drag goes being inside it;
+// 14:00 itself is asked in the chat. Expected values: the stored a6 answer, whose first Plan is 302동 앞 for 83 minutes
+// where the board drew 신양학술정보관 앞 for 80. The Plan's place and people are on the map, its time on the time bar,
+// and its basis in the card of its flag (P04 tickets 01 to 04).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -67,17 +70,16 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Asks "만나고 싶다" from 민수's card, then unfolds the bar, drags the band's body from 12:15 to 14:00 on a track laid a point a minute,
-// and lets it go; the main server answers the second request with a6.
-async function letGoAt14(): Promise<User> {
+// Asks "만나고 싶다" from 민수's card, then drags the band's body from 12:15 to 12:30 on a track laid four points a
+// minute, and lets it go; the main server answers the second request with a6.
+async function letGoAt1230(): Promise<User> {
   const user = await openMain();
   await layStage(390, 760);
   await press(user, row(MIN_SU));
   await meetFromCard(user);
-  await unfold();
-  await layTrack(390);
+  await layTrack(300);
   server.on('POST /assistant/answers', { status: 200, body: MEET_ANSWER_FROM_14 });
-  await dragBody(105);
+  await dragBody(60);
   return user;
 }
 
@@ -86,25 +88,26 @@ function markCard(): ReturnType<typeof within> {
 }
 
 // Partitions: the first Plan; its basis and the next Plan; the map.
-describe('the band of a5 let go at 14:00 (board a6)', () => {
-  it("asks from 14:00, and draws a6's first Plan, its people, its band, and the outline of a5's", async () => {
-    const user = await letGoAt14();
+describe('the band of a5 let go and answered with a6', () => {
+  it("asks from 12:30, and draws a6's first Plan, its people, its band, and a5's outline cut at the track's start", async () => {
+    const user = await letGoAt1230();
 
     expect(recalculations(server).at(-1)).toEqual({
-      input: MEET_ANSWER_FROM_14.input,
+      input: { ...MEET_ANSWER.input, window: { from: '12:30', until: null } },
       location: ON_CAMPUS,
       clientCapabilities: SENT_CAPABILITIES,
     });
     expect(mapThings()).toEqual(expect.arrayContaining([PICK, '민수']));
     expect(timeBar().getByText('14:07–15:30 · 함께 83분')).toBeVisible();
-    expect(screen.getByTestId('time-band-ghost')).toHaveStyle({ left: `${(15 / 390) * 100}%` });
+    // a6's track runs over 13:35 to 15:45, so a5's place at 12:15 lies before it and is cut away at its start.
+    expect(screen.getByTestId('time-band-ghost')).toHaveStyle({ left: '0%', width: '0%' });
     expect(card().getByRole('button', { name: '되돌리기' })).toBeVisible();
     await pressMarker(user, '나 · 17분');
     expect(markCard().getByText('출발 · 24동에서')).toBeVisible();
   });
 
   it("opens the basis the main server wrote on the pick's flag, and shows 유회진 학술정보관 앞 for 82 minutes", async () => {
-    const user = await letGoAt14();
+    const user = await letGoAt1230();
 
     await pressMarker(user, PICK);
     expect(markCard().getByText('민수 12:15 302동 수업 끝 · 15:30에 나서요')).toBeVisible();
@@ -118,7 +121,7 @@ describe('the band of a5 let go at 14:00 (board a6)', () => {
   });
 
   it('draws 민수 with the dashed ring of a position from the Timetable, at 302동 앞, where they meet at 14:07', async () => {
-    await letGoAt14();
+    await letGoAt1230();
 
     expect(mapThings()).toEqual(expect.arrayContaining(['302동 앞 · 14:07 만남', '나 · 17분', '민수']));
     const face = within(screen.getByTestId('main-map-touches')).getByLabelText('민수');

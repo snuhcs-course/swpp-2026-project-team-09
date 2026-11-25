@@ -33,7 +33,6 @@ import { bookingKept } from '../library/booking-kept';
 import { SlotBand } from '../library/slot-band';
 import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
-import { useAxis } from './band-axis';
 import { PersonRows } from './person-rows';
 import { TimeBand } from './time-band';
 import { type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
@@ -50,6 +49,8 @@ const GRIP_SLOP = { top: 16, bottom: 16, left: space[2], right: space[2] };
 // usual text size. Laid out, the chip's own width is the room, so that a larger text size widens both (P04 ticket 37):
 // the chip stands 12 from the bar's edge, 4 short of the bar's padding of 16, which is the gap before the words.
 const ADD_ROOM = 72;
+// The grip's name alone, where it opens nothing.
+const GRIP_ALONE = '시간 카드 손잡이';
 
 function ignoreDrop(): void {
   // A Lookup's band has no handles.
@@ -73,22 +74,22 @@ interface BarProps {
   offset?: number;
 }
 
-// The bar's grip: a drag moves the card between tucked, its place, and open (`useTimeCardGrip`); a press opens it or
-// folds it again, and a screen reader tucks it away or back.
-function Grip(p: { grip: TimeCardGrip; label: string; folded: boolean }): ReactElement {
+// The bar's grip: a drag moves the card between tucked, its place, and with Friends open (`useTimeCardGrip`); a press
+// opens it or folds it again, and a screen reader tucks it away or back. Alone (`label` null) it only tucks.
+function Grip(p: { grip: TimeCardGrip; label: string | null; folded: boolean }): ReactElement {
   const { grip, label, folded } = p;
   return (
     <GestureDetector gesture={grip.pan}>
       <Pressable
         accessibilityActions={grip.actions}
-        accessibilityLabel={label}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: !folded }}
+        accessibilityLabel={label ?? GRIP_ALONE}
+        accessibilityRole={label === null ? undefined : 'button'}
+        accessibilityState={label === null ? undefined : { expanded: !folded }}
         hitSlop={GRIP_SLOP}
         onAccessibilityAction={({ nativeEvent }) => {
           grip.onAction(nativeEvent.actionName);
         }}
-        onPress={grip.toggle}
+        onPress={label === null ? undefined : grip.toggle}
         style={styles.toggle}
         testID="time-card-grip"
       >
@@ -102,11 +103,9 @@ function Grip(p: { grip: TimeCardGrip; label: string; folded: boolean }): ReactE
 function OpenRows(p: { band: BarProps['band']; grip: TimeCardGrip; onHeight: (height: number) => void }): ReactElement {
   const { band, grip } = p;
   const folded = grip.place !== 'open';
-  const axis = useAxis(band.band, folded, grip.open);
   return (
     <Reanimated.View style={[styles.grown, grip.grown, grip.grownRest]}>
       <PersonRows
-        axis={axis}
         band={band.band}
         fixed={band.fixed}
         hidden={folded}
@@ -119,10 +118,10 @@ function OpenRows(p: { band: BarProps['band']; grip: TimeCardGrip; onHeight: (he
 }
 
 // The time bar: the answer's band in one white row at the top, its head the words and "＋ 같이", its track over the
-// free time around the span. Pulled open by its grip, the track widens to the band's whole range, a bar of one lane too,
-// so that a move further away is made there (PR 465's review), and with Friends a row for each person comes out under
-// it on the same axis (P04 ticket 61). Its grip also pushes it up out of the way. The height it tells is its folded
-// one: open, it lies over the map for a while.
+// free time around the span, at one range and scale whether it is open or not. With Friends, pulled open by its grip, a
+// row for each person comes out under the track over the same range (P04 ticket 61). A time outside that range is
+// reached by asking in the chat, not by a drag. Its grip also pushes it up out of the way. The height it tells is its
+// folded one: open, it lies over the map for a while.
 function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
   const [addWidth, setAddWidth] = useState(ADD_ROOM);
@@ -131,10 +130,9 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
   const barY = barTop(top) + offset;
   const { lanes, startAt, now } = band.band;
   const friends = lanes.length > 1;
-  const grip = useTimeCardGrip({ height, top: barY, rows: friends ? rows : 0 });
-  const folded = grip.place !== 'open';
-  const what = friends ? '사람별 시간' : '하루 시간';
-  const label = folded ? `${what} 펼치기` : `${what} 접기`;
+  const grip = useTimeCardGrip({ height, top: barY, opens: friends, rows });
+  const folded = !friends || grip.place !== 'open';
+  const label = friends ? `사람별 시간 ${folded ? '펼치기' : '접기'}` : null;
   return (
     <Reanimated.View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
@@ -150,9 +148,8 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
       <TimeBand
         {...band}
         day={day ?? koreaDayWord(startAt, new Date(now))}
-        folded={folded}
+        folded
         head={{ right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
-        open={grip.open}
       />
       {friends ? <OpenRows band={band} grip={grip} onHeight={setRows} /> : null}
       {add === null ? null : (

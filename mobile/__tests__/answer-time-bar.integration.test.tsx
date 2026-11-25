@@ -8,9 +8,10 @@
 
 import type { AssistantReply } from '@/api/assistant-types';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
+import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { act, fireEvent } from '@testing-library/react-native';
+import { act, fireEvent, within } from '@testing-library/react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { StyleSheet, type ViewStyle } from 'react-native';
 import { screen } from './support/app';
@@ -100,14 +101,15 @@ describe('the time bar', () => {
     expect(bar().getByText('13:00 24동 수업')).toBeVisible();
   });
 
-  it('unfolds to a row for each person at a press, and folds again', async () => {
+  it('unfolds to a row for each person at a press, its ends kept, and folds again', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
     await press(user, UNFOLD);
 
     expect(bar().getByText('나')).toBeVisible();
     expect(bar().getByText('민수')).toBeVisible();
-    expect(bar().getByText('11:30')).toBeVisible();
+    expect(bar().getByText('13:00 24동 수업')).toBeVisible();
+    expect(bar().queryByText('11:30')).toBeNull();
 
     await press(user, FOLD);
 
@@ -194,24 +196,66 @@ async function dragGrip(dy: number): Promise<void> {
   });
 }
 
-// P04 ticket 61 (boards p1, p2). Partitions: pulled down past half of the way open, and pushed back up; a press on the
-// band's words. Expected values: the band's whole range is 11:30 to 13:30, and its folded ends the busy stretches
-// around the span.
+// The rows for each person laid out `height` high, as a phone lays them out before the card opens, while a screen
+// reader still passes them by.
+async function layRows(height: number): Promise<void> {
+  await fireEvent(screen.getByTestId('time-card-rows', { includeHiddenElements: true }), 'layout', {
+    nativeEvent: { layout: { x: 0, y: 0, width: 320, height } },
+  });
+}
+
+function placeOf(element: ReturnType<typeof screen.getByTestId>): Pick<ViewStyle, 'left' | 'width'> {
+  const style: unknown = element.props.style;
+  const { left, width } = StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
+  return { left, width };
+}
+
+// Where the band's body stands on the track.
+function bodyPlace(): Pick<ViewStyle, 'left' | 'width'> {
+  return placeOf(screen.getByRole('adjustable', { name: '시간 띠' }));
+}
+
+// P04 ticket 61 (boards p1, p2). Partitions: pulled down past the rows' height and pushed back up; a press on the band's
+// words; a bar of one lane pulled down. Expected values: open, the track keeps its range, the free time around the span
+// between the busy stretches at its ends, 12:00 to 13:15, and not the band's whole range of 11:30 to 13:30; a busy
+// stretch that runs past it is cut at the track's end: 나's class from 13:00 to 13:30 at 80% to the end, 민수's from
+// 11:30 to 12:15 from the start to 20%.
 describe("the time bar's grip pulled down", () => {
-  it('opens to the whole range with a row for each person, and folds again when pushed up', async () => {
+  it('brings out a row for each person under a track that keeps its range, and folds them when pushed up', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
+    await layRows(64);
+    const folded = bodyPlace();
 
     await dragGrip(120);
 
     expect(bar().getByText('나')).toBeVisible();
     expect(bar().getByText('민수')).toBeVisible();
-    expect(bar().getByText('11:30')).toBeVisible();
+    expect(bar().getByText('민수 12:15 302동 수업 끝')).toBeVisible();
+    expect(bar().queryByText('11:30')).toBeNull();
+    expect(bodyPlace()).toEqual(folded);
     expect(screen.getByTestId('time-card-grip')).toBeExpanded();
+    const busy = within(screen.getByTestId('time-card-rows'))
+      .getAllByTestId('time-card-busy')
+      .map((one) => placeOf(one));
+    expect(busy).toContainEqual({ left: '80%', width: `${(1 - 60 / 75) * 100}%` });
+    expect(busy).toContainEqual({ left: '0%', width: '20%' });
 
-    await dragGrip(-120);
+    await dragGrip(-64);
 
     expect(bar().queryByText('민수')).toBeNull();
     expect(bar().getByText('민수 12:15 302동 수업 끝')).toBeVisible();
+    expect(barShift()).toBe(0);
+  });
+
+  it('opens nothing on a bar of one lane, whose grip only tucks', async () => {
+    await askOnMap(server, { ...MEAL_ANSWER_REPLY, answer: MEAL_ANSWER_ALONE });
+
+    await dragGrip(120);
+
+    expect(barShift()).toBe(0);
+    expect(screen.queryByTestId('time-card-rows', { includeHiddenElements: true })).toBeNull();
+    expect(screen.getByTestId('time-card-grip')).toHaveProp('accessibilityLabel', '시간 카드 손잡이');
+    expect(screen.queryByRole('button', { name: /시간 펼치기/u })).toBeNull();
   });
 
   it('opens nothing at a press on the band’s words', async () => {

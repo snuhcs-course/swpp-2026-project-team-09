@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent } from '@testing-library/react-native';
@@ -30,12 +31,11 @@ export async function layBand(): Promise<void> {
 
 // The points a drag of `minutes` takes on the folded track laid out `width` wide (`layBand`'s 240), which runs over the
 // free time around `band`'s span (P04 ticket 14), not over the band's whole range.
-// Unfolded (`folded` false), the track runs over the band's whole range.
-export function pointsFor(minutes: number, band: TimeBand | undefined, width = 240, folded = true): number {
+export function pointsFor(minutes: number, band: TimeBand | undefined, width = 240): number {
   if (band === undefined) {
     throw new Error('The answer has no band');
   }
-  const { startAt, endAt } = folded ? foldedRangeOf(band) : band.range;
+  const { startAt, endAt } = foldedRangeOf(band);
   return (minutes * width) / ((Date.parse(endAt) - Date.parse(startAt)) / 60_000);
 }
 

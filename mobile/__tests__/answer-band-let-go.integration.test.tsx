@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
@@ -15,7 +16,7 @@ import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
 import { askOnMap, card, mapThings, timeBar } from './support/answer-map';
 import { layBand, pointsFor, recalculations } from './support/answer-correct';
-import { body, dragBody, layTrack, stepBody, unfold } from './support/band-move';
+import { body, dragBody, layTrack, stepBody } from './support/band-move';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT, layStage } from './support/lists';
@@ -29,9 +30,10 @@ import { SENT_CAPABILITIES } from './support/capabilities';
 
 // The band dragged whole and let go (P02 ticket 25, "Letting go"), over the fake main server, which answers the meet
 // with 민수 and its recalculations with the stored real answer of board a5 (`meet-answer.json`): its first Plan, 302동
-// 앞, runs from 12:15 to 12:43, its second, 301동 앞, from 12:18 to 12:45, in a range of 12:00 to 18:30. The track is
-// laid 390 wide, a point a minute. Expected values: the ticket and its amended criteria. The Plan shown is read from
-// the pick's flag, and another is shown at a press on its candidate flag (P04 ticket 04).
+// 앞, runs from 12:15 to 12:43, its second, 301동 앞, from 12:18 to 12:45. The time card's track runs over the free time
+// around the span, 12:00 to 13:15 (P04 tickets 14 and 61), and is laid 300 wide, four points a minute. Expected values:
+// the ticket and its amended criteria. The Plan shown is read from the pick's flag, and another is shown at a press on
+// its candidate flag (P04 ticket 04).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -73,14 +75,13 @@ afterEach(() => {
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
-// Asks "만나고 싶다" from 민수's card, unfolds the bar to the band's whole range, and lays the band's track out.
+// Asks "만나고 싶다" from 민수's card and lays the band's track out.
 async function meetMinSu(): Promise<User> {
   const user = await openMain();
   await layStage(390, 760);
   await press(user, row(MIN_SU));
   await meetFromCard(user);
-  await unfold();
-  await layTrack(390);
+  await layTrack(300);
   return user;
 }
 
@@ -93,16 +94,15 @@ function startingAt(from: string): object {
   };
 }
 
-// Partitions: the band let go at 14:00 (board a6's request); a band off the five-minute grid; past the range's end;
-// less than half a step.
+// Partitions: the band let go at 12:30; a band off the five-minute grid; past the track's end; less than half a step.
 describe("a meet's band let go", () => {
-  it('asks the meet again from 14:00 and leaves its end to the server', async () => {
+  it('asks the meet again from 12:30 and leaves its end to the server', async () => {
     await meetMinSu();
 
-    await dragBody(105);
+    await dragBody(60);
 
     expect(recalculations(server)).toHaveLength(2);
-    expect(recalculations(server).at(-1)).toEqual(startingAt('14:00'));
+    expect(recalculations(server).at(-1)).toEqual(startingAt('12:30'));
     expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
   });
 
@@ -110,18 +110,18 @@ describe("a meet's band let go", () => {
     const user = await meetMinSu();
     await pressMarker(user, SECOND);
 
-    await dragBody(105);
+    await dragBody(60);
 
-    expect(recalculations(server).at(-1)).toEqual(startingAt('14:03'));
+    expect(recalculations(server).at(-1)).toEqual(startingAt('12:33'));
     expect(mapThings()).toEqual(expect.arrayContaining([FIRST_PICK, SECOND]));
   });
 
-  it("asks from 18:02 for a drag past the range's end", async () => {
+  it("asks from 12:47 for a drag past the track's end", async () => {
     await meetMinSu();
 
     await dragBody(400);
 
-    expect(recalculations(server).at(-1)).toEqual(startingAt('18:02'));
+    expect(recalculations(server).at(-1)).toEqual(startingAt('12:47'));
   });
 
   it('asks nothing for a drag of less than half a step, and keeps no outline', async () => {
@@ -141,7 +141,7 @@ describe('after a band let go', () => {
   it('brings back the Plan shown before with "되돌리기", without a request', async () => {
     const user = await meetMinSu();
     await pressMarker(user, SECOND);
-    await dragBody(105);
+    await dragBody(60);
 
     await user.press(card().getByRole('button', { name: '되돌리기' }));
     await pass(500);
@@ -155,7 +155,7 @@ describe('after a band let go', () => {
     await meetMinSu();
     server.on('POST /assistant/answers', { status: 500, body: { statusCode: 500, message: 'Internal' } });
 
-    await dragBody(185);
+    await dragBody(120);
 
     expect(screen.getByText(NOT_RECALCULATED)).toBeVisible();
     expect(body()).toHaveAccessibilityValue({ text: '12:15–12:43' });
@@ -189,13 +189,12 @@ function aloneFrom(start: string): object {
   };
 }
 
-// From PR 465's review: a bar of one lane unfolds too, so that a lunch alone between two classes still reaches past the
-// next one. Expected values: the stored answer's band, 11:50 to 12:45 in a range of 11:30 to 13:30, with the User's
-// class at 13:00; folded, the track ends at 13:15 (`foldedRangeOf`), so the latest start is 12:20; unfolded, the
-// range's end, so 12:35, over the class.
+// A lunch alone between two classes stops at the track's end, which keeps one range, open or not (P04 ticket 61): a time
+// past the next class is asked in the chat. Expected values: the stored answer's band, 11:50 to 12:45, with the
+// User's class at 13:00; the track ends at 13:15 (`foldedRangeOf`), so the latest start is 12:20.
 describe("a lunch alone's band let go far", () => {
   const band = MEAL_ANSWER_ALONE.plans[0]?.band;
-  const far = pointsFor(130, band, 240, false);
+  const far = pointsFor(130, band);
 
   it("stops at the folded track's end", async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
@@ -205,17 +204,6 @@ describe("a lunch alone's band let go far", () => {
     await dragBody(far);
 
     expect(recalculations(server).at(-1)).toEqual(aloneFrom('12:20'));
-  });
-
-  it("reaches the range's end over the next class once the bar is unfolded to the whole day", async () => {
-    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
-    await askOnMap(server, { ...MEAL_ANSWER_REPLY, answer: MEAL_ANSWER_ALONE });
-
-    await unfold('하루 시간 펼치기');
-    await layBand();
-    await dragBody(far);
-
-    expect(recalculations(server).at(-1)).toEqual(aloneFrom('12:35'));
   });
 });
 

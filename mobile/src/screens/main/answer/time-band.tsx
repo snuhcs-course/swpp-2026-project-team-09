@@ -12,7 +12,6 @@
 import { type ReactElement, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector, type PanGesture } from 'react-native-gesture-handler';
-import Reanimated, { type SharedValue } from 'react-native-reanimated';
 import type { MealInput, TimeBand as TimeBandData } from '@/api/assistant-types';
 import { color, radius, space } from '@/design-system';
 import { clashesAt } from '@/features/assistant/band-move';
@@ -25,8 +24,18 @@ import {
   type Stretch,
   stepped,
 } from '@/features/assistant/time-band';
-import { type BandTick, BandOnTrack, Ends, type HeldBand, redOf, Track, useWholeMove, wordsOf } from './band-body';
-import { type Axis, Placed, useAxis, usePoint } from './band-axis';
+import {
+  type BandTick,
+  BandOnTrack,
+  Ends,
+  type HeldBand,
+  percent,
+  placeOf,
+  redOf,
+  Track,
+  useWholeMove,
+  wordsOf,
+} from './band-body';
 import { BandWords, type HeadRoom } from './band-head-words';
 import { NowMark, Red, useShownBand } from './band-track';
 
@@ -48,12 +57,9 @@ interface TimeBandProps {
   moving?: Stretch | null;
   // Where a drag on the lanes moves the band whole, and where it is let go or stepped. Without it nothing does.
   onMove?: (at: Stretch, letGo: boolean) => void;
-  // The track over the free time around the span, and the busy stretches that bound it at its ends; else over the
-  // band's whole range, and its ends.
+  // The track over the free time around the span, as the time card always draws it, and the busy stretches that bound
+  // it at its ends; else over the band's whole range, and its ends.
   folded?: boolean;
-  // How far the track is opened from folded (0) to the whole range (1) as the time card is pulled (P04 ticket 61); left
-  // out, as `folded` says.
-  open?: SharedValue<number>;
   // The span's day beside its words: "내일(수)", or nothing for today.
   day?: string;
   // The day's other meal at one end, in place of that end's label.
@@ -82,7 +88,6 @@ const PAN_STARTS = 10;
 interface HandleProps {
   bound: BandBound;
   band: TimeBandData;
-  axis: Axis;
   shown: Stretch;
   trackWidth: number;
   focused: boolean;
@@ -94,7 +99,7 @@ interface HandleProps {
 }
 
 function Handle(props: HandleProps): ReactElement {
-  const { bound, band, axis, shown, trackWidth, focused, disabled, onMove, onLetGo, whole } = props;
+  const { bound, band, shown, trackWidth, focused, disabled, onMove, onLetGo, whole } = props;
   const own = bound === 'from' ? band.startAt : band.endAt;
   const pan = useMemo(() => {
     const at = (translationX: number): Moved => ({
@@ -117,10 +122,9 @@ function Handle(props: HandleProps): ReactElement {
       });
   }, [bound, band, own, trackWidth, disabled, onMove, onLetGo, whole]);
   const time = bound === 'from' ? shown.startAt : shown.endAt;
-  const [moving, rested] = usePoint(time, axis);
   return (
     <GestureDetector gesture={pan}>
-      <Reanimated.View
+      <View
         accessible
         accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
         accessibilityLabel={bound === 'from' ? '시작 시각' : '끝 시각'}
@@ -133,7 +137,7 @@ function Handle(props: HandleProps): ReactElement {
             onLetGo({ bound, clock: stepped(bound, actionName === 'increment' ? 1 : -1, band) });
           }
         }}
-        style={[styles.handle, moving, rested, focused && styles.focused]}
+        style={[styles.handle, { left: percent(shareOf(time, band.range)) }, focused && styles.focused]}
       />
     </GestureDetector>
   );
@@ -141,14 +145,13 @@ function Handle(props: HandleProps): ReactElement {
 
 interface LanesProps {
   band: TimeBandData;
-  axis: Axis;
   fixed: MealInput['window'];
   moving: Stretch | null;
 }
 
 // Every lane on one row, each over the one before it: the people's busy stretches together (P04 ticket 61; a row for
 // each person stands under the card's ends, `PersonRows`).
-function Lanes({ band, axis, fixed, moving }: LanesProps): ReactElement {
+function Lanes({ band, fixed, moving }: LanesProps): ReactElement {
   return (
     <>
       {band.lanes.map((lane, at) => (
@@ -159,20 +162,20 @@ function Lanes({ band, axis, fixed, moving }: LanesProps): ReactElement {
         >
           <View style={[styles.bar, at > 0 && styles.clear]}>
             {lane.busy.map((stretch) => (
-              <Placed axis={axis} key={`busy-${stretch.startAt}`} stretch={stretch} style={styles.busy} />
+              <View key={`busy-${stretch.startAt}`} style={[styles.busy, placeOf(stretch, band.range)]} />
             ))}
-            <Red axis={axis} stretches={redOf(lane, fixed, band, moving)} />
+            <Red range={band.range} stretches={redOf(lane, fixed, band, moving)} />
           </View>
         </View>
       ))}
-      <NowMark axis={axis} band={band} />
+      <NowMark band={band} />
     </>
   );
 }
 
 // While the band is moved whole, the parts of the busy stretches it covers, red on their lanes over the band and its
 // handles, which would hide them: the handles cover most of a narrow band.
-function RedOver({ band, axis, moving }: Pick<LanesProps, 'band' | 'axis' | 'moving'>): ReactElement | null {
+function RedOver({ band, moving }: Pick<LanesProps, 'band' | 'moving'>): ReactElement | null {
   if (moving === null) {
     return null;
   }
@@ -181,7 +184,7 @@ function RedOver({ band, axis, moving }: Pick<LanesProps, 'band' | 'axis' | 'mov
       {band.lanes.map((lane, at) => (
         <View key={lane.userId} style={[styles.lane, at > 0 && styles.stacked]} testID={`time-band-red-${lane.userId}`}>
           <View style={styles.redBar}>
-            <Red axis={axis} stretches={clashesAt([lane], moving)} />
+            <Red range={band.range} stretches={clashesAt([lane], moving)} />
           </View>
         </View>
       ))}
@@ -234,7 +237,7 @@ function useMovedBand(band: TimeBandData, disabled: boolean, onDrop: TimeBandPro
 
 // The time bar's band: its words with the day on top, then the people's busy stretches on one row, the line of now,
 // and the band with a handle at each end, which a drag or a screen reader's step moves by five minutes, and lanes that
-// move it whole. Folded, the track runs over the free time around the span; opened, over the whole range.
+// move it whole. Folded, the track runs over the free time around the span; else over the whole range.
 export function TimeBand(props: TimeBandProps): ReactElement {
   const {
     band: given,
@@ -249,14 +252,12 @@ export function TimeBand(props: TimeBandProps): ReactElement {
     day = '',
   } = props;
   const band = useShownBand(given, folded);
-  const axis = useAxis(given, folded, props.open);
   const [trackWidth, setTrackWidth] = useState(0);
   const moved = useMovedBand(band, disabled, onDrop);
   const whole = useWholeMove(band, trackWidth, disabled, onMove);
   const shown = moving ?? moved.shown;
   const handle = (bound: BandBound): ReactElement => (
     <Handle
-      axis={axis}
       band={band}
       bound={bound}
       disabled={disabled}
@@ -273,14 +274,14 @@ export function TimeBand(props: TimeBandProps): ReactElement {
       <BandWords day={day} head={props.head} parts={wordsOf(band, moving, moved)} />
       <View style={styles.lanes}>
         <Track onWidth={setTrackWidth} whole={whole}>
-          <Lanes axis={axis} band={band} fixed={fixed} moving={moving} />
-          <BandOnTrack {...props} axis={axis} band={band} moving={moving} shown={shown} />
+          <Lanes band={band} fixed={fixed} moving={moving} />
+          <BandOnTrack {...props} band={band} moving={moving} shown={shown} />
           {handles ? handle('from') : null}
           {handles ? handle('until') : null}
-          <RedOver axis={axis} band={band} moving={moving} />
+          <RedOver band={band} moving={moving} />
         </Track>
       </View>
-      <Ends axis={axis} band={band} folded={folded} tick={props.tick} />
+      <Ends band={band} folded={folded} tick={props.tick} />
     </View>
   );
 }

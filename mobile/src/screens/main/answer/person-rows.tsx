@@ -8,22 +8,21 @@ import type { ReactElement } from 'react';
 import { type LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import type { MealInput, TimeBand } from '@/api/assistant-types';
 import { color, radius, space, text } from '@/design-system';
-import type { Stretch } from '@/features/assistant/time-band';
-import { type Axis, Placed } from './band-axis';
-import { redOf } from './band-body';
+import { foldedRangeOf, type Stretch } from '@/features/assistant/time-band';
+import { placeOf, redOf } from './band-body';
 import { Red } from './band-track';
 
 // The open time card's row for each person (P04 ticket 61, board p2, variant A): the name as a small caption over the
-// left end of the person's own bar, and every bar with the same ends and scale as the bar of everyone above it, so that
-// a time lies straight down through them all. Each bar shows its person's busy stretches and the band's outline.
-// Folded, the rows take no room and a screen reader passes them by.
+// left end of the person's own bar, and every bar over the same free time around the span as the bar of everyone above
+// it, with the same ends and scale, so that a time lies straight down through them all. Each bar shows its person's
+// busy stretches, cut at the bar's ends, and the band's outline. Folded, the rows take no room and a screen reader
+// passes them by.
 
 const BAR_HEIGHT = 8;
 const LANE_HEIGHT = 12;
 
 interface PersonRowsProps {
   band: TimeBand;
-  axis: Axis;
   // Where the band is drawn now.
   shown: Stretch;
   fixed: MealInput['window'];
@@ -34,7 +33,8 @@ interface PersonRowsProps {
 }
 
 export function PersonRows(props: PersonRowsProps): ReactElement {
-  const { band, axis, shown, fixed, moving, hidden, onHeight } = props;
+  const { band, shown, fixed, moving, hidden, onHeight } = props;
+  const range = foldedRangeOf(band);
   return (
     <View
       accessibilityElementsHidden={hidden}
@@ -53,11 +53,15 @@ export function PersonRows(props: PersonRowsProps): ReactElement {
           <View style={styles.lane}>
             <View style={styles.bar}>
               {lane.busy.map((stretch) => (
-                <Placed axis={axis} key={`busy-${stretch.startAt}`} stretch={stretch} style={styles.busy} />
+                <View
+                  key={`busy-${stretch.startAt}`}
+                  style={[styles.busy, placeOf(stretch, range)]}
+                  testID="time-card-busy"
+                />
               ))}
-              <Red axis={axis} stretches={redOf(lane, fixed, band, moving)} />
+              <Red range={range} stretches={redOf(lane, fixed, band, moving)} />
             </View>
-            <Placed axis={axis} stretch={moving ?? shown} style={styles.outline} />
+            <View style={[styles.outline, placeOf(moving ?? shown, range)]} />
           </View>
         </View>
       ))}
