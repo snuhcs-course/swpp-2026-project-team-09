@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -20,12 +21,15 @@ import {
   font,
   Icon,
   LoadingState,
+  radius,
   SearchField,
   space,
 } from '@/design-system';
+import { BOARDS } from '@/features/party/boards';
 import type { PostView } from '@/features/party/posts';
-import { useCompanionSeekers, useFindPosts, useOfficialRecruiting } from '@/features/party/use-party';
+import { useBoardRows, useCompanionSeekers, useFindPosts, useOfficialRecruiting } from '@/features/party/use-party';
 import { JoinSheet, officialSubject } from './join-sheet';
+import { LineIcon } from './line-icon';
 import { OfficialBanner } from './official-banner';
 import { openPost, PostCard } from './post-card';
 import { TagBadges } from './quest-photo';
@@ -81,7 +85,11 @@ function Seekers(): ReactElement | null {
   );
 }
 
-// 모집 중인 파티's head, with `전체 보기` for 전체 파티.
+function openBoards(): void {
+  router.push('/boards');
+}
+
+// 모집 중인 파티's head, with the round `전체 게시판 ›` for 전체 파티.
 function PostsHead(): ReactElement {
   return (
     <View style={styles.head}>
@@ -89,16 +97,48 @@ function PostsHead(): ReactElement {
         모집 중인 파티
       </Text>
       <Pressable
-        accessibilityLabel="전체 보기"
+        accessibilityLabel="전체 게시판"
         accessibilityRole="button"
-        hitSlop={space[3]}
-        onPress={() => {
-          router.push('/boards');
-        }}
+        hitSlop={HEAD_SLOP}
+        onPress={openBoards}
+        style={({ pressed }) => [styles.all, pressed && styles.pressed]}
       >
-        <Text style={styles.all}>전체 보기 ›</Text>
+        <Text style={styles.allWords}>전체 게시판</Text>
+        <Icon color={color.ink} name="chevronRight" size={14} />
       </Pressable>
     </View>
+  );
+}
+
+// "식사 · 진로 · 취미 · 공연 모집글 12개 둘러보기": the four boards and their open posts, as 전체 파티 counts them.
+function boardsWords(posts: number): string {
+  return `${BOARDS.map(({ name }) => name).join(' · ')} 모집글 ${String(posts)}개 둘러보기`;
+}
+
+// Under the recommended posts, the way on to 전체 파티 for the User who reached the end of them; a search's results
+// have none. It waits for the boards' count.
+function BoardsCard(): ReactElement | null {
+  const { data: rows } = useBoardRows();
+  if (rows === undefined) {
+    return null;
+  }
+  const words = boardsWords(rows.reduce((sum, { count }) => sum + count, 0));
+  return (
+    <Pressable
+      accessibilityLabel={`전체 게시판 · ${words}`}
+      accessibilityRole="button"
+      onPress={openBoards}
+      style={({ pressed }) => [styles.boards, pressed && styles.boardsPressed]}
+    >
+      <View style={styles.boardsIcon}>
+        <LineIcon name="clipboard" tint={color.onPrimary} />
+      </View>
+      <View style={styles.boardsWords}>
+        <Text style={styles.boardsTitle}>전체 게시판</Text>
+        <Text style={styles.boardsLine}>{words}</Text>
+      </View>
+      <Icon color={color.snuBlue} name="chevronRight" size={18} />
+    </Pressable>
   );
 }
 
@@ -122,6 +162,7 @@ function Posts({ search, onJoin }: { search: string; onJoin: (post: PostView) =>
           post={post}
         />
       ))}
+      {found === undefined || search.trim() !== '' ? null : <BoardsCard />}
       {found === undefined || found.hidden === 0 ? null : (
         <View style={styles.hidden}>
           <Icon color={color.inkMuted} name="check" size={14} />
@@ -194,11 +235,56 @@ export function FindTab(): ReactElement {
   );
 }
 
+// The frame's measures: `전체 게시판 ›` 32 high, whose touch reaches 48, and the Boards card's padding and navy square.
+const ALL_HEIGHT = 32;
+const HEAD_SLOP = { top: 8, bottom: 8 };
+const BOARDS_PADDING = 14;
+const BOARDS_ICON = 40;
+// The Boards card's light navy outline, between `blue100` and `border`, as the frame draws it.
+const BOARDS_EDGE = '#D5DCEE';
+
 const styles = StyleSheet.create({
   body: { gap: space[3], padding: space[4] },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space[2] },
   heading: { fontFamily: font.semiBold, fontSize: 18, lineHeight: 26, letterSpacing: -0.18, color: color.ink },
-  all: { fontFamily: font.semiBold, fontSize: 14, lineHeight: 20, color: color.blue600 },
+  all: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    height: ALL_HEIGHT,
+    paddingLeft: space[3],
+    paddingRight: space[2],
+    borderWidth: 1,
+    borderColor: color.border,
+    borderRadius: radius.full,
+    backgroundColor: color.surface,
+  },
+  pressed: { backgroundColor: color.surfaceSubtle },
+  allWords: { fontFamily: font.semiBold, fontSize: 13, lineHeight: 18, color: color.ink },
+  boards: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    paddingVertical: BOARDS_PADDING,
+    paddingLeft: BOARDS_PADDING,
+    paddingRight: space[3],
+    borderWidth: 1,
+    borderColor: BOARDS_EDGE,
+    borderRadius: radius.lg,
+    backgroundColor: color.blue50,
+  },
+  boardsPressed: { backgroundColor: color.blue100 },
+  boardsIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: BOARDS_ICON,
+    height: BOARDS_ICON,
+    borderRadius: radius.md,
+    backgroundColor: color.snuBlue,
+  },
+  boardsWords: { flex: 1, minWidth: 0, gap: 2 },
+  boardsTitle: { fontFamily: font.bold, fontSize: 15, lineHeight: 22, color: color.ink },
+  boardsLine: { fontFamily: font.medium, fontSize: 12, lineHeight: 16, color: color.inkMuted },
   hidden: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   hiddenWords: { fontFamily: font.medium, fontSize: 12, lineHeight: 16, color: color.inkMuted },
   section: { gap: space[3], marginTop: space[2] },

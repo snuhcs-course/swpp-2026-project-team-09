@@ -6,6 +6,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -63,9 +64,10 @@ describe('모집 중인 파티', () => {
     await openAt('/party');
 
     const run = card(RUN.title);
-    expect(run.getByText('파티')).toBeVisible();
+    expect(run.queryByText('파티')).toBeNull();
     expect(run.getByText('3/8명')).toBeVisible();
-    expect(run.getByText(RUN.description)).toBeVisible();
+    expect(run.queryByText(RUN.description)).toBeNull();
+    expect(run.queryByText('자세히 ›')).toBeNull();
     expect(run.getByText('오늘 19:30')).toBeVisible();
     expect(run.getByText('버들골 (100동) 입구')).toBeVisible();
     expect(run.getByText('최유나 외 2명 · 친구 1명 포함')).toBeVisible();
@@ -86,13 +88,14 @@ describe('모집 중인 파티', () => {
     await user.type(screen.getByLabelText('파티 검색'), '코드 리뷰');
     expect(screen.getByText(CODING.title)).toBeVisible();
     expect(screen.queryByText(RUN.title)).toBeNull();
+    expect(screen.queryByRole('button', { name: /^전체 게시판 · /u })).toBeNull();
 
     await user.clear(screen.getByLabelText('파티 검색'));
     await user.type(screen.getByLabelText('파티 검색'), '없는 파티');
     expect(screen.getByText('결과 없음')).toBeVisible();
   });
 
-  it('opens the post with 자세히', async () => {
+  it('opens the post from its title, the button a screen reader finds', async () => {
     const user = await openAt('/party');
 
     await user.press(screen.getByRole('button', { name: `${RUN.title} 모집글 자세히 보기` }));
@@ -206,10 +209,10 @@ describe('the mocked parts in the build that asks the main server', () => {
     expect(screen.getByText('숨긴 파티 1개 · 다음 추천에 반영할게요')).toBeVisible();
   });
 
-  it('shows 전체 파티 without 공식', async () => {
+  it('shows 전체 파티 without 공식 from 전체 게시판', async () => {
     const user = await openAt('/party');
 
-    await user.press(screen.getByRole('button', { name: '전체 보기' }));
+    await user.press(screen.getByRole('button', { name: '전체 게시판' }));
     await pass(500);
 
     expect(screen.queryByRole('tab', { name: '공식' })).toBeNull();

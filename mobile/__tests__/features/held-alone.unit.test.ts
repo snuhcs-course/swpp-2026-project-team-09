@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { toCards } from '@/features/map/adapter';
@@ -16,7 +17,7 @@ import { ME, NOW, quest, sources } from '../support/map-sources';
 const TAKEN = quest('taken', { title: '채용박람회', capacity: 1, takenAlone: true });
 const PARTY = quest('party', { title: '302동식당에서 점심' });
 const FORM_ONE = quest('form-one', { title: '산책', capacity: 1 });
-const NOTHING = { myParty: null, parties: [], declined: [], invited: {}, meId: ME.id, now: NOW };
+const NOTHING = { myParty: null, parties: [], declined: [], meId: ME.id, now: NOW };
 
 // Partitions: a Quest taken alone, now and past; a 비공개 파티 held alone so far; one of capacity 1.
 describe('내 파티', () => {
