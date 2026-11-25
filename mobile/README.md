@@ -511,7 +511,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   level keeps it. A Friend whose position is not known has no marker. The Global Event,
   the User's Party and a Shared Quest are light glass tags (`MapTag`, changelog 11.24 § 4-4): the kind's line icon in its
   colour on that colour at 14%, a round of 20 while the whole campus is in view, of 26 from the `pins` level, and the
-  icon with the short name inside the tag from the `names` level, drawn into the marker's picture. A tag sits on its
+  icon with the short name inside the tag from the `names` level, drawn into the marker's picture, on a ground of 95%
+  so that the map's own words under it do not read through. A tag sits on its
   middle; a chosen one has a navy border and ring. A 퀘스트's tag is at 70%, with a lighter rim and shadow. Several
   kinds at one place are one such tag with a round for each kind. A Party's pin counts its members; a Global Event's counts the Quests
   that gather for it (`GET /quests/recruiting`) when they are more than one. Of the Global Events, only Favorite Events
@@ -884,7 +885,8 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   line), on a low screen with fewer rows.
 
 **The friend panel** (`friend-panel.tsx`, the `MainFriends` frame) is a `SidePanel` from the left over the whole
-screen, on the glass layer's `inner` level over the map: "친구 {N}" and ✕ "닫기"; the search "이름, 학과 검색" ("친구 검색"), by name and department, spaces aside, with
+screen, on the glass layer's `inner` level over the map; while it is open, what floats over the map and the tab bar
+give way, so that only the map shows through: "친구 {N}" and ✕ "닫기"; the search "이름, 학과 검색" ("친구 검색"), by name and department, spaces aside, with
 "결과 없음" when nobody is found; the chips 전체, 공강, 수업 중, 이동 중 and 위치 꺼짐 with their counts, those of 0
 hidden but 전체; and the Friends grouped by presence ("공강 · 4"), each row with the Avatar and its status, the name
 and the department, the detail (or the line where the app has no detail), and the round glass calendar button
