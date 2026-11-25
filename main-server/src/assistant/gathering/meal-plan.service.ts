@@ -8,6 +8,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
@@ -16,7 +17,6 @@ import { PrismaService } from '../../common/prisma.service.js';
 import { type FriendView } from '../../friends/dto/friend-view.dto.js';
 import { FriendViewService } from '../../friends/friend-view.service.js';
 import { type Cuisines } from '../../menus/cuisine-words.js';
-import { type RestaurantMenusDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { MenusService } from '../../menus/menus.service.js';
 import { type Hours, RestaurantHours } from '../../menus/restaurant-hours.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
@@ -34,7 +34,7 @@ import {
   type MealInput,
   type MeetInput,
 } from '../dto/answer.dto.js';
-import { clockOf, type DayItem, freeTimeOf, onDay } from '../free-time/free-time.js';
+import { type DayItem, freeTimeOf, onDay } from '../free-time/free-time.js';
 import { mealWindow } from '../free-time/meal-fit.js';
 import { openRestaurants } from '../free-time/meal-tools.js';
 import { type OpenRestaurant } from '../free-time/restaurant-card.js';
@@ -45,6 +45,7 @@ import { addingDto, addingOf, type Asked, askedFor, candidatesOf } from './meal-
 import { type AnswerPerson, mealAnswer, menusOf } from './meal-answer.js';
 import { type ServedMenu } from './meal-menu.js';
 import { type BusyItem, busyIn, leaveOut, mealChangeable, mealSetOf } from './meal-plan-parts.js';
+import { type BesideServices, besideOf } from './meal-beside.js';
 import { type MissingInputs } from './missing-inputs.js';
 import { locationPlaceOf, otherFriendsOf } from './other-friends.js';
 import { placeLabelOf } from './place-naming.js';
@@ -151,10 +152,10 @@ export class MealPlanService {
       served: menus,
     });
     const busy = this.busyOf(answer, people[0]?.items ?? [], input);
-    const otherMeal = this.otherMealOf(collected, input, now);
+    const beside = await besideOf(collected, { input, now, people: [askerPerson, ...friendPeople] }, this.beside);
     const touched = await this.touched(askerId, input, { ...at, now, kinds: [`meal-${meal}`], setAside: held?.id });
     const set = { ...touched, mealSet: mealSetOf(held), ...addingDto(adding, people, answer.plans) };
-    return { answer: { ...answer, otherMeal, ...set }, served: menus, busy, posted: collected.length > 0 };
+    return { answer: { ...answer, ...beside, ...set }, served: menus, busy, posted: collected.length > 0 };
   }
 
   // The input as planMeal plans it (P05 ticket 44): with everyone of the meal the asker holds that day when the User asked
@@ -183,19 +184,9 @@ export class MealPlanService {
     return { hours, menus: servedOf(restaurants, candidates, { hours, cuisines }) };
   }
 
-  // The other meal of the day, which the app's bar offers, and when it starts: its window's start, or now when it is under
-  // way. None when it is over, or when no Restaurant with a Place serves it that day.
-  private otherMealOf(
-    collected: readonly RestaurantMenusDto[],
-    { date, meal }: MealInput,
-    now: Date,
-  ): AnswerReply['otherMeal'] {
-    const other = meal === 'lunch' ? 'dinner' : 'lunch';
-    const { start, end } = mealWindow(date, other);
-    if (end <= now || openRestaurants(collected, other, this.restaurantPlaces).length === 0) {
-      return null;
-    }
-    return { meal: other, start: clockOf(start < now ? now : start) };
+  // What `besideOf` reads the Restaurants with.
+  private get beside(): BesideServices {
+    return { restaurantPlaces: this.restaurantPlaces, hours: this.hours, travel: this.travel };
   }
 
   // The Place of a Restaurant named as the plans name it, null for one the seed does not place.
