@@ -20,9 +20,10 @@ import { contentMaxOf, type FrameCardProps, LEAST_CONTENT } from './frame-card-p
 const LOW_LINES = 2;
 // The soft edge where the content passes under the footer.
 export const FADE = space[3];
-// The footer low's top edge is measured over: the input bar of one line, and the main button's row above it with its
-// gap (`AiInput`, the button of size "bar", 50 high), and the room over them (`AnswerFrame`'s `barRoom`). A footer
-// with less, an answer with no main button or the list of questions open, gives what it lacks to the content.
+// The footer low's top edge is measured over, above the navigation's inset that lifts the input (`MapBottom`): the
+// input bar of one line, and the main button's row above it with its gap (`AiInput`, the button of size "bar", 50
+// high), and the room over them (`AnswerFrame`'s `barRoom`). A footer with less, an answer with no main button or the
+// list of questions open, gives what it lacks to the content.
 const MAIN_ROW = 50;
 const FOOTER = AI_INPUT.bottom + AI_INPUT.height + space[2] + MAIN_ROW + space[3];
 // Middle's share of the screen, from the status bar's top to the screen's bottom: the card covers this much of it, far
@@ -40,8 +41,8 @@ export interface Caps extends LevelHeights {
 }
 
 // Low's height and the band under its whole lines: two lines over the meal answer's footer, more over a smaller one.
-function lowOf(mid: number, padTop: number, { line, barRoom }: { line: number; barRoom: number }): [number, number] {
-  const low = Math.min(mid, Math.max(padTop + line + FADE, padTop + LOW_LINES * line + FADE + FOOTER - barRoom));
+function lowOf(mid: number, padTop: number, { line, footer }: { line: number; footer: number }): [number, number] {
+  const low = Math.min(mid, Math.max(padTop + line + FADE, padTop + LOW_LINES * line + FADE + footer));
   const lines = Math.max(1, Math.floor((low - padTop - FADE) / line));
   return [low, Math.max(0, low - padTop - lines * line)];
 }
@@ -49,7 +50,7 @@ function lowOf(mid: number, padTop: number, { line, barRoom }: { line: number; b
 // The most the scrolling part shows at each step, under the card's header (`above`); null until the stage is laid out.
 export function useCaps(props: FrameCardProps, above: number, padTop: number): Caps | null {
   const { stageHeight, barRoom, raising, timeBarHeight = 0, fit = false } = props;
-  const { top } = useSafeAreaInsets();
+  const { top, bottom } = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
   if (stageHeight === null) {
     return null;
@@ -68,7 +69,10 @@ export function useCaps(props: FrameCardProps, above: number, padTop: number): C
   if (fit) {
     return { low: mid, mid, high, room: high, band: 0, fixedLow: false };
   }
-  const [low, band] = lowOf(mid, padTop, { line: text.bodyLg.lineHeight * fontScale, barRoom });
+  const [low, band] = lowOf(mid, padTop, {
+    line: text.bodyLg.lineHeight * fontScale,
+    footer: bottom + FOOTER - barRoom,
+  });
   return { low, mid, high, room: high, band, fixedLow: true };
 }
 

@@ -31,8 +31,10 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
   useMotionAllowed: (): boolean => true,
   useReduceMotionSetting: (): boolean => false,
 }));
+// The navigation's inset at the screen's bottom, which lifts the input over it; 0 unless a test sets it.
+const mockInsets = { bottom: 0 };
 jest.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: (): object => ({ top: 0, right: 0, bottom: 0, left: 0 }),
+  useSafeAreaInsets: (): object => ({ top: 0, right: 0, bottom: mockInsets.bottom, left: 0 }),
 }));
 
 const STAGE = 800;
@@ -110,6 +112,7 @@ async function settle(): Promise<void> {
 
 beforeEach(async () => {
   jest.useFakeTimers();
+  mockInsets.bottom = 0;
   mounts.content = 0;
   await AsyncStorage.clear();
 });
@@ -165,8 +168,19 @@ describe('the sheet’s steps', () => {
   });
 });
 
-// P04 ticket 63. Partitions: a footer without a main button at low, and at middle.
+// P04 ticket 63. Partitions: a footer without a main button at low, and at middle; a footer lifted over the
+// navigation's inset.
 describe('low over a smaller footer', () => {
+  // The emulator's check: with gesture navigation the input stands 24 higher, and the meal answer still shows two lines.
+  it('counts the navigation inset under the footer, so the meal answer still shows two lines', async () => {
+    mockInsets.bottom = 24;
+    await render(card('low', undefined, BAR_ROOM + 24));
+    await layContent(1000);
+    await settle();
+
+    expect(shown()).toBe(LOW);
+  });
+
   // P04 ticket 63: an answer without a main button gives that row's room to its words, whole lines of them, and the
   // room under the last whole line is covered in the sheet's colour.
   it('keeps the top edge over a footer without a main button, and shows its words in whole lines', async () => {
