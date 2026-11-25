@@ -41,7 +41,8 @@ jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>(
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
 const ADD = '같이 먹을 친구 추가';
-const ROWS = ['김민준 · 걸음 16분', '서지우 · 위치 모름'];
+// 김민준 walks 14 minutes to the plan alone's 301동식당 by the phone's guess.
+const ROWS = ['김민준 · 걸음 14분', '서지우 · 위치 모름'];
 const BACK = '답 닫기';
 
 const ALONE_PICKING: AssistantReply = { ...MEAL_ANSWER_REPLY, answer: { ...MEAL_ANSWER_ALONE, pickPeople: true } };
