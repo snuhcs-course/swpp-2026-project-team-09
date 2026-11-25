@@ -21,9 +21,10 @@ import { withTopic } from '../gathering/answer-words.js';
 import { cornersOf } from '../gathering/meal-menu.js';
 import { dayWordsFrom } from '../korea-time.js';
 
-// A menu question's answer (P04 ticket 72): with a meal Plan for the User alone at the Restaurant's Place, the meal
-// answer opened at that Restaurant, which the app shows as a place opened from a meal answer's list; without one, the
-// Restaurant brought to the map with its menu and why it cannot be done. Nothing here is sent to the model.
+// A menu question's answer (P04 ticket 72): the meal's answer for the User alone, as planMeal plans it, opened at the
+// Restaurant asked about, which the app shows as a place opened from that answer's list; when the Restaurant is none of
+// its Plans, the Restaurant brought to the map with its menu and why it cannot be done. Nothing here is sent to the
+// model.
 
 export interface MenuArgs {
   // The Restaurant, by its key.
@@ -33,7 +34,7 @@ export interface MenuArgs {
   now: Date;
   // The meal's lines as collected, notes included.
   lines: readonly MenuLineDto[];
-  // The meal Plan for the User alone at the Restaurant's Place.
+  // The meal's answer for the User alone, every Restaurant they can eat at among its Plans.
   answer: AnswerReply;
 }
 
@@ -58,8 +59,8 @@ export function dishesOf(lines: readonly MenuLineDto[]): string[] {
   return (main?.items ?? []).slice(0, DISHES_MAX).map((line) => dishName(line));
 }
 
-// The meal answer opened at the Restaurant asked about, whose Plan is the one for it; none when it has no Plan there,
-// as when the User has no time to eat there.
+// The meal answer opened at the Restaurant asked about, whose Plan is the one for it; none when it is none of the
+// answer's Plans, as when the User has no time to eat there.
 export function menuAnswer({ key, answer }: MenuArgs): MenuAnswer {
   const plan = answer.plans.find(({ id }) => id === key);
   if (plan === undefined) {

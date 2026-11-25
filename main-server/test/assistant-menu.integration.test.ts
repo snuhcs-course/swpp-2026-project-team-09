@@ -73,12 +73,13 @@ const TESTS_MENU = [
 ];
 
 // P04 ticket 72: "예술계 메뉴가 뭐야?" answered with a Lookup of chips ("83동에서"), two bold lines, and the whole menu
-// under 근거. The answer is now the meal answer opened at the Restaurant, as a place opened from its list.
+// under 근거. The answer is now the meal's answer, as planMeal plans it, opened at the Restaurant, as a place opened
+// from its list.
 describe('The menu of 301동식당 at 11:40 (board q8)', () => {
-  it('is the meal answer opened at 301동식당, with the time to eat, and no Lookup', async () => {
+  it('is the whole meal answer opened at 301동식당, with the time to eat, and no Lookup', async () => {
     const date = '2086-01-01';
     await boardQ8(date);
-    await stage.menusOn(date, ['301동식당']);
+    await stage.menusOn(date, ['301동식당', '학생회관식당']);
 
     const response = await stage.send([findMenu(date, '301동식당'), { text: '' }]);
 
@@ -86,7 +87,8 @@ describe('The menu of 301동식당 at 11:40 (board q8)', () => {
     expect(replySchema.parse(response.body).lookup).toBeNull();
     const answer = answerIn(response.body);
     expect(answer.opened).toBe('301동식당');
-    expect(answer.input).toMatchObject({ kind: 'meal', date, meal: 'lunch' });
+    expect(answer.input).toMatchObject({ kind: 'meal', date, meal: 'lunch', placeId: null });
+    expect(answer.plans.map(({ id }) => id).toSorted()).toEqual(['301동식당', '학생회관식당']);
     const plan = answer.plans.find(({ id }) => id === '301동식당');
     expect(plan?.band).toMatchObject({
       startAt: time(date, '11:50'),

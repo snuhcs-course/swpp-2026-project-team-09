@@ -62,7 +62,9 @@ describe('the mock of an answer drawn on the map', () => {
 
   // P04 ticket 72: a menu question is the meal answer opened at the Restaurant, or, closed, the Restaurant's menu view.
   it("answers 301동식당's menu with a context by the meal answer opened at it", async () => {
-    await expect(answered(mockClient.askAssistant(MENU, CONTEXT))).resolves.toEqual(MENU_ANSWER_REPLY);
+    await expect(answered(mockClient.askAssistant(MENU, CONTEXT))).resolves.toEqual(
+      replyWithOtherFriends(MENU_ANSWER_REPLY),
+    );
   });
 
   it("answers 학생회관식당's menu on its holiday by its menu view with why", async () => {

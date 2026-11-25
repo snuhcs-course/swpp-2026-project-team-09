@@ -21,8 +21,8 @@ import { at, classAt, DATE, id, readWorld } from './worked-example.js';
 
 // A menu question's answer (P04 ticket 72): "오늘 301동식당 메뉴 뭐야?" on Tuesday 2026-11-17 at 11:40, in a Class in
 // 301동 until 11:50 with the next at 13:00 in 24동, on the seed's walking table and the menus collected on 2026-10-01.
-// With a meal Plan for the User alone at the Restaurant's Place, it is that meal answer opened at the Restaurant, which
-// the app shows as a place opened from the list.
+// It is the meal's answer for the User alone, as planMeal plans it, opened at the Restaurant when that is one of its
+// Plans, which the app shows as a place opened from the list.
 
 beforeAll(() => readWorld());
 
@@ -70,13 +70,10 @@ interface Opened {
   plan: Plan;
 }
 
-// The meal answer of the User's lunch at the Restaurant's Place, alone, with their day as given, opened at it.
+// The meal answer of the User's lunch alone, with their day as given, the Restaurant at that Place among its
+// candidates, opened at it.
 function openedAt(key: string, placeName: string, items: DayItem[]): Opened {
-  const answer = answerOf([person(ME, '유상', items)], {
-    candidates: [{ key, placeId: id(placeName) }],
-    now: NOW,
-    fixed: { placeId: id(placeName) },
-  });
+  const answer = answerOf([person(ME, '유상', items)], { candidates: [{ key, placeId: id(placeName) }], now: NOW });
   const found = menuAnswer({ key, date: DATE, meal: 'lunch', now: NOW, lines: lunchOf(key), answer });
   if (found.result !== 'found') {
     throw new Error(`No meal Plan at ${key}: ${found.result}`);
@@ -95,7 +92,23 @@ describe('A menu asked of 301동식당 at 11:40, in a Class there until 11:50 (b
     expect(answer.opened).toBe('301동식당');
     expect(plan.id).toBe('301동식당');
     expect(answer.plans).toContain(plan);
-    expect(answer.input).toMatchObject({ kind: 'meal', meal: 'lunch', placeId: id('제1공학관') });
+    expect(answer.input).toMatchObject({ kind: 'meal', meal: 'lunch', placeId: null });
+  });
+
+  it('is the whole meal: every Restaurant the User can eat at is one of its Plans, as planMeal answers', () => {
+    const answer = answerOf([person(ME, '유상', boardDay())], { now: NOW });
+
+    const found = menuAnswer({
+      key: '301동식당',
+      date: DATE,
+      meal: 'lunch',
+      now: NOW,
+      lines: lunchOf('301동식당'),
+      answer,
+    });
+
+    expect(found).toMatchObject({ result: 'found', answer: { opened: '301동식당' } });
+    expect(answer.plans.length).toBeGreaterThan(1);
   });
 });
 
@@ -140,9 +153,22 @@ describe('No time to eat', () => {
     const answer = answerOf([person(ME, '유상', items)], {
       candidates: [{ key: '301동식당', placeId: id('제1공학관') }],
       now: NOW,
-      fixed: { placeId: id('제1공학관') },
     });
 
+    expect(
+      menuAnswer({ key: '301동식당', date: DATE, meal: 'lunch', now: NOW, lines: lunchOf('301동식당'), answer }),
+    ).toEqual({ result: 'none', reason: 'no-time' });
+  });
+});
+
+describe('A Restaurant none of whose Plans the meal has', () => {
+  it('is none while the meal has Plans at other Restaurants', () => {
+    const answer = answerOf([person(ME, '유상', boardDay())], {
+      candidates: [{ key: '학생회관식당', placeId: id('학생회관') }],
+      now: NOW,
+    });
+
+    expect(answer.plans.map(({ id: planId }) => planId)).toEqual(['학생회관식당']);
     expect(
       menuAnswer({ key: '301동식당', date: DATE, meal: 'lunch', now: NOW, lines: lunchOf('301동식당'), answer }),
     ).toEqual({ result: 'none', reason: 'no-time' });

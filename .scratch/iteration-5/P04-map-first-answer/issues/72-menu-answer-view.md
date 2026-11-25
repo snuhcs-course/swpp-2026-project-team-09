@@ -25,11 +25,12 @@ The user's points: prose instead of the list's view; nothing says why "83동에�
 
 The user chose A on the proposal page: no sentence above the menu.
 
-1. **A Restaurant that can be done.** When `findMenu` finds the menu and a meal Plan for the User alone at the Restaurant's Place, the reply's `answer` is that meal answer, with `opened` naming the Plan. It is the same as `planMeal` with the Restaurant.
+1. **A Restaurant that can be done.** `findMenu` plans the meal for the User alone as `planMeal` does, with no place limit (the user's choice, "밥 계획과 같은 화면"). When the Restaurant is one of its Plans, the reply's `answer` is that meal answer, with `opened` naming the Plan.
    - The app opens it at that Plan with its menu open, the card raised: the view of a place pressed in a meal answer's list (`MealMenu`).
-   - That view has the head (name, "HH:MM 도착 · 걸음 N분"), the date and meal at the right, the menu in corners, the main button, "＋ 같이", and "‹ N곳 목록", where N is the answer's places at that Place.
+   - That view has the head (name, "HH:MM 도착 · 걸음 N분"), the date and meal at the right, the menu in corners, the main button, "＋ 같이", and "‹ N곳 목록", which leads back to every place the User can eat at for that meal.
+   - The map shows the numbered candidates with the opened one chosen, as when its row is pressed.
    - The model writes nothing. The menu view hides the reply's words in any case.
-2. **A Restaurant that cannot be done now** (closed, no time to eat there, the meal over, its menu not posted). The Lookup keeps bringing the Restaurant to the map, and gains `menuView` with the Restaurant, the date, the meal, and why in a few words: "오늘 휴점", "시간이 안 맞아요", "점심 시간이 지났어요", "메뉴가 아직 안 올라왔어요".
+2. **A Restaurant that cannot be done now** (closed, none of the meal's Plans, the meal over, its menu not posted). The Lookup keeps bringing the Restaurant to the map, and gains `menuView` with the Restaurant, the date, the meal, and why in a few words: "오늘 휴점", "시간이 안 맞아요", "점심 시간이 지났어요", "메뉴가 아직 안 올라왔어요".
    - The app shows the same view: the head with why in place of the time, the menu of its day.
    - It has no number, no way back to a list, and no main button.
    - The model says why in one short sentence above it.
@@ -40,8 +41,8 @@ The user chose A on the proposal page: no sentence above the menu.
 
 ## Acceptance criteria
 
-- [x] `findMenu` found answers with the meal answer opened at the Restaurant and no Lookup. (Integration test, failing before.)
+- [x] `findMenu` found answers with the whole meal's answer opened at the Restaurant and no Lookup. A Restaurant that is none of its Plans while others are is none. (Unit and integration tests, failing before.)
 - [x] `findMenu` none answers with the Restaurant's Lookup with `menuView` and why: closed by its notice "오늘 휴점", notes only "점심은 안 해요", no time, the meal over, not posted, no meal. (Unit and integration tests.)
-- [x] The app opens such an answer at the Restaurant's menu, with the head, the menu, "‹ 1곳 목록", and no pill, lines, or 근거. A closed Restaurant shows its view with why and no button. (Integration test over the mocks, failing before.)
+- [x] The app opens such an answer at the Restaurant's menu, with the head, the menu, "‹ N곳 목록" of the whole meal, and no pill, lines, or 근거. A closed Restaurant shows its view with why and no button. (Integration test over the mocks, failing before.)
 - [x] The app checks `menuView`. (Unit test.)
 - [x] No native file changes. Lint, format, and types pass on the main server and the app.

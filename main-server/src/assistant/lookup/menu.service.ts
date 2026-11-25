@@ -31,7 +31,7 @@ export type MenuFound =
 // Spaces and case do not count when a name is matched, as in getMenus.
 const compact = (words: string): string => words.replaceAll(/\s/gu, '').toLowerCase();
 
-// What a menu drawn on the map needs: the Restaurants on the map, their menus, and the meal Plan for the User alone.
+// What a menu question needs: the Restaurants on the map, their menus, and the meal's answer for the User alone.
 @Injectable()
 export class MenuLookupService {
   constructor(
@@ -108,7 +108,9 @@ export class MenuLookupService {
         meal,
         people: [{ userId, constraints: [] }],
         window: { from: null, until: null },
-        placeId: place.id,
+        // The whole meal, as planMeal plans it, so that the answer opened at the Restaurant leads back to every place
+        // the User can eat at (P04 ticket 72).
+        placeId: null,
       },
       at,
     );

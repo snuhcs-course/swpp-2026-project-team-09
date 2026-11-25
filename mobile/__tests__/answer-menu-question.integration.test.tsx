@@ -51,7 +51,7 @@ describe('a menu question', () => {
 
     const menu = within(screen.getByTestId('meal-menu'));
     expect(menu.getByText('301동식당')).toBeOnTheScreen();
-    expect(menu.getByText('‹ 1곳 목록')).toBeOnTheScreen();
+    expect(menu.getByText('‹ 5곳 목록')).toBeOnTheScreen();
     expect(menu.getByText(/도착/u)).toBeOnTheScreen();
     expect(menu.getByText('부대짬뽕&군만두')).toBeOnTheScreen();
     expect(card().queryByText('근거')).toBeNull();
