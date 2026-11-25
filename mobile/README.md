@@ -1942,9 +1942,12 @@ source map.
 on an import anywhere else (`__tests__/telemetry/sentry-import-boundary.unit.test.ts`). App code calls what
 `src/telemetry/index.ts` exports:
 
-- `startTelemetry()`, called once by the root layout before the first screen. Without `EXPO_PUBLIC_SENTRY_DSN` it
-  starts nothing and every other function does nothing: tests, a local build, the mock APK and the Dev Server's and a
-  UAT's APK report nothing.
+- `startTelemetry()`, called once by the root layout before the first screen. It reads the switch below from the phone
+  and starts Sentry once it is read and on; the first screen does not wait for the read. Without
+  `EXPO_PUBLIC_SENTRY_DSN` it starts nothing and every other function does nothing: tests, a local build, the mock APK
+  and the Dev Server's and a UAT's APK report nothing.
+- `identifyUser(userId)` and `forgetUser()`, below.
+- `setSending(on)` and `useSending()`, the switch, below.
 - `reportError(error, where)`, for an error the app caught. `where` is one of a closed list in
   `src/telemetry/sentry.ts`: `screen` and `test-error`.
 - `TelemetryBoundary` and `RouteBreadcrumb`, below.
@@ -1994,6 +1997,36 @@ error, "A test error, sent from the build line in 내 정보", with `where` `tes
 in is unmarked, and what it sends is one harmless report. Use it to check a build: in Sentry's Issues, the error should
 appear with the Release's `release_tag`, and with a stack that names `src/screens/me/build-line.tsx` when the build's
 source map was uploaded.
+
+### The User
+
+Sentry's user is the User's id (the main server's UUID, the access token's subject) and nothing else.
+`identifyUser` sets it once the app knows the signed-in User: after a sign-in (`src/auth/sign-in.ts`) and at a start
+with a kept Session (`src/session/start.ts`). `forgetUser` clears it at a sign-out and when the Session ends from the
+main server's side (`endSession` in `src/session/session-events.ts`). The id is held while Sentry is not running and
+given to it when it starts.
+
+### The switch in 내 정보
+
+"오류 보고 보내기", a switch above 로그아웃, says under it what a report holds (the screens visited, the app's and the
+phone's version; no name and no position) and links to the privacy policy. It is on at first. The choice is the
+phone's, not the account's: it is kept under its own key, `snunow.error-reports` in AsyncStorage
+(`src/storage/error-reports.ts`), which neither a sign-out, the end of a Session nor the development setting for the
+first state clears, so it holds before a sign-in and from one User to the next.
+
+- **Off** holds at once. `reportError` does nothing and `beforeSend` drops every event, an unhandled error among them,
+  from that moment; then the layer closes Sentry (`Sentry.close()`, which in 8.36.0 flushes what the client already
+  holds, disables the client and closes the native SDK, so the session's updates and native crash handling stop).
+  At the next start Sentry is not started at all.
+- **On** again starts Sentry in the same run (`Sentry.init` makes a new client and starts the native SDK again).
+- **Before the choice is read**, at a start, Sentry is not running: up to ten errors passed to `reportError` wait and
+  are sent once the choice is read on, or dropped when it is off, and the latest change of screen becomes the first
+  breadcrumb. An unhandled error or a native crash in that moment, which lasts one read of the phone's storage, is not
+  reported. A phone whose storage cannot be read sends nothing in that run.
+- **A native crash kept from before** is not reached from JavaScript. The native SDKs write a crash to their own cache
+  and send it when they next start; 8.36.0 has no JavaScript call that empties that cache, and a native crash never
+  passes `beforeSend`. While the switch is off nothing starts, so nothing is sent; a crash kept from a run when the
+  switch was on, and not yet sent, goes out when the switch is turned on again.
 
 ### The settings
 

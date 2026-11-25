@@ -51,10 +51,11 @@ async function startApp(): Promise<void> {
   await renderRouter({ _layout: Layout, index: Start, 'quests/[questId]': Quest }, { initialUrl: '/' });
 }
 
-beforeAll(() => {
+beforeAll(async () => {
   // Not a real project's key: the stand-in sends nothing.
   process.env.EXPO_PUBLIC_SENTRY_DSN = 'https://public@o0.ingest.us.sentry.io/0';
-  startTelemetry();
+  // Sentry starts once the phone's choice is read.
+  await startTelemetry();
 });
 
 afterAll(() => {

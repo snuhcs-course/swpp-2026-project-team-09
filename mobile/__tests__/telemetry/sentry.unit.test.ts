@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import type * as Errors from '@/api/errors';
@@ -52,10 +53,10 @@ afterEach(() => {
 });
 
 describe('without EXPO_PUBLIC_SENTRY_DSN', () => {
-  it('starts nothing, reports nothing and leaves no breadcrumb', () => {
+  it('starts nothing, reports nothing and leaves no breadcrumb', async () => {
     const { layer, sentry } = loadLayer();
 
-    layer.startTelemetry();
+    await layer.startTelemetry();
     layer.reportError(new Error('boom'), 'screen');
     layer.noteRoute('/quests');
 
@@ -64,24 +65,23 @@ describe('without EXPO_PUBLIC_SENTRY_DSN', () => {
     expect(sentry.addBreadcrumb).not.toHaveBeenCalled();
   });
 
-  it('treats an empty DSN as none', () => {
+  it('treats an empty DSN as none', async () => {
     const { layer, sentry } = loadLayer('  ');
-    layer.startTelemetry();
+    await layer.startTelemetry();
     expect(sentry.init).not.toHaveBeenCalled();
   });
 });
 
 describe('with EXPO_PUBLIC_SENTRY_DSN', () => {
-  it('starts Sentry once', () => {
+  it('starts Sentry once', async () => {
     const { layer, sentry } = loadLayer(DSN);
-    layer.startTelemetry();
-    layer.startTelemetry();
+    await Promise.all([layer.startTelemetry(), layer.startTelemetry()]);
     expect(sentry.init).toHaveBeenCalledTimes(1);
   });
 
-  it("starts Sentry with the spec's settings", () => {
+  it("starts Sentry with the spec's settings", async () => {
     const { layer, sentry } = loadLayer(DSN);
-    layer.startTelemetry();
+    await layer.startTelemetry();
 
     const options = startedWith(sentry);
     expect(options).toMatchObject({
@@ -116,11 +116,11 @@ describe('with EXPO_PUBLIC_SENTRY_DSN', () => {
 });
 
 describe('what the layer hands Sentry', () => {
-  it('tags every report with the Release, the update, the versions and the platform', () => {
+  it('tags every report with the Release, the update, the versions and the platform', async () => {
     process.env.EXPO_PUBLIC_RELEASE_TAG = 'snunow/app/26.11.25-1';
     process.env.EXPO_PUBLIC_RELEASE_COMMIT = '1a2b3c4d';
     const { layer, sentry } = loadLayer(DSN);
-    layer.startTelemetry();
+    await layer.startTelemetry();
 
     expect(startedWith(sentry).initialScope).toEqual({
       tags: {
@@ -134,9 +134,9 @@ describe('what the layer hands Sentry', () => {
     });
   });
 
-  it('reports a handled error with where it came from', () => {
+  it('reports a handled error with where it came from', async () => {
     const { layer, sentry } = loadLayer(DSN);
-    layer.startTelemetry();
+    await layer.startTelemetry();
     const error = new Error('boom');
 
     layer.reportError(error, 'test-error');
@@ -145,9 +145,9 @@ describe('what the layer hands Sentry', () => {
     expect(sentry.captureException).toHaveBeenCalledWith(error, { tags: { where: 'test-error' } });
   });
 
-  it('leaves a breadcrumb with the route it is given', () => {
+  it('leaves a breadcrumb with the route it is given', async () => {
     const { layer, sentry } = loadLayer(DSN);
-    layer.startTelemetry();
+    await layer.startTelemetry();
 
     layer.noteRoute('/room/[questId]');
 
@@ -158,9 +158,9 @@ describe('what the layer hands Sentry', () => {
 });
 
 describe("a refusal of the main server's", () => {
-  it.each([400, 401, 403, 404, 409, 422, 499])('is never reported by reportError, with %i', (status) => {
+  it.each([400, 401, 403, 404, 409, 422, 499])('is never reported by reportError, with %i', async (status) => {
     const { layer, sentry, ApiError } = loadLayer(DSN);
-    layer.startTelemetry();
+    await layer.startTelemetry();
 
     layer.reportError(new ApiError(status, 'NOT_IN_PARTY'), 'screen');
 
@@ -169,7 +169,7 @@ describe("a refusal of the main server's", () => {
 
   it('is dropped by beforeSend when nothing caught it', async () => {
     const { layer, sentry, ApiError } = loadLayer(DSN);
-    layer.startTelemetry();
+    await layer.startTelemetry();
     const { beforeSend } = startedWith(sentry);
 
     const sent = await beforeSend?.(
@@ -180,9 +180,9 @@ describe("a refusal of the main server's", () => {
     expect(sent).toBeNull();
   });
 
-  it('is not one when the main server failed or did not answer: those are reported', () => {
+  it('is not one when the main server failed or did not answer: those are reported', async () => {
     const { layer, sentry, ApiError } = loadLayer(DSN);
-    layer.startTelemetry();
+    await layer.startTelemetry();
 
     layer.reportError(new ApiError(500), 'screen');
     layer.reportError(new ApiError(0), 'screen');
@@ -190,9 +190,9 @@ describe("a refusal of the main server's", () => {
     expect(sentry.captureException).toHaveBeenCalledTimes(2);
   });
 
-  it('is not one without a code: a 4xx the main server did not name is reported', () => {
+  it('is not one without a code: a 4xx the main server did not name is reported', async () => {
     const { layer, sentry, ApiError } = loadLayer(DSN);
-    layer.startTelemetry();
+    await layer.startTelemetry();
 
     layer.reportError(new ApiError(400), 'screen');
     layer.reportError(new ApiError(413), 'screen');
@@ -204,7 +204,7 @@ describe("a refusal of the main server's", () => {
 describe('beforeSend and beforeBreadcrumb', () => {
   it('scrub what they let through', async () => {
     const { layer, sentry } = loadLayer(DSN);
-    layer.startTelemetry();
+    await layer.startTelemetry();
     const { beforeSend, beforeBreadcrumb } = startedWith(sentry);
 
     const sent = await beforeSend?.(

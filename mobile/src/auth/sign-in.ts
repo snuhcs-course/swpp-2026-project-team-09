@@ -11,6 +11,8 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
@@ -28,6 +30,7 @@ import { endLibrarySessionInBackground } from '@/library/end-session';
 import { unregisterPush } from '@/push/device';
 import { keep, readKept } from '@/storage/kept';
 import { forgetReadingAgreement } from '@/storage/reading-notice';
+import { forgetUser, identifyUser } from '@/telemetry';
 
 // Sign-in lives behind these two operations. A build that holds Google's sign-in module asks Google which account.
 // Where the app asks the main server (`asksMainServer()`), Google's ID token goes to the main server, whose answer says
@@ -47,6 +50,8 @@ async function enter(suggestion: Suggestion): Promise<SignInResult> {
   const { onboardingCompleted } = await readKept();
   const onboarding: Onboarding = onboardingCompleted ? { completed: true } : { completed: false, suggestion };
   await keep({ signedIn: true, suggestion: onboarding.completed ? null : onboarding.suggestion });
+  // Crash reports carry the User's id, and nothing else of the User.
+  identifyUser(myUserId());
   return { outcome: 'signed-in', onboarding };
 }
 
@@ -82,6 +87,8 @@ async function enterMainServer(idToken: string): Promise<SignInResult> {
     onboardingCompleted: onboarding.completed,
     suggestion: onboarding.completed ? null : onboarding.suggestion,
   });
+  // Crash reports carry the User's id, the access token's subject, and nothing else of the User.
+  identifyUser(myUserId());
   return { outcome: 'signed-in', onboarding };
 }
 
@@ -142,6 +149,8 @@ async function signOutOfMainServer(): Promise<void> {
 // The library session ends too, whether or not the User logged in to it, so that the next person on the phone never
 // sees this one's bookings. It starts once the tokens are gone and the sign-out does not wait on the library's site.
 export async function signOut(): Promise<void> {
+  // First, so that crash reports stop carrying the User's id whatever fails below.
+  forgetUser();
   if (asksMainServer()) {
     await signOutOfMainServer();
   }

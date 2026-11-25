@@ -7,6 +7,8 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Suggestion } from '@/api/types';
@@ -15,6 +17,7 @@ import { endLibrarySessionInBackground } from '@/library/end-session';
 import { unregisterPush } from '@/push/device';
 import { keep } from '@/storage/kept';
 import { forgetReadingAgreement } from '@/storage/reading-notice';
+import { forgetUser } from '@/telemetry';
 
 // What the main server or the socket server says about the Session in the middle of anything, which the session's
 // provider follows: the Session ended, or the User has to finish Onboarding first. An end is `replaced` when a sign-in
@@ -44,6 +47,8 @@ export function announce(event: SessionEvent): void {
 // show the sign-in screen. The library session ends right after the tokens go, whether or not the User logged in to
 // it, without the end waiting on the library's site.
 export async function endSession(replaced: boolean): Promise<void> {
+  // First, so that crash reports stop carrying the User's id whatever fails below.
+  forgetUser();
   if (!(await unregisterPush())) {
     await keep({ pushUnregisterOwed: true });
   }
