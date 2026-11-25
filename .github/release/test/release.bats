@@ -749,6 +749,8 @@ KAKAO_REST_API_KEY=5c1d0e9f8a7b
 OPENROUTER_API_KEY=sk-or-v1-77aa
 LLM_KEYS={}
 INITIAL_ADMINISTRATOR_EMAILS=a@snu.ac.kr,b@snu.ac.kr
+SENTRY_WEBHOOK_SECRET=
+APP_CRASH_SLACK_WEBHOOK=
 EOF
   diff "$secrets/access-token-private-key.pem" <(printf '%s\n' "$PRIVATE_KEY")
   diff "$secrets/access-token-public-key.pem" <(printf '%s\n' "$PUBLIC_KEY")
@@ -804,6 +806,31 @@ EOF
     '{"anthropic":"sk-ant-api03-7f3c","or-backup":"sk-or-v1-9e1d","team-2":"sk-ant-api03-Zq9/x+b="}' ]
   [ "$(sed -n 's/^OPENROUTER_API_KEY=//p' "$secrets/secrets.env")" = sk-or-v1-77aa ]
   [[ "$output" != *sk-ant* && "$output" != *sk-or* ]] || false
+}
+
+@test "the crash alerts' Sentry secret and Slack webhook, when stored, are their lines, and no value is printed" {
+  serve_parameters "${PARAMETERS[@]}" sentry-webhook-secret 9d4f2a7c61e0 \
+    app-crash-slack-webhook https://hooks.slack.invalid/T0/B0/x7f3c
+  local secrets=$BATS_TEST_TMPDIR/secrets
+
+  run "$RELEASE" write-secrets "$secrets" "$ENDPOINT" <"$BATS_TEST_TMPDIR/parameters.json"
+
+  [ "$status" -eq 0 ]
+  [ "$(sed -n 's/^SENTRY_WEBHOOK_SECRET=//p' "$secrets/secrets.env")" = 9d4f2a7c61e0 ]
+  [ "$(sed -n 's/^APP_CRASH_SLACK_WEBHOOK=//p' "$secrets/secrets.env")" = https://hooks.slack.invalid/T0/B0/x7f3c ]
+  [[ "$output" != *9d4f2a7c61e0* && "$output" != *hooks.slack* ]] || false
+}
+
+@test "a crash alerts' parameter over two lines fails, naming it and printing no value" {
+  local secrets=$BATS_TEST_TMPDIR/secrets
+
+  serve_parameters "${PARAMETERS[@]}" app-crash-slack-webhook $'https://hooks.slack.invalid/T0\nB0/x7f3c'
+  run "$RELEASE" write-secrets "$secrets" "$ENDPOINT" <"$BATS_TEST_TMPDIR/parameters.json"
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"/snunow/production/app-crash-slack-webhook holds more than one line"* ]] || false
+  [[ "$output" != *hooks.slack* && "$output" != *x7f3c* ]] || false
+  [ ! -e "$secrets/secrets.env" ]
 }
 
 @test "a key's name outside lowercase letters, digits and dashes, the name default, or a value with whitespace, a quote or a backslash fails, naming the parameter and printing no value" {

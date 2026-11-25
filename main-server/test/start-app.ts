@@ -16,6 +16,7 @@
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { DynamicModule, INestApplication, Type } from '@nestjs/common';
@@ -28,10 +29,12 @@ import { httpAdapter } from '../src/common/http-adapter.js';
 import { useJsonBodyParsers } from '../src/common/json-body-limit.js';
 import { Settings } from '../src/common/settings.js';
 import { FETCH_EXPO } from '../src/push/expo-push.js';
+import { FETCH_SLACK } from '../src/sentry-alerts/crash-alerts.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../src/travel/travel.js';
 import { TUTORIAL_FILE_PATH } from '../src/tutorial/tutorial-content.js';
 import { FETCH_KAKAO } from '../src/walking-route/walking-route.service.js';
 import { refuseExpoPush } from './expo-push.js';
+import { refuseSlack } from './sentry-alerts.js';
 import { TestGoogleIdTokenVerifier } from './google.js';
 import { ScriptedModel } from './scripted-model.js';
 import { refuseKakao } from './walking-route.js';
@@ -44,6 +47,13 @@ import { refuseKakao } from './walking-route.js';
 // when given, answers in the place of the real Travel Times. `tutorialFile`, when given, is read as the tutorial's content
 // in the place of content/tutorial.yaml. `fetchExpo` answers in Expo's push service's place, refusing every call by
 // default. `model` answers for every one of the AI's keys, unless `modelFactory` gives each key a model of its own.
+// `fetchSlack` answers in the place of the crash alerts' Slack webhook, refusing every call by default.
+interface StartOptions {
+  fetchExpo?: typeof fetch;
+  modelFactory?: ModelFactory;
+  fetchSlack?: typeof fetch;
+}
+
 export async function startApp(
   settings: Partial<Record<keyof Settings, string | undefined>>,
   controllers: Type[] = [],
@@ -52,7 +62,7 @@ export async function startApp(
   modules: (Type | DynamicModule)[] = [],
   travel?: TravelProvider,
   tutorialFile?: string,
-  { fetchExpo = refuseExpoPush, modelFactory }: { fetchExpo?: typeof fetch; modelFactory?: ModelFactory } = {},
+  { fetchExpo = refuseExpoPush, modelFactory, fetchSlack = refuseSlack }: StartOptions = {},
 ): Promise<INestApplication<Server>> {
   for (const [name, value] of Object.entries(settings)) {
     vi.stubEnv(name, value);
@@ -68,7 +78,7 @@ export async function startApp(
   if (tutorialFile !== undefined) {
     testing.overrideProvider(TUTORIAL_FILE_PATH).useValue(tutorialFile);
   }
-  testing.overrideProvider(FETCH_EXPO).useValue(fetchExpo);
+  testing.overrideProvider(FETCH_EXPO).useValue(fetchExpo).overrideProvider(FETCH_SLACK).useValue(fetchSlack);
   const moduleRef = await testing
     .overrideProvider(GoogleIdTokenVerifier)
     .useClass(TestGoogleIdTokenVerifier)

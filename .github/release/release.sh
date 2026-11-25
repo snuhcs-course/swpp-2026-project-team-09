@@ -289,6 +289,16 @@ line_parameter() {
   printf '%s' "$value"
 }
 
+# A value for the env file that may be absent from Parameter Store: empty then, so that a Release passes without it and
+# the setting stays off. Present, it is held to one line as line_parameter holds it.
+optional_line_parameter() {
+  local name=$PARAMETER_PATH/$1
+  if ! jq -e --arg name "$name" 'any(.Parameters[]; .Name == $name)' <<<"$parameters" >/dev/null; then
+    return 0
+  fi
+  line_parameter "$1"
+}
+
 # A key, which Node reads only as PEM with real line breaks.
 pem_parameter() {
   local value
@@ -439,6 +449,8 @@ write_secrets() {
     env+=$'\n'"OPENROUTER_API_KEY=$(line_parameter openrouter-api-key)" &&
     env+=$'\n'"LLM_KEYS=$(llm_keys)" &&
     env+=$'\n'"INITIAL_ADMINISTRATOR_EMAILS=$(line_parameter initial-administrator-emails)" &&
+    env+=$'\n'"SENTRY_WEBHOOK_SECRET=$(optional_line_parameter sentry-webhook-secret)" &&
+    env+=$'\n'"APP_CRASH_SLACK_WEBHOOK=$(optional_line_parameter app-crash-slack-webhook)" &&
     private_key=$(pem_parameter access-token-private-key) &&
     public_key=$(pem_parameter access-token-public-key) || return 1
   (
