@@ -266,3 +266,24 @@ describe('the first-time hint', () => {
     expect(screen.queryByText(SHEET_HINT)).toBeNull();
   });
 });
+
+// PR 545's review: a let-go tells its step when the run arrives, and a render on the way, which still reads the step
+// the drag began at, stopped the run where it began. Partitions: a let-go from middle to low, the card rendered again
+// mid-run, then the step it tells given back as the parent would.
+describe('a let-go run', () => {
+  it('arrives at its step though the card renders again on the way', async () => {
+    const setLevel = jest.fn<undefined, [Level]>();
+    const view = await render(card('mid', setLevel));
+    await layContent(1000);
+    await settle();
+
+    await drag(200);
+    await view.rerender(card('mid', setLevel));
+    await settle();
+    expect(setLevel).toHaveBeenCalledWith('low');
+
+    await view.rerender(card('low', setLevel));
+    await settle();
+    expect(shown()).toBe(LOW);
+  });
+});

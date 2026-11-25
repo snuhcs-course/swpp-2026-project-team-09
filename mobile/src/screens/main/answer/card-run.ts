@@ -105,11 +105,11 @@ interface Place {
 function usePlace({ target, room, level, reduce, offset, aimed, ranLevel, running, rest, setRest }: Place): boolean {
   const stepped = ranLevel.current !== level && aimed.current !== null;
   const runs = target !== null && target !== aimed.current && stepped && !reduce;
-  if (target !== null && target !== aimed.current && !runs) {
+  // A run under way is left to arrive: a let-go tells React its step only then, so a render on the way still reads the
+  // step the drag began at, whose place is not where the card runs (PR 545's review).
+  if (target !== null && target !== aimed.current && !runs && !running.current) {
     aimed.current = target;
     offset.value = target;
-    // Set at once, the place ends any run under way.
-    running.current = false;
   } else if (target === null && aimed.current === null && room !== null) {
     offset.value = room;
   }
