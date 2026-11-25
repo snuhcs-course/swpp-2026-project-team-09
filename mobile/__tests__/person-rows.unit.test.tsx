@@ -4,9 +4,13 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, within } from '@testing-library/react-native';
 
 import type { TimeBand } from '@/api/assistant-types';
+import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
+import { withOtherFriends } from '@/api/mock/other-friends';
+import { color } from '@/design-system';
+import { pickRowsOf } from '@/features/assistant/people-picking';
 import { MEAL_PLAN_3 } from '@/api/mock/data/meal-answer-plan-3';
 import { PersonRows } from '@/screens/main/answer/person-rows';
 
@@ -69,5 +73,45 @@ describe('the open time card’s rows', () => {
     expect(screen.getByTestId('time-card-rows-room')).toHaveProp('scrollEnabled', true);
     expect(screen.getByTestId('time-card-rows-room')).toHaveStyle({ height: 202 });
     expect(screen.getAllByText(/^친구 \d$/u)).toHaveLength(people - 1);
+  });
+});
+
+function stretchesOf(userId: string): ReturnType<typeof screen.getAllByTestId> {
+  return within(screen.getByTestId(`time-card-pick-${userId}`)).getAllByTestId('time-card-busy');
+}
+
+// Partitions: a Friend checked and one not, over the mock's other Friends, whose lanes have busy stretches. Expected
+// values: every busy stretch drawn, 김민준's (f1, checked) in `borderStrong` and 박지호's (f3, unchecked) in `busyQuiet`,
+// which reads on the bar's `surfaceSunken` (boards p2–p3).
+describe('the rows while picking', () => {
+  const picked = withOtherFriends(MEAL_ANSWER).plans[0]?.band;
+  if (picked === undefined) {
+    throw new Error('The mock answer has no Plan');
+  }
+  const busyOf = (userId: string): number =>
+    [...picked.lanes, ...(picked.others ?? [])].find((lane) => lane.userId === userId)?.busy.length ?? 0;
+
+  it('draw an unchecked Friend’s busy stretches in a lighter tone than a checked one’s', async () => {
+    const rows = pickRowsOf({ band: picked, picked: ['f1'], walks: new Map(), friends: [] });
+    await render(
+      <PersonRows
+        band={picked}
+        fixed={{ from: null, until: null }}
+        hidden={false}
+        moving={null}
+        onHeight={jest.fn<void, [number]>()}
+        picking={{ rows, onPick: jest.fn<void, [string]>() }}
+        shown={{ startAt: picked.startAt, endAt: picked.endAt }}
+      />,
+    );
+    expect(stretchesOf('f3')).toHaveLength(busyOf('f3'));
+    for (const stretch of stretchesOf('f3')) {
+      expect(stretch).toHaveStyle({ backgroundColor: color.busyQuiet });
+    }
+    expect(stretchesOf('f1')).toHaveLength(busyOf('f1'));
+    for (const stretch of stretchesOf('f1')) {
+      expect(stretch).toHaveStyle({ backgroundColor: color.borderStrong });
+    }
+    expect(color.busyQuiet).not.toBe(color.surfaceSunken);
   });
 });

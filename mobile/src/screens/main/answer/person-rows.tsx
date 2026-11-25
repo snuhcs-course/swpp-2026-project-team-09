@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   pickName: { ...text.label, flex: 1, color: color.ink },
   quietName: { color: color.inkMuted },
   state: { ...text.caption, color: color.inkMuted },
-  quietBusy: { backgroundColor: color.border },
+  quietBusy: { backgroundColor: color.busyQuiet },
   addFriend: {
     paddingHorizontal: space[3],
     paddingVertical: space[1],
