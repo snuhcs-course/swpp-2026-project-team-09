@@ -106,10 +106,10 @@ describe('the way to 자하연식당 2층 by the shuttle', () => {
     expect(seen(drawing, 'answer:get-off:0').label).toMatchObject({ tone: 'stop', title: '기숙사삼거리 하차' });
   });
 
-  it('says "셔틀 13분" on the ride, in its dark purple', () => {
+  it("says \"셔틀 13분\", the whole leg's time, in the way there's dark blue and not the ride's purple", () => {
     const label = drawing.things.find(({ id }) => id === 'answer:leg:0:셔틀 13분');
     expect(label).toBeDefined();
-    expect(seen(drawing, 'answer:leg:0:셔틀 13분').label).toMatchObject({ tone: 'legShuttle' });
+    expect(seen(drawing, 'answer:leg:0:셔틀 13분').label).toMatchObject({ tone: 'leg' });
     expect(offLine(label?.position ?? stop('정문'), leg?.ride ?? [])).toBeLessThan(1);
   });
 });
@@ -149,10 +149,10 @@ describe('a way on by the shuttle', () => {
     ]);
   });
 
-  it('says its minutes on a pale pill in purple words', () => {
+  it("says its minutes on the way on's pale pill, not in purple", () => {
     const plans = CROWDED.plans.map((plan, at) => (at === CHOSEN ? Object.assign({}, plan, { scene }) : plan));
     const drawing = drawingOf({ ...CROWDED, plans }, CHOSEN, undefined, null, WAYS);
-    expect(seen(drawing, 'answer:leg:0:셔틀 13분').label).toMatchObject({ tone: 'legShuttleOn' });
+    expect(seen(drawing, 'answer:leg:0:셔틀 13분').label).toMatchObject({ tone: 'legOn' });
   });
 
   it('is one pale purple band when its stops are not known', () => {

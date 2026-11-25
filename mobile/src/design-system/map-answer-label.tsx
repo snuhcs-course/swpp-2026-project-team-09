@@ -143,27 +143,21 @@ const styles = StyleSheet.create({
   candidateBadge: { backgroundColor: color.snuBlue },
   number: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
   action: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
-  // A meal Plan's leg's minutes (P04 ticket 76): in its line's colours, the way there dark with white words and the way
-  // on pale with words in the line's own colour, blue on foot and purple by the shuttle.
+  // A meal Plan's leg's minutes (P04 ticket 76), the whole leg's time: the way there dark with white words and the way
+  // on pale with dark words, by the shuttle too. The shuttle's purple stays on its ride and its stops, so that a pill
+  // does not read as the ride's minutes alone.
   legLabel: { paddingHorizontal: space[1], backgroundColor: color.snuBlue },
   legOnLabel: { paddingHorizontal: space[1], backgroundColor: color.blue100 },
-  legShuttleLabel: { paddingHorizontal: space[1], backgroundColor: color.svcShuttle },
-  legShuttleOnLabel: { paddingHorizontal: space[1], backgroundColor: color.svcShuttleSoft },
   legTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.onPrimary },
   legOnTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
-  legShuttleOnTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.svcShuttle },
 });
 
 const LEG_LABELS: Partial<Record<AnswerLabel['tone'], ViewStyle>> = {
   leg: styles.legLabel,
   legOn: styles.legOnLabel,
-  legShuttle: styles.legShuttleLabel,
-  legShuttleOn: styles.legShuttleOnLabel,
 };
 
 const LEG_TITLES: Partial<Record<AnswerLabel['tone'], TextStyle>> = {
   leg: styles.legTitle,
   legOn: styles.legOnTitle,
-  legShuttle: styles.legTitle,
-  legShuttleOn: styles.legShuttleOnTitle,
 };

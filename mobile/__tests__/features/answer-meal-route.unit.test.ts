@@ -126,7 +126,7 @@ describe('a leg by shuttle', () => {
   it('reads "셔틀 N분" on its label, and the way on its minutes alone', () => {
     const drawing = drawingOf(CROWDED, at('자하연식당 2층'));
 
-    expect(seen(drawing, 'answer:leg:0:셔틀 13분').label).toMatchObject({ tone: 'legShuttle', title: '셔틀 13분' });
+    expect(seen(drawing, 'answer:leg:0:셔틀 13분').label).toMatchObject({ tone: 'leg', title: '셔틀 13분' });
     expect(seen(drawing, 'answer:leg:1:20분').label).toMatchObject({ tone: 'legOn', title: '20분' });
   });
 });

@@ -43,14 +43,13 @@ export type LabelSide = 'above' | 'below' | 'left' | 'right';
 // A way's flags.
 type WayTone = 'leave' | 'late' | 'shuttle';
 
-// A leg's minutes, in its line's colours.
-export type LegTone = 'leg' | 'legOn' | 'legShuttle' | 'legShuttleOn';
+// A leg's minutes: the way there's or the way on's, whatever the mode.
+export type LegTone = 'leg' | 'legOn';
 
 export interface AnswerLabel {
   side: LabelSide;
   // `stop` is a shuttle stop's; `kept` a Quest already set's.
-  // `leg` is a meal Plan's way there's minutes, `legOn` its way on's, and `legShuttle` and `legShuttleOn` the same by the
-  // shuttle (P04 ticket 76).
+  // `leg` is a meal Plan's way there's minutes and `legOn` its way on's, by the shuttle too (P04 ticket 76).
   tone: 'pick' | 'candidate' | 'dropped' | 'next' | 'person' | 'meeting' | 'stop' | 'kept' | LegTone | WayTone;
   title: string;
   // A second line, under the title; a candidate's stands beside its title (its arrival time).

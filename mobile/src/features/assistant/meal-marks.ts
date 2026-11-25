@@ -36,11 +36,8 @@ function along(from: LatLng, to: LatLng, share: number): LatLng {
 // Where along its leg a leg's minutes may stand, in order: the middle first.
 const ALONG = [0.5, 0.35, 0.65, 0.2, 0.8] as const;
 
-// A leg's minutes in its line's colours: the way there dark, the way on pale; blue on foot, purple by the shuttle.
-function legToneOf(on: boolean, shuttle: boolean): LegTone {
-  if (shuttle) {
-    return on ? 'legShuttleOn' : 'legShuttle';
-  }
+// A leg's minutes, the whole leg's time: the way there dark, the way on pale, whatever the mode.
+function legToneOf(on: boolean): LegTone {
   return on ? 'legOn' : 'leg';
 }
 
@@ -96,7 +93,7 @@ function legPlaces(line: readonly LatLng[]): { position: LatLng; overFaces: bool
   ];
 }
 
-// A leg's label: "셔틀 12분" by shuttle, "6분" on foot, in its line's colours (`legToneOf`). It may stand anywhere along
+// A leg's label: "셔틀 12분" by shuttle, "6분" on foot, dark for the way there and pale for the way on (`legToneOf`). It may stand anywhere along
 // its leg as drawn (`either`) and keeps clear of the legs' lines. Its id carries its words, so that a leg whose words
 // change is a new mark: the native map would otherwise keep the picture of the words before until the new one is made.
 function legDrafts(
@@ -115,7 +112,7 @@ function legDrafts(
       planId: null,
       group: 'leg',
       symbol: null,
-      tone: legToneOf(role === 'next', mode === 'shuttle'),
+      tone: legToneOf(role === 'next'),
       title,
       line: null,
       number: null,
