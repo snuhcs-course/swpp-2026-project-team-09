@@ -7,16 +7,18 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { type ReactElement, useCallback, useState } from 'react';
+import { type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { color, font, Icon, type IconName, radius, shadow, useSlide } from '@/design-system';
 import { useBackToClose } from '@/hooks/use-back-to-close';
+import { keepMapLayers, readMapLayers } from '@/storage/map-layers';
 import { LAYER_STACK, LAYERS_BUTTON } from './layout';
 
-// The layers of the map that are on. They start off when the app starts and stay as they are while another tab is
-// shown, since the main screen stays mounted.
+// The layers of the map that are on. The phone keeps them for each User, so that they start as the User left them
+// (P06 ticket 03), and they stay as they are while another tab is shown, since the main screen stays mounted.
 export interface Layers {
   dining: boolean;
   shuttle: boolean;
@@ -35,16 +37,80 @@ export interface LayerStack {
   turnOn: (layer: keyof Layers) => void;
 }
 
+const ALL_OFF: Layers = { dining: false, shuttle: false, study: false };
+
+function keep(layers: Layers): void {
+  // A change the phone failed to keep lasts until the app closes.
+  void keepMapLayers(layers).catch(() => null);
+}
+
+// The layers as the phone keeps them, and a change of one layer, which the phone keeps. They are off until what was
+// kept is read, and nothing is kept before, so that the start's "off" never writes over it; a layer changed meanwhile
+// keeps its change, and the others come as kept.
+function useKeptLayers(): { layers: Layers; change: (layer: keyof Layers, on: (was: boolean) => boolean) => void } {
+  const [layers, setLayers] = useState(ALL_OFF);
+  // The layers as last set, for changes made one after another before a render.
+  const latest = useRef(ALL_OFF);
+  // The layers changed before the read ended, or null once it has.
+  const changedEarly = useRef<Set<keyof Layers> | null>(new Set());
+  const show = useCallback((next: Layers) => {
+    latest.current = next;
+    setLayers(next);
+  }, []);
+  useEffect(() => {
+    let mounted = true;
+    void readMapLayers().then((kept) => {
+      const early = changedEarly.current;
+      if (!mounted || early === null) {
+        return;
+      }
+      changedEarly.current = null;
+      const next = { ...kept };
+      for (const layer of early) {
+        next[layer] = latest.current[layer];
+      }
+      show(next);
+      if (early.size > 0) {
+        keep(next);
+      }
+    });
+    return (): void => {
+      mounted = false;
+    };
+  }, [show]);
+  const change = useCallback(
+    (layer: keyof Layers, on: (was: boolean) => boolean) => {
+      const was = latest.current[layer];
+      const now = on(was);
+      if (now === was) {
+        return;
+      }
+      const next = { ...latest.current, [layer]: now };
+      show(next);
+      if (changedEarly.current === null) {
+        keep(next);
+      } else {
+        changedEarly.current.add(layer);
+      }
+    },
+    [show],
+  );
+  return { layers, change };
+}
+
 // The stack's state. Android's back button closes the stack while the map is `inFront`, before a card under it.
 export function useLayerStack(inFront: boolean): LayerStack {
   const [open, setOpen] = useState(false);
-  const [layers, setLayers] = useState<Layers>({ dining: false, shuttle: false, study: false });
+  const { layers, change } = useKeptLayers();
   const close = useCallback(() => {
     setOpen(false);
   }, []);
-  const turnOn = useCallback((layer: keyof Layers) => {
-    setLayers((now) => ({ ...now, [layer]: true }));
-  }, []);
+  const turnOn = useCallback(
+    (layer: keyof Layers) => {
+      change(layer, () => true);
+    },
+    [change],
+  );
   useBackToClose(open && inFront, close, { edge: false });
   return {
     layers,
@@ -54,13 +120,13 @@ export function useLayerStack(inFront: boolean): LayerStack {
     },
     close,
     toggleDining: () => {
-      setLayers((now) => ({ ...now, dining: !now.dining }));
+      change('dining', (on) => !on);
     },
     toggleShuttle: () => {
-      setLayers((now) => ({ ...now, shuttle: !now.shuttle }));
+      change('shuttle', (on) => !on);
     },
     toggleStudy: () => {
-      setLayers((now) => ({ ...now, study: !now.study }));
+      change('study', (on) => !on);
     },
     turnOn,
   };

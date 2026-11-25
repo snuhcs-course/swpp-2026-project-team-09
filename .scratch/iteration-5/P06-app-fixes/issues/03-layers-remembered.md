@@ -1,9 +1,9 @@
 # 03: The map's three layers stay as the User left them, across a restart
 
 Parent: [P06 spec](../spec.md)
-Status: needs-triage
-Held (2026-11-22): an improvement; the fixes (06, 07) go first.
-Blocked by: [01](01-lists-go-quest-chip-opens-quests.md), which removes the lists (only the three layers are left to remember) and changes the same main screen.
+Status: done
+Taken up on 2026-11-25.
+Blocked by: None. Decided 2026-11-25: 03 goes before 01, which is still held; 03 stores only the three layers and shares no source file with 01.
 
 Native files: none. Releases: an app OTA update only.
 
@@ -27,12 +27,20 @@ Received: "현재 앱은 껐다키면 친구/퀘스트 리스트는 펼쳐져있
 - The stack's buttons, the chat's showing of a layer, the shuttle fetched only while its layer is on.
 - Tests start from an empty storage (`__tests__/support/mocks.ts:49`, `startFresh()` clears AsyncStorage), so the existing tests' "starts off" still holds: `layers`, `study-layer`, `shuttle-layer`, `dining-layer` (`.integration`), `__tests__/storage/*.integration.test.ts`.
 
+## Decided while building (2026-11-25)
+
+- The layers are kept in `src/storage/map-layers.ts` under `snunow.map-layers:{userId}`, as JSON such as `{"dining":false,"shuttle":true,"study":true}`. A field that is missing or not `true` reads as off. The file takes the `Layers` type from `layers.tsx` (a type-only import).
+- They are read and kept in `useLayerStack`, which the stack's buttons and the chat's `turnOn` both pass through, so `chat-sheet.tsx` is unchanged.
+- A change made before the read ends wins per layer: the layers changed keep their change, the others come as kept, and that whole state is kept once the read ends. Turning on a layer that is already on keeps nothing.
+- In the app the read ends before a press can be made, so the read-before cases are a unit test of `useLayerStack` with the storage stood in (`layer-stack-kept.unit.test.tsx`); the restarts are integration tests.
+- The emulator check was left to the user's check on a phone (2026-11-25).
+
 ## Acceptance criteria
 
-- [ ] A layer turned on is on again when the main screen mounts anew over the same storage. (Integration test, which fails before the change.)
-- [ ] A layer turned on by the chat is remembered too. (Integration test.)
-- [ ] Two Users on one phone each get their own layers; nothing stored means all off. (Storage integration test.)
-- [ ] On a phone with the mock build: 공부공간 and 셔틀버스 on, the app force-stopped (`adb shell am force-stop`), opened again: both on, 식당 off. The screens go to the orchestrator before the PR. (Emulator.)
-- [ ] No native file changes; lint, format, and types pass on the app.
+- [x] A layer turned on is on again when the main screen mounts anew over the same storage. (Integration test, which fails before the change.)
+- [x] A layer turned on by the chat is remembered too. (Integration test.)
+- [x] Two Users on one phone each get their own layers; nothing stored means all off. (Storage integration test.)
+- [ ] On a phone with the mock build: 공부공간 and 셔틀버스 on, the app force-stopped (`adb shell am force-stop`), opened again: both on, 식당 off. The screens go to the orchestrator before the PR. (Emulator.) (Not yet: the user checks it on an Android phone after the PR opens.)
+- [x] No native file changes; lint, format, and types pass on the app.
 
 ## Comments

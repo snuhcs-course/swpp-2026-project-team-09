@@ -4,12 +4,13 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { pass, screen } from './support/app';
+import { pass, screen, startApp } from './support/app';
 import { answerDining } from './support/dining';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -131,6 +132,22 @@ describe('a map button pressed', () => {
     await user.press(frame().getByRole('button', { name: '지도에서 셔틀 보기' }));
     await pass(500);
 
+    expect(await layersOn(user)).toEqual({ dining: false, shuttle: true });
+  });
+});
+
+describe('a layer a map button turned on', () => {
+  it('is on again when the app starts again (P06 ticket 03)', async () => {
+    const user = await answered(['shuttle']);
+    await user.press(frame().getByRole('button', { name: '지도에서 셔틀 보기' }));
+    await pass(500);
+
+    await screen.unmount();
+    await startApp();
+    await pass(1000);
+    await pass(500);
+
+    expect(server.received('GET /shuttle')).toHaveLength(2);
     expect(await layersOn(user)).toEqual({ dining: false, shuttle: true });
   });
 });
