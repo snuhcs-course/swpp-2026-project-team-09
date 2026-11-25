@@ -45,7 +45,9 @@ The design of 2026-11-19 (`references/02-2-member-row-mock-up.png`), with 취소
 - One `Dialog` in `멤버` asks all three, as the hand-over's did. What was asked stays while it fades out, so its title and buttons do not change as it goes; it acts only on the confirming answer. Whether 내보내기 also takes the member out of the Party (`fromParty`) is decided on that answer, by the same rule.
 - The Leader's row tests (the three icons, 내보내기 with its 취소, 파티장 넘기기) moved from `room-people` into a new `room-member-row.integration.test.tsx`, because `room-people` would pass the lint's 300 lines. Its describe that keeps the press on a member is now "a member's row". `room-member-requests` keeps 친구 추가 and asks in its own describe.
 - `room-walking` also found the row by `/^김민준/u`. It and `room-wireframe` find it by `/^김민준(?: · |$)/u`, the row read as the name and its line, not "김민준님 …".
-- The emulator check was left to the user's check on a phone (2026-11-25).
+- From the review (2026-11-25): the screens were taken on the Android emulator with the mock build after all (`references/02-4` to `02-9`: the Leader's rows, the three dialogs, 요청됨 after 요청, and a row that a Holder who does not lead sees), and the user's check on an Android phone follows. For the capture only, 유지안 and 백승호 (no Friends; the User had sent 백승호 a request) were added to the mock's `q-dinner` with capacity 6. That change is not committed: it changes what 9 mock-backed tests of the main screen, the Quest list and 내 파티 expect.
+- From the review (2026-11-25): a Button with no words takes only the `md` size and never `full`, so the 40 square cannot be stretched or made taller.
+- Not done from the review (2026-11-25): closing the dialog when the member's state changes while it is open. A stale 요청 or 내보내기 is refused by the main server with a toast, and nothing breaks.
 
 ## Acceptance criteria
 
@@ -54,12 +56,12 @@ The design of 2026-11-19 (`references/02-2-member-row-mock-up.png`), with 취소
 - [x] 파티장 넘기기 still asks and hands over. (Integration test.)
 - [x] 요청됨 shows the dimmed, disabled icon under its name; 수락 stays a text button. (Integration test.)
 - [x] `usersPlus` and `userMinus` are in the icon set and the catalogue. (Unit test.)
-- [ ] The row, the three dialogs and the 요청됨 state on a phone with the mock build; the screens go to the orchestrator before the PR, and to the design review. (Emulator.) (Not yet: the user checks it on an Android phone after the PR opens.)
+- [x] The row, the three dialogs and the 요청됨 state on a phone with the mock build; the screens go to the orchestrator before the PR, and to the design review. (Emulator.) (Emulator screens in the PR; the user's check on an Android phone follows.)
 - [x] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
 
 ### Agent usage (2026-11-25)
 
-- Agent time: about 35 minutes, in one implementation session (tests, code, sweep and pull request; no emulator, as the brief changed). This is an estimate: gaps under 5 minutes between transcript entries, summed, plus the test runs waited on. The orchestrator session's own time is not counted here.
-- Tokens: input 13,793,213 (cache reads 13,575,634, cache writes 217,441, uncached 138); output 72,072. Without cache reads, 217,579. No subagents. Counted up to the writing of this entry, so the last few messages are left out.
+- Agent time: about 50 minutes, in one implementation session: tests, code, sweep and the pull request (about 35 minutes), then the review's fixes with the emulator screens (about 15 minutes). This is an estimate: gaps under 5 minutes between transcript entries, summed, plus the test runs waited on. The orchestrator session's own time is not counted here.
+- Tokens: input 32,493,732 (cache reads 32,207,832, cache writes 285,636, uncached 264); output 104,940. Without cache reads, 285,900. No subagents. Counted up to the writing of this entry, after the review's fixes, so the last few messages are left out.

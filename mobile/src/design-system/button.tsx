@@ -48,7 +48,7 @@ type ButtonProps = CommonProps &
       }
     // Without words, an `md` button is the icon alone in a square of 40, such as the 파티 member row's, and `label`
     // is what a screen reader says.
-    | { children?: undefined; icon: IconName; label: string }
+    | { children?: undefined; icon: IconName; label: string; size?: 'md'; full?: false }
   );
 
 const LABEL_COLOR: Record<Variant, string> = {
