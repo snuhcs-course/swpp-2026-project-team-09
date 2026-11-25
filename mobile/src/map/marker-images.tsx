@@ -11,6 +11,7 @@
 import { type ReactElement, type RefObject, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { captureView } from './capture';
+import { inCaptureOrder, LATER, onStage, rankOf } from './capture-order';
 import { anchorShare, hasPhoto, LookView, lookName, type MarkerLook } from './marker-looks';
 import { hasNativeMap } from './native-module';
 import type { Size } from './projection';
@@ -31,6 +32,9 @@ type Images = Readonly<Record<string, MarkerImage>>;
 let images: Images = {};
 let waiting: readonly MarkerLook[] = [];
 let failed: readonly string[] = [];
+// Each waiting look's place in the stage's order (`rankOf`), lowered when a screen comes to show it.
+const ranks = new Map<string, number>();
+const NO_LOOKS: readonly MarkerLook[] = [];
 const listeners = new Set<() => void>();
 // Counts the changes, a picture made or a look's tries used up, for a screen that waits on looks to hear of both.
 let changes = 0;
@@ -40,6 +44,18 @@ function tell(): void {
   for (const listener of listeners) {
     listener();
   }
+}
+
+// One frame: pictures made within it reach the screens as one change, so that a screen with many marks, an answer's,
+// draws again once for them and not once for each (P04 ticket 81).
+const FRAME_MS = 16;
+let telling: ReturnType<typeof setTimeout> | null = null;
+
+function tellOnce(): void {
+  telling ??= setTimeout(() => {
+    telling = null;
+    tell();
+  }, FRAME_MS);
 }
 
 function subscribe(listener: () => void): () => void {
@@ -63,9 +79,25 @@ export function unmadeImage(look: MarkerLook): MarkerImage {
   return { look: lookName(look), view: look, uri: null, width: 0, height: 0, anchor: anchorOf(look, NO_SIZE) };
 }
 
-// Puts the looks that have no picture on the stage. A screen that is newly shown asks `again` for a look whose
-// tries were used up.
-function ask(looks: readonly MarkerLook[], again: boolean): void {
+// Ranks the looks asked for, `later` ones behind every look shown now, and tells whether a waiting look moved up.
+function ranked(looks: readonly MarkerLook[], later: number): boolean {
+  const onHold = new Set(waiting.map((look) => lookName(look)));
+  let moved = false;
+  for (const look of looks) {
+    const name = lookName(look);
+    const rank = later + rankOf(look);
+    const was = ranks.get(name);
+    if (was === undefined || rank < was) {
+      moved ||= was !== undefined && onHold.has(name);
+      ranks.set(name, rank);
+    }
+  }
+  return moved;
+}
+
+// Puts the looks that have no picture on the stage, in their order, `later` ones behind those shown now. A screen that
+// is newly shown asks `again` for a look whose tries were used up.
+function ask(looks: readonly MarkerLook[], later: readonly MarkerLook[], again: boolean): void {
   if (!hasNativeMap()) {
     return;
   }
@@ -74,12 +106,14 @@ function ask(looks: readonly MarkerLook[], again: boolean): void {
     failed = failed.filter((name) => !names.has(name));
   }
   const known = new Set([...Object.keys(images), ...waiting.map((look) => lookName(look)), ...failed]);
-  const fresh = looks.filter((look, index) => {
+  const asked = [...looks, ...later];
+  const fresh = asked.filter((look, index) => {
     const name = lookName(look);
-    return !known.has(name) && looks.findIndex((other) => lookName(other) === name) === index;
+    return !known.has(name) && asked.findIndex((other) => lookName(other) === name) === index;
   });
-  if (fresh.length > 0) {
-    waiting = [...waiting, ...fresh];
+  const moved = ranked(looks, 0) || ranked(later, LATER);
+  if (fresh.length > 0 || moved) {
+    waiting = inCaptureOrder([...waiting, ...fresh], (look) => ranks.get(lookName(look)) ?? rankOf(look));
     tell();
   }
 }
@@ -96,7 +130,7 @@ function made(look: MarkerLook, uri: string, { width, height }: Size, complete: 
   if (complete) {
     leave(look);
   }
-  tell();
+  tellOnce();
 }
 
 function gaveUp(look: MarkerLook): void {
@@ -106,8 +140,9 @@ function gaveUp(look: MarkerLook): void {
 }
 
 // The image of each look, in the order asked. An image names its look at once and gains its picture when the stage
-// has made it, so a screen hands it to the map without waiting.
-export function useMarkerImages(looks: readonly MarkerLook[]): MarkerImage[] {
+// has made it, so a screen hands it to the map without waiting. `later` are made after every look a screen shows now,
+// for a screen to come.
+export function useMarkerImages(looks: readonly MarkerLook[], later: readonly MarkerLook[] = NO_LOOKS): MarkerImage[] {
   const kept = useSyncExternalStore(
     subscribe,
     () => images,
@@ -115,7 +150,7 @@ export function useMarkerImages(looks: readonly MarkerLook[]): MarkerImage[] {
   );
   const first = useRef(true);
   useEffect(() => {
-    ask(looks, first.current);
+    ask(looks, later, first.current);
     first.current = false;
   });
   return looks.map((look) => kept[lookName(look)] ?? unmadeImage(look));
@@ -190,6 +225,7 @@ function Shot({ look }: { look: MarkerLook }): ReactElement {
       }}
       ref={view}
       style={styles.shot}
+      testID={`stage:${lookName(look)}`}
     >
       <LookView
         look={look}
@@ -201,8 +237,8 @@ function Shot({ look }: { look: MarkerLook }): ReactElement {
   );
 }
 
-// Where the looks are drawn to be captured: outside the screen, unseen and unread. The app shows it once, around
-// every screen. It is empty in a build without the native map module.
+// Where the looks are drawn to be captured: outside the screen, unseen and unread, a few at a time in their order
+// (`onStage`). The app shows it once, around every screen. It is empty in a build without the native map module.
 export function MarkerImageStage(): ReactElement {
   const looks = useSyncExternalStore(
     subscribe,
@@ -211,7 +247,7 @@ export function MarkerImageStage(): ReactElement {
   );
   return (
     <View accessibilityElementsHidden aria-hidden importantForAccessibility="no-hide-descendants" style={styles.stage}>
-      {looks.map((look) => (
+      {onStage(looks).map((look) => (
         <Shot key={lookName(look)} look={look} />
       ))}
     </View>

@@ -73,8 +73,8 @@ function looksOf(drawing: AnswerDrawing | null | undefined): MarkerLook[] {
 // drawing before it shown, until every picture of it is made or will not be (`useLooksSettled`), however long that
 // takes: a mark's dot and its tag are one picture, so every mark changes in the same frame, none shows its number twice
 // or not at all, and none leaves the map while its new picture is on its way. A look already made is the same picture
-// again. Any other drawing is shown at once. `looks` are asked for beside it, so that a change of drawing never waits for a picture. `view` is the
-// view `next` was placed at.
+// again. Any other drawing is shown at once. `looks` are asked for beside it, after its own pictures (P04 ticket 81),
+// so that a change of drawing never waits for a picture. `view` is the view `next` was placed at.
 export function useMadeDrawing(
   base: string,
   next: AnswerDrawing | null,
@@ -86,7 +86,7 @@ export function useMadeDrawing(
   const before = shown !== null && next !== null && shown.base === base && shown.looks !== key ? shown : null;
   const nextLooks = looksOf(next);
   const beforeLooks = looksOf(before?.drawing);
-  const images = useMarkerImages([...nextLooks, ...beforeLooks, ...looks]);
+  const images = useMarkerImages([...nextLooks, ...beforeLooks], looks);
   const nextImages = images.slice(0, nextLooks.length);
   const made = useLooksSettled(nextLooks);
   const waits = before !== null && !made;
