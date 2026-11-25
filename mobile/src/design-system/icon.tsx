@@ -9,6 +9,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Fable 5.2  prompted by AhnJinYoung
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -82,6 +83,16 @@ const ICONS = {
   // Not the design system's: the `Party` frame draws them on a Sub Quest's edit button and on the Leader's Avatar.
   edit: [{ path: 'M4 20h4L19 9l-4-4L4 16z' }, { path: 'M13.5 6.5l4 4' }],
   crown: [{ path: 'M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z' }],
+  // Not the design system's: the 파티 member row's 친구 추가 (two people, so it is not the mirror of the other) and
+  // 내보내기.
+  usersPlus: [
+    { circle: [8.5, 8, 3] },
+    { path: 'M2.5 20c0-3.3 2.7-6 6-6 1.6 0 3 .6 4.1 1.6' },
+    { circle: [15.5, 8.5, 2.5] },
+    { path: 'M19 15v6' },
+    { path: 'M16 18h6' },
+  ],
+  userMinus: [{ circle: [8.5, 8, 3] }, { path: 'M2.5 20c0-3.3 2.7-6 6-6 1.6 0 3 .6 4.1 1.6' }, { path: 'M16 18h6' }],
   // Not the design system's: the `Profile` frame draws them on the timetable versions' 이름 바꾸기 and 이 시간표 삭제.
   pencil: [{ path: 'M4 20h4L19 9l-4-4L4 16z' }],
   trash: [{ path: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3' }],

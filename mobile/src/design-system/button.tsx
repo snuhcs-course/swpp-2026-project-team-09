@@ -7,6 +7,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -17,9 +18,7 @@ import { color, font, radius, size as sizes, space, text, tutorialTone } from '.
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'destructive' | 'done';
 
-interface ButtonProps {
-  // The label: a short Korean verb, such as "참여하기".
-  children: string;
+interface CommonProps {
   // One `primary` per screen or sheet; everything else is `secondary` or `ghost`. `danger` is for an action that
   // revokes sharing or leaves a Party, and is always confirmed; `destructive`, red and filled, is the answer of a
   // dialog that confirms it. `done`, green and filled, says a 새내기 튜토리얼 quest is done (✓ 완료).
@@ -37,9 +36,20 @@ interface ButtonProps {
   // What it asked is on its way: the dots stand in place of the label, in its colour, and it takes no press.
   busy?: boolean;
   onPress?: () => void;
-  // A fuller accessible name where the label alone is ambiguous, such as one of many cards' "관심 없음".
-  label?: string;
 }
+
+type ButtonProps = CommonProps &
+  (
+    | {
+        // The label: a short Korean verb, such as "참여하기".
+        children: string;
+        // A fuller accessible name where the label alone is ambiguous, such as one of many cards' "관심 없음".
+        label?: string;
+      }
+    // Without words, an `md` button is the icon alone in a square of 40, such as the 파티 member row's, and `label`
+    // is what a screen reader says.
+    | { children?: undefined; icon: IconName; label: string; size?: 'md'; full?: false }
+  );
 
 const LABEL_COLOR: Record<Variant, string> = {
   primary: color.onPrimary,
@@ -55,6 +65,7 @@ const MD_HEIGHT = 40;
 // The AI input's height for one line (`AI_INPUT.height` of the main screen's layout).
 const BAR_HEIGHT = 50;
 const MD_HIT_SLOP = (sizes.touchMin - MD_HEIGHT) / 2;
+const ICON_ALONE = 20;
 
 export function Button({
   children,
@@ -69,6 +80,7 @@ export function Button({
   label,
 }: ButtonProps): ReactElement {
   const labelColor = disabled ? color.inkMuted : LABEL_COLOR[variant];
+  const alone = children === undefined;
   return (
     <Pressable
       accessibilityLabel={label}
@@ -81,6 +93,7 @@ export function Button({
         styles.base,
         styles[size],
         full ? styles.full : styles.hug,
+        alone && styles.alone,
         centred && !full && styles.centred,
         styles[variant],
         pressed && pressedStyles[variant],
@@ -88,13 +101,17 @@ export function Button({
       ]}
     >
       {busy ? (
-        <WaitingDots label={`${label ?? children} · 보는 중`} tint={labelColor} />
+        <WaitingDots label={`${label ?? children ?? ''} · 보는 중`} tint={labelColor} />
       ) : (
         <>
-          {icon === undefined ? null : <Icon color={labelColor} name={icon} size={size === 'md' ? 18 : 20} />}
-          <Text numberOfLines={1} style={[size === 'md' ? styles.label : styles.labelLg, { color: labelColor }]}>
-            {children}
-          </Text>
+          {icon === undefined ? null : (
+            <Icon color={labelColor} name={icon} size={alone ? ICON_ALONE : size === 'md' ? 18 : 20} />
+          )}
+          {alone ? null : (
+            <Text numberOfLines={1} style={[size === 'md' ? styles.label : styles.labelLg, { color: labelColor }]}>
+              {children}
+            </Text>
+          )}
         </>
       )}
     </Pressable>
@@ -116,6 +133,7 @@ const styles = StyleSheet.create({
   bar: { height: BAR_HEIGHT, paddingHorizontal: space[5], borderRadius: radius.full },
   full: { alignSelf: 'stretch' },
   hug: { alignSelf: 'flex-start' },
+  alone: { width: MD_HEIGHT, paddingHorizontal: 0 },
   centred: { alignSelf: 'center' },
   primary: { backgroundColor: color.snuBlue },
   secondary: { backgroundColor: color.surface, borderColor: color.borderStrong },

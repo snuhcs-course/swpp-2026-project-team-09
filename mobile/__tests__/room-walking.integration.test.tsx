@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -76,7 +77,8 @@ async function heMoves(metres: number, from = LIBRARY_POSITION): Promise<typeof 
 }
 
 function hisLine(): string {
-  const row = within(screen.getByLabelText('멤버')).getByRole('button', { name: /^김민준/u });
+  // The row, read as the name and its line, not its buttons ("김민준님 …").
+  const row = within(screen.getByLabelText('멤버')).getByRole('button', { name: /^김민준(?: · |$)/u });
   return String(row.props.accessibilityLabel);
 }
 

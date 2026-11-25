@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -17,7 +18,7 @@ import type { JoinRequest } from '@/api/waiting-types';
 import { now } from '@/clock';
 import { Button, color, Dialog, font, Icon, space, useToast } from '@/design-system';
 import { agoWords, type MemberView, type RoomView } from '@/features/quests/room-adapter';
-import { MemberFriendButton } from './member-friend-button';
+import { MemberFriendButton, useFriendPresses } from './member-friend-button';
 import { PersonRow } from './person-row';
 import type { RoomActions } from './use-room-actions';
 
@@ -110,19 +111,78 @@ function useShowMember(): (member: MemberView) => void {
   };
 }
 
-interface MemberRowProps extends SectionProps {
+// What a press on one of a member row's icons asks before it acts.
+type AskAction = 'friend' | 'handOver' | 'remove';
+
+interface Ask {
+  action: AskAction;
+  member: MemberView;
+}
+
+const ASKS = {
+  friend: { title: (name: string) => `${name}님에게 친구 요청을 보낼까요?`, confirm: '요청', tone: 'primary' },
+  handOver: { title: (name: string) => `${name}님에게 파티장을 넘길까요?`, confirm: '넘기기', tone: 'primary' },
+  remove: { title: (name: string) => `${name}님을 파티에서 내보낼까요?`, confirm: '내보내기', tone: 'danger' },
+} as const;
+
+// The Leader of the Party also takes the Holder out of it.
+function removesFromParty({ activation }: RoomView, member: MemberView): boolean {
+  return activation.state === 'in' && activation.leadsParty && member.state?.tone !== 'waiting';
+}
+
+// 친구 추가 on another member's row and the Leader's 파티장 넘기기 and 내보내기 beside it, icons in a line.
+function MemberControls({
+  member,
+  leads,
+  onAsk,
+}: {
+  member: MemberView;
+  leads: boolean;
+  onAsk: (action: AskAction) => void;
+}): ReactElement {
+  return (
+    <View style={styles.controls}>
+      <MemberFriendButton
+        member={member}
+        onAdd={() => {
+          onAsk('friend');
+        }}
+      />
+      {leads ? (
+        <>
+          <Button
+            icon="crown"
+            label={`${member.name}님에게 파티장 넘기기`}
+            onPress={() => {
+              onAsk('handOver');
+            }}
+            variant="secondary"
+          />
+          <Button
+            icon="userMinus"
+            label={`${member.name}님 내보내기`}
+            onPress={() => {
+              onAsk('remove');
+            }}
+            variant="danger"
+          />
+        </>
+      ) : null}
+    </View>
+  );
+}
+
+interface MemberRowProps {
+  room: RoomView;
   member: MemberView;
   // `301동 앞까지 도보 8분` or `301동 앞에 있어요`, after the state of a member who shares.
   walk: string | undefined;
-  onHandOver: () => void;
+  onAsk: (action: AskAction) => void;
 }
 
-// A Holder, with the Leader's controls on every other row.
-function MemberRow({ room, actions, member, walk, onHandOver }: MemberRowProps): ReactElement {
-  const { quest, leads, activation } = room;
+// A Holder, with the icons on every other row.
+function MemberRow({ room, member, walk, onAsk }: MemberRowProps): ReactElement {
   const show = useShowMember();
-  // The Leader of the Party also takes the Holder out of it.
-  const fromParty = activation.state === 'in' && activation.leadsParty && member.state?.tone !== 'waiting';
   const words = [member.late, member.state?.words, walk].filter((part) => part !== null && part !== undefined);
   return (
     <PersonRow
@@ -139,34 +199,59 @@ function MemberRow({ room, actions, member, walk, onHandOver }: MemberRowProps):
             }
       }
     >
-      {member.me ? null : (
-        <View style={styles.controls}>
-          <MemberFriendButton member={member} />
-          {leads ? (
-            <>
-              <Button onPress={onHandOver} variant="secondary">
-                파티장 넘기기
-              </Button>
-              <Button onPress={() => void actions.removeHolder(quest.id, member, fromParty)} variant="danger">
-                내보내기
-              </Button>
-            </>
-          ) : null}
-        </View>
-      )}
+      {member.me ? null : <MemberControls leads={room.leads} member={member} onAsk={onAsk} />}
     </PersonRow>
   );
 }
 
+// The one dialog of the rows' icons. What was asked stays while it fades out, so that its words do not change as it
+// goes, and acts only on its confirming answer.
+function AskDialog({
+  room,
+  actions,
+  ask,
+  open,
+  onClose,
+}: SectionProps & { ask: Ask | null; open: boolean; onClose: () => void }): ReactElement {
+  const presses = useFriendPresses();
+  const words = ask === null ? null : ASKS[ask.action];
+  const confirm = (): void => {
+    onClose();
+    if (!open || ask === null) {
+      return;
+    }
+    const { action, member } = ask;
+    if (action === 'friend') {
+      presses.send(member);
+    } else if (action === 'handOver') {
+      void actions.handOver(room.quest.id, member);
+    } else {
+      void actions.removeHolder(room.quest.id, member, removesFromParty(room, member));
+    }
+  };
+  return (
+    <Dialog
+      cancelLabel="취소"
+      confirmLabel={words?.confirm}
+      onCancel={onClose}
+      onConfirm={confirm}
+      title={ask === null || words === null ? '' : words.title(ask.member.name)}
+      tone={words?.tone}
+      visible={open}
+    />
+  );
+}
+
 // `멤버 {n}`: the Holders, the Leader marked, with what the User sees of each while in the Party and how far each who
-// shares is on foot (`walks`, by id), and the Leader's controls.
+// shares is on foot (`walks`, by id), and the rows' icons, each of which asks first.
 export function MembersSection({
   room,
   actions,
   walks,
 }: SectionProps & { walks: Partial<Record<string, string>> }): ReactElement {
-  const { quest, members, left, activation } = room;
-  const [handing, setHanding] = useState<MemberView | null>(null);
+  const { members, left, activation } = room;
+  const [ask, setAsk] = useState<Ask | null>(null);
+  const [open, setOpen] = useState(false);
   return (
     <View accessibilityLabel="멤버" style={styles.section}>
       <Heading aside={left}>{`멤버 ${members.length}`}</Heading>
@@ -178,30 +263,24 @@ export function MembersSection({
       ) : null}
       {members.map((member) => (
         <MemberRow
-          actions={actions}
           key={member.id}
           member={member}
-          walk={member.state?.tone === 'live' ? walks[member.id] : undefined}
-          onHandOver={() => {
-            setHanding(member);
+          onAsk={(action) => {
+            setAsk({ action, member });
+            setOpen(true);
           }}
           room={room}
+          walk={member.state?.tone === 'live' ? walks[member.id] : undefined}
         />
       ))}
-      <Dialog
-        cancelLabel="취소"
-        confirmLabel="넘기기"
-        onCancel={() => {
-          setHanding(null);
+      <AskDialog
+        actions={actions}
+        ask={ask}
+        onClose={() => {
+          setOpen(false);
         }}
-        onConfirm={() => {
-          if (handing !== null) {
-            void actions.handOver(quest.id, handing);
-          }
-          setHanding(null);
-        }}
-        title={handing === null ? '' : `${handing.name}님에게 파티장을 넘길까요?`}
-        visible={handing !== null}
+        open={open}
+        room={room}
       />
     </View>
   );
@@ -222,5 +301,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F2F6',
   },
   lockWords: { fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.inkMuted },
-  controls: { gap: space[1] },
+  controls: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
 });

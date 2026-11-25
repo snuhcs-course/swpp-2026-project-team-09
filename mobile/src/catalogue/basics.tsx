@@ -6,6 +6,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -56,6 +57,12 @@ export function Buttons(): ReactElement {
         <Button variant="ghost">건너뛰기</Button>
         <Button variant="danger">파티 나가기</Button>
         <Button disabled>마감</Button>
+      </Row>
+      <Row gap={space[2]}>
+        <Button icon="usersPlus" label="친구 추가" variant="secondary" />
+        <Button icon="crown" label="파티장 넘기기" variant="secondary" />
+        <Button icon="userMinus" label="내보내기" variant="danger" />
+        <Button disabled icon="usersPlus" label="친구 요청됨" variant="secondary" />
       </Row>
       <Button full icon="users" size="lg">
         함께 갈 사람 찾기

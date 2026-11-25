@@ -4,6 +4,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -295,8 +296,9 @@ describe('what the frame does not draw, which the room keeps', () => {
     expect(screen.getByRole('button', { name: '수정' })).toBeVisible();
     expect(screen.getByRole('switch', { name: '내 위치 공유' })).toBeVisible();
     expect(screen.getAllByRole('button', { name: '완료로 표시' }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole('button', { name: '파티장 넘기기' }).length).toBeGreaterThan(0);
-    expect(within(screen.getByLabelText('멤버')).getByRole('button', { name: /^김민준/u })).toBeVisible();
+    expect(screen.getByRole('button', { name: '김민준님에게 파티장 넘기기' })).toBeVisible();
+    // The row itself, read as the name and its line, not its buttons ("김민준님 …").
+    expect(within(screen.getByLabelText('멤버')).getByRole('button', { name: /^김민준(?: · |$)/u })).toBeVisible();
     expect(within(screen.getByLabelText('멤버')).getByText(ME_HOLDER.name)).toBeVisible();
   });
 });
