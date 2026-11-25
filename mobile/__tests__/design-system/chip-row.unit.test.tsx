@@ -8,6 +8,7 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
 
 import { ChipRow } from '@/design-system/chip-row';
+import { color } from '@/design-system/tokens';
 
 const CHIPS = [
   { key: 'all', label: '전체', count: 12 },
@@ -28,6 +29,9 @@ describe('ChipRow', () => {
     await render(<ChipRow chips={CHIPS} onSelect={jest.fn<void, [string]>()} selected="free" />);
 
     expect(screen.getByRole('button', { name: '공강 4' })).toBeSelected();
+    // The tab itself is the light blue, where a picking chip's toggle sits inside its bordered pill.
+    expect(screen.getByRole('button', { name: '공강 4' })).toHaveStyle({ backgroundColor: color.blue100 });
+    expect(screen.getByRole('button', { name: '전체 12' })).not.toHaveStyle({ borderWidth: 1 });
     expect(screen.queryByTestId('chip-check', { includeHiddenElements: true })).toBeNull();
   });
 
