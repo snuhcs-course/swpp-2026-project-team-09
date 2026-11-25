@@ -11,6 +11,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -267,7 +268,7 @@ export const mapText = {
 // 800 is drawn in Bold, the heaviest the app loads.
 export const eventText = {
   // The day of the month in the date column, and the month and day name under it.
-  day: { fontFamily: font.bold, fontSize: 34, lineHeight: 40, letterSpacing: -0.68 },
+  day: { fontFamily: font.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.48 },
   dayLine: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
   // The source over the title.
   source: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
