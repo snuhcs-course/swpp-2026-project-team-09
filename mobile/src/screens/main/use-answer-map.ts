@@ -8,6 +8,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
@@ -43,6 +44,8 @@ import { paddingOf } from './answer-padding';
 import type { Room } from './layout';
 import { facesClearOf, othersOf, useFacePoints, useFaces } from './use-answer-faces';
 import { useChoosingRing } from './use-choosing-ring';
+import { pressableWith, quietFirst, useQuietPlace } from './use-quiet-place';
+import type { MapTap } from './tutorial/use-map-tap';
 
 export { othersOf };
 import { useAnswerWalks, useMealWays } from './use-answer-walks';
@@ -84,7 +87,7 @@ function keptDrawOf(answer: AnswerReply, index: number): ((view: LabelView | nul
 }
 
 // The drawing of the Plan on screen: alone once made or changed, the kept Quest's tag once left as it is, else the
-// answer's with its other Plans as candidates. Null with no answer.
+// answer's with its other Plans as candidates, the quiet place `opened` with its words. Null with no answer.
 function drawOf(
   answer: AnswerReply | null,
   index: number,
@@ -92,6 +95,7 @@ function drawOf(
   settled: boolean,
   leftAlone: boolean,
   ways?: Ways,
+  opened: string | null = null,
 ): Draw | null {
   if (answer === null) {
     return null;
@@ -100,7 +104,7 @@ function drawOf(
     return keptDrawOf(answer, index);
   }
   const [drawn, at] = settled ? [alone(answer, index), 0] : [answer, index];
-  return (view: LabelView | null): AnswerDrawing => drawingOf(drawn, at, standings, view, ways);
+  return (view: LabelView | null): AnswerDrawing => drawingOf(drawn, at, standings, view, ways, opened);
 }
 
 // How long the drawing and the card's height stay the same before the camera follows an answer that replaced another,
@@ -169,6 +173,8 @@ export interface AnswerMap {
   nativeMinLevel: number;
   // Left out, the camera's rules' lowest zoom (`MapProps`).
   outerZoom?: number;
+  // What watches the touches around the map besides the main screen's own: a quiet place's tap (P04 ticket 70).
+  touches?: MapTap['touches'];
 }
 
 type Limits = Pick<AnswerMap, 'nativeMinLevel' | 'outerZoom'>;
@@ -308,13 +314,17 @@ export function useAnswerMap(
   // A meal Plan's legs are drawn, and say their minutes, on the ways it is gone (`meal-marks.ts`); no other answer asks
   // for them.
   const ways = useMealWays(answer !== null && drawsMeal(answer) ? answer.plans[index] : undefined);
+  // While 바꾸기 is on its way nothing can be chosen either, nor once 그대로 두기 left the Quest as it is.
+  const sent = sending || settled || changing || leftAlone;
+  const quiet = useQuietPlace(answer, index, sent);
   const plain = useMemo(
     () => drawOf(answer, index, standings, settled, leftAlone),
     [answer, index, standings, settled, leftAlone],
   );
+  // The camera is worked out without the quiet place's words, so that it stays put when one opens.
   const draw = useMemo(
-    () => drawOf(answer, index, standings, settled, leftAlone, ways),
-    [answer, index, standings, settled, leftAlone, ways],
+    () => drawOf(answer, index, standings, settled, leftAlone, ways, quiet.opened),
+    [answer, index, standings, settled, leftAlone, ways, quiet.opened],
   );
   const framing = useFraming(map, room, true);
   // The camera is worked out without the ways, so that it stays put while their paths come.
@@ -322,12 +332,10 @@ export function useAnswerMap(
   const others = base === null ? NO_AVATARS : othersOf(everyday.avatars, everyday.cards, base);
   const everydayFaces = useFaces(others, shown, made !== null);
   const faces = leftAlone ? NO_AVATARS : everydayFaces;
-  // While 바꾸기 is on its way nothing can be chosen either, nor once 그대로 두기 left the Quest as it is.
-  const sent = sending || settled || changing || leftAlone;
   const avoid = useFacePoints(faces);
   const { held, looks } = useHeldViews(answer, sent, standings, framing, avoid, base);
   const ring = useChoosingRing(draw, looks, index);
-  const press = pressableWhile(sent);
+  const press = pressableWith(quiet, pressableWhile(sent));
   const drawn = useDrawnMap(ring.draw, base, answer, ring.looks, map, framing, routes, press, avoid, held);
   if (drawn === null) {
     return null;
@@ -335,7 +343,8 @@ export function useAnswerMap(
   const { markers, lines, drawing, placed, view } = drawn;
   return {
     contents: { markers, lines, avatars: facesClearOf(faces, placed, view) },
-    onPress: planPress(drawing, shown, sent, onMark),
+    onPress: quietFirst(quiet, planPress(drawing, shown, sent, onMark)),
+    touches: quiet.touches,
     ...ANSWER_LIMITS,
   };
 }

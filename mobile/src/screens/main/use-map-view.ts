@@ -10,6 +10,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo } from 'react';
@@ -40,6 +41,7 @@ import type { MadeQuestCard } from './use-made-quest-card';
 import { type Me, pressableMe } from './use-me';
 import type { ReceivedInvitation } from './use-received-invitation';
 import { bothTouches, type MapTouches, usePressedPlace } from './use-pressed-place';
+import { withQuietTouches } from './use-quiet-place';
 import type { Selection } from './use-selection';
 import { useThings } from './use-things';
 import { useViewport } from './use-viewport';
@@ -133,7 +135,8 @@ function pressTarget(
 // Proposal or a 관정도서관 seat card, the turn's reply alone, which wins over an answer kept from a turn before, and a
 // press on its flag opens its card (`useMadeSceneMap`). Once any of them closes, a camera left further out than the
 // everyday map allows glides back in. With an answer on screen, a meal's Plan included, a press on a building that is
-// none of its marks does nothing (P04 ticket 66). On the everyday map, a tap on empty map, one that no mark keeps
+// none of its marks does nothing (P04 ticket 66), and a press on a meal answer's place that cannot be done shows why
+// beside it until a press or a tap elsewhere (P04 ticket 70). On the everyday map, a tap on empty map, one that no mark keeps
 // and where no Place is found, clears the walking route with `clearRoute` (P15 ticket 55). Every request carries the
 // map's visible area at rest (`useViewport`).
 export function useMapView(
@@ -165,7 +168,7 @@ export function useMapView(
     return guidedView(guide, me, around);
   }
   if (answer !== null) {
-    return { ...answer, around };
+    return { ...answer, around: withQuietTouches(around, answer.touches) };
   }
   if (way !== null) {
     return { ...way, around };

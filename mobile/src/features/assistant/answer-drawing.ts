@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -52,4 +53,11 @@ export function offset(from: LatLng, to: LatLng): { east: number; north: number 
 export function metresBetween(from: LatLng, to: LatLng): number {
   const { east, north } = offset(from, to);
   return Math.hypot(east, north);
+}
+
+const ONE_POINT = 15;
+
+// Whether two positions stand at one point of an answer's marks: within 15 metres.
+export function samePoint(one: LatLng, other: LatLng): boolean {
+  return metresBetween(one, other) <= ONE_POINT;
 }

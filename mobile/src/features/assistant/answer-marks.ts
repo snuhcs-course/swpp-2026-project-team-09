@@ -9,6 +9,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, Cuisine, KeptQuest, MapScene, Plan } from '@/api/assistant-types';
@@ -17,7 +18,7 @@ import { type AnswerLabel, type AnswerSymbol } from '@/design-system';
 import { koreaDayWord } from '@/korea-time';
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
-import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
+import { type AnswerDrawing, type AnswerThing, offset, samePoint } from './answer-drawing';
 import {
   candidatesAt,
   destinationOf,
@@ -43,14 +44,9 @@ import { kindShown } from './meal-kinds';
 import { drawsMeal, hiddenRoutes, mealDrafts, sceneLines } from './meal-marks';
 import type { Ways } from './shuttle-legs';
 import { mealPickWords } from './meal-pick';
+import { droppedId, type Quiet, quieted, quietWords } from './quiet-places';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
-
-const ONE_POINT = 15;
-
-function samePoint(one: LatLng, other: LatLng): boolean {
-  return metresBetween(one, other) <= ONE_POINT;
-}
 
 // Whether a position is so near one of the Plan's own marks that a picture drawn there would lie over the mark or
 // its words: within the reach of a label above or below it.
@@ -104,6 +100,9 @@ export interface SceneSetting {
   // The paths its walks were found along and its legs by the shuttle, which a meal Plan's legs are drawn on; left
   // out, none.
   ways?: Ways;
+  // A meal answer's places that cannot be done, drawn quiet, and the one pressed (P04 ticket 70); left out, those
+  // places carry their words as any mark does.
+  quiet?: Quiet;
 }
 
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
@@ -144,7 +143,7 @@ function placeDraft(
   if (role === 'stop' || role === 'meeting') {
     return role === 'stop' ? stopDraft(item) : null;
   }
-  const id = role === 'next' ? `answer:next:${place.placeId}` : `answer:dropped:${place.label}`;
+  const id = role === 'next' ? `answer:next:${place.placeId}` : droppedId(place.label);
   return { ...base, id, name: title, group: role, symbol: { type: 'dot', role, number: null }, tone: role };
 }
 
@@ -270,7 +269,10 @@ export function drawingOfScene(
       scene,
       [
         ...personDrafts(scene, setting.standings),
-        ...scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
+        ...quieted(
+          setting,
+          scene.places.flatMap((place) => placeDraft(setting, scene, place) ?? []),
+        ),
         ...flagDrafts(scene),
         ...keptDrafts(setting.kept),
         ...(setting.drafts ?? []),
@@ -299,13 +301,15 @@ export function drawingOfScene(
 
 // What the map shows for the Plan at `planIndex` of an answer: its scene, with the Plan's number on the pick and the
 // other Plans as candidates. `standings` holds how each invited Friend stands, by user id, once the Plan was made
-// into a Quest. At a view, the labels' sides are chosen in its points too.
+// into a Quest. At a view, the labels' sides are chosen in its points too. A meal answer's places that cannot be done
+// are quiet dots, and the one whose mark's id is `opened` carries its words (P04 ticket 70).
 export function drawingOf(
   answer: AnswerReply,
   planIndex: number,
   standings: ReadonlyMap<string, Standing> = NO_STANDINGS,
   view: LabelView | null = null,
   ways?: Ways,
+  opened: string | null = null,
 ): AnswerDrawing {
   const plan = answer.plans[planIndex];
   if (plan === undefined) {
@@ -321,6 +325,7 @@ export function drawingOf(
     kind: kindShown(answer),
     kept: answer.planSet,
     meal: drawsMeal(answer),
+    quiet: { words: quietWords(answer), opened },
     ...(ways === undefined ? {} : { ways }),
   });
 }
