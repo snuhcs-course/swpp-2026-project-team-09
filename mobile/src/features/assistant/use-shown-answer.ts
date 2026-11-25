@@ -14,17 +14,22 @@ import type { AnswerReply, Cuisine, Plan, PlanInput } from '@/api/assistant-type
 import { apiClient } from '@/api/client';
 import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
+import {
+  type AnswerState,
+  arrivedState,
+  type ChangeBy,
+  firstState,
+  ghostOf,
+  replaced,
+  type SetStored,
+  withPlan,
+} from './answer-state';
 import { showing, withKind } from './meal-kinds';
-import { offeredAnswer } from './meal-offered';
 import { useMenuOpening } from './use-menu-opening';
 import { usePeoplePicking } from './use-people-picking';
 import { withPerson } from './plan-input';
-import { opensBasis } from './relaxed-plan';
 import type { Stretch } from './time-band';
 import type { ChatBubble } from './use-chat';
-
-// A drag of a handle, or of the band's lanes, which moves it whole.
-type ChangeBy = 'drag' | 'move';
 
 export interface ShownAnswer {
   // The answer of the conversation's last reply, or null: the frame's card finds its bubble by it.
@@ -91,36 +96,9 @@ export interface Recalculation {
   onFailed: () => void;
 }
 
-interface Shown {
-  answer: AnswerReply | null;
-  index: number;
-}
-
-interface AnswerState extends Shown {
-  // The id of the conversation's last reply bubble, or null without one.
-  replyId: number | null;
-  source: AnswerReply | null;
-  basisOpen: boolean;
-  adding: boolean;
-  picked: readonly string[] | null;
-  pickOrder: readonly string[] | null;
-  asked: readonly string[] | null;
-  // What was shown before the last drag.
-  kept: Shown | null;
-  recalculating: boolean;
-  pendingAdd: string | null;
-  moving: Stretch | null;
-  // The Plan on screen's menu is open in the raised card; a new answer closes it.
-  menu: boolean;
-  // Counts the replies: an answer that comes for an earlier one is dropped.
-  epoch: number;
-}
-
 function sayNothing(): void {
   // A holder that asks for no recalculation hears of no failure.
 }
-
-type SetStored = (update: (last: AnswerState) => AnswerState) => void;
 
 const NO_RECALCULATION: Recalculation = { location: null, onFailed: sayNothing };
 
@@ -133,67 +111,6 @@ export function lastReply(bubbles: readonly ChatBubble[]): ChatBubble | undefine
   return bubbles.findLast(
     (bubble) => bubble.role === 'assistant' && bubble.failure === null && bubble.own !== true && !keepsShown(bubble),
   );
-}
-
-function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
-  const given = reply?.answer ?? null;
-  const source = given === null ? null : offeredAnswer(given);
-  return {
-    replyId: reply?.id ?? null,
-    source,
-    answer: source,
-    index: 0,
-    basisOpen: opensBasis(source?.plans[0]),
-    adding: false,
-    picked: null,
-    pickOrder: null,
-    asked: null,
-    kept: null,
-    recalculating: false,
-    pendingAdd: null,
-    moving: null,
-    menu: false,
-    epoch,
-  };
-}
-
-function withPlan(state: AnswerState, index: number): AnswerState {
-  return index === state.index ? state : { ...state, index, basisOpen: opensBasis(state.answer?.plans[index]) };
-}
-
-// After a drag of a handle the Plan with the id of the one on screen stays when the new answer has it, otherwise the
-// first: the User moved the time of the Plan they look at. The band moved whole asked the server to plan again from a
-// new start, and any other change changed who eats or where from, and so the order.
-function replaced(last: AnswerState, given: AnswerReply, by: ChangeBy | undefined): AnswerState {
-  const next = offeredAnswer(given);
-  const shownId = last.answer?.plans[last.index]?.id;
-  const index =
-    by === 'drag'
-      ? Math.max(
-          0,
-          next.plans.findIndex(({ id }) => id === shownId),
-        )
-      : 0;
-  const kept = by === undefined ? null : { answer: last.answer, index: last.index };
-  const adding = last.adding && last.pendingAdd === null;
-  // Picking ends with the list of Friends (P04 ticket 64), so that 취소, back, and the main button stay in step with it.
-  const picking = adding ? { picked: last.picked, pickOrder: last.pickOrder } : { picked: null, pickOrder: null };
-  const settled = { recalculating: false, pendingAdd: null, asked: null, moving: null, menu: false };
-  return {
-    ...last,
-    answer: next,
-    index,
-    basisOpen: opensBasis(next.plans[index]),
-    adding,
-    ...picking,
-    kept,
-    ...settled,
-  };
-}
-
-function ghostOf(kept: Shown | null): Stretch | null {
-  const band = kept?.answer?.plans[kept.index]?.band;
-  return band === undefined ? null : { startAt: band.startAt, endAt: band.endAt };
 }
 
 function useBrowsing(setStored: SetStored): {
@@ -314,8 +231,8 @@ export function useShownAnswer(
   recalculation: Recalculation = NO_RECALCULATION,
 ): ShownAnswer {
   const reply = lastReply(bubbles);
-  const [stored, setStored] = useState<AnswerState>(() => fresh(reply, 0));
-  const current = stored.replyId === (reply?.id ?? null) ? stored : fresh(reply, stored.epoch + 1);
+  const [stored, setStored] = useState<AnswerState>(() => firstState(reply, bubbles));
+  const current = stored.replyId === (reply?.id ?? null) ? stored : arrivedState(reply, stored, bubbles);
   if (current !== stored) {
     setStored(current);
   }
