@@ -11,7 +11,9 @@ import {
   pickedOf,
   pickRowsOf,
   pickStateOf,
+  previewOf,
   toggled,
+  walkGuessOf,
   withPicked,
 } from '@/features/assistant/people-picking';
 
@@ -99,10 +101,10 @@ describe('the rows while picking', () => {
       ['minsu', 12],
     ]),
     friends: [
-      { id: 'minsu', name: '민수' },
-      { id: 'taehyun', name: '태현' },
-      { id: 'seoyeon', name: '서연' },
-      { id: 'jiho', name: '지호' },
+      { id: 'minsu', name: '민수', walkMinutes: null },
+      { id: 'taehyun', name: '태현', walkMinutes: null },
+      { id: 'seoyeon', name: '서연', walkMinutes: null },
+      { id: 'jiho', name: '지호', walkMinutes: null },
     ],
   });
 
@@ -126,8 +128,48 @@ describe('the rows while picking', () => {
     expect(pickStateOf({ me: true, walkMinutes: null })).toBe('');
   });
 
-  it('reads 완료, and how many people the Plan would gain', () => {
-    expect(doneWordsOf(INPUT, ['minsu'])).toBe('완료');
-    expect(doneWordsOf(INPUT, ['minsu', 'taehyun', 'seoyeon'])).toBe('완료 · 2명');
+  it('reads 완료 with how many Friends are checked, and 닫기 with no Friend to pick', () => {
+    expect(doneWordsOf([], 4)).toBe('완료');
+    expect(doneWordsOf(['minsu', 'taehyun', 'seoyeon'], 4)).toBe('완료 · 3명');
+    expect(doneWordsOf([], 0)).toBe('닫기');
+  });
+
+  it("guesses a Friend's walk from the straight line, rounded up, when the main server sent none", () => {
+    expect(walkGuessOf(250)).toBe(4);
+    expect(walkGuessOf(null)).toBeNull();
+  });
+});
+
+// Partitions: a checked person busy over the Plan's start; one busy only after it; nobody checked busy over it.
+// Expected values: the Plan's 28 minutes from 12:15 move to 12:30 after a class until 12:30; a 40-minute span from 12:30
+// stops at 태현's class from 12:50.
+describe('the span the combined bar previews', () => {
+  it('starts after a checked person busy at its start and keeps its length', () => {
+    const lanes = [
+      { userId: 'me', name: '나', busy: [] },
+      { userId: 'minsu', name: '민수', busy: [busy('11:30', '12:30')] },
+    ];
+    expect(previewOf(BAND, lanes)).toEqual({
+      startAt: at('12:30'),
+      endAt: at('12:58'),
+      text: '12:30–12:58 · 식사 28분',
+    });
+  });
+
+  it('ends at the next busy stretch of a checked person', () => {
+    const lanes = pickedLanes(BAND, ['taehyun']);
+    expect(previewOf({ ...BAND, startAt: at('12:30'), endAt: at('13:10') }, lanes)).toEqual({
+      startAt: at('12:30'),
+      endAt: at('12:50'),
+      text: '12:30–12:50 · 식사 20분',
+    });
+  });
+
+  it('keeps the Plan’s span when nobody checked is busy over it', () => {
+    expect(previewOf(BAND, pickedLanes(BAND, []))).toEqual({
+      startAt: BAND.startAt,
+      endAt: BAND.endAt,
+      text: BAND.text,
+    });
   });
 });

@@ -23,10 +23,10 @@ import { inView, type MapAvatar, type MarkerLook, useMarkerImages } from '@/map'
 import { SELECTED_ORDER } from './use-things';
 
 // The face a Friend's Avatar shows while an answer is on screen: while people are picked in the time card, lit when
-// checked and a "+" when not (P04 ticket 64); else the selected look while their add is on its way, and a "+" while a
-// press would pick them. Anyone else's, and every face once the Plan is sent, is the everyday map's look
-// unselected: a selection made before asking stands behind the frame, and only the add lights a face. Every face but
-// the lit one is faint, as the answer's own marks stand out.
+// checked and a "+" when not (P04 ticket 64); else lit while they are in the Plan or their add is on its way (board
+// p13), and a "+" while a press would pick them. Anyone else's, and every face once the Plan is sent, is the everyday
+// map's look unselected: a selection made before asking stands behind the frame. Every face but the lit ones is faint,
+// as the answer's own marks stand out.
 export function answerFaceOf(
   { id, image: { view } }: MapAvatar,
   input: PlanInput,
@@ -48,7 +48,9 @@ export function answerFaceOf(
   if (userId === pendingAdd) {
     return { ...face, selected: true, faded: false };
   }
-  return peopleOf(input).some((person) => person.userId === userId) ? face : { ...face, addable: true };
+  return peopleOf(input).some((person) => person.userId === userId)
+    ? { ...face, selected: true, faded: false }
+    : { ...face, addable: true };
 }
 
 // The Avatars the Plan leaves, with their faces, the lit one above the others. The selected look of each face with a
@@ -71,7 +73,14 @@ export function useFaces(
     const look = looks[at];
     const made = image === undefined || (image.uri === null && avatar.image.uri !== null) ? avatar.image : image;
     const lit = look?.kind === 'person' && look.selected === true;
-    return { ...avatar, image: made, order: lit ? SELECTED_ORDER : 0 };
+    // A lit Friend, checked while picking or in the Plan, carries the check in front of their name (boards p3, p13).
+    const checked = lit && friendIdOf(avatar.id) !== null && avatar.text !== undefined;
+    return {
+      ...avatar,
+      image: made,
+      order: lit ? SELECTED_ORDER : 0,
+      text: checked ? `✓ ${avatar.text ?? ''}` : avatar.text,
+    };
   });
 }
 

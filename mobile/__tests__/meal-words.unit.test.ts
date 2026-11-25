@@ -19,7 +19,7 @@ const FIRST = {
 };
 
 // Partitions: the first pick with the model's words and without; another place chosen; the answer recalculated; one
-// place kept of many.
+// Friend in the Plan and three; one place kept of many.
 describe('the meal words', () => {
   it('are the Assistant’s words while its first pick is on screen', () => {
     expect(mealWordsOf('302동식당이 좋아요.', FIRST)).toBe('302동식당이 좋아요.');
@@ -39,6 +39,17 @@ describe('the meal words', () => {
     const recalculated = { ...FIRST, answer: { ...MEAL_ANSWER_MENUS } };
 
     expect(mealWordsOf('302동식당이 좋아요.', recalculated)).toMatch(/^302동식당 · 12:15 · /u);
+  });
+
+  it('end with the Plan’s Friends, the first by name and the rest counted', () => {
+    const person = MEAL_ANSWER_MENUS.chips.find(({ kind }) => kind === 'person');
+    const three = {
+      ...MEAL_ANSWER_MENUS,
+      chips: person === undefined ? [] : [person, { ...person, text: '이서준' }, { ...person, text: '안진영' }],
+    };
+
+    expect(mealWordsOf('', { ...FIRST, answer: MEAL_ANSWER_MENUS })).toMatch(/ · 김민수와$/u);
+    expect(mealWordsOf('', { ...FIRST, answer: three })).toMatch(/ · 김민수 외 2명과$/u);
   });
 
   it('say that the one place kept alone fits the Friend’s time', () => {

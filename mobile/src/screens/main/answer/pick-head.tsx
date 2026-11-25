@@ -4,18 +4,22 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { router } from 'expo-router';
 import { type ReactElement, type ReactNode, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Plan, TimeBand } from '@/api/assistant-types';
 import { color, radius, space, text } from '@/design-system';
-import { doneWordsOf, pickedLanes, pickRowsOf } from '@/features/assistant/people-picking';
+import { metresBetween } from '@/features/assistant/answer-drawing';
+import { onlyFriendOf } from '@/features/assistant/meet-input';
+import { doneWordsOf, pickedLanes, pickRowsOf, previewOf, walkGuessOf } from '@/features/assistant/people-picking';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useFriends } from '@/features/friends/use-friends';
 import { BAR_ADD_HEIGHT } from './condition-chips';
 import type { Picking } from './person-rows';
 
 // The time card's head while people are picked (P04 ticket 64), in "＋ 같이"'s place: a quiet "취소" that leaves the
-// Plan as it was, and "완료", which asks once with everyone checked.
+// Plan as it was, and "완료", which asks once with everyone checked; "닫기" alone with no Friend to pick (boards p2–p5,
+// p20).
 export function PickHead(p: {
   done: string;
   disabled: boolean;
@@ -24,9 +28,11 @@ export function PickHead(p: {
 }): ReactElement {
   return (
     <View style={styles.head}>
-      <Pressable accessibilityRole="button" hitSlop={space[2]} onPress={p.onCancel} testID="time-card-pick-cancel">
-        <Text style={styles.cancel}>취소</Text>
-      </Pressable>
+      {p.done === '닫기' ? null : (
+        <Pressable accessibilityRole="button" hitSlop={space[2]} onPress={p.onCancel} testID="time-card-pick-cancel">
+          <Text style={styles.cancel}>취소</Text>
+        </Pressable>
+      )}
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ disabled: p.disabled }}
@@ -51,31 +57,61 @@ export interface PickingBar {
   addWords: string;
 }
 
-// The time card of a Plan while people are picked in it, and the add chip's words otherwise (P04 ticket 64).
-export function usePickingBar(shown: ShownAnswer, plan: Plan, busy: boolean): PickingBar {
+// 완료: one recalculation with everyone checked; a meet whose only Friend was unchecked goes back to that Friend's card,
+// as their ✕ did.
+function finishOf(shown: ShownAnswer, onClose: () => void): () => void {
+  return () => {
+    const { answer, picked } = shown;
+    const only = answer === null ? null : onlyFriendOf(answer.input);
+    if (only !== null && picked?.length === 0) {
+      onClose();
+      router.setParams({ person: only });
+      return;
+    }
+    shown.finishPicking();
+  };
+}
+
+// The time card of a Plan while people are picked in it, and the add chip's words otherwise (P04 ticket 64): the bar
+// draws the checked people's lanes and the span they leave (`previewOf`); a Friend the main server sent no lane for
+// is placed by the phone's guess of their walk.
+export function usePickingBar(
+  shown: ShownAnswer,
+  plan: Plan,
+  { busy, onClose }: { busy: boolean; onClose: () => void },
+): PickingBar {
   const { data: friends = [] } = useFriends();
   const { picked, answer } = shown;
-  const band = useMemo(
-    () => (picked === null ? plan.band : { ...plan.band, lanes: pickedLanes(plan.band, picked) }),
-    [plan.band, picked],
-  );
+  const band = useMemo(() => {
+    if (picked === null) {
+      return plan.band;
+    }
+    const lanes = pickedLanes(plan.band, picked);
+    return { ...plan.band, lanes, ...previewOf(plan.band, lanes) };
+  }, [plan.band, picked]);
   const others = plan.band.lanes.length - 1;
   const addWords = others > 0 ? `같이 ${String(others)} ›` : '＋ 같이';
   if (picked === null || answer === null) {
     return { band, picking: null, head: null, addWords };
   }
   const walks = new Map(plan.parts.map(({ userId, walkMinutes }) => [userId, walkMinutes]));
+  const guessed = friends.map(({ id, name, position }) => ({
+    id,
+    name,
+    walkMinutes: walkGuessOf(position === null ? null : metresBetween(position, plan.place)),
+  }));
+  const leave = (): void => {
+    shown.setAdding(false);
+  };
   return {
     band,
-    picking: { rows: pickRowsOf({ band: plan.band, picked, walks, friends }), onPick: shown.pick },
+    picking: { rows: pickRowsOf({ band: plan.band, picked, walks, friends: guessed }), onPick: shown.pick },
     head: (
       <PickHead
         disabled={busy}
-        done={doneWordsOf(answer.input, picked)}
-        onCancel={() => {
-          shown.setAdding(false);
-        }}
-        onDone={shown.finishPicking}
+        done={doneWordsOf(picked, friends.length)}
+        onCancel={leave}
+        onDone={friends.length === 0 ? leave : finishOf(shown, onClose)}
       />
     ),
     addWords,

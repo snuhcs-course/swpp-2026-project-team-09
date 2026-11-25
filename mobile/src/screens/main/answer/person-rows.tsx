@@ -66,8 +66,9 @@ interface LaneParts {
   outline: Stretch;
 }
 
-// A person's bar: their busy stretches, cut at the bar's ends, the clashes red, and the band's outline.
-function Lane({ lane, parts }: { lane: BandLane; parts: LaneParts }): ReactElement {
+// A person's bar: their busy stretches, cut at the bar's ends, the clashes red, and the band's outline. A Friend not
+// checked while picking has a quiet bar: lighter stretches, no clashes, and no outline (boards p2–p6).
+function Lane({ lane, parts, quiet = false }: { lane: BandLane; parts: LaneParts; quiet?: boolean }): ReactElement {
   const { band, range, fixed, moving, outline } = parts;
   return (
     <View style={styles.lane}>
@@ -75,49 +76,63 @@ function Lane({ lane, parts }: { lane: BandLane; parts: LaneParts }): ReactEleme
         {lane.busy.map((stretch) => (
           <View
             key={`busy-${stretch.startAt}`}
-            style={[styles.busy, placeOf(stretch, range)]}
+            style={[styles.busy, quiet && styles.quietBusy, placeOf(stretch, range)]}
             testID="time-card-busy"
           />
         ))}
-        <Red range={range} stretches={redOf(lane, fixed, band, moving)} />
+        {quiet ? null : <Red range={range} stretches={redOf(lane, fixed, band, moving)} />}
       </View>
-      <View style={[styles.outline, placeOf(outline, range)]} />
+      {quiet ? null : <View style={[styles.outline, placeOf(outline, range)]} />}
     </View>
   );
 }
 
-// A row while picking: its check, name, and state, and its bar when the main server sent its lane. An unchecked row is
-// quieter.
+// A person's row out of picking: the name as a small caption over their bar.
+function PersonLine({ lane, parts }: { lane: BandLane; parts: LaneParts }): ReactElement {
+  return (
+    <View style={styles.row}>
+      <Text numberOfLines={1} style={styles.name}>
+        {lane.name}
+      </Text>
+      <Lane lane={lane} parts={parts} />
+    </View>
+  );
+}
+
+// A Friend's row while picking: the check, the name, the state at the right, and the bar when the main server sent
+// the Friend's lane; a press checks or unchecks it. 나 has the row of everyone's, with no check.
 function PickLine({ row, parts, onPick }: { row: PickRow; parts: LaneParts; onPick: Picking['onPick'] }): ReactElement {
   const { userId, name, me, checked, busy } = row;
+  if (me) {
+    return <PersonLine lane={{ userId, name, busy: busy ?? [] }} parts={parts} />;
+  }
   const state = pickStateOf(row);
   return (
     <Pressable
-      accessibilityLabel={state === '' ? name : `${name} · ${state}`}
+      accessibilityLabel={`${name} · ${state}`}
       accessibilityRole="checkbox"
-      accessibilityState={{ checked, disabled: me }}
-      disabled={me}
+      accessibilityState={{ checked }}
       onPress={() => {
         onPick(userId);
       }}
-      style={[styles.row, !checked && styles.unchecked]}
+      style={styles.row}
       testID={`time-card-pick-${userId}`}
     >
       <View style={styles.head}>
         <View style={[styles.check, checked && styles.checked]}>
           {checked ? <Icon color={color.onPrimary} name="check" size={12} /> : null}
         </View>
-        <Text numberOfLines={1} style={styles.pickName}>
+        <Text numberOfLines={1} style={[styles.pickName, !checked && styles.quietName]}>
           {name}
         </Text>
         <Text style={styles.state}>{state}</Text>
       </View>
-      {busy === null ? null : <Lane lane={{ userId, name, busy }} parts={parts} />}
+      {busy === null ? null : <Lane lane={{ userId, name, busy }} parts={parts} quiet={!checked} />}
     </Pressable>
   );
 }
 
-// With no Friend to pick, one line that says so and leads to adding one.
+// With no Friend to pick, one line that says so and leads to adding one (board p20).
 function NoFriends(): ReactElement {
   return (
     <View style={styles.head} testID="time-card-no-friends">
@@ -127,6 +142,7 @@ function NoFriends(): ReactElement {
         onPress={() => {
           router.push('/me/friends/add');
         }}
+        style={styles.addFriend}
       >
         <Text style={styles.add}>친구 추가 ›</Text>
       </Pressable>
@@ -158,17 +174,11 @@ export function PersonRows(props: PersonRowsProps): ReactElement {
         style={styles.rows}
         testID="time-card-rows"
       >
-        {picking === null
-          ? band.lanes.map((lane) => (
-              <View key={lane.userId} style={styles.row}>
-                <Text numberOfLines={1} style={styles.name}>
-                  {lane.name}
-                </Text>
-                <Lane lane={lane} parts={parts} />
-              </View>
-            ))
-          : picking.rows.map((row) => <PickLine key={row.userId} onPick={picking.onPick} parts={parts} row={row} />)}
+        {picking === null ? band.lanes.map((lane) => <PersonLine key={lane.userId} lane={lane} parts={parts} />) : null}
         {picking !== null && picking.rows.length <= 1 ? <NoFriends /> : null}
+        {picking !== null && picking.rows.length > 1
+          ? picking.rows.map((row) => <PickLine key={row.userId} onPick={picking.onPick} parts={parts} row={row} />)
+          : null}
       </View>
     </ScrollView>
   );
@@ -180,7 +190,6 @@ const styles = StyleSheet.create({
   rows: { gap: ROW_GAP, paddingTop: ROWS_TOP },
   row: { gap: space[1] },
   name: { ...text.caption, color: color.inkMuted },
-  unchecked: { opacity: 0.5 },
   head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   check: {
     alignItems: 'center',
@@ -191,9 +200,18 @@ const styles = StyleSheet.create({
     borderColor: color.borderStrong,
     borderRadius: radius.full,
   },
-  checked: { borderColor: color.quest, backgroundColor: color.quest },
+  checked: { borderColor: color.snuBlue, backgroundColor: color.snuBlue },
   pickName: { ...text.label, flex: 1, color: color.ink },
+  quietName: { color: color.inkMuted },
   state: { ...text.caption, color: color.inkMuted },
+  quietBusy: { backgroundColor: color.border },
+  addFriend: {
+    paddingHorizontal: space[3],
+    paddingVertical: space[1],
+    borderWidth: 1.5,
+    borderColor: color.snuBlue,
+    borderRadius: radius.full,
+  },
   add: { ...text.label, color: color.snuBlue },
   lane: { height: LANE_HEIGHT, justifyContent: 'center' },
   bar: { height: BAR_HEIGHT, borderRadius: radius.full, backgroundColor: color.surfaceSunken },

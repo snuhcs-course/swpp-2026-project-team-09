@@ -35,6 +35,7 @@ import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
 import { type Picking, PersonRows } from './person-rows';
 import { usePickingBar } from './pick-head';
+import { PickHint } from './sheet-hint';
 import { SheetLinkContext } from './sheet-link';
 import { TimeBand } from './time-band';
 import { STRIP_SLOP, type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
@@ -129,7 +130,7 @@ function OpenRows(p: {
 
 // Picking opens the card once, as it starts.
 function useOpenWhen(picking: boolean, open: () => void): void {
-  const was = useRef(picking);
+  const was = useRef(false);
   useEffect(() => {
     if (picking && !was.current) {
       open();
@@ -187,6 +188,7 @@ function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: Ba
         </View>
       )}
       <Grip folded={folded} grip={grip} label={label} />
+      {picking === null ? null : <PickHint friends={picking.rows.length > 1} />}
     </Reanimated.View>
   );
 }
@@ -216,7 +218,7 @@ export function PlanBar(props: PlanBarProps): ReactElement {
   const fixed = bandIsFixed(answer.input.kind) || invitation.changed !== null;
   const tick = mealTickOf(answer);
   const sent = invitation.sending || invitation.made !== null;
-  const pickingBar = usePickingBar(shown, plan, busy);
+  const pickingBar = usePickingBar(shown, plan, { busy, onClose });
   return (
     <Bar
       picking={pickingBar.picking}

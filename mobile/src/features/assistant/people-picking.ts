@@ -7,6 +7,7 @@
 import type { PlanInput, TimeBand } from '@/api/assistant-types';
 import type { BandLane } from '@/api/time-band-types';
 import { hasPeople, peopleOf } from './plan-input';
+import { clockAt, msOf, onBandDay } from './time-band';
 
 // People picked in the time card (P04 ticket 64): after "＋ 같이" the User checks and unchecks Friends, the combined
 // bar following each check, and the conditions change once, at 완료, with everyone checked.
@@ -66,8 +67,8 @@ interface RowsSource {
   picked: readonly string[];
   // The walking minutes of the Plan's people to its place, by user id.
   walks: ReadonlyMap<string, number | null>;
-  // Every Friend of the User, for those the main server sent no lane for.
-  friends: readonly { id: string; name: string }[];
+  // Every Friend of the User, for those the main server sent no lane for, with the phone's guess of their walk.
+  friends: readonly { id: string; name: string; walkMinutes: number | null }[];
 }
 
 // A row for the asker and one for each Friend: the asker first, then the checked, then the nearest, those whose
@@ -90,7 +91,7 @@ export function pickRowsOf({ band, picked, walks, friends }: RowsSource): PickRo
     ...lanes,
     ...friends
       .filter(({ id }) => id !== me?.userId && !lanes.some(({ userId }) => userId === id))
-      .map(({ id, name }) => row(id, name, null, null)),
+      .map(({ id, name, walkMinutes }) => row(id, name, null, walkMinutes)),
   ];
   const sorted = rows.toSorted(
     (one, other) =>
@@ -121,8 +122,47 @@ export function pickStateOf({ me, walkMinutes }: Pick<PickRow, 'me' | 'walkMinut
   return me ? '' : '위치 모름';
 }
 
-// The button that ends picking: "완료", and how many people the Plan would have beyond those it has.
-export function doneWordsOf(input: PlanInput, picked: readonly string[]): string {
-  const added = picked.filter((id) => !pickedOf(input).includes(id)).length;
-  return added === 0 ? '완료' : `완료 · ${String(added)}명`;
+// The button that ends picking: "완료", with how many Friends are checked now; "닫기" with no Friend to pick.
+export function doneWordsOf(picked: readonly string[], friends: number): string {
+  if (friends === 0) {
+    return '닫기';
+  }
+  return picked.length === 0 ? '완료' : `완료 · ${String(picked.length)}명`;
+}
+
+// About 80 metres a minute on foot, for a Friend the main server sent no walk for: the straight line to the Plan's
+// place, rounded up.
+const WALK_METRES_A_MINUTE = 80;
+
+export function walkGuessOf(metres: number | null): number | null {
+  return metres === null ? null : Math.max(1, Math.ceil(metres / WALK_METRES_A_MINUTE));
+}
+
+// The span the combined bar previews while picking: as long as the Plan's, from its start or the end of the checked
+// people's busy stretch it falls in, until the next busy stretch of anyone checked; its words say the new times and
+// minutes ("18:15–18:56 · 식사 41분"). A preview only: the answer to 완료 brings the Plan's own (P04 ticket 64).
+export function previewOf(band: TimeBand, lanes: readonly BandLane[]): Pick<TimeBand, 'startAt' | 'endAt' | 'text'> {
+  const busy = lanes.flatMap((lane) => lane.busy).map(({ startAt, endAt }) => [msOf(startAt), msOf(endAt)] as const);
+  const length = msOf(band.endAt) - msOf(band.startAt);
+  let start = msOf(band.startAt);
+  for (let moved = true; moved;) {
+    moved = false;
+    for (const [from, until] of busy) {
+      if (from <= start && until > start) {
+        start = until;
+        moved = true;
+      }
+    }
+  }
+  const next = Math.min(msOf(band.range.endAt), ...busy.map(([from]) => from).filter((from) => from > start));
+  const end = Math.min(start + length, next);
+  if (end <= start) {
+    return { startAt: band.startAt, endAt: band.endAt, text: band.text };
+  }
+  const [from, until] = [clockAt(start), clockAt(end)];
+  const minutes = Math.round((end - start) / 60_000);
+  const text = band.text
+    .replace(/^\d\d:\d\d–\d\d:\d\d/u, `${from}–${until}`)
+    .replace(/\d+분$/u, `${String(minutes)}분`);
+  return { startAt: onBandDay(from, band), endAt: onBandDay(until, band), text };
 }
