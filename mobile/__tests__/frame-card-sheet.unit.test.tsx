@@ -142,6 +142,31 @@ describe('the sheet’s steps', () => {
     expect(shown()).toBe(LOW);
   });
 
+  it('takes no room for a content that lays out nothing, as a meet whose Friend has a face on the map', async () => {
+    await render(card('low'));
+    await layContent(12);
+    await settle();
+
+    expect(shown()).toBe(0);
+  });
+
+  it('stands middle at 60% of the stage', async () => {
+    await render(card('mid'));
+    await layContent(1000);
+    await settle();
+
+    expect(shown()).toBe(MID);
+  });
+
+  it('has no words under the grip', async () => {
+    await render(card('low'));
+
+    expect(within(screen.getByTestId('answer-card-handle')).queryByText(/./u)).toBeNull();
+  });
+});
+
+// P04 ticket 63. Partitions: a footer without a main button at low, and at middle.
+describe('low over a smaller footer', () => {
   // P04 ticket 63: an answer without a main button gives that row's room to its words, whole lines of them, and the
   // room under the last whole line is covered in the sheet's colour.
   it('keeps the top edge over a footer without a main button, and shows its words in whole lines', async () => {
@@ -166,28 +191,6 @@ describe('the sheet’s steps', () => {
     await settle();
 
     expect(getAnimatedStyle(screen.getByTestId('answer-card-band'))).toMatchObject({ opacity: 0 });
-  });
-
-  it('takes no room for a content that lays out nothing, as a meet whose Friend has a face on the map', async () => {
-    await render(card('low'));
-    await layContent(12);
-    await settle();
-
-    expect(shown()).toBe(0);
-  });
-
-  it('stands middle at 60% of the stage', async () => {
-    await render(card('mid'));
-    await layContent(1000);
-    await settle();
-
-    expect(shown()).toBe(MID);
-  });
-
-  it('has no words under the grip', async () => {
-    await render(card('low'));
-
-    expect(within(screen.getByTestId('answer-card-handle')).queryByText(/./u)).toBeNull();
   });
 });
 
