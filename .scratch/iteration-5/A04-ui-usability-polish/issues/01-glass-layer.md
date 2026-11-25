@@ -1,7 +1,7 @@
 # 01: The glass layer in the design system
 
 Parent: [A04 spec](../spec.md)
-Status: in-progress
+Status: done
 Blocked by: None (can start immediately).
 
 Native files: none. Releases: an app OTA update only.
@@ -47,7 +47,7 @@ The canvas boards that show the levels: Mf5Kit and Mf5Row-meal (<https://claude.
 - [x] The component draws each of the five levels, and the catalogue shows it under its name. (`catalogue.integration`, which fails before the change.)
 - [x] `mobile/README.md` § Design system has the Glass layer part.
 - [x] A screenshot of the catalogue's glass entry on the emulator goes in the pull request.
-- [ ] No native file changes; lint, format and types pass on the app.
+- [x] No native file changes; lint, format and types pass on the app.
 
 ## Comments
 
@@ -61,4 +61,4 @@ Estimates: agent time is the gaps under 5 minutes between transcript entries, su
 
 Without cache reads, the input is 261,671.
 
-The last criterion's types are left to CI: oxlint and prettier passed on the changed files, and tsc was not run on this Mac.
+The last criterion's types were left to CI: oxlint and prettier passed on the changed files, tsc was not run on this Mac, and CI passed on 6ebcd014.
