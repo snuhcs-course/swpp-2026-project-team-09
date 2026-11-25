@@ -5,7 +5,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AccessibilityActionInfo, ViewStyle } from 'react-native';
 import { Gesture, type PanGesture } from 'react-native-gesture-handler';
 import { type SharedValue, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -13,13 +13,15 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { useReduceMotionSetting } from '@/hooks/use-reduce-motion';
 import { CARRY_S, FLING_SPEED } from './card-levels';
 import { SETTLE } from './card-run';
+import type { SheetLink } from './sheet-link';
 
 // The time card's grip (P04 ticket 61, boards k1–k4 and p): the card stands at one of its places, and a drag on its
-// grip's strip, the card's whole width under its hairline, moves it between them with the finger. Pushed up it slides up as it
-// is, nothing laid out again, until only a strip with the grip shows under the status bar (tucked). With Friends, pulled
-// down it opens: a row for each person comes out under the track, which keeps its range and scale, the card growing
-// with the rows. Alone there is nothing to open. A let-go settles at the place a fling points to, or the nearest. A
-// press on the grip opens or folds the card with Friends, and a screen reader tucks it away or back.
+// grip's strip, the card's whole width under its hairline, moves it between them with the finger. Pushed up it slides
+// up as it is, nothing laid out again, until only a strip with the grip shows under the status bar (tucked). With
+// Friends, pulled down it opens: a row for each person comes out under the track, which keeps its range and scale, the
+// card growing with the rows. Alone there is nothing to open. A let-go settles at the place a fling points to, or the
+// nearest. A press on the grip opens or folds the card with Friends, and a screen reader tucks it away or back. Only
+// one of it and the answer sheet is expanded at a time (`sheet-link`).
 
 // What of the card stays in sight tucked: the grip and a little room around it.
 export const TUCK_STRIP = 20;
@@ -44,6 +46,8 @@ interface GripInput {
   // With Friends it opens, and the rows for each person add this much to it open.
   opens: boolean;
   rows: number;
+  // The answer sheet under it: opening brings a high sheet down, and the sheet rising to high folds the card.
+  sheet: SheetLink;
 }
 
 type Moved = ReturnType<typeof useAnimatedStyle<ViewStyle>>;
@@ -136,13 +140,16 @@ interface Settling {
 
 // The card's place, and the run to the place a let-go or a press settles at. Laid out again at rest, as when the rows'
 // height changes open, the card stays at its place.
-function useSettling(stops: readonly number[], y: SharedValue<number>): Settling {
+function useSettling(stops: readonly number[], y: SharedValue<number>, onOpen: () => void): Settling {
   const [place, setPlace] = useState<GripPlace>('shown');
   const [moving, setMoving] = useState(false);
   const reduce = useReduceMotionSetting() !== false;
   const settle = useCallback(
     (index: number, velocity = 0): void => {
       const to = stops[index] ?? 0;
+      if (PLACES[index] === 'open') {
+        onOpen();
+      }
       const done = (): void => {
         setPlace(PLACES[index] ?? 'shown');
         setMoving(false);
@@ -160,7 +167,7 @@ function useSettling(stops: readonly number[], y: SharedValue<number>): Settling
         }
       });
     },
-    [stops, reduce, y],
+    [stops, reduce, y, onOpen],
   );
   useEffect(() => {
     if (!moving) {
@@ -170,12 +177,24 @@ function useSettling(stops: readonly number[], y: SharedValue<number>): Settling
   return { place, moving, setMoving, settle };
 }
 
-export function useTimeCardGrip({ height, top, opens, rows }: GripInput): TimeCardGrip {
+// The sheet rising to high folds an open card back to its place; the card touched last wins, so only the rise does.
+function useFoldUnder(high: boolean, place: GripPlace, settle: (index: number) => void): void {
+  const wasHigh = useRef(high);
+  useEffect(() => {
+    if (high && !wasHigh.current && place === 'open') {
+      settle(PLACES.indexOf('shown'));
+    }
+    wasHigh.current = high;
+  }, [high, place, settle]);
+}
+
+export function useTimeCardGrip({ height, top, opens, rows, sheet }: GripInput): TimeCardGrip {
   // How far up the card goes: until its last TUCK_STRIP points stand at the stage's top, under the status bar.
   const reach = Math.max(0, top + height - TUCK_STRIP);
   const stops = useMemo(() => (opens ? [-reach, 0, rows] : [-reach, 0]), [reach, opens, rows]);
   const y = useSharedValue(0);
-  const { place, moving, setMoving, settle } = useSettling(stops, y);
+  const { place, moving, setMoving, settle } = useSettling(stops, y, sheet.onOpen);
+  useFoldUnder(sheet.high, place, settle);
   const pan = useGripPan(y, stops, settle, setMoving);
   const styles = useGripStyles(y, rows);
   const rested = useMemo(() => ({ transform: [{ translateY: place === 'tucked' ? -reach : 0 }] }), [place, reach]);

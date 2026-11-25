@@ -16,8 +16,10 @@ import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-han
 import { StyleSheet, type ViewStyle } from 'react-native';
 import { screen } from './support/app';
 import { askOnMap, card, timeBar as bar } from './support/answer-map';
+import { grip as sheetGrip, raiseCard } from './support/card-grip';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
+import { layStage } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
@@ -270,5 +272,43 @@ describe("the time bar's grip pulled down", () => {
 
     expect(bar().queryByText('민수')).toBeNull();
     expect(screen.getByTestId('time-card-grip')).toBeCollapsed();
+  });
+});
+
+// P04 ticket 61, the user's rule: only one of the time card and the answer sheet is expanded at a time, the card
+// touched last winning, so that the time card's grip is never under the sheet. Partitions: the time card opened over a
+// high sheet, then folded; the sheet raised to high under an open time card.
+describe('the time card and the answer sheet', () => {
+  it('brings a high sheet down to middle as the time card opens, and leaves it there as it folds', async () => {
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+    await layStage(390, 760);
+    await layRows(64);
+    await raiseCard();
+    await raiseCard();
+    expect(sheetGrip()).toHaveAccessibilityValue({ text: '크게' });
+
+    await dragGrip(120);
+
+    expect(screen.getByTestId('time-card-grip')).toBeExpanded();
+    expect(sheetGrip()).toHaveAccessibilityValue({ text: '중간' });
+
+    await dragGrip(-64);
+
+    expect(screen.getByTestId('time-card-grip')).toBeCollapsed();
+    expect(sheetGrip()).toHaveAccessibilityValue({ text: '중간' });
+  });
+
+  it('folds an open time card, not tucking it, as the sheet rises to high', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    await layStage(390, 760);
+    await press(user, UNFOLD);
+    await raiseCard();
+    expect(screen.getByTestId('time-card-grip')).toBeExpanded();
+
+    await raiseCard();
+
+    expect(sheetGrip()).toHaveAccessibilityValue({ text: '크게' });
+    expect(screen.getByTestId('time-card-grip')).toBeCollapsed();
+    expect(barShift()).toBe(0);
   });
 });

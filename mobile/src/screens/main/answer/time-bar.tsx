@@ -8,7 +8,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, type ReactNode, useState } from 'react';
+import { type ReactElement, type ReactNode, use, useState } from 'react';
 import { type LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Reanimated from 'react-native-reanimated';
@@ -34,6 +34,7 @@ import { SlotBand } from '../library/slot-band';
 import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
 import { PersonRows } from './person-rows';
+import { SheetLinkContext } from './sheet-link';
 import { TimeBand } from './time-band';
 import { STRIP_SLOP, type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
 import { type BandFocus, useCorrections } from './use-corrections';
@@ -119,7 +120,8 @@ function OpenRows(p: { band: BarProps['band']; grip: TimeCardGrip; onHeight: (he
 
 // The time bar: the answer's band in one white row at the top, its head the words and "＋ 같이", its track over the
 // free time around the span, at one range and scale whether it is open or not. With Friends, pulled open by its grip, a
-// row for each person comes out under the track over the same range (P04 ticket 61). A time outside that range is
+// row for each person comes out under the track over the same range, four people at most in sight and the rest
+// scrolled to (P04 ticket 61). A time outside that range is
 // reached by asking in the chat, not by a drag. Its grip also pushes it up out of the way. The height it tells is its
 // folded one: open, it lies over the map for a while.
 function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactElement {
@@ -130,7 +132,7 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
   const barY = barTop(top) + offset;
   const { lanes, startAt, now } = band.band;
   const friends = lanes.length > 1;
-  const grip = useTimeCardGrip({ height, top: barY, opens: friends, rows });
+  const grip = useTimeCardGrip({ height, top: barY, opens: friends, rows, sheet: use(SheetLinkContext) });
   const folded = !friends || grip.place !== 'open';
   const label = friends ? `사람별 시간 ${folded ? '펼치기' : '접기'}` : null;
   return (

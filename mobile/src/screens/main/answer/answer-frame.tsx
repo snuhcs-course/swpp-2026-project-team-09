@@ -43,6 +43,7 @@ import { MadeMarkCard } from './made-mark-card';
 import type { Raising } from './raise-handle';
 import { ReplySteps } from './reply-steps';
 import { barOf, onScreenOf, TopBar, Words } from './reply-words';
+import { SheetLinkContext, useSheetLink } from './sheet-link';
 import { type BandFocus, useBandFocus } from './use-corrections';
 
 interface AnswerCardProps {
@@ -243,10 +244,13 @@ function Framed(props: FramedProps): ReactElement {
   const drawnBar = (control.booking !== null && !control.booking.booked) || control.steps !== null;
   const barShown = !keyboardUp && (drawnBar || barOf(chat.bubbles, onScreenOf(control)) !== null);
   const bar = useBarHeight(barShown, onBarHeight);
+  const link = useSheetLink(raising);
   return (
     <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
       <View style={[styles.top, past && styles.faded]}>
-        {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
+        <SheetLinkContext value={link}>
+          {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
+        </SheetLinkContext>
       </View>
       <AnswerCard
         timeBarHeight={bar.height}
