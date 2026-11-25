@@ -33,7 +33,7 @@ import type { Chat } from '@/features/assistant/use-chat';
 import { bookingKept } from '../library/booking-kept';
 import { SlotBand } from '../library/slot-band';
 import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
-import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
+import { mealDayOf } from './meal-day';
 import { type Picking, PersonRows } from './person-rows';
 import { usePickingBar } from './pick-head';
 import { usePickingPlace } from './picking-place';
@@ -187,8 +187,8 @@ interface PlanBarProps {
 }
 
 // The bar of the Plan on screen: its handles and its lanes move it as the card's band did, unless the answer's kind
-// fixes the time. A meal's names the meal with its day when it is not under way today, and the day's other meal
-// stands at one end (`MealTick`). "＋ 같이" stands at the right of its words, beside the rows people belong with, while
+// fixes the time. A meal's names the meal with its day when it is not under way today; the day's other meal is asked
+// for in words (P04 ticket 82). "＋ 같이" stands at the right of its words, beside the rows people belong with, while
 // the Plan can take more people (P04 ticket 14), so that the dock is the input's row alone.
 export function PlanBar(props: PlanBarProps): ReactElement {
   const { shown, answer, plan, invitation, focus, onClose, onHeight, offset } = props;
@@ -198,17 +198,11 @@ export function PlanBar(props: PlanBarProps): ReactElement {
   const busy = shown.recalculating || invitation.sending || invitation.changing;
   // A meeting changed in place (P04 ticket 17) is set: its band is read, not moved.
   const fixed = bandIsFixed(answer.input.kind) || invitation.changed !== null;
-  const tick = mealTickOf(answer);
-  const sent = invitation.sending || invitation.made !== null;
   const pickingBar = usePickingBar(shown, plan, { busy, onClose });
   return (
     <Bar
       picking={pickingBar.picking}
       band={{
-        tick:
-          tick === null
-            ? undefined
-            : { side: tick.side, node: <MealTick sent={sent} shown={shown} words={tick.words} /> },
         band: pickingBar.band,
         disabled: busy,
         fixed: windowOf(answer.input),

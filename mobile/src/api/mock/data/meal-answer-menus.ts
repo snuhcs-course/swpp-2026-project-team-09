@@ -73,7 +73,6 @@ function withMenu(menus: Readonly<Record<string, Menu>>): (plan: Plan) => Plan {
 export const MEAL_ANSWER_MENUS: AnswerReply & { input: MealInput } = {
   ...MEAL_ANSWER,
   plans: MEAL_ANSWER.plans.map(withMenu(MENUS)),
-  otherMeal: { meal: 'dinner', start: '17:00' },
 };
 
 // Every time of the answer five hours later, lunch's words as dinner's.
@@ -95,7 +94,6 @@ function fiveHoursLater(value: AnswerReply): AnswerReply {
 export const MEAL_DINNER_MENUS: AnswerReply & { input: MealInput } = {
   ...fiveHoursLater({ ...MEAL_ANSWER, plans: MEAL_ANSWER.plans.map(withMenu(DINNERS)) }),
   input: { ...MEAL_ANSWER.input, meal: 'dinner' },
-  otherMeal: { meal: 'lunch', start: '12:16' },
 };
 
 export const MEAL_ANSWER_MENUS_REPLY: AssistantReply & { answer: AnswerReply } = {

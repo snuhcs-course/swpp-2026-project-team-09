@@ -93,8 +93,9 @@ function legPlaces(line: readonly LatLng[]): { position: LatLng; overFaces: bool
   ];
 }
 
-// A leg's label: "셔틀 12분" by shuttle, "6분" on foot, dark for the way there and pale for the way on (`legToneOf`). It may stand anywhere along
-// its leg as drawn (`either`) and keeps clear of the legs' lines. Its id carries its words, so that a leg whose words
+// A leg's label, the whole leg's minutes: "12분", by the shuttle too, which a screen reader says "셔틀 12분" (P04 ticket
+// 80); dark for the way there and pale for the way on (`legToneOf`). It may stand anywhere along its leg as drawn
+// (`either`) and keeps clear of the legs' lines. Its id carries its words, so that a leg whose words
 // change is a new mark: the native map would otherwise keep the picture of the words before until the new one is made.
 function legDrafts(
   scene: MapScene,
@@ -103,11 +104,11 @@ function legDrafts(
   hidden: ReadonlySet<number>,
 ): Draft[] {
   return legsOf(scene, hidden).flatMap(({ route: { minutes, mode, role }, index }): Draft[] => {
-    const title = mode === 'shuttle' ? `셔틀 ${String(minutes)}분` : `${String(minutes)}분`;
+    const title = `${String(minutes)}분`;
     const id = `answer:leg:${String(index)}:${title}`;
     return legPlaces(legLine(scene, index, ways)).map(({ position, overFaces }) => ({
       id,
-      name: mode === 'shuttle' ? title : `걸음 ${String(minutes)}분`,
+      name: mode === 'shuttle' ? `셔틀 ${title}` : `걸음 ${title}`,
       position,
       planId: null,
       group: 'leg',
@@ -151,11 +152,16 @@ export function hiddenRoutes(plan: Plan | undefined, scene: MapScene): ReadonlyS
 
 const NONE_HIDDEN: ReadonlySet<number> = new Set();
 
-// "15:30 302동 수업": when the next fixed thing starts, and what it is.
-function nextWords(plan: Plan, place: string | null): string | null {
+// "15:30 302동": when the next fixed thing starts and where, in the start's format, with no word of what it is (P04
+// ticket 80). The time is the Plan's next fixed thing's, or the one its place's tag begins with ("15:30 수업 · 302동").
+function nextWords(plan: Plan, item: MapScene['places'][number] | undefined): string | null {
   const after = fixedAfter(plan);
-  const what = after?.label ?? place;
-  return after === null || what === null ? null : `${koreaClock(after.at)} ${what}`;
+  const clock = after === null ? (item?.tag?.match(/^\d{1,2}:\d{2}/u)?.[0] ?? null) : koreaClock(after.at);
+  return clock === null || item === undefined ? null : `${clock} ${item.place.label}`;
+}
+
+function nextOf(scene: MapScene, id: string): MapScene['places'][number] | undefined {
+  return scene.places.find(({ role, place }) => role === 'next' && `answer:next:${place.placeId}` === id);
 }
 
 // A dark label may stand on any side of its point, so that it moves round when a side is taken.
@@ -190,7 +196,7 @@ export function mealDrafts(
     if (draft.group === 'pick') {
       return { ...draft, sides: PICK_SIDES, clearOf: lines };
     }
-    return draft.group === 'next' ? dark(draft, nextWords(plan, draft.title)) : draft;
+    return draft.group === 'next' ? dark(draft, nextWords(plan, nextOf(scene, draft.id))) : draft;
   });
   return [...marked, ...legDrafts(scene, ways, lines, hidden), ...stopDrafts(ways.legs)];
 }

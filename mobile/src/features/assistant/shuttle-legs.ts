@@ -138,22 +138,22 @@ export function shuttleRouteLines(route: MapScene['routes'][number], index: numb
 }
 
 function stopDraft(stop: ShuttleStop, word: string, id: string): Draft {
-  const title = `${stop.name} ${word}`;
   return {
     id,
-    name: title,
+    name: `${stop.name} ${word}`,
     position: point(stop),
     planId: null,
     group: 'stop',
     symbol: { type: 'dot', role: 'stop', number: null },
     tone: 'stop',
-    title,
+    title: null,
     line: null,
     number: null,
   };
 }
 
-// The two stops of a leg by the shuttle, marked and named: "301동 승차", "기숙사삼거리 하차".
+// The two stops of a leg by the shuttle: a dot each where the line turns purple and back, with no words on the map
+// (P04 ticket 80), named for a screen reader "301동 승차", "기숙사삼거리 하차".
 export function stopDrafts(legs: readonly ShuttleLeg[]): Draft[] {
   return legs.flatMap(({ index, board, getOff }) => [
     stopDraft(board, '승차', `answer:board:${String(index)}`),
