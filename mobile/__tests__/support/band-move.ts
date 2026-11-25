@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent } from '@testing-library/react-native';
@@ -19,14 +20,6 @@ export async function layTrack(width: number): Promise<void> {
   await fireEvent(screen.getByTestId('time-band-track'), 'layout', {
     nativeEvent: { layout: { x: 0, y: 0, width, height: 40 } },
   });
-}
-
-// The bar unfolded, a row for each person, over the band's whole range: folded, its track runs over the free time
-// around the span only (P04 ticket 14), so a move further away is made unfolded. A bar of one lane, the User's alone,
-// unfolds to the whole day (`하루 시간 펼치기`).
-export async function unfold(name = '사람별 시간 펼치기'): Promise<void> {
-  await fireEvent.press(screen.getByRole('button', { name }));
-  await pass(300);
 }
 
 export function body(): ReturnType<typeof screen.getByRole> {

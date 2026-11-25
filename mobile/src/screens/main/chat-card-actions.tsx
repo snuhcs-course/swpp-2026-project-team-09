@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -66,13 +67,11 @@ export interface CardLeaving {
   openPartyForm: (proposal: QuestProposal) => void;
   proposals: ProposalActions;
   // The seat card whose booking the map draws, by its place, and how it tells what it offers (P04 ticket 07).
-  // `raised`: the answer's card is raised, so the seat card shows all it holds; lowered, it says one sentence.
   // `point` and `walk`: the booking's building and the minutes of the walk the map draws there (P01 ticket 06).
   booking?: {
     place: string | null;
     tell: Tell;
     steps: boolean;
-    raised: boolean;
     point: PlacePoint | null;
     walk: number | null;
   };
@@ -80,16 +79,14 @@ export interface CardLeaving {
 
 type LeavingBooking = CardLeaving['booking'];
 
-// What a seat card learns of the booking on the map: how it tells what it offers, whether its band is on the bar, whether
-// the card is lowered, and the walk there (P04 ticket 07; P01 tickets 03 and 06).
-function bookingActionsOf(
-  booking: LeavingBooking,
-): Pick<LibraryCardActions, 'onMap' | 'bandOnBar' | 'docked' | 'bookingWalk'> {
+// What a seat card learns of the booking on the map: how it tells what it offers, whether its band is on the bar, and
+// the walk there (P04 ticket 07; P01 tickets 03 and 06). It shows all it holds at every step of the sheet, laid out
+// once (P04 ticket 61).
+function bookingActionsOf(booking: LeavingBooking): Pick<LibraryCardActions, 'onMap' | 'bandOnBar' | 'bookingWalk'> {
   const alone = (card: string): boolean => booking !== undefined && booking.place === card && !booking.steps;
   return {
     onMap: (card: string) => (booking !== undefined && booking.place === card ? booking.tell : null),
     bandOnBar: alone,
-    docked: (card: string) => alone(card) && booking?.raised === false,
     bookingWalk: () =>
       booking === undefined || booking.point === null || booking.steps
         ? null

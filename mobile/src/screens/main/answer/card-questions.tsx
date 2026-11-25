@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -16,7 +17,7 @@ import { markdownLabel } from '../chat-markdown';
 import { lastReply } from '@/features/assistant/use-shown-answer';
 import type { ChatSheetControl } from '../chat-sheet';
 import { DockChip } from './dock-chips';
-import { restOf } from './docked-answer';
+import { restOf } from './answer-rest';
 import { FollowUpChips } from './follow-up-chips';
 import { LeaveRow } from './leave-button';
 import { pressOffer } from './refusal-reply';

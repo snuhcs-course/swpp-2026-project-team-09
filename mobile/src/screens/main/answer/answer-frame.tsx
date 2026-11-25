@@ -11,6 +11,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -25,7 +26,7 @@ import type { CardActions } from '../chat-cards';
 import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
 import { FriendProfileOver, useProfileOver } from '../friend-profile';
-import { AI_INPUT, type Room } from '../layout';
+import type { Room } from '../layout';
 import { AnswerCaption } from './answer-caption';
 import { useCardTop } from './card-top';
 import { CaptionQuestions, type QuestionsOpen, Typing } from './card-questions';
@@ -34,13 +35,15 @@ import { KeptCards } from './kept-scene';
 import { WaitingReply } from './failed-and-waiting';
 import { CONTENT_TOP, contentMaxOf, FrameCard } from './frame-card';
 import { MarkCard } from './mark-card';
-import { DockedAnswer, restOf } from './docked-answer';
+import { ReplyPicks } from './reply-picks';
+import { SetQuestLine } from './set-quest-line';
 import { LeaveRow } from './leave-button';
 import { MarkRows } from './mark-rows';
 import { MadeMarkCard } from './made-mark-card';
 import type { Raising } from './raise-handle';
 import { ReplySteps } from './reply-steps';
 import { barOf, onScreenOf, TopBar, Words } from './reply-words';
+import { SheetLinkContext, useSheetLink } from './sheet-link';
 import { type BandFocus, useBandFocus } from './use-corrections';
 
 interface AnswerCardProps {
@@ -55,9 +58,8 @@ interface AnswerCardProps {
   onClose: () => void;
   raising: Raising;
   focus: BandFocus;
-  // The time bar's height under the pill, 0 for none: the raised card stops under it.
+  // The time card's height as it stands by default, 0 for none: high stops under it.
   timeBarHeight: number;
-  inputBottom: number;
   // The conversation's questions, opened in the card by its caption.
   list: QuestionsOpen;
 }
@@ -68,27 +70,12 @@ interface AnswerCardProps {
 // the keyboard is up, the questions and the turn's follow-ups stand above the input in place of its content, unless the
 // card is raised (board 6).
 function AnswerCard(props: AnswerCardProps): ReactElement {
-  const { control, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, focus, timeBarHeight, list } = props;
-  const card = { barRoom, onHeight, raising, stageHeight, timeBarHeight, inputBottom: props.inputBottom };
-  const typing = keyboardUp && !raising.raised;
-  const { listMax, ...top } = useCardTop(control, raising, list, { onClose, typing });
-  const { bubbles, waiting } = control.chat;
-  const after = turnOf(bubbles)?.after ?? [];
+  const { control, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, timeBarHeight, list } = props;
+  const card = { barRoom, onHeight, raising, stageHeight, timeBarHeight };
+  const typing = keyboardUp && raising.level === 'low';
+  const { listMax, ...top } = useCardTop(control, raising, list, { onClose });
+  const { waiting } = control.chat;
   const contentMax = contentMaxOf(stageHeight, barRoom);
-  // The dock stands in the card while it is raised too, under the open content, so that lowering fades it in rather
-  // than swapping it in at the end (P04 ticket 57).
-  const rest = keyboardUp || waiting || list.open ? null : restOf(control, after);
-  const [reply] = after;
-  const raise = (): void => {
-    raising.setRaised(true);
-  };
-  const kept = typing || list.open ? null : <KeptCards cardActions={props.cardActions} control={control} />;
-  // The dock, which the card shows at its lowest step over its open content (P04 ticket 57). A kept card then stands
-  // under the header at every step, mounted once (PR 537's review).
-  const dock =
-    rest === null || reply === undefined ? undefined : (
-      <DockedAnswer {...{ bubble: reply, control, focus, onClose, rest }} atRest={!raising.raised} onRaise={raise} />
-    );
   return (
     <FrameCard
       {...card}
@@ -98,12 +85,13 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
           <AnswerCaption control={control} listOpen={list.open} onList={list.toggle} />
         )
       }
-      dock={dock}
+      // While typing or with the list of questions open, low shows the content whole up to the middle step.
+      fit={typing || list.open}
+      atTop={control.pick.place !== null}
       hold={waiting}
-      lead={dock === undefined ? undefined : kept}
       testID="answer-card"
     >
-      {dock === undefined ? kept : null}
+      {typing || list.open ? null : <KeptCards cardActions={props.cardActions} control={control} />}
       {typing ? (
         <Typing control={control} />
       ) : list.open ? (
@@ -124,10 +112,15 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
   const docked = control.booking !== null && control.steps === null ? control.booking.bubbleId : null;
   const turn = turnOf(bubbles);
   const last = bubbles.at(-1);
+  // While a Place is picked on the map the card is mostly low: the picking line and its chip that stops it come first,
+  // where the low card shows them, as the dock had them (PR 545's review).
+  const picking = control.pick.place !== null;
   return (
     <>
       {(turn?.after ?? []).map((bubble) => (
         <View key={bubble.id} style={styles.part}>
+          {bubble === turn?.after[0] ? <SetQuestLine control={control} /> : null}
+          {bubble === last && picking ? <ReplyPicks control={control} /> : null}
           {bubble.steps === undefined ? null : (
             <ReplySteps onMap={control.steps?.bubbleId === bubble.id} steps={bubble.steps} />
           )}
@@ -153,6 +146,7 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
               )
             }
           />
+          {bubble === last && !picking ? <ReplyPicks control={control} /> : null}
         </View>
       ))}
       {waiting ? <WaitingReply onStop={control.chat.stop} /> : <LeaveRow control={control} />}
@@ -170,8 +164,6 @@ interface FramedProps {
   // The time bar's height, 0 while there is none.
   onBarHeight: (height: number) => void;
   stage: Room['stage'];
-  // The AI input's bottom, from the stage's bottom: the docked card's edge stands just under it.
-  inputBottom: number;
 }
 
 interface OpenMarkProps {
@@ -232,7 +224,7 @@ function useBarHeight(
 // listens only while the main screen is in front, so a screen pushed from the profile goes back to it. Back takes away
 // one layer per press (`backOf`), and so does a drag down. While a restaurant's menu is open the caption gives way to the menu's own head.
 function Framed(props: FramedProps): ReactElement {
-  const { control, barRoom, stageHeight, keyboardUp, onHeight, onBarHeight, stage, inputBottom } = props;
+  const { control, barRoom, stageHeight, keyboardUp, onHeight, onBarHeight, stage } = props;
   const { chat, leaving, hide } = control;
   const close = useCallback((): void => {
     Keyboard.dismiss();
@@ -252,25 +244,27 @@ function Framed(props: FramedProps): ReactElement {
   const drawnBar = (control.booking !== null && !control.booking.booked) || control.steps !== null;
   const barShown = !keyboardUp && (drawnBar || barOf(chat.bubbles, onScreenOf(control)) !== null);
   const bar = useBarHeight(barShown, onBarHeight);
+  const link = useSheetLink(raising);
   return (
     <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
-      <View style={[styles.top, past && styles.faded]}>
-        {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
-      </View>
-      <AnswerCard
-        timeBarHeight={bar.height}
-        barRoom={barRoom}
-        cardActions={actions}
-        inputBottom={inputBottom}
-        control={control}
-        focus={focus}
-        keyboardUp={keyboardUp}
-        list={list}
-        onClose={close}
-        onHeight={onHeight}
-        raising={raising}
-        stageHeight={stageHeight}
-      />
+      <SheetLinkContext value={link}>
+        <View style={[styles.top, past && styles.faded]}>
+          {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
+        </View>
+        <AnswerCard
+          timeBarHeight={bar.height}
+          barRoom={barRoom}
+          cardActions={actions}
+          control={control}
+          focus={focus}
+          keyboardUp={keyboardUp}
+          list={list}
+          onClose={close}
+          onHeight={onHeight}
+          raising={raising}
+          stageHeight={stageHeight}
+        />
+      </SheetLinkContext>
       {keyboardUp ? null : <OpenMark control={control} focus={focus} onClose={close} stage={stage} />}
       {sheets}
     </FriendProfileOver>
@@ -293,7 +287,6 @@ export function AnswerFrame(props: AnswerFrameProps): ReactElement | null {
   return control.framed ? (
     <Framed
       barRoom={inputTop + space[3]}
-      inputBottom={inputTop - (room.inputHeight ?? AI_INPUT.height)}
       control={control}
       keyboardUp={keyboardUp}
       onBarHeight={onBarHeight}

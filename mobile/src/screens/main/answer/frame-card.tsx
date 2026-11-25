@@ -14,9 +14,8 @@ import { OpenCard } from './open-card';
 
 export { CONTENT_TOP, contentMaxOf } from './frame-card-parts';
 
-// The frame's card, attached to the bottom of the screen: one sheet in every form (P04 ticket 57). An answer that docks
-// passes its dock, which the sheet holds over its open content and shows at its lowest step, so that raising and
-// lowering move the same card and nothing is swapped at the end of the motion.
+// The frame's card, attached to the bottom of the screen: one sheet whose content is laid out once, moved between its
+// steps (P04 tickets 57 and 61), so that raising and lowering move the same card and nothing is swapped.
 export function FrameCard(props: FrameCardProps): ReactElement {
   return <OpenCard {...props} />;
 }

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -103,8 +104,9 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// The line of a Plan beside a Quest the User holds stands first in the sheet (P04 ticket 61).
 function dock(): ReturnType<typeof within> {
-  return within(screen.getByTestId('dock-row'));
+  return within(screen.getByTestId('answer-card'));
 }
 
 // Partitions: the answer as it comes; 그대로 두기 pressed.
@@ -171,7 +173,7 @@ describe('그대로 두기 while 바꾸기 is on its way', () => {
   });
 });
 
-// Partitions: a building tapped, 나 pressed, the dock's line pressed, after 그대로 두기. From PR 444's review: the Quest
+// Partitions: a building tapped, 나 pressed, the sheet's line pressed, after 그대로 두기. From PR 444's review: the Quest
 // left as it is is settled, as a Plan made is, and a new message is the way on.
 describe('the answer after 그대로 두기', () => {
   it('asks nothing of a building tapped', async () => {

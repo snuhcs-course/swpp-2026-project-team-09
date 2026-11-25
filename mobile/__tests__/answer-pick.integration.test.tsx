@@ -3,9 +3,12 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
+import { ScrollView } from 'react-native';
 import { ANSWER_CAPABILITIES, type AssistantReply } from '@/api/assistant-types';
 import type { PickPlaceOffer, PickTimeOffer } from '@/api/pick-types';
 import type { Place } from '@/api/types';
@@ -77,8 +80,9 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// The question back and its pickers stand in the sheet, under the reply's words (P04 ticket 61).
 function dock(): ReturnType<typeof within> {
-  return within(screen.getByTestId('dock-row'));
+  return within(screen.getByTestId('answer-card'));
 }
 
 function lastAsked(): unknown {
@@ -96,8 +100,17 @@ describe('a Place picked on the map', () => {
     const user = await askOnMap(server, asking('어디서 만날까요?', PLACE_OFFER));
 
     expect(dock().getByText('어디서 만날까요?')).toBeVisible();
+    const scrolled = jest.spyOn(ScrollView.prototype, 'scrollTo');
     await user.press(dock().getByRole('button', { name: '지도에서 고르기' }));
     expect(dock().getByText('지도에서 건물을 눌러 주세요')).toBeVisible();
+    // The content goes back to its top, where the picking line now stands, however far it was scrolled.
+    expect(scrolled).toHaveBeenCalledWith({ y: 0, animated: true });
+    // While picking, the line comes before the reply's words, where the low card shows it (PR 545's review).
+    const lines = dock().getAllByText(/^(?:어디서 만날까요\?|지도에서 건물을 눌러 주세요)$/u);
+    expect(lines.map((line): unknown => line.props.children)).toEqual([
+      '지도에서 건물을 눌러 주세요',
+      '어디서 만날까요?',
+    ]);
     // From the screens: the line raises nothing while picking.
     expect(dock().queryByText('›')).toBeNull();
     server.on('POST /assistant/messages', { status: 200, body: asking('좋아요.', PLACE_OFFER) });

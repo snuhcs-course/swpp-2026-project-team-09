@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -18,7 +19,7 @@ import { step } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT, layStage } from './support/lists';
-import { givePhone, ME, ON_CAMPUS } from './support/main';
+import { givePhone, ON_CAMPUS } from './support/main';
 import { pressMarker } from './support/made-quest';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
@@ -103,7 +104,9 @@ describe('words sent with an answer on screen', () => {
   });
 });
 
-// Partitions: the follow-up waiting; its reply with an answer, after a drag; its reply without one.
+// Partitions: the follow-up waiting; its reply with an answer, after a drag; its reply of words alone. Since P04 ticket
+// 46 a reply of words alone keeps the scene before it: a Plan's, a seat card's, or a Lookup's that is not a fact; since
+// P04 ticket 58 a fact answer's mark leaves at a later reply (`answer-fact-mark-replaced`).
 describe('the answer on screen after words', () => {
   it("keeps the Plan's marks on the map while the follow-up waits", async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
@@ -129,14 +132,13 @@ describe('the answer on screen after words', () => {
     expect(screen.queryByTestId('time-band-ghost')).toBeNull();
   });
 
-  it('brings the everyday map back for a reply without an answer', async () => {
+  it("keeps the Plan's marks on the map under a reply of words alone", async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
     server.on('POST /assistant/messages', { status: 200, body: PLAIN_REPLY });
 
     await say(user);
     await pass(500);
 
-    expect(mapThings().filter((name) => FIRST_PLAN_MARKS.includes(name))).toEqual([]);
-    expect(mapThings()).toContain(ME);
+    expect(mapThings()).toEqual(expect.arrayContaining(FIRST_PLAN_MARKS));
   });
 });

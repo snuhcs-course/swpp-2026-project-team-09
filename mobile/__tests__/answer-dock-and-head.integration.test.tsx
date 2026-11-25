@@ -2,9 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { fireEvent, screen, within } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
 import { radius, space } from '@/design-system';
@@ -21,9 +22,9 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { sockets } from './support/fake-socket';
 
-// The dock and the bar's head from the user's phone (P04 tickets 45 and 50): the main button is the input's height, on
-// its own full-width row above the input, whose placeholder stays on one line; a cut sentence says "더 보기" and raises the card to the whole words; "＋ 같이" is a solid chip of the
-// head row's height, clear of the track.
+// The footer and the bar's head from the user's phone (P04 tickets 45, 50, and 61): the main button is the input's
+// height, on its own full-width row above the input, whose placeholder stays on one line; a long sentence stands whole
+// in the sheet; "＋ 같이" is a solid chip of the head row's height, clear of the track.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -39,7 +40,7 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-// Three sentences, which a phone cuts at the dock's two lines.
+// Three sentences, longer than the low sheet's two lines.
 const LONG =
   '12:15에 302동식당에서 민수와 만나 먹어요. 301동식당은 뚝배기불고기가 5,000원이고 걸음 15분이에요. 학생회관식당은 떡볶이가 있어요.';
 
@@ -95,29 +96,14 @@ describe('the main button above the input', () => {
   });
 });
 
-// Partitions: the sentence laid out in three lines (cut), and in one.
-describe('a cut sentence in the dock', () => {
-  it('says 더 보기, and a press raises the card to the whole words over the list', async () => {
-    const user = await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, text: LONG });
-    await fireEvent(screen.getByTestId('dock-line-measure', { includeHiddenElements: true }), 'textLayout', {
-      nativeEvent: { lines: [{}, {}, {}] },
-    });
-
-    expect(screen.getByTestId('dock-line-more', { includeHiddenElements: true })).toHaveTextContent('더 보기');
-    await user.press(screen.getByTestId('dock-line'));
+// Partitions: a long sentence (P04 ticket 61: no "더 보기"; the sheet holds the whole words, which a drag brings up).
+describe('a long sentence', () => {
+  it('stands whole over the list, with no "더 보기"', async () => {
+    await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, text: LONG });
 
     expect(screen.getByTestId('meal-words')).toHaveTextContent(LONG);
+    expect(screen.queryByText('더 보기')).toBeNull();
     expect(screen.getByTestId('meal-list')).toBeOnTheScreen();
-  });
-
-  it('takes no press while it fits', async () => {
-    await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
-    await fireEvent(screen.getByTestId('dock-line-measure', { includeHiddenElements: true }), 'textLayout', {
-      nativeEvent: { lines: [{}] },
-    });
-
-    expect(screen.queryByTestId('dock-line-more', { includeHiddenElements: true })).toBeNull();
-    expect(screen.getByTestId('dock-line').props.accessibilityRole).toBeUndefined();
   });
 });
 

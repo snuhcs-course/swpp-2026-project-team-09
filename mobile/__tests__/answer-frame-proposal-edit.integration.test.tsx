@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -242,7 +243,12 @@ describe('the frame after 수정', () => {
 
     await user.press(screen.getByRole('tab', { name: '지도' }));
 
-    expect(screen.getByRole('button', { name: '만들었어요' })).toBeDisabled();
+    // The main button and the Proposal's card in the sheet's content, which stays mounted at every step (P04 ticket 61).
+    const made = screen.getAllByRole('button', { name: '만들었어요' });
+    expect(made).toHaveLength(2);
+    for (const button of made) {
+      expect(button).toBeDisabled();
+    }
     expect(server.received('POST /quests/own')).toHaveLength(1);
   });
 

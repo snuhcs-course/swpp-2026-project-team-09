@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useMemo } from 'react';
@@ -175,13 +176,12 @@ export interface BandTick {
 interface EndsProps {
   band: TimeBand;
   folded: boolean;
-  margin: number;
   tick?: BandTick;
 }
 
-// The ends under the track: the range's beside the lanes' names, `margin` wide, or folded the busy stretches that
-// bound the span, each under its own time (P04 ticket 14); a tick stands in place of its side's.
-export function Ends({ band, folded, margin, tick }: EndsProps): ReactElement {
+// The ends under the track: the range's, or folded the busy stretches that bound the span, each under its own time
+// (P04 ticket 14); a tick stands in place of its side's.
+export function Ends({ band, folded, tick }: EndsProps): ReactElement {
   const { before, after } = folded
     ? bandEdgesOf(band)
     : { before: clockOf(band.range.startAt), after: clockOf(band.range.endAt) };
@@ -192,13 +192,7 @@ export function Ends({ band, folded, margin, tick }: EndsProps): ReactElement {
     </Text>
   );
   return (
-    <View
-      style={[
-        styles.ends,
-        !folded && { marginLeft: margin },
-        folded && { paddingLeft: percent(at.before), paddingRight: percent(1 - at.after) },
-      ]}
-    >
+    <View style={[styles.ends, folded && { paddingLeft: percent(at.before), paddingRight: percent(1 - at.after) }]}>
       {tick?.side === 'left' ? tick.node : end(before)}
       {tick?.side === 'right' ? tick.node : end(after)}
     </View>

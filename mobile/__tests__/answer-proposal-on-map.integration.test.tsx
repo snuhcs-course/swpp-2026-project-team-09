@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -98,8 +99,10 @@ describe('a Proposal with a Place', () => {
     expect(mapThings()).toContain(MIN_JUN.name);
     expect(mapLines()).toHaveLength(1);
     expect(screen.getByRole('button', { name: '만들고 초대 보내기' })).toBeEnabled();
-    expect(frame().queryByTestId('proposal-card')).toBeNull();
-    expect(frame().queryByText(REPLY)).toBeNull();
+    // The sheet's content is the raised card's at every step (P04 ticket 61): the reply's words over the Proposal's
+    // card, which no dock now stands in place of at rest.
+    expect(frame().getByText(REPLY)).toBeOnTheScreen();
+    expect(frame().getByTestId('proposal-card')).toBeOnTheScreen();
   });
 
   it('opens its rows at a press on its flag, and the party form from 제목', async () => {
@@ -148,7 +151,12 @@ describe("a Proposal's button", () => {
   it('reads "만들기" when it invites nobody', async () => {
     await proposed({ ...AT_THE_UNION, invitees: [] });
 
-    expect(screen.getByRole('button', { name: '만들기' })).toBeEnabled();
+    // The main button and the Proposal's card in the sheet's content (P04 ticket 61).
+    const make = screen.getAllByRole('button', { name: '만들기' });
+    expect(make).toHaveLength(2);
+    for (const button of make) {
+      expect(button).toBeEnabled();
+    }
   });
 });
 

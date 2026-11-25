@@ -4,49 +4,32 @@
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { GestureDetector, type PanGesture } from 'react-native-gesture-handler';
+import { StyleSheet, Text } from 'react-native';
 import Reanimated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { color, radius, space, text } from '@/design-system';
+import type { Level } from './card-levels';
 
 export const CLOSE_HINT = '놓으면 지도 화면으로 돌아가요';
 
-// How far a fling carries the let-go point, in seconds of its speed.
-export const FLING_S = 0.15;
 // How long the card takes to reach a step, or to come back (P04 ticket 52).
 export const MOTION_MS = 220;
 
-// The answer card's heights, lowered, raised, and full (`card-levels.ts`), and below them the answer closed (P04 tickets
-// 12 and 52).
+// The answer sheet's steps, low, middle, and high (`card-levels.ts`), and under low the answer closed (P04 tickets 12
+// and 61).
 export interface Raising {
-  raised: boolean;
-  setRaised: (raised: boolean) => void;
-  // The raised card taken one step further up, its top just under the status bar. Left out, the card has no such step.
-  full?: boolean;
-  setFull?: (full: boolean) => void;
-  // Closes the answer as ✕ does: a drag down from the lowered card past half its height. Left out, none.
+  level: Level;
+  setLevel: (level: Level) => void;
+  // Closes the answer as ✕ does: one more drag down from low, or a fling. Left out, none.
   close?: () => void;
-  // The card is dragged below its lowered height, or no longer.
+  // The card is dragged below low, or no longer.
   onPast?: (past: boolean) => void;
   // What a drag down takes away first, as back does: the list of questions, a mark's card, or a restaurant's menu, one
-  // layer a drag, before the raised card is lowered or the answer closed (P04 ticket 52). Left out or null, none.
+  // layer a drag, before the card is lowered or the answer closed (P04 ticket 52). Left out or null, none.
   layer?: (() => void) | null;
-  // One step down from a raised or full card, as back takes it: full to raised, a layer, then lowered. Left out, the
-  // raised card is lowered.
-  stepDown?: () => void;
-}
-
-// The card's header takes the drag (`useCardMotion`) wherever the finger starts on it, the grip, its label, or beside
-// the chip and the buttons; a press on the chip or a button stays a press.
-export function DragRow({ pan, children }: { pan: PanGesture; children: ReactElement }): ReactElement {
-  return (
-    <GestureDetector gesture={pan}>
-      <View collapsable={false}>{children}</View>
-    </GestureDetector>
-  );
 }
 
 // Where "놓으면 지도 화면으로 돌아가요" stands, from the stage's bottom: just above the card's top edge, following the card

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -11,6 +12,7 @@ import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
+import { raiseCard } from './support/card-grip';
 import { askOnMap } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -18,8 +20,8 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
-// P04 ticket 21: a meal answer beside a Quest already set docks its line; 그대로 두기 stands with 바꾸기 on the row above
-// the input (P04 ticket 50). The kinds of food stand over the raised card's list (board E3), not in the dock, and 메뉴 보기 is gone.
+// P04 ticket 21: a meal answer beside a Quest already set starts its sheet with its line (P04 ticket 61); 그대로 두기
+// stands with 바꾸기 on the row above the input (P04 ticket 50). The kinds of food stand over the list (board E3).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -74,7 +76,7 @@ afterEach(() => {
 });
 
 function dock(): ReturnType<typeof within> {
-  return within(screen.getByTestId('dock-row'));
+  return within(screen.getByTestId('answer-card'));
 }
 
 function beside(): ReturnType<typeof within> {
@@ -87,15 +89,14 @@ function buttonNames(): string[] {
     .map((button) => String(button.props.accessibilityLabel ?? ''));
 }
 
-// Partitions: the dock at first, 바꾸기 on its way, and 그대로 두기 pressed.
+// Partitions: the sheet at first, 바꾸기 on its way, and 그대로 두기 pressed.
 describe('a meal answer beside a lunch already set', () => {
-  it('has the line in the dock, and 그대로 두기 with 바꾸기 on the row above the input, with no kinds and no 메뉴 보기', async () => {
+  it('starts the sheet with the line, and 그대로 두기 with 바꾸기 on the row above the input, with no 메뉴 보기', async () => {
     await askOnMap(server, REPLY);
 
-    expect(dock().getByTestId('dock-line')).toHaveTextContent(LINE, { exact: false });
+    expect(dock().getByTestId('meal-words')).toHaveTextContent(LINE, { exact: false });
     const names = buttonNames();
     expect(names).not.toContain(KEEP);
-    expect(names).not.toContain(KOREAN);
     expect(names).not.toContain(MENUS);
     expect(beside().getByRole('button', { name: KEEP })).toBeEnabled();
     expect(beside().getByRole('button', { name: '바꾸기' })).toBeEnabled();
@@ -119,7 +120,7 @@ describe('a meal answer beside a lunch already set', () => {
     await pass(300);
 
     expect(screen.queryByRole('button', { name: KEEP })).toBeNull();
-    expect(dock().getByTestId('dock-line')).toBeVisible();
+    expect(dock().getByTestId('set-quest-line')).toBeVisible();
   });
 });
 
@@ -132,7 +133,7 @@ describe('the raised list once 바꾸기 changed the lunch held', () => {
     await pass(500);
     expect(dock().getByText(/바꿨어요/u)).toBeVisible();
 
-    await user.press(screen.getByTestId('dock-line'));
+    await raiseCard();
     const row = within(screen.getByTestId('meal-list')).getByTestId('meal-row-2');
     expect(row).toBeDisabled();
     expect(within(screen.getByTestId('kind-chips')).getByRole('button', { name: KOREAN })).toBeDisabled();

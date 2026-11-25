@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -69,11 +70,12 @@ async function step(bound: 'from' | 'until', actionName: 'increment' | 'decremen
 
 describe('TimeBand drawn', () => {
   // Partitions: the lanes and words of a stored band; a ghost given or not; a focus on a handle or none.
-  it("draws a lane for each person, the range's ends, the band's words, and its two handles", async () => {
+  // The names stand over each person's own row under the time card's ends (P04 ticket 61), not beside the track.
+  it("draws a lane for each person on one row, the range's ends, the band's words, and its two handles", async () => {
     await show();
 
-    expect(screen.getByText('나')).toBeVisible();
-    expect(screen.getByText('민수')).toBeVisible();
+    expect(screen.getAllByTestId(/^time-band-lane-/u)).toHaveLength(2);
+    expect(screen.queryByText('민수')).toBeNull();
     expect(screen.getByText('11:30')).toBeVisible();
     expect(screen.getByText('13:30')).toBeVisible();
     expect(screen.getByText('12:33–12:59 · 식사 26분')).toBeVisible();

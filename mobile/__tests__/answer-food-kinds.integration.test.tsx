@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -72,8 +73,6 @@ function lastContext(): unknown {
 describe('the kind chips of a meal answer', () => {
   it('stand over the raised list in the order of their counts after 전체, only 전체 filled, without a label', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
-    expect(screen.queryByRole('button', { name: KOREAN })).toBeNull();
-    expect(screen.queryByRole('button', { name: '메뉴 보기' })).toBeNull();
 
     await raiseCard();
 

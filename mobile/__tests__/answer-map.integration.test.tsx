@@ -9,15 +9,17 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
 import { Dimensions, StyleSheet, type ViewStyle } from 'react-native';
 import type { MapScene } from '@/api/assistant-types';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
-import { color } from '@/design-system';
+import { color, space, text } from '@/design-system';
 import * as answerCamera from '@/features/assistant/answer-camera';
 import * as projection from '@/map/projection';
+import { AI_INPUT as INPUT } from '@/screens/main/layout';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
@@ -229,6 +231,9 @@ const FIRST_PLAN_POINTS = distinct([
 // A Plan's card at rest is docked (P04 ticket 04), the bottom sheet on the screen's bottom edge (P04 ticket 52): it covers
 // its own height.
 
+// The low card with no content measured (P04 ticket 61): the footer's room, and two lines over the fade.
+const LOW_CARD = INPUT.bottom + INPUT.height + space[3] + (space[3] + 2 * text.bodyLg.lineHeight + space[3]);
+
 function padding(cardHeight: number): object {
   return { top: 8 + 24, right: 64, bottom: cardHeight + 8 + 66, left: 64 };
 }
@@ -308,10 +313,10 @@ describe('the camera after the answer came', () => {
     });
 
     // The map is asked for no fit of its own: every fit is the worked-out camera's, which fits all the points and, when
-    // that is too far out, the Plan's own (`answerCamera`). With the stage laid out, the lowered card's height is known
-    // from its steps (P04 ticket 52): with no content measured, half the stage.
+    // that is too far out, the Plan's own (`answerCamera`). With the stage laid out, the low card's height is known from
+    // its steps (P04 tickets 52 and 61): the footer's room and, with no content measured, two lines over the fade.
     expect(worked).toHaveBeenCalled();
     expect(fit.mock.calls.length).toBeLessThanOrEqual(2 * worked.mock.calls.length);
-    expect(worked.mock.lastCall?.[2]).toEqual(padding(height / 2));
+    expect(worked.mock.lastCall?.[2]).toEqual(padding(LOW_CARD));
   });
 });

@@ -5,6 +5,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -18,6 +19,7 @@ import { CAMPUS_BOUNDS, centreOf, project } from '@/map';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
+import { raiseCard } from './support/card-grip';
 import { askOnMap, card, mapLines, mapThings } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
@@ -139,23 +141,22 @@ describe('the visible area in a request', () => {
   });
 });
 
-// Partitions: the dock, the card it raises, and the map with and without a library session. Expected values: the copy
-// of board a9, and the seats the fake library holds.
+// Partitions: the sheet low and raised, and the map with and without a library session. Expected values: the copy of
+// board a9, and the seats the fake library holds.
 describe("board a9's answer", () => {
-  it('docks with the model\'s words, "관정 보기" as a chip, and "가는 길" beside the input (P04 tickets 05, 18)', async () => {
+  it('starts with the model\'s words, "관정 보기" under them, and "가는 길" beside the input (P04 tickets 05, 18, 61)', async () => {
     await askOnMap(server, REPLY);
 
     expect(card().getByText(REPLY.text)).toBeVisible();
-    expect(card().queryByText('빈 자리 수는 관정만 알 수 있어요')).toBeNull();
-    expect(within(screen.getByTestId('dock-row')).getByRole('button', { name: '관정 보기' })).toBeVisible();
+    expect(card().getByRole('button', { name: '관정 보기' })).toBeOnTheScreen();
     expect(beside().getByRole('button', { name: '가는 길' })).toBeVisible();
     expect(screen.queryByRole('button', { name: '길 안내' })).toBeNull();
   });
 
-  it('raises the chips, the two lines, "관정 보기", under the card’s ✕, at a press on the line', async () => {
-    const user = await askOnMap(server, REPLY);
+  it('raises the chips, the two lines, "관정 보기", under the card’s ✕', async () => {
+    await askOnMap(server, REPLY);
 
-    await user.press(card().getByText(REPLY.text));
+    await raiseCard();
 
     expect(card().getByText('보는 범위에선 공대 신양학술정보관')).toBeVisible();
     for (const chip of ['301동에서', '13:00 수업까지', '보는 범위', '조용한 곳']) {

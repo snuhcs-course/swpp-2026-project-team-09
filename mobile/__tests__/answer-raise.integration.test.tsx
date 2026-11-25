@@ -5,11 +5,14 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent } from '@testing-library/react-native';
 import { StyleSheet, type ViewStyle } from 'react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
+import { text } from '@/design-system';
+import { FLING_SPEED } from '@/screens/main/answer/card-levels';
 import { listsTop } from '@/screens/main/layout';
 import { pass, screen } from './support/app';
 import { holdBackButton } from './support/back';
@@ -20,8 +23,10 @@ import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
 
-// P02 ticket 38: the answer card's handle raises the card up to under the time bar and lowers it again, by a press or a drag,
-// and Android's back button lowers a raised card first. The mocks answer.
+// P02 ticket 38 and P04 ticket 61: the answer card rises a step at a time, low, middle, and high up to under the time
+// bar, and lowers again, by a drag anywhere on it or a screen reader's step, and Android's back button lowers a raised
+// card first. The mocks answer. Expected values: low shows the content's top padding of 12, two lines of 24, and the
+// fade of 12 at the usual font size.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -35,6 +40,8 @@ const STAGE = 760;
 // Where the raised card stops, the answer having no time bar: the lists' top, the tests' status bar taking nothing
 // (P04 ticket 52: no "←" stands there any more).
 const TOP_ROOM = listsTop(0);
+const LOW = 12 + 2 * text.bodyLg.lineHeight + 12;
+const FLING = FLING_SPEED * 2;
 
 type User = Awaited<ReturnType<typeof openMain>>;
 
@@ -56,14 +63,16 @@ function contentStyle(): ViewStyle {
   return StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
 }
 
-// What of the scrolling part shows: it is laid out once at its highest step's height, and the tail under the content
-// is what stands below the step's (P04 ticket 52).
-function shown(): number {
-  const tail = screen.queryByTestId('answer-card-tail', { includeHiddenElements: true });
-  const style: unknown = tail?.props.style;
-  const below =
-    tail === null ? 0 : Number(StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]).height);
-  return Number(contentStyle().height) - below;
+// What of the scrolling part shows: it is laid out once at its highest step's height, and the card stands that much
+// lower than its place, less what shows (P04 tickets 52 and 61).
+async function shown(): Promise<number> {
+  // The card's translation is drawn on the next frame.
+  await pass(50);
+  const style: unknown = screen.getByTestId('answer-card').props.style;
+  const { transform } = StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
+  const shift: unknown = Array.isArray(transform) ? transform[0] : undefined;
+  const down = typeof shift === 'object' && shift !== null && 'translateY' in shift ? Number(shift.translateY) : 0;
+  return Number(contentStyle().height) - down;
 }
 
 async function layContent(height: number): Promise<void> {
@@ -72,12 +81,12 @@ async function layContent(height: number): Promise<void> {
   });
 }
 
-async function dragHandle(dy: number): Promise<void> {
+async function dragHandle(dy: number, velocityY = 0): Promise<void> {
   await act(() => {
-    fireGestureHandler(getByGestureTestId('answer-card-handle'), [
+    fireGestureHandler(getByGestureTestId('answer-card-drag'), [
       { translationX: 0, translationY: 0, velocityY: 0 },
-      { translationX: 0, translationY: dy / 2, velocityY: 0 },
-      { translationX: 0, translationY: dy, velocityY: 0 },
+      { translationX: 0, translationY: dy / 2, velocityY },
+      { translationX: 0, translationY: dy, velocityY },
     ]);
   });
 }
@@ -93,42 +102,47 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-// Partitions: lowered, and raised and lowered by the grip's steps for a screen reader: nothing is pressed (P04 ticket 52).
+// Partitions: low, and the middle and high steps up and down by the grip's steps for a screen reader: nothing is pressed
+// (P04 ticket 52).
 describe("the answer card's handle", () => {
-  it('stands on the lowered card, which takes at most about half the stage as before', async () => {
+  it('stands on the low card, which shows two lines of its content', async () => {
     await framed();
 
     expect(grip()).toBeCollapsed();
-    expect(shown()).toBeLessThanOrEqual(STAGE / 2);
+    expect(await shown()).toBe(LOW);
   });
 
-  it('raises the card as tall as its content, up to the lists’ top, by a step up, and lowers it by a step down', async () => {
+  it('raises the card a step at a time, the middle about half the stage, high up to the lists’ top', async () => {
     await framed();
-    const lowered = shown();
 
     await raiseCard();
-
     expect(grip()).toBeExpanded();
-    expect(shown()).toBe(lowered + STAGE / 2 - TOP_ROOM);
+    const middle = await shown();
+    expect(middle).toBeGreaterThan(LOW);
+    expect(middle).toBeLessThanOrEqual(STAGE / 2);
+
+    await raiseCard();
+    expect(await shown()).toBe(middle + STAGE / 2 - TOP_ROOM);
     expect(button('답 닫기')).toBeVisible();
 
     await lowerCard();
-
+    expect(await shown()).toBe(middle);
+    await lowerCard();
     expect(grip()).toBeCollapsed();
-    expect(shown()).toBe(lowered);
+    expect(await shown()).toBe(LOW);
   });
 });
 
-// Partitions: up and down, past half the way and short of it; what the card keeps.
-describe("a drag on the answer card's handle", () => {
-  it('raises the card by a drag up past half the way, and lowers it by a drag down', async () => {
+// Partitions: a fling up and down, a short drag; what the card keeps.
+describe('a drag on the answer card', () => {
+  it('raises the card a step by a fling up, and lowers it by a fling down', async () => {
     await framed();
     await layContent(200);
 
-    await dragHandle(-300);
-    expect(grip()).toBeExpanded();
+    await dragHandle(-30, -FLING);
+    expect(grip()).toHaveAccessibilityValue({ text: '중간' });
 
-    await dragHandle(300);
+    await dragHandle(30, FLING);
     expect(grip()).toBeCollapsed();
   });
 
@@ -198,7 +212,7 @@ describe("Android's back button", () => {
   });
 });
 
-// P04 ticket 12: below the lowered card, a drag down closes the answer as ✕ does.
+// P04 tickets 12 and 61: from the low card, one more drag down closes the answer as ✕ does.
 async function layCard(height: number): Promise<void> {
   await fireEvent(screen.getByTestId('answer-card'), 'layout', {
     nativeEvent: { layout: { x: 0, y: 0, width: 390, height } },
@@ -207,7 +221,7 @@ async function layCard(height: number): Promise<void> {
 
 // Partitions: past half the card; a short drag; from the raised card. The hint while held is seen on a phone: the
 // test's gesture always ends.
-describe("a drag down on the lowered card's handle", () => {
+describe('a drag down on the low card', () => {
   it('closes the answer past half the card, and keeps the conversation', async () => {
     await framed();
     await layContent(200);
@@ -224,7 +238,7 @@ describe("a drag down on the lowered card's handle", () => {
     await layContent(200);
     await layCard(300);
 
-    await dragHandle(80);
+    await dragHandle(20);
 
     expect(screen.getByTestId('answer-caption')).toBeVisible();
     expect(grip()).toBeCollapsed();

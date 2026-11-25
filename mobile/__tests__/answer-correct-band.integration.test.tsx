@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { TimeBand } from '@/api/assistant-types';
@@ -118,9 +119,9 @@ describe('after a drag', () => {
     await step('from', 'increment');
 
     expect(mapThings()).toContain('학생회관식당 · 12:40 점심');
-    // 302동식당 is no candidate of the fixed start's answer: it does not fit, with its reason.
+    // 302동식당 is no candidate of the fixed start's answer: it does not fit, with its reason in the card's list.
     expect(screen.queryByRole('button', { name: /302동식당/u })).toBeNull();
-    expect(screen.getByLabelText('302동식당 · 3분밖에 못 있어요')).toBeOnTheScreen();
+    expect(card().getByLabelText('302동식당 · 3분밖에 못 있어요')).toBeOnTheScreen();
     expect(screen.getByTestId('time-band-ghost')).toHaveStyle({ borderStyle: 'dashed' });
   });
 

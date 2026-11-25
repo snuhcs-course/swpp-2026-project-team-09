@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -12,7 +13,7 @@ import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
 import { koreaDateKey, koreaNextDay } from '@/korea-time';
 import { LATE_HEADING } from '@/screens/main/answer/meal-list';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
-import { gripLabel, raiseCard } from './support/card-grip';
+import { raiseCard } from './support/card-grip';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { askOnMap, card } from './support/answer-map';
@@ -23,8 +24,9 @@ import { pass } from './support/app';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { sockets } from './support/fake-socket';
 
-// A meal answer's card (boards E1, E3, E4): docked, the Assistant's sentence with no chips; raised, every candidate as a
-// row, the nearest first, with the kinds over them; a press on a row chooses that place and opens its menu.
+// A meal answer's card (boards E1, E3, E4, and P04 ticket 61's a1–a5): one sheet that starts with the Assistant's
+// sentence, then every candidate as a row, the nearest first, with the kinds over them; a press on a row chooses that
+// place and opens its menu.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -68,14 +70,13 @@ function fourOf(reply: typeof MEAL_ANSWER_MENUS_REPLY): typeof MEAL_ANSWER_MENUS
   return { ...reply, answer };
 }
 
-// Partitions: docked; raised by the caption.
+// Partitions: low; raised by the grip.
 describe('a meal answer with four candidates', () => {
-  it('docks with the sentence alone: no kind chips and no 메뉴 보기', async () => {
+  it('starts the sheet with the sentence whole, and holds the list under it at low too', async () => {
     await askOnMap(server, fourOf(MEAL_ANSWER_MENUS_REPLY));
 
-    expect(screen.getByTestId('dock-line-words')).toHaveTextContent(SENTENCE);
-    expect(screen.queryByRole('button', { name: '메뉴 보기' })).toBeNull();
-    expect(screen.queryByTestId('kind-chips')).toBeNull();
+    expect(screen.getByTestId('meal-words')).toHaveTextContent(SENTENCE);
+    expect(list().getByTestId('meal-row-1')).toBeOnTheScreen();
   });
 
   it('lists every candidate when raised, the least walking first, the chosen one marked, under the kinds', async () => {
@@ -151,15 +152,6 @@ function keptOne(text: string): typeof MEAL_ANSWER_MENUS_REPLY {
 
 // Partitions: one Plan left of many, with the model's words and without; the candidates that cannot be done in time.
 describe('a meal answer that kept one Plan of many', () => {
-  it('says in the dock that one place alone fits, with no "›", and the grip\'s label names the list', async () => {
-    await askOnMap(server, keptOne('아래에서 확인해 보세요.'));
-
-    expect(screen.getByTestId('dock-line-words')).toHaveTextContent(/^김민수와 시간이 맞는 곳은 302동식당뿐이에요 · /u);
-    expect(screen.getByTestId('dock-line').props.accessibilityRole).toBeUndefined();
-    // The place offered, as the list's first line counts it; the two dropped stand under their own heading.
-    expect(gripLabel()).toBe('1곳 목록');
-  });
-
   it('lists the Plan, then the places dropped under their reason, faded and not pressable, under the people', async () => {
     await askOnMap(server, keptOne(SENTENCE));
 
@@ -213,8 +205,8 @@ function comesBefore(first: Found, second: Found): boolean {
   return false;
 }
 
-// P04 ticket 54: the raised meal card starts with the Assistant's words, as the dock does, so that lowering into the dock
-// moves nothing at the swap. Partitions: the words, the person chips, and the list.
+// P04 tickets 54 and 61: the meal sheet starts with the Assistant's words, so that the low sheet shows them. Partitions:
+// the words, the person chips, and the list.
 describe("the raised meal card's order", () => {
   it('is the words, then the person chips, then the list', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
@@ -228,16 +220,15 @@ describe("the raised meal card's order", () => {
   });
 });
 
-// Partitions: one Plan and nothing dropped (review of PR 483: the dock's line takes no press).
+// Partitions: one Plan and nothing dropped.
 describe('a meal answer of one place', () => {
-  it('names "1곳 목록" under the grip, and raised shows the people and the row', async () => {
+  it('shows the people and the row, raised', async () => {
     const answer: AnswerReply = {
       ...MEAL_ANSWER_MENUS_REPLY.answer,
       plans: MEAL_ANSWER_MENUS_REPLY.answer.plans.slice(0, 1),
     };
     await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, answer });
 
-    expect(gripLabel()).toBe('1곳 목록');
     await raiseCard();
 
     expect(card().getByText('김민수')).toBeOnTheScreen();

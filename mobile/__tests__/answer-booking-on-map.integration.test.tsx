@@ -3,11 +3,12 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
 import type { Place } from '@/api/types';
-import { gripLabel, raiseCard } from './support/card-grip';
+import { raiseCard } from './support/card-grip';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -98,9 +99,9 @@ describe('a seat card on the map', () => {
     expect(screen.getByRole('button', { name: '예약하기' })).toBeEnabled();
     const card = within(screen.getByTestId('answer-card'));
     expect(card.getByText(DOCKED)).toBeVisible();
-    expect(gripLabel()).toBe('자리·열람실');
     expect(card.queryByText('카드에서 확인해 주세요.')).toBeNull();
-    expect(card.queryByRole('button', { name: CHIP })).toBeNull();
+    // One sheet, laid out once (P04 ticket 61): the room chip is in it at low too.
+    expect(card.getByRole('button', { name: CHIP })).toBeOnTheScreen();
     expectNoWrite(library);
   });
 
@@ -160,7 +161,7 @@ async function raised(): Promise<Awaited<ReturnType<typeof asked>>> {
   return chat;
 }
 
-// P01 ticket 03: the raised card holds what the lowered one leaves out.
+// P01 ticket 03 and P04 ticket 61: the raised card holds the whole seat card, which the low one cuts at the footer.
 describe('the raised seat card on the map', () => {
   it('opens with the sentence, then the room chip, the seat with its time, 다른 자리 고르기, and the kiosk foot', async () => {
     await raised();

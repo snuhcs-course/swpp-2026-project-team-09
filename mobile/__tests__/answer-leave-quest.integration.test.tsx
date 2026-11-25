@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -18,8 +19,8 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, ME_ID, PHONE_NOW } from './support/server';
 
-// P04 ticket 24: "저녁 약속 취소해 줘" answers with one row in the dock, the Quest's title and start with 취소하기 or 나가기,
-// which sends DELETE /quests/{questId} as the room's 나가기 does. Taken, the dock's line says so and the
+// P04 ticket 24: "저녁 약속 취소해 줘" answers with one row in the sheet, the Quest's title and start with 취소하기 or 나가기,
+// which sends DELETE /quests/{questId} as the room's 나가기 does. Taken, the sheet says so and the
 // button goes; refused, the line says so and the button stays. Expected values: the main server's offer of PR 447
 // and the words of the ticket. The phone's clock is Tuesday 2026-10-06 13:00 in Korea.
 
@@ -66,8 +67,9 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// The question and how the press went stand in the sheet (P04 ticket 61).
 function dock(): ReturnType<typeof within> {
-  return within(screen.getByTestId('dock-row'));
+  return within(screen.getByTestId('answer-card'));
 }
 
 it('says quest-cancel to the main server', () => {

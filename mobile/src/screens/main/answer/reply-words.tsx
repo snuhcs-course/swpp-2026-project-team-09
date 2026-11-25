@@ -4,9 +4,10 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement, ReactNode } from 'react';
+import type { ReactElement } from 'react';
 import { StyleSheet } from 'react-native';
 import { color, text } from '@/design-system';
 import { modelWordsOf } from '@/features/assistant/model-words';
@@ -114,8 +115,6 @@ interface WordsProps extends OnScreen {
   onAsk: RefusalAsk;
   // A turn a Lookup's button asked of the recalculation.
   addRecalculated: Chat['addRecalculated'];
-  // The docked card's chips, when the Plan's card is docked (`PlanCard`'s `dock`).
-  dock?: ReactNode;
 }
 
 // The card of the answer on screen a reply's words are, by `wordsKindOf`, with a refusal's lines over the Plan's when
@@ -130,7 +129,7 @@ function onScreenCard(props: WordsProps, kind: WordsKind): ReactElement | null {
   if (kind === 'plan' && answer !== null) {
     const card = { answer, invitation, onClose, over, room, shown };
     const steps = (bubble.steps?.length ?? 0) > 1;
-    return <PlanCard {...card} dock={props.dock} focus={focus} said={bubble.text} steps={steps} />;
+    return <PlanCard {...card} focus={focus} said={bubble.text} steps={steps} />;
   }
   if (kind === 'made' && answer !== null && plan !== null && invitation.made !== null) {
     return <MadeCard {...{ answer, invitation, onClose, over, plan }} made={invitation.made} />;

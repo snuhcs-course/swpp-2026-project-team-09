@@ -7,6 +7,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-24  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -14,6 +15,7 @@ import { apiClient } from '@/api/client';
 import { FRIEND_LOOKUP_REPLY } from '@/api/mock/data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from '@/api/mock/data/menu-lookup';
 import { pass, screen } from './support/app';
+import { raiseCard } from './support/card-grip';
 import { card, mapLines, mapThings, timeBar } from './support/answer-map';
 import { AI_INPUT } from './support/lists';
 import { givePhone, ME, ON_CAMPUS, openMain } from './support/main';
@@ -73,16 +75,14 @@ function beside(): ReturnType<typeof within> {
   return within(screen.getByTestId('ai-input-beside'));
 }
 
-// Partitions: the dock; a way with nothing to read stays docked, as board 10 draws it, with no handle to raise it
-// (P04 ticket 10). Expected values: the copy of board q1.
+// Partitions: the sheet of a way, laid out once (P04 ticket 61). Expected values: the copy of board q1.
 describe('the card of a way to a Place (q1)', () => {
-  it('docks with "길 안내" beside the input and nothing the map says: no chips, lines, or "닫기"', async () => {
+  it('holds the Lookup in one sheet with "길 안내" beside the input, and no buttons of its own', async () => {
     await ask('문화관이 어디야?');
 
     expect(beside().getByRole('button', { name: '길 안내' })).toBeVisible();
-    expect(card().queryByText('301동에서')).toBeNull();
-    expect(card().queryByText('문화관(73동)은 여기예요')).toBeNull();
-    expect(card().queryByText('셔틀은 18분 걸려 걸어요')).toBeNull();
+    expect(card().getByText('301동에서')).toBeOnTheScreen();
+    expect(card().getByText('문화관(73동)은 여기예요')).toBeOnTheScreen();
     expect(card().queryByRole('button', { name: '길 안내' })).toBeNull();
     expect(card().queryByRole('button', { name: '닫기' })).toBeNull();
     expect(card().queryByRole('button', { name: '이대로 초대' })).toBeNull();
@@ -125,14 +125,12 @@ describe('the map of a way to a Place (q1)', () => {
   });
 });
 
-// Partitions: a Lookup with a band, its line in the dock, the card it raises, and its marks. Expected values: the copy
-// of board q8.
+// Partitions: a Lookup with a band, its sheet low and raised, and its marks. Expected values: the copy of board q8.
 describe('a menu (q8)', () => {
-  it('docks with the model\'s words, the band without handles on the time bar, and "길 안내" beside the input', async () => {
+  it('starts with the model\'s words, the band without handles on the time bar, and "길 안내" beside the input', async () => {
     await ask('오늘 301동식당 메뉴 뭐야?');
 
     expect(card().getByText(MENU_WORDS)).toBeVisible();
-    expect(card().queryByText('12:45까지 55분 먹을 수 있어요')).toBeNull();
     expect(timeBar().getByText('11:50–12:45 · 식사 55분')).toBeVisible();
     expect(screen.queryByLabelText('시작 시각')).toBeNull();
     expect(screen.queryByLabelText('끝 시각')).toBeNull();
@@ -140,10 +138,10 @@ describe('a menu (q8)', () => {
     expect(card().queryByRole('button', { name: '닫기' })).toBeNull();
   });
 
-  it("raises the chips and both lines at a press on the line, under the card's ✕", async () => {
-    const user = await ask('오늘 301동식당 메뉴 뭐야?');
+  it("shows the chips and both lines raised, under the card's ✕", async () => {
+    await ask('오늘 301동식당 메뉴 뭐야?');
 
-    await user.press(card().getByText(MENU_WORDS));
+    await raiseCard();
 
     expect(card().getByText('301동식당 오늘 점심은 부대짬뽕&군만두')).toBeVisible();
     expect(card().getByText('13:00 수업까지')).toBeVisible();
@@ -161,22 +159,21 @@ describe('a menu (q8)', () => {
   });
 });
 
-// Partitions: a Lookup whose only action is `meet` (ticket 24), its line in the dock, a person's chip, and ✕.
-// Expected values: the copy of board q6.
+// Partitions: a Lookup whose only action is `meet` (ticket 24), its sheet, a person's chip, and ✕. Expected values:
+// the copy of board q6.
 describe('where a Friend is (q6)', () => {
-  it('docks with the model\'s words and "만나고 싶다" beside the input, and draws his face', async () => {
+  it('starts with the model\'s words and "만나고 싶다" beside the input, and draws his face', async () => {
     await ask('민수 어디야?');
 
     expect(card().getByText(FRIEND_WORDS)).toBeVisible();
-    expect(card().queryByText('12:15까지 수업이에요')).toBeNull();
     expect(beside().getByRole('button', { name: '만나고 싶다' })).toBeVisible();
     expect(mapThings()).toContain('민수 · 지금 302동');
   });
 
-  it("shows 민수's chip with no ✕ of its own, and the lines raised by a press on the line, under the card's ✕", async () => {
-    const user = await ask('민수 어디야?');
+  it("shows 민수's chip with no ✕ of its own, and the lines raised, under the card's ✕", async () => {
+    await ask('민수 어디야?');
 
-    await user.press(card().getByText(FRIEND_WORDS));
+    await raiseCard();
 
     // The chip, and the strong word of the first line.
     expect(card().getAllByText('민수')).toHaveLength(2);
@@ -198,7 +195,7 @@ describe('where a Friend is (q6)', () => {
   it('returns to the everyday map with ✕ of the raised card', async () => {
     const user = await ask('민수 어디야?');
 
-    await user.press(card().getByText(FRIEND_WORDS));
+    await raiseCard();
     await user.press(card().getByRole('button', { name: '답 닫기' }));
 
     expect(screen.queryByTestId('answer-caption')).toBeNull();
