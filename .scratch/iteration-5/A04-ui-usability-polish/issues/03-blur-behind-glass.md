@@ -72,10 +72,11 @@ compositing, waits for the user's decision.
 
 ### The user's decision (2026-11-26)
 
-- Android: no blur. The panel's white goes from 50% to 75%, so that words on it never run into the map's lines.
-- iOS: the panel blurs with `GlassView` from `expo-glass-effect`, the system's Liquid Glass, on iOS 26 and later. Its
-  white at 50% lies over the blur, so the panel is as milky as the board's (`blur(16px) saturate(1.8)` under white at
-  50%); how strongly it blurs is Apple's. Before iOS 26 it is the Android panel.
+- Android: no blur. The panel's white goes from 50% to 80%, so that words on it never run into the map's lines.
+- iOS: the panel blurs with `GlassView` from `expo-glass-effect`, the system's Liquid Glass, on iOS 26 and later,
+  with no white over it: only the thin line along its top and its shadow. Before iOS 26 it is the Android panel.
+- The user chose both values on an iPhone 14 Pro, from a build with a test panel over the map (white over the blur
+  at 50%, 42%, 35% and 0%; without blur, 75% and 82%).
 - `expo-glass-effect` is already in the native build, left by 01, so this is a JavaScript change: no `version` raise
   and no native Release. `expo-blur` is not added.
 - No call site changes: the choice is made inside `Glass`.
