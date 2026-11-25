@@ -531,8 +531,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   markers leaves it open. A card whose thing leaves
   the map, such as a Friend who turns their location off, is closed for good: it does not open again on their return. The card shows the leading
   mark (a person's Avatar, or the place's icon on its kind's colour), the sub-label, the title, the lines and its
-  button. "가까이 보기" is offered below the `names` level and brings the camera to the `close` level, keeping the
-  card. On the card of a Party that others may join, "파티 열기" and "참여하기" open the Quest's room; on a Party
+  button; it has no "가까이 보기", and the User zooms by hand. On the card of a Party that others may join, "파티 열기" and "참여하기" open the Quest's room; on a Party
   member's card, "파티 열기" does what "활성 파티" does. "같이 갈 사람 찾기" opens 파티 만들기 with the Global Event
   chosen, as `+ 파티 모집` of the 행사 tab does; "파티 만들기" says "준비 중이에요". The
   room's member list shows a member by the main screen's address, `/main?person=<userId>`: the map goes to the
@@ -848,7 +847,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   set. The route's line is drawn purple, 3 wide, dashed 8 and 6, under every marker; each stop is the shuttle's dot
   of `MapDot`, with its name under it from the `names` level; each vehicle in service is the shuttle's pin of
   `MapPin`, an Avatar above the stops, with "운행 중" under it, so that a vehicle standing at its stop is seen. A stop's card says "셔틀버스 · 교내 순환", "{stop} 정류장" and the next stop
-  in loop order, and has no button but "가까이 보기"; a vehicle's says "셔틀버스 · 운행 중", "교내 순환 셔틀" and
+  in loop order, and has no button; a vehicle's says "셔틀버스 · 운행 중", "교내 순환 셔틀" and
   "{stop}에 있어요 · 다음 정류장 {next}", follows the vehicle's sets and closes when it goes, and "노선 보기" fits the
   camera to the whole line and closes the card. Outside weekdays from 08:00 to 21:00 in Korea's time
   (`SERVICE_HOURS`), a toast with the bus icon says "지금은 셔틀버스가 운행하지 않아요 · 평일 08:00–21:00" for 3.5
@@ -1645,7 +1644,7 @@ map.current?.fitTo([from, to], { padding: 48, maxZoom: 15.8 }); // and no closer
 - **Zoom levels** are counted from the fit zoom, because it differs from phone to phone. `ZOOM_OFFSET` in
   `src/map/campus.ts` names them once, from the `Main` wireframe's zoom factor z as log2(z): `pins` (z 1.6, +0.68),
   from which a place is a pin and not a dot; `names` (z 2.4, +1.26), from which a name is under it; `close` (z 2.6,
-  +1.38), where "가까이 보기", a Friend's row and "내 위치로 이동" bring the camera; and `step` (a factor 1.5, 0.585),
+  +1.38), where a Friend's row and "내 위치로 이동" bring the camera; and `step` (a factor 1.5, 0.585),
   one press of the zoom in or zoom out button. `zoomDetail(zoom, fitZoom)` answers `overview`, `pins` or `names`.
 - **Markers** are what the list says: one that is new is added, one whose `id` stays is changed, one that is gone is
   removed. `name` is what a screen reader says; `text` is drawn under the image by the map, in the map's own text.

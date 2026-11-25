@@ -10,6 +10,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { renderHook } from '@testing-library/react-native';
@@ -106,7 +107,6 @@ describe('the Quest list', () => {
         id: 'c1',
         kind: 'class',
         tone: 'class',
-        icon: 'clock',
         joinPolicy: null,
         kicker: '다음 강의 · 23분 후',
         title: '자료구조',
@@ -118,7 +118,6 @@ describe('the Quest list', () => {
         id: 'q-ai',
         kind: 'party',
         tone: 'open',
-        icon: 'users',
         joinPolicy: 'open',
         kicker: '공개 파티 · 활성화 중',
         title: 'AI 커리어 설명회',
@@ -130,7 +129,6 @@ describe('the Quest list', () => {
         id: 'q-dinner',
         kind: 'party',
         tone: 'closed',
-        icon: 'lock',
         joinPolicy: 'closed',
         kicker: '비공개 파티 · 김민준',
         title: '저녁 약속',

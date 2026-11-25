@@ -6,8 +6,10 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import { Animated } from 'react-native';
 import { pass, screen } from './support/app';
 import {
@@ -199,13 +201,15 @@ describe("the main screen's Quest list", () => {
     expect(button(DINNER_ROW)).toHaveTextContent('비공개 파티 · 김민준저녁 약속20:10 · 학생회관 (63동)');
   });
 
-  it("draws a row's kicker in the colour of its kind", async () => {
+  it("draws a class's kicker in the muted ink and every Party's near-black, and names 공개 or 비공개 by its icon", async () => {
     await openMain();
 
-    // A class in the muted ink, a Party that others may join in blue, a Shared Quest in the Party's colour.
+    // The changelog of 11.24 (§ 4-1): one navy round for every Party, told apart by its icon, not by colour.
     expect(screen.getByText('다음 강의 · 23분 후')).toHaveStyle({ color: '#555C74' });
-    expect(screen.getByText('공개 파티 · 활성화 중')).toHaveStyle({ color: '#2F6FC0' });
-    expect(screen.getByText('비공개 파티 · 김민준')).toHaveStyle({ color: '#B63A07' });
+    expect(screen.getByText('공개 파티 · 활성화 중')).toHaveStyle({ color: '#0E1330' });
+    expect(screen.getByText('비공개 파티 · 김민준')).toHaveStyle({ color: '#0E1330' });
+    expect(within(button(PARTY_ROW)).getByLabelText('공개')).toBeVisible();
+    expect(within(button(DINNER_ROW)).getByLabelText('비공개')).toBeVisible();
   });
 
   it('says that the day is empty when there is no Quest', async () => {
@@ -239,8 +243,9 @@ describe("a press on a class's row", () => {
 
     await press(user, CLASS_ROW);
 
-    // The Global Event stands on the class's building: it is a pin without words, and the map moved.
-    expect(lookOf(EVENT)).toBe('official:pin:starred');
+    // The Global Event stands on the class's building: from the names level its tag holds its short name, no words
+    // are under it, and the map moved.
+    expect(lookOf(EVENT)).toBe('official:pin:starred:label="AI 커리어"');
     expect(wordsUnder(EVENT, 'AI 커리어')).toBeNull();
     expect(placeOf(EVENT)).not.toEqual(before);
     expect(screen.getByText('자료구조 · 301동 118호')).toBeVisible();
