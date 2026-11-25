@@ -509,8 +509,11 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   full name under it from the `names` level. A Friend whose position is at the exact level (`Position.level`) carries
   a green dot at the face, none at the building level or while dimmed. A live position's level replaces the one before; one without a
   level keeps it. A Friend whose position is not known has no marker. The Global Event,
-  the User's Party and a Shared Quest are dots while the whole campus is in view, pins from the `pins` level and pins
-  with a short name from the `names` level. A Party's pin counts its members; a Global Event's counts the Quests
+  the User's Party and a Shared Quest are light glass tags (`MapTag`, changelog 11.24 § 4-4): the kind's line icon in its
+  colour on that colour at 14%, a round of 20 while the whole campus is in view, of 26 from the `pins` level, and the
+  icon with the short name inside the tag from the `names` level, drawn into the marker's picture. A tag sits on its
+  middle; a chosen one has a navy border and ring. A 퀘스트's tag is at 70%, with a lighter rim and shadow. Several
+  kinds at one place are one such tag with a round for each kind. A Party's pin counts its members; a Global Event's counts the Quests
   that gather for it (`GET /quests/recruiting`) when they are more than one. Of the Global Events, only Favorite Events
   stand on the map (`src/features/map/event-pins.ts`), unless the interest marks keep them: once the main server
   answers the matches, every event goes to the marks, which keep one mark per place for what matches a watched
@@ -604,9 +607,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     "수업 중" and "이동 중" wait for the FriendView of the Friend levels. A press brings the map to the Friend at the `close` level and opens their card; for a Friend whose
     position is not known it opens the same card without moving the map.
   - A Quest's row has the round with its icon, the kicker, the title and the time with the place, and the rail joins
-    the rounds. The adapter says the row's `tone` and `icon`: a class is `clock` in grey; `open`, a Party that
-    others may join, is `users` in blue; `closed`, a Party that takes nobody else and a Shared Quest, is `lock` in
-    the Party's colour (`questTone`). A press on a class's row brings the map to its place at the `names` level,
+    the rounds. The adapter says the row's `tone`, and `QuestRound` draws it (changelog 11.24 § 4-1): a class is a
+    clock on grey; every Party is one navy round at 70%, a person for `open` (공개) and a lock for `closed` (비공개),
+    which a screen reader names. A class's kicker is grey, a Party's near-black (`questTone`). A press on a class's row brings the map to its place at the `names` level,
     closes an open card and says "<title> · <place>", "자료구조 · 301동 118호"; any other row opens the Quest's
     room.
     Without a Quest the list says "오늘 일정 없음".
@@ -835,7 +838,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
 - **The 식당 layer** (`src/features/dining/`, the `MapDining` frame). Turning it on fetches today's menus, a day of
   Korea's calendar, and the Places, every time; failing either shows no pins and says "식당 정보를 불러오지
   못했어요". A pin stands on the Place `GET /menus` gives each restaurant that has a
-  line today; restaurants that share a Place share it. A pin is the frame's single 학식 mark (`MapRestaurant`), with
+  line today; restaurants that share a Place share it. A pin is `MapRestaurant`, the coral round with a fork and knife, with
   the restaurant's name under it from the `names` level, or "{first} 외 {n}곳". Its card says "식당 · 학식 · 63동",
   the restaurant's name (the Place's when several share it), the Place, and the meals each restaurant serves today
   ("오늘 점심 · 저녁"); "메뉴 보기" opens the menu panel at the meal served next, at the first of its restaurants.
@@ -881,12 +884,12 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   line), on a low screen with fewer rows.
 
 **The friend panel** (`friend-panel.tsx`, the `MainFriends` frame) is a `SidePanel` from the left over the whole
-screen: "친구 {N}" and ✕ "닫기"; the search "이름, 학과 검색" ("친구 검색"), by name and department, spaces aside, with
+screen, on the glass layer's `inner` level over the map: "친구 {N}" and ✕ "닫기"; the search "이름, 학과 검색" ("친구 검색"), by name and department, spaces aside, with
 "결과 없음" when nobody is found; the chips 전체, 공강, 수업 중, 이동 중 and 위치 꺼짐 with their counts, those of 0
 hidden but 전체; and the Friends grouped by presence ("공강 · 4"), each row with the Avatar and its status, the name
-and the department, the detail (or the line where the app has no detail), and the round calendar button "{이름}님과
-파티 만들기", which says "준비 중이에요". Its footer has "공유 설정" on the right, which closes the panel and shows 내
-정보 at `/me?show=sharing`, and "+ 친구 추가", which closes the panel and opens 친구 추가. The scrim ("친구 패널
+and the department, the detail (or the line where the app has no detail), and the round glass calendar button
+"{이름}님과 파티 만들기". Its footer, with no ground of its own, has "공유 설정" on the right, which closes the panel and shows 내
+정보 at `/me?show=sharing`, and the glass button "+ 친구 추가", which closes the panel and opens 친구 추가. The scrim ("친구 패널
 닫기"), ✕ and Android's back button close it.
 A Friend is under "위치 꺼짐" whenever the main server says the User cannot see them (`visible`), whatever the app's
 own status says.
@@ -940,7 +943,7 @@ chips "전체", "강의" and "파티", whose counts stay while one filters; and 
 start of the Sub Quest each shows (`toQuestGroups` in the quest feature's adapter): "오늘 · 10월 1일 (목)", "내일 ·
 …", "이번 주" (2 to 4 days ahead), "다음 주" (5 to 11), "그 이후", and "시간 미정" last for a Quest without a start.
 A Quest whose Sub Quests all ended (past their end time) or were cancelled is not shown; marks of done do not count.
-A row is 72 high: the round of 40 in its `questTone`, the kind ("강의", "공개 파티", "비공개 파티 · 김민준"), the
+A row is 72 high: the round of 40 (`QuestRound`, solid, one navy for every Party), the kind ("강의", "공개 파티", "비공개 파티 · 김민준"), the
 title, the place and the time. A class's row closes the screen and goes back to the map by `/main?quest=<id>`, which the
 Quest list on the map carries out as a press of its own row; any other row opens the Quest's room above it. Without a
 Quest it says "퀘스트가 없어요"; while the Quests load and after a failure it shows the shared states.
@@ -1540,8 +1543,11 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
 
 A repeated element that the design system lacks becomes a shared component here, not a copy in each screen.
 
-`MapDot` is a marker from far away, which the frames draw and the design system does not name: the kind's colour in a
-white border. A selected one is 4 larger, inside a ring of the key colour.
+`MapDot` is a marker from far away, which the frames draw and the design system does not name. A 행사, a 파티 and a
+퀘스트 are `MapTag`'s round of 20; a campus service is its colour in a white border, 4 larger and inside a ring of the
+key colour when selected. `MapStudyPin` is the 공부공간 layer's sky round of 22 with a white book and a tail (grey and
+faint for a building the User may not use), and `MapStudyCluster` a light sky see-through round with the count in a
+sky round (changelog 11.24 § 4-6). The 식당 and 공부공간 layer buttons take the pins' colours, `pinDining` and `pinStudy`.
 
 `MapPerson` is a person on the map, which the `Main` wireframe draws and the design system does not name: a teardrop
 filled with a colour of `presence`, with the person's small Avatar in it, 24 wide in its `small` form and 36
@@ -1551,8 +1557,8 @@ colour. `exact` puts a green dot of 11 on the drop's rim at the face's lower rig
 names the colours of what a person is doing: `free`, `class`, `moving` and `off`, the statuses, which an Avatar's dot
 uses too, and `member`, a member of the User's Party who is no Friend.
 
-`MapRestaurant` is the `MapDining` frame's single 학식 on the map: a round of 22 in the dining colour with 학, a white
-ring and a small tail; selected, 26 inside a ring of the key colour. `DayTile` is a day to choose as the
+`MapRestaurant` is a restaurant on the map (changelog 11.24 § 4-5): a coral round of 22 with a white fork and knife, a
+white ring and a triangular tail; selected, 26 inside a ring of the key colour. `DayTile` is a day to choose as the
 `PartyCreate` frame's date sheet draws it: 52 by 60, the day's name over its number, Sunday in red, Saturday in blue,
 the chosen one in navy.
 
@@ -1561,7 +1567,7 @@ whole campus is in view. The icons `chevronDown`, `chevronLeft`, `chevronRight`,
 `minus` are the wireframes' and not the design system's.
 
 For what the `Main` wireframe draws over the map and the design system does not name, `tokens.ts` has `questTone`
-(the colour of a Quest's row: `class`, `open`, `closed`), `onKey` (the dot and the muted text on a fill of the key
+(a Quest row's round and kicker for `class`, `open`, `closed`), `onKey` (the dot and the muted text on a fill of the key
 colour), `textHalo` (the white glow around text that sits on the map; the wireframe also strokes that text, which
 React Native cannot), `mapText` (the sizes of the lists' and the buttons' text) and the shadows `mapMark`,
 `mapRail`, `faceRing` and `floatKey`.

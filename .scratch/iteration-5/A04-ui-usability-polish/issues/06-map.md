@@ -1,7 +1,7 @@
 # 06: The map: quiet marks, new layer pins, a glass friend panel, no "가까이 보기"
 
 Parent: [A04 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: 01 (the glass layer), for the glass parts only. The rest can start immediately.
 
 Native files: `Things.kt` of the map module (see Comments). Releases: a native Release, `version` 1.0.5.
@@ -71,9 +71,9 @@ Check on the emulator that translucent marks come out right in the pictures the 
 
 - [x] No marker card shows "가까이 보기". (`main-card`, which fails before the change.)
 - [x] Quest rows tell 공개 from 비공개 by an icon a screen reader names. (Unit or integration test.)
-- [ ] Layers, the friend panel and pressing marks work as before. (Existing tests.)
+- [x] Layers, the friend panel and pressing marks work as before. (Existing tests.)
 - [x] "Before" and "after" emulator screens go in the pull request: the map at each zoom level with 행사, 파티 and 퀘스트 marks; the 식당 and 공부공간 layers; the friend panel; a marker card; the Quest list.
-- [ ] ~~No native file changes~~ (one, agreed: see Comments); lint, format and types pass on the app.
+- [x] ~~No native file changes~~ (one, agreed: see Comments); lint, format and types pass on the app.
 
 ## Comments
 
@@ -96,8 +96,8 @@ Check on the emulator that translucent marks come out right in the pictures the 
 
 Estimates: agent time is the gaps under 5 minutes between transcript entries, summed, so waiting for a person, for the heavy-job lock another session held, and for the native builds is left out. The two subagents are the code review's Standards and Spec reviewers. Counted up to the writing of this entry, so the review watch after the pull request is left out.
 
-| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
-|---|---|---|---|---|---|---|
-| Ticket 06 (the code, the tests, the emulator checks and the native fix, the code review, the pull request), with its two subagents | about 56 minutes | 88,261,771 | 87,657,550 | 603,613 | 608 | 154,972 |
+| Session                                                                                                                            | Agent time       | Input      | Cache reads | Cache writes | Uncached | Output  |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ---------- | ----------- | ------------ | -------- | ------- |
+| Ticket 06 (the code, the tests, the emulator checks and the native fix, the code review, the pull request), with its two subagents | about 56 minutes | 88,261,771 | 87,657,550  | 603,613      | 608      | 154,972 |
 
 Without cache reads, the input is 604,221.
