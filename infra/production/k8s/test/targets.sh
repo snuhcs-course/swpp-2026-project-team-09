@@ -6,6 +6,7 @@
 # 2026-11-15  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-23  Opus 5.5   prompted by TaeHyun79
+# 2026-11-24  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Renders each target with stand-in secrets, as a Release would, and checks the objects that the cluster would receive.
@@ -49,6 +50,8 @@ KAKAO_REST_API_KEY=stand-in
 OPENROUTER_API_KEY=stand-in
 LLM_KEYS={"anthropic":"stand-in","team-2":"stand-in-2"}
 INITIAL_ADMINISTRATOR_EMAILS=stand-in@example.com
+SENTRY_WEBHOOK_SECRET=
+APP_CRASH_SLACK_WEBHOOK=https://hooks.slack.invalid/T/B/x
 EOF
   echo stand-in >"$secrets/access-token-private-key.pem"
   echo stand-in >"$secrets/access-token-public-key.pem"
@@ -132,6 +135,23 @@ passes_the_ai_keys() {
       ; .))' "$work/$1.json" >/dev/null
 }
 
+# The crash alerts' secret and webhook (main-server README: Crash alerts from Sentry): from the Secret, under the names
+# the main server reads. One whose parameter is absent is still a key, empty, as release.sh writes it: a pod whose
+# secretKeyRef names a missing key does not start.
+passes_the_crash_alert_secrets() {
+  jq -e '(.[] | select(.kind == "Secret") | .data) as $secrets
+    | [.[] | select(.kind == "Deployment" and .metadata.name == "main-server")
+        | .spec.template.spec.containers[] | select(.name == "main-server") | .env[]
+        | {key: .name, value: .valueFrom.secretKeyRef}] | from_entries as $env
+    | $secrets.SENTRY_WEBHOOK_SECRET == ""
+      and ($secrets.APP_CRASH_SLACK_WEBHOOK | @base64d) == "https://hooks.slack.invalid/T/B/x"
+      and ($env | all(
+        (.SENTRY_WEBHOOK_SECRET.key == "SENTRY_WEBHOOK_SECRET" and (.SENTRY_WEBHOOK_SECRET.name | startswith("secrets-"))),
+        (.APP_CRASH_SLACK_WEBHOOK.key == "APP_CRASH_SLACK_WEBHOOK"
+          and (.APP_CRASH_SLACK_WEBHOOK.name | startswith("secrets-")))
+      ; .))' "$work/$1.json" >/dev/null
+}
+
 # The main server prints one JSON line per log entry, which Fluent Bit reads (main-server README: Logging).
 # $1 the target, $2 the server whose Deployment it checks.
 logs_json() {
@@ -212,6 +232,8 @@ check "all's policies allow exactly the listed connections" allows_only_the_list
 check "every Service's port is its pods' container port" serves_on_container_ports all
 for target in main-server all; do
   check "$target passes the main server OPENROUTER_API_KEY and LLM_KEYS from the Secret" passes_the_ai_keys "$target"
+  check "$target passes the main server SENTRY_WEBHOOK_SECRET and APP_CRASH_SLACK_WEBHOOK from the Secret" \
+    passes_the_crash_alert_secrets "$target"
 done
 for server in main-server socket-server worker-server; do
   for target in "$server" all; do

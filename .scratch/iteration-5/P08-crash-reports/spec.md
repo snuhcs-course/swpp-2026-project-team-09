@@ -160,7 +160,8 @@ before it is released.
 
 - Sentry's Issues page for crashes, and its Releases page for crash-free sessions and Users.
 - An alert on a new issue and on a regression. The free plan has one member and, as far as ticket 01 found, no Slack
-  integration, so the alert goes by email until ticket 06 settles how the team is told.
+  integration, so Sentry calls the main server, which posts a short line to the team's own Slack channel through an
+  Incoming Webhook made for that channel alone (ticket 09). Until that is in place the alert goes by email.
 - The mobile README gains a "Crash reports" section: the layer, the settings and the scrubbing above, how to open an
   issue and read its Release and update, and how to check a build.
 
@@ -187,7 +188,8 @@ sent from that build has arrived in Sentry with a readable stack (ticket 07).
 ## Out of Scope
 
 - Counting the app's use: PostHog, an event registry, `track`, `app_opened`, a dashboard. A separate task.
-- Sentry on the servers: their errors go to Slack (A02).
+- Sentry on the servers: their errors go to Slack (A02). Ticket 09 is the other way round: the main server only
+  passes Sentry's alert about the app on to Slack.
 - Tracing, profiling, session replay, screenshots.
 - A page on the admin site.
 - Rewriting existing error messages. The layer cuts and scrubs what leaves.
@@ -204,6 +206,7 @@ sent from that build has arrived in Sentry with a readable stack (ticket 07).
 | 06  | The account, the keys and the alert                                                 | A person                      | 01                                                |
 | 07  | The Release, the APK to the testers, and the check on the Release's build           | A person                      | 02 to 06                                          |
 | 08  | iOS: the build, its dSYM upload and its check                                       | A person                      | 07, and the decision whether the beta has iPhones |
+| 09  | A new crash in Sentry is posted to the team's Slack channel by the main server      | Code, and a person's steps    | None                                              |
 
 02, 03 and 05 can be built before the account exists, since a build without the DSN is silent. Ticket 02 changes
 native files and raises `version`; 03 to 05 do not.

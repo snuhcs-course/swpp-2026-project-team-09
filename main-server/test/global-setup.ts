@@ -19,6 +19,7 @@
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -80,6 +81,9 @@ const FIXED_SETTINGS = {
   DISH_CUISINES: 'off',
   // Read by src/main.ts only: the tests start the application without its logger.
   LOG_FORMAT: 'text',
+  // Off: POST /sentry/alerts answers 404. test/sentry-alerts.ts sets them, with placeholders, where a test needs them.
+  SENTRY_WEBHOOK_SECRET: '',
+  APP_CRASH_SLACK_WEBHOOK: '',
 } satisfies Partial<SettingValues>;
 
 // Starts PostgreSQL and Redis once for every test file, brings the empty main database up to the current schema and
