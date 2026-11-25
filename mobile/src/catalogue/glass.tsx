@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -10,7 +11,7 @@ import { color, Glass, radius, space, text } from '@/design-system';
 import { Section } from './layout';
 
 // Stripes in the map's colours, so that what shows through each level can be seen.
-const STRIPES = [color.snuBlue, color.surface, color.party, color.friend, color.surface, color.quest, color.svcStudy];
+const STRIPES = [color.snuBlue, color.party, color.friend, color.quest, color.svcStudy, color.svcDining];
 
 // Each level as it is used: the panel holds the inner box and the field, and the two chips stand on the ground itself.
 export function GlassLayer(): ReactElement {
@@ -46,7 +47,7 @@ export function GlassLayer(): ReactElement {
 
 const styles = StyleSheet.create({
   ground: { gap: space[4], padding: space[4], borderRadius: radius.lg, overflow: 'hidden' },
-  stripes: { ...StyleSheet.absoluteFill, flexDirection: 'row', transform: [{ skewX: '-20deg' }, { scale: 1.4 }] },
+  stripes: { ...StyleSheet.absoluteFill, flexDirection: 'row' },
   stripe: { flex: 1 },
   panel: { gap: space[3], padding: space[4], borderRadius: radius.xl },
   inner: { padding: space[3], borderRadius: radius.md },
