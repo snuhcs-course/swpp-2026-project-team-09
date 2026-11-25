@@ -2,7 +2,7 @@
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
-Pull request: none yet.
+Pull request: #577
 Blocked by: none.
 
 Native files: none. Releases: an app OTA update.
@@ -29,3 +29,12 @@ Choosing a Restaurant draws a straight line that turns into the walking path a m
 - [x] A failed request and no path found draw the straight line.
 - [x] The comments and docs say a path is never stored beyond the running app's memory.
 - [x] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+Built in PR #577. A walk's query keeps its path for `WALK_KEPT_MS` once no scene draws it, and `useWalkPaths` also gives the lines still on their way, fetching with no answer yet, which `linesOn` and a shuttle leg's lines leave out until their paths come. ADR 0010 says only that Kakao's results may not be stored, for the walking table, and is unchanged; the READMEs and P15 ticket 56 now say a path is never stored beyond the running app's memory.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 25 minutes in one session, the first read of the fault included (an estimate).
+- Tokens: input 15,253,079 (cache reads 15,081,071, cache writes 171,854, uncached 154); output 49,724. One subagent, included.
