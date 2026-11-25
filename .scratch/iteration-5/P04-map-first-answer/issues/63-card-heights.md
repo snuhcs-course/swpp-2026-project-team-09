@@ -19,7 +19,7 @@ The user tried ticket 61's sheet on his phone:
 The boards `h1`, `hA`, `l1`, `lC`, `k1`, `k2`, and `k3` of the people-pick set are the look and the numbers.
 
 1. **One low height.** At low the sheet's top edge stands where the meal answer's does: the header, two lines of words, the main button's row, and the input. An answer without a main button gives that row's room to its words, so more lines show whole. The list of earlier questions stands at the same edge. No line of words shows cut in half at low: the room under the last whole line is covered in the sheet's colour, which fades as the card rises.
-2. **Three steps clearly apart.** Middle covers 60% of the screen (the status bar's top to the screen's bottom). High stays just under the time card. Every content has all three steps, a short one included (boards k1 and k3).
+2. **Three steps clearly apart.** Middle covers 60% of the screen (the status bar's top to the screen's bottom). High's top edge is one line for every answer and state: just under the place the folded time card takes, whether a time card stands there or not. Every content has all three steps, a short one included (boards k1 and k3).
 3. **A drag only changes the height or closes.** Whatever the sheet shows (an answer, the list of earlier questions, a restaurant's menu), the same steps work, and a drag down from low past the close point closes the answer. A screen reader's step down only lowers the card too.
    - The header is the same everywhere: the history chip, "＋ 새 대화", and ✕. The restaurant's menu gets the chip back.
    - The list of earlier questions keeps the card's step, scrolls with the card's content, and is left by the chip, by picking a row, or by back.
@@ -31,7 +31,7 @@ The boards `h1`, `hA`, `l1`, `lC`, `k1`, `k2`, and `k3` of the people-pick set a
 
 - [ ] At low, the meal, seat, study-area, route, and words-only answers and the list of earlier questions (2 and 8 rows) have one top edge, measured on the emulator.
 - [ ] No line of words shows cut in half at low.
-- [ ] Middle covers 60% of the screen; high stands under the time card.
+- [ ] Middle covers 60% of the screen; high stands at one line under the folded time card's place, with or without a time card.
 - [ ] With the list of earlier questions or a restaurant's menu open, a drag moves the card between its steps and closes it from low, and the list or the menu stays.
 - [ ] The restaurant's menu shows the history chip.
 - [ ] Tests cover the heights, the drag over the list and the menu, and the screen reader's steps.
@@ -45,7 +45,7 @@ Emulator (1080 × 2400 px, 914 dp, font scale 1.0, gesture navigation), the card
 
 - Low: 1644 px, the card covering 31.5% of the screen, for the meal, seat, study-area, route, and refusal answers, the list of earlier questions (3 and 8 rows), and a restaurant's menu.
 - Middle: 961 px, 60.0% (`MID_SHARE = 0.6`). Low to middle: 28.5 points of percentage.
-- High: under the time card as in ticket 61. At first every step but low ran only as far as a short content (the meal list stopped at 71.0%, the 8-row list at 72.6%, a restaurant's menu at 43%), so on the user's phone a picked restaurant's menu could not go high. Middle and high now stand at their shares for every content, as boards k1 and k3 draw them: the content at the top, room under it.
+- High: one line, just under the place the folded time card takes (see "High at one line" below). At first every step but low ran only as far as a short content (the meal list stopped at 71.0%, the 8-row list at 72.6%, a restaurant's menu at 43%), so on the user's phone a picked restaurant's menu could not go high. Middle and high now stand at their shares for every content, as boards k1 and k3 draw them: the content at the top, room under it.
 - Low is set by its contents, not by a share: the meal answer's footer (the navigation inset, the input 12 + 50, a gap of 8, the main row 50, 12 over them), the header, two lines of words, and the fade. A share would cut lines on a small screen or at a large font.
 
 Layers the sheet can carry, and what a drag does on each:
@@ -75,15 +75,13 @@ Known, on hold by the user's decision (2026-11-25): the band at low is measured 
 
 ### The render loop with people picking (2026-11-25 evening, commit `a43beb1e6`)
 
-The user's phone, on a preview merging PR 552 with this ticket: "＋ 같이" gave "Maximum update depth exceeded" at once. Opening picking lays the time card out again, and its reported height came back a fraction of a point different each time (its rows' fractional height taken from a height the phone rounds to its pixels: 112, then 111.79, then 111.71 on the emulator). With every step at its share, the sheet's place hung on that height at every step, so each report moved the sheet in render; on the phone it never settled. The time card's, the header's, and the content's measured heights now move the sheet only by half a point or more (`steady.ts`). Test: `frame-card-steady`. On PR 552's side, its own `onLayout` reports (`time-bar.tsx` subtracting the rows' height, `person-rows.tsx`) still set state on any fraction; guarding them the same way is theirs to decide.
+The user's phone, on a preview merging PR 552 with this ticket: "＋ 같이" gave "Maximum update depth exceeded" at once. Opening picking lays the time card out again, and its reported height came back a fraction of a point different each time (its rows' fractional height taken from a height the phone rounds to its pixels: 112, then 111.79, then 111.71 on the emulator). With every step at its share, the sheet's place hung on that height at every step, so each report moved the sheet in render; on the phone it never settled. The header's and the content's measured heights now move the sheet only by half a point or more (`steady.ts`), and since high stands at one line the time card's height no longer moves it at all. Tests: `frame-card-steady`, `answer-sheet-steady`.
 
-### High over the time card (2026-11-26, commit `4ffba01df`)
+### High at one line (2026-11-26, commit `8f3f8cab3`)
 
-The user's phone, on the preview merging PR 552 at `0285b1ce3` with this ticket at `068eb1c32`: "하단 카드 높게를 화면 전체로 수정했구나? 원래는 시간 바 밑까지였잖아". It happened once, after people picking with the sheet raised and lowered while new bundles were arriving over Metro. After reopening the app high stood under the time card again, and he could not bring it back on purpose. Not reproduced here: on the emulator the first meal answer told its folded time card at 115.8 points and high stood under it, and then the emulator's Android restarted itself under the Mac's load before the picking steps ran.
+The user's phone, on the preview merging PR 552 with this ticket, twice. First: "하단 카드 높게를 화면 전체로 수정했구나? 원래는 시간 바 밑까지였잖아", once, after people picking with the sheet raised and lowered while new bundles arrived over Metro; it did not come back on purpose. The cause, from the code: the time card told its folded height as its laid-out height less its rows' room as React held it, and the sheet rising to high under an open card shuts that room on the UI thread first, so a layout then told the folded height less the rows' room, below 0 while picking; nothing was laid out again after React folded the card. PR 552 fixed that where the height is told (`8c7709b59`). Second: "내일 저녁이라고 전송하고 로딩하는 동안에는 높게를 하면 화면 전체를 덮기는 하네": while an answer loaded, before its time card, high covered the whole screen. Not reproduced on the emulator: its Android restarted itself under the Mac's load before the picking steps ran.
 
-The cause, from the code: the time card told its folded height as its laid-out height less its rows' room as React held it (`time-bar.tsx`, since ticket 61). The sheet rising to high under an open card shuts the rows' room on the UI thread first (`sheet-link`). A layout then, with React still holding the card open, told the folded height less the rows' room: below 0 while picking, whose rows run to about 200 points. React folded the card, nothing was laid out again, and high rose to the stage's top until the card was next laid out. PR 552 fixed it where the height is told (`8c7709b59`: the band's bottom, the gap, and the grip's strip, each as laid out).
-
-Here, as a backstop, high measures only by a time card's height of at least its folded least, its head's row and its grip's strip (52 points), and keeps the last such height otherwise; 0 is still no time card (`card-caps.ts`). Test: `frame-card-high`, 3 of 4 fail before (a told −90 put high at 616, the whole stage, instead of 496).
+The user chose one fixed line. High's top edge now stands just under the place the folded time card takes, whatever is above: an answer loading, an answer without a time card (a route, the seats, words only), a tucked card, or any measured height; the sheet no longer hears the time card's height. The place comes from the time card's own layout (`foldedTimeCardOf`): its top padding 12, the head's row (the chips' 32 on 5.0/Main, 36 with PR 552), the lane 20, and the ends' row 16, 4 apart, then the grip's strip 20 under a gap of 4, with the head's and the ends' rows growing with the font: 112 points on 5.0/Main and 116 with PR 552, where the emulator measured the folded card at 115.8. Tests: `answer-sheet-high` (high while an answer loads is high under its time card; it fails before, 634 against 510), `frame-card-high` (the line at the usual and at a larger font).
 
 ### Agent usage (2026-11-25)
 
@@ -92,5 +90,5 @@ Here, as a backstop, high measures only by a time card's height of at least its 
 
 ### Agent usage (2026-11-26)
 
-- Agent time: about 70 minutes in this session (an estimate) on the high over the time card, its guard, and a fix for PR 552's file that its own commit `8c7709b59` made needless.
+- Agent time: about 70 minutes in this session (an estimate) on the high over the time card, high at one line, and a fix for PR 552's file that its own commit `8c7709b59` made needless.
 - Tokens (this session, no subagents, since 2026-11-26 00:00 KST): input 278 uncached, plus cache reads 29,031,023 and cache writes 256,391; output 106,099 (up to this entry).
