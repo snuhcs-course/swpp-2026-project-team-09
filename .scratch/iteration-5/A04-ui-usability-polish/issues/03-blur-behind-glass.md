@@ -6,6 +6,8 @@ Blocked by: 01 (the glass layer).
 
 Native files: `mobile/package.json` (a native dependency) and `mobile/app.json` (`version`), only if the blur works. Releases: a native Release.
 
+Outcome: Android does not blur, and iOS blurs with `expo-glass-effect`, already in the build. No native file changes and no native Release; see Comments.
+
 ## What happens now
 
 - The glass layer (ticket 01) is translucent without blur.
@@ -35,9 +37,9 @@ Native files: `mobile/package.json` (a native dependency) and `mobile/app.json` 
 
 ## Acceptance criteria
 
-- [ ] The emulator check's result and screenshots are in this ticket's Comments.
+- [x] The emulator check's result and screenshots are in this ticket's Comments.
 - [ ] If it works: the `panel` level blurs on Android and iOS, `version` is raised, CI's `app-fingerprint` passes, and the Release publishes the APK.
-- [ ] If it does not: no code change, and the user has decided about iOS.
+- [x] If it does not: no code change, and the user has decided about iOS. The user decided more than iOS: Android's panel turns denser and `inner` with it, a JavaScript change (Comments).
 
 ## Comments
 
@@ -68,7 +70,7 @@ What it showed:
   map draws on its own surface, so the blur adds no work and also never follows the map.
 
 What follows from the spec: Android keeps the translucent glass, and no code changes here. iOS, which blurs at
-compositing, waits for the user's decision.
+compositing, waits for the user's decision. (The user's decision below changed this: see it.)
 
 ### The user's decision (2026-11-26)
 
