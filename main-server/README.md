@@ -2401,9 +2401,14 @@ Anthropic API as the AI's key says
   for a Sub Quest. A meal's or a meet's Plan band also carries `others`, for picking people in the app's time card: one
   entry for each Friend of the asker who is not in the conditions, in the order of the asker's Friends. Each has `busy`,
   the Friend's busy stretches cut to the band's range and labelled as the lanes' are, at every location level, and
-  `walkMinutes`, the walk from the Place the Friend view puts them in to the Plan's place. `walkMinutes` is `null` when
-  the asker may not see where the Friend is, or when the walking table has no row for that Place. An app that does not
-  know `others` ignores it (`src/assistant/gathering/other-friends.ts`).
+  `walkMinutes`, the walk to the Plan's place from where the Friend sets out for it. That is found by the planner's rule
+  for a picked person (`originOf`), on the Friend's Free Time that holds the Plan's span, or for a Friend busy at its
+  start, the stretch they come free in: the Place of the item before it while that item keeps them until then, else
+  the Place the Friend view puts them in, else that of an item that ended at most 15 minutes before now. When it is an
+  item's Place, `after` says that item as a busy stretch's label (`83동 수업`, `수업`, `일정`), never its name; it
+  reveals no more than a picked person's lane and the words of where they set out from. `walkMinutes` is `null` when
+  neither is known, or when the walking table has no row for that Place. An app that does not know `others` or
+  `after` ignores them (`src/assistant/gathering/other-friends.ts`).
   A message that asks for two or more things ("16시에 관정 갔다가 19시쯤 저녁, 7층 예약하고 스케줄 짜줘")
   gets `steps` too, left out otherwise: each request in time order, a book card, a booking a library tool refused, or
   the answer, with its `kind`, `title`, `place`, `from`, `startAt`, `endAt`, `status` (`shown` or `not-done`),

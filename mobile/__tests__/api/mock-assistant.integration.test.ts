@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
@@ -114,14 +115,17 @@ describe('the mock of a recalculation', () => {
 });
 
 // Partitions: the Friends of a meal's band, with a place and without; one of them picked. Expected values: the mock's
-// Friends, 서지우 (f11) with no place, and 김민준 (f1) picked (P04 ticket 64).
+// Friends, 서지우 (f11) with no place, who walks from the building of the Class she sets out after (P04 ticket 68), and
+// 김민준 (f1) picked (P04 ticket 64).
 describe('the mock of the other Friends on a band', () => {
   it('adds the mock’s Friends not in the conditions, each with a walk or none', async () => {
     const reply = await answered(mockClient.askAssistant(HUNGRY, CONTEXT));
     const others = reply.answer?.plans[0]?.band.others ?? [];
+    const placeless = others.find(({ userId }) => userId === 'f11');
 
     expect(others.map(({ name }) => name)).toEqual(FRIENDS.map(({ name }) => name));
-    expect(others.find(({ userId }) => userId === 'f11')?.walkMinutes).toBeNull();
+    expect(placeless?.after).toMatch(/^[\d-]+동 수업$/u);
+    expect(placeless?.walkMinutes).toBeGreaterThan(0);
     expect(others.find(({ userId }) => userId === 'f1')?.walkMinutes).toBeGreaterThan(0);
   });
 

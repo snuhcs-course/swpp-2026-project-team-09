@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { PlanInput, TimeBand } from '@/api/assistant-types';
@@ -53,11 +54,13 @@ export function pickedLanes(band: TimeBand, picked: readonly string[]): BandLane
 
 // What keeps a Friend from the Plan's time: the first of their busy stretches over the span, when it starts and ends,
 // and what it is, from its lane's label ("일정" for a step of a Quest, "수업" or "302동 수업" for a Class); null for a
-// stretch with no label, as an older main server sends.
+// stretch with no label, as an older main server sends. A Class's label, which names its Place when it has one, is
+// kept for the row's words (P04 ticket 68).
 export interface BusyAtSpan {
   startAt: string;
   endAt: string;
   kind: 'class' | 'quest' | null;
+  label?: string;
 }
 
 export interface PickRow {
@@ -70,6 +73,8 @@ export interface PickRow {
   reason: string | null;
   // To the Plan's place; null where it is not known.
   walkMinutes: number | null;
+  // The item of their day the main server has them set out after, as "83동 수업"; null when it sent none.
+  after: string | null;
   // From the User's Friend list; null for one not in the list.
   department: string | null;
 }
@@ -97,13 +102,19 @@ export function busyAtSpanOf(busy: BandLane['busy'], span: Pick<TimeBand, 'start
   const [first] = busy
     .filter(({ startAt, endAt }) => msOf(startAt) < until && msOf(endAt) > from)
     .toSorted((one, other) => msOf(one.startAt) - msOf(other.startAt));
-  return first === undefined ? null : { startAt: first.startAt, endAt: first.endAt, kind: kindOf(first.label) };
+  if (first === undefined) {
+    return null;
+  }
+  const kind = kindOf(first.label);
+  const at = { startAt: first.startAt, endAt: first.endAt, kind };
+  return kind === 'class' && first.label !== undefined ? { ...at, label: first.label } : at;
 }
 
 // The reason a busy Friend's row gives (variant R3 of the boards): busy as the span starts, until when ("18:15까지
-// 수업"); else from when ("17:30부터 일정"). Anything but a Class is "일정", never its title.
-export function reasonOf({ startAt, endAt, kind }: BusyAtSpan, span: Pick<TimeBand, 'startAt'>): string {
-  const what = kind === 'class' ? '수업' : '일정';
+// 16동 수업"); else from when ("17:30부터 일정"). A Class names its Place when it has one, as its lane's label does
+// (P04 ticket 68); anything but a Class is "일정", never its title.
+export function reasonOf({ startAt, endAt, kind, label }: BusyAtSpan, span: Pick<TimeBand, 'startAt'>): string {
+  const what = kind === 'class' ? (label ?? '수업') : '일정';
   return msOf(startAt) <= msOf(span.startAt)
     ? `${clockAt(msOf(endAt))}까지 ${what}`
     : `${clockAt(msOf(startAt))}부터 ${what}`;
@@ -113,7 +124,11 @@ export function reasonOf({ startAt, endAt, kind }: BusyAtSpan, span: Pick<TimeBa
 // the combined bar on top is everyone's (the user's decision, 2026-11-25).
 export function pickRowsOf({ band, picked, walks, friends }: RowsSource): PickRow[] {
   const [me, ...people] = band.lanes;
-  const row = (userId: string, name: string, busy: BandLane['busy'] | null, walkMinutes: number | null): PickRow => {
+  const row = (
+    { userId, name, busy }: { userId: string; name: string; busy: BandLane['busy'] | null },
+    walkMinutes: number | null,
+    after: string | null = null,
+  ): PickRow => {
     const busyAtSpan = busy === null ? null : busyAtSpanOf(busy, band);
     return {
       userId,
@@ -122,20 +137,21 @@ export function pickRowsOf({ band, picked, walks, friends }: RowsSource): PickRo
       busyAtSpan,
       reason: busyAtSpan === null ? null : reasonOf(busyAtSpan, band),
       walkMinutes,
+      after,
       department: friends.find(({ id }) => id === userId)?.department ?? null,
     };
   };
   const walkOf = (userId: string): number | null =>
     walks.has(userId) ? (walks.get(userId) ?? null) : (friends.find(({ id }) => id === userId)?.walkMinutes ?? null);
   const lanes = [
-    ...people.map(({ userId, name, busy }) => row(userId, name, busy, walkOf(userId))),
-    ...(band.others ?? []).map(({ userId, name, busy, walkMinutes }) => row(userId, name, busy, walkMinutes)),
+    ...people.map((lane) => row(lane, walkOf(lane.userId))),
+    ...(band.others ?? []).map((other) => row(other, other.walkMinutes, other.after ?? null)),
   ];
   return [
     ...lanes,
     ...friends
       .filter(({ id }) => id !== me?.userId && !lanes.some(({ userId }) => userId === id))
-      .map(({ id, name, walkMinutes }) => row(id, name, null, walkMinutes)),
+      .map(({ id, name, walkMinutes }) => row({ userId: id, name, busy: null }, walkMinutes)),
   ];
 }
 
@@ -174,17 +190,20 @@ export function inOrder(rows: readonly PickRow[], order: readonly string[]): Pic
 }
 
 // A row's one word at its right (variant R3): the reason of a Friend busy over the span, else the walk to the Plan's
-// place, else that where the Friend is is not known, which reads quieter.
-export function pickStateOf({ reason, walkMinutes }: Pick<PickRow, 'reason' | 'walkMinutes'>): {
+// place, after the item it starts from when the main server names one ("83동 수업 뒤 · 걸음 3분", P04 ticket 68), else
+// that where the Friend is is not known, which reads quieter.
+export function pickStateOf({ reason, walkMinutes, after }: Pick<PickRow, 'reason' | 'walkMinutes' | 'after'>): {
   words: string;
   quiet: boolean;
 } {
   if (reason !== null) {
     return { words: reason, quiet: false };
   }
-  return walkMinutes === null
-    ? { words: '위치 모름', quiet: true }
-    : { words: `걸음 ${String(walkMinutes)}분`, quiet: false };
+  if (walkMinutes === null) {
+    return { words: '위치 모름', quiet: true };
+  }
+  const walk = `걸음 ${String(walkMinutes)}분`;
+  return { words: after === null ? walk : `${after} 뒤 · ${walk}`, quiet: false };
 }
 
 // The button that ends picking: "완료", or "닫기" with no Friend to pick. It names no count (the user's phone,

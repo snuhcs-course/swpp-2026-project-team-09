@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -131,7 +132,9 @@ function PickLine({ row, onPick }: { row: PickRow; onPick: Picking['onPick'] }):
       <Text numberOfLines={1} style={[styles.department, quiet && styles.quietWords]}>
         {department ?? ''}
       </Text>
-      <Text style={[styles.state, state.quiet && styles.quietWords]}>{state.words}</Text>
+      <Text numberOfLines={1} style={[styles.state, state.quiet && styles.quietWords]}>
+        {state.words}
+      </Text>
     </Pressable>
   );
 }

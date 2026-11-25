@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MealInput, TimeBand } from '@/api/assistant-types';
@@ -174,12 +175,12 @@ function minsuRowOf(walks: ReadonlyMap<string, number | null>): PickRow | undefi
 // an item with no label. Expected values: the boards' words of variant R3.
 describe('the words at a row’s right while picking', () => {
   it('says one thing at the right: why a Friend is busy, else the walk, else, quieter, that where they are is unknown', () => {
-    expect(pickStateOf({ reason: '18:15까지 수업', walkMinutes: null })).toEqual({
+    expect(pickStateOf({ reason: '18:15까지 수업', walkMinutes: null, after: null })).toEqual({
       words: '18:15까지 수업',
       quiet: false,
     });
-    expect(pickStateOf({ reason: null, walkMinutes: 9 })).toEqual({ words: '걸음 9분', quiet: false });
-    expect(pickStateOf({ reason: null, walkMinutes: null })).toEqual({ words: '위치 모름', quiet: true });
+    expect(pickStateOf({ reason: null, walkMinutes: 9, after: null })).toEqual({ words: '걸음 9분', quiet: false });
+    expect(pickStateOf({ reason: null, walkMinutes: null, after: null })).toEqual({ words: '위치 모름', quiet: true });
   });
 
   it('gives a busy Friend’s reason by when it ends if it holds the span’s start, else by when it starts, as 수업 or 일정', () => {
