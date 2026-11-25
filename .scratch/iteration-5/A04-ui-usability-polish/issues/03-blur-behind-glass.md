@@ -1,7 +1,7 @@
 # 03: Blur behind the glass, and a native Release if it works
 
 Parent: [A04 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: 01 (the glass layer).
 
 Native files: `mobile/package.json` (a native dependency) and `mobile/app.json` (`version`), only if the blur works. Releases: a native Release.
@@ -85,3 +85,13 @@ compositing, waits for the user's decision. (The user's decision below changed t
 - The iOS look is checked by the user on an iPhone, as this Mac checks only the Android emulator.
 - With the unblurred panel at 80%, the `inner` level (chips and boxes inside a panel), also 80%, no longer stood
   out on it. The user raised `inner` to 90%.
+
+### Agent usage (2026-11-26)
+
+Estimates: agent time is the gaps under 5 minutes between transcript entries, summed, so waiting for a person, for the heavy-job lock another ticket's session held, or for CI is left out. The two subagents are the code review's Standards and Spec reviewers. Counted up to the approval of PR #571.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Ticket 03 (the emulator check with `expo-blur`, the iPhone builds for choosing the values, `Glass` and its tokens, the README and spec, the code review, the emulator screenshot, the pull request), with its two subagents | about 66 minutes | 31,249,275 | 30,897,230 | 351,615 | 430 | 111,091 |
+
+Without cache reads, the input is 352,045.
