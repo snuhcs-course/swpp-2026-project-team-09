@@ -35,5 +35,5 @@ Built in PR #575. The main server sends the count as the Plan menu's `others`, f
 
 ### Agent usage (2026-11-26)
 
-- Agent time: about 41 minutes in one session, test runs included (an estimate).
-- Tokens: input 86,276,235 (cache reads 86,010,814, cache writes 265,109, uncached 312); output 95,502. No subagents.
+- Agent time: about 47 minutes in one session, test runs and the emulator picture included (an estimate).
+- Tokens: input 100,756,763 (cache reads 100,425,625, cache writes 330,728, uncached 410); output 113,576. No subagents.
