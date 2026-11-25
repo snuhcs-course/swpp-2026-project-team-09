@@ -52,6 +52,21 @@ describe('the time card after picking', () => {
     expect(placeAfterPicking(before)).toBe(after);
   });
 
+  // The card comes back with picking on after the keyboard took it away a while: it opens again.
+  it('opens when it comes back with picking already on, and goes back to where it then stood', async () => {
+    const settled = jest.fn<void, [GripPlace]>();
+    const { rerender } = await renderHook(
+      ({ picking, place }: Props) => {
+        usePickingPlace(picking, { place, settleTo: settled });
+      },
+      { initialProps: { picking: true, place: 'shown' as GripPlace } },
+    );
+
+    await rerender({ picking: false, place: 'open' });
+
+    expect(settled.mock.calls).toEqual([['open'], ['shown']]);
+  });
+
   it('is left alone while nobody picks', async () => {
     const held = await heldFrom('shown');
 

@@ -181,6 +181,21 @@ describe('완료 with Friends checked', () => {
     expect(mapThings()).toEqual(expect.arrayContaining([THREE_PICK, '민수 · 18분', '지은 · 5분']));
   });
 
+  // The user's phone (2026-11-25): a card folded before "＋ 같이" stayed open after 완료.
+  it('folds the card again after 완료 when it was folded before "＋ 같이"', async () => {
+    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_THREE });
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    expect(screen.getByTestId('time-card-grip')).toHaveProp('accessibilityLabel', '사람별 시간 펼치기');
+    await user.press(timeBar().getByRole('button', { name: ADD }));
+    expect(screen.getByTestId('time-card-grip')).toHaveProp('accessibilityLabel', '사람별 시간 접기');
+
+    await user.press(pickRow(MIN_JUN.name));
+    await user.press(pickDone());
+    await pass(500);
+
+    expect(screen.getByTestId('time-card-grip')).toHaveProp('accessibilityLabel', '사람별 시간 펼치기');
+  });
+
   it("asks the same for a Friend's Avatar pressed on the map", async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_THREE });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);

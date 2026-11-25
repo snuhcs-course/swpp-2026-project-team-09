@@ -208,3 +208,24 @@ describe('Friends picked in a meet', () => {
     expect(friendCard().getByRole('header', { name: MIN_SU.name })).toBeVisible();
   });
 });
+
+// Partitions: a meet of two Friends with both unchecked at 완료.
+describe('a meet left with no Friend picked', () => {
+  // From PR 552's review: with two Friends unchecked the meet asked the main server for a meet of one, which it
+  // refuses (400).
+  it("closes the answer and brings back 민수's card when both of two Friends are unchecked, asking nothing more", async () => {
+    server.on('POST /assistant/answers', { status: 200, body: MET_BOTH });
+    const user = await meetMinSu();
+    await user.press(timeBar().getByRole('button', { name: ADD }));
+
+    await user.press(pickRow('민수'));
+    await user.press(pickRow(MIN_JUN.name));
+    expect(pickDone()).toHaveTextContent(/^완료$/u);
+    await user.press(pickDone());
+    await pass(500);
+
+    expect(recalculations(server)).toHaveLength(1);
+    expect(screen.queryByTestId('answer-caption')).toBeNull();
+    expect(friendCard().getByRole('header', { name: MIN_SU.name })).toBeVisible();
+  });
+});
