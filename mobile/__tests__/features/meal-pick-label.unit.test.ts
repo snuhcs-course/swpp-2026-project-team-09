@@ -19,7 +19,7 @@ if (first === undefined) {
   throw new Error('The stored answer has Plans');
 }
 
-function withMenu(menu: Plan['menu']): Plan {
+function withMenu(menu?: Plan['menu']): Plan {
   const { menu: _left, ...rest } = first;
   return menu === undefined ? rest : { ...rest, menu };
 }
@@ -51,7 +51,7 @@ describe("the chosen place's label", () => {
   });
 
   it('has no second line without a menu', () => {
-    expect(mealPickLabel(withMenu(undefined), '예술계식당', null).line).toBeNull();
+    expect(mealPickLabel(withMenu(), '예술계식당', null).line).toBeNull();
   });
 
   it("keeps the menu's own words from a main server without the count", () => {
