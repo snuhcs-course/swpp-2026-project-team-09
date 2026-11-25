@@ -25,12 +25,23 @@ The main server sends, with a meal's or a meet's Plan band, the lanes of the ask
 
 ## Acceptance criteria
 
-- [ ] Picking several Friends asks once, at 완료, with all of them; leaving asks nothing.
-- [ ] The rows are ordered checked, nearest, unknown last, and scroll past four and a half.
-- [ ] The combined bar follows each check before 완료.
-- [ ] The bottom card keeps its input and the answer while picking; no pills, no "그대로".
-- [ ] A face on the map checks the same row.
-- [ ] The main server's `others` are covered by tests, and the app works without them.
-- [ ] No native file changes; lint, format, and types pass on the app and the main server.
+- [x] Picking several Friends asks once, at 완료, with all of them; leaving asks nothing.
+- [x] The rows are ordered checked, nearest, unknown last, and scroll past four and a half.
+- [x] The combined bar follows each check before 완료.
+- [x] The bottom card keeps its input and the answer while picking; no pills, no "그대로".
+- [x] A face on the map checks the same row.
+- [x] The main server's `others` are covered by tests, and the app works without them.
+- [x] No native file changes; lint, format, and types pass on the app and the main server.
 
 ## Comments
+
+Built in PR #552 (marked ready 2026-11-25). The emulator pictures are in the PR body.
+
+### Agent usage (2026-11-25)
+
+- Agent time: about 2 hours 10 minutes in all, an estimate from the transcripts' timestamps.
+  - About 1 hour 20 minutes in the map-first-answer side session.
+  - About 50 minutes in its three subagents, partly in parallel with it: a review of the main server's `others`, the main server's `others`, and the rewrite of the old flow's tests.
+- Tokens, the session and its subagents together:
+  - Output: about 409k.
+  - Input: about 1k uncached, plus 197M cache reads and 1.2M cache writes.
