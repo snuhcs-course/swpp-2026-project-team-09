@@ -96,12 +96,13 @@ function noneState(args: Omit<MenuArgs, 'answer'>, reason: NoMenuReason): string
   return dishesLine(args, dishes);
 }
 
-// Why the Restaurant cannot be done, in a few words for the head of its menu: closed by its menu's notice ("오늘
-// 휴점"), the meal not served, no time to eat there, the meal over, or its menu not posted.
+// Why the Restaurant cannot be done, in a few words for the head of its menu: closed by its menu's notice, in the
+// notice's own words as the meal list's "쉬는 곳" names it (P04 ticket 71: "공대수시면접으로 인해 휴점합니다"), the meal
+// not served, no time to eat there, the meal over, or its menu not posted.
 export function whyOf({ date, meal, now, lines }: Omit<MenuArgs, 'answer' | 'key'>, reason: NoMenuReason): string {
-  const day = dayOf(date, now);
   if (reason === 'closed') {
-    return closureNotices(lines).length > 0 ? `${day} 휴점` : `${day} ${withTopic(mealWord(meal))} 안 해요`;
+    const notices = closureNotices(lines);
+    return notices.length > 0 ? notices.join(' ') : `${dayOf(date, now)} ${withTopic(mealWord(meal))} 안 해요`;
   }
   if (reason === 'no-time') {
     return mealWindow(date, meal).end <= now ? `${mealWord(meal)} 시간이 지났어요` : '시간이 안 맞아요';

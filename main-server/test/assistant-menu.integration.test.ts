@@ -175,7 +175,7 @@ describe('A Restaurant with nothing to eat at that meal', () => {
     });
     const lookup = lookupIn(response.body);
     expect(lookup.scene.flags).toMatchObject([{ text: '301동식당 · 오늘 점심은 안 해요' }]);
-    expect(lookup).toMatchObject({ lines: [], basis: [], menuView: { why: '오늘 휴점' } });
+    expect(lookup).toMatchObject({ lines: [], basis: [], menuView: { why: '※ 개교기념일 휴무' } });
   });
 });
 

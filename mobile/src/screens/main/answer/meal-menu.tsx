@@ -223,7 +223,7 @@ export function MealMenu({ answer, plan, shown }: MealMenuProps): ReactElement {
 const NO_CORNERS: readonly MenuCorner[] = [];
 
 // A menu question's Restaurant that cannot be done now (P04 ticket 72): the view of a place opened from a meal answer's
-// list, with why in its head in place of its time ("오늘 휴점", "시간이 안 맞아요"), no number, no way back to a list,
+// list, with why in its head in place of its time (a closure's own words, "시간이 안 맞아요"), no number, no way back to a list,
 // and no button.
 export function MenuViewCard({ view }: { view: MenuView }): ReactElement {
   return (

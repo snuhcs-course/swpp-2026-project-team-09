@@ -60,7 +60,7 @@ export interface MenuView {
   restaurant: string;
   date: string;
   meal: 'lunch' | 'dinner';
-  // Why it cannot be done, in a few words: "오늘 휴점", "시간이 안 맞아요".
+  // Why it cannot be done, in a few words: a closure's own words ("공대수시면접으로 인해 휴점합니다"), "시간이 안 맞아요".
   why: string;
 }
 

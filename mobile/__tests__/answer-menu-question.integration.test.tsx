@@ -65,7 +65,7 @@ describe('a menu question', () => {
 
     const view = within(screen.getByTestId('menu-view'));
     expect(view.getByText('학생회관식당')).toBeOnTheScreen();
-    expect(view.getByText('10/3(토) 휴점')).toBeOnTheScreen();
+    expect(view.getByText('개천절 휴무')).toBeOnTheScreen();
     expect(card().getByText('학생회관식당은 10/3(토) 점심에 휴점이에요.')).toBeOnTheScreen();
     expect(card().queryByText('근거')).toBeNull();
     expect(screen.queryByTestId('meal-menu-back')).toBeNull();

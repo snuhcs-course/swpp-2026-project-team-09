@@ -82,7 +82,7 @@ describe('menuNoneLookup', () => {
     const lookup = menuNoneLookup({ ...ARGS, lines: [note('※ 개교기념일 휴무')] }, 'closed', PLACE);
 
     expect(lookup.scene).toEqual(sceneSaying('내일(수) 점심은 안 해요'));
-    expect(lookup.menuView?.why).toBe('내일(수) 휴점');
+    expect(lookup.menuView?.why).toBe('※ 개교기념일 휴무');
   });
 });
 
@@ -107,14 +107,14 @@ describe('menuNoneLookup with no time to eat there', () => {
 
 // P04 ticket 65: a closure the worker gives no kind.
 describe('menuNoneLookup of a meal its menu closes', () => {
-  it('says 휴점 for a closure written without ※ or 휴무, and that the meal is not served for notes that say none', () => {
+  it("says a closure's own words, as the meal list's 쉬는 곳 does, and that the meal is not served for notes that say none", () => {
     const closed = {
       ...ARGS,
       lines: [{ text: '공대수시면접으로 인해 휴점합니다', kind: null, name: null, price: null }],
     };
     const notesOnly = { ...ARGS, lines: [note('※ 저녁 단체예약문의: 02-880-7889')] };
 
-    expect(menuNoneLookup(closed, 'closed', PLACE).menuView?.why).toBe('내일(수) 휴점');
+    expect(menuNoneLookup(closed, 'closed', PLACE).menuView?.why).toBe('공대수시면접으로 인해 휴점합니다');
     expect(menuNoneLookup(notesOnly, 'closed', PLACE).menuView?.why).toBe('내일(수) 점심은 안 해요');
   });
 });

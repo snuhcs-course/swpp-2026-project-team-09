@@ -58,7 +58,7 @@ export const MENU_CLOSED_LOOKUP: Lookup = {
   band: null,
   actions: [{ kind: 'guide', to: { ...STUDENT_CENTRE, ...STUDENT_CENTRE_AT } }],
   fact: true,
-  menuView: { restaurant: '학생회관식당', date: '2026-10-03', meal: 'lunch', why: '10/3(토) 휴점' },
+  menuView: { restaurant: '학생회관식당', date: '2026-10-03', meal: 'lunch', why: '개천절 휴무' },
 };
 
 export const MENU_CLOSED_REPLY: AssistantReply & { lookup: Lookup } = {

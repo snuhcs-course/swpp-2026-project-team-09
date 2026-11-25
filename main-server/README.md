@@ -2695,7 +2695,7 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       Restaurant's day was not collected, `오늘 저녁 메뉴 없음` when the day was collected with another meal but not this
       one (reason `no-meal`), `내일(수) 점심은 안 해요` when its menu closes the meal (P04 ticket 65), or its dishes when
       the User has no time to eat there (P04 tickets 59 and 60). Its `menuView` has the app show the Restaurant's menu
-      with why in a few words (`오늘 휴점`, `시간이 안 맞아요`, `메뉴가 아직 안 올라왔어요`), with no chips, lines, or
+      with why in a few words (a closure's own words, as the meal list's 쉬는 곳 gives them, `시간이 안 맞아요`, `메뉴가 아직 안 올라왔어요`), with no chips, lines, or
       basis, and the model says why in one short sentence. A menu not posted today is never said to come "up to six
       days ahead".
     - `findWay(to?, from?, by?)`, with `WAY_RULES`, for an app that sends `answer` (`lookup/`). It finds the way on foot
