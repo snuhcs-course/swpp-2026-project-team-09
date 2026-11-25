@@ -10,14 +10,15 @@ import type { ReactElement } from 'react';
 import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { cardStyles, color, radius, space, SwitchRow, text } from '@/design-system';
 import { setSending, useSending } from '@/telemetry';
+import { ERROR_REPORTS_PART } from '../legal-documents';
 
 // What an error report holds, under the switch.
 export const ERROR_REPORTS_CAPTION =
   '앱에 오류가 나면 그때까지 본 화면, 앱·휴대폰의 버전, 계정 번호를 보내요. 이름과 위치는 보내지 않아요.';
 
 // "오류 보고 보내기" (P08 ticket 03): whether the phone sends error reports, on at first. The choice is the phone's, so
-// it holds across sign-outs; off stops the sending at once. The link opens the privacy policy, whose part on error
-// reports P08 ticket 05 writes.
+// it holds across sign-outs; off stops the sending at once. The link opens the privacy policy at its part on error
+// reports.
 export function ErrorReportsRow(): ReactElement {
   const on = useSending();
   return (
@@ -34,7 +35,7 @@ export function ErrorReportsRow(): ReactElement {
         accessibilityRole="link"
         hitSlop={space[2]}
         onPress={() => {
-          router.navigate({ pathname: '/legal/[document]', params: { document: 'privacy' } });
+          router.navigate({ pathname: '/legal/[document]', params: { document: 'privacy', part: ERROR_REPORTS_PART } });
         }}
         style={({ pressed }): StyleProp<ViewStyle> => [styles.link, pressed && styles.linkPressed]}
       >

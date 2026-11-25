@@ -3,10 +3,11 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import type { ReactElement } from 'react';
+import { type ReactElement, useRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, font, Icon, size, space, text } from '@/design-system';
@@ -21,11 +22,30 @@ function close(): void {
   }
 }
 
-function Sections({ sections, bottom }: { sections: readonly LegalSection[]; bottom: number }): ReactElement {
+interface SectionsProps {
+  sections: readonly LegalSection[];
+  bottom: number;
+  // The part to open at, which is scrolled to once it is laid out. Unknown or absent, the document opens at its top.
+  part: string | undefined;
+}
+
+function Sections({ sections, bottom, part }: SectionsProps): ReactElement {
+  const scroll = useRef<ScrollView>(null);
   return (
-    <ScrollView contentContainerStyle={[styles.text, { paddingBottom: space[6] + bottom }]}>
-      {sections.map(({ heading, paragraphs }) => (
-        <View key={heading} style={styles.section}>
+    <ScrollView contentContainerStyle={[styles.text, { paddingBottom: space[6] + bottom }]} ref={scroll}>
+      {sections.map(({ heading, paragraphs, part: name }) => (
+        <View
+          key={heading}
+          onLayout={
+            name !== undefined && name === part
+              ? (event): void => {
+                  scroll.current?.scrollTo({ y: event.nativeEvent.layout.y, animated: false });
+                }
+              : undefined
+          }
+          style={styles.section}
+          testID={name === undefined ? undefined : `legal-part-${name}`}
+        >
           <Text accessibilityRole="header" style={styles.heading}>
             {heading}
           </Text>
@@ -40,8 +60,9 @@ function Sections({ sections, bottom }: { sections: readonly LegalSection[]; bot
   );
 }
 
-// One legal document on a screen of its own, read before signing in. What is not written yet is a placeholder.
-export function LegalScreen({ document }: { document: LegalDocument }): ReactElement {
+// One legal document on a screen of its own, read before signing in, opened at its top or at one of its parts. What is
+// not written yet is a placeholder.
+export function LegalScreen({ document, part }: { document: LegalDocument; part?: string }): ReactElement {
   const insets = useSafeAreaInsets();
   const title = LEGAL_DOCUMENTS[document];
   const sections = LEGAL_TEXTS[document];
@@ -60,7 +81,7 @@ export function LegalScreen({ document }: { document: LegalDocument }): ReactEle
           <Text style={styles.placeholder}>{`(${title} 내용이 들어갈 것)`}</Text>
         </View>
       ) : (
-        <Sections bottom={insets.bottom} sections={sections} />
+        <Sections bottom={insets.bottom} part={part} sections={sections} />
       )}
     </View>
   );

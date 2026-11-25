@@ -6,6 +6,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fireEvent, render, screen, type userEvent } from '@testing-library/react-native';
+import { ScrollView } from 'react-native';
 import type { ReactElement } from 'react';
 import { pass } from '../support/app';
 import { givePhone, ON_CAMPUS, openMain } from '../support/main';
@@ -95,8 +96,9 @@ async function nextStart(): Promise<FakeSentry> {
   return loaded.sentry;
 }
 
-it('is on at first, says what a report holds, and opens the privacy policy', async () => {
+it('is on at first, says what a report holds, and opens the privacy policy at its part on error reports', async () => {
   const user = await openMe();
+  const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
 
   expect(screen.getByRole('switch', { name: SWITCH })).toBeChecked();
   expect(screen.getByText(ERROR_REPORTS_CAPTION)).toBeVisible();
@@ -104,6 +106,13 @@ it('is on at first, says what a report holds, and opens the privacy policy', asy
   await pass(500);
 
   expect(screen.getByRole('header', { name: '개인정보 처리방침' })).toBeVisible();
+  expect(screen.getByRole('header', { name: '오류 보고' })).toBeVisible();
+  scrollTo.mockClear();
+  await fireEvent(screen.getByTestId('legal-part-error-reports'), 'layout', {
+    nativeEvent: { layout: { x: 0, y: 640, width: 390, height: 300 } },
+  });
+  expect(scrollTo).toHaveBeenLastCalledWith({ y: 640, animated: false });
+  scrollTo.mockRestore();
 });
 
 it('reports no test error once turned off, and closes Sentry', async () => {
