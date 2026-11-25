@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -204,7 +205,7 @@ describe('전체 파티', () => {
   it('opens at 일반, the boards, beside 공식', async () => {
     const user = await openAt('/party');
 
-    await user.press(screen.getByRole('button', { name: '전체 보기' }));
+    await user.press(screen.getByRole('button', { name: '전체 게시판' }));
     await pass(500);
 
     expect(screen.getByRole('tab', { name: '일반' })).toBeSelected();
