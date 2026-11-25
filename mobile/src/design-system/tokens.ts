@@ -12,6 +12,7 @@
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -115,9 +116,14 @@ export const halo = {
 // rest: the shadows, the map chip's rim, and `line`, the thin light line along a surface's top. Only `Glass`
 // (glass.tsx) reads them: a screen names a level and never these values.
 export const glass = {
-  // Outer bars, bottom sheets and cards over the map: white at 50%, the line, and the board's floating shadow, between
-  // `shadow.float` and `shadow.mapCard`.
-  panel: { ground: 'rgba(255, 255, 255, 0.5)', shadow: '0 4px 16px rgba(14, 19, 48, 0.16)' },
+  // Outer bars, bottom sheets and cards over the map: white at 50% over a blur, the line, and the board's floating
+  // shadow, between `shadow.float` and `shadow.mapCard`. Where nothing blurs (Android, which cannot blur the Kakao map,
+  // and iOS before 26), white at 75% instead, so that words on it never run into the map's lines (A04-03).
+  panel: {
+    ground: 'rgba(255, 255, 255, 0.75)',
+    overBlur: 'rgba(255, 255, 255, 0.5)',
+    shadow: '0 4px 16px rgba(14, 19, 48, 0.16)',
+  },
   // Chips, boxes, white buttons and light coloured chips inside a panel: white at 80%.
   inner: { ground: 'rgba(255, 255, 255, 0.8)' },
   // A grey input field inside a panel: the key colour at 5%.
