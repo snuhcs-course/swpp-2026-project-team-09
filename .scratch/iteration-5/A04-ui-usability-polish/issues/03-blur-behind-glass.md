@@ -40,3 +40,43 @@ Native files: `mobile/package.json` (a native dependency) and `mobile/app.json` 
 - [ ] If it does not: no code change, and the user has decided about iOS.
 
 ## Comments
+
+### The emulator check (2026-11-26)
+
+Android does not blur the map. The panel shows the map sharp through its 50% white, the same as the glass without
+blur. It is never blank or black, and panning stays smooth.
+
+How it was checked:
+
+- A local debug build of `5.0/A04-03-blur` (on 01's `5.0/A04-01-glass-layer`, 7772b569) with `expo-blur` 57.0.3,
+  the version `npx expo install` gives for Expo 57, on the `Medium_Phone` emulator (Android 16, API 36), mock data.
+- Android's `expo-blur` needs the views it blurs wrapped in a `BlurTargetView` and that view's ref passed as
+  `blurTarget`; `blurMethod` was `dimezisBlurViewSdk31Plus`, `intensity` 40, `tint` light.
+- For the check only, not committed: the map in `Map` wrapped in a `BlurTargetView`, and two `panel` glasses over it,
+  one with a `BlurView` inside and one without.
+- As a control, a row of coloured React Native stripes was put inside the same `BlurTargetView`, over the map.
+
+What it showed:
+
+- Under the blurred panel the React Native stripes are blurred, so the blur itself works. The map's roads and names
+  under the same panel stay sharp ([map and stripes](../references/after/03-map-and-rn-under-blur.jpg),
+  [map alone](../references/after/03-map-under-blur.jpg)).
+- The reason: the Kakao `MapView` draws in a `KGLSurfaceView`, a `SurfaceView`. Its pixels are on a surface of their
+  own, behind the window, and the blur library redraws only the views of the window, where the map is a transparent
+  hole. The blur therefore holds no map, and the panel's own white is all that covers it.
+- Panning: the map moves as before. While it was panned the app's UI drew no frames (`dumpsys gfxinfo`), because the
+  map draws on its own surface, so the blur adds no work and also never follows the map.
+
+What follows from the spec: Android keeps the translucent glass, and no code changes here. iOS, which blurs at
+compositing, waits for the user's decision.
+
+### The user's decision (2026-11-26)
+
+- Android: no blur. The panel's white goes from 50% to 75%, so that words on it never run into the map's lines.
+- iOS: the panel blurs with `GlassView` from `expo-glass-effect`, the system's Liquid Glass, on iOS 26 and later. Its
+  white at 50% lies over the blur, so the panel is as milky as the board's (`blur(16px) saturate(1.8)` under white at
+  50%); how strongly it blurs is Apple's. Before iOS 26 it is the Android panel.
+- `expo-glass-effect` is already in the native build, left by 01, so this is a JavaScript change: no `version` raise
+  and no native Release. `expo-blur` is not added.
+- No call site changes: the choice is made inside `Glass`.
+- The iOS look is checked by the user on an iPhone, as this Mac checks only the Android emulator.
