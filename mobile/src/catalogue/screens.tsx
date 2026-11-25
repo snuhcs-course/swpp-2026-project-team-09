@@ -7,6 +7,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -26,9 +27,9 @@ import {
   IconButton,
   ListRow,
   LoadingState,
+  QuestRound,
   questTone,
   radius,
-  RoundIcon,
   SearchField,
   SectionHeader,
   SegmentedTabs,
@@ -178,10 +179,10 @@ export function ListRows(): ReactElement {
         />
         <SectionHeader>오늘 · 10월 1일 (목)</SectionHeader>
         <ListRow
-          kicker={{ words: '강의', color: questTone.class }}
+          kicker={{ words: '강의', color: questTone.class.kicker }}
           label="강의 · 자료구조 · 301동 118호 · 14:00"
           large
-          leading={<RoundIcon fill={questTone.class} icon="clock" ink={color.onPrimary} />}
+          leading={<QuestRound tone="class" />}
           lines={['301동 118호']}
           onPress={showNotReady}
           title="자료구조"

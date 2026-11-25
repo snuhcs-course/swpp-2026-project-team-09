@@ -7,33 +7,21 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 import { Avatar, type PresenceStatus } from './avatar';
+import { Glass } from './glass';
 import { Icon, type IconName } from './icon';
-import { color, font, halo, radius, shadow, size as sizes, text } from './tokens';
+import { type MapPlaceKind, placeKindLook } from './map-kinds';
+import { MapRestaurant, MapStudyPin } from './map-service-pin';
+import { MapCount, MapTag } from './map-tag';
+import { color, halo, radius, shadow, text } from './tokens';
 
-export type MapPlaceKind = 'official' | 'private' | 'party' | 'quest' | 'dining' | 'library' | 'shuttle';
+export { type MapPlaceKind, placeKindLook } from './map-kinds';
 export type MapPinKind = MapPlaceKind | 'me' | 'friend';
-
-// The kind decides the colour and the icon, so that pins stay apart without colour. `name` is what a screen reader
-// says for a pin without a label.
-const CATEGORIES: Record<MapPlaceKind, { fill: string; icon: IconName; service: boolean; name: string }> = {
-  official: { fill: color.snuBlue, icon: 'calendar', service: false, name: '공식 행사' },
-  private: { fill: color.private, icon: 'lock', service: false, name: '내 일정' },
-  party: { fill: color.party, icon: 'users', service: false, name: '파티' },
-  quest: { fill: color.quest, icon: 'flag', service: false, name: '퀘스트' },
-  dining: { fill: color.svcDining, icon: 'meal', service: true, name: '식당' },
-  library: { fill: color.svcStudy, icon: 'book', service: true, name: '공부공간' },
-  shuttle: { fill: color.svcShuttle, icon: 'bus', service: true, name: '셔틀버스' },
-};
-
-// A kind's colour, icon and name, for a view that draws several kinds together.
-export function placeKindLook(kind: MapPlaceKind): { fill: string; icon: IconName; name: string } {
-  return CATEGORIES[kind];
-}
 
 interface MePinProps {
   kind: 'me';
@@ -52,7 +40,7 @@ interface FriendPinProps {
 
 interface CategoryPinProps {
   kind: MapPlaceKind;
-  // Short, 8 characters at most, shown in a white pill under the pin.
+  // Short, 8 characters at most: a tag's name beside its icon, from the map's "names" level.
   label?: string;
   // People who joined, or events clustered here.
   count?: number;
@@ -66,52 +54,52 @@ interface CategoryPinProps {
 
 type MapPinProps = MePinProps | FriendPinProps | CategoryPinProps;
 
+// The name under a Friend's pin, on glass.
 function Label({ children }: { children: string }): ReactElement {
   return (
-    <View style={styles.label}>
+    <Glass level="mapChip" style={styles.label}>
       <Text style={styles.labelText}>{children}</Text>
-    </View>
+    </Glass>
   );
 }
 
-function CategoryPin({
-  kind,
-  label,
-  count = 0,
-  selected = false,
-  icon,
-  filled = false,
-  muted = false,
-}: CategoryPinProps): ReactElement {
-  const { fill: kindFill, icon: kindIcon, service, name } = CATEGORIES[kind];
-  const fill = muted ? color.inkSubtle : kindFill;
-  const spoken = count > 0 ? `${label ?? name} ${count}` : (label ?? name);
+// The shuttle's pin, a vehicle: a rounded square in its colour, with its icon in white and a white border.
+function ShuttlePin({ count = 0, selected = false, label }: Omit<CategoryPinProps, 'kind'>): ReactElement {
+  const { fill, icon, name } = placeKindLook('shuttle');
   return (
     <View
-      accessibilityLabel={spoken}
+      accessibilityLabel={label ?? name}
       accessibilityRole="image"
       accessibilityState={{ selected }}
       accessible
-      style={[styles.pin, muted && styles.muted]}
+      style={styles.pin}
     >
-      <View
-        style={[styles.head, service && styles.serviceHead, { backgroundColor: fill }, selected && styles.selectedHead]}
-      >
-        <Icon color={color.onPrimary} filled={filled} name={icon ?? kindIcon} size={18} />
-        {count > 0 ? (
-          <View style={styles.count}>
-            <Text style={styles.countText}>{count}</Text>
-          </View>
-        ) : null}
+      <View style={[styles.head, { backgroundColor: fill }, selected && styles.selectedHead]}>
+        <Icon color={color.onPrimary} name={icon} size={18} />
+        <MapCount count={count} />
       </View>
       <View style={[styles.tail, { backgroundColor: fill }]} />
-      {label === undefined ? null : <Label>{label}</Label>}
     </View>
   );
 }
 
-// A marker over the map. `me` is the only use of the `me` colour. A Friend is an Avatar with the friend ring. A
-// campus service's pin is a smaller rounded square, so that the round social pins stay dominant.
+function CategoryPin({ muted, ...props }: CategoryPinProps): ReactElement {
+  const { kind, selected, label } = props;
+  if (kind === 'dining') {
+    return <MapRestaurant selected={selected} />;
+  }
+  if (kind === 'library') {
+    return <MapStudyPin muted={muted} name={label ?? placeKindLook(kind).name} selected={selected} />;
+  }
+  if (kind === 'shuttle') {
+    return <ShuttlePin {...props} />;
+  }
+  return <MapTag {...props} />;
+}
+
+// A marker over the map. `me` is the only use of the `me` colour. A Friend is an Avatar with the friend ring. A 행사,
+// a 파티 and a 퀘스트 are light tags (`MapTag`); a 식당 and a 공부공간 are small rounds with a tail; the shuttle is a
+// rounded square.
 export function MapPin(props: MapPinProps): ReactElement {
   if (props.kind === 'me') {
     return (
@@ -136,48 +124,23 @@ export function MapPin(props: MapPinProps): ReactElement {
   return <CategoryPin {...props} />;
 }
 
-// A pin from far away, when the whole campus is in view: the kind's colour alone. A campus service's is a smaller
-// square. A selected one is 4 larger, inside a ring of the key colour.
+// A place from far away, when the whole campus is in view. A 행사, a 파티 and a 퀘스트 are the tag's smaller round. A
+// campus service's is a small square in its colour; a selected one is 4 larger, inside a ring of the key colour.
 export function MapDot({ kind, selected = false }: { kind: MapPlaceKind; selected?: boolean }): ReactElement {
-  const { fill, service, name } = CATEGORIES[kind];
+  const { fill, service, name } = placeKindLook(kind);
+  if (!service) {
+    return <MapTag far kind={kind} selected={selected} />;
+  }
   return (
     <View
       accessibilityLabel={name}
       accessibilityRole="image"
       accessibilityState={{ selected }}
       accessible
-      style={[
-        styles.dot,
-        service && styles.serviceDot,
-        { backgroundColor: fill },
-        selected && (service ? styles.selectedServiceDot : styles.selectedDot),
-      ]}
+      style={[styles.dot, { backgroundColor: fill }, selected && styles.selectedDot]}
     />
   );
 }
-
-// A restaurant on the map, as the `MapDining` frame draws a single 학식: a round of 22 in the dining colour with 학 in
-// white, a white ring and a small tail. A selected one is 26, inside a ring of the key colour.
-export function MapRestaurant({ selected = false }: { selected?: boolean }): ReactElement {
-  return (
-    <View
-      accessibilityLabel="식당"
-      accessibilityRole="image"
-      accessibilityState={{ selected }}
-      accessible
-      style={styles.pin}
-    >
-      <View style={[styles.restaurant, selected && styles.selectedRestaurant]}>
-        <Text style={styles.restaurantLetter}>학</Text>
-      </View>
-      <View style={styles.restaurantTail} />
-    </View>
-  );
-}
-
-const RESTAURANT = 22;
-const SELECTED_RESTAURANT = 26;
-const RESTAURANT_TAIL = 4;
 
 const ME_HALO = 48;
 const ME_DOT = 16;
@@ -185,15 +148,10 @@ const ME_BORDER = 3;
 const ME_SMALL = 0.75;
 // The design system's sizes are the inside of a head; its white border of 2 is added around it.
 const HEAD_BORDER = 2;
-const HEAD = sizes.pin + HEAD_BORDER * 2;
 const SERVICE_HEAD = 30 + HEAD_BORDER * 2;
-// 12 of colour, or 9 for a campus service, inside a white border of 2.
-const DOT = 12 + HEAD_BORDER * 2;
+// 9 of colour inside a white border of 2.
 const SERVICE_DOT = 9 + HEAD_BORDER * 2;
 const SELECTED_DOT_MORE = 4;
-const SELECTED_DOT_RING = `0 0 0 4px ${halo.selectedDot}, ${shadow.dot}`;
-const COUNT = 18;
-const COUNT_PADDING = 4;
 
 const styles = StyleSheet.create({
   pin: {
@@ -203,17 +161,12 @@ const styles = StyleSheet.create({
   head: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: HEAD,
-    height: HEAD,
-    borderRadius: radius.full,
-    borderWidth: HEAD_BORDER,
-    borderColor: color.surface,
-    boxShadow: shadow.float,
-  },
-  serviceHead: {
     width: SERVICE_HEAD,
     height: SERVICE_HEAD,
     borderRadius: radius.md,
+    borderWidth: HEAD_BORDER,
+    borderColor: color.surface,
+    boxShadow: shadow.float,
   },
   selectedHead: {
     transform: [{ scale: 1.18 }],
@@ -221,57 +174,19 @@ const styles = StyleSheet.create({
   },
   dot: {
     alignSelf: 'flex-start',
-    width: DOT,
-    height: DOT,
-    borderRadius: radius.full,
+    width: SERVICE_DOT,
+    height: SERVICE_DOT,
+    borderRadius: 3,
     borderWidth: HEAD_BORDER,
     borderColor: color.surface,
     boxShadow: shadow.dot,
   },
-  serviceDot: {
-    width: SERVICE_DOT,
-    height: SERVICE_DOT,
-    borderRadius: 3,
-  },
   // The frame's ring reaches 6 from the colour: 4 beyond the white border of 2.
   selectedDot: {
-    width: DOT + SELECTED_DOT_MORE,
-    height: DOT + SELECTED_DOT_MORE,
-    boxShadow: SELECTED_DOT_RING,
-  },
-  selectedServiceDot: {
     width: SERVICE_DOT + SELECTED_DOT_MORE,
     height: SERVICE_DOT + SELECTED_DOT_MORE,
-    boxShadow: SELECTED_DOT_RING,
+    boxShadow: `0 0 0 4px ${halo.selectedDot}, ${shadow.dot}`,
   },
-  restaurant: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: RESTAURANT,
-    height: RESTAURANT,
-    borderRadius: radius.full,
-    backgroundColor: color.svcDining,
-    boxShadow: `0 0 0 2px ${color.surface}, 0 1px 4px rgba(14, 19, 48, 0.3)`,
-  },
-  selectedRestaurant: {
-    width: SELECTED_RESTAURANT,
-    height: SELECTED_RESTAURANT,
-    boxShadow: `0 0 0 2px ${color.surface}, 0 1px 4px rgba(14, 19, 48, 0.3), 0 0 0 6px ${halo.selectedDot}`,
-  },
-  restaurantLetter: { ...text.micro, fontFamily: font.bold, letterSpacing: 0, lineHeight: 13, color: color.onPrimary },
-  // The frame's triangle of 8 by 6 under the round.
-  restaurantTail: {
-    width: 0,
-    height: 0,
-    marginTop: -1,
-    borderLeftWidth: RESTAURANT_TAIL,
-    borderRightWidth: RESTAURANT_TAIL,
-    borderTopWidth: 6,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: color.svcDining,
-  },
-  muted: { opacity: 0.55 },
   tail: {
     width: 2,
     height: 8,
@@ -282,24 +197,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: radius.full,
-    backgroundColor: color.surface,
-    boxShadow: shadow.card,
   },
   labelText: { ...text.micro, color: color.ink },
-  count: {
-    position: 'absolute',
-    top: -6,
-    right: -8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: COUNT + COUNT_PADDING * 2,
-    height: COUNT,
-    paddingHorizontal: COUNT_PADDING,
-    borderRadius: radius.full,
-    backgroundColor: color.surface,
-    boxShadow: shadow.card,
-  },
-  countText: { ...text.micro, lineHeight: COUNT, color: color.ink },
   me: {
     alignItems: 'center',
     justifyContent: 'center',

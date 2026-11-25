@@ -14,6 +14,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -47,12 +48,14 @@ import type { Size } from './projection';
 //   which only the one selected person ever asks for, or with the "+" of a Friend who can be added to the answer on
 //   screen;
 // - for each kind of place, the dot and the pin, the pin once for each count it shows, and each of them selected;
-//   an official pin also with a Favorite Event's star;
+//   an official pin also with a Favorite Event's star; from the "names" level, a 행사's, a 파티's and a 퀘스트's pin
+//   once for each place, with its short name in its tag;
 // - for each set of kinds that stand together at one place, the dot and the pin, and each of them selected; the pin
-//   also with the star;
+//   also with the star, and from the "names" level once for each place, with its name;
 // - the same places and sets with the "!" of a mark newly posted or faded (`fresh`, `faded`);
 // - one for the tutorial's place pin, and one for each shape, colour and number of a guide's places.
-// No look holds a name or a label: that is the map's own text under the marker (`text` of `MapMarker`).
+// No other look holds a name or a label: a person's name is the map's own text under the marker (`text` of
+// `MapMarker`).
 //
 // A name holds nothing that changes from one answer of the server to the next: a person is named by their id and by
 // whether they have a photo, never by the photo's address, which is new with every answer. So a person whose name or
@@ -96,8 +99,8 @@ export type MarkerLook =
     }
   // A place, of each kind the design system has. `count` is drawn on a pin, never on a dot; 0 or left out, none.
   // `muted` is translucent grey: a study building none of whose spaces the User may use. `starred` draws a pin's
-  // icon as the filled star: a Favorite Event, or official events at one place of which one is. `fresh` and `faded`
-  // are an interest mark's (`InterestLook`).
+  // icon as the filled star: a Favorite Event, or official events at one place of which one is. `label` is a 행사's,
+  // a 파티's or a 퀘스트's short name in its tag. `fresh` and `faded` are an interest mark's (`InterestLook`).
   | ({
       kind: MapPlaceKind;
       form: MarkerForm;
@@ -105,19 +108,21 @@ export type MarkerLook =
       selected?: boolean;
       muted?: boolean;
       starred?: boolean;
+      label?: string;
     } & InterestLook)
   // Study pins merged while the whole campus is in view, with how many they are.
   | { kind: 'study-cluster'; count: number; selected?: boolean }
   // The Place of restaurants with menus today, at every level of detail.
   | { kind: 'restaurant'; selected?: boolean }
   // Things of several kinds at one place: a small round for each kind, in the order given. `starred` draws the
-  // official round's star on a pin: a Favorite Event is among them.
+  // official round's star on a pin: a Favorite Event is among them. `label` is the place's short name in its tag.
   | ({
       kind: 'group';
       kinds: readonly MapPlaceKind[];
       form: MarkerForm;
       selected?: boolean;
       starred?: boolean;
+      label?: string;
     } & InterestLook)
   // The place 지도에서 보기 of a tutorial quest shows: a red teardrop with a white circle, at every level of detail.
   | { kind: 'tutorialPlace' }
@@ -196,6 +201,7 @@ export function lookName(look: MarkerLook): string {
       look.starred === true && 'starred',
       selected,
       ...interestParts(look),
+      labelPart(look.label),
     );
   }
   if (look.kind === 'study-cluster') {
@@ -210,6 +216,11 @@ export function lookName(look: MarkerLook): string {
     const size = look.small === true ? 'small' : 'full';
     return parts('person', size, look.tone, look.id, photo, exact, stale, faded, selected, addable);
   }
+  return placeName(look, selected);
+}
+
+// The name of a single place's look.
+function placeName(look: Extract<MarkerLook, { kind: MapPlaceKind }>, selected: string | false): string {
   const count = look.form === 'pin' && (look.count ?? 0) > 0 && String(look.count);
   return parts(
     look.kind,
@@ -219,7 +230,13 @@ export function lookName(look: MarkerLook): string {
     look.starred === true && 'starred',
     selected,
     ...interestParts(look),
+    labelPart(look.label),
   );
+}
+
+// A tag's words, last and quoted, since they may hold the separator of `parts`.
+function labelPart(label: string | undefined): string | false {
+  return label !== undefined && `label=${JSON.stringify(label)}`;
 }
 
 // Named only when set, so that every name without a mark stays as it was.
@@ -227,13 +244,14 @@ function interestParts({ fresh, faded }: InterestLook): (string | false)[] {
   return [fresh === true && 'fresh', faded === true && 'faded'];
 }
 
-// A mark's "!" and fade around a place's or a group's view, which grows to hold the "!".
-function withInterest(look: InterestLook & { form: MarkerForm }, view: ReactElement): ReactElement {
+// A mark's "!" and fade around a place's or a group's view, which grows to hold the "!": below too for a look that sits
+// on its middle, so that its middle stays the box's.
+function withInterest(look: Extract<MarkerLook, { form: MarkerForm }>, view: ReactElement): ReactElement {
   if (look.fresh !== true && look.faded !== true) {
     return view;
   }
   return (
-    <MapMarkBadge faded={look.faded} form={look.form} fresh={look.fresh}>
+    <MapMarkBadge faded={look.faded} form={standsOnTip(look) ? 'pin' : 'dot'} fresh={look.fresh}>
       {view}
     </MapMarkBadge>
   );
@@ -243,13 +261,14 @@ export function hasPhoto(look: MarkerLook): boolean {
   return look.kind === 'person' && look.photo !== null;
 }
 
-// A pin and a person's marker stand on their tip, the bottom of their view. Everything else, a round thing, sits on
-// its middle.
+// The pins with a tail stand on their tip, the bottom of their view: a person's marker, a restaurant's, the tutorial's
+// place, and a 공부공간's and the shuttle's pin. Everything else sits on its middle: a round thing, and the tags of a
+// 행사, a 파티, a 퀘스트 and a group.
 export function standsOnTip(look: MarkerLook): boolean {
-  if (look.kind === 'me' || look.kind === 'study-cluster' || look.kind === 'answer' || look.kind === 'tutorialStep') {
-    return false;
+  if (look.kind === 'person' || look.kind === 'restaurant' || look.kind === 'tutorialPlace') {
+    return true;
   }
-  return look.kind === 'person' || look.kind === 'restaurant' || look.kind === 'tutorialPlace' || look.form === 'pin';
+  return (look.kind === 'library' || look.kind === 'shuttle') && look.form === 'pin';
 }
 
 // The point of a look's box that stands on its position, as shares of the box's width and height: the tip, the
@@ -316,7 +335,7 @@ function PlainLookView({ look, onPhotoSettled, testID }: LookViewProps): ReactEl
     return look.form === 'dot' ? (
       <MapGroupDot kinds={look.kinds} selected={look.selected} />
     ) : (
-      <MapGroupPin kinds={look.kinds} selected={look.selected} starred={look.starred} />
+      <MapGroupPin kinds={look.kinds} label={look.label} selected={look.selected} starred={look.starred} />
     );
   }
   if (look.kind === 'study-cluster') {
@@ -327,7 +346,7 @@ function PlainLookView({ look, onPhotoSettled, testID }: LookViewProps): ReactEl
 
 // A place's pin, whose icon is the filled star for a Favorite Event.
 function PlacePin({ look }: { look: Extract<MarkerLook, { kind: MapPlaceKind }> }): ReactElement {
-  const { count, kind, muted, selected, starred } = look;
+  const { count, kind, label, muted, selected, starred } = look;
   const star = starred === true;
   return (
     <MapPin
@@ -335,6 +354,7 @@ function PlacePin({ look }: { look: Extract<MarkerLook, { kind: MapPlaceKind }> 
       filled={star}
       icon={star ? 'star' : undefined}
       kind={kind}
+      label={label}
       muted={muted}
       selected={selected}
     />

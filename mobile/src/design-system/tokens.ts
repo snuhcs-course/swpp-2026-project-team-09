@@ -12,6 +12,7 @@
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -61,6 +62,10 @@ export const color = {
   svcShuttleSoft: '#EFEAFB',
   svcStudy: '#0369A1',
   svcStudySoft: '#E3F1FA',
+  // The 식당 and 공부공간 layers' pins and their buttons, as the changelog of 11.24 (§ 4-5, § 4-6) colours them: coral
+  // and sky.
+  pinDining: '#EE6A4C',
+  pinStudy: '#3A9AE6',
 } as const;
 
 // A 4-point grid. The key is the design system's step: space[4] is `space-4`, 16 points.
@@ -91,6 +96,9 @@ export const shadow = {
   // Around a small mark that sits on the map itself, as the `Main` frame draws it: the dot of a Friend's row and the
   // round of a Quest's row. A white ring of 2 over a soft shadow.
   mapMark: '0 0 0 2px #FFFFFF, 0 1px 4px rgba(14, 19, 48, 0.25)',
+  // Around a Quest's round on the map, lighter than `mapMark`, as the changelog of 11.24 (§ 4-1) and the `Main` board
+  // draw it: a white ring of 2 at 80% over a soft shadow.
+  mapQuestMark: '0 0 0 2px rgba(255, 255, 255, 0.8), 0 2px 8px rgba(14, 19, 48, 0.14)',
   // Around the rail that joins the Quest list's rows, as the `Main` frame draws it: a white ring of 1.5.
   mapRail: '0 0 0 1.5px #FFFFFF',
   // Under a floating button in the key colour, as the `Main` frame draws "활성 파티": the floating shadow, darker.
@@ -107,8 +115,12 @@ export const halo = {
   selected: 'rgba(0, 26, 114, 0.18)',
   // Around a selected dot, as the `Main` frame draws it: the key colour at 25%.
   selectedDot: 'rgba(0, 26, 114, 0.25)',
-  // Around merged study pins, the frame's translucent outer square: the study colour at 22%.
-  study: 'rgba(3, 105, 161, 0.22)',
+  // Around merged study pins, the `Main` board's see-through outer round: the study pins' sky at 20%, with a rim of it
+  // at 25%.
+  study: 'rgba(58, 154, 230, 0.2)',
+  studyRim: 'rgba(58, 154, 230, 0.25)',
+  // Around a chosen tag of the map, as the `Main` board rings it: the key colour at 16%.
+  selectedTag: 'rgba(0, 26, 114, 0.16)',
 } as const;
 
 // The glass layer's surfaces, as the changelog of 11.24 (§ 5-1) sets their grounds and its Mf5Kit board draws the
@@ -145,13 +157,13 @@ export const presence = {
   member: color.party,
 } as const;
 
-// The colour of a row of the main screen's Quest list, which its round, its kicker and its icon share, as the `Main`
-// frame draws them: a class in the muted ink; `open`, a Party that others may join, in a blue that no token of the
-// design system names; `closed`, a Party that takes nobody else and a Shared Quest, in the Party's colour.
+// The colours of a row of the Quest list, on the map and on the whole screen, as the changelog of 11.24 (§ 4-1) sets
+// them: a class's round and kicker in the muted ink; every Party's round in the key colour, told apart by its icon, and
+// its kicker near-black.
 export const questTone = {
-  class: color.inkMuted,
-  open: '#2F6FC0',
-  closed: color.party,
+  class: { round: color.inkMuted, kicker: color.inkMuted },
+  open: { round: color.snuBlue, kicker: color.ink },
+  closed: { round: color.snuBlue, kicker: color.ink },
 } as const;
 
 // The 새내기 튜토리얼's warm look, as the `Main` and `Profile` frames draw it: the Quest colour's ink on a cream ground.

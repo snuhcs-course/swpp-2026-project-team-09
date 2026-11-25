@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { screen as found } from '@testing-library/react-native';
@@ -87,7 +88,7 @@ describe('the 편의기능 button', () => {
 
     const dots = found.getAllByTestId('layer-dot', { includeHiddenElements: true });
     expect(dots).toHaveLength(1);
-    expect(dots[0]).toHaveStyle({ width: 5, height: 5, backgroundColor: '#B8336A' });
+    expect(dots[0]).toHaveStyle({ width: 5, height: 5, backgroundColor: '#EE6A4C' });
   });
 });
 
@@ -116,8 +117,8 @@ describe('the stack', () => {
 
     await user.press(toggle('공부공간 켜기'));
     expect(toggle('공부공간 끄기')).toHaveTextContent('공부공간ON');
-    expect(toggle('공부공간 끄기')).toHaveStyle({ backgroundColor: '#0369A1' });
-    expect(found.getByTestId('layer-dot', { includeHiddenElements: true })).toHaveStyle({ backgroundColor: '#0369A1' });
+    expect(toggle('공부공간 끄기')).toHaveStyle({ backgroundColor: '#3A9AE6' });
+    expect(found.getByTestId('layer-dot', { includeHiddenElements: true })).toHaveStyle({ backgroundColor: '#3A9AE6' });
 
     await user.press(toggle('공부공간 끄기'));
     expect(toggle('공부공간 켜기')).toHaveTextContent('공부공간OFF');
@@ -131,7 +132,7 @@ describe('the stack', () => {
     await user.press(toggle('식당 켜기'));
     expect(toggle('식당 끄기')).toHaveTextContent('식당ON');
     expect(toggle('식당 끄기')).toHaveProp('accessibilityState', { checked: true });
-    expect(toggle('식당 끄기')).toHaveStyle({ backgroundColor: '#B8336A' });
+    expect(toggle('식당 끄기')).toHaveStyle({ backgroundColor: '#EE6A4C' });
 
     await user.press(toggle('식당 끄기'));
     expect(toggle('식당 켜기')).toHaveTextContent('식당OFF');

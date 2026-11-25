@@ -10,6 +10,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -25,8 +26,6 @@ import { Choices, GroupMark } from './card-choices';
 import { CARD } from './layout';
 import { StudyRows } from './study-rows';
 
-export const LOOK_CLOSER = '가까이 보기';
-
 // What the card draws of a thing, which a Friend's card has also for a Friend whom the map does not show.
 type CardContent = Pick<
   CardView,
@@ -35,9 +34,6 @@ type CardContent = Pick<
 
 export interface CardProps {
   card: CardContent;
-  // "가까이 보기" is offered: the camera is below the "names" level of detail.
-  canLookCloser: boolean;
-  onLookCloser: () => void;
   // The card's own button, where it has one: "길찾기", or one whose feature belongs to another task.
   onPrimary: () => void;
   onClose: () => void;
@@ -219,20 +215,9 @@ export function CardFrame({
 }
 
 // The card of what was pressed on the map: the leading mark, the sub-label, the title, the lines or the choices,
-// "가까이 보기" where it is offered and the card's button. A Friend's card is their profile, with its rows among the
+// and the card's button. A Friend's card is their profile, with its rows among the
 // lines.
-export function Card({
-  card,
-  canLookCloser,
-  onLookCloser,
-  onPrimary,
-  onClose,
-  onChoose,
-  onHeight,
-  top,
-  onSeen,
-  lead,
-}: CardProps): ReactElement {
+export function Card({ card, onPrimary, onClose, onChoose, onHeight, top, onSeen, lead }: CardProps): ReactElement {
   return (
     <CardFrame onHeight={onHeight} top={top}>
       <Head card={card} onClose={onClose} />
@@ -241,11 +226,6 @@ export function Card({
       <Choices card={card} key={card.id} onChoose={onChoose} />
       <View style={[styles.buttons, lead !== undefined && styles.wrap]}>
         {lead}
-        {canLookCloser ? (
-          <Button icon="search" onPress={onLookCloser} variant="secondary">
-            {LOOK_CLOSER}
-          </Button>
-        ) : null}
         {card.primary === null ? null : (
           <View style={styles.primary}>
             <Button full onPress={onPrimary} variant={lead === undefined ? 'primary' : 'secondary'}>

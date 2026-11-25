@@ -4,6 +4,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { JoinPolicy, MyParty, Party, Person, Quest } from '@/api/types';
@@ -91,13 +92,13 @@ function only(quests: Quest[], parties: Party[] = [], myParty: MyParty | null = 
 describe('a row of the Quest list', () => {
   it('draws a class with the clock and the class kicker', () => {
     const row = only([quest('자료구조', { classQuest: true, startsAt: '2026-10-06T14:00:00+09:00' })]);
-    expect(row).toMatchObject({ kind: 'class', tone: 'class', icon: 'clock', joinPolicy: null, label: '강의' });
+    expect(row).toMatchObject({ kind: 'class', tone: 'class', joinPolicy: null, label: '강의' });
     expect(row.kicker).toBe('다음 강의 · 1시간 후');
   });
 
   it.each<JoinPolicy>(['open', 'approval'])('draws an %s Quest as public, counting its Holders', (joinPolicy) => {
     const row = only([quest('러닝', { joinPolicy, holders: [ME, MIN_JUN, SEO_YEON, TAE_O] })]);
-    expect(row).toMatchObject({ tone: 'open', icon: 'users', joinPolicy, label: '공개 파티', title: '러닝 퀘스트' });
+    expect(row).toMatchObject({ tone: 'open', joinPolicy, label: '공개 파티', title: '러닝 퀘스트' });
     expect(row.kicker).toBe('공개 파티 · 4명');
   });
 
@@ -105,7 +106,7 @@ describe('a row of the Quest list', () => {
     const alone = only([quest('혼자', { joinPolicy: 'closed' })]);
     const two = only([quest('저녁', { joinPolicy: 'closed', holders: [ME, MIN_JUN] })]);
     const four = only([quest('MT', { joinPolicy: 'closed', holders: [ME, MIN_JUN, SEO_YEON, TAE_O] })]);
-    expect(two).toMatchObject({ tone: 'closed', icon: 'lock', joinPolicy: 'closed', title: '저녁 퀘스트' });
+    expect(two).toMatchObject({ tone: 'closed', joinPolicy: 'closed', title: '저녁 퀘스트' });
     expect([alone.kicker, two.kicker, four.kicker]).toEqual([
       '비공개 파티',
       '비공개 파티 · 김민준',
@@ -118,9 +119,9 @@ describe('a row of the Quest list', () => {
     const open = quest('러닝', { holders: [ME, MIN_JUN] });
     const closed = quest('저녁', { joinPolicy: 'closed', holders: [ME, MIN_JUN] });
     const rows = rowsOf([open, closed], [partyFor('러닝', 'closed'), partyFor('저녁', 'open')]);
-    expect(rows.map(({ kicker, tone, icon, title }) => ({ kicker, tone, icon, title }))).toEqual([
-      { kicker: '공개 파티 · 활성화 중', tone: 'open', icon: 'users', title: '러닝 퀘스트' },
-      { kicker: '비공개 파티 · 활성화 중', tone: 'closed', icon: 'lock', title: '저녁 퀘스트' },
+    expect(rows.map(({ kicker, tone, title }) => ({ kicker, tone, title }))).toEqual([
+      { kicker: '공개 파티 · 활성화 중', tone: 'open', title: '러닝 퀘스트' },
+      { kicker: '비공개 파티 · 활성화 중', tone: 'closed', title: '저녁 퀘스트' },
     ]);
   });
 

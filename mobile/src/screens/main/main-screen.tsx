@@ -20,6 +20,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -84,7 +85,7 @@ interface SelectedCardProps {
   // 좌석 현황 of 관정관's card asks the Assistant in the chat. No card is shown while the answer frame is.
   chat: ChatSheetControl;
   onHeight: (height: number) => void;
-  // A 식당's card sits at the top of the map, without "가까이 보기".
+  // A 식당's card sits at the top of the map.
   top: boolean;
 }
 
@@ -107,8 +108,7 @@ function OverMap({ children, onStage }: OverMapProps): ReactElement {
   );
 }
 
-// The card of the selected thing, if any, with what its buttons do. "가까이 보기" is offered below the "names" level of detail
-// and brings the camera to the "close" level, keeping the card. "길찾기" closes the card once the route is asked for.
+// The card of the selected thing, if any, with what its buttons do. "길찾기" closes the card once the route is asked for.
 // "메뉴 보기" opens the menu panel at the restaurant. 관정관's "좌석 현황" closes the card and asks the Assistant for
 // its seats in the chat. "노선 보기" brings the shuttle's whole line into view and closes
 // the card. "파티 열기" and "참여하기" open a Quest's room, "같이 갈 사람 찾기" 파티 만들기 for the Global Event, and a
@@ -126,13 +126,9 @@ function ThingCard(props: SelectedCardProps): ReactElement | null {
   const { primary } = card;
   return (
     <CardOrSeen
-      canLookCloser={map.detail !== 'names' && !top}
       {...withMeet(card, chat)}
       onChoose={selection.select}
       onHeight={onHeight}
-      onLookCloser={() => {
-        map.goTo(card.position, 'close');
-      }}
       onPrimary={() => {
         if (primary === null) {
           return;

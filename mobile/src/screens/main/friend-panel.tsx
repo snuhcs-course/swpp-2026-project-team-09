@@ -7,6 +7,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -17,11 +18,12 @@ import type { Presence } from '@/api/types';
 import {
   AppBar,
   Avatar,
-  Button,
   ChipRow,
   color,
   EmptyState,
   ErrorState,
+  font,
+  Glass,
   Icon,
   IconButton,
   ListRow,
@@ -30,6 +32,7 @@ import {
   SearchField,
   SectionHeader,
   SidePanel,
+  size,
   space,
   text,
 } from '@/design-system';
@@ -78,9 +81,11 @@ function FriendRow({ friend, onMeet, onShow }: { friend: FriendView } & Omit<Gro
           onPress={() => {
             onMeet(friend);
           }}
-          style={({ pressed }) => [styles.meet, pressed && styles.meetPressed]}
+          style={({ pressed }) => pressed && styles.pressed}
         >
-          <Icon color={color.snuBlue} name="calendar" size={18} />
+          <Glass level="inner" style={styles.meet}>
+            <Icon color={color.snuBlue} name="calendar" size={18} />
+          </Glass>
         </Pressable>
       }
     />
@@ -114,7 +119,8 @@ function Groups({ friends, onMeet, onShow }: GroupsProps): ReactElement {
   );
 }
 
-// "공유 설정" and "+ 친구 추가" close the panel and show their screen.
+// "공유 설정" and "+ 친구 추가" close the panel and show their screen. The footer has no ground of its own: it is the
+// panel's glass, under a faint line, and "친구 추가" is a glass button.
 function Footer({ onLeave }: { onLeave: () => void }): ReactElement {
   const { bottom } = useSafeAreaInsets();
   const onShare = (): void => {
@@ -130,15 +136,18 @@ function Footer({ onLeave }: { onLeave: () => void }): ReactElement {
       <Pressable accessibilityRole="link" hitSlop={space[2]} onPress={onShare} style={styles.sharing}>
         <Text style={styles.link}>공유 설정</Text>
       </Pressable>
-      <Button full icon="plus" onPress={onAdd} size="lg" variant="secondary">
-        친구 추가
-      </Button>
+      <Pressable accessibilityRole="button" onPress={onAdd} style={({ pressed }) => pressed && styles.pressed}>
+        <Glass level="inner" style={styles.add}>
+          <Icon color={color.snuBlue} name="plus" size={20} />
+          <Text style={styles.addWords}>친구 추가</Text>
+        </Glass>
+      </Pressable>
     </View>
   );
 }
 
-// The friend panel, the `MainFriends` frame. A Friend's calendar button closes the panel and opens 파티 만들기 as
-// 비공개 with that Friend invited; a press elsewhere on the row is `onShow`'s.
+// The friend panel, the `MainFriends` frame, on glass over the map. A Friend's calendar button closes the panel and
+// opens 파티 만들기 as 비공개 with that Friend invited; a press elsewhere on the row is `onShow`'s.
 export function FriendPanel({ open, onClose, onShow }: FriendPanelProps): ReactElement {
   const { data: friends, isPending, refetch } = useFriends();
   const [query, setQuery] = useState('');
@@ -149,8 +158,9 @@ export function FriendPanel({ open, onClose, onShow }: FriendPanelProps): ReactE
   };
   const shown = friends?.filter((friend) => (filter === 'all' || friend.presence === filter) && found(friend, query));
   return (
-    <SidePanel label="친구" onClose={onClose} open={open}>
+    <SidePanel glass label="친구" onClose={onClose} open={open}>
       <AppBar
+        clear
         actions={<IconButton icon="x" label="닫기" onPress={onClose} />}
         count={friends?.length}
         line={false}
@@ -190,25 +200,35 @@ const styles = StyleSheet.create({
   search: { paddingTop: space[3], paddingHorizontal: space[5] },
   scroll: { flex: 1 },
   list: { paddingRight: space[3], paddingBottom: space[3], paddingLeft: space[5] },
+  // The `MainFriends` board's glass buttons: a faint rim, and the key colour's for 친구 추가.
   meet: {
     alignItems: 'center',
     justifyContent: 'center',
     width: MEET,
     height: MEET,
     borderWidth: 1,
-    borderColor: color.border,
+    borderColor: 'rgba(14, 19, 48, 0.08)',
     borderRadius: radius.full,
-    backgroundColor: color.surface,
   },
-  meetPressed: { backgroundColor: color.blue50 },
+  pressed: { opacity: 0.6 },
   footer: {
     gap: space[3],
     paddingTop: space[3],
     paddingHorizontal: space[5],
     borderTopWidth: 1,
-    borderTopColor: color.border,
-    backgroundColor: color.surface,
+    borderTopColor: 'rgba(14, 19, 48, 0.08)',
   },
+  add: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space[2],
+    height: size.button,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 26, 114, 0.22)',
+    borderRadius: radius.md,
+  },
+  addWords: { ...text.bodyLg, fontFamily: font.semiBold, color: color.snuBlue },
   sharing: { alignSelf: 'flex-end' },
   link: { ...text.label, paddingVertical: space[3], color: color.blue600 },
 });
