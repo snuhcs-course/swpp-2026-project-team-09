@@ -92,7 +92,7 @@ function useCloseSide(
 // taken away and the card stays (back's order).
 function useLetGo(
   raising: Raising,
-  back: (to: Level, velocity?: number, started?: boolean) => void,
+  back: (to: Level, velocity?: number, started?: boolean, arrive?: () => void) => void,
   heights: LevelHeights | null,
 ): (to: Level, velocity: number, started: boolean) => void {
   const { level, setLevel, layer = null } = raising;
@@ -104,10 +104,18 @@ function useLetGo(
         back(level, velocity);
         return;
       }
-      back(to, velocity, started);
-      if (to !== level) {
-        setLevel(to);
-      }
+      // React hears the new step when the run arrives there, so that no commit of its comes while the card runs: the
+      // view stood still through each and then jumped on (the user's phone check of a toss).
+      back(
+        to,
+        velocity,
+        started,
+        to === level
+          ? undefined
+          : (): void => {
+              setLevel(to);
+            },
+      );
     },
     [level, setLevel, layer, back, heights],
   );

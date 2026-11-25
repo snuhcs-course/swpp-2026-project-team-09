@@ -134,19 +134,21 @@ interface LetGoRun {
 
 // The run of a let-go (`back`): to its step with the finger's speed, or none when that speed points away from the step,
 // so that no frame goes back. A toss up begins its run on the UI thread (`card-drag`): `back` only keeps its step, and
-// `landed` ends it.
+// `landed` ends it. `arrive` is told at the run's end, with where the card rests.
 function useLetGoRun(p: LetGoRun): {
-  back: (to: Level, velocity?: number, started?: boolean) => void;
+  back: (to: Level, velocity?: number, started?: boolean, arrive?: () => void) => void;
   landed: (to: Level) => void;
 } {
   const { heights, room, offset, reduce, aimed, running, setRest, settle } = p;
+  const arriving = useRef<(() => void) | null>(null);
   const back = useCallback(
-    (to: Level, velocity = 0, started = false) => {
+    (to: Level, velocity = 0, started = false, arrive: (() => void) | null = null) => {
       if (heights === null || room === null) {
         return;
       }
       running.current = !reduce;
       const at = room - heightOf(to, heights);
+      arriving.current = arrive;
       if (started) {
         aimed.current = at;
         return;
@@ -155,6 +157,7 @@ function useLetGoRun(p: LetGoRun): {
       runTo(offset, at, { reduce, aimed, velocity: toward }, () => {
         setRest(at);
         settle(to);
+        arrive?.();
       });
     },
     [heights, room, offset, reduce, aimed, running, setRest, settle],
@@ -164,6 +167,8 @@ function useLetGoRun(p: LetGoRun): {
       if (heights !== null && room !== null && aimed.current === room - heightOf(to, heights)) {
         setRest(aimed.current);
         settle(to);
+        arriving.current?.();
+        arriving.current = null;
       }
     },
     [heights, room, aimed, setRest, settle],
@@ -184,7 +189,7 @@ export function useRun(
 ): {
   offset: SharedValue<number>;
   rest: number;
-  back: (to: Level, velocity?: number, started?: boolean) => void;
+  back: (to: Level, velocity?: number, started?: boolean, arrive?: () => void) => void;
   landed: (to: Level) => void;
 } {
   const { heights, room, extra, onHeight } = input;
