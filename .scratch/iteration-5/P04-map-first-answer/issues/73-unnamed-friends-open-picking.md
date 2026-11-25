@@ -35,9 +35,9 @@ The user's idea: "저녁 화면에서 같이 버튼이 눌린 상태로 제시�
 
 ## Comments
 
-Built in PR #574. The server's planMeal takes `pickPeople` and flags the answer when someone is left to pick; the app opens picking for a reply that has just arrived, told by its bubble id. Screens wait for the sessions emulator.
+Built in PR #574. The server's planMeal takes `pickPeople` and flags the answer when someone is left to pick; the app opens picking for a reply that has just arrived, told by its bubble id. Its screens are in the PR, from the sessions emulator on the mock. The one-sentence fault is fixed in its own commit.
 
 ### Agent usage (2026-11-26)
 
-- Agent time: about 29 minutes in one session, test runs included (an estimate).
-- Tokens: input 50,751,165 (cache reads 50,634,862, cache writes 116,151, uncached 152); output 66,862. No subagents.
+- Agent time: about 45 minutes in one session, test runs, the emulator pictures, and the one-sentence fault included (an estimate).
+- Tokens: input 83,715,549 (cache reads 83,552,080, cache writes 163,227, uncached 242); output 99,094. No subagents.
