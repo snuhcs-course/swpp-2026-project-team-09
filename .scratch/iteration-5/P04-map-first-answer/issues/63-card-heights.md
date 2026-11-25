@@ -71,7 +71,11 @@ Lag of the history chip with the seat answer (debug build on the emulator, three
 
 The cause on 5.0/Main: opening the list made low as tall as middle, so the card's height changed, and the map fitted again. With the seat answer that fit zooms out to the whole campus, with every shuttle stop, route, and study pin. Rule 1 keeps low's height, so the camera no longer moves. Left: each press still renders the main screen twice (the input hides under the list), and the native map gets new marker arrays each time; a content-equal check in `native-map.tsx` could skip those, as a follow-up.
 
-Open point: the band at low is measured on lines of words from the content's top. A row of chips right under one line of words (the meal's 김민수, the route's 301동에서) still shows its top edge above the footer.
+Known, on hold by the user's decision (2026-11-25): the band at low is measured on lines of words from the content's top, so a row of chips or a list row right under the words (the meal's 김민수, the route's 301동에서, the list's next row) can show its top edge above the footer. Not fixed in this ticket.
+
+### The render loop with people picking (2026-11-25 evening, commit `a43beb1e6`)
+
+The user's phone, on a preview merging PR 552 with this ticket: "＋ 같이" gave "Maximum update depth exceeded" at once. Opening picking lays the time card out again, and its reported height came back a fraction of a point different each time (its rows' fractional height taken from a height the phone rounds to its pixels: 112, then 111.79, then 111.71 on the emulator). With every step at its share, the sheet's place hung on that height at every step, so each report moved the sheet in render; on the phone it never settled. The time card's, the header's, and the content's measured heights now move the sheet only by half a point or more (`steady.ts`). Test: `frame-card-steady`. On PR 552's side, its own `onLayout` reports (`time-bar.tsx` subtracting the rows' height, `person-rows.tsx`) still set state on any fraction; guarding them the same way is theirs to decide.
 
 ### Agent usage (2026-11-25)
 
