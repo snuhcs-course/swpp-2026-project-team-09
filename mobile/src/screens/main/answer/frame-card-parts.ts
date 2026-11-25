@@ -28,6 +28,10 @@ export interface FrameCardProps {
   hold?: boolean;
   // Brings the content to its top each time it turns true.
   atTop?: boolean;
+  // A layer over the content, such as a restaurant's menu over the list of candidates, by an id, and the answer it is
+  // of: it opens at its top, and closing it brings the content back where it was (P04 ticket 78). Left out, none.
+  layer?: string | null;
+  layerOf?: object | null;
   // The card's step, low, middle, or high (P04 ticket 61). Left out, the card has one height.
   raising?: Raising;
   // ✕ at the right end of the header's row, which closes the answer (P04 ticket 52). Left out, none.
