@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MealInput, TimeBand } from '@/api/assistant-types';
@@ -131,28 +132,33 @@ function aroundOf(band: TimeBand): {
   return { last, next, nowBefore: now >= msOf(band.range.startAt) && now <= start };
 }
 
-// What bounds the span on each side of the folded bar: the busy stretch that ends last before it ("13:45 수업 끝") and
-// the one that starts first after it ("민수 15:30 수업"), named after its person unless it is the first lane's, the
-// User's own. Without one, now when it is in the range before the span, else the range's end.
-export function bandEdgesOf(band: TimeBand): { before: string; after: string } {
+// What bounds the span, written between the folded bar's two end times (P04 ticket 82): the busy stretch that ends last
+// before it ("13:45 수업 끝"), or now when it is in the range before the span and later than that ("13:50 지금");
+// without either, the one that starts first after it ("민수 15:30 수업"). Each is named after its person unless it is
+// the first lane's, the User's own. Null when nothing bounds the span.
+export interface BandNote {
+  side: 'left' | 'right';
+  words: string;
+}
+
+export function bandNoteOf(band: TimeBand): BandNote | null {
   const { last, next, nowBefore } = aroundOf(band);
-  const now = msOf(band.now);
-  const before =
-    last === undefined || (nowBefore && now > msOf(last.endAt))
-      ? nowBefore
-        ? `${clockOf(band.now)} 지금`
-        : clockOf(band.range.startAt)
-      : `${last.who}${clockOf(last.endAt)} ${last.label ?? '일정'} 끝`;
-  const after =
-    next === undefined ? clockOf(band.range.endAt) : `${next.who}${clockOf(next.startAt)} ${next.label ?? '일정'}`;
-  return { before, after };
+  if (last !== undefined && !(nowBefore && msOf(band.now) > msOf(last.endAt))) {
+    return { side: 'left', words: `${last.who}${clockOf(last.endAt)} ${last.label ?? '일정'} 끝` };
+  }
+  if (nowBefore) {
+    return { side: 'left', words: `${clockOf(band.now)} 지금` };
+  }
+  return next === undefined
+    ? null
+    : { side: 'right', words: `${next.who}${clockOf(next.startAt)} ${next.label ?? '일정'}` };
 }
 
 const FOLD_MARGIN_MS = 15 * MINUTE_MS;
 
 // The folded bar's track (P04 ticket 14, board 1): the free time around the span, from 15 minutes before what bounds it
-// on the left (`bandEdgesOf`'s: the busy stretch that ends last before it, or now) to 15 minutes after what bounds it on
-// the right, within the range.
+// on the left (the busy stretch that ends last before it, or now) to 15 minutes after what bounds it on the right, within
+// the range.
 export function foldedRangeOf(band: TimeBand): Stretch {
   const { before, after } = edgeMsOf(band);
   const startMs = before === null ? null : Math.max(msOf(band.range.startAt), before - FOLD_MARGIN_MS);
@@ -163,7 +169,7 @@ export function foldedRangeOf(band: TimeBand): Stretch {
   };
 }
 
-// When `bandEdgesOf`'s words are: what bounds the span on each side, null for the range's own end.
+// When what bounds the span on each side is, null for the range's own end.
 function edgeMsOf(band: TimeBand): { before: number | null; after: number | null } {
   const { last, next, nowBefore } = aroundOf(band);
   const now = msOf(band.now);
@@ -172,14 +178,4 @@ function edgeMsOf(band: TimeBand): { before: number | null; after: number | null
     before: nowBefore && (lastEnd === null || now > lastEnd) ? now : lastEnd,
     after: next === undefined ? null : msOf(next.startAt),
   };
-}
-
-// Where the folded bar's end words stand: each under its own time, as shares of `range` (P04 ticket 14).
-export function edgeSharesOf(band: TimeBand, range: Stretch): { before: number; after: number } {
-  const { before, after } = edgeMsOf(band);
-  const start = msOf(range.startAt);
-  const length = msOf(range.endAt) - start;
-  const share = (ms: number | null, otherwise: number): number =>
-    ms === null ? otherwise : Math.min(1, Math.max(0, (ms - start) / length));
-  return { before: share(before, 0), after: share(after, 1) };
 }

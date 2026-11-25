@@ -97,12 +97,13 @@ describe('the time bar', () => {
     expect(bar().getByText('내일(화) 점심 12:15–12:43 · 식사 28분')).toBeVisible();
   });
 
-  it("is folded to one row, bounded by the busy stretches at the span's ends", async () => {
+  // Since P04 ticket 82 what starts after the span stands under the bar only when nothing bounds it on the left.
+  it('is folded to one row, with what bounds the span on the left under it', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
 
     expect(bar().queryByText('민수')).toBeNull();
     expect(bar().getByText('민수 12:15 302동 수업 끝')).toBeVisible();
-    expect(bar().getByText('13:00 24동 수업')).toBeVisible();
+    expect(bar().queryByText('13:00 24동 수업')).toBeNull();
   });
 
   it('unfolds to a row for each person at a press, its ends kept, and folds again', async () => {
@@ -112,7 +113,7 @@ describe('the time bar', () => {
 
     expect(bar().getByText('나')).toBeVisible();
     expect(bar().getByText('민수')).toBeVisible();
-    expect(bar().getByText('13:00 24동 수업')).toBeVisible();
+    expect(bar().getByText('민수 12:15 302동 수업 끝')).toBeVisible();
     expect(bar().queryByText('11:30')).toBeNull();
 
     await press(user, FOLD);

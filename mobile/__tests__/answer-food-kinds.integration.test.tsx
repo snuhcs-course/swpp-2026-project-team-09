@@ -4,6 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -13,7 +14,7 @@ import { raiseCard } from './support/card-grip';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
-import { askOnMap } from './support/answer-map';
+import { askOnMap, timeBar } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { AI_INPUT } from './support/lists';
@@ -22,7 +23,7 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // The kinds of food as chips over the raised card's list (board E3) and lunch and dinner on the bar (P04 ticket 16,
-// boards 24 to 26): a press filters on the phone with no turn to the model,
+// boards 24 to 26; the other meal's link went with P04 ticket 82): a press filters on the phone with no turn to the model,
 // a candidate without the kind recedes to a grey name tag, the pick moves to the first candidate that serves it, and
 // the kind on screen goes with the next message; a reply that carries a kind shows its chip filled.
 
@@ -170,51 +171,35 @@ function askedTheDayBefore(): typeof MEAL_ANSWER_MENUS {
   return { ...MEAL_ANSWER_MENUS, plans, input: { ...MEAL_ANSWER_MENUS.input, cuisine: '한식' } };
 }
 
-function lastRecalculation(): unknown {
-  const body = server.received('POST /assistant/answers').at(-1)?.body;
-  return typeof body === 'object' && body !== null && 'input' in body ? body.input : undefined;
-}
-
-// Partitions: lunch on a later day with dinner after it; the tick pressed; dinner with lunch before it.
+// Partitions: lunch on a later day, whose main server still sends dinner as the other meal; dinner, which sends lunch
+// (P04 ticket 82: the other meal is asked for in words, and the bar's ends say its times).
 describe('lunch and dinner on the bar', () => {
-  it('names the meal with its day, and the other meal stands at its end', async () => {
+  it('names the meal with its day', async () => {
     await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, answer: askedTheDayBefore() });
 
     expect(screen.getByTestId('time-band-words')).toHaveTextContent(/^내일\(화\) 점심 /u);
-    expect(screen.getByRole('button', { name: '저녁 17:00' })).toHaveTextContent('저녁 17:00 ›');
   });
 
-  it('asks for dinner without the kind on a press, and shows lunch before it', async () => {
-    server.on('POST /assistant/answers', { status: 200, body: MEAL_DINNER_MENUS });
-    const user = await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, answer: askedTheDayBefore() });
+  it.each([
+    ['lunch', { ...askedTheDayBefore(), otherMeal: { meal: 'dinner', start: '17:00' } }, /저녁 17:00/u],
+    ['dinner', { ...MEAL_DINNER_MENUS, otherMeal: { meal: 'lunch', start: '12:16' } }, /점심 12:16/u],
+  ])('leave out the other meal under a %s answer', async (_, answer, other) => {
+    await askOnMap(server, { ...MEAL_ANSWER_MENUS_REPLY, answer });
 
-    await user.press(screen.getByRole('button', { name: '저녁 17:00' }));
-    await pass(500);
-
-    expect(lastRecalculation()).toEqual({
-      ...MEAL_ANSWER_MENUS.input,
-      meal: 'dinner',
-      window: { from: null, until: null },
-      placeId: null,
-      people: MEAL_ANSWER_MENUS.input.people.map(({ userId }) => ({ userId, constraints: [] })),
-    });
-    expect(screen.getByRole('button', { name: '점심 12:16' })).toHaveTextContent('‹ 점심 12:16');
-    expect(screen.getByTestId('time-band-words')).toHaveTextContent(/^저녁 /u);
+    expect(timeBar().queryByText(other)).toBeNull();
+    expect(screen.queryByTestId('meal-tick')).toBeNull();
   });
 });
 
-// Partitions: the kind chips and the bar's tick pressed while "만들고 초대 보내기" is on its way (review of PR 440).
-describe('the kinds and the other meal while the Plan is sent', () => {
-  it('change nothing on screen, and ask for nothing', async () => {
+// Partitions: the kind chips while "만들고 초대 보내기" is on its way (review of PR 440).
+describe('the kinds while the Plan is sent', () => {
+  it('take no press, and change nothing on screen', async () => {
     server.on('POST /plans', { status: 201, body: PLAN_QUEST, afterMs: 3000 });
     const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
     await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '만들고 초대 보내기' }));
     // No kind chip takes a press: the docked row gives way to the card while the Plan is sent.
     expect(screen.queryByRole('button', { name: JAPANESE, disabled: false })).toBeNull();
-    const dinner = screen.getByRole('button', { name: '저녁 17:00' });
-    expect(dinner).toBeDisabled();
-    await user.press(dinner);
     await pass(3000);
 
     expect(screen.getByRole('button', { name: /^302동식당 · 12:15 · /u })).toBeOnTheScreen();

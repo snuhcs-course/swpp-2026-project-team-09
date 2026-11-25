@@ -239,15 +239,6 @@ function isMealSetOrAbsent(value: unknown): boolean {
   );
 }
 
-// A meal answer's other meal: absent from other answers and from a main server before P05 ticket 15.
-function isOtherMealOrAbsent(value: unknown): boolean {
-  return (
-    value === undefined ||
-    value === null ||
-    ((field(value, 'meal') === 'lunch' || field(value, 'meal') === 'dinner') && isText(field(value, 'start')))
-  );
-}
-
 // A Friend the plans add to the meal the User holds, and those Friends with the start (P05 ticket 44).
 function isAddedFriend(value: unknown): value is { userId: string; name: string } {
   return isText(field(value, 'userId')) && isText(field(value, 'name'));
@@ -288,7 +279,6 @@ export function isAnswerReply(value: unknown): value is AnswerReply {
     listOf(isDropped)(field(value, 'dropped')) &&
     isClosedOrAbsent(field(value, 'closed')) &&
     isNoPlan(field(value, 'noPlan')) &&
-    isOtherMealOrAbsent(field(value, 'otherMeal')) &&
     isMealSetOrAbsent(field(value, 'mealSet')) &&
     isKeptOneOrAbsent(field(value, 'planSet')) &&
     isKeptOrAbsent(field(value, 'related')) &&
