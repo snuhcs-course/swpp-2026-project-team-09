@@ -41,5 +41,5 @@ Native files: none. Releases: an app OTA update.
 
 ### Agent usage (2026-11-26)
 
-- Agent time: about 45 minutes in this session (an estimate), most of it waiting on tests at a high machine load. No subagents.
-- Tokens: this session, input 214 uncached, cache reads 36,794,831 and cache writes 204,220; output 74,939. These also hold about 8 minutes of merging 5.0/Main into PR 573, and they are counted up to this entry. The pictures, if taken later, are not in them.
+- Agent time: about 1 hour 5 minutes in this session (an estimate), much of it waiting on tests at a high machine load: the build, the stronger blue, the three pictures, and two merges of 5.0/Main. No subagents.
+- Tokens: this session, input 424 uncached, cache reads 63,821,091 and cache writes 357,961; output 141,228. These also hold about 20 minutes of other work in the same session: merging 5.0/Main into PR 573 twice, and finding why an answer's marks come late. They are counted up to this entry.
