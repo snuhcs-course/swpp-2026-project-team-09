@@ -19,13 +19,14 @@ import { FRIENDS, POSITIONS } from './data/friends';
 const WALK_METRES_A_MINUTE = 80;
 // A Friend's busy stretches as shares of the band's range, by the Friend's place in the mock's list.
 const PATTERNS: readonly (readonly (readonly [number, number])[])[] = [
-  [],
+  [[0.7, 0.95]],
   [[0, 0.4]],
   [[0.6, 1]],
   [
     [0, 0.15],
     [0.8, 1],
   ],
+  [],
   [[0.3, 0.55]],
 ];
 
