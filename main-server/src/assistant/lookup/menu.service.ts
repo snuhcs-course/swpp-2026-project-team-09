@@ -16,6 +16,7 @@ import { servedLines } from '../../menus/open-rule.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { type AnswerReply, type Lookup, type Plan } from '../dto/answer.dto.js';
+import { type LocationMissing } from '../refusals/refusal.dto.js';
 import { type HandledMeal } from '../free-time/meal-fit.js';
 import { MealPlanService } from '../gathering/meal-plan.service.js';
 import { type HoursMeal, type MealOfDay } from './hours-words.js';
@@ -76,7 +77,8 @@ export class MenuLookupService {
   async find(
     userId: string,
     ask: { date: string; meal: HandledMeal; key: string },
-    at: { now: Date; location: Position | null },
+    // As planMeal plans: the User's location or why it is missing, and whether the app sets a held meal aside.
+    at: { now: Date; location: Position | null; locationMissing?: LocationMissing; setsAside?: boolean },
   ): Promise<MenuFound> {
     const { date, meal, key } = ask;
     const place = this.restaurantPlaces.placeOf(key);

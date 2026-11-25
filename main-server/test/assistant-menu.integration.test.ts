@@ -119,6 +119,21 @@ describe('The menu of 301동식당 at 11:40 (board q8)', () => {
   });
 });
 
+// PR 573's review: planned as planMeal plans, with the offer of a location the app could not read.
+describe('The menu of 301동식당 with the location missing', () => {
+  it('offers 위치 켜기 when the location is missing, as planMeal does', async () => {
+    const date = '2086-02-26';
+    await boardQ8(date);
+    await stage.menusOn(date, ['301동식당']);
+
+    const response = await stage.send([findMenu(date, '301동식당'), { text: '' }], {
+      context: { locationMissing: 'permission' },
+    });
+
+    expect(answerIn(response.body).offers).toEqual([{ kind: 'open', label: '위치 켜기', screen: 'location' }]);
+  });
+});
+
 describe('A Restaurant with nothing to eat at that meal', () => {
   it('answers none when no menu of it was collected, and draws the Restaurant saying so', async () => {
     const date = '2086-01-15';
@@ -219,7 +234,8 @@ describe('Words that name several Restaurants', () => {
 
     const answer = answerIn(response.body);
     expect(answer.opened).toBe('자하연식당 3층');
-    expect(answer.plans.map(({ id }) => id)).toContain('자하연식당 3층');
+    // PR 573's review: tied with 2층 on everything but the key, 3층 still leads, as the reply showed it.
+    expect(answer.plans[0]?.id).toBe('자하연식당 3층');
   });
 });
 

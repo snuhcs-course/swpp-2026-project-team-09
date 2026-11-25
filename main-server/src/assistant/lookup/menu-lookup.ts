@@ -59,14 +59,16 @@ export function dishesOf(lines: readonly MenuLineDto[]): string[] {
   return (main?.items ?? []).slice(0, DISHES_MAX).map((line) => dishName(line));
 }
 
-// The meal answer opened at the Restaurant asked about, whose Plan is the one for it; none when it is none of the
-// answer's Plans, as when the User has no time to eat there.
+// The meal answer opened at the Restaurant asked about, its Plan first: what the reply showed is its first Plan, for the
+// history the app sends back and for an app that does not read `opened` (PR 573's review). None when the Restaurant is
+// none of the answer's Plans, as when the User has no time to eat there.
 export function menuAnswer({ key, answer }: MenuArgs): MenuAnswer {
   const plan = answer.plans.find(({ id }) => id === key);
   if (plan === undefined) {
     return { result: 'none', reason: 'no-time' };
   }
-  return { result: 'found', plan, answer: { ...answer, opened: plan.id } };
+  const plans = [plan, ...answer.plans.filter((other) => other !== plan)];
+  return { result: 'found', plan, answer: { ...answer, plans, opened: plan.id } };
 }
 
 // The dishes as the line of the Restaurant's label, after the day and the meal when that is not today (P04 ticket 60).

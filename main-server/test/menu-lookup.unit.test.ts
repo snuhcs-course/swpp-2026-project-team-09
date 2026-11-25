@@ -97,18 +97,18 @@ describe('A menu asked of 301동식당 at 11:40, in a Class there until 11:50 (b
 
   it('is the whole meal: every Restaurant the User can eat at is one of its Plans, as planMeal answers', () => {
     const answer = answerOf([person(ME, '유상', boardDay())], { now: NOW });
+    const ids = answer.plans.map(({ id: planId }) => planId);
+    const asked = ids[1] ?? '';
 
-    const found = menuAnswer({
-      key: '301동식당',
-      date: DATE,
-      meal: 'lunch',
-      now: NOW,
-      lines: lunchOf('301동식당'),
-      answer,
-    });
+    const found = menuAnswer({ key: asked, date: DATE, meal: 'lunch', now: NOW, lines: [], answer });
 
-    expect(found).toMatchObject({ result: 'found', answer: { opened: '301동식당' } });
-    expect(answer.plans.length).toBeGreaterThan(1);
+    expect(ids.length).toBeGreaterThan(1);
+    expect(found).toMatchObject({ result: 'found', answer: { opened: asked } });
+    // PR 573's review: the asked Restaurant's Plan first, what the reply showed, the others after it in their order.
+    expect(found.result === 'found' ? found.answer.plans.map(({ id: planId }) => planId) : []).toEqual([
+      asked,
+      ...ids.filter((planId) => planId !== asked),
+    ]);
   });
 });
 

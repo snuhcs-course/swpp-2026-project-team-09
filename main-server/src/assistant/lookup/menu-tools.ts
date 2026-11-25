@@ -12,7 +12,7 @@
 import { z } from 'zod';
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { closureNotices } from '../../menus/open-rule.js';
-import { defineTool, noneFound, type Tool } from '../feature.js';
+import { defineTool, noneFound, type Tool, type ToolContext } from '../feature.js';
 import { mealWindow } from '../free-time/meal-fit.js';
 import { dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
 import { dayWordsFrom, koreaTime } from '../korea-time.js';
@@ -75,12 +75,24 @@ function namesOf(menus: MenuLookupService, words: string | undefined, tapped: st
   return tapped === null ? null : menus.at(tapped);
 }
 
+// The meal planned as planMeal plans it: the note or offer of a missing location, and a held meal set aside (PR 573's
+// review).
+function planningAt({ now, context, capabilities }: Pick<ToolContext, 'now' | 'context' | 'capabilities'>): {
+  now: Date;
+  location: ToolContext['context']['location'];
+  locationMissing: ToolContext['context']['locationMissing'];
+  setsAside: boolean;
+} {
+  const { location, locationMissing } = context;
+  return { now, location, locationMissing, setsAside: capabilities.has('plan-set') };
+}
+
 export function findMenu(menus: MenuLookupService): Tool {
   return defineTool({
     description:
       "Shows one Restaurant's menu for lunch or dinner of a day from today to a week ahead: the app opens it as a meal plan's place, with its menu, when the User is there and the way, and the button to make it. Answers result 'found' with the Restaurant, when its menu was collected (collectedAt), the menu's lines, and when the User can eat there (start, end, eatingMinutes) and from where; result 'several' with the Restaurants the words could name; or result 'none' with the reason.",
     input,
-    run: async ({ date, meal, restaurant }, { userId, now, context, presented }) => {
+    run: async ({ date, meal, restaurant }, { userId, now, context, presented, capabilities }) => {
       if (outOfReach(date, now)) {
         return noDay(date);
       }
@@ -98,7 +110,7 @@ export function findMenu(menus: MenuLookupService): Tool {
         return chosen;
       }
       const key = chosen.candidate.name;
-      const found = await menus.find(userId, { date, meal, key }, { now, location: context.location });
+      const found = await menus.find(userId, { date, meal, key }, planningAt({ now, context, capabilities }));
       presented.mapButtons.length = 0;
       if (found.result === 'none') {
         presented.lookup = found.lookup;
