@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MenuLineKind } from '../../generated/prisma/client.js';
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
-import { servedLines } from '../../menus/open-rule.js';
+import { closureNotices, servedLines } from '../../menus/open-rule.js';
 import { type Hours } from '../../menus/restaurant-hours.js';
 import { clockOf, onDay } from '../free-time/free-time.js';
 import { koreaDate } from '../korea-time.js';
@@ -51,6 +52,7 @@ export interface HoursFound {
 
 const NOT_COLLECTED = "that day's menu is not collected yet; its page gives these hours for that kind of day";
 const NOTES_ONLY = 'its menu that day holds only notes, so it does not serve it';
+const CLOSED = 'its menu that day says it is closed for this meal, in the words of notes';
 const NO_LINES = 'its menu that day has no line for this meal, so it does not serve it';
 
 const notesOf = (lines: readonly MenuLineDto[]): string[] =>
@@ -105,7 +107,10 @@ function mealWords({ meal, lines, hours, posted = false }: MealOfDay): MealWords
       : { meal, serves: 'not known', why: NOT_COLLECTED, usualOpensAt: hours.opensAt, usualClosesAt: hours.closesAt };
   }
   if (servedLines(lines).length === 0) {
-    return { meal, serves: false, why: NOTES_ONLY, notes: notesOf(lines) };
+    const notices = closureNotices(lines);
+    return notices.length === 0
+      ? { meal, serves: false, why: NOTES_ONLY, notes: notesOf(lines) }
+      : { meal, serves: false, why: CLOSED, notes: notices.map((text) => othersText('menu.line', text)) };
   }
   return servedWords(meal, lines, hours);
 }

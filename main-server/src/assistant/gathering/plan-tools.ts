@@ -8,6 +8,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -35,7 +36,7 @@ import { NOT_POSTED } from './not-posted.js';
 export const FRIENDS_MAX = 7;
 
 const NONE_REASONS: Record<NonNullable<AnswerReply['noPlan']>['reason'], string> = {
-  'no-menu': 'No Restaurant serves that meal that day: every menu collected for it holds only notes.',
+  'no-menu': 'No Restaurant serves that meal that day: every menu collected for it is closed or holds only notes.',
   'no-shared-time': 'There is no free time everyone shares during that meal.',
   'no-fit': 'No Restaurant can be reached, eaten at, and left in time.',
 };

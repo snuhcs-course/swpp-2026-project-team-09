@@ -5,6 +5,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -131,7 +132,7 @@ describe('A Restaurant with nothing to eat at that meal', () => {
     });
   });
 
-  it('answers none when its lunch holds only notes, with the notes, and draws the Restaurant not serving', async () => {
+  it('answers none when its menu closes its lunch, with the closure, and draws the Restaurant not serving', async () => {
     const date = '2086-01-22';
     await boardQ8(date);
     const closed = { meal: 'lunch', text: '※ 개교기념일 휴무', kind: 'note', name: null, price: null };
@@ -145,10 +146,12 @@ describe('A Restaurant with nothing to eat at that meal', () => {
 
     expect(stage.model.toolResults()[0]).toEqual({
       result: 'none',
-      reason: `301동식당 serves no lunch on ${date}: its lunch menu holds only notes.`,
+      reason: `301동식당 is closed for lunch on ${date}, as its menu's lines say: say so, with the reason they state.`,
       lines: ['<data label="menu.line">※ 개교기념일 휴무</data>'],
     });
-    expect(lookupIn(response.body).scene.flags).toMatchObject([{ text: '301동식당 · 오늘 점심은 안 해요' }]);
+    const lookup = lookupIn(response.body);
+    expect(lookup.scene.flags).toMatchObject([{ text: '301동식당 · 오늘 점심은 안 해요' }]);
+    expect(lookup.basis).toEqual(['※ 개교기념일 휴무']);
   });
 });
 

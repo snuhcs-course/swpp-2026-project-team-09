@@ -5,10 +5,12 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
+import { closureNotices } from '../../menus/open-rule.js';
 import { defineTool, noneFound, type Tool } from '../feature.js';
 import { mealWindow } from '../free-time/meal-fit.js';
 import { dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
@@ -40,7 +42,7 @@ const clock = (time: string): string => time.slice(11, 16);
 const menuLines = (lines: readonly MenuLineDto[]): string[] => lines.map(({ text }) => othersText('menu.line', text));
 
 function reasonOf(
-  { reason }: Extract<MenuFound, { result: 'none' }>,
+  { reason, lines }: Extract<MenuFound, { result: 'none' }>,
   key: string,
   { date, meal, now }: { date: string; meal: 'lunch' | 'dinner'; now: Date },
 ): string {
@@ -53,7 +55,9 @@ function reasonOf(
     return `${key} has no ${meal} menu on ${date}, though its menus of that day were collected: say there is no ${meal} menu that day, never that it is not posted yet or comes later.`;
   }
   if (reason === 'closed') {
-    return `${key} serves no ${meal} on ${date}: its ${meal} menu holds only notes.`;
+    return closureNotices(lines).length === 0
+      ? `${key} serves no ${meal} on ${date}: its ${meal} menu holds only notes.`
+      : `${key} is closed for ${meal} on ${date}, as its menu's lines say: say so, with the reason they state.`;
   }
   if (mealWindow(date, meal).end <= now) {
     return `The ${meal} of ${date} is over; ${key}'s menu is in lines.`;
