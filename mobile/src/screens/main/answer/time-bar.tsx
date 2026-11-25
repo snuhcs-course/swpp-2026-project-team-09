@@ -8,7 +8,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, type ReactNode, use, useState } from 'react';
+import { type ReactElement, type ReactNode, use, useEffect, useRef, useState } from 'react';
 import { type LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Reanimated from 'react-native-reanimated';
@@ -33,7 +33,8 @@ import { bookingKept } from '../library/booking-kept';
 import { SlotBand } from '../library/slot-band';
 import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
-import { PersonRows } from './person-rows';
+import { type Picking, PersonRows } from './person-rows';
+import { usePickingBar } from './pick-head';
 import { SheetLinkContext } from './sheet-link';
 import { TimeBand } from './time-band';
 import { STRIP_SLOP, type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
@@ -69,6 +70,8 @@ interface BarProps {
   onHeight: (height: number) => void;
   // How far below its place under the pill it stands, under the bar of several requests (P04 ticket 09); left out, 0.
   offset?: number;
+  // People are picked in its rows (P04 ticket 64), which opens it.
+  picking?: Picking | null;
 }
 
 // The bar's grip in its strip, the card's whole width at its bottom (the user's phone check), under a hairline that
@@ -101,7 +104,12 @@ function Grip(p: { grip: TimeCardGrip; label: string | null; folded: boolean }):
 }
 
 // The rows for each person under the open card, in the room that grows as the card is pulled open.
-function OpenRows(p: { band: BarProps['band']; grip: TimeCardGrip; onHeight: (height: number) => void }): ReactElement {
+function OpenRows(p: {
+  band: BarProps['band'];
+  grip: TimeCardGrip;
+  picking: Picking | null;
+  onHeight: (height: number) => void;
+}): ReactElement {
   const { band, grip } = p;
   const folded = grip.place !== 'open';
   return (
@@ -112,27 +120,40 @@ function OpenRows(p: { band: BarProps['band']; grip: TimeCardGrip; onHeight: (he
         hidden={folded}
         moving={band.moving ?? null}
         onHeight={p.onHeight}
+        picking={p.picking}
         shown={{ startAt: band.band.startAt, endAt: band.band.endAt }}
       />
     </Reanimated.View>
   );
 }
 
+// Picking opens the card once, as it starts.
+function useOpenWhen(picking: boolean, open: () => void): void {
+  const was = useRef(picking);
+  useEffect(() => {
+    if (picking && !was.current) {
+      open();
+    }
+    was.current = picking;
+  });
+}
+
 // The time bar: the answer's band in one white row at the top, its head the words and "＋ 같이", its track over the
 // free time around the span, at one range and scale whether it is open or not. With Friends, pulled open by its grip, a
 // row for each person comes out under the track over the same range, four people at most in sight and the rest
-// scrolled to (P04 ticket 61). A time outside that range is
-// reached by asking in the chat, not by a drag. Its grip also pushes it up out of the way. The height it tells is its
-// folded one: open, it lies over the map for a while.
-function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactElement {
+// scrolled to (P04 ticket 61); people are picked in those rows (P04 ticket 64). A time outside that range is asked for
+// in the chat, not by a drag. Its grip also pushes it up out of the way. The height it tells is its folded one: open,
+// it lies over the map for a while.
+function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
   const [addWidth, setAddWidth] = useState(ADD_ROOM);
   const [height, setHeight] = useState(0);
   const [rows, setRows] = useState(0);
   const barY = barTop(top) + offset;
   const { lanes, startAt, now } = band.band;
-  const friends = lanes.length > 1;
+  const friends = lanes.length > 1 || picking !== null;
   const grip = useTimeCardGrip({ height, top: barY, opens: friends, rows, sheet: use(SheetLinkContext) });
+  useOpenWhen(picking !== null, grip.open);
   const folded = !friends || grip.place !== 'open';
   const label = friends ? `사람별 시간 ${folded ? '펼치기' : '접기'}` : null;
   return (
@@ -153,7 +174,7 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
         folded
         head={{ right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
       />
-      {friends ? <OpenRows band={band} grip={grip} onHeight={setRows} /> : null}
+      {friends ? <OpenRows band={band} grip={grip} onHeight={setRows} picking={picking} /> : null}
       {add === null ? null : (
         <View
           onLayout={({ nativeEvent }: LayoutChangeEvent) => {
@@ -195,14 +216,16 @@ export function PlanBar(props: PlanBarProps): ReactElement {
   const fixed = bandIsFixed(answer.input.kind) || invitation.changed !== null;
   const tick = mealTickOf(answer);
   const sent = invitation.sending || invitation.made !== null;
+  const pickingBar = usePickingBar(shown, plan, busy);
   return (
     <Bar
+      picking={pickingBar.picking}
       band={{
         tick:
           tick === null
             ? undefined
             : { side: tick.side, node: <MealTick sent={sent} shown={shown} words={tick.words} /> },
-        band: plan.band,
+        band: pickingBar.band,
         disabled: busy,
         fixed: windowOf(answer.input),
         focus: fix.focus,
@@ -213,9 +236,10 @@ export function PlanBar(props: PlanBarProps): ReactElement {
         onMove: fixed ? undefined : fix.move,
       }}
       add={
-        addName === null ? null : (
-          <AddChip adding={fix.adding} disabled={busy} inBar name={addName} onAdd={fix.toggleAdding} />
-        )
+        pickingBar.head ??
+        (addName === null ? null : (
+          <AddChip disabled={busy} inBar name={addName} onAdd={fix.toggleAdding} words={pickingBar.addWords} />
+        ))
       }
       day={mealDayOf(answer, plan)}
       onHeight={onHeight}

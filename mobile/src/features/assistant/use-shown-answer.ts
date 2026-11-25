@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -13,6 +14,7 @@ import { apiClient } from '@/api/client';
 import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
 import { showing, withKind } from './meal-kinds';
+import { usePeoplePicking } from './use-people-picking';
 import { withPerson } from './plan-input';
 import { opensBasis } from './relaxed-plan';
 import type { Stretch } from './time-band';
@@ -38,9 +40,15 @@ export interface ShownAnswer {
   chooseKind: (kind: Cuisine | null) => void;
   basisOpen: boolean;
   toggleBasis: () => void;
-  // The list of Friends to add is open in the card; the input gives way to it.
+  // People are being picked in the time card (P04 ticket 64); `setAdding(false)` leaves without changing anything.
   adding: boolean;
   setAdding: (open: boolean) => void;
+  // The people checked while picking, but the asker, null when not picking.
+  picked: readonly string[] | null;
+  // Checks or unchecks a Friend while picking; outside it, opens picking with the Plan's people and that Friend.
+  pick: (userId: string) => void;
+  // 완료: asks once with everyone checked, nothing when that is the Plan's people, and ends picking.
+  finishPicking: () => void;
   // A recalculation is on its way: one runs at a time.
   recalculating: boolean;
   // Asks for the answer to the conditions of the answer on screen when it is called, as `alter` changes them; it
@@ -85,6 +93,7 @@ interface AnswerState extends Shown {
   source: AnswerReply | null;
   basisOpen: boolean;
   adding: boolean;
+  picked: readonly string[] | null;
   // What was shown before the last drag.
   kept: Shown | null;
   recalculating: boolean;
@@ -124,6 +133,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
     index: 0,
     basisOpen: opensBasis(source?.plans[0]),
     adding: false,
+    picked: null,
     kept: null,
     recalculating: false,
     pendingAdd: null,
@@ -164,7 +174,6 @@ function useBrowsing(setStored: SetStored): {
   browse: ShownAnswer['browse'];
   show: ShownAnswer['show'];
   toggleBasis: ShownAnswer['toggleBasis'];
-  setAdding: ShownAnswer['setAdding'];
   undo: ShownAnswer['undo'];
   setMoving: ShownAnswer['setMoving'];
 } {
@@ -189,12 +198,6 @@ function useBrowsing(setStored: SetStored): {
   const toggleBasis = useCallback((): void => {
     setStored((last) => ({ ...last, basisOpen: !last.basisOpen }));
   }, [setStored]);
-  const setAdding = useCallback(
-    (open: boolean): void => {
-      setStored((last) => (last.adding === open ? last : { ...last, adding: open }));
-    },
-    [setStored],
-  );
   const undo = useCallback((): void => {
     setStored((last) =>
       last.kept === null || last.recalculating ? last : { ...last, ...last.kept, kept: null, basisOpen: false },
@@ -208,7 +211,7 @@ function useBrowsing(setStored: SetStored): {
     },
     [setStored],
   );
-  return { browse, show, toggleBasis, setAdding, undo, setMoving };
+  return { browse, show, toggleBasis, undo, setMoving };
 }
 
 // The kind of food chosen on the phone (`withKind`): the answer on screen with its meal's `cuisine`, and its pick.
@@ -302,6 +305,9 @@ export function useShownAnswer(
   const browsing = useBrowsing(setStored);
   const chooseKind = useKindChoice(setStored);
   const menu = useMenuOpening(setStored, browsing.show);
+  const picking = usePeoplePicking(setStored, current.picked, (alter) => {
+    ask(alter, undefined, null);
+  });
   const plan = current.answer?.plans[current.index] ?? null;
   return {
     source: current.source,
@@ -319,6 +325,8 @@ export function useShownAnswer(
     add: (userId) => {
       ask((input) => withPerson(input, userId), undefined, userId);
     },
+    picked: current.picked,
+    ...picking,
     pendingAdd: current.pendingAdd,
     ghost: ghostOf(current.kept),
     moving: current.moving,

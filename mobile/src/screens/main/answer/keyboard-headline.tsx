@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLine } from '@/api/assistant-types';
@@ -32,7 +33,7 @@ export function headlineOf(reply: ChatBubble, control: Pick<ChatSheetControl, 'a
   if ((fromReply || keeps) && shown.answer !== null) {
     const over = keeps ? refusal?.lines[0] : undefined;
     // The card says nothing of a Plan at rest, but the headline over the keyboard names it, the map being covered.
-    const said = linesOf(shown, shown.answer, shown.adding)[0] ?? shown.plan?.lines[0];
+    const said = linesOf(shown, shown.answer)[0] ?? shown.plan?.lines[0];
     return over ?? said ?? wordsLine(reply.text);
   }
   const lookup = keeps ? onScreen.lookup : (reply.lookup ?? null);

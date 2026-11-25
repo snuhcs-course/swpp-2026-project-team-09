@@ -8,6 +8,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -17,13 +18,14 @@ import type { AnswerLabel } from '@/design-system';
 import { drawingOf } from '@/features/assistant/answer-marks';
 import { NO_STANDINGS } from '@/features/assistant/invited-friends';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
+import { NO_ANSWER } from './support/no-answer';
 import { inView, type MapCamera, type MarkerLook } from '@/map';
 import type * as MarkerImages from '@/map/marker-images';
 import { useMarkerImages } from '@/map/marker-images';
 import type { Room } from '@/screens/main/layout';
 import { type AnswerMap, useAnswerMap } from '@/screens/main/use-answer-map';
 import { placeMoved, withScene } from './support/answer-view';
-import { type Asked, mapOf, nothing } from './support/main-map-stand-in';
+import { type Asked, mapOf } from './support/main-map-stand-in';
 
 jest.mock('@/map/marker-images', () => {
   const actual = jest.requireActual<typeof MarkerImages>('@/map/marker-images');
@@ -52,31 +54,6 @@ jest.mock('react-native-safe-area-context', () => ({
 const SIZE = { width: 411, height: 914 };
 const ROOM: Room = { stage: SIZE, cardHeight: null, answerHeight: 274, tutorialStart: false, interestsHint: false };
 const FIT_ZOOM = 15.26;
-
-const NO_ANSWER: ShownAnswer = {
-  source: null,
-  answer: null,
-  plan: null,
-  index: 0,
-  browse: nothing,
-  show: nothing,
-  chooseKind: nothing,
-  basisOpen: false,
-  toggleBasis: nothing,
-  adding: false,
-  setAdding: nothing,
-  recalculating: false,
-  change: nothing,
-  add: nothing,
-  pendingAdd: null,
-  ghost: null,
-  undo: nothing,
-  moving: null,
-  setMoving: nothing,
-  menuFor: null,
-  openMenu: nothing,
-  closeMenu: nothing,
-};
 
 function shownAt(index: number): ShownAnswer {
   return { ...NO_ANSWER, source: MEAL_ANSWER, answer: MEAL_ANSWER, plan: MEAL_ANSWER.plans[index] ?? null, index };

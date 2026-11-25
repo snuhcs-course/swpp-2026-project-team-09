@@ -71,6 +71,8 @@ export interface TimeCardGrip {
   grown: Moved;
   grownRest: ViewStyle;
   toggle: () => void;
+  // Opens the card, with Friends to show, as picking people does (P04 ticket 64).
+  open: () => void;
   // 1 while the card's open height follows the sheet's move (`sheet-link`): its laid-out height then is not its own.
   followsSheet: SharedValue<number>;
   // A screen reader's steps on the grip.
@@ -288,6 +290,11 @@ export function useTimeCardGrip({ height, top, opens, rows, sheet }: GripInput):
     toggle: () => {
       if (opens) {
         settle(place === 'shown' ? 2 : 1);
+      }
+    },
+    open: () => {
+      if (opens && place !== 'open') {
+        settle(PLACES.indexOf('open'));
       }
     },
     actions: [place === 'tucked' ? { name: 'untuck', label: UNTUCK_LABEL } : { name: 'tuck', label: TUCK_LABEL }],

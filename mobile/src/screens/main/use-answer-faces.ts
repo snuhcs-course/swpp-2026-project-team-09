@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo } from 'react';
@@ -21,8 +22,9 @@ import { friendIdOf } from '@/features/map/adapter';
 import { inView, type MapAvatar, type MarkerLook, useMarkerImages } from '@/map';
 import { SELECTED_ORDER } from './use-things';
 
-// The face a Friend's Avatar shows while an answer is on screen: the selected look while their add is on its way, and
-// a "+" while a press would add them. Anyone else's, and every face once the Plan is sent, is the everyday map's look
+// The face a Friend's Avatar shows while an answer is on screen: while people are picked in the time card, lit when
+// checked and a "+" when not (P04 ticket 64); else the selected look while their add is on its way, and a "+" while a
+// press would pick them. Anyone else's, and every face once the Plan is sent, is the everyday map's look
 // unselected: a selection made before asking stands behind the frame, and only the add lights a face. Every face but
 // the lit one is faint, as the answer's own marks stand out.
 export function answerFaceOf(
@@ -30,6 +32,7 @@ export function answerFaceOf(
   input: PlanInput,
   pendingAdd: string | null,
   sent: boolean,
+  picked: readonly string[] | null = null,
 ): MarkerLook {
   if (view.kind !== 'person') {
     return view;
@@ -38,6 +41,9 @@ export function answerFaceOf(
   const userId = friendIdOf(id);
   if (userId === null || sent) {
     return face;
+  }
+  if (picked !== null) {
+    return picked.includes(userId) ? { ...face, selected: true, faded: false } : { ...face, addable: true };
   }
   if (userId === pendingAdd) {
     return { ...face, selected: true, faded: false };
@@ -50,11 +56,11 @@ export function answerFaceOf(
 // the picture the face has, so that a native map never leaves the face out meanwhile.
 export function useFaces(
   avatars: readonly MapAvatar[],
-  { answer, pendingAdd }: ShownAnswer,
+  { answer, pendingAdd, picked }: ShownAnswer,
   sent: boolean,
 ): MapAvatar[] {
   const looks = avatars.map((avatar) =>
-    answer === null ? avatar.image.view : answerFaceOf(avatar, answer.input, pendingAdd, sent),
+    answer === null ? avatar.image.view : answerFaceOf(avatar, answer.input, pendingAdd, sent, picked),
   );
   const ahead = looks.flatMap((look) =>
     look.kind === 'person' && look.addable === true ? [{ ...look, addable: false, selected: true, faded: false }] : [],

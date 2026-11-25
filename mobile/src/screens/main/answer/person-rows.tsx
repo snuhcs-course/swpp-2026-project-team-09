@@ -4,10 +4,13 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { router } from 'expo-router';
 import { type ReactElement, useState } from 'react';
-import { type LayoutChangeEvent, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type LayoutChangeEvent, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { MealInput, TimeBand } from '@/api/assistant-types';
-import { color, radius, space, text } from '@/design-system';
+import type { BandLane } from '@/api/time-band-types';
+import { color, Icon, radius, space, text } from '@/design-system';
+import { type PickRow, pickStateOf } from '@/features/assistant/people-picking';
 import { foldedRangeOf, type Stretch } from '@/features/assistant/time-band';
 import { placeOf, redOf } from './band-body';
 import { Red } from './band-track';
@@ -18,7 +21,8 @@ import { Red } from './band-track';
 // busy stretches, cut at the bar's ends, and the band's outline. Up to four people the rows show whole; with more, their
 // room is four and a half rows, the half row at its bottom edge showing there are more, and the rows scroll in it while
 // the card's head above and its grip's strip below stay. The rows only scroll: the card's drag is its strip's. Folded,
-// the rows take no room and a screen reader passes them by.
+// the rows take no room and a screen reader passes them by. While people are picked (P04 ticket 64) each row has a
+// check, the name, and the walk to the Plan's place at its right, and a press checks or unchecks it; 나 stays checked.
 
 const BAR_HEIGHT = 8;
 const LANE_HEIGHT = 12;
@@ -35,8 +39,16 @@ export function rowsRoomOf(whole: number, count: number): number {
   return ROWS_TOP + MOST_ROWS * (row + ROW_GAP) + row / 2;
 }
 
+// The rows while people are picked: a row for the User and each Friend (`pickRowsOf`), and the press on one.
+export interface Picking {
+  rows: readonly PickRow[];
+  onPick: (userId: string) => void;
+}
+
 interface PersonRowsProps {
   band: TimeBand;
+  // Left out, the rows of the Plan's people.
+  picking?: Picking | null;
   // Where the band is drawn now.
   shown: Stretch;
   fixed: MealInput['window'];
@@ -46,10 +58,87 @@ interface PersonRowsProps {
   onHeight: (height: number) => void;
 }
 
+interface LaneParts {
+  band: TimeBand;
+  range: TimeBand['range'];
+  fixed: MealInput['window'];
+  moving: Stretch | null;
+  outline: Stretch;
+}
+
+// A person's bar: their busy stretches, cut at the bar's ends, the clashes red, and the band's outline.
+function Lane({ lane, parts }: { lane: BandLane; parts: LaneParts }): ReactElement {
+  const { band, range, fixed, moving, outline } = parts;
+  return (
+    <View style={styles.lane}>
+      <View style={styles.bar}>
+        {lane.busy.map((stretch) => (
+          <View
+            key={`busy-${stretch.startAt}`}
+            style={[styles.busy, placeOf(stretch, range)]}
+            testID="time-card-busy"
+          />
+        ))}
+        <Red range={range} stretches={redOf(lane, fixed, band, moving)} />
+      </View>
+      <View style={[styles.outline, placeOf(outline, range)]} />
+    </View>
+  );
+}
+
+// A row while picking: its check, name, and state, and its bar when the main server sent its lane. An unchecked row is
+// quieter.
+function PickLine({ row, parts, onPick }: { row: PickRow; parts: LaneParts; onPick: Picking['onPick'] }): ReactElement {
+  const { userId, name, me, checked, busy } = row;
+  const state = pickStateOf(row);
+  return (
+    <Pressable
+      accessibilityLabel={state === '' ? name : `${name} · ${state}`}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked, disabled: me }}
+      disabled={me}
+      onPress={() => {
+        onPick(userId);
+      }}
+      style={[styles.row, !checked && styles.unchecked]}
+      testID={`time-card-pick-${userId}`}
+    >
+      <View style={styles.head}>
+        <View style={[styles.check, checked && styles.checked]}>
+          {checked ? <Icon color={color.onPrimary} name="check" size={12} /> : null}
+        </View>
+        <Text numberOfLines={1} style={styles.pickName}>
+          {name}
+        </Text>
+        <Text style={styles.state}>{state}</Text>
+      </View>
+      {busy === null ? null : <Lane lane={{ userId, name, busy }} parts={parts} />}
+    </Pressable>
+  );
+}
+
+// With no Friend to pick, one line that says so and leads to adding one.
+function NoFriends(): ReactElement {
+  return (
+    <View style={styles.head} testID="time-card-no-friends">
+      <Text style={styles.pickName}>아직 친구가 없어요</Text>
+      <Pressable
+        accessibilityRole="link"
+        onPress={() => {
+          router.push('/me/friends/add');
+        }}
+      >
+        <Text style={styles.add}>친구 추가 ›</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 export function PersonRows(props: PersonRowsProps): ReactElement {
-  const { band, shown, fixed, moving, hidden, onHeight } = props;
-  const range = foldedRangeOf(band);
-  const many = band.lanes.length > MOST_ROWS;
+  const { band, picking = null, shown, fixed, moving, hidden, onHeight } = props;
+  const parts = { band, range: foldedRangeOf(band), fixed, moving, outline: moving ?? shown };
+  const count = picking === null ? band.lanes.length : picking.rows.length;
+  const many = count > MOST_ROWS;
   const [room, setRoom] = useState<number | null>(null);
   return (
     <ScrollView
@@ -62,33 +151,24 @@ export function PersonRows(props: PersonRowsProps): ReactElement {
     >
       <View
         onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-          const next = rowsRoomOf(nativeEvent.layout.height, band.lanes.length);
+          const next = rowsRoomOf(nativeEvent.layout.height, count);
           setRoom(next);
           onHeight(next);
         }}
         style={styles.rows}
         testID="time-card-rows"
       >
-        {band.lanes.map((lane) => (
-          <View key={lane.userId} style={styles.row}>
-            <Text numberOfLines={1} style={styles.name}>
-              {lane.name}
-            </Text>
-            <View style={styles.lane}>
-              <View style={styles.bar}>
-                {lane.busy.map((stretch) => (
-                  <View
-                    key={`busy-${stretch.startAt}`}
-                    style={[styles.busy, placeOf(stretch, range)]}
-                    testID="time-card-busy"
-                  />
-                ))}
-                <Red range={range} stretches={redOf(lane, fixed, band, moving)} />
+        {picking === null
+          ? band.lanes.map((lane) => (
+              <View key={lane.userId} style={styles.row}>
+                <Text numberOfLines={1} style={styles.name}>
+                  {lane.name}
+                </Text>
+                <Lane lane={lane} parts={parts} />
               </View>
-              <View style={[styles.outline, placeOf(moving ?? shown, range)]} />
-            </View>
-          </View>
-        ))}
+            ))
+          : picking.rows.map((row) => <PickLine key={row.userId} onPick={picking.onPick} parts={parts} row={row} />)}
+        {picking !== null && picking.rows.length <= 1 ? <NoFriends /> : null}
       </View>
     </ScrollView>
   );
@@ -100,6 +180,21 @@ const styles = StyleSheet.create({
   rows: { gap: ROW_GAP, paddingTop: ROWS_TOP },
   row: { gap: space[1] },
   name: { ...text.caption, color: color.inkMuted },
+  unchecked: { opacity: 0.5 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  check: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 18,
+    height: 18,
+    borderWidth: 1.5,
+    borderColor: color.borderStrong,
+    borderRadius: radius.full,
+  },
+  checked: { borderColor: color.quest, backgroundColor: color.quest },
+  pickName: { ...text.label, flex: 1, color: color.ink },
+  state: { ...text.caption, color: color.inkMuted },
+  add: { ...text.label, color: color.snuBlue },
   lane: { height: LANE_HEIGHT, justifyContent: 'center' },
   bar: { height: BAR_HEIGHT, borderRadius: radius.full, backgroundColor: color.surfaceSunken },
   busy: { position: 'absolute', top: 0, bottom: 0, borderRadius: radius.full, backgroundColor: color.borderStrong },

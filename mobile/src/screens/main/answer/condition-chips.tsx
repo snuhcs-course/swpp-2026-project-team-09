@@ -7,6 +7,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -153,21 +154,24 @@ function PersonChip({ chip, disabled, onRemove, onProfile }: PersonChipProps): R
 }
 
 interface AddChipProps {
-  adding: boolean;
+  adding?: boolean;
   disabled: boolean;
   // A meal's when left out.
   name?: string;
   onAdd: () => void;
   // In the time bar's head: a solid outline of the head row's height (P04 ticket 45); else dashed, in the card's chips.
   inBar?: boolean;
+  // What it reads: "＋ 같이" when left out, "같이 3 ›" with Friends in the Plan (P04 ticket 64).
+  words?: string;
 }
 
 export function AddChip({
-  adding,
+  adding = false,
   disabled,
   name = '같이 먹을 친구 추가',
   onAdd,
   inBar = false,
+  words = '＋ 같이',
 }: AddChipProps): ReactElement {
   return (
     <Pressable
@@ -179,7 +183,7 @@ export function AddChip({
       onPress={onAdd}
       style={pressedStyle([styles.chip, inBar ? styles.inBar : styles.add, adding && styles.adding])}
     >
-      <Text style={[styles.label, adding && styles.personLabel]}>＋ 같이</Text>
+      <Text style={[styles.label, adding && styles.personLabel]}>{words}</Text>
     </Pressable>
   );
 }

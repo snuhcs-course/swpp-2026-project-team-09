@@ -12,8 +12,10 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { TimeBand } from './time-band-types';
 import type { LibraryCard } from './library-card-types';
 import type { Lookup } from './lookup-types';
 import type { MeetInput } from './meet-plan-types';
@@ -367,16 +369,6 @@ export interface MapScene {
   flags: { at: LatLng; text: string; role: FlagRole; placeId?: string }[];
 }
 
-export interface TimeBand {
-  range: { startAt: string; endAt: string };
-  now: string;
-  // A busy stretch of a Plan's band says what it is: "302동 수업", "수업", or "일정".
-  lanes: { userId: string; name: string; busy: { startAt: string; endAt: string; label?: string }[] }[];
-  startAt: string;
-  endAt: string;
-  text: string;
-}
-
 // One request of a message that asked for several (P03): a seat or room booked through a library card, or the plan
 // drawn on the map. A reply carries its steps, in time order, only when there are two or more.
 export interface ReplyStep {
@@ -413,3 +405,5 @@ export interface AssistantReply extends WithRefusal {
 }
 
 export type { AskOffer, ReplyOffer } from './reply-offer-types';
+
+export type { TimeBand } from './time-band-types';
