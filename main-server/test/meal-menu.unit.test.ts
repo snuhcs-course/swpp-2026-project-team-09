@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -179,6 +180,20 @@ describe("The menu line among a Plan's lines", () => {
   });
 });
 
+describe('A meal Plan’s menu, what else is served', () => {
+  // P04 ticket 74: the map's label of the chosen place says the menu's "외 N", from the menu's own count.
+  it('counts the other things served across every corner, as the menu’s words do', () => {
+    const lines = lunchOf('두레미담');
+    const words = menuLine({ lines, closesAt: null }, TODAY, NOW)
+      ?.map(({ text }) => text)
+      .join('');
+
+    expect(words).toContain(` 외 ${String(mainMenu(lines).others)}`);
+    expect(mainMenu(lines).others).toBeGreaterThan(mainMenu(lines).dishes.length - 1);
+    expect(mainMenu([]).others).toBe(0);
+  });
+});
+
 describe("A meal Plan's menu", () => {
   it("is its Restaurant's main corner, its dishes with their prices in the menu's order, and absent without one", () => {
     const menus = new Map([['학생회관식당', { lines: lunchOf('학생회관식당'), closesAt: '14:30' }]]);
@@ -191,6 +206,7 @@ describe("A meal Plan's menu", () => {
         { name: '단호박영양밥&양념장(#)', price: 3000, cuisine: null },
         { name: '수제탕수육', price: 6000, cuisine: null },
       ],
+      others: 2,
     });
     expect(plans.filter(({ id }) => id !== '학생회관식당').map(({ menu }) => menu)).not.toContainEqual(
       expect.anything(),

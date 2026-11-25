@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { KeptQuest, MapScene } from '@/api/assistant-types';
@@ -73,7 +74,7 @@ export interface Draft {
   line: string | null;
   // A candidate's dishes and price under its title and time; left out, none.
   sub?: string | null;
-  // A meal pick's time and walking after its title, and "메뉴 ›" after its line; left out, none.
+  // A meal pick's time after its title, and "메뉴 ›" after its line; left out, none.
   note?: string | null;
   action?: string | null;
   // A meal candidate that does not fit or is far, drawn pale; left out, not.

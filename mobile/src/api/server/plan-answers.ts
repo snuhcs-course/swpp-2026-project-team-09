@@ -10,7 +10,7 @@
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { AnswerLine, AnswerReply, Cuisine, MapScene, MenuDish, Plan, TimeBand } from '@/api/assistant-types';
+import type { AnswerLine, AnswerReply, MapScene, Plan, TimeBand } from '@/api/assistant-types';
 import type { DroppedPlace, PlanPart } from '@/api/plan-part-types';
 import { field, hasTexts, isNumber, isText, isTextOrNull, listOf } from './answers';
 import { isClosedOrAbsent, isLatLng, isPlacePoint } from './place-answers';
@@ -20,6 +20,7 @@ import { isRecruitingQuest } from './party-client';
 import { isInput, isOneOf } from './plan-inputs';
 import { hasRelax } from './relax-answers';
 import { isKeptOneOrAbsent, isKeptOrAbsent } from './kept-answers';
+import { isPlanMenuOrAbsent } from './plan-menu-answers';
 
 // The check of a Place, used beside these by other answers' checks.
 export { isPlacePoint } from './place-answers';
@@ -227,8 +228,6 @@ function isEventTimesOrAbsent(value: unknown): boolean {
   return value === undefined || (isText(field(value, 'startAt')) && isTextOrNull(field(value, 'endAt')));
 }
 
-const isCuisine = isKeyOf<Cuisine>({ 한식: true, 중식: true, 일식: true, 양식: true, 분식: true });
-
 // A meal answer's meal already set: absent from other answers and from a main server before P05 ticket 16.
 function isMealSetOrAbsent(value: unknown): boolean {
   return (
@@ -261,20 +260,6 @@ function isAddingOrAbsent(value: unknown): boolean {
       isText(field(value, 'startAt')) &&
       isTextOrNull(field(value, 'movesTo')))
   );
-}
-
-export function isDish(value: unknown): value is MenuDish {
-  const cuisine = field(value, 'cuisine');
-  return (
-    isText(field(value, 'name')) &&
-    isNumberOrNull(field(value, 'price')) &&
-    (cuisine === undefined || cuisine === null || isCuisine(cuisine))
-  );
-}
-
-// A meal Plan's menu: absent from other Plans and from a main server before P05 ticket 12's follow-up.
-function isPlanMenuOrAbsent(value: unknown): boolean {
-  return value === undefined || (isNumberOrNull(field(value, 'price')) && listOf(isDish)(field(value, 'dishes')));
 }
 
 export function isPlan(value: unknown): value is Plan {

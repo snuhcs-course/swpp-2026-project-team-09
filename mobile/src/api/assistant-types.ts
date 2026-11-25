@@ -335,8 +335,9 @@ export interface Plan {
   event?: { startAt: string; endAt: string | null };
   // A meal Plan's menu: its Restaurant's main corner, its own price (a buffet's or a self corner's, from its heading, null
   // when it has none) and its dishes in the menu's order. Absent when no menu was collected for the meal there, and
-  // from a main server before P05 ticket 12's follow-up.
-  menu?: { price: number | null; dishes: MenuDish[] };
+  // from a main server before P05 ticket 12's follow-up. `others`: how many other things are served that meal there,
+  // across every corner, the "외 N" of the menu's words (P04 ticket 74); absent from a main server before it.
+  menu?: { price: number | null; dishes: MenuDish[]; others?: number };
 }
 
 export interface MenuDish {
