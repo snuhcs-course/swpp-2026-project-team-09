@@ -7,6 +7,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The app's one map. A screen shows a map with `Map` and nothing else: no screen calls a map SDK or the native
@@ -26,7 +27,7 @@ export {
   zoomDetail,
 } from './campus';
 export { CREDIT_ROOM, Map } from './map';
-export { MarkerImageStage, unmadeImage, useMarkerImages } from './marker-images';
+export { MarkerImageStage, unmadeImage, useLooksSettled, useMarkerImages } from './marker-images';
 export type { MarkerForm, MarkerLook } from './marker-looks';
 export { atPoint, inView, type Point, project, type Size, unproject } from './projection';
 export type {

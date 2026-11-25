@@ -13,7 +13,7 @@ import type { ChatMessage, PlanInput, RequestContext } from '@/api/assistant-typ
 import { mockClient } from '@/api/mock/client';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { FRIEND_LOOKUP_REPLY } from '@/api/mock/data/friend-lookup';
-import { MENU_LOOKUP_REPLY } from '@/api/mock/data/menu-lookup';
+import { MENU_ANSWER_REPLY, MENU_CLOSED_REPLY } from '@/api/mock/data/menu-answer';
 import { FRIENDS } from '@/api/mock/data/friends';
 import { STUDY_LOOKUP_REPLY } from '@/api/mock/data/study-lookup';
 import { FRIEND_TAPS, TAP_LOOKUPS } from '@/api/mock/data/tap-lookups';
@@ -60,8 +60,17 @@ describe('the mock of an answer drawn on the map', () => {
     await expect(answered(mockClient.askAssistant(WHERE, CONTEXT))).resolves.toEqual(WAY_LOOKUP_REPLY);
   });
 
-  it("answers 301동식당's menu with a context by the main server's Lookup", async () => {
-    await expect(answered(mockClient.askAssistant(MENU, CONTEXT))).resolves.toEqual(MENU_LOOKUP_REPLY);
+  // P04 ticket 72: a menu question is the meal answer opened at the Restaurant, or, closed, the Restaurant's menu view.
+  it("answers 301동식당's menu with a context by the meal answer opened at it", async () => {
+    await expect(answered(mockClient.askAssistant(MENU, CONTEXT))).resolves.toEqual(
+      replyWithOtherFriends(MENU_ANSWER_REPLY),
+    );
+  });
+
+  it("answers 학생회관식당's menu on its holiday by its menu view with why", async () => {
+    const closed: ChatMessage[] = [{ role: 'user', text: '학생회관식당 메뉴 뭐야?' }];
+
+    await expect(answered(mockClient.askAssistant(closed, CONTEXT))).resolves.toEqual(MENU_CLOSED_REPLY);
   });
 
   it("answers where 민수 is with a context by the main server's Lookup", async () => {

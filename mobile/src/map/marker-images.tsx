@@ -36,8 +36,11 @@ let failed: readonly string[] = [];
 const ranks = new Map<string, number>();
 const NO_LOOKS: readonly MarkerLook[] = [];
 const listeners = new Set<() => void>();
+// Counts the changes, a picture made or a look's tries used up, for a screen that waits on looks to hear of both.
+let changes = 0;
 
 function tell(): void {
+  changes += 1;
   for (const listener of listeners) {
     listener();
   }
@@ -151,6 +154,19 @@ export function useMarkerImages(looks: readonly MarkerLook[], later: readonly Ma
     first.current = false;
   });
   return looks.map((look) => kept[lookName(look)] ?? unmadeImage(look));
+}
+
+// Whether every look has its picture, or will have none because its tries were used up: what a screen that keeps one
+// drawing until the next one's pictures are made waits for. Always so in a build without the native map module.
+export function useLooksSettled(looks: readonly MarkerLook[]): boolean {
+  useSyncExternalStore(
+    subscribe,
+    () => changes,
+    () => changes,
+  );
+  return (
+    !hasNativeMap() || looks.every((look) => images[lookName(look)] !== undefined || failed.includes(lookName(look)))
+  );
 }
 
 // How long a photo may take before a picture is made without it; the picture is made again when the photo comes.

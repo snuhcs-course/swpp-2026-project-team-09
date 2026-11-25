@@ -23,14 +23,7 @@ import type { Ways } from '@/features/assistant/shuttle-legs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { CardView } from '@/features/map/adapter';
-import {
-  type MapAvatar,
-  type MapLine,
-  type MapMarker,
-  type MarkerLook,
-  NATIVE_MIN_LEVEL,
-  useMarkerImages,
-} from '@/map';
+import { type MapAvatar, type MapLine, type MapMarker, type MarkerLook, NATIVE_MIN_LEVEL } from '@/map';
 import { ignoreMark, type OnMark, planPress, pressableWhile, takesNoPress } from './answer-presses';
 import {
   ANSWER_MIN_LEVEL,
@@ -48,6 +41,7 @@ import { useChoosingRing } from './use-choosing-ring';
 export { othersOf };
 import { useAnswerWalks, useMealWays } from './use-answer-walks';
 import type { MainMap } from './use-main-map';
+import { looksKey, useMadeDrawing, useRestedView } from './use-rested-labels';
 
 export { labelArea, paddingOf } from './answer-padding';
 export { useFraming } from './answer-framing';
@@ -224,10 +218,12 @@ export function useBase(draw: Draw | null): AnswerDrawing | null {
 
 // A drawing's markers and lines on the map in place of the everyday map's markers, lines, and the User's own Avatar,
 // with the camera of an answer. The camera is worked out from the drawing with its sides chosen in metres (`base`),
-// and the marks are drawn with their sides chosen at that camera. Null while there is nothing to draw. `looks` are
-// asked for with the drawing's own, so that a change of drawing never waits for a picture. `answer` is the answer
-// drawn, or the reply of a Lookup, for the camera to tell one that replaced another. `routes` are those of the scene
-// drawn: its walks follow their paths once found (`useAnswerWalks`). Labels keep clear of the faces at `avoid`.
+// and the marks are drawn with their sides chosen at that camera, and again at the camera where the map comes to rest
+// after it (`useRestedView`, P04 ticket 69), once their pictures are made (`useMadeDrawing`). Null while there is
+// nothing to draw. `looks` are asked for with the drawing's own, so that a change of drawing never waits for a
+// picture. `answer` is the answer drawn, or the reply of a Lookup, for the camera to tell one that replaced another.
+// `routes` are those of the scene drawn: its walks follow their paths once found (`useAnswerWalks`). Labels keep clear
+// of the faces at `avoid`.
 export function useDrawnMap(
   draw: Draw | null,
   base: AnswerDrawing | null,
@@ -246,12 +242,11 @@ export function useDrawnMap(
     () => held ?? (base === null ? null : labelViewOf(base, framing, avoid)),
     [held, base, framing, avoid],
   );
-  const drawing = useMemo(() => (draw === null || shown === null ? base : draw(shown)), [draw, base, shown]);
+  const placedAt = useRestedView(shown, map.camera);
+  const next = useMemo(() => (draw === null || placedAt === null ? base : draw(placedAt)), [draw, base, placedAt]);
+  const baseKey = useMemo(() => looksKey(base), [base]);
+  const { drawing, view, images } = useMadeDrawing(baseKey, next, placedAt, looks);
   const things = drawing?.things ?? [];
-  const images = useMarkerImages(
-    things.map(({ look }) => look),
-    looks,
-  );
   useAnswerCamera(base, shown, answer, map, framing);
   const lines = useAnswerWalks(drawing?.lines ?? NO_LINES, routes);
   if (base === null || drawing === null || things.length === 0) {
@@ -264,7 +259,7 @@ export function useDrawnMap(
       ? []
       : [{ id, name: thing.name, position, image, order, passive: planId === null && !pressable(id) }];
   });
-  return { markers, lines, drawing: base, placed: drawing, view: shown };
+  return { markers, lines, drawing: base, placed: drawing, view };
 }
 
 export function ignorePress(): void {

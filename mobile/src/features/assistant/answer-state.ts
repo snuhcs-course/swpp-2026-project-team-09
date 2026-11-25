@@ -6,6 +6,7 @@
 
 import type { AnswerReply } from '@/api/assistant-types';
 import { offeredAnswer } from './meal-offered';
+import { openedIndex } from './opened-menu';
 import { newestOf, openedIfArrived } from './picking-on-arrival';
 import { opensBasis } from './relaxed-plan';
 import type { Stretch } from './time-band';
@@ -46,15 +47,19 @@ export interface AnswerState extends Shown {
 
 export type SetStored = (update: (last: AnswerState) => AnswerState) => void;
 
+// A new reply's answer on screen: at its first Plan, or at a menu question's Restaurant with its menu open (P04 ticket
+// 72).
 function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
   const given = reply?.answer ?? null;
   const source = given === null ? null : offeredAnswer(given);
+  const opened = openedIndex(source);
+  const index = Math.max(opened, 0);
   return {
     replyId: reply?.id ?? null,
     source,
     answer: source,
-    index: 0,
-    basisOpen: opensBasis(source?.plans[0]),
+    index,
+    basisOpen: opensBasis(source?.plans[index]),
     adding: false,
     picked: null,
     pickOrder: null,
@@ -63,7 +68,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
     recalculating: false,
     pendingAdd: null,
     moving: null,
-    menu: false,
+    menu: opened >= 0,
     epoch,
     newest: reply?.id ?? 0,
   };
@@ -108,7 +113,7 @@ export function ghostOf(kept: Shown | null): Stretch | null {
   return band === undefined ? null : { startAt: band.startAt, endAt: band.endAt };
 }
 
-// The state the hook starts with, the conversation's last reply shown as it is: it opens nothing by itself.
+// The state the hook starts with, the conversation's last reply shown as it is: it opens no picking by itself.
 export function firstState(reply: ChatBubble | undefined, bubbles: readonly ChatBubble[]): AnswerState {
   return { ...fresh(reply, 0), newest: newestOf(bubbles) };
 }

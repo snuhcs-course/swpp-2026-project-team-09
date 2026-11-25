@@ -15,21 +15,20 @@
 import { within } from '@testing-library/react-native';
 import { apiClient } from '@/api/client';
 import { FRIEND_LOOKUP_REPLY } from '@/api/mock/data/friend-lookup';
-import { MENU_LOOKUP_REPLY } from '@/api/mock/data/menu-lookup';
 import { pass, screen } from './support/app';
 import { grip, raiseCard } from './support/card-grip';
-import { card, mapLines, mapThings, timeBar } from './support/answer-map';
+import { card, mapLines, mapThings } from './support/answer-map';
 import { AI_INPUT, layStage } from './support/lists';
 import { pressMarker } from './support/made-quest';
 import { givePhone, ME, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 
-// A Lookup in the answer frame (P01 ticket 11) over the mocks, whose Assistant answers "문화관이 어디야?", "오늘
-// 301동식당 메뉴 뭐야?", and "민수 어디야?" with the main server's real Lookups (boards q1, q8, and q6). Since P04
-// ticket 05 a Lookup docks: its main button beside the input, and the line of words the map does not show.
+// A Lookup in the answer frame (P01 ticket 11) over the mocks, whose Assistant answers "문화관이 어디야?" and "민수
+// 어디야?" with the main server's real Lookups (boards q1 and q6). Since P04 ticket 05 a Lookup docks: its main button
+// beside the input, and the line of words the map does not show. A menu question is no Lookup since P04 ticket 72
+// (`answer-menu-question.integration.test.tsx`).
 
-// The model's words beside the stored menu and Friend Lookups, which are the dock's line (P04 ticket 18).
-const MENU_WORDS = MENU_LOOKUP_REPLY.text;
+// The model's words beside the stored Friend Lookup, which are the dock's line (P04 ticket 18).
 const FRIEND_WORDS = FRIEND_LOOKUP_REPLY.text;
 
 jest.mock('expo-location');
@@ -127,42 +126,6 @@ describe('the map of a way to a Place (q1)', () => {
     expect(mapLines()).toContain('walking-route');
     expect(mapLines()).not.toContain('answer:route:0');
     expect(mapThings()).not.toContain('문화관(73동) · 걸어서 18분');
-  });
-});
-
-// Partitions: a Lookup with a band, its sheet low and raised, and its marks. Expected values: the copy of board q8.
-describe('a menu (q8)', () => {
-  it('starts with the model\'s words, the band without handles on the time bar, and "길 안내" beside the input', async () => {
-    await ask('오늘 301동식당 메뉴 뭐야?');
-
-    expect(card().getByText(MENU_WORDS)).toBeVisible();
-    expect(timeBar().getByText('11:50–12:45 · 식사 55분')).toBeVisible();
-    expect(screen.queryByLabelText('시작 시각')).toBeNull();
-    expect(screen.queryByLabelText('끝 시각')).toBeNull();
-    expect(beside().getByRole('button', { name: '길 안내' })).toBeVisible();
-    expect(card().queryByRole('button', { name: '닫기' })).toBeNull();
-  });
-
-  it("shows the chips and both lines raised, under the card's ✕", async () => {
-    await ask('오늘 301동식당 메뉴 뭐야?');
-
-    await raiseCard();
-
-    expect(card().getByText('301동식당 오늘 점심은 부대짬뽕&군만두')).toBeVisible();
-    expect(card().getByText('13:00 수업까지')).toBeVisible();
-    expect(card().getByText('12:45까지 55분 먹을 수 있어요')).toBeVisible();
-    expect(card().getByRole('button', { name: '답 닫기' })).toBeVisible();
-  });
-
-  it('draws the 식당 with its menu, and the way on to the next Class', async () => {
-    await ask('오늘 301동식당 메뉴 뭐야?');
-
-    expect(mapThings()).toEqual(
-      expect.arrayContaining(['301동식당 · 부대짬뽕&군만두 · (뚝)순댓국&계란장조림', '13:00 수업 · 24동']),
-    );
-    // The walk's path comes after the reply, and no line is drawn while it is on its way (P04 ticket 75).
-    await pass(500);
-    expect(mapLines()).toEqual(['answer:route:0']);
   });
 });
 
