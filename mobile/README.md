@@ -702,11 +702,13 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   else of the everyday map: each mark is an `answer` look, one symbol at a point and its label at the first free side,
   and a candidate's mark takes a press, which shows its Plan; each route is a solid line. A walked route (one whose
   `mode` is absent or `walk`, never a shuttle's ride) follows the path `GET /walking-route` gives for its two ends,
-  joined onto them, in its own colour and width, and stays straight while that is on its way, when it fails and when
-  no path is found (`useAnswerWalks`, `use-answer-walks.ts`; P15 ticket 56, pending the owner's decision on Kakao's
-  rule). Only the scene on screen is asked, at most `WALKS_PER_SCENE` (3) walks, each pair of ends once, the people's
-  ways before the way on to the next Class; a scene that leaves the screen gives its requests up and keeps nothing, so
-  one shown again asks again. The minutes shown stay the main server's. The markers of
+  joined onto them, in its own colour and width. It is not drawn while that is on its way, and stays straight when it
+  fails and when no path is found (`useAnswerWalks`, `use-answer-walks.ts`; P15 ticket 56 and P04 ticket 75, pending
+  the owner's decision on Kakao's rule). Only the scene on screen is asked, at most `WALKS_PER_SCENE` (3) walks, each
+  pair of ends once, the people's ways before the way on to the next Class; a scene that leaves the screen gives its
+  requests up. A path is held only while the answer that draws it is on screen, in the running app's memory
+  (`useWalksHeldWhile`), so a place of that answer chosen again asks nothing and draws its path at once; a new answer
+  and a closed one drop the paths of the one before. The minutes shown stay the main server's. The markers of
   events, Quests, Restaurants, Study Spaces, and the shuttle, the shuttle's line, a walking route, the tutorial's pin,
   the shuttle's vehicles, and the User's own Avatar give way; the Avatars of Friends and of the other people of the
   User's Party stay, but for those of the Plan's people, whom the marks draw, and those near one of the Plan's own
@@ -1260,8 +1262,7 @@ When an operation fails:
 
 The walking route is asked when the User asks, not as the User's position moves. Pending the owner's decision (P15
 ticket 56), an answer's walks are asked by themselves too (`useAnswerWalks`): at most three for the scene on screen,
-none kept once it leaves, and a request whose scene leaves is given up. The everyday route keeps its asking only
-while it is drawn (`gcTime: 0`):
+each held only while the answer that draws it is on screen, and a request whose scene leaves is given up. The everyday route keeps its asking only while it is drawn (`gcTime: 0`):
 
 ```tsx
 const { route, isPending, isError, ask, clear } = useWalkingRoute();
@@ -1584,20 +1585,25 @@ the map stays in sight while the User reads. `Glass` draws that surface at a nam
 its own layout (size, padding, radius) and never a colour, a border or a strength. The levels' values are
 `glass` in `tokens.ts`, which nothing but `Glass` reads.
 
-| Level      | Takes                                                                                        | Look                                                             |
-| ---------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `panel`    | the outer bars, the bottom sheets and the cards over the map                                 | white at 50%, a thin light line along its top, a floating shadow |
-| `inner`    | the chips, boxes, white buttons and light coloured chips inside a panel                      | white at 80%                                                     |
-| `field`    | a grey input field inside a panel                                                            | navy at 5%                                                       |
-| `mapChip`  | a small chip standing on the map itself: a walk's minutes, a candidate's tag, a route's time | white at 60% with a light rim, a light shadow                    |
-| `darkChip` | the black chip of a time and a place ("10:45 301동")                                         | the ink at 48%, for white words                                  |
+| Level      | Takes                                                                                        | Look                                                                                            |
+| ---------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `panel`    | the outer bars, the bottom sheets and the cards over the map                                 | a blur, or white at 80% where nothing blurs; a thin light line along its top, a floating shadow |
+| `inner`    | the chips, boxes, white buttons and light coloured chips inside a panel                      | white at 90%                                                                                    |
+| `field`    | a grey input field inside a panel                                                            | navy at 5%                                                                                      |
+| `mapChip`  | a small chip standing on the map itself: a walk's minutes, a candidate's tag, a route's time | white at 60% with a light rim, a light shadow                                                   |
+| `darkChip` | the black chip of a time and a place ("10:45 301동")                                         | the ink at 48%, for white words                                                                 |
 
 Never glass: the navy main buttons ("여기로", "일정에 넣기", "완료"), which stay solid so that the action to take stands
 out, and the full-screen white pages, such as the chat's first screen, which have no map behind them.
 
-A new Assistant panel over the map uses `Glass` at the level that fits, not colours of its own. The blur behind a
-panel, when it comes, is added inside `Glass`, so no caller changes. The catalogue's `Glass` section shows each level
-over stripes that show through.
+A new Assistant panel over the map uses `Glass` at the level that fits, not colours of its own. The catalogue's `Glass`
+section shows each level over stripes that show through.
+
+A `panel` blurs what is behind it on iOS 26 and later, with the system's Liquid Glass (`GlassView` from
+`expo-glass-effect`), with no white of its own over the blur. Android does not blur: the Kakao map
+draws on a GL surface of its own, behind the app's views, and a view's blur sees only the views (ticket A04-03 tried
+`expo-blur` on the emulator). There, and on iOS before 26, the panel is white at 80%, so that its words never run into
+the map's lines. Which one a phone gets is decided inside `Glass`; no caller asks.
 
 ## Map
 

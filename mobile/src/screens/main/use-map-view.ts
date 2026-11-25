@@ -10,6 +10,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo } from 'react';
@@ -32,6 +33,7 @@ import {
   useEverydayLimits,
   useInvitationMap,
 } from './use-answer-map';
+import { useWalksHeldWhile } from './use-answer-walks';
 import { useLookupMap } from './use-lookup-map';
 import { useMadeSceneMap } from './use-made-scene-map';
 import { pressOnMap } from './use-main-layers';
@@ -154,7 +156,9 @@ export function useMapView(
   const plan = useAnswerMap(drawn.answer, map, room, people, chat.invitation, withMealMenu(chat, openMark));
   const answer = useMadeSceneMap(chat, map, room, people, me, openMark) ?? plan ?? lookup;
   const unasked = invitation.shown || made.shown !== null;
-  const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);
+  const cardScene = invitation.shown ? invitation.scene : made.scene;
+  const way = useInvitationMap(cardScene, map, room);
+  useWalksHeldWhile(chat.framed ? (chat.answer.source ?? chat.lookup.reply) : null, cardScene);
   const limits = useEverydayLimits(map, drawsItsOwnMap({ answer, way, guide }));
   const everyday = answer === null && way === null && !chat.framed && !unasked && guide === null;
   const { target, picking } = pressTarget(chat, unasked, selection);

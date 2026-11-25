@@ -2,17 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type CardFact, type Lookup } from '../src/assistant/dto/answer.dto.js';
 import { type DayItem, onDay } from '../src/assistant/free-time/free-time.js';
 import { friendTap, type FriendTapArgs } from '../src/assistant/lookup/friend-lookup.js';
 import { friendTapLookup } from '../src/assistant/lookup/friend.service.js';
-import { SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { type FriendView } from '../src/friends/dto/friend-view.dto.js';
-import { readSeedTravel, shownMinutes } from '../src/travel/travel.js';
+import { shownMinutes } from '../src/travel/travel.js';
 import { friendView } from './place-card.js';
 import { classAt, id, placeOf, position, readCampus, TUESDAY } from './way-example.js';
+import { readFrozenTravel } from './frozen-travel.js';
 
 // A pressed Friend's card (wireframe row 6, boards a4, a13, and a10) on Tuesday 2026-11-17 at 12:10, the User setting
 // out from 301동, on the seed's Places and walking table: 김민수 in 302동 at the building level, 김지은 at 두산인문관 at
@@ -22,7 +23,7 @@ let walkMinutes: FriendTapArgs['walkMinutes'] = () => 0;
 
 beforeAll(async () => {
   await readCampus();
-  const travel = await readSeedTravel(SEED_DIRECTORY);
+  const travel = await readFrozenTravel();
   walkMinutes = (from, to): number => shownMinutes(travel.walkingSeconds(from, to));
 });
 

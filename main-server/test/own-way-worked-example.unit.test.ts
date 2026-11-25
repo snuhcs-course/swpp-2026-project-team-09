@@ -2,14 +2,15 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../src/common/geometry.js';
-import { SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { type CardStep, gatheringOf } from '../src/plans/own-way.js';
-import { readSeedTravel, type SeedTravel } from '../src/travel/travel.js';
+import { type SeedTravel } from '../src/travel/travel.js';
 import { step, wayOf } from './own-way-fixtures.js';
 import { at, id, jieunDay, minsuDay, NOW, placeOf, readWorld } from './worked-example.js';
+import { readFrozenTravel } from './frozen-travel.js';
 
 // The invitee's own way in the design's worked example (section 6.1), on the seed's walking table: the Leader's Quest
 // meets at 301동 at 12:18 and eats at the Student Center from 12:33.
@@ -18,7 +19,7 @@ let travel: SeedTravel;
 
 beforeAll(async () => {
   await readWorld();
-  travel = await readSeedTravel(SEED_DIRECTORY);
+  travel = await readFrozenTravel();
 });
 
 const lunchSteps = (): CardStep[] => [

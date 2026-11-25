@@ -67,3 +67,7 @@ The canvas boards: Mf5Kit, Mf5Row-meal, Mf5Row-back, MfKit, Mf3Kit, Mf4Kit, AmKi
 - [ ] No native file changes; lint, format and types pass on the app.
 
 ## Comments
+
+### From A04-03's design review (2026-11-26)
+
+- The `field` level's placeholder ("이어서 말하기") is faint grey on navy at 5% over the 80% panel, over the map as over the catalogue's stripes ([picture](../references/after/03-map-panel-android.jpg)). When this ticket puts a real input in a `field`, check its placeholder and typed text for contrast over the map (PR #571's review).

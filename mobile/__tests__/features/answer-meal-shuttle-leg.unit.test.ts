@@ -75,24 +75,30 @@ describe('the way to 자하연식당 2층 by the shuttle', () => {
 
   // P04 ticket 76: the way on's pale band first, under the way there's walks in dark blue and its ride in dark purple.
   it('is drawn as a walk to the stop, the ride along the roads, and a walk from the stop, never one straight line', () => {
-    const ids = drawing.lines.map(({ id }) => id);
-    expect(ids).toEqual(['answer:route:1', 'answer:route:0:in', 'answer:route:0:ride', 'answer:route:0:out']);
+    expect(drawing.lines.map(({ id, style }) => [id, style])).toEqual([
+      ['answer:route:1', LEG_STYLES.walkOn],
+      ['answer:route:0:in', LEG_STYLES.walkThere],
+      ['answer:route:0:ride', LEG_STYLES.rideThere],
+      ['answer:route:0:out', LEG_STYLES.walkThere],
+    ]);
     const ride = drawing.lines[2];
     expect(ride?.points.length).toBeGreaterThan(10);
     expect(ride?.points[0]).toEqual(stop('301동'));
     expect(ride?.points.at(-1)).toEqual(stop('기숙사삼거리'));
-    expect(drawing.lines.map(({ style }) => style)).toEqual([
-      LEG_STYLES.walkOn,
-      LEG_STYLES.walkThere,
-      LEG_STYLES.rideThere,
-      LEG_STYLES.walkThere,
-    ]);
     expect(drawing.lines[1]?.points).toEqual([PLAN.scene.routes[0]?.from, stop('301동')]);
     expect(drawing.lines[3]?.points).toEqual([stop('기숙사삼거리'), PLAN.scene.routes[0]?.to]);
   });
 
   it('asks for the paths of its two walks', () => {
     expect(shuttleWalks(LEGS).map(({ lineId }) => lineId)).toEqual(['answer:route:0:in', 'answer:route:0:out']);
+  });
+
+  // P04 ticket 75: no straight walk to a stop shows and then turns into its path. The way on's band comes first (76).
+  it('draws neither walk while its path is on its way, and the ride all the same', () => {
+    const waiting = { ...WAYS, waiting: new Set(['answer:route:0:in', 'answer:route:0:out']) };
+    const lines = drawingOf(CROWDED, CHOSEN, undefined, VIEW, waiting).lines.map(({ id }) => id);
+
+    expect(lines).toEqual(['answer:route:1', 'answer:route:0:ride']);
   });
 
   it('marks and names its two stops', () => {

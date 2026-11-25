@@ -123,11 +123,12 @@ export const halo = {
 // rest: the shadows, the map chip's rim, and `line`, the thin light line along a surface's top. Only `Glass`
 // (glass.tsx) reads them: a screen names a level and never these values.
 export const glass = {
-  // Outer bars, bottom sheets and cards over the map: white at 50%, the line, and the board's floating shadow, between
-  // `shadow.float` and `shadow.mapCard`.
-  panel: { ground: 'rgba(255, 255, 255, 0.5)', shadow: '0 4px 16px rgba(14, 19, 48, 0.16)' },
-  // Chips, boxes, white buttons and light coloured chips inside a panel: white at 80%.
-  inner: { ground: 'rgba(255, 255, 255, 0.8)' },
+  // Outer bars, bottom sheets and cards over the map: the line, the board's floating shadow (between `shadow.float`
+  // and `shadow.mapCard`), and white at 80% where the panel is not blurred (A04-03).
+  panel: { ground: 'rgba(255, 255, 255, 0.8)', shadow: '0 4px 16px rgba(14, 19, 48, 0.16)' },
+  // Chips, boxes, white buttons and light coloured chips inside a panel: white at 90%, above the 80% of the changelog
+  // of 11.24, so that they stand out on an unblurred panel's 80% (A04-03).
+  inner: { ground: 'rgba(255, 255, 255, 0.9)' },
   // A grey input field inside a panel: the key colour at 5%.
   field: { ground: 'rgba(0, 26, 114, 0.05)' },
   // A small chip that stands on the map itself, such as a walk's minutes: white at 60%, a rim, a light shadow.

@@ -17,6 +17,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { DynamicModule, INestApplication, Type } from '@nestjs/common';
@@ -31,6 +32,7 @@ import { Settings } from '../src/common/settings.js';
 import { FETCH_EXPO } from '../src/push/expo-push.js';
 import { FETCH_SLACK } from '../src/sentry-alerts/crash-alerts.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../src/travel/travel.js';
+import { readFrozenTravel } from './frozen-travel.js';
 import { TUTORIAL_FILE_PATH } from '../src/tutorial/tutorial-content.js';
 import { FETCH_KAKAO } from '../src/walking-route/walking-route.service.js';
 import { refuseExpoPush } from './expo-push.js';
@@ -43,9 +45,11 @@ import { refuseKakao } from './walking-route.js';
 // The test verifier accepts ID tokens from test/google.ts, `fetchKakao` answers in Kakao's place and `model` in the
 // Assistant's model's: by default a ScriptedModel without a script, which fails every call.
 // `controllers` adds controllers that exist only in the tests, such as handlers that no feature has yet, and `modules`
-// modules that only the tests or the benchmark import, such as the one binding the benchmark's run observer. `travel`,
-// when given, answers in the place of the real Travel Times. `tutorialFile`, when given, is read as the tutorial's content
-// in the place of content/tutorial.yaml. `fetchExpo` answers in Expo's push service's place, refusing every call by
+// modules that only the tests or the benchmark import, such as the one binding the benchmark's run observer. `travel`
+// answers in the place of the real Travel Times: by default the walking table frozen before it counted the climb
+// (`frozen-travel.ts`, P04 ticket 77), so that a test's numbers stay when the walking model changes; a test about the
+// table passes the seed's. `tutorialFile`, when given, is read as the tutorial's content in the place of
+// content/tutorial.yaml. `fetchExpo` answers in Expo's push service's place, refusing every call by
 // default. `model` answers for every one of the AI's keys, unless `modelFactory` gives each key a model of its own.
 // `fetchSlack` answers in the place of the crash alerts' Slack webhook, refusing every call by default.
 interface StartOptions {
@@ -72,9 +76,7 @@ export async function startApp(
   // Imported after AppModule, so that it is the same class AppModule registers.
   const { GoogleIdTokenVerifier } = await import('../src/auth/google-id-token.verifier.js');
   const testing = Test.createTestingModule({ imports: [AppModule, ...modules], controllers });
-  if (travel !== undefined) {
-    testing.overrideProvider(TRAVEL_PROVIDER).useValue(travel);
-  }
+  testing.overrideProvider(TRAVEL_PROVIDER).useValue(travel ?? (await readFrozenTravel()));
   if (tutorialFile !== undefined) {
     testing.overrideProvider(TUTORIAL_FILE_PATH).useValue(tutorialFile);
   }
