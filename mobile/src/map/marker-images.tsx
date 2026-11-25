@@ -11,7 +11,7 @@
 import { type ReactElement, type RefObject, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { captureView } from './capture';
-import { inCaptureOrder, onStage } from './capture-order';
+import { inCaptureOrder, LATER, onStage, rankOf } from './capture-order';
 import { anchorShare, hasPhoto, LookView, lookName, type MarkerLook } from './marker-looks';
 import { hasNativeMap } from './native-module';
 import type { Size } from './projection';
@@ -32,6 +32,9 @@ type Images = Readonly<Record<string, MarkerImage>>;
 let images: Images = {};
 let waiting: readonly MarkerLook[] = [];
 let failed: readonly string[] = [];
+// Each waiting look's place in the stage's order (`rankOf`), lowered when a screen comes to show it.
+const ranks = new Map<string, number>();
+const NO_LOOKS: readonly MarkerLook[] = [];
 const listeners = new Set<() => void>();
 
 function tell(): void {
@@ -73,9 +76,25 @@ export function unmadeImage(look: MarkerLook): MarkerImage {
   return { look: lookName(look), view: look, uri: null, width: 0, height: 0, anchor: anchorOf(look, NO_SIZE) };
 }
 
-// Puts the looks that have no picture on the stage. A screen that is newly shown asks `again` for a look whose
-// tries were used up.
-function ask(looks: readonly MarkerLook[], again: boolean): void {
+// Ranks the looks asked for, `later` ones behind every look shown now, and tells whether a waiting look moved up.
+function ranked(looks: readonly MarkerLook[], later: number): boolean {
+  const onHold = new Set(waiting.map((look) => lookName(look)));
+  let moved = false;
+  for (const look of looks) {
+    const name = lookName(look);
+    const rank = later + rankOf(look);
+    const was = ranks.get(name);
+    if (was === undefined || rank < was) {
+      moved ||= was !== undefined && onHold.has(name);
+      ranks.set(name, rank);
+    }
+  }
+  return moved;
+}
+
+// Puts the looks that have no picture on the stage, in their order, `later` ones behind those shown now. A screen that
+// is newly shown asks `again` for a look whose tries were used up.
+function ask(looks: readonly MarkerLook[], later: readonly MarkerLook[], again: boolean): void {
   if (!hasNativeMap()) {
     return;
   }
@@ -84,12 +103,14 @@ function ask(looks: readonly MarkerLook[], again: boolean): void {
     failed = failed.filter((name) => !names.has(name));
   }
   const known = new Set([...Object.keys(images), ...waiting.map((look) => lookName(look)), ...failed]);
-  const fresh = looks.filter((look, index) => {
+  const asked = [...looks, ...later];
+  const fresh = asked.filter((look, index) => {
     const name = lookName(look);
-    return !known.has(name) && looks.findIndex((other) => lookName(other) === name) === index;
+    return !known.has(name) && asked.findIndex((other) => lookName(other) === name) === index;
   });
-  if (fresh.length > 0) {
-    waiting = inCaptureOrder([...waiting, ...fresh]);
+  const moved = ranked(looks, 0) || ranked(later, LATER);
+  if (fresh.length > 0 || moved) {
+    waiting = inCaptureOrder([...waiting, ...fresh], (look) => ranks.get(lookName(look)) ?? rankOf(look));
     tell();
   }
 }
@@ -116,8 +137,9 @@ function gaveUp(look: MarkerLook): void {
 }
 
 // The image of each look, in the order asked. An image names its look at once and gains its picture when the stage
-// has made it, so a screen hands it to the map without waiting.
-export function useMarkerImages(looks: readonly MarkerLook[]): MarkerImage[] {
+// has made it, so a screen hands it to the map without waiting. `later` are made after every look a screen shows now,
+// for a screen to come.
+export function useMarkerImages(looks: readonly MarkerLook[], later: readonly MarkerLook[] = NO_LOOKS): MarkerImage[] {
   const kept = useSyncExternalStore(
     subscribe,
     () => images,
@@ -125,7 +147,7 @@ export function useMarkerImages(looks: readonly MarkerLook[]): MarkerImage[] {
   );
   const first = useRef(true);
   useEffect(() => {
-    ask(looks, first.current);
+    ask(looks, later, first.current);
     first.current = false;
   });
   return looks.map((look) => kept[lookName(look)] ?? unmadeImage(look));

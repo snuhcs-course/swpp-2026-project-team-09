@@ -8,6 +8,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react';
@@ -247,7 +248,10 @@ export function useDrawnMap(
   );
   const drawing = useMemo(() => (draw === null || shown === null ? base : draw(shown)), [draw, base, shown]);
   const things = drawing?.things ?? [];
-  const images = useMarkerImages([...things.map(({ look }) => look), ...looks]);
+  const images = useMarkerImages(
+    things.map(({ look }) => look),
+    looks,
+  );
   useAnswerCamera(base, shown, answer, map, framing);
   const lines = useAnswerWalks(drawing?.lines ?? NO_LINES, routes);
   if (base === null || drawing === null || things.length === 0) {

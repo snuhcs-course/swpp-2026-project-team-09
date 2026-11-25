@@ -7,8 +7,12 @@
 import { hasPhoto, type MarkerLook } from './marker-looks';
 
 // The order the stage makes pictures in (P04 ticket 81): an answer's chosen place first, its numbered places next by
-// their numbers, then the rest of the answer, then every other look; within each, the order they were asked in.
-function rankOf(look: MarkerLook): number {
+// their numbers, then the rest of the answer, then every other look; within each, the order they were asked in. A look
+// asked for ahead of its need (`LATER`), as the other Plans' boards for a choice to come or the numbered dots made on
+// the everyday map, waits behind every look a screen shows now.
+export const LATER = 10;
+
+export function rankOf(look: MarkerLook): number {
   if (look.kind !== 'answer') {
     return 3;
   }
@@ -21,8 +25,8 @@ function rankOf(look: MarkerLook): number {
   return number === null ? 2 : 1 + number / 1000;
 }
 
-export function inCaptureOrder(looks: readonly MarkerLook[]): MarkerLook[] {
-  return looks.toSorted((one, other) => rankOf(one) - rankOf(other));
+export function inCaptureOrder(looks: readonly MarkerLook[], rank: (look: MarkerLook) => number): MarkerLook[] {
+  return looks.toSorted((one, other) => rank(one) - rank(other));
 }
 
 // How many looks without a photo the stage draws at once. Each is captured as soon as it is laid out, and the captures

@@ -16,7 +16,8 @@ export const LOOKS_AHEAD: readonly MarkerLook[] = Array.from({ length: 12 }, (_,
   label: null,
 }));
 
-// How long the everyday map is shown before they are made, so that its own pictures come first.
+// How long the everyday map is shown before they are made. They are asked for later than any look shown, so that the
+// everyday map's own pictures come first.
 export const AHEAD_AFTER_MS = 3000;
 
 const NONE: readonly MarkerLook[] = [];
@@ -29,5 +30,5 @@ export function useLooksAhead(everyday: boolean): void {
       clearTimeout(timer);
     };
   }, [everyday, due]);
-  useMarkerImages(due ? LOOKS_AHEAD : NONE);
+  useMarkerImages(NONE, due ? LOOKS_AHEAD : NONE);
 }

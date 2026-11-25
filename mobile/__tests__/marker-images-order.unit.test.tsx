@@ -44,8 +44,8 @@ const START: MarkerLook = {
   label: { side: 'left', tone: 'meeting', title: '10:45 301동', line: null, number: null },
 };
 
-function Asks({ looks }: { looks: readonly MarkerLook[] }): ReactElement {
-  const images = useMarkerImages(looks);
+function Asks({ looks, later = [] }: { looks: readonly MarkerLook[]; later?: readonly MarkerLook[] }): ReactElement {
+  const images = useMarkerImages(looks, later);
   return (
     <>
       {images.map(({ look, uri }) => (
@@ -113,6 +113,20 @@ describe('the order an answer’s pictures are made in', () => {
 
     expect(onStage()).toEqual([]);
     expect(screen.getAllByText(/있음$/u)).toHaveLength(5);
+  });
+
+  // The emulator's first answer (2026-11-26): the other Plans' chosen places, asked for a choice to come, came before
+  // the numbered places on screen, and held them back three seconds.
+  it("draws the board on screen before the looks asked for another Plan's board", async () => {
+    const otherPick: MarkerLook = {
+      kind: 'answer',
+      symbol: { type: 'dot', role: 'pick', number: 2 },
+      label: { side: 'below', tone: 'pick', title: '301동식당', line: '들기름막국수 외 1', number: null },
+    };
+    await render(<Asks later={[otherPick, tag(1, 9)]} looks={[tag(4, 30)]} />);
+
+    expect(onStage()).toEqual([tag(4, 30), otherPick, tag(1, 9)].map((look) => lookName(look)));
+    await makeAll();
   });
 });
 

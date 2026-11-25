@@ -9,6 +9,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -313,7 +314,8 @@ function titled(looks: readonly MarkerLook[], title: string): boolean {
 // Partitions: a look that only another Plan than the one on screen draws. The third Plan's flag "12:18 민수와 만남"
 // stands at its Merging Point; the first Plan has none.
 describe('the looks the answer asks for', () => {
-  it("include another Plan's, while the first Plan is on screen", async () => {
+  // Asked for later than the looks on screen, so that the stage makes those first (P04 ticket 81).
+  it("include another Plan's, while the first Plan is on screen, asked for later", async () => {
     const asked: Asked = { fits: 0, cameras: [] };
     await render(asked);
 
@@ -323,6 +325,8 @@ describe('the looks the answer asks for', () => {
         '12:18 민수와 만남',
       ),
     ).toBe(false);
-    expect(titled(jest.mocked(useMarkerImages).mock.lastCall?.[0] ?? [], '12:18 민수와 만남')).toBe(true);
+    const [now = [], later = []] = jest.mocked(useMarkerImages).mock.lastCall ?? [];
+    expect(titled(now, '12:18 민수와 만남')).toBe(false);
+    expect(titled(later, '12:18 민수와 만남')).toBe(true);
   });
 });
