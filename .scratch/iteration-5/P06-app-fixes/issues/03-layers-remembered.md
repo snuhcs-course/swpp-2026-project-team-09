@@ -44,3 +44,8 @@ Received: "현재 앱은 껐다키면 친구/퀘스트 리스트는 펼쳐져있
 - [x] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+### Agent usage (2026-11-25)
+
+- Agent time: about 45 minutes, one session (Opus 5.5) from reading the ticket to opening the PR, including the Jest runs. An estimate.
+- Tokens, counted from the session's transcript up to the PR (no subagents): input 8.40M, of which cache reads 8.25M and cache writes 0.14M (uncached input 112); output 43k.
