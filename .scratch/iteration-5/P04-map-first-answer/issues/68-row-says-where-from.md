@@ -2,7 +2,7 @@
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
-Pull request: none yet.
+Pull request: #566
 Blocked by: none.
 
 Native files: none. Releases: the main server, and an app OTA update.
@@ -29,10 +29,17 @@ The planner's rule reads a stretch that starts after now from the item before it
 
 ## Acceptance criteria
 
-- [ ] The four cases at 17:00 and at 18:30 come from the main server's rule (`other-friends` unit tests) and read as on the board in the app (`people-picking-where-from`).
-- [ ] A busy Friend's Class names its building.
-- [ ] The longest words stay on one line, the department cut instead.
-- [ ] An `others` lane reveals nothing a picked person's lane and words do not.
-- [ ] No native file changes; lint, format, and types pass on the app and the main server.
+- [x] The four cases at 17:00 and at 18:30 come from the main server's rule (`other-friends` unit tests) and read as on the board in the app (`people-picking-where-from`).
+- [x] A busy Friend's Class names its building.
+- [x] The longest words stay on one line, the department cut instead.
+- [x] An `others` lane reveals nothing a picked person's lane and words do not.
+- [x] No native file changes; lint, format, and types pass on the app and the main server.
 
 ## Comments
+
+Built in PR #566. The main server reuses `originOf` for `others` (`setOutOf`), and the app says the item and the walk at a row's right. App screens wait for the sessions emulator, which another session was using.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 21 minutes in one session, test runs included (an estimate).
+- Tokens: input 37,691,927 (cache reads 37,571,412, cache writes 120,369, uncached 146); output 74,804. No subagents.
