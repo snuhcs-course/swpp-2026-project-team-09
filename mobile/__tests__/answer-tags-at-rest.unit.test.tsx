@@ -20,9 +20,11 @@ import { type Asked, mapOf } from './support/main-map-stand-in';
 import { NO_ANSWER } from './support/no-answer';
 
 // The pictures the map is given: unmade as in every test without the native module, or, with `mockNative.on`, made
-// for the looks in `mockMade` alone, as the native module's stage makes them. `mockAsked` holds every look asked for.
+// for the looks in `mockMade` alone, as the native module's stage makes them; the looks in `mockFailed` used up their
+// tries. `mockAsked` holds every look asked for.
 const mockNative = { on: false };
 const mockMade = new Set<string>();
+const mockFailed = new Set<string>();
 const mockAsked = new Set<string>();
 jest.mock('@/map/native-module', () => ({
   ...jest.requireActual<object>('@/map/native-module'),
@@ -39,6 +41,8 @@ jest.mock('@/map/marker-images', () => {
         const image = actual.unmadeImage(look);
         return mockNative.on && mockMade.has(nameOf(look)) ? { ...image, uri: `file:///${image.look}.png` } : image;
       }),
+    useLooksSettled: (looks: readonly MarkerLook[]): boolean =>
+      !mockNative.on || looks.every((look) => mockMade.has(nameOf(look)) || mockFailed.has(nameOf(look))),
   };
 });
 // The walking route service is no part of these hooks' units: an answer's walks keep their straight lines.
@@ -180,6 +184,7 @@ function onNeighbours(): MapCamera {
 beforeEach(() => {
   mockNative.on = false;
   mockMade.clear();
+  mockFailed.clear();
   mockAsked.clear();
 });
 
@@ -231,9 +236,14 @@ function makeAsked(): void {
   }
 }
 
-// Partitions: the pictures of the new placement not made, made, and not made for 1.5 seconds. Expected values: the
-// placements above, at the first camera and zoomed in on the neighbours.
-describe('a placement at rest while its pictures are made', () => {
+// Every mark on the map has its picture: none is taken away while its new picture is on its way.
+function whole(drawn: AnswerMap | null): boolean {
+  return (drawn?.contents.markers ?? []).every(({ image }) => image.uri !== null);
+}
+
+// Partitions: the pictures of the new placement not made, made, still on their way after ten seconds, and one whose
+// tries were used up. Expected values: the placements above, at the first camera and zoomed in on the neighbours.
+function withPictures(): void {
   beforeEach(() => {
     mockNative.on = true;
     jest.useFakeTimers();
@@ -241,6 +251,10 @@ describe('a placement at rest while its pictures are made', () => {
   afterEach(() => {
     jest.useRealTimers();
   });
+}
+
+describe('a placement at rest while its pictures are made', () => {
+  withPictures();
 
   it('keeps every mark as placed before until every picture is made, and then changes them together', async () => {
     const { drawn, restAt, again } = await rendered();
@@ -253,19 +267,40 @@ describe('a placement at rest while its pictures are made', () => {
 
     expect(taggedAll(drawn())).toEqual([false, false, true, true]);
   });
+});
 
-  it('stops waiting after 1.5 seconds', async () => {
+describe('a placement at rest whose pictures are slow or fail', () => {
+  withPictures();
+
+  // The phone's case (2026-11-26): after 1.5 seconds the placement at rest was shown with a picture still to come, and
+  // that mark left the map for a second.
+  it('keeps the board in sight, every mark with its picture, while a new picture is on its way', async () => {
     const { drawn, restAt } = await rendered();
     makeAsked();
 
     await restAt(onNeighbours());
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(1499);
+      await jest.advanceTimersByTimeAsync(10_000);
     });
+
     expect(taggedAll(drawn())).toEqual([false, true, false, false]);
-    await act(async () => {
-      await jest.advanceTimersByTimeAsync(1);
-    });
+    expect(whole(drawn())).toBe(true);
+  });
+
+  it('changes once the pictures still to come are made or will not be', async () => {
+    const { drawn, restAt, again } = await rendered();
+    makeAsked();
+    const before = new Set(mockAsked);
+
+    await restAt(onNeighbours());
+    const [last, ...rest] = [...mockAsked].filter((name) => !before.has(name));
+    for (const name of rest) {
+      mockMade.add(name);
+    }
+    if (last !== undefined) {
+      mockFailed.add(last);
+    }
+    await again();
 
     expect(taggedAll(drawn())).toEqual([false, false, true, true]);
   });

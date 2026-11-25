@@ -33,14 +33,14 @@ The user's decision (2026-11-26): the tags are placed again each time the map co
 3. **No flicker.**
    - While the map moves, the labels stay as they are.
    - A drawing placed again waits, the drawing before it still shown, until every picture of it is made. Then all its marks change in one frame. A mark's dot and its tag are one picture, so it never shows both numbers or neither.
-   - A picture that is still not made after 1.5 seconds stops the wait. The Android module keeps a mark's old picture until its new one is made.
+   - The wait has no time limit: the placement in sight stays until every picture of the new one is made, or its tries are used up. No mark leaves the map while its new picture is on its way.
    - Any other change of drawing (another Plan, another answer, the choosing ring, the walks' paths) shows at once, as today.
 4. **The camera's rules do not change** (`answer-camera.ts`): no new move of the camera.
 
 ## Acceptance criteria
 
 - [x] The case from the phone, with the stored meal answer: at the answer's first camera, candidates 2, 4, and 5 behind the time card have no tag and candidate 3 in view has one. At a camera that shows them all, 2 to 5 are tagged in rank order as room allows. Zoomed in on two neighbours, both are tagged, and the candidates out of view keep their numbered dots. (Unit test of `useAnswerMap`, failing before the change.)
-- [x] While the pictures of the new placement are not made, every mark keeps the placement before it. Once they are made, every mark changes together. A wait longer than 1.5 seconds ends. (Unit test.)
+- [x] While the pictures of the new placement are not made, every mark keeps the placement before it. Once they are made, or their tries are used up, every mark changes together, however long that takes. (Unit test.)
 - [x] The answer's camera moves no more than before. (Unit test.)
 - [x] Ticket 13's rank rule holds for what is on screen; its wording says so.
 - [x] No native file changes. Lint, format, and types pass on the app.
@@ -50,12 +50,18 @@ The user's decision (2026-11-26): the tags are placed again each time the map co
 Built in PR #568.
 
 - The tags are placed again at `map.camera`, which the map's `onCameraIdle` sets, once the map rests after the answer's own camera last changed.
-- A new placement waits until all its pictures are made (at most 1.5 seconds), then every mark changes in one frame.
+- A new placement waits until all its pictures are made or given up (`useLooksSettled`), then every mark changes in one frame.
 - Both hooks compare by value. A first version compared the base drawing and the framing as objects, and looped on a screen that makes them new at every render (`tutorial-kwanjeong-check.integration.test.tsx`, "Too many re-renders"). That existing test caught it and passes now.
 
 On the emulator (crowded meal mock), the picture after a zoom shows 5 tagged "32분" where 5.0/Main left a numbered dot. The same zoom on 5.0/Main was not taken, because the emulator went to another session.
 
 `answer-meal-list.integration.test.tsx` fails 3 tests ("Unable to find an element with text: 김민수") with 5.0/Main's own code too. That comes before this change.
+
+### No time limit on the wait (2026-11-26)
+
+The wait first ended after 1.5 seconds (`HOLD_MS`). Measured on the emulator (crowded meal mock, first answer of a fresh app), Main with this change dropped one numbered mark for 2.4 seconds once the map rested: the new placement was shown with a picture still to come. Main without this change drops two numbered marks for 1.8 seconds when the card's height places the labels again. The wait now has no time limit. It ends when every picture of the new placement is made or its tries are used up (`useLooksSettled` in `marker-images.tsx`), so the placement in sight stays whole. A picture already made is the same picture again: only a tag that is new or changes side needs one. The test with the capture mocked late fails with the 1.5-second limit.
+
+The same measurement found that this change does not slow a first answer. The first picture came 6.7 seconds after the answer, against 9.8 on Main, at a machine load of 10 to 22. A first answer is slow because its twelve pictures are captured one after another, about 0.3 to 0.6 seconds apart. Ticket 81 handles that.
 
 ### Agent usage (2026-11-26)
 

@@ -7,9 +7,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import type { AnswerDrawing } from '@/features/assistant/answer-marks';
-import { type MapCamera, type MarkerImage, type MarkerLook, useMarkerImages } from '@/map';
+import { type MapCamera, type MarkerImage, type MarkerLook, useLooksSettled, useMarkerImages } from '@/map';
 import { lookName } from '@/map/marker-looks';
-import { hasNativeMap } from '@/map/native-module';
 import { sameCamera } from '@/map/projection';
 
 // An answer's labels where the map comes to rest (P04 ticket 69): placed at the answer's own camera, where the camera
@@ -44,10 +43,6 @@ export function useRestedView(shown: LabelView | null, camera: MapCamera | null)
   );
 }
 
-// How long a drawing placed again waits for its pictures before it is shown with some still to come: the Android
-// module then keeps a mark's old picture until its new one is made.
-export const HOLD_MS = 1500;
-
 // A drawing's marks with their looks, as text that two drawings of the same looks share.
 export function looksKey(drawing: AnswerDrawing | null): string {
   return (drawing?.things ?? []).map(({ id, look }) => `${id} ${lookName(look)}`).join('\n');
@@ -75,9 +70,10 @@ function looksOf(drawing: AnswerDrawing | null | undefined): MarkerLook[] {
 
 // The drawing the map shows. One made from the same answer's drawing as the one shown (`base`, `looksKey` of the
 // drawing the camera moves for) with other looks, as when its labels are placed again at another view, waits, the
-// drawing before it shown, until every picture of it is made or `HOLD_MS` has passed: a mark's dot and its tag are
-// one picture, so every mark changes in the same frame and none shows its number twice or not at all. Any other is
-// shown at once. `looks` are asked for beside it, so that a change of drawing never waits for a picture. `view` is the
+// drawing before it shown, until every picture of it is made or will not be (`useLooksSettled`), however long that
+// takes: a mark's dot and its tag are one picture, so every mark changes in the same frame, none shows its number twice
+// or not at all, and none leaves the map while its new picture is on its way. A look already made is the same picture
+// again. Any other drawing is shown at once. `looks` are asked for beside it, so that a change of drawing never waits for a picture. `view` is the
 // view `next` was placed at.
 export function useMadeDrawing(
   base: string,
@@ -87,26 +83,19 @@ export function useMadeDrawing(
 ): MadeDrawing {
   const key = looksKey(next);
   const [shown, setShown] = useState<Shown | null>(next === null ? null : { base, looks: key, drawing: next, view });
-  const [late, setLate] = useState<string | null>(null);
   const before = shown !== null && next !== null && shown.base === base && shown.looks !== key ? shown : null;
   const nextLooks = looksOf(next);
   const beforeLooks = looksOf(before?.drawing);
   const images = useMarkerImages([...nextLooks, ...beforeLooks, ...looks]);
   const nextImages = images.slice(0, nextLooks.length);
-  const made = !hasNativeMap() || nextImages.every(({ uri }) => uri !== null);
-  const waits = before !== null && !made && late !== key;
+  const made = useLooksSettled(nextLooks);
+  const waits = before !== null && !made;
   const changed = next !== null && (shown?.looks !== key || shown.base !== base);
   useEffect(() => {
     if (!waits && changed && next !== null) {
       setShown({ base, looks: key, drawing: next, view });
     }
   }, [waits, changed, base, next, key, view]);
-  useEffect(() => {
-    const timer = waits ? setTimeout(setLate, HOLD_MS, key) : 0;
-    return (): void => {
-      clearTimeout(timer);
-    };
-  }, [waits, key]);
   if (waits && before !== null) {
     return {
       drawing: before.drawing,
