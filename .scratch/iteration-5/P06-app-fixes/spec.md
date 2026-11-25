@@ -1,6 +1,6 @@
 # P06: The app's fixes outside the Assistant
 
-Status: needs-triage (06 and 07 are done; 01 to 05 are held, see Solution)
+Status: ready-for-agent (08; 02, 03, 06 and 07 are done; 01, 04 and 05 are held, see Solution)
 
 ## Problem Statement
 
@@ -13,8 +13,9 @@ On 2026-11-22 the team collected, in a Slack thread, what bothers them in the ap
 5. **The User's own marker.** "지도에 내 위치가 카카오맵처럼 파란 점으로 표시되는데, 친구 위치 표시하는 것처럼 디자인 요소를 하나 넣어서 내 위치라는 인식이 더 잘되게 수정" (`references/05-1-own-dot-now.webp`, the dot at the middle left under "서울대학교 관악캠퍼스")
 6. **Ended 파티 in the invitations.** "이미 기간이 지난, 하지만 아직 수락하지 않은 비공개 파티가 초대 목록에 여전히 남아있음. 또한 수락을 눌렀을 때 토스트로 '이미 끝난 파티에요'가 뜸. 거절하면 목록에서 사라지긴 함." (`references/06-1-ended-invitation.webp`, with a ✓ on the failure toast)
 7. **A 공개 파티 of one.** "지금 공개로 1인 정원 파티 (나만)를 게시판에 올릴 수 있음. 비공개는 약간 나 스스로 퀘스트 생성용?이라 칠 수 있어도 공개는 2인부터 하긴 해야 할 듯 (아주 마이너한 이슈 …)" (no screen)
+8. **백그라운드에서도 공유 under 위치 공유.** Added by the user on 2026-11-25: "백그라운드에서도 공유 이 토글도 사실 override가 되는거잖아? 근데 지금 UI로 둘다 토글이 켜져있을때 위치 공유만 끄면 백그라운드에서도 공유는 켜진 상태로 남거든? 이걸 수정하고 싶어 같이 꺼지게, 대신 같이 꺼졌으면, 나중에 위치 공유를 킬 때는 같이 켜져야돼." (a screen of the 위치 공유 card on 내 정보, not kept)
 
-Every item was checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22: none is fixed yet.
+Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b on 2026-11-25: none was fixed then.
 
 ## Solution
 
@@ -27,12 +28,15 @@ One ticket per item, numbered as the items:
 5. [05: The User's own marker reads "나"](issues/05-own-marker-reads-me.md)
 6. [06: Ended 파티 leave the invitation and request lists, and failure toasts carry the alert icon](issues/06-ended-parties-leave-the-lists.md)
 7. [07: A 공개 파티 is for two or more](issues/07-open-party-for-two-or-more.md)
+8. [08: 백그라운드에서도 공유 shows off while 위치 공유 is off, and comes back with it](issues/08-background-follows-sharing.md)
 
 What is built now (agreed by the team after the review, 2026-11-22): what is broken goes first, and the improvements wait.
 
 - Now: 06, then 07. 06 is a fault (an ended 파티's invitation never leaves, and a failure toast carries ✓); 07 stops a wrong state (an open 파티 nobody can enter, listed on a Board). Both change the 파티 form's send path (`screens/party/form/use-send.ts`), so 07 follows 06.
   Done on 2026-11-22: 06 in PR 475, 07 in PR 480. Both wait for a main server Release and an app OTA update, and 06's last criterion for the Dev Server check after that Release.
 - Held, as tickets only (`Status: needs-triage`): 01 (its change to the agentic map design is still being agreed), 02, 03, 04 and 05 (improvements and design changes). They are fully written so that work can start once they are taken up.
+- Taken up on 2026-11-25: 02 and 03, done in PR 554 and PR 555. 03 went before 01, which is still held: it stores only the three layers and shares no source file with 01.
+- Added on 2026-11-25 and built at once: 08. It changes only `screens/me/background-row.tsx` and its tests, which no other ticket touches.
 
 When the held tickets are taken up, tickets touching the same files never run at the same time:
 
@@ -58,6 +62,7 @@ When the held tickets are taken up, tickets touching the same files never run at
 14. As a 파티 Leader, I want my sent invitations and join requests to drop ended 파티 too.
 15. As a User, I want a failure toast to look like a failure, not carry a check mark.
 16. As a User making a 공개 파티, I want it to recruit at least one other person; a 비공개 파티 for myself alone stays allowed.
+17. As a User turning 위치 공유 off, I want 백그라운드에서도 공유 to show off too, and to come back as it was when I turn 위치 공유 on again.
 
 ## Implementation Decisions
 
@@ -70,6 +75,7 @@ Decided on 2026-11-22:
 - 05: a round marker with "나" in it inside a blue ring, smaller than the first mock-up (`references/05-2-own-marker-chosen.png`; the three options shown were `references/05-3-options-shown.png`). Neither the User's name nor their photo.
 - 06: received invitations, the Leader's sent invitations and both join request lists leave out ended 파티; every failure toast of the 파티 tab and the room carries the alert icon.
 - 07: a 공개 파티 has a capacity of 2 or more; a 비공개 파티 1 or more.
+- 08 (2026-11-25): while 위치 공유 is off, 백그라운드에서도 공유 shows off and disabled; turned on again, it shows the User's kept choice. The screen changes, not the choice kept on the phone nor the rule for background sending, which already follows the Master Switch.
 
 For all tickets:
 
@@ -83,6 +89,7 @@ For all tickets:
 - Existing tests that find a thing by what goes (a list row, a text button, the 올리기 slot, the menu screen's ✕) are found with `git grep` and changed to reach it the new way; a test whose whole subject goes is removed with it.
 - Only the changed files' tests and those `git grep` finds run locally, with typecheck, lint and format; CI runs the whole suite.
 - Every ticket that changes a screen is checked on an Android emulator with the mock build. The screens go to the orchestrator before the pull request and to the design review for those with design calls (02, 04, 05).
+- From 2026-11-25 (02, 03, 08) the emulator check before the pull request is left out: the user checks the merged change on a phone. A review that asks for screens is answered with emulator screens (02).
 
 ## Out of Scope
 
@@ -107,6 +114,7 @@ Every item received and where it went:
 | 06 끝난 비공개 파티의 초대 | Ticket 06 |
 | 07 공개 1인 파티 | Ticket 07 (its own small ticket, last, though the item suggested folding it into another 파티 ticket: it touches the server, the app and server test fixtures) |
 | 파티 채팅 | Already fixed: PR 373 (P15-61) removed the 파티 chat UI |
+| 08 백그라운드에서도 공유 토글 (added 2026-11-25) | Ticket 08 |
 
 Notes for the tickets:
 
