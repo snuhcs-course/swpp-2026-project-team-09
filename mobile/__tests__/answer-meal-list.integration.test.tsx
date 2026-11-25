@@ -12,7 +12,7 @@ import type { AnswerReply } from '@/api/assistant-types';
 import { crowdedMealReply } from '@/api/mock/data/crowded-meal';
 import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
 import { koreaDateKey, koreaNextDay } from '@/korea-time';
-import { CLOSED_HEADING, LATE_HEADING } from '@/screens/main/answer/meal-list';
+import { CLOSED_HEADING } from '@/screens/main/answer/meal-list';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import { raiseCard } from './support/card-grip';
 import type * as SecureStoreFake from './support/secure-store';
@@ -196,19 +196,23 @@ describe('a meal answer with a Restaurant closed for the meal', () => {
   });
 });
 
-// Partitions: the crowded answer, two of whose restaurants open too late for the Class at 15:30.
+// Partitions: the crowded answer, whose 기숙사식당 cannot be done before the Class at 15:30, and whose 감골식당 has at
+// least the main server's fifteen minutes.
 describe('the crowded meal answer raised', () => {
-  it('lists the candidates that cannot be done in the time last, under one line that says so', async () => {
+  it('leaves the candidates that cannot be done in the time out of the list and its count (P04 ticket 67)', async () => {
     const date = koreaDateKey(koreaNextDay(PHONE_NOW));
-    await askOnMap(server, crowdedMealReply(date, PHONE_NOW.toISOString()));
+    const reply = crowdedMealReply(date, PHONE_NOW.toISOString());
+    await askOnMap(server, reply);
 
     await raiseCard();
 
     const labels = list()
       .getAllByRole('button', { name: /^\d+ /u })
       .map((row) => String(row.props.accessibilityLabel).split(' · ')[0]?.replace(/^\d+ /u, ''));
-    expect(labels.slice(-2).toSorted()).toEqual(['감골식당', '기숙사식당 (관악사 919동)']);
-    expect(list().getByText(LATE_HEADING)).toBeOnTheScreen();
+    expect(labels).not.toContain('기숙사식당 (관악사 919동)');
+    expect(labels).toContain('감골식당');
+    expect(list().getByTestId('meal-list-order')).toHaveTextContent(new RegExp(`^${String(labels.length)}곳 · `, 'u'));
+    expect(list().queryByText('시간 안에 다녀오기 어려운 곳')).toBeNull();
   });
 });
 

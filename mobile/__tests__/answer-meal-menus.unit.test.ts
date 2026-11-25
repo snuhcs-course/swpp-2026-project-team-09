@@ -157,16 +157,14 @@ describe('one Plan kept of many', () => {
   });
 });
 
+// P04 ticket 67: the phone fades by the main server's shortest meal, fifteen minutes, so that it fades none the server
+// offers for its length alone. 감골식당 has at least fifteen minutes before the Class and under twenty: faded before.
 describe('the crowded answer’s late restaurants', () => {
   it('fades only those that cannot be done before the next Class, however far the rest are', () => {
     const rows = candidateRowsOf(crowdedMealAnswer('2026-10-07', '2026-10-06T04:00:00Z'));
 
-    expect(
-      rows
-        .filter(({ faded }) => faded)
-        .map(({ name }) => name)
-        .toSorted(),
-    ).toEqual(['감골식당', '기숙사식당 (관악사 919동)']);
+    expect(rows.filter(({ faded }) => faded).map(({ name }) => name)).toEqual(['기숙사식당 (관악사 919동)']);
+    expect(rows.find(({ name }) => name === '감골식당')?.faded).toBe(false);
     expect(rows.some(({ walk, faded }) => (walk ?? 0) > 30 && !faded)).toBe(true);
   });
 });
