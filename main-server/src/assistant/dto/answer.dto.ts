@@ -8,6 +8,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -52,6 +53,9 @@ export interface AnswerReply extends WithMissing {
   plans: Plan[];
   // Considered, but they do not fit.
   dropped: DroppedPlace[];
+  // A meal's: the Restaurants closed for the meal by their menu's notice, which the list names apart (P04 ticket 67).
+  // Absent when none, and from other answers.
+  closed?: ClosedPlace[];
   // `relax` when nothing fits 지금: one button for each condition to ease.
   noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[]; relax?: RelaxOffer[] } | null;
   // A meal's: the other meal of the day and when it starts ("HH:MM", now when it is under way), which the app's bar
@@ -114,6 +118,12 @@ export interface PlacePoint {
   label: string;
   latitude: number;
   longitude: number;
+}
+
+// A Restaurant closed for the meal: its Place, and its menu's notice in its own lines ("공대수시면접으로 인해 휴점합니다").
+export interface ClosedPlace {
+  place: PlacePoint;
+  notices: string[];
 }
 
 export interface DroppedPlace {
