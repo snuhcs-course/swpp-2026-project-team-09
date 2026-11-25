@@ -2,7 +2,7 @@
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
-Pull request: none yet.
+Pull request: #581
 Blocked by: none.
 
 Native files: none. Releases: an app OTA update.
@@ -36,3 +36,12 @@ In the capture the menu was at its top, so that cut is low's height, not a scrol
 - [x] Another answer keeps no place from the one before.
 - [x] A row pressed at low raises the sheet to middle with the menu.
 - [x] No native file changes; lint, format, and types pass on the app.
+
+## Comments
+
+Built in PR #581. `useLayerScroll` in the card keeps the content's place while a menu is open over it, for the same answer only, and `useMenuRaising` makes every `openMenu` raise a low sheet. The content's scroll runs natively, so jest sees only its top: the place kept is checked by a unit test of the hook (`answer-layer-scroll`), and the wiring by `answer-meal-list-back`.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 33 minutes in one session, test runs included (an estimate).
+- Tokens: input 33,178,357 (cache reads 33,074,193, cache writes 104,032, uncached 132); output 55,345. No subagents.
