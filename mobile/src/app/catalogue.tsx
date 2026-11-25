@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { Redirect } from 'expo-router';
@@ -11,6 +12,7 @@ import type { ReactElement } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatars, Badges, Buttons, Chips, Icons, MapPins } from '@/catalogue/basics';
+import { GlassLayer } from '@/catalogue/glass';
 import { BottomNavs, ChatInputs, Dialogs, EventCards, TextFields, Toasts } from '@/catalogue/composites';
 import { AppBars, ChoiceGrids, Filters, FullScreenPanels, ListRows, Panels, States } from '@/catalogue/screens';
 import { color, space, text } from '@/design-system';
@@ -40,6 +42,7 @@ export default function CatalogueScreen(): ReactElement {
         <AppBars />
         <FullScreenPanels />
         <Panels />
+        <GlassLayer />
         <Filters />
         <ListRows />
         <ChoiceGrids />

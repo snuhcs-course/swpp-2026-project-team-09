@@ -1575,6 +1575,28 @@ developers: a released app does not show it. Compare it with the design system's
 own previews when a component changes: `pnpm web` serves the catalogue to a browser, where a phone-sized window
 shows it as the previews do. `MapDot` and `MapPerson` are in its `MapPin` section.
 
+### Glass layer
+
+What the Assistant draws over the map is see-through, as the wireframes' changelog of 11.24 (§ 5-1) sets it, so that
+the map stays in sight while the User reads. `Glass` draws that surface at a named level; a caller gives the level and
+its own layout (size, padding, radius, a border's width) and never a colour or a strength. The levels' values are
+`glass` in `tokens.ts`, which nothing but `Glass` reads.
+
+| Level | Takes | Look |
+|---|---|---|
+| `panel` | the outer bars, the bottom sheets and the cards over the map | white at 50%, a thin light line along its top, a floating shadow |
+| `inner` | the chips, boxes, white buttons and light coloured chips inside a panel | white at 80% |
+| `field` | a grey input field inside a panel | navy at 5% |
+| `mapChip` | a small chip standing on the map itself: a walk's minutes, a candidate's tag, a route's time | white at 60% with a light rim, a light shadow |
+| `darkChip` | the black chip of a time and a place ("10:45 301동") | the ink at 48%, for white words |
+
+Never glass: the navy main buttons ("여기로", "일정에 넣기", "완료"), which stay solid so that the action to take stands
+out, and the full-screen white pages, such as the chat's first screen, which have no map behind them.
+
+A new Assistant panel over the map uses `Glass` at the level that fits, not colours of its own. The blur behind a
+panel, when it comes, is added inside `Glass`, so no caller changes. The catalogue's `Glass` section shows each level
+over stripes that show through.
+
 ## Map
 
 A screen shows a map with one component, `Map` from `@/map`, and nothing else. No screen calls a map SDK or the native
