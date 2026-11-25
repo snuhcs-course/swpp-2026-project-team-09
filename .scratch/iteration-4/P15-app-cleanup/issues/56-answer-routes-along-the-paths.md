@@ -23,7 +23,7 @@ Native files: none. Releases: an app OTA update only (no main-server Release, no
   - At most `WALKS_PER_SCENE` = 3 walks a scene: the people's ways to the place first (the User's, then the Friends'), the way on to the next Class after them, so a Plan of three people draws all three people's ways. The others stay straight.
   - Each pair of ends once: two walks with the same two ends share one request and one path.
   - A recalculation whose ends did not move (a drag of the time band alone) asks nothing: the requests are keyed by the two ends. The scene changes only when a recalculation answers, which a drag asks for when the finger is let go, so a drag that moves the place asks then, not while dragging.
-- **Nothing is kept.** A path lives only while a scene on screen draws it (`gcTime: 0`, a key of its own, `answer-walk`, apart from the everyday route's). A scene shown again asks again.
+- **Nothing is stored.** A path is never stored beyond the running app's memory (a key of its own, `answer-walk`, apart from the everyday route's), where it stays for 30 minutes after its scene leaves the screen (P04 ticket 75). A scene shown again within that time asks nothing.
 - **Cancelled when replaced.** A scene that leaves the screen, such as by "다음 후보", gives up its requests still on their way: the query's `signal` reaches `fetch` (`findWalkingRoute`'s new `signal`, through `http.ts`'s `send`).
 - **Failures.** A failed walk is retried once, as the everyday route's request is (the app's query client), and not again on mount while it is still known (`retryOnMount: false`). Its line stays straight, and the other walks of the scene are drawn whatever it did.
 - A found path is joined onto the walk's two ends where it stops short of them (Kakao snaps each end to the nearest walkway), and drawn in the route's own colour, width and style. The line keeps its id (`answer:route:<index>`).
@@ -65,8 +65,8 @@ Against the quota of 1,000 routes a day, shared with 길 안내 and the party ro
 
 - [x] With an answer on screen, the walks of the scene on screen, at most 3, each pair of ends once, are drawn along the line `GET /walking-route` gives, joined onto their ends, in the route's own colour and width.
 - [x] A shuttle's ride is never asked and stays a straight line.
-- [x] While a walk's request is on its way, after it fails, and when no path is found, its line stays straight; a failed walk does not keep the others from being drawn.
-- [x] A scene that leaves the screen gives up its requests on their way, and a scene shown again asks again (nothing kept).
+- [x] While a walk's request is on its way its line is not drawn (P04 ticket 75); after it fails and when no path is found, its line stays straight; a failed walk does not keep the others from being drawn.
+- [x] A scene that leaves the screen gives up its requests on their way, and a scene shown again within 30 minutes asks nothing: its paths stay only in the running app's memory.
 - [x] The minutes on the card and the marks stay the server's.
 - [x] The request counts are written here and in the pull request, beside the quota.
 - [x] Tests, by ADR 0007: a unit test of the pure parts (`walksOf`, `walksToAsk`, `linesAlongPaths`); integration tests over the fake main server for a found path, a failing request, no path, the cap, the dedupe and the ride, a failure among found walks, a Plan left while its requests are on their way, and a Plan shown again; one over the mocks where the mock's answer draws the mock's walking line.

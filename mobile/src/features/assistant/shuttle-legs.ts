@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MapScene, Plan } from '@/api/assistant-types';
@@ -33,6 +34,9 @@ export interface ShuttleLeg {
 export interface Ways {
   paths: ReadonlyMap<string, readonly LatLng[]>;
   legs: readonly ShuttleLeg[];
+  // The ids of the walks' lines whose paths are on their way, not drawn until they come (P04 ticket 75). Left out,
+  // none.
+  waiting?: ReadonlySet<string>;
 }
 
 export const NO_WAYS: Ways = { paths: new Map(), legs: [] };
@@ -134,7 +138,7 @@ export function shuttleRouteLines(route: MapScene['routes'][number], index: numb
   const leg = ways.legs.find((one) => one.index === index);
   return leg === undefined
     ? [{ id: routeLineId(index), points: [route.from, route.to], style: BY_SHUTTLE }]
-    : shuttleLines(leg, ways);
+    : shuttleLines(leg, ways).filter(({ id }) => ways.waiting?.has(id) !== true);
 }
 
 function stopDraft(stop: ShuttleStop, word: string, id: string): Draft {

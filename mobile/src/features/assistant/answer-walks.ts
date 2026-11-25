@@ -88,11 +88,27 @@ export function linesAlongPaths(
   return linesOn(lines, pathsOf(walks, found));
 }
 
-// The lines with those of `paths`, by their ids, along their paths; the others as they are.
-export function linesOn(lines: readonly MapLine[], paths: ReadonlyMap<string, readonly LatLng[]>): MapLine[] {
-  return lines.map((line) => {
+// The ids of the lines of the walks whose paths are on their way: those whose ends (`endsOf`) are `waiting`.
+export function waitingLines(walks: readonly Walk[], waiting: ReadonlySet<string>): Set<string> {
+  return new Set(walks.flatMap((walk) => (waiting.has(endsOf(walk)) ? [walk.lineId] : [])));
+}
+
+const NONE_WAITING: ReadonlySet<string> = new Set();
+
+// The lines with those of `paths`, by their ids, along their paths; those `waiting` for a path not drawn until it
+// comes (P04 ticket 75), so that no straight line shows and turns into the path a moment later; the others as they
+// are.
+export function linesOn(
+  lines: readonly MapLine[],
+  paths: ReadonlyMap<string, readonly LatLng[]>,
+  waiting: ReadonlySet<string> = NONE_WAITING,
+): MapLine[] {
+  return lines.flatMap((line) => {
     const points = paths.get(line.id);
-    return points === undefined ? line : { ...line, points };
+    if (points !== undefined) {
+      return [{ ...line, points }];
+    }
+    return waiting.has(line.id) ? [] : [line];
   });
 }
 

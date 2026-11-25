@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { crowdedMealAnswer } from '@/api/mock/data/crowded-meal';
@@ -85,6 +86,14 @@ describe('the way to 자하연식당 2층 by the shuttle', () => {
 
   it('asks for the paths of its two walks', () => {
     expect(shuttleWalks(LEGS).map(({ lineId }) => lineId)).toEqual(['answer:route:0:in', 'answer:route:0:out']);
+  });
+
+  // P04 ticket 75: no straight walk to a stop shows and then turns into its path.
+  it('draws neither walk while its path is on its way, and the ride all the same', () => {
+    const waiting = { ...WAYS, waiting: new Set(['answer:route:0:in', 'answer:route:0:out']) };
+    const lines = drawingOf(CROWDED, CHOSEN, undefined, VIEW, waiting).lines.map(({ id }) => id);
+
+    expect(lines).toEqual(['answer:route:0:ride', 'answer:route:1']);
   });
 
   it('marks and names its two stops', () => {
