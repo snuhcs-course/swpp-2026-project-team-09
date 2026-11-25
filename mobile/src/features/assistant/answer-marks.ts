@@ -9,6 +9,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, Cuisine, KeptQuest, MapScene, Plan } from '@/api/assistant-types';
@@ -42,7 +43,7 @@ import { candidateDraft, leftOutByRank, pickLine, sideRank } from './answer-cand
 import { kindShown } from './meal-kinds';
 import { drawsMeal, hiddenRoutes, mealDrafts, sceneLines } from './meal-marks';
 import type { Ways } from './shuttle-legs';
-import { mealPickWords } from './meal-pick';
+import { mealPickLabel } from './meal-pick';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
 
@@ -122,7 +123,7 @@ function placeDraft(
     const plan = pickNumber === null ? undefined : plans[pickNumber - 1];
     const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber };
     if (meal && plan !== undefined) {
-      const words = mealPickWords(plan, title, kind);
+      const words = mealPickLabel(plan, title, kind);
       return { ...base, id: 'answer:pick', group: role, symbol, tone: role, number: pickNumber, ...words };
     }
     const line = pickLine(flag === undefined ? null : restOf(title, flag.text), day, plan, kind);

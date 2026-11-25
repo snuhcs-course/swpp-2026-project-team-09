@@ -2,12 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { AnswerLabel } from './map-answer';
-import { BADGE, GAP, LABEL_MAX, RING, SUB_MAX } from './map-answer-box';
+import { BADGE, GAP, LABEL_MAX, MEAL_PICK_MAX, RING, SUB_MAX } from './map-answer-box';
 import { color, mapText, radius, shadow, space, text } from './tokens';
 
 const WAY_FLAGS = new Set<AnswerLabel['tone']>(['leave', 'late', 'shuttle']);
@@ -62,7 +63,7 @@ function LabelWords({ tone, title, line, sub = null, note = null, action = null 
 
 // The label of an answer's mark (`MapAnswerMark`): its words in a tag beside the symbol box.
 export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
-  const { side, tone, line, number, shift, sub = null } = label;
+  const { side, tone, line, number, shift, sub = null, note = null } = label;
   return (
     <View
       style={[
@@ -72,6 +73,7 @@ export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?:
         tone === 'candidate' && styles.candidateLabel,
         tone === 'kept' && styles.keptLabel,
         (sub !== null || tone === 'pick') && styles.subLabel,
+        tone === 'pick' && note !== null && styles.mealPickLabel,
         tone === 'meeting' && styles.meetingLabel,
         tone === 'late' && styles.lateLabel,
         tone === 'shuttle' && styles.shuttleLabel,
@@ -121,6 +123,7 @@ const styles = StyleSheet.create({
   keptTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.inkMuted },
   sub: { ...mapText.rowLine, color: color.inkMuted },
   subLabel: { maxWidth: SUB_MAX },
+  mealPickLabel: { maxWidth: MEAL_PICK_MAX },
   meetingLabel: { backgroundColor: color.ink },
   lateLabel: { backgroundColor: color.dangerSoft },
   shuttleLabel: { backgroundColor: color.svcShuttleSoft },
