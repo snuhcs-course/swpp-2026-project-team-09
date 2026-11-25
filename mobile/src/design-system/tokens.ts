@@ -63,10 +63,11 @@ export const color = {
   svcShuttleSoft: '#EFEAFB',
   svcStudy: '#0369A1',
   svcStudySoft: '#E3F1FA',
-  // A meal Plan's way on to the next fixed thing, a pale band under the way there (P04 ticket 76): on foot, the blue of
-  // `snuBlue` and by the shuttle the purple of `svcShuttle`, each at about a third of its strength. Opaque, so that a
-  // band that crosses itself stays one colour.
-  routeOn: '#9FB0E6',
+  // A meal Plan's way on to the next fixed thing, a lighter band under the way there (P04 ticket 76). On foot, a mid
+  // blue at about half of `snuBlue`'s strength, at least 3:1 against the map's light blue campus, where a paler blue
+  // sank into it. By the shuttle, the purple of `svcShuttle` at about a third, which stands apart by its hue. Opaque,
+  // so that a band that crosses itself stays one colour.
+  routeOn: '#5679E4',
   routeShuttleOn: '#C9B0EE',
 } as const;
 

@@ -15,6 +15,20 @@ import { inView } from '@/map';
 import { seen } from '../support/answer-marks';
 import { AREA, FIRST_CAMERA, positionAt, viewAt } from '../support/answer-view';
 
+// A colour's relative luminance as WCAG 2 counts it.
+function luminance(hex: string): number {
+  const [r = 0, g = 0, b = 0] = [1, 3, 5].map((at) => {
+    const channel = Number.parseInt(hex.slice(at, at + 2), 16) / 255;
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrast(one: string, other: string): number {
+  const [light = 0, dark = 0] = [luminance(one), luminance(other)].toSorted((a, b) => b - a);
+  return (light + 0.05) / (dark + 0.05);
+}
+
 // The crowded meal answer's map (the answer screen's redesign, boards E1 and E2): eleven restaurants between a Class
 // ending at 301동 at 10:45 and one at 302동 at 15:30.
 const CROWDED = crowdedMealAnswer('2026-10-07', '2026-10-06T04:00:00Z');
@@ -66,6 +80,17 @@ describe('학생회관식당 chosen in the crowded meal answer', () => {
 
   it('keeps every candidate in the camera', () => {
     expect(drawing.keep).toEqual(drawing.points);
+  });
+});
+
+// The campus ground as the Kakao map draws it (the emulator, 2026-11-26), and WCAG's 3:1 for a graphic: the pale blue
+// band first drawn (#9FB0E6) was 1.6:1 on it and hard to see on the phone.
+describe("the way on's band on the map", () => {
+  const campus = '#D1E3EE';
+
+  it('stands at least 3:1 against the campus, and the way there at least 3:1 against it', () => {
+    expect(contrast(LEG_STYLES.walkOn.color, campus)).toBeGreaterThanOrEqual(3);
+    expect(contrast(LEG_STYLES.walkThere.color, LEG_STYLES.walkOn.color)).toBeGreaterThanOrEqual(3);
   });
 });
 
