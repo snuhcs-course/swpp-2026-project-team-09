@@ -241,9 +241,6 @@ export interface AnswerReply extends WithMissing, WithAdding {
   // when none, from other answers, and from a main server before it.
   closed?: ClosedPlace[];
   noPlan: ({ reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } & WithRelax) | null;
-  // A meal's: the other meal of the day and when it starts ("HH:MM"), null when it is over or nothing serves it. Absent
-  // from other answers and from a main server before P05 ticket 15.
-  otherMeal?: { meal: 'lunch' | 'dinner'; start: string } | null;
   // A meal asked with company the User did not name (P04 ticket 73): picking opens on the Plan as the answer arrives.
   // Absent otherwise, when nobody is left to pick, and from a main server before it.
   pickPeople?: true;

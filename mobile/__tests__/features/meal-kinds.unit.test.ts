@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, Cuisine, Plan } from '@/api/assistant-types';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
-import { kindChipsOf, kindOn, otherMealInput, showing, withKind } from '@/features/assistant/meal-kinds';
+import { kindChipsOf, kindOn, showing, withKind } from '@/features/assistant/meal-kinds';
 
 // The kinds of food as chips (P04 ticket 16, board 24): each kind the candidates' dishes hold, with its count of
 // places, the most served first.
@@ -83,29 +84,5 @@ describe('a kind chosen on the phone', () => {
 
     expect(kindOn(showing(chosen, 0).answer)).toBeNull();
     expect(kindOn(showing(chosen, 2).answer)).toBe('한식');
-  });
-});
-
-describe("the conditions of the day's other meal", () => {
-  it('switch the meal, and drop the window, the constraints, the Place, and the kind', () => {
-    const input = {
-      ...MEAL_ANSWER.input,
-      window: { from: '12:30', until: '13:00' },
-      placeId: 'place-1',
-      cuisine: '한식' as const,
-      people: MEAL_ANSWER.input.people.map(({ userId }) => ({
-        userId,
-        constraints: [{ kind: 'notBefore' as const, time: '12:30', source: 'asker' as const }],
-      })),
-    };
-
-    expect(otherMealInput(input, 'dinner')).toEqual({
-      kind: 'meal',
-      date: MEAL_ANSWER.input.date,
-      meal: 'dinner',
-      window: { from: null, until: null },
-      placeId: null,
-      people: MEAL_ANSWER.input.people.map(({ userId }) => ({ userId, constraints: [] })),
-    });
   });
 });
