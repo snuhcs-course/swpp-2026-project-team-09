@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -49,6 +50,18 @@ export interface Lookup {
   // An answer that only tells a fact (P05 ticket 47): a Restaurant's hours or its menu. It has no main action of its own
   // in the dock; its `actions` stay for the Place's card. Absent from any other Lookup, and from a main server before it.
   fact?: true;
+  // A menu question's Restaurant that cannot be done now (P04 ticket 72): its menu, shown as a meal answer shows a place
+  // opened from its list, with why in its head, in place of the chips, the lines, and the basis. Absent from any other
+  // Lookup, and from a main server before it.
+  menuView?: MenuView;
+}
+
+export interface MenuView {
+  restaurant: string;
+  date: string;
+  meal: 'lunch' | 'dinner';
+  // Why it cannot be done, in a few words: "오늘 휴점", "시간이 안 맞아요".
+  why: string;
 }
 
 export interface LookupMenu {

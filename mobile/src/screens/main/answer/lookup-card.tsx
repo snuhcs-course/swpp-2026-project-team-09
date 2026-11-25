@@ -5,6 +5,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -25,6 +26,7 @@ import { MEET, useMeetAsk } from '../meet-button';
 import { AnswerLines } from './answer-lines';
 import { CardNote } from './card-note';
 import { ReadOnlyChip } from './condition-chips';
+import { MenuViewCard } from './meal-menu';
 import { type ButtonOffer, isButton, pressOffer } from './refusal-reply';
 import { lookupDocks } from './words-rest';
 
@@ -176,11 +178,20 @@ function useLookupMeet(lookup: Lookup, addRecalculated: Chat['addRecalculated'])
 // the basis while open, the band without handles when a time matters, and the first action the app draws as the main
 // button, then its `ask` actions. A Lookup that docks has its main button beside the input instead
 // (`answerActionOf`). Beside a refusal, the refusal's lines stand in place of the Lookup's, and its offer in place of
-// the buttons.
+// the buttons. A menu question's Restaurant that cannot be done now shows its menu as a place opened from a meal
+// answer's list, in place of the chips, the lines, the basis, and the main button (P04 ticket 72).
 export function LookupCard(props: LookupCardProps): ReactElement {
   const { lookup, shown, refusal } = props;
   const { basisOpen, toggleBasis } = shown;
   const main = useLookupMain(props);
+  if (lookup.menuView !== undefined && refusal === null) {
+    return (
+      <View style={styles.card} testID="lookup-card">
+        <MenuViewCard view={lookup.menuView} />
+        <Buttons asks={asksOf(props)} main={null} onAsk={props.onAsk} />
+      </View>
+    );
+  }
   return (
     <View style={styles.card} testID="lookup-card">
       <Chips basis={lookup.basis.length === 0 ? null : { open: basisOpen, toggle: toggleBasis }} chips={lookup.chips} />

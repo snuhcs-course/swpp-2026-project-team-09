@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { CardFact, Lookup, LookupAction, LookupCard, LookupStep } from '@/api/lookup-types';
@@ -80,6 +81,15 @@ function isMenuOrAbsent(value: unknown): boolean {
 }
 
 // An asked Lookup has no card, and a main server before P01-17 sends none.
+// A menu question's Restaurant that cannot be done now (P04 ticket 72), absent from any other Lookup.
+function isMenuViewOrAbsent(value: unknown): boolean {
+  return (
+    value === undefined ||
+    (hasTexts(value, ['restaurant', 'date', 'why']) &&
+      (field(value, 'meal') === 'lunch' || field(value, 'meal') === 'dinner'))
+  );
+}
+
 export function isLookup(value: unknown): value is Lookup {
   const band = field(value, 'band');
   const card = field(value, 'card');
@@ -97,6 +107,7 @@ export function isLookup(value: unknown): value is Lookup {
     isNote(field(value, 'note')) &&
     isMenuOrAbsent(field(value, 'menu')) &&
     isKeptOrAbsent(field(value, 'kept')) &&
-    (field(value, 'fact') === undefined || field(value, 'fact') === true)
+    (field(value, 'fact') === undefined || field(value, 'fact') === true) &&
+    isMenuViewOrAbsent(field(value, 'menuView'))
   );
 }

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -112,7 +113,7 @@ describe('A question about a Restaurant its menu closes', () => {
 
   beforeAll(() => dinnerAt(ASKED, { '302동식당': closedAllDay(NOTICE), '301동식당': [dish('dinner', '제육볶음')] }));
 
-  it('answers its menu as closed with the closure, and brings it to the map', async () => {
+  it('answers its menu as closed, says 휴점 in the menu it shows, and brings it to the map', async () => {
     const findMenu = { tool: 'findMenu', input: { date: ASKED, meal: 'dinner', restaurant: '302동' } };
 
     const response = await stage.send([findMenu, { text: '…' }], {}, '302동 저녁 메뉴').expect(200);
@@ -123,8 +124,7 @@ describe('A question about a Restaurant its menu closes', () => {
       lines: [QUOTED],
     });
     const lookup = lookupIn(response.body);
-    expect(lookup.lines[1]).toEqual([{ text: '오늘 저녁은 안 해요', strong: false }]);
-    expect(lookup.basis).toEqual([NOTICE]);
+    expect(lookup.menuView).toEqual({ restaurant: '302동식당', date: ASKED, meal: 'dinner', why: '오늘 휴점' });
     expect(lookup.scene.places.map(({ place }) => place.label)).toEqual(['302동식당']);
   });
 

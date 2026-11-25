@@ -13,6 +13,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { TimeBand } from './time-band-types';
@@ -250,6 +251,9 @@ export interface AnswerReply extends WithMissing, WithAdding {
   // before P05 ticket 17, which sends `mealSet` beside `planSet` for one release.
   planSet?: KeptQuest | null;
   related?: KeptQuest[];
+  // A menu question's: the Plan whose Restaurant was asked about, which the answer opens at, its menu shown as from the
+  // list (P04 ticket 72). Absent from other answers and from a main server before it.
+  opened?: string;
 }
 
 // One of the User's Quests as the main server names it (P05 ticket 17): set aside by a plan, related to one, or asked

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AssistantReply } from '@/api/assistant-types';
@@ -9,8 +10,10 @@ import type { Lookup } from '@/api/lookup-types';
 import { isLookup } from '@/api/server/lookup-answers';
 import copy from './menu-lookup.json';
 
-// The main server's Lookup for "오늘 301동식당 메뉴 뭐야?", asked on Tuesday 2026-11-17 at 11:40 in a Class in 301동
-// until 11:50, over the menus collected on 2026-10-01, copied whole, with the User's id that of `meal-answer.ts`.
+// The main server's Lookup for "오늘 301동식당 메뉴 뭐야?" before P04 ticket 72, asked on Tuesday 2026-11-17 at 11:40 in a
+// Class in 301동 until 11:50, over the menus collected on 2026-10-01, copied whole, with the User's id that of
+// `meal-answer.ts`. The tests keep it as a Lookup with chips, two lines, a basis, and a band; a menu question is now
+// answered as `menu-answer.ts` has it.
 
 function checked(value: unknown): Lookup {
   if (!isLookup(value)) {

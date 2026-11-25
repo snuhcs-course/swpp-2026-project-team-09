@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -133,14 +134,23 @@ export function lastReply(bubbles: readonly ChatBubble[]): ChatBubble | undefine
   );
 }
 
+// The Plan a menu question's answer opens at, its Restaurant's (P04 ticket 72); -1 for any other answer.
+function openedIndex(source: AnswerReply | null): number {
+  const opened = source?.opened;
+  return opened === undefined ? -1 : (source?.plans.findIndex(({ id }) => id === opened) ?? -1);
+}
+
+// A new reply's answer on screen: at its first Plan, or at a menu question's Restaurant with its menu open.
 function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
   const source = reply?.answer ?? null;
+  const opened = openedIndex(source);
+  const index = Math.max(opened, 0);
   return {
     replyId: reply?.id ?? null,
     source,
     answer: source,
-    index: 0,
-    basisOpen: opensBasis(source?.plans[0]),
+    index,
+    basisOpen: opensBasis(source?.plans[index]),
     adding: false,
     picked: null,
     pickOrder: null,
@@ -149,7 +159,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
     recalculating: false,
     pendingAdd: null,
     moving: null,
-    menu: false,
+    menu: opened >= 0,
     epoch,
   };
 }

@@ -5,6 +5,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -14,14 +15,15 @@ import { MenusService } from '../../menus/menus.service.js';
 import { servedLines } from '../../menus/open-rule.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
-import { type Lookup, type Plan } from '../dto/answer.dto.js';
+import { type AnswerReply, type Lookup, type Plan } from '../dto/answer.dto.js';
 import { type HandledMeal } from '../free-time/meal-fit.js';
 import { MealPlanService } from '../gathering/meal-plan.service.js';
 import { type HoursMeal, type MealOfDay } from './hours-words.js';
 import { menuAnswer, menuNoneLookup, type NoMenuReason } from './menu-lookup.js';
 
 export type MenuFound =
-  | { result: 'found'; collectedAt: Date; lines: MenuLineDto[]; plan: Plan; lookup: Lookup }
+  // The meal answer opened at the Restaurant (P04 ticket 72).
+  | { result: 'found'; collectedAt: Date; lines: MenuLineDto[]; plan: Plan; answer: AnswerReply }
   // The day not collected, collected without the meal (P04 ticket 60), only notes, or no time to be there and eat. The lines are the meal's, and the
   // Lookup draws the Restaurant with why (P04 ticket 59).
   | { result: 'none'; reason: NoMenuReason; lines: MenuLineDto[]; lookup: Lookup };
@@ -110,8 +112,7 @@ export class MenuLookupService {
       },
       at,
     );
-    const [hours, cuisines] = await Promise.all([this.menus.hoursOf(key, meal, date), this.menus.cuisinesOf(lines)]);
-    const found = menuAnswer({ key, date, meal, now: at.now, lines, answer, hours, cuisines });
+    const found = menuAnswer({ key, date, meal, now: at.now, lines, answer });
     if (found.result === 'none') {
       return none(found.reason);
     }

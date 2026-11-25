@@ -11,6 +11,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -35,7 +36,7 @@ import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
 import { cancelReplyTo } from './data/cancel-quest';
 import { partyChangeReplyTo } from './data/party-change';
 import { pickReplyTo } from './data/pick';
-import { MENU_LOOKUP_REPLY } from './data/menu-lookup';
+import { MENU_ANSWER_REPLY, MENU_CLOSED_REPLY } from './data/menu-answer';
 import { NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from './data/missing-inputs';
 import { refusalReplyTo } from './data/refusals';
 import { isStepsAsk, stepsReplyOn } from './data/steps-answer';
@@ -275,7 +276,10 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
     return hungryReplyOf(context);
   }
   if (last.includes('301동식당') && last.includes('메뉴')) {
-    return MENU_LOOKUP_REPLY;
+    return MENU_ANSWER_REPLY;
+  }
+  if (last.includes('학생회관식당') && last.includes('메뉴')) {
+    return MENU_CLOSED_REPLY;
   }
   if (last.includes('이 근처') && last.includes('공부')) {
     return STUDY_LOOKUP_REPLY;

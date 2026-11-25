@@ -8,6 +8,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -80,6 +81,9 @@ export interface AnswerReply extends WithMissing {
     startAt: string;
     movesTo: string | null;
   };
+  // A menu question's: the Plan whose Restaurant was asked about, which the app opens at its menu as from the list (P04
+  // ticket 72). Absent from any other answer.
+  opened?: string;
 }
 
 // One of the User's Quests as the app reads it: those set aside by a plan (`planSet`), related to one (`related`), and

@@ -15,6 +15,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The conversation's control: the conversation with the Assistant, which the main screen holds, and what the answer
@@ -42,7 +43,7 @@ import { type QuestLeaving, useQuestLeaving } from '@/features/assistant/use-que
 import { type ShownAnswer, useShownAnswer } from '@/features/assistant/use-shown-answer';
 import { type ShownLookup, type StartGuidance, useShownLookup } from '@/features/assistant/use-shown-lookup';
 import { openPost } from '../party/post-card';
-import { type CardRaise, useCardRaise } from './answer/card-raise';
+import { type CardRaise, useCardRaise, useRaisedForMenu } from './answer/card-raise';
 import { type MarkOpening, useOpenedMark } from './answer/opened-mark';
 import type { CardLeaving } from './chat-card-actions';
 import { useContextChat, type Where } from './use-context-chat';
@@ -197,6 +198,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
     [place, bookingStage.tell, steps, point, walk],
   );
   const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow);
+  useRaisedForMenu(onScreen.answer, card);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation, chat.earlier);
   const pick = usePicking(chat);
   return {
