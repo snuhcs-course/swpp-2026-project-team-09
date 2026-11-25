@@ -59,6 +59,8 @@ interface AnswerCardProps {
   onClose: () => void;
   raising: Raising;
   focus: BandFocus;
+  // The bar of several requests' height with the Plan's bar under it, while it stands at the top; else 0.
+  stepsTop: number;
   // The conversation's questions, opened in the card by its caption.
   list: QuestionsOpen;
 }
@@ -69,8 +71,8 @@ interface AnswerCardProps {
 // the keyboard is up, the questions and the turn's follow-ups stand above the input in place of its content, unless the
 // card is raised (board 6).
 function AnswerCard(props: AnswerCardProps): ReactElement {
-  const { control, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, list } = props;
-  const card = { barRoom, onHeight, raising, stageHeight };
+  const { control, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, stepsTop, list } = props;
+  const card = { barRoom, onHeight, raising, stageHeight, stepsTop };
   const typing = keyboardUp && raising.level === 'low';
   const top = useCardTop(control, raising, list, { onClose });
   const { waiting } = control.chat;
@@ -198,14 +200,17 @@ function OpenMark({ control, stage, focus, onClose }: OpenMarkProps): ReactEleme
 }
 
 // The bar's height while it is shown, told to the screen for the camera's fit; 0 while there is none. The card's high
-// does not hang on it (`card-caps.ts`).
-function useBarHeight(shown: boolean, onBarHeight: (height: number) => void): (height: number) => void {
+// hangs on it only under the bar of several requests (`card-caps.ts`).
+function useBarHeight(
+  shown: boolean,
+  onBarHeight: (height: number) => void,
+): { height: number; onHeight: (height: number) => void } {
   const [height, setHeight] = useState(0);
   const told = shown ? height : 0;
   useEffect(() => {
     onBarHeight(told);
   }, [told, onBarHeight]);
-  return setHeight;
+  return { height: told, onHeight: setHeight };
 }
 
 // The frame itself: the time bar at the top when the answer has a time, "←" as a round button over the map at the top
@@ -236,13 +241,13 @@ function Framed(props: FramedProps): ReactElement {
   // A booked seat has no bar: "←" stands at the top (P01 ticket 04).
   const drawnBar = (control.booking !== null && !control.booking.booked) || control.steps !== null;
   const barShown = !keyboardUp && (drawnBar || barOf(chat.bubbles, onScreenOf(control)) !== null);
-  const onBarLaid = useBarHeight(barShown, onBarHeight);
+  const bar = useBarHeight(barShown, onBarHeight);
   const link = useSheetLink(raising);
   return (
     <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
       <SheetLinkContext value={link}>
         <View style={[styles.top, past && styles.faded]}>
-          {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={onBarLaid} /> : null}
+          {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
         </View>
         <AnswerCard
           barRoom={barRoom}
@@ -255,6 +260,7 @@ function Framed(props: FramedProps): ReactElement {
           onHeight={onHeight}
           raising={raising}
           stageHeight={stageHeight}
+          stepsTop={control.steps === null ? 0 : bar.height}
         />
       </SheetLinkContext>
       {keyboardUp ? null : <OpenMark control={control} focus={focus} onClose={close} stage={stage} />}

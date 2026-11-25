@@ -36,6 +36,10 @@ export interface FrameCardProps {
   onAskNew?: () => void;
   // The history chip at the left of the header's row. Left out or null, none.
   chip?: ReactNode;
+  // While the bar of several requests stands at the top, its height with the bar of the Plan shown under it: measured,
+  // its words wrapping. High stands under it where it reaches lower than the folded time card's place (PR 553's
+  // review). Left out, none.
+  stepsTop?: number;
   // Low shows the content whole up to the middle step, as while the keyboard is up.
   fit?: boolean;
   // Null leaves the card empty.

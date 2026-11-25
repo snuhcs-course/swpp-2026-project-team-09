@@ -12,6 +12,7 @@ import { AI_INPUT, listsTop } from '../layout';
 import type { LevelHeights } from './card-levels';
 import { BAR_ADD_HEIGHT } from './condition-chips';
 import { contentMaxOf, type FrameCardProps, LEAST_CONTENT } from './frame-card-parts';
+import { useSteady } from './steady';
 import { LANE_HEIGHT } from './time-band';
 import { TUCK_STRIP } from './time-card-grip';
 
@@ -64,6 +65,8 @@ export function useCaps(props: FrameCardProps, above: number, padTop: number): C
   const { stageHeight, barRoom, raising, fit = false } = props;
   const { top, bottom } = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
+  // The bar of several requests comes from its layout: a fraction of a point moves no step (`steady.ts`).
+  const stepsTop = useSteady(props.stepsTop ?? 0);
   if (stageHeight === null) {
     return null;
   }
@@ -73,9 +76,10 @@ export function useCaps(props: FrameCardProps, above: number, padTop: number): C
   }
   // High's top edge is one line for every answer and state: just under the place the folded time card takes, whether
   // one stands there or not, tucked away or not, whatever its measured height (h1, h2, k4; the user's phone, 2026-11-26:
-  // while an answer loaded, before its time card, high covered the whole screen). The stage runs from under the status
-  // bar, `top` high, to the screen's bottom. Where that place reaches lower than middle, middle is high.
-  const pillRoom = listsTop(top) + foldedTimeCardOf(fontScale) + space[2];
+  // while an answer loaded, before its time card, high covered the whole screen). Only the bar of several requests,
+  // with a Plan's bar under it, reaches lower, and high stands under it then. The stage runs from under the status bar,
+  // `top` high, to the screen's bottom. Where that place reaches lower than middle, middle is high.
+  const pillRoom = listsTop(top) + Math.max(foldedTimeCardOf(fontScale), stepsTop) + space[2];
   const under = stageHeight - pillRoom - barRoom - above;
   const mid = Math.max(LEAST_CONTENT, Math.min(under, (stageHeight + top) * MID_SHARE - barRoom - above));
   const high = Math.max(mid, under);
