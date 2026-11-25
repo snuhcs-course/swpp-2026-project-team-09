@@ -11,7 +11,6 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
- * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -35,9 +34,6 @@ export const color = {
   scrimStrong: 'rgba(14, 19, 48, 0.64)',
   border: '#E2E5EC',
   borderStrong: '#858CA0',
-  // A busy stretch of someone not yet picked in the time card (P04 ticket 64): lighter than `borderStrong`, yet clear
-  // on the bar's `surfaceSunken`.
-  busyQuiet: '#CFD3DD',
   ink: '#0E1330',
   inkMuted: '#555C74',
   inkSubtle: '#8A90A3',

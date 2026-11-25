@@ -5,13 +5,23 @@
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import { type ReactElement, type ReactNode, useMemo } from 'react';
+import { type ReactElement, type ReactNode, useEffect, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Plan, TimeBand } from '@/api/assistant-types';
 import { color, radius, space, text } from '@/design-system';
 import { metresBetween } from '@/features/assistant/answer-drawing';
-import { doneWordsOf, pickedLanes, pickRowsOf, previewOf, walkGuessOf } from '@/features/assistant/people-picking';
+import {
+  doneWordsOf,
+  inOrder,
+  openOrderOf,
+  pickedLanes,
+  type PickRow,
+  pickRowsOf,
+  previewOf,
+  walkGuessOf,
+} from '@/features/assistant/people-picking';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
+import type { FriendView } from '@/features/friends/adapter';
 import { useFriends } from '@/features/friends/use-friends';
 import { BAR_ADD_HEIGHT } from './condition-chips';
 import type { Picking } from './person-rows';
@@ -74,6 +84,36 @@ function finishOf(shown: ShownAnswer, onClose: () => void): () => void {
 // The time card of a Plan while people are picked in it, and the add chip's words otherwise (P04 ticket 64): the bar
 // draws the checked people's lanes and the span they leave (`previewOf`); a Friend the main server sent no lane for
 // is placed by the phone's guess of their walk.
+// The rows while picking, before their order (`useOpenOrder`): each Friend with the walk the Plan or `others` gives, or
+// the phone's guess from where the Friend is.
+function rowsOf(plan: Plan, picked: readonly string[], friends: readonly FriendView[]): PickRow[] {
+  const walks = new Map(plan.parts.map(({ userId, walkMinutes }) => [userId, walkMinutes]));
+  const guessed = friends.map(({ id, name, department, position }) => ({
+    id,
+    name,
+    department,
+    walkMinutes: walkGuessOf(position === null ? null : metresBetween(position, plan.place)),
+  }));
+  return pickRowsOf({ band: plan.band, picked, walks, friends: guessed });
+}
+
+// The rows in the order worked out as picking opened, which the answer's state keeps until it ends, so that a check
+// never moves a row and the keyboard, which takes the card away a while, does not reorder them (the user's phone,
+// 2026-11-25).
+function useOpenOrder(
+  shown: Pick<ShownAnswer, 'pickOrder' | 'keepPickOrder'>,
+  rows: PickRow[] | null,
+): PickRow[] | null {
+  const { pickOrder, keepPickOrder } = shown;
+  const order = rows === null ? null : (pickOrder ?? openOrderOf(rows));
+  useEffect(() => {
+    if (order !== null && pickOrder === null) {
+      keepPickOrder(order);
+    }
+  }, [order, pickOrder, keepPickOrder]);
+  return rows === null || order === null ? null : inOrder(rows, order);
+}
+
 export function usePickingBar(
   shown: ShownAnswer,
   plan: Plan,
@@ -90,22 +130,16 @@ export function usePickingBar(
   }, [plan.band, picked]);
   const others = plan.band.lanes.length - 1;
   const addWords = others > 0 ? `같이 ${String(others)} ›` : '＋ 같이';
-  if (picked === null || answer === null) {
+  const rows = useOpenOrder(shown, picked === null || answer === null ? null : rowsOf(plan, picked, friends));
+  if (picked === null || answer === null || rows === null) {
     return { band, picking: null, head: null, addWords };
   }
-  const walks = new Map(plan.parts.map(({ userId, walkMinutes }) => [userId, walkMinutes]));
-  const guessed = friends.map(({ id, name, department, position }) => ({
-    id,
-    name,
-    department,
-    walkMinutes: walkGuessOf(position === null ? null : metresBetween(position, plan.place)),
-  }));
   const leave = (): void => {
     shown.setAdding(false);
   };
   return {
     band,
-    picking: { rows: pickRowsOf({ band: plan.band, picked, walks, friends: guessed }), onPick: shown.pick },
+    picking: { rows, onPick: shown.pick },
     head: (
       <PickHead
         disabled={busy}

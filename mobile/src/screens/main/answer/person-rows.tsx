@@ -66,9 +66,9 @@ interface LaneParts {
   outline: Stretch;
 }
 
-// A person's bar: their busy stretches, cut at the bar's ends, the clashes red, and the band's outline. A Friend not
-// checked while picking has a quiet bar: lighter stretches, no clashes, and no outline (boards p2–p6).
-function Lane({ lane, parts, quiet = false }: { lane: BandLane; parts: LaneParts; quiet?: boolean }): ReactElement {
+// A person's bar: their busy stretches, cut at the bar's ends, the clashes red, and the band's outline. Picking shows
+// none: its rows are the people alone, and the combined bar on top changes with each check (the user, 2026-11-25).
+function Lane({ lane, parts }: { lane: BandLane; parts: LaneParts }): ReactElement {
   const { band, range, fixed, moving, outline } = parts;
   return (
     <View style={styles.lane}>
@@ -76,13 +76,13 @@ function Lane({ lane, parts, quiet = false }: { lane: BandLane; parts: LaneParts
         {lane.busy.map((stretch) => (
           <View
             key={`busy-${stretch.startAt}`}
-            style={[styles.busy, quiet && styles.quietBusy, placeOf(stretch, range)]}
+            style={[styles.busy, placeOf(stretch, range)]}
             testID="time-card-busy"
           />
         ))}
-        {quiet ? null : <Red range={range} stretches={redOf(lane, fixed, band, moving)} />}
+        <Red range={range} stretches={redOf(lane, fixed, band, moving)} />
       </View>
-      {quiet ? null : <View style={[styles.outline, placeOf(outline, range)]} />}
+      <View style={[styles.outline, placeOf(outline, range)]} />
     </View>
   );
 }
@@ -99,13 +99,10 @@ function PersonLine({ lane, parts }: { lane: BandLane; parts: LaneParts }): Reac
   );
 }
 
-// A Friend's row while picking: the check, the name, the state at the right, and the bar when the main server sent
-// the Friend's lane; a press checks or unchecks it. 나 has the row of everyone's, with no check.
-function PickLine({ row, parts, onPick }: { row: PickRow; parts: LaneParts; onPick: Picking['onPick'] }): ReactElement {
-  const { userId, name, me, checked, busy, department } = row;
-  if (me) {
-    return <PersonLine lane={{ userId, name, busy: busy ?? [] }} parts={parts} />;
-  }
+// A Friend's row while picking: the check, the name, the department, and the state at the right; a press checks or
+// unchecks it. Its final look (a line or two, a busy Friend's reason and grey) waits for the boards.
+function PickLine({ row, onPick }: { row: PickRow; onPick: Picking['onPick'] }): ReactElement {
+  const { userId, name, checked, department } = row;
   const state = pickStateOf(row);
   return (
     <Pressable
@@ -130,7 +127,6 @@ function PickLine({ row, parts, onPick }: { row: PickRow; parts: LaneParts; onPi
         </Text>
         <Text style={styles.state}>{state}</Text>
       </View>
-      {busy === null ? null : <Lane lane={{ userId, name, busy }} parts={parts} quiet={!checked} />}
     </Pressable>
   );
 }
@@ -178,10 +174,10 @@ export function PersonRows(props: PersonRowsProps): ReactElement {
         testID="time-card-rows"
       >
         {picking === null ? band.lanes.map((lane) => <PersonLine key={lane.userId} lane={lane} parts={parts} />) : null}
-        {picking !== null && picking.rows.length <= 1 ? <NoFriends /> : null}
-        {picking !== null && picking.rows.length > 1
-          ? picking.rows.map((row) => <PickLine key={row.userId} onPick={picking.onPick} parts={parts} row={row} />)
-          : null}
+        {picking !== null && picking.rows.length === 0 ? <NoFriends /> : null}
+        {picking === null
+          ? null
+          : picking.rows.map((row) => <PickLine key={row.userId} onPick={picking.onPick} row={row} />)}
       </View>
     </ScrollView>
   );
@@ -209,7 +205,6 @@ const styles = StyleSheet.create({
   department: { ...text.caption, flex: 1, color: color.inkSubtle },
   quietName: { color: color.inkMuted },
   state: { ...text.caption, color: color.inkMuted },
-  quietBusy: { backgroundColor: color.busyQuiet },
   addFriend: {
     paddingHorizontal: space[3],
     paddingVertical: space[1],

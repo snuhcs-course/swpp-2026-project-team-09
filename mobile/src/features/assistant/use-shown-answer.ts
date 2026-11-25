@@ -45,6 +45,9 @@ export interface ShownAnswer {
   setAdding: (open: boolean) => void;
   // The people checked while picking, but the asker, null when not picking.
   picked: readonly string[] | null;
+  // The rows' order while picking, kept from when it opened so that a check never moves a row; null until kept.
+  pickOrder: readonly string[] | null;
+  keepPickOrder: (order: readonly string[]) => void;
   // Checks or unchecks a Friend while picking; outside it, opens picking with the Plan's people and that Friend.
   pick: (userId: string) => void;
   // 완료: asks once with everyone checked, nothing when that is the Plan's people, and ends picking.
@@ -94,6 +97,7 @@ interface AnswerState extends Shown {
   basisOpen: boolean;
   adding: boolean;
   picked: readonly string[] | null;
+  pickOrder: readonly string[] | null;
   // What was shown before the last drag.
   kept: Shown | null;
   recalculating: boolean;
@@ -134,6 +138,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
     basisOpen: opensBasis(source?.plans[0]),
     adding: false,
     picked: null,
+    pickOrder: null,
     kept: null,
     recalculating: false,
     pendingAdd: null,
@@ -162,9 +167,18 @@ function replaced(last: AnswerState, next: AnswerReply, by: ChangeBy | undefined
   const kept = by === undefined ? null : { answer: last.answer, index: last.index };
   const adding = last.adding && last.pendingAdd === null;
   // Picking ends with the list of Friends (P04 ticket 64), so that 취소, back, and the main button stay in step with it.
-  const picked = adding ? last.picked : null;
+  const picking = adding ? { picked: last.picked, pickOrder: last.pickOrder } : { picked: null, pickOrder: null };
   const settled = { recalculating: false, pendingAdd: null, moving: null, menu: false };
-  return { ...last, answer: next, index, basisOpen: opensBasis(next.plans[index]), adding, picked, kept, ...settled };
+  return {
+    ...last,
+    answer: next,
+    index,
+    basisOpen: opensBasis(next.plans[index]),
+    adding,
+    ...picking,
+    kept,
+    ...settled,
+  };
 }
 
 function ghostOf(kept: Shown | null): Stretch | null {
@@ -328,6 +342,7 @@ export function useShownAnswer(
       ask((input) => withPerson(input, userId), undefined, userId);
     },
     picked: current.picked,
+    pickOrder: current.pickOrder,
     ...picking,
     pendingAdd: current.pendingAdd,
     ghost: ghostOf(current.kept),

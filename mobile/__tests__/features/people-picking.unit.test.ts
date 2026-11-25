@@ -9,6 +9,9 @@ import {
   doneWordsOf,
   pickedLanes,
   pickedOf,
+  busyAtSpanOf,
+  inOrder,
+  openOrderOf,
   pickRowsOf,
   type PickRow,
   pickStateOf,
@@ -92,11 +95,13 @@ describe('the combined bar while picking', () => {
   });
 });
 
-// Partitions: the order (the asker, checked, nearest, unknown last); a Friend with no lane; the states; 완료's words.
-describe('the rows while picking', () => {
-  const rows = pickRowsOf({
-    band: BAND,
-    picked: ['seoyeon'],
+const YERIN = { userId: 'yerin', name: '예린', busy: [{ ...busy('12:30', '13:00'), label: '일정' }], walkMinutes: 5 };
+const BUSY_BAND: TimeBand = { ...BAND, others: [...(BAND.others ?? []), YERIN] };
+
+function rowsWith(picked: readonly string[]): PickRow[] {
+  return pickRowsOf({
+    band: BUSY_BAND,
+    picked,
     walks: new Map([
       ['me', 3],
       ['minsu', 12],
@@ -108,25 +113,41 @@ describe('the rows while picking', () => {
       { id: 'jiho', name: '지호', walkMinutes: null },
     ],
   });
+}
 
-  it('puts the asker first, then the checked, then the nearest, and those not known last', () => {
-    expect(rows.map(({ name, checked }) => `${name}${checked ? ' ✓' : ''}`)).toEqual([
-      '나 ✓',
-      '서연 ✓',
-      '태현',
-      '민수',
-      '지호',
-    ]);
+function named(rows: readonly PickRow[]): string[] {
+  return rows.map(({ name, checked }) => `${name}${checked ? ' ✓' : ''}`);
+}
+
+// Partitions: the order as picking opens (checked, free by nearness, busy over the span, unknown last); a check after
+// it; a Friend with no lane; a Friend busy over the span; the states; 완료's words. Expected values: the span 12:15–12:43;
+// 민수 free (his class ends at 12:15), 태현 free (his starts at 12:50), 예린 busy with a Quest's step until 13:00.
+describe('the rows while picking', () => {
+  const opened = rowsWith(['seoyeon']);
+  const order = openOrderOf(opened);
+
+  it('has no row for the asker, and puts the checked first, the free by nearness, the busy, and the unknown last', () => {
+    expect(named(inOrder(opened, order))).toEqual(['서연 ✓', '태현', '민수', '예린', '지호']);
   });
 
-  it('gives a Friend the main server sent no lane for a row without a bar', () => {
-    expect(rows.find(({ userId }) => userId === 'jiho')).toMatchObject({ busy: null, walkMinutes: null });
+  it('keeps that order however rows are checked until picking ends', () => {
+    expect(named(inOrder(rowsWith(['jiho', 'taehyun']), order))).toEqual(['서연', '태현 ✓', '민수', '예린', '지호 ✓']);
+  });
+
+  it('says who is busy over the span, until when and with what, and nobody without busy stretches', () => {
+    expect(opened.find(({ userId }) => userId === 'yerin')?.busyAtSpan).toEqual({ endAt: at('13:00'), kind: 'quest' });
+    expect(opened.find(({ userId }) => userId === 'minsu')?.busyAtSpan).toBeNull();
+    expect(opened.find(({ userId }) => userId === 'jiho')).toMatchObject({ busyAtSpan: null, walkMinutes: null });
+    expect(busyAtSpanOf([{ startAt: at('12:00'), endAt: at('12:30') }], BUSY_BAND)).toEqual({
+      endAt: at('12:30'),
+      kind: null,
+    });
+    expect(busyAtSpanOf([{ ...busy('12:00', '12:30'), label: '302동 수업' }], BUSY_BAND)?.kind).toBe('class');
   });
 
   it('says the walk to the place, or that where a Friend is is not known', () => {
-    expect(pickStateOf({ me: false, walkMinutes: 9 })).toBe('걸음 9분');
-    expect(pickStateOf({ me: false, walkMinutes: null })).toBe('위치 모름');
-    expect(pickStateOf({ me: true, walkMinutes: null })).toBe('');
+    expect(pickStateOf({ walkMinutes: 9 })).toBe('걸음 9분');
+    expect(pickStateOf({ walkMinutes: null })).toBe('위치 모름');
   });
 
   it('reads 완료 with how many Friends are checked, and 닫기 with no Friend to pick', () => {
@@ -152,7 +173,7 @@ function minsuRowOf(walks: ReadonlyMap<string, number | null>): PickRow | undefi
 
 // Partitions: a Plan's Friend with a walk in the Plan, and without one; their department.
 describe('the walk and department of a Plan’s Friend while picking', () => {
-  it('comes with the Friend’s department from the Friend list, and none for the asker', () => {
+  it('comes with the Friend’s department from the Friend list, and the asker has no row', () => {
     const rows = pickRowsOf({
       band: BAND,
       picked: [],
@@ -161,7 +182,7 @@ describe('the walk and department of a Plan’s Friend while picking', () => {
     });
 
     expect(rows.find(({ userId }) => userId === 'minsu')?.department).toBe('컴퓨터공학부');
-    expect(rows[0]).toMatchObject({ me: true, department: null });
+    expect(rows.find(({ userId }) => userId === 'me')).toBeUndefined();
   });
 
   it('comes from the Plan, and from the phone’s guess only without one', () => {

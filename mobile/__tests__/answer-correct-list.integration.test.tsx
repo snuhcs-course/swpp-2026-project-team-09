@@ -98,14 +98,16 @@ describe('the time card while people are picked', () => {
 });
 
 // Partitions: 취소; Android's back. Expected values: the Plan as it was, nothing asked, 김민준 checked and then left
-// with the "+" on his face.
+// with the "+" on his face, and the card folded again as it was before "＋ 같이".
 describe('leaving the picking', () => {
   it.each([['취소'], ["Android's back"]])(
     'by %s asks nothing, leaves the Plan as it was, and brings back the chip and the main button',
     async (way) => {
       const back = holdBackButton();
       const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+      expect(screen.getByTestId('time-card-grip')).toHaveProp('accessibilityLabel', '사람별 시간 펼치기');
       await user.press(timeBar().getByRole('button', { name: ADD }));
+      expect(screen.getByTestId('time-card-grip')).toHaveProp('accessibilityLabel', '사람별 시간 접기');
       await user.press(pickRow(MIN_JUN.name));
       expect(lookOf(MIN_JUN.name)).toMatch(/^person:.+:selected$/u);
 
@@ -118,6 +120,8 @@ describe('leaving the picking', () => {
 
       expect(recalculations(server)).toEqual([]);
       expect(screen.queryByTestId('time-card-pick-done')).toBeNull();
+      // Folded before "＋ 같이", the card is folded again (the user's phone, 2026-11-25).
+      expect(screen.getByTestId('time-card-grip')).toHaveProp('accessibilityLabel', '사람별 시간 펼치기');
       expect(timeBar().getByRole('button', { name: ADD })).toHaveTextContent('같이 1 ›');
       expect(lookOf(MIN_JUN.name)).toMatch(/^person:.+:addable$/u);
       expect(mapThings()).toContain(PICK);

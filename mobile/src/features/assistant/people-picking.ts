@@ -51,16 +51,23 @@ export function pickedLanes(band: TimeBand, picked: readonly string[]): BandLane
   return me === undefined ? checked : [me, ...checked];
 }
 
+// What keeps a Friend from the Plan's time: the first of their busy stretches over the span, when it ends, and what it
+// is, from its lane's label ("일정" for a step of a Quest, "수업" or "302동 수업" for a Class); null for a stretch
+// with no label, as an older main server sends.
+export interface BusyAtSpan {
+  endAt: string;
+  kind: 'class' | 'quest' | null;
+}
+
 export interface PickRow {
   userId: string;
   name: string;
-  me: boolean;
   checked: boolean;
-  // Null when the main server sent no lane for this Friend.
-  busy: BandLane['busy'] | null;
+  // Null when the Friend is free over the Plan's span, or when the main server sent no busy stretches for them.
+  busyAtSpan: BusyAtSpan | null;
   // To the Plan's place; null where it is not known.
   walkMinutes: number | null;
-  // From the User's Friend list, shown quieter beside the name; null for the asker or one not in the list.
+  // From the User's Friend list; null for one not in the list.
   department: string | null;
 }
 
@@ -74,16 +81,31 @@ interface RowsSource {
   friends: readonly { id: string; name: string; department?: string; walkMinutes: number | null }[];
 }
 
-// A row for the asker and one for each Friend: the asker first, then the checked, then the nearest, those whose
-// whereabouts are not known last, a tie by name.
+function kindOf(label: string | undefined): BusyAtSpan['kind'] {
+  if (label === undefined) {
+    return null;
+  }
+  return label === '일정' ? 'quest' : 'class';
+}
+
+export function busyAtSpanOf(busy: BandLane['busy'], span: Pick<TimeBand, 'startAt' | 'endAt'>): BusyAtSpan | null {
+  const from = msOf(span.startAt);
+  const until = msOf(span.endAt);
+  const [first] = busy
+    .filter(({ startAt, endAt }) => msOf(startAt) < until && msOf(endAt) > from)
+    .toSorted((one, other) => msOf(one.startAt) - msOf(other.startAt));
+  return first === undefined ? null : { endAt: first.endAt, kind: kindOf(first.label) };
+}
+
+// A row for each Friend while picking, in no order (`openOrderOf`); the asker has none: picking shows no bars, and
+// the combined bar on top is everyone's (the user's decision, 2026-11-25).
 export function pickRowsOf({ band, picked, walks, friends }: RowsSource): PickRow[] {
   const [me, ...people] = band.lanes;
-  const row = (userId: string, name: string, busy: PickRow['busy'], walkMinutes: number | null): PickRow => ({
+  const row = (userId: string, name: string, busy: BandLane['busy'] | null, walkMinutes: number | null): PickRow => ({
     userId,
     name,
-    me: false,
     checked: picked.includes(userId),
-    busy,
+    busyAtSpan: busy === null ? null : busyAtSpanOf(busy, band),
     walkMinutes,
     department: friends.find(({ id }) => id === userId)?.department ?? null,
   });
@@ -93,40 +115,51 @@ export function pickRowsOf({ band, picked, walks, friends }: RowsSource): PickRo
     ...people.map(({ userId, name, busy }) => row(userId, name, busy, walkOf(userId))),
     ...(band.others ?? []).map(({ userId, name, busy, walkMinutes }) => row(userId, name, busy, walkMinutes)),
   ];
-  const rows = [
+  return [
     ...lanes,
     ...friends
       .filter(({ id }) => id !== me?.userId && !lanes.some(({ userId }) => userId === id))
       .map(({ id, name, walkMinutes }) => row(id, name, null, walkMinutes)),
   ];
-  const sorted = rows.toSorted(
-    (one, other) =>
-      Number(other.checked) - Number(one.checked) ||
-      (one.walkMinutes ?? Number.POSITIVE_INFINITY) - (other.walkMinutes ?? Number.POSITIVE_INFINITY) ||
-      one.name.localeCompare(other.name, 'ko'),
-  );
-  return me === undefined
-    ? sorted
-    : [
-        {
-          userId: me.userId,
-          name: me.name,
-          me: true,
-          checked: true,
-          busy: me.busy,
-          walkMinutes: walks.get(me.userId) ?? null,
-          department: null,
-        },
-        ...sorted,
-      ];
+}
+
+function groupOf({ checked, walkMinutes, busyAtSpan }: PickRow): number {
+  if (checked) {
+    return 0;
+  }
+  if (walkMinutes === null) {
+    return 3;
+  }
+  return busyAtSpan === null ? 1 : 2;
+}
+
+// The rows' order, worked out once as picking opens and kept until it ends, so that a check never moves a row (the
+// user's phone, 2026-11-25): those picked already, then the free by nearness, then those busy over the span, then
+// those whose whereabouts are not known; a tie by name.
+export function openOrderOf(rows: readonly PickRow[]): string[] {
+  const far = Number.POSITIVE_INFINITY;
+  return rows
+    .toSorted(
+      (one, other) =>
+        groupOf(one) - groupOf(other) ||
+        (one.walkMinutes ?? far) - (other.walkMinutes ?? far) ||
+        one.name.localeCompare(other.name, 'ko'),
+    )
+    .map(({ userId }) => userId);
+}
+
+// The rows in an order worked out before; a row it does not know, as a Friend the list brought later, comes after.
+export function inOrder(rows: readonly PickRow[], order: readonly string[]): PickRow[] {
+  const at = ({ userId }: PickRow): number => {
+    const index = order.indexOf(userId);
+    return index === -1 ? order.length : index;
+  };
+  return rows.toSorted((one, other) => at(one) - at(other));
 }
 
 // A row's state at its right: the walk to the Plan's place, or that where the Friend is is not known.
-export function pickStateOf({ me, walkMinutes }: Pick<PickRow, 'me' | 'walkMinutes'>): string {
-  if (walkMinutes !== null) {
-    return `걸음 ${String(walkMinutes)}분`;
-  }
-  return me ? '' : '위치 모름';
+export function pickStateOf({ walkMinutes }: Pick<PickRow, 'walkMinutes'>): string {
+  return walkMinutes === null ? '위치 모름' : `걸음 ${String(walkMinutes)}분`;
 }
 
 // The button that ends picking: "완료", with how many Friends are checked now; "닫기" with no Friend to pick.

@@ -125,18 +125,31 @@ describe('taking a Friend out', () => {
   });
 });
 
-// Partitions: picking opened from "＋ 같이"; from the face of a Friend already in the Plan.
+// Partitions: picking opened from "＋ 같이"; rows checked after it opened; opened from the face of a Friend already in
+// the Plan.
 describe('picking Friends in the time card', () => {
-  it("has 나 first, the Plan's 민수 checked, then the nearest Friend, the one without a position last", async () => {
+  it("has the Plan's 민수 checked first, then the nearest Friend, the one without a position last, and no bars", async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
     await user.press(timeBar().getByRole('button', { name: ADD }));
 
-    expect(within(screen.getByTestId('time-card-rows')).getAllByText(/^나$/u)).toHaveLength(1);
+    expect(within(screen.getByTestId('time-card-rows')).queryAllByText(/^나$/u)).toHaveLength(0);
+    expect(within(screen.getByTestId('time-card-rows')).queryAllByTestId('time-card-busy')).toHaveLength(0);
     expect(pickRows()).toEqual([MIN_SU_ROW, MIN_JUN_ROW, JI_WOO_ROW]);
     expect(checkedRows()).toEqual([MIN_SU_ROW]);
     expect(pickDone()).toHaveTextContent('완료 · 1명');
     expect(recalculations(server)).toEqual([]);
+  });
+
+  it('keeps every row where it stood when picking opened, however the rows are checked', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    await user.press(timeBar().getByRole('button', { name: ADD }));
+
+    await user.press(pickRow(JI_WOO.name));
+    await user.press(pickRow('민수'));
+
+    expect(pickRows()).toEqual([MIN_SU_ROW, MIN_JUN_ROW, JI_WOO_ROW]);
+    expect(checkedRows()).toEqual([JI_WOO_ROW]);
   });
 
   it('lists a Friend in the Plan once, checked, by the Plan’s walk, when their Avatar opens picking', async () => {

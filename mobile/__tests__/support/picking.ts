@@ -7,8 +7,8 @@
 import { within } from '@testing-library/react-native';
 import { screen } from './app';
 
-// People picked in the time card (P04 ticket 64): "＋ 같이" opens the card with a row for each person, 나's first and a
-// check for each Friend, and its head reads "취소" and "완료".
+// People picked in the time card (P04 ticket 64): "＋ 같이" opens the card with a row and a check for each Friend, no
+// bars and no row for 나, and its head reads "취소" and "완료".
 
 type Found = ReturnType<typeof screen.getByRole>;
 
