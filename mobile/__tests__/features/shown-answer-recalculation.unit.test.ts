@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -15,6 +16,7 @@ import {
   MEAL_ANSWER_THREE,
 } from '@/api/mock/data/meal-answers';
 import { ANSWERED, change, failed, HERE, heldBack, hold, replied, said } from '../support/shown-answer';
+import { offeredAnswer } from '@/features/assistant/meal-offered';
 
 // The answer on screen once the card corrects it (P02 spec, "Correcting the answer"), with the API client stood in.
 // The answers are the stored copies of the main server's replies: five Plans for "배고파, 민수랑 같이" (302동식당,
@@ -45,7 +47,7 @@ describe('the answer on screen, by the last reply', () => {
 
   it("is a later reply's answer, and none for a later reply without one or no bubbles", async () => {
     const held = await hold([...ANSWERED, said(3, '지은이도'), replied(4, MEAL_ANSWER_THREE)]);
-    expect(held.shown().answer).toBe(MEAL_ANSWER_THREE);
+    expect(held.shown().answer).toBe(offeredAnswer(MEAL_ANSWER_THREE));
 
     await held.rerender([
       ...ANSWERED,
@@ -191,7 +193,7 @@ describe('a late recalculation', () => {
     await held.rerender([...ANSWERED, said(3, '지은이도'), replied(4, MEAL_ANSWER_THREE)]);
     await reply.fail();
 
-    expect(held.shown().answer).toBe(MEAL_ANSWER_THREE);
+    expect(held.shown().answer).toBe(offeredAnswer(MEAL_ANSWER_THREE));
     expect(held.shown().recalculating).toBe(false);
     expect(held.onFailed).not.toHaveBeenCalled();
   });

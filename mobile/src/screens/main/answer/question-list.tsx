@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -30,9 +31,10 @@ interface QuestionListProps {
   rows: readonly QuestionRow[];
   // A question pressed, or a kept conversation's row: its turn on the map, in its conversation.
   onPick: (row: QuestionRow) => void;
-  // The most the list's card takes; it scrolls beyond.
-  maxHeight: number;
-  // In the answer's card: no card of its own around it.
+  // The most the list's card takes; it scrolls beyond. Left out, the list takes its whole height.
+  maxHeight?: number;
+  // In the answer's card: no card of its own around it, and no scroll of its own: the card's content scrolls it, so
+  // that a drag on it moves the card as on any answer (P04 ticket 63).
   flat?: boolean;
   // "＋ 새 대화" at the header's right; none without it.
   onAskNew?: () => void;
@@ -240,7 +242,9 @@ export function QuestionList(props: QuestionListProps): ReactElement {
       <ScrollView
         contentContainerStyle={flat ? styles.flatRows : styles.rows}
         keyboardShouldPersistTaps="handled"
+        scrollEnabled={!flat}
         style={flat ? styles.flatScroll : undefined}
+        testID="question-list-rows"
       >
         {earlier.length > 0 && now.length > 0 ? <Text style={[styles.group, styles.groupRow]}>지금 대화</Text> : null}
         {now.map((row) => (

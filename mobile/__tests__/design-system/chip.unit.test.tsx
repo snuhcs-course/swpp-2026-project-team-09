@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { render, screen, userEvent } from '@testing-library/react-native';
@@ -9,7 +10,7 @@ import { render, screen, userEvent } from '@testing-library/react-native';
 import { Chip } from '@/design-system/chip';
 
 describe('Chip', () => {
-  it('is a toggle that says whether it is selected', async () => {
+  it('is a toggle that says whether it is selected, with a ✓ when it is', async () => {
     const onPress = jest.fn<void, []>();
     await render(
       <Chip onPress={onPress} selected>
@@ -21,6 +22,7 @@ describe('Chip', () => {
 
     expect(onPress).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: '#보드게임' })).toBeSelected();
+    expect(screen.getByTestId('chip-check', { includeHiddenElements: true })).toBeOnTheScreen();
   });
 
   it('can be removed', async () => {
@@ -45,6 +47,7 @@ describe('Chip', () => {
 
     expect(onRemove).toHaveBeenCalledTimes(1);
     expect(onPress).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('chip-check', { includeHiddenElements: true })).toBeNull();
   });
 
   it('is plain text when it does nothing', async () => {

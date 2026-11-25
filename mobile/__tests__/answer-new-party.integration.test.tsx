@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -20,6 +21,7 @@ import { sockets } from './support/fake-socket';
 import { layStage } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
+import { checkedRows, pickDone } from './support/picking';
 import {
   answerRecalculations,
   ASKER,
@@ -133,14 +135,15 @@ describe("a new party's answer (board Recruit 4)", () => {
   });
 });
 
-// Partitions: the list of Friends open; a Friend who could come; a Friend taken out.
+// Partitions: Friends picked in the time card (P04 ticket 64); a Friend who could come; a Friend taken out.
 describe("a new party's Friends (board Recruit 4)", () => {
-  it('asks who to invite while the list of Friends is open', async () => {
+  it('are picked in the time card from 초대할 친구 추가, with 서준 checked', async () => {
     const user = await sayOnMap(server, ASKED, NEW_QUEST_REPLY);
 
     await user.press(timeBar().getByRole('button', { name: '초대할 친구 추가' }));
 
-    expect(card().getByText('누구를 초대할까요?')).toBeVisible();
+    expect(checkedRows()).toEqual([expect.stringMatching(/^서준 · /u)]);
+    expect(pickDone()).toHaveTextContent(/^완료$/u);
   });
 
   it('draws the Friend who could come with the line of his day, and adding him recalculates', async () => {

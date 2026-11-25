@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -19,7 +20,7 @@ import { clockWithDay, koreaTime } from '../korea-time.js';
 import { type GatheringArgs, GatheringNaming } from './answer-words.js';
 import { endedByItem, type GatheringFit, MINUTE_MS, minutesSaid } from './gathering.js';
 import { basisOf, meetingOf, originChip, personChips, subQuestsOf, untilChip } from './meal-answer.js';
-import { halfHoursAround, lanesOf, sceneOf } from './meal-scene.js';
+import { halfHoursAround, lanesOf, othersOf, sceneOf } from './meal-scene.js';
 import { meetHours, meetWindow } from './meet-gathering.js';
 import { droppedOf, partOf, unfitLines } from './plan-parts.js';
 
@@ -99,6 +100,7 @@ function bandOf(fit: GatheringFit, naming: MeetNaming): TimeBand {
     range: { startAt: koreaTime(from), endAt: koreaTime(until) },
     now: koreaTime(now),
     lanes: lanesOf(naming, from, until),
+    ...othersOf(naming, fit.placeId, from, until),
     startAt: koreaTime(start),
     endAt: koreaTime(end),
     text: `${clockOf(start)}–${clockOf(end)}${minutesSaid(fit) ? ` · 함께 ${togetherMinutes}분` : ''}`,

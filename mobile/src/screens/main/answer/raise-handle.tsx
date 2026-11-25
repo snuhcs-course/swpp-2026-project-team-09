@@ -5,6 +5,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -27,9 +28,6 @@ export interface Raising {
   close?: () => void;
   // The card is dragged below low, or no longer.
   onPast?: (past: boolean) => void;
-  // What a drag down takes away first, as back does: the list of questions, a mark's card, or a restaurant's menu, one
-  // layer a drag, before the card is lowered or the answer closed (P04 ticket 52). Left out or null, none.
-  layer?: (() => void) | null;
 }
 
 // Where "놓으면 지도 화면으로 돌아가요" stands, from the stage's bottom: just above the card's top edge, following the card

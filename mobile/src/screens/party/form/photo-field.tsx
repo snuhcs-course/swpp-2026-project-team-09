@@ -3,6 +3,7 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import * as ImagePicker from 'expo-image-picker';
@@ -113,7 +114,7 @@ export function PhotoField({ photo, onChange }: PhotoFieldProps): ReactElement {
   const take = useTake(onChange);
   return (
     <View style={styles.field}>
-      <FieldHead label="사진" />
+      <FieldHead icon="camera" label="사진" />
       {photo === null ? (
         <View style={styles.sources}>
           <SourceButton

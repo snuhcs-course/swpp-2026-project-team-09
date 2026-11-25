@@ -3,6 +3,8 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -29,7 +31,8 @@ export interface CandidateRow {
   when: string;
   // In minutes, null when not known.
   walk: number | null;
-  // It cannot be done in the time (`fadedPlan`): faded, as on the map, and listed last unless chosen.
+  // It cannot be done in the time (`fadedPlan`): only the Assistant's pick can be, which the answer keeps though it
+  // cannot (`offeredAnswer`), faded as on the map.
   faded: boolean;
   // "순살안동식찜닭 외 2", null without dishes.
   dishes: string | null;
@@ -58,27 +61,25 @@ export function mealCard(answer: AnswerReply | null): boolean {
   return answer?.input.kind === 'meal' && answer.plans.length > 0;
 }
 
-// The places the list offers ("8곳 목록"), as its first line and "전체" count them: the candidates. The places dropped
-// stand under their own heading in the list and are not counted.
+// The places the list offers ("8곳 목록"), as its first line and "전체" count them: the candidates, which the answer
+// on screen holds only as they can be done (`offeredAnswer`). The places closed for the meal stand apart at the list's
+// end and are not counted.
 export function listedCount(answer: AnswerReply): number {
   return answer.plans.length;
 }
 
-// The line over the candidates that cannot be done in the time.
-export const LATE_HEADING = '시간 안에 다녀오기 어려운 곳';
-
-// The line over the places dropped: with Friends, whose time they do not fit ("김태현과 시간이 맞지 않는 곳").
-export function droppedHeading(answer: AnswerReply): string {
-  const who = withFriendsOf(answer);
-  return who === null ? '시간이 맞지 않는 곳' : `${who} 시간이 맞지 않는 곳`;
-}
+// The line over the Restaurants closed for the meal (P04 ticket 71, board z1).
+export const CLOSED_HEADING = '쉬는 곳';
 
 // The Friends of the conditions with their particle, "김태현과"; null for none. A chip's name is before " · ".
 export function withFriendsOf(answer: AnswerReply): string | null {
-  const names = answer.chips
-    .filter(({ kind }) => kind === 'person')
-    .map(({ text: words }) => words.split(' · ')[0] ?? words);
+  const names = friendNamesOf(answer);
   return names.length === 0 ? null : withParticle(names.join(', '));
+}
+
+// The names of the Friends in the answer's Plan, from its people's chips.
+export function friendNamesOf(answer: AnswerReply): string[] {
+  return answer.chips.filter(({ kind }) => kind === 'person').map(({ text: words }) => words.split(' · ')[0] ?? words);
 }
 
 // The candidates of a meal answer with more than one, those of the kind on screen alone when one is chosen, the least
@@ -188,22 +189,22 @@ function Row({
   );
 }
 
-// A place dropped: its name and the reason, faded, and no press.
-function DroppedRow({ name, reason }: { name: string; reason: string }): ReactElement {
+// A Restaurant closed for the meal: its name and its notice, grey, not numbered, and no press.
+function ClosedRow({ name, notice }: { name: string; notice: string }): ReactElement {
   return (
     <View
-      accessibilityLabel={`${name} · ${reason}`}
+      accessibilityLabel={`${name} · ${notice}`}
       accessible
       style={[styles.row, styles.faded]}
-      testID="meal-dropped-row"
+      testID="meal-closed-row"
     >
-      <View style={[styles.badge, styles.droppedBadge]} />
+      <View style={[styles.badge, styles.closedBadge]} />
       <View style={styles.middle}>
         <Text numberOfLines={1} style={styles.name}>
           {name}
         </Text>
         <Text numberOfLines={2} style={styles.dishes}>
-          {reason}
+          {notice}
         </Text>
       </View>
     </View>
@@ -225,7 +226,9 @@ interface MealListProps {
   busy: boolean;
 }
 
-// The kinds of food on top, then a row per candidate; the chosen one is marked. A press on a row chooses that place,
+// The kinds of food on top, then a row per candidate; the chosen one is marked. The answer on screen holds only the
+// places that can be done (`offeredAnswer`, P04 ticket 71): asked, the Assistant says why one is missing. The Restaurants closed for the
+// meal end the list under "쉬는 곳". A press on a row chooses that place,
 // as a press on its tag does, and opens its menu (board E4).
 export function MealList({ answer, shown, busy }: MealListProps): ReactElement | null {
   if (!mealCard(answer)) {
@@ -233,7 +236,8 @@ export function MealList({ answer, shown, busy }: MealListProps): ReactElement |
   }
   const chosen = answer.plans[shown.index]?.id;
   const rows = candidateRowsOf(answer);
-  const late = rows.filter((row) => row.faded && row.planId !== chosen);
+
+  const closed = answer.closed ?? [];
   const row = (one: CandidateRow): ReactElement => (
     <Row
       chosen={one.planId === chosen}
@@ -251,12 +255,10 @@ export function MealList({ answer, shown, busy }: MealListProps): ReactElement |
         {orderLineOf(answer, rows.length)}
       </Text>
       <KindChips answer={answer} disabled={busy} onChoose={shown.chooseKind} />
-      {rows.filter((one) => !late.includes(one)).map((one) => row(one))}
-      {late.length === 0 ? null : <Heading words={LATE_HEADING} />}
-      {late.map((one) => row(one))}
-      {answer.dropped.length === 0 ? null : <Heading words={droppedHeading(answer)} />}
-      {answer.dropped.map(({ place, reason }) => (
-        <DroppedRow key={`${place.placeId}:${place.label}`} name={place.label} reason={reason} />
+      {rows.map((one) => row(one))}
+      {closed.length === 0 ? null : <Heading words={CLOSED_HEADING} />}
+      {closed.map(({ place, notices }) => (
+        <ClosedRow key={`${place.placeId}:${place.label}`} name={place.label} notice={notices.join(' ')} />
       ))}
     </View>
   );
@@ -287,7 +289,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.snuBlue,
   },
   chosenBadge: { backgroundColor: color.quest },
-  droppedBadge: { backgroundColor: color.inkSubtle },
+  closedBadge: { backgroundColor: color.inkSubtle },
   heading: { ...text.caption, marginTop: space[2], color: color.inkMuted },
   // On the list's left edge, above the kinds.
   order: { ...text.caption, color: color.inkMuted },
