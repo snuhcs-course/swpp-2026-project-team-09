@@ -15,6 +15,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The conversation's control: the conversation with the Assistant, which the main screen holds, and what the answer
@@ -50,6 +51,7 @@ import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
 import type { LocationMissing } from '@/api/refusal-types';
 import { type KeptConversation, useKeptConversation } from './use-kept-conversation';
 import { type BookingStage, useBookingStage } from './library/booking-stage';
+import { useMenuRaising } from './answer/meal-card';
 import { usePlanOutcomes } from './use-plan-outcomes';
 import { openProposalForm, useProposalMaking } from './use-proposal-making';
 
@@ -214,6 +216,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
       booking,
     },
     ...onScreen,
+    answer: useMenuRaising(onScreen.answer, card.setRaised),
     lookup: useShownLookup(sceneBubbles, start, kept.hide),
     ...onMap,
     ...useActiveStep(onMap.steps),
