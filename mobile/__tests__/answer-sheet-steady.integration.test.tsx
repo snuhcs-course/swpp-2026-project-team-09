@@ -82,9 +82,12 @@ describe('the time card told again a fraction of a point off', () => {
     await layTimeCard(112);
     const before = sheetAt();
 
-    for (const height of [111.79, 111.71, 111.93, 111.79, 111.71, 111.93]) {
-      await layTimeCard(height);
-    }
+    await layTimeCard(111.79);
+    await layTimeCard(111.71);
+    await layTimeCard(111.93);
+    await layTimeCard(111.79);
+    await layTimeCard(111.71);
+    await layTimeCard(111.93);
 
     expect(sheetAt()).toBe(before);
   });
