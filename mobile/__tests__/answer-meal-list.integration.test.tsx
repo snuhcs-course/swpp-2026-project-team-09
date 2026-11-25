@@ -10,7 +10,8 @@
 import { screen, within } from '@testing-library/react-native';
 import type { AnswerReply } from '@/api/assistant-types';
 import { crowdedMealReply } from '@/api/mock/data/crowded-meal';
-import { MEAL_ANSWER_MENUS_REPLY, MEAL_DINNER_MENUS } from '@/api/mock/data/meal-answer-menus';
+import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
+import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
 import { koreaDateKey, koreaNextDay } from '@/korea-time';
 import { CLOSED_HEADING } from '@/screens/main/answer/meal-list';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
@@ -22,6 +23,8 @@ import type { FakeServer } from './support/fake-server';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { pass } from './support/app';
+import { pressMarker } from './support/made-quest';
+import { layStage } from './support/lists';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { sockets } from './support/fake-socket';
 
@@ -124,8 +127,8 @@ describe('a row of the list pressed', () => {
 });
 
 // Partitions: another of the reply's places chosen; a kind chosen by a chip, with no turn to the model; the answer
-// recalculated (P04 ticket 79: the model's words stay while its places are on screen). Expected values: dinner's first
-// place, 302동식당, at 17:15.
+// recalculated (P04 ticket 79: the model's words stay while its places are on screen). Expected values: the first place
+// of the answer for the User alone, once 민수 is taken out on the map, 301동식당.
 describe('the words over the list once something else is chosen', () => {
   it('stay the Assistant’s when another of its places is chosen', async () => {
     const user = await askOnMap(server, fourOf(MEAL_ANSWER_MENUS_REPLY));
@@ -147,13 +150,14 @@ describe('the words over the list once something else is chosen', () => {
   });
 
   it('are the chosen place’s line once the answer is recalculated', async () => {
-    server.on('POST /assistant/answers', { status: 200, body: MEAL_DINNER_MENUS });
-    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE });
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY, () => layStage(390, 760));
 
-    await user.press(screen.getByRole('button', { name: '저녁 17:00' }));
+    await pressMarker(user, '민수');
+    await user.press(within(screen.getByTestId('mark-card')).getByRole('button', { name: '민수 빼기' }));
     await pass(500);
 
-    expect(screen.getByTestId('meal-words')).toHaveTextContent(/^302동식당 · 17:15 · /u);
+    expect(screen.getByTestId('meal-words')).toHaveTextContent(/^301동식당 · \d{2}:\d{2} · /u);
   });
 });
 
