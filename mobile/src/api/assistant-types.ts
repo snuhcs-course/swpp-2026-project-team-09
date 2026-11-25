@@ -22,7 +22,7 @@ import type { Lookup } from './lookup-types';
 import type { MeetInput } from './meet-plan-types';
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
-import type { DroppedPlace, PlanPart, WithAdding } from './plan-part-types';
+import type { ClosedPlace, DroppedPlace, PlanPart, WithAdding } from './plan-part-types';
 import type { ProposalChange } from './party-change-types';
 import type { ReplyOffer } from './reply-offer-types';
 import type { WithLocationMissing, WithMark, WithMissing, WithRefusal } from './refusal-types';
@@ -237,6 +237,9 @@ export interface AnswerReply extends WithMissing, WithAdding {
   plans: Plan[];
   // Considered, but they do not fit.
   dropped: DroppedPlace[];
+  // A meal's: the Restaurants closed for the meal, which the list names apart under "쉬는 곳" (P04 ticket 71). Absent
+  // when none, from other answers, and from a main server before it.
+  closed?: ClosedPlace[];
   noPlan: ({ reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[] } & WithRelax) | null;
   // A meal's: the other meal of the day and when it starts ("HH:MM"), null when it is over or nothing serves it. Absent
   // from other answers and from a main server before P05 ticket 15.

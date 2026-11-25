@@ -6,6 +6,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -30,6 +31,7 @@ import { type RefusalAsk, RefusalReply } from './refusal-reply';
 import { StepsTop } from './steps-bar';
 import { BookingBar, LookupBar, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
+import { offeredAnswer } from '@/features/assistant/meal-offered';
 
 // Which card a reply's words are: the Plan's, or the made Quest's once its Plan was made into one, for the reply the
 // answer on screen came from, the Lookup on screen for its reply, or the reply's own.
@@ -55,7 +57,7 @@ function lookupOf(bubble: ChatBubble, { lookup }: Seen): ShownLookup['lookup'] {
 export function wordsKindOf(bubble: ChatBubble, onScreen: Seen): WordsKind {
   const { shown, invitation } = onScreen;
   const { answer } = bubble;
-  const fromReply = answer !== undefined && answer !== null && answer === shown.source;
+  const fromReply = answer !== undefined && answer !== null && offeredAnswer(answer) === shown.source;
   if ((fromReply || keepsShown(bubble)) && shown.answer !== null) {
     return invitation.made === null || shown.plan === null ? 'plan' : 'made';
   }

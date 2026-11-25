@@ -14,8 +14,10 @@ import { sendAsWorker } from './worker.js';
 
 // A Restaurant whose menu closes the meal asked is no candidate (P04 ticket 65): on 2026-11-26 302동식당's lunch and
 // dinner each held only "공대수시면접으로 인해 휴점합니다", which the worker gives no kind, and a plan for that dinner
-// offered it first. At the Assistant's endpoint with the scripted model; each test takes a Tuesday of March 2074, which
-// no other file posts menus for, with the asker in a Class in 301동 until 17:50.
+// offered it first. The answer names it apart with its notice, which the app lists under "쉬는 곳", and asked why it is
+// missing, the Assistant says so from whyNotListed (P04 ticket 71). At the Assistant's endpoint with the scripted model;
+// each test takes a Tuesday of March 2074, which no other file posts menus for, with the asker in a Class in 301동 until
+// 17:50.
 
 const stage = new MealPlanStage();
 
@@ -45,6 +47,8 @@ const closedAllDay = (text: string, kind: string | null = null): object[] => [
   line('dinner', text, kind),
 ];
 
+const why = (words: string): Step => ({ tool: 'whyNotListed', input: { restaurant: words } });
+
 const planDinner = (date: string): Step => ({ tool: 'planMeal', input: { date, meal: 'dinner', friendIds: [] } });
 
 async function dinnerAt(date: string, menus: Record<string, object[]>): Promise<void> {
@@ -71,7 +75,7 @@ function lookupIn(body: unknown): Lookup {
 }
 
 describe('A plan for a meal some Restaurants close', () => {
-  it('offers only the open ones, and the closed one is no numbered Place on the map', async () => {
+  it('offers only the open ones, names the closed one apart with its notice, and no numbered Place on the map', async () => {
     const date = '2074-03-06';
     await dinnerAt(date, {
       '302동식당': closedAllDay(NOTICE),
@@ -86,6 +90,7 @@ describe('A plan for a meal some Restaurants close', () => {
     expect(drawn).not.toContain('302동식당');
     const [result] = stage.model.toolResults();
     expect(JSON.stringify(result)).not.toContain('302동식당');
+    expect(answer.closed?.map(({ place, notices }) => [place.label, notices])).toEqual([['302동식당', [NOTICE]]]);
   });
 
   it('says plainly that no Restaurant is open when every one closes it', async () => {
@@ -104,6 +109,24 @@ describe('A plan for a meal some Restaurants close', () => {
       result: 'none',
       reason: 'No Restaurant serves that meal that day: every menu collected for it is closed or holds only notes.',
     });
+  });
+});
+
+describe('A Restaurant closed for the meal it could not have been eaten at anyway', () => {
+  // The user's word (2026-11-26): a closed one that could not be reached and eaten at in the time anyway is not named.
+  // 학생회관식당's last dinner served at 17:30 is before the asker's Class ends at 17:50.
+  it('is not named apart: only one that would have been a candidate is', async () => {
+    const date = '2074-04-03';
+    await dinnerAt(date, {
+      '302동식당': closedAllDay(NOTICE),
+      학생회관식당: closedAllDay(NOTICE),
+      '301동식당': [dish('dinner', '제육볶음')],
+    });
+    stage.hoursAre({ 학생회관식당: { dinner: { opensAt: '17:00', closesAt: '17:30' } } });
+
+    const answer = answerIn((await stage.send([planDinner(date), { text: '…' }]).expect(200)).body);
+
+    expect(answer.closed?.map(({ place }) => place.label)).toEqual(['302동식당']);
   });
 });
 
@@ -144,5 +167,46 @@ describe('A question about a Restaurant its menu closes', () => {
     expect(lookup.lines[1]).toEqual([{ text: '저녁은 안 해요', strong: false }]);
     expect(lookup.basis).toEqual([`점심: ${NOTICE}`, `저녁: ${NOTICE}`]);
     expect(lookup.scene.places.map(({ place }) => place.label)).toEqual(['302동식당']);
+  });
+});
+
+describe('A question why a Restaurant is not among the places on screen', () => {
+  const ASKED = '2074-03-27';
+  const QUOTED = `<data label="menu.line">${NOTICE}</data>`;
+  let context: object;
+
+  beforeAll(async () => {
+    await dinnerAt(ASKED, { '302동식당': closedAllDay(NOTICE), '301동식당': [dish('dinner', '제육볶음')] });
+    context = { conditions: answerIn((await stage.send([planDinner(ASKED), { text: '…' }]).expect(200)).body).input };
+  });
+
+  it('answers a closed one with its notice in words, showing nothing of its own over the answer on screen', async () => {
+    const response = await stage.send([why('302동'), { text: '…' }], { context }, '왜 302동은 없어?').expect(200);
+
+    expect(stage.model.toolResults()[0]).toEqual({
+      result: 'reason',
+      restaurant: '302동식당',
+      why: 'closed',
+      notices: [QUOTED],
+    });
+    expect(replySchema.parse(response.body)).toEqual({ answer: null, lookup: null });
+    expect(response.body).toMatchObject({ mapButtons: [], cards: [], proposal: null });
+  });
+
+  it('says one of the places is listed', async () => {
+    await stage.send([why('301동'), { text: '…' }], { context }, '301동은 왜 없어?').expect(200);
+
+    expect(stage.model.toolResults()[0]).toEqual({
+      result: 'reason',
+      restaurant: '301동식당',
+      why: 'listed',
+      words: '목록에 있어요',
+    });
+  });
+
+  it('asks for the meal on screen when there is none', async () => {
+    await stage.send([why('302동'), { text: '…' }], {}, '왜 302동은 없어?').expect(200);
+
+    expect(stage.model.toolResults()[0]).toMatchObject({ result: 'none' });
   });
 });

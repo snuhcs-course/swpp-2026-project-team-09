@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -10,6 +11,7 @@ import type { AnswerReply } from '@/api/assistant-types';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answers';
 import type { RefusalKind } from '@/api/refusal-types';
+import { offeredAnswer } from '@/features/assistant/meal-offered';
 import type { ChatBubble } from '@/features/assistant/use-chat';
 import { type ShownAnswer, useShownAnswer } from '@/features/assistant/use-shown-answer';
 
@@ -169,7 +171,8 @@ describe('the Plan on screen, shown or replaced', () => {
 
     await rerender([ASKED, replied(2, MEAL_ANSWER), said(3, '지은이도'), replied(4, MEAL_ANSWER_THREE)]);
 
-    expect(shown().answer).toBe(MEAL_ANSWER_THREE);
+    // As the app offers it (P04 ticket 71): without the places dropped on its map, the same object for the same answer.
+    expect(shown().answer).toBe(offeredAnswer(MEAL_ANSWER_THREE));
     expect(shown().index).toBe(0);
     expect(shown().basisOpen).toBe(false);
   });

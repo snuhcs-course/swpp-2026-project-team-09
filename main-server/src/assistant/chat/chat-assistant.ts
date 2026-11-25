@@ -15,6 +15,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { FriendViewService } from '../../friends/friend-view.service.js';
@@ -32,6 +33,7 @@ import { type FreeTimeServices } from '../free-time/free-time-services.js';
 import { freeTimeTools } from '../free-time/free-time-tools.js';
 import { withTravelBoxes } from '../free-time/travel-boxes.js';
 import { MEET_RULES, planMeet } from '../gathering/meet-tools.js';
+import { MISSING_RULES, whyNotListed } from '../gathering/missing-tools.js';
 import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
 import { INTEREST_RULES, interestTools } from '../interests/interest-tools.js';
 import { koreaNow } from '../korea-time.js';
@@ -222,7 +224,7 @@ function mealsAndEvents(
 // Friend is, a day's Classes, and the Tutorial Quests in order; and the cancelling of a Quest found on its day.
 function withLookups(
   planned: { rules: string[]; tools: Record<string, Tool> },
-  { lookups }: ChatAssistantServices,
+  { lookups, plans }: ChatAssistantServices,
   drawsAnswers: boolean,
 ): { rules: string[]; tools: Record<string, Tool> } {
   if (!drawsAnswers) {
@@ -233,6 +235,7 @@ function withLookups(
       ...planned.rules,
       WAY_RULES,
       MENU_RULES,
+      MISSING_RULES,
       HOURS_RULES,
       FRIEND_RULES,
       DAY_RULES,
@@ -244,6 +247,7 @@ function withLookups(
       ...planned.tools,
       findWay: findWay(lookups.ways, lookups.tutorial),
       findMenu: findMenu(lookups.menus),
+      whyNotListed: whyNotListed(plans.meals, lookups.menus),
       restaurantHours: restaurantHours(lookups.menus),
       findFriend: findFriend(lookups.friends),
       findDay: findDay(lookups.days),

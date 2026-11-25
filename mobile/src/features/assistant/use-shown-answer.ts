@@ -15,6 +15,7 @@ import { apiClient } from '@/api/client';
 import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
 import { showing, withKind } from './meal-kinds';
+import { offeredAnswer } from './meal-offered';
 import { useMenuOpening } from './use-menu-opening';
 import { usePeoplePicking } from './use-people-picking';
 import { withPerson } from './plan-input';
@@ -142,7 +143,8 @@ function openedIndex(source: AnswerReply | null): number {
 
 // A new reply's answer on screen: at its first Plan, or at a menu question's Restaurant with its menu open.
 function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
-  const source = reply?.answer ?? null;
+  const given = reply?.answer ?? null;
+  const source = given === null ? null : offeredAnswer(given);
   const opened = openedIndex(source);
   const index = Math.max(opened, 0);
   return {
@@ -171,7 +173,8 @@ function withPlan(state: AnswerState, index: number): AnswerState {
 // After a drag of a handle the Plan with the id of the one on screen stays when the new answer has it, otherwise the
 // first: the User moved the time of the Plan they look at. The band moved whole asked the server to plan again from a
 // new start, and any other change changed who eats or where from, and so the order.
-function replaced(last: AnswerState, next: AnswerReply, by: ChangeBy | undefined): AnswerState {
+function replaced(last: AnswerState, given: AnswerReply, by: ChangeBy | undefined): AnswerState {
+  const next = offeredAnswer(given);
   const shownId = last.answer?.plans[last.index]?.id;
   const index =
     by === 'drag'
