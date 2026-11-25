@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -18,13 +19,15 @@ import { StudySpacesService } from '../../study-spaces/study-spaces.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../../travel/travel.js';
 import { type AnswerReply, type MeetInput } from '../dto/answer.dto.js';
 import { freeTimeOf, onDay } from '../free-time/free-time.js';
+import { UserDayService } from '../free-time/user-day.service.js';
 import { keptWords } from '../lookup/day-quests.js';
 import { openRestaurants } from '../free-time/meal-tools.js';
 import { type AnswerPerson } from './answer-words.js';
 import { type GatheringPerson, type GatheringPlace, MINUTE_MS } from './gathering.js';
-import { locationPlaceOf, MealPlanService } from './meal-plan.service.js';
+import { MealPlanService } from './meal-plan.service.js';
 import { meetAnswer } from './meet-answer.js';
 import { gatherToMeet, meetingPlaces, meetWindow } from './meet-gathering.js';
+import { locationPlaceOf, otherFriendsOf } from './other-friends.js';
 import { conditionsOf } from './plan-conditions.js';
 
 // 학생회관's Place number.
@@ -53,6 +56,7 @@ export interface MeetPlanned {
 export class MeetPlanService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly days: UserDayService,
     private readonly meals: MealPlanService,
     private readonly menus: MenusService,
     private readonly restaurantPlaces: RestaurantPlaces,
@@ -105,19 +109,19 @@ export class MeetPlanService {
   // The asker's meeting the plan would change is set aside when they lead it: its Sub Quests stand in nobody's way, and
   // the answer names it (`planSet`) as one they may change.
   async planned(askerId: string, input: MeetInput, at: PlanAt): Promise<MeetPlanned> {
-    const friends = await this.meals.friendsOf(askerId, input);
-    this.meals.refuseUnknownPlaces(input);
+    const { friends, others: notInPlan } = await this.meals.friendsOf(askerId, input);
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
     const { date } = input;
-    const [people, collected, buildings, held] = await Promise.all([
+    const [people, otherFriends, collected, buildings, held] = await Promise.all([
       this.meals.peopleOf(askerId, friends, date, at.location),
+      otherFriendsOf(notInPlan, date, { days: this.days, travel: this.travel }),
       this.menus.findByDate(date),
       this.studySpaces.listFor(askerId),
       at.setsAside === true ? this.heldOf(askerId, input, now, at.questId) : null,
     ]);
     const setAside = held?.result === 'one' && held.meeting.kept.mine ? held.meeting : null;
     const leftOut = new Set([...(at.leftOut ?? []), ...(setAside?.subQuestIds ?? [])]);
-    for (const person of people) {
+    for (const person of [...people, ...otherFriends]) {
       person.items = person.items.filter(({ id }) => !leftOut.has(id));
     }
     const [asker, ...others] = people.map(({ userId, items, position }, index): GatheringPerson => ({
@@ -132,7 +136,14 @@ export class MeetPlanService {
     const places = this.placesOf(collected, buildings);
     const when = { window: meetWindow(input), now };
     const gathering = gatherToMeet([asker, ...others], places, input.placeId, when, this.travel);
-    const answer = meetAnswer({ input, now, people, gathering, placeOf: (placeId) => this.meals.placeOf(placeId) });
+    const answer = meetAnswer({
+      input,
+      now,
+      people,
+      others: otherFriends,
+      gathering,
+      placeOf: (placeId) => this.meals.placeOf(placeId),
+    });
     const touched = await this.meals.touched(askerId, input, {
       now,
       kinds: ['meet'],
