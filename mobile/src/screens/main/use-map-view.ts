@@ -43,6 +43,7 @@ import { type Me, pressableMe } from './use-me';
 import type { ReceivedInvitation } from './use-received-invitation';
 import { bothTouches, type MapTouches, usePressedPlace } from './use-pressed-place';
 import type { Selection } from './use-selection';
+import { useLooksAhead } from './use-looks-ahead';
 import { useThings } from './use-things';
 import { useViewport } from './use-viewport';
 import type { GuideMap } from './tutorial/use-guide-map';
@@ -161,6 +162,7 @@ export function useMapView(
   useWalksHeldWhile(chat.framed ? (chat.answer.source ?? chat.lookup.reply) : null, cardScene);
   const limits = useEverydayLimits(map, drawsItsOwnMap({ answer, way, guide }));
   const everyday = answer === null && way === null && !chat.framed && !unasked && guide === null;
+  useLooksAhead(everyday);
   const { target, picking } = pressTarget(chat, unasked, selection);
   const tapClears = everyday ? clearRoute : undefined;
   const pressed = usePressedPlace(map.camera, target, chat.setTapped, everyday || picking, tapClears);

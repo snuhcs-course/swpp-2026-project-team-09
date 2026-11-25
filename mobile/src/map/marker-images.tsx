@@ -5,11 +5,13 @@
  * 2026-10-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type RefObject, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { captureView } from './capture';
+import { inCaptureOrder, onStage } from './capture-order';
 import { anchorShare, hasPhoto, LookView, lookName, type MarkerLook } from './marker-looks';
 import { hasNativeMap } from './native-module';
 import type { Size } from './projection';
@@ -75,7 +77,7 @@ function ask(looks: readonly MarkerLook[], again: boolean): void {
     return !known.has(name) && looks.findIndex((other) => lookName(other) === name) === index;
   });
   if (fresh.length > 0) {
-    waiting = [...waiting, ...fresh];
+    waiting = inCaptureOrder([...waiting, ...fresh]);
     tell();
   }
 }
@@ -173,6 +175,7 @@ function Shot({ look }: { look: MarkerLook }): ReactElement {
       }}
       ref={view}
       style={styles.shot}
+      testID={`stage:${lookName(look)}`}
     >
       <LookView
         look={look}
@@ -184,8 +187,8 @@ function Shot({ look }: { look: MarkerLook }): ReactElement {
   );
 }
 
-// Where the looks are drawn to be captured: outside the screen, unseen and unread. The app shows it once, around
-// every screen. It is empty in a build without the native map module.
+// Where the looks are drawn to be captured: outside the screen, unseen and unread, a few at a time in their order
+// (`onStage`). The app shows it once, around every screen. It is empty in a build without the native map module.
 export function MarkerImageStage(): ReactElement {
   const looks = useSyncExternalStore(
     subscribe,
@@ -194,7 +197,7 @@ export function MarkerImageStage(): ReactElement {
   );
   return (
     <View accessibilityElementsHidden aria-hidden importantForAccessibility="no-hide-descendants" style={styles.stage}>
-      {looks.map((look) => (
+      {onStage(looks).map((look) => (
         <Shot key={lookName(look)} look={look} />
       ))}
     </View>
