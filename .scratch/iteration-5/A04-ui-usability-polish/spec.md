@@ -19,7 +19,7 @@ Every item was checked against `origin/5.0/Main` b2e5323b on 2026-11-25.
 
 ## Solution
 
-Seven tickets. They are split so that no two of them change the same source file. 01, 04, 05 and 07 start at once; 02, 03 and the glass parts of 06 wait for 01.
+Seven tickets. They are split so that no two of them change the same source file. 01, 04, 05 and 07 start at once; 03 and the glass parts of 06 wait for 01. 02 waits for 01 and for P04's work on the same screens (see Further Notes).
 
 1. [**The glass layer.**](issues/01-glass-layer.md) A shared "glass layer" in the design system draws a translucent surface at one of a few fixed levels. The design system's documentation gets a "glass layer" section, so later Assistant screens are built the same way.
 2. [**The Assistant's map-first answer on glass.**](issues/02-assistant-answer-on-glass.md) The time bar, the bottom card and bar, the caption, the numbered candidate flags and their labels, the walk-minute chips and the food-kind chips move onto the glass layer.
@@ -250,7 +250,12 @@ The 행사 tab and the timetable (ticket 07)
 Order and conflicts:
 
 - 01, 04, 05 and 07 start together. 01 is small and goes first.
-- 02, 03 and ticket 06's glass parts (the friend panel, the pin head and label) build on 01. Ticket 06's other parts do not wait.
+- 03 and ticket 06's glass parts (the friend panel, the pin head and label) build on 01. Ticket 06's other parts do not wait.
+- 02 builds on 01 and also waits for P04, whose open work changes the same answer screens. P04's owner asked for this on PR #560:
+  - #552, #553 and #558 must have merged;
+  - then the P04 two-cards link rework, to be announced on PR #560.
+
+  Until then 02 is `needs-triage`. The rule that no two tickets change the same file holds inside A04 only, so whichever of 02 and a P04 pull request goes second merges `5.0/Main` first.
 - No two tickets change the same source file:
   - 01: the design system's new glass file.
   - 02: the Assistant's answer screens and the design-system map-answer parts.

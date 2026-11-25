@@ -33,6 +33,7 @@ A design-system component that draws a glass surface at a named level. A caller 
   - that navy main buttons and full-screen white pages never take glass;
   - that a new Assistant panel over the map uses the component, not its own colours.
 - Settle whether `color.surfaceGlass` becomes one of the levels or is removed. Leave no unused token behind.
+- `expo-glass-effect` in `mobile/package.json` is also unused, but it stays: removing it is a native change. Ticket 03, which makes the native Release, uses it or drops it.
 
 The canvas boards that show the levels: Mf5Kit and Mf5Row-meal (<https://claude.ai/artifact/NgBrKLs1RhN9tVywM6376Y>).
 

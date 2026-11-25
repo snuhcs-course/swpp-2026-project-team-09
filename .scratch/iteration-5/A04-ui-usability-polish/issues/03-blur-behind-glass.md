@@ -24,6 +24,7 @@ Native files: `mobile/package.json` (a native dependency) and `mobile/app.json` 
 2. If it works on Android:
    - Add the blur inside the glass layer, at the `panel` level only. No call site changes.
    - Raise `version` in `mobile/app.json` and make a native Release as the README describes. Nothing else rides with this pull request.
+   - Decide `expo-glass-effect` in the same pull request: use it for the iOS blur, or remove it. Ticket 01 left it in place because removing it is a native change.
    - Tell the user that testers reinstall the APK and that the iPhone build is redone by hand.
 3. If it does not work on Android: leave the code as it is, and record the result and screenshots here. Ask the user whether iOS should blur alone.
 

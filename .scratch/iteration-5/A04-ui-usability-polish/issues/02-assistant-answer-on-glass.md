@@ -1,8 +1,13 @@
 # 02: The Assistant's map-first answer on glass
 
 Parent: [A04 spec](../spec.md)
-Status: ready-for-agent
-Blocked by: 01 (the glass layer).
+Status: needs-triage (waits for the P04 work below; P04's owner asked for this on PR #560)
+Blocked by:
+- 01 (the glass layer);
+- P04's #552 (people picked in the time card), #553 (the answer sheet's three heights) and #558 ("여기면 어때?" removed), all merged;
+- after them, the P04 two-cards link rework, to be announced on this PR (#560). It rewrites `sheet-link.ts`, `card-run.ts`, `card-drag.ts` and `time-card-grip.ts`.
+
+Until then, no work on `screens/main/answer/` or `design-system/map-answer*` starts here. Whichever goes second merges `5.0/Main` first.
 
 Native files: none. Releases: an app OTA update only.
 
