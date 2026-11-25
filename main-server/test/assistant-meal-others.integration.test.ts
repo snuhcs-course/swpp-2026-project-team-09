@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { expectStatus, keptButHidden, shareAt, uploadPosition } from './location-sharing.js';
@@ -21,9 +22,11 @@ const TUESDAY = '2084-03-07';
 const time = (clock: string): string => `${TUESDAY}T${clock}:00+09:00`;
 
 // The design's worked example (Classes in 301동 until 11:50 and in 24동 from 13:00, lunch with 민수), while 지은 is
-// seen at the building level in 8동 and 하은 at the Timetable, her position kept.
+// seen at the building level in 8동 and 하은 at the Timetable, her position kept. Each walks from where they set out by
+// the planner's rule for a picked person (P04 ticket 68): 지은 from her 8동 Class, which ends as the lunch can start,
+// and 하은, busy from 12:30, from the 24동 Class her lane already shows, which she comes free after.
 describe('Lunch with 민수, with 지은 and 하은 not in it', () => {
-  it("gives them in each Plan's band in the Friend list's order, with stretches as a lane's and walks only when seen", async () => {
+  it("gives them in each Plan's band in the Friend list's order, with stretches as a lane's and where they set out from", async () => {
     await stage.asking(TUESDAY, '11:50');
     await stage.menusOn(TUESDAY, ['301동식당', '302동식당', '학생회관식당', '3식당', '자하연식당 2층']);
     await stage.classAt(stage.asker, '11:00', '11:50', '301');
@@ -52,12 +55,14 @@ describe('Lunch with 민수, with 지은 and 하은 not in it', () => {
             { startAt: time('13:00'), endAt: time('13:30'), label: '8동 수업' },
           ],
           walkMinutes: expect.any(Number) as unknown,
+          after: '8동 수업',
         },
         {
           userId: hidden.id,
           name: '하은',
           busy: [{ startAt: time('12:30'), endAt: time('13:30'), label: '24동 수업' }],
-          walkMinutes: null,
+          walkMinutes: expect.any(Number) as unknown,
+          after: '24동 수업',
         },
       ],
     });

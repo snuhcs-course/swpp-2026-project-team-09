@@ -251,13 +251,15 @@ export interface TimeBand {
   // A busy stretch of a Plan's band says what it is: "302동 수업", "수업", or "일정".
   lanes: { userId: string; name: string; busy: { startAt: string; endAt: string; label?: string }[] }[];
   // A meal's or a meeting's Plan: each of the asker's Friends not in the plan, in the order of their Friend list, for
-  // the time card to offer adding before one recalculation. `busy` as a lane's; `walkMinutes` from the Place nearest
-  // them to the Plan's, null when the asker may not see where they are.
+  // the time card to offer adding before one recalculation. `busy` as a lane's. `walkMinutes` to the Plan's Place from
+  // where they set out for it by the planner's rule for a picked person, null when that is not known; `after`, when
+  // they set out from an item of their day, says it as a busy stretch's label ("83동 수업", "수업", "일정").
   others?: {
     userId: string;
     name: string;
     busy: { startAt: string; endAt: string; label?: string }[];
     walkMinutes: number | null;
+    after?: string;
   }[];
   startAt: string;
   endAt: string;
