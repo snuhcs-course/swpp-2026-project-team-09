@@ -25,6 +25,9 @@ Left as it is: "같이 먹으면 식사가 28분 줄어요". The design defines 
 
 ## Comments
 
+The app's "여기면 어때?" card was removed by P04 ticket 66 (2026-11-25).
+
+
 ### Agent usage (2026-11-21)
 
 - Agent time: about 2 minutes (an estimate from the transcript, gaps over five minutes left out).

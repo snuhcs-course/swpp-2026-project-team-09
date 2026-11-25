@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { PlanInput } from '@/api/assistant-types';
@@ -10,11 +11,9 @@ import { mockRecalculation } from '@/api/mock/assistant';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import {
   MEAL_ANSWER_ALONE,
-  MEAL_ANSWER_FIXED_PLACE,
   MEAL_ANSWER_FIXED_START,
   MEAL_ANSWER_OTHER_ORIGIN,
   MEAL_ANSWER_THREE,
-  MEAL_ANSWER_UNFIT_PLACE,
 } from '@/api/mock/data/meal-answers';
 
 // The mock's choice of a stored copy for a recalculation (P02 spec, "The mock client"), each holding the conditions
@@ -83,21 +82,16 @@ describe('the mock of a recalculation with a window', () => {
   });
 });
 
-// Partitions: three people at 자하연식당, at 301동식당, and at a Place with no copy; two people at 자하연식당.
-describe('the mock of a recalculation at a pressed Place', () => {
-  it('answers 자하연식당 with the copy of a7, and 301동식당 with the copy of a8', () => {
-    expect(mockRecalculation(MEAL_ANSWER_FIXED_PLACE.input)).toEqual(MEAL_ANSWER_FIXED_PLACE);
-    expect(mockRecalculation(MEAL_ANSWER_UNFIT_PLACE.input)).toEqual(MEAL_ANSWER_UNFIT_PLACE);
-  });
-
-  it('answers a Place with no copy with the copy for three', () => {
-    const input: PlanInput = { ...MEAL_ANSWER_THREE.input, placeId: 'place-without-copy' };
+// Partitions: three people at a fixed Place; two. The mock holds no copy of a fixed Place: it answers by who comes.
+describe('the mock of a recalculation at a fixed Place', () => {
+  it('answers three people with the copy for three, holding the Place', () => {
+    const input: PlanInput = { ...MEAL_ANSWER_THREE.input, placeId: 'place-109' };
 
     expect(mockRecalculation(input)).toEqual({ ...MEAL_ANSWER_THREE, input });
   });
 
-  it('answers two people at 자하연식당 with the first copy', () => {
-    const input: PlanInput = { ...MEAL_ANSWER.input, placeId: MEAL_ANSWER_FIXED_PLACE.input.placeId };
+  it('answers two people with the first copy, holding the Place', () => {
+    const input: PlanInput = { ...MEAL_ANSWER.input, placeId: 'place-109' };
 
     expect(mockRecalculation(input)).toEqual({ ...MEAL_ANSWER, input });
   });

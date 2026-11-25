@@ -3,6 +3,7 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -19,7 +20,6 @@ const ON_SCREEN = {
   shown: { source: MEAL_ANSWER, answer: MEAL_ANSWER, plan: MEAL_ANSWER.plans[0] ?? null },
   lookup: { lookup: null },
   invitation: { made: null },
-  howAbout: { place: null },
 };
 
 const ASKED = bubble(1, 'user', '배고파, 민수랑 같이');

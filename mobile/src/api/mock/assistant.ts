@@ -10,6 +10,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -45,11 +46,9 @@ import { WAY_LOOKUP_REPLY } from './data/way-lookup';
 import { wayReplyOf } from './data/way-lookups';
 import {
   MEAL_ANSWER_ALONE,
-  MEAL_ANSWER_FIXED_PLACE,
   MEAL_ANSWER_FIXED_START,
   MEAL_ANSWER_OTHER_ORIGIN,
   MEAL_ANSWER_THREE,
-  MEAL_ANSWER_UNFIT_PLACE,
 } from './data/meal-answers';
 import { MEET_ANSWER, MEET_ANSWER_FROM_14 } from './data/meet-answer';
 import { GLOBAL_EVENTS } from './data/quests';
@@ -182,16 +181,8 @@ function menusReply(): string {
   return ['오늘 메뉴예요.', ...lines].join('\n');
 }
 
-// The mock's own Places (`data/places.ts`) of the copies' fixed Places, 자하연식당's building and 301동, so that a
-// building pressed on the mock gets them too.
-const PRESSED_ON_MOCK: Readonly<Record<string, AnswerReply>> = {
-  'place-109': MEAL_ANSWER_FIXED_PLACE,
-  'place-301': MEAL_ANSWER_UNFIT_PLACE,
-};
-
 // The mock holds copies of meal answers and of one meet, asked as it first is and again from 14:00, so other conditions
-// are read as a meal of the User alone. Three people at a pressed Place get the copy of that Place when there is one
-// ("여기면 어때?"). A meal 지금 of three is board n11's, and one eased from 지금 board n11b's.
+// are read as a meal of the User alone. A meal 지금 of three is board n11's, and one eased from 지금 board n11b's.
 function copyFor(input: PlanInput): AnswerReply {
   const rowFour = rowFourCopyOf(input);
   if (rowFour !== null) {
@@ -218,9 +209,7 @@ function copyFor(input: PlanInput): AnswerReply {
     return MEAL_ANSWER_ALONE;
   }
   if (people.length >= 3) {
-    const placeId = input.kind === 'meal' ? input.placeId : null;
-    const pressed = [MEAL_ANSWER_FIXED_PLACE, MEAL_ANSWER_UNFIT_PLACE].find((copy) => copy.input.placeId === placeId);
-    return pressed ?? (placeId === null ? undefined : PRESSED_ON_MOCK[placeId]) ?? MEAL_ANSWER_THREE;
+    return MEAL_ANSWER_THREE;
   }
   if (from !== null) {
     return MEAL_ANSWER_FIXED_START;

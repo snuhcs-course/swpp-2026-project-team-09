@@ -22,6 +22,9 @@ A building pressed during a Plan becomes "여기면 어때?". The recalculation 
 
 ## Comments
 
+The app's card was removed by P04 ticket 66 (2026-11-25); the main server's fixed Place stays.
+
+
 ### Decisions taken in the build (2026-11-15)
 
 1. **One place for the parts.** `gathering/plan-parts.ts` holds `partOf` (moved from `meal-answer.ts`), the dropped Places (`droppedOf`), and the fixed Place's lines (`unfitLines`). A meal's and a meet's answers both call it, so a meet with a fixed Place gets the same fields and words. `GatheringDrop` carries each person's `parts`, as a fit does.

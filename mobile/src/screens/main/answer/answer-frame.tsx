@@ -135,7 +135,6 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
                   addRecalculated={control.chat.addRecalculated}
                   bubble={bubble}
                   focus={focus}
-                  howAbout={control.howAbout}
                   invitation={control.invitation}
                   lookup={control.lookup}
                   onAsk={control.chat.send}
@@ -218,8 +217,7 @@ function useBarHeight(
 // The frame itself: the time bar at the top when the answer has a time, "←" as a round button over the map at the top
 // left, under the bar when there is one, and one card at the bottom with what was asked as its caption and the reply over the input (the
 // 2026-11-22 redesign). "←", Android's back button, and dragging the card down, docked or lowered, hide the frame and keep
-// the conversation, a reply on its way included. While a building is asked about over the answer ("여기면 어때?"), "←" and
-// back return to the answer instead, and the caption names the building. A Friend's profile opened from the card stands
+// the conversation, a reply on its way included. A Friend's profile opened from the card stands
 // over it until a new reply; while it is shown, the back button hides it alone. This handler is the only one, and
 // listens only while the main screen is in front, so a screen pushed from the profile goes back to it. Back takes away
 // one layer per press (`backOf`), and so does a drag down. While a restaurant's menu is open the caption gives way to the menu's own head.
@@ -232,11 +230,8 @@ function Framed(props: FramedProps): ReactElement {
   }, [hide]);
   const profile = useProfileOver(lastReply(chat.bubbles)?.id ?? null);
   const profileShown = profile.friend !== null && !keyboardUp;
-  const { keep } = control.howAbout;
-  const title = control.howAbout.title;
-  const leave = title === null ? close : keep;
   const [past, setPast] = useState(false);
-  const { raising, list, back } = useAnswerRaising(control, leave, setPast);
+  const { raising, list, back } = useAnswerRaising(control, close, setPast);
   useBackToClose(useIsFocused(), profileShown ? profile.hide : back, { edge: false });
   const { actions, sheets } = useCardActions(chat, leaving);
   const focus = useBandFocus();

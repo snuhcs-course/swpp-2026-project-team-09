@@ -4,6 +4,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -33,12 +34,12 @@ export interface PlanAction {
 }
 
 // "만들고 초대 보내기" for a Plan with a Friend, as "이대로 초대" made it into a Quest and invited them; "일정에 넣기" for a meal's Plan
-// alone, as "여기로" took it; beside a Quest the User holds, "바꾸기" or "파티 보기". None once the Plan is sent, while "여기면 어때?"
-// is asked, or for a Plan whose card holds its own buttons (events, parties, a new recruiting Quest).
+// alone, as "여기로" took it; beside a Quest the User holds, "바꾸기" or "파티 보기". None once the Plan is sent, or for a
+// Plan whose card holds its own buttons (events, parties, a new recruiting Quest).
 export function planActionOf(control: ChatSheetControl): PlanAction | null {
-  const { answer: shown, invitation, howAbout, framed } = control;
+  const { answer: shown, invitation, framed } = control;
   const { answer, plan } = shown;
-  if (!framed || answer === null || plan === null || invitation.made !== null || howAbout.place !== null) {
+  if (!framed || answer === null || plan === null || invitation.made !== null) {
     return null;
   }
   if (!planShown(control.chat.bubbles, onScreenOf(control))) {
