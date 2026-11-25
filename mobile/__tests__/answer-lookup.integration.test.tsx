@@ -8,6 +8,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -15,9 +16,10 @@ import { apiClient } from '@/api/client';
 import { FRIEND_LOOKUP_REPLY } from '@/api/mock/data/friend-lookup';
 import { MENU_LOOKUP_REPLY } from '@/api/mock/data/menu-lookup';
 import { pass, screen } from './support/app';
-import { raiseCard } from './support/card-grip';
+import { grip, raiseCard } from './support/card-grip';
 import { card, mapLines, mapThings, timeBar } from './support/answer-map';
-import { AI_INPUT } from './support/lists';
+import { AI_INPUT, layStage } from './support/lists';
+import { pressMarker } from './support/made-quest';
 import { givePhone, ME, ON_CAMPUS, openMain } from './support/main';
 import { startFresh } from './support/mocks';
 
@@ -200,6 +202,20 @@ describe('where a Friend is (q6)', () => {
 
     expect(screen.queryByTestId('answer-caption')).toBeNull();
     expect(mapThings()).not.toContain('민수 · 지금 302동');
+  });
+});
+
+// P04 ticket 63, the user's phone check: a press on the Lookup's own mark raises its sheet from low to middle, not to
+// high, which only the User's drag or a screen reader's step reaches.
+describe("a press on the Lookup's own mark", () => {
+  it('raises the sheet from low to middle', async () => {
+    const user = await ask('문화관이 어디야?');
+    await layStage(390, 760);
+    expect(grip()).toBeCollapsed();
+
+    await pressMarker(user, '문화관(73동) · 걸어서 18분');
+
+    expect(grip()).toHaveAccessibilityValue({ text: '중간' });
   });
 });
 

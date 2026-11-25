@@ -26,11 +26,13 @@ import { useHeldHeight, useTopWhen } from './held-height';
 import { CloseHint } from './raise-handle';
 import { SheetHint, useSheetHint } from './sheet-hint';
 import { useFollowPull } from './sheet-link';
+import { LowBand } from './low-band';
+import { useSteadyState } from './steady';
 
 // The frame's sheet, attached to the bottom of the screen (P04 tickets 52, 57, and 61): one surface whose content is
 // laid out once. Its header stays at the top while the content scrolls under it; the footer, the input and the main
-// button, stands fixed over its bottom, and the content passes under it with a soft fade. Low shows the header and
-// about two lines of the content; middle has its top edge at half the screen; high stands just under the time card. At
+// button, stands fixed over its bottom, and the content passes under it with a soft fade. Low has one top edge for every
+// answer; middle covers about 60% of the screen; high stands just under the time card (`useCaps`). At
 // every step the content scrolls as far as lets its end come clear of the fade, and keeps its place when the card
 // changes step. It moves as a sheet (`useCardMotion`). Only the low card tells its height, once settled, so that the
 // camera fits the answer to it alone.
@@ -38,13 +40,6 @@ import { useFollowPull } from './sheet-link';
 const FADED: ViewStyle = {
   experimental_backgroundImage: `linear-gradient(to bottom, rgba(255, 255, 255, 0), ${color.surface})`,
 };
-
-// Tells the scrolling part's cap at the card's step now.
-function useToldCap(cap: number | null, onContentCap: ((cap: number | null) => void) | undefined): void {
-  useEffect(() => {
-    onContentCap?.(cap);
-  }, [cap, onContentCap]);
-}
 
 interface ScrollingProps {
   props: FrameCardProps;
@@ -111,6 +106,7 @@ interface OpenCardState {
   lowHeight: number;
   hint: ReturnType<typeof useSheetHint>;
   onLayout: (event: LayoutChangeEvent) => void;
+  band: number;
 }
 
 // The sheet's measures: its header's and its content's heights, the caps, and the steps they make.
@@ -126,8 +122,10 @@ function useMeasures(props: FrameCardProps): {
 } {
   const topped = props.raising !== undefined || props.onClose !== undefined;
   const padTop = topped ? space[3] : CONTENT_TOP;
-  const [above, setAbove] = useState(0);
-  const [natural, setNatural] = useState<number | null>(null);
+  // Measured from layouts, they move the sheet only by half a point or more (`steady.ts`).
+  const [header, setAbove] = useSteadyState(0);
+  const above = header ?? 0;
+  const [natural, setNatural] = useSteadyState(null);
   const caps = useCaps(props, above, padTop);
   const heights = caps === null ? null : heightsOf(caps, natural, { padTop, under: underOf(props) });
   // Before the stage is laid out every step is offered; laid out, those of different heights.
@@ -160,8 +158,9 @@ function useContentScroll(
   const whole = natural === null ? 0 : natural + under;
   const scrolls = heights !== null && whole > heights[level] + 1;
   // The scroll view is laid out at the highest step's height: under the content it needs as much room as the low card
-  // shows less, so that the content scrolls its end clear of the fade there too.
-  const padBottom = caps === null || heights === null ? 0 : caps.room - heights.low + FADE;
+  // shows less, so that the content scrolls its end clear of the fade there too, and of the band over the footer at low
+  // (PR 553's review).
+  const padBottom = caps === null || heights === null ? 0 : caps.room - heights.low + Math.max(FADE, caps.band);
   return { scroll, scrollY, onScroll, scrolls, whole, padBottom };
 }
 
@@ -197,13 +196,11 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
   const [laid, setLaid] = useState(0);
   const extra = above + barRoom;
   const { scroll, scrollY, onScroll, scrolls, whole, padBottom } = useContentScroll(
-    { ...measures, under: underOf(props) },
+    { ...measures, under: Math.max(underOf(props), measures.caps?.band ?? 0) },
     level,
   );
   // The hint waits until the stage and the content are laid out, so that it shows only over a card with more to show.
-  const hint = useSheetHint(
-    raising !== undefined && level === 'low' && measures.natural !== null && heights !== null && steps.length > 1,
-  );
+  const hint = useSheetHint(raising !== undefined && level === 'low' && measures.natural !== null && scrolls);
   const room = caps?.room ?? null;
   const motion = useCardMotion({
     raising: raising ?? LOWERED,
@@ -217,7 +214,6 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
     whole,
     onHeight,
   });
-  useToldCap(caps === null ? null : caps[level], props.onContentCap);
   useFollowPull(motion.offset, level, { heights, room });
   const onLayout = useLaidHeight(caps === null && level === 'low', setLaid, onHeight);
   return {
@@ -236,6 +232,7 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
     hint,
     lowHeight: heights === null ? laid : extra + heights.low,
     onLayout,
+    band: caps?.band ?? 0,
   };
 }
 
@@ -300,7 +297,7 @@ export function OpenCard(props: FrameCardProps): ReactElement {
       {room === null ? null : (
         <>
           <View style={[styles.fade, FADED, { bottom: barRoom }]} testID={`${testID}-fade`} />
-          <View style={[styles.floor, { height: barRoom }]} />
+          <LowBand barRoom={barRoom} card={card} offset={offset} />
         </>
       )}
       {card.hint.shown ? <SheetHint bottom={card.lowHeight} /> : null}
@@ -322,8 +319,5 @@ const styles = StyleSheet.create({
   },
   content: { paddingHorizontal: OPEN_EDGE },
   parts: { gap: space[3] },
-  // Over the footer's room at the screen's bottom, under the input and the main button; it stays while the card goes
-  // under it to close (e2, e3).
-  floor: { position: 'absolute', right: 0, bottom: 0, left: 0, pointerEvents: 'none', backgroundColor: color.surface },
   fade: { position: 'absolute', right: 0, left: 0, height: FADE, pointerEvents: 'none' },
 });

@@ -12,6 +12,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -58,8 +59,8 @@ interface AnswerCardProps {
   onClose: () => void;
   raising: Raising;
   focus: BandFocus;
-  // The time card's height as it stands by default, 0 for none: high stops under it.
-  timeBarHeight: number;
+  // The bar of several requests' height with the Plan's bar under it, while it stands at the top; else 0.
+  stepsTop: number;
   // The conversation's questions, opened in the card by its caption.
   list: QuestionsOpen;
 }
@@ -70,23 +71,19 @@ interface AnswerCardProps {
 // the keyboard is up, the questions and the turn's follow-ups stand above the input in place of its content, unless the
 // card is raised (board 6).
 function AnswerCard(props: AnswerCardProps): ReactElement {
-  const { control, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, timeBarHeight, list } = props;
-  const card = { barRoom, onHeight, raising, stageHeight, timeBarHeight };
+  const { control, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, stepsTop, list } = props;
+  const card = { barRoom, onHeight, raising, stageHeight, stepsTop };
   const typing = keyboardUp && raising.level === 'low';
-  const { listMax, ...top } = useCardTop(control, raising, list, { onClose });
+  const top = useCardTop(control, raising, list, { onClose });
   const { waiting } = control.chat;
   const contentMax = contentMaxOf(stageHeight, barRoom);
   return (
     <FrameCard
       {...card}
       {...top}
-      chip={
-        typing || control.answer.menuFor !== null ? null : (
-          <AnswerCaption control={control} listOpen={list.open} onList={list.toggle} />
-        )
-      }
-      // While typing or with the list of questions open, low shows the content whole up to the middle step.
-      fit={typing || list.open}
+      chip={typing ? null : <AnswerCaption control={control} listOpen={list.open} onList={list.toggle} />}
+      // While typing, low shows the content whole up to the middle step.
+      fit={typing}
       atTop={control.pick.place !== null}
       hold={waiting}
       testID="answer-card"
@@ -95,7 +92,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
       {typing ? (
         <Typing control={control} />
       ) : list.open ? (
-        <CaptionQuestions control={control} list={list} maxHeight={listMax} onClose={onClose} />
+        <CaptionQuestions control={control} list={list} onClose={onClose} />
       ) : (
         <OpenAnswer {...props} room={contentMax === null ? null : contentMax - CONTENT_TOP} />
       )}
@@ -201,7 +198,8 @@ function OpenMark({ control, stage, focus, onClose }: OpenMarkProps): ReactEleme
   );
 }
 
-// The bar's height while it is shown, told to the screen for the camera's fit; 0 while there is none.
+// The bar's height while it is shown, told to the screen for the camera's fit; 0 while there is none. The card's high
+// hangs on it only under the bar of several requests (`card-caps.ts`).
 function useBarHeight(
   shown: boolean,
   onBarHeight: (height: number) => void,
@@ -220,7 +218,7 @@ function useBarHeight(
 // the conversation, a reply on its way included. A Friend's profile opened from the card stands
 // over it until a new reply; while it is shown, the back button hides it alone. This handler is the only one, and
 // listens only while the main screen is in front, so a screen pushed from the profile goes back to it. Back takes away
-// one layer per press (`backOf`), and so does a drag down. While a restaurant's menu is open the caption gives way to the menu's own head.
+// one layer per press (`backOf`); a drag only changes the card's height or closes the answer (P04 ticket 63).
 function Framed(props: FramedProps): ReactElement {
   const { control, barRoom, stageHeight, keyboardUp, onHeight, onBarHeight, stage } = props;
   const { chat, leaving, hide } = control;
@@ -247,7 +245,6 @@ function Framed(props: FramedProps): ReactElement {
           {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
         </View>
         <AnswerCard
-          timeBarHeight={bar.height}
           barRoom={barRoom}
           cardActions={actions}
           control={control}
@@ -258,6 +255,7 @@ function Framed(props: FramedProps): ReactElement {
           onHeight={onHeight}
           raising={raising}
           stageHeight={stageHeight}
+          stepsTop={control.steps === null ? 0 : bar.height}
         />
       </SheetLinkContext>
       {keyboardUp ? null : <OpenMark control={control} focus={focus} onClose={close} stage={stage} />}

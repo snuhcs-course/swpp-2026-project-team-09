@@ -6,12 +6,15 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent } from '@testing-library/react-native';
 import { StyleSheet, type ViewStyle } from 'react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
-import { text } from '@/design-system';
+import { space, text } from '@/design-system';
+import { foldedTimeCardOf } from '@/screens/main/answer/card-caps';
 import { FLING_SPEED } from '@/screens/main/answer/card-levels';
 import { listsTop } from '@/screens/main/layout';
 import { pass, screen } from './support/app';
@@ -25,8 +28,9 @@ import { startFresh } from './support/mocks';
 
 // P02 ticket 38 and P04 ticket 61: the answer card rises a step at a time, low, middle, and high up to under the time
 // bar, and lowers again, by a drag anywhere on it or a screen reader's step, and Android's back button lowers a raised
-// card first. The mocks answer. Expected values: low shows the content's top padding of 12, two lines of 24, and the
-// fade of 12 at the usual font size.
+// card first. The mocks answer. Expected values (P04 ticket 63): low's top edge is the meal answer's with its main
+// button, the content's top padding of 12, two lines of 24, and the fade of 12 at the usual font size; this answer has
+// no main button, so its words take that row's room, the button's 50 and its gap of 8. Middle covers 60% of the stage.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -37,10 +41,10 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 
 const ASKED = '식사 메뉴 추천';
 const STAGE = 760;
-// Where the raised card stops, the answer having no time bar: the lists' top, the tests' status bar taking nothing
-// (P04 ticket 52: no "←" stands there any more).
-const TOP_ROOM = listsTop(0);
-const LOW = 12 + 2 * text.bodyLg.lineHeight + 12;
+// Where the raised card stops: just under the place the folded time card takes, under the lists' top, whether the
+// answer has a time card or not (this one has none), the tests' status bar taking nothing (P04 ticket 63).
+const TOP_ROOM = listsTop(0) + foldedTimeCardOf(1) + space[2];
+const LOW = 12 + 2 * text.bodyLg.lineHeight + 12 + 50 + 8;
 const FLING = FLING_SPEED * 2;
 
 type User = Awaited<ReturnType<typeof openMain>>;
@@ -112,17 +116,17 @@ describe("the answer card's handle", () => {
     expect(await shown()).toBe(LOW);
   });
 
-  it('raises the card a step at a time, the middle about half the stage, high up to the lists’ top', async () => {
+  it('raises the card a step at a time, the middle at 60% of the stage, high up to the time card’s place', async () => {
     await framed();
 
     await raiseCard();
     expect(grip()).toBeExpanded();
     const middle = await shown();
     expect(middle).toBeGreaterThan(LOW);
-    expect(middle).toBeLessThanOrEqual(STAGE / 2);
+    expect(middle).toBeLessThanOrEqual(STAGE * 0.6);
 
     await raiseCard();
-    expect(await shown()).toBe(middle + STAGE / 2 - TOP_ROOM);
+    expect(await shown()).toBe(middle + STAGE * 0.4 - TOP_ROOM);
     expect(button('답 닫기')).toBeVisible();
 
     await lowerCard();

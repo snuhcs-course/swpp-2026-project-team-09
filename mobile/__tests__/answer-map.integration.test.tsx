@@ -232,8 +232,10 @@ const FIRST_PLAN_POINTS = distinct([
 // A Plan's card at rest is docked (P04 ticket 04), the bottom sheet on the screen's bottom edge (P04 ticket 52): it covers
 // its own height.
 
-// The low card with no content measured (P04 ticket 61): the footer's room, and two lines over the fade.
-const LOW_CARD = INPUT.bottom + INPUT.height + space[3] + (space[3] + 2 * text.bodyLg.lineHeight + space[3]);
+// The low card with no content measured (P04 tickets 61 and 63): one top edge for every answer, the meal answer's, its
+// footer with the main button's row (50, over a gap of 8), and two lines over the fade.
+const LOW_CARD =
+  INPUT.bottom + INPUT.height + space[2] + 50 + space[3] + (space[3] + 2 * text.bodyLg.lineHeight + space[3]);
 
 function padding(cardHeight: number): object {
   return { top: 8 + 24, right: 64, bottom: cardHeight + 8 + 66, left: 64 };
