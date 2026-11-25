@@ -102,6 +102,11 @@ Taken on an x86_64 emulator from a mock build of this branch.
   hand. The part is the policy's last, so the screen is at its end: the heading stands a few lines below the top, and
   the whole part down to its last sentence is in the one picture. There is no separate picture of the part's end.
 
+### The retention figure is back (2026-11-25)
+
+Read on the account (ticket 06): the Developer plan with a Business trial until 2026-12-08. The policy's sentence now
+reads "보관 기간은 최대 90일이고, 그 기간이 지나면 Sentry가 지워요." This is ticket 07's first step.
+
 ### Agent usage (2026-11-24)
 
 - Agent time: about 45 minutes in one implementation session, an estimate; most of it waited on the slow integration

@@ -37,3 +37,15 @@ configuration file, a test or a screenshot. The DSN is not a secret, but it is k
   retention is what Sentry sets for the plan, and that Sentry deletes a report after it.
 - Not yet read on the account's own Subscription page; a person adds what it shows here. A change of plan changes the
   figure, and the policy with it.
+
+### The retention, read on the account (2026-11-25)
+
+The organisation's Subscription page shows the **Developer plan**, with a **Business Plan Trial** that "stays active
+until Dec 8, 2026". No payment method is on file, and the owner will stay on the Developer plan when the trial ends.
+
+- Sentry's "Data Retention Periods" page gives Errors 30 days on Developer and 90 days on the paid plans, fixed when
+  an event is taken in by the plan then in effect. So a report taken in before 2026-12-08 may be kept 90 days, and one
+  after it 30. Whether a trial counts as the paid plan for retention is not said on the page; the longer figure is
+  taken as the bound.
+- The privacy policy therefore says "최대 90일" (at most 90 days), which holds in both cases. Once every report of the
+  trial has aged out (90 days after 2026-12-08), the sentence can say 30 days.
