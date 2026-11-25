@@ -6,6 +6,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -59,6 +60,8 @@ describe('what gives way to the Plan over the mocks', () => {
     await user.type(screen.getByLabelText(AI_INPUT), '배고파, 민수랑 같이');
     await user.press(screen.getByRole('button', { name: '보내기' }));
     await pass(3000);
+    // The walk's path comes after the reply, and no line is drawn while it is on its way (P04 ticket 75).
+    await pass(500);
 
     expect(mapLines()).toEqual(['answer:route:0', 'answer:route:1']);
 
