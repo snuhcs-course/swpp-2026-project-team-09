@@ -25,6 +25,7 @@ import { CardTop } from './card-header';
 import { useHeldHeight, useTopWhen } from './held-height';
 import { CloseHint } from './raise-handle';
 import { SheetHint, useSheetHint } from './sheet-hint';
+import { useFollowPull } from './sheet-link';
 
 // The frame's sheet, attached to the bottom of the screen (P04 tickets 52, 57, and 61): one surface whose content is
 // laid out once. Its header stays at the top while the content scrolls under it; the footer, the input and the main
@@ -217,6 +218,7 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
     onHeight,
   });
   useToldCap(caps === null ? null : caps[level], props.onContentCap);
+  useFollowPull(motion.offset, level, { heights, room });
   const onLayout = useLaidHeight(caps === null && level === 'low', setLaid, onHeight);
   return {
     setAbove,

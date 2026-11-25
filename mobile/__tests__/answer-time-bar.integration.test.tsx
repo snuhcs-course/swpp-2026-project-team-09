@@ -277,7 +277,8 @@ describe("the time bar's grip pulled down", () => {
 
 // P04 ticket 61, the user's rule: only one of the time card and the answer sheet is expanded at a time, the card
 // touched last winning, so that the time card's grip is never under the sheet. Partitions: the time card opened over a
-// high sheet, then folded; the sheet raised to high under an open time card.
+// high sheet, then folded; let go short of open over a high sheet; the sheet raised to high under an open time card.
+// The sheet following the finger during the pull is drawn on the UI thread and seen on the phone.
 describe('the time card and the answer sheet', () => {
   it('brings a high sheet down to middle as the time card opens, and leaves it there as it folds', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
@@ -296,6 +297,19 @@ describe('the time card and the answer sheet', () => {
 
     expect(screen.getByTestId('time-card-grip')).toBeCollapsed();
     expect(sheetGrip()).toHaveAccessibilityValue({ text: '중간' });
+  });
+
+  it('leaves a high sheet at high when the time card is let go short of open', async () => {
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+    await layStage(390, 760);
+    await layRows(64);
+    await raiseCard();
+    await raiseCard();
+
+    await dragGrip(20);
+
+    expect(screen.getByTestId('time-card-grip')).toBeCollapsed();
+    expect(sheetGrip()).toHaveAccessibilityValue({ text: '크게' });
   });
 
   it('folds an open time card, not tucking it, as the sheet rises to high', async () => {

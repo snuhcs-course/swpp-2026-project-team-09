@@ -4,16 +4,25 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { createContext, useMemo } from 'react';
+import { createContext, use, useMemo } from 'react';
+import { type SharedValue, useAnimatedReaction, useSharedValue } from 'react-native-reanimated';
+import { heightOf, type Level, type LevelHeights } from './card-levels';
 import type { Raising } from './raise-handle';
 
 // The answer sheet as the time card over it sees it (P04 ticket 61): only one of the two is expanded at a time, and the
-// card touched last wins. The time card opening brings a high sheet down to middle, which it stays at when the time
-// card folds again; the sheet rising to high folds an open time card. So the time card's grip is never under the sheet.
+// card touched last wins. A pull that opens the time card while the sheet is high brings the sheet down with the
+// finger, at none of the pull high and all of it middle, so that its top edge stays under the growing card; let go
+// open, the sheet rests at middle, where it stays when the time card folds, and let go short of it, back at high.
+// The sheet rising to high folds an open time card. So the time card's grip is never under the sheet.
 
 export interface SheetLink {
   high: boolean;
   onOpen: () => void;
+  // How far the time card is pulled open, 0 to 1, as its grip writes it on the UI thread, and whether the sheet
+  // follows it: not (0), with the finger (1), or let go short of open, back to high (2). Only a pull that starts with
+  // the sheet high moves it.
+  pull?: SharedValue<number>;
+  following?: SharedValue<number>;
 }
 
 function nothing(): void {
@@ -23,6 +32,8 @@ function nothing(): void {
 export const SheetLinkContext = createContext<SheetLink>({ high: false, onOpen: nothing });
 
 export function useSheetLink({ level, setLevel }: Pick<Raising, 'level' | 'setLevel'>): SheetLink {
+  const pull = useSharedValue(0);
+  const following = useSharedValue(0);
   return useMemo(
     () => ({
       high: level === 'high',
@@ -31,7 +42,36 @@ export function useSheetLink({ level, setLevel }: Pick<Raising, 'level' | 'setLe
           setLevel('mid');
         }
       },
+      pull,
+      following,
     }),
-    [level, setLevel],
+    [level, setLevel, pull, following],
+  );
+}
+
+// The sheet's place while it follows a pull of the time card, on the UI thread, from its offset at high to its offset
+// at middle; only a sheet that stands high follows.
+export function useFollowPull(
+  offset: SharedValue<number>,
+  level: Level,
+  { heights, room }: { heights: LevelHeights | null; room: number | null },
+): void {
+  const { pull, following } = use(SheetLinkContext);
+  const at = (step: Level): number | null =>
+    level !== 'high' || heights === null || room === null ? null : room - heightOf(step, heights);
+  const high = at('high');
+  const mid = at('mid');
+  useAnimatedReaction(
+    () => ((following?.value ?? 0) > 0 && pull !== undefined ? pull.value : null),
+    (share) => {
+      if (share === null || high === null || mid === null || following === undefined) {
+        return;
+      }
+      offset.value = high + share * (mid - high);
+      if (share <= 0 && following.value === 2) {
+        following.value = 0;
+      }
+    },
+    [high, mid],
   );
 }

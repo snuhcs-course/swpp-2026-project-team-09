@@ -8,7 +8,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AccessibilityActionInfo, ViewStyle } from 'react-native';
 import { Gesture, type PanGesture } from 'react-native-gesture-handler';
-import { type SharedValue, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import {
+  type SharedValue,
+  useAnimatedReaction,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useReduceMotionSetting } from '@/hooks/use-reduce-motion';
 import { CARRY_S, FLING_SPEED } from './card-levels';
@@ -97,15 +103,19 @@ export function gripLanding(at: number, velocity: number, stops: readonly number
   return best;
 }
 
+// A drag on the strip. One that starts with the sheet high and can open the card has the sheet follow it (`sheet-link`)
+// until it is let go: let go open, the sheet's own run to middle takes it from where it stands.
 function useGripPan(
   y: SharedValue<number>,
   stops: readonly number[],
   settle: (index: number, velocity: number) => void,
-  setMoving: (moving: boolean) => void,
+  { setMoving, sheet }: { setMoving: (moving: boolean) => void; sheet: SheetLink },
 ): PanGesture {
   const from = useSharedValue(0);
   const low = stops[0] ?? 0;
   const high = stops.at(-1) ?? 0;
+  const { following } = sheet;
+  const follows = sheet.high && stops.length > PLACES.indexOf('open');
   return Gesture.Pan()
     .withTestId('time-card-grip-drag')
     .activeOffsetY([-PAN_STARTS, PAN_STARTS])
@@ -113,6 +123,9 @@ function useGripPan(
     .onStart(() => {
       'worklet';
       from.value = y.value;
+      if (following !== undefined) {
+        following.value = follows ? 1 : 0;
+      }
       scheduleOnRN(setMoving, true);
     })
     .onUpdate(({ translationY }) => {
@@ -121,11 +134,30 @@ function useGripPan(
     })
     .onEnd(({ velocityY }) => {
       'worklet';
-      scheduleOnRN(settle, gripLanding(y.value, velocityY, stops), velocityY);
+      const to = gripLanding(y.value, velocityY, stops);
+      // Let go open, the sheet's own run to middle takes it; let go short, it follows the card back until it is high.
+      if (following !== undefined && following.value === 1) {
+        following.value = PLACES[to] === 'open' || y.value <= 0 ? 0 : 2;
+      }
+      scheduleOnRN(settle, to, velocityY);
     });
 }
 
-function useGripStyles(y: SharedValue<number>, rows: number): { moved: Moved; grown: Moved } {
+function useGripStyles(
+  y: SharedValue<number>,
+  rows: number,
+  pull?: SharedValue<number>,
+): { moved: Moved; grown: Moved } {
+  // How far the card is pulled open, for the sheet under it.
+  useAnimatedReaction(
+    () => (rows > 0 ? clamp(y.value / rows, 0, 1) : 0),
+    (share) => {
+      if (pull !== undefined) {
+        pull.value = share;
+      }
+    },
+    [rows, pull],
+  );
   const moved = useAnimatedStyle<ViewStyle>(() => ({ transform: [{ translateY: Math.min(0, y.value) }] }));
   const grown = useAnimatedStyle<ViewStyle>(() => ({ height: clamp(y.value, 0, rows) }));
   return { moved, grown };
@@ -140,7 +172,8 @@ interface Settling {
 
 // The card's place, and the run to the place a let-go or a press settles at. Laid out again at rest, as when the rows'
 // height changes open, the card stays at its place.
-function useSettling(stops: readonly number[], y: SharedValue<number>, onOpen: () => void): Settling {
+function useSettling(stops: readonly number[], y: SharedValue<number>, sheet: SheetLink): Settling {
+  const { onOpen, following } = sheet;
   const [place, setPlace] = useState<GripPlace>('shown');
   const [moving, setMoving] = useState(false);
   const reduce = useReduceMotionSetting() !== false;
@@ -148,6 +181,9 @@ function useSettling(stops: readonly number[], y: SharedValue<number>, onOpen: (
     (index: number, velocity = 0): void => {
       const to = stops[index] ?? 0;
       if (PLACES[index] === 'open') {
+        if (following !== undefined) {
+          following.value = 0;
+        }
         onOpen();
       }
       const done = (): void => {
@@ -167,7 +203,7 @@ function useSettling(stops: readonly number[], y: SharedValue<number>, onOpen: (
         }
       });
     },
-    [stops, reduce, y, onOpen],
+    [stops, reduce, y, onOpen, following],
   );
   useEffect(() => {
     if (!moving) {
@@ -193,10 +229,10 @@ export function useTimeCardGrip({ height, top, opens, rows, sheet }: GripInput):
   const reach = Math.max(0, top + height - TUCK_STRIP);
   const stops = useMemo(() => (opens ? [-reach, 0, rows] : [-reach, 0]), [reach, opens, rows]);
   const y = useSharedValue(0);
-  const { place, moving, setMoving, settle } = useSettling(stops, y, sheet.onOpen);
+  const { place, moving, setMoving, settle } = useSettling(stops, y, sheet);
   useFoldUnder(sheet.high, place, settle);
-  const pan = useGripPan(y, stops, settle, setMoving);
-  const styles = useGripStyles(y, rows);
+  const pan = useGripPan(y, stops, settle, { setMoving, sheet });
+  const styles = useGripStyles(y, rows, sheet.pull);
   const rested = useMemo(() => ({ transform: [{ translateY: place === 'tucked' ? -reach : 0 }] }), [place, reach]);
   const grownRest = useMemo(() => ({ height: place === 'open' ? rows : 0 }), [place, rows]);
   return {

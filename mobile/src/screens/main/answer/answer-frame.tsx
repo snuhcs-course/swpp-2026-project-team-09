@@ -247,24 +247,24 @@ function Framed(props: FramedProps): ReactElement {
   const link = useSheetLink(raising);
   return (
     <FriendProfileOver keyboardUp={keyboardUp} profile={profile}>
-      <View style={[styles.top, past && styles.faded]}>
-        <SheetLinkContext value={link}>
+      <SheetLinkContext value={link}>
+        <View style={[styles.top, past && styles.faded]}>
           {barShown ? <TopBar control={control} focus={focus} onClose={close} onHeight={bar.onHeight} /> : null}
-        </SheetLinkContext>
-      </View>
-      <AnswerCard
-        timeBarHeight={bar.height}
-        barRoom={barRoom}
-        cardActions={actions}
-        control={control}
-        focus={focus}
-        keyboardUp={keyboardUp}
-        list={list}
-        onClose={close}
-        onHeight={onHeight}
-        raising={raising}
-        stageHeight={stageHeight}
-      />
+        </View>
+        <AnswerCard
+          timeBarHeight={bar.height}
+          barRoom={barRoom}
+          cardActions={actions}
+          control={control}
+          focus={focus}
+          keyboardUp={keyboardUp}
+          list={list}
+          onClose={close}
+          onHeight={onHeight}
+          raising={raising}
+          stageHeight={stageHeight}
+        />
+      </SheetLinkContext>
       {keyboardUp ? null : <OpenMark control={control} focus={focus} onClose={close} stage={stage} />}
       {sheets}
     </FriendProfileOver>
