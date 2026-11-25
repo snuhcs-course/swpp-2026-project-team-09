@@ -35,12 +35,9 @@ export interface FrameCardProps {
   onAskNew?: () => void;
   // The history chip at the left of the header's row. Left out or null, none.
   chip?: ReactNode;
-  // Told the most the scrolling part may take at the card's height now, so that a list in it can end above the input
-  // and scroll inside itself.
-  onContentCap?: (cap: number | null) => void;
   // The time card's height as it stands by default, which high stops under. Left out, none.
   timeBarHeight?: number;
-  // Low shows the content whole up to the middle step, as while the keyboard is up or the list of questions is open.
+  // Low shows the content whole up to the middle step, as while the keyboard is up.
   fit?: boolean;
   // Null leaves the card empty.
   children: ReactNode;

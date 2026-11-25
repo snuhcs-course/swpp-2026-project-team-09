@@ -17,12 +17,14 @@ import type { Level } from '@/screens/main/answer/card-levels';
 import { FrameCard } from '@/screens/main/answer/frame-card';
 import { SHEET_HINT } from '@/screens/main/answer/sheet-hint';
 
-// The answer's sheet as one surface (P04 ticket 61): its content is laid out once and moved between low, middle, and
-// high; low shows about two lines of it, at the phone's font size, over the fade; no words stand under the grip, and a
-// first-time hint says the grip raises it, once a phone. The step the card stands at is read from its translation: the
-// laid-out height of the scrolling part less what shows. Expected values: the content's top padding of 12, two lines of
-// 24, and the fade of 12 at the usual font size; a content of 1000 is taller than every step. Middle shows half the
-// stage less the footer's room, as no status bar or header is laid out here.
+// The answer's sheet as one surface (P04 tickets 61 and 63): its content is laid out once and moved between low, middle,
+// and high; low has one top edge for every footer, the meal answer's, which shows two lines of words, at the phone's
+// font size, over the fade; no words stand under the grip, and a first-time hint says the grip raises it, once a phone.
+// The step the card stands at is read from its translation: the laid-out height of the scrolling part less what shows.
+// Expected values: the meal answer's footer of 132 (the input's 12 and 50, a gap of 8, the main button's row of 50,
+// and 12 over them); the content's top padding of 12, two lines of 24, and the fade of 12 at the usual font size; a
+// content of 1000 is taller than every step. Middle covers 60% of the stage less the footer's room, as no status bar or
+// header is laid out here.
 
 jest.mock('@/hooks/use-reduce-motion', () => ({
   useReduceMotion: (): boolean => false,
@@ -34,10 +36,12 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 const STAGE = 800;
-const BAR_ROOM = 40;
+const BAR_ROOM = 132;
 const FADE = 12;
 const LOW = 12 + 2 * text.bodyLg.lineHeight + FADE;
-const MID = STAGE / 2 - BAR_ROOM;
+const MID = STAGE * 0.6 - BAR_ROOM;
+// A footer of the input alone: no main button.
+const BARE_ROOM = 12 + 50 + 12;
 const WORDS = '12:15에 302동식당에서 민수와 만나 먹어요.';
 
 const mounts = { content: 0 };
@@ -49,10 +53,10 @@ function Counted(): React.ReactElement {
   return <Text>{WORDS}</Text>;
 }
 
-function card(level: Level, setLevel = jest.fn<undefined, [Level]>()): React.ReactElement {
+function card(level: Level, setLevel = jest.fn<undefined, [Level]>(), barRoom = BAR_ROOM): React.ReactElement {
   return (
     <FrameCard
-      barRoom={BAR_ROOM}
+      barRoom={barRoom}
       onClose={jest.fn<undefined, []>()}
       onHeight={jest.fn<undefined, [number]>()}
       raising={{ level, setLevel, close: jest.fn<undefined, []>() }}
@@ -129,12 +133,39 @@ describe('the sheet’s steps', () => {
     expect(mounts.content).toBe(1);
   });
 
-  it('stops a content shorter than low at its own height and the fade’s', async () => {
+  // P04 ticket 63: the top edge stands at one place for every answer, a short one too.
+  it('stands a content shorter than low at low all the same', async () => {
     await render(card('low'));
     await layContent(50);
     await settle();
 
-    expect(shown()).toBe(50 + FADE);
+    expect(shown()).toBe(LOW);
+  });
+
+  // P04 ticket 63: an answer without a main button gives that row's room to its words, whole lines of them, and the
+  // room under the last whole line is covered in the sheet's colour.
+  it('keeps the top edge over a footer without a main button, and shows its words in whole lines', async () => {
+    await render(card('low', undefined, BARE_ROOM));
+    await layContent(1000);
+    await settle();
+
+    const above = LOW + BAR_ROOM - BARE_ROOM;
+    expect(shown()).toBe(above);
+    const lines = Math.floor((above - 12 - FADE) / text.bodyLg.lineHeight);
+    expect(lines).toBe(4);
+    expect(heightOf('answer-card-band')).toBe(above - 12 - lines * text.bodyLg.lineHeight);
+    expect(getAnimatedStyle(screen.getByTestId('answer-card-band'))).toMatchObject({ opacity: 1 });
+  });
+
+  it('fades the band under the last whole line away at middle', async () => {
+    const view = await render(card('low', undefined, BARE_ROOM));
+    await layContent(1000);
+    await settle();
+
+    await view.rerender(card('mid', undefined, BARE_ROOM));
+    await settle();
+
+    expect(getAnimatedStyle(screen.getByTestId('answer-card-band'))).toMatchObject({ opacity: 0 });
   });
 
   it('takes no room for a content that lays out nothing, as a meet whose Friend has a face on the map', async () => {
@@ -145,7 +176,7 @@ describe('the sheet’s steps', () => {
     expect(shown()).toBe(0);
   });
 
-  it('stands middle at half the stage', async () => {
+  it('stands middle at 60% of the stage', async () => {
     await render(card('mid'));
     await layContent(1000);
     await settle();

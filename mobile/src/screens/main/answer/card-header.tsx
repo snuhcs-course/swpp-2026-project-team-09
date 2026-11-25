@@ -49,32 +49,27 @@ export const chipLook = StyleSheet.create({
   pressed: { opacity: 0.6 },
 });
 
-// The steps a screen reader takes the card through (`steps`, those of different heights): up a step; down a step, or,
-// at low, the layer over the card taken away (the earlier questions, a mark's card, a menu); and close. Only the steps
-// that can act now are offered (PR 516's review).
+// The steps a screen reader takes the card through (`steps`, those of different heights), as a drag does: up a step,
+// down a step, and close (P04 ticket 63). Only the steps that can act now are offered (PR 516's review).
 function actionsOf(raising: Raising, steps: readonly Level[]): AccessibilityActionInfo[] {
-  const { level, close, layer = null } = raising;
+  const { level, close } = raising;
   const at = Math.max(0, steps.indexOf(level));
   return [
     ...(at < steps.length - 1 ? [{ name: 'increment', label: '답 크게 보기' }] : []),
-    ...(at > 0 || layer !== null ? [{ name: 'decrement', label: '답 작게 보기' }] : []),
+    ...(at > 0 ? [{ name: 'decrement', label: '답 작게 보기' }] : []),
     ...(close === undefined ? [] : [{ name: 'close', label: CLOSE_ANSWER_LABEL }]),
   ];
 }
 
 function adjust(raising: Raising, steps: readonly Level[], action: string): void {
-  const { level, setLevel, close, layer = null } = raising;
+  const { level, setLevel, close } = raising;
   const at = Math.max(0, steps.indexOf(level));
   const up = steps[at + 1];
   const down = steps[at - 1];
   if (action === 'increment' && up !== undefined) {
     setLevel(up);
-  } else if (action === 'decrement') {
-    if (layer !== null) {
-      layer();
-    } else if (down !== undefined) {
-      setLevel(down);
-    }
+  } else if (action === 'decrement' && down !== undefined) {
+    setLevel(down);
   } else if (action === 'close') {
     close?.();
   }

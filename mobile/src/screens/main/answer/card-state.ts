@@ -3,6 +3,7 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useState } from 'react';
@@ -76,7 +77,8 @@ interface BackLayers {
 }
 
 // What back takes away before the card's height: the list of questions, a mark's card, or a restaurant's menu (back to
-// the list of candidates); null when none is open. A drag down on the card takes it away first too (P04 ticket 52).
+// the list of candidates); null when none is open. A drag never takes it away: it only changes the card's height or
+// closes the answer (P04 ticket 63).
 export function layerOf(list: QuestionsOpen, control: ChatSheetControl): (() => void) | null {
   if (list.open) {
     return list.close;
@@ -101,6 +103,6 @@ export function useAnswerRaising(
   onPast: (past: boolean) => void,
 ): { raising: Raising; list: QuestionsOpen; back: () => void } {
   const { level, setLevel, lower, list } = useCardState(control.card, control.chat.bubbles.at(-1)?.id ?? null);
-  const raising: Raising = { level, setLevel, close: leave, layer: layerOf(list, control), onPast };
+  const raising: Raising = { level, setLevel, close: leave, onPast };
   return { raising, list, back: backOf({ list, control, level, lower, leave }) };
 }

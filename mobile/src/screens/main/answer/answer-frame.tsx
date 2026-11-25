@@ -73,20 +73,16 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
   const { control, barRoom, stageHeight, keyboardUp, onHeight, onClose, raising, timeBarHeight, list } = props;
   const card = { barRoom, onHeight, raising, stageHeight, timeBarHeight };
   const typing = keyboardUp && raising.level === 'low';
-  const { listMax, ...top } = useCardTop(control, raising, list, { onClose });
+  const top = useCardTop(control, raising, list, { onClose });
   const { waiting } = control.chat;
   const contentMax = contentMaxOf(stageHeight, barRoom);
   return (
     <FrameCard
       {...card}
       {...top}
-      chip={
-        typing || control.answer.menuFor !== null ? null : (
-          <AnswerCaption control={control} listOpen={list.open} onList={list.toggle} />
-        )
-      }
-      // While typing or with the list of questions open, low shows the content whole up to the middle step.
-      fit={typing || list.open}
+      chip={typing ? null : <AnswerCaption control={control} listOpen={list.open} onList={list.toggle} />}
+      // While typing, low shows the content whole up to the middle step.
+      fit={typing}
       atTop={control.pick.place !== null}
       hold={waiting}
       testID="answer-card"
@@ -95,7 +91,7 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
       {typing ? (
         <Typing control={control} />
       ) : list.open ? (
-        <CaptionQuestions control={control} list={list} maxHeight={listMax} onClose={onClose} />
+        <CaptionQuestions control={control} list={list} onClose={onClose} />
       ) : (
         <OpenAnswer {...props} room={contentMax === null ? null : contentMax - CONTENT_TOP} />
       )}
@@ -222,7 +218,7 @@ function useBarHeight(
 // back return to the answer instead, and the caption names the building. A Friend's profile opened from the card stands
 // over it until a new reply; while it is shown, the back button hides it alone. This handler is the only one, and
 // listens only while the main screen is in front, so a screen pushed from the profile goes back to it. Back takes away
-// one layer per press (`backOf`), and so does a drag down. While a restaurant's menu is open the caption gives way to the menu's own head.
+// one layer per press (`backOf`); a drag only changes the card's height or closes the answer (P04 ticket 63).
 function Framed(props: FramedProps): ReactElement {
   const { control, barRoom, stageHeight, keyboardUp, onHeight, onBarHeight, stage } = props;
   const { chat, leaving, hide } = control;
