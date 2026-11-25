@@ -2,18 +2,18 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
 import { Server } from 'node:http';
 import { inject } from 'vitest';
 import { z } from 'zod';
-import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
-import { WALKING_TABLE_FILE, walkingTableSchema } from '../src/travel/walking-table.js';
 import { IN_LIBRARY, placeNumbered, type SeedPlace } from './friend-levels.js';
 import { befriend, type TestUser } from './friends.js';
 import { expectStatus, getPositions, shareAt, sharingFriends, uploadPosition } from './location-sharing.js';
 import { startApp } from './start-app.js';
+import { readFrozenWalkingTable } from './frozen-travel.js';
 
 const settings = inject('settings');
 let app: INestApplication<Server>;
@@ -31,7 +31,7 @@ const IN_ENGINEERING = { latitude: 37.4502012345, longitude: 126.9526012345 };
 
 // The walk from one Place to another as the app shows it, read from the committed walking table.
 async function tableMinutes(from: SeedPlace, to: SeedPlace): Promise<number> {
-  const table = await readSeedFile(SEED_DIRECTORY, WALKING_TABLE_FILE, walkingTableSchema);
+  const table = await readFrozenWalkingTable();
   const row = (place: SeedPlace): number => table.places.findIndex(({ id }) => id === place.id);
   const seconds = table.placeToPlace[row(from)]?.[row(to)];
   if (seconds === undefined) {

@@ -3,9 +3,10 @@
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, type ReactNode, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { NOT_AUTOFILLED } from './autofill';
 import { Icon } from './icon';
@@ -17,6 +18,8 @@ const FOCUS_RING = `0 0 0 1px ${color.focusRing}`;
 interface TextFieldProps {
   // Always visible. A placeholder is an example, not a label.
   label: string;
+  // Drawn before the label, as the 파티 form marks its fields. A screen reader skips it.
+  labelIcon?: ReactNode;
   value: string;
   onChangeText?: (value: string) => void;
   // An example, prefixed "예:".
@@ -32,6 +35,7 @@ interface TextFieldProps {
 // A labelled text input for the profile, the creation of an event and settings.
 export function TextField({
   label,
+  labelIcon,
   value,
   onChangeText,
   placeholder,
@@ -45,7 +49,7 @@ export function TextField({
   const help = error ?? helper;
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      <Label icon={labelIcon} label={label} />
       <TextInput
         {...NOT_AUTOFILLED}
         accessibilityHint={help}
@@ -77,6 +81,19 @@ export function TextField({
   );
 }
 
+// The label, after its icon when it has one.
+function Label({ label, icon }: { label: string; icon: ReactNode }): ReactElement {
+  if (icon === undefined) {
+    return <Text style={styles.label}>{label}</Text>;
+  }
+  return (
+    <View style={styles.labelRow}>
+      {icon}
+      <Text style={styles.label}>{label}</Text>
+    </View>
+  );
+}
+
 function Help({ help, error }: { help: string; error: boolean }): ReactElement {
   return (
     <View style={styles.help}>
@@ -91,6 +108,7 @@ const MULTILINE_HEIGHT = 96;
 const styles = StyleSheet.create({
   field: { gap: space[1] },
   label: { ...text.label, color: color.ink },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   input: {
     ...text.bodyLg,
     minHeight: size.touchMin,

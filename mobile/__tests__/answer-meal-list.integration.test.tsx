@@ -4,23 +4,27 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
 import type { AnswerReply } from '@/api/assistant-types';
 import { crowdedMealReply } from '@/api/mock/data/crowded-meal';
 import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
+import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
 import { koreaDateKey, koreaNextDay } from '@/korea-time';
-import { LATE_HEADING } from '@/screens/main/answer/meal-list';
+import { CLOSED_HEADING } from '@/screens/main/answer/meal-list';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import { raiseCard } from './support/card-grip';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { askOnMap, card } from './support/answer-map';
+import { askOnMap, card, timeBar } from './support/answer-map';
 import type { FakeServer } from './support/fake-server';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { pass } from './support/app';
+import { pressMarker } from './support/made-quest';
+import { layStage } from './support/lists';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { sockets } from './support/fake-socket';
 
@@ -42,7 +46,7 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-const SENTENCE = '12:15에 302동식당에서 민수와 만나 먹어요.';
+const SENTENCE = '둘 다 가까운 302동식당을 추천해요.';
 
 let server: FakeServer;
 
@@ -122,6 +126,41 @@ describe('a row of the list pressed', () => {
   });
 });
 
+// Partitions: another of the reply's places chosen; a kind chosen by a chip, with no turn to the model; the answer
+// recalculated (P04 ticket 79: the model's words stay while its places are on screen). Expected values: the first place
+// of the answer for the User alone, once 민수 is taken out on the map, 301동식당.
+describe('the words over the list once something else is chosen', () => {
+  it('stay the Assistant’s when another of its places is chosen', async () => {
+    const user = await askOnMap(server, fourOf(MEAL_ANSWER_MENUS_REPLY));
+    await raiseCard();
+
+    await user.press(list().getByTestId('meal-row-2'));
+    await user.press(within(screen.getByTestId('meal-menu')).getByRole('button', { name: '‹ 4곳 목록' }));
+
+    expect(screen.getByTestId('meal-words')).toHaveTextContent(SENTENCE);
+  });
+
+  it('stay the Assistant’s when a kind chip moves the pick', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await raiseCard();
+
+    await user.press(screen.getByRole('button', { name: '일식 2곳' }));
+
+    expect(screen.getByTestId('meal-words')).toHaveTextContent(SENTENCE);
+  });
+
+  it('are the chosen place’s line once the answer is recalculated', async () => {
+    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE });
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY, () => layStage(390, 760));
+
+    await pressMarker(user, '민수');
+    await user.press(within(screen.getByTestId('mark-card')).getByRole('button', { name: '민수 빼기' }));
+    await pass(500);
+
+    expect(screen.getByTestId('meal-words')).toHaveTextContent(/^301동식당 · \d{2}:\d{2} · /u);
+  });
+});
+
 const HELD_MS = 3000;
 
 // Partitions: a row pressed while the Plan on screen is being sent (review of PR 440).
@@ -150,40 +189,68 @@ function keptOne(text: string): typeof MEAL_ANSWER_MENUS_REPLY {
   return { ...MEAL_ANSWER_MENUS_REPLY, text, answer };
 }
 
-// Partitions: one Plan left of many, with the model's words and without; the candidates that cannot be done in time.
+// Partitions: one Plan left of many; the Restaurants closed for the meal beside the candidates.
 describe('a meal answer that kept one Plan of many', () => {
-  it('lists the Plan, then the places dropped under their reason, faded and not pressable, under the people', async () => {
+  it('lists the Plan alone: the places dropped for the time are not listed (P04 ticket 71)', async () => {
     await askOnMap(server, keptOne(SENTENCE));
 
     await raiseCard();
 
-    expect(card().getByText('김민수')).toBeOnTheScreen();
     expect(list().getByTestId('meal-row-1')).toBeEnabled();
-    // The same count as the grip's "1곳 목록": the place offered, not the places dropped.
     expect(list().getByTestId('meal-list-order')).toHaveTextContent(/^1곳 · /u);
-    expect(list().getByText('김민수와 시간이 맞지 않는 곳')).toBeOnTheScreen();
-    const dropped = list().getAllByTestId('meal-dropped-row');
-    expect(dropped.map((row) => String(row.props.accessibilityLabel))).toEqual([
-      '301동식당 · 김민수는 10분밖에 못 있어요',
-      '학생회관식당 · 김민수는 10분밖에 못 있어요',
-    ]);
-    expect(dropped[0]?.props.accessibilityRole).toBeUndefined();
+    expect(list().queryByText(/시간이 맞지 않는 곳/u)).toBeNull();
+    expect(list().queryByText(/10분밖에 못 있어요/u)).toBeNull();
   });
 });
 
-// Partitions: the crowded answer, two of whose restaurants open too late for the Class at 15:30.
+const NOTICE = '공대수시면접으로 인해 휴점합니다';
+
+// The answer with 감골식당 closed for the meal by its menu's notice (P04 ticket 71, board z1).
+function withClosed(): typeof MEAL_ANSWER_MENUS_REPLY {
+  const [first] = MEAL_ANSWER_MENUS_REPLY.answer.plans;
+  const place = { ...(first?.place ?? { placeId: 'p', latitude: 37.46, longitude: 126.95 }), label: '감골식당' };
+  return {
+    ...MEAL_ANSWER_MENUS_REPLY,
+    answer: { ...MEAL_ANSWER_MENUS_REPLY.answer, closed: [{ place, notices: [NOTICE] }] },
+  };
+}
+
+describe('a meal answer with a Restaurant closed for the meal', () => {
+  it('ends the list with it under "쉬는 곳", grey with its notice, not numbered, counted, or pressable', async () => {
+    await askOnMap(server, withClosed());
+
+    await raiseCard();
+
+    const plans = MEAL_ANSWER_MENUS_REPLY.answer.plans.length;
+    expect(list().getByTestId('meal-list-order')).toHaveTextContent(new RegExp(`^${String(plans)}곳 · `, 'u'));
+    expect(list().getByText(CLOSED_HEADING)).toBeOnTheScreen();
+    const closed = list().getAllByTestId('meal-closed-row');
+    expect(closed.map((row) => String(row.props.accessibilityLabel))).toEqual([`감골식당 · ${NOTICE}`]);
+    expect(closed[0]?.props.accessibilityRole).toBeUndefined();
+    expect(list().queryByRole('button', { name: /감골식당/u })).toBeNull();
+    expect(comesBefore(list().getByTestId(`meal-row-${String(plans)}`), list().getByTestId('meal-closed-row'))).toBe(
+      true,
+    );
+  });
+});
+
+// Partitions: the crowded answer, whose 기숙사식당 cannot be done before the Class at 15:30, and whose 감골식당 has at
+// least the main server's fifteen minutes.
 describe('the crowded meal answer raised', () => {
-  it('lists the candidates that cannot be done in the time last, under one line that says so', async () => {
+  it('leaves the candidates that cannot be done in the time out of the list and its count (P04 ticket 71)', async () => {
     const date = koreaDateKey(koreaNextDay(PHONE_NOW));
-    await askOnMap(server, crowdedMealReply(date, PHONE_NOW.toISOString()));
+    const reply = crowdedMealReply(date, PHONE_NOW.toISOString());
+    await askOnMap(server, reply);
 
     await raiseCard();
 
     const labels = list()
       .getAllByRole('button', { name: /^\d+ /u })
       .map((row) => String(row.props.accessibilityLabel).split(' · ')[0]?.replace(/^\d+ /u, ''));
-    expect(labels.slice(-2).toSorted()).toEqual(['감골식당', '기숙사식당 (관악사 919동)']);
-    expect(list().getByText(LATE_HEADING)).toBeOnTheScreen();
+    expect(labels).not.toContain('기숙사식당 (관악사 919동)');
+    expect(labels).toContain('감골식당');
+    expect(list().getByTestId('meal-list-order')).toHaveTextContent(new RegExp(`^${String(labels.length)}곳 · `, 'u'));
+    expect(list().queryByText('시간 안에 다녀오기 어려운 곳')).toBeNull();
   });
 });
 
@@ -208,21 +275,19 @@ function comesBefore(first: Found, second: Found): boolean {
 // P04 tickets 54 and 61: the meal sheet starts with the Assistant's words, so that the low sheet shows them. Partitions:
 // the words, the person chips, and the list.
 describe("the raised meal card's order", () => {
-  it('is the words, then the person chips, then the list', async () => {
+  // The people of the Plan are in the time card's "같이 N ›" since PR 552, no longer chips in the card.
+  it('is the words, then the list', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
     await raiseCard();
 
-    const words = screen.getByTestId('meal-words');
-    const person = card().getByText('김민수');
-    expect(comesBefore(words, person)).toBe(true);
-    expect(comesBefore(person, list().getByTestId('meal-row-1'))).toBe(true);
+    expect(comesBefore(screen.getByTestId('meal-words'), list().getByTestId('meal-row-1'))).toBe(true);
   });
 });
 
 // Partitions: one Plan and nothing dropped.
 describe('a meal answer of one place', () => {
-  it('shows the people and the row, raised', async () => {
+  it('shows the row, raised, with its people in the time card', async () => {
     const answer: AnswerReply = {
       ...MEAL_ANSWER_MENUS_REPLY.answer,
       plans: MEAL_ANSWER_MENUS_REPLY.answer.plans.slice(0, 1),
@@ -231,7 +296,7 @@ describe('a meal answer of one place', () => {
 
     await raiseCard();
 
-    expect(card().getByText('김민수')).toBeOnTheScreen();
+    expect(timeBar().getByRole('button', { name: '같이 먹을 친구 추가' })).toHaveTextContent('같이 1 ›');
     expect(list().getByTestId('meal-row-1')).toBeEnabled();
   });
 });

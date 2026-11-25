@@ -1743,13 +1743,14 @@ The app asks for a walking route between two points and draws its line. The main
 - A coordinate that is missing, is not a decimal number, or lies outside -90 to 90 for a latitude or -180 to 180 for a
   longitude gets 400 with a message that starts with the field, and Kakao is not asked.
 
-A route is never stored or cached, because Kakao's operating policy does not allow it. Every request asks Kakao once,
-and the answer carries `Cache-Control: no-store`, so that no HTTP cache, the app's included, keeps it. Nothing else
+The main server never stores or caches a route, because Kakao's operating policy does not allow it. Every request asks
+Kakao once, and the answer carries `Cache-Control: no-store`, so that no HTTP cache, the app's included, keeps it. Nothing else
 calls Kakao. The team's Kakao app has a free quota of 1,000 routes a day, and a call beyond it fails (§7.5), so the app
 asks for a route when the User does, never on every position. Pending the owner's decision (P15 ticket 56, "Open
 questions for the owner"): the app also asks, by itself, for the walks of the Plan or Lookup on screen in the answer
-frame, at most three a scene, each pair of ends once, keeping nothing once the scene leaves the screen; a typical
-answer costs 2 to 3 routes a Plan shown.
+frame, at most three a scene, each pair of ends once. A path is held only while the answer that draws it is on screen,
+in the running app's memory, so a Plan of that answer shown again asks nothing; a typical answer costs 2 to 3 routes a
+Plan shown the first time.
 
 The REST API key is `KAKAO_REST_API_KEY`, a secret that stays on the main server: it goes to Kakao in the
 `Authorization` header and nowhere else. The server stops at startup and names the setting when it is missing or empty.
@@ -2681,7 +2682,10 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       the clock (`mealByClock`): lunch until lunch's window ends, then dinner, judged at the start the User asked for
       and today no earlier than now. It answers the model `planned` with the meal, each plan's Restaurant, clock times,
       meeting, and each person's way in minutes, and the Restaurants dropped, or `none` with the meal and the reason,
-      never coordinates, course names, or rooms. The plans come in order (`gathering/plan-order.ts`): those where
+      never coordinates, course names, or rooms. Company the User does not name, or not all of (친구 두 명이랑 저녁),
+      is planned at once with `pickPeople` and only the Friends named: the model never asks for names, and the answer
+      carries `pickPeople: true` when its plan has someone left to pick, for the app to open its picking of Friends on
+      it (P04 ticket 73). The plans come in order (`gathering/plan-order.ts`): those where
       everyone has 30 minutes first, then the shorter ones. Within each group, the least walking for everyone together
       comes first, counting the walk there and on to each one's next item; then the smaller largest walk, the earlier
       start, and the key. When the asker's starting place is not known (a later day with no item before the meal, and
@@ -3078,8 +3082,12 @@ Each exported file keeps, at its top, where it came from and the day of the expo
   within, and the table's MAE below the baseline's. Last it fits the speed and the climb value to the 13 calibration
   walks, by ordinary least squares with no constant term, and prints them unrounded; a climb value below 0 becomes 0
   with that fit's speed. Each pair's path metres and climb are recovered from its seconds at the freeze, at 1.1 m/s and
-  3 s per metre of climb, and from the committed table's elevations. The builder's two constants in
-  `src/travel/walking-graph.ts` are that fit's, as P11 adopted them.
+  3 s per metre of climb, and from the committed table's elevations. The builder's flat speed in
+  `src/travel/walking-graph.ts` is that fit's, as P11 adopted it. The slope then changes it by Tobler's hiking
+  function, scaled so that the flat keeps that speed, the slope being the two ends' heights over the path's length
+  (ADR 0010, P04 ticket 77). A way up takes longer than the way down. The server's tests about plans and ways bind a
+  frozen copy of the table from before the slope (`test/fixtures/walking/walking-table-before-climb.json`), so that
+  their numbers stay when the walking model changes.
 - **Exporting**: `pnpm seed:export <name>…` repeats the export of the files it names and overwrites them; run without
   a name, it lists the names. An export over the network is one request, sent with a User-Agent that names the
   project, as OpenStreetMap asks. When Overpass answers 504 it is busy: wait some minutes before trying again.

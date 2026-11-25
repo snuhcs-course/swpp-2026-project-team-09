@@ -180,13 +180,14 @@ export function openOrderOf(rows: readonly PickRow[]): string[] {
     .map(({ userId }) => userId);
 }
 
-// The rows in an order worked out before; a row it does not know, as a Friend the list brought later, comes after.
+// The rows in an order worked out before. A row it does not know, as a Friend the list brought later, is left out
+// until picking opens again, so that the rows never grow or move once open (P04 ticket 67).
 export function inOrder(rows: readonly PickRow[], order: readonly string[]): PickRow[] {
-  const at = ({ userId }: PickRow): number => {
-    const index = order.indexOf(userId);
-    return index === -1 ? order.length : index;
-  };
-  return rows.toSorted((one, other) => at(one) - at(other));
+  const byId = new Map(rows.map((row) => [row.userId, row]));
+  return order.flatMap((userId) => {
+    const row = byId.get(userId);
+    return row === undefined ? [] : [row];
+  });
 }
 
 // A row's one word at its right (variant R3): the reason of a Friend busy over the span, else the walk to the Plan's

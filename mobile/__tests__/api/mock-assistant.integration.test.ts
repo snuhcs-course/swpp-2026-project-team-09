@@ -187,3 +187,24 @@ describe('the mock of a press on the map', () => {
     );
   });
 });
+
+// P04 ticket 73. Partitions: unnamed Friends for dinner, for lunch, and "누구랑"; a meal with a named Friend. Expected
+// values: the plan for the User alone with the picking open, and the mock's Friends to pick from.
+describe('the mock of a meal with Friends the User does not name', () => {
+  it.each([['친구 두명이랑 저녁'], ['친구랑 점심 먹을래'], ['누구랑 같이 먹을까 내일 저녁']])(
+    'answers "%s" for the User alone, with the picking open',
+    async (text) => {
+      const reply = await answered(mockClient.askAssistant([{ role: 'user', text }], CONTEXT));
+
+      expect(reply.answer?.pickPeople).toBe(true);
+      expect(reply.answer?.input).toMatchObject({ people: [expect.anything()] });
+      expect(reply.answer?.plans[0]?.band.others?.length).toBeGreaterThan(0);
+    },
+  );
+
+  it('opens nothing for a meal with a Friend the User names', async () => {
+    const reply = await answered(mockClient.askAssistant(HUNGRY, CONTEXT));
+
+    expect(reply.answer?.pickPeople).toBeUndefined();
+  });
+});

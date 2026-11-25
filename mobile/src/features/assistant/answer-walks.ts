@@ -4,6 +4,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MapScene, Plan } from '@/api/assistant-types';
@@ -87,11 +88,27 @@ export function linesAlongPaths(
   return linesOn(lines, pathsOf(walks, found));
 }
 
-// The lines with those of `paths`, by their ids, along their paths; the others as they are.
-export function linesOn(lines: readonly MapLine[], paths: ReadonlyMap<string, readonly LatLng[]>): MapLine[] {
-  return lines.map((line) => {
+// The ids of the lines of the walks whose paths are on their way: those whose ends (`endsOf`) are `waiting`.
+export function waitingLines(walks: readonly Walk[], waiting: ReadonlySet<string>): Set<string> {
+  return new Set(walks.flatMap((walk) => (waiting.has(endsOf(walk)) ? [walk.lineId] : [])));
+}
+
+const NONE_WAITING: ReadonlySet<string> = new Set();
+
+// The lines with those of `paths`, by their ids, along their paths; those `waiting` for a path not drawn until it
+// comes (P04 ticket 75), so that no straight line shows and turns into the path a moment later; the others as they
+// are.
+export function linesOn(
+  lines: readonly MapLine[],
+  paths: ReadonlyMap<string, readonly LatLng[]>,
+  waiting: ReadonlySet<string> = NONE_WAITING,
+): MapLine[] {
+  return lines.flatMap((line) => {
     const points = paths.get(line.id);
-    return points === undefined ? line : { ...line, points };
+    if (points !== undefined) {
+      return [{ ...line, points }];
+    }
+    return waiting.has(line.id) ? [] : [line];
   });
 }
 
@@ -184,10 +201,11 @@ export function fixedAfter(plan: Pick<Plan, 'band' | 'parts' | 'endAt'>): FixedT
 }
 
 const MINUTE = 60_000;
-// How long a meal takes at least, for whether a candidate fits.
-const SHORTEST_MEAL = 20;
+// How long a meal takes at least, for whether a candidate fits: the main server's `SHORTEST_MEAL_SECONDS`, by which it
+// keeps a candidate, so that the phone fades none it offers for this alone (P04 ticket 71).
+const SHORTEST_MEAL = 15;
 
-// Whether a meal Plan fits its band: arriving inside it, twenty minutes there, and the walk on, before the next fixed
+// Whether a meal Plan fits its band: arriving inside it, fifteen minutes there, and the walk on, before the next fixed
 // thing, or before the band's end with none.
 export function fitsBand(plan: Pick<Plan, 'band' | 'parts' | 'scene' | 'startAt' | 'endAt'>): boolean {
   const start = Date.parse(plan.startAt);

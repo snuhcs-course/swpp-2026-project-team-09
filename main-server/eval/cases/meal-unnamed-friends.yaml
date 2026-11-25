@@ -1,0 +1,58 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-26  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# A meal with company the User does not name is planned at once, and the app opens the picking of their Friends (P04
+# ticket 73). On the user's phone on 2026-11-26, "친구 두명이랑 저녁" was answered only in words: "친구 두 명의 이름을
+# 알려 주세요. 이름을 알려 주시면 저녁 식사 자리를 잡아 드릴게요." The P4 world asked from an app that draws answers
+# (`pnpm eval --world p4-answer`), on Monday 2026-11-02 at 11:30.
+
+- id: meal-unnamed-friends-dinner
+  category: meal-unnamed-friends
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 친구 두명이랑 저녁
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest, findFreeFriends]
+    args:
+      planMeal: { date: '2026-11-02', meal: dinner, pickPeople: true }
+    text:
+      absent: [이름, 누구, 알려 주세요, 두 명]
+
+- id: meal-unnamed-friend-lunch
+  category: meal-unnamed-friends
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 친구랑 점심 먹을래
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest, findFreeFriends]
+    args:
+      planMeal: { date: '2026-11-02', meal: lunch, pickPeople: true }
+    text:
+      absent: [이름, 누구, 알려 주세요]
+
+- id: meal-who-with-tomorrow
+  category: meal-unnamed-friends
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 누구랑 같이 먹을까 내일 저녁
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    args:
+      planMeal: { date: '2026-11-03', meal: dinner, pickPeople: true }
+    text:
+      absent: [이름, 알려 주세요]

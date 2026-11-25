@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, Plan } from '@/api/assistant-types';
@@ -89,12 +90,14 @@ function noWayThere(answer: AnswerReply, withNext: boolean): AnswerReply {
 describe('the walking a choice adds with the start not known', () => {
   const unknown = answerAt(AFTER, null);
 
-  it("is the way on to the next Class, on the tags and the chosen place's label", () => {
+  // The chosen place's label says only its start since P04 ticket 74: the way is on the route's pill.
+  it("is the way on to the next Class, on the tags, and the chosen place's label says its start", () => {
     const answer = noWayThere(unknown, true);
     const index = answer.plans.findIndex(({ place }) => place.label === PICK);
     const drawing = drawingOf(answer, index);
 
-    expect(seen(drawing, 'answer:pick').label).toMatchObject({ note: '11:00 · 걸음 17분' });
+    expect(seen(drawing, 'answer:pick').label).toMatchObject({ note: '11:00' });
+    expect(seen(drawing, 'answer:pick').name).toContain('걸음 17분');
     expect(seen(drawing, 'answer:candidate:3식당').label).toMatchObject({ title: '14분' });
   });
 

@@ -6,6 +6,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -152,7 +153,9 @@ describe('the answer of a meet (board a5)', () => {
     expect(timeBar().getByText('12:15–12:43 · 함께 28분')).toBeVisible();
     await press(user, '사람별 시간 펼치기');
     expect(timeBar().getByText('나')).toBeVisible();
-    expect(timeBar().getByText('13:00 24동 수업')).toBeVisible();
+    // The next Class is on the map; under the bar, what bounds the span on the left (P04 ticket 82).
+    expect(timeBar().getByText('민수 12:15 302동 수업 끝')).toBeVisible();
+    expect(timeBar().queryByText('13:00 24동 수업')).toBeNull();
     await pressMarker(user, '나 · 3분');
     expect(markCard().getByText('출발 · 301동에서')).toBeVisible();
     await press(user, '카드 닫기');

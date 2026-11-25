@@ -11,6 +11,9 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -27,8 +30,6 @@ export const color = {
   surface: '#FFFFFF',
   surfaceSubtle: '#F5F6F9',
   surfaceSunken: '#ECEEF3',
-  // A sheet over the map that lets the map show through, such as the AI chat.
-  surfaceGlass: 'rgba(255, 255, 255, 0.8)',
   scrim: 'rgba(14, 19, 48, 0.40)',
   // Darker, for a tour that dims all but one control so that it stands out.
   scrimStrong: 'rgba(14, 19, 48, 0.64)',
@@ -62,6 +63,12 @@ export const color = {
   svcShuttleSoft: '#EFEAFB',
   svcStudy: '#0369A1',
   svcStudySoft: '#E3F1FA',
+  // A meal Plan's way on to the next fixed thing, a lighter band under the way there (P04 ticket 76). On foot, a mid
+  // blue at about half of `snuBlue`'s strength, at least 3:1 against the map's light blue campus, where a paler blue
+  // sank into it. By the shuttle, the purple of `svcShuttle` at about a third, which stands apart by its hue. Opaque,
+  // so that a band that crosses itself stays one colour.
+  routeOn: '#5679E4',
+  routeShuttleOn: '#C9B0EE',
 } as const;
 
 // A 4-point grid. The key is the design system's step: space[4] is `space-4`, 16 points.
@@ -110,6 +117,29 @@ export const halo = {
   selectedDot: 'rgba(0, 26, 114, 0.25)',
   // Around merged study pins, the frame's translucent outer square: the study colour at 22%.
   study: 'rgba(3, 105, 161, 0.22)',
+} as const;
+
+// The glass layer's surfaces, as the changelog of 11.24 (§ 5-1) sets their grounds and its Mf5Kit board draws the
+// rest: the shadows, the map chip's rim, and `line`, the thin light line along a surface's top. Only `Glass`
+// (glass.tsx) reads them: a screen names a level and never these values.
+export const glass = {
+  // Outer bars, bottom sheets and cards over the map: the line, the board's floating shadow (between `shadow.float`
+  // and `shadow.mapCard`), and white at 80% where the panel is not blurred (A04-03).
+  panel: { ground: 'rgba(255, 255, 255, 0.8)', shadow: '0 4px 16px rgba(14, 19, 48, 0.16)' },
+  // Chips, boxes, white buttons and light coloured chips inside a panel: white at 90%, above the 80% of the changelog
+  // of 11.24, so that they stand out on an unblurred panel's 80% (A04-03).
+  inner: { ground: 'rgba(255, 255, 255, 0.9)' },
+  // A grey input field inside a panel: the key colour at 5%.
+  field: { ground: 'rgba(0, 26, 114, 0.05)' },
+  // A small chip that stands on the map itself, such as a walk's minutes: white at 60%, a rim, a light shadow.
+  mapChip: {
+    ground: 'rgba(255, 255, 255, 0.6)',
+    rim: 'rgba(255, 255, 255, 0.75)',
+    shadow: '0 4px 14px rgba(14, 19, 48, 0.12)',
+  },
+  // The black chip of a time and a place ("10:45 301동"): the ink at 48%.
+  darkChip: { ground: 'rgba(14, 19, 48, 0.48)' },
+  line: 'inset 0 1px 0 rgba(255, 255, 255, 0.85)',
 } as const;
 
 // The colour that says what a person is doing: a status's dot on an Avatar, a row's dot in the friend list and the
@@ -267,7 +297,7 @@ export const mapText = {
 // 800 is drawn in Bold, the heaviest the app loads.
 export const eventText = {
   // The day of the month in the date column, and the month and day name under it.
-  day: { fontFamily: font.bold, fontSize: 34, lineHeight: 40, letterSpacing: -0.68 },
+  day: { fontFamily: font.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.48 },
   dayLine: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
   // The source over the title.
   source: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },

@@ -42,7 +42,7 @@ function card(): React.ReactElement {
       stageHeight={STAGE}
       testID="card"
     >
-      <Text>12:15에 302동식당에서 민수와 만나 먹어요.</Text>
+      <Text>둘 다 가까운 302동식당을 추천해요.</Text>
     </FrameCard>
   );
 }

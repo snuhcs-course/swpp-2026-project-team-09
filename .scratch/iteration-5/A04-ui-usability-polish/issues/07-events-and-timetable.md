@@ -1,7 +1,7 @@
 # 07: The 행사 tab's rows and the timetable grid
 
 Parent: [A04 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: None (can start immediately).
 
 Native files: none. Releases: an app OTA update only.
@@ -44,9 +44,20 @@ Follow the changelog's § 2 and § 3 (`references/changelog-11-24.md`) and the c
 
 ## Acceptance criteria
 
-- [ ] A 행사 title is one line. (`events-tab`, which fails before the change.)
-- [ ] The timetable labels "09" to "21" and does not scroll inside its card; a class at 21:30 still shows. (`me-week-card`, which fails before the change.)
-- [ ] "Before" and "after" emulator screens of the 행사 tab with a long title and of 내 정보's timetable go in the pull request.
-- [ ] No native file changes; lint, format and types pass on the app.
+- [x] A 행사 title is one line. (`events-tab`, which fails before the change.)
+- [x] The timetable labels "09" to "21" and does not scroll inside its card; a class at 21:30 still shows. (`me-week-card`, which fails before the change.)
+- [x] "Before" and "after" emulator screens of the 행사 tab with a long title and of 내 정보's timetable go in the pull request.
+- [x] No native file changes; lint, format and types pass on the app.
 
 ## Comments
+
+### Done (2026-11-26)
+
+The 행사 row's date column is 60 wide with a 24/30 day (`eventText.day`, used only there), and its title is one line cut with "…"; the time·place line stays at two, and the ☆ stays navy. The timetable draws every hour at once, 32 high (416 for 09–22, as the Profile frame), without the inner scroll or the fades; a class outside widens it and the card grows. The adapter's range is unchanged: `LAST_HOUR = 22` is the end bound, so the rows already read "09" to "21". `openingHour`, which only chose where the scrolled hours opened, is removed with its tests. The lines are `react-native-svg` lines (solid at each hour, dotted at each half hour), the day header is `surfaceSubtle`, and blocks are square and fill their column; a one-hour class keeps its name over its room. The long title was checked by `events-tab` only: the mock has one event. Pull request #564, with the "after" screens in `references/after/07-*.jpg`.
+
+Not done here: the 행사 tab's `Filters` (`events-bar.tsx`) still repeats ticket 05's `ChipRow` tab; this ticket was told to leave that file alone.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 35 minutes in one session up to the pull request, of which about 20 waited for other A04 sessions' lock on the emulator and installs (an estimate). Review follow-ups are not counted.
+- Tokens (the session and its two review subagents): input 11,592,092 in all (11,299,297 cache reads, 292,605 cache writes, 190 uncached); output 48,924.

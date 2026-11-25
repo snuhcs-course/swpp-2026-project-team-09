@@ -136,6 +136,14 @@ describe('the rows while picking', () => {
     expect(named(inOrder(rowsWith(['jiho', 'taehyun']), order))).toEqual(['서연', '태현 ✓', '민수', '예린', '지호 ✓']);
   });
 
+  // P04 ticket 67: the rows never grow once picking is open, so a Friend the list brings later waits for the next.
+  it('leaves out a row the order does not know', () => {
+    const [first] = opened;
+    const later = first === undefined ? [] : [{ ...first, userId: 'newcomer', name: '새친구', checked: false }];
+
+    expect(named(inOrder([...opened, ...later], order))).toEqual(['서연 ✓', '태현', '민수', '예린', '지호']);
+  });
+
   it('says who is busy over the span, until when and with what, and nobody without busy stretches', () => {
     expect(opened.find(({ userId }) => userId === 'yerin')).toMatchObject({
       busyAtSpan: { startAt: at('12:30'), endAt: at('13:00'), kind: 'quest' },

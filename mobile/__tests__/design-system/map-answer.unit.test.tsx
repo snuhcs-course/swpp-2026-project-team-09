@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen } from '@testing-library/react-native';
@@ -239,5 +240,19 @@ describe("MapAnswerMark: a label's dark and muted tones", () => {
     );
 
     expect(screen.getByText('301동식당 · 5분밖에 못 있어요')).toHaveStyle({ color: color.inkMuted });
+  });
+});
+
+// Partitions: the way there and the way on. Expected values: P04 ticket 76's pills, which follow their leg, by the
+// shuttle too: the way there's dark with white words, the way on's pale with dark words.
+describe("MapAnswerMark: a leg's pill", () => {
+  it.each([
+    ['leg', '15분', color.snuBlue, color.onPrimary],
+    ['legOn', '17분', color.blue100, color.snuBlue],
+  ] as const)('draws a %s pill "%s" on %s in %s words', async (tone, title, ground, words) => {
+    await render(<MapAnswerMark label={{ ...PLAIN, side: 'above', tone, title }} symbol={null} testID="mark" />);
+
+    expect(screen.getByTestId('mark:label')).toHaveStyle({ backgroundColor: ground });
+    expect(screen.getByText(title)).toHaveStyle({ color: words });
   });
 });

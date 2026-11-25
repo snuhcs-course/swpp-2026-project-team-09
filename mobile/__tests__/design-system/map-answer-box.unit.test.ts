@@ -2,9 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLabel, answerLabelBox } from '@/design-system';
+import { MEAL_PICK_MAX, SUB_MAX } from '@/design-system/map-answer-box';
 
 function label(
   side: AnswerLabel['side'],
@@ -75,5 +77,27 @@ describe("an answer's label box with wide letters or a shift", () => {
       left: -142,
       right: -29,
     });
+  });
+});
+
+// A meal answer's chosen place (P04 ticket 74), its `note` its start. Partitions: short words; words past the widest,
+// with a note and without.
+describe("a meal answer's chosen place's label box", () => {
+  const LONG = '콘마요핫도그, 웨지감자튀김, 미니토마토파스타, 양배추샐러드';
+
+  it('is as wide as its longer line: 148 for "예술계식당 17:00" over "콘마요핫도그 외 2 메뉴 ›"', () => {
+    // The title at 14: five syllables 4.35 and " 17:00" 3.26, 106.54; the line at 12, the wider: nine syllables 7.83,
+    // four spaces 1.16, "2" 0.67, and "›" 1.0, 127.92; with the padding and the border, 147.92.
+    const pick = label('below', 'pick', '예술계식당', { note: '17:00', line: '콘마요핫도그 외 2', action: '메뉴 ›' });
+
+    expect(answerLabelBox(pick)).toMatchObject({ left: -74, right: 74 });
+  });
+
+  it(`is at most ${String(MEAL_PICK_MAX)} wide, the dish cut short, where a pick without a note may be ${String(SUB_MAX)}`, () => {
+    const meal = answerLabelBox(label('below', 'pick', '예술계식당', { note: '17:00', line: LONG }));
+    const other = answerLabelBox(label('below', 'pick', '예술계식당', { line: LONG }));
+
+    expect(meal.right - meal.left).toBe(MEAL_PICK_MAX);
+    expect(other.right - other.left).toBe(SUB_MAX);
   });
 });

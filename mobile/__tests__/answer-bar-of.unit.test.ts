@@ -4,6 +4,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -23,7 +24,7 @@ const ON_SCREEN = {
 };
 
 const ASKED = bubble(1, 'user', '배고파, 민수랑 같이');
-const REPLY = bubble(2, 'assistant', '12:15에 302동식당에서 민수와 만나 먹어요.', { answer: MEAL_ANSWER });
+const REPLY = bubble(2, 'assistant', '둘 다 가까운 302동식당을 추천해요.', { answer: MEAL_ANSWER });
 
 describe('barOf', () => {
   it("draws the Plan's band of the turn on screen", () => {

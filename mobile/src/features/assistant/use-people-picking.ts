@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback } from 'react';
@@ -9,7 +10,7 @@ import type { AnswerReply, PlanInput } from '@/api/assistant-types';
 import { pickedOf, toggled, withPicked } from './people-picking';
 import { hasPeople } from './plan-input';
 
-interface PickingState {
+export interface PickingState {
   answer: AnswerReply | null;
   adding: boolean;
   picked: readonly string[] | null;
@@ -33,6 +34,14 @@ interface Picking {
 
 const NOT_PICKING = { adding: false, picked: null, pickOrder: null } as const;
 
+// Picking opened over the answer on screen, as "＋ 같이" opens it: its Plan's people checked, the order worked out anew.
+export function pickingOpened<S extends PickingState>(last: S): S {
+  const answer = pickableOf(last);
+  return last.adding || answer === null
+    ? last
+    : { ...last, adding: true, picked: pickedOf(answer.input), pickOrder: null };
+}
+
 // Picking people in the time card (P04 ticket 64) over the answer on screen's state: opened with the Plan's people
 // checked, each press checking or unchecking one, and ended by 완료, which asks once (`change`), or by leaving, which
 // changes nothing.
@@ -47,10 +56,7 @@ export function usePeoplePicking<S extends PickingState>(
         if (!open) {
           return last.adding || last.picked !== null ? { ...last, ...NOT_PICKING } : last;
         }
-        const answer = pickableOf(last);
-        return last.adding || answer === null
-          ? last
-          : { ...last, adding: true, picked: pickedOf(answer.input), pickOrder: null };
+        return pickingOpened(last);
       });
     },
     [setStored],

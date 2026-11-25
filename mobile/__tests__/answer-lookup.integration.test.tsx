@@ -9,6 +9,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -100,6 +101,8 @@ describe('the map of a way to a Place (q1)', () => {
 
     expect(mapThings()).toEqual(expect.arrayContaining(['나', '문화관(73동) · 걸어서 18분']));
     expect(mapThings()).not.toContain(ME);
+    // The walk's path comes after the reply, and no line is drawn while it is on its way (P04 ticket 75).
+    await pass(500);
     expect(mapLines()).toEqual(['answer:route:0']);
   });
 
@@ -157,6 +160,8 @@ describe('a menu (q8)', () => {
     expect(mapThings()).toEqual(
       expect.arrayContaining(['301동식당 · 부대짬뽕&군만두 · (뚝)순댓국&계란장조림', '13:00 수업 · 24동']),
     );
+    // The walk's path comes after the reply, and no line is drawn while it is on its way (P04 ticket 75).
+    await pass(500);
     expect(mapLines()).toEqual(['answer:route:0']);
   });
 });

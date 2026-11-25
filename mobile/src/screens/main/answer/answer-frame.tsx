@@ -85,6 +85,8 @@ function AnswerCard(props: AnswerCardProps): ReactElement {
       // While typing, low shows the content whole up to the middle step.
       fit={typing}
       atTop={control.pick.place !== null}
+      layer={control.answer.menuFor}
+      layerOf={control.answer.answer}
       hold={waiting}
       testID="answer-card"
     >

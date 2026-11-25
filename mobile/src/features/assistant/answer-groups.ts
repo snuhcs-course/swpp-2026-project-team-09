@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { KeptQuest, MapScene } from '@/api/assistant-types';
@@ -48,6 +49,15 @@ export const ROUTE_STYLES = {
   alt: { color: color.inkSubtle, width: 2 },
 } as const;
 
+// A meal Plan's legs (P04 ticket 76): which leg by weight, the way there a dark thin line and the way on a pale band
+// twice as wide under it; which mode by hue, walking blue and the shuttle's ride purple.
+export const LEG_STYLES = {
+  walkThere: ROUTE_STYLES.me,
+  walkOn: { color: color.routeOn, width: 10 },
+  rideThere: { color: color.svcShuttle, width: 5 },
+  rideOn: { color: color.routeShuttleOn, width: 10 },
+} as const;
+
 // A place's flag away from the pick keeps the pick's tone; a flag at the area's edge towards a place outside it (관정)
 // is a next place's.
 export const FLAG_TONES: Record<FlagRole, AnswerLabel['tone']> = {
@@ -73,7 +83,7 @@ export interface Draft {
   line: string | null;
   // A candidate's dishes and price under its title and time; left out, none.
   sub?: string | null;
-  // A meal pick's time and walking after its title, and "메뉴 ›" after its line; left out, none.
+  // A meal pick's time after its title, and "메뉴 ›" after its line; left out, none.
   note?: string | null;
   action?: string | null;
   // A meal candidate that does not fit or is far, drawn pale; left out, not.

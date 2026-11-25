@@ -4,11 +4,13 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ClassTime, Place, TimetableClass, Weekday } from '@/api/types';
 
-// The hours the week on 내 정보 shows at least: from 09 to 22. A class outside them widens the week (see `weekHours`).
+// The hours the week on 내 정보 shows at least: from 09:00 to 22:00, its rows labelled "09" to "21". A class outside
+// them widens the week (see `weekHours`).
 export const FIRST_HOUR = 9;
 export const LAST_HOUR = 22;
 
@@ -91,29 +93,4 @@ export function weekHours(blocks: readonly ClassBlockView[]): { first: number; l
 // How many days the week shows: 월 to 금, to 토 for a class on Saturday, and to 일 for one on Sunday.
 export function weekDays(blocks: readonly ClassBlockView[]): number {
   return Math.max(WORKDAYS, ...blocks.map(({ day }) => day + 1));
-}
-
-// The hour the week opens at, never before its first. While today has a class that has not ended: the start of the
-// class that is running; else the current hour, or later so that today's next class shows whole in a `window` of
-// hours, but no later than that class's start. Otherwise the hour of the week's earliest class; otherwise the first.
-// `now` is today's index in the week (0 for Monday) and the time of day in hours.
-export function openingHour(
-  blocks: readonly ClassBlockView[],
-  first: number,
-  now: { day: number; hours: number },
-  window: number,
-): number {
-  const ahead = blocks
-    .filter(({ day, end }) => day === now.day && end > now.hours)
-    .toSorted((one, other) => one.start - other.start);
-  const [next] = ahead;
-  if (next !== undefined) {
-    const running = ahead.find(({ start }) => start <= now.hours);
-    if (running !== undefined) {
-      return Math.max(first, Math.floor(running.start));
-    }
-    const showsNext = Math.max(Math.floor(now.hours), Math.ceil(next.end - window));
-    return Math.max(first, Math.min(Math.floor(next.start), showsNext));
-  }
-  return blocks.length === 0 ? first : Math.max(first, Math.floor(Math.min(...blocks.map(({ start }) => start))));
 }

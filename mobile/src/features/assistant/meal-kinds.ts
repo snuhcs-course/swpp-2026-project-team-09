@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, Cuisine, MealInput, Plan } from '@/api/assistant-types';
@@ -83,11 +84,4 @@ export function showing({ answer }: OnScreen, index: number): OnScreen {
     return { answer, index };
   }
   return { answer: withKind({ answer, index }, null).answer, index };
-}
-
-// The conditions of the day's other meal, which the bar's tick asks for (board 26): its whole window, no one's
-// constraints, no fixed Place, and no kind of food, for that meal's menus differ (as P05 agreed).
-export function otherMealInput(input: MealInput, meal: MealInput['meal']): MealInput {
-  const people = input.people.map(({ userId }) => ({ userId, constraints: [] }));
-  return { ...inputWith(input, null), meal, window: { from: null, until: null }, people, placeId: null };
 }

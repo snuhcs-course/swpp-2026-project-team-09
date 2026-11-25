@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -99,7 +100,7 @@ function rowsOf(plan: Plan, picked: readonly string[], friends: readonly FriendV
 
 // The rows in the order worked out as picking opened, which the answer's state keeps until it ends, so that a check
 // never moves a row and the keyboard, which takes the card away a while, does not reorder them (the user's phone,
-// 2026-11-25).
+// 2026-11-25). Only the rows of that order show, so that they never grow once open (P04 ticket 67).
 function useOpenOrder(
   shown: Pick<ShownAnswer, 'pickOrder' | 'keepPickOrder'>,
   rows: PickRow[] | null,
@@ -114,12 +115,19 @@ function useOpenOrder(
   return rows === null || order === null ? null : inOrder(rows, order);
 }
 
+// The User's Friends with the positions their walks are guessed from, or null while the list is on its way, so that
+// no row shows before all of them can (P04 ticket 67). A list that failed leaves the rows of the answer alone.
+function useListedFriends(): readonly FriendView[] | null {
+  const { data, isError } = useFriends();
+  return data ?? (isError ? [] : null);
+}
+
 export function usePickingBar(
   shown: ShownAnswer,
   plan: Plan,
   { busy, onClose }: { busy: boolean; onClose: () => void },
 ): PickingBar {
-  const { data: friends = [] } = useFriends();
+  const friends = useListedFriends();
   const { picked, answer, asked } = shown;
   // From 완료 until its answer, the bar shows what was asked for, not the answer before it.
   const people = picked ?? asked;
@@ -131,7 +139,8 @@ export function usePickingBar(
     return { ...plan.band, lanes, ...previewOf(plan.band, lanes) };
   }, [plan.band, people]);
   const others = asked === null ? plan.band.lanes.length - 1 : asked.length;
-  const rows = useOpenOrder(shown, picked === null || answer === null ? null : rowsOf(plan, picked, friends));
+  const waiting = picked === null || answer === null || friends === null;
+  const rows = useOpenOrder(shown, waiting ? null : rowsOf(plan, picked, friends));
   if (picked === null || answer === null || rows === null) {
     return { band, picking: null, head: null, inPlan: others };
   }
@@ -144,9 +153,9 @@ export function usePickingBar(
     head: (
       <PickHead
         disabled={busy}
-        done={doneWordsOf(friends.length)}
+        done={doneWordsOf(rows.length)}
         onCancel={leave}
-        onDone={friends.length === 0 ? leave : finishOf(shown, onClose)}
+        onDone={rows.length === 0 ? leave : finishOf(shown, onClose)}
       />
     ),
     inPlan: others,

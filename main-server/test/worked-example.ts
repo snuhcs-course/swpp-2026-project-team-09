@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type DayItem, freeTimeOf, onDay } from '../src/assistant/free-time/free-time.js';
@@ -16,10 +17,9 @@ import {
 } from '../src/assistant/gathering/gathering.js';
 import { gatherMeal, withHours } from '../src/assistant/gathering/unmet-plans.js';
 import { type MealInput } from '../src/assistant/dto/answer.dto.js';
-import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { type PlaceDto } from '../src/places/dto/place.dto.js';
-import { readSeedTravel, type SeedTravel } from '../src/travel/travel.js';
-import { WALKING_TABLE_FILE, walkingTableSchema } from '../src/travel/walking-table.js';
+import { type SeedTravel } from '../src/travel/travel.js';
+import { readFrozenTravel, readFrozenWalkingTable } from './frozen-travel.js';
 
 // The design's worked example: lunch on Tuesday 2026-11-17, asked at 11:50, on the seed's walking table. Call
 // `readWorld` in a beforeAll first.
@@ -47,8 +47,8 @@ const idOf = new Map<string, string>();
 const places = new Map<string, PlaceDto>();
 
 export async function readWorld(): Promise<void> {
-  travel = await readSeedTravel(SEED_DIRECTORY);
-  const table = await readSeedFile(SEED_DIRECTORY, WALKING_TABLE_FILE, walkingTableSchema);
+  travel = await readFrozenTravel();
+  const table = await readFrozenWalkingTable();
   for (const place of table.places) {
     idOf.set(place.name, place.id);
   }

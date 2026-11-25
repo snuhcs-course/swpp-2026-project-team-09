@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply, type MealInput, type PersonConstraint } from '../src/assistant/dto/answer.dto.js';
@@ -9,10 +10,10 @@ import { type GatheringPlace } from '../src/assistant/gathering/gathering.js';
 import { type AnswerPerson, mealAnswer } from '../src/assistant/gathering/meal-answer.js';
 import { conditionsOf } from '../src/assistant/gathering/plan-conditions.js';
 import { gatherMeal, withHours } from '../src/assistant/gathering/unmet-plans.js';
-import { SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { type Hours } from '../src/menus/restaurant-hours.js';
-import { readSeedTravel, type SeedTravel } from '../src/travel/travel.js';
+import { type SeedTravel } from '../src/travel/travel.js';
 import { at, DATE, gatheringPerson, placeOf, readWorld, restaurants } from './worked-example.js';
+import { readFrozenTravel } from './frozen-travel.js';
 
 // A meal's answer as MealPlanService makes it, for the tests of conditions that cannot be met (P02-14), on the worked
 // example's Places and the seed's walking table. Call `readUnmetWorld` in a beforeAll first.
@@ -21,7 +22,7 @@ let travel: SeedTravel | null = null;
 
 export async function readUnmetWorld(): Promise<void> {
   await readWorld();
-  travel = await readSeedTravel(SEED_DIRECTORY);
+  travel = await readFrozenTravel();
 }
 
 export interface Asking {
