@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, type TextStyle, View, type ViewStyle } from 'react-native';
 import type { AnswerLabel } from './map-answer';
 import { BADGE, GAP, LABEL_MAX, MEAL_PICK_MAX, RING, SUB_MAX } from './map-answer-box';
 import { color, mapText, radius, shadow, space, text } from './tokens';
@@ -29,7 +29,7 @@ function LabelWords({ tone, title, line, sub = null, note = null, action = null 
           WAY_FLAGS.has(tone) && styles.flagTitle,
           tone === 'late' && styles.lateTitle,
           tone === 'shuttle' && styles.shuttleTitle,
-          tone === 'leg' && styles.legTitle,
+          LEG_TITLES[tone],
         ]}
       >
         {title}
@@ -77,7 +77,7 @@ export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?:
         tone === 'meeting' && styles.meetingLabel,
         tone === 'late' && styles.lateLabel,
         tone === 'shuttle' && styles.shuttleLabel,
-        tone === 'leg' && styles.legLabel,
+        LEG_LABELS[tone],
         shift !== undefined && (side === 'left' ? { marginRight: shift } : { marginLeft: shift }),
       ]}
       testID={testID}
@@ -143,7 +143,21 @@ const styles = StyleSheet.create({
   candidateBadge: { backgroundColor: color.snuBlue },
   number: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
   action: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
-  // A route's minutes (board E1): small, on white, in the route's colour.
-  legLabel: { paddingHorizontal: space[1] },
-  legTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
+  // A meal Plan's leg's minutes (P04 ticket 76), the whole leg's time: the way there dark with white words and the way
+  // on pale with dark words, by the shuttle too. The shuttle's purple stays on its ride and its stops, so that a pill
+  // does not read as the ride's minutes alone.
+  legLabel: { paddingHorizontal: space[1], backgroundColor: color.snuBlue },
+  legOnLabel: { paddingHorizontal: space[1], backgroundColor: color.blue100 },
+  legTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.onPrimary },
+  legOnTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
 });
+
+const LEG_LABELS: Partial<Record<AnswerLabel['tone'], ViewStyle>> = {
+  leg: styles.legLabel,
+  legOn: styles.legOnLabel,
+};
+
+const LEG_TITLES: Partial<Record<AnswerLabel['tone'], TextStyle>> = {
+  leg: styles.legTitle,
+  legOn: styles.legOnTitle,
+};

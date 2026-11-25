@@ -13,6 +13,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -62,6 +63,12 @@ export const color = {
   svcShuttleSoft: '#EFEAFB',
   svcStudy: '#0369A1',
   svcStudySoft: '#E3F1FA',
+  // A meal Plan's way on to the next fixed thing, a lighter band under the way there (P04 ticket 76). On foot, a mid
+  // blue at about half of `snuBlue`'s strength, at least 3:1 against the map's light blue campus, where a paler blue
+  // sank into it. By the shuttle, the purple of `svcShuttle` at about a third, which stands apart by its hue. Opaque,
+  // so that a band that crosses itself stays one colour.
+  routeOn: '#5679E4',
+  routeShuttleOn: '#C9B0EE',
 } as const;
 
 // A 4-point grid. The key is the design system's step: space[4] is `space-4`, 16 points.

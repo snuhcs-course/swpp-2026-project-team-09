@@ -49,6 +49,15 @@ export const ROUTE_STYLES = {
   alt: { color: color.inkSubtle, width: 2 },
 } as const;
 
+// A meal Plan's legs (P04 ticket 76): which leg by weight, the way there a dark thin line and the way on a pale band
+// twice as wide under it; which mode by hue, walking blue and the shuttle's ride purple.
+export const LEG_STYLES = {
+  walkThere: ROUTE_STYLES.me,
+  walkOn: { color: color.routeOn, width: 10 },
+  rideThere: { color: color.svcShuttle, width: 5 },
+  rideOn: { color: color.routeShuttleOn, width: 10 },
+} as const;
+
 // A place's flag away from the pick keeps the pick's tone; a flag at the area's edge towards a place outside it (관정)
 // is a next place's.
 export const FLAG_TONES: Record<FlagRole, AnswerLabel['tone']> = {
