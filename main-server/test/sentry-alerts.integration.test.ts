@@ -53,8 +53,8 @@ describe('A signed issue alert from Sentry', () => {
         url: SLACK_WEBHOOK,
         timeout: true,
         text: [
-          "App crash: TypeError: Cannot read property 'x' of undefined",
-          'at app/(tabs)/index.tsx · level error · release snunow/all/26.11.24-1 · platform android',
+          "App crash: `TypeError: Cannot read property 'x' of undefined`",
+          'at `app/(tabs)/index.tsx` · level `error` · release `snunow/all/26.11.24-1` · platform `android`',
           LINK,
         ].join('\n'),
       },
