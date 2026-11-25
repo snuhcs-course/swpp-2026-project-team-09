@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -38,7 +39,8 @@ function BackgroundExplanation({ visible, blocked, onAllow, onLater }: Explanati
 
 // The row "백그라운드에서도 공유" under the Master Switch, on Android in a development build. The background permission
 // is asked only here, after an explanation; where the system no longer prompts, the explanation leads to the phone's
-// settings, and the User turns the row on again on return.
+// settings, and the User turns the row on again on return. While the Master Switch is off it shows off, as the 위치 공유
+// screen's cells do; the choice kept on the phone brings it back.
 export function BackgroundRow({ masterOn }: { masterOn: boolean }): ReactElement | null {
   const { available, on, permission, choose, ask } = useBackgroundSharing();
   const showToast = useToast();
@@ -60,7 +62,7 @@ export function BackgroundRow({ masterOn }: { masterOn: boolean }): ReactElement
             choose(next);
           }
         }}
-        value={on}
+        value={masterOn && on}
       />
       <BackgroundExplanation
         blocked={blocked}
