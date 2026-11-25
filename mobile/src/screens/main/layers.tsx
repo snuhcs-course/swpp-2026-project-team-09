@@ -196,9 +196,9 @@ function LayersButton({
 export function LayerControls({ stack }: LayerControlsProps): ReactElement {
   const { shown, progress } = useSlide(stack.open);
   const toggles: Toggle[] = [
-    { label: '식당', icon: 'meal', tint: color.pinDining, on: stack.layers.dining, onPress: stack.toggleDining },
+    { label: '식당', icon: 'meal', tint: color.svcDining, on: stack.layers.dining, onPress: stack.toggleDining },
     { label: '셔틀버스', icon: 'bus', tint: color.svcShuttle, on: stack.layers.shuttle, onPress: stack.toggleShuttle },
-    { label: '공부공간', icon: 'book', tint: color.pinStudy, on: stack.layers.study, onPress: stack.toggleStudy },
+    { label: '공부공간', icon: 'bookOpen', tint: color.svcStudy, on: stack.layers.study, onPress: stack.toggleStudy },
   ];
   const rise = progress.interpolate({ inputRange: [0, 1], outputRange: [RISE, 0] });
   return (

@@ -58,7 +58,7 @@ const PLACE: Record<Extract<CardMark, { type: 'place' }>['place'], { tint: strin
   quest: { tint: color.quest, icon: 'flag' },
   dining: { tint: color.svcDining, icon: 'meal' },
   shuttle: { tint: color.svcShuttle, icon: 'bus' },
-  library: { tint: color.svcStudy, icon: 'book' },
+  library: { tint: color.svcStudy, icon: 'bookOpen' },
 };
 
 // What stands at the card's head: a person's Avatar, with the status for a Friend, the place's icon on a round of its

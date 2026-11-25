@@ -1545,9 +1545,11 @@ A repeated element that the design system lacks becomes a shared component here,
 
 `MapDot` is a marker from far away, which the frames draw and the design system does not name. A 행사, a 파티 and a
 퀘스트 are `MapTag`'s round of 20; a campus service is its colour in a white border, 4 larger and inside a ring of the
-key colour when selected. `MapStudyPin` is the 공부공간 layer's sky round of 22 with a white book and a tail (grey and
-faint for a building the User may not use), and `MapStudyCluster` a light sky see-through round with the count in a
-sky round (changelog 11.24 § 4-6). The 식당 and 공부공간 layer buttons take the pins' colours, `pinDining` and `pinStudy`.
+key colour when selected. `MapStudyPin` is the 공부공간 layer's round of 22 in `svcStudy` with a white open book (`bookOpen`) and a tail (grey and
+faint for a building the User may not use), and `MapStudyCluster` a light see-through round of that colour with the
+count in a round of it (changelog 11.24 § 4-6; the canvas's sky sank into the map's campus). The 식당 layer's pin is
+`pinDining` coral; its button, card and the chat's restaurant cards are the darker `svcDining` coral, which white
+words read on. 공부공간 shows the open book everywhere.
 
 `MapPerson` is a person on the map, which the `Main` wireframe draws and the design system does not name: a teardrop
 filled with a colour of `presence`, with the person's small Avatar in it, 24 wide in its `small` form and 36

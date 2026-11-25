@@ -17,7 +17,7 @@ const KINDS: Record<MapPlaceKind, { fill: string; icon: IconName; service: boole
   party: { fill: color.party, icon: 'users', service: false, name: '파티' },
   quest: { fill: color.quest, icon: 'flag', service: false, name: '퀘스트' },
   dining: { fill: color.svcDining, icon: 'meal', service: true, name: '식당' },
-  library: { fill: color.svcStudy, icon: 'book', service: true, name: '공부공간' },
+  library: { fill: color.svcStudy, icon: 'bookOpen', service: true, name: '공부공간' },
   shuttle: { fill: color.svcShuttle, icon: 'bus', service: true, name: '셔틀버스' },
 };
 

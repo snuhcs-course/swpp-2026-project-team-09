@@ -35,6 +35,7 @@ import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
 import { showsStartButton } from '@/features/tutorial/rules';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { FriendList } from './friend-list';
+import { useFriendPanelShown } from './friend-panel';
 import { OffMapFriendCard, useOffMapFriends } from './friend-profile';
 import { listsTop, ROUTE_PADDING, type Room } from './layout';
 import { LocationExplanation } from './location-explanation';
@@ -91,16 +92,18 @@ interface SelectedCardProps {
 
 // What floats over the map, between the phone's status bar and the navigation: each child places itself there, by
 // the offsets of `layout.ts`. A press beside the children reaches the map. It tells its size, the stage's, by which
-// the lists and the row of buttons fit themselves to a low or narrow screen.
+// the lists and the row of buttons fit themselves to a low or narrow screen. It gives way while the friend panel is
+// open.
 function OverMap({ children, onStage }: OverMapProps): ReactElement {
   const { top } = useSafeAreaInsets();
+  const panelShown = useFriendPanelShown();
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
         const { width, height } = nativeEvent.layout;
         onStage({ width, height });
       }}
-      style={[styles.overMap, { top }]}
+      style={[styles.overMap, { top }, panelShown && styles.underPanel]}
       testID="over-map"
     >
       {children}
@@ -348,4 +351,6 @@ const styles = StyleSheet.create({
   overMap: { position: 'absolute', right: 0, bottom: 0, left: 0, pointerEvents: 'box-none' },
   lists: { ...StyleSheet.absoluteFill, pointerEvents: 'box-none' },
   hidden: { display: 'none' },
+  // Under the friend panel's glass, which is drawn in the overlay above: kept laid out, but not seen or pressed.
+  underPanel: { opacity: 0, pointerEvents: 'none' },
 });

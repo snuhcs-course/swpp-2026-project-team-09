@@ -56,16 +56,17 @@ export const color = {
   dangerSoft: '#FCE8E8',
   warning: '#9A5200',
   warningSoft: '#FDF1E0',
-  svcDining: '#B8336A',
-  svcDiningSoft: '#FBE7EF',
+  // The 식당 layer's coral (changelog 11.24 § 4-5), dark enough for white words on it (4.96:1): its button, a 식당's
+  // card and the chat's restaurant cards. The pin itself is the lighter `pinDining`.
+  svcDining: '#C4452C',
+  svcDiningSoft: '#FCEBE6',
   svcShuttle: '#6B46C1',
   svcShuttleSoft: '#EFEAFB',
   svcStudy: '#0369A1',
   svcStudySoft: '#E3F1FA',
-  // The 식당 and 공부공간 layers' pins and their buttons, as the changelog of 11.24 (§ 4-5, § 4-6) colours them: coral
-  // and sky.
+  // The 식당 layer's pin, as the changelog of 11.24 (§ 4-5) colours it. 공부공간 keeps `svcStudy` for its pin too: the
+  // changelog's sky sank into the map's light-blue campus.
   pinDining: '#EE6A4C',
-  pinStudy: '#3A9AE6',
 } as const;
 
 // A 4-point grid. The key is the design system's step: space[4] is `space-4`, 16 points.
@@ -115,10 +116,10 @@ export const halo = {
   selected: 'rgba(0, 26, 114, 0.18)',
   // Around a selected dot, as the `Main` frame draws it: the key colour at 25%.
   selectedDot: 'rgba(0, 26, 114, 0.25)',
-  // Around merged study pins, the `Main` board's see-through outer round: the study pins' sky at 20%, with a rim of it
+  // Around merged study pins, the `Main` board's see-through outer round: the study colour at 20%, with a rim of it
   // at 25%.
-  study: 'rgba(58, 154, 230, 0.2)',
-  studyRim: 'rgba(58, 154, 230, 0.25)',
+  study: 'rgba(3, 105, 161, 0.2)',
+  studyRim: 'rgba(3, 105, 161, 0.25)',
   // Around a chosen tag of the map, as the `Main` board rings it: the key colour at 16%.
   selectedTag: 'rgba(0, 26, 114, 0.16)',
 } as const;

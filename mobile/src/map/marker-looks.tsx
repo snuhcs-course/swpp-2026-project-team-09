@@ -251,7 +251,12 @@ function withInterest(look: Extract<MarkerLook, { form: MarkerForm }>, view: Rea
     return view;
   }
   return (
-    <MapMarkBadge faded={look.faded} form={standsOnTip(look) ? 'pin' : 'dot'} fresh={look.fresh}>
+    <MapMarkBadge
+      faded={look.faded}
+      form={standsOnTip(look) ? 'pin' : 'dot'}
+      fresh={look.fresh}
+      named={look.label !== undefined}
+    >
       {view}
     </MapMarkBadge>
   );

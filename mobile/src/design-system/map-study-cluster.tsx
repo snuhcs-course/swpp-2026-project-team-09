@@ -11,7 +11,7 @@ import { seeThrough } from './see-through';
 import { color, font, halo, radius, text } from './tokens';
 
 // Study pins merged while the whole campus is in view, as the changelog of 11.24 (§ 4-6) and the `Main` board draw a
-// cluster of 공부공간: a light sky round, see-through, with the count in white in a round of the study pins' sky.
+// cluster of 공부공간: a light round of the study colour, see-through, with the count in white in a round of it.
 export function MapStudyCluster({ count, selected = false }: { count: number; selected?: boolean }): ReactElement {
   return (
     <View
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     width: CLUSTER_INNER,
     height: CLUSTER_INNER,
     borderRadius: radius.full,
-    backgroundColor: seeThrough(color.pinStudy, 0.92),
+    backgroundColor: seeThrough(color.svcStudy, 0.92),
     boxShadow: `0 0 0 2px ${color.surface}`,
   },
   clusterCount: { ...text.micro, fontFamily: font.bold, fontSize: 13, lineHeight: 16, color: color.onPrimary },

@@ -74,7 +74,7 @@ export function MapTag({
         style={[
           styles.frame,
           { height: size.box, borderColor: seeThrough(fill, kind === 'quest' ? TAG.questRim : TAG.rim) },
-          !named && { width: size.box },
+          named ? styles.namedFrame : { width: size.box },
           kind === 'quest' && styles.quest,
           selected && styles.selectedFrame,
         ]}
@@ -130,6 +130,9 @@ const styles = StyleSheet.create({
   ...tagStyles,
   pin: { alignItems: 'center', alignSelf: 'flex-start' },
   namedTag: { gap: 5, paddingRight: 9, paddingLeft: 3 },
+  // Under a named tag's glass, white at 75%: with the glass's 80% the ground is 95%, so that the map's own words under
+  // the tag do not read through its name (design review of A04-06). The rounds of 20 and 26 stay at 80%.
+  namedFrame: { backgroundColor: 'rgba(255, 255, 255, 0.75)' },
   quest: { opacity: QUEST_OPACITY, boxShadow: '0 1px 4px rgba(14, 19, 48, 0.08)' },
   // Room under the count, which reaches past the tag's end, so that it does not cover the name.
   namedCounted: { paddingRight: 9 + COUNT },

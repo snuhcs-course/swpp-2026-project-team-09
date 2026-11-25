@@ -6,33 +6,9 @@
 
 import type { ReactElement, ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 import { Icon } from './icon';
 import { seeThrough } from './see-through';
 import { color, halo, radius } from './tokens';
-
-// The canvas's open book, drawn by us: two pages, lightly filled, and the spine.
-function OpenBook(): ReactElement {
-  return (
-    <Svg
-      fill="none"
-      height={GLYPH}
-      stroke={color.onPrimary}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2.2}
-      viewBox="0 0 24 24"
-      width={GLYPH}
-    >
-      <Path
-        d="M12 6.8C10.4 5.5 8 5 3.5 5.2v12.6c4.5-.2 6.9.3 8.5 1.6 1.6-1.3 4-1.8 8.5-1.6V5.2C16 5 13.6 5.5 12 6.8z"
-        fill={color.onPrimary}
-        fillOpacity={0.25}
-      />
-      <Path d="M12 6.8v12.6" />
-    </Svg>
-  );
-}
 
 interface RoundPinProps {
   name: string;
@@ -84,12 +60,12 @@ interface StudyPinProps {
   muted?: boolean;
 }
 
-// A building of the 공부공간 layer: the sky round with a white book.
+// A building of the 공부공간 layer: the study colour's round with a white open book.
 export function MapStudyPin({ name, selected = false, muted = false }: StudyPinProps): ReactElement {
   return (
     <RoundPin
-      fill={muted ? color.inkSubtle : color.pinStudy}
-      glyph={<OpenBook />}
+      fill={muted ? color.inkSubtle : color.svcStudy}
+      glyph={<Icon color={color.onPrimary} name="bookOpen" size={GLYPH} />}
       muted={muted}
       name={name}
       selected={selected}
