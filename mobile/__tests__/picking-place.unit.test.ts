@@ -15,6 +15,7 @@ interface Props {
   picking: boolean;
   place: GripPlace;
   high?: boolean;
+  moving?: boolean;
 }
 
 async function heldFrom(place: GripPlace): Promise<{
@@ -23,8 +24,8 @@ async function heldFrom(place: GripPlace): Promise<{
 }> {
   const settled = jest.fn<void, [GripPlace]>();
   const { rerender } = await renderHook(
-    ({ picking, place: at, high = false }: Props) => {
-      usePickingPlace(picking, { place: at, settleTo: settled }, high);
+    ({ picking, place: at, high = false, moving = false }: Props) => {
+      usePickingPlace(picking, { place: at, moving, settleTo: settled }, high);
     },
     { initialProps: { picking: false, place } },
   );
@@ -58,7 +59,7 @@ describe('the time card after picking', () => {
     const settled = jest.fn<void, [GripPlace]>();
     const { rerender } = await renderHook(
       ({ picking, place }: Props) => {
-        usePickingPlace(picking, { place, settleTo: settled }, false);
+        usePickingPlace(picking, { place, moving: false, settleTo: settled }, false);
       },
       { initialProps: { picking: true, place: 'shown' as GripPlace } },
     );
@@ -83,13 +84,23 @@ describe('the picking rows and the answer’s sheet', () => {
   it('opens the rows each time the sheet comes back from high while picking, and leaves them alone otherwise', async () => {
     const held = await heldFrom('shown');
     await held.rerender({ picking: true, place: 'shown' });
-    await held.rerender({ picking: true, place: 'open', high: true });
+    await held.rerender({ picking: true, place: 'shown', high: true });
     await held.rerender({ picking: true, place: 'shown', high: false });
-    await held.rerender({ picking: true, place: 'open', high: true });
+    await held.rerender({ picking: true, place: 'shown', high: true });
     await held.rerender({ picking: true, place: 'shown', high: false });
     await held.rerender({ picking: false, place: 'open', high: true });
     await held.rerender({ picking: false, place: 'shown', high: false });
 
     expect(held.settled.mock.calls).toEqual([['open'], ['open'], ['open'], ['shown']]);
+  });
+
+  // The user's phone (2026-11-25): raised to high while the rows were still opening, the sheet left them open under it.
+  it('folds the rows that finish opening while the sheet stands high, and leaves a moving card to finish', async () => {
+    const held = await heldFrom('shown');
+    await held.rerender({ picking: true, place: 'shown' });
+    await held.rerender({ picking: true, place: 'shown', moving: true, high: true });
+    await held.rerender({ picking: true, place: 'open', moving: false, high: true });
+
+    expect(held.settled.mock.calls).toEqual([['open'], ['shown']]);
   });
 });
