@@ -2,10 +2,11 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, type TextStyle, View, type ViewStyle } from 'react-native';
 import type { AnswerLabel } from './map-answer';
 import { BADGE, GAP, LABEL_MAX, RING, SUB_MAX } from './map-answer-box';
 import { color, mapText, radius, shadow, space, text } from './tokens';
@@ -28,7 +29,7 @@ function LabelWords({ tone, title, line, sub = null, note = null, action = null 
           WAY_FLAGS.has(tone) && styles.flagTitle,
           tone === 'late' && styles.lateTitle,
           tone === 'shuttle' && styles.shuttleTitle,
-          tone === 'leg' && styles.legTitle,
+          LEG_TITLES[tone],
         ]}
       >
         {title}
@@ -75,7 +76,7 @@ export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?:
         tone === 'meeting' && styles.meetingLabel,
         tone === 'late' && styles.lateLabel,
         tone === 'shuttle' && styles.shuttleLabel,
-        tone === 'leg' && styles.legLabel,
+        LEG_LABELS[tone],
         shift !== undefined && (side === 'left' ? { marginRight: shift } : { marginLeft: shift }),
       ]}
       testID={testID}
@@ -140,7 +141,27 @@ const styles = StyleSheet.create({
   candidateBadge: { backgroundColor: color.snuBlue },
   number: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
   action: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
-  // A route's minutes (board E1): small, on white, in the route's colour.
-  legLabel: { paddingHorizontal: space[1] },
-  legTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
+  // A meal Plan's leg's minutes (P04 ticket 76): in its line's colours, the way there dark with white words and the way
+  // on pale with words in the line's own colour, blue on foot and purple by the shuttle.
+  legLabel: { paddingHorizontal: space[1], backgroundColor: color.snuBlue },
+  legOnLabel: { paddingHorizontal: space[1], backgroundColor: color.blue100 },
+  legShuttleLabel: { paddingHorizontal: space[1], backgroundColor: color.svcShuttle },
+  legShuttleOnLabel: { paddingHorizontal: space[1], backgroundColor: color.svcShuttleSoft },
+  legTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.onPrimary },
+  legOnTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
+  legShuttleOnTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.svcShuttle },
 });
+
+const LEG_LABELS: Partial<Record<AnswerLabel['tone'], ViewStyle>> = {
+  leg: styles.legLabel,
+  legOn: styles.legOnLabel,
+  legShuttle: styles.legShuttleLabel,
+  legShuttleOn: styles.legShuttleOnLabel,
+};
+
+const LEG_TITLES: Partial<Record<AnswerLabel['tone'], TextStyle>> = {
+  leg: styles.legTitle,
+  legOn: styles.legOnTitle,
+  legShuttle: styles.legTitle,
+  legShuttleOn: styles.legShuttleOnTitle,
+};
