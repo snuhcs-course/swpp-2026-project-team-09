@@ -41,7 +41,7 @@ Built in PR #552 (marked ready 2026-11-25). The emulator pictures are in the PR 
 
 - Agent time: about 2 hours 10 minutes in all, an estimate from the transcripts' timestamps.
   - About 1 hour 20 minutes in the map-first-answer side session.
-  - About 50 minutes in its three subagents, partly in parallel with it: a review of the main server's `others`, the main server's `others`, and the rewrite of the old flow's tests.
+  - About 50 minutes in its three subagents, partly in parallel with it. Among them were the main server's `others` and the rewrite of the old flow's tests.
 - Tokens, the session and its subagents together:
   - Output: about 409k.
   - Input: about 1k uncached, plus 197M cache reads and 1.2M cache writes.
