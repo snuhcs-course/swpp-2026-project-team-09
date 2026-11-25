@@ -4,6 +4,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -44,7 +45,7 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 
 // Three sentences, longer than the low sheet's two lines.
 const LONG =
-  '12:15에 302동식당에서 민수와 만나 먹어요. 301동식당은 뚝배기불고기가 5,000원이고 걸음 15분이에요. 학생회관식당은 떡볶이가 있어요.';
+  '둘 다 가까운 302동식당을 추천해요. 301동식당은 뚝배기불고기가 5,000원이고 걸음 15분이에요. 학생회관식당은 떡볶이가 있어요.';
 
 let server: FakeServer;
 

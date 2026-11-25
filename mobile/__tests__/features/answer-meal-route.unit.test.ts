@@ -8,11 +8,26 @@
 import { crowdedMealAnswer } from '@/api/mock/data/crowded-meal';
 import { ANSWER_SYMBOL_BOX } from '@/design-system';
 import { panToShow } from '@/features/assistant/answer-camera';
+import { LEG_STYLES } from '@/features/assistant/answer-groups';
 import { drawingOf } from '@/features/assistant/answer-marks';
 import { withDots } from '@/features/assistant/meal-marks';
 import { inView } from '@/map';
 import { seen } from '../support/answer-marks';
 import { AREA, FIRST_CAMERA, positionAt, viewAt } from '../support/answer-view';
+
+// A colour's relative luminance as WCAG 2 counts it.
+function luminance(hex: string): number {
+  const [r = 0, g = 0, b = 0] = [1, 3, 5].map((at) => {
+    const channel = Number.parseInt(hex.slice(at, at + 2), 16) / 255;
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrast(one: string, other: string): number {
+  const [light = 0, dark = 0] = [luminance(one), luminance(other)].toSorted((a, b) => b - a);
+  return (light + 0.05) / (dark + 0.05);
+}
 
 // The crowded meal answer's map (the answer screen's redesign, boards E1 and E2): eleven restaurants between a Class
 // ending at 301동 at 10:45 and one at 302동 at 15:30.
@@ -30,19 +45,23 @@ describe('학생회관식당 chosen in the crowded meal answer', () => {
     expect(seen(drawing, 'answer:next:place-302').label).toMatchObject({ tone: 'meeting', title: '15:30 302동 수업' });
   });
 
-  it('draws the way there solid and the way on dotted, each with its minutes', () => {
-    expect(drawing.lines.map(({ style }) => style.dash)).toEqual([undefined, [1, 8]]);
-    expect(seen(drawing, 'answer:leg:0:15분').label).toMatchObject({ tone: 'leg', title: '15분' });
-    expect(seen(drawing, 'answer:leg:1:17분').label).toMatchObject({ tone: 'leg', title: '17분' });
+  // P04 ticket 76: the way there a dark thin line, the way on a pale wide band drawn first so that it lies under it.
+  it('draws the way on as a pale band under the way there, a dark thin line', () => {
+    expect(drawing.lines.map(({ id, style }) => [id, style])).toEqual([
+      ['answer:route:1', LEG_STYLES.walkOn],
+      ['answer:route:0', LEG_STYLES.walkThere],
+    ]);
+    expect(LEG_STYLES.walkOn.width).toBeGreaterThan(LEG_STYLES.walkThere.width);
   });
 
-  it('draws the way on as dots, which the native map cannot dash, and the way there whole', () => {
-    const lines = withDots(drawing.lines);
-    expect(lines[0]).toBe(drawing.lines[0]);
-    expect(lines.length).toBeGreaterThan(20);
-    expect(lines.slice(1).every(({ id, points }) => id.startsWith('answer:route:1:dot:') && points.length === 2)).toBe(
-      true,
-    );
+  it("gives each leg's minutes the look of its line: dark for the way there, pale for the way on", () => {
+    expect(seen(drawing, 'answer:leg:0:15분').label).toMatchObject({ tone: 'leg', title: '15분' });
+    expect(seen(drawing, 'answer:leg:1:17분').label).toMatchObject({ tone: 'legOn', title: '17분' });
+  });
+
+  it('draws no dots: each line stays whole', () => {
+    expect(withDots(drawing.lines)).toEqual(drawing.lines);
+    expect(drawing.lines.some(({ id }) => id.includes(':dot:'))).toBe(false);
   });
 
   it('gives the pick its label with "메뉴 ›" and never fades it, though its walking is over thirty minutes', () => {
@@ -61,6 +80,17 @@ describe('학생회관식당 chosen in the crowded meal answer', () => {
 
   it('keeps every candidate in the camera', () => {
     expect(drawing.keep).toEqual(drawing.points);
+  });
+});
+
+// The campus ground as the Kakao map draws it (the emulator, 2026-11-26), and WCAG's 3:1 for a graphic: the pale blue
+// band first drawn (#9FB0E6) was 1.6:1 on it and hard to see on the phone.
+describe("the way on's band on the map", () => {
+  const campus = '#D1E3EE';
+
+  it('stands at least 3:1 against the campus, and the way there at least 3:1 against it', () => {
+    expect(contrast(LEG_STYLES.walkOn.color, campus)).toBeGreaterThanOrEqual(3);
+    expect(contrast(LEG_STYLES.walkThere.color, LEG_STYLES.walkOn.color)).toBeGreaterThanOrEqual(3);
   });
 });
 
@@ -97,6 +127,6 @@ describe('a leg by shuttle', () => {
     const drawing = drawingOf(CROWDED, at('자하연식당 2층'));
 
     expect(seen(drawing, 'answer:leg:0:셔틀 13분').label).toMatchObject({ tone: 'leg', title: '셔틀 13분' });
-    expect(seen(drawing, 'answer:leg:1:20분').label).toMatchObject({ tone: 'leg', title: '20분' });
+    expect(seen(drawing, 'answer:leg:1:20분').label).toMatchObject({ tone: 'legOn', title: '20분' });
   });
 });

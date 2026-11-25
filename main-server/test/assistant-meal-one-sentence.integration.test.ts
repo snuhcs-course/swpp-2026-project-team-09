@@ -18,7 +18,7 @@ beforeAll(() => stage.start());
 afterAll(() => stage.stop());
 
 const TUESDAY = '2084-03-07';
-const FIRST = '301동식당이 가장 가까워서 11:50에 먹어요.';
+const FIRST = '가장 가까운 301동식당을 추천해요.';
 
 describe('A meal reply with a walk in a second sentence', () => {
   it('reaches the app as its first sentence alone', async () => {

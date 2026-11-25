@@ -15,6 +15,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The team's design system "SNU Now", ported to React Native. A screen takes its colours, text styles and shared
@@ -45,6 +46,7 @@ export {
   type AnswerSymbol,
   type FaceBadge,
   type LabelSide,
+  type LegTone,
   MapAnswerMark,
 } from './map-answer';
 export { MapPerson, type PersonTone } from './map-person';

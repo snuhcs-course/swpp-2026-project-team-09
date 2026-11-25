@@ -3,6 +3,7 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -207,7 +208,10 @@ describe('A seat that starts as the meal window opens', () => {
 
 describe('A single request', () => {
   it('stays as it was: lunch alone sets out from the Class before it, and the reply has no steps', async () => {
-    const reply = await asked([lunch(), { text: '13:00에 먹어요.' }], '13시쯤 점심 먹자');
+    const reply = await asked(
+      [lunch(), { text: '수업 끝나고 바로 갈 수 있는 301동식당을 추천해요.' }],
+      '13시쯤 점심 먹자',
+    );
 
     expect(reply).not.toHaveProperty('steps');
     expect(originOf(reply.answer)).toEqual({ placeId: b301.id, basis: 'timetable' });

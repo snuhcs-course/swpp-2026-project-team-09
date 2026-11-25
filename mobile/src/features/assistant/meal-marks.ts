@@ -3,28 +3,28 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import { color, type LabelSide } from '@/design-system';
+import { type LabelSide, type LegTone } from '@/design-system';
 import { koreaClock } from '@/korea-time';
 import type { MapLine } from '@/map';
-import { type Draft, ROUTE_STYLES } from './answer-groups';
+import { type Draft, LEG_STYLES, ROUTE_STYLES } from './answer-groups';
 import { metresBetween } from './answer-drawing';
 import { fixedAfter, routeLineId, startOf } from './answer-walks';
-import { BY_SHUTTLE, NO_WAYS, shuttleLines, shuttleRouteLines, stopDrafts, type Ways } from './shuttle-legs';
+import { NO_WAYS, shuttleLines, shuttleRouteLines, stopDrafts, type Ways } from './shuttle-legs';
 
 // Whether an answer is drawn as a meal answer of the redesign: a meal whose Plans have menus.
 export function drawsMeal({ input, plans }: AnswerReply): boolean {
   return input.kind === 'meal' && plans.some(({ menu }) => menu !== undefined);
 }
 
-// A meal answer's route on the map (the answer screen's redesign, board E1): the way to the chosen place solid, the
-// way on to the next fixed thing dotted, each leg with its minutes, and the start and the next thing as dark labels
-// with their times ("10:45 301동", "15:30 302동 수업").
-
-const WAY_ON = { color: color.snuBlue, width: 4, dash: [1, 8] } as const;
+// A meal answer's route on the map (the answer screen's redesign, board E1; P04 ticket 76): the way to the chosen place
+// a dark thin line and the way on to the next fixed thing a pale band under it, walking blue and the shuttle purple
+// (`LEG_STYLES`), each leg with its minutes in its line's colours, and the start and the next thing as dark labels with
+// their times ("10:45 301동", "15:30 302동 수업").
 
 function along(from: LatLng, to: LatLng, share: number): LatLng {
   return {
@@ -35,6 +35,11 @@ function along(from: LatLng, to: LatLng, share: number): LatLng {
 
 // Where along its leg a leg's minutes may stand, in order: the middle first.
 const ALONG = [0.5, 0.35, 0.65, 0.2, 0.8] as const;
+
+// A leg's minutes, the whole leg's time: the way there dark, the way on pale, whatever the mode.
+function legToneOf(on: boolean): LegTone {
+  return on ? 'legOn' : 'leg';
+}
 
 // The paths a scene's walks were found along, by their lines' ids (`routeLineId`); a route not in it is drawn straight.
 export type WalkPaths = Ways['paths'];
@@ -88,16 +93,16 @@ function legPlaces(line: readonly LatLng[]): { position: LatLng; overFaces: bool
   ];
 }
 
-// A leg's label: "셔틀 12분" by shuttle, "6분" on foot. It may stand anywhere along its leg as drawn (`either`) and keeps
-// clear of the legs' lines. Its id carries its words, so that a leg whose words change is a new mark: the native map
-// would otherwise keep the picture of the words before until the new one is made.
+// A leg's label: "셔틀 12분" by shuttle, "6분" on foot, dark for the way there and pale for the way on (`legToneOf`). It may stand anywhere along
+// its leg as drawn (`either`) and keeps clear of the legs' lines. Its id carries its words, so that a leg whose words
+// change is a new mark: the native map would otherwise keep the picture of the words before until the new one is made.
 function legDrafts(
   scene: MapScene,
   ways: Ways,
   lines: readonly (readonly LatLng[])[],
   hidden: ReadonlySet<number>,
 ): Draft[] {
-  return legsOf(scene, hidden).flatMap(({ route: { minutes, mode }, index }): Draft[] => {
+  return legsOf(scene, hidden).flatMap(({ route: { minutes, mode, role }, index }): Draft[] => {
     const title = mode === 'shuttle' ? `셔틀 ${String(minutes)}분` : `${String(minutes)}분`;
     const id = `answer:leg:${String(index)}:${title}`;
     return legPlaces(legLine(scene, index, ways)).map(({ position, overFaces }) => ({
@@ -107,7 +112,7 @@ function legDrafts(
       planId: null,
       group: 'leg',
       symbol: null,
-      tone: 'leg',
+      tone: legToneOf(role === 'next'),
       title,
       line: null,
       number: null,
@@ -190,69 +195,34 @@ export function mealDrafts(
   return [...marked, ...legDrafts(scene, ways, lines, hidden), ...stopDrafts(ways.legs)];
 }
 
-// The lines of a scene's routes: a meal Plan's way on to the next fixed thing dotted, a meal Plan's leg by the shuttle
-// as its walks and its ride (`shuttleRouteLines`), the rest in their own style.
+// The lines of a scene's routes. A meal Plan's way there is a dark thin line and its way on a pale band, each by the
+// shuttle as its walks and its ride (`shuttleRouteLines`), the bands first, so that the native map, which draws a later
+// line on top, lays each line over the band of a way on that shares its road (P04 ticket 76). The rest keep their own
+// style, in their order.
 export function sceneLines(
   scene: MapScene,
   meal: boolean,
   ways: Ways = NO_WAYS,
   hidden: ReadonlySet<number> = NONE_HIDDEN,
 ): MapLine[] {
-  return scene.routes.flatMap((route, index): MapLine[] => {
+  const drawn = scene.routes.flatMap((route, index): { on: boolean; lines: MapLine[] }[] => {
     const { role, from, to, mode } = route;
     if (hidden.has(index)) {
       return [];
     }
-    if (meal && mode === 'shuttle' && (role === 'me' || role === 'next')) {
-      return shuttleRouteLines(route, index, ways);
+    const leg = meal && (role === 'me' || role === 'next');
+    const on = leg && role === 'next';
+    if (leg && mode === 'shuttle') {
+      return [{ on, lines: shuttleRouteLines(route, index, ways, on) }];
     }
-    return [
-      { id: routeLineId(index), points: [from, to], style: meal && role === 'next' ? WAY_ON : ROUTE_STYLES[role] },
-    ];
+    const style = leg ? (on ? LEG_STYLES.walkOn : LEG_STYLES.walkThere) : ROUTE_STYLES[role];
+    return [{ on, lines: [{ id: routeLineId(index), points: [from, to], style }] }];
   });
+  return [...drawn.filter(({ on }) => on), ...drawn.filter(({ on }) => !on)].flatMap(({ lines }) => lines);
 }
 
-// The native map draws every line solid, so the way on is drawn as dots: short round-ended pieces every 24 metres.
-const DOT = { length: 2, every: 24 };
-const DOT_STYLE = { color: color.snuBlue, width: 6 } as const;
-const SHUTTLE_DOT_STYLE = { color: BY_SHUTTLE.color, width: 6 } as const;
-
-// The dots of one straight piece from `walked` metres along the way, from the next dot's place `next` on.
-function piece(from: LatLng, to: LatLng, walked: number, next: number, dots: LatLng[][]): number {
-  const length = metresBetween(from, to);
-  if (length === 0) {
-    return next;
-  }
-  let at = next;
-  while (at + DOT.length <= walked + length) {
-    const start = (at - walked) / length;
-    dots.push([along(from, to, start), along(from, to, start + DOT.length / length)]);
-    at += DOT.every;
-  }
-  return at;
-}
-
-function dotsOf(points: readonly LatLng[]): LatLng[][] {
-  const dots: LatLng[][] = [];
-  let next = DOT.every / 2;
-  let walked = 0;
-  for (let at = 1; at < points.length; at += 1) {
-    const from = points[at - 1];
-    const to = points[at];
-    if (from !== undefined && to !== undefined) {
-      next = piece(from, to, walked, next, dots);
-      walked += metresBetween(from, to);
-    }
-  }
-  return dots;
-}
-
-// The lines with a meal Plan's way on (`WAY_ON`) as its dots, once its path is known or straight.
+// The lines as they are: a meal Plan's way on was once drawn as dots, which the native map could not dash, and is a
+// band since P04 ticket 76. Kept for `use-answer-walks.ts` until the path's own ticket (75) drops the call.
 export function withDots(lines: readonly MapLine[]): MapLine[] {
-  return lines.flatMap((line) => {
-    const style = line.style === WAY_ON ? DOT_STYLE : line.style === BY_SHUTTLE ? SHUTTLE_DOT_STYLE : null;
-    return style === null
-      ? [line]
-      : dotsOf(line.points).map((points, at) => ({ id: `${line.id}:dot:${String(at)}`, points, style }));
-  });
+  return [...lines];
 }

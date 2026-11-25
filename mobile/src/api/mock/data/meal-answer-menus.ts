@@ -97,7 +97,7 @@ export const MEAL_DINNER_MENUS: AnswerReply & { input: MealInput } = {
 };
 
 export const MEAL_ANSWER_MENUS_REPLY: AssistantReply & { answer: AnswerReply } = {
-  text: '12:15에 302동식당에서 민수와 만나 먹어요.',
+  text: '둘 다 가까운 302동식당을 추천해요.',
   mapButtons: [],
   cards: [],
   proposal: null,
