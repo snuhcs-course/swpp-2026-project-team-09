@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent } from '@testing-library/react-native';
@@ -74,7 +75,8 @@ function sheetAt(): number {
 }
 
 // Partitions: the sheet at low and at middle; the time card's height told again a fraction of a point off, many times
-// over, as on the phone; and a real change of the time card's height, which moves the sheet.
+// over, as on the phone; and a real change of the time card's height, which leaves the sheet too: its steps no longer
+// hear the time card's height (`frame-card-high`).
 describe('the time card told again a fraction of a point off', () => {
   it('leaves the sheet at low where it stands, however often it is told', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
@@ -105,7 +107,7 @@ describe('the time card told again a fraction of a point off', () => {
     expect(sheetAt()).toBe(before);
   });
 
-  it('moves the sheet when the time card really grows', async () => {
+  it('leaves the sheet where it stands when the time card really grows', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
     await layStage(390, 760);
     await layTimeCard(112);
@@ -114,6 +116,6 @@ describe('the time card told again a fraction of a point off', () => {
 
     await layTimeCard(140);
 
-    expect(sheetAt()).not.toBe(before);
+    expect(sheetAt()).toBe(before);
   });
 });

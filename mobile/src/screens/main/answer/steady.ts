@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -13,16 +14,6 @@ export const STEADY = 0.5;
 
 function moved(last: number | null, next: number): boolean {
   return last === null || Math.abs(next - last) >= STEADY;
-}
-
-// A length handed down as a prop, kept until it moves by STEADY or more.
-export function useSteady(value: number): number {
-  const [kept, setKept] = useState(value);
-  const goes = moved(kept, value);
-  if (goes && value !== kept) {
-    setKept(value);
-  }
-  return goes ? value : kept;
 }
 
 // A length told by an `onLayout`, set only when it moves by STEADY or more, so that a fraction sets no state at all.

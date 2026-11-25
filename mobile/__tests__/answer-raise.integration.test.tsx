@@ -7,12 +7,14 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent } from '@testing-library/react-native';
 import { StyleSheet, type ViewStyle } from 'react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
-import { text } from '@/design-system';
+import { space, text } from '@/design-system';
+import { foldedTimeCardOf } from '@/screens/main/answer/card-caps';
 import { FLING_SPEED } from '@/screens/main/answer/card-levels';
 import { listsTop } from '@/screens/main/layout';
 import { pass, screen } from './support/app';
@@ -39,9 +41,9 @@ jest.mock('@/hooks/use-reduce-motion', () => ({
 
 const ASKED = '식사 메뉴 추천';
 const STAGE = 760;
-// Where the raised card stops, the answer having no time bar: the lists' top, the tests' status bar taking nothing
-// (P04 ticket 52: no "←" stands there any more).
-const TOP_ROOM = listsTop(0);
+// Where the raised card stops: just under the place the folded time card takes, under the lists' top, whether the
+// answer has a time card or not (this one has none), the tests' status bar taking nothing (P04 ticket 63).
+const TOP_ROOM = listsTop(0) + foldedTimeCardOf(1) + space[2];
 const LOW = 12 + 2 * text.bodyLg.lineHeight + 12 + 50 + 8;
 const FLING = FLING_SPEED * 2;
 
@@ -114,7 +116,7 @@ describe("the answer card's handle", () => {
     expect(await shown()).toBe(LOW);
   });
 
-  it('raises the card a step at a time, the middle at 60% of the stage, high up to the lists’ top', async () => {
+  it('raises the card a step at a time, the middle at 60% of the stage, high up to the time card’s place', async () => {
     await framed();
 
     await raiseCard();

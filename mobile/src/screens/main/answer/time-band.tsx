@@ -7,6 +7,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useMemo, useState } from 'react';
@@ -74,7 +75,7 @@ interface Moved {
   clock: string;
 }
 
-const LANE_HEIGHT = 20;
+export const LANE_HEIGHT = 20;
 const BAR_HEIGHT = 8;
 const HANDLE_WIDTH = 16;
 // A handle takes a touch this wide, and its drag begins only on a sideways move, so that the card still scrolls over
