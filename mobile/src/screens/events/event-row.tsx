@@ -14,7 +14,7 @@ import { FavoriteToggle } from './favorite-toggle';
 
 // The title takes one line and the time·place line at most two, each cut with "…": every row keeps one height for its
 // title, and the detail sheet shows them whole.
-export const TITLE_LINES = 1;
+const TITLE_LINES = 1;
 export const ROW_LINES = 2;
 
 // "모집 중인 파티 {n}" in navy on light blue when a recruiting Quest the User can join is there for the event, "함께 갈

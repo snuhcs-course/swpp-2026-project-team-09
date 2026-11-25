@@ -21,13 +21,12 @@ const HOUR_HEIGHT = 32;
 const LABEL_WIDTH = 28;
 // A block stands under the line above it and fills its day's column.
 const BLOCK_TOP = 1;
+// At most this padding over and under a block's words: less when it would cost a line, so that a one-hour class still
+// shows its name over its room.
 const BLOCK_PADDING = 3;
-// A block shorter than this drops its padding, so that a 30-minute class still shows a line.
-const PADDED_HOURS = 0.75;
-// An hour's number sits just under its line.
+// An hour's number sits just under its line, and the half hour's line is dotted 3 on, 3 off, as the frame draws them.
 const LABEL_DROP = 3;
-// The half hour's dotted line.
-const DOT = '3 3';
+const HALF_HOUR_DASH = '3 3';
 
 interface BlockProps {
   block: ClassBlockView;
@@ -37,7 +36,8 @@ interface BlockProps {
 
 function Block({ block, first, onOpenClass }: BlockProps): ReactElement {
   const height = (block.end - block.start) * HOUR_HEIGHT - BLOCK_TOP;
-  const padding = block.end - block.start < PADDED_HOURS ? 0 : BLOCK_PADDING;
+  const lines = Math.max(1, Math.floor(height / text.micro.lineHeight));
+  const padding = Math.max(0, Math.min(BLOCK_PADDING, (height - lines * text.micro.lineHeight) / 2));
   return (
     <Pressable
       accessibilityLabel={[`${DAY_LETTERS[block.day] ?? ''}요일 ${block.time} ${block.name}`, block.where]
@@ -60,10 +60,7 @@ function Block({ block, first, onOpenClass }: BlockProps): ReactElement {
       ]}
       testID="class-block"
     >
-      <Text
-        numberOfLines={Math.max(1, Math.floor((height - 2 * padding) / text.micro.lineHeight))}
-        style={styles.blockWords}
-      >
+      <Text numberOfLines={lines} style={styles.blockWords}>
         {block.where === '' ? block.name : `${block.name}\n${block.where}`}
       </Text>
     </Pressable>
@@ -92,7 +89,7 @@ function Lines({ hours }: { hours: number }): ReactElement {
           <Line
             key={`half-${index}`}
             stroke={color.surfaceSunken}
-            strokeDasharray={DOT}
+            strokeDasharray={HALF_HOUR_DASH}
             strokeWidth={1}
             x1={LABEL_WIDTH}
             x2="100%"
