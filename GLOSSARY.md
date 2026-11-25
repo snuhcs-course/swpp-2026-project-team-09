@@ -211,7 +211,21 @@ _Avoid_: Tutorial Layer, Quest category
 
 **Tutorial Guide**:
 What a Tutorial Quest shows on the map in place of a page of text: its places as pins, a step at a time, each with a few words, the facts that matter as chips, and buttons such as 길찾기. Some guides first ask which kind applies, such as 일반 or 금융 for the student card; in others the steps are places side by side, any of which completes the quest.
-_Avoid_: Tour (the tour of the four tabs after the first run)
+_Avoid_: Tour (the Tour shows how to use the app, not campus life)
+
+### The Tour
+
+**Tour**:
+The 앱 둘러보기: a guide to how to use SNU Now, going into the tabs one at a time to show what each can do, and letting the User try the main things in Practice. It is offered right after Onboarding; a User can skip it and see it again from 내 정보.
+_Avoid_: Tutorial (the Tutorial is about campus life), tab tour, coach marks
+
+**Practice**:
+The part of the Tour where the User tries things on the app's real screens with made-up data that stays on the phone and is gone when the Tour ends. Nothing done in Practice reaches anyone else.
+_Avoid_: Demo Data (Demo Data is real data on the Dev Server), sandbox, mock
+
+**Practice Person**:
+A made-up person who appears only in Practice, with a Timetable and a position, and who answers the User as the Tour's script says. 샤샤 guides the whole Tour and is the User's Friend within Practice; 관악이 is a stranger who asks to join the User's 공개 파티. No Practice Person is a User.
+_Avoid_: NPC, bot, Practice Friend, Demo Account
 
 ### 관정도서관
 
