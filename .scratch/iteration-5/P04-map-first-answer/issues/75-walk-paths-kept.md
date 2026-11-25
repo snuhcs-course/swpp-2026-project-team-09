@@ -40,5 +40,5 @@ Built in PR #577. A walk's query keeps its path with no timeout, and `useWalksHe
 
 ### Agent usage (2026-11-26)
 
-- Agent time: about 25 minutes in one session, the first read of the fault included (an estimate).
-- Tokens: input 15,253,079 (cache reads 15,081,071, cache writes 171,854, uncached 154); output 49,724. One subagent, included.
+- Agent time: about 42 minutes in one session, the first read of the fault and the narrowing to the answer on screen included (an estimate).
+- Tokens: input 35,688,312 (cache reads 35,444,460, cache writes 243,588, uncached 264); output 94,899. One subagent, included.
