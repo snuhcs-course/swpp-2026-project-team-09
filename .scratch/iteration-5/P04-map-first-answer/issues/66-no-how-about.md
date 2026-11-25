@@ -2,6 +2,7 @@
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
+Pull request: #558
 Blocked by: none.
 
 Native files: none. Releases: an app OTA update.
@@ -27,9 +28,19 @@ The user's decision (2026-11-25): choosing where to eat is pressing one of the p
 
 ## Acceptance criteria
 
-- [ ] A building pressed during a meal's Plan asks nothing and changes nothing on screen.
-- [ ] The candidates, the pick, 나, the Plan's people, and Friends' faces take their presses as before.
-- [ ] No code or mock refers to "여기면 어때?" or its files; a test checks that the card no longer comes.
-- [ ] No native file changes; lint, format, and types pass on the app.
+- [x] A building pressed during a meal's Plan asks nothing and changes nothing on screen.
+- [x] The candidates, the pick, 나, the Plan's people, and Friends' faces take their presses as before.
+- [x] No code or mock refers to "여기면 어때?" or its files; a test checks that the card no longer comes.
+- [x] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+Built in PR #558. With a meal's Plan on screen, a building press now asks nothing; the answer's own marks and Friends' faces keep their presses.
+
+### Agent usage (2026-11-25)
+
+- Agent time: about 50 minutes in the map-first-answer side session, an estimate from the transcript's timestamps. No subagents.
+- Tokens, an estimate from the transcript, which lags the last minutes:
+  - Output: about 60k.
+  - Input: about 0.2k uncached, plus 60M cache reads and 0.15M cache writes.
+
