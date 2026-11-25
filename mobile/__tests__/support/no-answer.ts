@@ -24,6 +24,7 @@ export const NO_ANSWER: ShownAnswer = {
   adding: false,
   setAdding: nothing,
   picked: null,
+  asked: null,
   pickOrder: null,
   keepPickOrder: nothing,
   pick: nothing,

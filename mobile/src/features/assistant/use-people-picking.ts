@@ -39,7 +39,7 @@ const NOT_PICKING = { adding: false, picked: null, pickOrder: null } as const;
 export function usePeoplePicking<S extends PickingState>(
   setStored: (update: (last: S) => S) => void,
   picked: readonly string[] | null,
-  change: (alter: (input: PlanInput) => PlanInput) => void,
+  change: (alter: (input: PlanInput) => PlanInput, asked: readonly string[]) => void,
 ): Picking {
   const setAdding = useCallback(
     (open: boolean): void => {
@@ -75,7 +75,7 @@ export function usePeoplePicking<S extends PickingState>(
   );
   const finishPicking = (): void => {
     if (picked !== null) {
-      change((input) => withPicked(input, picked));
+      change((input) => withPicked(input, picked), picked);
     }
     setStored((last) => ({ ...last, ...NOT_PICKING }));
   };

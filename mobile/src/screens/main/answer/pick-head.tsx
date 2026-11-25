@@ -120,15 +120,17 @@ export function usePickingBar(
   { busy, onClose }: { busy: boolean; onClose: () => void },
 ): PickingBar {
   const { data: friends = [] } = useFriends();
-  const { picked, answer } = shown;
+  const { picked, answer, asked } = shown;
+  // From 완료 until its answer, the bar shows what was asked for, not the answer before it.
+  const people = picked ?? asked;
   const band = useMemo(() => {
-    if (picked === null) {
+    if (people === null) {
       return plan.band;
     }
-    const lanes = pickedLanes(plan.band, picked);
+    const lanes = pickedLanes(plan.band, people);
     return { ...plan.band, lanes, ...previewOf(plan.band, lanes) };
-  }, [plan.band, picked]);
-  const others = plan.band.lanes.length - 1;
+  }, [plan.band, people]);
+  const others = asked === null ? plan.band.lanes.length - 1 : asked.length;
   const rows = useOpenOrder(shown, picked === null || answer === null ? null : rowsOf(plan, picked, friends));
   if (picked === null || answer === null || rows === null) {
     return { band, picking: null, head: null, inPlan: others };

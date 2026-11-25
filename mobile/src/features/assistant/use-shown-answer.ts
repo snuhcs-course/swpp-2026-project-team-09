@@ -14,6 +14,7 @@ import { apiClient } from '@/api/client';
 import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
 import { showing, withKind } from './meal-kinds';
+import { useMenuOpening } from './use-menu-opening';
 import { usePeoplePicking } from './use-people-picking';
 import { withPerson } from './plan-input';
 import { opensBasis } from './relaxed-plan';
@@ -48,6 +49,9 @@ export interface ShownAnswer {
   // The rows' order while picking, kept from when it opened so that a check never moves a row; null until kept.
   pickOrder: readonly string[] | null;
   keepPickOrder: (order: readonly string[]) => void;
+  // The people 완료 asked for, from the request until its answer or its failure, so that the card shows what was asked
+  // in the meantime, not the answer before it (the user's phone, 2026-11-26).
+  asked: readonly string[] | null;
   // Checks or unchecks a Friend while picking; outside it, opens picking with the Plan's people and that Friend.
   pick: (userId: string) => void;
   // 완료: asks once with everyone checked, nothing when that is the Plan's people, and ends picking.
@@ -98,6 +102,7 @@ interface AnswerState extends Shown {
   adding: boolean;
   picked: readonly string[] | null;
   pickOrder: readonly string[] | null;
+  asked: readonly string[] | null;
   // What was shown before the last drag.
   kept: Shown | null;
   recalculating: boolean;
@@ -139,6 +144,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
     adding: false,
     picked: null,
     pickOrder: null,
+    asked: null,
     kept: null,
     recalculating: false,
     pendingAdd: null,
@@ -168,7 +174,7 @@ function replaced(last: AnswerState, next: AnswerReply, by: ChangeBy | undefined
   const adding = last.adding && last.pendingAdd === null;
   // Picking ends with the list of Friends (P04 ticket 64), so that 취소, back, and the main button stay in step with it.
   const picking = adding ? { picked: last.picked, pickOrder: last.pickOrder } : { picked: null, pickOrder: null };
-  const settled = { recalculating: false, pendingAdd: null, moving: null, menu: false };
+  const settled = { recalculating: false, pendingAdd: null, asked: null, moving: null, menu: false };
   return {
     ...last,
     answer: next,
@@ -243,23 +249,13 @@ function useKindChoice(setStored: SetStored): ShownAnswer['chooseKind'] {
   );
 }
 
-// Opens the menu of a Plan, which it shows, and closes it again.
-function useMenuOpening(setStored: SetStored, show: ShownAnswer['show']): Pick<ShownAnswer, 'openMenu' | 'closeMenu'> {
-  const openMenu = useCallback(
-    (planId: string): void => {
-      show(planId);
-      setStored((last) => (last.menu ? last : { ...last, menu: true }));
-    },
-    [setStored, show],
-  );
-  const closeMenu = useCallback((): void => {
-    setStored((last) => (last.menu ? { ...last, menu: false } : last));
-  }, [setStored]);
-  return { openMenu, closeMenu };
-}
-
 // A change of the conditions, and the Friend it adds, when it adds one.
-type Ask = (alter: (input: PlanInput) => PlanInput, by: ChangeBy | undefined, adds: string | null) => void;
+type Ask = (
+  alter: (input: PlanInput) => PlanInput,
+  by: ChangeBy | undefined,
+  adds: string | null,
+  asked?: readonly string[],
+) => void;
 
 // Asks for a recalculation of the answer on screen when it is called, unless one of that epoch is on its way: a
 // control may call a `change` of an earlier render. Its answer, or its failure, counts only while the epoch it was
@@ -270,7 +266,7 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
   useEffect(() => {
     live.current = { current, recalculation };
   });
-  return (alter, by, adds) => {
+  return (alter, by, adds, asked) => {
     const {
       current: { answer, epoch },
       recalculation: { location, locationMissing = null, onFailed },
@@ -281,7 +277,9 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
       return;
     }
     flight.current = epoch;
-    setStored((last) => (last.epoch === epoch ? { ...last, recalculating: true, pendingAdd: adds } : last));
+    setStored((last) =>
+      last.epoch === epoch ? { ...last, recalculating: true, pendingAdd: adds, asked: asked ?? null } : last,
+    );
     const settle = (update: (last: AnswerState) => AnswerState): boolean => {
       if (flight.current === epoch) {
         flight.current = null;
@@ -295,7 +293,7 @@ function useChange(current: AnswerState, setStored: SetStored, recalculation: Re
         settle((last) => replaced(last, next, by));
       },
       () => {
-        if (settle((last) => ({ ...last, recalculating: false, pendingAdd: null, moving: null }))) {
+        if (settle((last) => ({ ...last, recalculating: false, pendingAdd: null, asked: null, moving: null }))) {
           onFailed();
         }
       },
@@ -321,8 +319,8 @@ export function useShownAnswer(
   const browsing = useBrowsing(setStored);
   const chooseKind = useKindChoice(setStored);
   const menu = useMenuOpening(setStored, browsing.show);
-  const picking = usePeoplePicking(setStored, current.picked, (alter) => {
-    ask(alter, undefined, null);
+  const picking = usePeoplePicking(setStored, current.picked, (alter, asked) => {
+    ask(alter, undefined, null, asked);
   });
   const plan = current.answer?.plans[current.index] ?? null;
   return {
@@ -343,6 +341,7 @@ export function useShownAnswer(
     },
     picked: current.picked,
     pickOrder: current.pickOrder,
+    asked: current.asked,
     ...picking,
     pendingAdd: current.pendingAdd,
     ghost: ghostOf(current.kept),

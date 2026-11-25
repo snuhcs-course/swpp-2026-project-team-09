@@ -18,9 +18,10 @@ import { startFresh } from './support/mocks';
 import { checkedRows, pickCancel, pickDone, pickRow } from './support/picking';
 import { answerMainScreen, askMainServer, MIN_JUN, PHONE_NOW } from './support/server';
 
-// People picked in the time card while the answer's sheet moves (P04 ticket 64, the user's phone on 2026-11-25): the
-// rows are folded exactly while the sheet stands high, the head with 취소 · 완료 staying, and open again at middle or
-// lower, every time, with the checks kept. Against the fake main server, over the stored answer to "배고파, 민수랑 같이".
+// People picked in the time card while the answer's sheet moves (P04 ticket 64, the user's rule of 2026-11-26): the
+// card touched last wins and the other yields, and a yield is not undone by itself. The sheet raised to high folds the
+// rows, the head with 취소 · 완료 staying; they stay folded when it comes back down, and the grip brings them back with
+// the checks kept. Against the fake main server, over the stored answer to "배고파, 민수랑 같이".
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -58,7 +59,8 @@ function timeCard(): ReturnType<typeof screen.getByTestId> {
   return screen.getByTestId('time-card-grip');
 }
 
-// The sheet raised to high, where the rows fold and the head stays, then brought back to middle, where they open.
+// The sheet raised to high, where the rows fold and the head stays, then brought back to middle, where they stay
+// folded.
 async function highThenMiddle(): Promise<void> {
   await raiseCard();
   expect(sheetGrip()).toHaveAccessibilityValue({ text: '크게' });
@@ -68,12 +70,13 @@ async function highThenMiddle(): Promise<void> {
 
   await lowerCard();
   expect(sheetGrip()).toHaveAccessibilityValue({ text: '중간' });
-  expect(timeCard()).toBeExpanded();
+  expect(timeCard()).toBeCollapsed();
 }
 
-// Partitions: the sheet raised to high and brought back to middle, twice; then lowered to low.
+// Partitions: the sheet raised to high and brought back to middle, twice, the grip opening the rows between; then
+// lowered to low.
 describe('the picking rows as the answer’s sheet moves', () => {
-  it('fold while the sheet is high and open again at middle or lower, every time, the checks kept', async () => {
+  it('fold while the sheet is high, stay folded when it comes back down, and open by the grip, the checks kept', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
     await layStage(390, 760);
     await user.press(timeBar().getByRole('button', { name: ADD }));
@@ -82,9 +85,13 @@ describe('the picking rows as the answer’s sheet moves', () => {
     expect(timeCard()).toBeExpanded();
 
     await highThenMiddle();
+    await user.press(timeCard());
+    expect(timeCard()).toBeExpanded();
     await highThenMiddle();
     await lowerCard();
 
+    expect(timeCard()).toBeCollapsed();
+    await user.press(timeCard());
     expect(timeCard()).toBeExpanded();
     expect(checkedRows()).toHaveLength(2);
   });

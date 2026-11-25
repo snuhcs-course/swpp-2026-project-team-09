@@ -58,11 +58,11 @@ export function answerFaceOf(
 // the picture the face has, so that a native map never leaves the face out meanwhile.
 export function useFaces(
   avatars: readonly MapAvatar[],
-  { answer, pendingAdd, picked }: ShownAnswer,
+  { answer, pendingAdd, picked, asked }: ShownAnswer,
   sent: boolean,
 ): MapAvatar[] {
   const looks = avatars.map((avatar) =>
-    answer === null ? avatar.image.view : answerFaceOf(avatar, answer.input, pendingAdd, sent, picked),
+    answer === null ? avatar.image.view : answerFaceOf(avatar, answer.input, pendingAdd, sent, picked ?? asked),
   );
   const ahead = looks.flatMap((look) =>
     look.kind === 'person' && look.addable === true ? [{ ...look, addable: false, selected: true, faded: false }] : [],

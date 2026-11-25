@@ -15,18 +15,17 @@ export function placeAfterPicking(before: GripPlace): GripPlace {
 }
 
 // Started with picking already on, as when the card comes back after the keyboard hid it, the place to go back to is
-// the one the card stands at then. While picking, the rows follow the answer's sheet by its step, not by which move
-// came last (the user's phone, 2026-11-25): open at rest while the sheet stands high, they fold, the head with 취소 ·
-// 완료 staying; each time its step leaves high they open again. The fold is held while the sheet is high, not only as
-// it gets there: an opening still on its way then (`useFoldUnder` misses it) is folded as soon as it arrives. A card
-// that moves, under the finger or settling, is left to finish.
+// the one the card stands at then. While picking, the card touched last wins and the other yields, and a yield is not
+// undone by itself (the user's phone, 2026-11-26): the sheet standing high folds the rows, the head with 취소 · 완료
+// staying, and they stay folded when it comes back down until the grip brings them back. The fold is held while the
+// sheet is high, not only as it gets there: an opening still on its way then (`useFoldUnder` misses it) is folded as
+// soon as it arrives. A card that moves, under the finger or settling, is left to finish.
 export function usePickingPlace(
   picking: boolean,
   grip: Pick<TimeCardGrip, 'place' | 'moving' | 'settleTo'>,
   sheetHigh: boolean,
 ): void {
   const before = useRef<GripPlace | null>(null);
-  const wasHigh = useRef(sheetHigh);
   const { place, moving, settleTo } = grip;
   useEffect(() => {
     if (picking && before.current === null) {
@@ -35,11 +34,8 @@ export function usePickingPlace(
     } else if (!picking && before.current !== null) {
       settleTo(placeAfterPicking(before.current));
       before.current = null;
-    } else if (picking && wasHigh.current && !sheetHigh) {
-      settleTo('open');
     } else if (picking && sheetHigh && place === 'open' && !moving) {
       settleTo('shown');
     }
-    wasHigh.current = sheetHigh;
   });
 }

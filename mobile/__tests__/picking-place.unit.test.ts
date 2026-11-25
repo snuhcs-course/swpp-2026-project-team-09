@@ -80,18 +80,16 @@ describe('the time card after picking', () => {
 
 // Partitions: picking with the sheet rising to high and coming back, twice; the same after picking ends.
 describe('the picking rows and the answer’s sheet', () => {
-  // The user's phone (2026-11-25): back at middle from high, the rows sometimes stayed folded.
-  it('opens the rows each time the sheet comes back from high while picking, and leaves them alone otherwise', async () => {
+  // The user's rule (2026-11-26): a yield is not undone by itself; the grip brings the rows back.
+  it('leaves the folded rows folded when the sheet comes back from high, until the grip opens them', async () => {
     const held = await heldFrom('shown');
     await held.rerender({ picking: true, place: 'shown' });
     await held.rerender({ picking: true, place: 'shown', high: true });
     await held.rerender({ picking: true, place: 'shown', high: false });
-    await held.rerender({ picking: true, place: 'shown', high: true });
-    await held.rerender({ picking: true, place: 'shown', high: false });
-    await held.rerender({ picking: false, place: 'open', high: true });
-    await held.rerender({ picking: false, place: 'shown', high: false });
+    await held.rerender({ picking: true, place: 'open', high: false });
+    await held.rerender({ picking: false, place: 'open', high: false });
 
-    expect(held.settled.mock.calls).toEqual([['open'], ['open'], ['open'], ['shown']]);
+    expect(held.settled.mock.calls).toEqual([['open'], ['shown']]);
   });
 
   // The user's phone (2026-11-25): raised to high while the rows were still opening, the sheet left them open under it.
