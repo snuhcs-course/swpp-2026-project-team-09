@@ -39,8 +39,7 @@ Built in PR #558. With a meal's Plan on screen, a building press now asks nothin
 
 ### Agent usage (2026-11-25)
 
-- Agent time: about 50 minutes in the map-first-answer side session, an estimate from the transcript's timestamps. No subagents.
-- Tokens, an estimate from the transcript, which lags the last minutes:
-  - Output: about 60k.
-  - Input: about 0.2k uncached, plus 60M cache reads and 0.15M cache writes.
-
+- Agent time: about 20 minutes in the map-first-answer side session (12:45 to 13:05 UTC), an estimate from the transcript's timestamps. No subagents.
+- Tokens:
+  - Output: about 43k.
+  - Input: about 0.1k uncached, plus 47M cache reads and 0.09M cache writes.
