@@ -146,15 +146,18 @@ describe('pictures made within one frame', () => {
       .mocked(captureRef)
       .mockReset()
       .mockResolvedValueOnce('file:///tmp/first.png')
-      .mockImplementationOnce(
-        async () =>
-          new Promise((resolve) => {
-            setTimeout(resolve, 5, 'file:///tmp/second.png');
-          }),
-      );
+      .mockImplementationOnce(async () => {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 5);
+        });
+        return 'file:///tmp/second.png';
+      });
     await render(<Asks looks={[tag(11, 52), tag(12, 55)]} />);
     const layout = { nativeEvent: { layout: { x: 0, y: 0, width: 40, height: 40 } } };
-    await Promise.all(stageViews().map(async (view) => fireEvent(view, 'layout', layout)));
+    await stageViews().reduce(async (before, view) => {
+      await before;
+      await fireEvent(view, 'layout', layout);
+    }, Promise.resolve());
 
     await pass(20);
     expect(screen.queryAllByText(/있음$/u)).toHaveLength(0);
