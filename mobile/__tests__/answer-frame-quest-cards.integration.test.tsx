@@ -91,7 +91,7 @@ describe('the Quest cards of an answer', () => {
     await answered(questCards);
 
     expect(frame().getByText(REPLY)).toBeVisible();
-    expect(cardInFrame(FUTSAL.title).getByText('실력 무관!')).toBeVisible();
+    expect(cardInFrame(FUTSAL.title).queryByText('실력 무관!')).toBeNull();
     expect(cardInFrame(FUTSAL.title).getByText('301동 앞')).toBeVisible();
     expect(cardInFrame(FUTSAL.title).getByText('2/4명')).toBeVisible();
     expect(cardInFrame(FUTSAL.title).getByRole('button', { name: '참여하기' })).toBeVisible();
