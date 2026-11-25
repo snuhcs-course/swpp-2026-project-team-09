@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { PlacePoint } from './assistant-types';
@@ -36,6 +37,13 @@ export interface DroppedPlace {
   reason: string;
   // Each person's part there, given for the Place the input fixed (`placeId`).
   parts?: PlanPart[];
+}
+
+// A Restaurant closed for the meal by its menu's notice (P04 ticket 67): its Place, and the notice in its own lines
+// ("공대수시면접으로 인해 휴점합니다"). No candidate: the list names it apart.
+export interface ClosedPlace {
+  place: PlacePoint;
+  notices: string[];
 }
 
 // A meal answer's Friends whom its plans add to the meal the User holds (`planSet`, P05 ticket 44): those added (not
