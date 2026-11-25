@@ -11,6 +11,7 @@
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-21  Opus 5.5   prompted by fyoon46
 # 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-25  Fable 5.2  prompted by AhnJinYoung
 ################################################################################
 
 # The Release workflow's script, through its commands: the name check, the gate with gh faked on PATH, the app's
@@ -398,8 +399,8 @@ exported_update() {
 fake_uploader() {
   cat >"$BATS_TEST_TMPDIR/bin/sentry-expo-upload-sourcemaps" <<'SCRIPT'
 #!/usr/bin/env bash
-printf 'upload %s in %s with token=%s org=%s project=%s\n' "$*" "$PWD" "${SENTRY_AUTH_TOKEN:+set}" \
-  "${SENTRY_ORG:-}" "${SENTRY_PROJECT:-}" >>"$FAKE_CALLS"
+printf 'upload %s in %s with token=%s org=%s project=%s url=%s\n' "$*" "$PWD" "${SENTRY_AUTH_TOKEN:+set}" \
+  "${SENTRY_ORG:-}" "${SENTRY_PROJECT:-}" "${SENTRY_URL:-}" >>"$FAKE_CALLS"
 exit "${FAKE_UPLOAD_STATUS:-0}"
 SCRIPT
   chmod +x "$BATS_TEST_TMPDIR/bin/sentry-expo-upload-sourcemaps"
@@ -456,7 +457,7 @@ SCRIPT
   [ "$status" -eq 0 ]
   local mobile
   mobile=$(cd "$BATS_TEST_DIRNAME/../../../mobile" && pwd)
-  [ "$(cat "$FAKE_CALLS")" = "upload $BATS_TEST_TMPDIR/dist in $mobile with token=set org=snunow project=snu-now-app" ]
+  [ "$(cat "$FAKE_CALLS")" = "upload $BATS_TEST_TMPDIR/dist in $mobile with token=set org=snunow project=snu-now-app url=https://sentry.io/" ]
   [[ "$stderr" == *"sentry: 2 bundles with their maps in $BATS_TEST_TMPDIR/dist"* ]] || false
   [[ "$output$stderr" != *"$TOKEN"* ]] || false
 }

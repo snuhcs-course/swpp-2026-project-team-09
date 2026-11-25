@@ -11,6 +11,7 @@
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-21  Opus 5.5   prompted by fyoon46
 # 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-25  Fable 5.2  prompted by AhnJinYoung
 ################################################################################
 
 # The Release workflow's steps (.github/workflows/release.yml), one command each. The functions under Deciding take
@@ -542,6 +543,10 @@ upload_update_sourcemaps() {
     return 1
   fi
   echo "sentry: ${#bundles[@]} bundles with their maps in $1" >&2
+  # Sentry's script looks for a configuration of its own unless SENTRY_URL is set beside the organisation and the
+  # project, and finds none here: app.json names the plugin without options, and no sentry.properties exists at
+  # this step. sentry.io is where the organisation lives.
+  export SENTRY_URL="${SENTRY_URL:-https://sentry.io/}"
   if ! (cd "$REPOSITORY_ROOT/mobile" &&
     PATH="$PATH:$REPOSITORY_ROOT/mobile/node_modules/.bin" sentry-expo-upload-sourcemaps "$dist"); then
     update_sourcemaps_failed
