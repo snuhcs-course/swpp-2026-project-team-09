@@ -2,7 +2,7 @@
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
-Pull request: none yet.
+Pull request: #565
 Blocked by: none.
 
 Native files: none. Releases: an app OTA update.
@@ -25,10 +25,17 @@ Two faults in picking people in the time card (ticket 64), found on the user's p
 
 ## Acceptance criteria
 
-- [ ] With motion on, the rows' room grows without a jump to the picking rows' height, even when that height is laid out after the opening starts.
-- [ ] With the Friend list still on its way, no row shows until it arrives; then all of them show in their order.
-- [ ] A failed Friend list still opens picking with the answer's rows and "완료".
-- [ ] With motion on, 완료, 취소, or back pressed while the card opens leaves it folded, with no row for 나.
-- [ ] No native file changes; lint, format, and types pass on the app.
+- [x] With motion on, the rows' room grows without a jump to the picking rows' height, even when that height is laid out after the opening starts.
+- [x] With the Friend list still on its way, no row shows until it arrives; then all of them show in their order.
+- [x] A failed Friend list still opens picking with the answer's rows and "완료".
+- [x] With motion on, 완료, 취소, or back pressed while the card opens leaves it folded, with no row for 나.
+- [x] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+Built in PR #565. The opening's run now heads for picking's rows as they are laid out, the rows wait for the Friend list and never grow once open, and the place a run heads for counts when picking ends. Jest does not run springs over time, so the runs are tested at the grip's hook with each spring held until the test lands it (`time-card-grip-run`).
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 17 minutes in one session, test runs included (an estimate).
+- Tokens: input 22,500,133 (cache reads 22,384,192, cache writes 115,821, uncached 120); output 76,041. No subagents.
