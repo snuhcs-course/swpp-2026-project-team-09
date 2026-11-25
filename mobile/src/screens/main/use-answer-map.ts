@@ -41,7 +41,7 @@ import { useChoosingRing } from './use-choosing-ring';
 export { othersOf };
 import { useAnswerWalks, useMealWays } from './use-answer-walks';
 import type { MainMap } from './use-main-map';
-import { useMadeDrawing, useRestedView } from './use-rested-labels';
+import { looksKey, useMadeDrawing, useRestedView } from './use-rested-labels';
 
 export { labelArea, paddingOf } from './answer-padding';
 export { useFraming } from './answer-framing';
@@ -242,9 +242,10 @@ export function useDrawnMap(
     () => held ?? (base === null ? null : labelViewOf(base, framing, avoid)),
     [held, base, framing, avoid],
   );
-  const placedAt = useRestedView(shown, map.camera, base, framing);
+  const placedAt = useRestedView(shown, map.camera);
   const next = useMemo(() => (draw === null || placedAt === null ? base : draw(placedAt)), [draw, base, placedAt]);
-  const { drawing, view, images } = useMadeDrawing(base, next, placedAt, looks);
+  const baseKey = useMemo(() => looksKey(base), [base]);
+  const { drawing, view, images } = useMadeDrawing(baseKey, next, placedAt, looks);
   const things = drawing?.things ?? [];
   useAnswerCamera(base, shown, answer, map, framing);
   const lines = useAnswerWalks(drawing?.lines ?? NO_LINES, routes);

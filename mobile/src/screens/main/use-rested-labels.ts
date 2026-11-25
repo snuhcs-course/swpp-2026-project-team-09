@@ -10,30 +10,32 @@ import type { AnswerDrawing } from '@/features/assistant/answer-marks';
 import { type MapCamera, type MarkerImage, type MarkerLook, useMarkerImages } from '@/map';
 import { lookName } from '@/map/marker-looks';
 import { hasNativeMap } from '@/map/native-module';
+import { sameCamera } from '@/map/projection';
 
 // An answer's labels where the map comes to rest (P04 ticket 68): placed at the answer's own camera, where the camera
 // glides, and again each time the map comes to rest after that, as after the User's pan or pinch, so that the tags
-// show where there is room in what is on screen. Nothing is placed while the map moves.
+// show where there is room in what is on screen. Nothing is placed while the map moves. Both hooks compare what they
+// keep by value: the drawings and views they are given may be new objects at every render.
+
+function sameOwn(one: MapCamera | null, other: MapCamera | null): boolean {
+  return one === null || other === null ? one === other : sameCamera(one, other);
+}
 
 interface Since {
-  base: unknown;
-  framing: unknown;
+  // The answer's own camera, and the camera at rest when it was last changed.
+  own: MapCamera | null;
   camera: MapCamera | null;
 }
 
 // The view an answer's labels are placed at: the answer's own (`shown`) until the map comes to rest after the
-// answer's camera last moved, which it does whenever `base` or `framing` changes (`useAnswerCamera`); then the camera
-// at rest (`MainMap.camera`, which the map's `onCameraIdle` sets), with the same size and area.
-export function useRestedView(
-  shown: LabelView | null,
-  camera: MapCamera | null,
-  base: unknown,
-  framing: unknown,
-): LabelView | null {
-  const [since, setSince] = useState<Since>({ base, framing, camera });
-  const moved = since.base !== base || since.framing !== framing;
+// answer's own camera last changed, as it does for another answer, another Plan, or another card's height; then the
+// camera at rest (`MainMap.camera`, which the map's `onCameraIdle` sets), with the same size and area.
+export function useRestedView(shown: LabelView | null, camera: MapCamera | null): LabelView | null {
+  const own = shown?.camera ?? null;
+  const [since, setSince] = useState<Since>({ own, camera });
+  const moved = !sameOwn(since.own, own);
   if (moved) {
-    setSince({ base, framing, camera });
+    setSince({ own, camera });
   }
   const rested = !moved && camera !== null && camera !== since.camera;
   return useMemo(
@@ -46,9 +48,14 @@ export function useRestedView(
 // module then keeps a mark's old picture until its new one is made.
 export const HOLD_MS = 1500;
 
+// A drawing's marks with their looks, as text that two drawings of the same looks share.
+export function looksKey(drawing: AnswerDrawing | null): string {
+  return (drawing?.things ?? []).map(({ id, look }) => `${id} ${lookName(look)}`).join('\n');
+}
+
 interface Shown {
-  base: unknown;
-  // Its marks with their looks, as written by `looksKey`.
+  // The answer's drawing it was made from and its own looks, as `looksKey` writes them.
+  base: string;
   looks: string;
   drawing: AnswerDrawing;
   view: LabelView | null;
@@ -66,18 +73,14 @@ function looksOf(drawing: AnswerDrawing | null | undefined): MarkerLook[] {
   return drawing?.things.map(({ look }) => look) ?? [];
 }
 
-// A drawing's marks with their looks, as text that two drawings of the same looks share.
-function looksKey(drawing: AnswerDrawing | null): string {
-  return (drawing?.things ?? []).map(({ id, look }) => `${id} ${lookName(look)}`).join('\n');
-}
-
-// The drawing the map shows. One of the same answer's drawing (`base`, which the camera moves for) with other looks,
-// as when its labels are placed again at another view, waits, the drawing before it shown, until every picture of it
-// is made or `HOLD_MS` has passed: a mark's dot and its tag are one picture, so every mark changes in the same frame
-// and none shows its number twice or not at all. Any other is shown at once. `looks` are asked for beside it, so that
-// a change of drawing never waits for a picture. `view` is the view `next` was placed at.
+// The drawing the map shows. One made from the same answer's drawing as the one shown (`base`, `looksKey` of the
+// drawing the camera moves for) with other looks, as when its labels are placed again at another view, waits, the
+// drawing before it shown, until every picture of it is made or `HOLD_MS` has passed: a mark's dot and its tag are
+// one picture, so every mark changes in the same frame and none shows its number twice or not at all. Any other is
+// shown at once. `looks` are asked for beside it, so that a change of drawing never waits for a picture. `view` is the
+// view `next` was placed at.
 export function useMadeDrawing(
-  base: unknown,
+  base: string,
   next: AnswerDrawing | null,
   view: LabelView | null,
   looks: readonly MarkerLook[],
