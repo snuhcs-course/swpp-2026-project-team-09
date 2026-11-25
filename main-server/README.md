@@ -3073,8 +3073,12 @@ Each exported file keeps, at its top, where it came from and the day of the expo
   within, and the table's MAE below the baseline's. Last it fits the speed and the climb value to the 13 calibration
   walks, by ordinary least squares with no constant term, and prints them unrounded; a climb value below 0 becomes 0
   with that fit's speed. Each pair's path metres and climb are recovered from its seconds at the freeze, at 1.1 m/s and
-  3 s per metre of climb, and from the committed table's elevations. The builder's two constants in
-  `src/travel/walking-graph.ts` are that fit's, as P11 adopted them.
+  3 s per metre of climb, and from the committed table's elevations. The builder's flat speed in
+  `src/travel/walking-graph.ts` is that fit's, as P11 adopted it. The slope then changes it by Tobler's hiking
+  function, scaled so that the flat keeps that speed, the slope being the two ends' heights over the path's length
+  (ADR 0010, P04 ticket 77). A way up takes longer than the way down. The server's tests about plans and ways bind a
+  frozen copy of the table from before the slope (`test/fixtures/walking/walking-table-before-climb.json`), so that
+  their numbers stay when the walking model changes.
 - **Exporting**: `pnpm seed:export <name>…` repeats the export of the files it names and overwrites them; run without
   a name, it lists the names. An export over the network is one request, sent with a User-Agent that names the
   project, as OpenStreetMap asks. When Overpass answers 504 it is busy: wait some minutes before trying again.
