@@ -21,6 +21,9 @@ export interface RunInput {
   room: number | null;
   extra: number;
   onHeight: (height: number) => void;
+  // A run of a step's that takes over a let-go's, whose end is then never told: the sheet's lead of the time card ends
+  // there (`sheet-link`, PR 545's review).
+  onUnled?: () => void;
 }
 
 // Runs the offset to `to` with the let-go's speed, telling `done` at the end. With reduced motion, and for the card's
@@ -144,6 +147,7 @@ function useLetGoRun(p: LetGoRun): {
   const back = useCallback(
     (to: Level, velocity = 0, started = false, arrive: (() => void) | null = null) => {
       if (heights === null || room === null) {
+        arrive?.();
         return;
       }
       running.current = !reduce;
@@ -192,7 +196,7 @@ export function useRun(
   back: (to: Level, velocity?: number, started?: boolean, arrive?: () => void) => void;
   landed: (to: Level) => void;
 } {
-  const { heights, room, extra, onHeight } = input;
+  const { heights, room, extra, onHeight, onUnled } = input;
   const target = heights === null || room === null ? null : room - heightOf(level, heights);
   // Laid out with no steps yet, the card waits wholly under its place.
   const offset = useSharedValue(target ?? room ?? 0);
@@ -210,6 +214,7 @@ export function useRun(
   const { back, landed } = useLetGoRun({ heights, room, offset, reduce, aimed, running, setRest, settle });
   useEffect(() => {
     if (runs && target !== null) {
+      onUnled?.();
       running.current = true;
       runTo(offset, target, { reduce: false, aimed }, () => {
         setRest(target);
@@ -220,6 +225,6 @@ export function useRun(
     if (!running.current && level === 'low' && low !== null) {
       tell(extra + low);
     }
-  }, [runs, target, offset, settle, level, low, extra, tell]);
+  }, [runs, target, offset, settle, level, low, extra, tell, onUnled]);
   return { offset, rest, back, landed };
 }

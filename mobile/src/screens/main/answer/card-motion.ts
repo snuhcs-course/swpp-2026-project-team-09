@@ -157,8 +157,14 @@ export function useCardMotion(input: MotionInput): CardMotion {
   const { level } = raising;
   // Until the phone has said whether it asks for less motion, nothing runs.
   const reduce = useReduceMotionSetting() !== false;
-  const { offset, rest, back, landed } = useRun(input, level, reduce);
   const link = use(SheetLinkContext);
+  const { sheetLeads } = link;
+  const onUnled = useCallback((): void => {
+    if (sheetLeads !== undefined) {
+      sheetLeads.value = 0;
+    }
+  }, [sheetLeads]);
+  const { offset, rest, back, landed } = useRun({ ...input, onUnled }, level, reduce);
   const drop = useSharedValue(0);
   const { past, tellPast, closeNow } = useCloseSide(raising, drop);
   const letGo = useLetGo(raising, back, { heights, sheetLeads: link.sheetLeads });
