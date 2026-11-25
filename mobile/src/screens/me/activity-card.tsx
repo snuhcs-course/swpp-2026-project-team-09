@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -20,12 +21,14 @@ interface ActivityRowProps {
   label: string;
   value: string;
   onPress: () => void;
+  last?: boolean;
 }
 
-function ActivityRow({ icon, label, value, onPress }: ActivityRowProps): ReactElement {
+function ActivityRow({ icon, label, value, onPress, last }: ActivityRowProps): ReactElement {
   return (
     <ListRow
       label={value === '' ? label : `${label} ${value}`}
+      last={last}
       leading={<Icon color={color.inkMuted} name={icon} size={20} />}
       onPress={onPress}
       title={label}
@@ -87,6 +90,7 @@ export function ActivityCard(): ReactElement {
       <ActivityRow
         icon="bell"
         label="관심사"
+        last
         onPress={() => {
           router.push('/me/interests');
         }}

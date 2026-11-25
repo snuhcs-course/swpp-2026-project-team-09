@@ -1,7 +1,7 @@
 # 09: 내 정보's cards end without a line, and 관정도서관 로그인's button stands in the row's middle
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.
@@ -36,9 +36,21 @@ Positions are as of `origin/5.0/Main` ef2223aa.
 
 ## Acceptance criteria
 
-- [ ] On 내 정보, the 관심사, 탭 안내 다시 보기 and 관정도서관 로그인 rows have no bottom line; 친구 관리, 참여 중인 파티 and 내 퀘스트 keep theirs. (Test, which fails before the change.)
-- [ ] A `ListRow` given nothing new keeps its line. (Test.)
-- [ ] The 관정도서관 로그인 button is centred in its row (`alignSelf: 'center'`). (Test, which fails before the change.)
-- [ ] No native file changes; lint, format, and types pass on the app.
+- [x] On 내 정보, the 관심사, 탭 안내 다시 보기 and 관정도서관 로그인 rows have no bottom line; 친구 관리, 참여 중인 파티 and 내 퀘스트 keep theirs. (Test, which fails before the change.)
+- [x] A `ListRow` given nothing new keeps its line. (Test.)
+- [x] The 관정도서관 로그인 button is centred in its row (`alignSelf: 'center'`). (Test, which fails before the change.)
+- [x] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+`ListRow` takes `last`, a card's last row, which draws no line under it; the line moved from `row` into its own style, `divider`, so leaving it out takes no override. The tests are in `__tests__/me-cards.integration.test.tsx`, not `me.integration.test.tsx`, which would pass oxlint's 300 lines with them, and in a second `describe` of `list-row.unit.test.tsx`.
+
+### Agent usage (2026-11-25)
+
+Estimates: agent time is the gaps under 5 minutes between transcript entries, summed, so waiting for a person or for CI is left out. No subagents. Counted up to the writing of this entry, so the commit and the pull request are left out.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Ticket 09 (test first, `ListRow`'s `last`, the three cards, checks) | about 15 minutes | 4,278,077 | 4,170,763 | 107,244 | 70 | 24,966 |
+
+Without cache reads, the input is 107,314.
