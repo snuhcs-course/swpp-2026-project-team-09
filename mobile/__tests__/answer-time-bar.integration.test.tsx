@@ -165,23 +165,27 @@ async function stepGrip(actionName: 'tuck' | 'untuck'): Promise<void> {
 }
 
 // P04 ticket 61 (boards k1–k4). Partitions: tucked and back, by the grip's steps for a screen reader. Expected values:
-// a bar laid out 100 high under a stage top of 0 leaves a strip of 20.
+// a bar laid out 100 high under a stage top of 0 leaves a strip of 20; the hairline over the strip parts it from the
+// card's content, and with the strip alone in sight there is none.
 describe("the time bar's tuck", () => {
-  it('slides up by its grip until a strip shows, and comes back down', async () => {
+  it('slides up by its grip until a strip shows without its hairline, and comes back down', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
     const timeBar = screen.getByTestId('time-bar');
     await fireEvent(timeBar, 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 360, height: 100 } } });
     const style: unknown = timeBar.props.style;
     const top = Number(StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]).top);
+    expect(screen.getByTestId('time-card-rule')).toHaveStyle({ height: StyleSheet.hairlineWidth });
 
     await stepGrip('tuck');
     expect(barShift()).toBe(-(top + 100 - 20));
     expect(screen.getByTestId('time-card-grip')).toHaveProp('accessibilityActions', [
       { name: 'untuck', label: '시간 카드 펴기' },
     ]);
+    expect(screen.queryByTestId('time-card-rule')).toBeNull();
 
     await stepGrip('untuck');
     expect(barShift()).toBe(0);
+    expect(screen.getByTestId('time-card-rule')).toBeOnTheScreen();
   });
 });
 
@@ -234,6 +238,7 @@ describe("the time bar's grip pulled down", () => {
     expect(bar().queryByText('11:30')).toBeNull();
     expect(bodyPlace()).toEqual(folded);
     expect(screen.getByTestId('time-card-grip')).toBeExpanded();
+    expect(screen.getByTestId('time-card-rule')).toBeOnTheScreen();
     const busy = within(screen.getByTestId('time-card-rows'))
       .getAllByTestId('time-card-busy')
       .map((one) => placeOf(one));

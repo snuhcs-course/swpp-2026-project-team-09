@@ -15,7 +15,7 @@ import { CARRY_S, FLING_SPEED } from './card-levels';
 import { SETTLE } from './card-run';
 
 // The time card's grip (P04 ticket 61, boards k1–k4 and p): the card stands at one of its places, and a drag on its
-// grip, which takes a touch about 48 points high, moves it between them with the finger. Pushed up it slides up as it
+// grip's strip, the card's whole width under its hairline, moves it between them with the finger. Pushed up it slides up as it
 // is, nothing laid out again, until only a strip with the grip shows under the status bar (tucked). With Friends, pulled
 // down it opens: a row for each person comes out under the track, which keeps its range and scale, the card growing
 // with the rows. Alone there is nothing to open. A let-go settles at the place a fling points to, or the nearest. A
@@ -23,8 +23,10 @@ import { SETTLE } from './card-run';
 
 // What of the card stays in sight tucked: the grip and a little room around it.
 export const TUCK_STRIP = 20;
-// The grip's touch area, about 48 points high around the grip, and a little wider than it.
-export const GRIP_SLOP = { top: 16, bottom: 16, left: 8, right: 8 };
+// The strip the grip lies in is 20 points high from the hairline to the card's edge, and takes a touch 24 points
+// further down, over the map, so that it is 44 high; nothing above the hairline is covered: the track's drag, its
+// handles, and the ends' labels, the day's other meal among them, keep their own touches.
+export const STRIP_SLOP = { bottom: 24 };
 // A drag starts past this many points, so that a press stays a press.
 const PAN_STARTS = 8;
 
@@ -103,7 +105,7 @@ function useGripPan(
   return Gesture.Pan()
     .withTestId('time-card-grip-drag')
     .activeOffsetY([-PAN_STARTS, PAN_STARTS])
-    .hitSlop(GRIP_SLOP)
+    .hitSlop(STRIP_SLOP)
     .onStart(() => {
       'worklet';
       from.value = y.value;

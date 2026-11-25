@@ -35,16 +35,12 @@ import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { MealTick, mealDayOf, mealTickOf } from './meal-tick';
 import { PersonRows } from './person-rows';
 import { TimeBand } from './time-band';
-import { type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
+import { STRIP_SLOP, type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
 import { type BandFocus, useCorrections } from './use-corrections';
 import { addNameOf } from './who-words';
 
 const NO_WINDOW = { from: null, until: null };
 const NO_QUESTS: readonly Quest[] = [];
-// The grip takes a press 44 high around its middle only, so that the ends' labels, the day's other meal among them,
-// keep their own presses.
-const GRIP_WIDTH = 72;
-const GRIP_SLOP = { top: 16, bottom: 16, left: space[2], right: space[2] };
 // The words' room at the right while "＋ 같이" stands there, until the chip is laid out: its width on a phone at the
 // usual text size. Laid out, the chip's own width is the room, so that a larger text size widens both (P04 ticket 37):
 // the chip stands 12 from the bar's edge, 4 short of the bar's padding of 16, which is the gap before the words.
@@ -74,8 +70,11 @@ interface BarProps {
   offset?: number;
 }
 
-// The bar's grip: a drag moves the card between tucked, its place, and with Friends open (`useTimeCardGrip`); a press
-// opens it or folds it again, and a screen reader tucks it away or back. Alone (`label` null) it only tucks.
+// The bar's grip in its strip, the card's whole width at its bottom (the user's phone check), under a hairline that
+// parts it from the card's content as the answer sheet's header is parted, left out when the card is tucked to the
+// strip alone. A drag anywhere on the strip moves the card between tucked, its place, and with Friends open
+// (`useTimeCardGrip`); a press opens it or folds it again, and a screen reader tucks it away or back. Alone (`label`
+// null) it only tucks.
 function Grip(p: { grip: TimeCardGrip; label: string | null; folded: boolean }): ReactElement {
   const { grip, label, folded } = p;
   return (
@@ -85,14 +84,15 @@ function Grip(p: { grip: TimeCardGrip; label: string | null; folded: boolean }):
         accessibilityLabel={label ?? GRIP_ALONE}
         accessibilityRole={label === null ? undefined : 'button'}
         accessibilityState={label === null ? undefined : { expanded: !folded }}
-        hitSlop={GRIP_SLOP}
+        hitSlop={STRIP_SLOP}
         onAccessibilityAction={({ nativeEvent }) => {
           grip.onAction(nativeEvent.actionName);
         }}
         onPress={label === null ? undefined : grip.toggle}
-        style={styles.toggle}
+        style={styles.strip}
         testID="time-card-grip"
       >
+        {grip.place === 'tucked' ? null : <View style={styles.rule} testID="time-card-rule" />}
         <View style={styles.grip} />
       </Pressable>
     </GestureDetector>
@@ -291,14 +291,22 @@ const styles = StyleSheet.create({
     left: ANSWER_TOP.side,
     paddingTop: space[3],
     paddingHorizontal: space[4],
-    paddingBottom: space[2],
     borderRadius: radius.xl,
     backgroundColor: color.surface,
     boxShadow: shadow.float,
   },
   // The rows' room, which grows as the card is pulled open.
   grown: { overflow: 'hidden' },
-  toggle: { alignSelf: 'center', alignItems: 'center', width: GRIP_WIDTH, paddingTop: space[2] },
+  // The card's whole width, its padding included, 20 high from the hairline to the card's edge (`TUCK_STRIP`).
+  strip: { alignItems: 'center', marginTop: space[1], marginHorizontal: -space[4], paddingVertical: space[2] },
+  rule: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    left: 0,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: color.border,
+  },
   grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
   // At the right of the head row, its top at the row's top (the bar's padding), so that the two share their middle and
   // the track starts below both (P04 ticket 45).
