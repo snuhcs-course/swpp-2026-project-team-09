@@ -8,6 +8,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { Suggestion } from '@/api/types';
@@ -46,6 +47,8 @@ export function announce(event: SessionEvent): void {
 // show the sign-in screen. The library session ends right after the tokens go, whether or not the User logged in to
 // it, without the end waiting on the library's site.
 export async function endSession(replaced: boolean): Promise<void> {
+  // First, so that crash reports stop carrying the User's id whatever fails below.
+  forgetUser();
   if (!(await unregisterPush())) {
     await keep({ pushUnregisterOwed: true });
   }
@@ -53,8 +56,6 @@ export async function endSession(replaced: boolean): Promise<void> {
   endLibrarySessionInBackground();
   await keep({ signedIn: false, suggestion: null });
   await forgetReadingAgreement();
-  // Crash reports no longer carry the User's id.
-  forgetUser();
   announce({ kind: 'ended', replaced });
 }
 
