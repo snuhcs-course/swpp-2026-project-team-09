@@ -88,6 +88,7 @@ describe('모집 중인 파티', () => {
     await user.type(screen.getByLabelText('파티 검색'), '코드 리뷰');
     expect(screen.getByText(CODING.title)).toBeVisible();
     expect(screen.queryByText(RUN.title)).toBeNull();
+    expect(screen.queryByRole('button', { name: /^전체 게시판 · /u })).toBeNull();
 
     await user.clear(screen.getByLabelText('파티 검색'));
     await user.type(screen.getByLabelText('파티 검색'), '없는 파티');

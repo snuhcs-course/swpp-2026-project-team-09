@@ -115,8 +115,8 @@ function boardsWords(posts: number): string {
   return `${BOARDS.map(({ name }) => name).join(' · ')} 모집글 ${String(posts)}개 둘러보기`;
 }
 
-// Under the recommended posts, the way on to 전체 파티 for the User who reached the end of them. It waits for the
-// boards' count.
+// Under the recommended posts, the way on to 전체 파티 for the User who reached the end of them; a search's results
+// have none. It waits for the boards' count.
 function BoardsCard(): ReactElement | null {
   const { data: rows } = useBoardRows();
   if (rows === undefined) {
@@ -162,7 +162,7 @@ function Posts({ search, onJoin }: { search: string; onJoin: (post: PostView) =>
           post={post}
         />
       ))}
-      {found === undefined ? null : <BoardsCard />}
+      {found === undefined || search.trim() !== '' ? null : <BoardsCard />}
       {found === undefined || found.hidden === 0 ? null : (
         <View style={styles.hidden}>
           <Icon color={color.inkMuted} name="check" size={14} />

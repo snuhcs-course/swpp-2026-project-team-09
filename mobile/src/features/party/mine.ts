@@ -53,8 +53,10 @@ export interface MineGroup {
 }
 
 const PAST = '지난 일정';
+// The group of the Party the User is in now, which the 내 파티 list marks with the red light.
+export const LIVE_GROUP = '활성화 중';
 const GROUPS = [
-  '활성화 중',
+  LIVE_GROUP,
   '활성화 알림',
   '다른 활성 파티',
   '오늘',
@@ -136,7 +138,7 @@ function stripOf(running: Party | undefined, declined: readonly string[]): MineS
 // The running Parties first: the User's, those that wait for an answer, then the declined ones.
 function groupOf(live: boolean, strip: MineStripView | null, start: string | null, now: Date): string {
   if (live) {
-    return '활성화 중';
+    return LIVE_GROUP;
   }
   if (strip !== null) {
     return strip.declined ? '다른 활성 파티' : '활성화 알림';

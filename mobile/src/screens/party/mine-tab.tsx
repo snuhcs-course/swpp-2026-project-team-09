@@ -14,7 +14,7 @@ import { type ReactElement, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { myPartyQuery } from '@/api/queries';
 import { ChipRow, EmptyState, ErrorState, LoadingState, SectionHeader, space } from '@/design-system';
-import { filterMine, groupMine, type MineCardView, type MineFilter } from '@/features/party/mine';
+import { filterMine, groupMine, LIVE_GROUP, type MineCardView, type MineFilter } from '@/features/party/mine';
 import { useMineCards } from '@/features/party/use-party';
 import { joinAsk } from '../room/activation-box';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
@@ -22,8 +22,6 @@ import { useRoomActions } from '../room/use-room-actions';
 import { LiveDot } from './live-dot';
 import { MineCard } from './mine-card';
 import { showFind } from './use-party-actions';
-
-const LIVE = '활성화 중';
 
 // Without any 파티, the list says what it is for and leads to 찾기 (HE H7). A filter that hides every one says so.
 const EMPTY: Record<MineFilter, string> = {
@@ -60,7 +58,7 @@ function useEnter(onAsk: (ask: Ask) => void): (card: MineCardView) => void {
 
 // A group's header; "활성화 중", the User's running 파티, after the red light.
 function GroupHeader({ title }: { title: string }): ReactElement {
-  if (title !== LIVE) {
+  if (title !== LIVE_GROUP) {
     return <SectionHeader>{title}</SectionHeader>;
   }
   return (
