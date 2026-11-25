@@ -16,6 +16,7 @@ import type { LocationMissing } from '@/api/refusal-types';
 import type { LatLng } from '@/api/types';
 import { showing, withKind } from './meal-kinds';
 import { offeredAnswer } from './meal-offered';
+import { openedIndex } from './opened-menu';
 import { useMenuOpening } from './use-menu-opening';
 import { usePeoplePicking } from './use-people-picking';
 import { withPerson } from './plan-input';
@@ -133,12 +134,6 @@ export function lastReply(bubbles: readonly ChatBubble[]): ChatBubble | undefine
   return bubbles.findLast(
     (bubble) => bubble.role === 'assistant' && bubble.failure === null && bubble.own !== true && !keepsShown(bubble),
   );
-}
-
-// The Plan a menu question's answer opens at, its Restaurant's (P04 ticket 72); -1 for any other answer.
-function openedIndex(source: AnswerReply | null): number {
-  const opened = source?.opened;
-  return opened === undefined ? -1 : (source?.plans.findIndex(({ id }) => id === opened) ?? -1);
 }
 
 // A new reply's answer on screen: at its first Plan, or at a menu question's Restaurant with its menu open.
