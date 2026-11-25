@@ -244,6 +244,9 @@ export interface AnswerReply extends WithMissing, WithAdding {
   // A meal's: the other meal of the day and when it starts ("HH:MM"), null when it is over or nothing serves it. Absent
   // from other answers and from a main server before P05 ticket 15.
   otherMeal?: { meal: 'lunch' | 'dinner'; start: string } | null;
+  // A meal asked with company the User did not name (P04 ticket 73): picking opens on the Plan as the answer arrives.
+  // Absent otherwise, when nobody is left to pick, and from a main server before it.
+  pickPeople?: true;
   // A meal's: the Quest the User already holds for that meal and day, which the plans set aside and making one replaces
   // (바꾸기); null when none. `shared` when another holds it or is invited: making a Plan then answers 409
   // MEAL_ALREADY_SET, and it is changed in that Quest. Absent from other answers and from a main server before P05

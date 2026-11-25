@@ -7,6 +7,7 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -113,15 +114,12 @@ describe('내 파티', () => {
       '그 이후',
       '시간 미정',
     ]);
-    expect(card(PICNIC.title).getByText('활성화 중 · 2명 위치 공유')).toBeVisible();
-    expect(card(DINNER.title).getByText('비공개 파티')).toBeVisible();
+    expect(card(DINNER.title).getByText('비공개')).toBeVisible();
     expect(card(DINNER.title).getByText('2명')).toBeVisible();
-    expect(card(DINNER.title).getByText('나, 김민준')).toBeVisible();
-    expect(card(MY_HIKE.title).getByText('공개 파티')).toBeVisible();
-    expect(card(MY_HIKE.title).getByText('모집 중 · 1/6명')).toBeVisible();
-    expect(card(MY_HIKE.title).getByText('20:10 · 7시간 후')).toBeVisible();
-    expect(card(MY_HIKE.title).getByText('저녁 약속 · 학생회관 (63동)')).toBeVisible();
-    expect(card('내일 점심').getByText('내일 12:00')).toBeVisible();
+    expect(card(MY_HIKE.title).getByText('공개')).toBeVisible();
+    expect(card(MY_HIKE.title).getByText('1/6명')).toBeVisible();
+    expect(card(MY_HIKE.title).getByText('20:10 · 7시간 후 · 학생회관 (63동)')).toBeVisible();
+    expect(card('내일 점심').getByText(/^내일 12:00 · /u)).toBeVisible();
   });
 
   it('counts the Quests in the chips and filters by them', async () => {
@@ -159,7 +157,8 @@ describe('a card of 내 파티', () => {
     server.on(`POST /parties/${DINNER_PARTY.id}/join`, { status: 201, body: DINNER_PARTY_MINE });
     const user = await openAt('/party?tab=mine');
 
-    expect(card(DINNER.title).getByText('김민준님이 활성화했어요')).toBeVisible();
+    expect(card(DINNER.title).getByText('활성화 중 · 김민준')).toBeVisible();
+    expect(card(DINNER.title).getByRole('button', { name: `${DINNER.title} 활성화 거절` })).toBeVisible();
     await user.press(screen.getByRole('button', { name: `${DINNER.title} 활성화 참여` }));
     await pass(500);
 
@@ -181,8 +180,8 @@ describe('참여 중인 파티 above the tabs', () => {
     const user = await openAt('/me/parties');
 
     expect(screen.getByRole('header', { name: '참여 중인 파티' })).toBeVisible();
-    expect(card(DINNER.title).getByText('비공개 파티')).toBeVisible();
-    expect(card(MY_HIKE.title).getByText('모집 중 · 1/6명')).toBeVisible();
+    expect(card(DINNER.title).getByText('비공개')).toBeVisible();
+    expect(card(MY_HIKE.title).getByText('1/6명')).toBeVisible();
     expect(screen.getByText('전체 2')).toBeVisible();
     await user.press(screen.getByText('비공개 1'));
     expect(screen.getByRole('button', { name: DINNER.title })).toBeVisible();

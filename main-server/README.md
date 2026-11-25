@@ -2676,7 +2676,10 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       the clock (`mealByClock`): lunch until lunch's window ends, then dinner, judged at the start the User asked for
       and today no earlier than now. It answers the model `planned` with the meal, each plan's Restaurant, clock times,
       meeting, and each person's way in minutes, and the Restaurants dropped, or `none` with the meal and the reason,
-      never coordinates, course names, or rooms. The plans come in order (`gathering/plan-order.ts`): those where
+      never coordinates, course names, or rooms. Company the User does not name, or not all of (친구 두 명이랑 저녁),
+      is planned at once with `pickPeople` and only the Friends named: the model never asks for names, and the answer
+      carries `pickPeople: true` when its plan has someone left to pick, for the app to open its picking of Friends on
+      it (P04 ticket 73). The plans come in order (`gathering/plan-order.ts`): those where
       everyone has 30 minutes first, then the shorter ones. Within each group, the least walking for everyone together
       comes first, counting the walk there and on to each one's next item; then the smaller largest walk, the earlier
       start, and the key. When the asker's starting place is not known (a later day with no item before the meal, and

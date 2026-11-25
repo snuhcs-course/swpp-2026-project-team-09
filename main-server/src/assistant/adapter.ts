@@ -17,6 +17,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -35,6 +36,7 @@ import {
 } from 'ai';
 import { withApprovalLine } from './approval-line.js';
 import { type ChatMessage, type Feature, type FeatureReply, type Request, type ToolContext } from './feature.js';
+import { withoutWalkSentences } from './gathering/plan-reply.js';
 import { foundWithMentions } from './mentions.js';
 import { isOverload, limitOf, providerOf, waited } from './provider-failures.js';
 import { keptRefusal, lookupBeside, textBeside } from './refusals/refusals.js';
@@ -352,7 +354,7 @@ async function replyOf(
   if (presented.answer !== null || presented.lookup !== null || presented.refusal !== null) {
     delete presented.offers;
   }
-  const said = textBeside(text, presented.refusal);
+  const said = textBeside(withoutWalkSentences(text, (presented.answer?.plans.length ?? 0) > 0), presented.refusal);
   if (said !== '') {
     return { ...presented, text: said, noTextFinishReason: null };
   }
