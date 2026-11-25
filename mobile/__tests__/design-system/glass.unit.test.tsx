@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { render, screen } from '@testing-library/react-native';
@@ -24,7 +25,7 @@ describe('Glass', () => {
     );
     expect(new Set(grounds).size).toBe(GLASS_LEVELS.length);
     for (const ground of grounds) {
-      expect(ground).toMatch(/^rgba\(.*, 0\.\d+\)$/);
+      expect(ground).toMatch(/^rgba\(.*, 0\.\d+\)$/u);
     }
   });
 
