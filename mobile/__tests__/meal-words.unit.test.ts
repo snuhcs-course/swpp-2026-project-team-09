@@ -65,7 +65,7 @@ describe('the meal words', () => {
     const dropped = rest.map(({ place }) => ({ place, reason: '김민수는 10분밖에 못 있어요' }));
     const kept = { ...MEAL_ANSWER_MENUS, plans: first === undefined ? [] : [first], dropped };
 
-    expect(mealWordsOf('', { answer: kept, source: MEAL_ANSWER_MENUS, index: 0, plan: first ?? null })).toMatch(
+    expect(mealWordsOf('', { answer: kept, source: MEAL_ANSWER_MENUS, plan: first ?? null })).toMatch(
       /^김민수와 시간이 맞는 곳은 302동식당뿐이에요 · \d{2}:\d{2}/u,
     );
   });
