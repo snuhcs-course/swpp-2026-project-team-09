@@ -1,7 +1,7 @@
 # 63: The answer sheet's three heights are one for every answer, clearly apart, and a drag only moves or closes
 
 Parent: [P04 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human
 Blocked by: none. Follows ticket 61.
 
 Native files: none. Releases: an app OTA update.
@@ -38,3 +38,43 @@ The boards `h1`, `hA`, `l1`, `lC`, `k1`, `k2`, and `k3` of the people-pick set a
 - [ ] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+### Built and measured (2026-11-25)
+
+Emulator (1080 × 2400 px, 914 dp, font scale 1.0, gesture navigation), the card's top edge from the screen's top:
+
+- Low: 1644 px, the card covering 31.5% of the screen, for the meal, seat, study-area, route, and refusal answers, the list of earlier questions (3 and 8 rows), and a restaurant's menu.
+- Middle: 961 px, 60.0% (`MID_SHARE = 0.6`). Low to middle: 28.5 points of percentage.
+- High: under the time card as in ticket 61. Every mock answer here is shorter than the high step and stops at its own height (the meal list at 71.0%, the 8-row list at 72.6%), so middle to high is at most 40% of the screen less the time card's room.
+- Low is set by its contents, not by a share: the meal answer's footer (the navigation inset, the input 12 + 50, a gap of 8, the main row 50, 12 over them), the header, two lines of words, and the fade. A share would cut lines on a small screen or at a large font.
+
+Layers the sheet can carry, and what a drag does on each:
+
+| Layer | Before | Now |
+| --- | --- | --- |
+| The list of earlier questions | a drag down took it away; it made low as tall as middle | height only; it stays; low's edge holds |
+| A restaurant's menu | a drag down went back to the list; no history chip | height only; it stays; the chip shows |
+| A mark's card (over the map at its mark) | a drag down on the sheet took it away first | no longer taken by a drag; a press anywhere else and back still close it |
+| A Friend's profile | over the whole frame; the sheet is not under the finger | no change |
+| The library's room list (in the time card) | not moved by the sheet's drag | no change |
+| The list of Friends to add, a Place being picked, the keyboard's view | not a layer: no drag took them away | no change |
+| "여기면 어때?" (a building asked about over the answer) | ✕ and a drag down from low return to the earlier answer instead of closing | not changed: going back to the answer by a drag or ✕ may be right here; the user decides |
+
+Lag of the history chip with the seat answer (debug build on the emulator, three presses each, the first warm-up press left out):
+
+| | React commits in 1.5 s | JS render time | map renders | camera |
+| --- | --- | --- | --- | --- |
+| 5.0/Main, seat | 4 | 40–56 ms | 2–3 | zooms out to the whole campus on open |
+| 5.0/Main, meal | 5–10 | 91–209 ms | 4–6, the walking route re-sent 3 times | stays |
+| This branch, seat | 4–6 | 29–48 ms | 1–2 | stays |
+| This branch, meal | 3–6 | 45–151 ms | 2, no line re-sent | stays |
+
+The cause on 5.0/Main: opening the list made low as tall as middle, so the card's height changed, and the map fitted again. With the seat answer that fit zooms out to the whole campus, with every shuttle stop, route, and study pin. Rule 1 keeps low's height, so the camera no longer moves. Left: each press still renders the main screen twice (the input hides under the list), and the native map gets new marker arrays each time; a content-equal check in `native-map.tsx` could skip those, as a follow-up.
+
+Open point: the band at low is measured on lines of words from the content's top. A row of chips right under one line of words (the meal's 김민수, the route's 301동에서) still shows its top edge above the footer.
+
+### Agent usage (2026-11-25)
+
+- Agent time: about 60 minutes in this session (an estimate), plus the other session's start on rule 1 (commit `4281d90e7`, not measured here).
+- Tokens (this session, no subagents): input 614 uncached, plus cache reads 88,996,060 and cache writes 440,837; output 139,541.
+
