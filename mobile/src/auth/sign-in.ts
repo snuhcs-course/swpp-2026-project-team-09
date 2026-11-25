@@ -12,6 +12,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-25  Fable 5.2  prompted by AhnJinYoung
  ******************************************************************************/
 
 import { ApiError } from '@/api/errors';
@@ -148,12 +149,13 @@ async function signOutOfMainServer(): Promise<void> {
 // The library session ends too, whether or not the User logged in to it, so that the next person on the phone never
 // sees this one's bookings. It starts once the tokens are gone and the sign-out does not wait on the library's site.
 export async function signOut(): Promise<void> {
+  // First, so that crash reports stop carrying the User's id whatever fails below.
+  forgetUser();
   if (asksMainServer()) {
     await signOutOfMainServer();
   }
   endLibrarySessionInBackground();
   await keep({ signedIn: false, suggestion: null });
-  forgetUser();
   // The next User on this phone is asked again before a timetable picture is sent (P15-52).
   await forgetReadingAgreement();
   if (googleAvailable()) {
