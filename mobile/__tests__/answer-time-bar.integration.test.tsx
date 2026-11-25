@@ -17,6 +17,7 @@ import { StyleSheet, type ViewStyle } from 'react-native';
 import { screen } from './support/app';
 import { askOnMap, card, timeBar as bar } from './support/answer-map';
 import { grip as sheetGrip, raiseCard } from './support/card-grip';
+import { barShift, barTopOf, layFolded, layRows, stepGrip } from './support/time-card';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { layStage } from './support/lists';
@@ -154,28 +155,14 @@ describe("the bar's head", () => {
   });
 });
 
-// The bar's translation as React holds it: where it rests (P04 ticket 61).
-function barShift(): number {
-  const style: unknown = screen.getByTestId('time-bar').props.style;
-  const flat = StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
-  const shift: unknown = Array.isArray(flat.transform) ? flat.transform[0] : undefined;
-  return typeof shift === 'object' && shift !== null && 'translateY' in shift ? Number(shift.translateY) : 0;
-}
-
-async function stepGrip(actionName: 'tuck' | 'untuck'): Promise<void> {
-  await fireEvent(screen.getByTestId('time-card-grip'), 'accessibilityAction', { nativeEvent: { actionName } });
-}
-
 // P04 ticket 61 (boards k1–k4). Partitions: tucked and back, by the grip's steps for a screen reader. Expected values:
 // a bar laid out 100 high under a stage top of 0 leaves a strip of 20; the hairline over the strip parts it from the
 // card's content, and with the strip alone in sight there is none.
 describe("the time bar's tuck", () => {
   it('slides up by its grip until a strip shows without its hairline, and comes back down', async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
-    const timeBar = screen.getByTestId('time-bar');
-    await fireEvent(timeBar, 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 360, height: 100 } } });
-    const style: unknown = timeBar.props.style;
-    const top = Number(StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]).top);
+    await layFolded(100);
+    const top = barTopOf();
     expect(screen.getByTestId('time-card-rule')).toHaveStyle({ height: StyleSheet.hairlineWidth });
 
     await stepGrip('tuck');
@@ -199,14 +186,6 @@ async function dragGrip(dy: number): Promise<void> {
       { translationY: dy / 2, velocityY: 0 },
       { translationY: dy, velocityY: 0 },
     ]);
-  });
-}
-
-// The rows for each person laid out `height` high, as a phone lays them out before the card opens, while a screen
-// reader still passes them by.
-async function layRows(height: number): Promise<void> {
-  await fireEvent(screen.getByTestId('time-card-rows', { includeHiddenElements: true }), 'layout', {
-    nativeEvent: { layout: { x: 0, y: 0, width: 320, height } },
   });
 }
 

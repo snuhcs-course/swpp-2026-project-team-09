@@ -37,6 +37,7 @@ import { type Picking, PersonRows } from './person-rows';
 import { usePickingBar } from './pick-head';
 import { usePickingPlace } from './picking-place';
 import { PickHint } from './sheet-hint';
+import { useFoldedHeight } from './folded-height';
 import { SheetLinkContext } from './sheet-link';
 import { TimeBand } from './time-band';
 import { STRIP_SLOP, type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
@@ -51,6 +52,8 @@ const NO_QUESTS: readonly Quest[] = [];
 const ADD_ROOM = 72;
 // The grip's name alone, where it opens nothing.
 const GRIP_ALONE = '시간 카드 손잡이';
+// The gap over the grip's strip, which the folded height counts (`useFoldedHeight`).
+const STRIP_TOP = space[1];
 
 function ignoreDrop(): void {
   // A Lookup's band has no handles.
@@ -81,7 +84,12 @@ interface BarProps {
 // strip alone. A drag anywhere on the strip moves the card between tucked, its place, and with Friends open
 // (`useTimeCardGrip`); a press opens it or folds it again, and a screen reader tucks it away or back. Alone (`label`
 // null) it only tucks.
-function Grip(p: { grip: TimeCardGrip; label: string | null; folded: boolean }): ReactElement {
+function Grip(p: {
+  grip: TimeCardGrip;
+  label: string | null;
+  folded: boolean;
+  onLayout: (event: LayoutChangeEvent) => void;
+}): ReactElement {
   const { grip, label, folded } = p;
   return (
     <GestureDetector gesture={grip.pan}>
@@ -94,6 +102,7 @@ function Grip(p: { grip: TimeCardGrip; label: string | null; folded: boolean }):
         onAccessibilityAction={({ nativeEvent }) => {
           grip.onAction(nativeEvent.actionName);
         }}
+        onLayout={p.onLayout}
         onPress={label === null ? undefined : grip.toggle}
         style={styles.strip}
         testID="time-card-grip"
@@ -138,8 +147,8 @@ function OpenRows(p: {
 function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
   const [addWidth, setAddWidth] = useState(ADD_ROOM);
-  const [height, setHeight] = useState(0);
   const [rows, setRows] = useState(0);
+  const { height, onBand, onStrip } = useFoldedHeight(STRIP_TOP, onHeight);
   const barY = barTop(top) + offset;
   const { lanes, startAt, now } = band.band;
   const friends = lanes.length > 1 || picking !== null;
@@ -149,23 +158,15 @@ function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: Ba
   const folded = !friends || grip.place !== 'open';
   const label = friends ? `사람별 시간 ${folded ? '펼치기' : '접기'}` : null;
   return (
-    <Reanimated.View
-      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-        if (!grip.moving && grip.followsSheet.value === 0) {
-          const own = nativeEvent.layout.height - (folded ? 0 : rows);
-          setHeight(own);
-          onHeight(own);
-        }
-      }}
-      style={[styles.bar, { top: barY }, grip.moved, grip.rested]}
-      testID="time-bar"
-    >
-      <TimeBand
-        {...band}
-        day={day ?? koreaDayWord(startAt, new Date(now))}
-        folded
-        head={{ right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
-      />
+    <Reanimated.View style={[styles.bar, { top: barY }, grip.moved, grip.rested]} testID="time-bar">
+      <View onLayout={onBand} testID="time-card-head">
+        <TimeBand
+          {...band}
+          day={day ?? koreaDayWord(startAt, new Date(now))}
+          folded
+          head={{ right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
+        />
+      </View>
       {friends ? <OpenRows band={band} grip={grip} onHeight={setRows} picking={picking} /> : null}
       {add === null ? null : (
         <View
@@ -178,7 +179,7 @@ function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: Ba
           {add}
         </View>
       )}
-      <Grip folded={folded} grip={grip} label={label} />
+      <Grip folded={folded} grip={grip} label={label} onLayout={onStrip} />
       {picking === null ? null : <PickHint friends={picking.rows.length > 1} />}
     </Reanimated.View>
   );
@@ -317,7 +318,7 @@ const styles = StyleSheet.create({
   // The rows' room, which grows as the card is pulled open.
   grown: { overflow: 'hidden' },
   // The card's whole width, its padding included, 20 high from the hairline to the card's edge (`TUCK_STRIP`).
-  strip: { alignItems: 'center', marginTop: space[1], marginHorizontal: -space[4], paddingVertical: space[2] },
+  strip: { alignItems: 'center', marginTop: STRIP_TOP, marginHorizontal: -space[4], paddingVertical: space[2] },
   rule: {
     position: 'absolute',
     top: 0,
