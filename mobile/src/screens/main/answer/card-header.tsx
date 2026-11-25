@@ -15,8 +15,8 @@ import type { Raising } from './raise-handle';
 
 // The bottom sheet's header (P04 ticket 52), the same in every state: the grip at the top centre and one row under it,
 // the history chip, "＋ 새 대화", and ✕. Nothing in it is pressed to raise or lower the card: a drag on the card moves
-// it, and the grip gives screen readers the steps. The grip's zone keeps the room the label under it had, as the boards
-// of P04 ticket 61 keep it.
+// it, and the grip gives screen readers the steps. The grip's zone is the grip and an even room over and under it: the
+// room of the label it had went with the label (the user's phone check).
 
 export const CLOSE_ANSWER_LABEL = '답 닫기';
 export const ASK_NEW_LABEL = '새 대화';
@@ -24,13 +24,10 @@ export const GRIP_LABEL = '답 카드 높이';
 
 // ✕'s circle, as wide as the stop button's (`RoundButton`).
 const MARK = 36;
-// The grip and the room under it, together one unit over the row.
+// The grip and the room around it, together one unit over the row.
 const GRIP_TOP = 6;
 const GRIP_HEIGHT = 4;
-const LABEL_GAP = 2;
-const UNDER_LABEL = 4;
-const GRIP_ZONE = GRIP_TOP + GRIP_HEIGHT + LABEL_GAP + text.caption.lineHeight + UNDER_LABEL;
-// The whole header's height, with or without a label.
+const GRIP_ZONE = GRIP_TOP + GRIP_HEIGHT + GRIP_TOP;
 export const HEADER_HEIGHT = GRIP_ZONE + MARK;
 
 // The look the history chip and "＋ 새 대화" share: as high as ✕'s circle, so that the row's three shapes are one height
