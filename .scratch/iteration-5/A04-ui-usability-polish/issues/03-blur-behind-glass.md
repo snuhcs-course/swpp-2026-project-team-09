@@ -81,3 +81,5 @@ compositing, waits for the user's decision.
   and no native Release. `expo-blur` is not added.
 - No call site changes: the choice is made inside `Glass`.
 - The iOS look is checked by the user on an iPhone, as this Mac checks only the Android emulator.
+- With the unblurred panel at 80%, the `inner` level (chips and boxes inside a panel), also 80%, no longer stood
+  out on it. The user raised `inner` to 90%.

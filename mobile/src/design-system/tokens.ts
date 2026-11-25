@@ -121,8 +121,9 @@ export const glass = {
   // blurs (Android, which cannot blur the Kakao map, and iOS before 26), white at 80%, so that words on it never run
   // into the map's lines (A04-03).
   panel: { ground: 'rgba(255, 255, 255, 0.8)', shadow: '0 4px 16px rgba(14, 19, 48, 0.16)' },
-  // Chips, boxes, white buttons and light coloured chips inside a panel: white at 80%.
-  inner: { ground: 'rgba(255, 255, 255, 0.8)' },
+  // Chips, boxes, white buttons and light coloured chips inside a panel: white at 90%, a step above the unblurred
+  // panel's 80% so that they stand out on it (A04-03; the changelog says 80%).
+  inner: { ground: 'rgba(255, 255, 255, 0.9)' },
   // A grey input field inside a panel: the key colour at 5%.
   field: { ground: 'rgba(0, 26, 114, 0.05)' },
   // A small chip that stands on the map itself, such as a walk's minutes: white at 60%, a rim, a light shadow.

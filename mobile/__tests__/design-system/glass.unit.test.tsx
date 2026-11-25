@@ -39,7 +39,7 @@ function styleOf(testId: string): ViewStyle {
 }
 
 describe('Glass', () => {
-  it('draws a see-through ground at each level', async () => {
+  it('draws a different see-through ground at each level', async () => {
     await render(
       <>
         {GLASS_LEVELS.map((level) => (
@@ -49,6 +49,7 @@ describe('Glass', () => {
     );
 
     const grounds = GLASS_LEVELS.map((level) => String(styleOf(level).backgroundColor));
+    expect(new Set(grounds).size).toBe(GLASS_LEVELS.length);
     for (const ground of grounds) {
       expect(ground).toMatch(/^rgba\(.*, 0\.\d+\)$/u);
     }
