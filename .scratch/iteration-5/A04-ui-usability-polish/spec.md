@@ -289,4 +289,10 @@ References:
 
 - The canvas: <https://claude.ai/artifact/NgBrKLs1RhN9tVywM6376Y>. The boards to read are Party, Events, Profile, Main, ZoomCards, P15-04-after-panel, Mf5Kit and Mf5Row-meal. Each ticket names the ones it needs.
 - `references/changelog-11-24.md`: the changelog as received.
-- The "before" screens go under `references/` before the tickets start.
+- `references/before/`: the "before" screens. They were captured on 2026-11-25 from the mock build (`5.0/Main` ef2223aa) on the Android emulator. Each file name starts with its ticket's number:
+  - 02: the Assistant's answers to "배고파", "뭐 먹을까" (with the list and food-kind chips), "공부할 자리", and an answer about 채용박람회 (time bar, gold flag and label).
+  - 04: 찾기, 내 파티 (own activation), the 파티 form and the 관련 행사 picker.
+  - 05: the Quest screen. The friend panel's filter is in 06's friend panel shot.
+  - 06: the map at three zoom levels, the layers, the 식당 and 공부공간 layers, a marker card with "가까이 보기", and the friend panel.
+  - 07: the 행사 tab and 내 정보's timetable.
+- Not in the mock's default state, so not captured: another User's activation band (04), a long 행사 title (07), a dimmed candidate and a black time and place chip (02). Each ticket captures them if it can reach them.
