@@ -9,6 +9,7 @@ import type { AnswerReply } from '@/api/assistant-types';
 import { crowdedMealReply, crowdedWithFriend } from '@/api/mock/data/crowded-meal';
 import { FRIENDS } from '@/api/mock/data/friends';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
+import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
 import { MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answers';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
 import { koreaDateKey, koreaNextDay } from '@/korea-time';
@@ -16,7 +17,8 @@ import { raiseCard } from './support/card-grip';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
-import { askOnMap, mapThings } from './support/answer-map';
+import { askOnMap, card, mapThings } from './support/answer-map';
+import { AI_INPUT } from './support/lists';
 import type { FakeServer } from './support/fake-server';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
@@ -116,5 +118,33 @@ describe('a Plan made from a meal answer with places dropped', () => {
 
     const rows = within(screen.getByTestId('question-list')).getAllByTestId('question-row');
     expect(rows.map((row) => String(row.props.accessibilityLabel)).join('\n')).toMatch(/초대 \d+명 보냄/u);
+  });
+});
+
+const WHY = '감골식당은 정전으로 휴점해요.';
+
+// PR 569's review: asked why a place is missing while choosing, the Assistant answers in words alone (whyNotListed sets
+// no Lookup), and the meal answer on screen stays as it was, its time card, its chosen place, and its map, while the
+// card says the sentence (P04 ticket 46's words-only follow-up).
+describe('a question why a place is missing, answered in words', () => {
+  it('leaves the meal answer on screen as it was, the place chosen included', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await raiseCard();
+    await user.press(within(screen.getByTestId('meal-list')).getByTestId('meal-row-2'));
+    await pass(500);
+    const before = mapThings();
+
+    server.on('POST /assistant/messages', {
+      status: 200,
+      body: { text: WHY, mapButtons: [], cards: [], proposal: null },
+      afterMs: 500,
+    });
+    await user.type(screen.getByLabelText(AI_INPUT), '왜 감골식당은 없어?');
+    await user.press(screen.getByRole('button', { name: '보내기' }));
+    await pass(500);
+
+    expect(card().getByText(WHY)).toBeVisible();
+    expect(screen.getByTestId('time-bar')).toBeOnTheScreen();
+    expect(mapThings()).toEqual(before);
   });
 });

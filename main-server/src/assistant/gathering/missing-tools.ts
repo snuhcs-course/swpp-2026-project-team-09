@@ -10,7 +10,7 @@ import { othersText } from '../others-text.js';
 import { type MenuLookupService } from '../lookup/menu.service.js';
 import { resolved } from '../tools/resolved.js';
 import { type MealPlanService } from './meal-plan.service.js';
-import { cellReasonOf, missingLookup, missingWords, planReasonOf } from './missing-place.js';
+import { cellReasonOf, missingWords, planReasonOf } from './missing-place.js';
 
 const input = z.object({
   restaurant: z
@@ -22,16 +22,17 @@ const input = z.object({
 });
 
 // Why a Restaurant is not among the places of the meal answer on screen (P04 ticket 71): the meal on screen planned
-// again for the same conditions, and the Restaurant brought to the map with its reason, as a menu's answer brings it.
+// again for the same conditions. Only words: the reply shows nothing of its own, so the meal answer on screen stays as
+// it is, its plans, its chosen place, and its time card, while the card says the sentence (P04 ticket 46).
 export function whyNotListed(
   plans: Pick<MealPlanService, 'planned'>,
-  menus: Pick<MenuLookupService, 'named' | 'mealsOf' | 'placeOf'>,
+  menus: Pick<MenuLookupService, 'named' | 'mealsOf'>,
 ): Tool {
   return defineTool({
     description:
-      "Says why a Restaurant is not among the places of the meal answer on screen ([Plan on screen: …]), planning that meal again for the same conditions, and the app brings the Restaurant to the map with the reason. Answers result 'reason' with the Restaurant, why (closed: its menu's notice closes the meal; no-menu: its menu was not collected for the meal; time: there is too little time there; no-fit: it cannot be reached, eaten at, and left in time; listed: it is one of the places) and, for closed, notices, the menu's own lines, else words, the reason in the User's terms; result 'several' with the Restaurants the words could name; or result 'none'.",
+      "Says why a Restaurant is not among the places of the meal answer on screen ([Plan on screen: …]), planning that meal again for the same conditions; the answer on screen stays. Answers result 'reason' with the Restaurant, why (closed: its menu's notice closes the meal; no-menu: its menu was not collected for the meal; time: there is too little time there; no-fit: it cannot be reached, eaten at, and left in time; listed: it is one of the places) and, for closed, notices, the menu's own lines, else words, the reason in the User's terms; result 'several' with the Restaurants the words could name; or result 'none'.",
     input,
-    run: async ({ restaurant }, { userId, now, context, presented, capabilities }) => {
+    run: async ({ restaurant }, { userId, now, context, capabilities }) => {
       const conditions = context.conditions;
       if (conditions?.kind !== 'meal') {
         return noneFound('No meal answer is on screen: answer from what the User asked, without this tool.');
@@ -49,12 +50,6 @@ export function whyNotListed(
       const cell =
         (await menus.mealsOf(key, conditions.date)).find(({ meal }) => meal === conditions.meal)?.lines ?? [];
       const reason = cellReasonOf(cell) ?? planReasonOf(key, (await plans.planned(userId, conditions, at)).answer);
-      const place = menus.placeOf(key);
-      if (place !== null) {
-        presented.lookup = missingLookup(key, reason, place);
-        presented.answer = null;
-        presented.mapButtons.length = 0;
-      }
       const said =
         reason.why === 'closed'
           ? { notices: reason.notices.map((text) => othersText('menu.line', text)) }

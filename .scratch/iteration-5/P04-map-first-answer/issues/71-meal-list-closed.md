@@ -17,7 +17,7 @@ Native files: none. Releases: a main-server Release and an app OTA update.
 
 1. The list shows the places that can be done, and nothing about the ones that cannot for time. Two groups leave the list, and neither is counted in "N곳": the places dropped, and the candidates the phone fades. The chosen one stays listed. The phone fades by the main server's numbers: at least 15 minutes to eat (`SHORTEST_MEAL_SECONDS`), as the server keeps a candidate, where the phone took 20.
 2. Closed places stay in sight when they would otherwise have been possible. A Restaurant closed for the meal is listed at the list's end under "쉬는 곳" only if it would have been a candidate had it been open. That is planned as for a candidate, with its usual hours for the meal on that kind of day. It shows grey, with its notice's words, not numbered, not counted in "N곳", not pressable. The answer's sentence says nothing of it (board z1, right half, without its "시간이 맞지 않는 곳" group). The main server sends these places as their own optional field of the answer, which older apps ignore. The model's tool result does not name closed places as options, and the rules tell the model not to mention them unless asked.
-3. Asked why a place is not in the answer on screen, the Assistant answers in one sentence with the real reason from a tool's result, never guessed: closed, with the notice's words; or the time (only so many minutes there, or it cannot be reached and left in time); or no menu collected. The answer brings the Restaurant to the map as a menu's answer does, and makes no new Plan: the meal answer is back through the history list, as after any Lookup.
+3. Asked why a place is not in the answer on screen, the Assistant answers in one sentence with the real reason from a tool's result, never guessed: closed, with the notice's words; or the time (only so many minutes there, or it cannot be reached and left in time); or no menu collected. The answer is words alone: it shows nothing of its own, and the meal answer on screen stays exactly as it was, its plans, its chosen place, its time card, and its picking, while the card says the sentence.
 4. The map shows the places that can be done only: the numbered Plans, 1 to n, as the list numbers them. A place the main server dropped for the time, a Plan the phone fades, and a Restaurant closed for the meal draw nothing on the map, and the camera does not fit to them. The Assistant's first pick stays, numbered 1, though it cannot be done.
 
 ## Acceptance criteria
@@ -28,7 +28,7 @@ Native files: none. Releases: a main-server Release and an app OTA update.
 - [ ] One that would not have fit is not named at all.
 - [ ] The map draws only the numbered Plans, 1 to n as in the list; a dropped place, a faded Plan, and a closed place draw nothing.
 - [ ] The answer carries the closed places in their own optional field; an app without it reads the answer as before.
-- [ ] "왜 302동은 없어?" over a meal answer gets one sentence with the reason from a tool's result, and no new Plan is made.
+- [ ] "왜 302동은 없어?" over a meal answer gets one sentence with the reason from a tool's result, and the meal answer on screen stays as it was.
 - [ ] Each reason (closed, too little time, cannot be reached and left in time, no menu) has a unit test; the question has an integration test over the fake model.
 
 ## Comments

@@ -4,7 +4,7 @@
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { cellReasonOf, missingLookup, missingWords, planReasonOf } from '../src/assistant/gathering/missing-place.js';
+import { cellReasonOf, missingWords, planReasonOf } from '../src/assistant/gathering/missing-place.js';
 import { MenuLineKind } from '../src/generated/prisma/client.js';
 import { type MenuLineDto } from '../src/menus/dto/restaurant-menus.dto.js';
 
@@ -65,18 +65,5 @@ describe('the reason in the User’s words', () => {
     [{ why: 'listed' }, '목록에 있어요'],
   ])('%j', (reason, words) => {
     expect(missingWords(reason)).toBe(words);
-  });
-
-  it('labels the Restaurant brought to the map with it, as a fact the next reply lets go', () => {
-    const lookup = missingLookup(
-      '302동식당',
-      { why: 'closed', notices: [NOTICE] },
-      { id: 'p-302', latitude: 37.4, longitude: 126.9 },
-    );
-
-    expect(lookup.lines).toEqual([[{ text: '302동식당', strong: true }], [{ text: NOTICE, strong: false }]]);
-    expect(lookup.scene.places.map(({ place, role }) => [place.label, role])).toEqual([['302동식당', 'pick']]);
-    expect(lookup.scene.flags.map(({ text }) => text)).toEqual([`302동식당 · ${NOTICE}`]);
-    expect(lookup.fact).toBe(true);
   });
 });

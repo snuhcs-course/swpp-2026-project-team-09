@@ -6,9 +6,7 @@
 
 import { closureNotices, servedLines } from '../../menus/open-rule.js';
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
-import { type PlaceDto } from '../../places/dto/place.dto.js';
-import { type Lookup, type PlacePoint } from '../dto/answer.dto.js';
-import { part } from '../lookup/way-naming.js';
+import { type PlacePoint } from '../dto/answer.dto.js';
 
 // Why a Restaurant is not among the places of the meal answer on screen (P04 ticket 71), as the planner finds it for
 // the same conditions: its menu not collected for the meal, closed for it by its menu's notice, dropped for the time
@@ -48,7 +46,7 @@ export function planReasonOf(
   return drop === undefined ? { why: 'no-fit' } : { why: 'time', reason: drop.reason };
 }
 
-// The reason in the User's words, which the model says in one sentence and the Restaurant's label on the map shows.
+// The reason in the User's words, which the model says in one sentence.
 const WORDS = {
   'no-menu': '메뉴가 올라오지 않았어요',
   'no-fit': '시간 안에 다녀올 수 없어요',
@@ -60,31 +58,4 @@ export function missingWords(reason: MissingReason): string {
     return reason.notices.join(' ');
   }
   return reason.why === 'time' ? reason.reason : WORDS[reason.why];
-}
-
-// The Restaurant brought to the map with its reason, as a menu's or hours' answer brings it: picked out, its label
-// saying why, and the closure's words as the basis. Only a fact: the map lets it go under the next reply.
-export function missingLookup(
-  key: string,
-  reason: MissingReason,
-  place: Pick<PlaceDto, 'id' | 'latitude' | 'longitude'>,
-): Lookup {
-  const at = { latitude: place.latitude, longitude: place.longitude };
-  const words = missingWords(reason);
-  const point = { placeId: place.id, label: key, ...at };
-  return {
-    kind: 'place',
-    chips: [],
-    lines: [[part(key, true)], [part(words)]],
-    basis: [],
-    scene: {
-      people: [],
-      places: [{ place: point, role: 'pick', tag: key }],
-      routes: [],
-      flags: [{ at, text: `${key} · ${words}`, role: 'place' }],
-    },
-    band: null,
-    actions: [{ kind: 'guide', to: point }],
-    fact: true,
-  };
 }

@@ -181,7 +181,7 @@ describe('A question why a Restaurant is not among the places on screen', () => 
     context = { conditions: answerIn((await stage.send([planDinner(ASKED), { text: '…' }]).expect(200)).body).input };
   });
 
-  it('answers a closed one with its notice and brings it to the map, leaving no new plan', async () => {
+  it('answers a closed one with its notice in words, showing nothing of its own over the answer on screen', async () => {
     const response = await stage.send([why('302동'), { text: '…' }], { context }, '왜 302동은 없어?').expect(200);
 
     expect(stage.model.toolResults()[0]).toEqual({
@@ -190,10 +190,8 @@ describe('A question why a Restaurant is not among the places on screen', () => 
       why: 'closed',
       notices: [QUOTED],
     });
-    const lookup = lookupIn(response.body);
-    expect(lookup.lines[1]).toEqual([{ text: NOTICE, strong: false }]);
-    expect(lookup.scene.places.map(({ place }) => place.label)).toEqual(['302동식당']);
-    expect(replySchema.parse(response.body).answer).toBeNull();
+    expect(replySchema.parse(response.body)).toEqual({ answer: null, lookup: null });
+    expect(response.body).toMatchObject({ mapButtons: [], cards: [], proposal: null });
   });
 
   it('says one of the places is listed', async () => {
