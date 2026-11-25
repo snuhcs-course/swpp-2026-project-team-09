@@ -4,11 +4,12 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { screen as found } from '@testing-library/react-native';
 import { holdBackButton } from './support/back';
-import { screen } from './support/app';
+import { pass, screen, startApp } from './support/app';
 import { button, findButton, LAYERS } from './support/lists';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
 import { FRIEND, NOT_READY, press } from './support/markers';
@@ -32,6 +33,14 @@ function toggle(name: string): ReturnType<typeof screen.getByRole> {
 
 function stack(): ReturnType<typeof screen.queryByLabelText> {
   return screen.queryByLabelText(STACK);
+}
+
+// The app closed for good and started again, over what the phone keeps.
+async function restart(): Promise<void> {
+  await screen.unmount();
+  await startApp();
+  await pass(1000);
+  await pass(500);
 }
 
 beforeEach(async () => {
@@ -195,6 +204,35 @@ describe('the stack, open', () => {
     await press(user, LAYERS);
 
     expect(toggle('식당 끄기')).toHaveTextContent('식당ON');
+  });
+});
+
+describe('the layers, when the app starts again', () => {
+  it('are as the User left them (P06 ticket 03)', async () => {
+    const user = await openMain();
+    await press(user, LAYERS);
+    await user.press(toggle('공부공간 켜기'));
+    await user.press(toggle('셔틀버스 켜기'));
+
+    await restart();
+    await press(user, LAYERS);
+
+    expect(toggle('공부공간 끄기')).toHaveTextContent('공부공간ON');
+    expect(toggle('셔틀버스 끄기')).toHaveTextContent('셔틀버스ON');
+    expect(toggle('식당 켜기')).toHaveTextContent('식당OFF');
+    expect(found.getAllByTestId('layer-dot', { includeHiddenElements: true })).toHaveLength(2);
+  });
+
+  it('stay off once turned off again', async () => {
+    const user = await openMain();
+    await press(user, LAYERS);
+    await user.press(toggle('식당 켜기'));
+    await user.press(toggle('식당 끄기'));
+
+    await restart();
+    await press(user, LAYERS);
+
+    expect(toggle('식당 켜기')).toHaveTextContent('식당OFF');
   });
 });
 

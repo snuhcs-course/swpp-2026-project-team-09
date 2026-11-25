@@ -831,7 +831,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   "식당 끄기", filled with their layer's colour while on; above them the tile 메뉴 ("메뉴 보기"), which closes the
   stack and opens the menu panel at the meal served next. A transparent scrim over the map ("편의기능 레이어 닫기")
   and Android's back button close it, the button before a card under it; the zoom control is hidden while it is
-  open. The layers start off when the app starts and stay as they are while another tab is shown.
+  open. The phone keeps which layers are on for each User (`src/storage/map-layers.ts`), a map button's turning one
+  on included, so that they start as the User left them: off until that is read, and all off for a User with nothing
+  kept. They stay as they are while another tab is shown.
 - **The 식당 layer** (`src/features/dining/`, the `MapDining` frame). Turning it on fetches today's menus, a day of
   Korea's calendar, and the Places, every time; failing either shows no pins and says "식당 정보를 불러오지
   못했어요". A pin stands on the Place `GET /menus` gives each restaurant that has a
