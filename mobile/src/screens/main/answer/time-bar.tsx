@@ -231,7 +231,7 @@ export function PlanBar(props: PlanBarProps): ReactElement {
       add={
         pickingBar.head ??
         (addName === null ? null : (
-          <AddChip disabled={busy} inBar name={addName} onAdd={fix.toggleAdding} words={pickingBar.addWords} />
+          <AddChip disabled={busy} inBar name={addName} onAdd={fix.toggleAdding} inPlan={pickingBar.inPlan} />
         ))
       }
       day={mealDayOf(answer, plan)}

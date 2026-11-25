@@ -12,7 +12,8 @@ import type { ComponentProps } from 'react';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { NO_LOCATION_ANSWER } from '@/api/mock/data/missing-inputs';
 import { color } from '@/design-system';
-import { ConditionChips } from '@/screens/main/answer/condition-chips';
+import { AddChip, ConditionChips } from '@/screens/main/answer/condition-chips';
+import { chipLook } from '@/screens/main/answer/card-header';
 
 const MINSU = '35976b5c-4daf-454f-b10e-c8b09a33ca37';
 
@@ -250,5 +251,22 @@ describe("ConditionChips of a Friend's chip", () => {
     await userEvent.press(screen.getByRole('button', { name: '김민수 프로필' }));
 
     expect(onProfile).toHaveBeenCalledWith(MINSU);
+  });
+});
+
+// Partitions: no Friend in the Plan; two. Expected values: the answer sheet's header chips' look (the user's choice of
+// 2026-11-25): filled, no outline, the words muted with the plus before "같이", and "같이 2 ›" in ink.
+describe('the time bar’s "＋ 같이"', () => {
+  it.each([
+    [0, '같이', color.inkMuted],
+    [2, '같이 2 ›', color.ink],
+  ])('with %i Friends in the Plan reads %s, in its colour', async (inPlan, words, ink) => {
+    await render(<AddChip disabled={false} inBar inPlan={inPlan} name="같이 먹을 친구 추가" onAdd={noop} />);
+    const chip = screen.getByRole('button', { name: '같이 먹을 친구 추가' });
+
+    expect(chip).toHaveStyle({ backgroundColor: chipLook.chip.backgroundColor });
+    expect(chip).not.toHaveStyle({ borderWidth: 1 });
+    expect(chip).toHaveTextContent(words);
+    expect(screen.getByText(words)).toHaveStyle({ color: ink });
   });
 });

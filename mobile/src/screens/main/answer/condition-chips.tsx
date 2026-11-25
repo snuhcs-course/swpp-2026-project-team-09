@@ -15,6 +15,7 @@ import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } fro
 import type { ConditionChip } from '@/api/assistant-types';
 import { color, Icon, radius, size, space, text } from '@/design-system';
 import { profileLabel } from '@/features/friends/profile';
+import { CHIP_SLOP, chipLook, CHIP_HEIGHT as HEADER_CHIP_HEIGHT } from './card-header';
 
 // What stands at the right of the first line: "근거" or "근거 접기" with its chevron, or "그대로", which closes the list
 // of Friends.
@@ -52,8 +53,8 @@ interface ConditionChipsProps {
 
 const CHIP_HEIGHT = 34;
 const CHIP_BORDER = 1;
-// "＋ 같이" in the time bar's head, the head row's height.
-export const BAR_ADD_HEIGHT = 32;
+// "＋ 같이" in the time bar's head, the head row's height: the answer sheet's header chips' (the user, 2026-11-25).
+export const BAR_ADD_HEIGHT = HEADER_CHIP_HEIGHT;
 const HIT_SLOP = (size.touchMin - CHIP_HEIGHT) / 2;
 
 function pressedStyle(base: StyleProp<ViewStyle>): ({ pressed }: { pressed: boolean }) => StyleProp<ViewStyle> {
@@ -159,10 +160,38 @@ interface AddChipProps {
   // A meal's when left out.
   name?: string;
   onAdd: () => void;
-  // In the time bar's head: a solid outline of the head row's height (P04 ticket 45); else dashed, in the card's chips.
+  // In the time bar's head, with the answer sheet's header chips' look (`BarAddChip`); else dashed, in the card's chips.
   inBar?: boolean;
-  // What it reads: "＋ 같이" when left out, "같이 3 ›" with Friends in the Plan (P04 ticket 64).
-  words?: string;
+  // In the time bar: the Friends in the Plan, read "같이 3 ›" (P04 ticket 64); none reads "＋ 같이".
+  inPlan?: number;
+}
+
+// The time bar's chip takes the look "내일 저녁 ⌄" and "＋ 새 대화" share (`chipLook`, the user's choice of 2026-11-25):
+// filled, with no outline, the plus in navy before "같이"; with Friends in the Plan, "같이 3 ›" in ink, as holding them.
+function BarAddChip(props: Required<Pick<AddChipProps, 'disabled' | 'name' | 'onAdd' | 'inPlan'>>): ReactElement {
+  const { disabled, name, onAdd, inPlan } = props;
+  return (
+    <Pressable
+      accessibilityLabel={name}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      hitSlop={CHIP_SLOP}
+      onPress={onAdd}
+      style={({ pressed }) => [chipLook.chip, styles.inBar, pressed && chipLook.pressed]}
+    >
+      {inPlan > 0 ? (
+        <Text numberOfLines={1} style={[chipLook.words, styles.holding]}>{`같이 ${String(inPlan)} ›`}</Text>
+      ) : (
+        <>
+          <Icon color={color.snuBlue} name="plus" size={14} />
+          <Text numberOfLines={1} style={chipLook.words}>
+            같이
+          </Text>
+        </>
+      )}
+    </Pressable>
+  );
 }
 
 export function AddChip({
@@ -171,8 +200,11 @@ export function AddChip({
   name = '같이 먹을 친구 추가',
   onAdd,
   inBar = false,
-  words = '＋ 같이',
+  inPlan = 0,
 }: AddChipProps): ReactElement {
+  if (inBar) {
+    return <BarAddChip disabled={disabled} inPlan={inPlan} name={name} onAdd={onAdd} />;
+  }
   return (
     <Pressable
       accessibilityLabel={name}
@@ -181,9 +213,9 @@ export function AddChip({
       disabled={disabled}
       hitSlop={HIT_SLOP}
       onPress={onAdd}
-      style={pressedStyle([styles.chip, inBar ? styles.inBar : styles.add, adding && styles.adding])}
+      style={pressedStyle([styles.chip, styles.add, adding && styles.adding])}
     >
-      <Text style={[styles.label, adding && styles.personLabel]}>{words}</Text>
+      <Text style={[styles.label, adding && styles.personLabel]}>＋ 같이</Text>
     </Pressable>
   );
 }
@@ -267,6 +299,7 @@ const styles = StyleSheet.create({
   markedLabel: { color: color.quest },
   add: { borderStyle: 'dashed' },
   inBar: { height: BAR_ADD_HEIGHT },
+  holding: { color: color.ink },
   adding: { borderStyle: 'solid', borderColor: color.snuBlue, backgroundColor: color.blue100 },
   pressed: { opacity: 0.6 },
   label: { ...text.label, color: color.ink },

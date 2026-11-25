@@ -3,12 +3,14 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
-import { radius, space } from '@/design-system';
+import { color, radius, space } from '@/design-system';
+import { CHIP_HEIGHT } from '@/screens/main/answer/card-header';
 import { BAR_ADD_HEIGHT } from '@/screens/main/answer/condition-chips';
 import { AI_FIELD } from '@/screens/main/ai-input';
 import { AI_INPUT } from '@/screens/main/layout';
@@ -24,7 +26,7 @@ import { sockets } from './support/fake-socket';
 
 // The footer and the bar's head from the user's phone (P04 tickets 45, 50, and 61): the main button is the input's
 // height, on its own full-width row above the input, whose placeholder stays on one line; a long sentence stands whole
-// in the sheet; "＋ 같이" is a solid chip of the head row's height, clear of the track.
+// in the sheet; "＋ 같이" is a chip of the header chips' look and of the head row's height, clear of the track.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -109,12 +111,17 @@ describe('a long sentence', () => {
 
 // Partitions: a meal answer whose Plan can take a Friend: "＋ 같이" in the bar's head.
 describe('"＋ 같이" in the bar’s head', () => {
-  it('is a solid chip of the head row’s height, its top at the row’s, so that the track starts below it', async () => {
+  it('is the header chips’ filled chip of the head row’s height, its top at the row’s, so the track starts below it', async () => {
     await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
 
     const chip = within(screen.getByTestId('time-bar-add')).getByRole('button');
-    expect(StyleSheet.flatten(chip.props.style)).toMatchObject({ height: BAR_ADD_HEIGHT });
-    expect(StyleSheet.flatten(chip.props.style)).not.toMatchObject({ borderStyle: 'dashed' });
+    expect(StyleSheet.flatten(chip.props.style)).toMatchObject({
+      height: BAR_ADD_HEIGHT,
+      backgroundColor: color.surfaceSunken,
+    });
+    expect(StyleSheet.flatten(chip.props.style)).not.toHaveProperty('borderWidth');
+    expect(BAR_ADD_HEIGHT).toBe(CHIP_HEIGHT);
+    expect(chip).toHaveTextContent('같이');
     expect(screen.getByTestId('time-bar')).toHaveStyle({ paddingTop: space[3] });
     expect(screen.getByTestId('time-bar-add')).toHaveStyle({ top: space[3] });
     expect(screen.getByTestId('time-band-head')).toHaveStyle({ minHeight: BAR_ADD_HEIGHT });

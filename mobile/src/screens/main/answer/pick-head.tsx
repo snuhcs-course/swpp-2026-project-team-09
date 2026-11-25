@@ -62,8 +62,8 @@ export interface PickingBar {
   picking: Picking | null;
   // The head while picking, in "＋ 같이"'s place.
   head: ReactNode;
-  // "＋ 같이", or with Friends in the Plan "같이 3 ›", which opens picking with them checked.
-  addWords: string;
+  // The Friends in the Plan, whom "같이 3 ›" counts; none for "＋ 같이".
+  inPlan: number;
 }
 
 // 완료: one recalculation with everyone checked. A meet needs a Friend: one left with none checked goes back to the card
@@ -129,10 +129,9 @@ export function usePickingBar(
     return { ...plan.band, lanes, ...previewOf(plan.band, lanes) };
   }, [plan.band, picked]);
   const others = plan.band.lanes.length - 1;
-  const addWords = others > 0 ? `같이 ${String(others)} ›` : '＋ 같이';
   const rows = useOpenOrder(shown, picked === null || answer === null ? null : rowsOf(plan, picked, friends));
   if (picked === null || answer === null || rows === null) {
-    return { band, picking: null, head: null, addWords };
+    return { band, picking: null, head: null, inPlan: others };
   }
   const leave = (): void => {
     shown.setAdding(false);
@@ -148,7 +147,7 @@ export function usePickingBar(
         onDone={friends.length === 0 ? leave : finishOf(shown, onClose)}
       />
     ),
-    addWords,
+    inPlan: others,
   };
 }
 
