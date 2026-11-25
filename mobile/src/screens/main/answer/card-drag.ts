@@ -85,6 +85,10 @@ export interface PanParts {
   onLetGo: (to: Level, velocity: number, started: boolean) => void;
   // That run's end.
   onLanded: (to: Level) => void;
+  // The link with the time card (`sheet-link`): whether a pull of the time card leads now, when this drag lets the
+  // touch pass, and whether this card's own move leads, from when it takes the card until its run arrives.
+  following?: SharedValue<number>;
+  sheetLeads?: SharedValue<number>;
   // A let-go with no steps to run to (the stage not laid out): only the past hint goes.
   onStay: () => void;
 }
@@ -185,6 +189,9 @@ function follow(parts: PanParts, state: PanState, translationY: number): void {
   if (!state.took.value && shared.card !== 0) {
     state.took.value = true;
     state.from.value = parts.room - parts.offset.value;
+    if (parts.sheetLeads !== undefined) {
+      parts.sheetLeads.value = 1;
+    }
   }
   const from = state.from.value;
   const lowest = parts.closable && parts.level === 'low' ? Number.POSITIVE_INFINITY : from - heights.low;
@@ -221,6 +228,9 @@ function release(parts: PanParts, state: PanState, velocityY: number, closable: 
   const { drop, reduce, onClose, onStay, onLetGo } = parts;
   const at = shownAt(parts.heights, state, state.cardY.value);
   const land = landOf(parts, at, velocityY, parts.closable && closable);
+  if (land.kind !== 'step' && parts.sheetLeads !== undefined) {
+    parts.sheetLeads.value = 0;
+  }
   if (land.kind === 'close') {
     scheduleOnRN(onClose);
     return;
@@ -261,6 +271,16 @@ function decide(state: PanState, { allTouches }: GestureTouchEvent, manager: Ges
   }
 }
 
+// While a pull of the time card leads (`sheet-link`), the sheet only follows it and lets the touch pass.
+function touchMoved(parts: PanParts, state: PanState, event: GestureTouchEvent, manager: GestureStateManager): void {
+  'worklet';
+  if (!state.active.value && parts.following?.value === 1) {
+    manager.fail();
+    return;
+  }
+  decide(state, event, manager);
+}
+
 // The card's drag on the UI thread, anywhere on the card (`follow`). A let-go after the card moved lands on a step or
 // closes the answer; after the content alone scrolled, the content runs on and the card is left as it was. A drag taken away from the finger lands
 // without closing.
@@ -281,7 +301,7 @@ export function usePan(parts: PanParts): PanGesture {
     })
     .onTouchesMove((event, manager) => {
       'worklet';
-      decide(state, event, manager);
+      touchMoved(parts, state, event, manager);
     })
     .onStart(() => {
       'worklet';

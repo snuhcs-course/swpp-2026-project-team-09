@@ -176,8 +176,9 @@ describe('a drag on the content', () => {
     expect(shown()).toBe(MID);
     expect(setLevel).not.toHaveBeenCalled();
 
-    // 50 scrolls the content back to its top, and the card comes 200 down, nearer low than middle.
+    // 50 scrolls the content back, the card comes 200 down, nearer low, and its run arrives there.
     await drag(250);
+    await settle();
     expect(setLevel).toHaveBeenCalledWith('low');
   });
 

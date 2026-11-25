@@ -6,7 +6,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useCallback, useState } from 'react';
+import { use, useCallback, useState } from 'react';
 import type { PanGesture } from 'react-native-gesture-handler';
 import type Reanimated from 'react-native-reanimated';
 import {
@@ -21,6 +21,7 @@ import { useRun } from './card-run';
 import { useReduceMotionSetting } from '@/hooks/use-reduce-motion';
 import { heightOf, type Level, type LevelHeights } from './card-levels';
 import type { Raising } from './raise-handle';
+import { SheetLinkContext } from './sheet-link';
 
 // The answer sheet moving (P04 tickets 52 and 61). It is laid out once, at its highest step's height (`room`), and
 // moved only by a translation on the UI thread, `offset`: how far below its laid-out place it stands, so that the step's
@@ -93,31 +94,33 @@ function useCloseSide(
 function useLetGo(
   raising: Raising,
   back: (to: Level, velocity?: number, started?: boolean, arrive?: () => void) => void,
-  heights: LevelHeights | null,
+  { heights, sheetLeads }: { heights: LevelHeights | null; sheetLeads?: SharedValue<number> },
 ): (to: Level, velocity: number, started: boolean) => void {
   const { level, setLevel, layer = null } = raising;
   return useCallback(
     (to: Level, velocity: number, started: boolean) => {
+      // Arrived, this card's move no longer leads the time card (`sheet-link`).
+      const ends = (): void => {
+        if (sheetLeads !== undefined) {
+          sheetLeads.value = 0;
+        }
+      };
       const lower = heights !== null && heightOf(to, heights) < heightOf(level, heights);
       if (lower && layer !== null) {
         layer();
-        back(level, velocity);
+        back(level, velocity, false, ends);
         return;
       }
       // React hears the new step when the run arrives there, so that no commit of its comes while the card runs: the
       // view stood still through each and then jumped on (the user's phone check of a toss).
-      back(
-        to,
-        velocity,
-        started,
-        to === level
-          ? undefined
-          : (): void => {
-              setLevel(to);
-            },
-      );
+      back(to, velocity, started, (): void => {
+        ends();
+        if (to !== level) {
+          setLevel(to);
+        }
+      });
     },
-    [level, setLevel, layer, back, heights],
+    [level, setLevel, layer, back, heights, sheetLeads],
   );
 }
 
@@ -155,9 +158,10 @@ export function useCardMotion(input: MotionInput): CardMotion {
   // Until the phone has said whether it asks for less motion, nothing runs.
   const reduce = useReduceMotionSetting() !== false;
   const { offset, rest, back, landed } = useRun(input, level, reduce);
+  const link = use(SheetLinkContext);
   const drop = useSharedValue(0);
   const { past, tellPast, closeNow } = useCloseSide(raising, drop);
-  const letGo = useLetGo(raising, back, heights);
+  const letGo = useLetGo(raising, back, { heights, sheetLeads: link.sheetLeads });
   const stepped = room !== null && heights !== null;
   const listY = useListY(scroll, scrollY);
   useKeptEnd(offset, { room, whole, scroll, scrollY, listY });
@@ -181,6 +185,8 @@ export function useCardMotion(input: MotionInput): CardMotion {
       letGo(to, velocity, started);
     },
     onLanded: landed,
+    following: link.following,
+    sheetLeads: link.sheetLeads,
     onStay: (): void => {
       tellPast(false);
     },

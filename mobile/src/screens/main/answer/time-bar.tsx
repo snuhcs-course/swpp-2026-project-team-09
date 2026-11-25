@@ -138,7 +138,7 @@ function Bar({ band, day, add = null, onHeight, offset = 0 }: BarProps): ReactEl
   return (
     <Reanimated.View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-        if (!grip.moving) {
+        if (!grip.moving && grip.followsSheet.value === 0) {
           const own = nativeEvent.layout.height - (folded ? 0 : rows);
           setHeight(own);
           onHeight(own);

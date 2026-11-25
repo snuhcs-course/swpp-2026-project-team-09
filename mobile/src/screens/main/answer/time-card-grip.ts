@@ -71,6 +71,8 @@ export interface TimeCardGrip {
   grown: Moved;
   grownRest: ViewStyle;
   toggle: () => void;
+  // 1 while the card's open height follows the sheet's move (`sheet-link`): its laid-out height then is not its own.
+  followsSheet: SharedValue<number>;
   // A screen reader's steps on the grip.
   actions: AccessibilityActionInfo[];
   onAction: (name: string) => void;
@@ -112,9 +114,11 @@ function useGripPan(
   { setMoving, sheet }: { setMoving: (moving: boolean) => void; sheet: SheetLink },
 ): PanGesture {
   const from = useSharedValue(0);
+  // A drag that began while the sheet's move leads is let pass: the card only follows then.
+  const skip = useSharedValue(false);
   const low = stops[0] ?? 0;
   const high = stops.at(-1) ?? 0;
-  const { following } = sheet;
+  const { following, sheetLeads } = sheet;
   const follows = sheet.high && stops.length > PLACES.indexOf('open');
   return Gesture.Pan()
     .withTestId('time-card-grip-drag')
@@ -122,6 +126,10 @@ function useGripPan(
     .hitSlop(STRIP_SLOP)
     .onStart(() => {
       'worklet';
+      skip.value = sheetLeads?.value === 1;
+      if (skip.value) {
+        return;
+      }
       from.value = y.value;
       if (following !== undefined) {
         following.value = follows ? 1 : 0;
@@ -130,10 +138,15 @@ function useGripPan(
     })
     .onUpdate(({ translationY }) => {
       'worklet';
-      y.value = clamp(from.value + translationY, low, high);
+      if (!skip.value) {
+        y.value = clamp(from.value + translationY, low, high);
+      }
     })
     .onEnd(({ velocityY }) => {
       'worklet';
+      if (skip.value) {
+        return;
+      }
       const to = gripLanding(y.value, velocityY, stops);
       // Let go open, the sheet's own run to middle takes it; let go short, it follows the card back until it is high.
       if (following !== undefined && following.value === 1) {
@@ -213,6 +226,34 @@ function useSettling(stops: readonly number[], y: SharedValue<number>, sheet: Sh
   return { place, moving, setMoving, settle };
 }
 
+// While the sheet's move leads (`sheet-link`) and the card was open when it began, its open height follows the sheet
+// on the UI thread: open at middle, folded at high. Arrived at high, React folds it (`useFoldUnder`); back at middle,
+// it stands open as it rests.
+function useFollowSheet(y: SharedValue<number>, rows: number, sheet: SheetLink, place: GripPlace): SharedValue<number> {
+  const open = useSharedValue(place === 'open' ? 1 : 0);
+  useEffect(() => {
+    open.value = place === 'open' ? 1 : 0;
+  }, [open, place]);
+  const tracking = useSharedValue(0);
+  const { rise, sheetLeads } = sheet;
+  useAnimatedReaction(
+    () => [sheetLeads?.value ?? 0, rise?.value ?? 0] as const,
+    ([leads, share], previous) => {
+      if (leads === 1 && previous?.[0] !== 1) {
+        tracking.value = open.value;
+      }
+      if (tracking.value === 1 && rows > 0) {
+        y.value = rows * (1 - share);
+      }
+      if (leads !== 1) {
+        tracking.value = 0;
+      }
+    },
+    [rows],
+  );
+  return tracking;
+}
+
 // The sheet rising to high folds an open card back to its place; the card touched last wins, so only the rise does.
 function useFoldUnder(high: boolean, place: GripPlace, settle: (index: number) => void): void {
   const wasHigh = useRef(high);
@@ -231,6 +272,7 @@ export function useTimeCardGrip({ height, top, opens, rows, sheet }: GripInput):
   const y = useSharedValue(0);
   const { place, moving, setMoving, settle } = useSettling(stops, y, sheet);
   useFoldUnder(sheet.high, place, settle);
+  const followsSheet = useFollowSheet(y, rows, sheet, place);
   const pan = useGripPan(y, stops, settle, { setMoving, sheet });
   const styles = useGripStyles(y, rows, sheet.pull);
   const rested = useMemo(() => ({ transform: [{ translateY: place === 'tucked' ? -reach : 0 }] }), [place, reach]);
@@ -242,6 +284,7 @@ export function useTimeCardGrip({ height, top, opens, rows, sheet }: GripInput):
     rested,
     grownRest,
     ...styles,
+    followsSheet,
     toggle: () => {
       if (opens) {
         settle(place === 'shown' ? 2 : 1);
