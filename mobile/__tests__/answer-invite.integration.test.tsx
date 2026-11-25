@@ -6,6 +6,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -22,6 +23,7 @@ import { sockets } from './support/fake-socket';
 import { AI_INPUT, layStage } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
+import { pickCancel } from './support/picking';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { SENT_CAPABILITIES } from './support/capabilities';
 
@@ -164,15 +166,16 @@ describe('the card after inviting', () => {
   });
 });
 
-// Partitions: the list of Friends open and closed again before inviting; the input after inviting. The rule: ticket
-// 03, the open list takes the place of the band, the steps, and the input.
-describe('"만들고 초대 보내기" beside the list of Friends', () => {
-  it('gives way to the open list, and comes back with "그대로"', async () => {
+// Partitions: people picked in the time card and the picking left before inviting; the input after inviting. The
+// rule: P04 ticket 64, the main button waits for 완료 while the input stays.
+describe('"만들고 초대 보내기" while people are picked', () => {
+  it('is hidden while the input stays, and comes back with 취소', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
 
     await user.press(timeBar().getByRole('button', { name: '같이 먹을 친구 추가' }));
     expect(screen.queryByRole('button', { name: INVITE })).toBeNull();
-    await user.press(card().getByRole('button', { name: '그대로' }));
+    expect(screen.getByLabelText(AI_INPUT)).toBeVisible();
+    await user.press(pickCancel());
 
     expect(beside().getByRole('button', { name: INVITE })).toBeEnabled();
     expect(screen.getByLabelText(AI_INPUT)).toBeVisible();

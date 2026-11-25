@@ -231,8 +231,8 @@ async function wait(milliseconds: number): Promise<void> {
   });
 }
 
-// The list of Friends open, which makes the card taller, over the first Plan.
-const LIST_OPEN: Given = { ...FIRST, room: { ...ROOM, answerHeight: 380 } };
+// The card laid out taller over the first Plan, as it is before a recalculation's answer changes it.
+const TALLER: Given = { ...FIRST, room: { ...ROOM, answerHeight: 380 } };
 
 // A recalculation's answer: a new object, as every answer of the server is, here with the stored answer's Plans.
 function recalculated(plans = MEAL_ANSWER.plans): ShownAnswer {
@@ -256,12 +256,12 @@ describe("the answer's camera after a recalculation", () => {
 
   it('moves once, after the drawing and the card have stayed the same for 120 ms, to the card then laid out', async () => {
     const asked: Asked = { fits: 0, cameras: [] };
-    const rerender = await render(asked, LIST_OPEN);
+    const rerender = await render(asked, TALLER);
     const shown = recalculated();
 
-    await rerender({ ...LIST_OPEN, shown });
+    await rerender({ ...TALLER, shown });
     await wait(60);
-    // The list closed with the answer, and the card is laid out again.
+    // The card is laid out again for the answer.
     await rerender({ ...FIRST, shown });
     await wait(119);
     expect(asked.cameras).toHaveLength(1);
@@ -278,7 +278,7 @@ describe("the answer's camera after a recalculation", () => {
 
   it('stays where it is when the answer has no Plan', async () => {
     const asked: Asked = { fits: 0, cameras: [] };
-    const rerender = await render(asked, LIST_OPEN);
+    const rerender = await render(asked, TALLER);
 
     // The recalculated answer with its Plans emptied for the boundary.
     await rerender({ ...FIRST, shown: recalculated([]) });
@@ -295,7 +295,7 @@ describe("the answer's camera after the move for a recalculation", () => {
 
   it('moves at once again for a change of the card', async () => {
     const asked: Asked = { fits: 0, cameras: [] };
-    const rerender = await render(asked, LIST_OPEN);
+    const rerender = await render(asked, TALLER);
     const shown = recalculated();
     await rerender({ ...FIRST, shown });
     await wait(120);

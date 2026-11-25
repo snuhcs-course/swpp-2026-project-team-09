@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -13,7 +14,7 @@ import type { Friend } from '@/api/types';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, shownAddress } from './support/app';
-import { askOnMap, card, mapThings, timeBar } from './support/answer-map';
+import { askOnMap, mapThings, timeBar } from './support/answer-map';
 import { recalculations } from './support/answer-correct';
 import { holdBackButton } from './support/back';
 import type { FakeServer } from './support/fake-server';
@@ -24,13 +25,14 @@ import { pressMarker } from './support/made-quest';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { press } from './support/markers';
 import { startFresh } from './support/mocks';
+import { pickRow } from './support/picking';
 import { answerMainScreen, askMainServer, JI_WOO, MIN_JUN, PHONE_NOW } from './support/server';
 import { SENT_CAPABILITIES } from './support/capabilities';
 
 // A Friend's profile card inside the answer frame (P02 ticket 18), over the stored answer to "배고파, 민수랑 같이" and
 // the fake main server's Friends: 김민준, seen at the exact position, and 서지우, of whom the User sees the Timetable
-// only. It opens from the card of a face of the Plan's people (P04 ticket 03) and from a cell's mark in the open list
-// of Friends, stands over the answer's card, and closes back to it.
+// only. It opens from the card of a face of the Plan's people (P04 ticket 03), stands over the answer's card, and
+// closes back to it. The rows of people picked in the time card (P04 ticket 64) say each Friend by the full name.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -48,7 +50,6 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 
 const ASKER = MEAL_ANSWER.input.people[0];
 const ADD = '같이 먹을 친구 추가';
-const JI_WOO_CELL = '서지우, 경영학과, 위치 모름, 추가';
 const PICK = '302동식당 · 12:15 점심';
 // 김민준's face on the Plan, named apart from his Avatar on the everyday map.
 const FACE = '민준';
@@ -231,31 +232,10 @@ describe('a new reply', () => {
   });
 });
 
-// Partitions: a Friend of whom the User sees the Timetable only, from the open list, which stays open.
-describe("a cell's mark in the open list of Friends", () => {
-  it('opens the profile without choosing, and closing returns to the open list', async () => {
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await user.press(timeBar().getByRole('button', { name: ADD }));
-
-    await user.press(card().getByRole('button', { name: '서지우 프로필' }));
-
-    expect(profileCard().getByRole('header', { name: '서지우' })).toBeVisible();
-    expect(profileCard().getByText('경영학과')).toBeVisible();
-    expect(profileCard().getByRole('button', { name: '어디까지 보이나' })).toHaveTextContent('시간표만 보여요');
-    expect(recalculations(server)).toEqual([]);
-
-    await user.press(profileCard().getByRole('button', { name: '닫기' }));
-
-    expect(screen.queryByTestId('map-card')).toBeNull();
-    expect(card().getByRole('button', { name: JI_WOO_CELL })).toBeEnabled();
-    expect(card().getByRole('button', { name: '그대로' })).toBeVisible();
-    expect(card().getByText('누구와 같이 먹을까요?')).toBeVisible();
-  });
-});
-
-// Partitions: the cells; the face of the stored answer's person, who is none of the User's Friends.
+// Partitions: the rows of the time card while people are picked; the face of the stored answer's person, who is none
+// of the User's Friends.
 describe('full names', () => {
-  it('are in the cells with the department under each, and a face opens the profile only of a Friend', async () => {
+  it('are in the rows of the picking, and a face opens the profile only of a Friend', async () => {
     const user = await askOnMap(server, MEAL_ANSWER_REPLY, () => layStage(390, 760));
 
     await pressMarker(user, '민수');
@@ -265,9 +245,7 @@ describe('full names', () => {
     await pass(100);
     await user.press(timeBar().getByRole('button', { name: ADD }));
 
-    expect(card().getByRole('button', { name: '김민준, 컴퓨터공학부, 1.2km, 추가' })).toHaveTextContent(
-      '김민준컴퓨터공학부1.2km',
-    );
-    expect(card().getByRole('button', { name: JI_WOO_CELL })).toHaveTextContent('서지우경영학과위치 모름');
+    expect(pickRow(MIN_JUN.name)).toHaveTextContent(`${MIN_JUN.name}걸음 16분`);
+    expect(pickRow(JI_WOO.name)).toHaveTextContent(`${JI_WOO.name}위치 모름`);
   });
 });

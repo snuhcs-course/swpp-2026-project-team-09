@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { render, screen, userEvent, within } from '@testing-library/react-native';
@@ -76,7 +77,7 @@ describe('ConditionChips shown', () => {
     expect(screen.getByRole('button', { name: '13:00 수업까지' })).toHaveStyle({ borderColor: color.borderStrong });
   });
 
-  it('draws ＋ 같이 chosen while the list of Friends is open', async () => {
+  it('draws ＋ 같이 chosen while people are picked', async () => {
     await show({ adding: true });
 
     expect(screen.getByRole('button', { name: '같이 먹을 친구 추가' })).toBeSelected();
@@ -84,8 +85,7 @@ describe('ConditionChips shown', () => {
 });
 
 describe("ConditionChips' corner", () => {
-  // Partitions: the corner's action, the basis closed, open, none to open, and "그대로" while the list of Friends is
-  // open; and a press on it.
+  // Partitions: the corner's action, the basis closed, open, and none to open; and a press on it.
   it('draws no 근거 without a basis to open', async () => {
     await show({ corner: null });
 
@@ -98,14 +98,6 @@ describe("ConditionChips' corner", () => {
     await show({ corner: { words: '근거 접기', icon: 'chevronUp', onPress: noop } });
 
     expect(screen.getByRole('button', { name: '근거 접기' })).toBeVisible();
-    expect(screen.queryByRole('button', { name: '근거' })).toBeNull();
-  });
-
-  it('says 그대로 where 근거 stands while the list of Friends is open', async () => {
-    await show({ adding: true, corner: { words: '그대로', icon: null, onPress: noop } });
-
-    const holder: unknown = screen.getByRole('button', { name: '그대로' }).parent?.props.testID;
-    expect(holder).toBe('condition-chips');
     expect(screen.queryByRole('button', { name: '근거' })).toBeNull();
   });
 

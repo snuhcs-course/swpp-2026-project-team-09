@@ -10,6 +10,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -291,13 +292,12 @@ describe('the camera after the answer came', () => {
     expect(fit.mock.calls).toHaveLength(before + 1);
   });
 
-  it('fits again when the opened list of Friends makes the card taller, by what the card grew', async () => {
+  it('fits again when the card is laid out taller, by what the card grew', async () => {
     const fit = jest.spyOn(projection, 'fit');
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    await askOnMap(server, MEAL_ANSWER_REPLY);
     await layAnswerCard(240);
 
-    await user.press(screen.getByRole('button', { name: '같이 먹을 친구 추가' }));
-    // The plain ground lays nothing out: the card is laid out 96 taller, as the phone lays it out with the list.
+    // The plain ground lays nothing out: the card is laid out 96 taller, as the phone lays it out when it grows.
     await layAnswerCard(336);
 
     expect(fit.mock.lastCall?.[1]).toEqual(expect.objectContaining({ padding: padding(336) }));
