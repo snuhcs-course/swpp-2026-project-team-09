@@ -212,7 +212,7 @@ export function PlanBar(props: PlanBarProps): ReactElement {
   const { shown, answer, plan, invitation, focus, onClose, onHeight, offset } = props;
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const settled = invitation.made !== null || invitation.changed !== null || invitation.left !== null;
-  const addName = !settled && (fix.adding || fix.choices.length > 0) ? addNameOf(answer.input.kind) : null;
+  const addName = settled ? null : addNameOf(answer.input.kind);
   const busy = shown.recalculating || invitation.sending || invitation.changing;
   // A meeting changed in place (P04 ticket 17) is set: its band is read, not moved.
   const fixed = bandIsFixed(answer.input.kind) || invitation.changed !== null;

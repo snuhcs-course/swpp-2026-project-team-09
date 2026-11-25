@@ -161,8 +161,10 @@ function replaced(last: AnswerState, next: AnswerReply, by: ChangeBy | undefined
       : 0;
   const kept = by === undefined ? null : { answer: last.answer, index: last.index };
   const adding = last.adding && last.pendingAdd === null;
+  // Picking ends with the list of Friends (P04 ticket 64), so that 취소, back, and the main button stay in step with it.
+  const picked = adding ? last.picked : null;
   const settled = { recalculating: false, pendingAdd: null, moving: null, menu: false };
-  return { ...last, answer: next, index, basisOpen: opensBasis(next.plans[index]), adding, kept, ...settled };
+  return { ...last, answer: next, index, basisOpen: opensBasis(next.plans[index]), adding, picked, kept, ...settled };
 }
 
 function ghostOf(kept: Shown | null): Stretch | null {

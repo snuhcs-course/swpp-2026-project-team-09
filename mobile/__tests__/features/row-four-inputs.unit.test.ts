@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Plan, PlanInput } from '@/api/assistant-types';
@@ -11,7 +12,7 @@ import { NEW_QUEST_ANSWER } from '@/api/mock/data/new-quest-answer';
 import { QUESTS_ANSWER } from '@/api/mock/data/quests-answer';
 import { peopleOf, withOrigin } from '@/features/assistant/plan-input';
 import { newPartyOf, partiesOf } from '@/features/assistant/row-four-inputs';
-import { addNameOf, whoOf } from '@/screens/main/answer/who-words';
+import { addNameOf } from '@/screens/main/answer/who-words';
 
 // The conditions the buttons of an events Plan and a party's Plan recalculate with (P02 ticket 30), and the words of
 // "＋ 같이" by the kind of the answer. Expected values: the ticket's inputs, and the stored copies' ids: the job fair
@@ -96,12 +97,6 @@ describe('a start chosen on the map', () => {
 
 // Partitions: each kind of the conditions.
 describe('the words of "＋ 같이"', () => {
-  it('ask who comes to eat, to meet, or to be invited to a new party', () => {
-    expect(whoOf('meal')).toEqual([{ text: '누구와 같이 먹을까요?', strong: false }]);
-    expect(whoOf('meet')).toEqual([{ text: '누구와 같이 만날까요?', strong: false }]);
-    expect(whoOf('new-quest')).toEqual([{ text: '누구를 초대할까요?', strong: false }]);
-  });
-
   it('name the chip by what a Friend is added to, and leave it out for events and parties', () => {
     expect(addNameOf('meal')).toBe('같이 먹을 친구 추가');
     expect(addNameOf('meet')).toBe('같이 만날 친구 추가');

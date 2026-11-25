@@ -11,21 +11,18 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, type ReactNode, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
 import type { AnswerOffer } from '@/api/refusal-types';
 import { Button, color, space, text } from '@/design-system';
 import { movingWords } from '@/features/assistant/band-move';
 import { easedFromNow } from '@/features/assistant/relaxed-plan';
-import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { ChatMarkdown } from '../chat-markdown';
-import { useOpenFriendProfile } from '../friend-profile';
 import { AnswerLines } from './answer-lines';
 import { CardNote } from './card-note';
-import { PlanChips } from './plan-chips';
 import { MainButtons } from './main-buttons';
 import { MealList, mealCard } from './meal-list';
 import { MealMenu } from './meal-menu';
@@ -34,7 +31,6 @@ import { PlanStepper } from './plan-stepper';
 import { RelaxButtons } from './relax-buttons';
 import { RowFourButtons } from './row-four-buttons';
 import { type BandFocus, type Corrections, useCorrections } from './use-corrections';
-import { addNameOf } from './who-words';
 
 const UNDO_WIDTH = 96;
 
@@ -199,14 +195,13 @@ function MealWords({ said, shown }: { said: string; shown: ShownAnswer }): React
   );
 }
 
-// A meal answer's raised card: the Assistant's whole words, the person chips under them (`chips`), then its list, or
-// the chosen one's menu (P04 ticket 54).
-function MealBody(props: PlanCardProps & { busy: boolean; chips: ReactNode }): ReactElement {
+// A meal answer's raised card: the Assistant's whole words, then its list, or the chosen one's menu (P04 ticket 54).
+// People are picked in its time card (P04 ticket 64).
+function MealBody(props: PlanCardProps & { busy: boolean }): ReactElement {
   const { shown, answer, invitation, over = [], said = '' } = props;
   return (
     <>
       {over.length > 0 ? null : <MealWords said={said} shown={shown} />}
-      {props.chips}
       <MealSheet answer={answer} busy={props.busy || settled(invitation)} shown={shown} />
     </>
   );
@@ -233,31 +228,11 @@ export function PlanCard(props: PlanCardProps): ReactElement {
   const { shown, answer, invitation, over = [], onClose, focus, said = '' } = props;
   const busy = shown.recalculating || invitation.sending || invitation.changing;
   const fix = useCorrections(shown, answer.input, onClose, focus);
-  const openProfile = useOpenFriendProfile();
-  // While the Plan can take more people: the map does not draw every Friend's face (one near the answer's own marks
-  // gives way), so the + on a face is not enough. It stands in the time bar (P04 ticket 14), and here only where no
-  // bar is: an answer without a Plan, or while the keyboard hides the bar.
-  const barShown = useKeyboardHeight() === 0 && shown.plan !== null;
-  const addName = !barShown && (fix.adding || fix.choices.length > 0) ? addNameOf(answer.input.kind) : null;
   const meal = shown.plan !== null && mealCard(answer);
-  // The Plan's people are its time card's rows, picked there: the card has no chips of people (P04 ticket 64).
-  const chips =
-    addName === null ? null : (
-      <PlanChips
-        addName={addName}
-        answer={answer}
-        busy={busy}
-        chips={[]}
-        corner={null}
-        fix={fix}
-        onProfile={openProfile}
-      />
-    );
   return (
     <View style={styles.plan}>
-      {meal ? null : chips}
       <Said lines={linesOf(shown, answer, over)} said={meal ? '' : said} />
-      {meal ? <MealBody {...props} busy={busy} chips={chips} /> : null}
+      {meal ? <MealBody {...props} busy={busy} /> : null}
       <Below answer={answer} busy={busy} fix={fix} invitation={invitation} shown={shown} steps={props.steps} />
     </View>
   );

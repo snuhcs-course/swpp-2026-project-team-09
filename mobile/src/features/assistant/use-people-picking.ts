@@ -7,11 +7,19 @@
 import { useCallback } from 'react';
 import type { AnswerReply, PlanInput } from '@/api/assistant-types';
 import { pickedOf, toggled, withPicked } from './people-picking';
+import { hasPeople } from './plan-input';
 
 interface PickingState {
   answer: AnswerReply | null;
   adding: boolean;
   picked: readonly string[] | null;
+  recalculating: boolean;
+}
+
+// People are picked only in a Plan's time card, of a kind that takes people, and not while a new Plan is on its way:
+// its people are not yet those of the answer on screen.
+function pickableOf({ answer, recalculating }: PickingState): AnswerReply | null {
+  return answer !== null && !recalculating && answer.plans.length > 0 && hasPeople(answer.input) ? answer : null;
 }
 
 interface Picking {
@@ -31,10 +39,11 @@ export function usePeoplePicking<S extends PickingState>(
   const setAdding = useCallback(
     (open: boolean): void => {
       setStored((last) => {
-        if (last.adding === open) {
-          return last;
+        if (!open) {
+          return last.adding || last.picked !== null ? { ...last, adding: false, picked: null } : last;
         }
-        return { ...last, adding: open, picked: open && last.answer !== null ? pickedOf(last.answer.input) : null };
+        const answer = pickableOf(last);
+        return last.adding || answer === null ? last : { ...last, adding: true, picked: pickedOf(answer.input) };
       });
     },
     [setStored],
@@ -42,7 +51,11 @@ export function usePeoplePicking<S extends PickingState>(
   const pick = useCallback(
     (userId: string): void => {
       setStored((last) => {
-        const open = last.picked ?? (last.answer === null ? [] : pickedOf(last.answer.input));
+        const answer = pickableOf(last);
+        if (answer === null) {
+          return last;
+        }
+        const open = last.picked ?? pickedOf(answer.input);
         return {
           ...last,
           adding: true,

@@ -10,7 +10,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Plan, TimeBand } from '@/api/assistant-types';
 import { color, radius, space, text } from '@/design-system';
 import { metresBetween } from '@/features/assistant/answer-drawing';
-import { onlyFriendOf } from '@/features/assistant/meet-input';
 import { doneWordsOf, pickedLanes, pickRowsOf, previewOf, walkGuessOf } from '@/features/assistant/people-picking';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { useFriends } from '@/features/friends/use-friends';
@@ -57,15 +56,15 @@ export interface PickingBar {
   addWords: string;
 }
 
-// 완료: one recalculation with everyone checked; a meet whose only Friend was unchecked goes back to that Friend's card,
-// as their ✕ did.
+// 완료: one recalculation with everyone checked. A meet needs a Friend: one left with none checked goes back to the card
+// of the Friend it was made with, as the last ✕ did.
 function finishOf(shown: ShownAnswer, onClose: () => void): () => void {
   return () => {
     const { answer, picked } = shown;
-    const only = answer === null ? null : onlyFriendOf(answer.input);
-    if (only !== null && picked?.length === 0) {
+    const first = answer?.input.kind === 'meet' ? (answer.input.people[1]?.userId ?? null) : null;
+    if (first !== null && picked?.length === 0) {
       onClose();
-      router.setParams({ person: only });
+      router.setParams({ person: first });
       return;
     }
     shown.finishPicking();
