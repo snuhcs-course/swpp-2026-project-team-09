@@ -16,7 +16,7 @@ Travel Time is the time from one Place to another, on foot or by the circular sh
 
 ## Considered Options
 
-- **Kakao's walking route for every pair.** Its results may not be stored, and a live call for each candidate would cost a request per pair at every question. Kakao stays only for drawing routes: it never feeds the table, and nothing is compared with it.
+- **Kakao's walking route for every pair.** Its results may not be stored, and a live call for each candidate would cost a request per pair at every question. Kakao stays only for drawing routes: it never feeds the table, and nothing is compared with it. A drawn route is held only while the answer that draws it is on screen.
 - **Straight-line distance with a detour factor.** It needs no data, but it says a building behind a hill is 2 minutes away. It stays as the baseline of the walking evaluation.
 - **A grid instead of Place × Place.** Compared with the Place table, 25 m cells give an MAE of 46 s and 50 m cells 85 s, short trips come out long, and the table is 8 to 100 times larger.
 - **Joining every path within 40 m.** It stranded BK국제관, left 458 pairs unreachable, and said 24 minutes for 영선공장 → 우석경제관, 44 m apart. Nearest + 20 m leaves no pair unreachable, gives that pair 1.6 minutes and moves less when a pin moves.

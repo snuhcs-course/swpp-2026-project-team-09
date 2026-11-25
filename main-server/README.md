@@ -1748,9 +1748,9 @@ Kakao once, and the answer carries `Cache-Control: no-store`, so that no HTTP ca
 calls Kakao. The team's Kakao app has a free quota of 1,000 routes a day, and a call beyond it fails (§7.5), so the app
 asks for a route when the User does, never on every position. Pending the owner's decision (P15 ticket 56, "Open
 questions for the owner"): the app also asks, by itself, for the walks of the Plan or Lookup on screen in the answer
-frame, at most three a scene, each pair of ends once. It never stores a path beyond the running app's memory, where a
-path stays for 30 minutes after its scene leaves the screen, so a Plan shown again asks nothing; a typical answer costs
-2 to 3 routes a Plan shown the first time.
+frame, at most three a scene, each pair of ends once. A path is held only while the answer that draws it is on screen,
+in the running app's memory, so a Plan of that answer shown again asks nothing; a typical answer costs 2 to 3 routes a
+Plan shown the first time.
 
 The REST API key is `KAKAO_REST_API_KEY`, a secret that stays on the main server: it goes to Kakao in the
 `Authorization` header and nowhere else. The server stops at startup and names the setting when it is missing or empty.

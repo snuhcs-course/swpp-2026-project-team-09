@@ -7,8 +7,8 @@
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type FetchStatus, useQueries, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { type FetchStatus, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
 import type { MapScene, Plan } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { shuttleQuery } from '@/api/queries';
@@ -38,10 +38,6 @@ function walkKey(walk: Walk): readonly unknown[] {
   return [...ANSWER_WALK_KEY, endsOf(walk)];
 }
 
-// How long a walk's path is kept in the running app's memory once no scene on screen draws it (P04 ticket 75): a
-// place chosen again within it draws its path at once and asks nothing.
-export const WALK_KEPT_MS = 30 * 60 * 1000;
-
 interface Answer {
   route: WalkingRoute | undefined;
   // On its way: asked, neither answered nor failed yet, and not held while the phone is offline, when the line stays
@@ -65,10 +61,11 @@ export interface WalkState {
 
 // The paths of a scene's walks, by their lines' ids, once found, and the lines of those still on their way. Only the
 // scene on screen is asked for: at most `WALKS_PER_SCENE` walks, each pair of ends once, never a shuttle's ride.
-// Kakao's policy keeps a route from being stored: a path is never stored beyond the running app's memory, where it is
-// kept for `WALK_KEPT_MS` after its last scene leaves the screen and is gone when the app is closed. A request whose
-// scene leaves the screen is given up (the query's `signal`). A failure is retried as the everyday route's is, and not
-// again when its scene comes back while it is still known. A walk failed or with no path has none.
+// Kakao's policy keeps a route from being stored: a path is held only while the answer that draws it is on screen
+// (`useWalksHeldWhile`), in the running app's memory, so that a place of that answer chosen again asks nothing (P04
+// ticket 75). A request whose scene leaves the screen is given up (the query's `signal`). A failure is retried as the
+// everyday route's is, and not again when its scene comes back while it is still known. A walk failed or with no path
+// has none.
 export function useWalkPaths(walks: readonly Walk[]): WalkState {
   const asked = useMemo(() => walksToAsk(walks, WALKS_PER_SCENE), [walks]);
   const results = useQueries({
@@ -77,7 +74,7 @@ export function useWalkPaths(walks: readonly Walk[]): WalkState {
       queryFn: ({ signal }: { signal: AbortSignal }): Promise<WalkingRoute> =>
         apiClient.findWalkingRoute(walk.from, walk.to, signal),
       staleTime: Infinity,
-      gcTime: WALK_KEPT_MS,
+      gcTime: Infinity,
       retryOnMount: false,
     })),
     combine: answersOf,
@@ -100,6 +97,18 @@ export function useWalkPaths(walks: readonly Walk[]): WalkState {
     () => ({ paths: pathsOf(walks, found), waiting: waitingLines(walks, waiting) }),
     [walks, found, waiting],
   );
+}
+
+// Drops every walk's path no scene on screen draws once what holds them changes: the answer or the Lookup on screen
+// (`frame`, null with none) or the received invitation's or made Quest's card (`card`). A new answer and a closed one
+// drop the paths of the one before; choosing between the places of one answer, and the keyboard taking its card away
+// and back, keep them. Called after the hooks that ask for walks, whose requests have moved to the scene on screen by
+// then.
+export function useWalksHeldWhile(frame: object | null, card: object | null): void {
+  const client = useQueryClient();
+  useEffect(() => {
+    client.removeQueries({ queryKey: ANSWER_WALK_KEY, predicate: (query) => query.getObserversCount() === 0 });
+  }, [client, frame, card]);
 }
 
 // A scene's lines with its walks along their paths (`useWalkPaths`), joined onto their ends. A walk's line is not

@@ -16,7 +16,10 @@ Choosing a Restaurant draws a straight line that turns into the walking path a m
 
 ## What to build
 
-1. A walk's path stays in the running app's memory once per pair of ends: for 30 minutes after its last scene leaves the screen (`WALK_KEPT_MS`), and never on disk. Choosing a place again within that time asks nothing and draws its path at once. Kakao's policy keeps a route from being stored; a path is never stored beyond the running app's memory.
+1. A walk's path is held, once per pair of ends, only while the answer that draws it is on screen, in the running app's memory and never on disk. Kakao's operating policy allows caching only to improve the User's experience, kept current, and the API's free quota is 1,000 calls a day.
+   - Choosing between the answer's places, going back to one already seen, and the keyboard taking the card away and back reuse its paths: no request, and the path is drawn at once.
+   - A new answer and the answer closed (✕, back, a layer, route guidance) drop the paths of the one before. Shown again, it asks again.
+   - The same holds for a Lookup's walks and for a received invitation's or made Quest's card.
 2. A walk's line is not drawn while its path is on its way; it appears when the path comes. A failure, or no path found, draws the straight line as before, and so does a request held while the phone is offline.
 3. The minutes pills and the marks do not wait for the path.
 4. Nothing is asked ahead: another candidate's walks are asked only when it is chosen.
@@ -24,15 +27,16 @@ Choosing a Restaurant draws a straight line that turns into the walking path a m
 
 ## Acceptance criteria
 
-- [x] A place chosen again within 30 minutes asks `GET /walking-route` nothing and draws its path at once.
+- [x] A place of the answer on screen chosen again asks `GET /walking-route` nothing and draws its path at once.
+- [x] The answer closed and shown again asks again.
 - [x] While a walk's path is on its way, no line is drawn for it, a shuttle leg's walks included.
 - [x] A failed request and no path found draw the straight line.
-- [x] The comments and docs say a path is never stored beyond the running app's memory.
+- [x] ADR 0010, the comments, and the docs say a path is held only while the answer that draws it is on screen.
 - [x] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
 
-Built in PR #577. A walk's query keeps its path for `WALK_KEPT_MS` once no scene draws it, and `useWalkPaths` also gives the lines still on their way, fetching with no answer yet, which `linesOn` and a shuttle leg's lines leave out until their paths come. ADR 0010 says only that Kakao's results may not be stored, for the walking table, and is unchanged; the READMEs and P15 ticket 56 now say a path is never stored beyond the running app's memory.
+Built in PR #577. A walk's query keeps its path with no timeout, and `useWalksHeldWhile`, called in the map view after the hooks that ask for walks, drops every path no scene draws once the answer, the Lookup, or the card on screen changes or closes. `useWalkPaths` also gives the lines still on their way, fetching with no answer yet, which `linesOn` and a shuttle leg's lines leave out until their paths come. ADR 0010, the READMEs, and P15 ticket 56 say a path is held only while the answer that draws it is on screen.
 
 ### Agent usage (2026-11-26)
 

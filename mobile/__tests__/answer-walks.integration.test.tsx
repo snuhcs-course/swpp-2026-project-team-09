@@ -18,6 +18,7 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
 import { askOnMap, mapLines } from './support/answer-map';
+import { CONTINUE } from './support/questions';
 import type { FakeServer, Received, Reply } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS } from './support/main';
@@ -26,8 +27,9 @@ import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // An answer's walking routes follow the paths (P15 ticket 56), against the fake main server: the walks of the Plan on
 // screen are asked of `GET /walking-route`, a few at most, and drawn along the line it gives once it comes, and
-// straight when none comes. A Plan that leaves the screen gives its requests up; its paths stay in the running app's
-// memory, so one shown again asks nothing (P04 ticket 75).
+// straight when none comes. A Plan that leaves the screen gives its requests up. Its paths are held only while its
+// answer is on screen: a place of it chosen again asks nothing, and the answer closed and shown again asks again (P04
+// ticket 75).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -230,8 +232,8 @@ function signalsOf(walks: readonly [Point, Point][]): (AbortSignal | undefined)[
     .map(([, , signal]) => signal);
 }
 
-// Partitions: a Plan that leaves the screen while its walks are on their way, and one shown again after its walks
-// were answered.
+// Partitions: a Plan that leaves the screen while its walks are on their way; one shown again after its walks were
+// answered, while its answer stays on screen, and after the answer was closed and shown again.
 describe('a Plan that leaves the screen', () => {
   it("gives up its walks' requests still on their way", async () => {
     server.on(WALKING_ROUTE, (request) => pathOf(request, 5000));
@@ -245,7 +247,7 @@ describe('a Plan that leaves the screen', () => {
     expect(signalsOf(PLAN_3_WALKS).map((signal) => signal?.aborted)).toEqual([false, false, false]);
   });
 
-  it('keeps its paths in memory: shown again, it asks nothing and draws them at once', async () => {
+  it('keeps its paths while its answer is on screen: shown again, it asks nothing and draws them at once', async () => {
     server.on(WALKING_ROUTE, (request) => pathOf(request));
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
     await pass(500);
@@ -256,5 +258,19 @@ describe('a Plan that leaves the screen', () => {
 
     expect(strokesOf('answer:route:0')).toHaveLength(3);
     expect(server.received(WALKING_ROUTE).filter((request) => endsAt(request, RESTAURANT))).toHaveLength(1);
+  });
+
+  it('drops them once its answer is closed: shown again by "이어서", it asks again', async () => {
+    server.on(WALKING_ROUTE, (request) => pathOf(request));
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    await pass(500);
+
+    await user.press(screen.getByRole('button', { name: '답 닫기' }));
+    await pass(500);
+    await user.press(screen.getByRole('button', { name: CONTINUE }));
+    await pass(500);
+
+    expect(server.received(WALKING_ROUTE).filter((request) => endsAt(request, RESTAURANT))).toHaveLength(2);
+    expect(strokesOf('answer:route:0')).toHaveLength(3);
   });
 });
