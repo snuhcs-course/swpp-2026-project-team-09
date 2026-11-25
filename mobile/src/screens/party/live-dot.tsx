@@ -22,10 +22,6 @@ export function LiveDot(): ReactElement {
   const moving = useMotionAllowed();
   const opacity = useRef(new Animated.Value(1)).current;
   useEffect(() => {
-    if (!moving) {
-      opacity.setValue(1);
-      return;
-    }
     const step = (toValue: number): Animated.CompositeAnimation =>
       Animated.timing(opacity, {
         toValue,
@@ -33,10 +29,14 @@ export function LiveDot(): ReactElement {
         easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
       });
-    const blink = Animated.loop(Animated.sequence([step(DIM), step(1)]));
-    blink.start();
+    const blink = moving ? Animated.loop(Animated.sequence([step(DIM), step(1)])) : null;
+    if (blink === null) {
+      opacity.setValue(1);
+    } else {
+      blink.start();
+    }
     return (): void => {
-      blink.stop();
+      blink?.stop();
     };
   }, [moving, opacity]);
   return <Animated.View style={[styles.dot, { opacity }]} />;
