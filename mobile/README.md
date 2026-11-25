@@ -1579,7 +1579,7 @@ shows it as the previews do. `MapDot` and `MapPerson` are in its `MapPin` sectio
 
 What the Assistant draws over the map is see-through, as the wireframes' changelog of 11.24 (§ 5-1) sets it, so that
 the map stays in sight while the User reads. `Glass` draws that surface at a named level; a caller gives the level and
-its own layout (size, padding, radius, a border's width) and never a colour or a strength. The levels' values are
+its own layout (size, padding, radius) and never a colour, a border or a strength. The levels' values are
 `glass` in `tokens.ts`, which nothing but `Glass` reads.
 
 | Level | Takes | Look |

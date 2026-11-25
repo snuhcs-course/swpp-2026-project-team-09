@@ -12,8 +12,8 @@ import type { ReactElement } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatars, Badges, Buttons, Chips, Icons, MapPins } from '@/catalogue/basics';
-import { GlassLayer } from '@/catalogue/glass';
 import { BottomNavs, ChatInputs, Dialogs, EventCards, TextFields, Toasts } from '@/catalogue/composites';
+import { GlassLayer } from '@/catalogue/glass';
 import { AppBars, ChoiceGrids, Filters, FullScreenPanels, ListRows, Panels, States } from '@/catalogue/screens';
 import { color, space, text } from '@/design-system';
 

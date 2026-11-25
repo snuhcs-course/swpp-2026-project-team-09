@@ -111,18 +111,23 @@ export const halo = {
   study: 'rgba(3, 105, 161, 0.22)',
 } as const;
 
-// The glass layer's surfaces, as the changelog of 11.24 (§ 5-1) and its Mf5Kit board draw the Assistant over the map.
-// Only `Glass` (glass.tsx) reads them: a screen names a level and never these values. `line` is the thin light line
-// along a surface's top, `rim` the light border of a chip on the map.
+// The glass layer's surfaces, as the changelog of 11.24 (§ 5-1) sets their grounds and its Mf5Kit board draws the
+// rest: the shadows, the map chip's rim, and `line`, the thin light line along a surface's top. Only `Glass`
+// (glass.tsx) reads them: a screen names a level and never these values.
 export const glass = {
-  // Outer bars, bottom sheets and cards over the map: white at 50%, the line, and a floating shadow.
+  // Outer bars, bottom sheets and cards over the map: white at 50%, the line, and the board's floating shadow, between
+  // `shadow.float` and `shadow.mapCard`.
   panel: { ground: 'rgba(255, 255, 255, 0.5)', shadow: '0 4px 16px rgba(14, 19, 48, 0.16)' },
   // Chips, boxes, white buttons and light coloured chips inside a panel: white at 80%.
   inner: { ground: 'rgba(255, 255, 255, 0.8)' },
   // A grey input field inside a panel: the key colour at 5%.
   field: { ground: 'rgba(0, 26, 114, 0.05)' },
   // A small chip that stands on the map itself, such as a walk's minutes: white at 60%, a rim, a light shadow.
-  mapChip: { ground: 'rgba(255, 255, 255, 0.6)', rim: 'rgba(255, 255, 255, 0.75)', shadow: '0 4px 14px rgba(14, 19, 48, 0.12)' },
+  mapChip: {
+    ground: 'rgba(255, 255, 255, 0.6)',
+    rim: 'rgba(255, 255, 255, 0.75)',
+    shadow: '0 4px 14px rgba(14, 19, 48, 0.12)',
+  },
   // The black chip of a time and a place ("10:45 301동"): the ink at 48%.
   darkChip: { ground: 'rgba(14, 19, 48, 0.48)' },
   line: 'inset 0 1px 0 rgba(255, 255, 255, 0.85)',

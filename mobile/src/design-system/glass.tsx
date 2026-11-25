@@ -15,8 +15,8 @@ export const GLASS_LEVELS: readonly GlassLevel[] = ['panel', 'inner', 'field', '
 
 interface GlassProps extends Omit<ViewProps, 'style' | 'children'> {
   level: GlassLevel;
-  // The caller's layout: size, padding, radius, a border's width, how the children are laid out. The surface's
-  // colours and shadow are the level's and win over the caller's.
+  // The caller's layout: size, padding, radius, how the children are laid out. The surface's colours, shadow and the
+  // map chip's rim are the level's and win over the caller's.
   style?: StyleProp<ViewStyle>;
   children?: ReactNode;
 }
@@ -41,6 +41,7 @@ const surfaces = StyleSheet.create({
   field: { backgroundColor: glass.field.ground },
   mapChip: {
     backgroundColor: glass.mapChip.ground,
+    borderWidth: 1,
     borderColor: glass.mapChip.rim,
     boxShadow: `${glass.mapChip.shadow}, ${glass.line}`,
   },

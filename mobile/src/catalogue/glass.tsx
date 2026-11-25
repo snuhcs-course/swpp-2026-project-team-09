@@ -32,7 +32,7 @@ export function GlassLayer(): ReactElement {
           </Glass>
         </Glass>
         <View style={styles.chips}>
-          <Glass level="mapChip" style={[styles.chip, styles.rimmed]}>
+          <Glass level="mapChip" style={styles.chip}>
             <Text style={styles.chipWords}>mapChip · 6분</Text>
           </Glass>
           <Glass level="darkChip" style={styles.chip}>
@@ -55,7 +55,6 @@ const styles = StyleSheet.create({
   hint: { ...text.body, color: color.inkMuted },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
   chip: { paddingHorizontal: space[3], paddingVertical: space[1], borderRadius: radius.full },
-  rimmed: { borderWidth: 1 },
   chipWords: { ...text.caption, color: color.ink },
   darkWords: { ...text.caption, color: color.onPrimary },
 });
