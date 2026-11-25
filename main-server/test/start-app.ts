@@ -68,6 +68,9 @@ export async function startApp(
   tutorialFile?: string,
   { fetchExpo = refuseExpoPush, modelFactory, fetchSlack = refuseSlack }: StartOptions = {},
 ): Promise<INestApplication<Server>> {
+  // Read before AppModule is imported: its ConfigModule.forRoot checks the settings as it is imported, and a refusal
+  // must find `compile` waiting for it. A read between the two left it rejected with no handler (after PR 578).
+  const shownTravel = travel ?? (await readFrozenTravel());
   for (const [name, value] of Object.entries(settings)) {
     vi.stubEnv(name, value);
   }
@@ -76,7 +79,7 @@ export async function startApp(
   // Imported after AppModule, so that it is the same class AppModule registers.
   const { GoogleIdTokenVerifier } = await import('../src/auth/google-id-token.verifier.js');
   const testing = Test.createTestingModule({ imports: [AppModule, ...modules], controllers });
-  testing.overrideProvider(TRAVEL_PROVIDER).useValue(travel ?? (await readFrozenTravel()));
+  testing.overrideProvider(TRAVEL_PROVIDER).useValue(shownTravel);
   if (tutorialFile !== undefined) {
     testing.overrideProvider(TUTORIAL_FILE_PATH).useValue(tutorialFile);
   }
