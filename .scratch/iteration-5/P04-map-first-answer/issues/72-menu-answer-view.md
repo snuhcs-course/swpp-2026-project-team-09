@@ -2,6 +2,7 @@
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
+Pull request: #573
 Blocked by: none.
 
 Native files: none. Releases: a main-server Release and an app OTA update.
@@ -46,3 +47,15 @@ The user chose A on the proposal page: no sentence above the menu.
 - [x] The app opens such an answer at the Restaurant's menu, with the head, the menu, "‹ N곳 목록" of the whole meal, and no pill, lines, or 근거. A closed Restaurant shows its view with why and no button. (Integration test over the mocks, failing before.)
 - [x] The app checks `menuView`. (Unit test.)
 - [x] No native file changes. Lint, format, and types pass on the main server and the app.
+
+## Comments
+
+Built in PR #573.
+
+- **Review fixes.** The opened Plan comes first among the answer's Plans, so what the reply showed (`plans[0]`) and an app that does not read `opened` name the Restaurant asked about. The meal is planned with the missing location and a held meal set aside, as `planMeal` does.
+- **Not in this PR.** An answer that arrives while the sheet is raised is framed for low, as every answer is. In the emulator's second picture, the closed Restaurant's label is under the sheet raised by the answer before it. That is the general case, left for the sheet and time card rework.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 43 minutes in the p04-58 session, from the request to the review fixes. An estimate from the transcript's timestamps, adding gaps under 5 minutes. No subagent worked on this ticket.
+- Tokens: output about 172k. Input about 156.3M: cache reads about 155.9M, cache writes about 0.32M, and almost nothing uncached. Measured from the session's transcript, once per message.
