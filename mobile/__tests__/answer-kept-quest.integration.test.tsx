@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -184,7 +185,6 @@ describe('the answer after 그대로 두기', () => {
 
     await tapGround();
 
-    expect(screen.queryByText('여기면 어때?')).toBeNull();
     expect(server.received('POST /assistant/answers')).toHaveLength(0);
   });
 

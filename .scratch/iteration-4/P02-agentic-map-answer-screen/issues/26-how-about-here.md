@@ -26,6 +26,9 @@ Blocked by: 22 (the press on a building); package A's earliest arrival per perso
 
 ## Comments
 
+Removed by P04 ticket 66 (2026-11-25): a building pressed during a meal's Plan now asks nothing.
+
+
 - Boards a7 and a8; note (4) (each person's arrival as a row) and note (10) (✕ and "그대로" return to the Plan, row 1 g2).
 - Only a meal's Plan: no board presses a building during a meet or an events answer.
 - "지금 계획보다 M분 짧아요" is worked out by the app from the togetherMinutes of the two Plans it holds; every other word is the server's.

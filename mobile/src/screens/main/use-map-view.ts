@@ -9,11 +9,11 @@
  * 2026-11-18  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo } from 'react';
 import { awayPlaceOf } from '@/features/assistant/study-area';
-import { useAskingShown } from '@/features/assistant/use-how-about';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { ShownLookup } from '@/features/assistant/use-shown-lookup';
 import type { CardView } from '@/features/map/adapter';
@@ -39,7 +39,7 @@ import type { MainMap } from './use-main-map';
 import type { MadeQuestCard } from './use-made-quest-card';
 import { type Me, pressableMe } from './use-me';
 import type { ReceivedInvitation } from './use-received-invitation';
-import { bothTouches, type MapTouches, type PressedPlace, usePressedPlace } from './use-pressed-place';
+import { bothTouches, type MapTouches, usePressedPlace } from './use-pressed-place';
 import type { Selection } from './use-selection';
 import { useThings } from './use-things';
 import { useViewport } from './use-viewport';
@@ -95,23 +95,6 @@ function onMap({ framed, answer, lookup }: ChatSheetControl): { answer: ShownAns
     : { answer: { ...answer, answer: null, plan: null }, lookup: { ...lookup, lookup: null, reply: null } };
 }
 
-// A meal's Plan on screen whose buildings take a press ("여기면 어때?", P02 ticket 26): a press on a mark keeps its tap
-// from asking about a building and, while a building is asked about, does nothing else; the pressed building is
-// marked as on the everyday map.
-function withBuildingPress(answer: AnswerMap, pressed: PressedPlace, asked: boolean, around: MapTouches): MapView {
-  return {
-    ...answer,
-    contents: { ...answer.contents, markers: [...answer.contents.markers, ...pressed.markers] },
-    onPress: (id) => {
-      pressed.keep();
-      if (!asked) {
-        answer.onPress(id);
-      }
-    },
-    around,
-  };
-}
-
 // Whether the map draws something of its own in place of the everyday map: an answer or a Lookup, an invitation's or a
 // made Quest's way, or a 새내기 튜토리얼 quest's guide. While it does, the answer's limits hold and the everyday map's
 // glide back in to the lowest zoom waits, so that a fit further out than the whole campus stays where it rests.
@@ -149,8 +132,8 @@ function pressTarget(
 // Lookup on screen is drawn as a Plan is, and a press on one of its marks raises its card (`useLookupMap`); so is a
 // Proposal or a 관정도서관 seat card, the turn's reply alone, which wins over an answer kept from a turn before, and a
 // press on its flag opens its card (`useMadeSceneMap`). Once any of them closes, a camera left further out than the
-// everyday map allows glides back in. While a meal's Plan is on screen, a press on a building asks about it and the
-// map draws that ("여기면 어때?"). On the everyday map, a tap on empty map, one that no mark keeps
+// everyday map allows glides back in. With an answer on screen, a meal's Plan included, a press on a building that is
+// none of its marks does nothing (P04 ticket 66). On the everyday map, a tap on empty map, one that no mark keeps
 // and where no Place is found, clears the walking route with `clearRoute` (P15 ticket 55). Every request carries the
 // map's visible area at rest (`useViewport`).
 export function useMapView(
@@ -167,25 +150,22 @@ export function useMapView(
   const seats = useAwaySeats(awayPlaceOf(drawn.lookup.lookup));
   const people = useMemo(() => ({ avatars: things.avatars, cards }), [things.avatars, cards]);
   const lookup = useLookupMap(drawn.lookup, map, room, people, me.avatars, seats, chat.card.raise);
-  const { howAbout } = chat;
-  const shown = useAskingShown(drawn.answer, howAbout.point);
   const openMark = useMarkOpening(chat.openMark, map.camera, room.stage);
-  const plan = useAnswerMap(shown, map, room, people, chat.invitation, withMealMenu(chat, openMark));
+  const plan = useAnswerMap(drawn.answer, map, room, people, chat.invitation, withMealMenu(chat, openMark));
   const answer = useMadeSceneMap(chat, map, room, people, me, openMark) ?? plan ?? lookup;
   const unasked = invitation.shown || made.shown !== null;
   const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);
   const limits = useEverydayLimits(map, drawsItsOwnMap({ answer, way, guide }));
   const everyday = answer === null && way === null && !chat.framed && !unasked && guide === null;
-  const asking = howAbout.pressable && plan !== null && !unasked;
-  const { target, picking } = pressTarget(chat, unasked, asking ? howAbout.target : selection);
+  const { target, picking } = pressTarget(chat, unasked, selection);
   const tapClears = everyday ? clearRoute : undefined;
-  const pressed = usePressedPlace(map.camera, target, chat.setTapped, everyday || asking || picking, tapClears);
+  const pressed = usePressedPlace(map.camera, target, chat.setTapped, everyday || picking, tapClears);
   const around = bothTouches(pin.touches, pressed);
   if (guide !== null && !chat.framed) {
     return guidedView(guide, me, around);
   }
   if (answer !== null) {
-    return asking ? withBuildingPress(answer, pressed, howAbout.place !== null, around) : { ...answer, around };
+    return { ...answer, around };
   }
   if (way !== null) {
     return { ...way, around };

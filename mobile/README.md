@@ -685,10 +685,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     leaves the camera where it is, and adds the free seats the phone reads from its own library session to the flag
     towards 관정 (`study-area.ts`, `use-away-seats.ts`); its card's main button reads "가는 길", and its `ask` action
     "관정 보기" sends its words as the User's.
-  - While a meal's Plan is on screen, a press on a building recalculates the conditions with that Place fixed and
-    shows "여기면 어때?" over the Plan, which stays underneath: each person's arrival, the time together against the
-    Plan, "여기로 바꾸기" and "그대로" (`use-how-about.ts`, `how-about-card.tsx`); "그대로", the pill's ✕, and Android's
-    back return to the Plan.
+  - While an answer is on screen, a meal's Plan included, a press on a building that is none of its marks does
+    nothing; the answer's own marks, its numbered candidates included, and Friends' faces keep their presses
+    (`use-map-view.ts`).
   - A Restaurant card of a 공강에 밥 answer (`chat-restaurant-cards.tsx`) shows the name, "63동 · 오늘 점심", "식사 가능 시간
     N분", the first two menu lines with "외 N개", a chip per person, "{name} {도보|셔틀} N분" or "{name} —", with the
     longest highlighted, and 파티 만들기, which opens the party form filled from the card's Proposal as 수정 does, with

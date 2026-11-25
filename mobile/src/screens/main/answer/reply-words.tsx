@@ -5,6 +5,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -14,7 +15,6 @@ import { modelWordsOf } from '@/features/assistant/model-words';
 import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
 import { turnsOf } from '@/features/assistant/turn';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
-import type { HowAbout } from '@/features/assistant/use-how-about';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import { keepsShown, type ShownAnswer } from '@/features/assistant/use-shown-answer';
 import type { ShownLookup } from '@/features/assistant/use-shown-lookup';
@@ -22,7 +22,6 @@ import { ChatMarkdown } from '../chat-markdown';
 import type { ChatSheetControl } from '../chat-sheet';
 import { AnswerLines } from './answer-lines';
 import { FailedLines } from './failed-and-waiting';
-import { HowAboutCard } from './how-about-card';
 import { LookupCard } from './lookup-card';
 import { MadeCard } from './made-card';
 import { OfferedWords } from './offered-words';
@@ -32,15 +31,14 @@ import { StepsTop } from './steps-bar';
 import { BookingBar, LookupBar, PlanBar } from './time-bar';
 import type { BandFocus } from './use-corrections';
 
-// Which card a reply's words are: the "여기면 어때?" card over the answer on screen for the reply it came from, the
-// Plan's or the made Quest's once its Plan was made into one, the Lookup on screen for its reply, or the reply's own.
-type WordsKind = 'how-about' | 'plan' | 'made' | 'lookup' | 'own';
+// Which card a reply's words are: the Plan's, or the made Quest's once its Plan was made into one, for the reply the
+// answer on screen came from, the Lookup on screen for its reply, or the reply's own.
+type WordsKind = 'plan' | 'made' | 'lookup' | 'own';
 
 interface OnScreen {
   shown: ShownAnswer;
   lookup: ShownLookup;
   invitation: PlanInvitation;
-  howAbout: HowAbout;
 }
 
 // What deciding a reply's card reads of what is on screen.
@@ -48,7 +46,6 @@ interface Seen {
   shown: Pick<ShownAnswer, 'source' | 'answer' | 'plan'>;
   lookup: Pick<ShownLookup, 'lookup'>;
   invitation: Pick<PlanInvitation, 'made'>;
-  howAbout: Pick<HowAbout, 'place'>;
 }
 
 function lookupOf(bubble: ChatBubble, { lookup }: Seen): ShownLookup['lookup'] {
@@ -56,12 +53,9 @@ function lookupOf(bubble: ChatBubble, { lookup }: Seen): ShownLookup['lookup'] {
 }
 
 export function wordsKindOf(bubble: ChatBubble, onScreen: Seen): WordsKind {
-  const { shown, invitation, howAbout } = onScreen;
+  const { shown, invitation } = onScreen;
   const { answer } = bubble;
   const fromReply = answer !== undefined && answer !== null && answer === shown.source;
-  if (fromReply && howAbout.place !== null && shown.plan !== null) {
-    return 'how-about';
-  }
   if ((fromReply || keepsShown(bubble)) && shown.answer !== null) {
     return invitation.made === null || shown.plan === null ? 'plan' : 'made';
   }
@@ -72,8 +66,8 @@ export function wordsKindOf(bubble: ChatBubble, onScreen: Seen): WordsKind {
 // The time bar the latest turn with a reply has: the band of its Plan's card, or of its Lookup's, which have one.
 type BarOf = { kind: 'plan' } | { kind: 'lookup'; lookup: NonNullable<ShownLookup['lookup']> } | null;
 
-export function onScreenOf({ answer, lookup, invitation, howAbout }: ChatSheetControl): OnScreen {
-  return { shown: answer, lookup, invitation, howAbout };
+export function onScreenOf({ answer, lookup, invitation }: ChatSheetControl): OnScreen {
+  return { shown: answer, lookup, invitation };
 }
 
 export function barOf(bubbles: readonly ChatBubble[], onScreen: Seen): BarOf {
@@ -120,12 +114,9 @@ interface WordsProps extends OnScreen {
 // The card of the answer on screen a reply's words are, by `wordsKindOf`, with a refusal's lines over the Plan's when
 // the refusal keeps what is on screen; null when they are not one.
 function onScreenCard(props: WordsProps, kind: WordsKind): ReactElement | null {
-  const { bubble, shown, invitation, howAbout, room, onClose, focus } = props;
+  const { bubble, shown, invitation, room, onClose, focus } = props;
   const over = keepsShown(bubble) ? bubble.refusal?.lines : undefined;
   const { answer, plan } = shown;
-  if (kind === 'how-about' && plan !== null) {
-    return <HowAboutCard current={plan} howAbout={howAbout} />;
-  }
   if (kind === 'plan' && answer !== null) {
     const card = { answer, invitation, onClose, over, room, shown };
     const steps = (bubble.steps?.length ?? 0) > 1;

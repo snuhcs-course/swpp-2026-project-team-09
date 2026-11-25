@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { PlacePoint } from './assistant-types';
@@ -33,7 +34,7 @@ export interface PlanPart {
 export interface DroppedPlace {
   place: PlacePoint;
   reason: string;
-  // Each person's part there, given for the Place the input fixed ("여기면 어때?").
+  // Each person's part there, given for the Place the input fixed (`placeId`).
   parts?: PlanPart[];
 }
 

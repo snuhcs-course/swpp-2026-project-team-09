@@ -14,6 +14,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The conversation's control: the conversation with the Assistant, which the main screen holds, and what the answer
@@ -35,7 +36,6 @@ import { dueStepOf, type ShownSteps, shownStepsOf } from '@/features/assistant/s
 import type { Viewport } from '@/features/assistant/study-area';
 import type { PlanOutcomes } from '@/features/assistant/turn-outcome';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
-import { type HowAbout, useHowAbout } from '@/features/assistant/use-how-about';
 import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use-plan-invitation';
 import { type Picking, usePicking } from '@/features/assistant/use-picking';
 import { type QuestLeaving, useQuestLeaving } from '@/features/assistant/use-quest-leaving';
@@ -61,8 +61,6 @@ export interface ChatSheetControl extends Omit<KeptConversation, 'chat'>, MarkOp
   answer: ShownAnswer;
   // The Quest "이대로 초대" made from the Plan on screen, and how each invited Friend stands.
   invitation: PlanInvitation;
-  // A building pressed while a meal's Plan is on screen, and its answer ("여기면 어때?").
-  howAbout: HowAbout;
   // The Lookup on screen, which the map and the frame's card draw.
   lookup: ShownLookup;
   // The Proposal of the turn on screen with a place to stand at, which the map draws as a flag (P04 ticket 06).
@@ -151,13 +149,12 @@ function useShownOnMap(
 
 const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요';
 
-// The answer on screen, kept in `shownNow` for the context of the next request, the Quest made from its Plan, and a
-// building asked about over it.
+// The answer on screen, kept in `shownNow` for the context of the next request, and the Quest made from its Plan.
 function useAnswerOnScreen(
   bubbles: readonly ChatBubble[],
   { position, locationMissing }: Where,
   shownNow: RefObject<ShownAnswer | null>,
-): Pick<ChatSheetControl, 'answer' | 'invitation' | 'howAbout'> {
+): Pick<ChatSheetControl, 'answer' | 'invitation'> {
   const showToast = useToast();
   const recalculation = {
     location: position,
@@ -171,7 +168,7 @@ function useAnswerOnScreen(
   useEffect(() => {
     shownNow.current = shown;
   });
-  return { answer: shown, invitation, howAbout: useHowAbout(shown, invitation, recalculation) };
+  return { answer: shown, invitation };
 }
 
 // The conversation, every request of which carries the context at `where` the User is, and what the answer frame
