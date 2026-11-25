@@ -3,6 +3,7 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply, type MealInput, NO_CONTEXT } from '../src/assistant/dto/answer.dto.js';
@@ -67,7 +68,7 @@ describe('planMeal for a day with no menu', () => {
     expect(result).toEqual({
       result: 'none',
       meal: 'lunch',
-      reason: 'No Restaurant serves that meal that day: every menu collected for it holds only notes.',
+      reason: 'No Restaurant serves that meal that day: every menu collected for it is closed or holds only notes.',
     });
   });
 });

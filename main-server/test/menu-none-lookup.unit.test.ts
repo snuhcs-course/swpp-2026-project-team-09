@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { menuNoneLookup } from '../src/assistant/lookup/menu-lookup.js';
@@ -71,10 +72,11 @@ describe('menuNoneLookup', () => {
     );
   });
 
-  it('says the meal is not served that day', () => {
+  it('says the meal is not served that day, with the closure its menu writes as the basis', () => {
     const lookup = menuNoneLookup({ ...ARGS, lines: [note('※ 개교기념일 휴무')] }, 'closed', PLACE);
 
     expect(lookup.scene).toEqual(sceneSaying('내일(수) 점심은 안 해요'));
+    expect(lookup.basis).toEqual(['※ 개교기념일 휴무']);
   });
 
   it('names the dishes when the User has no time to eat there, with their prices as its basis', () => {
@@ -84,5 +86,19 @@ describe('menuNoneLookup', () => {
 
     expect(lookup.scene).toEqual(sceneSaying('내일(수) 점심 · 제육볶음 · 돈까스'));
     expect(lookup.basis).toEqual(['제육볶음 6,000원 · 돈까스 6,500원']);
+  });
+});
+
+// P04 ticket 65: a closure the worker gives no kind.
+describe('menuNoneLookup of a meal its menu closes', () => {
+  it('quotes a closure written without ※ or 휴무, and nothing for notes that say none', () => {
+    const closed = {
+      ...ARGS,
+      lines: [{ text: '공대수시면접으로 인해 휴점합니다', kind: null, name: null, price: null }],
+    };
+    const notesOnly = { ...ARGS, lines: [note('※ 저녁 단체예약문의: 02-880-7889')] };
+
+    expect(menuNoneLookup(closed, 'closed', PLACE).basis).toEqual(['공대수시면접으로 인해 휴점합니다']);
+    expect(menuNoneLookup(notesOnly, 'closed', PLACE).basis).toEqual([]);
   });
 });

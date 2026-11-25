@@ -7,11 +7,13 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Cuisines } from '../../menus/cuisine-words.js';
 import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { dishName } from '../../menus/dish-name.js';
+import { closureNotices } from '../../menus/open-rule.js';
 import { LONGEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
 import { type AnswerLine, type AnswerReply, type Lookup, type MapScene, type Plan } from '../dto/answer.dto.js';
 import { type LookupMenu } from '../dto/lookup.dto.js';
@@ -205,9 +207,18 @@ function noneState(args: Omit<MenuArgs, 'answer' | 'hours'>, reason: NoMenuReaso
   return dishesLine(args, dishes);
 }
 
+// The basis of a menu with no meal Plan: its dishes with their prices when there is no time to eat there, and the
+// closure's words when its menu closes the meal ("공대수시면접으로 인해 휴점합니다").
+function noneBasis(reason: NoMenuReason, lines: readonly MenuLineDto[]): string[] {
+  if (reason === 'no-time') {
+    return pricedDishes(lines);
+  }
+  return reason === 'closed' ? closureNotices(lines) : [];
+}
+
 // A menu asked of a Restaurant with no meal Plan to draw still brings the Restaurant to the map (P04 ticket 59), as an
-// hours answer does: picked out, its label saying why, and the dishes with their prices as the basis when there are
-// some. Only a fact: the map lets it go under the next reply.
+// hours answer does: picked out, its label saying why, and as the basis the dishes with their prices or the closure's
+// words when there are some. Only a fact: the map lets it go under the next reply.
 export function menuNoneLookup(
   args: Omit<MenuArgs, 'answer' | 'hours'>,
   reason: NoMenuReason,
@@ -216,12 +227,12 @@ export function menuNoneLookup(
   const { key } = args;
   const at = { latitude: place.latitude, longitude: place.longitude };
   const state = noneState(args, reason);
-  const priced = reason === 'no-time' ? pricedDishes(args.lines) : [];
+  const basis = noneBasis(reason, args.lines);
   return {
     kind: 'place',
     chips: [],
     lines: [[part(key, true)], [part(state)]],
-    basis: priced.length === 0 ? [] : [priced.join(' · ')],
+    basis: basis.length === 0 ? [] : [basis.join(' · ')],
     scene: {
       people: [],
       places: [{ place: { placeId: place.id, label: key, ...at }, role: 'pick', tag: key }],

@@ -2654,7 +2654,7 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       all share with the User (`shared`).
     - `findMealRestaurants(date, meal, friendIds, window?, departurePlace?, departureTime?, leaveBy?)` answers the time shared, the
       oldest `collectedAt` of the day and the Restaurants that fit, in order (`free-time/meal-fit.ts`): each with its key,
-      name, Place, its lines that are not notes, `start`, `eatingMinutes` and each person's way. A Restaurant is one with
+      name, Place, its served lines (neither notes nor closures), `start`, `eatingMinutes` and each person's way. A Restaurant is one with
       a Place that is open for the meal (`src/menus/open-rule.ts`, ADR 0011). It fits when, after the last of them
       arrives and the start rounds up to 5 minutes, at least 15 minutes are left before the first must leave and before
       the window ends, in the earliest shared interval where that holds. Nothing to show answers
@@ -2683,7 +2683,8 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       and `getMenus` say the same of such a day. A `findMenu` that answers `none` still draws the Restaurant
       (`menuNoneLookup`, kind `place`), its label saying why: `내일(수) 점심 메뉴 아직 안 올라옴` when that
       Restaurant's day was not collected, `오늘 저녁 메뉴 없음` when the day was collected with another meal but not this
-      one (reason `no-meal`), `내일(수) 점심은 안 해요`, or its dishes when the User has no time to eat there (P04 tickets
+      one (reason `no-meal`), `내일(수) 점심은 안 해요` with the closure its menu writes as the basis
+      (`공대수시면접으로 인해 휴점합니다`, P04 ticket 65), or its dishes when the User has no time to eat there (P04 tickets
       59 and 60). A menu not posted today is never said to come "up to six days ahead".
     - `findWay(to?, from?, by?)`, with `WAY_RULES`, for an app that sends `answer` (`lookup/`). It finds the way on foot
       to a Place, or to the Place of the User's next item today when `to` is left out, from a Place they named; else
@@ -2696,15 +2697,16 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
     - `restaurantHours(date, restaurant?, meal?)`, with `HOURS_RULES`, for an app that sends `answer` (`lookup/hours-*`). It
       finds the Restaurant as `findMenu` does and answers, in words only, each meal of the day: `opensAt` and
       `closesAt` as `RestaurantHours` keeps them for that kind of day when its menu serves the meal; `hours: 'not
-recorded'` with the menu's notes when it serves the meal without kept hours; `serves: false` with the notes when
-      its menu holds only notes; and `serves: 'not known'` with the usual hours when that day's menu is not collected
+recorded'` with the menu's notes when it serves the meal without kept hours; `serves: false` when its menu serves
+      nothing (ADR 0011), with the closure's words when it writes one (`공대수시면접으로 인해 휴점합니다`, P04 ticket 65),
+      else with its notes; and `serves: 'not known'` with the usual hours when that day's menu is not collected
       yet. A meal served without kept hours whose notes give times (`※ 운영시간 : 11:30 ~ 14:00`) is `byCorner`: each
       time with the corner of the dish line the note follows (`<A코너>…`), or, for one time and no corner, the meal's
       `opensAt` and `closesAt`. A meal with neither a menu nor hours is left out, and a Restaurant with neither for any
       meal answers `none`.
       A day whose menus are not posted yet is not a closed day: its meals with kept hours answer `serves: 'not
 known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, today `메뉴 아직 안 올라옴 · 평소 …`),
-      never `쉬어요`, which it says only when the menus hold only notes. A meal with no line on a day whose menu has lines for
+      never `쉬어요`, which it says only when the menus serve nothing. A meal with no line on a day whose menu has lines for
       another meal is not served that day (`serves: false`), not a meal still to come.
       Today it adds `now` and `servingNow`, the meal whose hours hold now, or null. The reply's `lookup` (kind `place`,
       `lookup/hours-lookup.ts`), also in place of a meal answer on screen, since the question is about the Restaurant
@@ -2715,7 +2717,8 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
       alone (`저녁 17:00–19:00`, `저녁 · 지금 영업 중 · 19:00까지`, `저녁은 안 해요`, or `평소 저녁 …` on a day not
       posted), so that a follow-up about another meal, which the rules send to the tool again, never keeps another
       meal's label; its basis lists each meal's
-      hours, and its action guides there.
+      hours, and a meal its menu closes with the closure's words (`저녁: 공대수시면접으로 인해 휴점합니다`), and its action
+      guides there.
     - `planEvents(date, eventIds?)` and `EVENT_RULES` join for an app that sends both `answer` and `events` (`events/`).
       It plans the published Global Events of a day the asker can attend between their items (`EventsInput`, kind
       `events`): `EventsPlanService` reads the asker's day, the day's events, and the Places, and `fitEvents` keeps

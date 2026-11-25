@@ -3,13 +3,15 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { closureNotices } from '../../menus/open-rule.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { type Lookup } from '../dto/answer.dto.js';
 import { onDay } from '../free-time/free-time.js';
 import { dayWordsFrom } from '../korea-time.js';
-import { type HoursFound, type HoursMeal, type MealWords, spanOf } from './hours-words.js';
+import { type HoursFound, type HoursMeal, type MealOfDay, type MealWords, spanOf } from './hours-words.js';
 
 // What the map draws of a Restaurant's hours: the Restaurant picked out, the camera on it, its label saying its state
 // now ("학생회관식당 · 지금 닫음 · 08:00 아침"), as the menu Lookup draws its Restaurant: the pick's tag and a place flag
@@ -75,11 +77,16 @@ function todayOrSpans({ date, meals, servingNow }: HoursFound, now: Date): strin
   return served.length === 0 ? '지금 닫음 · 오늘은 쉬어요' : '지금 닫음 · 오늘 영업 끝';
 }
 
-// Each meal's hours as the card's basis: "점심 11:30–14:00", by corner when the notes give them, and a meal not posted
-// yet by its usual hours.
-function basisOf({ meals }: HoursFound): string[] {
+// Each meal's hours as the card's basis: "점심 11:30–14:00", by corner when the notes give them, a meal not posted yet
+// by its usual hours, and a meal closed by its menu with the closure's words ("저녁: 공대수시면접으로 인해
+// 휴점합니다").
+function basisOf({ meals }: HoursFound, cells: readonly MealOfDay[]): string[] {
   return meals.flatMap((words) => {
     const meal = MEAL_WORDS[words.meal];
+    if (words.serves === false) {
+      const notices = closureNotices(cells.find((cell) => cell.meal === words.meal)?.lines ?? []);
+      return notices.length === 0 ? [] : [`${meal}: ${notices.join(' · ')}`];
+    }
     if ('byCorner' in words) {
       const corners = words.byCorner.map(({ corner, opensAt, closesAt }) =>
         corner === null ? `${opensAt}–${closesAt}` : `${corner} ${opensAt}–${closesAt}`,
@@ -119,8 +126,14 @@ function mealState({ date, meals, servingNow }: HoursFound, meal: HoursMeal, now
   return open ? `${name} · 지금 영업 중 · ${span.closesAt}까지` : `${name} ${span.opensAt}–${span.closesAt}`;
 }
 
-// The Restaurant picked out, its label the meal asked about, or its state now when none was.
-export function hoursLookup(found: HoursFound, place: PlaceDto, now: Date, meal?: HoursMeal): Lookup {
+// The Restaurant picked out, its label the meal asked about, or its state now when none was. `cells` are the day's meals
+// as collected, whose closures the basis quotes.
+export function hoursLookup(
+  found: HoursFound,
+  place: PlaceDto,
+  now: Date,
+  { meal, cells }: { meal?: HoursMeal; cells: readonly MealOfDay[] },
+): Lookup {
   const { restaurant } = found;
   const at = { latitude: place.latitude, longitude: place.longitude };
   const state = meal === undefined ? stateOf(found, now) : mealStateOf(found, meal, now);
@@ -128,7 +141,7 @@ export function hoursLookup(found: HoursFound, place: PlaceDto, now: Date, meal?
     kind: 'place',
     chips: [],
     lines: [[{ text: restaurant, strong: true }], [{ text: state, strong: false }]],
-    basis: basisOf(found),
+    basis: basisOf(found, cells),
     scene: {
       people: [],
       places: [{ place: { placeId: place.id, label: restaurant, ...at }, role: 'pick', tag: restaurant }],
