@@ -6,7 +6,7 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactElement, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { type LayoutChangeEvent, StyleSheet, View, type ViewStyle } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Reanimated, {
@@ -239,6 +239,23 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
   };
 }
 
+// The card's place on the UI thread. After each commit of React's it is laid again (`laid`, a count that adds
+// nothing): a commit could lay the place the card had when it mounted, which Reanimated keeps for the view, and the card
+// then stood there, under the footer, until it next moved (a fresh start's first answer, about one in three on the
+// emulator).
+function useMovedStyle(
+  offset: SharedValue<number>,
+  drop: SharedValue<number>,
+): ReturnType<typeof useAnimatedStyle<ViewStyle>> {
+  const laid = useSharedValue(0);
+  useLayoutEffect(() => {
+    laid.value += 1;
+  });
+  return useAnimatedStyle<ViewStyle>(() => ({
+    transform: [{ translateY: offset.value + drop.value + Math.min(0, laid.value) }],
+  }));
+}
+
 // The sheet, moved by `useCardMotion`, and the floor over the footer's room at the screen's bottom, which the card's
 // lower part passes under with a soft fade, so that nothing of the content shows around the input and the main button.
 export function OpenCard(props: FrameCardProps): ReactElement {
@@ -246,7 +263,7 @@ export function OpenCard(props: FrameCardProps): ReactElement {
   const card = useOpenCard(props);
   const { room, motion } = card;
   const { drop, offset } = motion;
-  const moved = useAnimatedStyle(() => ({ transform: [{ translateY: offset.value + drop.value }] }));
+  const moved = useMovedStyle(offset, drop);
   // What React holds for the view is where it rests, after the animated style, so that a commit of React's lays the
   // right place again (`useRun`); the UI thread moves it from there.
   const rested = useMemo(() => ({ transform: [{ translateY: motion.rest }] }), [motion.rest]);
