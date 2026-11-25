@@ -2,7 +2,7 @@
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
-Pull request: none yet.
+Pull request: #574
 Blocked by: none.
 
 Native files: none. Releases: the main server, and an app OTA update.
@@ -25,10 +25,17 @@ The user's idea: "저녁 화면에서 같이 버튼이 눌린 상태로 제시�
 
 ## Acceptance criteria
 
-- [ ] An eval case for "친구 두명이랑 저녁" and two more expects planMeal with `pickPeople` and no question for names.
-- [ ] The main server sets the flag only with someone left to pick, and plans with the named Friends.
-- [ ] The app opens picking for an answer that arrives with the flag, and not for one shown again.
-- [ ] Each fault's test fails on the code before.
-- [ ] No native file changes; lint, format, and types pass on the app and the main server.
+- [x] An eval case for "친구 두명이랑 저녁" and two more expects planMeal with `pickPeople` and no question for names.
+- [x] The main server sets the flag only with someone left to pick, and plans with the named Friends.
+- [x] The app opens picking for an answer that arrives with the flag, and not for one shown again.
+- [x] Each fault's test fails on the code before.
+- [x] No native file changes; lint, format, and types pass on the app and the main server.
 
 ## Comments
+
+Built in PR #574. The server's planMeal takes `pickPeople` and flags the answer when someone is left to pick; the app opens picking for a reply that has just arrived, told by its bubble id. Screens wait for the sessions emulator.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 29 minutes in one session, test runs included (an estimate).
+- Tokens: input 50,751,165 (cache reads 50,634,862, cache writes 116,151, uncached 152); output 66,862. No subagents.
