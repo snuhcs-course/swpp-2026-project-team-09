@@ -158,7 +158,7 @@ export function openRestaurants(
 }
 
 // The Restaurants with a Place that their menu's own notice closes for the meal (P04 ticket 65): no candidate, but the
-// meal's answer names them apart with the notice's lines (P04 ticket 67).
+// meal's answer names them apart with the notice's lines (P04 ticket 71).
 export function closedRestaurants(
   collected: readonly RestaurantMenusDto[],
   meal: HandledMeal,

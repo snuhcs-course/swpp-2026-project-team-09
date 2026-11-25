@@ -21,7 +21,7 @@ const input = z.object({
     .describe("The User's words for the Restaurant they ask about, as they wrote them (302동, 두레미담)."),
 });
 
-// Why a Restaurant is not among the places of the meal answer on screen (P04 ticket 67): the meal on screen planned
+// Why a Restaurant is not among the places of the meal answer on screen (P04 ticket 71): the meal on screen planned
 // again for the same conditions, and the Restaurant brought to the map with its reason, as a menu's answer brings it.
 export function whyNotListed(
   plans: Pick<MealPlanService, 'planned'>,

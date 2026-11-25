@@ -23,7 +23,7 @@ const isClosed = (value: unknown): value is ClosedPlace =>
   isPlacePoint(field(value, 'place')) && listOf(isText)(field(value, 'notices'));
 
 // A meal answer's Restaurants closed for the meal: absent when none, from other answers, and from a main server before
-// P04 ticket 67.
+// P04 ticket 71.
 export function isClosedOrAbsent(value: unknown): value is ClosedPlace[] | undefined {
   return value === undefined || listOf(isClosed)(value);
 }

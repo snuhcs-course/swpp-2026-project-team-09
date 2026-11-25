@@ -157,7 +157,7 @@ describe('one Plan kept of many', () => {
   });
 });
 
-// P04 ticket 67: the phone fades by the main server's shortest meal, fifteen minutes, so that it fades none the server
+// P04 ticket 71: the phone fades by the main server's shortest meal, fifteen minutes, so that it fades none the server
 // offers for its length alone. 감골식당 has at least fifteen minutes before the Class and under twenty: faded before.
 describe('the crowded answer’s late restaurants', () => {
   it('fades only those that cannot be done before the next Class, however far the rest are', () => {

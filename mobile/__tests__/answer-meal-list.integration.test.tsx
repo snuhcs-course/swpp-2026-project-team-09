@@ -153,7 +153,7 @@ function keptOne(text: string): typeof MEAL_ANSWER_MENUS_REPLY {
 
 // Partitions: one Plan left of many; the Restaurants closed for the meal beside the candidates.
 describe('a meal answer that kept one Plan of many', () => {
-  it('lists the Plan alone: the places dropped for the time are not listed (P04 ticket 67)', async () => {
+  it('lists the Plan alone: the places dropped for the time are not listed (P04 ticket 71)', async () => {
     await askOnMap(server, keptOne(SENTENCE));
 
     await raiseCard();
@@ -167,7 +167,7 @@ describe('a meal answer that kept one Plan of many', () => {
 
 const NOTICE = '공대수시면접으로 인해 휴점합니다';
 
-// The answer with 감골식당 closed for the meal by its menu's notice (P04 ticket 67, board z1).
+// The answer with 감골식당 closed for the meal by its menu's notice (P04 ticket 71, board z1).
 function withClosed(): typeof MEAL_ANSWER_MENUS_REPLY {
   const [first] = MEAL_ANSWER_MENUS_REPLY.answer.plans;
   const place = { ...(first?.place ?? { placeId: 'p', latitude: 37.46, longitude: 126.95 }), label: '감골식당' };
@@ -199,7 +199,7 @@ describe('a meal answer with a Restaurant closed for the meal', () => {
 // Partitions: the crowded answer, whose 기숙사식당 cannot be done before the Class at 15:30, and whose 감골식당 has at
 // least the main server's fifteen minutes.
 describe('the crowded meal answer raised', () => {
-  it('leaves the candidates that cannot be done in the time out of the list and its count (P04 ticket 67)', async () => {
+  it('leaves the candidates that cannot be done in the time out of the list and its count (P04 ticket 71)', async () => {
     const date = koreaDateKey(koreaNextDay(PHONE_NOW));
     const reply = crowdedMealReply(date, PHONE_NOW.toISOString());
     await askOnMap(server, reply);

@@ -31,7 +31,8 @@ export interface CandidateRow {
   when: string;
   // In minutes, null when not known.
   walk: number | null;
-  // It cannot be done in the time (`fadedPlan`): faded on the map, and not listed unless chosen (P04 ticket 67).
+  // It cannot be done in the time (`fadedPlan`): only the Assistant's pick can be, which the answer keeps though it
+  // cannot (`offeredAnswer`), faded as on the map.
   faded: boolean;
   // "순살안동식찜닭 외 2", null without dishes.
   dishes: string | null;
@@ -60,13 +61,14 @@ export function mealCard(answer: AnswerReply | null): boolean {
   return answer?.input.kind === 'meal' && answer.plans.length > 0;
 }
 
-// The places the list offers ("8곳 목록"), as its first line and "전체" count them: the candidates that can be done in
-// the time. The places closed for the meal stand apart at the list's end and are not counted.
+// The places the list offers ("8곳 목록"), as its first line and "전체" count them: the candidates, which the answer
+// on screen holds only as they can be done (`offeredAnswer`). The places closed for the meal stand apart at the list's
+// end and are not counted.
 export function listedCount(answer: AnswerReply): number {
-  return answer.plans.filter((plan) => !fadedPlan(plan)).length;
+  return answer.plans.length;
 }
 
-// The line over the Restaurants closed for the meal (P04 ticket 67, board z1).
+// The line over the Restaurants closed for the meal (P04 ticket 71, board z1).
 export const CLOSED_HEADING = '쉬는 곳';
 
 // The Friends of the conditions with their particle, "김태현과"; null for none. A chip's name is before " · ".
@@ -224,9 +226,8 @@ interface MealListProps {
   busy: boolean;
 }
 
-// The kinds of food on top, then a row per candidate that can be done in the time; the chosen one is marked, and listed
-// though it cannot. The places the main server dropped and those the phone fades are not listed (P04 ticket 67): asked,
-// the Assistant says why one is missing. The Restaurants closed for the
+// The kinds of food on top, then a row per candidate; the chosen one is marked. The answer on screen holds only the
+// places that can be done (`offeredAnswer`, P04 ticket 71): asked, the Assistant says why one is missing. The Restaurants closed for the
 // meal end the list under "쉬는 곳". A press on a row chooses that place,
 // as a press on its tag does, and opens its menu (board E4).
 export function MealList({ answer, shown, busy }: MealListProps): ReactElement | null {
@@ -235,7 +236,7 @@ export function MealList({ answer, shown, busy }: MealListProps): ReactElement |
   }
   const chosen = answer.plans[shown.index]?.id;
   const rows = candidateRowsOf(answer);
-  const listed = rows.filter((one) => !one.faded || one.planId === chosen);
+
   const closed = answer.closed ?? [];
   const row = (one: CandidateRow): ReactElement => (
     <Row
@@ -251,10 +252,10 @@ export function MealList({ answer, shown, busy }: MealListProps): ReactElement |
   return (
     <View style={styles.list} testID="meal-list">
       <Text numberOfLines={1} style={styles.order} testID="meal-list-order">
-        {orderLineOf(answer, listed.length)}
+        {orderLineOf(answer, rows.length)}
       </Text>
       <KindChips answer={answer} disabled={busy} onChoose={shown.chooseKind} />
-      {listed.map((one) => row(one))}
+      {rows.map((one) => row(one))}
       {closed.length === 0 ? null : <Heading words={CLOSED_HEADING} />}
       {closed.map(({ place, notices }) => (
         <ClosedRow key={`${place.placeId}:${place.label}`} name={place.label} notice={notices.join(' ')} />

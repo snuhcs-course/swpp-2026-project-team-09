@@ -15,7 +15,7 @@ import { sendAsWorker } from './worker.js';
 // A Restaurant whose menu closes the meal asked is no candidate (P04 ticket 65): on 2026-11-26 302동식당's lunch and
 // dinner each held only "공대수시면접으로 인해 휴점합니다", which the worker gives no kind, and a plan for that dinner
 // offered it first. The answer names it apart with its notice, which the app lists under "쉬는 곳", and asked why it is
-// missing, the Assistant says so from whyNotListed (P04 ticket 67). At the Assistant's endpoint with the scripted model;
+// missing, the Assistant says so from whyNotListed (P04 ticket 71). At the Assistant's endpoint with the scripted model;
 // each test takes a Tuesday of March 2074, which no other file posts menus for, with the asker in a Class in 301동 until
 // 17:50.
 

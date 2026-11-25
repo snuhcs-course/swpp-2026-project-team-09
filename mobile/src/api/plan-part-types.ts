@@ -39,7 +39,7 @@ export interface DroppedPlace {
   parts?: PlanPart[];
 }
 
-// A Restaurant closed for the meal by its menu's notice (P04 ticket 67): its Place, and the notice in its own lines
+// A Restaurant closed for the meal by its menu's notice (P04 ticket 71): its Place, and the notice in its own lines
 // ("공대수시면접으로 인해 휴점합니다"). No candidate: the list names it apart.
 export interface ClosedPlace {
   place: PlacePoint;

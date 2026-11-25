@@ -15,7 +15,7 @@ import { type GatheringPerson, type GatheringTravel } from './gathering.js';
 import { gatherMeal, withHours } from './unmet-plans.js';
 
 // What a meal's answer names beside its plans from the day's menus (moved out of `meal-plan.service.ts` for its length):
-// the other meal of the day, and the Restaurants closed for this one that would have been a candidate (P04 ticket 67).
+// the other meal of the day, and the Restaurants closed for this one that would have been a candidate (P04 ticket 71).
 
 export interface BesideServices {
   restaurantPlaces: RestaurantPlaces;

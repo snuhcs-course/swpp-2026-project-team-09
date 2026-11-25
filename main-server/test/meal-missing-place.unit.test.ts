@@ -8,7 +8,7 @@ import { cellReasonOf, missingLookup, missingWords, planReasonOf } from '../src/
 import { MenuLineKind } from '../src/generated/prisma/client.js';
 import { type MenuLineDto } from '../src/menus/dto/restaurant-menus.dto.js';
 
-// P04 ticket 67: why a Restaurant is not among the places of the meal on screen, as its lines for the meal and the
+// P04 ticket 71: why a Restaurant is not among the places of the meal on screen, as its lines for the meal and the
 // planner's answer for the same conditions tell it. Expected values: the reasons as the User reads them, the drop
 // reasons as the planner gives them ("13분밖에 못 있어요").
 

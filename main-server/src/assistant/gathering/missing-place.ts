@@ -10,7 +10,7 @@ import { type PlaceDto } from '../../places/dto/place.dto.js';
 import { type Lookup, type PlacePoint } from '../dto/answer.dto.js';
 import { part } from '../lookup/way-naming.js';
 
-// Why a Restaurant is not among the places of the meal answer on screen (P04 ticket 67), as the planner finds it for
+// Why a Restaurant is not among the places of the meal answer on screen (P04 ticket 71), as the planner finds it for
 // the same conditions: its menu not collected for the meal, closed for it by its menu's notice, dropped for the time
 // with the reason the planner gave, or none of those, as it cannot be reached, eaten at, and left in time. A Restaurant
 // that is one of the places says so.

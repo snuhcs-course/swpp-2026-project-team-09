@@ -51,7 +51,7 @@ describe('학생회관식당 chosen in the crowded meal answer', () => {
     expect(label).not.toHaveProperty('faded');
   });
 
-  // By the main server's fifteen minutes (P04 ticket 67): 감골식당, with fifteen to nineteen before the Class, is kept.
+  // By the main server's fifteen minutes (P04 ticket 71): 감골식당, with fifteen to nineteen before the Class, is kept.
   it('fades a candidate that cannot be done before the next Class, and not one only far away', () => {
     expect(seen(drawing, 'answer:candidate:기숙사식당 (관악사 919동)').symbol).toMatchObject({ faded: true });
     expect(seen(drawing, 'answer:candidate:감골식당').symbol).not.toHaveProperty('faded');

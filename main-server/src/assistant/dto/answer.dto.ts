@@ -53,7 +53,7 @@ export interface AnswerReply extends WithMissing {
   plans: Plan[];
   // Considered, but they do not fit.
   dropped: DroppedPlace[];
-  // A meal's: the Restaurants closed for the meal by their menu's notice, which the list names apart (P04 ticket 67).
+  // A meal's: the Restaurants closed for the meal by their menu's notice, which the list names apart (P04 ticket 71).
   // Absent when none, and from other answers.
   closed?: ClosedPlace[];
   // `relax` when nothing fits 지금: one button for each condition to ease.

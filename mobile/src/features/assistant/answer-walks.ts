@@ -186,7 +186,7 @@ export function fixedAfter(plan: Pick<Plan, 'band' | 'parts' | 'endAt'>): FixedT
 
 const MINUTE = 60_000;
 // How long a meal takes at least, for whether a candidate fits: the main server's `SHORTEST_MEAL_SECONDS`, by which it
-// keeps a candidate, so that the phone fades none it offers for this alone (P04 ticket 67).
+// keeps a candidate, so that the phone fades none it offers for this alone (P04 ticket 71).
 const SHORTEST_MEAL = 15;
 
 // Whether a meal Plan fits its band: arriving inside it, fifteen minutes there, and the walk on, before the next fixed
