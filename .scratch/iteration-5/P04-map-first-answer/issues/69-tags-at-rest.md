@@ -1,7 +1,8 @@
-# 68: An answer's tags are placed again where the map comes to rest
+# 69: An answer's tags are placed again where the map comes to rest
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
+Pull request: #567
 Blocked by: none.
 
 Native files: none. Releases: an app OTA update.

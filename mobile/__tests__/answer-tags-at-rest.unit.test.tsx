@@ -55,7 +55,7 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: (): object => ({ top: 0, right: 0, bottom: 0, left: 0 }),
 }));
 
-// The case from the phone (P04 ticket 68), on the stored meal answer with menus: its pick 302동식당 (1) at the south,
+// The case from the phone (P04 ticket 69), on the stored meal answer with menus: its pick 302동식당 (1) at the south,
 // 학생회관식당 (3) midway, and 301동식당 (2), 3식당 (4), and 자하연식당 2층 (5) moved about 2.2 km north, further than
 // the answer's outermost zoom holds with the pick. The camera keeps the pick's side, and 2, 4, and 5 stand behind the
 // time card at the top. 3식당 and 자하연식당 2층 are neighbours, 80 metres apart.
@@ -186,7 +186,7 @@ beforeEach(() => {
 // Partitions: the answer's first camera (2, 4, and 5 behind the time card, 3 in view); a camera at the same zoom that
 // shows them all; one zoomed in on two neighbours, the others out of view. Expected values: from where each stands in
 // those views, as the precondition checks say.
-describe('the tags of a meal answer where the map comes to rest (P04 ticket 68)', () => {
+describe('the tags of a meal answer where the map comes to rest (P04 ticket 69)', () => {
   it('tags at the first camera only 학생회관식당 (3), in view, with 2, 4, and 5 behind the time card', async () => {
     const { drawn, first } = await rendered();
 

@@ -219,7 +219,7 @@ export function useBase(draw: Draw | null): AnswerDrawing | null {
 // A drawing's markers and lines on the map in place of the everyday map's markers, lines, and the User's own Avatar,
 // with the camera of an answer. The camera is worked out from the drawing with its sides chosen in metres (`base`),
 // and the marks are drawn with their sides chosen at that camera, and again at the camera where the map comes to rest
-// after it (`useRestedView`, P04 ticket 68), once their pictures are made (`useMadeDrawing`). Null while there is
+// after it (`useRestedView`, P04 ticket 69), once their pictures are made (`useMadeDrawing`). Null while there is
 // nothing to draw. `looks` are asked for with the drawing's own, so that a change of drawing never waits for a
 // picture. `answer` is the answer drawn, or the reply of a Lookup, for the camera to tell one that replaced another.
 // `routes` are those of the scene drawn: its walks follow their paths once found (`useAnswerWalks`). Labels keep clear

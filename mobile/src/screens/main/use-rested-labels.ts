@@ -12,7 +12,7 @@ import { lookName } from '@/map/marker-looks';
 import { hasNativeMap } from '@/map/native-module';
 import { sameCamera } from '@/map/projection';
 
-// An answer's labels where the map comes to rest (P04 ticket 68): placed at the answer's own camera, where the camera
+// An answer's labels where the map comes to rest (P04 ticket 69): placed at the answer's own camera, where the camera
 // glides, and again each time the map comes to rest after that, as after the User's pan or pinch, so that the tags
 // show where there is room in what is on screen. Nothing is placed while the map moves. Both hooks compare what they
 // keep by value: the drawings and views they are given may be new objects at every render.
