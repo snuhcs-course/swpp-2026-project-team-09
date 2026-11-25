@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ChatBubble } from '@/features/assistant/use-chat';
@@ -40,7 +41,7 @@ describe('a turn of the conversation', () => {
   });
 
   it("is the User's message and the Assistant's reply", () => {
-    const reply = answered(2, '12:15에 302동식당에서 민수와 만나 먹어요.');
+    const reply = answered(2, '둘 다 가까운 302동식당을 추천해요.');
 
     expect(turnOf([said(1, '배고파, 민수랑 같이'), reply])).toEqual({
       id: 1,
