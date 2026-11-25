@@ -7,6 +7,8 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -51,11 +53,17 @@ export interface AnswerReply extends WithMissing {
   plans: Plan[];
   // Considered, but they do not fit.
   dropped: DroppedPlace[];
+  // A meal's: the Restaurants closed for the meal by their menu's notice, which the list names apart (P04 ticket 71).
+  // Absent when none, and from other answers.
+  closed?: ClosedPlace[];
   // `relax` when nothing fits 지금: one button for each condition to ease.
   noPlan: { reason: 'no-menu' | 'no-shared-time' | 'no-fit'; lines: AnswerLine[]; relax?: RelaxOffer[] } | null;
   // A meal's: the other meal of the day and when it starts ("HH:MM", now when it is under way), which the app's bar
   // offers; null when it is over or no Restaurant serves it that day. Absent from other answers.
   otherMeal?: { meal: 'lunch' | 'dinner'; start: string } | null;
+  // A meal asked with company the User did not name (P04 ticket 73): the app opens the picking of Friends on the plan as
+  // the answer arrives. Absent otherwise, and when nobody is left to pick.
+  pickPeople?: true;
   // A meal's or a meeting's: the asker's Quest the plans set aside, which making one replaces; null when none (P05 ticket
   // 17). For one release `mealSet` names a meal's beside it.
   planSet?: KeptQuestDto | null;
@@ -115,6 +123,12 @@ export interface PlacePoint {
   longitude: number;
 }
 
+// A Restaurant closed for the meal: its Place, and its menu's notice in its own lines ("공대수시면접으로 인해 휴점합니다").
+export interface ClosedPlace {
+  place: PlacePoint;
+  notices: string[];
+}
+
 export interface DroppedPlace {
   place: PlacePoint;
   reason: string;
@@ -169,6 +183,9 @@ export interface PlanMenu {
   // its dishes then have none of their own.
   price: number | null;
   dishes: MenuDish[];
+  // How many other things are served that meal there, across every corner: the "외 N" of the menu's words, which the
+  // map's label of the chosen place says too (P04 ticket 74). Absent from a main server before it.
+  others?: number;
 }
 
 export interface PlanPart {
@@ -233,6 +250,15 @@ export interface TimeBand {
   now: string;
   // A busy stretch of a Plan's band says what it is: "302동 수업", "수업", or "일정".
   lanes: { userId: string; name: string; busy: { startAt: string; endAt: string; label?: string }[] }[];
+  // A meal's or a meeting's Plan: each of the asker's Friends not in the plan, in the order of their Friend list, for
+  // the time card to offer adding before one recalculation. `busy` as a lane's; `walkMinutes` from the Place nearest
+  // them to the Plan's, null when the asker may not see where they are.
+  others?: {
+    userId: string;
+    name: string;
+    busy: { startAt: string; endAt: string; label?: string }[];
+    walkMinutes: number | null;
+  }[];
   startAt: string;
   endAt: string;
   text: string;

@@ -10,6 +10,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -231,8 +232,10 @@ const FIRST_PLAN_POINTS = distinct([
 // A Plan's card at rest is docked (P04 ticket 04), the bottom sheet on the screen's bottom edge (P04 ticket 52): it covers
 // its own height.
 
-// The low card with no content measured (P04 ticket 61): the footer's room, and two lines over the fade.
-const LOW_CARD = INPUT.bottom + INPUT.height + space[3] + (space[3] + 2 * text.bodyLg.lineHeight + space[3]);
+// The low card with no content measured (P04 tickets 61 and 63): one top edge for every answer, the meal answer's, its
+// footer with the main button's row (50, over a gap of 8), and two lines over the fade.
+const LOW_CARD =
+  INPUT.bottom + INPUT.height + space[2] + 50 + space[3] + (space[3] + 2 * text.bodyLg.lineHeight + space[3]);
 
 function padding(cardHeight: number): object {
   return { top: 8 + 24, right: 64, bottom: cardHeight + 8 + 66, left: 64 };
@@ -291,13 +294,12 @@ describe('the camera after the answer came', () => {
     expect(fit.mock.calls).toHaveLength(before + 1);
   });
 
-  it('fits again when the opened list of Friends makes the card taller, by what the card grew', async () => {
+  it('fits again when the card is laid out taller, by what the card grew', async () => {
     const fit = jest.spyOn(projection, 'fit');
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    await askOnMap(server, MEAL_ANSWER_REPLY);
     await layAnswerCard(240);
 
-    await user.press(screen.getByRole('button', { name: '같이 먹을 친구 추가' }));
-    // The plain ground lays nothing out: the card is laid out 96 taller, as the phone lays it out with the list.
+    // The plain ground lays nothing out: the card is laid out 96 taller, as the phone lays it out when it grows.
     await layAnswerCard(336);
 
     expect(fit.mock.lastCall?.[1]).toEqual(expect.objectContaining({ padding: padding(336) }));

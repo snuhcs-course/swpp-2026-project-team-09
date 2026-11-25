@@ -5,15 +5,17 @@
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type FriendView } from '../../friends/dto/friend-view.dto.js';
 import { Meal } from '../../generated/prisma/client.js';
 import { type RestaurantMenusDto } from '../../menus/dto/restaurant-menus.dto.js';
-import { servedLines } from '../../menus/open-rule.js';
+import { closureNotices, servedLines } from '../../menus/open-rule.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
 import { type TravelProvider } from '../../travel/travel.js';
+import { type ClosedPlace } from '../dto/answer.dto.js';
 import { CARDS_MAX, defineTool, noneFound, type Tool, type ToolContext } from '../feature.js';
 import { koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
@@ -152,6 +154,25 @@ export function openRestaurants(
     const place = restaurantPlaces.placeOf(name);
     const lines = servedLines(meals.find((served) => served.meal === meal)?.lines ?? []);
     return place === null || lines.length === 0 ? [] : [{ key: name, place, lines }];
+  });
+}
+
+// The Restaurants with a Place that their menu's own notice closes for the meal (P04 ticket 65): no candidate, but the
+// meal's answer names them apart with the notice's lines (P04 ticket 71).
+export function closedRestaurants(
+  collected: readonly RestaurantMenusDto[],
+  meal: HandledMeal,
+  restaurantPlaces: RestaurantPlaces,
+): ClosedPlace[] {
+  return collected.flatMap(({ name, meals }) => {
+    const place = restaurantPlaces.placeOf(name);
+    const notices = closureNotices(meals.find((served) => served.meal === meal)?.lines ?? []);
+    if (place === null || notices.length === 0) {
+      return [];
+    }
+    return [
+      { place: { placeId: place.id, label: name, latitude: place.latitude, longitude: place.longitude }, notices },
+    ];
   });
 }
 

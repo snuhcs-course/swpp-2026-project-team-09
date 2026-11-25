@@ -23,7 +23,7 @@ Seven tickets. They are split so that no two of them change the same source file
 
 1. [**The glass layer.**](issues/01-glass-layer.md) A shared "glass layer" in the design system draws a translucent surface at one of a few fixed levels. The design system's documentation gets a "glass layer" section, so later Assistant screens are built the same way.
 2. [**The Assistant's map-first answer on glass.**](issues/02-assistant-answer-on-glass.md) The time bar, the bottom card and bar, the caption, the numbered candidate flags and their labels, the walk-minute chips and the food-kind chips move onto the glass layer.
-3. [**Blur behind the glass.**](issues/03-blur-behind-glass.md) Check on an Android emulator whether a real blur works over the Kakao map. If it does, add it inside the glass layer and make it a native Release. If it does not, Android keeps the translucent glass.
+3. [**Blur behind the glass.**](issues/03-blur-behind-glass.md) Check on an Android emulator whether a real blur works over the Kakao map. If it does, add it inside the glass layer and make it a native Release. If it does not, Android keeps the translucent glass. Outcome: Android cannot blur the map, so its panel is a denser white; iOS 26 blurs with the system's Liquid Glass, already in the build, so no native Release.
 4. [**The 파티 tab.**](issues/04-party-tab.md) Thin 내 파티 cards with a quieter activation mark, simpler recruit cards with two ways to the Boards, icons on the 파티 form's fields, and a 관련 행사 picker shaped like the 행사 tab.
 5. [**Filter rows as word tabs.**](issues/05-filter-rows-as-word-tabs.md) The shared filter row draws plain word tabs instead of bordered pills. This changes the 내 파티 filter, the friend panel's filter and the Quest screen's filter at once.
 6. [**The map.**](issues/06-map.md) One navy for quest rows, told apart by icon. Glass icon tags for the map's 행사, 파티 and 퀘스트 marks. New restaurant and study-space pins and layer colours. A glass friend panel. No "가까이 보기".
@@ -126,8 +126,8 @@ Scope
 The glass layer and the Assistant (tickets 01 and 02)
 
 - One design-system component draws a glass surface. A caller names a level and never gives numbers. The levels come from the changelog's § 5-1:
-  - **panel**: outer bars, bottom sheets and cards over the map, about 50% white, a thin light line along the top, and blur when ticket 03 adds it.
-  - **inner**: chips, boxes, white buttons and light coloured chips inside a panel, 80% white.
+  - **panel**: outer bars, bottom sheets and cards over the map, a thin light line along the top, over a blur with no white on iOS 26 and later, else 80% white.
+  - **inner**: chips, boxes, white buttons and light coloured chips inside a panel, 90% white.
   - **field**: grey input fields inside a panel, navy at 5%.
   - **map chip**: small chips standing on the map itself (walk minutes, candidate tags, route time chips), 60% white.
   - **dark chip**: the black time and place chips ("10:45 301동"), navy-black at 48%.
@@ -145,6 +145,7 @@ Blur (ticket 03)
 - If it works: the blur goes inside the glass layer only, at the panel level. `version` is raised and a native Release is made, as `infra/production/README.md` § The Production APK describes. Testers reinstall the APK, and the iPhone build is redone by hand.
 - If it does not work on Android: Android keeps the translucent glass. iOS may still blur, as decided then.
 - No call site changes in either case.
+- Outcome (2026-11-26): Android does not blur the map; the Kakao map draws on a GL surface that `expo-blur` never sees. Android's panel is 80% white. iOS 26 and later blur with `GlassView` from `expo-glass-effect`, already in the native build, so the change is JavaScript only, with no `version` raise and no native Release. The user chose the values on an iPhone. The ticket's Comments hold the check and the decisions.
 
 The 파티 tab (ticket 04)
 

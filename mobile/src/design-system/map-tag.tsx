@@ -48,7 +48,8 @@ export interface MapTagProps {
 // on glass with the kind's line icon in the kind's colour, on that colour at 14%. A round of 20 from far away, of 26
 // closer, and with its name beside the icon from the "names" level. A chosen one has a navy border and ring. It sits
 // on its middle. A 퀘스트's is see-through at 70%, with a lighter rim and shadow (§ 4-1). The ground is the glass
-// layer's `inner` level, the changelog's head at 80% (§ 5-5); the rim, the shadow and the ring are the frame around it.
+// layer's `inner` level, the changelog's see-through head (§ 5-5); the rim, the shadow and the ring are the frame
+// around it.
 export function MapTag({
   kind,
   label,
@@ -130,9 +131,10 @@ const styles = StyleSheet.create({
   ...tagStyles,
   pin: { alignItems: 'center', alignSelf: 'flex-start' },
   namedTag: { gap: 5, paddingRight: 9, paddingLeft: 3 },
-  // Under a named tag's glass, white at 75%: with the glass's 80% the ground is 95%, so that the map's own words under
-  // the tag do not read through its name (design review of A04-06). The rounds of 20 and 26 stay at 80%.
-  namedFrame: { backgroundColor: 'rgba(255, 255, 255, 0.75)' },
+  // Under a named tag's glass, white at 50%: with the `inner` level's 90% the ground is 95%, so that the map's own
+  // words under the tag do not read through its name (design review of A04-06). The rounds of 20 and 26 are the
+  // level's alone.
+  namedFrame: { backgroundColor: 'rgba(255, 255, 255, 0.5)' },
   quest: { opacity: QUEST_OPACITY, boxShadow: '0 1px 4px rgba(14, 19, 48, 0.08)' },
   // Room under the count, which reaches past the tag's end, so that it does not cover the name.
   namedCounted: { paddingRight: 9 + COUNT },

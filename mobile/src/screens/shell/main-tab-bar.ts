@@ -38,7 +38,7 @@ function tell(): void {
 export function useHideTabBarOnMain(hide: boolean): void {
   useEffect(() => {
     if (!hide) {
-      return undefined;
+      return;
     }
     const hider = Symbol('tab bar hider');
     hiders.add(hider);

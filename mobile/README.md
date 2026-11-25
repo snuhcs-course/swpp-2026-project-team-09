@@ -44,7 +44,9 @@ app, such as `EXPO_PUBLIC_RELEASE_TAG`, are not development settings: they are l
 | `EXPO_PUBLIC_CAMPUS_WALK`    | `1`                                                   | The User's position is a walk on campus (see below) |
 
 An operation is named as in the table under "Data" below, such as `listFriends`. `completeOnboarding` and `enterLobby`
-have no empty answer, so `EXPO_PUBLIC_MOCK_EMPTY` leaves them as they are.
+have no empty answer, so `EXPO_PUBLIC_MOCK_EMPTY` leaves them as they are. `EXPO_PUBLIC_MOCK_EMPTY` also takes `others`:
+a meal's or a meet's answer then comes without the asker's other Friends, as from a main server before them, and with
+`listFriends` the answer has none of them either.
 
 With `EXPO_PUBLIC_CAMPUS_WALK=1` the phone is not asked for its position or for the permission. The User's position
 is a fixed round on campus (`src/position/walk.ts`) that starts where the `Main` wireframe draws the User and takes a
@@ -956,11 +958,11 @@ cards from the top:
 
 - the profile from the Lobby: the Avatar, the name, "컴퓨터공학부 · 22학번" (the department alone without an
   admission year), "SNU 계정 인증됨" and "프로필 편집";
-- 시간표 (`week-card.tsx`, the grid in `week-grid.tsx`): Monday to Friday from 09 to 22, with 토 (and 일) and wider
-  hours when a class falls outside them, drawn as a table with a line at each hour and a fainter one at each half
-  hour; eight hours show at a time and the rest scroll under the days behind a fade, opening at a running class's
-  start, else, while today has a class to come, at the current hour or later so that the class shows whole, else at
-  the week's earliest class. Today's day in navy, a block for each time of a class
+- 시간표 (`week-card.tsx`, the grid in `week-grid.tsx`): Monday to Friday from 09:00 to 22:00, rows labelled "09" to
+  "21", with 토 (and 일) and wider hours when a class falls outside them, drawn as a ruled table (A04 ticket 07): an
+  outer border, a line between days, the days on light grey, a solid line at each hour and a light dotted one at each
+  half hour. Every hour shows at once, 32 high (416 for 09 to 22), without scrolling inside the card; wider hours make
+  the card taller. Today's day in navy, a square block filling its day's column for each time of a class
   (`GET /timetable/classes`, with `GET /places` for the numbers) in the colour of the class's place in the timetable
   (`classColors`), reading "운영체제" over "301-118", "301동" or "118호". A press on a block opens its class's 수업
   수정, as the class's row in 시간표 does. Under the week, two tiles of one width: "직접 입력/수정" opens 시간표, and
@@ -1180,8 +1182,8 @@ User enters a Quest, `QUEST_ENDED` says "이미 끝난 파티예요".
   "해당하는 행사가 없어요" after a filter, and "검색 결과가 없어요" after a search.
 - A row (`event-row.tsx`, P15 ticket 54) has the date column (the day of the month, and "{M}월 · 오늘", "내일" or the
   weekday; today for an event that has begun and not ended, such as an exhibition until 11월 30일), then the source from the app's own list of announcers, the title, and the hours and the place on one line
-  ("18:00–20:00 · 301동 대강당"; "M월 D일까지" for an event whose end is more than 24 hours after its start), each of
-  the two cut at 2 lines. Its party line says "모집 중인 파티 {n}" (the recruiting Quests of `GET /quests/recruiting`,
+  ("18:00–20:00 · 301동 대강당"; "M월 D일까지" for an event whose end is more than 24 hours after its start), the
+  title cut with "…" at 1 line and the hours and place at 2 (A04 ticket 07). Its party line says "모집 중인 파티 {n}" (the recruiting Quests of `GET /quests/recruiting`,
   which the User does not hold, as the map card and the chat card count them) or "함께 갈 파티 찾기", and opens 파티
   찾기/모집; beside it, "내 파티" when the User holds a Quest for the event with others or open to them, closed ones
   too. The 48-point touch area of the line and of the filters reaches past their 40-point height. A press elsewhere on the row
@@ -1591,20 +1593,25 @@ the map stays in sight while the User reads. `Glass` draws that surface at a nam
 its own layout (size, padding, radius) and never a colour, a border or a strength. The levels' values are
 `glass` in `tokens.ts`, which nothing but `Glass` reads.
 
-| Level      | Takes                                                                                        | Look                                                             |
-| ---------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `panel`    | the outer bars, the bottom sheets and the cards over the map                                 | white at 50%, a thin light line along its top, a floating shadow |
-| `inner`    | the chips, boxes, white buttons and light coloured chips inside a panel                      | white at 80%                                                     |
-| `field`    | a grey input field inside a panel                                                            | navy at 5%                                                       |
-| `mapChip`  | a small chip standing on the map itself: a walk's minutes, a candidate's tag, a route's time | white at 60% with a light rim, a light shadow                    |
-| `darkChip` | the black chip of a time and a place ("10:45 301동")                                         | the ink at 48%, for white words                                  |
+| Level      | Takes                                                                                        | Look                                                                                            |
+| ---------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `panel`    | the outer bars, the bottom sheets and the cards over the map                                 | a blur, or white at 80% where nothing blurs; a thin light line along its top, a floating shadow |
+| `inner`    | the chips, boxes, white buttons and light coloured chips inside a panel                      | white at 90%                                                                                    |
+| `field`    | a grey input field inside a panel                                                            | navy at 5%                                                                                      |
+| `mapChip`  | a small chip standing on the map itself: a walk's minutes, a candidate's tag, a route's time | white at 60% with a light rim, a light shadow                                                   |
+| `darkChip` | the black chip of a time and a place ("10:45 301동")                                         | the ink at 48%, for white words                                                                 |
 
 Never glass: the navy main buttons ("여기로", "일정에 넣기", "완료"), which stay solid so that the action to take stands
 out, and the full-screen white pages, such as the chat's first screen, which have no map behind them.
 
-A new Assistant panel over the map uses `Glass` at the level that fits, not colours of its own. The blur behind a
-panel, when it comes, is added inside `Glass`, so no caller changes. The catalogue's `Glass` section shows each level
-over stripes that show through.
+A new Assistant panel over the map uses `Glass` at the level that fits, not colours of its own. The catalogue's `Glass`
+section shows each level over stripes that show through.
+
+A `panel` blurs what is behind it on iOS 26 and later, with the system's Liquid Glass (`GlassView` from
+`expo-glass-effect`), with no white of its own over the blur. Android does not blur: the Kakao map
+draws on a GL surface of its own, behind the app's views, and a view's blur sees only the views (ticket A04-03 tried
+`expo-blur` on the emulator). There, and on iOS before 26, the panel is white at 80%, so that its words never run into
+the map's lines. Which one a phone gets is decided inside `Glass`; no caller asks.
 
 ## Map
 

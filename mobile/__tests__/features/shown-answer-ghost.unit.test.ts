@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -9,6 +10,7 @@ import { apiClient } from '@/api/client';
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_ALONE, MEAL_ANSWER_FIXED_START, MEAL_ANSWER_THREE } from '@/api/mock/data/meal-answers';
 import { ANSWERED, change, heldBack, hold, replied, said } from '../support/shown-answer';
+import { offeredAnswer } from '@/features/assistant/meal-offered';
 
 // What a drag keeps (P02 spec, "After a drag"): the band of the Plan shown before it as a ghost, and "되돌리기",
 // which brings that answer back. The first Plan of the stored answer to "배고파, 민수랑 같이" runs from 12:15 to
@@ -43,7 +45,7 @@ describe('a drag', () => {
   it('keeps the band of the Plan shown before it as the ghost', async () => {
     const held = await dragged();
 
-    expect(held.shown().answer).toBe(MEAL_ANSWER_FIXED_START);
+    expect(held.shown().answer).toBe(offeredAnswer(MEAL_ANSWER_FIXED_START));
     expect(held.shown().ghost).toEqual(FIRST_BAND);
   });
 
@@ -71,7 +73,7 @@ describe('a drag', () => {
     await act(() => {
       held.shown().undo();
     });
-    expect(held.shown().answer).toBe(MEAL_ANSWER_FIXED_START);
+    expect(held.shown().answer).toBe(offeredAnswer(MEAL_ANSWER_FIXED_START));
   });
 });
 
@@ -115,6 +117,6 @@ describe('the ghost', () => {
     await reply.fail();
 
     expect(held.shown().ghost).toEqual(FIRST_BAND);
-    expect(held.shown().answer).toBe(MEAL_ANSWER_FIXED_START);
+    expect(held.shown().answer).toBe(offeredAnswer(MEAL_ANSWER_FIXED_START));
   });
 });

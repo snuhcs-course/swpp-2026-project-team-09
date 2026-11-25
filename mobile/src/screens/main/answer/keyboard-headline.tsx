@@ -4,6 +4,8 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLine } from '@/api/assistant-types';
@@ -12,6 +14,7 @@ import { keepsShown } from '@/features/assistant/use-shown-answer';
 import { markdownLabel } from '../chat-markdown';
 import type { ChatSheetControl } from '../chat-sheet';
 import { linesOf } from './plan-card';
+import { offeredAnswer } from '@/features/assistant/meal-offered';
 
 // The first line of some words, without the Markdown's markers.
 export function wordsLine(words: string): AnswerLine {
@@ -28,11 +31,11 @@ export function headlineOf(reply: ChatBubble, control: Pick<ChatSheetControl, 'a
   const { answer: shown, lookup: onScreen } = control;
   const { answer, refusal = null } = reply;
   const keeps = keepsShown(reply);
-  const fromReply = answer !== undefined && answer !== null && answer === shown.source;
+  const fromReply = answer !== undefined && answer !== null && offeredAnswer(answer) === shown.source;
   if ((fromReply || keeps) && shown.answer !== null) {
     const over = keeps ? refusal?.lines[0] : undefined;
     // The card says nothing of a Plan at rest, but the headline over the keyboard names it, the map being covered.
-    const said = linesOf(shown, shown.answer, shown.adding)[0] ?? shown.plan?.lines[0];
+    const said = linesOf(shown, shown.answer)[0] ?? shown.plan?.lines[0];
     return over ?? said ?? wordsLine(reply.text);
   }
   const lookup = keeps ? onScreen.lookup : (reply.lookup ?? null);

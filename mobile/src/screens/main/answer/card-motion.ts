@@ -19,7 +19,7 @@ import {
 import { rangeAt, usePan, useListY } from './card-drag';
 import { useRun } from './card-run';
 import { useReduceMotionSetting } from '@/hooks/use-reduce-motion';
-import { heightOf, type Level, type LevelHeights } from './card-levels';
+import type { Level, LevelHeights } from './card-levels';
 import type { Raising } from './raise-handle';
 import { SheetLinkContext } from './sheet-link';
 
@@ -65,62 +65,51 @@ interface MotionInput {
   onHeight: (height: number) => void;
 }
 
-// Past the close point, letting go closes the answer, and the hint says so; with a layer to take away first, it does
-// not.
+// Past the close point, letting go closes the answer, and the hint says so, whatever the card shows (P04 ticket 63).
 function useCloseSide(
   raising: Raising,
   drop: SharedValue<number>,
 ): { past: boolean; tellPast: (past: boolean) => void; closeNow: () => void } {
   const [past, setPast] = useState(false);
-  const { onPast, close, layer = null } = raising;
+  const { onPast, close } = raising;
   const tellPast = useCallback(
     (next: boolean) => {
-      const shown = next && layer === null;
-      setPast(shown);
-      onPast?.(shown);
+      setPast(next);
+      onPast?.(next);
     },
-    [layer, onPast],
+    [onPast],
   );
   const closeNow = useCallback(() => {
     tellPast(false);
     drop.value = 0;
-    (layer ?? close)?.();
-  }, [tellPast, drop, layer, close]);
+    close?.();
+  }, [tellPast, drop, close]);
   return { past, tellPast, closeNow };
 }
 
-// What a let-go does: runs to the step it lands on; lower than where it started with a layer over the card, the layer is
-// taken away and the card stays (back's order).
+// What a let-go does: runs to the step it lands on. It only changes the card's height: a layer over the card, the list
+// of questions or a restaurant's menu, stays, and is left by its own control or by back (P04 ticket 63).
 function useLetGo(
   raising: Raising,
   back: (to: Level, velocity?: number, started?: boolean, arrive?: () => void) => void,
-  { heights, sheetLeads }: { heights: LevelHeights | null; sheetLeads?: SharedValue<number> },
+  sheetLeads: SharedValue<number> | undefined,
 ): (to: Level, velocity: number, started: boolean) => void {
-  const { level, setLevel, layer = null } = raising;
+  const { level, setLevel } = raising;
   return useCallback(
     (to: Level, velocity: number, started: boolean) => {
-      // Arrived, this card's move no longer leads the time card (`sheet-link`).
-      const ends = (): void => {
+      // React hears the new step when the run arrives there, so that no commit of its comes while the card runs: the
+      // view stood still through each and then jumped on (the user's phone check of a toss). Arrived, this card's move
+      // no longer leads the time card (`sheet-link`).
+      back(to, velocity, started, (): void => {
         if (sheetLeads !== undefined) {
           sheetLeads.value = 0;
         }
-      };
-      const lower = heights !== null && heightOf(to, heights) < heightOf(level, heights);
-      if (lower && layer !== null) {
-        layer();
-        back(level, velocity, false, ends);
-        return;
-      }
-      // React hears the new step when the run arrives there, so that no commit of its comes while the card runs: the
-      // view stood still through each and then jumped on (the user's phone check of a toss).
-      back(to, velocity, started, (): void => {
-        ends();
         if (to !== level) {
           setLevel(to);
         }
       });
     },
-    [level, setLevel, layer, back, heights, sheetLeads],
+    [level, setLevel, back, sheetLeads],
   );
 }
 
@@ -167,7 +156,7 @@ export function useCardMotion(input: MotionInput): CardMotion {
   const { offset, rest, back, landed } = useRun({ ...input, onUnled }, level, reduce);
   const drop = useSharedValue(0);
   const { past, tellPast, closeNow } = useCloseSide(raising, drop);
-  const letGo = useLetGo(raising, back, { heights, sheetLeads: link.sheetLeads });
+  const letGo = useLetGo(raising, back, link.sheetLeads);
   const stepped = room !== null && heights !== null;
   const listY = useListY(scroll, scrollY);
   useKeptEnd(offset, { room, whole, scroll, scrollY, listY });

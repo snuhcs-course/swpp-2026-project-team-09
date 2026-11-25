@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, Plan } from '@/api/assistant-types';
@@ -33,14 +35,16 @@ describe('the tags of a meal answer with menus', () => {
     expect(seen(drawing, 'answer:candidate:자하연식당 2층').label).toMatchObject({ title: '22분', line: null });
   });
 
-  it("gives the pick's label its time and walking after its name, and its first dish, the rest's count, and its lowest price under them", () => {
+  // P04 ticket 74: the walk is the route's own pill; the label says the name and start over the main dish. A screen
+  // reader still reads it whole.
+  it("gives the pick's label its time after its name, and its first dish and the rest's count under them", () => {
     expect(seen(drawing, 'answer:pick')).toMatchObject({
       name: '302동식당 · 12:15 · 걸음 20분 · 뼈없는감자탕 외 5 · 4,000원부터',
       label: {
         tone: 'pick',
         title: '302동식당',
-        note: '12:15 · 걸음 20분',
-        line: '뼈없는감자탕 외 5 · 4,000원부터',
+        note: '12:15',
+        line: '뼈없는감자탕 외 5',
         action: '메뉴 ›',
       },
     });
@@ -171,9 +175,9 @@ describe('the faces of Friends the answer does not draw', () => {
   const input = MEAL_ANSWER.input;
   const inAnswer = input.people[1]?.userId ?? '';
 
-  it('are faint, whether a press would add them or not', () => {
+  it('are faint where a press would add them or the Plan is sent, and lit while in the Plan', () => {
     expect(answerFaceOf(avatarOf('friend-1'), input, null, false)).toMatchObject({ faded: true, addable: true });
-    expect(answerFaceOf(avatarOf(inAnswer), input, null, false)).toMatchObject({ faded: true });
+    expect(answerFaceOf(avatarOf(inAnswer), input, null, false)).toMatchObject({ selected: true, faded: false });
     expect(answerFaceOf(avatarOf('friend-1'), input, null, true)).toMatchObject({ faded: true });
   });
 

@@ -1,0 +1,27 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-26  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# A meal's reply is one sentence about the first plan, with nobody's minutes on the way: the app writes the ways and
+# their minutes on the map. On the user's phone on 2026-11-26, "저녁" alone was answered "예술계식당이 가장 가까워서
+# 17:00에 먹어요. 83동에서 도보 3분이에요." The server also drops such a sentence (`withoutWalkSentences`); this case
+# holds the model to the rule. The P4 world asked from an app that draws answers (`pnpm eval --world p4-answer`), on
+# Monday 2026-11-02 at 11:30.
+
+- id: meal-dinner-one-sentence
+  category: meal-one-sentence
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 저녁
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu]
+    args:
+      planMeal: { date: '2026-11-02', meal: dinner }
+    text:
+      absent: [도보, 분 걸려, 분 거리, 걸어서 1분, 걸어서 2분, 걸어서 3분, 걸어서 4분, 걸어서 5분]

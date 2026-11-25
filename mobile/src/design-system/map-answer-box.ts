@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLabel } from './map-answer';
@@ -17,6 +18,9 @@ export const LABEL_MAX = 180;
 // A candidate's tag with its dishes and price under its name, and the pick's flag with its first dish after its time:
 // boards 22 and 24 show "부대짬뽕&군만두 외 4 · 5,000원부터" whole.
 export const SUB_MAX = 260;
+// A meal answer's chosen place (P04 ticket 74): its name and start over its main dish, as wide as its longer line up to
+// about half the map's width, the dish cut short with "…" past it.
+export const MEAL_PICK_MAX = 200;
 export const RING = 2;
 export const BADGE = 16;
 
@@ -58,6 +62,15 @@ function wordsWidth(words: string, size: number): number {
   return width;
 }
 
+// How wide a label may be: a meal pick's (`note`, its time) about half the map, a pick's or one with dishes under it
+// wider, others narrower.
+function widestOf(tone: AnswerLabel['tone'], sub: string | null, note: string | null): number {
+  if (tone === 'pick' && note !== null) {
+    return MEAL_PICK_MAX;
+  }
+  return sub === null && tone !== 'pick' ? LABEL_MAX : SUB_MAX;
+}
+
 // A label's box around its mark's point, in points, x to the right and y down, as `MapAnswerMark` lays it out: at its
 // side of the symbol box, the gap and its `shift` away, and centred on the point the other way. Its width is its
 // words' with the padding, the pick's border, and the number's badge, at most `LABEL_MAX`. The camera's room for
@@ -81,7 +94,7 @@ export function answerLabelBox(
     tone === 'candidate' && line !== null ? titleWidth + space[1] + lineWidth : Math.max(titleWidth, lineWidth);
   const words = Math.max(head, sub === null ? 0 : wordsWidth(sub, rowSize));
   const frame = 2 * space[2] + (tone === 'pick' ? 2 * RING : 0) + (number === null ? 0 : BADGE + space[1]);
-  const width = Math.ceil(Math.min(sub === null && tone !== 'pick' ? LABEL_MAX : SUB_MAX, frame + words));
+  const width = Math.ceil(Math.min(widestOf(tone, sub, note), frame + words));
   const height = (line === null || tone === 'candidate') && sub === null ? oneLine(fontScale) : twoLines(fontScale);
   const reach = ANSWER_SYMBOL_BOX / 2 + GAP + shift;
   if (side === 'left' || side === 'right') {

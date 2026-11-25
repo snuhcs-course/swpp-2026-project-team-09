@@ -1,7 +1,7 @@
 # 04: The 파티 tab: thin 내 파티 cards, simpler recruit cards, form icons
 
 Parent: [A04 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: None (can start immediately).
 
 Native files: none. Releases: an app OTA update only.
@@ -75,10 +75,38 @@ When a call can only be made by looking (for example the activation line's exact
 
 ## Acceptance criteria
 
-- [ ] A recruiting 내 파티 card reads "3/8명" and another reads "N명". The request circle shows its count. Another's activation reads "활성화 중 · {name}", and after 거절 "활성화 중 · 참여 안 함". (Integration tests, which fail before the change.)
-- [ ] "전체 게시판 ›" and the Boards card both open the Boards. A recruit card has no body preview and no "자세히 ›". (Integration tests.)
-- [ ] The picker is titled "관련 행사 고르기" and choosing a 행사 still fills the form. (Integration test.)
-- [ ] "Before" and "after" emulator screens of 내 파티 (with an activation), 찾기, the form and the picker go in the pull request.
-- [ ] No native file changes; lint, format and types pass on the app.
+- [x] A recruiting 내 파티 card reads "3/8명" and another reads "N명". The request circle shows its count. Another's activation reads "활성화 중 · {name}", and after 거절 "활성화 중 · 참여 안 함". (Integration tests, which fail before the change.)
+- [x] "전체 게시판 ›" and the Boards card both open the Boards. A recruit card has no body preview and no "자세히 ›". (Integration tests.)
+- [x] The picker is titled "관련 행사 고르기" and choosing a 행사 still fills the form. (Integration test.)
+- [x] "Before" and "after" emulator screens of 내 파티 (with an activation), 찾기, the form and the picker go in the pull request.
+- [x] No native file changes; lint, format and types pass on the app.
 
 ## Comments
+
+### Done (2026-11-26)
+
+- **내 파티 card.** It is one line high: a drawn grey 공개/비공개 icon, the title with "3/8명" or "N명", and "when · where" with "장소 미정".
+  - Sent invitations are off the card, and `useMineCards` no longer fetches them.
+  - Another's activation is "활성화 중 · {name}" beside a red light (`live-dot.tsx`, still under reduce-motion), with a grey 거절 and an outlined 참여. After declining it reads "활성화 중 · 참여 안 함".
+  - The light is placed in the text column, as chosen from a mock-up.
+  - 내 정보 → 참여 중인 파티 shares the card.
+- **찾기.** It has the round "전체 게시판 ›" and a Boards card whose N is the sum of `useBoardRows`. The card is hidden while searching.
+  - The recruit card loses its badge, preview and "자세히 ›". Its title is now the screen reader's button to the post.
+  - The Assistant's quest cards share `PostCard` and changed too.
+- **Form.** Each field but 태그 has an icon. `LineIcon` draws those `Icon` lacks.
+  - `TextField` gained an optional `labelIcon`, and `WhenField`/`WhereField` an optional `icon`.
+- **관련 행사 picker.** It is titled "관련 행사 고르기", with rows shaped like the 행사 tab's and a light blue, checked row for the chosen 행사.
+- Pull request #562, with the "after" screens in `references/after/04-*.jpg`.
+
+Follow-up for ticket 07: the picker's date column is 72 wide with a 24 day, because "10월 · 오늘" ran into the rule at 60. If the 행사 tab settles on 60, the picker should follow.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 45 minutes in one session (an estimate). This includes:
+  - about 10 minutes waiting for the shared heavy-job lock;
+  - the emulator screens;
+  - the review fixes.
+- Tokens (the session and its two review subagents): output 120,227. Input 46,244,343 in all, made of:
+  - 45,721,133 cache reads;
+  - 522,764 cache writes;
+  - 446 uncached.

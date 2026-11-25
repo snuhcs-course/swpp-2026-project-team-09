@@ -11,22 +11,18 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type ReactElement, type ReactNode, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import type { AnswerLine, AnswerReply, ConditionChip } from '@/api/assistant-types';
+import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
 import type { AnswerOffer } from '@/api/refusal-types';
 import { Button, color, space, text } from '@/design-system';
 import { movingWords } from '@/features/assistant/band-move';
 import { easedFromNow } from '@/features/assistant/relaxed-plan';
-import { useKeyboardHeight } from '@/hooks/use-keyboard-height';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { ChatMarkdown } from '../chat-markdown';
-import { useOpenFriendProfile } from '../friend-profile';
 import { AnswerLines } from './answer-lines';
 import { CardNote } from './card-note';
-import { PlanChips } from './plan-chips';
-import { FriendChoices } from './friend-choices';
 import { MainButtons } from './main-buttons';
 import { MealList, mealCard } from './meal-list';
 import { MealMenu } from './meal-menu';
@@ -35,13 +31,8 @@ import { PlanStepper } from './plan-stepper';
 import { RelaxButtons } from './relax-buttons';
 import { RowFourButtons } from './row-four-buttons';
 import { type BandFocus, type Corrections, useCorrections } from './use-corrections';
-import { addNameOf, whoOf } from './who-words';
 
 const UNDO_WIDTH = 96;
-// The card's lines while the list of Friends is open: who comes (`whoOf`). The map takes a press on a face only while
-// a Plan is drawn, so without one the second line says how the list is sorted.
-const HOW: AnswerLine = [{ text: '지도의 얼굴을 누르거나 아래에서 골라요', strong: false }];
-const HOW_WITHOUT_PLAN: AnswerLine = [{ text: '가까운 친구부터 보여요', strong: false }];
 
 interface StepsProps {
   shown: ShownAnswer;
@@ -83,30 +74,15 @@ interface CardProps {
   over?: readonly AnswerLine[];
 }
 
-interface BelowProps extends CardProps {
+interface BelowProps extends Omit<CardProps, 'room'> {
   fix: Corrections;
   busy: boolean;
-  onProfile: ((userId: string) => void) | null;
   steps?: boolean;
 }
 
-// Under the line: the list of Friends while it is open, else the answer's note and the steps. The Plan's band is the
-// time bar's, under the pill.
-function Below({ shown, answer, invitation, room, fix, busy, onProfile, steps }: BelowProps): ReactElement {
+// Under the line: the answer's note and the steps. The Plan's band is the time bar's, under the pill.
+function Below({ shown, answer, invitation, fix, busy, steps }: BelowProps): ReactElement {
   const { plan } = shown;
-  if (fix.adding) {
-    return (
-      <FriendChoices
-        disabled={busy}
-        friends={fix.choices}
-        onChoose={fix.choose}
-        onProfile={onProfile}
-        pending={shown.pendingAdd}
-        pick={plan?.place ?? null}
-        room={room}
-      />
-    );
-  }
   return (
     <>
       <CardNote note={answer.note} />
@@ -123,18 +99,15 @@ function Below({ shown, answer, invitation, room, fix, busy, onProfile, steps }:
   );
 }
 
-// The lines a Plan's card says, which the map cannot: who comes while the list of Friends is open, a refusal's lines
-// over the Plan it keeps, who cannot come while the band is moved over their busy stretch, and why there is no Plan.
-// None otherwise: where, when, who, and the way are on the map and the time bar.
+// The lines a Plan's card says, which the map cannot: a refusal's lines over the Plan it keeps, who cannot come while
+// the band is moved over their busy stretch, and why there is no Plan. None otherwise: where, when, who, and the way
+// are on the map and the time bar. People are picked in the time card, and the card keeps saying the answer meanwhile
+// (P04 ticket 64).
 export function linesOf(
   { plan, moving }: Pick<ShownAnswer, 'plan' | 'moving'>,
   answer: AnswerReply,
-  adding: boolean,
   over: readonly AnswerLine[] = [],
 ): readonly AnswerLine[] {
-  if (adding) {
-    return [whoOf(answer.input.kind), plan === null ? HOW_WITHOUT_PLAN : HOW];
-  }
   if (over.length > 0) {
     return over;
   }
@@ -183,26 +156,11 @@ export function planCardRests(
     !adding &&
     ghost === null &&
     moving === null &&
-    linesOf(shown, answer, false, over).length === 0 &&
+    linesOf(shown, answer, over).length === 0 &&
     !easedFromNow(answer.input) &&
     (answer.offers ?? []).length === 0 &&
     (kind === 'meal' || kind === 'meet')
   );
-}
-
-// The person chips over the card: a meal answer's raised card has every person of the Plan over its list, with ✕ where
-// one can be taken out; any other card those whom the map draws no face for.
-function chipsOf(answer: AnswerReply, shown: Pick<ShownAnswer, 'plan'>, meal: boolean): ConditionChip[] {
-  return meal
-    ? answer.chips.filter(({ kind, userId }) => kind === 'person' && userId !== null)
-    : facelessChips(answer, shown);
-}
-
-// The chips of the Plan's people whom the scene draws no face for, those whose position is unknown ("민수 · 자리
-// 모름"): their chip keeps their profile and their ✕, since the map has no face to press.
-export function facelessChips(answer: AnswerReply, { plan }: Pick<ShownAnswer, 'plan'>): ConditionChip[] {
-  const drawn = new Set((plan?.scene.people ?? []).map(({ userId }) => userId));
-  return answer.chips.filter(({ kind, userId }) => kind === 'person' && userId !== null && !drawn.has(userId));
 }
 
 interface PlanCardProps extends CardProps {
@@ -237,14 +195,13 @@ function MealWords({ said, shown }: { said: string; shown: ShownAnswer }): React
   );
 }
 
-// A meal answer's raised card: the Assistant's whole words, the person chips under them (`chips`), then its list, or
-// the chosen one's menu (P04 ticket 54).
-function MealBody(props: PlanCardProps & { busy: boolean; chips: ReactNode }): ReactElement {
+// A meal answer's raised card: the Assistant's whole words, then its list, or the chosen one's menu (P04 ticket 54).
+// People are picked in its time card (P04 ticket 64).
+function MealBody(props: PlanCardProps & { busy: boolean }): ReactElement {
   const { shown, answer, invitation, over = [], said = '' } = props;
   return (
     <>
       {over.length > 0 ? null : <MealWords said={said} shown={shown} />}
-      {props.chips}
       <MealSheet answer={answer} busy={props.busy || settled(invitation)} shown={shown} />
     </>
   );
@@ -268,45 +225,15 @@ function MealSheet({
 }
 
 export function PlanCard(props: PlanCardProps): ReactElement {
-  const { shown, answer, invitation, room, over = [], onClose, focus, said = '' } = props;
+  const { shown, answer, invitation, over = [], onClose, focus, said = '' } = props;
   const busy = shown.recalculating || invitation.sending || invitation.changing;
   const fix = useCorrections(shown, answer.input, onClose, focus);
-  const openProfile = useOpenFriendProfile();
-  const corner = fix.adding ? { words: '그대로', icon: null, onPress: fix.toggleAdding } : null;
-  // While the Plan can take more people: the map does not draw every Friend's face (one near the answer's own marks
-  // gives way), so the + on a face is not enough. It stands in the time bar (P04 ticket 14), and here only where no
-  // bar is: an answer without a Plan, or while the keyboard hides the bar.
-  const barShown = useKeyboardHeight() === 0 && shown.plan !== null;
-  const addName = !barShown && (fix.adding || fix.choices.length > 0) ? addNameOf(answer.input.kind) : null;
-  const meal = !fix.adding && shown.plan !== null && mealCard(answer);
-  const faceless = chipsOf(answer, shown, meal);
-  const chips =
-    addName === null && corner === null && faceless.length === 0 ? null : (
-      <PlanChips
-        addName={addName}
-        answer={answer}
-        busy={busy}
-        chips={faceless}
-        corner={corner}
-        fix={fix}
-        onProfile={openProfile}
-      />
-    );
+  const meal = shown.plan !== null && mealCard(answer);
   return (
     <View style={styles.plan}>
-      {meal ? null : chips}
-      <Said lines={linesOf(shown, answer, fix.adding, over)} said={meal ? '' : said} />
-      {meal ? <MealBody {...props} busy={busy} chips={chips} /> : null}
-      <Below
-        answer={answer}
-        busy={busy}
-        fix={fix}
-        invitation={invitation}
-        onProfile={openProfile}
-        room={room}
-        shown={shown}
-        steps={props.steps}
-      />
+      <Said lines={linesOf(shown, answer, over)} said={meal ? '' : said} />
+      {meal ? <MealBody {...props} busy={busy} /> : null}
+      <Below answer={answer} busy={busy} fix={fix} invitation={invitation} shown={shown} steps={props.steps} />
     </View>
   );
 }

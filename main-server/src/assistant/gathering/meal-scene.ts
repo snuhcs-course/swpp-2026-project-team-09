@@ -6,6 +6,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type MapScene, type TimeBand } from '../dto/answer.dto.js';
@@ -177,6 +178,22 @@ export function lanesOf(naming: GatheringNaming, from: Date, until: Date): TimeB
   }));
 }
 
+// The asker's other Friends over the same range as the lanes, each with their walk to the Plan's Place.
+export function othersOf(naming: GatheringNaming, placeId: string, from: Date, until: Date): Pick<TimeBand, 'others'> {
+  const { others } = naming.args;
+  if (others === undefined) {
+    return {};
+  }
+  return {
+    others: others.map(({ userId, name, items, walkTo }) => ({
+      userId,
+      name,
+      busy: busyIn(items, from, until, (id) => naming.placeLabel(id)),
+      walkMinutes: walkTo(placeId),
+    })),
+  };
+}
+
 // From the half hour at or before the later of now and an hour before the plan's start, to the half hour at or after half
 // an hour past its end, reaching out to the half hours around the window the User fixed. `now` is given as it is, even
 // outside the range.
@@ -196,6 +213,7 @@ export function bandOf(fit: GatheringFit, naming: Naming): TimeBand {
     range: { startAt: koreaTime(from), endAt: koreaTime(until) },
     now: koreaTime(now),
     lanes: lanesOf(naming, from, until),
+    ...othersOf(naming, fit.placeId, from, until),
     startAt: koreaTime(start),
     endAt: koreaTime(end),
     text: `${clockOf(start)}–${clockOf(end)}${minutesSaid(fit) ? ` · 식사 ${togetherMinutes}분` : ''}`,

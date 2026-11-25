@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { crowdedMealAnswer } from '@/api/mock/data/crowded-meal';
@@ -46,12 +47,14 @@ describe('학생회관식당 chosen in the crowded meal answer', () => {
 
   it('gives the pick its label with "메뉴 ›" and never fades it, though its walking is over thirty minutes', () => {
     const { label } = seen(drawing, 'answer:pick');
-    expect(label).toMatchObject({ title: '학생회관식당', note: '11:00 · 걸음 32분', action: '메뉴 ›' });
+    expect(label).toMatchObject({ title: '학생회관식당', note: '11:00', action: '메뉴 ›' });
     expect(label).not.toHaveProperty('faded');
   });
 
+  // By the main server's fifteen minutes (P04 ticket 71): 감골식당, with fifteen to nineteen before the Class, is kept.
   it('fades a candidate that cannot be done before the next Class, and not one only far away', () => {
-    expect(seen(drawing, 'answer:candidate:감골식당').symbol).toMatchObject({ faded: true });
+    expect(seen(drawing, 'answer:candidate:기숙사식당 (관악사 919동)').symbol).toMatchObject({ faded: true });
+    expect(seen(drawing, 'answer:candidate:감골식당').symbol).not.toHaveProperty('faded');
     expect(seen(drawing, 'answer:candidate:자하연식당 2층').symbol).not.toHaveProperty('faded');
     expect(seen(drawing, 'answer:candidate:3식당').symbol).not.toHaveProperty('faded');
   });
@@ -65,7 +68,7 @@ describe('302동식당 chosen', () => {
   const drawing = drawingOf(CROWDED, at('302동식당'));
 
   it('moves the label to it, with only the way there drawn and its minutes', () => {
-    expect(seen(drawing, 'answer:pick').label).toMatchObject({ title: '302동식당', note: '11:30 · 걸음 2분' });
+    expect(seen(drawing, 'answer:pick').label).toMatchObject({ title: '302동식당', note: '11:30' });
     expect(drawing.lines).toHaveLength(1);
     expect(seen(drawing, 'answer:leg:0:2분').label).toMatchObject({ title: '2분' });
   });

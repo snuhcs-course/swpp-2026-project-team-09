@@ -6,6 +6,7 @@
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -41,15 +42,17 @@ export function Fill({ words }: { words: string }): ReactElement {
   return <Text style={styles.fill}>{words}</Text>;
 }
 
-// The Badges over a post: `파티`, and the Global Event's title.
-export function PostBadges({ post, fill = true }: { post: PostView; fill?: boolean }): ReactElement {
+// "오늘 19:30 · 버들골 입구" on one line: the clock with the time, the pin with the place, which "…" cuts when long.
+function WhenWhere({ post }: { post: PostView }): ReactElement {
   return (
-    <View style={styles.top}>
-      <View style={styles.badges}>
-        <Badge tone="party">파티</Badge>
-        {post.event === null ? null : <Badge tone="official">{post.event}</Badge>}
-      </View>
-      {fill ? <Fill words={post.fill} /> : null}
+    <View style={styles.whenWhere}>
+      <Icon color={color.inkMuted} name="clock" size={16} />
+      <Text style={styles.when}>{post.time}</Text>
+      <Text style={styles.dot}>·</Text>
+      <Icon color={color.inkMuted} name="pin" size={16} />
+      <Text numberOfLines={1} style={styles.where}>
+        {post.place}
+      </Text>
     </View>
   );
 }
@@ -59,7 +62,7 @@ interface PostCardProps {
   onJoin: (post: PostView) => void;
   // `관심 없음`; left out, the card has no such button.
   onHide?: (post: PostView) => void;
-  // Opens the post, from a press of the card or of `자세히 ›`. Left out, `자세히 ›` alone opens it with `openPost`.
+  // Opens the post, from a press of the card or of its title. Left out, the title alone opens it with `openPost`.
   onOpen?: (post: PostView) => void;
   // What its owner adds under the time and the place.
   children?: ReactNode;
@@ -72,7 +75,7 @@ interface CardProps {
 }
 
 // The card, which a press opens when its owner gives it `onOpen`, as 찾기 does. Its buttons stay buttons of their own:
-// a press of one does not open the card. The card is not one control for a screen reader, and `자세히 ›` is the button
+// a press of one does not open the card. The card is not one control for a screen reader, and its title is the button
 // that opens it.
 function Card({ post, onOpen, children }: CardProps): ReactElement {
   const shared = { accessibilityLabel: post.title, style: [cardStyles.card, styles.card] };
@@ -92,25 +95,36 @@ function Card({ post, onOpen, children }: CardProps): ReactElement {
   );
 }
 
-// A card of 찾기's 모집 중인 파티: its photo beside the title, the members' faces, `관심 없음` and `참여하기`.
+// A card of 찾기's 모집 중인 파티: the Global Event's badge when there is one, the title over "when · where" beside the
+// photo, the members' faces with "3/8명" at the end, `관심 없음` and `참여하기`.
 export function PostCard({ post, onJoin, onHide, onOpen, children }: PostCardProps): ReactElement {
+  const open = (): void => {
+    if (onOpen === undefined) {
+      openPost(post.questId);
+    } else {
+      onOpen(post);
+    }
+  };
   return (
     <Card onOpen={onOpen} post={post}>
-      <PostBadges post={post} />
+      {post.event === null ? null : (
+        <View style={styles.badges}>
+          <Badge tone="official">{post.event}</Badge>
+        </View>
+      )}
       <View style={styles.head}>
         <View style={styles.headWords}>
-          <Text style={styles.title}>{post.title}</Text>
-          {post.description === '' ? null : (
-            <Text numberOfLines={2} style={styles.description}>
-              {post.description}
-            </Text>
-          )}
+          <Text
+            accessibilityLabel={`${post.title} 모집글 자세히 보기`}
+            accessibilityRole="button"
+            onPress={open}
+            style={styles.title}
+          >
+            {post.title}
+          </Text>
+          <WhenWhere post={post} />
         </View>
-        {post.photo === null ? null : <PhotoView photo={post.photo} size="thumb" />}
-      </View>
-      <View style={styles.lines}>
-        <Line icon="clock">{post.time}</Line>
-        <Line icon="pin">{post.place}</Line>
+        {post.photo === null ? null : <PhotoView photo={post.photo} size="thumb" style={styles.photo} />}
       </View>
       {children}
       <View style={styles.people}>
@@ -118,20 +132,7 @@ export function PostCard({ post, onJoin, onHide, onOpen, children }: PostCardPro
         <Text numberOfLines={1} style={styles.members}>
           {post.members}
         </Text>
-        <Pressable
-          accessibilityLabel={`${post.title} 모집글 자세히 보기`}
-          accessibilityRole="button"
-          hitSlop={space[3]}
-          onPress={() => {
-            if (onOpen === undefined) {
-              openPost(post.questId);
-            } else {
-              onOpen(post);
-            }
-          }}
-        >
-          <Text style={styles.more}>자세히 ›</Text>
-        </Pressable>
+        <Fill words={post.fill} />
       </View>
       <CardButtons onHide={onHide} onJoin={onJoin} post={post} />
     </Card>
@@ -166,21 +167,34 @@ function CardButtons({ post, onJoin, onHide }: Omit<PostCardProps, 'onOpen' | 'c
   );
 }
 
+// The frame's measures: the card's padding, 12 over and 14 under, and the photo, 52.
+const PAD_TOP = 12;
+const PAD_BOTTOM = 14;
+const PHOTO = 52;
+
 const styles = StyleSheet.create({
-  card: { gap: space[3] },
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] },
-  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, flexShrink: 1 },
+  card: { gap: 10, paddingTop: PAD_TOP, paddingBottom: PAD_BOTTOM },
+  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   fill: { fontFamily: font.semiBold, fontSize: 12, lineHeight: 16, color: color.party },
-  head: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
-  headWords: { flex: 1, gap: space[1] },
+  head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  headWords: { flex: 1, minWidth: 0, gap: space[1] },
+  photo: { width: PHOTO, height: PHOTO },
   buttons: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   join: { flex: 1 },
   title: { fontFamily: font.semiBold, fontSize: 18, lineHeight: 26, letterSpacing: -0.18, color: color.ink },
-  description: { fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: color.inkMuted },
-  lines: { gap: space[1] },
   line: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  whenWhere: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   lineWords: { flexShrink: 1, fontFamily: font.regular, fontSize: 15, lineHeight: 22, color: color.inkMuted },
+  when: { fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: color.inkMuted },
+  dot: { fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: color.inkSubtle },
+  where: { flexShrink: 1, fontFamily: font.regular, fontSize: 14, lineHeight: 20, color: color.inkMuted },
   people: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  members: { flex: 1, fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.inkMuted },
-  more: { fontFamily: font.semiBold, fontSize: 13, lineHeight: 18, color: color.blue600 },
+  members: {
+    flex: 1,
+    marginLeft: space[1],
+    fontFamily: font.medium,
+    fontSize: 12,
+    lineHeight: 16,
+    color: color.inkMuted,
+  },
 });

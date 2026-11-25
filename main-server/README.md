@@ -2398,7 +2398,13 @@ Anthropic API as the AI's key says
   not, who of the plan is busy then and until when (a Friend by name only, the asker by their own Class or Quest too);
   the first plan is the nearest time everyone can be there. A busy
   stretch of a Plan's time band carries a `label`: `302동 수업` for a Class with a Place, `수업` without one, and `일정`
-  for a Sub Quest. A message that asks for two or more things ("16시에 관정 갔다가 19시쯤 저녁, 7층 예약하고 스케줄 짜줘")
+  for a Sub Quest. A meal's or a meet's Plan band also carries `others`, for picking people in the app's time card: one
+  entry for each Friend of the asker who is not in the conditions, in the order of the asker's Friends. Each has `busy`,
+  the Friend's busy stretches cut to the band's range and labelled as the lanes' are, at every location level, and
+  `walkMinutes`, the walk from the Place the Friend view puts them in to the Plan's place. `walkMinutes` is `null` when
+  the asker may not see where the Friend is, or when the walking table has no row for that Place. An app that does not
+  know `others` ignores it (`src/assistant/gathering/other-friends.ts`).
+  A message that asks for two or more things ("16시에 관정 갔다가 19시쯤 저녁, 7층 예약하고 스케줄 짜줘")
   gets `steps` too, left out otherwise: each request in time order, a book card, a booking a library tool refused, or
   the answer, with its `kind`, `title`, `place`, `from`, `startAt`, `endAt`, `status` (`shown` or `not-done`),
   `reason`, and what `shows` it (the card's key or the answer). A meal planned after a booking sets out from 관정 when
@@ -2670,7 +2676,10 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       the clock (`mealByClock`): lunch until lunch's window ends, then dinner, judged at the start the User asked for
       and today no earlier than now. It answers the model `planned` with the meal, each plan's Restaurant, clock times,
       meeting, and each person's way in minutes, and the Restaurants dropped, or `none` with the meal and the reason,
-      never coordinates, course names, or rooms. The plans come in order (`gathering/plan-order.ts`): those where
+      never coordinates, course names, or rooms. Company the User does not name, or not all of (친구 두 명이랑 저녁),
+      is planned at once with `pickPeople` and only the Friends named: the model never asks for names, and the answer
+      carries `pickPeople: true` when its plan has someone left to pick, for the app to open its picking of Friends on
+      it (P04 ticket 73). The plans come in order (`gathering/plan-order.ts`): those where
       everyone has 30 minutes first, then the shorter ones. Within each group, the least walking for everyone together
       comes first, counting the walk there and on to each one's next item; then the smaller largest walk, the earlier
       start, and the key. When the asker's starting place is not known (a later day with no item before the meal, and

@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
   frame: { ...tagStyles.frame, borderColor: color.border },
   fill: { ...tagStyles.fill, gap: GAP, paddingHorizontal: GAP },
   namedTag: { paddingRight: 9 },
-  // As a single kind's named tag: white at 75% under the glass, so that the ground is 95%.
-  namedFrame: { backgroundColor: 'rgba(255, 255, 255, 0.75)' },
+  // As a single kind's named tag: white at 50% under the glass, so that the ground is 95%.
+  namedFrame: { backgroundColor: 'rgba(255, 255, 255, 0.5)' },
   name: { ...tagStyles.name, marginLeft: 3 },
   kind: { alignItems: 'center', justifyContent: 'center', width: KIND, height: KIND, borderRadius: radius.full },
 });

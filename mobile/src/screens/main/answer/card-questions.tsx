@@ -4,6 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -30,8 +31,6 @@ export interface QuestionsOpen {
   close: () => void;
 }
 
-// The most the questions take in the card: about four rows, which scroll beyond.
-export const QUESTIONS_MAX = 240;
 // A question above the keyboard takes up to three lines, a sentence up to two.
 const QUESTION_LINES = 3;
 const SENTENCE_LINES = 2;
@@ -49,7 +48,7 @@ export function CardQuestions({
 }: {
   control: ChatSheetControl;
   onDone: () => void;
-  maxHeight: number;
+  maxHeight?: number;
   onAskNew?: () => void;
 }): ReactElement {
   return (
@@ -69,19 +68,17 @@ export function CardQuestions({
 }
 
 // The questions the caption opens, and "＋ 새 질문" in their header: the answer closed as "←" closes it, then the cursor
-// in the main map's input.
+// in the main map's input. They take their whole height in the card's content, which scrolls them at every step (P04
+// ticket 63).
 export function CaptionQuestions(props: {
   control: ChatSheetControl;
   list: QuestionsOpen;
   onClose: () => void;
-  // The list's most height; left out, about four rows. A raised card lifts it (P04 ticket 52).
-  maxHeight?: number;
 }): ReactElement {
-  const { control, list, onClose, maxHeight = QUESTIONS_MAX } = props;
+  const { control, list, onClose } = props;
   return (
     <CardQuestions
       control={control}
-      maxHeight={maxHeight}
       onAskNew={() => {
         list.close();
         onClose();

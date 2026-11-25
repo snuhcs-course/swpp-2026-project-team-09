@@ -205,7 +205,7 @@ function follow(parts: PanParts, state: PanState, translationY: number): void {
 
 // A let-go that raises the card runs it to its step from this very frame, with the finger's speed, so that a toss
 // neither stops for the frames a run started on the JS thread would wait nor kicks again when it starts (the user's
-// phone check). A let-go that lowers it is run from the JS thread, which may first take a layer over the card away.
+// phone check). A let-go that lowers it is run from the JS thread.
 function runUp(parts: PanParts, to: Level, velocityY: number): boolean {
   'worklet';
   const { heights, room, offset, level, reduce, onLanded } = parts;

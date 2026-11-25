@@ -5,12 +5,14 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import { type ComponentProps, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ConditionChip, PlanInput } from '@/api/assistant-types';
 import type { RelaxOffer } from '@/api/relax-types';
+import type { LatLng } from '@/api/types';
 import { useToast } from '@/design-system';
 import { useFriends } from '@/features/friends/use-friends';
 import { onlyFriendOf } from '@/features/assistant/meet-input';
@@ -19,9 +21,15 @@ import { backToNow, relaxed, timeChipChange } from '@/features/assistant/relaxed
 import { type BandBound, clockOf, msOf, type Stretch } from '@/features/assistant/time-band';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { waitForPlace } from '@/features/places/picked-place';
-import type { FriendChoices } from './friend-choices';
 
-type Choice = ComponentProps<typeof FriendChoices>['friends'][number];
+// A Friend not in the conditions, who could be picked.
+interface Choice {
+  id: string;
+  name: string;
+  department: string;
+  position: LatLng | null;
+  minutesOld: number | null;
+}
 
 // How long the time chip keeps the focus on the band's end handle.
 const FOCUS_MS = 2000;

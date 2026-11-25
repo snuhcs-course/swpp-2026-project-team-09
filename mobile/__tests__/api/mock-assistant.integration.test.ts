@@ -4,6 +4,8 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { answered, startFresh } from '../support/mocks';
@@ -18,6 +20,7 @@ import { FRIEND_TAPS, TAP_LOOKUPS } from '@/api/mock/data/tap-lookups';
 import { WAY_LOOKUP_REPLY } from '@/api/mock/data/way-lookup';
 import { LATE_LOOKUP_REPLY, LEAVE_LOOKUP_REPLY, SHUTTLE_LOOKUP_REPLY } from '@/api/mock/data/way-lookups';
 import { MEAL_ANSWER_ALONE, MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
+import { replyWithOtherFriends, withOtherFriends } from '@/api/mock/other-friends';
 
 // The mock of the Assistant, where the app asks no main server: asked to eat together with what the app knew, it
 // answers with the main server's real answer drawn on the map, and asked where a Place is, with its real Lookup;
@@ -48,7 +51,9 @@ afterEach(() => {
 
 describe('the mock of an answer drawn on the map', () => {
   it("answers 배고파 with a context by the main server's reply", async () => {
-    await expect(answered(mockClient.askAssistant(HUNGRY, CONTEXT))).resolves.toEqual(MEAL_ANSWER_REPLY);
+    await expect(answered(mockClient.askAssistant(HUNGRY, CONTEXT))).resolves.toEqual(
+      replyWithOtherFriends(MEAL_ANSWER_REPLY),
+    );
   });
 
   it("answers where a Place is with a context by the main server's Lookup", async () => {
@@ -89,22 +94,46 @@ describe('the mock of a recalculation', () => {
     // The first copy's input with its date moved a day on, a field that chooses no other copy.
     const input: PlanInput = { ...MEAL_ANSWER.input, date: '2026-11-18' };
 
-    await expect(answered(mockClient.recalculateAnswer(input, null))).resolves.toEqual({ ...MEAL_ANSWER, input });
+    await expect(answered(mockClient.recalculateAnswer(input, null))).resolves.toEqual(
+      withOtherFriends({ ...MEAL_ANSWER, input }),
+    );
   });
 
   it('answers a fixed start with the stored copy for a fixed start, holding the input it was given', async () => {
     const input: PlanInput = { ...MEAL_ANSWER.input, window: { from: '12:40', until: null } };
 
-    await expect(answered(mockClient.recalculateAnswer(input, null))).resolves.toEqual({
-      ...MEAL_ANSWER_FIXED_START,
-      input,
-    });
+    await expect(answered(mockClient.recalculateAnswer(input, null))).resolves.toEqual(
+      withOtherFriends({ ...MEAL_ANSWER_FIXED_START, input }),
+    );
   });
 
   it('answers the User alone with the stored copy for the User alone', async () => {
     await expect(answered(mockClient.recalculateAnswer(MEAL_ANSWER_ALONE.input, null))).resolves.toEqual(
-      MEAL_ANSWER_ALONE,
+      withOtherFriends(MEAL_ANSWER_ALONE),
     );
+  });
+});
+
+// Partitions: the Friends of a meal's band, with a place and without; one of them picked. Expected values: the mock's
+// Friends, 서지우 (f11) with no place, and 김민준 (f1) picked (P04 ticket 64).
+describe('the mock of the other Friends on a band', () => {
+  it('adds the mock’s Friends not in the conditions, each with a walk or none', async () => {
+    const reply = await answered(mockClient.askAssistant(HUNGRY, CONTEXT));
+    const others = reply.answer?.plans[0]?.band.others ?? [];
+
+    expect(others.map(({ name }) => name)).toEqual(FRIENDS.map(({ name }) => name));
+    expect(others.find(({ userId }) => userId === 'f11')?.walkMinutes).toBeNull();
+    expect(others.find(({ userId }) => userId === 'f1')?.walkMinutes).toBeGreaterThan(0);
+  });
+
+  it('puts a picked Friend in the recalculated Plan’s lanes and chips, out of its others', async () => {
+    const people = [...MEAL_ANSWER.input.people, { userId: 'f1', constraints: [] }];
+    const answer = await answered(mockClient.recalculateAnswer({ ...MEAL_ANSWER.input, people }, null));
+    const band = answer.plans[0]?.band;
+
+    expect(band?.lanes.map(({ userId }) => userId)).toContain('f1');
+    expect(band?.others?.some(({ userId }) => userId === 'f1')).toBe(false);
+    expect(answer.chips).toContainEqual({ kind: 'person', text: '김민준', userId: 'f1' });
   });
 });
 
@@ -153,5 +182,26 @@ describe('the mock of a press on the map', () => {
     await expect(answered(mockClient.answerTap({ kind: 'friend', userId: 'pm1' }, null))).resolves.toEqual(
       FRIEND_TAPS.f1,
     );
+  });
+});
+
+// P04 ticket 73. Partitions: unnamed Friends for dinner, for lunch, and "누구랑"; a meal with a named Friend. Expected
+// values: the plan for the User alone with the picking open, and the mock's Friends to pick from.
+describe('the mock of a meal with Friends the User does not name', () => {
+  it.each([['친구 두명이랑 저녁'], ['친구랑 점심 먹을래'], ['누구랑 같이 먹을까 내일 저녁']])(
+    'answers "%s" for the User alone, with the picking open',
+    async (text) => {
+      const reply = await answered(mockClient.askAssistant([{ role: 'user', text }], CONTEXT));
+
+      expect(reply.answer?.pickPeople).toBe(true);
+      expect(reply.answer?.input).toMatchObject({ people: [expect.anything()] });
+      expect(reply.answer?.plans[0]?.band.others?.length).toBeGreaterThan(0);
+    },
+  );
+
+  it('opens nothing for a meal with a Friend the User names', async () => {
+    const reply = await answered(mockClient.askAssistant(HUNGRY, CONTEXT));
+
+    expect(reply.answer?.pickPeople).toBeUndefined();
   });
 });

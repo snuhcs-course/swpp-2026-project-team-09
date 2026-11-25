@@ -1,7 +1,7 @@
 # 05: Filter rows as word tabs
 
 Parent: [A04 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: None (can start immediately).
 
 Native files: none. Releases: an app OTA update only.
@@ -40,9 +40,20 @@ Follow the changelog's § 1-2, § 4-2 and § 6 (`references/changelog-11-24.md`)
 
 ## Acceptance criteria
 
-- [ ] A filter row's chosen tab is selected for accessibility and draws no ✓. (`chip-row.unit`, which fails before the change.)
-- [ ] A picking `Chip` is unchanged. (`chip.unit`.)
-- [ ] "Before" and "after" emulator screens of the 내 파티 filter, the friend panel and the Quest screen go in the pull request.
-- [ ] No native file changes; lint, format and types pass on the app.
+- [x] A filter row's chosen tab is selected for accessibility and draws no ✓. (`chip-row.unit`, which fails before the change.)
+- [x] A picking `Chip` is unchanged. (`chip.unit`.)
+- [x] "Before" and "after" emulator screens of the 내 파티 filter, the friend panel and the Quest screen go in the pull request.
+- [x] No native file changes; lint, format and types pass on the app.
 
 ## Comments
+
+### Done (2026-11-26)
+
+`ChipRow` draws its own word tabs with the 행사 tab's values (40 high, 16 at the sides, radius 12, a row 60 high; `eventText.filter` in `inkMuted`, and `filterChosen` in `snuBlue` on `blue100` when chosen). The chosen tab keeps `selected` and its name ("전체 12"), and its touch area is 48. `Chip` is unchanged in look; only its ✓ gets `testID="chip-check"` for the tests. No screen file changed. Pull request #561, with the "after" screens in `references/after/05-*.jpg`.
+
+Follow-up for ticket 07: `Filters` in `events-bar.tsx` now repeats this tab almost line for line and could use `ChipRow`.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 35 minutes in one session, including two debug builds of the app and the emulator screens (an estimate).
+- Tokens (the session and its two review subagents): input 9,837,870 in all (9,654,975 cache reads, 182,673 cache writes, 222 uncached); output 43,296.
