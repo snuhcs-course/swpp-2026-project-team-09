@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
@@ -141,6 +142,37 @@ describe('a busy Friend’s row while picking', () => {
     expect(pickLineOf(unchecked.userId).getByText(unchecked.reason ?? '')).toHaveStyle({ color: color.inkMuted });
     expect(pickLineOf(unchecked.userId).getByText(unchecked.name)).toHaveStyle({ color: color.inkSubtle });
     expect(pickLineOf(checked.userId).getByText(checked.name)).toHaveStyle({ color: color.ink });
+  });
+});
+
+// P04 ticket 68: the longest words at a row's right, a Class's building and the walk from it, and a long department, as
+// on board z3. Variant R3 keeps a row on one line and the name and the words at the right whole: the department gives
+// way.
+describe('the longest row while picking', () => {
+  it('keeps the name and the words at the right whole on one line, and cuts the department instead', async () => {
+    const lane = { userId: 'ajy', name: '안진영', busy: [], walkMinutes: 12, after: '43-1동 수업' };
+    const longBand: TimeBand = { ...band, others: [lane] };
+    const friends = [{ id: 'ajy', name: '안진영', department: '식품동물생명공학부', walkMinutes: null }];
+    const rows = pickRowsOf({ band: longBand, picked: [], walks: new Map(), friends });
+    await render(
+      <PersonRows
+        band={longBand}
+        fixed={{ from: null, until: null }}
+        hidden={false}
+        moving={null}
+        onHeight={jest.fn<void, [number]>()}
+        picking={{ rows, onPick: jest.fn<void, [string]>() }}
+        shown={{ startAt: longBand.startAt, endAt: longBand.endAt }}
+      />,
+    );
+
+    const words = pickLineOf('ajy').getByText('43-1동 수업 뒤 · 걸음 12분');
+    expect(words).toHaveProp('numberOfLines', 1);
+    expect(words).toHaveStyle({ flexShrink: 0 });
+    expect(pickLineOf('ajy').getByText('안진영')).toHaveStyle({ flexShrink: 0 });
+    const department = pickLineOf('ajy').getByText('식품동물생명공학부');
+    expect(department).toHaveProp('numberOfLines', 1);
+    expect(department).toHaveStyle({ flex: 1 });
   });
 });
 
