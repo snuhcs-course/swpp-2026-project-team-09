@@ -85,6 +85,13 @@ them rather than left for later:
 Still a person's: the review of the wording, and whether Users who already agreed should be asked again (today's
 consent keeps no version of the texts, so they are not).
 
+### The retention (2026-11-25)
+
+The policy no longer names 30 days. The figure is Sentry's for the Developer plan, but nobody has read it on this
+organisation's Subscription page, and a policy must not state a guess. It now reads "보관 기간은 Sentry가 SNU Now의
+요금제에 정해 둔 기간이고, 그 기간이 지나면 Sentry가 지워요." Once ticket 06 records the account's figure, the number
+can go back in.
+
 ### Agent usage (2026-11-24)
 
 - Agent time: about 45 minutes in one implementation session, an estimate; most of it waited on the slow integration
