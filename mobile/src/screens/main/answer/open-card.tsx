@@ -197,9 +197,7 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
     level,
   );
   // The hint waits until the stage and the content are laid out, so that it shows only over a card with more to show.
-  const hint = useSheetHint(
-    raising !== undefined && level === 'low' && measures.natural !== null && heights !== null && steps.length > 1,
-  );
+  const hint = useSheetHint(raising !== undefined && level === 'low' && measures.natural !== null && scrolls);
   const room = caps?.room ?? null;
   const motion = useCardMotion({
     raising: raising ?? LOWERED,

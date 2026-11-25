@@ -136,13 +136,20 @@ describe('the sheet’s steps', () => {
     expect(mounts.content).toBe(1);
   });
 
-  // P04 ticket 63: the top edge stands at one place for every answer, a short one too.
-  it('stands a content shorter than low at low all the same', async () => {
-    await render(card('low'));
+  // P04 ticket 63 and the user's phone check of a restaurant's menu: every step stands at its share for every answer,
+  // a short one too, the content at the top and room under it.
+  it('stands a content shorter than low at low, middle at 60% of the stage, and high all the same', async () => {
+    const view = await render(card('low'));
     await layContent(50);
     await settle();
-
     expect(shown()).toBe(LOW);
+
+    await view.rerender(card('mid'));
+    await settle();
+    expect(shown()).toBe(MID);
+    await view.rerender(card('high'));
+    await settle();
+    expect(shown()).toBe(heightOf('card-content'));
   });
 
   it('takes no room for a content that lays out nothing, as a meet whose Friend has a face on the map', async () => {
@@ -151,14 +158,6 @@ describe('the sheet’s steps', () => {
     await settle();
 
     expect(shown()).toBe(0);
-  });
-
-  it('stands middle at 60% of the stage', async () => {
-    await render(card('mid'));
-    await layContent(1000);
-    await settle();
-
-    expect(shown()).toBe(MID);
   });
 
   it('has no words under the grip', async () => {

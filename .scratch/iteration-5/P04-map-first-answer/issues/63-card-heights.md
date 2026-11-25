@@ -19,7 +19,7 @@ The user tried ticket 61's sheet on his phone:
 The boards `h1`, `hA`, `l1`, `lC`, `k1`, `k2`, and `k3` of the people-pick set are the look and the numbers.
 
 1. **One low height.** At low the sheet's top edge stands where the meal answer's does: the header, two lines of words, the main button's row, and the input. An answer without a main button gives that row's room to its words, so more lines show whole. The list of earlier questions stands at the same edge. No line of words shows cut in half at low: the room under the last whole line is covered in the sheet's colour, which fades as the card rises.
-2. **Three steps clearly apart.** Middle covers 60% of the screen (the status bar's top to the screen's bottom). High stays just under the time card.
+2. **Three steps clearly apart.** Middle covers 60% of the screen (the status bar's top to the screen's bottom). High stays just under the time card. Every content has all three steps, a short one included (boards k1 and k3).
 3. **A drag only changes the height or closes.** Whatever the sheet shows (an answer, the list of earlier questions, a restaurant's menu), the same steps work, and a drag down from low past the close point closes the answer. A screen reader's step down only lowers the card too.
    - The header is the same everywhere: the history chip, "＋ 새 대화", and ✕. The restaurant's menu gets the chip back.
    - The list of earlier questions keeps the card's step, scrolls with the card's content, and is left by the chip, by picking a row, or by back.
@@ -45,7 +45,7 @@ Emulator (1080 × 2400 px, 914 dp, font scale 1.0, gesture navigation), the card
 
 - Low: 1644 px, the card covering 31.5% of the screen, for the meal, seat, study-area, route, and refusal answers, the list of earlier questions (3 and 8 rows), and a restaurant's menu.
 - Middle: 961 px, 60.0% (`MID_SHARE = 0.6`). Low to middle: 28.5 points of percentage.
-- High: under the time card as in ticket 61. Every mock answer here is shorter than the high step and stops at its own height (the meal list at 71.0%, the 8-row list at 72.6%), so middle to high is at most 40% of the screen less the time card's room.
+- High: under the time card as in ticket 61. At first every step but low ran only as far as a short content (the meal list stopped at 71.0%, the 8-row list at 72.6%, a restaurant's menu at 43%), so on the user's phone a picked restaurant's menu could not go high. Middle and high now stand at their shares for every content, as boards k1 and k3 draw them: the content at the top, room under it.
 - Low is set by its contents, not by a share: the meal answer's footer (the navigation inset, the input 12 + 50, a gap of 8, the main row 50, 12 over them), the header, two lines of words, and the fade. A share would cut lines on a small screen or at a large font.
 
 Layers the sheet can carry, and what a drag does on each:
