@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-05  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { METRES_PER_DEGREE, metresPerDegreeEast, type Position } from '../common/geometry.js';
@@ -10,10 +11,13 @@ import { METRES_PER_DEGREE, metresPerDegreeEast, type Position } from '../common
 // The walking model of ADR 0010: OpenStreetMap's paths as a graph, each pin joined to it, and the walk's seconds. Only
 // the offline builder runs this; the server looks the results up.
 
-// Both fitted to the 13 calibration walks of P04's evidence/06, unrounded (P11 ticket 02). The climb value was fitted
-// below 0 and became 0.
+// The speed on the flat, fitted to the 13 calibration walks of P04's evidence/06, unrounded (P11 ticket 02).
 export const WALKING_METRES_PER_SECOND = 1.3966856966974264;
-export const CLIMB_SECONDS_PER_METRE = 0;
+// Tobler's hiking function sets the speed by the slope (P04 ticket 77, the user's choice): fastest going down 5%, and
+// slower the steeper it climbs or drops from there. It is scaled so that the flat keeps the fitted speed above, where
+// Tobler's own is 5.04 km/h (1.3994 m/s, about 1.4 seconds a kilometre faster).
+const TOBLER_STEEPNESS = 3.5;
+const TOBLER_FASTEST_SLOPE = -0.05;
 const JOIN_MARGIN_METRES = 20;
 
 const WALKED_HIGHWAYS = new Set([
@@ -240,6 +244,20 @@ function metresBetweenJoins(toNodes: Float64Array, starts: ReadonlyMap<Segment, 
   return best;
 }
 
+// A walk of `metres` along the path to a destination `rise` metres above its origin, below it when negative. The slope
+// is the two ends' heights over the path's length: SRTM's 30 m cells put bumps in every path, and summing them edge
+// by edge adds a climb both ways, a flat pair included. A path that rises and falls on the way counts flatter than it
+// is.
+export function walkSeconds(metres: number, rise: number): number {
+  if (metres === 0) {
+    return 0;
+  }
+  const slope = rise / metres;
+  const share = Math.exp(-TOBLER_STEEPNESS * (Math.abs(slope - TOBLER_FASTEST_SLOPE) + TOBLER_FASTEST_SLOPE));
+  return metres / (WALKING_METRES_PER_SECOND * share);
+}
+
+// Each pair's seconds from each of `from` to each of `to`, in that direction.
 export function walkingSeconds(graph: WalkingGraph, from: readonly Pin[], to: readonly Pin[]): number[][] {
   const ends = to.map((pin) => joinsOf(graph, pin));
   return from.map((origin) => {
@@ -251,8 +269,7 @@ export function walkingSeconds(graph: WalkingGraph, from: readonly Pin[], to: re
         return 0;
       }
       const metres = metresBetweenJoins(toNodes, starts, ends[index] ?? []);
-      const climb = Math.max(0, destination.elevation - origin.elevation);
-      return metres / WALKING_METRES_PER_SECOND + climb * CLIMB_SECONDS_PER_METRE;
+      return walkSeconds(metres, destination.elevation - origin.elevation);
     });
   });
 }

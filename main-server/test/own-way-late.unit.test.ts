@@ -2,13 +2,14 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import { type CardStep } from '../src/plans/own-way.js';
-import { readSeedTravel, type SeedTravel } from '../src/travel/travel.js';
+import { type SeedTravel } from '../src/travel/travel.js';
 import { step, wayOf } from './own-way-fixtures.js';
 import { at, id, jieunDay, minsuDay, NOW, placeOf, readWorld } from './worked-example.js';
+import { readFrozenTravel } from './frozen-travel.js';
 
 // A late Holder's own way in the design's worked example (sections 5 and 6.1), on the seed's walking table: they set
 // out the minutes later than their way on time has them set out. The Quest meets at 301동 at 12:18 and eats at the
@@ -18,7 +19,7 @@ let travel: SeedTravel;
 
 beforeAll(async () => {
   await readWorld();
-  travel = await readSeedTravel(SEED_DIRECTORY);
+  travel = await readFrozenTravel();
 });
 
 const lunchSteps = (): CardStep[] => [
