@@ -1,7 +1,7 @@
 # 08: 백그라운드에서도 공유 shows off while 위치 공유 is off, and comes back with it
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.
@@ -34,11 +34,28 @@ Positions are as of `origin/5.0/Main` b2e5323b.
 - The catalogue's stand-alone 백그라운드에서도 공유 row (`catalogue/screens.tsx:191-196`) is not the card's row; it stays.
 - Tests: `me.integration.test.tsx` (:192-200, the row is enabled under 위치 공유 on), `background-sharing.integration.test.ts`, and the tests `git grep` finds for `BackgroundRow`, `백그라운드에서도 공유` and `backgroundChosen`.
 
+## Decided while building (2026-11-25)
+
+- The row's value is `masterOn && on` in `background-row.tsx`. `useBackgroundSharing().on` keeps meaning the choice and the permission, so the background task and the provider's start and stop are untouched.
+- The new tests are in their own file, `__tests__/me-background-row.integration.test.tsx`: `me.integration.test.tsx` is near the 300-line lint limit. Its test that the row is enabled under 위치 공유 on stays as it is.
+- On Android the switch is found by its label, and its state is read from the native switch's `on`, which is what TalkBack reads; its `disabled` is in `accessibilityState`.
+- Only the turn-off test fails before the change. The tests that the row comes back with 위치 공유, and stays on during the first turn-off's question and after "건물까지만", passed before too and guard the parts that must not break.
+
 ## Acceptance criteria
 
-- [ ] With 백그라운드에서도 공유 chosen and the permission granted, turning 위치 공유 off shows the row off and disabled. (Integration test, which fails before the change.)
-- [ ] Turning 위치 공유 on again shows the row on, without the User touching it; a row that was off before stays off. (Integration test.)
-- [ ] The choice kept on the phone is unchanged by turning 위치 공유 off. (Integration test.)
-- [ ] No native file changes; lint, format, and types pass on the app.
+- [x] With 백그라운드에서도 공유 chosen and the permission granted, turning 위치 공유 off shows the row off and disabled. (Integration test, which fails before the change.)
+- [x] Turning 위치 공유 on again shows the row on, without the User touching it; a row that was off before stays off. (Integration test.)
+- [x] The choice kept on the phone is unchanged by turning 위치 공유 off. (Integration test.)
+- [x] No native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+### Agent usage (2026-11-25)
+
+Estimates: agent time is the gaps under 5 minutes between transcript entries, summed, so waiting for a person or for CI is left out. No subagents. Counted up to the writing of this entry, so the commit, the merge check and the pull request are left out.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Ticket 08 (test first, the row's value, sweep, checks) | about 10 minutes | 6,969,070 | 6,860,411 | 108,555 | 104 | 24,103 |
+
+Without cache reads, the input is 108,659.
