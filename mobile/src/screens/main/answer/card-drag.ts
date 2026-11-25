@@ -22,7 +22,7 @@ import {
   withSpring,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { FLING_SPEED, landingOf, type Level, type LevelHeights } from './card-levels';
+import { FLING_SPEED, heightOf, landingOf, type Level, type LevelHeights } from './card-levels';
 import { SETTLE } from './card-run';
 
 // The answer sheet's drag on the UI thread (moved out of `card-motion.ts` for its length, P04 ticket 61). On the header
@@ -81,7 +81,10 @@ export interface PanParts {
   reduce: boolean;
   onPast: (past: boolean) => void;
   onClose: () => void;
-  onLetGo: (to: Level, velocity: number) => void;
+  // A let-go landing on a step; `started` when its run up already began here, on the UI thread.
+  onLetGo: (to: Level, velocity: number, started: boolean) => void;
+  // That run's end.
+  onLanded: (to: Level) => void;
   // A let-go with no steps to run to (the stage not laid out): only the past hint goes.
   onStay: () => void;
 }
@@ -193,6 +196,26 @@ function follow(parts: PanParts, state: PanState, translationY: number): void {
   listY.value = Math.min(shared.list, rangeAt(whole, from - cardY));
 }
 
+// A let-go that raises the card runs it to its step from this very frame, with the finger's speed, so that a toss
+// neither stops for the frames a run started on the JS thread would wait nor kicks again when it starts (the user's
+// phone check). A let-go that lowers it is run from the JS thread, which may first take a layer over the card away.
+function runUp(parts: PanParts, to: Level, velocityY: number): boolean {
+  'worklet';
+  const { heights, room, offset, level, reduce, onLanded } = parts;
+  if (reduce || heights === null || heightOf(to, heights) <= heightOf(level, heights)) {
+    return false;
+  }
+  const target = room - heightOf(to, heights);
+  const toward = (target - offset.value) * velocityY > 0 ? velocityY : 0;
+  offset.value = withSpring(target, { ...SETTLE, velocity: toward }, (finished) => {
+    'worklet';
+    if (finished === true) {
+      scheduleOnRN(onLanded, to);
+    }
+  });
+  return true;
+}
+
 function release(parts: PanParts, state: PanState, velocityY: number, closable: boolean): void {
   'worklet';
   const { drop, reduce, onClose, onStay, onLetGo } = parts;
@@ -202,11 +225,13 @@ function release(parts: PanParts, state: PanState, velocityY: number, closable: 
     scheduleOnRN(onClose);
     return;
   }
-  drop.value = reduce ? 0 : withSpring(0, { ...SETTLE, velocity: -velocityY });
+  // Only a card dragged below low has a drop to take back, and it goes back up from where it is: started with a speed
+  // away from 0, as a toss up gave it, it dipped tens of points while the card rose.
+  drop.value = reduce || drop.value <= 0 ? 0 : withSpring(0, { ...SETTLE, velocity: Math.min(0, velocityY) });
   if (land.kind === 'stay') {
     scheduleOnRN(onStay);
   } else {
-    scheduleOnRN(onLetGo, land.to, velocityY);
+    scheduleOnRN(onLetGo, land.to, velocityY, runUp(parts, land.to, velocityY));
   }
 }
 

@@ -92,19 +92,19 @@ function useCloseSide(
 // taken away and the card stays (back's order).
 function useLetGo(
   raising: Raising,
-  back: (to: Level, velocity?: number) => void,
+  back: (to: Level, velocity?: number, started?: boolean) => void,
   heights: LevelHeights | null,
-): (to: Level, velocity: number) => void {
+): (to: Level, velocity: number, started: boolean) => void {
   const { level, setLevel, layer = null } = raising;
   return useCallback(
-    (to: Level, velocity: number) => {
+    (to: Level, velocity: number, started: boolean) => {
       const lower = heights !== null && heightOf(to, heights) < heightOf(level, heights);
       if (lower && layer !== null) {
         layer();
         back(level, velocity);
         return;
       }
-      back(to, velocity);
+      back(to, velocity, started);
       if (to !== level) {
         setLevel(to);
       }
@@ -146,7 +146,7 @@ export function useCardMotion(input: MotionInput): CardMotion {
   const { level } = raising;
   // Until the phone has said whether it asks for less motion, nothing runs.
   const reduce = useReduceMotionSetting() !== false;
-  const { offset, rest, back } = useRun(input, level, reduce);
+  const { offset, rest, back, landed } = useRun(input, level, reduce);
   const drop = useSharedValue(0);
   const { past, tellPast, closeNow } = useCloseSide(raising, drop);
   const letGo = useLetGo(raising, back, heights);
@@ -168,10 +168,11 @@ export function useCardMotion(input: MotionInput): CardMotion {
     reduce,
     onPast: tellPast,
     onClose: closeNow,
-    onLetGo: (to: Level, velocity: number): void => {
+    onLetGo: (to: Level, velocity: number, started: boolean): void => {
       tellPast(false);
-      letGo(to, velocity);
+      letGo(to, velocity, started);
     },
+    onLanded: landed,
     onStay: (): void => {
       tellPast(false);
     },

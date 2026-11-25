@@ -121,6 +121,56 @@ function usePlace({ target, room, level, reduce, offset, aimed, ranLevel, runnin
   return runs;
 }
 
+interface LetGoRun {
+  heights: LevelHeights | null;
+  room: number | null;
+  offset: SharedValue<number>;
+  reduce: boolean;
+  aimed: { current: number | null };
+  running: { current: boolean };
+  setRest: (rest: number) => void;
+  settle: (level: Level) => void;
+}
+
+// The run of a let-go (`back`): to its step with the finger's speed, or none when that speed points away from the step,
+// so that no frame goes back. A toss up begins its run on the UI thread (`card-drag`): `back` only keeps its step, and
+// `landed` ends it.
+function useLetGoRun(p: LetGoRun): {
+  back: (to: Level, velocity?: number, started?: boolean) => void;
+  landed: (to: Level) => void;
+} {
+  const { heights, room, offset, reduce, aimed, running, setRest, settle } = p;
+  const back = useCallback(
+    (to: Level, velocity = 0, started = false) => {
+      if (heights === null || room === null) {
+        return;
+      }
+      running.current = !reduce;
+      const at = room - heightOf(to, heights);
+      if (started) {
+        aimed.current = at;
+        return;
+      }
+      const toward = (at - offset.value) * velocity > 0 ? velocity : 0;
+      runTo(offset, at, { reduce, aimed, velocity: toward }, () => {
+        setRest(at);
+        settle(to);
+      });
+    },
+    [heights, room, offset, reduce, aimed, running, setRest, settle],
+  );
+  const landed = useCallback(
+    (to: Level) => {
+      if (heights !== null && room !== null && aimed.current === room - heightOf(to, heights)) {
+        setRest(aimed.current);
+        settle(to);
+      }
+    },
+    [heights, room, aimed, setRest, settle],
+  );
+  return { back, landed };
+}
+
 // The offset running to its step. A step the User asked for runs: a let-go by `back`, a screen reader's or back's step
 // here. Anything else, the card's first place, a change of the step's height alone (the stage, the header, the
 // keyboard, the content laid out), and every step with reduced motion, is set in the render itself, before the moved
@@ -131,7 +181,12 @@ export function useRun(
   input: RunInput,
   level: Level,
   reduce: boolean,
-): { offset: SharedValue<number>; rest: number; back: (to: Level, velocity?: number) => void } {
+): {
+  offset: SharedValue<number>;
+  rest: number;
+  back: (to: Level, velocity?: number, started?: boolean) => void;
+  landed: (to: Level) => void;
+} {
   const { heights, room, extra, onHeight } = input;
   const target = heights === null || room === null ? null : room - heightOf(level, heights);
   // Laid out with no steps yet, the card waits wholly under its place.
@@ -147,19 +202,7 @@ export function useRun(
   const tell = useTellOnce(onHeight);
   const settle = useSettle(level, { low, extra, tell }, running);
   const runs = usePlace({ target, room, level, reduce, offset, aimed, ranLevel, running, rest, setRest });
-  const back = useCallback(
-    (to: Level, velocity = 0) => {
-      if (heights !== null && room !== null) {
-        running.current = !reduce;
-        const at = room - heightOf(to, heights);
-        runTo(offset, at, { reduce, aimed, velocity }, () => {
-          setRest(at);
-          settle(to);
-        });
-      }
-    },
-    [heights, room, offset, reduce, settle],
-  );
+  const { back, landed } = useLetGoRun({ heights, room, offset, reduce, aimed, running, setRest, settle });
   useEffect(() => {
     if (runs && target !== null) {
       running.current = true;
@@ -173,5 +216,5 @@ export function useRun(
       tell(extra + low);
     }
   }, [runs, target, offset, settle, level, low, extra, tell]);
-  return { offset, rest, back };
+  return { offset, rest, back, landed };
 }
