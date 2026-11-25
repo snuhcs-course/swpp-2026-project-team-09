@@ -4,6 +4,7 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -58,7 +59,10 @@ beforeEach(() => {
   jest.mocked(captureRef).mockReset();
 });
 
+// The store tells of pictures once a frame: its timer runs out before the clock is real again, so that the next test
+// hears of its own.
 afterEach(() => {
+  jest.runOnlyPendingTimers();
   jest.useRealTimers();
 });
 
@@ -111,7 +115,8 @@ describe('marker images in a build with a native map', () => {
     await pass(100);
     expect(screen.getByText('그림: 없음')).toBeVisible();
 
-    await pass(500);
+    // The retry's pause, and the frame in which the store tells of the picture made.
+    await pass(500 + 16);
     expect(screen.getByText('그림: file:///tmp/quest.png')).toBeVisible();
     expect(captureRef).toHaveBeenCalledTimes(2);
   });

@@ -95,7 +95,10 @@ beforeEach(() => {
   jest.mocked(captureRef).mockReset().mockResolvedValue('file:///tmp/answer.png');
 });
 
+// The store tells of pictures once a frame: its timer runs out before the clock is real again, so that the next test
+// hears of its own.
 afterEach(() => {
+  jest.runOnlyPendingTimers();
   jest.useRealTimers();
 });
 
@@ -132,5 +135,31 @@ describe('the numbered dots made ahead on the everyday map', () => {
     expect(lookName(asked)).toBe(
       lookName({ kind: 'answer', symbol: { type: 'dot', role: 'candidate', number: 3 }, label: null }),
     );
+  });
+});
+
+// Partitions: two pictures made 5 ms apart, within one frame. Expected values: none shown after the first is made,
+// both once the frame ends.
+describe('pictures made within one frame', () => {
+  it('reach the screen as one change, so that an answer draws again once for them', async () => {
+    jest
+      .mocked(captureRef)
+      .mockReset()
+      .mockResolvedValueOnce('file:///tmp/first.png')
+      .mockImplementationOnce(
+        async () =>
+          new Promise((resolve) => {
+            setTimeout(resolve, 5, 'file:///tmp/second.png');
+          }),
+      );
+    await render(<Asks looks={[tag(11, 52), tag(12, 55)]} />);
+    const layout = { nativeEvent: { layout: { x: 0, y: 0, width: 40, height: 40 } } };
+    await Promise.all(stageViews().map(async (view) => fireEvent(view, 'layout', layout)));
+
+    await pass(20);
+    expect(screen.queryAllByText(/있음$/u)).toHaveLength(0);
+    await pass(20);
+
+    expect(screen.getAllByText(/있음$/u)).toHaveLength(2);
   });
 });

@@ -40,6 +40,18 @@ function tell(): void {
   }
 }
 
+// One frame: pictures made within it reach the screens as one change, so that a screen with many marks, an answer's,
+// draws again once for them and not once for each (P04 ticket 81).
+const FRAME_MS = 16;
+let telling: ReturnType<typeof setTimeout> | null = null;
+
+function tellOnce(): void {
+  telling ??= setTimeout(() => {
+    telling = null;
+    tell();
+  }, FRAME_MS);
+}
+
 function subscribe(listener: () => void): () => void {
   listeners.add(listener);
   return (): void => {
@@ -94,7 +106,7 @@ function made(look: MarkerLook, uri: string, { width, height }: Size, complete: 
   if (complete) {
     leave(look);
   }
-  tell();
+  tellOnce();
 }
 
 function gaveUp(look: MarkerLook): void {

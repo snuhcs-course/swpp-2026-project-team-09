@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -52,7 +53,10 @@ beforeEach(() => {
   jest.mocked(captureRef).mockReset().mockResolvedValue('file:///tmp/answer.png');
 });
 
+// The store tells of pictures once a frame: its timer runs out before the clock is real again, so that the next test
+// hears of its own.
 afterEach(() => {
+  jest.runOnlyPendingTimers();
   jest.useRealTimers();
 });
 
