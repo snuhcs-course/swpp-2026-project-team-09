@@ -2,15 +2,19 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { useState } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { space, text } from '@/design-system';
 import { AI_INPUT, listsTop } from '../layout';
 import type { LevelHeights } from './card-levels';
+import { BAR_ADD_HEIGHT } from './condition-chips';
 import { contentMaxOf, type FrameCardProps, LEAST_CONTENT } from './frame-card-parts';
 import { useSteady } from './steady';
+import { TUCK_STRIP } from './time-card-grip';
 
 // The answer sheet's steps as heights (moved out of `open-card.tsx` for its length, P04 ticket 61). Low has one top
 // edge for every answer and for the list of questions: the meal answer's, its header, two lines of words, the main
@@ -30,6 +34,10 @@ const FOOTER = AI_INPUT.bottom + AI_INPUT.height + space[2] + MAIN_ROW + space[3
 // Middle's share of the screen, from the status bar's top to the screen's bottom: the card covers this much of it, far
 // enough from low's and high's that each step shows clearly more (the user's phone check of ticket 61).
 export const MID_SHARE = 0.6;
+// The folded time card is never lower than its head's row and its grip's strip. A height told under that was laid out
+// while the card changed, its rows' room shut and React still holding it open, and high would rise over the card to
+// the stage's top (the user's phone with PR 552, 2026-11-26).
+const FOLDED_LEAST = BAR_ADD_HEIGHT + TUCK_STRIP;
 
 export interface Caps extends LevelHeights {
   // The scrolling part's laid-out height: the highest step's.
@@ -48,13 +56,24 @@ function lowOf(mid: number, padTop: number, { line, footer }: { line: number; fo
   return [low, Math.max(0, low - padTop - lines * line)];
 }
 
+// The time card's height that high stands under: 0 while there is no card, and the last one fit to measure by while it
+// tells one under its folded least.
+function useFoldedBar(told: number): number {
+  const [last, setLast] = useState(0);
+  const fits = told >= FOLDED_LEAST;
+  if (fits && told !== last) {
+    setLast(told);
+  }
+  return told === 0 || fits ? told : last;
+}
+
 // The most the scrolling part shows at each step, under the card's header (`above`); null until the stage is laid out.
 export function useCaps(props: FrameCardProps, above: number, padTop: number): Caps | null {
   const { stageHeight, barRoom, raising, fit = false } = props;
   const { top, bottom } = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
   // The time card's height comes from its layout: a fraction of a point moves no step (`steady.ts`).
-  const timeBarHeight = useSteady(props.timeBarHeight ?? 0);
+  const timeBarHeight = useSteady(useFoldedBar(props.timeBarHeight ?? 0));
   if (stageHeight === null) {
     return null;
   }
