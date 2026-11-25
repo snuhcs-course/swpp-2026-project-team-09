@@ -1,7 +1,7 @@
 # 01: The glass layer in the design system
 
 Parent: [A04 spec](../spec.md)
-Status: ready-for-agent
+Status: in-progress
 Blocked by: None (can start immediately).
 
 Native files: none. Releases: an app OTA update only.
@@ -44,9 +44,21 @@ The canvas boards that show the levels: Mf5Kit and Mf5Row-meal (<https://claude.
 
 ## Acceptance criteria
 
-- [ ] The component draws each of the five levels, and the catalogue shows it under its name. (`catalogue.integration`, which fails before the change.)
-- [ ] `mobile/README.md` § Design system has the Glass layer part.
-- [ ] A screenshot of the catalogue's glass entry on the emulator goes in the pull request.
+- [x] The component draws each of the five levels, and the catalogue shows it under its name. (`catalogue.integration`, which fails before the change.)
+- [x] `mobile/README.md` § Design system has the Glass layer part.
+- [x] A screenshot of the catalogue's glass entry on the emulator goes in the pull request.
 - [ ] No native file changes; lint, format and types pass on the app.
 
 ## Comments
+
+### Agent usage (2026-11-26)
+
+Estimates: agent time is the gaps under 5 minutes between transcript entries, summed, so waiting for a person, for the heavy-job lock another ticket's session held, or for CI is left out. The two subagents are the code review's Standards and Spec reviewers. Counted up to the writing of this entry, so the review watch after the pull request is left out.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Ticket 01 (`Glass`, its tokens, the catalogue, the README, the code review, the emulator screenshot, the pull request), with its two subagents | about 15 minutes | 10,235,906 | 9,974,235 | 261,497 | 174 | 39,201 |
+
+Without cache reads, the input is 261,671.
+
+The last criterion's types are left to CI: oxlint and prettier passed on the changed files, and tsc was not run on this Mac.
