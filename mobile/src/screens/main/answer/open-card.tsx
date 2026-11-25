@@ -27,6 +27,7 @@ import { CloseHint } from './raise-handle';
 import { SheetHint, useSheetHint } from './sheet-hint';
 import { useFollowPull } from './sheet-link';
 import { LowBand } from './low-band';
+import { useSteadyState } from './steady';
 
 // The frame's sheet, attached to the bottom of the screen (P04 tickets 52, 57, and 61): one surface whose content is
 // laid out once. Its header stays at the top while the content scrolls under it; the footer, the input and the main
@@ -121,8 +122,10 @@ function useMeasures(props: FrameCardProps): {
 } {
   const topped = props.raising !== undefined || props.onClose !== undefined;
   const padTop = topped ? space[3] : CONTENT_TOP;
-  const [above, setAbove] = useState(0);
-  const [natural, setNatural] = useState<number | null>(null);
+  // Measured from layouts, they move the sheet only by half a point or more (`steady.ts`).
+  const [header, setAbove] = useSteadyState(0);
+  const above = header ?? 0;
+  const [natural, setNatural] = useSteadyState(null);
   const caps = useCaps(props, above, padTop);
   const heights = caps === null ? null : heightsOf(caps, natural, { padTop, under: underOf(props) });
   // Before the stage is laid out every step is offered; laid out, those of different heights.

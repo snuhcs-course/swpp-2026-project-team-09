@@ -174,6 +174,7 @@ export function CardTop(p: {
         p.onHeight(nativeEvent.layout.height);
       }}
       style={styles.top}
+      testID={`${p.props.testID}-top`}
     >
       <CardHeader chip={chip} onAskNew={onAskNew} onClose={onClose} raising={raising} steps={p.steps} />
       {p.ruled ? <View style={styles.rule} testID={`${p.props.testID}-rule`} /> : null}

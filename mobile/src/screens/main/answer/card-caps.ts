@@ -10,6 +10,7 @@ import { space, text } from '@/design-system';
 import { AI_INPUT, listsTop } from '../layout';
 import type { LevelHeights } from './card-levels';
 import { contentMaxOf, type FrameCardProps, LEAST_CONTENT } from './frame-card-parts';
+import { useSteady } from './steady';
 
 // The answer sheet's steps as heights (moved out of `open-card.tsx` for its length, P04 ticket 61). Low has one top
 // edge for every answer and for the list of questions: the meal answer's, its header, two lines of words, the main
@@ -49,9 +50,11 @@ function lowOf(mid: number, padTop: number, { line, footer }: { line: number; fo
 
 // The most the scrolling part shows at each step, under the card's header (`above`); null until the stage is laid out.
 export function useCaps(props: FrameCardProps, above: number, padTop: number): Caps | null {
-  const { stageHeight, barRoom, raising, timeBarHeight = 0, fit = false } = props;
+  const { stageHeight, barRoom, raising, fit = false } = props;
   const { top, bottom } = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
+  // The time card's height comes from its layout: a fraction of a point moves no step (`steady.ts`).
+  const timeBarHeight = useSteady(props.timeBarHeight ?? 0);
   if (stageHeight === null) {
     return null;
   }
