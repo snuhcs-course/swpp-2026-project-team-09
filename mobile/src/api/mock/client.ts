@@ -18,6 +18,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-25  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -27,6 +28,7 @@ import { CAMPUS_BOUNDS, isInside } from '@/map/campus';
 import { keep, readKept } from '@/storage/kept';
 import { answer } from './answer';
 import { mockAssistantReply, mockRecalculation, mockTap } from './assistant';
+import { replyWithOtherFriends, withOtherFriends } from './other-friends';
 import { FRIEND_STATUSES, MY_FRIEND_ID } from './data/friends';
 import { LATE_WAY } from './data/late-way';
 import { MENUS } from './data/menus';
@@ -241,8 +243,9 @@ export const mockClient: ApiClient = {
   getShuttle: () => answer('getShuttle', () => SHUTTLE),
   listShuttleVehicles: () => answer('listShuttleVehicles', () => SHUTTLE_VEHICLES, []),
   listStudySpaces: () => answer('listStudySpaces', () => STUDY_BUILDINGS, []),
-  askAssistant: (messages, context) => answer('askAssistant', () => mockAssistantReply(messages, context)),
-  recalculateAnswer: (input) => answer('recalculateAnswer', () => mockRecalculation(input)),
+  askAssistant: (messages, context) =>
+    answer('askAssistant', () => replyWithOtherFriends(mockAssistantReply(messages, context))),
+  recalculateAnswer: (input) => answer('recalculateAnswer', () => withOtherFriends(mockRecalculation(input))),
   answerTap: (tapped) => answer('answerTap', () => mockTap(tapped)),
   makePlanQuest: (making) => answer('makePlanQuest', () => mockPlanQuest(making)),
   getBetterPlan: () => answer('getBetterPlan', mockBetterPlan),
