@@ -143,7 +143,7 @@ describe("a new party's Friends (board Recruit 4)", () => {
     await user.press(timeBar().getByRole('button', { name: '초대할 친구 추가' }));
 
     expect(checkedRows()).toEqual([expect.stringMatching(/^서준 · /u)]);
-    expect(pickDone()).toHaveTextContent('완료 · 1명');
+    expect(pickDone()).toHaveTextContent(/^완료$/u);
   });
 
   it('draws the Friend who could come with the line of his day, and adding him recalculates', async () => {

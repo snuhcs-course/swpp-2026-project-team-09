@@ -131,7 +131,7 @@ describe("a Friend's face pressed on the map", () => {
 
     expect(pickRow(MIN_JUN.name)).not.toBeChecked();
     expect(lookOf(MIN_JUN.name)).toMatch(ADDABLE);
-    expect(pickDone()).toHaveTextContent('완료 · 1명');
+    expect(pickDone()).toHaveTextContent(/^완료$/u);
   });
 
   it("is lit and put back by a press on that Friend's row", async () => {

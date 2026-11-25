@@ -33,7 +33,7 @@ export function pickRow(name: string): Found {
   return within(screen.getByTestId('time-card-rows')).getByRole('checkbox', { name: new RegExp(`^${name} · `, 'u') });
 }
 
-// The head's button that ends picking: "완료", "완료 · 2명", or "닫기".
+// The head's button that ends picking: "완료", or "닫기".
 export function pickDone(): Found {
   return screen.getByTestId('time-card-pick-done');
 }

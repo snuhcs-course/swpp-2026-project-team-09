@@ -143,7 +143,7 @@ export function usePickingBar(
     head: (
       <PickHead
         disabled={busy}
-        done={doneWordsOf(picked, friends.length)}
+        done={doneWordsOf(friends.length)}
         onCancel={leave}
         onDone={friends.length === 0 ? leave : finishOf(shown, onClose)}
       />

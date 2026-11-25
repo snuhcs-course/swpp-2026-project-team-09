@@ -150,10 +150,9 @@ describe('the rows while picking', () => {
     expect(busyAtSpanOf([{ ...busy('12:00', '12:30'), label: '302동 수업' }], BUSY_BAND)?.kind).toBe('class');
   });
 
-  it('reads 완료 with how many Friends are checked, and 닫기 with no Friend to pick', () => {
-    expect(doneWordsOf([], 4)).toBe('완료');
-    expect(doneWordsOf(['minsu', 'taehyun', 'seoyeon'], 4)).toBe('완료 · 3명');
-    expect(doneWordsOf([], 0)).toBe('닫기');
+  it('reads 완료 with no count, and 닫기 with no Friend to pick', () => {
+    expect(doneWordsOf(4)).toBe('완료');
+    expect(doneWordsOf(0)).toBe('닫기');
   });
 
   it("guesses a Friend's walk from the straight line, rounded up, when the main server sent none", () => {

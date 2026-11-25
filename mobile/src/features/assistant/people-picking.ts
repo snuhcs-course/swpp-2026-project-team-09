@@ -187,12 +187,10 @@ export function pickStateOf({ reason, walkMinutes }: Pick<PickRow, 'reason' | 'w
     : { words: `걸음 ${String(walkMinutes)}분`, quiet: false };
 }
 
-// The button that ends picking: "완료", with how many Friends are checked now; "닫기" with no Friend to pick.
-export function doneWordsOf(picked: readonly string[], friends: number): string {
-  if (friends === 0) {
-    return '닫기';
-  }
-  return picked.length === 0 ? '완료' : `완료 · ${String(picked.length)}명`;
+// The button that ends picking: "완료", or "닫기" with no Friend to pick. It names no count (the user's phone,
+// 2026-11-25).
+export function doneWordsOf(friends: number): string {
+  return friends === 0 ? '닫기' : '완료';
 }
 
 // About 80 metres a minute on foot, for a Friend the main server sent no walk for: the straight line to the Plan's

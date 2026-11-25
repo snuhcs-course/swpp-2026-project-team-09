@@ -78,7 +78,7 @@ describe('the time card while people are picked', () => {
     expect(screen.getByTestId('time-card-grip')).toBeExpanded();
     expect(timeBar().queryByRole('button', { name: ADD })).toBeNull();
     expect(pickCancel()).toHaveTextContent('취소');
-    expect(pickDone()).toHaveTextContent('완료 · 1명');
+    expect(pickDone()).toHaveTextContent(/^완료$/u);
     expect(mapThings()).toContain(PICK);
     expect(card().queryByRole('button', { name: '그대로' })).toBeNull();
     expect(screen.getByLabelText(AI_INPUT)).toBeVisible();

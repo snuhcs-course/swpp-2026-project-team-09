@@ -165,7 +165,7 @@ describe('Friends picked in a meet', () => {
     await user.press(timeBar().getByRole('button', { name: ADD }));
 
     expect(checkedRows()).toEqual([MIN_SU_ROW]);
-    expect(pickDone()).toHaveTextContent('완료 · 1명');
+    expect(pickDone()).toHaveTextContent(/^완료$/u);
     expect(timeBar().queryByRole('button', { name: '같이 먹을 친구 추가' })).toBeNull();
   });
 

@@ -14,6 +14,7 @@ import type { GripPlace } from '@/screens/main/answer/time-card-grip';
 interface Props {
   picking: boolean;
   place: GripPlace;
+  high?: boolean;
 }
 
 async function heldFrom(place: GripPlace): Promise<{
@@ -22,8 +23,8 @@ async function heldFrom(place: GripPlace): Promise<{
 }> {
   const settled = jest.fn<void, [GripPlace]>();
   const { rerender } = await renderHook(
-    ({ picking, place: at }: Props) => {
-      usePickingPlace(picking, { place: at, settleTo: settled });
+    ({ picking, place: at, high = false }: Props) => {
+      usePickingPlace(picking, { place: at, settleTo: settled }, high);
     },
     { initialProps: { picking: false, place } },
   );
@@ -57,7 +58,7 @@ describe('the time card after picking', () => {
     const settled = jest.fn<void, [GripPlace]>();
     const { rerender } = await renderHook(
       ({ picking, place }: Props) => {
-        usePickingPlace(picking, { place, settleTo: settled });
+        usePickingPlace(picking, { place, settleTo: settled }, false);
       },
       { initialProps: { picking: true, place: 'shown' as GripPlace } },
     );
@@ -73,5 +74,22 @@ describe('the time card after picking', () => {
     await held.rerender({ picking: false, place: 'open' });
 
     expect(held.settled).not.toHaveBeenCalled();
+  });
+});
+
+// Partitions: picking with the sheet rising to high and coming back, twice; the same after picking ends.
+describe('the picking rows and the answer’s sheet', () => {
+  // The user's phone (2026-11-25): back at middle from high, the rows sometimes stayed folded.
+  it('opens the rows each time the sheet comes back from high while picking, and leaves them alone otherwise', async () => {
+    const held = await heldFrom('shown');
+    await held.rerender({ picking: true, place: 'shown' });
+    await held.rerender({ picking: true, place: 'open', high: true });
+    await held.rerender({ picking: true, place: 'shown', high: false });
+    await held.rerender({ picking: true, place: 'open', high: true });
+    await held.rerender({ picking: true, place: 'shown', high: false });
+    await held.rerender({ picking: false, place: 'open', high: true });
+    await held.rerender({ picking: false, place: 'shown', high: false });
+
+    expect(held.settled.mock.calls).toEqual([['open'], ['open'], ['open'], ['shown']]);
   });
 });

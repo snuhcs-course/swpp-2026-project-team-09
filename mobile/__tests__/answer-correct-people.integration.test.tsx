@@ -137,7 +137,7 @@ describe('picking Friends in the time card', () => {
     expect(within(screen.getByTestId('time-card-rows')).queryAllByTestId('time-card-busy')).toHaveLength(0);
     expect(pickRows()).toEqual([MIN_SU_ROW, MIN_JUN_ROW, JI_WOO_ROW]);
     expect(checkedRows()).toEqual([MIN_SU_ROW]);
-    expect(pickDone()).toHaveTextContent('완료 · 1명');
+    expect(pickDone()).toHaveTextContent(/^완료$/u);
     expect(recalculations(server)).toEqual([]);
   });
 
@@ -173,7 +173,7 @@ describe('완료 with Friends checked', () => {
     await user.press(pickRow(JI_WOO.name));
     await user.press(pickRow(MIN_JUN.name));
     expect(recalculations(server)).toEqual([]);
-    expect(pickDone()).toHaveTextContent('완료 · 3명');
+    expect(pickDone()).toHaveTextContent(/^완료$/u);
     await user.press(pickDone());
     await pass(500);
 

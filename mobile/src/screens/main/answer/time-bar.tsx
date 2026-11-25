@@ -143,8 +143,9 @@ function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: Ba
   const barY = barTop(top) + offset;
   const { lanes, startAt, now } = band.band;
   const friends = lanes.length > 1 || picking !== null;
-  const grip = useTimeCardGrip({ height, top: barY, opens: friends, rows, sheet: use(SheetLinkContext) });
-  usePickingPlace(picking !== null, grip);
+  const sheet = use(SheetLinkContext);
+  const grip = useTimeCardGrip({ height, top: barY, opens: friends, rows, sheet });
+  usePickingPlace(picking !== null, grip, sheet.high);
   const folded = !friends || grip.place !== 'open';
   const label = friends ? `사람별 시간 ${folded ? '펼치기' : '접기'}` : null;
   return (
