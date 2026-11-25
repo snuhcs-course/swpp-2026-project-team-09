@@ -7,6 +7,7 @@
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-21  Opus 5.5   prompted by fyoon46
 # 2026-11-24  Fable 5.2  prompted by AhnJinYoung
+# 2026-11-24  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Deploys a Release to Production: a pushed tag snunow/<target>/YY.MM.DD-N deploys its target at the tag's commit once
@@ -139,6 +140,8 @@ jobs:
       EXPO_PUBLIC_SOCKET_SERVER_URL: ${{ vars.PRODUCTION_APP_SOCKET_SERVER_URL }}
       EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ vars.PRODUCTION_APP_GOOGLE_WEB_CLIENT_ID }}
       EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: ${{ vars.PRODUCTION_APP_GOOGLE_IOS_CLIENT_ID }}
+      # Where crash reports go; baked into the bundle, never into the fingerprint. Empty, the app reports nothing.
+      EXPO_PUBLIC_SENTRY_DSN: ${{ vars.PRODUCTION_APP_SENTRY_DSN }}
       GOOGLE_IOS_URL_SCHEME: ${{ vars.PRODUCTION_APP_GOOGLE_IOS_URL_SCHEME }}
       INVITE_LINK_HOST: ${{ vars.PRODUCTION_APP_INVITE_LINK_HOST }}
       APP_VERSION_URL: https://github.com/${{ github.repository }}/releases/download/app-version/app-version.json
@@ -211,7 +214,8 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      # The Kakao key changes no fingerprint, but without it Kakao sign-in fails in the APK.
+      # The Kakao key changes no fingerprint, but without it Kakao sign-in fails in the APK. Sentry's Gradle step
+      # uploads the APK's bundle and source map, and fails the build without a token, so without one it is turned off.
       - name: Build the APK
         if: steps.decision.outputs.verdict == 'publish-needs-build'
         working-directory: mobile
@@ -219,13 +223,17 @@ jobs:
           KAKAO_NATIVE_APP_KEY: ${{ secrets.KAKAO_NATIVE_APP_KEY }}
           EXPO_PUBLIC_RELEASE_TAG: ${{ github.ref_name }}
           EXPO_PUBLIC_RELEASE_COMMIT: ${{ env.COMMIT }}
-          # Sentry's Gradle step uploads the source map and fails the build without a token. Until P08 ticket 04 gives
-          # it one, the upload is off; the build has no DSN yet either, so it reports nothing.
-          SENTRY_DISABLE_AUTO_UPLOAD: 'true'
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
         run: |
           if [[ -z "$KAKAO_NATIVE_APP_KEY" ]]; then
             echo "::error::The repository secret KAKAO_NATIVE_APP_KEY is empty or not set; the APK is not built."
             exit 1
+          fi
+          upload=$(../.github/release/release.sh sentry-upload "the APK's source map")
+          if [[ "$upload" == skip ]]; then
+            export SENTRY_DISABLE_AUTO_UPLOAD=true
           fi
           CI=1 pnpm expo prebuild --platform android --no-install
           echo "sdk.dir=$ANDROID_HOME" >android/local.properties
@@ -306,3 +314,13 @@ jobs:
           npx --yes eas-cli@26.0.0 update --channel production --environment production --platform all \
             --non-interactive --message "$GITHUB_REF_NAME" --json | tee "$RUNNER_TEMP/updates.json"
           ../.github/release/release.sh check-published "$ANDROID" "$IOS" <"$RUNNER_TEMP/updates.json"
+      # eas update exported the bundles and their source maps to mobile/dist. Without SENTRY_AUTH_TOKEN this notes the
+      # skip and passes; with it, a failed upload fails the job, saying the update is already out.
+      - name: Upload the update's source maps to Sentry
+        if: steps.order.outputs.order == 'publish'
+        working-directory: mobile
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+        run: ../.github/release/release.sh upload-update-sourcemaps dist

@@ -1,7 +1,7 @@
 # 04: The Release workflow uploads source maps, so that a stack is readable
 
 Parent: [P08 spec](../spec.md)
-Status: ready-for-agent
+Status: done
 Blocked by: 02
 
 Native files: none. Releases: none by itself; the next Release uses it.
@@ -38,14 +38,66 @@ Native files: none. Releases: none by itself; the next Release uses it.
 
 ## Acceptance criteria
 
-- [ ] With the token absent, the job's steps skip the uploads and the job passes. (The release script's test, or a
+- [x] With the token absent, the job's steps skip the uploads and the job passes. (The release script's test, or a
       dry run described in the pull request.)
-- [ ] With the token present, the upload step runs after `eas update`, and its failure fails the job with the message
+- [x] With the token present, the upload step runs after `eas update`, and its failure fails the job with the message
       above. (The release script's test.)
-- [ ] The workflow passes the token to the upload steps only. (Read from the diff; the pull request says so.)
-- [ ] The infra README says how to run the upload again by hand for an update.
-- [ ] CI's `release-script` job passes.
+- [x] The workflow passes the token to the upload steps only. (Read from the diff; the pull request says so.)
+- [x] The infra README says how to run the upload again by hand for an update.
+- [x] CI's `release-script` job passes.
 - [ ] After ticket 07's Release: a test error's stack in Sentry names a source file and line of ours. (Ticket 07
       checks it and writes the result here.)
 
 ## Comments
+
+### Built (2026-11-24)
+
+- **The DSN** comes from the variable `PRODUCTION_APP_SENTRY_DSN` into the app job's environment as
+  `EXPO_PUBLIC_SENTRY_DSN`, beside the other `EXPO_PUBLIC_*` values, so it reaches the APK's bundle and `eas update`'s
+  alike. It may be empty: it is not among `fingerprint-and-decide`'s required settings. It does not enter the
+  fingerprint: `app.config.ts` reads only `INVITE_LINK_HOST`, `UPDATE_CHANNEL`, `ANDROID_X86_64` and
+  `GOOGLE_IOS_URL_SCHEME`, and Sentry's config plugin only `SENTRY_ENVIRONMENT` (read in 8.36.0's `plugin/build`; not
+  measured with `fingerprint:generate`, since this ticket installs nothing in `mobile/`).
+- **The token, the organisation and the project** (`SENTRY_AUTH_TOKEN` secret, `SENTRY_ORG`, `SENTRY_PROJECT`
+  variables) are in the env of two steps only, "Build the APK" and the new "Upload the update's source maps to Sentry",
+  and are never on a command line.
+- **The APK:** `release.sh sentry-upload` prints `upload` or `skip`; on `skip` (no token) the step exports
+  `SENTRY_DISABLE_AUTO_UPLOAD=true` with a notice, which replaces ticket 02's stop-gap. With the token, Sentry's
+  `sentry.gradle.kts` runs `sentry-cli react-native gradle --bundle … --sourcemap …`, reading the token from the
+  environment.
+- **The update:** eas-cli 26.0.0 with SDK 57 runs `expo export --output-dir dist --source-maps --dump-assetmap
+--platform ios --platform android --clear` (read in eas-cli's `publish.js`: `--source-maps` defaults to `true`), so
+  `mobile/dist` holds each Hermes bundle with its `.map`, and nothing has to change in the `eas update` call. The new
+  step runs `release.sh upload-update-sourcemaps dist`, which checks that every bundle has its map (Sentry's script
+  passes with only a warning when none has) and runs `sentry-expo-upload-sourcemaps dist` from `mobile/`
+  (`@sentry/react-native` 8.36.0's bin, a wrapper over `@sentry/expo-upload-sourcemaps`, which runs
+  `sentry-cli sourcemaps upload --debug-id-reference` for each bundle). Debug IDs, an MD5 of the bundle from the Metro
+  plugin, tie a stack to its map; no release name is passed.
+- **A failed upload after the update** fails the job with `::error::The update is published, but its source maps did
+not reach Sentry…`, which says to re-run the job (its ordering check publishes the same bundle again, or skips if a
+  newer one is out) or to upload by hand (infra README § Uploading an update's source maps by hand). With the token but
+  without `SENTRY_ORG` or `SENTRY_PROJECT`, the upload step fails the same way, and the APK's build stops before
+  building.
+- **Different from the ticket:** "native symbols" are not uploaded. With the plain plugin, the Android build applies
+  `sentry.gradle.kts`, which uploads the JavaScript bundle's map alone; the Sentry Android Gradle Plugin, which uploads
+  ProGuard mappings and NDK symbols, is applied only with `experimental_android.enableAndroidGradlePlugin` in
+  `app.json`, a native change outside this ticket. The release build is not minified by R8, so Java frames read as
+  they are.
+- **Not tested here:** the real uploads (no token, no Gradle, no `eas`). The first Release with the token should show,
+  in "Build the APK", `Sentry-CLI arguments:` with the token masked and a successful upload, and in the new step
+  `sentry: 2 bundles with their maps in dist` followed by Sentry's `✅ Uploaded bundles and sourcemaps`.
+- **Checks run:** shellcheck and bats over `.github/release` and `.github/ci`, as CI's `release-script` job does (all
+  pass, 5 new tests), and actionlint on `release.yml` with shellcheck (clean).
+
+### After the review (2026-11-25)
+
+- **The variable `PRODUCTION_APP_SENTRY_DSN` is unset again.** It had been set when the account was made, so the first
+  app Release after this ticket would have sent reports before the privacy policy said so and before the switch was
+  in. It was removed from the repository's variables on 2026-11-25; a Release then builds an app that reports nothing.
+  A person sets it in ticket 07, once tickets 03 and 05 are on the main line. The infra README says so.
+
+### Agent usage (2026-11-24)
+
+- Agent time: about 1 hour in one implementation session, an estimate; about 10 minutes of it waited on the bats run.
+  The orchestrator's time is not counted here.
+- Tokens: 177,293 in all for the implementation session, as its usage reports; the split into input, cache reads, cache writes and output was not available.
