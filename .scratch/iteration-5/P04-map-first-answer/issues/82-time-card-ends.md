@@ -34,3 +34,10 @@ The user's decision (2026-11-26), on "저녁 17:00 ›": "나는 필요 없어 �
 ## Comments
 
 Built in PR #582.
+
+The right-hand note's rule was decided while building: it stands only when nothing bounds the span on the left, since four things on one line of a phone's width is the crowding being removed, and what comes after the meal is already on the map and on the bar. The picture is from the sessions emulator with mock data.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 32 minutes in one session, the test runs and the emulator picture included, the minutes spent waiting for answers left out (an estimate).
+- Tokens: input 38,453,540 (cache reads 38,300,137, cache writes 153,167, uncached 236); output 78,463. No subagents. Counted from the transcript up to the picture's upload.
