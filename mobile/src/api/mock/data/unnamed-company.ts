@@ -19,6 +19,6 @@ export function asksUnnamedCompany(words: string): boolean {
 
 export const UNNAMED_COMPANY_REPLY: AssistantReply = {
   ...MEAL_ANSWER_REPLY,
-  text: '11:50에 301동식당에서 먹어요.',
+  text: '가장 가까운 301동식당을 추천해요.',
   answer: { ...MEAL_ANSWER_ALONE, pickPeople: true },
 };

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, MealInput } from '@/api/assistant-types';
@@ -30,6 +31,9 @@ function replyOf(text: string, answer: AnswerReply): AssistantReply & { answer: 
   return { text, mapButtons: [], cards: [], proposal: null, answer, lookup: null, refusal: null };
 }
 
-export const NO_LOCATION_REPLY = replyOf('11:50에 301동식당에서 먹어요.', NO_LOCATION_ANSWER);
+export const NO_LOCATION_REPLY = replyOf(
+  '어디서 출발하는지 몰라서 가장 일찍 여는 301동식당을 추천해요.',
+  NO_LOCATION_ANSWER,
+);
 
-export const NO_TIMETABLE_REPLY = replyOf('301동식당이 가장 가까워요.', NO_TIMETABLE_ANSWER);
+export const NO_TIMETABLE_REPLY = replyOf('가장 가까운 301동식당을 추천해요.', NO_TIMETABLE_ANSWER);

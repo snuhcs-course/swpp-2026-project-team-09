@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
@@ -169,7 +170,7 @@ describe("Board n12: 배고파 at 13:47, 학생회관식당's lunch served until
     // ticket 42), so the app's position says it.
     const { latitude, longitude } = await stage.numbered('24');
 
-    const response = await stage.send([planMeal(date, []), { text: '13:52에 자하연식당 2층에서 먹어요.' }], {
+    const response = await stage.send([planMeal(date, []), { text: '가장 가까운 자하연식당 2층을 추천해요.' }], {
       context: { location: { latitude, longitude } },
     });
 
