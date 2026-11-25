@@ -16,6 +16,7 @@ import {
   type PickRow,
   pickStateOf,
   previewOf,
+  reasonOf,
   toggled,
   walkGuessOf,
   withPicked,
@@ -135,19 +136,18 @@ describe('the rows while picking', () => {
   });
 
   it('says who is busy over the span, until when and with what, and nobody without busy stretches', () => {
-    expect(opened.find(({ userId }) => userId === 'yerin')?.busyAtSpan).toEqual({ endAt: at('13:00'), kind: 'quest' });
+    expect(opened.find(({ userId }) => userId === 'yerin')).toMatchObject({
+      busyAtSpan: { startAt: at('12:30'), endAt: at('13:00'), kind: 'quest' },
+      reason: '12:30부터 일정',
+    });
     expect(opened.find(({ userId }) => userId === 'minsu')?.busyAtSpan).toBeNull();
     expect(opened.find(({ userId }) => userId === 'jiho')).toMatchObject({ busyAtSpan: null, walkMinutes: null });
     expect(busyAtSpanOf([{ startAt: at('12:00'), endAt: at('12:30') }], BUSY_BAND)).toEqual({
+      startAt: at('12:00'),
       endAt: at('12:30'),
       kind: null,
     });
     expect(busyAtSpanOf([{ ...busy('12:00', '12:30'), label: '302동 수업' }], BUSY_BAND)?.kind).toBe('class');
-  });
-
-  it('says the walk to the place, or that where a Friend is is not known', () => {
-    expect(pickStateOf({ walkMinutes: 9 })).toBe('걸음 9분');
-    expect(pickStateOf({ walkMinutes: null })).toBe('위치 모름');
   });
 
   it('reads 완료 with how many Friends are checked, and 닫기 with no Friend to pick', () => {
@@ -170,6 +170,28 @@ function minsuRowOf(walks: ReadonlyMap<string, number | null>): PickRow | undefi
     ({ userId }) => userId === 'minsu',
   );
 }
+
+// Partitions: busy, free, and unknown; busy over the span's start or from within it; a Class, a Quest's step, and
+// an item with no label. Expected values: the boards' words of variant R3.
+describe('the words at a row’s right while picking', () => {
+  it('says one thing at the right: why a Friend is busy, else the walk, else, quieter, that where they are is unknown', () => {
+    expect(pickStateOf({ reason: '18:15까지 수업', walkMinutes: null })).toEqual({
+      words: '18:15까지 수업',
+      quiet: false,
+    });
+    expect(pickStateOf({ reason: null, walkMinutes: 9 })).toEqual({ words: '걸음 9분', quiet: false });
+    expect(pickStateOf({ reason: null, walkMinutes: null })).toEqual({ words: '위치 모름', quiet: true });
+  });
+
+  it('gives a busy Friend’s reason by when it ends if it holds the span’s start, else by when it starts, as 수업 or 일정', () => {
+    const span = { startAt: at('12:15') };
+
+    expect(reasonOf({ startAt: at('11:30'), endAt: at('12:30'), kind: 'class' }, span)).toBe('12:30까지 수업');
+    expect(reasonOf({ startAt: at('12:30'), endAt: at('13:00'), kind: 'class' }, span)).toBe('12:30부터 수업');
+    expect(reasonOf({ startAt: at('12:15'), endAt: at('12:40'), kind: 'quest' }, span)).toBe('12:40까지 일정');
+    expect(reasonOf({ startAt: at('12:20'), endAt: at('12:40'), kind: null }, span)).toBe('12:20부터 일정');
+  });
+});
 
 // Partitions: a Plan's Friend with a walk in the Plan, and without one; their department.
 describe('the walk and department of a Plan’s Friend while picking', () => {

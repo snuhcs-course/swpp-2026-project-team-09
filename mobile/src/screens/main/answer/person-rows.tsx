@@ -9,7 +9,7 @@ import { type ReactElement, useState } from 'react';
 import { type LayoutChangeEvent, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { MealInput, TimeBand } from '@/api/assistant-types';
 import type { BandLane } from '@/api/time-band-types';
-import { color, Icon, radius, space, text } from '@/design-system';
+import { color, font, Icon, radius, space, text } from '@/design-system';
 import { type PickRow, pickStateOf } from '@/features/assistant/people-picking';
 import { foldedRangeOf, type Stretch } from '@/features/assistant/time-band';
 import { placeOf, redOf } from './band-body';
@@ -21,22 +21,29 @@ import { Red } from './band-track';
 // busy stretches, cut at the bar's ends, and the band's outline. Up to four people the rows show whole; with more, their
 // room is four and a half rows, the half row at its bottom edge showing there are more, and the rows scroll in it while
 // the card's head above and its grip's strip below stay. The rows only scroll: the card's drag is its strip's. Folded,
-// the rows take no room and a screen reader passes them by. While people are picked (P04 ticket 64) each row has a
-// check, the name, and the walk to the Plan's place at its right, and a press checks or unchecks it; 나 stays checked.
+// the rows take no room and a screen reader passes them by. While people are picked (P04 ticket 64, variant R3) each
+// Friend has one line with no bar, a check, the name, the department, and one thing at its right, the walk, the reason
+// they are busy, or "위치 모름"; five rows show whole, then five and a half. A press checks or unchecks it.
 
 const BAR_HEIGHT = 8;
 const LANE_HEIGHT = 12;
 const ROWS_TOP = space[2];
 const ROW_GAP = space[2];
 const MOST_ROWS = 4;
+// While picking (variant R3): rows 36 high with no gap, five whole and then five and a half, 206 with the top.
+const PICK_ROW = 36;
+const PICK_MOST = 5;
+// The kit's rings of a check not yet picked, a free Friend's and a busy one's; the app's tokens have none so light.
+const CHECK_RING = '#C3C8D4';
+const CHECK_RING_QUIET = '#D9DDE7';
 
-// The rows' room open, from their whole height laid out: all of them up to `MOST_ROWS` people, else four and a half.
-export function rowsRoomOf(whole: number, count: number): number {
-  if (count <= MOST_ROWS) {
+// The rows' room open, from their whole height laid out: all of them up to `most` people, else that many and a half.
+export function rowsRoomOf(whole: number, count: number, most: number = MOST_ROWS, gap: number = ROW_GAP): number {
+  if (count <= most) {
     return whole;
   }
-  const row = (whole - ROWS_TOP - (count - 1) * ROW_GAP) / count;
-  return ROWS_TOP + MOST_ROWS * (row + ROW_GAP) + row / 2;
+  const row = (whole - ROWS_TOP - (count - 1) * gap) / count;
+  return ROWS_TOP + most * (row + gap) + row / 2;
 }
 
 // The rows while people are picked: a row for the User and each Friend (`pickRowsOf`), and the press on one.
@@ -104,29 +111,27 @@ function PersonLine({ lane, parts }: { lane: BandLane; parts: LaneParts }): Reac
 function PickLine({ row, onPick }: { row: PickRow; onPick: Picking['onPick'] }): ReactElement {
   const { userId, name, checked, department } = row;
   const state = pickStateOf(row);
+  // Busy over the span and not picked: the row reads quieter, and can still be picked.
+  const quiet = row.busyAtSpan !== null && !checked;
   return (
     <Pressable
-      accessibilityLabel={`${name} · ${state}`}
+      accessibilityLabel={`${name} · ${state.words}`}
       accessibilityRole="checkbox"
       accessibilityState={{ checked }}
       onPress={() => {
         onPick(userId);
       }}
-      style={styles.row}
+      style={styles.pick}
       testID={`time-card-pick-${userId}`}
     >
-      <View style={styles.head}>
-        <View style={[styles.check, checked && styles.checked]}>
-          {checked ? <Icon color={color.onPrimary} name="check" size={12} /> : null}
-        </View>
-        <Text numberOfLines={1} style={[styles.pickName, !checked && styles.quietName]}>
-          {name}
-        </Text>
-        <Text numberOfLines={1} style={styles.department}>
-          {department ?? ''}
-        </Text>
-        <Text style={styles.state}>{state}</Text>
+      <View style={[styles.check, quiet && styles.quietCheck, checked && styles.checked]}>
+        {checked ? <Icon color={color.onPrimary} name="check" size={12} /> : null}
       </View>
+      <Text style={[styles.pickName, checked && styles.pickedName, quiet && styles.quietWords]}>{name}</Text>
+      <Text numberOfLines={1} style={[styles.department, quiet && styles.quietWords]}>
+        {department ?? ''}
+      </Text>
+      <Text style={[styles.state, state.quiet && styles.quietWords]}>{state.words}</Text>
     </Pressable>
   );
 }
@@ -134,8 +139,8 @@ function PickLine({ row, onPick }: { row: PickRow; onPick: Picking['onPick'] }):
 // With no Friend to pick, one line that says so and leads to adding one (board p20).
 function NoFriends(): ReactElement {
   return (
-    <View style={styles.head} testID="time-card-no-friends">
-      <Text style={styles.pickName}>아직 친구가 없어요</Text>
+    <View style={styles.pick} testID="time-card-no-friends">
+      <Text style={styles.noFriends}>아직 친구가 없어요</Text>
       <Pressable
         accessibilityRole="link"
         onPress={() => {
@@ -153,7 +158,8 @@ export function PersonRows(props: PersonRowsProps): ReactElement {
   const { band, picking = null, shown, fixed, moving, hidden, onHeight } = props;
   const parts = { band, range: foldedRangeOf(band), fixed, moving, outline: moving ?? shown };
   const count = picking === null ? band.lanes.length : picking.rows.length;
-  const many = count > MOST_ROWS;
+  const [most, gap]: [number, number] = picking === null ? [MOST_ROWS, ROW_GAP] : [PICK_MOST, 0];
+  const many = count > most;
   const [room, setRoom] = useState<number | null>(null);
   return (
     <ScrollView
@@ -166,11 +172,11 @@ export function PersonRows(props: PersonRowsProps): ReactElement {
     >
       <View
         onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-          const next = rowsRoomOf(nativeEvent.layout.height, count);
+          const next = rowsRoomOf(nativeEvent.layout.height, count, most, gap);
           setRoom(next);
           onHeight(next);
         }}
-        style={styles.rows}
+        style={[styles.rows, { gap }]}
         testID="time-card-rows"
       >
         {picking === null ? band.lanes.map((lane) => <PersonLine key={lane.userId} lane={lane} parts={parts} />) : null}
@@ -189,22 +195,27 @@ const styles = StyleSheet.create({
   rows: { gap: ROW_GAP, paddingTop: ROWS_TOP },
   row: { gap: space[1] },
   name: { ...text.caption, color: color.inkMuted },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  // Variant R3 of the boards (the user's choice, 2026-11-25): one line 36 high, the whole of it the press.
+  pick: { flexDirection: 'row', alignItems: 'center', gap: space[2], height: PICK_ROW },
   check: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 18,
-    height: 18,
+    width: 20,
+    height: 20,
     borderWidth: 1.5,
-    borderColor: color.borderStrong,
+    borderColor: CHECK_RING,
     borderRadius: radius.full,
   },
+  quietCheck: { borderColor: CHECK_RING_QUIET },
   checked: { borderColor: color.snuBlue, backgroundColor: color.snuBlue },
-  pickName: { ...text.label, flexShrink: 0, color: color.ink },
-  // Quieter than the name, and the first to give way to the state at the right (the user's phone, 2026-11-25).
-  department: { ...text.caption, flex: 1, color: color.inkSubtle },
-  quietName: { color: color.inkMuted },
-  state: { ...text.caption, color: color.inkMuted },
+  // Never cut; 600 once picked.
+  pickName: { fontFamily: font.medium, fontSize: 13.5, lineHeight: 20, flexShrink: 0, color: color.ink },
+  pickedName: { fontFamily: font.semiBold },
+  // The only words cut, with …, before the one at the right.
+  department: { ...text.caption, flex: 1, color: color.inkMuted },
+  state: { ...text.caption, flexShrink: 0, color: color.inkMuted },
+  quietWords: { color: color.inkSubtle },
+  noFriends: { fontFamily: font.medium, fontSize: 13.5, lineHeight: 20, flex: 1, color: color.inkMuted },
   addFriend: {
     paddingHorizontal: space[3],
     paddingVertical: space[1],

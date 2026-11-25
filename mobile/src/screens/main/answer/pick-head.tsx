@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import { type ReactElement, type ReactNode, useEffect, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Plan, TimeBand } from '@/api/assistant-types';
-import { color, radius, space, text } from '@/design-system';
+import { color, font, radius, space, text } from '@/design-system';
 import { metresBetween } from '@/features/assistant/answer-drawing';
 import {
   doneWordsOf,
@@ -153,8 +153,8 @@ export function usePickingBar(
 }
 
 const styles = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-  cancel: { ...text.label, color: color.inkMuted },
+  head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  cancel: { ...text.label, fontFamily: font.medium, color: color.inkMuted },
   done: {
     justifyContent: 'center',
     height: BAR_ADD_HEIGHT,

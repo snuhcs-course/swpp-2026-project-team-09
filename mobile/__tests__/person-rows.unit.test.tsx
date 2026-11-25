@@ -104,3 +104,37 @@ describe('the rows while picking', () => {
     expect(screen.queryByText('나')).toBeNull();
   });
 });
+
+// Partitions: five Friends, the most shown whole while picking; seven, more. Expected values: rows 36 high with no gap
+// under 8 of room (variant R3), so five are 8 + 5 × 36 = 188 and five and a half 8 + 5.5 × 36 = 206.
+describe('the room of the rows while picking', () => {
+  const mockBand = withOtherFriends(MEAL_ANSWER).plans[0]?.band;
+  if (mockBand === undefined) {
+    throw new Error('The mock answer has no Plan');
+  }
+
+  it.each([
+    [5, 188, false],
+    [7, 206, true],
+  ])('is %i rows of 36 at %i, scrolling: %s', async (people, room, scrolls) => {
+    const rows = pickRowsOf({ band: mockBand, picked: [], walks: new Map(), friends: [] }).slice(0, people);
+    const onHeight = jest.fn<void, [number]>();
+    await render(
+      <PersonRows
+        band={mockBand}
+        fixed={{ from: null, until: null }}
+        hidden={false}
+        moving={null}
+        onHeight={onHeight}
+        picking={{ rows, onPick: jest.fn<void, [string]>() }}
+        shown={{ startAt: mockBand.startAt, endAt: mockBand.endAt }}
+      />,
+    );
+    await fireEvent(screen.getByTestId('time-card-rows'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 320, height: TOP + people * 36 } },
+    });
+
+    expect(onHeight).toHaveBeenLastCalledWith(room);
+    expect(screen.getByTestId('time-card-rows-room')).toHaveProp('scrollEnabled', scrolls);
+  });
+});
