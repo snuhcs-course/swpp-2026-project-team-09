@@ -2,7 +2,7 @@
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
-Pull request: none yet.
+Pull request: #578
 Blocked by: none.
 
 Native files: none. Releases: the main server and its seed.
@@ -60,3 +60,10 @@ Why Tobler and not the walks' fit: all 43 walks are one walker's, on two nights 
 - [x] ADR 0010 and the README describe the model.
 
 ## Comments
+
+Built in PR #578. The table is rebuilt with Tobler between the ends. `startApp` binds the frozen table by default, so the plan and way tests kept their numbers: from 152 failing tests on the first candidate table to none.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 40 minutes in one session, the analysis, the test runs and the full server suite included (an estimate).
+- Tokens: input 92,523,982 (cache reads 92,350,661, cache writes 173,103, uncached 218); output 107,639. No subagents. These counts span 19:33–20:22 UTC, so they include PR 574's lint fix, done in the middle of this ticket, about a fifth of them.
