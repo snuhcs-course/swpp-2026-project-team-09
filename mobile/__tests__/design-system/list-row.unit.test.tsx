@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { render, screen, userEvent } from '@testing-library/react-native';
@@ -45,6 +46,32 @@ describe('ListRow', () => {
 
     expect(onPress).toHaveBeenCalledTimes(1);
     expect(screen.getByText('자료구조')).toHaveStyle({ fontSize: 16 });
+  });
+});
+
+describe("ListRow's line", () => {
+  it('keeps its line of 1 under it, with a press or without, given nothing more', async () => {
+    await render(
+      <>
+        <ListRow leading={null} onPress={jest.fn<void, []>()} title="친구 관리" />
+        <ListRow leading={null} title="김민준" trailing={<Button>만들기</Button>} />
+      </>,
+    );
+
+    expect(screen.getByRole('button', { name: '친구 관리' })).toHaveStyle({ borderBottomWidth: 1 });
+    expect(screen.getByRole('button', { name: '만들기' }).parent).toHaveStyle({ borderBottomWidth: 1 });
+  });
+
+  it("draws no line under it as a card's last row, whose edge ends it", async () => {
+    await render(
+      <>
+        <ListRow last leading={null} onPress={jest.fn<void, []>()} title="관심사" />
+        <ListRow last leading={null} title="관정도서관 로그인" trailing={<Button>로그인</Button>} />
+      </>,
+    );
+
+    expect(screen.getByRole('button', { name: '관심사' })).not.toHaveStyle({ borderBottomWidth: 1 });
+    expect(screen.getByRole('button', { name: '로그인' }).parent).not.toHaveStyle({ borderBottomWidth: 1 });
   });
 });
 

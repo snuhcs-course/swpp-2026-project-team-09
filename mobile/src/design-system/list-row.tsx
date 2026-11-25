@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-25  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -39,6 +40,8 @@ interface ListRowProps {
   trailing?: ReactNode;
   // A row of 72 with its title in 16, as a Quest's on the whole screen; otherwise 64 with lines and 56 without.
   large?: boolean;
+  // A card's last row, whose edge ends it: no line under it.
+  last?: boolean;
   // Makes the whole row a button, read by this label.
   onPress?: () => void;
   label?: string;
@@ -74,7 +77,7 @@ function Words({ title, aside, kicker, lines = [], large = false }: WordsProps):
 }
 
 // One row of a list: what it is at the start, its words, and what it offers at the end, over a line of 1.
-export function ListRow({ leading, trailing, onPress, label, ...words }: ListRowProps): ReactElement {
+export function ListRow({ leading, trailing, last = false, onPress, label, ...words }: ListRowProps): ReactElement {
   const minHeight = words.large === true ? 72 : (words.lines ?? []).length > 0 ? 64 : 56;
   const content = (
     <>
@@ -84,14 +87,14 @@ export function ListRow({ leading, trailing, onPress, label, ...words }: ListRow
     </>
   );
   if (onPress === undefined) {
-    return <View style={[styles.row, { minHeight }]}>{content}</View>;
+    return <View style={[styles.row, !last && styles.divider, { minHeight }]}>{content}</View>;
   }
   return (
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => [styles.row, { minHeight }, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.row, !last && styles.divider, { minHeight }, pressed && styles.pressed]}
     >
       {content}
     </Pressable>
@@ -111,13 +114,8 @@ const ROUND = 40;
 
 const styles = StyleSheet.create({
   round: { alignItems: 'center', justifyContent: 'center', width: ROUND, height: ROUND, borderRadius: radius.full },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    borderBottomWidth: 1,
-    borderBottomColor: color.border,
-  },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  divider: { borderBottomWidth: 1, borderBottomColor: color.border },
   pressed: { backgroundColor: color.surfaceSubtle },
   words: { flex: 1, gap: 1 },
   kicker: { fontFamily: font.bold, fontSize: 11, lineHeight: 14, letterSpacing: 0.11 },
