@@ -13,7 +13,8 @@ The Tour (P09, Iteration 5) lets a new User try asking the Assistant, making a �
 
 ## Consequences
 
-- The Assistant's answers in Practice are a script, not the model. They come from the mock Assistant (`mobile/src/api/mock/`), which is kept up to date as features change.
+- The Assistant's answers in Practice are a script, not the model. They come from the mock Assistant (`mobile/src/api/mock/`), which is kept up to date as features change, re-dated to the phone's day: the mock is built for one fixed moment.
 - The Practice client implements the same interface as the real one, so a change to what the Assistant or a 파티 sends fails the build until the script follows. A change in meaning that keeps the shape is caught only by the test that runs the Tour on the real screens.
 - Practice data must not reach the real query cache, and it is gone when the Tour ends or is stopped.
+- The User's own position and push registration are not Practice's: they keep going to the main server during the Tour.
 - Practice is marked on screen the whole time, because the screens look real.

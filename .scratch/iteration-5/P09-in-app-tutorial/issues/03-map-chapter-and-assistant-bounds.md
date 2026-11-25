@@ -18,8 +18,8 @@ The Tour's first chapter, without its ★ step (04).
   - "못 해요": 캠퍼스 밖 · 과제 · 친구 대신 수락 · 관정 외 도서관;
   - and the line "AI가 제안하면, 실행은 내가 눌러서".
 - **Example chips.** Two chips the User presses in turn:
-  - "배고파" gets a meal Plan on the map from the Practice client;
-  - "과제 도와줘" gets the Assistant's own refusal for homework ("과제는 도와 드릴 수 없어요.").
+  - "배고파" gets a meal Plan on the map from the Practice client, for the phone's day and time (the mock's menus are for 1 October and are re-dated, spec § Practice);
+  - "과제 도와줘" gets the Assistant's own refusal for homework ("과제는 도와 드릴 수 없어요."). The wording is the server's; the mock's copy of it (its homework refusal reply) is what the script uses.
 
   Nothing is typed; the input accepts only the chips.
 - The chapter is first in the Tour. It sets up its own Practice data at its start.
@@ -28,7 +28,7 @@ The Tour's first chapter, without its ★ step (04).
 
 - [ ] The Tour starts with this chapter; each step lights its element, with the spec's 샤샤 lines.
 - [ ] The two lists and the line show as written.
-- [ ] "배고파" shows a meal Plan on the map, and "과제 도와줘" shows the homework refusal, both from Practice.
+- [ ] "배고파" shows a meal Plan for today, never 1 October nor "오늘은 수집된 메뉴가 없어요.", and "과제 도와줘" shows the homework refusal, both from Practice.
 - [ ] Nothing of this chapter reaches the fake main server, and no Assistant message is sent to it.
 - [ ] Resuming at this chapter (02, if merged) starts it from its first step.
 - [ ] The app-level integration test covers the chapter.

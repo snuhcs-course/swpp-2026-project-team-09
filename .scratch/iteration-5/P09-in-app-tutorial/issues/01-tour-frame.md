@@ -17,8 +17,10 @@ A new User who finishes Onboarding is offered the Tour. They can go through its 
   - the next chapter and step;
   - what 다음, 그만하기 and the end do.
 - **Practice.** While the Tour is up, the app's one client answers from a Practice client.
-  - The Practice client implements the same interface, keeps its data in memory and is built on the mock client's parts. It never calls the main server.
-  - Its answers do not reach the real query cache, and nothing of it is left after the Tour.
+  - The Practice client implements the same interface, keeps its data in memory and is built on the mock client's parts. It never calls the main server for what Practice shows or does.
+  - **Passed through.** `uploadPosition` and `registerPushToken` go to the real client, so that the User's own position keeps reaching Friends and pushes stay registered during the Tour. Every other operation answers from Practice, `setMasterSwitch` included.
+  - **Dated today.** Practice's data is made for the phone's day and time when the Tour starts (the sample Timetable, 샤샤's Timetable). A mock part is reused only after it is re-dated, because the mock's data and copies are for the frame's 1 October.
+  - **Its own cache.** The Tour has a query cache of its own, used by the screens while Practice lasts. Socket events still invalidate the real cache only. When the Tour ends or is stopped, the Tour's cache is dropped and every real key is fetched again.
   - Its data includes 샤샤 as the User's one Friend, and a sample Timetable.
 - **The band.** "연습 중 · 실제로 저장되지 않아요" with 그만하기 shows the whole time.
 - **Pointing.**
@@ -46,7 +48,8 @@ A new User who finishes Onboarding is offered the Tour. They can go through its 
 - [ ] A step whose anchor is missing shows its bubble in the middle and the Tour goes on.
 - [ ] 그만하기 ends Practice at once and the real screens come back with the real data.
 - [ ] The end shows the cheering 샤샤 and "진짜로 시작하기", which leads to the first run's cards.
-- [ ] The fake main server receives no request from Practice during the whole Tour.
+- [ ] The fake main server receives no request from Practice during the whole Tour; the User's position uploads keep reaching it.
+- [ ] After the Tour, the real screens show the fake main server's data, fetched again, and nothing Practice answered.
 - [ ] The tour of the tabs is gone, and 내 정보 has "앱 둘러보기", which starts the Tour again.
 - [ ] Unit tests of the Tour's state cover the start card, skipping, stepping, stopping and finishing.
 - [ ] The app-level integration test replaces the tour of the tabs' test and covers the above. It fails when an anchor of a step is not found.

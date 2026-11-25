@@ -132,11 +132,12 @@ Whether the Tour was finished or declined, and the chapter reached, are kept on 
 - **The Practice client.**
   - It implements the same interface as the other two.
   - It holds Practice's data in memory: 샤샤, 관악이, a sample Timetable, a few events, and the 파티 the User makes.
-  - It reuses the mock client's parts where they exist, the Assistant's answers in particular.
-  - It never calls the main server.
-- **The query cache.** Practice's answers must not land in the cache the real screens use. When Practice ends, nothing of it is left and the real data is fetched as before.
-- **What else the app sends.** The app's background traffic that is not Practice's, such as reporting the User's own position under Location Sharing, is not changed by the Tour. The rule is that nothing *Practice* does reaches the server.
-- **Real-time updates.** Socket events and pushes that arrive during Practice are not drawn into Practice's screens. Their effect shows once Practice ends, as after any return to the app.
+  - It reuses the mock client's parts where they exist, the Assistant's answers in particular, but only after re-dating them (below).
+  - It never calls the main server for what Practice shows or does.
+- **Practice is dated to the phone's day.** The mock is built for one fixed moment, the frame's (1 October 2026, 13:37): its menus, answers and copies carry that day and time, and outside the mock build the app's clock is the phone's. Practice's data is therefore made for the phone's day and time when the Tour starts: the Timetables and the shared 공강, the Plan's time, the meal answer's menus and the events. A mock part is reused only after it is re-dated that way, so that no answer speaks of 1 October and none finds "오늘은 수집된 메뉴가 없어요."
+- **The query cache.** The Tour has a query cache of its own, which the screens use while Practice lasts, so that Practice's answers never land in the cache the real screens use. When Practice ends, that cache is dropped and every real key is fetched again, so that nothing Practice answered stays behind.
+- **What else the app sends.** The app's traffic that is not Practice's is not changed by the Tour: the Practice client hands `uploadPosition` (the User's own position under Location Sharing, in the foreground and the background) and `registerPushToken` to the real client, so that the User's position keeps reaching Friends during the Tour. Every other operation answers from Practice, `setMasterSwitch` included, since chapter 4 shows the switch. The rule is that nothing *Practice* does reaches the server.
+- **Real-time updates.** Socket events and pushes that arrive during Practice are not drawn into Practice's screens: they invalidate the real cache, not the Tour's. Their effect shows once Practice ends, when every real key is fetched again.
 
 ### The script
 - **Contents.** The Tour is a script: the chapters, the steps of each chapter, and for each step:
@@ -149,7 +150,7 @@ Whether the Tour was finished or declined, and the chapter reached, are kept on 
 - **The Assistant step.** In chapter 1's ★ step the input accepts only the scripted message.
   - The User types "@" and picks 샤샤 from the real mention list, the only Friend listed in Practice.
   - A chip then completes the request ("공강에 밥 먹자"), and only the scripted message can be sent.
-  - The example chips before it ("배고파" and "과제 도와줘") answer from the Practice client: a meal Plan, and the Assistant's real refusal wording for homework.
+  - The example chips before it ("배고파" and "과제 도와줘") answer from the Practice client: a meal Plan for today, and the Assistant's refusal for homework. That wording is the server's; the mock already keeps a copy of the homework refusal, which the script uses.
 - **The 파티 form.** In chapter 2 the form opens filled in by the script. The User chooses 공개 with 승인 후 참여 and posts. 관악이's request arrives a moment later, as a request does.
 
 ### Pointing
