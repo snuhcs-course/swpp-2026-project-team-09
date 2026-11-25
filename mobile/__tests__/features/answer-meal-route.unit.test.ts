@@ -42,7 +42,7 @@ describe('학생회관식당 chosen in the crowded meal answer', () => {
 
   it('says where the User starts and the next Class as dark labels with their times', () => {
     expect(seen(drawing, 'answer:me').label).toMatchObject({ tone: 'meeting', title: '10:45 301동' });
-    expect(seen(drawing, 'answer:next:place-302').label).toMatchObject({ tone: 'meeting', title: '15:30 302동 수업' });
+    expect(seen(drawing, 'answer:next:place-302').label).toMatchObject({ tone: 'meeting', title: '15:30 302동' });
   });
 
   // P04 ticket 76: the way there a dark thin line, the way on a pale wide band drawn first so that it lies under it.
@@ -94,6 +94,26 @@ describe("the way on's band on the map", () => {
   });
 });
 
+// The phone's case (P04 ticket 80, 2026-11-26): a next Class that is none of the Plan's fixed things after the meal,
+// its place tagged "15:30 수업 · 302동", was a white label in the tag's words.
+describe('the next Class known only by its tag', () => {
+  it('is the same dark label as the start, time then place: "15:30 302동"', () => {
+    const index = at('학생회관식당');
+    const plan = CROWDED.plans[index];
+    if (plan === undefined) {
+      throw new Error('No 학생회관식당');
+    }
+    const places = plan.scene.places.map((item) =>
+      item.role === 'next' ? Object.assign({}, item, { tag: '15:30 수업 · 302동' }) : item,
+    );
+    const late = Object.assign({}, plan, { endAt: '2026-10-07T14:00:00Z', scene: { ...plan.scene, places } });
+    const plans = CROWDED.plans.map((each) => (each === plan ? late : each));
+    const drawing = drawingOf({ ...CROWDED, plans }, index);
+
+    expect(seen(drawing, 'answer:next:place-302').label).toMatchObject({ tone: 'meeting', title: '15:30 302동' });
+  });
+});
+
 describe('302동식당 chosen', () => {
   const drawing = drawingOf(CROWDED, at('302동식당'));
 
@@ -123,10 +143,13 @@ describe('the view a meal answer keeps while another place is chosen', () => {
 
 // Partitions: the way there by shuttle (the shuttle-aware Plan, the crowded mock's 자하연식당 2층); the way on on foot.
 describe('a leg by shuttle', () => {
-  it('reads "셔틀 N분" on its label, and the way on its minutes alone', () => {
+  it('reads its minutes alone on its label, as the way on does, and says "셔틀" to a screen reader', () => {
     const drawing = drawingOf(CROWDED, at('자하연식당 2층'));
 
-    expect(seen(drawing, 'answer:leg:0:셔틀 13분').label).toMatchObject({ tone: 'leg', title: '셔틀 13분' });
+    expect(seen(drawing, 'answer:leg:0:13분')).toMatchObject({
+      name: '셔틀 13분',
+      label: { tone: 'leg', title: '13분' },
+    });
     expect(seen(drawing, 'answer:leg:1:20분').label).toMatchObject({ tone: 'legOn', title: '20분' });
   });
 });

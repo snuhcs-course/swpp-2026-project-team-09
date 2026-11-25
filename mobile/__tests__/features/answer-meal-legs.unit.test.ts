@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -63,7 +64,7 @@ function crosses(view: LabelView, box: ViewArea, from: LatLng, to: LatLng): bool
   });
 }
 
-// Partitions: a leg whose words change with the choice (302동식당's 2분 by foot, then 자하연식당 2층's 셔틀 13분); a
+// Partitions: a leg whose words change with the choice (302동식당's 2분 by foot, then 자하연식당 2층's 13분 by shuttle); a
 // leg with the same words in both.
 describe('a leg chosen with other words', () => {
   const before = legsOf(chosen(at('302동식당')).drawing);
@@ -71,7 +72,7 @@ describe('a leg chosen with other words', () => {
 
   it('is a new mark with a new picture, so that the map never keeps the words before', () => {
     expect(before.map(({ id }) => id)).toEqual(['answer:leg:0:2분']);
-    expect(after.map(({ id }) => id)).toEqual(['answer:leg:0:셔틀 13분', 'answer:leg:1:20분']);
+    expect(after.map(({ id }) => id)).toEqual(['answer:leg:0:13분', 'answer:leg:1:20분']);
     const [was] = before;
     const [now] = after;
     expect(was !== undefined && now !== undefined && lookName(now.look) !== lookName(was.look)).toBe(true);
