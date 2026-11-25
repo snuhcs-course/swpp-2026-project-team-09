@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-07  Fable 5.1  prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 package com.bonnieandclaude.snunow.map
@@ -74,8 +75,10 @@ class Pictures(private val manager: LabelManager, private val density: Float) {
     return manager.addLabelStyles(LabelStyles.from(name, style))
   }
 
-  // The picture's file, at the phone's pixels for its size in points. Null when it cannot be read.
-  private fun read(uri: String, width: Double, height: Double): Bitmap? {
+  // The picture's file, at the phone's pixels for its size in points, with straight alpha. Null when it cannot be read.
+  private fun read(uri: String, width: Double, height: Double): Bitmap? = scaled(uri, width, height)?.let(::straight)
+
+  private fun scaled(uri: String, width: Double, height: Double): Bitmap? {
     val path = Uri.parse(uri).path ?: return null
     val bitmap = BitmapFactory.decodeFile(path)
     if (bitmap == null) {
@@ -88,6 +91,19 @@ class Pictures(private val manager: LabelManager, private val density: Float) {
       return bitmap
     }
     return Bitmap.createScaledBitmap(bitmap, wide, high, true)
+  }
+
+  // The same picture with its colours not multiplied by their alpha. The SDK multiplies them itself, so a picture
+  // read as Android keeps it, already multiplied, came out darker wherever it is see-through: white at 80% as grey
+  // (A04-06, checked on the emulator).
+  private fun straight(bitmap: Bitmap): Bitmap {
+    val colours = IntArray(bitmap.width * bitmap.height)
+    // `getPixels` gives the colours unmultiplied, and a bitmap that is not premultiplied keeps them as they are.
+    bitmap.getPixels(colours, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+    val straight = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+    straight.isPremultiplied = false
+    straight.setPixels(colours, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+    return straight
   }
 
   private companion object {
