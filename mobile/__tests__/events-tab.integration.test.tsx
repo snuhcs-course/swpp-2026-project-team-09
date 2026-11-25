@@ -7,6 +7,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -99,11 +100,11 @@ describe('the list', () => {
     expect(card(MAJOR).queryByText('컴퓨터공학부 공지')).toBeNull();
   });
 
-  it('keeps a long title and a long place to two lines each, cut, with the hours before the place', async () => {
+  it('keeps a long title to one line and a long place to two, cut, with the hours before the place', async () => {
     answerEvents(server, { events: [{ ...CAREER, title: LONG_TITLE, place: LONG_PLACE }] });
     await openEvents();
 
-    expect(card(CAREER).getByRole('button', { name: LONG_TITLE })).toHaveProp('numberOfLines', 2);
+    expect(card(CAREER).getByRole('button', { name: LONG_TITLE })).toHaveProp('numberOfLines', 1);
     expect(card(CAREER).getByText(`18:00–20:00 · ${LONG_PLACE}`)).toHaveProp('numberOfLines', 2);
   });
 

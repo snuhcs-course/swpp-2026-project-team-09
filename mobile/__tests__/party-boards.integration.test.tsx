@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -59,12 +60,24 @@ describe('전체 파티', () => {
   it('counts each board’s posts, the User’s own among them, with N for a post of today', async () => {
     const user = await openAt('/party');
 
-    await user.press(screen.getByRole('button', { name: '전체 보기' }));
+    await user.press(screen.getByRole('button', { name: '전체 게시판' }));
 
     expect(screen.getByRole('button', { name: '식사 게시판 · 모집글 0개' })).not.toHaveTextContent(/N/u);
     expect(screen.getByRole('button', { name: '진로 게시판 · 모집글 1개' })).not.toHaveTextContent(/N/u);
     expect(screen.getByRole('button', { name: '취미 게시판 · 모집글 3개' })).toHaveTextContent(/N/u);
     expect(screen.getByRole('button', { name: '공연 게시판 · 모집글 1개' })).not.toHaveTextContent(/N/u);
+  });
+
+  it('opens from the card under 찾기’s posts, which counts the four boards’ posts', async () => {
+    const user = await openAt('/party');
+
+    const boards = await screen.findByRole('button', {
+      name: '전체 게시판 · 식사 · 진로 · 취미 · 공연 모집글 5개 둘러보기',
+    });
+    expect(within(boards).getByText('식사 · 진로 · 취미 · 공연 모집글 5개 둘러보기')).toBeVisible();
+    await user.press(boards);
+
+    expect(screen.getByRole('button', { name: '취미 게시판 · 모집글 3개' })).toBeVisible();
   });
 });
 

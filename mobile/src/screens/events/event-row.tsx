@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Fable 5.2  prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -11,8 +12,9 @@ import { Badge, color, eventText, eventTone, Icon, radius, size, space } from '@
 import type { EventView } from '@/features/events/adapter';
 import { FavoriteToggle } from './favorite-toggle';
 
-// The title and the time·place line take at most this many lines each: a long real title or place stays one short
-// row, and the detail sheet shows them whole.
+// The title takes one line and the time·place line at most two, each cut with "…": every row keeps one height for its
+// title, and the detail sheet shows them whole.
+const TITLE_LINES = 1;
 export const ROW_LINES = 2;
 
 // "모집 중인 파티 {n}" in navy on light blue when a recruiting Quest the User can join is there for the event, "함께 갈
@@ -92,7 +94,7 @@ export function EventRow({ event, focused, onLayout, onOpen, onParty }: EventRow
         <Text
           accessibilityRole="button"
           lineBreakStrategyIOS="hangul-word"
-          numberOfLines={ROW_LINES}
+          numberOfLines={TITLE_LINES}
           onPress={onOpen}
           style={styles.title}
         >
@@ -114,7 +116,7 @@ export function EventRow({ event, focused, onLayout, onOpen, onParty }: EventRow
 // The frame's measures that the design system's 4-point steps do not hold: the row's padding, the date column's width
 // and the light blue's padding.
 const ROW_PADDING = 22;
-const DATE_WIDTH = 72;
+const DATE_WIDTH = 60;
 const PARTY_PADDING = 14;
 // The day sits level with the title: lowered by 18 under a source's line, raised by the source's line and the gap
 // under it without one.

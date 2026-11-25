@@ -7,6 +7,7 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -18,6 +19,7 @@ import { Button, ErrorState, FullScreenPanel, LoadingState, space, TextField, us
 import { type HeldProposal, heldProposal } from '@/features/party/held-proposal';
 import { WhenField, WhereField } from '../../room/plan-form';
 import { EventField, EventPicker } from './event-field';
+import { FieldIcon } from './field-head';
 import { FriendPicker } from './friend-picker';
 import { BoardField, CapacityField, DescriptionField, VisibilityField } from './party-form-fields';
 import { PhotoField } from './photo-field';
@@ -30,6 +32,7 @@ const FOOTER = 81;
 function When({ state }: { state: FormState }): ReactElement {
   return (
     <WhenField
+      icon={<FieldIcon name="clock" />}
       onPick={(startsAt) => {
         state.change({ startsAt });
       }}
@@ -39,7 +42,15 @@ function When({ state }: { state: FormState }): ReactElement {
 }
 
 function Where({ state }: { state: FormState }): ReactElement {
-  return <WhereField onPicked={state.setPicked} onWords={state.setWords} picked={state.picked} words={state.words} />;
+  return (
+    <WhereField
+      icon={<FieldIcon name="pin" />}
+      onPicked={state.setPicked}
+      onWords={state.setWords}
+      picked={state.picked}
+      words={state.words}
+    />
+  );
 }
 
 interface FieldsProps {
@@ -68,6 +79,7 @@ function Fields({ state, onChooseEvent }: FieldsProps): ReactElement {
       />
       <TextField
         label="제목"
+        labelIcon={<FieldIcon name="title" />}
         maxLength={30}
         onChangeText={(next) => {
           change({ title: next });

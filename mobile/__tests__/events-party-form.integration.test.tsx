@@ -5,6 +5,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -67,6 +68,18 @@ describe('the event picker', () => {
     await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
     expect(screen.getByLabelText('행사 검색')).toHaveProp('placeholder', '제목·장소·내용 검색');
   });
+
+  it('marks the chosen event when it opens again', async () => {
+    const user = await openAt('/party-form');
+    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    await user.press(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
+
+    await user.press(screen.getByRole('button', { name: /^관련 행사 AI 커리어 설명회/u }));
+
+    expect(screen.getByRole('header', { name: '관련 행사 고르기' })).toBeVisible();
+    expect(screen.getByRole('button', { name: `행사 · ${CAREER.title}` })).toBeSelected();
+    expect(screen.getByRole('button', { name: `행사 · ${MAJOR.title}` })).not.toBeSelected();
+  });
 });
 
 describe('관련 행사', () => {
@@ -74,7 +87,7 @@ describe('관련 행사', () => {
     const user = await openAt('/party-form');
 
     await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
-    expect(screen.getByRole('header', { name: '행사' })).toBeVisible();
+    expect(screen.getByRole('header', { name: '관련 행사 고르기' })).toBeVisible();
     await user.press(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
 
     expect(screen.getByTestId('chosen-event')).toHaveTextContent(`${CAREER.title}오늘 18:00–20:00 · 301동 대강당`, {
