@@ -10,6 +10,7 @@ import {
   pickedLanes,
   pickedOf,
   pickRowsOf,
+  type PickRow,
   pickStateOf,
   previewOf,
   toggled,
@@ -143,6 +144,20 @@ describe('the rows while picking', () => {
 // Partitions: a checked person busy over the Plan's start; one busy only after it; nobody checked busy over it.
 // Expected values: the Plan's 28 minutes from 12:15 move to 12:30 after a class until 12:30; a 40-minute span from 12:30
 // stops at 태현's class from 12:50.
+function minsuRowOf(walks: ReadonlyMap<string, number | null>): PickRow | undefined {
+  return pickRowsOf({ band: BAND, picked: [], walks, friends: [{ id: 'minsu', name: '민수', walkMinutes: 6 }] }).find(
+    ({ userId }) => userId === 'minsu',
+  );
+}
+
+// Partitions: a Plan's Friend with a walk in the Plan, and without one.
+describe('the walk of a Plan’s Friend while picking', () => {
+  it('comes from the Plan, and from the phone’s guess only without one', () => {
+    expect(minsuRowOf(new Map([['minsu', 12]]))?.walkMinutes).toBe(12);
+    expect(minsuRowOf(new Map([['me', 3]]))?.walkMinutes).toBe(6);
+  });
+});
+
 describe('the span the combined bar previews', () => {
   it('starts after a checked person busy at its start and keeps its length', () => {
     const lanes = [

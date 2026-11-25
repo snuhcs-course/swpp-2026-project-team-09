@@ -65,7 +65,7 @@ export interface PickRow {
 interface RowsSource {
   band: TimeBand;
   picked: readonly string[];
-  // The walking minutes of the Plan's people to its place, by user id.
+  // The walking minutes of the Plan's people to its place, by user id; a Friend with none takes the phone's guess.
   walks: ReadonlyMap<string, number | null>;
   // Every Friend of the User, for those the main server sent no lane for, with the phone's guess of their walk.
   friends: readonly { id: string; name: string; walkMinutes: number | null }[];
@@ -83,8 +83,10 @@ export function pickRowsOf({ band, picked, walks, friends }: RowsSource): PickRo
     busy,
     walkMinutes,
   });
+  const walkOf = (userId: string): number | null =>
+    walks.has(userId) ? (walks.get(userId) ?? null) : (friends.find(({ id }) => id === userId)?.walkMinutes ?? null);
   const lanes = [
-    ...people.map(({ userId, name, busy }) => row(userId, name, busy, walks.get(userId) ?? null)),
+    ...people.map(({ userId, name, busy }) => row(userId, name, busy, walkOf(userId))),
     ...(band.others ?? []).map(({ userId, name, busy, walkMinutes }) => row(userId, name, busy, walkMinutes)),
   ];
   const rows = [
