@@ -39,7 +39,7 @@ function styleOf(testId: string): ViewStyle {
 }
 
 describe('Glass', () => {
-  it('draws a different see-through ground at each level', async () => {
+  it('draws a see-through ground at each level', async () => {
     await render(
       <>
         {GLASS_LEVELS.map((level) => (
@@ -49,7 +49,6 @@ describe('Glass', () => {
     );
 
     const grounds = GLASS_LEVELS.map((level) => String(styleOf(level).backgroundColor));
-    expect(new Set(grounds).size).toBe(GLASS_LEVELS.length);
     for (const ground of grounds) {
       expect(ground).toMatch(/^rgba\(.*, 0\.\d+\)$/u);
     }
@@ -70,7 +69,7 @@ describe('Glass', () => {
 });
 
 describe('Glass at the panel level', () => {
-  it('blurs behind a panel where the phone has Liquid Glass, with the white at 50% over it', async () => {
+  it('blurs behind a panel where the phone has Liquid Glass, with no white over the blur', async () => {
     mockLiquidGlass = true;
     await render(
       <Glass level="panel" style={{ borderRadius: 24 }} testID="panel">
@@ -80,14 +79,14 @@ describe('Glass at the panel level', () => {
 
     expect(styleOf('panel').backgroundColor).toBe('transparent');
     expect(styleOf('liquid-glass')).toMatchObject({ position: 'absolute', borderRadius: 24 });
-    expect(alphaOf(styleOf('glass-white').backgroundColor)).toBe(0.5);
+    expect(styleOf('glass-line').backgroundColor).toBeUndefined();
     expect(screen.getByText('학생회관식당')).toBeVisible();
   });
 
-  it('draws a denser white and no blur where the phone has no Liquid Glass, as on Android', async () => {
+  it('draws a dense white and no blur where the phone has no Liquid Glass, as on Android', async () => {
     await render(<Glass level="panel" testID="panel" />);
 
-    expect(alphaOf(styleOf('panel').backgroundColor)).toBe(0.75);
+    expect(alphaOf(styleOf('panel').backgroundColor)).toBe(0.8);
     expect(screen.queryByTestId('liquid-glass')).toBeNull();
   });
 

@@ -27,9 +27,9 @@ interface GlassProps extends Omit<ViewProps, 'style' | 'children'> {
 // a colour.
 //
 // A panel blurs what is behind it where the phone can blur the map: iOS 26 and later, with the system's Liquid Glass,
-// which blurs as the screen is composed. Its own white then lies over the blur at the board's 50%. Android cannot
-// blur the Kakao map, which draws on a surface of its own that a view's blur never sees (A04-03), nor can iOS before
-// 26; there the panel is a denser white with no blur.
+// which blurs as the screen is composed, and no white of its own over it. Android cannot blur the Kakao map, which
+// draws on a surface of its own that a view's blur never sees (A04-03), nor can iOS before 26; there the panel is a
+// dense white with no blur.
 export function Glass({ level, style, children, ...view }: GlassProps): ReactElement {
   if (level !== 'panel' || !isLiquidGlassAvailable()) {
     return (
@@ -42,7 +42,7 @@ export function Glass({ level, style, children, ...view }: GlassProps): ReactEle
   return (
     <View {...view} style={[style, surfaces.panelShadow]}>
       <GlassView glassEffectStyle="regular" pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius }]} />
-      <View style={[StyleSheet.absoluteFill, surfaces.panelOverBlur, { borderRadius }]} testID="glass-white" />
+      <View style={[StyleSheet.absoluteFill, surfaces.panelLine, { borderRadius }]} testID="glass-line" />
       {children}
     </View>
   );
@@ -53,10 +53,10 @@ const surfaces = StyleSheet.create({
     backgroundColor: glass.panel.ground,
     boxShadow: `${glass.panel.shadow}, ${glass.line}`,
   },
-  // A blurred panel: the shadow on the panel, and the white and its line on a layer over the blur, which would hide
-  // them if they were on the panel itself.
+  // A blurred panel: the shadow on the panel, and the line on a layer over the blur, which would hide it if it were on
+  // the panel itself.
   panelShadow: { backgroundColor: 'transparent', boxShadow: glass.panel.shadow },
-  panelOverBlur: { backgroundColor: glass.panel.overBlur, boxShadow: glass.line, pointerEvents: 'none' },
+  panelLine: { boxShadow: glass.line, pointerEvents: 'none' },
   inner: { backgroundColor: glass.inner.ground },
   field: { backgroundColor: glass.field.ground },
   mapChip: {
