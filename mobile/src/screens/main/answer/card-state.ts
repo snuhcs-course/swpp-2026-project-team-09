@@ -23,8 +23,10 @@ export interface CardState {
   list: QuestionsOpen;
 }
 
-// The step the card was raised to: high unless a drag or a screen reader stopped it at the middle. A press on the map
-// that raises the card (`setRaised`) takes it to the step it last stood at above low, high after it was lowered.
+// The step the card was raised to. A press that raises the card (`setRaised`: a chosen restaurant's "메뉴 ›" on the
+// map, a Lookup's own mark) takes it from low to middle, so that what it opened is seen, and leaves a raised card at
+// its step: only the User's drag or a screen reader's step takes the card to high (P04 ticket 63, the user's phone
+// check).
 type Upper = Exclude<Level, 'low'>;
 
 // The card's step, which the control holds as raised or not so that a press on the map raises it too, and whether the
@@ -38,7 +40,7 @@ export function useCardState({ raised, setRaised, earlier }: ChatSheetControl['c
   useEffect(() => {
     tellEarlier(open);
   }, [tellEarlier, open]);
-  const [upper, setUpper] = useState<Upper>('high');
+  const [upper, setUpper] = useState<Upper>('mid');
   const [seen, setSeen] = useState(turn);
   if (seen !== turn) {
     setSeen(turn);
@@ -47,7 +49,7 @@ export function useCardState({ raised, setRaised, earlier }: ChatSheetControl['c
   const setLevel = useCallback(
     (next: Level): void => {
       if (next === 'low') {
-        setUpper('high');
+        setUpper('mid');
         setRaised(false);
       } else {
         setUpper(next);
