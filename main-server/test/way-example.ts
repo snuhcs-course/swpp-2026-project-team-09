@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PlacePoint } from '../src/assistant/dto/answer.dto.js';
@@ -14,7 +15,8 @@ import { type PlaceDto } from '../src/places/dto/place.dto.js';
 import { readSeedPlaces } from '../src/places/places.seed.js';
 import { type ShuttleStopDto } from '../src/shuttle/dto/shuttle-route.dto.js';
 import { readSeedStops } from '../src/shuttle/shuttle.seed.js';
-import { readSeedTravel, type SeedTravel } from '../src/travel/travel.js';
+import { type SeedTravel } from '../src/travel/travel.js';
+import { readFrozenTravel } from './frozen-travel.js';
 
 // The campus of the boards of a way (q1, q2, q3, q4, and q15): the seed's Places, walking table, shuttle timing, and
 // shuttle stops. Call `readCampus` in a beforeAll first.
@@ -30,7 +32,7 @@ let places: PlaceDto[] = [];
 let stops: ShuttleStopDto[] = [];
 
 export async function readCampus(): Promise<void> {
-  travel = await readSeedTravel(SEED_DIRECTORY);
+  travel = await readFrozenTravel();
   const seed = await readSeedPlaces(SEED_DIRECTORY, await readCampusBoundary(SEED_DIRECTORY));
   places = seed.map(({ id, number, name, latitude, longitude }) => ({ id, number, name, latitude, longitude }));
   // The database gives a stop its id; its key in the seed stands in for it.

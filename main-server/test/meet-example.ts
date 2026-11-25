@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply, type MeetInput } from '../src/assistant/dto/answer.dto.js';
@@ -10,9 +11,9 @@ import { type AnswerPerson } from '../src/assistant/gathering/answer-words.js';
 import { type GatheringPerson } from '../src/assistant/gathering/gathering.js';
 import { meetAnswer } from '../src/assistant/gathering/meet-answer.js';
 import { gatherToMeet, meetingPlaces, meetWindow } from '../src/assistant/gathering/meet-gathering.js';
-import { SEED_DIRECTORY } from '../src/common/seed-directory.js';
-import { readSeedTravel, type SeedTravel } from '../src/travel/travel.js';
+import { type SeedTravel } from '../src/travel/travel.js';
 import { id, place, placeOf, position, readCampus } from './way-example.js';
+import { readFrozenTravel } from './frozen-travel.js';
 
 // The design's row 6, boards a5 and a6: "만나고 싶다" with 민수 on Tuesday 2026-11-17, asked at 12:10, on the seed's
 // Places and walking table. The places to meet are 학생회관, two libraries, and 302동식당. Call `readMeetWorld` in a
@@ -35,7 +36,7 @@ let travel: SeedTravel | null = null;
 
 export async function readMeetWorld(): Promise<void> {
   await readCampus();
-  travel = await readSeedTravel(SEED_DIRECTORY);
+  travel = await readFrozenTravel();
 }
 
 export const classAt = (start: string, end: string, placeName: string | null): DayItem => ({

@@ -7,8 +7,6 @@
  ******************************************************************************/
 
 import {
-  CLIMB_SECONDS_PER_METRE,
-  DESCENT_SECONDS_PER_METRE,
   type OsmWay,
   type Pin,
   WALKING_METRES_PER_SECOND,
@@ -157,23 +155,32 @@ describe('joining a pin to the graph', () => {
   });
 });
 
+// The speed on a slope by Tobler's function, scaled to the flat speed.
+function tobler(slope: number): number {
+  return SPEED * Math.exp(-3.5 * (Math.abs(slope + 0.05) - 0.05));
+}
+
+// P04 ticket 77: Tobler's hiking function on the slope between the two ends, scaled to the flat speed. Partitions: a
+// steep climb and the same drop; going down 5%, the fastest; flat. Expected values: the speed on the flat times
+// exp(−3.5 × (|slope + 0.05| − 0.05)).
 describe('climbing', () => {
   const path = footway(0, 0, 110, 0);
 
-  it('adds the climb value per metre when the destination is higher', () => {
-    expect(seconds([path], pin(0, 0, 100), pin(110, 0, 120))).toBeCloseTo(110 / SPEED + 20 * CLIMB_SECONDS_PER_METRE);
+  it('slows the walk up a slope by Tobler’s function', () => {
+    expect(seconds([path], pin(0, 0, 100), pin(110, 0, 120))).toBeCloseTo(110 / tobler(20 / 110));
   });
 
-  it('adds the descent value per metre when the destination is lower', () => {
-    expect(seconds([path], pin(0, 0, 120), pin(110, 0, 100))).toBeCloseTo(110 / SPEED + 20 * DESCENT_SECONDS_PER_METRE);
-  });
-
-  // P04 ticket 77: a way up and the way down differ.
-  it('takes longer up than down by the climb and the descent', () => {
-    const up = seconds([path], pin(0, 0, 100), pin(110, 0, 120));
+  it('takes the same drop down faster, but slower than its best', () => {
     const down = seconds([path], pin(0, 0, 120), pin(110, 0, 100));
 
-    expect(up - down).toBeCloseTo(20 * (CLIMB_SECONDS_PER_METRE - DESCENT_SECONDS_PER_METRE));
-    expect(up).toBeGreaterThan(down);
+    expect(down).toBeCloseTo(110 / tobler(-20 / 110));
+    expect(down).toBeLessThan(seconds([path], pin(0, 0, 100), pin(110, 0, 120)));
+  });
+
+  it('is fastest going down 5%, and at the flat speed on the flat', () => {
+    const gentle = seconds([path], pin(0, 0, 105.5), pin(110, 0, 100));
+
+    expect(gentle).toBeCloseTo((110 / SPEED) * Math.exp(-0.175));
+    expect(seconds([path], pin(0, 0, 100), pin(110, 0, 100))).toBeCloseTo(110 / SPEED);
   });
 });

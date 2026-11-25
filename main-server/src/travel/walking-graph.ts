@@ -13,13 +13,11 @@ import { METRES_PER_DEGREE, metresPerDegreeEast, type Position } from '../common
 
 // The speed on the flat, fitted to the 13 calibration walks of P04's evidence/06, unrounded (P11 ticket 02).
 export const WALKING_METRES_PER_SECOND = 1.3966856966974264;
-// What each metre the destination stands above the origin adds, and each metre it stands below, negative when going
-// down is faster than the flat, so that a way up and the way down differ (P04 ticket 77). Heights are the two ends',
-// not summed along the path: SRTM's 30 m cells put bumps in every path, and summing them adds a climb both ways, a
-// flat pair included. The calibration's fit of a climb went below 0 on walks too short and flat to tell it (P11
-// ticket 02).
-export const CLIMB_SECONDS_PER_METRE = 6;
-export const DESCENT_SECONDS_PER_METRE = 0;
+// Tobler's hiking function sets the speed by the slope (P04 ticket 77, the user's choice): fastest going down 5%, and
+// slower the steeper it climbs or drops from there. It is scaled so that the flat keeps the fitted speed above, where
+// Tobler's own is 5.04 km/h (1.3994 m/s, about 1.4 seconds a kilometre faster).
+const TOBLER_STEEPNESS = 3.5;
+const TOBLER_FASTEST_SLOPE = -0.05;
 const JOIN_MARGIN_METRES = 20;
 
 const WALKED_HIGHWAYS = new Set([
@@ -246,13 +244,17 @@ function metresBetweenJoins(toNodes: Float64Array, starts: ReadonlyMap<Segment, 
   return best;
 }
 
-// A walk of `metres` to a destination `rise` metres above its origin, below it when negative.
+// A walk of `metres` along the path to a destination `rise` metres above its origin, below it when negative. The slope
+// is the two ends' heights over the path's length: SRTM's 30 m cells put bumps in every path, and summing them edge
+// by edge adds a climb both ways, a flat pair included. A path that rises and falls on the way counts flatter than it
+// is.
 export function walkSeconds(metres: number, rise: number): number {
-  return (
-    metres / WALKING_METRES_PER_SECOND +
-    Math.max(0, rise) * CLIMB_SECONDS_PER_METRE +
-    Math.max(0, -rise) * DESCENT_SECONDS_PER_METRE
-  );
+  if (metres === 0) {
+    return 0;
+  }
+  const slope = rise / metres;
+  const share = Math.exp(-TOBLER_STEEPNESS * (Math.abs(slope - TOBLER_FASTEST_SLOPE) + TOBLER_FASTEST_SLOPE));
+  return metres / (WALKING_METRES_PER_SECOND * share);
 }
 
 // Each pair's seconds from each of `from` to each of `to`, in that direction.
@@ -267,7 +269,7 @@ export function walkingSeconds(graph: WalkingGraph, from: readonly Pin[], to: re
         return 0;
       }
       const metres = metresBetweenJoins(toNodes, starts, ends[index] ?? []);
-      return Math.max(0, walkSeconds(metres, destination.elevation - origin.elevation));
+      return walkSeconds(metres, destination.elevation - origin.elevation);
     });
   });
 }
