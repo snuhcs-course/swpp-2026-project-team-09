@@ -41,7 +41,18 @@ export async function otherFriendsOf(
       userId: friend.id,
       name: friend.name,
       items: items[index] ?? [],
-      walkTo: (placeId) => (from === null ? null : walkingMinutes(from, placeId, travel)),
+      walkTo: (placeId) => (from === null ? null : walkOrNone(from, placeId, travel)),
     };
   });
+}
+
+// The walking table throws for a Place it has no row for, as one an Administrator adds before the table is rebuilt.
+// Here that leaves this Friend's walk unknown rather than fail the answer for every Friend (as `LocationSharingService`
+// does for positions).
+function walkOrNone(from: string, to: string, travel: GatheringTravel): number | null {
+  try {
+    return walkingMinutes(from, to, travel);
+  } catch {
+    return null;
+  }
 }
