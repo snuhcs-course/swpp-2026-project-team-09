@@ -20,7 +20,7 @@ The user's decision (2026-11-26), on "저녁 17:00 ›": "나는 필요 없어 �
    - what bounds the span on the left, after the start time: the busy stretch that ends last before it ("· 민수 12:15 302동 수업 끝"), or now ("· 11:50 지금");
    - only when nothing bounds it on the left, what starts first after it, before the end time ("13:00 24동 수업 ·"), so that the line keeps its one reason;
    - nothing when nothing bounds the span.
-   What starts after the span is otherwise on the map, as the dark pill, and on the bar, as the busy block.
+     What starts after the span is otherwise on the map, as the dark pill, and on the bar, as the busy block.
 3. The other meal's link goes from both sides ("저녁 17:00 ›" under lunch, "‹ 점심 12:16" under dinner): it is asked for in words, which the meal rules cover. The main server still sends `otherMeal` for older apps; this app no longer reads it, and the code and tests that served only the link go (`MealTick`, `mealTickOf`, `otherMealInput`, the parser's check, the mocks' field).
 4. The same `Ends` draws every bar under the answer pill: every Plan's (a meal, a meet, the Plans of several requests) and every Lookup's (a menu answer). A seat's bar is `SlotBand`, a different component, and stays as it is.
 
