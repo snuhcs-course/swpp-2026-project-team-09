@@ -6,7 +6,7 @@
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AccessibilityActionInfo, ViewStyle } from 'react-native';
 import { Gesture, type PanGesture } from 'react-native-gesture-handler';
 import {
@@ -24,11 +24,11 @@ import type { SheetLink } from './sheet-link';
 
 // The time card's grip (P04 ticket 61, boards k1–k4 and p): the card stands at one of its places, and a drag on its
 // grip's strip, the card's whole width under its hairline, moves it between them with the finger. Pushed up it slides
-// up as it is, nothing laid out again, until only a strip with the grip shows under the status bar (tucked). With
-// Friends, pulled down it opens: a row for each person comes out under the track, which keeps its range and scale, the
-// card growing with the rows. Alone there is nothing to open. A let-go settles at the place a fling points to, or the
-// nearest. A press on the grip opens or folds the card with Friends, and a screen reader tucks it away or back. Only
-// one of it and the answer sheet is expanded at a time (`sheet-link`).
+// up as it is, nothing laid out again, until only a strip with the grip shows under the status bar (tucked). Pulled
+// down it opens: a row for each person comes out under the track, which keeps its range and scale, the card growing
+// with the rows; 나's alone when nobody is added (P04 ticket 64). A let-go settles at the place a fling points to, or
+// the nearest. A press on the grip opens or folds the card, and a screen reader tucks it away or back. Only one of it
+// and the answer sheet is expanded at a time (`sheet-link`).
 
 // What of the card stays in sight tucked: the grip and a little room around it.
 export const TUCK_STRIP = 20;
@@ -113,7 +113,7 @@ function useGripPan(
   y: SharedValue<number>,
   stops: readonly number[],
   settle: (index: number, velocity: number) => void,
-  { setMoving, sheet }: { setMoving: (moving: boolean) => void; sheet: SheetLink },
+  { grab, sheet }: { grab: () => void; sheet: SheetLink },
 ): PanGesture {
   const from = useSharedValue(0);
   // A drag that began while the sheet's move leads is let pass: the card only follows then.
@@ -136,7 +136,7 @@ function useGripPan(
       if (following !== undefined) {
         following.value = follows ? 1 : 0;
       }
-      scheduleOnRN(setMoving, true);
+      scheduleOnRN(grab);
     })
     .onUpdate(({ translationY }) => {
       'worklet';
@@ -181,27 +181,35 @@ function useGripStyles(
 interface Settling {
   place: GripPlace;
   moving: boolean;
-  setMoving: (moving: boolean) => void;
+  // Where the card is going: the place a run heads for, else the one it rests at. A way back asked while it opens
+  // (P04 ticket 67) is measured from where it goes, not from where it rested.
+  aim: () => GripPlace;
+  // The finger takes the card: a run on its way stops heading anywhere.
+  grab: () => void;
   settle: (index: number, velocity?: number) => void;
 }
 
-// The card's place, and the run to the place a let-go or a press settles at. Laid out again at rest, as when the rows'
-// height changes open, the card stays at its place.
-function useSettling(stops: readonly number[], y: SharedValue<number>, sheet: SheetLink): Settling {
-  const { onOpen, following } = sheet;
+interface Running {
+  place: GripPlace;
+  moving: boolean;
+  setMoving: (moving: boolean) => void;
+  // The index of the place a run heads for, until it arrives; null at rest and under the finger.
+  heading: RefObject<number | null>;
+  run: (index: number, velocity: number) => void;
+}
+
+// The run to the place a let-go or a press settles at.
+function useRun(stops: readonly number[], y: SharedValue<number>): Running {
   const [place, setPlace] = useState<GripPlace>('shown');
   const [moving, setMoving] = useState(false);
+  const heading = useRef<number | null>(null);
   const reduce = useReduceMotionSetting() !== false;
-  const settle = useCallback(
-    (index: number, velocity = 0): void => {
+  const run = useCallback(
+    (index: number, velocity: number): void => {
       const to = stops[index] ?? 0;
-      if (PLACES[index] === 'open') {
-        if (following !== undefined) {
-          following.value = 0;
-        }
-        onOpen();
-      }
+      heading.current = index;
       const done = (): void => {
+        heading.current = null;
         setPlace(PLACES[index] ?? 'shown');
         setMoving(false);
       };
@@ -218,14 +226,45 @@ function useSettling(stops: readonly number[], y: SharedValue<number>, sheet: Sh
         }
       });
     },
-    [stops, reduce, y, onOpen, following],
+    [stops, reduce, y],
   );
+  return { place, moving, setMoving, heading, run };
+}
+
+// The card's place, and the run to the place a let-go or a press settles at. Laid out again at rest, as when the rows'
+// height changes open, the card stays at its place; laid out again on its way, as picking's rows are a frame after the
+// opening begins, the run heads for the new height (P04 ticket 67).
+function useSettling(stops: readonly number[], y: SharedValue<number>, sheet: SheetLink): Settling {
+  const { onOpen, following } = sheet;
+  const { place, moving, setMoving, heading, run } = useRun(stops, y);
+  const settle = useCallback(
+    (index: number, velocity = 0): void => {
+      if (PLACES[index] === 'open') {
+        if (following !== undefined) {
+          following.value = 0;
+        }
+        onOpen();
+      }
+      run(index, velocity);
+    },
+    [run, onOpen, following],
+  );
+  const laid = useRef(stops);
   useEffect(() => {
-    if (!moving) {
+    const changed = laid.current !== stops;
+    laid.current = stops;
+    if (changed && heading.current !== null) {
+      run(heading.current, 0);
+    } else if (!moving) {
       y.value = stops[PLACES.indexOf(place)] ?? 0;
     }
-  }, [moving, place, stops, y]);
-  return { place, moving, setMoving, settle };
+  }, [moving, place, stops, y, heading, run]);
+  const aim = (): GripPlace => (heading.current === null ? place : (PLACES[heading.current] ?? place));
+  const grab = useCallback((): void => {
+    heading.current = null;
+    setMoving(true);
+  }, [heading, setMoving]);
+  return { place, moving, aim, grab, settle };
 }
 
 // While the sheet's move leads (`sheet-link`) and the card was open when it began, its open height follows the sheet
@@ -272,10 +311,10 @@ export function useTimeCardGrip({ height, top, rows, sheet }: GripInput): TimeCa
   const reach = Math.max(0, top + height - TUCK_STRIP);
   const stops = useMemo(() => [-reach, 0, rows], [reach, rows]);
   const y = useSharedValue(0);
-  const { place, moving, setMoving, settle } = useSettling(stops, y, sheet);
+  const { place, moving, aim, grab, settle } = useSettling(stops, y, sheet);
   useFoldUnder(sheet.high, place, settle);
   const followsSheet = useFollowSheet(y, rows, sheet, place);
-  const pan = useGripPan(y, stops, settle, { setMoving, sheet });
+  const pan = useGripPan(y, stops, settle, { grab, sheet });
   const styles = useGripStyles(y, rows, sheet.pull);
   const rested = useMemo(() => ({ transform: [{ translateY: place === 'tucked' ? -reach : 0 }] }), [place, reach]);
   const grownRest = useMemo(() => ({ height: place === 'open' ? rows : 0 }), [place, rows]);
@@ -288,10 +327,10 @@ export function useTimeCardGrip({ height, top, rows, sheet }: GripInput): TimeCa
     ...styles,
     followsSheet,
     toggle: () => {
-      settle(place === 'shown' ? 2 : 1);
+      settle(aim() === 'shown' ? 2 : 1);
     },
     settleTo: (to: GripPlace) => {
-      if (to !== place) {
+      if (to !== aim()) {
         settle(PLACES.indexOf(to));
       }
     },

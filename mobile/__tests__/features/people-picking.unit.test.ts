@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MealInput, TimeBand } from '@/api/assistant-types';
@@ -133,6 +134,14 @@ describe('the rows while picking', () => {
 
   it('keeps that order however rows are checked until picking ends', () => {
     expect(named(inOrder(rowsWith(['jiho', 'taehyun']), order))).toEqual(['서연', '태현 ✓', '민수', '예린', '지호 ✓']);
+  });
+
+  // P04 ticket 67: the rows never grow once picking is open, so a Friend the list brings later waits for the next.
+  it('leaves out a row the order does not know', () => {
+    const [first] = opened;
+    const later = first === undefined ? [] : [{ ...first, userId: 'newcomer', name: '새친구', checked: false }];
+
+    expect(named(inOrder([...opened, ...later], order))).toEqual(['서연 ✓', '태현', '민수', '예린', '지호']);
   });
 
   it('says who is busy over the span, until when and with what, and nobody without busy stretches', () => {
