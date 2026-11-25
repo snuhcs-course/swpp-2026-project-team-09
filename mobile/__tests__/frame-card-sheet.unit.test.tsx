@@ -184,7 +184,7 @@ describe('low over a smaller footer', () => {
   // P04 ticket 63: an answer without a main button gives that row's room to its words, whole lines of them, and the
   // room under the last whole line is covered in the sheet's colour.
   it('keeps the top edge over a footer without a main button, and shows its words in whole lines', async () => {
-    await render(card('low', undefined, BARE_ROOM));
+    const view = await render(card('low', undefined, BARE_ROOM));
     await layContent(1000);
     await settle();
 
@@ -194,16 +194,14 @@ describe('low over a smaller footer', () => {
     expect(lines).toBe(4);
     expect(heightOf('answer-card-band')).toBe(above - 12 - lines * text.bodyLg.lineHeight);
     expect(getAnimatedStyle(screen.getByTestId('answer-card-band'))).toMatchObject({ opacity: 1 });
-  });
+    // PR 553's review: fully scrolled at low, the content's end comes clear of the band, not only of the fade.
+    const style: unknown = screen.getByTestId('card-content').props.contentContainerStyle;
+    const { paddingBottom } = StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
+    expect(paddingBottom).toBe(heightOf('card-content') - above + heightOf('answer-card-band'));
 
-  it('fades the band under the last whole line away at middle', async () => {
-    const view = await render(card('low', undefined, BARE_ROOM));
-    await layContent(1000);
-    await settle();
-
+    // Raised to middle, the band fades away.
     await view.rerender(card('mid', undefined, BARE_ROOM));
     await settle();
-
     expect(getAnimatedStyle(screen.getByTestId('answer-card-band'))).toMatchObject({ opacity: 0 });
   });
 });

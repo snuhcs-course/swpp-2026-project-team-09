@@ -155,8 +155,9 @@ function useContentScroll(
   const whole = natural === null ? 0 : natural + under;
   const scrolls = heights !== null && whole > heights[level] + 1;
   // The scroll view is laid out at the highest step's height: under the content it needs as much room as the low card
-  // shows less, so that the content scrolls its end clear of the fade there too.
-  const padBottom = caps === null || heights === null ? 0 : caps.room - heights.low + FADE;
+  // shows less, so that the content scrolls its end clear of the fade there too, and of the band over the footer at low
+  // (PR 553's review).
+  const padBottom = caps === null || heights === null ? 0 : caps.room - heights.low + Math.max(FADE, caps.band);
   return { scroll, scrollY, onScroll, scrolls, whole, padBottom };
 }
 
@@ -192,7 +193,7 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
   const [laid, setLaid] = useState(0);
   const extra = above + barRoom;
   const { scroll, scrollY, onScroll, scrolls, whole, padBottom } = useContentScroll(
-    { ...measures, under: underOf(props) },
+    { ...measures, under: Math.max(underOf(props), measures.caps?.band ?? 0) },
     level,
   );
   // The hint waits until the stage and the content are laid out, so that it shows only over a card with more to show.
