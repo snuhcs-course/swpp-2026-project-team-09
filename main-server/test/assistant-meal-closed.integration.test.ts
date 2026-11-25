@@ -112,6 +112,24 @@ describe('A plan for a meal some Restaurants close', () => {
   });
 });
 
+describe('A Restaurant closed for the meal it could not have been eaten at anyway', () => {
+  // The user's word (2026-11-26): a closed one that could not be reached and eaten at in the time anyway is not named.
+  // 학생회관식당's last dinner served at 17:30 is before the asker's Class ends at 17:50.
+  it('is not named apart: only one that would have been a candidate is', async () => {
+    const date = '2074-04-03';
+    await dinnerAt(date, {
+      '302동식당': closedAllDay(NOTICE),
+      학생회관식당: closedAllDay(NOTICE),
+      '301동식당': [dish('dinner', '제육볶음')],
+    });
+    stage.hoursAre({ 학생회관식당: { dinner: { opensAt: '17:00', closesAt: '17:30' } } });
+
+    const answer = answerIn((await stage.send([planDinner(date), { text: '…' }]).expect(200)).body);
+
+    expect(answer.closed?.map(({ place }) => place.label)).toEqual(['302동식당']);
+  });
+});
+
 describe('A question about a Restaurant its menu closes', () => {
   const ASKED = '2074-03-20';
   const QUOTED = `<data label="menu.line">${NOTICE}</data>`;

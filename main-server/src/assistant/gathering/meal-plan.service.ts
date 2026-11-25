@@ -45,7 +45,7 @@ import { addingDto, addingOf, type Asked, askedFor, candidatesOf } from './meal-
 import { type AnswerPerson, mealAnswer, menusOf } from './meal-answer.js';
 import { type ServedMenu } from './meal-menu.js';
 import { type BusyItem, busyIn, leaveOut, mealChangeable, mealSetOf } from './meal-plan-parts.js';
-import { besideOf } from './meal-beside.js';
+import { type BesideServices, besideOf } from './meal-beside.js';
 import { type MissingInputs } from './missing-inputs.js';
 import { locationPlaceOf, otherFriendsOf } from './other-friends.js';
 import { placeLabelOf } from './place-naming.js';
@@ -152,7 +152,7 @@ export class MealPlanService {
       served: menus,
     });
     const busy = this.busyOf(answer, people[0]?.items ?? [], input);
-    const beside = besideOf(collected, input, { now, restaurantPlaces: this.restaurantPlaces });
+    const beside = await besideOf(collected, { input, now, people: [askerPerson, ...friendPeople] }, this.beside);
     const touched = await this.touched(askerId, input, { ...at, now, kinds: [`meal-${meal}`], setAside: held?.id });
     const set = { ...touched, mealSet: mealSetOf(held), ...addingDto(adding, people, answer.plans) };
     return { answer: { ...answer, ...beside, ...set }, served: menus, busy, posted: collected.length > 0 };
@@ -182,6 +182,11 @@ export class MealPlanService {
       this.menus.cuisinesOf(restaurants.flatMap(({ lines }) => lines)),
     ]);
     return { hours, menus: servedOf(restaurants, candidates, { hours, cuisines }) };
+  }
+
+  // What `besideOf` reads the Restaurants with.
+  private get beside(): BesideServices {
+    return { restaurantPlaces: this.restaurantPlaces, hours: this.hours, travel: this.travel };
   }
 
   // The Place of a Restaurant named as the plans name it, null for one the seed does not place.
