@@ -37,15 +37,16 @@ function tell(): void {
 // still asks.
 export function useHideTabBarOnMain(hide: boolean): void {
   useEffect(() => {
-    if (!hide) {
-      return;
-    }
-    const hider = Symbol('tab bar hider');
-    hiders.add(hider);
-    tell();
-    return (): void => {
-      hiders.delete(hider);
+    const hider = hide ? Symbol('tab bar hider') : null;
+    if (hider !== null) {
+      hiders.add(hider);
       tell();
+    }
+    return (): void => {
+      if (hider !== null) {
+        hiders.delete(hider);
+        tell();
+      }
     };
   }, [hide]);
 }
