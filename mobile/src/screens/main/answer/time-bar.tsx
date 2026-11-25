@@ -6,6 +6,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, use, useState } from 'react';
@@ -50,8 +51,6 @@ const NO_QUESTS: readonly Quest[] = [];
 // usual text size. Laid out, the chip's own width is the room, so that a larger text size widens both (P04 ticket 37):
 // the chip stands 12 from the bar's edge, 4 short of the bar's padding of 16, which is the gap before the words.
 const ADD_ROOM = 72;
-// The grip's name alone, where it opens nothing.
-const GRIP_ALONE = '시간 카드 손잡이';
 // The gap over the grip's strip, which the folded height counts (`useFoldedHeight`).
 const STRIP_TOP = space[1];
 
@@ -81,29 +80,23 @@ interface BarProps {
 
 // The bar's grip in its strip, the card's whole width at its bottom (the user's phone check), under a hairline that
 // parts it from the card's content as the answer sheet's header is parted, left out when the card is tucked to the
-// strip alone. A drag anywhere on the strip moves the card between tucked, its place, and with Friends open
-// (`useTimeCardGrip`); a press opens it or folds it again, and a screen reader tucks it away or back. Alone (`label`
-// null) it only tucks.
-function Grip(p: {
-  grip: TimeCardGrip;
-  label: string | null;
-  folded: boolean;
-  onLayout: (event: LayoutChangeEvent) => void;
-}): ReactElement {
-  const { grip, label, folded } = p;
+// strip alone. A drag anywhere on the strip moves the card between tucked, its place, and open (`useTimeCardGrip`); a
+// press opens it or folds it again, and a screen reader tucks it away or back.
+function Grip(p: { grip: TimeCardGrip; folded: boolean; onLayout: (event: LayoutChangeEvent) => void }): ReactElement {
+  const { grip, folded } = p;
   return (
     <GestureDetector gesture={grip.pan}>
       <Pressable
         accessibilityActions={grip.actions}
-        accessibilityLabel={label ?? GRIP_ALONE}
-        accessibilityRole={label === null ? undefined : 'button'}
-        accessibilityState={label === null ? undefined : { expanded: !folded }}
+        accessibilityLabel={`사람별 시간 ${folded ? '펼치기' : '접기'}`}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: !folded }}
         hitSlop={STRIP_SLOP}
         onAccessibilityAction={({ nativeEvent }) => {
           grip.onAction(nativeEvent.actionName);
         }}
         onLayout={p.onLayout}
-        onPress={label === null ? undefined : grip.toggle}
+        onPress={grip.toggle}
         style={styles.strip}
         testID="time-card-grip"
       >
@@ -139,24 +132,21 @@ function OpenRows(p: {
 }
 
 // The time bar: the answer's band in one white row at the top, its head the words and "＋ 같이", its track over the
-// free time around the span, at one range and scale whether it is open or not. With Friends, pulled open by its grip, a
-// row for each person comes out under the track over the same range, four people at most in sight and the rest
-// scrolled to (P04 ticket 61); people are picked in those rows (P04 ticket 64). A time outside that range is asked for
-// in the chat, not by a drag. Its grip also pushes it up out of the way. The height it tells is its folded one: open,
-// it lies over the map for a while.
+// free time around the span, at one range and scale whether it is open or not. Pulled open by its grip, a row for each
+// person comes out under the track over the same range, 나's alone when nobody is added, four people at most in sight
+// and the rest scrolled to (P04 ticket 61); people are picked in those rows (P04 ticket 64). A time outside that range
+// is asked for in the chat, not by a drag. Its grip also pushes it up out of the way. The height it tells is its
+// folded one: open, it lies over the map for a while.
 function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: BarProps): ReactElement {
   const { top } = useSafeAreaInsets();
   const [addWidth, setAddWidth] = useState(ADD_ROOM);
   const [rows, setRows] = useState(0);
   const { height, onBand, onStrip } = useFoldedHeight(STRIP_TOP, onHeight);
   const barY = barTop(top) + offset;
-  const { lanes, startAt, now } = band.band;
-  const friends = lanes.length > 1 || picking !== null;
+  const { startAt, now } = band.band;
   const sheet = use(SheetLinkContext);
-  const grip = useTimeCardGrip({ height, top: barY, opens: friends, rows, sheet });
+  const grip = useTimeCardGrip({ height, top: barY, rows, sheet });
   usePickingPlace(picking !== null, grip, sheet.high);
-  const folded = !friends || grip.place !== 'open';
-  const label = friends ? `사람별 시간 ${folded ? '펼치기' : '접기'}` : null;
   return (
     <Reanimated.View style={[styles.bar, { top: barY }, grip.moved, grip.rested]} testID="time-bar">
       <View onLayout={onBand} testID="time-card-head">
@@ -167,7 +157,7 @@ function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: Ba
           head={{ right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
         />
       </View>
-      {friends ? <OpenRows band={band} grip={grip} onHeight={setRows} picking={picking} /> : null}
+      <OpenRows band={band} grip={grip} onHeight={setRows} picking={picking} />
       {add === null ? null : (
         <View
           onLayout={({ nativeEvent }: LayoutChangeEvent) => {
@@ -179,7 +169,7 @@ function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: Ba
           {add}
         </View>
       )}
-      <Grip folded={folded} grip={grip} label={label} onLayout={onStrip} />
+      <Grip folded={grip.place !== 'open'} grip={grip} onLayout={onStrip} />
       {picking === null ? null : <PickHint friends={picking.rows.length > 1} />}
     </Reanimated.View>
   );

@@ -21,6 +21,7 @@ Native files: none expected. Releases: a main server deploy and an app OTA updat
 7. After 완료 only the checked rows remain; the button reads "같이 3 ›" and opens picking again with them checked. The bottom card has no pills; its summary ends "· 김태현 외 2명과".
 8. With no Friends: one line "아직 친구가 없어요" with "친구 추가 ›".
 9. From 완료 until the answer comes, the card shows what was asked for: "같이 2 ›", the preview, and the checked faces. A failed request goes back to the answer before it, with the toast.
+10. With nobody added, the grip opens the card too, to the one row "나" with its bar on the card's scale; a press on the grip folds it again, and the answer sheet yields as with Friends. Picking still has no row for 나.
 
 Rules of the time card and the answer sheet (the user, 2026-11-26):
 - The card touched last wins, and the other yields.
