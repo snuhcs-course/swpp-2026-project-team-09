@@ -41,7 +41,7 @@ Two more tests fired the same layout on `time-bar` and passed without testing wh
 ## Acceptance criteria
 
 - [x] `answer-sheet-high`, `main-first-run-answers`, `room-typed-place`, and `party-mine` pass, each run alone.
-- [ ] `ask-for-push` passes at the next nightly level. On a Mac under a load of about 30, the 나중에 case once passed even 150 seconds.
+- [x] `ask-for-push` passes at the next nightly level: run 45827589719, in 518 seconds. On a Mac under a load of about 30, the 나중에 case once passed even 150 seconds.
 - [x] `answer-sheet-steady` and `answer-time-bar-height` pass with the time card laid out through its parts.
 - [x] No test fires a layout on `time-bar`.
 - [x] No app source or native file changes; lint, format, and types pass on the app.
