@@ -1,7 +1,7 @@
 # 54: A Class the User says is cancelled is left out of the meal's plan
 
 Parent: [P05 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human
 
 Blocked by: none. The app's time card follows in P04 ticket 93.
 
@@ -56,3 +56,8 @@ The user's decision (2026-11-26), design page "1. 수업 빼기" with option 다
 ## Comments
 
 Built in PR #608.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 75 minutes in one session for this ticket and P04 ticket 93 together, the test runs and the emulator screens included, the minutes spent waiting for answers left out (an estimate).
+- Tokens, both tickets together: input 168,054,634 (cache reads 167,309,553, cache writes 744,573, uncached 508); output 170,767. One read-only subagent, which mapped the planner and the time card, used about 251,000 tokens more. Counted from the transcript up to the app PR's opening.
