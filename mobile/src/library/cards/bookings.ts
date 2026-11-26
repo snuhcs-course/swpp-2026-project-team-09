@@ -54,17 +54,24 @@ export function matchingBookings(
   });
 }
 
-// What a cancel or a return card acts on (P01 ticket 15): a return finds the seat in use, else a booking not yet in
-// use, which it offers to cancel `instead`: a seat is returned only once it is confirmed at the 좌석배정기.
+// What a cancel or a return card acts on (P01 ticket 15): a return finds the seat in use, else a seat of today booked
+// and not yet in use, which it offers to cancel `instead`: a seat is returned only once it is confirmed at the
+// 좌석배정기. A room, or a seat of another day, is never offered in place of a return (PR 646's review).
 export function actingOn(
   bookings: readonly LibraryBooking[],
   card: Pick<LibraryCardData, 'action' | 'target' | 'space'>,
+  today: string,
 ): { act: 'cancel' | 'return'; found: LibraryBooking[]; instead: boolean } {
   if (card.action !== 'return') {
     return { act: 'cancel', found: matchingBookings(bookings, card), instead: false };
   }
   const inUse = matchingBookings(bookings, card);
-  const booked = inUse.length === 0 ? matchingBookings(bookings, { ...card, action: 'cancel' }) : [];
+  const booked =
+    inUse.length === 0
+      ? matchingBookings(bookings, { ...card, action: 'cancel' }).filter(
+          (booking) => isSeat(booking.SEAT_VNAME) && siteInstant(booking.USESTART).date === today,
+        )
+      : [];
   return booked.length === 0
     ? { act: 'return', found: inUse, instead: false }
     : { act: 'cancel', found: booked, instead: true };

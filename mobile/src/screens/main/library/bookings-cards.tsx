@@ -114,7 +114,7 @@ function Found({
 export function CancelReturnCard({ card, place, bubbleId, actions }: CardProps & { place: string }): ReactElement {
   const { start, end } = cancelPeriod(koreaDateKey(now()));
   const { loaded, reload } = useLibraryLoad(() => library.myBookings(start, end), `${start}-${end}`);
-  const acting = loaded.state === 'ready' ? actingOn(loaded.value, card) : null;
+  const acting = loaded.state === 'ready' ? actingOn(loaded.value, card, koreaDateKey(now())) : null;
   const act: Act = acting?.act ?? (card.action === 'return' ? 'return' : 'cancel');
   const found = acting?.found ?? [];
   const [chosen, setChosen] = useState<number | null>(null);

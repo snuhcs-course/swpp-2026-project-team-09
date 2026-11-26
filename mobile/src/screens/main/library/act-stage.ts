@@ -27,36 +27,41 @@ export interface ActSeen {
 
 export interface ActStage {
   seen: ActSeen | null;
-  // `teller` keeps a card that is gone from taking away what another drawn in its place told.
+  // `teller` names the card that tells, so that one that is gone takes away only its own.
   tell: (teller: string, bubbleId: number, told: ActTold | null) => void;
   press: () => void;
-}
-
-function ignore(): void {
-  // Nothing told yet.
 }
 
 function same(one: ActSeen | null, other: ActSeen | null): boolean {
   return JSON.stringify(one) === JSON.stringify(other);
 }
 
+// The cards that tell a main button, in the order they first told it: the first has it, whichever renders last, so
+// that two cards in one reply never take it in turns; once it tells none, the next has it (PR 646's review).
 export function useActStage(): ActStage {
-  const pressRef = useRef<{ teller: string | null; press: () => void }>({ teller: null, press: ignore });
+  const tellers = useRef(new Map<string, { bubbleId: number; told: ActTold }>());
   const [seen, setSeen] = useState<ActSeen | null>(null);
   const tell = useCallback((teller: string, bubbleId: number, told: ActTold | null): void => {
     if (told === null) {
-      if (pressRef.current.teller === teller) {
-        pressRef.current = { teller: null, press: ignore };
-        setSeen(null);
-      }
-      return;
+      tellers.current.delete(teller);
+    } else {
+      tellers.current.set(teller, { bubbleId, told });
     }
-    pressRef.current = { teller, press: told.onPress };
-    const next = { bubbleId, words: told.words, disabled: told.disabled, danger: told.danger };
+    const [first] = tellers.current.values();
+    const next =
+      first === undefined
+        ? null
+        : {
+            bubbleId: first.bubbleId,
+            words: first.told.words,
+            disabled: first.told.disabled,
+            danger: first.told.danger,
+          };
     setSeen((last) => (same(last, next) ? last : next));
   }, []);
   const press = useCallback(() => {
-    pressRef.current.press();
+    const [first] = tellers.current.values();
+    first?.told.onPress();
   }, []);
   return { seen, tell, press };
 }

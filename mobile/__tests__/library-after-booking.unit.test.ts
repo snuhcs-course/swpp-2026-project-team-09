@@ -52,6 +52,7 @@ const BOOKED = bookingRow();
 const IN_USE = bookingRow({ BSEQNO: 3000002, STATUS: 3, STATUS_NAME: '입실', USESTART: '2026-11-02 15:00:00' });
 const RETURNED = bookingRow({ BSEQNO: 3000003, STATUS: 5, STATUS_NAME: '본인반납', USESTART: '2026-10-30 10:00:00' });
 const RETURN = libraryCard('return:-', 'return', { target: {} });
+const TODAY = '2026-11-02';
 
 function numbers(bookings: readonly LibraryBooking[]): number[] {
   return bookings.map(({ BSEQNO }) => BSEQNO);
@@ -59,7 +60,7 @@ function numbers(bookings: readonly LibraryBooking[]): number[] {
 
 describe('a return card', () => {
   it('returns the seat in use', () => {
-    const acting = actingOn([BOOKED, IN_USE], RETURN);
+    const acting = actingOn([BOOKED, IN_USE], RETURN, TODAY);
 
     expect(acting.act).toBe('return');
     expect(numbers(acting.found)).toEqual([3000002]);
@@ -68,7 +69,7 @@ describe('a return card', () => {
 
   it('offers to cancel a seat booked but not yet confirmed at the 좌석배정기, STATUS 1 or 2 (fault 1)', () => {
     for (const STATUS of [1, 2]) {
-      const acting = actingOn([bookingRow({ STATUS })], RETURN);
+      const acting = actingOn([bookingRow({ STATUS })], RETURN, TODAY);
 
       expect(acting.act).toBe('cancel');
       expect(numbers(acting.found)).toEqual([3000001]);
@@ -77,7 +78,14 @@ describe('a return card', () => {
   });
 
   it('finds nothing with no seat booked or in use', () => {
-    expect(actingOn([RETURNED], RETURN).found).toEqual([]);
+    expect(actingOn([RETURNED], RETURN, TODAY).found).toEqual([]);
+  });
+
+  it("offers no cancel for a room, or a seat of another day, in place of a return (PR 646's review)", () => {
+    const room = bookingRow({ SEAT_VNAME: 'G411', USESTART: '2026-11-05 10:00:00', USEEXPIRE: '2026-11-05 12:00:00' });
+    const tomorrow = bookingRow({ USESTART: '2026-11-03 09:00:00', USEEXPIRE: '2026-11-03 10:00:00' });
+
+    expect(actingOn([room, tomorrow], RETURN, TODAY).found).toEqual([]);
   });
 });
 
