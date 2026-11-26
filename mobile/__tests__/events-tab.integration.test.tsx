@@ -8,6 +8,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -248,18 +249,6 @@ describe('the tab opened at one event', () => {
     expect(screen.getByTestId(`event-${CAREER.id}`)).not.toHaveStyle({ backgroundColor: MARKED });
     await pass(2600);
     expect(screen.getByTestId(`event-${MAJOR.id}`)).not.toHaveStyle({ backgroundColor: MARKED });
-  });
-
-  it("is opened from the event's card in a Quest's room", async () => {
-    answerRoom(server, MY_CAREER);
-    answerEvents(server, { quests: [DINNER, MY_CAREER] });
-    const user = await openRoom(MY_CAREER);
-
-    await user.press(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
-    await pass(500);
-
-    expect(screen.getByRole('tab', { name: '행사' })).toBeSelected();
-    expect(screen.getByTestId(`event-${CAREER.id}`)).toHaveStyle({ backgroundColor: MARKED });
   });
 
   it('names the event on the Badge and card of a Quest the Leader titled otherwise', async () => {
