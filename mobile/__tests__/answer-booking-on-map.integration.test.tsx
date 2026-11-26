@@ -10,7 +10,7 @@
 
 import { fireEvent, within } from '@testing-library/react-native';
 import type { Place } from '@/api/types';
-import { raiseCard } from './support/card-grip';
+import { grip, raiseCard } from './support/card-grip';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -58,7 +58,7 @@ const KWANJEONG: Place = {
   latitude: 37.45903,
   longitude: 126.95247,
 };
-const FLAG = /^관정 7층 열람실 › · (\d+번 )?17:00–18:00( · 걸음 \d+분)?$/u;
+const FLAG = /^관정 7층 열람실 · 17:00( · \d+번)?( · 빈 자리 \d+석)?$/u;
 const CHIP = '열람실: 7층 열람실';
 const DOCKED = /^관정 7층 열람실에 17:00부터 1시간, 빈 자리 \d+석이에요\.$/u;
 
@@ -98,7 +98,8 @@ describe('a seat card on the map', () => {
   it('stands as a flag with the room, the seat, and the time, with a walk, the band on top, and 예약하기', async () => {
     await asked();
 
-    expect(flagName()).toMatch(/^관정 7층 열람실 › · \d+번 17:00–18:00( · 걸음 \d+분)?$/u);
+    // The room and the start, then the seat and the free seats (P01 ticket 10).
+    expect(flagName()).toMatch(/^관정 7층 열람실 · 17:00 · \d+번 · 빈 자리 \d+석$/u);
     expect(mapLines()).toHaveLength(1);
     expect(bar().getByText('17:00–18:00 · 1시간')).toBeVisible();
     expect(screen.getByRole('button', { name: '예약하기' })).toBeEnabled();
@@ -123,41 +124,33 @@ describe('a seat card on the map', () => {
     expect(bar().getByText('17:00–18:30 · 1시간 30분')).toBeVisible();
     expect(screen.queryByText(/석이에요\.$/u)).toBeNull();
     expect(screen.queryByText(/바꾼 시간이에요/u)).toBeNull();
-    expect(mapThings()).toContainEqual(expect.stringMatching(/17:00–18:30( · 걸음 \d+분)?$/u));
+    // The label keeps the start; the time card says the end (P01 ticket 10).
+    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 · 17:00 · \d+번/u));
     expectNoWrite(library);
   });
 
   it('says 로그인 beside the input while logged out of the library', async () => {
     await asked(false);
 
-    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 › · 17:00–18:00( · 걸음 \d+분)?$/u));
+    expect(mapThings()).toContain('관정 7층 열람실 · 17:00');
     expect(screen.getAllByRole('button', { name: '로그인' })).toHaveLength(1);
     expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '로그인' })).toBeVisible();
     expect(screen.queryByRole('button', { name: '예약하기' })).toBeNull();
   });
 });
 
-describe("the booking's flag", () => {
-  it('opens 다른 자리 고르기 from its flag, which opens the seat picture', async () => {
+// P01 ticket 10, the user's words: a press on the 관정 mark or its label does what a press on a meal's chosen place
+// does, and raises the answer's card; no card of its own opens over the map.
+describe("the booking's mark", () => {
+  it('raises the card to the middle from its mark, with no card of its own', async () => {
     const { user } = await asked();
+    expect(grip()).toBeCollapsed();
 
     await pressMarker(user, flagName());
-    const rows = within(screen.getByTestId('mark-card'));
-    await user.press(rows.getByRole('button', { name: '다른 자리 고르기' }));
-    await pass(500);
 
-    expect(screen.getByText('관정 7층 열람실 좌석 현황')).toBeVisible();
-    expect(screen.getByRole('button', { name: '좌석 현황 닫기' })).toBeVisible();
+    expect(screen.queryByTestId('mark-card')).toBeNull();
+    expect(grip()).toHaveAccessibilityValue({ text: '중간' });
     expectNoWrite(library);
-  });
-
-  it("names the room once in the flag's card", async () => {
-    const { user } = await asked();
-
-    await pressMarker(user, flagName());
-    const rows = within(screen.getByTestId('mark-card'));
-
-    expect(rows.getAllByText(/열람실/u)).toHaveLength(1);
   });
 });
 
@@ -229,7 +222,7 @@ describe('a seat booked on the map', () => {
     expect(screen.getByText(/^관정 7층 열람실 \d+번 · 오늘 17:00–18:00$/u)).toBeVisible();
     expect(screen.queryByText('카드에서 확인해 주세요.')).toBeNull();
     expect(screen.queryByText('예약했어요')).toBeNull();
-    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 › · \d+번 17:00–18:00 · 예약됨$/u));
+    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 · 17:00 · \d+번 · 예약됨$/u));
     expect(screen.queryByTestId('time-bar')).toBeNull();
     expect(screen.getByText(/^걸음 \d+분( ·|이라) /u)).toBeVisible();
     expect(within(screen.getByTestId('library-done')).getByRole('button', { name: '길 안내' })).toBeVisible();

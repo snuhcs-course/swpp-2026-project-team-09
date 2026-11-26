@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -78,6 +79,7 @@ export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?:
         (sub !== null || tone === 'pick') && styles.subLabel,
         tone === 'pick' && note !== null && styles.mealPickLabel,
         meal && (tone === 'pick' || tone === 'candidate') && styles.mealEdge,
+        label.study === true && tone === 'pick' && styles.studyEdge,
         tone === 'meeting' && styles.meetingLabel,
         tone === 'late' && styles.lateLabel,
         tone === 'shuttle' && styles.shuttleLabel,
@@ -152,6 +154,8 @@ const styles = StyleSheet.create({
   mealPickBadge: { backgroundColor: color.meal },
   // A meal answer's candidate's name tag (P04 ticket 90): its number as the candidate's soft coral round.
   mealEdge: { borderColor: color.meal },
+  // A 관정 booking's pick (P01 ticket 10): the study colour's edge.
+  studyEdge: { borderColor: color.svcStudy },
   mealCandidateBadge: { borderWidth: MEAL_BADGE_RIM, borderColor: color.meal, backgroundColor: color.mealSoft },
   mealNumber: { color: color.meal },
   candidateBadge: { backgroundColor: color.snuBlue },

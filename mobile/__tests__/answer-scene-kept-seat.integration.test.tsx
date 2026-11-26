@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -42,7 +43,7 @@ const KWANJEONG: Place = {
   longitude: 126.95247,
 };
 // The flag's label with its walk since P01 ticket 04.
-const FLAG = /^관정 7층 열람실 › · (\d+번 )?17:00–18:00( · 걸음 \d+분)?$/u;
+const FLAG = /^관정 7층 열람실 · 17:00( · \d+번)?( · 빈 자리 \d+석)?$/u;
 const FOLLOW_UP = '내일도 같은 자리 돼?';
 const REFUSED = '관정도서관 열람실은 당일만 예약할 수 있어요.';
 

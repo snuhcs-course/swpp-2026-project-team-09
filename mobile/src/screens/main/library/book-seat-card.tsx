@@ -147,13 +147,13 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
   const searching = useFullRoomSwap(room, props.space, loaded.state === 'ready' && seat === null);
   // While the rooms are listed the map keeps the seat on screen, and the button beside the input stays disabled, so that
   // no seat is booked out of sight (P01 tickets 03 and 08).
-  const told = { place, seat, loaded, write, logIn, shown, choosing: room.listing || searching };
+  const free = loaded.state === 'ready' && !searching ? freeSeatCount(seats) : null;
+  const told = { place, seat, free, loaded, write, logIn, shown, choosing: room.listing || searching };
   const onMap = useSeatOnMap(actions.onMap?.(place) ?? null, told);
   const mapped = actions.bandOnBar?.(place) === true;
   const ticketed = room.chip !== null;
   const offer = { ...props, space: shown, seats, choose: setNamed, write, close, ticketed, ...onMap };
   const looking = loaded.state === 'loading' || searching;
-  const free = loaded.state === 'ready' && !searching ? freeSeatCount(seats) : null;
   const line = looking || (seat !== null && loaded.state === 'ready');
   const ticketSeat = ticketSeatOf({ seat, free, busy: write.busy }, shown, onMap.setPicking);
   return (

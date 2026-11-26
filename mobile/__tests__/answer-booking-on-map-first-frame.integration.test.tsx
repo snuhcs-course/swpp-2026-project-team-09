@@ -71,7 +71,7 @@ describe('the study answer while its seats are read', () => {
   it('stands on the map from the first frame, with its label and the walk there', async () => {
     await asked();
 
-    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 › · 17:00–18:00( · 걸음 \d+분)?$/u));
+    expect(mapThings()).toContain('관정 7층 열람실 · 17:00');
     expect(mapLines()).toHaveLength(1);
     // The ticket stands from the first frame, its seat filling in where it stands, with no sentence (P01 ticket 09).
     expect(card().queryByText(/찾고 있어요/u)).toBeNull();

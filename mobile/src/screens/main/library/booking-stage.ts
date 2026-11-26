@@ -4,6 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -18,6 +19,8 @@ import { needsLogin, type Write } from './use-library-call';
 export interface BookingTold {
   place: string;
   seat: string | null;
+  // The free seats of the room on screen for the card's time, null until they are read (P01 ticket 10).
+  free: number | null;
   main: { words: string; onPress: () => void; disabled: boolean } | null;
   pick: (() => void) | null;
 }
@@ -26,6 +29,7 @@ export interface BookingTold {
 export interface BookingSeen {
   place: string;
   seat: string | null;
+  free: number | null;
   words: string | null;
   disabled: boolean;
   picks: boolean;
@@ -61,9 +65,16 @@ export function useBookingStage(): BookingStage {
       setSeen((last) => (last === null ? last : null));
       return;
     }
-    const { place, seat, main, pick } = told;
+    const { place, seat, free, main, pick } = told;
     presses.current = { press: main?.onPress ?? ignore, pick: pick ?? ignore };
-    const next = { place, seat, words: main?.words ?? null, disabled: main?.disabled ?? true, picks: pick !== null };
+    const next = {
+      place,
+      seat,
+      free,
+      words: main?.words ?? null,
+      disabled: main?.disabled ?? true,
+      picks: pick !== null,
+    };
     setSeen((last) => (same(last, next) ? last : next));
   }, []);
   const press = useCallback(() => {
@@ -81,6 +92,7 @@ export type Tell = BookingStage['tell'];
 interface Telling {
   place: string;
   seat: string | null;
+  free: number | null;
   // The seats' reading or the last write asked for the library's login.
   logInAsked: boolean;
   busy: boolean;
@@ -93,7 +105,7 @@ interface Telling {
 
 // A seat card on the map tells the screen what it offers at each render, and that it is gone once it unmounts.
 export function useTellBooking(tell: Tell | null, telling: Telling): void {
-  const { place, seat, logInAsked, busy, waiting, book, logIn, pick } = telling;
+  const { place, seat, free, logInAsked, busy, waiting, book, logIn, pick } = telling;
   useEffect(() => {
     if (tell === null) {
       return;
@@ -105,7 +117,7 @@ export function useTellBooking(tell: Tell | null, telling: Telling): void {
         : seat === null
           ? null
           : { words: busy ? '예약하는 중' : '예약하기', onPress: book, disabled: busy };
-    tell({ place, seat, main, pick });
+    tell({ place, seat, free, main, pick });
   });
   useEffect(
     () => (): void => {
@@ -118,6 +130,7 @@ export function useTellBooking(tell: Tell | null, telling: Telling): void {
 interface SeatOnMapOf {
   place: string;
   seat: LibrarySeat | null;
+  free: number | null;
   loaded: { state: 'loading' } | { state: 'ready' } | { state: 'failed'; failure: LibraryFailure };
   write: Write<LibrarySeat>;
   // 로그인 after the seats could not be read.
@@ -131,13 +144,14 @@ interface SeatOnMapOf {
 // opening, which it holds here so that the flag's card opens it too.
 export function useSeatOnMap(
   tell: Tell | null,
-  { place, seat, loaded, write, logIn, shown, choosing }: SeatOnMapOf,
+  { place, seat, free, loaded, write, logIn, shown, choosing }: SeatOnMapOf,
 ): { picking: boolean; setPicking: (picking: boolean) => void; onMap: boolean } {
   const [picking, setPicking] = useState(false);
   const failures = [loaded.state === 'failed' ? loaded.failure : null, write.failure?.failure ?? null];
   useTellBooking(tell, {
     place,
     seat: seat?.VNAME ?? null,
+    free,
     logInAsked: failures.some((failure) => failure !== null && needsLogin(failure)),
     busy: write.busy,
     waiting: choosing || loaded.state === 'loading',
