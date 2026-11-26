@@ -3,10 +3,12 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import type { TimetableClass, Weekday } from '@/api/types';
+import type { Board, TimetableClass, Weekday } from '@/api/types';
 import { koreaClock, koreaDaysAfter, koreaMinutes, koreaWeekday, koreaWeekdayName } from '@/korea-time';
+import { boardName } from './boards';
 import type { PostView } from './posts';
 
 // 찾기's search and order, and the reasons 파티 모집글 gives for recommending a post.
@@ -38,6 +40,20 @@ export function findPosts(
     .map((post, index) => ({ post, index, shared: sharedTags(post, myTags).length }))
     .toSorted((one, other) => other.shared - one.shared || one.index - other.index)
     .map(({ post }) => post);
+}
+
+// 찾기's filter: one board, or 전체.
+export type BoardFilter = Board | 'all';
+
+// The posts on the board, in the order given; 전체 keeps them all.
+export function postsOnBoard(posts: readonly PostView[], board: BoardFilter): PostView[] {
+  return posts.filter((post) => board === 'all' || post.board === board);
+}
+
+// What 찾기 says when nothing is left: "식사 게시판에 모집 중인 파티가 없어요" for a board, "결과 없음" for 전체 and a
+// search.
+export function noPostsWords(board: BoardFilter): string {
+  return board === 'all' ? '결과 없음' : `${boardName(board)}에 모집 중인 파티가 없어요`;
 }
 
 export interface Reasons {

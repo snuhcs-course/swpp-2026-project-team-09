@@ -4,6 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -25,6 +26,7 @@ import { markLibraryLoggedIn } from '@/library/flag';
 import { layStage } from './support/lists';
 import { pressMarker } from './support/made-quest';
 import { stepsReplyOn } from '@/api/mock/data/steps-answer';
+import { STUDY_BUILDINGS } from '@/api/mock/data/study-spaces';
 
 // P04 ticket 07: a 관정도서관 seat card stands on the map as a flag on 관정관 with the room, the seat, and the time, my
 // walk there, its band on the top bar, and its 예약하기 beside the input. P01 ticket 03: lowered, the card says one
@@ -87,6 +89,10 @@ function flagName(): string {
 
 function bar(): ReturnType<typeof within> {
   return within(screen.getByTestId('time-bar'));
+}
+
+function answerCard(): ReturnType<typeof within> {
+  return within(screen.getByTestId('answer-card'));
 }
 
 describe('a seat card on the map', () => {
@@ -185,6 +191,41 @@ describe('the raised seat card on the map', () => {
 
     expect(screen.getByText('어느 열람실로 할까요?')).toBeVisible();
     expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '예약하기' })).toBeDisabled();
+    expectNoWrite(library);
+  });
+});
+
+// P01 ticket 08: the rooms listed and closed leave the flag as it is; another room chosen changes it.
+describe("the booking's flag while the rooms are listed", () => {
+  it('keeps the room and the seat through the list and 그대로, and names the room chosen after it', async () => {
+    server.on('GET /study-spaces', { status: 200, body: STUDY_BUILDINGS });
+    const { user } = await raised();
+    const before = flagName();
+    expect(before).toMatch(/ · \d+번 /u);
+
+    await user.press(answerCard().getByRole('button', { name: CHIP }));
+    await pass(500);
+    expect(screen.getByText('어느 열람실로 할까요?')).toBeVisible();
+    expect(mapThings()).toContain(before);
+    await user.press(answerCard().getByRole('button', { name: '그대로' }));
+    await pass(500);
+    expect(mapThings()).toContain(before);
+
+    await user.press(answerCard().getByRole('button', { name: CHIP }));
+    await pass(500);
+    expect(mapThings()).toContain(before);
+    const other = answerCard()
+      .getAllByRole('button', { name: /^[78]층 .+ \d+석$/u })
+      .find((cell) => !String(cell.props.accessibilityLabel).startsWith('7층 열람실'));
+    if (other === undefined) {
+      throw new Error('No other room with free seats');
+    }
+    const room = String(other.props.accessibilityLabel).replace(/ \d+석$/u, '');
+    await user.press(other);
+    await pass(500);
+
+    expect(mapThings()).not.toContain(before);
+    expect(mapThings()).toContainEqual(expect.stringMatching(new RegExp(`^관정 ${room} › · \\d+번 17:00–18:00`, 'u')));
     expectNoWrite(library);
   });
 });

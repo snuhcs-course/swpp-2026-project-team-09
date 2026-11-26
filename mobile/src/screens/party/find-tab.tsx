@@ -5,128 +5,47 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { router } from 'expo-router';
-import { type ReactElement, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type ReactElement, useEffect, useRef, useState } from 'react';
+import { ScrollView, StyleSheet } from 'react-native';
 import type { OfficialRecruiting } from '@/api/quest-parts-types';
-import { color, EmptyState, ErrorState, font, Icon, LoadingState, radius, SearchField, space } from '@/design-system';
-import { BOARDS } from '@/features/party/boards';
+import { EmptyState, ErrorState, LoadingState, space } from '@/design-system';
+import { type BoardFilter, noPostsWords, postsOnBoard } from '@/features/party/finding';
 import type { PostView } from '@/features/party/posts';
-import { useBoardRows, useFindPosts, useOfficialRecruiting } from '@/features/party/use-party';
-import { JoinSheet, officialSubject } from './join-sheet';
-import { LineIcon } from './line-icon';
-import { OfficialBanner } from './official-banner';
-import { openPost, PostCard } from './post-card';
-import { Seekers } from './seekers';
+import { useFindPosts, useOfficialRecruiting } from '@/features/party/use-party';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
-import { useFindActions, usePartyActions, withdrawAsk } from './use-party-actions';
+import { FindBar } from './find-bar';
+import { FindCard } from './find-card';
+import { JoinSheet, officialSubject } from './join-sheet';
+import { OfficialBanner } from './official-banner';
+import { PostSheet } from './post-sheet';
+import { Seekers } from './seekers';
+import { useFindActions, usePartyActions } from './use-party-actions';
 
 // What the join sheet asks about: a post, or official recruiting.
 type Joining = { kind: 'post'; post: PostView } | { kind: 'official'; recruiting: OfficialRecruiting };
 
-// 전체 파티 at its `공식` tab.
-function openOfficialList(): void {
-  router.push({ pathname: '/boards', params: { tab: 'official' } });
+interface PostsProps {
+  board: BoardFilter;
+  search: string;
+  onOpen: (post: PostView) => void;
 }
 
-function openBoards(): void {
-  router.push('/boards');
-}
-
-// 모집 중인 파티's head, with the round `전체 게시판 ›` for 전체 파티.
-function PostsHead(): ReactElement {
-  return (
-    <View style={styles.head}>
-      <Text accessibilityRole="header" style={styles.heading}>
-        모집 중인 파티
-      </Text>
-      <Pressable
-        accessibilityLabel="전체 게시판"
-        accessibilityRole="button"
-        hitSlop={HEAD_SLOP}
-        onPress={openBoards}
-        style={({ pressed }) => [styles.all, pressed && styles.pressed]}
-      >
-        <Text style={styles.allWords}>전체 게시판</Text>
-        <Icon color={color.ink} name="chevronRight" size={14} />
-      </Pressable>
-    </View>
-  );
-}
-
-// "식사 · 진로 · 취미 · 공연 모집글 12개 둘러보기": the four boards and their open posts, as 전체 파티 counts them.
-function boardsWords(posts: number): string {
-  return `${BOARDS.map(({ name }) => name).join(' · ')} 모집글 ${String(posts)}개 둘러보기`;
-}
-
-// Under the recommended posts, the way on to 전체 파티 for the User who reached the end of them; a search's results
-// have none. It waits for the boards' count.
-function BoardsCard(): ReactElement | null {
-  const { data: rows } = useBoardRows();
-  if (rows === undefined) {
-    return null;
-  }
-  const words = boardsWords(rows.reduce((sum, { count }) => sum + count, 0));
-  return (
-    <Pressable
-      accessibilityLabel={`전체 게시판 · ${words}`}
-      accessibilityRole="button"
-      onPress={openBoards}
-      style={({ pressed }) => [styles.boards, pressed && styles.boardsPressed]}
-    >
-      <View style={styles.boardsIcon}>
-        <LineIcon name="clipboard" tint={color.onPrimary} />
-      </View>
-      <View style={styles.boardsWords}>
-        <Text style={styles.boardsTitle}>전체 게시판</Text>
-        <Text style={styles.boardsLine}>{words}</Text>
-      </View>
-      <Icon color={color.snuBlue} name="chevronRight" size={18} />
-    </Pressable>
-  );
-}
-
-// 모집 중인 파티: the cards, which a press opens at their post, and how many the User hid.
-function Posts({ search, onJoin }: { search: string; onJoin: (post: PostView) => void }): ReactElement {
+// The cards of the board chosen, or of every board while searching, in 찾기's order.
+function Posts({ board, search, onOpen }: PostsProps): ReactElement {
   const { data: found, isPending, refetch } = useFindPosts(search);
-  const actions = useFindActions();
-  const { withdraw } = usePartyActions();
-  const [ask, setAsk] = useState<Ask | null>(null);
+  const posts = found === undefined ? undefined : postsOnBoard(found, board);
   return (
     <>
       {found === undefined && isPending ? <LoadingState /> : null}
       {found === undefined && !isPending ? <ErrorState onRetry={refetch} /> : null}
-      {found?.posts.length === 0 ? <EmptyState words="결과 없음" /> : null}
-      {(found?.posts ?? []).map((post) => (
-        <PostCard
-          key={post.questId}
-          onHide={({ questId }) => void actions.hide(questId)}
-          onJoin={onJoin}
-          onOpen={({ questId }) => {
-            openPost(questId);
-          }}
-          onWithdraw={({ questId, title }, requestId) => {
-            setAsk(withdrawAsk({ requestId, questId, title }, withdraw));
-          }}
-          post={post}
-        />
+      {posts?.length === 0 ? <EmptyState words={noPostsWords(board)} /> : null}
+      {(posts ?? []).map((post) => (
+        <FindCard key={post.questId} onOpen={onOpen} post={post} />
       ))}
-      {found === undefined || search.trim() !== '' ? null : <BoardsCard />}
-      {found === undefined || found.hidden === 0 ? null : (
-        <View style={styles.hidden}>
-          <Icon color={color.inkMuted} name="check" size={14} />
-          <Text style={styles.hiddenWords}>{`숨긴 파티 ${String(found.hidden)}개 · 다음 추천에 반영할게요`}</Text>
-        </View>
-      )}
-      <ConfirmSheet
-        ask={ask}
-        label="확인"
-        onClose={() => {
-          setAsk(null);
-        }}
-      />
     </>
   );
 }
@@ -155,94 +74,88 @@ function JoinSheets({ joining, onClose }: { joining: Joining | null; onClose: ()
   );
 }
 
-// 찾기: the banner of official recruiting, the search, 모집 중인 파티 ordered by the User's tags, and the people looking
-// for company. The build that asks the main server has no official recruiting and no people looking for company.
-export function FindTab(): ReactElement {
-  const [search, setSearch] = useState('');
-  const official = useOfficialRecruiting().data ?? [];
+interface FindSheets {
+  open: (post: PostView) => void;
+  joinOfficial: (recruiting: OfficialRecruiting) => void;
+  sheets: ReactElement;
+}
+
+// 찾기's sheets: the 모집글 a card opens, the join sheets that it and the banner lead to, and the confirm sheet that its
+// `신청 취소` asks with. The 모집글 closes before either of the others opens.
+function useFindSheets(): FindSheets {
+  const [opened, setOpened] = useState<string | null>(null);
   const [joining, setJoining] = useState<Joining | null>(null);
-  return (
-    <>
-      {official.length === 0 ? null : (
-        <OfficialBanner
-          onAll={openOfficialList}
-          onOpen={(recruiting) => {
-            setJoining({ kind: 'official', recruiting });
+  const [ask, setAsk] = useState<Ask | null>(null);
+  const close = (): void => {
+    setOpened(null);
+  };
+  return {
+    open: ({ questId }) => {
+      setOpened(questId);
+    },
+    joinOfficial: (recruiting) => {
+      setJoining({ kind: 'official', recruiting });
+    },
+    sheets: (
+      <>
+        <PostSheet
+          onAsk={(next) => {
+            close();
+            setAsk(next);
           }}
-          recruiting={official}
-        />
-      )}
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <SearchField label="파티 검색" onChangeText={setSearch} placeholder="파티 검색" value={search} />
-        <PostsHead />
-        <Posts
+          onClose={close}
           onJoin={(post) => {
+            close();
             setJoining({ kind: 'post', post });
           }}
-          search={search}
+          questId={opened}
         />
+        <JoinSheets
+          joining={joining}
+          onClose={() => {
+            setJoining(null);
+          }}
+        />
+        <ConfirmSheet
+          ask={ask}
+          label="확인"
+          onClose={() => {
+            setAsk(null);
+          }}
+        />
+      </>
+    ),
+  };
+}
+
+// 찾기: the board filters or the search, which stay put; the banner of official recruiting; the recruiting posts
+// ordered by the User's tags, whose cards open their 모집글 in a sheet; and the people looking for company. The build
+// that asks the main server has no official recruiting and no people looking for company.
+export function FindTab(): ReactElement {
+  const [board, setBoard] = useState<BoardFilter>('all');
+  // The words searched, or null while the filters show.
+  const [search, setSearch] = useState<string | null>(null);
+  const searching = search !== null;
+  const list = useRef<ScrollView>(null);
+  // Another board, or the search opened or closed, starts from its first card, not where the last list was scrolled.
+  useEffect(() => {
+    list.current?.scrollTo({ y: 0, animated: false });
+  }, [board, searching]);
+  const official = useOfficialRecruiting().data ?? [];
+  const { open, joinOfficial, sheets } = useFindSheets();
+  return (
+    <>
+      <FindBar board={board} onBoard={setBoard} onSearch={setSearch} search={search} />
+      {official.length === 0 ? null : <OfficialBanner onOpen={joinOfficial} recruiting={official} />}
+      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled" ref={list} testID="find-list">
+        <Posts board={searching ? 'all' : board} onOpen={open} search={search ?? ''} />
         <Seekers />
       </ScrollView>
-      <JoinSheets
-        joining={joining}
-        onClose={() => {
-          setJoining(null);
-        }}
-      />
+      {sheets}
     </>
   );
 }
 
-// The frame's measures: `전체 게시판 ›` 32 high, whose touch reaches 48, and the Boards card's padding and navy square.
-const ALL_HEIGHT = 32;
-const HEAD_SLOP = { top: 8, bottom: 8 };
-const BOARDS_PADDING = 14;
-const BOARDS_ICON = 40;
-// The Boards card's light navy outline, between `blue100` and `border`, as the frame draws it.
-const BOARDS_EDGE = '#D5DCEE';
-
 const styles = StyleSheet.create({
-  body: { gap: space[3], padding: space[4] },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space[2] },
-  heading: { fontFamily: font.semiBold, fontSize: 18, lineHeight: 26, letterSpacing: -0.18, color: color.ink },
-  all: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    height: ALL_HEIGHT,
-    paddingLeft: space[3],
-    paddingRight: space[2],
-    borderWidth: 1,
-    borderColor: color.border,
-    borderRadius: radius.full,
-    backgroundColor: color.surface,
-  },
-  pressed: { backgroundColor: color.surfaceSubtle },
-  allWords: { fontFamily: font.semiBold, fontSize: 13, lineHeight: 18, color: color.ink },
-  boards: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    paddingVertical: BOARDS_PADDING,
-    paddingLeft: BOARDS_PADDING,
-    paddingRight: space[3],
-    borderWidth: 1,
-    borderColor: BOARDS_EDGE,
-    borderRadius: radius.lg,
-    backgroundColor: color.blue50,
-  },
-  boardsPressed: { backgroundColor: color.blue100 },
-  boardsIcon: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: BOARDS_ICON,
-    height: BOARDS_ICON,
-    borderRadius: radius.md,
-    backgroundColor: color.snuBlue,
-  },
-  boardsWords: { flex: 1, minWidth: 0, gap: 2 },
-  boardsTitle: { fontFamily: font.bold, fontSize: 15, lineHeight: 22, color: color.ink },
-  boardsLine: { fontFamily: font.medium, fontSize: 12, lineHeight: 16, color: color.inkMuted },
-  hidden: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  hiddenWords: { fontFamily: font.medium, fontSize: 12, lineHeight: 16, color: color.inkMuted },
+  body: { gap: space[3], paddingHorizontal: space[4], paddingBottom: space[4] },
 });

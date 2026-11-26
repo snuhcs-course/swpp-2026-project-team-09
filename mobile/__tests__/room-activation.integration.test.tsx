@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -88,7 +89,7 @@ describe("the room's head", () => {
     expect(screen.getByText('파티 · 3명')).toBeVisible();
     expect(screen.getByText('비공개')).toBeVisible();
     expect(screen.getAllByText('AI 커리어 설명회')).toHaveLength(2);
-    expect(screen.getByRole('button', { name: '행사 · AI 커리어 설명회' })).toBeVisible();
+    expect(screen.getByLabelText('행사 · AI 커리어 설명회')).toBeVisible();
     expect(screen.queryByText('내가 만든 파티')).toBeNull();
   });
 });

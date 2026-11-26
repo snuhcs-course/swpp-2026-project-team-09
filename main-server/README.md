@@ -2972,6 +2972,11 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
     `clientCapabilities: ["library"]`; otherwise, or with `LIBRARY_BOOKING_ENABLED=false`, every library tool answers
     `none` with the reason (and the official site). No tool result holds a seat, a booking, a 학번, a registered name
     or the User's 소속.
+  - A space asked for today at or after its closing, by its catalogue hours, gets no card. `showLibrarySeats` and
+    `findLibraryFreeSlots` answer `refused` with `closedToday` (`{ closedAt, opens }`, such as `23:00` and `내일 07:00`),
+    and `findLibrarySpace` marks the space `closedToday`. The refusal draws 관정 as a place with why, a `place` Lookup
+    with one `dropped` mark tagged "관정도서관 · 오늘 23:00 닫음 · 내일 07:00부터", `fact: true` and no actions
+    (`library/closed-today.ts`, P05 ticket 57).
   - `getTutorial(questKey?)` (`tutorial/`, `TUTORIAL_RULES`) answers the 새내기 튜토리얼's content from
     `content/tutorial.yaml` and the User's status of each quest, without turning the tutorial on.
   - A **presenter** puts something real into the reply rather than the model describing it.

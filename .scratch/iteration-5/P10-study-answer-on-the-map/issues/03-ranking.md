@@ -18,6 +18,8 @@ Blocked by: 01, 02
 - None at all gives `noPlan` with why: nothing fits in the area, everything is restricted, or everything is closed (with when the first one opens).
 - `POST /assistant/answers` reruns it for a `study` input.
 
+- A study input with Friends is ticket 07's; this ticket's ranking is the answer alone.
+
 ## Built (2026-11-27)
 
 - `lookup/study-plan.ts` ranks, `lookup/study-plan-parts.ts` makes each plan's fields, and `lookup/study-plan.service.ts` reads what they need. `StudySpacesService.hoursOf` gives a space's state from its schedule.

@@ -13,7 +13,8 @@ import { koreaDate } from '../korea-time.js';
 import { othersText } from '../others-text.js';
 import { clockOfMinutes, durationWords, earliestStartMinutes, windowRefusal } from './booking-rules.js';
 import { type ClockRange, type LibrarySpace } from './catalogue.js';
-import { bookableSpace, closedToday, dayWords, type LibraryServices, refused, spaceIdInput } from './library-parts.js';
+import { bookableSpace, dayWords, type LibraryServices, refused, spaceIdInput } from './library-parts.js';
+import { closedToday } from './closed-today.js';
 
 const MINUTE_MS = 60 * 1000;
 
@@ -82,7 +83,7 @@ export function findLibraryFreeSlots(services: LibraryServices): Tool {
       if (window !== null || space.hours === null) {
         return refused(window === null ? [] : [window]);
       }
-      const closed = closedToday(space, date, context.now);
+      const closed = closedToday(space, date, context, services.arrival.places);
       if (closed !== null) {
         return closed;
       }

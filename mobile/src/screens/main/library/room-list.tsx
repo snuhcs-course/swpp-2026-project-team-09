@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -13,7 +14,8 @@ import { type CellCount, cellOf, type Room, roomGrid, roomOf, spacesOf } from '@
 import { rangeWords } from '@/library/cards/times';
 import { LOG_IN_FOR_SEATS } from '../study-rows';
 import { CellGrid } from './cell-grid';
-import type { Rooms } from './use-room-counts';
+import type { RoomCounting } from './room-counting';
+import { type Rooms, useRooms } from './use-room-counts';
 
 // The seat card's room: its chip, which names the floor and kind in use and opens the list, and the list, one cell
 // per kind of room on each floor with the free seats of the seat space a tap fills.
@@ -64,7 +66,14 @@ export function RoomChipRow({
         <Icon color={ink} name="chevronDown" size={14} />
       </Pressable>
       {onKeep === null ? null : (
-        <Pressable accessibilityLabel="그대로" accessibilityRole="button" hitSlop={8} onPress={onKeep}>
+        <Pressable
+          accessibilityLabel="그대로"
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={onKeep}
+          style={({ pressed }) => [styles.keepTarget, pressed && styles.pressed]}
+          testID="room-keep"
+        >
           <Text style={styles.keep}>그대로</Text>
         </Pressable>
       )}
@@ -127,17 +136,19 @@ function RoomCell({
 
 // The list in the card, in the time band's place: what to choose and for what time, then the grid.
 export function RoomList({
-  rooms,
+  counting,
   shown,
   slot,
   onPick,
 }: {
-  rooms: Rooms;
+  // The counts read for the card's time, which only this list draws as they arrive (P01 ticket 08).
+  counting: RoomCounting;
   // The seat space on screen, whose room is outlined.
   shown: LibrarySpace;
   slot: Slot;
   onPick: (space: LibrarySpace) => void;
 }): ReactElement {
+  const rooms = useRooms(counting);
   const inUse = roomOf(shown);
   return (
     <View style={styles.list}>
@@ -207,6 +218,8 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.6 },
   chipLabel: { ...text.label },
   keep: { ...text.label, color: color.blue600 },
+  // As high as the chip beside it, so that a thumb finds it as easily (P01 ticket 08).
+  keepTarget: { height: CHIP_HEIGHT, justifyContent: 'center', paddingHorizontal: space[3] },
   list: { gap: space[3] },
   ask: { ...text.label, color: color.ink },
   basis: { ...text.caption, color: color.inkMuted },

@@ -6,7 +6,8 @@ Blocked by: 03
 
 ## What to build
 
-- The tool `planStudy` (`what`, `date?`, `from?`, `until?`, `near?`) puts 03's answer in `presented.answer`. It tells the model the plans in words: building, first space, open or unknown, stay, closes at, and the order's reason. It never gives seat counts.
+- The tool `planStudy` (`what`, `date?`, `from?`, `until?`, `near?`; with Friends `friendIds?`, `minutes?`, `firstDay?`, `lastDay?`) puts 03's answer, or 07's with Friends, in `presented.answer`.
+- With `study-plan`, "같이 공부할" with named Friends ("민수, 지은이랑 스터디") resolves each Friend, then calls `planStudy` with `friendIds`. `proposeStudyRoom` and its rule are not offered, as `findStudyNearby` is not; without `study-plan` they stay byte for byte. It tells the model the plans in words: building, first space, open or unknown, stay, closes at, and the order's reason. It never gives seat counts.
 - `STUDY_PLAN_RULES`, offered only with `study-plan` (as `withStudyArea` does for `area`):
   - "공부할 자리/데/곳 있어?", "조용히 공부할 곳" and "같이 공부할 곳" call `planStudy`, without asking back.
   - A named 관정 room, or a booking ("관정 7층 예약해 줘"), stays with the library tools.
