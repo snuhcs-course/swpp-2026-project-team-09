@@ -1,7 +1,7 @@
 # 93: The time card draws the Classes left out, and puts one back
 
 Parent: [P04 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human
 
 Blocked by: P05 ticket 54 (the main server leaves the Classes out). This app shows nothing new until a main server sends them.
 
@@ -29,7 +29,7 @@ The user's decision (2026-11-26), design page "1. 수업 빼기", "조건을 시
 
 ## Acceptance criteria
 
-- [ ] Tests fail on the code before:
+- [x] Tests fail on the code before:
   - the dashed block on the bar and on 나's row;
   - the line with its pill, the ends unchanged;
   - ✕ asking with none left out (the field gone) and, of two, with the other left;
@@ -38,7 +38,14 @@ The user's decision (2026-11-26), design page "1. 수업 빼기", "조건을 시
   - the card one step taller at font scale 1.0 and 1.3;
   - the checks of both fields;
   - the conditions with one put back.
-- [ ] Mock answers for one, two and five Classes left out, for the sessions emulator.
-- [ ] No native file changes; lint, format and types pass on the app.
+- [x] Mock answers for one, two and five Classes left out, for the sessions emulator.
+- [x] No native file changes; lint, format and types pass on the app.
 
 ## Comments
+
+Built in PR #609, with the main server's half in PR #608 (P05 ticket 54). The screens are from the sessions emulator with mock data, at font scale 1.0 and 1.3.
+
+### Agent usage (2026-11-26)
+
+- One session built both this ticket and P05 ticket 54. The whole is counted once, in ticket 54: about 75 minutes, an estimate, the minutes spent waiting for answers left out.
+- Tokens, the same whole: input 168,054,634 (cache reads 167,309,553, cache writes 744,573, uncached 508); output 170,767. One read-only subagent, which mapped the code, used about 251,000 tokens more.
