@@ -33,7 +33,7 @@ export interface SkippedClass {
   label: string;
 }
 
-// The rules a band's handles and whole moves follow (P01 ticket 12): the step, the shortest and the longest length in
+// The rules a band's handles and whole moves follow (P01 ticket 14): the step, the shortest and the longest length in
 // minutes (null for no longest), and the earliest start (null for the range's start).
 export interface BandRules {
   stepMinutes: number;

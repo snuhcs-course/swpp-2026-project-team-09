@@ -2472,9 +2472,21 @@ Anthropic API as the AI's key says
       - how many more people are needed;
       - the book key that "동의 요청 보내기" posts to `POST /library/room-requests`;
       - 사용 용도, when the window opens, and the sent request's state.
-  - The request's context and `POST /assistant/answers` already take a `study` input. Until P10 tickets 03 and 07
-    answer one, a recalculation of it is refused with 422.
-  - An app without `study-plan` gets nothing new.
+  - The request's context and `POST /assistant/answers` take a `study` input. The recalculation answers one alone
+    again (`lookup/study-plan*.ts`, P10 ticket 03); one with Friends is refused with 422 until P10 ticket 07.
+    - One plan per building holding a space of the kind asked that the User may use, within `area` when it is set.
+    - The User is ready at `window.from`, at 09:00 of another day asked without a time, or now. Where they are counts
+      only when they set out now.
+    - Each space's state at the arrival comes from its hours as data (`openAt`). The buildings known open come first,
+      then those whose hours are not known, which say so. Each group is ranked by the longest stay before the next item or
+      `window.until`, a stay of three hours or more counting as long enough, then by the shorter walk.
+    - A stay ends at the next item, at `window.until`, or at the space's closing. With none of them known, or a space
+      open around the clock, it is three hours.
+    - A building whose fitting spaces are all open only to others is `dropped` ("경영대학 학생만 쓸 수 있어요"). One
+      closed then is in `closed` ("09:00에 열어요", "오늘 23:00에 닫았어요").
+    - With no plan, `noPlan` says why: nothing of the kind in the area, all of it open only to others, no time before
+      the next item, or all of it closed, with the building that opens first.
+  - The chat's tool is `planStudy` (P10 ticket 04, below). An app without `study-plan` gets nothing new.
 
   A reply carries `clears: true` when the User asked for another plan, or something else, and nothing could be drawn
   for it: `planMeal` for a day past or more than a week ahead, for breakfast, or for a meal over for today;
@@ -2899,6 +2911,16 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
       (kind `study`) fades the restricted rooms and, when 관정관 is outside the area, flags the area's edge towards it
       (role `away`, with its `placeId`), where the phone adds its free seats. The model gets names, hours, and
       minutes, never the area; without a `viewport` the tool answers `none`.
+    - `planStudy(what, date?, from?, until?, near?)` and `STUDY_PLAN_RULES` join for an app that sends both `answer`
+      and `study-plan` (`lookup/study-plan-tools.ts`), in the place of `findStudyNearby` and its rules: "근처" is
+      `planStudy` with `near`, over the request's `viewport`.
+      - It puts the ranked study answer in `presented.answer` and tells the model each plan in words: the building,
+        its first space, whether its hours are known, when it closes, the walk and the stay. It also gives why the first
+        comes first, and the dropped and closed buildings. Never a seat count.
+      - With `study-plan`, the library rules leave "공부할 자리" asked without a booking to `planStudy`
+        (`LIBRARY_STUDY_RULES`). Without it, every prompt and tool is unchanged.
+      - A reply with no words of the model's says the first plan and why ("열려 있는 곳 중 가장 가까운 공대
+        신양학술정보관을 추천해요.", `lookup/study-plan-words.ts`).
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
       puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
       in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.

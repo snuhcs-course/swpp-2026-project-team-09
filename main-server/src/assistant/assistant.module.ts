@@ -11,6 +11,7 @@
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
@@ -43,6 +44,7 @@ import { LookupServices } from './lookup/lookup-services.js';
 import { MadePartyService } from './tools/made-party.js';
 import { MenuLookupService } from './lookup/menu.service.js';
 import { PlaceCardService } from './lookup/place.service.js';
+import { StudyPlanService } from './lookup/study-plan.service.js';
 import { StudyAreaService } from './lookup/study.service.js';
 import { TutorialOrderService } from './lookup/tutorial-order.service.js';
 import { WayService } from './lookup/way.service.js';
@@ -92,6 +94,7 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
     TutorialOrderService,
     LookupServices,
     StudyAreaService,
+    StudyPlanService,
     MadePartyService,
     QuestCancelService,
     // The space catalogue is read once, at start; a bad file stops the start.

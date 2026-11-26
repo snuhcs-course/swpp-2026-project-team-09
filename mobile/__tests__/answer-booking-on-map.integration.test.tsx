@@ -10,7 +10,7 @@
 
 import { fireEvent, within } from '@testing-library/react-native';
 import type { Place } from '@/api/types';
-import { raiseCard } from './support/card-grip';
+import { grip, raiseCard } from './support/card-grip';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -21,16 +21,19 @@ import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { askForCards, expectNoWrite, SEAT_CARD, sendFromBar, startLibraryChat } from './support/library-chat';
 import { openMain } from './support/main';
 import { DINNER } from './support/server';
+import { text } from '@/design-system';
+import { LOW_LINES } from '@/screens/main/answer/card-caps';
+import { ticketHeightAt } from '@/screens/main/library/seat-ticket';
+import { styleOf } from './support/seat-ticket';
 import type { Quest } from '@/api/types';
 import { markLibraryLoggedIn } from '@/library/flag';
 import { layStage } from './support/lists';
 import { pressMarker } from './support/made-quest';
 import { stepsReplyOn } from '@/api/mock/data/steps-answer';
-import { STUDY_BUILDINGS } from '@/api/mock/data/study-spaces';
 
 // P04 ticket 07: a 관정도서관 seat card stands on the map as a flag on 관정관 with the room, the seat, and the time, my
 // walk there, its band on the top bar, and its 예약하기 beside the input. P01 ticket 03: lowered, the card says one
-// sentence with the room, the time, and the free seats; raised, it holds the room chip, the seat, and the rest. The
+// sentence with the room, the time, and the free seats; raised, it holds the seat ticket and the rest (P01 ticket 09). The
 // phone's clock stands on Monday 2026-11-02 at 16:00 in Korea; the card is for 7층 7A 열람실 2 구역 today from 17:00
 // for an hour.
 
@@ -55,7 +58,7 @@ const KWANJEONG: Place = {
   latitude: 37.45903,
   longitude: 126.95247,
 };
-const FLAG = /^관정 7층 열람실 › · (\d+번 )?17:00–18:00( · 걸음 \d+분)?$/u;
+const FLAG = /^관정 7층 열람실 · 17:00( · \d+번)?( · 빈 자리 \d+석)?$/u;
 const CHIP = '열람실: 7층 열람실';
 const DOCKED = /^관정 7층 열람실에 17:00부터 1시간, 빈 자리 \d+석이에요\.$/u;
 
@@ -91,26 +94,25 @@ function bar(): ReturnType<typeof within> {
   return within(screen.getByTestId('time-bar'));
 }
 
-function answerCard(): ReturnType<typeof within> {
-  return within(screen.getByTestId('answer-card'));
-}
-
 describe('a seat card on the map', () => {
   it('stands as a flag with the room, the seat, and the time, with a walk, the band on top, and 예약하기', async () => {
     await asked();
 
-    expect(flagName()).toMatch(/^관정 7층 열람실 › · \d+번 17:00–18:00( · 걸음 \d+분)?$/u);
+    // The room and the start, then the seat and the free seats (P01 ticket 10).
+    expect(flagName()).toMatch(/^관정 7층 열람실 · 17:00 · \d+번 · 빈 자리 \d+석$/u);
     expect(mapLines()).toHaveLength(1);
     expect(bar().getByText('17:00–18:00 · 1시간')).toBeVisible();
-    // The meal's time card, its band and grip, and no band of the library's own (P01 ticket 12).
+    // The meal's time card, its band and grip, and no band of the library's own (P01 ticket 14).
     expect(bar().getByTestId('time-band-track')).toBeOnTheScreen();
     expect(screen.getByTestId('time-card-grip')).toBeOnTheScreen();
     expect(bar().queryByTestId('slot-band')).toBeNull();
     expect(screen.getByRole('button', { name: '예약하기' })).toBeEnabled();
     const card = within(screen.getByTestId('answer-card'));
-    expect(card.getByText(DOCKED)).toBeVisible();
+    // The ticket says the room, the seat and the free seats, and the time bar the time: no sentence repeats them
+    // (P01 ticket 09).
+    expect(card.queryByText(DOCKED)).toBeNull();
     expect(card.queryByText('카드에서 확인해 주세요.')).toBeNull();
-    // One sheet, laid out once (P04 ticket 61): the room chip is in it at low too.
+    // One sheet, laid out once (P04 ticket 61): the ticket is in it at low too.
     expect(card.getByRole('button', { name: CHIP })).toBeOnTheScreen();
     expectNoWrite(library);
   });
@@ -124,43 +126,35 @@ describe('a seat card on the map', () => {
     await pass(500);
 
     expect(bar().getByText('17:00–18:30 · 1시간 30분')).toBeVisible();
-    expect(screen.getByText(/^관정 7층 열람실에 17:00부터 1시간 30분, 빈 자리 \d+석이에요\.$/u)).toBeVisible();
+    expect(screen.queryByText(/석이에요\.$/u)).toBeNull();
     expect(screen.queryByText(/바꾼 시간이에요/u)).toBeNull();
-    expect(mapThings()).toContainEqual(expect.stringMatching(/17:00–18:30( · 걸음 \d+분)?$/u));
+    // The label keeps the start; the time card says the end (P01 ticket 10).
+    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 · 17:00 · \d+번/u));
     expectNoWrite(library);
   });
 
   it('says 로그인 beside the input while logged out of the library', async () => {
     await asked(false);
 
-    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 › · 17:00–18:00( · 걸음 \d+분)?$/u));
+    expect(mapThings()).toContain('관정 7층 열람실 · 17:00');
     expect(screen.getAllByRole('button', { name: '로그인' })).toHaveLength(1);
     expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '로그인' })).toBeVisible();
     expect(screen.queryByRole('button', { name: '예약하기' })).toBeNull();
   });
 });
 
-describe("the booking's flag", () => {
-  it('opens 다른 자리 고르기 from its flag, which opens the seat picture', async () => {
+// P01 ticket 10, the user's words: a press on the 관정 mark or its label does what a press on a meal's chosen place
+// does, and raises the answer's card; no card of its own opens over the map.
+describe("the booking's mark", () => {
+  it('raises the card to the middle from its mark, with no card of its own', async () => {
     const { user } = await asked();
+    expect(grip()).toBeCollapsed();
 
     await pressMarker(user, flagName());
-    const rows = within(screen.getByTestId('mark-card'));
-    await user.press(rows.getByRole('button', { name: '다른 자리 고르기' }));
-    await pass(500);
 
-    expect(screen.getByText('관정 7층 열람실 좌석 현황')).toBeVisible();
-    expect(screen.getByRole('button', { name: '좌석 현황 닫기' })).toBeVisible();
+    expect(screen.queryByTestId('mark-card')).toBeNull();
+    expect(grip()).toHaveAccessibilityValue({ text: '중간' });
     expectNoWrite(library);
-  });
-
-  it("names the room once in the flag's card", async () => {
-    const { user } = await asked();
-
-    await pressMarker(user, flagName());
-    const rows = within(screen.getByTestId('mark-card'));
-
-    expect(rows.getAllByText(/열람실/u)).toHaveLength(1);
   });
 });
 
@@ -173,18 +167,38 @@ async function raised(): Promise<Awaited<ReturnType<typeof asked>>> {
 
 // P01 ticket 03 and P04 ticket 61: the raised card holds the whole seat card, which the low one cuts at the footer.
 describe('the raised seat card on the map', () => {
-  it('opens with the sentence, then the room chip, the seat with its time, 다른 자리 고르기, and the kiosk foot', async () => {
+  it('opens with the ticket with the room and the seat, with no sentence over it, no pills and no kiosk line', async () => {
     await raised();
     const card = within(screen.getByTestId('answer-card'));
+    const ticket = within(card.getByTestId('seat-ticket'));
 
-    expect(card.getByText(DOCKED)).toBeVisible();
+    expect(card.queryByText(DOCKED)).toBeNull();
     expect(card.queryByText('카드에서 확인해 주세요.')).toBeNull();
     expect(card.getByRole('button', { name: CHIP })).toBeVisible();
-    expect(card.getByText(/^관정 7층 열람실 · \d+번$/u)).toBeVisible();
-    expect(card.getByText(/^빈 자리 \d+석$/u)).toBeVisible();
-    expect(card.getByRole('button', { name: '다른 자리 고르기' })).toBeVisible();
-    expect(card.getByText(/좌석배정기에서 확인해야 해요/u)).toBeVisible();
+    expect(ticket.getByText(/^\d+번$/u)).toBeVisible();
+    expect(ticket.getByText(/^빈 자리 \d+석$/u)).toBeVisible();
+    expect(card.queryByText(/^관정 7층 열람실 · \d+번$/u)).toBeNull();
+    expect(card.queryByRole('button', { name: '다른 자리 고르기' })).toBeNull();
+    expect(card.queryByText(/좌석배정기에서 확인해야 해요/u)).toBeNull();
     expectNoWrite(library);
+  });
+
+  it('stands whole at the low step: what stands over the ticket and the ticket fit its two lines (P01 ticket 09)', async () => {
+    await asked();
+
+    // The user's phone and the emulator at the lowest step: the ticket's bottom cut, 8 points too low.
+    const over = styleOf(screen.getByTestId('library-cards')).marginTop ?? 0;
+    expect(Number(over) + ticketHeightAt(1)).toBeLessThanOrEqual(LOW_LINES * text.bodyLg.lineHeight);
+  });
+
+  it("opens the seat picture from the ticket's seat (P01 ticket 09)", async () => {
+    const { user } = await raised();
+
+    await user.press(within(screen.getByTestId('answer-card')).getByRole('button', { name: /^좌석: \d+번$/u }));
+    await pass(500);
+
+    expect(screen.getByText('관정 7층 열람실 좌석 현황')).toBeVisible();
+    expect(screen.getByRole('button', { name: '좌석 현황 닫기' })).toBeVisible();
   });
 
   it('keeps 예약하기 in place, disabled, while the rooms are listed', async () => {
@@ -193,43 +207,8 @@ describe('the raised seat card on the map', () => {
     await user.press(within(screen.getByTestId('answer-card')).getByRole('button', { name: CHIP }));
     await pass(500);
 
-    expect(screen.getByText('어느 열람실로 할까요?')).toBeVisible();
+    expect(screen.getByText('17:00–18:00에 빈 자리')).toBeVisible();
     expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '예약하기' })).toBeDisabled();
-    expectNoWrite(library);
-  });
-});
-
-// P01 ticket 08: the rooms listed and closed leave the flag as it is; another room chosen changes it.
-describe("the booking's flag while the rooms are listed", () => {
-  it('keeps the room and the seat through the list and 그대로, and names the room chosen after it', async () => {
-    server.on('GET /study-spaces', { status: 200, body: STUDY_BUILDINGS });
-    const { user } = await raised();
-    const before = flagName();
-    expect(before).toMatch(/ · \d+번 /u);
-
-    await user.press(answerCard().getByRole('button', { name: CHIP }));
-    await pass(500);
-    expect(screen.getByText('어느 열람실로 할까요?')).toBeVisible();
-    expect(mapThings()).toContain(before);
-    await user.press(answerCard().getByRole('button', { name: '그대로' }));
-    await pass(500);
-    expect(mapThings()).toContain(before);
-
-    await user.press(answerCard().getByRole('button', { name: CHIP }));
-    await pass(500);
-    expect(mapThings()).toContain(before);
-    const other = answerCard()
-      .getAllByRole('button', { name: /^[78]층 .+ \d+석$/u })
-      .find((cell) => !String(cell.props.accessibilityLabel).startsWith('7층 열람실'));
-    if (other === undefined) {
-      throw new Error('No other room with free seats');
-    }
-    const room = String(other.props.accessibilityLabel).replace(/ \d+석$/u, '');
-    await user.press(other);
-    await pass(500);
-
-    expect(mapThings()).not.toContain(before);
-    expect(mapThings()).toContainEqual(expect.stringMatching(new RegExp(`^관정 ${room} › · \\d+번 17:00–18:00`, 'u')));
     expectNoWrite(library);
   });
 });
@@ -247,7 +226,7 @@ describe('a seat booked on the map', () => {
     expect(screen.getByText(/^관정 7층 열람실 \d+번 · 오늘 17:00–18:00$/u)).toBeVisible();
     expect(screen.queryByText('카드에서 확인해 주세요.')).toBeNull();
     expect(screen.queryByText('예약했어요')).toBeNull();
-    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 › · \d+번 17:00–18:00 · 예약됨$/u));
+    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 · 17:00 · \d+번 · 예약됨$/u));
     expect(screen.queryByTestId('time-bar')).toBeNull();
     expect(screen.getByText(/^걸음 \d+분( ·|이라) /u)).toBeVisible();
     expect(within(screen.getByTestId('library-done')).getByRole('button', { name: '길 안내' })).toBeVisible();
@@ -310,7 +289,7 @@ describe("the seat bar's day", () => {
 
     await asked();
 
-    // In the meal's time card (P01 ticket 12): the busy stretches on the User's lane, the part the band runs into red,
+    // In the meal's time card (P01 ticket 14): the busy stretches on the User's lane, the part the band runs into red,
     // the words, and what ends before it between the track's ends.
     const lane = within(bar().getByTestId('time-band-lane-me'));
     expect(lane.getAllByTestId('time-band-clash')).toHaveLength(1);

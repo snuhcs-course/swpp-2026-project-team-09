@@ -8,7 +8,7 @@ import type { TimeBand } from '@/api/assistant-types';
 import { bandMoved } from '@/features/assistant/band-move';
 import { droppedAt, shareOf, stepped } from '@/features/assistant/time-band';
 
-// The rules a band moves by (P01 ticket 12): a seat booking's band carries the library's (30-minute steps, the room's
+// The rules a band moves by (P01 ticket 14): a seat booking's band carries the library's (30-minute steps, the room's
 // shortest and longest length, no start before the earliest it takes today); a band without them moves by a meal's.
 // Partitions: a booking's band at its bounds and inside them; a meal's band. Expected values: the library's rules for
 // 7층 열람실 (an hour at least, six at most), on 2026-11-02 with 16:30 the earliest start.

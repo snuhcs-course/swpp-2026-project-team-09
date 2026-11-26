@@ -1,4 +1,4 @@
-# 12: The booking's time card draws the meal's band
+# 14: The booking's time card draws the meal's band
 
 Parent: [P01 spec](../spec.md); the user's phone, twice on 2026-11-27: "여전히 시간 카드의 시간 구간의 갈색 부분의 높이가 밥과 다르네"
 Status: ready-for-agent

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibraryCardData, LibrarySpace, MapScene, PlacePoint } from '@/api/assistant-types';
@@ -86,17 +87,32 @@ export function bookingLine(seat: string | null, slot: Slot, now: Date): string 
   return `${seat === null ? '' : `${seatWords(seat)} `}${day}${rangeWords(slot.start, slot.minutes)}`;
 }
 
-// The scene the app makes for a booking: the flag on the building with the room, the seat, and the time, which opens its
+// The pick's second line (P01 ticket 10): what is known of the seat and the free seats ("7800번 · 빈 자리 171석"), or the
+// seat and "예약됨" once booked; null when nothing is known, never an empty value.
+export function studyLine(seat: string | null, free: number | null, booked: boolean): string | null {
+  const parts = [
+    ...(seat === null ? [] : [seatWords(seat)]),
+    ...(booked ? ['예약됨'] : free === null ? [] : [`빈 자리 ${String(free)}석`]),
+  ];
+  return parts.length === 0 ? null : parts.join(' · ');
+}
+
+// The scene the app makes for a booking: the pick on the building with the room, and `line` under it, which opens its
 // card, and the User at `me` with a walk there.
-export function bookingScene(point: PlacePoint, space: LibrarySpace, line: string, me: LatLng | null): MapScene {
+export function bookingScene(point: PlacePoint, space: LibrarySpace, line: string | null, me: LatLng | null): MapScene {
   const at = { latitude: point.latitude, longitude: point.longitude };
   const { mine, walk } = meAndWalk(me, at);
   return {
     people: mine,
-    places: [{ place: point, role: 'pick', tag: `${bookingTitle(space)} ›` }],
+    places: [{ place: point, role: 'pick', tag: bookingTitle(space) }],
     routes: walk,
-    flags: [{ at, text: line, role: 'place' }],
+    flags: line === null ? [] : [{ at, text: line, role: 'place' }],
   };
 }
 
 export const BOOKING_SETTING: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
+
+// A booking's setting: its pick the study one, with the booking's start (P01 ticket 10).
+export function studySetting(start: string): SceneSetting {
+  return { ...BOOKING_SETTING, study: start };
+}

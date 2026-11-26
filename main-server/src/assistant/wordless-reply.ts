@@ -3,16 +3,18 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Lookup } from './dto/answer.dto.js';
 import { type Presented } from './feature.js';
 import { withToward } from './gathering/answer-words.js';
 import { wordlessMealSentence } from './gathering/plan-reply.js';
+import { wordlessStudySentence } from './lookup/study-plan-words.js';
 
 // What a reply says when no step of the model wrote any text: nothing beside a Lookup, whose lines the app draws as
-// the reply's words and sends back as what it said; over a meal answer with plans, the rules' one sentence made from
-// them (P05 ticket 48); the fixed sentence over anything else it shows, or a Lookup with no lines, so that no reply goes
+// the reply's words and sends back as what it said; over a meal or study answer with plans, the rules' one sentence
+// made from them (P05 ticket 48, P10 ticket 04); the fixed sentence over anything else it shows, or a Lookup with no lines, so that no reply goes
 // back empty; and no reply at all when it shows nothing.
 
 export const FIXED_SENTENCE = '아래에서 확인해 보세요.';
@@ -40,7 +42,7 @@ export function wordlessText({
   if (!others && lookup !== null && refusal === null && hasWords(lookup)) {
     return '';
   }
-  return wordlessMealSentence(answer) ?? FIXED_SENTENCE;
+  return wordlessMealSentence(answer) ?? wordlessStudySentence(answer) ?? FIXED_SENTENCE;
 }
 
 // Whether a reply with no words of the model's is logged as a warning: not beside a Lookup's lines, nor over a menu's

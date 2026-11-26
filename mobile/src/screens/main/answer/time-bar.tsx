@@ -254,7 +254,7 @@ export function LookupBar({
 }
 
 // A booking's bar (P04 ticket 07): the time card a meal's answer draws, with the seat card's band, whose handles change
-// the start and the end the chat keeps for the card within the room's hours, steps, and lengths (P01 ticket 12). Its
+// the start and the end the chat keeps for the card within the room's hours, steps, and lengths (P01 ticket 14). Its
 // "＋ 같이" slot is empty. While a booking is on its way the bar is hidden, so that the time stays as it was booked.
 export function BookingBar({
   booking,

@@ -4,7 +4,14 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { digitsThatFit, pannedOffset, pictureSize, zoomedOffset } from '@/library/cards/seat-zoom';
+import {
+  digitsAt,
+  digitsThatFit,
+  digitThresholds,
+  pannedOffset,
+  pictureSize,
+  zoomedOffset,
+} from '@/library/cards/seat-zoom';
 
 // The seat picture's maths at its edges (P01 ticket 11): where a pan and a pinch leave the view on the picture, which
 // the gestures call as worklets, and the digits of a seat's number that fit at a zoom.
@@ -76,5 +83,29 @@ describe('The digits of a seat number that fit at a zoom', () => {
     expect(digitsThatFit(IMAGE, 1)).toBe(0);
     expect(digitsThatFit(IMAGE, 2.6)).toBe(3);
     expect(digitsThatFit(IMAGE, 4)).toBeGreaterThanOrEqual(4);
+  });
+});
+
+// Partitions: four-digit numbers alone, as 7A 열람실 2 구역's, and lengths from one to four; zooms from 1 to 4 by
+// tenths. Expected values: `digitsThatFit` at each zoom, the most of the lengths given (P01 ticket 12).
+describe('The zooms where the digits that fit change', () => {
+  it('put four-digit numbers on from just under 3 times', () => {
+    const [four] = digitThresholds(IMAGE, [4, 4]);
+
+    expect(four?.digits).toBe(4);
+    expect(four?.from).toBeGreaterThan(2.9);
+    expect(four?.from).toBeLessThan(3);
+    expect(digitsThatFit(IMAGE, (four?.from ?? 0) - 0.001)).toBeLessThan(4);
+    expect(digitsThatFit(IMAGE, (four?.from ?? 0) + 0.001)).toBeGreaterThanOrEqual(4);
+  });
+
+  it('give what digitsThatFit gives, of the lengths the room has, at every zoom', () => {
+    const lengths = [1, 2, 3, 4];
+    const thresholds = digitThresholds(IMAGE, lengths);
+    const zooms = Array.from({ length: 31 }, (_, at) => 1 + at / 10);
+
+    for (const zoom of zooms) {
+      expect(digitsAt(zoom, thresholds)).toBe(Math.min(digitsThatFit(IMAGE, zoom), 4));
+    }
   });
 });

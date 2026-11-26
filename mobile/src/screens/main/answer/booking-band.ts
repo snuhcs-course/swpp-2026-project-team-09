@@ -15,7 +15,7 @@ import type { Slot } from '@/library/cards/payloads';
 import { limitsOf, type Span, slotOf, spanOf } from '@/library/cards/slot-band';
 import { clockOf, minutesOf } from '@/library/cards/times';
 
-// A seat booking's band in the time card a meal's draws (P01 ticket 12): its span, the room's hours as the range, the
+// A seat booking's band in the time card a meal's draws (P01 ticket 14): its span, the room's hours as the range, the
 // User's Classes and Quests of the day as their lane's busy stretches, the words the card said, and the library's rules,
 // which the band's handles and whole moves follow.
 

@@ -7,12 +7,13 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { type Position } from '../common/geometry.js';
 import { type AnswerReply, type LocationMissing, type PlanInput } from './dto/answer.dto.js';
 import { EventsPlanService } from './events/events-plan.service.js';
 import { MealPlanService } from './gathering/meal-plan.service.js';
 import { MeetPlanService } from './gathering/meet-plan.service.js';
+import { StudyPlanService } from './lookup/study-plan.service.js';
 import { NewQuestPlanService } from './recruiting/new-quest-plan.service.js';
 import { QuestsPlanService } from './recruiting/quests-plan.service.js';
 
@@ -25,6 +26,7 @@ export class PlanAnswersService {
     readonly quests: QuestsPlanService,
     readonly newQuests: NewQuestPlanService,
     readonly meets: MeetPlanService,
+    readonly studies: StudyPlanService,
   ) {}
 
   // Only a meal's plan reads why the location is missing; a meal's and a meet's leave out the Sub Quests `leftOut`
@@ -50,9 +52,8 @@ export class PlanAnswersService {
     if (input.kind === 'events') {
       return this.events.plan(askerId, input, at);
     }
-    // A study plan's answer comes with P10 ticket 03; until then no app is sent one to send back.
     if (input.kind === 'study') {
-      throw new UnprocessableEntityException('A study plan cannot be recalculated yet');
+      return this.studies.plan(askerId, input, at);
     }
     return input.kind === 'quests' ? this.quests.plan(askerId, input, at) : this.newQuests.plan(askerId, input, at);
   }
