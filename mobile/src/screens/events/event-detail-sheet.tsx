@@ -3,6 +3,7 @@
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Fable 5.2  prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -69,48 +70,70 @@ function Details({ event }: { event: EventView }): ReactElement {
   );
 }
 
+interface ActionsProps {
+  event: EventView;
+  onParty?: (event: EventView) => void;
+}
+
+// "원문 보기", which opens the event's page in the browser and is left out without one, and the party button, left
+// out where the sheet is given no `onParty`. A button alone spans the sheet; without either the sheet has no foot.
+function Actions({ event, onParty }: ActionsProps): ReactElement | null {
+  const { sourceUrl } = event;
+  const alone = onParty === undefined;
+  if (sourceUrl === null && alone) {
+    return null;
+  }
+  const page =
+    sourceUrl === null ? null : (
+      <Button
+        full={alone}
+        icon="globe"
+        onPress={() => {
+          void Linking.openURL(sourceUrl);
+        }}
+        size="lg"
+        variant="secondary"
+      >
+        원문 보기
+      </Button>
+    );
+  return (
+    <View style={styles.actions}>
+      {alone ? <View style={styles.grow}>{page}</View> : page}
+      {alone ? null : (
+        <View style={styles.grow}>
+          <Button
+            full
+            icon="users"
+            onPress={() => {
+              onParty(event);
+            }}
+            size="lg"
+          >
+            {detailPartyWords(event.recruiting)}
+          </Button>
+        </View>
+      )}
+    </View>
+  );
+}
+
 interface EventDetailSheetProps {
   event: EventView | null;
   onClose: () => void;
-  onParty: (event: EventView) => void;
+  // Left out in a Quest's room, whose User is in a 파티 for the event already: the sheet then has no party button.
+  onParty?: (event: EventView) => void;
 }
 
-// The `EventsDetail` frame: a pressed row's event in a sheet, with its time and place, its description, "원문 보기",
-// which opens its page in the browser and is left out without one, and the 파티 for it. The top part scrolls when the
-// description is long, the buttons staying under it.
+// The `EventsDetail` frame: an event in a sheet, with its time and place, its description, "원문 보기" and the 파티 for
+// it. The top part scrolls when the description is long, the buttons staying under it.
 export function EventDetailSheet({ event, onClose, onParty }: EventDetailSheetProps): ReactElement {
-  const sourceUrl = event?.sourceUrl ?? null;
   return (
     <BottomSheet label={event?.title ?? '행사'} onClose={onClose} open={event !== null}>
       {event === null ? null : (
         <View style={styles.body}>
           <Details event={event} />
-          <View style={styles.actions}>
-            {sourceUrl === null ? null : (
-              <Button
-                icon="globe"
-                onPress={() => {
-                  void Linking.openURL(sourceUrl);
-                }}
-                size="lg"
-                variant="secondary"
-              >
-                원문 보기
-              </Button>
-            )}
-            <View style={styles.grow}>
-              <Button
-                full
-                icon="users"
-                onPress={() => {
-                  onParty(event);
-                }}
-                size="lg"
-              >
-                {detailPartyWords(event.recruiting)}
-              </Button>
-            </View>
-          </View>
+          <Actions event={event} onParty={onParty} />
         </View>
       )}
     </BottomSheet>

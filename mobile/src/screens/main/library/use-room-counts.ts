@@ -3,21 +3,23 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { LibrarySpace } from '@/api/assistant-types';
 import { studySpacesQuery } from '@/api/queries';
 import type { StudyBuilding } from '@/api/study-types';
 import type { Slot } from '@/library/cards/payloads';
-import { type RoomCount, type RoomCounts, roomOf } from '@/library/cards/seat-rooms';
-import { freeSeats } from '@/library/cards/seats';
+import { roomOf } from '@/library/cards/seat-rooms';
 import { siteBookTime, siteDate } from '@/library/cards/times';
 import { library } from '@/library/library';
 import { useLibrarySession } from '@/library/library-session';
 import type { LibrarySeat } from '@/library/replies';
-import { SEATS_WAIT_MS, withinWait } from './seats-wait';
+import { RoomCounting, type Rooms } from './room-counting';
+
+export type { Rooms } from './room-counting';
 
 // A sector's seats for a time, as the library lists them.
 export function seatsFor(space: LibrarySpace, slot: Slot): Promise<LibrarySeat[]> {
@@ -30,76 +32,40 @@ export function seatsFor(space: LibrarySpace, slot: Slot): Promise<LibrarySeat[]
   });
 }
 
-// The seat card's rooms: the seat sectors the 공부공간 layer gives for 관정관, already cut by 소속 on the server, and
-// their free seats for the card's time. Nothing is read before `read`.
-export type Rooms =
-  | { state: 'idle' | 'listing' | 'unlisted' }
-  | { state: 'listed'; sectors: readonly LibrarySpace[]; counts: RoomCounts };
-
 function sectorsOf(buildings: readonly StudyBuilding[]): LibrarySpace[] {
   return buildings.flatMap(({ liveSeats }) => liveSeats?.sectors ?? []).filter((sector) => roomOf(sector) !== null);
 }
 
-function countOf(result: PromiseSettledResult<LibrarySeat[]> | undefined): RoomCount {
-  return result?.status === 'fulfilled' ? freeSeats(result.value).length : 'failed';
-}
-
-function withCount(rooms: Extract<Rooms, { state: 'listed' }>, id: string, count: RoomCount): Rooms {
-  return { ...rooms, counts: new Map(rooms.counts).set(id, count) };
-}
-
-// One sector's seats within the wait, its count told as soon as they come or as failed when they do not.
-function countedOne(
-  sector: LibrarySpace,
-  slot: Slot,
-  tell: (id: string, count: RoomCount) => void,
-): Promise<LibrarySeat[]> {
-  const seats = withinWait(seatsFor(sector, slot), SEATS_WAIT_MS);
-  void seats.then(
-    (value) => {
-      tell(sector.id, freeSeats(value).length);
-    },
-    () => {
-      tell(sector.id, 'failed');
-    },
-  );
-  return seats;
-}
-
-// `read` lists the sectors and reads each one's seats for the slot at once; a read that fails leaves the others.
-// Without a library session it lists the sectors and reads nothing. The newest read wins.
-export function useRoomCounts(slot: Slot): { rooms: Rooms; read: () => Promise<Rooms> } {
+// The seat card's counting of its rooms (`RoomCounting`), made once for the card: it holds the counts apart from the
+// card, so a count that arrives draws only what reads it (`useRooms`, `useRoomsWith`), and reads the card's time and the
+// library session as they are when it is asked.
+export function useRoomCounts(slot: Slot): RoomCounting {
   const queryClient = useQueryClient();
   const { loggedIn } = useLibrarySession();
-  const [rooms, setRooms] = useState<Rooms>({ state: 'idle' });
-  const round = useRef(0);
-  const read = useCallback(async (): Promise<Rooms> => {
-    round.current += 1;
-    const mine = round.current;
-    const settle = (next: Rooms): Rooms => {
-      if (mine === round.current) {
-        setRooms(next);
-      }
-      return next;
-    };
-    const countOne = (id: string, count: RoomCount): void => {
-      if (mine === round.current) {
-        setRooms((last) => (last.state === 'listed' && last.counts !== null ? withCount(last, id, count) : last));
-      }
-    };
-    setRooms((last) => (last.state === 'listed' ? last : { state: 'listing' }));
-    const sectors = await queryClient.query({ ...studySpacesQuery, staleTime: 'static' }).then(sectorsOf, () => null);
-    if (sectors === null) {
-      return settle({ state: 'unlisted' });
-    }
-    if (!loggedIn) {
-      return settle({ state: 'listed', sectors, counts: null });
-    }
-    settle({ state: 'listed', sectors, counts: new Map(sectors.map(({ id }) => [id, 'pending'])) });
-    // Each count shows as it arrives, and one that does not come within the wait shows as failed (P01 ticket 06).
-    const results = await Promise.allSettled(sectors.map((sector) => countedOne(sector, slot, countOne)));
-    const counts = new Map(sectors.map(({ id }, index): [string, RoomCount] => [id, countOf(results[index])]));
-    return settle({ state: 'listed', sectors, counts });
-  }, [queryClient, loggedIn, slot]);
-  return { rooms, read };
+  const now = useRef({ slot, loggedIn });
+  useEffect(() => {
+    now.current = { slot, loggedIn };
+  });
+  const [counting] = useState(
+    () =>
+      new RoomCounting({
+        slot: (): Slot => now.current.slot,
+        loggedIn: (): boolean => now.current.loggedIn,
+        sectors: (): Promise<LibrarySpace[] | null> =>
+          queryClient.query({ ...studySpacesQuery, staleTime: 'static' }).then(sectorsOf, () => null),
+        seats: seatsFor,
+        now: (): number => Date.now(),
+      }),
+  );
+  return counting;
+}
+
+// The rooms as the counting has them, drawn again with each change: for the list of rooms.
+export function useRooms(counting: RoomCounting): Rooms {
+  return useSyncExternalStore(counting.subscribe, counting.get);
+}
+
+// One value of the rooms, drawn again only when it changes: for the card, which needs little of them.
+export function useRoomsWith<T>(counting: RoomCounting, pick: (rooms: Rooms) => T): T {
+  return useSyncExternalStore(counting.subscribe, () => pick(counting.get()));
 }

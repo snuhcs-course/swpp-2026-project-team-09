@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -15,9 +16,10 @@ import { UsersService } from '../../users/users.service.js';
 import { CARDS_MAX, noneFound, type Presented, type ToolContext } from '../feature.js';
 import { type UserDayService } from '../free-time/user-day.service.js';
 import { koreaDate } from '../korea-time.js';
-import { addDays, lastBookableDate, type Refusal } from './booking-rules.js';
+import { addDays, closedTodayRefusal, lastBookableDate, type Refusal } from './booking-rules.js';
 import { type Catalogue, type LibrarySpace, type SpaceStatus, statusOf } from './catalogue.js';
 import { type FreeTimePort } from './free-time-port.js';
+import { closedWords } from './closed-today.js';
 import { type LibraryCard } from './library-card.js';
 
 // What the 관정도서관 tools share (ADR 0009). The model passes catalogue ids and the User's words; the server checks the
@@ -99,6 +101,7 @@ export function spaceAnswer(id: string, space: LibrarySpace | undefined, status:
     hours: space.hours,
     durations: { min: space.minMinutes, max: space.maxMinutes, step: space.stepMinutes },
     window: windowWords(space, now),
+    ...(closedTodayRefusal(space, koreaDate(now), now) === null ? {} : { closedToday: closedWords(space) }),
     capacity: space.capacity,
     useDescOptions: space.useDescOptions,
     needsPledge: space.pledge !== null,

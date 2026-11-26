@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-11-22  Opus 5.5   prompted by fyoon46
+# 2026-11-26  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # A study seat asked for from the current app (`capabilities: app`), which draws answers on the map, in the P6 world on
@@ -62,3 +63,25 @@
     text:
       mentions: [당일]
       absent: [몇 시부터, 예약할까요]
+
+# A reading room asked for after its closing gets no card and one sentence: when it closed and when it opens next
+# (P05 ticket 57). On the user's phone (2026-11-26, 23:37), "관정 열람실 자리 있어?" was answered with four sentences that
+# named a seats card no one could see. The clock stands at 23:37 on the world's Wednesday.
+- id: library-answer-closed-for-today
+  category: library-answer
+  world: p6-answer
+  capabilities: app
+  now: '2026-11-04T23:37:00+09:00'
+  repeat: 3
+  turns:
+    - user: 관정 열람실 자리 있어?
+  expect:
+    actions: [REFUSE]
+    tools:
+      required: [findLibrarySpace]
+      allowed: [showLibrarySeats, proposeLibraryBooking]
+    cards:
+      - { kind: library, max: 0 }
+    text:
+      mentions: ['23:00', '07:00']
+      absent: [카드]
