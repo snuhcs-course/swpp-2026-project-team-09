@@ -3517,6 +3517,12 @@ Each command fails when it finds a problem. Run all four before opening a pull r
 test files run in parallel, except `test/redis-idempotency-store.integration.test.ts`: it waits for Redis to expire
 records in real time, so it runs alone after the others, against a Redis container of its own.
 
+The integration test files share one database. The global setup also keeps a copy of it, as migrated and seeded, as a
+template. A file whose rows must reach no other file starts on a database of its own, which `ownDatabase()` in
+`test/containers.ts` clones from that template in about a second and drops afterwards. Every file that makes room
+requests does: a read of a room request expires and closes every request in its database by that file's own clock.
+`RoomStage` always does, and `MealPlanStage` and `StudyStage` do when started with `ownDatabase: true`.
+
 Each test file is named by its level (ADR 0007): `*.unit.test.ts` or `*.integration.test.ts`. `pnpm test:unit` runs
 the unit tests alone and needs no Docker. `pnpm test:integration` runs the integration tests, which start the
 containers. `pnpm test:cov` and `pnpm test:cov:unit` add the coverage of `src/`, written to `coverage/`.
