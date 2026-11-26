@@ -509,3 +509,45 @@
           forbidden: [getMenus, findMenu, showOnMap]
         text:
           absent: [운영, 걸어서]
+
+# A plan asked for a day out of reach, over the plan on screen, is still asked of planMeal, which answers none and
+# takes the plan on screen off the map (P05 ticket 55). On the user's phone (2026-11-26), "다다음주 월요일 점심" over
+# tomorrow's lunch was refused in words while tomorrow's plan stayed under them.
+- id: meal-out-of-reach-over-a-plan
+  category: meal-wishes
+  world: p4-answer
+  live: true
+  screen: true
+  repeat: 3
+  turns:
+    - user: 내일 점심 뭐 먹지
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planMeal]
+    - user: 다다음주 월요일 점심
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planMeal]
+          forbidden: [getMenus, findMenu, showOnMap]
+        args:
+          planMeal: { date: '2026-11-16' }
+        text:
+          absent: [추천해요]
+
+- id: meal-breakfast-planned-none
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 내일 아침 뭐 먹지
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, findMenu, showOnMap]
+    args:
+      planMeal: { meal: breakfast }
+    text:
+      mentions: [[점심, 저녁]]

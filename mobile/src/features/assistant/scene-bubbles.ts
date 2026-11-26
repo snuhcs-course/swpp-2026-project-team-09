@@ -3,15 +3,18 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { turnsOf } from './turn';
 import type { ChatBubble } from './use-chat';
 
 // Whether a reply draws a scene of its own on the map: an answer, a Lookup, cards, a Proposal, several requests' steps,
-// or a map button. A reply of words alone, a refusal, or a failure draws none.
+// or a map button; or nothing, in the place of the answer on screen, when it says it clears it (P05 ticket 55). A reply
+// of words alone, a refusal, or a failure draws none.
 function drawsItsOwn(bubble: ChatBubble): boolean {
   return (
+    bubble.clears === true ||
     (bubble.answer ?? null) !== null ||
     (bubble.lookup ?? null) !== null ||
     bubble.cards.length > 0 ||

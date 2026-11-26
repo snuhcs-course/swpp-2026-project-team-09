@@ -25,6 +25,7 @@ import type { RecruitingQuest } from './party-types';
 import type { ClosedPlace, DroppedPlace, PlanPart, WithAdding } from './plan-part-types';
 import type { ProposalChange } from './party-change-types';
 import type { ReplyOffer } from './reply-offer-types';
+import type { ReplyStep } from './reply-step-types';
 import type { WithLocationMissing, WithMark, WithMissing, WithRefusal } from './refusal-types';
 import type { MealWindow, WithRelax } from './relax-types';
 import type { NewQuestInput, QuestsInput } from './recruiting-plan-types';
@@ -42,6 +43,8 @@ export interface CardReference {
 }
 
 export { ANSWER_CAPABILITIES } from './capabilities';
+
+export type { ReplyStep };
 
 // A Place or a Friend of a Proposal, by id and the words the card shows: the Place's name, the Friend's name. Never
 // where a Friend is.
@@ -386,25 +389,6 @@ export interface MapScene {
   flags: { at: LatLng; text: string; role: FlagRole; placeId?: string }[];
 }
 
-// One request of a message that asked for several (P03): a seat or room booked through a library card, or the plan
-// drawn on the map. A reply carries its steps, in time order, only when there are two or more.
-export interface ReplyStep {
-  kind: 'seat' | 'room' | PlanInput['kind'];
-  // What it is, in words: "7층 7A 열람실 2 구역", "학생회관식당에서 저녁".
-  title: string;
-  place: PlacePoint | null;
-  // Where the User sets out from for it: the place of the step before it, unless they named another.
-  from: PlacePoint | null;
-  // Korea time with the offset; null when the step has no time.
-  startAt: string | null;
-  endAt: string | null;
-  // `shown`: its card or its answer is in the reply. `not-done`: it could not be done, for `reason`.
-  status: 'shown' | 'not-done';
-  reason: string | null;
-  // Where the reply shows it: the library card of that key, or the answer.
-  shows: { kind: 'card'; key: string } | { kind: 'answer' } | null;
-}
-
 // The Assistant's reply, whole: its text, the buttons under it that show a layer of the map, each layer once, its
 // cards in the order shown, the Proposal it made, or null, and the answer or the Lookup it drew on the map, or null. A
 // main server before P01-01 leaves the answer out, and one before P01-06 the Lookup.
@@ -422,6 +406,9 @@ export interface AssistantReply extends WithRefusal {
   // The plan the User chose in words (P05 ticket 51): of the meal answer on screen, kept with its list and numbers, or
   // of the reply's own answer, which then opens at it.
   select?: { planId: string };
+  // The answer on screen leaves the map, with its time card and button: the User asked for another plan, or something
+  // else, and nothing could be drawn for it (P05 ticket 55). A server before it leaves it out.
+  clears?: true;
 }
 
 export type { AskOffer, ReplyOffer } from './reply-offer-types';

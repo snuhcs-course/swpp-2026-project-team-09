@@ -14,7 +14,7 @@ import { type MenuLineDto } from '../../menus/dto/restaurant-menus.dto.js';
 import { closureNotices } from '../../menus/open-rule.js';
 import { defineTool, noneFound, type Tool, type ToolContext } from '../feature.js';
 import { mealByClock, mealWindow } from '../free-time/meal-fit.js';
-import { dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
+import { dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
 import { dayWordsFrom, koreaTime } from '../korea-time.js';
 import { othersText } from '../others-text.js';
 import { resolved } from '../tools/resolved.js';
@@ -103,7 +103,7 @@ export function findMenu(menus: Pick<MenuLookupService, 'named' | 'at' | 'find'>
     input,
     run: async ({ date, meal: named, restaurant }, { userId, now, context, presented, capabilities }) => {
       if (outOfReach(date, now)) {
-        return noDay(date);
+        return outOfReachDay(date, presented);
       }
       // A menu asked with no meal ("내일 예술계 메뉴") opens the meal nearest in time (P05 ticket 52).
       const meal = named ?? mealByClock(date, now);

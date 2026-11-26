@@ -78,6 +78,8 @@ export interface ChatBubble {
   steps?: ReplyStep[];
   // The plan the reply chose in words, of the answer on screen or of its own (P05 ticket 51). Not sent back.
   select?: string;
+  // The answer on screen leaves with this reply, which draws nothing in its place (P05 ticket 55). Not sent back.
+  clears?: true;
   // The map's visible area the reply's request sent, which a `study` Lookup outlines.
   area?: RequestContext['viewport'];
   // A turn a card's button asked of the recalculation, not of the Assistant: its words and its answer are a turn and a

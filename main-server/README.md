@@ -2454,6 +2454,16 @@ Anthropic API as the AI's key says
   that carries them. Every meal answer therefore says `choosable: true`, and the app sends `planIds` only over an
   answer that says it, never to an older main server.
 
+  A reply carries `clears: true` when the User asked for another plan, or something else, and nothing could be drawn
+  for it: `planMeal` for a day past or more than a week ahead, for breakfast, or for a meal over for today;
+  `planMeet`, `planEvents`, `planNewQuest` and `findMenu` for a day out of reach; and `refuse` for a request plainly
+  not about the plan on screen (off-campus, general-work, who-looked, past-location, others-sharing,
+  not-watched-friend, not-watched-shuttle). The app then takes the answer on screen off the map, with
+  its time card and button, so that the words are not read over a plan they are not about (P05 ticket 55). A reply of
+  words alone without it, such as one about the plan on screen ("왜 302동은 없어?"), or a refusal of words that are
+  vague or cannot be read (a typo, half a sentence), keeps the answer as before, and so
+  does an app that ignores it. It is left out of a reply that draws something of its own.
+
   `mentions` (`[{ "userId", "name" }]`, at most 20) lists the Friends the User picked with "@" in the new message. It is
   left out when there is none. Before the run, an id that is not among the asker's Friends is dropped, each Friend
   counts once, and the Friend's own name replaces the one sent (`src/assistant/mentions.ts`). The run's tools take the

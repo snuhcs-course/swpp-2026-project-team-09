@@ -126,6 +126,9 @@ export interface Presented {
   steps?: ReplyStep[];
   // The plan of the meal answer on screen the User chose in words (choosePlan).
   select?: string;
+  // A request for another plan, or another request, ended with nothing drawn: the plan on screen leaves it (P05 ticket
+  // 55). Left out when the reply may be about the plan on screen.
+  clears?: true;
 }
 
 // Who asks, when, and what their app knew as they asked, such as where they are.
