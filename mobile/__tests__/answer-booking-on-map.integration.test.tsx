@@ -10,7 +10,7 @@
 
 import { fireEvent, within } from '@testing-library/react-native';
 import type { Place } from '@/api/types';
-import { raiseCard } from './support/card-grip';
+import { grip, raiseCard } from './support/card-grip';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass, screen } from './support/app';
@@ -139,27 +139,18 @@ describe('a seat card on the map', () => {
   });
 });
 
-describe("the booking's flag", () => {
-  it('opens 다른 자리 고르기 from its flag, which opens the seat picture', async () => {
+// P01 ticket 10, the user's words: a press on the 관정 mark or its label does what a press on a meal's chosen place
+// does, and raises the answer's card; no card of its own opens over the map.
+describe("the booking's mark", () => {
+  it('raises the card to the middle from its mark, with no card of its own', async () => {
     const { user } = await asked();
+    expect(grip()).toBeCollapsed();
 
     await pressMarker(user, flagName());
-    const rows = within(screen.getByTestId('mark-card'));
-    await user.press(rows.getByRole('button', { name: '다른 자리 고르기' }));
-    await pass(500);
 
-    expect(screen.getByText('관정 7층 열람실 좌석 현황')).toBeVisible();
-    expect(screen.getByRole('button', { name: '좌석 현황 닫기' })).toBeVisible();
+    expect(screen.queryByTestId('mark-card')).toBeNull();
+    expect(grip()).toHaveAccessibilityValue({ text: '중간' });
     expectNoWrite(library);
-  });
-
-  it("names the room once in the flag's card", async () => {
-    const { user } = await asked();
-
-    await pressMarker(user, flagName());
-    const rows = within(screen.getByTestId('mark-card'));
-
-    expect(rows.getAllByText(/열람실/u)).toHaveLength(1);
   });
 });
 

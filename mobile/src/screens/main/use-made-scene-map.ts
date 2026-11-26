@@ -218,10 +218,20 @@ export function useMadeSceneMap(
     tellWalk(walk);
   }, [walk, tellWalk]);
   // A press on another step's flag makes it the step shown; one on the step shown opens its card when it is a booking.
+  // A booking alone takes a press as a meal's chosen place does: it raises the answer's card, and no card of its own
+  // opens over the map (P01 ticket 10, the user's words).
   const onMark = (id: string, position: LatLng): void => {
     const number = stepNumberOf(id);
     const step = number === null ? undefined : chat.steps?.steps[number - 1];
-    if (number === null || step === undefined) {
+    if (
+      number === null &&
+      chat.booking !== null &&
+      chat.steps === null &&
+      chat.proposal === null &&
+      chat.cards === null
+    ) {
+      chat.card.raise(false);
+    } else if (number === null || step === undefined) {
       onFlag(id, position);
     } else if (number - 1 !== chat.activeStep) {
       chat.setActiveStep(number - 1);

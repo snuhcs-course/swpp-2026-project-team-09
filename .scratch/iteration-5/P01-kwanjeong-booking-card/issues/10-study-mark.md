@@ -24,6 +24,7 @@ A seat booking on the map is the answer's plain pick: a gold round with no icon,
 - **The walk.** It follows the meal's policy. While the User's position is known, the way there is drawn with its own minutes on its line ("6분"), as a meal Plan's way there is, and the label has no walk. Without the position, no way is drawn and the walk is not known, so the label has none either.
 - **The free seats.** The card tells the map its free seats beside the seat (`BookingSeen.free`).
 - **The flag kept while the rooms are listed** (P01 ticket 08) still holds. Its words are the new label's.
+- **A press on the mark** does what a press on a meal's chosen place does: it raises the answer's card (to the middle from low). No card of its own opens over the map; the box with the room, the seat and the time and 다른 자리 고르기 is gone for this mark (the user's words, 2026-11-27: "밥 때도 이런 팝업은 없었잖아"). The seat ticket's seat opens the seat picture instead. The same box still opens from the numbered flag of a booking that is one of several requests.
 
 Not in this ticket: the marks of a booking that is one of several requests (its numbered step flag stays as it is), the list of study places, and the time card's range.
 
@@ -33,6 +34,7 @@ Not in this ticket: the marks of a booking that is one of several requests (its 
 - [x] An unknown seat or count leaves the rest, and with neither there is no second line. (Unit test.)
 - [x] With the User's position, the way has its minutes on its line, and the label no walk. Without it, neither. (Unit tests.)
 - [x] The flag keeps its seat while the rooms are listed, and names the room chosen after it. (Integration test, as in ticket 08.)
+- [x] A press on the mark raises the card to the middle and opens no card of its own. (Integration test.)
 - [ ] On the user's phone: the sky round with the book, the gold start, and the second line.
 
 ## Comments
