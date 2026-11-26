@@ -26,10 +26,12 @@ const DATE = '2087-01-07';
 
 const answerIn = (body: unknown): AnswerReply => z.custom<AnswerReply>().parse(body);
 
+// From an app that draws the answer alone (`study-plan`) and not the answer together.
 function recalculate(body: object): request.Test {
-  return withAccessToken(request(stage.app.getHttpServer()).post('/assistant/answers'), stage.asker.accessToken).send(
-    body,
-  );
+  return withAccessToken(request(stage.app.getHttpServer()).post('/assistant/answers'), stage.asker.accessToken).send({
+    clientCapabilities: ['library', 'answer', 'study-plan'],
+    ...body,
+  });
 }
 
 const studyInput = (from: string | null, userIds = [stage.asker.id]): object => ({
@@ -37,6 +39,7 @@ const studyInput = (from: string | null, userIds = [stage.asker.id]): object => 
   date: DATE,
   what: 'any',
   people: userIds.map((userId) => ({ userId, constraints: [] })),
+  together: false,
   window: { from, until: null },
   area: null,
   minutes: null,
@@ -65,9 +68,15 @@ describe("A study plan's input", () => {
     expect((await recalculate({ input: studyInput(null, [randomUUID()]), location: null })).status).toBe(400);
   });
 
-  it('is refused with 422 with Friends, until the group study room answer comes (P10 ticket 07)', async () => {
+  it('is refused with 422 with Friends from an app that does not say study-group (P10 ticket 07)', async () => {
     const input = studyInput(null, [stage.asker.id, randomUUID()]);
 
     expect((await recalculate({ input, location: null })).status).toBe(422);
+  });
+
+  it('is refused with 422 alone from an app that does not say study-plan', async () => {
+    const response = await recalculate({ input: studyInput(null), location: null, clientCapabilities: ['answer'] });
+
+    expect(response.status).toBe(422);
   });
 });

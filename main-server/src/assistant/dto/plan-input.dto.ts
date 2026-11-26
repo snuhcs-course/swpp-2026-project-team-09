@@ -42,8 +42,8 @@ export interface MealInput {
 }
 
 // Where the asker can study that day (P10). Alone, the study places they may use that fit `what`, within `area` when
-// they asked for 근처, ranked as a meal's plans are. With Friends added by the time card's "+ 같이", a 관정 group study
-// room at everyone's free time.
+// they asked for 근처, ranked as a meal's plans are. Together, or with Friends added by the time card's "+ 같이", a 관정
+// group study room at everyone's free time.
 export interface StudyInput {
   kind: 'study';
   // YYYY-MM-DD in Korea.
@@ -52,6 +52,9 @@ export interface StudyInput {
   what: 'quiet' | 'group' | 'pc' | 'any';
   // The asker first, then the Friends added: 1 to 8, a party's limit.
   people: PlanPerson[];
+  // Studying together (같이, 스터디, 조모임): the group study room answer, even before any Friend is added. With Friends
+  // it is that answer whatever this says; false with the asker alone is the answer alone.
+  together: boolean;
   window: { from: string | null; until: string | null };
   // The visible map area the User asked within (근처, 이 주변); null for the whole campus. Alone only.
   area: { south: number; west: number; north: number; east: number } | null;
@@ -218,6 +221,7 @@ const studyInputSchema = z.strictObject({
   date: z.iso.date(),
   what: z.enum(['quiet', 'group', 'pc', 'any']),
   people: planPeopleSchema.min(1),
+  together: z.boolean(),
   window: windowSchema,
   minutes: z.int().min(1).max(1440).nullable(),
   chosen: z.strictObject({ seatSpaceId: catalogueId.nullable(), roomSpaceId: catalogueId.nullable() }),

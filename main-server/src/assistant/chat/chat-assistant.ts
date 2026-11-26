@@ -39,7 +39,6 @@ import { CHOOSE_PLAN_RULES, choosePlan } from '../gathering/choose-plan.js';
 import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
 import { INTEREST_RULES, interestTools } from '../interests/interest-tools.js';
 import { koreaNow } from '../korea-time.js';
-import { LIBRARY_ANSWER_RULES, LIBRARY_RULES, LIBRARY_STUDY_RULES } from '../library/library-rules.js';
 import { type PlanAnswersService } from '../plan-answers.service.js';
 import { planNewQuest } from '../recruiting/new-quest-tools.js';
 import { planQuests, RECRUITING_RULES } from '../recruiting/recruiting-tools.js';
@@ -49,8 +48,6 @@ import { DAY_RULES, findDay } from '../lookup/day-tools.js';
 import { findFriend, FRIEND_RULES } from '../lookup/friend-tools.js';
 import { HOURS_RULES, restaurantHours } from '../lookup/hours-tools.js';
 import { findMenu, MENU_RULES } from '../lookup/menu-tools.js';
-import { withStudyPlan } from '../lookup/study-plan-tools.js';
-import { withStudyArea } from '../lookup/study-tools.js';
 import { type LookupServices } from '../lookup/lookup-services.js';
 import { QUEST_WAY_RULES } from '../lookup/quest-way-tools.js';
 import { findTutorialOrder, TUTORIAL_ORDER_RULES } from '../lookup/tutorial-order-tools.js';
@@ -77,6 +74,7 @@ import { WHICH_FRIEND } from '../tools/which-friend.js';
 import { TutorialService } from '../../tutorial/tutorial.service.js';
 import { getTutorial } from '../tutorial/get-tutorial.js';
 import { TUTORIAL_RULES } from '../tutorial/tutorial-rules.js';
+import { libraryRulesOf, studyDrawingOf, withStudies } from './chat-studies.js';
 
 // The services the chat Assistant's tools call.
 export interface ChatAssistantServices {
@@ -110,14 +108,9 @@ export interface ChatAssistantOptions {
   drawsArea?: boolean;
   // With drawsAnswers, it also draws ranked study places (`study-plan`, P10), which take 근처 in the place of drawsArea's.
   drawsStudy?: boolean;
-}
-
-// The 관정도서관 rules: with a study answer, "공부할 자리" asked without a booking is planStudy's.
-function libraryRulesOf(drawsAnswers: boolean, drawsStudy: boolean): string {
-  if (!drawsAnswers) {
-    return LIBRARY_RULES;
-  }
-  return drawsStudy ? LIBRARY_STUDY_RULES : LIBRARY_ANSWER_RULES;
+  // With drawsAnswers, it also draws the study answer together (`study-group`, P10 ticket 07), in the place of
+  // proposeStudyRoom's card.
+  drawsStudyGroup?: boolean;
 }
 
 // The system prompt's part that is the same for every request, whoever asks and whenever, which the Anthropic path
@@ -308,18 +301,15 @@ export function chatAssistant(services: ChatAssistantServices, options?: ChatAss
     freeTime,
     drawsAnswers,
   );
-  const drawsStudy = drawsAnswers && options?.drawsStudy === true;
-  const planned = withStudyPlan(
-    withStudyArea(
-      withInterests(onMap, services.interests, drawsAnswers),
-      services.lookups.studyAreas,
-      drawsAnswers && options?.drawsArea === true && !drawsStudy,
-    ),
-    services.lookups.studyPlans,
-    drawsStudy,
-  );
+  const studies = studyDrawingOf(options);
+  const planned = withStudies(withInterests(onMap, services.interests, drawsAnswers), services, studies);
+  // proposeStudyRoom is offered to an app that draws answers and not the answer together.
+  const libraryOptions = {
+    ...answeringOptions(drawsAnswers),
+    picksStudyTime: drawsAnswers && !studies.drawsStudyGroup,
+  };
   return {
-    instructions: instructionsOf(planned.rules, libraryRulesOf(drawsAnswers, drawsStudy), drawsAnswers),
+    instructions: instructionsOf(planned.rules, libraryRulesOf(studies), drawsAnswers),
     requestInstructions: requestInstructionsOf,
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
     ...(drawsAnswers ? { afterRun: stepsAfterRun(services) } : {}),
@@ -341,8 +331,8 @@ export function chatAssistant(services: ChatAssistantServices, options?: ChatAss
       findFreeFriends,
       ...planned.tools,
       // findLibrarySpace, findLibraryFreeSlots, proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn,
-      // showLibrarySeats and showMyLibraryBookings, and proposeStudyRoom for an app that draws answers.
-      ...libraryTools(library, answeringOptions(drawsAnswers)),
+      // showLibrarySeats and showMyLibraryBookings, and proposeStudyRoom.
+      ...libraryTools(library, libraryOptions),
       getTutorial: getTutorial(tutorial),
     },
   };

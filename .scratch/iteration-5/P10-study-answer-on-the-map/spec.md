@@ -11,6 +11,7 @@ The user wants the meal answer's way: numbered candidates on the map and in a li
 ## Constraints
 
 - **An installed app gets what it gets today.** The new answer goes only to an app that sends the capability `study-plan` in `clientCapabilities`, as `area` and `pick` do. Without it, the rules and tools stay as they are: the 관정 booking path, and `findStudyNearby` for an app that says `area`.
+- **The answer together has its own capability, `study-group`** (2026-11-27), because the app draws it before it can draw the ranked list. Each works without the other; see With Friends.
 - **Opening hours are structured data, filled by hand** from `.scratch/iteration-5/notes-ko/handoff/study-space-hours-research.md` (being collected). They cover weekdays, Saturday, and Sunday and holidays, in term and in vacation. Each space keeps its display text `hours`.
   - A space whose hours for the asked time are unknown is listed after the known-open ones, with a line that its hours are not known. It is never called open.
   - A space known to be closed then is not a candidate. It is listed under "쉬는 곳", as a closed Restaurant is (P04 ticket 71).
@@ -23,8 +24,9 @@ The user wants the meal answer's way: numbered candidates on the map and in a li
 A tool `planStudy` answers an `AnswerReply`. It takes:
 - `what`: quiet | group | pc | any, as `findStudyNearby`;
 - `date`, today by default; `from`, `until`;
-- `near`: true when the User said 근처 or 이 주변, which limits it to the visible area;
-- with Friends, `friendIds`, `minutes`, and a period as `firstDay`/`lastDay`.
+- `near`: true when the User said 근처 or 이 주변, which limits it to the visible area.
+
+Studying together is another tool's, `planStudyGroup`, for an app that says `study-group` (With Friends).
 
 The input and the answer alone:
 
@@ -35,6 +37,7 @@ interface StudyInput {
   date: string;                       // YYYY-MM-DD in Korea
   what: 'quiet' | 'group' | 'pc' | 'any';
   people: PlanPerson[];               // the asker first, then the Friends added; 1 to 8 (PARTY_MAX)
+  together: boolean;                  // studying together: the group answer, even with the asker alone (2026-11-27)
   window: { from: string | null; until: string | null };
   area: { south: number; west: number; north: number; east: number } | null; // set for 근처, alone only
   minutes: number | null;             // with Friends, the length asked ("2시간"), else from–until, else 180
@@ -98,10 +101,26 @@ interface StudyInput {
 
 ## With Friends
 
-**One answer, alone or with Friends.** The time card's "+ 같이" adds or removes Friends and recalculates through `POST /assistant/answers`, as a meal does. `band.others` lists the asker's other Friends with their busy times and walks, for the picker.
-- **Alone (one person):** the seat plans above.
-- **With Friends (2 to 8):** one plan, `관정관`, a 관정 group study room. The time comes from everyone's free time. The main action is "동의 요청 보내기", today's room request, unchanged on the server.
-- **All Friends removed:** the alone answer again. The 열람실 and the time the User chose while alone are kept in the input (`chosen`, `window`) and come back.
+**Two capabilities** (2026-11-27). The app draws the answer together before it can draw the ranked list, so each has its own:
+- `study-plan`: the ranked places answer alone (tickets 03–05). Studying together is not its: an app with only `study-plan` keeps today's `proposeStudyRoom`, its rule and its card.
+- `study-group`: the answer together, through its own tool `planStudyGroup(friendIds?, date?, firstDay?, lastDay?, from?, until?, minutes?)` and rules `STUDY_GROUP_RULES`. For such an app, `proposeStudyRoom` and its rule line are not offered, and the library rules route studying together to `planStudyGroup`.
+- An app with only `study-group` asking alone gets today's 관정 seat card, through today's library tools and prompt. An app with both gets `planStudy` alone and `planStudyGroup` together. An app with neither is unchanged.
+- `POST /assistant/answers` answers a study input together only for an app that says `study-group`, and one alone only for an app that says `study-plan`; otherwise 422.
+
+**Together.** The input's `together` says the User asked to study together; the group answer is given when it is true or `people` holds Friends.
+- The words: 같이, 친구랑, 스터디, 조모임 or 팀플 with a place or a time to study → `planStudyGroup`. 혼자, or nothing of the kind, → the alone answer: `planStudy` with `study-plan`, else today's library seat path.
+- **"같이 공부할 자리 있어?" with no names:** the group plan for the asker alone, in the more-needed state: the smallest room kind that books (`studyRoomFor` for its minimum, 4), the time from the asker's own free time, `people: 1`, `moreNeeded: 3`, `key: null`. The app opens its picking of Friends from it.
+- With Friends named, the full plan; two people need two more.
+
+**The time card.** `band.others` lists the asker's other Friends with their busy times and walks, for the picker, on the answer alone and together. "+ 같이" adds or removes Friends and recalculates through `POST /assistant/answers`, as a meal does.
+- **Alone (one person, `together: false`):** the seat plans above.
+- **Together (2 to 8, or `together: true`):** one plan, `관정관`, a 관정 group study room. The time comes from everyone's free time. The main action is "동의 요청 보내기", today's room request, unchanged on the server.
+- **All Friends removed:** an answer started with "같이" stays together, at `moreNeeded: 3`. To go back alone, the app sends `together: false`, which brings the alone answer with what the User chose while alone kept in the input (`chosen.seatSpaceId`, `window`).
+
+**A `study-group`-only app's seat card "+ 같이".** That app has no answer alone: it shows today's seat card.
+- Its "+ 같이" sends `POST /assistant/answers` with a study input built from the card: `date`; `window.from` and `window.until` as the card's start and end; `minutes`; `chosen.seatSpaceId` as the card's space; `together: true`; and `people` as the asker and the Friends added. The server answers the answer together, within that window.
+- The card's key, `book:{space}:{date}:{HHMM}:{minutes}`, holds everything the input needs; the server needs nothing else from the card.
+- When every Friend is removed, the app shows the seat card it kept. There is no server call.
 
 `people` takes the same `PlanPerson` and constraints as a meal's input (from, notBefore, leaveBy, set by the asker), with the same checks: the asker first, no one twice, only the asker's Friends, a known Place. `area` is ignored with Friends.
 
@@ -161,10 +180,10 @@ interface RoomRequestState {
 - **From a Quest:** `GET /quests` and `GET /quests/:questId` give a booking party `roomRequest: { id, status, consented, asked } | null`, null for every other Quest. It feeds the map's Quest tag ("동의 1/3 · 기다리는 중", "모두 동의 · 예약하기") and `/main?card=party:<questId>`.
 - **Booked:** `group.request.status === 'booked'`. The app draws the same ticket on a light sky ground with ✓ and "예약됨"; the server sends only the status.
 
-**`proposeStudyRoom` for a `study-plan` app** is folded into `planStudy`. "민수, 지은이랑 스터디" means: resolve each Friend with `resolveFriend`, then call `planStudy` with `friendIds`, the day or a period (`firstDay`/`lastDay`), and `minutes` when said.
-- For a period, the best day for everyone is picked, and the model is told the other days' best times, as today.
+**`proposeStudyRoom` for a `study-group` app** is replaced by `planStudyGroup`. "민수, 지은이랑 스터디" means: resolve each Friend with `resolveFriend`, then call `planStudyGroup` with `friendIds`, the day or a period (`firstDay`/`lastDay`), and `minutes` when said.
+- With neither a day nor a period, the days a room can be booked now. For several days, the best day for everyone is picked, and the model is told the other days' best times, as today.
 - The same functions run inside it: `pickStudyTime`, `arrivalsOf`, `studyRoomFor`, `checkBooking`, `windowOpening`.
-- `proposeStudyRoom` and its rule are not offered to that app, as `findStudyNearby` is not. Without `study-plan` they stay as they are.
+- `proposeStudyRoom` and its rule are not offered to that app, as `findStudyNearby` is not to a `study-plan` app. Without `study-group` they stay as they are.
 
 **Not known:** which rooms of a kind are free, and how many ("빈 방 11"), and whether the phone can read that per kind ahead of the ticket's left cell. Only the phone reads it, as for seats. The server's `rooms[].fits` is the head count only.
 
@@ -192,6 +211,9 @@ See `issues/`:
 - After the request is sent, the room, time and people are locked; changing them means cancelling it.
 - The public holidays come from the official rules (관공서의 공휴일에 관한 규정, KASI's 음양력 변환), each with its citation. A day not listed reads as a regular day. 설·추석 stay unknown for a space whose source does not state them.
 - The 7 spaces with no hours stay in the seed as unknown, listed last, never called open. Nothing is removed for now.
+- The capability is split: `study-plan` is the answer alone, `study-group` the answer together, with its own tool `planStudyGroup` and rules. Each app gets only what it says.
+- `StudyInput.together`: "같이 공부할 자리 있어?" with nobody named is the answer together for the asker alone, at three more needed. Removing every Friend keeps it together; `together: false` goes back alone.
+- A `study-group`-only app's seat card offers "+ 같이" through a study input built from the card; removing every Friend shows the kept card again, without a server call.
 
 ## Not in this spec
 

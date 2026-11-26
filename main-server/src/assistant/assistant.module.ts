@@ -44,6 +44,7 @@ import { LookupServices } from './lookup/lookup-services.js';
 import { MadePartyService } from './tools/made-party.js';
 import { MenuLookupService } from './lookup/menu.service.js';
 import { PlaceCardService } from './lookup/place.service.js';
+import { StudyGroupService } from './lookup/study-group.service.js';
 import { StudyPlanService } from './lookup/study-plan.service.js';
 import { StudyAreaService } from './lookup/study.service.js';
 import { TutorialOrderService } from './lookup/tutorial-order.service.js';
@@ -95,6 +96,7 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
     LookupServices,
     StudyAreaService,
     StudyPlanService,
+    StudyGroupService,
     MadePartyService,
     QuestCancelService,
     // The space catalogue is read once, at start; a bad file stops the start.
