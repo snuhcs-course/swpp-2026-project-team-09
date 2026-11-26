@@ -128,7 +128,6 @@ Points for the reviewer of the wording:
 
 ## Comments
 
-
 ### Built (2026-11-26)
 
 What was built (app only). `Status: ready-for-human`: the wording review and the emulator screenshots are left.
