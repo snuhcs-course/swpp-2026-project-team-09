@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import request from 'supertest';
@@ -60,7 +61,9 @@ describe('Board n13: 배고파 without the location permission', () => {
     expect(answer.chips).toEqual([{ kind: 'until', text: '13:00 수업까지', userId: null }]);
     expect(answer.plans[0]?.parts[0]?.origin).toBeNull();
     expect(linesOf(answer.plans[0]?.lines)).not.toContain('301동에서 출발로 잡았어요');
-    expect(answer.offers).toEqual([{ kind: 'open', label: '위치 켜기', screen: 'location' }]);
+    expect(answer.offers).toEqual([
+      { kind: 'open', label: '위치 켜기', screen: 'location', hint: '위치를 켜면 지금 있는 곳에서 가까운 순으로 봐요' },
+    ]);
   });
 
   it('sets out from where nobody knows long after the Class ended', async () => {
@@ -97,7 +100,9 @@ describe('A recalculation of board n13', () => {
     expect(response.status).toBe(200);
     const answer = z.custom<AnswerReply>().parse(response.body);
     expect(answer.chips.map(({ kind }) => kind)).not.toContain('origin');
-    expect(answer.offers).toEqual([{ kind: 'open', label: '위치 켜기', screen: 'location' }]);
+    expect(answer.offers).toEqual([
+      { kind: 'open', label: '위치 켜기', screen: 'location', hint: '위치를 켜면 지금 있는 곳에서 가까운 순으로 봐요' },
+    ]);
   });
 });
 
@@ -148,7 +153,9 @@ describe('Board n15: 배고파 with no Class in the Timetable', () => {
     expect(linesOf(answer.plans[0]?.lines)).toEqual(['301동식당이 가장 가까워요', '오늘 제육볶음']);
     expect(answer.plans[0]?.basis[0]).toBe('시간표가 없어 가까운 순서로 넘겨 봐요');
     expect(answer.note).toBe('시간표를 넣으면 나설 시각까지 알려 드려요');
-    expect(answer.offers).toEqual([{ kind: 'open', label: '시간표 넣기', screen: 'timetable' }]);
+    expect(answer.offers).toEqual([
+      { kind: 'open', label: '시간표 넣기', screen: 'timetable', hint: '시간표를 넣으면 나설 시각까지 알려 드려요' },
+    ]);
   });
 });
 

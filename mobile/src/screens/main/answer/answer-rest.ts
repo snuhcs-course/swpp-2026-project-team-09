@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ChatBubble } from '@/features/assistant/use-chat';
@@ -45,13 +46,12 @@ function planRests(control: ChatSheetControl, reply: ChatBubble): boolean {
 // A Plan beside a Quest the User holds, at rest: its line says so (P04 ticket 17).
 function besideSetQuest(control: ChatSheetControl): boolean {
   const { answer: shown, chat } = control;
-  const { plan, adding, moving, ghost } = shown;
+  const { plan, adding, moving } = shown;
   return (
     setQuestOf(shown.answer) !== null &&
     plan !== null &&
     !adding &&
     moving === null &&
-    ghost === null &&
     planShown(chat.bubbles, onScreenOf(control))
   );
 }

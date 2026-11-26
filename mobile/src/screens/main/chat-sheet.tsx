@@ -37,6 +37,7 @@ import { dueStepOf, type ShownSteps, shownStepsOf } from '@/features/assistant/s
 import type { Viewport } from '@/features/assistant/study-area';
 import type { PlanOutcomes } from '@/features/assistant/turn-outcome';
 import type { Chat, ChatBubble } from '@/features/assistant/use-chat';
+import { useAskedAgain } from '@/features/assistant/use-asked-again';
 import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use-plan-invitation';
 import { type Picking, usePicking } from '@/features/assistant/use-picking';
 import { type QuestLeaving, useQuestLeaving } from '@/features/assistant/use-quest-leaving';
@@ -166,6 +167,7 @@ function useAnswerOnScreen(
     },
   };
   const shown = useShownAnswer(bubbles, recalculation);
+  useAskedAgain(shown, position);
   const invitation = usePlanInvitation(shown, { location: position, locationMissing, say: showToast });
   useEffect(() => {
     shownNow.current = shown;

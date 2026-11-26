@@ -207,7 +207,6 @@ export function PlanBar(props: PlanBarProps): ReactElement {
         disabled: busy,
         fixed: windowOf(answer.input),
         focus: fix.focus,
-        ghost: shown.ghost,
         handles: !fixed,
         moving: shown.moving,
         onDrop: fix.drop,
@@ -241,7 +240,6 @@ export function LookupBar({
         disabled: true,
         fixed: NO_WINDOW,
         focus: null,
-        ghost: null,
         handles: false,
         onDrop: ignoreDrop,
       }}

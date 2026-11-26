@@ -3,6 +3,7 @@
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER } from '@/api/mock/data/meal-answer';
@@ -11,10 +12,10 @@ import { linesOf, planCardRests } from '@/screens/main/answer/plan-card';
 
 // What a Plan's card says and when it docks (P04 ticket 04), over the stored answer to "배고파, 민수랑 같이".
 const PLAN = MEAL_ANSWER.plans[0] ?? null;
-type Seen = Pick<ShownAnswer, 'plan' | 'moving' | 'ghost' | 'adding'>;
+type Seen = Pick<ShownAnswer, 'plan' | 'moving' | 'adding'>;
 
 function shown(more: Partial<Seen> = {}): Seen {
-  return { plan: PLAN, moving: null, ghost: null, adding: false, ...more };
+  return { plan: PLAN, moving: null, adding: false, ...more };
 }
 
 describe("a Plan's card", () => {
