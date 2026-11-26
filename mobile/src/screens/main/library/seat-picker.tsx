@@ -6,6 +6,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -107,7 +108,8 @@ function seatMiddle(seat: LibrarySeat, image: Size, zoom: number): Point {
 
 type PictureProps = SeatPickerProps & { chosen: LibrarySeat | null; pick: (seat: LibrarySeat) => void };
 
-// The two scroll views, down and across, that hold the picture and tell the zoom where the view is.
+// The two scroll views, down and across, that hold the picture and tell the zoom where the view is. They take no touch
+// of their own: the zoom's pan moves them (P01 ticket 11).
 function Scrolled({ zoomed, children }: { zoomed: SeatZoom; children: ReactElement }): ReactElement {
   return (
     <ScrollView
@@ -121,8 +123,8 @@ function Scrolled({ zoomed, children }: { zoomed: SeatZoom; children: ReactEleme
       onScroll={({ nativeEvent: { contentOffset } }) => {
         zoomed.scrolled('y', contentOffset.y);
       }}
-      onScrollBeginDrag={zoomed.dragged}
       ref={zoomed.down}
+      scrollEnabled={false}
       scrollEventThrottle={16}
       testID="seat-picker-scroll-down"
     >
@@ -135,8 +137,8 @@ function Scrolled({ zoomed, children }: { zoomed: SeatZoom; children: ReactEleme
         onScroll={({ nativeEvent: { contentOffset } }) => {
           zoomed.scrolled('x', contentOffset.x);
         }}
-        onScrollBeginDrag={zoomed.dragged}
         ref={zoomed.across}
+        scrollEnabled={false}
         scrollEventThrottle={16}
         testID="seat-map-scroll"
       >
@@ -154,7 +156,7 @@ function Picture(props: PictureProps): ReactElement {
   );
   return (
     <>
-      <GestureDetector gesture={zoomed.pinch}>
+      <GestureDetector gesture={zoomed.gesture}>
         <View collapsable={false} style={styles.box} testID="seat-picker-box">
           <Scrolled zoomed={zoomed}>
             <SeatMap
