@@ -2911,6 +2911,11 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
       (kind `study`) fades the restricted rooms and, when 관정관 is outside the area, flags the area's edge towards it
       (role `away`, with its `placeId`), where the phone adds its free seats. The model gets names, hours, and
       minutes, never the area; without a `viewport` the tool answers `none`.
+      - By the hours as data (P10 ticket 06, `byHours` in `lookup/study-near.ts`), a space closed at the arrival is left
+        out, and one whose hours are not known comes after every known-open one; it is picked only when none is open,
+        with "여는 시간을 몰라요" in the basis and `hoursKnown: false` for the model. A stay ends at the closing when that
+        comes before the next item, or within three hours when nothing follows. With every fitting space closed, the
+        tool answers `none` (`all-closed`). The Lookup's shape is unchanged.
     - `planStudy(what, date?, from?, until?, near?)` and `STUDY_PLAN_RULES` join for an app that sends both `answer`
       and `study-plan` (`lookup/study-plan-tools.ts`), in the place of `findStudyNearby` and its rules: "근처" is
       `planStudy` with `near`, over the request's `viewport`.
