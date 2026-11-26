@@ -2454,24 +2454,38 @@ Anthropic API as the AI's key says
   that carries them. Every meal answer therefore says `choosable: true`, and the app sends `planIds` only over an
   answer that says it, never to an older main server.
 
-  An app that sends `"clientCapabilities": ["study-plan"]` will get "공부할 자리 있어?" answered as ranked study places,
-  the meal answer's way (P10). Its input is a `PlanInput` of kind `study` (`date`, `what`: quiet, group, pc or any,
-  the asker alone, `window`, and `area` for 근처), and each of its Plans carries `study` (the building's spaces that
-  fit, with their hours and whether each is open or not known, 관정관's space to book, and `liveSeats`). The request's
-  context and `POST /assistant/answers` take a `study` input, and the recalculation answers it again
-  (`lookup/study-plan*.ts`, P10 ticket 03):
-  - One plan per building holding a space of the kind asked that the User may use, within `area` when it is set.
-  - The User is ready at `window.from`, at 09:00 of another day asked without a time, or now. Where they are counts
-    only when they set out now.
-  - Each space's state at the arrival comes from its hours as data (`openAt`). The buildings known open come first,
-    then those whose hours are not known, which say so. Each group is ranked by the longest stay before the next item or
-    `window.until`, a stay of three hours or more counting as long enough, then by the shorter walk.
-  - A stay ends at the next item, at `window.until`, or at the space's closing. With none of them known, or a space
-    open around the clock, it is three hours.
-  - A building whose fitting spaces are all open only to others is `dropped` ("경영대학 학생만 쓸 수 있어요"). One
-    closed then is in `closed` ("09:00에 열어요", "오늘 23:00에 닫았어요").
-  - With no plan, `noPlan` says why: nothing of the kind in the area, all of it open only to others, no time before
-    the next item, or all of it closed, with the building that opens first.
+  An app that sends `"clientCapabilities": ["study-plan"]` will get "공부할 자리 있어?" answered on the map, the meal
+  answer's way (P10).
+  - Its input is a `PlanInput` of kind `study`:
+    - `date`;
+    - `what`: quiet, group, pc or any;
+    - `people`: the asker, and the Friends the time card's "+ 같이" adds, 1 to 8;
+    - `window`;
+    - `area` for 근처;
+    - `minutes`: with Friends, the length asked;
+    - `chosen`: the seat space or room kind the User chose, kept across adding and removing Friends.
+  - Each of its Plans carries `study` (`dto/study-plan.dto.ts`).
+    - Alone, `study` holds the building's spaces that fit, with their hours and whether each is open or not known,
+      관정관's seat to book, and `liveSeats`.
+    - With Friends, the one plan is 관정관's, and `study.group` holds:
+      - the 관정 group study room kind, and every kind with whether it fits the head count;
+      - how many more people are needed;
+      - the book key that "동의 요청 보내기" posts to `POST /library/room-requests`;
+      - 사용 용도, when the window opens, and the sent request's state.
+  - The request's context and `POST /assistant/answers` take a `study` input. The recalculation answers one alone
+    again (`lookup/study-plan*.ts`, P10 ticket 03); one with Friends is refused with 422 until P10 ticket 07.
+    - One plan per building holding a space of the kind asked that the User may use, within `area` when it is set.
+    - The User is ready at `window.from`, at 09:00 of another day asked without a time, or now. Where they are counts
+      only when they set out now.
+    - Each space's state at the arrival comes from its hours as data (`openAt`). The buildings known open come first,
+      then those whose hours are not known, which say so. Each group is ranked by the longest stay before the next item or
+      `window.until`, a stay of three hours or more counting as long enough, then by the shorter walk.
+    - A stay ends at the next item, at `window.until`, or at the space's closing. With none of them known, or a space
+      open around the clock, it is three hours.
+    - A building whose fitting spaces are all open only to others is `dropped` ("경영대학 학생만 쓸 수 있어요"). One
+      closed then is in `closed` ("09:00에 열어요", "오늘 23:00에 닫았어요").
+    - With no plan, `noPlan` says why: nothing of the kind in the area, all of it open only to others, no time before
+      the next item, or all of it closed, with the building that opens first.
   - The chat's tool is `planStudy` (P10 ticket 04, below). An app without `study-plan` gets nothing new.
 
   A reply carries `clears: true` when the User asked for another plan, or something else, and nothing could be drawn
@@ -3292,10 +3306,16 @@ Each exported file keeps, at its top, where it came from and the day of the expo
   `sunday`), for the year (`week`) and, when a source gives them apart, a `vacation`, with the column a public holiday
   takes (`holiday`), 설·추석's own (`lunarHolidays`) and stretches such as an exam period (`periods`). Each day is a list
   of ranges (a close of `24:00`, or past midnight, allowed), `'closed'`, or `null` when no source gives it. The file's
-  `calendar` gives the term's vacations and the public holidays, each over the span it is known. A space is open at a
-  time only when every way the calendar allows that day to be says so; else it is closed or not known. Fill only what a
-  source states, from the hours research, and put a conflict or what is not verified in the schedule's `note`. Neither
-  is served by `GET /study-spaces`.
+  `calendar` gives two things:
+  - the term's vacations, over the span the 학사일정 covers;
+  - the public holidays, with 설·추석 apart, over the range they are filled for (`filled`). Each holiday names its
+    rule ("관공서의 공휴일에 관한 규정 제3조제1항제1호") and the page that states its date: law.go.kr, or KASI's
+    음양력 변환 for a lunar date.
+    A day outside that range, or not listed, reads as a regular day. `study-hours.unit.test.ts` fails once today passes
+    the range's end: fill the next range from the same rules, an election day or a temporary holiday only where an
+    official page states it. A space is open at a time only when every way the calendar allows that day to be says so;
+    else it is closed or not known. Fill only what a source states, from the hours research, and put a conflict or what
+    is not verified in the schedule's `note`. Neither is served by `GET /study-spaces`.
 - **Correcting a Place**: change it in its file, such as a name in `inst_kor_nm`, and load again. The next export
   overwrites the correction.
 - **Giving a Place its outlines by hand**: add an entry to `place-outlines.json`.

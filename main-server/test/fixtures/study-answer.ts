@@ -13,7 +13,7 @@ import { type AnswerReply, type Plan, type PlanStudy, type StudySpot } from '../
 // 법학도서관 (to 01:00). Then comes 인문대 신양학술정보관, whose hours are not known. 경영학도서관's 열람실 is dropped
 // as the 경영대학's; 사회과학도서관 has been closed since 18:00. The app session builds its mock from it.
 
-const ME = '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d';
+export const ME = '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d';
 const DAY = '2026-11-04';
 const at = (clock: string): string => `${DAY}T${clock}:00+09:00`;
 
@@ -24,9 +24,9 @@ const point = (placeId: string, label: string, latitude: number, longitude: numb
   longitude,
 });
 
-const ORIGIN = point('6f1b2c3d-0000-4000-8000-000000000301', '301동', 37.4501, 126.9524);
+export const ORIGIN = point('6f1b2c3d-0000-4000-8000-000000000301', '301동', 37.4501, 126.9524);
 const SINYANG_ENG = point('6f1b2c3d-0000-4000-8000-000000000441', '공대 신양학술정보관', 37.4504, 126.9529);
-const KWANJEONG = point('6f1b2c3d-0000-4000-8000-000000000621', '관정관', 37.4594, 126.9502);
+export const KWANJEONG = point('6f1b2c3d-0000-4000-8000-000000000621', '관정관', 37.4594, 126.9502);
 const LAW = point('6f1b2c3d-0000-4000-8000-000000000072', '법학도서관', 37.4615, 126.9512);
 const SINYANG_HUM = point('6f1b2c3d-0000-4000-8000-000000000004', '인문대 신양학술정보관', 37.4601, 126.9531);
 
@@ -161,6 +161,8 @@ export const STUDY_ANSWER: AnswerReply = {
     people: [{ userId: ME, constraints: [] }],
     window: { from: null, until: null },
     area: null,
+    minutes: null,
+    chosen: { seatSpaceId: null, roomSpaceId: null },
   },
   chips: [
     { kind: 'origin', text: '301동에서', userId: null },

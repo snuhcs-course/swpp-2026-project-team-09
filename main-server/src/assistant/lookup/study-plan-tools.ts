@@ -62,6 +62,8 @@ export function planStudy(studyPlans: Pick<StudyPlanService, 'plan'>): Tool {
         people: [{ userId, constraints: [] }],
         window: { from: from ?? null, until: until ?? null },
         area,
+        minutes: null,
+        chosen: { seatSpaceId: null, roomSpaceId: null },
       };
       const answer = await studyPlans.plan(userId, studyInput, {
         now,

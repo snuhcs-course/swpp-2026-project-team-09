@@ -4,7 +4,7 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { type Position } from '../../common/geometry.js';
 import { PlaceLookup } from '../../places/place-lookup.js';
 import { StudySpacesService } from '../../study-spaces/study-spaces.service.js';
@@ -29,9 +29,13 @@ export class StudyPlanService {
     input: StudyInput,
     at: { now: Date; location: Position | null; locationMissing?: LocationMissing },
   ): Promise<AnswerReply> {
-    const [asker] = input.people;
-    if (asker.userId !== askerId) {
+    const [asker, ...friends] = input.people;
+    if (asker?.userId !== askerId) {
       throw new BadRequestException('The first person of a plan is the asker');
+    }
+    // A study plan with Friends, a 관정 group study room, comes with P10 ticket 07.
+    if (friends.length > 0) {
+      throw new UnprocessableEntityException('A study plan with Friends cannot be answered yet');
     }
     const [fromPlaceId = null] = asker.constraints.flatMap((one) => (one.kind === 'from' ? [one.placeId] : []));
     if (fromPlaceId !== null && this.places.byId(fromPlaceId) === null) {

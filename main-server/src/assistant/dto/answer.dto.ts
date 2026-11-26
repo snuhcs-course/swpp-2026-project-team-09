@@ -12,6 +12,7 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { type PlanStudy } from './study-plan.dto.js';
 import { z } from 'zod';
 import { type Position } from '../../common/geometry.js';
 import { type CuisineWord } from '../../menus/cuisine-words.js';
@@ -184,26 +185,6 @@ export interface Plan {
   study?: PlanStudy;
 }
 
-export interface PlanStudy {
-  spaces: StudySpot[];
-  // 관정관's catalogue space to book (7F-7A-zone2 for a quiet place); null elsewhere.
-  book: { spaceId: string } | null;
-  // 관정관's free seats are read on the phone, through the User's own library login; null elsewhere.
-  liveSeats: 'kwanjeong' | null;
-}
-
-// A study space of a study Plan's building. `open` is never closed: a space closed then is in the answer's `closed`.
-export interface StudySpot {
-  key: string;
-  name: string;
-  kind: 'library' | 'reading' | 'lounge' | 'pc' | 'group';
-  // The display text of its hours, null when the sources give none.
-  hours: string | null;
-  open: 'open' | 'unknown';
-  // HH:MM, when known.
-  closesAt: string | null;
-}
-
 export interface MenuDish {
   name: string;
   price: number | null;
@@ -322,6 +303,7 @@ export interface ReplyStep {
 }
 
 export type { CardFact, Lookup, LookupAction, LookupCard } from './lookup.dto.js';
+export type { GroupRoomKind, PlanStudy, RoomRequestState, StudyGroup, StudySpot } from './study-plan.dto.js';
 export type { AnswerOffer, LocationMissing } from '../refusals/refusal.dto.js';
 export type {
   EventsInput,

@@ -17,7 +17,7 @@ import { ENGINEERING_AREA, MOUNTAIN_AREA, studyBuildingsFor } from './study-area
 import { classAt, id, ME, numbered, position, readCampus, TUESDAY, wayArgs } from './way-example.js';
 
 // "공부할 자리 있어?" ranked over the seed's buildings and hours (P10 ticket 03), on Tuesday 2026-11-17, a term
-// weekday, with the 2026 public holidays known. The User is at 301동 unless given otherwise.
+// weekday, by the seed's calendar. The User is at 301동 unless given otherwise.
 
 let schedules = new Map<string, Schedule>();
 let calendar: Calendar;
@@ -27,10 +27,7 @@ beforeAll(async () => {
   await readCampus();
   const file = await readSeedFile(SEED_DIRECTORY, STUDY_SPACES_FILE, studySpacesSchema);
   schedules = new Map(file.buildings.flatMap(({ spaces }) => spaces.map(({ key, schedule }) => [key, schedule])));
-  calendar = {
-    ...file.calendar,
-    holidays: { known: { from: '2026-01-01', to: '2026-12-31' }, dates: ['2026-12-25'], lunar: [], source: null },
-  };
+  calendar = file.calendar;
   const departments = ['경제학부', '컴퓨터공학부', '화학생물공학부'];
   const listed = await Promise.all(departments.map((department) => studyBuildingsFor(department)));
   for (const [index, department] of departments.entries()) {
@@ -65,6 +62,8 @@ function asked({
     people: [{ userId: ME, constraints: [] }],
     window: { from: null, until: null },
     area,
+    minutes: null,
+    chosen: { seatSpaceId: null, roomSpaceId: null },
   };
   return studyPlanAnswer({
     input,

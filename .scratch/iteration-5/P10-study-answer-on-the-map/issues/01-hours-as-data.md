@@ -37,4 +37,9 @@ Blocked by: the hours research, `.scratch/iteration-5/notes-ko/handoff/study-spa
   - 세미나실: 09:00–22:00;
   - the split 수의학도서관 rooms.
 - [x] `GET /study-spaces` serves what it serves today: `schedule` is not on that wire.
-- [ ] The public holidays of 2026 and 2027 in `calendar.holidays`. Until then every day may be a holiday, so a space whose holiday or 설·추석 hours differ from its regular ones is unknown.
+- [x] The public holidays in `calendar.holidays`, from 2026-11 to 2027-12 (second PR of ticket 01, 2026-11-27). They come from the official rules, since no list could be read and the repo keeps none:
+  - the fixed days and the substitute rule from 관공서의 공휴일에 관한 규정 (대통령령 제36290호, in force 2026-05-11). Every 국경일, so 제헌절, and 노동절 are holidays now;
+  - 설, 부처님 오신 날 and 추석 from KASI's 음양력 변환.
+  - Each date names its rule and its page. No election day or temporary holiday is listed: no official page states one.
+  - A day outside the range, or not listed, reads as a regular day.
+  - A unit test fails once today passes the range's end.

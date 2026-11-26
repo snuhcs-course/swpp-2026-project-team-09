@@ -11,8 +11,20 @@
 import { type RequestContext, type StudyInput } from './dto/answer.dto.js';
 
 // The study plan on screen (P10), with the places the app numbers.
-function studyLine({ date, what, window, area }: StudyInput, planId: string | null, planIds?: string[]): string {
-  const plan = { plan: planId, kind: 'study', date, what, from: window.from, until: window.until, near: area !== null };
+function studyLine(input: StudyInput, planId: string | null, planIds?: string[]): string {
+  const { date, what, people, window, area, minutes } = input;
+  const friendIds = people.slice(1).map(({ userId }) => userId);
+  const plan = {
+    plan: planId,
+    kind: 'study',
+    date,
+    what,
+    friendIds,
+    from: window.from,
+    until: window.until,
+    minutes,
+    near: area !== null,
+  };
   return `[Plan on screen: ${JSON.stringify({ ...plan, ...(planIds === undefined ? {} : { numbered: planIds }) })}]`;
 }
 
