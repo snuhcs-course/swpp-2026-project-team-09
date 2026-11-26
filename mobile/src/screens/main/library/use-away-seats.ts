@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -11,7 +12,7 @@ import { studySpacesQuery } from '@/api/queries';
 import { now } from '@/clock';
 import type { AwaySeats } from '@/features/assistant/study-area';
 import { tappedSlot } from '@/library/cards/made';
-import { freeSeats } from '@/library/cards/seats';
+import { freeSeatCount } from '@/library/cards/seats';
 import { useLibrarySession } from '@/library/library-session';
 import { seatsFor } from './use-room-counts';
 
@@ -25,7 +26,7 @@ async function freeOf(sectors: readonly LibrarySpace[]): Promise<number | null> 
   const read = await Promise.allSettled(
     sectors.map((sector) => seatsFor(sector, tappedSlot(sector, at, { start: null, minutes: null }))),
   );
-  const counts = read.flatMap((result) => (result.status === 'fulfilled' ? [freeSeats(result.value).length] : []));
+  const counts = read.flatMap((result) => (result.status === 'fulfilled' ? [freeSeatCount(result.value)] : []));
   return counts.length === 0 ? null : counts.reduce((sum, count) => sum + count, 0);
 }
 

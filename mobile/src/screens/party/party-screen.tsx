@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-23  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -63,6 +64,7 @@ export function PartyScreen({ tab, onTab }: PartyScreenProps): ReactElement {
     <TabScreen
       actions={
         <Button
+          centred
           icon="plus"
           onPress={() => {
             router.push('/party-form');

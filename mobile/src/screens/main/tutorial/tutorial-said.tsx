@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -26,7 +27,7 @@ function Found({ booking }: { booking: ShownBooking }): ReactElement {
   return (
     <View style={styles.found}>
       <View style={styles.book}>
-        <Icon color={color.onPrimary} name="book" size={16} />
+        <Icon color={color.onPrimary} name="bookOpen" size={16} />
       </View>
       <View style={styles.foundWords}>
         <Text style={styles.foundTitle}>{booking.title}</Text>

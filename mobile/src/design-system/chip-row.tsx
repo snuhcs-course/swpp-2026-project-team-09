@@ -4,35 +4,38 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { color, eventText, radius, size, space } from './tokens';
 
-export interface CountedChip<Key extends string> {
+export interface RowChip<Key extends string> {
   key: Key;
   label: string;
-  count: number;
+  // Left out, the chip shows its label alone, as 찾기's boards do.
+  count?: number;
 }
 
 interface ChipRowProps<Key extends string> {
-  chips: readonly CountedChip<Key>[];
+  chips: readonly RowChip<Key>[];
   selected: Key;
   onSelect: (key: Key) => void;
   // Hides a chip whose count is 0, unless it is the selected one.
   hideEmpty?: boolean;
 }
 
-// A row of filters that scrolls sideways, each with its count: "전체 12", "공강 4". The filters are words, the chosen
-// one bold in navy on light blue, as the 행사 tab draws its own; a bare `Chip` stays the pill that picks things.
+// A row of filters that scrolls sideways, each with its count, "전체 12", "공강 4", or without one. The filters are
+// words, the chosen one bold in navy on light blue, as the 행사 tab draws its own; a bare `Chip` stays the pill that
+// picks things.
 export function ChipRow<Key extends string>({
   chips,
   selected,
   onSelect,
   hideEmpty = false,
 }: ChipRowProps<Key>): ReactElement {
-  const shown = hideEmpty ? chips.filter(({ key, count }) => count > 0 || key === selected) : chips;
+  const shown = hideEmpty ? chips.filter(({ key, count }) => count !== 0 || key === selected) : chips;
   return (
     <ScrollView
       contentContainerStyle={styles.row}
@@ -42,7 +45,7 @@ export function ChipRow<Key extends string>({
     >
       {shown.map(({ key, label, count }) => {
         const chosen = key === selected;
-        const words = `${label} ${count}`;
+        const words = count === undefined ? label : `${label} ${String(count)}`;
         return (
           <Pressable
             accessibilityLabel={words}
