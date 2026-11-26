@@ -35,6 +35,11 @@ Only the card's face is new.
   - "예약 창이 열리면 알려 드려요", dimmed. Today's window push brings the user back.
 - **Booked:**
   - the booked ticket (ticket 10's option 나);
+  - its room number:
+    - the booking phone reads it from the booking it keeps (`keepRoomBooking`, by bseqno);
+    - any other phone finds the booking in the library's own list (getMyBookingList) by date, start and kind, and reads the room's name;
+    - when neither can be read, the right cell shows the label "방" with no value, never a guess;
+    - the ticket takes the room from a source given to it, so that the server can be another one later. The room is not added to the server's `…/result` report: the user decides whether the Friends see it through our server;
   - "16:00까지 들어가지 않으면 취소돼요.";
   - "예약 취소", today's cancel (`roomCancelCardOf`).
 
@@ -46,6 +51,7 @@ Only the card's face is new.
 - [ ] Logged out: "로그인하고 예약" opens the login, and the booking follows it. (Integration test.)
 - [ ] A `:wait` key: the window's sentence and the dimmed action. (Integration test.)
 - [ ] Booked: ✓ 예약됨 on the light sky ground, the entry note and "예약 취소". (Integration test.)
+- [ ] The booked room's number comes from the kept booking, else from the library's list by date, start and kind; with neither, "방" stands alone. (Integration test.)
 - [ ] Pictures at 1.0 and 1.3 of the ready, booked and declined cards before merge.
 - [ ] Whole lint, format and types.
 
