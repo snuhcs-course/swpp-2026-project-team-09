@@ -127,7 +127,7 @@ What was built (main server and the Release only; nothing is sent until ticket 1
 - Documents: main-server README section "Usage data" and the folder layout; `infra/production/README.md` section
   "Usage data in PostHog" (the parameter, setting and deleting it) and the two lists of parameters.
 - Tests: `usage-service.unit.test.ts` (no token, no client; consent read for each event; failed read; a rejecting and
-  a reported failure, one warning without the token; shutdown with its limit), `posthog-client.unit.test.ts` (the
+  a reported failure, one warning without the token; shutdown with its limit), `posthog-client.integration.test.ts` (the
   real client with its `fetch` replaced: the US host, `$geoip_disable`, no `$set`, the close waits for a pending send,
   one try and the failure through `onError`; and the import boundary over `src/`), `settings-posthog.unit.test.ts`,
   `usage-events.integration.test.ts` (every flow of the second criterion, the three that send nothing, the consent

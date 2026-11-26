@@ -208,7 +208,7 @@ request.
 The main server sends PostHog the closing stage of four actions it does, so that the team can count how often each
 goes through and compare it with what the app asked for and heard back (P08 spec: Usage data with PostHog). The app
 sends the other stages itself. `src/usage/` is the only place that imports `posthog-node` (6.0.6), and a unit test
-(`test/posthog-client.unit.test.ts`) refuses an import of it anywhere else.
+(`test/posthog-import-boundary.unit.test.ts`) refuses an import of it anywhere else; `test/posthog-client.integration.test.ts` drives the real SDK over a stand-in `fetch`.
 
 **The events**, sent once their work is committed, never inside a transaction, with the User id (our database's UUID)
 as `distinctId`:
