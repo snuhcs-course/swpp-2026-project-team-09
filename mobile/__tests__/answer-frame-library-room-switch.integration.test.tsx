@@ -87,7 +87,9 @@ describe('a switch of room', () => {
     expect(within(ticket().getByTestId('seat-ticket-seat')).getByText('좌석')).toBeOnTheScreen();
     world.library.release();
   });
+});
 
+describe('the room switched and booked', () => {
   it('books the room on screen, and a later turn sends the card of that room', async () => {
     const chat = await askTicket(world);
     await pressIn(seatCard(), ROOM);
