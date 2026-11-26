@@ -145,7 +145,8 @@ describe('예약하기 on the seat book card', () => {
     expect(done.getByText('17:30까지 좌석배정기에서 확인해요')).toBeVisible();
     expect(inFrame().queryByLabelText(/예약 번호/u)).toBeNull();
     expect(inFrame().queryByText(/다 쓰면 꼭 반납해 주세요/u)).toBeNull();
-    expect(seatCard().queryByRole('button', { name: '예약하기' })).toBeNull();
+    // It speaks for the seat card, which shows nothing more.
+    expect(screen.queryByTestId(`library-book-${SEAT_CARD.library.key}`)).toBeNull();
   });
 });
 

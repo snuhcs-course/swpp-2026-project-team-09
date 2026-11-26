@@ -25,6 +25,7 @@ Native files: none. Server: none. Releases: the app's JavaScript only.
   - A booking on another day says its day, and no walk.
   - The main button beside the input is 가는 길 while the booking is on the map and the route guidance can start; there is none off campus.
   - The booking number, the paragraphs, 좌석 현황 보기, the 길 안내 pill and 확인 are gone. ✕ closes the answer.
+  - It speaks for the seat card it booked: that reply shows nothing more, before or after a cancel, on the map or not, and takes no room over the ticket, which stands whole at the card's low step.
 - **Cancelling from the done message (boards 4 and 5).** "예약 취소 ›" turns the main button into 예약 취소, drawn in red. Nothing is sent until it is pressed. Then:
   - the ticket greys and "예약을 취소했어요." says so;
   - the seat-stay Quest ends;
@@ -54,6 +55,7 @@ Not in this ticket: the server's side of faults 1 and 3 (the return tool and the
 - [x] The confirm time is the booked start + 30: booked at 01:20 for 07:00 gives 07:30, and a `USESTART` read back wins, with its line. (Unit and integration tests, red first.)
 - [x] The return card offers 예약 취소 for a seat booked and not yet confirmed (STATUS 1 or 2). (Unit and integration tests, red first.)
 - [x] The done message is the booked ticket with its line, 가는 길 beside the input, and none of the removed parts. (Integration test.)
+- [x] The booked ticket is the card's first part, whole at the low step, and the reply's words do not come back after a cancel. (Integration test, red first; found on the emulator.)
 - [x] "예약 취소 ›" sends nothing; 예약 취소 cancels once, greys the ticket, and takes the map's mark away. (Integration test.)
 - [x] The cancel and return cards act from the main button, without the Assistant's words or 그만두기. (Integration tests.)
 - [x] 내 예약 shows only bookings booked or in use, a past period's as they ended, and one sentence with none. (Unit and integration tests.)

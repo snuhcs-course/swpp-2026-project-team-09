@@ -46,6 +46,24 @@ export function speaksForItself({ cards, done, own = false }: Pick<ChatBubble, '
   );
 }
 
+// A turn's bubbles less each reply that holds only the seat card a done message of the turn booked, still booked or
+// cancelled since: the done message speaks for it, so it shows nothing more, and takes no room over the ticket, which
+// stands whole at the card's low step (P01 ticket 15).
+export function shownParts(turn: readonly ChatBubble[]): ChatBubble[] {
+  const booked = new Set(
+    turn.flatMap(({ done }) => (done?.ticket === undefined || done.place === undefined ? [] : [done.place])),
+  );
+  return turn.filter(({ id, cards, steps }) => {
+    const [card] = cards;
+    return !(
+      cards.length === 1 &&
+      steps === undefined &&
+      card?.kind === 'library' &&
+      booked.has(cardPlace(id, card.library.key))
+    );
+  });
+}
+
 // A card the chat keeps as ended: what it did, with no button, and the booking it ended, greyed.
 function Finished({ card, outcome }: { card: LibraryCard; outcome: CardOutcome }): ReactElement {
   return (

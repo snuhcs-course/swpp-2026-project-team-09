@@ -70,10 +70,10 @@ describe('a finished seat card when the frame draws it anew', () => {
 
     await redrawFrame();
 
-    const shown = inCard(SEAT_TEST_ID);
-    expect(shown.getByText('예약했어요')).toBeVisible();
-    expect(shown.queryByRole('button', { name: '예약하기' })).toBeNull();
-    expect(shown.queryByText(/7194번/u)).toBeNull();
+    // The done message speaks for the booked card, which shows nothing more (P01 ticket 15).
+    expect(screen.queryByTestId(SEAT_TEST_ID)).toBeNull();
+    expect(screen.queryByRole('button', { name: '예약하기' })).toBeNull();
+    expect(screen.queryByText(/7194번/u)).toBeNull();
     expect(inFrame().getByLabelText(/^예약됨 · /u)).toBeVisible();
     expect(library.writes()).toHaveLength(1);
   });
@@ -133,7 +133,7 @@ describe('a card whose write is on its way when the frame draws it anew', () => 
     library.release();
     await pass(0);
 
-    expect(inCard(SEAT_TEST_ID).getByText('예약했어요')).toBeVisible();
+    expect(screen.queryByTestId(SEAT_TEST_ID)).toBeNull();
     expect(inFrame().getByLabelText(/^예약됨 · /u)).toBeVisible();
     expect(library.writes()).toHaveLength(1);
   });

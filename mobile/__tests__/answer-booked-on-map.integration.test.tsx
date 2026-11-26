@@ -63,6 +63,15 @@ function dock(): ReturnType<typeof within> {
   return within(screen.getByTestId('ai-input-beside'));
 }
 
+// The first of the answer card's parts.
+function firstPart(): ReturnType<typeof within> {
+  const [first] = screen.getByTestId('answer-card-parts').children;
+  if (first === undefined || typeof first === 'string') {
+    throw new Error('The answer card has no parts');
+  }
+  return within(first);
+}
+
 async function booked(): Promise<Awaited<ReturnType<typeof askForCards>>> {
   const chat = await askForCards({ server, library }, [SEAT_CARD]);
   await layStage(390, 760);
@@ -89,6 +98,9 @@ describe('a seat booked on the map', () => {
     expect(dock().getByRole('button', { name: '가는 길' })).toBeEnabled();
     expect(mapThings()).toContainEqual(expect.stringMatching(BOOKED_MARK));
     expect(within(screen.getByTestId('answer-card')).getByRole('button', { name: '답 닫기' })).toBeVisible();
+    // The done message speaks for the reply, which takes no room over the ticket: the ticket is the card's first part,
+    // whole at the low step.
+    expect(firstPart().getByTestId('library-done')).toBeVisible();
   });
 
   it('is cancelled only on 예약 취소, after "예약 취소 ›", and then greys, says so, and leaves the map', async () => {
@@ -110,6 +122,8 @@ describe('a seat booked on the map', () => {
     expect(done.getByLabelText(/^취소됨 · 오늘 17:00–18:00, 7층 열람실, 좌석 \d+번$/u)).toBeVisible();
     expect(mapThings().some((thing) => BOOKED_MARK.test(thing))).toBe(false);
     expect(screen.queryByRole('button', { name: '가는 길' })).toBeNull();
+    // The reply's own words do not come back once the booking has left the map.
+    expect(screen.queryByText('카드에서 확인해 주세요.')).toBeNull();
   });
 });
 
