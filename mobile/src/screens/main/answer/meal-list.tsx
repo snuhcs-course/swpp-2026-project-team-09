@@ -142,6 +142,28 @@ export function listOrderWords(answer: AnswerReply): string {
 
 const BADGE = 22;
 
+// A row's number, as the map numbers it: soft coral with a coral rim, the chosen one solid coral (P04 ticket 85).
+function RowNumber({ number, chosen }: { number: number; chosen: boolean }): ReactElement {
+  return (
+    <View style={[styles.badge, chosen && styles.chosenBadge]}>
+      <Text style={[styles.number, chosen && styles.chosenNumber]}>{number}</Text>
+    </View>
+  );
+}
+
+// A row's way in ink, or the clock time when the User is there in gold (P04 ticket 85).
+function WayLine({ row }: { row: CandidateRow }): ReactElement {
+  return (
+    <Text
+      numberOfLines={1}
+      style={[styles.when, row.clock && styles.clock]}
+      testID={`meal-row-${String(row.number)}-when`}
+    >
+      {row.when}
+    </Text>
+  );
+}
+
 function Row({
   row,
   chosen,
@@ -172,20 +194,12 @@ function Row({
       ]}
       testID={`meal-row-${String(number)}`}
     >
-      <View style={[styles.badge, chosen && styles.chosenBadge]}>
-        <Text style={[styles.number, chosen && styles.chosenNumber]}>{number}</Text>
-      </View>
+      <RowNumber chosen={chosen} number={number} />
       <View style={styles.middle}>
         <Text numberOfLines={1} style={styles.name}>
           {name}
         </Text>
-        <Text
-          numberOfLines={1}
-          style={[styles.when, row.clock && styles.clock]}
-          testID={`meal-row-${String(number)}-when`}
-        >
-          {when}
-        </Text>
+        <WayLine row={row} />
         {dishes === null ? null : (
           <Text numberOfLines={1} style={styles.dishes}>
             {dishes}
