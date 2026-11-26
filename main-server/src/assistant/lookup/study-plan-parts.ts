@@ -83,6 +83,11 @@ export const KWANJEONG_BUILDING = '관정관';
 export const bookOf = (what: StudyInput['what']): { spaceId: string } | null =>
   what === 'quiet' || what === 'any' ? { spaceId: KWANJEONG_SEAT } : null;
 
+// The seat 관정관's plan books: the seat space the User chose on the answer, once they chose one (the app keeps it in
+// `chosen`), else the first 7층 seat for a quiet place or any.
+export const seatToBook = ({ what, chosen }: Pick<StudyInput, 'what' | 'chosen'>): { spaceId: string } | null =>
+  chosen.seatSpaceId === null ? bookOf(what) : { spaceId: chosen.seatSpaceId };
+
 // The band reaches an hour before the arrival, unless now is later, and half an hour past the end.
 const BAND_BEFORE_MS = 60 * MINUTE_MS;
 const BAND_AFTER_MS = 30 * MINUTE_MS;
@@ -289,7 +294,7 @@ export function planOf(ranked: Ranked, index: number, context: PlanContext): Pla
     band: bandOf(ranked, context),
     study: {
       spaces: spots.map((spot) => spotOf(spot)),
-      book: building.liveSeats === null ? null : bookOf(context.input.what),
+      book: building.liveSeats === null ? null : seatToBook(context.input),
       liveSeats: building.liveSeats === null ? null : 'kwanjeong',
     },
   };
