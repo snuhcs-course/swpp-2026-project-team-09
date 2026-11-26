@@ -35,3 +35,10 @@ The choice is made anew where the map comes to rest (P04 ticket 69). It changes 
 - [ ] Where every way covers a round: the fewest rounds, and no capsule.
 - [ ] Where a side is clear of every round: two lines there, as before.
 - [ ] A move of a few points leaves the label as it was.
+
+## Comments
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 30 minutes in the p04-58 session, an estimate. No emulator run: the capture's answer is the main server's and its short strip is the user's view; the test reproduces its geometry. No subagents.
+- Tokens, from the ticket's start (08:10 UTC) to this entry: input 64 uncached, with cache reads 25,446,044 and cache writes 41,278; output 32,394.
