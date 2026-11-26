@@ -19,12 +19,166 @@
       "source": "https://www.snu.ac.kr/academics/resources/calendar"
     },
     "holidays": {
-      "known": null,
-      "dates": [],
-      "lunar": [],
-      "source": null
+      "filled": {
+        "from": "2026-11-01",
+        "to": "2027-12-31"
+      },
+      "dates": [
+        {
+          "date": "2026-12-25",
+          "name": "기독탄신일",
+          "rule": "관공서의 공휴일에 관한 규정 제2조제10호",
+          "source": "https://www.law.go.kr/법령/관공서의공휴일에관한규정"
+        },
+        {
+          "date": "2027-01-01",
+          "name": "1월 1일",
+          "rule": "관공서의 공휴일에 관한 규정 제2조제3호",
+          "source": "https://www.law.go.kr/법령/관공서의공휴일에관한규정"
+        },
+        {
+          "date": "2027-02-09",
+          "name": "설날 대체공휴일",
+          "rule": "설날(2월 7일)이 일요일과 겹쳐 그 공휴일 다음의 첫 번째 비공휴일: 관공서의 공휴일에 관한 규정 제3조제1항제2호",
+          "source": "https://www.law.go.kr/법령/관공서의공휴일에관한규정"
+        },
+        {
+          "date": "2027-03-01",
+          "name": "3·1절",
+          "rule": "관공서의 공휴일에 관한 규정 제2조제2호, 국경일에 관한 법률 제2조제1호",
+          "source": "https://www.law.go.kr/법령/국경일에관한법률"
+        },
+        {
+          "date": "2027-05-01",
+          "name": "노동절",
+          "rule": "관공서의 공휴일에 관한 규정 제2조제6호",
+          "source": "https://www.law.go.kr/법령/관공서의공휴일에관한규정"
+        },
+        {
+          "date": "2027-05-03",
+          "name": "노동절 대체공휴일",
+          "rule": "노동절(5월 1일)이 토요일과 겹침: 관공서의 공휴일에 관한 규정 제3조제1항제1호",
+          "source": "https://www.law.go.kr/법령/관공서의공휴일에관한규정"
+        },
+        {
+          "date": "2027-05-05",
+          "name": "어린이날",
+          "rule": "관공서의 공휴일에 관한 규정 제2조제7호",
+          "source": "https://www.law.go.kr/법령/관공서의공휴일에관한규정"
+        },
+        {
+          "date": "2027-05-13",
+          "name": "부처님 오신 날",
+          "rule": "음력 4월 8일(한국천문연구원 음양력 변환): 관공서의 공휴일에 관한 규정 제2조제5호",
+          "source": "https://astro.kasi.re.kr/life/pageView/8"
+        },
+        {
+          "date": "2027-06-06",
+          "name": "현충일",
+          "rule": "일요일과 겹쳐도 대체공휴일 없음(제3조제1항에 없음): 관공서의 공휴일에 관한 규정 제2조제8호",
+          "source": "https://www.law.go.kr/법령/관공서의공휴일에관한규정"
+        },
+        {
+          "date": "2027-07-17",
+          "name": "제헌절",
+          "rule": "관공서의 공휴일에 관한 규정 제2조제2호(2026. 5. 11. 시행), 국경일에 관한 법률 제2조제2호",
+          "source": "https://www.law.go.kr/법령/국경일에관한법률"
+        },
+        {
+          "date": "2027-07-19",
+          "name": "제헌절 대체공휴일",
+          "rule": "제헌절(7월 17일)이 토요일과 겹침: 관공서의 공휴일에 관한 규정 제3조제1항제1호",
+          "source": "https://www.law.go.kr/법령/관공서의공휴일에관한규정"
+        },
+        {
+          "date": "2027-08-15",
+          "name": "광복절",
+          "rule": "관공서의 공휴일에 관한 규정 제2조제2호, 국경일에 관한 법률 제2조제3호",
+          "source": "https://www.law.go.kr/법령/국경일에관한법률"
+        },
+        {
+          "date": "2027-08-16",
+          "name": "광복절 대체공휴일",
+          "rule": "광복절(8월 15일)이 일요일과 겹침: 관공서의 공휴일에 관한 규정 제3조제1항제1호",
+          "source": "https://www.law.go.kr/법령/관공서의공휴일에관한규정"
+        },
+        {
+          "date": "2027-10-03",
+          "name": "개천절",
+          "rule": "관공서의 공휴일에 관한 규정 제2조제2호, 국경일에 관한 법률 제2조제4호",
+          "source": "https://www.law.go.kr/법령/국경일에관한법률"
+        },
+        {
+          "date": "2027-10-04",
+          "name": "개천절 대체공휴일",
+          "rule": "개천절(10월 3일)이 일요일과 겹침: 관공서의 공휴일에 관한 규정 제3조제1항제1호",
+          "source": "https://www.law.go.kr/법령/관공서의공휴일에관한규정"
+        },
+        {
+          "date": "2027-10-09",
+          "name": "한글날",
+          "rule": "관공서의 공휴일에 관한 규정 제2조제2호, 국경일에 관한 법률 제2조제5호",
+          "source": "https://www.law.go.kr/법령/국경일에관한법률"
+        },
+        {
+          "date": "2027-10-11",
+          "name": "한글날 대체공휴일",
+          "rule": "한글날(10월 9일)이 토요일과 겹치고 10일은 일요일: 관공서의 공휴일에 관한 규정 제3조제1항제1호",
+          "source": "https://www.law.go.kr/법령/관공서의공휴일에관한규정"
+        },
+        {
+          "date": "2027-12-25",
+          "name": "기독탄신일",
+          "rule": "관공서의 공휴일에 관한 규정 제2조제10호",
+          "source": "https://www.law.go.kr/법령/관공서의공휴일에관한규정"
+        },
+        {
+          "date": "2027-12-27",
+          "name": "기독탄신일 대체공휴일",
+          "rule": "기독탄신일(12월 25일)이 토요일과 겹치고 26일은 일요일: 관공서의 공휴일에 관한 규정 제3조제1항제1호",
+          "source": "https://www.law.go.kr/법령/관공서의공휴일에관한규정"
+        }
+      ],
+      "lunar": [
+        {
+          "date": "2027-02-06",
+          "name": "설날 전날",
+          "rule": "음력 2026년 12월 30일, 12월의 말일(한국천문연구원 음양력 변환): 관공서의 공휴일에 관한 규정 제2조제4호",
+          "source": "https://astro.kasi.re.kr/life/pageView/8"
+        },
+        {
+          "date": "2027-02-07",
+          "name": "설날",
+          "rule": "음력 2027년 1월 1일(한국천문연구원 음양력 변환): 관공서의 공휴일에 관한 규정 제2조제4호",
+          "source": "https://astro.kasi.re.kr/life/pageView/8"
+        },
+        {
+          "date": "2027-02-08",
+          "name": "설날 다음 날",
+          "rule": "음력 2027년 1월 2일(한국천문연구원 음양력 변환): 관공서의 공휴일에 관한 규정 제2조제4호",
+          "source": "https://astro.kasi.re.kr/life/pageView/8"
+        },
+        {
+          "date": "2027-09-14",
+          "name": "추석 전날",
+          "rule": "음력 2027년 8월 14일(한국천문연구원 음양력 변환): 관공서의 공휴일에 관한 규정 제2조제9호",
+          "source": "https://astro.kasi.re.kr/life/pageView/8"
+        },
+        {
+          "date": "2027-09-15",
+          "name": "추석",
+          "rule": "음력 2027년 8월 15일(한국천문연구원 음양력 변환): 관공서의 공휴일에 관한 규정 제2조제9호",
+          "source": "https://astro.kasi.re.kr/life/pageView/8"
+        },
+        {
+          "date": "2027-09-16",
+          "name": "추석 다음 날",
+          "rule": "음력 2027년 8월 16일(한국천문연구원 음양력 변환): 관공서의 공휴일에 관한 규정 제2조제9호",
+          "source": "https://astro.kasi.re.kr/life/pageView/8"
+        }
+      ]
     },
-    "note": "Vacations from the 2026학년도 학사일정 (read 2026-11-27); the 2027 1학기 is not published yet. The public holidays are not filled yet: no official list was readable, so every day may be a holiday."
+    "note": "Vacations from the 2026학년도 학사일정 (read 2026-11-27); the 2027 1학기 is not published yet. Public holidays from 2026-11 to 2027-12, read 2026-11-27: 관공서의 공휴일에 관한 규정 (대통령령 제36290호, 시행 2026. 5. 11.: every 국경일, so 제헌절, and 노동절 are holidays) and 국경일에 관한 법률 on law.go.kr, and the lunar dates from KASI's 음양력 변환. No 임기만료 election day (공직선거법 제34조) falls in the range, and no temporary holiday (제2조제11호) is listed: only one an official page states would be, and none was found. 설날's substitute day is a public holiday, not 설: a source's 설·추석 closure is not taken to cover it. A day outside the range, or not listed, reads as a regular day."
   },
   "buildings": [
     {

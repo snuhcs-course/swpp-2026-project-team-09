@@ -4,6 +4,7 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { koreaDate } from '../src/assistant/korea-time.js';
 import { readSeedFile, SEED_DIRECTORY } from '../src/common/seed-directory.js';
 import {
   type Calendar,
@@ -37,6 +38,10 @@ function scheduleOf(overrides: Partial<Schedule> = {}): Schedule {
   };
 }
 
+function holiday(date: string, name: string): Calendar['holidays']['dates'][number] {
+  return { date, name, rule: '관공서의 공휴일에 관한 규정 제2조', source: 'https://www.law.go.kr/' };
+}
+
 // 2026's terms and holidays, with 한글날 (10-09) a holiday in term and 추석's 09-25 a lunar one.
 const CALENDAR: Calendar = {
   terms: {
@@ -45,17 +50,16 @@ const CALENDAR: Calendar = {
     source: 'https://www.snu.ac.kr/academics/resources/calendar',
   },
   holidays: {
-    known: { from: '2026-01-01', to: '2026-12-31' },
-    dates: ['2026-10-09'],
-    lunar: ['2026-09-25'],
-    source: null,
+    filled: { from: '2026-01-01', to: '2026-12-31' },
+    dates: [holiday('2026-10-09', '한글날')],
+    lunar: [holiday('2026-09-25', '추석')],
   },
   note: null,
 };
 
 const UNPLACED: Calendar = {
   terms: { known: null, vacations: [], source: null },
-  holidays: { known: null, dates: [], lunar: [], source: null },
+  holidays: { filled: { from: '2026-01-01', to: '2026-01-01' }, dates: [], lunar: [] },
   note: null,
 };
 
@@ -143,23 +147,12 @@ describe('openAt past midnight', () => {
   });
 });
 
-describe('openAt on a day the calendar does not place', () => {
-  it('is unknown when a holiday or 설·추석 could change the answer', () => {
+describe('openAt on a day the calendars do not place', () => {
+  it('reads a day the holiday list does not hold, or one outside it, as a regular day', () => {
     const kwanjeong = scheduleOf({ week: every(range('07:00', '23:00')), vacation: null, lunarHolidays: 'closed' });
 
-    expect(openAt(kwanjeong, UNPLACED, at('2026-11-27', '10:00'))).toEqual({ state: 'unknown' });
-  });
-
-  it('is open when every way the day may be says open, until the earliest close', () => {
-    const allDay = every(range('00:00', '24:00'));
-    const central = scheduleOf({
-      week: allDay,
-      vacation: null,
-      holiday: 'saturday',
-      lunarHolidays: range('00:00', '24:00'),
-    });
-
-    expect(openAt(central, UNPLACED, at('2026-11-27', '10:00'))).toMatchObject({ state: 'open', closesAt: '24:00' });
+    expect(openAt(kwanjeong, CALENDAR, at('2026-11-27', '10:00'))).toMatchObject({ state: 'open', closesAt: '23:00' });
+    expect(openAt(kwanjeong, UNPLACED, at('2027-03-02', '10:00'))).toMatchObject({ state: 'open', closesAt: '23:00' });
   });
 
   it('is unknown in term or vacation when their hours differ, and open when they agree', () => {
@@ -168,10 +161,10 @@ describe('openAt on a day the calendar does not place', () => {
       vacation: { weekday: range('08:00', '24:00'), saturday: null, sunday: null },
       holiday: null,
     });
-    const placedHolidays: Calendar = { ...CALENDAR, terms: UNPLACED.terms };
+    const unplacedTerms: Calendar = { ...CALENDAR, terms: UNPLACED.terms };
 
-    expect(openAt(sinyang, placedHolidays, at('2026-11-27', '03:00'))).toEqual({ state: 'unknown' });
-    expect(openAt(sinyang, placedHolidays, at('2026-11-27', '10:00'))).toMatchObject({ state: 'open' });
+    expect(openAt(sinyang, unplacedTerms, at('2026-11-27', '03:00'))).toEqual({ state: 'unknown' });
+    expect(openAt(sinyang, unplacedTerms, at('2026-11-27', '10:00'))).toMatchObject({ state: 'open' });
   });
 });
 
@@ -210,10 +203,12 @@ describe('The schedule and calendar schemas', () => {
 });
 
 let spaces: StudySpacesFile['buildings'][number]['spaces'];
+let seedCalendar: Calendar;
 
 beforeAll(async () => {
   const file = await readSeedFile(SEED_DIRECTORY, STUDY_SPACES_FILE, studySpacesSchema);
   spaces = file.buildings.flatMap((building) => building.spaces);
+  seedCalendar = file.calendar;
 });
 
 function byKey(key: string): Schedule {
@@ -265,5 +260,34 @@ describe("study-spaces.json's hours", () => {
       holiday: null,
       lunarHolidays: null,
     });
+  });
+});
+
+describe("study-spaces.json's public holidays", () => {
+  it('reach past today: fill the list again from the official rules before this fails', () => {
+    expect(koreaDate(new Date()) <= seedCalendar.holidays.filled.to).toBe(true);
+  });
+
+  it('give 설 and 추석 apart, and every substitute day on a weekday', () => {
+    const { dates, lunar } = seedCalendar.holidays;
+    const substitutes = dates.filter(({ name }) => name.endsWith('대체공휴일'));
+
+    expect(lunar.map(({ name }) => name)).toEqual([
+      '설날 전날',
+      '설날',
+      '설날 다음 날',
+      '추석 전날',
+      '추석',
+      '추석 다음 날',
+    ]);
+    expect(substitutes.map(({ date }) => new Date(`${date}T00:00:00Z`).getUTCDay() % 6)).not.toContain(0);
+  });
+
+  it('close a space whose holidays take Saturday’s column on a substitute day, and on 추석 by its own value', () => {
+    const stacks = byKey('social-sciences-stacks');
+
+    expect(openAt(stacks, seedCalendar, at('2027-07-19', '10:00'))).toMatchObject({ state: 'closed' });
+    expect(openAt(stacks, seedCalendar, at('2027-07-20', '10:00'))).toMatchObject({ state: 'open' });
+    expect(openAt(stacks, seedCalendar, at('2027-09-15', '10:00'))).toMatchObject({ state: 'closed' });
   });
 });
