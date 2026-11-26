@@ -6,6 +6,7 @@
 
 import { type AnswerReply, type Plan } from '../dto/answer.dto.js';
 import { hasFinal } from '../gathering/answer-words.js';
+import { groupSentence } from './study-group-words.js';
 
 // What the model is told of a study answer (P10 ticket 04), and the one sentence a reply with no words of its own says
 // over it: the first plan and why it comes first. Never a seat count.
@@ -28,11 +29,16 @@ function whyFirst(first: Plan, { chips }: AnswerReply): string {
   return until === undefined ? '가장 오래 있을 수 있는 ' : `${until} 가장 오래 있을 수 있는 `;
 }
 
-// "13:00 수업까지 가장 오래 있을 수 있는 공대 신양학술정보관을 추천해요." Null for any other answer, or one with no plan.
+// "13:00 수업까지 가장 오래 있을 수 있는 공대 신양학술정보관을 추천해요.", or together "네 명이 모두 비는 내일 15:00에 관정
+// 4층 6인실을 추천해요." Null for any other answer, or one with no plan.
 export function wordlessStudySentence(answer: AnswerReply | null): string | null {
   const first = answer?.plans[0];
   if (answer === null || answer.input.kind !== 'study' || first === undefined) {
     return null;
+  }
+  const group = first.study?.group;
+  if (group !== undefined) {
+    return groupSentence(first, group);
   }
   return `${whyFirst(first, answer)}${first.id}${hasFinal(first.id) ? '을' : '를'} 추천해요.`;
 }

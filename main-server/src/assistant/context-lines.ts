@@ -9,6 +9,7 @@
  ******************************************************************************/
 
 import { type RequestContext, type StudyInput } from './dto/answer.dto.js';
+import { isTogether } from './lookup/study-group.js';
 import { KWANJEONG_BUILDING, seatToBook } from './lookup/study-plan-parts.js';
 
 // The study plan on screen (P10), with the places the app numbers.
@@ -26,9 +27,11 @@ function studyLine(input: StudyInput, planId: string | null, planIds?: string[])
     minutes,
     near: area !== null,
   };
-  // 관정관's plan shown, alone, books its seat (P10 ticket 05); with Friends its room is the request's.
-  const book = planId === KWANJEONG_BUILDING && friendIds.length === 0 ? seatToBook(input) : null;
+  // 관정관's plan shown, alone, books its seat (P10 ticket 05); together its room is the request's (ticket 07).
+  const together = isTogether(input);
+  const book = planId === KWANJEONG_BUILDING && !together ? seatToBook(input) : null;
   const more = {
+    ...(together ? { together: true } : {}),
     ...(book === null ? {} : { book: book.spaceId }),
     ...(planIds === undefined ? {} : { numbered: planIds }),
   };

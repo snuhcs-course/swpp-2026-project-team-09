@@ -11,9 +11,11 @@ import { type AnswerReply, type Plan, type PlanStudy, type StudySpot } from '../
 // space open around the clock or whose hours are not known. Every stay is three hours or more, so the buildings known
 // open come first by the shorter walk: 공대 신양학술정보관 (24 hours in term), 관정관 (bookable, to 23:00) and
 // 법학도서관 (to 01:00). Then comes 인문대 신양학술정보관, whose hours are not known. 경영학도서관's 열람실 is dropped
-// as the 경영대학's; 사회과학도서관 has been closed since 18:00. The app session builds its mock from it.
+// as the 경영대학's; 사회과학도서관 has been closed since 18:00. Each time card lists the User's one Friend, free, with
+// their walk there, for "+ 같이" (ticket 07). The app session builds its mock from it.
 
 export const ME = '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d';
+export const OTHER_FRIEND = { userId: 'a3f1c2d4-0000-4000-8000-0000000000a4', name: '최준호' };
 const DAY = '2026-11-04';
 const at = (clock: string): string => `${DAY}T${clock}:00+09:00`;
 
@@ -91,6 +93,7 @@ function planOf({ place, walk, endAt, study, lines }: Building, number: number):
       range: { startAt: at('19:00'), endAt },
       now: at('19:10'),
       lanes: [],
+      others: [{ ...OTHER_FRIEND, busy: [], walkMinutes: walk + 3 }],
       startAt: arrival,
       endAt,
       text: `${arrival.slice(11, 16)}–${endAt.slice(11, 16)}`,
@@ -159,6 +162,7 @@ export const STUDY_ANSWER: AnswerReply = {
     date: DAY,
     what: 'any',
     people: [{ userId: ME, constraints: [] }],
+    together: false,
     window: { from: null, until: null },
     area: null,
     minutes: null,
