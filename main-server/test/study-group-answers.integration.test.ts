@@ -19,7 +19,7 @@ import { withAccessToken } from './sign-in.js';
 
 const stage = new MealPlanStage();
 
-beforeAll(() => stage.start());
+beforeAll(() => stage.start({ ownDatabase: true }));
 
 afterAll(() => stage.stop());
 
