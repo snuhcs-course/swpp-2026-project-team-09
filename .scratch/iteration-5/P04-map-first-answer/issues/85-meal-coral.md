@@ -25,6 +25,7 @@ The user's choice (2026-11-26): "3안" of the candidate marks proposal, the righ
   - number badges in the same two looks: soft coral with a coral rim and number, and the chosen row's solid coral with a white number;
   - the chosen row's ground soft coral with a coral border, in place of gold;
   - times and "걸음 N분" keep their colour.
+- **The opened Restaurant's number** (from the list or a menu question): solid coral, as the chosen place; its time stays gold.
 - **Unchanged:**
   - the path (navy) and rides (purple);
   - the time card and every time (gold);
@@ -54,5 +55,17 @@ The user's choice (2026-11-26): "3안" of the candidate marks proposal, the righ
 - [ ] On a meal answer, the pick's round is solid coral with a white number, its label's border coral, and its time gold.
 - [ ] A meal candidate's round has a soft coral ground, a coral rim and number, and a white ring.
 - [ ] The ring of a meal pick just chosen is coral.
-- [ ] The list's badges and chosen row are coral; times keep their colour.
+- [ ] The list's badges and chosen row are coral, and so is an opened Restaurant's number; times keep their colour.
 - [ ] Every other answer's pick stays gold.
+
+## Comments
+
+### Decisions (2026-11-26)
+
+- The orchestrator, on the screens: map and list match the board; the faded candidate and the coral number at 4.29:1 stay as they are.
+- The opened Restaurant's number was gold in the first screens; it is the chosen place, so it is coral too.
+
+### Agent usage (2026-11-26)
+
+- Agent time for tickets 84 and 85 together: about 1 hour 40 minutes in the p04-58 session, an estimate, including about 35 minutes of emulator runs. No subagents.
+- Tokens for tickets 84 and 85 together, from ticket 83's agent usage entry (05:55 UTC) to this entry: see the PR's last comment, counted once both PRs are open.
