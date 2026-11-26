@@ -15,7 +15,7 @@
 
 import type { AnswerReply, Cuisine, KeptQuest, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import { koreaDayWord } from '@/korea-time';
+import { koreaClock, koreaDayWord } from '@/korea-time';
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
 import { type AnswerDrawing, metresBetween, offset } from './answer-drawing';
@@ -111,6 +111,9 @@ export interface SceneSetting {
   // A 관정 booking's: its start, which makes its pick the study one and its way carry its minutes (P01 ticket 10).
   // Left out, not.
   study?: string;
+  // A study answer's group study room (P10 ticket 11): its pick's label in the study pick's make-up, the room at
+  // 관정 with its start, and the kind with the people under it, in place of the scene's tag. Left out, the tag.
+  studyPick?: { title: string; line: string };
   // The plans over a price ceiling some others are under, which have no mark, as the places closed for the meal: the
   // map shows only the places the User can choose now (P04 ticket 92). Left out, none.
   over?: ReadonlySet<string>;
@@ -119,19 +122,19 @@ export interface SceneSetting {
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
 
 function placeDraft(
-  { number: pickNumber, plans, day, kind = null, meal = false, coral = false, over, study }: SceneSetting,
+  { number: pickNumber, plans, day, kind = null, meal = false, coral = false, over, study, studyPick }: SceneSetting,
   scene: MapScene,
   item: MapScene['places'][number],
 ): Draft | null {
   const { place, role, tag } = item;
-  const title = tag ?? place.label;
+  const title = role === 'pick' && studyPick !== undefined ? studyPick.title : (tag ?? place.label);
   const position = { latitude: place.latitude, longitude: place.longitude };
   const base = { position, planId: null, title, line: null, number: null };
   if (role === 'pick') {
     const flag = scene.flags.find(({ at, role: flagRole }) => flagRole === 'place' && samePoint(at, position));
     const plan = pickNumber === null ? undefined : plans[pickNumber - 1];
     const pick = { title, position, number: pickNumber, plan, day, kind, meal, coral, study: study ?? null };
-    return pickDraft(pick, flag?.text ?? null);
+    return pickDraft(pick, studyPick?.line ?? flag?.text ?? null);
   }
   if (role === 'candidate') {
     const planId = plans.find((one) => one.place.placeId === place.placeId && one.place.label === place.label)?.id;
@@ -307,7 +310,17 @@ export function drawingOf(
     return { things: [], lines: [], points: [], own: [], pick: null, userIds: [] };
   }
   const day = koreaDayWord(plan.startAt, new Date(plan.band.now));
+  const group = plan.study?.group;
   return drawingOfScene(plan.scene, view, {
+    ...(group === undefined
+      ? {}
+      : {
+          study: koreaClock(plan.startAt),
+          studyPick: {
+            title: `관정 ${String(group.room.floor)}층 그룹스터디룸`,
+            line: `${group.room.name} · ${String(group.people)}명`,
+          },
+        }),
     opens: 'pick',
     number: planIndex + 1,
     plans: answer.plans,
