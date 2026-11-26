@@ -10,6 +10,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
@@ -24,6 +25,7 @@ import { StudySpacesModule } from '../study-spaces/study-spaces.module.js';
 import { TimetableModule } from '../timetable/timetable.module.js';
 import { TravelModule } from '../travel/travel.module.js';
 import { TutorialModule } from '../tutorial/tutorial.module.js';
+import { UsageModule } from '../usage/usage.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { AssistantController } from './assistant.controller.js';
 import { AssistantService } from './assistant.service.js';
@@ -68,6 +70,8 @@ import { QuestsPlanService } from './recruiting/quests-plan.service.js';
     TimetableModule,
     TravelModule,
     TutorialModule,
+    // The usage event of each reply.
+    UsageModule,
     UsersModule,
   ],
   controllers: [AssistantController],

@@ -8,6 +8,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
@@ -15,6 +16,7 @@ import { PrismaService } from '../common/prisma.service.js';
 import { SignalsService } from '../common/signals.service.js';
 import { JoinPolicy, QuestJoinRequest } from '../generated/prisma/client.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
+import { UsageService } from '../usage/usage.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import { CLOCK, type Clock } from './clock.js';
@@ -53,6 +55,7 @@ export class JoinRequestsService {
     private readonly classQuests: ClassQuestsService,
     private readonly roomRequests: RoomRequestSync,
     @Inject(CLOCK) private readonly clock: Clock,
+    private readonly usage: UsageService,
   ) {}
 
   // A Closed Quest is answered as unknown, as joining it is. A User who holds the Quest alone for its Global Event may
@@ -156,6 +159,8 @@ export class JoinRequestsService {
       });
     });
     this.signals.send(holderIds, 'quests-changed');
+    // For the User who asked, not the Leader who pressed.
+    this.usage.sent(request.userId, 'party_join_completed', { how: 'request_accepted' });
     await this.roomRequests.questChanged(questId);
   }
 
