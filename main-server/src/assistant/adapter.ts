@@ -40,7 +40,7 @@ import { withoutWalkSentences } from './gathering/plan-reply.js';
 import { foundWithMentions } from './mentions.js';
 import { isOverload, limitOf, providerOf, waited } from './provider-failures.js';
 import { keptRefusal, lookupBeside, textBeside } from './refusals/refusals.js';
-import { FIXED_SENTENCE, wordlessText } from './wordless-reply.js';
+import { warnsOfNoText, wordlessText } from './wordless-reply.js';
 import { lastShown, messagesFor, textOf } from './run-messages.js';
 
 // The one file that knows the model library, the Vercel AI SDK (ADR 0005): the model port and the loop that runs a
@@ -362,7 +362,7 @@ async function replyOf(
   if (wordless === null) {
     return null;
   }
-  return { ...presented, text: wordless, noTextFinishReason: wordless === FIXED_SENTENCE ? finishReason : null };
+  return { ...presented, text: wordless, noTextFinishReason: warnsOfNoText(presented, wordless) ? finishReason : null };
 }
 
 // Why a run failed, for the server's log: the error's name and, from the model's provider, the HTTP status. Never an

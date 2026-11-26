@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-10-22  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-26  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Menus: a lookup with the right day and meal, and the dining button (P07's open question: the map button after a menu
@@ -86,3 +87,20 @@
     mapButtons: [dining]
     text:
       mentions: [제육볶음]
+
+# How fresh collected data is goes unsaid when it was collected today, and is never said as a stamp (P05 ticket 52).
+# On the user's phone (2026-11-26) a getMenus answer said "2026-11-26 10:00에 수집된 정보예요". The world's menus are
+# collected on the run's day, so the reply names no collection.
+- id: menus-collected-today-unsaid
+  category: menus
+  repeat: 3
+  turns:
+    - user: 오늘 점심 학식 뭐 나와?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [getMenus]
+      forbidden: [proposeQuest]
+    text:
+      mentions: [제육볶음]
+      absent: [수집, '2026-', 기준이에요]

@@ -7,6 +7,7 @@
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-23  Opus 5.5   prompted by TaeHyun79
 # 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-26  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # Renders each target with stand-in secrets, as a Release would, and checks the objects that the cluster would receive.
@@ -52,6 +53,7 @@ LLM_KEYS={"anthropic":"stand-in","team-2":"stand-in-2"}
 INITIAL_ADMINISTRATOR_EMAILS=stand-in@example.com
 SENTRY_WEBHOOK_SECRET=
 APP_CRASH_SLACK_WEBHOOK=https://hooks.slack.invalid/T/B/x
+POSTHOG_PROJECT_TOKEN=
 EOF
   echo stand-in >"$secrets/access-token-private-key.pem"
   echo stand-in >"$secrets/access-token-public-key.pem"
@@ -152,6 +154,25 @@ passes_the_crash_alert_secrets() {
       ; .))' "$work/$1.json" >/dev/null
 }
 
+# The PostHog project's token (main-server README: Usage data), from the Secret under the name the main server reads.
+# $1 the target, $2 the value the stand-in secrets.env holds: empty as release.sh writes an absent parameter, or a token.
+passes_the_posthog_token() {
+  jq -e --arg token "$2" '(.[] | select(.kind == "Secret") | .data.POSTHOG_PROJECT_TOKEN) as $stored
+    | [.[] | select(.kind == "Deployment" and .metadata.name == "main-server")
+        | .spec.template.spec.containers[] | select(.name == "main-server") | .env[]
+        | select(.name == "POSTHOG_PROJECT_TOKEN") | .valueFrom.secretKeyRef] as $refs
+    | $stored != null and ($stored | @base64d) == $token
+      and ($refs | length) == 1 and $refs[0].key == "POSTHOG_PROJECT_TOKEN" and ($refs[0].name | startswith("secrets-"))
+    ' "$work/$1.json" >/dev/null
+}
+
+# The same with a token stored: the parameter present, in a copy of its own.
+renders_with_a_posthog_token() {
+  copy_manifests "$work/posthog"
+  sed -i 's/^POSTHOG_PROJECT_TOKEN=$/POSTHOG_PROJECT_TOKEN=phc_standIn/' "$work/posthog/parts/shared/secrets/secrets.env"
+  render "$work/posthog/targets/main-server" >"$work/posthog.json" && passes_the_posthog_token posthog phc_standIn
+}
+
 # The main server prints one JSON line per log entry, which Fluent Bit reads (main-server README: Logging).
 # $1 the target, $2 the server whose Deployment it checks.
 logs_json() {
@@ -234,7 +255,10 @@ for target in main-server all; do
   check "$target passes the main server OPENROUTER_API_KEY and LLM_KEYS from the Secret" passes_the_ai_keys "$target"
   check "$target passes the main server SENTRY_WEBHOOK_SECRET and APP_CRASH_SLACK_WEBHOOK from the Secret" \
     passes_the_crash_alert_secrets "$target"
+  check "$target passes the main server POSTHOG_PROJECT_TOKEN from the Secret, empty while its parameter is absent" \
+    passes_the_posthog_token "$target" ""
 done
+check "main-server passes the main server a stored POSTHOG_PROJECT_TOKEN from the Secret" renders_with_a_posthog_token
 for server in main-server socket-server worker-server; do
   for target in "$server" all; do
     check "$target sets $server's LOG_FORMAT to json" logs_json "$target" "$server"

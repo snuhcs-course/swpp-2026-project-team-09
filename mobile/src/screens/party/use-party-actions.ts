@@ -8,6 +8,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type QueryClient, type QueryKey, useQueryClient } from '@tanstack/react-query';
@@ -30,6 +31,7 @@ import type { MyJoinRequest, QuestInvitation } from '@/api/waiting-types';
 import { type ToastAction, useToast } from '@/design-system';
 import type { PostView } from '@/features/party/posts';
 import { ENTERING, refusalWords } from '@/features/quests/refusals';
+import type { Ask } from '../room/confirm-sheet';
 import type { PartyTab } from './party-screen';
 
 // What the 파티 tab asks of the main server to enter a Quest, each with its toast. A refusal says why in Korean, and
@@ -209,4 +211,18 @@ export function useFindActions(): FindActions {
       },
     };
   }, [queryClient, showToast]);
+}
+
+// Asks before withdrawing the User's request to join a Quest, from 보낸 신청 or a card of 찾기.
+export function withdrawAsk(
+  { requestId, questId, title }: { requestId: string; questId: string; title: string },
+  withdraw: PartyActions['withdraw'],
+): Ask {
+  return {
+    title: `‘${title}’ 참여 신청을 취소할까요?`,
+    body: '파티장에게 보낸 신청이 사라져요.',
+    confirm: '신청 취소',
+    danger: true,
+    onConfirm: () => void withdraw(requestId, questId),
+  };
 }

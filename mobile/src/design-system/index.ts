@@ -16,6 +16,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The team's design system "SNU Now", ported to React Native. A screen takes its colours, text styles and shared
@@ -41,14 +42,18 @@ export { Icon, ICON_NAMES, iconOrFlag, type IconName } from './icon';
 export { ListRow, RoundIcon, SectionHeader } from './list-row';
 export {
   ANSWER_SYMBOL_BOX,
+  CAPSULE,
   type AnswerLabel,
   answerLabelBox,
   type AnswerSymbol,
   type FaceBadge,
   type LabelSide,
+  type LegTone,
   MapAnswerMark,
+  MEAL_NUMBER,
 } from './map-answer';
 export { MapPerson, type PersonTone } from './map-person';
+export { RoundNumber } from './round-number';
 export { KindRounds, MapGroupDot, MapGroupPin } from './map-group-pin';
 export { MapMarkBadge } from './map-mark-badge';
 export { MapTutorialPin, MapTutorialStep, type TutorialStepShape } from './map-tutorial-pin';

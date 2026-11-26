@@ -1,0 +1,59 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-26  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# A menu question's answer is the Restaurant opened as a meal plan's place (P04 ticket 72): when findMenu finds its menu
+# and the User has time to eat there, the app shows the menu, the time, and the way, and the reply writes nothing. On
+# 2026-11-26 the reply wrote the menu as a paragraph over the same menu. The P4 world asked from an app that draws
+# answers (`pnpm eval --world p4-answer`), on Monday 2026-11-02 at 11:30, the question `menu-collected` asks.
+
+- id: menu-found-writes-nothing
+  category: menu-answer-view
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 오늘 학생회관식당 점심 뭐야?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findMenu]
+      forbidden: [getMenus, showOnMap]
+    text:
+      none: true
+
+# A menu asked with no meal opens the meal nearest in time, with the other one press away on the tabs (P05 ticket 52).
+# On the user's phone (2026-11-26), "내일 예술계 메뉴" was answered in text with getMenus: both meals as lists and when
+# they were collected, nothing opened on the map. Tuesday 2026-11-03 is the next day of the P4 world.
+- id: menu-without-meal-another-day
+  category: menu-answer-view
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 내일 예술계 메뉴
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findMenu]
+      forbidden: [getMenus, showOnMap]
+    args:
+      findMenu: { date: '2026-11-03' }
+    text:
+      none: true
+
+- id: menu-without-meal-today
+  category: menu-answer-view
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 두레미담 메뉴 알려줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findMenu]
+      forbidden: [getMenus, showOnMap]
+    args:
+      findMenu: { date: '2026-11-02' }
+    text:
+      none: true

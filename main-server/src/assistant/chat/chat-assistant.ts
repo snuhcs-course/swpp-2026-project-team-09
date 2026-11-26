@@ -34,6 +34,7 @@ import { freeTimeTools } from '../free-time/free-time-tools.js';
 import { withTravelBoxes } from '../free-time/travel-boxes.js';
 import { MEET_RULES, planMeet } from '../gathering/meet-tools.js';
 import { MISSING_RULES, whyNotListed } from '../gathering/missing-tools.js';
+import { CHOOSE_PLAN_RULES, choosePlan } from '../gathering/choose-plan.js';
 import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
 import { INTEREST_RULES, interestTools } from '../interests/interest-tools.js';
 import { koreaNow } from '../korea-time.js';
@@ -142,7 +143,7 @@ function chatRules(drawsAnswers: boolean): string {
 
 - Answer in the language of the User's last message. In Korean, use 해요체.
 - Answer facts about campus, such as menus, the shuttle and events, only from the results your tools returned in this message. Never answer them from memory, and never guess or invent one. When a tool returns result "none", say plainly that there is none and why, except for the search before a 파티 is proposed (below).
-- Say when the data was collected, from its collectedAt.
+- Say how fresh collected data is, from its collectedAt, only when it was not collected today: in a few words the way a person says it, relative to now, with no year and no machine date ("어제 저녁 기준이에요", "월요일 10시 기준이에요"), never the stamp itself (never "2026-11-26 10:00에 수집된 정보예요"). Data collected today, the regular daily collection, goes unsaid.
 - After ${drawsAnswers ? 'an answer from getMenus' : 'an answer about menus'}, call showOnMap with dining; after an answer about where the shuttle is, call showOnMap with shuttle. It adds a button that shows that layer on the map, so do not describe the map in words.
 - To find campus events (Global Events), call searchGlobalEvents with the period the User meant, read against now (이번 주 is from today to Sunday; with no period given, the next 7 days), and words of the kind of event they asked for. From its candidates pick those that fit what the User meant, and show them with showGlobalEvents. Keep the text to a sentence: the cards show the details.
 - To find 파티 to join (recruiting Quests), call searchRecruitingQuests with the Board, the period read against now, or the Global Event the User meant (운동 is on the hobby Board), pick those that fit, and show them with showQuests. Keep the text to a sentence. Give a Board only when you are sure of it; when you are not, search without one.
@@ -207,12 +208,16 @@ function mealsAndEvents(
 ): { rules: string[]; tools: Record<string, Tool> } {
   const { meals, events, quests } = plans;
   if (!drawsEvents) {
-    return { rules: [FREE_TIME_EVENT_RULES, PLAN_RULES], tools: { planMeal: planMeal(meals, earlier) } };
+    return {
+      rules: [FREE_TIME_EVENT_RULES, PLAN_RULES, CHOOSE_PLAN_RULES],
+      tools: { planMeal: planMeal(meals, earlier), choosePlan: choosePlan() },
+    };
   }
   return {
-    rules: [FREE_TIME_EVENT_RULES, PLAN_RULES, EVENT_RULES, RECRUITING_RULES],
+    rules: [FREE_TIME_EVENT_RULES, PLAN_RULES, CHOOSE_PLAN_RULES, EVENT_RULES, RECRUITING_RULES],
     tools: {
       planMeal: planMeal(meals, earlier),
+      choosePlan: choosePlan(),
       planEvents: planEvents(events),
       planQuests: planQuests(quests),
       planNewQuest: planNewQuest(plans, days),

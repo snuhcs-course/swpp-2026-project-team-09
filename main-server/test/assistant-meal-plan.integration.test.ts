@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { randomUUID } from 'node:crypto';
@@ -44,10 +45,9 @@ function answerIn(body: unknown): AnswerReply {
   return answer;
 }
 
-const timeOn =
-  (date: string): ((clock: string) => string) =>
-  (clock) =>
-    `${date}T${clock}:00+09:00`;
+function timeOn(date: string): (clock: string) => string {
+  return (clock) => `${date}T${clock}:00+09:00`;
+}
 
 // Each plan as "key start–end (minutes)", in Korea time with the offset.
 const summary = ({ plans }: AnswerReply): string[] =>
@@ -167,6 +167,8 @@ describe('What the model is told of the plans', () => {
           restaurant: '학생회관식당',
           menu: ['제육볶음 6,000원'],
           closesAt: null,
+          // The price as the app's list writes it, so that the reply's prices agree with it (P05 ticket 50).
+          price: '6,000원',
           start: '12:33',
           end: '12:59',
           togetherMinutes: 26,

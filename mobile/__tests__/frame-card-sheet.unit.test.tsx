@@ -4,6 +4,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -44,7 +45,7 @@ const LOW = 12 + 2 * text.bodyLg.lineHeight + FADE;
 const MID = STAGE * 0.6 - BAR_ROOM;
 // A footer of the input alone: no main button.
 const BARE_ROOM = 12 + 50 + 12;
-const WORDS = '12:15에 302동식당에서 민수와 만나 먹어요.';
+const WORDS = '둘 다 가까운 302동식당을 추천해요.';
 
 const mounts = { content: 0 };
 

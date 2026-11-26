@@ -10,6 +10,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -98,6 +99,9 @@ export interface AssistantReplyDto {
   offers?: ReplyOffer[];
   // Each request of a message that asked for two or more, in time order; left out otherwise (P03).
   steps?: ReplyStep[];
+  // The plan of the meal answer on screen the User chose in words, which the app shows, keeping the answer and its
+  // numbers (P05 ticket 51); left out otherwise, and by a reply that draws an answer of its own.
+  select?: { planId: string };
 }
 
 // A button that opens a 파티's room at its 수정 (P05 ticket 30), sent only to an app that says `party-change`.

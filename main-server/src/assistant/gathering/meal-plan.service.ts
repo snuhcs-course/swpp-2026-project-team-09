@@ -44,7 +44,15 @@ import { type GatheringPerson, MINUTE_MS } from './gathering.js';
 import { addingDto, addingOf, type Asked, askedFor, candidatesOf } from './meal-adding.js';
 import { type AnswerPerson, mealAnswer, menusOf } from './meal-answer.js';
 import { type ServedMenu } from './meal-menu.js';
-import { type BusyItem, busyIn, leaveOut, mealChangeable, mealSetOf } from './meal-plan-parts.js';
+import {
+  type BusyItem,
+  busyIn,
+  leaveOut,
+  mealChangeable,
+  mealSetOf,
+  skippedOut,
+  withSkipped,
+} from './meal-plan-parts.js';
 import { type BesideServices, besideOf } from './meal-beside.js';
 import { type MissingInputs } from './missing-inputs.js';
 import { locationPlaceOf, otherFriendsOf } from './other-friends.js';
@@ -116,14 +124,14 @@ export class MealPlanService {
     const now = new Date(Math.ceil(at.now.getTime() / MINUTE_MS) * MINUTE_MS);
     const { date, meal } = given;
     const [people, others, collected, missing, held] = await Promise.all([
-      this.peopleOf(askerId, friends, date, at.location),
+      this.peopleOf(askerId, friends, date, at.location, given.skipped),
       otherFriendsOf(notInPlan, date, { days: this.days, travel: this.travel }),
       this.menus.findByDate(date),
       this.missingOf(askerId, at),
       heldMealOf(this.prisma, askerId, given),
     ]);
     leaveOut([...people, ...others], [...(at.leftOut ?? []), ...(held?.subQuestIds ?? [])]);
-    const { adding, asked: input } = addingOf(held, given);
+    const { adding, asked: input } = addingOf(held, withSkipped(given, people[0].skipped ?? []));
     const [askerPerson, ...friendPeople] = people.map(({ userId, items, position }, index): GatheringPerson => ({
       id: userId,
       free: freeTimeOf(items, date, now),
@@ -163,6 +171,9 @@ export class MealPlanService {
   // one and asked for a Friend, that meal, of which nothing is planned. `alreadyIn` names the Friends asked for who are
   // in the meal held or invited to it.
   readonly asked = (askerId: string, input: MealInput): Promise<Asked> => askedFor(this.prisma, askerId, input);
+
+  // The asker's Classes of the day, which planMeal names a Class to leave out among.
+  readonly classesOn = (askerId: string, date: string): Promise<DayItem[]> => this.days.classesOn(askerId, date);
 
   // The asker's items that fill the meal's time, when no time is free for it and no condition can be eased: with a
   // button to ease "지금", the model says only that.
@@ -246,6 +257,7 @@ export class MealPlanService {
     friends: readonly FriendView[],
     date: string,
     location: Position | null,
+    skippedIds: readonly string[] = [],
   ): Promise<[AnswerPerson, ...AnswerPerson[]]> {
     const [asker, mine, ...theirs] = await Promise.all([
       this.users.findById(askerId),
@@ -253,7 +265,7 @@ export class MealPlanService {
       ...friends.map(({ id }) => this.days.itemsOn(id, date)),
     ]);
     return [
-      { userId: askerId, name: asker.name, me: true, items: mine, position: location },
+      { userId: askerId, name: asker.name, me: true, ...skippedOut(mine, skippedIds), position: location },
       ...friends.map(({ id, name, level, position }, index) => ({
         userId: id,
         name,

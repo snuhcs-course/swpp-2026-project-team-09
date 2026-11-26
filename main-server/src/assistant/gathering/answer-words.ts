@@ -9,6 +9,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
@@ -37,6 +38,8 @@ export interface AnswerPerson {
   me: boolean;
   // Their items of the day, for the time band's lanes and for wording where they set out from.
   items: readonly DayItem[];
+  // The asker's Classes left out of the plan, which are not in `items`; absent for none.
+  skipped?: readonly DayItem[];
   // The position the asker may see of them now (the asker's own for the asker), or null.
   position: Position | null;
   // How much of a Friend the asker sees.
@@ -48,8 +51,10 @@ export interface OtherFriend {
   userId: string;
   name: string;
   items: readonly DayItem[];
-  // Their walk to a Place, null when the asker may not see where they are.
-  walkTo: (placeId: string) => number | null;
+  // The Place the Friend view puts them in now, null when the asker may not see where they are.
+  locationPlaceId: string | null;
+  // The walk between two Places, null where the walking table has no row.
+  walk: (from: string, to: string) => number | null;
 }
 
 // What the words of a gathering's answer read, a meal's or a meet's.

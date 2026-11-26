@@ -5,6 +5,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useMemo } from 'react';
@@ -14,15 +15,7 @@ import type { MealInput, TimeBand } from '@/api/assistant-types';
 import { color, radius, space, text } from '@/design-system';
 import { bandMoved, bandStepped, movingWords } from '@/features/assistant/band-move';
 import { type BandWordsPart, shownWordsOf } from '@/features/assistant/band-words';
-import {
-  type BandBound,
-  bandEdgesOf,
-  clashes,
-  clockOf,
-  edgeSharesOf,
-  shareOf,
-  type Stretch,
-} from '@/features/assistant/time-band';
+import { type BandBound, bandNoteOf, clashes, clockOf, shareOf, type Stretch } from '@/features/assistant/time-band';
 
 // The time band on its track, which a drag on its lanes moves whole (P02 ticket 25).
 
@@ -121,8 +114,6 @@ interface BandProps {
   band: TimeBand;
   // Where the band is drawn.
   shown: Stretch;
-  // Where the band was before the last drag, drawn as a dashed outline.
-  ghost: Stretch | null;
   // The band's place while it is moved whole, or null.
   moving: Stretch | null;
   disabled: boolean;
@@ -150,11 +141,11 @@ function Body({ band, shown, disabled, onMove }: BandProps & { onMove: OnMove })
   );
 }
 
-// The band where it is drawn, and the dashed outline of where it was before a drag: while it is moved whole, its own
-// place.
+// The band where it is drawn, and while it is moved whole the dashed outline of its own place. Once let go nothing of
+// the place before stays: a drag is undone by dragging back (P04 ticket 86).
 export function BandOnTrack(props: BandProps): ReactElement {
-  const { band, ghost, moving, shown, onMove } = props;
-  const outline = moving === null ? ghost : { startAt: band.startAt, endAt: band.endAt };
+  const { band, moving, shown, onMove } = props;
+  const outline = moving === null ? null : { startAt: band.startAt, endAt: band.endAt };
   return (
     <>
       {outline === null ? null : <View style={[styles.ghost, placeOf(outline, band.range)]} testID="time-band-ghost" />}
@@ -167,34 +158,35 @@ export function BandOnTrack(props: BandProps): ReactElement {
   );
 }
 
-// What stands at one end of the bar in place of its label: the day's other meal (P04 ticket 16, board 26).
-export interface BandTick {
-  side: 'left' | 'right';
-  node: ReactNode;
-}
-
 interface EndsProps {
   band: TimeBand;
   folded: boolean;
-  tick?: BandTick;
 }
 
-// The ends under the track: the range's, or folded the busy stretches that bound the span, each under its own time
-// (P04 ticket 14); a tick stands in place of its side's.
-export function Ends({ band, folded, tick }: EndsProps): ReactElement {
-  const { before, after } = folded
-    ? bandEdgesOf(band)
-    : { before: clockOf(band.range.startAt), after: clockOf(band.range.endAt) };
-  const at = folded ? edgeSharesOf(band, band.range) : { before: 0, after: 1 };
-  const end = (words: string): ReactElement => (
-    <Text numberOfLines={1} style={styles.end}>
-      {words}
-    </Text>
-  );
+// Under the track (P04 ticket 82, the user's 나안): its start at the left end and its end at the right end, and folded,
+// between them what bounds the span (`bandNoteOf`), after the start time or, bounded on the right alone, before the end
+// time, on one line cut short before the other time.
+export function Ends({ band, folded }: EndsProps): ReactElement {
+  const note = folded ? bandNoteOf(band) : null;
   return (
-    <View style={[styles.ends, folded && { paddingLeft: percent(at.before), paddingRight: percent(1 - at.after) }]}>
-      {tick?.side === 'left' ? tick.node : end(before)}
-      {tick?.side === 'right' ? tick.node : end(after)}
+    <View style={styles.ends}>
+      <Text style={styles.end} testID="time-band-start">
+        {clockOf(band.range.startAt)}
+      </Text>
+      {note === null ? null : (
+        <Text
+          numberOfLines={1}
+          style={[styles.end, styles.note, note.side === 'right' && styles.noteRight]}
+          testID="time-band-note"
+        >
+          {note.side === 'left' ? '· ' : null}
+          <Text>{note.words}</Text>
+          {note.side === 'right' ? ' ·' : null}
+        </Text>
+      )}
+      <Text style={styles.end} testID="time-band-end">
+        {clockOf(band.range.endAt)}
+      </Text>
     </View>
   );
 }
@@ -202,6 +194,8 @@ export function Ends({ band, folded, tick }: EndsProps): ReactElement {
 const styles = StyleSheet.create({
   ends: { flexDirection: 'row', justifyContent: 'space-between', gap: space[2] },
   end: { ...text.caption, color: color.inkSubtle },
+  note: { flex: 1, textAlign: 'left' },
+  noteRight: { textAlign: 'right' },
   track: { flex: 1 },
   ghost: {
     position: 'absolute',

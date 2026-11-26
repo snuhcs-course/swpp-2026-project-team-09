@@ -5,6 +5,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -14,14 +15,16 @@ import { MenusService } from '../../menus/menus.service.js';
 import { servedLines } from '../../menus/open-rule.js';
 import { RestaurantPlaces } from '../../menus/restaurant-places.js';
 import { type PlaceDto } from '../../places/dto/place.dto.js';
-import { type Lookup, type Plan } from '../dto/answer.dto.js';
+import { type AnswerReply, type Lookup, type Plan } from '../dto/answer.dto.js';
+import { type LocationMissing } from '../refusals/refusal.dto.js';
 import { type HandledMeal } from '../free-time/meal-fit.js';
 import { MealPlanService } from '../gathering/meal-plan.service.js';
 import { type HoursMeal, type MealOfDay } from './hours-words.js';
 import { menuAnswer, menuNoneLookup, type NoMenuReason } from './menu-lookup.js';
 
 export type MenuFound =
-  | { result: 'found'; collectedAt: Date; lines: MenuLineDto[]; plan: Plan; lookup: Lookup }
+  // The meal answer opened at the Restaurant (P04 ticket 72).
+  | { result: 'found'; collectedAt: Date; lines: MenuLineDto[]; plan: Plan; answer: AnswerReply }
   // The day not collected, collected without the meal (P04 ticket 60), only notes, or no time to be there and eat. The lines are the meal's, and the
   // Lookup draws the Restaurant with why (P04 ticket 59).
   | { result: 'none'; reason: NoMenuReason; lines: MenuLineDto[]; lookup: Lookup };
@@ -29,7 +32,7 @@ export type MenuFound =
 // Spaces and case do not count when a name is matched, as in getMenus.
 const compact = (words: string): string => words.replaceAll(/\s/gu, '').toLowerCase();
 
-// What a menu drawn on the map needs: the Restaurants on the map, their menus, and the meal Plan for the User alone.
+// What a menu question needs: the Restaurants on the map, their menus, and the meal's answer for the User alone.
 @Injectable()
 export class MenuLookupService {
   constructor(
@@ -74,7 +77,8 @@ export class MenuLookupService {
   async find(
     userId: string,
     ask: { date: string; meal: HandledMeal; key: string },
-    at: { now: Date; location: Position | null },
+    // As planMeal plans: the User's location or why it is missing, and whether the app sets a held meal aside.
+    at: { now: Date; location: Position | null; locationMissing?: LocationMissing; setsAside?: boolean },
   ): Promise<MenuFound> {
     const { date, meal, key } = ask;
     const place = this.restaurantPlaces.placeOf(key);
@@ -106,12 +110,13 @@ export class MenuLookupService {
         meal,
         people: [{ userId, constraints: [] }],
         window: { from: null, until: null },
-        placeId: place.id,
+        // The whole meal, as planMeal plans it, so that the answer opened at the Restaurant leads back to every place
+        // the User can eat at (P04 ticket 72).
+        placeId: null,
       },
       at,
     );
-    const [hours, cuisines] = await Promise.all([this.menus.hoursOf(key, meal, date), this.menus.cuisinesOf(lines)]);
-    const found = menuAnswer({ key, date, meal, now: at.now, lines, answer, hours, cuisines });
+    const found = menuAnswer({ key, date, meal, now: at.now, lines, answer });
     if (found.result === 'none') {
       return none(found.reason);
     }

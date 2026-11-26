@@ -11,6 +11,7 @@ import { screen, within } from '@testing-library/react-native';
 import type { AnswerReply } from '@/api/assistant-types';
 import { crowdedMealReply } from '@/api/mock/data/crowded-meal';
 import { MEAL_ANSWER_MENUS_REPLY } from '@/api/mock/data/meal-answer-menus';
+import { MEAL_ANSWER_ALONE } from '@/api/mock/data/meal-answers';
 import { koreaDateKey, koreaNextDay } from '@/korea-time';
 import { CLOSED_HEADING } from '@/screens/main/answer/meal-list';
 import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
@@ -22,6 +23,8 @@ import type { FakeServer } from './support/fake-server';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { pass } from './support/app';
+import { pressMarker } from './support/made-quest';
+import { layStage } from './support/lists';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import { sockets } from './support/fake-socket';
 
@@ -43,7 +46,7 @@ jest.mock('@/auth/google', () => ({
 jest.mock('expo-secure-store', () => jest.requireActual<typeof SecureStoreFake>('./support/secure-store'));
 jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>('./support/fake-socket'));
 
-const SENTENCE = '12:15에 302동식당에서 민수와 만나 먹어요.';
+const SENTENCE = '둘 다 가까운 302동식당을 추천해요.';
 
 let server: FakeServer;
 
@@ -120,6 +123,41 @@ describe('a row of the list pressed', () => {
     await user.press(menu.getByRole('button', { name: '‹ 4곳 목록' }));
     expect(screen.queryByTestId('meal-menu')).toBeNull();
     expect(String(list().getByTestId('meal-row-2').props.accessibilityLabel)).toMatch(/ · 고른 곳$/u);
+  });
+});
+
+// Partitions: another of the reply's places chosen; a kind chosen by a chip, with no turn to the model; the answer
+// recalculated (P04 ticket 79: the model's words stay while its places are on screen). Expected values: the first place
+// of the answer for the User alone, once 민수 is taken out on the map, 301동식당.
+describe('the words over the list once something else is chosen', () => {
+  it('stay the Assistant’s when another of its places is chosen', async () => {
+    const user = await askOnMap(server, fourOf(MEAL_ANSWER_MENUS_REPLY));
+    await raiseCard();
+
+    await user.press(list().getByTestId('meal-row-2'));
+    await user.press(within(screen.getByTestId('meal-menu')).getByRole('button', { name: '‹ 4곳 목록' }));
+
+    expect(screen.getByTestId('meal-words')).toHaveTextContent(SENTENCE);
+  });
+
+  it('stay the Assistant’s when a kind chip moves the pick', async () => {
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY);
+    await raiseCard();
+
+    await user.press(screen.getByRole('button', { name: '일식 2곳' }));
+
+    expect(screen.getByTestId('meal-words')).toHaveTextContent(SENTENCE);
+  });
+
+  it('are the chosen place’s line once the answer is recalculated', async () => {
+    server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_ALONE });
+    const user = await askOnMap(server, MEAL_ANSWER_MENUS_REPLY, () => layStage(390, 760));
+
+    await pressMarker(user, '민수');
+    await user.press(within(screen.getByTestId('mark-card')).getByRole('button', { name: '민수 빼기' }));
+    await pass(500);
+
+    expect(screen.getByTestId('meal-words')).toHaveTextContent(/^301동식당 · \d{2}:\d{2} · /u);
   });
 });
 

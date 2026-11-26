@@ -10,6 +10,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useMemo } from 'react';
@@ -32,6 +33,7 @@ import {
   useEverydayLimits,
   useInvitationMap,
 } from './use-answer-map';
+import { useWalksHeldWhile } from './use-answer-walks';
 import { useLookupMap } from './use-lookup-map';
 import { useMadeSceneMap } from './use-made-scene-map';
 import { pressOnMap } from './use-main-layers';
@@ -41,6 +43,7 @@ import { type Me, pressableMe } from './use-me';
 import type { ReceivedInvitation } from './use-received-invitation';
 import { bothTouches, type MapTouches, usePressedPlace } from './use-pressed-place';
 import type { Selection } from './use-selection';
+import { useLooksAhead } from './use-looks-ahead';
 import { useThings } from './use-things';
 import { useViewport } from './use-viewport';
 import type { GuideMap } from './tutorial/use-guide-map';
@@ -154,9 +157,12 @@ export function useMapView(
   const plan = useAnswerMap(drawn.answer, map, room, people, chat.invitation, withMealMenu(chat, openMark));
   const answer = useMadeSceneMap(chat, map, room, people, me, openMark) ?? plan ?? lookup;
   const unasked = invitation.shown || made.shown !== null;
-  const way = useInvitationMap(invitation.shown ? invitation.scene : made.scene, map, room);
+  const cardScene = invitation.shown ? invitation.scene : made.scene;
+  const way = useInvitationMap(cardScene, map, room);
+  useWalksHeldWhile(chat.framed ? (chat.answer.source ?? chat.lookup.reply) : null, cardScene);
   const limits = useEverydayLimits(map, drawsItsOwnMap({ answer, way, guide }));
   const everyday = answer === null && way === null && !chat.framed && !unasked && guide === null;
+  useLooksAhead(everyday);
   const { target, picking } = pressTarget(chat, unasked, selection);
   const tapClears = everyday ? clearRoute : undefined;
   const pressed = usePressedPlace(map.camera, target, chat.setTapped, everyday || picking, tapClears);

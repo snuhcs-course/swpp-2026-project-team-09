@@ -198,11 +198,17 @@ function isLane(value: unknown): value is TimeBand['lanes'][number] {
   return hasTexts(value, ['userId', 'name']) && listOf(isBusy)(field(value, 'busy'));
 }
 
+function isSkipped(value: unknown): value is NonNullable<TimeBand['skipped']>[number] {
+  return hasTexts(value, ['id', 'startAt', 'endAt', 'label']);
+}
+
 export function isBand(value: unknown): value is TimeBand {
+  const skipped = field(value, 'skipped');
   return (
     isSpan(field(value, 'range')) &&
     hasTexts(value, ['now', 'startAt', 'endAt', 'text']) &&
-    listOf(isLane)(field(value, 'lanes'))
+    listOf(isLane)(field(value, 'lanes')) &&
+    (skipped === undefined || listOf(isSkipped)(skipped))
   );
 }
 
@@ -236,15 +242,6 @@ function isMealSetOrAbsent(value: unknown): boolean {
     (hasTexts(value, ['questId', 'title', 'startAt', 'place']) &&
       listOf(isText)(field(value, 'friendNames')) &&
       isBoolean(field(value, 'shared')))
-  );
-}
-
-// A meal answer's other meal: absent from other answers and from a main server before P05 ticket 15.
-function isOtherMealOrAbsent(value: unknown): boolean {
-  return (
-    value === undefined ||
-    value === null ||
-    ((field(value, 'meal') === 'lunch' || field(value, 'meal') === 'dinner') && isText(field(value, 'start')))
   );
 }
 
@@ -288,7 +285,6 @@ export function isAnswerReply(value: unknown): value is AnswerReply {
     listOf(isDropped)(field(value, 'dropped')) &&
     isClosedOrAbsent(field(value, 'closed')) &&
     isNoPlan(field(value, 'noPlan')) &&
-    isOtherMealOrAbsent(field(value, 'otherMeal')) &&
     isMealSetOrAbsent(field(value, 'mealSet')) &&
     isKeptOneOrAbsent(field(value, 'planSet')) &&
     isKeptOrAbsent(field(value, 'related')) &&

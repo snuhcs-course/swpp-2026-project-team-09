@@ -13,11 +13,12 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { initials } from './avatar';
 import { MapPin } from './map-pin';
-import { ANSWER_SYMBOL_BOX, GAP, RING } from './map-answer-box';
+import { ANSWER_SYMBOL_BOX, CANDIDATE_ROUND, CAPSULE, CAPSULE_EDGE, GAP, MEAL_NUMBER, RING } from './map-answer-box';
 import { MapAnswerLabel } from './map-answer-label';
-import { color, mapText, radius, shadow, text } from './tokens';
+import { RoundNumber } from './round-number';
+import { color, mapText, radius, shadow, space, text } from './tokens';
 
-export { ANSWER_SYMBOL_BOX, answerLabelBox } from './map-answer-box';
+export { ANSWER_SYMBOL_BOX, answerLabelBox, CAPSULE, MEAL_NUMBER } from './map-answer-box';
 
 export type AnswerSymbol =
   | { type: 'me' }
@@ -25,15 +26,15 @@ export type AnswerSymbol =
   // measured at the exact level. `badge`: a "?" (`waiting`) or a "✓" (`accepted`) at the face's upper right; the
   // caller says what it means.
   | { type: 'face'; name: string; dashed: boolean; badge?: FaceBadge; exact?: boolean }
-  // `faded`: drawn pale. `ring`: how far, from 0 to 1, the ring spreading from a pick just chosen has gone, and `pop`
-  // its dot a little larger as it is chosen; left out, none.
+  // `faded`: drawn pale. `meal`: a meal answer's Restaurant, in coral (P04 ticket 85): the pick solid with a white
+  // number, a candidate soft with a coral rim and number; left out, the pick gold and a candidate navy, as every other
+  // answer's.
   | {
       type: 'dot';
       role: 'pick' | 'candidate' | 'dropped' | 'next' | 'stop' | 'kept';
       number: number | null;
       faded?: boolean;
-      ring?: number;
-      pop?: boolean;
+      meal?: boolean;
     };
 
 export type FaceBadge = 'waiting' | 'accepted';
@@ -43,11 +44,16 @@ export type LabelSide = 'above' | 'below' | 'left' | 'right';
 // A way's flags.
 type WayTone = 'leave' | 'late' | 'shuttle';
 
+// A leg's minutes: the way there's or the way on's, whatever the mode.
+export type LegTone = 'leg' | 'legOn';
+
 export interface AnswerLabel {
   side: LabelSide;
   // `stop` is a shuttle stop's; `kept` a Quest already set's.
-  // `leg` is a route's minutes.
-  tone: 'pick' | 'candidate' | 'dropped' | 'next' | 'person' | 'meeting' | 'stop' | 'kept' | 'leg' | WayTone;
+  // `leg` is a meal Plan's way there's minutes and `legOn` its way on's, by the shuttle too (P04 ticket 76).
+  // `minutes` is a meal candidate's minutes, a capsule whose near end lies under its numbered round (P04 ticket 83).
+  tone:
+    'pick' | 'candidate' | 'dropped' | 'next' | 'person' | 'meeting' | 'stop' | 'kept' | 'minutes' | LegTone | WayTone;
   title: string;
   // A second line, under the title; a candidate's stands beside its title (its arrival time).
   line: string | null;
@@ -60,6 +66,12 @@ export interface AnswerLabel {
   action?: string | null;
   // Drawn pale, as a candidate that does not fit or is far. Left out, not.
   faded?: boolean;
+  // A meal answer's pick or candidate, menus or none: its edge and number badge in coral (P04 ticket 90). Left out, its
+  // tone's own colours.
+  meal?: boolean;
+  // A meal candidate's capsule says a clock time ("17:00"), drawn in gold as every clock time; left out, the walking
+  // minutes in ink (P04 ticket 88).
+  clock?: boolean;
   // A number badge before the title, when the mark's own dot is not drawn.
   number: number | null;
   // How much further than the gap a label at the left or the right stands from the symbol box, in points, so that it
@@ -80,19 +92,34 @@ function partOf(testID: string | undefined, part: string): string | undefined {
 
 type DotSymbol = Extract<AnswerSymbol, { type: 'dot' }>;
 
-function Dot({ role, number, ring, pop = false, testID }: DotSymbol & { testID?: string }): ReactElement {
+// A meal answer's other candidate (P04 ticket 85): a soft coral ground in a coral rim, and a coral number. The rim is
+// its outside edge, with no white ring or shadow around it: the round and its number take that room (P04 ticket 91).
+function MealCandidate({ number, testID }: { number: number | null; testID?: string }): ReactElement {
   return (
-    <>
-      {ring === undefined ? null : (
-        <View
-          style={[styles.ring, { opacity: 1 - ring, transform: [{ scale: 1 + ring * RING_GROWTH }] }]}
-          testID={partOf(testID, 'ring')}
-        />
+    <View style={styles.mealCandidate} testID={testID}>
+      {number === null ? null : <RoundNumber inside={MEAL_INSIDE} number={number} style={styles.mealNumber} />}
+    </View>
+  );
+}
+
+// The size of a dot that may hold a number, by its role.
+const PICK_DOT = 30;
+const DOT_SIZES: Partial<Record<DotSymbol['role'], number>> = { pick: PICK_DOT, candidate: CANDIDATE_ROUND };
+// The inside of a meal candidate's coral round: its size less its coral rim.
+const MEAL_RIM = 1.5;
+const MEAL_INSIDE = CANDIDATE_ROUND - 2 * MEAL_RIM;
+
+function Dot({ role, number, meal = false, testID }: DotSymbol & { testID?: string }): ReactElement {
+  if (meal && role === 'candidate') {
+    return <MealCandidate number={number} testID={testID} />;
+  }
+  const inside = (DOT_SIZES[role] ?? CANDIDATE_ROUND) - 2 * RING;
+  return (
+    <View style={[styles.dot, styles[role], meal && role === 'pick' && styles.mealPick]} testID={testID}>
+      {number === null ? null : (
+        <RoundNumber inside={inside} number={number} style={role === 'pick' ? styles.pickNumber : styles.number} />
       )}
-      <View style={[styles.dot, styles[role], pop && styles.pop]} testID={testID}>
-        {number === null ? null : <Text style={role === 'pick' ? styles.pickNumber : styles.number}>{number}</Text>}
-      </View>
-    </>
+    </View>
   );
 }
 
@@ -122,8 +149,44 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
   return <Dot {...symbol} testID={partOf(testID, 'dot')} />;
 }
 
+// A meal candidate's minutes (P04 ticket 83): a white capsule whose near end is room for the candidate's numbered round.
+// Beside its own round (`number` null) it is a picture of its own under the round, so that the two read as one capsule
+// and the round's picture is the one made ahead; it runs to its side of the round. A candidate without a round of its
+// own, at a spot another mark holds, carries its round inside, beside the spot, or the round alone when its minutes
+// give way (no `title`).
+function MinutesCapsule({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
+  const { number, side, title, faded = false, clock = false } = label;
+  const round =
+    number === null ? null : <Dot meal number={number} role="candidate" testID={partOf(testID, 'dot')} type="dot" />;
+  if (round !== null && title === '') {
+    return <View testID={testID}>{round}</View>;
+  }
+  const left = side === 'left';
+  return (
+    <View
+      style={[styles.capsule, left ? styles.capsuleLeft : styles.capsuleRight, faded && styles.faded]}
+      testID={testID}
+    >
+      <View style={[styles.roundRoom, left ? styles.roomLeft : styles.roomRight]}>{round}</View>
+      <Text numberOfLines={1} style={[styles.minutes, clock && styles.clock]} testID={partOf(testID, 'minutes')}>
+        {title}
+      </Text>
+    </View>
+  );
+}
+
+// A label at a side of the symbol box: a meal candidate's capsule holding its round, or any other label.
+function SideLabel({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
+  return label.tone === 'minutes' ? (
+    <MinutesCapsule label={label} testID={testID} />
+  ) : (
+    <MapAnswerLabel label={label} testID={testID} />
+  );
+}
+
 // A mark of an answer on the map, as one picture: a symbol box of 36 by 36, which may be empty, and a label at one
-// side of it. Its anchor is the centre of the symbol box, so that a label never covers its own point.
+// side of it. Its anchor is the centre of the symbol box, so that a label never covers its own point. A meal
+// candidate's minutes are a capsule alone (`MinutesCapsule`).
 export function MapAnswerMark({
   symbol,
   label,
@@ -133,6 +196,9 @@ export function MapAnswerMark({
   label: AnswerLabel | null;
   testID?: string;
 }): ReactElement {
+  if (symbol === null && label?.tone === 'minutes' && label.number === null) {
+    return <MinutesCapsule label={label} testID={testID} />;
+  }
   return (
     <View
       style={[
@@ -145,15 +211,12 @@ export function MapAnswerMark({
       <View style={styles.box} testID={partOf(testID, 'symbol')}>
         {symbol === null ? null : <MarkSymbol symbol={symbol} testID={testID} />}
       </View>
-      {label === null ? null : <MapAnswerLabel label={label} testID={partOf(testID, 'label')} />}
+      {label === null ? null : <SideLabel label={label} testID={partOf(testID, 'label')} />}
     </View>
   );
 }
 
-const PICK_DOT = 30;
-// How much wider than the pick's dot its ring spreads, as a share of the dot.
-const RING_GROWTH = 1.4;
-const CANDIDATE_DOT = 20;
+const CANDIDATE_DOT = CANDIDATE_ROUND;
 const SMALL_DOT = 14;
 const NEXT_SQUARE = 18;
 const FACE_BADGE = 14;
@@ -162,15 +225,6 @@ const EXACT_DOT = 11;
 const styles = StyleSheet.create({
   mark: { alignSelf: 'flex-start', alignItems: 'center', gap: GAP },
   faded: { opacity: 0.45 },
-  ring: {
-    position: 'absolute',
-    width: PICK_DOT,
-    height: PICK_DOT,
-    borderRadius: radius.full,
-    borderWidth: RING,
-    borderColor: color.quest,
-  },
-  pop: { transform: [{ scale: 1.2 }] },
   box: { alignItems: 'center', justifyContent: 'center', width: ANSWER_SYMBOL_BOX, height: ANSWER_SYMBOL_BOX },
   face: {
     alignItems: 'center',
@@ -222,5 +276,35 @@ const styles = StyleSheet.create({
   waiting: { backgroundColor: color.inkMuted },
   accepted: { backgroundColor: color.friend },
   pickNumber: { ...mapText.smallTitle, color: color.onPrimary },
+  mealPick: { backgroundColor: color.meal },
+  mealCandidate: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: CANDIDATE_ROUND,
+    height: CANDIDATE_ROUND,
+    borderRadius: radius.full,
+    borderWidth: MEAL_RIM,
+    borderColor: color.meal,
+    backgroundColor: color.mealSoft,
+  },
+  mealNumber: { fontFamily: mapText.smallTitle.fontFamily, fontSize: MEAL_NUMBER, color: color.meal },
+  capsule: {
+    alignSelf: 'flex-start',
+    alignItems: 'center',
+    minHeight: CAPSULE,
+    borderRadius: radius.full,
+    borderWidth: CAPSULE_EDGE,
+    borderColor: color.border,
+    backgroundColor: color.surface,
+    boxShadow: shadow.mapName,
+  },
+  capsuleRight: { flexDirection: 'row', paddingRight: space[2] },
+  capsuleLeft: { flexDirection: 'row-reverse', paddingLeft: space[2] },
+  // The near end, under the round or holding it, and the gap before the words.
+  roundRoom: { width: CAPSULE - CAPSULE_EDGE + space[1] },
+  roomRight: { alignItems: 'flex-start', paddingLeft: (CAPSULE - CANDIDATE_DOT) / 2 - CAPSULE_EDGE },
+  roomLeft: { alignItems: 'flex-end', paddingRight: (CAPSULE - CANDIDATE_DOT) / 2 - CAPSULE_EDGE },
+  minutes: { ...mapText.smallTitle, color: color.ink },
+  clock: { color: color.quest },
   number: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
 });

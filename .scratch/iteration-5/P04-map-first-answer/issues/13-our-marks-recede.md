@@ -32,7 +32,7 @@ While an answer is up, only the answer's place, its route, and its people stand 
 
 ## Decided while building (2026-11-22)
 
-- More than five candidates: every candidate keeps its numbered dot. Where room is short the tags of candidates standing alone in the view are left out from the lowest rank upward, never a higher-ranked one before a lower-ranked one; the pick always keeps its flag; a dot without a tag still takes the press and gets its flag when pressed.
+- More than five candidates: every candidate keeps its numbered dot. Where room is short the tags of candidates standing alone in the view are left out from the lowest rank upward, never a higher-ranked one before a lower-ranked one. The tags are placed again each time the map comes to rest, so this holds for what is on screen after a pan or a pinch too (ticket 69). The pick always keeps its flag; a dot without a tag still takes the press and gets its flag when pressed.
 - A candidate without a menu: one line (number, name, time). A buffet (`Plan.menu.price`): its price once, without 부터 ("나가사키꼬치어묵 외 1 · 6,500원"); dishes of equal price: one price without 부터.
 - The faces of Friends the answer does not draw are faint (opacity 0.55); the face whose add is on its way is lit. The app's own campus marks are already replaced while an answer is up; Kakao's base labels stay.
 - Every candidate's tag carries its number, and its dot at the place keeps it too (screen review: a tag read alone says which candidate it is, the number the list of ticket 15 uses). Two-line tags and the pick's flag may grow to 260 points.

@@ -18,6 +18,9 @@ const FOCUS_RING = `0 0 0 1px ${color.focusRing}`;
 interface TextFieldProps {
   // Always visible. A placeholder is an example, not a label.
   label: string;
+  // What a screen reader names the input, when it must say more than the label (one of several alike); the label by
+  // default.
+  accessibilityLabel?: string;
   // Drawn before the label, as the 파티 form marks its fields. A screen reader skips it.
   labelIcon?: ReactNode;
   value: string;
@@ -35,6 +38,7 @@ interface TextFieldProps {
 // A labelled text input for the profile, the creation of an event and settings.
 export function TextField({
   label,
+  accessibilityLabel = label,
   labelIcon,
   value,
   onChangeText,
@@ -53,7 +57,7 @@ export function TextField({
       <TextInput
         {...NOT_AUTOFILLED}
         accessibilityHint={help}
-        accessibilityLabel={label}
+        accessibilityLabel={accessibilityLabel}
         accessibilityState={{ disabled }}
         editable={!disabled}
         maxLength={maxLength}

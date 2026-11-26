@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { SHORTEST_MEAL_SECONDS } from '../../travel/judgement-constants.js';
@@ -100,7 +101,7 @@ function bandOf(fit: GatheringFit, naming: MeetNaming): TimeBand {
     range: { startAt: koreaTime(from), endAt: koreaTime(until) },
     now: koreaTime(now),
     lanes: lanesOf(naming, from, until),
-    ...othersOf(naming, fit.placeId, from, until),
+    ...othersOf(naming, fit, from, until),
     startAt: koreaTime(start),
     endAt: koreaTime(end),
     text: `${clockOf(start)}–${clockOf(end)}${minutesSaid(fit) ? ` · 함께 ${togetherMinutes}분` : ''}`,

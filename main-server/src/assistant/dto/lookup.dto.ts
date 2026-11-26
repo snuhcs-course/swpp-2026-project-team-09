@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type {
@@ -45,6 +46,18 @@ export interface Lookup {
   menu?: LookupMenu;
   // A day's: the Quests the question asked about, nearest first. Absent from any other Lookup.
   kept?: KeptQuestDto[];
+  // A menu question's Restaurant that cannot be done now (P04 ticket 72): the app shows its menu as a meal answer shows a
+  // place opened from its list, with why in its head, in place of the chips, the lines, and the basis. Absent from any
+  // other Lookup.
+  menuView?: MenuView;
+}
+
+export interface MenuView {
+  restaurant: string;
+  date: string;
+  meal: 'lunch' | 'dinner';
+  // Why it cannot be done, in a few words: a closure's own words ("공대수시면접으로 인해 휴점합니다"), "시간이 안 맞아요".
+  why: string;
 }
 
 export interface LookupMenu {

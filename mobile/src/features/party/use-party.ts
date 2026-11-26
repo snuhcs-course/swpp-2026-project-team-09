@@ -41,7 +41,7 @@ import { sameKoreaDay } from '@/korea-time';
 import { BOARDS } from './boards';
 import { findPosts, type Reasons, reasonsFor } from './finding';
 import { type MineCardView, toMineCards } from './mine';
-import { boardPosts, entryPost, type PostView, questPost } from './posts';
+import { boardPosts, entryPost, hasRoom, type PostView, questPost } from './posts';
 
 interface Asked<Data> {
   data: Data | undefined;
@@ -74,7 +74,7 @@ export interface FindView {
   hidden: number;
 }
 
-// 찾기's 모집 중인 파티: the recruiting Quests that match the search and that the User did not hide, those sharing more
+// 찾기's 모집 중인 파티: the recruiting Quests with a place left that match the search and that the User did not hide, those sharing more
 // tags with the User first, and otherwise the newest first as the list holds them.
 export function useFindPosts(search: string): ScreenData<FindView> {
   const [entries, requests, friends, myTags, hidden, removals] = useQueries({
@@ -90,9 +90,9 @@ export function useFindPosts(search: string): ScreenData<FindView> {
   return combined(
     [entries, requests],
     () => {
-      const posts = (entries.data ?? []).map((entry) =>
-        entryPost(entry, requests.data ?? [], friends.data ?? [], removals.data ?? []),
-      );
+      const posts = (entries.data ?? [])
+        .map((entry) => entryPost(entry, requests.data ?? [], friends.data ?? [], removals.data ?? []))
+        .filter((post) => hasRoom(post));
       const hiddenIds = hidden.data ?? [];
       return {
         posts: findPosts(posts, { search, myTags: myTags.data ?? [], hidden: hiddenIds }),

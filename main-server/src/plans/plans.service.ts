@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { BadRequestException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
@@ -28,6 +29,7 @@ import { NotificationsService } from '../notifications/notifications.service.js'
 import { CLOCK, type Clock } from '../quests/clock.js';
 import { type CreatedInvitation, InvitationsService } from '../quests/invitations.service.js';
 import { ALONE_CAPACITY, QuestsService, type SubQuestColumns } from '../quests/quests.service.js';
+import { partyMade, UsageService } from '../usage/usage.service.js';
 import { heldMealOf } from '../quests/held-meal.js';
 import { refuseHeldMeeting } from '../quests/held-meeting.js';
 import { conflict, sharedQuestHeld } from '../quests/refusals.js';
@@ -109,6 +111,7 @@ export class PlansService {
     private readonly notifications: NotificationsService,
     private readonly asks: FriendAsksService,
     @Inject(CLOCK) private readonly clock: Clock,
+    private readonly usage: UsageService,
   ) {}
 
   // Plans again as the recalculation does, and makes the Plan named into a Quest the asker leads, inviting everyone
@@ -141,7 +144,7 @@ export class PlansService {
     });
     await this.forgetReplaced(userId, replaced);
     this.keepTimeToLeave(userId, questId, plan);
-    return this.made(userId, questId, created);
+    return partyMade(this.usage, userId, await this.made(userId, questId, created));
   }
 
   // Plans again as the recalculation does, with these Sub Quests left out of everyone's day, and answers the Plan named.
@@ -182,7 +185,7 @@ export class PlansService {
           : await this.forGlobalEvent(userId, { id: globalEventId, title: plan.title }, tx, { ...settings, steps });
       return { questId: made, created: await this.invite(userId, made, plan, tx) };
     });
-    return this.made(userId, questId, created);
+    return partyMade(this.usage, userId, await this.made(userId, questId, created));
   }
 
   // Plans again, and makes the Plan named a Quest taken alone, which the asker holds alone: a meal's with its steps, an

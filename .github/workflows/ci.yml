@@ -12,6 +12,7 @@
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-21  Opus 5.5   prompted by fyoon46
 # 2026-11-23  Opus 5.5   prompted by TaeHyun79
+# 2026-11-26  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 name: CI
@@ -98,14 +99,15 @@ jobs:
           matrix.project != 'flow-tests' && steps.changes.outputs.run != 'false' &&
           (steps.changes.outputs.tests == 'unit' || matrix.project == 'mobile')
 
-  # The app's integration tests, at the nightly level only: they take over twenty minutes even split across four
+  # The app's integration tests, at the nightly level only: they take about fifty minutes even split across four
   # runners, packed by each file's measured seconds (.github/ci/app-test-sequencer.cjs). Each keeps Jest's transform
   # cache for the next runs on its branch. At the basic and full levels the jobs run nothing and still report success,
   # since the Iteration Main's ruleset requires them by name; the mobile job runs the app's unit tests at every level.
+  # A shard cut by its time limit prints no file's seconds (app-test-times.sh), so the limit leaves room to finish.
   mobile-tests:
     name: mobile-tests (${{ matrix.shard }}/${{ strategy.job-total }})
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:

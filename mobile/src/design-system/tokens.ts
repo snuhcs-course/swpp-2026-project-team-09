@@ -13,6 +13,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -60,6 +61,10 @@ export const color = {
   // card and the chat's restaurant cards. The pin itself is the lighter `pinDining`.
   svcDining: '#C4452C',
   svcDiningSoft: '#FCEBE6',
+  // A meal answer's Restaurants on the map and in its list (P04 ticket 85, the user's "3안"): coral and its soft ground.
+  // The same coral as `svcDining`, kept as their own tokens so the meal answer's marks stay put if the layer's colour changes.
+  meal: '#C4452C',
+  mealSoft: '#FCEBE6',
   svcShuttle: '#6B46C1',
   svcShuttleSoft: '#EFEAFB',
   svcStudy: '#0369A1',
@@ -67,6 +72,12 @@ export const color = {
   // The 식당 layer's pin, as the changelog of 11.24 (§ 4-5) colours it. 공부공간 keeps `svcStudy` for its pin too: the
   // changelog's sky sank into the map's light-blue campus.
   pinDining: '#EE6A4C',
+  // A meal Plan's way on to the next fixed thing, a lighter band under the way there (P04 ticket 76). On foot, a mid
+  // blue at about half of `snuBlue`'s strength, at least 3:1 against the map's light blue campus, where a paler blue
+  // sank into it. By the shuttle, the purple of `svcShuttle` at about a third, which stands apart by its hue. Opaque,
+  // so that a band that crosses itself stays one colour.
+  routeOn: '#5679E4',
+  routeShuttleOn: '#C9B0EE',
 } as const;
 
 // A 4-point grid. The key is the design system's step: space[4] is `space-4`, 16 points.

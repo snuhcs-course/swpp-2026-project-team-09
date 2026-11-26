@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerReply, type LocationMissing, type MealInput } from '../src/assistant/dto/answer.dto.js';
@@ -92,8 +93,27 @@ const n13 = (): AnswerReply =>
 const at301 = (): AnswerReply =>
   answerFor({ clock: '12:30', items: myDay(), located: id('제1공학관'), locationMissing: null });
 
+// The offers with their hint lines (P04 ticket 86).
+const TURN_LOCATION_ON = {
+  kind: 'open',
+  label: '위치 켜기',
+  screen: 'location',
+  hint: '위치를 켜면 지금 있는 곳에서 가까운 순으로 봐요',
+};
+const ADD_TIMETABLE = {
+  kind: 'open',
+  label: '시간표 넣기',
+  screen: 'timetable',
+  hint: '시간표를 넣으면 나설 시각까지 알려 드려요',
+};
+
 // Board n13 assumed the Class's 301동; since P05 ticket 42 the asker without a position sets out from where nobody knows.
 describe('Board n13: no location permission, at 12:30, the Class in 301동 over at 11:50', () => {
+  // P05 ticket 51: a meal answer says that this main server takes planIds, and only over it does the app send them.
+  it('says the main server takes planIds', () => {
+    expect(n13().choosable).toBe(true);
+  });
+
   it('has no origin chip', () => {
     expect(n13().chips).toEqual([{ kind: 'until', text: '13:00 수업까지', userId: null }]);
   });
@@ -105,10 +125,10 @@ describe('Board n13: no location permission, at 12:30, the Class in 301동 over 
     expect(first?.lines.flat().map(({ text }) => text)).not.toContain('에서 출발로 잡았어요');
   });
 
-  it('offers 위치 켜기, which opens the explanation of the location, and no note', () => {
+  it('offers 위치 켜기 with its hint, which opens the explanation of the location, and no note', () => {
     const answer = n13();
 
-    expect(answer.offers).toEqual([{ kind: 'open', label: '위치 켜기', screen: 'location' }]);
+    expect(answer.offers).toEqual([TURN_LOCATION_ON]);
     expect(answer.note).toBeUndefined();
   });
 
@@ -168,11 +188,11 @@ describe('Board n15: no Timetable, at 11:50 at 301동', () => {
     }
   });
 
-  it('notes what a Timetable would add, and offers 시간표 넣기', () => {
+  it('notes what a Timetable would add, for the apps before P04 ticket 86, and offers 시간표 넣기 with it as the hint', () => {
     const answer = n15();
 
     expect(answer.note).toBe('시간표를 넣으면 나설 시각까지 알려 드려요');
-    expect(answer.offers).toEqual([{ kind: 'open', label: '시간표 넣기', screen: 'timetable' }]);
+    expect(answer.offers).toEqual([ADD_TIMETABLE]);
   });
 
   it('claims no order without a location either, and offers both', () => {

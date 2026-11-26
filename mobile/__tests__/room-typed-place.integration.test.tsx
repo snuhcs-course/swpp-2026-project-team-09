@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -113,8 +114,9 @@ describe('typed words that name no single Place', () => {
   );
 
   it('save the words alone when they name more than one Place', async () => {
-    const user = await typePlace('제1공학관');
+    // The places as the app loads them with the room, before the words are typed.
     server.on('GET /places', { status: 200, body: [ENGINEERING, { ...ENGINEERING, id: 'p301-1', number: '301-1' }] });
+    const user = await typePlace('제1공학관');
 
     await answer(user, '추가');
 

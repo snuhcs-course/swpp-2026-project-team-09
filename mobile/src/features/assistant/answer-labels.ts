@@ -6,6 +6,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -44,6 +45,8 @@ export interface MarkPoint {
   symbol: LatLng | null;
   // The symbol is a person's, the User's own or a Friend's face, which a tag that gives way keeps clear of.
   person?: boolean;
+  // The symbol is a meal answer's candidate's or pick's round, over which the map draws no face (`facesClearOf`).
+  round?: boolean;
 }
 
 // A mark that may take a label: the index of its point, its own position, the words of its label, null for none, and
@@ -61,6 +64,8 @@ export interface Unplaced {
   overFaces?: boolean;
   // A kept tag that gives way to the other labels: where no side is clear of them, it keeps its number only, or none.
   shrinks?: boolean;
+  // A meal pick's label, which keeps clear of the other rounds before anything but a person's mark (P04 ticket 89).
+  roundsFirst?: boolean;
 }
 
 // Whether another point lies within a label's reach on that side of its point.
@@ -97,8 +102,9 @@ interface Laid {
   box: ViewArea;
 }
 
+// A meal candidate's minutes capsule stays at its round: it never moves to share an edge (P04 ticket 83).
 function laidOut(view: LabelView, position: LatLng, label: AnswerLabel | null): Laid | null {
-  if (label?.side !== 'left' && label?.side !== 'right') {
+  if ((label?.side !== 'left' && label?.side !== 'right') || label.tone === 'minutes') {
     return null;
   }
   const { x, y } = inView(position, view.camera, view.size);
@@ -182,6 +188,7 @@ function placeOne(
     clearOf = [],
     overFaces = false,
     shrinks = false,
+    roundsFirst = false,
   }: Unplaced & { words: Words },
   list: readonly LabelSide[],
   { symbols, pins, faces, boxes, free, pinned }: Placing,
@@ -193,12 +200,22 @@ function placeOne(
   const lines = lineBoxes(view, clearOf);
   const rooms = {
     covering: [...othersThan(symbols, point), ...boxes, ...(overFaces ? [] : faces), ...lines],
+    rounds: othersThan(symbols, point),
     clear: [...othersThan(pins, point), ...boxes, ...faces, ...lines],
     labels: [...boxes, ...lines],
     taken: free,
     pinned,
   };
-  return sideAtView(view, position, words, list, rooms, { kept, shrinks });
+  return sideAtView(view, position, words, list, rooms, { kept, shrinks, roundsFirst });
+}
+
+// The everyday faces the map draws, as boxes: not those over a meal answer's candidate's or pick's round, which the map
+// leaves out (`facesClearOf`), so that no label keeps clear of a face that is not there (P04 ticket 84).
+function facesDrawn(view: LabelView, points: readonly MarkPoint[]): ViewArea[] {
+  const rounds = symbolBoxes(view, points, ({ round = false }) => round).filter((box) => box !== null);
+  return (view.avoid ?? [])
+    .map((position) => faceBox(view, position))
+    .filter((face) => !rounds.some((round) => overlaps(face, round)));
 }
 
 // The labels of an answer's marks, taken in the order given, each at a side of its list that no earlier label at its
@@ -213,7 +230,7 @@ export function placeLabels(
 ): (AnswerLabel | null)[] {
   const taken = points.map(() => new Set<LabelSide>());
   const symbols = view === null ? [] : symbolBoxes(view, points, () => true);
-  const faces = view === null ? [] : (view.avoid ?? []).map((position) => faceBox(view, position));
+  const faces = view === null ? [] : facesDrawn(view, points);
   // The people's marks, the User's own and the Friends' faces, which a label that gives way keeps clear of too.
   const pins = view === null ? [] : symbolBoxes(view, points, ({ person = false }) => person);
   const pinned = pins.some((pin) => pin !== null);

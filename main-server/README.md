@@ -79,9 +79,10 @@ Once the server is running, a store that goes down makes readiness answer 503 in
 The app signs in with Google and sends the ID token it gets to the main server:
 
 - `POST /auth/google` with `{ "idToken": "..." }` answers
-  `200 { "accessToken": "...", "refreshToken": "...", "onboarding": { ... } }`. The first sign-in of a Google account
-  creates its User, with an empty name and department and a [Friend ID](#friends). `onboarding` tells the app where to
-  go next (see [Onboarding and the lobby](#onboarding-and-the-lobby)).
+  `200 { "accessToken": "...", "refreshToken": "...", "onboarding": { ... }, "consent": { ... } }`. The first sign-in
+  of a Google account creates its User, with an empty name and department and a [Friend ID](#friends). `onboarding`
+  tells the app where to go next (see [Onboarding and the lobby](#onboarding-and-the-lobby)), and `consent` is the
+  account's [consent](#consent), so that a new phone does not ask for it again.
 - Only SNU accounts get in: the token's hosted domain claim must be `snu.ac.kr` and its email address verified. Another
   account gets 403. An invalid or expired ID token, or one issued to another client than the app's
   (`GOOGLE_APP_CLIENT_ID`), the admin site's included, gets 401.
@@ -120,20 +121,22 @@ fixed: they are never the User's to change. The app enters the lobby, which give
    `{ "completed": false, "suggestion": { "name": ..., "department": ... } }`, read from the Google account's name, which
    for an SNU account reads `홍길동 / 학생 / 컴퓨터공학부`. A part that cannot be read, or that the
    [profile's limits](#profile) refuse, is `null`. Every SNU account is taken to give both.
-2. Until then, every User route but two answers
+2. Until then, every User route but those below answers
    `403 { "code": "ONBOARDING_REQUIRED", "message": "Complete onboarding first.", "onboarding": { ... } }`, with the
    sign-in's `onboarding` read from the Google name of the last sign-in. So an app that restarts halfway gets onboarding
    back from its first request, the lobby's. `AccessTokenGuard` checks it on every request, in the query that reads the
-   session. The two routes open before onboarding are marked `@AllowBeforeOnboarding()`: `POST /users/me/onboarding`
-   and `POST /auth/sign-out`.
+   session. The routes open before onboarding are marked `@AllowBeforeOnboarding()`: `POST /users/me/onboarding`,
+   `POST /auth/sign-out`, and the [consent](#consent)'s `PUT /users/me/consent` and `PUT /users/me/usage-consent`,
+   since the consent screen comes before onboarding.
 3. `POST /users/me/onboarding` with `{ "name": "...", "department": "...", "admissionYear": ..., "hashtags": [...] }`
    saves the profile and completes onboarding, and answers 204. The name and the department are the account's: sent,
    they are dropped, so that an older app's request still goes through. An account that does not give one of them is
    logged as a warning and completes onboarding with that part empty. The profile's limits apply. The app sends it again when the answer was lost: a repeat saves the profile again.
-4. `POST /lobby`, with no body, answers `200 { "profile": { ... }, "masterSwitch": false, "masterOffAsked": false }`,
-   the profile as `GET /users/me/profile` gives it, whether the User's [Master Switch](#location-sharing) is on, and
-   whether the app has asked the User before they turned it off (see [Asking once](#asking-once)). Later features add
-   what the app needs when it starts.
+4. `POST /lobby`, with no body, answers
+   `200 { "profile": { ... }, "masterSwitch": false, "masterOffAsked": false, "consent": { ... } }`, the profile as
+   `GET /users/me/profile` gives it, whether the User's [Master Switch](#location-sharing) is on, whether the app has
+   asked the User before they turned it off (see [Asking once](#asking-once)), and the account's
+   [consent](#consent), as the sign-in's answer gives it. Later features add what the app needs when it starts.
 
 A sign-in on another phone during onboarding ends the first phone's session as any sign-in does: its next request, the
 onboarding's included, gets 401 with `"code": "SESSION_REPLACED"`, and the other phone goes through onboarding.
@@ -147,7 +150,8 @@ A User reads and edits their own profile. The routes name no User, so they never
 
 - `GET /users/me/profile` answers
   `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...], "friendId": "7KX2M9QD", "studentNumber": ..., "registeredName": ..., "affiliation": ... }`.
-  Like every User route but two, it needs the User to have finished onboarding. `friendId` is the User's
+  Like every User route but those [open before onboarding](#onboarding-and-the-lobby), it needs the User to have
+  finished onboarding. `friendId` is the User's
   [Friend ID](#friends).
 - `PATCH /users/me/profile` with some of these fields changes only those and answers with the whole profile. `null`
   empties `admissionYear`, `studentNumber`, `registeredName` and `affiliation`, and `[]` empties `hashtags`. The name
@@ -171,6 +175,76 @@ A User reads and edits their own profile. The routes name no User, so they never
     the nine digits, `202612345`. An empty one empties it.
   - `registeredName`: at most 30 characters. An empty one empties it.
   - `affiliation`: `undergraduate` (학부), `graduate` (대학원) or `exchange` (교환학생).
+
+## Consent
+
+The account keeps the consent the User gave on the app's consent screen, so that a new phone, or a sign-in again,
+does not ask again, and a changed text does. `CONSENT_VERSION` in `src/users/consent.ts` is the version of the legal
+documents the app shows, 1 for now. The app holds the same number, and the two are raised together, in one pull
+request.
+
+- Four columns of `users` hold it, all empty for an account that has agreed to nothing: `consent_version`, the version
+  agreed to; `usage_consent`, the usage data choice given with it; `consented_at`, when the version was agreed to; and
+  `usage_chosen_at`, when the usage choice was last set, by the consent or by the switch.
+- The sign-in's answer and the Lobby carry `"consent": { "version": 1, "usage": true }`, the account's as stored, and
+  `{ "version": null, "usage": null }` for an account that agreed to none.
+- `PUT /users/me/consent` with `{ "version": 1, "usage": true }` is "동의하고 시작" on the consent screen, and is open
+  before onboarding. A version from 1 to `CONSENT_VERSION` higher than the account's is stored with the choice and the
+  time, and answered 204. The same version again stores the choice it carries and answers 204, so the app may send it
+  again when the answer was lost; when the version was agreed to stays. A version lower than the account's gets
+  `409 { "code": "CONSENT_VERSION_OUTDATED" }`, and one above `CONSENT_VERSION`, or a body of another shape, 400.
+- `PUT /users/me/usage-consent` with `{ "usage": false }` is the switch "사용 기록 보내기" in 내 정보, open before
+  onboarding too. It stores the choice and its time and answers 204, the same choice again included, and leaves the
+  version and when it was agreed to as they are. A body with a `version` gets 400: a change of the choice never sends
+  one, so it cannot be taken for agreeing to the documents, and it keeps working when `CONSENT_VERSION` is raised and
+  the User has not yet agreed to the new one. An account that has agreed to no version gets
+  `409 { "code": "CONSENT_REQUIRED" }`: the choice is made on the consent screen first.
+- Usage data about a User may be sent only while the account holds a version of at least `CONSENT_VERSION` with usage
+  chosen. `usageMayBeSent` in `src/users/consent.ts` is the only rule, and `UsersService.usageMayBeSent(userId)` reads
+  the account again each time, so a change of the switch holds from the next event.
+
+## Usage data
+
+The main server sends PostHog the closing stage of four actions it does, so that the team can count how often each
+goes through and compare it with what the app asked for and heard back (P08 spec: Usage data with PostHog). The app
+sends the other stages itself. `src/usage/` is the only place that imports `posthog-node` (6.0.6), and a unit test
+(`test/posthog-import-boundary.unit.test.ts`) refuses an import of it anywhere else; `test/posthog-client.integration.test.ts` drives the real SDK over a stand-in `fetch`.
+
+**The events**, sent once their work is committed, never inside a transaction, with the User id (our database's UUID)
+as `distinctId`:
+
+| Event                           | When                                                                                                                                                                                     | Properties                                                                          |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `assistant_reply_completed`     | `POST /assistant/messages` answers 200; the answers and the taps send nothing                                                                                                            | none                                                                                |
+| `party_creation_completed`      | a 파티 is stored (`POST /quests/own`; `POST /quests` that makes the User's Quest for the Global Event, or gathers others from a Quest taken alone; `POST /plans` but a Plan taken alone) | `visibility` of the stored Quest: `public` (Open or Approval) or `private` (Closed) |
+| `party_join_completed`          | the User is stored as a Holder, sent for the User who joined, also when the Leader accepted                                                                                              | `how`: `joined_directly`, `invitation_accepted` or `request_accepted`               |
+| `friendship_creation_completed` | a friendship is stored, sent once for each of the two Users                                                                                                                              | `how`: `request_accepted`, `invite_link_accepted` or `requests_crossed`             |
+
+Every event also carries `source: "server"`, and nothing else: no text of a message or an answer, no title, Place,
+coordinates, name, Student Number or Friend list, no person property, and GeoIP is off. Not counted: a Quest taken
+alone, a Class Quest, a Tutorial Quest, a booking party's Quest and its invitation accepted with the room's consent,
+the Party (활성 파티), the admin site's befriending and the demo seed. The event names and their properties are typed
+in `src/usage/usage-events.ts`, and `UsageService.sent(userId, event, properties)` takes only those.
+
+**Consent.** Before each event the service reads the account with `UsersService.usageMayBeSent` (Consent, above) and
+sends nothing unless it holds a version of at least `CONSENT_VERSION` with usage chosen. No copy is kept, so a change
+of the switch in 내 정보 holds from the next event. A failed read drops the event with a warning.
+
+**Never in the way of a request.** `sent` returns at once: the read and the send run beside the request, which waits for
+neither. Each event is its own request to PostHog (`captureImmediate`), tried once and given 5 seconds; a failure or a
+timeout drops it and logs one warning that names the error's type and its cause's, such as `A usage event was not sent
+to PostHog: CaptureError (AbortError)`, never the token or the error's message. At the application's close the client's
+`shutdown` sends what is still pending, waiting at most 3 seconds.
+
+**The setting.** `POSTHOG_PROJECT_TOKEN`, the project's token (`phc_…`), optional and empty by default. Empty, as in
+development, the Dev Server and the tests that do not set it, no client is made and nothing is sent; there is no
+route. A value of another shape refuses the start without repeating it. PostHog's host, `https://us.i.posthog.com`,
+is a constant. The token is a write-only client token, but it is kept out of the repository and of every log line
+all the same. In Production it is the parameter `posthog-project-token` (`infra/production/README.md`: Usage data in
+PostHog).
+
+In a test, `test/usage.ts` gives a placeholder token and `PostHogStub`, which stands in for PostHog's client and keeps
+each event: `startApp(…, { posthog: stub.clients })`. No test reaches PostHog.
 
 ## Friends
 
@@ -1743,13 +1817,14 @@ The app asks for a walking route between two points and draws its line. The main
 - A coordinate that is missing, is not a decimal number, or lies outside -90 to 90 for a latitude or -180 to 180 for a
   longitude gets 400 with a message that starts with the field, and Kakao is not asked.
 
-A route is never stored or cached, because Kakao's operating policy does not allow it. Every request asks Kakao once,
-and the answer carries `Cache-Control: no-store`, so that no HTTP cache, the app's included, keeps it. Nothing else
+The main server never stores or caches a route, because Kakao's operating policy does not allow it. Every request asks
+Kakao once, and the answer carries `Cache-Control: no-store`, so that no HTTP cache, the app's included, keeps it. Nothing else
 calls Kakao. The team's Kakao app has a free quota of 1,000 routes a day, and a call beyond it fails (§7.5), so the app
 asks for a route when the User does, never on every position. Pending the owner's decision (P15 ticket 56, "Open
 questions for the owner"): the app also asks, by itself, for the walks of the Plan or Lookup on screen in the answer
-frame, at most three a scene, each pair of ends once, keeping nothing once the scene leaves the screen; a typical
-answer costs 2 to 3 routes a Plan shown.
+frame, at most three a scene, each pair of ends once. A path is held only while the answer that draws it is on screen,
+in the running app's memory, so a Plan of that answer shown again asks nothing; a typical answer costs 2 to 3 routes a
+Plan shown the first time.
 
 The REST API key is `KAKAO_REST_API_KEY`, a secret that stays on the main server: it goes to Kakao in the
 `Authorization` header and nowhere else. The server stops at startup and names the setting when it is missing or empty.
@@ -2365,8 +2440,19 @@ Anthropic API as the AI's key says
   Beside `messages` the app may send `context`, what it knew as the User asked, each part null or left out when it does
   not know it: `location` (`{ "latitude", "longitude" }`, where the User is), `viewport` (`{ "south", "west", "north",`
   `"east" }`, the visible map area), `tapped` (`{ "kind": "place", "placeId" }` or `{ "kind": "friend", "userId" }`),
-  `conditions` (the `PlanInput` of the answer on screen), `planId` (the plan on screen), and `mentions` (below). Every
-  tool is given it, and `planMeal` reads its `location`.
+  `conditions` (the `PlanInput` of the answer on screen), `planId` (the plan on screen), `planIds` (below), and
+  `mentions` (below). Every tool is given it, and `planMeal` reads its `location`.
+
+  `planIds` (at most 30) lists the plans of the meal answer on screen in its order, which the app numbers from 1. The
+  model reads them as `numbered` in the line `[Plan on screen: …]`, and `choosePlan` chooses one of them by its number
+  or its Restaurant ("2번으로 할게", "두레미담으로"). A reply that chose one carries `select` (`{ "planId" }`). Beside no
+  answer of its own, the app keeps the answer on screen, its list and its numbers, and shows that plan. Beside a new
+  answer that holds it, such as after a dish picked from the menus or a Friend added with the choice, the app opens the
+  new answer at it. An app that ignores `select` shows the reply's words. A number past the list is asked about again,
+  a Restaurant not in the list is planned as a change of place, and without `planIds` the model plans with `planMeal`
+  as before. The request schema refuses unknown fields, so a main server before `planIds` would answer 400 to a request
+  that carries them. Every meal answer therefore says `choosable: true`, and the app sends `planIds` only over an
+  answer that says it, never to an older main server.
 
   `mentions` (`[{ "userId", "name" }]`, at most 20) lists the Friends the User picked with "@" in the new message. It is
   left out when there is none. Before the run, an id that is not among the asker's Friends is dropped, each Friend
@@ -2401,9 +2487,14 @@ Anthropic API as the AI's key says
   for a Sub Quest. A meal's or a meet's Plan band also carries `others`, for picking people in the app's time card: one
   entry for each Friend of the asker who is not in the conditions, in the order of the asker's Friends. Each has `busy`,
   the Friend's busy stretches cut to the band's range and labelled as the lanes' are, at every location level, and
-  `walkMinutes`, the walk from the Place the Friend view puts them in to the Plan's place. `walkMinutes` is `null` when
-  the asker may not see where the Friend is, or when the walking table has no row for that Place. An app that does not
-  know `others` ignores it (`src/assistant/gathering/other-friends.ts`).
+  `walkMinutes`, the walk to the Plan's place from where the Friend sets out for it. That is found by the planner's rule
+  for a picked person (`originOf`), on the Friend's Free Time that holds the Plan's span, or for a Friend busy at its
+  start, the stretch they come free in: the Place of the item before it while that item keeps them until then, else
+  the Place the Friend view puts them in, else that of an item that ended at most 15 minutes before now. When it is an
+  item's Place, `after` says that item as a busy stretch's label (`83동 수업`, `수업`, `일정`), never its name; it
+  reveals no more than a picked person's lane and the words of where they set out from. `walkMinutes` is `null` when
+  neither is known, or when the walking table has no row for that Place. An app that does not know `others` or
+  `after` ignores them (`src/assistant/gathering/other-friends.ts`).
   A message that asks for two or more things ("16시에 관정 갔다가 19시쯤 저녁, 7층 예약하고 스케줄 짜줘")
   gets `steps` too, left out otherwise: each request in time order, a book card, a booking a library tool refused, or
   the answer, with its `kind`, `title`, `place`, `from`, `startAt`, `endAt`, `status` (`shown` or `not-done`),
@@ -2487,6 +2578,30 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
     are ready at the earliest; where they set out from is still decided by their own time), and `leaveBy` (the latest
     they leave).
+  - **The kind of food and the price.** A meal's `input` may carry `cuisine` (`한식`, `중식`, `일식`, `양식`, `분식`, or
+    null): the plans of the Restaurants that serve it come first. It may carry `maxPrice`, the highest price per person,
+    a whole number of won from 1 to 100,000, and `cheapFirst: true` (P05 ticket 53); any other value of either is a
+    `400`. A Restaurant fits `maxPrice` when the price its list shows is at or under it: its main corner's own price,
+    else its cheapest dish. The fitting plans come first, each part in its order, and the others follow; when none
+    fits, every plan goes cheapest first; when no plan has a price, as before a meal's menus are posted, the order
+    stays. `cheapFirst` puts the cheapest first, among the fitting plans when there is a `maxPrice`. planMeal keeps
+    both from the conditions on screen until the User lets them go, and the app takes `maxPrice` away with its chip's
+    ✕. This server goes out before the app that shows them; a server reverted to before it answers `400` to an app that
+    sends a `maxPrice` back, until the User starts a new conversation, so it is reverted only together with that app.
+  - **What was missing.** A meal's answer asked with `locationMissing: 'permission'` carries in `offers`
+    `{ "kind": "open", "label": "위치 켜기", "screen": "location", "hint": "위치를 켜면 지금 있는 곳에서 가까운 순으로 봐요" }`,
+    and one for a User with no Class carries `{ "kind": "open", "label": "시간표 넣기", "screen": "timetable", "hint" }`
+    with `note`, the same words as that `hint`. The app draws a meal Plan's offers as the `hint` lines under its words
+    (P04 ticket 86); `note` is kept for the apps before them, which draw the note over their buttons.
+  - **Classes left out.** A meal's `input` may carry `skipped`, the ids of the times of the asker's Classes of that day
+    left out of the plan (P05 ticket 54): the planner takes them out of the asker's day, so the meal may use that
+    time, and where the asker sets out from and the next item come from the items left. An id that is none of the
+    asker's Classes that day is dropped from the answer's `input`, and the field is absent for none. Each Plan's
+    `band.skipped` lists them whole as `{ id, startAt, endAt, label }`, in no lane, and the band's range reaches over
+    the time they free, to the next item left or the meal's end. `planMeal` names them with `skipClasses` and puts one
+    back with `attendClasses`, by start (`HH:MM`) or by name; a word that names none of the day's Classes, or several,
+    answers `{ "result": "unknownClass", "unknown", "classes" }` and plans nothing. Those of the conditions on screen
+    stay left out for any meal of the same day.
   - **A meet** (`{ "kind": "meet", "date", "people", "window", "placeId" }`, `gathering/meet-plan.service.ts`): the
     earliest stretch between 09:00 and 22:00, from now or `window.from`, that the asker and the Friends share, at the
     place where they
@@ -2689,12 +2804,20 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       worker reads today to six days ahead, so a week ahead never has one): the card's `noPlan.lines` say
       `11/30(월) 메뉴는 아직 올라오지 않았어요` and `메뉴는 엿새 뒤 날짜까지 볼 수 있어요` (today the first line alone), the
       reason stays `no-menu`, and the model is told the menus are not posted yet, never that nothing is open. `findMenu`
-      and `getMenus` say the same of such a day. A `findMenu` that answers `none` still draws the Restaurant
+      and `getMenus` say the same of such a day. `findMenu` takes the meal only when the User names one; with none
+      ("내일 예술계 메뉴") it opens the meal nearest in time, as `planMeal` takes it: today the one being served now or the
+      next, on another day lunch, the other one press away on the app's tabs (P05 ticket 52). A `findMenu` that finds the menu plans the meal for the User alone as
+      `planMeal` does; when the Restaurant is one of its Plans, that meal answer is the reply's `answer`, with `opened`
+      naming the Plan: the app shows it as that place opened from the answer's list (its menu, when the User arrives,
+      the button to make it, and the way back to every place they can eat at), and the model writes nothing (P04
+      ticket 72). When it is none of them, the answer is `none` with reason `no-time`. A `findMenu` that answers `none` still draws the Restaurant
       (`menuNoneLookup`, kind `place`), its label saying why: `내일(수) 점심 메뉴 아직 안 올라옴` when that
       Restaurant's day was not collected, `오늘 저녁 메뉴 없음` when the day was collected with another meal but not this
-      one (reason `no-meal`), `내일(수) 점심은 안 해요` with the closure its menu writes as the basis
-      (`공대수시면접으로 인해 휴점합니다`, P04 ticket 65), or its dishes when the User has no time to eat there (P04 tickets
-      59 and 60). A menu not posted today is never said to come "up to six days ahead".
+      one (reason `no-meal`), `내일(수) 점심은 안 해요` when its menu closes the meal (P04 ticket 65), or its dishes when
+      the User has no time to eat there (P04 tickets 59 and 60). Its `menuView` has the app show the Restaurant's menu
+      with why in a few words (a closure's own words, as the meal list's 쉬는 곳 gives them, `시간이 안 맞아요`, `메뉴가 아직 안 올라왔어요`), with no chips, lines, or
+      basis, and the model says why in one short sentence. A menu not posted today is never said to come "up to six
+      days ahead".
     - `findWay(to?, from?, by?)`, with `WAY_RULES`, for an app that sends `answer` (`lookup/`). It finds the way on foot
       to a Place, or to the Place of the User's next item today when `to` is left out, from a Place they named; else
       the main gate (서울대 정문) when their location is off campus; else the Place their location is in, or the
@@ -3076,8 +3199,12 @@ Each exported file keeps, at its top, where it came from and the day of the expo
   within, and the table's MAE below the baseline's. Last it fits the speed and the climb value to the 13 calibration
   walks, by ordinary least squares with no constant term, and prints them unrounded; a climb value below 0 becomes 0
   with that fit's speed. Each pair's path metres and climb are recovered from its seconds at the freeze, at 1.1 m/s and
-  3 s per metre of climb, and from the committed table's elevations. The builder's two constants in
-  `src/travel/walking-graph.ts` are that fit's, as P11 adopted them.
+  3 s per metre of climb, and from the committed table's elevations. The builder's flat speed in
+  `src/travel/walking-graph.ts` is that fit's, as P11 adopted it. The slope then changes it by Tobler's hiking
+  function, scaled so that the flat keeps that speed, the slope being the two ends' heights over the path's length
+  (ADR 0010, P04 ticket 77). A way up takes longer than the way down. The server's tests about plans and ways bind a
+  frozen copy of the table from before the slope (`test/fixtures/walking/walking-table-before-climb.json`), so that
+  their numbers stay when the walking model changes.
 - **Exporting**: `pnpm seed:export <name>…` repeats the export of the files it names and overwrites them; run without
   a name, it lists the names. An export over the network is one request, sent with a User-Agent that names the
   project, as OpenStreetMap asks. When Overpass answers 504 it is busy: wait some minutes before trying again.
@@ -3285,7 +3412,7 @@ src/
 ├── generated/                       Prisma Client, generated by `pnpm install` (not committed)
 ├── health/                          a feature: the liveness and readiness checks
 ├── auth/                            a feature: app and admin site sign-in, refresh, sign-out, the access token checks
-├── users/                           a feature: the signed-in User, their profile, Friend ID and onboarding
+├── users/                           a feature: the signed-in User, their profile, Friend ID, onboarding and consent
 ├── friends/                         a feature: Friend IDs looked up, Friend Requests and Friends
 ├── invite-links/                    a feature: Invite Links, the Digital Asset Links file that opens them in the app,
 │                                    and the page their address answers in a browser
@@ -3295,6 +3422,7 @@ src/
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── log-test/                        a feature: an Administrator's test log line at a chosen level
 ├── sentry-alerts/                   a feature: Sentry's alerts on the app's crashes, posted to the team's Slack channel
+├── usage/                           the usage data sent to PostHog, the only importer of posthog-node (no route)
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
 ├── global-settings/                 the global settings an Administrator changes, their registry, and each pod's

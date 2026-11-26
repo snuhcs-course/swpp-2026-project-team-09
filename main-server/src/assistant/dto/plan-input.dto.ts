@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -27,8 +28,16 @@ export interface MealInput {
   window: { from: string | null; until: string | null; now?: boolean };
   // The Place the User fixed.
   placeId: string | null;
+  // The asker's Classes of the day left out of this plan, as the ids of their times: the meal may use that time. Absent
+  // for none, as a main server before it never sends it.
+  skipped?: string[];
   // The kind of food on screen: the plans of the Restaurants that serve it come first. Absent or null for none.
   cuisine?: CuisineWord | null;
+  // The highest price per person in won (P05 ticket 53): the Restaurants whose list price is at or under it come first,
+  // the others after them. Absent for none.
+  maxPrice?: number;
+  // The cheapest first, by list price (싼 데). Absent for the usual order.
+  cheapFirst?: true;
 }
 
 // When the asker and their Friends are free together that day, and where they meet.
@@ -92,8 +101,13 @@ const CONSTRAINTS_MAX = 8;
 // The most events an answer of events is asked for by id, and the most Quests an answer of Quests.
 export const EVENT_IDS_MAX = 20;
 export const QUEST_IDS_MAX = 20;
+// The most Classes a meal leaves out: more than a day's Classes come to.
+const SKIPPED_MAX = 12;
+
 // The longest title of a new Quest, as a Quest's title.
 const TITLE_MAX = 50;
+// A meal's price ceiling, in won: far above any meal on the campus.
+export const MAX_PRICE = 100_000;
 
 const constraintSource = z.enum(['asker', 'person']);
 
@@ -118,7 +132,10 @@ const mealInputSchema = z.strictObject({
   people: planPeopleSchema.min(1),
   window: mealWindowSchema,
   placeId: z.uuid().nullable(),
+  skipped: z.array(z.uuid()).max(SKIPPED_MAX).optional(),
   cuisine: z.enum(CUISINE_WORD_LIST).nullable().optional(),
+  maxPrice: z.number().int().positive().max(MAX_PRICE).optional(),
+  cheapFirst: z.literal(true).optional(),
 });
 
 // A meet has a Friend: without one there is nobody to meet.

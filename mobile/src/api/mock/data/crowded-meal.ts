@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, AssistantReply, MapScene, MealInput, Plan } from '@/api/assistant-types';
@@ -196,7 +197,6 @@ export function crowdedMealAnswer(date: string, now: string): AnswerReply & { in
     plans: RESTAURANTS.toSorted((one, other) => walkOf(one) - walkOf(other)).map((one) => planOf(date, now, one)),
     dropped: [],
     noPlan: null,
-    otherMeal: { meal: 'dinner', start: '17:00' },
   };
 }
 

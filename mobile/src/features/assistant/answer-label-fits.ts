@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -152,11 +153,55 @@ export function keptAt(
   );
 }
 
+// A meal pick's label with its name and time alone, one line, narrower than with its dish under them (P04 ticket 89).
+function oneLine(words: Words): Words {
+  return { ...words, line: null, action: null };
+}
+
+function covered(box: ViewArea, others: readonly ViewArea[]): number {
+  return others.filter((other) => overlaps(box, other)).length;
+}
+
+// Where no side is clear of everything, a meal pick's label (P04 ticket 89), never left out: on one line at a side
+// clear of everything; else, of its sides whose box stays inside the area, two lines or one, the one clear of the
+// people's marks, the labels, the faces, and the lines where one is, then over the fewest other rounds, two lines before
+// one on a tie, its sides in their order. A round so is under it only where every way it fits covers one; a candidate's
+// capsule, placed after it, gives way to it. None inside the area: as any kept label (`keptAt`).
+function pickRoom(
+  view: LabelView,
+  position: LatLng,
+  words: Words,
+  list: readonly LabelSide[],
+  rooms: Rooms,
+): { side: LabelSide; words: Words } | null {
+  const short = oneLine(words);
+  const one = atView(view, position, short, list, rooms.covering);
+  if (one !== null) {
+    return { side: one, words: short };
+  }
+  let best: { side: LabelSide; words: Words; cost: number } | null = null;
+  for (const form of [words, short]) {
+    for (const side of list) {
+      const box = boxIn(view, position, { ...form, side });
+      const cost = (covered(box, rooms.clear) > 0 ? CLEAR_COST : 0) + covered(box, rooms.rounds);
+      if (inside(box, view.area) && (best === null || cost < best.cost)) {
+        best = { side, words: form, cost };
+      }
+    }
+  }
+  return best === null ? null : { side: best.side, words: best.words };
+}
+
+// More than any count of rounds: a pick's label keeps clear of a person's mark, a label, a face, or a line before it
+// keeps clear of rounds.
+const CLEAR_COST = 1000;
+
 // What a label at a view keeps clear of: everything (`covering`); the labels, faces, the User's own mark, and the lines
-// (`clear`); the labels and the lines (`labels`); and the sides its point's other labels took (`taken`). `pinned`:
-// some mark's symbol is a person's.
+// (`clear`); the labels and the lines (`labels`); the other points' symbols (`rounds`); and the sides its point's other
+// labels took (`taken`). `pinned`: some mark's symbol is a person's.
 export interface Rooms {
   covering: readonly ViewArea[];
+  rounds: readonly ViewArea[];
   clear: readonly ViewArea[];
   labels: readonly ViewArea[];
   taken: ReadonlySet<LabelSide>;
@@ -184,7 +229,7 @@ export function sideAtView(
   words: Words,
   list: readonly LabelSide[],
   rooms: Rooms,
-  { kept, shrinks }: { kept: boolean; shrinks: boolean },
+  { kept, shrinks, roundsFirst = false }: { kept: boolean; shrinks: boolean; roundsFirst?: boolean },
 ): { side: LabelSide; words: Words } | null {
   const side = atView(view, position, words, list, rooms.covering);
   if (side !== null) {
@@ -196,6 +241,10 @@ export function sideAtView(
   // A tag with no number, as a receded candidate's, keeps its words: shrunk, it would say nothing.
   if (shrinks && words.number !== null) {
     return shrunk(view, position, words, list, rooms);
+  }
+  const room = roundsFirst ? pickRoom(view, position, words, list, rooms) : null;
+  if (room !== null) {
+    return room;
   }
   const held =
     (rooms.pinned ? atView(view, position, words, list, rooms.clear) : null) ??

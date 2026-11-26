@@ -6,12 +6,15 @@
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, type TextStyle, View, type ViewStyle } from 'react-native';
 import type { AnswerLabel } from './map-answer';
 import { BADGE, GAP, LABEL_MAX, MEAL_PICK_MAX, RING, SUB_MAX } from './map-answer-box';
+import { RoundNumber } from './round-number';
 import { color, mapText, radius, shadow, space, text } from './tokens';
 
 const WAY_FLAGS = new Set<AnswerLabel['tone']>(['leave', 'late', 'shuttle']);
+// A meal candidate's number badge: its coral rim (P04 ticket 90).
+const MEAL_BADGE_RIM = 1.5;
 
 // A label's title and its line: a candidate's side by side, with its dishes under them (`sub`).
 function LabelWords({ tone, title, line, sub = null, note = null, action = null }: AnswerLabel): ReactElement {
@@ -29,7 +32,7 @@ function LabelWords({ tone, title, line, sub = null, note = null, action = null 
           WAY_FLAGS.has(tone) && styles.flagTitle,
           tone === 'late' && styles.lateTitle,
           tone === 'shuttle' && styles.shuttleTitle,
-          tone === 'leg' && styles.legTitle,
+          LEG_TITLES[tone],
         ]}
       >
         {title}
@@ -63,7 +66,7 @@ function LabelWords({ tone, title, line, sub = null, note = null, action = null 
 
 // The label of an answer's mark (`MapAnswerMark`): its words in a tag beside the symbol box.
 export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
-  const { side, tone, line, number, shift, sub = null, note = null } = label;
+  const { side, tone, line, number, shift, sub = null, note = null, meal = false } = label;
   return (
     <View
       style={[
@@ -74,17 +77,22 @@ export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?:
         tone === 'kept' && styles.keptLabel,
         (sub !== null || tone === 'pick') && styles.subLabel,
         tone === 'pick' && note !== null && styles.mealPickLabel,
+        meal && (tone === 'pick' || tone === 'candidate') && styles.mealEdge,
         tone === 'meeting' && styles.meetingLabel,
         tone === 'late' && styles.lateLabel,
         tone === 'shuttle' && styles.shuttleLabel,
-        tone === 'leg' && styles.legLabel,
+        LEG_LABELS[tone],
         shift !== undefined && (side === 'left' ? { marginRight: shift } : { marginLeft: shift }),
       ]}
       testID={testID}
     >
       {number === null ? null : (
-        <View style={[styles.badge, tone === 'pick' ? styles.pickBadge : styles.candidateBadge]}>
-          <Text style={styles.number}>{number}</Text>
+        <View style={[styles.badge, tone === 'pick' ? pickBadgeOf(note, meal) : candidateBadgeOf(meal)]}>
+          <RoundNumber
+            inside={meal && tone !== 'pick' ? BADGE - 2 * MEAL_BADGE_RIM : BADGE}
+            number={number}
+            style={[styles.number, meal && tone !== 'pick' && styles.mealNumber]}
+          />
         </View>
       )}
       <LabelWords {...label} />
@@ -123,7 +131,8 @@ const styles = StyleSheet.create({
   keptTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.inkMuted },
   sub: { ...mapText.rowLine, color: color.inkMuted },
   subLabel: { maxWidth: SUB_MAX },
-  mealPickLabel: { maxWidth: MEAL_PICK_MAX },
+  // A meal pick's label (its time, `note`, marks it): coral since P04 ticket 85, its time still gold.
+  mealPickLabel: { maxWidth: MEAL_PICK_MAX, borderColor: color.meal },
   meetingLabel: { backgroundColor: color.ink },
   lateLabel: { backgroundColor: color.dangerSoft },
   shuttleLabel: { backgroundColor: color.svcShuttleSoft },
@@ -140,10 +149,39 @@ const styles = StyleSheet.create({
   pickLine: { color: color.quest },
   stopLine: { color: color.svcShuttle },
   pickBadge: { backgroundColor: color.quest },
+  mealPickBadge: { backgroundColor: color.meal },
+  // A meal answer's candidate's name tag (P04 ticket 90): its number as the candidate's soft coral round.
+  mealEdge: { borderColor: color.meal },
+  mealCandidateBadge: { borderWidth: MEAL_BADGE_RIM, borderColor: color.meal, backgroundColor: color.mealSoft },
+  mealNumber: { color: color.meal },
   candidateBadge: { backgroundColor: color.snuBlue },
   number: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
   action: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
-  // A route's minutes (board E1): small, on white, in the route's colour.
-  legLabel: { paddingHorizontal: space[1] },
-  legTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
+  // A meal Plan's leg's minutes (P04 ticket 76), the whole leg's time: the way there dark with white words and the way
+  // on pale with dark words, by the shuttle too. The shuttle's purple stays on its ride and its stops, so that a pill
+  // does not read as the ride's minutes alone.
+  legLabel: { paddingHorizontal: space[1], backgroundColor: color.snuBlue },
+  legOnLabel: { paddingHorizontal: space[1], backgroundColor: color.blue100 },
+  legTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.onPrimary },
+  legOnTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
 });
+
+// A pick's number badge, when its dot is not drawn: a meal pick's coral (P04 ticket 85), any other gold.
+function pickBadgeOf(note: string | null, meal: boolean): ViewStyle {
+  return note === null && !meal ? styles.pickBadge : styles.mealPickBadge;
+}
+
+// A candidate's number badge: a meal's soft coral (P04 ticket 90), any other navy.
+function candidateBadgeOf(meal: boolean): ViewStyle {
+  return meal ? styles.mealCandidateBadge : styles.candidateBadge;
+}
+
+const LEG_LABELS: Partial<Record<AnswerLabel['tone'], ViewStyle>> = {
+  leg: styles.legLabel,
+  legOn: styles.legOnLabel,
+};
+
+const LEG_TITLES: Partial<Record<AnswerLabel['tone'], TextStyle>> = {
+  leg: styles.legTitle,
+  legOn: styles.legOnTitle,
+};

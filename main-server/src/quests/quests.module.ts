@@ -8,6 +8,7 @@
  * 2026-11-14  Opus 5.5   prompted by TaeHyun79
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { RoomRequestSyncModule } from '../library/room-request-sync.module.js';
 import { NotificationsModule } from '../notifications/notifications.module.js';
 import { PushModule } from '../push/push.module.js';
 import { TimetableModule } from '../timetable/timetable.module.js';
+import { UsageModule } from '../usage/usage.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import { CLOCK, systemClock } from './clock.js';
@@ -30,7 +32,15 @@ import { RecruitingService } from './recruiting.service.js';
 import { SubQuestsService } from './sub-quests.service.js';
 
 @Module({
-  imports: [UsersModule, FriendsModule, TimetableModule, RoomRequestSyncModule, PushModule, NotificationsModule],
+  imports: [
+    UsersModule,
+    FriendsModule,
+    TimetableModule,
+    RoomRequestSyncModule,
+    PushModule,
+    NotificationsModule,
+    UsageModule,
+  ],
   controllers: [QuestsController, JoinRequestsController, InvitationsController],
   providers: [
     QuestsService,

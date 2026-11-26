@@ -49,6 +49,15 @@ export const ROUTE_STYLES = {
   alt: { color: color.inkSubtle, width: 2 },
 } as const;
 
+// A meal Plan's legs (P04 ticket 76): which leg by weight, the way there a dark thin line and the way on a pale band
+// twice as wide under it; which mode by hue, walking blue and the shuttle's ride purple.
+export const LEG_STYLES = {
+  walkThere: ROUTE_STYLES.me,
+  walkOn: { color: color.routeOn, width: 10 },
+  rideThere: { color: color.svcShuttle, width: 5 },
+  rideOn: { color: color.routeShuttleOn, width: 10 },
+} as const;
+
 // A place's flag away from the pick keeps the pick's tone; a flag at the area's edge towards a place outside it (관정)
 // is a next place's.
 export const FLAG_TONES: Record<FlagRole, AnswerLabel['tone']> = {
@@ -79,10 +88,17 @@ export interface Draft {
   action?: string | null;
   // A meal candidate that does not fit or is far, drawn pale; left out, not.
   faded?: boolean;
+  // A meal answer's pick or candidate, menus or none: its label in coral (P04 ticket 90); left out, not.
+  coral?: boolean;
+  // A meal candidate's title is a clock time, not walking minutes (P04 ticket 88); left out, not.
+  clock?: boolean;
   // The number a pick or a candidate carries in its label when its dot is not drawn.
   number: number | null;
   // The sides its label may take in place of its group's; left out, its group's.
   sides?: LabelSide[];
+  // A meal candidate's round's name while its minutes stand in a capsule beside it (P04 ticket 83): its number and place
+  // ("후보 4 · 3식당"), the capsule taking the whole `name`, so that the whole is said once. Left out, `name`.
+  roundName?: string;
   // Lines its label keeps clear of, as a meal Plan's legs; left out, none.
   clearOf?: readonly (readonly LatLng[])[];
   // Places one label may stand at: of the drafts with the same `either`, only the first whose label is placed is drawn.
@@ -208,7 +224,9 @@ export function unplaced(
   held: boolean,
   meal = false,
 ): Unplaced {
-  const { position, group, tone, title, line, sub = null, note = null, action = null, faded = false, number } = draft;
+  const { position, group, title, line, sub = null, note = null, action = null, faded = false, number } = draft;
+  // A meal candidate without a round of its own carries its round in its minutes' capsule (P04 ticket 83).
+  const tone = meal && group === 'candidate' && draft.tone === 'candidate' ? 'minutes' : draft.tone;
   const words =
     title === null
       ? null
@@ -220,6 +238,8 @@ export function unplaced(
           ...(note === null ? {} : { note }),
           ...(action === null ? {} : { action }),
           ...(faded ? { faded } : {}),
+          ...(draft.coral === true ? { meal: true } : {}),
+          ...(draft.clock === true ? { clock: true } : {}),
           number: group === 'candidate' || symbol === null ? number : null,
         };
   const { sides = SIDES[group], clearOf, either, always = false, overFaces = false } = draft;
@@ -231,10 +251,33 @@ export function unplaced(
     kept: group === 'pick' || held || always,
     // A tag held at a point it shares gives way to the other labels (P04 ticket 51).
     ...(meal && held && group === 'candidate' ? { shrinks: true } : {}),
+    // A meal pick's label keeps clear of the other rounds (P04 ticket 89).
+    ...(meal && group === 'pick' ? { roundsFirst: true } : {}),
     ...(clearOf === undefined ? {} : { clearOf }),
     ...(either === undefined ? {} : { either }),
     ...(overFaces ? { overFaces } : {}),
   };
+}
+
+// A meal candidate's minutes beside its numbered round, as one capsule (P04 ticket 83): at the round's right, or at its
+// left when the right has no room, never above or below it, and left out when neither side has room. Never kept, since
+// the round says the candidate's number and takes its press.
+export const CAPSULE_SIDES: LabelSide[] = ['right', 'left'];
+
+export function unplacedMinutes(draft: Draft, point: number): Unplaced {
+  const { position, title, faded = false, clock = false } = draft;
+  const words =
+    title === null
+      ? null
+      : {
+          tone: 'minutes' as const,
+          title,
+          line: null,
+          number: null,
+          ...(faded ? { faded } : {}),
+          ...(clock ? { clock } : {}),
+        };
+  return { point, position, words, sides: CAPSULE_SIDES };
 }
 
 export function eitherOrder(drafts: readonly Draft[], one: Draft, other: Draft): number {

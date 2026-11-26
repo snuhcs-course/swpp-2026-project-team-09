@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -31,10 +32,10 @@ export const NO_ANSWER: ShownAnswer = {
   finishPicking: nothing,
   recalculating: false,
   change: nothing,
+  again: nothing,
   add: nothing,
   pendingAdd: null,
-  ghost: null,
-  undo: nothing,
+  undo: null,
   moving: null,
   setMoving: nothing,
   menuFor: null,

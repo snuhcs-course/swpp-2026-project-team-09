@@ -13,6 +13,8 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import {
@@ -41,11 +43,13 @@ import { RecruitingService } from '../quests/recruiting.service.js';
 import { ShuttleService } from '../shuttle/shuttle.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../travel/travel.js';
 import { TutorialService } from '../tutorial/tutorial.service.js';
+import { UsageService } from '../usage/usage.service.js';
 import { UsersService } from '../users/users.service.js';
 import { causeOf, RUN_OBSERVER, runFeature, type RunLimits, type RunObserver } from './adapter.js';
 import { chatAssistant, type ChatAssistantServices } from './chat/chat-assistant.js';
 import { NO_CONTEXT, type RequestContext } from './dto/answer.dto.js';
 import { type AssistantReplyDto } from './dto/assistant-messages.dto.js';
+import { replyBody } from './reply-body.js';
 import { type ChatMessage, type ClientCapability, type Feature, type FeatureReply } from './feature.js';
 import { UserDayService } from './free-time/user-day.service.js';
 import { koreaDate } from './korea-time.js';
@@ -100,6 +104,7 @@ export class AssistantService {
     lookups: LookupServices,
     interests: InterestsService,
     madeParties: MadePartyService,
+    private readonly usage: UsageService,
     // Only the benchmark binds one (main-server/eval).
     @Optional() @Inject(RUN_OBSERVER) private readonly observer?: RunObserver,
   ) {
@@ -161,22 +166,17 @@ export class AssistantService {
       if (reply.noTextFinishReason !== null) {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }
-      const { text, mapButtons, cards, proposal, answer, lookup, refusal, offers = [], steps } = reply;
-      return {
-        text,
-        mapButtons,
-        cards,
-        proposal,
-        answer,
-        lookup,
-        refusal,
-        ...(offers.length === 0 ? {} : { offers }),
-        ...(steps === undefined ? {} : { steps }),
-      };
+      return this.answered(userId, reply);
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();
     }
+  }
+
+  // The reply as the app reads it, once the Assistant has answered, with its usage event (README.md: Usage data).
+  private answered(userId: string, reply: FeatureReply): AssistantReplyDto {
+    this.usage.sent(userId, 'assistant_reply_completed', {});
+    return replyBody(reply);
   }
 
   private chatFor(capabilities: readonly ClientCapability[]): Feature {

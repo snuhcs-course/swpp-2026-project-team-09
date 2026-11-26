@@ -13,6 +13,7 @@ import type { LevelHeights } from './card-levels';
 import { BAR_ADD_HEIGHT } from './condition-chips';
 import { contentMaxOf, type FrameCardProps, LEAST_CONTENT } from './frame-card-parts';
 import { useSteady } from './steady';
+import { skippedLineOf } from './skipped-classes';
 import { LANE_HEIGHT } from './time-band';
 import { TUCK_STRIP } from './time-card-grip';
 
@@ -53,11 +54,13 @@ function lowOf(mid: number, padTop: number, { line, footer }: { line: number; fo
 }
 
 // The place the folded time card takes, as `time-bar.tsx` lays it out: its top padding, the head's row, the track's
-// lane, and the ends' row, 4 apart, then the grip's strip under a gap of 4. Its rows of words grow with the font.
-export function foldedTimeCardOf(fontScale: number): number {
+// lane, and the ends' row, 4 apart, then the grip's strip under a gap of 4. Its rows of words grow with the font. While
+// a Class is left out of the Plan, the line of those Classes makes it one fixed step taller (P04 ticket 93).
+export function foldedTimeCardOf(fontScale: number, skippedLine = false): number {
   const head = Math.max(BAR_ADD_HEIGHT, text.label.lineHeight * fontScale);
   const ends = text.caption.lineHeight * fontScale;
-  return space[3] + head + space[1] + LANE_HEIGHT + space[1] + ends + space[1] + TUCK_STRIP;
+  const skipped = skippedLine ? skippedLineOf(fontScale) : 0;
+  return space[3] + head + space[1] + LANE_HEIGHT + space[1] + ends + skipped + space[1] + TUCK_STRIP;
 }
 
 // The most the scrolling part shows at each step, under the card's header (`above`); null until the stage is laid out.
@@ -79,7 +82,7 @@ export function useCaps(props: FrameCardProps, above: number, padTop: number): C
   // while an answer loaded, before its time card, high covered the whole screen). Only the bar of several requests,
   // with a Plan's bar under it, reaches lower, and high stands under it then. The stage runs from under the status bar,
   // `top` high, to the screen's bottom. Where that place reaches lower than middle, middle is high.
-  const pillRoom = listsTop(top) + Math.max(foldedTimeCardOf(fontScale), stepsTop) + space[2];
+  const pillRoom = listsTop(top) + Math.max(foldedTimeCardOf(fontScale, props.skippedLine), stepsTop) + space[2];
   const under = stageHeight - pillRoom - barRoom - above;
   const mid = Math.max(LEAST_CONTENT, Math.min(under, (stageHeight + top) * MID_SHARE - barRoom - above));
   const high = Math.max(mid, under);

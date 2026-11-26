@@ -12,6 +12,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
@@ -33,13 +34,12 @@ import {
 import type { Lookup } from '@/api/lookup-types';
 import type { Mention } from '@/api/mention-types';
 import type { Refusal } from '@/api/refusal-types';
-import { apiClient } from '@/api/client';
-import { ApiError } from '@/api/errors';
 import { now } from '@/clock';
 import type { ShownChatCard } from '@/api/quest-parts-types';
 import type { LibraryDone } from '@/library/cards/done';
 import type { Slot } from '@/library/cards/payloads';
 import { useAskApp } from './app-turn';
+import { answerTo, type NewBubble } from './assistant-bubble';
 import { type EarlierConversation, useConversations } from './conversations';
 import { useLetGo, useWaiting } from './let-go';
 import { contextFor } from './request-context';
@@ -76,6 +76,8 @@ export interface ChatBubble {
   offers?: ReplyOffer[];
   // Each request of the message, in time order, when it asked for two or more (P03). They are not sent back.
   steps?: ReplyStep[];
+  // The plan the reply chose in words, of the answer on screen or of its own (P05 ticket 51). Not sent back.
+  select?: string;
   // The map's visible area the reply's request sent, which a `study` Lookup outlines.
   area?: RequestContext['viewport'];
   // A turn a card's button asked of the recalculation, not of the Assistant: its words and its answer are a turn and a
@@ -173,13 +175,6 @@ export interface Chat {
   proposalMade: (bubbleId: number, questId: string) => void;
 }
 
-// Two lines: what failed, then why and where the words are (the input holds them again).
-export const CHAT_FAILED =
-  '답을 가져오지 못했어요.\n연결이 끊겼거나 서버가 답하지 않았어요. 쓴 말은 입력칸에 그대로 두었어요.';
-export const CHAT_USED_UP = '오늘은 여기까지 답할 수 있어요. 내일 다시 물어봐 주세요';
-
-const FAILURE_TEXT: Record<ChatFailure, string> = { unavailable: CHAT_FAILED, usedUp: CHAT_USED_UP };
-
 function textLength(messages: readonly ChatMessage[]): number {
   return messages.reduce((total, message) => total + lengthOf(message), 0);
 }
@@ -217,23 +212,6 @@ export function messagesToSend(
     messages = messages.slice(1);
   }
   return messages;
-}
-
-type NewBubble = Omit<ChatBubble, 'id'>;
-
-// The Assistant's bubble for the conversation: its reply, or the failure.
-async function answerTo(messages: ChatMessage[], context: RequestContext): Promise<NewBubble> {
-  try {
-    const reply = await apiClient.askAssistant(messages, context);
-    const { text, cards, mapButtons, proposal, answer = null, lookup = null, refusal = null, offers, steps } = reply;
-    const drawn = { answer, lookup, refusal, area: context.viewport };
-    const offered = offers === undefined || offers.length === 0 ? {} : { offers };
-    const stepped = steps === undefined || steps.length < 2 ? {} : { steps };
-    return { role: 'assistant', text, cards, mapButtons, proposal, failure: null, ...drawn, ...offered, ...stepped };
-  } catch (error) {
-    const failure = error instanceof ApiError && error.status === 429 ? 'usedUp' : 'unavailable';
-    return { role: 'assistant', text: FAILURE_TEXT[failure], cards: [], mapButtons: [], proposal: null, failure };
-  }
 }
 
 export interface Bubbles {

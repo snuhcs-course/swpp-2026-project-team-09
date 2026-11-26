@@ -23,6 +23,15 @@ export const SUB_MAX = 260;
 export const MEAL_PICK_MAX = 200;
 export const RING = 2;
 export const BADGE = 16;
+// A candidate's numbered round, its white ring included; a meal candidate's has none, its coral rim its edge (P04
+// ticket 91).
+export const CANDIDATE_ROUND = 20;
+// The number in a meal candidate's round, and in the meal list's badge, which reads as the same mark (P04 ticket 91).
+export const MEAL_NUMBER = 13;
+// A meal candidate's minutes capsule (P04 ticket 83): its height, and the width of its near end, which holds the
+// candidate's numbered round with a little white around it; its edge's width.
+export const CAPSULE = 26;
+export const CAPSULE_EDGE = 1;
 
 // A label's height, the tallest of its kind: one line of the pick's title with the padding and the pick's border at
 // the top and at the bottom, or that title and a line under it.
@@ -71,6 +80,28 @@ function widestOf(tone: AnswerLabel['tone'], sub: string | null, note: string | 
   return sub === null && tone !== 'pick' ? LABEL_MAX : SUB_MAX;
 }
 
+// A minutes capsule's width and height, its near end included.
+function capsuleSize(title: string, fontScale: number): { width: number; height: number } {
+  const words = wordsWidth(title, mapText.smallTitle.fontSize * fontScale);
+  return {
+    width: Math.ceil(CAPSULE + space[1] + words + space[2] + CAPSULE_EDGE),
+    height: Math.max(CAPSULE, mapText.smallTitle.lineHeight * fontScale + 2 * CAPSULE_EDGE),
+  };
+}
+
+// A minutes capsule's box (P04 ticket 83): the capsule beyond its near end. The near end, `CAPSULE` wide, lies under
+// the candidate's round, whose centre is the point, inside the round's own symbol box, which the other labels keep
+// clear of already; the words follow at the side it runs to.
+function capsuleBox(
+  { side, title }: AnswerLabel,
+  fontScale: number,
+): { left: number; top: number; right: number; bottom: number } {
+  const { width, height } = capsuleSize(title, fontScale);
+  const beyond = width - CAPSULE / 2;
+  const [left, right] = side === 'left' ? [-CAPSULE / 2 - beyond, -CAPSULE / 2] : [CAPSULE / 2, CAPSULE / 2 + beyond];
+  return { left, top: -height / 2, right, bottom: height / 2 };
+}
+
 // A label's box around its mark's point, in points, x to the right and y down, as `MapAnswerMark` lays it out: at its
 // side of the symbol box, the gap and its `shift` away, and centred on the point the other way. Its width is its
 // words' with the padding, the pick's border, and the number's badge, at most `LABEL_MAX`. The camera's room for
@@ -85,6 +116,14 @@ export function answerLabelBox(
   right: number;
   bottom: number;
 } {
+  if (tone === 'minutes' && number === null) {
+    return capsuleBox({ side, tone, title, line, number }, fontScale);
+  }
+  // A meal candidate without a round of its own (P04 ticket 83): its capsule with its round inside, or the round alone.
+  const held = title === '' ? { width: CANDIDATE_ROUND, height: CANDIDATE_ROUND } : capsuleSize(title, fontScale);
+  if (tone === 'minutes') {
+    return around(side, shift, held);
+  }
   const titleSize = (tone === 'pick' ? mapText.buttonTitle.fontSize : mapText.rowLine.fontSize) * fontScale;
   const rowSize = mapText.rowLine.fontSize * fontScale;
   const lineWords = line === null ? null : action === null ? line : `${line} ${action}`;
@@ -96,6 +135,16 @@ export function answerLabelBox(
   const frame = 2 * space[2] + (tone === 'pick' ? 2 * RING : 0) + (number === null ? 0 : BADGE + space[1]);
   const width = Math.ceil(Math.min(widestOf(tone, sub, note), frame + words));
   const height = (line === null || tone === 'candidate') && sub === null ? oneLine(fontScale) : twoLines(fontScale);
+  return around(side, shift, { width, height });
+}
+
+// A box of that size at its side of the symbol box, the gap and its `shift` away, and centred on the point the other
+// way.
+function around(
+  side: AnswerLabel['side'],
+  shift: number,
+  { width, height }: { width: number; height: number },
+): { left: number; top: number; right: number; bottom: number } {
   const reach = ANSWER_SYMBOL_BOX / 2 + GAP + shift;
   if (side === 'left' || side === 'right') {
     const left = side === 'right' ? reach : -reach - width;

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -14,6 +15,7 @@ import { type PickRow, pickStateOf } from '@/features/assistant/people-picking';
 import { foldedRangeOf, type Stretch } from '@/features/assistant/time-band';
 import { placeOf, redOf } from './band-body';
 import { Red } from './band-track';
+import { SkippedBlocks } from './skipped-classes';
 
 // The open time card's row for each person (P04 ticket 61, board p2, variant A): the name as a small caption over the
 // left end of the person's own bar, and every bar over the same free time around the span as the bar of everyone above
@@ -75,7 +77,16 @@ interface LaneParts {
 
 // A person's bar: their busy stretches, cut at the bar's ends, the clashes red, and the band's outline. Picking shows
 // none: its rows are the people alone, and the combined bar on top changes with each check (the user, 2026-11-25).
-function Lane({ lane, parts }: { lane: BandLane; parts: LaneParts }): ReactElement {
+// The asker's carries the Classes left out of the plan as dashed blocks (P04 ticket 93).
+function Lane({
+  lane,
+  parts,
+  skipped,
+}: {
+  lane: BandLane;
+  parts: LaneParts;
+  skipped?: TimeBand['skipped'];
+}): ReactElement {
   const { band, range, fixed, moving, outline } = parts;
   return (
     <View style={styles.lane}>
@@ -87,6 +98,7 @@ function Lane({ lane, parts }: { lane: BandLane; parts: LaneParts }): ReactEleme
             testID="time-card-busy"
           />
         ))}
+        <SkippedBlocks range={range} skipped={skipped} />
         <Red range={range} stretches={redOf(lane, fixed, band, moving)} />
       </View>
       <View style={[styles.outline, placeOf(outline, range)]} />
@@ -95,13 +107,14 @@ function Lane({ lane, parts }: { lane: BandLane; parts: LaneParts }): ReactEleme
 }
 
 // A person's row out of picking: the name as a small caption over their bar.
-function PersonLine({ lane, parts }: { lane: BandLane; parts: LaneParts }): ReactElement {
+function PersonLine(p: { lane: BandLane; parts: LaneParts; skipped?: TimeBand['skipped'] }): ReactElement {
+  const { lane, parts, skipped } = p;
   return (
     <View style={styles.row}>
       <Text numberOfLines={1} style={styles.name}>
         {lane.name}
       </Text>
-      <Lane lane={lane} parts={parts} />
+      <Lane lane={lane} parts={parts} skipped={skipped} />
     </View>
   );
 }
@@ -131,7 +144,9 @@ function PickLine({ row, onPick }: { row: PickRow; onPick: Picking['onPick'] }):
       <Text numberOfLines={1} style={[styles.department, quiet && styles.quietWords]}>
         {department ?? ''}
       </Text>
-      <Text style={[styles.state, state.quiet && styles.quietWords]}>{state.words}</Text>
+      <Text numberOfLines={1} style={[styles.state, state.quiet && styles.quietWords]}>
+        {state.words}
+      </Text>
     </Pressable>
   );
 }
@@ -179,7 +194,11 @@ export function PersonRows(props: PersonRowsProps): ReactElement {
         style={[styles.rows, { gap }]}
         testID="time-card-rows"
       >
-        {picking === null ? band.lanes.map((lane) => <PersonLine key={lane.userId} lane={lane} parts={parts} />) : null}
+        {picking === null
+          ? band.lanes.map((lane, at) => (
+              <PersonLine key={lane.userId} lane={lane} parts={parts} skipped={at === 0 ? band.skipped : undefined} />
+            ))
+          : null}
         {picking !== null && picking.rows.length === 0 ? <NoFriends /> : null}
         {picking === null
           ? null

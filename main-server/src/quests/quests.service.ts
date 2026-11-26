@@ -15,6 +15,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -32,6 +33,7 @@ import {
 } from '../generated/prisma/client.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
+import { partyMade, UsageService } from '../usage/usage.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import { CLOCK, type Clock } from './clock.js';
@@ -90,6 +92,7 @@ export class QuestsService {
     private readonly classQuests: ClassQuestsService,
     private readonly roomRequests: RoomRequestSync,
     private readonly notifications: NotificationsService,
+    private readonly usage: UsageService,
   ) {}
 
   // The User's Quest for the Global Event, made the first time, with the title given or else the event's. The User's
@@ -115,7 +118,8 @@ export class QuestsService {
       await forgetLeaveBy(this.notifications, this.logger, { userId, questId });
       this.signals.send([userId], 'quests-changed');
     }
-    return this.read(userId, questId);
+    // A 파티 made: a new Quest, or one the User took alone that gathers others from now on.
+    return created ? partyMade(this.usage, userId, await this.read(userId, questId)) : this.read(userId, questId);
   }
 
   // A Quest of the User's own, without a Global Event.
@@ -124,7 +128,7 @@ export class QuestsService {
       this.createWithSubQuest(await columnsOf(subQuest, tx), [userId], tx, settings),
     );
     this.signals.send([userId], 'quests-changed');
-    return this.read(userId, questId);
+    return partyMade(this.usage, userId, await this.read(userId, questId));
   }
 
   // The stored Quests, then today's Class Quests. Leaves out the Quests whose Sub Quests are all cancelled or past

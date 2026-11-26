@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-09-29  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { once } from 'node:events';
@@ -33,7 +34,9 @@ function portOf(server: Server): number {
 describe('Startup', () => {
   const settings = inject('settings');
 
-  it('stops when the database cannot be reached', async () => {
+  // A refused connection still takes about 4.6 s to stop startup, past the default 5 s on a loaded runner (5.3 s at
+  // a0c97817b's full run).
+  it('stops when the database cannot be reached', { timeout: 10_000 }, async () => {
     await expect(startApp({ ...settings, DATABASE_URL: 'postgresql://main:main@127.0.0.1:1/main' })).rejects.toThrow(
       "Can't reach database server",
     );

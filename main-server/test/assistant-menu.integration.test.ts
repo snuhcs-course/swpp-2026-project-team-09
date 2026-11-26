@@ -6,6 +6,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -35,6 +36,14 @@ const replySchema = z.object({
   lookup: z.custom<Lookup | null>(),
 });
 
+function answerIn(body: unknown): AnswerReply {
+  const { answer } = replySchema.parse(body);
+  if (answer === null) {
+    throw new Error('The reply has no answer');
+  }
+  return answer;
+}
+
 function lookupIn(body: unknown): Lookup {
   const { lookup } = replySchema.parse(body);
   if (lookup === null) {
@@ -63,32 +72,30 @@ const TESTS_MENU = [
   '<data label="menu.line">※ 운영시간 : 11:00~14:30</data>',
 ];
 
+// P04 ticket 72: "예술계 메뉴가 뭐야?" answered with a Lookup of chips ("83동에서"), two bold lines, and the whole menu
+// under 근거. The answer is now the meal's answer, as planMeal plans it, opened at the Restaurant, as a place opened
+// from its list.
 describe('The menu of 301동식당 at 11:40 (board q8)', () => {
-  it('is drawn on the map as a Lookup, with the time to eat from the meal Plan, and no answer', async () => {
+  it('is the whole meal answer opened at 301동식당, with the time to eat, and no Lookup', async () => {
     const date = '2086-01-01';
     await boardQ8(date);
-    await stage.menusOn(date, ['301동식당']);
+    await stage.menusOn(date, ['301동식당', '학생회관식당']);
 
-    const response = await stage.send([findMenu(date, '301동식당'), { text: '301동식당 오늘 점심은 제육볶음이에요.' }]);
+    const response = await stage.send([findMenu(date, '301동식당'), { text: '' }]);
 
     expect(response.status).toBe(200);
-    expect(replySchema.parse(response.body).answer).toBeNull();
-    const lookup = lookupIn(response.body);
-    expect(lookup.kind).toBe('menu');
-    expect(lookup.lines).toEqual([
-      [
-        { text: '301동식당', strong: true },
-        { text: ' 오늘 점심은 제육볶음 6,000원', strong: false },
-      ],
-      [{ text: '12:45까지 55분 먹을 수 있어요', strong: false }],
-    ]);
-    expect(lookup.band).toMatchObject({
+    expect(replySchema.parse(response.body).lookup).toBeNull();
+    const answer = answerIn(response.body);
+    expect(answer.opened).toBe('301동식당');
+    expect(answer.input).toMatchObject({ kind: 'meal', date, meal: 'lunch', placeId: null });
+    expect(answer.plans.map(({ id }) => id).toSorted()).toEqual(['301동식당', '학생회관식당']);
+    const plan = answer.plans.find(({ id }) => id === '301동식당');
+    expect(plan?.band).toMatchObject({
       startAt: time(date, '11:50'),
       endAt: time(date, '12:45'),
       text: '11:50–12:45 · 식사 55분',
     });
-    expect(lookup.chips.map(({ text }) => text)).toEqual(['301동에서', '13:00 수업까지']);
-    expect(lookup.scene.flags).toMatchObject([{ text: '제육볶음', role: 'place' }]);
+    expect(plan?.menu?.dishes.map(({ name }) => name)).toEqual(['제육볶음']);
   });
 
   it('gives the model the menu inside the delimiters for collected text, the times, and no coordinates', async () => {
@@ -112,6 +119,23 @@ describe('The menu of 301동식당 at 11:40 (board q8)', () => {
   });
 });
 
+// PR 573's review: planned as planMeal plans, with the offer of a location the app could not read.
+describe('The menu of 301동식당 with the location missing', () => {
+  it('offers 위치 켜기 when the location is missing, as planMeal does', async () => {
+    const date = '2086-02-26';
+    await boardQ8(date);
+    await stage.menusOn(date, ['301동식당']);
+
+    const response = await stage.send([findMenu(date, '301동식당'), { text: '' }], {
+      context: { locationMissing: 'permission' },
+    });
+
+    expect(answerIn(response.body).offers).toEqual([
+      { kind: 'open', label: '위치 켜기', screen: 'location', hint: '위치를 켜면 지금 있는 곳에서 가까운 순으로 봐요' },
+    ]);
+  });
+});
+
 describe('A Restaurant with nothing to eat at that meal', () => {
   it('answers none when no menu of it was collected, and draws the Restaurant saying so', async () => {
     const date = '2086-01-15';
@@ -129,7 +153,9 @@ describe('A Restaurant with nothing to eat at that meal', () => {
       kind: 'place',
       fact: true,
       scene: { flags: [{ text: '301동식당 · 오늘 점심 메뉴 아직 안 올라옴', role: 'place' }] },
+      menuView: { restaurant: '301동식당', date, meal: 'lunch', why: '메뉴가 아직 안 올라왔어요' },
     });
+    expect(replySchema.parse(response.body).answer).toBeNull();
   });
 
   it('answers none when its menu closes its lunch, with the closure, and draws the Restaurant not serving', async () => {
@@ -151,7 +177,7 @@ describe('A Restaurant with nothing to eat at that meal', () => {
     });
     const lookup = lookupIn(response.body);
     expect(lookup.scene.flags).toMatchObject([{ text: '301동식당 · 오늘 점심은 안 해요' }]);
-    expect(lookup.basis).toEqual(['※ 개교기념일 휴무']);
+    expect(lookup).toMatchObject({ lines: [], basis: [], menuView: { why: '※ 개교기념일 휴무' } });
   });
 });
 
@@ -208,11 +234,10 @@ describe('Words that name several Restaurants', () => {
 
     const response = await stage.send([findMenu(date, '자하연식당 3층'), { text: '…' }]);
 
-    const lookup = lookupIn(response.body);
-    expect(lookup.scene.places.filter(({ role }) => role === 'pick' || role === 'candidate')).toMatchObject([
-      { role: 'pick', tag: '자하연식당 3층' },
-    ]);
-    expect(lookup.lines[0]?.[0]).toEqual({ text: '자하연식당 3층', strong: true });
+    const answer = answerIn(response.body);
+    expect(answer.opened).toBe('자하연식당 3층');
+    // PR 573's review: tied with 2층 on everything but the key, 3층 still leads, as the reply showed it.
+    expect(answer.plans[0]?.id).toBe('자하연식당 3층');
   });
 });
 

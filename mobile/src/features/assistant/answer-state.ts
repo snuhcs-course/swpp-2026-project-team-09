@@ -6,6 +6,7 @@
 
 import type { AnswerReply } from '@/api/assistant-types';
 import { offeredAnswer } from './meal-offered';
+import { openedIndex } from './opened-menu';
 import { newestOf, openedIfArrived } from './picking-on-arrival';
 import { opensBasis } from './relaxed-plan';
 import type { Stretch } from './time-band';
@@ -31,7 +32,7 @@ export interface AnswerState extends Shown {
   picked: readonly string[] | null;
   pickOrder: readonly string[] | null;
   asked: readonly string[] | null;
-  // What was shown before the last drag.
+  // What was shown before a drag whose answer has no Plan, which leaves no band to drag back (P04 ticket 86).
   kept: Shown | null;
   recalculating: boolean;
   pendingAdd: string | null;
@@ -46,15 +47,20 @@ export interface AnswerState extends Shown {
 
 export type SetStored = (update: (last: AnswerState) => AnswerState) => void;
 
+// A new reply's answer on screen: at its first Plan, at a menu question's Restaurant with its menu open (P04 ticket
+// 72), or at the plan the reply chose in words, such as for a dish picked from the menus (P05 ticket 51).
 function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
   const given = reply?.answer ?? null;
   const source = given === null ? null : offeredAnswer(given);
+  const opened = openedIndex(source);
+  const chosen = source?.plans.findIndex(({ id }) => id === reply?.select) ?? -1;
+  const index = Math.max(opened >= 0 ? opened : chosen, 0);
   return {
     replyId: reply?.id ?? null,
     source,
     answer: source,
-    index: 0,
-    basisOpen: opensBasis(source?.plans[0]),
+    index,
+    basisOpen: opensBasis(source?.plans[index]),
     adding: false,
     picked: null,
     pickOrder: null,
@@ -63,7 +69,7 @@ function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
     recalculating: false,
     pendingAdd: null,
     moving: null,
-    menu: false,
+    menu: opened >= 0,
     epoch,
     newest: reply?.id ?? 0,
   };
@@ -86,7 +92,7 @@ export function replaced(last: AnswerState, given: AnswerReply, by: ChangeBy | u
           next.plans.findIndex(({ id }) => id === shownId),
         )
       : 0;
-  const kept = by === undefined ? null : { answer: last.answer, index: last.index };
+  const kept = by === undefined || next.plans.length > 0 ? null : { answer: last.answer, index: last.index };
   const adding = last.adding && last.pendingAdd === null;
   // Picking ends with the list of Friends (P04 ticket 64), so that 취소, back, and the main button stay in step with it.
   const picking = adding ? { picked: last.picked, pickOrder: last.pickOrder } : { picked: null, pickOrder: null };
@@ -103,12 +109,7 @@ export function replaced(last: AnswerState, given: AnswerReply, by: ChangeBy | u
   };
 }
 
-export function ghostOf(kept: Shown | null): Stretch | null {
-  const band = kept?.answer?.plans[kept.index]?.band;
-  return band === undefined ? null : { startAt: band.startAt, endAt: band.endAt };
-}
-
-// The state the hook starts with, the conversation's last reply shown as it is: it opens nothing by itself.
+// The state the hook starts with, the conversation's last reply shown as it is: it opens no picking by itself.
 export function firstState(reply: ChatBubble | undefined, bubbles: readonly ChatBubble[]): AnswerState {
   return { ...fresh(reply, 0), newest: newestOf(bubbles) };
 }

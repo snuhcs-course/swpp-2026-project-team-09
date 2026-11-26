@@ -5,6 +5,8 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -15,6 +17,7 @@ import { z } from 'zod';
 import { type Hours } from '../src/menus/restaurant-hours.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { type TravelProvider } from '../src/travel/travel.js';
+import { type UsageClientFactory } from '../src/usage/usage.service.js';
 import { ask, postAssistantMessages } from './assistant.js';
 import { befriend, signInUser, type TestUser } from './friends.js';
 import { menusMessage, restaurant } from './menus.js';
@@ -58,9 +61,11 @@ export class MealPlanStage {
   // A travel provider of the test's own in place of the seed's.
   constructor(private readonly travel?: TravelProvider) {}
 
-  async start(): Promise<void> {
+  // `settings` over the tests' own, and `posthog` in PostHog's client's place, for a test of the usage events.
+  async start({ settings = {}, posthog }: { settings?: object; posthog?: UsageClientFactory } = {}): Promise<void> {
     const { model } = this.model;
-    this.app = await startApp(inject('settings'), [], refuseKakao, model, [], this.travel);
+    const all = { ...inject('settings'), ...settings };
+    this.app = await startApp(all, [], refuseKakao, model, [], this.travel, undefined, { posthog });
     vi.spyOn(this.app.get<Clock>(CLOCK), 'now').mockImplementation(() => this.now);
     // Imported after startApp, so that it is the class AppModule registers.
     const { RestaurantHours } = await import('../src/menus/restaurant-hours.js');
@@ -97,10 +102,22 @@ export class MealPlanStage {
     return friend;
   }
 
-  // Adds a Class in the building of that number, on Tuesdays unless another day is given.
-  async classAt(user: TestUser, start: string, end: string, number: string, weekday = 'tuesday'): Promise<void> {
+  // Adds a Class in the building of that number, on Tuesdays unless another day is given, and gives the id of its time.
+  async classAt(
+    user: TestUser,
+    start: string,
+    end: string,
+    number: string,
+    weekday = 'tuesday',
+    courseName = COURSE,
+  ): Promise<string> {
     const times = [{ weekday, startTime: start, endTime: end, placeId: (await this.numbered(number)).id, room: ROOM }];
-    await addClass(this.app, user.accessToken, { courseName: COURSE, times });
+    const added = await addClass(this.app, user.accessToken, { courseName, times });
+    const [time] = added.times;
+    if (time === undefined) {
+      throw new Error('A Class added has its time');
+    }
+    return time.id;
   }
 
   // Posts the day's menus as the worker does, each Restaurant serving lunch.

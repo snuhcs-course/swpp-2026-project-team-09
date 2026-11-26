@@ -17,6 +17,8 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { DynamicModule, INestApplication, Type } from '@nestjs/common';
@@ -30,11 +32,14 @@ import { useJsonBodyParsers } from '../src/common/json-body-limit.js';
 import { Settings } from '../src/common/settings.js';
 import { FETCH_EXPO } from '../src/push/expo-push.js';
 import { FETCH_SLACK } from '../src/sentry-alerts/crash-alerts.service.js';
+import { USAGE_CLIENT_FACTORY, type UsageClientFactory } from '../src/usage/usage.service.js';
 import { TRAVEL_PROVIDER, type TravelProvider } from '../src/travel/travel.js';
+import { readFrozenTravel } from './frozen-travel.js';
 import { TUTORIAL_FILE_PATH } from '../src/tutorial/tutorial-content.js';
 import { FETCH_KAKAO } from '../src/walking-route/walking-route.service.js';
 import { refuseExpoPush } from './expo-push.js';
 import { refuseSlack } from './sentry-alerts.js';
+import { refusePostHog } from './usage.js';
 import { TestGoogleIdTokenVerifier } from './google.js';
 import { ScriptedModel } from './scripted-model.js';
 import { refuseKakao } from './walking-route.js';
@@ -43,15 +48,19 @@ import { refuseKakao } from './walking-route.js';
 // The test verifier accepts ID tokens from test/google.ts, `fetchKakao` answers in Kakao's place and `model` in the
 // Assistant's model's: by default a ScriptedModel without a script, which fails every call.
 // `controllers` adds controllers that exist only in the tests, such as handlers that no feature has yet, and `modules`
-// modules that only the tests or the benchmark import, such as the one binding the benchmark's run observer. `travel`,
-// when given, answers in the place of the real Travel Times. `tutorialFile`, when given, is read as the tutorial's content
-// in the place of content/tutorial.yaml. `fetchExpo` answers in Expo's push service's place, refusing every call by
+// modules that only the tests or the benchmark import, such as the one binding the benchmark's run observer. `travel`
+// answers in the place of the real Travel Times: by default the walking table frozen before it counted the climb
+// (`frozen-travel.ts`, P04 ticket 77), so that a test's numbers stay when the walking model changes; a test about the
+// table passes the seed's. `tutorialFile`, when given, is read as the tutorial's content in the place of
+// content/tutorial.yaml. `fetchExpo` answers in Expo's push service's place, refusing every call by
 // default. `model` answers for every one of the AI's keys, unless `modelFactory` gives each key a model of its own.
 // `fetchSlack` answers in the place of the crash alerts' Slack webhook, refusing every call by default.
+// `posthog` makes the client that stands in for PostHog's (test/usage.ts); by default it refuses to make one.
 interface StartOptions {
   fetchExpo?: typeof fetch;
   modelFactory?: ModelFactory;
   fetchSlack?: typeof fetch;
+  posthog?: UsageClientFactory;
 }
 
 export async function startApp(
@@ -62,8 +71,11 @@ export async function startApp(
   modules: (Type | DynamicModule)[] = [],
   travel?: TravelProvider,
   tutorialFile?: string,
-  { fetchExpo = refuseExpoPush, modelFactory, fetchSlack = refuseSlack }: StartOptions = {},
+  { fetchExpo = refuseExpoPush, modelFactory, fetchSlack = refuseSlack, posthog = refusePostHog }: StartOptions = {},
 ): Promise<INestApplication<Server>> {
+  // Read before AppModule is imported: its ConfigModule.forRoot checks the settings as it is imported, and a refusal
+  // must find `compile` waiting for it. A read between the two left it rejected with no handler (after PR 578).
+  const shownTravel = travel ?? (await readFrozenTravel());
   for (const [name, value] of Object.entries(settings)) {
     vi.stubEnv(name, value);
   }
@@ -72,13 +84,12 @@ export async function startApp(
   // Imported after AppModule, so that it is the same class AppModule registers.
   const { GoogleIdTokenVerifier } = await import('../src/auth/google-id-token.verifier.js');
   const testing = Test.createTestingModule({ imports: [AppModule, ...modules], controllers });
-  if (travel !== undefined) {
-    testing.overrideProvider(TRAVEL_PROVIDER).useValue(travel);
-  }
+  testing.overrideProvider(TRAVEL_PROVIDER).useValue(shownTravel);
   if (tutorialFile !== undefined) {
     testing.overrideProvider(TUTORIAL_FILE_PATH).useValue(tutorialFile);
   }
   testing.overrideProvider(FETCH_EXPO).useValue(fetchExpo).overrideProvider(FETCH_SLACK).useValue(fetchSlack);
+  testing.overrideProvider(USAGE_CLIENT_FACTORY).useValue(posthog);
   const moduleRef = await testing
     .overrideProvider(GoogleIdTokenVerifier)
     .useClass(TestGoogleIdTokenVerifier)

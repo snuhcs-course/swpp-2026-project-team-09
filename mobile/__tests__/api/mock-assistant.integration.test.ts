@@ -13,7 +13,7 @@ import type { ChatMessage, PlanInput, RequestContext } from '@/api/assistant-typ
 import { mockClient } from '@/api/mock/client';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { FRIEND_LOOKUP_REPLY } from '@/api/mock/data/friend-lookup';
-import { MENU_LOOKUP_REPLY } from '@/api/mock/data/menu-lookup';
+import { MENU_ANSWER_REPLY, MENU_CLOSED_REPLY } from '@/api/mock/data/menu-answer';
 import { FRIENDS } from '@/api/mock/data/friends';
 import { STUDY_LOOKUP_REPLY } from '@/api/mock/data/study-lookup';
 import { FRIEND_TAPS, TAP_LOOKUPS } from '@/api/mock/data/tap-lookups';
@@ -60,8 +60,17 @@ describe('the mock of an answer drawn on the map', () => {
     await expect(answered(mockClient.askAssistant(WHERE, CONTEXT))).resolves.toEqual(WAY_LOOKUP_REPLY);
   });
 
-  it("answers 301동식당's menu with a context by the main server's Lookup", async () => {
-    await expect(answered(mockClient.askAssistant(MENU, CONTEXT))).resolves.toEqual(MENU_LOOKUP_REPLY);
+  // P04 ticket 72: a menu question is the meal answer opened at the Restaurant, or, closed, the Restaurant's menu view.
+  it("answers 301동식당's menu with a context by the meal answer opened at it", async () => {
+    await expect(answered(mockClient.askAssistant(MENU, CONTEXT))).resolves.toEqual(
+      replyWithOtherFriends(MENU_ANSWER_REPLY),
+    );
+  });
+
+  it("answers 학생회관식당's menu on its holiday by its menu view with why", async () => {
+    const closed: ChatMessage[] = [{ role: 'user', text: '학생회관식당 메뉴 뭐야?' }];
+
+    await expect(answered(mockClient.askAssistant(closed, CONTEXT))).resolves.toEqual(MENU_CLOSED_REPLY);
   });
 
   it("answers where 민수 is with a context by the main server's Lookup", async () => {
@@ -115,14 +124,17 @@ describe('the mock of a recalculation', () => {
 });
 
 // Partitions: the Friends of a meal's band, with a place and without; one of them picked. Expected values: the mock's
-// Friends, 서지우 (f11) with no place, and 김민준 (f1) picked (P04 ticket 64).
+// Friends, 서지우 (f11) with no place, who walks from the building of the Class she sets out after (P04 ticket 68), and
+// 김민준 (f1) picked (P04 ticket 64).
 describe('the mock of the other Friends on a band', () => {
   it('adds the mock’s Friends not in the conditions, each with a walk or none', async () => {
     const reply = await answered(mockClient.askAssistant(HUNGRY, CONTEXT));
     const others = reply.answer?.plans[0]?.band.others ?? [];
+    const placeless = others.find(({ userId }) => userId === 'f11');
 
     expect(others.map(({ name }) => name)).toEqual(FRIENDS.map(({ name }) => name));
-    expect(others.find(({ userId }) => userId === 'f11')?.walkMinutes).toBeNull();
+    expect(placeless?.after).toMatch(/^[\d-]+동 수업$/u);
+    expect(placeless?.walkMinutes).toBeGreaterThan(0);
     expect(others.find(({ userId }) => userId === 'f1')?.walkMinutes).toBeGreaterThan(0);
   });
 

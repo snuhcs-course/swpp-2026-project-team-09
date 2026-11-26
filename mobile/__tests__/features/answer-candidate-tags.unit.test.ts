@@ -12,7 +12,7 @@ import { MEAL_ANSWER_MENUS } from '@/api/mock/data/meal-answer-menus';
 import { drawingOf } from '@/features/assistant/answer-marks';
 import type { MapAvatar } from '@/map';
 import { answerFaceOf } from '@/screens/main/use-answer-faces';
-import { seen } from '../support/answer-marks';
+import { minutesOf, seen } from '../support/answer-marks';
 import { FIRST_CAMERA, THIRD_CAMERA, viewAt } from '../support/answer-view';
 import { inView } from '@/map';
 
@@ -24,15 +24,22 @@ import { inView } from '@/map';
 describe('the tags of a meal answer with menus', () => {
   const drawing = drawingOf(MEAL_ANSWER_MENUS, 0);
 
-  it('gives a candidate a small tag of its number and the walking it adds, with no dishes and no price', () => {
-    const { name, label } = seen(drawing, 'answer:candidate:학생회관식당');
-    expect(name).toBe('후보 3 · 학생회관식당 · 걸음 16분');
-    expect(label).toMatchObject({ tone: 'candidate', title: '16분', line: null, number: 3 });
-    expect(label).not.toHaveProperty('sub');
+  // P04 ticket 83: the number on the candidate's round, the walking in a capsule beside it.
+  it('gives a candidate its numbered round and the walking it adds beside it, with no dishes and no price', () => {
+    const { name, symbol } = seen(drawing, 'answer:candidate:학생회관식당');
+    expect(name).toBe('후보 3 · 학생회관식당');
+    expect(symbol).toMatchObject({ type: 'dot', role: 'candidate', number: 3 });
+    expect(minutesOf(drawing, '학생회관식당')).toMatchObject({
+      tone: 'minutes',
+      title: '16분',
+      line: null,
+      number: null,
+    });
+    expect(minutesOf(drawing, '학생회관식당')).not.toHaveProperty('sub');
   });
 
   it('counts the way there and the way on to the next Class', () => {
-    expect(seen(drawing, 'answer:candidate:자하연식당 2층').label).toMatchObject({ title: '22분', line: null });
+    expect(minutesOf(drawing, '자하연식당 2층')).toMatchObject({ title: '22분', line: null });
   });
 
   // P04 ticket 74: the walk is the route's own pill; the label says the name and start over the main dish. A screen
@@ -98,19 +105,6 @@ describe('two candidates at one point when room is short', () => {
   });
 });
 
-// Partitions: the emulator's view, where some candidates' tags do not fit; every Plan of the answer on screen.
-describe('candidates whose tags do not fit', () => {
-  it.each([0, 1, 2, 3, 4])('leaves them out from the lowest rank upward, Plan %i on screen', (index) => {
-    const drawing = drawingOf(MEAL_ANSWER_MENUS, index, undefined, viewAt(FIRST_CAMERA));
-    const tagged = MEAL_ANSWER_MENUS.plans
-      .map((plan) => drawing.things.find(({ id }) => id === `answer:candidate:${plan.place.label}`))
-      .flatMap((thing) => (thing?.look.kind === 'answer' ? [thing.look.label !== null] : []));
-
-    expect(tagged).toHaveLength(4);
-    expect(tagged).toEqual(tagged.toSorted((one, other) => Number(other) - Number(one)));
-  });
-});
-
 // The third Plan (the pick 학생회관식당) in a crowded view: an area around 302동 only, where no side of candidate 1's
 // tag fits. 302동식당 (1) stands on 민수's point and 301동식당 (2) on the User's, so neither has a dot of its own.
 describe('a candidate without a dot of its own when room is short (review of PR 437)', () => {
@@ -142,8 +136,8 @@ describe('a kind on screen with no chip for it', () => {
   it('recedes no candidate when none serves it', () => {
     const answer = withCuisine(MEAL_ANSWER_MENUS, '분식');
 
-    expect(tagOf(answer, '301동식당')).toMatchObject({ label: { tone: 'candidate', number: 2 } });
-    expect(tagOf(answer, '자하연식당 2층')).toMatchObject({ label: { tone: 'candidate', number: 5 } });
+    expect(tagOf(answer, '301동식당')).toMatchObject({ label: { tone: 'minutes', number: 2 } });
+    expect(tagOf(answer, '자하연식당 2층')).toMatchObject({ symbol: { role: 'candidate', number: 5 } });
   });
 
   it('recedes no candidate when the dishes have no kind', () => {
@@ -154,8 +148,8 @@ describe('a kind on screen with no chip for it', () => {
     );
     const answer = withCuisine({ ...MEAL_ANSWER_MENUS, plans }, '한식');
 
-    expect(tagOf(answer, '301동식당')).toMatchObject({ label: { tone: 'candidate', number: 2 } });
-    expect(tagOf(answer, '학생회관식당')).toMatchObject({ label: { tone: 'candidate', number: 3 } });
+    expect(tagOf(answer, '301동식당')).toMatchObject({ label: { tone: 'minutes', number: 2 } });
+    expect(tagOf(answer, '학생회관식당')).toMatchObject({ symbol: { role: 'candidate', number: 3 } });
   });
 });
 

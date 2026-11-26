@@ -34,6 +34,9 @@ export interface RequestContext {
   conditions: PlanInput | null;
   // The plan on screen.
   planId: string | null;
+  // The plans of the meal answer on screen in its order, which the app numbers from 1 (P05 ticket 51). Left out by an app
+  // before it.
+  planIds?: string[];
   // The Friends the User's new message mentions with "@". Left out by an app before the mention, and checked against
   // the asker's Friends before anything reads it.
   mentions?: Mention[];
@@ -87,6 +90,12 @@ export interface AnswerReply extends WithMissing {
     startAt: string;
     movesTo: string | null;
   };
+  // A menu question's: the Plan whose Restaurant was asked about, which the app opens at its menu as from the list (P04
+  // ticket 72). Absent from any other answer.
+  opened?: string;
+  // A meal answer from a main server that takes `planIds`: only over such an answer does the app send them, so that a
+  // newer app never sends a field an older main server refuses (P05 ticket 51). Absent from any other answer.
+  choosable?: true;
 }
 
 // One of the User's Quests as the app reads it: those set aside by a plan (`planSet`), related to one (`related`), and
@@ -251,14 +260,19 @@ export interface TimeBand {
   // A busy stretch of a Plan's band says what it is: "302동 수업", "수업", or "일정".
   lanes: { userId: string; name: string; busy: { startAt: string; endAt: string; label?: string }[] }[];
   // A meal's or a meeting's Plan: each of the asker's Friends not in the plan, in the order of their Friend list, for
-  // the time card to offer adding before one recalculation. `busy` as a lane's; `walkMinutes` from the Place nearest
-  // them to the Plan's, null when the asker may not see where they are.
+  // the time card to offer adding before one recalculation. `busy` as a lane's. `walkMinutes` to the Plan's Place from
+  // where they set out for it by the planner's rule for a picked person, null when that is not known; `after`, when
+  // they set out from an item of their day, says it as a busy stretch's label ("83동 수업", "수업", "일정").
   others?: {
     userId: string;
     name: string;
     busy: { startAt: string; endAt: string; label?: string }[];
     walkMinutes: number | null;
+    after?: string;
   }[];
+  // A meal's Plan: the asker's Classes of the day left out of it (`MealInput.skipped`), whole, labelled as a lane's busy
+  // stretch. They are in no lane. Absent for none.
+  skipped?: { id: string; startAt: string; endAt: string; label: string }[];
   startAt: string;
   endAt: string;
   text: string;
@@ -298,6 +312,8 @@ export type {
 export { EVENT_IDS_MAX, planInputSchema, QUEST_IDS_MAX } from './plan-input.dto.js';
 
 const PLAN_ID_MAX = 200;
+// More plans than an answer lists is a wrong request.
+const PLANS_MAX = 30;
 
 const latitude = z.number().min(-90).max(90);
 const longitude = z.number().min(-180).max(180);
@@ -322,6 +338,7 @@ export const requestContextSchema = z.strictObject({
   tapped: tappedSchema.nullable().default(null),
   conditions: planInputSchema.nullable().default(null),
   planId: z.string().min(1).max(PLAN_ID_MAX).nullable().default(null),
+  planIds: z.array(z.string().min(1).max(PLAN_ID_MAX)).max(PLANS_MAX).optional(),
   mentions: z.array(mentionSchema).max(MENTIONS_MAX).optional(),
 }) satisfies z.ZodType<RequestContext>;
 

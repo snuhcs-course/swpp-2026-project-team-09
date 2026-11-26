@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Cuisine, MapScene, Plan } from '@/api/assistant-types';
@@ -9,11 +10,13 @@ import type { AnswerSymbol } from '@/design-system';
 import { koreaClock } from '@/korea-time';
 import type { AnswerLabel } from '@/design-system';
 import { inView } from '@/map';
-import { type Draft, SIDE_ORDER } from './answer-groups';
+import type { LatLng } from '@/api/types';
+import { type Draft, restOf, SIDE_ORDER } from './answer-groups';
 import { inside, type LabelView } from './answer-labels';
 import { addedWalk, fadedPlan } from './answer-walks';
 import { serves } from './meal-kinds';
 import { dishWords, menuLine } from './meal-menus';
+import { mealPickLabel } from './meal-pick';
 
 // The words of an answer's pick and other candidates on the map (P04 ticket 13, boards 20 to 22).
 
@@ -42,6 +45,39 @@ export function pickLine(
   return when === null ? dishes : `${when} · ${dishes}`;
 }
 
+// The chosen place of a scene: a meal answer's with menus says its time and main dish (`mealPickLabel`); any other its
+// flag's words, its day, and its first dish (`pickLine`). Any meal answer's, menus or none, is coral (P04 ticket 90).
+export function pickDraft(
+  pick: {
+    title: string;
+    position: LatLng;
+    number: number | null;
+    plan: Plan | undefined;
+    day: string | undefined;
+    kind: Cuisine | null;
+    meal: boolean;
+    coral: boolean;
+  },
+  flagText: string | null,
+): Draft {
+  const { title, position, number, plan, day, kind, meal, coral } = pick;
+  const symbol: AnswerSymbol = { type: 'dot', role: 'pick', number, ...(coral ? { meal: true } : {}) };
+  const base = {
+    id: 'answer:pick',
+    position,
+    planId: null,
+    group: 'pick',
+    tone: 'pick',
+    number,
+    ...(coral ? { coral } : {}),
+  } as const;
+  if (meal && plan !== undefined) {
+    return { ...base, symbol: { ...symbol, meal: true }, ...mealPickLabel(plan, title, kind) };
+  }
+  const line = pickLine(flagText === null ? null : restOf(title, flagText), day, plan, kind);
+  return { ...base, name: line === null ? title : `${title} · ${line}`, symbol, title, line };
+}
+
 // A candidate without the kind of food on screen (board 25): its name alone in grey, with no number and no dot. A
 // press still picks it.
 function recededDraft(plan: Plan, { place, tag }: MapScene['places'][number]): Draft {
@@ -60,24 +96,28 @@ function recededDraft(plan: Plan, { place, tag }: MapScene['places'][number]): D
   };
 }
 
-// A meal answer's candidate (the answer screen's redesign, board E1): a small tag of its number and the walking it adds
-// to the User's day ("26분"), or its arrival time when that walking is not known. A screen reader reads its name too.
+// A meal answer's candidate (the answer screen's redesign, board E1): its numbered round and the walking it adds to the
+// User's day ("26분"), or its arrival time when that walking is not known, in a capsule beside the round (P04 ticket
+// 83). A screen reader reads its name too.
 function mealDraft(plan: Plan, number: number, { place, tag }: MapScene['places'][number]): Draft {
   const title = tag ?? place.label;
   const walk = addedWalk(plan);
   const value = walk === null ? koreaClock(plan.startAt) : `${String(walk)}분`;
   const said = walk === null ? `${value} 도착` : `걸음 ${value}`;
   const faded = fadedPlan(plan);
+  const round = [`후보 ${String(number)}`, title].join(' · ');
   return {
     id: `answer:candidate:${place.label}`,
-    name: [`후보 ${String(number)}`, title, said].join(' · '),
+    name: `${round} · ${said}`,
+    roundName: round,
     position: { latitude: place.latitude, longitude: place.longitude },
     planId: plan.id,
     group: 'candidate',
-    symbol: { type: 'dot', role: 'candidate', number, ...(faded ? { faded } : {}) },
+    symbol: { type: 'dot', role: 'candidate', number, meal: true, ...(faded ? { faded } : {}) },
     tone: 'candidate',
     title: value,
     ...(faded ? { faded } : {}),
+    ...(walk === null ? { clock: true } : {}),
     line: null,
     number,
   };
@@ -90,6 +130,7 @@ export function candidateDraft(
   item: MapScene['places'][number],
   kind: Cuisine | null = null,
   meal = false,
+  coral = false,
 ): Draft {
   const { place, tag } = item;
   const title = tag ?? place.label;
@@ -105,8 +146,9 @@ export function candidateDraft(
   const time = plan === undefined ? null : koreaClock(plan.startAt);
   const sub = menuLine(plan?.menu, kind);
   const said = [time, sub].flatMap((words) => words ?? []);
-  const symbol: AnswerSymbol = { type: 'dot', role: 'candidate', number };
+  const symbol: AnswerSymbol = { type: 'dot', role: 'candidate', number, ...(coral ? { meal: true } : {}) };
   return {
+    ...(coral ? { coral } : {}),
     id: `answer:candidate:${place.label}`,
     name: number === null ? title : [`후보 ${String(number)}`, title, ...said].join(' · '),
     position: { latitude: place.latitude, longitude: place.longitude },
@@ -135,6 +177,8 @@ interface Labelled {
   draft: Draft;
   held: boolean;
   label: AnswerLabel | null;
+  // A meal candidate's minutes beside its round (P04 ticket 83).
+  capsule?: boolean;
 }
 
 // Whether a mark's point is in the view's area, where its tag could be read; without a view, every one is.
@@ -148,10 +192,13 @@ function seenAt(view: LabelView | null, { position }: Draft): boolean {
 
 // Where room is short, the tags of the candidates in the view's area whose own numbered dot is drawn are left out from
 // the lowest rank upward: once one has none, none after it has one. The dot stays and takes the press. A held
-// candidate always keeps its tag.
+// candidate always keeps its tag. A meal candidate's minutes are left out on their own, only where they have no room
+// (P04 ticket 84): the user wants each candidate's minutes wherever they fit, nearer numbers still placed first.
 export function leftOutByRank<T extends Labelled>(placed: readonly T[], view: LabelView | null): T[] {
   const lone = placed
-    .filter(({ draft, held }) => draft.group === 'candidate' && !held && seenAt(view, draft))
+    .filter(
+      ({ draft, held, capsule = false }) => draft.group === 'candidate' && !held && !capsule && seenAt(view, draft),
+    )
     .toSorted((one, other) => (one.draft.number ?? UNNUMBERED) - (other.draft.number ?? UNNUMBERED));
   const first = lone.findIndex(({ label }) => label === null);
   const out = new Set(first === -1 ? [] : lone.slice(first));

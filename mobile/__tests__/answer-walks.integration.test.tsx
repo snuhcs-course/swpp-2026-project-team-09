@@ -4,6 +4,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen, within } from '@testing-library/react-native';
@@ -17,6 +18,7 @@ import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { pass } from './support/app';
 import { askOnMap, mapLines } from './support/answer-map';
+import { CONTINUE } from './support/questions';
 import type { FakeServer, Received, Reply } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { givePhone, ON_CAMPUS } from './support/main';
@@ -24,8 +26,10 @@ import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 
 // An answer's walking routes follow the paths (P15 ticket 56), against the fake main server: the walks of the Plan on
-// screen are asked of `GET /walking-route`, a few at most, and drawn along the line it gives, and stay straight when
-// none comes. Nothing is kept: a Plan that leaves the screen gives its requests up, and one shown again asks again.
+// screen are asked of `GET /walking-route`, a few at most, and drawn along the line it gives once it comes, and
+// straight when none comes. A Plan that leaves the screen gives its requests up. Its paths are held only while its
+// answer is on screen: a place of it chosen again asks nothing, and the answer closed and shown again asks again (P04
+// ticket 75).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -93,8 +97,21 @@ function pathOf(request: Received, afterMs?: number): Reply {
   return { status: 200, body: { status: 'OK', route: { line, distance: 300, duration: 240 } }, afterMs };
 }
 
-// Partitions: a path found for the User's walk, the request failing, no path found.
+// Partitions: a path on its way, found for the User's walk, the request failing, no path found.
 describe("an answer's walks", () => {
+  it('draws no straight line for a walk while its path is on its way, and the path once it comes', async () => {
+    server.on(WALKING_ROUTE, (request) => pathOf(request, 2000));
+    await askOnMap(server, MEAL_ANSWER_REPLY);
+    await pass(500);
+
+    expect(screen.queryByTestId('line:answer:route:0')).toBeNull();
+    expect(screen.queryByTestId('line:answer:route:1')).toBeNull();
+
+    await pass(2000);
+    expect(strokesOf('answer:route:0')).toHaveLength(3);
+    expect(strokesOf('answer:route:1')).toHaveLength(3);
+  });
+
   it("draws the User's walk along the path the service found, in the line's own colour and width", async () => {
     server.on(WALKING_ROUTE, (request) =>
       endsAt(request, RESTAURANT) ? pathOf(request) : { status: 200, body: { status: 'TOO_FAR_AWAY', route: null } },
@@ -215,8 +232,8 @@ function signalsOf(walks: readonly [Point, Point][]): (AbortSignal | undefined)[
     .map(([, , signal]) => signal);
 }
 
-// Partitions: a Plan that leaves the screen while its walks are on their way, and one shown again after its walks
-// were answered.
+// Partitions: a Plan that leaves the screen while its walks are on their way; one shown again after its walks were
+// answered, while its answer stays on screen, and after the answer was closed and shown again.
 describe('a Plan that leaves the screen', () => {
   it("gives up its walks' requests still on their way", async () => {
     server.on(WALKING_ROUTE, (request) => pathOf(request, 5000));
@@ -230,7 +247,7 @@ describe('a Plan that leaves the screen', () => {
     expect(signalsOf(PLAN_3_WALKS).map((signal) => signal?.aborted)).toEqual([false, false, false]);
   });
 
-  it('keeps nothing: shown again, it asks again', async () => {
+  it('keeps its paths while its answer is on screen: shown again, it asks nothing and draws them at once', async () => {
     server.on(WALKING_ROUTE, (request) => pathOf(request));
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
     await pass(500);
@@ -238,6 +255,19 @@ describe('a Plan that leaves the screen', () => {
     await user.press(screen.getByRole('button', { name: '후보 3 · 학생회관식당 · 12:33' }));
     await pass(500);
     await user.press(screen.getByRole('button', { name: '후보 1 · 302동식당 · 12:15' }));
+
+    expect(strokesOf('answer:route:0')).toHaveLength(3);
+    expect(server.received(WALKING_ROUTE).filter((request) => endsAt(request, RESTAURANT))).toHaveLength(1);
+  });
+
+  it('drops them once its answer is closed: shown again by "이어서", it asks again', async () => {
+    server.on(WALKING_ROUTE, (request) => pathOf(request));
+    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
+    await pass(500);
+
+    await user.press(screen.getByRole('button', { name: '답 닫기' }));
+    await pass(500);
+    await user.press(screen.getByRole('button', { name: CONTINUE }));
     await pass(500);
 
     expect(server.received(WALKING_ROUTE).filter((request) => endsAt(request, RESTAURANT))).toHaveLength(2);
