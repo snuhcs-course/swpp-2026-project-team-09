@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -49,10 +50,12 @@ export function choosePlan(): Tool {
       }),
     run: ({ number, restaurant }, { context, presented }) => {
       const { conditions, planIds } = context;
-      const listed = conditions?.kind === 'meal' ? (planIds ?? []) : [];
+      // A meal's answer, or a study answer's (P10 ticket 05), lists its places numbered.
+      const listed = conditions?.kind === 'meal' || conditions?.kind === 'study' ? (planIds ?? []) : [];
       // The plans a planMeal of this message drew, which the app opens at the plan chosen: a dish picked from their
       // menus, or a choice asked with a change ("2번으로 하고 지은이도 불러 줘").
-      const drawn = presented.answer?.input.kind === 'meal' ? presented.answer.plans.map(({ id }) => id) : null;
+      const kind = presented.answer?.input.kind;
+      const drawn = kind === 'meal' || kind === 'study' ? (presented.answer?.plans.map(({ id }) => id) ?? null) : null;
       if (listed.length === 0 && drawn === null) {
         return Promise.resolve({ result: 'none', listed: 0, reason: NOT_ON_SCREEN });
       }

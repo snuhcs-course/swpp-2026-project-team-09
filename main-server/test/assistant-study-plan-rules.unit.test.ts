@@ -11,7 +11,9 @@ import {
 } from '../src/assistant/chat/chat-assistant.js';
 import { type AnswerReply, NO_CONTEXT, type RequestContext, type StudyInput } from '../src/assistant/dto/answer.dto.js';
 import { type ClientCapability, type ToolContext } from '../src/assistant/feature.js';
+import { contextLines } from '../src/assistant/context-lines.js';
 import { FoundIds } from '../src/assistant/found-ids.js';
+import { choosePlan } from '../src/assistant/gathering/choose-plan.js';
 import { LIBRARY_ANSWER_RULES, LIBRARY_STUDY_RULES } from '../src/assistant/library/library-rules.js';
 import { planStudy, STUDY_PLAN_RULES } from '../src/assistant/lookup/study-plan-tools.js';
 import { wordlessStudySentence } from '../src/assistant/lookup/study-plan-words.js';
@@ -19,6 +21,7 @@ import { STUDY_RULES } from '../src/assistant/lookup/study-tools.js';
 import { wordlessText } from '../src/assistant/wordless-reply.js';
 import { chatServicesWithoutData } from './chat-services.js';
 import { STUDY_ANSWER } from './fixtures/study-answer.js';
+import { STUDY_GROUP_TO_SEND } from './fixtures/study-group-answers.js';
 
 // planStudy and its rules for an app that says `study-plan` (P10 ticket 04): the prompt and tools of every other app
 // as they are, the tool's refusals before it plans, and the one sentence a reply with no words says over the answer.
@@ -143,5 +146,35 @@ describe('A study answer’s one sentence', () => {
 
     expect(wordlessStudySentence(short)).toBe('21:00 수업까지 가장 오래 있을 수 있는 공대 신양학술정보관을 추천해요.');
     expect(wordlessStudySentence(unknown)).toBe('여는 시간은 모르지만 가장 가까운 인문대 신양학술정보관을 추천해요.');
+  });
+});
+
+describe('A study answer on screen', () => {
+  const planIds = STUDY_ANSWER.plans.map(({ id }) => id);
+  const onScreen = (planId: string): RequestContext => ({
+    ...NO_CONTEXT,
+    conditions: STUDY_ANSWER.input,
+    planId,
+    planIds,
+  });
+
+  it('is chosen by number or by building, as a meal answer is', async () => {
+    const byNumber = contextOf(onScreen(planIds[0] ?? ''));
+    const byName = contextOf(onScreen(planIds[0] ?? ''));
+
+    expect(await choosePlan().run({ number: 2 }, byNumber)).toMatchObject({ result: 'chosen', number: 2 });
+    expect(byNumber.presented.select).toBe(planIds[1]);
+    expect(await choosePlan().run({ restaurant: '법학도서관' }, byName)).toMatchObject({ result: 'chosen' });
+    expect(byName.presented.select).toBe('법학도서관');
+  });
+
+  it('gives 관정관’s seat to book when its plan is shown, and none for another', () => {
+    expect(contextLines(onScreen('관정관'))[0]).toContain('"book":"7F-7A-zone2"');
+    expect(contextLines(onScreen('법학도서관'))[0]).not.toContain('"book"');
+    const chosen = { ...STUDY_ANSWER.input, chosen: { seatSpaceId: '8F-8A-zone1-quiet', roomSpaceId: null } };
+    expect(contextLines({ ...onScreen('관정관'), conditions: chosen })[0]).toContain('"book":"8F-8A-zone1-quiet"');
+    expect(
+      contextLines({ ...NO_CONTEXT, conditions: STUDY_GROUP_TO_SEND.input, planId: '관정관', planIds: ['관정관'] })[0],
+    ).not.toContain('"book"');
   });
 });

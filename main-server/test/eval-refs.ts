@@ -3,6 +3,7 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type EvalCase } from '../eval/cases.ts';
@@ -96,7 +97,8 @@ function refsOf(evalCase: EvalCase): SeedRef[] {
         return turn.expect === undefined ? [] : refsOfExpect(turn.expect);
       }
       const { cards, proposal } = turn.assistant;
-      return [...cards.map((card) => ({ kind: card.kind, name: card.seed })), ...refsOfProposal(proposal)];
+      const seeded = cards.flatMap(({ kind, seed }) => (kind === 'library' ? [] : [{ kind, name: seed }]));
+      return [...seeded, ...refsOfProposal(proposal)];
     }),
   ];
 }

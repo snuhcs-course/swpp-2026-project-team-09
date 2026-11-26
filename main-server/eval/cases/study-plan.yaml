@@ -4,11 +4,12 @@
 # 2026-11-27  Opus 5.5   prompted by fyoon46
 ################################################################################
 
-# "공부할 자리 있어?" answered as ranked study places (P10 ticket 04), from the app that says `study-plan`
+# "공부할 자리 있어?" answered as ranked study places (P10 tickets 04 and 05), from the app that says `study-plan`
 # (`capabilities: study-app`), in the P6 world on Wednesday 2026-11-04 at 10:05. A place to study asked for without a
 # 관정도서관 space or a booking goes to planStudy, never to a library tool; a named 관정 space or a booking stays with
-# the library tools; 근처 is planStudy with near over the visible area; and a choice by number over the answer on screen
-# is choosePlan's. Written, and not run: no model key on the machine they were written on.
+# the library tools; 근처 is planStudy with near over the visible area; a choice by number over the answer on screen is
+# choosePlan's; and 예약해 줘 with 관정관's plan shown books its seat. Written, and not run: no model key on the machine
+# they were written on.
 
 - id: study-plan-a-seat
   category: study-plan
@@ -67,7 +68,6 @@
   live: true
   screen: true
   repeat: 3
-  knownFailure: choosePlan reads a meal answer on screen only, until P10 ticket 05 widens it to a study answer.
   turns:
     - user: 공부할 자리 있어?
       expect:
@@ -82,3 +82,32 @@
           forbidden: [planStudy, findLibrarySpace, showOnMap]
         args:
           choosePlan: { number: 2 }
+
+# 관정관 chosen by name, then 예약해 줘 over it: its seat, 7F-7A-zone2, through the library tools.
+- id: study-plan-book-kwanjeong-shown
+  category: study-plan
+  world: p6-answer
+  capabilities: study-app
+  live: true
+  screen: true
+  repeat: 3
+  turns:
+    - user: 공부할 자리 있어?
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planStudy]
+    - user: 관정으로 할게
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [choosePlan]
+          forbidden: [planStudy]
+    - user: 예약해 줘
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [findLibrarySpace, proposeLibraryBooking]
+          forbidden: [planStudy]
+        args:
+          proposeLibraryBooking: { spaceId: 7F-7A-zone2 }

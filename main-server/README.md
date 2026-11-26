@@ -2553,7 +2553,13 @@ Anthropic API as the AI's key says
     out, on one message at most). Once 만들기 made the Proposal, it is sent back with `madeQuestId`, the Quest's id.
     The model gets only the latest 20 messages, and of an Assistant's message its text, a line naming its cards and a
     line with its Proposal's values (`[Proposal shown: …]`, or `[Proposal made: …]` with the Quest's id), never an
-    earlier message's tool results.
+    earlier message's tool results. The cards line names each card by its kind and id, except a library book card: the
+    app sends it back as the User left it, and on the phone they can change its room, time and seat, so its key is
+    written out in words from the catalogue, such as
+    `[Cards shown: library card for 관정 8층 8A 열람실 1 구역(QUIET ZONE), 11/27 14:00–17:00, as the User left it]`
+    (`run-messages.ts`, P05 ticket 60). The library rules say that a difference from the earlier text is the User's
+    change, not the Assistant's error, and that a seat item in `[Ahead: …]` at that time is the booking made. Nothing
+    more is sent: no booking number and no flag that the User booked.
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
     the User's, a message of another shape, a User's message over 1,000 characters, an Assistant's over 4,000, more
     than one Proposal, messages over 24,000 characters together, a Proposal's title, description and names included,
@@ -2920,6 +2926,9 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
         comes first, and the dropped and closed buildings. Never a seat count.
       - With `study-plan`, the library rules leave "공부할 자리" asked without a booking to `planStudy`
         (`LIBRARY_STUDY_RULES`). Without it, every prompt and tool is unchanged.
+      - The model chooses a plan of a study answer on screen with `choosePlan`, by number or by building, as for a
+        meal (P10 ticket 05). With 관정관's plan shown alone, the study line gives `book` (7F-7A-zone2 for a quiet place
+        or any), and "예약해 줘" books it through the library tools; 관정관's plan alone carries the same `study.book`.
       - A reply with no words of the model's says the first plan and why ("열려 있는 곳 중 가장 가까운 공대
         신양학술정보관을 추천해요.", `lookup/study-plan-words.ts`).
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
@@ -2969,7 +2978,8 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
     `shown` adds `windowOpens`: the room request it makes waits for the window (Group study room requests).
   - `proposeLibraryCancel`, `proposeLibraryReturn`, `showLibrarySeats` and `showMyLibraryBookings` show the other
     library cards. A card's `key` (at most 120 characters, such as `book:7F-7A-zone2:2026-11-04:1700:60`) is its id
-    in the history, checked against its grammar. Library cards are attached only for a request with
+    in the history, checked against its grammar; a book card's key reaches the model in words, as the User left it
+    (Shape, above). Library cards are attached only for a request with
     `clientCapabilities: ["library"]`; otherwise, or with `LIBRARY_BOOKING_ENABLED=false`, every library tool answers
     `none` with the reason (and the official site). No tool result holds a seat, a booking, a 학번, a registered name
     or the User's 소속, and no summary names a card: the reply says what the User presses, never that a card was shown.
