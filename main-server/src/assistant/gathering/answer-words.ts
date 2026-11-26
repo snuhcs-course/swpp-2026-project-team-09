@@ -38,6 +38,8 @@ export interface AnswerPerson {
   me: boolean;
   // Their items of the day, for the time band's lanes and for wording where they set out from.
   items: readonly DayItem[];
+  // The asker's Classes left out of the plan, which are not in `items`; absent for none.
+  skipped?: readonly DayItem[];
   // The position the asker may see of them now (the asker's own for the asker), or null.
   position: Position | null;
   // How much of a Friend the asker sees.

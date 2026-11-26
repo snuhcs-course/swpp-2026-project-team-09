@@ -12,6 +12,7 @@
 
 import { type MapScene, type TimeBand } from '../dto/answer.dto.js';
 import { byStart, clockOf, type DayItem, onDay } from '../free-time/free-time.js';
+import { mealWindow } from '../free-time/meal-fit.js';
 import { koreaTime } from '../korea-time.js';
 import {
   type GatheringNaming,
@@ -24,6 +25,7 @@ import {
   withAnd,
 } from './answer-words.js';
 import { type GatheringFit, MINUTE_MS, minutesSaid, type PersonPart } from './gathering.js';
+import { freedReach } from './meal-plan-parts.js';
 import { type SetOut, setOutOf } from './other-friends.js';
 
 // What the map draws of a plan, and its time band.
@@ -219,14 +221,28 @@ function otherLane(
     : { userId, name, busy, walkMinutes, after: busyLabel(after, label) };
 }
 
+// The asker's Classes left out of the plan, whole, labelled as a lane's busy stretch.
+function skippedOf(items: readonly DayItem[], naming: Naming): NonNullable<TimeBand['skipped']> {
+  return items.map((item) => ({
+    id: item.id,
+    startAt: koreaTime(item.start),
+    endAt: koreaTime(item.end),
+    label: busyLabel(item, (placeId) => naming.placeLabel(placeId)),
+  }));
+}
+
 // From the half hour at or before the later of now and an hour before the plan's start, to the half hour at or after half
-// an hour past its end, reaching out to the half hours around the window the User fixed. `now` is given as it is, even
-// outside the range.
+// an hour past its end, reaching out to the half hours around the window the User fixed, and over the time a Class left
+// out frees, so that the meal can be moved into it. `now` is given as it is, even outside the range.
 export function bandOf(fit: GatheringFit, naming: Naming): TimeBand {
   const { start, end, togetherMinutes } = fit;
   const { now, input } = naming.args;
+  const { items, skipped = [] } = naming.asker;
   const opens = [Math.max(now.getTime(), start.getTime() - BAND_BEFORE_MS)];
   const closes = [end.getTime() + BAND_AFTER_MS];
+  if (skipped.length > 0) {
+    closes.push(freedReach(items, skipped, mealWindow(input.date, input.meal).end).getTime());
+  }
   if (input.window.from !== null) {
     opens.push(onDay(input.date, input.window.from).getTime());
   }
@@ -239,6 +255,7 @@ export function bandOf(fit: GatheringFit, naming: Naming): TimeBand {
     now: koreaTime(now),
     lanes: lanesOf(naming, from, until),
     ...othersOf(naming, fit, from, until),
+    ...(skipped.length === 0 ? {} : { skipped: skippedOf(skipped, naming) }),
     startAt: koreaTime(start),
     endAt: koreaTime(end),
     text: `${clockOf(start)}–${clockOf(end)}${minutesSaid(fit) ? ` · 식사 ${togetherMinutes}분` : ''}`,

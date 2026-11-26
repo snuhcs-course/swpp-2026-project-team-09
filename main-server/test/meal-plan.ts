@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -101,10 +102,22 @@ export class MealPlanStage {
     return friend;
   }
 
-  // Adds a Class in the building of that number, on Tuesdays unless another day is given.
-  async classAt(user: TestUser, start: string, end: string, number: string, weekday = 'tuesday'): Promise<void> {
+  // Adds a Class in the building of that number, on Tuesdays unless another day is given, and gives the id of its time.
+  async classAt(
+    user: TestUser,
+    start: string,
+    end: string,
+    number: string,
+    weekday = 'tuesday',
+    courseName = COURSE,
+  ): Promise<string> {
     const times = [{ weekday, startTime: start, endTime: end, placeId: (await this.numbered(number)).id, room: ROOM }];
-    await addClass(this.app, user.accessToken, { courseName: COURSE, times });
+    const added = await addClass(this.app, user.accessToken, { courseName, times });
+    const [time] = added.times;
+    if (time === undefined) {
+      throw new Error('A Class added has its time');
+    }
+    return time.id;
   }
 
   // Posts the day's menus as the worker does, each Restaurant serving lunch.

@@ -270,6 +270,9 @@ export interface TimeBand {
     walkMinutes: number | null;
     after?: string;
   }[];
+  // A meal's Plan: the asker's Classes of the day left out of it (`MealInput.skipped`), whole, labelled as a lane's busy
+  // stretch. They are in no lane. Absent for none.
+  skipped?: { id: string; startAt: string; endAt: string; label: string }[];
   startAt: string;
   endAt: string;
   text: string;

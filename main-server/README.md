@@ -2593,6 +2593,15 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     and one for a User with no Class carries `{ "kind": "open", "label": "시간표 넣기", "screen": "timetable", "hint" }`
     with `note`, the same words as that `hint`. The app draws a meal Plan's offers as the `hint` lines under its words
     (P04 ticket 86); `note` is kept for the apps before them, which draw the note over their buttons.
+  - **Classes left out.** A meal's `input` may carry `skipped`, the ids of the times of the asker's Classes of that day
+    left out of the plan (P05 ticket 54): the planner takes them out of the asker's day, so the meal may use that
+    time, and where the asker sets out from and the next item come from the items left. An id that is none of the
+    asker's Classes that day is dropped from the answer's `input`, and the field is absent for none. Each Plan's
+    `band.skipped` lists them whole as `{ id, startAt, endAt, label }`, in no lane, and the band's range reaches over
+    the time they free, to the next item left or the meal's end. `planMeal` names them with `skipClasses` and puts one
+    back with `attendClasses`, by start (`HH:MM`) or by name; a word that names none of the day's Classes, or several,
+    answers `{ "result": "unknownClass", "unknown", "classes" }` and plans nothing. Those of the conditions on screen
+    stay left out for any meal of the same day.
   - **A meet** (`{ "kind": "meet", "date", "people", "window", "placeId" }`, `gathering/meet-plan.service.ts`): the
     earliest stretch between 09:00 and 22:00, from now or `window.from`, that the asker and the Friends share, at the
     place where they
