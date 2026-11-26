@@ -29,6 +29,8 @@ export interface CandidateRow {
   // The way this choice adds to the User's day, "걸음 16분", or "이동 16분 · 셔틀" with a leg by shuttle, or when the User
   // is there, "11:53 도착", when where they start is not known.
   when: string;
+  // `when` is a clock time ("11:53 도착"), drawn in the time's gold; the way's words are ink (P04 ticket 85).
+  clock: boolean;
   // In minutes, null when not known.
   walk: number | null;
   // It cannot be done in the time (`fadedPlan`): only the Assistant's pick can be, which the answer keeps though it
@@ -43,11 +45,13 @@ export interface CandidateRow {
 
 function rowOf(plan: Plan, index: number, kind: Cuisine | null): CandidateRow {
   const walk = addedWalk(plan);
+  const way = travelWords(plan);
   return {
     number: index + 1,
     planId: plan.id,
     name: plan.place.label,
-    when: travelWords(plan) ?? `${koreaClock(plan.startAt)} 도착`,
+    when: way ?? `${koreaClock(plan.startAt)} 도착`,
+    clock: way === null,
     walk,
     faded: fadedPlan(plan),
     dishes: plan.menu === undefined ? null : dishWords(plan.menu, kind),
@@ -175,7 +179,11 @@ function Row({
         <Text numberOfLines={1} style={styles.name}>
           {name}
         </Text>
-        <Text numberOfLines={1} style={styles.when}>
+        <Text
+          numberOfLines={1}
+          style={[styles.when, row.clock && styles.clock]}
+          testID={`meal-row-${String(number)}-when`}
+        >
           {when}
         </Text>
         {dishes === null ? null : (
@@ -300,7 +308,9 @@ const styles = StyleSheet.create({
   number: { ...text.micro, color: color.meal },
   middle: { flex: 1, gap: 2 },
   name: { ...text.body, fontFamily: font.bold, color: color.ink },
-  when: { ...text.caption, fontFamily: font.semiBold, color: color.quest },
+  // The way this choice adds in ink, as the name; gold is for clock times alone (P04 ticket 85).
+  when: { ...text.caption, fontFamily: font.semiBold, color: color.ink },
+  clock: { color: color.quest },
   dishes: { ...text.caption, color: color.inkMuted },
   price: { ...text.caption, color: color.inkMuted },
 });

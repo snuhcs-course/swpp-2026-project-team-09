@@ -6,6 +6,7 @@
 
 import { render, screen, within } from '@testing-library/react-native';
 
+import type { AnswerReply } from '@/api/assistant-types';
 import { MEAL_ANSWER_MENUS } from '@/api/mock/data/meal-answer-menus';
 import { color } from '@/design-system';
 import { MealList } from '@/screens/main/answer/meal-list';
@@ -54,5 +55,36 @@ describe("a meal answer's opened Restaurant", () => {
     await render(<MealMenu answer={MEAL_ANSWER_MENUS} plan={PLAN} shown={MENU_SHOWN} />, { wrapper: freshWrapper() });
 
     expect(screen.getByTestId('meal-menu-number')).toHaveStyle({ backgroundColor: color.meal });
+  });
+});
+
+// The stored answer with where the User starts not known and no next Class: no walking to say, so each row says when
+// the User is there.
+function withoutWays(answer: AnswerReply): AnswerReply {
+  const plans = answer.plans.map((plan) => ({
+    ...plan,
+    parts: plan.parts.map((part) => (part.me ? Object.assign({}, part, { walkMinutes: null, origin: null }) : part)),
+    scene: { ...plan.scene, routes: plan.scene.routes.filter(({ role }) => role !== 'next') },
+  }));
+  return { ...answer, plans };
+}
+
+// Partitions: a row's way ("걸음 N분") and a row's clock time ("11:53 도착"). Expected values: the user's decision on the
+// coral screens (2026-11-26), the way in the name's ink and gold for clock times alone.
+describe("a meal answer's list rows' second line", () => {
+  it('says the way in ink, as the name', async () => {
+    await render(<MealList answer={MEAL_ANSWER_MENUS} busy={false} shown={SHOWN} />);
+    const line = screen.getByTestId('meal-row-3-when');
+
+    expect(line).toHaveTextContent(/^걸음 \d+분$/u);
+    expect(line).toHaveStyle({ color: color.ink });
+  });
+
+  it('keeps a clock time gold', async () => {
+    await render(<MealList answer={withoutWays(MEAL_ANSWER_MENUS)} busy={false} shown={SHOWN} />);
+    const line = screen.getByTestId('meal-row-3-when');
+
+    expect(line).toHaveTextContent(/^\d{2}:\d{2} 도착$/u);
+    expect(line).toHaveStyle({ color: color.quest });
   });
 });

@@ -24,7 +24,7 @@ The user's choice (2026-11-26): "3안" of the candidate marks proposal, the righ
 - **The list:**
   - number badges in the same two looks: soft coral with a coral rim and number, and the chosen row's solid coral with a white number;
   - the chosen row's ground soft coral with a coral border, in place of gold;
-  - times and "걸음 N분" keep their colour.
+  - the "걸음 N분" line is ink, as the Restaurant's name, at its present weight (the user, after seeing the screens); a clock time there ("11:53 도착") stays gold. Gold is then for clock times and the time card alone.
 - **The opened Restaurant's number** (from the list or a menu question): solid coral, as the chosen place; its time stays gold.
 - **Unchanged:**
   - the path (navy) and rides (purple);
@@ -55,7 +55,7 @@ The user's choice (2026-11-26): "3안" of the candidate marks proposal, the righ
 - [ ] On a meal answer, the pick's round is solid coral with a white number, its label's border coral, and its time gold.
 - [ ] A meal candidate's round has a soft coral ground, a coral rim and number, and a white ring.
 - [ ] The ring of a meal pick just chosen is coral.
-- [ ] The list's badges and chosen row are coral, and so is an opened Restaurant's number; times keep their colour.
+- [ ] The list's badges and chosen row are coral, and so is an opened Restaurant's number; a row's "걸음 N분" is ink and a clock time stays gold.
 - [ ] Every other answer's pick stays gold.
 
 ## Comments
@@ -64,6 +64,7 @@ The user's choice (2026-11-26): "3안" of the candidate marks proposal, the righ
 
 - The orchestrator, on the screens: map and list match the board; the faded candidate and the coral number at 4.29:1 stay as they are.
 - The opened Restaurant's number was gold in the first screens; it is the chosen place, so it is coral too.
+- The user, after seeing the coral screens: go ahead with coral, and the list's "걸음 N분" turns from gold to ink. Only the meal list's rows change; the opened Restaurant's header keeps its own line style.
 
 ### Agent usage (2026-11-26)
 
