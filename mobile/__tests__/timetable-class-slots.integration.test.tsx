@@ -66,11 +66,13 @@ async function pickPlace(user: User, button: string): Promise<void> {
   await user.press(screen.getByRole('button', { name: button }));
   await pass(500);
   await user.type(screen.getByLabelText('장소 검색'), '302');
-  await pass(800);
+  // The User stops typing for 300 ms, and the search is answered.
+  await pass(300);
+  await pass(500);
   await user.press(screen.getByRole('button', { name: '제2공학관 302동' }));
 }
 
-// 선형대수: 월 13:00–14:30 at 302동, and 수 15:00–16:15 at the same Place.
+// 선형대수: 월 13:00–14:30 at 302동, and 수 15:30–16:45 at the same Place.
 async function addTwoSlotClass(user: User): Promise<void> {
   await user.press(screen.getByRole('button', { name: '수업 추가' }));
   await pass(500);
@@ -81,9 +83,9 @@ async function addTwoSlotClass(user: User): Promise<void> {
   await user.press(screen.getByRole('button', { name: '다른 시간대 추가' }));
 
   // The hours first: until a day is chosen the slot is named 두 번째 수업, unlike any day's button.
-  await hours(user, slot('두 번째 수업'), ['15', '00'], ['16', '15']);
+  await hours(user, slot('두 번째 수업'), ['15', '30'], ['16', '45']);
   await user.press(slot('두 번째 수업').getByRole('togglebutton', { name: '수' }));
-  await user.press(slot('수 15:00–16:15').getByRole('checkbox', { name: '월요일 수업과 같은 장소·강의실' }));
+  await user.press(slot('수 15:30–16:45').getByRole('checkbox', { name: '월요일 수업과 같은 장소·강의실' }));
 }
 
 describe('a class with a slot per set of hours', () => {
@@ -110,14 +112,14 @@ describe('a class with a slot per set of hours', () => {
     const user = await openTimetable();
 
     await addTwoSlotClass(user);
-    expect(slot('수 15:00–16:15').getByText('제2공학관 302동')).toBeVisible();
-    expect(slot('수 15:00–16:15').queryByRole('button', { name: '수 15:00–16:15 장소 선택' })).toBeNull();
+    expect(slot('수 15:30–16:45').getByText('제2공학관 302동')).toBeVisible();
+    expect(slot('수 15:30–16:45').queryByRole('button', { name: '수 15:30–16:45 장소 선택' })).toBeNull();
     await user.press(screen.getByRole('button', { name: '저장' }));
     await pass(1000);
 
     expect(screen.getByTestId('toast-layer')).toHaveTextContent('수업을 추가했어요');
     const added = within(screen.getByRole('button', { name: '선형대수 수정' }));
-    expect(added.getByText('월 13:00–14:30, 수 15:00–16:15')).toBeVisible();
+    expect(added.getByText('월 13:00–14:30, 수 15:30–16:45')).toBeVisible();
     expect(added.getByText('제2공학관 302동')).toBeVisible();
   });
 });
@@ -135,14 +137,14 @@ describe('changing the slots', () => {
       '제2공학관 302동',
     );
     expect(
-      slot('수 15:00–16:15').getByRole('checkbox', { name: '월요일 수업과 같은 장소·강의실' }).props,
+      slot('수 15:30–16:45').getByRole('checkbox', { name: '월요일 수업과 같은 장소·강의실' }).props,
     ).toMatchObject({ accessibilityState: { checked: true } });
     await user.press(screen.getByRole('button', { name: '저장' }));
     await pass(1000);
 
     expect(screen.getByTestId('toast-layer')).toHaveTextContent('수업을 수정했어요');
     expect(
-      within(screen.getByRole('button', { name: '선형대수 수정' })).getByText('월 13:00–14:30, 수 15:00–16:15'),
+      within(screen.getByRole('button', { name: '선형대수 수정' })).getByText('월 13:00–14:30, 수 15:30–16:45'),
     ).toBeVisible();
   });
 });
@@ -160,7 +162,7 @@ describe('removing a slot', () => {
     await pass(1000);
 
     const added = within(screen.getByRole('button', { name: '선형대수 수정' }));
-    expect(added.getByText('수 15:00–16:15')).toBeVisible();
+    expect(added.getByText('수 15:30–16:45')).toBeVisible();
     expect(added.getByText('제2공학관 302동 118호')).toBeVisible();
   });
 

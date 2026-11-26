@@ -93,8 +93,29 @@ function slotReady(slot: SlotDraft): boolean {
   return slot.days.length > 0 && slot.start !== '' && slot.end !== '' && !endNotAfterStart(slot);
 }
 
+// Whether slot `index` shares a day with another slot and their hours cross there: the main server refuses a class
+// whose own times cross. Only a class read from a screenshot opens so, with two times on one day.
+export function slotCrossesAnother(draft: ClassDraft, index: number): boolean {
+  const slot = draft.slots[index];
+  if (slot === undefined || !slotReady(slot)) {
+    return false;
+  }
+  return draft.slots.some(
+    (other, at) =>
+      at !== index &&
+      slotReady(other) &&
+      other.days.some((day) => slot.days.includes(day)) &&
+      slot.start < other.end &&
+      other.start < slot.end,
+  );
+}
+
 export function isReady(draft: ClassDraft): boolean {
-  return draft.name.trim() !== '' && draft.slots.length > 0 && draft.slots.every((slot) => slotReady(slot));
+  return (
+    draft.name.trim() !== '' &&
+    draft.slots.length > 0 &&
+    draft.slots.every((slot, index) => slotReady(slot) && !slotCrossesAnother(draft, index))
+  );
 }
 
 // A slot's name, as its card's header and its controls' labels read it: "월·수 10:30–12:00", the days alone before

@@ -15,6 +15,7 @@ import {
   MOST_SLOTS,
   placeText,
   type SlotDraft,
+  slotCrossesAnother,
   slotName,
   takenDays,
 } from '@/features/timetable/class-form';
@@ -105,6 +106,11 @@ function SlotTimes({ draft, index, onChange }: Pick<SlotCardProps, 'draft' | 'in
       {endWrong ? (
         <Text accessibilityRole="alert" style={styles.error}>
           종료 시각이 시작 시각보다 늦어야 해요
+        </Text>
+      ) : null}
+      {slotCrossesAnother(draft, index) ? (
+        <Text accessibilityRole="alert" style={styles.error}>
+          같은 요일의 다른 시간대와 시간이 겹쳐요
         </Text>
       ) : null}
     </>

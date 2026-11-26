@@ -42,6 +42,7 @@ The canvas's form, `수업 추가` and `수업 수정`:
 - Removing the first slot gives the next one, when its box was checked, the removed slot's Place and room as its own (`withoutSlot`), since it becomes the first (PR #594's review).
 - With several slots, the room field's visible label stays "강의실 선택"; a screen reader hears it with the slot's name first. `TextField` takes an `accessibilityLabel` for that, the label by default.
 - 삭제 takes the muted ink (PR #594's review).
+- Two slots that share a day and whose hours cross there keep 저장 off, with "같은 요일의 다른 시간대와 시간이 겹쳐요" under the later one: the main server refuses such a class. Only a class read from a screenshot, with two times on one day, opens so (PR #594's review).
 - Screens on the emulator with the mock build: `references/11-1-before-one-slot.jpg` to `references/11-7-after-large-font.jpg`.
 
 ## Acceptance criteria
