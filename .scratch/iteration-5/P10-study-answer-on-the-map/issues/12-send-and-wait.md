@@ -25,7 +25,7 @@ The group answer gets a new face on today's room request logic (`screens/main/li
   - the sentence "박민수 님이 빠져서 세 명이에요. 한 명만 더 부르면 돼요.";
   - the dimmed ticket with "3명" red;
   - "+ 같이 한 명 더", which is today's `AskOneMore` (`room-ask-more.tsx`).
-- **Cancelling a sent request** is today's: the requester ends the booking party. Where the card offers it is the plan's open question.
+- **Cancelling a sent request:** "요청 취소 ›" at the end of the consent line, in the place and style the booked ticket gives "예약 취소 ›". It ends the booking party as today, and the card returns to its state before sending.
 
 ## Acceptance criteria
 
@@ -34,6 +34,7 @@ The group answer gets a new face on today's room request logic (`screens/main/li
 - [ ] With one consent the line names the two who are awaited. (Integration test, the polled request.)
 - [ ] A decline shows the three-person sentence, the dimmed ticket and "+ 같이 한 명 더". Asking one more uses today's companions call. (Integration test.)
 - [ ] The time card's "같이" does not open the picker once sent. (Integration test.)
+- [ ] "요청 취소 ›" ends the booking party, and the card is again the one to send, unlocked. (Integration test.)
 - [ ] Whole lint, format and types.
 
 ## Comments

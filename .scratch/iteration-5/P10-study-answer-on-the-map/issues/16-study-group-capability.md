@@ -2,7 +2,7 @@
 
 Parent: [P10 spec](../spec.md) § With Friends ("Two capabilities")
 Status: ready-for-agent
-Blocked by: 09 to 15; the server's ticket 07 (PR 643) live in Production
+Blocked by: 09 to 15; a Release that carries the server's ticket 07 (PR 643) live in Production. This is the last pull request of the group study room.
 
 Native files: none. Releases: an app OTA update, only after the Production server accepts `study-group`.
 

@@ -23,9 +23,10 @@ A study answer with `study.group` is drawn as a meal answer is, with the meal's 
   - the room ticket (ticket 10) and the use line;
   - the main action "동의 요청 보내기" (ticket 12 sends it).
   - The room number is the first room of the kind free for the whole time, read from the library (`roomTimesFor`, `freeRooms`) while the library is logged in.
+  - Logged out of the library, as the seat answer does it: the right cell shows "방" alone, the red line asks for the library login, and the main button is 로그인. The room number is chosen once logged in.
 - **Fewer than four** (`moreNeeded > 0`, no key). This covers "같이 공부할 자리 있어?" with no Friend named, which comes back with people 1 and moreNeeded 3. In this state:
   - the ticket is dimmed;
-  - the sentence says "그룹스터디룸은 네 명부터예요." and how many more;
+  - the sentence says "그룹스터디룸은 네 명부터예요." and how many more: "한 명만 더 부르면 돼요." for one, "두 명 더 부르면 돼요." and "세 명 더 부르면 돼요." for two and three;
   - the main action opens the friend picker: "+ 같이 한 명 더" when one is missing, "+ 같이" otherwise.
 - **Removing every Friend** from an answer that began as "같이" keeps the group answer at moreNeeded 3; the server answers it so.
 - **No plan** (`noPlan`): the reason's lines, as a meal's.
@@ -36,7 +37,7 @@ A study answer with `study.group` is drawn as a meal answer is, with the meal's 
 - [ ] `STUDY_GROUP_MORE_NEEDED`: the dimmed ticket, the sentence with one more, and "+ 같이 한 명 더", which opens the picker. (Integration test.)
 - [ ] The asker alone (people 1, moreNeeded 3): "+ 같이" opens the picker. Picking three Friends asks the server with the four people and `together: true`, and the answer to send is shown. (Integration test.)
 - [ ] Removing a Friend asks the server again without them. (Integration test.)
-- [ ] Logged out of the library: the ticket and the sending work, and the room number is left to the booking (see the plan's open question). (Integration test.)
+- [ ] Logged out of the library: the right cell shows "방" alone, the red line asks for the login, and the main button 로그인 opens it; logged in, the room number and "동의 요청 보내기" follow. (Integration test.)
 - [ ] Pictures from the emulator at font scale 1.0 and 1.3 before merge.
 - [ ] Whole lint, format and types.
 
