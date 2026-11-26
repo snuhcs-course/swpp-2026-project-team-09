@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act, type userEvent } from '@testing-library/react-native';
@@ -91,6 +92,11 @@ export const MY_HIKE: Quest = {
   createdAt: '2026-10-06T03:50:00.000Z',
   holders: [ME_HOLDER],
 };
+
+// A card of 찾기, by its spoken name, which starts with its title: "{title}, {time}, {place}, …, {fill}".
+export function cardName(title: string): RegExp {
+  return new RegExp(`^${title.replaceAll(/[$()*+.?[\\\]^{|}]/gu, String.raw`\$&`)}, `, 'u');
+}
 
 export function requestFor(quest: RecruitingQuest, id = 'qr1'): MyJoinRequest {
   const { nextSubQuest: _next, ...summary } = quest;

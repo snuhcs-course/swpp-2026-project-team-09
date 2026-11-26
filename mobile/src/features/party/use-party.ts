@@ -9,6 +9,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQueries, useQuery } from '@tanstack/react-query';
@@ -37,7 +38,6 @@ import { myUserId } from '@/auth/sign-in';
 import { now } from '@/clock';
 import { declinedPartiesQuery } from '@/features/parties/declined';
 import { heldAlone } from '@/features/quests/adapter';
-import { sameKoreaDay } from '@/korea-time';
 import { BOARDS } from './boards';
 import { findPosts, type Reasons, reasonsFor } from './finding';
 import { type MineCardView, toMineCards } from './mine';
@@ -68,15 +68,9 @@ function combined<View>(
   };
 }
 
-export interface FindView {
-  posts: PostView[];
-  // How many of the recruiting posts listed now the User hid with `관심 없음`.
-  hidden: number;
-}
-
-// 찾기's 모집 중인 파티: the recruiting Quests with a place left that match the search and that the User did not hide, those sharing more
-// tags with the User first, and otherwise the newest first as the list holds them.
-export function useFindPosts(search: string): ScreenData<FindView> {
+// 찾기's posts: the recruiting Quests with a place left that match the search and that the User did not hide, those
+// sharing more tags with the User first, and otherwise the newest first as the list holds them.
+export function useFindPosts(search: string): ScreenData<PostView[]> {
   const [entries, requests, friends, myTags, hidden, removals] = useQueries({
     queries: [
       recruitingQuery('all'),
@@ -93,17 +87,13 @@ export function useFindPosts(search: string): ScreenData<FindView> {
       const posts = (entries.data ?? [])
         .map((entry) => entryPost(entry, requests.data ?? [], friends.data ?? [], removals.data ?? []))
         .filter((post) => hasRoom(post));
-      const hiddenIds = hidden.data ?? [];
-      return {
-        posts: findPosts(posts, { search, myTags: myTags.data ?? [], hidden: hiddenIds }),
-        hidden: posts.filter(({ questId }) => hiddenIds.includes(questId)).length,
-      };
+      return findPosts(posts, { search, myTags: myTags.data ?? [], hidden: hidden.data ?? [] });
     },
     [friends, myTags, hidden, removals],
   );
 }
 
-// Official recruiting, for 찾기's banner and 전체 파티's `공식`. None in the build that asks the main server.
+// Official recruiting, for 찾기's banner. None in the build that asks the main server.
 export function useOfficialRecruiting(): ScreenData<OfficialRecruiting[]> {
   const official = useQuery(officialRecruitingQuery);
   return combined([official], () => official.data ?? []);
@@ -119,11 +109,10 @@ export interface BoardRowView {
   board: Board;
   name: string;
   count: number;
-  // A post was made today.
-  fresh: boolean;
 }
 
-// 전체 파티's boards, with their posts counted from the list of all recruiting Quests and the User's own.
+// The boards with their posts counted from the list of all recruiting Quests and the User's own, for the form's sheet
+// of boards.
 export function useBoardRows(): ScreenData<BoardRowView[]> {
   const [entries, quests] = useQueries({ queries: [recruitingQuery('all'), questsQuery] });
   return combined([entries, quests], () =>
@@ -133,21 +122,8 @@ export function useBoardRows(): ScreenData<BoardRowView[]> {
         board: key,
         name: `${name} 게시판`,
         count: posts.length,
-        fresh: posts.some(({ createdAt }) => sameKoreaDay(new Date(createdAt), now())),
       };
     }),
-  );
-}
-
-export function useBoardPosts(board: Board): ScreenData<PostView[]> {
-  const [entries, quests, requests, removals] = useQueries({
-    queries: [recruitingQuery(board), questsQuery, myJoinRequestsQuery, questRemovalsQuery],
-  });
-  return combined(
-    [entries, quests, requests],
-    () =>
-      boardPosts(board, entries.data ?? [], quests.data ?? [], requests.data ?? [], myUserId(), removals.data ?? []),
-    [removals],
   );
 }
 

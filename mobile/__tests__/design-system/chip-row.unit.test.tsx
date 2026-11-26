@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { render, screen, userEvent } from '@testing-library/react-native';
@@ -33,6 +34,17 @@ describe('ChipRow', () => {
     expect(screen.getByRole('button', { name: '공강 4' })).toHaveStyle({ backgroundColor: color.blue100 });
     expect(screen.getByRole('button', { name: '전체 12' })).not.toHaveStyle({ borderWidth: 1 });
     expect(screen.queryByTestId('chip-check', { includeHiddenElements: true })).toBeNull();
+  });
+
+  it('draws a chip without a count as its label alone', async () => {
+    const boards = [
+      { key: 'all', label: '전체' },
+      { key: 'meal', label: '식사' },
+    ] as const;
+    await render(<ChipRow chips={boards} onSelect={jest.fn<void, [string]>()} selected="meal" />);
+
+    expect(screen.getByRole('button', { name: '식사' })).toBeSelected();
+    expect(screen.getByRole('button', { name: '전체' })).toHaveTextContent('전체', { exact: true });
   });
 
   it('passes on the chip that is pressed', async () => {

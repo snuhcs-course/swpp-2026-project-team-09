@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -14,7 +16,7 @@ import { answerEvents, openEvents } from './support/events';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answer, toast } from './support/room';
-import { answerParty, CODING, invitationTo, openAt, requestFor } from './support/party';
+import { answerParty, cardName, CODING, invitationTo, openAt, requestFor } from './support/party';
 import { askMainServer, PHONE_NOW } from './support/server';
 
 // What an empty 파티 tab, 행사 tab and 보낸 신청 say they are for, with their one first action (HE H7), and the toast
@@ -90,7 +92,8 @@ describe('the toast after asking to join', () => {
     server.on('POST /quest-join-requests', { status: 201, body: invitationTo(CODING, 'qr1') });
     const user = await openAt('/party');
 
-    await user.press(within(screen.getByLabelText(CODING.title)).getByRole('button', { name: '참여 신청' }));
+    await user.press(screen.getByLabelText(cardName(CODING.title)));
+    await user.press(within(screen.getByLabelText('파티 모집글')).getByRole('button', { name: '참여 신청' }));
     setAnswers({ requests: [requestFor(CODING)] });
     await answer(user, '참여 신청');
     expect(toast()).toHaveTextContent(/참여를 신청했어요/u);
