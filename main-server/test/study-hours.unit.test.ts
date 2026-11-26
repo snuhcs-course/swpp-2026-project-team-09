@@ -9,6 +9,7 @@ import {
   type Calendar,
   calendarSchema,
   openAt,
+  type Opening,
   type Schedule,
   scheduleSchema,
 } from '../src/study-spaces/study-hours.js';
@@ -61,6 +62,8 @@ const UNPLACED: Calendar = {
 
 const at = (date: string, clock: string): Date => new Date(`${date}T${clock}:00+09:00`);
 
+const closed = (opensAt: string | null, closedAt: string | null): Opening => ({ state: 'closed', opensAt, closedAt });
+
 describe('openAt, by the kind of day', () => {
   const schedule = scheduleOf();
 
@@ -70,18 +73,18 @@ describe('openAt, by the kind of day', () => {
       closesAt: '18:00',
       closesIn: 480,
     });
-    expect(openAt(schedule, CALENDAR, at('2026-11-27', '18:00'))).toEqual({ state: 'closed', opensAt: null });
-    expect(openAt(schedule, CALENDAR, at('2026-11-27', '20:00'))).toEqual({ state: 'closed', opensAt: null });
-    expect(openAt(schedule, CALENDAR, at('2026-11-27', '08:00'))).toEqual({ state: 'closed', opensAt: '09:00' });
+    expect(openAt(schedule, CALENDAR, at('2026-11-27', '18:00'))).toEqual(closed(null, '18:00'));
+    expect(openAt(schedule, CALENDAR, at('2026-11-27', '20:00'))).toEqual(closed(null, '18:00'));
+    expect(openAt(schedule, CALENDAR, at('2026-11-27', '08:00'))).toEqual(closed('09:00', null));
   });
 
   it('reads a Saturday and a Sunday by their own columns', () => {
     expect(openAt(schedule, CALENDAR, at('2026-11-28', '12:00'))).toMatchObject({ state: 'open', closesAt: '17:00' });
-    expect(openAt(schedule, CALENDAR, at('2026-11-29', '12:00'))).toEqual({ state: 'closed', opensAt: null });
+    expect(openAt(schedule, CALENDAR, at('2026-11-29', '12:00'))).toEqual(closed(null, null));
   });
 
   it("reads a public holiday by the column the space's source gives it, and 설·추석 by their own", () => {
-    expect(openAt(schedule, CALENDAR, at('2026-10-09', '12:00'))).toEqual({ state: 'closed', opensAt: null });
+    expect(openAt(schedule, CALENDAR, at('2026-10-09', '12:00'))).toEqual(closed(null, null));
     expect(openAt(scheduleOf({ holiday: 'saturday' }), CALENDAR, at('2026-10-09', '12:00'))).toMatchObject({
       state: 'open',
     });
@@ -93,7 +96,7 @@ describe('openAt, by the kind of day', () => {
 
   it('reads a vacation day by the vacation hours', () => {
     expect(openAt(schedule, CALENDAR, at('2026-12-23', '11:00'))).toMatchObject({ state: 'open', closesAt: '16:00' });
-    expect(openAt(schedule, CALENDAR, at('2026-12-23', '17:00'))).toEqual({ state: 'closed', opensAt: null });
+    expect(openAt(schedule, CALENDAR, at('2026-12-23', '17:00'))).toEqual(closed(null, '16:00'));
   });
 });
 
@@ -111,10 +114,15 @@ describe('openAt with no hours, or hours of a stretch', () => {
 
     expect(openAt(exams, CALENDAR, at('2026-11-29', '03:00'))).toEqual({
       state: 'open',
-      closesAt: '24:00',
-      closesIn: 1260,
+      closesAt: null,
+      closesIn: null,
     });
-    expect(openAt(exams, CALENDAR, at('2026-12-15', '03:00'))).toEqual({ state: 'closed', opensAt: '09:00' });
+    expect(openAt(exams, CALENDAR, at('2026-12-14', '22:00'))).toEqual({
+      state: 'open',
+      closesAt: '24:00',
+      closesIn: 120,
+    });
+    expect(openAt(exams, CALENDAR, at('2026-12-15', '03:00'))).toEqual(closed('09:00', '00:00'));
   });
 });
 
@@ -135,7 +143,7 @@ describe('openAt past midnight', () => {
   });
 
   it('is closed from the close to the next open', () => {
-    expect(openAt(law, CALENDAR, at('2026-11-28', '01:00'))).toEqual({ state: 'closed', opensAt: '06:00' });
+    expect(openAt(law, CALENDAR, at('2026-11-28', '01:00'))).toEqual(closed('06:00', '01:00'));
   });
 
   it('reads the time in Korea, whatever the server runs in', () => {
@@ -159,7 +167,11 @@ describe('openAt on a day the calendar does not place', () => {
       lunarHolidays: range('00:00', '24:00'),
     });
 
-    expect(openAt(central, UNPLACED, at('2026-11-27', '10:00'))).toMatchObject({ state: 'open', closesAt: '24:00' });
+    expect(openAt(central, UNPLACED, at('2026-11-27', '10:00'))).toEqual({
+      state: 'open',
+      closesAt: null,
+      closesIn: null,
+    });
   });
 
   it('is unknown in term or vacation when their hours differ, and open when they agree', () => {
@@ -172,6 +184,19 @@ describe('openAt on a day the calendar does not place', () => {
 
     expect(openAt(sinyang, placedHolidays, at('2026-11-27', '03:00'))).toEqual({ state: 'unknown' });
     expect(openAt(sinyang, placedHolidays, at('2026-11-27', '10:00'))).toMatchObject({ state: 'open' });
+  });
+
+  it("keeps 24:00 as the close when the next day's hours are not known", () => {
+    const sinyang = scheduleOf({
+      week: { weekday: range('00:00', '24:00'), saturday: null, sunday: null },
+      vacation: null,
+    });
+
+    expect(openAt(sinyang, CALENDAR, at('2026-11-27', '23:30'))).toEqual({
+      state: 'open',
+      closesAt: '24:00',
+      closesIn: 30,
+    });
   });
 });
 

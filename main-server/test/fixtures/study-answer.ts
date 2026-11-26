@@ -6,12 +6,12 @@
 
 import { type AnswerReply, type Plan, type PlanStudy, type StudySpot } from '../../src/assistant/dto/answer.dto.js';
 
-// A whole study answer (P10 ticket 02), as P10 ticket 03 will make it: "공부할 자리 있어?" on Wednesday 2026-11-04 at
-// 19:10, the User at 301동 with nothing after it that day, so each stay runs to the space's closing, or three hours when
-// its hours are not known. The app session builds its mock from it. The known-open buildings first, the longest stay
-// first: 법학도서관 (to 01:00), 공대 신양학술정보관 (24 hours in term), 관정관 (bookable, to 23:00); then 인문대
-// 신양학술정보관, whose hours are not known. 경영학도서관's 열람실 is dropped as the 경영대학's; 사회과학도서관 has been
-// closed since 18:00.
+// A whole study answer (P10 ticket 02), as P10 ticket 03 makes it: "공부할 자리 있어?" on Wednesday 2026-11-04 at
+// 19:10, the User at 301동 with nothing after it that day. Each stay runs to the space's closing, or three hours for a
+// space open around the clock or whose hours are not known. Every stay is three hours or more, so the buildings known
+// open come first by the shorter walk: 공대 신양학술정보관 (24 hours in term), 관정관 (bookable, to 23:00) and
+// 법학도서관 (to 01:00). Then comes 인문대 신양학술정보관, whose hours are not known. 경영학도서관's 열람실 is dropped
+// as the 경영대학's; 사회과학도서관 has been closed since 18:00. The app session builds its mock from it.
 
 const ME = '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d';
 const DAY = '2026-11-04';
@@ -101,29 +101,17 @@ function planOf({ place, walk, endAt, study, lines }: Building, number: number):
 
 const BUILDINGS: Building[] = [
   {
-    place: LAW,
-    walk: 16,
-    endAt: '2026-11-05T01:00:00+09:00',
-    lines: [
-      [
-        { text: '열람실', strong: true },
-        { text: ' · 01:00까지', strong: false },
-      ],
-    ],
-    study: { spaces: [spot('law-reading', '열람실', 'reading', '06:00–01:00', '01:00')], book: null, liveSeats: null },
-  },
-  {
     place: SINYANG_ENG,
     walk: 2,
-    endAt: '2026-11-05T00:00:00+09:00',
+    endAt: at('22:12'),
     lines: [
       [
         { text: '3층 자유열람실', strong: true },
-        { text: ' · 학기 중 24시간', strong: false },
+        { text: ' · 24시간', strong: false },
       ],
     ],
     study: {
-      spaces: [spot('sinyang-eng-free', '3층 자유열람실', 'reading', '학기 중 24시간 · 방학 08:00–24:00', '24:00')],
+      spaces: [spot('sinyang-eng-free', '3층 자유열람실', 'reading', '학기 중 24시간 · 방학 08:00–24:00', null)],
       book: null,
       liveSeats: null,
     },
@@ -143,6 +131,18 @@ const BUILDINGS: Building[] = [
       book: { spaceId: '7F-7A-zone2' },
       liveSeats: 'kwanjeong',
     },
+  },
+  {
+    place: LAW,
+    walk: 16,
+    endAt: '2026-11-05T01:00:00+09:00',
+    lines: [
+      [
+        { text: '열람실', strong: true },
+        { text: ' · 01:00까지', strong: false },
+      ],
+    ],
+    study: { spaces: [spot('law-reading', '열람실', 'reading', '06:00–01:00', '01:00')], book: null, liveSeats: null },
   },
   {
     place: SINYANG_HUM,
