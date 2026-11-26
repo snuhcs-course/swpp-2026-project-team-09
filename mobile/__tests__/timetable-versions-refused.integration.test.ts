@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -12,7 +13,7 @@ import { apiClient } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import { mockClient } from '@/api/mock/client';
 import type { ClassSave } from '@/api/types';
-import { EMPTY_DRAFT } from '@/features/timetable/class-form';
+import { EMPTY_SLOT } from '@/features/timetable/class-form';
 import { useClassChanges } from '@/features/timetable/use-timetable';
 import { forgetLaunch, makeVersion, readVersions } from '@/features/timetable/versions';
 
@@ -79,7 +80,7 @@ describe('a class the main server refuses for good', () => {
       createElement(QueryClientProvider, { client: queryClient }, children);
     const { result } = await renderHook(() => useClassChanges(), { wrapper });
 
-    const draft = { ...EMPTY_DRAFT, name: '창의공학설계', days: [4], start: '09:00', end: '10:15' };
+    const draft = { name: '창의공학설계', slots: [{ ...EMPTY_SLOT, days: [4], start: '09:00', end: '10:15' }] };
     await answered(result.current.save(null, draft));
 
     expect(await classNames()).toEqual(['인공지능', '창의공학설계', '컴파일러']);

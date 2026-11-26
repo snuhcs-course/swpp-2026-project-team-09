@@ -171,7 +171,7 @@ describe('the numbered dots made ahead on the everyday map', () => {
 
     expect(screen.getByText(`${lookName(asked)} 있음`)).toBeVisible();
     expect(lookName(asked)).toBe(
-      lookName({ kind: 'answer', symbol: { type: 'dot', role: 'candidate', number: 3 }, label: null }),
+      lookName({ kind: 'answer', symbol: { type: 'dot', role: 'candidate', number: 3, meal: true }, label: null }),
     );
   });
 });
