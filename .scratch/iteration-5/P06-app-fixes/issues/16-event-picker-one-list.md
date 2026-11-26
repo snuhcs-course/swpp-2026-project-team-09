@@ -1,7 +1,7 @@
 # 16: 관련 행사 고르기: one list without 진로 / 이벤트 / 축제, rows like 행사's, and an event chosen only from its sheet
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.
@@ -77,13 +77,36 @@ Positions are as of `origin/5.0/Main` bbe4cad9, under `mobile/src/`.
 
 ## Acceptance criteria
 
-- [ ] The picker has no tabs and lists every event by date; the search still finds across them. (App integration test, which fails before the change.)
-- [ ] A row shows a long title on up to two lines and the time and the place on their own lines with icons. (App integration test, which fails before the change.)
-- [ ] A press on a row opens the event's sheet instead of picking it; "이 행사 추가" picks it and returns to the form. (App integration test, which fails before the change.)
-- [ ] For the event already chosen, the sheet shows a disabled "선택됨" and no 이 행사 추가. (App integration test, which fails before the change.)
-- [ ] Picking an event adds no tags, and the chosen-event box shows no kind line; `event-kinds.ts` is gone. (App integration test, which fails before the change.)
-- [ ] The 행사 tab's sheet keeps its party button, and the room's sheet has none. (App integration test.)
+- [x] The picker has no tabs and lists every event by date; the search still finds across them. (App integration test, which fails before the change.)
+- [x] A row shows a long title on up to two lines and the time and the place on their own lines with icons. (App integration test, which fails before the change.)
+- [x] A press on a row opens the event's sheet instead of picking it; "이 행사 추가" picks it and returns to the form. (App integration test, which fails before the change.)
+- [x] For the event already chosen, the sheet shows a disabled "선택됨" and no 이 행사 추가. (App integration test, which fails before the change.)
+- [x] Picking an event adds no tags, and the chosen-event box shows no kind line; `event-kinds.ts` is gone. (App integration test, which fails before the change.)
+- [x] The 행사 tab's sheet keeps its party button, and the room's sheet has none. (App integration test.)
 - [ ] Checked on the user's phone with the pull request's release build.
-- [ ] No native file changes; lint, format and types pass on the changed files.
+- [x] No native file changes; lint, format and types pass on the changed files.
+
+## Decided while building
+
+- The rows drop the announcer's line above the title, as the 행사 list's row and the wireframe draw them. The server build has no announcer anyway.
+- `EventDetailSheet` takes one `action` in place of `onParty`: `party`, which the 행사 tab passes, or `add` with `chosen`, which the picker passes. The room passes none.
+- The picker's rows reuse the 행사 row's time and place line (`EventFact`) and its two-line limits, now exported from `event-row.tsx`. The day drops its offset (`DAY_DROP`), since no source line sits above the title now.
+- The check sits level with the title's first line (12 + (23 − 24) / 2 from the top).
+- `FormEvent` keeps its `source`, which nothing shows now. Dropping it would change the form's state code, which this ticket leaves alone.
+- Tests:
+  - `events-party-form`: two new tests for the sheet (it opens over the picker without choosing; 선택됨 for the chosen event). Its picking tests go through 이 행사 추가 (`pickEvent` in `support/events.ts`), and the tag check is now "no tags added".
+  - `party-form-parts`: the tabs test becomes the one-list test, and the festival test checks no tags and no kind line.
+  - The row test moved here from `events-party-form`, which reached lint's 300-line limit.
+  - `party-form-edit`: picks through the sheet, and checks that no tags are kept.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+Estimates. Agent time is the session's wall clock from start to the pull request. About 15 minutes of it were Jest runs. No subagents. The orchestrator's time writing the ticket is not included. Tokens are counted up to the writing of this entry, so the commit and the pull request are left out.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Ticket 16 (tests first, the one list, the sheet's foot, the kinds removed, checks) | about 30 minutes | 8,080,267 | 7,923,210 | 156,959 | 98 | 43,075 |
+
+Without cache reads, the input is 157,057.

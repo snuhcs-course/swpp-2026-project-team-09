@@ -17,7 +17,6 @@ import {
   EmptyState,
   ErrorState,
   eventText,
-  eventTone,
   font,
   FullScreenPanel,
   Icon,
@@ -25,13 +24,13 @@ import {
   LoadingState,
   radius,
   SearchField,
-  SegmentedTabs,
   space,
 } from '@/design-system';
 import { EVENT_SEARCH_HINT, eventTime, type EventView, toEventViews } from '@/features/events/adapter';
 import { useEventSources } from '@/features/events/use-events';
-import { EVENT_KINDS, type EventKind, eventKindOf } from '@/features/party/event-kinds';
 import type { FormEvent } from '@/features/party/making';
+import { EventDetailSheet } from '../../events/event-detail-sheet';
+import { EventFact, PLACE_LINES, TITLE_LINES } from '../../events/event-row';
 import { FieldHead } from './field-head';
 
 // "오늘 18:00–20:00 · 301동 대강당"
@@ -40,47 +39,35 @@ function lineOf(event: FormEvent): string {
   return event.place === null ? time : `${time} · ${event.place}`;
 }
 
-// "진로 · 컴퓨터공학부 공지"
-function sourceLine(event: FormEvent): string {
-  const kind = EVENT_KINDS.find(({ key }) => key === eventKindOf(event))?.label ?? '';
-  return event.source === null ? kind : `${kind} · ${event.source}`;
-}
-
 function eventOf(events: readonly GlobalEvent[], id: string): GlobalEvent | undefined {
   return events.find((event) => event.id === id);
 }
 
-interface PickerProps {
-  // The event chosen before, whose tab opens first.
-  chosen: FormEvent | null;
-  onPick: (event: FormEvent) => void;
-  onBack: () => void;
+// The event whose sheet is open: as the sheet shows it, and as the form takes it.
+interface Opened {
+  view: EventView;
+  event: FormEvent;
 }
 
 interface EventsProps {
-  kind: EventKind;
   search: string;
   chosen: FormEvent | null;
-  onPick: (event: FormEvent) => void;
+  onOpen: (opened: Opened) => void;
 }
 
-// The tab's events, or with a search the events of every tab that match it.
-function Events({ kind, search, chosen, onPick }: EventsProps): ReactElement {
+// Every event, as the 행사 tab orders them by their start, or with a search those that match it.
+function Events({ search, chosen, onOpen }: EventsProps): ReactElement {
   const sources = useEventSources();
   if (sources.data === undefined) {
     return sources.isError ? <ErrorState onRetry={sources.refetch} /> : <LoadingState />;
   }
   const { events } = sources.data;
-  const searching = search.trim() !== '';
-  const views = toEventViews(sources.data, 'all', search).filter((view) => {
-    const event = eventOf(events, view.id);
-    return event !== undefined && (searching || eventKindOf(event) === kind);
-  });
+  const views = toEventViews(sources.data, 'all', search);
   if (events.length === 0) {
     return <EmptyState words="예정된 행사가 없어요" />;
   }
   if (views.length === 0) {
-    return <EmptyState words={searching ? '검색 결과가 없어요' : '이 분류의 행사가 없어요'} />;
+    return <EmptyState words="검색 결과가 없어요" />;
   }
   return (
     <View>
@@ -90,8 +77,8 @@ function Events({ kind, search, chosen, onPick }: EventsProps): ReactElement {
           <PickerRow
             chosen={chosen?.id === view.id}
             key={view.id}
-            onPick={() => {
-              onPick({ ...event, source: view.source });
+            onOpen={() => {
+              onOpen({ view, event: { ...event, source: view.source } });
             }}
             view={view}
           />
@@ -101,19 +88,18 @@ function Events({ kind, search, chosen, onPick }: EventsProps): ReactElement {
   );
 }
 
-// An event's row, shaped as the 행사 tab's: the date column, a rule, the source, the title on one line, and "time ·
-// place". The chosen one is light blue with a navy check.
-function PickerRow({ view, chosen, onPick }: { view: EventView; chosen: boolean; onPick: () => void }): ReactElement {
-  const line = view.place === null ? view.hours : `${view.hours} · ${view.place}`;
+// An event's row, as the 행사 tab's (P06 ticket 15): the date column, a rule, the title on up to two lines, and the time
+// and the place on lines of their own. The chosen one is light blue with a navy check.
+function PickerRow({ view, chosen, onOpen }: { view: EventView; chosen: boolean; onOpen: () => void }): ReactElement {
   return (
     <Pressable
       accessibilityLabel={`행사 · ${view.title}`}
       accessibilityRole="button"
       accessibilityState={{ selected: chosen }}
-      onPress={onPick}
+      onPress={onOpen}
       style={[styles.row, chosen && styles.rowChosen]}
     >
-      <View style={[styles.date, { marginTop: view.source === null ? DAY_DROP - SOURCE_STEP : DAY_DROP }]}>
+      <View style={styles.date}>
         <Text style={styles.day}>{view.date.day}</Text>
         <Text numberOfLines={1} style={styles.dayLine}>
           {view.date.line}
@@ -121,13 +107,11 @@ function PickerRow({ view, chosen, onPick }: { view: EventView; chosen: boolean;
       </View>
       <View style={styles.rule} />
       <View style={styles.rowWords}>
-        {view.source === null ? null : <Text style={styles.rowSource}>{view.source}</Text>}
-        <Text numberOfLines={1} style={styles.rowTitle}>
+        <Text lineBreakStrategyIOS="hangul-word" numberOfLines={TITLE_LINES} style={styles.rowTitle}>
           {view.title}
         </Text>
-        <Text numberOfLines={1} style={styles.rowLine}>
-          {line}
-        </Text>
+        <EventFact icon="clock" lines={1} words={view.hours} />
+        {view.place === null ? null : <EventFact icon="pin" lines={PLACE_LINES} words={view.place} />}
       </View>
       {chosen ? (
         <View style={styles.check}>
@@ -138,18 +122,39 @@ function PickerRow({ view, chosen, onPick }: { view: EventView; chosen: boolean;
   );
 }
 
-// 관련 행사 고르기, the event picker of 파티 만들기: the tabs 진로, 이벤트 and 축제, the search over all of them, and
-// rows shaped as the 행사 tab's.
+interface PickerProps {
+  // The event chosen before: its row is marked, and its sheet says "선택됨".
+  chosen: FormEvent | null;
+  onPick: (event: FormEvent) => void;
+  onBack: () => void;
+}
+
+// 관련 행사 고르기, the event picker of 파티 만들기: the search and every event in one list. A row opens the 행사 tab's
+// sheet over it, whose "이 행사 추가" picks the event.
 export function EventPicker({ chosen, onPick, onBack }: PickerProps): ReactElement {
-  const [kind, setKind] = useState<EventKind>(chosen === null ? 'career' : eventKindOf(chosen));
   const [search, setSearch] = useState('');
+  const [opened, setOpened] = useState<Opened | null>(null);
   return (
     <FullScreenPanel leave={{ kind: 'back', onPress: onBack }} title="관련 행사 고르기">
-      <SegmentedTabs onSelect={setKind} segments={EVENT_KINDS} selected={kind} />
       <View style={styles.picker}>
         <SearchField label="행사 검색" onChangeText={setSearch} placeholder={EVENT_SEARCH_HINT} value={search} />
-        <Events chosen={chosen} kind={kind} onPick={onPick} search={search} />
+        <Events chosen={chosen} onOpen={setOpened} search={search} />
       </View>
+      <EventDetailSheet
+        action={{
+          kind: 'add',
+          chosen: opened !== null && opened.event.id === chosen?.id,
+          onPress: () => {
+            if (opened !== null) {
+              onPick(opened.event);
+            }
+          },
+        }}
+        event={opened?.view ?? null}
+        onClose={() => {
+          setOpened(null);
+        }}
+      />
     </FullScreenPanel>
   );
 }
@@ -187,7 +192,6 @@ export function EventField({ event, locked, onChoose, onClear }: FieldProps): Re
             onPress={onChoose}
             style={styles.chosenWords}
           >
-            <Text style={styles.source}>{sourceLine(event)}</Text>
             <Text style={styles.title}>{event.title}</Text>
             <Text style={styles.line}>{lineOf(event)}</Text>
           </Pressable>
@@ -204,20 +208,18 @@ export function EventField({ event, locked, onChoose, onClear }: FieldProps): Re
   );
 }
 
-// The frame's measures for the picker's rows: their padding, the date column, the check's round.
-const ROW_PADDING = 22;
+// The picker's date column keeps its own width, wider than the 행사 tab's. The check sits level with the title's first
+// line.
 const DATE_WIDTH = 72;
-// The day sits level with the title: lowered under a source's line, raised by that line and its gap without one.
-const DAY_DROP = 18;
-const SOURCE_STEP = eventText.source.lineHeight + space[1];
 const CHECK = 24;
+const CHECK_DROP = (eventText.title.lineHeight - CHECK) / 2;
 
 const styles = StyleSheet.create({
   picker: { gap: space[2], padding: space[4] },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingVertical: ROW_PADDING,
+    paddingVertical: space[3],
     paddingHorizontal: space[3],
     borderBottomWidth: 1,
     borderBottomColor: color.border,
@@ -235,12 +237,10 @@ const styles = StyleSheet.create({
   },
   // Clear of the check.
   rowWords: { flex: 1, minWidth: 0, gap: space[1], paddingRight: space[8] },
-  rowSource: { ...eventText.source, color: color.inkMuted },
   rowTitle: { ...eventText.title, color: color.ink },
-  rowLine: { ...eventText.line, color: eventTone.words },
   check: {
     position: 'absolute',
-    top: ROW_PADDING + 2,
+    top: space[3] + CHECK_DROP,
     right: space[3],
     alignItems: 'center',
     justifyContent: 'center',
@@ -276,7 +276,6 @@ const styles = StyleSheet.create({
   locked: { borderWidth: 1, borderColor: color.border, backgroundColor: color.surfaceSubtle },
   lock: { alignItems: 'center', justifyContent: 'center', width: 48, height: 48 },
   chosenWords: { flex: 1, gap: 2 },
-  source: { fontFamily: font.medium, fontSize: 12, lineHeight: 16, color: color.inkMuted },
   title: { fontFamily: font.semiBold, fontSize: 16, lineHeight: 22, color: color.ink },
   line: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: color.inkMuted },
 });

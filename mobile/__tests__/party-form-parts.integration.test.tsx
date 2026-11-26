@@ -3,16 +3,18 @@
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { font } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
 import { pass, screen } from './support/app';
-import { BOOK_TALK, CAREER, MAJOR } from './support/events';
+import { BOOK_TALK, CAREER, MAJOR, pickEvent } from './support/events';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { MY_HIKE, openAt } from './support/party';
@@ -21,7 +23,7 @@ import { toast, toastIcon } from './support/room';
 import { askMainServer, PHONE_NOW } from './support/server';
 import { readQuestEntries } from '@/storage/quest-entries';
 
-// 파티 만들기's 사진, the event picker's tabs, 태그 and the board sheet, against the fake main server.
+// 파티 만들기's 사진, the event picker's list, 태그 and the board sheet, against the fake main server.
 
 jest.mock('expo-location');
 jest.mock('expo-image-picker', () => ({
@@ -51,6 +53,9 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 let server: FakeServer;
 
 const KEPT_URI = PHOTO_URI.replace('/photos/', '/documents/quest-photos/');
+const HIDDEN = { includeHiddenElements: true };
+const LONG_TITLE = '제147회 규장각 콜로키엄 | 147th Kyujanggak Colloquium';
+const LONG_PLACE = '서울대학교 규장각한국학연구원(103동) 1-44호 & Zoom 온라인 회의실(전날 이메일로 접속 안내 예정)';
 
 beforeEach(async () => {
   jest.useFakeTimers({ now: PHONE_NOW });
@@ -134,33 +139,70 @@ describe('사진 not taken', () => {
 });
 
 describe('the event picker', () => {
-  it('has the tabs 진로, 이벤트 and 축제, and a search over all of them', async () => {
+  // The main server lists them by their start, which the 행사 tab keeps.
+  it('lists every event in one list, as the 행사 tab orders them, without tabs, and the search finds across them', async () => {
+    server.on('GET /global-events', { status: 200, body: [CAREER, MAJOR, FESTIVAL, BOOK_TALK] });
     const user = await openAt('/party-form');
     await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
 
-    expect(screen.getByRole('tab', { name: '진로' })).toBeSelected();
-    expect(shownEvents()).toEqual([`행사 · ${CAREER.title}`, `행사 · ${MAJOR.title}`]);
-    await user.press(screen.getByRole('tab', { name: '이벤트' }));
-    expect(shownEvents()).toEqual([`행사 · ${BOOK_TALK.title}`]);
-    await user.press(screen.getByRole('tab', { name: '축제' }));
-    expect(shownEvents()).toEqual([`행사 · ${FESTIVAL.title}`]);
+    for (const name of ['진로', '이벤트', '축제']) {
+      expect(screen.queryByRole('tab', { name })).toBeNull();
+    }
+    expect(shownEvents()).toEqual([CAREER, MAJOR, FESTIVAL, BOOK_TALK].map(({ title }) => `행사 · ${title}`));
 
     await user.type(screen.getByLabelText('행사 검색'), '설명회');
     expect(shownEvents()).toEqual([`행사 · ${CAREER.title}`, `행사 · ${MAJOR.title}`]);
+    await user.clear(screen.getByLabelText('행사 검색'));
+    await user.type(screen.getByLabelText('행사 검색'), '공연');
+    expect(shownEvents()).toEqual([`행사 · ${FESTIVAL.title}`]);
   });
 
-  it('fills the title, the place, the time and the tags from a festival', async () => {
+  it('fills the title, the place and the time from a festival, adds no tags, and shows no kind over the title', async () => {
     const user = await openAt('/party-form');
     await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
-    await user.press(screen.getByRole('tab', { name: '축제' }));
-    await user.press(screen.getByRole('button', { name: `행사 · ${FESTIVAL.title}` }));
+    await pickEvent(user, FESTIVAL);
 
-    expect(screen.getByTestId('chosen-event')).toHaveTextContent('축제', { exact: false });
+    const chosen = within(screen.getByTestId('chosen-event'));
+    expect(chosen.getByText(FESTIVAL.title)).toBeVisible();
+    expect(chosen.queryByText('축제')).toBeNull();
     expect(screen.getByLabelText('제목')).toHaveDisplayValue('가을 축제 개막 공연 같이 가요');
     expect(screen.getByLabelText('어디서')).toHaveDisplayValue('버들골 풍산마당');
     expect(screen.getByRole('button', { name: /^언제 10월 9일/u })).toBeVisible();
-    expect(screen.getByRole('button', { name: '#축제' })).toBeSelected();
-    expect(screen.getByRole('button', { name: '#공연' })).toBeSelected();
+    expect(screen.queryByRole('button', { name: '#축제', selected: true })).toBeNull();
+    expect(screen.queryByRole('button', { name: '#공연', selected: true })).toBeNull();
+  });
+});
+
+describe('a row of the event picker', () => {
+  // As the 행사 tab's row (P06 ticket 15), its day included; the date column keeps the picker's width (ticket 16).
+  it("sets a row as the 행사 tab's: a long title on two lines, then the time and the place on lines of their own after their icons", async () => {
+    server.on('GET /global-events', {
+      status: 200,
+      body: [
+        { ...CAREER, title: LONG_TITLE, place: LONG_PLACE },
+        { ...MAJOR, place: null },
+      ],
+    });
+    const user = await openAt('/party-form');
+
+    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+
+    const career = screen.getByRole('button', { name: `행사 · ${LONG_TITLE}` });
+    const row = within(career);
+    expect(career).toHaveStyle({ paddingVertical: 12 });
+    expect(row.getByText('6')).toHaveStyle({ fontFamily: font.bold, fontSize: 22, lineHeight: 28 });
+    expect(row.getByText('10월 · 오늘')).toHaveStyle({ fontSize: 12, lineHeight: 16 });
+    expect(row.getByText(LONG_TITLE)).toHaveStyle({ fontFamily: font.bold, fontSize: 16, lineHeight: 23 });
+    expect(row.getByText(LONG_TITLE)).toHaveProp('numberOfLines', 2);
+    expect(row.getByTestId('event-icon-clock', HIDDEN)).toBeOnTheScreen();
+    expect(row.getByText('18:00–20:00')).toHaveStyle({ fontSize: 13, lineHeight: 18 });
+    expect(row.getByText('18:00–20:00')).toHaveProp('numberOfLines', 1);
+    expect(row.getByTestId('event-icon-pin', HIDDEN)).toBeOnTheScreen();
+    expect(row.getByText(LONG_PLACE)).toHaveProp('numberOfLines', 2);
+    expect(row.queryByText('컴퓨터공학부 공지')).toBeNull();
+    const major = within(screen.getByRole('button', { name: `행사 · ${MAJOR.title}` }));
+    expect(major.getByText('17:00')).toBeVisible();
+    expect(major.queryByTestId('event-icon-pin', HIDDEN)).toBeNull();
   });
 });
 

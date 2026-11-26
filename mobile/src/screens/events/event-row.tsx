@@ -14,8 +14,8 @@ import type { EventView } from '@/features/events/adapter';
 import { FavoriteToggle } from './favorite-toggle';
 
 // The title and the place take at most two lines each, cut with "…": the detail sheet shows them whole.
-const TITLE_LINES = 2;
-const PLACE_LINES = 2;
+export const TITLE_LINES = 2;
+export const PLACE_LINES = 2;
 
 // "모집 중인 파티 {n}" in navy on light blue when a recruiting Quest the User can join is there for the event, "함께 갈
 // 파티 찾기" otherwise, the User's own 파티 or not: the old card offered 파티 찾기/모집 on every event.
@@ -57,8 +57,8 @@ function MineMark(): ReactElement {
   );
 }
 
-// The time or the place on a line of its own, after the detail sheet's icon for it.
-function Fact({ icon, words, lines }: { icon: IconName; words: string; lines: number }): ReactElement {
+// The time or the place on a line of its own, after the detail sheet's icon for it. 관련 행사 고르기's rows take it too.
+export function EventFact({ icon, words, lines }: { icon: IconName; words: string; lines: number }): ReactElement {
   return (
     <View style={styles.fact}>
       <View style={styles.factIcon}>
@@ -112,8 +112,8 @@ export function EventRow({ event, focused, onLayout, onOpen, onParty }: EventRow
         >
           {event.title}
         </Text>
-        <Fact icon="clock" lines={1} words={event.hours} />
-        {event.place === null ? null : <Fact icon="pin" lines={PLACE_LINES} words={event.place} />}
+        <EventFact icon="clock" lines={1} words={event.hours} />
+        {event.place === null ? null : <EventFact icon="pin" lines={PLACE_LINES} words={event.place} />}
         <View style={styles.partyRow}>
           <PartyLine onPress={onParty} recruiting={event.recruiting} />
           {event.mine ? <MineMark /> : null}
