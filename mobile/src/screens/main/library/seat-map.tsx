@@ -5,9 +5,10 @@
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { ReactElement } from 'react';
+import { memo, type ReactElement } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { LibrarySpace } from '@/api/assistant-types';
 import { color, font, radius, space } from '@/design-system';
@@ -20,7 +21,8 @@ import { seatMapUrl } from '@/library/site';
 // pale; an accessible seat (STATUS 9) is grey and is not booked online. Small in the chat, large on a tap
 // (`seat-picker.tsx`); the large view draws each seat's number once the whole number fits its box, so that the User can
 // pick the seat they know, and the seat picked there in the key colour, with a tag naming it while its own number does
-// not fit.
+// not fit. The large view lays the map out once at its most zoom and scales it down (P01 ticket 11): which numbers show
+// is told by `digits`, the most digits that fit at the zoom seen, and the tag is drawn apart (`ChosenTag`).
 
 // The site's colours of a seat.
 export const SEAT_LOOK: Record<SeatState, { fill: string; label: string }> = {
@@ -42,10 +44,15 @@ interface SeatMapProps {
   testID: string;
   // What lies over the image and under the seats.
   under?: ReactElement;
-  // Each seat draws its number (VNAME).
-  numbered?: boolean;
+  // Each seat whose number (VNAME) has at most this many digits draws it; none when left out.
+  digits?: number;
   // The VNAME of the seat picked, drawn in the key colour.
   chosen?: string | null;
+}
+
+// Whether a seat draws its number: it has at most `digits` digits, and the whole number fits its box as laid out.
+export function numberShown(box: Pick<SeatBox, 'width' | 'height' | 'seat'>, digits: number): boolean {
+  return box.seat.VNAME.length <= digits && seatNumberSize(box, box.seat.VNAME) !== null;
 }
 
 // The seat's number, centred in its box in dark ink, or nothing while the whole number does not fit. It is no
@@ -71,7 +78,8 @@ function SeatNumber({ box, chosen }: { box: SeatBox; chosen: boolean }): ReactEl
   );
 }
 
-function Seat({
+// A seat, drawn again only when what it shows changes: a pick redraws two seats, not all of them (P01 ticket 11).
+const Seat = memo(function Seat({
   box,
   onSeat,
   numbered,
@@ -111,48 +119,79 @@ function Seat({
       {number}
     </Pressable>
   );
-}
+});
 
 const TAG_HEIGHT = 20;
 const TAG_GAP = 3;
 const TAG_FONT = 12;
 const TAG_SIDE = 6;
+const TAG_LINE = 16;
 
 // The tag over the picked seat while the seat's own number does not fit its box: its whole number in the key colour,
 // above the seat or, near the picture's top, below it, kept inside the picture's width. Once the number fits, the seat
 // shows it itself and the tag would only cover the seat above. It takes no touch, and the seat's own label names it to
-// a screen reader.
-function SeatTag({ box, mapWidth }: { box: SeatBox; mapWidth: number }): ReactElement {
+// a screen reader. `grow`: how much larger it is drawn than its size seen, in a map laid out larger than it is seen.
+function SeatTag({ box, mapWidth, grow }: { box: SeatBox; mapWidth: number; grow: number }): ReactElement {
   const label = box.seat.VNAME;
-  const width = label.length * 0.7 * TAG_FONT + 2 * TAG_SIDE;
-  const above = box.top - TAG_GAP - TAG_HEIGHT;
-  const top = above >= 0 ? above : box.top + box.height + TAG_GAP;
+  const width = (label.length * 0.7 * TAG_FONT + 2 * TAG_SIDE) * grow;
+  const height = TAG_HEIGHT * grow;
+  const above = box.top - TAG_GAP * grow - height;
+  const top = above >= 0 ? above : box.top + box.height + TAG_GAP * grow;
   const left = Math.min(Math.max(box.left + box.width / 2 - width / 2, 0), Math.max(mapWidth - width, 0));
   return (
     <View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       pointerEvents="none"
-      style={[styles.tag, { top, left, minWidth: width }]}
+      style={[
+        styles.tag,
+        { top, left, minWidth: width, height, paddingHorizontal: TAG_SIDE * grow, borderRadius: radius.sm * grow },
+      ]}
       testID="seat-tag"
     >
-      <Text allowFontScaling={false} numberOfLines={1} style={styles.tagLabel}>
+      <Text
+        allowFontScaling={false}
+        numberOfLines={1}
+        style={[styles.tagLabel, { fontSize: TAG_FONT * grow, lineHeight: TAG_LINE * grow }]}
+      >
         {label}
       </Text>
     </View>
   );
 }
 
-export function SeatMap(props: SeatMapProps): ReactElement | null {
-  const { space: shown, seats, width, onSeat, testID, under, numbered = false, chosen = null } = props;
+// The tag over the large view's picked seat while its number is not drawn (`SeatTag`), in a map laid out at `width`
+// and seen `grow` times smaller. Drawn beside the map, so that a new zoom redraws the tag alone.
+export function ChosenTag({
+  space: shown,
+  seats,
+  chosen,
+  width,
+  digits,
+  grow,
+}: Pick<SeatMapProps, 'space' | 'seats' | 'width'> & {
+  chosen: string | null;
+  digits: number;
+  grow: number;
+}): ReactElement | null {
+  const image = shown.mapImage;
+  const seat = chosen === null ? undefined : seats.find(({ VNAME }) => VNAME === chosen);
+  if (image === null || seat === undefined || width <= 0) {
+    return null;
+  }
+  const [box] = seatBoxes([seat], image.width, width);
+  return box === undefined || numberShown(box, digits) ? null : <SeatTag box={box} grow={grow} mapWidth={width} />;
+}
+
+// Drawn again only when its props change: never during a pinch or a pan of the large view (P01 ticket 11).
+export const SeatMap = memo(function SeatMap(props: SeatMapProps): ReactElement | null {
+  const { space: shown, seats, width, onSeat, testID, under, digits = 0, chosen = null } = props;
   const image = shown.mapImage;
   if (image === null || width <= 0) {
     return null;
   }
   const height = (width * image.height) / image.width;
   const boxes = seatBoxes(seats, image.width, width);
-  const tagged = numbered ? boxes.find((box) => box.seat.VNAME === chosen) : undefined;
-  const tag = tagged !== undefined && seatNumberSize(tagged, tagged.seat.VNAME) === null ? tagged : undefined;
   return (
     <View style={{ width, height }} testID={testID}>
       <Image
@@ -163,12 +202,17 @@ export function SeatMap(props: SeatMapProps): ReactElement | null {
       />
       {under}
       {boxes.map((box) => (
-        <Seat box={box} chosen={box.seat.VNAME === chosen} key={box.seat.SEATNO} numbered={numbered} onSeat={onSeat} />
+        <Seat
+          box={box}
+          chosen={box.seat.VNAME === chosen}
+          key={box.seat.SEATNO}
+          numbered={numberShown(box, digits)}
+          onSeat={onSeat}
+        />
       ))}
-      {tag === undefined ? null : <SeatTag box={tag} mapWidth={width} />}
     </View>
   );
-}
+});
 
 // The small map in the chat: a tap on the map, not on a free seat, opens the large view. The tap area lies under the
 // seats, beside them, so that each free seat stays a button of its own.
@@ -209,7 +253,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: color.snuBlue,
   },
-  tagLabel: { fontFamily: font.bold, fontSize: TAG_FONT, lineHeight: 16, color: color.onPrimary },
+  tagLabel: { fontFamily: font.bold, color: color.onPrimary },
   small: { position: 'relative', overflow: 'hidden', borderRadius: 10, backgroundColor: color.surface },
   badge: {
     position: 'absolute',

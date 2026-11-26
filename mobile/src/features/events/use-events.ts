@@ -4,6 +4,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type UseQueryResult, useQueries } from '@tanstack/react-query';
@@ -12,7 +13,7 @@ import { askAgain, type ScreenData } from '@/api/screen-data';
 import type { GlobalEvent, Quest } from '@/api/types';
 import type { RecruitingQuest } from '@/api/party-types';
 import { now } from '@/clock';
-import type { EventSources } from './adapter';
+import { type EventSources, type EventView, toEventViews } from './adapter';
 
 type Results = [
   UseQueryResult<GlobalEvent[]>,
@@ -68,4 +69,15 @@ export function useEventSources(): ScreenData<EventSources> {
     queries: [globalEventsQuery, globalEventAnnouncersQuery, recruitingQuestsQuery, questsQuery],
     combine,
   });
+}
+
+// One event as the 행사 tab shows it, for its sheet opened elsewhere, such as in a Quest's room. Null while the list
+// does not hold it: before it loads, after it failed, and for an event that ended or was withdrawn, which the main
+// server no longer lists.
+export function useEventView(eventId: string): EventView | null {
+  const { data } = useEventSources();
+  if (data === undefined) {
+    return null;
+  }
+  return toEventViews({ ...data, events: data.events.filter(({ id }) => id === eventId) }, 'all', '').at(0) ?? null;
 }

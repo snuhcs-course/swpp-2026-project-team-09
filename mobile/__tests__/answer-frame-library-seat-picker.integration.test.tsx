@@ -8,9 +8,8 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { act, fireEvent, within } from '@testing-library/react-native';
+import { act, within } from '@testing-library/react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
-import { ScrollView } from 'react-native';
 import { seatNumberSize } from '@/library/cards/seats';
 import { pictureSize } from '@/library/cards/seat-zoom';
 import type * as SecureStoreFake from './support/secure-store';
@@ -44,18 +43,8 @@ let library: FakeLibrary;
 
 // The numbers and the tag are drawn but are no accessible element of their own: the seat's label names it.
 const HIDDEN = { includeHiddenElements: true };
-// The picture's view, as the test lays it out, and the picture of 7A 열람실 2 구역 in image pixels.
-const VIEW = { width: 320, height: 298 };
+// The picture of 7A 열람실 2 구역 in image pixels.
 const IMAGE = { width: 2529, height: 1198 };
-
-// The last offset the picture's scroll views were sent to on one axis.
-function lastScroll(
-  spy: jest.SpyInstance<void, Parameters<ScrollView['scrollTo']>>,
-  axis: 'x' | 'y',
-): number | undefined {
-  const sent = spy.mock.calls.flatMap(([to]) => (typeof to === 'object' && to[axis] !== undefined ? [to[axis]] : []));
-  return sent.at(-1);
-}
 
 async function zoomToMost(picture: ReturnType<typeof within>): Promise<void> {
   await pressIn(picture, '확대');
@@ -82,10 +71,6 @@ const TICKET_SEAT = /^좌석: \d+번$/u;
 
 async function press(name: string | RegExp): Promise<void> {
   await pressIn(seatCard(), name);
-}
-
-function image(): ReturnType<typeof screen.getByTestId> {
-  return screen.getByTestId('seat-map-large-map-image');
 }
 
 describe("the seat on the seat book card's ticket", () => {
@@ -119,19 +104,19 @@ describe('the seat picture, zoomed and closed', () => {
   it('zooms the seat picture with 확대 and 축소, between 1 and 4 times', async () => {
     await askForCards({ server, library }, [SEAT_CARD]);
     await press(TICKET_SEAT);
+    // How far each step zooms and where the view lands is read from the picture's layer in its unit test
+    // (`library-seat-pinch`): here, the buttons' ends (P01 ticket 11).
     const picture = within(screen.getByTestId('seat-map-large'));
-    expect(image()).toHaveStyle({ height: 300 });
     expect(picture.getByRole('button', { name: '축소' })).toBeDisabled();
 
     await pressIn(picture, '확대');
-    expect(image()).toHaveStyle({ height: 450 });
+    expect(picture.getByRole('button', { name: '축소' })).toBeEnabled();
     await pressIn(picture, '확대');
     await pressIn(picture, '확대');
     await pressIn(picture, '확대');
-    expect(image()).toHaveStyle({ height: 1200 });
     expect(picture.getByRole('button', { name: '확대' })).toBeDisabled();
     await pressIn(picture, '축소');
-    expect(image()).toHaveStyle({ height: 900 });
+    expect(picture.getByRole('button', { name: '확대' })).toBeEnabled();
   });
 
   it('closes the seat picture on ✕ with the seat as it was', async () => {
@@ -142,33 +127,6 @@ describe('the seat picture, zoomed and closed', () => {
     await pressIn(picture, '좌석 현황 닫기');
 
     expect(seatCard().getByText('7193번')).toBeVisible();
-  });
-});
-
-describe('where the seat picture zooms', () => {
-  it('zooms around the middle of the view, or around the picked seat, within the picture', async () => {
-    await askForCards({ server, library }, [SEAT_CARD]);
-    await press(TICKET_SEAT);
-    const picture = within(screen.getByTestId('seat-map-large'));
-    const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
-    await fireEvent(screen.getByTestId('seat-picker-scroll-down'), 'layout', {
-      nativeEvent: { layout: { x: 0, y: 0, ...VIEW } },
-    });
-    await fireEvent(screen.getByTestId('seat-map-scroll'), 'scroll', {
-      nativeEvent: { contentOffset: { x: 100, y: 0 } },
-    });
-
-    // The view's middle, 260 × 149 of the picture at 1, is the middle at 1.5 too.
-    await pressIn(picture, '확대');
-    expect(lastScroll(scrollTo, 'x')).toBeCloseTo(260 * 1.5 - 160);
-    expect(lastScroll(scrollTo, 'y')).toBeCloseTo(149 * 1.5 - 149);
-
-    // Seat 7300's box is at 1468 × 237 of the 2529-pixel image, 33 × 28 pixels: at 2 its middle comes to the view's
-    // middle, and the top edge holds the view at 0.
-    await pressIn(picture, '7300번 빈 자리');
-    await pressIn(picture, '확대');
-    expect(lastScroll(scrollTo, 'x')).toBeCloseTo((1468 + 16.5) * (600 / 1198) - 160);
-    expect(lastScroll(scrollTo, 'y')).toBe(0);
   });
 });
 
@@ -187,13 +145,15 @@ describe('a pinch on the seat picture', () => {
     await askForCards({ server, library }, [SEAT_CARD]);
     await press(TICKET_SEAT);
 
+    // The zoom each pinch lands on is read from the picture's layer in its unit test (`library-seat-pinch`): here, that
+    // the pinch zooms in and back out to 1, which the buttons' ends show.
+    const picture = within(screen.getByTestId('seat-map-large'));
     await pinch([1.05, 1.1, 1.2, 1.3, 1.4, 1.5]);
-    expect(image()).toHaveStyle({ height: 450 });
-    // Back toward the start in one gesture, and a second gesture from where the first left it.
+    expect(picture.getByRole('button', { name: '축소' })).toBeEnabled();
     await pinch([1.4, 1.2]);
-    expect(image()).toHaveStyle({ height: 540 });
+    expect(picture.getByRole('button', { name: '축소' })).toBeEnabled();
     await pinch([0.9, 0.5, 0.2]);
-    expect(image()).toHaveStyle({ height: 300 });
+    expect(picture.getByRole('button', { name: '축소' })).toBeDisabled();
   });
 });
 

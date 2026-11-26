@@ -1,6 +1,6 @@
 # P06: The app's fixes outside the Assistant
 
-Status: ready-for-agent (11; 02, 03, 06, 07, 08, 09 and 10 are done; 01, 04 and 05 are held, see Solution)
+Status: ready-for-agent (13; 02, 03, 06, 07, 08, 09, 10 and 11 are done; 01, 04 and 05 are held, see Solution)
 
 ## Problem Statement
 
@@ -17,8 +17,9 @@ On 2026-11-22 the team collected, in a Slack thread, what bothers them in the ap
 9. **내 정보's cards.** Added by the user on 2026-11-25, on their phone: "관심사 아래 line, 탭 안내 다시 보기 밑에 line, 관정도서관 로그인 밑에 line 있잖아. 이거 해당 블록이 거기서 끝나는데 그 line들이 있을 이유가 없거든?" and "관정도서관 로그인 버튼, 지금 그 칸 기준으로 위에 붙어있잖아, 이거 중앙으로 맞추고 싶어." (`references/09-1-me-cards-mock-up.webp`, the screen as it is and as agreed)
 10. **Full 파티 and 파티 asked for, in 찾기.** Added by the user on 2026-11-26. From UAT 1, never fixed: "자리가 다 찬 파티도 보여줌. → 참여하기 버튼도 활성화가 되어 있고, 눌렀을 때 그제야 '자리가 다 찼어요'를 보여줌." And: "파티를 이미 신청했는데 해당 파티의 참여 신청 버튼이 아직 활성화 되어있음 (모집 중인 파티 탭에서) 이거 신청 취소 버튼으로 만들고 버튼 디자인은 '초대' - '신청 취소' 버튼과 동일하게." (`references/10-1-asked-card-now.jpg`, `references/10-2-asked-post-now.jpg`)
 11. **A class whose days have different hours.** Added by the user on 2026-11-26: such a class has to be made twice, as two classes of one name. The user changed 수업 추가 on the design canvas (board `Timetable`, its form) and asked for that change alone.
+13. **파티's event card.** Added by the user on 2026-11-26, from their notes on the 파티 and 행사 tabs: "행사가 태그된 파티 안에 들어갔을 때 행사를 누르면 행사 탭으로 아예 넘어가버림, 팝업으로 아래서 위로 뜨게 하는 식으로 하는게 낫지 않나?" (`references/13-1-room-event-sheet.webp`)
 
-Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc on 2026-11-26: none was fixed then.
+Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc on 2026-11-26, item 13 against 9be7f899 on 2026-11-27: none was fixed then.
 
 ## Solution
 
@@ -35,6 +36,7 @@ One ticket per item, numbered as the items:
 9. [09: 내 정보's cards end without a line, and 관정도서관 로그인's button stands in the row's middle](issues/09-me-cards-end-clean.md)
 10. [10: 찾기 leaves out full 파티, and a card whose request waits offers 신청 취소](issues/10-full-and-asked-posts.md)
 11. [11: The class form takes a time slot per set of hours](issues/11-class-time-slots.md)
+13. [13: 파티's event card opens the event's detail as a sheet over the room](issues/13-room-event-sheet.md)
 
 What is built now (agreed by the team after the review, 2026-11-22): what is broken goes first, and the improvements wait.
 
@@ -46,6 +48,7 @@ What is built now (agreed by the team after the review, 2026-11-22): what is bro
 - Added on 2026-11-25 and built at once: 09. It changes `design-system/list-row.tsx` (a way to leave the line out, the default unchanged) and three of 내 정보's cards; no open ticket touches them.
 - Added on 2026-11-26 and built at once: 10. It changes 찾기 (`screens/party/find-tab.tsx`, `post-card.tsx`), 보낸 신청's ask and the party posts' lists (`features/party/`); no open ticket touches them.
 - Added on 2026-11-26 and built at once: 11. It changes the class form (`features/timetable/class-form.ts`, `screens/timetable/`); no open ticket touches them.
+- Added on 2026-11-27 and built at once: 13. It changes the room's event card (`screens/room/room-event.tsx`) and `EventDetailSheet` (a way to leave out its party button); no open ticket touches them.
 
 When the held tickets are taken up, tickets touching the same files never run at the same time:
 
@@ -76,6 +79,7 @@ When the held tickets are taken up, tickets touching the same files never run at
 19. As a User looking for a 파티, I want 찾기 and the boards to leave out 파티 with no place left, so that I never press 참여하기 to hear "자리가 다 찼어요".
 20. As a User who asked to join a 파티, I want its card in 찾기 to offer 신청 취소 instead of 참여 신청.
 21. As a User whose class meets at different hours on different days, I want to enter it as one class with a time slot per set of hours.
+26. As a 파티 member pressing its event, I want the event's detail to slide up over the room, so that I never lose my place in the 파티.
 
 ## Implementation Decisions
 
@@ -92,6 +96,7 @@ Decided on 2026-11-22:
 - 09 (2026-11-25): the line goes from under the last row of 내 정보's activity card, 탭 안내 다시 보기 and 관정도서관 로그인 only; `ListRow` keeps its line by default, and the 비공개 구역 card on the 위치 공유 screen, which ends the same way, stays. The 관정도서관 로그인 button is centred in its row with `Button`'s existing `centred`.
 - 10 (2026-11-26): full 파티 leave 찾기 and the boards, filtered in the app, so that 파티 모집글 still opens one from a link or a chat card; a 찾기 card whose request waits shows `secondary` `신청 취소` at 참여 신청's size, asking as 보낸 신청 does.
 - 11 (2026-11-26): the canvas's 수업 추가 form, with a slot per set of hours (up to seven), each slot's own Place and room or the first's; the Place stays optional, and the timetable list is unchanged.
+- 13 (2026-11-27): the room's event card opens `EventDetailSheet` over the room instead of going to the 행사 tab. In the room the sheet has no party button, since the User is already in a 파티 of that event. An event the app's list no longer holds (ended or withdrawn) leaves the card unpressable. The 행사 tab's focus stays for push notices.
 
 For all tickets:
 
@@ -135,6 +140,7 @@ Every item received and where it went:
 | 09 내 정보 카드 끝의 줄, 관정도서관 로그인 버튼 위치 (added 2026-11-25) | Ticket 09 |
 | 10 가득 찬 파티, 신청한 파티의 참여 신청 버튼 (added 2026-11-26) | Ticket 10 |
 | 11 요일마다 시간이 다른 수업 (added 2026-11-26) | Ticket 11 |
+| 13 파티 상세에서 행사를 누르면 행사 탭으로 넘어감 (added 2026-11-26) | Ticket 13 |
 
 Notes for the tickets:
 
