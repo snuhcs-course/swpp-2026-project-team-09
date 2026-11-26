@@ -22,6 +22,7 @@ import {
   EMPTY_SLOT,
   isReady,
   type SlotDraft,
+  withoutSlot,
 } from '@/features/timetable/class-form';
 import { type Timetable, useClassChanges, useTimetable } from '@/features/timetable/use-timetable';
 import { NOT_MOVED } from '@/features/timetable/use-versions';
@@ -197,7 +198,7 @@ function FormFields({ draft, setDraft, crossings, onPickPlace }: FieldsProps): R
               onPickPlace(index);
             }}
             onRemove={() => {
-              setDraft((held) => ({ ...held, slots: held.slots.filter((__, other) => other !== index) }));
+              setDraft((held) => withoutSlot(held, index));
             }}
           />
         ))}

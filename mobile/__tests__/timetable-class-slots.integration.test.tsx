@@ -145,6 +145,24 @@ describe('changing the slots', () => {
       within(screen.getByRole('button', { name: '선형대수 수정' })).getByText('월 13:00–14:30, 수 15:00–16:15'),
     ).toBeVisible();
   });
+});
+
+describe('removing a slot', () => {
+  it('keeps the first slot’s Place and room on a slot that took them, once the first is removed', async () => {
+    const user = await openTimetable();
+    await addTwoSlotClass(user);
+    await user.type(screen.getByLabelText('월 13:00–14:30 강의실 선택'), '118호');
+
+    await user.press(screen.getByRole('button', { name: '월 13:00–14:30 삭제' }));
+    expect(screen.getByRole('button', { name: '장소 선택' })).toHaveTextContent('제2공학관 302동');
+    expect(screen.getByLabelText('강의실 선택')).toHaveDisplayValue('118호');
+    await user.press(screen.getByRole('button', { name: '저장' }));
+    await pass(1000);
+
+    const added = within(screen.getByRole('button', { name: '선형대수 수정' }));
+    expect(added.getByText('수 15:00–16:15')).toBeVisible();
+    expect(added.getByText('제2공학관 302동 118호')).toBeVisible();
+  });
 
   it('removes a slot with 삭제, and its days are free again', async () => {
     const user = await openTimetable();

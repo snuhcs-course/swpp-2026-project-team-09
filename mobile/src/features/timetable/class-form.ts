@@ -112,11 +112,23 @@ export function takenDays(draft: ClassDraft, index: number): number[] {
   return draft.slots.flatMap((slot, other) => (other === index ? [] : slot.days));
 }
 
+// The draft without slot `index`. When the first goes, a slot that took its Place and room keeps them as its own,
+// since it becomes the first and has no first to take them from.
+export function withoutSlot(draft: ClassDraft, index: number): ClassDraft {
+  const [first] = draft.slots;
+  const slots = draft.slots.filter((_, other) => other !== index);
+  const [next] = slots;
+  if (index !== 0 || first === undefined || next === undefined || !next.same) {
+    return { ...draft, slots };
+  }
+  return { ...draft, slots: [{ ...next, place: first.place, room: first.room, same: false }, ...slots.slice(1)] };
+}
+
 // The Place and the room a slot is saved with: the first slot's when it says `same`.
 export function whereOf(draft: ClassDraft, index: number): Pick<SlotDraft, 'place' | 'room'> {
   const slot = draft.slots[index];
   const first = draft.slots[0];
-  const from = index > 0 && slot?.same === true && first !== undefined ? first : slot;
+  const from = index > 0 && slot?.same && first !== undefined ? first : slot;
   return { place: from?.place ?? null, room: from?.room ?? '' };
 }
 

@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     borderBottomColor: color.surfaceSunken,
   },
   headName: { fontFamily: font.bold, fontSize: 14, lineHeight: 20, color: color.ink },
-  remove: { fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.inkFaint },
+  remove: { fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.inkMuted },
   error: { fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.danger },
   rule: { height: 1, marginVertical: space[1], backgroundColor: color.surfaceSunken },
   same: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 2 },
