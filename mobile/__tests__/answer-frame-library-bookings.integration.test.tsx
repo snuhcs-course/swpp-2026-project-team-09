@@ -3,9 +3,12 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import { libraryCard } from '@/api/mock/data/library';
+import { screen } from './support/app';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import type { FakeServer } from './support/fake-server';
@@ -17,12 +20,14 @@ import {
   expectNothingOfTheLibrarySent,
   expectNoWrite,
   inCard,
+  inFrame,
   pressIn,
   startLibraryChat,
 } from './support/library-chat';
 
-// The cancel and return cards and 내 예약 in the answer frame, against the fake main server and the fake library. M4:
-// no test sees a write before the confirm press.
+// The cancel and return cards and 내 예약 in the answer frame, against the fake main server and the fake library. Each
+// booking is its ticket, and the act is the main button beside the input (P01 ticket 15). M4: no test sees a write
+// before that press.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -51,21 +56,31 @@ afterEach(() => {
 });
 
 const CANCEL = card(libraryCard('cancel:-:2026-11-02:-', 'cancel', { target: { date: '2026-11-02' } }));
+const BOOKED_TICKET = '예약됨 · 오늘 17:00–18:00, 7층 7A 열람실, 좌석 7193번';
+
+function dock(): ReturnType<typeof within> {
+  return within(screen.getByTestId('ai-input-beside'));
+}
 
 describe('the cancel card', () => {
-  it('finds the one matching booking and cancels it only on 취소하기', async () => {
+  it('shows the one matching booking as its ticket, under no words of the Assistant, and cancels it only on 예약 취소', async () => {
     library.addBooking(bookingRow());
     await askForCards({ server, library }, [CANCEL], { words: '오늘 예약 취소해줘' });
     const shown = inCard(`library-cancel-${CANCEL.library.key}`);
 
     expect(library.requestsTo('getMyBookingList')[0]?.body).toEqual({ start: '20261101', end: '20261105' });
-    expect(shown.getByText('7층 7A 열람실 · 7193번 · 오늘 17:00–18:00')).toBeVisible();
+    expect(shown.getByLabelText(BOOKED_TICKET)).toBeVisible();
+    expect(inFrame().queryByText('카드에서 확인해 주세요.')).toBeNull();
+    expect(shown.queryByRole('button', { name: '그만두기' })).toBeNull();
     expectNoWrite(library);
 
-    await pressIn(shown, '취소하기');
+    await pressIn(dock(), '예약 취소');
 
     expect(library.writes()).toEqual([{ endpoint: 'setCancelBooking', body: { bseqno: '3000001' } }]);
-    expect(inCard(`library-cancel-${CANCEL.library.key}`).getByText('예약을 취소했어요')).toBeVisible();
+    const after = inCard(`library-cancel-${CANCEL.library.key}`);
+    expect(after.getByText('예약을 취소했어요.')).toBeVisible();
+    expect(after.getByLabelText('취소됨 · 오늘 17:00–18:00, 7층 7A 열람실, 좌석 7193번')).toBeVisible();
+    expect(screen.queryByTestId('ai-input-beside')).toBeNull();
     expectNothingOfTheLibrarySent(server, ['3000001']);
   });
 
@@ -75,45 +90,34 @@ describe('the cancel card', () => {
     await askForCards({ server, library }, [CANCEL], { words: '예약 취소' });
     const shown = inCard(`library-cancel-${CANCEL.library.key}`);
 
-    expect(shown.getByRole('button', { name: '취소하기' })).toBeDisabled();
+    expect(dock().getByRole('button', { name: '예약 취소' })).toBeDisabled();
     await pressIn(shown, /7300번/u, 'radio');
-    await pressIn(shown, '취소하기');
+    await pressIn(dock(), '예약 취소');
 
     expect(library.writes()).toEqual([{ endpoint: 'setCancelBooking', body: { bseqno: '3000002' } }]);
   });
 
-  it('says "취소할 예약이 없어요" when none matches', async () => {
+  it('says "취소할 예약이 없어요." when none matches', async () => {
     library.addBooking(bookingRow({ USESTART: '2026-11-03 17:00:00' }));
     await askForCards({ server, library }, [CANCEL], { words: '예약 취소' });
 
-    expect(inCard(`library-cancel-${CANCEL.library.key}`).getByText('취소할 예약이 없어요')).toBeVisible();
+    expect(inCard(`library-cancel-${CANCEL.library.key}`).getByText('취소할 예약이 없어요.')).toBeVisible();
+    expect(screen.queryByTestId('ai-input-beside')).toBeNull();
     expectNoWrite(library);
   });
 });
 
-describe('the cancel card when nothing is to be cancelled', () => {
-  it('sends nothing on 그만두기', async () => {
-    library.addBooking(bookingRow());
-    await askForCards({ server, library }, [CANCEL], { words: '예약 취소' });
-    const shown = inCard(`library-cancel-${CANCEL.library.key}`);
-
-    await pressIn(shown, '그만두기');
-
-    const after = inCard(`library-cancel-${CANCEL.library.key}`);
-    expect(after.getByText('그만뒀어요')).toBeVisible();
-    expect(after.queryByRole('button', { name: '취소하기' })).toBeNull();
-    expectNoWrite(library);
-  });
-
+describe('the cancel card the library refuses', () => {
   it("shows the library's words when it refuses the cancel", async () => {
     library.addBooking(bookingRow());
     library.refuseCancels('취소할 수 없는 예약입니다.');
     await askForCards({ server, library }, [CANCEL], { words: '예약 취소' });
-    const shown = inCard(`library-cancel-${CANCEL.library.key}`);
 
-    await pressIn(shown, '취소하기');
+    await pressIn(dock(), '예약 취소');
 
-    expect(shown.getByText('취소하지 못했어요: 취소할 수 없는 예약입니다.')).toBeVisible();
+    expect(
+      inCard(`library-cancel-${CANCEL.library.key}`).getByText('취소하지 못했어요: 취소할 수 없는 예약입니다.'),
+    ).toBeVisible();
   });
 });
 
@@ -124,9 +128,10 @@ describe('the return card', () => {
     library.addBooking(bookingRow({ STATUS: 3, STATUS_NAME: '입실', USESTART: '2026-11-02 15:00:00' }));
     await askForCards({ server, library }, [RETURN], { words: '자리 반납해줘' });
     const shown = inCard(`library-return-${RETURN.library.key}`);
+    expect(shown.getByLabelText('사용 중 · 18:00까지, 7층 7A 열람실, 좌석 7193번')).toBeVisible();
     expectNoWrite(library);
 
-    await pressIn(shown, '반납하기');
+    await pressIn(dock(), '반납하기');
 
     expect(library.writes()).toEqual([{ endpoint: 'setCancelBooking', body: { bseqno: '3000001' } }]);
     expect(
@@ -134,10 +139,26 @@ describe('the return card', () => {
     ).toBeVisible();
   });
 
-  it('says "지금 사용 중인 좌석이 없어요" with none in use', async () => {
+  it('offers to cancel a seat booked and not yet used, in place of "지금 사용 중인 좌석이 없어요" (fault 1)', async () => {
+    library.addBooking(bookingRow());
+    await askForCards({ server, library }, [RETURN], { words: '반납해줘' });
+    const shown = inCard(`library-return-${RETURN.library.key}`);
+
+    expect(shown.getByText('아직 쓰기 전이라 반납 대신 예약을 취소할 수 있어요.')).toBeVisible();
+    expect(shown.getByLabelText(BOOKED_TICKET)).toBeVisible();
+    expect(dock().queryByRole('button', { name: '반납하기' })).toBeNull();
+    await pressIn(dock(), '예약 취소');
+
+    expect(library.writes()).toEqual([{ endpoint: 'setCancelBooking', body: { bseqno: '3000001' } }]);
+    expect(inCard(`library-return-${RETURN.library.key}`).getByText('예약을 취소했어요.')).toBeVisible();
+  });
+
+  it('says plainly that nothing is booked or in use', async () => {
     await askForCards({ server, library }, [RETURN], { words: '반납' });
 
-    expect(inCard(`library-return-${RETURN.library.key}`).getByText('지금 사용 중인 좌석이 없어요')).toBeVisible();
+    expect(
+      inCard(`library-return-${RETURN.library.key}`).getByText('지금 예약이나 사용 중인 자리가 없어요.'),
+    ).toBeVisible();
     expectNoWrite(library);
   });
 });
@@ -145,7 +166,7 @@ describe('the return card', () => {
 describe('내 예약', () => {
   const MINE = card(libraryCard('myBookings:2026-10-26:2026-11-05', 'myBookings'));
 
-  it('lists a week back to three days on with STATUS_NAME, and 취소 or 반납 on the rows that allow it', async () => {
+  it('shows the bookings booked or in use as tickets, and cancels one from its "예약 취소 ›" with 예약 취소', async () => {
     library.addBooking(bookingRow());
     library.addBooking(
       bookingRow({ BSEQNO: 3000002, STATUS: 5, STATUS_NAME: '본인반납', USESTART: '2026-10-30 10:00:00' }),
@@ -154,23 +175,35 @@ describe('내 예약', () => {
     const shown = inCard(`library-myBookings-${MINE.library.key}`);
 
     expect(library.requestsTo('getMyBookingList')[0]?.body).toEqual({ start: '20261026', end: '20261105' });
-    expect(shown.getByText('예약')).toBeVisible();
-    expect(shown.getByText('본인반납')).toBeVisible();
-    expect(shown.getAllByRole('button', { name: /취소$/u })).toHaveLength(1);
+    expect(shown.getByLabelText(BOOKED_TICKET)).toBeVisible();
+    expect(shown.getByText('17:30까지 좌석배정기에서 확인해요')).toBeVisible();
+    expect(shown.queryByText(/본인반납/u)).toBeNull();
     expectNoWrite(library);
 
-    await pressIn(shown, /취소$/u);
+    await pressIn(shown, '예약 취소 ›');
     expectNoWrite(library);
-    await pressIn(shown, '취소하기');
+    expect(shown.queryByRole('button', { name: '예약 취소 ›' })).toBeNull();
+    await pressIn(dock(), '예약 취소');
 
     expect(library.writes()).toEqual([{ endpoint: 'setCancelBooking', body: { bseqno: '3000001' } }]);
-    expect(shown.getByText('예약을 취소했어요')).toBeVisible();
-    expect(shown.getByText('예약취소')).toBeVisible();
+    expect(shown.getByText('예약을 취소했어요.')).toBeVisible();
+  });
+
+  it('says plainly when nothing is booked or in use', async () => {
+    library.addBooking(
+      bookingRow({ BSEQNO: 3000002, STATUS: 5, STATUS_NAME: '본인반납', USESTART: '2026-10-30 10:00:00' }),
+    );
+    await askForCards({ server, library }, [MINE], { words: '반납 잘 됐니?' });
+
+    expect(
+      inCard(`library-myBookings-${MINE.library.key}`).getByText('지금 예약이나 사용 중인 자리가 없어요.'),
+    ).toBeVisible();
+    expect(inFrame().queryByText('카드에서 확인해 주세요.')).toBeNull();
   });
 });
 
 describe('내 예약 of a period', () => {
-  it("reads the card's period, from its date to its until, as ticket 07's card sends it", async () => {
+  it("reads the card's period, from its date to its until, and shows a past one's bookings as they ended", async () => {
     const period = {
       kind: 'library',
       library: {
@@ -184,7 +217,7 @@ describe('내 예약 of a period', () => {
     const shown = inCard('library-myBookings-myBookings:2026-10-01:2026-10-03');
 
     expect(library.requestsTo('getMyBookingList')[0]?.body).toEqual({ start: '20261001', end: '20261003' });
-    expect(shown.getAllByText('예약취소').length).toBeGreaterThan(0);
+    expect(shown.getAllByLabelText(/^예약취소 · /u).length).toBeGreaterThan(0);
     expectNoWrite(library);
   });
 });

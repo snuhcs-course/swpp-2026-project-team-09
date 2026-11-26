@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { GROUP_ROOM, READING_ROOM } from '@/api/mock/data/library';
@@ -252,10 +253,9 @@ describe('the times', () => {
     expect(dayWords('2026-11-05', NOW)).toBe('11월 5일 (목)');
   });
 
-  it('gives the latest time to confirm a seat booked now at the kiosk, 30 minutes on, in Korea', () => {
-    expect(kioskDeadline(new Date('2026-11-04T16:00:00+09:00'))).toBe('16:30');
-    expect(kioskDeadline(new Date('2026-11-04T13:50:00+09:00'))).toBe('14:20');
-    expect(kioskDeadline(new Date('2026-11-04T13:50:40+09:00'))).toBe('14:20');
-    expect(kioskDeadline(new Date('2026-11-04T22:45:00+09:00'))).toBe('23:15');
+  it('gives the latest time to confirm a seat at the kiosk: its start + 30 minutes, whenever it was booked', () => {
+    expect(kioskDeadline('07:00')).toBe('07:30');
+    expect(kioskDeadline('16:45')).toBe('17:15');
+    expect(kioskDeadline('23:45')).toBe('00:15');
   });
 });

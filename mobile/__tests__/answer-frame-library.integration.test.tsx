@@ -73,7 +73,7 @@ describe('a library card in the frame', () => {
     await pressIn(seat, '예약하기');
 
     expect(library.writes()).toHaveLength(1);
-    expect(card().getByText('✓ 예약했어요')).toBeVisible();
+    expect(card().getByLabelText(/^예약됨 · /u)).toBeVisible();
   });
 });
 

@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -19,6 +20,7 @@ import {
   expectNothingOfTheLibrarySent,
   expectNoWrite,
   inCard,
+  inDock,
   inFrame,
   pressIn,
   SEAT_CARD,
@@ -88,7 +90,7 @@ describe('the stay of a seat booked', () => {
     await pass(500);
 
     expect(library.writes()).toHaveLength(1);
-    expect(inFrame().getByText('✓ 예약했어요')).toBeVisible();
+    expect(inFrame().getByLabelText(/^예약됨 · /u)).toBeVisible();
   });
 });
 
@@ -106,7 +108,7 @@ describe('A seat returned', () => {
     );
 
     await askForCards({ server, library }, [RETURN], { words: '자리 반납해줘' });
-    await pressIn(inCard(`library-return-${RETURN.library.key}`), '반납하기');
+    await pressIn(inDock(), '반납하기');
     await pass(500);
 
     expect(server.received(`DELETE /quests/${STAY_QUEST.id}`)).toHaveLength(1);
@@ -117,7 +119,7 @@ describe('A seat returned', () => {
     library.addBooking(bookingRow({ STATUS: 3, STATUS_NAME: '입실', USESTART: '2026-11-02 15:00:00' }));
     await askForCards({ server, library }, [RETURN], { words: '자리 반납해줘' });
 
-    await pressIn(inCard(`library-return-${RETURN.library.key}`), '반납하기');
+    await pressIn(inDock(), '반납하기');
     await pass(500);
 
     expect(server.received().filter(({ method }) => method === 'DELETE')).toEqual([]);

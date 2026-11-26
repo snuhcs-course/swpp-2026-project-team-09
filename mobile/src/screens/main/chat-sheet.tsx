@@ -16,6 +16,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // The conversation's control: the conversation with the Assistant, which the main screen holds, and what the answer
@@ -51,6 +52,7 @@ import { useContextChat, type Where } from './use-context-chat';
 import { sceneBubblesOf } from '@/features/assistant/scene-bubbles';
 import type { LocationMissing } from '@/api/refusal-types';
 import { type KeptConversation, useKeptConversation } from './use-kept-conversation';
+import { type ActStage, useActStage } from './library/act-stage';
 import { type BookingStage, useBookingStage } from './library/booking-stage';
 import { useMenuRaising } from './answer/meal-card';
 import { usePlanOutcomes } from './use-plan-outcomes';
@@ -72,6 +74,8 @@ export interface ChatSheetControl extends Omit<KeptConversation, 'chat'>, MarkOp
   // the time of (P04 ticket 07), and what the card tells of its seat and main action.
   booking: ShownBooking | null;
   bookingStage: BookingStage;
+  // What a booking's ticket offers beside the input: 가는 길, 반납하기, or 예약 취소 (P01 ticket 15).
+  libraryAct: ActStage;
   // The requests of the turn on screen when it answered several, drawn as numbered flags, and the index of the one
   // whose detail and action are shown: the step due first until a press on another's flag (P04 ticket 09).
   steps: ShownSteps | null;
@@ -175,6 +179,18 @@ function useAnswerOnScreen(
   return { answer: shown, invitation };
 }
 
+// What the seat card whose booking the map draws learns of it: its place, how it tells what it offers, whether it is
+// one of several requests, its building, and the walk there (P04 ticket 07; P01 ticket 06).
+function useBookingLeaving(
+  onMap: Pick<ChatSheetControl, 'booking' | 'steps'>,
+  { tell, walk }: BookingStage,
+): NonNullable<CardLeaving['booking']> {
+  const place = onMap.booking?.place ?? null;
+  const steps = onMap.steps !== null;
+  const point = onMap.booking?.point ?? null;
+  return useMemo(() => ({ place, tell, steps, point, walk }), [place, tell, steps, point, walk]);
+}
+
 // The conversation, every request of which carries the context at `where` the User is, and what the answer frame
 // draws of it. A card that leads elsewhere leaves the frame as it is: an event card opens the 행사 tab at the event, as
 // the room's event does; a Quest card opens the post, as 찾기's card does; a Proposal, once made, shows 내 파티, as the
@@ -191,15 +207,9 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
   const sceneBubbles = useMemo(() => sceneBubblesOf(chat.bubbles), [chat.bubbles]);
   const onMap = useShownOnMap({ ...chat, bubbles: sceneBubbles }, kept.framed);
   const bookingStage = useBookingStage();
-  const place = onMap.booking?.place ?? null;
-  const steps = onMap.steps !== null;
+  const libraryAct = useActStage();
   const card = useCardRaise(kept.framed);
-  const point = onMap.booking?.point ?? null;
-  const { walk } = bookingStage;
-  const booking = useMemo(
-    () => ({ place, tell: bookingStage.tell, steps, point, walk }),
-    [place, bookingStage.tell, steps, point, walk],
-  );
+  const booking = useBookingLeaving(onMap, bookingStage);
   const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation, chat.earlier);
   const pick = usePicking(chat);
@@ -216,6 +226,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
       openPartyForm,
       proposals,
       booking,
+      act: libraryAct.tell,
     },
     ...onScreen,
     answer: useMenuRaising(onScreen.answer, card.setRaised, chat.bubbles),
@@ -223,6 +234,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
     ...onMap,
     ...useActiveStep(onMap.steps),
     bookingStage,
+    libraryAct,
     leave: useQuestLeaving(),
     pick,
     locationMissing: where.locationMissing,

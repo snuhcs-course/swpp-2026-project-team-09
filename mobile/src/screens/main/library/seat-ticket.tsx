@@ -29,14 +29,14 @@ export interface TicketOf {
 
 const CHEVRON = 16;
 const DASHES = 12;
-const BORDER = 1.5;
+export const BORDER = 1.5;
 // The cells' top and bottom padding, small enough that the ticket stands whole in the low step's two lines.
-const PAD_Y = 4;
+export const PAD_Y = 4;
 // The seat cell's least width at font size 1, room for a four-digit seat ("7193번") and its chevron, so that the cells
 // keep their widths while the seat is read and when it comes.
 const SEAT_MIN = 96;
 // A value's line, at the phone's font size 1.
-const VALUE_LINE = 20;
+export const VALUE_LINE = 20;
 
 // The ticket's height at a font scale: its border, its cells' padding, the label's line and the value's line. The
 // card's low step shows two lines of an answer's words (`card-caps.ts`), and the ticket stands there whole.
@@ -45,13 +45,13 @@ export function ticketHeightAt(fontScale: number): number {
 }
 
 // The dashed line between the cells: dashes laid over the line's place and cut off at the ticket's height, so that
-// they never make the ticket taller.
-function Dashes(): ReactElement {
+// they never make the ticket taller. A booked ticket's are its own colour (P01 ticket 15).
+export function Dashes({ tint = color.svcStudy }: { tint?: string }): ReactElement {
   return (
     <View style={styles.divider}>
       <View style={styles.dashes}>
         {Array.from({ length: DASHES }, (_, index) => (
-          <View key={index} style={styles.dash} />
+          <View key={index} style={[styles.dash, { backgroundColor: tint }]} />
         ))}
       </View>
     </View>
@@ -142,5 +142,5 @@ const styles = StyleSheet.create({
   roomName: { flexShrink: 1 },
   divider: { width: 1.5, alignSelf: 'stretch' },
   dashes: { position: 'absolute', top: space[1], bottom: space[1], left: 0, right: 0, overflow: 'hidden', gap: 3 },
-  dash: { height: 4, backgroundColor: color.svcStudy, opacity: 0.45 },
+  dash: { height: 4, opacity: 0.45 },
 });

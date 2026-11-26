@@ -4,6 +4,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { libraryCard } from '@/api/mock/data/library';
@@ -24,6 +25,7 @@ import {
   expectNothingOfTheLibrarySent,
   expectNoWrite,
   inCard,
+  inDock,
   inFrame,
   pressIn,
   startLibraryChat,
@@ -157,7 +159,7 @@ describe('the cancel of a room booked through a room request', () => {
 
     expect(server.received(`POST /library/room-requests/${REQUEST_ID}/cancelled`)).toEqual([]);
 
-    await pressIn(inCard(`library-cancel-${cancel.library.key}`), '취소하기');
+    await pressIn(inDock(), '예약 취소');
 
     expect(library.writes()).toEqual([{ endpoint: 'setCancelBooking', body: { bseqno: '3000001' } }]);
     expect(server.received(`POST /library/room-requests/${REQUEST_ID}/cancelled`).map(({ body }) => body)).toEqual([
@@ -185,7 +187,7 @@ describe("the booking party, gone with the User's own cancel", () => {
       socket.accept();
     });
 
-    await pressIn(inCard(`library-cancel-${cancel.library.key}`), '취소하기');
+    await pressIn(inDock(), '예약 취소');
     await socketServer((socket) => {
       socket.send('quests-changed');
     });

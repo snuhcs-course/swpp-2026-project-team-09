@@ -62,7 +62,12 @@ export function roomOf(space: Pick<LibrarySpace, 'id' | 'floor' | 'kind'>): Room
 // "관정 7층 열람실": the room's chip words, or its floor and short name; the room's one name on the map and in the done
 // message (P01 ticket 03).
 export function roomTitle(space: Pick<LibrarySpace, 'id' | 'floor' | 'kind' | 'name'>): string {
-  return `관정 ${roomOf(space)?.label ?? `${String(space.floor)}층 ${shortName(space)}`}`;
+  return `관정 ${roomLabel(space)}`;
+}
+
+// "7층 열람실": the room's words on the seat ticket, before and after the booking (P01 tickets 09 and 15).
+export function roomLabel(space: Pick<LibrarySpace, 'id' | 'floor' | 'kind' | 'name'>): string {
+  return roomOf(space)?.label ?? `${String(space.floor)}층 ${shortName(space)}`;
 }
 
 // "7A 노트북존", or the space's own name for one the phone has no short name for.

@@ -98,7 +98,9 @@ describe('the room switched and booked', () => {
     await pressIn(seatCard(), '예약하기');
 
     expect(world.library.writes().map(({ body }) => body.sectorNo)).toEqual(['18202']);
-    expect(inFrame().getByText(/^관정 8층 노트북존 \d+번 · 오늘 \d{2}:\d{2}–\d{2}:\d{2}$/u)).toBeVisible();
+    expect(
+      inFrame().getByLabelText(/^예약됨 · 오늘 \d{2}:\d{2}–\d{2}:\d{2}, 8층 노트북존, 좌석 \d+번$/u),
+    ).toBeVisible();
 
     await sendFromBar(chat.user, '고마워');
 

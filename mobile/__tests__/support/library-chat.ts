@@ -4,13 +4,13 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, type userEvent, within } from '@testing-library/react-native';
 import type { LibraryCard, LibraryCardData } from '@/api/assistant-types';
 import { libraryCard, READING_ROOM, SEAT_NOTES } from '@/api/mock/data/library';
 import { forgetLoginOpened, markLibraryLoggedIn } from '@/library/flag';
-import type { LibraryBooking } from '@/library/replies';
 import { pass, screen } from './app';
 import { PLACES } from './dining';
 import type { FakeServer } from './fake-server';
@@ -23,6 +23,8 @@ import { givePhone, ON_CAMPUS, openMain } from './main';
 import { startFresh } from './mocks';
 import { answerParty } from './party';
 import { askMainServer } from './server';
+
+export { bookingRow } from './booking-row';
 
 // What the library cards' tests share: the phone's clock on Monday 2026-11-02 at 16:00 in Korea, the fake main server
 // whose Assistant answers with library cards (as P06 ticket 07's tools will), and the fake library behind the hidden
@@ -104,28 +106,13 @@ export function inFrame(): ReturnType<typeof within> {
   return within(screen.getByTestId('answer-card'));
 }
 
-export function inCard(testID: string): ReturnType<typeof within> {
-  return within(inFrame().getByTestId(testID));
+// Beside the input: the answer's main button, which is a booking ticket's act (P01 ticket 15).
+export function inDock(): ReturnType<typeof within> {
+  return within(screen.getByTestId('ai-input-beside'));
 }
 
-// One of the User's bookings, as getMyBookingList lists it: a 7층 seat today at 17:00 unless told otherwise.
-export function bookingRow(given: Partial<LibraryBooking> = {}): LibraryBooking {
-  return {
-    BSEQNO: 3000001,
-    SEATNO: 17202001,
-    USESTART: '2026-11-02 17:00:00',
-    USEEXPIRE: '2026-11-02 18:00:00',
-    STATUS: 2,
-    STATUS_NAME: '예약',
-    FLOOR_NAME: '7층',
-    ROOM_NAME: '7A 열람실',
-    SECTOR_NAME: '7A 열람실 2 구역',
-    SEAT_NAME: '7A 열람실 2구역-1',
-    SEAT_VNAME: '7193',
-    SECTORNO: 17202,
-    ROOMNO: 172,
-    ...given,
-  };
+export function inCard(testID: string): ReturnType<typeof within> {
+  return within(inFrame().getByTestId(testID));
 }
 
 // M4: no request that changes a booking reached the library.

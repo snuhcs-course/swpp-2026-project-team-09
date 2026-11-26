@@ -13,6 +13,7 @@
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -23,6 +24,7 @@ import { turnOf } from '@/features/assistant/turn';
 import { lastReply } from '@/features/assistant/use-shown-answer';
 import { useBackToClose } from '@/hooks/use-back-to-close';
 import { BubbleParts } from '../chat-bubbles';
+import { speaksForItself } from '../library/chat-library-cards';
 import type { CardActions } from '../chat-cards';
 import { useCardActions } from '../chat-card-actions';
 import type { ChatSheetControl } from '../chat-sheet';
@@ -130,7 +132,7 @@ function OpenAnswer(props: AnswerCardProps & { room: number | null }): ReactElem
             onRetry={bubble.failure === 'unavailable' && bubble === last && !waiting && control.latest ? retry : null}
             onShowLayer={control.leaving.showLayer}
             words={
-              bubble.id === docked ? null : (
+              bubble.id === docked || speaksForItself(bubble) ? null : (
                 <Words
                   addRecalculated={control.chat.addRecalculated}
                   bubble={bubble}

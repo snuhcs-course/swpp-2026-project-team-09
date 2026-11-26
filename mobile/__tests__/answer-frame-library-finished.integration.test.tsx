@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { libraryCard } from '@/api/mock/data/library';
@@ -20,6 +21,7 @@ import {
   card,
   expectNoWrite,
   inCard,
+  inDock,
   inFrame,
   pressIn,
   redrawFrame,
@@ -72,7 +74,7 @@ describe('a finished seat card when the frame draws it anew', () => {
     expect(shown.getByText('예약했어요')).toBeVisible();
     expect(shown.queryByRole('button', { name: '예약하기' })).toBeNull();
     expect(shown.queryByText(/7194번/u)).toBeNull();
-    expect(inFrame().getByText('✓ 예약했어요')).toBeVisible();
+    expect(inFrame().getByLabelText(/^예약됨 · /u)).toBeVisible();
     expect(library.writes()).toHaveLength(1);
   });
 
@@ -89,29 +91,29 @@ describe('a finished seat card when the frame draws it anew', () => {
 });
 
 describe('a finished cancel or return card when the frame draws it anew', () => {
-  it('shows the cancel done, with no 취소하기', async () => {
+  it('shows the cancel done, with no 예약 취소', async () => {
     library.addBooking(bookingRow());
     await askForCards({ server, library }, [CANCEL], { words: '오늘 예약 취소해줘' });
-    await pressIn(inCard(`library-cancel-${CANCEL.library.key}`), '취소하기');
+    await pressIn(inDock(), '예약 취소');
 
     await redrawFrame();
 
     const shown = inCard(`library-cancel-${CANCEL.library.key}`);
-    expect(shown.getByText('예약을 취소했어요')).toBeVisible();
-    expect(shown.queryByRole('button', { name: '취소하기' })).toBeNull();
+    expect(shown.getByText('예약을 취소했어요.')).toBeVisible();
+    expect(screen.queryByRole('button', { name: '예약 취소' })).toBeNull();
     expect(library.writes()).toHaveLength(1);
   });
 
   it('shows the return done, with no 반납하기', async () => {
     library.addBooking(bookingRow({ STATUS: 3, STATUS_NAME: '입실', USESTART: '2026-11-02 15:00:00' }));
     await askForCards({ server, library }, [RETURN], { words: '자리 반납해줘' });
-    await pressIn(inCard(`library-return-${RETURN.library.key}`), '반납하기');
+    await pressIn(inDock(), '반납하기');
 
     await redrawFrame();
 
     const shown = inCard(`library-return-${RETURN.library.key}`);
     expect(shown.getByText('반납했어요. 이용해 주셔서 고마워요!')).toBeVisible();
-    expect(shown.queryByRole('button', { name: '반납하기' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '반납하기' })).toBeNull();
     expect(library.writes()).toHaveLength(1);
   });
 });
@@ -132,7 +134,7 @@ describe('a card whose write is on its way when the frame draws it anew', () => 
     await pass(0);
 
     expect(inCard(SEAT_TEST_ID).getByText('예약했어요')).toBeVisible();
-    expect(inFrame().getByText('✓ 예약했어요')).toBeVisible();
+    expect(inFrame().getByLabelText(/^예약됨 · /u)).toBeVisible();
     expect(library.writes()).toHaveLength(1);
   });
 

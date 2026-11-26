@@ -12,9 +12,10 @@ import type { ReactElement } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { LibraryCard } from '@/api/assistant-types';
 import { space } from '@/design-system';
-import { cardPlace } from '@/features/assistant/use-chat';
+import { type CardOutcome, cardPlace, type ChatBubble } from '@/features/assistant/use-chat';
 import { BookRoomCard } from './book-room-card';
 import { BookSeatCard } from './book-seat-card';
+import { BookedTicket } from './booked-ticket';
 import { CancelReturnCard, MyBookingsCard } from './bookings-cards';
 import { SeatsCard } from './seats-card';
 import { CardBox, Said } from './library-parts';
@@ -31,11 +32,26 @@ interface OneProps {
   actions: LibraryCardActions;
 }
 
-// A card the chat keeps as ended: what it did, with no button.
-function Finished({ card, words }: { card: LibraryCard; words: string }): ReactElement {
+const OWN_WORDS = new Set<LibraryCard['library']['action']>(['cancel', 'return', 'myBookings']);
+
+// A reply of the Assistant that holds only cancel, return, or 내 예약 cards, and a seat's done message, show no words
+// but the card's: the Assistant never sees the bookings, and its words would only point at the card (P01 ticket 15).
+// The app's own words over such a card stay.
+export function speaksForItself({ cards, done, own = false }: Pick<ChatBubble, 'cards' | 'done' | 'own'>): boolean {
+  if (done?.ticket !== undefined) {
+    return true;
+  }
+  return (
+    !own && cards.length > 0 && cards.every((card) => card.kind === 'library' && OWN_WORDS.has(card.library.action))
+  );
+}
+
+// A card the chat keeps as ended: what it did, with no button, and the booking it ended, greyed.
+function Finished({ card, outcome }: { card: LibraryCard; outcome: CardOutcome }): ReactElement {
   return (
     <CardBox testID={`library-${card.library.action}-${card.library.key}`}>
-      <Said>{words}</Said>
+      <Said>{outcome.words}</Said>
+      {outcome.ticket === undefined ? null : <BookedTicket ticket={outcome.ticket} />}
     </CardBox>
   );
 }
@@ -46,10 +62,10 @@ function One({ card, own, bubbleId, actions }: OneProps): ReactElement | null {
   const place = cardPlace(bubbleId, data.key);
   const outcome = actions.outcomeOf(place);
   if (outcome !== null && outcome.kind !== 'pending') {
-    // A booking on the map has its done message's head ("✓ 예약했어요"), so its card adds no line (P01 ticket 03).
-    return outcome.kind === 'booked' && actions.bandOnBar?.(place) === true ? null : (
-      <Finished card={card} words={outcome.words} />
-    );
+    // A booking on the map has its done message, so its card adds no line (P01 ticket 03); one cancelled from that
+    // message says so there (ticket 15).
+    const told = (outcome.kind === 'booked' && actions.bandOnBar?.(place) === true) || outcome.kind === 'cancelled';
+    return told && data.action === 'book' ? null : <Finished card={card} outcome={outcome} />;
   }
   switch (data.action) {
     case 'book':
@@ -65,9 +81,9 @@ function One({ card, own, bubbleId, actions }: OneProps): ReactElement | null {
       return shown === null ? null : <SeatsCard actions={actions} card={data} space={shown} />;
     case 'cancel':
     case 'return':
-      return <CancelReturnCard actions={actions} card={data} place={place} />;
+      return <CancelReturnCard actions={actions} bubbleId={bubbleId} card={data} place={place} />;
     case 'myBookings':
-      return <MyBookingsCard card={data} />;
+      return <MyBookingsCard actions={actions} bubbleId={bubbleId} card={data} />;
     default:
       return null;
   }
