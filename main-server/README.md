@@ -2492,6 +2492,9 @@ Anthropic API as the AI's key says
     - Together (`together`, or Friends in `people`), the one plan is 관정관's, and `study.group` holds:
       - the 관정 group study room kind, and every kind, 2층 first, with whether it fits the head count ("6명부터",
         "6명까지");
+      - for the room kind and each listed kind, `space`: its library space as the library cards carry it (`roomNo`,
+        `sectorNo`, the kind's room numbers in `seatNos`, its hours and durations), which the phone reads the kind's free
+        rooms from (a sector may hold several kinds);
       - how many more people are needed, 3 for the asker alone;
       - the book key that "동의 요청 보내기" posts to `POST /library/room-requests`, null while more are needed;
       - 사용 용도, when the window opens, and the sent request's state, set only in the answer that
