@@ -17,9 +17,9 @@ import { FIRST_CAMERA, viewAt } from '../support/answer-view';
 // The emulator's first view of the stored "뭐 먹을까" answer (2026-11-26), with the everyday Friends' faces it keeps
 // clear of: 학생회관식당 (3) has a Friend's face at its right and the next Class's mark at its left.
 const EMULATOR_VIEW: LabelView = {
-  camera: { centre: { latitude: 37.4516888169877, longitude: 126.95058 }, zoom: 14.786047200315798 },
-  size: { width: 411.4285583496094, height: 914.2857055664062 },
-  area: { top: 176.00000095367432, right: 395.4285583496094, bottom: 594.4761810302734, left: 16 },
+  camera: { centre: { latitude: 37.451688817, longitude: 126.95058 }, zoom: 14.7860472 },
+  size: { width: 411.42856, height: 914.28571 },
+  area: { top: 176, right: 395.42856, bottom: 594.47618, left: 16 },
   avoid: [
     { latitude: 37.45952, longitude: 126.95209 },
     { latitude: 37.46108, longitude: 126.9527 },
