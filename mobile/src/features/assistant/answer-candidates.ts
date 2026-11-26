@@ -139,6 +139,8 @@ interface Labelled {
   draft: Draft;
   held: boolean;
   label: AnswerLabel | null;
+  // A meal candidate's minutes beside its round (P04 ticket 83).
+  capsule?: boolean;
 }
 
 // Whether a mark's point is in the view's area, where its tag could be read; without a view, every one is.
@@ -152,10 +154,13 @@ function seenAt(view: LabelView | null, { position }: Draft): boolean {
 
 // Where room is short, the tags of the candidates in the view's area whose own numbered dot is drawn are left out from
 // the lowest rank upward: once one has none, none after it has one. The dot stays and takes the press. A held
-// candidate always keeps its tag.
+// candidate always keeps its tag. A meal candidate's minutes are left out on their own, only where they have no room
+// (P04 ticket 84): the user wants each candidate's minutes wherever they fit, nearer numbers still placed first.
 export function leftOutByRank<T extends Labelled>(placed: readonly T[], view: LabelView | null): T[] {
   const lone = placed
-    .filter(({ draft, held }) => draft.group === 'candidate' && !held && seenAt(view, draft))
+    .filter(
+      ({ draft, held, capsule = false }) => draft.group === 'candidate' && !held && !capsule && seenAt(view, draft),
+    )
     .toSorted((one, other) => (one.draft.number ?? UNNUMBERED) - (other.draft.number ?? UNNUMBERED));
   const first = lone.findIndex(({ label }) => label === null);
   const out = new Set(first === -1 ? [] : lone.slice(first));
