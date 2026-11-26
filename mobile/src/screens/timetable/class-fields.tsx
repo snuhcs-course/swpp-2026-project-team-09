@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -17,17 +18,22 @@ const MINUTES = ['', ...Array.from({ length: 12 }, (_, step) => String(step * 5)
 // The frame's outline of the warning box, between the Quest colour's ground and its ink.
 const WARNING_LINE = '#E8C877';
 const WARNING_INK = '#5C3B00';
+// The frame's ink of a day another time slot holds: a disabled control, lighter than any text.
+const HELD_DAY_INK = '#C2C6D1';
 
 function FieldName({ children }: { children: string }): ReactElement {
   return <Text style={styles.fieldName}>{children}</Text>;
 }
 
-// `월` … `일`, Saturday in blue and Sunday in red while off.
+// `월` … `일`, Saturday in blue and Sunday in red while off. A day another time slot holds (`taken`) is greyed out and
+// cannot be pressed.
 export function DayToggles({
   days,
+  taken = [],
   onChange,
 }: {
   days: readonly number[];
+  taken?: readonly number[];
   onChange: (days: number[]) => void;
 }): ReactElement {
   return (
@@ -36,8 +42,11 @@ export function DayToggles({
       <View style={styles.days}>
         {DAY_NAMES.map((name, day) => {
           const on = days.includes(day);
+          const held = !on && taken.includes(day);
           let ink: string = color.ink;
-          if (day === SATURDAY) {
+          if (held) {
+            ink = HELD_DAY_INK;
+          } else if (day === SATURDAY) {
             ink = color.blue600;
           } else if (day === SUNDAY) {
             ink = color.danger;
@@ -46,12 +55,13 @@ export function DayToggles({
             <Pressable
               accessibilityLabel={name}
               accessibilityRole="togglebutton"
-              accessibilityState={{ checked: on }}
+              accessibilityState={{ checked: on, disabled: held }}
+              disabled={held}
               key={name}
               onPress={() => {
                 onChange(on ? days.filter((other) => other !== day) : [...days, day]);
               }}
-              style={[styles.day, on && styles.dayOn]}
+              style={[styles.day, on && styles.dayOn, held && styles.dayHeld]}
             >
               <Text style={[styles.dayName, { color: on ? color.onPrimary : ink }, on && styles.dayNameOn]}>
                 {name}
@@ -192,13 +202,22 @@ export function CrossingWarning({ lines }: { lines: readonly string[] }): ReactE
   );
 }
 
-// `장소`: a button reading `장소 선택` or the chosen Place, which opens the Place picker.
-export function PlaceButton({ chosen, onPress }: { chosen: string | null; onPress: () => void }): ReactElement {
+// `장소`: a button reading `장소 선택` or the chosen Place, which opens the Place picker. `label` names it for a screen
+// reader, "장소 선택" unless the form has several time slots.
+export function PlaceButton({
+  chosen,
+  label = '장소 선택',
+  onPress,
+}: {
+  chosen: string | null;
+  label?: string;
+  onPress: () => void;
+}): ReactElement {
   return (
     <View style={styles.field}>
       <FieldName>장소</FieldName>
       <Pressable
-        accessibilityLabel="장소 선택"
+        accessibilityLabel={label}
         accessibilityRole="button"
         accessibilityValue={chosen === null ? undefined : { text: chosen }}
         onPress={onPress}
@@ -230,6 +249,7 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
   },
   dayOn: { borderColor: color.snuBlue, backgroundColor: color.snuBlue },
+  dayHeld: { borderColor: color.surfaceSunken, backgroundColor: color.surfaceSubtle },
   dayName: { fontFamily: font.medium, fontSize: 15, lineHeight: 22 },
   dayNameOn: { fontFamily: font.bold },
   times: { flexDirection: 'row', alignItems: 'flex-end', gap: space[2] },
