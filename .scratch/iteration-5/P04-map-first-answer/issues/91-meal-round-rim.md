@@ -32,3 +32,10 @@ The user's words: keep the coral rim, drop the extra outer ring, and give its ro
 - [x] The chosen meal round and another answer's candidate keep their white ring.
 - [x] The meal list's badge number is the map's: 13 points, bold.
 - [x] Emulator screens at font scale 1.0 and 1.3, with a bare round over a path line.
+
+## Comments
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 40 minutes in the p04-58 session, from 09:48 UTC to the push, an estimate. It includes the emulator screens at font scale 1.0 and 1.3. It leaves out the merge of 5.0/Main into PR 600 (ticket 90), about 16 minutes in the same stretch. No subagents.
+- Tokens, from 09:48 UTC to this entry, the merge for PR 600 left out: input 204 uncached, with cache reads 27,176,389 and cache writes 120,543; output 59,292.
