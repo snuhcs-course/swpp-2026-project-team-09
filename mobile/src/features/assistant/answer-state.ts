@@ -47,13 +47,14 @@ export interface AnswerState extends Shown {
 
 export type SetStored = (update: (last: AnswerState) => AnswerState) => void;
 
-// A new reply's answer on screen: at its first Plan, or at a menu question's Restaurant with its menu open (P04 ticket
-// 72).
+// A new reply's answer on screen: at its first Plan, at a menu question's Restaurant with its menu open (P04 ticket
+// 72), or at the plan the reply chose in words, such as for a dish picked from the menus (P05 ticket 51).
 function fresh(reply: ChatBubble | undefined, epoch: number): AnswerState {
   const given = reply?.answer ?? null;
   const source = given === null ? null : offeredAnswer(given);
   const opened = openedIndex(source);
-  const index = Math.max(opened, 0);
+  const chosen = source?.plans.findIndex(({ id }) => id === reply?.select) ?? -1;
+  const index = Math.max(opened >= 0 ? opened : chosen, 0);
   return {
     replyId: reply?.id ?? null,
     source,

@@ -28,7 +28,7 @@ function named(listed: readonly string[], words: string): string[] {
 const NOT_ON_SCREEN =
   'No meal answer with numbered places is on screen: plan the meal with planMeal, with the Restaurant as a change of place.';
 
-export const CHOOSE_PLAN_RULES = `- A line [Plan on screen: …] of a meal with numbered gives the places the app lists, numbered from 1 in that order, and plan the one shown. When the User chooses one of them by its number or its name, or the one shown (2번으로 할게, 3번, 두레미담으로, 거기로 하자, 이걸로 할게), call choosePlan with number, or with restaurant as the list names it, and call no planMeal: the app keeps the answer, its list and its numbers, and shows the one chosen. Your reply is one sentence that it is chosen, such as "2번 예술계식당으로 골랐어요.": nothing about its hours, menu or way, which the app shows. When choosePlan answers none, ask in one short sentence which number, such as "1번부터 6번까지 있어요. 몇 번으로 할까요?". When it answers several, ask which of them by name. When it answers notListed, the place is not among them: it is a change of place, by the rule of changing the plan on screen.`;
+export const CHOOSE_PLAN_RULES = `- A line [Plan on screen: …] of a meal with numbered gives the places the app lists, numbered from 1 in that order, and plan the one shown. When the User chooses one of them by its number or its name, or the one shown (2번으로 할게, 3번, 두레미담으로, 거기로 하자, 이걸로 할게), call choosePlan with number, or with restaurant as the list names it, and call no planMeal: the app keeps the answer, its list and its numbers, and shows the one chosen. Your reply is one sentence that it is chosen, such as "2번 예술계식당으로 골랐어요.": nothing about its hours, menu or way, which the app shows. choosePlan may follow a planMeal of the same message, such as for a dish picked from the plans' menus, or a Friend added with the choice ("2번으로 하고 지은이도 불러 줘"): give the number the User said, which counts on the list on screen, or the restaurant among the new answer's plans, and the app opens that new answer at the plan chosen. When choosePlan answers none, ask in one short sentence which number, such as "1번부터 6번까지 있어요. 몇 번으로 할까요?". When it answers several, ask which of them by name. When it answers notListed, the place is not among them: it is a change of place, by the rule of changing the plan on screen.`;
 
 export function choosePlan(): Tool {
   return defineTool({
@@ -50,22 +50,25 @@ export function choosePlan(): Tool {
     run: ({ number, restaurant }, { context, presented }) => {
       const { conditions, planIds } = context;
       const listed = conditions?.kind === 'meal' ? (planIds ?? []) : [];
-      if (listed.length === 0) {
+      // The plans a planMeal of this message drew, which the app opens at the plan chosen: a dish picked from their
+      // menus, or a choice asked with a change ("2번으로 하고 지은이도 불러 줘").
+      const drawn = presented.answer?.input.kind === 'meal' ? presented.answer.plans.map(({ id }) => id) : null;
+      if (listed.length === 0 && drawn === null) {
         return Promise.resolve({ result: 'none', listed: 0, reason: NOT_ON_SCREEN });
       }
-      const ids =
-        number === undefined ? named(listed, restaurant ?? '') : [listed[number - 1]].flatMap((id) => id ?? []);
+      if (number !== undefined && listed[number - 1] === undefined) {
+        return Promise.resolve({ result: 'none', listed: listed.length });
+      }
+      const ids = number === undefined ? named(drawn ?? listed, restaurant ?? '') : [listed[number - 1] ?? ''];
       const [id, ...others] = ids;
-      if (id === undefined) {
-        return Promise.resolve(
-          number === undefined ? { result: 'notListed' } : { result: 'none', listed: listed.length },
-        );
+      if (id === undefined || (drawn !== null && !drawn.includes(id))) {
+        return Promise.resolve({ result: 'notListed' });
       }
       if (others.length > 0) {
         return Promise.resolve({ result: 'several', restaurants: ids });
       }
       presented.select = id;
-      return Promise.resolve({ result: 'chosen', number: listed.indexOf(id) + 1, restaurant: id });
+      return Promise.resolve({ result: 'chosen', number: (drawn ?? listed).indexOf(id) + 1, restaurant: id });
     },
   });
 }

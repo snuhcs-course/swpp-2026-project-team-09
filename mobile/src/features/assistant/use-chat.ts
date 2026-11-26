@@ -76,7 +76,7 @@ export interface ChatBubble {
   offers?: ReplyOffer[];
   // Each request of the message, in time order, when it asked for two or more (P03). They are not sent back.
   steps?: ReplyStep[];
-  // The plan of the answer on screen the reply chose (P05 ticket 51). Not sent back.
+  // The plan the reply chose in words, of the answer on screen or of its own (P05 ticket 51). Not sent back.
   select?: string;
   // The map's visible area the reply's request sent, which a `study` Lookup outlines.
   area?: RequestContext['viewport'];

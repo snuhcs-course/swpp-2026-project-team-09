@@ -28,8 +28,9 @@ export function wordlessText({
   refusal,
   select,
 }: Presented): string | null {
-  // A plan chosen in words (P05 ticket 51): the one sentence its rule asks for.
-  if (select !== undefined && answer === null) {
+  // A plan chosen in words (P05 ticket 51), on the answer kept or on the reply's new one: the one sentence its rule asks
+  // for.
+  if (select !== undefined && (answer === null || answer.plans.some(({ id }) => id === select))) {
     return `${withToward(select)} 골랐어요.`;
   }
   const others = cards.length > 0 || mapButtons.length > 0 || proposal !== null || answer !== null;

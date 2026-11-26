@@ -93,6 +93,9 @@ export interface AnswerReply extends WithMissing {
   // A menu question's: the Plan whose Restaurant was asked about, which the app opens at its menu as from the list (P04
   // ticket 72). Absent from any other answer.
   opened?: string;
+  // A meal answer from a main server that takes `planIds`: only over such an answer does the app send them, so that a
+  // newer app never sends a field an older main server refuses (P05 ticket 51). Absent from any other answer.
+  choosable?: true;
 }
 
 // One of the User's Quests as the app reads it: those set aside by a plan (`planSet`), related to one (`related`), and

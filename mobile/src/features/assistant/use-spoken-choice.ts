@@ -18,7 +18,8 @@ export function useSpokenChoice(
   const done = useRef<number | null>(null);
   const reply = lastReply(bubbles);
   const replyId = reply?.id ?? null;
-  const planId = reply?.select;
+  // A reply with an answer of its own opens it at the plan chosen (`fresh` in answer-state.ts).
+  const planId = (reply?.answer ?? null) === null ? reply?.select : undefined;
   const listed = answer?.plans.some(({ id }) => id === planId) === true;
   useEffect(() => {
     if (replyId === null || planId === undefined || done.current === replyId || !listed) {
