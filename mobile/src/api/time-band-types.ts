@@ -3,6 +3,7 @@
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 // A person's lane of a Plan's time band: their busy stretches of the band's day, cut to its range, each saying what it
@@ -32,6 +33,15 @@ export interface SkippedClass {
   label: string;
 }
 
+// The rules a band's handles and whole moves follow (P01 ticket 12): the step, the shortest and the longest length in
+// minutes (null for no longest), and the earliest start (null for the range's start).
+export interface BandRules {
+  stepMinutes: number;
+  leastMinutes: number;
+  mostMinutes: number | null;
+  earliest: string | null;
+}
+
 // A Plan's time band: the range drawn, now, the people's lanes, and the span with its words.
 export interface TimeBand {
   range: { startAt: string; endAt: string };
@@ -44,4 +54,7 @@ export interface TimeBand {
   startAt: string;
   endAt: string;
   text: string;
+  // The app's own, for a seat booking's band, which moves by the library's rules; the main server never sends it, and a
+  // band without it moves by a meal's (`MEAL_RULES`).
+  rules?: BandRules;
 }

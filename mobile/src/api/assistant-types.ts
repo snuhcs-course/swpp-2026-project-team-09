@@ -14,6 +14,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { TimeBand } from './time-band-types';
@@ -413,4 +414,4 @@ export interface AssistantReply extends WithRefusal {
 
 export type { AskOffer, ReplyOffer } from './reply-offer-types';
 
-export type { TimeBand } from './time-band-types';
+export type { BandRules, TimeBand } from './time-band-types';

@@ -5,6 +5,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -20,7 +21,6 @@ import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { askForCards, expectNoWrite, SEAT_CARD, sendFromBar, startLibraryChat } from './support/library-chat';
 import { openMain } from './support/main';
 import { DINNER } from './support/server';
-import { color } from '@/design-system';
 import type { Quest } from '@/api/types';
 import { markLibraryLoggedIn } from '@/library/flag';
 import { layStage } from './support/lists';
@@ -102,6 +102,10 @@ describe('a seat card on the map', () => {
     expect(flagName()).toMatch(/^관정 7층 열람실 › · \d+번 17:00–18:00( · 걸음 \d+분)?$/u);
     expect(mapLines()).toHaveLength(1);
     expect(bar().getByText('17:00–18:00 · 1시간')).toBeVisible();
+    // The meal's time card, its band and grip, and no band of the library's own (P01 ticket 12).
+    expect(bar().getByTestId('time-band-track')).toBeOnTheScreen();
+    expect(screen.getByTestId('time-card-grip')).toBeOnTheScreen();
+    expect(bar().queryByTestId('slot-band')).toBeNull();
     expect(screen.getByRole('button', { name: '예약하기' })).toBeEnabled();
     const card = within(screen.getByTestId('answer-card'));
     expect(card.getByText(DOCKED)).toBeVisible();
@@ -294,7 +298,7 @@ function onNov2(id: string, title: string, start: string, end: string, label: st
 }
 
 describe("the seat bar's day", () => {
-  it('draws the Classes and Quests on the track, names the one before, and says the Class the band runs into', async () => {
+  it('draws the Classes and Quests on the track, names what bounds it before, and says the Class it runs into', async () => {
     server.on('GET /quests', {
       status: 200,
       body: [
@@ -306,12 +310,15 @@ describe("the seat bar's day", () => {
 
     await asked();
 
-    expect(bar().getAllByTestId('slot-band-busy')).toHaveLength(3);
-    const words = bar().getByTestId('slot-band-words');
-    expect(words).toHaveTextContent('17:00–18:00 · 17:30 수업과 겹쳐요', { exact: true });
-    expect(words).toHaveStyle({ color: color.warning });
-    expect(bar().getByText('15:45 301동 수업 끝')).toBeVisible();
-    expect(bar().getByText('19:00 저녁 약속')).toBeVisible();
+    // In the meal's time card (P01 ticket 12): the busy stretches on the User's lane, the part the band runs into red,
+    // the words, and what ends before it between the track's ends.
+    const lane = within(bar().getByTestId('time-band-lane-me'));
+    expect(lane.getAllByTestId('time-band-clash')).toHaveLength(1);
+    expect(bar().getByTestId('time-band-words')).toHaveTextContent('17:00–18:00 · 17:30 수업과 겹쳐요', {
+      exact: true,
+    });
+    // Between the ends, what bounds it before, as a meal's card says it: now (16:00), after the Class ended at 15:45.
+    expect(within(bar().getByTestId('time-band-note')).getByText('16:00 지금')).toBeVisible();
     expect(screen.getByRole('button', { name: '예약하기' })).toBeEnabled();
   });
 });

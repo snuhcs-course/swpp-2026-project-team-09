@@ -7,9 +7,10 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import type { MealInput, TimeBand } from '@/api/assistant-types';
+import type { BandRules, MealInput, TimeBand } from '@/api/assistant-types';
 import { koreaClock } from '@/korea-time';
 
 // The time band's arithmetic. Its times are Korea time with the offset, and the window's are "HH:MM".
@@ -25,11 +26,35 @@ interface Band {
   range: Stretch;
   startAt: string;
   endAt: string;
+  rules?: BandRules;
 }
 
 const MINUTE_MS = 60_000;
 export const STEP_MS = BAND_STEP_MINUTES * MINUTE_MS;
-const LEAST_MS = BAND_LEAST_MINUTES * MINUTE_MS;
+
+// A meal's band: 5-minute steps, at least 15 minutes, anywhere in its range.
+export const MEAL_RULES: BandRules = {
+  stepMinutes: BAND_STEP_MINUTES,
+  leastMinutes: BAND_LEAST_MINUTES,
+  mostMinutes: null,
+  earliest: null,
+};
+
+function rulesOf(band: Band): BandRules {
+  return band.rules ?? MEAL_RULES;
+}
+
+// The band's step in milliseconds.
+export function stepMsOf(band: Band): number {
+  return rulesOf(band).stepMinutes * MINUTE_MS;
+}
+
+// The earliest a band may start: its range's start, or its rules' earliest when that is later.
+export function earliestMsOf(band: Band): number {
+  const { earliest } = rulesOf(band);
+  const start = msOf(band.range.startAt);
+  return earliest === null ? start : Math.max(start, msOf(earliest));
+}
 
 export function msOf(time: string): number {
   return new Date(time).getTime();
@@ -40,20 +65,31 @@ export function clockAt(ms: number): string {
 }
 
 // Korea is a whole number of steps ahead of UTC, so a step of the epoch is a step of Korea's clock.
-function stepDown(ms: number): number {
-  return Math.floor(ms / STEP_MS) * STEP_MS;
+function stepDown(ms: number, step: number): number {
+  return Math.floor(ms / step) * step;
 }
 
-function stepUp(ms: number): number {
-  return Math.ceil(ms / STEP_MS) * STEP_MS;
+function stepUp(ms: number, step: number): number {
+  return Math.ceil(ms / step) * step;
 }
 
-// Where a handle may stand: inside the range, and at least `BAND_LEAST_MINUTES` from the other handle.
+// Where a handle may stand: inside the range from its earliest start, at least the shortest length from the other
+// handle, and at most the longest.
 function kept(ms: number, bound: BandBound, band: Band): number {
+  const { leastMinutes, mostMinutes } = rulesOf(band);
+  const step = stepMsOf(band);
+  const least = leastMinutes * MINUTE_MS;
+  const most = mostMinutes === null ? Number.POSITIVE_INFINITY : mostMinutes * MINUTE_MS;
   const [lowest, highest] =
     bound === 'from'
-      ? [stepUp(msOf(band.range.startAt)), stepDown(msOf(band.endAt) - LEAST_MS)]
-      : [stepUp(msOf(band.startAt) + LEAST_MS), stepDown(msOf(band.range.endAt))];
+      ? [
+          Math.max(stepUp(earliestMsOf(band), step), stepUp(msOf(band.endAt) - most, step)),
+          stepDown(msOf(band.endAt) - least, step),
+        ]
+      : [
+          stepUp(msOf(band.startAt) + least, step),
+          Math.min(stepDown(msOf(band.range.endAt), step), stepDown(msOf(band.startAt) + most, step)),
+        ];
   return Math.min(Math.max(ms, lowest), highest);
 }
 
@@ -77,12 +113,14 @@ export function shareOf(time: string, range: Stretch): number {
 export function droppedAt(bound: BandBound, share: number, band: Band): string {
   const start = msOf(band.range.startAt);
   const time = start + share * (msOf(band.range.endAt) - start);
-  return moved(ownOf(bound, band), Math.floor(time / STEP_MS + 0.5) * STEP_MS, bound, band);
+  const step = stepMsOf(band);
+  return moved(ownOf(bound, band), Math.floor(time / step + 0.5) * step, bound, band);
 }
 
 export function stepped(bound: BandBound, direction: 1 | -1, band: Band): string {
   const time = ownOf(bound, band);
-  return moved(time, direction === 1 ? stepDown(time) + STEP_MS : stepUp(time) - STEP_MS, bound, band);
+  const step = stepMsOf(band);
+  return moved(time, direction === 1 ? stepDown(time, step) + step : stepUp(time, step) - step, bound, band);
 }
 
 // A clock time of the window on the band's day, with Korea's offset.
