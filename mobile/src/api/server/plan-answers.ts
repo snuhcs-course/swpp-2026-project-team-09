@@ -198,11 +198,17 @@ function isLane(value: unknown): value is TimeBand['lanes'][number] {
   return hasTexts(value, ['userId', 'name']) && listOf(isBusy)(field(value, 'busy'));
 }
 
+function isSkipped(value: unknown): value is NonNullable<TimeBand['skipped']>[number] {
+  return hasTexts(value, ['id', 'startAt', 'endAt', 'label']);
+}
+
 export function isBand(value: unknown): value is TimeBand {
+  const skipped = field(value, 'skipped');
   return (
     isSpan(field(value, 'range')) &&
     hasTexts(value, ['now', 'startAt', 'endAt', 'text']) &&
-    listOf(isLane)(field(value, 'lanes'))
+    listOf(isLane)(field(value, 'lanes')) &&
+    (skipped === undefined || listOf(isSkipped)(skipped))
   );
 }
 
