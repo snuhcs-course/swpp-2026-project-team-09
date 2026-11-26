@@ -2602,6 +2602,15 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     and one for a User with no Class carries `{ "kind": "open", "label": "시간표 넣기", "screen": "timetable", "hint" }`
     with `note`, the same words as that `hint`. The app draws a meal Plan's offers as the `hint` lines under its words
     (P04 ticket 86); `note` is kept for the apps before them, which draw the note over their buttons.
+  - **Classes left out.** A meal's `input` may carry `skipped`, the ids of the times of the asker's Classes of that day
+    left out of the plan (P05 ticket 54): the planner takes them out of the asker's day, so the meal may use that
+    time, and where the asker sets out from and the next item come from the items left. An id that is none of the
+    asker's Classes that day is dropped from the answer's `input`, and the field is absent for none. Each Plan's
+    `band.skipped` lists them whole as `{ id, startAt, endAt, label }`, in no lane, and the band's range reaches over
+    the time they free, to the next item left or the meal's end. `planMeal` names them with `skipClasses` and puts one
+    back with `attendClasses`, by start (`HH:MM`) or by name; a word that names none of the day's Classes, or several,
+    answers `{ "result": "unknownClass", "unknown", "classes" }` and plans nothing. Those of the conditions on screen
+    stay left out for any meal of the same day.
   - **A meet** (`{ "kind": "meet", "date", "people", "window", "placeId" }`, `gathering/meet-plan.service.ts`): the
     earliest stretch between 09:00 and 22:00, from now or `window.from`, that the asker and the Friends share, at the
     place where they
@@ -2804,7 +2813,9 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       worker reads today to six days ahead, so a week ahead never has one): the card's `noPlan.lines` say
       `11/30(월) 메뉴는 아직 올라오지 않았어요` and `메뉴는 엿새 뒤 날짜까지 볼 수 있어요` (today the first line alone), the
       reason stays `no-menu`, and the model is told the menus are not posted yet, never that nothing is open. `findMenu`
-      and `getMenus` say the same of such a day. A `findMenu` that finds the menu plans the meal for the User alone as
+      and `getMenus` say the same of such a day. `findMenu` takes the meal only when the User names one; with none
+      ("내일 예술계 메뉴") it opens the meal nearest in time, as `planMeal` takes it: today the one being served now or the
+      next, on another day lunch, the other one press away on the app's tabs (P05 ticket 52). A `findMenu` that finds the menu plans the meal for the User alone as
       `planMeal` does; when the Restaurant is one of its Plans, that meal answer is the reply's `answer`, with `opened`
       naming the Plan: the app shows it as that place opened from the answer's list (its menu, when the User arrives,
       the button to make it, and the way back to every place they can eat at), and the model writes nothing (P04

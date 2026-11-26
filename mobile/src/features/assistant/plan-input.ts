@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { MealInput, PlanInput, PlanPerson } from '@/api/assistant-types';
@@ -74,4 +75,15 @@ export function withOrigin(input: PlanInput, placeId: string): PlanInput {
     { kind: 'from' as const, placeId, source: 'asker' as const },
   ];
   return { ...input, people: [{ ...asker, constraints }, ...others] };
+}
+
+// A meal's conditions with that Class back in the plan (P04 ticket 93): without the field once none is left out, so
+// that a main server before the field is sent nothing new. Other conditions, or a Class not left out, are unchanged.
+export function withoutSkipped(input: PlanInput, classId: string): PlanInput {
+  if (input.kind !== 'meal' || !(input.skipped ?? []).includes(classId)) {
+    return input;
+  }
+  const { skipped = [], ...rest } = input;
+  const left = skipped.filter((id) => id !== classId);
+  return left.length === 0 ? rest : { ...rest, skipped: left };
 }

@@ -22,3 +22,38 @@
       forbidden: [getMenus, showOnMap]
     text:
       none: true
+
+# A menu asked with no meal opens the meal nearest in time, with the other one press away on the tabs (P05 ticket 52).
+# On the user's phone (2026-11-26), "내일 예술계 메뉴" was answered in text with getMenus: both meals as lists and when
+# they were collected, nothing opened on the map. Tuesday 2026-11-03 is the next day of the P4 world.
+- id: menu-without-meal-another-day
+  category: menu-answer-view
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 내일 예술계 메뉴
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findMenu]
+      forbidden: [getMenus, showOnMap]
+    args:
+      findMenu: { date: '2026-11-03' }
+    text:
+      none: true
+
+- id: menu-without-meal-today
+  category: menu-answer-view
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 두레미담 메뉴 알려줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findMenu]
+      forbidden: [getMenus, showOnMap]
+    args:
+      findMenu: { date: '2026-11-02' }
+    text:
+      none: true

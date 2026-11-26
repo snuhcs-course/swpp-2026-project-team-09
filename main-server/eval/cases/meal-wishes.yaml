@@ -194,9 +194,12 @@
     text:
       absent: [302동에서, 301동에서]
 
-# A Class the User says is cancelled stays in the plan: nothing leaves a Class out yet, so the one sentence says so
-# (P05 ticket 49). On the user's phone (2026-11-26), "내일 1시 수업 휴강이야. 점심 뭐 먹을까?" was planned before that
-# Class with no word about it. The asker's Tuesday has 데이터베이스 at 11:00–12:15.
+# A Class the User says is cancelled, or that they will skip, is left out of the plan for the conversation (P05 ticket
+# 54, which replaces ticket 49's sentence that it could not be). planMeal names it by its start or its name, and
+# the one sentence says it was left out. On the user's phone (2026-11-26), "내일 1시 수업 휴강이야. 점심 뭐 먹을까?"
+# was planned before that Class. The asker's Tuesday has 데이터베이스 at 11:00–12:15 and 운영체제 at 15:00–16:15,
+# and Monday 컴퓨터구조 09:30, 멀티코어컴퓨팅 11:00, 현대암호학개론 14:00, and 컴퓨터그래픽스 16:00; 김지은 has a
+# Class on Tuesday at 13:00. Written and committed, not run: no model key on this machine.
 - id: meal-wish-class-cancelled
   category: meal-wishes
   world: p4-answer
@@ -209,10 +212,99 @@
       required: [planMeal]
       forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
     args:
-      planMeal: { date: '2026-11-03', meal: lunch }
+      planMeal: { date: '2026-11-03', meal: lunch, skipClasses: ['11:00'] }
     text:
-      mentions: [[반영, 빼지, 그대로, 남아]]
-      absent: [뺐어요, 빼고 골랐]
+      mentions: [[빼고, 뺐, 빼서]]
+      absent: [반영하지 못, 아직]
+
+- id: meal-wish-class-skipped-by-name
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 내일 데이터베이스 째고 점심 먹을래
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    args:
+      planMeal: { date: '2026-11-03', meal: lunch, skipClasses: [데이터베이스] }
+    text:
+      mentions: [[빼고, 뺐, 빼서]]
+
+- id: meal-wish-afternoon-classes-cancelled
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 오늘 오후 수업 다 휴강이래. 점심 뭐 먹지?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    args:
+      planMeal: { date: '2026-11-02', meal: lunch, skipClasses: ['14:00', '16:00'] }
+    text:
+      mentions: [[빼고, 뺐, 빼서]]
+
+# No Class of the asker's starts at 14:00 on Tuesday: planMeal answers unknownClass with the day's Classes, and the
+# reply asks which one they mean.
+- id: meal-wish-class-cancelled-unknown
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 내일 2시 수업 휴강이야. 점심 뭐 먹을까?
+  expect:
+    actions: [TOOL+ASK]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    text:
+      mentions: [[어느, 어떤, 몇 시]]
+
+# Only the asker's own Classes are left out: a Friend's is said to be beyond it, and the meal is planned with the
+# Friend as their Timetable stands.
+- id: meal-wish-friend-class-cancelled
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 지은이도 내일 1시 수업 휴강이래. 같이 점심 먹자
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      allowed: [resolveFriend]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    text:
+      mentions: [[뺄 수 없, 빼지 못, 못 빼]]
+
+# A Class left out comes back when the User says they go after all: the plan on screen keeps the other conditions.
+- id: meal-wish-class-put-back
+  category: meal-wishes
+  world: p4-answer
+  live: true
+  screen: true
+  repeat: 3
+  turns:
+    - user: 내일 11시 수업 휴강이야. 점심 뭐 먹을까?
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planMeal]
+        args:
+          planMeal: { date: '2026-11-03', skipClasses: ['11:00'] }
+    - user: 아 11시 수업 휴강 아니래. 다시 봐 줘
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planMeal]
+          forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+        args:
+          planMeal: { date: '2026-11-03', attendClasses: ['11:00'] }
 
 # A meal with a price ceiling (P05 ticket 53, the design page "밥 조건 두 가지" § 2). planMeal takes the price the User
 # names as maxPrice, per person in won, and the one sentence names it; it replaced the rule of P05 ticket 50, under which
