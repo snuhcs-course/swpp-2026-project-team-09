@@ -172,7 +172,7 @@ describe("a candidate's tag with dishes (P04 ticket 13)", () => {
   });
 });
 
-// Partitions: a dot faded or not, at each ring stage or none, popped or not; a label faded or not, with "메뉴 ›" or
+// Partitions: a dot faded or not, a meal's or not; a label faded or not, with "메뉴 ›" or
 // without, with a note or without (the answer screen's redesign).
 function dot(more: object): MarkerLook {
   return {
@@ -194,10 +194,7 @@ describe("a meal answer's looks that differ only in how they are drawn", () => {
     const looks = [
       dot({}),
       dot({ faded: true }),
-      dot({ ring: 0.2 }),
-      dot({ ring: 0.6 }),
-      dot({ ring: 1, pop: true }),
-      dot({ ring: 1 }),
+      dot({ meal: true }),
       label({}),
       label({ faded: true }),
       label({ action: '메뉴 ›' }),

@@ -15,6 +15,7 @@ import { initials } from './avatar';
 import { MapPin } from './map-pin';
 import { ANSWER_SYMBOL_BOX, CANDIDATE_ROUND, CAPSULE, CAPSULE_EDGE, GAP, RING } from './map-answer-box';
 import { MapAnswerLabel } from './map-answer-label';
+import { RoundNumber } from './round-number';
 import { color, mapText, radius, shadow, space, text } from './tokens';
 
 export { ANSWER_SYMBOL_BOX, answerLabelBox, CAPSULE } from './map-answer-box';
@@ -25,17 +26,14 @@ export type AnswerSymbol =
   // measured at the exact level. `badge`: a "?" (`waiting`) or a "✓" (`accepted`) at the face's upper right; the
   // caller says what it means.
   | { type: 'face'; name: string; dashed: boolean; badge?: FaceBadge; exact?: boolean }
-  // `faded`: drawn pale. `ring`: how far, from 0 to 1, the ring spreading from a pick just chosen has gone, and `pop`
-  // its dot a little larger as it is chosen; left out, none. `meal`: a meal answer's Restaurant, in coral (P04 ticket
-  // 85): the pick solid with a white number, a candidate soft with a coral rim and number; left out, the pick gold and a
-  // candidate navy, as every other answer's.
+  // `faded`: drawn pale. `meal`: a meal answer's Restaurant, in coral (P04 ticket 85): the pick solid with a white
+  // number, a candidate soft with a coral rim and number; left out, the pick gold and a candidate navy, as every other
+  // answer's.
   | {
       type: 'dot';
       role: 'pick' | 'candidate' | 'dropped' | 'next' | 'stop' | 'kept';
       number: number | null;
       faded?: boolean;
-      ring?: number;
-      pop?: boolean;
       meal?: boolean;
     };
 
@@ -68,6 +66,9 @@ export interface AnswerLabel {
   action?: string | null;
   // Drawn pale, as a candidate that does not fit or is far. Left out, not.
   faded?: boolean;
+  // A meal candidate's capsule says a clock time ("17:00"), drawn in gold as every clock time; left out, the walking
+  // minutes in ink (P04 ticket 88).
+  clock?: boolean;
   // A number badge before the title, when the mark's own dot is not drawn.
   number: number | null;
   // How much further than the gap a label at the left or the right stands from the symbol box, in points, so that it
@@ -90,48 +91,34 @@ type DotSymbol = Extract<AnswerSymbol, { type: 'dot' }>;
 
 // A meal answer's other candidate (P04 ticket 85): within the white ring a coral rim, a soft coral ground, and a coral
 // number.
-function MealCandidate({
-  number,
-  pop,
-  testID,
-}: {
-  number: number | null;
-  pop: boolean;
-  testID?: string;
-}): ReactElement {
+function MealCandidate({ number, testID }: { number: number | null; testID?: string }): ReactElement {
   return (
-    <View style={[styles.dot, styles.candidate, styles.mealCandidate, pop && styles.pop]} testID={testID}>
+    <View style={[styles.dot, styles.candidate, styles.mealCandidate]} testID={testID}>
       <View style={styles.mealCandidateGround} testID={partOf(testID, 'ground')}>
-        {number === null ? null : <Text style={styles.mealNumber}>{number}</Text>}
+        {number === null ? null : <RoundNumber inside={MEAL_GROUND} number={number} style={styles.mealNumber} />}
       </View>
     </View>
   );
 }
 
-function Dot({ role, number, ring, pop = false, meal = false, testID }: DotSymbol & { testID?: string }): ReactElement {
+// The size of a dot that may hold a number, by its role.
+const PICK_DOT = 30;
+const DOT_SIZES: Partial<Record<DotSymbol['role'], number>> = { pick: PICK_DOT, candidate: CANDIDATE_ROUND };
+// The inside of a meal candidate's coral round: its size less its white ring and its coral rim.
+const MEAL_RIM = 1.5;
+const MEAL_GROUND = CANDIDATE_ROUND - 2 * RING - 2 * MEAL_RIM;
+
+function Dot({ role, number, meal = false, testID }: DotSymbol & { testID?: string }): ReactElement {
+  if (meal && role === 'candidate') {
+    return <MealCandidate number={number} testID={testID} />;
+  }
+  const inside = (DOT_SIZES[role] ?? CANDIDATE_ROUND) - 2 * RING;
   return (
-    <>
-      {ring === undefined ? null : (
-        <View
-          style={[
-            styles.ring,
-            meal && styles.mealRing,
-            { opacity: 1 - ring, transform: [{ scale: 1 + ring * RING_GROWTH }] },
-          ]}
-          testID={partOf(testID, 'ring')}
-        />
+    <View style={[styles.dot, styles[role], meal && role === 'pick' && styles.mealPick]} testID={testID}>
+      {number === null ? null : (
+        <RoundNumber inside={inside} number={number} style={role === 'pick' ? styles.pickNumber : styles.number} />
       )}
-      {meal && role === 'candidate' ? (
-        <MealCandidate number={number} pop={pop} testID={testID} />
-      ) : (
-        <View
-          style={[styles.dot, styles[role], meal && role === 'pick' && styles.mealPick, pop && styles.pop]}
-          testID={testID}
-        >
-          {number === null ? null : <Text style={role === 'pick' ? styles.pickNumber : styles.number}>{number}</Text>}
-        </View>
-      )}
-    </>
+    </View>
   );
 }
 
@@ -167,7 +154,7 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
 // own, at a spot another mark holds, carries its round inside, beside the spot, or the round alone when its minutes
 // give way (no `title`).
 function MinutesCapsule({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
-  const { number, side, title, faded = false } = label;
+  const { number, side, title, faded = false, clock = false } = label;
   const round =
     number === null ? null : <Dot meal number={number} role="candidate" testID={partOf(testID, 'dot')} type="dot" />;
   if (round !== null && title === '') {
@@ -180,7 +167,7 @@ function MinutesCapsule({ label, testID }: { label: AnswerLabel; testID?: string
       testID={testID}
     >
       <View style={[styles.roundRoom, left ? styles.roomLeft : styles.roomRight]}>{round}</View>
-      <Text numberOfLines={1} style={styles.minutes} testID={partOf(testID, 'minutes')}>
+      <Text numberOfLines={1} style={[styles.minutes, clock && styles.clock]} testID={partOf(testID, 'minutes')}>
         {title}
       </Text>
     </View>
@@ -228,11 +215,7 @@ export function MapAnswerMark({
   );
 }
 
-const PICK_DOT = 30;
-// How much wider than the pick's dot its ring spreads, as a share of the dot.
-const RING_GROWTH = 1.4;
 const CANDIDATE_DOT = CANDIDATE_ROUND;
-const MEAL_RIM = 1.5;
 const SMALL_DOT = 14;
 const NEXT_SQUARE = 18;
 const FACE_BADGE = 14;
@@ -241,15 +224,6 @@ const EXACT_DOT = 11;
 const styles = StyleSheet.create({
   mark: { alignSelf: 'flex-start', alignItems: 'center', gap: GAP },
   faded: { opacity: 0.45 },
-  ring: {
-    position: 'absolute',
-    width: PICK_DOT,
-    height: PICK_DOT,
-    borderRadius: radius.full,
-    borderWidth: RING,
-    borderColor: color.quest,
-  },
-  pop: { transform: [{ scale: 1.2 }] },
   box: { alignItems: 'center', justifyContent: 'center', width: ANSWER_SYMBOL_BOX, height: ANSWER_SYMBOL_BOX },
   face: {
     alignItems: 'center',
@@ -302,14 +276,13 @@ const styles = StyleSheet.create({
   accepted: { backgroundColor: color.friend },
   pickNumber: { ...mapText.smallTitle, color: color.onPrimary },
   mealPick: { backgroundColor: color.meal },
-  mealRing: { borderColor: color.meal },
   // The coral rim is the round's own ground showing around its soft ground.
   mealCandidate: { backgroundColor: color.meal },
   mealCandidateGround: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: CANDIDATE_DOT - 2 * RING - 2 * MEAL_RIM,
-    height: CANDIDATE_DOT - 2 * RING - 2 * MEAL_RIM,
+    width: MEAL_GROUND,
+    height: MEAL_GROUND,
     borderRadius: radius.full,
     backgroundColor: color.mealSoft,
   },
@@ -331,5 +304,6 @@ const styles = StyleSheet.create({
   roomRight: { alignItems: 'flex-start', paddingLeft: (CAPSULE - CANDIDATE_DOT) / 2 - CAPSULE_EDGE },
   roomLeft: { alignItems: 'flex-end', paddingRight: (CAPSULE - CANDIDATE_DOT) / 2 - CAPSULE_EDGE },
   minutes: { ...mapText.smallTitle, color: color.ink },
+  clock: { color: color.quest },
   number: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
 });
