@@ -88,6 +88,8 @@ export interface Draft {
   action?: string | null;
   // A meal candidate that does not fit or is far, drawn pale; left out, not.
   faded?: boolean;
+  // A meal answer's pick or candidate, menus or none: its label in coral (P04 ticket 90); left out, not.
+  coral?: boolean;
   // The number a pick or a candidate carries in its label when its dot is not drawn.
   number: number | null;
   // The sides its label may take in place of its group's; left out, its group's.
@@ -234,6 +236,7 @@ export function unplaced(
           ...(note === null ? {} : { note }),
           ...(action === null ? {} : { action }),
           ...(faded ? { faded } : {}),
+          ...(draft.coral === true ? { meal: true } : {}),
           number: group === 'candidate' || symbol === null ? number : null,
         };
   const { sides = SIDES[group], clearOf, either, always = false, overFaces = false } = draft;

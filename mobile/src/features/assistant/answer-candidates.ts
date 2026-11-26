@@ -94,6 +94,7 @@ export function candidateDraft(
   item: MapScene['places'][number],
   kind: Cuisine | null = null,
   meal = false,
+  coral = false,
 ): Draft {
   const { place, tag } = item;
   const title = tag ?? place.label;
@@ -109,8 +110,9 @@ export function candidateDraft(
   const time = plan === undefined ? null : koreaClock(plan.startAt);
   const sub = menuLine(plan?.menu, kind);
   const said = [time, sub].flatMap((words) => words ?? []);
-  const symbol: AnswerSymbol = { type: 'dot', role: 'candidate', number };
+  const symbol: AnswerSymbol = { type: 'dot', role: 'candidate', number, ...(coral ? { meal: true } : {}) };
   return {
+    ...(coral ? { coral } : {}),
     id: `answer:candidate:${place.label}`,
     name: number === null ? title : [`후보 ${String(number)}`, title, ...said].join(' · '),
     position: { latitude: place.latitude, longitude: place.longitude },

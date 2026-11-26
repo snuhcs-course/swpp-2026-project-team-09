@@ -68,6 +68,9 @@ export interface AnswerLabel {
   action?: string | null;
   // Drawn pale, as a candidate that does not fit or is far. Left out, not.
   faded?: boolean;
+  // A meal answer's pick or candidate, menus or none: its edge and number badge in coral (P04 ticket 90). Left out, its
+  // tone's own colours.
+  meal?: boolean;
   // A number badge before the title, when the mark's own dot is not drawn.
   number: number | null;
   // How much further than the gap a label at the left or the right stands from the symbol box, in points, so that it

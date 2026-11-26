@@ -107,12 +107,14 @@ export interface SceneSetting {
   // The paths its walks were found along and its legs by the shuttle, which a meal Plan's legs are drawn on; left
   // out, none.
   ways?: Ways;
+  // A meal answer's, menus or none: its pick and candidates in coral, as its list (P04 ticket 90). Left out, not.
+  coral?: boolean;
 }
 
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
 
 function placeDraft(
-  { number: pickNumber, plans, day, kind = null, meal = false }: SceneSetting,
+  { number: pickNumber, plans, day, kind = null, meal = false, coral = false }: SceneSetting,
   scene: MapScene,
   item: MapScene['places'][number],
 ): Draft | null {
@@ -123,16 +125,27 @@ function placeDraft(
   if (role === 'pick') {
     const flag = scene.flags.find(({ at, role: flagRole }) => flagRole === 'place' && samePoint(at, position));
     const plan = pickNumber === null ? undefined : plans[pickNumber - 1];
-    const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber };
+    const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber, ...(coral ? { meal: true } : {}) };
+    const tinted = coral ? { coral } : {};
     if (meal && plan !== undefined) {
       const words = mealPickLabel(plan, title, kind);
-      const coral: AnswerSymbol = { ...symbol, meal: true };
-      return { ...base, id: 'answer:pick', group: role, symbol: coral, tone: role, number: pickNumber, ...words };
+      const round: AnswerSymbol = { ...symbol, meal: true };
+      return {
+        ...base,
+        ...tinted,
+        id: 'answer:pick',
+        group: role,
+        symbol: round,
+        tone: role,
+        number: pickNumber,
+        ...words,
+      };
     }
     const line = pickLine(flag === undefined ? null : restOf(title, flag.text), day, plan, kind);
     const name = line === null ? title : `${title} · ${line}`;
     return {
       ...base,
+      ...tinted,
       id: 'answer:pick',
       name,
       group: role,
@@ -143,7 +156,7 @@ function placeDraft(
     };
   }
   if (role === 'candidate') {
-    return candidateDraft(plans, item, kind, meal);
+    return candidateDraft(plans, item, kind, meal, coral);
   }
   if (role === 'stop' || role === 'meeting') {
     return role === 'stop' ? stopDraft(item) : null;
@@ -320,6 +333,7 @@ export function drawingOf(
     kind: kindShown(answer),
     kept: answer.planSet,
     meal: drawsMeal(answer),
+    coral: answer.input.kind === 'meal',
     ...(ways === undefined ? {} : { ways }),
   });
 }

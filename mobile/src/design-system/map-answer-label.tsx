@@ -63,7 +63,7 @@ function LabelWords({ tone, title, line, sub = null, note = null, action = null 
 
 // The label of an answer's mark (`MapAnswerMark`): its words in a tag beside the symbol box.
 export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
-  const { side, tone, line, number, shift, sub = null, note = null } = label;
+  const { side, tone, line, number, shift, sub = null, note = null, meal = false } = label;
   return (
     <View
       style={[
@@ -74,6 +74,7 @@ export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?:
         tone === 'kept' && styles.keptLabel,
         (sub !== null || tone === 'pick') && styles.subLabel,
         tone === 'pick' && note !== null && styles.mealPickLabel,
+        meal && (tone === 'pick' || tone === 'candidate') && styles.mealEdge,
         tone === 'meeting' && styles.meetingLabel,
         tone === 'late' && styles.lateLabel,
         tone === 'shuttle' && styles.shuttleLabel,
@@ -83,8 +84,8 @@ export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?:
       testID={testID}
     >
       {number === null ? null : (
-        <View style={[styles.badge, tone === 'pick' ? pickBadgeOf(note) : styles.candidateBadge]}>
-          <Text style={styles.number}>{number}</Text>
+        <View style={[styles.badge, tone === 'pick' ? pickBadgeOf(note, meal) : candidateBadgeOf(meal)]}>
+          <Text style={[styles.number, meal && tone !== 'pick' && styles.mealNumber]}>{number}</Text>
         </View>
       )}
       <LabelWords {...label} />
@@ -142,6 +143,10 @@ const styles = StyleSheet.create({
   stopLine: { color: color.svcShuttle },
   pickBadge: { backgroundColor: color.quest },
   mealPickBadge: { backgroundColor: color.meal },
+  // A meal answer's candidate's name tag (P04 ticket 90): its number as the candidate's soft coral round.
+  mealEdge: { borderColor: color.meal },
+  mealCandidateBadge: { borderWidth: 1.5, borderColor: color.meal, backgroundColor: color.mealSoft },
+  mealNumber: { color: color.meal },
   candidateBadge: { backgroundColor: color.snuBlue },
   number: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
   action: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
@@ -155,8 +160,13 @@ const styles = StyleSheet.create({
 });
 
 // A pick's number badge, when its dot is not drawn: a meal pick's coral (P04 ticket 85), any other gold.
-function pickBadgeOf(note: string | null): ViewStyle {
-  return note === null ? styles.pickBadge : styles.mealPickBadge;
+function pickBadgeOf(note: string | null, meal: boolean): ViewStyle {
+  return note === null && !meal ? styles.pickBadge : styles.mealPickBadge;
+}
+
+// A candidate's number badge: a meal's soft coral (P04 ticket 90), any other navy.
+function candidateBadgeOf(meal: boolean): ViewStyle {
+  return meal ? styles.mealCandidateBadge : styles.candidateBadge;
 }
 
 const LEG_LABELS: Partial<Record<AnswerLabel['tone'], ViewStyle>> = {
