@@ -316,7 +316,7 @@ export const eventText = {
   // The day of the month in the date column, and the month and day name under it.
   day: { fontFamily: font.bold, fontSize: 22, lineHeight: 28, letterSpacing: -0.44 },
   dayLine: { fontFamily: font.medium, fontSize: 12, lineHeight: 16 },
-  // The source over the title.
+  // The source over the 관련 행사 picker's title.
   source: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
   title: { fontFamily: font.bold, fontSize: 16, lineHeight: 23, letterSpacing: -0.24 },
   // The time and the place.
@@ -327,8 +327,8 @@ export const eventText = {
   // "모집 중인 파티 {n}", and "함께 갈 파티 찾기".
   party: { fontFamily: font.bold, fontSize: 13, lineHeight: 18 },
   partyFind: { fontFamily: font.semiBold, fontSize: 13, lineHeight: 18 },
-  // The detail sheet, whose title is `text.titleLg`: a row's key and value, and the description.
-  key: { fontFamily: font.medium, fontSize: 14, lineHeight: 22 },
-  value: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 22 },
-  description: { fontFamily: font.regular, fontSize: 15, lineHeight: 23 },
+  // The detail sheet: its title, the time's and the place's value, and the description.
+  sheetTitle: { fontFamily: font.bold, fontSize: 21, lineHeight: 29, letterSpacing: -0.315 },
+  value: { fontFamily: font.semiBold, fontSize: 14, lineHeight: 21 },
+  description: { fontFamily: font.regular, fontSize: 14, lineHeight: 22 },
 } as const satisfies Record<string, TextStyle>;

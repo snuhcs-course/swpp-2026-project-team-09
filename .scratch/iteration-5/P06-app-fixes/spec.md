@@ -1,6 +1,6 @@
 # P06: The app's fixes outside the Assistant
 
-Status: ready-for-agent (14, 15; 02, 03, 06, 07, 08, 09, 10, 11, 12 and 13 are done; 01, 04 and 05 are held, see Solution)
+Status: ready-for-agent (15; 02, 03, 06, 07, 08, 09, 10, 11, 12, 13 and 14 are done; 01, 04 and 05 are held, see Solution)
 
 ## Problem Statement
 
