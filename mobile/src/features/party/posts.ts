@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by fyoon46
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { MemberFace, QuestPhoto, ShownQuest, ShownRecruitingQuest } from '@/api/quest-parts-types';
@@ -177,8 +178,14 @@ function newestFirst(one: PostView, other: PostView): number {
   return other.createdAt.localeCompare(one.createdAt);
 }
 
-// A board's posts: the recruiting Quests of others, and the User's own Open or Approval Quests on it with a Sub
-// Quest ahead, which the recruiting list leaves out. The newest first.
+// A post another User may still enter: its Holders are fewer than its capacity. The lists of recruiting posts leave the
+// rest out, so that nobody presses 참여하기 to hear "자리가 다 찼어요".
+export function hasRoom(post: Pick<PostView, 'holders' | 'capacity'>): boolean {
+  return post.holders < post.capacity;
+}
+
+// A board's posts: the recruiting Quests of others with a place left, and the User's own Open or Approval Quests on it
+// with a Sub Quest ahead, which the recruiting list leaves out. The newest first.
 export function boardPosts(
   board: Board,
   entries: readonly ShownRecruitingQuest[],
@@ -192,7 +199,8 @@ export function boardPosts(
     .flatMap((quest) => questPost(quest, meId) ?? []);
   const others = entries
     .filter((entry) => entry.board === board)
-    .map((entry) => entryPost(entry, requests, [], removedIds));
+    .map((entry) => entryPost(entry, requests, [], removedIds))
+    .filter((post) => hasRoom(post));
   return [...own, ...others].toSorted(newestFirst);
 }
 
