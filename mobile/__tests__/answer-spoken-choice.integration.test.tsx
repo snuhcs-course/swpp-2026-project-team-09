@@ -111,7 +111,7 @@ describe('A plan of the meal answer chosen in words', () => {
   it("opens the reply's own new answer at the plan it chose", async () => {
     const user = await openMain();
     await ask(user, '점심 뭐 먹지');
-    const reordered = [...CHOOSABLE.answer.plans].reverse();
+    const reordered = CHOOSABLE.answer.plans.toReversed();
     const [, chosen] = reordered;
     const answer = { ...CHOOSABLE.answer, plans: reordered };
     const body = { ...CHOOSABLE, text: `${chosen?.id ?? ''}으로 골랐어요.`, answer, select: { planId: chosen?.id } };
@@ -131,12 +131,11 @@ describe('A plan of the meal answer chosen in words', () => {
 // answered.
 describe('A follow-up to a main server before ticket 51', () => {
   it('sends no planIds and is answered', async () => {
-    server.on('POST /assistant/messages', ({ body }) => {
-      const context = (body as { context?: Record<string, unknown> }).context ?? {};
-      return 'planIds' in context
+    server.on('POST /assistant/messages', ({ body }) =>
+      JSON.stringify(body).includes('"planIds"')
         ? { status: 400, body: { statusCode: 400, message: 'Unrecognized key: "planIds"' } }
-        : { status: 200, body: MEAL_ANSWER_REPLY, afterMs: 500 };
-    });
+        : { status: 200, body: MEAL_ANSWER_REPLY, afterMs: 500 },
+    );
     const user = await openMain();
     await ask(user, '점심 뭐 먹지');
 
