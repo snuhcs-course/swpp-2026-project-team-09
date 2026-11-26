@@ -2455,25 +2455,30 @@ Anthropic API as the AI's key says
   answer that says it, never to an older main server.
 
   An app that sends `"clientCapabilities": ["study-plan"]` will get "공부할 자리 있어?" answered on the map, the meal
-  answer's way (P10).
+  answer's way (P10), and one that sends `study-group` the study answer together, a 관정 group study room at
+  everyone's free time (P10 ticket 07). Each works without the other.
   - Its input is a `PlanInput` of kind `study`:
     - `date`;
     - `what`: quiet, group, pc or any;
     - `people`: the asker, and the Friends the time card's "+ 같이" adds, 1 to 8;
+    - `together`: studying together, the group study room answer even with the asker alone;
     - `window`;
     - `area` for 근처;
-    - `minutes`: with Friends, the length asked;
+    - `minutes`: together, the length asked;
     - `chosen`: the seat space or room kind the User chose, kept across adding and removing Friends.
   - Each of its Plans carries `study` (`dto/study-plan.dto.ts`).
     - Alone, `study` holds the building's spaces that fit, with their hours and whether each is open or not known,
       관정관's seat to book, and `liveSeats`.
-    - With Friends, the one plan is 관정관's, and `study.group` holds:
-      - the 관정 group study room kind, and every kind with whether it fits the head count;
-      - how many more people are needed;
-      - the book key that "동의 요청 보내기" posts to `POST /library/room-requests`;
+    - Together (`together`, or Friends in `people`), the one plan is 관정관's, and `study.group` holds:
+      - the 관정 group study room kind, and every kind, 2층 first, with whether it fits the head count ("6명부터",
+        "6명까지");
+      - how many more people are needed, 3 for the asker alone;
+      - the book key that "동의 요청 보내기" posts to `POST /library/room-requests`, null while more are needed;
       - 사용 용도, when the window opens, and the sent request's state.
   - The request's context and `POST /assistant/answers` take a `study` input. The recalculation answers one alone
-    again (`lookup/study-plan*.ts`, P10 ticket 03); one with Friends is refused with 422 until P10 ticket 07.
+    again (`lookup/study-plan*.ts`, P10 ticket 03) for an app that says `study-plan`, and one together
+    (`lookup/study-group*.ts`, ticket 07) for an app that says `study-group`; otherwise 422. A day together may be up
+    to 14 days ahead, past the booking window.
     - One plan per building holding a space of the kind asked that the User may use, within `area` when it is set.
     - The User is ready at `window.from`, at 09:00 of another day asked without a time, or now. Where they are counts
       only when they set out now.
@@ -2486,7 +2491,21 @@ Anthropic API as the AI's key says
       closed then is in `closed` ("09:00에 열어요", "오늘 23:00에 닫았어요").
     - With no plan, `noPlan` says why: nothing of the kind in the area, all of it open only to others, no time before
       the next item, or all of it closed, with the building that opens first.
-  - The chat's tool is `planStudy` (P10 ticket 04, below). An app without `study-plan` gets nothing new.
+    - Alone, each plan's time card lists the asker's Friends in `band.others`, with their busy time and walk, for
+      "+ 같이".
+  - Together, the answer is proposeStudyRoom's pick, read from the input:
+    - The people are checked as a meal's are: the asker first, only their Friends, no one twice, constraints the
+      asker's, known Places (400). `notBefore` and `leaveBy` bound a person's day; `from` is where they set out from.
+    - `pickStudyTime` picks over everyone's items, the room kind's hours within `window`, in its steps, with the walks
+      to and from Place 62-1, for `minutes`, else `window`'s span, else 180 minutes. `arrivalsOf` gives each person's
+      arrival, which `parts`, the lines and `basis` say.
+    - The room kind is `studyRoomFor`'s, the smallest that books for fewer than 4, or `chosen.roomSpaceId` while it
+      fits. The key is checked by `checkBooking` and ends in `:wait` past the booking window, with `opens`.
+    - `band.lanes` holds everyone's busy time and `band.others` the asker's other Friends.
+    - `noPlan` is `no-shared-time` when no start keeps everyone for 30 minutes, and `no-fit` with today's refusal for
+      more than 8 people, a length the room does not take, or a day it cannot be booked or waited for.
+  - The chat's tools are `planStudy` (P10 ticket 04) and `planStudyGroup` (ticket 07), below. An app with neither
+    capability gets nothing new.
 
   A reply carries `clears: true` when the User asked for another plan, or something else, and nothing could be drawn
   for it: `planMeal` for a day past or more than a week ahead, for breakfast, or for a meal over for today;
@@ -2924,6 +2943,20 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
         or any), and "예약해 줘" books it through the library tools; 관정관's plan alone carries the same `study.book`.
       - A reply with no words of the model's says the first plan and why ("열려 있는 곳 중 가장 가까운 공대
         신양학술정보관을 추천해요.", `lookup/study-plan-words.ts`).
+    - `planStudyGroup(friendIds?, date?, firstDay? + lastDay?, from?, until?, minutes?)` and `STUDY_GROUP_RULES` join
+      for an app that sends both `answer` and `study-group` (`lookup/study-group-tools.ts`), in the place of
+      `proposeStudyRoom` and its rule. 같이, 친구랑, 스터디, 조모임 or 팀플 with a place or a time to study resolves
+      each Friend named, then calls it; named nobody, the plan is the asker's alone with three more needed, and the app
+      opens its picking of Friends from it.
+      - Its days are the one named, a period of at most 7 days from today on, or the days a room can be booked now; it
+        plans the best day and tells the model the other days' best times.
+      - It tells the model the room, the day and time, each person's stay, `moreNeeded` and when the window opens, with
+        Friends' names in delimiters, and the one sentence ("네 명이 모두 비는 내일 15:00에 관정 4층 6인실을
+        추천해요.", or "그룹스터디룸은 네 명부터예요. 한 명만 더 부르면 돼요."), which a reply with no words says too.
+      - The library rules drop the proposeStudyRoom rule and leave studying together to `planStudyGroup`
+        (`LIBRARY_GROUP_RULES`, or `LIBRARY_STUDY_GROUP_RULES` with `study-plan` too, whose study rules then name
+        "혼자 공부할 곳" in the place of "같이 공부할 곳"). Alone, a `study-group` app keeps the library's seat path, and
+        one with both `planStudy`. Without `study-group`, every prompt and tool is unchanged.
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
       puts those cards first, soonest first across kinds, by the start judged, whatever order the presenters were called
       in. Other cards stay after them, and a run that did not call the tool keeps its cards as they were.
@@ -2951,8 +2984,8 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
     say "맞는 곳이 N곳이라 첫 곳으로 채웠어요", and the phone's room chip lets the User choose another; several rooms
     are still asked about. The card's space carries the
     catalogue's `kind`, by which the phone groups the seat spaces of a floor.
-  - **A study group's time** (P05, `library/propose-study-room.ts`), for an app that draws answers only: the
-    answer-drawing rules have the model call `proposeStudyRoom(friendIds, date? | from? + to?, minutes?)` for a study
+  - **A study group's time** (P05, `library/propose-study-room.ts`), for an app that draws answers and does not say
+    `study-group`: the answer-drawing rules have the model call `proposeStudyRoom(friendIds, date? | from? + to?, minutes?)` for a study
     with Friends and no start ("민수, 지은, 서준이랑 이번 주에 스터디"), after `resolveFriend`. The days are the one
     named, a period of at most 7 days from today on, or the days a room can be booked now; each must be bookable or
     waitable (at most 14 days ahead). The room is the smallest group study room size whose minimum and maximum hold the
