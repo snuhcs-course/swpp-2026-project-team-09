@@ -7,6 +7,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -34,7 +35,7 @@ import { agoWords } from '@/features/quests/room-adapter';
 import { REMOVED_CAPTION } from '@/features/quests/refusals';
 import { type Ask, ConfirmSheet } from '../room/confirm-sheet';
 import { openPost } from './post-card';
-import { type PartyActions, showFind, usePartyActions } from './use-party-actions';
+import { type PartyActions, showFind, usePartyActions, withdrawAsk } from './use-party-actions';
 
 // `{when} · {where} · {names} 함께`, of what the invitation carries: the server build has none of the three yet, and
 // then the card counts the Holders.
@@ -122,16 +123,6 @@ function SentRequestRow({
   );
 }
 
-function withdrawAsk({ id, quest }: MyJoinRequest, actions: PartyActions): Ask {
-  return {
-    title: `‘${quest.title}’ 참여 신청을 취소할까요?`,
-    body: '파티장에게 보낸 신청이 사라져요.',
-    confirm: '신청 취소',
-    danger: true,
-    onConfirm: () => void actions.withdraw(id, quest.id),
-  };
-}
-
 // `보낸 신청`: the User's waiting requests to join, the newest first, beside the invitations received.
 function SentRequests({ actions }: { actions: PartyActions }): ReactElement {
   const { data: requests, isPending, refetch } = useSentRequests();
@@ -156,7 +147,12 @@ function SentRequests({ actions }: { actions: PartyActions }): ReactElement {
         <SentRequestRow
           key={request.id}
           onWithdraw={() => {
-            setAsk(withdrawAsk(request, actions));
+            setAsk(
+              withdrawAsk(
+                { requestId: request.id, questId: request.quest.id, title: request.quest.title },
+                actions.withdraw,
+              ),
+            );
           }}
           removed={removedIds.includes(request.quest.id)}
           request={request}

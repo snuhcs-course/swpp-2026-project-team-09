@@ -62,6 +62,8 @@ interface PostCardProps {
   onJoin: (post: PostView) => void;
   // `관심 없음`; left out, the card has no such button.
   onHide?: (post: PostView) => void;
+  // `신청 취소`, in place of `참여 신청` once the User's request waits. Left out, the card shows `참여 신청` still.
+  onWithdraw?: (post: PostView, requestId: string) => void;
   // Opens the post, from a press of the card or of its title. Left out, the title alone opens it with `openPost`.
   onOpen?: (post: PostView) => void;
   // What its owner adds under the time and the place.
@@ -97,7 +99,7 @@ function Card({ post, onOpen, children }: CardProps): ReactElement {
 
 // A card of 찾기's 모집 중인 파티: the Global Event's badge when there is one, the title over "when · where" beside the
 // photo, the members' faces with "3/8명" at the end, `관심 없음` and `참여하기`.
-export function PostCard({ post, onJoin, onHide, onOpen, children }: PostCardProps): ReactElement {
+export function PostCard({ post, onJoin, onHide, onWithdraw, onOpen, children }: PostCardProps): ReactElement {
   const open = (): void => {
     if (onOpen === undefined) {
       openPost(post.questId);
@@ -134,12 +136,18 @@ export function PostCard({ post, onJoin, onHide, onOpen, children }: PostCardPro
         </Text>
         <Fill words={post.fill} />
       </View>
-      <CardButtons onHide={onHide} onJoin={onJoin} post={post} />
+      <CardButtons onHide={onHide} onJoin={onJoin} onWithdraw={onWithdraw} post={post} />
     </Card>
   );
 }
 
-function CardButtons({ post, onJoin, onHide }: Omit<PostCardProps, 'onOpen' | 'children'>): ReactElement {
+// The request of the User's that waits on the post, or null.
+function waitingRequest({ role }: PostView): string | null {
+  return role.kind === 'approval' ? role.requestId : null;
+}
+
+function CardButtons({ post, onJoin, onHide, onWithdraw }: Omit<PostCardProps, 'onOpen' | 'children'>): ReactElement {
+  const requestId = onWithdraw === undefined ? null : waitingRequest(post);
   return (
     <View style={styles.buttons}>
       {onHide === undefined ? null : (
@@ -154,14 +162,27 @@ function CardButtons({ post, onJoin, onHide }: Omit<PostCardProps, 'onOpen' | 'c
         </Button>
       )}
       <View style={styles.join}>
-        <Button
-          full
-          onPress={() => {
-            onJoin(post);
-          }}
-        >
-          {joinLabel(post)}
-        </Button>
+        {requestId === null ? (
+          <Button
+            full
+            onPress={() => {
+              onJoin(post);
+            }}
+          >
+            {joinLabel(post)}
+          </Button>
+        ) : (
+          <Button
+            full
+            label={`${post.title} 신청 취소`}
+            onPress={() => {
+              onWithdraw?.(post, requestId);
+            }}
+            variant="secondary"
+          >
+            신청 취소
+          </Button>
+        )}
       </View>
     </View>
   );
