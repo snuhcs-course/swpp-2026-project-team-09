@@ -13,12 +13,12 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { initials } from './avatar';
 import { MapPin } from './map-pin';
-import { ANSWER_SYMBOL_BOX, CANDIDATE_ROUND, CAPSULE, CAPSULE_EDGE, GAP, RING } from './map-answer-box';
+import { ANSWER_SYMBOL_BOX, CANDIDATE_ROUND, CAPSULE, CAPSULE_EDGE, GAP, MEAL_NUMBER, RING } from './map-answer-box';
 import { MapAnswerLabel } from './map-answer-label';
 import { RoundNumber } from './round-number';
 import { color, mapText, radius, shadow, space, text } from './tokens';
 
-export { ANSWER_SYMBOL_BOX, answerLabelBox, CAPSULE } from './map-answer-box';
+export { ANSWER_SYMBOL_BOX, answerLabelBox, CAPSULE, MEAL_NUMBER } from './map-answer-box';
 
 export type AnswerSymbol =
   | { type: 'me' }
@@ -105,10 +105,9 @@ function MealCandidate({ number, testID }: { number: number | null; testID?: str
 // The size of a dot that may hold a number, by its role.
 const PICK_DOT = 30;
 const DOT_SIZES: Partial<Record<DotSymbol['role'], number>> = { pick: PICK_DOT, candidate: CANDIDATE_ROUND };
-// The inside of a meal candidate's coral round: its size less its coral rim; its number's size.
+// The inside of a meal candidate's coral round: its size less its coral rim.
 const MEAL_RIM = 1.5;
 const MEAL_INSIDE = CANDIDATE_ROUND - 2 * MEAL_RIM;
-const MEAL_NUMBER = 13;
 
 function Dot({ role, number, meal = false, testID }: DotSymbol & { testID?: string }): ReactElement {
   if (meal && role === 'candidate') {

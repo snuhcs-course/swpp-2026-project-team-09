@@ -6,7 +6,10 @@
 
 import { render, screen } from '@testing-library/react-native';
 
-import { type AnswerLabel, color, MapAnswerMark, shadow } from '@/design-system';
+import { MEAL_ANSWER_MENUS } from '@/api/mock/data/meal-answer-menus';
+import { type AnswerLabel, color, font, MapAnswerMark, shadow } from '@/design-system';
+import { MealList } from '@/screens/main/answer/meal-list';
+import { ignoreMark } from '@/screens/main/answer-presses';
 
 // A meal candidate's numbered round (P04 ticket 91, the user's words on his phone): it read as three circles, a white
 // ring with its shadow, the coral rim, and the soft ground. The coral rim is now its outside edge, and the round and its
@@ -76,5 +79,26 @@ describe('MapAnswerMark: the rounds that keep their white ring', () => {
       backgroundColor: ground,
       boxShadow: shadow.dot,
     });
+  });
+});
+
+// Partitions: the chosen row's badge and another row's, against the map's round. Expected values: the orchestrator's
+// addition to the ticket, the list's number at the map's size and weight so that the two read as the same mark.
+describe("the meal list's badge number", () => {
+  it("is the size and weight of the number in the map's round, chosen or not", async () => {
+    const shown = { index: 0, openMenu: ignoreMark, chooseKind: ignoreMark };
+    await render(<MealList answer={MEAL_ANSWER_MENUS} busy={false} shown={shown} />);
+
+    for (const digits of ['1', '3']) {
+      expect(screen.getByText(digits)).toHaveStyle({ fontSize: NUMBER_SIZE, fontFamily: font.bold });
+    }
+  });
+
+  it("matches the map's round", async () => {
+    await render(
+      <MapAnswerMark label={null} symbol={{ type: 'dot', role: 'candidate', number: 3, meal: true }} testID="m" />,
+    );
+
+    expect(screen.getByText('3')).toHaveStyle({ fontSize: NUMBER_SIZE, fontFamily: font.bold });
   });
 });

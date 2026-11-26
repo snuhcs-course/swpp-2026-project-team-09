@@ -10,7 +10,7 @@
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { AnswerReply, Cuisine, Plan } from '@/api/assistant-types';
-import { color, font, radius, RoundNumber, space, text } from '@/design-system';
+import { color, font, MEAL_NUMBER, radius, RoundNumber, space, text } from '@/design-system';
 import { addedWalk, fadedPlan, travelWords } from '@/features/assistant/answer-walks';
 import { kindShown, serves } from '@/features/assistant/meal-kinds';
 import { dishWords, priceWords } from '@/features/assistant/meal-menus';
@@ -324,7 +324,8 @@ const styles = StyleSheet.create({
   heading: { ...text.caption, marginTop: space[2], color: color.inkMuted },
   // On the list's left edge, above the kinds.
   order: { ...text.caption, color: color.inkMuted },
-  number: { ...text.micro, color: color.meal },
+  // The map's round's number, so that the two read as the same mark (P04 ticket 91).
+  number: { fontFamily: font.bold, fontSize: MEAL_NUMBER, color: color.meal },
   middle: { flex: 1, gap: 2 },
   name: { ...text.body, fontFamily: font.bold, color: color.ink },
   // The way this choice adds in ink, as the name; gold is for clock times alone (P04 ticket 85).

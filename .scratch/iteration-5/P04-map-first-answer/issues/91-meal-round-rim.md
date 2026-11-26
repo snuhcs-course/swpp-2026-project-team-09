@@ -22,7 +22,7 @@ The user's words: keep the coral rim, drop the extra outer ring, and give its ro
 - A bare round on the map relies on its coral rim alone to stand off the pale ground and the path lines. This was checked on the emulator at font scale 1.0 and 1.3.
 - The chosen round keeps its white ring. It is one solid coral disc inside a single white edge, with no rim, so it does not read as a double edge.
 - Every other answer's candidate keeps its white ring around a navy fill.
-- The meal list's badges are left as they are. They have no outer ring, and at 22 points they are still larger than the map's round. Their number is 11 points against the map's 13.
+- The meal list's badges keep their size: no outer ring, 22 points across, larger than the map's round. Their number goes from 11 points to the map's 13 at the map's weight, so the two read as the same mark (the orchestrator's addition). One constant, `MEAL_NUMBER`, holds the size for both.
 - Mark pictures are made at run time and named by role, number, and `meal`. The name stays the same.
 
 ## Acceptance criteria
@@ -30,4 +30,5 @@ The user's words: keep the coral rim, drop the extra outer ring, and give its ro
 - [x] A meal candidate's round, alone or in its capsule: 20 points across, a coral rim of 1.5, a soft ground, no white ring, no shadow.
 - [x] Its number fills the 17-point inside at 13 points.
 - [x] The chosen meal round and another answer's candidate keep their white ring.
+- [x] The meal list's badge number is the map's: 13 points, bold.
 - [x] Emulator screens at font scale 1.0 and 1.3, with a bare round over a path line.

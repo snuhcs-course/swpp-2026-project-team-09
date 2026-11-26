@@ -49,6 +49,7 @@ export {
   type LabelSide,
   type LegTone,
   MapAnswerMark,
+  MEAL_NUMBER,
 } from './map-answer';
 export { MapPerson, type PersonTone } from './map-person';
 export { RoundNumber } from './round-number';
