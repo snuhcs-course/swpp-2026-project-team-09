@@ -5,6 +5,7 @@
  * 2026-10-03  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by TaeHyun79
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { load } from 'cheerio';
@@ -28,15 +29,20 @@ export function parseEventListPage(html: string, filter: ListFilter): ListedPost
   if ($('input[name="df"]').val() !== filter.from || $('input[name="dt"]').val() !== filter.to) {
     throw new Error(`The page is not the events list from ${filter.from} to ${filter.to}`);
   }
-  return items.toArray().map((item) => {
+  return items.toArray().flatMap((item) => {
     const postNumber = /[?&]bbsidx=(\d+)/u.exec($(item).attr('href') ?? '')?.[1];
     if (postNumber === undefined) {
+      // A post that links out of the board opens in a new window and has no page here to read. A page whose posts all
+      // link out would read as the end of the list; none has been seen.
+      if ($(item).attr('target') === '_blank') {
+        return [];
+      }
       throw new Error('A post of the events list has no number');
     }
     const title = clean($(item).find('.title').text());
     if (title === '') {
       throw new Error('A post of the events list has no title');
     }
-    return { postNumber: Number(postNumber), title };
+    return [{ postNumber: Number(postNumber), title }];
   });
 }

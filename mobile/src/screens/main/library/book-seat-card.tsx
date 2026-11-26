@@ -8,6 +8,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, useEffect } from 'react';
@@ -17,7 +18,7 @@ import { bookingTitle } from '@/features/assistant/booking-scene';
 import { seatWords } from '@/library/cards/bookings';
 import { whenWords } from '@/library/cards/times';
 import type { Slot } from '@/library/cards/payloads';
-import { chooseSeat, freeSeats } from '@/library/cards/seats';
+import { chooseSeat, freeSeatCount } from '@/library/cards/seats';
 import { lengthWords, liveSlot, sameSlot } from '@/library/cards/slot-band';
 import type { LibrarySeat } from '@/library/replies';
 import { CardBox, FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
@@ -108,21 +109,14 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
   const seats = loaded.state === 'ready' ? loaded.value : [];
   const seat = chooseSeat(seats, named);
   const searching = useFullRoomSwap(room, props.space, loaded.state === 'ready' && seat === null);
-  // While the rooms are listed no seat is offered, so the button beside the input does not book one out of sight.
-  const told = {
-    place,
-    seat: room.listing ? null : seat,
-    loaded,
-    write,
-    logIn,
-    shown,
-    choosing: room.listing || searching,
-  };
+  // While the rooms are listed the map keeps the seat on screen, and the button beside the input stays disabled, so that
+  // no seat is booked out of sight (P01 tickets 03 and 08).
+  const told = { place, seat, loaded, write, logIn, shown, choosing: room.listing || searching };
   const onMap = useSeatOnMap(actions.onMap?.(place) ?? null, told);
   const mapped = actions.bandOnBar?.(place) === true;
   const offer = { ...props, space: shown, seats, choose: setNamed, write, close, undo: room.undo, ...onMap };
   const looking = loaded.state === 'loading' || searching;
-  const free = loaded.state === 'ready' && !searching ? freeSeats(seats).length : null;
+  const free = loaded.state === 'ready' && !searching ? freeSeatCount(seats) : null;
   const line = looking || (seat !== null && loaded.state === 'ready');
   return (
     <>
@@ -204,7 +198,7 @@ function SeatRest(
       {/* Raised while no seat is offered yet, the card still holds the site's notes (P01 ticket 06). */}
       {docked || !noSeat ? null : <Notes notes={props.card.notes.filter((note) => !note.includes('좌석배정기'))} />}
       {room.chip === null || docked ? null : (
-        <RoomWords free={free} full={room.full} rooms={room.counting.rooms} shown={room.shown} />
+        <RoomWords counting={room.counting} free={free} full={room.full} shown={room.shown} />
       )}
       {looking ? <Said>빈 자리를 찾고 있어요</Said> : null}
       {children}

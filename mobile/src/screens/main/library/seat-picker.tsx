@@ -5,6 +5,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -14,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LibrarySpace } from '@/api/assistant-types';
 import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
 import { bookingTitle } from '@/features/assistant/booking-scene';
-import { SEAT_BOX, freeSeats } from '@/library/cards/seats';
+import { SEAT_BOX, freeSeatCount } from '@/library/cards/seats';
 import { PICTURE_HEIGHT, type Point, pictureSize, type Size, ZOOM_MOST } from '@/library/cards/seat-zoom';
 import type { LibrarySeat } from '@/library/replies';
 import { CHOSEN_LOOK, SEAT_LOOK, SeatMap } from './seat-map';
@@ -180,7 +181,7 @@ function Head({ space: shown, seats, onClose }: Pick<SeatPickerProps, 'space' | 
         <Text accessibilityRole="header" style={styles.title}>
           {`${bookingTitle(shown)} 좌석 현황`}
         </Text>
-        <Text style={styles.sub}>{`빈 자리 ${String(freeSeats(seats).length)}석 / ${String(seats.length)}석`}</Text>
+        <Text style={styles.sub}>{`빈 자리 ${String(freeSeatCount(seats))}석 / ${String(seats.length)}석`}</Text>
       </View>
       {/* A card over the map closes by ✕ at its top right, and by Android's back (P04 ticket 53). */}
       <Pressable accessibilityLabel="좌석 현황 닫기" accessibilityRole="button" onPress={onClose} style={styles.close}>

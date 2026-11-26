@@ -33,3 +33,8 @@ The AI input takes no words written into it while the User is not in it:
 Built in PR #613.
 
 What the guard does not cover: an autofill that lands while the field is focused, for example with the keyboard up right after the login. If it comes back that way, the next step is native, a config plugin that marks the field `IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS` on its parent. That would need a native Release.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 20 minutes (an estimate), in one session, from 21:45 KST. The turns were shared with the map of the 관정 library calls (P01 ticket 08).
+- Tokens, for those shared turns: 110 input, 39,359 output; cache reads 42,277,124, cache writes 66,089. The subagents of those turns read the library calls and are counted under P01 ticket 08.
