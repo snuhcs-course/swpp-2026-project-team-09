@@ -40,7 +40,9 @@ is never used here.
      value, each action's `_requested` and `_completed` from the app, and the main server's `_completed` with
      `source: server` for the same User id; no IP address on any event, and no property outside the spec's table and
      PostHog's own device and OS;
-   - with a second account that does not tick the item: nothing arrives from it, from the app or the main server.
+   - with a second account that does not tick the item: nothing arrives from it, from the app or the main server;
+   - on the first account, turn 내 정보's "사용 기록 보내기" off, send the Assistant a message and open two screens:
+     nothing more arrives, from the app or the main server; turn it on again and the next events arrive.
 8. **iOS** is ticket 08's owner's: when an iOS build is next made, the same check on an iPhone is written there.
 
 ## Done when
@@ -49,6 +51,6 @@ is never used here.
 - [ ] The variable and the parameter are in place.
 - [ ] Step 7, with what was seen, is written under Comments, with a screenshot of one event that shows its
       properties and no IP address (no token in it).
-- [ ] The account that did not tick the item sent nothing.
+- [ ] The account that did not tick the item sent nothing, and the first sent nothing while its switch was off.
 
 ## Comments

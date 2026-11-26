@@ -45,7 +45,8 @@ nothing for a User until ticket 11's screen has recorded the usage choice.
   `friendship_creation_completed` (`how`), each with `source: 'server'` and the User id as `distinctId`. It:
   - is called after the transaction has committed, never inside it, and is not awaited by the request;
   - reads the account's consent with ticket 10's rule and sends nothing unless it holds `CONSENT_VERSION` with usage
-    chosen; a failed read drops the event;
+    chosen; it reads it again for each event, with no copy kept, so the switch in 내 정보 holds from the next event; a
+    failed read drops the event;
   - drops the event and logs one warning on a failure or a timeout of PostHog, naming the error's type and never the
     token or the error's message; the User's answer is as it would have been without it.
 - **The four closing stages**, at the places above: the reply when the Assistant answers 200; a 파티 made with the
@@ -74,7 +75,8 @@ nothing for a User until ticket 11's screen has recorded the usage choice.
       server with its database and a stand-in for PostHog's client.)
 - [ ] `attend` that finds the User's existing Quest, a Plan taken alone, and the admin site's befriending send nothing.
       (Integration tests.)
-- [ ] A User who chose no, or whose account holds no version, sends nothing. (Integration test.)
+- [ ] A User who chose no, whose account holds no version, or who turned the switch off (`PUT /users/me/usage-consent`
+      with false) sends nothing from the next event on; turned on again, events are sent again. (Integration test.)
 - [ ] A PostHog that throws, or does not answer, leaves the request's answer as it was, and the warning holds no token.
       (Integration test with the stand-in; a test on the captured log.)
 - [ ] The application's close flushes the client. (Unit test.)

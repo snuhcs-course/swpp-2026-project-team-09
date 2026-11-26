@@ -71,7 +71,7 @@ Native files: none. Releases: an app over-the-air update.
 - [ ] A seat booked sends `seat_booking_requested` then `seat_booking_completed`; a seat taken sends `seat_booking_failed` with `refused` and
       `seat_taken`. (Integration test with the library's stand-in.)
 - [ ] A request aborted by its caller, and a 401 mended by a renewal, send nothing. (Unit tests.)
-- [ ] A User who chose no sends nothing for any of the above. (Integration test.)
+- [ ] A User who chose no, or turned 내 정보's switch off, sends nothing for any of the above. (Integration test.)
 - [ ] No event holds a message, a title, a name, a Place or a coordinate: the fake's recorded properties are only
       those of the registry. (Unit test over every recorded event of the integration tests.)
 - [ ] Lint, format and types of the app pass. No native file changes.

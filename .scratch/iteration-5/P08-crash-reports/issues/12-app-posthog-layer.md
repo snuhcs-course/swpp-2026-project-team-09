@@ -36,7 +36,15 @@ over-the-air update. Nothing is sent until ticket 15 sets `PRODUCTION_APP_POSTHO
   reference, and a difference in a name or a default is written under Comments.
 - **When it may send:** only while a signed-in User is identified and the phone's copy of the account's consent holds
   `CONSENT_VERSION` with usage true. The layer gains `allowUsage(chosen)`, called where that copy is read or written
-  (the sign-in, a start with a kept Session, the consent's answer). Before that nothing is sent or queued.
+  (the sign-in, a start with a kept Session, the consent's answer, and the answer of 내 정보's switch "사용 기록
+  보내기" from ticket 11). Before that nothing is sent or queued.
+- **The switch off holds at once.** `allowUsage(false)` calls PostHog's `optOut()`, and nothing captured before it is
+  sent after it: what the client still holds unsent is dropped, not flushed. How is read in the installed version's
+  source and written under Comments: if `optOut()` already empties the queue, that is enough; if it only stops new
+  captures, the layer also calls `reset()`, which clears the client's persisted state and its queue, and identifies
+  the User again when the switch is turned on. `allowUsage(true)` calls `optIn()`, sends `app_opened` as a start of
+  sending in that run, and goes on. The switch's own request (ticket 11) is not waited for: the phone follows the
+  User's press, and goes back only if the switch goes back.
 - **Identity.** `identifyUser(id)` also calls PostHog's `identify(id)` with no person properties; `forgetUser()` also
   flushes and then calls `reset`, and sending stops until the next User is identified and allowed.
 - **What every event carries**, registered once: `source: 'app'`, `app_version` (from `expo-constants`),
@@ -74,6 +82,9 @@ over-the-air update. Nothing is sent until ticket 15 sets `PRODUCTION_APP_POSTHO
       the fake.)
 - [ ] Nothing is sent before a User is identified with usage chosen, nothing for a User who chose no, and nothing
       after `forgetUser()`; `identify` carries the User id and no property. (Unit tests.)
+- [ ] With the switch turned off while events wait unsent, none of them is sent afterwards and nothing new is
+      captured; turned on again, `optIn` is called, the User is identified and `app_opened` is sent. (Unit tests with
+      the fake, which models the queue as the installed version does.)
 - [ ] `app_opened` is sent once when sending starts and once at each return to the foreground. (Unit test with a fake
       `AppState`.)
 - [ ] `screen_viewed` for a route with a parameter holds `:id` and not the value. (Unit test.)

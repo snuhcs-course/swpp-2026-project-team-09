@@ -224,8 +224,9 @@ main server ──> one usage service ──> PostHog (US)     the closing stage
 ```
 
 Consent moves from the phone to the account. The account keeps the version of the documents the User agreed to and
-the choice on usage data. Nothing of PostHog is sent before that choice is made, and nothing at all for a User who
-did not choose it. Sentry and its switch "오류 보고 보내기" stay as the first part has them.
+the choice on usage data. The User makes the choice on the consent screen and can change it at any time with a
+switch in 내 정보, "사용 기록 보내기", which writes the same value on the account. Nothing of PostHog is sent before the
+choice is made, and nothing while it is off. Sentry and its switch "오류 보고 보내기" stay as the first part has them.
 
 ### User stories
 
@@ -242,8 +243,8 @@ did not choose it. Sentry and its switch "오류 보고 보내기" stay as the f
     mistake.
 18. As a developer, I want a test to refuse an import of the PostHog SDK outside the telemetry folder, so that the
     consent check and the scrubbing cannot be bypassed.
-19. As an SNU student, I want to choose once, when I agree to the legal documents, whether my use of the app is
-    recorded, so that nothing is recorded that I did not agree to.
+19. As an SNU student, I want to choose, when I agree to the legal documents, whether my use of the app is recorded,
+    and to change that choice in 내 정보 at any time, so that nothing is recorded that I do not agree to.
 20. As an SNU student, I want to use every feature whatever I choose, so that the choice is a real one.
 21. As an SNU student, I want the privacy policy to say what is recorded, what never is, who receives it and for how
     long, so that I know before I choose.
@@ -357,8 +358,15 @@ follow each User's own, so a rate can stray a little from 100% when the two chos
 
 #### Consent
 
-- There is no switch for usage data. The consent screen after sign-in gains an optional item for it, a checkbox that
-  is not ticked at first. The User chooses once, and cannot change the choice later in the app.
+- The consent screen after sign-in gains an optional item for usage data, a checkbox that is not ticked at first,
+  and the choice is stored on the account.
+- 내 정보 gains a row "사용 기록 보내기" with a switch, under "오류 보고 보내기", with a one-line caption and a link to
+  the policy's part. It shows the account's choice, and turning it off or on writes the same account value. A change
+  of the choice does not change the consent version and does not ask for consent again. The main server reads only
+  that value before it sends, so a change holds for it from the next event.
+- Off holds at once on the phone too: the layer opts PostHog out and drops what it still holds unsent, so nothing
+  queued before the change is sent after it. On opts it in again. Ticket 12 checks how the installed version's
+  `optOut` treats its queue.
 - Consent moves from the phone to the account. The account keeps the consent version the User agreed to, the usage
   choice and when it was given. The app and the main server each hold the current version, `CONSENT_VERSION`, which
   is 1 with this spec and is raised in both in the same pull request.
@@ -375,6 +383,8 @@ follow each User's own, so a rate can stray a little from 100% when the two chos
 - A required consent was considered and not chosen: 개인정보 보호법 제16조 3항 and 제22조 5항 bar refusing a service
   because a User does not agree to the processing of information the service does not need, and usage data is not
   needed for any feature.
+- A choice fixed once made was considered and not chosen: 제37조 gives a User the right to withdraw consent, so the
+  switch lets the User do it in the app.
 - A later raise of the version, and whether it asks the usage item again, is decided when it happens.
 
 #### PostHog's settings in the app
@@ -441,10 +451,14 @@ The code covers both platforms. The iOS build and its check are the owner's own,
 - The privacy policy gains a part "사용 기록": what is sent (the events in plain Korean, the User id, the app's
   version, the phone's model and OS version), what never is (name, email, 학번, location, Friends, 파티 titles,
   anything typed), who receives it (PostHog, Inc., in the United States, Virginia, as a transfer abroad), how long it
-  is kept (1 year on the current plan), and that the item is optional and fixed once chosen.
+  is kept (1 year on the current plan), that the item is optional and can be changed at any time in 내 정보, and that
+  records already sent stay with PostHog until the retention ends.
 - The retention is read on the account's plan page before the Release, as ticket 07 did for Sentry, and the policy's
   figure follows what it shows.
-- The consent screen shows the optional item with its checkbox and one sentence, and names the part.
+- The consent screen shows the optional item with its checkbox and one sentence, and names the part. The 내 정보
+  row's caption says in one line what is sent, with a link to the part.
+- 제28조의8 asks a transfer abroad to name the recipient's contact. Neither this part nor the error reports' part
+  (Sentry) names one; the wording's reviewer decides for both.
 - All Korean wording is drafted in ticket 11 and reviewed by a person before the Release.
 
 ### Testing
@@ -454,12 +468,13 @@ The code covers both platforms. The iOS build and its check are the owner's own,
   the registry and a property it does not list; the route of a screen and of a request is scrubbed; `reason` and
   `code` from each kind of failure.
 - **Integration (app):** the consent screen over the fake main server: shown for an account with no version, not for
-  one with the current version, the checkbox not ticked at first, the choice sent; a 파티 made, a join, a Friend
+  one with the current version, the checkbox not ticked at first, the choice sent; the 내 정보 switch writes the
+  account's value and, off, stops the sending at once with nothing queued sent; a 파티 made, a join, a Friend
   Request accepted, an Assistant reply and a seat booked each send their stages; a refused request sends `_failed`
   with `refused` and the code, and `api_request_failed`; a User who chose no sends nothing.
-- **Integration (main server):** the consent route and the consent in the sign-in's answer and the Lobby, through the
+- **Integration (main server):** the consent route, the usage route, and the consent in the sign-in's answer and the Lobby, through the
   started server with its database; each closing stage sent for the right User with its properties, after the commit;
-  nothing for a User who chose no; a PostHog that throws or hangs leaves the request's answer as it was.
+  nothing for a User who chose no or turned the switch off; a PostHog that throws or hangs leaves the request's answer as it was.
 - **Unit (main server):** the service without a token sends nothing; a failure is logged without the token; shutdown
   flushes.
 - **Boundary tests:** `posthog-react-native` outside `mobile/src/telemetry/`, and `posthog-node` outside the main
@@ -470,7 +485,6 @@ The code covers both platforms. The iOS build and its check are the owner's own,
 
 ### Out of scope
 
-- A switch for usage data in 내 정보, or any later change of the choice in the app.
 - Any event not in the table above, autocapture of any kind, session replay, feature flags, surveys, heatmaps.
 - Person properties, groups, and PostHog's data warehouse.
 - The kind of the Assistant's answer, and other server-side analyses (questions for the reviewer, below).
@@ -486,37 +500,40 @@ Each has the answer the work follows until a reviewer says otherwise.
    accuracy? Current answer: the main server sends the closing stage of four actions and nothing else.
 2. **Should `assistant_reply_completed` carry the kind of answer** (a meal plan, a 파티 Proposal, a lookup, a refusal,
    an error), for a later analysis of quality? Current answer: no.
-3. **Optional consent instead of required.** Current answer: optional, since 개인정보 보호법 제16조 3항 and 제22조 5항
-   bar refusing the service over information it does not need.
+3. **Optional consent instead of required, and a switch backed by the account instead of a choice fixed once made.**
+   Current answer: an optional item on the consent screen and a switch in 내 정보 that writes the same account value,
+   since 개인정보 보호법 제16조 3항 and 제22조 5항 bar refusing the service over information it does not need, and
+   제37조 lets a User withdraw consent.
 
 ## Tickets
 
-| #   | Ticket                                                                               | Kind                          | Blocked by                                        |
-| --- | ------------------------------------------------------------------------------------ | ----------------------------- | ------------------------------------------------- |
-| 01  | Sentry's support for Expo 57 and React Native 0.86, and two points of the free plan  | A person, with what was found | None                                              |
-| 02  | The layer, Sentry, the scrubbing, the error boundary, the test error                 | Code                          | 01                                                |
-| 03  | The user at sign-in and sign-out, and the switch in 내 정보                          | Code                          | 02                                                |
-| 04  | The Release workflow uploads source maps                                             | Code                          | 02                                                |
-| 05  | The privacy policy's part for error reports, and the consent screen                  | Code and a person's review    | 03                                                |
-| 06  | The account, the keys and the alert                                                  | A person                      | 01                                                |
-| 07  | The Release, the APK to the testers, and the check on the Release's build            | A person                      | 02 to 06                                          |
-| 08  | iOS: the build, its dSYM upload and its check                                        | A person                      | 07, and the decision whether the beta has iPhones |
-| 09  | A new crash in Sentry is posted to the team's Slack channel by the main server       | Code, and a person's steps    | None                                              |
-| 10  | The account keeps the consent's version and the usage choice                         | Code                          | None                                              |
-| 11  | The consent screen asks on the account, with the optional item and the policy's part | Code and a person's review    | 10                                                |
-| 12  | The app's PostHog layer: the SDK, identity, `app_opened`, screens, the registry      | Code                          | 11                                                |
-| 13  | The app's events for the five actions, and `api_request_failed`                      | Code                          | 12                                                |
-| 14  | The main server's events: the closing stage of four actions                          | Code                          | 10                                                |
-| 15  | The settings, the Release, and the check that events arrive                          | A person                      | 11 to 14                                          |
-| 16  | The dashboard "Beta" in PostHog                                                      | An agent, with a person's key | 15                                                |
+| #   | Ticket                                                                              | Kind                          | Blocked by                                        |
+| --- | ----------------------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------- |
+| 01  | Sentry's support for Expo 57 and React Native 0.86, and two points of the free plan | A person, with what was found | None                                              |
+| 02  | The layer, Sentry, the scrubbing, the error boundary, the test error                | Code                          | 01                                                |
+| 03  | The user at sign-in and sign-out, and the switch in 내 정보                         | Code                          | 02                                                |
+| 04  | The Release workflow uploads source maps                                            | Code                          | 02                                                |
+| 05  | The privacy policy's part for error reports, and the consent screen                 | Code and a person's review    | 03                                                |
+| 06  | The account, the keys and the alert                                                 | A person                      | 01                                                |
+| 07  | The Release, the APK to the testers, and the check on the Release's build           | A person                      | 02 to 06                                          |
+| 08  | iOS: the build, its dSYM upload and its check                                       | A person                      | 07, and the decision whether the beta has iPhones |
+| 09  | A new crash in Sentry is posted to the team's Slack channel by the main server      | Code, and a person's steps    | None                                              |
+| 10  | The account keeps the consent's version and the usage choice                        | Code                          | None                                              |
+| 11  | The consent screen and 내 정보's switch on the account, and the policy's part       | Code and a person's review    | 10                                                |
+| 12  | The app's PostHog layer: the SDK, identity, `app_opened`, screens, the registry     | Code                          | 11                                                |
+| 13  | The app's events for the five actions, and `api_request_failed`                     | Code                          | 12                                                |
+| 14  | The main server's events: the closing stage of four actions                         | Code                          | 10                                                |
+| 15  | The settings, the Release, and the check that events arrive                         | A person                      | 11 to 14                                          |
+| 16  | The dashboard "Beta" in PostHog                                                     | An agent, with a person's key | 15                                                |
 
 02, 03 and 05 can be built before the account exists, since a build without the DSN is silent. Ticket 02 changes
 native files and raises `version`; 03 to 05 do not.
 
 Tickets 10 to 16 change no native file and need no new APK: each app ticket is an over-the-air update, and ticket 12
 checks the fingerprint. Their order keeps the main line releasable. Ticket 10 is the main server alone, and changes
-nothing a User sees. Ticket 11 needs it on Production first, and brings the consent item and the policy's part
-together, so no User is asked about usage data the policy does not describe. Tickets 12 to 14 send nothing until a
+nothing a User sees. Ticket 11 needs it on Production first, and brings the consent item, the switch in 내 정보
+and the policy's part together, so no User is asked about usage data the policy does not describe, and every User
+who chose it can change it from the first day. Tickets 12 to 14 send nothing until a
 User chose usage data in ticket 11's screen and ticket 15 sets the tokens. iOS is ticket 08's owner's, as for the crash
 reports.
 
