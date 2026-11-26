@@ -11,6 +11,7 @@
  * 2026-11-05  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -19,6 +20,7 @@ import { type Hit, type SearchCounts } from '../common/search-sql.js';
 import { SignalsService } from '../common/signals.service.js';
 import { JoinPolicy, Prisma, Quest, QuestBoard } from '../generated/prisma/client.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
+import { UsageService } from '../usage/usage.service.js';
 import { UsersService } from '../users/users.service.js';
 import { ClassQuestsService } from './class-quests.service.js';
 import { CLOCK, type Clock } from './clock.js';
@@ -54,6 +56,7 @@ export class RecruitingService {
     @Inject(CLOCK) private readonly clock: Clock,
     private readonly classQuests: ClassQuestsService,
     private readonly roomRequests: RoomRequestSync,
+    private readonly usage: UsageService,
   ) {}
 
   // The Open and Approval Quests the reader does not hold that have a Sub Quest ahead, the newest first.
@@ -166,6 +169,7 @@ export class RecruitingService {
       }),
     );
     this.signals.send(holderIds, 'quests-changed');
+    this.usage.sent(userId, 'party_join_completed', { how: 'joined_directly' });
     await this.roomRequests.questChanged(questId);
     return this.quests.read(userId, questId);
   }

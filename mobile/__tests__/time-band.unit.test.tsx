@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -29,15 +30,7 @@ const noop = (): void => undefined;
 
 function element(props: Partial<Props>): React.ReactElement {
   return (
-    <TimeBand
-      band={band}
-      disabled={false}
-      focus={null}
-      ghost={null}
-      onDrop={noop}
-      fixed={{ from: null, until: null }}
-      {...props}
-    />
+    <TimeBand band={band} disabled={false} focus={null} onDrop={noop} fixed={{ from: null, until: null }} {...props} />
   );
 }
 
@@ -69,7 +62,7 @@ async function step(bound: 'from' | 'until', actionName: 'increment' | 'decremen
 }
 
 describe('TimeBand drawn', () => {
-  // Partitions: the lanes and words of a stored band; a ghost given or not; a focus on a handle or none.
+  // Partitions: the lanes and words of a stored band; a focus on a handle or none.
   // The names stand over each person's own row under the time card's ends (P04 ticket 61), not beside the track.
   it("draws a lane for each person on one row, the range's ends, the band's words, and its two handles", async () => {
     await show();
@@ -81,15 +74,6 @@ describe('TimeBand drawn', () => {
     expect(screen.getByText('12:33–12:59 · 식사 26분')).toBeVisible();
     expect(handle('from')).toHaveAccessibilityValue({ text: '12:33' });
     expect(handle('until')).toHaveAccessibilityValue({ text: '12:59' });
-  });
-
-  it('draws the ghost as a dashed outline only when one is given', async () => {
-    const rerender = await show();
-    expect(screen.queryByTestId('time-band-ghost')).toBeNull();
-
-    await rerender({ ghost: { startAt: at('12:15'), endAt: at('12:43') } });
-
-    expect(screen.getByTestId('time-band-ghost')).toHaveStyle({ borderStyle: 'dashed' });
   });
 
   it('emphasises the handle in focus', async () => {

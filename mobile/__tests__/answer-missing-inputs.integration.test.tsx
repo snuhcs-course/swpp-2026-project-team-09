@@ -6,6 +6,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -22,12 +23,21 @@ import { pressMarker } from './support/made-quest';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
-import { NO_LOCATION_ANSWER, NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from '@/api/mock/data/missing-inputs';
+import { SENT_CAPABILITIES } from './support/capabilities';
+import {
+  NO_LOCATION_ANSWER,
+  NO_LOCATION_REPLY,
+  NO_TIMETABLE_ANSWER,
+  NO_TIMETABLE_REPLY,
+} from '@/api/mock/data/missing-inputs';
 import { LEAVE_LOOKUP_REPLY } from '@/api/mock/data/way-lookups';
+import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
+import type { PlanQuest } from '@/api/plan-quest-types';
 
 // Without a location or a Timetable (P02-13), in the answer frame against the fake main server: the card says what
-// the answer assumed, on the User's start and in the pick's card, draws its note above the buttons, and its offers
-// beside them, each opening its screen.
+// the answer assumed, on the User's start and in the pick's card, and a meal Plan's offers are hint lines under the
+// Assistant's words, over the list, each opening its screen (P04 ticket 86); the answer is asked again once the
+// location is allowed.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -46,6 +56,17 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 const EXPLANATION = '지도에 내 아바타를 보여 주려면 위치 권한이 필요해요.';
 const N14_NOTE = '캠퍼스 밖이라 친구에게 내 위치가 보이지 않아요';
 const START = '나';
+const LOCATION_HINT = '위치를 켜면 지금 있는 곳에서 가까운 순으로 봐요';
+const TIMETABLE_HINT = '시간표를 넣으면 나설 시각까지 알려 드려요';
+const MAKE_ALONE = '일정에 넣기';
+// The stored Quest as the main server makes it of a Plan for one person, with no reminder.
+const [ASKER] = PLAN_QUEST.quest.members ?? [];
+const MADE_ALONE: PlanQuest = {
+  quest: { ...PLAN_QUEST.quest, capacity: 1, takenAlone: true, members: ASKER === undefined ? [] : [ASKER] },
+  invitations: [],
+  askLevels: [],
+  alone: { lines: [[{ text: '301동식당에서 먹어요', strong: false }]], remindAt: null },
+};
 const PICK = '301동식당 · 11:50 점심';
 
 let server: FakeServer;
@@ -62,14 +83,29 @@ function markCard(): ReturnType<typeof within> {
   return within(screen.getByTestId('mark-card'));
 }
 
+// The meal card's parts from the top: the words, the hint lines, and the list.
+function sheetOrder(): unknown[] {
+  return card()
+    .getAllByTestId(/^(?:meal-words|answer-hint-.+|meal-list)$/u)
+    .map(({ props }: { props: { testID?: unknown } }) => props.testID);
+}
+
+// No button stands under the list: no row of steps, and no button of an offer's label.
+function noButtonRow(): void {
+  expect(card().queryByTestId('plan-steps')).toBeNull();
+  expect(card().queryByRole('button', { name: '위치 켜기' })).toBeNull();
+  expect(card().queryByRole('button', { name: '시간표 넣기' })).toBeNull();
+}
+
 afterEach(() => {
   jest.useRealTimers();
   jest.restoreAllMocks();
 });
 
 // Partitions: the request without the permission; an answer with an offer and no note (n13), with a note and an
-// offer (n15), and a Lookup with a note and no action (n14). Expected values: the stored copies of the main server's
-// answers, and board n14's words.
+// offer (n15), with both offers, with an offer of a main server before P04 ticket 86 (no hint), and a Lookup with a
+// note and no action (n14); the location allowed after the hint, and a recalculation that still lacks it. Expected
+// values: the stored copies of the main server's answers, board n14's words, and the boards of P04 ticket 86.
 describe('board n13: no location permission', () => {
   it('is asked with no position and the reason, the permission missing', async () => {
     givePhone({ permission: 'refused' });
@@ -88,14 +124,64 @@ describe('board n13: no location permission', () => {
     expect(markCard().getByText('출발 · 301동에서')).toBeVisible();
   });
 
-  it('offers 위치 켜기, which opens the explanation of the location', async () => {
+  it('says 위치 켜기 as a hint line under the words, over the list, which opens the explanation', async () => {
     givePhone({ permission: 'refused' });
     const user = await askOnMap(server, NO_LOCATION_REPLY);
-    const steps = within(card().getByTestId('plan-steps'));
 
-    await user.press(steps.getByRole('button', { name: '위치 켜기' }));
+    expect(sheetOrder()).toEqual(['meal-words', 'answer-hint-location', 'meal-list']);
+    noButtonRow();
+    await user.press(card().getByRole('button', { name: LOCATION_HINT }));
 
     expect(screen.getByText(EXPLANATION)).toBeVisible();
+  });
+});
+
+describe('board n13, the location allowed from its hint', () => {
+  it('asks the same conditions again from the position, with no message', async () => {
+    givePhone({ permission: 'refused', prompt: 'granted', position: ON_CAMPUS });
+    server.on('POST /assistant/answers', { status: 200, body: NO_TIMETABLE_ANSWER });
+    const user = await askOnMap(server, NO_LOCATION_REPLY);
+
+    await user.press(card().getByRole('button', { name: LOCATION_HINT }));
+    await user.press(screen.getByRole('button', { name: '계속' }));
+    await pass(500);
+
+    expect(recalculations(server)).toEqual([
+      { input: NO_LOCATION_ANSWER.input, location: ON_CAMPUS, clientCapabilities: SENT_CAPABILITIES },
+    ]);
+    expect(server.received('POST /assistant/messages')).toHaveLength(1);
+    expect(card().queryByRole('button', { name: LOCATION_HINT })).toBeNull();
+  });
+
+  it('asks again only once, though the answer that comes still lacks the location', async () => {
+    givePhone({ permission: 'refused', prompt: 'granted', position: ON_CAMPUS });
+    server.on('POST /assistant/answers', { status: 200, body: NO_LOCATION_ANSWER });
+    const user = await askOnMap(server, NO_LOCATION_REPLY);
+
+    await user.press(card().getByRole('button', { name: LOCATION_HINT }));
+    await user.press(screen.getByRole('button', { name: '계속' }));
+    await pass(2000);
+
+    expect(recalculations(server)).toHaveLength(1);
+  });
+});
+
+// The review of PR 597: a recalculation would drop what was made of the answer, and its buttons would come back.
+describe('board n13 made into a Quest before the location comes', () => {
+  it('is asked nothing again, and its Quest stays made', async () => {
+    const phone = givePhone({ permission: 'refused', position: ON_CAMPUS });
+    server.on('POST /plans', { status: 201, body: MADE_ALONE });
+    const user = await askOnMap(server, NO_LOCATION_REPLY);
+    await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: MAKE_ALONE }));
+    await pass(500);
+    expect(server.received('POST /plans')).toHaveLength(1);
+
+    phone.setPermission('granted');
+    await phone.comeToFront();
+    await pass(2000);
+
+    expect(recalculations(server)).toEqual([]);
+    expect(screen.queryByRole('button', { name: MAKE_ALONE })).toBeNull();
   });
 });
 
@@ -113,23 +199,54 @@ describe('a correction of board n13', () => {
 });
 
 describe('board n15: no Timetable', () => {
-  it('says the first is the nearest, and notes what a Timetable would add above the buttons', async () => {
+  it('says the first is the nearest, and what a Timetable would add once, as the hint line over the list', async () => {
     givePhone({ permission: 'granted', position: ON_CAMPUS });
     const user = await askOnMap(server, NO_TIMETABLE_REPLY, () => layStage(390, 760));
 
-    expect(card().getByText('시간표를 넣으면 나설 시각까지 알려 드려요')).toBeVisible();
+    expect(sheetOrder()).toEqual(['meal-words', 'answer-hint-timetable', 'meal-list']);
+    expect(card().getAllByText(TIMETABLE_HINT)).toHaveLength(1);
+    noButtonRow();
     await pressMarker(user, PICK);
     expect(markCard().getByText('시간표가 없어 가까운 순서로 넘겨 봐요')).toBeVisible();
   });
 
-  it('opens the Timetable with 시간표 넣기', async () => {
+  it('opens the Timetable from the hint line', async () => {
     givePhone({ permission: 'granted', position: ON_CAMPUS });
     const user = await askOnMap(server, NO_TIMETABLE_REPLY);
 
-    await user.press(card().getByRole('button', { name: '시간표 넣기' }));
+    await user.press(card().getByRole('button', { name: TIMETABLE_HINT }));
     await pass(500);
 
     expect(shownAddress()).toBe('/me/timetable');
+  });
+});
+
+describe('without the location permission and a Timetable', () => {
+  it('says two hint lines, the location first', async () => {
+    givePhone({ permission: 'refused' });
+    const offers = [...(NO_LOCATION_ANSWER.offers ?? []), ...(NO_TIMETABLE_ANSWER.offers ?? [])];
+    const answer = { ...NO_LOCATION_ANSWER, offers, note: NO_TIMETABLE_ANSWER.note };
+    await askOnMap(server, { ...NO_LOCATION_REPLY, answer });
+
+    expect(sheetOrder()).toEqual(['meal-words', 'answer-hint-location', 'answer-hint-timetable', 'meal-list']);
+    expect(card().getAllByText(TIMETABLE_HINT)).toHaveLength(1);
+    noButtonRow();
+  });
+});
+
+describe('an offer from a main server before P04 ticket 86', () => {
+  it('is a hint line of its label, with no row of buttons', async () => {
+    givePhone({ permission: 'refused' });
+    const answer = {
+      ...NO_LOCATION_ANSWER,
+      offers: [{ kind: 'open' as const, label: '위치 켜기', screen: 'location' as const }],
+    };
+    const user = await askOnMap(server, { ...NO_LOCATION_REPLY, answer });
+
+    expect(card().queryByTestId('plan-steps')).toBeNull();
+    await user.press(within(card().getByTestId('answer-hint-location')).getByText('위치 켜기'));
+
+    expect(screen.getByText(EXPLANATION)).toBeVisible();
   });
 });
 

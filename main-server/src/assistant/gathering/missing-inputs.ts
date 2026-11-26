@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type AnswerOffer, type AnswerReply, type LocationMissing } from '../dto/answer.dto.js';
@@ -21,8 +22,13 @@ export interface MissingInputs {
 
 export const NEAREST_BASIS = '시간표가 없어 가까운 순서로 넘겨 봐요';
 const TIMETABLE_NOTE = '시간표를 넣으면 나설 시각까지 알려 드려요';
-const TURN_LOCATION_ON: AnswerOffer = { kind: 'open', label: '위치 켜기', screen: 'location' };
-const ADD_TIMETABLE: AnswerOffer = { kind: 'open', label: '시간표 넣기', screen: 'timetable' };
+const TURN_LOCATION_ON: AnswerOffer = {
+  kind: 'open',
+  label: '위치 켜기',
+  screen: 'location',
+  hint: '위치를 켜면 지금 있는 곳에서 가까운 순으로 봐요',
+};
+const ADD_TIMETABLE: AnswerOffer = { kind: 'open', label: '시간표 넣기', screen: 'timetable', hint: TIMETABLE_NOTE };
 
 const askerWalk = ({ parts }: GatheringFit): number => parts[0]?.walkMinutes ?? 0;
 
@@ -50,7 +56,8 @@ export function missingLines({ key }: GatheringFit, nearest: boolean): AnswerLin
   ];
 }
 
-// The answer's offers and note: "위치 켜기" without the permission, and "시간표 넣기" with a note without a Class.
+// The answer's offers and note: "위치 켜기" without the permission, and "시간표 넣기" with a note without a Class. Each
+// offer carries its hint line, and the note stays for the apps before P04 ticket 86.
 export function missingParts(missing: MissingInputs | undefined): Pick<AnswerReply, 'offers' | 'note'> {
   if (missing === undefined) {
     return {};

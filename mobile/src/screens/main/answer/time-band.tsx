@@ -33,8 +33,6 @@ interface TimeBandProps {
   band: TimeBandData;
   // What the User fixed: the window of the conditions, for the clashes.
   fixed: MealInput['window'];
-  // Where the band was before a drag: a dashed outline.
-  ghost: Stretch | null;
   // A handle drawn emphasised.
   focus: BandBound | null;
   // A recalculation is on its way: the handles take nothing.

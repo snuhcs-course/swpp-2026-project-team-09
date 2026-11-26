@@ -5,6 +5,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
@@ -136,19 +137,17 @@ describe("a meet's band let go", () => {
   });
 });
 
-// Partitions: "되돌리기" after the answer came; a recalculation that fails.
+// Partitions: the answer that came; a recalculation that fails.
 describe('after a band let go', () => {
-  it('brings back the Plan shown before with "되돌리기", without a request', async () => {
+  it('keeps nothing of the Plan shown before: no outline and no 되돌리기 (P04 ticket 86)', async () => {
     const user = await meetMinSu();
     await pressMarker(user, SECOND);
     await dragBody(60);
-
-    await user.press(card().getByRole('button', { name: '되돌리기' }));
     await pass(500);
 
-    expect(mapThings()).toContain('301동 앞 · 12:18 만남');
-    expect(screen.queryByTestId('time-band-ghost')).toBeNull();
     expect(recalculations(server)).toHaveLength(2);
+    expect(screen.queryByTestId('time-band-ghost')).toBeNull();
+    expect(card().queryByRole('button', { name: '되돌리기' })).toBeNull();
   });
 
   it('puts the band and the lines back, and says so, when the recalculation fails', async () => {
@@ -208,7 +207,7 @@ describe("a lunch alone's band let go far", () => {
 });
 
 describe("a meal's band let go", () => {
-  it('asks the meal again from 12:25 for a drag of ten minutes, and keeps the place before as the outline', async () => {
+  it('asks the meal again from 12:25 for a drag of ten minutes, and keeps no outline of the place before', async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
     await askOnMap(server, MEAL_ANSWER_REPLY);
     await layBand();
@@ -223,6 +222,6 @@ describe("a meal's band let go", () => {
       },
     ]);
     expect(mapThings()).toContain('학생회관식당 · 12:40 점심');
-    expect(screen.getByTestId('time-band-ghost')).toHaveStyle({ borderStyle: 'dashed' });
+    expect(screen.queryByTestId('time-band-ghost')).toBeNull();
   });
 });

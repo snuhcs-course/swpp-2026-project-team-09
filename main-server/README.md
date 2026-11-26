@@ -79,9 +79,10 @@ Once the server is running, a store that goes down makes readiness answer 503 in
 The app signs in with Google and sends the ID token it gets to the main server:
 
 - `POST /auth/google` with `{ "idToken": "..." }` answers
-  `200 { "accessToken": "...", "refreshToken": "...", "onboarding": { ... } }`. The first sign-in of a Google account
-  creates its User, with an empty name and department and a [Friend ID](#friends). `onboarding` tells the app where to
-  go next (see [Onboarding and the lobby](#onboarding-and-the-lobby)).
+  `200 { "accessToken": "...", "refreshToken": "...", "onboarding": { ... }, "consent": { ... } }`. The first sign-in
+  of a Google account creates its User, with an empty name and department and a [Friend ID](#friends). `onboarding`
+  tells the app where to go next (see [Onboarding and the lobby](#onboarding-and-the-lobby)), and `consent` is the
+  account's [consent](#consent), so that a new phone does not ask for it again.
 - Only SNU accounts get in: the token's hosted domain claim must be `snu.ac.kr` and its email address verified. Another
   account gets 403. An invalid or expired ID token, or one issued to another client than the app's
   (`GOOGLE_APP_CLIENT_ID`), the admin site's included, gets 401.
@@ -120,20 +121,22 @@ fixed: they are never the User's to change. The app enters the lobby, which give
    `{ "completed": false, "suggestion": { "name": ..., "department": ... } }`, read from the Google account's name, which
    for an SNU account reads `홍길동 / 학생 / 컴퓨터공학부`. A part that cannot be read, or that the
    [profile's limits](#profile) refuse, is `null`. Every SNU account is taken to give both.
-2. Until then, every User route but two answers
+2. Until then, every User route but those below answers
    `403 { "code": "ONBOARDING_REQUIRED", "message": "Complete onboarding first.", "onboarding": { ... } }`, with the
    sign-in's `onboarding` read from the Google name of the last sign-in. So an app that restarts halfway gets onboarding
    back from its first request, the lobby's. `AccessTokenGuard` checks it on every request, in the query that reads the
-   session. The two routes open before onboarding are marked `@AllowBeforeOnboarding()`: `POST /users/me/onboarding`
-   and `POST /auth/sign-out`.
+   session. The routes open before onboarding are marked `@AllowBeforeOnboarding()`: `POST /users/me/onboarding`,
+   `POST /auth/sign-out`, and the [consent](#consent)'s `PUT /users/me/consent` and `PUT /users/me/usage-consent`,
+   since the consent screen comes before onboarding.
 3. `POST /users/me/onboarding` with `{ "name": "...", "department": "...", "admissionYear": ..., "hashtags": [...] }`
    saves the profile and completes onboarding, and answers 204. The name and the department are the account's: sent,
    they are dropped, so that an older app's request still goes through. An account that does not give one of them is
    logged as a warning and completes onboarding with that part empty. The profile's limits apply. The app sends it again when the answer was lost: a repeat saves the profile again.
-4. `POST /lobby`, with no body, answers `200 { "profile": { ... }, "masterSwitch": false, "masterOffAsked": false }`,
-   the profile as `GET /users/me/profile` gives it, whether the User's [Master Switch](#location-sharing) is on, and
-   whether the app has asked the User before they turned it off (see [Asking once](#asking-once)). Later features add
-   what the app needs when it starts.
+4. `POST /lobby`, with no body, answers
+   `200 { "profile": { ... }, "masterSwitch": false, "masterOffAsked": false, "consent": { ... } }`, the profile as
+   `GET /users/me/profile` gives it, whether the User's [Master Switch](#location-sharing) is on, whether the app has
+   asked the User before they turned it off (see [Asking once](#asking-once)), and the account's
+   [consent](#consent), as the sign-in's answer gives it. Later features add what the app needs when it starts.
 
 A sign-in on another phone during onboarding ends the first phone's session as any sign-in does: its next request, the
 onboarding's included, gets 401 with `"code": "SESSION_REPLACED"`, and the other phone goes through onboarding.
@@ -147,7 +150,8 @@ A User reads and edits their own profile. The routes name no User, so they never
 
 - `GET /users/me/profile` answers
   `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...], "friendId": "7KX2M9QD", "studentNumber": ..., "registeredName": ..., "affiliation": ... }`.
-  Like every User route but two, it needs the User to have finished onboarding. `friendId` is the User's
+  Like every User route but those [open before onboarding](#onboarding-and-the-lobby), it needs the User to have
+  finished onboarding. `friendId` is the User's
   [Friend ID](#friends).
 - `PATCH /users/me/profile` with some of these fields changes only those and answers with the whole profile. `null`
   empties `admissionYear`, `studentNumber`, `registeredName` and `affiliation`, and `[]` empties `hashtags`. The name
@@ -171,6 +175,76 @@ A User reads and edits their own profile. The routes name no User, so they never
     the nine digits, `202612345`. An empty one empties it.
   - `registeredName`: at most 30 characters. An empty one empties it.
   - `affiliation`: `undergraduate` (학부), `graduate` (대학원) or `exchange` (교환학생).
+
+## Consent
+
+The account keeps the consent the User gave on the app's consent screen, so that a new phone, or a sign-in again,
+does not ask again, and a changed text does. `CONSENT_VERSION` in `src/users/consent.ts` is the version of the legal
+documents the app shows, 1 for now. The app holds the same number, and the two are raised together, in one pull
+request.
+
+- Four columns of `users` hold it, all empty for an account that has agreed to nothing: `consent_version`, the version
+  agreed to; `usage_consent`, the usage data choice given with it; `consented_at`, when the version was agreed to; and
+  `usage_chosen_at`, when the usage choice was last set, by the consent or by the switch.
+- The sign-in's answer and the Lobby carry `"consent": { "version": 1, "usage": true }`, the account's as stored, and
+  `{ "version": null, "usage": null }` for an account that agreed to none.
+- `PUT /users/me/consent` with `{ "version": 1, "usage": true }` is "동의하고 시작" on the consent screen, and is open
+  before onboarding. A version from 1 to `CONSENT_VERSION` higher than the account's is stored with the choice and the
+  time, and answered 204. The same version again stores the choice it carries and answers 204, so the app may send it
+  again when the answer was lost; when the version was agreed to stays. A version lower than the account's gets
+  `409 { "code": "CONSENT_VERSION_OUTDATED" }`, and one above `CONSENT_VERSION`, or a body of another shape, 400.
+- `PUT /users/me/usage-consent` with `{ "usage": false }` is the switch "사용 기록 보내기" in 내 정보, open before
+  onboarding too. It stores the choice and its time and answers 204, the same choice again included, and leaves the
+  version and when it was agreed to as they are. A body with a `version` gets 400: a change of the choice never sends
+  one, so it cannot be taken for agreeing to the documents, and it keeps working when `CONSENT_VERSION` is raised and
+  the User has not yet agreed to the new one. An account that has agreed to no version gets
+  `409 { "code": "CONSENT_REQUIRED" }`: the choice is made on the consent screen first.
+- Usage data about a User may be sent only while the account holds a version of at least `CONSENT_VERSION` with usage
+  chosen. `usageMayBeSent` in `src/users/consent.ts` is the only rule, and `UsersService.usageMayBeSent(userId)` reads
+  the account again each time, so a change of the switch holds from the next event.
+
+## Usage data
+
+The main server sends PostHog the closing stage of four actions it does, so that the team can count how often each
+goes through and compare it with what the app asked for and heard back (P08 spec: Usage data with PostHog). The app
+sends the other stages itself. `src/usage/` is the only place that imports `posthog-node` (6.0.6), and a unit test
+(`test/posthog-import-boundary.unit.test.ts`) refuses an import of it anywhere else; `test/posthog-client.integration.test.ts` drives the real SDK over a stand-in `fetch`.
+
+**The events**, sent once their work is committed, never inside a transaction, with the User id (our database's UUID)
+as `distinctId`:
+
+| Event                           | When                                                                                                                                                                                     | Properties                                                                          |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `assistant_reply_completed`     | `POST /assistant/messages` answers 200; the answers and the taps send nothing                                                                                                            | none                                                                                |
+| `party_creation_completed`      | a 파티 is stored (`POST /quests/own`; `POST /quests` that makes the User's Quest for the Global Event, or gathers others from a Quest taken alone; `POST /plans` but a Plan taken alone) | `visibility` of the stored Quest: `public` (Open or Approval) or `private` (Closed) |
+| `party_join_completed`          | the User is stored as a Holder, sent for the User who joined, also when the Leader accepted                                                                                              | `how`: `joined_directly`, `invitation_accepted` or `request_accepted`               |
+| `friendship_creation_completed` | a friendship is stored, sent once for each of the two Users                                                                                                                              | `how`: `request_accepted`, `invite_link_accepted` or `requests_crossed`             |
+
+Every event also carries `source: "server"`, and nothing else: no text of a message or an answer, no title, Place,
+coordinates, name, Student Number or Friend list, no person property, and GeoIP is off. Not counted: a Quest taken
+alone, a Class Quest, a Tutorial Quest, a booking party's Quest and its invitation accepted with the room's consent,
+the Party (활성 파티), the admin site's befriending and the demo seed. The event names and their properties are typed
+in `src/usage/usage-events.ts`, and `UsageService.sent(userId, event, properties)` takes only those.
+
+**Consent.** Before each event the service reads the account with `UsersService.usageMayBeSent` (Consent, above) and
+sends nothing unless it holds a version of at least `CONSENT_VERSION` with usage chosen. No copy is kept, so a change
+of the switch in 내 정보 holds from the next event. A failed read drops the event with a warning.
+
+**Never in the way of a request.** `sent` returns at once: the read and the send run beside the request, which waits for
+neither. Each event is its own request to PostHog (`captureImmediate`), tried once and given 5 seconds; a failure or a
+timeout drops it and logs one warning that names the error's type and its cause's, such as `A usage event was not sent
+to PostHog: CaptureError (AbortError)`, never the token or the error's message. At the application's close the client's
+`shutdown` sends what is still pending, waiting at most 3 seconds.
+
+**The setting.** `POSTHOG_PROJECT_TOKEN`, the project's token (`phc_…`), optional and empty by default. Empty, as in
+development, the Dev Server and the tests that do not set it, no client is made and nothing is sent; there is no
+route. A value of another shape refuses the start without repeating it. PostHog's host, `https://us.i.posthog.com`,
+is a constant. The token is a write-only client token, but it is kept out of the repository and of every log line
+all the same. In Production it is the parameter `posthog-project-token` (`infra/production/README.md`: Usage data in
+PostHog).
+
+In a test, `test/usage.ts` gives a placeholder token and `PostHogStub`, which stands in for PostHog's client and keeps
+each event: `startApp(…, { posthog: stub.clients })`. No test reaches PostHog.
 
 ## Friends
 
@@ -2504,6 +2578,11 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
     are ready at the earliest; where they set out from is still decided by their own time), and `leaveBy` (the latest
     they leave).
+  - **What was missing.** A meal's answer asked with `locationMissing: 'permission'` carries in `offers`
+    `{ "kind": "open", "label": "위치 켜기", "screen": "location", "hint": "위치를 켜면 지금 있는 곳에서 가까운 순으로 봐요" }`,
+    and one for a User with no Class carries `{ "kind": "open", "label": "시간표 넣기", "screen": "timetable", "hint" }`
+    with `note`, the same words as that `hint`. The app draws a meal Plan's offers as the `hint` lines under its words
+    (P04 ticket 86); `note` is kept for the apps before them, which draw the note over their buttons.
   - **A meet** (`{ "kind": "meet", "date", "people", "window", "placeId" }`, `gathering/meet-plan.service.ts`): the
     earliest stretch between 09:00 and 22:00, from now or `window.from`, that the asker and the Friends share, at the
     place where they
@@ -3312,7 +3391,7 @@ src/
 ├── generated/                       Prisma Client, generated by `pnpm install` (not committed)
 ├── health/                          a feature: the liveness and readiness checks
 ├── auth/                            a feature: app and admin site sign-in, refresh, sign-out, the access token checks
-├── users/                           a feature: the signed-in User, their profile, Friend ID and onboarding
+├── users/                           a feature: the signed-in User, their profile, Friend ID, onboarding and consent
 ├── friends/                         a feature: Friend IDs looked up, Friend Requests and Friends
 ├── invite-links/                    a feature: Invite Links, the Digital Asset Links file that opens them in the app,
 │                                    and the page their address answers in a browser
@@ -3322,6 +3401,7 @@ src/
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── log-test/                        a feature: an Administrator's test log line at a chosen level
 ├── sentry-alerts/                   a feature: Sentry's alerts on the app's crashes, posted to the team's Slack channel
+├── usage/                           the usage data sent to PostHog, the only importer of posthog-node (no route)
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
 ├── global-settings/                 the global settings an Administrator changes, their registry, and each pod's

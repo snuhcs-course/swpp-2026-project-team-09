@@ -5,39 +5,31 @@
  * 2026-10-17  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
 import { type ReactElement, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { isRefusal } from '@/api/errors';
 import type { TimetableClass } from '@/api/types';
-import {
-  Button,
-  color,
-  Dialog,
-  ErrorState,
-  font,
-  FullScreenPanel,
-  LoadingState,
-  space,
-  TextField,
-  useToast,
-} from '@/design-system';
+import { Button, Dialog, ErrorState, FullScreenPanel, LoadingState, space, TextField, useToast } from '@/design-system';
 import {
   type ClassDraft,
   crossingLines,
   draftOf,
   EMPTY_DRAFT,
-  endNotAfterStart,
+  EMPTY_SLOT,
   isReady,
-  placeText,
+  type SlotDraft,
+  withoutSlot,
 } from '@/features/timetable/class-form';
 import { type Timetable, useClassChanges, useTimetable } from '@/features/timetable/use-timetable';
 import { NOT_MOVED } from '@/features/timetable/use-versions';
 import { VersionsRefusal } from '@/features/timetable/versions';
 import { PlacePicker } from '../places/place-picker';
-import { CrossingWarning, DayToggles, PlaceButton, TimeRow } from './class-fields';
+import { CrossingWarning } from './class-fields';
+import { AddSlot, SlotCard } from './slot-card';
 
 function titleOf(classId: string | null): string {
   return classId === null ? '수업 추가' : '수업 수정';
@@ -100,8 +92,6 @@ function useFormActions(classId: string | null): {
   };
   return { working, save, remove };
 }
-
-type Change = (changed: Partial<ClassDraft>) => void;
 
 interface DeleteDialogProps {
   visible: boolean;
@@ -167,75 +157,59 @@ function FormFooter({ editing, working, ready, onDelete, onSave }: FooterProps):
   );
 }
 
-function TimeSection({
-  draft,
-  change,
-  crossings,
-}: {
-  draft: ClassDraft;
-  change: Change;
-  crossings: string[];
-}): ReactElement {
-  const endWrong = endNotAfterStart(draft);
-  return (
-    <View style={styles.timeGroup}>
-      <TimeRow
-        end={draft.end}
-        endWrong={endWrong}
-        onEnd={(end) => {
-          change({ end });
-        }}
-        onStart={(start) => {
-          change({ start });
-        }}
-        start={draft.start}
-      />
-      {endWrong ? (
-        <Text accessibilityRole="alert" style={styles.error}>
-          종료 시각이 시작 시각보다 늦어야 해요
-        </Text>
-      ) : null}
-      {crossings.length > 0 ? <CrossingWarning lines={crossings} /> : null}
-    </View>
-  );
-}
+type SetDraft = (next: (held: ClassDraft) => ClassDraft) => void;
 
 interface FieldsProps {
   draft: ClassDraft;
-  change: Change;
+  setDraft: SetDraft;
   crossings: string[];
-  onPickPlace: () => void;
+  onPickPlace: (index: number) => void;
 }
 
-function FormFields({ draft, change, crossings, onPickPlace }: FieldsProps): ReactElement {
+// 과목명, then a card for each time slot and `다른 시간대 추가`, then the classes the slots cross.
+function FormFields({ draft, setDraft, crossings, onPickPlace }: FieldsProps): ReactElement {
+  const changeSlot = (index: number, changed: Partial<SlotDraft>): void => {
+    setDraft((held) => ({
+      ...held,
+      slots: held.slots.map((slot, other) => (other === index ? { ...slot, ...changed } : slot)),
+    }));
+  };
   return (
     <View style={styles.body}>
       <TextField
         label="과목명"
         maxLength={30}
         onChangeText={(name) => {
-          change({ name });
+          setDraft((held) => ({ ...held, name }));
         }}
         placeholder="과목명"
         value={draft.name}
       />
-      <DayToggles
-        days={draft.days}
-        onChange={(days) => {
-          change({ days });
-        }}
-      />
-      <TimeSection change={change} crossings={crossings} draft={draft} />
-      <PlaceButton chosen={draft.place === null ? null : placeText(draft.place)} onPress={onPickPlace} />
-      <TextField
-        label="강의실 선택"
-        maxLength={20}
-        onChangeText={(room) => {
-          change({ room });
-        }}
-        placeholder="예: 118호"
-        value={draft.room}
-      />
+      <View style={styles.slots}>
+        {draft.slots.map((_, index) => (
+          <SlotCard
+            draft={draft}
+            index={index}
+            key={index}
+            onChange={(changed) => {
+              changeSlot(index, changed);
+            }}
+            onPickPlace={() => {
+              onPickPlace(index);
+            }}
+            onRemove={() => {
+              setDraft((held) => withoutSlot(held, index));
+            }}
+          />
+        ))}
+        <AddSlot
+          onAdd={() => {
+            setDraft((held) => ({ ...held, slots: [...held.slots, EMPTY_SLOT] }));
+          }}
+          slots={draft.slots.length}
+        />
+      </View>
+      {crossings.length > 0 ? <CrossingWarning lines={crossings} /> : null}
     </View>
   );
 }
@@ -243,13 +217,11 @@ function FormFields({ draft, change, crossings, onPickPlace }: FieldsProps): Rea
 function ClassForm({ lesson, timetable }: { lesson: TimetableClass | null; timetable: Timetable }): ReactElement {
   const classId = lesson?.id ?? null;
   const [draft, setDraft] = useState(() => (lesson === null ? EMPTY_DRAFT : draftOf(lesson, timetable.places)));
-  const [picking, setPicking] = useState(false);
+  // The slot whose Place is being picked, or null.
+  const [picking, setPicking] = useState<number | null>(null);
   const { working, save, remove } = useFormActions(classId);
-  const change: Change = (changed) => {
-    setDraft((held) => ({ ...held, ...changed }));
-  };
   const closePicker = (): void => {
-    setPicking(false);
+    setPicking(null);
   };
   const footer = (
     <FormFooter
@@ -266,24 +238,25 @@ function ClassForm({ lesson, timetable }: { lesson: TimetableClass | null; timet
     <View style={styles.screen}>
       <FullScreenPanel footer={footer} leave={{ kind: 'close', onPress: router.back }} subtle title={titleOf(classId)}>
         <FormFields
-          change={change}
           crossings={crossingLines(draft, timetable.classes, classId)}
           draft={draft}
-          onPickPlace={() => {
-            setPicking(true);
-          }}
+          onPickPlace={setPicking}
+          setDraft={setDraft}
         />
       </FullScreenPanel>
-      {picking ? (
+      {picking === null ? null : (
         <PlacePicker
           onClose={closePicker}
           onPick={(place) => {
-            change({ place });
+            setDraft((held) => ({
+              ...held,
+              slots: held.slots.map((slot, index) => (index === picking ? { ...slot, place } : slot)),
+            }));
             closePicker();
           }}
-          picked={draft.place?.id ?? null}
+          picked={draft.slots[picking]?.place?.id ?? null}
         />
-      ) : null}
+      )}
     </View>
   );
 }
@@ -305,8 +278,7 @@ export function ClassFormScreen({ classId }: { classId: string | null }): ReactE
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   body: { gap: 18, padding: space[4], paddingBottom: space[6] },
-  timeGroup: { gap: space[2] },
-  error: { fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.danger },
+  slots: { gap: space[3] },
   footer: { flexDirection: 'row', gap: space[2] },
   saveSlot: { flex: 1 },
 });

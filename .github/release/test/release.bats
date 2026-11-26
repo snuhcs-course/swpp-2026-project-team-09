@@ -12,6 +12,7 @@
 # 2026-11-21  Opus 5.5   prompted by fyoon46
 # 2026-11-24  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-25  Fable 5.2  prompted by AhnJinYoung
+# 2026-11-26  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Release workflow's script, through its commands: the name check, the gate with gh faked on PATH, the app's
@@ -751,6 +752,7 @@ LLM_KEYS={}
 INITIAL_ADMINISTRATOR_EMAILS=a@snu.ac.kr,b@snu.ac.kr
 SENTRY_WEBHOOK_SECRET=
 APP_CRASH_SLACK_WEBHOOK=
+POSTHOG_PROJECT_TOKEN=
 EOF
   diff "$secrets/access-token-private-key.pem" <(printf '%s\n' "$PRIVATE_KEY")
   diff "$secrets/access-token-public-key.pem" <(printf '%s\n' "$PUBLIC_KEY")
@@ -819,6 +821,17 @@ EOF
   [ "$(sed -n 's/^SENTRY_WEBHOOK_SECRET=//p' "$secrets/secrets.env")" = 9d4f2a7c61e0 ]
   [ "$(sed -n 's/^APP_CRASH_SLACK_WEBHOOK=//p' "$secrets/secrets.env")" = https://hooks.slack.invalid/T0/B0/x7f3c ]
   [[ "$output" != *9d4f2a7c61e0* && "$output" != *hooks.slack* ]] || false
+}
+
+@test "the PostHog project token, when stored, is its line, and no value is printed" {
+  serve_parameters "${PARAMETERS[@]}" posthog-project-token phc_4f7a2c9e1b0d
+  local secrets=$BATS_TEST_TMPDIR/secrets
+
+  run "$RELEASE" write-secrets "$secrets" "$ENDPOINT" <"$BATS_TEST_TMPDIR/parameters.json"
+
+  [ "$status" -eq 0 ]
+  [ "$(sed -n 's/^POSTHOG_PROJECT_TOKEN=//p' "$secrets/secrets.env")" = phc_4f7a2c9e1b0d ]
+  [[ "$output" != *phc_4f7a2c9e1b0d* ]] || false
 }
 
 @test "a crash alerts' parameter over two lines fails, naming it and printing no value" {

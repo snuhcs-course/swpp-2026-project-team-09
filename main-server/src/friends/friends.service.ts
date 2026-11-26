@@ -9,6 +9,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
@@ -18,6 +19,7 @@ import { FriendLevel, Prisma, User } from '../generated/prisma/client.js';
 import { levelSeen } from '../location-sharing/friend-level.js';
 import { VisibilityService } from '../location-sharing/visibility.service.js';
 import { RoomRequestSync } from '../library/room-request-sync.service.js';
+import { friendsMade, UsageService } from '../usage/usage.service.js';
 import { UsersService } from '../users/users.service.js';
 import { checkFellowHolders } from './fellow-holders.js';
 import {
@@ -99,6 +101,7 @@ export class FriendsService {
     private readonly signals: SignalsService,
     private readonly visibility: VisibilityService,
     private readonly roomRequests: RoomRequestSync,
+    private readonly usage: UsageService,
   ) {}
 
   async ownerOf(friendId: string): Promise<User> {
@@ -119,7 +122,7 @@ export class FriendsService {
       throw new BadRequestException({ statusCode: HttpStatus.BAD_REQUEST, error: 'Bad Request', ...own });
     }
     const pair = pairOf(senderId, receiverId);
-    return this.changeBetween(pair, async (tx) => {
+    const sent = await this.changeBetween(pair, async (tx): Promise<SentFriendRequestDto> => {
       if ('userId' in to) {
         await checkFellowHolders(tx, senderId, receiverId);
       }
@@ -143,11 +146,16 @@ export class FriendsService {
       await tx.friendship.update({ where: { id: existing.id }, data: { acceptedAt: new Date() } });
       return { status: 'friends' };
     });
+    if (sent.status === 'friends') {
+      friendsMade(this.usage, pair, 'requests_crossed');
+    }
+    return sent;
   }
 
   // Makes two Users Friends at once, as accepting an Invite Link does: a Friend Request waiting between them becomes
   // the friendship. `alongside` runs in the same transaction once both are locked, so that what it changes is stored
-  // only with the friendship, and a refusal it throws stores neither.
+  // only with the friendship, and a refusal it throws stores neither. It sends no usage event: the Invite Link's
+  // accept does, and the admin site's befriending is not counted.
   async befriend(
     senderId: string,
     receiverId: string,
@@ -188,22 +196,23 @@ export class FriendsService {
     return lists;
   }
 
-  accept(userId: string, requestId: string): Promise<void> {
-    return this.answer(receivedBy(userId, requestId), async (tx) => {
+  async accept(userId: string, requestId: string): Promise<void> {
+    const pair = await this.answer(receivedBy(userId, requestId), async (tx) => {
       const { count } = await tx.friendship.updateMany({
         where: { id: requestId, acceptedAt: null },
         data: { acceptedAt: new Date() },
       });
       return count;
     });
+    friendsMade(this.usage, pair, 'request_accepted');
   }
 
-  decline(userId: string, requestId: string): Promise<void> {
-    return this.answer(receivedBy(userId, requestId), (tx) => removeWaiting(tx, requestId));
+  async decline(userId: string, requestId: string): Promise<void> {
+    await this.answer(receivedBy(userId, requestId), (tx) => removeWaiting(tx, requestId));
   }
 
-  cancel(userId: string, requestId: string): Promise<void> {
-    return this.answer({ id: requestId, senderId: userId }, (tx) => removeWaiting(tx, requestId));
+  async cancel(userId: string, requestId: string): Promise<void> {
+    await this.answer({ id: requestId, senderId: userId }, (tx) => removeWaiting(tx, requestId));
   }
 
   // A common Party leaves `seen` as it is: it shows the position only while it lasts, not by the friendship.
@@ -286,10 +295,11 @@ export class FriendsService {
 
   // Answers the waiting Friend Request that `where` finds. `change` answers how many rows it changed, none when the
   // request was answered in the meantime.
+  // Answers the two Users of the request, once the change is stored.
   private async answer(
     where: Prisma.FriendshipWhereInput,
     change: (tx: Prisma.TransactionClient) => Promise<number>,
-  ): Promise<void> {
+  ): Promise<Pair> {
     const request = await this.prisma.friendship.findFirst({ where: { ...where, acceptedAt: null } });
     if (request === null) {
       throw friendRequestNotFound();
@@ -299,6 +309,7 @@ export class FriendsService {
         throw friendRequestNotFound();
       }
     });
+    return { userAId: request.userAId, userBId: request.userBId };
   }
 
   // Every change between two Users locks both in the order of their ids first, so that changes between the same two
