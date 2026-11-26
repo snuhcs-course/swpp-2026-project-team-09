@@ -92,14 +92,12 @@ function partOf(testID: string | undefined, part: string): string | undefined {
 
 type DotSymbol = Extract<AnswerSymbol, { type: 'dot' }>;
 
-// A meal answer's other candidate (P04 ticket 85): within the white ring a coral rim, a soft coral ground, and a coral
-// number.
+// A meal answer's other candidate (P04 ticket 85): a soft coral ground in a coral rim, and a coral number. The rim is
+// its outside edge, with no white ring or shadow around it: the round and its number take that room (P04 ticket 91).
 function MealCandidate({ number, testID }: { number: number | null; testID?: string }): ReactElement {
   return (
-    <View style={[styles.dot, styles.candidate, styles.mealCandidate]} testID={testID}>
-      <View style={styles.mealCandidateGround} testID={partOf(testID, 'ground')}>
-        {number === null ? null : <RoundNumber inside={MEAL_GROUND} number={number} style={styles.mealNumber} />}
-      </View>
+    <View style={styles.mealCandidate} testID={testID}>
+      {number === null ? null : <RoundNumber inside={MEAL_INSIDE} number={number} style={styles.mealNumber} />}
     </View>
   );
 }
@@ -107,9 +105,10 @@ function MealCandidate({ number, testID }: { number: number | null; testID?: str
 // The size of a dot that may hold a number, by its role.
 const PICK_DOT = 30;
 const DOT_SIZES: Partial<Record<DotSymbol['role'], number>> = { pick: PICK_DOT, candidate: CANDIDATE_ROUND };
-// The inside of a meal candidate's coral round: its size less its white ring and its coral rim.
+// The inside of a meal candidate's coral round: its size less its coral rim; its number's size.
 const MEAL_RIM = 1.5;
-const MEAL_GROUND = CANDIDATE_ROUND - 2 * RING - 2 * MEAL_RIM;
+const MEAL_INSIDE = CANDIDATE_ROUND - 2 * MEAL_RIM;
+const MEAL_NUMBER = 13;
 
 function Dot({ role, number, meal = false, testID }: DotSymbol & { testID?: string }): ReactElement {
   if (meal && role === 'candidate') {
@@ -279,17 +278,17 @@ const styles = StyleSheet.create({
   accepted: { backgroundColor: color.friend },
   pickNumber: { ...mapText.smallTitle, color: color.onPrimary },
   mealPick: { backgroundColor: color.meal },
-  // The coral rim is the round's own ground showing around its soft ground.
-  mealCandidate: { backgroundColor: color.meal },
-  mealCandidateGround: {
+  mealCandidate: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: MEAL_GROUND,
-    height: MEAL_GROUND,
+    width: CANDIDATE_ROUND,
+    height: CANDIDATE_ROUND,
     borderRadius: radius.full,
+    borderWidth: MEAL_RIM,
+    borderColor: color.meal,
     backgroundColor: color.mealSoft,
   },
-  mealNumber: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.meal },
+  mealNumber: { fontFamily: mapText.smallTitle.fontFamily, fontSize: MEAL_NUMBER, color: color.meal },
   capsule: {
     alignSelf: 'flex-start',
     alignItems: 'center',

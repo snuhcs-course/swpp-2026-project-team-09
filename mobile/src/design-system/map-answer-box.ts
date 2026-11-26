@@ -23,7 +23,8 @@ export const SUB_MAX = 260;
 export const MEAL_PICK_MAX = 200;
 export const RING = 2;
 export const BADGE = 16;
-// A candidate's numbered round, its white ring included.
+// A candidate's numbered round, its white ring included; a meal candidate's has none, its coral rim its edge (P04
+// ticket 91).
 export const CANDIDATE_ROUND = 20;
 // A meal candidate's minutes capsule (P04 ticket 83): its height, and the width of its near end, which holds the
 // candidate's numbered round with a little white around it; its edge's width.
