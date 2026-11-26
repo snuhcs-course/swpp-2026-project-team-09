@@ -117,6 +117,7 @@ function mealDraft(plan: Plan, number: number, { place, tag }: MapScene['places'
     tone: 'candidate',
     title: value,
     ...(faded ? { faded } : {}),
+    ...(walk === null ? { clock: true } : {}),
     line: null,
     number,
   };

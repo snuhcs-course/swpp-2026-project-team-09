@@ -11,6 +11,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -23,6 +24,7 @@ import { type Told } from '../notifications/notification.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { invitationMessage } from '../push/messages.js';
 import { PushService } from '../push/push.service.js';
+import { UsageService } from '../usage/usage.service.js';
 import { CLOCK, type Clock } from './clock.js';
 import { QuestDto, subQuestsAheadWhere } from './dto/quest.dto.js';
 import {
@@ -63,6 +65,7 @@ export class InvitationsService {
     private readonly push: PushService,
     private readonly notifications: NotificationsService,
     @Inject(CLOCK) private readonly clock: Clock,
+    private readonly usage: UsageService,
   ) {}
 
   async invite(leaderId: string, questId: string, userId: string): Promise<void> {
@@ -137,8 +140,9 @@ export class InvitationsService {
   }
 
   // A refused acceptance leaves the invitation waiting. Checked again once the Quest is locked, so that an invitation
-  // the Leader cancelled meanwhile admits nobody.
-  async accept(userId: string, invitationId: string): Promise<QuestDto> {
+  // the Leader cancelled meanwhile admits nobody. `forBooking` is a booking party's invitation, accepted with the
+  // consent to its room request: no 파티 join of the usage data (README.md: Usage data).
+  async accept(userId: string, invitationId: string, { forBooking = false } = {}): Promise<QuestDto> {
     const { questId, holderIds, answered } = await this.prisma.$transaction(async (tx) => {
       const invitation = await tx.questInvitation.findFirst({
         where: { id: invitationId, userId },
@@ -155,6 +159,9 @@ export class InvitationsService {
       return { questId: invitation.questId, holderIds: entered, answered: invitation };
     });
     this.signals.send(holderIds, 'quests-changed');
+    if (!forBooking) {
+      this.usage.sent(userId, 'party_join_completed', { how: 'invitation_accepted' });
+    }
     this.signals.send([answered.quest.leaderId], 'invitation-accepted', { questId, userId });
     this.tellLeader(answered.quest.leaderId, {
       kind: 'accepted',

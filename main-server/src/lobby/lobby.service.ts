@@ -4,6 +4,7 @@
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Injectable } from '@nestjs/common';
@@ -21,6 +22,7 @@ export class LobbyService {
       profile: this.users.profileOf(user),
       masterSwitch: user.masterSwitchOn,
       masterOffAsked: user.masterOffAskedAt !== null,
+      consent: this.users.consentOf(user),
     };
   }
 }

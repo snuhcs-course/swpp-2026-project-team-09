@@ -3,6 +3,7 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -44,7 +45,7 @@ beforeEach(() => {
 // Partitions: a later reply with the same answer object after a recalculation and a drag; a recalculation on its way
 // when it comes; the app's own bubble and a failure after the reply.
 describe('a new reply with the same answer object', () => {
-  it('replaces the recalculated answer: its first Plan, the basis closed, and no ghost', async () => {
+  it('replaces the recalculated answer: its first Plan and the basis closed', async () => {
     const reply = heldBack(recalculate);
     const held = await hold(ANSWERED);
     await change(held, MEAL_ANSWER_FIXED_START.input, 'drag');
@@ -58,7 +59,6 @@ describe('a new reply with the same answer object', () => {
     expect(held.shown().answer).toBe(MEAL_ANSWER);
     expect(held.shown().index).toBe(0);
     expect(held.shown().basisOpen).toBe(false);
-    expect(held.shown().ghost).toBeNull();
   });
 
   it('drops a recalculation that was on its way', async () => {

@@ -13,7 +13,7 @@ import type { MenuView } from '@/api/lookup-types';
 import type { Meal, MenuLine, RestaurantMenus } from '@/api/menu-types';
 import { menusQuery } from '@/api/queries';
 import { now } from '@/clock';
-import { color, font, radius, size, space, text } from '@/design-system';
+import { color, font, radius, RoundNumber, size, space, text } from '@/design-system';
 import { cornersOf, hoursOf, type MenuCorner, planCorner } from '@/features/assistant/meal-menus';
 import { travelWords } from '@/features/assistant/answer-walks';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -104,12 +104,11 @@ function Corner({ corner }: { corner: MenuCorner }): ReactElement {
       {head === '' ? null : <Text style={styles.cornerTitle}>{head}</Text>}
       {served.length === 0 ? null : <Text style={styles.served}>{served.join(' · ')}</Text>}
       {ordered.map(({ name, price: one }, at) => (
-        // A menu may list a dish twice; its place tells them apart.
+        // The view where the User reads the menu shows each dish whole, wrapped onto as many lines as it needs, its price
+        // at the right of the first (P04 ticket 87). A menu may list a dish twice; its place tells them apart.
         // oxlint-disable-next-line react/no-array-index-key
         <View key={`${String(at)}:${name}`} style={styles.ordered}>
-          <Text numberOfLines={1} style={styles.orderedName}>
-            {name}
-          </Text>
+          <Text style={styles.orderedName}>{name}</Text>
           <Text style={styles.orderedPrice}>{won(one)}</Text>
         </View>
       ))}
@@ -140,7 +139,7 @@ function Head({
     <View style={styles.head}>
       {number === null ? null : (
         <View style={styles.badge} testID="meal-menu-number">
-          <Text style={styles.number}>{number}</Text>
+          <RoundNumber inside={BADGE} number={number} style={styles.number} />
         </View>
       )}
       <View style={styles.names}>

@@ -9,9 +9,12 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, type TextStyle, View, type ViewStyle } from 'react-native';
 import type { AnswerLabel } from './map-answer';
 import { BADGE, GAP, LABEL_MAX, MEAL_PICK_MAX, RING, SUB_MAX } from './map-answer-box';
+import { RoundNumber } from './round-number';
 import { color, mapText, radius, shadow, space, text } from './tokens';
 
 const WAY_FLAGS = new Set<AnswerLabel['tone']>(['leave', 'late', 'shuttle']);
+// A meal candidate's number badge: its coral rim (P04 ticket 90).
+const MEAL_BADGE_RIM = 1.5;
 
 // A label's title and its line: a candidate's side by side, with its dishes under them (`sub`).
 function LabelWords({ tone, title, line, sub = null, note = null, action = null }: AnswerLabel): ReactElement {
@@ -85,7 +88,11 @@ export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?:
     >
       {number === null ? null : (
         <View style={[styles.badge, tone === 'pick' ? pickBadgeOf(note, meal) : candidateBadgeOf(meal)]}>
-          <Text style={[styles.number, meal && tone !== 'pick' && styles.mealNumber]}>{number}</Text>
+          <RoundNumber
+            inside={meal && tone !== 'pick' ? BADGE - 2 * MEAL_BADGE_RIM : BADGE}
+            number={number}
+            style={[styles.number, meal && tone !== 'pick' && styles.mealNumber]}
+          />
         </View>
       )}
       <LabelWords {...label} />
@@ -145,7 +152,7 @@ const styles = StyleSheet.create({
   mealPickBadge: { backgroundColor: color.meal },
   // A meal answer's candidate's name tag (P04 ticket 90): its number as the candidate's soft coral round.
   mealEdge: { borderColor: color.meal },
-  mealCandidateBadge: { borderWidth: 1.5, borderColor: color.meal, backgroundColor: color.mealSoft },
+  mealCandidateBadge: { borderWidth: MEAL_BADGE_RIM, borderColor: color.meal, backgroundColor: color.mealSoft },
   mealNumber: { color: color.meal },
   candidateBadge: { backgroundColor: color.snuBlue },
   number: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },

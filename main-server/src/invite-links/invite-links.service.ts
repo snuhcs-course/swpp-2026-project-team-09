@@ -3,6 +3,7 @@
  *
  * 2026-10-04  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import {
@@ -21,6 +22,7 @@ import { Settings } from '../common/settings.js';
 import { toUserSummaryDto } from '../friends/dto/friends.dto.js';
 import { FriendsService } from '../friends/friends.service.js';
 import { InviteLink } from '../generated/prisma/client.js';
+import { friendsMade, UsageService } from '../usage/usage.service.js';
 import { CreatedInviteLinkDto, InviteLinkDto, InviteLinkStatus } from './dto/invite-links.dto.js';
 
 const LIFETIME_MS = 24 * 60 * 60 * 1000;
@@ -79,6 +81,7 @@ export class InviteLinksService {
     private readonly prisma: PrismaService,
     private readonly friends: FriendsService,
     private readonly settings: ConfigService<Settings, true>,
+    private readonly usage: UsageService,
   ) {}
 
   async create(senderId: string): Promise<CreatedInviteLinkDto> {
@@ -115,6 +118,7 @@ export class InviteLinksService {
         throw refusals.used();
       }
     });
+    friendsMade(this.usage, { userAId: link.senderId, userBId: userId }, 'invite_link_accepted');
   }
 
   private async linkOf(token: string): Promise<InviteLink & { sender: { name: string; department: string } }> {

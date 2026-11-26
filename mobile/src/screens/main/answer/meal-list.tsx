@@ -10,7 +10,7 @@
 import type { ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { AnswerReply, Cuisine, Plan } from '@/api/assistant-types';
-import { color, font, radius, space, text } from '@/design-system';
+import { color, font, radius, RoundNumber, space, text } from '@/design-system';
 import { addedWalk, fadedPlan, travelWords } from '@/features/assistant/answer-walks';
 import { kindShown, serves } from '@/features/assistant/meal-kinds';
 import { dishWords, priceWords } from '@/features/assistant/meal-menus';
@@ -141,12 +141,17 @@ export function listOrderWords(answer: AnswerReply): string {
 }
 
 const BADGE = 22;
+const BADGE_RIM = 1.5;
 
 // A row's number, as the map numbers it: soft coral with a coral rim, the chosen one solid coral (P04 ticket 85).
 function RowNumber({ number, chosen }: { number: number; chosen: boolean }): ReactElement {
   return (
     <View style={[styles.badge, chosen && styles.chosenBadge]}>
-      <Text style={[styles.number, chosen && styles.chosenNumber]}>{number}</Text>
+      <RoundNumber
+        inside={BADGE - 2 * BADGE_RIM}
+        number={number}
+        style={[styles.number, chosen && styles.chosenNumber]}
+      />
     </View>
   );
 }
@@ -309,7 +314,7 @@ const styles = StyleSheet.create({
     height: BADGE,
     marginTop: 2,
     borderRadius: radius.full,
-    borderWidth: 1.5,
+    borderWidth: BADGE_RIM,
     borderColor: color.meal,
     backgroundColor: color.mealSoft,
   },

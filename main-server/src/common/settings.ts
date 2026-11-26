@@ -22,6 +22,7 @@
  * 2026-11-23  Fable 5.2  prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { createPrivateKey, createPublicKey } from 'node:crypto';
@@ -197,6 +198,16 @@ export const settingsSchema = z
       .string()
       .default('')
       .refine((url) => url === '' || URL.parse(url)?.protocol === 'https:', 'Expected an https:// URL or nothing'),
+    // The PostHog project's token (phc_…), with which the main server sends the closing stage of four actions as usage
+    // data (README.md: Usage data). Empty, as in development and the tests, no client is made and nothing is sent. Kept
+    // out of every log line all the same; a refusal of its shape never repeats it.
+    POSTHOG_PROJECT_TOKEN: z
+      .string()
+      .default('')
+      .refine(
+        (token) => token === '' || /^phc_[A-Za-z0-9]+$/u.test(token),
+        'Expected a PostHog project token or nothing',
+      ),
   })
   .refine(
     (keys) => createPublicKey(keys.ACCESS_TOKEN_PRIVATE_KEY).equals(createPublicKey(keys.ACCESS_TOKEN_PUBLIC_KEY)),

@@ -14,7 +14,7 @@ import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { MEAL_ANSWER_FIXED_START } from '@/api/mock/data/meal-answers';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { pass, screen } from './support/app';
+import { screen } from './support/app';
 import { askOnMap, card, mapThings } from './support/answer-map';
 import { drag, layBand, pointsFor, recalculations, step } from './support/answer-correct';
 import type { FakeServer } from './support/fake-server';
@@ -112,9 +112,9 @@ describe('a handle let go', () => {
   });
 });
 
-// Partitions: the answer after a drag; "되돌리기".
+// Partitions: the answer after a drag. A drag is undone by dragging back (P04 ticket 86).
 describe('after a drag', () => {
-  it("draws the new answer's first Plan, and the band before the drag as a dashed outline", async () => {
+  it("draws the new answer's first Plan, with no outline of the band before and no 되돌리기", async () => {
     await askOnMap(server, MEAL_ANSWER_REPLY);
 
     await step('from', 'increment');
@@ -125,19 +125,7 @@ describe('after a drag', () => {
     expect(screen.queryByRole('button', { name: /302동식당/u })).toBeNull();
     expect(card().queryByLabelText('302동식당 · 3분밖에 못 있어요')).toBeNull();
     expect(mapThings().filter((name) => name.includes('3분밖에 못 있어요'))).toEqual([]);
-    expect(screen.getByTestId('time-band-ghost')).toHaveStyle({ borderStyle: 'dashed' });
-  });
-
-  it('brings back the answer before the drag with "되돌리기", without a request, and no outline', async () => {
-    const user = await askOnMap(server, MEAL_ANSWER_REPLY);
-    await step('from', 'increment');
-
-    await user.press(card().getByRole('button', { name: '되돌리기' }));
-    await pass(500);
-
-    expect(mapThings()).toEqual(expect.arrayContaining(['302동식당 · 12:15 점심', '후보 5 · 자하연식당 2층 · 12:35']));
     expect(screen.queryByTestId('time-band-ghost')).toBeNull();
     expect(card().queryByRole('button', { name: '되돌리기' })).toBeNull();
-    expect(recalculations(server)).toHaveLength(1);
   });
 });

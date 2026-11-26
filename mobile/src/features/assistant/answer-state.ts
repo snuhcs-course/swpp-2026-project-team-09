@@ -32,7 +32,7 @@ export interface AnswerState extends Shown {
   picked: readonly string[] | null;
   pickOrder: readonly string[] | null;
   asked: readonly string[] | null;
-  // What was shown before the last drag.
+  // What was shown before a drag whose answer has no Plan, which leaves no band to drag back (P04 ticket 86).
   kept: Shown | null;
   recalculating: boolean;
   pendingAdd: string | null;
@@ -91,7 +91,7 @@ export function replaced(last: AnswerState, given: AnswerReply, by: ChangeBy | u
           next.plans.findIndex(({ id }) => id === shownId),
         )
       : 0;
-  const kept = by === undefined ? null : { answer: last.answer, index: last.index };
+  const kept = by === undefined || next.plans.length > 0 ? null : { answer: last.answer, index: last.index };
   const adding = last.adding && last.pendingAdd === null;
   // Picking ends with the list of Friends (P04 ticket 64), so that 취소, back, and the main button stay in step with it.
   const picking = adding ? { picked: last.picked, pickOrder: last.pickOrder } : { picked: null, pickOrder: null };
@@ -106,11 +106,6 @@ export function replaced(last: AnswerState, given: AnswerReply, by: ChangeBy | u
     kept,
     ...settled,
   };
-}
-
-export function ghostOf(kept: Shown | null): Stretch | null {
-  const band = kept?.answer?.plans[kept.index]?.band;
-  return band === undefined ? null : { startAt: band.startAt, endAt: band.endAt };
 }
 
 // The state the hook starts with, the conversation's last reply shown as it is: it opens no picking by itself.

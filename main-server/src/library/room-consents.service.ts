@@ -3,6 +3,7 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -50,7 +51,7 @@ export class RoomConsentsService {
         })
       : null;
     if (invitation !== null) {
-      await this.invitations.accept(userId, invitation.id);
+      await this.invitations.accept(userId, invitation.id, { forBooking: true });
     }
     await settleAsked(this.sync, userId, requestId, async (settling, held) => {
       await settling.tx.roomConsent.update({

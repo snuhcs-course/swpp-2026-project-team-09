@@ -5,6 +5,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -89,7 +90,7 @@ function markCard(): ReturnType<typeof within> {
 
 // Partitions: the first Plan; its basis and the next Plan; the map.
 describe('the band of a5 let go and answered with a6', () => {
-  it("asks from 12:30, and draws a6's first Plan, its people, its band, and a5's outline cut at the track's start", async () => {
+  it("asks from 12:30, and draws a6's first Plan, its people, and its band, with nothing left of a5's", async () => {
     const user = await letGoAt1230();
 
     expect(recalculations(server).at(-1)).toEqual({
@@ -99,9 +100,9 @@ describe('the band of a5 let go and answered with a6', () => {
     });
     expect(mapThings()).toEqual(expect.arrayContaining([PICK, '민수']));
     expect(timeBar().getByText('14:07–15:30 · 함께 83분')).toBeVisible();
-    // a6's track runs over 13:35 to 15:45, so a5's place at 12:15 lies before it and is cut away at its start.
-    expect(screen.getByTestId('time-band-ghost')).toHaveStyle({ left: '0%', width: '0%' });
-    expect(card().getByRole('button', { name: '되돌리기' })).toBeVisible();
+    // A drag is undone by dragging back (P04 ticket 86): no outline of a5's place, and no 되돌리기.
+    expect(screen.queryByTestId('time-band-ghost')).toBeNull();
+    expect(card().queryByRole('button', { name: '되돌리기' })).toBeNull();
     await pressMarker(user, '나 · 17분');
     expect(markCard().getByText('출발 · 24동에서')).toBeVisible();
   });

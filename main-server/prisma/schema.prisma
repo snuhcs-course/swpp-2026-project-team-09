@@ -30,6 +30,7 @@
 // 2026-11-16  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-21  Opus 5.5   prompted by fyoon46
+// 2026-11-26  Opus 5.5   prompted by AhnJinYoung
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -72,6 +73,12 @@ model User {
   masterSwitchOn    Boolean            @default(false) @map("master_switch_on")
   // When the app first asked the User, before they turned the Master Switch off, whether to show the building instead.
   masterOffAskedAt  DateTime?          @map("master_off_asked_at")
+  // The version of the legal documents the User agreed to (CONSENT_VERSION in src/users/consent.ts), null for none,
+  // and when. The usage choice is given with it and changed by the switch in 내 정보; null while no version is agreed.
+  consentVersion    Int?               @map("consent_version")
+  usageConsent      Boolean?           @map("usage_consent")
+  consentedAt       DateTime?          @map("consented_at")
+  usageChosenAt     DateTime?          @map("usage_chosen_at")
   sessions          Session[]
   friendshipsAsA    Friendship[]       @relation("FriendshipUserA")
   friendshipsAsB    Friendship[]       @relation("FriendshipUserB")

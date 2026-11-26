@@ -7,6 +7,7 @@
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -33,6 +34,7 @@ export const signInResultSchema = tokensSchema.extend({
     completed: z.boolean(),
     suggestion: z.strictObject({ name: z.string().nullable(), department: z.string().nullable() }).optional(),
   }),
+  consent: z.strictObject({ version: z.number().int().nullable(), usage: z.boolean().nullable() }),
 });
 
 export type SignInResult = z.infer<typeof signInResultSchema>;
