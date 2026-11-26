@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -13,7 +14,7 @@ import { pass, screen, shownAddress } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answer, toast } from './support/room';
-import { answerParty, CODING, invitationTo, JAZZ, openAt, requestFor, RUN } from './support/party';
+import { answerParty, cardName, CODING, invitationTo, JAZZ, openAt, requestFor, RUN } from './support/party';
 import { askMainServer, DINNER, PHONE_NOW } from './support/server';
 
 // 찾기's 모집글 sheet, which a card opens over 찾기: its content, its buttons by role, joining through the join sheet
@@ -45,7 +46,7 @@ function sheet(): ReturnType<typeof within> {
 // 찾기, with the card of `title` pressed.
 async function openSheet(title: string): Promise<User> {
   const user = await openAt('/party');
-  await user.press(screen.getByLabelText(title));
+  await user.press(screen.getByLabelText(cardName(title)));
   return user;
 }
 
@@ -180,7 +181,7 @@ describe('관심 없음 on the sheet', () => {
 
     expect(screen.queryByRole('header', { name: `‘${RUN.title}’를 숨길까요?` })).toBeNull();
     expect(sheet().getByRole('header', { name: RUN.title })).toBeVisible();
-    expect(screen.getByLabelText(RUN.title)).toBeVisible();
+    expect(screen.getByLabelText(cardName(RUN.title))).toBeVisible();
   });
 
   it('asks with 을 after a title that ends in a final consonant', async () => {

@@ -92,9 +92,9 @@ Everything in the wireframe's ① to ⑦.
 ## Decided while building (2026-11-26)
 
 - The 모집글 leaves out the members' faces as well: the wireframe's ③, ⑥ and ⑦ show the members line without them, and in the build that asks the main server the only face was the Leader's, whose Avatar is already above.
-- `신청 취소` in the sheet asks first with today's confirm sheet, as 찾기's card did, and the sheet closes before it asks, as it does before the join sheet. The screen's `신청 취소` still withdraws at once.
+- `신청 취소` in the sheet asks first with today's confirm sheet, as 찾기's card did, and the sheet closes before it asks, as it does before the join sheet. The screen's `신청 취소` still withdrew at once (changed after review, below).
 - The search's names for a screen reader follow 행사's: the magnifier "파티 검색", the field "파티 검색어" (placeholder "파티 검색"), ✕ "검색 닫기". The field does not raise the keyboard by itself, as 행사's does not.
-- A card is one button for a screen reader, named by its title, as 내 파티's card is.
+- A card is one button for a screen reader, as 내 파티's card is. It was named by its title alone (changed after review, below).
 - The event line is `blue600`, the design system's blue for words.
 - The 모집글 screen's ground is white, as the sheet and the wireframe's ⑦ draw it; it was grey with white cards.
 - `없애기` on the screen goes back as `관심 없음` does, to 찾기 when no screen is behind it; before, it only went back.
@@ -103,6 +103,9 @@ Everything in the wireframe's ① to ⑦.
 - Gone with the boards: `boards-screen.tsx`, `board-screen.tsx`, their routes and the layout's slides for them, `useBoardPosts`, `isBoard`, `postedWords`, the boards' "N" mark, and 찾기's count of hidden posts. `boardPosts` and `useBoardRows` stay for the form's sheet of boards.
 - `PostCard` is unchanged. Its `onHide` and `onWithdraw` now have no caller, since 찾기 was the only one; removing them is left to a tidy-up.
 - The Footer moved from `post-screen.tsx` to `post-footer.tsx`, shared by the screen and the sheet; the content is `post-content.tsx`.
+- After review (2026-11-27), the filter row's end fades into the tab's grey ground over 28 dp before the magnifier's line, as the wireframe's ① draws it: an SVG gradient as the Assistant's line of 뺀 수업 has, which takes no press, with the chips scrolling under it. It shows whenever the filters do, not only while chips lie beyond the end.
+- After review (2026-11-27), a card's screen-reader name is "{title}, {time}, {place}, {fill}", with the event's title after the place when the card has an event line.
+- After review (2026-11-27), `신청 취소` on the 모집글 screen asks first, with the confirm sheet and words of the sheet and 보낸 신청 (`withdrawAsk`). `PostFooter` asks it itself, so the screen and the sheet cannot drift apart.
 
 ## Acceptance criteria
 
@@ -122,3 +125,9 @@ Everything in the wireframe's ① to ⑦.
 
 - Agent time: about 26 minutes, in one session (reading the code, tests written first and seen failing, the change, the test sweep, the ticket). This is an estimate: gaps under 5 minutes between transcript entries, summed, counted up to the writing of this entry, so the commit and the pull request are left out.
 - Tokens: input 27,397,838 (cache reads 27,077,077, cache writes 320,547, uncached 214); output 106,081. No subagents.
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 22 minutes, in the same session, for the three review fixes (the row's fade, the card's spoken name, `신청 취소` asking on the screen): tests written first and seen failing, the change, the targeted run, the ticket. This is an estimate: gaps under 5 minutes between transcript entries, summed, plus the 5.6-minute final test run, counted up to the writing of this entry.
+- Tokens: input 6,676,066 (cache reads 6,540,732, cache writes 135,236, uncached 98); output 31,478. No subagents.
+- Ticket total so far: about 48 minutes; input 34,073,904 (cache reads 33,617,809, cache writes 455,783, uncached 312); output 137,559. The first round's commit and pull request are not in either entry.

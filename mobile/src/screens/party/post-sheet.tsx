@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -12,7 +13,6 @@ import { usePost } from '@/features/party/use-party';
 import type { Ask } from '../room/confirm-sheet';
 import { PostContent } from './post-content';
 import { PostFooter } from './post-footer';
-import { usePartyActions, withdrawAsk } from './use-party-actions';
 
 interface PostSheetProps {
   // The post shown, or null while the sheet is closed.
@@ -26,7 +26,6 @@ interface PostSheetProps {
 
 function SheetBody({ questId, onClose, onJoin, onAsk }: PostSheetProps & { questId: string }): ReactElement {
   const { data: detail, isPending, refetch } = usePost(questId);
-  const { withdraw } = usePartyActions();
   if (detail === undefined) {
     return isPending ? <LoadingState /> : <ErrorState onRetry={refetch} />;
   }
@@ -44,9 +43,6 @@ function SheetBody({ questId, onClose, onJoin, onAsk }: PostSheetProps & { quest
         onGone={onClose}
         onJoin={() => {
           onJoin(post);
-        }}
-        onWithdraw={(requestId) => {
-          onAsk(withdrawAsk({ requestId, questId, title: post.title }, withdraw));
         }}
         post={post}
       />

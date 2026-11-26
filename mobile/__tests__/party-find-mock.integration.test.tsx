@@ -5,6 +5,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,7 +15,7 @@ import { router } from 'expo-router';
 import { pass, screen, shownAddress } from './support/app';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
-import { openAt } from './support/party';
+import { cardName, openAt } from './support/party';
 import { answer, toast } from './support/room';
 
 // 찾기 and 파티 모집글 against the mocks, which show every mocked part: official recruiting, tags, hiding a post and
@@ -33,7 +34,7 @@ const CODING = '알고리즘 코테 스터디';
 const DINNER = '샤로수길 저녁 같이 먹어요';
 
 function card(title: string): ReturnType<typeof within> {
-  return within(screen.getByLabelText(title));
+  return within(screen.getByLabelText(cardName(title)));
 }
 
 beforeEach(async () => {
@@ -164,7 +165,7 @@ describe('모집 중인 파티', () => {
   it('hides a post with 관심 없음 once asked, and keeps it on the phone', async () => {
     const user = await openAt('/party');
 
-    await user.press(screen.getByLabelText(RUN));
+    await user.press(screen.getByLabelText(cardName(RUN)));
     await pass(500);
     await user.press(within(screen.getByLabelText('파티 모집글')).getByRole('button', { name: '관심 없음' }));
     await answer(user, '숨기기');

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useQuery } from '@tanstack/react-query';
@@ -17,7 +18,7 @@ import type { PostView } from '@/features/party/posts';
 import { REMOVED_CAPTION } from '@/features/quests/refusals';
 import type { Ask } from '../room/confirm-sheet';
 import { useRoomActions } from '../room/use-room-actions';
-import { useFindActions } from './use-party-actions';
+import { useFindActions, usePartyActions, withdrawAsk } from './use-party-actions';
 
 // The 모집글's buttons, on its screen and in 찾기's sheet.
 
@@ -134,16 +135,16 @@ function hideQuestion(title: string): string {
 interface PostFooterProps {
   post: PostView;
   onJoin: () => void;
-  // `신청 취소`: the screen withdraws at once, 찾기's sheet asks first.
-  onWithdraw: (requestId: string) => void;
-  // Asks before `없애기`.
+  // Asks before `신청 취소` and `없애기`.
   onAsk: (ask: Ask) => void;
   // Once the post is hidden or ended: the screen goes back, the sheet closes.
   onGone: () => void;
 }
 
-// The footer with what it does. `관심 없음` asks in a dialog first, since a hidden post does not come back.
-export function PostFooter({ post, onJoin, onWithdraw, onAsk, onGone }: PostFooterProps): ReactElement {
+// The footer with what it does. `관심 없음` asks in a dialog first, since a hidden post does not come back; `신청 취소`
+// asks as 보낸 신청 does.
+export function PostFooter({ post, onJoin, onAsk, onGone }: PostFooterProps): ReactElement {
+  const { withdraw } = usePartyActions();
   const findActions = useFindActions();
   const endAsk = useEndAsk(post.questId, onGone);
   const [hiding, setHiding] = useState(false);
@@ -157,7 +158,9 @@ export function PostFooter({ post, onJoin, onWithdraw, onAsk, onGone }: PostFoot
           setHiding(true);
         }}
         onJoin={onJoin}
-        onWithdraw={onWithdraw}
+        onWithdraw={(requestId) => {
+          onAsk(withdrawAsk({ requestId, questId: post.questId, title: post.title }, withdraw));
+        }}
         post={post}
       />
       <Dialog

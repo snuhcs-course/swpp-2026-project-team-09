@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -15,12 +16,17 @@ interface FindCardProps {
   onOpen: (post: PostView) => void;
 }
 
+// What a screen reader says of a card: "버들골 저녁 러닝 크루, 오늘 19:30, 버들골 입구, 3/8명", the event after the place.
+function spokenName({ title, time, place, event, fill }: PostView): string {
+  return [title, time, place, ...(event === null ? [] : [event]), fill].join(', ');
+}
+
 // A card of 찾기: the board and the fill, the title, the time and the place each on its line, and the event of a 파티
 // for one. It has no photo, faces or buttons: a press opens the 모집글. The Assistant's cards keep `PostCard`.
 export function FindCard({ post, onOpen }: FindCardProps): ReactElement {
   return (
     <Pressable
-      accessibilityLabel={post.title}
+      accessibilityLabel={spokenName(post)}
       accessibilityRole="button"
       onPress={() => {
         onOpen(post);

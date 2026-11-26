@@ -7,6 +7,7 @@
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -92,7 +93,7 @@ describe('파티 모집글', () => {
 });
 
 describe('asking to join on 파티 모집글', () => {
-  it('asks to join an Approval Quest, then waits with 신청 취소, which withdraws', async () => {
+  it('asks to join an Approval Quest, then waits with 신청 취소, which asks first as 찾기’s sheet does', async () => {
     server.on('POST /quest-join-requests', { status: 201, body: requestFor(CODING) });
     server.on('POST /quest-join-requests/qr1/withdraw', { status: 204 });
     const user = await openAt(`/post/${CODING.id}`);
@@ -102,9 +103,14 @@ describe('asking to join on 파티 모집글', () => {
     await answer(user, '참여 신청');
     expect(screen.getByText('참여 신청을 기다리는 중이에요')).toBeVisible();
 
-    setAnswers({ requests: [] });
     await user.press(screen.getByRole('button', { name: '신청 취소' }));
     await pass(500);
+    expect(screen.getByText(`‘${CODING.title}’ 참여 신청을 취소할까요?`)).toBeVisible();
+    expect(screen.getByText('파티장에게 보낸 신청이 사라져요.')).toBeVisible();
+    expect(server.received('POST /quest-join-requests/qr1/withdraw')).toHaveLength(0);
+
+    setAnswers({ requests: [] });
+    await answer(user, '신청 취소');
     expect(server.received('POST /quest-join-requests/qr1/withdraw')).toHaveLength(1);
     expect(toast()).toHaveTextContent('신청을 취소했어요');
     expect(screen.getByRole('button', { name: '참여 신청' })).toBeVisible();
@@ -117,6 +123,7 @@ describe('asking to join on 파티 모집글', () => {
 
     await user.press(screen.getByRole('button', { name: '신청 취소' }));
     await pass(500);
+    await answer(user, '신청 취소');
 
     expect(toast()).toHaveTextContent('파티장이 신청을 받지 않았어요');
     expect(toastIcon()).toBe('alert');

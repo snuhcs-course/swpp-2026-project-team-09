@@ -6,6 +6,7 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -50,7 +51,6 @@ export function PostScreen({ questId }: { questId: string }): ReactElement {
             onJoin={() => {
               setJoining(post);
             }}
-            onWithdraw={(requestId) => void actions.withdraw(requestId, post.questId)}
             post={post}
           />
         )

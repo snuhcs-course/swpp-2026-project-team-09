@@ -8,6 +8,7 @@
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -21,7 +22,7 @@ import { socketServer, theSocket } from './support/live';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answer } from './support/room';
-import { answerParty, CODING, invitationTo, JAZZ, openAt, RUN } from './support/party';
+import { answerParty, cardName, CODING, invitationTo, JAZZ, openAt, RUN } from './support/party';
 import { askMainServer, PHONE_NOW } from './support/server';
 
 // 찾기: the board filters, the search at their end and the plain cards, against the fake main server (P06 ticket 12).
@@ -47,7 +48,7 @@ let setAnswers: ReturnType<typeof answerParty>;
 const BOARDS = ['전체', '식사', '진로', '취미', '공연'];
 
 function card(title: string): ReturnType<typeof within> {
-  return within(screen.getByLabelText(title));
+  return within(screen.getByLabelText(cardName(title)));
 }
 
 function shownTitles(): string[] {
@@ -89,7 +90,7 @@ describe('what 찾기 no longer has', () => {
   it('says nothing of the hidden posts', async () => {
     const user = await openAt('/party');
 
-    await user.press(screen.getByLabelText(RUN.title));
+    await user.press(screen.getByLabelText(cardName(RUN.title)));
     await user.press(within(screen.getByLabelText('파티 모집글')).getByRole('button', { name: '관심 없음' }));
     await answer(user, '숨기기');
 
@@ -107,7 +108,7 @@ describe('the board filters', () => {
       expect(within(screen.getByTestId('find-list')).queryByRole('button', { name })).toBeNull();
     }
     expect(screen.getByRole('button', { name: '전체' })).toBeSelected();
-    expect(within(screen.getByTestId('find-list')).getByLabelText(RUN.title)).toBeVisible();
+    expect(within(screen.getByTestId('find-list')).getByLabelText(cardName(RUN.title))).toBeVisible();
   });
 
   it('shows a board’s posts alone, in the same order, and says when a board has none', async () => {
@@ -118,11 +119,23 @@ describe('the board filters', () => {
     expect(shownTitles()).toEqual([RUN.title]);
 
     await user.press(screen.getByRole('button', { name: '식사' }));
-    expect(screen.queryByLabelText(RUN.title)).toBeNull();
+    expect(screen.queryByLabelText(cardName(RUN.title))).toBeNull();
     expect(screen.getByText('식사 게시판에 모집 중인 파티가 없어요')).toBeVisible();
 
     await user.press(screen.getByRole('button', { name: '전체' }));
     expect(shownTitles()).toEqual([RUN.title, CODING.title, JAZZ.title]);
+  });
+
+  it('fades the row’s end before the magnifier, over the chips that scroll under it, taking no press', async () => {
+    const user = await openAt('/party');
+
+    const fade = screen.getByTestId('find-filters-fade');
+    expect(fade).toBeOnTheScreen();
+    expect(fade).toHaveProp('pointerEvents', 'none');
+    expect(within(screen.getByTestId('find-list')).queryByTestId('find-filters-fade')).toBeNull();
+
+    await user.press(screen.getByRole('button', { name: '파티 검색' }));
+    expect(screen.queryByTestId('find-filters-fade')).toBeNull();
   });
 
   it('keeps today’s empty state for 전체 with no post', async () => {
@@ -175,6 +188,13 @@ describe('a card', () => {
     expect(run.queryByText(RUN.description)).toBeNull();
     expect(card(CODING.title).getByText('진로 게시판')).toBeVisible();
     expect(card(CODING.title).getByText('장소 미정')).toBeVisible();
+  });
+
+  it('speaks its title, time, place and fill, and the event after the place', async () => {
+    await openAt('/party');
+
+    expect(screen.getByLabelText(`${RUN.title}, 오늘 19:30, 버들골 (100동) 입구, 3/8명`)).toBeVisible();
+    expect(screen.getByLabelText(`${JAZZ.title}, 시간 미정, 장소 미정, 재즈 정기공연, 5/6명`)).toBeVisible();
   });
 
   it('has no photo, no faces, no members line and no buttons', async () => {
