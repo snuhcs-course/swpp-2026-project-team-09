@@ -2377,7 +2377,8 @@ the walk (`seatLeaveBy`); none when that time has passed or comes before the sta
 kept, and a leave-by that fails to be kept never fails the stay. The Quest is marked `seatStay`: the User's day as the
 planners read it (`heldSubQuests`, for `UserDayService.itemsOn`) leaves it out, so a seat is no busy time for the User
 or a Friend planning with them. The phone ends it with `DELETE /quests/:id` when it cancels or returns the seat, and a
-seat it never reports ends at its booked end.
+seat it never reports ends at its booked end. The Assistant's `proposeLibraryReturn` reads it: a stay not yet started
+is a booking to cancel, not a seat to return.
 
 ## Assistant
 
@@ -3023,7 +3024,16 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
     (Shape, above). Library cards are attached only for a request with
     `clientCapabilities: ["library"]`; otherwise, or with `LIBRARY_BOOKING_ENABLED=false`, every library tool answers
     `none` with the reason (and the official site). No tool result holds a seat, a booking, a 학번, a registered name
-    or the User's 소속.
+    or the User's 소속, and no summary names a card: the reply says what the User presses, never that a card was shown.
+  - 반납 is only for a seat confirmed at the 좌석배정기. `proposeLibraryReturn` reads the User's seat stay of today
+    (`library/seat-stay-now.ts`: the one under way, else the next to start; a seat booked through the app's card is
+    one, see A seat's stay). While that stay has not started, the seat is not in use: it shows the cancel card for its
+    day and start (`cancel:-:<date>:<HHMM>`) and answers `notInUse: true`, and the rules have the reply say in one
+    sentence that the seat is not in use yet and 취소하기 cancels it. From the start on, and for a room named, it shows
+    the return card, since the server cannot see whether the seat was confirmed. "내 예약", "예약 됐어?", "취소
+    됐어?", "반납 됐어?" and "반납했어?" call `showMyLibraryBookings`, whose card lists each booking with its state;
+    the reply says in one sentence that the states are shown below and never whether a booking, cancel or return went
+    through (P05 ticket 59). These rules are shared by `LIBRARY_RULES` and the answer-drawing ones.
   - A space asked for today at or after its closing, by its catalogue hours, gets no card. `showLibrarySeats` and
     `findLibraryFreeSlots` answer `refused` with `closedToday` (`{ closedAt, opens }`, such as `23:00` and `내일 07:00`),
     and `findLibrarySpace` marks the space `closedToday`. The refusal draws 관정 as a place with why, a `place` Lookup
