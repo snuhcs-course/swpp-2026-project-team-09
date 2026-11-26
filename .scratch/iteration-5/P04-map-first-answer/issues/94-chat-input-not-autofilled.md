@@ -30,4 +30,6 @@ The AI input takes no words written into it while the User is not in it:
 
 ## Comments
 
+Built in PR #613.
+
 What the guard does not cover: an autofill that lands while the field is focused, for example with the keyboard up right after the login. If it comes back that way, the next step is native, a config plugin that marks the field `IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS` on its parent. That would need a native Release.
