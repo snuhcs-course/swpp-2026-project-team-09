@@ -54,3 +54,5 @@ The user's decision (2026-11-26), design page "1. 수업 빼기" with option 다
 - [x] No native file changes; lint, format and types pass on the main server.
 
 ## Comments
+
+Built in PR #608.
