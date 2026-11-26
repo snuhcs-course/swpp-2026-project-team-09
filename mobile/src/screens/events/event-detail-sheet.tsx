@@ -8,20 +8,9 @@
 
 import type { ReactElement } from 'react';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
-import {
-  BottomSheet,
-  Button,
-  color,
-  eventText,
-  eventTone,
-  Icon,
-  type IconName,
-  radius,
-  space,
-  text,
-} from '@/design-system';
+import { BottomSheet, Button, color, eventText, eventTone, Icon, type IconName, radius, space } from '@/design-system';
 import type { EventView } from '@/features/events/adapter';
-import { MineMark } from './event-row';
+import { type DescriptionLine, descriptionLines } from './description-lines';
 import { FavoriteToggle } from './favorite-toggle';
 
 // "파티 찾기/모집", or "모집 중인 파티 {n} · 찾기/모집" when a recruiting Quest the User can join is there for the event,
@@ -30,13 +19,13 @@ export function detailPartyWords(recruiting: number): string {
   return recruiting === 0 ? '파티 찾기/모집' : `모집 중인 파티 ${recruiting} · 찾기/모집`;
 }
 
+// The icon names the value on the screen, and `name` names it to a screen reader.
 function Fact({ icon, name, words }: { icon: IconName; name: string; words: string }): ReactElement {
   return (
-    <View style={styles.fact}>
+    <View accessibilityLabel={`${name}, ${words}`} accessible style={styles.fact}>
       <View style={styles.factIcon}>
-        <Icon color={color.inkMuted} name={icon} size={18} />
+        <Icon color={color.inkMuted} name={icon} size={FACT_ICON} />
       </View>
-      <Text style={styles.key}>{name}</Text>
       <Text lineBreakStrategyIOS="hangul-word" style={styles.value}>
         {words}
       </Text>
@@ -44,28 +33,38 @@ function Fact({ icon, name, words }: { icon: IconName; name: string; words: stri
   );
 }
 
+// A block per line of the text, each run of blank lines one wider gap.
+function Description({ lines }: { lines: DescriptionLine[] }): ReactElement {
+  return (
+    <View testID="event-description">
+      {lines.map(({ words, afterBlank }, index) => (
+        <Text
+          key={index}
+          lineBreakStrategyIOS="hangul-word"
+          style={[styles.description, { marginTop: index === 0 ? 0 : afterBlank ? PARAGRAPH_GAP : LINE_GAP }]}
+        >
+          {words}
+        </Text>
+      ))}
+    </View>
+  );
+}
+
 function Details({ event }: { event: EventView }): ReactElement {
+  const lines = descriptionLines(event.description);
   return (
     <ScrollView contentContainerStyle={styles.details} style={styles.scroll} testID="event-detail">
       <View style={styles.head}>
-        <View style={styles.names}>
-          {event.source === null ? null : <Text style={styles.source}>{event.source}</Text>}
-          {event.mine ? <MineMark /> : null}
-          <Text accessibilityRole="header" lineBreakStrategyIOS="hangul-word" style={styles.title}>
-            {event.title}
-          </Text>
-        </View>
+        <Text accessibilityRole="header" lineBreakStrategyIOS="hangul-word" style={styles.title}>
+          {event.title}
+        </Text>
         <FavoriteToggle eventId={event.id} style={styles.favorite} />
       </View>
       <View style={styles.facts}>
         <Fact icon="clock" name="언제" words={event.time} />
         {event.place === null ? null : <Fact icon="pin" name="어디" words={event.place} />}
       </View>
-      {event.description === '' ? null : (
-        <Text lineBreakStrategyIOS="hangul-word" style={styles.description}>
-          {event.description}
-        </Text>
-      )}
+      {lines.length === 0 ? null : <Description lines={lines} />}
     </ScrollView>
   );
 }
@@ -141,21 +140,22 @@ export function EventDetailSheet({ event, onClose, onParty }: EventDetailSheetPr
 }
 
 // The `EventsDetail` frame's measures that the design system's 4-point steps do not hold: the gaps and padding of the
-// time and place box, its key column, and how far the ☆'s touch area reaches past the title's corner.
+// time and place box, how far the ☆'s touch area reaches past the title's corner, and the description's gaps between
+// lines and across blank lines (ticket 14).
 const BOX_GAP = 10;
 const BOX_PADDING = 14;
-const KEY_WIDTH = 36;
-const ICON_DROP = 2;
+const FACT_ICON = 18;
+const ICON_DROP = (eventText.value.lineHeight - FACT_ICON) / 2;
 const FAVORITE_REACH = { marginTop: -6, marginRight: -10 };
+const LINE_GAP = 7;
+const PARAGRAPH_GAP = 14;
 
 const styles = StyleSheet.create({
   body: { flexShrink: 1, gap: space[4], paddingHorizontal: space[5], paddingBottom: space[1] },
   scroll: { flexGrow: 0, flexShrink: 1 },
   details: { gap: space[4] },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2] },
-  names: { flex: 1, minWidth: 0, gap: space[1] },
-  source: { ...eventText.source, color: color.inkMuted },
-  title: { ...text.titleLg, color: color.ink },
+  title: { ...eventText.sheetTitle, flex: 1, minWidth: 0, color: color.ink },
   favorite: FAVORITE_REACH,
   facts: {
     gap: BOX_GAP,
@@ -166,7 +166,6 @@ const styles = StyleSheet.create({
   },
   fact: { flexDirection: 'row', alignItems: 'flex-start', gap: BOX_GAP },
   factIcon: { paddingTop: ICON_DROP },
-  key: { ...eventText.key, width: KEY_WIDTH, color: color.inkFaint },
   value: { ...eventText.value, flex: 1, color: color.ink },
   description: { ...eventText.description, color: eventTone.words },
   actions: { flexDirection: 'row', alignItems: 'center', gap: space[2] },

@@ -1,7 +1,7 @@
 # 14: 행사's detail sheet: no 내 파티 or source line, no 언제 / 어디 words, smaller type, and the description spaced by its own lines
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.
@@ -58,11 +58,31 @@ All in `EventDetailSheet`; the 행사 list's rows do not change.
 
 ## Acceptance criteria
 
-- [ ] The sheet shows neither the 내 파티 mark nor the source line, even for an event of the User's 파티 with an announcer; the list row still shows its 내 파티 mark. (App integration test, which fails before the change.)
-- [ ] The facts show their icons and values without the words 언제 / 어디, and a screen reader still gets 언제 / 어디 with each value. (App integration test, which fails before the change.)
-- [ ] The title is 21 Bold, the values 14 SemiBold and the description 14 Regular. (Test, which fails before the change.)
-- [ ] A description with lines and blank lines shows one block per line, 7 apart, with each run of blank lines as one gap of 14, and its words unchanged. (Unit or integration test, which fails before the change.)
+- [x] The sheet shows neither the 내 파티 mark nor the source line, even for an event of the User's 파티 with an announcer; the list row still shows its 내 파티 mark. (App integration test, which fails before the change.)
+- [x] The facts show their icons and values without the words 언제 / 어디, and a screen reader still gets 언제 / 어디 with each value. (App integration test, which fails before the change.)
+- [x] The title is 21 Bold, the values 14 SemiBold and the description 14 Regular. (Test, which fails before the change.)
+- [x] A description with lines and blank lines shows one block per line, 7 apart, with each run of blank lines as one gap of 14, and its words unchanged. (Unit or integration test, which fails before the change.)
 - [ ] Checked on the user's phone with the pull request's release build.
-- [ ] No native file changes; lint, format and types pass on the changed files.
+- [x] No native file changes; lint, format and types pass on the changed files.
+
+## Decided while building
+
+- The title's letter spacing is -0.315, 1.5% of its size, as `text.titleLg`'s and the row title's. The ticket gave only the size and the line height.
+- The 18 icon is centred on the value's first line: it drops 1.5 instead of 2, now that the line is 21 high.
+- Each fact is one element for a screen reader, labelled "언제, …" or "어디, …". The value is still its own text.
+- A line of white space alone counts as blank, since it has no words. `\r\n` counts as one line break. A line keeps its own spaces, at its ends too.
+- A description of blank lines alone shows no description, as an empty one showed none before.
+- `eventText.key` is gone with the words 언제 / 어디, its only use. `MineMark` is no longer exported, since the sheet was its only user outside the row.
+- The ticket's sheet tests are in a new `event-detail-sheet.integration.test.tsx`. In `events-tab` they would have gone over the 300-line lint limit. `events-tab` now checks what a screen reader gets for 언제 / 어디 instead of the words, and no longer checks the sheet's 내 파티.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+Estimates. Agent time is the session's wall clock from start to the pull request. About 8 minutes of it were Jest runs, partly in the background. No subagents. Tokens are counted up to the writing of this entry, so the commit and the pull request are left out.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Ticket 14 (tests first, `descriptionLines`, the sheet's head, facts and type, checks) | about 15 minutes | 8,572,759 | 8,430,719 | 141,920 | 120 | 42,998 |
+
+Without cache reads, the input is 142,040.

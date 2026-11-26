@@ -136,7 +136,7 @@ describe("the User's own 파티", () => {
 });
 
 describe('the detail sheet', () => {
-  it('opens on a press of the row, with the time, the place, the description and 원문 보기', async () => {
+  it('opens on a press of the row, with the time and the place by their icons, the description and 원문 보기', async () => {
     const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
     answerEvents(server, { events: [{ ...CAREER, title: LONG_TITLE, place: LONG_PLACE }, MAJOR] });
     const user = await openEvents();
@@ -145,10 +145,13 @@ describe('the detail sheet', () => {
     await pass(500);
 
     expect(screen.getByRole('header', { name: LONG_TITLE })).toBeVisible();
-    expect(screen.getByText('언제')).toBeVisible();
     expect(screen.getByText('오늘 18:00–20:00')).toBeVisible();
-    expect(screen.getByText('어디')).toBeVisible();
     expect(screen.getByText(LONG_PLACE)).toBeVisible();
+    // No 언제 and 어디 on the screen, where the icons say it; a screen reader still hears them.
+    expect(screen.queryByText('언제')).toBeNull();
+    expect(screen.queryByText('어디')).toBeNull();
+    expect(screen.getByLabelText('언제, 오늘 18:00–20:00')).toBeVisible();
+    expect(screen.getByLabelText(`어디, ${LONG_PLACE}`)).toBeVisible();
     expect(screen.getByText(CAREER.description)).toBeVisible();
     await user.press(screen.getByRole('button', { name: '원문 보기' }));
     expect(openURL).toHaveBeenCalledWith(CAREER.sourceUrl);
@@ -164,11 +167,11 @@ describe('the detail sheet', () => {
     await user.press(screen.getByRole('button', { name: '파티 찾기/모집' }));
     await pass(500);
 
-    expect(screen.queryByText('언제')).toBeNull();
+    expect(screen.queryByTestId('event-detail')).toBeNull();
     expect(screen.getByRole('header', { name: '모집 중인 파티 0' })).toBeVisible();
   });
 
-  it("counts the recruiting Quests on its party button, and marks the User's own 파티", async () => {
+  it('counts the recruiting Quests on its party button', async () => {
     answerEvents(server, { quests: [DINNER, WITH_FRIEND] });
     const user = await openEvents();
 
@@ -176,7 +179,6 @@ describe('the detail sheet', () => {
     await pass(500);
 
     expect(screen.getByRole('button', { name: '모집 중인 파티 2 · 찾기/모집' })).toBeVisible();
-    expect(within(screen.getByTestId('event-detail')).getByText('내 파티')).toBeVisible();
   });
 });
 

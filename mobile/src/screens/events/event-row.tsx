@@ -4,6 +4,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Fable 5.2  prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -47,7 +48,7 @@ function PartyLine({ recruiting, onPress }: { recruiting: number; onPress: () =>
 
 // The User's own 파티 for the event, as the old card's badge said it. The frame draws none (ticket 54).
 // The badge keeps itself at its parent's start, so a box of its own centres it on the line it stands beside.
-export function MineMark(): ReactElement {
+function MineMark(): ReactElement {
   return (
     <View style={styles.mine}>
       <Badge icon={false} tone="friend">
