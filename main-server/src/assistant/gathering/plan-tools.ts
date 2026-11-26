@@ -14,7 +14,7 @@
 
 import { z } from 'zod';
 import { CUISINE_WORD_LIST, type CuisineWord } from '../../menus/cuisine-words.js';
-import { type AnswerReply, type MealInput, type Plan, type ReplyStep, type RequestContext } from '../dto/answer.dto.js';
+import { type AnswerReply, type MealInput, type ReplyStep, type RequestContext } from '../dto/answer.dto.js';
 import { defineTool, type Presented, type Tool, type ToolContext } from '../feature.js';
 import { afterEarlierSteps } from '../steps/plan-steps.js';
 import { type FoundIds, type FoundKind } from '../found-ids.js';
@@ -22,18 +22,9 @@ import { mealByClock } from '../free-time/meal-fit.js';
 import { clockTime, dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
 import { askedBy } from '../refusals/friend-question.js';
 import { mealAfter, nextMealOffer } from './meal-after-hours.js';
-import { listPrice, menuWords, type ServedMenu } from './meal-menu.js';
-import {
-  PRICE_INPUTS,
-  type PriceCondition,
-  planPriceWords,
-  priceConditionOf,
-  priceConditionWords,
-} from './meal-price.js';
-import { orderWords } from './plan-order.js';
-import { timesAndWays } from './plan-times.js';
+import { PRICE_INPUTS, priceConditionOf } from './meal-price.js';
 import { type MealPlanService } from './meal-plan.service.js';
-import { addingWords, alreadySetWords, busyWords, invitedWords, relatedWords, servingKind } from './meal-tool-words.js';
+import { addingWords, busyWords, invitedWords, plannedWords } from './meal-tool-words.js';
 import { NOT_POSTED } from './not-posted.js';
 
 export { PLAN_RULES } from './plan-rules.js';
@@ -78,16 +69,6 @@ function noneOf(
     return { result: 'none', meal: input.meal, reason: NOT_POSTED };
   }
   return { result: 'none', meal: input.meal, reason: relax.length > 0 ? NOT_NOW : NONE_REASONS[reason] };
-}
-
-// The Restaurant's menu for the meal in words and when it closes, so that a User who picks by food is answered from
-// the plans.
-function planWords(plan: Plan, served: ReadonlyMap<string, ServedMenu>, condition: PriceCondition): object {
-  const menu = served.get(plan.id);
-  const words = menu === undefined ? {} : { menu: menuWords(menu.lines), closesAt: menu.closesAt };
-  const price = plan.menu === undefined ? null : listPrice(plan.menu);
-  const priced = planPriceWords(plan, condition);
-  return { restaurant: plan.id, ...words, ...(price === null ? {} : { price }), ...priced, ...timesAndWays(plan) };
 }
 
 const input = z
@@ -154,6 +135,8 @@ const input = z
       ),
   })
   .refine(({ from, until }) => from === undefined || until === undefined || from < until, 'Expected from before until');
+
+type PlanMealArgs = z.infer<typeof input>;
 
 // An id is accepted when a resolver returned it in this message, or when it is on screen or tapped. The asker heads
 // the conditions on screen and is no Friend of them.
@@ -234,23 +217,25 @@ function placeIdOf(
   return placed;
 }
 
-// The plans in words for the model, and with a kind of food, the Restaurants that serve it.
-function plannedWords(
-  answer: AnswerReply,
-  served: ReadonlyMap<string, ServedMenu>,
-  { meal, kind }: { meal: MealInput['meal']; kind: CuisineWord | null },
-): object {
-  const condition = answer.input.kind === 'meal' ? answer.input : {};
+// The meal planMeal plans, with what the conditions on screen keep: each person's constraints for the same day and
+// meal, the kind of food, and the price (P05 ticket 53).
+function mealInputOf(
+  { date, friendIds, from, until, now: soon, restaurant, placeId, cuisine, startPlaceId, ...asked }: PlanMealArgs,
+  meal: MealInput['meal'],
+  { userId, context }: Pick<ToolContext, 'userId' | 'context'>,
+  plans: Pick<MealPlanService, 'restaurantPlaceId'>,
+): MealInput {
+  const kept = withStart(constraintsOf(context, date, meal), userId, startPlaceId);
+  const kind = kindOf(cuisine, context, date, meal);
   return {
-    result: 'planned',
+    kind: 'meal',
+    date,
     meal,
-    plans: answer.plans.map((plan) => planWords(plan, served, condition)),
-    ...priceConditionWords(answer.plans, condition),
-    dropped: answer.dropped.map(({ place }) => place.label),
-    ...(kind === null ? {} : { cuisine: kind, servedBy: servingKind(answer.plans, kind) }),
-    ...orderWords(answer.plans),
-    ...alreadySetWords(answer.mealSet, answer.planSet),
-    ...relatedWords(answer.related),
+    people: [userId, ...new Set(friendIds)].map((id) => ({ userId: id, constraints: kept.get(id) ?? [] })),
+    window: { from: from ?? null, until: until ?? null, ...(soon === true ? { now: true } : {}) },
+    placeId: placeIdOf(plans, restaurant, placeId),
+    ...(kind === null ? {} : { cuisine: kind }),
+    ...priceConditionOf(asked, context),
   };
 }
 
@@ -288,46 +273,19 @@ export function planMeal(
     description:
       "Plans a meal for the User alone or with Friends on a day from today to a week ahead. The server decides the Restaurant, when everyone is there, how long they can eat, and where they meet on the way, those with 30 minutes for everyone first, each the least travel for everyone first, on foot or by the shuttle, (to the Restaurant and on to each one's next item), and the app draws the plans on the map. Answers result 'planned' with the meal and the plans in order, each with its restaurant, its menu for the meal and closesAt, its price as the app's list writes it, start, end, togetherMinutes, meeting, and each person's way, and the Restaurants dropped, or result 'none' with the meal and the reason.",
     input,
-    run: async (
-      {
-        date,
-        meal: named,
-        friendIds,
-        from,
-        until,
-        now: soon,
-        restaurant,
-        placeId,
-        cuisine,
-        startPlaceId,
-        pickPeople,
-        ...asked
-      },
-      toolContext,
-    ) => {
-      const { userId, now, context, found, presented } = toolContext;
+    run: async (args, toolContext) => {
+      const { date, friendIds, placeId, startPlaceId, pickPeople } = args;
+      const { now, context, found, presented } = toolContext;
       if (outOfReach(date, now)) {
         return noDay(date);
       }
-      const meal = named ?? mealByClock(date, now, from);
       const seen = seenIds(context);
       askedBy('planMeal', friendIds, found, presented);
       refuseUnseen(found, 'friend', friendIds, seen.friends);
       refuseUnseen(found, 'place', placeId === undefined ? [] : [placeId], seen.places);
       refuseUnseen(found, 'place', startPlaceId === undefined ? [] : [startPlaceId], []);
-      const kept = withStart(constraintsOf(context, date, meal), userId, startPlaceId);
-      const kind = kindOf(cuisine, context, date, meal);
-      const price = priceConditionOf(asked, context);
-      const planInput: MealInput = {
-        kind: 'meal',
-        date,
-        meal,
-        people: [userId, ...new Set(friendIds)].map((id) => ({ userId: id, constraints: kept.get(id) ?? [] })),
-        window: { from: from ?? null, until: until ?? null, ...(soon === true ? { now: true } : {}) },
-        placeId: placeIdOf(plans, restaurant, placeId),
-        ...(kind === null ? {} : { cuisine: kind }),
-        ...price,
-      };
+      const planInput = mealInputOf(args, args.meal ?? mealByClock(date, now, args.from), toolContext, plans);
+      const kind = planInput.cuisine ?? null;
       const words = await plannedFor(plans, afterEarlierSteps(planInput, earlier(toolContext)), {
         toolContext,
         planInput,

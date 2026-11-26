@@ -108,22 +108,22 @@ function recalculate(input: MealInput): request.Test {
   });
 }
 
+const inputOn = (date: string, condition: object): MealInput => ({
+  kind: 'meal',
+  date,
+  meal: 'lunch',
+  people: [{ userId: stage.asker.id, constraints: [] }],
+  window: { from: null, until: null },
+  placeId: null,
+  ...condition,
+});
+
 // Partitions: a ceiling with cheapFirst, and a ceiling of 0 won. Expected values: the input schema.
 describe('A price condition in a recalculation', () => {
-  const input = (date: string, condition: object): MealInput => ({
-    kind: 'meal',
-    date,
-    meal: 'lunch',
-    people: [{ userId: stage.asker.id, constraints: [] }],
-    window: { from: null, until: null },
-    placeId: null,
-    ...condition,
-  });
-
   it('comes back unchanged in the input, the Restaurants under it first', async () => {
     const date = '2089-10-04';
     await lunchOn(date);
-    const asked = input(date, { maxPrice: 6500, cheapFirst: true });
+    const asked = inputOn(date, { maxPrice: 6500, cheapFirst: true });
 
     const response = await recalculate(asked);
 
@@ -134,7 +134,7 @@ describe('A price condition in a recalculation', () => {
   });
 
   it('is refused at 0 won', async () => {
-    const response = await recalculate(input('2089-10-04', { maxPrice: 0 }));
+    const response = await recalculate(inputOn('2089-10-04', { maxPrice: 0 }));
 
     expect(response.status).toBe(400);
   });

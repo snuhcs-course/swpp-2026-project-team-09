@@ -1,7 +1,7 @@
 # 53: A meal plan with a price ceiling
 
 Parent: [P05 spec](../spec.md); the design page "밥 조건 두 가지" § 2 가격으로 거르기, approved by the user on 2026-11-26 (`.scratch/iteration-5/notes-ko/handoff/meal-conditions-design/index.html`)
-Status: ready-for-agent
+Status: ready-for-human
 Blocked by: nothing
 
 Native files: none. Releases: the main server, before the app's part (P04 ticket 92).
@@ -35,10 +35,17 @@ Native files: none. Releases: the main server, before the app's part (P04 ticket
 
 ## Acceptance criteria
 
-- [ ] `cheapestDish`: the corner's price with its first dish, the cheapest of dishes that differ, the first of a tie, and none. (Unit tests.)
-- [ ] The order: no condition, `cheapFirst` alone, a ceiling that some fit (exactly at it and one won over), a ceiling with `cheapFirst`, none fitting, no prices at all. (Unit tests.)
-- [ ] planMeal: the ceiling and `cheapFirst` go into the input, are kept from the conditions on screen on another day, and are let go with 'any' and false. Its words carry the condition and each plan's dish and price. (Unit tests.)
-- [ ] The server's sentence for each case. (Unit tests.)
-- [ ] Through the server: a ceiling orders the plans, and a recalculation takes and gives back `maxPrice`. (Integration tests.)
-- [ ] Eval cases `meal-wish-by-price` (rewritten), `meal-price-ceiling-words`, `meal-cheap-first`, `meal-price-let-go`, P4 world. Not run: no model key on this machine.
-- [ ] Whole lint, format and types of the main server.
+- [x] `cheapestDish`: the corner's price with its first dish, the cheapest of dishes that differ, the first of a tie, and none. (Unit tests.)
+- [x] The order: no condition, `cheapFirst` alone, a ceiling that some fit (exactly at it and one won over), a ceiling with `cheapFirst`, none fitting, no prices at all. (Unit tests.)
+- [x] planMeal: the ceiling and `cheapFirst` go into the input, are kept from the conditions on screen on another day, and are let go with 'any' and false. Its words carry the condition and each plan's dish and price. (Unit tests.)
+- [x] The server's sentence for each case. (Unit tests.)
+- [x] Through the server: a ceiling orders the plans, and a recalculation takes and gives back `maxPrice`. (Integration tests.)
+- [x] Eval cases `meal-wish-by-price` (rewritten), `meal-price-ceiling-words`, `meal-cheap-first`, `meal-price-let-go`, P4 world. Not run: no model key on this machine.
+- [x] Whole lint, format and types of the main server.
+
+## Comments
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 30 minutes in the p04-58 session, from 11:05 UTC to the server's pull request, an estimate. It includes reading the design and the code for both parts, and the app's part has not started. One search subagent ran for about 6 minutes beside it.
+- Tokens, from 11:05 UTC to this entry: the session's input 168 uncached, with cache reads 35,581,410 and cache writes 151,899; output 84,823. The subagent's input 122 uncached, with cache reads 8,561,523 and cache writes 162,787; output 27,060.

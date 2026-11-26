@@ -85,7 +85,7 @@ export function priceConditionOf(
   { conditions }: RequestContext,
 ): PriceCondition {
   const shown = conditions?.kind === 'meal' ? conditions : null;
-  const maxPrice = asked.maxPrice === undefined ? shown?.maxPrice : asked.maxPrice;
+  const maxPrice = asked.maxPrice ?? shown?.maxPrice;
   const cheapFirst = asked.cheapFirst ?? shown?.cheapFirst === true;
   return {
     ...(maxPrice === undefined || maxPrice === 'any' ? {} : { maxPrice }),

@@ -204,7 +204,10 @@ describe('planMeal asked by price', () => {
     expect(asked[0]).not.toHaveProperty('maxPrice');
     expect(asked[0]).not.toHaveProperty('cheapFirst');
   });
+});
 
+// Partitions: some fit, none fits, and no prices. Expected values: the ticket's words for the model.
+describe("planMeal's words with a price ceiling", () => {
   it("tells the model the ceiling, how many fit, and each plan's dish and price", async () => {
     const { tool } = stagedPlanMeal([STUDENT_HALL, DUREMIDAM]);
 

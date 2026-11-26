@@ -231,7 +231,7 @@
     args:
       planMeal: { date: '2026-11-02', meal: dinner, maxPrice: 5000 }
     text:
-      mentions: [[5, 000원 이하, 5천원 이하]]
+      mentions: [['5,000원 이하', 5천원 이하]]
       absent: [거르지 못, 단품, 부족]
 
 - id: meal-price-ceiling-words
@@ -326,7 +326,7 @@
         args:
           planMeal: { maxPrice: any }
         text:
-          absent: [5, 000원 이하]
+          absent: ['5,000원 이하']
 
 # A meal's plans are never answered with no words (P05 ticket 48). Production logged a meal turn whose model wrote no
 # text (2026-11-26), and the app put the plan's own line, with its walk and price, where the sentence goes.
