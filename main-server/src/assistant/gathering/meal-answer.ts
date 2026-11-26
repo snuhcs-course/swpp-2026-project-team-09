@@ -8,6 +8,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type AnswerLine, type AnswerReply, type ConditionChip, type Plan } from '../dto/answer.dto.js';
@@ -320,5 +321,6 @@ export function mealAnswer(args: MealAnswerArgs): AnswerReply {
     dropped: droppedOf(naming),
     noPlan: plans.length > 0 ? null : (notNowPlan(naming) ?? noPlanOf(naming)),
     ...missingParts(args.missing),
+    choosable: true,
   };
 }

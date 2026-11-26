@@ -189,6 +189,9 @@ export interface RequestContext extends WithLocationMissing {
   conditions: PlanInput | null;
   // The plan on screen.
   planId: string | null;
+  // The plans of the meal answer on screen in its order, which the list and the map number from 1, so that "2번으로
+  // 할게" chooses one of them (P05 ticket 51). Left out without a meal answer on screen that says `choosable`.
+  planIds?: string[];
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
@@ -257,6 +260,9 @@ export interface AnswerReply extends WithMissing, WithAdding {
   // A menu question's: the Plan whose Restaurant was asked about, which the answer opens at, its menu shown as from the
   // list (P04 ticket 72). Absent from other answers and from a main server before it.
   opened?: string;
+  // A meal answer from a main server that takes `planIds` (P05 ticket 51): only over such an answer does the app send
+  // them, since an older main server refuses a request that carries them.
+  choosable?: true;
 }
 
 // One of the User's Quests as the main server names it (P05 ticket 17): set aside by a plan, related to one, or asked
@@ -410,6 +416,9 @@ export interface AssistantReply extends WithRefusal {
   offers?: ReplyOffer[];
   // Each request of a message that asked for two or more, in time order (P03). A server before P03 leaves it out.
   steps?: ReplyStep[];
+  // The plan the User chose in words (P05 ticket 51): of the meal answer on screen, kept with its list and numbers, or
+  // of the reply's own answer, which then opens at it.
+  select?: { planId: string };
 }
 
 export type { AskOffer, ReplyOffer } from './reply-offer-types';

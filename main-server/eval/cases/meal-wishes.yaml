@@ -252,3 +252,74 @@
     text:
       mentions: [추천]
       absent: [아래에서 확인해 보세요, 걸음]
+
+# A plan of the meal answer on screen chosen in words keeps the answer, its list and its numbers (P05 ticket 51). On
+# the user's phone (2026-11-26), "2번으로 할게" over a dinner answer of six places was planned again at its 2번 alone,
+# numbered 1, and the reply described the place. The second turn sends the first answer on screen, as the app does.
+- id: meal-choose-by-number
+  category: meal-wishes
+  world: p4-answer
+  live: true
+  screen: true
+  repeat: 3
+  turns:
+    - user: 오늘 저녁 뭐 먹지
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planMeal]
+    - user: 2번으로 할게
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [choosePlan]
+          forbidden: [planMeal, getMenus, findMenu, showOnMap]
+        args:
+          choosePlan: { number: 2 }
+        text:
+          absent: [운영, 메뉴는, 걸어서]
+
+- id: meal-choose-by-name
+  category: meal-wishes
+  world: p4-answer
+  live: true
+  screen: true
+  repeat: 3
+  turns:
+    - user: 오늘 저녁 뭐 먹지
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planMeal]
+    - user: 두레미담으로 하자
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [choosePlan]
+          forbidden: [planMeal, getMenus, findMenu, showOnMap]
+        text:
+          absent: [운영, 메뉴는, 걸어서]
+
+# A dish picked from the plans' menus plans again with the same conditions and may choose the plan that serves it in
+# the same message: the reply then carries the new answer opened at that plan (review of PR 596).
+- id: meal-choose-by-dish
+  category: meal-wishes
+  world: p4-answer
+  live: true
+  screen: true
+  repeat: 3
+  turns:
+    - user: 오늘 저녁 뭐 먹지
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planMeal]
+    - user: 국물 있는 거 먹고 싶어
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planMeal]
+          allowed: [choosePlan]
+          forbidden: [getMenus, findMenu, showOnMap]
+        text:
+          absent: [운영, 걸어서]

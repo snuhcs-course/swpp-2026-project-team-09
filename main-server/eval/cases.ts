@@ -8,6 +8,7 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readdirSync, readFileSync } from 'node:fs';
@@ -144,6 +145,9 @@ export const caseSchema = z
     // Where the asker is, sent as the request's context as the app sends it; none is sent without it.
     context: z.strictObject({ location: z.strictObject({ latitude: z.number(), longitude: z.number() }) }).optional(),
     live: z.boolean().default(false),
+    // A live case whose later turns send the answer on screen as the app does: the last answer's conditions, the plan
+    // shown, and its plans in order, numbered from 1 (P05 ticket 51). Left out, every turn sends the case's context only.
+    screen: z.boolean().default(false),
     // Run this many times, for pass^k (the repeated set).
     repeat: z.int().min(2).optional(),
     // Why the Assistant does not do this yet: scored as usual, reported apart.
@@ -161,6 +165,7 @@ export const caseSchema = z
     message: "The last turn must be the User's",
     path: ['turns'],
   })
+  .refine(({ live, screen }) => live || !screen, { message: 'Only a live case carries the answer on screen' })
   .refine(({ live, turns }) => !live || turns.every((turn) => 'user' in turn), {
     message: "A live case holds only the User's turns",
     path: ['turns'],

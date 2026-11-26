@@ -34,6 +34,9 @@ export interface RequestContext {
   conditions: PlanInput | null;
   // The plan on screen.
   planId: string | null;
+  // The plans of the meal answer on screen in its order, which the app numbers from 1 (P05 ticket 51). Left out by an app
+  // before it.
+  planIds?: string[];
   // The Friends the User's new message mentions with "@". Left out by an app before the mention, and checked against
   // the asker's Friends before anything reads it.
   mentions?: Mention[];
@@ -90,6 +93,9 @@ export interface AnswerReply extends WithMissing {
   // A menu question's: the Plan whose Restaurant was asked about, which the app opens at its menu as from the list (P04
   // ticket 72). Absent from any other answer.
   opened?: string;
+  // A meal answer from a main server that takes `planIds`: only over such an answer does the app send them, so that a
+  // newer app never sends a field an older main server refuses (P05 ticket 51). Absent from any other answer.
+  choosable?: true;
 }
 
 // One of the User's Quests as the app reads it: those set aside by a plan (`planSet`), related to one (`related`), and
@@ -303,6 +309,8 @@ export type {
 export { EVENT_IDS_MAX, planInputSchema, QUEST_IDS_MAX } from './plan-input.dto.js';
 
 const PLAN_ID_MAX = 200;
+// More plans than an answer lists is a wrong request.
+const PLANS_MAX = 30;
 
 const latitude = z.number().min(-90).max(90);
 const longitude = z.number().min(-180).max(180);
@@ -327,6 +335,7 @@ export const requestContextSchema = z.strictObject({
   tapped: tappedSchema.nullable().default(null),
   conditions: planInputSchema.nullable().default(null),
   planId: z.string().min(1).max(PLAN_ID_MAX).nullable().default(null),
+  planIds: z.array(z.string().min(1).max(PLAN_ID_MAX)).max(PLANS_MAX).optional(),
   mentions: z.array(mentionSchema).max(MENTIONS_MAX).optional(),
 }) satisfies z.ZodType<RequestContext>;
 

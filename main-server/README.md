@@ -2440,8 +2440,19 @@ Anthropic API as the AI's key says
   Beside `messages` the app may send `context`, what it knew as the User asked, each part null or left out when it does
   not know it: `location` (`{ "latitude", "longitude" }`, where the User is), `viewport` (`{ "south", "west", "north",`
   `"east" }`, the visible map area), `tapped` (`{ "kind": "place", "placeId" }` or `{ "kind": "friend", "userId" }`),
-  `conditions` (the `PlanInput` of the answer on screen), `planId` (the plan on screen), and `mentions` (below). Every
-  tool is given it, and `planMeal` reads its `location`.
+  `conditions` (the `PlanInput` of the answer on screen), `planId` (the plan on screen), `planIds` (below), and
+  `mentions` (below). Every tool is given it, and `planMeal` reads its `location`.
+
+  `planIds` (at most 30) lists the plans of the meal answer on screen in its order, which the app numbers from 1. The
+  model reads them as `numbered` in the line `[Plan on screen: …]`, and `choosePlan` chooses one of them by its number
+  or its Restaurant ("2번으로 할게", "두레미담으로"). A reply that chose one carries `select` (`{ "planId" }`). Beside no
+  answer of its own, the app keeps the answer on screen, its list and its numbers, and shows that plan. Beside a new
+  answer that holds it, such as after a dish picked from the menus or a Friend added with the choice, the app opens the
+  new answer at it. An app that ignores `select` shows the reply's words. A number past the list is asked about again,
+  a Restaurant not in the list is planned as a change of place, and without `planIds` the model plans with `planMeal`
+  as before. The request schema refuses unknown fields, so a main server before `planIds` would answer 400 to a request
+  that carries them. Every meal answer therefore says `choosable: true`, and the app sends `planIds` only over an
+  answer that says it, never to an older main server.
 
   `mentions` (`[{ "userId", "name" }]`, at most 20) lists the Friends the User picked with "@" in the new message. It is
   left out when there is none. Before the run, an id that is not among the asker's Friends is dropped, each Friend

@@ -109,6 +109,11 @@ const ADD_TIMETABLE = {
 
 // Board n13 assumed the Class's 301동; since P05 ticket 42 the asker without a position sets out from where nobody knows.
 describe('Board n13: no location permission, at 12:30, the Class in 301동 over at 11:50', () => {
+  // P05 ticket 51: a meal answer says that this main server takes planIds, and only over it does the app send them.
+  it('says the main server takes planIds', () => {
+    expect(n13().choosable).toBe(true);
+  });
+
   it('has no origin chip', () => {
     expect(n13().chips).toEqual([{ kind: 'until', text: '13:00 수업까지', userId: null }]);
   });

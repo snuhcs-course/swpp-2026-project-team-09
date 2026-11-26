@@ -12,6 +12,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -123,6 +124,8 @@ export interface Presented {
   notDone?: NotDone[];
   // The requests of the message in time order, when it asked for two or more (P03).
   steps?: ReplyStep[];
+  // The plan of the meal answer on screen the User chose in words (choosePlan).
+  select?: string;
 }
 
 // Who asks, when, and what their app knew as they asked, such as where they are.

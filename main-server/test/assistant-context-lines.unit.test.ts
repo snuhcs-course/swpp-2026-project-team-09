@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -41,6 +42,16 @@ const PLAN_LINE =
 describe('The lines of a request context', () => {
   it('give the plan on screen with its conditions', () => {
     expect(contextLines({ ...NO_CONTEXT, conditions: CONDITIONS, planId: '학생회관식당' })).toEqual([PLAN_LINE]);
+  });
+
+  // P05 ticket 51: the places the app lists, numbered from 1, so that "2번으로 할게" chooses one of them.
+  it('give the plans the app lists, in its order, when the app sends them', () => {
+    const listed = ['학생회관식당', '예술계식당', '두레미담'];
+    const line = `${PLAN_LINE.slice(0, -2)},"numbered":["학생회관식당","예술계식당","두레미담"]}]`;
+
+    expect(contextLines({ ...NO_CONTEXT, conditions: CONDITIONS, planId: '학생회관식당', planIds: listed })).toEqual([
+      line,
+    ]);
   });
 
   it('give a tapped Friend', () => {

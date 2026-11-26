@@ -42,6 +42,7 @@ import { type PlanInvitation, usePlanInvitation } from '@/features/assistant/use
 import { type Picking, usePicking } from '@/features/assistant/use-picking';
 import { type QuestLeaving, useQuestLeaving } from '@/features/assistant/use-quest-leaving';
 import { type ShownAnswer, useShownAnswer } from '@/features/assistant/use-shown-answer';
+import { useSpokenChoice } from '@/features/assistant/use-spoken-choice';
 import { type ShownLookup, type StartGuidance, useShownLookup } from '@/features/assistant/use-shown-lookup';
 import { openPost } from '../party/post-card';
 import { type CardRaise, useCardRaise } from './answer/card-raise';
@@ -153,10 +154,12 @@ function useShownOnMap(
 const NOT_RECALCULATED = '다시 계산하지 못했어요. 잠시 후 다시 시도해 주세요';
 
 // The answer on screen, kept in `shownNow` for the context of the next request, and the Quest made from its Plan.
+// `said`: every bubble, whose last reply may choose a plan of the answer on screen in words (P05 ticket 51).
 function useAnswerOnScreen(
   bubbles: readonly ChatBubble[],
   { position, locationMissing }: Where,
   shownNow: RefObject<ShownAnswer | null>,
+  said: readonly ChatBubble[],
 ): Pick<ChatSheetControl, 'answer' | 'invitation'> {
   const showToast = useToast();
   const recalculation = {
@@ -167,6 +170,7 @@ function useAnswerOnScreen(
     },
   };
   const shown = useShownAnswer(bubbles, recalculation);
+  useSpokenChoice(said, shown);
   const invitation = usePlanInvitation(shown, { location: position, locationMissing, say: showToast });
   useAskedAgain(shown, position, invitation);
   useEffect(() => {
@@ -200,7 +204,7 @@ export function useChatSheet(turnOn: (layer: MapLayer) => void, where: Where, st
     () => ({ place, tell: bookingStage.tell, steps, point, walk }),
     [place, bookingStage.tell, steps, point, walk],
   );
-  const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow);
+  const onScreen = useAnswerOnScreen(sceneBubbles, where, shownNow, chat.bubbles);
   const outcomes = usePlanOutcomes(kept.said, onScreen.answer, onScreen.invitation, chat.earlier);
   const pick = usePicking(chat);
   return {
