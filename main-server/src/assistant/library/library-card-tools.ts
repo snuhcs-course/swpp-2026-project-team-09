@@ -13,7 +13,6 @@ import { addDays, windowRefusal } from './booking-rules.js';
 import { type LibraryTarget, myBookingsCard, seatsCard, targetCard } from './library-card.js';
 import {
   bookableSpace,
-  closedToday,
   dayWords,
   gated,
   type LibraryServices,
@@ -22,6 +21,7 @@ import {
   spaceIdInput,
   targetSpace,
 } from './library-parts.js';
+import { closedToday } from './closed-today.js';
 
 // The library cards other than book: cancel, return, seats and myBookings. Each shows what the phone fills from the
 // library, and none of them sees it.
@@ -95,7 +95,7 @@ export function showLibrarySeats(services: LibraryServices): Tool {
       if (window !== null) {
         return refused([window]);
       }
-      const closed = closedToday(space, day, context.now);
+      const closed = closedToday(space, day, context, services.arrival.places);
       if (closed !== null) {
         return closed;
       }

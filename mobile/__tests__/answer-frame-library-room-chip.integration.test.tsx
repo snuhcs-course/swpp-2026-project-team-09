@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { libraryCard, READING_ROOM, SEAT_NOTES } from '@/api/mock/data/library';
@@ -181,6 +182,22 @@ describe('the room list', () => {
     expect(seatCard().getByTestId('room-chip-plain')).toHaveTextContent('7층 열람실');
     expect(seatCard().getByRole('button', { name: '예약하기' })).toBeVisible();
     expectNoWrite(library);
+  });
+});
+
+// P01 ticket 08: the counts are kept for a minute, so the list opened again does not read the library again.
+describe('the room list opened again', () => {
+  it('within a minute shows the free seats at once and reads nothing more', async () => {
+    await ask();
+    await pressIn(seatCard(), '열람실: 7층 열람실');
+    const read = sectorsRead().length;
+    await pressIn(seatCard(), '그대로');
+
+    await pressIn(seatCard(), '열람실: 7층 열람실');
+
+    expect(seatCard().getByRole('button', { name: '7층 열람실 42석' })).toBeVisible();
+    expect(seatCard().getByRole('button', { name: '8층 노트북존 17석' })).toBeVisible();
+    expect(sectorsRead()).toHaveLength(read);
   });
 });
 

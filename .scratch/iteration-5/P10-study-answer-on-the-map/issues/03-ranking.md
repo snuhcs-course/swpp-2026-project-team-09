@@ -18,6 +18,8 @@ Blocked by: 01, 02
 - None at all gives `noPlan` with why: nothing fits in the area, everything is restricted, or everything is closed (with when the first one opens).
 - `POST /assistant/answers` reruns it for a `study` input.
 
+- A study input with Friends is ticket 07's; this ticket's ranking is the answer alone.
+
 ## Acceptance criteria
 
 - [ ] At 10:00 on a term weekday: known-open before unknown, each by the longest stay. A restricted space is dropped for a User outside it and a candidate for one inside it. A closed one is in `closed`. (Unit tests on the seed.)
