@@ -171,4 +171,4 @@ Checks run (2026-11-26, on this machine):
 ### Agent usage (2026-11-26)
 
 - Agent time: about 50 minutes (estimate), one session.
-- Tokens: to be filled in by the orchestrator.
+- Tokens: 354,902 in all for the implementation session, as its usage reports; the split into input, cache reads, cache writes and output was not available.
