@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -12,6 +13,7 @@ import { addDays, windowRefusal } from './booking-rules.js';
 import { type LibraryTarget, myBookingsCard, seatsCard, targetCard } from './library-card.js';
 import {
   bookableSpace,
+  closedToday,
   dayWords,
   gated,
   type LibraryServices,
@@ -92,6 +94,10 @@ export function showLibrarySeats(services: LibraryServices): Tool {
       const window = windowRefusal(space, day, context.now);
       if (window !== null) {
         return refused([window]);
+      }
+      const closed = closedToday(space, day, context.now);
+      if (closed !== null) {
+        return closed;
       }
       const length = start === undefined ? null : (minutes ?? DEFAULT_SEAT_MINUTES);
       showCard(context.presented, seatsCard(space, { date: day, start: start ?? null, minutes: length }));
