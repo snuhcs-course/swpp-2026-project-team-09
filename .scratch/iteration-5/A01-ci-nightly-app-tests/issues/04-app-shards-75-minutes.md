@@ -1,0 +1,34 @@
+# 04: The app's integration test shards have time to finish
+
+Parent: [A01 spec](../spec.md)
+Status: ready-for-agent
+Pull request: none yet
+Blocked by: None
+
+Native files: none. Releases: none; only CI changes.
+
+## What happens now
+
+The nightly-level run on 5.0/Main at 2d0cb5ba9 (run 45807726226) cut `mobile-tests` (2/4), (3/4), and (4/4) at the job's 45-minute limit. The nightly runs of 2026-11-23 and of 2026-11-26 at 05:20 UTC were cut the same way. No test hung: each cut shard was still finishing files in its last minute.
+
+- Shard 1 finished its 79 files in 37 minutes. Shards 2 to 4 had done 39, 41, and 49 of their 80 files when cut; finishing would have taken about 55 to 60 minutes each.
+- The shards are packed by `.github/ci/app-test-times.json`, last rebuilt on 2026-11-16.
+  - It holds 176 of today's 318 integration files. The other 142 count as the median, 47.6 seconds.
+  - The files measured 1.75 to 2.7 times the table's seconds, so the shards came out uneven.
+- A shard cut by its limit prints no `app-test-time` lines, so `app-test-times.sh` cannot rebuild the table from a cut run.
+- The whole suite takes about 200 runner-minutes, about 50 minutes a shard when packed evenly.
+
+## What to build
+
+1. `mobile-tests` runs for up to 75 minutes. The four jobs keep their names, which the Iteration Main ruleset requires: `mobile-tests (1/4)` to `(4/4)`.
+2. The first nightly-level run whose four shards finish rebuilds `app-test-times.json` with `app-test-times.sh`, in a pull request of its own.
+
+The Release's gate leaves the app's integration tests out, so its 45 minutes stay as they are. Eight shards, at about 25 minutes each, would also need the ruleset's required checks renamed; they are not part of this ticket.
+
+## Acceptance criteria
+
+- [x] `mobile-tests` has `timeout-minutes: 75`; its job names are unchanged.
+- [ ] A nightly-level run on 5.0/Main finishes all four shards.
+- [ ] `app-test-times.json` is rebuilt from that run.
+
+## Comments
