@@ -89,6 +89,11 @@ interface StudyInput {
 
 See `issues/`: 01 hours as data, 02 the reply shape, 03 the ranking, 04 the tool and its rules behind the capability, 05 관정's plan and the choice, 06 the hours in `findStudyNearby` for apps without the capability.
 
+## Decisions (2026-11-26 night)
+
+- "근처 공부할 곳" from an app that says both `area` and `study-plan` takes the new answer, through `near`.
+- The default stay when nothing follows today is until the space's closing, else three hours.
+
 ## Not in this spec
 
 - The app's study list row and opened view. That is another session's work, against the shape above.
