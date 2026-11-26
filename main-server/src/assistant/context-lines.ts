@@ -9,6 +9,7 @@
  ******************************************************************************/
 
 import { type RequestContext, type StudyInput } from './dto/answer.dto.js';
+import { KWANJEONG_BUILDING, seatToBook } from './lookup/study-plan-parts.js';
 
 // The study plan on screen (P10), with the places the app numbers.
 function studyLine(input: StudyInput, planId: string | null, planIds?: string[]): string {
@@ -25,7 +26,13 @@ function studyLine(input: StudyInput, planId: string | null, planIds?: string[])
     minutes,
     near: area !== null,
   };
-  return `[Plan on screen: ${JSON.stringify({ ...plan, ...(planIds === undefined ? {} : { numbered: planIds }) })}]`;
+  // 관정관's plan shown, alone, books its seat (P10 ticket 05); with Friends its room is the request's.
+  const book = planId === KWANJEONG_BUILDING && friendIds.length === 0 ? seatToBook(input) : null;
+  const more = {
+    ...(book === null ? {} : { book: book.spaceId }),
+    ...(planIds === undefined ? {} : { numbered: planIds }),
+  };
+  return `[Plan on screen: ${JSON.stringify({ ...plan, ...more })}]`;
 }
 
 // What the app knew as the User asked, as the lines the model reads after their message.

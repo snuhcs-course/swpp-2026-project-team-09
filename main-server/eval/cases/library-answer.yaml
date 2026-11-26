@@ -3,6 +3,7 @@
 #
 # 2026-11-22  Opus 5.5   prompted by fyoon46
 # 2026-11-26  Opus 5.5   prompted by fyoon46
+# 2026-11-27  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # A study seat asked for from the current app (`capabilities: app`), which draws answers on the map, in the P6 world on
@@ -85,3 +86,28 @@
     text:
       mentions: ['23:00', '07:00']
       absent: [카드]
+
+# A book card the User changed on the phone goes back as they left it (P05 ticket 60). On the user's phone (2026-11-27)
+# the Assistant proposed a seat in 7층 7A 열람실 2 구역; the User switched the card to 8층 8A 열람실 1 구역(QUIET ZONE)
+# and booked it, and the next reply said its 7A words had been wrong ("…라고 한 건 잘못이었어요"). Here the card comes
+# back with the 8층 key beside the earlier words that named 7A. The reply names where the seat is, and neither
+# apologises nor takes its words back. The world holds no seat-stay Quest, so the booking itself is not in [Ahead].
+- id: library-answer-changed-card-no-apology
+  category: library-answer
+  world: p6-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 공부할 자리
+    - assistant:
+        text: 관정도서관 7층 7A 열람실 2 구역에 10:30부터 13:30까지 자리를 골라 뒀어요. 예약하기를 눌러야 예약돼요.
+        cards:
+          - { kind: library, seed: 'book:8F-8A-zone1-quiet:2026-11-04:1030:180' }
+    - user: 그 자리 어디야?
+  expect:
+    actions: [CHAT, TOOL]
+    tools:
+      forbidden: [proposeLibraryBooking, proposeLibraryCancel, proposeLibraryReturn]
+    text:
+      mentions: [[8층, 8A]]
+      absent: [잘못, 죄송, 착오, 실수, 정정]

@@ -18,6 +18,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -300,7 +301,7 @@ export async function runFeature(
   const { steps, finishReason } = await generateText({
     model,
     instructions: systemOf(feature, asker.now),
-    messages: messagesFor(messages, asker),
+    messages: messagesFor(messages, asker, feature.libraryCatalogue),
     tools: toolSetOf(feature, context, observer),
     stopWhen: stepCountIs(maxSteps),
     maxRetries: MAX_RETRIES,
