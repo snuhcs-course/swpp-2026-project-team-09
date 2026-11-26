@@ -35,3 +35,10 @@ Not in this ticket: the band's height and the handles' use, which stay as they a
 - [ ] On the user's phone: at night the band is wide enough to hold, and in the morning a one-hour band has its handles outside.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 0.4 hours, an estimate from one session's transcript with pauses over 5 minutes left out. It covers the build and the emulator pictures at two font scales.
+- Tokens:
+  - input: 34,150,228, of which 34,071,555 were cache reads, 78,539 cache writes, and 134 uncached;
+  - output: 49,873.
