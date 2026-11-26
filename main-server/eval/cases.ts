@@ -9,6 +9,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readdirSync, readFileSync } from 'node:fs';
@@ -78,12 +79,17 @@ const APP_CAPABILITIES = ['library', 'answer', 'area', 'meet', 'events'] as cons
 // The app with ticket 17's 바꾸기 and 그대로 두기, which says `plan-set` too.
 const NEXT_APP = [...APP_CAPABILITIES, 'plan-set'] as const satisfies readonly ClientCapability[];
 
+// The app with P10's ranked study places, which says `study-plan` too.
+const STUDY_APP = [...APP_CAPABILITIES, 'study-plan'] as const satisfies readonly ClientCapability[];
+
+const CAPABILITY_SETS = { app: APP_CAPABILITIES, 'next-app': NEXT_APP, 'study-app': STUDY_APP } as const;
+
 // What a run of a case sends beside the messages: its world's fields, or the current app's capabilities when the case
 // says so, and where the asker is when the case says.
 export function requestFieldsOf({ world, capabilities, context }: EvalCase): object {
   return {
     ...WORLD_REQUEST_FIELDS[world],
-    ...(capabilities === 'world' ? {} : { clientCapabilities: capabilities === 'app' ? APP_CAPABILITIES : NEXT_APP }),
+    ...(capabilities === 'world' ? {} : { clientCapabilities: CAPABILITY_SETS[capabilities] }),
     ...(context === undefined ? {} : { context }),
   };
 }
@@ -140,10 +146,19 @@ export const caseSchema = z
     // Who asks, by a name in the world's `askers`, if not the world's User.
     asker: seedName.optional(),
     // `app`: the request says what the current app draws, every capability, in place of the world's (a meet needs
-    // `meet`); `next-app`: and `plan-set` too, as the app with 바꾸기 will.
-    capabilities: z.enum(['world', 'app', 'next-app']).default('world'),
-    // Where the asker is, sent as the request's context as the app sends it; none is sent without it.
-    context: z.strictObject({ location: z.strictObject({ latitude: z.number(), longitude: z.number() }) }).optional(),
+    // `meet`); `next-app`: and `plan-set` too, as the app with 바꾸기 will; `study-app`: and `study-plan`, as the app
+    // with P10's study answer will.
+    capabilities: z.enum(['world', 'app', 'next-app', 'study-app']).default('world'),
+    // Where the asker is, and the map's visible area, sent as the request's context as the app sends it; none is sent
+    // without it.
+    context: z
+      .strictObject({
+        location: z.strictObject({ latitude: z.number(), longitude: z.number() }),
+        viewport: z
+          .strictObject({ south: z.number(), west: z.number(), north: z.number(), east: z.number() })
+          .optional(),
+      })
+      .optional(),
     live: z.boolean().default(false),
     // A live case whose later turns send the answer on screen as the app does: the last answer's conditions, the plan
     // shown, and its plans in order, numbered from 1 (P05 ticket 51). Left out, every turn sends the case's context only.

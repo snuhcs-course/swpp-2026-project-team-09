@@ -15,6 +15,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -186,7 +187,8 @@ export class AssistantService {
     const drawn = capabilities.includes('events') ? 'events' : 'answer';
     const meet = capabilities.includes('meet') ? '-meet' : '';
     const area = capabilities.includes('area') ? '-area' : '';
-    return this.chats[`${drawn}${meet}${area}` as const];
+    const study = capabilities.includes('study-plan') ? '-study' : '';
+    return this.chats[`${drawn}${meet}${area}${study}` as const];
   }
 
   // Counts the User's message in their day in Korea, and answers how many they have sent that day.
@@ -199,13 +201,14 @@ export class AssistantService {
 }
 
 // The chat of an app that does not draw answers, and of one that does, by what else it draws: a day's events, a meet,
-// and the visible area's study spaces.
+// the visible area's study spaces, and ranked study places.
 type Drawn = 'answer' | 'events';
-type ChatKind = 'plain' | Drawn | `${Drawn}-meet` | `${Drawn}-area` | `${Drawn}-meet-area`;
+type Drawing = Drawn | `${Drawn}-meet` | `${Drawn}-area` | `${Drawn}-meet-area`;
+type ChatKind = 'plain' | Drawing | `${Drawing}-study`;
 
 function chatsOf(services: ChatAssistantServices): Record<ChatKind, Feature> {
-  const chat = (drawsEvents: boolean, drawsMeets: boolean, drawsArea: boolean): Feature =>
-    chatAssistant(services, { drawsAnswers: true, drawsEvents, drawsMeets, drawsArea });
+  const chat = (drawsEvents: boolean, drawsMeets: boolean, drawsArea: boolean, drawsStudy = false): Feature =>
+    chatAssistant(services, { drawsAnswers: true, drawsEvents, drawsMeets, drawsArea, drawsStudy });
   return {
     plain: chatAssistant(services),
     answer: chat(false, false, false),
@@ -216,6 +219,14 @@ function chatsOf(services: ChatAssistantServices): Record<ChatKind, Feature> {
     'events-area': chat(true, false, true),
     'answer-meet-area': chat(false, true, true),
     'events-meet-area': chat(true, true, true),
+    'answer-study': chat(false, false, false, true),
+    'events-study': chat(true, false, false, true),
+    'answer-meet-study': chat(false, true, false, true),
+    'events-meet-study': chat(true, true, false, true),
+    'answer-area-study': chat(false, false, true, true),
+    'events-area-study': chat(true, false, true, true),
+    'answer-meet-area-study': chat(false, true, true, true),
+    'events-meet-area-study': chat(true, true, true, true),
   };
 }
 
