@@ -16,22 +16,33 @@ The 관정 seat picture ("<room> 좌석 현황", opened from the seats card's �
 
 ## What to build
 
-- The scroll views only show the picture and report where the view is. They take no touch (`scrollEnabled={false}`); `scrollTo` still moves them.
-- One finger moves the view by a pan of the gesture handler, held within the picture's edges (`pannedOffset`).
-- The pan and the pinch run at once (`Gesture.Simultaneous`). A spread in any direction zooms about the point between the fingers, as before, and two fingers moving together move the picture.
-- A tap still picks a seat: the pan starts only after the finger has moved. 확대 and 축소 and the zoom's limits of 1 to 4 stay as they are.
-- After a one-finger fling the view glides on a short way, slowing, and stops at the picture's edges (the orchestrator's addition).
-  - It slows as Reanimated's `withDecay` does, its speed falling by 0.995 each millisecond. It runs frame by frame on the JS thread, as the pan does, since the picture is moved by the scroll views' `scrollTo`. Moving it by Reanimated's shared values would mean replacing the scroll views' refs with animated ones, which is not cheap.
-  - A new touch, a pinch, or 확대 and 축소 stops it. Two fingers lifted give no glide.
-- A pan never takes the view past the picture's edges at any zoom. A spread at an edge keeps the point between the fingers where it is; a closing that would take the view past an edge holds it at the edge.
+First version (pushed, then checked on the user's phone): the scroll views took no touch, a pan of the gesture handler moved them by `scrollTo` beside the pinch, and a fling glided frame by frame on the JS thread. The pinch then worked in every direction, but stuttered: "좀 너무 버벅거려". Each frame crossed the JS thread, and each step of a pinch laid the picture and its 478 seats out again (measured: 6 layouts in a pinch of 6 updates).
+
+Now (the orchestrator's brief, 2026-11-27):
+
+- No scroll view. One layer holds the picture and the seats, laid out once at the most zoom, 4, and scaled down to the zoom seen, so that the picture stays sharp. Its offsets and scale are Reanimated shared values on an animated style.
+- A pan and a pinch of the gesture handler, at once (`Gesture.Simultaneous`), change them in worklets on the UI thread. One finger moves the view; two zoom it about the point between them and move it as they move.
+- A one-finger fling glides on by `withDecay`, clamped to the picture's edges. A touch stops it, and two fingers lifted give none.
+- 확대 and 축소 move the same values by `withTiming`, or at once without motion. Each press steps from the zoom the last one aimed at, so quick presses during a move each take a step.
+- The tested maths (the point between the fingers kept, 1 to 4 times, the edges) are worklets the gestures call.
+- Nothing is laid out during a gesture. The zoom seen reaches React only when a gesture or a press ends, for the buttons and the seats' numbers. A seat's number shows when the whole number fits its box at that zoom, as before (`digitsThatFit`), so the seats are drawn again only when that changes, near 3 times. The picked seat's tag is drawn apart and keeps its size seen.
+- Each seat stays a button of its own (478 in 7A 열람실 2 구역), with its label for a screen reader. A seat is memoised, so a pick draws two seats again, not all. One tap handler on the layer, which finds the seat from the tap's point, would drop those labels: it is not built.
+- A tap still picks a seat: the pan starts only after the finger has moved. The limits and the edges are as before.
+- **Size at 4×** (the orchestrator's check):
+  - 7A 열람실 2 구역's layer is 2533 × 1200 points at 4, 7600 × 3600 px on a phone at a density of 3.
+  - It is a view, not a bitmap. Nothing makes it an offscreen layer (no `renderToHardwareTextureAndroid`, no offscreen alpha), so no texture limit applies to it.
+  - The one bitmap is the room's image. React Native's image loader shrinks an image only to a view smaller than it, and this view is larger, so the image is decoded at its own 2529 × 1198 px: 12.1 MB at 4 bytes a pixel. That is well under the 100 MB a canvas draws.
+  - Its 2529 px side is above the 2048 px that OpenGL ES 3 guarantees for a texture and below the 8192 px or more that phones of these years give. Before this change, the same bitmap was decoded and drawn at that size once the picture was zoomed to 4, so the risk is not new.
+  - Only a phone shows the memory itself.
 
 ## Acceptance criteria
 
-- [x] The pan's offsets: inside the picture, and held at every edge at zoom 1, 2 and 4. A spread at each edge keeps the point still; a closing past an edge is held. The glide's decay and length. (Unit tests.)
-- [x] A fling glides and slows, a hard fling stops at the edge, a new touch stops it, and two fingers give none. (Unit tests.)
-- [x] The scroll views take no touch, one finger moves the view by the change since the last update within the picture, a pinch zooms about the point between the fingers, and a tap picks a seat. (Unit tests; the first two fail before the change.)
-- [x] The seat picture's tests of ticket 01 pass: 확대 and 축소, the picked seat, and the pinch's total scale.
-- [ ] On a phone: a two-finger spread sideways, across, and upright zooms each time; one finger moves the picture; a tap picks a seat. Only a phone shows that the touch is no longer taken from the pinch.
+- [x] The pan's offsets inside the picture and held at every edge at zoom 1, 2 and 4; a spread at each edge keeps the point still; a closing past an edge is held; the digits of a number that fit at a zoom. (Unit tests.)
+- [x] The picture is one layer laid out at 4 and seen at 1; one finger moves it by the change since the last update within the picture; a fling glides, a touch stops it, a hard fling stops at the edge, two fingers give none; a pinch zooms about the point between the fingers, by its total scale, no further than 4; 확대 and 축소 zoom about the middle or the picked seat, and quick presses each take a step; a tap picks a seat. (Unit tests.)
+- [x] The seat layer is not laid out at any step of a pinch of the 478 seats of 7A 열람실 2 구역: 0 of 6, against 6 of 6 before. (Unit test.)
+- [x] A tap lands on the seat drawn under it at 1, 2 and 4 times: each seat is drawn at its own place in the picture through the layer's move and scale, the picked seat at the view's middle and its neighbour not, and a press picks it. Only a phone shows the touch itself finding the view through the transform. (Unit tests.)
+- [x] The seat picture's integration tests: the buttons' ends, the pinch in and out, the numbers whole or not at all, and the picked seat's tag.
+- [ ] On a phone: a spread in any direction zooms without stutter; one finger moves the picture; a fling glides; a tap picks a seat.
 - [x] Whole lint, format and types of the app.
 
 ## Comments
@@ -40,3 +51,4 @@ The 관정 seat picture ("<room> 좌석 현황", opened from the seats card's �
 
 - Agent time: about 25 minutes in the p04-58 session, from 16:02 UTC to the pull request, an estimate. No emulator: it was in use by another session. No subagents.
 - Tokens, from 16:02 UTC to this entry: input 90 uncached, with cache reads 28,652,834 and cache writes 681,804; output 53,261.
+- The redo after the phone's stutter: about 35 minutes more in the same session, from 16:44 UTC to the push, an estimate; no emulator. Tokens: input 174 uncached, with cache reads 69,967,653 and cache writes 150,196; output 110,151.

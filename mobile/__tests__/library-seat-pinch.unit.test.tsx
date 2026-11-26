@@ -5,17 +5,19 @@
  ******************************************************************************/
 
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
-import { ScrollView } from 'react-native';
+import { StyleSheet, type ViewStyle } from 'react-native';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
+import { getAnimatedStyle } from 'react-native-reanimated';
 import { READING_ROOM } from '@/api/mock/data/library';
-import { glideDistance, glideMs, pannedOffset, pictureSize, zoomedOffset } from '@/library/cards/seat-zoom';
+import { pictureSize } from '@/library/cards/seat-zoom';
 import type { LibrarySeat } from '@/library/replies';
 import { SeatPicker } from '@/screens/main/library/seat-picker';
 
 // The seat picture's pinch and pan (P01 ticket 11). On the user's phone (2026-11-27, preview 1.0.5) a pinch barely
 // zoomed when the fingers spread sideways or across: the picture's own scroll views took the first finger's sideways
-// move as a scroll, and Android then cancels the gesture handlers. One finger now moves the picture by a pan of the
-// gesture handler, beside the pinch, and the scroll views take no touch of their own.
+// move as a scroll, and Android then cancels the gesture handlers. Then, with a pan beside the pinch, it stuttered: the
+// picture was moved from the JS thread and laid out again at each step. The picture is now one layer, laid out once at
+// the most zoom, that a pan and a pinch move and scale on the UI thread, with a fling's glide by `withDecay`.
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: (): object => ({ top: 0, right: 0, bottom: 0, left: 0 }),
@@ -51,192 +53,150 @@ function ignoreClose(): void {
   // The test does not close the picture.
 }
 
-function lastScroll(spy: jest.SpyInstance<void, Parameters<ScrollView['scrollTo']>>, axis: 'x' | 'y'): number | null {
-  const sent = spy.mock.calls.flatMap(([to]) => (typeof to === 'object' && to[axis] !== undefined ? [to[axis]] : []));
-  return sent.at(-1) ?? null;
-}
-
 async function openPicture(onSeat: (picked: LibrarySeat) => void = ignoreSeat): Promise<void> {
   await render(<SeatPicker onClose={ignoreClose} onSeat={onSeat} seats={SEATS} space={READING_ROOM} visible />);
-  await fireEvent(screen.getByTestId('seat-picker-scroll-down'), 'layout', {
+  await fireEvent(screen.getByTestId('seat-picker-view'), 'layout', {
     nativeEvent: { layout: { x: 0, y: 0, ...VIEW } },
   });
 }
 
-// A pan as react-native-gesture-handler reports it: each update's translation is the total since it began.
-async function pan(moves: readonly { x: number; y: number }[]): Promise<void> {
+// Where the view stands on the picture, read from the seat layer's move and scale once a frame has passed: the layer is
+// laid out at 4.
+async function seen(): Promise<{ x: number; y: number; zoom: number }> {
+  await pass(FRAME);
+  const style: unknown = getAnimatedStyle(screen.getByTestId('seat-picker-layer'));
+  const { transform } = StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]);
+  const parts: unknown[] = Array.isArray(transform) ? transform : [];
+  const part = (at: number, key: string): number => {
+    const one = parts[at];
+    return typeof one === 'object' && one !== null && key in one ? Number(Reflect.get(one, key)) : Number.NaN;
+  };
+  return { x: -part(0, 'translateX'), y: -part(1, 'translateY'), zoom: part(2, 'scale') * 4 };
+}
+
+// A pan as react-native-gesture-handler reports it: each update's translation is the total since it began; the last
+// update's velocity is the release's.
+async function pan(
+  moves: readonly { x: number; y: number }[],
+  { fingers = 1, velocity = 0 }: { fingers?: number; velocity?: number } = {},
+): Promise<void> {
   await act(() => {
     fireGestureHandler(getByGestureTestId('seat-picker-pan'), [
-      { translationX: 0, translationY: 0 },
-      ...moves.map(({ x, y }) => ({ translationX: x, translationY: y })),
+      { translationX: 0, translationY: 0, numberOfPointers: fingers },
+      ...moves.map(({ x, y }) => ({ translationX: x, translationY: y, numberOfPointers: fingers })),
+      {
+        translationX: moves.at(-1)?.x ?? 0,
+        translationY: moves.at(-1)?.y ?? 0,
+        numberOfPointers: fingers,
+        velocityX: velocity,
+        velocityY: 0,
+      },
     ]);
   });
 }
 
+const FRAME = 20;
+// Longer than a button's move of 200 ms.
+const STEP = 300;
+
+// A pinch as react-native-gesture-handler reports it: each update's scale is the total since the fingers came down.
+async function pinchTo(scales: readonly number[]): Promise<void> {
+  await act(() => {
+    fireGestureHandler(
+      getByGestureTestId('seat-picker-pinch'),
+      [1, ...scales].map((scale) => ({ scale, focalX: 160, focalY: 149 })),
+    );
+  });
+}
+
+// Where a seat is drawn in the view: its box in the layer, laid out at 4, moved and scaled as the layer is.
+async function drawnBox(name: string): Promise<{ left: number; top: number; right: number; bottom: number }> {
+  const at = await seen();
+  const own: unknown = screen.getByLabelText(new RegExp(`^${name}번`, 'u')).props.style;
+  const { left, top, width, height } = StyleSheet.flatten<ViewStyle>(Array.isArray(own) ? own : [own]);
+  const scale = at.zoom / 4;
+  const [x, y] = [Number(left) * scale - at.x, Number(top) * scale - at.y];
+  return { left: x, top: y, right: x + Number(width) * scale, bottom: y + Number(height) * scale };
+}
+
+function holds(box: { left: number; top: number; right: number; bottom: number }, x: number, y: number): boolean {
+  return box.left <= x && x <= box.right && box.top <= y && y <= box.bottom;
+}
+
+async function pass(ms: number): Promise<void> {
+  await act(() => {
+    jest.advanceTimersByTime(ms);
+  });
+}
+
+beforeEach(() => {
+  jest.useFakeTimers();
+});
+
 afterEach(() => {
-  jest.restoreAllMocks();
+  jest.useRealTimers();
 });
 
-// Partitions: a move inside the picture, past its left edge, and past its bottom. Expected values: the picture's
-// edges, the view at 0 at the left and top, and at the picture's size less the view's at the right and bottom.
-describe('Where one finger moves the view', () => {
-  it.each([
-    ['inside the picture', { x: 100, y: 0 }, { x: -40, y: 0 }, { x: 140, y: 0 }],
-    ['past its left edge', { x: 50, y: 0 }, { x: 80, y: 0 }, { x: 0, y: 0 }],
-    ['past its bottom', { x: 0, y: 0 }, { x: 0, y: -500 }, { x: 0, y: 2 }],
-  ] as const)('moves %s and stops at the edges', (_, offset, by, to) => {
-    expect(pannedOffset({ offset, by, picture: AT_ONE, view: VIEW })).toEqual(to);
-  });
-});
-
-// Partitions: each edge at zoom 2 and at the most, 4. Expected values: the picture's size at that zoom less the view's.
-describe('Where one finger moves the view at any zoom', () => {
-  it.each([2, 4])('never passes the picture’s edges at %d times', (zoom) => {
-    const picture = pictureSize(IMAGE, zoom);
-    const most = { x: picture.width - VIEW.width, y: picture.height - VIEW.height };
-    const middle = { x: most.x / 2, y: most.y / 2 };
-
-    expect(pannedOffset({ offset: middle, by: { x: 5000, y: 5000 }, picture, view: VIEW })).toEqual({ x: 0, y: 0 });
-    expect(pannedOffset({ offset: middle, by: { x: -5000, y: -5000 }, picture, view: VIEW })).toEqual(most);
-  });
-});
-
-// Partitions: a spread at the right and bottom edge, at the left and top, and a closing whose point would leave the
-// picture's edge. Expected values: the point under the fingers is where it was, scaled by the zoom, unless the view
-// would leave the picture.
-describe('Where a pinch keeps the point between the fingers at the edges', () => {
-  const at = { x: 200, y: 100 };
-
-  it.each([
-    ['the right and bottom edges', { x: AT_ONE.width - VIEW.width, y: AT_ONE.height - VIEW.height }],
-    ['the left and top edges', { x: 0, y: 0 }],
-  ])('keeps it still when spread at %s', (_, offset) => {
-    const point = { x: offset.x + at.x, y: offset.y + at.y };
-    const picture = pictureSize(IMAGE, 2);
-
-    const landed = zoomedOffset({ point, at, from: 1, to: 2, picture, view: VIEW });
-
-    expect(landed.x + at.x).toBeCloseTo(point.x * 2);
-    expect(landed.y + at.y).toBeCloseTo(point.y * 2);
-    expect(landed.x).toBeLessThanOrEqual(picture.width - VIEW.width);
-    expect(landed.y).toBeLessThanOrEqual(picture.height - VIEW.height);
-  });
-
-  it('holds the view at the edge when a closing would take it past', () => {
-    const picture = pictureSize(IMAGE, 1);
-
-    expect(zoomedOffset({ point: { x: 250, y: 120 }, at, from: 2, to: 1, picture, view: VIEW })).toEqual({
-      x: 0,
-      y: 0,
-    });
-  });
-});
-
-// Partitions: a fling, no fling, and a long time. Expected values: Reanimated's withDecay at a deceleration of 0.995
-// a millisecond: v / 1000 / -ln 0.995, about 199.5 ms of the velocity.
-describe('The glide after a fling', () => {
-  it('slows to a stop a short way on', () => {
-    expect(glideDistance(1000, 100)).toBeGreaterThan(0);
-    expect(glideDistance(1000, 100)).toBeLessThan(100);
-    expect(glideDistance(1000, 100_000)).toBeCloseTo(1000 / 1000 / -Math.log(0.995));
-    expect(glideDistance(-1000, 100_000)).toBeCloseTo(-1000 / 1000 / -Math.log(0.995));
-  });
-
-  it('lasts until the speed is under 20 points a second, and not at all without a fling', () => {
-    expect(glideMs({ x: 2000, y: 0 })).toBeCloseTo(Math.log(20 / 2000) / Math.log(0.995));
-    expect(glideMs({ x: 10, y: -15 })).toBe(0);
-  });
-});
-
-// Partitions: the scroll views, and a one-finger move. Expected values: the ticket and the picture's edges.
+// Partitions: the picture's layer, one finger inside and past the edges. Expected values: the ticket and the
+// picture's edges.
 describe('The seat picture under one finger', () => {
-  it('lets its scroll views take no touch, so that a sideways or slanting spread stays a pinch', async () => {
+  it('has no scroll view: one layer laid out at 4 times, seen at 1', async () => {
     await openPicture();
 
-    expect(screen.getByTestId('seat-picker-scroll-down')).toHaveProp('scrollEnabled', false);
-    expect(screen.getByTestId('seat-map-scroll')).toHaveProp('scrollEnabled', false);
+    expect(screen.queryByTestId('seat-picker-scroll-down')).toBeNull();
+    expect(screen.getByTestId('seat-map-large-map-image')).toHaveStyle({ height: 1200 });
+    expect(await seen()).toEqual({ x: 0, y: 0, zoom: 1 });
   });
 
-  it('moves the view with one finger, by the move since the last update, within the picture', async () => {
+  it('moves the view by the change since the last update, held within the picture', async () => {
     await openPicture();
-    const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
 
     await pan([
       { x: -30, y: 0 },
       { x: -120, y: -10 },
     ]);
-    expect(lastScroll(scrollTo, 'x')).toBe(120);
-    expect(lastScroll(scrollTo, 'y')).toBe(2);
+    expect(await seen()).toMatchObject({ x: 120, y: 2 });
 
     await pan([{ x: 500, y: 0 }]);
-    expect(lastScroll(scrollTo, 'x')).toBe(0);
+    expect(await seen()).toMatchObject({ x: 0 });
   });
 });
 
-// A move of 40 points to the left and a release at `velocity` points a second, with `fingers` down, then `ms` of the
-// glide; the offsets the scroll views were sent to across, the last first.
-async function flingLeft(velocity: number, fingers: number, ms: number): Promise<number[]> {
-  const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
-  await act(() => {
-    fireGestureHandler(getByGestureTestId('seat-picker-pan'), [
-      { translationX: 0, translationY: 0, numberOfPointers: fingers },
-      { translationX: -40, translationY: 0, numberOfPointers: fingers },
-      { translationX: -40, translationY: 0, numberOfPointers: fingers, velocityX: -velocity, velocityY: 0 },
-    ]);
-  });
-  const released = lastScroll(scrollTo, 'x') ?? 0;
-  await act(() => {
-    jest.advanceTimersByTime(ms);
-  });
-  return [lastScroll(scrollTo, 'x') ?? 0, released];
-}
-
-// Partitions: a fling, a hard fling, and two fingers. Expected values: the decay of `glideDistance` and the picture's
-// edges.
+// Partitions: a fling, a hard fling, a touch during the glide, and two fingers. Expected values: `withDecay` held at the
+// picture's edges.
 describe('The seat picture after a fling', () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('glides on after a one-finger fling, slowing, until it is slower than 20 points a second', async () => {
+  it('glides on after a one-finger fling, and a touch stops it', async () => {
     await openPicture();
 
-    const [midway, released] = await flingLeft(800, 1, 100);
-    const [stopped] = await flingLeft(0, 1, 0);
+    await pan([{ x: -40, y: 0 }], { velocity: -600 });
+    await pass(50);
+    const gliding = (await seen()).x;
+    await pan([{ x: 0, y: 0 }]);
+    const stopped = (await seen()).x;
+    await pass(1000);
 
-    expect(released).toBe(40);
-    expect(midway).toBeGreaterThan(40);
-    expect(midway).toBeLessThan(40 + glideDistance(800, glideMs({ x: 800, y: 0 })));
-    expect(stopped).toBeCloseTo(midway + 40);
+    expect(gliding).toBeGreaterThan(40);
+    expect((await seen()).x).toBe(stopped);
   });
 
-  it('glides as far as the decay goes, and stops a hard fling at the picture’s edge', async () => {
-    await openPicture();
-    const [glided] = await flingLeft(800, 1, 3000);
-    expect(glided).toBeCloseTo(40 + glideDistance(800, glideMs({ x: 800, y: 0 })));
-
-    const [held] = await flingLeft(10_000, 1, 3000);
-    expect(held).toBeCloseTo(AT_ONE.width - VIEW.width);
-  });
-
-  it('does not glide after two fingers', async () => {
+  it('stops a hard fling at the picture’s edge, and gives no glide after two fingers', async () => {
     await openPicture();
 
-    const [after] = await flingLeft(800, 2, 2000);
+    await pan([{ x: -40, y: 0 }], { velocity: -10_000 });
+    await pass(3000);
+    expect((await seen()).x).toBeCloseTo(AT_ONE.width - VIEW.width);
 
-    expect(after).toBe(40);
+    await pan([{ x: 100, y: 0 }], { fingers: 2, velocity: 3000 });
+    const released = (await seen()).x;
+    await pass(3000);
+    expect((await seen()).x).toBe(released);
   });
 });
 
-// Partitions: a pinch and a tap. Expected values: the ticket.
-describe('The seat picture under two fingers and a tap', () => {
-  it('zooms with a pinch about the point between the fingers, whichever way they spread', async () => {
+// Partitions: a pinch, a pinch past the most, and pinches in and out. Expected values: the ticket.
+describe('The seat picture under two fingers', () => {
+  it('zooms with a pinch about the point between the fingers, and no further than 4 times', async () => {
     await openPicture();
-    const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo');
 
     await act(() => {
       fireGestureHandler(getByGestureTestId('seat-picker-pinch'), [
@@ -244,10 +204,66 @@ describe('The seat picture under two fingers and a tap', () => {
         { scale: 2, focalX: 200, focalY: 100 },
       ]);
     });
+    expect(await seen()).toEqual({ x: 200, y: 100, zoom: 2 });
 
-    expect(screen.getByTestId('seat-map-large-map-image')).toHaveStyle({ height: 600 });
-    expect(lastScroll(scrollTo, 'x')).toBe(200);
-    expect(lastScroll(scrollTo, 'y')).toBe(100);
+    await act(() => {
+      fireGestureHandler(getByGestureTestId('seat-picker-pinch'), [
+        { scale: 1, focalX: 160, focalY: 149 },
+        { scale: 5, focalX: 160, focalY: 149 },
+      ]);
+    });
+    expect((await seen()).zoom).toBe(4);
+  });
+  it("zooms by a pinch's total scale since the fingers came down, without compounding it", async () => {
+    await openPicture();
+
+    await pinchTo([1.05, 1.1, 1.2, 1.3, 1.4, 1.5]);
+    expect((await seen()).zoom).toBeCloseTo(1.5);
+    await pinchTo([1.4, 1.2]);
+    expect((await seen()).zoom).toBeCloseTo(1.8);
+    await pinchTo([0.9, 0.5, 0.2]);
+    expect((await seen()).zoom).toBe(1);
+  });
+});
+
+// Partitions: the buttons, a picked seat, quick presses, and a tap. Expected values: the ticket.
+describe('The seat picture’s buttons and a tap', () => {
+  it('zooms with 확대 and 축소 about the middle of the view, in a short move', async () => {
+    await openPicture();
+
+    await fireEvent.press(screen.getByLabelText('확대'));
+    await pass(STEP);
+    expect(await seen()).toEqual({ x: 160 * 1.5 - 160, y: 149 * 1.5 - 149, zoom: 1.5 });
+    await fireEvent.press(screen.getByLabelText('축소'));
+    await pass(STEP);
+    expect(await seen()).toEqual({ x: 0, y: 0, zoom: 1 });
+  });
+
+  it('brings a picked seat to the middle with 확대, the top edge holding the view', async () => {
+    await openPicture();
+
+    await fireEvent.press(screen.getByLabelText('7300번 빈 자리'));
+    await fireEvent.press(screen.getByLabelText('확대'));
+    await pass(STEP);
+
+    // Seat 7300's box is at 1468 × 237 of the 2529-pixel image, 33 × 28 pixels: at 1.5 its middle comes to the view's
+    // middle across, and the picture's top holds the view at 0.
+    const scale = pictureSize(IMAGE, 1.5).width / IMAGE.width;
+    const at = await seen();
+    expect(at.x).toBeCloseTo((1468 + 16.5) * scale - VIEW.width / 2);
+    expect(at.y).toBe(0);
+  });
+
+  it('takes a step for each quick press of 확대, during the move of the last', async () => {
+    await openPicture();
+
+    await fireEvent.press(screen.getByLabelText('확대'));
+    await fireEvent.press(screen.getByLabelText('확대'));
+    await fireEvent.press(screen.getByLabelText('확대'));
+    await fireEvent.press(screen.getByLabelText('확대'));
+    await pass(STEP);
+
+    expect((await seen()).zoom).toBe(4);
   });
 
   it('still picks a seat with a tap', async () => {
@@ -259,4 +275,43 @@ describe('The seat picture under two fingers and a tap', () => {
 
     expect(onSeat).toHaveBeenCalledWith(SEATS[0]);
   });
+});
+
+// Partitions: 1, 2 and 4 times. Expected values: the picture's own place of each seat, which the gestures' maths use,
+// and the seat whose box holds the point. The phone's own touch finds the view under the finger through the layer's
+// transform, as drawn; only the phone shows that.
+describe('A tap on the seat picture at every zoom', () => {
+  it('lands at 1 on the seat drawn there, at its place in the picture', async () => {
+    const onSeat = jest.fn<undefined, [LibrarySeat]>();
+    await openPicture(onSeat);
+
+    // Seat 7301 is in the view at 1, at 300 × 237 of the image.
+    const box = await drawnBox('7301');
+    expect(box.left).toBeCloseTo(300 * (pictureSize(IMAGE, 1).width / IMAGE.width));
+    await fireEvent.press(screen.getByLabelText('7301번 빈 자리'));
+    await fireEvent.press(screen.getByText('7301번 선택'));
+
+    expect(onSeat).toHaveBeenCalledWith(SEATS[1]);
+  });
+
+  it.each([2, 4])(
+    'lands at %d times on the picked seat drawn at the view’s middle, not its neighbour',
+    async (zoom) => {
+      await openPicture();
+      await fireEvent.press(screen.getByLabelText('7300번 빈 자리'));
+      // 1.5 and 2, or on to 3 and 4: one press a step.
+      await (zoom === 2 ? [1, 2] : [1, 2, 3, 4]).reduce(async (previous) => {
+        await previous;
+        await fireEvent.press(screen.getByLabelText('확대'));
+      }, Promise.resolve());
+      await pass(STEP);
+
+      const picked = await drawnBox('7300');
+      // Across, 7300 is at the view's middle; down, the picture's top may hold it higher.
+      const point = { x: VIEW.width / 2, y: (picked.top + picked.bottom) / 2 };
+      expect((await seen()).zoom).toBe(zoom);
+      expect(holds(picked, point.x, point.y)).toBe(true);
+      expect(holds(await drawnBox('7301'), point.x, point.y)).toBe(false);
+    },
+  );
 });

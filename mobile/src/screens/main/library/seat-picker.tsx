@@ -10,16 +10,25 @@
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LibrarySpace } from '@/api/assistant-types';
 import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
 import { bookingTitle } from '@/features/assistant/booking-scene';
 import { SEAT_BOX, freeSeatCount } from '@/library/cards/seats';
-import { PICTURE_HEIGHT, type Point, pictureSize, type Size, ZOOM_MOST } from '@/library/cards/seat-zoom';
+import {
+  digitsThatFit,
+  LAYOUT_ZOOM,
+  PICTURE_HEIGHT,
+  type Point,
+  pictureSize,
+  type Size,
+  ZOOM_MOST,
+} from '@/library/cards/seat-zoom';
 import type { LibrarySeat } from '@/library/replies';
-import { CHOSEN_LOOK, SEAT_LOOK, SeatMap } from './seat-map';
+import { CHOSEN_LOOK, ChosenTag, SEAT_LOOK, SeatMap } from './seat-map';
 import { type SeatZoom, useSeatZoom } from './use-seat-zoom';
 
 // The room's seat picture, large (P15 ticket 57; the look of `GestureAskSeats` and `MainChatLibSeats`): the site's
@@ -27,7 +36,8 @@ import { type SeatZoom, useSeatZoom } from './use-seat-zoom';
 // and which scrolls both ways. A press on a free seat picks it and turns that seat alone the key colour, with a tag
 // naming it; a press on another moves the pick. "<n>번 선택" at the foot, shown once a seat is picked, hands the seat
 // on; ✕ hands nothing on. 확대 and 축소 keep the middle of the view in the middle, or bring the picked seat there, and a
-// pinch keeps the point between the fingers where it is (P01 ticket 01 of Iteration 5).
+// pinch keeps the point between the fingers where it is (P01 ticket 01 of Iteration 5). The picture is one layer laid
+// out at the most zoom, which the gestures move and scale on the UI thread (P01 ticket 11).
 
 interface SeatPickerProps {
   space: LibrarySpace;
@@ -108,67 +118,46 @@ function seatMiddle(seat: LibrarySeat, image: Size, zoom: number): Point {
 
 type PictureProps = SeatPickerProps & { chosen: LibrarySeat | null; pick: (seat: LibrarySeat) => void };
 
-// The two scroll views, down and across, that hold the picture and tell the zoom where the view is. They take no touch
-// of their own: the zoom's pan moves them (P01 ticket 11).
-function Scrolled({ zoomed, children }: { zoomed: SeatZoom; children: ReactElement }): ReactElement {
-  return (
-    <ScrollView
-      nestedScrollEnabled
-      onContentSizeChange={() => {
-        zoomed.grown('y');
-      }}
-      onLayout={({ nativeEvent: { layout } }) => {
-        zoomed.laidOut({ width: layout.width, height: layout.height });
-      }}
-      onScroll={({ nativeEvent: { contentOffset } }) => {
-        zoomed.scrolled('y', contentOffset.y);
-      }}
-      ref={zoomed.down}
-      scrollEnabled={false}
-      scrollEventThrottle={16}
-      testID="seat-picker-scroll-down"
-    >
-      <ScrollView
-        horizontal
-        nestedScrollEnabled
-        onContentSizeChange={() => {
-          zoomed.grown('x');
-        }}
-        onScroll={({ nativeEvent: { contentOffset } }) => {
-          zoomed.scrolled('x', contentOffset.x);
-        }}
-        ref={zoomed.across}
-        scrollEnabled={false}
-        scrollEventThrottle={16}
-        testID="seat-map-scroll"
-      >
-        {children}
-      </ScrollView>
-    </ScrollView>
-  );
-}
-
 function Picture(props: PictureProps): ReactElement {
   const { space: shown, seats, onSeat, chosen, pick } = props;
   const image = shown.mapImage;
   const zoomed = useSeatZoom(image, (zoom) =>
     chosen === null || image === null ? null : seatMiddle(chosen, image, zoom),
   );
+  const width = image === null ? 0 : pictureSize(image, LAYOUT_ZOOM).width;
+  const digits = image === null ? 0 : digitsThatFit(image, zoomed.zoom);
+  const marked = chosen?.VNAME ?? props.current ?? null;
   return (
     <>
       <GestureDetector gesture={zoomed.gesture}>
         <View collapsable={false} style={styles.box} testID="seat-picker-box">
-          <Scrolled zoomed={zoomed}>
-            <SeatMap
-              chosen={chosen?.VNAME ?? props.current ?? null}
-              numbered
-              onSeat={onSeat === null ? null : pick}
-              seats={seats}
-              space={shown}
-              testID="seat-map-large-map"
-              width={image === null ? 0 : pictureSize(image, zoomed.zoom).width}
-            />
-          </Scrolled>
+          <View
+            onLayout={({ nativeEvent: { layout } }) => {
+              zoomed.laidOut({ width: layout.width, height: layout.height });
+            }}
+            style={styles.view}
+            testID="seat-picker-view"
+          >
+            <Animated.View style={[styles.layer, zoomed.style]} testID="seat-picker-layer">
+              <SeatMap
+                chosen={marked}
+                digits={digits}
+                onSeat={onSeat === null ? null : pick}
+                seats={seats}
+                space={shown}
+                testID="seat-map-large-map"
+                width={width}
+              />
+              <ChosenTag
+                chosen={marked}
+                digits={digits}
+                grow={LAYOUT_ZOOM / zoomed.zoom}
+                seats={seats}
+                space={shown}
+                width={width}
+              />
+            </Animated.View>
+          </View>
         </View>
       </GestureDetector>
       <Tools step={zoomed.step} zoom={zoomed.zoom} />
@@ -242,6 +231,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: color.surfaceSunken,
   },
+  view: { flex: 1, overflow: 'hidden' },
+  // Scaled from its top left, so that its offsets are the picture's at the zoom seen.
+  layer: { position: 'absolute', top: 0, left: 0, transformOrigin: 'left top' },
   tools: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   keyItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   keySwatch: { width: 12, height: 12, borderRadius: 3, borderWidth: 1, borderColor: color.border },
