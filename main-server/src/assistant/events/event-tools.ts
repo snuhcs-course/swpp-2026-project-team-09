@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -49,6 +50,7 @@ export function planEvents(plans: EventsPlanService): Tool {
     input,
     run: async ({ date, eventIds }, { userId, now, context, found, presented }) => {
       if (outOfReach(date, now)) {
+        presented.clears = true;
         return noDay(date);
       }
       found.refuseUnfound('globalEvent', eventIds ?? []);

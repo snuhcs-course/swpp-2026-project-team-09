@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -103,6 +104,7 @@ export function planMeet(plans: MeetPlanService): Tool {
       { userId, now, context, capabilities, found, presented },
     ) => {
       if (outOfReach(date, now)) {
+        presented.clears = true;
         return noDay(date);
       }
       const seen = seenIds(context);

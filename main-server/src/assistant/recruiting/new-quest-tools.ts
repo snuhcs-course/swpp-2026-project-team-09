@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -129,6 +130,7 @@ export function planNewQuest(plans: PlanAnswersService, days: Pick<UserDayServic
     run: async (given, context) => {
       const { userId, now, context: request, presented } = context;
       if (outOfReach(given.date, now)) {
+        presented.clears = true;
         return noDay(given.date);
       }
       refuseUnseen(context, given);

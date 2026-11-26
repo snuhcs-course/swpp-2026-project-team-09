@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -117,6 +118,18 @@ function refusalFor(
   return friendWords(sources, kind, friendId, context);
 }
 
+const CLEARING: ReadonlySet<string> = new Set([
+  'off-campus',
+  'general-work',
+  'vague',
+  'not-understood',
+  'who-looked',
+  'past-location',
+  'others-sharing',
+  'not-watched-friend',
+  'not-watched-shuttle',
+]);
+
 export function refuse(sources: RefusalSources): Tool {
   return defineTool({
     description:
@@ -133,6 +146,11 @@ export function refuse(sources: RefusalSources): Tool {
         return refusal;
       }
       presented.refusal = refusal;
+      // A request plainly not about the plan on screen takes it off the map (P05 ticket 55). An invitation answered for
+      // a Friend, or a Friend not found, may be about the plan's own people, and keeps it.
+      if (CLEARING.has(refusal.kind)) {
+        presented.clears = true;
+      }
       return {
         result: 'shown',
         kind: refusal.kind,

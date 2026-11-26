@@ -419,6 +419,9 @@ export interface AssistantReply extends WithRefusal {
   // The plan the User chose in words (P05 ticket 51): of the meal answer on screen, kept with its list and numbers, or
   // of the reply's own answer, which then opens at it.
   select?: { planId: string };
+  // The answer on screen leaves the map, with its time card and button: the User asked for another plan, or something
+  // else, and nothing could be drawn for it (P05 ticket 55). A server before it leaves it out.
+  clears?: true;
 }
 
 export type { AskOffer, ReplyOffer } from './reply-offer-types';

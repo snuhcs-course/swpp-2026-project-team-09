@@ -94,6 +94,7 @@ export function findMenu(menus: MenuLookupService): Tool {
     input,
     run: async ({ date, meal, restaurant }, { userId, now, context, presented, capabilities }) => {
       if (outOfReach(date, now)) {
+        presented.clears = true;
         return noDay(date);
       }
       const names = namesOf(menus, restaurant, context.tapped?.kind === 'place' ? context.tapped.placeId : null);
