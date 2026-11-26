@@ -193,3 +193,62 @@
       planMeal: { date: '2026-11-02' }
     text:
       absent: [302동에서, 301동에서]
+
+# A Class the User says is cancelled stays in the plan: nothing leaves a Class out yet, so the one sentence says so
+# (P05 ticket 49). On the user's phone (2026-11-26), "내일 1시 수업 휴강이야. 점심 뭐 먹을까?" was planned before that
+# Class with no word about it. The asker's Tuesday has 데이터베이스 at 11:00–12:15.
+- id: meal-wish-class-cancelled
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 내일 11시 수업 휴강이야. 점심 뭐 먹을까?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    args:
+      planMeal: { date: '2026-11-03', meal: lunch }
+    text:
+      mentions: [[반영, 빼지, 그대로, 남아]]
+      absent: [뺐어요, 빼고 골랐]
+
+# No plan is narrowed by price, and the reply's prices are the list's (P05 ticket 50). On the user's phone
+# (2026-11-26), "5천원 이하로 저녁" was answered that no dinner under 5,000원 exists and the first Restaurant cost
+# 6,000원, while the list under it said "3,000원부터".
+- id: meal-wish-by-price
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 5천원 이하로 저녁
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    args:
+      planMeal: { date: '2026-11-02', meal: dinner }
+    text:
+      mentions: [가격]
+      absent: [단품, 부족]
+
+# A meal's plans are never answered with no words (P05 ticket 48). Production logged a meal turn whose model wrote no
+# text (2026-11-26), and the app put the plan's own line, with its walk and price, where the sentence goes.
+- id: meal-wish-writes-its-sentence
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 내일 점심 뭐 먹을까?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    args:
+      planMeal: { date: '2026-11-03', meal: lunch }
+    text:
+      mentions: [추천]
+      absent: [아래에서 확인해 보세요, 걸음]
