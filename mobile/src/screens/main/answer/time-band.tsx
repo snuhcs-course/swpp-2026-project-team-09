@@ -28,6 +28,7 @@ import {
 import { BandOnTrack, Ends, type HeldBand, percent, placeOf, redOf, Track, useWholeMove, wordsOf } from './band-body';
 import { BandWords, type HeadRoom } from './band-head-words';
 import { NowMark, Red, useShownBand } from './band-track';
+import { SkippedBlocks, SkippedLine } from './skipped-classes';
 
 interface TimeBandProps {
   band: TimeBandData;
@@ -41,6 +42,8 @@ interface TimeBandProps {
   onDrop: (bound: BandBound, time: string) => void;
   // False draws no handles, as for a Lookup's band, which is not recalculated.
   handles?: boolean;
+  // Puts a Class left out back in the plan (P04 ticket 93); left out, its pills take no press.
+  onPutBack?: (classId: string) => void;
   // The band's place while it is moved whole by a drag on its lanes, drawn in place of the Plan's.
   moving?: Stretch | null;
   // Where a drag on the lanes moves the band whole, and where it is let go or stepped. Without it nothing does.
@@ -150,6 +153,7 @@ function Lanes({ band, fixed, moving }: LanesProps): ReactElement {
             {lane.busy.map((stretch) => (
               <View key={`busy-${stretch.startAt}`} style={[styles.busy, placeOf(stretch, band.range)]} />
             ))}
+            {at === 0 ? <SkippedBlocks range={band.range} skipped={band.skipped} /> : null}
             <Red range={band.range} stretches={redOf(lane, fixed, band, moving)} />
           </View>
         </View>
@@ -268,6 +272,7 @@ export function TimeBand(props: TimeBandProps): ReactElement {
         </Track>
       </View>
       <Ends band={band} folded={folded} />
+      <SkippedLine disabled={disabled} onPutBack={props.onPutBack} skipped={band.skipped} />
     </View>
   );
 }

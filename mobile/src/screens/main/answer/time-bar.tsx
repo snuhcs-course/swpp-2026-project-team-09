@@ -22,7 +22,7 @@ import { fixedOnDay } from '@/features/assistant/booking-day';
 import { spanOf } from '@/library/cards/slot-band';
 import type { Lookup } from '@/api/lookup-types';
 import { color, radius, shadow, space } from '@/design-system';
-import { windowOf } from '@/features/assistant/plan-input';
+import { windowOf, withoutSkipped } from '@/features/assistant/plan-input';
 import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -211,6 +211,11 @@ export function PlanBar(props: PlanBarProps): ReactElement {
         moving: shown.moving,
         onDrop: fix.drop,
         onMove: fixed ? undefined : fix.move,
+        onPutBack: settled
+          ? undefined
+          : (classId) => {
+              shown.change((input) => withoutSkipped(input, classId));
+            },
       }}
       add={
         pickingBar.head ??

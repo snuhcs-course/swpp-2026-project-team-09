@@ -31,6 +31,7 @@ import { FRIENDS } from './data/friends';
 import { MENUS } from './data/menus';
 import { CROWDED_ASKED, crowdedMealAnswer, crowdedMealReply, crowdedWithFriend } from './data/crowded-meal';
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
+import { skippedReplyTo } from './data/skipped-classes';
 import { MEAL_ANSWER_MENUS_REPLY, MEAL_DINNER_MENUS } from './data/meal-answer-menus';
 import { asksUnnamedCompany, UNNAMED_COMPANY_REPLY } from './data/unnamed-company';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
@@ -260,7 +261,7 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
   if (last.includes(NOT_NOW_ASKED)) {
     return NOT_NOW_REPLY;
   }
-  const cancel = cancelReplyTo(last) ?? partyChangeReplyTo(last) ?? pickReplyTo(last);
+  const cancel = cancelReplyTo(last) ?? partyChangeReplyTo(last) ?? pickReplyTo(last) ?? skippedReplyTo(last);
   if (cancel !== null) {
     return cancel;
   }

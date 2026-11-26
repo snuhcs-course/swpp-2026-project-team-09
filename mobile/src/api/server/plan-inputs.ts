@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { EventsInput, MealInput, PersonConstraint, PlanInput, PlanPerson } from '@/api/assistant-types';
@@ -57,13 +58,19 @@ function isCuisineOrNone(value: unknown): boolean {
   return value === undefined || value === null || isCuisine(value);
 }
 
+// The Classes left out: absent for none, and from a main server before P04 ticket 93.
+function isSkippedOrNone(value: unknown): boolean {
+  return value === undefined || listOf(isText)(value);
+}
+
 function isMealInput(value: unknown): value is MealInput {
   return (
     field(value, 'kind') === 'meal' &&
     isOneOf(['lunch', 'dinner'])(field(value, 'meal')) &&
     isGathering(value) &&
     hasNow(field(value, 'window')) &&
-    isCuisineOrNone(field(value, 'cuisine'))
+    isCuisineOrNone(field(value, 'cuisine')) &&
+    isSkippedOrNone(field(value, 'skipped'))
   );
 }
 

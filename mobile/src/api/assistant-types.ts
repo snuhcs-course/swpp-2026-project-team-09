@@ -208,6 +208,9 @@ export interface MealInput {
   window: MealWindow;
   // The Place the User fixed.
   placeId: string | null;
+  // The asker's Classes of the day left out of the plan, as the ids of their times (P04 ticket 93); absent for none,
+  // and from a main server before it. The app only sends back those the main server gave.
+  skipped?: string[];
   // The kind of food on screen, which the main server keeps and puts first. Absent or null for none.
   cuisine?: Cuisine | null;
 }
