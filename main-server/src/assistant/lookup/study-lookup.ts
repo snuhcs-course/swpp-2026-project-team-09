@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type StudyBuildingDto, type StudySpaceDto } from '../../study-spaces/dto/study-spaces.dto.js';
@@ -93,7 +94,7 @@ const ASK_KWANJEONG: LookupAction = { kind: 'ask', label: '관정 보기', text:
 const labelOf = ({ name, place }: StudyBuildingDto): string =>
   place.number === null ? name : `${name}(${place.number}동)`;
 
-const pointOf = (building: StudyBuildingDto): PlacePoint => {
+export const pointOf = (building: StudyBuildingDto): PlacePoint => {
   const { id, latitude, longitude } = building.place;
   return { placeId: id, label: labelOf(building), latitude, longitude };
 };

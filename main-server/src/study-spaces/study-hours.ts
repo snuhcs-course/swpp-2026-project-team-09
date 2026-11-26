@@ -95,15 +95,19 @@ export type Calendar = z.infer<typeof calendarSchema>;
 type Hours = Schedule['lunarHolidays'];
 type Week = Schedule['week'];
 
-// `closesAt` is the clock of the close, 24:00 for midnight and past it for a close the next day ("01:00"), and
-// `closesIn` the minutes until it; `opensAt` is the next opening today, when known.
+// `closesAt` is the clock of the close, 24:00 for midnight and the next day's clock past it ("01:00"), and `closesIn`
+// the minutes until it; both null when it stays open a day or more. `opensAt` is the next opening today and `closedAt`
+// the last close today, each when known.
 export type Opening =
-  | { state: 'open'; closesAt: string; closesIn: number }
-  | { state: 'closed'; opensAt: string | null }
+  | { state: 'open'; closesAt: string | null; closesIn: number | null }
+  | { state: 'closed'; opensAt: string | null; closedAt: string | null }
   | { state: 'unknown' };
 
-// An opening by minutes from today's midnight: `end` may be past 24:00.
-type Reading = { state: 'open'; end: number } | { state: 'closed'; next: number | null } | { state: 'unknown' };
+type Closed = Extract<Opening, { state: 'closed' }>;
+
+// An opening by minutes from today's midnight: `end` may be past 24:00, and `last` before 00:00 (a close yesterday).
+type Reading =
+  { state: 'open'; end: number } | { state: 'closed'; next: number | null; last: number | null } | { state: 'unknown' };
 
 const DAY_MINUTES = 24 * 60;
 const KOREA_MS = 9 * 60 * 60 * 1000;
@@ -164,7 +168,7 @@ function readingOf(hours: Hours, minutes: number, offset: number): Reading {
     return { state: 'unknown' };
   }
   if (hours === 'closed') {
-    return { state: 'closed', next: null };
+    return { state: 'closed', next: null, last: null };
   }
   const at = minutes + offset;
   const spans = hours.map(({ open, close }) => {
@@ -176,8 +180,16 @@ function readingOf(hours: Hours, minutes: number, offset: number): Reading {
     return { state: 'open', end: current.end - offset };
   }
   const starts = spans.flatMap(({ start }) => (start > at ? [start - offset] : []));
-  return { state: 'closed', next: starts.length === 0 ? null : Math.min(...starts) };
+  const ends = spans.flatMap(({ end }) => (end <= at ? [end - offset] : []));
+  return {
+    state: 'closed',
+    next: starts.length === 0 ? null : Math.min(...starts),
+    last: ends.length === 0 ? null : Math.max(...ends),
+  };
 }
+
+const latest = (one: number | null, other: number | null): number | null =>
+  one === null || other === null ? (one ?? other) : Math.max(one, other);
 
 // One reading of the day before and one of today together: open when either is, closed when both are.
 function together(before: Reading, today: Reading): Reading {
@@ -187,28 +199,44 @@ function together(before: Reading, today: Reading): Reading {
   if (today.state === 'open') {
     return today;
   }
-  return before.state === 'closed' && today.state === 'closed' ? today : { state: 'unknown' };
+  if (before.state === 'closed' && today.state === 'closed') {
+    return { state: 'closed', next: today.next, last: latest(before.last, today.last) };
+  }
+  return { state: 'unknown' };
+}
+
+// The value every reading gives, or null when they differ.
+function shared(values: readonly (number | null)[]): number | null {
+  const [first = null] = values;
+  return values.every((value) => value === first) ? first : null;
 }
 
 // Open when every reading the calendar allows says open (until the earliest close), closed when every one says closed,
 // else unknown: a space is never called open on a guess.
-function agreed(readings: readonly Reading[], minutes: number): Opening {
+function agreed(readings: readonly Reading[]): { state: 'open'; end: number } | Closed | { state: 'unknown' } {
   const ends = readings.flatMap((one) => (one.state === 'open' ? [one.end] : []));
   if (ends.length === readings.length) {
-    const end = Math.min(...ends);
-    return { state: 'open', closesAt: clockOf(end), closesIn: end - minutes };
+    return { state: 'open', end: Math.min(...ends) };
   }
-  const nexts = readings.flatMap((one) => (one.state === 'closed' ? [one.next] : []));
-  if (nexts.length < readings.length) {
+  const closed = readings.flatMap((one) => (one.state === 'closed' ? [one] : []));
+  if (closed.length < readings.length) {
     return { state: 'unknown' };
   }
-  const [next = null] = nexts;
-  return { state: 'closed', opensAt: next !== null && nexts.every((one) => one === next) ? clockOf(next) : null };
+  const next = shared(closed.map((one) => one.next));
+  const last = shared(closed.map((one) => one.last));
+  return {
+    state: 'closed',
+    opensAt: next === null ? null : clockOf(next),
+    closedAt: last === null || last < 0 ? null : clockOf(last),
+  };
 }
 
-// Whether a space is open at `at`, by its schedule and the calendar: its own day's ranges, and the day before's that
-// run past midnight, over every reading of the two days the calendar allows.
-export function openAt(schedule: Schedule, calendar: Calendar, at: Date): Opening {
+// The opening at `at` by its own day and the day before, the close in minutes from `at`.
+function openOnce(
+  schedule: Schedule,
+  calendar: Calendar,
+  at: Date,
+): { state: 'open'; closesAt: string; closesIn: number } | Closed | { state: 'unknown' } {
   const korea = new Date(at.getTime() + KOREA_MS);
   const date = korea.toISOString().slice(0, 10);
   const minutes = korea.getUTCHours() * 60 + korea.getUTCMinutes();
@@ -216,8 +244,27 @@ export function openAt(schedule: Schedule, calendar: Calendar, at: Date): Openin
   const before = readingsOf(schedule, calendar, previousDay(date)).map((hours) =>
     readingOf(hours, minutes, DAY_MINUTES),
   );
-  return agreed(
-    before.flatMap((one) => today.map((other) => together(one, other))),
-    minutes,
-  );
+  const opening = agreed(before.flatMap((one) => today.map((other) => together(one, other))));
+  return opening.state === 'open'
+    ? { state: 'open', closesAt: clockOf(opening.end), closesIn: opening.end - minutes }
+    : opening;
+}
+
+// Whether a space is open at `at`, by its schedule and the calendar, over every reading of the days the calendar
+// allows. A close that the next day's opening follows at once is no close: 24 hours every day stays open.
+export function openAt(schedule: Schedule, calendar: Calendar, at: Date): Opening {
+  const first = openOnce(schedule, calendar, at);
+  if (first.state !== 'open') {
+    return first;
+  }
+  let { closesAt, closesIn } = first;
+  while (closesIn < DAY_MINUTES) {
+    const after = openOnce(schedule, calendar, new Date(at.getTime() + closesIn * 60_000));
+    if (after.state !== 'open') {
+      return { state: 'open', closesAt, closesIn };
+    }
+    ({ closesAt } = after);
+    closesIn += after.closesIn;
+  }
+  return { state: 'open', closesAt: null, closesIn: null };
 }

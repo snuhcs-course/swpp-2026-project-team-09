@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
@@ -11,6 +12,7 @@ import { readSeedFile, SEED_DIRECTORY } from '../common/seed-directory.js';
 import { PlaceLookup } from '../places/place-lookup.js';
 import { UsersService } from '../users/users.service.js';
 import { type StudyBuildingDto, type StudySpaceDto } from './dto/study-spaces.dto.js';
+import { type Calendar, openAt, type Opening, type Schedule } from './study-hours.js';
 import {
   DEPARTMENT_COLLEGES_FILE,
   type DepartmentColleges,
@@ -39,6 +41,8 @@ function seatSectors(catalogue: Catalogue, affiliation: Standing['affiliation'])
 export class StudySpacesService implements OnModuleInit {
   private buildings: PlacedBuilding[] = [];
   private table: DepartmentColleges = new Map();
+  private schedules = new Map<string, Schedule>();
+  private calendar: Calendar | null = null;
 
   constructor(
     private readonly places: PlaceLookup,
@@ -58,6 +62,19 @@ export class StudySpacesService implements OnModuleInit {
     }
     this.buildings = placedBuildings(file.buildings, (number) => this.places.numbered(number));
     this.table = table;
+    this.schedules = new Map(
+      file.buildings.flatMap(({ spaces }) => spaces.map(({ key, schedule }) => [key, schedule])),
+    );
+    this.calendar = file.calendar;
+  }
+
+  // Whether a space is open at a time, by its hours as data (P10), and how sure their sources are.
+  hoursOf(key: string, at: Date): { opening: Opening; confidence: Schedule['confidence'] } {
+    const schedule = this.schedules.get(key);
+    if (schedule === undefined || this.calendar === null) {
+      throw new Error(`No hours for the study space ${key}`);
+    }
+    return { opening: openAt(schedule, this.calendar, at), confidence: schedule.confidence };
   }
 
   async listFor(userId: string): Promise<StudyBuildingDto[]> {

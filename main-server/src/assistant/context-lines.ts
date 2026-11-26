@@ -5,9 +5,28 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { type RequestContext } from './dto/answer.dto.js';
+import { type RequestContext, type StudyInput } from './dto/answer.dto.js';
+
+// The study plan on screen (P10), with the places the app numbers.
+function studyLine(input: StudyInput, planId: string | null, planIds?: string[]): string {
+  const { date, what, people, window, area, minutes } = input;
+  const friendIds = people.slice(1).map(({ userId }) => userId);
+  const plan = {
+    plan: planId,
+    kind: 'study',
+    date,
+    what,
+    friendIds,
+    from: window.from,
+    until: window.until,
+    minutes,
+    near: area !== null,
+  };
+  return `[Plan on screen: ${JSON.stringify({ ...plan, ...(planIds === undefined ? {} : { numbered: planIds }) })}]`;
+}
 
 // What the app knew as the User asked, as the lines the model reads after their message.
 export function contextLines({ conditions, planId, planIds, tapped }: RequestContext): string[] {
@@ -28,6 +47,8 @@ export function contextLines({ conditions, planId, planIds, tapped }: RequestCon
     const friendIds = people.slice(1).map(({ userId }) => userId);
     const plan = { plan: planId, kind: 'meet', date, friendIds, from: window.from, until: window.until, placeId };
     lines.push(`[Plan on screen: ${JSON.stringify(plan)}]`);
+  } else if (conditions?.kind === 'study') {
+    lines.push(studyLine(conditions, planId, planIds));
   } else if (conditions !== null) {
     const { date, meal, people, window, placeId } = conditions;
     const plan = {

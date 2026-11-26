@@ -4,6 +4,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerReply, MapScene, Plan } from '@/api/assistant-types';
@@ -122,6 +123,13 @@ function legDrafts(
       overFaces,
     }));
   });
+}
+
+// The minutes of a scene's ways with no meal Plan, as a meal Plan's legs carry theirs: a 관정 booking's way there (P01
+// ticket 10).
+export function wayMinutesDrafts(scene: MapScene, ways: Ways = NO_WAYS): Draft[] {
+  const lines = legsOf(scene, NONE_HIDDEN).flatMap(({ index }) => drawnLines(scene, index, ways));
+  return legDrafts(scene, ways, lines, NONE_HIDDEN);
 }
 
 // Where the User sets out from, as the answer used it (`startOf`): "10:45 301동", the end of the Class or the Quest there;
