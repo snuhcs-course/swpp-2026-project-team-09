@@ -8,7 +8,15 @@ import { ANSWER_CAPABILITIES } from '@/api/capabilities';
 import { mockRecalculation } from '@/api/mock/assistant';
 import { STUDY_GROUP_TO_SEND } from '@/api/mock/data/study-group-answers';
 import { isAnswerReply } from '@/api/server/plan-answers';
-import { hasPeople, windowOf, withBound, withoutPerson, withPerson, withStart } from '@/features/assistant/plan-input';
+import {
+  hasPeople,
+  windowOf,
+  withBound,
+  withChosenRoom,
+  withoutPerson,
+  withPerson,
+  withStart,
+} from '@/features/assistant/plan-input';
 import { addNameOf } from '@/screens/main/answer/who-words';
 import alone from '@/api/mock/data/study-answer.json';
 import gathering from '@/api/mock/data/study-group-gathering.json';
@@ -99,6 +107,14 @@ describe('A study input changed on the card', () => {
     const removed = withoutPerson(STUDY, firstFriend?.userId ?? '');
     expect(removed).toMatchObject({ together: true, chosen: STUDY.chosen, minutes: 120 });
     expect(hasPeople(removed) ? removed.people : []).toHaveLength(3);
+  });
+
+  it('asks again with the kind of room chosen, and leaves other conditions as they are', () => {
+    expect(withChosenRoom(STUDY, '2F-group-6')).toEqual({
+      ...STUDY,
+      chosen: { seatSpaceId: null, roomSpaceId: '2F-group-6' },
+    });
+    expect(withChosenRoom(mockRecalculation(STUDY).input, '2F-group-6').kind).toBe('study');
   });
 
   it('fixes its window from the band', () => {

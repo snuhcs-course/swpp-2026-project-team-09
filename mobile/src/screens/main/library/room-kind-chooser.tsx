@@ -34,7 +34,7 @@ function cellOf(kind: Kind, chosen: string, counts: RoomCounts, onChoose: (space
   const base = { key: kind.spaceId, floor: kind.floor, name: kind.name, label, chosen: kind.spaceId === chosen };
   if (!kind.fits) {
     const reason = kind.reason ?? '';
-    return { ...base, value: reason, said: reason, off: true, few: false, onPress: () => undefined };
+    return { ...base, value: reason, said: reason, off: true, few: false, onPress: null };
   }
   const count = counts?.get(kind.spaceId);
   const { shown, said } = countWords(count);

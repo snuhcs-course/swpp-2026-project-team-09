@@ -28,7 +28,8 @@ export interface FloorCell {
   off: boolean;
   // The fact in the danger colour.
   few: boolean;
-  onPress: () => void;
+  // Null for a cell that cannot be chosen.
+  onPress: (() => void) | null;
 }
 
 function Cell({ cell }: { cell: FloorCell }): ReactElement {
@@ -39,7 +40,7 @@ function Cell({ cell }: { cell: FloorCell }): ReactElement {
       accessibilityRole="button"
       accessibilityState={{ disabled: off, selected: chosen }}
       disabled={off}
-      onPress={onPress}
+      onPress={onPress ?? undefined}
       style={({ pressed }) => [styles.cell, chosen && styles.chosen, off && styles.off, pressed && styles.pressed]}
     >
       <Text numberOfLines={1} style={[styles.name, off && styles.offWords]}>

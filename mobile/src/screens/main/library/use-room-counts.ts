@@ -55,7 +55,7 @@ export function useRoomCounts(slot: Slot): RoomCounting {
         loggedIn: (): boolean => now.current.loggedIn,
         sectors: (): Promise<LibrarySpace[] | null> =>
           queryClient.query({ ...studySpacesQuery, staleTime: 'static' }).then(sectorsOf, () => null),
-        count: (sector, at) => seatsFor(sector, at).then(freeSeatCount),
+        count: (sector: LibrarySpace, at: Slot): Promise<number> => seatsFor(sector, at).then(freeSeatCount),
         now: (): number => Date.now(),
       }),
   );

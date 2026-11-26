@@ -37,7 +37,12 @@ describe('The room kind chooser', () => {
       ['4F-group-8', 'pending'],
     ]);
     await render(
-      <RoomKindChooser counts={counts} group={groupOf(STUDY_GROUP_TO_SEND)} onChoose={jest.fn()} slot={SLOT} />,
+      <RoomKindChooser
+        counts={counts}
+        group={groupOf(STUDY_GROUP_TO_SEND)}
+        onChoose={jest.fn<void, [string]>()}
+        slot={SLOT}
+      />,
     );
 
     expect(screen.getByText('15:00–17:00에 빈 방')).toBeVisible();
@@ -52,7 +57,7 @@ describe('The room kind chooser', () => {
   });
 
   it('chooses a kind that fits, and none that does not', async () => {
-    const onChoose = jest.fn();
+    const onChoose = jest.fn<void, [string]>();
     await render(
       <RoomKindChooser counts={new Map()} group={groupOf(STUDY_GROUP_TO_SEND)} onChoose={onChoose} slot={SLOT} />,
     );
@@ -62,10 +67,18 @@ describe('The room kind chooser', () => {
 
     expect(onChoose.mock.calls).toEqual([['2F-group-6']]);
   });
+});
 
+// Partitions: no count read, and three people. Expected values: the design and the server's fixture of three.
+describe('The room kind chooser before its counts', () => {
   it('leaves a count not yet read empty, and every kind grey for three people', async () => {
     await render(
-      <RoomKindChooser counts={null} group={groupOf(STUDY_GROUP_MORE_NEEDED)} onChoose={jest.fn()} slot={SLOT} />,
+      <RoomKindChooser
+        counts={null}
+        group={groupOf(STUDY_GROUP_MORE_NEEDED)}
+        onChoose={jest.fn<void, [string]>()}
+        slot={SLOT}
+      />,
     );
 
     expect(screen.queryByText(/빈 방 \d/u)).toBeNull();
@@ -80,7 +93,7 @@ const FIRST = ROOMS[0]?.NAME ?? '';
 // library's room list.
 describe('The room number chooser', () => {
   it('shows the kind’s free rooms three to a row, with how many, the chosen one outlined', async () => {
-    await render(<RoomNumberChooser chosen={FIRST} onChoose={jest.fn()} rooms={ROOMS} slot={SLOT} />);
+    await render(<RoomNumberChooser chosen={FIRST} onChoose={jest.fn<void, [string]>()} rooms={ROOMS} slot={SLOT} />);
 
     expect(screen.getByText(`15:00–17:00에 빈 방 ${String(ROOMS.length)}곳`)).toBeVisible();
     for (const row of screen.getAllByTestId('room-number-row')) {
@@ -90,7 +103,7 @@ describe('The room number chooser', () => {
   });
 
   it('chooses a room by its number', async () => {
-    const onChoose = jest.fn();
+    const onChoose = jest.fn<void, [string]>();
     const [first] = ROOMS;
     await render(<RoomNumberChooser chosen={null} onChoose={onChoose} rooms={ROOMS} slot={SLOT} />);
 
@@ -106,7 +119,7 @@ describe('The use chooser', () => {
   const OPTIONS = groupOf(STUDY_GROUP_TO_SEND).useDescOptions;
 
   it('shows the uses as equal cells, the chosen one outlined', async () => {
-    const onChoose = jest.fn();
+    const onChoose = jest.fn<void, [string]>();
     await render(<UseChooser chosen="과제" onChoose={onChoose} options={OPTIONS} />);
 
     expect(cell(/^과제$/u)).toBeSelected();
