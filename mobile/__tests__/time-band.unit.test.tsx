@@ -221,7 +221,8 @@ describe('TimeBand stepped', () => {
 });
 
 // P01 ticket 17, from the pictures: a band too short for its two handles keeps its fill between them, and each handle
-// stands a hair outside it with the grip every handle has, so that the band is plainly the block in the middle.
+// stands a hair outside it with a grip, so that the band is plainly the block in the middle. A band wide enough, a
+// meal's among them, keeps its handles as they were.
 describe('TimeBand too short for its handles', () => {
   it('draws its handles a hair outside it, each with its grip', async () => {
     await show();
@@ -236,10 +237,11 @@ describe('TimeBand too short for its handles', () => {
     expect(screen.getByTestId('time-band-grip-until')).toBeOnTheScreen();
   });
 
-  it('draws them on its ends, with the same grip, on a band wide enough', async () => {
+  it("draws a meal's band wide enough with its handles on its ends as before, and no grip", async () => {
     await show();
 
     expect(handle('from')).toHaveStyle({ marginLeft: -8 });
-    expect(screen.getByTestId('time-band-grip-from')).toBeOnTheScreen();
+    expect(screen.queryByTestId('time-band-grip-from')).toBeNull();
+    expect(screen.queryByTestId('time-band-grip-until')).toBeNull();
   });
 });

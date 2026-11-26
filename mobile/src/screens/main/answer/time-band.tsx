@@ -146,10 +146,12 @@ function Handle(props: HandleProps): ReactElement {
         ]}
         testID={`time-band-handle-${bound}`}
       >
-        <View style={styles.grip} testID={`time-band-grip-${bound}`}>
-          <View style={styles.gripLine} />
-          <View style={styles.gripLine} />
-        </View>
+        {outside ? (
+          <View style={styles.grip} testID={`time-band-grip-${bound}`}>
+            <View style={styles.gripLine} />
+            <View style={styles.gripLine} />
+          </View>
+        ) : null}
       </View>
     </GestureDetector>
   );
@@ -322,13 +324,12 @@ const styles = StyleSheet.create({
     borderColor: color.quest,
     borderRadius: radius.sm,
     backgroundColor: color.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  // Two short lines that say a handle is to be dragged, on a band of any width (P01 ticket 17).
+  // A handle drawn outside a short band stands a hair apart from it and carries a grip of two short lines, so that the
+  // band is plainly the block between them (P01 ticket 17); one on a band's end stays as it was.
+  outsideFrom: { marginLeft: -(HANDLE_WIDTH + HANDLE_HAIR), alignItems: 'center', justifyContent: 'center' },
+  outsideUntil: { marginLeft: HANDLE_HAIR, alignItems: 'center', justifyContent: 'center' },
   grip: { flexDirection: 'row', gap: 2 },
   gripLine: { width: 1.5, height: 8, borderRadius: 1, backgroundColor: color.quest },
-  outsideFrom: { marginLeft: -(HANDLE_WIDTH + HANDLE_HAIR) },
-  outsideUntil: { marginLeft: HANDLE_HAIR },
   focused: { borderWidth: 3, borderColor: color.focusRing },
 });
