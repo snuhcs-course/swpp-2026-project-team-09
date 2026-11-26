@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type PlaceDto } from '../../places/dto/place.dto.js';
@@ -106,6 +107,7 @@ const KIND_WORDS: Record<Exclude<PlanInput['kind'], 'meal'>, string> = {
   events: '행사',
   quests: '파티',
   'new-quest': '새 파티',
+  study: '공부할 곳',
 };
 
 // The answer's step: its first Plan, or why it has none.

@@ -9,6 +9,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -178,6 +179,29 @@ export interface Plan {
   // A meal Plan's menu: its Restaurant's main corner, its own price and its dishes in the menu's order. Absent when no
   // menu was collected for the meal there.
   menu?: PlanMenu;
+  // A study Plan's building (P10): its study spaces that fit, best first, which of 관정's to book, and whether the phone
+  // reads its free seats. Absent from every other Plan.
+  study?: PlanStudy;
+}
+
+export interface PlanStudy {
+  spaces: StudySpot[];
+  // 관정관's catalogue space to book (7F-7A-zone2 for a quiet place); null elsewhere.
+  book: { spaceId: string } | null;
+  // 관정관's free seats are read on the phone, through the User's own library login; null elsewhere.
+  liveSeats: 'kwanjeong' | null;
+}
+
+// A study space of a study Plan's building. `open` is never closed: a space closed then is in the answer's `closed`.
+export interface StudySpot {
+  key: string;
+  name: string;
+  kind: 'library' | 'reading' | 'lounge' | 'pc' | 'group';
+  // The display text of its hours, null when the sources give none.
+  hours: string | null;
+  open: 'open' | 'unknown';
+  // HH:MM, when known.
+  closesAt: string | null;
 }
 
 export interface MenuDish {
@@ -308,6 +332,7 @@ export type {
   PlanInput,
   PlanPerson,
   QuestsInput,
+  StudyInput,
 } from './plan-input.dto.js';
 export { EVENT_IDS_MAX, planInputSchema, QUEST_IDS_MAX } from './plan-input.dto.js';
 

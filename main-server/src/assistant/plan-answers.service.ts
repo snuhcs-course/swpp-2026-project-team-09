@@ -4,9 +4,10 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { type Position } from '../common/geometry.js';
 import { type AnswerReply, type LocationMissing, type PlanInput } from './dto/answer.dto.js';
 import { EventsPlanService } from './events/events-plan.service.js';
@@ -48,6 +49,10 @@ export class PlanAnswersService {
     }
     if (input.kind === 'events') {
       return this.events.plan(askerId, input, at);
+    }
+    // A study plan's answer comes with P10 ticket 03; until then no app is sent one to send back.
+    if (input.kind === 'study') {
+      throw new UnprocessableEntityException('A study plan cannot be recalculated yet');
     }
     return input.kind === 'quests' ? this.quests.plan(askerId, input, at) : this.newQuests.plan(askerId, input, at);
   }

@@ -2454,6 +2454,13 @@ Anthropic API as the AI's key says
   that carries them. Every meal answer therefore says `choosable: true`, and the app sends `planIds` only over an
   answer that says it, never to an older main server.
 
+  An app that sends `"clientCapabilities": ["study-plan"]` will get "공부할 자리 있어?" answered as ranked study places,
+  the meal answer's way (P10). Its input is a `PlanInput` of kind `study` (`date`, `what`: quiet, group, pc or any,
+  the asker alone, `window`, and `area` for 근처), and each of its Plans carries `study` (the building's spaces that
+  fit, with their hours and whether each is open or not known, 관정관's space to book, and `liveSeats`). The request's
+  context and `POST /assistant/answers` already take a `study` input. Until P10 ticket 03 answers one, a recalculation
+  of it is refused with 422, and an app without `study-plan` gets nothing new.
+
   A reply carries `clears: true` when the User asked for another plan, or something else, and nothing could be drawn
   for it: `planMeal` for a day past or more than a week ahead, for breakfast, or for a meal over for today;
   `planMeet`, `planEvents`, `planNewQuest` and `findMenu` for a day out of reach; and `refuse` for a request plainly

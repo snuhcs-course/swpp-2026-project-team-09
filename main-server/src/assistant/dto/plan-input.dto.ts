@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -15,7 +16,7 @@ import { mealWindowSchema } from '../refusals/relax.dto.js';
 // The conditions of a plan, part of the contract of `answer.dto.ts`, which exports them again.
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
-export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput | MeetInput;
+export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput | MeetInput | StudyInput;
 
 export interface MealInput {
   kind: 'meal';
@@ -38,6 +39,20 @@ export interface MealInput {
   maxPrice?: number;
   // The cheapest first, by list price (싼 데). Absent for the usual order.
   cheapFirst?: true;
+}
+
+// Where the asker can study that day, ranked as a meal's plans are (P10): the study places they may use that fit
+// `what`, within `area` when they asked for 근처. The asker alone.
+export interface StudyInput {
+  kind: 'study';
+  // YYYY-MM-DD in Korea.
+  date: string;
+  // quiet: 열람실 and 도서관; group: rooms to study together; pc: computers; any: every kind.
+  what: 'quiet' | 'group' | 'pc' | 'any';
+  people: PlanPerson[];
+  window: { from: string | null; until: string | null };
+  // The visible map area the User asked within (근처, 이 주변); null for the whole campus.
+  area: { south: number; west: number; north: number; east: number } | null;
 }
 
 // When the asker and their Friends are free together that day, and where they meet.
@@ -185,10 +200,30 @@ const newQuestInputSchema = z
     'Expected a Global Event, or a title and a Place',
   );
 
+const latitude = z.number().min(-90).max(90);
+const longitude = z.number().min(-180).max(180);
+
+// A study plan is the asker's alone.
+const studyInputSchema = z.strictObject({
+  kind: z.literal('study'),
+  date: z.iso.date(),
+  what: z.enum(['quiet', 'group', 'pc', 'any']),
+  people: planPeopleSchema.min(1).max(1),
+  window: windowSchema,
+  area: z
+    .strictObject({ south: latitude, west: longitude, north: latitude, east: longitude })
+    .refine(
+      ({ south, north, west, east }) => south < north && west < east,
+      'Expected south before north, west before east',
+    )
+    .nullable(),
+});
+
 export const planInputSchema = z.discriminatedUnion('kind', [
   mealInputSchema,
   eventsInputSchema,
   questsInputSchema,
   newQuestInputSchema,
   meetInputSchema,
+  studyInputSchema,
 ]);
