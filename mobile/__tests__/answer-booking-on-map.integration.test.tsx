@@ -238,7 +238,7 @@ describe('a seat booked on the map', () => {
   });
 });
 
-// P01 ticket 16: the time card shows the rest of the day, from now floored to the hour to closing.
+// P01 ticket 17: the time card shows the rest of the day, from now floored to the hour to closing.
 describe("a seat card's time card", () => {
   it('runs from now, 16:00, to closing', async () => {
     await asked();

@@ -16,7 +16,7 @@ import { limitsOf, type Span, type SpanLimits, slotOf, spanOf } from '@/library/
 import { clockOf, minutesOf } from '@/library/cards/times';
 
 // A seat booking's band in the time card a meal's draws (P01 ticket 14): its span, the rest of the room's day as the
-// range (ticket 16), the
+// range (ticket 17), the
 // User's Classes and Quests of the day as their lane's busy stretches, the words the card said, and the library's rules,
 // which the band's handles and whole moves follow.
 
@@ -28,14 +28,14 @@ function onDay(date: string, minutes: number): string {
 }
 
 const HOUR = 60;
-// The range is at least this wide, so that an hour of the band stays wide enough to hold (P01 ticket 16).
+// The range is at least this wide, so that an hour of the band stays wide enough to hold (P01 ticket 17).
 const RANGE_LEAST = 4 * HOUR;
 
 function hourOf(minutes: number): number {
   return Math.floor(minutes / HOUR) * HOUR;
 }
 
-// The range the time card shows a booking's day over (P01 ticket 16): today, from the moment the answer came floored
+// The range the time card shows a booking's day over (P01 ticket 17): today, from the moment the answer came floored
 // to the hour to closing, starting earlier to keep RANGE_LEAST, never before opening nor after the span's start; the
 // hours gone by are no use, since the library books today's seats only from now on. Another day, opening to closing.
 function rangeOf(limits: SpanLimits, span: Span, date: string, shownAt: Date): Span {
@@ -117,7 +117,7 @@ export function useBookingBand(
   keep: (slot: Slot) => void,
 ): BookingBand {
   const [moving, setMoving] = useState<Stretch | null>(null);
-  // The moment the answer came, whose range the card keeps (P01 ticket 16).
+  // The moment the answer came, whose range the card keeps (P01 ticket 17).
   const [shownAt] = useState(now);
   const span = spanOf(slot);
   return {

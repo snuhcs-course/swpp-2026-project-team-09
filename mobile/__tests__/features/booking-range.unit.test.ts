@@ -9,7 +9,7 @@ import { handlesOutside } from '@/features/assistant/time-band';
 import type { Slot } from '@/library/cards/payloads';
 import { bookingBandOf } from '@/screens/main/answer/booking-band';
 
-// The range of a seat booking's time card (P01 ticket 16): today, from now floored to the hour to the closing time, at
+// The range of a seat booking's time card (P01 ticket 17): today, from now floored to the hour to the closing time, at
 // least 4 hours wide and never before opening; another day, opening to closing. It is the range of the moment the
 // answer came, kept while the card is open. And a band too short for its two handles has them drawn outside it.
 // Expected values: 7층 열람실, open 07:00–23:00, on 2026-11-02.

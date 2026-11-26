@@ -82,7 +82,7 @@ interface HandleProps {
   shown: Stretch;
   trackWidth: number;
   focused: boolean;
-  // Drawn outside the band, which is too short for both handles on its ends (P01 ticket 16).
+  // Drawn outside the band, which is too short for both handles on its ends (P01 ticket 17).
   outside: boolean;
   disabled: boolean;
   onMove: (moved: Moved) => void;

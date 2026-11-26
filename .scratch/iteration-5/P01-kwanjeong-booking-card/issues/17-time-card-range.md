@@ -1,4 +1,4 @@
-# 16: The seat answer's time card shows the rest of the day
+# 17: The seat answer's time card shows the rest of the day
 
 Parent: [P01 spec](../spec.md); the time-card range decision of 2026-11-27 ("바꾸기")
 Status: ready-for-agent
