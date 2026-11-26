@@ -5,6 +5,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useEffect, useState } from 'react';
@@ -21,7 +22,8 @@ import { nextStart } from '@/library/cards/times';
 import { basisOf, type Room, roomOf, shortName, swapFor } from '@/library/cards/seat-rooms';
 import { type ChipTone, RoomChipRow, RoomList } from './room-list';
 import type { LibraryCardActions } from './use-library-call';
-import { type Rooms, useRoomCounts } from './use-room-counts';
+import type { RoomCounting } from './room-counting';
+import { type Rooms, useRoomCounts, useRooms, useRoomsWith } from './use-room-counts';
 
 // The room of a seat card the Assistant gave: the room on screen, kept with the chat so that it outlasts the sheet and
 // later requests send the card of that room; the chip and the list that change it; and the swap of a room that is full
@@ -46,7 +48,7 @@ export interface SeatRoom {
   listing: boolean;
   setListing: (listing: boolean) => void;
   tone: ChipTone;
-  counting: ReturnType<typeof useRoomCounts>;
+  counting: RoomCounting;
   choose: (next: LibrarySpace) => void;
   // 되돌리기, while the room on screen is not the one the card first showed.
   undo: (() => void) | null;
@@ -162,18 +164,19 @@ export function useSeatRoom(of: SeatRoomOf): SeatRoom {
 }
 
 // The counts read again for a new time, once they were read for the old one.
-function useRecount(counting: ReturnType<typeof useRoomCounts>, slot: Slot): void {
+function useRecount(counting: RoomCounting, slot: Slot): void {
   const time = `${slot.date} ${slot.start} ${String(slot.minutes)}`;
   const [seen, setSeen] = useState(time);
-  const { rooms, read } = counting;
+  const counted = useRoomsWith(counting, (rooms) => rooms.state !== 'idle');
+  const { read } = counting;
   useEffect(() => {
     if (seen !== time) {
       setSeen(time);
-      if (rooms.state !== 'idle') {
+      if (counted) {
         void read();
       }
     }
-  }, [seen, time, rooms.state, read]);
+  }, [seen, time, counted, read]);
 }
 
 // While the card's own room shows no free seat for its time (`ownEmpty`), the rooms are read and the space of the same
@@ -228,6 +231,8 @@ export function RoomTop({ room, slot }: { room: SeatRoom; slot: Slot }): ReactEl
         onKeep={
           listing
             ? () => {
+                // The counts still on their way change nothing more (P01 ticket 08).
+                counting.stop();
                 setListing(false);
               }
             : null
@@ -235,7 +240,7 @@ export function RoomTop({ room, slot }: { room: SeatRoom; slot: Slot }): ReactEl
         room={roomOf(room.shown) ?? chip}
         tone={room.tone}
       />
-      {listing ? <RoomList onPick={room.choose} rooms={counting.rooms} shown={room.shown} slot={slot} /> : null}
+      {listing ? <RoomList counting={counting} onPick={room.choose} shown={room.shown} slot={slot} /> : null}
     </>
   );
 }
@@ -263,13 +268,15 @@ export function RoomWords({
   shown,
   free,
   full,
-  rooms,
+  counting,
 }: {
   shown: LibrarySpace;
   free: number | null;
   full: LibrarySpace | null;
-  rooms: Rooms;
+  counting: RoomCounting;
 }): ReactElement {
+  // Read here, so that a count that arrives draws these words and not the card around them (P01 ticket 08).
+  const rooms = useRooms(counting);
   const basis = rooms.state === 'listed' ? basisOf(shown, rooms.sectors, rooms.counts) : null;
   const filled = filledWords(shown, free);
   return (
