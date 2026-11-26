@@ -3,6 +3,7 @@
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type userEvent, within } from '@testing-library/react-native';
@@ -142,6 +143,12 @@ export async function openEvents(more: Parameters<typeof openMain>[1] = {}): Pro
   await user.press(screen.getByRole('tab', { name: '행사' }));
   await pass(500);
   return user;
+}
+
+// 관련 행사 고르기 in 파티 만들기: a row opens the event's sheet, whose 이 행사 추가 picks it and returns to the form.
+export async function pickEvent(user: User, event: Pick<GlobalEvent, 'title'>): Promise<void> {
+  await user.press(screen.getByRole('button', { name: `행사 · ${event.title}` }));
+  await user.press(screen.getByRole('button', { name: '이 행사 추가' }));
 }
 
 export function card(event: GlobalEvent): ReturnType<typeof within> {

@@ -6,6 +6,8 @@
 
 // A study Plan's part (P10): its building's study spaces alone, and the 관정 group study room with Friends.
 
+import { type LibraryCardSpace } from '../library/library-card.js';
+
 export interface PlanStudy {
   // Alone: the building's study spaces that fit, best first. Empty with Friends.
   spaces: StudySpot[];
@@ -24,6 +26,9 @@ export interface GroupRoomKind {
   // "6인실"
   name: string;
   capacity: { min: number; max: number };
+  // The library space the phone reads the kind's free rooms from, as the library cards carry it: its roomNo and
+  // sectorNo, the kind's room numbers in seatNos (a sector may hold several kinds), its hours and durations.
+  space: LibraryCardSpace;
 }
 
 // The group study room of a study plan with Friends. The specific room (G412) is the phone's: it reads which rooms of

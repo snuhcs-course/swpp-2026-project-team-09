@@ -1,6 +1,6 @@
 # P06: The app's fixes outside the Assistant
 
-Status: ready-for-agent (15; 02, 03, 06, 07, 08, 09, 10, 11, 12, 13 and 14 are done; 01, 04 and 05 are held, see Solution)
+Status: ready-for-agent (16; 02, 03, 06, 07, 08, 09, 10, 11, 12, 13, 14 and 15 are done; 01, 04 and 05 are held, see Solution)
 
 ## Problem Statement
 
@@ -21,8 +21,9 @@ On 2026-11-22 the team collected, in a Slack thread, what bothers them in the ap
 13. **파티's event card.** Added by the user on 2026-11-26, from their notes on the 파티 and 행사 tabs: "행사가 태그된 파티 안에 들어갔을 때 행사를 누르면 행사 탭으로 아예 넘어가버림, 팝업으로 아래서 위로 뜨게 하는 식으로 하는게 낫지 않나?" (`references/13-1-room-event-sheet.webp`)
 14. **행사's detail sheet.** Added by the user on 2026-11-26, from their notes on the 파티 and 행사 tabs: "행사/특정행사 누름 올라오는 팝업에서도 제목을 좀더 작게, 언제/어디 글씨는 삭제(아이콘으로 인지 가능), 위에 '내 파티' 이거 뭐임? 삭제." Settled on 2026-11-27 (`references/14-1-event-sheet-wireframe.webp`, `references/14-2-description-spacing.webp`).
 15. **행사's list.** Added by the user on 2026-11-26, from their notes on the 파티 and 행사 tabs: "행사 다가오는 행사 문구 삭제, 시간이랑 장소, 아이콘(눌렀을때 올라오는 팝업의 아이콘)을 두고 다른 줄로 나누기, 제목과 시간/장소 글씨 크기가 여전히 큼.." Settled on 2026-11-27 (`references/15-1-events-list-wireframe.webp`).
+16. **관련 행사 고르기.** Added by the user on 2026-11-26, from their notes on the 파티 form: "관련행사 고르기 했을때 UI 말도 안되게 못생김 … 일단 눌렀을때 바로 추가되는게 아니라 행사탭처럼 아래서 위로 팝업 하나띄워주고, 추가 버튼을 따로 두고 추가했으면 좋겠음. (진로/이벤트/축제 이건 누가 나누는거지?)" Settled on 2026-11-27 (`references/16-1-event-picker-wireframe.webp`).
 
-Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc and item 12 against f44a4c61 on 2026-11-26, item 13 against 9be7f899 and item 14 against 03120c8c and item 15 against 2934be94 on 2026-11-27: none was fixed then.
+Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc and item 12 against f44a4c61 on 2026-11-26, item 13 against 9be7f899 and item 14 against 03120c8c and item 15 against 2934be94 and item 16 against bbe4cad9 on 2026-11-27: none was fixed then.
 
 ## Solution
 
@@ -43,6 +44,7 @@ One ticket per item, numbered as the items:
 13. [13: 파티's event card opens the event's detail as a sheet over the room](issues/13-room-event-sheet.md)
 14. [14: 행사's detail sheet: no 내 파티 or source line, no 언제 / 어디 words, smaller type, and the description spaced by its own lines](issues/14-event-sheet-cleaner.md)
 15. [15: 행사's list: no 다가오는 행사 heading, smaller type, time and place on their own lines, titles up to two lines, and no source line](issues/15-events-list-lighter.md)
+16. [16: 관련 행사 고르기: one list without 진로 / 이벤트 / 축제, rows like 행사's, and an event chosen only from its sheet](issues/16-event-picker-one-list.md)
 
 What is built now (agreed by the team after the review, 2026-11-22): what is broken goes first, and the improvements wait.
 
@@ -58,6 +60,7 @@ What is built now (agreed by the team after the review, 2026-11-22): what is bro
 - Added on 2026-11-27 and built at once: 13. It changes the room's event card (`screens/room/room-event.tsx`) and `EventDetailSheet` (a way to leave out its party button); no open ticket touches them.
 - Added on 2026-11-27 and built at once: 14. It changes `EventDetailSheet` (`screens/events/event-detail-sheet.tsx`) and adds text styles to the tokens; no open ticket touches them.
 - Added on 2026-11-27 and built at once: 15. It changes `EventRow` (`screens/events/event-row.tsx`), the list's heading (`events-screen.tsx`), the shared `eventText` styles and the 관련 행사 picker's day size (`screens/party/form/event-field.tsx`). Ticket 14 (PR 636) touches `event-row.tsx` and other `eventText` keys too, so whichever lands second merges `5.0/Main` first.
+- Added on 2026-11-27 and built at once: 16. It changes the 관련 행사 picker and field (`screens/party/form/event-field.tsx`), `EventDetailSheet` (a foot button of its own), `withEvent` (`features/party/making.ts`), and deletes `features/party/event-kinds.ts`; no open ticket touches them.
 
 When the held tickets are taken up, tickets touching the same files never run at the same time:
 
@@ -95,6 +98,7 @@ When the held tickets are taken up, tickets touching the same files never run at
 26. As a 파티 member pressing its event, I want the event's detail to slide up over the room, so that I never lose my place in the 파티.
 27. As a User reading an event's detail, I want a quieter head and a description broken where its writer broke it, so that I can read it at a glance.
 28. As a User scanning 행사, I want lighter rows with the time and the place on their own lines and titles I can read to the end, so that more events fit and each reads at a glance.
+29. As a User making a 파티 for an event, I want to see the event's detail before I add it, in one list I can search, without kinds the app guesses wrongly.
 
 ## Implementation Decisions
 
@@ -115,6 +119,7 @@ Decided on 2026-11-22:
 - 13 (2026-11-27): the room's event card opens `EventDetailSheet` over the room instead of going to the 행사 tab. In the room the sheet has no party button, since the User is already in a 파티 of that event. An event the app's list no longer holds (ended or withdrawn) leaves the card unpressable. The 행사 tab's focus stays for push notices.
 - 14 (2026-11-27): in `EventDetailSheet` only, the 내 파티 mark and the source line go (the source never shows in the server build), and so do the words 언제 / 어디, which a screen reader still gets. The title becomes 21 Bold, the values 14 SemiBold and the description 14 Regular. The description is laid out by its own lines, 7 apart, with a run of blank lines as one gap of 14, and its words untouched. Its content (e-mails, repeated time and place, a summary) is left as scraped.
 - 15 (2026-11-27): the list loses its 다가오는 행사 heading and its rows' source line. A row's day is 22 Bold over a 12 month line, the title 16 Bold on up to two lines, the time and the place on their own lines with `clock` / `pin` at 13 Medium, the party line 13, and the padding 12. The sizes live in the shared `eventText`, which the 관련 행사 picker also takes (its day override goes), its other changes waiting for its own item. The day words stay 오늘 / 내일 / weekday.
+- 16 (2026-11-27): the picker loses its 진로 / 이벤트 / 축제 tabs and lists every event by date with its search. Its rows follow the 행사 list's: two-line titles, time and place lines with icons, padding 12. A press opens `EventDetailSheet` with 원문 보기 and 이 행사 추가, or a disabled 선택됨 for the event already chosen. The kind rules (`event-kinds.ts`: regular expressions over an event's words, a stopgap) are deleted with their uses: the tabs, the chosen box's kind line and the tags added on picking. Nothing else reads them.
 
 For all tickets:
 
@@ -163,6 +168,7 @@ Every item received and where it went:
 | 13 파티 상세에서 행사를 누르면 행사 탭으로 넘어감 (added 2026-11-26) | Ticket 13 |
 | 14 행사 팝업의 내 파티, 언제/어디, 제목 크기 (added 2026-11-26) | Ticket 14, with the description's spacing (added 2026-11-27) |
 | 15 행사 목록의 다가오는 행사, 시간/장소 줄, 글씨 크기 (added 2026-11-26) | Ticket 15, with two-line titles (added 2026-11-27) |
+| 16 관련 행사 고르기의 UI, 누르면 팝업과 추가 버튼, 진로/이벤트/축제 (added 2026-11-26) | Ticket 16, with the kind rules deleted (added 2026-11-27) |
 
 Notes for the tickets:
 
