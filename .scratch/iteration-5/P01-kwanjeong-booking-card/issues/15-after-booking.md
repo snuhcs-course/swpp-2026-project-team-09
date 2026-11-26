@@ -62,3 +62,10 @@ Not in this ticket: the server's side of faults 1 and 3 (the return tool and the
 - [ ] On the user's phone: boards 1–7.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 2.0 hours, an estimate from one session's transcript with pauses over 5 minutes left out. It covers the build, two review rounds, and the emulator pictures at two font scales.
+- Tokens:
+  - input: 116,572,291, of which 116,151,194 were cache reads, 420,493 cache writes, and 604 uncached;
+  - output: 238,096.
