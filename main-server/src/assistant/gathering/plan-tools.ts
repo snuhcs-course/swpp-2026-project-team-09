@@ -19,7 +19,7 @@ import { defineTool, type Presented, type Tool, type ToolContext } from '../feat
 import { afterEarlierSteps } from '../steps/plan-steps.js';
 import { type FoundIds, type FoundKind } from '../found-ids.js';
 import { mealByClock } from '../free-time/meal-fit.js';
-import { clockTime, dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
+import { clockTime, dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
 import { askedBy } from '../refusals/friend-question.js';
 import { mealAfter, nextMealOffer } from './meal-after-hours.js';
 import { PRICE_INPUTS, priceConditionOf } from './meal-price.js';
@@ -42,6 +42,8 @@ const NONE_REASONS: Record<NonNullable<AnswerReply['noPlan']>['reason'], string>
   'no-fit': 'No Restaurant can be reached, eaten at, and left in time.',
 };
 
+const BREAKFAST = 'Breakfast is not planned: say in one sentence that lunch and dinner are.';
+
 const NOT_NOW = 'There is no time now when everyone can eat together; the app offers buttons to ease it.';
 
 const overToday = (words: string): string =>
@@ -62,6 +64,7 @@ function noneOf(
   const next = relax.length === 0 ? mealAfter(input, now) : null;
   if (next !== null) {
     presented.answer = null;
+    presented.clears = true;
     presented.offers = [nextMealOffer(next, friendNames(answer))];
     return { result: 'none', meal: input.meal, reason: overToday(next.words) };
   }
@@ -76,10 +79,10 @@ const input = z
   .object({
     date: dateInput,
     meal: z
-      .enum(['lunch', 'dinner'])
+      .enum(['lunch', 'dinner', 'breakfast'])
       .optional()
       .describe(
-        "lunch or dinner, only when the User's words name the meal (점심, 저녁). Left out otherwise: the server takes the one being served or the next one today, and lunch on a later day.",
+        "lunch or dinner, only when the User's words name the meal (점심, 저녁); breakfast for 아침, which is not planned. Left out otherwise: the server takes the one being served or the next one today, and lunch on a later day.",
       ),
     friendIds: z
       .array(z.uuid())
@@ -255,6 +258,7 @@ async function plannedFor(
   presented.mapButtons.length = 0;
   if ('invited' in asked) {
     presented.answer = null;
+    presented.clears = true;
     return invitedWords(asked.invited, planInput.meal);
   }
   const { answer, served, busy = [], posted = true } = await plans.planned(userId, asked.input, at);
@@ -279,8 +283,14 @@ export function planMeal(plans: MealPlans, earlier: (context: ToolContext) => re
     run: async (args, toolContext) => {
       const { date, friendIds, placeId, startPlaceId, pickPeople } = args;
       const { userId, now, context, found, presented } = toolContext;
+      // A plan asked for a day out of reach, or for breakfast, cannot be made: the plan on screen leaves the map, so that
+      // the reply's words are not read over it (P05 ticket 55).
       if (outOfReach(date, now)) {
-        return noDay(date);
+        return outOfReachDay(date, presented);
+      }
+      if (args.meal === 'breakfast') {
+        presented.clears = true;
+        return { result: 'none', meal: 'breakfast', reason: BREAKFAST };
       }
       const seen = seenIds(context);
       askedBy('planMeal', friendIds, found, presented);

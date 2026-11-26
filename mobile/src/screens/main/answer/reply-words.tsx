@@ -58,7 +58,9 @@ export function wordsKindOf(bubble: ChatBubble, onScreen: Seen): WordsKind {
   const { shown, invitation } = onScreen;
   const { answer } = bubble;
   const fromReply = answer !== undefined && answer !== null && offeredAnswer(answer) === shown.source;
-  if ((fromReply || keepsShown(bubble)) && shown.answer !== null) {
+  // A plan chosen in words is the plan's card, opened at its Restaurant (P05 ticket 56).
+  const chosen = bubble.select !== undefined && shown.answer?.plans.some(({ id }) => id === bubble.select) === true;
+  if ((fromReply || keepsShown(bubble) || chosen) && shown.answer !== null) {
     return invitation.made === null || shown.plan === null ? 'plan' : 'made';
   }
   const lookup = lookupOf(bubble, onScreen);
@@ -122,7 +124,9 @@ function onScreenCard(props: WordsProps, kind: WordsKind): ReactElement | null {
   if (kind === 'plan' && answer !== null) {
     const card = { answer, invitation, onClose, over, room, shown };
     const steps = (bubble.steps?.length ?? 0) > 1;
-    return <PlanCard {...card} focus={focus} said={bubble.text} steps={steps} />;
+    // A choice's words are not the card's: the history list keeps them (P05 ticket 56).
+    const said = bubble.select === undefined ? bubble.text : '';
+    return <PlanCard {...card} focus={focus} said={said} steps={steps} />;
   }
   if (kind === 'made' && answer !== null && plan !== null && invitation.made !== null) {
     return <MadeCard {...{ answer, invitation, onClose, over, plan }} made={invitation.made} />;

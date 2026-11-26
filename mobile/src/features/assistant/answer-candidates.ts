@@ -128,9 +128,7 @@ function mealDraft(plan: Plan, number: number, { place, tag }: MapScene['places'
 export function candidateDraft(
   plans: readonly Plan[],
   item: MapScene['places'][number],
-  kind: Cuisine | null = null,
-  meal = false,
-  coral = false,
+  { kind = null, meal = false, coral = false }: { kind?: Cuisine | null; meal?: boolean; coral?: boolean } = {},
 ): Draft {
   const { place, tag } = item;
   const title = tag ?? place.label;

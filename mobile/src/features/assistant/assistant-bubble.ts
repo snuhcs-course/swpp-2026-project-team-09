@@ -26,7 +26,8 @@ export async function answerTo(messages: ChatMessage[], context: RequestContext)
     const reply = await apiClient.askAssistant(messages, context);
     const { text, cards, mapButtons, proposal, answer = null, lookup = null, refusal = null, offers, steps } = reply;
     const chosen = reply.select === undefined ? {} : { select: reply.select.planId };
-    const drawn = { answer, lookup, refusal, area: context.viewport, ...chosen };
+    const cleared = reply.clears === true && answer === null && lookup === null ? { clears: true as const } : {};
+    const drawn = { answer, lookup, refusal, area: context.viewport, ...chosen, ...cleared };
     const offered = offers === undefined || offers.length === 0 ? {} : { offers };
     const stepped = steps === undefined || steps.length < 2 ? {} : { steps };
     return { role: 'assistant', text, cards, mapButtons, proposal, failure: null, ...drawn, ...offered, ...stepped };

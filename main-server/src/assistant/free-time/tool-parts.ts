@@ -3,10 +3,11 @@
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
  * 2026-11-01  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
-import { noneFound, type NoneFound } from '../feature.js';
+import { noneFound, type NoneFound, type Presented } from '../feature.js';
 import { koreaDate } from '../korea-time.js';
 import { othersText } from '../others-text.js';
 import { type DayItem, type FreeInterval } from './free-time.js';
@@ -41,6 +42,13 @@ export function outOfReach(date: string, now: Date): boolean {
 
 export function noDay(date: string): NoneFound {
   return noneFound(`${date} is not between today and a week from today.`);
+}
+
+// A plan asked for a day out of reach: none, and the plan on screen leaves the map, so that the reply's words are not
+// read over it (P05 ticket 55).
+export function outOfReachDay(date: string, presented: Pick<Presented, 'clears'>): NoneFound {
+  presented.clears = true;
+  return noDay(date);
 }
 
 export function itemName({ name }: DayItem): string {

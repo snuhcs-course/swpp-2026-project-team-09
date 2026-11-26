@@ -7,6 +7,7 @@
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
+import { within } from '@testing-library/react-native';
 import { pass, screen } from './support/app';
 import { answerDining } from './support/dining';
 import type { FakeServer } from './support/fake-server';
@@ -100,7 +101,6 @@ describe('A plan of the meal answer chosen in words', () => {
 
     await ask(user, '좋아');
 
-    expect(screen.getByText(CHOSEN.text)).toBeVisible();
     expect(lastRequest()).toMatchObject({
       context: { conditions: MEAL_ANSWER_REPLY.answer.input, planId: THIRD, planIds: PLAN_IDS },
     });
@@ -118,11 +118,30 @@ describe('A plan of the meal answer chosen in words', () => {
     server.on('POST /assistant/messages', { status: 200, body, afterMs: 500 });
     await ask(user, '돈까스 먹고 싶어');
 
+    expect(within(screen.getByTestId('meal-menu')).getByText(chosen?.id ?? '')).toBeVisible();
     await ask(user, '좋아');
 
     expect(lastRequest()).toMatchObject({
       context: { planId: chosen?.id, planIds: reordered.map(({ id }) => id) },
     });
+  });
+});
+
+describe('A plan chosen in words, opened as a press on its row', () => {
+  // P05 ticket 56, the user's phone (Release 26.11.26-3): a spoken choice ends as a press on that row of the list does,
+  // the Restaurant opened in the answer with its menu, "‹ N곳 목록" back to the list, and no paragraph of the reply's
+  // words, which the history list keeps.
+  it("opens the plan's Restaurant as a press on its row does, with no paragraph", async () => {
+    const user = await openMain();
+    await ask(user, '점심 뭐 먹지');
+    server.on('POST /assistant/messages', { status: 200, body: CHOSEN, afterMs: 500 });
+
+    await ask(user, '3번으로 할게');
+
+    const menu = within(screen.getByTestId('meal-menu'));
+    expect(menu.getByText(THIRD)).toBeVisible();
+    expect(menu.getByRole('button', { name: `‹ ${String(PLAN_IDS.length)}곳 목록` })).toBeVisible();
+    expect(screen.queryByText(CHOSEN.text)).toBeNull();
   });
 });
 

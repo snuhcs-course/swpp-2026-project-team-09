@@ -102,6 +102,9 @@ export interface AssistantReplyDto {
   // The plan of the meal answer on screen the User chose in words, which the app shows, keeping the answer and its
   // numbers (P05 ticket 51); left out otherwise, and by a reply that draws an answer of its own.
   select?: { planId: string };
+  // The answer on screen leaves the map with its time card and button: the User asked for another plan, or something
+  // else, and nothing could be drawn for it (P05 ticket 55). Left out otherwise, and by a reply that draws its own.
+  clears?: true;
 }
 
 // A button that opens a 파티's room at its 수정 (P05 ticket 30), sent only to an app that says `party-change`.
