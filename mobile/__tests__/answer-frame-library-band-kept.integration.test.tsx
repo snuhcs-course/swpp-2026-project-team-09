@@ -3,6 +3,8 @@
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -101,7 +103,7 @@ describe('the card kept with the chat', () => {
     await stepBand('시간 띠', 'increment');
     expect(filledCard().getByText('17:30–20:30 · 3시간')).toBeVisible();
     expect(filledCard().queryByText(/바꾼 시간이에요/u)).toBeNull();
-    await pressIn(filledCard(), '자리 선택하기');
+    await pressIn(filledCard(), /^좌석: \d+번$/u);
     const picture = within(screen.getByTestId('seat-map-large'));
     await pressIn(picture, '7200번 빈 자리');
     await pressIn(picture, '7200번 선택');
@@ -137,7 +139,7 @@ describe('a card left open past its start', () => {
   it('books nothing when the start went by before 예약하기, and says so', async () => {
     await askForCards({ server, library }, [SEAT_CARD]);
     const seatCard = inCard(`library-book-${SEAT_CARD.library.key}`);
-    expect(seatCard.getByText('오늘 17:00–18:00')).toBeVisible();
+    expect(seatCard.getByText('17:00–18:00 · 1시간')).toBeVisible();
 
     // 17:10: the next start is 17:30.
     jest.setSystemTime(new Date('2026-11-02T08:10:00.000Z'));

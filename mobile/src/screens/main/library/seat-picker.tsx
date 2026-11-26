@@ -18,15 +18,7 @@ import type { LibrarySpace } from '@/api/assistant-types';
 import { Button, color, font, Icon, type IconName, radius, space, text } from '@/design-system';
 import { bookingTitle } from '@/features/assistant/booking-scene';
 import { SEAT_BOX, freeSeatCount } from '@/library/cards/seats';
-import {
-  digitsThatFit,
-  LAYOUT_ZOOM,
-  PICTURE_HEIGHT,
-  type Point,
-  pictureSize,
-  type Size,
-  ZOOM_MOST,
-} from '@/library/cards/seat-zoom';
+import { LAYOUT_ZOOM, PICTURE_HEIGHT, type Point, pictureSize, type Size, ZOOM_MOST } from '@/library/cards/seat-zoom';
 import type { LibrarySeat } from '@/library/replies';
 import { CHOSEN_LOOK, ChosenTag, SEAT_LOOK, SeatMap } from './seat-map';
 import { type SeatZoom, useSeatZoom } from './use-seat-zoom';
@@ -121,11 +113,12 @@ type PictureProps = SeatPickerProps & { chosen: LibrarySeat | null; pick: (seat:
 function Picture(props: PictureProps): ReactElement {
   const { space: shown, seats, onSeat, chosen, pick } = props;
   const image = shown.mapImage;
-  const zoomed = useSeatZoom(image, (zoom) =>
-    chosen === null || image === null ? null : seatMiddle(chosen, image, zoom),
+  const zoomed = useSeatZoom(
+    image,
+    (zoom) => (chosen === null || image === null ? null : seatMiddle(chosen, image, zoom)),
+    seats.map(({ VNAME }) => VNAME.length),
   );
   const width = image === null ? 0 : pictureSize(image, LAYOUT_ZOOM).width;
-  const digits = image === null ? 0 : digitsThatFit(image, zoomed.zoom);
   const marked = chosen?.VNAME ?? props.current ?? null;
   return (
     <>
@@ -141,7 +134,7 @@ function Picture(props: PictureProps): ReactElement {
             <Animated.View style={[styles.layer, zoomed.style]} testID="seat-picker-layer">
               <SeatMap
                 chosen={marked}
-                digits={digits}
+                digits={zoomed.digits}
                 onSeat={onSeat === null ? null : pick}
                 seats={seats}
                 space={shown}
@@ -150,7 +143,7 @@ function Picture(props: PictureProps): ReactElement {
               />
               <ChosenTag
                 chosen={marked}
-                digits={digits}
+                digits={zoomed.digits}
                 grow={LAYOUT_ZOOM / zoomed.zoom}
                 seats={seats}
                 space={shown}

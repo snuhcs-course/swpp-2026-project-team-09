@@ -4,6 +4,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -18,7 +19,7 @@ import type { FakeServer } from './support/fake-server';
 import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { askForCards, expectNoWrite, inCard, pressIn, SEAT_CARD, startLibraryChat } from './support/library-chat';
 
-// The seat book card's 자리 선택하기 and the room's seat picture (P15 ticket 57, P01 ticket 01 of Iteration 5): a press
+// The seat book card's seat on its ticket and the room's seat picture (P15 ticket 57, P01 tickets 01 and 09 of Iteration 5): a press
 // picks one seat and only that one changes colour, "<n>번 선택" puts it in the card, 확대 and 축소 zoom it around the
 // middle of the view or the picked seat, and a seat's number is drawn whole or not at all, while the marked seat's tag
 // always names it. Against the fake main server and the fake library.
@@ -65,16 +66,19 @@ function seatCard(): ReturnType<typeof inCard> {
   return inCard(`library-book-${SEAT_CARD.library.key}`);
 }
 
-async function press(name: string): Promise<void> {
+// The seat on the card's ticket, which opens the seat picture (P01 ticket 09).
+const TICKET_SEAT = /^좌석: \d+번$/u;
+
+async function press(name: string | RegExp): Promise<void> {
   await pressIn(seatCard(), name);
 }
 
-describe('자리 선택하기 on the seat book card', () => {
-  it('lets 자리 선택하기 pick a free seat on the seat picture, which only that seat shows, and choose it', async () => {
+describe("the seat on the seat book card's ticket", () => {
+  it("lets the ticket's seat pick a free seat on the seat picture, which only that seat shows, and choose it", async () => {
     library.takeSeat(17202002);
     await askForCards({ server, library }, [SEAT_CARD]);
 
-    await press('자리 선택하기');
+    await press(TICKET_SEAT);
     const picture = within(screen.getByTestId('seat-map-large'));
     expect(picture.getByText('관정 7층 열람실 좌석 현황')).toBeVisible();
     expect(picture.queryByRole('button', { name: /번 선택$/u })).toBeNull();
@@ -91,7 +95,7 @@ describe('자리 선택하기 on the seat book card', () => {
     expect(picture.getByRole('button', { name: '7300번 빈 자리' })).toHaveStyle({ backgroundColor: '#F89200' });
     await pressIn(picture, '7200번 선택');
 
-    expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7200번')).toBeVisible();
+    expect(seatCard().getByText('7200번')).toBeVisible();
     expectNoWrite(library);
   });
 });
@@ -99,7 +103,7 @@ describe('자리 선택하기 on the seat book card', () => {
 describe('the seat picture, zoomed and closed', () => {
   it('zooms the seat picture with 확대 and 축소, between 1 and 4 times', async () => {
     await askForCards({ server, library }, [SEAT_CARD]);
-    await press('자리 선택하기');
+    await press(TICKET_SEAT);
     // How far each step zooms and where the view lands is read from the picture's layer in its unit test
     // (`library-seat-pinch`): here, the buttons' ends (P01 ticket 11).
     const picture = within(screen.getByTestId('seat-map-large'));
@@ -117,12 +121,12 @@ describe('the seat picture, zoomed and closed', () => {
 
   it('closes the seat picture on ✕ with the seat as it was', async () => {
     await askForCards({ server, library }, [SEAT_CARD]);
-    await press('자리 선택하기');
+    await press(TICKET_SEAT);
     const picture = within(screen.getByTestId('seat-map-large'));
     await pressIn(picture, '7300번 빈 자리');
     await pressIn(picture, '좌석 현황 닫기');
 
-    expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
+    expect(seatCard().getByText('7193번')).toBeVisible();
   });
 });
 
@@ -139,7 +143,7 @@ async function pinch(scales: readonly number[]): Promise<void> {
 describe('a pinch on the seat picture', () => {
   it('zooms by the total scale since the fingers came down, without compounding it, within 1 and 4 times', async () => {
     await askForCards({ server, library }, [SEAT_CARD]);
-    await press('자리 선택하기');
+    await press(TICKET_SEAT);
 
     // The zoom each pinch lands on is read from the picture's layer in its unit test (`library-seat-pinch`): here, that
     // the pinch zooms in and back out to 1, which the buttons' ends show.
@@ -156,7 +160,7 @@ describe('a pinch on the seat picture', () => {
 describe('the seat numbers and the marked seat', () => {
   it('draws no cut number: none at 1, whole ones at 4, and the marked seat named at every zoom', async () => {
     await askForCards({ server, library }, [SEAT_CARD]);
-    await press('자리 선택하기');
+    await press(TICKET_SEAT);
     const picture = within(screen.getByTestId('seat-map-large'));
 
     expect(screen.queryByTestId('seat-number-7300', HIDDEN)).toBeNull();
@@ -183,6 +187,6 @@ describe('the seat numbers and the marked seat', () => {
     await pressIn(picture, '축소');
     expect(screen.getByTestId('seat-tag', HIDDEN)).toHaveTextContent('7300');
     await pressIn(picture, '7300번 선택');
-    expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7300번')).toBeVisible();
+    expect(seatCard().getByText('7300번')).toBeVisible();
   });
 });
