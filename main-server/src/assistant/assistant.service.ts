@@ -248,6 +248,26 @@ function chatsOf(services: ChatAssistantServices): Map<string, Feature> {
   ]);
 }
 
+type LibraryParts = Pick<LibraryServices, 'catalogue' | 'freeTime' | 'friends' | 'quests' | 'users'> & {
+  days: UserDayService;
+  placeLookup: PlaceLookup;
+  travel: TravelProvider;
+};
+
+// What the 관정도서관 tools are given: LIBRARY_BOOKING_ENABLED, and the User's seat stay read through `prisma`.
+function libraryOf(
+  settings: ConfigService<Settings, true>,
+  prisma: PrismaService,
+  { days, placeLookup, travel, ...parts }: LibraryParts,
+): LibraryServices {
+  return {
+    ...parts,
+    arrival: { days, places: placeLookup, travel },
+    seatStay: (userId: string, now: Date): Promise<SeatStay | null> => seatStayNow(prisma, userId, now),
+    enabled: settings.get('LIBRARY_BOOKING_ENABLED', { infer: true }),
+  };
+}
+
 function limitsOf(settings: ConfigService<Settings, true>): RunLimits {
   return {
     maxSteps: settings.get('ASSISTANT_MAX_STEPS', { infer: true }),
