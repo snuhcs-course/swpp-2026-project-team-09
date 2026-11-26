@@ -9,13 +9,13 @@ import { MEAL_ANSWER_MENUS } from '@/api/mock/data/meal-answer-menus';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import { drawingOf } from '@/features/assistant/answer-marks';
 import { minutesOf, seen } from '../support/answer-marks';
-import { FIRST_CAMERA, viewAt } from '../support/answer-view';
+import { FIRST_CAMERA, positionAt, viewAt } from '../support/answer-view';
 
 // Each meal candidate's minutes left out on their own (P04 ticket 84): only where they have no room, nearer numbers
 // placed first, never because an earlier candidate had none.
 
-// The emulator's first view of the stored "뭐 먹을까" answer (2026-11-26), with the everyday Friends' faces it keeps
-// clear of: 학생회관식당 (3) has a Friend's face at its right and the next Class's mark at its left.
+// The emulator's first view of the stored "뭐 먹을까" answer (2026-11-26), with the everyday Friends' faces. Two of
+// them stand over 자하연식당 2층's round (5) and one over 학생회관식당's (3): the map leaves those out (`facesClearOf`).
 const EMULATOR_VIEW: LabelView = {
   camera: { centre: { latitude: 37.451688817, longitude: 126.95058 }, zoom: 14.7860472 },
   size: { width: 411.42856, height: 914.28571 },
@@ -32,15 +32,29 @@ const EMULATOR_VIEW: LabelView = {
   fontScale: 1,
 };
 
-// Partitions: a candidate after one without room, at the emulator's view. Expected values: the emulator's capture,
-// where 3 had no room and 4 had room at its right.
+// A Friend's face drawn at the right of 학생회관식당 (3), clear of its round: the map draws it, so 3's minutes have no room.
+const FACE_BESIDE_3 = positionAt(EMULATOR_VIEW.camera, { x: 255, y: 300 });
+
+// Partitions: a candidate after one without room; faces the map leaves out over the rounds. Expected values: the
+// emulator's view, where 3, 4 and 5 all have room at one side once no face that is not drawn stands in the way.
 describe("a meal candidate's minutes after one without room", () => {
   it('stay where they have room, though the candidate before them has none', () => {
-    const drawing = drawingOf(MEAL_ANSWER_MENUS, 0, undefined, EMULATOR_VIEW);
+    const view = { ...EMULATOR_VIEW, avoid: [...(EMULATOR_VIEW.avoid ?? []), FACE_BESIDE_3] };
+    const drawing = drawingOf(MEAL_ANSWER_MENUS, 0, undefined, view);
 
     expect(minutesOf(drawing, '학생회관식당')).toBeNull();
     expect(minutesOf(drawing, '3식당')).toMatchObject({ side: 'right', title: '19분' });
+    expect(minutesOf(drawing, '자하연식당 2층')).toMatchObject({ side: 'left', title: '22분' });
     expect(seen(drawing, 'answer:candidate:학생회관식당').symbol).toMatchObject({ number: 3 });
+  });
+});
+
+describe('the faces a meal candidate’s minutes keep clear of', () => {
+  it('are only those the map draws, not those it leaves out over a candidate’s round', () => {
+    const drawing = drawingOf(MEAL_ANSWER_MENUS, 0, undefined, EMULATOR_VIEW);
+
+    expect(minutesOf(drawing, '학생회관식당')).toMatchObject({ side: 'right', title: '16분' });
+    expect(minutesOf(drawing, '자하연식당 2층')).toMatchObject({ side: 'left', title: '22분' });
   });
 });
 

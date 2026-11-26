@@ -45,6 +45,8 @@ export interface MarkPoint {
   symbol: LatLng | null;
   // The symbol is a person's, the User's own or a Friend's face, which a tag that gives way keeps clear of.
   person?: boolean;
+  // The symbol is a meal answer's candidate's or pick's round, over which the map draws no face (`facesClearOf`).
+  round?: boolean;
 }
 
 // A mark that may take a label: the index of its point, its own position, the words of its label, null for none, and
@@ -203,6 +205,15 @@ function placeOne(
   return sideAtView(view, position, words, list, rooms, { kept, shrinks });
 }
 
+// The everyday faces the map draws, as boxes: not those over a meal answer's candidate's or pick's round, which the map
+// leaves out (`facesClearOf`), so that no label keeps clear of a face that is not there (P04 ticket 84).
+function facesDrawn(view: LabelView, points: readonly MarkPoint[]): ViewArea[] {
+  const rounds = symbolBoxes(view, points, ({ round = false }) => round).filter((box) => box !== null);
+  return (view.avoid ?? [])
+    .map((position) => faceBox(view, position))
+    .filter((face) => !rounds.some((round) => overlaps(face, round)));
+}
+
 // The labels of an answer's marks, taken in the order given, each at a side of its list that no earlier label at its
 // point took. Without a view, the first side with no other point within its reach in metres, or with none such the
 // first. At a view, the first whose box stays inside the area and covers neither another point's symbol box nor a
@@ -215,7 +226,7 @@ export function placeLabels(
 ): (AnswerLabel | null)[] {
   const taken = points.map(() => new Set<LabelSide>());
   const symbols = view === null ? [] : symbolBoxes(view, points, () => true);
-  const faces = view === null ? [] : (view.avoid ?? []).map((position) => faceBox(view, position));
+  const faces = view === null ? [] : facesDrawn(view, points);
   // The people's marks, the User's own and the Friends' faces, which a label that gives way keeps clear of too.
   const pins = view === null ? [] : symbolBoxes(view, points, ({ person = false }) => person);
   const pinned = pins.some((pin) => pin !== null);

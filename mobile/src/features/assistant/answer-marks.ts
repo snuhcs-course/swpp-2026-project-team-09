@@ -206,6 +206,10 @@ function markPoint(position: LatLng, drawn: Draft | undefined, meal: boolean): M
   if (meal && (type === 'face' || type === 'me')) {
     point.person = true;
   }
+  const role = drawn?.symbol?.type === 'dot' ? drawn.symbol.role : null;
+  if (meal && (role === 'candidate' || role === 'pick')) {
+    point.round = true;
+  }
   return point;
 }
 
