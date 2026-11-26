@@ -13,6 +13,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
@@ -46,6 +47,7 @@ import { causeOf, RUN_OBSERVER, runFeature, type RunLimits, type RunObserver } f
 import { chatAssistant, type ChatAssistantServices } from './chat/chat-assistant.js';
 import { NO_CONTEXT, type RequestContext } from './dto/answer.dto.js';
 import { type AssistantReplyDto } from './dto/assistant-messages.dto.js';
+import { replyBody } from './reply-body.js';
 import { type ChatMessage, type ClientCapability, type Feature, type FeatureReply } from './feature.js';
 import { UserDayService } from './free-time/user-day.service.js';
 import { koreaDate } from './korea-time.js';
@@ -161,18 +163,7 @@ export class AssistantService {
       if (reply.noTextFinishReason !== null) {
         this.logger.warn(fixedSentenceLog(reply, reply.noTextFinishReason));
       }
-      const { text, mapButtons, cards, proposal, answer, lookup, refusal, offers = [], steps } = reply;
-      return {
-        text,
-        mapButtons,
-        cards,
-        proposal,
-        answer,
-        lookup,
-        refusal,
-        ...(offers.length === 0 ? {} : { offers }),
-        ...(steps === undefined ? {} : { steps }),
-      };
+      return replyBody(reply);
     } catch (error) {
       this.logger.warn(`The Assistant did not answer: ${causeOf(error)}`);
       throw unavailable();

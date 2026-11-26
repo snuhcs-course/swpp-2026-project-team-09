@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type RefObject, useCallback, useRef } from 'react';
@@ -27,7 +28,9 @@ function contextAt(where: Where, shown: ShownAnswer | null, { tapped, viewport }
   const { position, locationMissing } = where;
   const conditions = shown?.answer?.input ?? null;
   const planId = shown?.plan?.id ?? null;
-  return { location: position, locationMissing, viewport, tapped, conditions, planId };
+  const listed = conditions?.kind === 'meal' ? shown?.answer?.plans.map(({ id }) => id) : undefined;
+  const planIds = listed === undefined || listed.length === 0 ? {} : { planIds: listed };
+  return { location: position, locationMissing, viewport, tapped, conditions, planId, ...planIds };
 }
 
 // The conversation, whose requests carry the context: the answer on screen kept in `shownNow`, what was pressed on the

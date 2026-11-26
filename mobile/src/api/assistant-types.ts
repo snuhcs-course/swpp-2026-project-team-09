@@ -189,6 +189,9 @@ export interface RequestContext extends WithLocationMissing {
   conditions: PlanInput | null;
   // The plan on screen.
   planId: string | null;
+  // The plans of the meal answer on screen in its order, which the list and the map number from 1, so that "2번으로
+  // 할게" chooses one of them (P05 ticket 51). Left out without a meal answer on screen.
+  planIds?: string[];
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
@@ -410,6 +413,9 @@ export interface AssistantReply extends WithRefusal {
   offers?: ReplyOffer[];
   // Each request of a message that asked for two or more, in time order (P03). A server before P03 leaves it out.
   steps?: ReplyStep[];
+  // The plan of the meal answer on screen the User chose in words, which the answer then shows, keeping its list and
+  // numbers (P05 ticket 51); a reply with it draws nothing of its own.
+  select?: { planId: string };
 }
 
 export type { AskOffer, ReplyOffer } from './reply-offer-types';

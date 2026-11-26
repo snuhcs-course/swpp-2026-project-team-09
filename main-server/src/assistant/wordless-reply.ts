@@ -7,6 +7,7 @@
 
 import { type Lookup } from './dto/answer.dto.js';
 import { type Presented } from './feature.js';
+import { withToward } from './gathering/answer-words.js';
 import { wordlessMealSentence } from './gathering/plan-reply.js';
 
 // What a reply says when no step of the model wrote any text: nothing beside a Lookup, whose lines the app draws as
@@ -18,7 +19,19 @@ export const FIXED_SENTENCE = '아래에서 확인해 보세요.';
 
 const hasWords = ({ lines }: Lookup): boolean => lines.some((line) => line.some(({ text }) => text.trim() !== ''));
 
-export function wordlessText({ cards, mapButtons, proposal, answer, lookup, refusal }: Presented): string | null {
+export function wordlessText({
+  cards,
+  mapButtons,
+  proposal,
+  answer,
+  lookup,
+  refusal,
+  select,
+}: Presented): string | null {
+  // A plan chosen in words (P05 ticket 51): the one sentence its rule asks for.
+  if (select !== undefined && answer === null) {
+    return `${withToward(select)} 골랐어요.`;
+  }
   const others = cards.length > 0 || mapButtons.length > 0 || proposal !== null || answer !== null;
   if (!others && lookup === null) {
     return null;

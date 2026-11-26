@@ -34,6 +34,7 @@ import { freeTimeTools } from '../free-time/free-time-tools.js';
 import { withTravelBoxes } from '../free-time/travel-boxes.js';
 import { MEET_RULES, planMeet } from '../gathering/meet-tools.js';
 import { MISSING_RULES, whyNotListed } from '../gathering/missing-tools.js';
+import { CHOOSE_PLAN_RULES, choosePlan } from '../gathering/choose-plan.js';
 import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
 import { INTEREST_RULES, interestTools } from '../interests/interest-tools.js';
 import { koreaNow } from '../korea-time.js';
@@ -207,12 +208,16 @@ function mealsAndEvents(
 ): { rules: string[]; tools: Record<string, Tool> } {
   const { meals, events, quests } = plans;
   if (!drawsEvents) {
-    return { rules: [FREE_TIME_EVENT_RULES, PLAN_RULES], tools: { planMeal: planMeal(meals, earlier) } };
+    return {
+      rules: [FREE_TIME_EVENT_RULES, PLAN_RULES, CHOOSE_PLAN_RULES],
+      tools: { planMeal: planMeal(meals, earlier), choosePlan: choosePlan() },
+    };
   }
   return {
-    rules: [FREE_TIME_EVENT_RULES, PLAN_RULES, EVENT_RULES, RECRUITING_RULES],
+    rules: [FREE_TIME_EVENT_RULES, PLAN_RULES, CHOOSE_PLAN_RULES, EVENT_RULES, RECRUITING_RULES],
     tools: {
       planMeal: planMeal(meals, earlier),
+      choosePlan: choosePlan(),
       planEvents: planEvents(events),
       planQuests: planQuests(quests),
       planNewQuest: planNewQuest(plans, days),

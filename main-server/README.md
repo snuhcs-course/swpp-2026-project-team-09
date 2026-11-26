@@ -2366,8 +2366,17 @@ Anthropic API as the AI's key says
   Beside `messages` the app may send `context`, what it knew as the User asked, each part null or left out when it does
   not know it: `location` (`{ "latitude", "longitude" }`, where the User is), `viewport` (`{ "south", "west", "north",`
   `"east" }`, the visible map area), `tapped` (`{ "kind": "place", "placeId" }` or `{ "kind": "friend", "userId" }`),
-  `conditions` (the `PlanInput` of the answer on screen), `planId` (the plan on screen), and `mentions` (below). Every
-  tool is given it, and `planMeal` reads its `location`.
+  `conditions` (the `PlanInput` of the answer on screen), `planId` (the plan on screen), `planIds` (below), and
+  `mentions` (below). Every tool is given it, and `planMeal` reads its `location`.
+
+  `planIds` (at most 30) lists the plans of the meal answer on screen in its order, which the app numbers from 1. It is
+  left out without a meal answer on screen. The model reads them as `numbered` in the line `[Plan on screen: …]`, and
+  `choosePlan` chooses one of them by its number or its Restaurant ("2번으로 할게", "두레미담으로"). A reply that chose one
+  draws no answer of its own and carries `select` (`{ "planId" }`): the app keeps the answer, its list and its numbers,
+  and shows that plan. An app that ignores `select` shows the reply's words over the answer kept. A number past the
+  list is asked about again, a Restaurant not in the list is planned as a change of place, and without `planIds` the
+  model plans with `planMeal` as before. As with `mentions`, a main server before `planIds` answers 400 to a request
+  that carries it: deploy the main server before or with the app that sends it.
 
   `mentions` (`[{ "userId", "name" }]`, at most 20) lists the Friends the User picked with "@" in the new message. It is
   left out when there is none. Before the run, an id that is not among the asker's Friends is dropped, each Friend
