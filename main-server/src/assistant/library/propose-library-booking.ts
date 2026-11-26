@@ -28,6 +28,7 @@ import {
   saysSameDayOnly,
 } from './booking-rules.js';
 import { KWANJEONG_PLACE_NUMBER, type LibrarySpace } from './catalogue.js';
+import { closedToday } from './closed-today.js';
 import { firstOfSeveralNote } from './find-library-space.js';
 import { bookCard, type LibraryCompanion } from './library-card.js';
 import {
@@ -151,6 +152,9 @@ export interface BookingOptions {
   fillsSeatTime: boolean;
   // The app draws answers on the map: a card the User asked the Assistant to book says it is their own press.
   notesOwnPress?: boolean;
+  // The app draws answers on the map: a space asked for today after its closing answers closedToday, with 관정 drawn
+  // as closed, as showLibrarySeats does (P05 ticket 61).
+  refusesClosedToday?: boolean;
 }
 
 // What a seat's arrival is read from.
@@ -249,12 +253,17 @@ function shownBooking(services: LibraryServices, context: ToolContext, checked: 
 export function proposeLibraryBooking(services: LibraryServices, options?: BookingOptions): Tool {
   const fillsSeatTime = options?.fillsSeatTime ?? false;
   const description = fillsSeatTime ? FILLING_DESCRIPTION : DESCRIPTION;
+  const refusesClosed = options?.refusesClosedToday ?? false;
   const run = async (asked: z.output<typeof answeringInput>, context: ToolContext): Promise<unknown> => {
     const checked = await bookableSpace(services, asked.spaceId, context);
     if ('answer' in checked) {
       return checked.answer;
     }
     const { space } = checked;
+    const closed = refusesClosed ? closedToday(space, asked.date, context, services.arrival.places) : null;
+    if (closed !== null) {
+      return closed;
+    }
     const party = await partyOf(services, asked, context);
     const people = 'refusal' in party ? undefined : party.people;
     const filling = fillsSeatTime ? await fillingOf(services, context, space, asked) : null;

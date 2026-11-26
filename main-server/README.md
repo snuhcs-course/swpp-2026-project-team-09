@@ -2957,7 +2957,11 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
     answers `found` with only the first of them, in the catalogue's order with `7F-7A-zone2` first, its card's notes
     say "맞는 곳이 N곳이라 첫 곳으로 채웠어요", and the phone's room chip lets the User choose another; several rooms
     are still asked about. The card's space carries the
-    catalogue's `kind`, by which the phone groups the seat spaces of a floor.
+    catalogue's `kind`, by which the phone groups the seat spaces of a floor. For the same app, a question about the
+    free seats of a seat space ("관정 7층 자리 있어?") or its 좌석 현황 is asked as that seat (P05 ticket 61):
+    `findLibrarySpace`, then `proposeLibraryBooking`, whose book card the phone draws as the seat ticket with its free
+    seats, never `showLibrarySeats`, and a reply of one sentence that names no card. A room space's free rooms still go
+    to `showLibrarySeats`, as every 좌석 현황 does in the text chat.
   - **A study group's time** (P05, `library/propose-study-room.ts`), for an app that draws answers only: the
     answer-drawing rules have the model call `proposeStudyRoom(friendIds, date? | from? + to?, minutes?)` for a study
     with Friends and no start ("민수, 지은, 서준이랑 이번 주에 스터디"), after `resolveFriend`. The days are the one
@@ -2996,7 +3000,8 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
     `findLibraryFreeSlots` answer `refused` with `closedToday` (`{ closedAt, opens }`, such as `23:00` and `내일 07:00`),
     and `findLibrarySpace` marks the space `closedToday`. The refusal draws 관정 as a place with why, a `place` Lookup
     with one `dropped` mark tagged "관정도서관 · 오늘 23:00 닫음 · 내일 07:00부터", `fact: true` and no actions
-    (`library/closed-today.ts`, P05 ticket 57).
+    (`library/closed-today.ts`, P05 ticket 57). For an app that draws answers, `proposeLibraryBooking` answers the
+    same (`refusesClosedToday`, P05 ticket 61); in the text chat it is refused by the hours as before.
   - `getTutorial(questKey?)` (`tutorial/`, `TUTORIAL_RULES`) answers the 새내기 튜토리얼's content from
     `content/tutorial.yaml` and the User's status of each quest, without turning the tutorial on.
   - A **presenter** puts something real into the reply rather than the model describing it.
