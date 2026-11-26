@@ -1,7 +1,7 @@
 # 86: A meal answer with a Plan has no row of buttons under its list
 
 Parent: [P04 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human
 
 Blocked by: none.
 
@@ -51,7 +51,7 @@ The user's decision (2026-11-26), boards "밥 답 밑 단추: 개선안": "위�
 
 ## Comments
 
-Built in PR #PRNUM.
+Built in PR #597.
 
 Decided while building (2026-11-26):
 - 되돌리기 stays on an answer with no Plan that a drag brought, where no band is left to drag back.
@@ -59,3 +59,8 @@ Decided while building (2026-11-26):
 - The offers of an answer with no Plan stay buttons; only a meal's Plan draws hint lines.
 
 The screens are from the sessions emulator with mock data. No mock reaches both hints at once; a test does.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 80 minutes in one session, the test runs, the emulator screens and the picture upload included, the minutes spent waiting for answers left out (an estimate).
+- Tokens: input 87,472,865 (cache reads 87,058,059, cache writes 414,258, uncached 548); output 166,502. No subagents. Counted from the transcript up to the PR's opening.
