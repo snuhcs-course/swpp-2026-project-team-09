@@ -2584,7 +2584,7 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     with `note`, the same words as that `hint`. The app draws a meal Plan's offers as the `hint` lines under its words
     (P04 ticket 86); `note` is kept for the apps before them, which draw the note over their buttons.
   - **Classes left out.** A meal's `input` may carry `skipped`, the ids of the times of the asker's Classes of that day
-    left out of the plan (P05 ticket SKIPNUM): the planner takes them out of the asker's day, so the meal may use that
+    left out of the plan (P05 ticket 54): the planner takes them out of the asker's day, so the meal may use that
     time, and where the asker sets out from and the next item come from the items left. An id that is none of the
     asker's Classes that day is dropped from the answer's `input`, and the field is absent for none. Each Plan's
     `band.skipped` lists them whole as `{ id, startAt, endAt, label }`, in no lane, and the band's range reaches over

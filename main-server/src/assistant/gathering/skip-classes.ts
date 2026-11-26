@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { type MealInput, type RequestContext } from '../dto/answer.dto.js';
 import { byStart, clockOf, type DayItem } from '../free-time/free-time.js';
 
-// The asker's Classes a meal leaves out for the conversation ("내일 1시 수업 휴강이야", P05 ticket SKIPNUM): planMeal
+// The asker's Classes a meal leaves out for the conversation ("내일 1시 수업 휴강이야", P05 ticket 54): planMeal
 // names them by their start or their name, the server finds them among the asker's Classes of the day, and the
 // conditions on screen keep them for every plan of that day until the User says they go.
 

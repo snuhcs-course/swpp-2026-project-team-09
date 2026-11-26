@@ -195,7 +195,7 @@
       absent: [302동에서, 301동에서]
 
 # A Class the User says is cancelled, or that they will skip, is left out of the plan for the conversation (P05 ticket
-# SKIPNUM, which replaces ticket 49's sentence that it could not be). planMeal names it by its start or its name, and
+# 54, which replaces ticket 49's sentence that it could not be). planMeal names it by its start or its name, and
 # the one sentence says it was left out. On the user's phone (2026-11-26), "내일 1시 수업 휴강이야. 점심 뭐 먹을까?"
 # was planned before that Class. The asker's Tuesday has 데이터베이스 at 11:00–12:15 and 운영체제 at 15:00–16:15,
 # and Monday 컴퓨터구조 09:30, 멀티코어컴퓨팅 11:00, 현대암호학개론 14:00, and 컴퓨터그래픽스 16:00; 김지은 has a

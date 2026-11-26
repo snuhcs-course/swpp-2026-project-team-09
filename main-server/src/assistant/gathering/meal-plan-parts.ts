@@ -24,7 +24,7 @@ export interface BusyItem {
   end: string;
 }
 
-// The asker's items of the day without the Classes the input leaves out (P05 ticket SKIPNUM), which are free for the
+// The asker's items of the day without the Classes the input leaves out (P05 ticket 54), which are free for the
 // meal, and those Classes in time order; an id that is none of them is dropped.
 export function skippedOut(
   items: readonly DayItem[],

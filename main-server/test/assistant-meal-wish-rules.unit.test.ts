@@ -43,7 +43,7 @@ describe('The chat of an app that draws answers', () => {
   });
 });
 
-// P05 ticket SKIPNUM: a Class the User says is cancelled is left out of the plan, which ticket 49's rule could only say
+// P05 ticket 54: a Class the User says is cancelled is left out of the plan, which ticket 49's rule could only say
 // it was not.
 describe("A Class the User says is cancelled, in an app's chat that draws answers", () => {
   it("is left out through planMeal, and put back when they go after all; a Friend's never", () => {
