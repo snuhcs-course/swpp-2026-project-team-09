@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -119,7 +120,7 @@ describe('a login closed while its check runs', () => {
     expect(held.checks()).toBe(2);
     await expect(isLibraryLoggedIn()).resolves.toBe(true);
     expect(seatCard().queryByText(NEEDS_LOGIN)).toBeNull();
-    expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
+    expect(seatCard().getByText('7193번')).toBeVisible();
     expect(hiddenViewMounted()).toBe(true);
   });
 
@@ -157,7 +158,7 @@ describe('the check kept while the view is in the school login', () => {
 
     expect(held.checks()).toBe(2);
     await expect(isLibraryLoggedIn()).resolves.toBe(true);
-    expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
+    expect(seatCard().getByText('7193번')).toBeVisible();
   });
 });
 

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
@@ -9,7 +10,6 @@ import { GRADUATE_SECTOR, KWANJEONG_SECTORS } from '@/api/mock/data/study-spaces
 import {
   basisOf,
   cellOf,
-  namesRoom,
   roomGrid,
   roomOf,
   type RoomCount,
@@ -158,18 +158,7 @@ describe('the full-room swap', () => {
   });
 });
 
-describe('words that name a room', () => {
-  it.each(['8층 노트북존 자리', '7B 노트북존으로', '관정 7층 열람실 17시에 한 시간 예약해줘', '조용한 곳'])(
-    '"%s" names one',
-    (words) => {
-      expect(namesRoom(words)).toBe(true);
-    },
-  );
-
-  it.each(['공부할 자리', '자리 잡아 줘', '아무 자리'])('"%s" names none', (words) => {
-    expect(namesRoom(words)).toBe(false);
-  });
-
+describe("a room's spaces", () => {
   it('keeps the spaces of a room in their order', () => {
     const room = roomOf(sector('7F-7B-notebook'));
 

@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -96,7 +97,7 @@ describe('the login from a card', () => {
     await releaseFirstCheck();
 
     expect(seatCard().queryByText(NEEDS_LOGIN)).toBeNull();
-    expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
+    expect(seatCard().getByText('7193번')).toBeVisible();
     expect(library.requestsTo('getSeatBookingList').length).toBeGreaterThan(0);
   });
 
@@ -119,7 +120,7 @@ describe('the login from a card', () => {
 describe('the end of the session', () => {
   it('shows the login line at once on a card that had read, once the session is ended', async () => {
     await askForCards({ server, library }, [SEAT_CARD]);
-    expect(inCard(SEAT_TEST_ID).getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
+    expect(inCard(SEAT_TEST_ID).getByText('7193번')).toBeVisible();
 
     await act(async () => {
       await endLibrarySession(fakeTransport(library));

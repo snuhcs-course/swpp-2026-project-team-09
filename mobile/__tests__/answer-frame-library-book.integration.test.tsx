@@ -7,8 +7,10 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import { libraryCard, READING_ROOM, SEAT_NOTES } from '@/api/mock/data/library';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -91,28 +93,27 @@ describe('the seat book card', () => {
         },
       },
     ]);
-    expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
-    expect(seatCard().getByText('오늘 17:00–18:00')).toBeVisible();
-    for (const name of ['예약하기', '예약 안 함', '자리 선택하기']) {
+    // The ticket says the room and the seat (P01 ticket 09).
+    expect(within(seatCard().getByTestId('seat-ticket')).getByText('7193번')).toBeVisible();
+    for (const name of ['예약하기', '예약 안 함']) {
       expect(seatCard().getByRole('button', { name })).toBeVisible();
     }
-    expect(seatCard().getByText(`· ${SEAT_NOTES[1] ?? ''}`)).toBeVisible();
+    expect(seatCard().queryByRole('button', { name: '자리 선택하기' })).toBeNull();
+    expect(seatCard().queryByText(`· ${SEAT_NOTES[1] ?? ''}`)).toBeNull();
     expectNoWrite(library);
   });
 
-  it('says under its buttons until when a seat booked now is confirmed at the kiosk, and that once', async () => {
+  it('says nothing of the kiosk before the booking: the booked card says it (P01 ticket 09)', async () => {
     await askForCards({ server, library }, [SEAT_CARD]);
 
-    expect(seatCard().getByText('예약하면 16:30까지 좌석배정기에서 확인해야 해요.')).toBeVisible();
-    // The site's note on the kiosk is left out: the foot says it.
-    expect(seatCard().getAllByText(/좌석배정기/u)).toHaveLength(1);
+    expect(seatCard().queryAllByText(/좌석배정기/u)).toHaveLength(0);
   });
 
   it('offers the named seat while it is free', async () => {
     const named = card({ ...SEAT_CARD.library, key: 'book:7F-7A-zone2:2026-11-02:1700:60:s=7200', seat: '7200' });
     await askForCards({ server, library }, [named]);
 
-    expect(inCard(`library-book-${named.library.key}`).getByText('관정관 7층 7A 열람실 2 구역 · 7200번')).toBeVisible();
+    expect(inCard(`library-book-${named.library.key}`).getByText('7200번')).toBeVisible();
   });
 });
 
@@ -239,7 +240,7 @@ describe("the seat book card's failures", () => {
 
     expect(library.writes()).toHaveLength(1);
     expect(seatCard().getByText('그 자리는 방금 다른 사람이 예약했어요')).toBeVisible();
-    expect(seatCard().getByText('관정관 7층 7A 열람실 2 구역 · 7194번')).toBeVisible();
+    expect(seatCard().getByText('7194번')).toBeVisible();
     expect(seatCard().queryByText(new RegExp(TAKEN_SEAT_MESSAGE, 'u'))).toBeNull();
   });
 

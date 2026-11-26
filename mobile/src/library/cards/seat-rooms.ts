@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
@@ -195,9 +196,4 @@ export function basisOf(
       .map(({ space: each, free }) => `${SEAT_SPACES[each.id]?.tag ?? each.name} ${String(free)}석`)
       .join(' · '),
   };
-}
-
-// Whether the User's words name a room, a floor or a seat space: the chip is then drawn as the User's own condition.
-export function namesRoom(words: string): boolean {
-  return /[78]층|열람실|노트북|정숙|조용|대학원|7A|7B|8A|171호|181호/iu.test(words);
 }

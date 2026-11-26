@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -292,9 +293,11 @@ describe('어시스턴트에게 예약 부탁하기', () => {
       within(screen.getByTestId('answer-caption')).getByText('관정도서관 7층 열람실에 한 자리 예약해줘'),
     ).toBeVisible();
     // The Assistant's library card for 7F-7A-zone2 reads the seats and offers the first free one, writing nothing. On
-    // the map, lowered, it says the room, the time, and the free seats in one sentence (P01 ticket 03).
+    // the map its ticket says the room, the free seats and the seat, and the time bar the time (P01 ticket 09).
     const card = within(screen.getByTestId('answer-card'));
-    expect(card.getByText(/^관정 7층 열람실에 \d{2}:\d{2}부터 .+, 빈 자리 \d+석이에요\.$/u)).toBeVisible();
+    const ticket = within(card.getByTestId('seat-ticket'));
+    expect(ticket.getByText(/^빈 자리 \d+석$/u)).toBeOnTheScreen();
+    expect(ticket.getByText(/^\d+번$/u)).toBeOnTheScreen();
     // Since the seat card stands on the map (P04 ticket 07), its "예약하기" is the main button beside the input.
     expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '예약하기' })).toBeVisible();
     expect(library.requestsTo('getSeatBookingList')).toHaveLength(1);

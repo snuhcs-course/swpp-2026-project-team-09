@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { STUDY_BUILDINGS } from '@/api/mock/data/study-spaces';
@@ -55,14 +56,14 @@ function lastSeatsRead(): string | undefined {
 describe('a seat book card left open across its start', () => {
   it('books the next time it can, and keeps that one time while the booking is on its way', async () => {
     await askForCards({ server, library }, [SEAT_CARD]);
-    expect(seatCard().getByText('오늘 17:00–18:00')).toBeVisible();
+    expect(seatCard().getByText('17:00–18:00 · 1시간')).toBeVisible();
 
     // 17:10, and the card draws again (the room chip opened and kept as it was).
     jest.setSystemTime(new Date('2026-11-02T08:10:00.000Z'));
     await pressIn(seatCard(), '열람실: 7층 열람실');
-    await pressIn(seatCard(), '그대로');
+    await pressIn(seatCard(), '열람실: 7층 열람실');
     await pass(0);
-    expect(seatCard().getByText('오늘 17:30–18:30')).toBeVisible();
+    expect(seatCard().getByText('17:30–18:30 · 1시간')).toBeVisible();
     expect(lastSeatsRead()).toBe('1730-1830');
 
     library.holdWrites();
@@ -70,7 +71,6 @@ describe('a seat book card left open across its start', () => {
     await pass(0);
 
     expect(seatCard().getByText('예약하는 중이에요')).toBeVisible();
-    expect(seatCard().getByText('오늘 17:30–18:30')).toBeVisible();
     expect(lastSeatsRead()).toBe('1730-1830');
 
     library.release();

@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -66,7 +67,7 @@ describe('a library card in the frame', () => {
     await user.press(screen.getByRole('button', { name: '보내기' }));
     await pass(500);
     const seat = within(card().getByTestId(`library-book-${SEAT_CARD.library.key}`));
-    expect(seat.getByText('관정관 7층 7A 열람실 2 구역 · 7193번')).toBeVisible();
+    expect(seat.getByText('7193번')).toBeVisible();
 
     await pressIn(seat, '예약하기');
 

@@ -21,11 +21,19 @@ import type { Slot } from '@/library/cards/payloads';
 import { chooseSeat, freeSeatCount } from '@/library/cards/seats';
 import { lengthWords, liveSlot, sameSlot } from '@/library/cards/slot-band';
 import type { LibrarySeat } from '@/library/replies';
-import { CardBox, FailureNote, Notes, Pill, Pills, Said, SpaceRow } from './library-parts';
+import { CardBox, FailureNote, Pill, Pills, Said, SpaceRow } from './library-parts';
 import { seatsBubble } from './own-bubbles';
 import { NO_FREE_SEAT, SEATS_UNREAD } from './seat-booking';
 import { type BookSeatCardProps, type Closed, SeatOffer } from './seat-offer';
-import { RoomTop, RoomWords, type SeatRoom, useFullRoomSwap, useSeatRoom } from './seat-room';
+import {
+  NO_TICKET_SEAT,
+  RoomTop,
+  RoomWords,
+  type SeatRoom,
+  type TicketSeat,
+  useFullRoomSwap,
+  useSeatRoom,
+} from './seat-room';
 import { BOOKING_CLOSED } from './seats-card';
 import { SlotBand } from './slot-band';
 import type { Loaded } from './use-library-call';
@@ -40,7 +48,7 @@ import { useSeatOnMap } from './booking-stage';
 // is swapped for one with free seats.
 
 export { BOOK_FAILED, NO_FREE_SEAT, NOT_BOOKED, SEAT_TAKEN, SEATS_UNREAD, SLOT_PASSED } from './seat-booking';
-export { type Closed, UNDO_ROOM } from './seat-offer';
+export type { Closed } from './seat-offer';
 export { CLOSED } from './seat-calls';
 
 function NoFreeSeat({ space, card, actions }: Pick<BookSeatCardProps, 'space' | 'card' | 'actions'>): ReactElement {
@@ -66,18 +74,20 @@ interface SeatPartProps extends BookSeatCardProps {
   named: string | null;
   setNamed: (seat: string | null) => void;
   docked: boolean;
-  // The room chip and its list, which a booking on the map shows under its sentence.
-  top: ReactNode;
+  // The ticket and the room list under it, with what the ticket says of the seat offered (P01 ticket 09).
+  top: (seat: TicketSeat) => ReactNode;
 }
 
-// The study answer's one sentence on the map, lowered and raised (P01 ticket 03): the room, the time, and the free seats,
-// or what is being looked for. A failure or a full room says its own line instead.
+// The study answer's one sentence on the map (P01 ticket 03): what is being looked for or booked, else the room, the
+// time and the free seats. Over the ticket, which says the room, the seat and the free seats while the time bar says
+// the time, only the reason for the start stays (P01 ticket 09). A failure or a full room says its own line.
 function StudyLine({
   space,
   slot,
   free,
   busy,
   arrival,
+  ticketed,
 }: {
   space: LibrarySpace;
   slot: Slot;
@@ -85,7 +95,8 @@ function StudyLine({
   busy: boolean;
   // The server's arrival when it filled the start from it (P05's PR 496): the reason for the start.
   arrival: NonNullable<LibraryCardData['arrival']> | null;
-}): ReactElement {
+  ticketed: boolean;
+}): ReactElement | null {
   const when = `${slot.start}부터 ${lengthWords(slot.minutes)}`;
   if (busy) {
     return <Said>예약하는 중이에요</Said>;
@@ -96,7 +107,30 @@ function StudyLine({
   // A start the User reaches walking from now is why it is that start (P01 ticket 06).
   // Only a start the server filled from the arrival has a reason; a time the User named has none (PR 500's review).
   const why = arrival === null ? '' : `${arrival.from}에서 걸음 ${String(arrival.walkMinutes)}분이라 `;
+  if (ticketed) {
+    return arrival === null ? null : <Said>{`${why}${slot.start}부터예요.`}</Said>;
+  }
   return <Said>{`${why}${bookingTitle(space)}에 ${when}, 빈 자리 ${String(free)}석이에요.`}</Said>;
+}
+
+// What the ticket says of the seat offered: its free seats, the seat, and the seat picture's opening, with none while
+// there is no seat or no picture.
+function ticketSeatOf(
+  seat: LibrarySeat | null,
+  free: number | null,
+  shown: LibrarySpace,
+  setPicking: (picking: boolean) => void,
+): TicketSeat {
+  return {
+    free,
+    seat: seat === null ? null : seatWords(seat.VNAME),
+    onSeat:
+      seat === null || shown.mapImage === null
+        ? null
+        : (): void => {
+            setPicking(true);
+          },
+  };
 }
 
 // The seats of the room on screen and what the card offers of them. It stays mounted while the room list is open, so
@@ -114,18 +148,27 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
   const told = { place, seat, loaded, write, logIn, shown, choosing: room.listing || searching };
   const onMap = useSeatOnMap(actions.onMap?.(place) ?? null, told);
   const mapped = actions.bandOnBar?.(place) === true;
-  const offer = { ...props, space: shown, seats, choose: setNamed, write, close, undo: room.undo, ...onMap };
+  const ticketed = room.chip !== null;
+  const offer = { ...props, space: shown, seats, choose: setNamed, write, close, ticketed, ...onMap };
   const looking = loaded.state === 'loading' || searching;
   const free = loaded.state === 'ready' && !searching ? freeSeatCount(seats) : null;
   const line = looking || (seat !== null && loaded.state === 'ready');
+  const ticketSeat = ticketSeatOf(seat, free, shown, onMap.setPicking);
   return (
     <>
       {mapped && line ? (
-        <StudyLine busy={write.busy} free={free} slot={props.slot} space={shown} arrival={props.card.arrival ?? null} />
+        <StudyLine
+          arrival={props.card.arrival ?? null}
+          busy={write.busy}
+          free={free}
+          slot={props.slot}
+          space={shown}
+          ticketed={ticketed}
+        />
       ) : null}
-      {props.top}
+      {props.top(ticketSeat)}
       {room.listing ? null : (
-        <SeatRest {...props} free={free} looking={looking && !mapped} noSeat={seat === null}>
+        <SeatRest {...props} looking={looking && !mapped}>
           <SeatsFailure close={close} loaded={loaded} logIn={logIn} mapped={mapped} reload={reload} shown={shown} />
           {loaded.state === 'ready' && seat === null && !searching ? (
             <NoFreeSeat actions={actions} card={card} space={shown} />
@@ -188,18 +231,12 @@ function SeatsFailure(props: {
   );
 }
 
-// Under the chip: the space filled with its free seats, and "빈 자리를 찾고 있어요" in the chat, then the rest.
-function SeatRest(
-  props: SeatPartProps & { free: number | null; looking: boolean; noSeat: boolean; children: ReactNode },
-): ReactElement {
-  const { room, free, looking, docked, noSeat, children } = props;
+// Under the ticket: the room swapped out when it was full, and "빈 자리를 찾고 있어요" in the chat, then the rest.
+function SeatRest(props: SeatPartProps & { looking: boolean; children: ReactNode }): ReactElement {
+  const { room, looking, docked, children } = props;
   return (
     <>
-      {/* Raised while no seat is offered yet, the card still holds the site's notes (P01 ticket 06). */}
-      {docked || !noSeat ? null : <Notes notes={props.card.notes.filter((note) => !note.includes('좌석배정기'))} />}
-      {room.chip === null || docked ? null : (
-        <RoomWords counting={room.counting} free={free} full={room.full} shown={room.shown} />
-      )}
+      {room.chip === null || docked ? null : <RoomWords counting={room.counting} full={room.full} />}
       {looking ? <Said>빈 자리를 찾고 있어요</Said> : null}
       {children}
     </>
@@ -235,7 +272,8 @@ export function BookSeatCard(props: BookSeatCardProps): ReactElement {
       setListing(false);
     }
   }, [docked, listing, setListing]);
-  const top = docked ? null : <RoomTop room={room} slot={live ?? room.slot} />;
+  const top = (seat: TicketSeat): ReactNode =>
+    docked ? null : <RoomTop room={room} seat={seat} slot={live ?? room.slot} />;
   return (
     <CardBox testID={`library-book-${card.key}`}>
       {room.listing || busy || live === null || props.actions.bandOnBar?.(props.place) === true ? null : (
@@ -243,7 +281,7 @@ export function BookSeatCard(props: BookSeatCardProps): ReactElement {
       )}
       {live === null ? (
         <>
-          {top}
+          {top(NO_TICKET_SEAT)}
           <Said>{BOOKING_CLOSED}</Said>
         </>
       ) : (
