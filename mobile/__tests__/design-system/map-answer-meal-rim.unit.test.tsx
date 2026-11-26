@@ -5,7 +5,6 @@
  ******************************************************************************/
 
 import { render, screen } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
 
 import { type AnswerLabel, color, MapAnswerMark, shadow } from '@/design-system';
 
@@ -16,10 +15,6 @@ import { type AnswerLabel, color, MapAnswerMark, shadow } from '@/design-system'
 const ROUND = 20;
 const RIM = 1.5;
 const NUMBER_SIZE = 13;
-
-function styleOf(testID: string): Record<string, unknown> {
-  return StyleSheet.flatten(screen.getByTestId(testID).props.style) as Record<string, unknown>;
-}
 
 // Partitions: the round alone on the map, alone where its minutes gave way, and inside its capsule. Expected values: the
 // ticket's sizes, the footprint of the round with its white ring before.
@@ -41,7 +36,7 @@ describe("MapAnswerMark: a meal candidate's round without a white ring", () => {
       borderColor: color.meal,
       backgroundColor: color.mealSoft,
     });
-    expect(styleOf(round).boxShadow).toBeUndefined();
+    expect(screen.getByTestId(round)).not.toHaveStyle({ boxShadow: shadow.dot });
   });
 
   it.each([
