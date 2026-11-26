@@ -9,6 +9,7 @@ import type { StudyGroup } from '@/api/study-plan-types';
 import { useLibrarySession } from '@/library/library-session';
 import type { TellAct } from '../library/act-stage';
 import type { PartyRequest } from '../library/room-party';
+import { isWaiting } from './study-group-booking';
 import { isOut } from './study-group-request';
 
 // The study answer together's main button beside the input (P10 tickets 11 and 12), told as a booking ticket's is:
@@ -19,7 +20,7 @@ import { isOut } from './study-group-request';
 
 const TELLER = 'study-group';
 
-type Main = 'add' | 'logIn' | 'send' | 'sending' | 'waiting' | 'ready' | 'askMore';
+type Main = 'add' | 'logIn' | 'send' | 'sending' | 'waiting' | 'ready' | 'logInBook' | 'wait' | 'again' | 'askMore';
 
 interface Seen {
   main: Main;
@@ -27,15 +28,29 @@ interface Seen {
   disabled: boolean;
 }
 
+// Once everyone has consented (P10 ticket 14): 예약하기, "로그인하고 예약" logged out, the booking window's wait, or
+// asking again at the next free time when the kind has no free room (`again`, the button's words).
+function readyMain(group: StudyGroup, loggedIn: boolean, again: string | null): Seen {
+  if (isWaiting(group)) {
+    return { main: 'wait', words: '예약 창이 열리면 알려 드려요', disabled: true };
+  }
+  if (again !== null) {
+    return { main: 'again', words: again, disabled: false };
+  }
+  return loggedIn
+    ? { main: 'ready', words: '예약하기', disabled: false }
+    : { main: 'logInBook', words: '로그인하고 예약', disabled: false };
+}
+
 // `group` is the one on screen: while the request is out, its people those still in.
-export function mainOf(group: StudyGroup, loggedIn: boolean, party: PartyRequest): Seen {
+export function mainOf(group: StudyGroup, loggedIn: boolean, party: PartyRequest, again: string | null = null): Seen {
   const { request } = party;
   if (isOut(request)) {
     if ((request.moreNeeded ?? 0) > 0) {
       return { main: 'askMore', words: '+ 같이 한 명 더', disabled: false };
     }
     return request.status === 'ready'
-      ? { main: 'ready', words: '예약하기', disabled: true }
+      ? readyMain(group, loggedIn, again)
       : { main: 'waiting', words: '모두 동의하면 예약', disabled: true };
   }
   if (party.sending) {
