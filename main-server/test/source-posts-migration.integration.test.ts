@@ -2,52 +2,23 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
-import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { cpSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { Server } from 'node:http';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { inject } from 'vitest';
 import { type PrismaClient } from '../src/generated/prisma/client.js';
 import { connect, migrate, seed } from './containers.js';
 import { listedAmong, publishedAmong } from './global-event-lists.js';
 import { collectedPost, eventsMessage, stepOver } from './global-events.js';
+import { migrateBefore } from './old-schema.js';
 import { signIn, signInAsAdministrator } from './sign-in.js';
 import { startApp } from './start-app.js';
 import { askAsWorker, sendAsWorker } from './worker.js';
 
 const THE_MIGRATION = '20261031120000_add_source_posts';
-const SERVER = fileURLToPath(new URL('..', import.meta.url));
-
-// Applies the migrations before THE_MIGRATION, through a Prisma config of their own. In node_modules, where the config
-// finds `prisma/config`.
-function migrateToTheOldSchema(databaseUrl: string): void {
-  const folder = mkdtempSync(join(SERVER, 'node_modules', '.migration-test-'));
-  try {
-    const migrations = join(SERVER, 'prisma', 'migrations');
-    for (const entry of readdirSync(migrations).filter((name) => name < THE_MIGRATION || name.endsWith('.toml'))) {
-      cpSync(join(migrations, entry), join(folder, 'migrations', entry), { recursive: true });
-    }
-    const config = join(folder, 'prisma.config.ts');
-    writeFileSync(
-      config,
-      `import { defineConfig } from 'prisma/config';
-export default defineConfig({
-  schema: ${JSON.stringify(join(SERVER, 'prisma', 'schema.prisma'))},
-  migrations: { path: ${JSON.stringify(join(folder, 'migrations'))} },
-  datasource: { url: ${JSON.stringify(databaseUrl)} },
-});
-`,
-    );
-    execFileSync('pnpm', ['prisma', 'migrate', 'deploy', '--config', config], { cwd: SERVER, stdio: 'inherit' });
-  } finally {
-    rmSync(folder, { recursive: true, force: true });
-  }
-}
 
 const address = (postNumber: number): string => `https://www.snu.ac.kr/snunow/events?md=v&bbsidx=${postNumber}`;
 
@@ -120,7 +91,7 @@ beforeAll(async () => {
   await shared.$executeRawUnsafe(`CREATE DATABASE "${name}"`);
   const url = new URL(settings.DATABASE_URL);
   url.pathname = `/${name}`;
-  migrateToTheOldSchema(url.toString());
+  migrateBefore(url.toString(), THE_MIGRATION);
   prisma = connect(url.toString());
   await storeTheOldEvents();
 

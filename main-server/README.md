@@ -79,9 +79,10 @@ Once the server is running, a store that goes down makes readiness answer 503 in
 The app signs in with Google and sends the ID token it gets to the main server:
 
 - `POST /auth/google` with `{ "idToken": "..." }` answers
-  `200 { "accessToken": "...", "refreshToken": "...", "onboarding": { ... } }`. The first sign-in of a Google account
-  creates its User, with an empty name and department and a [Friend ID](#friends). `onboarding` tells the app where to
-  go next (see [Onboarding and the lobby](#onboarding-and-the-lobby)).
+  `200 { "accessToken": "...", "refreshToken": "...", "onboarding": { ... }, "consent": { ... } }`. The first sign-in
+  of a Google account creates its User, with an empty name and department and a [Friend ID](#friends). `onboarding`
+  tells the app where to go next (see [Onboarding and the lobby](#onboarding-and-the-lobby)), and `consent` is the
+  account's [consent](#consent), so that a new phone does not ask for it again.
 - Only SNU accounts get in: the token's hosted domain claim must be `snu.ac.kr` and its email address verified. Another
   account gets 403. An invalid or expired ID token, or one issued to another client than the app's
   (`GOOGLE_APP_CLIENT_ID`), the admin site's included, gets 401.
@@ -120,20 +121,22 @@ fixed: they are never the User's to change. The app enters the lobby, which give
    `{ "completed": false, "suggestion": { "name": ..., "department": ... } }`, read from the Google account's name, which
    for an SNU account reads `홍길동 / 학생 / 컴퓨터공학부`. A part that cannot be read, or that the
    [profile's limits](#profile) refuse, is `null`. Every SNU account is taken to give both.
-2. Until then, every User route but two answers
+2. Until then, every User route but those below answers
    `403 { "code": "ONBOARDING_REQUIRED", "message": "Complete onboarding first.", "onboarding": { ... } }`, with the
    sign-in's `onboarding` read from the Google name of the last sign-in. So an app that restarts halfway gets onboarding
    back from its first request, the lobby's. `AccessTokenGuard` checks it on every request, in the query that reads the
-   session. The two routes open before onboarding are marked `@AllowBeforeOnboarding()`: `POST /users/me/onboarding`
-   and `POST /auth/sign-out`.
+   session. The routes open before onboarding are marked `@AllowBeforeOnboarding()`: `POST /users/me/onboarding`,
+   `POST /auth/sign-out`, and the [consent](#consent)'s `PUT /users/me/consent` and `PUT /users/me/usage-consent`,
+   since the consent screen comes before onboarding.
 3. `POST /users/me/onboarding` with `{ "name": "...", "department": "...", "admissionYear": ..., "hashtags": [...] }`
    saves the profile and completes onboarding, and answers 204. The name and the department are the account's: sent,
    they are dropped, so that an older app's request still goes through. An account that does not give one of them is
    logged as a warning and completes onboarding with that part empty. The profile's limits apply. The app sends it again when the answer was lost: a repeat saves the profile again.
-4. `POST /lobby`, with no body, answers `200 { "profile": { ... }, "masterSwitch": false, "masterOffAsked": false }`,
-   the profile as `GET /users/me/profile` gives it, whether the User's [Master Switch](#location-sharing) is on, and
-   whether the app has asked the User before they turned it off (see [Asking once](#asking-once)). Later features add
-   what the app needs when it starts.
+4. `POST /lobby`, with no body, answers
+   `200 { "profile": { ... }, "masterSwitch": false, "masterOffAsked": false, "consent": { ... } }`, the profile as
+   `GET /users/me/profile` gives it, whether the User's [Master Switch](#location-sharing) is on, whether the app has
+   asked the User before they turned it off (see [Asking once](#asking-once)), and the account's
+   [consent](#consent), as the sign-in's answer gives it. Later features add what the app needs when it starts.
 
 A sign-in on another phone during onboarding ends the first phone's session as any sign-in does: its next request, the
 onboarding's included, gets 401 with `"code": "SESSION_REPLACED"`, and the other phone goes through onboarding.
@@ -147,7 +150,8 @@ A User reads and edits their own profile. The routes name no User, so they never
 
 - `GET /users/me/profile` answers
   `{ "name": ..., "department": ..., "admissionYear": ..., "hashtags": [...], "friendId": "7KX2M9QD", "studentNumber": ..., "registeredName": ..., "affiliation": ... }`.
-  Like every User route but two, it needs the User to have finished onboarding. `friendId` is the User's
+  Like every User route but those [open before onboarding](#onboarding-and-the-lobby), it needs the User to have
+  finished onboarding. `friendId` is the User's
   [Friend ID](#friends).
 - `PATCH /users/me/profile` with some of these fields changes only those and answers with the whole profile. `null`
   empties `admissionYear`, `studentNumber`, `registeredName` and `affiliation`, and `[]` empties `hashtags`. The name
@@ -171,6 +175,33 @@ A User reads and edits their own profile. The routes name no User, so they never
     the nine digits, `202612345`. An empty one empties it.
   - `registeredName`: at most 30 characters. An empty one empties it.
   - `affiliation`: `undergraduate` (학부), `graduate` (대학원) or `exchange` (교환학생).
+
+## Consent
+
+The account keeps the consent the User gave on the app's consent screen, so that a new phone, or a sign-in again,
+does not ask again, and a changed text does. `CONSENT_VERSION` in `src/users/consent.ts` is the version of the legal
+documents the app shows, 1 for now. The app holds the same number, and the two are raised together, in one pull
+request.
+
+- Four columns of `users` hold it, all empty for an account that has agreed to nothing: `consent_version`, the version
+  agreed to; `usage_consent`, the usage data choice given with it; `consented_at`, when the version was agreed to; and
+  `usage_chosen_at`, when the usage choice was last set, by the consent or by the switch.
+- The sign-in's answer and the Lobby carry `"consent": { "version": 1, "usage": true }`, the account's as stored, and
+  `{ "version": null, "usage": null }` for an account that agreed to none.
+- `PUT /users/me/consent` with `{ "version": 1, "usage": true }` is "동의하고 시작" on the consent screen, and is open
+  before onboarding. A version from 1 to `CONSENT_VERSION` higher than the account's is stored with the choice and the
+  time, and answered 204. The same version again stores the choice it carries and answers 204, so the app may send it
+  again when the answer was lost; when the version was agreed to stays. A version lower than the account's gets
+  `409 { "code": "CONSENT_VERSION_OUTDATED" }`, and one above `CONSENT_VERSION`, or a body of another shape, 400.
+- `PUT /users/me/usage-consent` with `{ "usage": false }` is the switch "사용 기록 보내기" in 내 정보, open before
+  onboarding too. It stores the choice and its time and answers 204, the same choice again included, and leaves the
+  version and when it was agreed to as they are. A body with a `version` gets 400: a change of the choice never sends
+  one, so it cannot be taken for agreeing to the documents, and it keeps working when `CONSENT_VERSION` is raised and
+  the User has not yet agreed to the new one. An account that has agreed to no version gets
+  `409 { "code": "CONSENT_REQUIRED" }`: the choice is made on the consent screen first.
+- Usage data about a User may be sent only while the account holds a version of at least `CONSENT_VERSION` with usage
+  chosen. `usageMayBeSent` in `src/users/consent.ts` is the only rule, and `UsersService.usageMayBeSent(userId)` reads
+  the account again each time, so a change of the switch holds from the next event.
 
 ## Friends
 
@@ -3301,7 +3332,7 @@ src/
 ├── generated/                       Prisma Client, generated by `pnpm install` (not committed)
 ├── health/                          a feature: the liveness and readiness checks
 ├── auth/                            a feature: app and admin site sign-in, refresh, sign-out, the access token checks
-├── users/                           a feature: the signed-in User, their profile, Friend ID and onboarding
+├── users/                           a feature: the signed-in User, their profile, Friend ID, onboarding and consent
 ├── friends/                         a feature: Friend IDs looked up, Friend Requests and Friends
 ├── invite-links/                    a feature: Invite Links, the Digital Asset Links file that opens them in the app,
 │                                    and the page their address answers in a browser
