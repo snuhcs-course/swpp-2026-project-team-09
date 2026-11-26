@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { inject } from 'vitest';
@@ -61,7 +62,7 @@ describe('A study with three Friends in the days a room can be booked', () => {
     expect(result).toEqual({
       result: 'shown',
       summary:
-        '2026-11-05(목) 15:30–18:30 관정 4층 6인실, 4명 예약 카드를 보여 줬어요. 예약하기를 눌러야 예약돼요. 카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.',
+        '2026-11-05(목) 15:30–18:30 관정 4층 6인실, 4명 예약을 아래에 띄웠어요. 예약하기를 눌러야 예약돼요. 카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.',
       people: [
         { name: '나', arrival: '15:29', from: '15:30', until: '18:30', minutes: 180 },
         { name: friendName('민수'), arrival: '17:01', from: '17:01', until: '18:30', minutes: 89 },

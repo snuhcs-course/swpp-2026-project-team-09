@@ -29,6 +29,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
+import { PrismaService } from '../common/prisma.service.js';
 import { REDIS } from '../common/redis.module.js';
 import { type Settings } from '../common/settings.js';
 import { FriendViewService } from '../friends/friend-view.service.js';
@@ -58,6 +59,8 @@ import { friendMentions } from './mentions.js';
 import { ModelPort } from './model-port.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
+import { type LibraryServices } from './library/library-tools.js';
+import { type SeatStay, seatStayNow } from './library/seat-stay-now.js';
 import { LookupServices } from './lookup/lookup-services.js';
 import { MadePartyService } from './tools/made-party.js';
 import { PlanAnswersService } from './plan-answers.service.js';
@@ -100,6 +103,7 @@ export class AssistantService {
     @Inject(FREE_TIME_PORT) freeTime: FreeTimePort,
     quests: QuestsService,
     users: UsersService,
+    prisma: PrismaService,
     tutorial: TutorialService,
     plans: PlanAnswersService,
     lookups: LookupServices,
@@ -111,7 +115,6 @@ export class AssistantService {
   ) {
     this.ahead = (userId: string, now: Date): Promise<string[]> => lookups.days.ahead(userId, now);
     this.friendViews = friends;
-    const enabled = settings.get('LIBRARY_BOOKING_ENABLED', { infer: true });
     const services = {
       menus,
       shuttle,
@@ -120,7 +123,7 @@ export class AssistantService {
       friends,
       places,
       freeTime: { days, recruiting, globalEvents, places: placeLookup, travel, friends, menus, restaurantPlaces },
-      library: { catalogue, freeTime, friends, quests, users, arrival: { days, places: placeLookup, travel }, enabled },
+      library: libraryOf(settings, prisma, { catalogue, freeTime, friends, quests, users, days, placeLookup, travel }),
       tutorial,
       plans,
       lookups,
