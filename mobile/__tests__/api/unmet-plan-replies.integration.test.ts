@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -11,11 +12,13 @@ import type { ChatMessage, RequestContext } from '@/api/assistant-types';
 import { apiClient } from '@/api/client';
 import { mockClient } from '@/api/mock/client';
 import { EASED_ANSWER, NOT_NOW_ANSWER, NOT_NOW_ASKED, NOT_NOW_REPLY } from '@/api/mock/data/unmet-plans';
+import { withOtherFriends } from '@/api/mock/other-friends';
 import { googleAvailable } from '@/auth/google';
 
 // A meal whose conditions cannot be met (P02-14): believed from the main server in the contract's shape, and answered
 // by the mock, where the app asks no main server, with the main server's real answers of board n11 (nothing fits 지금)
-// and n11b (eased to 13:00).
+// and n11b (eased to 13:00). The mock sends a Plan's band with its Friends as `others` (P04-64), as a main server
+// since then does.
 
 jest.mock('@/auth/google', () => ({
   googleAvailable: jest.fn<boolean, []>(),
@@ -88,7 +91,9 @@ describe('the mock', () => {
   it("recalculates 13:00 이후 with the main server's answer of board n11b", async () => {
     const input = { ...NOT_NOW_ANSWER.input, window: { from: '13:00', until: null, now: true } };
 
-    await expect(answered(mockClient.recalculateAnswer(input, AT_301))).resolves.toEqual({ ...EASED_ANSWER, input });
+    await expect(answered(mockClient.recalculateAnswer(input, AT_301))).resolves.toEqual(
+      withOtherFriends({ ...EASED_ANSWER, input }),
+    );
   });
 
   it("goes back to board n11's answer with 지금 again", async () => {
