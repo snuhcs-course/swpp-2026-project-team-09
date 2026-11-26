@@ -192,6 +192,18 @@ Decisions and things inferred:
 - The error reports' test pattern `/이름·이메일·학번이 아니에요/` now matches two paragraphs (the new part says the
   same), so it was made longer to match only the error reports' one.
 
+### Screenshots (2026-11-26)
+
+Taken on an x86_64 emulator from a mock build of this branch, as a new account.
+
+- `../references/11-consent-unticked.png` and `11-consent-ticked.png`: the consent screen's optional item.
+- `../references/11-policy-usage.png`: the item's link opens the policy at "사용 기록" without a scroll by hand. The part
+  is the policy's last, so the screen stops at the document's end and the heading stands a little below the top.
+- `../references/11-me-card-on.png` and `11-me-card-off.png`: 내 정보's card with both switches; "사용 기록 보내기" was on
+  after the item was ticked, and off after a press.
+
+The failure toasts are covered by the integration tests and were not pictured.
+
 ### Agent usage (2026-11-26)
 
 - Agent time: about 2 hours 30 minutes (estimate), one session, most of it waiting on single-file Jest runs.
