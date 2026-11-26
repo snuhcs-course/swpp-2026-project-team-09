@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -16,8 +17,8 @@ import { answer, toast } from './support/room';
 import { answerParty, CODING, JAZZ, openAt, requestFor, RUN } from './support/party';
 import { askMainServer, PHONE_NOW } from './support/server';
 
-// 찾기 and 전체 파티 leave out a full recruiting Quest, and a 찾기 card whose request waits offers `신청 취소`, against
-// the fake main server (P06-10).
+// 찾기 and its board filters leave out a full recruiting Quest, and the 모집글 sheet of a 파티 whose request waits
+// offers `신청 취소`, against the fake main server (P06-10, P06-12).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -41,6 +42,10 @@ const FULL_RUN = { ...RUN, holderCount: 8 };
 
 function card(title: string): ReturnType<typeof within> {
   return within(screen.getByLabelText(title));
+}
+
+function sheet(): ReturnType<typeof within> {
+  return within(screen.getByLabelText('파티 모집글'));
 }
 
 beforeEach(async () => {
@@ -67,38 +72,37 @@ describe('a full recruiting Quest', () => {
     expect(screen.queryByText(RUN.title)).toBeNull();
   });
 
-  it('is not counted on the Boards card nor listed on its board', async () => {
+  it('is not listed under its board’s filter', async () => {
     setAnswers({ recruiting: [FULL_RUN, CODING, JAZZ], quests: [] });
     const user = await openAt('/party');
 
-    expect(
-      await screen.findByRole('button', { name: '전체 게시판 · 식사 · 진로 · 취미 · 공연 모집글 2개 둘러보기' }),
-    ).toBeVisible();
-    await user.press(screen.getByRole('button', { name: '전체 게시판' }));
-    expect(screen.getByRole('button', { name: '취미 게시판 · 모집글 0개' })).toBeVisible();
+    await user.press(await screen.findByRole('button', { name: '취미' }));
+
+    expect(screen.getByText('취미 게시판에 모집 중인 파티가 없어요')).toBeVisible();
   });
 
   it('comes back once a place is free again', async () => {
     setAnswers({ recruiting: [{ ...RUN, holderCount: 7 }] });
-    await openAt('/party');
+    const user = await openAt('/party');
 
     expect(card(RUN.title).getByText('7/8명')).toBeVisible();
-    expect(card(RUN.title).getByRole('button', { name: '참여하기' })).toBeVisible();
+    await user.press(screen.getByLabelText(RUN.title));
+    expect(sheet().getByRole('button', { name: '참여하기' })).toBeVisible();
   });
 });
 
-describe('a card whose request waits', () => {
-  it('offers 신청 취소 in place of 참여 신청, and keeps 관심 없음', async () => {
+describe('the 모집글 sheet of a 파티 whose request waits', () => {
+  it('offers 신청 취소 in place of 참여 신청', async () => {
     setAnswers({ requests: [requestFor(CODING)] });
-    await openAt('/party');
+    const user = await openAt('/party');
 
-    const coding = card(CODING.title);
-    expect(coding.getByRole('button', { name: `${CODING.title} 신청 취소` })).toBeVisible();
-    expect(coding.queryByRole('button', { name: '참여 신청' })).toBeNull();
-    expect(coding.getByRole('button', { name: `${CODING.title} 관심 없음` })).toBeVisible();
+    await user.press(screen.getByLabelText(CODING.title));
+
+    expect(sheet().getByRole('button', { name: '신청 취소' })).toBeVisible();
+    expect(sheet().queryByRole('button', { name: '참여 신청' })).toBeNull();
   });
 
-  it('asks before withdrawing, and shows 참여 신청 again once withdrawn', async () => {
+  it('asks before withdrawing, and offers 참여 신청 again once withdrawn', async () => {
     setAnswers({ requests: [requestFor(CODING)] });
     server.on('POST /quest-join-requests/qr1/withdraw', () => {
       setAnswers({ requests: [] });
@@ -106,25 +110,30 @@ describe('a card whose request waits', () => {
     });
     const user = await openAt('/party');
 
-    await user.press(card(CODING.title).getByRole('button', { name: `${CODING.title} 신청 취소` }));
+    await user.press(screen.getByLabelText(CODING.title));
+    await user.press(sheet().getByRole('button', { name: '신청 취소' }));
     await pass(500);
     expect(screen.getByText(`‘${CODING.title}’ 참여 신청을 취소할까요?`)).toBeVisible();
     await answer(user, '취소');
     expect(server.received('POST /quest-join-requests/qr1/withdraw')).toHaveLength(0);
 
-    await user.press(card(CODING.title).getByRole('button', { name: `${CODING.title} 신청 취소` }));
+    await user.press(screen.getByLabelText(CODING.title));
+    await user.press(sheet().getByRole('button', { name: '신청 취소' }));
     await pass(500);
     await answer(user, '신청 취소');
 
     expect(server.received('POST /quest-join-requests/qr1/withdraw')).toHaveLength(1);
     expect(toast()).toHaveTextContent('신청을 취소했어요');
-    expect(card(CODING.title).getByRole('button', { name: '참여 신청' })).toBeVisible();
+    await user.press(screen.getByLabelText(CODING.title));
+    expect(sheet().getByRole('button', { name: '참여 신청' })).toBeVisible();
   });
 
   it('leaves an Open Quest’s 참여하기 as it is', async () => {
-    await openAt('/party');
+    const user = await openAt('/party');
 
-    expect(card(RUN.title).getByRole('button', { name: '참여하기' })).toBeVisible();
-    expect(card(RUN.title).queryByRole('button', { name: `${RUN.title} 신청 취소` })).toBeNull();
+    await user.press(screen.getByLabelText(RUN.title));
+
+    expect(sheet().getByRole('button', { name: '참여하기' })).toBeVisible();
+    expect(sheet().queryByRole('button', { name: '신청 취소' })).toBeNull();
   });
 });

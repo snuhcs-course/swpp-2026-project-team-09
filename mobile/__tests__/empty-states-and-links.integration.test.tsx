@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -90,7 +91,8 @@ describe('the toast after asking to join', () => {
     server.on('POST /quest-join-requests', { status: 201, body: invitationTo(CODING, 'qr1') });
     const user = await openAt('/party');
 
-    await user.press(within(screen.getByLabelText(CODING.title)).getByRole('button', { name: '참여 신청' }));
+    await user.press(screen.getByLabelText(CODING.title));
+    await user.press(within(screen.getByLabelText('파티 모집글')).getByRole('button', { name: '참여 신청' }));
     setAnswers({ requests: [requestFor(CODING)] });
     await answer(user, '참여 신청');
     expect(toast()).toHaveTextContent(/참여를 신청했어요/u);

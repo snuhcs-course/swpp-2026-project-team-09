@@ -1,7 +1,7 @@
 # 12: 찾기: board filters that stay put, search at their end, plain cards whose 모집글 slides up, and no 전체 게시판
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.
@@ -89,16 +89,36 @@ Everything in the wireframe's ① to ⑦.
 - Storing tags or photos on the server, and what to do with the stand-in tags.
 - 내 파티, the room, the 파티 form and the 행사 tab, which have their own items.
 
+## Decided while building (2026-11-26)
+
+- The 모집글 leaves out the members' faces as well: the wireframe's ③, ⑥ and ⑦ show the members line without them, and in the build that asks the main server the only face was the Leader's, whose Avatar is already above.
+- `신청 취소` in the sheet asks first with today's confirm sheet, as 찾기's card did, and the sheet closes before it asks, as it does before the join sheet. The screen's `신청 취소` still withdraws at once.
+- The search's names for a screen reader follow 행사's: the magnifier "파티 검색", the field "파티 검색어" (placeholder "파티 검색"), ✕ "검색 닫기". The field does not raise the keyboard by itself, as 행사's does not.
+- A card is one button for a screen reader, named by its title, as 내 파티's card is.
+- The event line is `blue600`, the design system's blue for words.
+- The 모집글 screen's ground is white, as the sheet and the wireframe's ⑦ draw it; it was grey with white cards.
+- `없애기` on the screen goes back as `관심 없음` does, to 찾기 when no screen is behind it; before, it only went back.
+- In the mock build, the banner of official recruiting stands under the filter row, which stays right under the tabs.
+- `ChipRow`'s chip type is now `RowChip`, its count optional.
+- Gone with the boards: `boards-screen.tsx`, `board-screen.tsx`, their routes and the layout's slides for them, `useBoardPosts`, `isBoard`, `postedWords`, the boards' "N" mark, and 찾기's count of hidden posts. `boardPosts` and `useBoardRows` stay for the form's sheet of boards.
+- `PostCard` is unchanged. Its `onHide` and `onWithdraw` now have no caller, since 찾기 was the only one; removing them is left to a tidy-up.
+- The Footer moved from `post-screen.tsx` to `post-footer.tsx`, shared by the screen and the sheet; the content is `post-content.tsx`.
+
 ## Acceptance criteria
 
-- [ ] `+ 만들기` is centred in the bar (`alignSelf: 'center'`). (Test.)
-- [ ] 찾기 has no 파티 검색 field, no 모집 중인 파티 heading, no 전체 게시판 entry and no 숨긴 파티 line; `/boards` and `/boards/[board]` are gone. (Test, which fails before the change.)
-- [ ] The filter row shows 전체 식사 진로 취미 공연 without counts and stays put when the list scrolls; a board shows only its posts, or the empty words. (Test, which fails before the change.)
-- [ ] The magnifier turns the row into the search field; a search finds across boards; ✕ brings the row back at 전체. (Test, which fails before the change.)
-- [ ] A card shows the board, the fill, the title, the time and place on their own lines, and the event line when there is one, with no photo, faces or buttons; the Assistant's cards are unchanged. (Test, which fails before the change.)
-- [ ] Pressing a card opens the 모집글 sheet over 찾기 with the agreed content and today's buttons by role; the 모집글 screen shows the same content. (Test, which fails before the change.)
-- [ ] 관심 없음 asks with the centred dialog; 숨기기 hides the post and closes the sheet, 취소 keeps it. (Test, which fails before the change.)
-- [ ] Checked on the user's phone with the pull request's release build.
-- [ ] No native file changes; lint, format and types pass on the changed files.
+- [x] `+ 만들기` is centred in the bar (`alignSelf: 'center'`). (Test.)
+- [x] 찾기 has no 파티 검색 field, no 모집 중인 파티 heading, no 전체 게시판 entry and no 숨긴 파티 line; `/boards` and `/boards/[board]` are gone. (Test, which fails before the change.)
+- [x] The filter row shows 전체 식사 진로 취미 공연 without counts and stays put when the list scrolls; a board shows only its posts, or the empty words. (Test, which fails before the change.)
+- [x] The magnifier turns the row into the search field; a search finds across boards; ✕ brings the row back at 전체. (Test, which fails before the change.)
+- [x] A card shows the board, the fill, the title, the time and place on their own lines, and the event line when there is one, with no photo, faces or buttons; the Assistant's cards are unchanged. (Test, which fails before the change.)
+- [x] Pressing a card opens the 모집글 sheet over 찾기 with the agreed content and today's buttons by role; the 모집글 screen shows the same content. (Test, which fails before the change.)
+- [x] 관심 없음 asks with the centred dialog; 숨기기 hides the post and closes the sheet, 취소 keeps it. (Test, which fails before the change.)
+- [ ] Checked on the user's phone with the pull request's release build. (Not yet: the orchestrator builds the branch onto the user's phone after the pull request opens.)
+- [x] No native file changes; lint, format and types pass on the changed files.
 
 ## Comments
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 26 minutes, in one session (reading the code, tests written first and seen failing, the change, the test sweep, the ticket). This is an estimate: gaps under 5 minutes between transcript entries, summed, counted up to the writing of this entry, so the commit and the pull request are left out.
+- Tokens: input 27,397,838 (cache reads 27,077,077, cache writes 320,547, uncached 214); output 106,081. No subagents.

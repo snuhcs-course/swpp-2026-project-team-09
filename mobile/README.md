@@ -453,8 +453,8 @@ for every route in it, the `PositionProvider` that every tab and every screen ab
   파티, 행사 and 내 정보 are described below.
 - **Screens above the tabs** are routes of the stack: the Quest list on the whole screen (`/quests`), 알림
   (`/notifications`), 프로필 편집 (`/profile-edit`), 시간표 (`/me/timetable`) and its class form
-  (`/me/timetable/class`), a Quest's room (`/room/<questId>`), the map view of the place picker (`/place-map`), 전체
-  파티 (`/boards`), a board (`/boards/meal`), 파티 모집글 (`/post/<questId>`), 파티 만들기 (`/party-form`, and
+  (`/me/timetable/class`), a Quest's room (`/room/<questId>`), the map view of the place picker (`/place-map`), 파티
+  모집글 (`/post/<questId>`), 파티 만들기 (`/party-form`, and
   `/party-form?questId=<id>` for its edit mode). Each is a `FullScreenPanel`
   and slides in over 0.28 s, from the bottom for `/quests` and from the right for a pushed screen,
   or appears without sliding where the phone asks for less motion (`slideFrom` in the layout). The tabs lie under
@@ -1129,19 +1129,22 @@ recruiting Quest (`GET /quests/recruiting`) or of the User's own, `mine.ts` the 
 hooks. The tabs count the User's Quests but the Class Quests (`내 파티 {n}`) and what waits under 초대, the Quest
 invitations (`초대 {n}`, red).
 
-- **찾기**: the search `파티 검색` over the titles and descriptions, and `모집 중인 파티`, the recruiting Quests the
-  newest first. A card has the Badges, the fill, the next Sub Quest's time and place ("시간 미정", "장소 미정"), the
-  Leader, `자세히 ›` to the post and `참여하기`, or `참여 신청` for an Approval Quest, which opens the join confirm
-  sheet (`join-sheet.tsx`). Joining (`POST /quests/:questId/join`) says "{title} 참여 완료" and shows 내 파티; asking
-  (`POST /quest-join-requests`) says "참여를 신청했어요". `전체 보기 ›` opens 전체 파티.
-- **전체 파티** lists the four boards (`src/features/party/boards.ts`) with their counts and `N` for a post of today in
-  Korea's time. **A board** (`GET /quests/recruiting?board=`) merges the others' posts with the User's own Open or
-  Approval Quests on it with a Sub Quest ahead, which the recruiting list leaves out, the newest first: "내 파티" for
-  the User's lead, "참여 중" for another's held Quest, the time posted ("13:21" today, "10/03 (토) 15:57" before). Its
-  own posts open the room, the others' the post.
-- **파티 모집글** shows the post and a footer by who reads it: `참여하기`, `참여 신청` or the waiting request with `신청
-취소` (`GET /quest-join-requests`, `POST /quest-join-requests/:id/withdraw`); for the Leader `없애기`, which ends the
-  Quest as the room's `파티 없애기` does, and `수정하기`; for another Holder "이미 참여 중인 파티예요".
+- **찾기**: the recruiting Quests with a place left that the User did not hide, those sharing more tags with the User
+  first, then the newest. Under the tabs, outside the list that scrolls, the board filters 전체 · 식사 · 진로 · 취미 ·
+  공연 (`ChipRow` without counts, `find-bar.tsx`) with the magnifier `파티 검색` at their end, which turns them into
+  the search field over every board; its ✕ `검색 닫기` brings the filters back at 전체. A board with no post says
+  "{식사} 게시판에 모집 중인 파티가 없어요". A card (`find-card.tsx`) has the board, the fill, the title, the next Sub
+  Quest's time and place on their own lines ("시간 미정", "장소 미정") and the event of a 파티 for one in blue; a press
+  opens the 모집글 as a sheet over 찾기 (`post-sheet.tsx`). Its `참여하기`, or `참여 신청` for an Approval Quest,
+  closes it and opens the join confirm sheet (`join-sheet.tsx`). Joining (`POST /quests/:questId/join`) says "{title}
+  참여 완료" and shows 내 파티; asking (`POST /quest-join-requests`) says "참여를 신청했어요". Its `신청 취소` asks
+  first.
+- **파티 모집글** (`post-content.tsx`, the same in 찾기's sheet and on the screen) shows the board and the fill, the
+  title, the Leader, a grey box with the time, the place, the members and the event, the description and 추천 이유,
+  and a footer by who reads it (`post-footer.tsx`): `관심 없음`, which asks in a dialog before hiding the post on the
+  phone for good, and `참여하기` or `참여 신청`; the waiting request with `신청 취소` (`GET /quest-join-requests`,
+  `POST /quest-join-requests/:id/withdraw`); for the Leader `없애기`, which ends the Quest as the room's `파티 없애기`
+  does, and `수정하기`; for another Holder "이미 참여 중인 파티예요". The stand-in photo and tags are not shown.
 - **파티 만들기** (`form/`) asks `제목`, `본문` ({n}/200), `언제` through the date·time sheet, `인원` from 2 to 8 in
   public, `어디서` as the room's 일정 form, `공개 범위` with `바로 참여` and `승인 후 참여` under 공개, `게시판` in public
   through a sheet of the boards, and `친구 초대` from `GET /friends`. `파티 올리기` (public) sends `POST /quests/own`
@@ -1529,7 +1532,7 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
     They slide over 0.28 s, or appear at once where the phone asks for less motion (`use-slide.ts`), and are drawn
     in the `OverlayHost` (`Overlay`).
   - `SegmentedTabs` (48 high, the selected one underlined in navy, a count pill in grey or red), `ChipRow` (chips
-    with counts that scroll sideways; `hideEmpty` hides those of 0), `SearchField` (with ✕ "지우기").
+    that scroll sideways, with counts or without; `hideEmpty` hides those of 0), `SearchField` (with ✕ "지우기").
   - `ListRow` (an Avatar or a `RoundIcon` of 40, the name in 15/600 or 16/600 for `large`, an aside, a kicker, one
     or two lines, a trailing slot, 56 to 72 high over a line of 1, one button when it has a press) and
     `SectionHeader` ("공강 · 4").

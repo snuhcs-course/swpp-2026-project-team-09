@@ -6,9 +6,11 @@
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { within } from '@testing-library/react-native';
+import { act, within } from '@testing-library/react-native';
+import { router } from 'expo-router';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal } from './support/fake-server';
@@ -18,9 +20,10 @@ import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answer, HIS_PICNIC, toast, toastIcon } from './support/room';
 import { answerParty, CODING, JAZZ, MY_HIKE, openAt, requestFor, RUN } from './support/party';
-import { askMainServer, DINNER, PHONE_NOW } from './support/server';
+import { askMainServer, PHONE_NOW } from './support/server';
 
-// 전체 파티, its boards and 파티 모집글, against the fake main server.
+// 파티 모집글, the screen that a room, an invitation, the Assistant's cards and 행사 open, against the fake main server.
+// It shows what 찾기's sheet shows (P06 ticket 12).
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -47,7 +50,7 @@ beforeEach(async () => {
   await startFresh();
   sockets.length = 0;
   server = await askMainServer({ signedIn: true });
-  setAnswers = answerParty(server, { quests: [DINNER, MY_HIKE, HIS_HOLD] });
+  setAnswers = answerParty(server, { quests: [MY_HIKE, HIS_HOLD] });
   givePhone({ permission: 'granted', position: ON_CAMPUS });
 });
 
@@ -56,72 +59,12 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe('전체 파티', () => {
-  it('counts each board’s posts, the User’s own among them, with N for a post of today', async () => {
-    const user = await openAt('/party');
-
-    await user.press(screen.getByRole('button', { name: '전체 게시판' }));
-
-    expect(screen.getByRole('button', { name: '식사 게시판 · 모집글 0개' })).not.toHaveTextContent(/N/u);
-    expect(screen.getByRole('button', { name: '진로 게시판 · 모집글 1개' })).not.toHaveTextContent(/N/u);
-    expect(screen.getByRole('button', { name: '취미 게시판 · 모집글 3개' })).toHaveTextContent(/N/u);
-    expect(screen.getByRole('button', { name: '공연 게시판 · 모집글 1개' })).not.toHaveTextContent(/N/u);
-  });
-
-  it('opens from the card under 찾기’s posts, which counts the four boards’ posts', async () => {
-    const user = await openAt('/party');
-
-    const boards = await screen.findByRole('button', {
-      name: '전체 게시판 · 식사 · 진로 · 취미 · 공연 모집글 5개 둘러보기',
-    });
-    expect(within(boards).getByText('식사 · 진로 · 취미 · 공연 모집글 5개 둘러보기')).toBeVisible();
-    await user.press(boards);
-
-    expect(screen.getByRole('button', { name: '취미 게시판 · 모집글 3개' })).toBeVisible();
-  });
-});
-
-describe('a board', () => {
-  it('merges the User’s own posts with the others’, the newest first, with their Badges', async () => {
-    const user = await openAt('/boards/hobby');
-
-    const posts = screen.getAllByRole('button', { name: /^(관악산|버들골|자하연)/u });
-    expect(posts.map((post) => String(post.props.accessibilityLabel))).toEqual([
-      MY_HIKE.title,
-      RUN.title,
-      HIS_HOLD.title,
-    ]);
-    const [mine, others, held] = posts.map((post) => within(post));
-    expect(mine?.getByText('내 파티')).toBeVisible();
-    expect(mine?.getByText('12:50')).toBeVisible();
-    expect(others?.getByText('오늘 19:30 · 버들골 (100동) 입구')).toBeVisible();
-    expect(others?.getByText('3/8명')).toBeVisible();
-    expect(held?.getByText('참여 중')).toBeVisible();
-    expect(held?.getByText('10/05 (월) 10:00')).toBeVisible();
-
-    await user.press(screen.getByRole('button', { name: RUN.title }));
-    expect(shownAddress()).toBe(`/post/${RUN.id}`);
-  });
-
-  it('opens the post for the User’s own post', async () => {
-    const user = await openAt('/boards/hobby');
-
-    await user.press(screen.getByRole('button', { name: MY_HIKE.title }));
-
-    expect(shownAddress()).toBe(`/post/${MY_HIKE.id}`);
-  });
-
-  it('says when it has no post', async () => {
-    await openAt('/boards/meal');
-
-    expect(screen.getByText('아직 모집글이 없어요')).toBeVisible();
-  });
-});
-
 describe('파티 모집글', () => {
   it('shows the post with 참여하기 for an Open Quest', async () => {
     await openAt(`/post/${RUN.id}`);
 
+    expect(screen.getByText('취미 게시판')).toBeVisible();
+    expect(screen.getByText('3/8명')).toBeVisible();
     expect(screen.getByText('최유나 · 모집자')).toBeVisible();
     expect(screen.getByText('디자인학부 · 30분 전')).toBeVisible();
     expect(screen.getByRole('header', { name: RUN.title })).toBeVisible();
@@ -129,6 +72,26 @@ describe('파티 모집글', () => {
     expect(screen.getByRole('button', { name: '참여하기' })).toBeVisible();
   });
 
+  it('shows the Leader’s Avatar once, without the members’ faces', async () => {
+    await openAt(`/post/${RUN.id}`);
+
+    expect(screen.getAllByRole('image', { name: /^[가-힣]{3}$/u })).toEqual([
+      screen.getByRole('image', { name: '최유나' }),
+    ]);
+    expect(within(screen.getByLabelText('추천 이유')).getByText('친구 최유나님이 모집했어요.')).toBeVisible();
+  });
+
+  it('shows the Global Event’s post with its event line, which takes no press', async () => {
+    await openAt(`/post/${JAZZ.id}`);
+
+    expect(screen.getByText('시간 미정')).toBeVisible();
+    expect(screen.getByText('장소 미정')).toBeVisible();
+    expect(within(screen.getByTestId('event-line')).getByText('재즈 정기공연')).toBeVisible();
+    expect(screen.getByTestId('event-line')).not.toHaveProp('onPress');
+  });
+});
+
+describe('asking to join on 파티 모집글', () => {
   it('asks to join an Approval Quest, then waits with 신청 취소, which withdraws', async () => {
     server.on('POST /quest-join-requests', { status: 201, body: requestFor(CODING) });
     server.on('POST /quest-join-requests/qr1/withdraw', { status: 204 });
@@ -157,6 +120,33 @@ describe('파티 모집글', () => {
 
     expect(toast()).toHaveTextContent('파티장이 신청을 받지 않았어요');
     expect(toastIcon()).toBe('alert');
+  });
+});
+
+describe('관심 없음 on 파티 모집글', () => {
+  it('asks in a dialog, and 숨기기 hides the post and goes back to 찾기', async () => {
+    const user = await openAt('/party');
+    await act(() => {
+      router.push(`/post/${RUN.id}`);
+    });
+    await pass(500);
+
+    await user.press(screen.getByRole('button', { name: '관심 없음' }));
+    expect(screen.getByRole('header', { name: `‘${RUN.title}’를 숨길까요?` })).toBeVisible();
+    await answer(user, '숨기기');
+
+    expect(shownAddress()).toBe('/party');
+    expect(screen.queryByText(RUN.title)).toBeNull();
+  });
+
+  it('stays on 취소', async () => {
+    const user = await openAt(`/post/${RUN.id}`);
+
+    await user.press(screen.getByRole('button', { name: '관심 없음' }));
+    await answer(user, '취소');
+
+    expect(shownAddress()).toBe(`/post/${RUN.id}`);
+    expect(screen.getByRole('header', { name: RUN.title })).toBeVisible();
   });
 });
 
@@ -189,12 +179,5 @@ describe('파티 모집글 of a Quest the User holds', () => {
 
     expect(screen.getByRole('header', { name: '모집글 수정' })).toBeVisible();
     expect(screen.getByDisplayValue(MY_HIKE.title)).toBeVisible();
-  });
-
-  it('shows the Global Event’s post as any other', async () => {
-    await openAt(`/post/${JAZZ.id}`);
-
-    expect(screen.getByText('시간 미정')).toBeVisible();
-    expect(screen.getByText('장소 미정')).toBeVisible();
   });
 });

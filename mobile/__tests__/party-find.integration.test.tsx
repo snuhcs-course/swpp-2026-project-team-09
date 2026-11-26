@@ -7,22 +7,25 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
+import { color } from '@/design-system/tokens';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
-import { type FakeServer, refusal, type Reply } from './support/fake-server';
+import type { FakeServer } from './support/fake-server';
 import { sockets } from './support/fake-socket';
-import { pass, screen, shownAddress } from './support/app';
+import { pass, screen } from './support/app';
 import { socketServer, theSocket } from './support/live';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
-import { answer, toast } from './support/room';
+import { answer } from './support/room';
 import { answerParty, CODING, invitationTo, JAZZ, openAt, RUN } from './support/party';
-import { askMainServer, DINNER, PHONE_NOW } from './support/server';
+import { askMainServer, PHONE_NOW } from './support/server';
 
-// 찾기: the recruiting Quests, the search and joining through the confirm sheet, against the fake main server.
+// 찾기: the board filters, the search at their end and the plain cards, against the fake main server (P06 ticket 12).
+// The 모집글 a card opens is in `party-find-sheet`.
 
 jest.mock('expo-location');
 jest.mock('@/hooks/use-reduce-motion', () => ({
@@ -41,8 +44,14 @@ jest.mock('socket.io-client', () => jest.requireActual<typeof FakeSocketModule>(
 let server: FakeServer;
 let setAnswers: ReturnType<typeof answerParty>;
 
+const BOARDS = ['전체', '식사', '진로', '취미', '공연'];
+
 function card(title: string): ReturnType<typeof within> {
   return within(screen.getByLabelText(title));
+}
+
+function shownTitles(): string[] {
+  return screen.getAllByText(/^(버들골 저녁|알고리즘|재즈 동아리)/u).map(({ props }) => String(props.children));
 }
 
 beforeEach(async () => {
@@ -59,175 +68,143 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe('모집 중인 파티', () => {
-  it('shows each recruiting Quest as a card, the newest first', async () => {
+describe('the 파티 header', () => {
+  it('stands + 만들기 in the middle of the bar', async () => {
+    await openAt('/party');
+
+    expect(screen.getByRole('button', { name: '만들기' })).toHaveStyle({ alignSelf: 'center' });
+  });
+});
+
+describe('what 찾기 no longer has', () => {
+  it('has no search field in the list, no 모집 중인 파티 heading and no 전체 게시판', async () => {
+    await openAt('/party');
+
+    expect(await screen.findByText(RUN.title)).toBeVisible();
+    expect(screen.queryByPlaceholderText('파티 검색')).toBeNull();
+    expect(screen.queryByRole('header', { name: '모집 중인 파티' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^전체 게시판/u })).toBeNull();
+  });
+
+  it('says nothing of the hidden posts', async () => {
+    const user = await openAt('/party');
+
+    await user.press(screen.getByLabelText(RUN.title));
+    await user.press(within(screen.getByLabelText('파티 모집글')).getByRole('button', { name: '관심 없음' }));
+    await answer(user, '숨기기');
+
+    expect(screen.queryByText(RUN.title)).toBeNull();
+    expect(screen.queryByText(/^숨긴 파티/u)).toBeNull();
+  });
+});
+
+describe('the board filters', () => {
+  it('shows 전체 식사 진로 취미 공연 without counts, at 전체, outside the list that scrolls', async () => {
+    await openAt('/party');
+
+    for (const name of BOARDS) {
+      expect(screen.getByRole('button', { name })).toBeVisible();
+      expect(within(screen.getByTestId('find-list')).queryByRole('button', { name })).toBeNull();
+    }
+    expect(screen.getByRole('button', { name: '전체' })).toBeSelected();
+    expect(within(screen.getByTestId('find-list')).getByLabelText(RUN.title)).toBeVisible();
+  });
+
+  it('shows a board’s posts alone, in the same order, and says when a board has none', async () => {
+    const user = await openAt('/party');
+
+    await user.press(screen.getByRole('button', { name: '취미' }));
+    expect(screen.getByRole('button', { name: '취미' })).toBeSelected();
+    expect(shownTitles()).toEqual([RUN.title]);
+
+    await user.press(screen.getByRole('button', { name: '식사' }));
+    expect(screen.queryByLabelText(RUN.title)).toBeNull();
+    expect(screen.getByText('식사 게시판에 모집 중인 파티가 없어요')).toBeVisible();
+
+    await user.press(screen.getByRole('button', { name: '전체' }));
+    expect(shownTitles()).toEqual([RUN.title, CODING.title, JAZZ.title]);
+  });
+
+  it('keeps today’s empty state for 전체 with no post', async () => {
+    setAnswers({ recruiting: [] });
+    await openAt('/party');
+
+    expect(screen.getByText('결과 없음')).toBeVisible();
+  });
+});
+
+describe('the search', () => {
+  it('turns the filters into the field, finds across boards, and ✕ brings the filters back at 전체', async () => {
+    const user = await openAt('/party');
+    await user.press(screen.getByRole('button', { name: '취미' }));
+
+    await user.press(screen.getByRole('button', { name: '파티 검색' }));
+    expect(screen.queryByRole('button', { name: '취미' })).toBeNull();
+    expect(screen.getByPlaceholderText('파티 검색')).toBeVisible();
+    await user.type(screen.getByLabelText('파티 검색어'), '코드 리뷰');
+    expect(shownTitles()).toEqual([CODING.title]);
+
+    await user.clear(screen.getByLabelText('파티 검색어'));
+    await user.type(screen.getByLabelText('파티 검색어'), '없는 파티');
+    expect(screen.getByText('결과 없음')).toBeVisible();
+
+    await user.press(screen.getByRole('button', { name: '검색 닫기' }));
+    expect(screen.queryByLabelText('파티 검색어')).toBeNull();
+    expect(screen.getByRole('button', { name: '전체' })).toBeSelected();
+    expect(shownTitles()).toEqual([RUN.title, CODING.title, JAZZ.title]);
+  });
+
+  it('is on 찾기 alone', async () => {
+    await openAt('/party?tab=mine');
+
+    expect(screen.queryByRole('button', { name: '파티 검색' })).toBeNull();
+  });
+});
+
+describe('a card', () => {
+  it('shows the board, the fill, the title, and the time and the place each on a line', async () => {
     await openAt('/party');
 
     const run = card(RUN.title);
-    expect(run.queryByText('파티')).toBeNull();
+    expect(run.getByText('취미 게시판')).toBeVisible();
     expect(run.getByText('3/8명')).toBeVisible();
-    expect(run.queryByText(RUN.description)).toBeNull();
-    expect(run.queryByText('자세히 ›')).toBeNull();
+    expect(run.getByText(RUN.title)).toBeVisible();
     expect(run.getByText('오늘 19:30')).toBeVisible();
-    expect(run.getByText('버들골 (100동) 입구')).toBeVisible();
-    expect(run.getByText('최유나 외 2명 · 친구 1명 포함')).toBeVisible();
-    expect(run.getByRole('button', { name: '참여하기' })).toBeVisible();
-    expect(card(CODING.title).getByRole('button', { name: '참여 신청' })).toBeVisible();
+    expect(run.getByText('버들골 (100동) 입구')).toHaveProp('numberOfLines', 2);
+    expect(run.queryByText('·')).toBeNull();
+    expect(run.queryByText(RUN.description)).toBeNull();
+    expect(card(CODING.title).getByText('진로 게시판')).toBeVisible();
     expect(card(CODING.title).getByText('장소 미정')).toBeVisible();
-    expect(card(JAZZ.title).getByText('재즈 정기공연')).toBeVisible();
-    expect(card(JAZZ.title).getByText('시간 미정')).toBeVisible();
-    const titles = screen
-      .getAllByText(/^(버들골 저녁|알고리즘|재즈 동아리)/u)
-      .map(({ props }) => String(props.children));
-    expect(titles).toEqual([RUN.title, CODING.title, JAZZ.title]);
   });
 
-  it('filters the cards by title and description, and says when none is left', async () => {
-    const user = await openAt('/party');
+  it('has no photo, no faces, no members line and no buttons', async () => {
+    await openAt('/party');
 
-    await user.type(screen.getByLabelText('파티 검색'), '코드 리뷰');
-    expect(screen.getByText(CODING.title)).toBeVisible();
-    expect(screen.queryByText(RUN.title)).toBeNull();
-    expect(screen.queryByRole('button', { name: /^전체 게시판 · /u })).toBeNull();
-
-    await user.clear(screen.getByLabelText('파티 검색'));
-    await user.type(screen.getByLabelText('파티 검색'), '없는 파티');
-    expect(screen.getByText('결과 없음')).toBeVisible();
+    const run = card(RUN.title);
+    expect(run.queryAllByRole('image')).toEqual([]);
+    expect(run.queryByText('최유나 외 2명 · 친구 1명 포함')).toBeNull();
+    expect(screen.queryByRole('button', { name: '참여하기' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '참여 신청' })).toBeNull();
+    expect(screen.queryByRole('button', { name: `${RUN.title} 관심 없음` })).toBeNull();
   });
 
-  it('opens the post from its title, the button a screen reader finds', async () => {
-    const user = await openAt('/party');
+  it('shows the event of a 파티 for one in blue under the place, on one line', async () => {
+    await openAt('/party');
 
-    await user.press(screen.getByRole('button', { name: `${RUN.title} 모집글 자세히 보기` }));
-
-    expect(shownAddress()).toBe(`/post/${RUN.id}`);
-  });
-});
-
-describe('a press of a card', () => {
-  it('opens the post', async () => {
-    const user = await openAt('/party');
-
-    await user.press(screen.getByTestId(`post-${RUN.id}`));
-
-    expect(shownAddress()).toBe(`/post/${RUN.id}`);
-  });
-
-  it('keeps 참여하기 and 관심 없음 to themselves, without opening the post', async () => {
-    const user = await openAt('/party');
-
-    await user.press(card(RUN.title).getByRole('button', { name: '참여하기' }));
-    expect(screen.getByText(`‘${RUN.title}’에 참여할까요?`)).toBeVisible();
-    expect(shownAddress()).toBe('/party');
-    await user.press(screen.getByRole('button', { name: '취소' }));
-
-    await user.press(card(CODING.title).getByRole('button', { name: `${CODING.title} 관심 없음` }));
-    await pass(500);
-    expect(screen.queryByText(CODING.title)).toBeNull();
-    expect(shownAddress()).toBe('/party');
-  });
-});
-
-describe('joining through the confirm sheet', () => {
-  it('joins an Open Quest at once and shows 내 파티', async () => {
-    server.on(`POST /quests/${RUN.id}/join`, { status: 201, body: DINNER });
-    const user = await openAt('/party');
-
-    await user.press(card(RUN.title).getByRole('button', { name: '참여하기' }));
-    expect(screen.getByText(`‘${RUN.title}’에 참여할까요?`)).toBeVisible();
-    expect(screen.getByText('최유나 외 2명 · 친구 1명 포함 (3/8명)')).toBeVisible();
-    expect(screen.getByText('멤버가 파티를 활성화하면, 수락한 멤버끼리 위치를 공유해요.')).toBeVisible();
-    await answer(user, '참여하기');
-
-    expect(server.received(`POST /quests/${RUN.id}/join`)).toHaveLength(1);
-    expect(toast()).toHaveTextContent(`${RUN.title} 참여 완료`);
-    expect(screen.getByRole('tab', { name: /^내 파티/u })).toBeSelected();
-  });
-
-  it('asks to join an Approval Quest', async () => {
-    server.on('POST /quest-join-requests', { status: 201, body: { ...invitationTo(CODING, 'qr1') } });
-    const user = await openAt('/party');
-
-    await user.press(card(CODING.title).getByRole('button', { name: '참여 신청' }));
-    await answer(user, '참여 신청');
-
-    expect(server.received('POST /quest-join-requests')[0]?.body).toEqual({ questId: CODING.id });
-    expect(toast()).toHaveTextContent('참여를 신청했어요보낸 신청 보기');
-  });
-});
-
-describe('a refused joining', () => {
-  it.each([
-    [refusal(409, 'QUEST_FULL'), '자리가 다 찼어요'],
-    [refusal(409, 'QUEST_ENDED'), '이미 끝난 파티예요'],
-    [refusal(409, 'SHARED_QUEST_HELD'), '이 행사에 함께 가는 파티가 이미 있어요'],
-    [refusal(409, 'ALREADY_HOLDER'), '이미 참여 중인 파티예요'],
-    [refusal(404, 'QUEST_NOT_FOUND'), '파티를 찾을 수 없어요'],
-    [refusal(409, 'QUEST_NOT_OPEN'), '참여 방식이 바뀌었어요. 다시 확인해 주세요'],
-    [refusal(409, 'QUEST_REMOVED_ASK'), '내보내진 파티라 파티장 승인이 필요해요'],
-  ] as [Reply, string][])('says why joining was refused: %j', async (reply, words) => {
-    server.on(`POST /quests/${RUN.id}/join`, reply);
-    const user = await openAt('/party');
-    const asked = server.received('GET /quests/recruiting').length;
-
-    await user.press(card(RUN.title).getByRole('button', { name: '참여하기' }));
-    await answer(user, '참여하기');
-
-    expect(toast()).toHaveTextContent(words);
-    expect(server.received('GET /quests/recruiting').length).toBeGreaterThan(asked);
-    expect(screen.getByRole('tab', { name: '찾기' })).toBeSelected();
-  });
-
-  it.each([
-    [refusal(409, 'QUEST_NOT_APPROVAL'), '참여 방식이 바뀌었어요. 다시 확인해 주세요'],
-    [refusal(409, 'QUEST_JOIN_REQUEST_ALREADY_SENT'), '이미 참여를 신청했어요'],
-  ] as [Reply, string][])('says why asking was refused: %j', async (reply, words) => {
-    server.on('POST /quest-join-requests', reply);
-    const user = await openAt('/party');
-
-    await user.press(card(CODING.title).getByRole('button', { name: '참여 신청' }));
-    await answer(user, '참여 신청');
-
-    expect(toast()).toHaveTextContent(words);
+    const event = card(JAZZ.title).getByText('재즈 정기공연');
+    expect(event).toHaveStyle({ color: color.blue600 });
+    expect(event).toHaveProp('numberOfLines', 1);
+    expect(card(RUN.title).queryByTestId('event-line')).toBeNull();
   });
 });
 
 describe('the mocked parts in the build that asks the main server', () => {
-  it('hides official recruiting, the people looking for company and invented faces in 찾기', async () => {
-    const user = await openAt('/party');
+  it('hides official recruiting and the people looking for company in 찾기', async () => {
+    await openAt('/party');
 
     expect(screen.queryByLabelText('공식 모집')).toBeNull();
     expect(screen.queryByText(/^공식 · /u)).toBeNull();
     expect(screen.queryByText('같이 할 사람을 찾는 중')).toBeNull();
-    expect(card(RUN.title).getAllByRole('image', { name: /^[가-힣]{3}$/u })).toEqual([
-      card(RUN.title).getByRole('image', { name: '최유나' }),
-    ]);
-
-    await user.press(card(RUN.title).getByRole('button', { name: `${RUN.title} 관심 없음` }));
-    await pass(500);
-    expect(screen.queryByText(RUN.title)).toBeNull();
-    expect(screen.getByText('숨긴 파티 1개 · 다음 추천에 반영할게요')).toBeVisible();
-  });
-
-  it('shows 전체 파티 without 공식 from 전체 게시판', async () => {
-    const user = await openAt('/party');
-
-    await user.press(screen.getByRole('button', { name: '전체 게시판' }));
-    await pass(500);
-
-    expect(screen.queryByRole('tab', { name: '공식' })).toBeNull();
-    expect(screen.getByRole('button', { name: /^취미 게시판 · 모집글/u })).toBeVisible();
-  });
-
-  it('shows the post’s Leader alone among its faces', async () => {
-    await openAt(`/post/${RUN.id}`);
-
-    // The Leader's Avatar beside the name, and the one face of the members line.
-    expect(screen.getAllByRole('image', { name: /^[가-힣]{3}$/u })).toEqual(
-      screen.getAllByRole('image', { name: '최유나' }),
-    );
-    expect(screen.getAllByRole('image', { name: '최유나' })).toHaveLength(2);
-    expect(within(screen.getByLabelText('추천 이유')).getByText('친구 최유나님이 모집했어요.')).toBeVisible();
   });
 });
 
