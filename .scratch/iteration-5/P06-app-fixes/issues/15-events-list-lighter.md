@@ -1,7 +1,7 @@
 # 15: 행사's list: no 다가오는 행사 heading, smaller type, time and place on their own lines, titles up to two lines, and no source line
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.
@@ -69,11 +69,32 @@ Positions are as of `origin/5.0/Main` 2934be94 (ticket 14's spec lines come befo
 
 ## Acceptance criteria
 
-- [ ] The list has no 다가오는 행사 heading. (App integration test, which fails before the change.)
-- [ ] A row shows a long title on up to two lines, the time and the place on their own lines with their icons, and no source line even for an event with an announcer. (App integration test, which fails before the change.)
-- [ ] The shared styles have the agreed sizes (day 22 Bold, month line 12, title 16 Bold, line 13 Medium, party 13), and the row's padding is 12. (Test, which fails before the change.)
-- [ ] The 관련 행사 picker's rows use the shared sizes, its day included, and keep their own layout otherwise. (Test, which fails before the change.)
+- [x] The list has no 다가오는 행사 heading. (App integration test, which fails before the change.)
+- [x] A row shows a long title on up to two lines, the time and the place on their own lines with their icons, and no source line even for an event with an announcer. (App integration test, which fails before the change.)
+- [x] The shared styles have the agreed sizes (day 22 Bold, month line 12, title 16 Bold, line 13 Medium, party 13), and the row's padding is 12. (Test, which fails before the change.)
+- [x] The 관련 행사 picker's rows use the shared sizes, its day included, and keep their own layout otherwise. (Test, which fails before the change.)
 - [ ] Checked on the user's phone with the pull request's release build.
-- [ ] No native file changes; lint, format and types pass on the changed files.
+- [x] No native file changes; lint, format and types pass on the changed files.
+
+## Decided while building
+
+- The party line's box shrinks with its words, from 40 to 32 high (the pill around 13-point words), and its hit slop grows from 4 to 8 a side, so the touch area stays 48. The gap above it is 4 (was 8), so the slop does not reach over the place line.
+- The ☆ moves up with the padding (top 0, was 12), so it stays level with the title's first line.
+- The time line is cut at one line; the ticket gives two lines only to the place.
+- The time and place icons are 8 from their words, as the party line's icon is, so the three lines' words start in one column.
+- Letter spacing keeps its share of the size: the day -0.44 (2%), the title -0.24 (1.5%).
+- The picker's day offset under its source line (`DAY_DROP`) stays, as the rest of the picker does.
+- Tests: `events-tab`'s list test and a new `a row` block (two tests), and one new test in `events-party-form`'s picker block. The detail sheet test now looks for the place inside the sheet, since the row shows the same text on its own.
+- PR #636 overlaps: `tokens.ts` lines next to each other (`party` / `partyFind` here, the sheet's keys there), the same sheet test in `events-tab`, and #636's new `event-detail-sheet` test, which expects the row's source line. Whichever merges second resolves them.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+Estimates. Agent time is the session's wall clock from start to the pull request. About 12 minutes of it were Jest runs, mostly in the background. No subagents. Tokens are counted up to the writing of this entry, so the commit and the pull request are left out.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Ticket 15 (tests first, the row, the shared sizes, the picker's day, checks) | about 30 minutes | 8,703,608 | 8,553,768 | 149,732 | 108 | 49,403 |
+
+Without cache reads, the input is 149,840.
