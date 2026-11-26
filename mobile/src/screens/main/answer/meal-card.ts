@@ -7,7 +7,9 @@
  ******************************************************************************/
 
 import { useMemo } from 'react';
+import type { ChatBubble } from '@/features/assistant/use-chat';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
+import { useSpokenChoice } from '@/features/assistant/use-spoken-choice';
 import type { ChatSheetControl } from '../chat-sheet';
 import { useRaisedForMenu } from './card-raise';
 
@@ -21,9 +23,13 @@ export function openMealMenu(control: Pick<ChatSheetControl, 'answer'>, planId: 
 // the list alike, and leaves a raised card at its step (`useCardState`): at low the menu's back row and head would not
 // fit the two lines low shows, and its name was cut through (P04 ticket 78, the user's phone). An answer that comes
 // opened at a Restaurant's menu raises it too (`useRaisedForMenu`, P04 ticket 72).
-export function useMenuRaising(shown: ShownAnswer, setRaised: (raised: boolean) => void): ShownAnswer {
+export function useMenuRaising(
+  shown: ShownAnswer,
+  setRaised: (raised: boolean) => void,
+  said: readonly ChatBubble[],
+): ShownAnswer {
   useRaisedForMenu(shown, setRaised);
-  return useMemo(
+  const raising = useMemo(
     () => ({
       ...shown,
       openMenu: (planId: string): void => {
@@ -33,4 +39,7 @@ export function useMenuRaising(shown: ShownAnswer, setRaised: (raised: boolean) 
     }),
     [shown, setRaised],
   );
+  // A plan chosen in words opens as a press on its row of the list does (P05 ticket 56).
+  useSpokenChoice(said, raising);
+  return raising;
 }
