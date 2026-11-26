@@ -53,7 +53,7 @@ describe('Cancel and return cards', () => {
       { key: 'cancel:-:-:-', action: 'cancel', target: {}, space: null },
       { key: 'return:-', action: 'return', target: {}, space: null },
     ]);
-    expect(stage.model.toolResults()[1]).toEqual({ result: 'shown', summary: '취소하기를 눌러야 취소돼요.' });
+    expect(stage.model.toolResults()[1]).toEqual({ result: 'shown', summary: '예약 취소를 눌러야 취소돼요.' });
     expect(stage.model.toolResults()[3]).toEqual({ result: 'shown', summary: '반납하기를 눌러야 반납돼요.' });
   });
 });
@@ -80,7 +80,7 @@ describe('A return asked for a seat booked through the app', () => {
       {
         result: 'shown',
         notInUse: true,
-        summary: '14:00부터 예약한 자리는 아직 사용 전이라 반납이 아니라 취소해요. 취소하기를 눌러야 취소돼요.',
+        summary: '14:00부터 예약한 자리는 아직 사용 전이라 반납이 아니라 취소해요. 예약 취소를 눌러야 취소돼요.',
       },
     ]);
   });
