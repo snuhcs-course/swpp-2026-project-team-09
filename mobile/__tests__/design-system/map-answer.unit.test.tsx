@@ -9,7 +9,7 @@
 
 import { render, screen } from '@testing-library/react-native';
 
-import { ANSWER_SYMBOL_BOX, type AnswerLabel, color, MapAnswerMark } from '@/design-system';
+import { ANSWER_SYMBOL_BOX, type AnswerLabel, CAPSULE, color, MapAnswerMark } from '@/design-system';
 
 const PLAIN: AnswerLabel = { side: 'right', tone: 'person', title: '민수 · 18분', line: null, number: null };
 
@@ -254,5 +254,47 @@ describe("MapAnswerMark: a leg's pill", () => {
 
     expect(screen.getByTestId('mark:label')).toHaveStyle({ backgroundColor: ground });
     expect(screen.getByText(title)).toHaveStyle({ color: words });
+  });
+});
+
+// Partitions: a capsule running to the right and to the left. Expected values: the board of P04 ticket 83, a white
+// capsule with the light border, as high as the round's room, holding the minutes in ink and no number.
+describe("MapAnswerMark: a meal candidate's minutes", () => {
+  it.each(['right', 'left'] as const)('is a capsule of the minutes alone, running to the %s', async (side) => {
+    const minutes: AnswerLabel = { side, tone: 'minutes', title: '19분', line: null, number: null };
+    await render(<MapAnswerMark label={minutes} symbol={null} testID="mark" />);
+
+    expect(screen.getByTestId('mark')).toHaveStyle({
+      minHeight: CAPSULE,
+      flexDirection: side === 'left' ? 'row-reverse' : 'row',
+      backgroundColor: color.surface,
+      borderColor: color.border,
+    });
+    expect(screen.getByTestId('mark:minutes')).toHaveTextContent('19분');
+    expect(screen.getByTestId('mark:minutes')).toHaveStyle({ color: color.ink });
+    expect(screen.queryByTestId('mark:symbol')).toBeNull();
+    expect(screen.queryByText(/^\d+$/u)).toBeNull();
+  });
+});
+
+// Partitions: a candidate without a round of its own, with its minutes and with them given way. Expected values: the
+// orchestrator's decision (P04 ticket 83), its numbered round inside the capsule, or the round alone with its white ring.
+describe("MapAnswerMark: a meal candidate's minutes beside a spot another mark holds", () => {
+  it('holds the numbered round inside the capsule', async () => {
+    const minutes: AnswerLabel = { side: 'right', tone: 'minutes', title: '26분', line: null, number: 4 };
+    await render(<MapAnswerMark label={minutes} symbol={null} testID="mark" />);
+
+    expect(screen.getByTestId('mark:label:dot')).toHaveTextContent('4');
+    expect(screen.getByTestId('mark:label:minutes')).toHaveTextContent('26분');
+    expect(screen.getByTestId('mark:label')).toHaveStyle({ borderColor: color.border });
+  });
+
+  it('is the numbered round alone when its minutes give way', async () => {
+    const number: AnswerLabel = { side: 'right', tone: 'minutes', title: '', line: null, number: 7 };
+    await render(<MapAnswerMark label={number} symbol={null} testID="mark" />);
+
+    expect(screen.getByTestId('mark:label:dot')).toHaveTextContent('7');
+    expect(screen.getByTestId('mark:label:dot')).toHaveStyle({ width: 20, backgroundColor: color.snuBlue });
+    expect(screen.queryByTestId('mark:label:minutes')).toBeNull();
   });
 });

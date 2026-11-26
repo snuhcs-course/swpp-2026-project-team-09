@@ -13,11 +13,11 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { initials } from './avatar';
 import { MapPin } from './map-pin';
-import { ANSWER_SYMBOL_BOX, GAP, RING } from './map-answer-box';
+import { ANSWER_SYMBOL_BOX, CANDIDATE_ROUND, CAPSULE, CAPSULE_EDGE, GAP, RING } from './map-answer-box';
 import { MapAnswerLabel } from './map-answer-label';
-import { color, mapText, radius, shadow, text } from './tokens';
+import { color, mapText, radius, shadow, space, text } from './tokens';
 
-export { ANSWER_SYMBOL_BOX, answerLabelBox } from './map-answer-box';
+export { ANSWER_SYMBOL_BOX, answerLabelBox, CAPSULE } from './map-answer-box';
 
 export type AnswerSymbol =
   | { type: 'me' }
@@ -50,7 +50,9 @@ export interface AnswerLabel {
   side: LabelSide;
   // `stop` is a shuttle stop's; `kept` a Quest already set's.
   // `leg` is a meal Plan's way there's minutes and `legOn` its way on's, by the shuttle too (P04 ticket 76).
-  tone: 'pick' | 'candidate' | 'dropped' | 'next' | 'person' | 'meeting' | 'stop' | 'kept' | LegTone | WayTone;
+  // `minutes` is a meal candidate's minutes, a capsule whose near end lies under its numbered round (P04 ticket 83).
+  tone:
+    'pick' | 'candidate' | 'dropped' | 'next' | 'person' | 'meeting' | 'stop' | 'kept' | 'minutes' | LegTone | WayTone;
   title: string;
   // A second line, under the title; a candidate's stands beside its title (its arrival time).
   line: string | null;
@@ -125,8 +127,44 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
   return <Dot {...symbol} testID={partOf(testID, 'dot')} />;
 }
 
+// A meal candidate's minutes (P04 ticket 83): a white capsule whose near end is room for the candidate's numbered round.
+// Beside its own round (`number` null) it is a picture of its own under the round, so that the two read as one capsule
+// and the round's picture is the one made ahead; it runs to its side of the round. A candidate without a round of its
+// own, at a spot another mark holds, carries its round inside, beside the spot, or the round alone when its minutes
+// give way (no `title`).
+function MinutesCapsule({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
+  const { number, side, title, faded = false } = label;
+  const round =
+    number === null ? null : <Dot number={number} role="candidate" testID={partOf(testID, 'dot')} type="dot" />;
+  if (round !== null && title === '') {
+    return <View testID={testID}>{round}</View>;
+  }
+  const left = side === 'left';
+  return (
+    <View
+      style={[styles.capsule, left ? styles.capsuleLeft : styles.capsuleRight, faded && styles.faded]}
+      testID={testID}
+    >
+      <View style={[styles.roundRoom, left ? styles.roomLeft : styles.roomRight]}>{round}</View>
+      <Text numberOfLines={1} style={styles.minutes} testID={partOf(testID, 'minutes')}>
+        {title}
+      </Text>
+    </View>
+  );
+}
+
+// A label at a side of the symbol box: a meal candidate's capsule holding its round, or any other label.
+function SideLabel({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
+  return label.tone === 'minutes' ? (
+    <MinutesCapsule label={label} testID={testID} />
+  ) : (
+    <MapAnswerLabel label={label} testID={testID} />
+  );
+}
+
 // A mark of an answer on the map, as one picture: a symbol box of 36 by 36, which may be empty, and a label at one
-// side of it. Its anchor is the centre of the symbol box, so that a label never covers its own point.
+// side of it. Its anchor is the centre of the symbol box, so that a label never covers its own point. A meal
+// candidate's minutes are a capsule alone (`MinutesCapsule`).
 export function MapAnswerMark({
   symbol,
   label,
@@ -136,6 +174,9 @@ export function MapAnswerMark({
   label: AnswerLabel | null;
   testID?: string;
 }): ReactElement {
+  if (symbol === null && label?.tone === 'minutes' && label.number === null) {
+    return <MinutesCapsule label={label} testID={testID} />;
+  }
   return (
     <View
       style={[
@@ -148,7 +189,7 @@ export function MapAnswerMark({
       <View style={styles.box} testID={partOf(testID, 'symbol')}>
         {symbol === null ? null : <MarkSymbol symbol={symbol} testID={testID} />}
       </View>
-      {label === null ? null : <MapAnswerLabel label={label} testID={partOf(testID, 'label')} />}
+      {label === null ? null : <SideLabel label={label} testID={partOf(testID, 'label')} />}
     </View>
   );
 }
@@ -156,7 +197,7 @@ export function MapAnswerMark({
 const PICK_DOT = 30;
 // How much wider than the pick's dot its ring spreads, as a share of the dot.
 const RING_GROWTH = 1.4;
-const CANDIDATE_DOT = 20;
+const CANDIDATE_DOT = CANDIDATE_ROUND;
 const SMALL_DOT = 14;
 const NEXT_SQUARE = 18;
 const FACE_BADGE = 14;
@@ -225,5 +266,22 @@ const styles = StyleSheet.create({
   waiting: { backgroundColor: color.inkMuted },
   accepted: { backgroundColor: color.friend },
   pickNumber: { ...mapText.smallTitle, color: color.onPrimary },
+  capsule: {
+    alignSelf: 'flex-start',
+    alignItems: 'center',
+    minHeight: CAPSULE,
+    borderRadius: radius.full,
+    borderWidth: CAPSULE_EDGE,
+    borderColor: color.border,
+    backgroundColor: color.surface,
+    boxShadow: shadow.mapName,
+  },
+  capsuleRight: { flexDirection: 'row', paddingRight: space[2] },
+  capsuleLeft: { flexDirection: 'row-reverse', paddingLeft: space[2] },
+  // The near end, under the round or holding it, and the gap before the words.
+  roundRoom: { width: CAPSULE - CAPSULE_EDGE + space[1] },
+  roomRight: { alignItems: 'flex-start', paddingLeft: (CAPSULE - CANDIDATE_DOT) / 2 - CAPSULE_EDGE },
+  roomLeft: { alignItems: 'flex-end', paddingRight: (CAPSULE - CANDIDATE_DOT) / 2 - CAPSULE_EDGE },
+  minutes: { ...mapText.smallTitle, color: color.ink },
   number: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
 });

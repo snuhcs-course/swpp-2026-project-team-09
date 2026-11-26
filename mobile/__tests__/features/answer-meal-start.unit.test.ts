@@ -9,7 +9,7 @@ import type { AnswerReply, Plan } from '@/api/assistant-types';
 import { crowdedMealAnswer } from '@/api/mock/data/crowded-meal';
 import { drawingOf } from '@/features/assistant/answer-marks';
 import { startOf } from '@/features/assistant/answer-walks';
-import { seen } from '../support/answer-marks';
+import { minutesOf, seen } from '../support/answer-marks';
 
 // Where a meal answer's map says the User sets out from (P04 ticket 51): the start the answer used, never the end of a
 // Class already over paired with a place. The crowded meal is on 2026-10-07, after a Class at 301동 ending at 10:45.
@@ -98,7 +98,7 @@ describe('the walking a choice adds with the start not known', () => {
 
     expect(seen(drawing, 'answer:pick').label).toMatchObject({ note: '11:00' });
     expect(seen(drawing, 'answer:pick').name).toContain('걸음 17분');
-    expect(seen(drawing, 'answer:candidate:3식당').label).toMatchObject({ title: '14분' });
+    expect(minutesOf(drawing, '3식당')).toMatchObject({ title: '14분' });
   });
 
   it('is not said with no next Class either: a tag says its time', () => {
@@ -107,6 +107,6 @@ describe('the walking a choice adds with the start not known', () => {
     const drawing = drawingOf(answer, index);
 
     expect(seen(drawing, 'answer:pick').label?.note).toBe('11:00');
-    expect(seen(drawing, 'answer:candidate:3식당').label?.title).toMatch(/^\d{2}:\d{2}$/u);
+    expect(minutesOf(drawing, '3식당')?.title).toMatch(/^\d{2}:\d{2}$/u);
   });
 });

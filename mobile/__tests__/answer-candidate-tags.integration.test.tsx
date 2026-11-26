@@ -87,7 +87,9 @@ describe('a meal answer with five Plans and their menus', () => {
 
     expect(mapThings()).toContainEqual(expect.stringMatching(/^301동식당 · 12:18 · 걸음 15분 · 부대짬뽕&군만두 외 4/u));
     expect(screen.getByRole('button', { name: '후보 1 · 302동식당 · 걸음 20분' })).toBeOnTheScreen();
-    expect(mapThings().filter((name) => name.startsWith('후보 '))).toHaveLength(4);
+    // Each candidate once, by its number: its round and its minutes' capsule are two marks of it (P04 ticket 83).
+    const numbers = mapThings().flatMap((name) => (name.startsWith('후보 ') ? [name.split(' · ')[0]] : []));
+    expect(new Set(numbers).size).toBe(4);
   });
 });
 

@@ -7,10 +7,12 @@
 import { hasPhoto, type MarkerLook } from './marker-looks';
 
 // The order the stage makes pictures in (P04 ticket 81): an answer's chosen place first, its numbered places next by
-// their numbers, then the rest of the answer, then every other look; within each, the order they were asked in. A look
-// asked for ahead of its need (`LATER`), as the other Plans' boards for a choice to come or the numbered dots made on
-// the everyday map, waits behind every look a screen shows now.
+// their numbers and their minutes after them (P04 ticket 83), then the rest of the answer, then every other look;
+// within each, the order they were asked in. A look asked for ahead of its need (`LATER`), as the other Plans' boards
+// for a choice to come or the numbered dots made on the everyday map, waits behind every look a screen shows now.
 export const LATER = 10;
+// A candidate's minutes, after every numbered round (1 + number / 1000).
+const MINUTES_RANK = 1.5;
 
 export function rankOf(look: MarkerLook): number {
   if (look.kind !== 'answer') {
@@ -20,8 +22,12 @@ export function rankOf(look: MarkerLook): number {
   if (symbol?.type === 'dot' && symbol.role === 'pick') {
     return 0;
   }
+  if (label?.tone === 'minutes' && label.number === null) {
+    return MINUTES_RANK;
+  }
   const dotNumber = symbol?.type === 'dot' && symbol.role === 'candidate' ? symbol.number : null;
-  const number = label?.tone === 'candidate' ? label.number : dotNumber;
+  // A meal candidate without a round of its own carries its number in its capsule (P04 ticket 83).
+  const number = label?.tone === 'candidate' || label?.tone === 'minutes' ? label.number : dotNumber;
   return number === null ? 2 : 1 + number / 1000;
 }
 

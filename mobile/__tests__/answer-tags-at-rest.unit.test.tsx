@@ -106,15 +106,17 @@ function markOf(drawn: AnswerMap | null, label: string): Seen {
   return { label: look.label, symbol: look.symbol };
 }
 
-// Whether a candidate carries its tag: its number in the tag and none in its dot, or in its dot alone.
+// Whether a candidate carries its minutes: its round has its number whatever room there is, and its minutes stand in
+// a capsule of their own beside it, with no number, or are left out (P04 ticket 83).
 function tagged(drawn: AnswerMap | null, label: string): boolean {
   const { label: tag, symbol } = markOf(drawn, label);
-  const dotNumber = symbol?.type === 'dot' ? symbol.number : null;
-  if (tag === null) {
-    expect(dotNumber).not.toBeNull();
+  expect(tag).toBeNull();
+  expect(symbol?.type === 'dot' ? symbol.number : null).not.toBeNull();
+  const minutes = drawn?.contents.markers.find(({ id }) => id === `answer:candidate:${label}:minutes`)?.image.view;
+  if (minutes === undefined) {
     return false;
   }
-  expect(dotNumber).toBeNull();
+  expect(minutes).toMatchObject({ kind: 'answer', symbol: null, label: { tone: 'minutes', number: null } });
   return true;
 }
 
@@ -199,14 +201,17 @@ describe('the tags of a meal answer where the map comes to rest (P04 ticket 69)'
     expect(taggedAll(drawn())).toEqual([false, true, false, false]);
   });
 
-  it('tags 2 to 5, which all have room, once the map rests where all of them show', async () => {
+  // P04 ticket 83: a capsule runs to the right of its round, or to the left, never above or below. 3식당 (4) stands 14
+  // points from 자하연식당 2층's round (5) at its right and has 301동식당's minutes (2) at its left, so 4 and 5 keep their
+  // numbered rounds alone, the later ranks giving way as before.
+  it('tags 2 and 3 once the map rests where all of them show, and 4 between two neighbours has no room', async () => {
     const { drawn, restAt, first } = await rendered();
     const north = northOf(first);
     expect(CANDIDATES.map((label) => inArea(movedTo(label), north))).toEqual([true, true, true, true]);
 
     await restAt(north);
 
-    expect(taggedAll(drawn())).toEqual([true, true, true, true]);
+    expect(taggedAll(drawn())).toEqual([true, true, false, false]);
   });
 
   it('tags both neighbours once the map rests zoomed in on them, and the others keep their numbered dots', async () => {

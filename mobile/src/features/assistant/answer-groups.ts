@@ -92,6 +92,9 @@ export interface Draft {
   number: number | null;
   // The sides its label may take in place of its group's; left out, its group's.
   sides?: LabelSide[];
+  // A meal candidate's round's name while its minutes stand in a capsule beside it (P04 ticket 83): its number and place
+  // ("후보 4 · 3식당"), the capsule taking the whole `name`, so that the whole is said once. Left out, `name`.
+  roundName?: string;
   // Lines its label keeps clear of, as a meal Plan's legs; left out, none.
   clearOf?: readonly (readonly LatLng[])[];
   // Places one label may stand at: of the drafts with the same `either`, only the first whose label is placed is drawn.
@@ -217,7 +220,9 @@ export function unplaced(
   held: boolean,
   meal = false,
 ): Unplaced {
-  const { position, group, tone, title, line, sub = null, note = null, action = null, faded = false, number } = draft;
+  const { position, group, title, line, sub = null, note = null, action = null, faded = false, number } = draft;
+  // A meal candidate without a round of its own carries its round in its minutes' capsule (P04 ticket 83).
+  const tone = meal && group === 'candidate' && draft.tone === 'candidate' ? 'minutes' : draft.tone;
   const words =
     title === null
       ? null
@@ -244,6 +249,17 @@ export function unplaced(
     ...(either === undefined ? {} : { either }),
     ...(overFaces ? { overFaces } : {}),
   };
+}
+
+// A meal candidate's minutes beside its numbered round, as one capsule (P04 ticket 83): at the round's right, or at its
+// left when the right has no room, never above or below it, and left out when neither side has room. Never kept, since
+// the round says the candidate's number and takes its press.
+export const CAPSULE_SIDES: LabelSide[] = ['right', 'left'];
+
+export function unplacedMinutes(draft: Draft, point: number): Unplaced {
+  const { position, title, faded = false } = draft;
+  const words = title === null ? null : { tone: 'minutes' as const, title, line: null, number: null };
+  return { point, position, words: words !== null && faded ? { ...words, faded } : words, sides: CAPSULE_SIDES };
 }
 
 export function eitherOrder(drafts: readonly Draft[], one: Draft, other: Draft): number {

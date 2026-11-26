@@ -14,11 +14,13 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import {
   ANSWER_SYMBOL_BOX,
+  CAPSULE,
   type AnswerLabel,
   type AnswerSymbol,
   type LabelSide,
@@ -253,13 +255,18 @@ export function standsOnTip(look: MarkerLook): boolean {
 }
 
 // The point of a look's box that stands on its position, as shares of the box's width and height: the tip, the
-// middle, or for an answer's look the centre of its symbol box. A box not laid out yet stands on its middle.
+// middle, or for an answer's look the centre of its symbol box, and for a meal candidate's minutes the centre of the
+// capsule's near end, where the candidate's round stands (P04 ticket 83). A box not laid out yet stands on its middle.
 export function anchorShare(look: MarkerLook, { width, height }: Size): { x: number; y: number } {
   if (look.kind !== 'answer' || look.label === null) {
     return { x: 0.5, y: standsOnTip(look) ? 1 : 0.5 };
   }
   if (width <= 0 || height <= 0) {
     return { x: 0.5, y: 0.5 };
+  }
+  if (look.label.tone === 'minutes' && look.label.number === null) {
+    const near = CAPSULE / 2 / width;
+    return { x: look.label.side === 'left' ? 1 - near : near, y: 0.5 };
   }
   const centre = ANSWER_SYMBOL_BOX / 2;
   const shares: Record<LabelSide, { x: number; y: number }> = {

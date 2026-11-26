@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { AnswerLabel, AnswerSymbol } from '@/design-system';
@@ -34,6 +35,12 @@ export function seen(drawing: AnswerDrawing, id: string): Seen {
     throw new Error(`The thing ${id} has no answer look`);
   }
   return { name, symbol: look.symbol, label: look.label, planId };
+}
+
+// A meal candidate's minutes beside its numbered round (P04 ticket 83), or null where they are left out.
+export function minutesOf(drawing: AnswerDrawing, place: string): AnswerLabel | null {
+  const thing = drawing.things.find(({ id }) => id === `answer:candidate:${place}:minutes`);
+  return thing?.look.kind === 'answer' ? thing.look.label : null;
 }
 
 export function sideOf(drawing: AnswerDrawing, id: string): string | null {
