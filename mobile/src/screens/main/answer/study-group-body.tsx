@@ -246,18 +246,10 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
         open={open === 'kind' || open === 'room' ? open : null}
         room={room}
       />
+      {/* A cell's chooser opens right under the ticket, the use's under its line (design group-study-design ④ ⑤). */}
+      <Choosers {...choices} group={group} open={open === 'use' ? null : open} room={room} rooms={rooms} slot={slot} />
       <UseLine onPress={toggle('use')} use={use} />
-      <Choosers
-        group={group}
-        onKind={choices.onKind}
-        onRoom={choices.onRoom}
-        onUse={choices.onUse}
-        open={open}
-        room={room}
-        rooms={rooms}
-        slot={slot}
-        use={use}
-      />
+      {open === 'use' ? <Choosers {...choices} group={group} open="use" room={room} rooms={rooms} slot={slot} /> : null}
     </View>
   );
 }
