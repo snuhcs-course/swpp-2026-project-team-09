@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 import type { PlanPerson } from './assistant-types';
+import type { LibrarySpace } from './library-card-types';
 import type { RoomRequestStatus } from './room-requests';
 
 // A study answer's conditions and its Plans' study part (P10), as main-server `assistant/dto/plan-input.dto.ts` and
@@ -36,6 +37,9 @@ export interface GroupRoomKind {
   // "6인실"
   name: string;
   capacity: { min: number; max: number };
+  // The kind's library space, as a library card carries it, for the phone to read the kind's free rooms: its sector
+  // and its own room numbers (P10 ticket 20).
+  space: LibrarySpace;
 }
 
 // The request sent from a group answer, as the answer rebuilt from it shows it.

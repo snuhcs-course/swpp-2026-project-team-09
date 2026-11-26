@@ -43,9 +43,9 @@ describe('A study answer from the main server', () => {
     expect(isAnswerReply(copy)).toBe(true);
   });
 
-  it('keeps the group of the room to send: the kind, the people, the key, and no request yet', () => {
+  it('keeps the group of the room to send: the kind with its library space, the people, the key, and no request yet', () => {
     expect(firstGroupOf(toSend)).toMatchObject({
-      room: { spaceId: '4F-group-6', floor: 4, name: '6인실' },
+      room: { spaceId: '4F-group-6', floor: 4, name: '6인실', space: { unit: 'room', roomNo: 141, sectorNo: 14103 } },
       people: 4,
       moreNeeded: 0,
       key: 'book:4F-group-6:2026-11-05:1500:120',
@@ -69,6 +69,10 @@ describe('A study answer that breaks the contract', () => {
     ['a count that is not a number', withGroup({ moreNeeded: '1' })],
     ['an unknown request status', withGroup({ request: { ...ready.plans[0]?.study.group.request, status: 'held' } })],
     ['a room kind without its floor', withGroup({ room: { spaceId: '4F-group-6', name: '6인실' } })],
+    [
+      'a room kind without its library space',
+      withGroup({ room: { ...toSend.plans[0]?.study.group.room, space: undefined } }),
+    ],
     ['an input without together', { ...toSend, input: { ...toSend.input, together: undefined } }],
   ])('is refused: %s', (_case, copy) => {
     expect(isAnswerReply(copy)).toBe(false);
