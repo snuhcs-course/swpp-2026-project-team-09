@@ -2919,6 +2919,9 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
         comes first, and the dropped and closed buildings. Never a seat count.
       - With `study-plan`, the library rules leave "공부할 자리" asked without a booking to `planStudy`
         (`LIBRARY_STUDY_RULES`). Without it, every prompt and tool is unchanged.
+      - The model chooses a plan of a study answer on screen with `choosePlan`, by number or by building, as for a
+        meal (P10 ticket 05). With 관정관's plan shown alone, the study line gives `book` (7F-7A-zone2 for a quiet place
+        or any), and "예약해 줘" books it through the library tools; 관정관's plan alone carries the same `study.book`.
       - A reply with no words of the model's says the first plan and why ("열려 있는 곳 중 가장 가까운 공대
         신양학술정보관을 추천해요.", `lookup/study-plan-words.ts`).
     - **After a run**, `withTravelBoxes` (`free-time/travel-boxes.ts`) attaches each candidate's fields to its card and
