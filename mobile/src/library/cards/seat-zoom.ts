@@ -105,16 +105,59 @@ export const GLIDE_DECAY = 0.995;
 // and a pinch lays nothing out (P01 ticket 11).
 export const LAYOUT_ZOOM = ZOOM_MOST;
 
-// The most digits a seat's number has that fit its box whole at that zoom (`seatNumberSize`): the seats whose numbers
-// are that long or shorter show them; 0 for none.
-export function digitsThatFit(image: Size, zoom: number): number {
+// Whether a seat's number this many digits long fits its box whole at that zoom (`seatNumberSize`).
+function fitsAt(image: Size, zoom: number, digits: number): boolean {
   const scale = image.width > 0 ? pictureSize(image, zoom).width / image.width : 0;
-  const box = { width: SEAT_BOX.width * scale, height: SEAT_BOX.height * scale };
+  return (
+    seatNumberSize({ width: SEAT_BOX.width * scale, height: SEAT_BOX.height * scale }, '0'.repeat(digits)) !== null
+  );
+}
+
+// The most digits a seat's number has that fit its box whole at that zoom: the seats whose numbers are that long or
+// shorter show them; 0 for none.
+export function digitsThatFit(image: Size, zoom: number): number {
   let digits = 0;
-  while (digits < MOST_DIGITS && seatNumberSize(box, '0'.repeat(digits + 1)) !== null) {
+  while (digits < MOST_DIGITS && fitsAt(image, zoom, digits + 1)) {
     digits += 1;
   }
   return digits;
 }
 
 const MOST_DIGITS = 8;
+// Steps of halving that find a threshold to well under a thousandth of a zoom.
+const HALVINGS = 30;
+
+// The zoom from which a number of each length shown fits its box whole, for the lengths the room's numbers have
+// (P01 ticket 12): found once, so that a pinch only compares its zoom with them (`digitsAt`). A length that does not fit
+// even at the most zoom has none.
+export function digitThresholds(image: Size, lengths: readonly number[]): { digits: number; from: number }[] {
+  return [...new Set(lengths)]
+    .toSorted((one, other) => one - other)
+    .flatMap((digits) => {
+      if (!fitsAt(image, ZOOM_MOST, digits)) {
+        return [];
+      }
+      let [low, high] = [1, ZOOM_MOST];
+      if (fitsAt(image, low, digits)) {
+        return [{ digits, from: low }];
+      }
+      for (let step = 0; step < HALVINGS; step += 1) {
+        const middle = (low + high) / 2;
+        [low, high] = fitsAt(image, middle, digits) ? [low, middle] : [middle, high];
+      }
+      return [{ digits, from: high }];
+    });
+}
+
+// The most digits shown at that zoom, of the lengths the thresholds hold; 0 for none. A worklet: a pinch calls it at
+// each step.
+export function digitsAt(zoom: number, thresholds: readonly { digits: number; from: number }[]): number {
+  'worklet';
+  let digits = 0;
+  for (const threshold of thresholds) {
+    if (zoom >= threshold.from) {
+      digits = Math.max(digits, threshold.digits);
+    }
+  }
+  return digits;
+}

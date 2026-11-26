@@ -19,6 +19,8 @@ import {
 import { scheduleOnRN } from 'react-native-worklets';
 import { useMotionAllowed } from '@/hooks/use-reduce-motion';
 import {
+  digitsAt,
+  digitThresholds,
   GLIDE_DECAY,
   LAYOUT_ZOOM,
   offsetMost,
@@ -36,11 +38,14 @@ import {
 // thread, so that nothing crosses to the JS thread and nothing is laid out while the fingers move. One finger moves the
 // view, two zoom it about the point between them and move it as they move, a fling glides on to the picture's edges,
 // and 확대 and 축소 keep the middle of the view in the middle, or bring the picked seat there. The zoom seen is handed to
-// React only when a gesture ends, for the buttons and the seats' numbers.
+// React only when a gesture ends, for the buttons; the most digits of a seat's number that fit reach it once each time
+// the zoom crosses where they change, during a pinch too, for the seats' numbers (P01 ticket 12).
 
 export interface SeatZoom {
   // The zoom once the last gesture or button ended.
   zoom: number;
+  // The most digits of a seat's number that fit at the zoom seen, of the lengths the room's numbers have.
+  digits: number;
   // 확대 (1) or 축소 (-1).
   step: (by: 1 | -1) => void;
   // The pan of one finger, or of two together, and the pinch, at once.
@@ -78,7 +83,19 @@ function stop({ zoom, x, y }: Place): void {
 
 // react-native-gesture-handler gives a pinch's `scale` as the total since the fingers came down, so the zoom is the zoom
 // at that moment times it. Each update keeps the picture's point under the fingers where it is.
-function usePinch(image: Size | null, place: Place, settle: (zoom: number) => void): ReturnType<typeof Gesture.Pinch> {
+// The seats' numbers change while the fingers move: once each time the zoom crosses where the digits that fit change,
+// never at each step, so that the seats are drawn again at most once a crossing.
+interface Digits {
+  thresholds: readonly { digits: number; from: number }[];
+  shown: SharedValue<number>;
+  show: (digits: number) => void;
+}
+
+function usePinch(
+  image: Size | null,
+  place: Place,
+  { settle, digits }: { settle: (zoom: number) => void; digits: Digits },
+): ReturnType<typeof Gesture.Pinch> {
   const from = useSharedValue(1);
   return useMemo(
     () =>
@@ -101,11 +118,16 @@ function usePinch(image: Size | null, place: Place, settle: (zoom: number) => vo
           place.zoom.value = next;
           place.x.value = landed.x;
           place.y.value = landed.y;
+          const fit = digitsAt(next, digits.thresholds);
+          if (fit !== digits.shown.value) {
+            digits.shown.value = fit;
+            scheduleOnRN(digits.show, fit);
+          }
         })
         .onEnd(() => {
           scheduleOnRN(settle, place.zoom.value);
         }),
-    [image, place, from, settle],
+    [image, place, from, settle, digits],
   );
 }
 
@@ -186,16 +208,44 @@ function useStep(
   };
 }
 
-// `picked` gives the picked seat's middle in the picture at a zoom, or null when no seat is picked.
-export function useSeatZoom(image: Size | null, picked: (zoom: number) => Point | null): SeatZoom {
+// The numbers' digits that fit, a shared value the pinch reads and React's copy of it.
+function useDigits(image: Size | null, lengths: readonly number[]): Digits & { digits: number } {
+  const key = [...new Set(lengths)].join(',');
+  const thresholds = useMemo(
+    () => (image === null ? [] : digitThresholds(image, key === '' ? [] : key.split(',').map(Number))),
+    [image, key],
+  );
+  const [digits, setDigits] = useState(() => digitsAt(1, thresholds));
+  const shown = useSharedValue(digits);
+  const show = useCallback((fit: number) => {
+    setDigits(fit);
+  }, []);
+  return useMemo(() => ({ thresholds, shown, show, digits }), [thresholds, shown, show, digits]);
+}
+
+// `picked` gives the picked seat's middle in the picture at a zoom, or null when no seat is picked; `lengths`, the
+// lengths of the room's seat numbers.
+export function useSeatZoom(
+  image: Size | null,
+  picked: (zoom: number) => Point | null,
+  lengths: readonly number[] = [],
+): SeatZoom {
   const place = usePlace();
   const [zoom, setZoom] = useState(1);
   const aimed = useRef(1);
-  const settle = useCallback((settled: number) => {
-    aimed.current = settled;
-    setZoom(settled);
-  }, []);
-  const pinch = usePinch(image, place, settle);
+  const digits = useDigits(image, lengths);
+  const { thresholds, shown, show } = digits;
+  const settle = useCallback(
+    (settled: number) => {
+      aimed.current = settled;
+      setZoom(settled);
+      const fit = digitsAt(settled, thresholds);
+      shown.value = fit;
+      show(fit);
+    },
+    [thresholds, shown, show],
+  );
+  const pinch = usePinch(image, place, { settle, digits });
   const pan = usePan(image, place);
   const gesture = useMemo(() => Gesture.Simultaneous(pan, pinch), [pan, pinch]);
   const style = useAnimatedStyle<ViewStyle>(() => ({
@@ -207,6 +257,7 @@ export function useSeatZoom(image: Size | null, picked: (zoom: number) => Point 
   }));
   return {
     zoom,
+    digits: digits.digits,
     step: useStep(image, place, picked, { aimed, settle }),
     gesture,
     style,
