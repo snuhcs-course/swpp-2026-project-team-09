@@ -5,8 +5,10 @@
  ******************************************************************************/
 
 import { type CuisineWord } from '../../menus/cuisine-words.js';
-import { type AnswerReply, type Plan } from '../dto/answer.dto.js';
+import { type AnswerReply, type MealInput, type Plan } from '../dto/answer.dto.js';
 import { hasFinal, withSubject } from './answer-words.js';
+import { listPrice, won } from './meal-menu.js';
+import { fitsUnder, planPrice } from './meal-price.js';
 import { nextItemWords, shownWalk } from './plan-order.js';
 
 // A sentence that gives someone's walk in minutes ("83동에서 도보 3분이에요", "걸어서 5분 걸려요"): the app draws the
@@ -42,7 +44,25 @@ export function wordlessMealSentence(answer: AnswerReply | null): string | null 
   }
   // A name's bracketed part is not read for the particle: 아워홈(901동)을.
   const read = first.id.replace(/\s*\([^)]*\)$/u, '');
-  return `${whyFirst(first, rest, answer.input.cuisine)}${first.id}${hasFinal(read) ? '을' : '를'} 추천해요.`;
+  return `${pricedWhy(first, rest, answer.input)}${first.id}${hasFinal(read) ? '을' : '를'} 추천해요.`;
+}
+
+// Why the first plan comes first with a price condition (P05 ticket 53), the condition named: under the ceiling, the
+// first's reason among the fitting plans; none under it, the cheapest; no price at all, the menus not posted yet; the
+// cheapest first alone, its price as the list writes it.
+function pricedWhy(first: Plan, rest: readonly Plan[], { cuisine, maxPrice, cheapFirst }: MealInput): string {
+  const cheapest = first.menu === undefined ? null : listPrice(first.menu);
+  if (maxPrice === undefined) {
+    return cheapFirst === true && cheapest !== null ? `가장 싼 ${cheapest}인 ` : whyFirst(first, rest, cuisine);
+  }
+  if ([first, ...rest].every((plan) => planPrice(plan) === null)) {
+    return `메뉴가 아직 올라오지 않아 가격으로 거르지 못해서, ${whyFirst(first, rest, cuisine)}`;
+  }
+  if (!fitsUnder(planPrice(first), maxPrice)) {
+    return `${won(maxPrice)} 이하는 없어서, 가장 싼 ${cheapest ?? ''}인 `;
+  }
+  const fitting = rest.filter((plan) => fitsUnder(planPrice(plan), maxPrice));
+  return `${won(maxPrice)} 이하로는 ${whyFirst(first, fitting, cuisine)}`;
 }
 
 // Why the first plan comes first, in the rules' words, or nothing when none can be said truly: the kind of food it
