@@ -209,11 +209,11 @@ function LoginPage({
 // the library's page. The view gives a page two scripts: the style sheet that fits the login form to the phone
 // (`login-fit.ts`), and the one that turns the school's pages' alerts into a line of the app (`login-alert.ts`).
 // Neither reads the page, and the view takes no message but an alert's words, so the app never sees the password. Once
-// the view is back on the site's main, booking or my-booking screen, the login is done and the session stays in the web view's own
-// cookie jar. Reaching those screens is not enough by itself: the login is done only when a check finds the session
-// works; otherwise the view stays open and asks again on the next of those screens. ✕ is "no session"; after five
-// minutes the view closes as failed. Back from the school's login, a cover hides the site's page until the check ends,
-// for 15 seconds at most.
+// the view is back on the site's main, booking or my-booking screen, the login is done and the session stays in the web
+// view's own cookie jar. Reaching those screens is not enough by itself: the login is done only when a check finds the
+// session works; otherwise the view stays open and asks again on the next of those screens. ✕ is "no session"; after
+// five minutes the view closes as failed. Back from the school's login, a cover hides the site's page until the check
+// ends, for 15 seconds at most.
 export function LibraryLogin({ visible, onDone, onLanded, onLeft, checking }: LibraryLoginProps): ReactElement {
   const finish = useFinish(visible, onDone);
   const back = useReturning(visible);

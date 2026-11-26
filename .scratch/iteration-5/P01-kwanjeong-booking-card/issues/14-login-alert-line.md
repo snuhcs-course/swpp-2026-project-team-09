@@ -56,3 +56,8 @@ Read on 2026-11-27 from the site's pages as they are without a login: the login 
 - [x] Whole lint, format, and types of the app.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 40 minutes in the p04-58 session, from 18:12 UTC to the push, an estimate. About half of it is test runs on a loaded machine, and the first few minutes close ticket 13's second pull request. No emulator, no subagents.
+- Tokens, from 18:12 UTC to this entry: input 96 uncached, with cache reads 12,626,712 and cache writes 99,955; output 60,785.
