@@ -42,6 +42,12 @@ export function bindPartyRequest(cardKey: string, requestId: string): void {
   requestOfKey.set(cardKey, requestId);
 }
 
+// A request taken back: neither the card's place nor its key holds it any more.
+function forgetRequest(place: string, cardKey: string): void {
+  requestOfCard.delete(place);
+  requestOfKey.delete(cardKey);
+}
+
 // For the tests: no card has a request.
 export function forgetPartyRequests(): void {
   requestOfCard.clear();
@@ -74,6 +80,19 @@ function makingOf(card: PartyCard, useDesc: string | null): Parameters<typeof ro
   return card.questId === null
     ? { key: card.key, friendIds: card.companions.map(({ friendId }) => friendId), ...extra }
     : { key: card.key, questId: card.questId, ...extra };
+}
+
+// Takes a request still gathering or ready back: its booking party ends, then `forget` leaves the card without it.
+function cancelOf(request: RoomRequest | null, forget: () => void): (() => void) | null {
+  if (request === null || (request.status !== 'gathering' && request.status !== 'ready')) {
+    return null;
+  }
+  return () => {
+    void apiClient
+      .endQuest(request.questId)
+      .then(forget)
+      .catch(() => null);
+  };
 }
 
 export function usePartyRequest(
@@ -111,13 +130,6 @@ export function usePartyRequest(
     }
   };
   const request = id === null ? null : (asked.data ?? null);
-  const open = request !== null && (request.status === 'gathering' || request.status === 'ready');
-  const cancel = async (questId: string): Promise<void> => {
-    await apiClient.endQuest(questId);
-    requestOfCard.delete(place);
-    requestOfKey.delete(card.key);
-    setId(null);
-  };
   return {
     request,
     send: id === null && !sending ? () => void send() : null,
@@ -127,7 +139,10 @@ export function usePartyRequest(
     update: (next) => {
       queryClient.setQueryData([...ROOM_REQUEST_KEY, id], next);
     },
-    cancel: open ? () => void cancel(request.questId).catch(() => null) : null,
+    cancel: cancelOf(request, () => {
+      forgetRequest(place, card.key);
+      setId(null);
+    }),
   };
 }
 

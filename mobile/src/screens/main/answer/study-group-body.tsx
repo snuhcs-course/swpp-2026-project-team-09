@@ -7,6 +7,7 @@
 import { type ReactElement, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { AnswerReply, Plan } from '@/api/assistant-types';
+import type { RoomRequest } from '@/api/room-requests';
 import type { StudyGroup } from '@/api/study-plan-types';
 import { color, font, space, text } from '@/design-system';
 import { withChosenRoom } from '@/features/assistant/plan-input';
@@ -194,27 +195,43 @@ function RequestLine({ words, onCancel }: { words: string; onCancel: (() => void
   );
 }
 
+// The request out, the card's lock on the answer while it is, and the picker of one more Friend.
+function useGroupRequest(
+  props: GroupBodyProps,
+  use: string | null,
+): {
+  party: ReturnType<typeof usePartyRequest>;
+  out: RoomRequest | null;
+  asking: boolean;
+  setAsking: (asking: boolean) => void;
+} {
+  const { shown, answer, plan, group, bubbleId } = props;
+  const party = usePartyRequest(partyCardOf(answer, plan, group), `study-group:${String(bubbleId ?? 0)}`, use);
+  const out = isOut(party.request) ? party.request : null;
+  const [asking, setAsking] = useState(false);
+  const held = out !== null;
+  const { lock } = shown;
+  useEffect(() => {
+    lock(held);
+  }, [lock, held]);
+  return { party, out, asking, setAsking };
+}
+
 export function StudyGroupBody(props: GroupBodyProps): ReactElement {
-  const { shown, answer, plan, group, said } = props;
+  const { answer, plan, group, said } = props;
   const { loggedIn } = useLibrarySession();
   const slot = slotOf(answer, plan);
   const rooms = useRoomsFree(group, slot, loggedIn);
-  const choices = useGroupChoices(group, shown);
-  const party = usePartyRequest(
-    partyCardOf(answer, plan, group),
-    `study-group:${String(props.bubbleId ?? 0)}`,
-    choices.use,
-  );
-  const out = isOut(party.request) ? party.request : null;
+  const choices = useGroupChoices(group, props.shown);
+  const { party, out, asking, setAsking } = useGroupRequest(props, choices.use);
   const onScreen = groupOfRequest(group, out);
-  const [asking, setAsking] = useState(false);
-  const held = out !== null;
-  useEffect(() => {
-    shown.lock(held);
-  }, [shown.lock, held]);
-  useGroupAct({ ...props, group: onScreen, loggedIn, party, onAsk: () => setAsking(true) });
+  const onAsk = (): void => {
+    setAsking(true);
+  };
+  useGroupAct({ ...props, group: onScreen, loggedIn, party, onAsk });
   const room = choices.chosen ?? rooms?.[0]?.NAME ?? null;
   const { open, use, toggle } = choices;
+  const held = out !== null;
   return (
     <View style={styles.body} testID="study-group-body">
       <GroupWords group={onScreen} out={out === null ? null : outWords(out)} said={said} />
@@ -241,7 +258,13 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
         <RequestLine onCancel={party.cancel} words={consentWords(out)} />
       )}
       {out !== null && asking ? (
-        <OneMorePicker onAsked={party.update} onClose={() => setAsking(false)} request={out} />
+        <OneMorePicker
+          onAsked={party.update}
+          onClose={() => {
+            setAsking(false);
+          }}
+          request={out}
+        />
       ) : null}
       {!held && open === 'use' ? (
         <Choosers {...choices} group={group} open="use" room={room} rooms={rooms} slot={slot} />
