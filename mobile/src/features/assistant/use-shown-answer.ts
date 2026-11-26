@@ -7,6 +7,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -50,6 +51,10 @@ export interface ShownAnswer {
   // People are being picked in the time card (P04 ticket 64); `setAdding(false)` leaves without changing anything.
   adding: boolean;
   setAdding: (open: boolean) => void;
+  // The answer is held as it is: a study answer together whose consent requests are out keeps its people, its time and
+  // its room until they are taken back (P10 ticket 12). Picking does not open, and no change asks again.
+  locked: boolean;
+  lock: (locked: boolean) => void;
   // The people checked while picking, but the asker, null when not picking.
   picked: readonly string[] | null;
   // The rows' order while picking, kept from when it opened so that a check never moves a row; null until kept.
@@ -233,6 +238,7 @@ export function useShownAnswer(
 ): ShownAnswer {
   const reply = lastReply(bubbles);
   const [stored, setStored] = useState<AnswerState>(() => firstState(reply, bubbles));
+  const [locked, lock] = useState(false);
   const current = stored.replyId === (reply?.id ?? null) ? stored : arrivedState(reply, stored, bubbles);
   if (current !== stored) {
     setStored(current);
@@ -256,7 +262,9 @@ export function useShownAnswer(
     adding: current.adding,
     recalculating: current.recalculating,
     change: (alter, by) => {
-      ask(alter, by, null);
+      if (!locked) {
+        ask(alter, by, null);
+      }
     },
     again: () => {
       // A copy, which `ask` takes for a change.
@@ -269,6 +277,13 @@ export function useShownAnswer(
     pickOrder: current.pickOrder,
     asked: current.asked,
     ...picking,
+    setAdding: (open) => {
+      if (!(open && locked)) {
+        picking.setAdding(open);
+      }
+    },
+    locked,
+    lock,
     pendingAdd: current.pendingAdd,
     undo: current.kept === null ? null : browsing.undo,
     moving: current.moving,

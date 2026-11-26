@@ -3,13 +3,16 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { type ReactElement, useState } from 'react';
 import type { LibraryCardData } from '@/api/assistant-types';
+import { apiClient } from '@/api/client';
 import { newIdempotencyKey } from '@/api/idempotency-key';
 import { ROOM_REQUEST_KEY, type RoomRequest, roomRequests } from '@/api/room-requests';
+import type { StudyInput } from '@/api/study-plan-types';
 import { type CompanionsView, companionsView } from '@/library/cards/room-companions';
 import type { RoomMember } from '@/library/client';
 import { library } from '@/library/library';
@@ -54,17 +57,27 @@ export interface PartyRequest {
   ready: boolean;
   // Shows the request as a change answered it, before the next poll.
   update: (request: RoomRequest) => void;
+  // Takes the request back as today: its booking party ends, and the card is as before it was sent (P10 ticket 12).
+  // Null without a request still gathering or ready.
+  cancel: (() => void) | null;
 }
 
-function makingOf(card: LibraryCardData, useDesc: string | null): Parameters<typeof roomRequests.make>[0] {
-  const extra = useDesc === null ? {} : { useDesc };
+// What a request is made from: a book card's key and its Friends or Quest; a study answer together gives the same, with
+// the study input it was made from (P10 ticket 12).
+export type PartyCard = Pick<LibraryCardData, 'key' | 'questId' | 'companions'> & { input?: StudyInput };
+
+function makingOf(card: PartyCard, useDesc: string | null): Parameters<typeof roomRequests.make>[0] {
+  const extra = {
+    ...(useDesc === null ? {} : { useDesc }),
+    ...(card.input === undefined ? {} : { input: card.input }),
+  };
   return card.questId === null
     ? { key: card.key, friendIds: card.companions.map(({ friendId }) => friendId), ...extra }
     : { key: card.key, questId: card.questId, ...extra };
 }
 
 export function usePartyRequest(
-  card: LibraryCardData,
+  card: PartyCard,
   place: string,
   useDesc: string | null,
   onMade?: (made: RoomRequest) => void,
@@ -98,6 +111,13 @@ export function usePartyRequest(
     }
   };
   const request = id === null ? null : (asked.data ?? null);
+  const open = request !== null && (request.status === 'gathering' || request.status === 'ready');
+  const cancel = async (questId: string): Promise<void> => {
+    await apiClient.endQuest(questId);
+    requestOfCard.delete(place);
+    requestOfKey.delete(card.key);
+    setId(null);
+  };
   return {
     request,
     send: id === null && !sending ? () => void send() : null,
@@ -107,6 +127,7 @@ export function usePartyRequest(
     update: (next) => {
       queryClient.setQueryData([...ROOM_REQUEST_KEY, id], next);
     },
+    cancel: open ? () => void cancel(request.questId).catch(() => null) : null,
   };
 }
 
