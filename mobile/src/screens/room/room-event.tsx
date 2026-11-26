@@ -2,36 +2,56 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { useQueries } from '@tanstack/react-query';
-import { router } from 'expo-router';
-import type { ReactElement } from 'react';
-import { Pressable } from 'react-native';
-import { globalEventAnnouncersQuery, globalEventsQuery } from '@/api/queries';
-import { now } from '@/clock';
+import { useQuery } from '@tanstack/react-query';
+import { type ReactElement, useState } from 'react';
+import { Pressable, View } from 'react-native';
+import { globalEventAnnouncersQuery } from '@/api/queries';
 import { EventCard } from '@/design-system';
-import { eventTime } from '@/features/events/adapter';
+import { useEventView } from '@/features/events/use-events';
+import { EventDetailSheet } from '../events/event-detail-sheet';
 
-// The Global Event a Quest is for, as the design system's card. A press opens the 행사 tab marked at it.
+// The Global Event a Quest is for, as the design system's card. A press shows the 행사 tab's detail sheet over the
+// room, without its party button, as the User is in a 파티 for it. An event the 행사 tab's list does not hold, such as
+// one that ended, keeps the title the Quest holds and takes no press.
 export function RoomEvent({ event }: { event: { id: string; title: string } }): ReactElement {
-  const [events, announcers] = useQueries({ queries: [globalEventsQuery, globalEventAnnouncersQuery] });
-  const known = events.data?.find(({ id }) => id === event.id);
-  const source = announcers.data?.find(({ eventId }) => eventId === event.id)?.announcer;
+  const view = useEventView(event.id);
+  const { data: announcers } = useQuery(globalEventAnnouncersQuery);
+  const [open, setOpen] = useState(false);
+  const label = `행사 · ${event.title}`;
+  const card = (
+    <EventCard
+      source={announcers?.find(({ eventId }) => eventId === event.id)?.announcer}
+      time={view?.time}
+      title={view?.title ?? event.title}
+      venue={view?.place ?? undefined}
+    />
+  );
   return (
-    <Pressable
-      accessibilityLabel={`행사 · ${event.title}`}
-      accessibilityRole="button"
-      onPress={() => {
-        router.navigate({ pathname: '/events', params: { focus: event.id } });
-      }}
-    >
-      <EventCard
-        source={source}
-        time={known === undefined ? undefined : eventTime(known, now())}
-        title={known?.title ?? event.title}
-        venue={known?.place ?? undefined}
+    <>
+      {view === null ? (
+        <View accessibilityLabel={label} accessible>
+          {card}
+        </View>
+      ) : (
+        <Pressable
+          accessibilityLabel={label}
+          accessibilityRole="button"
+          onPress={() => {
+            setOpen(true);
+          }}
+        >
+          {card}
+        </Pressable>
+      )}
+      <EventDetailSheet
+        event={open ? view : null}
+        onClose={() => {
+          setOpen(false);
+        }}
       />
-    </Pressable>
+    </>
   );
 }

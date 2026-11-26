@@ -1,7 +1,7 @@
 # 13: 파티's event card opens the event's detail as a sheet over the room
 
 Parent: [P06 spec](../spec.md)
-Status: ready-for-agent
+Status: ready-for-human (built; waits for review)
 Blocked by: None.
 
 Native files: none. Releases: an app OTA update only.
@@ -48,10 +48,28 @@ Positions are as of `origin/5.0/Main` 9be7f899, under `mobile/src/`.
 
 ## Acceptance criteria
 
-- [ ] A press on the room's event card opens the event's detail sheet over the room and does not go to the 행사 tab; closing it leaves the room. (App integration test, which fails before the change.)
-- [ ] The room's sheet has no party button and shows `원문 보기` when the event has a source URL; the 행사 tab's sheet still has its party button. (App integration test.)
-- [ ] An event not in the app's list leaves the card unpressable. (App integration test.)
+- [x] A press on the room's event card opens the event's detail sheet over the room and does not go to the 행사 tab; closing it leaves the room. (App integration test, which fails before the change.)
+- [x] The room's sheet has no party button and shows `원문 보기` when the event has a source URL; the 행사 tab's sheet still has its party button. (App integration test.)
+- [x] An event not in the app's list leaves the card unpressable. (App integration test.)
 - [ ] Checked on the user's phone with the pull request's release build.
-- [ ] No native file changes; lint, format and types pass on the changed files.
+- [x] No native file changes; lint, format and types pass on the changed files.
+
+## Decided while building
+
+- **By event id.** `useEventView(eventId)` (`features/events/use-events.ts`) gives one event as the 행사 tab shows it, from `useEventSources` and `toEventViews`, or null while the list does not hold it. The room's card is pressable only when it is not null. Ticket 12's 모집글 event line can open the same sheet with it.
+- **The party button.** `EventDetailSheet`'s `onParty` is optional. Without it, the sheet has no party button. Only the room leaves it out.
+- **The sheet's foot without the party button.** `원문 보기` alone spans the sheet, as the design system's `lg` button does at a sheet's foot. Without a source URL, the sheet has no foot and no empty row.
+- **The unpressable card.** It keeps its accessible name `행사 · {title}` and stays one element for a screen reader, without the button role. Its source line still comes from the app's list of announcers, as it does today, also for an event the list of events lacks.
+- **Tests.** The new `__tests__/room-event.integration.test.tsx` holds the three criteria. It replaces `events-tab`'s "is opened from the event's card in a Quest's room". `room-activation` now finds the card by its name, not as a button: the event in that test is not in the fake server's list.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+Estimates. Agent time is the session's wall clock from start to the pull request. About 25 minutes of it were Jest runs in the background on a machine other sessions loaded. Counting only the gaps under 5 minutes between transcript entries gives about 15 minutes. No subagents. Tokens are counted up to the writing of this entry, so the commit and the pull request are left out.
+
+| Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
+|---|---|---|---|---|---|---|
+| Ticket 13 (tests first, `useEventView`, the sheet's optional party button, the room's card, checks) | about 45 minutes | 9,463,125 | 9,323,982 | 139,019 | 124 | 38,918 |
+
+Without cache reads, the input is 139,143.
