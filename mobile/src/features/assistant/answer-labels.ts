@@ -64,6 +64,8 @@ export interface Unplaced {
   overFaces?: boolean;
   // A kept tag that gives way to the other labels: where no side is clear of them, it keeps its number only, or none.
   shrinks?: boolean;
+  // A meal pick's label, which keeps clear of the other rounds before anything but a person's mark (P04 ticket 89).
+  roundsFirst?: boolean;
 }
 
 // Whether another point lies within a label's reach on that side of its point.
@@ -186,6 +188,7 @@ function placeOne(
     clearOf = [],
     overFaces = false,
     shrinks = false,
+    roundsFirst = false,
   }: Unplaced & { words: Words },
   list: readonly LabelSide[],
   { symbols, pins, faces, boxes, free, pinned }: Placing,
@@ -197,12 +200,13 @@ function placeOne(
   const lines = lineBoxes(view, clearOf);
   const rooms = {
     covering: [...othersThan(symbols, point), ...boxes, ...(overFaces ? [] : faces), ...lines],
+    rounds: othersThan(symbols, point),
     clear: [...othersThan(pins, point), ...boxes, ...faces, ...lines],
     labels: [...boxes, ...lines],
     taken: free,
     pinned,
   };
-  return sideAtView(view, position, words, list, rooms, { kept, shrinks });
+  return sideAtView(view, position, words, list, rooms, { kept, shrinks, roundsFirst });
 }
 
 // The everyday faces the map draws, as boxes: not those over a meal answer's candidate's or pick's round, which the map

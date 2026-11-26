@@ -245,6 +245,8 @@ export function unplaced(
     kept: group === 'pick' || held || always,
     // A tag held at a point it shares gives way to the other labels (P04 ticket 51).
     ...(meal && held && group === 'candidate' ? { shrinks: true } : {}),
+    // A meal pick's label keeps clear of the other rounds (P04 ticket 89).
+    ...(meal && group === 'pick' ? { roundsFirst: true } : {}),
     ...(clearOf === undefined ? {} : { clearOf }),
     ...(either === undefined ? {} : { either }),
     ...(overFaces ? { overFaces } : {}),
