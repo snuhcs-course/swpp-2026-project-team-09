@@ -8,14 +8,17 @@
  * 2026-10-04  Fable 5.1  prompted by fyoon46
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-11-19  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { PrismaService } from '../common/prisma.service.js';
 import { Prisma, User } from '../generated/prisma/client.js';
 import { accountFieldsOf, accountProfileOf, googleNameParts } from './account-profile.js';
+import { type StoredConsent, usageMayBeSent } from './consent.js';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto.js';
+import { ConsentBodyDto, ConsentDto } from './dto/consent.dto.js';
 import { OnboardingDto, OnboardingSource } from './dto/onboarding.dto.js';
 import { ProfileDto, toProfileDto } from './dto/profile.dto.js';
 import { UpdateProfileDto } from './dto/update-profile.dto.js';
@@ -37,6 +40,22 @@ function isFriendIdHeld(error: unknown): boolean {
     friendIdHeldSchema.safeParse(error.meta).success
   );
 }
+
+const consentVersionOutdated = (): ConflictException =>
+  new ConflictException({
+    statusCode: HttpStatus.CONFLICT,
+    error: 'Conflict',
+    code: 'CONSENT_VERSION_OUTDATED',
+    message: 'The account has already agreed to a later version of the documents.',
+  });
+
+const consentRequired = (): ConflictException =>
+  new ConflictException({
+    statusCode: HttpStatus.CONFLICT,
+    error: 'Conflict',
+    code: 'CONSENT_REQUIRED',
+    message: 'Agree to the documents on the consent screen first.',
+  });
 
 @Injectable()
 export class UsersService {
@@ -98,6 +117,51 @@ export class UsersService {
 
   profileOf(user: User): ProfileDto {
     return toProfileDto(user);
+  }
+
+  consentOf({ consentVersion, usageConsent }: StoredConsent): ConsentDto {
+    return { version: consentVersion, usage: usageConsent };
+  }
+
+  // A version higher than the account's is stored with the choice; the same version again stores the choice it
+  // carries, so that the app may send it again when the answer was lost. A lower one is refused.
+  async agree(id: string, { version, usage }: ConsentBodyDto): Promise<void> {
+    const now = new Date();
+    const agreed = await this.prisma.user.updateMany({
+      where: { id, OR: [{ consentVersion: null }, { consentVersion: { lt: version } }] },
+      data: { consentVersion: version, usageConsent: usage, consentedAt: now, usageChosenAt: now },
+    });
+    if (agreed.count > 0) {
+      return;
+    }
+    const repeated = await this.prisma.user.updateMany({
+      where: { id, consentVersion: version },
+      data: { usageConsent: usage, usageChosenAt: now },
+    });
+    if (repeated.count === 0) {
+      throw consentVersionOutdated();
+    }
+  }
+
+  // The switch in 내 정보. The version and when it was agreed to stay as they are.
+  async chooseUsage(id: string, usage: boolean): Promise<void> {
+    const chosen = await this.prisma.user.updateMany({
+      where: { id, consentVersion: { not: null } },
+      data: { usageConsent: usage, usageChosenAt: new Date() },
+    });
+    if (chosen.count === 0) {
+      throw consentRequired();
+    }
+  }
+
+  // Whether usage data about the User may be sent, read from the account each time, so that a change of the switch
+  // holds from the next event.
+  async usageMayBeSent(id: string): Promise<boolean> {
+    const consent = await this.prisma.user.findUniqueOrThrow({
+      where: { id },
+      select: { consentVersion: true, usageConsent: true },
+    });
+    return usageMayBeSent(consent);
   }
 
   findById(id: string): Promise<User> {

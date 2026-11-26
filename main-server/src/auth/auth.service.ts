@@ -6,6 +6,7 @@
  * 2026-09-30  Opus 5.5   prompted by fyoon46
  * 2026-10-01  Opus 5.5   prompted by fyoon46
  * 2026-10-04  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
@@ -96,6 +97,7 @@ export class AuthService {
       accessToken: await this.signAccessToken(user.id, sessionId),
       refreshToken: refreshToken.token,
       onboarding: this.users.onboardingOf(user),
+      consent: this.users.consentOf(user),
     };
   }
 
