@@ -31,6 +31,7 @@ import {
 } from './answer-words.js';
 import { type GatheringFit, type GatheringSide, type PersonPart } from './gathering.js';
 import { kindFirst, mainMenu, menuBasis, withMenu } from './meal-menu.js';
+import { priceOrder, servedPrice } from './meal-price.js';
 import { bandOf, mealSpan, sceneOf } from './meal-scene.js';
 import { missingParts, nearestFirst } from './missing-inputs.js';
 import { notPostedLines } from './not-posted.js';
@@ -311,7 +312,8 @@ function planOf(fit: GatheringFit, naming: Naming, { first, nearest }: { first: 
 export function mealAnswer(args: MealAnswerArgs): AnswerReply {
   const naming = new GatheringNaming(args);
   const nearest = nearestFirst(args);
-  const plans = kindFirst(nearest ?? args.gathering.fits, args.input.cuisine, args.served).map((fit, index) =>
+  const kinded = kindFirst(nearest ?? args.gathering.fits, args.input.cuisine, args.served);
+  const plans = priceOrder(kinded, args.input, ({ key }) => servedPrice(args.served?.get(key))).map((fit, index) =>
     planOf(fit, naming, { first: index === 0, nearest: nearest !== null }),
   );
   return {
