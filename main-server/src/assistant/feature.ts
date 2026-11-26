@@ -13,6 +13,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -94,6 +95,8 @@ export const CLIENT_CAPABILITIES = [
   'party-change',
   'quest-cancel',
   'pick',
+  // Draws a study answer as ranked study places, the meal answer's way (P10).
+  'study-plan',
 ] as const;
 
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];
