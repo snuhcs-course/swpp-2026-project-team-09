@@ -13,6 +13,7 @@ import { type TestUser } from './friends.js';
 import { getQuest, getQuests } from './quests.js';
 import { lunchQuest, ROOM_KEY, roomRequestSchema, RoomStage } from './room-requests.js';
 import { withAccessToken } from './sign-in.js';
+import { addClass } from './timetable.js';
 
 // A room request sent from a study answer (P10 ticket 08): the study input it keeps, the answer rebuilt from it at
 // GET …/:id/answer for the requester alone, locked at the request's room and time with the request's state, and a
@@ -178,14 +179,26 @@ describe('A room request from the chat’s book card, without an input', () => {
     });
   });
 
-  it('answers for an existing Quest’s Holders who are not the requester’s Friends', async () => {
+  it('answers for an existing Quest’s Holders who are not the requester’s Friends, never reading their days', async () => {
     const booker = await stage.user('홀부');
     const others = await Promise.all(['홀1', '홀2', '홀3'].map((name) => stage.user(name)));
+    const [stranger] = others;
+    if (stranger === undefined) {
+      throw new Error('Three Holders');
+    }
+    // A Class before the room on Thursday 2026-11-05: a non-Friend's day stays theirs (PR 647's review).
+    const place = await stage.prisma.place.findFirstOrThrow({ where: { number: '301' } });
+    const times = [{ weekday: 'thursday', startTime: '14:00', endTime: '14:50', placeId: place.id, room: '101' }];
+    await addClass(stage.app, stranger.accessToken, { courseName: '비공개 수업', times });
     const questId = await lunchQuest(stage.prisma, [booker.id, ...ids(others)]);
     const { id } = await stage.asking(booker, questId);
     const answer = await answered(booker, id);
+    const [plan] = answer.plans;
 
     expect(groupOf(answer)).toMatchObject({ people: 4, request: { status: 'gathering', asked: 3 } });
+    expect(plan?.band.lanes.find(({ userId }) => userId === stranger.id)?.busy).toEqual([]);
+    expect(plan?.parts.find(({ userId }) => userId === stranger.id)?.origin).toBeNull();
+    expect(JSON.stringify(answer)).not.toContain('301동');
   });
 });
 

@@ -88,7 +88,10 @@ export class StudyGroupService {
     const ids = new Set(input.people.map(({ userId }) => userId));
     const friends = input.people.slice(1).map(({ userId }) => listed.find(({ id }) => id === userId));
     const kwanjeong = this.kwanjeong();
-    const people = await this.peopleOf(known, sent.names, [input.date]);
+    // Only the asker's and their Friends' days are read: a Holder who is not a Friend shows no Class, no building and no
+    // origin, and stays for the whole booking.
+    const reads = (userId: string): boolean => userId === askerId || listed.some(({ id }) => id === userId);
+    const people = await this.peopleOf(known, sent.names, [input.date], reads);
     const args = { input: known, dates: [input.date], now, catalogue: this.catalogue, people };
     const time = lockedGroupTime({ ...args, kwanjeongPlaceId: kwanjeong.id, walkingMinutes: this.walking }, sent);
     const others = listed.filter(({ id }) => !ids.has(id));
@@ -143,17 +146,21 @@ export class StudyGroupService {
     });
   }
 
-  // Each person's items of the days, named by their Friend view or the names given, the asker 나.
+  // Each person's items of the days, named by their Friend view or the names given, the asker 나; none for one whose day
+  // is not read.
   private async peopleOf(
     input: StudyInput,
     named: readonly (FriendView | string)[],
     dates: readonly string[],
+    reads: (userId: string) => boolean = () => true,
   ): Promise<GroupPerson[]> {
     const days = await Promise.all(
       input.people.map(async ({ userId }) =>
-        Object.fromEntries(
-          await Promise.all(dates.map(async (date) => [date, await this.days.itemsOn(userId, date)] as const)),
-        ),
+        reads(userId)
+          ? Object.fromEntries(
+              await Promise.all(dates.map(async (date) => [date, await this.days.itemsOn(userId, date)] as const)),
+            )
+          : {},
       ),
     );
     return input.people.map(({ userId, constraints }, index) => ({
