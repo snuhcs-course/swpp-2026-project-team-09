@@ -14,11 +14,11 @@
 
 import type { AnswerReply, Cuisine, KeptQuest, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import { type AnswerLabel, type AnswerSymbol } from '@/design-system';
+import type { AnswerSymbol } from '@/design-system';
 import { koreaDayWord } from '@/korea-time';
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
-import { type AnswerDrawing, type AnswerThing, metresBetween, offset } from './answer-drawing';
+import { type AnswerDrawing, metresBetween, offset } from './answer-drawing';
 import {
   candidatesAt,
   destinationOf,
@@ -39,6 +39,7 @@ import {
   withOpenMarks,
 } from './answer-groups';
 import { type LabelView, type MarkPoint, placeLabels, UPRIGHT_REACH } from './answer-labels';
+import { type Placed, thingsInOrder } from './answer-things';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 import { candidateDraft, leftOutByRank, pickLine, sideRank } from './answer-candidates';
 import { kindShown } from './meal-kinds';
@@ -196,14 +197,6 @@ function byGroup(order: Group[]): (one: Draft, other: Draft) => number {
   return (one, other) => order.indexOf(one.group) - order.indexOf(other.group);
 }
 
-interface Placed {
-  draft: Draft;
-  symbol: AnswerSymbol | null;
-  label: AnswerLabel | null;
-  // A meal candidate whose round is drawn: its label is its minutes' capsule (P04 ticket 83).
-  capsule: boolean;
-}
-
 // One symbol at each point, and the labels placed (`placeLabels`) in the order their kinds take sides, so that the
 // Plan's own marks take theirs first.
 // A point's symbol: a meal answer's people's marks, the User's own and the Friends' faces, are told apart.
@@ -252,38 +245,6 @@ function placeAll(drafts: Draft[], view: LabelView | null, meal: boolean): Place
     .map(({ draft, symbol, held, capsule }, at) => ({ draft, symbol, held, capsule, label: labels[at] ?? null }))
     .filter(({ draft, label }) => draft.either === undefined || label !== null);
   return leftOutByRank(drawn, view);
-}
-
-// A mark's things: its symbol and its label as one picture; a meal candidate's numbered round and its minutes as two
-// (P04 ticket 83), the round the one made ahead and the minutes named by their words alone, so that no picture is
-// made for a number and minutes together.
-function thingsOf({ draft, symbol, label, capsule }: Placed): Omit<AnswerThing, 'order'>[] {
-  const { id, name, position, planId, roundName = name } = draft;
-  const thing = {
-    id,
-    name,
-    position,
-    look: { kind: 'answer', symbol, label: capsule ? null : label },
-    planId,
-  } as const;
-  if (!capsule || label === null) {
-    return [thing];
-  }
-  return [
-    { ...thing, name: roundName },
-    { ...thing, id: `${id}:minutes`, look: { kind: 'answer', symbol: null, label } },
-  ];
-}
-
-// Every mark's things in their drawing order, the first on top; the minutes' capsules under every round, so that a
-// round stands at its capsule's end and no capsule covers another candidate's number.
-function thingsInOrder(placed: readonly Placed[]): AnswerThing[] {
-  const all = placed.flatMap(thingsOf);
-  const ordered = [
-    ...all.filter(({ id }) => !id.endsWith(':minutes')),
-    ...all.filter(({ id }) => id.endsWith(':minutes')),
-  ];
-  return ordered.map((thing, index) => ({ ...thing, order: ordered.length - index }));
 }
 
 // What the map shows for a scene: its marks, its lines, and the points the camera fits. At a view, the labels' sides

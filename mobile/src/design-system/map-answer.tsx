@@ -13,7 +13,7 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { initials } from './avatar';
 import { MapPin } from './map-pin';
-import { ANSWER_SYMBOL_BOX, CAPSULE, CAPSULE_EDGE, GAP, RING } from './map-answer-box';
+import { ANSWER_SYMBOL_BOX, CANDIDATE_ROUND, CAPSULE, CAPSULE_EDGE, GAP, RING } from './map-answer-box';
 import { MapAnswerLabel } from './map-answer-label';
 import { color, mapText, radius, shadow, space, text } from './tokens';
 
@@ -127,21 +127,37 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
   return <Dot {...symbol} testID={partOf(testID, 'dot')} />;
 }
 
-// A meal candidate's minutes (P04 ticket 83): a white capsule whose near end is room for the candidate's numbered round,
-// drawn as a picture of its own under the round, so that the two read as one capsule and the round's picture is the
-// one made ahead. It runs to its side of the round.
+// A meal candidate's minutes (P04 ticket 83): a white capsule whose near end is room for the candidate's numbered round.
+// Beside its own round (`number` null) it is a picture of its own under the round, so that the two read as one capsule
+// and the round's picture is the one made ahead; it runs to its side of the round. A candidate without a round of its
+// own, at a spot another mark holds, carries its round inside, beside the spot, or the round alone when its minutes
+// give way (no `title`).
 function MinutesCapsule({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
-  const left = label.side === 'left';
+  const { number, side, title, faded = false } = label;
+  const round = number === null ? null : <Dot number={number} role="candidate" testID={partOf(testID, 'dot')} type="dot" />;
+  if (round !== null && title === '') {
+    return <View testID={testID}>{round}</View>;
+  }
+  const left = side === 'left';
   return (
     <View
-      style={[styles.capsule, left ? styles.capsuleLeft : styles.capsuleRight, label.faded === true && styles.faded]}
+      style={[styles.capsule, left ? styles.capsuleLeft : styles.capsuleRight, faded && styles.faded]}
       testID={testID}
     >
-      <View style={styles.roundRoom} />
+      <View style={[styles.roundRoom, left ? styles.roomLeft : styles.roomRight]}>{round}</View>
       <Text numberOfLines={1} style={styles.minutes} testID={partOf(testID, 'minutes')}>
-        {label.title}
+        {title}
       </Text>
     </View>
+  );
+}
+
+// A label at a side of the symbol box: a meal candidate's capsule holding its round, or any other label.
+function SideLabel({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
+  return label.tone === 'minutes' ? (
+    <MinutesCapsule label={label} testID={testID} />
+  ) : (
+    <MapAnswerLabel label={label} testID={testID} />
   );
 }
 
@@ -157,7 +173,7 @@ export function MapAnswerMark({
   label: AnswerLabel | null;
   testID?: string;
 }): ReactElement {
-  if (symbol === null && label?.tone === 'minutes') {
+  if (symbol === null && label?.tone === 'minutes' && label.number === null) {
     return <MinutesCapsule label={label} testID={testID} />;
   }
   return (
@@ -172,7 +188,7 @@ export function MapAnswerMark({
       <View style={styles.box} testID={partOf(testID, 'symbol')}>
         {symbol === null ? null : <MarkSymbol symbol={symbol} testID={testID} />}
       </View>
-      {label === null ? null : <MapAnswerLabel label={label} testID={partOf(testID, 'label')} />}
+      {label === null ? null : <SideLabel label={label} testID={partOf(testID, 'label')} />}
     </View>
   );
 }
@@ -180,7 +196,7 @@ export function MapAnswerMark({
 const PICK_DOT = 30;
 // How much wider than the pick's dot its ring spreads, as a share of the dot.
 const RING_GROWTH = 1.4;
-const CANDIDATE_DOT = 20;
+const CANDIDATE_DOT = CANDIDATE_ROUND;
 const SMALL_DOT = 14;
 const NEXT_SQUARE = 18;
 const FACE_BADGE = 14;
@@ -261,8 +277,10 @@ const styles = StyleSheet.create({
   },
   capsuleRight: { flexDirection: 'row', paddingRight: space[2] },
   capsuleLeft: { flexDirection: 'row-reverse', paddingLeft: space[2] },
-  // The near end, under the round, and the gap before the words.
+  // The near end, under the round or holding it, and the gap before the words.
   roundRoom: { width: CAPSULE - CAPSULE_EDGE + space[1] },
+  roomRight: { alignItems: 'flex-start', paddingLeft: (CAPSULE - CANDIDATE_DOT) / 2 - CAPSULE_EDGE },
+  roomLeft: { alignItems: 'flex-end', paddingRight: (CAPSULE - CANDIDATE_DOT) / 2 - CAPSULE_EDGE },
   minutes: { ...mapText.smallTitle, color: color.ink },
   number: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
 });

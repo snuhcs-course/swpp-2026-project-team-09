@@ -264,7 +264,7 @@ export function anchorShare(look: MarkerLook, { width, height }: Size): { x: num
   if (width <= 0 || height <= 0) {
     return { x: 0.5, y: 0.5 };
   }
-  if (look.label.tone === 'minutes') {
+  if (look.label.tone === 'minutes' && look.label.number === null) {
     const near = CAPSULE / 2 / width;
     return { x: look.label.side === 'left' ? 1 - near : near, y: 0.5 };
   }

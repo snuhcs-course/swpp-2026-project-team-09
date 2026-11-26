@@ -220,7 +220,9 @@ export function unplaced(
   held: boolean,
   meal = false,
 ): Unplaced {
-  const { position, group, tone, title, line, sub = null, note = null, action = null, faded = false, number } = draft;
+  const { position, group, title, line, sub = null, note = null, action = null, faded = false, number } = draft;
+  // A meal candidate without a round of its own carries its round in its minutes' capsule (P04 ticket 83).
+  const tone = meal && group === 'candidate' && draft.tone === 'candidate' ? 'minutes' : draft.tone;
   const words =
     title === null
       ? null

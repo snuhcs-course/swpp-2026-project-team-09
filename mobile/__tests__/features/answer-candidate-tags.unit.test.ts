@@ -149,7 +149,7 @@ describe('a kind on screen with no chip for it', () => {
   it('recedes no candidate when none serves it', () => {
     const answer = withCuisine(MEAL_ANSWER_MENUS, '분식');
 
-    expect(tagOf(answer, '301동식당')).toMatchObject({ label: { tone: 'candidate', number: 2 } });
+    expect(tagOf(answer, '301동식당')).toMatchObject({ label: { tone: 'minutes', number: 2 } });
     expect(tagOf(answer, '자하연식당 2층')).toMatchObject({ symbol: { role: 'candidate', number: 5 } });
   });
 
@@ -161,7 +161,7 @@ describe('a kind on screen with no chip for it', () => {
     );
     const answer = withCuisine({ ...MEAL_ANSWER_MENUS, plans }, '한식');
 
-    expect(tagOf(answer, '301동식당')).toMatchObject({ label: { tone: 'candidate', number: 2 } });
+    expect(tagOf(answer, '301동식당')).toMatchObject({ label: { tone: 'minutes', number: 2 } });
     expect(tagOf(answer, '학생회관식당')).toMatchObject({ symbol: { role: 'candidate', number: 3 } });
   });
 });

@@ -8,7 +8,7 @@ import { MEAL_ANSWER_MENUS } from '@/api/mock/data/meal-answer-menus';
 import { type AnswerDrawing, drawingOf } from '@/features/assistant/answer-marks';
 import { inView } from '@/map';
 import { lookName } from '@/map/marker-looks';
-import { planPress } from '@/screens/main/answer-presses';
+import { ignoreMark, planPress } from '@/screens/main/answer-presses';
 import { LOOKS_AHEAD } from '@/screens/main/use-looks-ahead';
 import { seen } from '../support/answer-marks';
 import { FIRST_CAMERA, SIZE, viewAt } from '../support/answer-view';
@@ -33,6 +33,10 @@ function withRoom(left: number, right: number): AnswerDrawing {
   return drawingOf(MEAL_ANSWER_MENUS, 0, undefined, viewAt(FIRST_CAMERA, area));
 }
 
+function orderOf(drawing: AnswerDrawing, id: string): number {
+  return drawing.things.find((thing) => thing.id === id)?.order ?? Number.NaN;
+}
+
 function minutesOf(drawing: AnswerDrawing): ReturnType<typeof seen> | undefined {
   return drawing.things.some(({ id }) => id === MINUTES) ? seen(drawing, MINUTES) : undefined;
 }
@@ -53,8 +57,7 @@ describe("a tagged candidate's number", () => {
   });
 
   it('is drawn under its round, so that the round stands at the capsule’s end', () => {
-    const order = (id: string): number => drawing.things.find((thing) => thing.id === id)?.order ?? Number.NaN;
-    expect(order(MINUTES)).toBeLessThan(order(ROUND));
+    expect(orderOf(drawing, MINUTES)).toBeLessThan(orderOf(drawing, ROUND));
   });
 
   it('says the whole once, on the capsule, and the round its number and place', () => {
@@ -63,13 +66,16 @@ describe("a tagged candidate's number", () => {
   });
 
   it('chooses its Plan at a press on the minutes, as on the round', () => {
-    const show = jest.fn<undefined, [string]>();
-    const press = planPress(drawing, { pick: jest.fn(), show, recalculating: false }, false, jest.fn());
+    const shown: string[] = [];
+    const show = (planId: string): void => {
+      shown.push(planId);
+    };
+    const press = planPress(drawing, { pick: ignoreMark, show, recalculating: false }, false, ignoreMark);
 
     press(MINUTES);
     press(ROUND);
 
-    expect(show.mock.calls).toEqual([[PLAN.id], [PLAN.id]]);
+    expect(shown).toEqual([PLAN.id, PLAN.id]);
   });
 });
 
@@ -100,3 +106,24 @@ describe('the capsule’s side by the room beside the round', () => {
     expect(rounds).toEqual(Array.from({ length: 3 }, () => (ROUND_4 === undefined ? null : lookName(ROUND_4))));
   });
 });
+
+// Partitions: a candidate on the User's own spot, whose round is not drawn; every board of the answer. Expected values:
+// the orchestrator's decision on PR review (2026-11-26), the same capsule with the round inside, and no candidate's
+// navy-bordered pill left on a meal map.
+describe('a candidate without a round of its own', () => {
+  it('carries its round in its capsule, beside the spot another mark holds', () => {
+    const { symbol, label } = seen(drawingOf(MEAL_ANSWER_MENUS, 0), 'answer:candidate:301동식당');
+
+    expect(symbol).toBeNull();
+    expect(label).toMatchObject({ tone: 'minutes', title: '15분', number: 2 });
+  });
+
+  it.each(MEAL_ANSWER_MENUS.plans.map((_, index) => index))('leaves no candidate pill on board %i', (index) => {
+    const tones = drawingOf(MEAL_ANSWER_MENUS, index).things.flatMap(({ look }) =>
+      look.kind === 'answer' && look.label !== null ? [look.label.tone] : [],
+    );
+
+    expect(tones).not.toContain('candidate');
+  });
+});
+

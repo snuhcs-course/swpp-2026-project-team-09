@@ -22,11 +22,12 @@ export function rankOf(look: MarkerLook): number {
   if (symbol?.type === 'dot' && symbol.role === 'pick') {
     return 0;
   }
-  if (label?.tone === 'minutes') {
+  if (label?.tone === 'minutes' && label.number === null) {
     return MINUTES_RANK;
   }
   const dotNumber = symbol?.type === 'dot' && symbol.role === 'candidate' ? symbol.number : null;
-  const number = label?.tone === 'candidate' ? label.number : dotNumber;
+  // A meal candidate without a round of its own carries its number in its capsule (P04 ticket 83).
+  const number = label?.tone === 'candidate' || label?.tone === 'minutes' ? label.number : dotNumber;
   return number === null ? 2 : 1 + number / 1000;
 }
 

@@ -44,6 +44,10 @@ const START: MarkerLook = {
   label: { side: 'left', tone: 'meeting', title: '10:45 301동', line: null, number: null },
 };
 
+function candidateRound(number: number): MarkerLook {
+  return { kind: 'answer', symbol: { type: 'dot', role: 'candidate', number }, label: null };
+}
+
 function Asks({ looks, later = [] }: { looks: readonly MarkerLook[]; later?: readonly MarkerLook[] }): ReactElement {
   const images = useMarkerImages(looks, later);
   return (
@@ -134,11 +138,6 @@ describe('the order an answer’s pictures are made in', () => {
 // ticket 83). Expected values: the rounds first, by number, then the minutes, then the rest.
 describe("the order a board's rounds and minutes are made in", () => {
   it("makes the candidates' minutes after every numbered round and before the rest of the answer", async () => {
-    const round = (number: number): MarkerLook => ({
-      kind: 'answer',
-      symbol: { type: 'dot', role: 'candidate', number },
-      label: null,
-    });
     const minutes: MarkerLook = {
       kind: 'answer',
       symbol: null,
@@ -148,9 +147,9 @@ describe("the order a board's rounds and minutes are made in", () => {
       ...START,
       label: { side: 'left', tone: 'meeting', title: '15:30 302동', line: null, number: null },
     };
-    await render(<Asks looks={[end, minutes, round(9), round(8)]} />);
+    await render(<Asks looks={[end, minutes, candidateRound(9), candidateRound(8)]} />);
 
-    expect(onStage()).toEqual([round(8), round(9), minutes].map((look) => lookName(look)));
+    expect(onStage()).toEqual([candidateRound(8), candidateRound(9), minutes].map((look) => lookName(look)));
     await makeAll();
   });
 });
