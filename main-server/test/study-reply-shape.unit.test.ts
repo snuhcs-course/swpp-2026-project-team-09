@@ -7,6 +7,8 @@
 import { contextLines } from '../src/assistant/context-lines.js';
 import { type AnswerReply, NO_CONTEXT, recalculationSchema } from '../src/assistant/dto/answer.dto.js';
 import { CLIENT_CAPABILITIES } from '../src/assistant/feature.js';
+import { type Catalogue, CATALOGUE_FILE, readCatalogue } from '../src/assistant/library/catalogue.js';
+import { cardSpace } from '../src/assistant/library/library-card.js';
 import { STUDY_ANSWER } from './fixtures/study-answer.js';
 import {
   STUDY_GROUP_GATHERING,
@@ -82,6 +84,26 @@ describe('The study answer with Friends', () => {
 
   it('shows the request once sent: gathering, then ready', () => {
     expect(groups.map((answer) => requestState(answer))).toEqual([undefined, 'gathering', 'ready', undefined]);
+  });
+});
+
+let catalogue: Catalogue;
+
+beforeAll(async () => {
+  catalogue = await readCatalogue(CATALOGUE_FILE);
+});
+
+describe("The group fixtures' room kinds", () => {
+  it("carry each kind's library space as the catalogue gives it, for the phone to read free rooms", () => {
+    const kinds = [STUDY_GROUP_TO_SEND, STUDY_GROUP_MORE_NEEDED].flatMap(({ plans }) =>
+      plans.flatMap(({ study }) => (study?.group === undefined ? [] : [study.group.room, ...study.group.rooms])),
+    );
+
+    expect(kinds.length).toBeGreaterThan(0);
+    for (const { spaceId, space } of kinds) {
+      const listed = catalogue.byId.get(spaceId);
+      expect(space).toEqual(listed === undefined ? null : cardSpace(listed, listed.seatNos));
+    }
   });
 });
 
