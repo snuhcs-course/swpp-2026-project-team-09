@@ -19,7 +19,7 @@
 import type { TimeBand } from './time-band-types';
 import type { LibraryCard } from './library-card-types';
 import type { Lookup } from './lookup-types';
-import type { MeetInput } from './meet-plan-types';
+import type { MealPrice, MeetInput } from './meet-plan-types';
 import type { MenuLine } from './menu-types';
 import type { RecruitingQuest } from './party-types';
 import type { ClosedPlace, DroppedPlace, PlanPart, WithAdding } from './plan-part-types';
@@ -197,7 +197,7 @@ export interface RequestContext extends WithLocationMissing {
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
 export type PlanInput = MealInput | EventsInput | QuestsInput | NewQuestInput | MeetInput;
 
-export interface MealInput {
+export interface MealInput extends MealPrice {
   kind: 'meal';
   // YYYY-MM-DD in Korea.
   date: string;

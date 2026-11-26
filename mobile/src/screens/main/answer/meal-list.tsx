@@ -14,10 +14,18 @@ import { color, font, MEAL_NUMBER, radius, RoundNumber, space, text } from '@/de
 import { addedWalk, fadedPlan, travelWords } from '@/features/assistant/answer-walks';
 import { kindShown, serves } from '@/features/assistant/meal-kinds';
 import { dishWords, priceWords } from '@/features/assistant/meal-menus';
+import {
+  fitDishWords,
+  fittingPlans,
+  PRICED_ORDER_WORDS,
+  pricedOrder,
+  showsFitDish,
+} from '@/features/assistant/meal-price';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { withParticle } from '@/features/map/short-name';
 import { koreaClock } from '@/korea-time';
 import { KindChips } from './kind-chips';
+import { OverPriceRows } from './over-price-rows';
 
 // The raised card of a meal answer (board E3): every candidate as a row, the kinds of food over them as the filter.
 
@@ -43,7 +51,9 @@ export interface CandidateRow {
   startAt: string;
 }
 
-function rowOf(plan: Plan, index: number, kind: Cuisine | null): CandidateRow {
+// With a ceiling some fit, the row writes the dish its price speaks of and the price in place of its dishes (P04
+// ticket 92).
+function rowOf(plan: Plan, index: number, kind: Cuisine | null, fitDish: boolean): CandidateRow {
   const walk = addedWalk(plan);
   const way = travelWords(plan);
   return {
@@ -54,8 +64,8 @@ function rowOf(plan: Plan, index: number, kind: Cuisine | null): CandidateRow {
     clock: way === null,
     walk,
     faded: fadedPlan(plan),
-    dishes: plan.menu === undefined ? null : dishWords(plan.menu, kind),
-    price: plan.menu === undefined ? null : priceWords(plan.menu),
+    dishes: fitDish ? fitDishWords(plan) : plan.menu === undefined ? null : dishWords(plan.menu, kind),
+    price: fitDish || plan.menu === undefined ? null : priceWords(plan.menu),
     startAt: plan.startAt,
   };
 }
@@ -69,7 +79,7 @@ export function mealCard(answer: AnswerReply | null): boolean {
 // on screen holds only as they can be done (`offeredAnswer`). The places closed for the meal stand apart at the list's
 // end and are not counted.
 export function listedCount(answer: AnswerReply): number {
-  return answer.plans.length;
+  return fittingPlans(answer).length;
 }
 
 // The line over the Restaurants closed for the meal (P04 ticket 71, board z1).
@@ -94,15 +104,16 @@ export function candidateRowsOf(answer: AnswerReply | null): CandidateRow[] {
     return [];
   }
   const kind = kindShown(answer);
-  const rows = answer.plans
-    .map((plan, index) => ({ plan, row: rowOf(plan, index, kind) }))
+  const fitDish = showsFitDish(answer);
+  const rows = fittingPlans(answer)
+    .map((plan, index) => ({ plan, row: rowOf(plan, index, kind, fitDish) }))
     .filter(({ plan }) => kind === null || serves(plan, kind))
     .map(({ row }) => row);
   // Only where the User starts is known is the main server's order the least walking. Otherwise it stands as it came:
   // without a walk anywhere, the walk on to the next item, the earliest start, the longest time to eat (P05 ticket 40);
   // with a way on alone, those where everyone has thirty minutes first (P05 ticket 45). An order of the phone's would
   // scramble it.
-  return byWalking(answer)
+  return byWalking(answer) && !pricedOrder(answer)
     ? rows.toSorted(
         (one, other) =>
           (one.walk ?? Infinity) - (other.walk ?? Infinity) ||
@@ -132,8 +143,12 @@ function byWalking(answer: AnswerReply): boolean {
 
 // How the raised list is ordered, which its first line says: by walking ("걸음이 적은 순"); without any walking, the main
 // server's order, the earliest open first ("일찍 여는 순", P04 ticket 48); with a way on alone, where the User starts
-// being unknown, the main server's order of its pick first ("추천 순").
+// being unknown, the main server's order of its pick first ("추천 순"); by price as the main server ordered it ("싼 순",
+// P04 ticket 92).
 export function listOrderWords(answer: AnswerReply): string {
+  if (pricedOrder(answer)) {
+    return PRICED_ORDER_WORDS;
+  }
   if (byWalking(answer)) {
     return '걸음이 적은 순';
   }
@@ -248,7 +263,7 @@ function Heading({ words }: { words: string }): ReactElement {
 
 interface MealListProps {
   answer: AnswerReply;
-  shown: Pick<ShownAnswer, 'index' | 'openMenu' | 'chooseKind'>;
+  shown: Pick<ShownAnswer, 'index' | 'openMenu' | 'chooseKind' | 'change'>;
   // A Plan is being sent or is made, or a recalculation is on its way: nothing is chosen, as on the map.
   busy: boolean;
 }
@@ -281,8 +296,9 @@ export function MealList({ answer, shown, busy }: MealListProps): ReactElement |
       <Text numberOfLines={1} style={styles.order} testID="meal-list-order">
         {orderLineOf(answer, rows.length)}
       </Text>
-      <KindChips answer={answer} disabled={busy} onChoose={shown.chooseKind} />
+      <KindChips answer={answer} change={shown.change} disabled={busy} onChoose={shown.chooseKind} />
       {rows.map((one) => row(one))}
+      <OverPriceRows answer={answer} />
       {closed.length === 0 ? null : <Heading words={CLOSED_HEADING} />}
       {closed.map(({ place, notices }) => (
         <ClosedRow key={`${place.placeId}:${place.label}`} name={place.label} notice={notices.join(' ')} />

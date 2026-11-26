@@ -41,6 +41,7 @@ import { type Placed, thingsInOrder } from './answer-things';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
 import { candidateDraft, leftOutByRank, pickDraft, sideRank } from './answer-candidates';
 import { kindShown } from './meal-kinds';
+import { overPriceIds } from './meal-price';
 import { drawsMeal, hiddenRoutes, mealDrafts, sceneLines } from './meal-marks';
 import type { Ways } from './shuttle-legs';
 
@@ -106,12 +107,15 @@ export interface SceneSetting {
   ways?: Ways;
   // A meal answer's, menus or none: its pick and candidates in coral, as its list (P04 ticket 90). Left out, not.
   coral?: boolean;
+  // The plans over a price ceiling some others are under, which have no mark, as the places closed for the meal: the
+  // map shows only the places the User can choose now (P04 ticket 92). Left out, none.
+  over?: ReadonlySet<string>;
 }
 
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
 
 function placeDraft(
-  { number: pickNumber, plans, day, kind = null, meal = false, coral = false }: SceneSetting,
+  { number: pickNumber, plans, day, kind = null, meal = false, coral = false, over }: SceneSetting,
   scene: MapScene,
   item: MapScene['places'][number],
 ): Draft | null {
@@ -125,7 +129,10 @@ function placeDraft(
     return pickDraft({ title, position, number: pickNumber, plan, day, kind, meal, coral }, flag?.text ?? null);
   }
   if (role === 'candidate') {
-    return candidateDraft(plans, item, kind, meal, coral);
+    const planId = plans.find((one) => one.place.placeId === place.placeId && one.place.label === place.label)?.id;
+    return planId !== undefined && over?.has(planId) === true
+      ? null
+      : candidateDraft(plans, item, { kind, meal, coral });
   }
   if (role === 'stop' || role === 'meeting') {
     return role === 'stop' ? stopDraft(item) : null;
@@ -303,6 +310,7 @@ export function drawingOf(
     kept: answer.planSet,
     meal: drawsMeal(answer),
     coral: answer.input.kind === 'meal',
+    over: overPriceIds(answer),
     ...(ways === undefined ? {} : { ways }),
   });
 }

@@ -63,6 +63,12 @@ function isSkippedOrNone(value: unknown): boolean {
   return value === undefined || listOf(isText)(value);
 }
 
+// A price condition: absent, or a ceiling in won and the cheapest first (P05 ticket 53).
+function isPriceOrNone(value: unknown): boolean {
+  const [maxPrice, cheapFirst] = [field(value, 'maxPrice'), field(value, 'cheapFirst')];
+  return (maxPrice === undefined || typeof maxPrice === 'number') && (cheapFirst === undefined || cheapFirst === true);
+}
+
 function isMealInput(value: unknown): value is MealInput {
   return (
     field(value, 'kind') === 'meal' &&
@@ -70,7 +76,8 @@ function isMealInput(value: unknown): value is MealInput {
     isGathering(value) &&
     hasNow(field(value, 'window')) &&
     isCuisineOrNone(field(value, 'cuisine')) &&
-    isSkippedOrNone(field(value, 'skipped'))
+    isSkippedOrNone(field(value, 'skipped')) &&
+    isPriceOrNone(value)
   );
 }
 

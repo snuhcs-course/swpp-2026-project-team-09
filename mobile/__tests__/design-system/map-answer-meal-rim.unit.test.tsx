@@ -86,7 +86,7 @@ describe('MapAnswerMark: the rounds that keep their white ring', () => {
 // addition to the ticket, the list's number at the map's size and weight so that the two read as the same mark.
 describe("the meal list's badge number", () => {
   it("is the size and weight of the number in the map's round, chosen or not", async () => {
-    const shown = { index: 0, openMenu: ignoreMark, chooseKind: ignoreMark };
+    const shown = { index: 0, openMenu: ignoreMark, chooseKind: ignoreMark, change: ignoreMark };
     await render(<MealList answer={MEAL_ANSWER_MENUS} busy={false} shown={shown} />);
 
     for (const digits of ['1', '3']) {
