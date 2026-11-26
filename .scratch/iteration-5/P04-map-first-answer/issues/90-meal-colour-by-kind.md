@@ -26,7 +26,14 @@ The colour follows the answer's kind (the orchestrator, 2026-11-26).
 
 ## Acceptance criteria
 
-- [ ] A meal answer without menus: every drawn round and every label of its pick and candidates is a meal's.
-- [ ] Its name tag has a coral edge and a soft coral number with a coral number; its pick's label a coral edge.
-- [ ] A meet answer's picks carry no meal flag.
-- [ ] Emulator screens of the stored answer without the location at font scale 1.0 and 1.3.
+- [x] A meal answer without menus: every drawn round and every label of its pick and candidates is a meal's.
+- [x] Its name tag has a coral edge and a soft coral number with a coral number; its pick's label a coral edge.
+- [x] A meet answer's picks carry no meal flag.
+- [x] Emulator screens of the stored answer without the location at font scale 1.0 and 1.3.
+
+## Comments
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 50 minutes in the p04-58 session, from 08:40 UTC (after ticket 89's PR) to the push, an estimate. It includes the emulator screens at font scale 1.0 and 1.3. No subagents.
+- Tokens, from 08:40 UTC to this entry: input 338 uncached, with cache reads 106,009,940 and cache writes 1,037,196; output 82,615.
