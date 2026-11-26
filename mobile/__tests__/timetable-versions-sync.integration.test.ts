@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -14,7 +15,7 @@ import { mockClient } from '@/api/mock/client';
 import type { ClassSave } from '@/api/types';
 import * as signIn from '@/auth/sign-in';
 import * as clock from '@/clock';
-import { EMPTY_DRAFT } from '@/features/timetable/class-form';
+import { EMPTY_SLOT } from '@/features/timetable/class-form';
 import { semesterName } from '@/features/timetable/version-parts';
 import { useClassChanges } from '@/features/timetable/use-timetable';
 import {
@@ -95,7 +96,7 @@ function failSecondAdd(): { heal: () => void } {
   };
 }
 
-const draft = { ...EMPTY_DRAFT, name: '창의공학설계', days: [4], start: '09:00', end: '10:15' };
+const draft = { name: '창의공학설계', slots: [{ ...EMPTY_SLOT, days: [4], start: '09:00', end: '10:15' }] };
 
 // The class form's changes, as the timetable screens use them.
 async function classChanges(): Promise<{ current: ReturnType<typeof useClassChanges> }> {
