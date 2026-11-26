@@ -105,19 +105,6 @@ describe('two candidates at one point when room is short', () => {
   });
 });
 
-// Partitions: the emulator's view, where some candidates' tags do not fit; every Plan of the answer on screen.
-describe('candidates whose tags do not fit', () => {
-  it.each([0, 1, 2, 3, 4])('leaves them out from the lowest rank upward, Plan %i on screen', (index) => {
-    const drawing = drawingOf(MEAL_ANSWER_MENUS, index, undefined, viewAt(FIRST_CAMERA));
-    const tagged = MEAL_ANSWER_MENUS.plans
-      .map((plan) => drawing.things.find(({ id }) => id === `answer:candidate:${plan.place.label}`))
-      .flatMap((thing) => (thing?.look.kind === 'answer' ? [thing.look.label !== null] : []));
-
-    expect(tagged).toHaveLength(4);
-    expect(tagged).toEqual(tagged.toSorted((one, other) => Number(other) - Number(one)));
-  });
-});
-
 // The third Plan (the pick 학생회관식당) in a crowded view: an area around 302동 only, where no side of candidate 1's
 // tag fits. 302동식당 (1) stands on 민수's point and 301동식당 (2) on the User's, so neither has a dot of its own.
 describe('a candidate without a dot of its own when room is short (review of PR 437)', () => {

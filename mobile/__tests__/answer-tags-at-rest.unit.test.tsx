@@ -202,16 +202,16 @@ describe('the tags of a meal answer where the map comes to rest (P04 ticket 69)'
   });
 
   // P04 ticket 83: a capsule runs to the right of its round, or to the left, never above or below. 3식당 (4) stands 14
-  // points from 자하연식당 2층's round (5) at its right and has 301동식당's minutes (2) at its left, so 4 and 5 keep their
-  // numbered rounds alone, the later ranks giving way as before.
-  it('tags 2 and 3 once the map rests where all of them show, and 4 between two neighbours has no room', async () => {
+  // points from 자하연식당 2층's round (5) at its right and has 301동식당's minutes (2) at its left, so 4 keeps its
+  // numbered round alone; 5 keeps its minutes, which have room (P04 ticket 84).
+  it('tags 2, 3 and 5 once the map rests where all of them show, and 4 between two neighbours has no room', async () => {
     const { drawn, restAt, first } = await rendered();
     const north = northOf(first);
     expect(CANDIDATES.map((label) => inArea(movedTo(label), north))).toEqual([true, true, true, true]);
 
     await restAt(north);
 
-    expect(taggedAll(drawn())).toEqual([true, true, false, false]);
+    expect(taggedAll(drawn())).toEqual([true, true, false, true]);
   });
 
   it('tags both neighbours once the map rests zoomed in on them, and the others keep their numbered dots', async () => {
