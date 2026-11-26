@@ -2,7 +2,7 @@
 
 Parent: [A01 spec](../spec.md)
 Status: ready-for-agent
-Pull request: none yet
+Pull request: #610
 Blocked by: None
 
 Native files: none. Releases: none; only test files change.
@@ -47,3 +47,10 @@ Two more tests fired the same layout on `time-bar` and passed without testing wh
 - [x] No app source or native file changes; lint, format, and types pass on the app.
 
 ## Comments
+
+Built in PR #610 from a triage of nightly-level run 45807726226. Each file was run alone on 5.0/Main or this branch with `--maxWorkers=2`. `answer-sheet-high` was bisected over every app commit since PR 553. Its stage height was found by logging the sheet's inputs.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 1.2 hours in one session, test runs and the bisect included (an estimate).
+- Tokens, to the PR's opening: input 25,195,098 (cache reads 24,968,101, cache writes 226,731, uncached 266); output 72,181. No subagents.
