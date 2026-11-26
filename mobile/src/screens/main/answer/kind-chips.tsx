@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -9,6 +10,9 @@ import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import type { AnswerReply, Cuisine } from '@/api/assistant-types';
 import { color, radius, size, space, text } from '@/design-system';
 import { kindChipsOf, kindOn } from '@/features/assistant/meal-kinds';
+import { conditionChipsOf, fittingPlans } from '@/features/assistant/meal-price';
+import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
+import { ConditionChips } from './condition-chip';
 
 const CHIP_HEIGHT = 34;
 const HIT_SLOP = (size.touchMin - CHIP_HEIGHT) / 2;
@@ -19,6 +23,8 @@ interface KindChipsProps {
   disabled: boolean;
   // Chooses a kind on the phone, or clears it with null.
   onChoose: (kind: Cuisine | null) => void;
+  // Asks for the answer without a condition set in words (P04 ticket 92).
+  change: ShownAnswer['change'];
 }
 
 function Chip({
@@ -51,10 +57,13 @@ function Chip({
 
 // The kinds of food of a meal answer over its list (board E3), which filter it: "전체" with the count of every
 // candidate, then a chip per kind with its count of places. The kind on screen is filled, and the map recedes the
-// candidates without it (P04 ticket 16). Nothing with fewer than two kinds, or with one candidate alone.
-export function KindChips({ answer, disabled, onChoose }: KindChipsProps): ReactElement | null {
-  const chips = answer === null || answer.plans.length < 2 ? [] : kindChipsOf(answer.plans);
-  if (answer === null || chips.length === 0) {
+// candidates without it (P04 ticket 16). No kinds with fewer than two of them, or with one candidate alone. Before them,
+// the conditions set in words, each with its ✕, and a thin line (P04 ticket 92); the places over a price ceiling are
+// not counted.
+export function KindChips({ answer, disabled, onChoose, change }: KindChipsProps): ReactElement | null {
+  const plans = answer === null ? [] : fittingPlans(answer);
+  const chips = plans.length < 2 ? [] : kindChipsOf(plans);
+  if (answer === null || (chips.length === 0 && conditionChipsOf(answer).length === 0)) {
     return null;
   }
   const chosen = kindOn(answer);
@@ -66,15 +75,18 @@ export function KindChips({ answer, disabled, onChoose }: KindChipsProps): React
       showsHorizontalScrollIndicator={false}
       testID="kind-chips"
     >
-      <Chip
-        disabled={disabled}
-        on={chosen === null}
-        onPress={() => {
-          onChoose(null);
-        }}
-        said={`전체 ${String(answer.plans.length)}곳`}
-        words={`전체 ${String(answer.plans.length)}`}
-      />
+      <ConditionChips answer={answer} change={change} disabled={disabled} divided={chips.length > 0} />
+      {chips.length === 0 ? null : (
+        <Chip
+          disabled={disabled}
+          on={chosen === null}
+          onPress={() => {
+            onChoose(null);
+          }}
+          said={`전체 ${String(plans.length)}곳`}
+          words={`전체 ${String(plans.length)}`}
+        />
+      )}
       {chips.map(({ kind, places }) => (
         <Chip
           disabled={disabled}

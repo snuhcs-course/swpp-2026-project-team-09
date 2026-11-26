@@ -124,19 +124,23 @@ function mealDraft(plan: Plan, number: number, { place, tag }: MapScene['places'
 }
 
 // Another candidate: its number, its name, and its arrival time. A meal answer's is a small tag (`mealDraft`); one
-// without the kind of food on screen recedes.
+// without the kind of food on screen recedes, and so does one over a price ceiling others are under (`over`, P04
+// ticket 92).
 export function candidateDraft(
   plans: readonly Plan[],
   item: MapScene['places'][number],
-  kind: Cuisine | null = null,
-  meal = false,
-  coral = false,
+  {
+    kind = null,
+    meal = false,
+    coral = false,
+    over,
+  }: { kind?: Cuisine | null; meal?: boolean; coral?: boolean; over?: ReadonlySet<string> | undefined } = {},
 ): Draft {
   const { place, tag } = item;
   const title = tag ?? place.label;
   const index = plans.findIndex((plan) => plan.place.placeId === place.placeId && plan.place.label === place.label);
   const plan: Plan | undefined = plans[index];
-  if (plan !== undefined && kind !== null && !serves(plan, kind)) {
+  if (plan !== undefined && ((kind !== null && !serves(plan, kind)) || over?.has(plan.id) === true)) {
     return recededDraft(plan, item);
   }
   if (plan !== undefined && meal) {

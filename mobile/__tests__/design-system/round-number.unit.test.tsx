@@ -74,7 +74,7 @@ describe('a number in a round on the map', () => {
 // Partitions: the chosen row's badge and another row's. Expected values: the badge of 22 less its rim of 1.5.
 describe('a number in a meal list’s badge', () => {
   it('keeps its size and is centred, chosen or not', async () => {
-    const shown = { index: 0, openMenu: ignoreMark, chooseKind: ignoreMark };
+    const shown = { index: 0, openMenu: ignoreMark, chooseKind: ignoreMark, change: ignoreMark };
     await render(<MealList answer={MEAL_ANSWER_MENUS} busy={false} shown={shown} />);
 
     expectCentredIn(numberOf('1'), 19);

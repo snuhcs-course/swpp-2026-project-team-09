@@ -33,6 +33,7 @@ import { CROWDED_ASKED, crowdedMealAnswer, crowdedMealReply, crowdedWithFriend }
 import { MEAL_ANSWER, MEAL_ANSWER_REPLY } from './data/meal-answer';
 import { skippedReplyTo } from './data/skipped-classes';
 import { MEAL_ANSWER_MENUS_REPLY, MEAL_DINNER_MENUS } from './data/meal-answer-menus';
+import { pricedCopy, priceReplyOf } from './data/meal-price-answer';
 import { asksUnnamedCompany, UNNAMED_COMPANY_REPLY } from './data/unnamed-company';
 import { FRIEND_LOOKUP_REPLY } from './data/friend-lookup';
 import { cancelReplyTo } from './data/cancel-quest';
@@ -225,7 +226,7 @@ function copyFor(input: PlanInput): AnswerReply {
 // server's real answer that fits who is in the conditions, whether the window's start is fixed, and where the User
 // sets out from, holding the input it was given.
 export function mockRecalculation(input: PlanInput): AnswerReply {
-  return { ...copyFor(input), input };
+  return { ...pricedCopy(copyFor(input), input), input };
 }
 
 // A press without a main server: the stored card of that building or Friend. The mock does not calculate, so a building
@@ -275,7 +276,7 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
     return UNNAMED_COMPANY_REPLY;
   }
   if (last.includes('뭐 먹을까')) {
-    return MEAL_ANSWER_MENUS_REPLY;
+    return priceReplyOf(last) ?? MEAL_ANSWER_MENUS_REPLY;
   }
   if (last.includes('배고파')) {
     return hungryReplyOf(context);
@@ -292,7 +293,7 @@ function drawnReplyOf(last: string, context: RequestContext): AssistantReply | n
   if (last.includes('민수') && last.includes('어디')) {
     return FRIEND_LOOKUP_REPLY;
   }
-  return rowFourReplyOf(last) ?? wayReplyOf(last);
+  return priceReplyOf(last) ?? rowFourReplyOf(last) ?? wayReplyOf(last);
 }
 
 export function mockAssistantReply(messages: readonly ChatMessage[], context: RequestContext): AssistantReply {
