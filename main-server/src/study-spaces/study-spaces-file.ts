@@ -2,11 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-04  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type Affiliation } from '../generated/prisma/client.js';
 import { type PlaceDto } from '../places/dto/place.dto.js';
+import { calendarSchema, scheduleSchema } from './study-hours.js';
 
 // The 공부공간 layer's data (README.md: Seed data): `seed/study-spaces.json`, the Study Spaces by building, and
 // `seed/department-colleges.json`, the college of each department of the app's list. Both are read once when the
@@ -45,6 +47,8 @@ const spaceSchema = z.strictObject({
   confidence: z.enum(['high', 'medium']),
   // A conflict between sources, for the reviewer. Never served.
   note: text.nullable(),
+  // The hours as data (P10 ticket 01), which the Assistant reads; `hours` stays the text the layer shows. Never served.
+  schedule: scheduleSchema,
 });
 
 const buildingSchema = z.strictObject({
@@ -58,6 +62,8 @@ const buildingSchema = z.strictObject({
 
 export const studySpacesSchema = z.strictObject({
   checkedOn: z.iso.date(),
+  // The days the schedules depend on: the term's vacations and the public holidays.
+  calendar: calendarSchema,
   buildings: z.array(buildingSchema).min(1),
 });
 

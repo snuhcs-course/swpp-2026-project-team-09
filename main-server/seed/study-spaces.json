@@ -1,5 +1,31 @@
 {
-  "checkedOn": "2026-11-04",
+  "checkedOn": "2026-11-26",
+  "calendar": {
+    "terms": {
+      "known": {
+        "from": "2026-03-01",
+        "to": "2027-02-28"
+      },
+      "vacations": [
+        {
+          "from": "2026-06-23",
+          "to": "2026-08-31"
+        },
+        {
+          "from": "2026-12-22",
+          "to": "2027-02-28"
+        }
+      ],
+      "source": "https://www.snu.ac.kr/academics/resources/calendar"
+    },
+    "holidays": {
+      "known": null,
+      "dates": [],
+      "lunar": [],
+      "source": null
+    },
+    "note": "Vacations from the 2026학년도 학사일정 (read 2026-11-27); the 2027 1학기 is not published yet. The public holidays are not filled yet: no official list was readable, so every day may be a holiday."
+  },
   "buildings": [
     {
       "place": "62",
@@ -15,7 +41,44 @@
           "link": "https://lib.snu.ac.kr/about/hour-directions/hours/central/",
           "source": "https://lib.snu.ac.kr/about/hour-directions/",
           "confidence": "medium",
-          "note": "3A열람실 24시간: the library's hours page and snu.ac.kr say 24시간, 나무위키 (2026-06-17) says it is not open all night. Research items 1, 2, 5, 6, 7 in one row; SNU Commons (1·2층, 평일 09–18) and 헤리티지 라운지 are not rows."
+          "note": "3A열람실 24시간: the library's hours page and snu.ac.kr say 24시간, 나무위키 (2026-06-17) says it is not open all night. Research items 1, 2, 5, 6, 7 in one row; SNU Commons (1·2층, 평일 09–18) and 헤리티지 라운지 are not rows.",
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "00:00",
+                  "close": "24:00"
+                }
+              ],
+              "saturday": [
+                {
+                  "open": "00:00",
+                  "close": "24:00"
+                }
+              ],
+              "sunday": [
+                {
+                  "open": "00:00",
+                  "close": "24:00"
+                }
+              ]
+            },
+            "vacation": null,
+            "holiday": "saturday",
+            "lunarHolidays": [
+              {
+                "open": "00:00",
+                "close": "24:00"
+              }
+            ],
+            "periods": [],
+            "confidence": "medium",
+            "sources": [
+              "https://lib.snu.ac.kr/about/hour-directions/hours/central/",
+              "https://www.snu.ac.kr/campuslife/facilities/library"
+            ],
+            "note": "3A열람실 24시간 on every day type, 추석·설 included (L-C, snu.ac.kr, the 2019 brochure); not checked on the ground. 3B 07:00–23:00 every day; 자료실·정보검색실 평일 09:00–21:00, 토·공휴일 10:00–17:00, 일 13:00–17:00, closed during 추석·설."
+          }
         }
       ]
     },
@@ -33,7 +96,36 @@
           "link": "https://lib.snu.ac.kr/about/hour-directions/",
           "source": "https://lib.snu.ac.kr/about/hour-directions/",
           "confidence": "medium",
-          "note": "Research items 8–11 and 13–20 in one row. The 7·8층 seat count differs by source (1,786 in 2015, about 2,000, 4,000여)."
+          "note": "Research items 8–11 and 13–20 in one row. The 7·8층 seat count differs by source (1,786 in 2015, about 2,000, 4,000여).",
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "07:00",
+                  "close": "23:00"
+                }
+              ],
+              "saturday": [
+                {
+                  "open": "07:00",
+                  "close": "23:00"
+                }
+              ],
+              "sunday": [
+                {
+                  "open": "07:00",
+                  "close": "23:00"
+                }
+              ]
+            },
+            "vacation": null,
+            "holiday": "saturday",
+            "lunarHolidays": "closed",
+            "periods": [],
+            "confidence": "high",
+            "sources": ["https://lib.snu.ac.kr/about/hour-directions/hours/central/"],
+            "note": "7·8열람실 07:00–23:00 every day; 그룹스터디룸·정보검색실 09:00–23:00 every day; closed during 추석·설. 8B for graduate students is not on today's L-C, not re-verified."
+          }
         }
       ]
     },
@@ -46,7 +138,7 @@
           "key": "business-reading-room",
           "name": "열람실",
           "kind": "reading",
-          "hours": "07:00–23:00",
+          "hours": "평일 09:00–23:00",
           "restriction": {
             "colleges": ["경영대학"],
             "label": "경영대학"
@@ -54,24 +146,68 @@
           "link": "https://cba.snu.ac.kr/campus/library",
           "source": "https://lib.snu.ac.kr/about/hour-directions/hours/branch/",
           "confidence": "medium",
-          "note": "Hours conflict: the library's branch page says 07:00–23:00 every day, cba.snu.ac.kr says 평일 09:00–23:00 and closed on weekends. Who may use it is from a 2009 notice."
+          "note": "Hours conflict: the 경영대학's page (cba.snu.ac.kr) says 평일 09:00–23:00 and closed on weekends, the library's branch page 07:00–23:00 every day, the 2019 brochure 06:00–23:00. The narrower, the college's, is shown. Who may use it is from a 2009 notice.",
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "09:00",
+                  "close": "23:00"
+                }
+              ],
+              "saturday": "closed",
+              "sunday": "closed"
+            },
+            "vacation": null,
+            "holiday": null,
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "low",
+            "sources": [
+              "https://cba.snu.ac.kr/campus/library",
+              "https://lib.snu.ac.kr/about/hour-directions/hours/branch/"
+            ],
+            "note": "Sources disagree: the 경영대학's page gives 평일 09:00–23:00 and closed on weekends, L-B gives 07:00–23:00 every day, the 2019 brochure 06:00–23:00. The narrower, the college's, is used; holidays not stated."
+          }
         },
         {
           "key": "business-free-seats",
           "name": "자유열람석",
           "kind": "reading",
-          "hours": "07:00–23:00",
+          "hours": "평일 09:00–23:00",
           "restriction": null,
           "link": "https://cba.snu.ac.kr/campus/library",
           "source": "https://lib.snu.ac.kr/about/hour-directions/hours/branch/",
           "confidence": "medium",
-          "note": "Hours conflict as for 열람실."
+          "note": "Hours conflict as for 열람실; the narrower hours are shown.",
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "09:00",
+                  "close": "23:00"
+                }
+              ],
+              "saturday": "closed",
+              "sunday": "closed"
+            },
+            "vacation": null,
+            "holiday": null,
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "low",
+            "sources": [
+              "https://cba.snu.ac.kr/campus/library",
+              "https://lib.snu.ac.kr/about/hour-directions/hours/branch/"
+            ],
+            "note": "Neither page names 자유열람석; taken as the 열람실, with its conflict (the college's narrower hours used)."
+          }
         },
         {
           "key": "business-group-rooms",
           "name": "그룹스터디룸·세미나실",
           "kind": "group",
-          "hours": null,
+          "hours": "09:00–22:00",
           "restriction": {
             "colleges": ["경영대학"],
             "label": "경영대학"
@@ -79,7 +215,36 @@
           "link": "https://ssims.snu.ac.kr",
           "source": "https://www.mycba.co.kr/seminar-room",
           "confidence": "medium",
-          "note": "Booked on 예약하샤, up to 3 hours, 3 people at least; no opening hours given."
+          "note": "Booked on 예약하샤, up to 3 hours, 3 people at least. Hours of the 세미나실 from mycba.co.kr (월–일 09:00–22:00).",
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "09:00",
+                  "close": "22:00"
+                }
+              ],
+              "saturday": [
+                {
+                  "open": "09:00",
+                  "close": "22:00"
+                }
+              ],
+              "sunday": [
+                {
+                  "open": "09:00",
+                  "close": "22:00"
+                }
+              ]
+            },
+            "vacation": null,
+            "holiday": null,
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "medium",
+            "sources": ["https://www.mycba.co.kr/seminar-room"],
+            "note": "세미나실 (58동 231, 233~235, 333~339호): \"월요일 - 일요일 09:00 - 22:00\". The library's own group study rooms in 58동 2층 are not on today's L-B."
+          }
         }
       ]
     },
@@ -97,7 +262,39 @@
           "link": "https://lib.snu.ac.kr/about/libraries/law-library/",
           "source": "https://lib.snu.ac.kr/about/libraries/law-library/l-guide/",
           "confidence": "medium",
-          "note": "Who may use it is not stated (probably mostly 법학); shown as usable until the PM checks it. 서암법학관 2층 136석 and 국산법학도서관 3층 86석."
+          "note": "Who may use it is not stated (probably mostly 법학); shown as usable until the PM checks it. 서암법학관 2층 136석 and 국산법학도서관 3층 86석.",
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "06:00",
+                  "close": "01:00"
+                }
+              ],
+              "saturday": [
+                {
+                  "open": "06:00",
+                  "close": "01:00"
+                }
+              ],
+              "sunday": [
+                {
+                  "open": "06:00",
+                  "close": "01:00"
+                }
+              ]
+            },
+            "vacation": null,
+            "holiday": "saturday",
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "high",
+            "sources": [
+              "https://lib.snu.ac.kr/about/libraries/law-library/l-guide/",
+              "https://lib.snu.ac.kr/about/hour-directions/hours/branch/"
+            ],
+            "note": "Every day confirmed. Whether it opens during 추석·설 is not stated (the branch table has no column for them)."
+          }
         }
       ]
     },
@@ -115,7 +312,39 @@
           "link": "https://lib.snu.ac.kr/about/libraries/law-library/",
           "source": "https://lib.snu.ac.kr/about/libraries/law-library/l-guide/",
           "confidence": "medium",
-          "note": "Who may use it is not stated; shown as usable until the PM checks it."
+          "note": "Who may use it is not stated; shown as usable until the PM checks it.",
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "06:00",
+                  "close": "01:00"
+                }
+              ],
+              "saturday": [
+                {
+                  "open": "06:00",
+                  "close": "01:00"
+                }
+              ],
+              "sunday": [
+                {
+                  "open": "06:00",
+                  "close": "01:00"
+                }
+              ]
+            },
+            "vacation": null,
+            "holiday": "saturday",
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "high",
+            "sources": [
+              "https://lib.snu.ac.kr/about/libraries/law-library/l-guide/",
+              "https://lib.snu.ac.kr/about/hour-directions/hours/branch/"
+            ],
+            "note": "As 법학도서관 열람실."
+          }
         }
       ]
     },
@@ -133,7 +362,29 @@
           "link": "https://lib.snu.ac.kr/about/libraries/socialsciences-library/",
           "source": "https://social.snu.ac.kr/en/library/",
           "confidence": "medium",
-          "note": null
+          "note": null,
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "09:00",
+                  "close": "18:00"
+                }
+              ],
+              "saturday": "closed",
+              "sunday": "closed"
+            },
+            "vacation": null,
+            "holiday": "saturday",
+            "lunarHolidays": "closed",
+            "periods": [],
+            "confidence": "high",
+            "sources": [
+              "https://lib.snu.ac.kr/about/hour-directions/hours/branch/",
+              "https://social.snu.ac.kr/en/library/"
+            ],
+            "note": null
+          }
         },
         {
           "key": "social-sciences-group-rooms",
@@ -147,7 +398,26 @@
           "link": "https://lib.snu.ac.kr/about/libraries/socialsciences-library/",
           "source": "https://social.snu.ac.kr/en/library/",
           "confidence": "medium",
-          "note": "Its booking site sslib.snu.ac.kr/reserve/study_room has no DNS now."
+          "note": "Its booking site sslib.snu.ac.kr/reserve/study_room has no DNS now.",
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "09:00",
+                  "close": "19:50"
+                }
+              ],
+              "saturday": "closed",
+              "sunday": "closed"
+            },
+            "vacation": null,
+            "holiday": null,
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "low",
+            "sources": ["https://sslib.snu.ac.kr/reserve/study_room"],
+            "note": "Unverified: read only from a search engine's copy of the booking page; the site is down and social.snu.ac.kr does not state it."
+          }
         }
       ]
     },
@@ -165,7 +435,36 @@
           "link": "https://lib.snu.ac.kr/about/hour-directions/hours/branch/",
           "source": "https://lib.snu.ac.kr/about/hour-directions/hours/branch/",
           "confidence": "medium",
-          "note": "Building conflict: the library's page says 75-1, cals.snu.ac.kr says 202 (not in the seed). Reopened 2026-04-03."
+          "note": "Building conflict: the library's page says 75-1, cals.snu.ac.kr says 202 (not in the seed). Reopened 2026-04-03.",
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "06:30",
+                  "close": "22:30"
+                }
+              ],
+              "saturday": [
+                {
+                  "open": "06:30",
+                  "close": "22:30"
+                }
+              ],
+              "sunday": [
+                {
+                  "open": "06:30",
+                  "close": "22:30"
+                }
+              ]
+            },
+            "vacation": null,
+            "holiday": "saturday",
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "high",
+            "sources": ["https://lib.snu.ac.kr/about/hour-directions/hours/branch/"],
+            "note": "Every day confirmed; 추석·설 not stated."
+          }
         },
         {
           "key": "agriculture-stacks",
@@ -176,7 +475,26 @@
           "link": "https://lib.snu.ac.kr/about/hour-directions/hours/branch/",
           "source": "https://lib.snu.ac.kr/about/hour-directions/hours/branch/",
           "confidence": "medium",
-          "note": "Building as for 상록 라키비움."
+          "note": "Building as for 상록 라키비움.",
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "09:00",
+                  "close": "18:00"
+                }
+              ],
+              "saturday": "closed",
+              "sunday": "closed"
+            },
+            "vacation": null,
+            "holiday": "saturday",
+            "lunarHolidays": "closed",
+            "periods": [],
+            "confidence": "high",
+            "sources": ["https://lib.snu.ac.kr/about/hour-directions/hours/branch/"],
+            "note": null
+          }
         }
       ]
     },
@@ -187,14 +505,76 @@
       "spaces": [
         {
           "key": "veterinary-library",
-          "name": "자료실·그룹스터디룸",
+          "name": "정보자료실",
           "kind": "library",
           "hours": "평일 09:00–18:00",
           "restriction": null,
           "link": "https://libguide.snu.ac.kr/vetlib/home",
           "source": "https://www.dailyvet.co.kr/v/300189",
           "confidence": "medium",
-          "note": null
+          "note": null,
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "09:00",
+                  "close": "18:00"
+                }
+              ],
+              "saturday": "closed",
+              "sunday": "closed"
+            },
+            "vacation": null,
+            "holiday": "saturday",
+            "lunarHolidays": "closed",
+            "periods": [],
+            "confidence": "high",
+            "sources": ["https://lib.snu.ac.kr/about/hour-directions/hours/branch/"],
+            "note": "정보자료실. The 그룹스터디룸 is its own space now (veterinary-group-rooms)."
+          }
+        },
+        {
+          "key": "veterinary-group-rooms",
+          "name": "그룹스터디룸",
+          "kind": "group",
+          "hours": "07:00–23:00",
+          "restriction": null,
+          "link": "https://libguide.snu.ac.kr/vetlib/home",
+          "source": "https://www.dailyvet.co.kr/v/300189",
+          "confidence": "medium",
+          "note": "Split from 자료실·그룹스터디룸 by the hours research of 2026-11-26: the library page gives the room 07:00–23:00 every day.",
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "07:00",
+                  "close": "23:00"
+                }
+              ],
+              "saturday": [
+                {
+                  "open": "07:00",
+                  "close": "23:00"
+                }
+              ],
+              "sunday": [
+                {
+                  "open": "07:00",
+                  "close": "23:00"
+                }
+              ]
+            },
+            "vacation": null,
+            "holiday": "saturday",
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "high",
+            "sources": [
+              "https://lib.snu.ac.kr/about/hour-directions/hours/branch/",
+              "https://libguide.snu.ac.kr/vetlib/home"
+            ],
+            "note": "The library page's hours. The exam-period 24 hours (2026-11-24 to 12-14) name the 힐링·회복 공간 and the 공동학습실; whether the 공동학습실 is this room is not stated, so it is not applied."
+          }
         },
         {
           "key": "veterinary-healing-space",
@@ -208,7 +588,65 @@
           "link": "https://libguide.snu.ac.kr/vetlib/home",
           "source": "https://www.dailyvet.co.kr/v/300189",
           "confidence": "medium",
-          "note": "Opened on 10월 8일, probably 2026."
+          "note": "Opened on 10월 8일, probably 2026.",
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "07:00",
+                  "close": "23:00"
+                }
+              ],
+              "saturday": [
+                {
+                  "open": "07:00",
+                  "close": "23:00"
+                }
+              ],
+              "sunday": [
+                {
+                  "open": "07:00",
+                  "close": "23:00"
+                }
+              ]
+            },
+            "vacation": null,
+            "holiday": "saturday",
+            "lunarHolidays": null,
+            "periods": [
+              {
+                "from": "2026-11-24",
+                "to": "2026-12-14",
+                "week": {
+                  "weekday": [
+                    {
+                      "open": "00:00",
+                      "close": "24:00"
+                    }
+                  ],
+                  "saturday": [
+                    {
+                      "open": "00:00",
+                      "close": "24:00"
+                    }
+                  ],
+                  "sunday": [
+                    {
+                      "open": "00:00",
+                      "close": "24:00"
+                    }
+                  ]
+                },
+                "note": "\"힐링·회복 공간 및 공동학습실 기말고사 대비 24시간 개방 운영\" (libguide, read 2026-11-26)"
+              }
+            ],
+            "confidence": "high",
+            "sources": [
+              "https://lib.snu.ac.kr/about/hour-directions/hours/branch/",
+              "https://libguide.snu.ac.kr/vetlib/home"
+            ],
+            "note": "Exam period from the libguide (medium)."
+          }
         }
       ]
     },
@@ -226,7 +664,26 @@
           "link": "https://lib.snu.ac.kr/about/libraries/music-library/",
           "source": "https://lib.snu.ac.kr/about/libraries/music-library/",
           "confidence": "medium",
-          "note": null
+          "note": null,
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "09:00",
+                  "close": "18:00"
+                }
+              ],
+              "saturday": "closed",
+              "sunday": "closed"
+            },
+            "vacation": null,
+            "holiday": "saturday",
+            "lunarHolidays": "closed",
+            "periods": [],
+            "confidence": "high",
+            "sources": ["https://lib.snu.ac.kr/about/hour-directions/hours/branch/"],
+            "note": "For the 열람실; the 그룹스터디룸 is not listed."
+          }
         }
       ]
     },
@@ -244,7 +701,26 @@
           "link": "https://lib.snu.ac.kr/about/libraries/international-library/",
           "source": "https://lib.snu.ac.kr/about/libraries/international-library/",
           "confidence": "medium",
-          "note": "Whether it has reading seats is not stated."
+          "note": "Whether it has reading seats is not stated.",
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "09:00",
+                  "close": "18:00"
+                }
+              ],
+              "saturday": "closed",
+              "sunday": "closed"
+            },
+            "vacation": null,
+            "holiday": "saturday",
+            "lunarHolidays": "closed",
+            "periods": [],
+            "confidence": "high",
+            "sources": ["https://lib.snu.ac.kr/about/hour-directions/hours/branch/"],
+            "note": null
+          }
         }
       ]
     },
@@ -262,7 +738,35 @@
           "link": "https://eng.snu.ac.kr/about/support-facilities/sinyang-library",
           "source": "https://eng.snu.ac.kr/about/support-facilities/sinyang-library",
           "confidence": "medium",
-          "note": "The page has no date; it says the room is open to all but some facilities need a 학생증."
+          "note": "The page has no date; it says the room is open to all but some facilities need a 학생증.",
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "00:00",
+                  "close": "24:00"
+                }
+              ],
+              "saturday": null,
+              "sunday": null
+            },
+            "vacation": {
+              "weekday": [
+                {
+                  "open": "08:00",
+                  "close": "24:00"
+                }
+              ],
+              "saturday": null,
+              "sunday": null
+            },
+            "holiday": null,
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "medium",
+            "sources": ["https://eng.snu.ac.kr/about/support-facilities/sinyang-library"],
+            "note": "\"학기중 24시간, 방학중 08:00-24:00\" with no day types: weekends and holidays not stated."
+          }
         },
         {
           "key": "engineering-sinyang-pc-rooms",
@@ -273,7 +777,21 @@
           "link": "https://eng.snu.ac.kr/about/support-facilities/sinyang-library",
           "source": "https://eng.snu.ac.kr/about/support-facilities/sinyang-library",
           "confidence": "medium",
-          "note": null
+          "note": null,
+          "schedule": {
+            "week": {
+              "weekday": null,
+              "saturday": null,
+              "sunday": null
+            },
+            "vacation": null,
+            "holiday": null,
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "low",
+            "sources": [],
+            "note": "Not found: the eng.snu.ac.kr page lists the rooms and PCs with no hours (also checked in its pictures, 2026-11-27)."
+          }
         },
         {
           "key": "engineering-sinyang-group-rooms",
@@ -287,7 +805,21 @@
           "link": "https://ssims.snu.ac.kr",
           "source": "https://eng.snu.ac.kr/about/support-facilities/sinyang-library",
           "confidence": "medium",
-          "note": "Booked on 예약하샤; no opening hours given."
+          "note": "Booked on 예약하샤; no opening hours given.",
+          "schedule": {
+            "week": {
+              "weekday": null,
+              "saturday": null,
+              "sunday": null
+            },
+            "vacation": null,
+            "holiday": null,
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "low",
+            "sources": [],
+            "note": "Not found: only \"예약하샤를 통해 예약\"; the hours are probably behind 예약하샤's login."
+          }
         }
       ]
     },
@@ -308,7 +840,21 @@
           "link": "https://ssims.snu.ac.kr",
           "source": "https://eng.snu.ac.kr/about/support-facilities/sinyang-library",
           "confidence": "medium",
-          "note": "Booked on 예약하샤; no opening hours given."
+          "note": "Booked on 예약하샤; no opening hours given.",
+          "schedule": {
+            "week": {
+              "weekday": null,
+              "saturday": null,
+              "sunday": null
+            },
+            "vacation": null,
+            "holiday": null,
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "low",
+            "sources": [],
+            "note": "Not found: only the booking link on eng.snu.ac.kr."
+          }
         }
       ]
     },
@@ -329,7 +875,26 @@
           "link": "https://cse.snu.ac.kr/ko/about/facilities",
           "source": "https://cse.snu.ac.kr/ko/community/notice/13088",
           "confidence": "medium",
-          "note": "Building conflict: cse.snu.ac.kr says 310동 312호, the notice 301동 312호; 178 seats (2015) or 230. Registered with the S-card in 301동 319호."
+          "note": "Building conflict: cse.snu.ac.kr says 310동 312호, the notice 301동 312호; 178 seats (2015) or 230. Registered with the S-card in 301동 319호.",
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "00:00",
+                  "close": "24:00"
+                }
+              ],
+              "saturday": null,
+              "sunday": null
+            },
+            "vacation": null,
+            "holiday": null,
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "medium",
+            "sources": ["https://cse.snu.ac.kr/ko/community/notice/13088"],
+            "note": "\"24시간 개방\" (a 2015 notice) with no day types: weekends and holidays not stated."
+          }
         },
         {
           "key": "me-haedong-study-hall",
@@ -343,7 +908,21 @@
           "link": "https://me.snu.ac.kr/%EC%98%88%EC%95%BD-%EB%B0%8F-%EC%8B%A0%EC%B2%AD/%EA%B7%B8%EB%A3%B9%EC%8A%A4%ED%84%B0%EB%94%94%EB%A3%B8/",
           "source": "https://me.snu.ac.kr/%EC%98%88%EC%95%BD-%EB%B0%8F-%EC%8B%A0%EC%B2%AD/%EA%B7%B8%EB%A3%B9%EC%8A%A4%ED%84%B0%EB%94%94%EB%A3%B8/",
           "confidence": "medium",
-          "note": "Booked on 예약하샤, once a day for up to 3 hours; no opening hours given."
+          "note": "Booked on 예약하샤, once a day for up to 3 hours; no opening hours given.",
+          "schedule": {
+            "week": {
+              "weekday": null,
+              "saturday": null,
+              "sunday": null
+            },
+            "vacation": null,
+            "holiday": null,
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "low",
+            "sources": [],
+            "note": "Not found: me.snu.ac.kr gives booking rules only."
+          }
         },
         {
           "key": "cse-student-space",
@@ -357,7 +936,21 @@
           "link": "https://cse.snu.ac.kr/ko/about/facilities",
           "source": "https://cse.snu.ac.kr/ko/about/facilities",
           "confidence": "medium",
-          "note": "301동 315호; no opening hours given."
+          "note": "301동 315호; no opening hours given.",
+          "schedule": {
+            "week": {
+              "weekday": null,
+              "saturday": null,
+              "sunday": null
+            },
+            "vacation": null,
+            "holiday": null,
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "low",
+            "sources": [],
+            "note": "Not found: cse.snu.ac.kr gives no hours. A 404 page's S-Lab \"09:00–18:00\" was not used."
+          }
         }
       ]
     },
@@ -378,7 +971,26 @@
           "link": "https://cbe.snu.ac.kr/cbe/main/contents.do?menuNo=300007",
           "source": "https://cbe.snu.ac.kr/cbe/main/contents.do?menuNo=300007",
           "confidence": "high",
-          "note": null
+          "note": null,
+          "schedule": {
+            "week": {
+              "weekday": [
+                {
+                  "open": "00:00",
+                  "close": "24:00"
+                }
+              ],
+              "saturday": null,
+              "sunday": null
+            },
+            "vacation": null,
+            "holiday": null,
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "high",
+            "sources": ["https://cbe.snu.ac.kr/cbe/main/contents.do?menuNo=300007"],
+            "note": "\"24시간 개방운영\" with no day types: weekends and holidays not stated."
+          }
         },
         {
           "key": "cse-software-lab",
@@ -392,7 +1004,21 @@
           "link": "https://cse.snu.ac.kr/ko/about/facilities",
           "source": "https://cse.snu.ac.kr/ko/about/facilities",
           "confidence": "medium",
-          "note": "302동 311-1호; no opening hours given."
+          "note": "302동 311-1호; no opening hours given.",
+          "schedule": {
+            "week": {
+              "weekday": null,
+              "saturday": null,
+              "sunday": null
+            },
+            "vacation": null,
+            "holiday": null,
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "low",
+            "sources": [],
+            "note": "Not found. The reservation guide says it has had no PCs since 2020-1 and only lab TAs book it: its kind pc looks out of date."
+          }
         }
       ]
     },
@@ -410,7 +1036,21 @@
           "link": "https://humanities.snu.ac.kr/community/notice?md=v&bbsidx=2205",
           "source": "https://humanities.snu.ac.kr/community/notice?md=v&bbsidx=2205",
           "confidence": "medium",
-          "note": "For 서울대 구성원 only since 2022-02-22; no opening hours given."
+          "note": "For 서울대 구성원 only since 2022-02-22; no opening hours given.",
+          "schedule": {
+            "week": {
+              "weekday": null,
+              "saturday": null,
+              "sunday": null
+            },
+            "vacation": null,
+            "holiday": null,
+            "lunarHolidays": null,
+            "periods": [],
+            "confidence": "low",
+            "sources": [],
+            "note": "Not found: notice 2205 says only that it is for 서울대 구성원."
+          }
         }
       ]
     }
