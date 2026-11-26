@@ -20,6 +20,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by TaeHyun79
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { TestProject } from 'vitest/node';
@@ -84,6 +85,8 @@ const FIXED_SETTINGS = {
   // Off: POST /sentry/alerts answers 404. test/sentry-alerts.ts sets them, with placeholders, where a test needs them.
   SENTRY_WEBHOOK_SECRET: '',
   APP_CRASH_SLACK_WEBHOOK: '',
+  // Off: no PostHog client is made. test/usage.ts sets a placeholder token, with a stand-in client, where a test needs it.
+  POSTHOG_PROJECT_TOKEN: '',
 } satisfies Partial<SettingValues>;
 
 // Starts PostgreSQL and Redis once for every test file, brings the empty main database up to the current schema and

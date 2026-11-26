@@ -294,7 +294,7 @@ describe("MapAnswerMark: a meal candidate's minutes beside a spot another mark h
     await render(<MapAnswerMark label={number} symbol={null} testID="mark" />);
 
     expect(screen.getByTestId('mark:label:dot')).toHaveTextContent('7');
-    expect(screen.getByTestId('mark:label:dot')).toHaveStyle({ width: 20, backgroundColor: color.snuBlue });
+    expect(screen.getByTestId('mark:label:dot')).toHaveStyle({ width: 20, backgroundColor: color.meal });
     expect(screen.queryByTestId('mark:label:minutes')).toBeNull();
   });
 });

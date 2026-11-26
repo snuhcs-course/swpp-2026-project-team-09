@@ -83,7 +83,7 @@ export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?:
       testID={testID}
     >
       {number === null ? null : (
-        <View style={[styles.badge, tone === 'pick' ? styles.pickBadge : styles.candidateBadge]}>
+        <View style={[styles.badge, tone === 'pick' ? pickBadgeOf(note) : styles.candidateBadge]}>
           <Text style={styles.number}>{number}</Text>
         </View>
       )}
@@ -123,7 +123,8 @@ const styles = StyleSheet.create({
   keptTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.inkMuted },
   sub: { ...mapText.rowLine, color: color.inkMuted },
   subLabel: { maxWidth: SUB_MAX },
-  mealPickLabel: { maxWidth: MEAL_PICK_MAX },
+  // A meal pick's label (its time, `note`, marks it): coral since P04 ticket 85, its time still gold.
+  mealPickLabel: { maxWidth: MEAL_PICK_MAX, borderColor: color.meal },
   meetingLabel: { backgroundColor: color.ink },
   lateLabel: { backgroundColor: color.dangerSoft },
   shuttleLabel: { backgroundColor: color.svcShuttleSoft },
@@ -140,6 +141,7 @@ const styles = StyleSheet.create({
   pickLine: { color: color.quest },
   stopLine: { color: color.svcShuttle },
   pickBadge: { backgroundColor: color.quest },
+  mealPickBadge: { backgroundColor: color.meal },
   candidateBadge: { backgroundColor: color.snuBlue },
   number: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.onPrimary },
   action: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
@@ -151,6 +153,11 @@ const styles = StyleSheet.create({
   legTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.onPrimary },
   legOnTitle: { fontFamily: mapText.smallTitle.fontFamily, color: color.snuBlue },
 });
+
+// A pick's number badge, when its dot is not drawn: a meal pick's coral (P04 ticket 85), any other gold.
+function pickBadgeOf(note: string | null): ViewStyle {
+  return note === null ? styles.pickBadge : styles.mealPickBadge;
+}
 
 const LEG_LABELS: Partial<Record<AnswerLabel['tone'], ViewStyle>> = {
   leg: styles.legLabel,

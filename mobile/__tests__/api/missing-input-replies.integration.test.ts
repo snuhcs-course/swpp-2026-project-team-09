@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type * as SecureStoreFake from '../support/secure-store';
@@ -12,11 +13,13 @@ import { apiClient } from '@/api/client';
 import { mockClient } from '@/api/mock/client';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import { NO_LOCATION_REPLY, NO_TIMETABLE_REPLY } from '@/api/mock/data/missing-inputs';
+import { replyWithOtherFriends } from '@/api/mock/other-friends';
 import { googleAvailable } from '@/auth/google';
 
 // An answer that says what was missing (P02-13): believed from the main server in the contract's shape, and answered
 // by the mock, where the app asks no main server, with the main server's real answers to "배고파" without the location
-// permission (board n13) and with no Class in the Timetable (board n15).
+// permission (board n13) and with no Class in the Timetable (board n15). The mock sends each with its Friends as
+// `others` (P04-64), as a main server since then does.
 
 jest.mock('@/auth/google', () => ({
   googleAvailable: jest.fn<boolean, []>(),
@@ -79,16 +82,20 @@ describe('the mock of 배고파', () => {
       mockClient.askAssistant(HUNGRY, context({ location: null, locationMissing: 'permission' })),
     );
 
-    expect(reply).toEqual(NO_LOCATION_REPLY);
+    expect(reply).toEqual(replyWithOtherFriends(NO_LOCATION_REPLY));
   });
 
   it("answers with no Class in the mock's Timetable by the main server's answer of board n15", async () => {
     await answered(mockClient.resetTimetable());
 
-    await expect(answered(mockClient.askAssistant(HUNGRY, context()))).resolves.toEqual(NO_TIMETABLE_REPLY);
+    await expect(answered(mockClient.askAssistant(HUNGRY, context()))).resolves.toEqual(
+      replyWithOtherFriends(NO_TIMETABLE_REPLY),
+    );
   });
 
   it('answers as before with the location and a Timetable', async () => {
-    await expect(answered(mockClient.askAssistant(HUNGRY, context()))).resolves.toEqual(MEAL_ANSWER_REPLY);
+    await expect(answered(mockClient.askAssistant(HUNGRY, context()))).resolves.toEqual(
+      replyWithOtherFriends(MEAL_ANSWER_REPLY),
+    );
   });
 });

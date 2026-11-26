@@ -196,4 +196,4 @@ Decisions and things inferred:
 ### Agent usage (2026-11-26)
 
 - Agent time: about 2 hours 30 minutes (estimate), one session, most of it waiting on single-file Jest runs.
-- Tokens: to be filled in by the orchestrator.
+- Tokens: 279,840 in all for the implementation session, as its usage reports; the split into input, cache reads, cache writes and output was not available.

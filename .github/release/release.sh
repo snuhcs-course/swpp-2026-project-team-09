@@ -12,6 +12,7 @@
 # 2026-11-21  Opus 5.5   prompted by fyoon46
 # 2026-11-24  Opus 5.5   prompted by AhnJinYoung
 # 2026-11-25  Fable 5.2  prompted by AhnJinYoung
+# 2026-11-26  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 # The Release workflow's steps (.github/workflows/release.yml), one command each. The functions under Deciding take
@@ -451,6 +452,7 @@ write_secrets() {
     env+=$'\n'"INITIAL_ADMINISTRATOR_EMAILS=$(line_parameter initial-administrator-emails)" &&
     env+=$'\n'"SENTRY_WEBHOOK_SECRET=$(optional_line_parameter sentry-webhook-secret)" &&
     env+=$'\n'"APP_CRASH_SLACK_WEBHOOK=$(optional_line_parameter app-crash-slack-webhook)" &&
+    env+=$'\n'"POSTHOG_PROJECT_TOKEN=$(optional_line_parameter posthog-project-token)" &&
     private_key=$(pem_parameter access-token-private-key) &&
     public_key=$(pem_parameter access-token-public-key) || return 1
   (

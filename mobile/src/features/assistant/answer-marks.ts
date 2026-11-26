@@ -126,7 +126,8 @@ function placeDraft(
     const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber };
     if (meal && plan !== undefined) {
       const words = mealPickLabel(plan, title, kind);
-      return { ...base, id: 'answer:pick', group: role, symbol, tone: role, number: pickNumber, ...words };
+      const coral: AnswerSymbol = { ...symbol, meal: true };
+      return { ...base, id: 'answer:pick', group: role, symbol: coral, tone: role, number: pickNumber, ...words };
     }
     const line = pickLine(flag === undefined ? null : restOf(title, flag.text), day, plan, kind);
     const name = line === null ? title : `${title} · ${line}`;
