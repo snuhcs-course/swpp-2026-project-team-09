@@ -106,6 +106,8 @@ Everything in the wireframe's ① to ⑦.
 - After review (2026-11-27), the filter row's end fades into the tab's grey ground over 28 dp before the magnifier's line, as the wireframe's ① draws it: an SVG gradient as the Assistant's line of 뺀 수업 has, which takes no press, with the chips scrolling under it. It shows whenever the filters do, not only while chips lie beyond the end.
 - After review (2026-11-27), a card's screen-reader name is "{title}, {time}, {place}, {fill}", with the event's title after the place when the card has an event line.
 - After review (2026-11-27), `신청 취소` on the 모집글 screen asks first, with the confirm sheet and words of the sheet and 보낸 신청 (`withdrawAsk`). `PostFooter` asks it itself, so the screen and the sheet cannot drift apart.
+- After the emulator check (2026-11-27), choosing another board, or opening or closing the search, scrolls 찾기's list back to its top, so the list starts from its first card. Typing in the search does not.
+- Left as it is (2026-11-27): in the mock build, 찾기 sometimes showed the ErrorState's ↻ right after a cold start, and one press loaded it. This is older than this ticket: the pull request does not change what 찾기 asks (`useFindPosts`'s six queries), the mock client, the one retry or when the ErrorState shows (`found === undefined && !isPending`), all as on 5.0/Main. Not checked on 5.0/Main in an emulator.
 
 ## Acceptance criteria
 
@@ -130,4 +132,5 @@ Everything in the wireframe's ① to ⑦.
 
 - Agent time: about 22 minutes, in the same session, for the three review fixes (the row's fade, the card's spoken name, `신청 취소` asking on the screen): tests written first and seen failing, the change, the targeted run, the ticket. This is an estimate: gaps under 5 minutes between transcript entries, summed, plus the 5.6-minute final test run, counted up to the writing of this entry.
 - Tokens: input 6,676,066 (cache reads 6,540,732, cache writes 135,236, uncached 98); output 31,478. No subagents.
-- Ticket total so far: about 48 minutes; input 34,073,904 (cache reads 33,617,809, cache writes 455,783, uncached 312); output 137,559. The first round's commit and pull request are not in either entry.
+- The emulator check's follow-up, in the same session (the list's scroll back to its top, a test seen failing, and the check that the cold start's ErrorState is older than this ticket): about 24 minutes, estimated the same way, plus two test runs of about 5 and 6 minutes under the load of a phone build. Tokens: input 8,168,395 (cache reads 8,116,717, cache writes 51,592, uncached 86); output 28,479. No subagents.
+- Ticket total so far: about 72 minutes; input 42,242,299 (cache reads 41,734,526, cache writes 507,375, uncached 398); output 166,038. Each round's commit and push after its entry was written are not counted.

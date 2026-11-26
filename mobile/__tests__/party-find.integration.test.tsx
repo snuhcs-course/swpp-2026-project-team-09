@@ -12,6 +12,7 @@
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
+import { ScrollView } from 'react-native';
 import { color } from '@/design-system/tokens';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
@@ -49,6 +50,15 @@ const BOARDS = ['전체', '식사', '진로', '취미', '공연'];
 
 function card(title: string): ReturnType<typeof within> {
   return within(screen.getByLabelText(cardName(title)));
+}
+
+// The scrolls 찾기's list was given, leaving out the other scroll views', such as the filter row.
+type Scrolled = jest.SpyInstance<void, Parameters<ScrollView['scrollTo']>, ScrollView>;
+
+function listScrolls(scrolled: Scrolled): Parameters<ScrollView['scrollTo']>[0][] {
+  return scrolled.mock.contexts.flatMap((view, at) =>
+    view.props.testID === 'find-list' ? [scrolled.mock.calls[at]?.[0]] : [],
+  );
 }
 
 function shownTitles(): string[] {
@@ -171,6 +181,28 @@ describe('the search', () => {
     await openAt('/party?tab=mine');
 
     expect(screen.queryByRole('button', { name: '파티 검색' })).toBeNull();
+  });
+});
+
+describe('the list’s place', () => {
+  it('goes back to the top when the board changes and when the search opens or closes, not as the words change', async () => {
+    const user = await openAt('/party');
+    // The React Native mock's `scrollTo` is one mock for every scroll view, which keeps the earlier tests' calls.
+    const scrolled = jest.spyOn(ScrollView.prototype, 'scrollTo');
+    await user.scrollTo(screen.getByTestId('find-list'), { y: 600 });
+    scrolled.mockClear();
+    const top = { y: 0, animated: false };
+
+    await user.press(screen.getByRole('button', { name: '진로' }));
+    expect(listScrolls(scrolled)).toEqual([top]);
+
+    await user.press(screen.getByRole('button', { name: '파티 검색' }));
+    expect(listScrolls(scrolled)).toEqual([top, top]);
+    await user.type(screen.getByLabelText('파티 검색어'), '코드 리뷰');
+    expect(listScrolls(scrolled)).toEqual([top, top]);
+
+    await user.press(screen.getByRole('button', { name: '검색 닫기' }));
+    expect(listScrolls(scrolled)).toEqual([top, top, top]);
   });
 });
 

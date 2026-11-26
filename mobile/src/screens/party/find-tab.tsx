@@ -6,9 +6,10 @@
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import type { OfficialRecruiting } from '@/api/quest-parts-types';
 import { EmptyState, ErrorState, LoadingState, space } from '@/design-system';
@@ -134,14 +135,20 @@ export function FindTab(): ReactElement {
   const [board, setBoard] = useState<BoardFilter>('all');
   // The words searched, or null while the filters show.
   const [search, setSearch] = useState<string | null>(null);
+  const searching = search !== null;
+  const list = useRef<ScrollView>(null);
+  // Another board, or the search opened or closed, starts from its first card, not where the last list was scrolled.
+  useEffect(() => {
+    list.current?.scrollTo({ y: 0, animated: false });
+  }, [board, searching]);
   const official = useOfficialRecruiting().data ?? [];
   const { open, joinOfficial, sheets } = useFindSheets();
   return (
     <>
       <FindBar board={board} onBoard={setBoard} onSearch={setSearch} search={search} />
       {official.length === 0 ? null : <OfficialBanner onOpen={joinOfficial} recruiting={official} />}
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled" testID="find-list">
-        <Posts board={search === null ? board : 'all'} onOpen={open} search={search ?? ''} />
+      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled" ref={list} testID="find-list">
+        <Posts board={searching ? 'all' : board} onOpen={open} search={search ?? ''} />
         <Seekers />
       </ScrollView>
       {sheets}
