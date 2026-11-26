@@ -21,7 +21,10 @@ import type { FakeLibrary } from './support/kwanjeong/fake-library';
 import { askForCards, expectNoWrite, SEAT_CARD, sendFromBar, startLibraryChat } from './support/library-chat';
 import { openMain } from './support/main';
 import { DINNER } from './support/server';
-import { color } from '@/design-system';
+import { color, text } from '@/design-system';
+import { LOW_LINES } from '@/screens/main/answer/card-caps';
+import { ticketHeightAt } from '@/screens/main/library/seat-ticket';
+import { styleOf } from './support/seat-ticket';
 import type { Quest } from '@/api/types';
 import { markLibraryLoggedIn } from '@/library/flag';
 import { layStage } from './support/lists';
@@ -181,6 +184,14 @@ describe('the raised seat card on the map', () => {
     expect(card.queryByRole('button', { name: '다른 자리 고르기' })).toBeNull();
     expect(card.queryByText(/좌석배정기에서 확인해야 해요/u)).toBeNull();
     expectNoWrite(library);
+  });
+
+  it('stands whole at the low step: what stands over the ticket and the ticket fit its two lines (P01 ticket 09)', async () => {
+    await asked();
+
+    // The user's phone and the emulator at the lowest step: the ticket's bottom cut, 8 points too low.
+    const over = styleOf(screen.getByTestId('library-cards')).marginTop ?? 0;
+    expect(Number(over) + ticketHeightAt(1)).toBeLessThanOrEqual(LOW_LINES * text.bodyLg.lineHeight);
   });
 
   it("opens the seat picture from the ticket's seat (P01 ticket 09)", async () => {
