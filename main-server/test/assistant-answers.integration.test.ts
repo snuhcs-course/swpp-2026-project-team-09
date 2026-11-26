@@ -238,6 +238,8 @@ describe("A study plan's input", () => {
         people: [{ userId: stage.asker.id, constraints: [] }],
         window: { from: null, until: null },
         area: null,
+        minutes: null,
+        chosen: { seatSpaceId: null, roomSpaceId: null },
       },
       location: null,
     });
