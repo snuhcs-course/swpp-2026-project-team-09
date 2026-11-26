@@ -152,6 +152,7 @@ function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | null): str
           ...(symbol.faded === true ? ['faded'] : []),
           ...(symbol.ring === undefined ? [] : [{ ring: symbol.ring }]),
           ...(symbol.pop === true ? ['pop'] : []),
+          ...(symbol.meal === true ? ['meal'] : []),
         ]
       : null,
     label === null

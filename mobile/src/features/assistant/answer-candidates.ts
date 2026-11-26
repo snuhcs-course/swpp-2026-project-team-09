@@ -78,7 +78,7 @@ function mealDraft(plan: Plan, number: number, { place, tag }: MapScene['places'
     position: { latitude: place.latitude, longitude: place.longitude },
     planId: plan.id,
     group: 'candidate',
-    symbol: { type: 'dot', role: 'candidate', number, ...(faded ? { faded } : {}) },
+    symbol: { type: 'dot', role: 'candidate', number, meal: true, ...(faded ? { faded } : {}) },
     tone: 'candidate',
     title: value,
     ...(faded ? { faded } : {}),

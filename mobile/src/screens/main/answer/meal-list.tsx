@@ -169,7 +169,7 @@ function Row({
       testID={`meal-row-${String(number)}`}
     >
       <View style={[styles.badge, chosen && styles.chosenBadge]}>
-        <Text style={styles.number}>{number}</Text>
+        <Text style={[styles.number, chosen && styles.chosenNumber]}>{number}</Text>
       </View>
       <View style={styles.middle}>
         <Text numberOfLines={1} style={styles.name}>
@@ -276,7 +276,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
-  chosen: { borderColor: color.quest, backgroundColor: color.questSoft },
+  // The chosen Restaurant and the numbers in a meal answer's coral (P04 ticket 85), as on the map; times keep gold.
+  chosen: { borderColor: color.meal, backgroundColor: color.mealSoft },
   pressed: { opacity: 0.6 },
   faded: { opacity: 0.45 },
   badge: {
@@ -286,14 +287,17 @@ const styles = StyleSheet.create({
     height: BADGE,
     marginTop: 2,
     borderRadius: radius.full,
-    backgroundColor: color.snuBlue,
+    borderWidth: 1.5,
+    borderColor: color.meal,
+    backgroundColor: color.mealSoft,
   },
-  chosenBadge: { backgroundColor: color.quest },
-  closedBadge: { backgroundColor: color.inkSubtle },
+  chosenBadge: { backgroundColor: color.meal },
+  chosenNumber: { color: color.onPrimary },
+  closedBadge: { borderColor: color.inkSubtle, backgroundColor: color.inkSubtle },
   heading: { ...text.caption, marginTop: space[2], color: color.inkMuted },
   // On the list's left edge, above the kinds.
   order: { ...text.caption, color: color.inkMuted },
-  number: { ...text.micro, color: color.onPrimary },
+  number: { ...text.micro, color: color.meal },
   middle: { flex: 1, gap: 2 },
   name: { ...text.body, fontFamily: font.bold, color: color.ink },
   when: { ...text.caption, fontFamily: font.semiBold, color: color.quest },

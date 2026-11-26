@@ -59,6 +59,10 @@ export const color = {
   warningSoft: '#FDF1E0',
   svcDining: '#B8336A',
   svcDiningSoft: '#FBE7EF',
+  // A meal answer's Restaurants on the map and in its list (P04 ticket 85, the user's "3안"): coral and its soft ground.
+  // The values PR 572 gives `svcDining` and `svcDiningSoft`, kept apart from today's magenta `svcDining`.
+  meal: '#C4452C',
+  mealSoft: '#FCEBE6',
   svcShuttle: '#6B46C1',
   svcShuttleSoft: '#EFEAFB',
   svcStudy: '#0369A1',
