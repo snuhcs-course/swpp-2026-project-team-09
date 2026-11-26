@@ -6,8 +6,11 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
+import { font } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { type FakeServer, refusal } from './support/fake-server';
@@ -79,6 +82,22 @@ describe('the event picker', () => {
     expect(screen.getByRole('header', { name: '관련 행사 고르기' })).toBeVisible();
     expect(screen.getByRole('button', { name: `행사 · ${CAREER.title}` })).toBeSelected();
     expect(screen.getByRole('button', { name: `행사 · ${MAJOR.title}` })).not.toBeSelected();
+  });
+
+  // The 행사 tab's sizes, its day included (P06 ticket 15); the picker's own layout waits for its own item.
+  it("sets its rows in the 행사 tab's type, with the source and one line each for the title and the time and place", async () => {
+    const user = await openAt('/party-form');
+
+    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+
+    const row = within(screen.getByRole('button', { name: `행사 · ${CAREER.title}` }));
+    expect(row.getByText('6')).toHaveStyle({ fontFamily: font.bold, fontSize: 22, lineHeight: 28 });
+    expect(row.getByText('10월 · 오늘')).toHaveStyle({ fontSize: 12, lineHeight: 16 });
+    expect(row.getByText('컴퓨터공학부 공지')).toBeVisible();
+    expect(row.getByText(CAREER.title)).toHaveStyle({ fontFamily: font.bold, fontSize: 16, lineHeight: 23 });
+    expect(row.getByText(CAREER.title)).toHaveProp('numberOfLines', 1);
+    expect(row.getByText('18:00–20:00 · 301동 대강당')).toHaveStyle({ fontSize: 13, lineHeight: 18 });
+    expect(row.getByText('18:00–20:00 · 301동 대강당')).toHaveProp('numberOfLines', 1);
   });
 });
 
