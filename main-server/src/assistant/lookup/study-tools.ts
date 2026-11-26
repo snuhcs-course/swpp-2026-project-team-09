@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -25,6 +26,7 @@ const NONE_REASONS: Record<Extract<StudyAnswer, { result: 'none' }>['reason'], s
   'no-area': 'The app sent no visible area of the map.',
   'nothing-in-area': 'No study space of that kind is in the area of the map the User sees.',
   'none-usable': 'Every study space of that kind in the area the User sees is open only to others, as restricted says.',
+  'all-closed': 'Every study space of that kind the User may use in the area they see is closed then.',
   'no-start':
     'Where the User sets out from is not known: where they are could not be matched to a Place, and no item of theirs has ended earlier today.',
 };

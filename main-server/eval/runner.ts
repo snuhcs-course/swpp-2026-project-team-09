@@ -11,6 +11,7 @@
  * 2026-11-20  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -131,7 +132,10 @@ export function requestMessages(turns: readonly CaseTurn[], world: World): SentM
     return {
       role: 'assistant',
       text,
-      cards: cards.map(({ kind, seed }) => ({ kind, id: seedOf(world.seeds, kind, seed).id })),
+      cards: cards.map(({ kind, seed }) => ({
+        kind,
+        id: kind === 'library' ? seed : seedOf(world.seeds, kind, seed).id,
+      })),
       proposal: proposal === null ? null : sentProposalOf(proposal, world),
     };
   });

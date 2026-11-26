@@ -3,9 +3,11 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Position } from '../../common/geometry.js';
+import { type Opening } from '../../study-spaces/study-hours.js';
 import { shownMinutes, type TravelProvider } from '../../travel/travel.js';
 import { type RequestContext } from '../dto/answer.dto.js';
 import { type DayItem, freeTimeOf } from '../free-time/free-time.js';
@@ -100,4 +102,34 @@ export function byStay<Candidate extends { stay: StudyStay }>(candidates: readon
 
 export function longestStay<Candidate extends { stay: StudyStay }>(candidates: readonly Candidate[]): Candidate | null {
   return byStay(candidates)[0] ?? null;
+}
+
+// A stay this long or longer is long enough: a closing after it ends nothing (P10 ticket 06).
+const LONG_ENOUGH_MINUTES = 3 * 60;
+
+// The stay ended by the space's closing when that comes before the walk on to the next item, or, with nothing
+// following, within three hours.
+export function withClosing(stay: StudyStay, opening: Opening): StudyStay {
+  if (opening.state !== 'open' || opening.closesIn === null) {
+    return stay;
+  }
+  const closeAt = plusMinutes(stay.arrival, opening.closesIn);
+  const ends = stay.leaveBy === null ? opening.closesIn < LONG_ENOUGH_MINUTES : closeAt < stay.leaveBy;
+  return ends ? { ...stay, leaveBy: closeAt, minutes: opening.closesIn } : stay;
+}
+
+// The candidates by their hours at the arrival (P10 ticket 06): those closed then left out, those known open first and
+// those whose hours are not known after, each group by the stay, which ends at the closing.
+export function byHours<Candidate extends { stay: StudyStay; space: { key: string } }>(
+  candidates: readonly Candidate[],
+  hoursOf: (key: string, at: Date) => { opening: Opening },
+): (Candidate & { open: boolean })[] {
+  const judged = candidates.flatMap((candidate) => {
+    const { opening } = hoursOf(candidate.space.key, candidate.stay.arrival);
+    if (opening.state === 'closed') {
+      return [];
+    }
+    return [{ ...candidate, stay: withClosing(candidate.stay, opening), open: opening.state === 'open' }];
+  });
+  return [...byStay(judged.filter(({ open }) => open)), ...byStay(judged.filter(({ open }) => !open))];
 }

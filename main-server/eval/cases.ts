@@ -26,7 +26,8 @@ import { expectSchema } from './expect.ts';
 // Three kinds of case, by their turns:
 // - single turn: one User's message;
 // - fixed history: the earlier turns written out, the Assistant's as the app would send them back (its text, its
-//   cards by seed name, its Proposal with seed names), and the User's last message, the one scored;
+//   cards by seed name, a library card by its key, its Proposal with seed names), and the User's last message, the
+//   one scored;
 // - live (`live: true`): only the User's messages; each is sent with the Assistant's real replies before it.
 
 export const CASES_DIRECTORY = new URL('cases/', import.meta.url);
@@ -82,7 +83,18 @@ const NEXT_APP = [...APP_CAPABILITIES, 'plan-set'] as const satisfies readonly C
 // The app with P10's ranked study places, which says `study-plan` too.
 const STUDY_APP = [...APP_CAPABILITIES, 'study-plan'] as const satisfies readonly ClientCapability[];
 
-const CAPABILITY_SETS = { app: APP_CAPABILITIES, 'next-app': NEXT_APP, 'study-app': STUDY_APP } as const;
+// The app with P10's study answer together (ticket 07), which says `study-group` and not `study-plan`; and the app with
+// both.
+const STUDY_GROUP_APP = [...APP_CAPABILITIES, 'study-group'] as const satisfies readonly ClientCapability[];
+const STUDY_BOTH_APP = [...STUDY_APP, 'study-group'] as const satisfies readonly ClientCapability[];
+
+const CAPABILITY_SETS = {
+  app: APP_CAPABILITIES,
+  'next-app': NEXT_APP,
+  'study-app': STUDY_APP,
+  'study-group-app': STUDY_GROUP_APP,
+  'study-both-app': STUDY_BOTH_APP,
+} as const;
 
 // What a run of a case sends beside the messages: its world's fields, or the current app's capabilities when the case
 // says so, and where the asker is when the case says.
@@ -103,8 +115,9 @@ export const WORLD_TUTORIAL_FILES: Partial<Record<WorldName, string>> = {
 
 const seedName = z.string().min(1);
 
-// A Restaurant card's seed is its key, the name `GET /menus` gives it.
-const cardSchema = z.strictObject({ kind: z.enum(['quest', 'globalEvent', 'restaurant']), seed: seedName });
+// A Restaurant card's seed is its key, the name `GET /menus` gives it. A library card's is its key too, which no world
+// seeds: it is sent back as written, as the User left the card on the phone.
+const cardSchema = z.strictObject({ kind: z.enum(['quest', 'globalEvent', 'restaurant', 'library']), seed: seedName });
 
 // A Proposal the Assistant made, with its Place, its Global Event and its invitees by seed name. The endpoint checks
 // the other values, as it does the app's; the join policies and Boards are the database's (prisma/schema.prisma).
@@ -147,8 +160,10 @@ export const caseSchema = z
     asker: seedName.optional(),
     // `app`: the request says what the current app draws, every capability, in place of the world's (a meet needs
     // `meet`); `next-app`: and `plan-set` too, as the app with 바꾸기 will; `study-app`: and `study-plan`, as the app
-    // with P10's study answer will.
-    capabilities: z.enum(['world', 'app', 'next-app', 'study-app']).default('world'),
+    // with P10's study answer will; `study-group-app`: and `study-group` instead; `study-both-app`: and both.
+    capabilities: z
+      .enum(['world', 'app', 'next-app', 'study-app', 'study-group-app', 'study-both-app'])
+      .default('world'),
     // Where the asker is, and the map's visible area, sent as the request's context as the app sends it; none is sent
     // without it.
     context: z

@@ -8,6 +8,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type MapScene, type TimeBand } from '../dto/answer.dto.js';
@@ -210,7 +211,7 @@ export function othersOf(
   };
 }
 
-function otherLane(
+export function otherLane(
   { userId, name, items }: OtherFriend,
   { walkMinutes, after }: SetOut,
   { from, until, label }: { from: Date; until: Date; label: (placeId: string) => string },

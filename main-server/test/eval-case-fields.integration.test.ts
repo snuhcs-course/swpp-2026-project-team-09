@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-31  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { inject, type ProvidedContext } from 'vitest';
@@ -15,7 +16,7 @@ import { signInUser } from './friends.js';
 import { ScriptedModel } from './scripted-model.js';
 
 // What P4 added to a case (P04 ticket 03): its own time, its own asker and Restaurant cards in a fixed history, with the
-// scripted model in the real model's place.
+// scripted model in the real model's place; and a library card in a fixed history, by its key (P05 ticket 60).
 
 const model = new ScriptedModel();
 
@@ -100,5 +101,18 @@ describe('A Restaurant card in a fixed history', () => {
     );
 
     expect(sent).toMatchObject({ cards: [{ kind: 'restaurant', id: '학생회관식당' }] });
+  });
+});
+
+describe('A library card in a fixed history', () => {
+  it('is sent back by its key, which no world seeds', () => {
+    const key = 'book:8F-8A-zone1-quiet:2026-11-04:1030:180';
+
+    const [sent] = requestMessages(
+      [{ assistant: { text: '자리를 골라 뒀어요.', cards: [{ kind: 'library', seed: key }], proposal: null } }],
+      world,
+    );
+
+    expect(sent).toMatchObject({ cards: [{ kind: 'library', id: key }] });
   });
 });

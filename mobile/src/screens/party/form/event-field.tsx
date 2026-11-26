@@ -5,6 +5,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -203,10 +204,9 @@ export function EventField({ event, locked, onChoose, onClear }: FieldProps): Re
   );
 }
 
-// The frame's measures for the picker's rows: their padding, the date column and its day, the check's round.
+// The frame's measures for the picker's rows: their padding, the date column, the check's round.
 const ROW_PADDING = 22;
 const DATE_WIDTH = 72;
-const DAY = { fontSize: 24, lineHeight: 30, letterSpacing: -0.48 };
 // The day sits level with the title: lowered under a source's line, raised by that line and its gap without one.
 const DAY_DROP = 18;
 const SOURCE_STEP = eventText.source.lineHeight + space[1];
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   },
   rowChosen: { backgroundColor: color.blue50 },
   date: { width: DATE_WIDTH },
-  day: { ...eventText.day, ...DAY, color: color.ink },
+  day: { ...eventText.day, color: color.ink },
   dayLine: { ...eventText.dayLine, color: color.inkMuted },
   rule: {
     alignSelf: 'stretch',

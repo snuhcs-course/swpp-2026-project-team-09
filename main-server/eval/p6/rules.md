@@ -138,6 +138,7 @@ A book card holds the space, the date, the start, the minutes, and when given th
 - "내 예약" shows a **myBookings** card. "예약 취소해줘" shows a **cancel** card, "반납해줘" a **return** card. Each card loads the bookings on the phone and is confirmed by its button.
 - A request that names the booking ("오늘 3시 예약 취소") gives the card that target: date 11/4, start 15:00.
 - The Assistant cannot see the User's bookings, seats or rooms. "반납했어?" asks about what it cannot see: a CHAT that says so, with no tool and no library card at all, not even 내 예약.
+  - _Superseded 2026-11-27 (P05 ticket 59), after the freeze:_ the Assistant now answers "반납했어?" with the **myBookings** card, which shows each booking's state, and never says whether the return went through. The frozen label stays (`suite.yaml`, `supersededAfterFreeze`).
 - The done message after a booking ("…예약되었어요!", "사용 다했으면 꼭 반납처리를 해주세요! 저한테 말해주셔도 되고 키오스크를 이용해 반납하셔도 돼요!", the kiosk within 30 minutes) is the app's own bubble after the press, not the Assistant's reply. A reply that proposes a booking need not say it, and must not say the booking is made.
 
 ## 14. The tutorial and campus facilities
@@ -180,7 +181,7 @@ What the spec and the catalogue left open, as the PM ruled on the blind draft, n
 3. 스튜디오 and 라이브 방송 fit 6F-studio and Creative Media Studio: an ASK (section 3).
 4. "중앙도서관 열람실" is an ASK between 7층 and 8층 that says 본관 is 미구현 (section 3).
 5. "내 공강에 7층 열람실" asks which space first, with no tool and no slot times (section 12; ruling 17 replaces the earlier free-slots ASK).
-6. "반납했어?" is a CHAT with no card at all (section 13).
+6. "반납했어?" is a CHAT with no card at all (section 13). Superseded 2026-11-27 by P05 ticket 59: a **myBookings** card.
 7. No weekday names: 오늘, 내일, 모레, N일 뒤 (section 1).
 8. Information questions search in a fixed order: getTutorial, the app's other data, the official link (section 14).
 9. "아무 자리(나)" is the default seat space 7F-7A-zone2; a missing time is still asked (section 3).
