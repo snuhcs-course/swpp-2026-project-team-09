@@ -25,6 +25,7 @@ import { type FoundIds } from './found-ids.js';
 import { type TravelBox } from './free-time/candidate-fit.js';
 import { type RestaurantCard } from './free-time/restaurant-card.js';
 import { type JudgedCandidates } from './free-time/travel-boxes.js';
+import { type Catalogue } from './library/catalogue.js';
 import { type LibraryCard } from './library/library-card.js';
 import { type QuestProposal, type SentProposal } from './proposal.js';
 import { type Refusal } from './refusals/refusal.dto.js';
@@ -203,6 +204,8 @@ export interface Feature {
   // What a run that answered changes in what was presented once every tool has run, such as the steps of a message
   // that asked for several things (P03).
   afterRun?(context: ToolContext): Promise<void>;
+  // The 관정도서관 catalogue, by which a book card sent back is read in words (run-messages.ts).
+  readonly libraryCatalogue?: Catalogue;
 }
 
 // What a tool answers when nothing matches, so that the model says so instead of answering from elsewhere.

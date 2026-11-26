@@ -2571,7 +2571,13 @@ Anthropic API as the AI's key says
     out, on one message at most). Once 만들기 made the Proposal, it is sent back with `madeQuestId`, the Quest's id.
     The model gets only the latest 20 messages, and of an Assistant's message its text, a line naming its cards and a
     line with its Proposal's values (`[Proposal shown: …]`, or `[Proposal made: …]` with the Quest's id), never an
-    earlier message's tool results.
+    earlier message's tool results. The cards line names each card by its kind and id, except a library book card: the
+    app sends it back as the User left it, and on the phone they can change its room, time and seat, so its key is
+    written out in words from the catalogue, such as
+    `[Cards shown: library card for 관정 8층 8A 열람실 1 구역(QUIET ZONE), 11/27 14:00–17:00, as the User left it]`
+    (`run-messages.ts`, P05 ticket 60). The library rules say that a difference from the earlier text is the User's
+    change, not the Assistant's error, and that a seat item in `[Ahead: …]` at that time is the booking made. Nothing
+    more is sent: no booking number and no flag that the User booked.
   - **Refused with 400 before the model is called:** a conversation without messages, one whose last message is not
     the User's, a message of another shape, a User's message over 1,000 characters, an Assistant's over 4,000, more
     than one Proposal, messages over 24,000 characters together, a Proposal's title, description and names included,
@@ -2988,7 +2994,11 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
     answers `found` with only the first of them, in the catalogue's order with `7F-7A-zone2` first, its card's notes
     say "맞는 곳이 N곳이라 첫 곳으로 채웠어요", and the phone's room chip lets the User choose another; several rooms
     are still asked about. The card's space carries the
-    catalogue's `kind`, by which the phone groups the seat spaces of a floor.
+    catalogue's `kind`, by which the phone groups the seat spaces of a floor. For the same app, a question about the
+    free seats of a seat space ("관정 7층 자리 있어?") or its 좌석 현황 is asked as that seat (P05 ticket 61):
+    `findLibrarySpace`, then `proposeLibraryBooking`, whose book card the phone draws as the seat ticket with its free
+    seats, never `showLibrarySeats`, and a reply of one sentence that names no card. A room space's free rooms still go
+    to `showLibrarySeats`, as every 좌석 현황 does in the text chat.
   - **A study group's time** (P05, `library/propose-study-room.ts`), for an app that draws answers and does not say
     `study-group`: the answer-drawing rules have the model call `proposeStudyRoom(friendIds, date? | from? + to?, minutes?)` for a study
     with Friends and no start ("민수, 지은, 서준이랑 이번 주에 스터디"), after `resolveFriend`. The days are the one
@@ -3009,7 +3019,8 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
     `shown` adds `windowOpens`: the room request it makes waits for the window (Group study room requests).
   - `proposeLibraryCancel`, `proposeLibraryReturn`, `showLibrarySeats` and `showMyLibraryBookings` show the other
     library cards. A card's `key` (at most 120 characters, such as `book:7F-7A-zone2:2026-11-04:1700:60`) is its id
-    in the history, checked against its grammar. Library cards are attached only for a request with
+    in the history, checked against its grammar; a book card's key reaches the model in words, as the User left it
+    (Shape, above). Library cards are attached only for a request with
     `clientCapabilities: ["library"]`; otherwise, or with `LIBRARY_BOOKING_ENABLED=false`, every library tool answers
     `none` with the reason (and the official site). No tool result holds a seat, a booking, a 학번, a registered name
     or the User's 소속.
@@ -3017,7 +3028,8 @@ known'`, and the map's label says them as usual (`평소 점심 11:00–14:30`, 
     `findLibraryFreeSlots` answer `refused` with `closedToday` (`{ closedAt, opens }`, such as `23:00` and `내일 07:00`),
     and `findLibrarySpace` marks the space `closedToday`. The refusal draws 관정 as a place with why, a `place` Lookup
     with one `dropped` mark tagged "관정도서관 · 오늘 23:00 닫음 · 내일 07:00부터", `fact: true` and no actions
-    (`library/closed-today.ts`, P05 ticket 57).
+    (`library/closed-today.ts`, P05 ticket 57). For an app that draws answers, `proposeLibraryBooking` answers the
+    same (`refusesClosedToday`, P05 ticket 61); in the text chat it is refused by the hours as before.
   - `getTutorial(questKey?)` (`tutorial/`, `TUTORIAL_RULES`) answers the 새내기 튜토리얼's content from
     `content/tutorial.yaml` and the User's status of each quest, without turning the tutorial on.
   - A **presenter** puts something real into the reply rather than the model describing it.

@@ -26,7 +26,8 @@ import { expectSchema } from './expect.ts';
 // Three kinds of case, by their turns:
 // - single turn: one User's message;
 // - fixed history: the earlier turns written out, the Assistant's as the app would send them back (its text, its
-//   cards by seed name, its Proposal with seed names), and the User's last message, the one scored;
+//   cards by seed name, a library card by its key, its Proposal with seed names), and the User's last message, the
+//   one scored;
 // - live (`live: true`): only the User's messages; each is sent with the Assistant's real replies before it.
 
 export const CASES_DIRECTORY = new URL('cases/', import.meta.url);
@@ -114,8 +115,9 @@ export const WORLD_TUTORIAL_FILES: Partial<Record<WorldName, string>> = {
 
 const seedName = z.string().min(1);
 
-// A Restaurant card's seed is its key, the name `GET /menus` gives it.
-const cardSchema = z.strictObject({ kind: z.enum(['quest', 'globalEvent', 'restaurant']), seed: seedName });
+// A Restaurant card's seed is its key, the name `GET /menus` gives it. A library card's is its key too, which no world
+// seeds: it is sent back as written, as the User left the card on the phone.
+const cardSchema = z.strictObject({ kind: z.enum(['quest', 'globalEvent', 'restaurant', 'library']), seed: seedName });
 
 // A Proposal the Assistant made, with its Place, its Global Event and its invitees by seed name. The endpoint checks
 // the other values, as it does the app's; the join policies and Boards are the database's (prisma/schema.prisma).
