@@ -120,4 +120,4 @@ Decisions and things inferred:
 ### Agent usage (2026-11-26)
 
 - Agent time: about 35 minutes (estimate), one session.
-- Tokens: to be filled in by the orchestrator.
+- Tokens: 146,092 in all for the implementation session, as its usage reports; the split into input, cache reads, cache writes and output was not available.
