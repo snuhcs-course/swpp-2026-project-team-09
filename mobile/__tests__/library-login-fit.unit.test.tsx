@@ -7,6 +7,7 @@
 
 import { render, screen } from '@testing-library/react-native';
 
+import { LOGIN_PAGE_SCRIPT } from '@/library/login-alert';
 import { LOGIN_FIT_CSS, LOGIN_FIT_ID, LOGIN_FIT_SCRIPT } from '@/library/login-fit';
 import { LibraryLogin } from '@/library/login-view';
 import { LIBRARY_MAIN_URL } from '@/library/site';
@@ -89,14 +90,14 @@ describe('the login view', () => {
     forgetWebViews();
   });
 
-  it('gives its pages the fit and nothing that could send the app a message', async () => {
+  it('gives its pages the fit and the alerts’ script, and takes a message only for an alert (ticket 14)', async () => {
     await render(<LibraryLogin checking={false} onDone={noop} onLanded={noop} onLeft={noop} visible />);
 
     const web = webViewAt(LIBRARY_MAIN_URL);
     expect(web?.props.testID).toBe('library-login-view');
-    expect(web?.props.injectedJavaScriptBeforeContentLoaded).toBe(LOGIN_FIT_SCRIPT);
-    expect(web?.props.injectedJavaScript).toBe(LOGIN_FIT_SCRIPT);
-    expect(web?.props.onMessage).toBeUndefined();
+    expect(web?.props.injectedJavaScriptBeforeContentLoaded).toBe(LOGIN_PAGE_SCRIPT);
+    expect(web?.props.injectedJavaScript).toBe(LOGIN_PAGE_SCRIPT);
+    expect(web?.props.onMessage).toEqual(expect.any(Function));
     expect(web?.injected).toEqual([]);
     expect(screen.getByText('아이디와 비밀번호는 도서관 로그인 페이지로만 전달돼요')).toBeVisible();
   });
