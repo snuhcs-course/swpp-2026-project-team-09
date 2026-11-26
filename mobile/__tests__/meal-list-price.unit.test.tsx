@@ -121,15 +121,18 @@ describe('The map of a meal answer with a price ceiling', () => {
     const drawing = drawingOf(answer, 0);
     // 302동식당 stands where 302동 is, which the Friend's Class and its way on still mark: the other two are framed by
     // nothing else.
-    const overAt = answer.plans
-      .filter(({ id }) => ['3식당', '자하연식당 2층'].includes(id))
-      .map(({ place }) => `${String(place.latitude)},${String(place.longitude)}`);
+    const alone = new Set(['3식당', '자하연식당 2층']);
+    const overAt = new Set(
+      answer.plans
+        .filter(({ id }) => alone.has(id))
+        .map(({ place }) => `${String(place.latitude)},${String(place.longitude)}`),
+    );
 
     expect(drawing.things.filter(({ id }) => OVER.some((name) => id.startsWith(`answer:candidate:${name}`)))).toEqual(
       [],
     );
     expect(
-      drawing.points.filter(({ latitude, longitude }) => overAt.includes(`${String(latitude)},${String(longitude)}`)),
+      drawing.points.filter(({ latitude, longitude }) => overAt.has(`${String(latitude)},${String(longitude)}`)),
     ).toEqual([]);
   });
 
