@@ -8,6 +8,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useMemo, useState } from 'react';
@@ -21,6 +22,8 @@ import {
   clockOf,
   droppedAt,
   onBandDay,
+  HANDLE_WIDTH,
+  handlesOutside,
   shareOf,
   type Stretch,
   stepped,
@@ -65,7 +68,6 @@ interface Moved {
 
 export const LANE_HEIGHT = 20;
 const BAR_HEIGHT = 8;
-const HANDLE_WIDTH = 16;
 // A handle takes a touch this wide, and its drag begins only on a sideways move, so that the card still scrolls over
 // the band.
 const HANDLE_TOUCH = 44;
@@ -80,6 +82,8 @@ interface HandleProps {
   shown: Stretch;
   trackWidth: number;
   focused: boolean;
+  // Drawn outside the band, which is too short for both handles on its ends (P01 ticket 16).
+  outside: boolean;
   disabled: boolean;
   onMove: (moved: Moved) => void;
   onLetGo: (moved: Moved) => void;
@@ -88,7 +92,7 @@ interface HandleProps {
 }
 
 function Handle(props: HandleProps): ReactElement {
-  const { bound, band, shown, trackWidth, focused, disabled, onMove, onLetGo, whole } = props;
+  const { bound, band, shown, trackWidth, focused, outside, disabled, onMove, onLetGo, whole } = props;
   const own = bound === 'from' ? band.startAt : band.endAt;
   const pan = useMemo(() => {
     const at = (translationX: number): Moved => ({
@@ -126,7 +130,13 @@ function Handle(props: HandleProps): ReactElement {
             onLetGo({ bound, clock: stepped(bound, actionName === 'increment' ? 1 : -1, band) });
           }
         }}
-        style={[styles.handle, { left: percent(shareOf(time, band.range)) }, focused && styles.focused]}
+        style={[
+          styles.handle,
+          { left: percent(shareOf(time, band.range)) },
+          outside && (bound === 'from' ? styles.outsideFrom : styles.outsideUntil),
+          focused && styles.focused,
+        ]}
+        testID={`time-band-handle-${bound}`}
       />
     </GestureDetector>
   );
@@ -252,6 +262,7 @@ export function TimeBand(props: TimeBandProps): ReactElement {
       bound={bound}
       disabled={disabled}
       focused={focus === bound}
+      outside={handlesOutside(shown, band.range, trackWidth)}
       trackWidth={trackWidth}
       whole={whole}
       onLetGo={moved.onLetGo}
@@ -299,5 +310,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: color.surface,
   },
+  outsideFrom: { marginLeft: -HANDLE_WIDTH },
+  outsideUntil: { marginLeft: 0 },
   focused: { borderWidth: 3, borderColor: color.focusRing },
 });

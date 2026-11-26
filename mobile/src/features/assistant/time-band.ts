@@ -110,6 +110,16 @@ export function shareOf(time: string, range: Stretch): number {
   return Math.min(Math.max(share, 0), 1);
 }
 
+// A handle's width on the track, in points.
+export const HANDLE_WIDTH = 16;
+
+// Whether a band, as wide as it is drawn on a track `trackWidth` wide, is narrower than its two handles, which drawn
+// on its ends would cover it: they are drawn outside it then (P01 ticket 16). Before the track is measured, on them.
+export function handlesOutside(shown: Stretch, range: Stretch, trackWidth: number): boolean {
+  const width = (shareOf(shown.endAt, range) - shareOf(shown.startAt, range)) * trackWidth;
+  return trackWidth > 0 && width < 2 * HANDLE_WIDTH;
+}
+
 export function droppedAt(bound: BandBound, share: number, band: Band): string {
   const start = msOf(band.range.startAt);
   const time = start + share * (msOf(band.range.endAt) - start);

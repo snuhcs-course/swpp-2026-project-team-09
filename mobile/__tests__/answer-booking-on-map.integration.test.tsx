@@ -238,6 +238,16 @@ describe('a seat booked on the map', () => {
   });
 });
 
+// P01 ticket 16: the time card shows the rest of the day, from now floored to the hour to closing.
+describe("a seat card's time card", () => {
+  it('runs from now, 16:00, to closing', async () => {
+    await asked();
+
+    expect(bar().getByTestId('time-band-start')).toHaveTextContent('16:00');
+    expect(bar().getByTestId('time-band-end')).toHaveTextContent('23:00');
+  });
+});
+
 // PR 460's review: the seat card of several requests (P03) is never left without its 예약하기. With the steps on the map
 // (P04 ticket 09) the seat is step ①, shown first, and its 예약하기 stands beside the input.
 describe('a seat card that is one of several requests', () => {

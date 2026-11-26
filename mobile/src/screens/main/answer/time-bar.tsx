@@ -271,6 +271,8 @@ export function BookingBar({
   const quests = useQuery(questsQuery).data ?? NO_QUESTS;
   return live === null || pending || booking.booked ? null : (
     <BookingCard
+      // A new answer's card sets its range anew (P01 ticket 16).
+      key={booking.place}
       keep={(slot) => {
         keep({ slot });
       }}
