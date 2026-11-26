@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { readFileSync } from 'node:fs';
@@ -27,6 +28,15 @@ describe('The 관정도서관 rules', () => {
   it('of an app that draws answers say to sign in first when the card shows 로그인, and name the library one way', () => {
     expect(LIBRARY_ANSWER_RULES).toContain('they sign in first when the card shows 로그인');
     expect(LIBRARY_ANSWER_RULES).toContain('Call the library 관정도서관 in replies, not 관정관.');
+  });
+
+  // On the phone (2026-11-27) the User switched a card from 7층 7A to 8층 and booked it, and the next reply called the
+  // Assistant's 7A words wrong.
+  it('of both chats say that a card sent back is as the User left it, and a difference is no error', () => {
+    const line = 'Where it differs from your earlier words, the User changed it: it is not your error';
+    expect(LIBRARY_RULES).toContain(line);
+    expect(LIBRARY_ANSWER_RULES).toContain(line);
+    expect(LIBRARY_ANSWER_RULES).toContain('A seat item in [Ahead: …] at the card');
   });
 
   // "내일 공부할 자리" asked "몇 시부터 몇 시까지 예약할까요?" and refused the answer: seats are booked on their day only.

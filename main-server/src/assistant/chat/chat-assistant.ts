@@ -323,6 +323,7 @@ export function chatAssistant(services: ChatAssistantServices, options?: ChatAss
     requestInstructions: requestInstructionsOf,
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
     ...(drawsAnswers ? { afterRun: stepsAfterRun(services) } : {}),
+    libraryCatalogue: library.catalogue,
     tools: {
       getMenus: getMenus(menus),
       getShuttle: getShuttle(shuttle),
