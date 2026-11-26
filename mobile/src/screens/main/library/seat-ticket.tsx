@@ -77,9 +77,12 @@ function SeatCell({ seat, onSeat }: { seat: string | null; onSeat: (() => void) 
         <Text numberOfLines={1} style={styles.value}>
           {seat ?? ' '}
         </Text>
-        <View testID="seat-ticket-seat-chevron">
-          <Icon color={color.svcStudy} name="chevronDown" size={CHEVRON} />
-        </View>
+        {/* Until a seat is known there is nothing to press, so no chevron says there is. */}
+        {seat === null ? null : (
+          <View testID="seat-ticket-seat-chevron">
+            <Icon color={color.svcStudy} name="chevronDown" size={CHEVRON} />
+          </View>
+        )}
       </View>
     </Pressable>
   );

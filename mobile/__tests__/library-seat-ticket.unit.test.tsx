@@ -31,12 +31,15 @@ describe('the ticket while its values are read', () => {
     expect(seat.getByText('좌석')).toBeOnTheScreen();
     expect(seat.queryByText(/\d+번/u)).toBeNull();
     expect(screen.getByTestId('seat-ticket-seat')).toBeDisabled();
+    // Nothing to press there yet, so no chevron says there is.
+    expect(seat.queryByTestId('seat-ticket-seat-chevron')).toBeNull();
   });
 
   it('fills in the seat where it stands once it is read', async () => {
     await render(<SeatTicket {...ROOM} free={42} onSeat={(): void => undefined} seat="7193번" />);
 
     expect(within(screen.getByTestId('seat-ticket-seat')).getByText('7193번')).toBeOnTheScreen();
+    expect(screen.getByTestId('seat-ticket-seat-chevron')).toBeOnTheScreen();
     expect(screen.getByText('빈 자리 42석')).toBeOnTheScreen();
   });
 });
