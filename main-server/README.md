@@ -2454,6 +2454,28 @@ Anthropic API as the AI's key says
   that carries them. Every meal answer therefore says `choosable: true`, and the app sends `planIds` only over an
   answer that says it, never to an older main server.
 
+  An app that sends `"clientCapabilities": ["study-plan"]` will get "공부할 자리 있어?" answered on the map, the meal
+  answer's way (P10).
+  - Its input is a `PlanInput` of kind `study`:
+    - `date`;
+    - `what`: quiet, group, pc or any;
+    - `people`: the asker, and the Friends the time card's "+ 같이" adds, 1 to 8;
+    - `window`;
+    - `area` for 근처;
+    - `minutes`: with Friends, the length asked;
+    - `chosen`: the seat space or room kind the User chose, kept across adding and removing Friends.
+  - Each of its Plans carries `study` (`dto/study-plan.dto.ts`).
+    - Alone, `study` holds the building's spaces that fit, with their hours and whether each is open or not known,
+      관정관's seat to book, and `liveSeats`.
+    - With Friends, the one plan is 관정관's, and `study.group` holds:
+      - the 관정 group study room kind, and every kind with whether it fits the head count;
+      - how many more people are needed;
+      - the book key that "동의 요청 보내기" posts to `POST /library/room-requests`;
+      - 사용 용도, when the window opens, and the sent request's state.
+  - The request's context and `POST /assistant/answers` already take a `study` input. Until P10 tickets 03 and 07
+    answer one, a recalculation of it is refused with 422.
+  - An app without `study-plan` gets nothing new.
+
   A reply carries `clears: true` when the User asked for another plan, or something else, and nothing could be drawn
   for it: `planMeal` for a day past or more than a week ahead, for breakfast, or for a meal over for today;
   `planMeet`, `planEvents`, `planNewQuest` and `findMenu` for a day out of reach; and `refuse` for a request plainly

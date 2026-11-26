@@ -9,8 +9,10 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { type PlanStudy } from './study-plan.dto.js';
 import { z } from 'zod';
 import { type Position } from '../../common/geometry.js';
 import { type CuisineWord } from '../../menus/cuisine-words.js';
@@ -178,6 +180,9 @@ export interface Plan {
   // A meal Plan's menu: its Restaurant's main corner, its own price and its dishes in the menu's order. Absent when no
   // menu was collected for the meal there.
   menu?: PlanMenu;
+  // A study Plan's building (P10): its study spaces that fit, best first, which of 관정's to book, and whether the phone
+  // reads its free seats. Absent from every other Plan.
+  study?: PlanStudy;
 }
 
 export interface MenuDish {
@@ -298,6 +303,7 @@ export interface ReplyStep {
 }
 
 export type { CardFact, Lookup, LookupAction, LookupCard } from './lookup.dto.js';
+export type { GroupRoomKind, PlanStudy, RoomRequestState, StudyGroup, StudySpot } from './study-plan.dto.js';
 export type { AnswerOffer, LocationMissing } from '../refusals/refusal.dto.js';
 export type {
   EventsInput,
@@ -308,6 +314,7 @@ export type {
   PlanInput,
   PlanPerson,
   QuestsInput,
+  StudyInput,
 } from './plan-input.dto.js';
 export { EVENT_IDS_MAX, planInputSchema, QUEST_IDS_MAX } from './plan-input.dto.js';
 
