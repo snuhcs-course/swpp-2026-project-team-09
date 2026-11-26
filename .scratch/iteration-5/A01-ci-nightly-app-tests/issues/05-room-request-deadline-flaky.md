@@ -1,7 +1,7 @@
 # 05: room-request-deadline.integration.test.ts fails beside the other room-request files
 
 Parent: [A01 spec](../spec.md)
-Status: needs-triage
+Status: ready-for-human
 Blocked by: None
 
 ## What happens
