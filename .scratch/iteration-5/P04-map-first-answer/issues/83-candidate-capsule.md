@@ -45,3 +45,15 @@ The user's decision (2026-11-26), drawn on the right-hand board of the candidate
 - [ ] A press on the minutes chooses the candidate's Plan.
 - [ ] Other answer kinds keep their look.
 - [ ] The first answer's marks arrive no later than before: timings before and after on the emulator in the PR.
+
+## Comments
+
+### Decisions on the screens (2026-11-26)
+
+- A candidate without a round of its own takes the same capsule with its numbered round inside, beside the spot. That covers the second Restaurant of a building, and a candidate on the User's spot or the next Class's. Without room for its minutes it is the numbered round alone, beside the spot. No candidate's navy-bordered pill is left on a meal map. One picture is made at answer time for each of these few.
+- The rule that leaves out every later candidate's minutes once an earlier one has no room stays here. Each candidate losing its minutes on its own is a ticket of its own.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 1 hour 50 minutes in the p04-58 session, an estimate. It includes about 40 minutes of emulator runs and the test runs, slowed by a machine load of 13 to 21. No subagents.
+- Tokens, from the ticket's start (03:53 UTC) to this entry: input 424 uncached, with cache reads 95,278,072 and cache writes 701,736; output 171,990.
