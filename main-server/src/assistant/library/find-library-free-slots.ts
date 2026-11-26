@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -12,7 +13,7 @@ import { koreaDate } from '../korea-time.js';
 import { othersText } from '../others-text.js';
 import { clockOfMinutes, durationWords, earliestStartMinutes, windowRefusal } from './booking-rules.js';
 import { type ClockRange, type LibrarySpace } from './catalogue.js';
-import { bookableSpace, dayWords, type LibraryServices, refused, spaceIdInput } from './library-parts.js';
+import { bookableSpace, closedToday, dayWords, type LibraryServices, refused, spaceIdInput } from './library-parts.js';
 
 const MINUTE_MS = 60 * 1000;
 
@@ -80,6 +81,10 @@ export function findLibraryFreeSlots(services: LibraryServices): Tool {
       const window = windowRefusal(space, date, context.now);
       if (window !== null || space.hours === null) {
         return refused(window === null ? [] : [window]);
+      }
+      const closed = closedToday(space, date, context.now);
+      if (closed !== null) {
+        return closed;
       }
       const free = await services.freeTime.freeTimeOn(context.userId, date, context.now);
       const slots = slotsOf(free, { space, hours: space.hours, date, now: context.now, minutes });
