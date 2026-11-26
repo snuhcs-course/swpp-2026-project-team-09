@@ -139,7 +139,7 @@ function Head({
   return (
     <View style={styles.head}>
       {number === null ? null : (
-        <View style={styles.badge}>
+        <View style={styles.badge} testID="meal-menu-number">
           <Text style={styles.number}>{number}</Text>
         </View>
       )}
@@ -257,7 +257,8 @@ const styles = StyleSheet.create({
     width: BADGE,
     height: BADGE,
     borderRadius: radius.full,
-    backgroundColor: color.quest,
+    // The opened Restaurant is the one chosen: coral, as on the map and in the list (P04 ticket 85).
+    backgroundColor: color.meal,
   },
   number: { ...text.label, fontFamily: font.bold, color: color.onPrimary },
   names: { flex: 1, gap: 2 },

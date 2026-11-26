@@ -26,7 +26,9 @@ export type AnswerSymbol =
   // caller says what it means.
   | { type: 'face'; name: string; dashed: boolean; badge?: FaceBadge; exact?: boolean }
   // `faded`: drawn pale. `ring`: how far, from 0 to 1, the ring spreading from a pick just chosen has gone, and `pop`
-  // its dot a little larger as it is chosen; left out, none.
+  // its dot a little larger as it is chosen; left out, none. `meal`: a meal answer's Restaurant, in coral (P04 ticket
+  // 85): the pick solid with a white number, a candidate soft with a coral rim and number; left out, the pick gold and a
+  // candidate navy, as every other answer's.
   | {
       type: 'dot';
       role: 'pick' | 'candidate' | 'dropped' | 'next' | 'stop' | 'kept';
@@ -34,6 +36,7 @@ export type AnswerSymbol =
       faded?: boolean;
       ring?: number;
       pop?: boolean;
+      meal?: boolean;
     };
 
 export type FaceBadge = 'waiting' | 'accepted';
@@ -85,18 +88,49 @@ function partOf(testID: string | undefined, part: string): string | undefined {
 
 type DotSymbol = Extract<AnswerSymbol, { type: 'dot' }>;
 
-function Dot({ role, number, ring, pop = false, testID }: DotSymbol & { testID?: string }): ReactElement {
+// A meal answer's other candidate (P04 ticket 85): within the white ring a coral rim, a soft coral ground, and a coral
+// number.
+function MealCandidate({
+  number,
+  pop,
+  testID,
+}: {
+  number: number | null;
+  pop: boolean;
+  testID?: string;
+}): ReactElement {
+  return (
+    <View style={[styles.dot, styles.candidate, styles.mealCandidate, pop && styles.pop]} testID={testID}>
+      <View style={styles.mealCandidateGround} testID={partOf(testID, 'ground')}>
+        {number === null ? null : <Text style={styles.mealNumber}>{number}</Text>}
+      </View>
+    </View>
+  );
+}
+
+function Dot({ role, number, ring, pop = false, meal = false, testID }: DotSymbol & { testID?: string }): ReactElement {
   return (
     <>
       {ring === undefined ? null : (
         <View
-          style={[styles.ring, { opacity: 1 - ring, transform: [{ scale: 1 + ring * RING_GROWTH }] }]}
+          style={[
+            styles.ring,
+            meal && styles.mealRing,
+            { opacity: 1 - ring, transform: [{ scale: 1 + ring * RING_GROWTH }] },
+          ]}
           testID={partOf(testID, 'ring')}
         />
       )}
-      <View style={[styles.dot, styles[role], pop && styles.pop]} testID={testID}>
-        {number === null ? null : <Text style={role === 'pick' ? styles.pickNumber : styles.number}>{number}</Text>}
-      </View>
+      {meal && role === 'candidate' ? (
+        <MealCandidate number={number} pop={pop} testID={testID} />
+      ) : (
+        <View
+          style={[styles.dot, styles[role], meal && role === 'pick' && styles.mealPick, pop && styles.pop]}
+          testID={testID}
+        >
+          {number === null ? null : <Text style={role === 'pick' ? styles.pickNumber : styles.number}>{number}</Text>}
+        </View>
+      )}
     </>
   );
 }
@@ -135,7 +169,7 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
 function MinutesCapsule({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
   const { number, side, title, faded = false } = label;
   const round =
-    number === null ? null : <Dot number={number} role="candidate" testID={partOf(testID, 'dot')} type="dot" />;
+    number === null ? null : <Dot meal number={number} role="candidate" testID={partOf(testID, 'dot')} type="dot" />;
   if (round !== null && title === '') {
     return <View testID={testID}>{round}</View>;
   }
@@ -198,6 +232,7 @@ const PICK_DOT = 30;
 // How much wider than the pick's dot its ring spreads, as a share of the dot.
 const RING_GROWTH = 1.4;
 const CANDIDATE_DOT = CANDIDATE_ROUND;
+const MEAL_RIM = 1.5;
 const SMALL_DOT = 14;
 const NEXT_SQUARE = 18;
 const FACE_BADGE = 14;
@@ -266,6 +301,19 @@ const styles = StyleSheet.create({
   waiting: { backgroundColor: color.inkMuted },
   accepted: { backgroundColor: color.friend },
   pickNumber: { ...mapText.smallTitle, color: color.onPrimary },
+  mealPick: { backgroundColor: color.meal },
+  mealRing: { borderColor: color.meal },
+  // The coral rim is the round's own ground showing around its soft ground.
+  mealCandidate: { backgroundColor: color.meal },
+  mealCandidateGround: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: CANDIDATE_DOT - 2 * RING - 2 * MEAL_RIM,
+    height: CANDIDATE_DOT - 2 * RING - 2 * MEAL_RIM,
+    borderRadius: radius.full,
+    backgroundColor: color.mealSoft,
+  },
+  mealNumber: { ...text.micro, fontFamily: mapText.smallTitle.fontFamily, letterSpacing: 0, color: color.meal },
   capsule: {
     alignSelf: 'flex-start',
     alignItems: 'center',

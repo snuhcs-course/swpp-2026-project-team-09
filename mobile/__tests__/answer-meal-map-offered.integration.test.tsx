@@ -72,7 +72,8 @@ function mapNumbers(): number[] {
     const found = /^후보 (\d+) · /u.exec(name);
     return found === null ? [] : [Number(found[1])];
   });
-  return [1, ...numbers].toSorted((one, other) => one - other);
+  // A candidate's round and its minutes' capsule are two marks of one number (P04 ticket 83).
+  return [...new Set([1, ...numbers])].toSorted((one, other) => one - other);
 }
 
 // Partitions: a Plan the phone fades; places the main server dropped beside a Restaurant closed for the meal.

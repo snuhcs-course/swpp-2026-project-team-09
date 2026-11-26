@@ -1,6 +1,6 @@
 # P06: The app's fixes outside the Assistant
 
-Status: ready-for-agent (10; 02, 03, 06, 07, 08 and 09 are done; 01, 04 and 05 are held, see Solution)
+Status: ready-for-agent (11; 02, 03, 06, 07, 08, 09 and 10 are done; 01, 04 and 05 are held, see Solution)
 
 ## Problem Statement
 
@@ -16,8 +16,9 @@ On 2026-11-22 the team collected, in a Slack thread, what bothers them in the ap
 8. **백그라운드에서도 공유 under 위치 공유.** Added by the user on 2026-11-25: "백그라운드에서도 공유 이 토글도 사실 override가 되는거잖아? 근데 지금 UI로 둘다 토글이 켜져있을때 위치 공유만 끄면 백그라운드에서도 공유는 켜진 상태로 남거든? 이걸 수정하고 싶어 같이 꺼지게, 대신 같이 꺼졌으면, 나중에 위치 공유를 킬 때는 같이 켜져야돼." (a screen of the 위치 공유 card on 내 정보, not kept)
 9. **내 정보's cards.** Added by the user on 2026-11-25, on their phone: "관심사 아래 line, 탭 안내 다시 보기 밑에 line, 관정도서관 로그인 밑에 line 있잖아. 이거 해당 블록이 거기서 끝나는데 그 line들이 있을 이유가 없거든?" and "관정도서관 로그인 버튼, 지금 그 칸 기준으로 위에 붙어있잖아, 이거 중앙으로 맞추고 싶어." (`references/09-1-me-cards-mock-up.webp`, the screen as it is and as agreed)
 10. **Full 파티 and 파티 asked for, in 찾기.** Added by the user on 2026-11-26. From UAT 1, never fixed: "자리가 다 찬 파티도 보여줌. → 참여하기 버튼도 활성화가 되어 있고, 눌렀을 때 그제야 '자리가 다 찼어요'를 보여줌." And: "파티를 이미 신청했는데 해당 파티의 참여 신청 버튼이 아직 활성화 되어있음 (모집 중인 파티 탭에서) 이거 신청 취소 버튼으로 만들고 버튼 디자인은 '초대' - '신청 취소' 버튼과 동일하게." (`references/10-1-asked-card-now.jpg`, `references/10-2-asked-post-now.jpg`)
+11. **A class whose days have different hours.** Added by the user on 2026-11-26: such a class has to be made twice, as two classes of one name. The user changed 수업 추가 on the design canvas (board `Timetable`, its form) and asked for that change alone.
 
-Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, item 10 against 8020e2dc on 2026-11-26: none was fixed then.
+Items 1 to 7 were checked against `origin/5.0/Main` 6abd04e8 on 2026-11-22, item 8 against b2e5323b and item 9 against ef2223aa on 2026-11-25, items 10 and 11 against 8020e2dc on 2026-11-26: none was fixed then.
 
 ## Solution
 
@@ -33,6 +34,7 @@ One ticket per item, numbered as the items:
 8. [08: 백그라운드에서도 공유 shows off while 위치 공유 is off, and comes back with it](issues/08-background-follows-sharing.md)
 9. [09: 내 정보's cards end without a line, and 관정도서관 로그인's button stands in the row's middle](issues/09-me-cards-end-clean.md)
 10. [10: 찾기 leaves out full 파티, and a card whose request waits offers 신청 취소](issues/10-full-and-asked-posts.md)
+11. [11: The class form takes a time slot per set of hours](issues/11-class-time-slots.md)
 
 What is built now (agreed by the team after the review, 2026-11-22): what is broken goes first, and the improvements wait.
 
@@ -43,6 +45,7 @@ What is built now (agreed by the team after the review, 2026-11-22): what is bro
 - Added on 2026-11-25 and built at once: 08, done in PR 556. It changes only `screens/me/background-row.tsx` and its tests, which no other ticket touches.
 - Added on 2026-11-25 and built at once: 09. It changes `design-system/list-row.tsx` (a way to leave the line out, the default unchanged) and three of 내 정보's cards; no open ticket touches them.
 - Added on 2026-11-26 and built at once: 10. It changes 찾기 (`screens/party/find-tab.tsx`, `post-card.tsx`), 보낸 신청's ask and the party posts' lists (`features/party/`); no open ticket touches them.
+- Added on 2026-11-26 and built at once: 11. It changes the class form (`features/timetable/class-form.ts`, `screens/timetable/`); no open ticket touches them.
 
 When the held tickets are taken up, tickets touching the same files never run at the same time:
 
@@ -72,6 +75,7 @@ When the held tickets are taken up, tickets touching the same files never run at
 18. As a User on 내 정보, I want each card to end at its edge, without a line under its last row, and the 관정도서관 로그인 button level with its row.
 19. As a User looking for a 파티, I want 찾기 and the boards to leave out 파티 with no place left, so that I never press 참여하기 to hear "자리가 다 찼어요".
 20. As a User who asked to join a 파티, I want its card in 찾기 to offer 신청 취소 instead of 참여 신청.
+21. As a User whose class meets at different hours on different days, I want to enter it as one class with a time slot per set of hours.
 
 ## Implementation Decisions
 
@@ -87,6 +91,7 @@ Decided on 2026-11-22:
 - 08 (2026-11-25): while 위치 공유 is off, 백그라운드에서도 공유 shows off and disabled; turned on again, it shows the User's kept choice. The screen changes, not the choice kept on the phone nor the rule for background sending, which already follows the Master Switch.
 - 09 (2026-11-25): the line goes from under the last row of 내 정보's activity card, 탭 안내 다시 보기 and 관정도서관 로그인 only; `ListRow` keeps its line by default, and the 비공개 구역 card on the 위치 공유 screen, which ends the same way, stays. The 관정도서관 로그인 button is centred in its row with `Button`'s existing `centred`.
 - 10 (2026-11-26): full 파티 leave 찾기 and the boards, filtered in the app, so that 파티 모집글 still opens one from a link or a chat card; a 찾기 card whose request waits shows `secondary` `신청 취소` at 참여 신청's size, asking as 보낸 신청 does.
+- 11 (2026-11-26): the canvas's 수업 추가 form, with a slot per set of hours (up to seven), each slot's own Place and room or the first's; the Place stays optional, and the timetable list is unchanged.
 
 For all tickets:
 
@@ -129,6 +134,7 @@ Every item received and where it went:
 | 08 백그라운드에서도 공유 토글 (added 2026-11-25) | Ticket 08 |
 | 09 내 정보 카드 끝의 줄, 관정도서관 로그인 버튼 위치 (added 2026-11-25) | Ticket 09 |
 | 10 가득 찬 파티, 신청한 파티의 참여 신청 버튼 (added 2026-11-26) | Ticket 10 |
+| 11 요일마다 시간이 다른 수업 (added 2026-11-26) | Ticket 11 |
 
 Notes for the tickets:
 
