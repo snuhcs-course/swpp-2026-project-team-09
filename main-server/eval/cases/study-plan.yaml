@@ -1,0 +1,84 @@
+################################################################################
+# AI-generated with Claude
+#
+# 2026-11-27  Opus 5.5   prompted by fyoon46
+################################################################################
+
+# "공부할 자리 있어?" answered as ranked study places (P10 ticket 04), from the app that says `study-plan`
+# (`capabilities: study-app`), in the P6 world on Wednesday 2026-11-04 at 10:05. A place to study asked for without a
+# 관정도서관 space or a booking goes to planStudy, never to a library tool; a named 관정 space or a booking stays with
+# the library tools; 근처 is planStudy with near over the visible area; and a choice by number over the answer on screen
+# is choosePlan's. Written, and not run: no model key on the machine they were written on.
+
+- id: study-plan-a-seat
+  category: study-plan
+  world: p6-answer
+  capabilities: study-app
+  repeat: 3
+  turns:
+    - user: 공부할 자리 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planStudy]
+      forbidden: [findLibrarySpace, proposeLibraryBooking, showLibrarySeats, findStudyNearby, showOnMap]
+    args:
+      planStudy: { what: any }
+    text:
+      absent: [몇 시부터, 남은 자리, 빈자리, 빈 자리]
+
+- id: study-plan-kwanjeong-booking
+  category: study-plan
+  world: p6-answer
+  capabilities: study-app
+  repeat: 3
+  turns:
+    - user: 관정 7층 예약해 줘
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      forbidden: [planStudy]
+
+# 근처 over board a9's visible area (공대, with 관정관 to the north), the User at 301동.
+- id: study-plan-near-quiet
+  category: study-plan
+  world: p6-answer
+  capabilities: study-app
+  context:
+    location: { latitude: 37.45016, longitude: 126.95259 }
+    viewport: { south: 37.447, west: 126.949, north: 37.456, east: 126.956 }
+  repeat: 3
+  turns:
+    - user: 근처 조용한 데
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planStudy]
+      forbidden: [findStudyNearby, findLibrarySpace]
+    args:
+      planStudy: { what: quiet, near: true }
+
+# The second plan chosen by number over the study answer on screen.
+- id: study-plan-choose-second
+  category: study-plan
+  world: p6-answer
+  capabilities: study-app
+  live: true
+  screen: true
+  repeat: 3
+  knownFailure: choosePlan reads a meal answer on screen only, until P10 ticket 05 widens it to a study answer.
+  turns:
+    - user: 공부할 자리 있어?
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planStudy]
+    - user: 2번으로 할게
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [choosePlan]
+          forbidden: [planStudy, findLibrarySpace, showOnMap]
+        args:
+          choosePlan: { number: 2 }

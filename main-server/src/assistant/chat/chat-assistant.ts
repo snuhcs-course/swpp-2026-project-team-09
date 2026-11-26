@@ -16,6 +16,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { FriendViewService } from '../../friends/friend-view.service.js';
@@ -38,7 +39,7 @@ import { CHOOSE_PLAN_RULES, choosePlan } from '../gathering/choose-plan.js';
 import { PLAN_RULES, planMeal } from '../gathering/plan-tools.js';
 import { INTEREST_RULES, interestTools } from '../interests/interest-tools.js';
 import { koreaNow } from '../korea-time.js';
-import { LIBRARY_ANSWER_RULES, LIBRARY_RULES } from '../library/library-rules.js';
+import { LIBRARY_ANSWER_RULES, LIBRARY_RULES, LIBRARY_STUDY_RULES } from '../library/library-rules.js';
 import { type PlanAnswersService } from '../plan-answers.service.js';
 import { planNewQuest } from '../recruiting/new-quest-tools.js';
 import { planQuests, RECRUITING_RULES } from '../recruiting/recruiting-tools.js';
@@ -48,6 +49,7 @@ import { DAY_RULES, findDay } from '../lookup/day-tools.js';
 import { findFriend, FRIEND_RULES } from '../lookup/friend-tools.js';
 import { HOURS_RULES, restaurantHours } from '../lookup/hours-tools.js';
 import { findMenu, MENU_RULES } from '../lookup/menu-tools.js';
+import { withStudyPlan } from '../lookup/study-plan-tools.js';
 import { withStudyArea } from '../lookup/study-tools.js';
 import { type LookupServices } from '../lookup/lookup-services.js';
 import { QUEST_WAY_RULES } from '../lookup/quest-way-tools.js';
@@ -106,6 +108,16 @@ export interface ChatAssistantOptions {
   drawsMeets?: boolean;
   // With drawsAnswers, it also sends the visible map area and draws its study spaces.
   drawsArea?: boolean;
+  // With drawsAnswers, it also draws ranked study places (`study-plan`, P10), which take 근처 in the place of drawsArea's.
+  drawsStudy?: boolean;
+}
+
+// The 관정도서관 rules: with a study answer, "공부할 자리" asked without a booking is planStudy's.
+function libraryRulesOf(drawsAnswers: boolean, drawsStudy: boolean): string {
+  if (!drawsAnswers) {
+    return LIBRARY_RULES;
+  }
+  return drawsStudy ? LIBRARY_STUDY_RULES : LIBRARY_ANSWER_RULES;
 }
 
 // The system prompt's part that is the same for every request, whoever asks and whenever, which the Anthropic path
@@ -296,13 +308,18 @@ export function chatAssistant(services: ChatAssistantServices, options?: ChatAss
     freeTime,
     drawsAnswers,
   );
-  const planned = withStudyArea(
-    withInterests(onMap, services.interests, drawsAnswers),
-    services.lookups.studyAreas,
-    drawsAnswers && options?.drawsArea === true,
+  const drawsStudy = drawsAnswers && options?.drawsStudy === true;
+  const planned = withStudyPlan(
+    withStudyArea(
+      withInterests(onMap, services.interests, drawsAnswers),
+      services.lookups.studyAreas,
+      drawsAnswers && options?.drawsArea === true && !drawsStudy,
+    ),
+    services.lookups.studyPlans,
+    drawsStudy,
   );
   return {
-    instructions: instructionsOf(planned.rules, drawsAnswers ? LIBRARY_ANSWER_RULES : LIBRARY_RULES, drawsAnswers),
+    instructions: instructionsOf(planned.rules, libraryRulesOf(drawsAnswers, drawsStudy), drawsAnswers),
     requestInstructions: requestInstructionsOf,
     cardsAfterRun: ({ presented, judged }) => withTravelBoxes(presented.cards, judged),
     ...(drawsAnswers ? { afterRun: stepsAfterRun(services) } : {}),
