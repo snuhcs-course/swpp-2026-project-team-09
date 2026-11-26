@@ -214,9 +214,9 @@
       mentions: [[반영, 빼지, 그대로, 남아]]
       absent: [뺐어요, 빼고 골랐]
 
-# No plan is narrowed by price, and the reply's prices are the list's (P05 ticket 50). On the user's phone
-# (2026-11-26), "5천원 이하로 저녁" was answered that no dinner under 5,000원 exists and the first Restaurant cost
-# 6,000원, while the list under it said "3,000원부터".
+# A meal with a price ceiling (P05 ticket 53, the design page "밥 조건 두 가지" § 2). planMeal takes the price the User
+# names as maxPrice, per person in won, and the one sentence names it; it replaced the rule of P05 ticket 50, under which
+# "5천원 이하로 저녁" was said not to be narrowed by price. Not run when written: no model key on that machine.
 - id: meal-wish-by-price
   category: meal-wishes
   world: p4-answer
@@ -229,10 +229,104 @@
       required: [planMeal]
       forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
     args:
-      planMeal: { date: '2026-11-02', meal: dinner }
+      planMeal: { date: '2026-11-02', meal: dinner, maxPrice: 5000 }
     text:
-      mentions: [가격]
-      absent: [단품, 부족]
+      mentions: [[5, 000원 이하, 5천원 이하]]
+      absent: [거르지 못, 단품, 부족]
+
+- id: meal-price-ceiling-words
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 만원 안쪽으로 점심 뭐 먹지
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    args:
+      planMeal: { meal: lunch, maxPrice: 10000 }
+
+- id: meal-price-about
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 6천원 정도로 저녁 먹을 데
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    args:
+      planMeal: { meal: dinner, maxPrice: 6000 }
+
+# 싼 데 with no number sets no ceiling: the cheapest first.
+- id: meal-cheap-first
+  category: meal-wishes
+  world: p4-answer
+  repeat: 3
+  turns:
+    - user: 저녁 싼 데로
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [planMeal]
+      forbidden: [getMenus, showOnMap, findMenu, proposeQuest]
+    args:
+      planMeal: { meal: dinner, cheapFirst: true }
+    text:
+      mentions: [싼]
+
+# The price on screen is kept by the server for the next message, and let go only when the User lets it go.
+- id: meal-price-kept-with-a-kind
+  category: meal-wishes
+  world: p4-answer
+  live: true
+  screen: true
+  repeat: 3
+  turns:
+    - user: 5천원 이하로 저녁
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planMeal]
+        args:
+          planMeal: { maxPrice: 5000 }
+    - user: 한식으로
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planMeal]
+          forbidden: [getMenus, findMenu, showOnMap]
+        args:
+          planMeal: { cuisine: 한식 }
+
+- id: meal-price-let-go
+  category: meal-wishes
+  world: p4-answer
+  live: true
+  screen: true
+  repeat: 3
+  turns:
+    - user: 5천원 이하로 저녁
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planMeal]
+        args:
+          planMeal: { maxPrice: 5000 }
+    - user: 가격은 상관없어
+      expect:
+        actions: [TOOL]
+        tools:
+          required: [planMeal]
+          forbidden: [getMenus, findMenu, showOnMap]
+        args:
+          planMeal: { maxPrice: any }
+        text:
+          absent: [5, 000원 이하]
 
 # A meal's plans are never answered with no words (P05 ticket 48). Production logged a meal turn whose model wrote no
 # text (2026-11-26), and the app put the plan's own line, with its walk and price, where the sentence goes.

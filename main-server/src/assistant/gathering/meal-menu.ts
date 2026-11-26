@@ -93,7 +93,7 @@ export function kindFirst<Fit extends { key: string }>(
     : [...fits.filter((fit) => serves(fit)), ...fits.filter((fit) => !serves(fit))];
 }
 
-const won = (price: number): string => `${price.toLocaleString('ko-KR')}원`;
+export const won = (price: number): string => `${price.toLocaleString('ko-KR')}원`;
 
 // What a meal costs there as the app's list writes it ("3,000원부터"): the corner's own price, else the lowest of its
 // dishes' with 부터 when they differ; null when nothing has a price. planMeal gives it to the model, so that the reply's
@@ -108,6 +108,23 @@ export function listPrice({ price, dishes }: Pick<PlanMenu, 'price' | 'dishes'>)
   }
   const lowest = Math.min(...prices);
   return prices.some((one) => one !== lowest) ? `${won(lowest)}부터` : won(lowest);
+}
+
+// The dish the list's price speaks of, with that price (P05 ticket 53): the corner's first dish at the corner's own
+// price, else the first of its cheapest dishes; none when nothing has a price. A price ceiling compares it.
+export function cheapestDish({
+  price,
+  dishes,
+}: Pick<PlanMenu, 'price' | 'dishes'>): { name: string; price: number } | null {
+  const [first] = dishes;
+  if (price !== null) {
+    return first === undefined ? null : { name: first.name, price };
+  }
+  return dishes.reduce<{ name: string; price: number } | null>(
+    (cheapest, { name, price: own }) =>
+      own !== null && (cheapest === null || own < cheapest.price) ? { name, price: own } : cheapest,
+    null,
+  );
 }
 
 function itemWords(line: MenuLineDto): string {
