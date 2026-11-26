@@ -20,7 +20,7 @@ Native files: none. Releases: the main server. Nothing a User sees changes until
 
 ## What to build
 
-- **Three columns on `User`**, in one migration, all empty for every existing account:
+- **Four columns on `User`**, in one migration, all empty for every existing account:
   - `consentVersion Int?` (`consent_version`): the version of the legal documents the User agreed to; null for none;
   - `usageConsent Boolean?` (`usage_consent`): the usage choice given with it; null while no version is agreed;
   - `consentedAt DateTime?` (`consented_at`): when the version was agreed to;
