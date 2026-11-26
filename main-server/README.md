@@ -2804,7 +2804,9 @@ The module (`src/assistant/`) has four parts. Only the adapter knows the SDK:
       worker reads today to six days ahead, so a week ahead never has one): the card's `noPlan.lines` say
       `11/30(월) 메뉴는 아직 올라오지 않았어요` and `메뉴는 엿새 뒤 날짜까지 볼 수 있어요` (today the first line alone), the
       reason stays `no-menu`, and the model is told the menus are not posted yet, never that nothing is open. `findMenu`
-      and `getMenus` say the same of such a day. A `findMenu` that finds the menu plans the meal for the User alone as
+      and `getMenus` say the same of such a day. `findMenu` takes the meal only when the User names one; with none
+      ("내일 예술계 메뉴") it opens the meal nearest in time, as `planMeal` takes it: today the one being served now or the
+      next, on another day lunch, the other one press away on the app's tabs (P05 ticket 52). A `findMenu` that finds the menu plans the meal for the User alone as
       `planMeal` does; when the Restaurant is one of its Plans, that meal answer is the reply's `answer`, with `opened`
       naming the Plan: the app shows it as that place opened from the answer's list (its menu, when the User arrives,
       the button to make it, and the way back to every place they can eat at), and the model writes nothing (P04
