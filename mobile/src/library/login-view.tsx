@@ -9,9 +9,10 @@
  ******************************************************************************/
 
 import { type ReactElement, useEffect, useEffectEvent, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, StyleSheet, Text, View } from 'react-native';
+import { Modal, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { AppBar, color, space, text } from '@/design-system';
+import { AppBar, color, font, radius, space, text } from '@/design-system';
+import { seeThrough } from '@/design-system/see-through';
 import type { LoginOutcome } from './client';
 import { LOGIN_FIT_SCRIPT } from './login-fit';
 import { isLoginDone, LIBRARY_MAIN_URL } from './site';
@@ -60,32 +61,52 @@ function useFinish(visible: boolean, onDone: (outcome: Closed) => void): (outcom
 
 const COVER_WORDS = '로그인하는 중이에요';
 
+// The longest the cover stays over one way back. Past it, a way back that stalled shows the site's page, under the bar
+// with ✕, so that the User is never left behind the cover.
+export const COVER_LIMIT_MS = 15_000;
+
 // Whether the view is on its way back from the school's login (P01 ticket 13): from the moment it starts loading the
 // site's main, booking or my-booking screen after a page off them, until it leaves them again. Its page is then covered
 // while it loads and while a check runs, so that the site's own page never shows between the login and the close. Each
-// login view opened starts afresh.
+// login view opened starts afresh. `stalled`: the way back has lasted `COVER_LIMIT_MS`.
 function useReturning(visible: boolean): {
   returning: boolean;
   landedOn: boolean;
+  stalled: boolean;
   went: (url: string, loading: boolean) => void;
 } {
   const away = useRef(false);
   const [returning, setReturning] = useState(false);
   const [landedOn, setLandedOn] = useState(false);
+  const [stalled, setStalled] = useState(false);
   useEffect(() => {
     if (visible) {
       away.current = false;
       setReturning(false);
       setLandedOn(false);
+      setStalled(false);
     }
   }, [visible]);
+  useEffect((): (() => void) | void => {
+    if (!returning) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setStalled(true);
+    }, COVER_LIMIT_MS);
+    return (): void => {
+      clearTimeout(timer);
+    };
+  }, [returning]);
   return {
     returning,
     landedOn,
+    stalled,
     went: (url, loading) => {
       if (!isLoginDone(url)) {
         away.current = true;
         setReturning(false);
+        setStalled(false);
         return;
       }
       if (away.current) {
@@ -126,8 +147,9 @@ function LoginPage({
       />
       {covered ? (
         <View style={styles.cover} testID="library-login-cover">
-          <ActivityIndicator color={color.snuBlue} />
-          <Text style={styles.coverWords}>{COVER_WORDS}</Text>
+          <Text numberOfLines={1} style={styles.coverWords}>
+            {COVER_WORDS}
+          </Text>
         </View>
       ) : null}
     </View>
@@ -140,11 +162,12 @@ function LoginPage({
 // on the site's main, booking or my-booking screen, the login is done and the session stays in the web view's own
 // cookie jar. Reaching those screens is not enough by itself: the login is done only when a check finds the session
 // works; otherwise the view stays open and asks again on the next of those screens. ✕ is "no session"; after five
-// minutes the view closes as failed. Back from the school's login, a cover hides the site's page until the check ends.
+// minutes the view closes as failed. Back from the school's login, a cover hides the site's page until the check ends,
+// for 15 seconds at most.
 export function LibraryLogin({ visible, onDone, onLanded, onLeft, checking }: LibraryLoginProps): ReactElement {
   const finish = useFinish(visible, onDone);
   const back = useReturning(visible);
-  const covered = back.returning && (!back.landedOn || checking);
+  const covered = back.returning && !back.stalled && (!back.landedOn || checking);
   return (
     <Modal
       animationType="slide"
@@ -180,8 +203,17 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: space[3],
     backgroundColor: color.surface,
   },
-  coverWords: { ...text.body, color: color.ink },
+  // The look of the app's hints: one line in a see-through pill.
+  coverWords: {
+    ...text.label,
+    overflow: 'hidden',
+    paddingVertical: space[2],
+    paddingHorizontal: space[4],
+    borderRadius: radius.full,
+    backgroundColor: seeThrough(color.ink, 0.62),
+    fontFamily: font.semiBold,
+    color: color.surface,
+  },
 });
