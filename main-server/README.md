@@ -2493,6 +2493,11 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
     are ready at the earliest; where they set out from is still decided by their own time), and `leaveBy` (the latest
     they leave).
+  - **What was missing.** A meal's answer asked with `locationMissing: 'permission'` carries in `offers`
+    `{ "kind": "open", "label": "위치 켜기", "screen": "location", "hint": "위치를 켜면 지금 있는 곳에서 가까운 순으로 봐요" }`,
+    and one for a User with no Class carries `{ "kind": "open", "label": "시간표 넣기", "screen": "timetable", "hint" }`
+    with `note`, the same words as that `hint`. The app draws a meal Plan's offers as the `hint` lines under its words
+    (P04 ticket 86); `note` is kept for the apps before them, which draw the note over their buttons.
   - **A meet** (`{ "kind": "meet", "date", "people", "window", "placeId" }`, `gathering/meet-plan.service.ts`): the
     earliest stretch between 09:00 and 22:00, from now or `window.from`, that the asker and the Friends share, at the
     place where they

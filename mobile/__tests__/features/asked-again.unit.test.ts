@@ -8,29 +8,41 @@ import { renderHook } from '@testing-library/react-native';
 import type { AnswerReply } from '@/api/assistant-types';
 import { NO_LOCATION_ANSWER, NO_TIMETABLE_ANSWER } from '@/api/mock/data/missing-inputs';
 import type { LatLng } from '@/api/types';
-import { useAskedAgain } from '@/features/assistant/use-asked-again';
+import { type Settling, useAskedAgain } from '@/features/assistant/use-asked-again';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { NO_ANSWER } from '../support/no-answer';
 
 // The answer asked again once a position on campus comes (P04 ticket 86). Partitions: the position (none, as off
 // campus or before the permission; one), the answer on screen (offering the location, not offering it, none), and the
-// reply (the same one rendered again or after its recalculation, a new one). Expected values: the hook's rule.
+// reply (the same one rendered again or after its recalculation, a new one), and what the User did with the answer
+// (nothing; a Quest changed or left beside it; a request or a recalculation on its way). Expected values: the hook's
+// rule, and the review of PR 597 for an answer acted on.
 
 const HERE: LatLng = { latitude: 37.45016, longitude: 126.95259 };
 const ELSEWHERE: LatLng = { latitude: 37.4594, longitude: 126.9516 };
+
+const UNSETTLED: Settling = { made: null, changed: null, left: null, sending: false, changing: false };
 
 interface Seen {
   source: AnswerReply | null;
   answer: AnswerReply | null;
   position: LatLng | null;
+  settling?: Settling;
+  recalculating?: boolean;
 }
 
 async function watch(first: Seen): Promise<{ again: jest.Mock<void, []>; see: (next: Seen) => Promise<void> }> {
   const again = jest.fn<void, []>();
-  const shownOf = ({ source, answer }: Seen): ShownAnswer => ({ ...NO_ANSWER, source, answer, again });
+  const shownOf = ({ source, answer, recalculating = false }: Seen): ShownAnswer => ({
+    ...NO_ANSWER,
+    source,
+    answer,
+    again,
+    recalculating,
+  });
   const { rerender } = await renderHook(
     (seen: Seen) => {
-      useAskedAgain(shownOf(seen), seen.position);
+      useAskedAgain(shownOf(seen), seen.position, seen.settling ?? UNSETTLED);
     },
     { initialProps: first },
   );
@@ -90,5 +102,32 @@ describe('an answer that does not offer the location, or none', () => {
     await see({ source: null, answer: null, position: HERE });
 
     expect(again).not.toHaveBeenCalled();
+  });
+});
+
+describe('an answer the User acted on', () => {
+  it.each([
+    ['its Quest changed', { ...UNSETTLED, changed: '바꿨어요' }],
+    ['its Quest left as it is', { ...UNSETTLED, left: '그대로 둘게요' }],
+  ])('is asked nothing again once %s, though a position comes', async (_, settling) => {
+    const { again, see } = await watch({ ...lacking, position: null, settling });
+
+    await see({ ...lacking, position: HERE, settling });
+    await see({ ...lacking, position: HERE, settling: UNSETTLED });
+
+    expect(again).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['an invitation', { ...lacking, settling: { ...UNSETTLED, sending: true } }],
+    ['a change of its Quest', { ...lacking, settling: { ...UNSETTLED, changing: true } }],
+    ['a recalculation', { ...lacking, recalculating: true }],
+  ])('waits while %s is on its way, then is asked again once', async (_, busy) => {
+    const { again, see } = await watch({ ...busy, position: HERE });
+    expect(again).not.toHaveBeenCalled();
+
+    await see({ ...lacking, position: HERE });
+
+    expect(again).toHaveBeenCalledTimes(1);
   });
 });

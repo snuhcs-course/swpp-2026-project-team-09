@@ -31,6 +31,8 @@ import {
   NO_TIMETABLE_REPLY,
 } from '@/api/mock/data/missing-inputs';
 import { LEAVE_LOOKUP_REPLY } from '@/api/mock/data/way-lookups';
+import { PLAN_QUEST } from '@/api/mock/data/plan-quest';
+import type { PlanQuest } from '@/api/plan-quest-types';
 
 // Without a location or a Timetable (P02-13), in the answer frame against the fake main server: the card says what
 // the answer assumed, on the User's start and in the pick's card, and a meal Plan's offers are hint lines under the
@@ -56,6 +58,15 @@ const N14_NOTE = '캠퍼스 밖이라 친구에게 내 위치가 보이지 않�
 const START = '나';
 const LOCATION_HINT = '위치를 켜면 지금 있는 곳에서 가까운 순으로 봐요';
 const TIMETABLE_HINT = '시간표를 넣으면 나설 시각까지 알려 드려요';
+const MAKE_ALONE = '일정에 넣기';
+// The stored Quest as the main server makes it of a Plan for one person, with no reminder.
+const [ASKER] = PLAN_QUEST.quest.members ?? [];
+const MADE_ALONE: PlanQuest = {
+  quest: { ...PLAN_QUEST.quest, capacity: 1, takenAlone: true, members: ASKER === undefined ? [] : [ASKER] },
+  invitations: [],
+  askLevels: [],
+  alone: { lines: [[{ text: '301동식당에서 먹어요', strong: false }]], remindAt: null },
+};
 const PICK = '301동식당 · 11:50 점심';
 
 let server: FakeServer;
@@ -152,6 +163,25 @@ describe('board n13, the location allowed from its hint', () => {
     await pass(2000);
 
     expect(recalculations(server)).toHaveLength(1);
+  });
+});
+
+// The review of PR 597: a recalculation would drop what was made of the answer, and its buttons would come back.
+describe('board n13 made into a Quest before the location comes', () => {
+  it('is asked nothing again, and its Quest stays made', async () => {
+    const phone = givePhone({ permission: 'refused', position: ON_CAMPUS });
+    server.on('POST /plans', { status: 201, body: MADE_ALONE });
+    const user = await askOnMap(server, NO_LOCATION_REPLY);
+    await user.press(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: MAKE_ALONE }));
+    await pass(500);
+    expect(server.received('POST /plans')).toHaveLength(1);
+
+    phone.setPermission('granted');
+    await phone.comeToFront();
+    await pass(2000);
+
+    expect(recalculations(server)).toEqual([]);
+    expect(screen.queryByRole('button', { name: MAKE_ALONE })).toBeNull();
   });
 });
 

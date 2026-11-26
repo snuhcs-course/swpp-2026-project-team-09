@@ -167,8 +167,8 @@ function useAnswerOnScreen(
     },
   };
   const shown = useShownAnswer(bubbles, recalculation);
-  useAskedAgain(shown, position);
   const invitation = usePlanInvitation(shown, { location: position, locationMissing, say: showToast });
+  useAskedAgain(shown, position, invitation);
   useEffect(() => {
     shownNow.current = shown;
   });
