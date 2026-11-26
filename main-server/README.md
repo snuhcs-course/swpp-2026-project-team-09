@@ -3263,6 +3263,20 @@ Each exported file keeps, at its top, where it came from and the day of the expo
   its spaces is. 관정관's entry lists the seat sectors of the library catalogue the User may book, which the phone reads
   through the User's own Library Session; no count comes back. When the app's department list changes, add the new
   names to `department-colleges.json`: the app's test fails until every name has an entry.
+- **A Study Space's hours as data** (P10): each space's `schedule` gives its hours by day (`weekday`, `saturday`,
+  `sunday`), for the year (`week`) and, when a source gives them apart, a `vacation`, with the column a public holiday
+  takes (`holiday`), 설·추석's own (`lunarHolidays`) and stretches such as an exam period (`periods`). Each day is a list
+  of ranges (a close of `24:00`, or past midnight, allowed), `'closed'`, or `null` when no source gives it. The file's
+  `calendar` gives two things:
+  - the term's vacations, over the span the 학사일정 covers;
+  - the public holidays, with 설·추석 apart, over the range they are filled for (`filled`). Each holiday names its
+    rule ("관공서의 공휴일에 관한 규정 제3조제1항제1호") and the page that states its date: law.go.kr, or KASI's
+    음양력 변환 for a lunar date.
+    A day outside that range, or not listed, reads as a regular day. `study-hours.unit.test.ts` fails once today passes
+    the range's end: fill the next range from the same rules, an election day or a temporary holiday only where an
+    official page states it. A space is open at a time only when every way the calendar allows that day to be says so;
+    else it is closed or not known. Fill only what a source states, from the hours research, and put a conflict or what
+    is not verified in the schedule's `note`. Neither is served by `GET /study-spaces`.
 - **Correcting a Place**: change it in its file, such as a name in `inst_kor_nm`, and load again. The next export
   overwrites the correction.
 - **Giving a Place its outlines by hand**: add an entry to `place-outlines.json`.
