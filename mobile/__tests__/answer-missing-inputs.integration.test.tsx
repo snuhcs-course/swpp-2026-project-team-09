@@ -123,8 +123,10 @@ describe('board n13: no location permission', () => {
 
     expect(screen.getByText(EXPLANATION)).toBeVisible();
   });
+});
 
-  it('asks the same conditions again from the position once the location is allowed, with no message', async () => {
+describe('board n13, the location allowed from its hint', () => {
+  it('asks the same conditions again from the position, with no message', async () => {
     givePhone({ permission: 'refused', prompt: 'granted', position: ON_CAMPUS });
     server.on('POST /assistant/answers', { status: 200, body: NO_TIMETABLE_ANSWER });
     const user = await askOnMap(server, NO_LOCATION_REPLY);

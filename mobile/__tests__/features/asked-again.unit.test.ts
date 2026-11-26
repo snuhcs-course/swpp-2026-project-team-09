@@ -25,8 +25,8 @@ interface Seen {
   position: LatLng | null;
 }
 
-async function watch(first: Seen): Promise<{ again: jest.Mock; see: (next: Seen) => Promise<void> }> {
-  const again = jest.fn();
+async function watch(first: Seen): Promise<{ again: jest.Mock<void, []>; see: (next: Seen) => Promise<void> }> {
+  const again = jest.fn<void, []>();
   const shownOf = ({ source, answer }: Seen): ShownAnswer => ({ ...NO_ANSWER, source, answer, again });
   const { rerender } = await renderHook(
     (seen: Seen) => {
