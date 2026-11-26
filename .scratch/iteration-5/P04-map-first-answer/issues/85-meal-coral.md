@@ -68,4 +68,4 @@ The user's choice (2026-11-26): "3안" of the candidate marks proposal, the righ
 ### Agent usage (2026-11-26)
 
 - Agent time for tickets 84 and 85 together: about 1 hour 40 minutes in the p04-58 session, an estimate, including about 35 minutes of emulator runs. No subagents.
-- Tokens for tickets 84 and 85 together, from ticket 83's agent usage entry (05:55 UTC) to this entry: see the PR's last comment, counted once both PRs are open.
+- Tokens for tickets 84 and 85 together, from ticket 83's agent usage entry (05:55 UTC) to this entry (06:53 UTC): input 484 uncached, with cache reads 164,504,444 and cache writes 816,128; output 143,978.
