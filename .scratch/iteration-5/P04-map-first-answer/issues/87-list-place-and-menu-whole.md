@@ -2,6 +2,7 @@
 
 Parent: [P04 spec](../spec.md)
 Status: ready-for-agent
+Pull request: #591
 Blocked by: none.
 
 Native files: none. Releases: an app OTA update.
@@ -42,4 +43,9 @@ The other suspects:
 
 ## Comments
 
-`useLayerScroll` gives the room to hold under the content while a layer is open: the content's height when the first layer opened, less the layer's own. The card adds it to the content's bottom padding. Its unit test (`answer-layer-scroll`) runs the scroll before the layout, as Android does, and failed first with the list back at the menu's end (230 for 900). `answer-meal-list-back` checks the room while a menu is open and after it closes. `answer-meal-menu-whole` failed first on the dish's one-line cut.
+Built in PR #591. `useLayerScroll` gives the room to hold under the content while a layer is open: the content's height when the first layer opened, less the layer's own. The card adds it to the content's bottom padding. Its unit test (`answer-layer-scroll`) runs the scroll before the layout, as Android does, and failed first with the list back at the menu's end (230 for 900). `answer-meal-list-back` checks the room while a menu is open and after it closes. `answer-meal-menu-whole` failed first on the dish's one-line cut.
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 25 minutes in one session, test runs included (an estimate).
+- Tokens, to the PR's opening: input 8,858,610 (cache reads 8,697,028, cache writes 161,482, uncached 100); output 48,691. No subagents.
