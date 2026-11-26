@@ -171,6 +171,8 @@ describe('A study answer on screen', () => {
   it('gives 관정관’s seat to book when its plan is shown, and none for another', () => {
     expect(contextLines(onScreen('관정관'))[0]).toContain('"book":"7F-7A-zone2"');
     expect(contextLines(onScreen('법학도서관'))[0]).not.toContain('"book"');
+    const chosen = { ...STUDY_ANSWER.input, chosen: { seatSpaceId: '8F-8A-zone1-quiet', roomSpaceId: null } };
+    expect(contextLines({ ...onScreen('관정관'), conditions: chosen })[0]).toContain('"book":"8F-8A-zone1-quiet"');
     expect(
       contextLines({ ...NO_CONTEXT, conditions: STUDY_GROUP_TO_SEND.input, planId: '관정관', planIds: ['관정관'] })[0],
     ).not.toContain('"book"');
