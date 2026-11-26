@@ -31,6 +31,22 @@ A study answer with `study.group` is drawn as a meal answer is, with the meal's 
 - **Removing every Friend** from an answer that began as "같이" keeps the group answer at moreNeeded 3; the server answers it so.
 - **No plan** (`noPlan`): the reason's lines, as a meal's.
 
+## How it is built
+
+- **The card:** `PlanCard` draws `StudyGroupBody` (`screens/main/answer/study-group-body.tsx`) for a Plan with `study.group`, in place of a meal's body. It holds:
+  - the Assistant's sentence, or `shortWords` while people are missing;
+  - the login line;
+  - the room ticket with the kind's first room free for the whole time (`roomTimesFor`, `freeRooms`);
+  - the use line, and the chooser of the cell or the line opened.
+  - Choosing a kind asks again through `shown.change(withChosenRoom)`.
+- **The main button** is told to P01 ticket 15's act stage (`control.libraryAct`), as a booking ticket's is. `planActionOf` leaves a group answer to it.
+  - "+ 같이 …" opens the time card's picker (`fix.toggleAdding`).
+  - 로그인 opens the library login.
+  - "동의 요청 보내기" waits for ticket 12.
+- **The map:** `drawingOf` gives a group answer's pick the study pick's make-up (P01 ticket 10): "관정 4층 그룹스터디룸 · 15:00 · 6인실 · 4명".
+- **The time card** is the meal's `PlanBar` unchanged.
+- **The mock** answers "같이 공부할 자리 있어?" from the copies (`studyGroupReplyTo`).
+
 ## Acceptance criteria
 
 - [ ] `STUDY_GROUP_TO_SEND`: the time card with "같이 3 ›" and the Friends' busy blocks, the sky mark and label, the people's marks, the sentence, the ticket "그룹스터디룸 · 4명 / 4층 6인실 / 방 G412", and "동의 요청 보내기". (Integration test, with the library's room list.)
