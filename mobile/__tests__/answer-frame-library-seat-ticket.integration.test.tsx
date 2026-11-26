@@ -9,6 +9,7 @@ import { SEAT_NOTES } from '@/api/mock/data/library';
 import { color } from '@/design-system';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
+import { pass } from './support/app';
 import { expectNoWrite, pressIn } from './support/library-chat';
 import {
   askTicket,
@@ -82,6 +83,20 @@ describe('the seat ticket', () => {
     await pressIn(seatCard(), '좌석: 7193번');
 
     expect(screen.getByRole('button', { name: '좌석 현황 닫기' })).toBeVisible();
+  });
+});
+
+describe("the ticket's seat", () => {
+  it('opens the seat picture from the seat while the room list is open, and closes the list', async () => {
+    await askTicket(world);
+    await pass(500);
+    expect(ticket().getByText('7193번')).toBeVisible();
+    await pressIn(seatCard(), ROOM);
+
+    await pressIn(seatCard(), '좌석: 7193번');
+
+    expect(screen.getByRole('button', { name: '좌석 현황 닫기' })).toBeVisible();
+    expect(seatCard().queryByText('17:00–20:00에 빈 자리')).toBeNull();
   });
 
   it("opens nothing from the seat while 예약하기 is on its way (PR 625's review)", async () => {

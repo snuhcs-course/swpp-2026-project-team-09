@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -84,7 +85,7 @@ export function ChatLibraryCards({
   actions: LibraryCardActions;
 }): ReactElement {
   return (
-    <View style={styles.cards}>
+    <View style={styles.cards} testID="library-cards">
       {cards.map((card) => (
         <One actions={actions} bubbleId={bubbleId} card={card} key={card.library.key} own={own} />
       ))}
@@ -93,5 +94,7 @@ export function ChatLibraryCards({
 }
 
 const styles = StyleSheet.create({
-  cards: { gap: space[3], marginTop: space[2] },
+  // No room of its own over the cards: the turn's parts already stand apart, and on the map the seat ticket is the
+  // first thing at the card's low step, which shows two lines (P01 ticket 09).
+  cards: { gap: space[3] },
 });
