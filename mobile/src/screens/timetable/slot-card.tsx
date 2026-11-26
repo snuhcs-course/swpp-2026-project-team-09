@@ -131,7 +131,8 @@ function SlotWhere({
         onPress={onPickPlace}
       />
       <TextField
-        label={`${prefix}강의실 선택`}
+        accessibilityLabel={`${prefix}강의실 선택`}
+        label="강의실 선택"
         maxLength={20}
         onChangeText={(room) => {
           onChange({ room });

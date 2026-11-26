@@ -39,6 +39,10 @@ The canvas's form, `수업 추가` and `수업 수정`:
 - The Place stays optional in every slot. The canvas's 저장 waits for a Place, but a class read from a screenshot often has none, and such a class must stay savable.
 - The list's 장소 line is left as it is (the first time's Place). The canvas's list shows one per slot, but the user asked for the form only.
 - The slot's card, its 같은 장소 box and 다른 시간대 추가 are in `screens/timetable/slot-card.tsx`. `DayToggles` takes the days other slots hold, and `PlaceButton` a name.
+- Removing the first slot gives the next one, when its box was checked, the removed slot's Place and room as its own (`withoutSlot`), since it becomes the first (PR #594's review).
+- With several slots, the room field's visible label stays "강의실 선택"; a screen reader hears it with the slot's name first. `TextField` takes an `accessibilityLabel` for that, the label by default.
+- 삭제 takes the muted ink (PR #594's review).
+- Screens on the emulator with the mock build: `references/11-1-before-one-slot.jpg` to `references/11-7-after-large-font.jpg`.
 
 ## Acceptance criteria
 
