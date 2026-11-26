@@ -3,6 +3,7 @@
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-25  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
@@ -19,7 +20,7 @@ export function LibraryCard(): ReactElement {
     <View style={[cardStyles.card, styles.card]}>
       <ListRow
         last
-        leading={<Icon color={color.inkMuted} name="book" size={20} />}
+        leading={<Icon color={color.inkMuted} name="bookOpen" size={20} />}
         lines={[loggedIn ? '로그인됨' : '로그인하지 않음']}
         title="관정도서관 로그인"
         trailing={

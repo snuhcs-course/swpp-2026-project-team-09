@@ -4,6 +4,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -15,7 +16,7 @@ import { color, Icon, type IconName, radius, shadow, size, space, text } from '@
 const EXAMPLES: readonly { words: string; icon: IconName; tint: string }[] = [
   { words: '배고파', icon: 'meal', tint: color.svcDining },
   { words: '오늘 볼 만한 거 있어?', icon: 'calendar', tint: color.party },
-  { words: '공부할 자리', icon: 'book', tint: color.svcStudy },
+  { words: '공부할 자리', icon: 'bookOpen', tint: color.svcStudy },
 ];
 
 // The frame's chip height.

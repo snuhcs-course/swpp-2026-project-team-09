@@ -136,7 +136,7 @@ function Dot({ role, number, meal = false, study = false, testID }: DotSymbol & 
     >
       {studyPick ? (
         <View testID={bookOf(testID)}>
-          <Icon color={color.onPrimary} name="book" size={STUDY_BOOK} />
+          <Icon color={color.onPrimary} name="bookOpen" size={STUDY_BOOK} />
         </View>
       ) : null}
       {number === null ? null : (
