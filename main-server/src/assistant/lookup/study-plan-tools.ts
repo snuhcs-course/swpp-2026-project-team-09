@@ -85,7 +85,9 @@ export const STUDY_PLAN_RULES = `Places to study are planned on the map: the ser
 - A named 관정도서관 space (관정 7층 열람실, 관정 스터디룸) or a booking (관정 7층 예약해 줘, 자리 잡아 줘) stays with the library tools.
 - Your reply is one sentence about the first plan and why it comes first, as planStudy's why says, such as "13:00 수업까지 가장 오래 있을 수 있는 공대 신양학술정보관을 추천해요." The app shows the rest. Never say how many seats are free or how full a place is: only 관정도서관's free seats are known, and the app shows them. Do not call showOnMap for it.
 - A place whose hours are not known is never said to be open.
-- When planStudy answers none, say its reason in one sentence.`;
+- When planStudy answers none, say its reason in one sentence.
+- A line [Plan on screen: …] of kind study with numbered gives the buildings the app lists, numbered from 1 in that order, and plan the one shown. When the User chooses one of them by its number or its name, or the one shown (2번으로 할게, 신양으로, 관정으로 하자), call choosePlan with number, or with restaurant as the building's name the list gives, and call no planStudy. Your reply is one sentence that it is chosen.
+- When that line gives book and the User asks to book the place shown (예약해 줘, 여기 예약해 줘), book that 관정도서관 space as the library rules book a seat: call findLibrarySpace with the id book gives, then proposeLibraryBooking. Any other plan shown cannot be booked here: say so in one sentence.`;
 
 // An app that says `study-plan` gets the study answer in the place of findStudyNearby, 근처 included (P10's decision of
 // 2026-11-26).

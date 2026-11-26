@@ -73,6 +73,16 @@ export interface PlanContext {
   faded: readonly Faded[];
 }
 
+// What 관정관's plan books (P10 ticket 05): the first 7층 seat for a quiet place or any. A group study room needs
+// companions, which proposeStudyRoom books, and 관정관 holds no computers to book.
+export const KWANJEONG_SEAT = '7F-7A-zone2';
+
+// The building of the 공부공간 layer whose seats the phone reads, as the layer names it.
+export const KWANJEONG_BUILDING = '관정관';
+
+export const bookOf = (what: StudyInput['what']): { spaceId: string } | null =>
+  what === 'quiet' || what === 'any' ? { spaceId: KWANJEONG_SEAT } : null;
+
 // The band reaches an hour before the arrival, unless now is later, and half an hour past the end.
 const BAND_BEFORE_MS = 60 * MINUTE_MS;
 const BAND_AFTER_MS = 30 * MINUTE_MS;
@@ -279,7 +289,7 @@ export function planOf(ranked: Ranked, index: number, context: PlanContext): Pla
     band: bandOf(ranked, context),
     study: {
       spaces: spots.map((spot) => spotOf(spot)),
-      book: null,
+      book: building.liveSeats === null ? null : bookOf(context.input.what),
       liveSeats: building.liveSeats === null ? null : 'kwanjeong',
     },
   };
