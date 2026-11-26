@@ -17,20 +17,44 @@ import roomList from './support/kwanjeong/getRoomList_14103_20261105.json';
 // group-study-resume 5 and 3 나 다 라): what the card says and its main button, by the room read again, the library
 // session and the booking window.
 
-const GROUP = STUDY_GROUP_READY.plans[0]?.study?.group as StudyGroup;
+function groupOf(): StudyGroup {
+  const group = STUDY_GROUP_READY.plans[0]?.study?.group;
+  if (group === undefined) {
+    throw new Error('no group');
+  }
+  return group;
+}
+
+const GROUP = groupOf();
 const ROOMS: LibraryRoomTimes[] = roomList.BookingTimeList;
 const SLOT = { date: '2026-11-05', start: '15:00', minutes: 120 };
 
 const free = (...names: string[]): LibraryRoomTimes[] => ROOMS.filter(({ NAME }) => names.includes(NAME));
 
-const ready = { status: 'ready', moreNeeded: 0 } as RoomRequest;
+const ready: RoomRequest = {
+  id: 'r',
+  status: 'ready',
+  questId: 'q',
+  madeForBooking: true,
+  requester: { userId: 'me', name: '나' },
+  space: { id: '4F-group-6', name: '6인실' },
+  date: SLOT.date,
+  start: SLOT.start,
+  minutes: SLOT.minutes,
+  useDesc: '과제',
+  reason: null,
+  failed: null,
+  consents: [],
+  companions: [],
+  moreNeeded: 0,
+};
 const party = (request: RoomRequest | null): PartyRequest => ({
   request,
   send: null,
   sending: false,
   failed: false,
   ready: request?.status === 'ready',
-  update: () => undefined,
+  update: jest.fn<void, [RoomRequest]>(),
   cancel: null,
 });
 

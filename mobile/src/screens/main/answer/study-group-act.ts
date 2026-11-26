@@ -74,21 +74,30 @@ export interface GroupAct {
   onAdd: () => void;
   // Opens the picker of one more Friend for the request out.
   onAsk: () => void;
+  // Once everyone has consented (P10 ticket 14): books the room, or asks again at the next free time; `again` is that
+  // button's words, null while the kind has a free room. `booking` dims 예약하기 while the room or the use is missing,
+  // or while it books.
+  onBook?: () => void;
+  onAgain?: () => void;
+  again?: string | null;
+  booking?: boolean;
   act?: TellAct;
   bubbleId?: number;
 }
 
 // Its words are told when they change, and its press reads the card's latest functions, so that telling it costs no
 // render.
-export function useGroupAct({ group, loggedIn, party, busy, onAdd, onAsk, act, bubbleId }: GroupAct): void {
+export function useGroupAct(props: GroupAct): void {
+  const { group, loggedIn, party, busy, act, bubbleId, again = null, booking = false } = props;
   const { logIn } = useLibrarySession();
-  const latest = useRef({ onAdd, onAsk, logIn, send: party.send });
+  const handlers = { ...props, logIn, send: party.send };
+  const latest = useRef(handlers);
   useEffect(() => {
-    latest.current = { onAdd, onAsk, logIn, send: party.send };
+    latest.current = handlers;
   });
-  const seen = mainOf(group, loggedIn, party);
+  const seen = mainOf(group, loggedIn, party, again);
   const { main, words } = seen;
-  const disabled = busy || seen.disabled;
+  const disabled = busy || seen.disabled || (main === 'ready' && booking);
   useEffect(() => {
     if (act === undefined || bubbleId === undefined) {
       return;
@@ -103,6 +112,15 @@ export function useGroupAct({ group, loggedIn, party, busy, onAdd, onAsk, act, b
         void now.logIn().catch(() => null);
       } else if (main === 'send') {
         now.send?.();
+      } else if (main === 'ready') {
+        now.onBook?.();
+      } else if (main === 'logInBook') {
+        void now
+          .logIn()
+          .then(() => now.onBook?.())
+          .catch(() => null);
+      } else if (main === 'again') {
+        now.onAgain?.();
       }
     };
     act(TELLER, bubbleId, { words, onPress, disabled, danger: false });
