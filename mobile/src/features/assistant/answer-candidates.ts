@@ -10,11 +10,13 @@ import type { AnswerSymbol } from '@/design-system';
 import { koreaClock } from '@/korea-time';
 import type { AnswerLabel } from '@/design-system';
 import { inView } from '@/map';
-import { type Draft, SIDE_ORDER } from './answer-groups';
+import type { LatLng } from '@/api/types';
+import { type Draft, restOf, SIDE_ORDER } from './answer-groups';
 import { inside, type LabelView } from './answer-labels';
 import { addedWalk, fadedPlan } from './answer-walks';
 import { serves } from './meal-kinds';
 import { dishWords, menuLine } from './meal-menus';
+import { mealPickLabel } from './meal-pick';
 
 // The words of an answer's pick and other candidates on the map (P04 ticket 13, boards 20 to 22).
 
@@ -41,6 +43,39 @@ export function pickLine(
     return when;
   }
   return when === null ? dishes : `${when} · ${dishes}`;
+}
+
+// The chosen place of a scene: a meal answer's with menus says its time and main dish (`mealPickLabel`); any other its
+// flag's words, its day, and its first dish (`pickLine`). Any meal answer's, menus or none, is coral (P04 ticket 90).
+export function pickDraft(
+  pick: {
+    title: string;
+    position: LatLng;
+    number: number | null;
+    plan: Plan | undefined;
+    day: string | undefined;
+    kind: Cuisine | null;
+    meal: boolean;
+    coral: boolean;
+  },
+  flagText: string | null,
+): Draft {
+  const { title, position, number, plan, day, kind, meal, coral } = pick;
+  const symbol: AnswerSymbol = { type: 'dot', role: 'pick', number, ...(coral ? { meal: true } : {}) };
+  const base = {
+    id: 'answer:pick',
+    position,
+    planId: null,
+    group: 'pick',
+    tone: 'pick',
+    number,
+    ...(coral ? { coral } : {}),
+  } as const;
+  if (meal && plan !== undefined) {
+    return { ...base, symbol: { ...symbol, meal: true }, ...mealPickLabel(plan, title, kind) };
+  }
+  const line = pickLine(flagText === null ? null : restOf(title, flagText), day, plan, kind);
+  return { ...base, name: line === null ? title : `${title} · ${line}`, symbol, title, line };
 }
 
 // A candidate without the kind of food on screen (board 25): its name alone in grey, with no number and no dot. A
@@ -95,6 +130,7 @@ export function candidateDraft(
   item: MapScene['places'][number],
   kind: Cuisine | null = null,
   meal = false,
+  coral = false,
 ): Draft {
   const { place, tag } = item;
   const title = tag ?? place.label;
@@ -110,8 +146,9 @@ export function candidateDraft(
   const time = plan === undefined ? null : koreaClock(plan.startAt);
   const sub = menuLine(plan?.menu, kind);
   const said = [time, sub].flatMap((words) => words ?? []);
-  const symbol: AnswerSymbol = { type: 'dot', role: 'candidate', number };
+  const symbol: AnswerSymbol = { type: 'dot', role: 'candidate', number, ...(coral ? { meal: true } : {}) };
   return {
+    ...(coral ? { coral } : {}),
     id: `answer:candidate:${place.label}`,
     name: number === null ? title : [`후보 ${String(number)}`, title, ...said].join(' · '),
     position: { latitude: place.latitude, longitude: place.longitude },

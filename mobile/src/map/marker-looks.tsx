@@ -166,6 +166,7 @@ function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | null): str
           ...(label.note === undefined || label.note === null ? [] : [{ note: label.note }]),
           ...(label.action === undefined || label.action === null ? [] : [{ action: label.action }]),
           ...(label.faded === true ? ['faded'] : []),
+          ...(label.meal === true ? ['meal'] : []),
           ...(label.clock === true ? ['clock'] : []),
         ],
   ];

@@ -14,7 +14,6 @@
 
 import type { AnswerReply, Cuisine, KeptQuest, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import type { AnswerSymbol } from '@/design-system';
 import { koreaDayWord } from '@/korea-time';
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
@@ -31,7 +30,6 @@ import {
   type Group,
   keptDrafts,
   OWN,
-  restOf,
   stopDraft,
   SYMBOL_ORDER,
   unplaced,
@@ -41,11 +39,10 @@ import {
 import { type LabelView, type MarkPoint, placeLabels, UPRIGHT_REACH } from './answer-labels';
 import { type Placed, thingsInOrder } from './answer-things';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
-import { candidateDraft, leftOutByRank, pickLine, sideRank } from './answer-candidates';
+import { candidateDraft, leftOutByRank, pickDraft, sideRank } from './answer-candidates';
 import { kindShown } from './meal-kinds';
 import { drawsMeal, hiddenRoutes, mealDrafts, sceneLines } from './meal-marks';
 import type { Ways } from './shuttle-legs';
-import { mealPickLabel } from './meal-pick';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
 
@@ -107,12 +104,14 @@ export interface SceneSetting {
   // The paths its walks were found along and its legs by the shuttle, which a meal Plan's legs are drawn on; left
   // out, none.
   ways?: Ways;
+  // A meal answer's, menus or none: its pick and candidates in coral, as its list (P04 ticket 90). Left out, not.
+  coral?: boolean;
 }
 
 const BARE: SceneSetting = { number: null, plans: [], standings: NO_STANDINGS };
 
 function placeDraft(
-  { number: pickNumber, plans, day, kind = null, meal = false }: SceneSetting,
+  { number: pickNumber, plans, day, kind = null, meal = false, coral = false }: SceneSetting,
   scene: MapScene,
   item: MapScene['places'][number],
 ): Draft | null {
@@ -123,27 +122,10 @@ function placeDraft(
   if (role === 'pick') {
     const flag = scene.flags.find(({ at, role: flagRole }) => flagRole === 'place' && samePoint(at, position));
     const plan = pickNumber === null ? undefined : plans[pickNumber - 1];
-    const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber };
-    if (meal && plan !== undefined) {
-      const words = mealPickLabel(plan, title, kind);
-      const coral: AnswerSymbol = { ...symbol, meal: true };
-      return { ...base, id: 'answer:pick', group: role, symbol: coral, tone: role, number: pickNumber, ...words };
-    }
-    const line = pickLine(flag === undefined ? null : restOf(title, flag.text), day, plan, kind);
-    const name = line === null ? title : `${title} · ${line}`;
-    return {
-      ...base,
-      id: 'answer:pick',
-      name,
-      group: role,
-      symbol,
-      tone: role,
-      line,
-      number: pickNumber,
-    };
+    return pickDraft({ title, position, number: pickNumber, plan, day, kind, meal, coral }, flag?.text ?? null);
   }
   if (role === 'candidate') {
-    return candidateDraft(plans, item, kind, meal);
+    return candidateDraft(plans, item, kind, meal, coral);
   }
   if (role === 'stop' || role === 'meeting') {
     return role === 'stop' ? stopDraft(item) : null;
@@ -320,6 +302,7 @@ export function drawingOf(
     kind: kindShown(answer),
     kept: answer.planSet,
     meal: drawsMeal(answer),
+    coral: answer.input.kind === 'meal',
     ...(ways === undefined ? {} : { ways }),
   });
 }

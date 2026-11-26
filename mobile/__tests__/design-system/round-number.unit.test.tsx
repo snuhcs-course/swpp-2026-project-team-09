@@ -60,6 +60,14 @@ describe('a number in a round on the map', () => {
     expectCentredIn(numberOf('4'), 13);
     expectCentredIn(numberOf('1'), 16);
   });
+
+  // P04 ticket 90: a menu-less meal answer's name tag has a soft coral badge with a coral rim of 1.5.
+  it('keeps its size and is centred in a meal candidate’s name tag badge, inside its coral rim', async () => {
+    const tag: AnswerLabel = { side: 'right', tone: 'candidate', title: '3식당', line: null, number: 2, meal: true };
+    await render(<MapAnswerMark label={tag} symbol={null} />);
+
+    expectCentredIn(numberOf('2'), 13);
+  });
 });
 
 // Partitions: the chosen row's badge and another row's. Expected values: the badge of 22 less its rim of 1.5.

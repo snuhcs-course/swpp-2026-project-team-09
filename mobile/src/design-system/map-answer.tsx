@@ -66,6 +66,9 @@ export interface AnswerLabel {
   action?: string | null;
   // Drawn pale, as a candidate that does not fit or is far. Left out, not.
   faded?: boolean;
+  // A meal answer's pick or candidate, menus or none: its edge and number badge in coral (P04 ticket 90). Left out, its
+  // tone's own colours.
+  meal?: boolean;
   // A meal candidate's capsule says a clock time ("17:00"), drawn in gold as every clock time; left out, the walking
   // minutes in ink (P04 ticket 88).
   clock?: boolean;
