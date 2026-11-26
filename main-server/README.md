@@ -203,6 +203,49 @@ request.
   chosen. `usageMayBeSent` in `src/users/consent.ts` is the only rule, and `UsersService.usageMayBeSent(userId)` reads
   the account again each time, so a change of the switch holds from the next event.
 
+## Usage data
+
+The main server sends PostHog the closing stage of four actions it does, so that the team can count how often each
+goes through and compare it with what the app asked for and heard back (P08 spec: Usage data with PostHog). The app
+sends the other stages itself. `src/usage/` is the only place that imports `posthog-node` (6.0.6), and a unit test
+(`test/posthog-import-boundary.unit.test.ts`) refuses an import of it anywhere else; `test/posthog-client.integration.test.ts` drives the real SDK over a stand-in `fetch`.
+
+**The events**, sent once their work is committed, never inside a transaction, with the User id (our database's UUID)
+as `distinctId`:
+
+| Event                           | When                                                                                                                                                                                     | Properties                                                                          |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `assistant_reply_completed`     | `POST /assistant/messages` answers 200; the answers and the taps send nothing                                                                                                            | none                                                                                |
+| `party_creation_completed`      | a 파티 is stored (`POST /quests/own`; `POST /quests` that makes the User's Quest for the Global Event, or gathers others from a Quest taken alone; `POST /plans` but a Plan taken alone) | `visibility` of the stored Quest: `public` (Open or Approval) or `private` (Closed) |
+| `party_join_completed`          | the User is stored as a Holder, sent for the User who joined, also when the Leader accepted                                                                                              | `how`: `joined_directly`, `invitation_accepted` or `request_accepted`               |
+| `friendship_creation_completed` | a friendship is stored, sent once for each of the two Users                                                                                                                              | `how`: `request_accepted`, `invite_link_accepted` or `requests_crossed`             |
+
+Every event also carries `source: "server"`, and nothing else: no text of a message or an answer, no title, Place,
+coordinates, name, Student Number or Friend list, no person property, and GeoIP is off. Not counted: a Quest taken
+alone, a Class Quest, a Tutorial Quest, a booking party's Quest and its invitation accepted with the room's consent,
+the Party (활성 파티), the admin site's befriending and the demo seed. The event names and their properties are typed
+in `src/usage/usage-events.ts`, and `UsageService.sent(userId, event, properties)` takes only those.
+
+**Consent.** Before each event the service reads the account with `UsersService.usageMayBeSent` (Consent, above) and
+sends nothing unless it holds a version of at least `CONSENT_VERSION` with usage chosen. No copy is kept, so a change
+of the switch in 내 정보 holds from the next event. A failed read drops the event with a warning.
+
+**Never in the way of a request.** `sent` returns at once: the read and the send run beside the request, which waits for
+neither. Each event is its own request to PostHog (`captureImmediate`), tried once and given 5 seconds; a failure or a
+timeout drops it and logs one warning that names the error's type and its cause's, such as `A usage event was not sent
+to PostHog: CaptureError (AbortError)`, never the token or the error's message. At the application's close the client's
+`shutdown` sends what is still pending, waiting at most 3 seconds.
+
+**The setting.** `POSTHOG_PROJECT_TOKEN`, the project's token (`phc_…`), optional and empty by default. Empty, as in
+development, the Dev Server and the tests that do not set it, no client is made and nothing is sent; there is no
+route. A value of another shape refuses the start without repeating it. PostHog's host, `https://us.i.posthog.com`,
+is a constant. The token is a write-only client token, but it is kept out of the repository and of every log line
+all the same. In Production it is the parameter `posthog-project-token` (`infra/production/README.md`: Usage data in
+PostHog).
+
+In a test, `test/usage.ts` gives a placeholder token and `PostHogStub`, which stands in for PostHog's client and keeps
+each event: `startApp(…, { posthog: stub.clients })`. No test reaches PostHog.
+
 ## Friends
 
 Every User has a Friend ID: 8 characters from capital letters and digits, without `0`, `O`, `1`, `I` and `L`, such as
@@ -3342,6 +3385,7 @@ src/
 ├── administrators/                  a feature: the Administrators, who register and remove each other
 ├── log-test/                        a feature: an Administrator's test log line at a chosen level
 ├── sentry-alerts/                   a feature: Sentry's alerts on the app's crashes, posted to the team's Slack channel
+├── usage/                           the usage data sent to PostHog, the only importer of posthog-node (no route)
 ├── collection/                      a feature: each Source's Collection status, and the worker's reports of failure
 ├── global-events/                   a feature: the Global Events, and the events the worker collects
 ├── global-settings/                 the global settings an Administrator changes, their registry, and each pod's

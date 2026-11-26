@@ -8,6 +8,7 @@
 # 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 # 2026-11-23  Opus 5.5   prompted by TaeHyun79
 # 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-26  Opus 5.5   prompted by AhnJinYoung
 ################################################################################
 
 apiVersion: apps/v1
@@ -85,6 +86,10 @@ spec:
               valueFrom: { secretKeyRef: { name: secrets, key: SENTRY_WEBHOOK_SECRET } }
             - name: APP_CRASH_SLACK_WEBHOOK
               valueFrom: { secretKeyRef: { name: secrets, key: APP_CRASH_SLACK_WEBHOOK } }
+            # The PostHog project's token for the usage data, empty until a person stores it (main-server README: Usage
+            # data). Empty, the main server sends nothing to PostHog.
+            - name: POSTHOG_PROJECT_TOKEN
+              valueFrom: { secretKeyRef: { name: secrets, key: POSTHOG_PROJECT_TOKEN } }
             - name: AUTOMATIC_PUBLICATION
               valueFrom: { configMapKeyRef: { name: settings, key: AUTOMATIC_PUBLICATION } }
             - name: AUTOMATIC_JUDGEMENT

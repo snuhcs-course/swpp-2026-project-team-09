@@ -7,12 +7,14 @@
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { Module } from '@nestjs/common';
 import { RoomRequestSyncModule } from '../library/room-request-sync.module.js';
 import { LocationSharingModule } from '../location-sharing/location-sharing.module.js';
 import { PlacesModule } from '../places/places.module.js';
+import { UsageModule } from '../usage/usage.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { AdminFriendsController } from './admin-friends.controller.js';
 import { AdminFriendsService } from './admin-friends.service.js';
@@ -23,7 +25,7 @@ import { FriendsController } from './friends.controller.js';
 import { FriendsService } from './friends.service.js';
 
 @Module({
-  imports: [UsersModule, LocationSharingModule, PlacesModule, RoomRequestSyncModule],
+  imports: [UsersModule, LocationSharingModule, PlacesModule, RoomRequestSyncModule, UsageModule],
   controllers: [FriendsController, AdminFriendsController, FriendAsksController],
   providers: [FriendsService, AdminFriendsService, FriendViewService, FriendAsksService],
   exports: [FriendsService, FriendViewService, FriendAsksService],

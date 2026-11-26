@@ -539,6 +539,7 @@ file's.
 | `LOG_FORMAT`                          | Optional: `json` prints each log entry as one JSON line, as Production does (main-server README: Logging); `text` unless set.              |
 | `SENTRY_WEBHOOK_SECRET`               | Optional secret: the client secret of Sentry's internal integration, which signs its crash alerts. Unset, `POST /sentry/alerts` is 404.    |
 | `APP_CRASH_SLACK_WEBHOOK`             | Optional secret: the Incoming Webhook of `#team9-app-crash`, where crash alerts are posted (main-server README: Crash alerts from Sentry). |
+| `POSTHOG_PROJECT_TOKEN`               | Optional secret: the PostHog project's token, with which usage data is sent (main-server README: Usage data). Unset, nothing is sent.      |
 
 ### socket-server
 

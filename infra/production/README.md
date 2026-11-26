@@ -634,6 +634,38 @@ aws ssm delete-parameter --region ap-northeast-2 --name /snunow/production/sentr
 aws ssm delete-parameter --region ap-northeast-2 --name /snunow/production/app-crash-slack-webhook
 ```
 
+## Usage data in PostHog
+
+The main server sends PostHog Cloud US the closing stage of four actions, for the Users who chose usage data
+(main-server README: Usage data). It needs one secret, a parameter of its own under `/snunow/production/`, read by every
+Release with the others and handed to the main server in Secret `secrets`:
+
+| Parameter               | Setting                 | What it is                                      |
+| ----------------------- | ----------------------- | ----------------------------------------------- |
+| `posthog-project-token` | `POSTHOG_PROJECT_TOKEN` | The PostHog project's token, `phc_` and letters |
+
+It is optional. While it is absent, a Release writes it empty, the pods start as before, and the main server sends
+nothing to PostHog. A value over one line fails the Release at its secrets step, naming the parameter and never
+printing the value; one of another shape than `phc_` and letters and digits stops the main server's start. The token is
+a write-only client token, but it is a secret here all the same: typed with `read -rs`, never pasted into a chat, a
+document or a screenshot.
+
+**Setting it**, by a person (P08 ticket 15), then a `main-server` or `all` Release of the newest reviewed commit
+([Releases](#releases)):
+
+```bash
+read -rs POSTHOG_PROJECT_TOKEN
+[ -n "$POSTHOG_PROJECT_TOKEN" ] && aws ssm put-parameter --region ap-northeast-2 \
+  --name /snunow/production/posthog-project-token --type SecureString --value "$POSTHOG_PROJECT_TOKEN" --overwrite
+unset POSTHOG_PROJECT_TOKEN
+```
+
+**Turning it off** is deleting the parameter and pushing a Release:
+
+```bash
+aws ssm delete-parameter --region ap-northeast-2 --name /snunow/production/posthog-project-token
+```
+
 ## First setup
 
 Once, in this order. A move to another account has its own steps ([Moving to account B](#moving-to-account-b)).
@@ -726,7 +758,8 @@ Once, in this order. A move to another account has its own steps ([Moving to acc
    (`main-server/.env.example` says how to make one). The administrators' addresses are those the team members sign in
    to the admin site with, separated by commas. The last command lists the seven parameters. The AI's other keys, the
    `llm-key-<name>` parameters, are added later and only when wanted ([The AI's keys](#the-ais-keys)), and so are the
-   crash alerts' two ([Crash alerts in Slack](#crash-alerts-in-slack)).
+   crash alerts' two ([Crash alerts in Slack](#crash-alerts-in-slack)) and PostHog's token
+   ([Usage data in PostHog](#usage-data-in-posthog)).
 
 6. **The consoles, by hand.**
    - In the Google Cloud project, add `https://admin.snunow.com` to the admin Google client's authorized JavaScript
@@ -1458,8 +1491,9 @@ aws eks update-kubeconfig --name snunow --region ap-northeast-2 --alias snunow-p
    aws ssm get-parameters-by-path --region ap-northeast-2 --path /snunow/production --query 'Parameters[].Name'
    ```
 
-   The last command lists the seven parameters in B, any `llm-key-<name>` parameters, and the crash alerts' two if
-   they are set ([Crash alerts in Slack](#crash-alerts-in-slack)). A's stay as they are.
+   The last command lists the seven parameters in B, any `llm-key-<name>` parameters, and the crash alerts' two and
+   PostHog's token if they are set ([Crash alerts in Slack](#crash-alerts-in-slack),
+   [Usage data in PostHog](#usage-data-in-posthog)). A's stay as they are.
 
 5. **B's first Release.** With `kubectx snunow-production-b`, [prepare B's database](#preparing-a-new-database),
    leaving out its first command, which would point `snunow-production` at B. Its `--overwrite` puts B's new database
