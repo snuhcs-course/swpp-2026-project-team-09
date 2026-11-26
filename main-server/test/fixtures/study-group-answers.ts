@@ -4,6 +4,7 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { type LibraryCardSpace } from '../../src/assistant/library/library-card.js';
 import {
   type AnswerReply,
   type GroupRoomKind,
@@ -50,22 +51,62 @@ const FRIENDS = [
   { userId: 'a3f1c2d4-0000-4000-8000-0000000000a3', name: '김지은', from: null, walk: null, free: null },
 ];
 
-const kind = (spaceId: string, floor: number, name: string, min: number, max: number): GroupRoomKind => ({
-  spaceId,
-  floor,
+// Each kind's library space as the catalogue gives it (cardSpace()), the one the phone reads the kind's free rooms from.
+function spaceOf(
+  spaceId: string,
+  name: string,
+  floor: number,
+  sector: [number, number],
+  seatNos: number[],
+): LibraryCardSpace {
+  const [roomNo, sectorNo] = sector;
+  return {
+    id: spaceId,
+    name,
+    floor,
+    kind: 'group-study-room',
+    placeNumber: '62-1',
+    unit: 'room',
+    roomNo,
+    sectorNo,
+    seatNos,
+    mapImage: null,
+    hours: { open: '09:00', close: '23:00' },
+    minMinutes: 30,
+    maxMinutes: 180,
+    stepMinutes: 30,
+  };
+}
+
+const seats = (sectorNo: number, ...numbers: number[]): number[] => numbers.map((number) => sectorNo * 1000 + number);
+
+const kind = (name: string, capacity: [number, number], space: LibraryCardSpace): GroupRoomKind => ({
+  spaceId: space.id,
+  floor: space.floor,
   name,
-  capacity: { min, max },
+  capacity: { min: capacity[0], max: capacity[1] },
+  space,
 });
 
-const SIX_FOURTH = kind('4F-group-6', 4, '6인실', 4, 6);
+const SIX_FOURTH = kind(
+  '6인실',
+  [4, 6],
+  spaceOf(
+    '4F-group-6',
+    '그룹스터디룸 6인실 (24 rooms)',
+    4,
+    [141, 14103],
+    seats(14103, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25),
+  ),
+);
 
 // The kinds the app can request, 2층 first, as the ticket's left cell lists them.
 const KINDS = [
-  kind('2F-group-6', 2, '6인실', 4, 6),
-  kind('2F-group-10', 2, '10인실', 7, 10),
+  kind('6인실', [4, 6], spaceOf('2F-group-6', '그룹스터디룸 6인실', 2, [121, 12103], seats(12103, 1, 2, 3, 6))),
+  kind('10인실', [7, 10], spaceOf('2F-group-10', '그룹스터디룸 10인실', 2, [121, 12102], seats(12102, 1, 2, 3))),
   SIX_FOURTH,
-  kind('4F-group-8', 4, '8인실', 6, 8),
-  kind('4F-group-10', 4, '10인실', 7, 10),
+  kind('8인실', [6, 8], spaceOf('4F-group-8', '그룹스터디룸 8인실 (G401)', 4, [141, 14102], seats(14102, 1))),
+  kind('10인실', [7, 10], spaceOf('4F-group-10', '그룹스터디룸 10인실', 4, [141, 14101], seats(14101, 1, 2, 3, 4))),
 ];
 
 function reasonOf({ min, max }: GroupRoomKind['capacity'], people: number): string | null {
@@ -76,9 +117,9 @@ function reasonOf({ min, max }: GroupRoomKind['capacity'], people: number): stri
 }
 
 const roomsFor = (people: number): StudyGroup['rooms'] =>
-  KINDS.map(({ spaceId, floor, name, capacity }) => {
+  KINDS.map(({ spaceId, floor, name, capacity, space }) => {
     const reason = reasonOf(capacity, people);
-    return { spaceId, floor, name, capacity, fits: reason === null, reason };
+    return { spaceId, floor, name, capacity, space, fits: reason === null, reason };
   });
 
 const USE = ['강의', '과제', '동아리활동', '연구', '취업', '기타'];

@@ -23,6 +23,7 @@ import { MINUTE_MS } from '../gathering/gathering.js';
 import { busyIn, halfHoursAround } from '../gathering/meal-scene.js';
 import { koreaDate, koreaTime } from '../korea-time.js';
 import { durationWords } from '../library/booking-rules.js';
+import { cardSpace } from '../library/library-card.js';
 import { arrivalsOf } from '../library/study-pick.js';
 import { type GroupRoom, monthDayWords, stayNote } from '../library/study-room.js';
 import { type GroupPerson, type GroupPick, type GroupTime } from './study-group.js';
@@ -67,12 +68,19 @@ const kindName = ({ name }: GroupRoom): string =>
     .replace(/ \(.*\)$/u, '')
     .trim();
 
-const kindOf = (room: GroupRoom): GroupRoomKind => ({
-  spaceId: room.id,
-  floor: room.floor ?? 0,
-  name: kindName(room),
-  capacity: { min: room.capacity.min, max: room.capacity.max },
-});
+function kindOf(room: GroupRoom): GroupRoomKind {
+  const space = cardSpace(room, room.seatNos);
+  if (space === null) {
+    throw new Error(`The group room ${room.id} has no library space`);
+  }
+  return {
+    spaceId: room.id,
+    floor: room.floor ?? 0,
+    name: kindName(room),
+    capacity: { min: room.capacity.min, max: room.capacity.max },
+    space,
+  };
+}
 
 function fitOf({ capacity: { min, max } }: GroupRoom, people: number): { fits: boolean; reason: string | null } {
   if (people < min) {
