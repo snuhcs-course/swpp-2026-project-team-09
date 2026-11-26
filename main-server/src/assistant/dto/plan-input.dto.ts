@@ -3,6 +3,7 @@
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -27,6 +28,9 @@ export interface MealInput {
   window: { from: string | null; until: string | null; now?: boolean };
   // The Place the User fixed.
   placeId: string | null;
+  // The asker's Classes of the day left out of this plan, as the ids of their times: the meal may use that time. Absent
+  // for none, as a main server before it never sends it.
+  skipped?: string[];
   // The kind of food on screen: the plans of the Restaurants that serve it come first. Absent or null for none.
   cuisine?: CuisineWord | null;
 }
@@ -92,6 +96,9 @@ const CONSTRAINTS_MAX = 8;
 // The most events an answer of events is asked for by id, and the most Quests an answer of Quests.
 export const EVENT_IDS_MAX = 20;
 export const QUEST_IDS_MAX = 20;
+// The most Classes a meal leaves out: more than a day's Classes come to.
+const SKIPPED_MAX = 12;
+
 // The longest title of a new Quest, as a Quest's title.
 const TITLE_MAX = 50;
 
@@ -118,6 +125,7 @@ const mealInputSchema = z.strictObject({
   people: planPeopleSchema.min(1),
   window: mealWindowSchema,
   placeId: z.uuid().nullable(),
+  skipped: z.array(z.uuid()).max(SKIPPED_MAX).optional(),
   cuisine: z.enum(CUISINE_WORD_LIST).nullable().optional(),
 });
 

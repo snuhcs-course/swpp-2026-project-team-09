@@ -28,6 +28,7 @@ import { timesAndWays } from './plan-times.js';
 import { type MealPlanService } from './meal-plan.service.js';
 import { addingWords, alreadySetWords, busyWords, invitedWords, relatedWords, servingKind } from './meal-tool-words.js';
 import { NOT_POSTED } from './not-posted.js';
+import { skipOf, skippedWords, skipParameters } from './skip-classes.js';
 
 export { PLAN_RULES } from './plan-rules.js';
 
@@ -143,6 +144,7 @@ const input = z
       .describe(
         'True when the User wants company for the meal without naming everyone (친구랑, 친구 두 명이랑, 누구랑 같이): the app opens the list of their Friends on the plan to pick from. The Friends they do name go in friendIds as usual. Left out otherwise.',
       ),
+    ...skipParameters,
   })
   .refine(({ from, until }) => from === undefined || until === undefined || from < until, 'Expected from before until');
 
@@ -268,19 +270,18 @@ async function plannedFor(
   return { ...plannedWords(answer, served, { meal: planInput.meal, kind }), ...adding };
 }
 
+// The planner planMeal asks; a test's may know no Classes.
+type MealPlans = Pick<MealPlanService, 'asked' | 'planned' | 'restaurantPlaceId'> &
+  Partial<Pick<MealPlanService, 'classesOn'>>;
+
 // `earlier`: the steps shown before the meal in this message, which it sets out from (P03).
-export function planMeal(
-  plans: Pick<MealPlanService, 'asked' | 'planned' | 'restaurantPlaceId'>,
-  earlier: (context: ToolContext) => readonly ReplyStep[] = () => [],
-): Tool {
+export function planMeal(plans: MealPlans, earlier: (context: ToolContext) => readonly ReplyStep[] = () => []): Tool {
   return defineTool({
     description:
       "Plans a meal for the User alone or with Friends on a day from today to a week ahead. The server decides the Restaurant, when everyone is there, how long they can eat, and where they meet on the way, those with 30 minutes for everyone first, each the least travel for everyone first, on foot or by the shuttle, (to the Restaurant and on to each one's next item), and the app draws the plans on the map. Answers result 'planned' with the meal and the plans in order, each with its restaurant, its menu for the meal and closesAt, its price as the app's list writes it, start, end, togetherMinutes, meeting, and each person's way, and the Restaurants dropped, or result 'none' with the meal and the reason.",
     input,
-    run: async (
-      { date, meal: named, friendIds, from, until, now: soon, restaurant, placeId, cuisine, startPlaceId, pickPeople },
-      toolContext,
-    ) => {
+    run: async (args, toolContext) => {
+      const { date, meal: named, friendIds, from, until, now: soon, restaurant, placeId, cuisine, startPlaceId } = args;
       const { userId, now, context, found, presented } = toolContext;
       if (outOfReach(date, now)) {
         return noDay(date);
@@ -291,6 +292,14 @@ export function planMeal(
       refuseUnseen(found, 'friend', friendIds, seen.friends);
       refuseUnseen(found, 'place', placeId === undefined ? [] : [placeId], seen.places);
       refuseUnseen(found, 'place', startPlaceId === undefined ? [] : [startPlaceId], []);
+      const skip = await skipOf(
+        plans,
+        { userId, date, context },
+        { skip: args.skipClasses, attend: args.attendClasses },
+      );
+      if ('result' in skip) {
+        return skip;
+      }
       const kept = withStart(constraintsOf(context, date, meal), userId, startPlaceId);
       const kind = kindOf(cuisine, context, date, meal);
       const planInput: MealInput = {
@@ -299,6 +308,7 @@ export function planMeal(
         meal,
         people: [userId, ...new Set(friendIds)].map((id) => ({ userId: id, constraints: kept.get(id) ?? [] })),
         window: { from: from ?? null, until: until ?? null, ...(soon === true ? { now: true } : {}) },
+        ...(skip.ids.length === 0 ? {} : { skipped: skip.ids }),
         placeId: placeIdOf(plans, restaurant, placeId),
         ...(kind === null ? {} : { cuisine: kind }),
       };
@@ -307,10 +317,11 @@ export function planMeal(
         planInput,
         kind,
       });
-      if (pickPeople === true) {
+      if (args.pickPeople === true) {
         presented.answer = withPicking(presented.answer);
       }
-      return words;
+      const shown = presented.answer?.input;
+      return { ...words, ...skippedWords(shown?.kind === 'meal' ? shown : undefined, skip.classes) };
     },
   });
 }
