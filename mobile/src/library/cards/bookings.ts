@@ -7,6 +7,7 @@
 
 import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
 import type { LibraryBooking } from '../replies';
+import { roomLabelOfSector } from './seat-rooms';
 import { dayAfter, dayWords, kioskDeadline, siteDate, siteInstant } from './times';
 
 // The User's bookings, as getMyBookingList lists them: which a cancel or a return card acts on, which a row of 내 예약
@@ -115,7 +116,7 @@ export function ticketOfBooking(booking: LibraryBooking, now: Date, ended: strin
     state: ended === null ? (using ? 'using' : 'booked') : 'ended',
     word: ended ?? (using ? '사용 중' : '예약됨'),
     when: using ? `${end.clock}까지` : `${dayWords(start.date, now)} ${start.clock}–${end.clock}`,
-    room: `${booking.FLOOR_NAME} ${booking.ROOM_NAME}`,
+    room: roomLabelOfSector(booking.SECTORNO) ?? `${booking.FLOOR_NAME} ${booking.ROOM_NAME}`,
     unit: isSeat(booking.SEAT_VNAME) ? '좌석' : '방',
     seat: seatWords(booking.SEAT_VNAME),
   };

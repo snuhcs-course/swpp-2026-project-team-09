@@ -56,7 +56,7 @@ afterEach(() => {
 });
 
 const CANCEL = card(libraryCard('cancel:-:2026-11-02:-', 'cancel', { target: { date: '2026-11-02' } }));
-const BOOKED_TICKET = '예약됨 · 오늘 17:00–18:00, 7층 7A 열람실, 좌석 7193번';
+const BOOKED_TICKET = '예약됨 · 오늘 17:00–18:00, 7층 열람실, 좌석 7193번';
 
 function dock(): ReturnType<typeof within> {
   return within(screen.getByTestId('ai-input-beside'));
@@ -79,7 +79,7 @@ describe('the cancel card', () => {
     expect(library.writes()).toEqual([{ endpoint: 'setCancelBooking', body: { bseqno: '3000001' } }]);
     const after = inCard(`library-cancel-${CANCEL.library.key}`);
     expect(after.getByText('예약을 취소했어요.')).toBeVisible();
-    expect(after.getByLabelText('취소됨 · 오늘 17:00–18:00, 7층 7A 열람실, 좌석 7193번')).toBeVisible();
+    expect(after.getByLabelText('취소됨 · 오늘 17:00–18:00, 7층 열람실, 좌석 7193번')).toBeVisible();
     expect(screen.queryByTestId('ai-input-beside')).toBeNull();
     expectNothingOfTheLibrarySent(server, ['3000001']);
   });
@@ -128,7 +128,7 @@ describe('the return card', () => {
     library.addBooking(bookingRow({ STATUS: 3, STATUS_NAME: '입실', USESTART: '2026-11-02 15:00:00' }));
     await askForCards({ server, library }, [RETURN], { words: '자리 반납해줘' });
     const shown = inCard(`library-return-${RETURN.library.key}`);
-    expect(shown.getByLabelText('사용 중 · 18:00까지, 7층 7A 열람실, 좌석 7193번')).toBeVisible();
+    expect(shown.getByLabelText('사용 중 · 18:00까지, 7층 열람실, 좌석 7193번')).toBeVisible();
     expectNoWrite(library);
 
     await pressIn(dock(), '반납하기');

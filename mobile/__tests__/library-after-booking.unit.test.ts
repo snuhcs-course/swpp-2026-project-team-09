@@ -94,7 +94,14 @@ describe('the tickets of the bookings', () => {
     expect(ticketOfBooking(BOOKED, NOW)).toMatchObject({ state: 'booked', word: '예약됨', when: '오늘 17:00–18:00' });
     expect(ticketOfBooking(IN_USE, NOW)).toMatchObject({ state: 'using', word: '사용 중', when: '18:00까지' });
     expect(ticketOfBooking(BOOKED, NOW, '취소됨')).toMatchObject({ state: 'ended', when: '오늘 17:00–18:00' });
-    expect(ticketOfBooking(BOOKED, NOW)).toMatchObject({ room: '7층 7A 열람실', unit: '좌석', seat: '7193번' });
+    // The room's one name, as the seat ticket and the map give it, by the booking's sector; a study room the site's.
+    expect(ticketOfBooking(BOOKED, NOW)).toMatchObject({ room: '7층 열람실', unit: '좌석', seat: '7193번' });
+    expect(ticketOfBooking(bookingRow({ SECTORNO: 18201 }), NOW)).toMatchObject({ room: '8층 정숙 열람실' });
+    expect(
+      ticketOfBooking(bookingRow({ SECTORNO: 14103, FLOOR_NAME: '4층', ROOM_NAME: '그룹스터디룸' }), NOW),
+    ).toMatchObject({
+      room: '4층 그룹스터디룸',
+    });
     expect(ticketOfBooking(bookingRow({ SEAT_VNAME: 'G411' }), NOW)).toMatchObject({ unit: '방', seat: 'G411' });
   });
 
