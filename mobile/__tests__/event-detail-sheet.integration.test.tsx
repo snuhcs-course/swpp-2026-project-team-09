@@ -55,11 +55,12 @@ async function openCareer(user: Awaited<ReturnType<typeof openEvents>>): Promise
 }
 
 describe("the sheet's head", () => {
-  it("shows neither the 내 파티 nor the source of the row, for an event of the User's 파티", async () => {
+  it("shows neither the 내 파티 of the row nor the source, for an event of the User's 파티 with an announcer", async () => {
     answerEvents(server, { quests: [DINNER, MY_CAREER] });
     const user = await openEvents();
     expect(card(CAREER).getByText('내 파티')).toBeVisible();
-    expect(card(CAREER).getByText('컴퓨터공학부 공지')).toBeVisible();
+    // The row has had no source line since P06 ticket 15.
+    expect(card(CAREER).queryByText('컴퓨터공학부 공지')).toBeNull();
 
     const sheet = await openCareer(user);
 

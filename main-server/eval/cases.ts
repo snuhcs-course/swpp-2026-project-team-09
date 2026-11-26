@@ -83,7 +83,18 @@ const NEXT_APP = [...APP_CAPABILITIES, 'plan-set'] as const satisfies readonly C
 // The app with P10's ranked study places, which says `study-plan` too.
 const STUDY_APP = [...APP_CAPABILITIES, 'study-plan'] as const satisfies readonly ClientCapability[];
 
-const CAPABILITY_SETS = { app: APP_CAPABILITIES, 'next-app': NEXT_APP, 'study-app': STUDY_APP } as const;
+// The app with P10's study answer together (ticket 07), which says `study-group` and not `study-plan`; and the app with
+// both.
+const STUDY_GROUP_APP = [...APP_CAPABILITIES, 'study-group'] as const satisfies readonly ClientCapability[];
+const STUDY_BOTH_APP = [...STUDY_APP, 'study-group'] as const satisfies readonly ClientCapability[];
+
+const CAPABILITY_SETS = {
+  app: APP_CAPABILITIES,
+  'next-app': NEXT_APP,
+  'study-app': STUDY_APP,
+  'study-group-app': STUDY_GROUP_APP,
+  'study-both-app': STUDY_BOTH_APP,
+} as const;
 
 // What a run of a case sends beside the messages: its world's fields, or the current app's capabilities when the case
 // says so, and where the asker is when the case says.
@@ -149,8 +160,10 @@ export const caseSchema = z
     asker: seedName.optional(),
     // `app`: the request says what the current app draws, every capability, in place of the world's (a meet needs
     // `meet`); `next-app`: and `plan-set` too, as the app with 바꾸기 will; `study-app`: and `study-plan`, as the app
-    // with P10's study answer will.
-    capabilities: z.enum(['world', 'app', 'next-app', 'study-app']).default('world'),
+    // with P10's study answer will; `study-group-app`: and `study-group` instead; `study-both-app`: and both.
+    capabilities: z
+      .enum(['world', 'app', 'next-app', 'study-app', 'study-group-app', 'study-both-app'])
+      .default('world'),
     // Where the asker is, and the map's visible area, sent as the request's context as the app sends it; none is sent
     // without it.
     context: z

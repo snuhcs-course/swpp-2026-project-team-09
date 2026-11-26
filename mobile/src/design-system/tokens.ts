@@ -310,25 +310,23 @@ export const mapText = {
   smallLine: { fontFamily: font.medium, fontSize: 10, lineHeight: 13 },
 } as const satisfies Record<string, TextStyle>;
 
-// The text of the 행사 tab and its sheet, as the `Events` frame draws it: sizes the eight styles lack. The frame's weight
-// 800 is drawn in Bold, the heaviest the app loads.
+// The text of the 행사 tab and its sheet, as the `Events` frame draws it and P06 ticket 15 made the list's smaller: sizes
+// the eight styles lack. The frame's weight 800 is drawn in Bold, the heaviest the app loads.
 export const eventText = {
   // The day of the month in the date column, and the month and day name under it.
-  day: { fontFamily: font.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.48 },
-  dayLine: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
-  // The source over the title.
+  day: { fontFamily: font.bold, fontSize: 22, lineHeight: 28, letterSpacing: -0.44 },
+  dayLine: { fontFamily: font.medium, fontSize: 12, lineHeight: 16 },
+  // The source over the 관련 행사 picker's title.
   source: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
-  title: { fontFamily: font.bold, fontSize: 20, lineHeight: 28, letterSpacing: -0.3 },
+  title: { fontFamily: font.bold, fontSize: 16, lineHeight: 23, letterSpacing: -0.24 },
   // The time and the place.
-  line: { fontFamily: font.medium, fontSize: 15, lineHeight: 22 },
+  line: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
   // The filters, chosen and not.
   filter: { fontFamily: font.medium, fontSize: 16, lineHeight: 22 },
   filterChosen: { fontFamily: font.bold, fontSize: 16, lineHeight: 22 },
-  // "다가오는 행사".
-  heading: { fontFamily: font.bold, fontSize: 16, lineHeight: 24 },
   // "모집 중인 파티 {n}", and "함께 갈 파티 찾기".
-  party: { fontFamily: font.bold, fontSize: 15, lineHeight: 20 },
-  partyFind: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 20 },
+  party: { fontFamily: font.bold, fontSize: 13, lineHeight: 18 },
+  partyFind: { fontFamily: font.semiBold, fontSize: 13, lineHeight: 18 },
   // The detail sheet: its title, the time's and the place's value, and the description.
   sheetTitle: { fontFamily: font.bold, fontSize: 21, lineHeight: 29, letterSpacing: -0.315 },
   value: { fontFamily: font.semiBold, fontSize: 14, lineHeight: 21 },

@@ -60,6 +60,7 @@ function asked({
     date: TUESDAY,
     what,
     people: [{ userId: ME, constraints: [] }],
+    together: false,
     window: { from: null, until: null },
     area,
     minutes: null,

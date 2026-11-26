@@ -7,6 +7,7 @@
 import { type StudyBuildingDto, type StudySpaceDto } from '../../study-spaces/dto/study-spaces.dto.js';
 import { type AnswerLine, type AnswerReply, type ClosedPlace, type StudyInput } from '../dto/answer.dto.js';
 import { onDay } from '../free-time/free-time.js';
+import { type OtherFriend } from '../gathering/answer-words.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
 import { koreaDate } from '../korea-time.js';
 import { pointOf, STUDY_WHATS } from './study-lookup.js';
@@ -33,6 +34,8 @@ export interface StudyPlanArgs {
   // When the answer is made, for the time card.
   now: Date;
   buildings: readonly StudyBuildingDto[];
+  // The asker's Friends with their day, for each time card's "+ 같이"; none given, the band has no `others`.
+  others?: readonly OtherFriend[];
   hoursOf: (key: string, at: Date) => StudyHours;
 }
 

@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-27  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # Bookings, cancel and return (P06 spec, "The P6 eval suite"): "내 예약", "취소해줘", "반납해줘" and "오늘 3시 예약 취소"
@@ -90,6 +91,10 @@
       absent: [취소했어요, 취소되었어요]
 
 # The Assistant cannot see the bookings: CHAT, saying so, with no library card at all (ruling 6).
+#
+# Superseded 2026-11-27 (P05 ticket 59): the Assistant now shows the User's bookings, each with its state, for this
+# question. The label stays as frozen; library-answer-did-i-return holds the new answer (suite.yaml,
+# `supersededAfterFreeze`).
 - id: p6-bookings-did-i-return
   category: p6-bookings
   world: p6

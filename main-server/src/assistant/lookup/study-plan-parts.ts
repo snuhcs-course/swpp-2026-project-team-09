@@ -20,11 +20,13 @@ import {
 } from '../dto/answer.dto.js';
 import { clockOf } from '../free-time/free-time.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
+import { type OtherFriend } from '../gathering/answer-words.js';
 import { busyIn, halfHoursAround } from '../gathering/meal-scene.js';
 import { koreaTime } from '../korea-time.js';
 import { durationWords } from './day-lookup.js';
 import { pointOf, STUDY_WHATS } from './study-lookup.js';
 import { type StudyDay, type StudyStay } from './study-near.js';
+import { studyOthers } from './study-others.js';
 import { type WayArgs } from './way.js';
 import { GATE_BASIS } from './way-lookup.js';
 import { dueWords, WayNaming } from './way-naming.js';
@@ -71,10 +73,11 @@ export interface PlanContext {
   day: StudyDay;
   ordered: readonly Ranked[];
   faded: readonly Faded[];
+  others?: readonly OtherFriend[];
 }
 
 // What 관정관's plan books (P10 ticket 05): the first 7층 seat for a quiet place or any. A group study room needs
-// companions, which proposeStudyRoom books, and 관정관 holds no computers to book.
+// companions, which the answer together requests (ticket 07), and 관정관 holds no computers to book.
 export const KWANJEONG_SEAT = '7F-7A-zone2';
 
 // The building of the 공부공간 layer whose seats the phone reads, as the layer names it.
@@ -253,22 +256,19 @@ function sceneOf(ranked: Ranked, index: number, context: PlanContext): MapScene 
   };
 }
 
-function bandOf({ stay, end }: Ranked, { now, way }: PlanContext): TimeBand {
+function bandOf({ stay, end, building }: Ranked, { now, way, input, others }: PlanContext): TimeBand {
   const naming = new WayNaming(way);
   const { from, until } = halfHoursAround(
     Math.max(now.getTime(), stay.arrival.getTime() - BAND_BEFORE_MS),
     end.getTime() + BAND_AFTER_MS,
   );
+  const label = (placeId: string): string => naming.placeLabel(placeId);
+  const plan = { date: input.date, now, placeId: building.place.id, start: stay.arrival, end };
   return {
     range: { startAt: koreaTime(from), endAt: koreaTime(until) },
     now: koreaTime(now),
-    lanes: [
-      {
-        userId: way.me.userId,
-        name: '나',
-        busy: busyIn(way.me.items, from, until, (placeId) => naming.placeLabel(placeId)),
-      },
-    ],
+    lanes: [{ userId: way.me.userId, name: '나', busy: busyIn(way.me.items, from, until, label) }],
+    ...studyOthers(others, plan, { from, until, label }),
     startAt: koreaTime(stay.arrival),
     endAt: koreaTime(end),
     text: `${clockOf(stay.arrival)}–${clockOf(end)}`,

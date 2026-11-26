@@ -98,6 +98,9 @@ export const CLIENT_CAPABILITIES = [
   'pick',
   // Draws a study answer as ranked study places, the meal answer's way (P10).
   'study-plan',
+  // Draws the study answer together, a 관정 group study room at everyone's free time, with 동의 요청 보내기 (P10 ticket
+  // 07). Without it the group study path is proposeStudyRoom's card.
+  'study-group',
 ] as const;
 
 export type ClientCapability = (typeof CLIENT_CAPABILITIES)[number];

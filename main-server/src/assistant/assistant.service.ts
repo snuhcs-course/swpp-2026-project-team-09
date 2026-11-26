@@ -29,6 +29,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
+import { PrismaService } from '../common/prisma.service.js';
 import { REDIS } from '../common/redis.module.js';
 import { type Settings } from '../common/settings.js';
 import { FriendViewService } from '../friends/friend-view.service.js';
@@ -58,6 +59,8 @@ import { friendMentions } from './mentions.js';
 import { ModelPort } from './model-port.js';
 import { type Catalogue, LIBRARY_CATALOGUE } from './library/catalogue.js';
 import { FREE_TIME_PORT, type FreeTimePort } from './library/free-time-port.js';
+import { type LibraryServices } from './library/library-tools.js';
+import { type SeatStay, seatStayNow } from './library/seat-stay-now.js';
 import { LookupServices } from './lookup/lookup-services.js';
 import { MadePartyService } from './tools/made-party.js';
 import { PlanAnswersService } from './plan-answers.service.js';
@@ -72,8 +75,8 @@ const COUNT_LIFETIME_SECONDS = 2 * 24 * 60 * 60;
 @Injectable()
 export class AssistantService {
   private readonly logger = new Logger(AssistantService.name);
-  // The chat of each kind of app.
-  private readonly chats: Record<ChatKind, Feature>;
+  // The chat of each kind of app, by `chatKey`.
+  private readonly chats: ReadonlyMap<string, Feature>;
   private readonly dailyMessages: number;
   private readonly limits: RunLimits;
   // The line of what is ahead, which an app that draws answers has the model read each turn.
@@ -100,6 +103,7 @@ export class AssistantService {
     @Inject(FREE_TIME_PORT) freeTime: FreeTimePort,
     quests: QuestsService,
     users: UsersService,
+    prisma: PrismaService,
     tutorial: TutorialService,
     plans: PlanAnswersService,
     lookups: LookupServices,
@@ -111,7 +115,6 @@ export class AssistantService {
   ) {
     this.ahead = (userId: string, now: Date): Promise<string[]> => lookups.days.ahead(userId, now);
     this.friendViews = friends;
-    const enabled = settings.get('LIBRARY_BOOKING_ENABLED', { infer: true });
     const services = {
       menus,
       shuttle,
@@ -120,7 +123,7 @@ export class AssistantService {
       friends,
       places,
       freeTime: { days, recruiting, globalEvents, places: placeLookup, travel, friends, menus, restaurantPlaces },
-      library: { catalogue, freeTime, friends, quests, users, arrival: { days, places: placeLookup, travel }, enabled },
+      library: libraryOf(settings, prisma, { catalogue, freeTime, friends, quests, users, days, placeLookup, travel }),
       tutorial,
       plans,
       lookups,
@@ -181,14 +184,12 @@ export class AssistantService {
   }
 
   private chatFor(capabilities: readonly ClientCapability[]): Feature {
-    if (!capabilities.includes('answer')) {
-      return this.chats.plain;
+    const drawing = capabilities.includes('answer') ? drawingOf(capabilities) : null;
+    const chat = this.chats.get(chatKey(drawing));
+    if (chat === undefined) {
+      throw new Error(`No chat for ${chatKey(drawing)}`);
     }
-    const drawn = capabilities.includes('events') ? 'events' : 'answer';
-    const meet = capabilities.includes('meet') ? '-meet' : '';
-    const area = capabilities.includes('area') ? '-area' : '';
-    const study = capabilities.includes('study-plan') ? '-study' : '';
-    return this.chats[`${drawn}${meet}${area}${study}` as const];
+    return chat;
   }
 
   // Counts the User's message in their day in Korea, and answers how many they have sent that day.
@@ -200,33 +201,70 @@ export class AssistantService {
   }
 }
 
-// The chat of an app that does not draw answers, and of one that does, by what else it draws: a day's events, a meet,
-// the visible area's study spaces, and ranked study places.
-type Drawn = 'answer' | 'events';
-type Drawing = Drawn | `${Drawn}-meet` | `${Drawn}-area` | `${Drawn}-meet-area`;
-type ChatKind = 'plain' | Drawing | `${Drawing}-study`;
+// What an app that draws answers draws besides: a day's events, a meet, the visible area's study spaces, ranked study
+// places, and the study answer together.
+interface Drawing {
+  drawsEvents: boolean;
+  drawsMeets: boolean;
+  drawsArea: boolean;
+  drawsStudy: boolean;
+  drawsStudyGroup: boolean;
+}
 
-function chatsOf(services: ChatAssistantServices): Record<ChatKind, Feature> {
-  const chat = (drawsEvents: boolean, drawsMeets: boolean, drawsArea: boolean, drawsStudy = false): Feature =>
-    chatAssistant(services, { drawsAnswers: true, drawsEvents, drawsMeets, drawsArea, drawsStudy });
+const drawingOf = (capabilities: readonly ClientCapability[]): Drawing => ({
+  drawsEvents: capabilities.includes('events'),
+  drawsMeets: capabilities.includes('meet'),
+  drawsArea: capabilities.includes('area'),
+  drawsStudy: capabilities.includes('study-plan'),
+  drawsStudyGroup: capabilities.includes('study-group'),
+});
+
+const FLAGS = ['drawsEvents', 'drawsMeets', 'drawsArea', 'drawsStudy', 'drawsStudyGroup'] as const;
+
+// "plain" for an app that does not draw answers, else what it draws, such as "answer drawsEvents drawsArea".
+const chatKey = (drawing: Drawing | null): string =>
+  drawing === null ? 'plain' : ['answer', ...FLAGS.filter((flag) => drawing[flag])].join(' ');
+
+const BOTH = [false, true];
+
+// Every drawing: each flag on or off.
+const DRAWINGS: Drawing[] = BOTH.flatMap((drawsEvents) =>
+  BOTH.flatMap((drawsMeets) =>
+    BOTH.flatMap((drawsArea) =>
+      BOTH.flatMap((drawsStudy) =>
+        BOTH.map((drawsStudyGroup) => ({ drawsEvents, drawsMeets, drawsArea, drawsStudy, drawsStudyGroup })),
+      ),
+    ),
+  ),
+);
+
+function chatsOf(services: ChatAssistantServices): Map<string, Feature> {
+  return new Map([
+    [chatKey(null), chatAssistant(services)],
+    ...DRAWINGS.map((drawing): [string, Feature] => [
+      chatKey(drawing),
+      chatAssistant(services, { drawsAnswers: true, ...drawing }),
+    ]),
+  ]);
+}
+
+type LibraryParts = Pick<LibraryServices, 'catalogue' | 'freeTime' | 'friends' | 'quests' | 'users'> & {
+  days: UserDayService;
+  placeLookup: PlaceLookup;
+  travel: TravelProvider;
+};
+
+// What the 관정도서관 tools are given: LIBRARY_BOOKING_ENABLED, and the User's seat stay read through `prisma`.
+function libraryOf(
+  settings: ConfigService<Settings, true>,
+  prisma: PrismaService,
+  { days, placeLookup, travel, ...parts }: LibraryParts,
+): LibraryServices {
   return {
-    plain: chatAssistant(services),
-    answer: chat(false, false, false),
-    events: chat(true, false, false),
-    'answer-meet': chat(false, true, false),
-    'events-meet': chat(true, true, false),
-    'answer-area': chat(false, false, true),
-    'events-area': chat(true, false, true),
-    'answer-meet-area': chat(false, true, true),
-    'events-meet-area': chat(true, true, true),
-    'answer-study': chat(false, false, false, true),
-    'events-study': chat(true, false, false, true),
-    'answer-meet-study': chat(false, true, false, true),
-    'events-meet-study': chat(true, true, false, true),
-    'answer-area-study': chat(false, false, true, true),
-    'events-area-study': chat(true, false, true, true),
-    'answer-meet-area-study': chat(false, true, true, true),
-    'events-meet-area-study': chat(true, true, true, true),
+    ...parts,
+    arrival: { days, places: placeLookup, travel },
+    seatStay: (userId: string, now: Date): Promise<SeatStay | null> => seatStayNow(prisma, userId, now),
+    enabled: settings.get('LIBRARY_BOOKING_ENABLED', { infer: true }),
   };
 }
 

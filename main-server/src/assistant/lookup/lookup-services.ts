@@ -11,6 +11,7 @@ import { QuestCancelService } from './cancel-quest.js';
 import { DayLookupService } from './day.service.js';
 import { FriendLookupService } from './friend.service.js';
 import { MenuLookupService } from './menu.service.js';
+import { StudyGroupService } from './study-group.service.js';
 import { StudyPlanService } from './study-plan.service.js';
 import { StudyAreaService } from './study.service.js';
 import { TutorialOrderService } from './tutorial-order.service.js';
@@ -27,6 +28,7 @@ export class LookupServices {
     readonly tutorial: TutorialOrderService,
     readonly studyAreas: StudyAreaService,
     readonly studyPlans: StudyPlanService,
+    readonly studyGroups: StudyGroupService,
     readonly cancels: QuestCancelService,
   ) {}
 }
