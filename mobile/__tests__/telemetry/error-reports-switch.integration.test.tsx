@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-24  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -102,7 +103,7 @@ it('is on at first, says what a report holds, and opens the privacy policy at it
 
   expect(screen.getByRole('switch', { name: SWITCH })).toBeChecked();
   expect(screen.getByText(ERROR_REPORTS_CAPTION)).toBeVisible();
-  await user.press(screen.getByRole('link', { name: '개인정보 처리방침 보기' }));
+  await user.press(screen.getByRole('link', { name: "'오류 보고' 보기" }));
   await pass(500);
 
   expect(screen.getByRole('header', { name: '개인정보 처리방침' })).toBeVisible();

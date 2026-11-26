@@ -16,6 +16,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -23,8 +24,10 @@ import { isRefusal } from '@/api/errors';
 import { mockClient } from '@/api/mock/client';
 import type { OnboardingAnswers } from '@/api/types';
 import { newIdempotencyKey } from '@/api/idempotency-key';
+import { keepConsent } from '@/consent/kept-consent';
 import { keep } from '@/storage/kept';
 import {
+  consentOf,
   isFriends,
   isInviteLink,
   isLobby,
@@ -91,14 +94,21 @@ export const serverClient: ApiClient = {
   },
   enterLobby: async () => {
     const lobby = await call('POST', '/lobby', isLobby);
-    // The main server let the User in, so the User has finished Onboarding, whatever this phone kept.
-    await keep({ onboardingCompleted: true });
+    // The main server let the User in, so the User has finished Onboarding, whatever this phone kept. The phone's copy
+    // of the consent follows the account's.
+    await keepConsent(consentOf(lobby.consent), { onboardingCompleted: true });
     return lobby;
   },
   updateProfile: (change) => call('PATCH', '/users/me/profile', isProfile, { body: change }),
   getProfile: () => call('GET', '/users/me/profile', isProfile),
   setMasterSwitch: async (on) => {
     await call('PUT', '/users/me/master-switch', isNothing, { body: { on } });
+  },
+  agreeToConsent: async (version, usage) => {
+    await call('PUT', '/users/me/consent', isNothing, { body: { version, usage } });
+  },
+  setUsageConsent: async (usage) => {
+    await call('PUT', '/users/me/usage-consent', isNothing, { body: { usage } });
   },
   registerPushToken: async (token) => {
     await call('PUT', '/users/me/push-token', isNothing, { body: { token } });

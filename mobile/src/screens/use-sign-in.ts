@@ -4,11 +4,13 @@
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-08  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import { useCallback, useRef, useState } from 'react';
 import type { GoogleAccountPrompt } from '@/auth/google';
 import { signIn } from '@/auth/sign-in';
+import { consentScreenAsks } from '@/consent/choices';
 import { useSession } from '@/session/session';
 import { readKept } from '@/storage/kept';
 
@@ -38,8 +40,8 @@ export function useSignIn(): { phase: SignInPhase; start: (way: GoogleAccountPro
       setPhase('checking');
       void ending(way).then(async (result) => {
         if (result.outcome === 'signed-in') {
-          const { consented } = await readKept();
-          enter(result.onboarding, consented);
+          const { consent, consented } = await readKept();
+          enter(result.onboarding, await consentScreenAsks(consent, consented));
           return;
         }
         checking.current = false;

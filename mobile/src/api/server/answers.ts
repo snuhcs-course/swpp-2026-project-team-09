@@ -11,11 +11,13 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
  ******************************************************************************/
 
 import type {
   Board,
   ClassTime,
+  Consent,
   Friend,
   FriendLevel,
   InviteLink,
@@ -74,10 +76,23 @@ export function isSuggestion(value: unknown): value is Suggestion {
   return isTextOrNull(field(value, 'name')) && isTextOrNull(field(value, 'department'));
 }
 
+// The account's consent in the sign-in's answer or the Lobby (P08 ticket 10). A field that is missing, or a part of
+// another shape, reads as null, so that an older main server's answer still counts.
+export function consentOf(value: unknown): Consent {
+  const version = field(value, 'version');
+  const usage = field(value, 'usage');
+  return {
+    version: typeof version === 'number' && Number.isInteger(version) ? version : null,
+    usage: typeof usage === 'boolean' ? usage : null,
+  };
+}
+
 export interface SignInAnswer {
   accessToken: string;
   refreshToken: string;
   onboarding: { completed: boolean; suggestion?: Suggestion };
+  // Not checked: read with `consentOf`.
+  consent?: unknown;
 }
 
 export function isSignInAnswer(value: unknown): value is SignInAnswer {

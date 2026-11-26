@@ -395,6 +395,7 @@ src/catalogue/      the sections of the design system's catalogue screen
 src/hooks/          hooks shared by components and screens
 src/api/            the API client, the main server's answers as types, the main server's client and the mocks
 src/auth/           sign-in and sign-out, and the main server's tokens
+src/consent/        the phone's copy of the account's consent, CONSENT_VERSION, and the two ways to change it
 src/live/           the one connection to the socket server
 src/features/       one folder per feature: its adapter and the hooks a screen asks for data with
 src/map/            the one map component, its interface and the pictures of its markers
@@ -419,14 +420,15 @@ Keep code that is not a screen, such as components and hooks, in `src/` outside 
 ## Screens and the flow between them
 
 The app starts on the loading screen (`/`), once. While it shows, the app reads what the phone keeps and, for a User
-who signed in, agreed to the legal documents and finished Onboarding, fetches the Lobby. Then it shows where the User belongs:
+who signed in, whose account agreed to the current version of the legal documents and who finished Onboarding,
+fetches the Lobby. Then it shows where the User belongs:
 
-| The User                                                          | Sees        | Address       |
-| ----------------------------------------------------------------- | ----------- | ------------- |
-| is not signed in                                                  | Sign-in     | `/sign-in`    |
-| signed in and has not agreed to the legal documents on this phone | Consent     | `/consent`    |
-| agreed and has not finished Onboarding                            | Onboarding  | `/onboarding` |
-| agreed and finished Onboarding                                    | Main screen | `/main`       |
+| The User                                                           | Sees        | Address       |
+| ------------------------------------------------------------------ | ----------- | ------------- |
+| is not signed in                                                   | Sign-in     | `/sign-in`    |
+| signed in, and the account holds no consent to the current version | Consent     | `/consent`    |
+| agreed and has not finished Onboarding                             | Onboarding  | `/onboarding` |
+| agreed and finished Onboarding                                     | Main screen | `/main`       |
 
 `src/session/session.tsx` holds where the User is while the app runs. A screen that belongs to one of these places
 starts with `useOwnPlace(...)`, which leads a User who does not belong there to where they do. A sign-in calls
@@ -473,9 +475,29 @@ The sign-in screen has one button. A press asks the sign-in module (`src/auth/si
 check, then follows the ending: `enter` for a User who signed in, the default state after a closed sheet, and a
 refused state for an account outside SNU or any other failure. A press in a refused state tries again.
 
-The consent screen asks once on a phone: a signed-in User who has not agreed there sees it after the sign-in, or after
-the loading screen, and the Session remembers where they go next. "동의하고 시작" stores the consent and calls `agree`;
-"로그아웃" signs out. A sign-out leaves the consent on the phone.
+The consent screen asks once on an account (P08 ticket 11). The account keeps the version of the legal documents the
+User agreed to and the choice on usage data (the main server's README, "Consent"); the phone keeps a copy,
+`consent: { version, usage }` in `src/storage/kept.ts`, written through `keepConsent` (`src/consent/kept-consent.ts`)
+from the sign-in's answer, each Lobby, the consent's answer and the switch "사용 기록 보내기", and emptied at a
+sign-out and at a Session's end. A missing field in an answer reads as null. The screen shows after a sign-in, or
+after the loading screen with a kept Session, when the copy's version is null or lower than `CONSENT_VERSION` (1,
+raised together with the main server's); the start decides from the copy, without the network. The Session remembers
+where the User goes next.
+
+A User who agreed on this phone before the account kept a consent (the old `consented: true`, which nothing writes
+true any more) and whose account holds no version is not asked again: at the sign-in or the start the app sends the
+current version with usage data off, quietly (`consentScreenAsks` in `src/consent/choices.ts`), and goes on. A failed
+send asks nothing and is tried again at the next start; until then the copy holds no version, which counts as off.
+
+The screen lists the three documents and the sentence on error reports, and below them, under a divider, an optional
+item: a checkbox "사용 기록 보내기 (선택)" (`src/screens/check-box.tsx`, the box the room book card's 서약서 uses),
+not ticked at first, its sentence and a link to the privacy policy's part "사용 기록". "동의하고 시작" sends
+`PUT /users/me/consent` with `CONSENT_VERSION` and the checkbox, keeps the account's answer on the phone and calls
+`agree`; a failed send keeps the User on the screen with a toast, keeps nothing, and the button sends again.
+"로그아웃" signs out.
+
+In the mock build the phone keeps the account's consent too, as `mockAccountConsent`, which a sign-out leaves and the
+mock's sign-in copies, so the screen asks once on the phone; the mock's Lobby leaves the copy as it is.
 
 The Onboarding screen (`src/screens/onboarding/`) starts from what the sign-in suggested: the name and the department,
 each with the badge "Google 계정에서 가져옴" until the User changes that field. The department is a name from the
@@ -1217,10 +1239,11 @@ the campus; when the camera stops it asks `GET /places/at` and the sheet says th
 The three legal documents open from the consent screen on a screen of their own, `/legal/terms`, `/legal/privacy` and
 `/legal/location` (`src/app/legal/[document].tsx`). It belongs to no place of the flow, so anyone may open it, and it
 closes back to the screen it was opened from. `?part=` opens a document at one of its parts:
-`/legal/privacy?part=error-reports` scrolls to the privacy policy's part "오류 보고". Of the privacy policy three parts
-are written (학번, 학적상 이름, 소속; 도서관 로그인; 오류 보고), and the consent screen names the part on error reports
-in a sentence under the documents; the other two documents are placeholders. Consent is kept once per phone without a
-version, so a changed text does not ask a User who agreed again.
+`/legal/privacy?part=error-reports` scrolls to the privacy policy's part "오류 보고", and `?part=usage` to "사용 기록".
+Of the privacy policy four parts are written (학번, 학적상 이름, 소속; 도서관 로그인; 오류 보고; 사용 기록), and the
+consent screen names the part on error reports in a sentence under the documents and links to the part on usage data
+from its item; the other two documents are placeholders. A changed text raises `CONSENT_VERSION`, which asks every
+User again.
 
 **The update check** (`src/update/`) runs once at every start: `UpdateCheck`, in the root layout beside the stack,
 fetches `app-version.json` from the `app-version` Release on GitHub with a 5-second timeout, without holding back the
@@ -1361,7 +1384,7 @@ The User's own id is the access token's subject, and the app's time is the phone
 User is the mock's `me` and the time is the moment the wireframe shows, 1 October 2026 at 13:37 (`src/clock.ts`), so
 that the screens read as the wireframe on any day.
 
-The phone keeps that the User signed in, that the User agreed to the legal documents, what the sign-in suggested for
+The phone keeps that the User signed in, its copy of the account's consent, what the sign-in suggested for
 Onboarding, whether Onboarding is finished and its answers, that the User answered the explanation before the
 location prompt (`locationExplained`), the token of an Invite Link until its accept screen shows it (`inviteToken`),
 and the running Parties whose 활성화 the User declined (`declinedParties`) (`src/storage/kept.ts`). A value stored by
@@ -2046,7 +2069,7 @@ given to it when it starts.
 
 ### The switch in 내 정보
 
-"오류 보고 보내기", a switch above 로그아웃, says under it what a report holds (the screens visited, the app's and the
+"오류 보고 보내기", a switch in the card above 로그아웃, says under it what a report holds (the screens visited, the app's and the
 phone's version; no name and no position) and links to the privacy policy's part on error reports. It is on at first. The choice is the
 phone's, not the account's: it is kept under its own key, `snunow.error-reports` in AsyncStorage
 (`src/storage/error-reports.ts`), which neither a sign-out, the end of a Session nor the development setting for the
@@ -2065,6 +2088,14 @@ first state clears, so it holds before a sign-in and from one User to the next.
   and send it when they next start; 8.36.0 has no JavaScript call that empties that cache, and a native crash never
   passes `beforeSend`. While the switch is off nothing starts, so nothing is sent; a crash kept from a run when the
   switch was on, and not yet sent, goes out when the switch is turned on again.
+
+"사용 기록 보내기", under it in the same card and split by the card's divider (`src/screens/me/sending-card.tsx`,
+`src/screens/me/usage-row.tsx`, P08 ticket 11), is the account's
+choice on usage data, not the phone's: it shows the phone's copy of the account's consent (`useKeptConsent`), and a
+turn sends `PUT /users/me/usage-consent` with the new value and keeps the answer on the phone, leaving the version as
+it is, so no consent is asked again. The switch shows the new position while the request is on its way and goes back
+with a toast when it fails. Each row's link names its part: "'오류 보고' 보기" and "'사용 기록' 보기". Nothing is sent to PostHog yet:
+P08 ticket 12 makes the sending follow the copy, from `keepConsent`.
 
 ### The settings
 
