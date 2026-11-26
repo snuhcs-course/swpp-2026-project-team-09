@@ -42,3 +42,10 @@ Native files: none. Releases: an app OTA update.
 - [ ] No pick pops or spreads a ring, and no ring picture is made.
 - [ ] A capsule's clock time is gold, and walking minutes are ink.
 - [ ] Confirmed on the user's phone (the preview build): the numbers centred at his font size.
+
+## Comments
+
+### Agent usage (2026-11-26)
+
+- Agent time: about 35 minutes in the p04-58 session, an estimate. No emulator run: the emulator's font size is 1.0, where the numbers were already centred. No subagents.
+- Tokens, from the ticket's start (07:34 UTC) to this entry: input 134 uncached, with cache reads 51,021,113 and cache writes 101,686; output 60,498.
