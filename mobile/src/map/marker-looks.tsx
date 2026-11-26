@@ -156,8 +156,7 @@ function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | null): str
           symbol.role,
           symbol.number,
           ...(symbol.faded === true ? ['faded'] : []),
-          ...(symbol.meal === true ? ['meal'] : []),
-          ...(symbol.study === true ? ['study'] : []),
+          ...[symbol.meal === true ? ['meal'] : [], symbol.study === true ? ['study'] : []].flat(),
         ]
       : null,
     label === null
