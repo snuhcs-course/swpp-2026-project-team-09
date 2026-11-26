@@ -19,7 +19,6 @@ import {
   arrivedState,
   type ChangeBy,
   firstState,
-  ghostOf,
   replaced,
   type SetStored,
   withPlan,
@@ -69,14 +68,16 @@ export interface ShownAnswer {
   // replaces the one on screen. Without an answer on screen, or when `alter` gives the same conditions back, it does
   // nothing.
   change: (alter: (input: PlanInput) => PlanInput, by?: ChangeBy) => void;
+  // Asks for the answer to the same conditions from where the User is now, as `change` does (P04 ticket 86).
+  again: () => void;
   // Adds a Friend to the conditions as `change` does, chosen in the list or on the map, and holds them as the pending
   // add until the answer comes: the list of Friends stays open until then and closes with that answer.
   add: (userId: string) => void;
   // The Friend whose add is on its way, or null.
   pendingAdd: string | null;
-  // The band of the Plan shown before the last drag, while "되돌리기" can bring that answer back.
-  ghost: Stretch | null;
-  undo: () => void;
+  // "되돌리기" of an answer with no Plan that a drag brought, back to the answer before it; null otherwise. A drag that
+  // brings a Plan is undone by dragging back (P04 ticket 86).
+  undo: (() => void) | null;
   // The band's place while it is dragged whole, and after it is let go until the recalculation it asked for ends; the
   // input gives way to it.
   moving: Stretch | null;
@@ -117,7 +118,7 @@ function useBrowsing(setStored: SetStored): {
   browse: ShownAnswer['browse'];
   show: ShownAnswer['show'];
   toggleBasis: ShownAnswer['toggleBasis'];
-  undo: ShownAnswer['undo'];
+  undo: () => void;
   setMoving: ShownAnswer['setMoving'];
 } {
   const browse = useCallback(
@@ -257,6 +258,10 @@ export function useShownAnswer(
     change: (alter, by) => {
       ask(alter, by, null);
     },
+    again: () => {
+      // A copy, which `ask` takes for a change.
+      ask((input) => ({ ...input }), undefined, null);
+    },
     add: (userId) => {
       ask((input) => withPerson(input, userId), undefined, userId);
     },
@@ -265,7 +270,7 @@ export function useShownAnswer(
     asked: current.asked,
     ...picking,
     pendingAdd: current.pendingAdd,
-    ghost: ghostOf(current.kept),
+    undo: current.kept === null ? null : browsing.undo,
     moving: current.moving,
     menuFor: current.menu && plan !== null ? plan.id : null,
     ...menu,

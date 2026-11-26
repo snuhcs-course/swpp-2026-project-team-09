@@ -9,60 +9,28 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { AnswerLine, AnswerReply } from '@/api/assistant-types';
-import type { AnswerOffer } from '@/api/refusal-types';
-import { Button, color, space, text } from '@/design-system';
+import { color, space, text } from '@/design-system';
 import { movingWords } from '@/features/assistant/band-move';
-import { easedFromNow } from '@/features/assistant/relaxed-plan';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { ChatMarkdown } from '../chat-markdown';
+import { AnswerHints, saidByHint } from './answer-hints';
 import { AnswerLines } from './answer-lines';
 import { CardNote } from './card-note';
-import { MainButtons } from './main-buttons';
 import { MealList, mealCard } from './meal-list';
 import { MealMenu } from './meal-menu';
 import { mealWordsOf } from './meal-words';
+import { OfferButtons } from './offer-buttons';
 import { PlanStepper } from './plan-stepper';
 import { RelaxButtons } from './relax-buttons';
 import { RowFourButtons } from './row-four-buttons';
 import { type BandFocus, type Corrections, useCorrections } from './use-corrections';
-
-const UNDO_WIDTH = 96;
-
-interface StepsProps {
-  shown: ShownAnswer;
-  busy: boolean;
-  // The screens the answer offers for an input that was missing.
-  offers: readonly AnswerOffer[];
-  // "처음으로" back to 지금, null for none.
-  back: (() => void) | null;
-}
-
-// "되돌리기" at a fixed width while a drag is kept, then "처음으로" and the answer's offers. The main button stands beside
-// the input (`planActionOf`), and other candidates are numbered flags on the map.
-function Steps({ shown, busy, offers, back }: StepsProps): ReactElement | null {
-  const { ghost, undo } = shown;
-  if (ghost === null && offers.length === 0 && back === null) {
-    return null;
-  }
-  return (
-    <View style={styles.steps} testID="plan-steps">
-      {ghost === null ? null : (
-        <View style={styles.undo}>
-          <Button disabled={busy} full onPress={undo} variant="secondary">
-            되돌리기
-          </Button>
-        </View>
-      )}
-      <MainButtons back={back} busy={busy} here={null} invitation={null} offers={offers} />
-    </View>
-  );
-}
 
 interface CardProps {
   shown: ShownAnswer;
@@ -78,21 +46,24 @@ interface BelowProps extends Omit<CardProps, 'room'> {
   fix: Corrections;
   busy: boolean;
   steps?: boolean;
+  // A meal's Plan, whose offers are hint lines over its list (`MealBody`).
+  meal: boolean;
 }
 
-// Under the line: the answer's note and the steps. The Plan's band is the time bar's, under the pill.
-function Below({ shown, answer, invitation, fix, busy, steps }: BelowProps): ReactElement {
+// Under the line: the answer's note, the relax buttons of an answer without a Plan, and the answer's offers as buttons.
+// The Plan's band is the time bar's, under the pill, and the main button stands beside the input (`planActionOf`). A
+// meal's Plan has no row of buttons: it says its offers as hint lines over its list, and its note once when a hint says
+// it; a drag is undone by dragging back (P04 ticket 86).
+function Below({ shown, answer, invitation, fix, busy, steps, meal }: BelowProps): ReactElement {
   const { plan } = shown;
+  const offers = answer.offers ?? [];
   return (
     <>
-      <CardNote note={answer.note} />
-      {plan === null ? <RelaxButtons busy={busy} onRelax={fix.relax} relax={answer.noPlan?.relax ?? []} /> : null}
-      <Steps
-        back={plan !== null && easedFromNow(answer.input) ? fix.back : null}
-        busy={busy}
-        offers={answer.offers ?? []}
-        shown={shown}
-      />
+      {meal && saidByHint(answer.note, offers) ? null : <CardNote note={answer.note} />}
+      {plan === null ? (
+        <RelaxButtons busy={busy} onRelax={fix.relax} relax={answer.noPlan?.relax ?? []} undo={shown.undo} />
+      ) : null}
+      {meal ? null : <OfferButtons offers={offers} />}
       <PlanStepper busy={busy} shown={shown} steps={steps} />
       <RowFourButtons busy={busy} invitation={invitation} shown={shown} />
     </>
@@ -141,23 +112,21 @@ function Said({ lines, said }: { lines: readonly AnswerLine[]; said: string }): 
   );
 }
 
-// Whether the Plan's card has nothing to read: no line, step, relax button, or the buttons of events and parties. Then
+// Whether the Plan's card has nothing to read: no line, offer, relax button, or the buttons of events and parties. Then
 // the keyboard's view shows it in brief (`restOf`).
 export function planCardRests(
-  shown: Pick<ShownAnswer, 'plan' | 'ghost' | 'adding' | 'moving'>,
+  shown: Pick<ShownAnswer, 'plan' | 'adding' | 'moving'>,
   answer: AnswerReply,
   over: readonly AnswerLine[],
 ): boolean {
-  const { plan, ghost, adding, moving } = shown;
+  const { plan, adding, moving } = shown;
   const { kind } = answer.input;
   // One form for the whole drag of the band: open, since its lines may come and go under the finger.
   return (
     plan !== null &&
     !adding &&
-    ghost === null &&
     moving === null &&
     linesOf(shown, answer, over).length === 0 &&
-    !easedFromNow(answer.input) &&
     (answer.offers ?? []).length === 0 &&
     (kind === 'meal' || kind === 'meet')
   );
@@ -195,13 +164,15 @@ function MealWords({ said, shown }: { said: string; shown: ShownAnswer }): React
   );
 }
 
-// A meal answer's raised card: the Assistant's whole words, then its list, or the chosen one's menu (P04 ticket 54).
-// People are picked in its time card (P04 ticket 64).
+// A meal answer's raised card: the Assistant's whole words, the hint lines of what was missing (P04 ticket 86), then its
+// list, or the chosen one's menu, which shows neither (P04 ticket 54). People are picked in its time card (P04 ticket
+// 64).
 function MealBody(props: PlanCardProps & { busy: boolean }): ReactElement {
   const { shown, answer, invitation, over = [], said = '' } = props;
   return (
     <>
       {over.length > 0 ? null : <MealWords said={said} shown={shown} />}
+      {shown.menuFor === null ? <AnswerHints offers={answer.offers ?? []} /> : null}
       <MealSheet answer={answer} busy={props.busy || settled(invitation)} shown={shown} />
     </>
   );
@@ -233,7 +204,15 @@ export function PlanCard(props: PlanCardProps): ReactElement {
     <View style={styles.plan}>
       <Said lines={linesOf(shown, answer, over)} said={meal ? '' : said} />
       {meal ? <MealBody {...props} busy={busy} /> : null}
-      <Below answer={answer} busy={busy} fix={fix} invitation={invitation} shown={shown} steps={props.steps} />
+      <Below
+        answer={answer}
+        busy={busy}
+        fix={fix}
+        invitation={invitation}
+        meal={meal}
+        shown={shown}
+        steps={props.steps}
+      />
     </View>
   );
 }
@@ -242,6 +221,4 @@ const styles = StyleSheet.create({
   plan: { gap: space[3] },
   said: { gap: space[2] },
   words: { ...text.body, color: color.ink },
-  steps: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  undo: { width: UNDO_WIDTH },
 });

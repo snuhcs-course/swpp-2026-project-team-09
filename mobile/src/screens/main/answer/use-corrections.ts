@@ -6,6 +6,7 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -17,7 +18,7 @@ import { useToast } from '@/design-system';
 import { useFriends } from '@/features/friends/use-friends';
 import { onlyFriendOf } from '@/features/assistant/meet-input';
 import { peopleOf, withBound, withOrigin, withoutPerson, withStart } from '@/features/assistant/plan-input';
-import { backToNow, relaxed, timeChipChange } from '@/features/assistant/relaxed-plan';
+import { relaxed, timeChipChange } from '@/features/assistant/relaxed-plan';
 import { type BandBound, clockOf, msOf, type Stretch } from '@/features/assistant/time-band';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
 import { waitForPlace } from '@/features/places/picked-place';
@@ -49,9 +50,8 @@ export interface Corrections {
   focus: BandBound | null;
   focusUntil: (chip: ConditionChip) => void;
   drop: (bound: BandBound, time: string) => void;
-  // A button of an answer that nothing fits 지금, and 처음으로 back to 지금.
+  // A button of an answer that nothing fits 지금.
   relax: (offer: RelaxOffer) => void;
-  back: () => void;
   // The band dragged whole to a place, or let go there: let go where it started, it goes back and asks nothing.
   move: (at: Stretch, letGo: boolean) => void;
 }
@@ -163,9 +163,6 @@ export function useCorrections(
     },
     relax: (offer) => {
       change((conditions) => relaxed(conditions, offer));
-    },
-    back: () => {
-      change(backToNow);
     },
     move: moveOf(shown),
   };

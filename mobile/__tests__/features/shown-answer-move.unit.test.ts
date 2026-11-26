@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { act } from '@testing-library/react-native';
@@ -84,30 +85,16 @@ describe('the band moved whole', () => {
   });
 });
 
-// Partitions: the answer that comes, though it holds the Plan shown; "되돌리기"; a failure.
+// Partitions: the answer that comes, though it holds the Plan shown; a failure.
 describe('the answer to a band moved whole', () => {
-  it("shows its first Plan, keeps the band of the Plan shown before as the ghost, and draws the band's own place", async () => {
+  it("shows its first Plan and draws the band's own place, keeping nothing to undo: it is moved back (P04 ticket 86)", async () => {
     const { held, come } = await movedFromSecond();
 
     await come();
 
     expect(held.shown().plan?.id).toBe('302동식당');
-    expect(held.shown().ghost).toEqual({ startAt: at('12:18'), endAt: at('12:45') });
     expect(held.shown().moving).toBeNull();
-  });
-
-  it('is undone without a request, back to the Plan shown before', async () => {
-    const { held, come } = await movedFromSecond();
-    await come();
-
-    await act(() => {
-      held.shown().undo();
-    });
-
-    expect(held.shown().answer).toBe(MEAL_ANSWER);
-    expect(held.shown().plan?.id).toBe('301동식당');
-    expect(held.shown().ghost).toBeNull();
-    expect(recalculate).toHaveBeenCalledTimes(1);
+    expect(held.shown().undo).toBeNull();
   });
 
   it('puts the band back, and keeps the answer and its Plan, when the recalculation fails', async () => {

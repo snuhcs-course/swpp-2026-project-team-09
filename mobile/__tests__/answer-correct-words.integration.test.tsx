@@ -6,6 +6,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-25  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -118,18 +119,16 @@ describe('the answer on screen after words', () => {
     expect(mapThings()).toEqual(expect.arrayContaining(FIRST_PLAN_MARKS));
   });
 
-  it("is the reply's answer, which drops the outline of a drag", async () => {
+  it("is the reply's answer, after a drag's", async () => {
     server.on('POST /assistant/answers', { status: 200, body: MEAL_ANSWER_FIXED_START });
     const user = await askOnMap(server, MEAL_ANSWER_REPLY);
     await step('from', 'increment');
-    expect(screen.getByTestId('time-band-ghost')).toBeOnTheScreen();
     server.on('POST /assistant/messages', { status: 200, body: { ...MEAL_ANSWER_REPLY, answer: MEAL_ANSWER_THREE } });
 
     await say(user);
     await pass(500);
 
     expect(mapThings()).toContain('학생회관식당 · 12:33 점심');
-    expect(screen.queryByTestId('time-band-ghost')).toBeNull();
   });
 
   it("keeps the Plan's marks on the map under a reply of words alone", async () => {
