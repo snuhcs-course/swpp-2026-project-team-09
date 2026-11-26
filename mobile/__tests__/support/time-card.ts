@@ -19,13 +19,6 @@ export async function layFolded(height: number): Promise<void> {
   });
 }
 
-// The bar's own height top to bottom, as the phone lays it out, open or folded.
-export async function layBar(height: number): Promise<void> {
-  await fireEvent(screen.getByTestId('time-bar'), 'layout', {
-    nativeEvent: { layout: { x: 0, y: 0, width: 360, height } },
-  });
-}
-
 export function barTopOf(): number {
   const style: unknown = screen.getByTestId('time-bar').props.style;
   return Number(StyleSheet.flatten<ViewStyle>(Array.isArray(style) ? style : [style]).top);

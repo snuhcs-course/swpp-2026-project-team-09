@@ -5,7 +5,6 @@
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { fireEvent } from '@testing-library/react-native';
 import { StyleSheet, type ViewStyle } from 'react-native';
 import { MEAL_ANSWER_REPLY } from '@/api/mock/data/meal-answer';
 import type * as SecureStoreFake from './support/secure-store';
@@ -19,6 +18,7 @@ import { layStage } from './support/lists';
 import { givePhone, ON_CAMPUS } from './support/main';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
+import { layFolded } from './support/time-card';
 
 // P04 ticket 63, the user's phone with PR 552 merged: "＋ 같이" gave "Maximum update depth exceeded" at once. The time
 // card was laid out again and told a height a fraction of a point off each time (112, then 111.79, then 111.71 on the
@@ -58,11 +58,10 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-// The time card's layout, as the phone tells it.
+// The time card's layout, as the phone tells it: its folded parts, from which it tells its height. The bar itself has
+// no layout handler, so a layout fired on it would reach the stage.
 async function layTimeCard(height: number): Promise<void> {
-  await fireEvent(screen.getByTestId('time-bar'), 'layout', {
-    nativeEvent: { layout: { x: 16, y: 28, width: 358, height } },
-  });
+  await layFolded(height);
   await pass(50);
 }
 
