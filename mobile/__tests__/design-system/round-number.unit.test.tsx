@@ -5,7 +5,6 @@
  ******************************************************************************/
 
 import { render, screen } from '@testing-library/react-native';
-import { StyleSheet, type TextStyle } from 'react-native';
 
 import { MEAL_ANSWER_MENUS } from '@/api/mock/data/meal-answer-menus';
 import { type AnswerLabel, type AnswerSymbol, MapAnswerMark } from '@/design-system';
@@ -16,20 +15,16 @@ import { ignoreMark } from '@/screens/main/answer-presses';
 // of the soft coral rounds sat low and to the right, their text grown past the 13-point inside of the round. A round
 // keeps its size at any font size, so its number does too, in a box the round's inside, centred without font padding.
 
-interface Centred {
-  scales: boolean | undefined;
-  style: TextStyle;
-}
+type Shown = ReturnType<typeof screen.getByText>;
 
-function numberOf(digits: string): Centred {
-  const text = screen.getByText(digits);
-  return { scales: text.props.allowFontScaling as boolean | undefined, style: StyleSheet.flatten(text.props.style) };
+function numberOf(digits: string): Shown {
+  return screen.getByText(digits);
 }
 
 // The inside of a round: its size less its rings.
-function expectCentredIn({ scales, style }: Centred, inside: number): void {
-  expect(scales).toBe(false);
-  expect(style).toMatchObject({
+function expectCentredIn(number: Shown, inside: number): void {
+  expect(number).toHaveProp('allowFontScaling', false);
+  expect(number).toHaveStyle({
     width: inside,
     height: inside,
     lineHeight: inside,
