@@ -107,7 +107,8 @@ export interface SceneSetting {
   ways?: Ways;
   // A meal answer's, menus or none: its pick and candidates in coral, as its list (P04 ticket 90). Left out, not.
   coral?: boolean;
-  // The plans over a price ceiling some others are under, whose candidates recede (P04 ticket 92); left out, none.
+  // The plans over a price ceiling some others are under, which have no mark, as the places closed for the meal: the
+  // map shows only the places the User can choose now (P04 ticket 92). Left out, none.
   over?: ReadonlySet<string>;
 }
 
@@ -128,7 +129,10 @@ function placeDraft(
     return pickDraft({ title, position, number: pickNumber, plan, day, kind, meal, coral }, flag?.text ?? null);
   }
   if (role === 'candidate') {
-    return candidateDraft(plans, item, { kind, meal, coral, over });
+    const planId = plans.find((one) => one.place.placeId === place.placeId && one.place.label === place.label)?.id;
+    return planId !== undefined && over?.has(planId) === true
+      ? null
+      : candidateDraft(plans, item, { kind, meal, coral });
   }
   if (role === 'stop' || role === 'meeting') {
     return role === 'stop' ? stopDraft(item) : null;

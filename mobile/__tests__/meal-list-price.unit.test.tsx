@@ -103,15 +103,40 @@ function numberOn(drawing: AnswerDrawing, id: string): number | null {
   return (symbol?.type === 'dot' ? symbol.number : null) ?? label?.number ?? null;
 }
 
-// Partitions: a fitting place and one over the ceiling. Expected values: the ticket, as a candidate without the kind
-// on screen recedes (board 25).
+// Partitions: the fitting places, those over the ceiling, and the same answer without it. Expected values: the
+// orchestrator's rule of the meal map, which shows only the places the User can choose now: as the places closed for
+// the meal, those over the price have no mark, and the camera frames the fitting ones.
 describe('The map of a meal answer with a price ceiling', () => {
-  it('numbers the fitting places alone; one over it recedes, its name alone', () => {
+  const OVER = ['302동식당', '3식당', '자하연식당 2층'];
+
+  it('numbers the fitting places alone', () => {
     const drawing = drawingOf(asked({ maxPrice: 5000 }), 0);
 
     expect(numberOn(drawing, 'answer:pick')).toBe(1);
     expect(numberOn(drawing, 'answer:candidate:학생회관식당')).toBe(2);
-    expect(seen(drawing, 'answer:candidate:302동식당').symbol).toBeNull();
-    expect(numberOn(drawing, 'answer:candidate:302동식당')).toBeNull();
+  });
+
+  it('draws no mark of a place over the price, and frames none of them', () => {
+    const answer = asked({ maxPrice: 5000 });
+    const drawing = drawingOf(answer, 0);
+    // 302동식당 stands where 302동 is, which the Friend's Class and its way on still mark: the other two are framed by
+    // nothing else.
+    const overAt = answer.plans
+      .filter(({ id }) => ['3식당', '자하연식당 2층'].includes(id))
+      .map(({ place }) => `${String(place.latitude)},${String(place.longitude)}`);
+
+    expect(drawing.things.filter(({ id }) => OVER.some((name) => id.startsWith(`answer:candidate:${name}`)))).toEqual(
+      [],
+    );
+    expect(
+      drawing.points.filter(({ latitude, longitude }) => overAt.includes(`${String(latitude)},${String(longitude)}`)),
+    ).toEqual([]);
+  });
+
+  it('draws them again as candidates once the ceiling is taken away', () => {
+    // 301동식당 shown, the second of the stored order, so that the three are candidates.
+    const drawing = drawingOf(pricedAnswer(MEAL_DINNER_MENUS, {}), 1);
+
+    expect(OVER.every((name) => drawing.things.some(({ id }) => id === `answer:candidate:${name}`))).toBe(true);
   });
 });

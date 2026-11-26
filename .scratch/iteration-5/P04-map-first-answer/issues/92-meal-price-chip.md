@@ -24,7 +24,7 @@ The main server orders a meal's plans by a price ceiling (P05 ticket 53): those 
   - The list keeps the main server's order whenever it is by price: `cheapFirst`, or a ceiling that none fits. The order line says "싼 순", the same as the chip.
   - With a ceiling and the usual order, the fitting rows sort by walking as now, and the line counts only them ("2곳 · 걸음이 적은 순").
 - **Kind chips** count the fitting places only, "전체" too.
-- **Map:** only the fitting places are numbered. A plan over the price recedes like a candidate without the kind on screen: its name in grey, no number, no dot. Its pick, the first plan, fits whenever any does.
+- **Map:** only the fitting places are numbered. A plan over the price has no mark at all, like a place closed for the meal: the meal map shows only the places the User can choose now (the orchestrator's rule, after the first screens showed them as grey names). The camera frames the fitting ones. After ✕ they come back as candidates. The pick, the first plan, fits whenever any does.
 - **Wire:** `MealInput` takes `maxPrice?` and `cheapFirst?`. The app never adds them, only removes them, so an older main server is never sent a field it refuses. An answer without them shows as before.
 - **Mock:** "5천원 이하로 저녁", "만원 안쪽", "싼 데" and the like answer the stored dinner with the condition in the main server's order. A recalculation with a condition is ordered the same way.
 
@@ -32,7 +32,7 @@ The main server orders a meal's plans by a price ceiling (P05 ticket 53): those 
 
 - [x] The dish and price, the order line, the chips' words, what fits and what goes over, and the input without a condition. (Unit tests.)
 - [x] The list: the chips with ✕, a fitting row's dish and price, the grey section, the kind counts, none fitting, `cheapFirst`, and an answer without a condition as before. (Unit tests.)
-- [x] The map: a plan over the price recedes, and the fitting ones keep their numbers. (Unit test.)
+- [x] The map: a plan over the price has no mark and is not framed, the fitting ones keep their numbers, and they come back without the ceiling. (Unit tests.)
 - [x] The app's input guard takes the two fields. (Unit test.)
 - [x] Emulator screens at font scale 1.0 and 1.3, sent to the orchestrator before the pull request: the chip with fitting rows and the section over the price, none fitting, "싼 순", and the map with only the fitting places numbered.
 - [x] Whole lint, format and types of the app and the main server.
