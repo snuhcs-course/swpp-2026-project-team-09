@@ -84,6 +84,11 @@ With the fix, ten runs in a row:
 
 One more run on up to eight workers (`--maxWorkers` alone) passed too: 8 files, 56 tests, 36.95 s.
 
+The whole integration project once (`pnpm test:integration`, eight workers, the Mac's load average about 40): Test
+Files 1 failed | 305 passed (306), Tests 2 failed | 3173 passed (3175), 690.99 s. The two were
+`assistant-search-room`'s "finds the later Quest past those Full", which timed out at Vitest's 5 s, and the case after
+it, which read that one's leftovers. The file makes no room requests, and alone it passed 16 of 16 right after.
+
 Time added, on a loaded Mac:
 
 - the template copy in the global setup: 0.13 s, once;
