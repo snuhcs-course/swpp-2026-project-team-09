@@ -5,6 +5,7 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { KeptQuest, MapScene } from '@/api/assistant-types';
@@ -90,6 +91,8 @@ export interface Draft {
   faded?: boolean;
   // A meal answer's pick or candidate, menus or none: its label in coral (P04 ticket 90); left out, not.
   coral?: boolean;
+  // A 관정 booking's pick: its label in the study colour (P01 ticket 10); left out, not.
+  study?: boolean;
   // A meal candidate's title is a clock time, not walking minutes (P04 ticket 88); left out, not.
   clock?: boolean;
   // The number a pick or a candidate carries in its label when its dot is not drawn.
@@ -239,6 +242,7 @@ export function unplaced(
           ...(action === null ? {} : { action }),
           ...(faded ? { faded } : {}),
           ...(draft.coral === true ? { meal: true } : {}),
+          ...(draft.study === true ? { study: true } : {}),
           ...(draft.clock === true ? { clock: true } : {}),
           number: group === 'candidate' || symbol === null ? number : null,
         };

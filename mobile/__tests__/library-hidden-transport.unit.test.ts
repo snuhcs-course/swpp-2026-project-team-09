@@ -2,8 +2,10 @@
  * AI-generated with Claude
  *
  * 2026-11-01  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import type { CallTiming } from '@/library/call-timing';
 import { CALL_MS, HiddenViewTransport, LOGOUT_MS, PAGE_LOAD_MS } from '@/library/hidden-transport';
 import { isLibraryPage, isLoginDone, LIBRARY_LOGOUT_URL, LIBRARY_MAIN_URL, seatMapUrl } from '@/library/site';
 import type { TransportReply } from '@/library/transport';
@@ -198,5 +200,41 @@ describe("the site's addresses", () => {
 
   it("builds a sector's seat map address", () => {
     expect(seatMapUrl(17202)).toBe('https://k-rsv.snu.ac.kr:444/MAP/WEB/area_17202.png?version=20261022');
+  });
+});
+
+// P01 ticket 08: what each call took is noted, with nothing of what was asked or answered.
+describe("a call's timing", () => {
+  it("notes the endpoint, how it ended, the reply's size, the page's wait and the call's time", async () => {
+    const noted: CallTiming[] = [];
+    const transport = new HiddenViewTransport((timing) => {
+      noted.push(timing);
+    });
+    const view = attached(transport);
+    const call = transport.call('getSeatBookingList', { sectorNo: '17202', bookTime: '1700-1800' });
+    await jest.advanceTimersByTimeAsync(300);
+    transport.loaded(PAGE);
+    await jest.advanceTimersByTimeAsync(1200);
+    const data = JSON.stringify({ id: lastId(view), ok: true, result: { SeatList: [] } });
+    transport.received(data, PAGE);
+    await settled(call);
+
+    expect(noted).toEqual([
+      { endpoint: 'getSeatBookingList', outcome: 'ok', size: data.length, pageMs: 300, callMs: 1200 },
+    ]);
+  });
+
+  it('notes a call with no reply as network once its time is up', async () => {
+    const noted: CallTiming[] = [];
+    const transport = new HiddenViewTransport((timing) => {
+      noted.push(timing);
+    });
+    attached(transport);
+    transport.loaded(PAGE);
+    const call = transport.call('getSectorList', { libno: '1', floorno: '7' });
+    await jest.advanceTimersByTimeAsync(CALL_MS);
+    await settled(call);
+
+    expect(noted).toEqual([{ endpoint: 'getSectorList', outcome: 'network', size: 0, pageMs: 0, callMs: CALL_MS }]);
   });
 });

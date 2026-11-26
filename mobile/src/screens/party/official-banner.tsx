@@ -4,6 +4,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-10-23  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { useIsFocused } from 'expo-router';
@@ -16,8 +17,8 @@ import { sidewaysSwipe, swipeStep, TURN_SWIPE } from '@/navigation/swipe-rule';
 import { PhotoView } from './quest-photo';
 
 // 찾기's banner of official recruiting, the `Party` frame's carousel: one at a time, turning every 4 seconds until the
-// User pauses it, with ‹ ›, `n / N` and `+` for 전체 파티's `공식`. A swipe left or right over it turns it as ‹ › do,
-// in place of the 파티 tab's swipe.
+// User pauses it, with ‹ › and `n / N`. A swipe left or right over it turns it as ‹ › do, in place of the 파티 tab's
+// swipe.
 
 export const TURN_MS = 4000;
 const HEIGHT = 156;
@@ -26,7 +27,6 @@ const ROUND = 28;
 interface OfficialBannerProps {
   recruiting: readonly OfficialRecruiting[];
   onOpen: (recruiting: OfficialRecruiting) => void;
-  onAll: () => void;
 }
 
 function RoundButton({ label, icon, onPress }: { label: string; icon: IconName; onPress: () => void }): ReactElement {
@@ -136,7 +136,7 @@ function Slide({ shown, onOpen }: { shown: OfficialRecruiting; onOpen: () => voi
 }
 
 // ‹ ›, play and pause, `n / N` and `+`.
-function Controls({ turning, count, onAll }: { turning: Turning; count: number; onAll: () => void }): ReactElement {
+function Controls({ turning, count }: { turning: Turning; count: number }): ReactElement {
   const { index, playing, turn, togglePlaying } = turning;
   const place = `${String(index + 1)} / ${String(count)}`;
   return (
@@ -166,12 +166,11 @@ function Controls({ turning, count, onAll }: { turning: Turning; count: number; 
           {` / ${String(count)}`}
         </Text>
       </View>
-      <RoundButton icon="plus" label="공식 모집 전체 보기" onPress={onAll} />
     </View>
   );
 }
 
-export function OfficialBanner({ recruiting, onOpen, onAll }: OfficialBannerProps): ReactElement | null {
+export function OfficialBanner({ recruiting, onOpen }: OfficialBannerProps): ReactElement | null {
   const turning = useTurning(recruiting.length);
   const { turn } = turning;
   const swipe = useMemo(
@@ -197,7 +196,7 @@ export function OfficialBanner({ recruiting, onOpen, onAll }: OfficialBannerProp
           }}
           shown={shown}
         />
-        <Controls count={recruiting.length} onAll={onAll} turning={turning} />
+        <Controls count={recruiting.length} turning={turning} />
       </View>
     </GestureDetector>
   );
