@@ -2578,6 +2578,16 @@ Proposal)`. A way or a Place the map draws (a `way` or `place` Lookup) with noth
     constraints are `from` (where they set out from, basis `chosen`), `notBefore` (when they
     are ready at the earliest; where they set out from is still decided by their own time), and `leaveBy` (the latest
     they leave).
+  - **The kind of food and the price.** A meal's `input` may carry `cuisine` (`한식`, `중식`, `일식`, `양식`, `분식`, or
+    null): the plans of the Restaurants that serve it come first. It may carry `maxPrice`, the highest price per person,
+    a whole number of won from 1 to 100,000, and `cheapFirst: true` (P05 ticket 53); any other value of either is a
+    `400`. A Restaurant fits `maxPrice` when the price its list shows is at or under it: its main corner's own price,
+    else its cheapest dish. The fitting plans come first, each part in its order, and the others follow; when none
+    fits, every plan goes cheapest first; when no plan has a price, as before a meal's menus are posted, the order
+    stays. `cheapFirst` puts the cheapest first, among the fitting plans when there is a `maxPrice`. planMeal keeps
+    both from the conditions on screen until the User lets them go, and the app takes `maxPrice` away with its chip's
+    ✕. This server goes out before the app that shows them; a server reverted to before it answers `400` to an app that
+    sends a `maxPrice` back, until the User starts a new conversation, so it is reverted only together with that app.
   - **What was missing.** A meal's answer asked with `locationMissing: 'permission'` carries in `offers`
     `{ "kind": "open", "label": "위치 켜기", "screen": "location", "hint": "위치를 켜면 지금 있는 곳에서 가까운 순으로 봐요" }`,
     and one for a User with no Class carries `{ "kind": "open", "label": "시간표 넣기", "screen": "timetable", "hint" }`
