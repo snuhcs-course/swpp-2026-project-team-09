@@ -5,11 +5,13 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { EventsInput, MealInput, PersonConstraint, PlanInput, PlanPerson } from '@/api/assistant-types';
 import type { MeetInput } from '@/api/meet-plan-types';
 import type { NewQuestInput, QuestsInput } from '@/api/recruiting-plan-types';
+import type { StudyInput } from '@/api/study-plan-types';
 import { field, isBoard, isText, isTextOrNull, listOf } from './answers';
 import { hasNow } from './relax-answers';
 
@@ -114,6 +116,32 @@ function isNewQuestInput(value: unknown): value is NewQuestInput {
   );
 }
 
+const isWhat = isOneOf(['quiet', 'group', 'pc', 'any']);
+
+function isArea(value: unknown): boolean {
+  return value === null || ['south', 'west', 'north', 'east'].every((side) => typeof field(value, side) === 'number');
+}
+
+// A study answer's conditions (P10): the people and window as a meal's, studying together or not, and what was chosen.
+function isStudyInput(value: unknown): value is StudyInput {
+  const [window, chosen, minutes] = [field(value, 'window'), field(value, 'chosen'), field(value, 'minutes')];
+  return (
+    field(value, 'kind') === 'study' &&
+    isText(field(value, 'date')) &&
+    isWhat(field(value, 'what')) &&
+    listOf(isPerson)(field(value, 'people')) &&
+    typeof field(value, 'together') === 'boolean' &&
+    isTextOrNull(field(window, 'from')) &&
+    isTextOrNull(field(window, 'until')) &&
+    isArea(field(value, 'area')) &&
+    (minutes === null || typeof minutes === 'number') &&
+    isTextOrNull(field(chosen, 'seatSpaceId')) &&
+    isTextOrNull(field(chosen, 'roomSpaceId'))
+  );
+}
+
 export function isInput(value: unknown): value is PlanInput {
-  return [isMealInput, isEventsInput, isQuestsInput, isNewQuestInput, isMeetInput].some((isKind) => isKind(value));
+  return [isMealInput, isEventsInput, isQuestsInput, isNewQuestInput, isMeetInput, isStudyInput].some((isKind) =>
+    isKind(value),
+  );
 }
