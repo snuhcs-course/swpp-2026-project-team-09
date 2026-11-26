@@ -14,7 +14,6 @@
 
 import type { AnswerReply, Cuisine, KeptQuest, MapScene, Plan } from '@/api/assistant-types';
 import type { LatLng } from '@/api/types';
-import type { AnswerSymbol } from '@/design-system';
 import { koreaDayWord } from '@/korea-time';
 import type { MarkerLook } from '@/map';
 import { lookName } from '@/map/marker-looks';
@@ -31,7 +30,6 @@ import {
   type Group,
   keptDrafts,
   OWN,
-  restOf,
   stopDraft,
   SYMBOL_ORDER,
   unplaced,
@@ -41,11 +39,10 @@ import {
 import { type LabelView, type MarkPoint, placeLabels, UPRIGHT_REACH } from './answer-labels';
 import { type Placed, thingsInOrder } from './answer-things';
 import { NO_STANDINGS, type Standing, standingWords } from './invited-friends';
-import { candidateDraft, leftOutByRank, pickLine, sideRank } from './answer-candidates';
+import { candidateDraft, leftOutByRank, pickDraft, sideRank } from './answer-candidates';
 import { kindShown } from './meal-kinds';
 import { drawsMeal, hiddenRoutes, mealDrafts, sceneLines } from './meal-marks';
 import type { Ways } from './shuttle-legs';
-import { mealPickLabel } from './meal-pick';
 
 export type { AnswerDrawing, AnswerThing } from './answer-drawing';
 
@@ -125,35 +122,7 @@ function placeDraft(
   if (role === 'pick') {
     const flag = scene.flags.find(({ at, role: flagRole }) => flagRole === 'place' && samePoint(at, position));
     const plan = pickNumber === null ? undefined : plans[pickNumber - 1];
-    const symbol: AnswerSymbol = { type: 'dot', role, number: pickNumber, ...(coral ? { meal: true } : {}) };
-    const tinted = coral ? { coral } : {};
-    if (meal && plan !== undefined) {
-      const words = mealPickLabel(plan, title, kind);
-      const round: AnswerSymbol = { ...symbol, meal: true };
-      return {
-        ...base,
-        ...tinted,
-        id: 'answer:pick',
-        group: role,
-        symbol: round,
-        tone: role,
-        number: pickNumber,
-        ...words,
-      };
-    }
-    const line = pickLine(flag === undefined ? null : restOf(title, flag.text), day, plan, kind);
-    const name = line === null ? title : `${title} · ${line}`;
-    return {
-      ...base,
-      ...tinted,
-      id: 'answer:pick',
-      name,
-      group: role,
-      symbol,
-      tone: role,
-      line,
-      number: pickNumber,
-    };
+    return pickDraft({ title, position, number: pickNumber, plan, day, kind, meal, coral }, flag?.text ?? null);
   }
   if (role === 'candidate') {
     return candidateDraft(plans, item, kind, meal, coral);

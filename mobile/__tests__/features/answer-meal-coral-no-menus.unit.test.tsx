@@ -56,7 +56,7 @@ describe("a meal answer's marks without menus", () => {
   });
 
   it('keep every other answer’s pick gold', () => {
-    expect(marksOf(MEET_ANSWER).some(({ meal, label }) => meal || label?.meal === true)).toBe(false);
+    expect(marksOf(MEET_ANSWER).some(({ meal, label }) => meal === true || label?.meal === true)).toBe(false);
   });
 });
 
