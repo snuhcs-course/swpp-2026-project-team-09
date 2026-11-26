@@ -29,13 +29,12 @@ describe('MapAnswerMark: a meal answer in coral', () => {
     expect(screen.getByTestId('m:dot')).toHaveStyle({ backgroundColor: color.quest });
   });
 
-  it("draws a meal candidate's round with a coral rim, a soft ground, and a coral number, inside its white ring", async () => {
+  it("draws a meal candidate's round with a coral rim, a soft ground, and a coral number", async () => {
     const symbol = { type: 'dot', role: 'candidate', number: 3, meal: true } as const;
     await render(<MapAnswerMark label={null} symbol={symbol} testID="m" />);
 
-    expect(screen.getByTestId('m:dot')).toHaveStyle({ backgroundColor: color.meal, borderColor: color.surface });
+    expect(screen.getByTestId('m:dot')).toHaveStyle({ backgroundColor: color.mealSoft, borderColor: color.meal });
     expect(screen.getByText('3')).toHaveStyle({ color: color.meal });
-    expect(screen.getByTestId('m:dot:ground')).toHaveStyle({ backgroundColor: color.mealSoft });
   });
 });
 
@@ -60,7 +59,7 @@ describe("MapAnswerMark: a meal answer's labels in coral", () => {
     const minutes: AnswerLabel = { side: 'right', tone: 'minutes', title: '26분', line: null, number: 4 };
     await render(<MapAnswerMark label={minutes} symbol={null} testID="m" />);
 
-    expect(screen.getByTestId('m:label:dot')).toHaveStyle({ backgroundColor: color.meal });
+    expect(screen.getByTestId('m:label:dot')).toHaveStyle({ borderColor: color.meal, backgroundColor: color.mealSoft });
     expect(screen.getByText('4')).toHaveStyle({ color: color.meal });
   });
 

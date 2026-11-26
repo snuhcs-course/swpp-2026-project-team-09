@@ -35,10 +35,11 @@ function expectCentredIn(number: Shown, inside: number): void {
 }
 
 // Partitions: a meal candidate's coral round, a navy candidate's, a pick's, a capsule's round, and a label's badge.
-// Expected values: each round's size less its white ring of 2 and, for the coral one, its rim of 1.5.
+// Expected values: each round's size less its white ring of 2; the coral one's less its rim of 1.5 alone, with no
+// white ring since P04 ticket 91.
 describe('a number in a round on the map', () => {
   it.each([
-    ['a meal candidate’s coral round', { type: 'dot', role: 'candidate', number: 3, meal: true }, 13],
+    ['a meal candidate’s coral round', { type: 'dot', role: 'candidate', number: 3, meal: true }, 17],
     ['a candidate’s navy round', { type: 'dot', role: 'candidate', number: 3 }, 16],
     ['the pick’s round', { type: 'dot', role: 'pick', number: 3, meal: true }, 26],
   ] as const)('keeps its size and is centred in %s', async (_, symbol: AnswerSymbol, inside) => {
@@ -57,7 +58,7 @@ describe('a number in a round on the map', () => {
       </>,
     );
 
-    expectCentredIn(numberOf('4'), 13);
+    expectCentredIn(numberOf('4'), 17);
     expectCentredIn(numberOf('1'), 16);
   });
 
