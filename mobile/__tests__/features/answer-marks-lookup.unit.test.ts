@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Lookup } from '@/api/lookup-types';
@@ -219,5 +220,33 @@ describe('the destination the camera keeps on its side', () => {
 
   it('is none for 민수, a person alone (q6)', () => {
     expect(drawingOfScene(FRIEND_LOOKUP.scene).pick).toBeNull();
+  });
+});
+
+// P05 ticket 57: 관정 asked for after its closing comes as a place with why, as a Restaurant with no menu does: one
+// dropped mark, which today's app draws grey with its tag, and nothing else. The scene is the main server's, as its
+// integration test reads it.
+describe('the drawing of 관정 closed for today', () => {
+  const at = { latitude: 37.4598, longitude: 126.9519 };
+  const drawing = drawingOfScene({
+    people: [],
+    places: [
+      {
+        place: { placeId: 'b0d3c1e0-0000-4000-8000-000000000621', label: '관정도서관', ...at },
+        role: 'dropped',
+        tag: '관정도서관 · 오늘 23:00 닫음 · 내일 07:00부터',
+      },
+    ],
+    routes: [],
+    flags: [],
+  });
+
+  it('draws one grey mark with the closing and the next opening, and no pick', () => {
+    expect(seen(drawing, 'answer:dropped:관정도서관')).toMatchObject({
+      name: '관정도서관 · 오늘 23:00 닫음 · 내일 07:00부터',
+      symbol: { type: 'dot', role: 'dropped', number: null },
+    });
+    expect(ids(drawing)).toEqual(['answer:dropped:관정도서관']);
+    expect(drawing.pick).toBeNull();
   });
 });

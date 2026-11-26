@@ -19,6 +19,7 @@ import { koreaDate } from '../korea-time.js';
 import { addDays, closedTodayRefusal, lastBookableDate, type Refusal } from './booking-rules.js';
 import { type Catalogue, type LibrarySpace, type SpaceStatus, statusOf } from './catalogue.js';
 import { type FreeTimePort } from './free-time-port.js';
+import { closedWords } from './closed-today.js';
 import { type LibraryCard } from './library-card.js';
 
 // What the 관정도서관 tools share (ADR 0009). The model passes catalogue ids and the User's words; the server checks the
@@ -189,18 +190,6 @@ export function showCard(presented: Presented, card: LibraryCard): void {
 export function refused(refusals: Refusal[]): object {
   return { result: 'refused', refusals };
 }
-
-// A space closed for the rest of today (P05 ticket 57): the refusal, and when it opens next, for the one sentence the
-// rules ask for; no card. Null while it is open, or for another day.
-export function closedToday(space: LibrarySpace, date: string, now: Date): object | null {
-  const refusal = closedTodayRefusal(space, date, now);
-  return refusal === null ? null : { ...refused([refusal]), closedToday: closedWords(space) };
-}
-
-const closedWords = ({ hours }: LibrarySpace): object => ({
-  closedAt: hours?.close,
-  opens: `내일 ${hours?.open ?? ''}`,
-});
 
 // 오늘, 내일 and 모레, or the date.
 export function dayWords(date: string, now: Date): string {
