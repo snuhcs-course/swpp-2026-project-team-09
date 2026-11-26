@@ -11,6 +11,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { JoinPolicy, LatLng, MyParty, Party, Quest, SubQuest } from '@/api/types';
@@ -27,10 +28,9 @@ export interface QuestRowView {
   // `party` is every Quest that is not a class or taken alone: the frames draw a Shared Quest as a Party. `quest` is
   // one taken alone, which is no 파티.
   kind: 'class' | 'party' | 'quest';
+  // Also the row's round, which the design system's `QuestRound` draws: a clock for a class, a person for `open`, a
+  // lock for `closed`.
   tone: QuestRowTone;
-  // In the row's round, by its name in the design system: `clock` for a class, `users` for `open`, `lock` for
-  // `closed`.
-  icon: 'clock' | 'users' | 'lock';
   // The Quest's own. Null for a class.
   joinPolicy: JoinPolicy | null;
   // "다음 강의 · 23분 후", "공개 파티 · 4명", "비공개 파티 · 김민준 외 2명" or "공개 파티 · 활성화 중", the list on
@@ -231,8 +231,6 @@ function kindLabel(tone: QuestRowTone, quest: Quest, meId: string): string {
   return others === '' ? '비공개 파티' : `비공개 파티 · ${others}`;
 }
 
-const ROW_ICON = { class: 'clock', open: 'users', closed: 'lock' } as const;
-
 function toneOf(quest: Quest): QuestRowTone {
   if (quest.classQuest) {
     return 'class';
@@ -267,7 +265,6 @@ export function toQuestRows(sources: QuestSources): QuestRowView[] {
       id: quest.id,
       kind: kindOf(quest),
       tone,
-      icon: ROW_ICON[tone],
       joinPolicy: quest.classQuest ? null : quest.joinPolicy,
       kicker: quest.classQuest
         ? classKicker(subQuest, quest === nextClass, now)

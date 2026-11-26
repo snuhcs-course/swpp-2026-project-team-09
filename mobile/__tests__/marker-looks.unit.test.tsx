@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-10-22  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { render, screen } from '@testing-library/react-native';
@@ -101,5 +102,22 @@ describe("a group's look on the map", () => {
       'group:official+party:pin:selected',
       'group:party+dining+shuttle:pin',
     ]);
+  });
+});
+
+// Partitions: a 행사's, a 파티's or a group's tag with its name and without, and a name that holds the separator.
+describe("a tag's look with its name, from the map's closest level", () => {
+  it('has a name of its own for each name, and draws the name in the tag', async () => {
+    const party: MarkerLook = { kind: 'party', form: 'pin', label: '저녁 약속' };
+    const group: MarkerLook = { kind: 'group', kinds: ['official', 'party'], form: 'pin', label: '301동' };
+
+    expect(lookName(party)).toBe('party:pin:label="저녁 약속"');
+    expect(lookName(group)).toBe('group:official+party:pin:label="301동"');
+    expect(lookName({ kind: 'party', form: 'pin', label: 'a:selected' })).not.toBe(
+      lookName({ kind: 'party', form: 'pin', label: 'a', selected: true }),
+    );
+
+    await render(<LookView look={party} />);
+    expect(screen.getByText('저녁 약속')).toBeVisible();
   });
 });

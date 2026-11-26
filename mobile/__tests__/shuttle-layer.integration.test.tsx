@@ -5,6 +5,7 @@
  * 2026-10-07  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-17  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type * as SecureStoreFake from './support/secure-store';
@@ -15,7 +16,7 @@ import { sockets } from './support/fake-socket';
 import { findButton } from './support/lists';
 import { socketServer } from './support/live';
 import { givePhone, ON_CAMPUS, openMain } from './support/main';
-import { CLOSER, press, wordsUnder, zoomIn } from './support/markers';
+import { press, wordsUnder, zoomIn } from './support/markers';
 import { startFresh } from './support/mocks';
 import { answerMainScreen, askMainServer, PHONE_NOW } from './support/server';
 import {
@@ -169,15 +170,13 @@ describe("a stop's card", () => {
     await start();
   });
 
-  it('names a stop and the next one, with no button but "가까이 보기"', async () => {
+  it('names a stop and the next one, with no button', async () => {
     const user = await openMain();
     await toggleShuttle(user);
 
     await press(user, stopMarker(AGRICULTURE));
 
-    expect(screen.getByTestId('map-card')).toHaveTextContent(
-      '셔틀버스 · 교내 순환농생대 정류장다음 정류장 정문가까이 보기',
-    );
+    expect(screen.getByTestId('map-card')).toHaveTextContent('셔틀버스 · 교내 순환농생대 정류장다음 정류장 정문');
     expect(screen.getByText('셔틀버스 · 교내 순환')).toHaveStyle({ color: '#6B46C1' });
     expect(findButton('노선 보기')).toBeNull();
   });
@@ -194,7 +193,7 @@ describe("a vehicle's card", () => {
 
     await press(user, vehicleMarker(GATE));
     expect(screen.getByTestId('map-card')).toHaveTextContent(
-      '셔틀버스 · 운행 중교내 순환 셔틀정문에 있어요 · 다음 정류장 법과대가까이 보기노선 보기',
+      '셔틀버스 · 운행 중교내 순환 셔틀정문에 있어요 · 다음 정류장 법과대노선 보기',
     );
 
     await socketServer((socket) => {
@@ -206,10 +205,8 @@ describe("a vehicle's card", () => {
   it('brings the whole line into view with "노선 보기", and closes', async () => {
     const user = await openMain();
     await toggleShuttle(user);
-    await press(user, stopMarker(SCIENCE));
-    await press(user, CLOSER);
+    await zoomIn(user, 4);
     expect(inView(stopMarker(GATE))).toBe(false);
-    await press(user, '닫기');
 
     await press(user, vehicleMarker(GATE));
     await press(user, '노선 보기');

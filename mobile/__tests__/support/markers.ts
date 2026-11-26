@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { type userEvent, within } from '@testing-library/react-native';
@@ -16,7 +17,6 @@ export const PARTY = '파티 · AI 커리어 설명회 같이 가요';
 export const DINNER = '파티 · 저녁 약속';
 
 export const ROUTE = '경로가 그려져 있습니다';
-export const CLOSER = '가까이 보기';
 export const NOT_READY = '준비 중이에요';
 
 type User = ReturnType<typeof userEvent.setup>;

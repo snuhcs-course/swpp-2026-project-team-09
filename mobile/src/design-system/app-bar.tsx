@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -47,14 +48,16 @@ interface AppBarProps {
   actions?: ReactNode;
   // The line under the bar. A panel whose header runs into its content has none.
   line?: boolean;
+  // No white ground: the bar of a see-through panel, such as the glass friend panel.
+  clear?: boolean;
 }
 
 // The bar at the top of a screen, under the phone's status bar, in the frames' two forms. A tab's has its title in
 // 22/700 from 20 at the left; a sub-screen's has the way out in 48 at the left and its title in 20/700.
-export function AppBar({ title, count, leave, actions, line = true }: AppBarProps): ReactElement {
+export function AppBar({ title, count, leave, actions, line = true, clear = false }: AppBarProps): ReactElement {
   const { top } = useInsets();
   return (
-    <View style={[styles.bar, { paddingTop: top }, line && styles.lined]}>
+    <View style={[!clear && styles.bar, { paddingTop: top }, line && styles.lined]}>
       <View style={[styles.row, leave === undefined ? styles.tab : styles.sub]}>
         {leave === undefined ? null : (
           <IconButton icon={LEAVE[leave.kind].icon} label={LEAVE[leave.kind].label} onPress={leave.onPress} />

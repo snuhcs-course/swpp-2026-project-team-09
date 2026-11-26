@@ -2,11 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-10-05  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { render, screen } from '@testing-library/react-native';
 
 import { MapPin } from '@/design-system/map-pin';
+import { QuestRound } from '@/design-system/quest-round';
 
 describe('MapPin', () => {
   it('shows its label and its count', async () => {
@@ -40,5 +42,22 @@ describe('MapPin', () => {
 
     expect(screen.getByText('서연')).toBeVisible();
     expect(screen.getByLabelText('김서연 · 이동 중')).toBeVisible();
+  });
+});
+
+// Partitions: the three tones, on the map and on the whole screen.
+describe('QuestRound', () => {
+  it.each([false, true])('tells 공개 from 비공개 by an icon a screen reader names, on the map: %s', async (onMap) => {
+    await render(
+      <>
+        <QuestRound onMap={onMap} tone="open" />
+        <QuestRound onMap={onMap} tone="closed" />
+        <QuestRound onMap={onMap} tone="class" />
+      </>,
+    );
+
+    expect(screen.getByLabelText('공개')).toBeVisible();
+    expect(screen.getByLabelText('비공개')).toBeVisible();
+    expect(screen.getByLabelText('강의')).toBeVisible();
   });
 });
