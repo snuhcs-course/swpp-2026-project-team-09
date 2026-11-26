@@ -72,11 +72,8 @@ const pinchEvent = (scale: number): object => ({ scale, focalX: 160, focalY: 149
 
 // One update at a time, each in its own act, as a phone's touches come one frame at a time: how many times the seat
 // layer was laid out at each.
-async function pinchStepByStep(scales: readonly number[]): Promise<number[]> {
+async function stepsOf(scales: readonly number[]): Promise<number[]> {
   const counts: number[] = [];
-  await act(() => {
-    pinchCallback('onStart')(pinchEvent(1));
-  });
   await scales.reduce(async (previous, scale) => {
     await previous;
     const before = jest.mocked(seatBoxes).mock.calls.length;
@@ -85,18 +82,33 @@ async function pinchStepByStep(scales: readonly number[]): Promise<number[]> {
     });
     counts.push(jest.mocked(seatBoxes).mock.calls.length - before);
   }, Promise.resolve());
+  return counts;
+}
+
+async function pinchStepByStep(scales: readonly number[]): Promise<number[]> {
+  await act(() => {
+    pinchCallback('onStart')(pinchEvent(1));
+  });
+  const counts = await stepsOf(scales);
   await act(() => {
     pinchCallback('onEnd')(pinchEvent(scales.at(-1) ?? 1), true);
   });
   return counts;
 }
 
+async function openRoom(): Promise<void> {
+  await render(<SeatPicker onClose={ignore} onSeat={ignore} seats={SEATS} space={READING_ROOM} visible />);
+  await fireEvent(screen.getByTestId('seat-picker-view'), 'layout', {
+    nativeEvent: { layout: { x: 0, y: 0, width: 320, height: 298 } },
+  });
+}
+
+// The numbers are drawn but are no accessible element of their own.
+const HIDDEN = { includeHiddenElements: true };
+
 describe('The seats of 7A 열람실 2 구역 during a pinch', () => {
   it('are not laid out again at any step of the pinch', async () => {
-    await render(<SeatPicker onClose={ignore} onSeat={ignore} seats={SEATS} space={READING_ROOM} visible />);
-    await fireEvent(screen.getByTestId('seat-picker-box'), 'layout', {
-      nativeEvent: { layout: { x: 0, y: 0, width: 320, height: 298 } },
-    });
+    await openRoom();
 
     const counts = await pinchStepByStep([1.1, 1.25, 1.5, 1.8, 2.2, 2.6]);
 
@@ -106,5 +118,25 @@ describe('The seats of 7A 열람실 2 구역 during a pinch', () => {
     const style: unknown = getAnimatedStyle(screen.getByTestId('seat-picker-layer'));
     const transform: unknown = typeof style === 'object' && style !== null ? Reflect.get(style, 'transform') : null;
     expect(Array.isArray(transform) ? transform.at(-1) : null).toEqual({ scale: 2.6 / 4 });
+  });
+});
+
+// Partitions: a pinch in past where the room's four-digit numbers fit (about 3 times), and back out in the same
+// gesture. Expected values: the user's ask (P01 ticket 12), the numbers while zooming, by one switch a crossing: the
+// seat layer drawn again once at the step that crosses, before the fingers lift.
+describe('The seat numbers of 7A 열람실 2 구역 during a pinch', () => {
+  it('show once the zoom passes where four digits fit, the seats drawn again once, and go once it is back under', async () => {
+    await openRoom();
+    await act(() => {
+      pinchCallback('onStart')(pinchEvent(1));
+    });
+
+    const up = await stepsOf([1.5, 2.2, 2.8, 3.2, 3.6]);
+    expect(up).toEqual([0, 0, 0, 1, 0]);
+    expect(screen.getByTestId('seat-number-7193', HIDDEN)).toHaveTextContent('7193');
+
+    const down = await stepsOf([3.2, 2.8, 2.2]);
+    expect(down).toEqual([0, 1, 0]);
+    expect(screen.queryByTestId('seat-number-7193', HIDDEN)).toBeNull();
   });
 });
