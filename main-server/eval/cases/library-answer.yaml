@@ -3,6 +3,7 @@
 #
 # 2026-11-22  Opus 5.5   prompted by fyoon46
 # 2026-11-26  Opus 5.5   prompted by fyoon46
+# 2026-11-27  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # A study seat asked for from the current app (`capabilities: app`), which draws answers on the map, in the P6 world on
@@ -64,9 +65,31 @@
       mentions: [당일]
       absent: [몇 시부터, 예약할까요]
 
+# Free seats in a reading room are asked as that seat (P05 ticket 61): the book card, which the app draws as the seat
+# ticket with its free seats, and no seats card. The reply is one sentence that names no card.
+- id: library-answer-seat-status
+  category: library-answer
+  world: p6-answer
+  capabilities: app
+  repeat: 3
+  turns:
+    - user: 관정 7층 자리 있어?
+  expect:
+    actions: [TOOL]
+    tools:
+      required: [findLibrarySpace, proposeLibraryBooking]
+      forbidden: [showLibrarySeats]
+      only: true
+    cards:
+      - { kind: library, action: book, space: 7F-7A-zone2, min: 1, max: 1 }
+      - { kind: library, action: seats, max: 0 }
+    text:
+      absent: [카드, 몇 시부터, 좌석 현황]
+
 # A reading room asked for after its closing gets no card and one sentence: when it closed and when it opens next
 # (P05 ticket 57). On the user's phone (2026-11-26, 23:37), "관정 열람실 자리 있어?" was answered with four sentences that
-# named a seats card no one could see. The clock stands at 23:37 on the world's Wednesday.
+# named a seats card no one could see. The clock stands at 23:37 on the world's Wednesday. Since P05 ticket 61 the
+# question is asked as a seat, and proposeLibraryBooking answers closedToday and draws 관정 grey.
 - id: library-answer-closed-for-today
   category: library-answer
   world: p6-answer
@@ -78,8 +101,8 @@
   expect:
     actions: [REFUSE]
     tools:
-      required: [findLibrarySpace]
-      allowed: [showLibrarySeats, proposeLibraryBooking]
+      required: [findLibrarySpace, proposeLibraryBooking]
+      forbidden: [showLibrarySeats]
     cards:
       - { kind: library, max: 0 }
     text:
