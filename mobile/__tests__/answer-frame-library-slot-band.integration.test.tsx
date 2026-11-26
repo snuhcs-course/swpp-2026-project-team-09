@@ -2,6 +2,8 @@
  * AI-generated with Claude
  *
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -62,7 +64,6 @@ describe('the time band of the seat book card', () => {
     await pass(0);
 
     expect(seatCard().getByText('17:00–18:30 · 1시간 30분')).toBeVisible();
-    expect(seatCard().getByText('오늘 17:00–18:30')).toBeVisible();
     expect(library.requestsTo('getSeatBookingList').slice(before).at(-1)?.body).toMatchObject({
       useTime: '90',
       bookTime: '1700-1830',

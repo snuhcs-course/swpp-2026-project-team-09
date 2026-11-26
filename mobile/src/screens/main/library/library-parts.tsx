@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement, ReactNode } from 'react';
@@ -28,7 +29,7 @@ export function CardBox({ testID, children }: { testID: string; children: ReactN
 export function SpaceRow({
   title,
   meta,
-  icon = 'book',
+  icon = 'bookOpen',
 }: {
   title: string;
   meta: string;

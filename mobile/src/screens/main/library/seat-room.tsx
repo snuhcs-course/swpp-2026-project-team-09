@@ -6,10 +6,11 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import type { LibraryCardData, LibrarySpace } from '@/api/assistant-types';
 import { color, space as spacing, text } from '@/design-system';
 import { useBackToClose } from '@/hooks/use-back-to-close';
@@ -19,39 +20,36 @@ import { seatBookCardOf } from '@/library/cards/made';
 import type { Slot } from '@/library/cards/payloads';
 import { sameSlot } from '@/library/cards/slot-band';
 import { nextStart } from '@/library/cards/times';
-import { basisOf, type Room, roomOf, shortName, swapFor } from '@/library/cards/seat-rooms';
-import { type ChipTone, RoomChipRow, RoomList } from './room-list';
+import { type Room, roomOf, shortName, swapFor } from '@/library/cards/seat-rooms';
+import { RoomList } from './room-list';
+import { SeatTicket } from './seat-ticket';
 import type { LibraryCardActions } from './use-library-call';
 import type { RoomCounting } from './room-counting';
 import { type Rooms, useRoomCounts, useRooms, useRoomsWith } from './use-room-counts';
 
 // The room of a seat card the Assistant gave: the room on screen, kept with the chat so that it outlasts the sheet and
-// later requests send the card of that room; the chip and the list that change it; and the swap of a room that is full
-// for the card's time.
+// later requests send the card of that room; the ticket and the list under it that change it; and the swap of a room
+// that is full for the card's time.
 
 export interface SeatRoomOf {
   card: LibraryCardData;
   space: LibrarySpace;
   place: string;
-  // A card the app gave for a tapped seat, which has no room chip.
+  // A card the app gave for a tapped seat, which has no ticket.
   adjustable: boolean;
-  roomNamed?: boolean;
   actions: LibraryCardActions;
 }
 
 export interface SeatRoom {
-  // The chip's room; null for a card without the chip.
+  // The ticket's room as the card came; null for a card without the ticket.
   chip: Room | null;
   shown: LibrarySpace;
   // The card's own room, when it was full and another was swapped in.
   full: LibrarySpace | null;
   listing: boolean;
   setListing: (listing: boolean) => void;
-  tone: ChipTone;
   counting: RoomCounting;
   choose: (next: LibrarySpace) => void;
-  // 되돌리기, while the room on screen is not the one the card first showed.
-  undo: (() => void) | null;
   // Shows a room swapped in for the card's own, which was full.
   swap: (next: LibrarySpace) => void;
   // The card's time and the seat it offers, as kept with the chat.
@@ -59,16 +57,6 @@ export interface SeatRoom {
   setSlot: (slot: Slot) => void;
   named: string | null;
   setNamed: (seat: string | null) => void;
-}
-
-function toneOf(listing: boolean, changed: boolean, named: boolean): ChipTone {
-  if (listing) {
-    return 'open';
-  }
-  if (changed) {
-    return 'changed';
-  }
-  return named ? 'named' : 'plain';
 }
 
 // The card's own time: the card's, else the next 30 minutes today for two hours.
@@ -127,7 +115,7 @@ export function useSeatRoom(of: SeatRoomOf): SeatRoom {
   const { card, space } = of;
   const [listing, setListing] = useState(false);
   const { kept, keep } = useKept(of);
-  const { slot, first, full } = kept;
+  const { slot, full } = kept;
   const counting = useRoomCounts(slot);
   useRecount(counting, slot);
   const choose = (next: LibrarySpace): void => {
@@ -140,15 +128,8 @@ export function useSeatRoom(of: SeatRoomOf): SeatRoom {
     full,
     listing,
     setListing,
-    tone: toneOf(listing, kept.space.id !== space.id, of.roomNamed ?? false),
     counting,
     choose,
-    undo:
-      kept.space.id === first.id
-        ? null
-        : () => {
-            choose(first);
-          },
     swap: (next) => {
       keep({ space: next, first: next, full: space, seat: null });
     },
@@ -208,12 +189,23 @@ export function useFullRoomSwap(room: SeatRoom, space: LibrarySpace, ownEmpty: b
   return ownFull && !noneFree;
 }
 
-// The chip row, and the list in the time band's place while it is open.
-export function RoomTop({ room, slot }: { room: SeatRoom; slot: Slot }): ReactElement | null {
+// What the ticket shows of the seat offered: the room's free seats, the seat, and how the seat picture opens.
+export interface TicketSeat {
+  free: number | null;
+  seat: string | null;
+  onSeat: (() => void) | null;
+}
+
+export const NO_TICKET_SEAT: TicketSeat = { free: null, seat: null, onSeat: null };
+
+// The ticket, and the list under it while it is open, in the time band's place (P01 ticket 09).
+export function RoomTop({ room, slot, seat }: { room: SeatRoom; slot: Slot; seat: TicketSeat }): ReactElement | null {
   const { chip, listing, setListing, counting } = room;
   const closeList = useCallback((): void => {
+    // The counts still on their way change nothing more (P01 ticket 08).
+    counting.stop();
     setListing(false);
-  }, [setListing]);
+  }, [counting, setListing]);
   // Android's back closes the open list before anything else of the answer (P01 ticket 04).
   useBackToClose(listing, closeList, { edge: false });
   if (chip === null) {
@@ -221,24 +213,27 @@ export function RoomTop({ room, slot }: { room: SeatRoom; slot: Slot }): ReactEl
   }
   return (
     <>
-      <RoomChipRow
-        onChip={() => {
-          if (!listing) {
+      <SeatTicket
+        free={seat.free}
+        onRoom={() => {
+          if (listing) {
+            closeList();
+          } else {
             void counting.read();
+            setListing(true);
           }
-          setListing(!listing);
         }}
-        onKeep={
-          listing
-            ? () => {
-                // The counts still on their way change nothing more (P01 ticket 08).
-                counting.stop();
-                setListing(false);
+        onSeat={
+          listing && seat.onSeat !== null
+            ? (): void => {
+                closeList();
+                seat.onSeat?.();
               }
-            : null
+            : seat.onSeat
         }
-        room={roomOf(room.shown) ?? chip}
-        tone={room.tone}
+        open={listing}
+        room={(roomOf(room.shown) ?? chip).label}
+        seat={seat.seat}
       />
       {listing ? <RoomList counting={counting} onPick={room.choose} shown={room.shown} slot={slot} /> : null}
     </>
@@ -251,52 +246,23 @@ function freeAgain(full: LibrarySpace, rooms: Rooms): boolean {
   return typeof count === 'number' && count > 0;
 }
 
-// The space filled and its free seats: "7A 노트북존 · 빈 자리 31석". The name is left out where the chip above already
-// says it ("7층 열람실"), so the room is named once (P01 ticket 03).
-function filledWords(shown: LibrarySpace, free: number | null): string | null {
-  const name = shortName(shown);
-  const said = roomOf(shown)?.label === name;
-  if (free === null) {
-    return said ? null : name;
-  }
-  return said ? `빈 자리 ${String(free)}석` : `${name} · 빈 자리 ${String(free)}석`;
-}
-
-// What the card says of the room on screen: the seat space filled with its free seats, the room swapped out when it
-// was full, and why this space of its room.
+// What the card says of the room on screen beyond its ticket: the room swapped out when it was full for the time, while
+// it still is.
 export function RoomWords({
-  shown,
-  free,
   full,
   counting,
 }: {
-  shown: LibrarySpace;
-  free: number | null;
   full: LibrarySpace | null;
   counting: RoomCounting;
-}): ReactElement {
+}): ReactElement | null {
   // Read here, so that a count that arrives draws these words and not the card around them (P01 ticket 08).
   const rooms = useRooms(counting);
-  const basis = rooms.state === 'listed' ? basisOf(shown, rooms.sectors, rooms.counts) : null;
-  const filled = filledWords(shown, free);
-  return (
-    <View style={styles.words}>
-      {filled === null ? null : <Text style={styles.filled}>{filled}</Text>}
-      {full === null || freeAgain(full, rooms) ? null : (
-        <Text style={styles.why}>{`${shortName(full)}은 그 시간에 다 찼어요`}</Text>
-      )}
-      {basis === null ? null : (
-        <>
-          <Text style={styles.why}>{basis.why}</Text>
-          <Text style={styles.why}>{basis.counts}</Text>
-        </>
-      )}
-    </View>
-  );
+  if (full === null || freeAgain(full, rooms)) {
+    return null;
+  }
+  return <Text style={styles.why}>{`${shortName(full)}은 그 시간에 다 찼어요`}</Text>;
 }
 
 const styles = StyleSheet.create({
-  words: { gap: 2, paddingHorizontal: spacing[1] },
-  filled: { ...text.label, color: color.quest },
-  why: { ...text.caption, color: color.inkMuted },
+  why: { ...text.caption, color: color.inkMuted, paddingHorizontal: spacing[1] },
 });
