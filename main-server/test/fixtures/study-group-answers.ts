@@ -18,7 +18,9 @@ import { KWANJEONG, ME, ORIGIN, OTHER_FRIEND } from './study-answer.js';
 // Wednesday 2026-11-04 at 19:10, the User and three Friends are all free tomorrow from 15:00, so the plan is a 관정
 // 4층 6인실 from 15:00 to 17:00. Four states of it: ready to send ("동의 요청 보내기"), gathering (1 of 3 consents),
 // ready (every consent in, "예약하기"), and with two Friends only, one more needed ("+ 같이"). 김지은 has nothing
-// before it that day, so where she sets out from is not known. Names, ids and places are examples.
+// before it that day, so where she sets out from is not known. Names, ids and places are examples. Gathering and ready
+// are GET /library/room-requests/:id/answer's: locked at the request's room kind, the only one in `rooms`, which
+// `chosen.roomSpaceId` names.
 
 const DAY = '2026-11-05';
 const NOW = '2026-11-04T19:10:00+09:00';
@@ -202,9 +204,10 @@ function groupPlan(friends: typeof FRIENDS, group: StudyGroup): Plan {
 function groupAnswer(friends: typeof FRIENDS, request: RoomRequestState | null): AnswerReply {
   const people = friends.length + 1;
   const moreNeeded = Math.max(0, 4 - people);
+  const sent = request !== null;
   const group: StudyGroup = {
     room: SIX_FOURTH,
-    rooms: roomsFor(people),
+    rooms: roomsFor(people).filter(({ spaceId }) => !sent || spaceId === SIX_FOURTH.spaceId),
     people,
     moreNeeded,
     key: moreNeeded > 0 ? null : `book:4F-group-6:${DAY}:1500:120`,
@@ -222,7 +225,7 @@ function groupAnswer(friends: typeof FRIENDS, request: RoomRequestState | null):
       window: { from: null, until: null },
       area: null,
       minutes: 120,
-      chosen: { seatSpaceId: null, roomSpaceId: null },
+      chosen: { seatSpaceId: null, roomSpaceId: sent ? SIX_FOURTH.spaceId : null },
     },
     chips: friends.map(({ userId, name }) => ({ kind: 'person' as const, text: name, userId })),
     plans: [groupPlan(friends, group)],
