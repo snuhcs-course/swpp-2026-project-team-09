@@ -2,7 +2,7 @@
 
 Parent: [A01 spec](../spec.md)
 Status: ready-for-agent
-Pull request: none yet
+Pull request: #611
 Blocked by: None
 
 Native files: none. Releases: none; only CI changes.
@@ -32,3 +32,5 @@ The Release's gate leaves the app's integration tests out, so its 45 minutes sta
 - [ ] `app-test-times.json` is rebuilt from that run.
 
 ## Comments
+
+Built in PR #611. The nightly-level run after its merge and the rebuilt table follow here.
