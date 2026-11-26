@@ -95,6 +95,21 @@ export function kindFirst<Fit extends { key: string }>(
 
 const won = (price: number): string => `${price.toLocaleString('ko-KR')}원`;
 
+// What a meal costs there as the app's list writes it ("3,000원부터"): the corner's own price, else the lowest of its
+// dishes' with 부터 when they differ; null when nothing has a price. planMeal gives it to the model, so that the reply's
+// prices agree with the list (P05 ticket 50).
+export function listPrice({ price, dishes }: Pick<PlanMenu, 'price' | 'dishes'>): string | null {
+  if (price !== null) {
+    return won(price);
+  }
+  const prices = dishes.flatMap((dish) => (dish.price === null ? [] : [dish.price]));
+  if (prices.length === 0) {
+    return null;
+  }
+  const lowest = Math.min(...prices);
+  return prices.some((one) => one !== lowest) ? `${won(lowest)}부터` : won(lowest);
+}
+
 function itemWords(line: MenuLineDto): string {
   return line.name !== null && line.price !== null ? `${dishName(line)} ${won(line.price)}` : dishName(line);
 }

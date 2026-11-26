@@ -22,7 +22,7 @@ import { mealByClock } from '../free-time/meal-fit.js';
 import { clockTime, dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
 import { askedBy } from '../refusals/friend-question.js';
 import { mealAfter, nextMealOffer } from './meal-after-hours.js';
-import { menuWords, type ServedMenu } from './meal-menu.js';
+import { listPrice, menuWords, type ServedMenu } from './meal-menu.js';
 import { orderWords } from './plan-order.js';
 import { timesAndWays } from './plan-times.js';
 import { type MealPlanService } from './meal-plan.service.js';
@@ -78,7 +78,8 @@ function noneOf(
 function planWords(plan: Plan, served: ReadonlyMap<string, ServedMenu>): object {
   const menu = served.get(plan.id);
   const words = menu === undefined ? {} : { menu: menuWords(menu.lines), closesAt: menu.closesAt };
-  return { restaurant: plan.id, ...words, ...timesAndWays(plan) };
+  const price = plan.menu === undefined ? null : listPrice(plan.menu);
+  return { restaurant: plan.id, ...words, ...(price === null ? {} : { price }), ...timesAndWays(plan) };
 }
 
 const input = z
@@ -274,7 +275,7 @@ export function planMeal(
 ): Tool {
   return defineTool({
     description:
-      "Plans a meal for the User alone or with Friends on a day from today to a week ahead. The server decides the Restaurant, when everyone is there, how long they can eat, and where they meet on the way, those with 30 minutes for everyone first, each the least travel for everyone first, on foot or by the shuttle, (to the Restaurant and on to each one's next item), and the app draws the plans on the map. Answers result 'planned' with the meal and the plans in order, each with its restaurant, its menu for the meal and closesAt, start, end, togetherMinutes, meeting, and each person's way, and the Restaurants dropped, or result 'none' with the meal and the reason.",
+      "Plans a meal for the User alone or with Friends on a day from today to a week ahead. The server decides the Restaurant, when everyone is there, how long they can eat, and where they meet on the way, those with 30 minutes for everyone first, each the least travel for everyone first, on foot or by the shuttle, (to the Restaurant and on to each one's next item), and the app draws the plans on the map. Answers result 'planned' with the meal and the plans in order, each with its restaurant, its menu for the meal and closesAt, its price as the app's list writes it, start, end, togetherMinutes, meeting, and each person's way, and the Restaurants dropped, or result 'none' with the meal and the reason.",
     input,
     run: async (
       { date, meal: named, friendIds, from, until, now: soon, restaurant, placeId, cuisine, startPlaceId, pickPeople },
