@@ -4,6 +4,7 @@
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -114,9 +115,10 @@ describe("an answer's look with a label moved to share an edge", () => {
 // without a label, and a box not laid out yet. Expected values: the brief's anchor, the centre of the 36-point
 // symbol box.
 describe("a look's anchor as shares of its box", () => {
-  it('is the middle of a round thing and the tip of a pin, whatever the size', () => {
+  it('is the middle of a round thing and of a tag, and the tip of a pin with a tail, whatever the size', () => {
     expect(anchorShare({ kind: 'party', form: 'dot' }, { width: 16, height: 16 })).toEqual({ x: 0.5, y: 0.5 });
-    expect(anchorShare({ kind: 'party', form: 'pin' }, { width: 40, height: 50 })).toEqual({ x: 0.5, y: 1 });
+    expect(anchorShare({ kind: 'party', form: 'pin' }, { width: 26, height: 26 })).toEqual({ x: 0.5, y: 0.5 });
+    expect(anchorShare({ kind: 'library', form: 'pin' }, { width: 22, height: 27 })).toEqual({ x: 0.5, y: 1 });
   });
 
   it.each([

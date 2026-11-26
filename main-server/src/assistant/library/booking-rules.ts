@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { koreaDate } from '../korea-time.js';
@@ -134,6 +135,16 @@ export function windowRefusal(space: LibrarySpace, date: string, now: Date, wait
     return closed({ field: 'date', reason: `${space.name}은 일요일에 열지 않아요` });
   }
   return null;
+}
+
+// The space asked for today after its closing (P05 ticket 57): nothing of today can be seen or booked there, and it
+// opens again on the next day. Null before its closing, on another day, or without its hours.
+export function closedTodayRefusal(space: LibrarySpace, date: string, now: Date): Refusal | null {
+  const { hours } = space;
+  if (hours === null || date !== koreaDate(now) || earliestStartMinutes(now, 1) < minutesOfClock(hours.close)) {
+    return null;
+  }
+  return closed({ field: 'date', reason: `${kindWord(space)}은 오늘 ${hours.close}에 닫았어요`, bound: hours });
 }
 
 function hoursRefusal(space: LibrarySpace, hours: ClockRange, start: number, end: number): Refusal | null {

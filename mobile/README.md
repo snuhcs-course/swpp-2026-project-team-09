@@ -511,8 +511,12 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   full name under it from the `names` level. A Friend whose position is at the exact level (`Position.level`) carries
   a green dot at the face, none at the building level or while dimmed. A live position's level replaces the one before; one without a
   level keeps it. A Friend whose position is not known has no marker. The Global Event,
-  the User's Party and a Shared Quest are dots while the whole campus is in view, pins from the `pins` level and pins
-  with a short name from the `names` level. A Party's pin counts its members; a Global Event's counts the Quests
+  the User's Party and a Shared Quest are light glass tags (`MapTag`, changelog 11.24 § 4-4): the kind's line icon in its
+  colour on that colour at 14%, a round of 20 while the whole campus is in view, of 26 from the `pins` level, and the
+  icon with the short name inside the tag from the `names` level, drawn into the marker's picture, on a ground of 95%
+  so that the map's own words under it do not read through. A tag sits on its
+  middle; a chosen one has a navy border and ring. A 퀘스트's tag is at 70%, with a lighter rim and shadow. Several
+  kinds at one place are one such tag with a round for each kind. A Party's pin counts its members; a Global Event's counts the Quests
   that gather for it (`GET /quests/recruiting`) when they are more than one. Of the Global Events, only Favorite Events
   stand on the map (`src/features/map/event-pins.ts`), unless the interest marks keep them: once the main server
   answers the matches, every event goes to the marks, which keep one mark per place for what matches a watched
@@ -533,8 +537,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   markers leaves it open. A card whose thing leaves
   the map, such as a Friend who turns their location off, is closed for good: it does not open again on their return. The card shows the leading
   mark (a person's Avatar, or the place's icon on its kind's colour), the sub-label, the title, the lines and its
-  button. "가까이 보기" is offered below the `names` level and brings the camera to the `close` level, keeping the
-  card. On the card of a Party that others may join, "파티 열기" and "참여하기" open the Quest's room; on a Party
+  button; it has no "가까이 보기", and the User zooms by hand. On the card of a Party that others may join, "파티 열기" and "참여하기" open the Quest's room; on a Party
   member's card, "파티 열기" does what "활성 파티" does. "같이 갈 사람 찾기" opens 파티 만들기 with the Global Event
   chosen, as `+ 파티 모집` of the 행사 tab does; "파티 만들기" says "준비 중이에요". The
   room's member list shows a member by the main screen's address, `/main?person=<userId>`: the map goes to the
@@ -607,9 +610,9 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
     "수업 중" and "이동 중" wait for the FriendView of the Friend levels. A press brings the map to the Friend at the `close` level and opens their card; for a Friend whose
     position is not known it opens the same card without moving the map.
   - A Quest's row has the round with its icon, the kicker, the title and the time with the place, and the rail joins
-    the rounds. The adapter says the row's `tone` and `icon`: a class is `clock` in grey; `open`, a Party that
-    others may join, is `users` in blue; `closed`, a Party that takes nobody else and a Shared Quest, is `lock` in
-    the Party's colour (`questTone`). A press on a class's row brings the map to its place at the `names` level,
+    the rounds. The adapter says the row's `tone`, and `QuestRound` draws it (changelog 11.24 § 4-1): a class is a
+    clock on grey; every Party is one navy round at 70%, a person for `open` (공개) and a lock for `closed` (비공개),
+    which a screen reader names. A class's kicker is grey, a Party's near-black (`questTone`). A press on a class's row brings the map to its place at the `names` level,
     closes an open card and says "<title> · <place>", "자료구조 · 301동 118호"; any other row opens the Quest's
     room.
     Without a Quest the list says "오늘 일정 없음".
@@ -840,7 +843,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
 - **The 식당 layer** (`src/features/dining/`, the `MapDining` frame). Turning it on fetches today's menus, a day of
   Korea's calendar, and the Places, every time; failing either shows no pins and says "식당 정보를 불러오지
   못했어요". A pin stands on the Place `GET /menus` gives each restaurant that has a
-  line today; restaurants that share a Place share it. A pin is the frame's single 학식 mark (`MapRestaurant`), with
+  line today; restaurants that share a Place share it. A pin is `MapRestaurant`, the coral round with a fork and knife, with
   the restaurant's name under it from the `names` level, or "{first} 외 {n}곳". Its card says "식당 · 학식 · 63동",
   the restaurant's name (the Place's when several share it), the Place, and the meals each restaurant serves today
   ("오늘 점심 · 저녁"); "메뉴 보기" opens the menu panel at the meal served next, at the first of its restaurants.
@@ -852,7 +855,7 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   set. The route's line is drawn purple, 3 wide, dashed 8 and 6, under every marker; each stop is the shuttle's dot
   of `MapDot`, with its name under it from the `names` level; each vehicle in service is the shuttle's pin of
   `MapPin`, an Avatar above the stops, with "운행 중" under it, so that a vehicle standing at its stop is seen. A stop's card says "셔틀버스 · 교내 순환", "{stop} 정류장" and the next stop
-  in loop order, and has no button but "가까이 보기"; a vehicle's says "셔틀버스 · 운행 중", "교내 순환 셔틀" and
+  in loop order, and has no button; a vehicle's says "셔틀버스 · 운행 중", "교내 순환 셔틀" and
   "{stop}에 있어요 · 다음 정류장 {next}", follows the vehicle's sets and closes when it goes, and "노선 보기" fits the
   camera to the whole line and closes the card. Outside weekdays from 08:00 to 21:00 in Korea's time
   (`SERVICE_HOURS`), a toast with the bus icon says "지금은 셔틀버스가 운행하지 않아요 · 평일 08:00–21:00" for 3.5
@@ -886,12 +889,13 @@ selectedId)` turns them into the `markers` and `avatars` of `<Map>`, each under 
   line), on a low screen with fewer rows.
 
 **The friend panel** (`friend-panel.tsx`, the `MainFriends` frame) is a `SidePanel` from the left over the whole
-screen: "친구 {N}" and ✕ "닫기"; the search "이름, 학과 검색" ("친구 검색"), by name and department, spaces aside, with
+screen, on the glass layer's `inner` level over the map; while it is open, what floats over the map and the tab bar
+give way, so that only the map shows through: "친구 {N}" and ✕ "닫기"; the search "이름, 학과 검색" ("친구 검색"), by name and department, spaces aside, with
 "결과 없음" when nobody is found; the chips 전체, 공강, 수업 중, 이동 중 and 위치 꺼짐 with their counts, those of 0
 hidden but 전체; and the Friends grouped by presence ("공강 · 4"), each row with the Avatar and its status, the name
-and the department, the detail (or the line where the app has no detail), and the round calendar button "{이름}님과
-파티 만들기", which says "준비 중이에요". Its footer has "공유 설정" on the right, which closes the panel and shows 내
-정보 at `/me?show=sharing`, and "+ 친구 추가", which closes the panel and opens 친구 추가. The scrim ("친구 패널
+and the department, the detail (or the line where the app has no detail), and the round glass calendar button
+"{이름}님과 파티 만들기". Its footer, with no ground of its own, has "공유 설정" on the right, which closes the panel and shows 내
+정보 at `/me?show=sharing`, and the glass button "+ 친구 추가", which closes the panel and opens 친구 추가. The scrim ("친구 패널
 닫기"), ✕ and Android's back button close it.
 A Friend is under "위치 꺼짐" whenever the main server says the User cannot see them (`visible`), whatever the app's
 own status says.
@@ -945,7 +949,7 @@ chips "전체", "강의" and "파티", whose counts stay while one filters; and 
 start of the Sub Quest each shows (`toQuestGroups` in the quest feature's adapter): "오늘 · 10월 1일 (목)", "내일 ·
 …", "이번 주" (2 to 4 days ahead), "다음 주" (5 to 11), "그 이후", and "시간 미정" last for a Quest without a start.
 A Quest whose Sub Quests all ended (past their end time) or were cancelled is not shown; marks of done do not count.
-A row is 72 high: the round of 40 in its `questTone`, the kind ("강의", "공개 파티", "비공개 파티 · 김민준"), the
+A row is 72 high: the round of 40 (`QuestRound`, solid, one navy for every Party), the kind ("강의", "공개 파티", "비공개 파티 · 김민준"), the
 title, the place and the time. A class's row closes the screen and goes back to the map by `/main?quest=<id>`, which the
 Quest list on the map carries out as a press of its own row; any other row opens the Quest's room above it. Without a
 Quest it says "퀘스트가 없어요"; while the Quests load and after a failure it shows the shared states.
@@ -1544,8 +1548,13 @@ The app's look is the team's design system "SNU Now", the one the wireframes are
 
 A repeated element that the design system lacks becomes a shared component here, not a copy in each screen.
 
-`MapDot` is a marker from far away, which the frames draw and the design system does not name: the kind's colour in a
-white border. A selected one is 4 larger, inside a ring of the key colour.
+`MapDot` is a marker from far away, which the frames draw and the design system does not name. A 행사, a 파티 and a
+퀘스트 are `MapTag`'s round of 20; a campus service is its colour in a white border, 4 larger and inside a ring of the
+key colour when selected. `MapStudyPin` is the 공부공간 layer's round of 22 in `svcStudy` with a white open book (`bookOpen`) and a tail (grey and
+faint for a building the User may not use), and `MapStudyCluster` a light see-through round of that colour with the
+count in a round of it (changelog 11.24 § 4-6; the canvas's sky sank into the map's campus). The 식당 layer's pin is
+`pinDining` coral; its button, card and the chat's restaurant cards are the darker `svcDining` coral, which white
+words read on. 공부공간 shows the open book everywhere.
 
 `MapPerson` is a person on the map, which the `Main` wireframe draws and the design system does not name: a teardrop
 filled with a colour of `presence`, with the person's small Avatar in it, 24 wide in its `small` form and 36
@@ -1555,8 +1564,8 @@ colour. `exact` puts a green dot of 11 on the drop's rim at the face's lower rig
 names the colours of what a person is doing: `free`, `class`, `moving` and `off`, the statuses, which an Avatar's dot
 uses too, and `member`, a member of the User's Party who is no Friend.
 
-`MapRestaurant` is the `MapDining` frame's single 학식 on the map: a round of 22 in the dining colour with 학, a white
-ring and a small tail; selected, 26 inside a ring of the key colour. `DayTile` is a day to choose as the
+`MapRestaurant` is a restaurant on the map (changelog 11.24 § 4-5): a coral round of 22 with a white fork and knife, a
+white ring and a triangular tail; selected, 26 inside a ring of the key colour. `DayTile` is a day to choose as the
 `PartyCreate` frame's date sheet draws it: 52 by 60, the day's name over its number, Sunday in red, Saturday in blue,
 the chosen one in navy.
 
@@ -1565,7 +1574,7 @@ whole campus is in view. The icons `chevronDown`, `chevronLeft`, `chevronRight`,
 `minus` are the wireframes' and not the design system's.
 
 For what the `Main` wireframe draws over the map and the design system does not name, `tokens.ts` has `questTone`
-(the colour of a Quest's row: `class`, `open`, `closed`), `onKey` (the dot and the muted text on a fill of the key
+(a Quest row's round and kicker for `class`, `open`, `closed`), `onKey` (the dot and the muted text on a fill of the key
 colour), `textHalo` (the white glow around text that sits on the map; the wireframe also strokes that text, which
 React Native cannot), `mapText` (the sizes of the lists' and the buttons' text) and the shadows `mapMark`,
 `mapRail`, `faceRing` and `floatKey`.
@@ -1653,7 +1662,7 @@ map.current?.fitTo([from, to], { padding: 48, maxZoom: 15.8 }); // and no closer
 - **Zoom levels** are counted from the fit zoom, because it differs from phone to phone. `ZOOM_OFFSET` in
   `src/map/campus.ts` names them once, from the `Main` wireframe's zoom factor z as log2(z): `pins` (z 1.6, +0.68),
   from which a place is a pin and not a dot; `names` (z 2.4, +1.26), from which a name is under it; `close` (z 2.6,
-  +1.38), where "가까이 보기", a Friend's row and "내 위치로 이동" bring the camera; and `step` (a factor 1.5, 0.585),
+  +1.38), where a Friend's row and "내 위치로 이동" bring the camera; and `step` (a factor 1.5, 0.585),
   one press of the zoom in or zoom out button. `zoomDetail(zoom, fitZoom)` answers `overview`, `pins` or `names`.
 - **Markers** are what the list says: one that is new is added, one whose `id` stays is changed, one that is gone is
   removed. `name` is what a screen reader says; `text` is drawn under the image by the map, in the map's own text.
