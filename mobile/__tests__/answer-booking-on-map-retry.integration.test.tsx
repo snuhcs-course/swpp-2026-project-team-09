@@ -3,6 +3,7 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -110,11 +111,14 @@ describe("Android's back over the room list", () => {
   });
 });
 
-describe('the label on the map', () => {
-  it('says the walk there', async () => {
+// P01 ticket 10: the walk follows the meal's policy, its minutes on the way's line and none on the label.
+describe('the way on the map', () => {
+  it('carries the walk there on its line, and the label says the room, the start, the seat and the free seats', async () => {
     await asked();
 
-    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 › · \d+번 17:00–18:00 · 걸음 \d+분$/u));
+    expect(mapThings()).toContainEqual(expect.stringMatching(/^걸음 \d+분$/u));
+    expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 · 17:00 · \d+번 · 빈 자리 \d+석$/u));
+    expect(mapThings().some((thing) => thing.startsWith('관정') && thing.includes('걸음'))).toBe(false);
   });
 });
 
@@ -149,11 +153,11 @@ describe("the booking's flag while the rooms are listed", () => {
     const { user } = await asked();
     await raiseCard();
     await pass(500);
-    const before = mapThings().find((thing) => thing.startsWith('관정 7층 열람실 ›'));
+    const before = mapThings().find((thing) => thing.startsWith('관정 7층 열람실 · 17:00'));
     if (before === undefined) {
       throw new Error(`No booking flag among ${mapThings().join(', ')}`);
     }
-    expect(before).toMatch(/ · \d+번 /u);
+    expect(before).toMatch(/ · \d+번/u);
 
     await user.press(card().getByRole('button', { name: ROOM }));
     await pass(500);
@@ -177,7 +181,7 @@ describe("the booking's flag while the rooms are listed", () => {
     await pass(500);
 
     expect(mapThings()).not.toContain(before);
-    expect(mapThings()).toContainEqual(expect.stringMatching(new RegExp(`^관정 ${room} › · \\d+번 17:00–18:00`, 'u')));
+    expect(mapThings()).toContainEqual(expect.stringMatching(new RegExp(`^관정 ${room} · 17:00 · \\d+번`, 'u')));
     expectNoWrite(library);
   });
 });

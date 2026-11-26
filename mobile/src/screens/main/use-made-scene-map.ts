@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useEffect, useMemo } from 'react';
@@ -11,7 +12,7 @@ import type { LatLng } from '@/api/types';
 import { now } from '@/clock';
 import type { LabelView } from '@/features/assistant/answer-labels';
 import { type AnswerDrawing, drawingOfScene, type SceneSetting } from '@/features/assistant/answer-marks';
-import { BOOKING_SETTING, bookingLine, bookingScene } from '@/features/assistant/booking-scene';
+import { BOOKING_SETTING, bookingScene, studyLine, studySetting } from '@/features/assistant/booking-scene';
 import { cardDrafts, cardNumberOf, type ShownCards } from '@/features/assistant/cards-scene';
 import { meAndWalk, proposalScene, proposalSetting } from '@/features/assistant/proposal-scene';
 import {
@@ -161,20 +162,21 @@ function cardsMade(shown: ShownCards, position: LatLng | null): Made | null {
 function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: LatLng | null): Made | null {
   const friends = useMemo(() => friendPositions(everyday), [everyday]);
   const { proposal, booking, bookingStage, chat: said, steps, activeStep, cards } = chat;
-  const seat = bookingStage.seen?.place === booking?.place ? (bookingStage.seen?.seat ?? null) : null;
+  const told = bookingStage.seen?.place === booking?.place ? bookingStage.seen : null;
+  const seat = told?.seat ?? null;
   const kept = booking === null ? null : bookingKept(booking, said);
   const done =
     booking?.booked === true ? said.bubbles.findLast((bubble) => bubble.done !== undefined)?.done : undefined;
-  // The walk there, as a meal's label says it ("걸음 8분"), while the User's position is known (P01 ticket 04).
-  const walk = booking === null || position === null ? undefined : meAndWalk(position, booking.point).walk[0];
-  const walking = walk === undefined ? '' : ` · 걸음 ${String(walk.minutes)}분`;
+  // The pick's second line (P01 ticket 10): what is known of the seat and the free seats, or the seat booked. The walk
+  // there carries its own minutes on its line, as a meal Plan's way there, and the label none.
   const line =
     kept === null
       ? null
       : done === undefined
-        ? `${bookingLine(seat ?? kept.kept.seat, kept.kept.slot, now())}${walking}`
-        : `${bookingLine(done.seatLabel ?? null, kept.kept.slot, now())} · 예약됨`;
+        ? studyLine(seat ?? kept.kept.seat, told?.free ?? null, false)
+        : studyLine(done.seatLabel ?? null, null, true);
   const space = kept?.kept.space ?? null;
+  const start = kept?.kept.slot.start ?? null;
   return useMemo((): Made | null => {
     if (steps !== null) {
       return stepsMade(steps, activeStep, { key: booking?.card.key ?? null, seat, space }, position);
@@ -188,13 +190,13 @@ function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: La
     if (cards !== null) {
       return cardsMade(cards, position);
     }
-    if (booking === null || line === null || space === null) {
+    if (booking === null || start === null || space === null) {
       return null;
     }
     const { latitude, longitude } = booking.point;
     const scene = bookingScene(booking.point, space, line, position);
-    return { source: booking, scene, setting: BOOKING_SETTING, flag: { latitude, longitude } };
-  }, [steps, activeStep, seat, proposal, cards, booking, line, space, position, friends]);
+    return { source: booking, scene, setting: studySetting(start), flag: { latitude, longitude } };
+  }, [steps, activeStep, seat, proposal, cards, booking, line, space, start, position, friends]);
 }
 
 // What the map draws of a reply the app makes the scene of: a Proposal (P04 ticket 06) or a seat card (ticket 07).

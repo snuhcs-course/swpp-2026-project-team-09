@@ -7,11 +7,13 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { initials } from './avatar';
+import { Icon } from './icon';
 import { MapPin } from './map-pin';
 import { ANSWER_SYMBOL_BOX, CANDIDATE_ROUND, CAPSULE, CAPSULE_EDGE, GAP, MEAL_NUMBER, RING } from './map-answer-box';
 import { MapAnswerLabel } from './map-answer-label';
@@ -35,6 +37,8 @@ export type AnswerSymbol =
       number: number | null;
       faded?: boolean;
       meal?: boolean;
+      // A 관정 booking's pick (P01 ticket 10): the round in the study colour with the study layer's book inside.
+      study?: boolean;
     };
 
 export type FaceBadge = 'waiting' | 'accepted';
@@ -69,6 +73,8 @@ export interface AnswerLabel {
   // A meal answer's pick or candidate, menus or none: its edge and number badge in coral (P04 ticket 90). Left out, its
   // tone's own colours.
   meal?: boolean;
+  // A 관정 booking's pick (P01 ticket 10): its edge in the study colour. Left out, its tone's own colours.
+  study?: boolean;
   // A meal candidate's capsule says a clock time ("17:00"), drawn in gold as every clock time; left out, the walking
   // minutes in ink (P04 ticket 88).
   clock?: boolean;
@@ -109,13 +115,30 @@ const DOT_SIZES: Partial<Record<DotSymbol['role'], number>> = { pick: PICK_DOT, 
 const MEAL_RIM = 1.5;
 const MEAL_INSIDE = CANDIDATE_ROUND - 2 * MEAL_RIM;
 
-function Dot({ role, number, meal = false, testID }: DotSymbol & { testID?: string }): ReactElement {
+// The study layer's book inside a 관정 booking's round, as the layer's own marks draw it.
+const STUDY_BOOK = 16;
+
+// The book's test id beside its round's ("m:dot" → "m:book").
+function bookOf(testID: string | undefined): string | undefined {
+  return testID?.replace(/:dot$/u, ':book');
+}
+
+function Dot({ role, number, meal = false, study = false, testID }: DotSymbol & { testID?: string }): ReactElement {
   if (meal && role === 'candidate') {
     return <MealCandidate number={number} testID={testID} />;
   }
   const inside = (DOT_SIZES[role] ?? CANDIDATE_ROUND) - 2 * RING;
+  const studyPick = study && role === 'pick';
   return (
-    <View style={[styles.dot, styles[role], meal && role === 'pick' && styles.mealPick]} testID={testID}>
+    <View
+      style={[styles.dot, styles[role], meal && role === 'pick' && styles.mealPick, studyPick && styles.studyPick]}
+      testID={testID}
+    >
+      {studyPick ? (
+        <View testID={bookOf(testID)}>
+          <Icon color={color.onPrimary} name="book" size={STUDY_BOOK} />
+        </View>
+      ) : null}
       {number === null ? null : (
         <RoundNumber inside={inside} number={number} style={role === 'pick' ? styles.pickNumber : styles.number} />
       )}
@@ -277,6 +300,7 @@ const styles = StyleSheet.create({
   accepted: { backgroundColor: color.friend },
   pickNumber: { ...mapText.smallTitle, color: color.onPrimary },
   mealPick: { backgroundColor: color.meal },
+  studyPick: { backgroundColor: color.svcStudy },
   mealCandidate: {
     alignItems: 'center',
     justifyContent: 'center',

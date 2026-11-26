@@ -3,6 +3,7 @@
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Cuisine, MapScene, Plan } from '@/api/assistant-types';
@@ -57,10 +58,12 @@ export function pickDraft(
     kind: Cuisine | null;
     meal: boolean;
     coral: boolean;
+    // A 관정 booking's start, which makes its pick the study one (P01 ticket 10); null for any other pick.
+    study: string | null;
   },
   flagText: string | null,
 ): Draft {
-  const { title, position, number, plan, day, kind, meal, coral } = pick;
+  const { title, position, number, plan, day, kind, meal, coral, study } = pick;
   const symbol: AnswerSymbol = { type: 'dot', role: 'pick', number, ...(coral ? { meal: true } : {}) };
   const base = {
     id: 'answer:pick',
@@ -73,6 +76,22 @@ export function pickDraft(
   } as const;
   if (meal && plan !== undefined) {
     return { ...base, symbol: { ...symbol, meal: true }, ...mealPickLabel(plan, title, kind) };
+  }
+  if (study !== null) {
+    // The meal pick's make-up in the study colour: the room with its start, then what is known of the seat and the free
+    // seats with "›", for the label opens the booking's card.
+    const name = [title, study, ...(flagText === null ? [] : [flagText])].join(' · ');
+    const action = flagText === null ? null : '›';
+    return {
+      ...base,
+      symbol: { ...symbol, study: true },
+      name,
+      title,
+      note: study,
+      line: flagText,
+      action,
+      study: true,
+    };
   }
   const line = pickLine(flagText === null ? null : restOf(title, flagText), day, plan, kind);
   return { ...base, name: line === null ? title : `${title} · ${line}`, symbol, title, line };

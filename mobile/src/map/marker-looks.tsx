@@ -15,6 +15,7 @@
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
@@ -151,6 +152,7 @@ function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | null): str
           symbol.number,
           ...(symbol.faded === true ? ['faded'] : []),
           ...(symbol.meal === true ? ['meal'] : []),
+          ...(symbol.study === true ? ['study'] : []),
         ]
       : null,
     label === null
@@ -167,6 +169,7 @@ function answerName(symbol: AnswerSymbol | null, label: AnswerLabel | null): str
           ...(label.action === undefined || label.action === null ? [] : [{ action: label.action }]),
           ...(label.faded === true ? ['faded'] : []),
           ...(label.meal === true ? ['meal'] : []),
+          ...(label.study === true ? ['study'] : []),
           ...(label.clock === true ? ['clock'] : []),
         ],
   ];
