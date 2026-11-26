@@ -20,6 +20,7 @@
  * 2026-11-17  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-18  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router, useIsFocused } from 'expo-router';
@@ -34,6 +35,7 @@ import { LIVE_SEATS_WORDS } from '@/features/study/adapter';
 import { showsStartButton } from '@/features/tutorial/rules';
 import { useOpenPartyCreate } from '@/screens/events/use-party-create';
 import { FriendList } from './friend-list';
+import { useFriendPanelShown } from './friend-panel';
 import { OffMapFriendCard, useOffMapFriends } from './friend-profile';
 import { listsTop, ROUTE_PADDING, type Room } from './layout';
 import { LocationExplanation } from './location-explanation';
@@ -84,22 +86,24 @@ interface SelectedCardProps {
   // 좌석 현황 of 관정관's card asks the Assistant in the chat. No card is shown while the answer frame is.
   chat: ChatSheetControl;
   onHeight: (height: number) => void;
-  // A 식당's card sits at the top of the map, without "가까이 보기".
+  // A 식당's card sits at the top of the map.
   top: boolean;
 }
 
 // What floats over the map, between the phone's status bar and the navigation: each child places itself there, by
 // the offsets of `layout.ts`. A press beside the children reaches the map. It tells its size, the stage's, by which
-// the lists and the row of buttons fit themselves to a low or narrow screen.
+// the lists and the row of buttons fit themselves to a low or narrow screen. It gives way while the friend panel is
+// open.
 function OverMap({ children, onStage }: OverMapProps): ReactElement {
   const { top } = useSafeAreaInsets();
+  const panelShown = useFriendPanelShown();
   return (
     <View
       onLayout={({ nativeEvent }: LayoutChangeEvent) => {
         const { width, height } = nativeEvent.layout;
         onStage({ width, height });
       }}
-      style={[styles.overMap, { top }]}
+      style={[styles.overMap, { top }, panelShown && styles.underPanel]}
       testID="over-map"
     >
       {children}
@@ -107,8 +111,7 @@ function OverMap({ children, onStage }: OverMapProps): ReactElement {
   );
 }
 
-// The card of the selected thing, if any, with what its buttons do. "가까이 보기" is offered below the "names" level of detail
-// and brings the camera to the "close" level, keeping the card. "길찾기" closes the card once the route is asked for.
+// The card of the selected thing, if any, with what its buttons do. "길찾기" closes the card once the route is asked for.
 // "메뉴 보기" opens the menu panel at the restaurant. 관정관's "좌석 현황" closes the card and asks the Assistant for
 // its seats in the chat. "노선 보기" brings the shuttle's whole line into view and closes
 // the card. "파티 열기" and "참여하기" open a Quest's room, "같이 갈 사람 찾기" 파티 만들기 for the Global Event, and a
@@ -126,13 +129,9 @@ function ThingCard(props: SelectedCardProps): ReactElement | null {
   const { primary } = card;
   return (
     <CardOrSeen
-      canLookCloser={map.detail !== 'names' && !top}
       {...withMeet(card, chat)}
       onChoose={selection.select}
       onHeight={onHeight}
-      onLookCloser={() => {
-        map.goTo(card.position, 'close');
-      }}
       onPrimary={() => {
         if (primary === null) {
           return;
@@ -352,4 +351,6 @@ const styles = StyleSheet.create({
   overMap: { position: 'absolute', right: 0, bottom: 0, left: 0, pointerEvents: 'box-none' },
   lists: { ...StyleSheet.absoluteFill, pointerEvents: 'box-none' },
   hidden: { display: 'none' },
+  // Under the friend panel's glass, which is drawn in the overlay above: kept laid out, but not seen or pressed.
+  underPanel: { opacity: 0, pointerEvents: 'none' },
 });

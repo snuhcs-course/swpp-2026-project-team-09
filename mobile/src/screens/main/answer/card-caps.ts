@@ -3,6 +3,7 @@
  *
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { useWindowDimensions } from 'react-native';
@@ -23,7 +24,7 @@ import { TUCK_STRIP } from './time-card-grip';
 // card.
 
 // Low shows this many lines of the meal answer's words, at the phone's font size, over the fade.
-const LOW_LINES = 2;
+export const LOW_LINES = 2;
 // The soft edge where the content passes under the footer.
 export const FADE = space[3];
 // The footer low's top edge is measured over, above the navigation's inset that lifts the input (`MapBottom`): the

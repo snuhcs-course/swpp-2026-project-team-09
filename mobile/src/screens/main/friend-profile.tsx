@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
@@ -49,19 +50,12 @@ export function useProfileOver(replyId: number | null): ProfileOver {
   return { friend, show, hide };
 }
 
-function ignore(): void {
-  // A profile card has no "가까이 보기": over the answer frame the camera is the answer's, and a Friend whom the map
-  // does not show has no face to look closer at.
-}
-
-// A Friend's profile card, over the answer frame's card and for a Friend whom the everyday map does not show: no
-// "가까이 보기", and "파티 만들기" with the Friend.
+// A Friend's profile card, over the answer frame's card and for a Friend whom the everyday map does not show, with
+// "파티 만들기" with the Friend.
 function profileCardProps(friend: FriendView, onHeight?: (height: number) => void): Omit<CardProps, 'onClose'> {
   return {
-    canLookCloser: false,
     card: friendProfileCard(friend),
     onHeight,
-    onLookCloser: ignore,
     onPrimary: () => {
       router.push({ pathname: '/party-form', params: { friendId: friend.id } });
     },

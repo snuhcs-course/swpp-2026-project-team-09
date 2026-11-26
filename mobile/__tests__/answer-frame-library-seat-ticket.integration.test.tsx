@@ -1,7 +1,7 @@
 /*******************************************************************************
  * AI-generated with Claude
  *
- * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { screen } from '@testing-library/react-native';
@@ -82,6 +82,16 @@ describe('the seat ticket', () => {
     await pressIn(seatCard(), '좌석: 7193번');
 
     expect(screen.getByRole('button', { name: '좌석 현황 닫기' })).toBeVisible();
+  });
+
+  it("opens nothing from the seat while 예약하기 is on its way (PR 625's review)", async () => {
+    await askTicket(world);
+    world.library.holdWrites();
+
+    await pressIn(seatCard(), '예약하기');
+
+    expect(seatCard().getByRole('button', { name: '좌석: 7193번' })).toBeDisabled();
+    world.library.release();
   });
 
   it('leaves the kiosk line and the cautions out of the card', async () => {

@@ -4,6 +4,7 @@
  * 2026-10-06  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { render, screen, within } from '@testing-library/react-native';
@@ -260,12 +261,20 @@ describe('MapPerson: where the green dot stands', () => {
 });
 
 describe('MapDot', () => {
-  it('is 4 larger when it is selected', async () => {
+  it("is a campus service's square, 4 larger when it is selected", async () => {
+    const { rerender } = await render(<MapDot kind="shuttle" />);
+    expect(screen.getByLabelText('셔틀버스')).toHaveStyle({ width: 13, height: 13 });
+
+    await rerender(<MapDot kind="shuttle" selected />);
+    expect(screen.getByLabelText('셔틀버스')).toHaveStyle({ width: 17, height: 17 });
+    expect(screen.getByLabelText('셔틀버스')).toBeSelected();
+  });
+
+  it("is a 파티's tag from far away, read by its kind and marked selected", async () => {
     const { rerender } = await render(<MapDot kind="party" />);
-    expect(screen.getByLabelText('파티')).toHaveStyle({ width: 16, height: 16 });
+    expect(screen.getByLabelText('파티')).not.toBeSelected();
 
     await rerender(<MapDot kind="party" selected />);
-    expect(screen.getByLabelText('파티')).toHaveStyle({ width: 20, height: 20 });
     expect(screen.getByLabelText('파티')).toBeSelected();
   });
 });

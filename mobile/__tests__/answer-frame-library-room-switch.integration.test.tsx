@@ -5,8 +5,10 @@
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
+import { within } from '@testing-library/react-native';
 import type * as SecureStoreFake from './support/secure-store';
 import type * as FakeSocketModule from './support/fake-socket';
 import { expectNoWrite, inFrame, pressIn, sendFromBar } from './support/library-chat';
@@ -70,6 +72,24 @@ describe('a switch of room', () => {
     expectNoWrite(world.library);
   });
 
+  it('keeps the ticket whole while the new room is read, with no sentence and no seat row (P01 ticket 09)', async () => {
+    await askTicket(world, { seat: '7200' });
+    await pressIn(seatCard(), ROOM);
+    world.library.holdSeats();
+
+    await pressIn(seatCard(), '7층 노트북존 31석');
+
+    // The user's phone: "다시 확인하는 중" under the old seat, and a sentence, before the new room's seat came.
+    expect(seatCard().queryByText(/다시 확인하는 중/u)).toBeNull();
+    expect(seatCard().queryByText(/찾고 있어요/u)).toBeNull();
+    expect(seatCard().queryByText(/ · \d+번$/u)).toBeNull();
+    expect(ticket().getByText('7층 노트북존')).toBeVisible();
+    expect(within(ticket().getByTestId('seat-ticket-seat')).getByText('좌석')).toBeOnTheScreen();
+    world.library.release();
+  });
+});
+
+describe('the room switched and booked', () => {
   it('books the room on screen, and a later turn sends the card of that room', async () => {
     const chat = await askTicket(world);
     await pressIn(seatCard(), ROOM);

@@ -185,6 +185,16 @@ describe('the raised seat card on the map', () => {
     expectNoWrite(library);
   });
 
+  it("opens the seat picture from the ticket's seat (P01 ticket 09)", async () => {
+    const { user } = await raised();
+
+    await user.press(within(screen.getByTestId('answer-card')).getByRole('button', { name: /^좌석: \d+번$/u }));
+    await pass(500);
+
+    expect(screen.getByText('관정 7층 열람실 좌석 현황')).toBeVisible();
+    expect(screen.getByRole('button', { name: '좌석 현황 닫기' })).toBeVisible();
+  });
+
   it('keeps 예약하기 in place, disabled, while the rooms are listed', async () => {
     const { user } = await raised();
 

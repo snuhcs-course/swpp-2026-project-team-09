@@ -43,10 +43,10 @@ import { useSeatOnMap } from './booking-stage';
 
 // The book card of a reading room's seat (the MainChatLibReserve frame). It reads the sector's seats for the time,
 // offers the named or tapped seat, else the first free one, and books it only on 예약하기; 예약 안 함 beside it ends the card
-// unbooked, and the foot under them says until when a seat booked now is confirmed at the seat kiosk. The done message
-// is the app's own bubble. A card the Assistant gave for a seat space the room chip knows starts with that chip: it
-// lists the rooms by floor and kind and switches the card to another for the same time, and a room full for that time
-// is swapped for one with free seats.
+// unbooked. The done message is the app's own bubble, which says until when the seat is confirmed at the seat kiosk.
+// A card the Assistant gave for a seat space of 관정관's rooms starts with its ticket (P01 ticket 09): the room with its
+// free seats, which lists the rooms by floor under it and switches the card to another for the same time, and the
+// seat, which opens the seat picture. A room full for that time is swapped for one with free seats.
 
 export { BOOK_FAILED, NO_FREE_SEAT, NOT_BOOKED, SEAT_TAKEN, SEATS_UNREAD, SLOT_PASSED } from './seat-booking';
 export type { Closed } from './seat-offer';
@@ -103,7 +103,8 @@ function StudyLine({
     return <Said>예약하는 중이에요</Said>;
   }
   if (free === null) {
-    return <Said>{`${bookingTitle(space)}에서 ${when}, 빈 자리를 찾고 있어요.`}</Said>;
+    // Over a ticket the seat and the count fill in where they stand, and no sentence says they are read.
+    return ticketed ? null : <Said>{`${bookingTitle(space)}에서 ${when}, 빈 자리를 찾고 있어요.`}</Said>;
   }
   // A start the User reaches walking from now is why it is that start (P01 ticket 06).
   // Only a start the server filled from the arrival has a reason; a time the User named has none (PR 500's review).
@@ -117,16 +118,16 @@ function StudyLine({
 // What the ticket says of the seat offered: its free seats, the seat, and the seat picture's opening, with none while
 // there is no seat or no picture.
 function ticketSeatOf(
-  seat: LibrarySeat | null,
-  free: number | null,
+  { seat, free, busy }: { seat: LibrarySeat | null; free: number | null; busy: boolean },
   shown: LibrarySpace,
   setPicking: (picking: boolean) => void,
 ): TicketSeat {
   return {
     free,
     seat: seat === null ? null : seatWords(seat.VNAME),
+    // While 예약하기 is on its way no other seat is picked, as 자리 선택하기 was hidden then (PR 625's review).
     onSeat:
-      seat === null || shown.mapImage === null
+      seat === null || shown.mapImage === null || busy
         ? null
         : (): void => {
             setPicking(true);
@@ -154,7 +155,7 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
   const offer = { ...props, space: shown, seats, choose: setNamed, write, close, ticketed, ...onMap };
   const looking = loaded.state === 'loading' || searching;
   const line = looking || (seat !== null && loaded.state === 'ready');
-  const ticketSeat = ticketSeatOf(seat, free, shown, onMap.setPicking);
+  const ticketSeat = ticketSeatOf({ seat, free, busy: write.busy }, shown, onMap.setPicking);
   return (
     <>
       {mapped && line ? (
@@ -169,13 +170,13 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
       ) : null}
       {props.top(ticketSeat)}
       {room.listing ? null : (
-        <SeatRest {...props} looking={looking && !mapped}>
+        <SeatRest {...props} looking={looking && !mapped && !ticketed}>
           <SeatsFailure close={close} loaded={loaded} logIn={logIn} mapped={mapped} reload={reload} shown={shown} />
           {loaded.state === 'ready' && seat === null && !searching ? (
             <NoFreeSeat actions={actions} card={card} space={shown} />
           ) : null}
           {seat === null ? null : <SeatOffer {...offer} seat={seat} />}
-          {seat === null && last !== null && !props.docked ? (
+          {seat === null && last !== null && !props.docked && !ticketed ? (
             <SeatRechecked seat={chooseSeat(last, named)} slot={props.slot} space={shown} />
           ) : null}
         </SeatRest>
@@ -184,8 +185,8 @@ function SeatPart(props: SeatPartProps): ReactElement | null {
   );
 }
 
-// While a new time or room is read, the seat last offered, for the eye only, with no button: nothing can book it
-// (PR 500's review).
+// While a new time or room is read, on a card without the ticket, the seat last offered, for the eye only, with no
+// button: nothing can book it (PR 500's review). The ticket keeps its cells instead (P01 ticket 09).
 function SeatRechecked({
   seat,
   slot,

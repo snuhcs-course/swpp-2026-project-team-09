@@ -7,21 +7,23 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
  * 2026-11-18  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { router } from 'expo-router';
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, useEffect, useState, useSyncExternalStore } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Presence } from '@/api/types';
 import {
   AppBar,
   Avatar,
-  Button,
   ChipRow,
   color,
   EmptyState,
   ErrorState,
+  font,
+  Glass,
   Icon,
   IconButton,
   ListRow,
@@ -30,12 +32,14 @@ import {
   SearchField,
   SectionHeader,
   SidePanel,
+  size,
   space,
   text,
 } from '@/design-system';
 import { type FriendView, PRESENCE_LABEL, withAge } from '@/features/friends/adapter';
 import { profileLabel } from '@/features/friends/profile';
 import { useFriends } from '@/features/friends/use-friends';
+import { useHideTabBarOnMain } from '../shell/main-tab-bar';
 
 type Filter = Presence | 'all';
 
@@ -78,9 +82,11 @@ function FriendRow({ friend, onMeet, onShow }: { friend: FriendView } & Omit<Gro
           onPress={() => {
             onMeet(friend);
           }}
-          style={({ pressed }) => [styles.meet, pressed && styles.meetPressed]}
+          style={({ pressed }) => [styles.meet, pressed && styles.pressed]}
         >
-          <Icon color={color.snuBlue} name="calendar" size={18} />
+          <Glass level="inner" style={styles.fill}>
+            <Icon color={color.snuBlue} name="calendar" size={18} />
+          </Glass>
         </Pressable>
       }
     />
@@ -114,7 +120,8 @@ function Groups({ friends, onMeet, onShow }: GroupsProps): ReactElement {
   );
 }
 
-// "공유 설정" and "+ 친구 추가" close the panel and show their screen.
+// "공유 설정" and "+ 친구 추가" close the panel and show their screen. The footer has no ground of its own: it is the
+// panel's glass, under a faint line, and "친구 추가" is a glass button.
 function Footer({ onLeave }: { onLeave: () => void }): ReactElement {
   const { bottom } = useSafeAreaInsets();
   const onShare = (): void => {
@@ -130,15 +137,56 @@ function Footer({ onLeave }: { onLeave: () => void }): ReactElement {
       <Pressable accessibilityRole="link" hitSlop={space[2]} onPress={onShare} style={styles.sharing}>
         <Text style={styles.link}>공유 설정</Text>
       </Pressable>
-      <Button full icon="plus" onPress={onAdd} size="lg" variant="secondary">
-        친구 추가
-      </Button>
+      <Pressable
+        accessibilityRole="button"
+        onPress={onAdd}
+        style={({ pressed }) => [styles.add, pressed && styles.pressed]}
+      >
+        <Glass level="inner" style={[styles.fill, styles.addFill]}>
+          <Icon color={color.snuBlue} name="plus" size={20} />
+          <Text style={styles.addWords}>친구 추가</Text>
+        </Glass>
+      </Pressable>
     </View>
   );
 }
 
-// The friend panel, the `MainFriends` frame. A Friend's calendar button closes the panel and opens 파티 만들기 as
-// 비공개 with that Friend invited; a press elsewhere on the row is `onShow`'s.
+// Whether the friend panel is open, for the main screen: what floats over the map and the tab bar give way while it is,
+// so that only the map shows through its glass (design review of A04-06).
+let panelShown = false;
+const panelWatchers = new Set<() => void>();
+
+function setPanelShown(next: boolean): void {
+  panelShown = next;
+  for (const watcher of panelWatchers) {
+    watcher();
+  }
+}
+
+function watchPanel(watcher: () => void): () => void {
+  panelWatchers.add(watcher);
+  return (): void => {
+    panelWatchers.delete(watcher);
+  };
+}
+
+export function useFriendPanelShown(): boolean {
+  return useSyncExternalStore(watchPanel, () => panelShown);
+}
+
+// Tells the main screen that the panel is open, and hides the tab bar meanwhile.
+function useShownOnMain(open: boolean): void {
+  useHideTabBarOnMain(open);
+  useEffect(() => {
+    setPanelShown(open);
+    return (): void => {
+      setPanelShown(false);
+    };
+  }, [open]);
+}
+
+// The friend panel, the `MainFriends` frame, on glass over the map. A Friend's calendar button closes the panel and
+// opens 파티 만들기 as 비공개 with that Friend invited; a press elsewhere on the row is `onShow`'s.
 export function FriendPanel({ open, onClose, onShow }: FriendPanelProps): ReactElement {
   const { data: friends, isPending, refetch } = useFriends();
   const [query, setQuery] = useState('');
@@ -148,9 +196,11 @@ export function FriendPanel({ open, onClose, onShow }: FriendPanelProps): ReactE
     router.push({ pathname: '/party-form', params: { friendId: id } });
   };
   const shown = friends?.filter((friend) => (filter === 'all' || friend.presence === filter) && found(friend, query));
+  useShownOnMain(open);
   return (
-    <SidePanel label="친구" onClose={onClose} open={open}>
+    <SidePanel glass label="친구" onClose={onClose} open={open}>
       <AppBar
+        clear
         actions={<IconButton icon="x" label="닫기" onPress={onClose} />}
         count={friends?.length}
         line={false}
@@ -185,30 +235,28 @@ export function FriendPanel({ open, onClose, onShow }: FriendPanelProps): ReactE
 }
 
 const MEET = 44;
+// The board's faint line of the ink at 8%: the calendar button's rim and the line over the footer.
+const FAINT_LINE = 'rgba(14, 19, 48, 0.08)';
 
 const styles = StyleSheet.create({
   search: { paddingTop: space[3], paddingHorizontal: space[5] },
   scroll: { flex: 1 },
   list: { paddingRight: space[3], paddingBottom: space[3], paddingLeft: space[5] },
-  meet: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: MEET,
-    height: MEET,
-    borderWidth: 1,
-    borderColor: color.border,
-    borderRadius: radius.full,
-    backgroundColor: color.surface,
-  },
-  meetPressed: { backgroundColor: color.blue50 },
+  // The `MainFriends` board's glass buttons: a frame with a faint rim, or the key colour's for 친구 추가, around the
+  // glass that fills it.
+  meet: { width: MEET, height: MEET, borderWidth: 1, borderColor: FAINT_LINE, borderRadius: radius.full },
+  fill: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: radius.full },
+  pressed: { opacity: 0.6 },
   footer: {
     gap: space[3],
     paddingTop: space[3],
     paddingHorizontal: space[5],
     borderTopWidth: 1,
-    borderTopColor: color.border,
-    backgroundColor: color.surface,
+    borderTopColor: FAINT_LINE,
   },
+  add: { height: size.button, borderWidth: 1, borderColor: 'rgba(0, 26, 114, 0.22)', borderRadius: radius.md },
+  addFill: { flexDirection: 'row', gap: space[2], borderRadius: radius.md },
+  addWords: { ...text.bodyLg, fontFamily: font.semiBold, color: color.snuBlue },
   sharing: { alignSelf: 'flex-end' },
   link: { ...text.label, paddingVertical: space[3], color: color.blue600 },
 });

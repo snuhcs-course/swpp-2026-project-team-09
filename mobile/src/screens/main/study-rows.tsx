@@ -29,7 +29,7 @@ function LiveSeatsLine({ seats }: { seats: LiveSeats }): ReactElement | null {
   const words = seatWords(seats);
   return words === null ? null : (
     <View style={styles.seats} testID="study-live-seats">
-      <Icon color={color.svcStudy} name="book" size={16} />
+      <Icon color={color.svcStudy} name="bookOpen" size={16} />
       <Text style={styles.seatWords}>{words}</Text>
     </View>
   );

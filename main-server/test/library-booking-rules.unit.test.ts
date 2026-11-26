@@ -3,11 +3,13 @@
  *
  * 2026-11-02  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import {
   type BookingRequest,
   checkBooking,
+  closedTodayRefusal,
   earliestStartMinutes,
   PARTY_REFUSAL,
   type Refusal,
@@ -210,5 +212,38 @@ describe('A seat for a day after today', () => {
     expect(
       [tomorrow, roomLater, yesterday].map((refusal) => refusal !== undefined && saysSameDayOnly(refusal)),
     ).toEqual([true, false, false]);
+  });
+});
+
+// A space asked for today after its closing (P05 ticket 57): on the user's phone (2026-11-26, 23:37), "관정 열람실
+// 자리 있어?" showed a seats card of a room closed since 23:00. Partitions: after the closing, at it, a minute before,
+// another day, and a room's own hours.
+const at = (clock: string): Date => new Date(`2026-11-04T${clock}:00+09:00`);
+
+function refusalAt(spaceId: string, clock: string, date = '2026-11-04'): Refusal | null {
+  const space = catalogue.byId.get(spaceId);
+  if (space === undefined) {
+    throw new Error(`No ${spaceId}`);
+  }
+  return closedTodayRefusal(space, date, at(clock));
+}
+
+describe('A space closed for the rest of today', () => {
+  it('is refused after its closing, by its catalogue hours', () => {
+    expect(refusalAt(seat, '23:37')).toMatchObject({ field: 'date', reason: '열람실은 오늘 23:00에 닫았어요' });
+    expect(refusalAt(seat, '23:00')).toMatchObject({ reason: '열람실은 오늘 23:00에 닫았어요' });
+  });
+
+  it('is open a minute before, and on another day', () => {
+    expect(refusalAt(seat, '22:59')).toBeNull();
+    expect(refusalAt(seat, '23:37', '2026-11-05')).toBeNull();
+  });
+
+  it("follows a room's own hours", () => {
+    const space = catalogue.byId.get(room);
+
+    expect(refusalAt(room, '23:37')).toMatchObject({
+      reason: `그룹스터디룸은 오늘 ${space?.hours?.close ?? ''}에 닫았어요`,
+    });
   });
 });
