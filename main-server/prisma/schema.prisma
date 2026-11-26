@@ -31,6 +31,7 @@
 // 2026-11-20  Opus 5.5   prompted by Jaehyun0320
 // 2026-11-21  Opus 5.5   prompted by fyoon46
 // 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+// 2026-11-27  Opus 5.5   prompted by fyoon46
 // *****************************************************************************
 
 // The main database's schema. Change it, then record the change as a migration (see README.md).
@@ -1142,6 +1143,9 @@ model RoomRequest {
   // The date and the start as one time, by which a request still not booked expires.
   startsAt       DateTime          @map("starts_at")
   useDesc        String?           @map("use_desc")
+  // The study input of the answer the request was sent from (P10), from which its answer is rebuilt; null for a
+  // request from the chat's book card.
+  studyInput     Json?             @map("study_input")
   status         RoomRequestStatus @default(gathering)
   // The companion the library did not recognise, who is asked to check their 내 정보.
   failedUserId   String?           @map("failed_user_id") @db.Uuid

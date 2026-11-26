@@ -8,6 +8,7 @@
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-16  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -72,6 +73,7 @@ describe('Attending a Global Event', () => {
       takenAlone: false,
       waitingJoinRequests: 0,
       members: [{ user: holder, state: 'accepted', lateMinutes: null }],
+      roomRequest: null,
     });
   });
 

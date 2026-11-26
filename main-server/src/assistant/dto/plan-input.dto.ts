@@ -215,8 +215,8 @@ const longitude = z.number().min(-180).max(180);
 
 const catalogueId = z.string().trim().min(1).max(40);
 
-// A study plan is the asker's, with up to 7 Friends (2026-11-27).
-const studyInputSchema = z.strictObject({
+// A study plan is the asker's, with up to 7 Friends (2026-11-27). A room request sent from its answer keeps it too.
+export const studyInputSchema = z.strictObject({
   kind: z.literal('study'),
   date: z.iso.date(),
   what: z.enum(['quiet', 'group', 'pc', 'any']),
