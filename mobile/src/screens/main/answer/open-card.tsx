@@ -216,7 +216,7 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
     onHeight,
   });
   useFollowPull(motion.offset, level, { heights, room });
-  useLayerScroll(props.layer ?? null, props.layerOf ?? null, scroll, scrollY);
+  const held = useLayerScroll(props.layer ?? null, props.layerOf ?? null, scroll, scrollY, measures.natural);
   const onLayout = useLaidHeight(caps === null && level === 'low', setLaid, onHeight);
   return {
     setAbove,
@@ -229,7 +229,7 @@ function useOpenCard(props: FrameCardProps): OpenCardState {
     scroll,
     onScroll,
     scrolls,
-    padBottom,
+    padBottom: padBottom + held,
     ruled: props.children !== null && (heights === null || heights.high > 0),
     hint,
     lowHeight: heights === null ? laid : extra + heights.low,
