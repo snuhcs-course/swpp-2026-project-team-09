@@ -2,6 +2,7 @@
 # AI-generated with Claude
 #
 # 2026-11-02  Opus 5.5   prompted by AhnJinYoung
+# 2026-11-27  Opus 5.5   prompted by fyoon46
 ################################################################################
 
 # The P6 suite (P06 spec, "The P6 eval suite"; ticket 06): 관정 booking and the tutorial in the Assistant. Its cases are
@@ -51,6 +52,18 @@ subsets:
 # the P6 case that holds the new answer.
 superseded:
   - { case: out-of-scope-library-seats, heldBy: p6-common-central-library-seats }
+
+# P6 cases whose expected answer a later change of the Assistant's rules replaced after C0. Each keeps its frozen label
+# and is listed with the case outside the suite that holds the new answer; a later run fails it by design, which is no
+# regression. Entered after the freeze, as `runs` below is, and changing no frozen value.
+supersededAfterFreeze:
+  - case: p6-bookings-did-i-return
+    heldBy: library-answer-did-i-return
+    date: '2026-11-27'
+    by: P05 ticket 59
+    reason: >-
+      "반납했어?" and "반납 됐어?" now show the User's bookings (showMyLibraryBookings), each with its state, in place of
+      ruling 6's CHAT that said the Assistant cannot see them: "반납 잘 됐니?" was refused on the user's phone.
 
 score:
   # A case passes when all its assertions hold. The mean of the 3 runs.

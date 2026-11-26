@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { z } from 'zod';
@@ -178,7 +179,7 @@ function shownAnswer({ space, booking, facts, companions, opens }: Shown, others
       : `예약 창은 ${openingWords(opens)}에 열려요. 동의를 먼저 받아 두고, 그때 알려 드려요.`;
   return {
     result: 'shown',
-    summary: `${when} ${roomLabelOf(space, space.id)}, ${names.length}명 예약 카드를 보여 줬어요. ${closing}`,
+    summary: `${when} ${roomLabelOf(space, space.id)}, ${names.length}명 예약을 아래에 띄웠어요. ${closing}`,
     people: booking.stays.map(({ from, until, minutes }, index) => ({
       name: names[index] ?? '',
       arrival: arrivals[index] ?? null,

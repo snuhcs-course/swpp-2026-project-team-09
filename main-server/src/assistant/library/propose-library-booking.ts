@@ -7,6 +7,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { NotFoundException } from '@nestjs/common';
@@ -137,7 +138,7 @@ function summaryOf(
   const press = askedToBook
     ? `대신 예약할 수는 없어요. 예약하기를 직접 눌러야 예약돼요. ${SIGN_IN_FIRST}`
     : `예약하기를 눌러야 예약돼요. ${SIGN_IN_FIRST}`;
-  return `${where}, ${when}${who} 예약 카드를 보여 줬어요. ${filled}${press}${asks}`;
+  return `${where}, ${when}${who} 예약을 아래에 띄웠어요. ${filled}${press}${asks}`;
 }
 
 const DESCRIPTION =

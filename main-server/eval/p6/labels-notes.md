@@ -36,6 +36,8 @@
 
 **The four "7층" ASKs name three spaces exactly.** These are hours-from, now, missing-time and seats-now. 7F-notebook-171's only name, 노트북존, is already matched by "7B 노트북존", so its mention passes whenever 7B's does. In effect the check is by name for 7A 1 구역, 7A 2 구역 and 7B, and 171 is covered only by that loose match.
 
+**Ruling 6 superseded (2026-11-27, P05 ticket 59).** "반납했어?" and "반납 됐어?" now call `showMyLibraryBookings`, whose card lists each booking with its state, and the reply says in one sentence that the states are shown, never whether the return went through. "반납 잘 됐니?" had been refused on the user's phone. `p6-bookings-did-i-return` keeps its frozen label, and a later run fails it by design; `library-answer-did-i-return` (`eval/cases/library-answer.yaml`) holds the new answer, as `supersededAfterFreeze` in `suite.yaml` records.
+
 ## The tutorial copy
 
 The suite reads its own copy of the tutorial, `tutorial.yaml` beside these notes, frozen with C0; a run of the p6 world serves it in the place of `content/tutorial.yaml` (`WORLD_TUTORIAL_FILES` in `eval/cases.ts`). The tutorial labels, such as the quest count of `p6-tutorial-progress`, are drafted from that copy.

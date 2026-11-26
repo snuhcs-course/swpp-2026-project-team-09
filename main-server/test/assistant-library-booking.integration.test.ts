@@ -5,6 +5,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { inject } from 'vitest';
@@ -61,7 +62,7 @@ const SEAT_CARD = {
 };
 
 const SEAT_SUMMARY =
-  '7층 7A 열람실 2 구역 7193, 오늘 17:00–18:00 예약 카드를 보여 줬어요. 예약하기를 눌러야 예약돼요. 카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.';
+  '7층 7A 열람실 2 구역 7193, 오늘 17:00–18:00 예약을 아래에 띄웠어요. 예약하기를 눌러야 예약돼요. 카드에 로그인이 보이면 관정도서관에 먼저 로그인해요.';
 
 describe('A book card', () => {
   it('is filled from the catalogue and the checked request, and the model gets a summary', async () => {
