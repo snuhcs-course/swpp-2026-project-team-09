@@ -18,14 +18,14 @@ Native files: none. Releases: the main server and the app's JavaScript, in eithe
   - A plan tool that ends without a plan sets it:
     - `planMeal` for a day past or more than a week ahead, for breakfast (now `meal: breakfast`, answered none), for a meal over for today, or for a meal the User is only invited to;
     - `planMeet`, `planEvents`, `planNewQuest` and `findMenu` for a day out of reach.
-  - `refuse` sets it for a request plainly not about the plan on screen: off-campus, general-work, vague, not-understood, who-looked, past-location, others-sharing, not-watched-friend, not-watched-shuttle.
-  - Nothing sets it for a reply of words alone, for `whyMissing` ("왜 302동은 없어?"), for an invitation answered for a Friend, or for a Friend not found, which may be about the plan's own people. Those keep the plan on screen as before.
+  - `refuse` sets it for a request plainly not about the plan on screen: off-campus, general-work, who-looked, past-location, others-sharing, not-watched-friend, not-watched-shuttle.
+  - Nothing sets it for a reply of words alone, for `whyMissing` ("왜 302동은 없어?"), for an invitation answered for a Friend, or for a Friend not found, which may be about the plan's own people. Nor for `vague` and `not-understood`: a typo or half a sentence over a plan must not wipe it off the map (review of the pull request). Those keep the plan on screen as before.
 - A reply that draws something of its own leaves `clears` out, since it takes the screen anyway.
 - The rules: `planMeal` is called for any day the User names, past or far, and for breakfast, never answered in words alone over the plan on screen.
 
 ## Acceptance criteria
 
-- [x] `planMeal` clears for a day past, a day more than a week ahead, breakfast, and a meal over for today, and not for a day in reach. `refuse` clears for requests not about the plan. `replyBody` sends `clears` only when nothing else is drawn. (Unit tests, failing before.)
+- [x] `planMeal` clears for a day past, a day more than a week ahead, breakfast, and a meal over for today, and not for a day in reach. `refuse` clears for requests not about the plan, and keeps it for `vague` and `not-understood`. `replyBody` sends `clears` only when nothing else is drawn. (Unit tests, failing before.)
 - [x] The app takes the answer off the screen on a reply with `clears`: no 일정에 넣기, and the next request carries no conditions. A reply of words alone without it keeps the answer. (Integration test against the fake main server.)
 - [x] Eval cases `meal-out-of-reach-over-a-plan` (live, `screen: true`) and `meal-breakfast-planned-none`. Not run: no model key on this machine.
 - [x] README; whole lint, format and types of the main server and the app.

@@ -121,8 +121,6 @@ function refusalFor(
 const CLEARING: ReadonlySet<string> = new Set([
   'off-campus',
   'general-work',
-  'vague',
-  'not-understood',
   'who-looked',
   'past-location',
   'others-sharing',
@@ -147,7 +145,8 @@ export function refuse(sources: RefusalSources): Tool {
       }
       presented.refusal = refusal;
       // A request plainly not about the plan on screen takes it off the map (P05 ticket 55). An invitation answered for
-      // a Friend, or a Friend not found, may be about the plan's own people, and keeps it.
+      // a Friend, or a Friend not found, may be about the plan's own people, and keeps it; so do words that are vague or
+      // cannot be read, such as a typo or half a sentence, as words alone do.
       if (CLEARING.has(refusal.kind)) {
         presented.clears = true;
       }

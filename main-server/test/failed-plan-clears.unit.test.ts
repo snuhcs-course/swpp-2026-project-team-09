@@ -75,7 +75,7 @@ describe('A refusal', () => {
     },
   };
 
-  it.each(['off-campus', 'general-work', 'vague', 'not-understood'])(
+  it.each(['off-campus', 'general-work', 'who-looked', 'not-watched-shuttle'])(
     'of a request plainly not about the plan on screen takes it off the map: %s',
     async (kind) => {
       const context = contextAt('10:00');
@@ -84,6 +84,15 @@ describe('A refusal', () => {
       expect(context.presented.clears).toBe(true);
     },
   );
+
+  // A typo or half a sentence over a plan keeps it, as words alone do (review of PR 612).
+  it.each(['vague', 'not-understood'])('of words that are vague or cannot be read keeps the plan: %s', async (kind) => {
+    const context = contextAt('10:00');
+    await refuse(sources).run({ kind }, context);
+
+    expect(context.presented.refusal).not.toBeNull();
+    expect(context.presented.clears).toBeUndefined();
+  });
 });
 
 describe('The reply the app gets', () => {
