@@ -24,17 +24,17 @@ Native files: none. Releases: the main server. The reply is the menu answer the 
 ## Where the collected sentence comes from
 
 - It comes from the chat's base rule above, applied to `getMenus`, whose restaurants carry `collectedAt`. `MENU_RULES` already say it only when asked, for `findMenu` (P05 ticket 12), so it leaves this path with this ticket.
-- It still shows on every `getMenus` answer:
+- It would still show on every `getMenus` answer:
   - an app that does not draw answers;
   - breakfast, which planMeal does not plan;
   - a Restaurant `findMenu` cannot find on the map.
-
-  Not changed here.
+- So the base rule changes too. It says how fresh collected data is only when it was not collected today, in a few words relative to now, with no year and no machine date ("어제 저녁 기준이에요", "월요일 10시 기준이에요"), never the stamp itself. The regular collection of the same day goes unsaid. This applies to every tool that gives `collectedAt`: menus and the shuttle.
 
 ## Acceptance criteria
 
 - [x] With no meal: another day opens lunch; today at 10:00 and 14:00 lunch, at 15:00 and 21:00 dinner. A meal named is kept. (Unit test, failing before the change: `findMenu` refused an input with no meal.)
 - [x] Eval cases `menu-without-meal-another-day` ("내일 예술계 메뉴") and `menu-without-meal-today` ("두레미담 메뉴 알려줘"): findMenu, no getMenus, no words. Not run: no model key on this machine.
+- [x] The base rule's freshness, with the eval case `menus-collected-today-unsaid` (a menu collected the run's day: no collection said, no stamp). Not run: no model key on this machine.
 - [x] README; whole lint, format and types of the main server.
 
 ## Comments
