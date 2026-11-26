@@ -335,7 +335,9 @@ describe('the looks the answer asks for', () => {
     const rerender = await render({ fits: 0, cameras: [] });
     await rerender({ ...FIRST, shown: shownAt(2) });
 
-    const asked = jest.mocked(useMarkerImages).mock.calls.flatMap((call) => call.flat());
+    const asked: MarkerLook[] = jest
+      .mocked(useMarkerImages)
+      .mock.calls.flatMap(([now, later]) => now.concat(later ?? []));
     const ringed = asked.filter(
       (look) =>
         look.kind === 'answer' && look.symbol?.type === 'dot' && ('ring' in look.symbol || 'pop' in look.symbol),
