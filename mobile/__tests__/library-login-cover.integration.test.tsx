@@ -4,7 +4,8 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { fireEvent, screen } from '@testing-library/react-native';
+import { fireEvent, screen, within } from '@testing-library/react-native';
+import { radius } from '@/design-system';
 import { isLibraryLoggedIn } from '@/library/flag';
 import { LIBRARY_MAIN_URL } from '@/library/site';
 import { answerFromFakeLibrary, navigate, pass, showRow, useLibrarySessionTests } from './support/library-session';
@@ -57,6 +58,36 @@ describe("The login's cover", () => {
     await pass(0);
     expect(screen.getByText('loggedIn')).toBeVisible();
     await expect(isLibraryLoggedIn()).resolves.toBe(true);
+  });
+});
+
+// Partitions: a way back that stalls before the page lands, and the cover's look. Expected values: the ticket (at most
+// 15 seconds, and the hint's look: one line in a see-through pill, no button).
+describe("The login's cover's limit and look", () => {
+  it('comes off 15 seconds after the way back began when the page never lands, and the view stays open', async () => {
+    answerFromFakeLibrary();
+    await openLogin();
+    await navigate(SCHOOL_LOGIN);
+
+    await navigate(BACK, true);
+    await pass(15_000 - 1);
+    expect(screen.getByText(COVER)).toBeVisible();
+    await pass(1);
+
+    expect(screen.queryByText(COVER)).toBeNull();
+    expect(screen.getByTestId('library-login-view')).toBeVisible();
+  });
+
+  it('is one line in a see-through pill, with no button', async () => {
+    answerFromFakeLibrary();
+    await openLogin();
+    await navigate(SCHOOL_LOGIN);
+    await navigate(BACK, true);
+
+    const words = screen.getByText(COVER);
+    expect(words).toHaveProp('numberOfLines', 1);
+    expect(words).toHaveStyle({ backgroundColor: 'rgba(14, 19, 48, 0.62)', borderRadius: radius.full });
+    expect(within(screen.getByTestId('library-login-cover')).queryAllByRole('button')).toHaveLength(0);
   });
 });
 
