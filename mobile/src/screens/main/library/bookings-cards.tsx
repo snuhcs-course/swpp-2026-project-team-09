@@ -127,6 +127,9 @@ export function CancelReturnCard({ card, place, bubbleId, actions }: CardProps &
   });
   const logIn = useLogInReload(reload);
   const idle = outcome === 'idle' && !write.busy;
+  // A cancel card the main server showed for "반납해줘" on a seat not yet in use (P05 ticket 59) says why, as a return
+  // card that turned to a cancel does: the Assistant's words are not shown over it.
+  const returnAsked = card.action === 'cancel' && /반납/u.test(actions.askedBefore(bubbleId));
   useTellAct(
     actions.act ?? null,
     bubbleId,
@@ -137,7 +140,7 @@ export function CancelReturnCard({ card, place, bubbleId, actions }: CardProps &
       <FailureNote failure={loaded.state === 'failed' ? loaded.failure : null} onLogIn={logIn} />
       {loaded.state === 'loading' ? <Said>예약을 찾고 있어요</Said> : null}
       {acting !== null && found.length === 0 ? <Said>{ACT_WORDS[act].none}</Said> : null}
-      {acting?.instead === true ? <Said>{NOT_YET_USED}</Said> : null}
+      {found.length > 0 && (acting?.instead === true || returnAsked) ? <Said>{NOT_YET_USED}</Said> : null}
       <Found booking={booking} choose={idle ? setChosen : null} found={found} />
       <FailureNote failure={write.failure?.failure ?? null} message={write.failure?.message} onLogIn={write.logIn} />
     </CardBox>

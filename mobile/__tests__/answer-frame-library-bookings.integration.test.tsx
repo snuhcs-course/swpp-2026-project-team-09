@@ -163,6 +163,18 @@ describe('the return card', () => {
   });
 });
 
+describe('the cancel card the main server shows for 반납 of a seat not yet in use', () => {
+  it('says why the seat is cancelled and not returned', async () => {
+    library.addBooking(bookingRow());
+    await askForCards({ server, library }, [CANCEL], { words: '반납해줘' });
+
+    expect(
+      inCard(`library-cancel-${CANCEL.library.key}`).getByText('아직 쓰기 전이라 반납 대신 예약을 취소할 수 있어요.'),
+    ).toBeVisible();
+    expect(dock().getByRole('button', { name: '예약 취소' })).toBeEnabled();
+  });
+});
+
 describe('내 예약', () => {
   const MINE = card(libraryCard('myBookings:2026-10-26:2026-11-05', 'myBookings'));
 
