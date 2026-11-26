@@ -92,21 +92,27 @@ Positions are as of `origin/5.0/Main` bbe4cad9, under `mobile/src/`.
 - `EventDetailSheet` takes one `action` in place of `onParty`: `party`, which the 행사 tab passes, or `add` with `chosen`, which the picker passes. The room passes none.
 - The picker's rows reuse the 행사 row's time and place line (`EventFact`) and its two-line limits, now exported from `event-row.tsx`. The day drops its offset (`DAY_DROP`), since no source line sits above the title now.
 - The check sits level with the title's first line (12 + (23 − 24) / 2 from the top).
+- The user's phone check of 2026-11-27 changed two things after the first build:
+  - The date column is 56 wide, as the 행사 list's (was 72), so the divider sits as close to the date as on the 행사 tab. This overrides "The date column keeps its width" above.
+  - Only the chosen row keeps 32 on the right for its check. Unchosen rows had the same reserve, as the 행사 row keeps for its ☆, but the picker has no ☆, so their words now take the full width.
 - `FormEvent` keeps its `source`, which nothing shows now. Dropping it would change the form's state code, which this ticket leaves alone.
 - Tests:
   - `events-party-form`: two new tests for the sheet (it opens over the picker without choosing; 선택됨 for the chosen event). Its picking tests go through 이 행사 추가 (`pickEvent` in `support/events.ts`), and the tag check is now "no tags added".
   - `party-form-parts`: the tabs test becomes the one-list test, and the festival test checks no tags and no kind line.
   - The row test moved here from `events-party-form`, which reached lint's 300-line limit.
   - `party-form-edit`: picks through the sheet, and checks that no tags are kept.
+  - After the phone check, `party-form-parts`' row test also checks the 56 date column, and a new test checks that only the chosen row keeps the right reserve. Both failed before the change.
 
 ## Comments
 
 ### Agent usage (2026-11-27)
 
-Estimates. Agent time is the session's wall clock from start to the pull request. About 15 minutes of it were Jest runs. No subagents. The orchestrator's time writing the ticket is not included. Tokens are counted up to the writing of this entry, so the commit and the pull request are left out.
+Estimates. Agent time is the session's wall clock, from start to the pull request and from the phone-check request to the push. About 18 minutes of it were Jest runs. No subagents. The orchestrator's time writing the ticket and building onto the phone is not included. The follow-up's tokens are counted up to the writing of this entry, so its commit and push are left out.
 
 | Session | Agent time | Input | Cache reads | Cache writes | Uncached | Output |
 |---|---|---|---|---|---|---|
-| Ticket 16 (tests first, the one list, the sheet's foot, the kinds removed, checks) | about 30 minutes | 8,080,267 | 7,923,210 | 156,959 | 98 | 43,075 |
+| Ticket 16 (tests first, the one list, the sheet's foot, the kinds removed, checks, the pull request) | about 35 minutes | 10,307,237 | 10,136,513 | 170,604 | 120 | 50,315 |
+| Ticket 16, the phone-check change (the 56 date column, the right reserve only on the chosen row) | about 10 minutes | 1,406,093 | 1,397,440 | 8,639 | 14 | 5,645 |
+| Total | about 45 minutes | 11,713,330 | 11,533,953 | 179,243 | 134 | 55,960 |
 
-Without cache reads, the input is 157,057.
+Without cache reads, the input is 179,377.

@@ -99,14 +99,14 @@ function PickerRow({ view, chosen, onOpen }: { view: EventView; chosen: boolean;
       onPress={onOpen}
       style={[styles.row, chosen && styles.rowChosen]}
     >
-      <View style={styles.date}>
+      <View style={styles.date} testID="picker-date">
         <Text style={styles.day}>{view.date.day}</Text>
         <Text numberOfLines={1} style={styles.dayLine}>
           {view.date.line}
         </Text>
       </View>
       <View style={styles.rule} />
-      <View style={styles.rowWords}>
+      <View style={[styles.rowWords, chosen && styles.rowWordsChosen]} testID="picker-words">
         <Text lineBreakStrategyIOS="hangul-word" numberOfLines={TITLE_LINES} style={styles.rowTitle}>
           {view.title}
         </Text>
@@ -208,9 +208,8 @@ export function EventField({ event, locked, onChoose, onClear }: FieldProps): Re
   );
 }
 
-// The picker's date column keeps its own width, wider than the 행사 tab's. The check sits level with the title's first
-// line.
-const DATE_WIDTH = 72;
+// The date column is as wide as the 행사 tab's. The check sits level with the title's first line.
+const DATE_WIDTH = 56;
 const CHECK = 24;
 const CHECK_DROP = (eventText.title.lineHeight - CHECK) / 2;
 
@@ -235,8 +234,9 @@ const styles = StyleSheet.create({
     marginRight: space[4],
     backgroundColor: color.border,
   },
-  // Clear of the check.
-  rowWords: { flex: 1, minWidth: 0, gap: space[1], paddingRight: space[8] },
+  rowWords: { flex: 1, minWidth: 0, gap: space[1] },
+  // Clear of the check, which only the chosen row has.
+  rowWordsChosen: { paddingRight: space[8] },
   rowTitle: { ...eventText.title, color: color.ink },
   check: {
     position: 'absolute',

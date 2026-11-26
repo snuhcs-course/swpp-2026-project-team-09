@@ -72,6 +72,11 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
+// The words of an event's row in the picker: the title and the time and place lines.
+function rowWords(event: { title: string }): ReturnType<typeof screen.getByTestId> {
+  return within(screen.getByRole('button', { name: `행사 · ${event.title}` })).getByTestId('picker-words');
+}
+
 function shownEvents(): string[] {
   return screen.getAllByRole('button', { name: /^행사 · /u }).map(({ props }) => String(props.accessibilityLabel));
 }
@@ -174,7 +179,7 @@ describe('the event picker', () => {
 });
 
 describe('a row of the event picker', () => {
-  // As the 행사 tab's row (P06 ticket 15), its day included; the date column keeps the picker's width (ticket 16).
+  // As the 행사 tab's row (P06 ticket 15), its day and its 56-wide date column included.
   it("sets a row as the 행사 tab's: a long title on two lines, then the time and the place on lines of their own after their icons", async () => {
     server.on('GET /global-events', {
       status: 200,
@@ -190,6 +195,7 @@ describe('a row of the event picker', () => {
     const career = screen.getByRole('button', { name: `행사 · ${LONG_TITLE}` });
     const row = within(career);
     expect(career).toHaveStyle({ paddingVertical: 12 });
+    expect(row.getByTestId('picker-date')).toHaveStyle({ width: 56 });
     expect(row.getByText('6')).toHaveStyle({ fontFamily: font.bold, fontSize: 22, lineHeight: 28 });
     expect(row.getByText('10월 · 오늘')).toHaveStyle({ fontSize: 12, lineHeight: 16 });
     expect(row.getByText(LONG_TITLE)).toHaveStyle({ fontFamily: font.bold, fontSize: 16, lineHeight: 23 });
@@ -203,6 +209,18 @@ describe('a row of the event picker', () => {
     const major = within(screen.getByRole('button', { name: `행사 · ${MAJOR.title}` }));
     expect(major.getByText('17:00')).toBeVisible();
     expect(major.queryByTestId('event-icon-pin', HIDDEN)).toBeNull();
+  });
+
+  // The picker has no ☆: only the chosen row keeps its words clear of its check.
+  it("keeps room on the right only for the chosen row's check", async () => {
+    const user = await openAt('/party-form');
+    await user.press(screen.getByRole('button', { name: '관련 행사 선택' }));
+    await pickEvent(user, CAREER);
+
+    await user.press(screen.getByRole('button', { name: /^관련 행사 AI 커리어 설명회/u }));
+
+    expect(rowWords(CAREER)).toHaveStyle({ paddingRight: 32 });
+    expect(rowWords(MAJOR)).not.toHaveStyle({ paddingRight: 32 });
   });
 });
 
