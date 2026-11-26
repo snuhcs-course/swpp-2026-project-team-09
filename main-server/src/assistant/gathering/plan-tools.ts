@@ -19,7 +19,7 @@ import { defineTool, type Presented, type Tool, type ToolContext } from '../feat
 import { afterEarlierSteps } from '../steps/plan-steps.js';
 import { type FoundIds, type FoundKind } from '../found-ids.js';
 import { mealByClock } from '../free-time/meal-fit.js';
-import { clockTime, dateInput, noDay, outOfReach } from '../free-time/tool-parts.js';
+import { clockTime, dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
 import { askedBy } from '../refusals/friend-question.js';
 import { mealAfter, nextMealOffer } from './meal-after-hours.js';
 import { PRICE_INPUTS, priceConditionOf } from './meal-price.js';
@@ -286,8 +286,7 @@ export function planMeal(plans: MealPlans, earlier: (context: ToolContext) => re
       // A plan asked for a day out of reach, or for breakfast, cannot be made: the plan on screen leaves the map, so that
       // the reply's words are not read over it (P05 ticket 55).
       if (outOfReach(date, now)) {
-        presented.clears = true;
-        return noDay(date);
+        return outOfReachDay(date, presented);
       }
       if (args.meal === 'breakfast') {
         presented.clears = true;
