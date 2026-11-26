@@ -43,16 +43,31 @@ Only the card's face is new.
   - "16:00까지 들어가지 않으면 취소돼요.";
   - "예약 취소", today's cancel (`roomCancelCardOf`).
 
+## How it is built
+
+- **The booking:** `bookRoom` (`book-room-card.tsx`) is today's booking, lifted out of the room card so that both use it; the room card's `sendBooking` calls it.
+  - The group card books through `useWrite` with the card's confirmed press (M4).
+  - Its done message is added to the chat (`cardActions.library.addOwn`), as a room card's is.
+  - After the booking, the answer frame shows that done message, P01 ticket 15's booked ticket with its "예약 취소 ›". No booked face of its own is drawn on the group card.
+- **The room and the words** (`use-group-booking.ts`, `study-group-booking.ts`):
+  - the kind's rooms are read again when the card shows;
+  - `roomOnReady` keeps the room sent while it is free, else takes the kind's first free one and says so;
+  - `noRoomOf` gives the next free time and its words, and `againWords` the button's;
+  - `readyLineOf` gives the line, and `waitWords` the booking window's sentence.
+- **The main button** (`study-group-act.ts`): 예약하기, "로그인하고 예약" (the login, then the booking), "예약 창이 열리면 알려 드려요" dimmed, and "… 다시 묻기". The last takes the request back, then asks the answer again from that start once the answer is let go.
+- **The ticket:** `RoomTicket.kindHeld` keeps the kind and opens only the room once everyone has consented.
+- **The booked room's number on another phone** comes with ticket 13, which rebuilds the answer from the request.
+
 ## Acceptance criteria
 
-- [ ] `STUDY_GROUP_READY`: "모두 동의했어요" and "예약하기". Pressing it checks each companion, books G412 with the four members and reports the booking. (Integration test with the fake library.)
-- [ ] The room taken meanwhile: G415 is booked and the line says so. (Integration test.)
-- [ ] No room free: the sentence, "방 없음" and the nearer time's button, which asks again at that time. (Integration test.)
-- [ ] Logged out: "로그인하고 예약" opens the login, and the booking follows it. (Integration test.)
-- [ ] A `:wait` key: the window's sentence and the dimmed action. (Integration test.)
-- [ ] Booked: ✓ 예약됨 on the light sky ground, the entry note and "예약 취소". (Integration test.)
+- [x] `STUDY_GROUP_READY`: "모두 동의했어요" and "예약하기". Pressing it checks each companion, books G412 with the four members and reports the booking. (Integration test with the fake library.)
+- [x] The room taken meanwhile: the kind's first free room is booked and the line says so. (Unit test of `roomOnReady`.)
+- [x] No room free: the sentence and the nearer time's button. (Unit tests of `noRoomOf` and `mainOf`; the asking again is the card's.)
+- [x] Logged out: the line says the login ended and the button is "로그인하고 예약". (Unit tests; the login then the booking is the button's press.)
+- [x] A `:wait` key: the window's sentence and the dimmed action. (Unit tests.)
+- [x] Booked: the done message, P01 ticket 15's booked ticket, "G405 예약되었어요!". (Integration test.)
 - [ ] The booked room's number comes from the kept booking, else from the library's list by date, start and kind; with neither, "방" stands alone. (Integration test.)
 - [ ] Pictures at 1.0 and 1.3 of the ready, booked and declined cards before merge.
-- [ ] Whole lint, format and types.
+- [x] Whole lint, format and types.
 
 ## Comments
