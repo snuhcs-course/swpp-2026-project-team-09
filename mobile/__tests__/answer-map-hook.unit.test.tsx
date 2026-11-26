@@ -329,4 +329,18 @@ describe('the looks the answer asks for', () => {
     expect(titled(now, '12:18 민수와 만남')).toBe(false);
     expect(titled(later, '12:18 민수와 만남')).toBe(true);
   });
+
+  // P04 ticket 88: the ring that spread from a pick just chosen is gone, and so are its pictures.
+  it('hold no pick with a ring or a pop, on arrival or after another place is chosen', async () => {
+    const rerender = await render({ fits: 0, cameras: [] });
+    await rerender({ ...FIRST, shown: shownAt(2) });
+
+    const asked = jest.mocked(useMarkerImages).mock.calls.flatMap(([now = [], later = []]) => [...now, ...later]);
+    const ringed = asked.filter(
+      (look) =>
+        look.kind === 'answer' && look.symbol?.type === 'dot' && ('ring' in look.symbol || 'pop' in look.symbol),
+    );
+    expect(asked.length).toBeGreaterThan(0);
+    expect(ringed).toEqual([]);
+  });
 });

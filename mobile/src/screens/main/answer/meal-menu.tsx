@@ -13,7 +13,7 @@ import type { MenuView } from '@/api/lookup-types';
 import type { Meal, MenuLine, RestaurantMenus } from '@/api/menu-types';
 import { menusQuery } from '@/api/queries';
 import { now } from '@/clock';
-import { color, font, radius, size, space, text } from '@/design-system';
+import { color, font, radius, RoundNumber, size, space, text } from '@/design-system';
 import { cornersOf, hoursOf, type MenuCorner, planCorner } from '@/features/assistant/meal-menus';
 import { travelWords } from '@/features/assistant/answer-walks';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -140,7 +140,7 @@ function Head({
     <View style={styles.head}>
       {number === null ? null : (
         <View style={styles.badge} testID="meal-menu-number">
-          <Text style={styles.number}>{number}</Text>
+          <RoundNumber inside={BADGE} number={number} style={styles.number} />
         </View>
       )}
       <View style={styles.names}>

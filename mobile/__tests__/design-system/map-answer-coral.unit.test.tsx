@@ -11,7 +11,7 @@ import { type AnswerLabel, color, MapAnswerMark } from '@/design-system';
 // A meal answer's marks in coral (P04 ticket 85, the user's "3안"): a flag of the meal's rounds and of a meal pick's
 // label, so that every other answer's pick stays gold.
 
-// Partitions: a meal answer's pick and candidate, the pick of any other answer, the ring of a meal pick just chosen, a
+// Partitions: a meal answer's pick and candidate, the pick of any other answer, a
 // meal pick's label, and a candidate's round inside its capsule. Expected values: P04 ticket 85, the user's "3안".
 describe('MapAnswerMark: a meal answer in coral', () => {
   it("fills a meal pick's round with coral and its number white", async () => {
@@ -38,16 +38,6 @@ describe('MapAnswerMark: a meal answer in coral', () => {
     expect(screen.getByTestId('m:dot:ground')).toHaveStyle({ backgroundColor: color.mealSoft });
   });
 
-  it("spreads a meal pick's ring in coral", async () => {
-    const symbol = { type: 'dot', role: 'pick', number: 1, meal: true, ring: 0.2 } as const;
-    await render(<MapAnswerMark label={null} symbol={symbol} testID="m" />);
-
-    expect(screen.getByTestId('m:dot:ring')).toHaveStyle({ borderColor: color.meal });
-  });
-});
-
-// Partitions: a meal pick's label, with its round and without, and a candidate's round inside its capsule.
-describe("MapAnswerMark: a meal answer's labels in coral", () => {
   it("edges a meal pick's label with coral and keeps its time gold", async () => {
     const label: AnswerLabel = {
       side: 'below',

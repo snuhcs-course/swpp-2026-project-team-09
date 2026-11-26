@@ -51,6 +51,7 @@ export {
   MapAnswerMark,
 } from './map-answer';
 export { MapPerson, type PersonTone } from './map-person';
+export { RoundNumber } from './round-number';
 export { KindRounds, MapGroupDot, MapGroupPin } from './map-group-pin';
 export { MapMarkBadge } from './map-mark-badge';
 export { MapTutorialPin, MapTutorialStep, type TutorialStepShape } from './map-tutorial-pin';

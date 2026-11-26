@@ -9,6 +9,7 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, type TextStyle, View, type ViewStyle } from 'react-native';
 import type { AnswerLabel } from './map-answer';
 import { BADGE, GAP, LABEL_MAX, MEAL_PICK_MAX, RING, SUB_MAX } from './map-answer-box';
+import { RoundNumber } from './round-number';
 import { color, mapText, radius, shadow, space, text } from './tokens';
 
 const WAY_FLAGS = new Set<AnswerLabel['tone']>(['leave', 'late', 'shuttle']);
@@ -84,7 +85,7 @@ export function MapAnswerLabel({ label, testID }: { label: AnswerLabel; testID?:
     >
       {number === null ? null : (
         <View style={[styles.badge, tone === 'pick' ? pickBadgeOf(note) : styles.candidateBadge]}>
-          <Text style={styles.number}>{number}</Text>
+          <RoundNumber inside={BADGE} number={number} style={styles.number} />
         </View>
       )}
       <LabelWords {...label} />
