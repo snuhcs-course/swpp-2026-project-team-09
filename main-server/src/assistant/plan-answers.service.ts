@@ -7,7 +7,7 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { type Position } from '../common/geometry.js';
 import { type AnswerReply, type LocationMissing, type PlanInput } from './dto/answer.dto.js';
 import { EventsPlanService } from './events/events-plan.service.js';
