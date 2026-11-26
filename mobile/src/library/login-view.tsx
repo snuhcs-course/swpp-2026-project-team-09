@@ -127,7 +127,7 @@ function useReturning(visible: boolean): {
   };
 }
 
-// The line a page's alert leaves under the notice (P01 ticket 14). It goes when the User touches the page, as to edit
+// The line a page's alert leaves under the notice (P01 ticket 16). It goes when the User touches the page, as to edit
 // the fields or send the form again, when a way back from the school's login begins, and with each login view opened.
 function useSaid(visible: boolean, returning: boolean): { said: string | null; say: (words: string | null) => void } {
   const [said, say] = useState<string | null>(null);

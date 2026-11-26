@@ -7,7 +7,7 @@
 import { alertWords, LOGIN_ALERT_SCRIPT, LOGIN_PAGE_SCRIPT, WRONG_LOGIN_WORDS } from '@/library/login-alert';
 import { LOGIN_FIT_SCRIPT } from '@/library/login-fit';
 
-// The login page's alerts as one line of the app (P01 ticket 14). With a wrong password the library's login form
+// The login page's alerts as one line of the app (P01 ticket 16). With a wrong password the library's login form
 // raises the browser's own dialog, "SSO 응답 오류" with 확인. The login view's page script turns the page's `alert` into a
 // message to the app, and reads nothing of the page.
 

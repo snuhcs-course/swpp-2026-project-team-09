@@ -10,7 +10,7 @@ import { isLibraryLoggedIn } from '@/library/flag';
 import { LIBRARY_MAIN_URL } from '@/library/site';
 import { answerFromFakeLibrary, navigate, pass, showRow, useLibrarySessionTests } from './support/library-session';
 
-// The login page's alerts as one line of the app (P01 ticket 14). With a wrong password the library's login form came
+// The login page's alerts as one line of the app (P01 ticket 16). With a wrong password the library's login form came
 // back with the browser's own dialog, "'https://k-rsv.snu.ac.kr' 페이지 내용: SSO 응답 오류" and 확인. The page's alert now
 // reaches the app as a message, and the app says it in one line under the notice. The navigation events are the ones
 // a login gives (`library-session.integration.test.tsx`); the alert is the message the page script sends

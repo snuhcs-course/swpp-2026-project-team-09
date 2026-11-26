@@ -6,7 +6,7 @@
 
 import { LOGIN_FIT_SCRIPT } from './login-fit';
 
-// The login pages' alerts, said by the app in one line (P01 ticket 14). With a wrong password the library's login form
+// The login pages' alerts, said by the app in one line (P01 ticket 16). With a wrong password the library's login form
 // comes back and raises the browser's own dialog, "SSO 응답 오류" with 확인. On the school's pages this script makes the
 // page's `alert` send its words to the app instead. It reads nothing of the page: no field, no cookie, no storage;
 // it only replaces `alert`. The site goes on after its alerts by itself, so none waits for a 확인. The web view runs it

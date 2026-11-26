@@ -90,7 +90,7 @@ describe('the login view', () => {
     forgetWebViews();
   });
 
-  it('gives its pages the fit and the alerts’ script, and takes a message only for an alert (ticket 14)', async () => {
+  it('gives its pages the fit and the alerts’ script, and takes a message only for an alert (ticket 16)', async () => {
     await render(<LibraryLogin checking={false} onDone={noop} onLanded={noop} onLeft={noop} visible />);
 
     const web = webViewAt(LIBRARY_MAIN_URL);

@@ -1,4 +1,4 @@
-# 14: A login page's alert is one line of the app, not the browser's dialog
+# 16: A login page's alert is one line of the app, not the browser's dialog
 
 Parent: [P01 spec](../spec.md); the user on the phone (2026-11-27): with a wrong password, the library's login page raises the browser's own dialog, "'https://k-rsv.snu.ac.kr' 페이지 내용: SSO 응답 오류" with 확인. "한 줄로 바꿀 수 있다면 바꾸는 게 이득 아닌가?"
 Status: ready-for-human
