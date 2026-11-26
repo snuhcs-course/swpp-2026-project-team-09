@@ -2,21 +2,13 @@
  * AI-generated with Claude
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
 import { GRADUATE_SECTOR, KWANJEONG_SECTORS } from '@/api/mock/data/study-spaces';
-import {
-  basisOf,
-  cellOf,
-  namesRoom,
-  roomGrid,
-  roomOf,
-  type RoomCount,
-  shortName,
-  spacesOf,
-  swapFor,
-} from '@/library/cards/seat-rooms';
+import { cellOf, roomGrid, roomOf, type RoomCount, shortName, spacesOf, swapFor } from '@/library/cards/seat-rooms';
 
 // The rooms of the seat card's chip and list: the label of a floor and kind, the seat space a cell fills, and the
 // space a full one is swapped for. The counts are the design's example for 14:00–20:00.
@@ -122,16 +114,6 @@ describe("the pick of a cell's space", () => {
 
     expect(cell(7, 'notebook-zone', failed)).toEqual({ count: { kind: 'failed' }, pick: sector('7F-7B-notebook') });
   });
-
-  it('gives the basis of a pick among several spaces, most free seats first', () => {
-    expect(basisOf(sector('7F-7A-zone1-notebook'), KWANJEONG_SECTORS, EXAMPLE)).toEqual({
-      why: '7층 노트북존 가운데 빈 자리가 가장 많은 곳이에요',
-      counts: '7A 31석 · 7B 25석 · 171호 12석',
-    });
-    expect(basisOf(sector('7F-7B-notebook'), KWANJEONG_SECTORS, EXAMPLE)).toBeNull();
-    expect(basisOf(sector('7F-7A-zone2'), KWANJEONG_SECTORS, EXAMPLE)).toBeNull();
-    expect(basisOf(sector('7F-7A-zone1-notebook'), KWANJEONG_SECTORS, null)).toBeNull();
-  });
 });
 
 describe('the full-room swap', () => {
@@ -158,18 +140,7 @@ describe('the full-room swap', () => {
   });
 });
 
-describe('words that name a room', () => {
-  it.each(['8층 노트북존 자리', '7B 노트북존으로', '관정 7층 열람실 17시에 한 시간 예약해줘', '조용한 곳'])(
-    '"%s" names one',
-    (words) => {
-      expect(namesRoom(words)).toBe(true);
-    },
-  );
-
-  it.each(['공부할 자리', '자리 잡아 줘', '아무 자리'])('"%s" names none', (words) => {
-    expect(namesRoom(words)).toBe(false);
-  });
-
+describe("a room's spaces", () => {
   it('keeps the spaces of a room in their order', () => {
     const room = roomOf(sector('7F-7B-notebook'));
 

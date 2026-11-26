@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -72,7 +73,9 @@ describe('the study answer while its seats are read', () => {
 
     expect(mapThings()).toContainEqual(expect.stringMatching(/^관정 7층 열람실 › · 17:00–18:00( · 걸음 \d+분)?$/u));
     expect(mapLines()).toHaveLength(1);
-    expect(card().getByText('관정 7층 열람실에서 17:00부터 1시간, 빈 자리를 찾고 있어요.')).toBeVisible();
+    // The ticket stands from the first frame, its seat filling in where it stands, with no sentence (P01 ticket 09).
+    expect(card().queryByText(/찾고 있어요/u)).toBeNull();
+    expect(within(card().getByTestId('seat-ticket')).getByText('7층 열람실')).toBeVisible();
     expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '예약하기' })).toBeDisabled();
   });
 
