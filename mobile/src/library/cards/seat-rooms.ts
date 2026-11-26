@@ -4,6 +4,7 @@
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LibrarySpace } from '@/api/assistant-types';
@@ -125,8 +126,8 @@ function most(counted: readonly Counted[]): Counted | null {
   return counted.reduce<Counted | null>((best, each) => (best === null || each.free > best.free ? each : best), null);
 }
 
-// What a cell shows at its right: nothing without a session, "…" while a read is pending, "—" when a read failed, the
-// free seats, or 만석.
+// What a cell shows at its right: nothing without a session or while a read is pending, "—" when a read failed, the
+// free seats, or 만석 (P01 ticket 09).
 export type CellCount =
   | { kind: 'none' }
   | { kind: 'pending' }
@@ -172,28 +173,4 @@ export function swapFor(full: LibrarySpace, sectors: readonly LibrarySpace[], co
     counts,
   ).filter(({ free }) => free > 0);
   return (most(open.filter(({ space }) => space.kind === full.kind)) ?? most(open))?.space ?? null;
-}
-
-// Why the phone filled this seat space of its room, when the room holds several and this one has the most free
-// seats: "7층 노트북존 가운데 빈 자리가 가장 많은 곳이에요" over "7A 31석 · 7B 25석 · 171호 12석".
-export function basisOf(
-  space: LibrarySpace,
-  sectors: readonly LibrarySpace[],
-  counts: RoomCounts,
-): { why: string; counts: string } | null {
-  const room = roomOf(space);
-  if (room === null || counts === null) {
-    return null;
-  }
-  const spaces = spacesOf(room, sectors);
-  const counted = countedOf(spaces, counts).toSorted((one, other) => other.free - one.free);
-  if (spaces.length < 2 || counted.length < spaces.length || counted[0]?.space.id !== space.id) {
-    return null;
-  }
-  return {
-    why: `${room.label} 가운데 빈 자리가 가장 많은 곳이에요`,
-    counts: counted
-      .map(({ space: each, free }) => `${SEAT_SPACES[each.id]?.tag ?? each.name} ${String(free)}석`)
-      .join(' · '),
-  };
 }

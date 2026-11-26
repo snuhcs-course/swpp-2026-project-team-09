@@ -2187,7 +2187,7 @@ to show, with its 로그인 that sends the pressed write once more.
 The seat book card shows its time as a band (`slot-band.tsx`, rules in `cards/slot-band.ts`): a track from the
 space's opening to its closing time, the band with a handle at each end, and "14:00–20:00 · 6시간" under it. A drag
 moves an end or the band whole, by the space's step (30 minutes), never before the next 30 minutes today, after
-closing, or outside the space's shortest and longest length; the seats and the room chip's counts are read again when
+closing, or outside the space's shortest and longest length; the seats and the room list's counts are read again when
 the finger is let go. `now` is read at each render, at the let-go and at 예약하기: a start that went by moves on with the
 end along, a day with no room left says "오늘은 예약 시간이 끝났어요", and the booking (`seat-booking.ts`) refuses a slot
 that is no longer valid. The time and the seat on screen are kept with the chat where the room is (`CardRoom`), so
@@ -2282,11 +2282,12 @@ can tell the server "the booking of request X was cancelled" with no body.
 
 ### The seat card's room
 
-A seat card the Assistant gave for one of 관정관's seat spaces starts with the room chip ("7층 열람실 ▾",
-`cards/seat-rooms.ts`): the floor and kind of room in use. Tapping it lists the rooms in a column per floor and a row
-per kind, each cell with the free seats, for the card's time, of the seat space of that room with the most of them;
-only then are the sectors the 공부공간 layer gives read, all at once (`screens/main/library/use-room-counts.ts`). One
-tap fills the same time in that space, and 되돌리기 returns to the room the card first showed. Without a library
+A seat card the Assistant gave for one of 관정관's seat spaces starts with its ticket (`seat-ticket.tsx`): the room in
+use with its free seats ("열람실 · 빈 자리 42석" over "7층 열람실"), and the seat ("좌석" over "7193번"), which opens the
+seat picture. The room lists the rooms under the ticket, a row of cells per floor, each with the free seats, for the
+card's time, of the seat space of that room with the most of them; only then are the sectors the 공부공간 layer gives
+read, all at once and kept for a minute (`screens/main/library/room-counting.ts`). One tap fills the same time in that
+space, and the room pressed again closes the list. Without a library
 session the cells show names only, and a tap fills the largest space of the room. When the card's own room has no free
 seat for its time, the phone fills the space of the same kind with the most free seats, else the one with the most.
 The chat keeps the room shown with the card, and later requests send the card by the key of that room's book card,

@@ -5,6 +5,7 @@
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-24  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { fireEvent, within } from '@testing-library/react-native';
@@ -180,6 +181,16 @@ describe('the raised seat card on the map', () => {
     expect(card.queryByRole('button', { name: '다른 자리 고르기' })).toBeNull();
     expect(card.queryByText(/좌석배정기에서 확인해야 해요/u)).toBeNull();
     expectNoWrite(library);
+  });
+
+  it("opens the seat picture from the ticket's seat (P01 ticket 09)", async () => {
+    const { user } = await raised();
+
+    await user.press(within(screen.getByTestId('answer-card')).getByRole('button', { name: /^좌석: \d+번$/u }));
+    await pass(500);
+
+    expect(screen.getByText('관정 7층 열람실 좌석 현황')).toBeVisible();
+    expect(screen.getByRole('button', { name: '좌석 현황 닫기' })).toBeVisible();
   });
 
   it('keeps 예약하기 in place, disabled, while the rooms are listed', async () => {

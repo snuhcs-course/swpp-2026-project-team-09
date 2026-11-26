@@ -3,6 +3,7 @@
  *
  * 2026-11-23  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { within } from '@testing-library/react-native';
@@ -130,14 +131,17 @@ describe('the line over the ticket', () => {
     expect(card().queryByText(DOCKED)).toBeNull();
   });
 
-  it('says it is looking while the seats are read, and the ticket shows no empty seat', async () => {
+  it('shows the whole ticket from the first frame while the seats are read, with no sentence, 예약하기 dimmed', async () => {
     library.holdSeats();
     await asked();
 
-    expect(card().getByText(/빈 자리를 찾고 있어요\.$/u)).toBeVisible();
+    // The user's phone: a sentence while the seats came, then the ticket in its place (P01 ticket 09).
+    expect(card().queryByText(/찾고 있어요/u)).toBeNull();
     const ticket = within(card().getByTestId('seat-ticket'));
     expect(ticket.getByText('7층 열람실')).toBeOnTheScreen();
-    expect(ticket.queryByText('좌석')).toBeNull();
+    expect(within(ticket.getByTestId('seat-ticket-seat')).getByText('좌석')).toBeOnTheScreen();
+    expect(ticket.queryByText(/^\d+번$/u)).toBeNull();
+    expect(within(screen.getByTestId('ai-input-beside')).getByRole('button', { name: '예약하기' })).toBeDisabled();
     library.release();
   });
 });
