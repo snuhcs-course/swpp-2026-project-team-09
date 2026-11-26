@@ -35,11 +35,12 @@ Read on 2026-11-27 from the site's pages as they are without a login: the login 
   - The words show as one line just under the notice "아이디와 비밀번호는 도서관 로그인 페이지로만 전달돼요", over the top of the page. They take the hint's look, a pill with white words, in the danger colour at 0.88, and have no button. A touch reaches the page through them.
   - The line goes when the User touches the page, as to edit the fields or press 로그인 again. It also goes when a way back from the school's login begins, and with each login view opened. It stays when the site goes on to another page after its alert.
   - An alert lifts the cover of a way back (ticket 13).
-- **ADR 0012 is unchanged:**
+- **ADR 0012's decision is unchanged:**
   - the login is the site's page in a visible web view;
   - the scripts read nothing of the page;
   - nothing of the session leaves the web views;
   - the app sends no request of its own to the site.
+  - Its login paragraph said that no script is injected into the login's pages, which the fit's script of ticket 02 had already made untrue. It now names both scripts, says they read no field, form, cookie or storage, and says the app takes a message only as an alert's words from an https page of the school.
 - **On Android, the first run** comes as the page starts (`onPageStarted`). The form's alert comes when its document is ready, before the second run once the page has loaded. If a phone ran the first one before the new page existed, its alert would still be the browser's dialog. Only a phone shows which; a native script at the document's start would be the next step.
 
 ## Acceptance criteria

@@ -2120,6 +2120,8 @@ hidden-transport.ts  the app's one transport, the hidden web view: waits for its
 hidden-view.tsx      the hidden web view, mounted at the app's root while the flag is set
 call-script.ts       the one fixed script injected per call, and the message protocol
 login-view.tsx       the full-screen login web view
+login-fit.ts         the script that fits the login form to the phone
+login-alert.ts       the script that sends a login page's alert to the app, and the line the app says for one
 library-session.tsx  the login, the flag and the logout for the screens (`useLibrarySession()`)
 flag.ts              the "logged in" flag, `kwanjeong.loggedIn` in AsyncStorage
 end-session.ts       "end the library session", the one shared logout step
