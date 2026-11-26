@@ -32,13 +32,15 @@ function recalculate(body: object): request.Test {
   );
 }
 
-const studyInput = (from: string | null, userId = stage.asker.id): object => ({
+const studyInput = (from: string | null, userIds = [stage.asker.id]): object => ({
   kind: 'study',
   date: DATE,
   what: 'any',
-  people: [{ userId, constraints: [] }],
+  people: userIds.map((userId) => ({ userId, constraints: [] })),
   window: { from, until: null },
   area: null,
+  minutes: null,
+  chosen: { seatSpaceId: null, roomSpaceId: null },
 });
 
 describe("A study plan's input", () => {
@@ -60,6 +62,12 @@ describe("A study plan's input", () => {
   });
 
   it('is refused with 400 when its person is not the asker', async () => {
-    expect((await recalculate({ input: studyInput(null, randomUUID()), location: null })).status).toBe(400);
+    expect((await recalculate({ input: studyInput(null, [randomUUID()]), location: null })).status).toBe(400);
+  });
+
+  it('is refused with 422 with Friends, until the group study room answer comes (P10 ticket 07)', async () => {
+    const input = studyInput(null, [stage.asker.id, randomUUID()]);
+
+    expect((await recalculate({ input, location: null })).status).toBe(422);
   });
 });

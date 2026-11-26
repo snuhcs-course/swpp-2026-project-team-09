@@ -2454,25 +2454,39 @@ Anthropic API as the AI's key says
   that carries them. Every meal answer therefore says `choosable: true`, and the app sends `planIds` only over an
   answer that says it, never to an older main server.
 
-  An app that sends `"clientCapabilities": ["study-plan"]` will get "공부할 자리 있어?" answered as ranked study places,
-  the meal answer's way (P10). Its input is a `PlanInput` of kind `study` (`date`, `what`: quiet, group, pc or any,
-  the asker alone, `window`, and `area` for 근처), and each of its Plans carries `study` (the building's spaces that
-  fit, with their hours and whether each is open or not known, 관정관's space to book, and `liveSeats`). The request's
-  context and `POST /assistant/answers` take a `study` input, and the recalculation answers it again
-  (`lookup/study-plan*.ts`, P10 ticket 03):
-  - One plan per building holding a space of the kind asked that the User may use, within `area` when it is set.
-  - The User is ready at `window.from`, at 09:00 of another day asked without a time, or now. Where they are counts
-    only when they set out now.
-  - Each space's state at the arrival comes from its hours as data (`openAt`). The buildings known open come first,
-    then those whose hours are not known, which say so. Each group is ranked by the longest stay before the next item or
-    `window.until`, a stay of three hours or more counting as long enough, then by the shorter walk.
-  - A stay ends at the next item, at `window.until`, or at the space's closing. With none of them known, or a space
-    open around the clock, it is three hours.
-  - A building whose fitting spaces are all open only to others is `dropped` ("경영대학 학생만 쓸 수 있어요"). One
-    closed then is in `closed` ("09:00에 열어요", "오늘 23:00에 닫았어요").
-  - With no plan, `noPlan` says why: nothing of the kind in the area, all of it open only to others, no time before
-    the next item, or all of it closed, with the building that opens first.
-  - The chat's tool for it comes with P10 ticket 04. Until then an app without `study-plan` gets nothing new.
+  An app that sends `"clientCapabilities": ["study-plan"]` will get "공부할 자리 있어?" answered on the map, the meal
+  answer's way (P10).
+  - Its input is a `PlanInput` of kind `study`:
+    - `date`;
+    - `what`: quiet, group, pc or any;
+    - `people`: the asker, and the Friends the time card's "+ 같이" adds, 1 to 8;
+    - `window`;
+    - `area` for 근처;
+    - `minutes`: with Friends, the length asked;
+    - `chosen`: the seat space or room kind the User chose, kept across adding and removing Friends.
+  - Each of its Plans carries `study` (`dto/study-plan.dto.ts`).
+    - Alone, `study` holds the building's spaces that fit, with their hours and whether each is open or not known,
+      관정관's seat to book, and `liveSeats`.
+    - With Friends, the one plan is 관정관's, and `study.group` holds:
+      - the 관정 group study room kind, and every kind with whether it fits the head count;
+      - how many more people are needed;
+      - the book key that "동의 요청 보내기" posts to `POST /library/room-requests`;
+      - 사용 용도, when the window opens, and the sent request's state.
+  - The request's context and `POST /assistant/answers` take a `study` input. The recalculation answers one alone
+    again (`lookup/study-plan*.ts`, P10 ticket 03); one with Friends is refused with 422 until P10 ticket 07.
+    - One plan per building holding a space of the kind asked that the User may use, within `area` when it is set.
+    - The User is ready at `window.from`, at 09:00 of another day asked without a time, or now. Where they are counts
+      only when they set out now.
+    - Each space's state at the arrival comes from its hours as data (`openAt`). The buildings known open come first,
+      then those whose hours are not known, which say so. Each group is ranked by the longest stay before the next item or
+      `window.until`, a stay of three hours or more counting as long enough, then by the shorter walk.
+    - A stay ends at the next item, at `window.until`, or at the space's closing. With none of them known, or a space
+      open around the clock, it is three hours.
+    - A building whose fitting spaces are all open only to others is `dropped` ("경영대학 학생만 쓸 수 있어요"). One
+      closed then is in `closed` ("09:00에 열어요", "오늘 23:00에 닫았어요").
+    - With no plan, `noPlan` says why: nothing of the kind in the area, all of it open only to others, no time before
+      the next item, or all of it closed, with the building that opens first.
+  - An app without `study-plan` gets nothing new.
 
   A reply carries `clears: true` when the User asked for another plan, or something else, and nothing could be drawn
   for it: `planMeal` for a day past or more than a week ahead, for breakfast, or for a meal over for today;

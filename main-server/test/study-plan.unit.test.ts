@@ -65,6 +65,8 @@ function asked({
     people: [{ userId: ME, constraints: [] }],
     window: { from: null, until: null },
     area,
+    minutes: null,
+    chosen: { seatSpaceId: null, roomSpaceId: null },
   };
   return studyPlanAnswer({
     input,
