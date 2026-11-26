@@ -222,6 +222,32 @@ describe("The User's daily messages", () => {
   });
 });
 
+// A study plan's input (P10 ticket 02) is taken, as a request's context will carry it; its answer comes with P10 ticket
+// 03, and until then a recalculation of it is refused with 422, never a failure of the server.
+describe("A study plan's input", () => {
+  beforeAll(async () => {
+    await stage.asking('2087-01-07', '11:50');
+  });
+
+  it('is refused with 422 until study plans are answered', async () => {
+    const response = await recalculate({
+      input: {
+        kind: 'study',
+        date: '2087-01-07',
+        what: 'quiet',
+        people: [{ userId: stage.asker.id, constraints: [] }],
+        window: { from: null, until: null },
+        area: null,
+        minutes: null,
+        chosen: { seatSpaceId: null, roomSpaceId: null },
+      },
+      location: null,
+    });
+
+    expect(response.status).toBe(422);
+  });
+});
+
 describe('Refused with 400', () => {
   const date = '2087-05-06';
   let friend: Named;
