@@ -216,6 +216,9 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
   const { room } = booking;
   const held = out !== null;
   const ready = out?.status === 'ready';
+  const chooser = (at: Open): ReactElement => (
+    <Choosers {...choices} group={props.group} open={at} room={room} rooms={booking.free} slot={slot} />
+  );
   return (
     <View style={styles.body} testID="study-group-body">
       <GroupWords
@@ -235,16 +238,7 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
         room={room}
       />
       {/* A cell's chooser opens right under the ticket, the use's under its line (design group-study-design ④ ⑤). */}
-      {held && !ready ? null : (
-        <Choosers
-          {...choices}
-          group={props.group}
-          open={open === 'use' ? null : open}
-          room={room}
-          rooms={booking.free}
-          slot={slot}
-        />
-      )}
+      {held && !ready ? null : chooser(open === 'use' ? null : open)}
       {out === null ? (
         <UseLine onPress={toggle('use')} use={use} />
       ) : (
@@ -259,9 +253,7 @@ export function StudyGroupBody(props: GroupBodyProps): ReactElement {
           request={out}
         />
       ) : null}
-      {!held && open === 'use' ? (
-        <Choosers {...choices} group={props.group} open="use" room={room} rooms={booking.free} slot={slot} />
-      ) : null}
+      {!held && open === 'use' ? chooser('use') : null}
     </View>
   );
 }
