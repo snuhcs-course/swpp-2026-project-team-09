@@ -126,4 +126,3 @@ describe('a candidate without a round of its own', () => {
     expect(tones).not.toContain('candidate');
   });
 });
-

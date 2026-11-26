@@ -134,7 +134,8 @@ function MarkSymbol({ symbol, testID }: { symbol: AnswerSymbol; testID?: string 
 // give way (no `title`).
 function MinutesCapsule({ label, testID }: { label: AnswerLabel; testID?: string }): ReactElement {
   const { number, side, title, faded = false } = label;
-  const round = number === null ? null : <Dot number={number} role="candidate" testID={partOf(testID, 'dot')} type="dot" />;
+  const round =
+    number === null ? null : <Dot number={number} role="candidate" testID={partOf(testID, 'dot')} type="dot" />;
   if (round !== null && title === '') {
     return <View testID={testID}>{round}</View>;
   }

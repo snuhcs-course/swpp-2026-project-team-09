@@ -298,4 +298,3 @@ describe("MapAnswerMark: a meal candidate's minutes beside a spot another mark h
     expect(screen.queryByTestId('mark:label:minutes')).toBeNull();
   });
 });
-
