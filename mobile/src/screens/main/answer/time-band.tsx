@@ -72,6 +72,8 @@ const BAR_HEIGHT = 8;
 // the band.
 const HANDLE_TOUCH = 44;
 const HANDLE_SLOP = (HANDLE_TOUCH - HANDLE_WIDTH) / 2;
+// The space between a handle drawn outside a short band and the band (P01 ticket 17).
+const HANDLE_HAIR = 2;
 // Up and down too, so that a folded bar's handle, one lane high, still takes a touch the design system's height.
 const HANDLE_SLOP_Y = (HANDLE_TOUCH - LANE_HEIGHT) / 2;
 const PAN_STARTS = 10;
@@ -91,10 +93,11 @@ interface HandleProps {
   whole: PanGesture;
 }
 
-function Handle(props: HandleProps): ReactElement {
-  const { bound, band, shown, trackWidth, focused, outside, disabled, onMove, onLetGo, whole } = props;
+// A handle's drag, which moves its end by the finger's distance and lets it go there.
+function useHandlePan(props: HandleProps): PanGesture {
+  const { bound, band, trackWidth, disabled, onMove, onLetGo, whole } = props;
   const own = bound === 'from' ? band.startAt : band.endAt;
-  const pan = useMemo(() => {
+  return useMemo(() => {
     const at = (translationX: number): Moved => ({
       bound,
       clock: droppedAt(bound, shareOf(own, band.range) + translationX / trackWidth, band),
@@ -114,6 +117,11 @@ function Handle(props: HandleProps): ReactElement {
         onLetGo(at(translationX));
       });
   }, [bound, band, own, trackWidth, disabled, onMove, onLetGo, whole]);
+}
+
+function Handle(props: HandleProps): ReactElement {
+  const { bound, band, shown, focused, outside, disabled, onLetGo } = props;
+  const pan = useHandlePan(props);
   const time = bound === 'from' ? shown.startAt : shown.endAt;
   return (
     <GestureDetector gesture={pan}>
@@ -137,7 +145,12 @@ function Handle(props: HandleProps): ReactElement {
           focused && styles.focused,
         ]}
         testID={`time-band-handle-${bound}`}
-      />
+      >
+        <View style={styles.grip} testID={`time-band-grip-${bound}`}>
+          <View style={styles.gripLine} />
+          <View style={styles.gripLine} />
+        </View>
+      </View>
     </GestureDetector>
   );
 }
@@ -309,8 +322,13 @@ const styles = StyleSheet.create({
     borderColor: color.quest,
     borderRadius: radius.sm,
     backgroundColor: color.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  outsideFrom: { marginLeft: -HANDLE_WIDTH },
-  outsideUntil: { marginLeft: 0 },
+  // Two short lines that say a handle is to be dragged, on a band of any width (P01 ticket 17).
+  grip: { flexDirection: 'row', gap: 2 },
+  gripLine: { width: 1.5, height: 8, borderRadius: 1, backgroundColor: color.quest },
+  outsideFrom: { marginLeft: -(HANDLE_WIDTH + HANDLE_HAIR) },
+  outsideUntil: { marginLeft: HANDLE_HAIR },
   focused: { borderWidth: 3, borderColor: color.focusRing },
 });

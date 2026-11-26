@@ -22,7 +22,7 @@ A seat answer's time card runs over the room's whole day, 07:00–23:00. An hour
   - Across an hour boundary the range does not move; the line of now moves right.
   - The earliest start follows the real now, as before (`limitsOf`): a handle or a whole move never reaches a start gone by. A start that went by while the card was open is refused at 예약하기, as it already was (`SLOT_PASSED`).
   - A start before now was not possible before this change either: `earliest` is the next half hour of now.
-- **The handles.** Each is 16 points wide. A band narrower on the track than the two handles is measured by the track's width, and has them drawn outside it: the start's left of the band, the end's right of it. Under 32 points they go outside; from 32 they stay on the ends. Before the track is measured they stay on the ends. The rule is in the time band itself, so a meal's band that narrow gets it too.
+- **The handles.** Each is 16 points wide. A band narrower on the track than the two handles is measured by the track's width, and has them drawn outside it: the start's left of the band, the end's right of it. Under 32 points they go outside; from 32 they stay on the ends. Before the track is measured they stay on the ends. The rule is in the time band itself, so a meal's band that narrow gets it too. Drawn outside, each handle stands 2 points apart from the band, which keeps its fill. Every handle, on a band of any width, carries a grip of two short lines, so that a narrow band is plainly the block between its handles.
 
 Not in this ticket: the band's height and the handles' use, which stay as they are.
 
@@ -31,6 +31,7 @@ Not in this ticket: the band's height and the handles' use, which stay as they a
 - [x] The range at 09:10, 14:20 and 22:10, before opening, and on another day. (Unit tests, red first at the three times.)
 - [x] The range stays that of the moment the answer came, while the line of now moves on. (Unit test.)
 - [x] Handles are drawn outside a band of 31 points, and on the ends of one of 33. (Unit test.)
+- [x] Outside, the handles stand 2 points apart from the band, and every handle has its grip. (Render test, red first.)
 - [x] On the map, the booking's card runs from 16:00 at 16:00 to 23:00. (Integration test.)
 - [ ] On the user's phone: at night the band is wide enough to hold, and in the morning a one-hour band has its handles outside.
 
