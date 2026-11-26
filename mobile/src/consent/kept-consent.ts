@@ -7,6 +7,7 @@
 import { useEffect, useState } from 'react';
 import type { Consent } from '@/api/types';
 import { type Kept, keep, readKept } from '@/storage/kept';
+import { allowUsage } from '@/telemetry';
 
 // The version of the legal documents the app shows. Raised together with the main server's `CONSENT_VERSION`
 // (`main-server/src/users/consent.ts`), in one pull request: a User whose account holds a lower one is asked again.
@@ -20,14 +21,21 @@ export function consentAsked(consent: Consent): boolean {
   return consent.version === null || consent.version < CONSENT_VERSION;
 }
 
+// Whether usage data may be sent (P08 ticket 12): the copy holds the current version with usage chosen. An empty copy,
+// an older version or usage not chosen is off.
+export function usageChosen(consent: Consent): boolean {
+  return consent.version === CONSENT_VERSION && consent.usage === true;
+}
+
 type Listener = (consent: Consent) => void;
 
 const listeners = new Set<Listener>();
 
 // Writes the phone's copy of the account's consent, with `more` in the same write, and tells whoever shows it. Every
 // write of the copy goes through here: the sign-in, the Lobby, the consent's answer, the switch's answer, a sign-out
-// and a Session's end.
+// and a Session's end. Usage data follows the new copy at once, before it is written.
 export async function keepConsent(consent: Consent, more: Partial<Kept> = {}): Promise<void> {
+  allowUsage(usageChosen(consent));
   await keep({ ...more, consent });
   for (const listener of listeners) {
     listener(consent);

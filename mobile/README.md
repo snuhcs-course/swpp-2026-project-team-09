@@ -405,7 +405,8 @@ src/session/        where the User is in the flow between the screens, and the w
 src/library/        관정도서관: the library client, its hidden web view and login, and the end of its session
 src/update/         the check at start for a newer native build, and its dialog
 src/push/           the wrapper over the notifications library: the permission, the Expo push token, the channel
-src/telemetry/      crash reports: the only folder that imports Sentry, its scrubbing, and the error boundary
+src/telemetry/      crash reports and usage data: the only folder that imports Sentry and PostHog, the scrubbing,
+                    the error boundary and the event registry
 src/screens/        the screens that the routes show; a screen of several files has a folder
 modules/            the native modules, local Expo modules: the map (snu-now-map), text recognition (snu-now-ocr) and
                     the web views' cookie clearing (snu-now-web-cookies)
@@ -2007,7 +2008,7 @@ on an import anywhere else (`__tests__/telemetry/sentry-import-boundary.unit.tes
   and starts Sentry once it is read and on; the first screen does not wait for the read. Without
   `EXPO_PUBLIC_SENTRY_DSN` it starts nothing and every other function does nothing: tests, a local build, the mock APK
   and the Dev Server's and a UAT's APK report nothing.
-- `identifyUser(userId)` and `forgetUser()`, below.
+- `identifyUser(userId)` and `forgetUser()`, below. They set usage data's User too ("Usage data").
 - `setSending(on)` and `useSending()`, the switch, below.
 - `reportError(error, where)`, for an error the app caught. `where` is one of a closed list in
   `src/telemetry/sentry.ts`: `screen` and `test-error`.
@@ -2094,8 +2095,8 @@ first state clears, so it holds before a sign-in and from one User to the next.
 choice on usage data, not the phone's: it shows the phone's copy of the account's consent (`useKeptConsent`), and a
 turn sends `PUT /users/me/usage-consent` with the new value and keeps the answer on the phone, leaving the version as
 it is, so no consent is asked again. The switch shows the new position while the request is on its way and goes back
-with a toast when it fails. Each row's link names its part: "'오류 보고' 보기" and "'사용 기록' 보기". Nothing is sent to PostHog yet:
-P08 ticket 12 makes the sending follow the copy, from `keepConsent`.
+with a toast when it fails. Each row's link names its part: "'오류 보고' 보기" and "'사용 기록' 보기". What it sends, and
+when, is in "Usage data".
 
 ### The settings
 
@@ -2125,6 +2126,117 @@ DSN.
 
 Adding Sentry changed the app's native part, so it came with `version` 1.0.4 and a new APK
 ([The Production APK](../infra/production/README.md#the-production-apk)).
+
+## Usage data
+
+A Release's build sends a short, fixed list of events to PostHog Cloud US (`https://us.i.posthog.com`, a constant in
+`src/telemetry/usage.ts`), only for a User who chose usage data (P08's "Usage data with PostHog"). The SDK is
+`posthog-react-native` 4.87.3, which is JavaScript: adding it left the fingerprint as it was, and it needs no new APK.
+Its optional native peers are the ones the app already has; `expo-application` and `expo-localization` are not added.
+
+### The layer
+
+`src/telemetry/` is the only folder that imports `posthog-react-native`; the same boundary test as Sentry's fails on
+an import anywhere else (`__tests__/telemetry/sentry-import-boundary.unit.test.ts`). App code calls what
+`src/telemetry/index.ts` exports:
+
+- `track(name, properties)` sends an event of the registry (below) with exactly its properties.
+- `allowUsage(chosen)` tells the layer whether the phone's copy of the account's consent allows usage data: it holds
+  `CONSENT_VERSION` with usage true (`usageChosen` in `src/consent/kept-consent.ts`). It is called by `keepConsent`, so
+  at every write of the copy (the sign-in, the Lobby, the consent's answer, the switch's answer, a sign-out, a
+  Session's end), at a start with a kept Session where the copy is read (`src/session/start.ts`), and at once when
+  내 정보's switch "사용 기록 보내기" is pressed, before the account answers; a failed turn calls it again with the
+  copy as it was.
+- `identifyUser(id)` also calls PostHog's `identify(id)`, with no person properties; `forgetUser()` also flushes the
+  client and then calls `reset()`.
+- `scrubbedRoute(path)` and `serverCode(code)`, the only ways to make a `route` and a main server's `code`.
+
+The client is made the first time a User is identified while usage is allowed, never before. Nothing is sent or
+queued until then, nothing for a User who chose no, and nothing after `forgetUser()` until the next User is
+identified and allowed.
+
+### PostHog's settings
+
+`usageOptions()` in `src/telemetry/usage.ts`, each checked against 4.87.3's own reference:
+
+| Option                                        | Value                      | Why                                                                   |
+| --------------------------------------------- | -------------------------- | --------------------------------------------------------------------- |
+| `host`                                        | `https://us.i.posthog.com` | PostHog Cloud US                                                      |
+| `defaultOptIn`                                | `false`                    | Opted out until the layer opts in, and again after each `reset()`     |
+| `captureAppLifecycleEvents`                   | `false`                    | `app_opened` is the layer's own                                       |
+| `preloadFeatureFlags`                         | `false`                    | No feature flags                                                      |
+| `disableRemoteFeatureFlags`                   | `true`                     | No flags request, also at `identify` and `reset`                      |
+| `sendFeatureFlagEvent`                        | `false`                    | No `$feature_flag_called`                                             |
+| `disableSurveys`                              | `true`                     | No surveys                                                            |
+| `enableSessionReplay`                         | `false`                    | No session replay (also the default)                                  |
+| `errorTracking`                               | `{ autocapture: false }`   | Errors go to Sentry, whatever the project's remote config says        |
+| `capturePushNotificationSubscriptions/Opened` | `false`                    | No push events (they also need a native plugin the app does not have) |
+| `disableGeoip`                                | `true`                     | Every event carries `$geoip_disable`                                  |
+| `personProfiles`                              | `'identified_only'`        | Also the default                                                      |
+| `setDefaultPersonProperties`                  | `false`                    | The device's properties stay off the person                           |
+| `fetchRetryCount`                             | `0`                        | A failed batch is not retried behind the switch's back (below)        |
+
+There is no `PostHogProvider`, so neither touches nor screens are autocaptured (`autocapture` is a prop of the
+provider; expo-router has no `NavigationContainer` anyway). `disableRemoteConfig` is not set: in 4.87.3 it is a no-op,
+and the client loads the project's remote config once when it is made. PostHog's own device model, OS version and app
+version stay on each event. A person also turns on the project's "Discard client IP data".
+
+### When it sends
+
+- **The switch off** (`allowUsage(false)`) holds at once: the layer calls `optOut()`, so nothing new is captured, and
+  empties the client's queue, so nothing captured before is sent after. In 4.87.3 `optOut()` only sets the flag and
+  keeps the queue, and `reset()` keeps the queue on purpose (`PostHogPersistedProperty.Queue`), so the layer sets
+  that persisted property to null itself, at once and again once the opt-out holds. A batch already handed to the
+  network cannot be called back; with `fetchRetryCount: 0` it is not tried again, and a network failure keeps it in
+  the queue, where the next off drops it.
+- **The switch on** (`allowUsage(true)`) calls `optIn()`, identifies the User again and sends `app_opened`.
+- **A sign-out or a Session's end** flushes what the client holds, then resets it: its ids and its opt-in are cleared
+  (back to `defaultOptIn: false`), so the next User is opted in only once identified and allowed. The queue stays, and
+  each queued event keeps the id it was captured with.
+- **A new client**, the first in a run, is reset before it opts in, so an id or an opt-in an earlier run left in its
+  storage is not this run's.
+
+### The events
+
+`src/telemetry/events.ts` is the registry: every event of the spec's table that the app sends, with the type of its
+properties. `track` takes only a name from there and exactly its properties, so a new event is a change to that file;
+a name outside it, a property it does not list, or a free string does not compile. `route` is a `ScrubbedRoute`,
+made only by `scrubbedRoute` (the crash reports' route-word rule, `scrubPath`), a main server's code a `ServerCode`,
+made only by `serverCode` (one word of capitals), and every other property is a union of fixed words.
+
+This ticket sends two of them; the five actions' stages and `api_request_failed` come with P08 ticket 13.
+
+| Event           | When                                                                                        | Properties |
+| --------------- | ------------------------------------------------------------------------------------------- | ---------- |
+| `app_opened`    | sending starts in a run (the sign-in, a start, the switch on), and each return to the front | none       |
+| `screen_viewed` | each change of screen, from `RouteBreadcrumb` in the root layout                            | `route`    |
+
+A return to the front is React Native's `AppState` going from `background` or `inactive` to `active`. The route of
+`screen_viewed` is expo-router's pattern with every segment that is not a route word as `:id`: `/room/[questId]` is
+sent as `/room/:id`. The crash reports' breadcrumb keeps its own form, `/room/[questId]`.
+
+Every event also carries `source: 'app'`, `app_version` (from `expo-constants`), `release_tag`, `release_commit`,
+`runtime_version` and `platform`, read as the crash reports' tags are (`src/telemetry/build.ts`). PostHog's own
+`$identify`, which `identify` sends, carries the User id and the anonymous id it replaces.
+
+### The settings
+
+| Variable                    | Read by          | What it does                                                    |
+| --------------------------- | ---------------- | --------------------------------------------------------------- |
+| `EXPO_PUBLIC_POSTHOG_TOKEN` | the app's bundle | PostHog's project token. Without it the app sends no usage data |
+
+The token is a write-only client token, in the bundle by design, and still never committed, pasted into a chat or
+shown in a screenshot. Tests, a local build, the mock APK, and the Dev Server's and a UAT's APK have none. The Release
+workflow's app job takes it from the repository variable `PRODUCTION_APP_POSTHOG_TOKEN`, which may be unset and stays
+unset until P08 ticket 15 ([The app's bundle](../infra/production/README.md#the-apps-bundle)). It changes no
+fingerprint.
+
+### Testing
+
+Every test runs with a stand-in for `posthog-react-native` (`__tests__/support/posthog.ts`, set up in
+`jest-setup.ts`), which records the clients and their calls and models 4.87.3's queue: an opted-out client queues
+nothing, `optOut()` and `reset()` keep the queue, and `flush()` sends it. `__tests__/telemetry/usage.unit.test.ts` and
+`usage-events.unit.test.ts` load the layer anew for each test, with a fake `AppState`.
 
 ## 관정도서관 (P06)
 
