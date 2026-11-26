@@ -43,6 +43,15 @@ describe('A reading room asked for after its closing', () => {
 
     expect(stage.model.toolResults()[1]).toMatchObject(CLOSED);
     expect(libraryCards(response.body)).toEqual([]);
+    // 관정 drawn as a place with why, a grey mark with no main button (the user's choice, 2026-11-26).
+    expect(response.body).toMatchObject({
+      lookup: {
+        kind: 'place',
+        fact: true,
+        actions: [],
+        scene: { places: [{ role: 'dropped', tag: '관정도서관 · 오늘 23:00 닫음 · 내일 07:00부터' }] },
+      },
+    });
   });
 
   it('is said closed by findLibrarySpace, and refused by findLibraryFreeSlots rather than as no 공강', async () => {

@@ -19,13 +19,16 @@ These are read from the code; there is no log.
 - `closedTodayRefusal` (`booking-rules.ts`): a space asked for today at or after its closing, by its catalogue hours, is refused: "열람실은 오늘 23:00에 닫았어요".
 - `showLibrarySeats` and `findLibraryFreeSlots` answer it with `closedToday: { closedAt, opens }` ("내일 07:00") and no card. `findLibrarySpace` gives `closedToday` for such a space, so the model knows before it calls anything else.
 - The rule for an app that draws answers: on `closedToday`, call no other library tool for today, and say in one sentence when it closed and when it opens next, such as "관정도서관 열람실은 23:00에 닫았어요, 내일 07:00부터 당일 예약할 수 있어요.". Never name a card. The text chat's rules are unchanged.
-- Not built here, since they are the user's UI choice: 관정 drawn on the map with a "닫음 · 내일 07:00부터" label, an offer of study places open now, and an offer of tomorrow's seats.
+- **관정 on the map (the user's choice, 2026-11-26):** the refusal also draws 관정 as a place with why, as a Restaurant with no menu is (P04 ticket 59). It is a place Lookup (`closed-today.ts`) with one grey `dropped` mark tagged "관정도서관 · 오늘 23:00 닫음 · 내일 07:00부터" (hours from the catalogue), `fact: true` and no actions, so there is no main button. Today's app draws a `dropped` place grey with its tag, so no app change is needed, and it reaches phones with the main server.
+- When `findLibrarySpace` says `closedToday` for a question about today, the rule has the model call `showLibrarySeats`, which draws it.
+- Not built: an offer of study places open now (it needs the opening hours in `findStudyNearby` first), and an offer of tomorrow's seats (the library books seats on the day only).
 
 ## Acceptance criteria
 
 - [x] The refusal after closing and at it, none a minute before or on another day, and a room by its own hours. (Unit tests.)
-- [x] At 23:37, `showLibrarySeats` answers `closedToday` with no card, `findLibrarySpace` marks the space `closedToday`, and `findLibraryFreeSlots` answers `closedToday`, not "no 공강". (Integration test, failing before the change.)
+- [x] At 23:37, `showLibrarySeats` answers `closedToday` with no card and draws 관정 as a grey place with its reason, `findLibrarySpace` marks the space `closedToday`, and `findLibraryFreeSlots` answers `closedToday`, not "no 공강". (Integration test, failing before the change.)
 - [x] The rule, with the eval case `library-answer-closed-for-today`. Not run: no model key on this machine.
+- [x] Today's app draws that scene as one grey mark with its tag and no pick. (App unit test, no app change.)
 - [x] Whole lint, format and types of the main server; the library integration files run locally.
 
 ## Comments
