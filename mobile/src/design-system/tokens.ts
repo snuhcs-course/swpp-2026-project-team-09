@@ -14,6 +14,7 @@
  * 2026-11-25  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { TextStyle } from 'react-native';
@@ -328,8 +329,8 @@ export const eventText = {
   // "모집 중인 파티 {n}", and "함께 갈 파티 찾기".
   party: { fontFamily: font.bold, fontSize: 15, lineHeight: 20 },
   partyFind: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 20 },
-  // The detail sheet, whose title is `text.titleLg`: a row's key and value, and the description.
-  key: { fontFamily: font.medium, fontSize: 14, lineHeight: 22 },
-  value: { fontFamily: font.semiBold, fontSize: 15, lineHeight: 22 },
-  description: { fontFamily: font.regular, fontSize: 15, lineHeight: 23 },
+  // The detail sheet: its title, the time's and the place's value, and the description.
+  sheetTitle: { fontFamily: font.bold, fontSize: 21, lineHeight: 29, letterSpacing: -0.315 },
+  value: { fontFamily: font.semiBold, fontSize: 14, lineHeight: 21 },
+  description: { fontFamily: font.regular, fontSize: 14, lineHeight: 22 },
 } as const satisfies Record<string, TextStyle>;
