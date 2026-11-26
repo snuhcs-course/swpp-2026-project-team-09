@@ -50,9 +50,10 @@ const span = z
   .strictObject({ from: z.iso.date(), to: z.iso.date() })
   .refine(({ from, to }) => from <= to, 'Expected from before to');
 
-// The days the hours depend on, each known over its own span (the sources differ): the term's vacations, from the
-// university's 학사일정, and the public holidays with 설·추석 apart, from the official list. A day outside a span is not
-// known to be a vacation day, or a holiday.
+// The days the hours depend on: the term's vacations, from the university's 학사일정, known over their own span (a day
+// outside it may be in term or in a vacation); and the public holidays with 설·추석 apart, each with the rule that makes
+// it a holiday and the page that states its date, filled over `filled` (P10 ticket 01: a day outside it, or not
+// listed, reads as a regular day, and a test fails once today passes its end, so that the list is filled again).
 const termsSchema = z
   .strictObject({
     known: span.nullable(),
@@ -67,13 +68,25 @@ const termsSchema = z
     'Expected vacations that do not overlap',
   );
 
-const holidaysSchema = z.strictObject({
-  known: span.nullable(),
-  dates: z.array(z.iso.date()),
-  // 설 and 추석, with the days before and after.
-  lunar: z.array(z.iso.date()),
-  source: z.url({ protocol: /^https?$/u }).nullable(),
+const holidaySchema = z.strictObject({
+  date: z.iso.date(),
+  name: text,
+  // "관공서의 공휴일에 관한 규정 제3조제1항제1호", with the lunar date read where it is one.
+  rule: text,
+  source: z.url({ protocol: /^https?$/u }),
 });
+
+const holidaysSchema = z
+  .strictObject({
+    filled: span,
+    dates: z.array(holidaySchema),
+    // 설 and 추석, with the days before and after.
+    lunar: z.array(holidaySchema),
+  })
+  .refine(
+    ({ filled, dates, lunar }) => [...dates, ...lunar].every(({ date }) => filled.from <= date && date <= filled.to),
+    'Expected every holiday within filled',
+  );
 
 export const calendarSchema = z.strictObject({ terms: termsSchema, holidays: holidaysSchema, note: text.nullable() });
 
@@ -131,21 +144,20 @@ function weeksOf(schedule: Schedule, terms: Calendar['terms'], date: string): We
   return [terms.vacations.some(({ from, to }) => from <= date && date <= to) ? schedule.vacation : schedule.week];
 }
 
-// The hours of each way a day may be, as far as the calendar knows.
+// The hours of each way a day may be, as far as the calendar knows: in term or in a vacation when the terms do not place
+// it, and a holiday, 설·추석 or a regular day as the list has it.
 function readingsOf(schedule: Schedule, { terms, holidays }: Calendar, date: string): Hours[] {
   const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
   const regular = weekday === 0 ? 'sunday' : weekday === 6 ? 'saturday' : 'weekday';
-  const known = within(holidays.known, date);
-  return weeksOf(schedule, terms, date).flatMap((week) => {
-    const asHoliday = schedule.holiday === null ? null : week[schedule.holiday];
-    if (!known) {
-      // A day the holiday list does not cover may be a holiday, or 설 or 추석.
-      return [week[regular], asHoliday, schedule.lunarHolidays];
+  const listed = (days: readonly { date: string }[]): boolean => days.some((day) => day.date === date);
+  return weeksOf(schedule, terms, date).map((week) => {
+    if (listed(holidays.lunar)) {
+      return schedule.lunarHolidays;
     }
-    if (holidays.lunar.includes(date)) {
-      return [schedule.lunarHolidays];
+    if (listed(holidays.dates)) {
+      return schedule.holiday === null ? null : week[schedule.holiday];
     }
-    return [holidays.dates.includes(date) ? asHoliday : week[regular]];
+    return week[regular];
   });
 }
 
