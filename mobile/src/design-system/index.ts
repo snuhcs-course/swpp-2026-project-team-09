@@ -41,6 +41,7 @@ export { Icon, ICON_NAMES, iconOrFlag, type IconName } from './icon';
 export { ListRow, RoundIcon, SectionHeader } from './list-row';
 export {
   ANSWER_SYMBOL_BOX,
+  CAPSULE,
   type AnswerLabel,
   answerLabelBox,
   type AnswerSymbol,

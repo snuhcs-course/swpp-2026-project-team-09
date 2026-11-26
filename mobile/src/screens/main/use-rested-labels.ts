@@ -71,10 +71,10 @@ function looksOf(drawing: AnswerDrawing | null | undefined): MarkerLook[] {
 // The drawing the map shows. One made from the same answer's drawing as the one shown (`base`, `looksKey` of the
 // drawing the camera moves for) with other looks, as when its labels are placed again at another view, waits, the
 // drawing before it shown, until every picture of it is made or will not be (`useLooksSettled`), however long that
-// takes: a mark's dot and its tag are one picture, so every mark changes in the same frame, none shows its number twice
-// or not at all, and none leaves the map while its new picture is on its way. A look already made is the same picture
-// again. Any other drawing is shown at once. `looks` are asked for beside it, after its own pictures (P04 ticket 81),
-// so that a change of drawing never waits for a picture. `view` is the view `next` was placed at.
+// takes: every mark changes in the same frame, a candidate's round with its minutes (P04 ticket 83), so that none shows
+// its number twice or not at all, and none leaves the map while its new picture is on its way. A look already made is
+// the same picture again. Any other drawing is shown at once. `looks` are asked for beside it, after its own pictures
+// (P04 ticket 81), so that a change of drawing never waits for a picture. `view` is the view `next` was placed at.
 export function useMadeDrawing(
   base: string,
   next: AnswerDrawing | null,

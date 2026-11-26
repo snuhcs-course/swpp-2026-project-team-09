@@ -6,6 +6,7 @@
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { LatLng } from '@/api/types';
@@ -97,8 +98,9 @@ interface Laid {
   box: ViewArea;
 }
 
+// A meal candidate's minutes capsule stays at its round: it never moves to share an edge (P04 ticket 83).
 function laidOut(view: LabelView, position: LatLng, label: AnswerLabel | null): Laid | null {
-  if (label?.side !== 'left' && label?.side !== 'right') {
+  if ((label?.side !== 'left' && label?.side !== 'right') || label.tone === 'minutes') {
     return null;
   }
   const { x, y } = inView(position, view.camera, view.size);

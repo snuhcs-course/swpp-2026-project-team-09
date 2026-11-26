@@ -139,6 +139,20 @@ describe("a look's anchor as shares of its box", () => {
     expect(anchor.y).toBeCloseTo(share.y, 10);
   });
 
+  // P04 ticket 83: the centre of the capsule's near end, where the candidate's round stands, 13 from that end.
+  it.each([
+    ['right', 13 / 70],
+    ['left', 1 - 13 / 70],
+  ] as const)("is the round's centre in a candidate's minutes capsule running to the %s", (side, x) => {
+    const minutes: MarkerLook = {
+      kind: 'answer',
+      symbol: null,
+      label: { side, tone: 'minutes', title: '19분', line: null, number: null },
+    };
+
+    expect(anchorShare(minutes, { width: 70, height: 26 })).toEqual({ x, y: 0.5 });
+  });
+
   it('is the middle of an answer look without a label', () => {
     expect(anchorShare({ ...FACE, label: null }, { width: 36, height: 36 })).toEqual({ x: 0.5, y: 0.5 });
   });

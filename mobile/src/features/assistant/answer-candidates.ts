@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-22  Opus 5.5   prompted by fyoon46
+ * 2026-11-26  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import type { Cuisine, MapScene, Plan } from '@/api/assistant-types';
@@ -60,17 +61,20 @@ function recededDraft(plan: Plan, { place, tag }: MapScene['places'][number]): D
   };
 }
 
-// A meal answer's candidate (the answer screen's redesign, board E1): a small tag of its number and the walking it adds
-// to the User's day ("26분"), or its arrival time when that walking is not known. A screen reader reads its name too.
+// A meal answer's candidate (the answer screen's redesign, board E1): its numbered round and the walking it adds to the
+// User's day ("26분"), or its arrival time when that walking is not known, in a capsule beside the round (P04 ticket
+// 83). A screen reader reads its name too.
 function mealDraft(plan: Plan, number: number, { place, tag }: MapScene['places'][number]): Draft {
   const title = tag ?? place.label;
   const walk = addedWalk(plan);
   const value = walk === null ? koreaClock(plan.startAt) : `${String(walk)}분`;
   const said = walk === null ? `${value} 도착` : `걸음 ${value}`;
   const faded = fadedPlan(plan);
+  const round = [`후보 ${String(number)}`, title].join(' · ');
   return {
     id: `answer:candidate:${place.label}`,
-    name: [`후보 ${String(number)}`, title, said].join(' · '),
+    name: `${round} · ${said}`,
+    roundName: round,
     position: { latitude: place.latitude, longitude: place.longitude },
     planId: plan.id,
     group: 'candidate',

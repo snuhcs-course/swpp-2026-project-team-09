@@ -130,6 +130,31 @@ describe('the order an answer’s pictures are made in', () => {
   });
 });
 
+// Partitions: a board's numbered rounds, its candidates' minutes, and its other marks, asked in another order (P04
+// ticket 83). Expected values: the rounds first, by number, then the minutes, then the rest.
+describe("the order a board's rounds and minutes are made in", () => {
+  it("makes the candidates' minutes after every numbered round and before the rest of the answer", async () => {
+    const round = (number: number): MarkerLook => ({
+      kind: 'answer',
+      symbol: { type: 'dot', role: 'candidate', number },
+      label: null,
+    });
+    const minutes: MarkerLook = {
+      kind: 'answer',
+      symbol: null,
+      label: { side: 'right', tone: 'minutes', title: '7분', line: null, number: null },
+    };
+    const end: MarkerLook = {
+      ...START,
+      label: { side: 'left', tone: 'meeting', title: '15:30 302동', line: null, number: null },
+    };
+    await render(<Asks looks={[end, minutes, round(9), round(8)]} />);
+
+    expect(onStage()).toEqual([round(8), round(9), minutes].map((look) => lookName(look)));
+    await makeAll();
+  });
+});
+
 // Partitions: before the everyday map has rested, and after. Expected values: the numbered dots of 1 to 12 and a stop's.
 describe('the numbered dots made ahead on the everyday map', () => {
   it('makes none before the map has rested, then every dot, so a first answer finds its dots made', async () => {
