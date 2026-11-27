@@ -96,7 +96,6 @@ const KEPT_ICONS: Partial<Record<KeptKind, NoticeView['icon']>> = {
   'join-cancelled': 'users',
   'invitation-cancelled': 'calendar',
   'became-leader': 'user',
-  'party-activated': 'pin',
 };
 
 // `ahead` while the time is still to come, as the main server reads no clock.
