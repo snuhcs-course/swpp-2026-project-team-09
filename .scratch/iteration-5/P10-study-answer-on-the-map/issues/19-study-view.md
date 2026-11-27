@@ -2,7 +2,7 @@
 
 Parent: [P10 spec](../spec.md)
 Status: ready-for-agent
-Pull request: none yet
+Pull request: see the P10-19 PR
 Blocked by: 18; the main server's 24 for the button
 
 Native files: none. Releases: an app OTA update, though no answer reaches it until the app says `study-plan` (ticket 23).
@@ -37,3 +37,8 @@ The approved board's ③ ("공부할 곳 후보 화면", 2026-11-27): a press on
 ## Comments
 
 - The main server made a Quest only of a meal's, a meet's, an events' or a new recruiting Quest's Plan, and refused a study Plan with 400 `PLAN_KIND`. Its ticket 24 (PR #677) takes a study Plan alone; this PR merges after it.
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 35 minutes, an estimate, in one session (the view, the button, the restricted rows, and its part of the emulator pictures).
+- Tokens, estimated as this ticket's share of that session: input 36M, of which 35.9M cache reads, 0.15M cache writes and under 1k uncached; output 55k.
