@@ -11,6 +11,16 @@
 
 import { type Card } from './card-address.js';
 
+// A 파티 gone by the Leader's doing: ended, told to each other member and to whoever waited on it, or the User removed.
+export type GoneKind = 'party-ended' | 'party-removed' | 'join-cancelled' | 'invitation-cancelled';
+
+export interface PartyGone {
+  kind: GoneKind;
+  questId: string;
+  questTitle: string;
+  leaderName: string;
+}
+
 // The facts of each kind, from which the service writes the words. The kinds are a closed list.
 export type Told =
   | { kind: 'accepted'; questId: string; questTitle: string; friendId: string; friendName: string }
@@ -20,6 +30,7 @@ export type Told =
   | { kind: 'join-declined'; questId: string; questTitle: string; leaderName: string }
   // The requests to join that wait for the Leader: the newest one's name, and how many wait in all.
   | { kind: 'join-asked'; questId: string; questTitle: string; name: string; waiting: number }
+  | PartyGone
   // Given for a Plan taken alone: `toward`, the next item the walk is for, "13:00 수업"; `by`, a way by shuttle.
   | {
       kind: 'leave-by';
