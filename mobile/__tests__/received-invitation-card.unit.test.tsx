@@ -3,6 +3,7 @@
  *
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { render, screen, userEvent, within } from '@testing-library/react-native';
@@ -44,6 +45,14 @@ describe('the card of a received invitation', () => {
     expect(screen.getByText('유상의 파티 초대')).toBeVisible();
     expect(screen.getByTestId('invitation-title')).toHaveTextContent('12:33 학생회관식당에서 식사');
     expect(screen.getByText('유상과 함께')).toBeVisible();
+  });
+
+  it('names the Leader who sent it, who may no longer lead the 파티', async () => {
+    await show({
+      card: { ...INVITATION_CARD, invitedBy: { id: 'inviter', name: '한도경', department: '산업공학과' } },
+    });
+
+    expect(screen.getByText('한도경의 파티 초대')).toBeVisible();
   });
 
   it("shows the way's lines as the server wrote them, and the steps in order, numbered from 1", async () => {

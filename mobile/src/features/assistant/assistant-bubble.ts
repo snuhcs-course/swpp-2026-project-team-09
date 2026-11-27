@@ -3,6 +3,7 @@
  *
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-27  Opus 5.5   prompted by fyoon46
  * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
@@ -41,7 +42,20 @@ export async function answerTo(messages: ChatMessage[], context: RequestContext)
     const offered = offers === undefined || offers.length === 0 ? {} : { offers };
     const stepped = steps === undefined || steps.length < 2 ? {} : { steps };
     const keyed = { ...answersOf(reply), ...stepped };
-    return { role: 'assistant', text, cards, mapButtons, proposal, failure: null, ...drawn, ...offered, ...keyed };
+    // The conversation's Classes left out, which later requests send (P01 ticket 40).
+    const kept = reply.skipped === undefined ? {} : { skipped: reply.skipped };
+    return {
+      role: 'assistant',
+      text,
+      cards,
+      mapButtons,
+      proposal,
+      failure: null,
+      ...drawn,
+      ...offered,
+      ...keyed,
+      ...kept,
+    };
   } catch (error) {
     const failure = error instanceof ApiError && error.status === 429 ? 'usedUp' : 'unavailable';
     return { role: 'assistant', text: FAILURE_TEXT[failure], cards: [], mapButtons: [], proposal: null, failure };

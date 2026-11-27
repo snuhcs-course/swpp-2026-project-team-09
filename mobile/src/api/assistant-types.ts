@@ -20,6 +20,7 @@
 
 import type { PersonConstraint } from './constraint-types';
 import type { TimeBand } from './time-band-types';
+import type { LeftOutClass } from './left-out-types';
 import type { LibraryCard } from './library-card-types';
 import type { Lookup } from './lookup-types';
 import type { MealPrice, MeetInput } from './meet-plan-types';
@@ -204,6 +205,8 @@ export interface RequestContext extends WithLocationMissing {
   // and 74 refuses them.
   answers?: PlanInput[];
   steps?: ReplyStep[];
+  // The User's Classes the conversation leaves out, as the latest reply gave them (P01 ticket 40). Left out for none.
+  skipped?: LeftOutClass[];
 }
 
 // The conditions of a plan: what a recalculation needs, and nothing the server can read itself.
@@ -428,8 +431,11 @@ export interface AssistantReply extends WithRefusal {
   // The answer on screen leaves the map, with its time card and button: the User asked for another plan, or something
   // else, and nothing could be drawn for it (P05 ticket 55). A server before it leaves it out.
   clears?: true;
+  // The conversation's Classes left out (P01 ticket 40), which the next requests send. A server before it leaves it out.
+  skipped?: LeftOutClass[];
 }
 
 export type { AskOffer, ReplyOffer } from './reply-offer-types';
 
 export type { BandRules, TimeBand } from './time-band-types';
+export type { LeftOutClass } from './left-out-types';

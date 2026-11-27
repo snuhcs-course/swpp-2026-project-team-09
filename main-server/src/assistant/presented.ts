@@ -101,3 +101,12 @@ export function reviseAnswer(presented: Drawn, change: (answer: AnswerReply) => 
   presented.answer = changed;
   presented.answers = at === -1 ? withAnswer(answers, changed) : answers.with(at, changed);
 }
+
+// A request's answer planned again by the server, such as a step set out from the one before it (P05 ticket 74): in its
+// place in the answers, and in the one slot when that holds the same request.
+export function settleAnswer(presented: Drawn, answer: AnswerReply): void {
+  presented.answers = withAnswer(presented.answers ?? [], answer);
+  if (presented.answer !== null && sameRequest(presented.answer.input, answer.input)) {
+    presented.answer = answer;
+  }
+}

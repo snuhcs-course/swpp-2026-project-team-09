@@ -48,7 +48,8 @@ export function replyBody(
   };
 }
 
-const keyed = (answer: AnswerReply): AnswerReply => ({ ...answer, key: requestKey(answer.input) });
+// The key the steps gave the answer, the one its request had on screen (P05 ticket 74), else its request's own.
+const keyed = (answer: AnswerReply): AnswerReply => ({ ...answer, key: answer.key ?? requestKey(answer.input) });
 
 // The key of the last answer that holds the plan: the one drawn after any other of the same Restaurant or place.
 function holding(answers: readonly AnswerReply[], planId: string): string | null {
