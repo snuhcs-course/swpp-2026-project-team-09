@@ -15,10 +15,9 @@
 
 import { z } from 'zod';
 import { CUISINE_WORD_LIST, type CuisineWord } from '../../menus/cuisine-words.js';
-import { type AnswerReply, type MealInput, type ReplyStep, type RequestContext } from '../dto/answer.dto.js';
+import { type AnswerReply, type MealInput, type RequestContext } from '../dto/answer.dto.js';
 import { defineTool, type Presented, type Tool, type ToolContext } from '../feature.js';
 import { presentAnswer, reviseAnswer, takeMap, withdrawAnswer } from '../presented.js';
-import { afterEarlierSteps } from '../steps/plan-steps.js';
 import { type FoundIds, type FoundKind } from '../found-ids.js';
 import { mealByClock } from '../free-time/meal-fit.js';
 import { clockTime, dateInput, outOfReach, outOfReachDay } from '../free-time/tool-parts.js';
@@ -273,8 +272,10 @@ async function plannedFor(
 type MealPlans = Pick<MealPlanService, 'asked' | 'planned' | 'restaurantPlaceId'> &
   Partial<Pick<MealPlanService, 'classesOn'>>;
 
-// `earlier`: the steps shown before the meal in this message, which it sets out from (P03).
-export function planMeal(plans: MealPlans, earlier: (context: ToolContext) => readonly ReplyStep[] = () => []): Tool {
+// The meal's conditions set out from the step before it among those shown so far in this message (P03), or as they are.
+type StartAfter = (input: MealInput, context: ToolContext) => Promise<MealInput>;
+
+export function planMeal(plans: MealPlans, startAfter: StartAfter = (asked) => Promise.resolve(asked)): Tool {
   return defineTool({
     description:
       "Plans a meal for the User alone or with Friends on a day from today to a week ahead. The server decides the Restaurant, when everyone is there, how long they can eat, and where they meet on the way, those with 30 minutes for everyone first, each the least travel for everyone first, on foot or by the shuttle, (to the Restaurant and on to each one's next item), and the app draws the plans on the map. Answers result 'planned' with the meal and the plans in order, each with its restaurant, its menu for the meal and closesAt, its price as the app's list writes it, start, end, togetherMinutes, meeting, and each person's way, and the Restaurants dropped, or result 'none' with the meal and the reason.",
@@ -306,7 +307,7 @@ export function planMeal(plans: MealPlans, earlier: (context: ToolContext) => re
         ...(skip.ids.length === 0 ? {} : { skipped: skip.ids }),
       };
       const kind = planInput.cuisine ?? null;
-      const words = await plannedFor(plans, afterEarlierSteps(planInput, earlier(toolContext)), {
+      const words = await plannedFor(plans, await startAfter(planInput, toolContext), {
         toolContext,
         planInput,
         kind,

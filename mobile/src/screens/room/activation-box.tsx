@@ -6,17 +6,20 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-15  Opus 5.5   prompted by fyoon46
  * 2026-11-15  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Button, color, font, Icon, radius, space, SwitchRow } from '@/design-system';
-import { useMasterSwitch } from '@/features/sharing/use-master-switch';
-import type { OtherParty, RoomView } from '@/features/quests/room-adapter';
+import { Avatar, Button, cardStyles, color, font, Icon, shadow, space } from '@/design-system';
+import type { ActivationView, PartyPerson, RoomView } from '@/features/quests/room-adapter';
 import { opensParty } from '@/features/quests/rules';
 import { myUserId } from '@/auth/sign-in';
-import { MasterOffLine } from '../master-off-line';
+import { LiveDot } from '../party/live-dot';
 import type { Ask } from './confirm-sheet';
+import { ACTIVATION_HELP, HelpButton } from './help-bubble';
+import { leaveAsk } from './party-asks';
+import { type PartyEntry, usePartyEntry } from './use-party-entry';
 import type { RoomActions } from './use-room-actions';
 
 interface ActivationBoxProps {
@@ -25,234 +28,175 @@ interface ActivationBoxProps {
   onAsk: (ask: Ask) => void;
 }
 
-// The question before leaving the 활성화, also asked from the map for a Party tied to no Quest.
-export function leaveAsk(onConfirm: () => void): Ask {
-  return {
-    title: '활성화에서 나갈까요?',
-    body: '내 위치 공유가 멈추고 멤버 위치도 볼 수 없어요.\n파티에는 그대로 남아요.',
-    confirm: '나가기',
-    danger: true,
-    onConfirm,
-  };
+interface Steps extends ActivationBoxProps {
+  entry: PartyEntry;
 }
 
-// The frame's words for the other Party: the User leaves it, or ends the one the User switched on (leads).
-function switchLine(otherParty: OtherParty | null): string {
-  if (otherParty === null) {
-    return '';
-  }
-  const { title, leads } = otherParty;
-  return `\n한 번에 한 파티에만 참여할 수 있어요. ${
-    leads ? `내가 켠 ‘${title}’ 활성화는 꺼져요.` : `지금 참여 중인 ‘${title}’ 활성화에서는 나가게 돼요.`
-  }`;
-}
-
-// How the User gets out of the other Party first: `end` for one the User leads, as the sheet says.
-export function leavingOf(otherParty: OtherParty | null): boolean | 'end' {
-  if (otherParty === null) {
-    return false;
-  }
-  return otherParty.leads ? 'end' : true;
-}
-
-// The question before entering a Party while the User is in another, also asked from 내 파티, which names the other
-// Party by its title alone.
-export function joinAsk(title: string, other: string | OtherParty, onConfirm: () => void): Ask {
-  const otherParty = typeof other === 'string' ? { title: other, leads: false } : other;
-  return {
-    title: `‘${title}’ 활성화에 참여할까요?`,
-    body: `참여한 멤버끼리 서로 위치를 볼 수 있어요.${switchLine(otherParty)}`,
-    confirm: '나가고 참여',
-    danger: false,
-    onConfirm,
-  };
-}
-
-const SWITCH_OFF_LINE = '\n내 정보에서 위치 공유를 켜야 멤버에게 내 위치가 보여요';
-
-const TONES = {
-  none: { ground: color.surface, edge: color.border, round: color.snuBlue, width: 1 },
-  in: { ground: '#EAF6F0', edge: '#9FD4BD', round: color.live, width: 1 },
-  waiting: { ground: color.blue50, edge: color.snuBlue, round: color.snuBlue, width: 2 },
-  declined: { ground: '#F0F2F6', edge: '#D8DCE5', round: color.inkMuted, width: 1 },
-} as const;
-
-interface Shown {
-  title: string;
-  sub: string;
-  buttons: { label: string; variant: 'primary' | 'secondary' | 'danger'; onPress: () => void }[];
-}
-
-type ShownButton = Shown['buttons'][number];
-
-// The question before opening the Quest's Party, `others` being its other Holders, also asked from 알림.
-export function openAsk(
-  others: number,
-  otherParty: OtherParty | null,
-  masterSwitch: boolean,
-  onConfirm: () => void,
-): Ask {
-  const notice = others > 0 ? `멤버 ${others}명에게 알림이 가요. ` : '';
-  return {
-    title: '파티를 활성화할까요?',
-    body: `${notice}수락한 멤버끼리만 서로 위치를 볼 수 있어요.${switchLine(otherParty)}${masterSwitch ? '' : SWITCH_OFF_LINE}`,
-    confirm: '활성화',
-    danger: false,
-    onConfirm,
-  };
-}
-
-function openButton({ room, actions, onAsk }: ActivationBoxProps, masterSwitch: boolean): ShownButton {
-  const { quest, otherParty } = room;
-  const others = quest.holders.length - 1;
-  return {
-    label: '파티 활성화',
-    variant: 'primary',
-    onPress: () => {
-      onAsk(
-        openAsk(others, otherParty, masterSwitch, () => void actions.openParty(quest, others, leavingOf(otherParty))),
-      );
-    },
-  };
-}
-
-// The Leader of the Party ends it for everyone; a member leaves it.
-function outButton({ actions, onAsk }: ActivationBoxProps, leadsParty: boolean): ShownButton {
-  if (!leadsParty) {
-    return {
-      label: '활성화에서 나가기',
-      variant: 'danger',
-      onPress: () => {
-        onAsk(leaveAsk(() => void actions.leaveParty()));
-      },
-    };
-  }
-  return {
-    label: '활성화 끄기',
-    variant: 'danger',
-    onPress: () => {
-      onAsk({
+// The Leader of the Party ends it for everyone; a member leaves it. `small`: the way out of the not-in card, under its
+// main button.
+function outButton({ actions, onAsk }: ActivationBoxProps, leadsParty: boolean, small = false): ReactElement {
+  const ask: Ask = leadsParty
+    ? {
         title: '활성화를 끌까요?',
         body: '모든 멤버의 위치 공유가 멈춰요.\n파티는 그대로 남아요.',
         confirm: '끄기',
         danger: true,
         onConfirm: () => void actions.endParty(),
-      });
-    },
-  };
-}
-
-// `참여` enters at once, and asks first when the User must leave another Party for it.
-function joinButton({ room, actions, onAsk }: ActivationBoxProps, partyId: string, title: string): ShownButton {
-  const { otherParty } = room;
-  return {
-    label: '참여',
-    variant: 'primary',
-    onPress: () => {
-      if (otherParty === null) {
-        void actions.joinParty(partyId, false);
-        return;
       }
-      onAsk(joinAsk(title, otherParty, () => void actions.joinParty(partyId, leavingOf(otherParty))));
-    },
-  };
-}
-
-function useShown(props: ActivationBoxProps): Shown {
-  const masterSwitch = useMasterSwitch().on;
-  const { activation, quest } = props.room;
-  if (activation.state === 'none') {
-    return {
-      title: '아직 활성화하지 않았어요',
-      sub: '켜면 멤버에게 알림이 가고, 수락한 멤버끼리 위치를 공유해요',
-      buttons: opensParty(quest, myUserId()) ? [openButton(props, masterSwitch)] : [],
-    };
-  }
-  if (activation.state === 'in') {
-    return {
-      title: '활성화 중',
-      sub:
-        activation.sharing > 1
-          ? `${activation.sharing}명이 서로 위치를 공유하고 있어요`
-          : '멤버의 응답을 기다리는 중이에요',
-      buttons: [outButton(props, activation.leadsParty)],
-    };
-  }
-  const join = joinButton(props, activation.partyId, activation.title);
-  if (activation.state === 'declined') {
-    return { title: '활성화 중인 파티예요', sub: '나는 참여하지 않는 중 · 위치를 공유하지 않아요', buttons: [join] };
-  }
-  const decline: ShownButton = {
-    label: '거절',
-    variant: 'secondary',
-    onPress: () => {
-      props.actions.declineParty(activation.partyId);
-    },
-  };
-  return {
-    title: activation.leader === null ? '파티가 활성화됐어요' : `${activation.leader}님이 파티를 활성화했어요`,
-    sub: '수락하면 참여한 멤버끼리 위치를 공유해요',
-    buttons: [decline, join],
-  };
-}
-
-// The box `파티 활성화` of the frame's room, in one of its four states.
-export function ActivationBox(props: ActivationBoxProps): ReactElement {
-  const { room, actions } = props;
-  const { title, sub, buttons } = useShown(props);
-  const masterOff = useMasterSwitch().off;
-  const tone = TONES[room.activation.state];
+    : leaveAsk(() => void actions.leaveParty());
   return (
-    <View
-      accessibilityLabel="파티 활성화"
-      style={[styles.box, { backgroundColor: tone.ground, borderColor: tone.edge, borderWidth: tone.width }]}
+    <Button
+      centred={small}
+      full={!small}
+      onPress={() => {
+        onAsk(ask);
+      }}
+      variant={small ? 'ghost' : 'danger'}
     >
-      <View style={styles.head}>
-        <View style={[styles.round, { backgroundColor: tone.round }]}>
-          <Icon color={color.onPrimary} name="pin" size={18} />
-        </View>
-        <View style={styles.words}>
-          <Text style={[styles.title, room.activation.state === 'in' && styles.titleIn]}>{title}</Text>
-          <Text style={styles.sub}>{sub}</Text>
-        </View>
+      {leadsParty ? '활성화 끄기' : '활성화에서 나가기'}
+    </Button>
+  );
+}
+
+// The faces of those in, overlapping, and "이서연, 나, 박지호 참여 중".
+function People({ people }: { people: readonly PartyPerson[] }): ReactElement | null {
+  if (people.length === 0) {
+    return null;
+  }
+  const words = `${people.map(({ name, me }) => (me ? '나' : name)).join(', ')} 참여 중`;
+  return (
+    <View accessibilityLabel={words} accessible style={styles.people}>
+      <View style={styles.faces}>
+        {people.map(({ id, name }, index) => (
+          <View key={id} style={[styles.face, index > 0 && styles.overlap]}>
+            <Avatar name={name} size="xs" />
+          </View>
+        ))}
       </View>
-      {room.activation.state === 'in' ? (
-        <View>
-          <MasterOffLine />
-          {/* Off and disabled while the Master Switch is off; the stored value comes back with it. */}
-          <SwitchRow
-            disabled={masterOff}
-            label="내 위치 공유"
-            onValueChange={(on) => void actions.setSharing(on)}
-            value={!masterOff && room.activation.switchOn}
-          />
-        </View>
-      ) : null}
-      {buttons.length === 0 ? null : (
-        <View style={styles.buttons}>
-          {buttons.map(({ label, variant, onPress }) => (
-            <View key={label} style={styles.button}>
-              <Button full onPress={onPress} variant={variant}>
-                {label}
-              </Button>
-            </View>
-          ))}
-        </View>
-      )}
+      <Text numberOfLines={2} style={styles.peopleWords}>
+        {words}
+      </Text>
     </View>
   );
 }
 
-const ROUND = 36;
+type Running = Exclude<ActivationView, { state: 'none' }>;
+
+// `활성화 끄기` or `활성화에서 나가기` for the User in; `위치 공유 켜고 참여` for one in whom nobody sees, with a small way out
+// under it; else `나도 참여`.
+function cardButton(props: Steps & { activation: Running }): ReactElement {
+  const { activation } = props;
+  if (activation.state === 'in' && activation.joined) {
+    return outButton(props, activation.leadsParty);
+  }
+  if (activation.state === 'in') {
+    const { switchOn, leadsParty } = activation;
+    return (
+      <View style={styles.notIn}>
+        <Button
+          full
+          onPress={() => {
+            props.entry.shareAgain(switchOn);
+          }}
+        >
+          위치 공유 켜고 참여
+        </Button>
+        {outButton(props, leadsParty, true)}
+      </View>
+    );
+  }
+  const { partyId, title } = activation;
+  return (
+    <Button
+      full
+      onPress={() => {
+        props.entry.join(partyId, title, props.room.otherParty);
+      }}
+    >
+      나도 참여
+    </Button>
+  );
+}
+
+// The white card of a running Party: the red light, those in, and the User's way in or out. Outlined as 내 파티's
+// card while the User is in, whom nobody sees while a switch is off.
+function LiveCard(props: Steps & { activation: Running }): ReactElement {
+  const { activation } = props;
+  const member = activation.state === 'in';
+  const joined = member && activation.joined;
+  return (
+    <View style={[cardStyles.card, styles.card, joined && styles.live]} testID="activation-card">
+      <View style={styles.top}>
+        <LiveDot />
+        <Text style={styles.liveWords}>활성화 중</Text>
+        <View style={styles.grow} />
+        <HelpButton help={ACTIVATION_HELP} size={18} />
+      </View>
+      <People people={activation.people} />
+      {member && !joined ? (
+        <View style={styles.off}>
+          <Icon color={color.warning} name="alert" size={14} />
+          <Text style={styles.offWords}>전체 위치 공유가 꺼져 있어서 참여하지 않은 상태예요</Text>
+        </View>
+      ) : null}
+      {cardButton(props)}
+    </View>
+  );
+}
+
+// The room's 활성화: `파티 활성화` with its ? while no Party runs for the Quest, else the card of the running one.
+export function ActivationBox(props: ActivationBoxProps): ReactElement | null {
+  const { room } = props;
+  const entry = usePartyEntry(props.onAsk);
+  const steps: Steps = { ...props, entry };
+  const { activation } = room;
+  if (activation.state === 'none' && !opensParty(room.quest, myUserId())) {
+    return null;
+  }
+  return (
+    <View accessibilityLabel="파티 활성화">
+      {activation.state === 'none' ? (
+        <View style={styles.openRow}>
+          <View style={styles.grow}>
+            <Button
+              full
+              icon="pin"
+              onPress={() => {
+                entry.open(room.quest, room.otherParty, true);
+              }}
+            >
+              파티 활성화
+            </Button>
+          </View>
+          <HelpButton help={ACTIVATION_HELP} size={20} />
+        </View>
+      ) : (
+        <LiveCard {...steps} activation={activation} />
+      )}
+      {entry.explanation}
+    </View>
+  );
+}
+
+const FACE_RING = 2;
 
 const styles = StyleSheet.create({
-  box: { gap: space[3], padding: 14, borderRadius: radius.lg },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  round: { alignItems: 'center', justifyContent: 'center', width: ROUND, height: ROUND, borderRadius: radius.full },
-  words: { flex: 1 },
-  title: { fontFamily: font.bold, fontSize: 15, lineHeight: 22, color: color.ink },
-  titleIn: { color: color.live },
-  sub: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: color.inkMuted },
-  buttons: { flexDirection: 'row', gap: space[2] },
-  button: { flex: 1 },
+  openRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  grow: { flex: 1 },
+  card: { gap: space[3] },
+  notIn: { gap: space[1] },
+  live: {
+    borderWidth: 2,
+    borderColor: color.snuBlue,
+    boxShadow: `0 0 0 4px ${color.blue100}, ${shadow.float}`,
+  },
+  top: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  liveWords: { fontFamily: font.bold, fontSize: 15, lineHeight: 22, color: color.ink },
+  people: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  faces: { flexDirection: 'row' },
+  face: { borderWidth: FACE_RING, borderColor: color.surface, borderRadius: 999 },
+  overlap: { marginLeft: -6 - FACE_RING },
+  peopleWords: { flex: 1, fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.inkMuted },
+  off: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
+  offWords: { flex: 1, fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: color.inkMuted },
 });

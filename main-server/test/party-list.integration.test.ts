@@ -3,6 +3,7 @@
  *
  * 2026-10-05  Opus 5.5   prompted by fyoon46
  * 2026-10-06  Fable 5.1  prompted by fyoon46
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -13,6 +14,7 @@ import { PrismaClient } from '../src/generated/prisma/client.js';
 import { CLOCK, type Clock } from '../src/quests/clock.js';
 import { befriend, signInUser } from './friends.js';
 import {
+  enter,
   getInvitations,
   getMyParty,
   getSentJoinRequests,
@@ -137,7 +139,43 @@ describe('The list of Parties a User can see, for a Holder', () => {
 
     expect(await listedIds(app, reader)).toEqual([closedId, approvalId, openId]);
   });
+});
 
+describe('The members the list of Parties names', () => {
+  it('names the members of a Party whose Quest the User holds, in the order they entered', async () => {
+    const [reader, leader, member] = await Promise.all([
+      signInUser(app),
+      signInUser(app, { name: '홍길동', department: '컴퓨터공학부' }),
+      signInUser(app, { name: '김철수', department: '경영학과' }),
+    ]);
+    const questId = await sharedQuest(app, leader, [member, reader]);
+    const partyId = await partyOf(app, leader, { questId });
+    await enter(app, member, partyId);
+
+    expect((await listParties(app, reader)).body).toEqual([
+      expect.objectContaining({
+        id: partyId,
+        holdsQuest: true,
+        members: [
+          { id: leader.id, name: '홍길동' },
+          { id: member.id, name: '김철수' },
+        ],
+      }),
+    ]);
+  });
+
+  it('names no members of a Friend’s Party whose Quest the User does not hold', async () => {
+    const [reader, leader, friend] = await Promise.all([signInUser(app), signInUser(app), signInUser(app)]);
+    await befriend(app, reader, friend);
+    await partyOfHolders(app, leader, [friend]);
+
+    const [party] = z.array(z.unknown()).parse((await listParties(app, reader)).body);
+    expect(party).toMatchObject({ holdsQuest: false, friends: [expect.objectContaining({ id: friend.id })] });
+    expect(party).not.toHaveProperty('members');
+  });
+});
+
+describe('The list of Parties a User can see, for a Holder who is a Friend', () => {
   it('has a Party once, when the User holds its Quest and a Friend is in it', async () => {
     const [reader, leader] = await Promise.all([signInUser(app), signInUser(app)]);
     await befriend(app, reader, leader);

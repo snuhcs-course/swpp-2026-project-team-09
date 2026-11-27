@@ -120,20 +120,24 @@ function isCardStep(step: ReplyStep, key: string | null): boolean {
   return key !== null && step.shows?.kind === 'card' && step.shows.key === key;
 }
 
-// Several requests as numbered flags (P04 ticket 09): the step due, or pressed, carries the seat its card offers.
+// Several requests as numbered flags (P04 ticket 09): the step due, or pressed, carries the seat its card offers; a
+// booking made carries its seat and "예약됨" whichever step is shown (P10 ticket 29).
 function stepsMade(
   { steps }: ShownSteps,
   active: number,
-  booking: { key: string | null; seat: string | null; space: LibrarySpace | null },
+  booking: { key: string | null; seat: string | null; space: LibrarySpace | null; booked: boolean },
   position: LatLng | null,
 ): Made | null {
-  const { key, seat, space } = booking;
+  const { key, seat, space, booked } = booking;
   const first = steps.find(({ place }) => place !== null)?.place;
   if (first === undefined || first === null) {
     return null;
   }
   const at = now();
-  const lines = steps.map((step, index) => stepLine(step, index === active && isCardStep(step, key) ? seat : null, at));
+  const lines = steps.map((step, index) => {
+    const card = isCardStep(step, key);
+    return stepLine(step, card && (booked || index === active) ? seat : null, at, card && booked);
+  });
   const titles = steps.map((step) => stepTitle(step, isCardStep(step, key) ? space : null));
   // The step shown opens a card only when it is the booking on screen; another step's flag makes it the step shown.
   const opens = steps.map((step, index) => index !== active || isCardStep(step, key));
@@ -179,7 +183,9 @@ function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: La
   const start = kept?.kept.slot.start ?? null;
   return useMemo((): Made | null => {
     if (steps !== null) {
-      return stepsMade(steps, activeStep, { key: booking?.card.key ?? null, seat, space }, position);
+      const booked = done !== undefined;
+      const stepSeat = booked ? (done.seatLabel ?? null) : seat;
+      return stepsMade(steps, activeStep, { key: booking?.card.key ?? null, seat: stepSeat, space, booked }, position);
     }
     if (proposal !== null) {
       const { latitude, longitude } = proposal.place;
@@ -196,7 +202,7 @@ function useMade(chat: ChatSheetControl, everyday: EverydayAvatars, position: La
     const { latitude, longitude } = booking.point;
     const scene = bookingScene(booking.point, space, line, position);
     return { source: booking, scene, setting: studySetting(start), flag: { latitude, longitude } };
-  }, [steps, activeStep, seat, proposal, cards, booking, line, space, start, position, friends]);
+  }, [steps, activeStep, seat, done, proposal, cards, booking, line, space, start, position, friends]);
 }
 
 // What the map draws of a reply the app makes the scene of: a Proposal (P04 ticket 06) or a seat card (ticket 07).

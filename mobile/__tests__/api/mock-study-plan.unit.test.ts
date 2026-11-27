@@ -4,21 +4,28 @@
  * 2026-11-27  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
-import { STUDY_PLAN_ANSWER, STUDY_PLAN_ASKED, STUDY_PLAN_REPLY } from '@/api/mock/data/study-plan-answer';
+import { ANSWER_CAPABILITIES } from '@/api/assistant-types';
+import { STUDY_PLAN_ANSWER, STUDY_PLAN_REPLY } from '@/api/mock/data/study-plan-answer';
 import { isLibraryAsk, libraryReply } from '@/api/mock/library-replies';
 
-// The mock's study answer alone (P10 ticket 17): asked in its own words until the app says `study-plan` (ticket 23),
-// with each Plan's scene as the main server draws it (`study-plan-parts.ts`).
+// The mock's study answer alone (P10 tickets 17 and 23): the app says `study-plan`, so "공부할 자리 있어?" asked without
+// a booking is the places to study, as the main server answers it (`LIBRARY_STUDY_RULES`); a seat named or asked to be
+// booked stays the seat card. Each Plan's scene is as the main server draws it (`study-plan-parts.ts`).
 
-// Partitions: the study answer's words; "공부할 자리 있어?". Expected values: the stored answer and today's seat card.
+// Partitions: where to study, asked without a booking; a reading room named; a booking asked. Expected values: the
+// stored answer and today's seat card.
 describe("the mock's answer of where to study alone", () => {
-  it('answers its own words with the places to study', () => {
-    expect(isLibraryAsk(STUDY_PLAN_ASKED)).toBe(true);
-    expect(libraryReply(STUDY_PLAN_ASKED)).toBe(STUDY_PLAN_REPLY);
+  it('is what the app says it draws', () => {
+    expect(ANSWER_CAPABILITIES).toContain('study-plan');
   });
 
-  it('keeps "공부할 자리 있어?" the seat card', () => {
-    expect(libraryReply('공부할 자리 있어?').cards[0]?.kind).toBe('library');
+  it.each(['공부할 자리 있어?', '공부할 곳 추천해 줘'])('answers "%s" with the places to study', (words) => {
+    expect(isLibraryAsk(words)).toBe(true);
+    expect(libraryReply(words)).toBe(STUDY_PLAN_REPLY);
+  });
+
+  it.each(['관정 열람실 자리 있어?', '공부할 자리 예약해 줘'])('keeps "%s" the seat card', (words) => {
+    expect(libraryReply(words).cards[0]?.kind).toBe('library');
   });
 });
 

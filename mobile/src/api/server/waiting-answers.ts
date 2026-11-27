@@ -11,6 +11,7 @@
  * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
+import type { Person } from '@/api/types';
 import type {
   FriendRequests,
   JoinRequest,
@@ -83,20 +84,30 @@ export function isNextSubQuest(value: unknown): value is NextSubQuest {
   );
 }
 
-// An invitation as the main server sends it, with when and where its Quest next meets. A main server before P06
-// ticket 24 sends no `nextSubQuest`, so that an app updated over the air before it still lists its invitations.
-type SentInvitation = Omit<QuestInvitation, 'nextSubQuest'> & { nextSubQuest?: NextSubQuest | null };
+// An invitation as the main server sends it, with when and where its Quest next meets and who sent it. A main server
+// before P06 ticket 24 sends no `nextSubQuest` and one before ticket 31 no `invitedBy`, so that an app updated over
+// the air before it still lists its invitations.
+type SentInvitation = Omit<QuestInvitation, 'nextSubQuest' | 'invitedBy'> & {
+  nextSubQuest?: NextSubQuest | null;
+  invitedBy?: Person;
+};
 
 function isSentInvitation(value: unknown): value is SentInvitation {
   const next = field(value, 'nextSubQuest');
-  return isMyJoinRequest(value) && (next === undefined || next === null || isNextSubQuest(next));
+  const invitedBy = field(value, 'invitedBy');
+  return (
+    isMyJoinRequest(value) &&
+    (next === undefined || next === null || isNextSubQuest(next)) &&
+    (invitedBy === undefined || isHolder(invitedBy))
+  );
 }
 
 export const isQuestInvitations = listOf(isSentInvitation);
 
-// An invitation without `nextSubQuest` says neither when nor where, as one whose Quest has neither.
-export function toQuestInvitation({ nextSubQuest = null, ...invitation }: SentInvitation): QuestInvitation {
-  return { ...invitation, nextSubQuest };
+// An invitation without `nextSubQuest` says neither when nor where, as one whose Quest has neither; one without
+// `invitedBy` names the Quest's Leader, as the main server does for an invitation that kept no sender.
+export function toQuestInvitation({ nextSubQuest = null, invitedBy, ...invitation }: SentInvitation): QuestInvitation {
+  return { ...invitation, nextSubQuest, invitedBy: invitedBy ?? invitation.quest.leader };
 }
 
 function isJoinRequest(value: unknown): value is JoinRequest {

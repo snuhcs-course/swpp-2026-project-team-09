@@ -3,12 +3,13 @@
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
  * 2026-11-23  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { z } from 'zod';
 import { type AnswerLine, type MapScene, type PlacePoint } from '../../assistant/dto/answer.dto.js';
 import { latitudeQuerySchema, longitudeQuerySchema } from '../../common/degrees-query.js';
-import { type QuestSummaryDto, type SubQuestDto } from '../../quests/dto/quest.dto.js';
+import { type HolderDto, type QuestSummaryDto, type SubQuestDto } from '../../quests/dto/quest.dto.js';
 
 // An invitation as the invited User opens it, declared with the same shape in the app. The gathering's and the way's
 // times are Korea time with the offset, as an answer's are; the rest as the Quests' routes give them.
@@ -16,6 +17,8 @@ export interface InvitationCardDto {
   id: string;
   sentAt: string;
   quest: QuestSummaryDto;
+  // The Leader who sent it, who may no longer lead the Quest; the Quest's Leader for one that kept no sender.
+  invitedBy: HolderDto;
   // The Leader first, then in the order they entered.
   holders: { id: string; name: string }[];
   // In the order of their starts, those without one last.

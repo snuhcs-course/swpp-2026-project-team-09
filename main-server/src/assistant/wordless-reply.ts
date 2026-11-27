@@ -4,12 +4,14 @@
  * 2026-11-22  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type Lookup } from './dto/answer.dto.js';
 import { type Presented } from './feature.js';
 import { withToward } from './gathering/answer-words.js';
-import { wordlessMealSentence } from './gathering/plan-reply.js';
+import { withoutWalkSentences, wordlessMealSentence } from './gathering/plan-reply.js';
+import { textBeside } from './refusals/refusals.js';
 import { wordlessStudySentence } from './lookup/study-plan-words.js';
 
 // What a reply says when no step of the model wrote any text: nothing beside a Lookup, whose lines the app draws as
@@ -49,3 +51,10 @@ export function wordlessText({
 // answer opened at its Restaurant, which have none by their rules, so that the real cases stand out.
 export const warnsOfNoText = ({ answer }: Presented, text: string): boolean =>
   text !== '' && answer?.opened === undefined;
+
+// The model's words as the reply says them: without the walk sentences beside a plan drawn, followed by a sentence for
+// each step the server planned into another plan than the one the model worded (P05 ticket 74), and beside a refusal.
+export const saidText = (text: string, { answer, addedWords, refusal }: Presented): string => {
+  const words = withoutWalkSentences(text, (answer?.plans.length ?? 0) > 0);
+  return textBeside([words.trim(), addedWords ?? ''].filter((part) => part !== '').join(' '), refusal);
+};

@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { INestApplication } from '@nestjs/common';
@@ -95,6 +96,7 @@ describe('The Leader inviting a Friend', () => {
           endsAt: null,
           place: null,
         },
+        invitedBy: { id: leader.id, name: '홍길동', department: '컴퓨터공학부' },
       },
     ]);
     expect((await getQuest(app, friend, questId)).status).toBe(404);
@@ -214,9 +216,10 @@ describe('Accepting an invitation', () => {
 });
 
 describe('Accepting an invitation is refused', () => {
-  it('when the Quest is full, and the invitation still waits', async () => {
+  it('when the Quest filled after the invitation, and the invitation still waits', async () => {
     const [leader, friend] = await friends();
-    const { invitationId } = await invited(leader, friend, { capacity: 1 });
+    const { questId, invitationId } = await invited(leader, friend, { capacity: 2 });
+    await setQuest(app, leader, questId, { capacity: 1 });
 
     const response = await answerInvitation(app, friend, invitationId, 'accept');
 
@@ -251,8 +254,9 @@ describe('Accepting an invitation is refused', () => {
 
   it('for a full Quest, after which it works once the Leader raises the capacity', async () => {
     const [leader, friend] = await friends();
-    const { questId, invitationId } = await invited(leader, friend, { capacity: 1 });
-    await answerInvitation(app, friend, invitationId, 'accept');
+    const { questId, invitationId } = await invited(leader, friend, { capacity: 2 });
+    await setQuest(app, leader, questId, { capacity: 1 });
+    await answerInvitation(app, friend, invitationId, 'accept').expect(409);
     await setQuest(app, leader, questId, { capacity: 2 });
 
     expect((await answerInvitation(app, friend, invitationId, 'accept')).status).toBe(201);

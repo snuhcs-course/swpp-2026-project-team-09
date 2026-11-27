@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { InvitationCard } from '@/api/invitation-card-types';
@@ -28,6 +29,11 @@ export const INVITATION_CARD: InvitationCard = {
     board: null,
     description: '',
     createdAt: '2026-11-14T13:31:24.427Z',
+  },
+  invitedBy: {
+    id: '11ca538e-e4ef-48d9-9a1f-b7160c553bee',
+    name: '유상',
+    department: '컴퓨터공학부',
   },
   holders: [
     {

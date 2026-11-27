@@ -10,6 +10,7 @@
  * 2026-11-19  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ChatCard } from '@/api/assistant-types';
@@ -82,11 +83,12 @@ export function withQuestParts(client: ApiClient, build: Build): ShownClient {
       (await client.listRecruitingQuests(filter)).map((summary) => summaryWithParts(summary, build)),
     listQuestInvitations: async () => {
       const invitations = await client.listQuestInvitations();
-      return invitations.map(({ id, quest, sentAt, nextSubQuest }) => ({
+      return invitations.map(({ id, quest, sentAt, nextSubQuest, invitedBy }) => ({
         id,
         quest: summaryWithParts(quest, build),
         sentAt,
         nextSubQuest,
+        invitedBy,
       }));
     },
     ...mockedOnly(build),

@@ -8,20 +8,20 @@
  * 2026-11-25  Opus 5.5   prompted by fyoon46
  * 2026-11-26  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by fyoon46
  ******************************************************************************/
 
 import { type ReactElement, type ReactNode, use, useState } from 'react';
-import { type LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
-import { GestureDetector } from 'react-native-gesture-handler';
-import Reanimated from 'react-native-reanimated';
+import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
+import Reanimated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import type { AnswerReply, LibrarySpace, Plan } from '@/api/assistant-types';
 import { questsQuery } from '@/api/queries';
 import type { Quest } from '@/api/types';
 import type { Lookup } from '@/api/lookup-types';
-import { color, radius, shadow, space } from '@/design-system';
-import { windowOf, withoutSkipped } from '@/features/assistant/plan-input';
+import { radius, space } from '@/design-system';
+import { windowOf } from '@/features/assistant/plan-input';
 import { bandIsFixed } from '@/features/assistant/row-four-inputs';
 import type { PlanInvitation } from '@/features/assistant/use-plan-invitation';
 import type { ShownAnswer } from '@/features/assistant/use-shown-answer';
@@ -29,21 +29,25 @@ import { koreaDayWord } from '@/korea-time';
 import type { Slot } from '@/library/cards/payloads';
 import { ANSWER_TOP, listsTop } from '../layout';
 import type { ShownBooking } from '@/features/assistant/booking-scene';
+import { leftOutOf } from '@/features/assistant/left-out';
 import type { Chat } from '@/features/assistant/use-chat';
-import { bookingKept } from '../library/booking-kept';
-import { useBookingBand } from './booking-band';
+import { bookingBarOf } from '../library/booking-kept';
+import { leftOutIdsOn, useBookingBand } from './booking-band';
 import { AddChip, BAR_ADD_HEIGHT } from './condition-chips';
 import { mealDayOf } from './meal-day';
 import { type Picking, PersonRows } from './person-rows';
-import { usePickingBar } from './pick-head';
+import { answerPickSource, usePickingBar } from './pick-head';
 import { usePickingPlace } from './picking-place';
+import { useSeatTogether } from './seat-picking';
 import { PickHint } from './sheet-hint';
 import { useFoldedHeight } from './folded-height';
 import { SheetLinkContext } from './sheet-link';
 import { TimeBand } from './time-band';
-import { STRIP_SLOP, type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
+import { type TimeCardGrip, useTimeCardGrip } from './time-card-grip';
+import { CARD_FACE, Caret, Grip, STRIP_TOP } from './time-card-strip';
 import { type BandFocus, useCorrections } from './use-corrections';
 import { addNameOf } from './who-words';
+import { restingLift, type TopStops } from './top-stops';
 
 const NO_WINDOW = { from: null, until: null };
 const NO_QUESTS: readonly Quest[] = [];
@@ -51,8 +55,6 @@ const NO_QUESTS: readonly Quest[] = [];
 // usual text size. Laid out, the chip's own width is the room, so that a larger text size widens both (P04 ticket 37):
 // the chip stands 12 from the bar's edge, 4 short of the bar's padding of 16, which is the gap before the words.
 const ADD_ROOM = 72;
-// The gap over the grip's strip, which the folded height counts (`useFoldedHeight`).
-const STRIP_TOP = space[1];
 
 function ignoreDrop(): void {
   // A Lookup's band has no handles.
@@ -74,37 +76,11 @@ interface BarProps {
   onHeight: (height: number) => void;
   // How far below its place under the pill it stands, under the bar of several requests (P04 ticket 09); left out, 0.
   offset?: number;
+  // Under the bar of several requests, where the chosen step's span is centred on that bar, as a share of its range: a
+  // caret on the card's top edge points there (P01 ticket 23). Left out, none.
+  caret?: number;
   // People are picked in its rows (P04 ticket 64), which opens it.
   picking?: Picking | null;
-}
-
-// The bar's grip in its strip, the card's whole width at its bottom (the user's phone check), under a hairline that
-// parts it from the card's content as the answer sheet's header is parted, left out when the card is tucked to the
-// strip alone. A drag anywhere on the strip moves the card between tucked, its place, and open (`useTimeCardGrip`); a
-// press opens it or folds it again, and a screen reader tucks it away or back.
-function Grip(p: { grip: TimeCardGrip; folded: boolean; onLayout: (event: LayoutChangeEvent) => void }): ReactElement {
-  const { grip, folded } = p;
-  return (
-    <GestureDetector gesture={grip.pan}>
-      <Pressable
-        accessibilityActions={grip.actions}
-        accessibilityLabel={`사람별 시간 ${folded ? '펼치기' : '접기'}`}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: !folded }}
-        hitSlop={STRIP_SLOP}
-        onAccessibilityAction={({ nativeEvent }) => {
-          grip.onAction(nativeEvent.actionName);
-        }}
-        onLayout={p.onLayout}
-        onPress={grip.toggle}
-        style={styles.strip}
-        testID="time-card-grip"
-      >
-        {grip.place === 'tucked' ? null : <View style={styles.rule} testID="time-card-rule" />}
-        <View style={styles.grip} />
-      </Pressable>
-    </GestureDetector>
-  );
 }
 
 // The rows for each person under the open card, in the room that grows as the card is pulled open.
@@ -137,7 +113,57 @@ function OpenRows(p: {
 // and the rest scrolled to (P04 ticket 61); people are picked in those rows (P04 ticket 64). A time outside that range
 // is asked for in the chat, not by a drag. Its grip also pushes it up out of the way. The height it tells is its
 // folded one: open, it lies over the map for a while.
-function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: BarProps): ReactElement {
+// Under the bar of several requests it is the top's last card (P01 ticket 22): it folds behind that bar, then takes the
+// bar up to the stage's top, its grip strip showing all the way (`top-stops.tsx`).
+function Bar(props: BarProps): ReactElement {
+  const sheet = use(SheetLinkContext);
+  return <TimeCard {...props} under={(props.offset ?? 0) > 0 ? sheet.top : undefined} />;
+}
+
+// Under the bar of several requests the card stands in a frame that starts inside that bar, under its rounded top, and
+// moves with the bar's lift: no part of the card ever shows above the bar, however tall it is (the fault P01 ticket 22
+// removes), and past its place behind the bar it goes up with the bar.
+function UnderFrame({ under, children }: { under: TopStops; children: ReactNode }): ReactElement {
+  const { top } = useSafeAreaInsets();
+  const { lift } = under;
+  const moved = useAnimatedStyle(() => ({ transform: [{ translateY: lift.value }] }));
+  const rested = { transform: [{ translateY: restingLift(under.stop, barTop(top) + under.stepsHeight) }] };
+  return (
+    <Reanimated.View style={[styles.frame, { top: frameTop(top) }, moved, rested]} testID="time-card-frame">
+      {children}
+    </Reanimated.View>
+  );
+}
+
+// "＋ 같이" at the right of the head's row, which tells its width so that the words leave it room.
+function AddSlot({ add, onWidth }: { add: ReactNode; onWidth: (width: number) => void }): ReactElement {
+  return (
+    <View
+      onLayout={({ nativeEvent }: LayoutChangeEvent) => {
+        onWidth(Math.ceil(nativeEvent.layout.width));
+      }}
+      style={styles.add}
+      testID="time-bar-add"
+    >
+      {add}
+    </View>
+  );
+}
+
+function frameTop(inset: number): number {
+  return barTop(inset) + radius.xl;
+}
+
+function TimeCard({
+  band,
+  day,
+  add = null,
+  onHeight,
+  offset = 0,
+  caret,
+  picking = null,
+  under,
+}: BarProps & { under: TopStops | undefined }): ReactElement {
   const { top } = useSafeAreaInsets();
   const [addWidth, setAddWidth] = useState(ADD_ROOM);
   const [rows, setRows] = useState(0);
@@ -145,34 +171,31 @@ function Bar({ band, day, add = null, onHeight, offset = 0, picking = null }: Ba
   const barY = barTop(top) + offset;
   const { startAt, now } = band.band;
   const sheet = use(SheetLinkContext);
-  const grip = useTimeCardGrip({ height, top: barY, rows, sheet });
+  const grip = useTimeCardGrip({ height, top: barY, rows, sheet, under });
   usePickingPlace(picking !== null, grip, sheet.high);
-  return (
-    <Reanimated.View style={[styles.bar, { top: barY }, grip.moved, grip.rested]} testID="time-bar">
-      <View onLayout={onBand} testID="time-card-head">
-        <TimeBand
-          {...band}
-          day={day ?? koreaDayWord(startAt, new Date(now))}
-          folded
-          head={{ right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
-        />
-      </View>
-      <OpenRows band={band} grip={grip} onHeight={setRows} picking={picking} />
-      {add === null ? null : (
-        <View
-          onLayout={({ nativeEvent }: LayoutChangeEvent) => {
-            setAddWidth(Math.ceil(nativeEvent.layout.width));
-          }}
-          style={styles.add}
-          testID="time-bar-add"
-        >
-          {add}
+  const card = (
+    <Reanimated.View
+      style={[styles.bar, { top: under === undefined ? barY : barY - frameTop(top) }, grip.moved, grip.rested]}
+      testID="time-bar"
+    >
+      <View style={styles.face} testID="time-card-face">
+        <View onLayout={onBand} testID="time-card-head">
+          <TimeBand
+            {...band}
+            day={day ?? koreaDayWord(startAt, new Date(now))}
+            folded
+            head={{ right: add === null ? 0 : addWidth, height: BAR_ADD_HEIGHT }}
+          />
         </View>
-      )}
-      <Grip folded={grip.place !== 'open'} grip={grip} onLayout={onStrip} />
-      {picking === null ? null : <PickHint friends={picking.rows.length > 1} />}
+        <OpenRows band={band} grip={grip} onHeight={setRows} picking={picking} />
+        {add === null ? null : <AddSlot add={add} onWidth={setAddWidth} />}
+        <Grip folded={grip.place !== 'open'} grip={grip} onLayout={onStrip} />
+        {picking === null ? null : <PickHint friends={picking.rows.length > 1} />}
+      </View>
+      {caret === undefined ? null : <Caret at={caret} />}
     </Reanimated.View>
   );
+  return under === undefined ? card : <UnderFrame under={under}>{card}</UnderFrame>;
 }
 
 interface PlanBarProps {
@@ -185,6 +208,9 @@ interface PlanBarProps {
   onClose: () => void;
   onHeight: (height: number) => void;
   offset?: number;
+  caret?: number;
+  // The way back to the card the answer was asked from, or null (P10 ticket 15).
+  toCard?: (() => void) | null;
 }
 
 // The bar of the Plan on screen: its handles and its lanes move it as the card's band did, unless the answer's kind
@@ -192,7 +218,7 @@ interface PlanBarProps {
 // for in words (P04 ticket 82). "＋ 같이" stands at the right of its words, beside the rows people belong with, while
 // the Plan can take more people (P04 ticket 14), so that the dock is the input's row alone.
 export function PlanBar(props: PlanBarProps): ReactElement {
-  const { shown, answer, plan, invitation, focus, onClose, onHeight, offset } = props;
+  const { shown, answer, plan, invitation, focus, onClose, onHeight, offset, caret, toCard = null } = props;
   const fix = useCorrections(shown, answer.input, onClose, focus);
   const settled = invitation.made !== null || invitation.changed !== null || invitation.left !== null;
   const addName = settled ? null : addNameOf(answer.input.kind);
@@ -200,7 +226,7 @@ export function PlanBar(props: PlanBarProps): ReactElement {
   const busy = shown.recalculating || shown.locked || invitation.sending || invitation.changing;
   // A meeting changed in place (P04 ticket 17) is set: its band is read, not moved.
   const fixed = bandIsFixed(answer.input.kind) || invitation.changed !== null;
-  const pickingBar = usePickingBar(shown, plan, { busy, onClose });
+  const pickingBar = usePickingBar(answerPickSource(shown, onClose, toCard), plan, { busy });
   return (
     <Bar
       picking={pickingBar.picking}
@@ -216,7 +242,7 @@ export function PlanBar(props: PlanBarProps): ReactElement {
         onPutBack: settled
           ? undefined
           : (classId) => {
-              shown.change((input) => withoutSkipped(input, classId));
+              shown.putBack(classId);
             },
       }}
       add={
@@ -228,6 +254,7 @@ export function PlanBar(props: PlanBarProps): ReactElement {
       day={mealDayOf(answer, plan)}
       onHeight={onHeight}
       offset={offset}
+      caret={caret}
     />
   );
 }
@@ -257,29 +284,37 @@ export function LookupBar({
 
 // A booking's bar (P04 ticket 07): the time card a meal's answer draws, with the seat card's band, whose handles change
 // the start and the end the chat keeps for the card within the room's hours, steps, and lengths (P01 ticket 14). Its
-// "＋ 같이" slot is empty. While a booking is on its way the bar is hidden, so that the time stays as it was booked.
+// "＋ 같이" is the answers' own, chip and picker (P10 ticket 15). While a booking is on its way the bar is hidden, so
+// that the time stays as it was booked.
 export function BookingBar({
   booking,
   chat,
   onHeight,
 }: {
   booking: ShownBooking;
-  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes'>;
+  chat: Pick<Chat, 'rooms' | 'showRoom' | 'outcomes' | 'bubbles' | 'putBack' | 'askApp' | 'waiting'>;
   onHeight: (height: number) => void;
 }): ReactElement | null {
-  const { kept, keep, live } = bookingKept(booking, chat);
-  const pending = chat.outcomes.get(booking.place)?.kind === 'pending';
+  const bar = bookingBarOf(booking, chat);
   // The User's Classes and Quests of the slot's date, which the band shows and names (P01 ticket 05).
   const quests = useQuery(questsQuery).data ?? NO_QUESTS;
-  return live === null || pending || booking.booked ? null : (
+  if (bar === null) {
+    return null;
+  }
+  const { kept, keep, live } = bar;
+  // The conversation's Classes left out on the booking's day, which its ✕ puts back (P01 ticket 40).
+  const skipped = { ids: leftOutIdsOn(leftOutOf(chat.bubbles), live.date), putBack: chat.putBack };
+  return (
     <BookingCard
       // A new answer's card sets its range anew (P01 ticket 17).
       key={booking.place}
+      chat={chat}
       keep={(slot) => {
         keep({ slot });
       }}
       onHeight={onHeight}
       quests={quests}
+      skipped={skipped}
       slot={live}
       space={kept.space}
     />
@@ -291,36 +326,25 @@ function BookingCard(p: {
   space: LibrarySpace;
   quests: readonly Quest[];
   keep: (slot: Slot) => void;
+  skipped: { ids: readonly string[]; putBack: (classId: string) => void };
+  chat: Pick<Chat, 'askApp' | 'waiting'>;
   onHeight: (height: number) => void;
 }): ReactElement {
-  const band = useBookingBand(p.slot, p.space, p.quests, p.keep);
-  return <Bar band={band} onHeight={p.onHeight} />;
+  const band = useBookingBand(p.slot, p.space, p.quests, p.keep, p.skipped);
+  const together = useSeatTogether(p.space, band.band, p.chat);
+  return (
+    <Bar add={together.add} band={{ ...band, band: together.band }} onHeight={p.onHeight} picking={together.picking} />
+  );
 }
 
 const styles = StyleSheet.create({
-  bar: {
-    position: 'absolute',
-    right: ANSWER_TOP.side,
-    left: ANSWER_TOP.side,
-    paddingTop: space[3],
-    paddingHorizontal: space[4],
-    borderRadius: radius.xl,
-    backgroundColor: color.surface,
-    boxShadow: shadow.float,
-  },
+  frame: { position: 'absolute', right: 0, bottom: 0, left: 0, overflow: 'hidden', pointerEvents: 'box-none' },
+  // The card's place, which moves; its face is inside, and the caret over the face's top edge beside it, outside both
+  // bounds: Android draws a child outside its parent only where the parent says so (P01 ticket 23).
+  bar: { position: 'absolute', right: ANSWER_TOP.side, left: ANSWER_TOP.side, overflow: 'visible' },
+  face: { paddingTop: space[3], paddingHorizontal: space[4], ...CARD_FACE },
   // The rows' room, which grows as the card is pulled open.
   grown: { overflow: 'hidden' },
-  // The card's whole width, its padding included, 20 high from the hairline to the card's edge (`TUCK_STRIP`).
-  strip: { alignItems: 'center', marginTop: STRIP_TOP, marginHorizontal: -space[4], paddingVertical: space[2] },
-  rule: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    left: 0,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: color.border,
-  },
-  grip: { width: 36, height: 4, borderRadius: radius.full, backgroundColor: color.border },
   // At the right of the head row, its top at the row's top (the bar's padding), so that the two share their middle and
   // the track starts below both (P04 ticket 45).
   add: { position: 'absolute', top: space[3], right: space[3] },

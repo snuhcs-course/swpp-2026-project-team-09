@@ -13,6 +13,7 @@ import {
   type TimeBand,
 } from '../dto/answer.dto.js';
 import { onDay } from '../free-time/free-time.js';
+import { latest } from '../free-time/meal-fit.js';
 import { type OtherFriend } from '../gathering/answer-words.js';
 import { MINUTE_MS } from '../gathering/gathering.js';
 import { skippedBand } from '../free-time/left-out-classes.js';
@@ -58,10 +59,16 @@ const GUESSED_STAY_MINUTES = 3 * 60;
 // Another day asked for without a time is read from this time.
 const FIRST_CLOCK = '09:00';
 
-// When the User is ready to set out: the time asked from, the first time of another day, or now.
-export function readyAt({ date, window }: Pick<StudyInput, 'date' | 'window'>, now: Date): Date {
-  if (window.from !== null) {
-    const from = onDay(date, window.from);
+// When the User is ready to set out: the latest of the time asked from and the asker's "not before", which a step
+// before it in the same message sets (P05 ticket 74), else the first time of another day, or now.
+export function readyAt(
+  { date, window, people = [] }: Pick<StudyInput, 'date' | 'window'> & Partial<Pick<StudyInput, 'people'>>,
+  now: Date,
+): Date {
+  const notBefore = (people[0]?.constraints ?? []).flatMap((one) => (one.kind === 'notBefore' ? [one.time] : []));
+  const asked = [window.from, ...notBefore].flatMap((clock) => (clock === null ? [] : [onDay(date, clock)]));
+  if (asked.length > 0) {
+    const from = latest(asked);
     return from > now ? from : now;
   }
   return date > koreaDate(now) ? onDay(date, FIRST_CLOCK) : now;

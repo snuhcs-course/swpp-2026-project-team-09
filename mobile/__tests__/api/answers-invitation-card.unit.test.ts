@@ -2,6 +2,7 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 // Partitions of the check of an invitation's card: the main server's card for 민수 in the worked example; each checked
@@ -26,6 +27,7 @@ const inWay = (variants: readonly Variant[]): Variant[] => inside(CARD, 'way', v
 const ACCEPTED: Variant[] = [
   ["the main server's card", CARD],
   ['no gathering and no way', { ...CARD, gathering: null, way: null }],
+  ['a card of a main server before P06-31, without invitedBy', { ...CARD, invitedBy: undefined }],
   ['a gathering without an end', { ...CARD, gathering: { ...GATHERING, endAt: null } }],
   [
     'a way of an unknown origin',

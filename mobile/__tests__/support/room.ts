@@ -5,6 +5,7 @@
  * 2026-10-06  Fable 5.1  prompted by fyoon46
  * 2026-10-09  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-22  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-27  Opus 5.5   prompted by TaeHyun79
  ******************************************************************************/
 
 import { act, type userEvent, within } from '@testing-library/react-native';
@@ -13,7 +14,7 @@ import type { MyParty, Party, Person, Quest } from '@/api/types';
 import type { FakeServer, Reply } from './fake-server';
 import { pass, screen } from './app';
 import { openMain } from './main';
-import { answerMainScreen, DINNER, ME_ID, MIN_JUN } from './server';
+import { answerMainScreen, DINNER, LOBBY, ME_ID, MIN_JUN } from './server';
 
 // A Quest's room against the fake main server. A test file that uses it mocks what `server.ts` and `live.ts` say.
 
@@ -126,9 +127,11 @@ export function answerMyParty(server: FakeServer, party: MyParty | null): { set:
   };
 }
 
-// The main screen's answers, and the Quest's own.
+// The main screen's answers, and the Quest's own. The Master Switch is on, as it must be for the User to be seen in
+// the Quest's Party (P06 ticket 19); a test of it off answers the Lobby again.
 export function answerRoom(server: FakeServer, quest: Quest = PICNIC): void {
   answerMainScreen(server);
+  server.on('POST /lobby', { status: 200, body: { ...LOBBY, masterSwitch: true } });
   server.on('GET /quests', { status: 200, body: [DINNER, quest] });
   server.on(`GET /quests/${quest.id}`, { status: 200, body: quest });
   server.on(`GET /quests/${quest.id}/invitations`, { status: 200, body: [] });

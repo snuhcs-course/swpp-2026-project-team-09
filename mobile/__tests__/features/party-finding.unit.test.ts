@@ -4,6 +4,7 @@
  * 2026-10-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-21  Opus 5.5   prompted by fyoon46
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { TimetableClass } from '@/api/types';
@@ -34,6 +35,7 @@ function post(questId: string, description = '', place = '자하연'): PostView 
     description,
     leader: { id: 'l', name: '최유나', department: '디자인학부' },
     event: null,
+    eventId: null,
     board: 'hobby',
     joinPolicy: 'open',
     fill: '1/4명',

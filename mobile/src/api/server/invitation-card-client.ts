@@ -2,11 +2,12 @@
  * AI-generated with Claude
  *
  * 2026-11-14  Opus 5.5   prompted by fyoon46
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
 import type { InvitationCard, OwnWay } from '@/api/invitation-card-types';
-import { field, hasTexts, isNumber, isPlace, isText, isTextOrNull, listOf } from './answers';
+import { field, hasTexts, isHolder as isPerson, isNumber, isPlace, isText, isTextOrNull, listOf } from './answers';
 import { call } from './http';
 import { isLine, isNext, isPlacePoint, isScene } from './plan-answers';
 import { isQuestSummary } from './waiting-answers';
@@ -61,10 +62,16 @@ export function isWay(value: unknown): value is InvitationCard['way'] {
   );
 }
 
-export function isInvitationCard(value: unknown): value is InvitationCard {
+// The card as the main server sends it: one before P06 ticket 31 sends no `invitedBy`, and the card then names the
+// Quest's Leader, as the main server does for an invitation that kept no sender.
+type SentCard = Omit<InvitationCard, 'invitedBy'> & { invitedBy?: InvitationCard['invitedBy'] };
+
+export function isInvitationCard(value: unknown): value is SentCard {
+  const invitedBy = field(value, 'invitedBy');
   return (
     hasTexts(value, ['id', 'sentAt']) &&
     isQuestSummary(field(value, 'quest')) &&
+    (invitedBy === undefined || isPerson(invitedBy)) &&
     listOf(isHolder)(field(value, 'holders')) &&
     listOf(isStep)(field(value, 'steps')) &&
     isGathering(field(value, 'gathering')) &&
@@ -73,8 +80,13 @@ export function isInvitationCard(value: unknown): value is InvitationCard {
 }
 
 export const invitationCardClient: Pick<ApiClient, 'getInvitationCard'> = {
-  getInvitationCard: (invitationId, location) =>
-    call('GET', `/quest-invitations/${encodeURIComponent(invitationId)}`, isInvitationCard, {
-      query: location === null ? {} : { latitude: location.latitude, longitude: location.longitude },
-    }),
+  getInvitationCard: async (invitationId, location) => {
+    const { invitedBy, ...card } = await call(
+      'GET',
+      `/quest-invitations/${encodeURIComponent(invitationId)}`,
+      isInvitationCard,
+      { query: location === null ? {} : { latitude: location.latitude, longitude: location.longitude } },
+    );
+    return { ...card, invitedBy: invitedBy ?? card.quest.leader };
+  },
 };

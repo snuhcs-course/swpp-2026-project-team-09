@@ -91,6 +91,27 @@ describe('초대', () => {
   });
 });
 
+describe('an invitation sent by a Leader who no longer leads the 파티', () => {
+  it('names the one who invited, not the Leader now', async () => {
+    const inviter = { id: '6d1c3f5e-4444-4a5b-8c9d-000000000009', name: '한도경', department: '산업공학과' };
+    setAnswers({ invitations: [{ ...INVITATION, invitedBy: inviter }] });
+    await openAt('/party?tab=invites');
+
+    const invitation = within(screen.getByLabelText(INVITATION.quest.title));
+    expect(invitation.getByText('한도경님이 비공개 파티에 초대했어요')).toBeVisible();
+    expect(invitation.queryByText(/윤태오/u)).toBeNull();
+  });
+
+  it('names the Leader for an invitation from a main server that sends no sender', async () => {
+    const { invitedBy: _sender, ...before } = INVITATION;
+    server.on('GET /quest-invitations', { status: 200, body: [before] });
+    await openAt('/party?tab=invites');
+
+    const invitation = within(screen.getByLabelText(INVITATION.quest.title));
+    expect(invitation.getByText('윤태오님이 비공개 파티에 초대했어요')).toBeVisible();
+  });
+});
+
 describe('a refused acceptance', () => {
   it.each([
     [refusal(404, 'QUEST_INVITATION_NOT_FOUND'), '이미 끝난 초대예요'],

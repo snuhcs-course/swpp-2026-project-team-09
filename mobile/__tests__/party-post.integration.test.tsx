@@ -8,6 +8,7 @@
  * 2026-11-26  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-26  Opus 5.5   prompted by TaeHyun79
  * 2026-11-27  Opus 5.5   prompted by TaeHyun79
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import { act, within } from '@testing-library/react-native';
@@ -127,6 +128,35 @@ describe('asking to join on 파티 모집글', () => {
 
     expect(toast()).toHaveTextContent('파티장이 신청을 받지 않았어요');
     expect(toastIcon()).toBe('alert');
+  });
+});
+
+describe('파티 모집글 of a full 파티', () => {
+  it('shows 정원이 다 찼어요 in place of 참여하기, and it takes no press', async () => {
+    setAnswers({ recruiting: [{ ...RUN, holderCount: 8 }, CODING, JAZZ] });
+    await openAt(`/post/${RUN.id}`);
+
+    expect(screen.getByText('8/8명')).toBeVisible();
+    expect(screen.getByRole('button', { name: '정원이 다 찼어요' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: '참여하기' })).toBeNull();
+  });
+
+  it('shows 정원이 다 찼어요 in place of 참여 신청 for an Approval Quest', async () => {
+    setAnswers({ recruiting: [RUN, { ...CODING, holderCount: 4 }, JAZZ] });
+    await openAt(`/post/${CODING.id}`);
+
+    expect(screen.getByRole('button', { name: '정원이 다 찼어요' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: '참여 신청' })).toBeNull();
+  });
+
+  it('still waits with 신청 취소 when the User’s request waits', async () => {
+    const full = { ...CODING, holderCount: 4 };
+    setAnswers({ recruiting: [RUN, full, JAZZ], requests: [requestFor(full)] });
+    await openAt(`/post/${CODING.id}`);
+
+    expect(screen.getByText('참여 신청을 기다리는 중이에요')).toBeVisible();
+    expect(screen.getByRole('button', { name: '신청 취소' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: '정원이 다 찼어요' })).toBeNull();
   });
 });
 
