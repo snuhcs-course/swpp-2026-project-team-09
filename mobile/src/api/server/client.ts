@@ -17,6 +17,7 @@
  * 2026-11-16  Opus 5.5   prompted by Jaehyun0320
  * 2026-11-18  Opus 5.5   prompted by AhnJinYoung
  * 2026-11-26  Opus 5.5   prompted by AhnJinYoung
+ * 2026-11-28  Opus 5.5   prompted by Jaehyun0320
  ******************************************************************************/
 
 import type { ApiClient } from '@/api/client';
@@ -49,7 +50,13 @@ import { isPositions } from './position-answers';
 import { isQuests } from './quest-answers';
 import { isShuttleRoute, isShuttleVehicles } from './shuttle-answers';
 import { isStudyBuildings } from './study-answers';
-import { isFriendRequests, isJoinRequests, isKeptNotifications, isQuestInvitations } from './waiting-answers';
+import {
+  isFriendRequests,
+  isJoinRequests,
+  isKeptNotifications,
+  isQuestInvitations,
+  toQuestInvitation,
+} from './waiting-answers';
 import { assistantClient } from './assistant-client';
 import { eventClient } from './event-client';
 import { call } from './http';
@@ -150,7 +157,8 @@ export const serverClient: ApiClient = {
   },
   listPositions: () => call('GET', '/positions', isPositions),
   listQuests: () => call('GET', '/quests', isQuests),
-  listQuestInvitations: () => call('GET', '/quest-invitations', isQuestInvitations),
+  listQuestInvitations: async () =>
+    (await call('GET', '/quest-invitations', isQuestInvitations)).map((invitation) => toQuestInvitation(invitation)),
   listNotifications: () => call('GET', '/notifications', isKeptNotifications),
   listJoinRequests: (questId) => call('GET', `/quests/${encodeURIComponent(questId)}/join-requests`, isJoinRequests),
   listClasses: () => call('GET', '/timetable/classes', isTimetableClasses),

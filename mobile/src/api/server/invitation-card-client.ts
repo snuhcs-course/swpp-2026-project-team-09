@@ -62,11 +62,16 @@ export function isWay(value: unknown): value is InvitationCard['way'] {
   );
 }
 
-export function isInvitationCard(value: unknown): value is InvitationCard {
+// The card as the main server sends it: one before P06 ticket 31 sends no `invitedBy`, and the card then names the
+// Quest's Leader, as the main server does for an invitation that kept no sender.
+type SentCard = Omit<InvitationCard, 'invitedBy'> & { invitedBy?: InvitationCard['invitedBy'] };
+
+export function isInvitationCard(value: unknown): value is SentCard {
+  const invitedBy = field(value, 'invitedBy');
   return (
     hasTexts(value, ['id', 'sentAt']) &&
     isQuestSummary(field(value, 'quest')) &&
-    isPerson(field(value, 'invitedBy')) &&
+    (invitedBy === undefined || isPerson(invitedBy)) &&
     listOf(isHolder)(field(value, 'holders')) &&
     listOf(isStep)(field(value, 'steps')) &&
     isGathering(field(value, 'gathering')) &&
@@ -75,8 +80,13 @@ export function isInvitationCard(value: unknown): value is InvitationCard {
 }
 
 export const invitationCardClient: Pick<ApiClient, 'getInvitationCard'> = {
-  getInvitationCard: (invitationId, location) =>
-    call('GET', `/quest-invitations/${encodeURIComponent(invitationId)}`, isInvitationCard, {
-      query: location === null ? {} : { latitude: location.latitude, longitude: location.longitude },
-    }),
+  getInvitationCard: async (invitationId, location) => {
+    const { invitedBy, ...card } = await call(
+      'GET',
+      `/quest-invitations/${encodeURIComponent(invitationId)}`,
+      isInvitationCard,
+      { query: location === null ? {} : { latitude: location.latitude, longitude: location.longitude } },
+    );
+    return { ...card, invitedBy: invitedBy ?? card.quest.leader };
+  },
 };
