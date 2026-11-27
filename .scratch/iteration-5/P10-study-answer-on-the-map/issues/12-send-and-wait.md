@@ -56,3 +56,8 @@ The group answer gets a new face on today's room request logic (`screens/main/li
 - [x] Whole lint, format and types.
 
 ## Comments
+
+### Agent usage (2026-11-27)
+
+- Agent time: about 9 minutes in the p04-58 session, from 22:45 to 23:04 UTC on 11-26, an estimate. Restacking it on ticket 11's later fixes is counted under ticket 11. No subagents.
+- Tokens: input 54 uncached, with cache reads 19,642,770 and cache writes 51,585; output 35,038.
