@@ -2666,9 +2666,12 @@ Anthropic API as the AI's key says
   A message that asks for two or more things ("16시에 관정 갔다가 19시쯤 저녁, 7층 예약하고 스케줄 짜줘")
   gets `steps` too, left out otherwise: each request in time order, a book card, a booking a library tool refused, or
   the answer, with its `kind`, `title`, `place`, `from`, `startAt`, `endAt`, `status` (`shown` or `not-done`),
-  `reason`, and what `shows` it (the card's key or the answer). A meal planned after a booking sets out from 관정 when
-  the booking ends, unless the User named its start (`planMeal`'s `startPlaceId`); `planMeal` plans from the steps shown
-  before it, and the run plans the meal again when the model planned it first (`src/assistant/steps/plan-steps.ts`).
+  `reason`, and what `shows` it (the card's key or the answer). For every app, a meal sets out from the step before it
+  among the message's bookings and answers, such as 관정 when a booking ends or a study place when the stay ends, unless
+  the User named its start (`planMeal`'s `startPlaceId`) or an item of their day lies between; for an app before
+  `answers` the chain is the asker's own (`source: 'asker'`, P05 ticket 78). `planMeal` plans from the steps shown
+  before it, and the run plans the meal again when the model planned it first (`src/assistant/steps/all-steps.ts`,
+  `src/assistant/steps/plan-steps.ts`).
 
   - **Shape.** A message is the User's, `{ "role": "user", "text": "…" }`, or the Assistant's,
     `{ "role": "assistant", "text": "…", "cards": [{ "kind": "quest", "id": "…" }] }`, with the cards it showed
